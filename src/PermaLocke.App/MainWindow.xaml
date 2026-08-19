@@ -16,6 +16,9 @@
         <DataTemplate DataType="{x:Type vm:RandomizerViewModel}">
             <views:RandomizerView />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:GachaViewModel}">
+            <views:GachaView />
+        </DataTemplate>
         <DataTemplate DataType="{x:Type vm:MiscellaneousViewModel}">
             <views:MiscellaneousView />
         </DataTemplate>

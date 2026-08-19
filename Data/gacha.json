@@ -1,0 +1,86 @@
+{
+  "version": 1,
+  "comment": "Gacha. Los IV salen siempre al azar, los seis, en todos los tiers: perfectIvs queda a 0. Los tiers son rangos del TOTAL de estadísticas base, no listas de Pokémon: así ninguna especie se queda fuera y no hay 807 ids que mantener. El límite de cada tier es su techo; el suelo es el techo del anterior. Los pools salen de Data/species.json, generado desde la ROM con: PermaLocke.RomTool species",
+
+  "comentarioPrecios": "Coste 0 MIENTRAS SE PRUEBA. Los precios reales (100, 225 y 300) se ponen cuando exista el sistema de logros, que es de donde saldrán los puntos.",
+
+  "comentarioNivel": "Todos los tiers entregan a nivel 1: el gacha da el Pokémon, subirlo es cosa del jugador y del cap de nivel de la run.",
+
+  "tiers": [
+    {
+      "id": "tier1",
+      "name": "Tier 1",
+      "maxBaseStatTotal": 400,
+      "legendaryChance": 0.0,
+      "minLevel": 1,
+      "maxLevel": 1,
+      "perfectIvs": 0,
+      "shinyChance": 0.01
+    },
+    {
+      "id": "tier2",
+      "name": "Tier 2",
+      "maxBaseStatTotal": 490,
+      "legendaryChance": 0.0,
+      "minLevel": 1,
+      "maxLevel": 1,
+      "perfectIvs": 0,
+      "shinyChance": 0.01
+    },
+    {
+      "id": "tier3",
+      "name": "Tier 3",
+      "maxBaseStatTotal": 535,
+      "legendaryChance": 0.0,
+      "minLevel": 1,
+      "maxLevel": 1,
+      "perfectIvs": 0,
+      "shinyChance": 0.02
+    },
+    {
+      "id": "tier4",
+      "name": "Tier 4",
+      "maxBaseStatTotal": 590,
+      "legendaryChance": 0.0,
+      "minLevel": 1,
+      "maxLevel": 1,
+      "perfectIvs": 0,
+      "shinyChance": 0.03
+    },
+    {
+      "id": "tier5",
+      "name": "Tier 5",
+      "comment": "40% legendario. El 60% restante son los nueve pseudolegendarios de más de 590: Dragonite, Tyranitar, Slaking, Salamence, Metagross, Garchomp, Hydreigon, Goodra y Kommo-o.",
+      "maxBaseStatTotal": 9999,
+      "legendaryChance": 0.40,
+      "minLevel": 1,
+      "maxLevel": 1,
+      "perfectIvs": 0,
+      "shinyChance": 0.05
+    }
+  ],
+
+  "banners": [
+    {
+      "id": "pocho",
+      "name": "POCHO",
+      "description": "Barato y sin sorpresas. Sobre todo Tier 2.",
+      "cost": 0,
+      "chances": { "tier1": 0.15, "tier2": 0.60, "tier3": 0.25 }
+    },
+    {
+      "id": "decente",
+      "name": "DECENTE",
+      "description": "El término medio. Sobre todo Tier 3.",
+      "cost": 0,
+      "chances": { "tier2": 0.15, "tier3": 0.60, "tier4": 0.25 }
+    },
+    {
+      "id": "bueno",
+      "name": "BUENO",
+      "description": "Caro, y el único que puede dar legendarios.",
+      "cost": 0,
+      "chances": { "tier3": 0.15, "tier4": 0.60, "tier5": 0.25 }
+    }
+  ]
+}

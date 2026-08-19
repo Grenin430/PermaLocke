@@ -187,8 +187,23 @@ ejecutable, lo usa en modo portátil y le activa el servidor RPC solo. Verificad
 publicado. Los binarios no se versionan: se reconstruyen desde `github.com/Grenin430/azahar`, y
 solo se versiona `Emulator/LEEME.md` con su procedencia y su licencia. Ver §25.
 
-**Siguiente.** Probar en partida nueva iniciales, entrenadores y tiendas. Luego Fase 4: gacha,
-tienda y logros.
+**Fase 4 empezada: el gacha (2026-08-19).** Tres banners con rarezas por **rango de total de
+estadísticas base**, no por listas de Pokémon, así que ninguna especie se queda fuera y sigue
+valiendo con la ROM randomizada (el módulo de datos baraja las estadísticas pero conserva el
+total). `RomTool species` genera `Data/species.json` desde el cartucho. Cada tirada se calcula
+con la seed de la run y su número, así que **se puede recomputar y auditar**.
+
+**El Pokémon va al PC del juego**, escribiendo en el fichero de partida con PKHeX: copia previa,
+y se relee para confirmarlo. Exige el juego cerrado, igual que la referencia. Cómo se supo que
+esa era la vía: analizando los backups de BxnnyLocke, que son saves completos de 445.440 bytes.
+Eso ahorró localizar las cajas en memoria. Detalle en `docs/ARCHITECTURE.md` §26.
+
+Pantalla con animación abstracta del ultraespacio: cinco portales de color, uno por tier, sin
+ningún asset con copyright. **Precios a cero mientras se prueba**; los reales (100/225/300) se
+ponen cuando existan los logros, que son la fuente de puntos y hoy no existe ninguna.
+
+**Siguiente.** Logros (la fuente de puntos), tienda, y probar en partida nueva iniciales,
+entrenadores y tiendas.
 
 Lo que NO está resuelto todavía y no debe darse por hecho (detalle en `docs/ARCHITECTURE.md`):
 
@@ -201,6 +216,9 @@ Lo que NO está resuelto todavía y no debe darse por hecho (detalle en `docs/AR
 | Mochila del juego (leer, poner cantidad, añadir lo que no llevas) | **RESUELTA Y VERIFICADA** en el juego — ver `ARCHITECTURE.md` §22 |
 | Zona actual del jugador (regla de las Poké Balls) | **RESUELTA Y VERIFICADA** — es el área de `encdata`, leída anclando a la mochila; ver `ARCHITECTURE.md` §23 |
 | Regla de las Poké Balls (impedir la captura, no solo registrarla) | **IMPLEMENTADA Y APAGADA** — cableada y con tests, sin probar en el juego; ver `ARCHITECTURE.md` §24 |
+| Gacha (motor, probabilidades, reproducible) | **HECHO** — 194 tests; sin verse funcionando en la app |
+| Entrega del Pokémon al PC del juego | **VERIFICADA sobre copia del save**; falta hacerlo en la partida real. Exige el juego cerrado |
+| Logros, tienda y sincronización | **SIN EMPEZAR** — hoy no hay forma de ganar puntos |
 | API concreta de pk3DS.Core | **VERIFICADA** contra la ROM real — ver `ARCHITECTURE.md` §19 |
 
 ---
@@ -221,6 +239,7 @@ dotnet run --project tools/PermaLocke.RomTool -- trainers 20260818
 dotnet run --project tools/PermaLocke.RomTool -- pokemon 20260818
 dotnet run --project tools/PermaLocke.RomTool -- shops --gen
 dotnet run --project tools/PermaLocke.RomTool -- zones
+dotnet run --project tools/PermaLocke.RomTool -- species
 dotnet run --project tools/PermaLocke.RomTool -- randomize 20260818 --install
 ```
 

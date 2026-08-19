@@ -1,0 +1,8656 @@
+{
+  "comment": "Generado por: PermaLocke.RomTool species. No editar a mano.",
+  "natures": [
+    "Fuerte",
+    "Hura\u00F1a",
+    "Audaz",
+    "Firme",
+    "P\u00EDcara",
+    "Osada",
+    "D\u00F3cil",
+    "Pl\u00E1cida",
+    "Agitada",
+    "Floja",
+    "Miedosa",
+    "Activa",
+    "Seria",
+    "Alegre",
+    "Ingenua",
+    "Modesta",
+    "Afable",
+    "Mansa",
+    "T\u00EDmida",
+    "Alocada",
+    "Serena",
+    "Amable",
+    "Grosera",
+    "Cauta",
+    "Rara",
+    "[~ 25]"
+  ],
+  "abilities": [
+    "-",
+    "Hedor",
+    "Llovizna",
+    "Impulso",
+    "Armadura Batalla",
+    "Robustez",
+    "Humedad",
+    "Flexibilidad",
+    "Velo Arena",
+    "Elec. Est\u00E1tica",
+    "Absorbe Elec",
+    "Absorbe Agua",
+    "Despiste",
+    "Aclimataci\u00F3n",
+    "Ojo Compuesto",
+    "Insomnio",
+    "Cambio Color",
+    "Inmunidad",
+    "Absorbe Fuego",
+    "Polvo Escudo",
+    "Ritmo Propio",
+    "Ventosas",
+    "Intimidaci\u00F3n",
+    "Sombra Trampa",
+    "Piel Tosca",
+    "Superguarda",
+    "Levitaci\u00F3n",
+    "Efecto Espora",
+    "Sincron\u00EDa",
+    "Cuerpo Puro",
+    "Cura Natural",
+    "Pararrayos",
+    "Dicha",
+    "Nado R\u00E1pido",
+    "Clorofila",
+    "Iluminaci\u00F3n",
+    "Rastro",
+    "Potencia",
+    "Punto T\u00F3xico",
+    "Foco Interno",
+    "Escudo Magma",
+    "Velo Agua",
+    "Im\u00E1n",
+    "Insonorizar",
+    "Cura Lluvia",
+    "Chorro Arena",
+    "Presi\u00F3n",
+    "Sebo",
+    "Madrugar",
+    "Cuerpo Llama",
+    "Fuga",
+    "Vista Lince",
+    "Corte Fuerte",
+    "Recogida",
+    "Ausente",
+    "Entusiasmo",
+    "Gran Encanto",
+    "M\u00E1s",
+    "Menos",
+    "Predicci\u00F3n",
+    "Viscosidad",
+    "Mudar",
+    "Agallas",
+    "Escama Especial",
+    "Lodo L\u00EDquido",
+    "Espesura",
+    "Mar Llamas",
+    "Torrente",
+    "Enjambre",
+    "Cabeza Roca",
+    "Sequ\u00EDa",
+    "Trampa Arena",
+    "Esp\u00EDritu Vital",
+    "Humo Blanco",
+    "Energ\u00EDa Pura",
+    "Caparaz\u00F3n",
+    "Bucle Aire",
+    "Tumbos",
+    "Electromotor",
+    "Rivalidad",
+    "Impasible",
+    "Manto N\u00EDveo",
+    "Gula",
+    "Irascible",
+    "Liviano",
+    "Ign\u00EDfugo",
+    "Simple",
+    "Piel Seca",
+    "Descarga",
+    "Pu\u00F1o F\u00E9rreo",
+    "Ant\u00EDdoto",
+    "Adaptable",
+    "Encadenado",
+    "Hidrataci\u00F3n",
+    "Poder Solar",
+    "Pies R\u00E1pidos",
+    "Normalidad",
+    "Francotirador",
+    "Muro M\u00E1gico",
+    "Indefenso",
+    "Rezagado",
+    "Experto",
+    "Defensa Hoja",
+    "Zoquete",
+    "Rompemoldes",
+    "Afortunado",
+    "Resquicio",
+    "Anticipaci\u00F3n",
+    "Alerta",
+    "Ignorante",
+    "Cromolente",
+    "Filtro",
+    "Inicio Lento",
+    "Intr\u00E9pido",
+    "Colector",
+    "G\u00E9lido",
+    "Roca S\u00F3lida",
+    "Nevada",
+    "Recogemiel",
+    "Cacheo",
+    "Audaz",
+    "Multitipo",
+    "Don Floral",
+    "Mal Sue\u00F1o",
+    "Hurto",
+    "Potencia Bruta",
+    "Respond\u00F3n",
+    "Nerviosismo",
+    "Competitivo",
+    "Flaqueza",
+    "Cuerpo Maldito",
+    "Alma Cura",
+    "Compiescolta",
+    "Armadura Fr\u00E1gil",
+    "Metal Pesado",
+    "Metal Liviano",
+    "Compensaci\u00F3n",
+    "\u00CDmpetu T\u00F3xico",
+    "\u00CDmpetu Ardiente",
+    "Cosecha",
+    "Telepat\u00EDa",
+    "Veleta",
+    "Funda",
+    "Toque T\u00F3xico",
+    "Regeneraci\u00F3n",
+    "Sacapecho",
+    "\u00CDmpetu Arena",
+    "Piel Milagro",
+    "C\u00E1lculo Final",
+    "Ilusi\u00F3n",
+    "Impostor",
+    "Allanamiento",
+    "Momia",
+    "Autoestima",
+    "Justiciero",
+    "Cobard\u00EDa",
+    "Espejo M\u00E1gico",
+    "Herb\u00EDvoro",
+    "Bromista",
+    "Poder Arena",
+    "Punta Acero",
+    "Modo Daruma",
+    "Tinovictoria",
+    "Turbollama",
+    "Terravoltaje",
+    "Velo Aroma",
+    "Velo Flor",
+    "Carrillo",
+    "Mutatipo",
+    "Pelaje Recio",
+    "Prestidigitador",
+    "Antibalas",
+    "Tenacidad",
+    "Mand\u00EDbula Fuerte",
+    "Piel Helada",
+    "Velo Dulce",
+    "Cambio T\u00E1ctico",
+    "Alas Vendaval",
+    "Megadisparador",
+    "Manto Frondoso",
+    "Simbiosis",
+    "Garra Dura",
+    "Piel Fe\u00E9rica",
+    "Baba",
+    "Piel Celeste",
+    "Amor Filial",
+    "Aura Oscura",
+    "Aura Fe\u00E9rica",
+    "Rompeaura",
+    "Mar del Albor",
+    "Tierra del Ocaso",
+    "R\u00E1faga Delta",
+    "Firmeza",
+    "Huida",
+    "Retirada",
+    "Hidrorrefuerzo",
+    "Ensa\u00F1amiento",
+    "Escudo Limitado",
+    "Vigilante",
+    "Pompa",
+    "Acero Templado",
+    "C\u00F3lera",
+    "Quitanieves",
+    "Remoto",
+    "Voz Fluida",
+    "Primer Auxilio",
+    "Piel El\u00E9ctrica",
+    "Cola Surf",
+    "Banco",
+    "Disfraz",
+    "Fuerte Afecto",
+    "Agrupamiento",
+    "Corrosi\u00F3n",
+    "Letargo Perenne",
+    "Regia Presencia",
+    "Rev\u00E9s",
+    "Pareja de Baile",
+    "Bater\u00EDa",
+    "Peluche",
+    "Cuerpo V\u00EDvido",
+    "Cor\u00E1nima",
+    "Rizos Rebeldes",
+    "Receptor",
+    "Reacci\u00F3n Qu\u00EDmica",
+    "Ultraimpulso",
+    "Sistema Alfa",
+    "Electrog\u00E9nesis",
+    "Psicog\u00E9nesis",
+    "Nebulog\u00E9nesis",
+    "Herbog\u00E9nesis",
+    "Guardia Met\u00E1lica",
+    "Guardia Espectro",
+    "Armadura Prisma",
+    "Fuerza Cerebral"
+  ],
+  "species": [
+    {
+      "id": 1,
+      "name": "Bulbasaur",
+      "baseStatTotal": 318,
+      "legendary": false,
+      "abilities": [
+        "Espesura",
+        "Clorofila"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Ivysaur",
+      "baseStatTotal": 405,
+      "legendary": false,
+      "abilities": [
+        "Espesura",
+        "Clorofila"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Venusaur",
+      "baseStatTotal": 525,
+      "legendary": false,
+      "abilities": [
+        "Espesura",
+        "Clorofila"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Charmander",
+      "baseStatTotal": 309,
+      "legendary": false,
+      "abilities": [
+        "Mar Llamas",
+        "Poder Solar"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Charmeleon",
+      "baseStatTotal": 405,
+      "legendary": false,
+      "abilities": [
+        "Mar Llamas",
+        "Poder Solar"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "Charizard",
+      "baseStatTotal": 534,
+      "legendary": false,
+      "abilities": [
+        "Mar Llamas",
+        "Poder Solar"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "Squirtle",
+      "baseStatTotal": 314,
+      "legendary": false,
+      "abilities": [
+        "Torrente",
+        "Cura Lluvia"
+      ]
+    },
+    {
+      "id": 8,
+      "name": "Wartortle",
+      "baseStatTotal": 405,
+      "legendary": false,
+      "abilities": [
+        "Torrente",
+        "Cura Lluvia"
+      ]
+    },
+    {
+      "id": 9,
+      "name": "Blastoise",
+      "baseStatTotal": 530,
+      "legendary": false,
+      "abilities": [
+        "Torrente",
+        "Cura Lluvia"
+      ]
+    },
+    {
+      "id": 10,
+      "name": "Caterpie",
+      "baseStatTotal": 195,
+      "legendary": false,
+      "abilities": [
+        "Polvo Escudo",
+        "Fuga"
+      ]
+    },
+    {
+      "id": 11,
+      "name": "Metapod",
+      "baseStatTotal": 205,
+      "legendary": false,
+      "abilities": [
+        "Mudar"
+      ]
+    },
+    {
+      "id": 12,
+      "name": "Butterfree",
+      "baseStatTotal": 395,
+      "legendary": false,
+      "abilities": [
+        "Ojo Compuesto",
+        "Cromolente"
+      ]
+    },
+    {
+      "id": 13,
+      "name": "Weedle",
+      "baseStatTotal": 195,
+      "legendary": false,
+      "abilities": [
+        "Polvo Escudo",
+        "Fuga"
+      ]
+    },
+    {
+      "id": 14,
+      "name": "Kakuna",
+      "baseStatTotal": 205,
+      "legendary": false,
+      "abilities": [
+        "Mudar"
+      ]
+    },
+    {
+      "id": 15,
+      "name": "Beedrill",
+      "baseStatTotal": 395,
+      "legendary": false,
+      "abilities": [
+        "Enjambre",
+        "Francotirador"
+      ]
+    },
+    {
+      "id": 16,
+      "name": "Pidgey",
+      "baseStatTotal": 251,
+      "legendary": false,
+      "abilities": [
+        "Vista Lince",
+        "Tumbos",
+        "Sacapecho"
+      ]
+    },
+    {
+      "id": 17,
+      "name": "Pidgeotto",
+      "baseStatTotal": 349,
+      "legendary": false,
+      "abilities": [
+        "Vista Lince",
+        "Tumbos",
+        "Sacapecho"
+      ]
+    },
+    {
+      "id": 18,
+      "name": "Pidgeot",
+      "baseStatTotal": 479,
+      "legendary": false,
+      "abilities": [
+        "Vista Lince",
+        "Tumbos",
+        "Sacapecho"
+      ]
+    },
+    {
+      "id": 19,
+      "name": "Rattata",
+      "baseStatTotal": 253,
+      "legendary": false,
+      "abilities": [
+        "Fuga",
+        "Agallas",
+        "Entusiasmo"
+      ]
+    },
+    {
+      "id": 20,
+      "name": "Raticate",
+      "baseStatTotal": 413,
+      "legendary": false,
+      "abilities": [
+        "Fuga",
+        "Agallas",
+        "Entusiasmo"
+      ]
+    },
+    {
+      "id": 21,
+      "name": "Spearow",
+      "baseStatTotal": 262,
+      "legendary": false,
+      "abilities": [
+        "Vista Lince",
+        "Francotirador"
+      ]
+    },
+    {
+      "id": 22,
+      "name": "Fearow",
+      "baseStatTotal": 442,
+      "legendary": false,
+      "abilities": [
+        "Vista Lince",
+        "Francotirador"
+      ]
+    },
+    {
+      "id": 23,
+      "name": "Ekans",
+      "baseStatTotal": 288,
+      "legendary": false,
+      "abilities": [
+        "Intimidaci\u00F3n",
+        "Mudar",
+        "Nerviosismo"
+      ]
+    },
+    {
+      "id": 24,
+      "name": "Arbok",
+      "baseStatTotal": 448,
+      "legendary": false,
+      "abilities": [
+        "Intimidaci\u00F3n",
+        "Mudar",
+        "Nerviosismo"
+      ]
+    },
+    {
+      "id": 25,
+      "name": "Pikachu",
+      "baseStatTotal": 320,
+      "legendary": false,
+      "abilities": [
+        "Elec. Est\u00E1tica",
+        "Pararrayos"
+      ]
+    },
+    {
+      "id": 26,
+      "name": "Raichu",
+      "baseStatTotal": 485,
+      "legendary": false,
+      "abilities": [
+        "Elec. Est\u00E1tica",
+        "Pararrayos"
+      ]
+    },
+    {
+      "id": 27,
+      "name": "Sandshrew",
+      "baseStatTotal": 300,
+      "legendary": false,
+      "abilities": [
+        "Velo Arena",
+        "\u00CDmpetu Arena"
+      ]
+    },
+    {
+      "id": 28,
+      "name": "Sandslash",
+      "baseStatTotal": 450,
+      "legendary": false,
+      "abilities": [
+        "Velo Arena",
+        "\u00CDmpetu Arena"
+      ]
+    },
+    {
+      "id": 29,
+      "name": "Nidoran\uE08F",
+      "baseStatTotal": 275,
+      "legendary": false,
+      "abilities": [
+        "Punto T\u00F3xico",
+        "Rivalidad",
+        "Entusiasmo"
+      ]
+    },
+    {
+      "id": 30,
+      "name": "Nidorina",
+      "baseStatTotal": 365,
+      "legendary": false,
+      "abilities": [
+        "Punto T\u00F3xico",
+        "Rivalidad",
+        "Entusiasmo"
+      ]
+    },
+    {
+      "id": 31,
+      "name": "Nidoqueen",
+      "baseStatTotal": 505,
+      "legendary": false,
+      "abilities": [
+        "Punto T\u00F3xico",
+        "Rivalidad",
+        "Potencia Bruta"
+      ]
+    },
+    {
+      "id": 32,
+      "name": "Nidoran\uE08E",
+      "baseStatTotal": 273,
+      "legendary": false,
+      "abilities": [
+        "Punto T\u00F3xico",
+        "Rivalidad",
+        "Entusiasmo"
+      ]
+    },
+    {
+      "id": 33,
+      "name": "Nidorino",
+      "baseStatTotal": 365,
+      "legendary": false,
+      "abilities": [
+        "Punto T\u00F3xico",
+        "Rivalidad",
+        "Entusiasmo"
+      ]
+    },
+    {
+      "id": 34,
+      "name": "Nidoking",
+      "baseStatTotal": 505,
+      "legendary": false,
+      "abilities": [
+        "Punto T\u00F3xico",
+        "Rivalidad",
+        "Potencia Bruta"
+      ]
+    },
+    {
+      "id": 35,
+      "name": "Clefairy",
+      "baseStatTotal": 323,
+      "legendary": false,
+      "abilities": [
+        "Gran Encanto",
+        "Muro M\u00E1gico",
+        "Compiescolta"
+      ]
+    },
+    {
+      "id": 36,
+      "name": "Clefable",
+      "baseStatTotal": 483,
+      "legendary": false,
+      "abilities": [
+        "Gran Encanto",
+        "Muro M\u00E1gico",
+        "Ignorante"
+      ]
+    },
+    {
+      "id": 37,
+      "name": "Vulpix",
+      "baseStatTotal": 299,
+      "legendary": false,
+      "abilities": [
+        "Absorbe Fuego",
+        "Sequ\u00EDa"
+      ]
+    },
+    {
+      "id": 38,
+      "name": "Ninetales",
+      "baseStatTotal": 505,
+      "legendary": false,
+      "abilities": [
+        "Absorbe Fuego",
+        "Sequ\u00EDa"
+      ]
+    },
+    {
+      "id": 39,
+      "name": "Jigglypuff",
+      "baseStatTotal": 270,
+      "legendary": false,
+      "abilities": [
+        "Gran Encanto",
+        "Tenacidad",
+        "Compiescolta"
+      ]
+    },
+    {
+      "id": 40,
+      "name": "Wigglytuff",
+      "baseStatTotal": 435,
+      "legendary": false,
+      "abilities": [
+        "Gran Encanto",
+        "Tenacidad",
+        "Cacheo"
+      ]
+    },
+    {
+      "id": 41,
+      "name": "Zubat",
+      "baseStatTotal": 245,
+      "legendary": false,
+      "abilities": [
+        "Foco Interno",
+        "Allanamiento"
+      ]
+    },
+    {
+      "id": 42,
+      "name": "Golbat",
+      "baseStatTotal": 455,
+      "legendary": false,
+      "abilities": [
+        "Foco Interno",
+        "Allanamiento"
+      ]
+    },
+    {
+      "id": 43,
+      "name": "Oddish",
+      "baseStatTotal": 320,
+      "legendary": false,
+      "abilities": [
+        "Clorofila",
+        "Fuga"
+      ]
+    },
+    {
+      "id": 44,
+      "name": "Gloom",
+      "baseStatTotal": 395,
+      "legendary": false,
+      "abilities": [
+        "Clorofila",
+        "Hedor"
+      ]
+    },
+    {
+      "id": 45,
+      "name": "Vileplume",
+      "baseStatTotal": 490,
+      "legendary": false,
+      "abilities": [
+        "Clorofila",
+        "Efecto Espora"
+      ]
+    },
+    {
+      "id": 46,
+      "name": "Paras",
+      "baseStatTotal": 285,
+      "legendary": false,
+      "abilities": [
+        "Efecto Espora",
+        "Piel Seca",
+        "Humedad"
+      ]
+    },
+    {
+      "id": 47,
+      "name": "Parasect",
+      "baseStatTotal": 405,
+      "legendary": false,
+      "abilities": [
+        "Efecto Espora",
+        "Piel Seca",
+        "Humedad"
+      ]
+    },
+    {
+      "id": 48,
+      "name": "Venonat",
+      "baseStatTotal": 305,
+      "legendary": false,
+      "abilities": [
+        "Ojo Compuesto",
+        "Cromolente",
+        "Fuga"
+      ]
+    },
+    {
+      "id": 49,
+      "name": "Venomoth",
+      "baseStatTotal": 450,
+      "legendary": false,
+      "abilities": [
+        "Polvo Escudo",
+        "Cromolente",
+        "Piel Milagro"
+      ]
+    },
+    {
+      "id": 50,
+      "name": "Diglett",
+      "baseStatTotal": 265,
+      "legendary": false,
+      "abilities": [
+        "Velo Arena",
+        "Trampa Arena",
+        "Poder Arena"
+      ]
+    },
+    {
+      "id": 51,
+      "name": "Dugtrio",
+      "baseStatTotal": 425,
+      "legendary": false,
+      "abilities": [
+        "Velo Arena",
+        "Trampa Arena",
+        "Poder Arena"
+      ]
+    },
+    {
+      "id": 52,
+      "name": "Meowth",
+      "baseStatTotal": 290,
+      "legendary": false,
+      "abilities": [
+        "Recogida",
+        "Experto",
+        "Nerviosismo"
+      ]
+    },
+    {
+      "id": 53,
+      "name": "Persian",
+      "baseStatTotal": 440,
+      "legendary": false,
+      "abilities": [
+        "Flexibilidad",
+        "Experto",
+        "Nerviosismo"
+      ]
+    },
+    {
+      "id": 54,
+      "name": "Psyduck",
+      "baseStatTotal": 320,
+      "legendary": false,
+      "abilities": [
+        "Humedad",
+        "Aclimataci\u00F3n",
+        "Nado R\u00E1pido"
+      ]
+    },
+    {
+      "id": 55,
+      "name": "Golduck",
+      "baseStatTotal": 500,
+      "legendary": false,
+      "abilities": [
+        "Humedad",
+        "Aclimataci\u00F3n",
+        "Nado R\u00E1pido"
+      ]
+    },
+    {
+      "id": 56,
+      "name": "Mankey",
+      "baseStatTotal": 305,
+      "legendary": false,
+      "abilities": [
+        "Esp\u00EDritu Vital",
+        "Irascible",
+        "Competitivo"
+      ]
+    },
+    {
+      "id": 57,
+      "name": "Primeape",
+      "baseStatTotal": 455,
+      "legendary": false,
+      "abilities": [
+        "Esp\u00EDritu Vital",
+        "Irascible",
+        "Competitivo"
+      ]
+    },
+    {
+      "id": 58,
+      "name": "Growlithe",
+      "baseStatTotal": 350,
+      "legendary": false,
+      "abilities": [
+        "Intimidaci\u00F3n",
+        "Absorbe Fuego",
+        "Justiciero"
+      ]
+    },
+    {
+      "id": 59,
+      "name": "Arcanine",
+      "baseStatTotal": 555,
+      "legendary": false,
+      "abilities": [
+        "Intimidaci\u00F3n",
+        "Absorbe Fuego",
+        "Justiciero"
+      ]
+    },
+    {
+      "id": 60,
+      "name": "Poliwag",
+      "baseStatTotal": 300,
+      "legendary": false,
+      "abilities": [
+        "Absorbe Agua",
+        "Humedad",
+        "Nado R\u00E1pido"
+      ]
+    },
+    {
+      "id": 61,
+      "name": "Poliwhirl",
+      "baseStatTotal": 385,
+      "legendary": false,
+      "abilities": [
+        "Absorbe Agua",
+        "Humedad",
+        "Nado R\u00E1pido"
+      ]
+    },
+    {
+      "id": 62,
+      "name": "Poliwrath",
+      "baseStatTotal": 510,
+      "legendary": false,
+      "abilities": [
+        "Absorbe Agua",
+        "Humedad",
+        "Nado R\u00E1pido"
+      ]
+    },
+    {
+      "id": 63,
+      "name": "Abra",
+      "baseStatTotal": 310,
+      "legendary": false,
+      "abilities": [
+        "Sincron\u00EDa",
+        "Foco Interno",
+        "Muro M\u00E1gico"
+      ]
+    },
+    {
+      "id": 64,
+      "name": "Kadabra",
+      "baseStatTotal": 400,
+      "legendary": false,
+      "abilities": [
+        "Sincron\u00EDa",
+        "Foco Interno",
+        "Muro M\u00E1gico"
+      ]
+    },
+    {
+      "id": 65,
+      "name": "Alakazam",
+      "baseStatTotal": 500,
+      "legendary": false,
+      "abilities": [
+        "Sincron\u00EDa",
+        "Foco Interno",
+        "Muro M\u00E1gico"
+      ]
+    },
+    {
+      "id": 66,
+      "name": "Machop",
+      "baseStatTotal": 305,
+      "legendary": false,
+      "abilities": [
+        "Agallas",
+        "Indefenso",
+        "Impasible"
+      ]
+    },
+    {
+      "id": 67,
+      "name": "Machoke",
+      "baseStatTotal": 405,
+      "legendary": false,
+      "abilities": [
+        "Agallas",
+        "Indefenso",
+        "Impasible"
+      ]
+    },
+    {
+      "id": 68,
+      "name": "Machamp",
+      "baseStatTotal": 505,
+      "legendary": false,
+      "abilities": [
+        "Agallas",
+        "Indefenso",
+        "Impasible"
+      ]
+    },
+    {
+      "id": 69,
+      "name": "Bellsprout",
+      "baseStatTotal": 300,
+      "legendary": false,
+      "abilities": [
+        "Clorofila",
+        "Gula"
+      ]
+    },
+    {
+      "id": 70,
+      "name": "Weepinbell",
+      "baseStatTotal": 390,
+      "legendary": false,
+      "abilities": [
+        "Clorofila",
+        "Gula"
+      ]
+    },
+    {
+      "id": 71,
+      "name": "Victreebel",
+      "baseStatTotal": 490,
+      "legendary": false,
+      "abilities": [
+        "Clorofila",
+        "Gula"
+      ]
+    },
+    {
+      "id": 72,
+      "name": "Tentacool",
+      "baseStatTotal": 335,
+      "legendary": false,
+      "abilities": [
+        "Cuerpo Puro",
+        "Lodo L\u00EDquido",
+        "Cura Lluvia"
+      ]
+    },
+    {
+      "id": 73,
+      "name": "Tentacruel",
+      "baseStatTotal": 515,
+      "legendary": false,
+      "abilities": [
+        "Cuerpo Puro",
+        "Lodo L\u00EDquido",
+        "Cura Lluvia"
+      ]
+    },
+    {
+      "id": 74,
+      "name": "Geodude",
+      "baseStatTotal": 300,
+      "legendary": false,
+      "abilities": [
+        "Cabeza Roca",
+        "Robustez",
+        "Velo Arena"
+      ]
+    },
+    {
+      "id": 75,
+      "name": "Graveler",
+      "baseStatTotal": 390,
+      "legendary": false,
+      "abilities": [
+        "Cabeza Roca",
+        "Robustez",
+        "Velo Arena"
+      ]
+    },
+    {
+      "id": 76,
+      "name": "Golem",
+      "baseStatTotal": 495,
+      "legendary": false,
+      "abilities": [
+        "Cabeza Roca",
+        "Robustez",
+        "Velo Arena"
+      ]
+    },
+    {
+      "id": 77,
+      "name": "Ponyta",
+      "baseStatTotal": 410,
+      "legendary": false,
+      "abilities": [
+        "Fuga",
+        "Absorbe Fuego",
+        "Cuerpo Llama"
+      ]
+    },
+    {
+      "id": 78,
+      "name": "Rapidash",
+      "baseStatTotal": 500,
+      "legendary": false,
+      "abilities": [
+        "Fuga",
+        "Absorbe Fuego",
+        "Cuerpo Llama"
+      ]
+    },
+    {
+      "id": 79,
+      "name": "Slowpoke",
+      "baseStatTotal": 315,
+      "legendary": false,
+      "abilities": [
+        "Despiste",
+        "Ritmo Propio",
+        "Regeneraci\u00F3n"
+      ]
+    },
+    {
+      "id": 80,
+      "name": "Slowbro",
+      "baseStatTotal": 490,
+      "legendary": false,
+      "abilities": [
+        "Despiste",
+        "Ritmo Propio",
+        "Regeneraci\u00F3n"
+      ]
+    },
+    {
+      "id": 81,
+      "name": "Magnemite",
+      "baseStatTotal": 325,
+      "legendary": false,
+      "abilities": [
+        "Im\u00E1n",
+        "Robustez",
+        "C\u00E1lculo Final"
+      ]
+    },
+    {
+      "id": 82,
+      "name": "Magneton",
+      "baseStatTotal": 465,
+      "legendary": false,
+      "abilities": [
+        "Im\u00E1n",
+        "Robustez",
+        "C\u00E1lculo Final"
+      ]
+    },
+    {
+      "id": 83,
+      "name": "Farfetch\u2019d",
+      "baseStatTotal": 377,
+      "legendary": false,
+      "abilities": [
+        "Vista Lince",
+        "Foco Interno",
+        "Competitivo"
+      ]
+    },
+    {
+      "id": 84,
+      "name": "Doduo",
+      "baseStatTotal": 310,
+      "legendary": false,
+      "abilities": [
+        "Fuga",
+        "Madrugar",
+        "Tumbos"
+      ]
+    },
+    {
+      "id": 85,
+      "name": "Dodrio",
+      "baseStatTotal": 470,
+      "legendary": false,
+      "abilities": [
+        "Fuga",
+        "Madrugar",
+        "Tumbos"
+      ]
+    },
+    {
+      "id": 86,
+      "name": "Seel",
+      "baseStatTotal": 325,
+      "legendary": false,
+      "abilities": [
+        "Sebo",
+        "Hidrataci\u00F3n",
+        "G\u00E9lido"
+      ]
+    },
+    {
+      "id": 87,
+      "name": "Dewgong",
+      "baseStatTotal": 475,
+      "legendary": false,
+      "abilities": [
+        "Sebo",
+        "Hidrataci\u00F3n",
+        "G\u00E9lido"
+      ]
+    },
+    {
+      "id": 88,
+      "name": "Grimer",
+      "baseStatTotal": 325,
+      "legendary": false,
+      "abilities": [
+        "Hedor",
+        "Viscosidad",
+        "Toque T\u00F3xico"
+      ]
+    },
+    {
+      "id": 89,
+      "name": "Muk",
+      "baseStatTotal": 500,
+      "legendary": false,
+      "abilities": [
+        "Hedor",
+        "Viscosidad",
+        "Toque T\u00F3xico"
+      ]
+    },
+    {
+      "id": 90,
+      "name": "Shellder",
+      "baseStatTotal": 305,
+      "legendary": false,
+      "abilities": [
+        "Caparaz\u00F3n",
+        "Encadenado",
+        "Funda"
+      ]
+    },
+    {
+      "id": 91,
+      "name": "Cloyster",
+      "baseStatTotal": 525,
+      "legendary": false,
+      "abilities": [
+        "Caparaz\u00F3n",
+        "Encadenado",
+        "Funda"
+      ]
+    },
+    {
+      "id": 92,
+      "name": "Gastly",
+      "baseStatTotal": 310,
+      "legendary": false,
+      "abilities": [
+        "Levitaci\u00F3n"
+      ]
+    },
+    {
+      "id": 93,
+      "name": "Haunter",
+      "baseStatTotal": 405,
+      "legendary": false,
+      "abilities": [
+        "Levitaci\u00F3n"
+      ]
+    },
+    {
+      "id": 94,
+      "name": "Gengar",
+      "baseStatTotal": 500,
+      "legendary": false,
+      "abilities": [
+        "Cuerpo Maldito"
+      ]
+    },
+    {
+      "id": 95,
+      "name": "Onix",
+      "baseStatTotal": 385,
+      "legendary": false,
+      "abilities": [
+        "Cabeza Roca",
+        "Robustez",
+        "Armadura Fr\u00E1gil"
+      ]
+    },
+    {
+      "id": 96,
+      "name": "Drowzee",
+      "baseStatTotal": 328,
+      "legendary": false,
+      "abilities": [
+        "Insomnio",
+        "Alerta",
+        "Foco Interno"
+      ]
+    },
+    {
+      "id": 97,
+      "name": "Hypno",
+      "baseStatTotal": 483,
+      "legendary": false,
+      "abilities": [
+        "Insomnio",
+        "Alerta",
+        "Foco Interno"
+      ]
+    },
+    {
+      "id": 98,
+      "name": "Krabby",
+      "baseStatTotal": 325,
+      "legendary": false,
+      "abilities": [
+        "Corte Fuerte",
+        "Caparaz\u00F3n",
+        "Potencia Bruta"
+      ]
+    },
+    {
+      "id": 99,
+      "name": "Kingler",
+      "baseStatTotal": 475,
+      "legendary": false,
+      "abilities": [
+        "Corte Fuerte",
+        "Caparaz\u00F3n",
+        "Potencia Bruta"
+      ]
+    },
+    {
+      "id": 100,
+      "name": "Voltorb",
+      "baseStatTotal": 330,
+      "legendary": false,
+      "abilities": [
+        "Insonorizar",
+        "Elec. Est\u00E1tica",
+        "Resquicio"
+      ]
+    },
+    {
+      "id": 101,
+      "name": "Electrode",
+      "baseStatTotal": 490,
+      "legendary": false,
+      "abilities": [
+        "Insonorizar",
+        "Elec. Est\u00E1tica",
+        "Resquicio"
+      ]
+    },
+    {
+      "id": 102,
+      "name": "Exeggcute",
+      "baseStatTotal": 325,
+      "legendary": false,
+      "abilities": [
+        "Clorofila",
+        "Cosecha"
+      ]
+    },
+    {
+      "id": 103,
+      "name": "Exeggutor",
+      "baseStatTotal": 530,
+      "legendary": false,
+      "abilities": [
+        "Clorofila",
+        "Cosecha"
+      ]
+    },
+    {
+      "id": 104,
+      "name": "Cubone",
+      "baseStatTotal": 320,
+      "legendary": false,
+      "abilities": [
+        "Cabeza Roca",
+        "Pararrayos",
+        "Armadura Batalla"
+      ]
+    },
+    {
+      "id": 105,
+      "name": "Marowak",
+      "baseStatTotal": 425,
+      "legendary": false,
+      "abilities": [
+        "Cabeza Roca",
+        "Pararrayos",
+        "Armadura Batalla"
+      ]
+    },
+    {
+      "id": 106,
+      "name": "Hitmonlee",
+      "baseStatTotal": 455,
+      "legendary": false,
+      "abilities": [
+        "Flexibilidad",
+        "Audaz",
+        "Liviano"
+      ]
+    },
+    {
+      "id": 107,
+      "name": "Hitmonchan",
+      "baseStatTotal": 455,
+      "legendary": false,
+      "abilities": [
+        "Vista Lince",
+        "Pu\u00F1o F\u00E9rreo",
+        "Foco Interno"
+      ]
+    },
+    {
+      "id": 108,
+      "name": "Lickitung",
+      "baseStatTotal": 385,
+      "legendary": false,
+      "abilities": [
+        "Ritmo Propio",
+        "Despiste",
+        "Aclimataci\u00F3n"
+      ]
+    },
+    {
+      "id": 109,
+      "name": "Koffing",
+      "baseStatTotal": 340,
+      "legendary": false,
+      "abilities": [
+        "Levitaci\u00F3n"
+      ]
+    },
+    {
+      "id": 110,
+      "name": "Weezing",
+      "baseStatTotal": 490,
+      "legendary": false,
+      "abilities": [
+        "Levitaci\u00F3n"
+      ]
+    },
+    {
+      "id": 111,
+      "name": "Rhyhorn",
+      "baseStatTotal": 345,
+      "legendary": false,
+      "abilities": [
+        "Pararrayos",
+        "Cabeza Roca",
+        "Audaz"
+      ]
+    },
+    {
+      "id": 112,
+      "name": "Rhydon",
+      "baseStatTotal": 485,
+      "legendary": false,
+      "abilities": [
+        "Pararrayos",
+        "Cabeza Roca",
+        "Audaz"
+      ]
+    },
+    {
+      "id": 113,
+      "name": "Chansey",
+      "baseStatTotal": 450,
+      "legendary": false,
+      "abilities": [
+        "Cura Natural",
+        "Dicha",
+        "Alma Cura"
+      ]
+    },
+    {
+      "id": 114,
+      "name": "Tangela",
+      "baseStatTotal": 435,
+      "legendary": false,
+      "abilities": [
+        "Clorofila",
+        "Defensa Hoja",
+        "Regeneraci\u00F3n"
+      ]
+    },
+    {
+      "id": 115,
+      "name": "Kangaskhan",
+      "baseStatTotal": 490,
+      "legendary": false,
+      "abilities": [
+        "Madrugar",
+        "Intr\u00E9pido",
+        "Foco Interno"
+      ]
+    },
+    {
+      "id": 116,
+      "name": "Horsea",
+      "baseStatTotal": 295,
+      "legendary": false,
+      "abilities": [
+        "Nado R\u00E1pido",
+        "Francotirador",
+        "Humedad"
+      ]
+    },
+    {
+      "id": 117,
+      "name": "Seadra",
+      "baseStatTotal": 440,
+      "legendary": false,
+      "abilities": [
+        "Punto T\u00F3xico",
+        "Francotirador",
+        "Humedad"
+      ]
+    },
+    {
+      "id": 118,
+      "name": "Goldeen",
+      "baseStatTotal": 320,
+      "legendary": false,
+      "abilities": [
+        "Nado R\u00E1pido",
+        "Velo Agua",
+        "Pararrayos"
+      ]
+    },
+    {
+      "id": 119,
+      "name": "Seaking",
+      "baseStatTotal": 450,
+      "legendary": false,
+      "abilities": [
+        "Nado R\u00E1pido",
+        "Velo Agua",
+        "Pararrayos"
+      ]
+    },
+    {
+      "id": 120,
+      "name": "Staryu",
+      "baseStatTotal": 340,
+      "legendary": false,
+      "abilities": [
+        "Iluminaci\u00F3n",
+        "Cura Natural",
+        "C\u00E1lculo Final"
+      ]
+    },
+    {
+      "id": 121,
+      "name": "Starmie",
+      "baseStatTotal": 520,
+      "legendary": false,
+      "abilities": [
+        "Iluminaci\u00F3n",
+        "Cura Natural",
+        "C\u00E1lculo Final"
+      ]
+    },
+    {
+      "id": 122,
+      "name": "Mr. Mime",
+      "baseStatTotal": 460,
+      "legendary": false,
+      "abilities": [
+        "Insonorizar",
+        "Filtro",
+        "Experto"
+      ]
+    },
+    {
+      "id": 123,
+      "name": "Scyther",
+      "baseStatTotal": 500,
+      "legendary": false,
+      "abilities": [
+        "Enjambre",
+        "Experto",
+        "Impasible"
+      ]
+    },
+    {
+      "id": 124,
+      "name": "Jynx",
+      "baseStatTotal": 455,
+      "legendary": false,
+      "abilities": [
+        "Despiste",
+        "Alerta",
+        "Piel Seca"
+      ]
+    },
+    {
+      "id": 125,
+      "name": "Electabuzz",
+      "baseStatTotal": 490,
+      "legendary": false,
+      "abilities": [
+        "Elec. Est\u00E1tica",
+        "Esp\u00EDritu Vital"
+      ]
+    },
+    {
+      "id": 126,
+      "name": "Magmar",
+      "baseStatTotal": 495,
+      "legendary": false,
+      "abilities": [
+        "Cuerpo Llama",
+        "Esp\u00EDritu Vital"
+      ]
+    },
+    {
+      "id": 127,
+      "name": "Pinsir",
+      "baseStatTotal": 500,
+      "legendary": false,
+      "abilities": [
+        "Corte Fuerte",
+        "Rompemoldes",
+        "Autoestima"
+      ]
+    },
+    {
+      "id": 128,
+      "name": "Tauros",
+      "baseStatTotal": 490,
+      "legendary": false,
+      "abilities": [
+        "Intimidaci\u00F3n",
+        "Irascible",
+        "Potencia Bruta"
+      ]
+    },
+    {
+      "id": 129,
+      "name": "Magikarp",
+      "baseStatTotal": 200,
+      "legendary": false,
+      "abilities": [
+        "Nado R\u00E1pido",
+        "Cobard\u00EDa"
+      ]
+    },
+    {
+      "id": 130,
+      "name": "Gyarados",
+      "baseStatTotal": 540,
+      "legendary": false,
+      "abilities": [
+        "Intimidaci\u00F3n",
+        "Autoestima"
+      ]
+    },
+    {
+      "id": 131,
+      "name": "Lapras",
+      "baseStatTotal": 535,
+      "legendary": false,
+      "abilities": [
+        "Absorbe Agua",
+        "Caparaz\u00F3n",
+        "Hidrataci\u00F3n"
+      ]
+    },
+    {
+      "id": 132,
+      "name": "Ditto",
+      "baseStatTotal": 288,
+      "legendary": false,
+      "abilities": [
+        "Flexibilidad",
+        "Impostor"
+      ]
+    },
+    {
+      "id": 133,
+      "name": "Eevee",
+      "baseStatTotal": 325,
+      "legendary": false,
+      "abilities": [
+        "Fuga",
+        "Adaptable",
+        "Anticipaci\u00F3n"
+      ]
+    },
+    {
+      "id": 134,
+      "name": "Vaporeon",
+      "baseStatTotal": 525,
+      "legendary": false,
+      "abilities": [
+        "Absorbe Agua",
+        "Hidrataci\u00F3n"
+      ]
+    },
+    {
+      "id": 135,
+      "name": "Jolteon",
+      "baseStatTotal": 525,
+      "legendary": false,
+      "abilities": [
+        "Absorbe Elec",
+        "Pies R\u00E1pidos"
+      ]
+    },
+    {
+      "id": 136,
+      "name": "Flareon",
+      "baseStatTotal": 525,
+      "legendary": false,
+      "abilities": [
+        "Absorbe Fuego",
+        "Agallas"
+      ]
+    },
+    {
+      "id": 137,
+      "name": "Porygon",
+      "baseStatTotal": 395,
+      "legendary": false,
+      "abilities": [
+        "Rastro",
+        "Descarga",
+        "C\u00E1lculo Final"
+      ]
+    },
+    {
+      "id": 138,
+      "name": "Omanyte",
+      "baseStatTotal": 355,
+      "legendary": false,
+      "abilities": [
+        "Nado R\u00E1pido",
+        "Caparaz\u00F3n",
+        "Armadura Fr\u00E1gil"
+      ]
+    },
+    {
+      "id": 139,
+      "name": "Omastar",
+      "baseStatTotal": 495,
+      "legendary": false,
+      "abilities": [
+        "Nado R\u00E1pido",
+        "Caparaz\u00F3n",
+        "Armadura Fr\u00E1gil"
+      ]
+    },
+    {
+      "id": 140,
+      "name": "Kabuto",
+      "baseStatTotal": 355,
+      "legendary": false,
+      "abilities": [
+        "Nado R\u00E1pido",
+        "Armadura Batalla",
+        "Armadura Fr\u00E1gil"
+      ]
+    },
+    {
+      "id": 141,
+      "name": "Kabutops",
+      "baseStatTotal": 495,
+      "legendary": false,
+      "abilities": [
+        "Nado R\u00E1pido",
+        "Armadura Batalla",
+        "Armadura Fr\u00E1gil"
+      ]
+    },
+    {
+      "id": 142,
+      "name": "Aerodactyl",
+      "baseStatTotal": 515,
+      "legendary": false,
+      "abilities": [
+        "Cabeza Roca",
+        "Presi\u00F3n",
+        "Nerviosismo"
+      ]
+    },
+    {
+      "id": 143,
+      "name": "Snorlax",
+      "baseStatTotal": 540,
+      "legendary": false,
+      "abilities": [
+        "Inmunidad",
+        "Sebo",
+        "Gula"
+      ]
+    },
+    {
+      "id": 144,
+      "name": "Articuno",
+      "baseStatTotal": 580,
+      "legendary": true,
+      "abilities": [
+        "Presi\u00F3n",
+        "Manto N\u00EDveo"
+      ]
+    },
+    {
+      "id": 145,
+      "name": "Zapdos",
+      "baseStatTotal": 580,
+      "legendary": true,
+      "abilities": [
+        "Presi\u00F3n",
+        "Elec. Est\u00E1tica"
+      ]
+    },
+    {
+      "id": 146,
+      "name": "Moltres",
+      "baseStatTotal": 580,
+      "legendary": true,
+      "abilities": [
+        "Presi\u00F3n",
+        "Cuerpo Llama"
+      ]
+    },
+    {
+      "id": 147,
+      "name": "Dratini",
+      "baseStatTotal": 300,
+      "legendary": false,
+      "abilities": [
+        "Mudar",
+        "Escama Especial"
+      ]
+    },
+    {
+      "id": 148,
+      "name": "Dragonair",
+      "baseStatTotal": 420,
+      "legendary": false,
+      "abilities": [
+        "Mudar",
+        "Escama Especial"
+      ]
+    },
+    {
+      "id": 149,
+      "name": "Dragonite",
+      "baseStatTotal": 600,
+      "legendary": false,
+      "abilities": [
+        "Foco Interno",
+        "Compensaci\u00F3n"
+      ]
+    },
+    {
+      "id": 150,
+      "name": "Mewtwo",
+      "baseStatTotal": 680,
+      "legendary": true,
+      "abilities": [
+        "Presi\u00F3n",
+        "Nerviosismo"
+      ]
+    },
+    {
+      "id": 151,
+      "name": "Mew",
+      "baseStatTotal": 600,
+      "legendary": true,
+      "abilities": [
+        "Sincron\u00EDa"
+      ]
+    },
+    {
+      "id": 152,
+      "name": "Chikorita",
+      "baseStatTotal": 318,
+      "legendary": false,
+      "abilities": [
+        "Espesura",
+        "Defensa Hoja"
+      ]
+    },
+    {
+      "id": 153,
+      "name": "Bayleef",
+      "baseStatTotal": 405,
+      "legendary": false,
+      "abilities": [
+        "Espesura",
+        "Defensa Hoja"
+      ]
+    },
+    {
+      "id": 154,
+      "name": "Meganium",
+      "baseStatTotal": 525,
+      "legendary": false,
+      "abilities": [
+        "Espesura",
+        "Defensa Hoja"
+      ]
+    },
+    {
+      "id": 155,
+      "name": "Cyndaquil",
+      "baseStatTotal": 309,
+      "legendary": false,
+      "abilities": [
+        "Mar Llamas",
+        "Absorbe Fuego"
+      ]
+    },
+    {
+      "id": 156,
+      "name": "Quilava",
+      "baseStatTotal": 405,
+      "legendary": false,
+      "abilities": [
+        "Mar Llamas",
+        "Absorbe Fuego"
+      ]
+    },
+    {
+      "id": 157,
+      "name": "Typhlosion",
+      "baseStatTotal": 534,
+      "legendary": false,
+      "abilities": [
+        "Mar Llamas",
+        "Absorbe Fuego"
+      ]
+    },
+    {
+      "id": 158,
+      "name": "Totodile",
+      "baseStatTotal": 314,
+      "legendary": false,
+      "abilities": [
+        "Torrente",
+        "Potencia Bruta"
+      ]
+    },
+    {
+      "id": 159,
+      "name": "Croconaw",
+      "baseStatTotal": 405,
+      "legendary": false,
+      "abilities": [
+        "Torrente",
+        "Potencia Bruta"
+      ]
+    },
+    {
+      "id": 160,
+      "name": "Feraligatr",
+      "baseStatTotal": 530,
+      "legendary": false,
+      "abilities": [
+        "Torrente",
+        "Potencia Bruta"
+      ]
+    },
+    {
+      "id": 161,
+      "name": "Sentret",
+      "baseStatTotal": 215,
+      "legendary": false,
+      "abilities": [
+        "Fuga",
+        "Vista Lince",
+        "Cacheo"
+      ]
+    },
+    {
+      "id": 162,
+      "name": "Furret",
+      "baseStatTotal": 415,
+      "legendary": false,
+      "abilities": [
+        "Fuga",
+        "Vista Lince",
+        "Cacheo"
+      ]
+    },
+    {
+      "id": 163,
+      "name": "Hoothoot",
+      "baseStatTotal": 262,
+      "legendary": false,
+      "abilities": [
+        "Insomnio",
+        "Vista Lince",
+        "Cromolente"
+      ]
+    },
+    {
+      "id": 164,
+      "name": "Noctowl",
+      "baseStatTotal": 452,
+      "legendary": false,
+      "abilities": [
+        "Insomnio",
+        "Vista Lince",
+        "Cromolente"
+      ]
+    },
+    {
+      "id": 165,
+      "name": "Ledyba",
+      "baseStatTotal": 265,
+      "legendary": false,
+      "abilities": [
+        "Enjambre",
+        "Madrugar",
+        "Cobard\u00EDa"
+      ]
+    },
+    {
+      "id": 166,
+      "name": "Ledian",
+      "baseStatTotal": 390,
+      "legendary": false,
+      "abilities": [
+        "Enjambre",
+        "Madrugar",
+        "Pu\u00F1o F\u00E9rreo"
+      ]
+    },
+    {
+      "id": 167,
+      "name": "Spinarak",
+      "baseStatTotal": 250,
+      "legendary": false,
+      "abilities": [
+        "Enjambre",
+        "Insomnio",
+        "Francotirador"
+      ]
+    },
+    {
+      "id": 168,
+      "name": "Ariados",
+      "baseStatTotal": 400,
+      "legendary": false,
+      "abilities": [
+        "Enjambre",
+        "Insomnio",
+        "Francotirador"
+      ]
+    },
+    {
+      "id": 169,
+      "name": "Crobat",
+      "baseStatTotal": 535,
+      "legendary": false,
+      "abilities": [
+        "Foco Interno",
+        "Allanamiento"
+      ]
+    },
+    {
+      "id": 170,
+      "name": "Chinchou",
+      "baseStatTotal": 330,
+      "legendary": false,
+      "abilities": [
+        "Absorbe Elec",
+        "Iluminaci\u00F3n",
+        "Absorbe Agua"
+      ]
+    },
+    {
+      "id": 171,
+      "name": "Lanturn",
+      "baseStatTotal": 460,
+      "legendary": false,
+      "abilities": [
+        "Absorbe Elec",
+        "Iluminaci\u00F3n",
+        "Absorbe Agua"
+      ]
+    },
+    {
+      "id": 172,
+      "name": "Pichu",
+      "baseStatTotal": 205,
+      "legendary": false,
+      "abilities": [
+        "Elec. Est\u00E1tica",
+        "Pararrayos"
+      ]
+    },
+    {
+      "id": 173,
+      "name": "Cleffa",
+      "baseStatTotal": 218,
+      "legendary": false,
+      "abilities": [
+        "Gran Encanto",
+        "Muro M\u00E1gico",
+        "Compiescolta"
+      ]
+    },
+    {
+      "id": 174,
+      "name": "Igglybuff",
+      "baseStatTotal": 210,
+      "legendary": false,
+      "abilities": [
+        "Gran Encanto",
+        "Tenacidad",
+        "Compiescolta"
+      ]
+    },
+    {
+      "id": 175,
+      "name": "Togepi",
+      "baseStatTotal": 245,
+      "legendary": false,
+      "abilities": [
+        "Entusiasmo",
+        "Dicha",
+        "Afortunado"
+      ]
+    },
+    {
+      "id": 176,
+      "name": "Togetic",
+      "baseStatTotal": 405,
+      "legendary": false,
+      "abilities": [
+        "Entusiasmo",
+        "Dicha",
+        "Afortunado"
+      ]
+    },
+    {
+      "id": 177,
+      "name": "Natu",
+      "baseStatTotal": 320,
+      "legendary": false,
+      "abilities": [
+        "Sincron\u00EDa",
+        "Madrugar",
+        "Espejo M\u00E1gico"
+      ]
+    },
+    {
+      "id": 178,
+      "name": "Xatu",
+      "baseStatTotal": 470,
+      "legendary": false,
+      "abilities": [
+        "Sincron\u00EDa",
+        "Madrugar",
+        "Espejo M\u00E1gico"
+      ]
+    },
+    {
+      "id": 179,
+      "name": "Mareep",
+      "baseStatTotal": 280,
+      "legendary": false,
+      "abilities": [
+        "Elec. Est\u00E1tica",
+        "M\u00E1s"
+      ]
+    },
+    {
+      "id": 180,
+      "name": "Flaaffy",
+      "baseStatTotal": 365,
+      "legendary": false,
+      "abilities": [
+        "Elec. Est\u00E1tica",
+        "M\u00E1s"
+      ]
+    },
+    {
+      "id": 181,
+      "name": "Ampharos",
+      "baseStatTotal": 510,
+      "legendary": false,
+      "abilities": [
+        "Elec. Est\u00E1tica",
+        "M\u00E1s"
+      ]
+    },
+    {
+      "id": 182,
+      "name": "Bellossom",
+      "baseStatTotal": 490,
+      "legendary": false,
+      "abilities": [
+        "Clorofila",
+        "Alma Cura"
+      ]
+    },
+    {
+      "id": 183,
+      "name": "Marill",
+      "baseStatTotal": 250,
+      "legendary": false,
+      "abilities": [
+        "Sebo",
+        "Potencia",
+        "Herb\u00EDvoro"
+      ]
+    },
+    {
+      "id": 184,
+      "name": "Azumarill",
+      "baseStatTotal": 420,
+      "legendary": false,
+      "abilities": [
+        "Sebo",
+        "Potencia",
+        "Herb\u00EDvoro"
+      ]
+    },
+    {
+      "id": 185,
+      "name": "Sudowoodo",
+      "baseStatTotal": 410,
+      "legendary": false,
+      "abilities": [
+        "Robustez",
+        "Cabeza Roca",
+        "Cobard\u00EDa"
+      ]
+    },
+    {
+      "id": 186,
+      "name": "Politoed",
+      "baseStatTotal": 500,
+      "legendary": false,
+      "abilities": [
+        "Absorbe Agua",
+        "Humedad",
+        "Llovizna"
+      ]
+    },
+    {
+      "id": 187,
+      "name": "Hoppip",
+      "baseStatTotal": 250,
+      "legendary": false,
+      "abilities": [
+        "Clorofila",
+        "Defensa Hoja",
+        "Allanamiento"
+      ]
+    },
+    {
+      "id": 188,
+      "name": "Skiploom",
+      "baseStatTotal": 340,
+      "legendary": false,
+      "abilities": [
+        "Clorofila",
+        "Defensa Hoja",
+        "Allanamiento"
+      ]
+    },
+    {
+      "id": 189,
+      "name": "Jumpluff",
+      "baseStatTotal": 460,
+      "legendary": false,
+      "abilities": [
+        "Clorofila",
+        "Defensa Hoja",
+        "Allanamiento"
+      ]
+    },
+    {
+      "id": 190,
+      "name": "Aipom",
+      "baseStatTotal": 360,
+      "legendary": false,
+      "abilities": [
+        "Fuga",
+        "Recogida",
+        "Encadenado"
+      ]
+    },
+    {
+      "id": 191,
+      "name": "Sunkern",
+      "baseStatTotal": 180,
+      "legendary": false,
+      "abilities": [
+        "Clorofila",
+        "Poder Solar",
+        "Madrugar"
+      ]
+    },
+    {
+      "id": 192,
+      "name": "Sunflora",
+      "baseStatTotal": 425,
+      "legendary": false,
+      "abilities": [
+        "Clorofila",
+        "Poder Solar",
+        "Madrugar"
+      ]
+    },
+    {
+      "id": 193,
+      "name": "Yanma",
+      "baseStatTotal": 390,
+      "legendary": false,
+      "abilities": [
+        "Impulso",
+        "Ojo Compuesto",
+        "Cacheo"
+      ]
+    },
+    {
+      "id": 194,
+      "name": "Wooper",
+      "baseStatTotal": 210,
+      "legendary": false,
+      "abilities": [
+        "Humedad",
+        "Absorbe Agua",
+        "Ignorante"
+      ]
+    },
+    {
+      "id": 195,
+      "name": "Quagsire",
+      "baseStatTotal": 430,
+      "legendary": false,
+      "abilities": [
+        "Humedad",
+        "Absorbe Agua",
+        "Ignorante"
+      ]
+    },
+    {
+      "id": 196,
+      "name": "Espeon",
+      "baseStatTotal": 525,
+      "legendary": false,
+      "abilities": [
+        "Sincron\u00EDa",
+        "Espejo M\u00E1gico"
+      ]
+    },
+    {
+      "id": 197,
+      "name": "Umbreon",
+      "baseStatTotal": 525,
+      "legendary": false,
+      "abilities": [
+        "Sincron\u00EDa",
+        "Foco Interno"
+      ]
+    },
+    {
+      "id": 198,
+      "name": "Murkrow",
+      "baseStatTotal": 405,
+      "legendary": false,
+      "abilities": [
+        "Insomnio",
+        "Afortunado",
+        "Bromista"
+      ]
+    },
+    {
+      "id": 199,
+      "name": "Slowking",
+      "baseStatTotal": 490,
+      "legendary": false,
+      "abilities": [
+        "Despiste",
+        "Ritmo Propio",
+        "Regeneraci\u00F3n"
+      ]
+    },
+    {
+      "id": 200,
+      "name": "Misdreavus",
+      "baseStatTotal": 435,
+      "legendary": false,
+      "abilities": [
+        "Levitaci\u00F3n"
+      ]
+    },
+    {
+      "id": 201,
+      "name": "Unown",
+      "baseStatTotal": 336,
+      "legendary": false,
+      "abilities": [
+        "Levitaci\u00F3n"
+      ]
+    },
+    {
+      "id": 202,
+      "name": "Wobbuffet",
+      "baseStatTotal": 405,
+      "legendary": false,
+      "abilities": [
+        "Sombra Trampa",
+        "Telepat\u00EDa"
+      ]
+    },
+    {
+      "id": 203,
+      "name": "Girafarig",
+      "baseStatTotal": 455,
+      "legendary": false,
+      "abilities": [
+        "Foco Interno",
+        "Madrugar",
+        "Herb\u00EDvoro"
+      ]
+    },
+    {
+      "id": 204,
+      "name": "Pineco",
+      "baseStatTotal": 290,
+      "legendary": false,
+      "abilities": [
+        "Robustez",
+        "Funda"
+      ]
+    },
+    {
+      "id": 205,
+      "name": "Forretress",
+      "baseStatTotal": 465,
+      "legendary": false,
+      "abilities": [
+        "Robustez",
+        "Funda"
+      ]
+    },
+    {
+      "id": 206,
+      "name": "Dunsparce",
+      "baseStatTotal": 415,
+      "legendary": false,
+      "abilities": [
+        "Dicha",
+        "Fuga",
+        "Cobard\u00EDa"
+      ]
+    },
+    {
+      "id": 207,
+      "name": "Gligar",
+      "baseStatTotal": 430,
+      "legendary": false,
+      "abilities": [
+        "Corte Fuerte",
+        "Velo Arena",
+        "Inmunidad"
+      ]
+    },
+    {
+      "id": 208,
+      "name": "Steelix",
+      "baseStatTotal": 510,
+      "legendary": false,
+      "abilities": [
+        "Cabeza Roca",
+        "Robustez",
+        "Potencia Bruta"
+      ]
+    },
+    {
+      "id": 209,
+      "name": "Snubbull",
+      "baseStatTotal": 300,
+      "legendary": false,
+      "abilities": [
+        "Intimidaci\u00F3n",
+        "Fuga",
+        "Cobard\u00EDa"
+      ]
+    },
+    {
+      "id": 210,
+      "name": "Granbull",
+      "baseStatTotal": 450,
+      "legendary": false,
+      "abilities": [
+        "Intimidaci\u00F3n",
+        "Pies R\u00E1pidos",
+        "Cobard\u00EDa"
+      ]
+    },
+    {
+      "id": 211,
+      "name": "Qwilfish",
+      "baseStatTotal": 440,
+      "legendary": false,
+      "abilities": [
+        "Punto T\u00F3xico",
+        "Nado R\u00E1pido",
+        "Intimidaci\u00F3n"
+      ]
+    },
+    {
+      "id": 212,
+      "name": "Scizor",
+      "baseStatTotal": 500,
+      "legendary": false,
+      "abilities": [
+        "Enjambre",
+        "Experto",
+        "Metal Liviano"
+      ]
+    },
+    {
+      "id": 213,
+      "name": "Shuckle",
+      "baseStatTotal": 505,
+      "legendary": false,
+      "abilities": [
+        "Robustez",
+        "Gula",
+        "Respond\u00F3n"
+      ]
+    },
+    {
+      "id": 214,
+      "name": "Heracross",
+      "baseStatTotal": 500,
+      "legendary": false,
+      "abilities": [
+        "Enjambre",
+        "Agallas",
+        "Autoestima"
+      ]
+    },
+    {
+      "id": 215,
+      "name": "Sneasel",
+      "baseStatTotal": 430,
+      "legendary": false,
+      "abilities": [
+        "Foco Interno",
+        "Vista Lince",
+        "Hurto"
+      ]
+    },
+    {
+      "id": 216,
+      "name": "Teddiursa",
+      "baseStatTotal": 330,
+      "legendary": false,
+      "abilities": [
+        "Recogida",
+        "Pies R\u00E1pidos",
+        "Recogemiel"
+      ]
+    },
+    {
+      "id": 217,
+      "name": "Ursaring",
+      "baseStatTotal": 500,
+      "legendary": false,
+      "abilities": [
+        "Agallas",
+        "Pies R\u00E1pidos",
+        "Nerviosismo"
+      ]
+    },
+    {
+      "id": 218,
+      "name": "Slugma",
+      "baseStatTotal": 250,
+      "legendary": false,
+      "abilities": [
+        "Escudo Magma",
+        "Cuerpo Llama",
+        "Armadura Fr\u00E1gil"
+      ]
+    },
+    {
+      "id": 219,
+      "name": "Magcargo",
+      "baseStatTotal": 430,
+      "legendary": false,
+      "abilities": [
+        "Escudo Magma",
+        "Cuerpo Llama",
+        "Armadura Fr\u00E1gil"
+      ]
+    },
+    {
+      "id": 220,
+      "name": "Swinub",
+      "baseStatTotal": 250,
+      "legendary": false,
+      "abilities": [
+        "Despiste",
+        "Manto N\u00EDveo",
+        "Sebo"
+      ]
+    },
+    {
+      "id": 221,
+      "name": "Piloswine",
+      "baseStatTotal": 450,
+      "legendary": false,
+      "abilities": [
+        "Despiste",
+        "Manto N\u00EDveo",
+        "Sebo"
+      ]
+    },
+    {
+      "id": 222,
+      "name": "Corsola",
+      "baseStatTotal": 410,
+      "legendary": false,
+      "abilities": [
+        "Entusiasmo",
+        "Cura Natural",
+        "Regeneraci\u00F3n"
+      ]
+    },
+    {
+      "id": 223,
+      "name": "Remoraid",
+      "baseStatTotal": 300,
+      "legendary": false,
+      "abilities": [
+        "Entusiasmo",
+        "Francotirador",
+        "Veleta"
+      ]
+    },
+    {
+      "id": 224,
+      "name": "Octillery",
+      "baseStatTotal": 480,
+      "legendary": false,
+      "abilities": [
+        "Ventosas",
+        "Francotirador",
+        "Veleta"
+      ]
+    },
+    {
+      "id": 225,
+      "name": "Delibird",
+      "baseStatTotal": 330,
+      "legendary": false,
+      "abilities": [
+        "Esp\u00EDritu Vital",
+        "Entusiasmo",
+        "Insomnio"
+      ]
+    },
+    {
+      "id": 226,
+      "name": "Mantine",
+      "baseStatTotal": 485,
+      "legendary": false,
+      "abilities": [
+        "Nado R\u00E1pido",
+        "Absorbe Agua",
+        "Velo Agua"
+      ]
+    },
+    {
+      "id": 227,
+      "name": "Skarmory",
+      "baseStatTotal": 465,
+      "legendary": false,
+      "abilities": [
+        "Vista Lince",
+        "Robustez",
+        "Armadura Fr\u00E1gil"
+      ]
+    },
+    {
+      "id": 228,
+      "name": "Houndour",
+      "baseStatTotal": 330,
+      "legendary": false,
+      "abilities": [
+        "Madrugar",
+        "Absorbe Fuego",
+        "Nerviosismo"
+      ]
+    },
+    {
+      "id": 229,
+      "name": "Houndoom",
+      "baseStatTotal": 500,
+      "legendary": false,
+      "abilities": [
+        "Madrugar",
+        "Absorbe Fuego",
+        "Nerviosismo"
+      ]
+    },
+    {
+      "id": 230,
+      "name": "Kingdra",
+      "baseStatTotal": 540,
+      "legendary": false,
+      "abilities": [
+        "Nado R\u00E1pido",
+        "Francotirador",
+        "Humedad"
+      ]
+    },
+    {
+      "id": 231,
+      "name": "Phanpy",
+      "baseStatTotal": 330,
+      "legendary": false,
+      "abilities": [
+        "Recogida",
+        "Velo Arena"
+      ]
+    },
+    {
+      "id": 232,
+      "name": "Donphan",
+      "baseStatTotal": 500,
+      "legendary": false,
+      "abilities": [
+        "Robustez",
+        "Velo Arena"
+      ]
+    },
+    {
+      "id": 233,
+      "name": "Porygon2",
+      "baseStatTotal": 515,
+      "legendary": false,
+      "abilities": [
+        "Rastro",
+        "Descarga",
+        "C\u00E1lculo Final"
+      ]
+    },
+    {
+      "id": 234,
+      "name": "Stantler",
+      "baseStatTotal": 465,
+      "legendary": false,
+      "abilities": [
+        "Intimidaci\u00F3n",
+        "Cacheo",
+        "Herb\u00EDvoro"
+      ]
+    },
+    {
+      "id": 235,
+      "name": "Smeargle",
+      "baseStatTotal": 250,
+      "legendary": false,
+      "abilities": [
+        "Ritmo Propio",
+        "Experto",
+        "Veleta"
+      ]
+    },
+    {
+      "id": 236,
+      "name": "Tyrogue",
+      "baseStatTotal": 210,
+      "legendary": false,
+      "abilities": [
+        "Agallas",
+        "Impasible",
+        "Esp\u00EDritu Vital"
+      ]
+    },
+    {
+      "id": 237,
+      "name": "Hitmontop",
+      "baseStatTotal": 455,
+      "legendary": false,
+      "abilities": [
+        "Intimidaci\u00F3n",
+        "Experto",
+        "Impasible"
+      ]
+    },
+    {
+      "id": 238,
+      "name": "Smoochum",
+      "baseStatTotal": 305,
+      "legendary": false,
+      "abilities": [
+        "Despiste",
+        "Alerta",
+        "Hidrataci\u00F3n"
+      ]
+    },
+    {
+      "id": 239,
+      "name": "Elekid",
+      "baseStatTotal": 360,
+      "legendary": false,
+      "abilities": [
+        "Elec. Est\u00E1tica",
+        "Esp\u00EDritu Vital"
+      ]
+    },
+    {
+      "id": 240,
+      "name": "Magby",
+      "baseStatTotal": 365,
+      "legendary": false,
+      "abilities": [
+        "Cuerpo Llama",
+        "Esp\u00EDritu Vital"
+      ]
+    },
+    {
+      "id": 241,
+      "name": "Miltank",
+      "baseStatTotal": 490,
+      "legendary": false,
+      "abilities": [
+        "Sebo",
+        "Intr\u00E9pido",
+        "Herb\u00EDvoro"
+      ]
+    },
+    {
+      "id": 242,
+      "name": "Blissey",
+      "baseStatTotal": 540,
+      "legendary": false,
+      "abilities": [
+        "Cura Natural",
+        "Dicha",
+        "Alma Cura"
+      ]
+    },
+    {
+      "id": 243,
+      "name": "Raikou",
+      "baseStatTotal": 580,
+      "legendary": true,
+      "abilities": [
+        "Presi\u00F3n",
+        "Foco Interno"
+      ]
+    },
+    {
+      "id": 244,
+      "name": "Entei",
+      "baseStatTotal": 580,
+      "legendary": true,
+      "abilities": [
+        "Presi\u00F3n",
+        "Foco Interno"
+      ]
+    },
+    {
+      "id": 245,
+      "name": "Suicune",
+      "baseStatTotal": 580,
+      "legendary": true,
+      "abilities": [
+        "Presi\u00F3n",
+        "Foco Interno"
+      ]
+    },
+    {
+      "id": 246,
+      "name": "Larvitar",
+      "baseStatTotal": 300,
+      "legendary": false,
+      "abilities": [
+        "Agallas",
+        "Velo Arena"
+      ]
+    },
+    {
+      "id": 247,
+      "name": "Pupitar",
+      "baseStatTotal": 410,
+      "legendary": false,
+      "abilities": [
+        "Mudar"
+      ]
+    },
+    {
+      "id": 248,
+      "name": "Tyranitar",
+      "baseStatTotal": 600,
+      "legendary": false,
+      "abilities": [
+        "Chorro Arena",
+        "Nerviosismo"
+      ]
+    },
+    {
+      "id": 249,
+      "name": "Lugia",
+      "baseStatTotal": 680,
+      "legendary": true,
+      "abilities": [
+        "Presi\u00F3n",
+        "Compensaci\u00F3n"
+      ]
+    },
+    {
+      "id": 250,
+      "name": "Ho-Oh",
+      "baseStatTotal": 680,
+      "legendary": true,
+      "abilities": [
+        "Presi\u00F3n",
+        "Regeneraci\u00F3n"
+      ]
+    },
+    {
+      "id": 251,
+      "name": "Celebi",
+      "baseStatTotal": 600,
+      "legendary": true,
+      "abilities": [
+        "Cura Natural"
+      ]
+    },
+    {
+      "id": 252,
+      "name": "Treecko",
+      "baseStatTotal": 310,
+      "legendary": false,
+      "abilities": [
+        "Espesura",
+        "Liviano"
+      ]
+    },
+    {
+      "id": 253,
+      "name": "Grovyle",
+      "baseStatTotal": 405,
+      "legendary": false,
+      "abilities": [
+        "Espesura",
+        "Liviano"
+      ]
+    },
+    {
+      "id": 254,
+      "name": "Sceptile",
+      "baseStatTotal": 530,
+      "legendary": false,
+      "abilities": [
+        "Espesura",
+        "Liviano"
+      ]
+    },
+    {
+      "id": 255,
+      "name": "Torchic",
+      "baseStatTotal": 310,
+      "legendary": false,
+      "abilities": [
+        "Mar Llamas",
+        "Impulso"
+      ]
+    },
+    {
+      "id": 256,
+      "name": "Combusken",
+      "baseStatTotal": 405,
+      "legendary": false,
+      "abilities": [
+        "Mar Llamas",
+        "Impulso"
+      ]
+    },
+    {
+      "id": 257,
+      "name": "Blaziken",
+      "baseStatTotal": 530,
+      "legendary": false,
+      "abilities": [
+        "Mar Llamas",
+        "Impulso"
+      ]
+    },
+    {
+      "id": 258,
+      "name": "Mudkip",
+      "baseStatTotal": 310,
+      "legendary": false,
+      "abilities": [
+        "Torrente",
+        "Humedad"
+      ]
+    },
+    {
+      "id": 259,
+      "name": "Marshtomp",
+      "baseStatTotal": 405,
+      "legendary": false,
+      "abilities": [
+        "Torrente",
+        "Humedad"
+      ]
+    },
+    {
+      "id": 260,
+      "name": "Swampert",
+      "baseStatTotal": 535,
+      "legendary": false,
+      "abilities": [
+        "Torrente",
+        "Humedad"
+      ]
+    },
+    {
+      "id": 261,
+      "name": "Poochyena",
+      "baseStatTotal": 220,
+      "legendary": false,
+      "abilities": [
+        "Fuga",
+        "Pies R\u00E1pidos",
+        "Cobard\u00EDa"
+      ]
+    },
+    {
+      "id": 262,
+      "name": "Mightyena",
+      "baseStatTotal": 420,
+      "legendary": false,
+      "abilities": [
+        "Intimidaci\u00F3n",
+        "Pies R\u00E1pidos",
+        "Autoestima"
+      ]
+    },
+    {
+      "id": 263,
+      "name": "Zigzagoon",
+      "baseStatTotal": 240,
+      "legendary": false,
+      "abilities": [
+        "Recogida",
+        "Gula",
+        "Pies R\u00E1pidos"
+      ]
+    },
+    {
+      "id": 264,
+      "name": "Linoone",
+      "baseStatTotal": 420,
+      "legendary": false,
+      "abilities": [
+        "Recogida",
+        "Gula",
+        "Pies R\u00E1pidos"
+      ]
+    },
+    {
+      "id": 265,
+      "name": "Wurmple",
+      "baseStatTotal": 195,
+      "legendary": false,
+      "abilities": [
+        "Polvo Escudo",
+        "Fuga"
+      ]
+    },
+    {
+      "id": 266,
+      "name": "Silcoon",
+      "baseStatTotal": 205,
+      "legendary": false,
+      "abilities": [
+        "Mudar"
+      ]
+    },
+    {
+      "id": 267,
+      "name": "Beautifly",
+      "baseStatTotal": 395,
+      "legendary": false,
+      "abilities": [
+        "Enjambre",
+        "Rivalidad"
+      ]
+    },
+    {
+      "id": 268,
+      "name": "Cascoon",
+      "baseStatTotal": 205,
+      "legendary": false,
+      "abilities": [
+        "Mudar"
+      ]
+    },
+    {
+      "id": 269,
+      "name": "Dustox",
+      "baseStatTotal": 385,
+      "legendary": false,
+      "abilities": [
+        "Polvo Escudo",
+        "Ojo Compuesto"
+      ]
+    },
+    {
+      "id": 270,
+      "name": "Lotad",
+      "baseStatTotal": 220,
+      "legendary": false,
+      "abilities": [
+        "Nado R\u00E1pido",
+        "Cura Lluvia",
+        "Ritmo Propio"
+      ]
+    },
+    {
+      "id": 271,
+      "name": "Lombre",
+      "baseStatTotal": 340,
+      "legendary": false,
+      "abilities": [
+        "Nado R\u00E1pido",
+        "Cura Lluvia",
+        "Ritmo Propio"
+      ]
+    },
+    {
+      "id": 272,
+      "name": "Ludicolo",
+      "baseStatTotal": 480,
+      "legendary": false,
+      "abilities": [
+        "Nado R\u00E1pido",
+        "Cura Lluvia",
+        "Ritmo Propio"
+      ]
+    },
+    {
+      "id": 273,
+      "name": "Seedot",
+      "baseStatTotal": 220,
+      "legendary": false,
+      "abilities": [
+        "Clorofila",
+        "Madrugar",
+        "Hurto"
+      ]
+    },
+    {
+      "id": 274,
+      "name": "Nuzleaf",
+      "baseStatTotal": 340,
+      "legendary": false,
+      "abilities": [
+        "Clorofila",
+        "Madrugar",
+        "Hurto"
+      ]
+    },
+    {
+      "id": 275,
+      "name": "Shiftry",
+      "baseStatTotal": 480,
+      "legendary": false,
+      "abilities": [
+        "Clorofila",
+        "Madrugar",
+        "Hurto"
+      ]
+    },
+    {
+      "id": 276,
+      "name": "Taillow",
+      "baseStatTotal": 270,
+      "legendary": false,
+      "abilities": [
+        "Agallas",
+        "Intr\u00E9pido"
+      ]
+    },
+    {
+      "id": 277,
+      "name": "Swellow",
+      "baseStatTotal": 455,
+      "legendary": false,
+      "abilities": [
+        "Agallas",
+        "Intr\u00E9pido"
+      ]
+    },
+    {
+      "id": 278,
+      "name": "Wingull",
+      "baseStatTotal": 270,
+      "legendary": false,
+      "abilities": [
+        "Vista Lince",
+        "Hidrataci\u00F3n",
+        "Cura Lluvia"
+      ]
+    },
+    {
+      "id": 279,
+      "name": "Pelipper",
+      "baseStatTotal": 440,
+      "legendary": false,
+      "abilities": [
+        "Vista Lince",
+        "Llovizna",
+        "Cura Lluvia"
+      ]
+    },
+    {
+      "id": 280,
+      "name": "Ralts",
+      "baseStatTotal": 198,
+      "legendary": false,
+      "abilities": [
+        "Sincron\u00EDa",
+        "Rastro",
+        "Telepat\u00EDa"
+      ]
+    },
+    {
+      "id": 281,
+      "name": "Kirlia",
+      "baseStatTotal": 278,
+      "legendary": false,
+      "abilities": [
+        "Sincron\u00EDa",
+        "Rastro",
+        "Telepat\u00EDa"
+      ]
+    },
+    {
+      "id": 282,
+      "name": "Gardevoir",
+      "baseStatTotal": 518,
+      "legendary": false,
+      "abilities": [
+        "Sincron\u00EDa",
+        "Rastro",
+        "Telepat\u00EDa"
+      ]
+    },
+    {
+      "id": 283,
+      "name": "Surskit",
+      "baseStatTotal": 269,
+      "legendary": false,
+      "abilities": [
+        "Nado R\u00E1pido",
+        "Cura Lluvia"
+      ]
+    },
+    {
+      "id": 284,
+      "name": "Masquerain",
+      "baseStatTotal": 454,
+      "legendary": false,
+      "abilities": [
+        "Intimidaci\u00F3n",
+        "Nerviosismo"
+      ]
+    },
+    {
+      "id": 285,
+      "name": "Shroomish",
+      "baseStatTotal": 295,
+      "legendary": false,
+      "abilities": [
+        "Efecto Espora",
+        "Ant\u00EDdoto",
+        "Pies R\u00E1pidos"
+      ]
+    },
+    {
+      "id": 286,
+      "name": "Breloom",
+      "baseStatTotal": 460,
+      "legendary": false,
+      "abilities": [
+        "Efecto Espora",
+        "Ant\u00EDdoto",
+        "Experto"
+      ]
+    },
+    {
+      "id": 287,
+      "name": "Slakoth",
+      "baseStatTotal": 280,
+      "legendary": false,
+      "abilities": [
+        "Ausente"
+      ]
+    },
+    {
+      "id": 288,
+      "name": "Vigoroth",
+      "baseStatTotal": 440,
+      "legendary": false,
+      "abilities": [
+        "Esp\u00EDritu Vital"
+      ]
+    },
+    {
+      "id": 289,
+      "name": "Slaking",
+      "baseStatTotal": 670,
+      "legendary": false,
+      "abilities": [
+        "Ausente"
+      ]
+    },
+    {
+      "id": 290,
+      "name": "Nincada",
+      "baseStatTotal": 266,
+      "legendary": false,
+      "abilities": [
+        "Ojo Compuesto",
+        "Fuga"
+      ]
+    },
+    {
+      "id": 291,
+      "name": "Ninjask",
+      "baseStatTotal": 456,
+      "legendary": false,
+      "abilities": [
+        "Impulso",
+        "Allanamiento"
+      ]
+    },
+    {
+      "id": 292,
+      "name": "Shedinja",
+      "baseStatTotal": 236,
+      "legendary": false,
+      "abilities": [
+        "Superguarda"
+      ]
+    },
+    {
+      "id": 293,
+      "name": "Whismur",
+      "baseStatTotal": 240,
+      "legendary": false,
+      "abilities": [
+        "Insonorizar",
+        "Cobard\u00EDa"
+      ]
+    },
+    {
+      "id": 294,
+      "name": "Loudred",
+      "baseStatTotal": 360,
+      "legendary": false,
+      "abilities": [
+        "Insonorizar",
+        "Intr\u00E9pido"
+      ]
+    },
+    {
+      "id": 295,
+      "name": "Exploud",
+      "baseStatTotal": 490,
+      "legendary": false,
+      "abilities": [
+        "Insonorizar",
+        "Intr\u00E9pido"
+      ]
+    },
+    {
+      "id": 296,
+      "name": "Makuhita",
+      "baseStatTotal": 237,
+      "legendary": false,
+      "abilities": [
+        "Sebo",
+        "Agallas",
+        "Potencia Bruta"
+      ]
+    },
+    {
+      "id": 297,
+      "name": "Hariyama",
+      "baseStatTotal": 474,
+      "legendary": false,
+      "abilities": [
+        "Sebo",
+        "Agallas",
+        "Potencia Bruta"
+      ]
+    },
+    {
+      "id": 298,
+      "name": "Azurill",
+      "baseStatTotal": 190,
+      "legendary": false,
+      "abilities": [
+        "Sebo",
+        "Potencia",
+        "Herb\u00EDvoro"
+      ]
+    },
+    {
+      "id": 299,
+      "name": "Nosepass",
+      "baseStatTotal": 375,
+      "legendary": false,
+      "abilities": [
+        "Robustez",
+        "Im\u00E1n",
+        "Poder Arena"
+      ]
+    },
+    {
+      "id": 300,
+      "name": "Skitty",
+      "baseStatTotal": 260,
+      "legendary": false,
+      "abilities": [
+        "Gran Encanto",
+        "Normalidad",
+        "Piel Milagro"
+      ]
+    },
+    {
+      "id": 301,
+      "name": "Delcatty",
+      "baseStatTotal": 400,
+      "legendary": false,
+      "abilities": [
+        "Gran Encanto",
+        "Normalidad",
+        "Piel Milagro"
+      ]
+    },
+    {
+      "id": 302,
+      "name": "Sableye",
+      "baseStatTotal": 380,
+      "legendary": false,
+      "abilities": [
+        "Vista Lince",
+        "Rezagado",
+        "Bromista"
+      ]
+    },
+    {
+      "id": 303,
+      "name": "Mawile",
+      "baseStatTotal": 380,
+      "legendary": false,
+      "abilities": [
+        "Corte Fuerte",
+        "Intimidaci\u00F3n",
+        "Potencia Bruta"
+      ]
+    },
+    {
+      "id": 304,
+      "name": "Aron",
+      "baseStatTotal": 330,
+      "legendary": false,
+      "abilities": [
+        "Robustez",
+        "Cabeza Roca",
+        "Metal Pesado"
+      ]
+    },
+    {
+      "id": 305,
+      "name": "Lairon",
+      "baseStatTotal": 430,
+      "legendary": false,
+      "abilities": [
+        "Robustez",
+        "Cabeza Roca",
+        "Metal Pesado"
+      ]
+    },
+    {
+      "id": 306,
+      "name": "Aggron",
+      "baseStatTotal": 530,
+      "legendary": false,
+      "abilities": [
+        "Robustez",
+        "Cabeza Roca",
+        "Metal Pesado"
+      ]
+    },
+    {
+      "id": 307,
+      "name": "Meditite",
+      "baseStatTotal": 280,
+      "legendary": false,
+      "abilities": [
+        "Energ\u00EDa Pura",
+        "Telepat\u00EDa"
+      ]
+    },
+    {
+      "id": 308,
+      "name": "Medicham",
+      "baseStatTotal": 410,
+      "legendary": false,
+      "abilities": [
+        "Energ\u00EDa Pura",
+        "Telepat\u00EDa"
+      ]
+    },
+    {
+      "id": 309,
+      "name": "Electrike",
+      "baseStatTotal": 295,
+      "legendary": false,
+      "abilities": [
+        "Elec. Est\u00E1tica",
+        "Pararrayos",
+        "Menos"
+      ]
+    },
+    {
+      "id": 310,
+      "name": "Manectric",
+      "baseStatTotal": 475,
+      "legendary": false,
+      "abilities": [
+        "Elec. Est\u00E1tica",
+        "Pararrayos",
+        "Menos"
+      ]
+    },
+    {
+      "id": 311,
+      "name": "Plusle",
+      "baseStatTotal": 405,
+      "legendary": false,
+      "abilities": [
+        "M\u00E1s",
+        "Pararrayos"
+      ]
+    },
+    {
+      "id": 312,
+      "name": "Minun",
+      "baseStatTotal": 405,
+      "legendary": false,
+      "abilities": [
+        "Menos",
+        "Absorbe Elec"
+      ]
+    },
+    {
+      "id": 313,
+      "name": "Volbeat",
+      "baseStatTotal": 430,
+      "legendary": false,
+      "abilities": [
+        "Iluminaci\u00F3n",
+        "Enjambre",
+        "Bromista"
+      ]
+    },
+    {
+      "id": 314,
+      "name": "Illumise",
+      "baseStatTotal": 430,
+      "legendary": false,
+      "abilities": [
+        "Despiste",
+        "Cromolente",
+        "Bromista"
+      ]
+    },
+    {
+      "id": 315,
+      "name": "Roselia",
+      "baseStatTotal": 400,
+      "legendary": false,
+      "abilities": [
+        "Cura Natural",
+        "Punto T\u00F3xico",
+        "Defensa Hoja"
+      ]
+    },
+    {
+      "id": 316,
+      "name": "Gulpin",
+      "baseStatTotal": 302,
+      "legendary": false,
+      "abilities": [
+        "Lodo L\u00EDquido",
+        "Viscosidad",
+        "Gula"
+      ]
+    },
+    {
+      "id": 317,
+      "name": "Swalot",
+      "baseStatTotal": 467,
+      "legendary": false,
+      "abilities": [
+        "Lodo L\u00EDquido",
+        "Viscosidad",
+        "Gula"
+      ]
+    },
+    {
+      "id": 318,
+      "name": "Carvanha",
+      "baseStatTotal": 305,
+      "legendary": false,
+      "abilities": [
+        "Piel Tosca",
+        "Impulso"
+      ]
+    },
+    {
+      "id": 319,
+      "name": "Sharpedo",
+      "baseStatTotal": 460,
+      "legendary": false,
+      "abilities": [
+        "Piel Tosca",
+        "Impulso"
+      ]
+    },
+    {
+      "id": 320,
+      "name": "Wailmer",
+      "baseStatTotal": 400,
+      "legendary": false,
+      "abilities": [
+        "Velo Agua",
+        "Despiste",
+        "Presi\u00F3n"
+      ]
+    },
+    {
+      "id": 321,
+      "name": "Wailord",
+      "baseStatTotal": 500,
+      "legendary": false,
+      "abilities": [
+        "Velo Agua",
+        "Despiste",
+        "Presi\u00F3n"
+      ]
+    },
+    {
+      "id": 322,
+      "name": "Numel",
+      "baseStatTotal": 305,
+      "legendary": false,
+      "abilities": [
+        "Despiste",
+        "Simple",
+        "Ritmo Propio"
+      ]
+    },
+    {
+      "id": 323,
+      "name": "Camerupt",
+      "baseStatTotal": 460,
+      "legendary": false,
+      "abilities": [
+        "Escudo Magma",
+        "Roca S\u00F3lida",
+        "Irascible"
+      ]
+    },
+    {
+      "id": 324,
+      "name": "Torkoal",
+      "baseStatTotal": 470,
+      "legendary": false,
+      "abilities": [
+        "Humo Blanco",
+        "Sequ\u00EDa",
+        "Caparaz\u00F3n"
+      ]
+    },
+    {
+      "id": 325,
+      "name": "Spoink",
+      "baseStatTotal": 330,
+      "legendary": false,
+      "abilities": [
+        "Sebo",
+        "Ritmo Propio",
+        "Gula"
+      ]
+    },
+    {
+      "id": 326,
+      "name": "Grumpig",
+      "baseStatTotal": 470,
+      "legendary": false,
+      "abilities": [
+        "Sebo",
+        "Ritmo Propio",
+        "Gula"
+      ]
+    },
+    {
+      "id": 327,
+      "name": "Spinda",
+      "baseStatTotal": 360,
+      "legendary": false,
+      "abilities": [
+        "Ritmo Propio",
+        "Tumbos",
+        "Respond\u00F3n"
+      ]
+    },
+    {
+      "id": 328,
+      "name": "Trapinch",
+      "baseStatTotal": 290,
+      "legendary": false,
+      "abilities": [
+        "Corte Fuerte",
+        "Trampa Arena",
+        "Potencia Bruta"
+      ]
+    },
+    {
+      "id": 329,
+      "name": "Vibrava",
+      "baseStatTotal": 340,
+      "legendary": false,
+      "abilities": [
+        "Levitaci\u00F3n"
+      ]
+    },
+    {
+      "id": 330,
+      "name": "Flygon",
+      "baseStatTotal": 520,
+      "legendary": false,
+      "abilities": [
+        "Levitaci\u00F3n"
+      ]
+    },
+    {
+      "id": 331,
+      "name": "Cacnea",
+      "baseStatTotal": 335,
+      "legendary": false,
+      "abilities": [
+        "Velo Arena",
+        "Absorbe Agua"
+      ]
+    },
+    {
+      "id": 332,
+      "name": "Cacturne",
+      "baseStatTotal": 475,
+      "legendary": false,
+      "abilities": [
+        "Velo Arena",
+        "Absorbe Agua"
+      ]
+    },
+    {
+      "id": 333,
+      "name": "Swablu",
+      "baseStatTotal": 310,
+      "legendary": false,
+      "abilities": [
+        "Cura Natural",
+        "Aclimataci\u00F3n"
+      ]
+    },
+    {
+      "id": 334,
+      "name": "Altaria",
+      "baseStatTotal": 490,
+      "legendary": false,
+      "abilities": [
+        "Cura Natural",
+        "Aclimataci\u00F3n"
+      ]
+    },
+    {
+      "id": 335,
+      "name": "Zangoose",
+      "baseStatTotal": 458,
+      "legendary": false,
+      "abilities": [
+        "Inmunidad",
+        "\u00CDmpetu T\u00F3xico"
+      ]
+    },
+    {
+      "id": 336,
+      "name": "Seviper",
+      "baseStatTotal": 458,
+      "legendary": false,
+      "abilities": [
+        "Mudar",
+        "Allanamiento"
+      ]
+    },
+    {
+      "id": 337,
+      "name": "Lunatone",
+      "baseStatTotal": 460,
+      "legendary": false,
+      "abilities": [
+        "Levitaci\u00F3n"
+      ]
+    },
+    {
+      "id": 338,
+      "name": "Solrock",
+      "baseStatTotal": 460,
+      "legendary": false,
+      "abilities": [
+        "Levitaci\u00F3n"
+      ]
+    },
+    {
+      "id": 339,
+      "name": "Barboach",
+      "baseStatTotal": 288,
+      "legendary": false,
+      "abilities": [
+        "Despiste",
+        "Anticipaci\u00F3n",
+        "Hidrataci\u00F3n"
+      ]
+    },
+    {
+      "id": 340,
+      "name": "Whiscash",
+      "baseStatTotal": 468,
+      "legendary": false,
+      "abilities": [
+        "Despiste",
+        "Anticipaci\u00F3n",
+        "Hidrataci\u00F3n"
+      ]
+    },
+    {
+      "id": 341,
+      "name": "Corphish",
+      "baseStatTotal": 308,
+      "legendary": false,
+      "abilities": [
+        "Corte Fuerte",
+        "Caparaz\u00F3n",
+        "Adaptable"
+      ]
+    },
+    {
+      "id": 342,
+      "name": "Crawdaunt",
+      "baseStatTotal": 468,
+      "legendary": false,
+      "abilities": [
+        "Corte Fuerte",
+        "Caparaz\u00F3n",
+        "Adaptable"
+      ]
+    },
+    {
+      "id": 343,
+      "name": "Baltoy",
+      "baseStatTotal": 300,
+      "legendary": false,
+      "abilities": [
+        "Levitaci\u00F3n"
+      ]
+    },
+    {
+      "id": 344,
+      "name": "Claydol",
+      "baseStatTotal": 500,
+      "legendary": false,
+      "abilities": [
+        "Levitaci\u00F3n"
+      ]
+    },
+    {
+      "id": 345,
+      "name": "Lileep",
+      "baseStatTotal": 355,
+      "legendary": false,
+      "abilities": [
+        "Ventosas",
+        "Colector"
+      ]
+    },
+    {
+      "id": 346,
+      "name": "Cradily",
+      "baseStatTotal": 495,
+      "legendary": false,
+      "abilities": [
+        "Ventosas",
+        "Colector"
+      ]
+    },
+    {
+      "id": 347,
+      "name": "Anorith",
+      "baseStatTotal": 355,
+      "legendary": false,
+      "abilities": [
+        "Armadura Batalla",
+        "Nado R\u00E1pido"
+      ]
+    },
+    {
+      "id": 348,
+      "name": "Armaldo",
+      "baseStatTotal": 495,
+      "legendary": false,
+      "abilities": [
+        "Armadura Batalla",
+        "Nado R\u00E1pido"
+      ]
+    },
+    {
+      "id": 349,
+      "name": "Feebas",
+      "baseStatTotal": 200,
+      "legendary": false,
+      "abilities": [
+        "Nado R\u00E1pido",
+        "Despiste",
+        "Adaptable"
+      ]
+    },
+    {
+      "id": 350,
+      "name": "Milotic",
+      "baseStatTotal": 540,
+      "legendary": false,
+      "abilities": [
+        "Escama Especial",
+        "Tenacidad",
+        "Gran Encanto"
+      ]
+    },
+    {
+      "id": 351,
+      "name": "Castform",
+      "baseStatTotal": 420,
+      "legendary": false,
+      "abilities": [
+        "Predicci\u00F3n"
+      ]
+    },
+    {
+      "id": 352,
+      "name": "Kecleon",
+      "baseStatTotal": 440,
+      "legendary": false,
+      "abilities": [
+        "Cambio Color",
+        "Mutatipo"
+      ]
+    },
+    {
+      "id": 353,
+      "name": "Shuppet",
+      "baseStatTotal": 295,
+      "legendary": false,
+      "abilities": [
+        "Insomnio",
+        "Cacheo",
+        "Cuerpo Maldito"
+      ]
+    },
+    {
+      "id": 354,
+      "name": "Banette",
+      "baseStatTotal": 455,
+      "legendary": false,
+      "abilities": [
+        "Insomnio",
+        "Cacheo",
+        "Cuerpo Maldito"
+      ]
+    },
+    {
+      "id": 355,
+      "name": "Duskull",
+      "baseStatTotal": 295,
+      "legendary": false,
+      "abilities": [
+        "Levitaci\u00F3n",
+        "Cacheo"
+      ]
+    },
+    {
+      "id": 356,
+      "name": "Dusclops",
+      "baseStatTotal": 455,
+      "legendary": false,
+      "abilities": [
+        "Presi\u00F3n",
+        "Cacheo"
+      ]
+    },
+    {
+      "id": 357,
+      "name": "Tropius",
+      "baseStatTotal": 460,
+      "legendary": false,
+      "abilities": [
+        "Clorofila",
+        "Poder Solar",
+        "Cosecha"
+      ]
+    },
+    {
+      "id": 358,
+      "name": "Chimecho",
+      "baseStatTotal": 455,
+      "legendary": false,
+      "abilities": [
+        "Levitaci\u00F3n"
+      ]
+    },
+    {
+      "id": 359,
+      "name": "Absol",
+      "baseStatTotal": 465,
+      "legendary": false,
+      "abilities": [
+        "Presi\u00F3n",
+        "Afortunado",
+        "Justiciero"
+      ]
+    },
+    {
+      "id": 360,
+      "name": "Wynaut",
+      "baseStatTotal": 260,
+      "legendary": false,
+      "abilities": [
+        "Sombra Trampa",
+        "Telepat\u00EDa"
+      ]
+    },
+    {
+      "id": 361,
+      "name": "Snorunt",
+      "baseStatTotal": 300,
+      "legendary": false,
+      "abilities": [
+        "Foco Interno",
+        "G\u00E9lido",
+        "Veleta"
+      ]
+    },
+    {
+      "id": 362,
+      "name": "Glalie",
+      "baseStatTotal": 480,
+      "legendary": false,
+      "abilities": [
+        "Foco Interno",
+        "G\u00E9lido",
+        "Veleta"
+      ]
+    },
+    {
+      "id": 363,
+      "name": "Spheal",
+      "baseStatTotal": 290,
+      "legendary": false,
+      "abilities": [
+        "Sebo",
+        "G\u00E9lido",
+        "Despiste"
+      ]
+    },
+    {
+      "id": 364,
+      "name": "Sealeo",
+      "baseStatTotal": 410,
+      "legendary": false,
+      "abilities": [
+        "Sebo",
+        "G\u00E9lido",
+        "Despiste"
+      ]
+    },
+    {
+      "id": 365,
+      "name": "Walrein",
+      "baseStatTotal": 530,
+      "legendary": false,
+      "abilities": [
+        "Sebo",
+        "G\u00E9lido",
+        "Despiste"
+      ]
+    },
+    {
+      "id": 366,
+      "name": "Clamperl",
+      "baseStatTotal": 345,
+      "legendary": false,
+      "abilities": [
+        "Caparaz\u00F3n",
+        "Cobard\u00EDa"
+      ]
+    },
+    {
+      "id": 367,
+      "name": "Huntail",
+      "baseStatTotal": 485,
+      "legendary": false,
+      "abilities": [
+        "Nado R\u00E1pido",
+        "Velo Agua"
+      ]
+    },
+    {
+      "id": 368,
+      "name": "Gorebyss",
+      "baseStatTotal": 485,
+      "legendary": false,
+      "abilities": [
+        "Nado R\u00E1pido",
+        "Hidrataci\u00F3n"
+      ]
+    },
+    {
+      "id": 369,
+      "name": "Relicanth",
+      "baseStatTotal": 485,
+      "legendary": false,
+      "abilities": [
+        "Nado R\u00E1pido",
+        "Cabeza Roca",
+        "Robustez"
+      ]
+    },
+    {
+      "id": 370,
+      "name": "Luvdisc",
+      "baseStatTotal": 330,
+      "legendary": false,
+      "abilities": [
+        "Nado R\u00E1pido",
+        "Hidrataci\u00F3n"
+      ]
+    },
+    {
+      "id": 371,
+      "name": "Bagon",
+      "baseStatTotal": 300,
+      "legendary": false,
+      "abilities": [
+        "Cabeza Roca",
+        "Potencia Bruta"
+      ]
+    },
+    {
+      "id": 372,
+      "name": "Shelgon",
+      "baseStatTotal": 420,
+      "legendary": false,
+      "abilities": [
+        "Cabeza Roca",
+        "Funda"
+      ]
+    },
+    {
+      "id": 373,
+      "name": "Salamence",
+      "baseStatTotal": 600,
+      "legendary": false,
+      "abilities": [
+        "Intimidaci\u00F3n",
+        "Autoestima"
+      ]
+    },
+    {
+      "id": 374,
+      "name": "Beldum",
+      "baseStatTotal": 300,
+      "legendary": false,
+      "abilities": [
+        "Cuerpo Puro",
+        "Metal Liviano"
+      ]
+    },
+    {
+      "id": 375,
+      "name": "Metang",
+      "baseStatTotal": 420,
+      "legendary": false,
+      "abilities": [
+        "Cuerpo Puro",
+        "Metal Liviano"
+      ]
+    },
+    {
+      "id": 376,
+      "name": "Metagross",
+      "baseStatTotal": 600,
+      "legendary": false,
+      "abilities": [
+        "Cuerpo Puro",
+        "Metal Liviano"
+      ]
+    },
+    {
+      "id": 377,
+      "name": "Regirock",
+      "baseStatTotal": 580,
+      "legendary": true,
+      "abilities": [
+        "Cuerpo Puro",
+        "Robustez"
+      ]
+    },
+    {
+      "id": 378,
+      "name": "Regice",
+      "baseStatTotal": 580,
+      "legendary": true,
+      "abilities": [
+        "Cuerpo Puro",
+        "G\u00E9lido"
+      ]
+    },
+    {
+      "id": 379,
+      "name": "Registeel",
+      "baseStatTotal": 580,
+      "legendary": true,
+      "abilities": [
+        "Cuerpo Puro",
+        "Metal Liviano"
+      ]
+    },
+    {
+      "id": 380,
+      "name": "Latias",
+      "baseStatTotal": 600,
+      "legendary": true,
+      "abilities": [
+        "Levitaci\u00F3n"
+      ]
+    },
+    {
+      "id": 381,
+      "name": "Latios",
+      "baseStatTotal": 600,
+      "legendary": true,
+      "abilities": [
+        "Levitaci\u00F3n"
+      ]
+    },
+    {
+      "id": 382,
+      "name": "Kyogre",
+      "baseStatTotal": 670,
+      "legendary": true,
+      "abilities": [
+        "Llovizna"
+      ]
+    },
+    {
+      "id": 383,
+      "name": "Groudon",
+      "baseStatTotal": 670,
+      "legendary": true,
+      "abilities": [
+        "Sequ\u00EDa"
+      ]
+    },
+    {
+      "id": 384,
+      "name": "Rayquaza",
+      "baseStatTotal": 680,
+      "legendary": true,
+      "abilities": [
+        "Bucle Aire"
+      ]
+    },
+    {
+      "id": 385,
+      "name": "Jirachi",
+      "baseStatTotal": 600,
+      "legendary": true,
+      "abilities": [
+        "Dicha"
+      ]
+    },
+    {
+      "id": 386,
+      "name": "Deoxys",
+      "baseStatTotal": 600,
+      "legendary": true,
+      "abilities": [
+        "Presi\u00F3n"
+      ]
+    },
+    {
+      "id": 387,
+      "name": "Turtwig",
+      "baseStatTotal": 318,
+      "legendary": false,
+      "abilities": [
+        "Espesura",
+        "Caparaz\u00F3n"
+      ]
+    },
+    {
+      "id": 388,
+      "name": "Grotle",
+      "baseStatTotal": 405,
+      "legendary": false,
+      "abilities": [
+        "Espesura",
+        "Caparaz\u00F3n"
+      ]
+    },
+    {
+      "id": 389,
+      "name": "Torterra",
+      "baseStatTotal": 525,
+      "legendary": false,
+      "abilities": [
+        "Espesura",
+        "Caparaz\u00F3n"
+      ]
+    },
+    {
+      "id": 390,
+      "name": "Chimchar",
+      "baseStatTotal": 309,
+      "legendary": false,
+      "abilities": [
+        "Mar Llamas",
+        "Pu\u00F1o F\u00E9rreo"
+      ]
+    },
+    {
+      "id": 391,
+      "name": "Monferno",
+      "baseStatTotal": 405,
+      "legendary": false,
+      "abilities": [
+        "Mar Llamas",
+        "Pu\u00F1o F\u00E9rreo"
+      ]
+    },
+    {
+      "id": 392,
+      "name": "Infernape",
+      "baseStatTotal": 534,
+      "legendary": false,
+      "abilities": [
+        "Mar Llamas",
+        "Pu\u00F1o F\u00E9rreo"
+      ]
+    },
+    {
+      "id": 393,
+      "name": "Piplup",
+      "baseStatTotal": 314,
+      "legendary": false,
+      "abilities": [
+        "Torrente",
+        "Competitivo"
+      ]
+    },
+    {
+      "id": 394,
+      "name": "Prinplup",
+      "baseStatTotal": 405,
+      "legendary": false,
+      "abilities": [
+        "Torrente",
+        "Competitivo"
+      ]
+    },
+    {
+      "id": 395,
+      "name": "Empoleon",
+      "baseStatTotal": 530,
+      "legendary": false,
+      "abilities": [
+        "Torrente",
+        "Competitivo"
+      ]
+    },
+    {
+      "id": 396,
+      "name": "Starly",
+      "baseStatTotal": 245,
+      "legendary": false,
+      "abilities": [
+        "Vista Lince",
+        "Audaz"
+      ]
+    },
+    {
+      "id": 397,
+      "name": "Staravia",
+      "baseStatTotal": 340,
+      "legendary": false,
+      "abilities": [
+        "Intimidaci\u00F3n",
+        "Audaz"
+      ]
+    },
+    {
+      "id": 398,
+      "name": "Staraptor",
+      "baseStatTotal": 485,
+      "legendary": false,
+      "abilities": [
+        "Intimidaci\u00F3n",
+        "Audaz"
+      ]
+    },
+    {
+      "id": 399,
+      "name": "Bidoof",
+      "baseStatTotal": 250,
+      "legendary": false,
+      "abilities": [
+        "Simple",
+        "Ignorante",
+        "Veleta"
+      ]
+    },
+    {
+      "id": 400,
+      "name": "Bibarel",
+      "baseStatTotal": 410,
+      "legendary": false,
+      "abilities": [
+        "Simple",
+        "Ignorante",
+        "Veleta"
+      ]
+    },
+    {
+      "id": 401,
+      "name": "Kricketot",
+      "baseStatTotal": 194,
+      "legendary": false,
+      "abilities": [
+        "Mudar",
+        "Fuga"
+      ]
+    },
+    {
+      "id": 402,
+      "name": "Kricketune",
+      "baseStatTotal": 384,
+      "legendary": false,
+      "abilities": [
+        "Enjambre",
+        "Experto"
+      ]
+    },
+    {
+      "id": 403,
+      "name": "Shinx",
+      "baseStatTotal": 263,
+      "legendary": false,
+      "abilities": [
+        "Rivalidad",
+        "Intimidaci\u00F3n",
+        "Agallas"
+      ]
+    },
+    {
+      "id": 404,
+      "name": "Luxio",
+      "baseStatTotal": 363,
+      "legendary": false,
+      "abilities": [
+        "Rivalidad",
+        "Intimidaci\u00F3n",
+        "Agallas"
+      ]
+    },
+    {
+      "id": 405,
+      "name": "Luxray",
+      "baseStatTotal": 523,
+      "legendary": false,
+      "abilities": [
+        "Rivalidad",
+        "Intimidaci\u00F3n",
+        "Agallas"
+      ]
+    },
+    {
+      "id": 406,
+      "name": "Budew",
+      "baseStatTotal": 280,
+      "legendary": false,
+      "abilities": [
+        "Cura Natural",
+        "Punto T\u00F3xico",
+        "Defensa Hoja"
+      ]
+    },
+    {
+      "id": 407,
+      "name": "Roserade",
+      "baseStatTotal": 515,
+      "legendary": false,
+      "abilities": [
+        "Cura Natural",
+        "Punto T\u00F3xico",
+        "Experto"
+      ]
+    },
+    {
+      "id": 408,
+      "name": "Cranidos",
+      "baseStatTotal": 350,
+      "legendary": false,
+      "abilities": [
+        "Rompemoldes",
+        "Potencia Bruta"
+      ]
+    },
+    {
+      "id": 409,
+      "name": "Rampardos",
+      "baseStatTotal": 495,
+      "legendary": false,
+      "abilities": [
+        "Rompemoldes",
+        "Potencia Bruta"
+      ]
+    },
+    {
+      "id": 410,
+      "name": "Shieldon",
+      "baseStatTotal": 350,
+      "legendary": false,
+      "abilities": [
+        "Robustez",
+        "Insonorizar"
+      ]
+    },
+    {
+      "id": 411,
+      "name": "Bastiodon",
+      "baseStatTotal": 495,
+      "legendary": false,
+      "abilities": [
+        "Robustez",
+        "Insonorizar"
+      ]
+    },
+    {
+      "id": 412,
+      "name": "Burmy",
+      "baseStatTotal": 224,
+      "legendary": false,
+      "abilities": [
+        "Mudar",
+        "Funda"
+      ]
+    },
+    {
+      "id": 413,
+      "name": "Wormadam",
+      "baseStatTotal": 424,
+      "legendary": false,
+      "abilities": [
+        "Anticipaci\u00F3n",
+        "Funda"
+      ]
+    },
+    {
+      "id": 414,
+      "name": "Mothim",
+      "baseStatTotal": 424,
+      "legendary": false,
+      "abilities": [
+        "Enjambre",
+        "Cromolente"
+      ]
+    },
+    {
+      "id": 415,
+      "name": "Combee",
+      "baseStatTotal": 244,
+      "legendary": false,
+      "abilities": [
+        "Recogemiel",
+        "Entusiasmo"
+      ]
+    },
+    {
+      "id": 416,
+      "name": "Vespiquen",
+      "baseStatTotal": 474,
+      "legendary": false,
+      "abilities": [
+        "Presi\u00F3n",
+        "Nerviosismo"
+      ]
+    },
+    {
+      "id": 417,
+      "name": "Pachirisu",
+      "baseStatTotal": 405,
+      "legendary": false,
+      "abilities": [
+        "Fuga",
+        "Recogida",
+        "Absorbe Elec"
+      ]
+    },
+    {
+      "id": 418,
+      "name": "Buizel",
+      "baseStatTotal": 330,
+      "legendary": false,
+      "abilities": [
+        "Nado R\u00E1pido",
+        "Velo Agua"
+      ]
+    },
+    {
+      "id": 419,
+      "name": "Floatzel",
+      "baseStatTotal": 495,
+      "legendary": false,
+      "abilities": [
+        "Nado R\u00E1pido",
+        "Velo Agua"
+      ]
+    },
+    {
+      "id": 420,
+      "name": "Cherubi",
+      "baseStatTotal": 275,
+      "legendary": false,
+      "abilities": [
+        "Clorofila"
+      ]
+    },
+    {
+      "id": 421,
+      "name": "Cherrim",
+      "baseStatTotal": 450,
+      "legendary": false,
+      "abilities": [
+        "Don Floral"
+      ]
+    },
+    {
+      "id": 422,
+      "name": "Shellos",
+      "baseStatTotal": 325,
+      "legendary": false,
+      "abilities": [
+        "Viscosidad",
+        "Colector",
+        "Poder Arena"
+      ]
+    },
+    {
+      "id": 423,
+      "name": "Gastrodon",
+      "baseStatTotal": 475,
+      "legendary": false,
+      "abilities": [
+        "Viscosidad",
+        "Colector",
+        "Poder Arena"
+      ]
+    },
+    {
+      "id": 424,
+      "name": "Ambipom",
+      "baseStatTotal": 482,
+      "legendary": false,
+      "abilities": [
+        "Experto",
+        "Recogida",
+        "Encadenado"
+      ]
+    },
+    {
+      "id": 425,
+      "name": "Drifloon",
+      "baseStatTotal": 348,
+      "legendary": false,
+      "abilities": [
+        "Resquicio",
+        "Liviano",
+        "\u00CDmpetu Ardiente"
+      ]
+    },
+    {
+      "id": 426,
+      "name": "Drifblim",
+      "baseStatTotal": 498,
+      "legendary": false,
+      "abilities": [
+        "Resquicio",
+        "Liviano",
+        "\u00CDmpetu Ardiente"
+      ]
+    },
+    {
+      "id": 427,
+      "name": "Buneary",
+      "baseStatTotal": 350,
+      "legendary": false,
+      "abilities": [
+        "Fuga",
+        "Zoquete",
+        "Flexibilidad"
+      ]
+    },
+    {
+      "id": 428,
+      "name": "Lopunny",
+      "baseStatTotal": 480,
+      "legendary": false,
+      "abilities": [
+        "Gran Encanto",
+        "Zoquete",
+        "Flexibilidad"
+      ]
+    },
+    {
+      "id": 429,
+      "name": "Mismagius",
+      "baseStatTotal": 495,
+      "legendary": false,
+      "abilities": [
+        "Levitaci\u00F3n"
+      ]
+    },
+    {
+      "id": 430,
+      "name": "Honchkrow",
+      "baseStatTotal": 505,
+      "legendary": false,
+      "abilities": [
+        "Insomnio",
+        "Afortunado",
+        "Autoestima"
+      ]
+    },
+    {
+      "id": 431,
+      "name": "Glameow",
+      "baseStatTotal": 310,
+      "legendary": false,
+      "abilities": [
+        "Flexibilidad",
+        "Ritmo Propio",
+        "Vista Lince"
+      ]
+    },
+    {
+      "id": 432,
+      "name": "Purugly",
+      "baseStatTotal": 452,
+      "legendary": false,
+      "abilities": [
+        "Sebo",
+        "Ritmo Propio",
+        "Competitivo"
+      ]
+    },
+    {
+      "id": 433,
+      "name": "Chingling",
+      "baseStatTotal": 285,
+      "legendary": false,
+      "abilities": [
+        "Levitaci\u00F3n"
+      ]
+    },
+    {
+      "id": 434,
+      "name": "Stunky",
+      "baseStatTotal": 329,
+      "legendary": false,
+      "abilities": [
+        "Hedor",
+        "Resquicio",
+        "Vista Lince"
+      ]
+    },
+    {
+      "id": 435,
+      "name": "Skuntank",
+      "baseStatTotal": 479,
+      "legendary": false,
+      "abilities": [
+        "Hedor",
+        "Resquicio",
+        "Vista Lince"
+      ]
+    },
+    {
+      "id": 436,
+      "name": "Bronzor",
+      "baseStatTotal": 300,
+      "legendary": false,
+      "abilities": [
+        "Levitaci\u00F3n",
+        "Ign\u00EDfugo",
+        "Metal Pesado"
+      ]
+    },
+    {
+      "id": 437,
+      "name": "Bronzong",
+      "baseStatTotal": 500,
+      "legendary": false,
+      "abilities": [
+        "Levitaci\u00F3n",
+        "Ign\u00EDfugo",
+        "Metal Pesado"
+      ]
+    },
+    {
+      "id": 438,
+      "name": "Bonsly",
+      "baseStatTotal": 290,
+      "legendary": false,
+      "abilities": [
+        "Robustez",
+        "Cabeza Roca",
+        "Cobard\u00EDa"
+      ]
+    },
+    {
+      "id": 439,
+      "name": "Mime Jr.",
+      "baseStatTotal": 310,
+      "legendary": false,
+      "abilities": [
+        "Insonorizar",
+        "Filtro",
+        "Experto"
+      ]
+    },
+    {
+      "id": 440,
+      "name": "Happiny",
+      "baseStatTotal": 220,
+      "legendary": false,
+      "abilities": [
+        "Cura Natural",
+        "Dicha",
+        "Compiescolta"
+      ]
+    },
+    {
+      "id": 441,
+      "name": "Chatot",
+      "baseStatTotal": 411,
+      "legendary": false,
+      "abilities": [
+        "Vista Lince",
+        "Tumbos",
+        "Sacapecho"
+      ]
+    },
+    {
+      "id": 442,
+      "name": "Spiritomb",
+      "baseStatTotal": 485,
+      "legendary": false,
+      "abilities": [
+        "Presi\u00F3n",
+        "Allanamiento"
+      ]
+    },
+    {
+      "id": 443,
+      "name": "Gible",
+      "baseStatTotal": 300,
+      "legendary": false,
+      "abilities": [
+        "Velo Arena",
+        "Piel Tosca"
+      ]
+    },
+    {
+      "id": 444,
+      "name": "Gabite",
+      "baseStatTotal": 410,
+      "legendary": false,
+      "abilities": [
+        "Velo Arena",
+        "Piel Tosca"
+      ]
+    },
+    {
+      "id": 445,
+      "name": "Garchomp",
+      "baseStatTotal": 600,
+      "legendary": false,
+      "abilities": [
+        "Velo Arena",
+        "Piel Tosca"
+      ]
+    },
+    {
+      "id": 446,
+      "name": "Munchlax",
+      "baseStatTotal": 390,
+      "legendary": false,
+      "abilities": [
+        "Recogida",
+        "Sebo",
+        "Gula"
+      ]
+    },
+    {
+      "id": 447,
+      "name": "Riolu",
+      "baseStatTotal": 285,
+      "legendary": false,
+      "abilities": [
+        "Impasible",
+        "Foco Interno",
+        "Bromista"
+      ]
+    },
+    {
+      "id": 448,
+      "name": "Lucario",
+      "baseStatTotal": 525,
+      "legendary": false,
+      "abilities": [
+        "Impasible",
+        "Foco Interno",
+        "Justiciero"
+      ]
+    },
+    {
+      "id": 449,
+      "name": "Hippopotas",
+      "baseStatTotal": 330,
+      "legendary": false,
+      "abilities": [
+        "Chorro Arena",
+        "Poder Arena"
+      ]
+    },
+    {
+      "id": 450,
+      "name": "Hippowdon",
+      "baseStatTotal": 525,
+      "legendary": false,
+      "abilities": [
+        "Chorro Arena",
+        "Poder Arena"
+      ]
+    },
+    {
+      "id": 451,
+      "name": "Skorupi",
+      "baseStatTotal": 330,
+      "legendary": false,
+      "abilities": [
+        "Armadura Batalla",
+        "Francotirador",
+        "Vista Lince"
+      ]
+    },
+    {
+      "id": 452,
+      "name": "Drapion",
+      "baseStatTotal": 500,
+      "legendary": false,
+      "abilities": [
+        "Armadura Batalla",
+        "Francotirador",
+        "Vista Lince"
+      ]
+    },
+    {
+      "id": 453,
+      "name": "Croagunk",
+      "baseStatTotal": 300,
+      "legendary": false,
+      "abilities": [
+        "Anticipaci\u00F3n",
+        "Piel Seca",
+        "Toque T\u00F3xico"
+      ]
+    },
+    {
+      "id": 454,
+      "name": "Toxicroak",
+      "baseStatTotal": 490,
+      "legendary": false,
+      "abilities": [
+        "Anticipaci\u00F3n",
+        "Piel Seca",
+        "Toque T\u00F3xico"
+      ]
+    },
+    {
+      "id": 455,
+      "name": "Carnivine",
+      "baseStatTotal": 454,
+      "legendary": false,
+      "abilities": [
+        "Levitaci\u00F3n"
+      ]
+    },
+    {
+      "id": 456,
+      "name": "Finneon",
+      "baseStatTotal": 330,
+      "legendary": false,
+      "abilities": [
+        "Nado R\u00E1pido",
+        "Colector",
+        "Velo Agua"
+      ]
+    },
+    {
+      "id": 457,
+      "name": "Lumineon",
+      "baseStatTotal": 460,
+      "legendary": false,
+      "abilities": [
+        "Nado R\u00E1pido",
+        "Colector",
+        "Velo Agua"
+      ]
+    },
+    {
+      "id": 458,
+      "name": "Mantyke",
+      "baseStatTotal": 345,
+      "legendary": false,
+      "abilities": [
+        "Nado R\u00E1pido",
+        "Absorbe Agua",
+        "Velo Agua"
+      ]
+    },
+    {
+      "id": 459,
+      "name": "Snover",
+      "baseStatTotal": 334,
+      "legendary": false,
+      "abilities": [
+        "Nevada",
+        "Insonorizar"
+      ]
+    },
+    {
+      "id": 460,
+      "name": "Abomasnow",
+      "baseStatTotal": 494,
+      "legendary": false,
+      "abilities": [
+        "Nevada",
+        "Insonorizar"
+      ]
+    },
+    {
+      "id": 461,
+      "name": "Weavile",
+      "baseStatTotal": 510,
+      "legendary": false,
+      "abilities": [
+        "Presi\u00F3n",
+        "Hurto"
+      ]
+    },
+    {
+      "id": 462,
+      "name": "Magnezone",
+      "baseStatTotal": 535,
+      "legendary": false,
+      "abilities": [
+        "Im\u00E1n",
+        "Robustez",
+        "C\u00E1lculo Final"
+      ]
+    },
+    {
+      "id": 463,
+      "name": "Lickilicky",
+      "baseStatTotal": 515,
+      "legendary": false,
+      "abilities": [
+        "Ritmo Propio",
+        "Despiste",
+        "Aclimataci\u00F3n"
+      ]
+    },
+    {
+      "id": 464,
+      "name": "Rhyperior",
+      "baseStatTotal": 535,
+      "legendary": false,
+      "abilities": [
+        "Pararrayos",
+        "Roca S\u00F3lida",
+        "Audaz"
+      ]
+    },
+    {
+      "id": 465,
+      "name": "Tangrowth",
+      "baseStatTotal": 535,
+      "legendary": false,
+      "abilities": [
+        "Clorofila",
+        "Defensa Hoja",
+        "Regeneraci\u00F3n"
+      ]
+    },
+    {
+      "id": 466,
+      "name": "Electivire",
+      "baseStatTotal": 540,
+      "legendary": false,
+      "abilities": [
+        "Electromotor",
+        "Esp\u00EDritu Vital"
+      ]
+    },
+    {
+      "id": 467,
+      "name": "Magmortar",
+      "baseStatTotal": 540,
+      "legendary": false,
+      "abilities": [
+        "Cuerpo Llama",
+        "Esp\u00EDritu Vital"
+      ]
+    },
+    {
+      "id": 468,
+      "name": "Togekiss",
+      "baseStatTotal": 545,
+      "legendary": false,
+      "abilities": [
+        "Entusiasmo",
+        "Dicha",
+        "Afortunado"
+      ]
+    },
+    {
+      "id": 469,
+      "name": "Yanmega",
+      "baseStatTotal": 515,
+      "legendary": false,
+      "abilities": [
+        "Impulso",
+        "Cromolente",
+        "Cacheo"
+      ]
+    },
+    {
+      "id": 470,
+      "name": "Leafeon",
+      "baseStatTotal": 525,
+      "legendary": false,
+      "abilities": [
+        "Defensa Hoja",
+        "Clorofila"
+      ]
+    },
+    {
+      "id": 471,
+      "name": "Glaceon",
+      "baseStatTotal": 525,
+      "legendary": false,
+      "abilities": [
+        "Manto N\u00EDveo",
+        "G\u00E9lido"
+      ]
+    },
+    {
+      "id": 472,
+      "name": "Gliscor",
+      "baseStatTotal": 510,
+      "legendary": false,
+      "abilities": [
+        "Corte Fuerte",
+        "Velo Arena",
+        "Ant\u00EDdoto"
+      ]
+    },
+    {
+      "id": 473,
+      "name": "Mamoswine",
+      "baseStatTotal": 530,
+      "legendary": false,
+      "abilities": [
+        "Despiste",
+        "Manto N\u00EDveo",
+        "Sebo"
+      ]
+    },
+    {
+      "id": 474,
+      "name": "Porygon-Z",
+      "baseStatTotal": 535,
+      "legendary": false,
+      "abilities": [
+        "Adaptable",
+        "Descarga",
+        "C\u00E1lculo Final"
+      ]
+    },
+    {
+      "id": 475,
+      "name": "Gallade",
+      "baseStatTotal": 518,
+      "legendary": false,
+      "abilities": [
+        "Impasible",
+        "Justiciero"
+      ]
+    },
+    {
+      "id": 476,
+      "name": "Probopass",
+      "baseStatTotal": 525,
+      "legendary": false,
+      "abilities": [
+        "Robustez",
+        "Im\u00E1n",
+        "Poder Arena"
+      ]
+    },
+    {
+      "id": 477,
+      "name": "Dusknoir",
+      "baseStatTotal": 525,
+      "legendary": false,
+      "abilities": [
+        "Presi\u00F3n",
+        "Cacheo"
+      ]
+    },
+    {
+      "id": 478,
+      "name": "Froslass",
+      "baseStatTotal": 480,
+      "legendary": false,
+      "abilities": [
+        "Manto N\u00EDveo",
+        "Cuerpo Maldito"
+      ]
+    },
+    {
+      "id": 479,
+      "name": "Rotom",
+      "baseStatTotal": 440,
+      "legendary": false,
+      "abilities": [
+        "Levitaci\u00F3n"
+      ]
+    },
+    {
+      "id": 480,
+      "name": "Uxie",
+      "baseStatTotal": 580,
+      "legendary": true,
+      "abilities": [
+        "Levitaci\u00F3n"
+      ]
+    },
+    {
+      "id": 481,
+      "name": "Mesprit",
+      "baseStatTotal": 580,
+      "legendary": true,
+      "abilities": [
+        "Levitaci\u00F3n"
+      ]
+    },
+    {
+      "id": 482,
+      "name": "Azelf",
+      "baseStatTotal": 580,
+      "legendary": true,
+      "abilities": [
+        "Levitaci\u00F3n"
+      ]
+    },
+    {
+      "id": 483,
+      "name": "Dialga",
+      "baseStatTotal": 680,
+      "legendary": true,
+      "abilities": [
+        "Presi\u00F3n",
+        "Telepat\u00EDa"
+      ]
+    },
+    {
+      "id": 484,
+      "name": "Palkia",
+      "baseStatTotal": 680,
+      "legendary": true,
+      "abilities": [
+        "Presi\u00F3n",
+        "Telepat\u00EDa"
+      ]
+    },
+    {
+      "id": 485,
+      "name": "Heatran",
+      "baseStatTotal": 600,
+      "legendary": true,
+      "abilities": [
+        "Absorbe Fuego",
+        "Cuerpo Llama"
+      ]
+    },
+    {
+      "id": 486,
+      "name": "Regigigas",
+      "baseStatTotal": 670,
+      "legendary": true,
+      "abilities": [
+        "Inicio Lento"
+      ]
+    },
+    {
+      "id": 487,
+      "name": "Giratina",
+      "baseStatTotal": 680,
+      "legendary": true,
+      "abilities": [
+        "Presi\u00F3n",
+        "Telepat\u00EDa"
+      ]
+    },
+    {
+      "id": 488,
+      "name": "Cresselia",
+      "baseStatTotal": 600,
+      "legendary": true,
+      "abilities": [
+        "Levitaci\u00F3n"
+      ]
+    },
+    {
+      "id": 489,
+      "name": "Phione",
+      "baseStatTotal": 480,
+      "legendary": true,
+      "abilities": [
+        "Hidrataci\u00F3n"
+      ]
+    },
+    {
+      "id": 490,
+      "name": "Manaphy",
+      "baseStatTotal": 600,
+      "legendary": true,
+      "abilities": [
+        "Hidrataci\u00F3n"
+      ]
+    },
+    {
+      "id": 491,
+      "name": "Darkrai",
+      "baseStatTotal": 600,
+      "legendary": true,
+      "abilities": [
+        "Mal Sue\u00F1o"
+      ]
+    },
+    {
+      "id": 492,
+      "name": "Shaymin",
+      "baseStatTotal": 600,
+      "legendary": true,
+      "abilities": [
+        "Cura Natural"
+      ]
+    },
+    {
+      "id": 493,
+      "name": "Arceus",
+      "baseStatTotal": 720,
+      "legendary": true,
+      "abilities": [
+        "Multitipo"
+      ]
+    },
+    {
+      "id": 494,
+      "name": "Victini",
+      "baseStatTotal": 600,
+      "legendary": true,
+      "abilities": [
+        "Tinovictoria"
+      ]
+    },
+    {
+      "id": 495,
+      "name": "Snivy",
+      "baseStatTotal": 308,
+      "legendary": false,
+      "abilities": [
+        "Espesura",
+        "Respond\u00F3n"
+      ]
+    },
+    {
+      "id": 496,
+      "name": "Servine",
+      "baseStatTotal": 413,
+      "legendary": false,
+      "abilities": [
+        "Espesura",
+        "Respond\u00F3n"
+      ]
+    },
+    {
+      "id": 497,
+      "name": "Serperior",
+      "baseStatTotal": 528,
+      "legendary": false,
+      "abilities": [
+        "Espesura",
+        "Respond\u00F3n"
+      ]
+    },
+    {
+      "id": 498,
+      "name": "Tepig",
+      "baseStatTotal": 308,
+      "legendary": false,
+      "abilities": [
+        "Mar Llamas",
+        "Sebo"
+      ]
+    },
+    {
+      "id": 499,
+      "name": "Pignite",
+      "baseStatTotal": 418,
+      "legendary": false,
+      "abilities": [
+        "Mar Llamas",
+        "Sebo"
+      ]
+    },
+    {
+      "id": 500,
+      "name": "Emboar",
+      "baseStatTotal": 528,
+      "legendary": false,
+      "abilities": [
+        "Mar Llamas",
+        "Audaz"
+      ]
+    },
+    {
+      "id": 501,
+      "name": "Oshawott",
+      "baseStatTotal": 308,
+      "legendary": false,
+      "abilities": [
+        "Torrente",
+        "Caparaz\u00F3n"
+      ]
+    },
+    {
+      "id": 502,
+      "name": "Dewott",
+      "baseStatTotal": 413,
+      "legendary": false,
+      "abilities": [
+        "Torrente",
+        "Caparaz\u00F3n"
+      ]
+    },
+    {
+      "id": 503,
+      "name": "Samurott",
+      "baseStatTotal": 528,
+      "legendary": false,
+      "abilities": [
+        "Torrente",
+        "Caparaz\u00F3n"
+      ]
+    },
+    {
+      "id": 504,
+      "name": "Patrat",
+      "baseStatTotal": 255,
+      "legendary": false,
+      "abilities": [
+        "Fuga",
+        "Vista Lince",
+        "C\u00E1lculo Final"
+      ]
+    },
+    {
+      "id": 505,
+      "name": "Watchog",
+      "baseStatTotal": 420,
+      "legendary": false,
+      "abilities": [
+        "Iluminaci\u00F3n",
+        "Vista Lince",
+        "C\u00E1lculo Final"
+      ]
+    },
+    {
+      "id": 506,
+      "name": "Lillipup",
+      "baseStatTotal": 275,
+      "legendary": false,
+      "abilities": [
+        "Esp\u00EDritu Vital",
+        "Recogida",
+        "Fuga"
+      ]
+    },
+    {
+      "id": 507,
+      "name": "Herdier",
+      "baseStatTotal": 370,
+      "legendary": false,
+      "abilities": [
+        "Intimidaci\u00F3n",
+        "\u00CDmpetu Arena",
+        "Intr\u00E9pido"
+      ]
+    },
+    {
+      "id": 508,
+      "name": "Stoutland",
+      "baseStatTotal": 500,
+      "legendary": false,
+      "abilities": [
+        "Intimidaci\u00F3n",
+        "\u00CDmpetu Arena",
+        "Intr\u00E9pido"
+      ]
+    },
+    {
+      "id": 509,
+      "name": "Purrloin",
+      "baseStatTotal": 281,
+      "legendary": false,
+      "abilities": [
+        "Flexibilidad",
+        "Liviano",
+        "Bromista"
+      ]
+    },
+    {
+      "id": 510,
+      "name": "Liepard",
+      "baseStatTotal": 446,
+      "legendary": false,
+      "abilities": [
+        "Flexibilidad",
+        "Liviano",
+        "Bromista"
+      ]
+    },
+    {
+      "id": 511,
+      "name": "Pansage",
+      "baseStatTotal": 316,
+      "legendary": false,
+      "abilities": [
+        "Gula",
+        "Espesura"
+      ]
+    },
+    {
+      "id": 512,
+      "name": "Simisage",
+      "baseStatTotal": 498,
+      "legendary": false,
+      "abilities": [
+        "Gula",
+        "Espesura"
+      ]
+    },
+    {
+      "id": 513,
+      "name": "Pansear",
+      "baseStatTotal": 316,
+      "legendary": false,
+      "abilities": [
+        "Gula",
+        "Mar Llamas"
+      ]
+    },
+    {
+      "id": 514,
+      "name": "Simisear",
+      "baseStatTotal": 498,
+      "legendary": false,
+      "abilities": [
+        "Gula",
+        "Mar Llamas"
+      ]
+    },
+    {
+      "id": 515,
+      "name": "Panpour",
+      "baseStatTotal": 316,
+      "legendary": false,
+      "abilities": [
+        "Gula",
+        "Torrente"
+      ]
+    },
+    {
+      "id": 516,
+      "name": "Simipour",
+      "baseStatTotal": 498,
+      "legendary": false,
+      "abilities": [
+        "Gula",
+        "Torrente"
+      ]
+    },
+    {
+      "id": 517,
+      "name": "Munna",
+      "baseStatTotal": 292,
+      "legendary": false,
+      "abilities": [
+        "Alerta",
+        "Sincron\u00EDa",
+        "Telepat\u00EDa"
+      ]
+    },
+    {
+      "id": 518,
+      "name": "Musharna",
+      "baseStatTotal": 487,
+      "legendary": false,
+      "abilities": [
+        "Alerta",
+        "Sincron\u00EDa",
+        "Telepat\u00EDa"
+      ]
+    },
+    {
+      "id": 519,
+      "name": "Pidove",
+      "baseStatTotal": 264,
+      "legendary": false,
+      "abilities": [
+        "Sacapecho",
+        "Afortunado",
+        "Rivalidad"
+      ]
+    },
+    {
+      "id": 520,
+      "name": "Tranquill",
+      "baseStatTotal": 358,
+      "legendary": false,
+      "abilities": [
+        "Sacapecho",
+        "Afortunado",
+        "Rivalidad"
+      ]
+    },
+    {
+      "id": 521,
+      "name": "Unfezant",
+      "baseStatTotal": 488,
+      "legendary": false,
+      "abilities": [
+        "Sacapecho",
+        "Afortunado",
+        "Rivalidad"
+      ]
+    },
+    {
+      "id": 522,
+      "name": "Blitzle",
+      "baseStatTotal": 295,
+      "legendary": false,
+      "abilities": [
+        "Pararrayos",
+        "Electromotor",
+        "Herb\u00EDvoro"
+      ]
+    },
+    {
+      "id": 523,
+      "name": "Zebstrika",
+      "baseStatTotal": 497,
+      "legendary": false,
+      "abilities": [
+        "Pararrayos",
+        "Electromotor",
+        "Herb\u00EDvoro"
+      ]
+    },
+    {
+      "id": 524,
+      "name": "Roggenrola",
+      "baseStatTotal": 280,
+      "legendary": false,
+      "abilities": [
+        "Robustez",
+        "Armadura Fr\u00E1gil",
+        "Poder Arena"
+      ]
+    },
+    {
+      "id": 525,
+      "name": "Boldore",
+      "baseStatTotal": 390,
+      "legendary": false,
+      "abilities": [
+        "Robustez",
+        "Armadura Fr\u00E1gil",
+        "Poder Arena"
+      ]
+    },
+    {
+      "id": 526,
+      "name": "Gigalith",
+      "baseStatTotal": 515,
+      "legendary": false,
+      "abilities": [
+        "Robustez",
+        "Chorro Arena",
+        "Poder Arena"
+      ]
+    },
+    {
+      "id": 527,
+      "name": "Woobat",
+      "baseStatTotal": 323,
+      "legendary": false,
+      "abilities": [
+        "Ignorante",
+        "Zoquete",
+        "Simple"
+      ]
+    },
+    {
+      "id": 528,
+      "name": "Swoobat",
+      "baseStatTotal": 425,
+      "legendary": false,
+      "abilities": [
+        "Ignorante",
+        "Zoquete",
+        "Simple"
+      ]
+    },
+    {
+      "id": 529,
+      "name": "Drilbur",
+      "baseStatTotal": 328,
+      "legendary": false,
+      "abilities": [
+        "\u00CDmpetu Arena",
+        "Poder Arena",
+        "Rompemoldes"
+      ]
+    },
+    {
+      "id": 530,
+      "name": "Excadrill",
+      "baseStatTotal": 508,
+      "legendary": false,
+      "abilities": [
+        "\u00CDmpetu Arena",
+        "Poder Arena",
+        "Rompemoldes"
+      ]
+    },
+    {
+      "id": 531,
+      "name": "Audino",
+      "baseStatTotal": 445,
+      "legendary": false,
+      "abilities": [
+        "Alma Cura",
+        "Regeneraci\u00F3n",
+        "Zoquete"
+      ]
+    },
+    {
+      "id": 532,
+      "name": "Timburr",
+      "baseStatTotal": 305,
+      "legendary": false,
+      "abilities": [
+        "Agallas",
+        "Potencia Bruta",
+        "Pu\u00F1o F\u00E9rreo"
+      ]
+    },
+    {
+      "id": 533,
+      "name": "Gurdurr",
+      "baseStatTotal": 405,
+      "legendary": false,
+      "abilities": [
+        "Agallas",
+        "Potencia Bruta",
+        "Pu\u00F1o F\u00E9rreo"
+      ]
+    },
+    {
+      "id": 534,
+      "name": "Conkeldurr",
+      "baseStatTotal": 505,
+      "legendary": false,
+      "abilities": [
+        "Agallas",
+        "Potencia Bruta",
+        "Pu\u00F1o F\u00E9rreo"
+      ]
+    },
+    {
+      "id": 535,
+      "name": "Tympole",
+      "baseStatTotal": 294,
+      "legendary": false,
+      "abilities": [
+        "Nado R\u00E1pido",
+        "Hidrataci\u00F3n",
+        "Absorbe Agua"
+      ]
+    },
+    {
+      "id": 536,
+      "name": "Palpitoad",
+      "baseStatTotal": 384,
+      "legendary": false,
+      "abilities": [
+        "Nado R\u00E1pido",
+        "Hidrataci\u00F3n",
+        "Absorbe Agua"
+      ]
+    },
+    {
+      "id": 537,
+      "name": "Seismitoad",
+      "baseStatTotal": 509,
+      "legendary": false,
+      "abilities": [
+        "Nado R\u00E1pido",
+        "Toque T\u00F3xico",
+        "Absorbe Agua"
+      ]
+    },
+    {
+      "id": 538,
+      "name": "Throh",
+      "baseStatTotal": 465,
+      "legendary": false,
+      "abilities": [
+        "Agallas",
+        "Foco Interno",
+        "Rompemoldes"
+      ]
+    },
+    {
+      "id": 539,
+      "name": "Sawk",
+      "baseStatTotal": 465,
+      "legendary": false,
+      "abilities": [
+        "Robustez",
+        "Foco Interno",
+        "Rompemoldes"
+      ]
+    },
+    {
+      "id": 540,
+      "name": "Sewaddle",
+      "baseStatTotal": 310,
+      "legendary": false,
+      "abilities": [
+        "Enjambre",
+        "Clorofila",
+        "Funda"
+      ]
+    },
+    {
+      "id": 541,
+      "name": "Swadloon",
+      "baseStatTotal": 380,
+      "legendary": false,
+      "abilities": [
+        "Defensa Hoja",
+        "Clorofila",
+        "Funda"
+      ]
+    },
+    {
+      "id": 542,
+      "name": "Leavanny",
+      "baseStatTotal": 500,
+      "legendary": false,
+      "abilities": [
+        "Enjambre",
+        "Clorofila",
+        "Funda"
+      ]
+    },
+    {
+      "id": 543,
+      "name": "Venipede",
+      "baseStatTotal": 260,
+      "legendary": false,
+      "abilities": [
+        "Punto T\u00F3xico",
+        "Enjambre",
+        "Impulso"
+      ]
+    },
+    {
+      "id": 544,
+      "name": "Whirlipede",
+      "baseStatTotal": 360,
+      "legendary": false,
+      "abilities": [
+        "Punto T\u00F3xico",
+        "Enjambre",
+        "Impulso"
+      ]
+    },
+    {
+      "id": 545,
+      "name": "Scolipede",
+      "baseStatTotal": 485,
+      "legendary": false,
+      "abilities": [
+        "Punto T\u00F3xico",
+        "Enjambre",
+        "Impulso"
+      ]
+    },
+    {
+      "id": 546,
+      "name": "Cottonee",
+      "baseStatTotal": 280,
+      "legendary": false,
+      "abilities": [
+        "Bromista",
+        "Allanamiento",
+        "Clorofila"
+      ]
+    },
+    {
+      "id": 547,
+      "name": "Whimsicott",
+      "baseStatTotal": 480,
+      "legendary": false,
+      "abilities": [
+        "Bromista",
+        "Allanamiento",
+        "Clorofila"
+      ]
+    },
+    {
+      "id": 548,
+      "name": "Petilil",
+      "baseStatTotal": 280,
+      "legendary": false,
+      "abilities": [
+        "Clorofila",
+        "Ritmo Propio",
+        "Defensa Hoja"
+      ]
+    },
+    {
+      "id": 549,
+      "name": "Lilligant",
+      "baseStatTotal": 480,
+      "legendary": false,
+      "abilities": [
+        "Clorofila",
+        "Ritmo Propio",
+        "Defensa Hoja"
+      ]
+    },
+    {
+      "id": 550,
+      "name": "Basculin",
+      "baseStatTotal": 460,
+      "legendary": false,
+      "abilities": [
+        "Audaz",
+        "Adaptable",
+        "Rompemoldes"
+      ]
+    },
+    {
+      "id": 551,
+      "name": "Sandile",
+      "baseStatTotal": 292,
+      "legendary": false,
+      "abilities": [
+        "Intimidaci\u00F3n",
+        "Autoestima",
+        "Irascible"
+      ]
+    },
+    {
+      "id": 552,
+      "name": "Krokorok",
+      "baseStatTotal": 351,
+      "legendary": false,
+      "abilities": [
+        "Intimidaci\u00F3n",
+        "Autoestima",
+        "Irascible"
+      ]
+    },
+    {
+      "id": 553,
+      "name": "Krookodile",
+      "baseStatTotal": 519,
+      "legendary": false,
+      "abilities": [
+        "Intimidaci\u00F3n",
+        "Autoestima",
+        "Irascible"
+      ]
+    },
+    {
+      "id": 554,
+      "name": "Darumaka",
+      "baseStatTotal": 315,
+      "legendary": false,
+      "abilities": [
+        "Entusiasmo",
+        "Foco Interno"
+      ]
+    },
+    {
+      "id": 555,
+      "name": "Darmanitan",
+      "baseStatTotal": 480,
+      "legendary": false,
+      "abilities": [
+        "Potencia Bruta",
+        "Modo Daruma"
+      ]
+    },
+    {
+      "id": 556,
+      "name": "Maractus",
+      "baseStatTotal": 461,
+      "legendary": false,
+      "abilities": [
+        "Absorbe Agua",
+        "Clorofila",
+        "Colector"
+      ]
+    },
+    {
+      "id": 557,
+      "name": "Dwebble",
+      "baseStatTotal": 325,
+      "legendary": false,
+      "abilities": [
+        "Robustez",
+        "Caparaz\u00F3n",
+        "Armadura Fr\u00E1gil"
+      ]
+    },
+    {
+      "id": 558,
+      "name": "Crustle",
+      "baseStatTotal": 485,
+      "legendary": false,
+      "abilities": [
+        "Robustez",
+        "Caparaz\u00F3n",
+        "Armadura Fr\u00E1gil"
+      ]
+    },
+    {
+      "id": 559,
+      "name": "Scraggy",
+      "baseStatTotal": 348,
+      "legendary": false,
+      "abilities": [
+        "Mudar",
+        "Autoestima",
+        "Intimidaci\u00F3n"
+      ]
+    },
+    {
+      "id": 560,
+      "name": "Scrafty",
+      "baseStatTotal": 488,
+      "legendary": false,
+      "abilities": [
+        "Mudar",
+        "Autoestima",
+        "Intimidaci\u00F3n"
+      ]
+    },
+    {
+      "id": 561,
+      "name": "Sigilyph",
+      "baseStatTotal": 490,
+      "legendary": false,
+      "abilities": [
+        "Piel Milagro",
+        "Muro M\u00E1gico",
+        "Cromolente"
+      ]
+    },
+    {
+      "id": 562,
+      "name": "Yamask",
+      "baseStatTotal": 303,
+      "legendary": false,
+      "abilities": [
+        "Momia"
+      ]
+    },
+    {
+      "id": 563,
+      "name": "Cofagrigus",
+      "baseStatTotal": 483,
+      "legendary": false,
+      "abilities": [
+        "Momia"
+      ]
+    },
+    {
+      "id": 564,
+      "name": "Tirtouga",
+      "baseStatTotal": 355,
+      "legendary": false,
+      "abilities": [
+        "Roca S\u00F3lida",
+        "Robustez",
+        "Nado R\u00E1pido"
+      ]
+    },
+    {
+      "id": 565,
+      "name": "Carracosta",
+      "baseStatTotal": 495,
+      "legendary": false,
+      "abilities": [
+        "Roca S\u00F3lida",
+        "Robustez",
+        "Nado R\u00E1pido"
+      ]
+    },
+    {
+      "id": 566,
+      "name": "Archen",
+      "baseStatTotal": 401,
+      "legendary": false,
+      "abilities": [
+        "Flaqueza"
+      ]
+    },
+    {
+      "id": 567,
+      "name": "Archeops",
+      "baseStatTotal": 567,
+      "legendary": false,
+      "abilities": [
+        "Flaqueza"
+      ]
+    },
+    {
+      "id": 568,
+      "name": "Trubbish",
+      "baseStatTotal": 329,
+      "legendary": false,
+      "abilities": [
+        "Hedor",
+        "Viscosidad",
+        "Resquicio"
+      ]
+    },
+    {
+      "id": 569,
+      "name": "Garbodor",
+      "baseStatTotal": 474,
+      "legendary": false,
+      "abilities": [
+        "Hedor",
+        "Armadura Fr\u00E1gil",
+        "Resquicio"
+      ]
+    },
+    {
+      "id": 570,
+      "name": "Zorua",
+      "baseStatTotal": 330,
+      "legendary": false,
+      "abilities": [
+        "Ilusi\u00F3n"
+      ]
+    },
+    {
+      "id": 571,
+      "name": "Zoroark",
+      "baseStatTotal": 510,
+      "legendary": false,
+      "abilities": [
+        "Ilusi\u00F3n"
+      ]
+    },
+    {
+      "id": 572,
+      "name": "Minccino",
+      "baseStatTotal": 300,
+      "legendary": false,
+      "abilities": [
+        "Gran Encanto",
+        "Experto",
+        "Encadenado"
+      ]
+    },
+    {
+      "id": 573,
+      "name": "Cinccino",
+      "baseStatTotal": 470,
+      "legendary": false,
+      "abilities": [
+        "Gran Encanto",
+        "Experto",
+        "Encadenado"
+      ]
+    },
+    {
+      "id": 574,
+      "name": "Gothita",
+      "baseStatTotal": 290,
+      "legendary": false,
+      "abilities": [
+        "Cacheo",
+        "Tenacidad",
+        "Sombra Trampa"
+      ]
+    },
+    {
+      "id": 575,
+      "name": "Gothorita",
+      "baseStatTotal": 390,
+      "legendary": false,
+      "abilities": [
+        "Cacheo",
+        "Tenacidad",
+        "Sombra Trampa"
+      ]
+    },
+    {
+      "id": 576,
+      "name": "Gothitelle",
+      "baseStatTotal": 490,
+      "legendary": false,
+      "abilities": [
+        "Cacheo",
+        "Tenacidad",
+        "Sombra Trampa"
+      ]
+    },
+    {
+      "id": 577,
+      "name": "Solosis",
+      "baseStatTotal": 290,
+      "legendary": false,
+      "abilities": [
+        "Funda",
+        "Muro M\u00E1gico",
+        "Regeneraci\u00F3n"
+      ]
+    },
+    {
+      "id": 578,
+      "name": "Duosion",
+      "baseStatTotal": 370,
+      "legendary": false,
+      "abilities": [
+        "Funda",
+        "Muro M\u00E1gico",
+        "Regeneraci\u00F3n"
+      ]
+    },
+    {
+      "id": 579,
+      "name": "Reuniclus",
+      "baseStatTotal": 490,
+      "legendary": false,
+      "abilities": [
+        "Funda",
+        "Muro M\u00E1gico",
+        "Regeneraci\u00F3n"
+      ]
+    },
+    {
+      "id": 580,
+      "name": "Ducklett",
+      "baseStatTotal": 305,
+      "legendary": false,
+      "abilities": [
+        "Vista Lince",
+        "Sacapecho",
+        "Hidrataci\u00F3n"
+      ]
+    },
+    {
+      "id": 581,
+      "name": "Swanna",
+      "baseStatTotal": 473,
+      "legendary": false,
+      "abilities": [
+        "Vista Lince",
+        "Sacapecho",
+        "Hidrataci\u00F3n"
+      ]
+    },
+    {
+      "id": 582,
+      "name": "Vanillite",
+      "baseStatTotal": 305,
+      "legendary": false,
+      "abilities": [
+        "G\u00E9lido",
+        "Manto N\u00EDveo",
+        "Armadura Fr\u00E1gil"
+      ]
+    },
+    {
+      "id": 583,
+      "name": "Vanillish",
+      "baseStatTotal": 395,
+      "legendary": false,
+      "abilities": [
+        "G\u00E9lido",
+        "Manto N\u00EDveo",
+        "Armadura Fr\u00E1gil"
+      ]
+    },
+    {
+      "id": 584,
+      "name": "Vanilluxe",
+      "baseStatTotal": 535,
+      "legendary": false,
+      "abilities": [
+        "G\u00E9lido",
+        "Nevada",
+        "Armadura Fr\u00E1gil"
+      ]
+    },
+    {
+      "id": 585,
+      "name": "Deerling",
+      "baseStatTotal": 335,
+      "legendary": false,
+      "abilities": [
+        "Clorofila",
+        "Herb\u00EDvoro",
+        "Dicha"
+      ]
+    },
+    {
+      "id": 586,
+      "name": "Sawsbuck",
+      "baseStatTotal": 475,
+      "legendary": false,
+      "abilities": [
+        "Clorofila",
+        "Herb\u00EDvoro",
+        "Dicha"
+      ]
+    },
+    {
+      "id": 587,
+      "name": "Emolga",
+      "baseStatTotal": 428,
+      "legendary": false,
+      "abilities": [
+        "Elec. Est\u00E1tica",
+        "Electromotor"
+      ]
+    },
+    {
+      "id": 588,
+      "name": "Karrablast",
+      "baseStatTotal": 315,
+      "legendary": false,
+      "abilities": [
+        "Enjambre",
+        "Mudar",
+        "Indefenso"
+      ]
+    },
+    {
+      "id": 589,
+      "name": "Escavalier",
+      "baseStatTotal": 495,
+      "legendary": false,
+      "abilities": [
+        "Enjambre",
+        "Caparaz\u00F3n",
+        "Funda"
+      ]
+    },
+    {
+      "id": 590,
+      "name": "Foongus",
+      "baseStatTotal": 294,
+      "legendary": false,
+      "abilities": [
+        "Efecto Espora",
+        "Regeneraci\u00F3n"
+      ]
+    },
+    {
+      "id": 591,
+      "name": "Amoonguss",
+      "baseStatTotal": 464,
+      "legendary": false,
+      "abilities": [
+        "Efecto Espora",
+        "Regeneraci\u00F3n"
+      ]
+    },
+    {
+      "id": 592,
+      "name": "Frillish",
+      "baseStatTotal": 335,
+      "legendary": false,
+      "abilities": [
+        "Absorbe Agua",
+        "Cuerpo Maldito",
+        "Humedad"
+      ]
+    },
+    {
+      "id": 593,
+      "name": "Jellicent",
+      "baseStatTotal": 480,
+      "legendary": false,
+      "abilities": [
+        "Absorbe Agua",
+        "Cuerpo Maldito",
+        "Humedad"
+      ]
+    },
+    {
+      "id": 594,
+      "name": "Alomomola",
+      "baseStatTotal": 470,
+      "legendary": false,
+      "abilities": [
+        "Alma Cura",
+        "Hidrataci\u00F3n",
+        "Regeneraci\u00F3n"
+      ]
+    },
+    {
+      "id": 595,
+      "name": "Joltik",
+      "baseStatTotal": 319,
+      "legendary": false,
+      "abilities": [
+        "Ojo Compuesto",
+        "Nerviosismo",
+        "Enjambre"
+      ]
+    },
+    {
+      "id": 596,
+      "name": "Galvantula",
+      "baseStatTotal": 472,
+      "legendary": false,
+      "abilities": [
+        "Ojo Compuesto",
+        "Nerviosismo",
+        "Enjambre"
+      ]
+    },
+    {
+      "id": 597,
+      "name": "Ferroseed",
+      "baseStatTotal": 305,
+      "legendary": false,
+      "abilities": [
+        "Punta Acero"
+      ]
+    },
+    {
+      "id": 598,
+      "name": "Ferrothorn",
+      "baseStatTotal": 489,
+      "legendary": false,
+      "abilities": [
+        "Punta Acero",
+        "Anticipaci\u00F3n"
+      ]
+    },
+    {
+      "id": 599,
+      "name": "Klink",
+      "baseStatTotal": 300,
+      "legendary": false,
+      "abilities": [
+        "M\u00E1s",
+        "Menos",
+        "Cuerpo Puro"
+      ]
+    },
+    {
+      "id": 600,
+      "name": "Klang",
+      "baseStatTotal": 440,
+      "legendary": false,
+      "abilities": [
+        "M\u00E1s",
+        "Menos",
+        "Cuerpo Puro"
+      ]
+    },
+    {
+      "id": 601,
+      "name": "Klinklang",
+      "baseStatTotal": 520,
+      "legendary": false,
+      "abilities": [
+        "M\u00E1s",
+        "Menos",
+        "Cuerpo Puro"
+      ]
+    },
+    {
+      "id": 602,
+      "name": "Tynamo",
+      "baseStatTotal": 275,
+      "legendary": false,
+      "abilities": [
+        "Levitaci\u00F3n"
+      ]
+    },
+    {
+      "id": 603,
+      "name": "Eelektrik",
+      "baseStatTotal": 405,
+      "legendary": false,
+      "abilities": [
+        "Levitaci\u00F3n"
+      ]
+    },
+    {
+      "id": 604,
+      "name": "Eelektross",
+      "baseStatTotal": 515,
+      "legendary": false,
+      "abilities": [
+        "Levitaci\u00F3n"
+      ]
+    },
+    {
+      "id": 605,
+      "name": "Elgyem",
+      "baseStatTotal": 335,
+      "legendary": false,
+      "abilities": [
+        "Telepat\u00EDa",
+        "Sincron\u00EDa",
+        "C\u00E1lculo Final"
+      ]
+    },
+    {
+      "id": 606,
+      "name": "Beheeyem",
+      "baseStatTotal": 485,
+      "legendary": false,
+      "abilities": [
+        "Telepat\u00EDa",
+        "Sincron\u00EDa",
+        "C\u00E1lculo Final"
+      ]
+    },
+    {
+      "id": 607,
+      "name": "Litwick",
+      "baseStatTotal": 275,
+      "legendary": false,
+      "abilities": [
+        "Absorbe Fuego",
+        "Cuerpo Llama",
+        "Allanamiento"
+      ]
+    },
+    {
+      "id": 608,
+      "name": "Lampent",
+      "baseStatTotal": 370,
+      "legendary": false,
+      "abilities": [
+        "Absorbe Fuego",
+        "Cuerpo Llama",
+        "Allanamiento"
+      ]
+    },
+    {
+      "id": 609,
+      "name": "Chandelure",
+      "baseStatTotal": 520,
+      "legendary": false,
+      "abilities": [
+        "Absorbe Fuego",
+        "Cuerpo Llama",
+        "Allanamiento"
+      ]
+    },
+    {
+      "id": 610,
+      "name": "Axew",
+      "baseStatTotal": 320,
+      "legendary": false,
+      "abilities": [
+        "Rivalidad",
+        "Rompemoldes",
+        "Nerviosismo"
+      ]
+    },
+    {
+      "id": 611,
+      "name": "Fraxure",
+      "baseStatTotal": 410,
+      "legendary": false,
+      "abilities": [
+        "Rivalidad",
+        "Rompemoldes",
+        "Nerviosismo"
+      ]
+    },
+    {
+      "id": 612,
+      "name": "Haxorus",
+      "baseStatTotal": 540,
+      "legendary": false,
+      "abilities": [
+        "Rivalidad",
+        "Rompemoldes",
+        "Nerviosismo"
+      ]
+    },
+    {
+      "id": 613,
+      "name": "Cubchoo",
+      "baseStatTotal": 305,
+      "legendary": false,
+      "abilities": [
+        "Manto N\u00EDveo",
+        "Quitanieves",
+        "Cobard\u00EDa"
+      ]
+    },
+    {
+      "id": 614,
+      "name": "Beartic",
+      "baseStatTotal": 505,
+      "legendary": false,
+      "abilities": [
+        "Manto N\u00EDveo",
+        "Quitanieves",
+        "Nado R\u00E1pido"
+      ]
+    },
+    {
+      "id": 615,
+      "name": "Cryogonal",
+      "baseStatTotal": 515,
+      "legendary": false,
+      "abilities": [
+        "Levitaci\u00F3n"
+      ]
+    },
+    {
+      "id": 616,
+      "name": "Shelmet",
+      "baseStatTotal": 305,
+      "legendary": false,
+      "abilities": [
+        "Hidrataci\u00F3n",
+        "Caparaz\u00F3n",
+        "Funda"
+      ]
+    },
+    {
+      "id": 617,
+      "name": "Accelgor",
+      "baseStatTotal": 495,
+      "legendary": false,
+      "abilities": [
+        "Hidrataci\u00F3n",
+        "Viscosidad",
+        "Liviano"
+      ]
+    },
+    {
+      "id": 618,
+      "name": "Stunfisk",
+      "baseStatTotal": 471,
+      "legendary": false,
+      "abilities": [
+        "Elec. Est\u00E1tica",
+        "Flexibilidad",
+        "Velo Arena"
+      ]
+    },
+    {
+      "id": 619,
+      "name": "Mienfoo",
+      "baseStatTotal": 350,
+      "legendary": false,
+      "abilities": [
+        "Foco Interno",
+        "Regeneraci\u00F3n",
+        "Audaz"
+      ]
+    },
+    {
+      "id": 620,
+      "name": "Mienshao",
+      "baseStatTotal": 510,
+      "legendary": false,
+      "abilities": [
+        "Foco Interno",
+        "Regeneraci\u00F3n",
+        "Audaz"
+      ]
+    },
+    {
+      "id": 621,
+      "name": "Druddigon",
+      "baseStatTotal": 485,
+      "legendary": false,
+      "abilities": [
+        "Piel Tosca",
+        "Potencia Bruta",
+        "Rompemoldes"
+      ]
+    },
+    {
+      "id": 622,
+      "name": "Golett",
+      "baseStatTotal": 303,
+      "legendary": false,
+      "abilities": [
+        "Pu\u00F1o F\u00E9rreo",
+        "Zoquete",
+        "Indefenso"
+      ]
+    },
+    {
+      "id": 623,
+      "name": "Golurk",
+      "baseStatTotal": 483,
+      "legendary": false,
+      "abilities": [
+        "Pu\u00F1o F\u00E9rreo",
+        "Zoquete",
+        "Indefenso"
+      ]
+    },
+    {
+      "id": 624,
+      "name": "Pawniard",
+      "baseStatTotal": 340,
+      "legendary": false,
+      "abilities": [
+        "Competitivo",
+        "Foco Interno",
+        "Presi\u00F3n"
+      ]
+    },
+    {
+      "id": 625,
+      "name": "Bisharp",
+      "baseStatTotal": 490,
+      "legendary": false,
+      "abilities": [
+        "Competitivo",
+        "Foco Interno",
+        "Presi\u00F3n"
+      ]
+    },
+    {
+      "id": 626,
+      "name": "Bouffalant",
+      "baseStatTotal": 490,
+      "legendary": false,
+      "abilities": [
+        "Audaz",
+        "Herb\u00EDvoro",
+        "Insonorizar"
+      ]
+    },
+    {
+      "id": 627,
+      "name": "Rufflet",
+      "baseStatTotal": 350,
+      "legendary": false,
+      "abilities": [
+        "Vista Lince",
+        "Potencia Bruta",
+        "Entusiasmo"
+      ]
+    },
+    {
+      "id": 628,
+      "name": "Braviary",
+      "baseStatTotal": 510,
+      "legendary": false,
+      "abilities": [
+        "Vista Lince",
+        "Potencia Bruta",
+        "Competitivo"
+      ]
+    },
+    {
+      "id": 629,
+      "name": "Vullaby",
+      "baseStatTotal": 370,
+      "legendary": false,
+      "abilities": [
+        "Sacapecho",
+        "Funda",
+        "Armadura Fr\u00E1gil"
+      ]
+    },
+    {
+      "id": 630,
+      "name": "Mandibuzz",
+      "baseStatTotal": 510,
+      "legendary": false,
+      "abilities": [
+        "Sacapecho",
+        "Funda",
+        "Armadura Fr\u00E1gil"
+      ]
+    },
+    {
+      "id": 631,
+      "name": "Heatmor",
+      "baseStatTotal": 484,
+      "legendary": false,
+      "abilities": [
+        "Gula",
+        "Absorbe Fuego",
+        "Humo Blanco"
+      ]
+    },
+    {
+      "id": 632,
+      "name": "Durant",
+      "baseStatTotal": 484,
+      "legendary": false,
+      "abilities": [
+        "Enjambre",
+        "Entusiasmo",
+        "Ausente"
+      ]
+    },
+    {
+      "id": 633,
+      "name": "Deino",
+      "baseStatTotal": 300,
+      "legendary": false,
+      "abilities": [
+        "Entusiasmo"
+      ]
+    },
+    {
+      "id": 634,
+      "name": "Zweilous",
+      "baseStatTotal": 420,
+      "legendary": false,
+      "abilities": [
+        "Entusiasmo"
+      ]
+    },
+    {
+      "id": 635,
+      "name": "Hydreigon",
+      "baseStatTotal": 600,
+      "legendary": false,
+      "abilities": [
+        "Levitaci\u00F3n"
+      ]
+    },
+    {
+      "id": 636,
+      "name": "Larvesta",
+      "baseStatTotal": 360,
+      "legendary": false,
+      "abilities": [
+        "Cuerpo Llama",
+        "Enjambre"
+      ]
+    },
+    {
+      "id": 637,
+      "name": "Volcarona",
+      "baseStatTotal": 550,
+      "legendary": false,
+      "abilities": [
+        "Cuerpo Llama",
+        "Enjambre"
+      ]
+    },
+    {
+      "id": 638,
+      "name": "Cobalion",
+      "baseStatTotal": 580,
+      "legendary": true,
+      "abilities": [
+        "Justiciero"
+      ]
+    },
+    {
+      "id": 639,
+      "name": "Terrakion",
+      "baseStatTotal": 580,
+      "legendary": true,
+      "abilities": [
+        "Justiciero"
+      ]
+    },
+    {
+      "id": 640,
+      "name": "Virizion",
+      "baseStatTotal": 580,
+      "legendary": true,
+      "abilities": [
+        "Justiciero"
+      ]
+    },
+    {
+      "id": 641,
+      "name": "Tornadus",
+      "baseStatTotal": 580,
+      "legendary": true,
+      "abilities": [
+        "Bromista",
+        "Competitivo"
+      ]
+    },
+    {
+      "id": 642,
+      "name": "Thundurus",
+      "baseStatTotal": 580,
+      "legendary": true,
+      "abilities": [
+        "Bromista",
+        "Competitivo"
+      ]
+    },
+    {
+      "id": 643,
+      "name": "Reshiram",
+      "baseStatTotal": 680,
+      "legendary": true,
+      "abilities": [
+        "Turbollama"
+      ]
+    },
+    {
+      "id": 644,
+      "name": "Zekrom",
+      "baseStatTotal": 680,
+      "legendary": true,
+      "abilities": [
+        "Terravoltaje"
+      ]
+    },
+    {
+      "id": 645,
+      "name": "Landorus",
+      "baseStatTotal": 600,
+      "legendary": true,
+      "abilities": [
+        "Poder Arena",
+        "Potencia Bruta"
+      ]
+    },
+    {
+      "id": 646,
+      "name": "Kyurem",
+      "baseStatTotal": 660,
+      "legendary": true,
+      "abilities": [
+        "Presi\u00F3n"
+      ]
+    },
+    {
+      "id": 647,
+      "name": "Keldeo",
+      "baseStatTotal": 580,
+      "legendary": true,
+      "abilities": [
+        "Justiciero"
+      ]
+    },
+    {
+      "id": 648,
+      "name": "Meloetta",
+      "baseStatTotal": 600,
+      "legendary": true,
+      "abilities": [
+        "Dicha"
+      ]
+    },
+    {
+      "id": 649,
+      "name": "Genesect",
+      "baseStatTotal": 600,
+      "legendary": true,
+      "abilities": [
+        "Descarga"
+      ]
+    },
+    {
+      "id": 650,
+      "name": "Chespin",
+      "baseStatTotal": 313,
+      "legendary": false,
+      "abilities": [
+        "Espesura",
+        "Antibalas"
+      ]
+    },
+    {
+      "id": 651,
+      "name": "Quilladin",
+      "baseStatTotal": 405,
+      "legendary": false,
+      "abilities": [
+        "Espesura",
+        "Antibalas"
+      ]
+    },
+    {
+      "id": 652,
+      "name": "Chesnaught",
+      "baseStatTotal": 530,
+      "legendary": false,
+      "abilities": [
+        "Espesura",
+        "Antibalas"
+      ]
+    },
+    {
+      "id": 653,
+      "name": "Fennekin",
+      "baseStatTotal": 307,
+      "legendary": false,
+      "abilities": [
+        "Mar Llamas",
+        "Prestidigitador"
+      ]
+    },
+    {
+      "id": 654,
+      "name": "Braixen",
+      "baseStatTotal": 409,
+      "legendary": false,
+      "abilities": [
+        "Mar Llamas",
+        "Prestidigitador"
+      ]
+    },
+    {
+      "id": 655,
+      "name": "Delphox",
+      "baseStatTotal": 534,
+      "legendary": false,
+      "abilities": [
+        "Mar Llamas",
+        "Prestidigitador"
+      ]
+    },
+    {
+      "id": 656,
+      "name": "Froakie",
+      "baseStatTotal": 314,
+      "legendary": false,
+      "abilities": [
+        "Torrente",
+        "Mutatipo"
+      ]
+    },
+    {
+      "id": 657,
+      "name": "Frogadier",
+      "baseStatTotal": 405,
+      "legendary": false,
+      "abilities": [
+        "Torrente",
+        "Mutatipo"
+      ]
+    },
+    {
+      "id": 658,
+      "name": "Greninja",
+      "baseStatTotal": 530,
+      "legendary": false,
+      "abilities": [
+        "Torrente",
+        "Mutatipo"
+      ]
+    },
+    {
+      "id": 659,
+      "name": "Bunnelby",
+      "baseStatTotal": 237,
+      "legendary": false,
+      "abilities": [
+        "Recogida",
+        "Carrillo",
+        "Potencia"
+      ]
+    },
+    {
+      "id": 660,
+      "name": "Diggersby",
+      "baseStatTotal": 423,
+      "legendary": false,
+      "abilities": [
+        "Recogida",
+        "Carrillo",
+        "Potencia"
+      ]
+    },
+    {
+      "id": 661,
+      "name": "Fletchling",
+      "baseStatTotal": 278,
+      "legendary": false,
+      "abilities": [
+        "Sacapecho",
+        "Alas Vendaval"
+      ]
+    },
+    {
+      "id": 662,
+      "name": "Fletchinder",
+      "baseStatTotal": 382,
+      "legendary": false,
+      "abilities": [
+        "Cuerpo Llama",
+        "Alas Vendaval"
+      ]
+    },
+    {
+      "id": 663,
+      "name": "Talonflame",
+      "baseStatTotal": 499,
+      "legendary": false,
+      "abilities": [
+        "Cuerpo Llama",
+        "Alas Vendaval"
+      ]
+    },
+    {
+      "id": 664,
+      "name": "Scatterbug",
+      "baseStatTotal": 200,
+      "legendary": false,
+      "abilities": [
+        "Polvo Escudo",
+        "Ojo Compuesto",
+        "Compiescolta"
+      ]
+    },
+    {
+      "id": 665,
+      "name": "Spewpa",
+      "baseStatTotal": 213,
+      "legendary": false,
+      "abilities": [
+        "Mudar",
+        "Compiescolta"
+      ]
+    },
+    {
+      "id": 666,
+      "name": "Vivillon",
+      "baseStatTotal": 411,
+      "legendary": false,
+      "abilities": [
+        "Polvo Escudo",
+        "Ojo Compuesto",
+        "Compiescolta"
+      ]
+    },
+    {
+      "id": 667,
+      "name": "Litleo",
+      "baseStatTotal": 369,
+      "legendary": false,
+      "abilities": [
+        "Rivalidad",
+        "Nerviosismo",
+        "Autoestima"
+      ]
+    },
+    {
+      "id": 668,
+      "name": "Pyroar",
+      "baseStatTotal": 507,
+      "legendary": false,
+      "abilities": [
+        "Rivalidad",
+        "Nerviosismo",
+        "Autoestima"
+      ]
+    },
+    {
+      "id": 669,
+      "name": "Flab\u00E9b\u00E9",
+      "baseStatTotal": 303,
+      "legendary": false,
+      "abilities": [
+        "Velo Flor",
+        "Simbiosis"
+      ]
+    },
+    {
+      "id": 670,
+      "name": "Floette",
+      "baseStatTotal": 371,
+      "legendary": false,
+      "abilities": [
+        "Velo Flor",
+        "Simbiosis"
+      ]
+    },
+    {
+      "id": 671,
+      "name": "Florges",
+      "baseStatTotal": 552,
+      "legendary": false,
+      "abilities": [
+        "Velo Flor",
+        "Simbiosis"
+      ]
+    },
+    {
+      "id": 672,
+      "name": "Skiddo",
+      "baseStatTotal": 350,
+      "legendary": false,
+      "abilities": [
+        "Herb\u00EDvoro",
+        "Manto Frondoso"
+      ]
+    },
+    {
+      "id": 673,
+      "name": "Gogoat",
+      "baseStatTotal": 531,
+      "legendary": false,
+      "abilities": [
+        "Herb\u00EDvoro",
+        "Manto Frondoso"
+      ]
+    },
+    {
+      "id": 674,
+      "name": "Pancham",
+      "baseStatTotal": 348,
+      "legendary": false,
+      "abilities": [
+        "Pu\u00F1o F\u00E9rreo",
+        "Rompemoldes",
+        "Intr\u00E9pido"
+      ]
+    },
+    {
+      "id": 675,
+      "name": "Pangoro",
+      "baseStatTotal": 495,
+      "legendary": false,
+      "abilities": [
+        "Pu\u00F1o F\u00E9rreo",
+        "Rompemoldes",
+        "Intr\u00E9pido"
+      ]
+    },
+    {
+      "id": 676,
+      "name": "Furfrou",
+      "baseStatTotal": 472,
+      "legendary": false,
+      "abilities": [
+        "Pelaje Recio"
+      ]
+    },
+    {
+      "id": 677,
+      "name": "Espurr",
+      "baseStatTotal": 355,
+      "legendary": false,
+      "abilities": [
+        "Vista Lince",
+        "Allanamiento",
+        "Ritmo Propio"
+      ]
+    },
+    {
+      "id": 678,
+      "name": "Meowstic",
+      "baseStatTotal": 466,
+      "legendary": false,
+      "abilities": [
+        "Vista Lince",
+        "Allanamiento",
+        "Bromista"
+      ]
+    },
+    {
+      "id": 679,
+      "name": "Honedge",
+      "baseStatTotal": 325,
+      "legendary": false,
+      "abilities": [
+        "Indefenso"
+      ]
+    },
+    {
+      "id": 680,
+      "name": "Doublade",
+      "baseStatTotal": 448,
+      "legendary": false,
+      "abilities": [
+        "Indefenso"
+      ]
+    },
+    {
+      "id": 681,
+      "name": "Aegislash",
+      "baseStatTotal": 520,
+      "legendary": false,
+      "abilities": [
+        "Cambio T\u00E1ctico"
+      ]
+    },
+    {
+      "id": 682,
+      "name": "Spritzee",
+      "baseStatTotal": 341,
+      "legendary": false,
+      "abilities": [
+        "Alma Cura",
+        "Velo Aroma"
+      ]
+    },
+    {
+      "id": 683,
+      "name": "Aromatisse",
+      "baseStatTotal": 462,
+      "legendary": false,
+      "abilities": [
+        "Alma Cura",
+        "Velo Aroma"
+      ]
+    },
+    {
+      "id": 684,
+      "name": "Swirlix",
+      "baseStatTotal": 341,
+      "legendary": false,
+      "abilities": [
+        "Velo Dulce",
+        "Liviano"
+      ]
+    },
+    {
+      "id": 685,
+      "name": "Slurpuff",
+      "baseStatTotal": 480,
+      "legendary": false,
+      "abilities": [
+        "Velo Dulce",
+        "Liviano"
+      ]
+    },
+    {
+      "id": 686,
+      "name": "Inkay",
+      "baseStatTotal": 288,
+      "legendary": false,
+      "abilities": [
+        "Respond\u00F3n",
+        "Ventosas",
+        "Allanamiento"
+      ]
+    },
+    {
+      "id": 687,
+      "name": "Malamar",
+      "baseStatTotal": 482,
+      "legendary": false,
+      "abilities": [
+        "Respond\u00F3n",
+        "Ventosas",
+        "Allanamiento"
+      ]
+    },
+    {
+      "id": 688,
+      "name": "Binacle",
+      "baseStatTotal": 306,
+      "legendary": false,
+      "abilities": [
+        "Garra Dura",
+        "Francotirador",
+        "Hurto"
+      ]
+    },
+    {
+      "id": 689,
+      "name": "Barbaracle",
+      "baseStatTotal": 500,
+      "legendary": false,
+      "abilities": [
+        "Garra Dura",
+        "Francotirador",
+        "Hurto"
+      ]
+    },
+    {
+      "id": 690,
+      "name": "Skrelp",
+      "baseStatTotal": 320,
+      "legendary": false,
+      "abilities": [
+        "Punto T\u00F3xico",
+        "Toque T\u00F3xico",
+        "Adaptable"
+      ]
+    },
+    {
+      "id": 691,
+      "name": "Dragalge",
+      "baseStatTotal": 494,
+      "legendary": false,
+      "abilities": [
+        "Punto T\u00F3xico",
+        "Toque T\u00F3xico",
+        "Adaptable"
+      ]
+    },
+    {
+      "id": 692,
+      "name": "Clauncher",
+      "baseStatTotal": 330,
+      "legendary": false,
+      "abilities": [
+        "Megadisparador"
+      ]
+    },
+    {
+      "id": 693,
+      "name": "Clawitzer",
+      "baseStatTotal": 500,
+      "legendary": false,
+      "abilities": [
+        "Megadisparador"
+      ]
+    },
+    {
+      "id": 694,
+      "name": "Helioptile",
+      "baseStatTotal": 289,
+      "legendary": false,
+      "abilities": [
+        "Piel Seca",
+        "Velo Arena",
+        "Poder Solar"
+      ]
+    },
+    {
+      "id": 695,
+      "name": "Heliolisk",
+      "baseStatTotal": 481,
+      "legendary": false,
+      "abilities": [
+        "Piel Seca",
+        "Velo Arena",
+        "Poder Solar"
+      ]
+    },
+    {
+      "id": 696,
+      "name": "Tyrunt",
+      "baseStatTotal": 362,
+      "legendary": false,
+      "abilities": [
+        "Mand\u00EDbula Fuerte",
+        "Robustez"
+      ]
+    },
+    {
+      "id": 697,
+      "name": "Tyrantrum",
+      "baseStatTotal": 521,
+      "legendary": false,
+      "abilities": [
+        "Mand\u00EDbula Fuerte",
+        "Cabeza Roca"
+      ]
+    },
+    {
+      "id": 698,
+      "name": "Amaura",
+      "baseStatTotal": 362,
+      "legendary": false,
+      "abilities": [
+        "Piel Helada",
+        "Nevada"
+      ]
+    },
+    {
+      "id": 699,
+      "name": "Aurorus",
+      "baseStatTotal": 521,
+      "legendary": false,
+      "abilities": [
+        "Piel Helada",
+        "Nevada"
+      ]
+    },
+    {
+      "id": 700,
+      "name": "Sylveon",
+      "baseStatTotal": 525,
+      "legendary": false,
+      "abilities": [
+        "Gran Encanto",
+        "Piel Fe\u00E9rica"
+      ]
+    },
+    {
+      "id": 701,
+      "name": "Hawlucha",
+      "baseStatTotal": 500,
+      "legendary": false,
+      "abilities": [
+        "Flexibilidad",
+        "Liviano",
+        "Rompemoldes"
+      ]
+    },
+    {
+      "id": 702,
+      "name": "Dedenne",
+      "baseStatTotal": 431,
+      "legendary": false,
+      "abilities": [
+        "Carrillo",
+        "Recogida",
+        "M\u00E1s"
+      ]
+    },
+    {
+      "id": 703,
+      "name": "Carbink",
+      "baseStatTotal": 500,
+      "legendary": false,
+      "abilities": [
+        "Cuerpo Puro",
+        "Robustez"
+      ]
+    },
+    {
+      "id": 704,
+      "name": "Goomy",
+      "baseStatTotal": 300,
+      "legendary": false,
+      "abilities": [
+        "Herb\u00EDvoro",
+        "Hidrataci\u00F3n",
+        "Baba"
+      ]
+    },
+    {
+      "id": 705,
+      "name": "Sliggoo",
+      "baseStatTotal": 452,
+      "legendary": false,
+      "abilities": [
+        "Herb\u00EDvoro",
+        "Hidrataci\u00F3n",
+        "Baba"
+      ]
+    },
+    {
+      "id": 706,
+      "name": "Goodra",
+      "baseStatTotal": 600,
+      "legendary": false,
+      "abilities": [
+        "Herb\u00EDvoro",
+        "Hidrataci\u00F3n",
+        "Baba"
+      ]
+    },
+    {
+      "id": 707,
+      "name": "Klefki",
+      "baseStatTotal": 470,
+      "legendary": false,
+      "abilities": [
+        "Bromista",
+        "Prestidigitador"
+      ]
+    },
+    {
+      "id": 708,
+      "name": "Phantump",
+      "baseStatTotal": 309,
+      "legendary": false,
+      "abilities": [
+        "Cura Natural",
+        "Cacheo",
+        "Cosecha"
+      ]
+    },
+    {
+      "id": 709,
+      "name": "Trevenant",
+      "baseStatTotal": 474,
+      "legendary": false,
+      "abilities": [
+        "Cura Natural",
+        "Cacheo",
+        "Cosecha"
+      ]
+    },
+    {
+      "id": 710,
+      "name": "Pumpkaboo",
+      "baseStatTotal": 335,
+      "legendary": false,
+      "abilities": [
+        "Recogida",
+        "Cacheo",
+        "Insomnio"
+      ]
+    },
+    {
+      "id": 711,
+      "name": "Gourgeist",
+      "baseStatTotal": 494,
+      "legendary": false,
+      "abilities": [
+        "Recogida",
+        "Cacheo",
+        "Insomnio"
+      ]
+    },
+    {
+      "id": 712,
+      "name": "Bergmite",
+      "baseStatTotal": 304,
+      "legendary": false,
+      "abilities": [
+        "Ritmo Propio",
+        "G\u00E9lido",
+        "Robustez"
+      ]
+    },
+    {
+      "id": 713,
+      "name": "Avalugg",
+      "baseStatTotal": 514,
+      "legendary": false,
+      "abilities": [
+        "Ritmo Propio",
+        "G\u00E9lido",
+        "Robustez"
+      ]
+    },
+    {
+      "id": 714,
+      "name": "Noibat",
+      "baseStatTotal": 245,
+      "legendary": false,
+      "abilities": [
+        "Cacheo",
+        "Allanamiento",
+        "Telepat\u00EDa"
+      ]
+    },
+    {
+      "id": 715,
+      "name": "Noivern",
+      "baseStatTotal": 535,
+      "legendary": false,
+      "abilities": [
+        "Cacheo",
+        "Allanamiento",
+        "Telepat\u00EDa"
+      ]
+    },
+    {
+      "id": 716,
+      "name": "Xerneas",
+      "baseStatTotal": 680,
+      "legendary": true,
+      "abilities": [
+        "Aura Fe\u00E9rica"
+      ]
+    },
+    {
+      "id": 717,
+      "name": "Yveltal",
+      "baseStatTotal": 680,
+      "legendary": true,
+      "abilities": [
+        "Aura Oscura"
+      ]
+    },
+    {
+      "id": 718,
+      "name": "Zygarde",
+      "baseStatTotal": 600,
+      "legendary": true,
+      "abilities": [
+        "Rompeaura"
+      ]
+    },
+    {
+      "id": 719,
+      "name": "Diancie",
+      "baseStatTotal": 600,
+      "legendary": true,
+      "abilities": [
+        "Cuerpo Puro"
+      ]
+    },
+    {
+      "id": 720,
+      "name": "Hoopa",
+      "baseStatTotal": 600,
+      "legendary": true,
+      "abilities": [
+        "Prestidigitador"
+      ]
+    },
+    {
+      "id": 721,
+      "name": "Volcanion",
+      "baseStatTotal": 600,
+      "legendary": true,
+      "abilities": [
+        "Absorbe Agua"
+      ]
+    },
+    {
+      "id": 722,
+      "name": "Rowlet",
+      "baseStatTotal": 320,
+      "legendary": false,
+      "abilities": [
+        "Espesura",
+        "Remoto"
+      ]
+    },
+    {
+      "id": 723,
+      "name": "Dartrix",
+      "baseStatTotal": 420,
+      "legendary": false,
+      "abilities": [
+        "Espesura",
+        "Remoto"
+      ]
+    },
+    {
+      "id": 724,
+      "name": "Decidueye",
+      "baseStatTotal": 530,
+      "legendary": false,
+      "abilities": [
+        "Espesura",
+        "Remoto"
+      ]
+    },
+    {
+      "id": 725,
+      "name": "Litten",
+      "baseStatTotal": 320,
+      "legendary": false,
+      "abilities": [
+        "Mar Llamas",
+        "Intimidaci\u00F3n"
+      ]
+    },
+    {
+      "id": 726,
+      "name": "Torracat",
+      "baseStatTotal": 420,
+      "legendary": false,
+      "abilities": [
+        "Mar Llamas",
+        "Intimidaci\u00F3n"
+      ]
+    },
+    {
+      "id": 727,
+      "name": "Incineroar",
+      "baseStatTotal": 530,
+      "legendary": false,
+      "abilities": [
+        "Mar Llamas",
+        "Intimidaci\u00F3n"
+      ]
+    },
+    {
+      "id": 728,
+      "name": "Popplio",
+      "baseStatTotal": 320,
+      "legendary": false,
+      "abilities": [
+        "Torrente",
+        "Voz Fluida"
+      ]
+    },
+    {
+      "id": 729,
+      "name": "Brionne",
+      "baseStatTotal": 420,
+      "legendary": false,
+      "abilities": [
+        "Torrente",
+        "Voz Fluida"
+      ]
+    },
+    {
+      "id": 730,
+      "name": "Primarina",
+      "baseStatTotal": 530,
+      "legendary": false,
+      "abilities": [
+        "Torrente",
+        "Voz Fluida"
+      ]
+    },
+    {
+      "id": 731,
+      "name": "Pikipek",
+      "baseStatTotal": 265,
+      "legendary": false,
+      "abilities": [
+        "Vista Lince",
+        "Encadenado",
+        "Recogida"
+      ]
+    },
+    {
+      "id": 732,
+      "name": "Trumbeak",
+      "baseStatTotal": 355,
+      "legendary": false,
+      "abilities": [
+        "Vista Lince",
+        "Encadenado",
+        "Recogida"
+      ]
+    },
+    {
+      "id": 733,
+      "name": "Toucannon",
+      "baseStatTotal": 485,
+      "legendary": false,
+      "abilities": [
+        "Vista Lince",
+        "Encadenado",
+        "Potencia Bruta"
+      ]
+    },
+    {
+      "id": 734,
+      "name": "Yungoos",
+      "baseStatTotal": 253,
+      "legendary": false,
+      "abilities": [
+        "Vigilante",
+        "Mand\u00EDbula Fuerte",
+        "Adaptable"
+      ]
+    },
+    {
+      "id": 735,
+      "name": "Gumshoos",
+      "baseStatTotal": 418,
+      "legendary": false,
+      "abilities": [
+        "Vigilante",
+        "Mand\u00EDbula Fuerte",
+        "Adaptable"
+      ]
+    },
+    {
+      "id": 736,
+      "name": "Grubbin",
+      "baseStatTotal": 300,
+      "legendary": false,
+      "abilities": [
+        "Enjambre"
+      ]
+    },
+    {
+      "id": 737,
+      "name": "Charjabug",
+      "baseStatTotal": 400,
+      "legendary": false,
+      "abilities": [
+        "Bater\u00EDa"
+      ]
+    },
+    {
+      "id": 738,
+      "name": "Vikavolt",
+      "baseStatTotal": 500,
+      "legendary": false,
+      "abilities": [
+        "Levitaci\u00F3n"
+      ]
+    },
+    {
+      "id": 739,
+      "name": "Crabrawler",
+      "baseStatTotal": 338,
+      "legendary": false,
+      "abilities": [
+        "Corte Fuerte",
+        "Pu\u00F1o F\u00E9rreo",
+        "Irascible"
+      ]
+    },
+    {
+      "id": 740,
+      "name": "Crabominable",
+      "baseStatTotal": 478,
+      "legendary": false,
+      "abilities": [
+        "Corte Fuerte",
+        "Pu\u00F1o F\u00E9rreo",
+        "Irascible"
+      ]
+    },
+    {
+      "id": 741,
+      "name": "Oricorio",
+      "baseStatTotal": 476,
+      "legendary": false,
+      "abilities": [
+        "Pareja de Baile"
+      ]
+    },
+    {
+      "id": 742,
+      "name": "Cutiefly",
+      "baseStatTotal": 304,
+      "legendary": false,
+      "abilities": [
+        "Recogemiel",
+        "Polvo Escudo",
+        "Velo Dulce"
+      ]
+    },
+    {
+      "id": 743,
+      "name": "Ribombee",
+      "baseStatTotal": 464,
+      "legendary": false,
+      "abilities": [
+        "Recogemiel",
+        "Polvo Escudo",
+        "Velo Dulce"
+      ]
+    },
+    {
+      "id": 744,
+      "name": "Rockruff",
+      "baseStatTotal": 280,
+      "legendary": false,
+      "abilities": [
+        "Vista Lince",
+        "Esp\u00EDritu Vital",
+        "Impasible"
+      ]
+    },
+    {
+      "id": 745,
+      "name": "Lycanroc",
+      "baseStatTotal": 487,
+      "legendary": false,
+      "abilities": [
+        "Vista Lince",
+        "\u00CDmpetu Arena",
+        "Impasible"
+      ]
+    },
+    {
+      "id": 746,
+      "name": "Wishiwashi",
+      "baseStatTotal": 175,
+      "legendary": false,
+      "abilities": [
+        "Banco"
+      ]
+    },
+    {
+      "id": 747,
+      "name": "Mareanie",
+      "baseStatTotal": 305,
+      "legendary": false,
+      "abilities": [
+        "Ensa\u00F1amiento",
+        "Flexibilidad",
+        "Regeneraci\u00F3n"
+      ]
+    },
+    {
+      "id": 748,
+      "name": "Toxapex",
+      "baseStatTotal": 495,
+      "legendary": false,
+      "abilities": [
+        "Ensa\u00F1amiento",
+        "Flexibilidad",
+        "Regeneraci\u00F3n"
+      ]
+    },
+    {
+      "id": 749,
+      "name": "Mudbray",
+      "baseStatTotal": 385,
+      "legendary": false,
+      "abilities": [
+        "Ritmo Propio",
+        "Firmeza",
+        "Foco Interno"
+      ]
+    },
+    {
+      "id": 750,
+      "name": "Mudsdale",
+      "baseStatTotal": 500,
+      "legendary": false,
+      "abilities": [
+        "Ritmo Propio",
+        "Firmeza",
+        "Foco Interno"
+      ]
+    },
+    {
+      "id": 751,
+      "name": "Dewpider",
+      "baseStatTotal": 269,
+      "legendary": false,
+      "abilities": [
+        "Pompa",
+        "Absorbe Agua"
+      ]
+    },
+    {
+      "id": 752,
+      "name": "Araquanid",
+      "baseStatTotal": 454,
+      "legendary": false,
+      "abilities": [
+        "Pompa",
+        "Absorbe Agua"
+      ]
+    },
+    {
+      "id": 753,
+      "name": "Fomantis",
+      "baseStatTotal": 250,
+      "legendary": false,
+      "abilities": [
+        "Defensa Hoja",
+        "Respond\u00F3n"
+      ]
+    },
+    {
+      "id": 754,
+      "name": "Lurantis",
+      "baseStatTotal": 480,
+      "legendary": false,
+      "abilities": [
+        "Defensa Hoja",
+        "Respond\u00F3n"
+      ]
+    },
+    {
+      "id": 755,
+      "name": "Morelull",
+      "baseStatTotal": 285,
+      "legendary": false,
+      "abilities": [
+        "Iluminaci\u00F3n",
+        "Efecto Espora",
+        "Cura Lluvia"
+      ]
+    },
+    {
+      "id": 756,
+      "name": "Shiinotic",
+      "baseStatTotal": 405,
+      "legendary": false,
+      "abilities": [
+        "Iluminaci\u00F3n",
+        "Efecto Espora",
+        "Cura Lluvia"
+      ]
+    },
+    {
+      "id": 757,
+      "name": "Salandit",
+      "baseStatTotal": 320,
+      "legendary": false,
+      "abilities": [
+        "Corrosi\u00F3n",
+        "Despiste"
+      ]
+    },
+    {
+      "id": 758,
+      "name": "Salazzle",
+      "baseStatTotal": 480,
+      "legendary": false,
+      "abilities": [
+        "Corrosi\u00F3n",
+        "Despiste"
+      ]
+    },
+    {
+      "id": 759,
+      "name": "Stufful",
+      "baseStatTotal": 340,
+      "legendary": false,
+      "abilities": [
+        "Peluche",
+        "Zoquete",
+        "Gran Encanto"
+      ]
+    },
+    {
+      "id": 760,
+      "name": "Bewear",
+      "baseStatTotal": 500,
+      "legendary": false,
+      "abilities": [
+        "Peluche",
+        "Zoquete",
+        "Nerviosismo"
+      ]
+    },
+    {
+      "id": 761,
+      "name": "Bounsweet",
+      "baseStatTotal": 210,
+      "legendary": false,
+      "abilities": [
+        "Defensa Hoja",
+        "Despiste",
+        "Velo Dulce"
+      ]
+    },
+    {
+      "id": 762,
+      "name": "Steenee",
+      "baseStatTotal": 290,
+      "legendary": false,
+      "abilities": [
+        "Defensa Hoja",
+        "Despiste",
+        "Velo Dulce"
+      ]
+    },
+    {
+      "id": 763,
+      "name": "Tsareena",
+      "baseStatTotal": 510,
+      "legendary": false,
+      "abilities": [
+        "Defensa Hoja",
+        "Regia Presencia",
+        "Velo Dulce"
+      ]
+    },
+    {
+      "id": 764,
+      "name": "Comfey",
+      "baseStatTotal": 485,
+      "legendary": false,
+      "abilities": [
+        "Velo Flor",
+        "Primer Auxilio",
+        "Cura Natural"
+      ]
+    },
+    {
+      "id": 765,
+      "name": "Oranguru",
+      "baseStatTotal": 490,
+      "legendary": false,
+      "abilities": [
+        "Foco Interno",
+        "Telepat\u00EDa",
+        "Simbiosis"
+      ]
+    },
+    {
+      "id": 766,
+      "name": "Passimian",
+      "baseStatTotal": 490,
+      "legendary": false,
+      "abilities": [
+        "Receptor",
+        "Competitivo"
+      ]
+    },
+    {
+      "id": 767,
+      "name": "Wimpod",
+      "baseStatTotal": 230,
+      "legendary": false,
+      "abilities": [
+        "Huida"
+      ]
+    },
+    {
+      "id": 768,
+      "name": "Golisopod",
+      "baseStatTotal": 530,
+      "legendary": false,
+      "abilities": [
+        "Retirada"
+      ]
+    },
+    {
+      "id": 769,
+      "name": "Sandygast",
+      "baseStatTotal": 320,
+      "legendary": false,
+      "abilities": [
+        "Hidrorrefuerzo",
+        "Velo Arena"
+      ]
+    },
+    {
+      "id": 770,
+      "name": "Palossand",
+      "baseStatTotal": 480,
+      "legendary": false,
+      "abilities": [
+        "Hidrorrefuerzo",
+        "Velo Arena"
+      ]
+    },
+    {
+      "id": 771,
+      "name": "Pyukumuku",
+      "baseStatTotal": 410,
+      "legendary": false,
+      "abilities": [
+        "Rev\u00E9s",
+        "Ignorante"
+      ]
+    },
+    {
+      "id": 772,
+      "name": "C\u00F3digo Cero",
+      "baseStatTotal": 534,
+      "legendary": true,
+      "abilities": [
+        "Armadura Batalla"
+      ]
+    },
+    {
+      "id": 773,
+      "name": "Silvally",
+      "baseStatTotal": 570,
+      "legendary": true,
+      "abilities": [
+        "Sistema Alfa"
+      ]
+    },
+    {
+      "id": 774,
+      "name": "Minior",
+      "baseStatTotal": 440,
+      "legendary": false,
+      "abilities": [
+        "Escudo Limitado"
+      ]
+    },
+    {
+      "id": 775,
+      "name": "Komala",
+      "baseStatTotal": 480,
+      "legendary": false,
+      "abilities": [
+        "Letargo Perenne"
+      ]
+    },
+    {
+      "id": 776,
+      "name": "Turtonator",
+      "baseStatTotal": 485,
+      "legendary": false,
+      "abilities": [
+        "Caparaz\u00F3n"
+      ]
+    },
+    {
+      "id": 777,
+      "name": "Togedemaru",
+      "baseStatTotal": 435,
+      "legendary": false,
+      "abilities": [
+        "Punta Acero",
+        "Pararrayos",
+        "Robustez"
+      ]
+    },
+    {
+      "id": 778,
+      "name": "Mimikyu",
+      "baseStatTotal": 476,
+      "legendary": false,
+      "abilities": [
+        "Disfraz"
+      ]
+    },
+    {
+      "id": 779,
+      "name": "Bruxish",
+      "baseStatTotal": 475,
+      "legendary": false,
+      "abilities": [
+        "Cuerpo V\u00EDvido",
+        "Mand\u00EDbula Fuerte",
+        "Piel Milagro"
+      ]
+    },
+    {
+      "id": 780,
+      "name": "Drampa",
+      "baseStatTotal": 485,
+      "legendary": false,
+      "abilities": [
+        "C\u00F3lera",
+        "Herb\u00EDvoro",
+        "Aclimataci\u00F3n"
+      ]
+    },
+    {
+      "id": 781,
+      "name": "Dhelmise",
+      "baseStatTotal": 517,
+      "legendary": false,
+      "abilities": [
+        "Acero Templado"
+      ]
+    },
+    {
+      "id": 782,
+      "name": "Jangmo-o",
+      "baseStatTotal": 300,
+      "legendary": false,
+      "abilities": [
+        "Antibalas",
+        "Insonorizar",
+        "Funda"
+      ]
+    },
+    {
+      "id": 783,
+      "name": "Hakamo-o",
+      "baseStatTotal": 420,
+      "legendary": false,
+      "abilities": [
+        "Antibalas",
+        "Insonorizar",
+        "Funda"
+      ]
+    },
+    {
+      "id": 784,
+      "name": "Kommo-o",
+      "baseStatTotal": 600,
+      "legendary": false,
+      "abilities": [
+        "Antibalas",
+        "Insonorizar",
+        "Funda"
+      ]
+    },
+    {
+      "id": 785,
+      "name": "Tapu Koko",
+      "baseStatTotal": 570,
+      "legendary": true,
+      "abilities": [
+        "Electrog\u00E9nesis",
+        "Telepat\u00EDa"
+      ]
+    },
+    {
+      "id": 786,
+      "name": "Tapu Lele",
+      "baseStatTotal": 570,
+      "legendary": true,
+      "abilities": [
+        "Psicog\u00E9nesis",
+        "Telepat\u00EDa"
+      ]
+    },
+    {
+      "id": 787,
+      "name": "Tapu Bulu",
+      "baseStatTotal": 570,
+      "legendary": true,
+      "abilities": [
+        "Herbog\u00E9nesis",
+        "Telepat\u00EDa"
+      ]
+    },
+    {
+      "id": 788,
+      "name": "Tapu Fini",
+      "baseStatTotal": 570,
+      "legendary": true,
+      "abilities": [
+        "Nebulog\u00E9nesis",
+        "Telepat\u00EDa"
+      ]
+    },
+    {
+      "id": 789,
+      "name": "Cosmog",
+      "baseStatTotal": 200,
+      "legendary": true,
+      "abilities": [
+        "Ignorante"
+      ]
+    },
+    {
+      "id": 790,
+      "name": "Cosmoem",
+      "baseStatTotal": 400,
+      "legendary": true,
+      "abilities": [
+        "Robustez"
+      ]
+    },
+    {
+      "id": 791,
+      "name": "Solgaleo",
+      "baseStatTotal": 680,
+      "legendary": true,
+      "abilities": [
+        "Guardia Met\u00E1lica"
+      ]
+    },
+    {
+      "id": 792,
+      "name": "Lunala",
+      "baseStatTotal": 680,
+      "legendary": true,
+      "abilities": [
+        "Guardia Espectro"
+      ]
+    },
+    {
+      "id": 793,
+      "name": "Nihilego",
+      "baseStatTotal": 570,
+      "legendary": true,
+      "abilities": [
+        "Ultraimpulso"
+      ]
+    },
+    {
+      "id": 794,
+      "name": "Buzzwole",
+      "baseStatTotal": 570,
+      "legendary": true,
+      "abilities": [
+        "Ultraimpulso"
+      ]
+    },
+    {
+      "id": 795,
+      "name": "Pheromosa",
+      "baseStatTotal": 570,
+      "legendary": true,
+      "abilities": [
+        "Ultraimpulso"
+      ]
+    },
+    {
+      "id": 796,
+      "name": "Xurkitree",
+      "baseStatTotal": 570,
+      "legendary": true,
+      "abilities": [
+        "Ultraimpulso"
+      ]
+    },
+    {
+      "id": 797,
+      "name": "Celesteela",
+      "baseStatTotal": 570,
+      "legendary": true,
+      "abilities": [
+        "Ultraimpulso"
+      ]
+    },
+    {
+      "id": 798,
+      "name": "Kartana",
+      "baseStatTotal": 570,
+      "legendary": true,
+      "abilities": [
+        "Ultraimpulso"
+      ]
+    },
+    {
+      "id": 799,
+      "name": "Guzzlord",
+      "baseStatTotal": 570,
+      "legendary": true,
+      "abilities": [
+        "Ultraimpulso"
+      ]
+    },
+    {
+      "id": 800,
+      "name": "Necrozma",
+      "baseStatTotal": 600,
+      "legendary": true,
+      "abilities": [
+        "Armadura Prisma"
+      ]
+    },
+    {
+      "id": 801,
+      "name": "Magearna",
+      "baseStatTotal": 600,
+      "legendary": true,
+      "abilities": [
+        "Cor\u00E1nima"
+      ]
+    },
+    {
+      "id": 802,
+      "name": "Marshadow",
+      "baseStatTotal": 600,
+      "legendary": true,
+      "abilities": [
+        "Experto"
+      ]
+    },
+    {
+      "id": 803,
+      "name": "Poipole",
+      "baseStatTotal": 420,
+      "legendary": true,
+      "abilities": [
+        "Ultraimpulso"
+      ]
+    },
+    {
+      "id": 804,
+      "name": "Naganadel",
+      "baseStatTotal": 540,
+      "legendary": true,
+      "abilities": [
+        "Ultraimpulso"
+      ]
+    },
+    {
+      "id": 805,
+      "name": "Stakataka",
+      "baseStatTotal": 570,
+      "legendary": true,
+      "abilities": [
+        "Ultraimpulso"
+      ]
+    },
+    {
+      "id": 806,
+      "name": "Blacephalon",
+      "baseStatTotal": 570,
+      "legendary": true,
+      "abilities": [
+        "Ultraimpulso"
+      ]
+    },
+    {
+      "id": 807,
+      "name": "Zeraora",
+      "baseStatTotal": 600,
+      "legendary": true,
+      "abilities": [
+        "Absorbe Elec"
+      ]
+    }
+  ]
+}

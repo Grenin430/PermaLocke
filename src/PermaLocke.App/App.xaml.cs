@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using PermaLocke.App.Services;
 using PermaLocke.App.ViewModels;
 using PermaLocke.Core;
+using PermaLocke.Core.Domain;
 using PermaLocke.Core.Services;
 using PermaLocke.Data;
 using PermaLocke.GameLink;
@@ -31,6 +32,14 @@ public partial class App : Application
         collection.AddPermaLockeCore();
         collection.AddPermaLockeRules(Path.Combine(paths.Data, "rules.json"));
         collection.AddPermaLockeGameLink(paths.SaveBackups);
+
+        // Gacha: los banners y la tabla de especies son configuración; sin ellas la sección lo
+        // dice en pantalla en vez de tirar con datos inventados.
+        collection.AddSingleton<IGachaCatalog>(_ =>
+            JsonGachaCatalog.Load(Path.Combine(paths.Data, "gacha.json")));
+        collection.AddSingleton<ISpeciesStatsCatalog>(_ =>
+            JsonSpeciesStatsCatalog.Load(Path.Combine(paths.Data, "species.json")));
+        collection.AddSingleton<GachaService>();
         collection.AddSingleton<EncounterService>();
         collection.AddSingleton<GameWatcher>();
 
@@ -42,6 +51,7 @@ public partial class App : Application
         collection.AddTransient<RegisterCaptureViewModel>();
         collection.AddSingleton<HomeViewModel>();
         collection.AddSingleton<RandomizerViewModel>();
+        collection.AddSingleton<GachaViewModel>();
         collection.AddSingleton<MiscellaneousViewModel>();
         collection.AddSingleton<MainViewModel>();
 

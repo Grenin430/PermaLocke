@@ -14,7 +14,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly ILogger<MainViewModel> _logger;
 
     public MainViewModel(HomeViewModel home, RandomizerViewModel randomizer,
-        MiscellaneousViewModel miscellaneous, IRunContext runContext,
+        MiscellaneousViewModel miscellaneous, GachaViewModel gacha, IRunContext runContext,
         ILogger<MainViewModel> logger)
     {
         _home = home;
@@ -25,8 +25,7 @@ public sealed partial class MainViewModel : ObservableObject
         [
             home,
             randomizer,
-            new PendingSectionViewModel("GACHA", "Fase 4",
-                "Banners configurables desde Data/gacha.json, tirada con seed registrada y resultado auditable."),
+            gacha,
             new PendingSectionViewModel("TIENDA", "Fase 4",
                 "Catálogo desde Data/shop.json. La entrega del objeto al juego depende de la integración con Azahar."),
             new PendingSectionViewModel("LOGROS", "Fase 4",

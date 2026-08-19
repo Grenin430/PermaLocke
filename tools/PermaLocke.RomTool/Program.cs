@@ -39,6 +39,9 @@ switch (command)
     case "statics":
         await StaticsAsync(args.Length > 1 ? ulong.Parse(args[1]) : 20260818);
         break;
+    case "species":
+        await SpeciesAsync();
+        break;
     case "zones":
         await ZonesAsync();
         break;
@@ -510,4 +513,92 @@ async Task ZonesAsync()
     // Releído del disco, como manda la norma del randomizador: no se publica lo que no se relee.
     using var check = System.Text.Json.JsonDocument.Parse(await File.ReadAllTextAsync(path));
     Console.WriteLine($"\nRelectura: {check.RootElement.GetProperty("areas").GetArrayLength()} áreas.");
+}
+
+// Genera Data/species.json: por cada especie, el total de estadísticas base y si es especial.
+// El total sale de la ROM, que es la fuente de verdad; la clasificación de legendario no está
+// en el cartucho de forma utilizable, así que viene de PKHeX.
+//
+// El total importa porque el gacha reparte por rangos de él. El módulo de datos de Pokémon del
+// randomizador BARAJA las estadísticas pero conserva el total, así que esta tabla sigue valiendo
+// con una ROM randomizada.
+async Task SpeciesAsync()
+{
+    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work);
+    var speciesNames = workspace.Config.GetText(TextName.SpeciesNames);
+    var abilityNames = workspace.Config.GetText(TextName.AbilityNames);
+    var natureNames = workspace.Config.GetText(TextName.Natures);
+    var personal = workspace.Config.GetGARCData("personal");
+
+    // El último subfichero es la tabla entera empaquetada; las especies son los anteriores.
+    var count = Math.Min(personal.Files.Length - 1, speciesNames.Length);
+    var entries = new List<object>();
+    var histogram = new Dictionary<string, int>();
+    var legendaries = 0;
+
+    for (ushort id = 1; id < count; id++)
+    {
+        var raw = personal.Files[id];
+
+        if (raw.Length < PersonalEntry7.Size || string.IsNullOrWhiteSpace(speciesNames[id]))
+        {
+            continue;
+        }
+
+        var total = PersonalEntry7.StatOffsets.Sum(offset => (int)raw[offset]);
+
+        if (total <= 0)
+        {
+            continue;
+        }
+
+        var special = PKHeX.Core.SpeciesCategory.IsLegendary(id)
+                      || PKHeX.Core.SpeciesCategory.IsSubLegendary(id)
+                      || PKHeX.Core.SpeciesCategory.IsMythical(id)
+                      || PKHeX.Core.SpeciesCategory.IsUltraBeast(id);
+
+        // Las tres habilidades de la especie, ya resueltas a nombre para que la app no
+        // necesite ni la ROM ni PKHeX para enseñarlas.
+        var abilities = PersonalEntry7.AbilityOffsets
+            .Select(offset => (int)raw[offset])
+            .Where(ability => ability > 0 && ability < abilityNames.Length)
+            .Select(ability => abilityNames[ability])
+            .Distinct()
+            .ToArray();
+
+        entries.Add(new { id, name = speciesNames[id], baseStatTotal = total, legendary = special, abilities });
+
+        if (special)
+        {
+            legendaries++;
+        }
+
+        var bucket = total <= 400 ? "1 (<=400)" : total <= 490 ? "2 (<=490)"
+            : total <= 535 ? "3 (<=535)" : total <= 590 ? "4 (<=590)" : "5 (>590)";
+        histogram[bucket] = histogram.GetValueOrDefault(bucket) + 1;
+    }
+
+    var path = Path.Combine(root, "Data", "species.json");
+    await File.WriteAllTextAsync(path, System.Text.Json.JsonSerializer.Serialize(
+        new
+        {
+            comment = "Generado por: PermaLocke.RomTool species. No editar a mano.",
+            natures = natureNames,
+            // SIN filtrar: la posición en esta lista ES el id de la habilidad en el cartucho, y
+            // quitar los huecos vacíos desplazaría todos los ids a partir del primero.
+            abilities = abilityNames,
+            species = entries
+        },
+        new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+
+    Console.WriteLine($"{entries.Count} especies escritas en {path}, {legendaries} especiales\n");
+    Console.WriteLine("Reparto por los rangos del gacha:");
+
+    foreach (var bucket in histogram.OrderBy(b => b.Key))
+    {
+        Console.WriteLine($"  tier {bucket.Key,-12} {bucket.Value,4} especies");
+    }
+
+    using var check = System.Text.Json.JsonDocument.Parse(await File.ReadAllTextAsync(path));
+    Console.WriteLine($"\nRelectura: {check.RootElement.GetProperty("species").GetArrayLength()} especies.");
 }

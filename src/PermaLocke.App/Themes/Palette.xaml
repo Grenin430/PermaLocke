@@ -24,6 +24,20 @@
     <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}" />
     <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}" />
 
+
+    <!-- Un color por rareza del gacha. La animación del ultraespacio pinta un portal de cada
+         uno, y el que se ilumina al final es el del tier que ha tocado. -->
+    <Color x:Key="Tier1Color">#FF7C8AA0</Color>
+    <Color x:Key="Tier2Color">#FF4FE08A</Color>
+    <Color x:Key="Tier3Color">#FF3FD0F0</Color>
+    <Color x:Key="Tier4Color">#FFB061F0</Color>
+    <Color x:Key="Tier5Color">#FFFFB03F</Color>
+
+    <SolidColorBrush x:Key="Tier1Brush" Color="{StaticResource Tier1Color}" />
+    <SolidColorBrush x:Key="Tier2Brush" Color="{StaticResource Tier2Color}" />
+    <SolidColorBrush x:Key="Tier3Brush" Color="{StaticResource Tier3Color}" />
+    <SolidColorBrush x:Key="Tier4Brush" Color="{StaticResource Tier4Color}" />
+    <SolidColorBrush x:Key="Tier5Brush" Color="{StaticResource Tier5Color}" />
     <FontFamily x:Key="UiFont">Segoe UI</FontFamily>
     <FontFamily x:Key="MonoFont">Consolas</FontFamily>
 

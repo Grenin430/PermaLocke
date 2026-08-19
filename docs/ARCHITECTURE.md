@@ -1828,3 +1828,150 @@ Es una obligación distinta de la de PermaLocke, que también es GPLv3 pero por 
 pk3DS.Core.
 
 Coste del paquete: **262 MB** — 161 de la app self-contained y 100 del emulador.
+
+---
+
+## 26. Fase 4: el gacha (2026-08-19)
+
+Es en lo que se gastan los puntos, y sin ello la competición no tiene sentido. Hecho el motor,
+la pantalla y la entrega al juego; los precios quedan a cero mientras no exista la fuente de
+puntos, que son los logros.
+
+### Los tiers son rangos de estadísticas, no listas
+
+El diseño lo fijó el usuario y es mejor que el de la referencia:
+
+| Banner | Reparto |
+|---|---|
+| POCHO | 15% T1 · **60% T2** · 25% T3 |
+| DECENTE | 15% T2 · **60% T3** · 25% T4 |
+| BUENO | 15% T3 · **60% T4** · 25% T5 |
+
+| Tier | Total de estadísticas base |
+|---|---|
+| 1 | ≤ 400 |
+| 2 | ≤ 490 |
+| 3 | ≤ 535 |
+| 4 | ≤ 590 |
+| 5 | > 590, **40% legendario** |
+
+Un tier es un **rango del total de estadísticas base**, no una lista de Pokémon. Ninguna especie
+se queda fuera, no hay 807 ids que mantener, y —esto es lo importante— **sigue valiendo con la
+ROM randomizada**, porque el módulo de datos de Pokémon baraja las estadísticas pero conserva el
+total (§20). El suelo de cada tier es el techo del anterior, así que las bandas ni se solapan ni
+dejan huecos.
+
+`PermaLocke.RomTool species` genera `Data/species.json` leyendo el cartucho: 807 especies con su
+total, si son especiales, sus habilidades y los 25 nombres de naturaleza. El reparto real:
+
+```text
+tier 1 (<=400)   327 especies      tier 4 (<=590)    46
+tier 2 (<=490)   242               tier 5 (>590)     50
+tier 3 (<=535)   142
+```
+
+**Aviso que salió de mirar los datos:** el tier 5 tiene 41 legendarios y solo **9** no
+legendarios —los pseudolegendarios de 600—, así que el 60% no legendario se reparte entre nueve
+Pokémon y saldrán muy repetidos. Se implementó como se pidió, pero conviene saberlo.
+
+Los legendarios no pueden salir de los tiers baratos: su probabilidad es cero ahí **y** el pool
+se parte por esa marca, así que ni por accidente.
+
+### Reproducible, que es lo que separa un gacha de una promesa
+
+La tirada se calcula con la **seed de la run** derivada por el número de tirada. Ambos viajan en
+el evento `GachaRoll`, de modo que cualquiera puede recomputar la tirada número 7 de una run y
+comprobar que dio lo que dice el historial. Nadie tiene que fiarse de lo que diga un jugador.
+
+Un fallo real que esto destapó: `GachaPull` es un `record`, y un record compara los IV **por
+referencia**. Recomputar una tirada nunca coincidía con la registrada, que es justo el único uso
+para el que existe la comparación. Se le escribió `Equals` a mano.
+
+Otra decisión: **no se cobra por un Pokémon que no se produjo**. La tirada se genera primero —es
+pura y no toca nada— y solo después se gastan los puntos. Si el cobro falla, no se guarda nada.
+
+Habilidades y nivel, a petición del usuario: la habilidad sale **al azar de entre todas las del
+juego**, no de las de la especie, así que un Magikarp puede salir con Levitación; los IV son
+aleatorios los seis; y todo llega a **nivel 1**, que subirlo es cosa del jugador.
+
+Trampa que costó un rato: la lista de habilidades de `species.json` **no se filtra**, porque la
+posición en ella *es* el id que usa el cartucho y quitar los huecos vacíos desplazaría todos los
+ids a partir del primero.
+
+### El Pokémon va al PC, y cómo se supo por dónde ir
+
+El usuario pidió que el Pokémon apareciese en el juego, no solo en la run. La vía obvia era
+localizar las cajas del PC en memoria, que es otra investigación como la del equipo o la
+mochila, y encima con un agravante: **escribir un Pokémon en un hueco vacío nunca se ha hecho**.
+Hasta ahora solo se han sobrescrito Pokémon existentes, y el escritor exige que el checksum del
+bloque original valide. Equivocarse ahí corrompe la partida de otro, no la propia.
+
+Antes de meterse en eso se miró **cómo lo hace BxnnyLocke**, que es material de referencia y
+está permitido analizar (no copiar). La respuesta estaba en su carpeta de intercambio:
+
+```text
+Emulador/user/rtp/p/bckp/
+    main_20260818_005359    445.440 bytes
+    main_20260818_005511    445.440 bytes      (10 copias con marca de tiempo)
+```
+
+**445.440 bytes = 0x6CC00, exactamente el tamaño de un save de Ultra Luna**, y `main` es el
+nombre del fichero de guardado de 3DS. Es decir: **no localizan las cajas, editan el save**, y
+hacen copia con timestamp antes de tocarlo. Con PKHeX.Core, que ya se sabía que llevan.
+
+Eso ahorró la investigación entera. `SaveBoxDelivery` hace lo mismo:
+
+- busca el save bajo `sdmc/Nintendo 3DS/**/001b5100/**/main`, sin suponer los identificadores de
+  consola, que Azahar genera y no siempre son ceros;
+- **se niega a escribir si el juego está cargado** —lo pregunta por el RPC—, porque el emulador
+  tiene el save en memoria y lo reescribiría encima, borrando el Pokémon;
+- copia el save entero antes de tocarlo, y si la copia falla no escribe;
+- construye el Pokémon como **del propio jugador**: mismo nombre de entrenador, mismo TID y SID,
+  misma versión. Si no, el juego lo trataría como intercambiado y no obedecería;
+- lo pone en el primer hueco libre y **relee el fichero** para confirmarlo. No se reporta como
+  entregado nada que no se haya vuelto a ver en disco.
+
+Verificado sobre una copia del save real, releída con PKHeX desde fuera:
+
+```text
+entrega -> Delivered: Slaking está en la caja 1, hueco 1
+  especie 289  nivel 1  OT «Grenin430»  TID 842462
+  habilidad 81 (Manto Níveo, que Slaking no tiene: es un gacha)
+  movimientos 58/63/216/332      checksum válido: True
+```
+
+Los movimientos los deduce PKHeX del nivel. Si el análisis de legalidad se atraganta con un
+Pokémon que el gacha ha hecho imposible, llega **sin movimientos** en vez de no llegar: el
+jugador los enseña y sigue, que es un problema mucho menor que una entrega fallida.
+
+**El precio, y es el mismo que paga la referencia: hay que cerrar el juego.**
+
+### La animación
+
+Pixel art de Lunala esquivando portales no se puede hacer sin assets: los sprites son de
+Nintendo y no se redistribuyen, y séptima generación usa modelos 3D, no sprites. Sacarlos del
+cartucho del propio jugador sería legítimo, pero los iconos están en formato de textura de 3DS y
+al recortar pk3DS se eliminaron justo `ETC1`, `ImageUtil` y `CTR/Images/` (§19).
+
+Así que la animación es **abstracta y generada por código**: el ultraespacio, cinco portales de
+colores —uno por tier, con sus tokens en `Palette.xaml`— y una nave que los cruza durante 2,4
+segundos mientras el portal que ha tocado se abre. Cero assets, y funciona en cualquier máquina.
+
+Detalle de WPF que obligó a rehacerlo: **un `Storyboard` dentro de un `Style` no puede animar
+otro elemento por nombre**, porque el estilo no tiene ámbito de nombres. Cada portal y la nave se
+animan a sí mismos.
+
+La espera de 2,6 segundos antes de revelar es presentación, no teatro: **la tirada ya está
+decidida, guardada y entregada** antes de que empiece la cuenta.
+
+### Estado
+
+| Pieza | Estado |
+|---|---|
+| Motor, tiers, probabilidades | **HECHO**, 10 tests, probabilidades medidas sobre 20.000 tiradas |
+| Reproducibilidad por seed | **HECHA** y con test |
+| Entrega al PC del juego | **VERIFICADA** sobre una copia del save; falta hacerlo en la partida real |
+| Pantalla y animación | **HECHAS**, sin ver funcionando todavía |
+| Precios | **A CERO** mientras se prueba. Los reales son 100 / 225 / 300 |
+| Logros, que son la fuente de puntos | **SIN EMPEZAR**: hoy no hay forma de ganar puntos |
+| Tienda | Sin empezar |

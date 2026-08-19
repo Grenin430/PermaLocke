@@ -31,6 +31,13 @@ public static class ServiceCollectionExtensions
             sp.GetRequiredService<AzaharRpcClient>(),
             backupFolder,
             sp.GetRequiredService<ILogger<AzaharGameWriter>>()));
+        services.TryAddSingleton<SaveBoxDelivery>(sp => new SaveBoxDelivery(
+            sp.GetRequiredService<AzaharInstallation>(),
+            sp.GetRequiredService<AzaharRpcClient>(),
+            AppContext.BaseDirectory,
+            backupFolder,
+            sp.GetRequiredService<ILogger<SaveBoxDelivery>>()));
+        services.TryAddSingleton<IPokemonDelivery>(sp => sp.GetRequiredService<SaveBoxDelivery>());
         services.TryAddSingleton<ZoneService>();
         services.TryAddSingleton<IZoneProvider>(sp => sp.GetRequiredService<ZoneService>());
         services.TryAddSingleton<IItemWithholder>(sp => sp.GetRequiredService<BagService>());
