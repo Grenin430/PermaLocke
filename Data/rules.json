@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "comment": "Configuración de reglas y economía de puntos. Ningún valor de esta lista vive en el código.",
+
+  "pointRewards": {
+    "comment": "Pendientes de confirmar por el usuario. Desactivados: hoy los puntos solo salen de los logros.",
+    "enabled": false,
+    "values": {
+      "trainerDefeated": 5,
+      "captainDefeated": 25,
+      "trialCompleted": 30,
+      "kahunaDefeated": 50,
+      "totemDefeated": 50,
+      "skullOrAetherBoss": 25,
+      "grandTrialCompleted": 50,
+      "pokemonLost": -25
+    }
+  },
+
+  "defaultRuleMode": "Block",
+
+  "rules": {
+    "firstEncounter": { "enabled": true, "mode": "Block" },
+    "shinyClause":    { "enabled": true, "mode": "WarnOnly", "consumesEncounter": false },
+    "dupesClause":    { "enabled": true, "mode": "WarnOnly", "ignoreEvolutionaryLine": true },
+    "speciesClause":  { "enabled": false, "mode": "Disabled" },
+    "giftPokemon":    { "enabled": true, "mode": "WarnOnly", "consumesEncounter": false },
+    "staticPokemon":  { "enabled": true, "mode": "WarnOnly", "consumesEncounter": false },
+    "levelCap":       { "enabled": true, "mode": "Block" }
+  },
+
+  "encounterTypesThatConsumeZone": [ "Wild", "Fishing", "Sos" ],
+
+  "ballControl": {
+    "comment": "Retira las Poké Balls mientras la zona ya haya gastado su encuentro, y las devuelve al salir. Los ids salen de la lista de objetos del cartucho: nombre acabado en 'Ball' en inglés y en español, que es lo que deja fuera la Bola de Humo, la Luminosa y la Férrea, que son objetos equipables.",
+    "enabled": true,
+    "itemIds": [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 492, 493, 494, 495, 496, 497, 498, 499, 576, 851 ]
+  },
+
+  "death": {
+    "comment": "Al detectarse 0 PS, el Pokémon se transforma al salir del combate. Verificado en el juego.",
+    "transform": {
+      "species": 292,
+      "speciesName": "Shedinja",
+      "nickname": "MUERTO",
+      "level": 1,
+      "ability": 0,
+      "abilityComment": "0 = el juego muestra \"-\", sin habilidad",
+      "clearMoves": true
+    },
+    "note": "Nivel y estadísticas no se refrescan hasta que el Pokémon entra y sale de un combate."
+  }
+}

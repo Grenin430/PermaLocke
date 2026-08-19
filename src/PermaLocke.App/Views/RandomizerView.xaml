@@ -1,0 +1,70 @@
+﻿<UserControl x:Class="PermaLocke.App.Views.RandomizerView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="0,0,8,0">
+
+            <!-- Estado de lo que hace falta para randomizar. -->
+            <Border Style="{StaticResource Panel}" Margin="0,0,0,12">
+                <StackPanel>
+                    <TextBlock Text="SEED DE LA RUN" Style="{StaticResource PanelHeading}" />
+                    <TextBlock Text="{Binding SeedLabel}" Style="{StaticResource Mono}" FontSize="18" Margin="0,2,0,10" />
+
+                    <TextBlock Text="ROM" Style="{StaticResource PanelHeading}" />
+                    <TextBlock Text="{Binding RomText}" Style="{StaticResource Body}" TextWrapping="Wrap" Margin="0,2,0,10" />
+
+                    <TextBlock Text="AZAHAR" Style="{StaticResource PanelHeading}" />
+                    <TextBlock Text="{Binding AzaharText}" Style="{StaticResource Mono}" TextWrapping="Wrap" Margin="0,2,0,0" />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Panel}" Margin="0,0,0,12">
+                <StackPanel>
+                    <TextBlock Text="QUÉ SE RANDOMIZA" Style="{StaticResource PanelHeading}" />
+                    <TextBlock Style="{StaticResource Body}" TextWrapping="Wrap" LineHeight="20" Margin="0,4,0,0"
+                               Text="Lo decide Data/randomizer.json, no esta pantalla: encuentros salvajes, objetos del suelo, iniciales y fósiles, entrenadores, datos de Pokémon y tiendas especiales." />
+                    <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,8,0,0"
+                               Text="Ocupa unos 460 MB, casi todo del fichero de encuentros, que en Ultra Luna lleva los datos de mapa dentro. La ROM original no se modifica nunca." />
+                </StackPanel>
+            </Border>
+
+            <!-- Generar e instalar son dos pasos a propósito: instalar cambia la partida. -->
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <Button Content="GENERAR" Style="{StaticResource PrimaryButton}"
+                        Command="{Binding GenerateCommand}" MinWidth="130" />
+                <Button Content="INSTALAR EN AZAHAR" Style="{StaticResource PrimaryButton}"
+                        Command="{Binding InstallCommand}" MinWidth="180" Margin="8,0,0,0" />
+                <Button Content="QUITAR" Style="{StaticResource PrimaryButton}"
+                        Command="{Binding RemoveCommand}" MinWidth="110" Margin="8,0,0,0" />
+            </StackPanel>
+
+            <TextBlock Text="{Binding Status}" Style="{StaticResource Body}" TextWrapping="Wrap" Margin="0,0,0,10" />
+
+            <Border>
+                <Border.Style>
+                    <Style TargetType="Border" BasedOn="{StaticResource Panel}">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsGenerated}" Value="True">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <StackPanel>
+                    <TextBlock Text="ÚLTIMO RESULTADO" Style="{StaticResource PanelHeading}" />
+                    <ItemsControl ItemsSource="{Binding Steps}" Margin="0,4,0,0">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}" Style="{StaticResource Mono}" TextWrapping="Wrap" Margin="0,2" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBlock Text="{Binding OutputText}" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,10,0,0" />
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

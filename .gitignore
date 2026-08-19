@@ -1,0 +1,28 @@
+# --- Compilación -------------------------------------------------------------
+bin/
+obj/
+*.user
+.vs/
+
+# --- Material que NO se redistribuye -----------------------------------------
+# Locke/ es una instalación ajena (BxnnyLocke) con una partida del usuario. Es de
+# solo lectura y material de referencia: no es nuestro y no se publica.
+Locke/
+
+# La ROM es propiedad de Nintendo. Cada jugador aporta la suya; PermaLocke nunca
+# la modifica ni la distribuye.
+ROM/
+
+# Los emuladores, incluido el fork propio, se distribuyen desde su repositorio
+# con su fuente, no metidos aquí.
+Azahar/
+Nuevo_azahar/
+
+# --- Generado ----------------------------------------------------------------
+# Mods de LayeredFS: se regeneran desde la ROM y la seed, y pesan cientos de MB.
+Randomized/
+
+# Partidas, eventos y copias de seguridad de memoria: datos del jugador.
+Saves/
+
+Logs/

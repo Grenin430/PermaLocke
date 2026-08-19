@@ -1,0 +1,227 @@
+using Microsoft.Extensions.Logging;
+using PermaLocke.Core.Abstractions;
+using PermaLocke.GameLink.Data;
+using PermaLocke.GameLink.Rpc;
+
+namespace PermaLocke.GameLink;
+
+/// <summary>
+/// Live link to Ultra Moon running in Azahar, over the emulator's RPC server.
+/// </summary>
+/// <remarks>
+/// Locating the party costs a full memory sweep, so the address is cached. Every read then
+/// revalidates it: if slot zero stops holding a coherent Pokémon of this trainer the cache is
+/// dropped and the sweep runs again. That way a moved party — new area, bigger team, different
+/// emulator build — recovers by itself instead of silently reporting stale data.
+/// </remarks>
+public sealed class AzaharGameStateProvider(
+    AzaharRpcClient client,
+    ISpeciesLookup species,
+    ILocationLookup locations,
+    string knownLayoutPath,
+    ILogger<AzaharGameStateProvider> logger) : IGameStateProvider
+{
+    /// <summary>Ultra Moon (Europe). PermaLocke targets this title only.</summary>
+    public const ulong UltraMoonTitleId = 0x00040000001B5100;
+
+    private PartyLayout? _layout;
+    private IReadOnlyList<PartyLayout> _allLayouts = [];
+    private string _gameTrainer = string.Empty;
+
+    /// <summary>The copy used for reading: the one that carries battle stats.</summary>
+    public PartyLayout? Layout => _layout;
+
+    /// <summary>
+    /// Every copy found. Writes go to all of them, because the one the game reads cannot be
+    /// identified from memory alone and they all hold the same Pokémon.
+    /// </summary>
+    public IReadOnlyList<PartyLayout> AllLayouts => _allLayouts;
+
+    /// <summary>
+    /// Only the party for now. Boxes, bag, badges and wild encounters need their own locators
+    /// and are not claimed until they exist.
+    /// </summary>
+    public GameLinkCapabilities Capabilities =>
+        GameLinkCapabilities.Party | GameLinkCapabilities.LiveUpdates;
+
+    /// <summary>Trainer name recorded in the run. Preferred when locating, never required.</summary>
+    public string TrainerName { get; set; } = string.Empty;
+
+    public Task<GameSnapshot> ReadAsync(CancellationToken ct = default) =>
+        Task.Run(() => Read(ct), ct);
+
+    private GameSnapshot Read(CancellationToken ct)
+    {
+        var now = DateTimeOffset.Now;
+
+        try
+        {
+            client.AttachTo(UltraMoonTitleId);
+        }
+        catch (Exception ex)
+        {
+            _layout = null;
+            return GameSnapshot.Disconnected(Explain(ex), now);
+        }
+
+        var reader = new Pk7Reader(client);
+
+        if (_layout is { } cached && ReadParty(reader, cached) is { Count: > 0 } cachedParty)
+        {
+            return new GameSnapshot(true, null, cachedParty, now, TrainerNotice());
+        }
+
+        // Antes de barrer, se prueban las direcciones de la última sesión. Un barrido son 96 MB
+        // y decenas de miles de peticiones, y hacerlo en cada arranque llegó a tumbar el
+        // emulador. Fiarse de ellas es seguro porque no se confía: cada copia tiene que devolver
+        // un equipo coherente de este entrenador antes de usarse.
+        if (ReadRemembered() is { Count: > 0 } remembered
+            && Choose(reader, remembered) is { } fromDisk)
+        {
+            _allLayouts = [.. remembered.Where(layout => ReadParty(reader, layout).Count > 0)];
+            _layout = fromDisk;
+            _gameTrainer = fromDisk.TrainerName;
+
+            logger.LogInformation("Equipo en 0x{Address:X8}, el de la última vez, revalidado sin barrer",
+                fromDisk.Address);
+
+            return new GameSnapshot(true, null, ReadParty(reader, fromDisk), now, TrainerNotice());
+        }
+
+        logger.LogInformation("Localizando el equipo en memoria (barrido completo)...");
+
+        var located = new PartyLayoutLocator(client).LocateAll(TrainerName, ct);
+        var readable = Choose(reader, located);
+
+        if (readable is null)
+
+
+        {
+            _layout = null;
+            return GameSnapshot.Disconnected(
+                "El juego responde, pero no encuentro el equipo en memoria. "
+                + "¿Has empezado la partida y tienes algún Pokémon?", now);
+        }
+
+        _layout = readable;
+        _allLayouts = located;
+        _gameTrainer = readable.TrainerName;
+        Remember(located);
+
+        logger.LogInformation(
+            "Equipo localizado en 0x{Address:X8} (salto 0x{Stride:X}), {Copies} copias, entrenador «{Trainer}»",
+            readable.Address, readable.Stride, located.Count, _gameTrainer);
+
+        return new GameSnapshot(true, null, ReadParty(reader, readable), now, TrainerNotice());
+    }
+
+    /// <summary>
+    /// The run is created before the game is ever read, so the name typed there may not match
+    /// the trainer in the save. Saying so is more useful than silently using one or the other.
+    /// </summary>
+    private string? TrainerNotice() =>
+        string.IsNullOrEmpty(_gameTrainer)
+        || string.Equals(_gameTrainer, TrainerName, StringComparison.Ordinal)
+            ? null
+            : $"El entrenador del juego es «{_gameTrainer}» y la run está a nombre de «{TrainerName}».";
+
+    /// <summary>
+    /// Picks the copy worth reading from. They differ in what they carry: some only have
+    /// coherent battle stats for the first slot, so the one that yields the most members wins.
+    /// </summary>
+    private PartyLayout? Choose(Pk7Reader reader, IReadOnlyList<PartyLayout> candidates) =>
+        candidates
+            .Select(layout => (Layout: layout, Party: ReadParty(reader, layout)))
+            .Where(candidate => candidate.Party.Count > 0)
+            .OrderByDescending(candidate => candidate.Party.Count)
+            .ThenBy(candidate => candidate.Layout.Stride == PartyLayoutLocator.CopyStride ? 0 : 1)
+            .Select(candidate => candidate.Layout)
+            .FirstOrDefault();
+
+    /// <summary>Layouts found last session, if any. Never used without revalidating them.</summary>
+    private IReadOnlyList<PartyLayout> ReadRemembered()
+    {
+        try
+        {
+            if (!File.Exists(knownLayoutPath))
+            {
+                return [];
+            }
+
+            var layouts = new List<PartyLayout>();
+
+            foreach (var line in File.ReadAllLines(knownLayoutPath))
+            {
+                var parts = line.Split('\t');
+
+                if (parts.Length == 3
+                    && uint.TryParse(parts[0], System.Globalization.NumberStyles.HexNumber, null, out var address)
+                    && uint.TryParse(parts[1], System.Globalization.NumberStyles.HexNumber, null, out var stride))
+                {
+                    layouts.Add(new PartyLayout(address, stride, parts[2]));
+                }
+            }
+
+            return layouts;
+        }
+        catch (IOException)
+        {
+            return [];
+        }
+    }
+
+    private void Remember(IEnumerable<PartyLayout> layouts)
+    {
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(knownLayoutPath)!);
+            File.WriteAllLines(knownLayoutPath,
+                layouts.Select(l => $"{l.Address:X8}\t{l.Stride:X}\t{l.TrainerName}"));
+        }
+        catch (IOException ex)
+        {
+            // Sin el fichero solo se pierde el atajo: la próxima vez se vuelve a barrer.
+            logger.LogWarning(ex, "No se pudo recordar la dirección del equipo");
+        }
+    }
+
+    private List<LivePartyMember> ReadParty(Pk7Reader reader, PartyLayout layout)
+    {
+        var party = new List<LivePartyMember>();
+
+        for (var slot = 0; slot < 6; slot++)
+        {
+            var member = reader.TryRead(layout.SlotAddress(slot));
+
+            // An empty slot ends the party; every slot after it is empty too.
+            if (member is null)
+            {
+                break;
+            }
+
+            party.Add(new LivePartyMember(
+                slot,
+                member.Species,
+                species.GetName(member.Species),
+                member.Nickname,
+                member.Level,
+                member.CurrentHp,
+                member.MaxHp,
+                member.IsShiny,
+                member.Pid,
+                member.MetLocation,
+                locations.GetName(member.MetLocation),
+                member.TrainerName));
+        }
+
+        return party;
+    }
+
+
+    private static string Explain(Exception ex) => ex switch
+    {
+        AzaharRpcException => ex.Message,
+        _ => "Azahar no responde. Ábrelo, carga la ROM y activa "
+             + "Configuración → Depuración → Activar servidor RPC."
+    };
+}

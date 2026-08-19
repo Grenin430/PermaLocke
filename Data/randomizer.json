@@ -1,0 +1,54 @@
+{
+  "_comentario": "Qué randomiza PermaLocke y cómo. Editable por el admin sin recompilar. Los ids de especie son los del juego (1-807).",
+
+  "wildEncounters": true,
+
+  "_fieldItems": "Las Poké Balls tiradas por el mapa: las normales llevan objeto, las doradas MT. Las MT se cambian por otras MT; los objetos normales se barajan entre sí, para no introducir ningún id que el cartucho no colocara ya en alguna parte.",
+  "fieldItems": true,
+  "staticEncounters": true,
+  "trainers": true,
+  "_pokemonData": "Cambia el juego mucho más que el resto: tipos, estadísticas, habilidades, evoluciones y aprendizajes. Se aplica el último, para que los demás módulos emparejen por las estadísticas del cartucho y no por unas ya randomizadas.",
+  "pokemonData": true,
+  "randomizeTypes": true,
+  "shuffleBaseStats": true,
+  "randomizeAbilities": true,
+  "randomizeEvolutions": true,
+  "randomizeLearnsets": true,
+  "_specialMarts": "Solo los mostradores especiales de los centros Pokémon; los ocho inventarios normales se dejan intactos. Las tiendas de MT se randomizan por otras MT; las demás se surten del objeto de abajo en todos sus huecos.",
+  "specialMarts": true,
+  "nonMachineMartItem": 4,
+
+  "_pickMode": "PerSlot tira cada hueco por separado. OneToOne hace que una especie sea siempre la misma otra en toda la partida.",
+  "pickMode": "PerSlot",
+
+  "_similarStrength": "Mantiene el reemplazo cerca del total de estadísticas base del original, para que la Ruta 1 no suelte un pseudolegendario.",
+  "similarStrength": true,
+  "strengthTolerance": 0.15,
+
+  "_mirrorSosSlots": "true hace que una llamada de auxilio traiga la misma especie que apareció.",
+  "mirrorSosSlots": false,
+
+  "distinctStarters": true,
+
+  "_trainerMovesFromLearnset": "Al cambiar la especie de un Pokémon de entrenador, deja sus movimientos a cero para que el juego le dé los suyos. 518 de los 1139 del cartucho ya vienen así, o sea que el juego lo soporta.",
+  "trainerMovesFromLearnset": true,
+
+  "_protectedSpecies": "Especies que se dejan tal cual estén donde estén. Cosmog (789) por defecto: la historia lo entrega y luego exige que evolucione a Solgaleo o Lunala, y no está probado que el juego aguante que lo cambies.",
+  "protectedSpecies": [789],
+
+  "maxSpecies": 807,
+
+  "_bannedSpecies": "Legendarios y singulares de la 1 a la 7. Quita ids de esta lista si quieres que salgan.",
+  "bannedSpecies": [
+    144, 145, 146, 150, 151,
+    243, 244, 245, 249, 250, 251,
+    377, 378, 379, 380, 381, 382, 383, 384, 385, 386,
+    480, 481, 482, 483, 484, 485, 486, 487, 488, 489, 490, 491, 492, 493, 494,
+    638, 639, 640, 641, 642, 643, 644, 645, 646, 647, 648, 649,
+    716, 717, 718, 719, 720, 721,
+    772, 773,
+    785, 786, 787, 788, 789, 790, 791, 792,
+    793, 794, 795, 796, 797, 798, 799,
+    800, 801, 802, 803, 804, 805, 806, 807
+  ]
+}

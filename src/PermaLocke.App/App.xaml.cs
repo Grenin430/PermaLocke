@@ -1,0 +1,95 @@
+using System.IO;
+using System.Windows;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using PermaLocke.App.Services;
+using PermaLocke.App.ViewModels;
+using PermaLocke.Core;
+using PermaLocke.Core.Services;
+using PermaLocke.Data;
+using PermaLocke.GameLink;
+using PermaLocke.Infrastructure;
+using PermaLocke.Rules;
+using PermaLocke.Rules.Services;
+
+namespace PermaLocke.App;
+
+public partial class App : Application
+{
+    private ServiceProvider? _services;
+
+    protected override async void OnStartup(StartupEventArgs e)
+    {
+        base.OnStartup(e);
+
+        var paths = new AppPaths();
+        paths.EnsureCreated();
+
+        var collection = new ServiceCollection();
+        collection.AddPermaLockeInfrastructure(paths, "permalocke");
+        collection.AddPermaLockeData(paths.Saves);
+        collection.AddPermaLockeCore();
+        collection.AddPermaLockeRules(Path.Combine(paths.Data, "rules.json"));
+        collection.AddPermaLockeGameLink(paths.SaveBackups);
+        collection.AddSingleton<EncounterService>();
+        collection.AddSingleton<GameWatcher>();
+
+        collection.AddSingleton<AzaharInstallation>();
+        collection.AddSingleton<IAppDialogs, AppDialogs>();
+        collection.AddSingleton<IUiDispatcher, WpfUiDispatcher>();
+        collection.AddSingleton<GameLinkMonitor>();
+        collection.AddTransient<CreateRunViewModel>();
+        collection.AddTransient<RegisterCaptureViewModel>();
+        collection.AddSingleton<HomeViewModel>();
+        collection.AddSingleton<RandomizerViewModel>();
+        collection.AddSingleton<MiscellaneousViewModel>();
+        collection.AddSingleton<MainViewModel>();
+
+        _services = collection.BuildServiceProvider();
+
+        var logger = _services.GetRequiredService<ILogger<App>>();
+        logger.LogInformation("PermaLocke iniciado. Raíz de datos: {Root}", paths.Root);
+
+        DispatcherUnhandledException += (_, args) =>
+        {
+            logger.LogError(args.Exception, "Excepción no controlada en la interfaz");
+            MessageBox.Show(
+                "Ha ocurrido un error inesperado. El detalle técnico se ha escrito en la carpeta Logs.",
+                "PermaLocke", MessageBoxButton.OK, MessageBoxImage.Error);
+            args.Handled = true;
+        };
+
+        // The dispatcher handler above only sees UI thread failures. These two catch the rest,
+        // so a crash on a background thread can never again disappear without a trace.
+        AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+            logger.LogCritical(args.ExceptionObject as Exception,
+                "Excepción no controlada fuera del hilo de interfaz. Terminando: {Terminating}",
+                args.IsTerminating);
+
+        TaskScheduler.UnobservedTaskException += (_, args) =>
+        {
+            logger.LogError(args.Exception, "Excepción de tarea sin observar");
+            args.SetObserved();
+        };
+
+        var main = _services.GetRequiredService<MainViewModel>();
+        var window = new MainWindow { DataContext = main };
+        MainWindow = window;
+        window.Show();
+
+        var run = await _services.GetRequiredService<RunService>().LoadMostRecentAsync();
+        logger.LogInformation("Run cargada al inicio: {Run}", run?.Name ?? "ninguna");
+
+        await main.InitialiseAsync();
+
+        // Started last: it polls the emulator, and there is no point doing that before the
+        // run it belongs to has been loaded.
+        _services.GetRequiredService<GameLinkMonitor>().Start();
+    }
+
+    protected override void OnExit(ExitEventArgs e)
+    {
+        _services?.Dispose();
+        base.OnExit(e);
+    }
+}

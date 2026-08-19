@@ -1,0 +1,23 @@
+LISTA DEL LEVEL CAP DE LAS PRUEBAS
+
+1 prueba : nivel 14
+2 prueba : nivel 20
+3 prueba : nivel 24
+4 prueba : nivel 26
+5 prueba : nivel 29
+6 prueba : nivel 34
+7 prueba : nivel 40
+8 prueba : nivel 42
+9 prueba : nivel 54
+10 prueba : nivel 59
+11 prueba : nivel 66
+12 prueba : nivel 67
+LIGA : nivel 73
+REMATCH : nivel 85
+
+
+LOGROS
+- DERROTAR 1 ENTRENADOR - 10 PTOS
+- PASAR PRUEBA 1 - 100 PTOS
+- HUIR DE COMBATES 5 VECES - 50 PTOS
+DEJA ESO DE MOMENTO EN LOS LOGROS PARA TESTEAR

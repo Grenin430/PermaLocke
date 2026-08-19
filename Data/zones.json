@@ -1,0 +1,2366 @@
+{
+  "comment": "Generado por: PermaLocke.RomTool zones. No editar a mano.",
+  "source": "a/0/8/3 (encdata) \u002B a/0/7/7 (zonedata) \u002B a/0/9/1 (worlddata)",
+  "areas": [
+    {
+      "area": 0,
+      "names": [
+        "Ruta 1",
+        "Mar de Melemele"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 1,
+      "names": [
+        "Pueblo Lilii"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 2,
+      "names": [
+        "Mar de Melemele",
+        "Ciudad Hauoli"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 3,
+      "names": [
+        "Ciudad Hauoli"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 4,
+      "names": [
+        "Ruta 3",
+        "Bah\u00EDa Kalae"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 5,
+      "names": [
+        "Ruta 2"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 6,
+      "names": [
+        "Playa Big Wave"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 7,
+      "names": [
+        "Pueblo Lilii"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 8,
+      "names": [
+        "Pueblo Lilii"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 9,
+      "names": [
+        "Ciudad Hauoli"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 10,
+      "names": [
+        "Ruta 1"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 11,
+      "names": [
+        "Ruta 1"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 12,
+      "names": [
+        "Ruta 1"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 13,
+      "names": [
+        "Senda Mahalo"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 14,
+      "names": [
+        "Senda Mahalo"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 15,
+      "names": [
+        "Senda Mahalo"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 16,
+      "names": [
+        "Ruinas de la Guerra"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 17,
+      "names": [
+        "Ruinas de la Guerra"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 18,
+      "names": [
+        "Ruinas de la Guerra"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 19,
+      "names": [
+        "Ruinas de la Guerra"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 20,
+      "names": [
+        "Colina Dequilate"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 21,
+      "names": [
+        "Colina Dequilate"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 22,
+      "names": [
+        "Cementerio de Hauoli"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 23,
+      "names": [
+        "Jardines de Melemele"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 24,
+      "names": [
+        "Gruta Unemar"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 25,
+      "names": [
+        "Huerto de Bayas"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 26,
+      "names": [
+        "Cueva Costera"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 27,
+      "names": [
+        "Cueva Sotobosque"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 28,
+      "names": [
+        "Cueva Sotobosque"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 29,
+      "names": [
+        "Ruta 1"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 30,
+      "names": [
+        "Pueblo Lilii"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 31,
+      "names": [
+        "Pueblo Lilii"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 32,
+      "names": [
+        "Pueblo Lilii"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 33,
+      "names": [
+        "Pueblo Lilii"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 34,
+      "names": [
+        "Ruta 1"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 35,
+      "names": [
+        "Ruta 1"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 36,
+      "names": [
+        "Ciudad Hauoli"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 37,
+      "names": [
+        "Ruta 2"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 38,
+      "names": [
+        "Ciudad Hauoli"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 39,
+      "names": [
+        "Huerto de Bayas"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 40,
+      "names": [
+        "Ruta 1"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 41,
+      "names": [
+        "Ruta 1"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 42,
+      "names": [
+        "Ruta 1"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 43,
+      "names": [
+        "Ruta 1"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 44,
+      "names": [
+        "Ruta 1"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 45,
+      "names": [
+        "Ruta 1"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 46,
+      "names": [
+        "Ruta 1"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 47,
+      "names": [
+        "Ruta 1"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 48,
+      "names": [
+        "Ciudad Hauoli"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 49,
+      "names": [
+        "Ciudad Hauoli"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 50,
+      "names": [
+        "Ciudad Hauoli"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 51,
+      "names": [
+        "Ciudad Hauoli"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 52,
+      "names": [
+        "Ciudad Hauoli"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 53,
+      "names": [
+        "Ciudad Hauoli"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 54,
+      "names": [
+        "Ciudad Hauoli"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 55,
+      "names": [
+        "Ciudad Hauoli"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 56,
+      "names": [
+        "Ciudad Hauoli"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 57,
+      "names": [
+        "Ruta 2"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 58,
+      "names": [
+        "Ruta 2"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 59,
+      "names": [
+        "Ciudad Hauoli"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 60,
+      "names": [
+        "Ciudad Hauoli"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 61,
+      "names": [
+        "Ciudad Hauoli"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 62,
+      "names": [
+        "Ruta 1"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 63,
+      "names": [
+        "Ciudad Hauoli"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 64,
+      "names": [
+        "Ruta 2"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 65,
+      "names": [
+        "Ciudad Kantai"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 66,
+      "names": [
+        "Ruta 4"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 67,
+      "names": [
+        "Pueblo Ohana"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 68,
+      "names": [
+        "Ruta 5"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 69,
+      "names": [
+        "Ruta 6"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 70,
+      "names": [
+        "Ruta 7"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 71,
+      "names": [
+        "Ruta 8"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 72,
+      "names": [
+        "Ruta 9"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 73,
+      "names": [
+        "Resort Hanohano",
+        "Playa de Hanohano"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 74,
+      "names": [
+        "Ciudad Konikoni"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 75,
+      "names": [
+        "Avenida Royale"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 76,
+      "names": [
+        "Playa de Kantai"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 77,
+      "names": [
+        "T\u00FAnel del Volc\u00E1n"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 78,
+      "names": [
+        "Ruinas de la Vida"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 79,
+      "names": [
+        "Ruinas de la Vida"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 80,
+      "names": [
+        "Ruinas de la Vida"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 81,
+      "names": [
+        "Colina del Recuerdo",
+        "Afueras de Akala"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 82,
+      "names": [
+        "T\u00FAnel Diglett"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 83,
+      "names": [
+        "\u00C1rea Volc\u00E1nica Wela"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 84,
+      "names": [
+        "\u00C1rea Volc\u00E1nica Wela"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 85,
+      "names": [
+        "Colina Saltagua"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 86,
+      "names": [
+        "Colina Saltagua"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 87,
+      "names": [
+        "Jungla Umbr\u00EDa"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 88,
+      "names": [
+        "Jungla Umbr\u00EDa"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 89,
+      "names": [
+        "Jungla Umbr\u00EDa"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 90,
+      "names": [
+        "Jungla Umbr\u00EDa"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 91,
+      "names": [
+        "Jungla Umbr\u00EDa"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 92,
+      "names": [
+        "Pueblo Ohana"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 93,
+      "names": [
+        "Ciudad Konikoni"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 94,
+      "names": [
+        "Ciudad Konikoni"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 95,
+      "names": [
+        "Ciudad Konikoni"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 96,
+      "names": [
+        "Ciudad Kantai"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 97,
+      "names": [
+        "Ciudad Kantai"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 98,
+      "names": [
+        "Ciudad Kantai"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 99,
+      "names": [
+        "Ciudad Kantai"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 100,
+      "names": [
+        "Ciudad Kantai"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 101,
+      "names": [
+        "Ciudad Kantai"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 102,
+      "names": [
+        "Ciudad Kantai"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 103,
+      "names": [
+        "Ciudad Kantai"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 104,
+      "names": [
+        "Ciudad Kantai"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 105,
+      "names": [
+        "Ciudad Kantai"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 106,
+      "names": [
+        "Ciudad Kantai"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 107,
+      "names": [
+        "Ciudad Kantai"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 108,
+      "names": [
+        "Ciudad Kantai"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 109,
+      "names": [
+        "Ruta 8"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 110,
+      "names": [
+        "Resort Hanohano"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 111,
+      "names": [
+        "Avenida Royale"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 112,
+      "names": [
+        "Ruta 8"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 113,
+      "names": [
+        "Ruta 8"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 114,
+      "names": [
+        "Avenida Royale"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 115,
+      "names": [
+        "Ciudad Konikoni"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 116,
+      "names": [
+        "Ciudad Konikoni"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 117,
+      "names": [
+        "Ruta 9"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 118,
+      "names": [
+        "Estadio Royale"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 119,
+      "names": [
+        "Ruta 8"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 120,
+      "names": [
+        "Rancho Ohana"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 121,
+      "names": [
+        "Rancho Ohana"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 122,
+      "names": [
+        "Rancho Ohana"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 123,
+      "names": [
+        "Ciudad Kantai"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 124,
+      "names": [
+        "Ciudad Konikoni"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 125,
+      "names": [
+        "Ciudad Konikoni"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 126,
+      "names": [
+        "Avenida Royale"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 127,
+      "names": [
+        "Ciudad Kantai"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 128,
+      "names": [
+        "Valle de los Pikachu"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 129,
+      "names": [
+        "Ciudad Kantai"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 130,
+      "names": [
+        "Avenida Royale"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 131,
+      "names": [
+        "Ruta 8"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 132,
+      "names": [
+        "Ciudad Konikoni"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 133,
+      "names": [
+        "Pueblo Ohana"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 134,
+      "names": [
+        "Ruta 5"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 135,
+      "names": [
+        "Ciudad Mal\u00EDe"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 136,
+      "names": [
+        "Ruta 10"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 137,
+      "names": [
+        "Ruta 12"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 138,
+      "names": [
+        "Ruta 13"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 139,
+      "names": [
+        "Aldea Tapu",
+        "Ruta 14"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 140,
+      "names": [
+        "Ruta 15",
+        "Ruta 16"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 141,
+      "names": [
+        "Ruta 17"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 142,
+      "names": [
+        "Ruta 11"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 143,
+      "names": [
+        "Playa de Ula-Ula"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 144,
+      "names": [
+        "Pueblo Po"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 145,
+      "names": [
+        "Desierto de Haina"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 146,
+      "names": [
+        "Desierto de Haina"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 147,
+      "names": [
+        "Jardines de Ula-Ula"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 148,
+      "names": [
+        "Parque de Mal\u00EDe"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 149,
+      "names": [
+        "Pico Hokulani"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 150,
+      "names": [
+        "Monte Rubor"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 151,
+      "names": [
+        "Ruinas de la Cosecha"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 152,
+      "names": [
+        "Ruinas de la Cosecha"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 153,
+      "names": [
+        "Ruinas de la Cosecha"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 154,
+      "names": [
+        "Lago Corosol"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 155,
+      "names": [
+        "Lago Corosol"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 156,
+      "names": [
+        "Lago Corosol"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 157,
+      "names": [
+        "Lago Corosol"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 158,
+      "names": [
+        "Lago Coroluna"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 159,
+      "names": [
+        "Lago Coroluna"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 160,
+      "names": [
+        "Lago Coroluna"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 161,
+      "names": [
+        "Lago Coroluna"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 162,
+      "names": [
+        "Monte Lanakila"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 163,
+      "names": [
+        "Monte Lanakila"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 164,
+      "names": [
+        "Monte Lanakila"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 165,
+      "names": [
+        "Monte Lanakila"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 166,
+      "names": [
+        "Monte Lanakila"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 167,
+      "names": [
+        "Monte Lanakila"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 168,
+      "names": [
+        "Monte Lanakila"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 169,
+      "names": [
+        "Monte Lanakila"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 170,
+      "names": [
+        "Mansi\u00F3n Misteriosa"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 171,
+      "names": [
+        "Mansi\u00F3n Misteriosa"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 172,
+      "names": [
+        "Mansi\u00F3n Misteriosa"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 173,
+      "names": [
+        "Mansi\u00F3n Misteriosa"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 174,
+      "names": [
+        "Mansi\u00F3n Misteriosa"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 175,
+      "names": [
+        "Mansi\u00F3n Misteriosa"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 176,
+      "names": [
+        "Mansi\u00F3n Misteriosa"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 177,
+      "names": [
+        "Mansi\u00F3n Misteriosa"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 178,
+      "names": [
+        "Mansi\u00F3n Misteriosa"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 179,
+      "names": [
+        "Mansi\u00F3n Misteriosa"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 180,
+      "names": [
+        "Mansi\u00F3n Misteriosa"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 181,
+      "names": [
+        "Mansi\u00F3n Misteriosa"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 182,
+      "names": [
+        "S\u00FAper Ultraganga"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 183,
+      "names": [
+        "S\u00FAper Ultraganga"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 184,
+      "names": [
+        "S\u00FAper Ultraganga"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 185,
+      "names": [
+        "Ciudad Mal\u00EDe"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 186,
+      "names": [
+        "Ciudad Mal\u00EDe"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 187,
+      "names": [
+        "Ciudad Mal\u00EDe"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 188,
+      "names": [
+        "Ciudad Mal\u00EDe"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 189,
+      "names": [
+        "Ciudad Mal\u00EDe"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 190,
+      "names": [
+        "Ciudad Mal\u00EDe"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 191,
+      "names": [
+        "Ciudad Mal\u00EDe"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 192,
+      "names": [
+        "Ciudad Mal\u00EDe"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 193,
+      "names": [
+        "Ciudad Mal\u00EDe"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 194,
+      "names": [
+        "Ciudad Mal\u00EDe"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 195,
+      "names": [
+        "Ruta 15"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 196,
+      "names": [
+        "Ruta 13"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 197,
+      "names": [
+        "Ruta 13"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 198,
+      "names": [
+        "Ruta 17"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 199,
+      "names": [
+        "Ruta 16"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 200,
+      "names": [
+        "Ruta 16"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 201,
+      "names": [
+        "Observ. de Hokulani"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 202,
+      "names": [
+        "Observ. de Hokulani"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 203,
+      "names": [
+        "Observ. de Hokulani"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 204,
+      "names": [
+        "Observ. de Hokulani"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 205,
+      "names": [
+        "Monte Rubor"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 206,
+      "names": [
+        "Ciudad Mal\u00EDe"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 207,
+      "names": [
+        "Ruta 15"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 208,
+      "names": [
+        "Ruta 13"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 209,
+      "names": [
+        "Ruta 13"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 210,
+      "names": [
+        "Liga Pok\u00E9mon"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 211,
+      "names": [
+        "Liga Pok\u00E9mon"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 212,
+      "names": [
+        "Liga Pok\u00E9mon"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 213,
+      "names": [
+        "Liga Pok\u00E9mon"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 214,
+      "names": [
+        "Liga Pok\u00E9mon"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 215,
+      "names": [
+        "Liga Pok\u00E9mon"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 216,
+      "names": [
+        "Liga Pok\u00E9mon"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 217,
+      "names": [
+        "Ciudad Mal\u00EDe"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 218,
+      "names": [
+        "Aldea Tapu"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 219,
+      "names": [
+        "Pueblo Po"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 220,
+      "names": [
+        "Ruta 16"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 221,
+      "names": [
+        "Monte Lanakila"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 222,
+      "names": [
+        "Pico Hokulani"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 223,
+      "names": [
+        "Aldea Marina"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 224,
+      "names": [
+        "Prado de Poni"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 225,
+      "names": [
+        "Antiguo Paso de Poni",
+        "Arrecife de Poni"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 226,
+      "names": [
+        "Bosque de Poni"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 227,
+      "names": [
+        "Llanura de Poni"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 228,
+      "names": [
+        "Costa de Poni"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 229,
+      "names": [
+        "Pendiente de Poni"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 230,
+      "names": [
+        "Playa de Poni"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 231,
+      "names": [
+        "Jardines de Poni"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 232,
+      "names": [
+        "Ca\u00F1\u00F3n de Poni"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 233,
+      "names": [
+        "Ca\u00F1\u00F3n de Poni"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 234,
+      "names": [
+        "Ca\u00F1\u00F3n de Poni"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 235,
+      "names": [
+        "Ca\u00F1\u00F3n de Poni"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 236,
+      "names": [
+        "Ca\u00F1\u00F3n de Poni"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 237,
+      "names": [
+        "Ca\u00F1\u00F3n de Poni"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 238,
+      "names": [
+        "Altar del Sol"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 239,
+      "names": [
+        "Altar del Sol"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 240,
+      "names": [
+        "Altar de la Luna"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 241,
+      "names": [
+        "Altar de la Luna"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 242,
+      "names": [
+        "Ruinas del Tr\u00E1nsito"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 243,
+      "names": [
+        "Ruinas del Tr\u00E1nsito"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 244,
+      "names": [
+        "Ruinas del Tr\u00E1nsito"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 245,
+      "names": [
+        "Gruta Desenlace"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 246,
+      "names": [
+        "Gruta Desenlace"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 247,
+      "names": [
+        "Gruta Desenlace"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 248,
+      "names": [
+        "Isla Exeggutor"
+      ],
+      "hasEncounters": true
+    },
+    {
+      "area": 249,
+      "names": [
+        "Gruta de la Llanura"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 250,
+      "names": [
+        "Aldea Marina"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 251,
+      "names": [
+        "Aldea Marina"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 252,
+      "names": [
+        "Aldea Marina"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 253,
+      "names": [
+        "Aldea Marina"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 254,
+      "names": [
+        "Antiguo Paso de Poni"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 255,
+      "names": [
+        "Aldea Marina"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 256,
+      "names": [
+        "\u00C1rbol de Combate"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 257,
+      "names": [
+        "\u00C1rbol de Combate"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 258,
+      "names": [
+        "\u00C1rbol de Combate"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 259,
+      "names": [
+        "\u00C1rbol de Combate"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 260,
+      "names": [
+        "Para\u00EDso \u00C6ther"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 261,
+      "names": [
+        "Para\u00EDso \u00C6ther"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 262,
+      "names": [
+        "Para\u00EDso \u00C6ther"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 263,
+      "names": [
+        "Para\u00EDso \u00C6ther"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 264,
+      "names": [
+        "Para\u00EDso \u00C6ther"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 265,
+      "names": [
+        "Para\u00EDso \u00C6ther"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 266,
+      "names": [
+        "Para\u00EDso \u00C6ther"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 267,
+      "names": [
+        "Para\u00EDso \u00C6ther"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 268,
+      "names": [
+        "Para\u00EDso \u00C6ther"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 269,
+      "names": [
+        "Para\u00EDso \u00C6ther"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 270,
+      "names": [
+        "Para\u00EDso \u00C6ther"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 271,
+      "names": [
+        "Para\u00EDso \u00C6ther"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 272,
+      "names": [
+        "Para\u00EDso \u00C6ther"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 273,
+      "names": [
+        "Para\u00EDso \u00C6ther"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 274,
+      "names": [
+        "Ruta 1"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 275,
+      "names": [
+        "Ruta 1"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 276,
+      "names": [
+        "Ruta 1"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 277,
+      "names": [
+        "Ultraabismo"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 278,
+      "names": [
+        "Ultr\u00F3polis"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 279,
+      "names": [
+        "Ultr\u00F3polis"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 280,
+      "names": [
+        "Torre Ultr\u00F3polis"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 281,
+      "names": [
+        "Torre Ultr\u00F3polis"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 282,
+      "names": [
+        "Ultragenerador"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 283,
+      "names": [
+        "Ultravalle"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 284,
+      "names": [
+        "Ultradesierto"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 285,
+      "names": [
+        "Ultrabosque"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 286,
+      "names": [
+        "Ultrajungla"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 287,
+      "names": [
+        "Ultraurbe"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 288,
+      "names": [
+        "Ultraurbe"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 289,
+      "names": [
+        "Ultraespacio Cero"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 290,
+      "names": [
+        "Ultraespacio Cero"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 291,
+      "names": [
+        "Ultraespacio Cero"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 292,
+      "names": [
+        "Ultraespacio Cero"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 293,
+      "names": [
+        "Para\u00EDso \u00C6ther"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 294,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 295,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 296,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 297,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 298,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 299,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 300,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 301,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 302,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 303,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 304,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 305,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 306,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 307,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 308,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 309,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 310,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 311,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 312,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 313,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 314,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 315,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 316,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 317,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 318,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 319,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 320,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 321,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 322,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 323,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 324,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 325,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 326,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 327,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 328,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 329,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 330,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 331,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 332,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 333,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 334,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    },
+    {
+      "area": 335,
+      "names": [
+        "Castillo Team Rocket"
+      ],
+      "hasEncounters": false
+    }
+  ]
+}

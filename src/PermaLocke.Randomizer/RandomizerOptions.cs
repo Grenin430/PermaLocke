@@ -1,0 +1,108 @@
+namespace PermaLocke.Randomizer;
+
+/// <summary>How a replacement species is chosen.</summary>
+public enum SpeciesPickMode
+{
+    /// <summary>Every slot is rolled on its own. Maximum variety.</summary>
+    PerSlot,
+
+    /// <summary>
+    /// One species always becomes the same other species, everywhere. The classic randomizer
+    /// mapping: knowing what a Pidgey turned into tells you what every Pidgey turned into.
+    /// </summary>
+    OneToOne,
+}
+
+/// <summary>
+/// What to randomize and how. Lives in <c>Data/randomizer.json</c>, never in the code, so the
+/// admin can change the competition's rules without a rebuild.
+/// </summary>
+public sealed record RandomizerOptions
+{
+    /// <summary>Wild encounters. The only module whose output is large: ~460 MB.</summary>
+    public bool WildEncounters { get; init; } = true;
+
+    /// <summary>
+    /// The Poké Balls lying on the ground: ordinary ones hold an item, gold ones a TM. They live
+    /// in the same GARC as the wild encounters.
+    /// </summary>
+    public bool FieldItems { get; init; } = true;
+
+    /// <summary>Starters, the eleven fossils, gifts, statics and totems.</summary>
+    public bool StaticEncounters { get; init; } = true;
+
+    public bool Trainers { get; init; } = true;
+
+    /// <summary>Types, base stats, abilities, learnsets and evolutions.</summary>
+    public bool PokemonData { get; init; }
+
+    /// <summary>Special mart stock. Lives in <c>Shop.cro</c>, not in a GARC.</summary>
+    public bool SpecialMarts { get; init; }
+
+    public SpeciesPickMode PickMode { get; init; } = SpeciesPickMode.PerSlot;
+
+    /// <summary>
+    /// Keep the replacement near the original's base stat total, so an early route does not
+    /// hand out a pseudo-legendary. Zero disables the band.
+    /// </summary>
+    public bool SimilarStrength { get; init; } = true;
+
+    /// <summary>How far the base stat total may stray, as a fraction, when matching strength.</summary>
+    public double StrengthTolerance { get; init; } = 0.15;
+
+    /// <summary>
+    /// Copy the base slots over the SOS and weather slots, so an SOS call brings the same
+    /// species that appeared. Off means those slots are rolled too.
+    /// </summary>
+    public bool MirrorSosSlots { get; init; }
+
+    /// <summary>The three starters must differ from each other.</summary>
+    public bool DistinctStarters { get; init; } = true;
+
+    /// <summary>
+    /// Blank a trainer Pokémon's moves when its species changes, so the game builds a moveset
+    /// from the new species' learnset instead of keeping one picked for the old one.
+    /// </summary>
+    public bool TrainerMovesFromLearnset { get; init; } = true;
+
+    /// <summary>Randomize the type or types of every species and form.</summary>
+    public bool RandomizeTypes { get; init; } = true;
+
+    /// <summary>
+    /// Rearrange the six base stats without changing their total. Shuffling rather than rolling
+    /// keeps the base stat total meaningful, which is what the encounter and trainer modules use
+    /// to match a replacement to the species it replaces.
+    /// </summary>
+    public bool ShuffleBaseStats { get; init; } = true;
+
+    /// <summary>Randomize abilities. A slot that was empty stays empty.</summary>
+    public bool RandomizeAbilities { get; init; } = true;
+
+    /// <summary>
+    /// Redirect what each species evolves into. The trigger is left alone, so an evolution still
+    /// happens at the same level or with the same stone.
+    /// </summary>
+    public bool RandomizeEvolutions { get; init; } = true;
+
+    /// <summary>Replace the moves of every level-up learnset, keeping the levels.</summary>
+    public bool RandomizeLearnsets { get; init; } = true;
+
+    /// <summary>
+    /// What a special mart that does not sell TMs is stocked with, in every slot. Poké Ball (4)
+    /// by default: a Nuzlocke needs balls far more than it needs X Items.
+    /// </summary>
+    public int NonMachineMartItem { get; init; } = 4;
+
+    /// <summary>
+    /// Species left exactly as the cartridge has them, wherever they appear. Cosmog is here by
+    /// default: the story hands it over and later requires it to become Solgaleo or Lunala, and
+    /// whether the game survives having it replaced has not been tested.
+    /// </summary>
+    public IReadOnlyList<int> ProtectedSpecies { get; init; } = [789];
+
+    /// <summary>Species that may never be handed out. Legendaries and mythicals, typically.</summary>
+    public IReadOnlyList<int> BannedSpecies { get; init; } = [];
+
+    /// <summary>Highest species id the game knows. Ultra Sun/Moon stop at Melmetal's predecessor.</summary>
+    public int MaxSpecies { get; init; } = 807;
+}

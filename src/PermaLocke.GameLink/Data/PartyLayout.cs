@@ -1,0 +1,156 @@
+using PKHeX.Core;
+using PermaLocke.GameLink.Rpc;
+
+namespace PermaLocke.GameLink.Data;
+
+/// <param name="Address">Address of party slot zero.</param>
+/// <param name="Stride">Bytes between consecutive members.</param>
+/// <param name="TrainerName">Trainer the party belongs to, as read from the game.</param>
+public sealed record PartyLayout(uint Address, uint Stride, string TrainerName)
+{
+    public uint SlotAddress(int slot) => (uint)(Address + slot * Stride);
+}
+
+/// <summary>
+/// Locates the party the game actually reads from, as opposed to the copies it keeps in sync.
+/// </summary>
+/// <remarks>
+/// The game holds several copies of the party. They were told apart by writing a different
+/// nickname into each one and seeing which the game displayed: the authoritative copy is the
+/// one whose members are <see cref="AuthoritativeStride"/> bytes apart, while the copies inside
+/// the save block use the plain party stride. That is an empirical finding, so the locator
+/// prefers the wider stride but still returns a narrower match rather than nothing — a copy is
+/// good enough for reading, and callers that intend to write check <see cref="PartyLayout"/>.
+/// </remarks>
+public sealed class PartyLayoutLocator(AzaharRpcClient client)
+{
+    /// <summary>Stride of the structure the game reads from. Determined against the real game.</summary>
+    public const uint AuthoritativeStride = 0x1E4;
+
+    /// <summary>Stride of the save-resident copies.</summary>
+    public const uint CopyStride = 0x104;
+
+    private static readonly int StoredSize = new PK7().SIZE_STORED;
+
+    /// <summary>
+    /// Every copy of the party found in memory. The game keeps several and only one of them is
+    /// the one it reads; they cannot be told apart by their contents or their stride, since
+    /// four of the six share it. Callers deal with that instead of guessing: reads use a copy
+    /// that carries battle stats, and writes go to all of them.
+    /// </summary>
+    public IReadOnlyList<PartyLayout> LocateAll(string? preferredTrainer, CancellationToken ct = default)
+    {
+        var candidates = new List<PartyLayout>();
+
+        // Acotado a donde el juego guarda su estado vivo, no a todo lo que el emulador contesta.
+        // Barrer 0x30000000-0x40000000 entero son 384 MB y unas 100.000 peticiones, y eso llegó a
+        // tumbar el emulador durante el arranque de la app. El equipo y todas sus copias caen
+        // dentro de estos 96 MB: de 0x3002E258 a 0x33F7FA44.
+        foreach (var region in MemorySearch.LiveStateRegions)
+        {
+            var buffer = ReadRegion(region, ct);
+
+            for (var offset = 0; offset + StoredSize <= buffer.Length; offset += 4)
+            {
+                ct.ThrowIfCancellationRequested();
+
+                if (!LooksLikeHeader(buffer, offset))
+                {
+                    continue;
+                }
+
+                var first = Parse(buffer, offset);
+
+                if (first is null)
+                {
+                    continue;
+                }
+
+                // A single valid Pokémon is not a party. The stride is confirmed by checking
+                // that a second one sits exactly that far away.
+                var stride = DetectStride(buffer, offset);
+
+                if (stride is null)
+                {
+                    continue;
+                }
+
+                candidates.Add(new PartyLayout(region.Start + (uint)offset, stride.Value,
+                    first.OriginalTrainerName));
+            }
+        }
+
+        if (candidates.Count == 0)
+        {
+            return [];
+        }
+
+        var matchesTrainer = candidates
+            .Where(c => string.Equals(c.TrainerName, preferredTrainer, StringComparison.Ordinal))
+            .ToList();
+
+        return matchesTrainer.Count > 0 ? matchesTrainer : candidates;
+    }
+
+    /// <summary>Sanity is zero and the checksum is non-zero in every real block; cheap pre-filter.</summary>
+    private static bool LooksLikeHeader(byte[] buffer, int offset) =>
+        BitConverter.ToUInt16(buffer, offset + 4) == 0
+        && BitConverter.ToUInt16(buffer, offset + 6) != 0;
+
+    private static PK7? Parse(byte[] buffer, int offset)
+    {
+        var block = new byte[new PK7().SIZE_PARTY];
+        buffer.AsSpan(offset, StoredSize).CopyTo(block);
+
+        var pokemon = new PK7(block);
+
+        return pokemon.ChecksumValid
+               && pokemon.Species is > 0 and <= 807
+               && pokemon.CurrentLevel is > 0 and <= 100
+               && !string.IsNullOrWhiteSpace(pokemon.OriginalTrainerName)
+            ? pokemon
+            : null;
+    }
+
+    /// <summary>Returns the stride when a second valid Pokémon follows at a known distance.</summary>
+    private static uint? DetectStride(byte[] buffer, int offset)
+    {
+        foreach (var stride in (uint[])[AuthoritativeStride, CopyStride])
+        {
+            var next = offset + (int)stride;
+
+            if (next + StoredSize <= buffer.Length && LooksLikeHeader(buffer, next)
+                && Parse(buffer, next) is not null)
+            {
+                return stride;
+            }
+        }
+
+        return null;
+    }
+
+    private byte[] ReadRegion(MemoryRegion region, CancellationToken ct)
+    {
+        var buffer = new byte[region.Size];
+        var requests = 0;
+
+        for (var offset = 0u; offset < region.Size; offset += 0x1000)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var chunk = (int)Math.Min(0x1000, region.Size - offset);
+
+            if (client.TryReadMemory(region.Start + offset, chunk, out var data))
+            {
+                data.CopyTo(buffer.AsSpan((int)offset));
+            }
+
+            if (++requests % 256 == 0)
+            {
+                Thread.Sleep(1);
+            }
+        }
+
+        return buffer;
+    }
+}

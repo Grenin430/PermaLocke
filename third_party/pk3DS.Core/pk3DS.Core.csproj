@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+
+    <!-- Third-party code, kept as close to upstream as possible so it can still be diffed.
+         Its warnings are not PermaLocke's to fix. -->
+    <NoWarn>CA2022;CS0168;CS0169;CS0414;CS0649</NoWarn>
+    <EnableNETAnalyzers>false</EnableNETAnalyzers>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+</Project>

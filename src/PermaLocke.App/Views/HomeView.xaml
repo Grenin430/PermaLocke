@@ -1,0 +1,252 @@
+﻿<UserControl x:Class="PermaLocke.App.Views.HomeView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid>
+        <!-- Empty state: no run yet. Shown instead of zeroed-out statistics. -->
+        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="620">
+            <StackPanel.Style>
+                <Style TargetType="StackPanel">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding HasRun}" Value="False">
+                            <Setter Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </StackPanel.Style>
+
+            <TextBlock Text="NO HAY NINGUNA RUN ACTIVA"
+                       Style="{StaticResource PanelHeading}" FontSize="18"
+                       HorizontalAlignment="Center" />
+            <TextBlock Style="{StaticResource Body}" TextAlignment="Center" Margin="0,10,0,0"
+                       Text="Deja tu ROM vanilla de Pokémon Ultra Luna en la carpeta ROM y crea la run." />
+            <Button Content="CREAR RUN" Command="{Binding CreateRunCommand}"
+                    Style="{StaticResource PrimaryButton}"
+                    HorizontalAlignment="Center" Margin="0,22,0,0" />
+        </StackPanel>
+
+        <!-- Run dashboard -->
+        <Grid>
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding HasRun}" Value="True">
+                            <Setter Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="1.2*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="12" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource Panel}">
+                <StackPanel>
+                    <TextBlock Text="RUN" Style="{StaticResource PanelHeading}" />
+                    <TextBlock Text="{Binding RunName}" Style="{StaticResource Body}" FontSize="17" />
+                    <TextBlock Text="{Binding GameName}" Style="{StaticResource Muted}" Margin="0,4,0,0" />
+                    <TextBlock Text="{Binding PlayerName}" Style="{StaticResource Muted}" />
+                    <TextBlock Text="{Binding SeedLabel}" Style="{StaticResource Mono}"
+                               Foreground="{StaticResource AccentBrush}" FontSize="15" Margin="0,10,0,0" />
+                    <Button Content="REGISTRAR CAPTURA" Command="{Binding RegisterCaptureCommand}"
+                            Style="{StaticResource PrimaryButton}" Padding="14,8"
+                            HorizontalAlignment="Left" Margin="0,14,0,0" />
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource Panel}">
+                <StackPanel>
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="VIVOS" Style="{StaticResource PanelHeading}" Margin="0" />
+                            <TextBlock Text="{Binding AliveCount}" Style="{StaticResource Mono}"
+                                       FontSize="22" Foreground="{StaticResource SuccessBrush}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="MUERTOS" Style="{StaticResource PanelHeading}" Margin="0" />
+                            <TextBlock Text="{Binding DeadCount}" Style="{StaticResource Mono}"
+                                       FontSize="22" Foreground="{StaticResource DangerBrush}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="ENCUENTROS" Style="{StaticResource PanelHeading}" Margin="0" />
+                            <TextBlock Text="{Binding EncounterCount}" Style="{StaticResource Mono}"
+                                       FontSize="22" Foreground="{StaticResource AccentBrush}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <Border BorderBrush="{StaticResource AccentDimBrush}" BorderThickness="1"
+                            Padding="10" Margin="0,0,0,12">
+                        <StackPanel>
+                            <TextBlock Text="ETAPA ACTUAL" Style="{StaticResource PanelHeading}" Margin="0,0,0,4" />
+                            <DockPanel>
+                                <TextBlock DockPanel.Dock="Right" Text="{Binding LevelCapText}"
+                                           Style="{StaticResource Mono}" FontSize="20"
+                                           Foreground="{StaticResource WarningBrush}" />
+                                <TextBlock Text="{Binding StageText}" Style="{StaticResource Body}"
+                                           VerticalAlignment="Center" />
+                            </DockPanel>
+                            <TextBlock Style="{StaticResource Muted}" FontSize="11" Margin="0,2,0,0"
+                                       Text="Cap de nivel en vigor. Nada puede pasar de ahí." />
+                            <Button Content="HE SUPERADO LA ETAPA" Command="{Binding AdvanceStageCommand}"
+                                    Style="{StaticResource PrimaryButton}" Padding="10,5" FontSize="11"
+                                    HorizontalAlignment="Left" Margin="0,8,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock Text="PROGRESO" Style="{StaticResource PanelHeading}" />
+
+                    <ItemsControl ItemsSource="{Binding Islands}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <DockPanel Margin="0,3">
+                                    <TextBlock DockPanel.Dock="Right" Text="{Binding State}"
+                                               Style="{StaticResource Mono}" FontSize="12"
+                                               Foreground="{StaticResource TextMutedBrush}" />
+                                    <TextBlock Text="{Binding Name}" Style="{StaticResource Body}" />
+                                </DockPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Row="2" Grid.Column="0" Style="{StaticResource Panel}">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top" Text="EQUIPO EN EL JUEGO" Style="{StaticResource PanelHeading}" />
+
+                    <TextBlock DockPanel.Dock="Bottom" Text="{Binding GameLinkStatus}"
+                               FontSize="11" Margin="0,8,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource Mono}">
+                                <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding GameLinkConnected}" Value="True">
+                                        <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <Border DockPanel.Dock="Bottom" Margin="0,10,0,0" Padding="10"
+                            Background="{StaticResource SurfaceAltBrush}"
+                            BorderBrush="{StaticResource WarningBrush}" BorderThickness="1.5">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasDetection}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <StackPanel>
+                            <TextBlock Text="{Binding DetectionMessage}" Style="{StaticResource Body}"
+                                       FontSize="12" Foreground="{StaticResource WarningBrush}" />
+                            <Button Content="REGISTRARLO" Command="{Binding RegisterDetectedCommand}"
+                                    Style="{StaticResource PrimaryButton}" Padding="12,6"
+                                    HorizontalAlignment="Left" Margin="0,8,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <ItemsControl ItemsSource="{Binding LiveTeam}">
+
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,3">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="70" />
+                                        <ColumnDefinition Width="70" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{Binding Name}" Style="{StaticResource Body}" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Level}" Style="{StaticResource Mono}"
+                                               FontSize="12" Foreground="{StaticResource TextMutedBrush}" />
+                                    <TextBlock Grid.Column="2" Text="{Binding Hp}"
+                                               FontSize="12" TextAlignment="Right">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock" BasedOn="{StaticResource Mono}">
+                                                <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsFainted}" Value="True">
+                                                        <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                                                        <Setter Property="FontWeight" Value="Bold" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </DockPanel>
+            </Border>
+
+            <Border Grid.Row="2" Grid.Column="2" Style="{StaticResource Panel}">
+
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top" Text="ÚLTIMAS ACCIONES" Style="{StaticResource PanelHeading}" />
+                    <ItemsControl ItemsSource="{Binding RecentEvents}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,2">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="90" />
+                                        <ColumnDefinition Width="170" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="60" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{Binding Timestamp}"
+                                               Style="{StaticResource Mono}" FontSize="12"
+                                               Foreground="{StaticResource TextMutedBrush}" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Type}"
+                                               Style="{StaticResource Mono}" FontSize="12"
+                                               Foreground="{StaticResource AccentBrush}" />
+                                    <TextBlock Grid.Column="2" Text="{Binding Description}"
+                                               Style="{StaticResource Body}" FontSize="12" />
+                                    <TextBlock Grid.Column="3" Text="{Binding Points}"
+                                               Style="{StaticResource Mono}" FontSize="12"
+                                               TextAlignment="Right" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </DockPanel>
+            </Border>
+
+            <TextBlock Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3"
+                       Text="{Binding IntegrityStatus}"
+                       FontSize="11" Margin="2,8,0,0">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock" BasedOn="{StaticResource Mono}">
+                        <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IntegrityOk}" Value="False">
+                                <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                                <Setter Property="FontWeight" Value="Bold" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+        </Grid>
+    </Grid>
+</UserControl>

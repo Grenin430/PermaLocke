@@ -1,0 +1,24 @@
+﻿<UserControl x:Class="PermaLocke.App.Views.PendingView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Deliberately says what it is: an unbuilt section, not a broken one. -->
+    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="560">
+        <TextBlock Text="SECCIÓN NO IMPLEMENTADA TODAVÍA"
+                   Style="{StaticResource PanelHeading}"
+                   FontSize="16"
+                   HorizontalAlignment="Center" />
+
+        <Border BorderBrush="{StaticResource AccentDimBrush}" BorderThickness="1"
+                Padding="10,4" Margin="0,4,0,18" HorizontalAlignment="Center">
+            <TextBlock Text="{Binding Phase}" Style="{StaticResource Mono}"
+                       Foreground="{StaticResource WarningBrush}" />
+        </Border>
+
+        <TextBlock Text="{Binding Plan}" Style="{StaticResource Body}"
+                   TextAlignment="Center" LineHeight="20" />
+
+        <TextBlock Style="{StaticResource Muted}" TextAlignment="Center" Margin="0,18,0,0"
+                   Text="No hay nada que pulsar aquí: prefiero dejarlo vacío antes que poner botones que no hacen nada." />
+    </StackPanel>
+</UserControl>

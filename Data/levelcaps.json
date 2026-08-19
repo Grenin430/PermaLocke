@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "game": "UltraMoon",
+  "comment": "Cap de nivel vigente tras superar cada hito. Editable desde PermaLocke.Admin.",
+  "caps": [
+    { "id": "trial-01", "order": 1,  "name": "1ª prueba",  "level": 14 },
+    { "id": "trial-02", "order": 2,  "name": "2ª prueba",  "level": 20 },
+    { "id": "trial-03", "order": 3,  "name": "3ª prueba",  "level": 24 },
+    { "id": "trial-04", "order": 4,  "name": "4ª prueba",  "level": 26 },
+    { "id": "trial-05", "order": 5,  "name": "5ª prueba",  "level": 29 },
+    { "id": "trial-06", "order": 6,  "name": "6ª prueba",  "level": 34 },
+    { "id": "trial-07", "order": 7,  "name": "7ª prueba",  "level": 40 },
+    { "id": "trial-08", "order": 8,  "name": "8ª prueba",  "level": 42 },
+    { "id": "trial-09", "order": 9,  "name": "9ª prueba",  "level": 54 },
+    { "id": "trial-10", "order": 10, "name": "10ª prueba", "level": 59 },
+    { "id": "trial-11", "order": 11, "name": "11ª prueba", "level": 66 },
+    { "id": "trial-12", "order": 12, "name": "12ª prueba", "level": 67 },
+    { "id": "league",   "order": 13, "name": "Liga",       "level": 73 },
+    { "id": "rematch",  "order": 14, "name": "Rematch",    "level": 85 }
+  ]
+}

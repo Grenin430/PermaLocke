@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "comment": "Conjunto reducido de pruebas. Se ampliará cuando la detección automática funcione.",
+  "achievements": [
+    {
+      "id": "first-trainer",
+      "name": "Primer entrenador",
+      "description": "Derrota a 1 entrenador.",
+      "trigger": "TrainerDefeated",
+      "target": 1,
+      "points": 10
+    },
+    {
+      "id": "trial-01-cleared",
+      "name": "Primera prueba",
+      "description": "Supera la prueba 1.",
+      "trigger": "TrialCompleted",
+      "target": 1,
+      "points": 100
+    },
+    {
+      "id": "flee-5",
+      "name": "Pies ligeros",
+      "description": "Huye de 5 combates.",
+      "trigger": "BattleFled",
+      "target": 5,
+      "points": 50
+    }
+  ]
+}

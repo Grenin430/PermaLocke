@@ -1,0 +1,57 @@
+﻿<Window x:Class="PermaLocke.App.Views.CreateRunWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="PermaLocke — Nueva run"
+        Height="580" Width="560"
+        MinHeight="420" MinWidth="480"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource BackgroundBrush}">
+
+    <Border Style="{StaticResource Panel}" Margin="12">
+        <!-- The action row is pinned to the bottom and the form scrolls, so the confirm
+             button can never be pushed off the window by a long ROM status message. -->
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0" Text="NUEVA RUN" Style="{StaticResource SectionTitle}"
+                       FontSize="26" Margin="0,0,0,16" />
+
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,0,6,0">
+                <StackPanel>
+                    <TextBlock Text="ROM" Style="{StaticResource PanelHeading}" />
+                    <Border BorderBrush="{StaticResource AccentDimBrush}" BorderThickness="1"
+                            Padding="10" Margin="0,0,0,16">
+                        <TextBlock Text="{Binding RomStatus}" Style="{StaticResource Mono}" FontSize="12" />
+                    </Border>
+
+                    <TextBlock Text="NOMBRE DE LA RUN" Style="{StaticResource PanelHeading}" />
+                    <TextBox Text="{Binding RunName, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource Field}" Margin="0,0,0,14" />
+
+                    <TextBlock Text="NICKNAME DEL JUGADOR" Style="{StaticResource PanelHeading}" />
+                    <TextBox Text="{Binding PlayerName, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource Field}" Margin="0,0,0,4" />
+                    <TextBlock Style="{StaticResource Muted}" FontSize="11" Margin="0,0,0,14"
+                               Text="Se contrastará con el nombre del entrenador del save cuando exista integración con el juego." />
+
+                    <TextBlock Text="ROL" Style="{StaticResource PanelHeading}" />
+                    <TextBox Text="{Binding RoleId, UpdateSourceTrigger=PropertyChanged}"
+                             Style="{StaticResource Field}" />
+                </StackPanel>
+            </ScrollViewer>
+
+            <StackPanel Grid.Row="2" Margin="0,14,0,0">
+                <TextBlock Text="{Binding ErrorMessage}" Style="{StaticResource Body}"
+                           Foreground="{StaticResource DangerBrush}" Margin="0,0,0,8" />
+                <TextBlock Style="{StaticResource Muted}" FontSize="11" Margin="0,0,0,8"
+                           Text="El botón se activa cuando hay una ROM válida de Ultra Luna, un nombre de run y un nickname." />
+                <Button Content="CREAR RUN" Command="{Binding CreateCommand}"
+                        Style="{StaticResource PrimaryButton}" HorizontalAlignment="Right" />
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>
