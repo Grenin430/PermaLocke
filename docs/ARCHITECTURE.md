@@ -1781,3 +1781,50 @@ se enciende hasta probarla con el jugador delante.
 Falta además la excepción del shiny que describe el §16 —devolver las bolas si el salvaje es
 shiny y retirarlas al acabar el combate—, que necesita el salvaje y la bandera de combate, y
 esas siguen encontradas a mano y sin localizador.
+
+---
+
+## 25. El emulador viaja con la app (2026-08-19)
+
+Diez personas van a instalar esto, y el Azahar oficial **no sirve**: se niega a escribir en la
+región donde vive el estado del juego y responde OK igualmente (§15). Pedirle a cada uno que se
+compile un fork no es una opción, así que la app lo reparte.
+
+`AzaharInstallation` ya tenía el mecanismo; lo que faltaba era la carpeta. Al arrancar busca
+`Emulator\azahar.exe` **junto a su propio ejecutable**:
+
+- si está, lo usa en **modo portátil** — la existencia de `Emulator\user\` hace que el emulador
+  guarde ahí su configuración, sus mods y sus partidas, sin tocar la instalación que el jugador
+  ya tuviera;
+- y le **activa el servidor RPC**, que Azahar trae apagado y que solo puede cambiarse con la
+  emulación detenida. Es el ajuste que cada jugador habría tenido que encontrar a mano.
+
+Verificado sobre el publicado de verdad, no sobre la carpeta de compilación:
+
+```text
+Azahar propio encontrado en ...\Emulator\azahar.exe
+Servidor RPC activado en ...\Emulator\user\config\qt-config.ini
+```
+
+El `qt-config.ini` se crea de cero con `enable_rpc_server=true` y su bandera `\default=false`,
+que es la que impide que el emulador lo revierta al cerrarse.
+
+### Qué se versiona y qué no
+
+Los binarios del fork son 100 MB y **no están en el repositorio**: se reconstruyen desde
+`github.com/Grenin430/azahar`. Lo que sí se versiona es `Emulator/LEEME.md`, con la procedencia,
+los dos parches y el enlace al fuente. `PermaLocke.App.csproj` copia la carpeta entera **solo al
+publicar** (`CopyToPublishDirectory`, nunca `CopyToOutputDirectory`): copiar 100 MB en cada
+compilación de desarrollo no tendría sentido, y quien desarrolla ya tiene su Azahar abierto.
+
+Si la carpeta está vacía la app **no falla**: avisa por el log y cae al Azahar instalado, con la
+salvedad de que entonces las escrituras no surtirán efecto.
+
+### Licencia
+
+Azahar es GPLv3, así que repartir su binario obliga a ofrecer su fuente. Está en
+`github.com/Grenin430/azahar` y el enlace viaja dentro del propio paquete, en `Emulator/LEEME.md`.
+Es una obligación distinta de la de PermaLocke, que también es GPLv3 pero por PKHeX.Core y
+pk3DS.Core.
+
+Coste del paquete: **262 MB** — 161 de la app self-contained y 100 del emulador.

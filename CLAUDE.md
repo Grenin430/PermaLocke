@@ -182,6 +182,11 @@ la lectura coincide con la mochila real, la dirección aguanta reiniciar el emul
 999 Caramelos Raros en un bolsillo que **no tenía entrada de caramelos** se ve en pantalla.
 Toda escritura se relee antes de darla por buena. Detalle en `docs/ARCHITECTURE.md` §22.
 
+**El emulador viaja con la app.** `Emulator/` lleva el fork propio; la app lo detecta junto a su
+ejecutable, lo usa en modo portátil y le activa el servidor RPC solo. Verificado sobre el
+publicado. Los binarios no se versionan: se reconstruyen desde `github.com/Grenin430/azahar`, y
+solo se versiona `Emulator/LEEME.md` con su procedencia y su licencia. Ver §25.
+
 **Siguiente.** Probar en partida nueva iniciales, entrenadores y tiendas. Luego Fase 4: gacha,
 tienda y logros.
 

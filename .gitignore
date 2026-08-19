@@ -18,6 +18,7 @@ ROM/
 Azahar/
 Nuevo_azahar/
 
+
 # --- Generado ----------------------------------------------------------------
 # Mods de LayeredFS: se regeneran desde la ROM y la seed, y pesan cientos de MB.
 Randomized/
@@ -26,3 +27,8 @@ Randomized/
 Saves/
 
 Logs/
+# El fork de Azahar que se reparte con la app: 100 MB de binarios que se reconstruyen desde
+# github.com/Grenin430/azahar. Solo se versiona su LEEME, que dice de dónde salen y bajo qué
+# licencia se distribuyen.
+Emulator/*
+!Emulator/LEEME.md

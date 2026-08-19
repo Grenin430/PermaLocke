@@ -23,4 +23,23 @@
     <UseWPF>true</UseWPF>
   </PropertyGroup>
 
+
+  <!--
+    El emulador propio viaja con la aplicación publicada, para que ningún jugador tenga que
+    instalar ni configurar nada: PermaLocke encuentra Emulator\azahar.exe junto a su ejecutable,
+    lo arranca en modo portátil y le activa el servidor RPC solo.
+
+    Solo se copia al PUBLICAR. En compilaciones normales serían 100 MB copiados en cada build,
+    y quien desarrolla ya tiene su propio Azahar abierto.
+
+    Si la carpeta está vacía no se rompe nada: la app avisa por el log y cae al Azahar instalado.
+    Ver Emulator\LEEME.md, que sí se reparte, con la procedencia y la licencia del fork.
+  -->
+  <ItemGroup>
+    <EmulatorFiles Include="$(MSBuildThisFileDirectory)..\..\Emulator\**\*" />
+    <None Include="@(EmulatorFiles)"
+          Link="Emulator\%(RecursiveDir)%(Filename)%(Extension)"
+          CopyToOutputDirectory="Never"
+          CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>
