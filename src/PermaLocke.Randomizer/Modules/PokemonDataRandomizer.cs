@@ -28,9 +28,17 @@ public sealed class PokemonDataRandomizer(RomWorkspace workspace, RandomizerOpti
         var maxAbility = workspace.Config.Info.MaxAbilityID;
         var maxMove = workspace.Config.Info.MaxMoveID;
 
+        // Cada parte con su propia fuente, por la misma razón que cada módulo tiene la suya
+        // (§20): activar o desactivar una no debe mover los resultados de las demás. Aquí faltaba,
+        // y desactivar las evoluciones desplazaba los aprendizajes de una partida ya empezada.
+        //
+        // 'personal' se queda con la fuente raíz a propósito: es la primera que consumía, así que
+        // mantenerla deja los tipos, las estadísticas y las habilidades EXACTAMENTE como estaban
+        // en las partidas ya en curso. Derivarla también sería más limpio, pero cambiaría el
+        // mundo de quien ya está jugando.
         var entries = RandomizePersonal(mod, random, typeCount, maxAbility, ct);
-        var evolutions = RandomizeEvolutions(mod, random, ct);
-        var moves = RandomizeLearnsets(mod, random, maxMove, ct);
+        var evolutions = RandomizeEvolutions(mod, random.Derive("evolutions"), ct);
+        var moves = RandomizeLearnsets(mod, random.Derive("learnsets"), maxMove, ct);
 
         await VerifyAsync(mod, ct);
         return new PokemonDataResult(entries, evolutions, moves);
@@ -51,10 +59,15 @@ public sealed class PokemonDataRandomizer(RomWorkspace workspace, RandomizerOpti
         var rows = packed.Length / PersonalEntry7.Size;
         var changed = 0;
 
+        // Una fuente por aspecto: desactivar los tipos ya no desplaza las estadisticas ni las
+        // habilidades, que es lo que pasaba compartiendo una sola fuente en cadena.
+        var sources = new EntrySources(
+            random.Derive("types"), random.Derive("stats"), random.Derive("abilities"));
+
         for (var row = 1; row < rows; row++) // row 0 is a placeholder, not a species
         {
             ct.ThrowIfCancellationRequested();
-            RandomizeEntry(packed, row * PersonalEntry7.Size, random, typeCount, maxAbility);
+            RandomizeEntry(packed, row * PersonalEntry7.Size, sources, typeCount, maxAbility);
             changed++;
         }
 
@@ -75,23 +88,27 @@ public sealed class PokemonDataRandomizer(RomWorkspace workspace, RandomizerOpti
         return changed;
     }
 
-    private void RandomizeEntry(byte[] table, int at, IRandomSource random, int typeCount, int maxAbility)
+    /// <summary>One random stream per aspect, so switching one off leaves the others alone.</summary>
+    private readonly record struct EntrySources(
+        IRandomSource Types, IRandomSource Stats, IRandomSource Abilities);
+
+    private void RandomizeEntry(byte[] table, int at, EntrySources sources, int typeCount, int maxAbility)
     {
         if (options.RandomizeTypes)
         {
             // A species with one type keeps having one type; a dual type keeps two distinct ones.
-            var first = random.Next(typeCount);
-            var second = PersonalEntry7.IsMonoType(table, at) ? first : random.Next(typeCount);
+            var first = sources.Types.Next(typeCount);
+            var second = PersonalEntry7.IsMonoType(table, at) ? first : sources.Types.Next(typeCount);
             for (var attempt = 0; attempt < 16 && second == first && !PersonalEntry7.IsMonoType(table, at); attempt++)
             {
-                second = random.Next(typeCount);
+                second = sources.Types.Next(typeCount);
             }
             PersonalEntry7.SetTypes(table, at, first, second);
         }
 
         if (options.ShuffleBaseStats)
         {
-            PersonalEntry7.ShuffleStats(table, at, random.Next);
+            PersonalEntry7.ShuffleStats(table, at, sources.Stats.Next);
         }
 
         if (options.RandomizeAbilities)
@@ -103,7 +120,7 @@ public sealed class PokemonDataRandomizer(RomWorkspace workspace, RandomizerOpti
                 {
                     continue;
                 }
-                PersonalEntry7.SetAbility(table, at, slot, random.Next(1, maxAbility + 1));
+                PersonalEntry7.SetAbility(table, at, slot, sources.Abilities.Next(1, maxAbility + 1));
             }
         }
     }
@@ -206,8 +223,16 @@ public sealed class PokemonDataRandomizer(RomWorkspace workspace, RandomizerOpti
     {
         foreach (var file in (string[])[GameFiles.Personal, GameFiles.Evolution, GameFiles.Learnset])
         {
-            var modded = new GARC.LazyGARC(await File.ReadAllBytesAsync(
-                Path.Combine(mod.RomFsDirectory, file.Replace('/', Path.DirectorySeparatorChar)), ct));
+            var path = Path.Combine(mod.RomFsDirectory, file.Replace('/', Path.DirectorySeparatorChar));
+
+            // Un módulo apagado no deja fichero, y eso es lo correcto: el juego usa el del
+            // cartucho. Verificar lo que no se ha escrito reventaba la randomización entera.
+            if (!File.Exists(path))
+            {
+                continue;
+            }
+
+            var modded = new GARC.LazyGARC(await File.ReadAllBytesAsync(path, ct));
             var vanilla = new GARC.LazyGARC(await File.ReadAllBytesAsync(workspace.PathOf(file), ct));
 
             if (modded.FileCount != vanilla.FileCount)

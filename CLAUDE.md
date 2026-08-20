@@ -187,6 +187,14 @@ ejecutable, lo usa en modo portátil y le activa el servidor RPC solo. Verificad
 publicado. Los binarios no se versionan: se reconstruyen desde `github.com/Grenin430/azahar`, y
 solo se versiona `Emulator/LEEME.md` con su procedencia y su licencia. Ver §25.
 
+**Randomizador: tipos y evoluciones desactivados (2026-08-19).** A petición del usuario, las
+líneas evolutivas y los tipos se quedan como el cartucho; el resto sigue randomizado. Apagar
+esos dos interruptores destapó dos fallos que nadie había visto porque **nunca se había apagado
+un módulo**: la carpeta del mod no se vaciaba, así que el fichero de la generación anterior
+seguía activo y el informe cantaba «0 evoluciones» mientras el juego las tenía randomizadas; y
+los cinco aspectos de los datos de Pokémon compartían una sola fuente aleatoria, de modo que
+apagar uno desplazaba a los demás. Ambos corregidos. Detalle en `docs/ARCHITECTURE.md` §27.
+
 **Fase 4 empezada: el gacha (2026-08-19).** Tres banners con rarezas por **rango de total de
 estadísticas base**, no por listas de Pokémon, así que ninguna especie se queda fuera y sigue
 valiendo con la ROM randomizada (el módulo de datos baraja las estadísticas pero conserva el

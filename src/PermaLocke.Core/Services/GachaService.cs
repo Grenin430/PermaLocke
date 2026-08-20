@@ -105,9 +105,14 @@ public sealed class GachaService(
                        + "¿Está generado Data/species.json?");
         }
 
-        var spent = await points.SpendAsync(run.Id, banner.Cost,
-            $"Tirada de gacha en «{banner.Name}».", EventSource.Player, run.PlayerName, ct)
-            .ConfigureAwait(false);
+        // Un banner gratuito no genera gasto: cobrar cero no es cobrar, y PointsService rechaza
+        // con razón que se le pidan gastos de cero. Es lo que permite dejar un banner a coste 0
+        // para probar sin tocar el motor de puntos.
+        var spent = banner.Cost > 0
+            ? await points.SpendAsync(run.Id, banner.Cost,
+                $"Tirada de gacha en «{banner.Name}».", EventSource.Player, run.PlayerName, ct)
+                .ConfigureAwait(false)
+            : new PointsResult(true, balance);
 
         if (!spent.Success)
         {

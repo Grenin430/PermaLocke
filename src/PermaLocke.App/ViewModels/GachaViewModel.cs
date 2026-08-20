@@ -100,6 +100,8 @@ public sealed partial class GachaViewModel : SectionViewModel
             Balance = await _points.GetBalanceAsync(run.Id);
         }
 
+        _logger.LogInformation("Gacha: {Count} banners cargados, saldo {Balance}", Banners.Count, Balance);
+
         Status = Banners.Count == 0
             ? "No hay banners configurados. Revisa Data/gacha.json y Data/species.json."
             : string.Empty;
@@ -107,12 +109,17 @@ public sealed partial class GachaViewModel : SectionViewModel
         RollCommand.NotifyCanExecuteChanged();
     }
 
-    private bool CanRoll => !IsRolling && SelectedBanner is not null && _runContext.Current is not null;
+    // No se exige SelectedBanner: el ListBox escribe null en el view model mientras se
+    // inicializa, y eso dejaba el botón muerto aunque hubiera banners en pantalla.
+    private bool CanRoll => !IsRolling && Banners.Count > 0 && _runContext.Current is not null;
 
     [RelayCommand(CanExecute = nameof(CanRoll))]
     private async Task RollAsync()
     {
-        if (_runContext.Current is not { } run || SelectedBanner is not { } selected)
+        // Si el ListBox aún no ha elegido, se tira del primero: el botón ya no se apoya en él.
+        var selected = SelectedBanner ?? Banners.FirstOrDefault();
+
+        if (_runContext.Current is not { } run || selected is null)
         {
             return;
         }

@@ -1975,3 +1975,66 @@ decidida, guardada y entregada** antes de que empiece la cuenta.
 | Precios | **A CERO** mientras se prueba. Los reales son 100 / 225 / 300 |
 | Logros, que son la fuente de puntos | **SIN EMPEZAR**: hoy no hay forma de ganar puntos |
 | Tienda | Sin empezar |
+
+---
+
+## 27. Dos fallos que solo aparecieron apagando módulos (2026-08-19)
+
+El usuario pidió que **las evoluciones y los tipos no se randomizaran**: si te toca un Rowlet
+salvaje, quieres acabar con un Decidueye, y un Latios debe seguir siendo Dragón/Psíquico.
+Apagar esos dos interruptores destapó dos fallos, y el segundo era grave.
+
+### Apagar un módulo no quitaba su fichero del mod
+
+`LayeredFsMod.Clear()` existía y **nadie lo llamaba**. Al regenerar con las evoluciones
+apagadas, el fichero `a/0/1/4` de la generación anterior **seguía en la carpeta del mod**, el
+juego lo cargaba tan contento, y el informe decía «0 evoluciones». Comprobado en el juego del
+usuario:
+
+```text
+Rowlet    cartucho: -> Dartrix      su mod: -> Oshawott
+Magikarp  cartucho: -> Gyarados     su mod: -> Pikipek
+```
+
+Es exactamente el tipo de mentira que la regla 3 prohíbe: la app afirmaba una cosa y el juego
+hacía otra. Ahora `RandomizeAsync` **vacía la carpeta antes de escribir**, así que el mod
+contiene exactamente lo que esta pasada ha generado y nada más. Un módulo apagado no deja
+fichero, y el juego usa el del cartucho, que es lo correcto.
+
+De rebote apareció el segundo: `PokemonDataRandomizer.VerifyAsync` releía siempre los tres
+ficheros —personal, evoluciones y aprendizajes— y **reventaba la randomización entera** al no
+encontrar el de un módulo apagado. Ahora salta lo que no se ha escrito.
+
+### Una fuente aleatoria por aspecto, no una compartida
+
+El §20 fijó que cada **módulo** deriva su fuente por un salt con nombre, para que activar o
+desactivar uno no mueva los resultados de los demás. Dentro de `PokemonDataRandomizer` esa norma
+no se había aplicado: tipos, estadísticas, habilidades, evoluciones y aprendizajes tiraban **de
+la misma fuente en cadena**. Apagar los tipos desplazaba todo lo que venía detrás.
+
+Eso significa que un jugador que cambiara un interruptor a mitad de partida se encontraría con
+otras estadísticas y otras habilidades sin haberlas tocado. Ahora hay cinco fuentes derivadas:
+`types`, `stats`, `abilities`, `evolutions` y `learnsets`.
+
+### Lo que esto cambió en la partida en curso
+
+Se regeneró e instaló con la misma seed. Comprobado releyendo el mod:
+
+| Qué | Antes | Ahora |
+|---|---|---|
+| Tipos | Rowlet Tierra/Siniestro | **Planta/Volador**, como el cartucho |
+| Evoluciones | Rowlet → Oshawott | **Sin fichero**: Rowlet → Dartrix |
+| Estadísticas | barajadas | **barajadas de otra forma** |
+| Habilidades | randomizadas | **randomizadas de otra forma** |
+| Encuentros salvajes | — | **sin cambios**: van por otro módulo con su propio salt |
+
+Las estadísticas y las habilidades cambian porque las fuentes derivadas son nuevas, y no hay
+forma de evitarlo sin renunciar al arreglo. El usuario estaba en la Ruta 1, así que el momento
+era el bueno.
+
+### La lección
+
+Los dos fallos son la misma familia: **el estado que sobrevive a un cambio de configuración**.
+Un fichero que se queda de la vez anterior y una secuencia aleatoria compartida son las dos
+formas que tenía el randomizador de arrastrar el pasado. Ninguna se veía sin apagar un módulo,
+que es algo que hasta ahora nunca se había hecho.

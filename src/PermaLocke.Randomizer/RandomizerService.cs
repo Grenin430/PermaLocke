@@ -51,6 +51,12 @@ public sealed class RandomizerService(RandomizerOptions options)
         var pool = SpeciesPool.FromGame(workspace.Config, options);
         var mod = new LayeredFsMod(workspace, modDirectory);
 
+        // Se vacía antes de escribir. Sin esto, un módulo que se apaga deja su fichero de la
+        // generación anterior en la carpeta, el juego lo sigue cargando y el informe dice que no
+        // hay nada randomizado: exactamente lo que pasó al desactivar las evoluciones, que
+        // seguían cambiadas en la partida mientras el informe cantaba "0 evoluciones".
+        mod.Clear();
+
         // Encuentros y objetos del suelo viven en el mismo GARC de 460 MB, así que se carga una
         // vez, se aplican los dos y se guarda una vez.
         if (options.WildEncounters || options.FieldItems)

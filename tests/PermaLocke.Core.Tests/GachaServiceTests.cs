@@ -1,3 +1,4 @@
+using PermaLocke.Core.Abstractions;
 using PermaLocke.Core.Domain;
 using PermaLocke.Core.Services;
 
@@ -186,4 +187,92 @@ public sealed class GachaServiceTests
 
         Assert.Null(service.Preview(Pocho(), 1, 0));
     }
+
+    /// <summary>
+    /// A free banner must roll. Charging zero is not charging, and the points service rightly
+    /// refuses to spend nothing — so the gacha has to skip the charge, not ask for it.
+    /// </summary>
+    [Fact]
+    public async Task A_banner_that_costs_nothing_still_rolls()
+    {
+        var events = new RecordingEvents();
+        var free = new GachaBanner("gratis", "GRATIS", string.Empty, 0,
+            new Dictionary<string, double> { ["tier1"] = 1.0 });
+
+        var service = new GachaService(new Catalog(Tiers(), [free]), new Species(SpeciesTable()),
+            new ZeroPoints(), events, new NoRepository(), new FixedClock());
+
+        var result = await service.RollAsync(SampleRun(), "gratis");
+
+        Assert.True(result.Success);
+        Assert.NotNull(result.Pull);
+        Assert.Equal(0, result.Balance);
+
+        // Un solo evento, el de la tirada: no hay gasto que registrar.
+        var recorded = Assert.Single(events.Appended);
+        Assert.Equal(GameEventType.GachaRoll, recorded.Type);
+    }
+
+    private sealed class ZeroPoints : IPointsService
+    {
+        public Task<int> GetBalanceAsync(Guid runId, CancellationToken ct = default) => Task.FromResult(0);
+
+        public Task<PointsResult> EarnAsync(Guid runId, int amount, string description,
+            EventSource source, string actor, CancellationToken ct = default) =>
+            throw new NotSupportedException();
+
+        public Task<PointsResult> SpendAsync(Guid runId, int amount, string description,
+            EventSource source, string actor, CancellationToken ct = default) =>
+            throw new InvalidOperationException("una tirada gratis no debe intentar gastar");
+
+        public Task<PointsResult> AdjustAsync(Guid runId, int delta, string reason, string adminName,
+            CancellationToken ct = default) => throw new NotSupportedException();
+    }
+
+    private sealed class NoRepository : IPokemonRepository
+    {
+        public Task<IReadOnlyList<PokemonEntry>> GetAllAsync(Guid runId, CancellationToken ct = default) =>
+            Task.FromResult<IReadOnlyList<PokemonEntry>>([]);
+
+        public Task<PokemonEntry?> GetAsync(Guid pokemonId, CancellationToken ct = default) =>
+            Task.FromResult<PokemonEntry?>(null);
+
+        public Task SaveAsync(PokemonEntry pokemon, CancellationToken ct = default) => Task.CompletedTask;
+    }
+
+    private sealed class RecordingEvents : IEventStore
+    {
+        public List<GameEvent> Appended { get; } = [];
+
+        public Task<GameEvent> AppendAsync(GameEvent gameEvent, CancellationToken ct = default)
+        {
+            Appended.Add(gameEvent);
+            return Task.FromResult(gameEvent);
+        }
+
+        public Task<IReadOnlyList<GameEvent>> GetAllAsync(Guid runId, CancellationToken ct = default) =>
+            Task.FromResult<IReadOnlyList<GameEvent>>(Appended);
+
+        public Task<IReadOnlyList<GameEvent>> GetLatestAsync(Guid runId, int count, CancellationToken ct = default) =>
+            Task.FromResult<IReadOnlyList<GameEvent>>(Appended);
+
+        public Task<IntegrityReport> VerifyChainAsync(Guid runId, CancellationToken ct = default) =>
+            throw new NotSupportedException();
+    }
+
+    private sealed class FixedClock : IClock
+    {
+        public DateTimeOffset Now => new(2026, 8, 20, 1, 0, 0, TimeSpan.Zero);
+    }
+
+    private static Run SampleRun() => new()
+    {
+        Id = Guid.NewGuid(),
+        Name = "Prueba",
+        Game = GameVersion.UltraMoon,
+        SeedLabel = "20260820",
+        Seed = 20260820,
+        RoleId = "player",
+        PlayerName = "Grenin"
+    };
 }
