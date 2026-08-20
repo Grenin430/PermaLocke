@@ -231,12 +231,15 @@ once iconos y Necrozma normal va detrás de sus tres fusiones. Ver §30 y §30 b
 El gacha ya enseña el sprite del Pokémon que sale. Los iconos los extrae `PokemonSpriteService`
 de la ROM del propio jugador la primera vez que se abre la pantalla.
 
-La animación del gacha se rehízo dos veces. La versión actual es una **ruleta de siluetas**: una
-tira de 46 iconos del cartucho, aplanados a un color, cruza la pantalla, frena, se pasa de la
-marca, retrocede y para en el que ha tocado, que se revela a color. Lleva **escalada de rareza
-con engaño** —la pantalla arranca en el tier más barato y sube, en dos pasos si el tier es alto—
-y dura de **2,5 s a 5 s según el tier**. El engaño es solo presentación: el Pokémon, los puntos y
-el evento ya están decididos, guardados y entregados antes de que la rueda gire. Ver §31.
+La animación del gacha es una **ruleta**: una tira de 118 iconos del cartucho, a todo color, cruza
+la pantalla y frena durante casi media tirada. El final es **a clics**: la rueda se planta **tres
+casillas antes** y avanza **de una en una**, con su pausa, su golpe de marcador y su tirón, y el
+último clic se pasa de largo y vuelve. Al parar caen fogonazo, onda de choque, ráfaga de rayos y
+sacudida del panel. Lleva **escalada de rareza con engaño** —arranca en el tier más barato y sube,
+en dos pasos si el tier es alto— y dura de **6 s a 11 s según el tier**. Todo eso es presentación:
+el Pokémon, los puntos y el evento ya están decididos, guardados y entregados antes de que la
+rueda gire. El número de clics es igual para todos los tiers **a propósito**: variarlo cantaría el
+resultado antes de tiempo. Ver §31.
 
 Dos fallos de WPF que costó encontrar y que conviene no repetir: **`OpacityMask` con `ImageBrush`
 no pinta nada** (la silueta se cocina ahora en un bitmap) y **un `ItemsControl` dentro de un `Grid`

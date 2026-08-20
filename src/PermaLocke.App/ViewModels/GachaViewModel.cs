@@ -142,6 +142,18 @@ public sealed partial class GachaViewModel : SectionViewModel
     private string _lastBadge = string.Empty;
 
     /// <summary>
+    /// True when the roll earned a badge, which is the view's cue to celebrate louder.
+    /// </summary>
+    /// <remarks>
+    /// The extra noise is not decoration handed out at random: it maps to something that really
+    /// happened and is rare, so it says as much as the word does.
+    /// </remarks>
+    [ObservableProperty]
+    private bool _hasBadge;
+
+    partial void OnLastBadgeChanged(string value) => HasBadge = value.Length > 0;
+
+    /// <summary>
     /// Icon of the Pokémon that came out, taken from the player's own ROM. Null when the species
     /// is not one of the 649 whose icon is known, and then the card simply shows no picture.
     /// </summary>

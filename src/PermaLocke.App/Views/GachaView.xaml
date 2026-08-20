@@ -41,6 +41,25 @@
             </DrawingBrush.Drawing>
         </DrawingBrush>
 
+        <!-- Rayas de velocidad. Solo se encienden durante el crucero de la ruleta y se apagan al
+             frenar, así que la pantalla dice a qué velocidad va sin necesidad de leer nada. -->
+        <DrawingBrush x:Key="Hyperstreaks" TileMode="Tile" Viewport="0,0,320,124"
+                      ViewportUnits="Absolute" Stretch="None">
+            <DrawingBrush.Drawing>
+                <GeometryDrawing Brush="{StaticResource TextBrush}">
+                    <GeometryDrawing.Geometry>
+                        <GeometryGroup>
+                            <RectangleGeometry Rect="0,16,96,1" />
+                            <RectangleGeometry Rect="146,40,62,1" />
+                            <RectangleGeometry Rect="40,68,124,1" />
+                            <RectangleGeometry Rect="212,94,74,1" />
+                            <RectangleGeometry Rect="256,24,52,1" />
+                        </GeometryGroup>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+            </DrawingBrush.Drawing>
+        </DrawingBrush>
+
         <!-- La escalera de rareza: un portal por tier de Data/gacha.json. Añadir o quitar un
              tier cambia la animación sin tocar el XAML. Cada plantilla tiene su propio ámbito de
              nombres, que es lo que permite animar sus hijos por nombre (ARCHITECTURE.md §29). -->
@@ -259,6 +278,26 @@
                         </Rectangle.Triggers>
                     </Rectangle>
 
+                    <!-- Rayas de velocidad. Corren siempre, pero con opacidad 0: el code-behind
+                         solo las enciende mientras la rueda va lanzada. -->
+                    <Rectangle x:Name="Streaks" Fill="{StaticResource Hyperstreaks}" Opacity="0"
+                               Width="1400" HorizontalAlignment="Left" IsHitTestVisible="False">
+                        <Rectangle.RenderTransform>
+                            <TranslateTransform X="0" />
+                        </Rectangle.RenderTransform>
+                        <Rectangle.Triggers>
+                            <EventTrigger RoutedEvent="Loaded">
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation
+                                            Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+                                            From="0" To="-320" Duration="0:0:0.5" RepeatBehavior="Forever" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+                        </Rectangle.Triggers>
+                    </Rectangle>
+
                     <!-- Fogonazo del color del tier. Lo dispara el code-behind: en cada subida
                          del engaño y otra vez al parar la rueda. -->
                     <Rectangle x:Name="Flash" Opacity="0" IsHitTestVisible="False">
@@ -272,7 +311,13 @@
                         </Rectangle.Fill>
                     </Rectangle>
 
-                    <Grid>
+                    <!-- Todo el contenido va sobre este Grid porque el code-behind lo sacude: al
+                         subir un tier y al parar la rueda. Sacudir el fondo también movería las
+                         estrellas, que es justo lo que da la sensación de que están quietas. -->
+                    <Grid x:Name="Stage">
+                        <Grid.RenderTransform>
+                            <TranslateTransform x:Name="StageShake" X="0" Y="0" />
+                        </Grid.RenderTransform>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
@@ -294,8 +339,23 @@
                     </ItemsControl>
 
                     <!-- LA RULETA. El desplazamiento, el frenado y el desenfoque los monta el
-                         code-behind, que es el único que sabe el ancho real del visor. -->
-                    <Border x:Name="ReelViewport" Grid.Row="2" Height="104" Margin="14,0" CornerRadius="3"
+                         code-behind, que es el único que sabe el ancho real del visor.
+                         El acercamiento y el tirón de cada clic van en este envoltorio, no en el
+                         visor, para que la onda y el destello los acompañen sin recortarse. -->
+                    <!-- Altura fijada a la del visor a propósito. La fila es Auto, así que sin
+                         esto la ráfaga de 300 px la infla hasta 300 y la fila del resultado se
+                         queda sin sitio: la ficha desaparece sin que nada falle ni se registre.
+                         Con la altura puesta, la ráfaga sigue dibujándose fuera —este Grid no
+                         recorta— y solo la recorta el panel, que es lo que se quiere. -->
+                    <Grid x:Name="ReelStage" Grid.Row="2" Height="104" RenderTransformOrigin="0.5,0.5">
+                        <Grid.RenderTransform>
+                            <TransformGroup>
+                                <ScaleTransform x:Name="ReelZoom" ScaleX="1" ScaleY="1" />
+                                <TranslateTransform x:Name="ReelJolt" X="0" Y="0" />
+                            </TransformGroup>
+                        </Grid.RenderTransform>
+
+                    <Border x:Name="ReelViewport" Height="104" Margin="14,0" CornerRadius="3"
                             ClipToBounds="True" Background="#22000000" BorderThickness="1"
                             BorderBrush="{StaticResource SurfaceAltBrush}">
                         <Grid>
@@ -352,6 +412,59 @@
                         </Grid>
                     </Border>
 
+                    <!-- La onda de choque. Fuera del visor a propósito: dentro la recortaría el
+                         ClipToBounds que la ruleta necesita. -->
+                    <Ellipse x:Name="Shockwave" Width="150" Height="150" Opacity="0"
+                             IsHitTestVisible="False" StrokeThickness="4"
+                             HorizontalAlignment="Center" VerticalAlignment="Center"
+                             RenderTransformOrigin="0.5,0.5"
+                             Stroke="{Binding LastTierBrushKey, Converter={StaticResource ResourceKey}}">
+                        <Ellipse.RenderTransform>
+                            <ScaleTransform x:Name="ShockwaveScale" ScaleX="0.2" ScaleY="0.2" />
+                        </Ellipse.RenderTransform>
+                    </Ellipse>
+
+                    <!-- El destello del premio: ocho rayos y un aro de luz alrededor de la casilla
+                         que ha tocado. El centro va hueco a propósito —los rayos arrancan más
+                         afuera que la celda— porque lo que se ha venido a ver es el Pokémon, y una
+                         estrella maciza encima lo tapaba. Como el marcador está centrado, esto
+                         también. -->
+                    <Grid x:Name="Burst" Width="300" Height="300" Opacity="0" IsHitTestVisible="False"
+                          HorizontalAlignment="Center" VerticalAlignment="Center"
+                          RenderTransformOrigin="0.5,0.5">
+                        <Grid.RenderTransform>
+                            <TransformGroup>
+                                <RotateTransform x:Name="BurstSpin" Angle="0" />
+                                <ScaleTransform x:Name="BurstScale" ScaleX="0.55" ScaleY="0.55" />
+                            </TransformGroup>
+                        </Grid.RenderTransform>
+
+                        <Ellipse Width="300" Height="300" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Ellipse.Fill>
+                                <RadialGradientBrush>
+                                    <GradientStop Offset="0" Color="#00000000" />
+                                    <GradientStop Offset="0.34" Color="#00000000" />
+                                    <GradientStop Offset="0.55"
+                                                  Color="{Binding LastTierBrushKey, Converter={StaticResource ResourceKey},
+                                                                  ConverterParameter=color, FallbackValue=White}" />
+                                    <GradientStop Offset="1" Color="#00000000" />
+                                </RadialGradientBrush>
+                            </Ellipse.Fill>
+                        </Ellipse>
+
+                        <Path HorizontalAlignment="Center" VerticalAlignment="Center"
+                              Fill="{Binding LastTierBrushKey, Converter={StaticResource ResourceKey}}"
+                              Data="M -5,-58 L 5,-58 L 0,-124 Z
+                                    M 5,58 L -5,58 L 0,124 Z
+                                    M 58,-5 L 58,5 L 124,0 Z
+                                    M -58,5 L -58,-5 L -124,0 Z
+                                    M 37,-45 L 45,-37 L 88,-88 Z
+                                    M 45,37 L 37,45 L 88,88 Z
+                                    M -37,45 L -45,37 L -88,88 Z
+                                    M -45,-37 L -37,-45 L -88,-88 Z" />
+                    </Grid>
+                    </Grid>
+
                     <!-- Resultado. Entra con su propia animación; los datos ya estaban decididos
                          y guardados antes de que la rueda empezase a girar. -->
                     <Border Grid.Row="3" VerticalAlignment="Center" HorizontalAlignment="Center"
@@ -392,15 +505,81 @@
                             <TextBlock Style="{StaticResource Mono}" HorizontalAlignment="Center" FontSize="10"
                                        Opacity="0.75" Text="{Binding LastTierName}"
                                        Foreground="{Binding LastTierBrushKey, Converter={StaticResource ResourceKey}}" />
-                            <TextBlock Style="{StaticResource PanelHeading}" HorizontalAlignment="Center"
-                                       FontSize="21" Margin="0,1,0,0" Text="{Binding LastPull.SpeciesName}" />
+                            <!-- El nombre entra con su propio golpe y un pelín más tarde que la
+                                 ficha, para que sean dos impactos y no uno. -->
+                            <TextBlock HorizontalAlignment="Center" FontSize="21" Margin="0,1,0,0"
+                                       Text="{Binding LastPull.SpeciesName}" RenderTransformOrigin="0.5,0.5">
+                                <TextBlock.RenderTransform>
+                                    <ScaleTransform ScaleX="1" ScaleY="1" />
+                                </TextBlock.RenderTransform>
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource PanelHeading}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HasResult}" Value="True">
+                                                <DataTrigger.EnterActions>
+                                                    <BeginStoryboard>
+                                                        <Storyboard>
+                                                            <DoubleAnimation BeginTime="0:0:0.12" From="1.5" To="1"
+                                                                Duration="0:0:0.55"
+                                                                Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)">
+                                                                <DoubleAnimation.EasingFunction>
+                                                                    <BackEase EasingMode="EaseOut" Amplitude="0.7" />
+                                                                </DoubleAnimation.EasingFunction>
+                                                            </DoubleAnimation>
+                                                            <DoubleAnimation BeginTime="0:0:0.12" From="1.5" To="1"
+                                                                Duration="0:0:0.55"
+                                                                Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)">
+                                                                <DoubleAnimation.EasingFunction>
+                                                                    <BackEase EasingMode="EaseOut" Amplitude="0.7" />
+                                                                </DoubleAnimation.EasingFunction>
+                                                            </DoubleAnimation>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </DataTrigger.EnterActions>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <!-- La marca de shiny o legendario late tres veces al aparecer. Solo
+                                 se pone cuando de verdad lo es, así que el ruido está ganado. -->
                             <TextBlock HorizontalAlignment="Center" FontSize="10" Margin="0,1,0,0"
-                                       Text="{Binding LastBadge}" Foreground="{StaticResource AccentBrush}">
+                                       Text="{Binding LastBadge}" Foreground="{StaticResource AccentBrush}"
+                                       RenderTransformOrigin="0.5,0.5">
+                                <TextBlock.RenderTransform>
+                                    <ScaleTransform ScaleX="1" ScaleY="1" />
+                                </TextBlock.RenderTransform>
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock" BasedOn="{StaticResource Mono}">
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding LastBadge}" Value="">
                                                 <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding HasBadge}" Value="True">
+                                                <DataTrigger.EnterActions>
+                                                    <BeginStoryboard>
+                                                        <Storyboard>
+                                                            <DoubleAnimation BeginTime="0:0:0.3" From="2.2" To="1"
+                                                                Duration="0:0:0.6"
+                                                                Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)">
+                                                                <DoubleAnimation.EasingFunction>
+                                                                    <BackEase EasingMode="EaseOut" Amplitude="0.9" />
+                                                                </DoubleAnimation.EasingFunction>
+                                                            </DoubleAnimation>
+                                                            <DoubleAnimation BeginTime="0:0:0.3" From="2.2" To="1"
+                                                                Duration="0:0:0.6"
+                                                                Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)">
+                                                                <DoubleAnimation.EasingFunction>
+                                                                    <BackEase EasingMode="EaseOut" Amplitude="0.9" />
+                                                                </DoubleAnimation.EasingFunction>
+                                                            </DoubleAnimation>
+                                                            <DoubleAnimation BeginTime="0:0:0.3" From="0.25" To="1"
+                                                                Duration="0:0:0.45" AutoReverse="True"
+                                                                RepeatBehavior="3x"
+                                                                Storyboard.TargetProperty="Opacity" />
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </DataTrigger.EnterActions>
                                             </DataTrigger>
                                         </Style.Triggers>
                                     </Style>

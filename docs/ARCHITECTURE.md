@@ -2356,18 +2356,36 @@ más que la ficha final.
 
 ### Qué se ve
 
-1. Una tira de **118 celdas** cruza la pantalla a toda velocidad, con los iconos **a todo color**.
-2. La tira **acelera, cruza a velocidad constante, frena larguísimo, se pasa media casilla y
-   retrocede** hasta asentarse. La frenada ocupa **más de la mitad de la tirada**: se ve a los
-   Pokémon pasar cada vez más despacio hasta que uno se queda.
-3. Un **desenfoque** que baja de 8 a 0 hace de velocímetro, y se retira pronto para que los
-   iconos se aprecien mientras la rueda todavía se está parando.
-4. La celda que queda bajo el marcador **crece con un rebote** y las demás bajan a opacidad 0,42:
-   siguen a color, pero la que ha tocado es la que se lee.
-5. La escalera de tiers de arriba **sube durante la tirada**, y cada subida trae su fogonazo y un
-   golpe elástico del marcador.
+1. Una tira de **118 celdas** cruza la pantalla a toda velocidad, con los iconos **a todo color**,
+   y unas **rayas de velocidad** se encienden detrás mientras va lanzada.
+2. La tira **acelera, cruza a velocidad constante y frena larguísimo**. La frenada ocupa casi la
+   mitad de la tirada: se ve a los Pokémon pasar cada vez más despacio.
+3. Un **desenfoque** que baja de 8 a 0 hace de velocímetro, y se retira **antes de los clics**,
+   para que se pueda leer qué Pokémon pasa por el marcador en cada uno.
+4. **El final a clics**: la rueda se planta **tres casillas antes** y avanza **de una en una**, con
+   su pausa entre cada una y un golpe del marcador y un tirón del visor en cada avance. El último
+   clic **se pasa de largo y vuelve**. Mientras tanto el visor se **acerca** un 6%.
+5. Al parar: fogonazo del color del tier, **onda de choque**, **ráfaga de ocho rayos** alrededor de
+   la casilla y una **sacudida** de todo el panel. La celda ganadora **crece con un rebote** y las
+   demás bajan a opacidad 0,42.
+6. La ficha del resultado entra con su propio golpe, y el **nombre un pelín después**, para que
+   sean dos impactos y no uno. Si hay marca de shiny o legendario, **late tres veces** y cae una
+   segunda onda encima de la primera.
+7. La escalera de tiers de arriba **sube durante la tirada**, y cada subida trae su fogonazo, su
+   golpe de marcador y su sacudida.
 
 Duración: de **6 s en el tier 1 a 11 s en el tier 5**.
+
+### Por qué el final es a clics
+
+Una rueda que se desliza hasta pararse resuelve la tirada **en un solo instante**. Una que se
+planta tres casillas antes y camina las tres últimas la resuelve **tres veces**, y en cada pausa
+el jugador lee el Pokémon que hay bajo el marcador y piensa que es el suyo. Es el recurso de las
+tragaperras de toda la vida y es de lejos lo que más aporta de todo lo que se ha añadido.
+
+El número de clics es **el mismo para todos los tiers a propósito**. Hacer que los raros
+clicasen más sería más vistoso, pero cantaría el resultado antes de que la rueda llegue, y
+entonces el engaño del tier no engañaría a nadie.
 
 ### El engaño, y por qué no incumple la regla 3
 
@@ -2428,11 +2446,32 @@ holgada a propósito: si la red saltara antes que la rueda, volvería el mismo s
 Medido con el ganador ya parado: `centroCelda=333, centroVisor=332`. Un píxel, que es el borde
 del marco.
 
+### Cuarto fallo: la ráfaga se comió la ficha del resultado
+
+La ráfaga de rayos mide 300 px y se metió como hija del `Grid` de la ruleta, que ocupa una fila
+**`Auto`**. La fila pasó de medir 104 a medir 300, se comió los 392 px del panel y la fila `*` del
+resultado se quedó **sin sitio**: la ficha con el nombre, la naturaleza y los IV **dejó de
+aparecer**, sin error, sin excepción y sin una línea en el log.
+
+Es la tercera vez que el mismo mecanismo muerde en esta pantalla —ya pasó con los rectángulos de
+fondo y su `RowSpan`—, así que conviene tenerlo como norma: **en un `Grid` con filas `Auto`,
+cualquier adorno grande hay que sacarlo del flujo o fijarle la altura**. Aquí se le fija a la de
+la ruleta; la ráfaga se sigue dibujando fuera, porque ese `Grid` no recorta, y quien la recorta es
+el panel, que es justo lo que se quería.
+
+Se encontró comparando dos capturas: la ficha estaba en la versión anterior de la animación y no
+en la nueva, con la línea de estado diciendo tan tranquila que el Pokémon ya estaba en la caja.
+
 ### Verificado en la aplicación
 
-Con la aplicación abierta y tirando de verdad: la rueda gira, frena, retrocede y para; el tier
-sube del 1 al que toca con su fogonazo; y el Pokémon se revela a color bajo el marcador. Salieron
-así **Whimsicott**, **Floatzel** y **Heracross**, todos entregados a la caja del jugador.
+Con la aplicación abierta y tirando de verdad: la rueda gira, frena, hace sus tres clics, se pasa
+y vuelve; el tier sube con su fogonazo; y al parar caen la onda, la ráfaga y la sacudida con el
+Pokémon revelado dentro de su marco y la ficha completa debajo. Salieron así **Mudkip**,
+**Skuntank** y **Crawdaunt**.
 
-Lo que **no** se ha visto en vivo es la subida **en dos pasos**, porque exige que toque tier 4 o 5
-y no salió ninguno en las pruebas. El camino de un solo salto sí se ha visto funcionar.
+La subida **en dos pasos** también se ha visto, tirando del banner caro: la pantalla pasó por
+**tier 4** antes de quedarse, y salió **Haxorus** de tier 4, con el morado del tier en el portal,
+en el marco de la ruleta y en el borde de la ficha.
+
+Lo que **no** se ha visto en vivo es la celebración de **shiny o legendario**, porque no ha
+tocado ninguno; el camino está cableado y es el mismo que el resto, pero está sin ver.
