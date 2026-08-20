@@ -2038,3 +2038,346 @@ Los dos fallos son la misma familia: **el estado que sobrevive a un cambio de co
 Un fichero que se queda de la vez anterior y una secuencia aleatoria compartida son las dos
 formas que tenía el randomizador de arrastrar el pasado. Ninguna se veía sin apagar un módulo,
 que es algo que hasta ahora nunca se había hecho.
+
+---
+
+## 28. Sprites de Pokémon: se pueden sacar de la ROM (2026-08-20)
+
+El §26 daba los sprites por inviables: «séptima generación usa modelos 3D, y los iconos están en
+formato de textura de 3DS, y al recortar pk3DS se eliminaron ETC1, ImageUtil y CTR/Images». Eso
+era **cierto solo en parte**, y la parte falsa era justo la que bloqueaba.
+
+### Dónde están y en qué formato
+
+Barriendo los 333 ficheros bajo `a/` y mirando la firma de sus subficheros aparece el contenedor:
+
+| Qué | Ruta | Contenido |
+|---|---|---|
+| **Iconos de Pokémon** | **`a/0/6/2`** | 1154 subficheros, LZ11 → BFLIM |
+| Iconos de objetos | `a/0/6/1` | 769 subficheros, 32x32 |
+| Retratos grandes | `a/2/7/3` | 1157 subficheros de 256x256, **estos sí ETC1A4** |
+
+Un icono son **4096 bytes de píxeles + 40 de cola**. La cola es la firma `FLIM` seguida del
+bloque `imag`, y ahí está todo lo que hace falta:
+
+```text
++0x1C  ancho   0x40 (64)
++0x1E  alto    0x20 (32)
++0x20  alineación
++0x22  formato 7 = RGBA5551
++0x23  swizzle 4 = rotado 90°
++0x24  bytes de datos
+```
+
+**Son RGBA5551, no ETC1.** O sea que **no hace falta reincorporar nada de lo que se eliminó de
+pk3DS**: el decodificador entero cabe en unas sesenta líneas y no arrastra ni `System.Drawing`
+ni WPF, así que `PermaLocke.Randomizer` sigue cumpliendo la norma de no depender de UI.
+
+### Las dos trampas del formato, y cómo se resolvieron
+
+1. **Las texturas de 3DS van en mosaicos de 8x8 y dentro de cada mosaico en orden Morton**: los
+   bits pares del índice son la X y los impares la Y. Con el orden equivocado el sprite sale
+   reconocible pero descosido, que es lo peor que puede pasar porque parece que casi funciona.
+
+   Para no decidirlo a ojo se midió: se probaron las ocho combinaciones (dimensiones almacenadas
+   32x64 o 64x32 × mosaicos por filas o por columnas × Morton normal o traspuesta) puntuando cada
+   una por la **discontinuidad en los bordes de mosaico**. La buena es la única que no deja
+   costura: 1,17 frente a 3,09 de la siguiente. No es una opinión, es una medida.
+
+2. **El swizzle 4 significa que la textura está guardada con los ejes cambiados**: los 64x32 que
+   declara la cabecera viven en memoria como 32 de ancho por 64 de alto. Hay que destramar sobre
+   las dimensiones almacenadas y **después** girar 90° en sentido antihorario. Sin ese giro todos
+   los Pokémon salen tumbados.
+
+Verificado mirando el resultado: Bulbasaur, Ivysaur, Venusaur y Mega Venusaur en los iconos 1 a
+4; Pikachu en el 34; Staryu, Starmie, Mr. Mime, Scyther, Jynx, Electabuzz y Magmar seguidos en
+los iconos 168 a 174.
+
+### Lo que está implementado
+
+| Pieza | Dónde |
+|---|---|
+| Lector y decodificador BFLIM | `Randomizer/Sprites/BflimTexture.cs` |
+| Iconos del cartucho, con recorte del margen transparente | `Randomizer/Sprites/PokemonIconReader.cs` |
+| Codificador PNG propio (zlib del framework, sin `System.Drawing`) | `Randomizer/Sprites/PngImage.cs` |
+| Herramienta | `PermaLocke.RomTool sprites [--sheets]` |
+
+```text
+1154 iconos escritos en Data\sprites en 1362 ms (0 vacíos)
+Tamaños más frecuentes tras recortar: 17x18 x35, 26x25 x28, 21x20 x17
+```
+
+Los sprites **no se versionan**: son de Nintendo. `Data/sprites/` está en `.gitignore` y cada
+jugador los extrae de su propia ROM, exactamente igual que la randomización. Nueve tests cubren
+la cola del BFLIM, el orden Morton, el recorrido de los mosaicos, el giro y el PNG.
+
+### Lo que falta: la tabla especie → icono
+
+Los iconos van **por especie en orden nacional, con las formas de cada una detrás**. El problema
+es saber **cuántos iconos consume cada especie**, y el cartucho no lo dice en ninguna parte:
+
+- La suma de `FormeCount` de las 807 especies da **1116**, y el contenedor tiene **1153** además
+  del huevo. Sobran **37**.
+- Y no sobran repartidos de forma regular: hay especies con **más** iconos que formas (**Pikachu
+  tiene 10 y declara 8**) y especies con **menos** (Scatterbug y Spewpa declaran 20 formas cada
+  uno). Ni siquiera el orden interno es el esperado: en las especies con forma de Alola, **la de
+  Alola va primero** (Raichu de Alola en el 44, el normal en el 45).
+- El campo `FormeSprite` de `personal`, que en sexta generación apuntaba a esto, **vale 0 en todas
+  las entradas** de Ultra Luna.
+- No hay tabla creciente de ~808 entradas ni en el RomFS ni en el `code.bin` del ExeFS —que, por
+  cierto, **no está comprimido** y coincide byte a byte con lo que se lee en memoria en
+  `0x00100000`, así que buscar ahí es barato y ya se hizo.
+- Los textos `Forms` (1118 líneas) están indexados **por especie**, no por icono, así que tampoco
+  sirven de puente.
+
+Se intentaron cuatro alineamientos automáticos —conteo de formas, casi-duplicados por similitud
+de bytes, color del Pokédex (que sí está en `personal`, byte 0x21 bits 0-5, y es correcto) y
+similitud de paleta entre iconos consecutivos— y **ninguno da un resultado exacto**: aciertan
+tramos largos y se desincronizan en puntos sueltos. Un mapeo «casi bueno» es justo lo que la
+regla 3 prohíbe, porque enseñaría el sprite de otro Pokémon con toda la confianza del mundo.
+
+**Estado: resuelto para las especies 1-649 mirando el contenedor tramo a tramo. Ver §30.**
+Las 158 restantes viven en un bloque con otro orden y siguen sin asignar, así que para ellas la
+app no enseña sprite: prefiere no enseñar ninguno a enseñar el equivocado.
+
+### Detalle que salió de paso: `a/0/9/2`
+
+El fichero de 5 MB que BxnnyLocke randomiza y PermaLocke no toca, pendiente de identificar desde
+hace sesiones, **no son los iconos**. Sus 759 subficheros llevan cadenas de depuración del
+intérprete de scripts (`ccmode=%d Not Found`), así que es el contenedor de **scripts** del juego.
+Encaja con que un randomizador lo toque: en séptima generación los iniciales y varios regalos se
+entregan por script.
+
+---
+
+## 29. La animación del gacha, rehecha (2026-08-20)
+
+La de §26 eran cinco bloques de XAML repetidos —treinta y cinco líneas cada uno, uno por tier—,
+doce estrellas fijas y un rectángulo cruzando la pantalla. Funcionaba, pero era eso.
+
+### Los portales salen ahora de la configuración
+
+`GachaViewModel` expone una colección de `PortalViewModel`, uno por tier de `Data/gacha.json`, y
+la vista los pinta con un `ItemsControl`. Añadir o quitar un tier cambia la animación **sin tocar
+el XAML**, que es la misma norma que rige el resto de la app: los valores de juego viven en JSON.
+
+Cada portal nombra su color de la paleta (`Tier3Brush`) y un `ResourceKeyConverter` lo resuelve
+contra `Themes/Palette.xaml`. Así el view model no toca un `Brush` y los colores siguen todos en
+el mismo sitio. Con `ConverterParameter=color` devuelve el `Color` en vez del pincel, que es lo
+que necesitan los degradados.
+
+### Qué se ve
+
+- **Dos capas de estrellas** con paralaje, hechas con un `DrawingBrush` en mosaico. Ninguna
+  imagen de por medio.
+- **Los cinco portales laten** en reposo y el que toca **se abre**: el anillo engorda, se ilumina,
+  late en grande y suelta un destello del color del tier.
+- **La nave lleva estela**: dos trazos con degradado y un halo en la punta.
+- **Un fogonazo del color del tier** recorre el panel al revelar.
+- **La ficha del resultado entra con su propia animación** y dice de qué tier salió, con el borde
+  y el título de ese color, y marca **SHINY** o **LEGENDARIO** cuando de verdad lo es.
+
+### Dos detalles que sí importan
+
+1. **Se apaga el portal antes de cada tirada.** Si no, dos tiradas seguidas del mismo tier no
+   cambiarían `LastTier`, el `DataTrigger` no volvería a dispararse y el portal se quedaría
+   quieto en la segunda. Es el tipo de fallo que solo aparece tirando dos veces con suerte.
+2. **Las estrellas se mueven trasladando el rectángulo, no animando el pincel.** WPF congela los
+   `Freezable` de un diccionario de recursos, así que animar el `Viewport` del `DrawingBrush`
+   revienta en ejecución. Se mueve el `RenderTransform`, que siempre se puede.
+
+Sigue en pie la trampa del §26: un `Storyboard` dentro de un `Style` no puede animar a otro
+elemento por nombre. Un `DataTemplate` **sí** tiene ámbito de nombres propio, y por eso los
+portales pueden animar sus tres capas internas desde `DataTemplate.Triggers`.
+
+### Verificado en la app, no solo compilando
+
+Se abrió la aplicación, se navegó a GACHA y se tiró dos veces:
+
+```text
+tirada 1: Leafeon SHINY, tier 3  -> portal azul abierto, ficha azul
+tirada 2: Pyukumuku,     tier 2  -> portal verde abierto, ficha verde
+```
+
+Y de paso queda cerrado un pendiente del §26: **la entrega al PC del juego funciona sobre la
+partida real**, no solo sobre una copia. El log lo dice y el jugador tiene los dos Pokémon en la
+caja 1:
+
+```text
+SaveBoxDelivery: Copia de la partida guardada en main-20260820-062431.sav
+SaveBoxDelivery: Leafeon entregado en la caja 1, hueco 19
+SaveBoxDelivery: Pyukumuku entregado en la caja 1, hueco 20
+```
+
+También se corrigió un texto de la pantalla que se había quedado atrás: decía que el Pokémon
+«todavía no se escribe dentro del juego» cuando lleva escribiéndose desde el §26.
+
+---
+
+## 30. La tabla especie → icono, construida a mano (2026-08-20)
+
+El §28 dejó la extracción resuelta y el índice sin resolver: el cartucho no dice qué icono es de
+qué especie, y ningún alineamiento automático daba un resultado **exacto**. Se construyó
+mirando el contenedor tramo a tramo, con los iconos ya decodificados y numerados.
+
+### Lo que resultó ser el orden
+
+```text
+icono 0          el huevo
+iconos 1-866     especies 1-649, en orden nacional, cada una seguida de sus formas
+iconos 867-1153  especies 650-807, en un orden que NO es el nacional
+```
+
+El corte es exacto y es lo que hace verificable toda la primera mitad: **las especies 1 a 649
+ocupan exactamente 866 iconos**. El 866 es el último Genesect y el 867 es el primer Furfrou, así
+que si la suma no da 866 la tabla está mal y `PokemonIconIndex.Build` **lanza** en vez de
+devolver un mapa torcido.
+
+### Por qué no bastaba con contar formas
+
+Una especie no ocupa tantos iconos como formas declara. Hay de todo, y cada caso se comprobó
+mirando el icono:
+
+| Caso | Ejemplo |
+|---|---|
+| Más iconos que formas | Pikachu: **10 iconos, 8 formas** (el suyo y nueve gorras) |
+| Muchos más | Unown: **46 iconos, 28 formas** |
+| Menos | Mothim: **1 icono, 3 formas**; Arceus: **1 icono, 18 formas** |
+| Pares idénticos | Clefairy, Dugtrio, Poliwhirl, Kingler, Croconaw, Sneasel, Roselia, Klink… son la variante de sexo, que el cartucho guarda como dibujo aparte aunque no sea una forma |
+
+En total, 55 especies necesitan corrección. Están en `Adjustments`, dentro de
+`Randomizer/Sprites/PokemonIconIndex.cs`, cada una con su comentario.
+
+### La trampa de las formas de Alola
+
+En las especies de Kanto con forma de Alola, **el icono de Alola va primero**: el 44 es el Raichu
+de Alola y el 45 el normal. Coger el primero del grupo, que es lo natural, habría enseñado un
+Raichu de Alola cada vez que el gacha diera un Raichu corriente. `NormalFormOffsets` corrige las
+dieciocho, y en Dugtrio y Muk el desplazamiento es de **dos**, porque su forma de Alola tiene
+además variante de sexo.
+
+Excepción a la excepción que conviene no perder: **Exeggutor también pone Alola primero** (147
+Alola, 148 normal), aunque a primera vista parezca lo contrario.
+
+### Verificación
+
+- La suma tiene que dar 866 y da 866.
+- Tres rejillas completas releídas a ojo contra el orden nacional: **1-90**, **300-339** y
+  **570-609**. Todas correctas, Pokémon a Pokémon.
+- Trece iconos verificados uno a uno están fijados en tests (`PokemonIconIndexTests`), junto con
+  que ninguna especie comparte icono con otra.
+- En la aplicación: Arcanine y Heracross salieron del gacha **con su sprite**, y Aromatisse y
+  Furfrou —ambos por encima de 649— salieron **sin dibujo**, que es justo lo que debe pasar.
+
+### Lo que queda fuera, y por qué
+
+Las especies **650 a 807** no tienen icono asignado. El bloque que las contiene está en otro
+orden —empieza por Furfrou, sigue por Phantump, Trevenant, Litleo, Pyroar, Scatterbug, Spewpa,
+Vivillon— y no coincide con la Pokédex nacional, ni con la de Kalos, ni con la de Alola. Son 287
+iconos que habría que identificar de nuevo uno a uno.
+
+Mientras tanto `PokemonSpriteService.Get` devuelve **null** para esas especies y la pantalla no
+dibuja nada. Un hueco es honesto; el sprite de otro Pokémon no lo sería.
+
+### Cómo llegan los sprites a cada jugador
+
+No se reparten: `PokemonSpriteService` los extrae de la ROM que el jugador ya tiene la primera
+vez que se abre el gacha —1,4 s, 1154 PNG en `Data/sprites/`— y los cachea. Si no hay ROM, o si
+algo falla, se anota en el log y la pantalla sigue funcionando sin dibujos. `Data/sprites/` está
+en `.gitignore`.
+
+Detalle menor y documentado: en las especies cuyo macho y hembra tienen dibujo distinto
+(Frillish, Jellicent, Unfezant…) se usa el primero del grupo, que en Frillish resulta ser la
+hembra. No se sabe cuál considera el juego el principal, así que no se elige por corazonada.
+
+---
+
+## 31. La ruleta del gacha (2026-08-20)
+
+La animación del §29 se rehízo entera a petición del usuario, que eligió entre cuatro conceptos:
+**ruleta de siluetas**, con **escalada de rareza con engaño** y **duración larga en los tiers
+altos**. Es la primera animación del proyecto que usa los sprites del cartucho (§28) para algo
+más que la ficha final.
+
+### Qué se ve
+
+1. Una tira de **118 celdas** cruza la pantalla a toda velocidad, con los iconos **a todo color**.
+2. La tira **acelera, cruza a velocidad constante, frena larguísimo, se pasa media casilla y
+   retrocede** hasta asentarse. La frenada ocupa **más de la mitad de la tirada**: se ve a los
+   Pokémon pasar cada vez más despacio hasta que uno se queda.
+3. Un **desenfoque** que baja de 8 a 0 hace de velocímetro, y se retira pronto para que los
+   iconos se aprecien mientras la rueda todavía se está parando.
+4. La celda que queda bajo el marcador **crece con un rebote** y las demás bajan a opacidad 0,42:
+   siguen a color, pero la que ha tocado es la que se lee.
+5. La escalera de tiers de arriba **sube durante la tirada**, y cada subida trae su fogonazo y un
+   golpe elástico del marcador.
+
+Duración: de **6 s en el tier 1 a 11 s en el tier 5**.
+
+### El engaño, y por qué no incumple la regla 3
+
+La pantalla arranca encendida en el **tier más barato** y sube al real cuando la rueda va por el
+80% —los dos tiers de arriba suben en **dos pasos**, para que un legendario se note venir—. Es
+decir: durante unos segundos la pantalla enseña un tier que no es el que ha tocado.
+
+Eso es presentación y solo presentación. **El Pokémon, los puntos y el evento se deciden, se
+guardan y se entregan antes de que la rueda empiece a girar**; `LastTier` siempre tiene el tier
+real y `DisplayedTier` es lo único que miente, durante tres segundos, sobre un resultado que ya
+está escrito. Las siluetas que pasan tampoco son candidatas, y el texto de la pantalla lo dice.
+
+La duración va de **6 s en el tier 1 a 11 s en el tier 5**, para que la espera larga solo llegue
+cuando ha tocado algo bueno.
+
+### Dónde vive cada cosa
+
+| Pieza | Dónde |
+|---|---|
+| Qué celda gana, cuánto dura, cuándo sube el tier | `GachaViewModel.SpinAsync` |
+| La tira, sembrada con la seed de la tirada | `GachaViewModel.BuildReel` |
+| Aceleración, frenado, rebote, desenfoque y fogonazos | `GachaView.xaml.cs` |
+
+El code-behind existe porque **dónde tiene que parar la rueda depende del ancho del visor en ese
+momento**, y un Storyboard escrito en XAML no puede saberlo. No decide nada ni toca datos: el
+view model dice *qué* y la vista *cómo*. La tira se siembra con la seed de la tirada, así que
+recomputar una tirada la reproduce también visualmente.
+
+### Dos fallos de WPF que costaron encontrar
+
+1. **`OpacityMask` con un `ImageBrush` no pinta nada** sobre estos iconos. La ruleta salía
+   completamente vacía aunque el log confirmara 45 de 46 celdas con icono. La solución es no
+   depender del recorte: `PokemonSpriteService.GetShadow` **cocina la silueta en un bitmap**,
+   conservando el alfa y tirando el color, y la celda muestra un `Image` normal.
+
+2. **Un `ItemsControl` dentro de un `Grid` se recorta al ancho disponible.** Medía **662 px en
+   vez de 3312**, así que en cuanto la tira se desplazaba se salía entera de la vista y no se veía
+   ni el fondo de depuración que se le puso para comprobarlo. La tira va ahora dentro de un
+   **`Canvas`**, que mide a sus hijos con espacio infinito.
+
+Los dos daban el mismo síntoma —una banda vacía— por causas distintas, y ninguno de los dos
+falla al compilar ni deja rastro en el log. Se encontraron midiendo desde el propio code-behind:
+`viewport=664 stripW=662 items=46` fue lo que destapó el segundo.
+
+### Tercer fallo: revelar por reloj y no por la rueda
+
+La primera versión revelaba al ganador con un `Task.Delay` de la misma duración que la animación.
+Parecía equivalente y no lo era: **construir 118 celdas lleva su tiempo**, así que la animación
+arranca bastante después de la petición y termina igual de tarde. El reloj llegaba antes y el
+Pokémon se revelaba **con la rueda todavía en marcha**, apareciendo media casilla fuera de su
+propio marco. Muy fácil de confundir con un error de cálculo del punto de parada, que es donde se
+buscó primero.
+
+Ahora el aviso lo da la propia animación (`Completed`), y el view model espera a eso. Queda una
+red de tres segundos por si la vista nunca llegó a arrancar —una pantalla que no se cuelga— y va
+holgada a propósito: si la red saltara antes que la rueda, volvería el mismo síntoma.
+
+Medido con el ganador ya parado: `centroCelda=333, centroVisor=332`. Un píxel, que es el borde
+del marco.
+
+### Verificado en la aplicación
+
+Con la aplicación abierta y tirando de verdad: la rueda gira, frena, retrocede y para; el tier
+sube del 1 al que toca con su fogonazo; y el Pokémon se revela a color bajo el marcador. Salieron
+así **Whimsicott**, **Floatzel** y **Heracross**, todos entregados a la caja del jugador.
+
+Lo que **no** se ha visto en vivo es la subida **en dos pasos**, porque exige que toque tier 4 o 5
+y no salió ninguno en las pruebas. El camino de un solo salto sí se ha visto funcionar.

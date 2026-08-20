@@ -3,6 +3,7 @@ using PermaLocke.Randomizer;
 using PermaLocke.Randomizer.Modules;
 using PermaLocke.Randomizer.Output;
 using PermaLocke.Randomizer.Rom;
+using PermaLocke.Randomizer.Sprites;
 using pk3DS.Core;
 using pk3DS.Core.CTR;
 
@@ -42,6 +43,9 @@ switch (command)
     case "species":
         await SpeciesAsync();
         break;
+    case "sprites":
+        Sprites(args.Contains("--sheets"));
+        break;
     case "zones":
         await ZonesAsync();
         break;
@@ -57,6 +61,7 @@ switch (command)
               PermaLocke.RomTool inspect              datos de la ROM y de los GARC
               PermaLocke.RomTool names <id> [id...]   nombres de especie leídos de la ROM
               PermaLocke.RomTool randomize [seed]     genera el mod en la carpeta de Azahar
+              PermaLocke.RomTool sprites [--sheets]   vuelca los iconos de Pokémon a Data/sprites
             """);
         break;
 }
@@ -601,4 +606,101 @@ async Task SpeciesAsync()
 
     using var check = System.Text.Json.JsonDocument.Parse(await File.ReadAllTextAsync(path));
     Console.WriteLine($"\nRelectura: {check.RootElement.GetProperty("species").GetArrayLength()} especies.");
+}
+
+// Vuelca los iconos de Pokémon del cartucho del jugador a PNG. Los sprites son de Nintendo y
+// no viajan con PermaLocke: cada uno los saca de su propia ROM, igual que la randomización.
+void Sprites(bool sheets)
+{
+    var rom = RequireRom();
+    var reader = PokemonIconReader.Open(rom, work);
+    var outDir = Path.Combine(root, "Data", "sprites");
+    Directory.CreateDirectory(outDir);
+
+    var sw = Stopwatch.StartNew();
+    var written = 0;
+    var empty = 0;
+    var sizes = new Dictionary<string, int>();
+
+    for (var i = 0; i < reader.Count; i++)
+    {
+        var icon = reader.Read(i);
+        if (icon.Pixels.All(b => b == 0))
+        {
+            empty++;
+            continue;
+        }
+
+        File.WriteAllBytes(Path.Combine(outDir, $"{i:0000}.png"),
+            PngImage.Encode(icon.Pixels, icon.Width, icon.Height));
+        written++;
+        var key = $"{icon.Width}x{icon.Height}";
+        sizes[key] = sizes.GetValueOrDefault(key) + 1;
+    }
+
+    Console.WriteLine($"{written} iconos escritos en {outDir} en {sw.ElapsedMilliseconds} ms ({empty} vacíos)");
+    Console.WriteLine("Tamaños más frecuentes tras recortar: " + string.Join(", ",
+        sizes.OrderByDescending(s => s.Value).Take(5).Select(s => $"{s.Key} x{s.Value}")));
+
+    // Relectura: no se da por bueno un fichero que no se ha vuelto a leer del disco.
+    var sample = Path.Combine(outDir, "0001.png");
+    var bytes = File.ReadAllBytes(sample);
+    var okSignature = bytes.Length > 8 && bytes[1] == 'P' && bytes[2] == 'N' && bytes[3] == 'G';
+    Console.WriteLine($"Relectura de {Path.GetFileName(sample)}: {bytes.Length} bytes, firma PNG {(okSignature ? "correcta" : "MAL")}");
+
+    if (!sheets)
+    {
+        Console.WriteLine("\n(--sheets genera además hojas de contactos para identificar los iconos)");
+        return;
+    }
+
+    // Hojas de contactos: 60 iconos por hoja, en el orden del contenedor. Sirven para construir
+    // a mano la tabla especie -> icono, que el cartucho no expone en ninguna parte (ver §28).
+    var sheetDir = Path.Combine(outDir, "hojas");
+    Directory.CreateDirectory(sheetDir);
+    const int columns = 10, rows = 6, cell = 68, scale = 2;
+    var perSheet = columns * rows;
+
+    for (var first = 0; first < reader.Count; first += perSheet)
+    {
+        var sheetWidth = columns * cell * scale;
+        var sheetHeight = rows * cell * scale / 2;
+        var canvas = new byte[sheetWidth * sheetHeight * 4];
+
+        for (var n = 0; n < perSheet && first + n < reader.Count; n++)
+        {
+            var icon = reader.Read(first + n);
+            var ox = (n % columns) * cell * scale;
+            var oy = (n / columns) * cell * scale / 2;
+            var checker = (n % columns + n / columns) % 2 == 0 ? (byte)250 : (byte)225;
+
+            for (var y = 0; y < cell * scale / 2; y++)
+            for (var x = 0; x < cell * scale; x++)
+            {
+                var target = (((oy + y) * sheetWidth) + ox + x) * 4;
+                var sx = x / scale;
+                var sy = y / scale;
+                byte r = checker, g = checker, b = checker;
+
+                if (sx < icon.Width && sy < icon.Height)
+                {
+                    var source = ((sy * icon.Width) + sx) * 4;
+                    var alpha = icon.Pixels[source + 3];
+                    r = (byte)((icon.Pixels[source] * alpha / 255) + (checker * (255 - alpha) / 255));
+                    g = (byte)((icon.Pixels[source + 1] * alpha / 255) + (checker * (255 - alpha) / 255));
+                    b = (byte)((icon.Pixels[source + 2] * alpha / 255) + (checker * (255 - alpha) / 255));
+                }
+
+                canvas[target] = r;
+                canvas[target + 1] = g;
+                canvas[target + 2] = b;
+                canvas[target + 3] = 255;
+            }
+        }
+
+        File.WriteAllBytes(Path.Combine(sheetDir, $"hoja-{first:0000}.png"),
+            PngImage.Encode(canvas, sheetWidth, sheetHeight));
+    }
+
+    Console.WriteLine($"Hojas de contactos en {sheetDir} ({(reader.Count + perSheet - 1) / perSheet} hojas de {perSheet})");
 }

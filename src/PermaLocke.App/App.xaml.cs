@@ -47,6 +47,7 @@ public partial class App : Application
         collection.AddSingleton<IAppDialogs, AppDialogs>();
         collection.AddSingleton<IUiDispatcher, WpfUiDispatcher>();
         collection.AddSingleton<GameLinkMonitor>();
+        collection.AddSingleton<PokemonSpriteService>();
         collection.AddTransient<CreateRunViewModel>();
         collection.AddTransient<RegisterCaptureViewModel>();
         collection.AddSingleton<HomeViewModel>();

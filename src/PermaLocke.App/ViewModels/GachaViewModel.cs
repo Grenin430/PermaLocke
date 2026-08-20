@@ -2,11 +2,35 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
+using PermaLocke.App.Services;
 using PermaLocke.Core.Abstractions;
 using PermaLocke.Core.Domain;
 using PermaLocke.Core.Services;
 
 namespace PermaLocke.App.ViewModels;
+
+/// <summary>
+/// One portal of the ultra-space animation: a tier, its colour and whether it is the one that
+/// just opened.
+/// </summary>
+/// <remarks>
+/// There is one of these per tier in <c>Data/gacha.json</c>, so adding or removing a tier changes
+/// the animation without touching XAML. Each portal animates itself: a Storyboard inside a Style
+/// has no name scope and cannot reach another element (ARCHITECTURE.md §26).
+/// </remarks>
+public sealed partial class PortalViewModel(GachaTier tier, int position) : ObservableObject
+{
+    public string TierId { get; } = tier.Id;
+
+    public string Name { get; } = tier.Name;
+
+    /// <summary>Palette key, resolved by the view. Tiers are ordered, so position picks the colour.</summary>
+    public string BrushKey { get; } = $"Tier{position}Brush";
+
+    /// <summary>True while this portal is the one the roll landed on.</summary>
+    [ObservableProperty]
+    private bool _isActive;
+}
 
 /// <summary>One banner as the screen shows it, with its odds spelled out.</summary>
 public sealed class BannerViewModel(GachaBanner banner, string odds)
@@ -36,30 +60,51 @@ public sealed partial class GachaViewModel : SectionViewModel
     private readonly IRunContext _runContext;
     private readonly IPointsService _points;
     private readonly IPokemonDelivery _delivery;
+    private readonly PokemonSpriteService _sprites;
     private readonly ILogger<GachaViewModel> _logger;
 
     public GachaViewModel(GachaService gacha, IRunContext runContext, IPointsService points,
-        IPokemonDelivery delivery, ILogger<GachaViewModel> logger)
+        IPokemonDelivery delivery, PokemonSpriteService sprites, ILogger<GachaViewModel> logger)
         : base("GACHA")
     {
         _gacha = gacha;
         _runContext = runContext;
         _points = points;
         _delivery = delivery;
+        _sprites = sprites;
         _logger = logger;
     }
 
     /// <summary>
-    /// How long the reveal animation runs before the result appears.
+    /// Cells the reel carries. Long enough to keep a fast cruise going for seconds before the
+    /// brakes come on — a short strip would have to crawl to fill the same time.
+    /// </summary>
+    private const int ReelLength = 118;
+
+    /// <summary>Where the winner sits: near the end, so the reel travels a long way first.</summary>
+    private const int ReelWinnerIndex = 108;
+
+    /// <summary>
+    /// How long a spin lasts, by tier. The cheapest resolves quickly; the rarest takes its time.
     /// </summary>
     /// <remarks>
     /// The roll itself is instantaneous, so without this the animation would be over before it
     /// started. The wait is presentation, not suspense theatre over a pending computation: the
-    /// Pokémon is already decided and stored when the wait begins.
+    /// Pokémon is already decided and stored when the reel starts turning.
     /// </remarks>
-    private static readonly TimeSpan RevealDelay = TimeSpan.FromSeconds(2.6);
+    private static TimeSpan SpinTimeFor(int tierIndex) =>
+        TimeSpan.FromSeconds(6.0 + (1.25 * Math.Clamp(tierIndex, 0, 4)));
+
+    /// <summary>Raised when the reel should spin. The view owns the animation; this owns the plan.</summary>
+    public event EventHandler<SpinRequest>? SpinRequested;
 
     public ObservableCollection<BannerViewModel> Banners { get; } = [];
+
+    /// <summary>The spinning reel, rebuilt on every roll.</summary>
+    public ObservableCollection<ReelCellViewModel> Reel { get; } = [];
+
+    /// <summary>One portal per tier, in order of price. Built from the catalogue, not from XAML.</summary>
+    public ObservableCollection<PortalViewModel> Portals { get; } = [];
 
     [ObservableProperty]
     private BannerViewModel? _selectedBanner;
@@ -84,6 +129,51 @@ public sealed partial class GachaViewModel : SectionViewModel
     [ObservableProperty]
     private bool _hasResult;
 
+    /// <summary>Name of the tier that came out, for the result card.</summary>
+    [ObservableProperty]
+    private string _lastTierName = string.Empty;
+
+    /// <summary>Palette key of the tier that came out, so the flash and the card match its colour.</summary>
+    [ObservableProperty]
+    private string _lastTierBrushKey = "AccentBrush";
+
+    /// <summary>"Legendario" / "Shiny", or empty. Only set when the roll really was one.</summary>
+    [ObservableProperty]
+    private string _lastBadge = string.Empty;
+
+    /// <summary>
+    /// Icon of the Pokémon that came out, taken from the player's own ROM. Null when the species
+    /// is not one of the 649 whose icon is known, and then the card simply shows no picture.
+    /// </summary>
+    [ObservableProperty]
+    private System.Windows.Media.Imaging.BitmapSource? _lastSprite;
+
+    /// <summary>
+    /// Tier the screen is <em>showing</em> while the reel turns, which is not always the one that
+    /// came out.
+    /// </summary>
+    /// <remarks>
+    /// This is the fake-out the player asked for: the reel starts lit at the lowest tier and
+    /// climbs — once, or twice for the top tiers — before it stops. It is presentation and
+    /// nothing else: the Pokémon, the points and the event were decided and written before the
+    /// first frame, and <see cref="LastTier"/> always holds the real one.
+    /// </remarks>
+    [ObservableProperty]
+    private string _displayedTier = string.Empty;
+
+    /// <summary>Lights the portal that matches what is being shown, and puts out the rest.</summary>
+    partial void OnDisplayedTierChanged(string value)
+    {
+        foreach (var portal in Portals)
+        {
+            portal.IsActive = portal.TierId == value;
+        }
+
+        var match = Portals.FirstOrDefault(p => p.TierId == value);
+        LastTierName = match?.Name ?? value;
+        LastTierBrushKey = match?.BrushKey ?? "AccentBrush";
+    }
+
     public override async Task ActivateAsync()
     {
         Banners.Clear();
@@ -93,12 +183,25 @@ public sealed partial class GachaViewModel : SectionViewModel
             Banners.Add(new BannerViewModel(banner, DescribeOdds(banner)));
         }
 
+        if (Portals.Count == 0)
+        {
+            var position = 1;
+            foreach (var tier in _gacha.Tiers)
+            {
+                Portals.Add(new PortalViewModel(tier, position++));
+            }
+        }
+
         SelectedBanner ??= Banners.FirstOrDefault();
 
         if (_runContext.Current is { } run)
         {
             Balance = await _points.GetBalanceAsync(run.Id);
         }
+
+        // Los iconos salen de la ROM del propio jugador la primera vez. Si no se puede, la
+        // pantalla funciona igual: enseña la ficha sin dibujo.
+        await _sprites.PrepareAsync();
 
         _logger.LogInformation("Gacha: {Count} banners cargados, saldo {Balance}", Banners.Count, Balance);
 
@@ -126,6 +229,12 @@ public sealed partial class GachaViewModel : SectionViewModel
 
         IsRolling = true;
         HasResult = false;
+        // Se apaga todo antes de tirar. Si no, dos tiradas seguidas del mismo tier no cambiarían
+        // la propiedad y el portal no volvería a abrirse.
+        LastTier = string.Empty;
+        DisplayedTier = string.Empty;
+        LastBadge = string.Empty;
+        LastSprite = null;
         RollCommand.NotifyCanExecuteChanged();
         Status = string.Empty;
 
@@ -141,13 +250,19 @@ public sealed partial class GachaViewModel : SectionViewModel
                 return;
             }
 
-            // El portal ya sabe de qué color es y se ilumina; el resultado aparece cuando la
-            // nave entra en él. La tirada ya está decidida y guardada antes de esta espera:
-            // no se está fingiendo un cálculo, solo dándole tiempo a la animación.
-            LastTier = pull.TierId;
-            await Task.Delay(RevealDelay);
+            await SpinAsync(pull);
 
             LastPull = pull;
+            // La marca solo se pone cuando de verdad lo es: un shiny se enseña, uno que no lo es
+            // no se disfraza de nada.
+            LastBadge = (pull.IsShiny, pull.Legendary) switch
+            {
+                (true, true) => "SHINY · LEGENDARIO",
+                (true, false) => "SHINY",
+                (false, true) => "LEGENDARIO",
+                _ => string.Empty,
+            };
+            LastSprite = _sprites.Get(pull.Species);
             HasResult = true;
 
             // El Pokémon va al PC del juego. Si no se puede ahora, se dice por qué en vez de
@@ -167,6 +282,82 @@ public sealed partial class GachaViewModel : SectionViewModel
         {
             IsRolling = false;
             RollCommand.NotifyCanExecuteChanged();
+        }
+    }
+
+    /// <summary>
+    /// Fills the reel and runs the spin: the wheel turns, the tier climbs, and it stops on the
+    /// Pokémon that had already come out.
+    /// </summary>
+    private async Task SpinAsync(GachaPull pull)
+    {
+        BuildReel(pull);
+
+        var tierIndex = Math.Max(0, Portals.ToList().FindIndex(p => p.TierId == pull.TierId));
+        var duration = SpinTimeFor(tierIndex);
+
+        var stopped = new TaskCompletionSource();
+        SpinRequested?.Invoke(this, new SpinRequest(ReelWinnerIndex, duration, () => stopped.TrySetResult()));
+
+        // El engaño: se arranca encendido en el tier más barato y se sube. Los dos tiers de
+        // arriba suben en dos pasos, que es lo que hace que un legendario se note venir.
+        DisplayedTier = Portals.Count > 0 ? Portals[0].TierId : pull.TierId;
+
+        var stepUp = tierIndex >= 3 ? TimeSpan.FromSeconds(duration.TotalSeconds * 0.55) : TimeSpan.Zero;
+        var reveal = TimeSpan.FromSeconds(duration.TotalSeconds * 0.80);
+
+        if (stepUp > TimeSpan.Zero)
+        {
+            await Task.Delay(stepUp);
+            DisplayedTier = Portals[tierIndex - 2].TierId;
+            await Task.Delay(reveal - stepUp);
+        }
+        else
+        {
+            await Task.Delay(reveal);
+        }
+
+        DisplayedTier = pull.TierId;
+        LastTier = pull.TierId;
+
+        // Se espera a que la rueda pare de verdad, no a que pase el tiempo. Los tres segundos de
+        // más son una red por si la vista no llegó a arrancar la animación —la pantalla no se
+        // queda colgada— y van holgados a propósito: si la red salta antes de que la rueda pare,
+        // el ganador se revela a medio camino y aparece fuera de su marco.
+        await Task.WhenAny(stopped.Task, Task.Delay(duration + TimeSpan.FromSeconds(3)));
+
+        // La rueda ya se ha parado: el ganador crece y los demás se apagan un poco, para que se
+        // lea cuál es sin quitarles el color.
+        foreach (var cell in Reel)
+        {
+            if (cell.IsWinner)
+            {
+                cell.IsRevealed = true;
+            }
+            else
+            {
+                cell.IsDimmed = true;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Builds the strip: silhouettes picked at random, with the Pokémon that came out sitting at
+    /// the position the view will stop on.
+    /// </summary>
+    private void BuildReel(GachaPull pull)
+    {
+        Reel.Clear();
+
+        // La seed de la tirada también siembra la tira, para que la misma tirada se vea igual al
+        // recomputarla. Es decoración, pero decoración reproducible.
+        var random = new Random(unchecked((int)(pull.Seed ^ (ulong)pull.Number)));
+
+        for (var i = 0; i < ReelLength; i++)
+        {
+            var winner = i == ReelWinnerIndex;
+            var sprite = winner ? _sprites.Get(pull.Species) : _sprites.GetRandom(random);
+            Reel.Add(new ReelCellViewModel(sprite, winner));
         }
     }
 

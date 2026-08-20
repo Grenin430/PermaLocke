@@ -210,6 +210,34 @@ Pantalla con animación abstracta del ultraespacio: cinco portales de color, uno
 ningún asset con copyright. **Precios a cero mientras se prueba**; los reales (100/225/300) se
 ponen cuando existan los logros, que son la fuente de puntos y hoy no existe ninguna.
 
+**Sprites del cartucho y animación nueva (2026-08-20).** Los sprites **sí se pueden sacar de la
+ROM del jugador**: los iconos de caja están en `a/0/6/2`, 1154 imágenes LZ11+BFLIM en **RGBA5551**
+—no ETC1—, así que **no hace falta reincorporar nada de lo que se recortó de pk3DS**.
+`RomTool sprites` los vuelca a PNG en 1,4 s; `Data/sprites/` está en `.gitignore` porque son de
+Nintendo. Detalle en `docs/ARCHITECTURE.md` §28.
+
+**La tabla especie → icono se construyó a mano** mirando el contenedor tramo a tramo, porque el
+cartucho no la publica y el número de iconos por especie no coincide con su número de formas
+(Pikachu tiene 10 y declara 8; Arceus 1 y declara 18). Resuelta y verificada para las **649
+primeras especies**, que ocupan exactamente 866 iconos —esa suma es la comprobación, y si no
+cuadra el código lanza—. De la 650 en adelante el contenedor usa otro orden y siguen sin
+asignar: para esas la app **no enseña sprite**, que es mejor que enseñar el de otro Pokémon.
+Ojo con las formas de Alola: su icono va **antes** que el de la forma normal. Ver §30.
+
+El gacha ya enseña el sprite del Pokémon que sale. Los iconos los extrae `PokemonSpriteService`
+de la ROM del propio jugador la primera vez que se abre la pantalla.
+
+La animación del gacha se rehízo dos veces. La versión actual es una **ruleta de siluetas**: una
+tira de 46 iconos del cartucho, aplanados a un color, cruza la pantalla, frena, se pasa de la
+marca, retrocede y para en el que ha tocado, que se revela a color. Lleva **escalada de rareza
+con engaño** —la pantalla arranca en el tier más barato y sube, en dos pasos si el tier es alto—
+y dura de **2,5 s a 5 s según el tier**. El engaño es solo presentación: el Pokémon, los puntos y
+el evento ya están decididos, guardados y entregados antes de que la rueda gire. Ver §31.
+
+Dos fallos de WPF que costó encontrar y que conviene no repetir: **`OpacityMask` con `ImageBrush`
+no pinta nada** (la silueta se cocina ahora en un bitmap) y **un `ItemsControl` dentro de un `Grid`
+se recorta al ancho disponible**, así que una tira larga tiene que ir dentro de un `Canvas`.
+
 **Siguiente.** Logros (la fuente de puntos), tienda, y probar en partida nueva iniciales,
 entrenadores y tiendas.
 
@@ -224,8 +252,10 @@ Lo que NO está resuelto todavía y no debe darse por hecho (detalle en `docs/AR
 | Mochila del juego (leer, poner cantidad, añadir lo que no llevas) | **RESUELTA Y VERIFICADA** en el juego — ver `ARCHITECTURE.md` §22 |
 | Zona actual del jugador (regla de las Poké Balls) | **RESUELTA Y VERIFICADA** — es el área de `encdata`, leída anclando a la mochila; ver `ARCHITECTURE.md` §23 |
 | Regla de las Poké Balls (impedir la captura, no solo registrarla) | **IMPLEMENTADA Y APAGADA** — cableada y con tests, sin probar en el juego; ver `ARCHITECTURE.md` §24 |
-| Gacha (motor, probabilidades, reproducible) | **HECHO** — 194 tests; sin verse funcionando en la app |
-| Entrega del Pokémon al PC del juego | **VERIFICADA sobre copia del save**; falta hacerlo en la partida real. Exige el juego cerrado |
+| Gacha (motor, probabilidades, reproducible) | **HECHO** — 220 tests; **visto funcionando en la app, con sprites** |
+| Entrega del Pokémon al PC del juego | **VERIFICADA EN LA PARTIDA REAL** — dos entregas a la caja 1 con copia previa. Exige el juego cerrado |
+| Extraer los sprites de Pokémon de la ROM | **RESUELTA Y VERIFICADA** — `a/0/6/2`, RGBA5551, 1154 iconos a PNG en 1,4 s; ver `ARCHITECTURE.md` §28 |
+| Saber qué icono es de qué especie | **RESUELTO PARA LAS 649 PRIMERAS** — construido a mano y verificado; las 650-807 están en un bloque con otro orden y siguen sin asignar. Ver `ARCHITECTURE.md` §30 |
 | Logros, tienda y sincronización | **SIN EMPEZAR** — hoy no hay forma de ganar puntos |
 | API concreta de pk3DS.Core | **VERIFICADA** contra la ROM real — ver `ARCHITECTURE.md` §19 |
 
@@ -248,6 +278,7 @@ dotnet run --project tools/PermaLocke.RomTool -- pokemon 20260818
 dotnet run --project tools/PermaLocke.RomTool -- shops --gen
 dotnet run --project tools/PermaLocke.RomTool -- zones
 dotnet run --project tools/PermaLocke.RomTool -- species
+dotnet run --project tools/PermaLocke.RomTool -- sprites --sheets
 dotnet run --project tools/PermaLocke.RomTool -- randomize 20260818 --install
 ```
 

@@ -37,6 +37,9 @@ public sealed class GachaService(
 
     public IReadOnlyList<GachaBanner> Banners => catalog.Banners;
 
+    /// <summary>The tiers, cheapest band first. The screen draws one portal per tier from this.</summary>
+    public IReadOnlyList<GachaTier> Tiers => Ordered;
+
     public GachaBanner? Find(string bannerId) =>
         catalog.Banners.FirstOrDefault(banner => banner.Id == bannerId);
 
