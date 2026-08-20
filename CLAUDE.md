@@ -217,12 +217,16 @@ ROM del jugador**: los iconos de caja están en `a/0/6/2`, 1154 imágenes LZ11+B
 Nintendo. Detalle en `docs/ARCHITECTURE.md` §28.
 
 **La tabla especie → icono se construyó a mano** mirando el contenedor tramo a tramo, porque el
-cartucho no la publica y el número de iconos por especie no coincide con su número de formas
-(Pikachu tiene 10 y declara 8; Arceus 1 y declara 18). Resuelta y verificada para las **649
-primeras especies**, que ocupan exactamente 866 iconos —esa suma es la comprobación, y si no
-cuadra el código lanza—. De la 650 en adelante el contenedor usa otro orden y siguen sin
-asignar: para esas la app **no enseña sprite**, que es mejor que enseñar el de otro Pokémon.
-Ojo con las formas de Alola: su icono va **antes** que el de la forma normal. Ver §30.
+cartucho no la publica —no está en `personal`, ni en el RomFS, ni en el `code.bin`— y el número
+de iconos por especie no coincide con su número de formas (Pikachu tiene 10 y declara 8; Arceus 1
+y declara 18). **Resuelta para las 807**, en dos mitades con dos comprobaciones distintas: las
+1-649 van en orden nacional y tienen que ocupar exactamente 866 iconos; las 650-807 van en otro
+orden y se identificaron una a una, con la exigencia de que el reparto **cierre** —158 especies,
+287 iconos, ninguno libre ni repetido—. Si alguna de las dos cuentas falla, el código lanza.
+Esa segunda cuenta es la que cazó el único error de bulto: Togedemaru se había leído encima de
+Jangmo-o y Hakamo-o. Ojo con las formas de Alola, cuyo icono va **antes** que el de la forma
+normal; y con la misma trampa en el segundo bloque, donde el Furfrou sin corte es el sexto de sus
+once iconos y Necrozma normal va detrás de sus tres fusiones. Ver §30 y §30 bis.
 
 El gacha ya enseña el sprite del Pokémon que sale. Los iconos los extrae `PokemonSpriteService`
 de la ROM del propio jugador la primera vez que se abre la pantalla.
@@ -255,7 +259,7 @@ Lo que NO está resuelto todavía y no debe darse por hecho (detalle en `docs/AR
 | Gacha (motor, probabilidades, reproducible) | **HECHO** — 220 tests; **visto funcionando en la app, con sprites** |
 | Entrega del Pokémon al PC del juego | **VERIFICADA EN LA PARTIDA REAL** — dos entregas a la caja 1 con copia previa. Exige el juego cerrado |
 | Extraer los sprites de Pokémon de la ROM | **RESUELTA Y VERIFICADA** — `a/0/6/2`, RGBA5551, 1154 iconos a PNG en 1,4 s; ver `ARCHITECTURE.md` §28 |
-| Saber qué icono es de qué especie | **RESUELTO PARA LAS 649 PRIMERAS** — construido a mano y verificado; las 650-807 están en un bloque con otro orden y siguen sin asignar. Ver `ARCHITECTURE.md` §30 |
+| Saber qué icono es de qué especie | **RESUELTO PARA LAS 807** — construido a mano en dos bloques; el reparto cierra sin iconos libres ni repetidos y hay tests. Ver `ARCHITECTURE.md` §30 y §30 bis |
 | Logros, tienda y sincronización | **SIN EMPEZAR** — hoy no hay forma de ganar puntos |
 | API concreta de pk3DS.Core | **VERIFICADA** contra la ROM real — ver `ARCHITECTURE.md` §19 |
 

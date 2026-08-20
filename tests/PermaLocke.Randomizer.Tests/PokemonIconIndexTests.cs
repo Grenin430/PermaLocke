@@ -8,17 +8,19 @@ namespace PermaLocke.Randomizer.Tests;
 /// <remarks>
 /// It was built by looking at the container icon by icon, so what needs guarding is that nobody
 /// edits the adjustment lists without redoing that work. These tests pin the checks that would
-/// catch it: the ordered block has to add up exactly, and a handful of icons verified by eye
+/// catch it: both blocks have to add up exactly, and a handful of icons verified by eye
 /// have to keep landing where they were seen.
 /// </remarks>
 public class PokemonIconIndexTests
 {
     [Fact]
-    public void The_table_stops_where_the_container_stops_following_the_dex()
+    public void The_container_is_two_blocks_and_the_table_knows_where_each_one_ends()
     {
-        Assert.Equal(649, PokemonIconIndex.LastKnownSpecies);
+        Assert.Equal(649, PokemonIconIndex.OrderedBlockSpecies);
         Assert.Equal(866, PokemonIconIndex.OrderedBlockIcons);
         Assert.Equal(0, PokemonIconIndex.EggIcon);
+        Assert.Equal(807, PokemonIconIndex.LastSpecies);
+        Assert.Equal(1154, PokemonIconIndex.ContainerIcons);
     }
 
     /// <summary>
@@ -40,6 +42,13 @@ public class PokemonIconIndexTests
     [InlineData(201, 259)]  // Unown
     [InlineData(493, 664)]  // Arceus, whose eighteen forms share one icon
     [InlineData(649, 862)]  // Genesect, the last one in the ordered block
+    [InlineData(650, 929)]  // Chespin, first of the second block
+    [InlineData(676, 872)]  // Furfrou untrimmed, sixth of its eleven icons
+    [InlineData(777, 1110)] // Togedemaru, the one that had been read as Jangmo-o
+    [InlineData(782, 1024)] // Jangmo-o
+    [InlineData(671, 920)]  // Florges
+    [InlineData(700, 987)]  // Sylveon
+    [InlineData(778, 1028)] // Mimikyu
     public void Icons_verified_by_eye_stay_where_they_were_seen(int species, int icon)
     {
         var table = BuildWithRealCartridgeCounts();
@@ -47,13 +56,47 @@ public class PokemonIconIndexTests
     }
 
     [Fact]
-    public void Every_species_up_to_the_cut_has_an_icon_and_no_more()
+    public void The_ordered_block_covers_every_species_up_to_the_seam()
+    {
+        var table = BuildWithRealCartridgeCounts();
+        var ordered = table.Where(pair => pair.Key <= PokemonIconIndex.OrderedBlockSpecies).ToList();
+
+        Assert.Equal(PokemonIconIndex.OrderedBlockSpecies, ordered.Count);
+        Assert.All(ordered, pair => Assert.InRange(pair.Value, 1, PokemonIconIndex.OrderedBlockIcons));
+    }
+
+    /// <summary>
+    /// The second block was identified icon by icon, so the guard is arithmetic: all 158 species
+    /// present, each pointing at its own picture, and every picture inside the block. An entry
+    /// landing in the ordered block would be a typo aiming at somebody else's Pokemon, and
+    /// nothing at runtime would notice.
+    /// </summary>
+    [Fact]
+    public void The_second_block_covers_the_rest_and_uses_up_its_icons_exactly()
+    {
+        var table = BuildWithRealCartridgeCounts();
+        var second = table.Where(pair => pair.Key > PokemonIconIndex.OrderedBlockSpecies).ToList();
+
+        var expected = PokemonIconIndex.LastSpecies - PokemonIconIndex.OrderedBlockSpecies;
+        Assert.Equal(expected, second.Count);
+        Assert.Equal(expected, second.Select(pair => pair.Value).Distinct().Count());
+        Assert.All(second, pair =>
+            Assert.InRange(pair.Key, PokemonIconIndex.OrderedBlockSpecies + 1, PokemonIconIndex.LastSpecies));
+        Assert.All(second, pair =>
+            Assert.InRange(pair.Value, PokemonIconIndex.OrderedBlockIcons + 1, PokemonIconIndex.ContainerIcons - 1));
+    }
+
+    /// <summary>Every species the cartridge draws now has an icon: there is no gap left.</summary>
+    [Fact]
+    public void No_species_is_left_without_a_picture()
     {
         var table = BuildWithRealCartridgeCounts();
 
-        Assert.Equal(PokemonIconIndex.LastKnownSpecies, table.Count);
-        Assert.All(table.Values, icon => Assert.InRange(icon, 1, PokemonIconIndex.OrderedBlockIcons));
-        Assert.DoesNotContain(650, table.Keys);
+        Assert.Equal(PokemonIconIndex.LastSpecies, table.Count);
+        for (var species = 1; species <= PokemonIconIndex.LastSpecies; species++)
+        {
+            Assert.True(table.ContainsKey(species), $"la especie {species} se ha quedado sin icono");
+        }
     }
 
     /// <summary>Two species never share an icon: that would mean the table drifted.</summary>

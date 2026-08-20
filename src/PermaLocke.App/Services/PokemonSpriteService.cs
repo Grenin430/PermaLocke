@@ -17,9 +17,9 @@ namespace PermaLocke.App.Services;
 /// and cached as PNG under <c>Data/sprites</c>, which is in <c>.gitignore</c>.
 /// </para>
 /// <para>
-/// Only species 1-649 have a known icon (ARCHITECTURE.md §28): past that the container stops
-/// following the National Dex order. Everything else returns null, and the screen simply shows
-/// no picture — better nothing than somebody else's Pokémon.
+/// All 807 species have their icon (ARCHITECTURE.md §28 and §30). Anything the index does not
+/// know — a cartridge whose counts stop adding up, so the table refuses to build — returns null
+/// and the screen simply shows no picture: better nothing than somebody else's Pokémon.
 /// </para>
 /// </remarks>
 public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteService> logger)

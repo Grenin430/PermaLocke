@@ -2136,9 +2136,10 @@ similitud de paleta entre iconos consecutivos— y **ninguno da un resultado exa
 tramos largos y se desincronizan en puntos sueltos. Un mapeo «casi bueno» es justo lo que la
 regla 3 prohíbe, porque enseñaría el sprite de otro Pokémon con toda la confianza del mundo.
 
-**Estado: resuelto para las especies 1-649 mirando el contenedor tramo a tramo. Ver §30.**
-Las 158 restantes viven en un bloque con otro orden y siguen sin asignar, así que para ellas la
-app no enseña sprite: prefiere no enseñar ninguno a enseñar el equivocado.
+**Estado: resuelto para las 807 mirando el contenedor tramo a tramo. Ver §30 y §30 bis.**
+Las 1 a 649 salen de una cuenta que tiene que dar 866 exacto; las 158 restantes viven en un
+bloque con otro orden y se identificaron una a una, con la comprobación de que el reparto cierre
+sin iconos libres ni repetidos.
 
 ### Detalle que salió de paso: `a/0/9/2`
 
@@ -2264,20 +2265,74 @@ Alola, 148 normal), aunque a primera vista parezca lo contrario.
 - La suma tiene que dar 866 y da 866.
 - Tres rejillas completas releídas a ojo contra el orden nacional: **1-90**, **300-339** y
   **570-609**. Todas correctas, Pokémon a Pokémon.
-- Trece iconos verificados uno a uno están fijados en tests (`PokemonIconIndexTests`), junto con
-  que ninguna especie comparte icono con otra.
-- En la aplicación: Arcanine y Heracross salieron del gacha **con su sprite**, y Aromatisse y
-  Furfrou —ambos por encima de 649— salieron **sin dibujo**, que es justo lo que debe pasar.
+- Diecisiete iconos verificados uno a uno están fijados en tests (`PokemonIconIndexTests`), junto
+  con que ninguna especie comparte icono con otra.
+- En la aplicación: Arcanine y Heracross salieron del gacha **con su sprite**.
 
-### Lo que queda fuera, y por qué
+## 30 bis. El segundo bloque, identificado entero (2026-08-20)
 
-Las especies **650 a 807** no tienen icono asignado. El bloque que las contiene está en otro
-orden —empieza por Furfrou, sigue por Phantump, Trevenant, Litleo, Pyroar, Scatterbug, Spewpa,
-Vivillon— y no coincide con la Pokédex nacional, ni con la de Kalos, ni con la de Alola. Son 287
-iconos que habría que identificar de nuevo uno a uno.
+Las especies **650 a 807** ocupan los iconos 867 a 1153 en un orden que no es el nacional, ni el
+de Kalos, ni el de Alola. Se buscó primero la tabla dentro del juego —en `personal`, en el RomFS,
+en el `code.bin` sin comprimir, y como secuencia de 16 bits en todos los ficheros volcados— y
+**no está**. Así que se identificaron los 287 iconos mirándolos.
 
-Mientras tanto `PokemonSpriteService.Get` devuelve **null** para esas especies y la pantalla no
-dibuja nada. Un hueco es honesto; el sprite de otro Pokémon no lo sería.
+### Lo que hizo el trabajo abarcable
+
+El bloque **mantiene juntas las familias evolutivas y en orden**: Chespin, Quilladin y Chesnaught
+caen en tres iconos seguidos. Así que se leyó familia a familia, no especie a especie. Las
+familias no siempre son vecinas entre sí —de Noibat a Noivern hay cincuenta y seis iconos, y de
+Pancham a Pangoro otros tantos—, pero cada una está entera.
+
+Antes de mirar nada se firmaron los 1154 iconos y se agruparon por píxeles idénticos y por
+silueta. Eso da gratis los límites de los grupos difíciles: los **20 Vivillon**, los **11 Furfrou**,
+los 5+6+5 de Flabébé/Floette/Florges, los **28 de Minior** (14 meteoritos idénticos y 14 núcleos
+de colores), los **4 de Mimikyu**, y las parejas idénticas que resultan ser las **formas Dominante**
+de Gumshoos, Vikavolt, Ribombee, Araquanid, Lurantis, Salazzle, Togedemaru y Kommo-o.
+
+### La comprobación que no perdona
+
+El reparto tiene que **cerrar**: 158 especies, 287 iconos, ni uno libre ni uno usado dos veces.
+Se llevó la cuenta de los tramos en una tabla aparte y se pidió el complemento.
+
+Eso fue lo que cazó el único error de bulto. Togedemaru se había leído en 1024-1025 —dos iconos
+que, mirados de cerca, son **dos dragones grises con placas doradas**, o sea Jangmo-o y
+Hakamo-o— y al final quedaban seis iconos libres para seis especies, pero dos de esos iconos eran
+**el mismo dibujo**, así que una especie se habría quedado sin sprite. Con Jangmo-o y Hakamo-o en
+su sitio, Togedemaru cae en la pareja idéntica 1110-1111 —un erizo redondo con la cola en forma
+de rayo— y el reparto cierra sin sobras.
+
+`PokemonIconIndex.Build` hace esa misma cuenta y **lanza** si alguien edita mal la tabla: 158
+entradas, 158 iconos distintos, todos entre 867 y 1153.
+
+### Formas: cuál se enseña
+
+Donde una especie tiene varios dibujos se lista **el corriente**, que no siempre es el primero
+del grupo —la misma trampa que las formas de Alola—:
+
+| Especie | Se enseña | Ojo |
+|---|---|---|
+| Furfrou | sin corte | es el **sexto** de sus once iconos, no el primero |
+| Oricorio | estilo Apasionado (rojo) | el amarillo va antes |
+| Lycanroc | diurno | |
+| Wishiwashi | forma Individual | la forma Banco va antes |
+| Minior | dentro del meteorito | los núcleos de colores van antes |
+| Necrozma | normal | Melena Crepuscular, Alas del Alba y Ultra van **antes** |
+| Magearna | blanca | la de color original va antes |
+| Xerneas | modo Neutro | |
+
+### Verificación
+
+- El reparto cierra: 0 iconos libres, 0 solapes, 158 especies, 158 iconos distintos.
+- Rejilla completa de las 158 en orden de Pokédex, releída entera: cada fila se lee como la
+  Pokédex, que es exactamente lo que delataría un cambiazo.
+- Las 807 especies resuelven a un PNG existente y no vacío en la caché que lee la aplicación.
+- En la aplicación, tirando al gacha: **Crabominable** y **Minior** salieron con su sprite —y
+  Minior con su meteorito, que es la forma correcta—, además de Meowstic, Heliolisk y Goomy.
+
+Se probó también cruzar cada icono con el **color de Pokédex** que declara `personal`, pero el
+color dominante de un icono de 32×32 con contorno negro no es fiable: Rowlet declara Marrón y su
+icono se lee amarillo. Sirvió para una duda concreta —cuál de dos iconos era el morado— y no como
+prueba. No se apoya nada en él.
 
 ### Cómo llegan los sprites a cada jugador
 
