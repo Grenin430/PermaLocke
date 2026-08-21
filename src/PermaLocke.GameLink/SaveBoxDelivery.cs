@@ -102,7 +102,7 @@ public sealed class SaveBoxDelivery(
             var pokemon = PokemonBuilder.Build(
                 new NewPokemon(pull.Species, pull.Level, pull.Nature, pull.AbilityId, pull.Ivs, pull.IsShiny),
                 save);
-            save.SetBoxSlotAtIndex(pokemon, box, slot);
+            save.SetBoxSlotAtIndex(pokemon, box, slot, PokemonBuilder.Handover);
             File.WriteAllBytes(path, save.Write().ToArray());
 
             // Se relee del disco: no se da por entregado lo que no se ha vuelto a ver.

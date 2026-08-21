@@ -89,7 +89,7 @@ public sealed class SaveBoxSwap(PlayerSave save, string backupFolder, ILogger<Sa
                 new NewPokemon(offer.Species, offer.Level, offer.Nature, offer.AbilityId, offer.Ivs, offer.IsShiny),
                 game);
 
-            game.SetBoxSlotAtIndex(received, box, slot);
+            game.SetBoxSlotAtIndex(received, box, slot, PokemonBuilder.Handover);
             File.WriteAllBytes(path, game.Write().ToArray());
 
             if (!Verify(path, box, slot, offer))

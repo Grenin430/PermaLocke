@@ -3135,3 +3135,74 @@ Un Pokémon que ya sabe un movimiento Z lo sigue sabiendo: está escrito en la p
 instalado sigue siendo el de antes; hace falta volver a generar con la misma seed y reinstalar.
 Como cada módulo tiene su propia fuente aleatoria (§27), regenerar con la misma seed cambia **solo
 los aprendizajes**: los salvajes, los entrenadores, las estadísticas y las tiendas salen idénticos.
+
+---
+
+## 42. Renombrar no es capturar, y las Dominsignias las cuenta el juego (2026-08-21)
+
+### El fallo: 150 capturas que no ocurrieron
+
+La reparación de nombres del §41 se ejecutó contra la partida real y funcionó: 150 Pokémon
+recuperaron su nombre. También subió **capturas de 167 a 317, Poké Balls usadas de 168 a 318 y
+combates contra salvajes de 212 a 362**.
+
+PKHeX trata meter un Pokémon en una caja como **adquirirlo**: por defecto registra la entrada de
+la Pokédex y mueve los contadores de la ficha de entrenador. Es lo correcto cuando un Pokémon
+llega, y falso aquí, porque ya estaban en la caja. `EntityImportSettings` separa las tres cosas
+—`UpdateToSaveFile`, `UpdatePokeDex`, `UpdateRecord`—, así que la reparación va ahora con las tres
+en `Disable`, y hay dos tests que fallan si alguna se escapa.
+
+Se deshizo comparando la partida contra la copia previa: **solo esos tres récords** habían
+cambiado, la Pokédex seguía en 175 vistos y 128 capturados, y ninguna bandera, ni el dinero, ni
+`stamps`. La copia era además del mismo minuto de juego, así que se restauró y se volvió a pasar
+la reparación corregida. Comprobado después: la partida difiere de la copia **en nada** salvo los
+nombres.
+
+La entrega del gacha y el wonder trade tenían el mismo defecto y ahora usan
+`PokemonBuilder.Handover`, que desactiva **solo los récords**: la Pokédex se queda, porque el
+Pokémon sí es del jugador, pero nadie tiró una ball a una tirada de gacha.
+
+### El mod anterior ya no se borra sin más
+
+Reinstalar el mod vacía la carpeta, y tiene que hacerlo (§27). Pero esa carpeta **es el mundo en
+el que alguien está jugando**, y una vez borrada no hay manera de demostrar que la reinstalación
+no cambió nada. `Clear()` la mueve ahora a `load/permalocke-mod-anterior` —fuera de `mods`, para
+no tentar al emulador— y el informe dice dónde quedó. Es un `Move`, no una copia: son 460 MB en el
+mismo volumen.
+
+De paso quedó demostrado que la generación es **determinista**: instalar dos veces seguidas con la
+misma seed da los seis ficheros byte a byte idénticos.
+
+Trampa que costó un susto: `Randomized/seed-<seed>/` era del 18 de agosto, anterior a apagar tipos
+y evoluciones, así que comparar contra ella decía que `a/0/1/7` había cambiado. No era el mundo del
+jugador, era una referencia caducada. Lo que se instaló tiene **0 tipos distintos del cartucho**,
+que es exactamente lo que pide `randomizer.json`.
+
+### Las Dominsignias: `work[169]`
+
+La competición las llama «pegatinas», pero el cartucho reserva esa palabra para las pegatinas del
+Fotoclub; lo que se busca por el mapa son **Dominsignias**, y hay 100.
+
+`Misc7.Stamps` parecía la pista buena —pasó de 1 a 3 y el jugador dijo tener 2, que es su
+popcount—, pero escribiéndole `0xDEADBEEF` y mirando qué bytes se movían resulta ser un campo de
+**14 bits** en el bloque Misc, offset 0x008 bit 4. En 14 bits no caben 100. Descartado.
+
+El bueno es `work[169]`, y lo dicen las cuatro medidas contra lo que el jugador fue diciendo:
+
+| volcado | jugado | `work[169]` | lo que dijo el jugador |
+|---|---|---|---|
+| antes | 19:33 | 0 | — |
+| después | 20:22 | **1** | «acabo de pillar la primera dominsignia» |
+| prueba1 | 21:01 | 1 | habló de la prueba, no de Dominsignias |
+| prueba2 | 21:34 | 1 | ídem |
+| ahora | 21:38 | **2** | «he pillado otra y tengo 2, antes tenía 1» |
+
+De ahí la cuarta fuente de progreso, `"work": 169`, junto al récord, el objeto y el disparador.
+`GameRecordSnapshot` lleva ahora los mil contadores enteros: leerlos no cuesta nada y evita
+mantener en código una lista de cuáles interesan, que ya la dice `Data/achievements.json`.
+
+Esto vale además como retractación: en el §40 se dijo que aquella primera sesión no contenía nada
+de lo que el jugador decía. Contenía su primera Dominsignia. Lo que no contenía era una prueba.
+
+Un ancla de contador tiene una ventaja sobre una de bandera: **enseña un número que el jugador
+puede comparar**. La tarjeta dice 2/25 y él sabe cuántas lleva. Si algún día no cuadra, se ve.

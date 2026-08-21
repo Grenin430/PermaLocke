@@ -337,9 +337,20 @@ los aprendizajes: 1313 de 16052 en el mod instalado. Cuáles son se lee de la RO
 el código: **todo movimiento Z tiene PP = 1** y ningún otro, salvo Forcejeo y Esquema, que tampoco
 pintan nada ahí. Verificado generando: 0 de 16052. Ver §41.
 
-**Siguiente.** Anclar las diez pruebas restantes y las pegatinas —una medición cada una, con
-`Saves/banderas-prueba2.txt` de línea base—, tienda, y probar en partida nueva iniciales,
-entrenadores y tiendas.
+**Renombrar no es capturar, y las Dominsignias las cuenta el juego (2026-08-21).** La reparación de
+nombres funcionó y de paso subió **capturas 167→317, balls 168→318 y combates salvajes 212→362**:
+PKHeX trata meter un Pokémon en una caja como *adquirirlo*. `EntityImportSettings` separa Pokédex
+de récords, así que la reparación va con todo en `Disable` y la entrega y el wonder trade con los
+récords en `Disable` -la Pokédex se queda, pero nadie tiró una ball a una tirada de gacha-. Se
+deshizo comparando contra la copia previa: solo esos tres récords habían cambiado, y la copia era
+del mismo minuto, así que se restauró y se repitió. Además, reinstalar el mod ya no borra el
+anterior: se mueve a `load/permalocke-mod-anterior`, porque esa carpeta es el mundo en el que
+alguien juega. Y las «pegatinas» de la competición son las **Dominsignias**, contadas en
+`work[169]`, anclado con cuatro medidas contra lo que el jugador fue diciendo. `Misc7.Stamps`
+parecía encajar pero son **14 bits** y las Dominsignias son 100. Ver §42.
+
+**Siguiente.** Anclar las diez pruebas restantes -basta con mirar qué cristal Z aparece- y el
+segundo alto mando, tienda, y probar en partida nueva iniciales, entrenadores y tiendas.
 
 Lo que NO está resuelto todavía y no debe darse por hecho (detalle en `docs/ARCHITECTURE.md`):
 
@@ -360,7 +371,7 @@ Lo que NO está resuelto todavía y no debe darse por hecho (detalle en `docs/AR
 | Wonder trade (banda de BST, escritura, animación) | **MOTOR Y ESCRITURA HECHOS** — 16 tests y verificado contra una copia real del save; la animación está sin ver porque exige un intercambio de verdad. Ver `ARCHITECTURE.md` §33 |
 | Logros y penalizaciones | **HECHO Y VISTO EN LA APP** — motor, pantalla y 6 tests. Falta la lista real de logros, que la tiene que dar el jugador. Ver `ARCHITECTURE.md` §36 |
 | Contadores del juego (movimientos Z, huidas, shiny, entrenadores) | **HECHO Y VISTO EN LA APP** — se leen de `SAV7USUM.Records`; 28/200 huidas y 6/100 entrenadores reales. Ver `ARCHITECTURE.md` §38 |
-| Detectar pruebas y pegatinas | **LA PRIMERA PRUEBA, HECHA Y VISTA EN LA APP** — anclada al Normastal Z, no a una bandera. Las once restantes y las pegatinas, pendientes: una medición cada una. Ver `ARCHITECTURE.md` §39 y §40 |
+| Detectar pruebas y pegatinas | **PRUEBAS 1 Y 2 Y LAS PEGATINAS, HECHAS Y VISTAS EN LA APP** — las pruebas por su cristal Z, las Dominsignias por `work[169]`. Faltan las diez pruebas restantes y el segundo alto mando. Ver `ARCHITECTURE.md` §40 y §42 |
 | Tienda y sincronización | **SIN EMPEZAR** |
 | API concreta de pk3DS.Core | **VERIFICADA** contra la ROM real — ver `ARCHITECTURE.md` §19 |
 

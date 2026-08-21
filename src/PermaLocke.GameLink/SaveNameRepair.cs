@@ -113,6 +113,23 @@ public sealed class SaveNameRepair(PlayerSave save, string backupFolder, ILogger
     }
 
     /// <summary>
+    /// Put a Pokémon back exactly where it was, touching nothing else.
+    /// </summary>
+    /// <remarks>
+    /// PKHeX treats putting a Pokémon in a box as <em>acquiring</em> it: by default it registers
+    /// the Pokédex entry and bumps the trainer card counters. That is right when a Pokémon
+    /// arrives, and wrong here — these were already in the box. Left at the default, renaming the
+    /// hundred and fifty of a real run added a hundred and fifty captures, a hundred and fifty
+    /// Poké Balls used and a hundred and fifty wild battles that never happened.
+    /// </remarks>
+    private static readonly EntityImportSettings PutBack = new()
+    {
+        UpdateToSaveFile = EntityImportOption.Disable,
+        UpdatePokeDex = EntityImportOption.Disable,
+        UpdateRecord = EntityImportOption.Disable,
+    };
+
+    /// <summary>
     /// Names everything nameless in an already-loaded save, and says what it named.
     /// </summary>
     /// <remarks>
@@ -145,7 +162,7 @@ public sealed class SaveNameRepair(PlayerSave save, string backupFolder, ILogger
                 }
 
                 named.Add($"caja {box + 1}, hueco {slot + 1}: {Label(names, pokemon)}");
-                game.SetBoxSlotAtIndex(pokemon, box, slot);
+                game.SetBoxSlotAtIndex(pokemon, box, slot, PutBack);
             }
         }
 
@@ -163,7 +180,7 @@ public sealed class SaveNameRepair(PlayerSave save, string backupFolder, ILogger
             }
 
             named.Add($"equipo, puesto {slot + 1}: {Label(names, pokemon)}");
-            game.SetPartySlotAtIndex(pokemon, slot);
+            game.SetPartySlotAtIndex(pokemon, slot, PutBack);
         }
 
         return (total, named);

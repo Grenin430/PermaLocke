@@ -134,6 +134,11 @@ async Task RandomizeAsync(ulong seed)
         Console.WriteLine($"  {step.Module}: {step.Detail}");
     }
     Console.WriteLine($"\n{report.Files.Count} ficheros, {report.TotalBytes / 1024.0 / 1024.0:F1} MB, en {report.Elapsed.TotalSeconds:F1} s");
+
+    if (report.PreviousModKept is { } kept)
+    {
+        Console.WriteLine($"El mod anterior está guardado en {kept}, por si hay que volver a él.");
+    }
 }
 
 async Task DumpAsync(ulong seed, string zone)

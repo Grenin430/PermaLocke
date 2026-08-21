@@ -14,7 +14,8 @@ public sealed record GameRecordSnapshot(
     string? Notice,
     IReadOnlyDictionary<int, int> Values,
     DateTimeOffset ReadAt,
-    IReadOnlySet<int>? Items = null)
+    IReadOnlySet<int>? Items = null,
+    IReadOnlyDictionary<int, int>? Works = null)
 {
     private static readonly HashSet<int> None = [];
 
@@ -25,6 +26,16 @@ public sealed record GameRecordSnapshot(
 
     /// <summary>True when the bag holds this item. Only meaningful for what the game never takes back.</summary>
     public bool Has(int item) => (Items ?? None).Contains(item);
+
+    /// <summary>
+    /// One of the save's own event counters, or zero when it was never set.
+    /// </summary>
+    /// <remarks>
+    /// A thousand of them, unlabelled, and the game keeps its own tallies there for things no
+    /// record counts — Totem Stickers among them. Which counter is which is measured, never
+    /// guessed: see <c>ARCHITECTURE.md</c> §39.
+    /// </remarks>
+    public int Work(int counter) => Works?.GetValueOrDefault(counter) ?? 0;
 }
 
 /// <summary>

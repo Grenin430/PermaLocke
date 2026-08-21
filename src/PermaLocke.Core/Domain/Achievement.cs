@@ -24,6 +24,12 @@ namespace PermaLocke.Core.Domain;
 /// an empty pouch. Only for what the game never takes back; a consumable would flicker.
 /// </para>
 /// </param>
+/// <param name="Work">
+/// One of the save's own thousand event counters, when the game tallies the thing itself but no
+/// record shows it. The Totem Stickers are counted in number 169, which was pinned by watching it
+/// go 0 → 1 the session the player said they had found their first, sit still through two trials
+/// they said nothing about, and go 1 → 2 the session they said they had two.
+/// </param>
 public sealed record Achievement(
     string Id,
     string Name,
@@ -33,13 +39,14 @@ public sealed record Achievement(
     int Target,
     int Points,
     int? Record = null,
-    int? Item = null)
+    int? Item = null,
+    int? Work = null)
 {
     /// <summary>PermaLocke counts this one on its own, from the events it already records.</summary>
-    public bool IsAutomatic => Trigger is not null || Record is not null || Item is not null;
+    public bool IsAutomatic => Trigger is not null || Record is not null || Item is not null || Work is not null;
 
     /// <summary>The number comes from the player's own save, not from anything PermaLocke counted.</summary>
-    public bool IsFromGame => Record is not null || Item is not null;
+    public bool IsFromGame => Record is not null || Item is not null || Work is not null;
 
     /// <summary>
     /// The player moves this counter by hand.
@@ -50,7 +57,7 @@ public sealed record Achievement(
     /// player marks them, and every mark is its own event — signed by the player, not by the
     /// automatic detection, so the history always says which of the two it was.
     /// </remarks>
-    public bool IsManual => Trigger is null && Record is null && Item is null;
+    public bool IsManual => Trigger is null && Record is null && Item is null && Work is null;
 }
 
 /// <summary>

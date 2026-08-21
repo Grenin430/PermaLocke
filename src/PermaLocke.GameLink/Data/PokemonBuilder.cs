@@ -22,6 +22,20 @@ public sealed record NewPokemon(
 /// </remarks>
 public static class PokemonBuilder
 {
+    /// <summary>
+    /// How a Pokémon PermaLocke hands over goes into the save: it counts for the Pokédex, but not
+    /// for the trainer card's counters.
+    /// </summary>
+    /// <remarks>
+    /// PKHeX treats putting a Pokémon in a box as acquiring it, and by default bumps <em>captures,
+    /// Poké Balls used and wild battles</em>. None of that happened: nobody threw a ball at a
+    /// gacha roll. The Pokédex entry does stay, because the Pokémon really is the player's now.
+    /// </remarks>
+    public static readonly EntityImportSettings Handover = new()
+    {
+        UpdateRecord = EntityImportOption.Disable,
+    };
+
     public static PK7 Build(NewPokemon spec, SAV7USUM save)
     {
         var pokemon = new PK7

@@ -86,6 +86,12 @@ public sealed class AchievementService(IAchievementCatalog catalog, IPointsServi
             return game.Available && game.Has(item) ? 1 : 0;
         }
 
+        // Un contador del propio juego que no sale en la ficha de entrenador, como las Dominsignias.
+        if (achievement.Work is { } work)
+        {
+            return game.Available ? game.Work(work) : 0;
+        }
+
         return achievement.Trigger is { } trigger
             ? counts.GetValueOrDefault(trigger)
             : marked.GetValueOrDefault(achievement.Id);

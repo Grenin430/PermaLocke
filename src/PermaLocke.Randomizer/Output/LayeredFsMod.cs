@@ -66,14 +66,71 @@ public sealed class LayeredFsMod(RomWorkspace workspace, string modDirectory)
         }
     }
 
-    /// <summary>Deletes the whole mod folder, returning the game to vanilla.</summary>
-    public void Clear()
+    /// <summary>
+    /// Empties the mod folder, keeping the one that was there.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Emptying is not optional: a file left over from a previous generation stays active and the
+    /// report cheerfully says the module is off while the game plays it (§27). But the folder that
+    /// gets emptied <b>is the world somebody is playing in</b>, and once it is gone there is no way
+    /// to prove a reinstall changed nothing — which is exactly the position a reinstall of one
+    /// fixed module should never leave anyone in.
+    /// </para>
+    /// <para>
+    /// So the old one is moved aside first, next to <c>mods</c> rather than inside it: the emulator
+    /// picks a mod by a folder named exactly the program id, and nothing here should tempt it.
+    /// A move, not a copy, because this is half a gigabyte and both live on the same volume. Only
+    /// the last one is kept; older ones would fill the disk for no one.
+    /// </para>
+    /// </remarks>
+    public string? Clear()
     {
         var root = Directory.GetParent(RomFsDirectory)!.FullName;
+
+        if (!Directory.Exists(root))
+        {
+            _staged.Clear();
+            return null;
+        }
+
+        var saved = KeepAside(root);
         if (Directory.Exists(root))
         {
             Directory.Delete(root, recursive: true);
         }
+
         _staged.Clear();
+        return saved;
+    }
+
+    /// <summary>Moves the installed mod out of the way, and returns where it went.</summary>
+    private static string? KeepAside(string root)
+    {
+        try
+        {
+            if (!Directory.EnumerateFileSystemEntries(root).Any())
+            {
+                return null;
+            }
+
+            var mods = Directory.GetParent(root);
+            var shelf = Path.Combine(mods?.Parent?.FullName ?? root, "permalocke-mod-anterior");
+
+            if (Directory.Exists(shelf))
+            {
+                Directory.Delete(shelf, recursive: true);
+            }
+
+            Directory.CreateDirectory(Path.GetDirectoryName(shelf)!);
+            Directory.Move(root, shelf);
+            return shelf;
+        }
+        catch (Exception)
+        {
+            // Guardar la anterior es una red de seguridad, no un requisito: si no se puede -otro
+            // volumen, permisos-, la randomización sigue. Lo que no puede es dejar de vaciarse.
+            return null;
+        }
     }
 }

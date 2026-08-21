@@ -97,11 +97,21 @@ public sealed class SaveRecordReader(PlayerSave save, ILogger<SaveRecordReader> 
             .Select(item => item.Index)
             .ToHashSet();
 
+        // Los mil contadores de evento enteros. No cuesta nada leerlos y evita tener que mantener
+        // aquí una lista de cuáles interesan: eso ya lo dice Data/achievements.json.
+        var work = game.Blocks.EventWork;
+        var works = new Dictionary<int, int>(work.EventWorkCount);
+
+        for (var counter = 0; counter < work.EventWorkCount; counter++)
+        {
+            works[counter] = work.GetWork(counter);
+        }
+
         logger.LogInformation(
             "Récords leídos: {Caught} capturas, {Balls} balls, {Fled} huidas, {Z} movimientos Z, {Items} objetos",
             values.GetValueOrDefault(6), values.GetValueOrDefault(42),
             values.GetValueOrDefault(46), values.GetValueOrDefault(41), items.Count);
 
-        return new GameRecordSnapshot(true, null, notice, values, now, items);
+        return new GameRecordSnapshot(true, null, notice, values, now, items, works);
     }
 }

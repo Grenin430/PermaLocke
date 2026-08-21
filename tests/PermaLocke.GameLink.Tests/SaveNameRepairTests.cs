@@ -75,6 +75,35 @@ public sealed class SaveNameRepairTests
         Assert.Empty(named);
     }
 
+    /// <summary>
+    /// Renaming is not acquiring. PKHeX bumps captures, Poké Balls used and wild battles when a
+    /// Pokémon is put into a box, and on the real run that turned a rename of 150 into 150
+    /// captures, 150 balls and 150 wild battles that never happened.
+    /// </summary>
+    [Fact]
+    public void Repairing_does_not_touch_the_trainer_card_counters()
+    {
+        var game = Save();
+        int[] watched = [3, 4, 6, 42, 21];
+        var before = watched.Select(game.Records.GetRecord).ToArray();
+
+        SaveNameRepair.Apply(game);
+
+        Assert.Equal(before, watched.Select(game.Records.GetRecord).ToArray());
+    }
+
+    /// <summary>Nor the Pokédex: these were already in the box before anyone renamed them.</summary>
+    [Fact]
+    public void Repairing_does_not_register_anything_in_the_pokedex()
+    {
+        var game = Save();
+        var before = Enumerable.Range(1, 807).Count(sp => game.GetSeen((ushort)sp));
+
+        SaveNameRepair.Apply(game);
+
+        Assert.Equal(before, Enumerable.Range(1, 807).Count(sp => game.GetSeen((ushort)sp)));
+    }
+
     /// <summary>The party is walked too: the level 100 in the team was nameless as well.</summary>
     [Fact]
     public void The_party_is_repaired_as_well_as_the_boxes()

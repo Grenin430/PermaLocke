@@ -10,7 +10,9 @@
 
   "comentarioCristales": "Los cristales Z de tipo son los objetos 807 a 824, en el orden de tipos del juego: 807 Normastal, 808 Pirostal, 809 Hidrostal, 810 Electrostal, 811 Fitostal, 812 Criostal, 813 Lizastal, 814 Toxistal, 815 Geostal, 816 Aerostal, 817 Psicostal, 818 Insectostal, 819 Litostal, 820 Espectrostal, 821 Dracostal, 822 Nictostal, 823 Metalostal, 824 Feeristal. Anclados midiendo, no de memoria: prueba 1 dio el Normastal Z (807) y prueba 2 el Lizastal Z (813), cada uno visto entrar en la mochila entre dos volcados. Las siguientes se anclan igual, mirando qué cristal aparece.",
 
-  "comentarioPendientes": "Las pruebas 2 a 12, las pegatinas y el segundo alto mando siguen a mano. Para anclar cada una: PermaLocke.Probe --flags antes.txt, jugar hasta que pase la cosa, GUARDAR dentro del juego, --flags despues.txt, y --flags-diff antes.txt despues.txt. Si aparece un objeto nuevo se pone aquí como item; si es una bandera, como flag. Ojo: comprueba el tiempo jugado de los dos volcados, porque si no guardaste son la misma partida y el diff enseña lo de antes.",
+  "comentarioContadores": "work apunta a uno de los MIL CONTADORES DE EVENTO de la partida, que no salen en la ficha de entrenador. El 169 son las Dominsignias encontradas -lo que la competicion llama pegatinas-: se ancló midiendo, viendolo pasar de 0 a 1 la sesion en que el jugador dijo haber cogido la primera, quedarse quieto durante dos pruebas de las que no dijo nada, y pasar de 1 a 2 la sesion en que dijo tener dos. Ojo: el campo stamps NO es esto, tiene 14 bits y las Dominsignias son 100.",
+
+  "comentarioPendientes": "Las pruebas 3 a 12, las pegatinas y el segundo alto mando siguen a mano. Para anclar cada una: PermaLocke.Probe --flags antes.txt, jugar hasta que pase la cosa, GUARDAR dentro del juego, --flags despues.txt, y --flags-diff antes.txt despues.txt. Si aparece un objeto nuevo se pone aquí como item; si es una bandera, como flag. Ojo: comprueba el tiempo jugado de los dos volcados, porque si no guardaste son la misma partida y el diff enseña lo de antes.",
 
   "comentarioPuntos": "Los de las pruebas, las pegatinas y el alto mando salen de la competición. Los de movimientos Z, huidas, shiny y entrenadores los he puesto yo a ojo sobre esa misma escala: cámbialos aquí sin tocar código.",
 
@@ -31,9 +33,9 @@
     { "id": "alto-mando-campeon", "name": "Campeón", "description": "Derrota al alto mando y proclámate campeón.", "target": 1, "points": 300, "record": 2 },
     { "id": "alto-mando-otra-vez", "name": "Y otra vez", "description": "Derrota al alto mando de nuevo.", "target": 2, "points": 300 },
 
-    { "id": "pegatinas-25", "name": "Pegatinas: 25", "description": "Encuentra 25 pegatinas escondidas por toda la región.", "target": 25, "points": 75 },
-    { "id": "pegatinas-50", "name": "Pegatinas: 50", "description": "Encuentra 50 pegatinas escondidas por toda la región.", "target": 50, "points": 125 },
-    { "id": "pegatinas-100", "name": "Pegatinas: 100", "description": "Encuentra 100 pegatinas escondidas por toda la región.", "target": 100, "points": 200 },
+    { "id": "pegatinas-25", "name": "Pegatinas: 25", "description": "Encuentra 25 Dominsignias escondidas por toda la región.", "target": 25, "points": 75, "work": 169 },
+    { "id": "pegatinas-50", "name": "Pegatinas: 50", "description": "Encuentra 50 Dominsignias escondidas por toda la región.", "target": 50, "points": 125, "work": 169 },
+    { "id": "pegatinas-100", "name": "Pegatinas: 100", "description": "Encuentra 100 Dominsignias escondidas por toda la región.", "target": 100, "points": 200, "work": 169 },
 
     { "id": "movimientos-z-100", "name": "Poder Z", "description": "Usa 100 movimientos Z.", "target": 100, "points": 150, "record": 41 },
     { "id": "huidas-200", "name": "Pies ligeros", "description": "Huye 200 veces de un combate.", "target": 200, "points": 100, "record": 46 },

@@ -18,7 +18,8 @@ public sealed record RandomizationReport(
     IReadOnlyList<RandomizerStep> Steps,
     IReadOnlyList<string> Files,
     long TotalBytes,
-    TimeSpan Elapsed);
+    TimeSpan Elapsed,
+    string? PreviousModKept = null);
 
 /// <summary>
 /// Turns a vanilla cartridge plus a seed into a LayeredFS mod folder that Azahar loads.
@@ -55,7 +56,7 @@ public sealed class RandomizerService(RandomizerOptions options)
         // generación anterior en la carpeta, el juego lo sigue cargando y el informe dice que no
         // hay nada randomizado: exactamente lo que pasó al desactivar las evoluciones, que
         // seguían cambiadas en la partida mientras el informe cantaba "0 evoluciones".
-        mod.Clear();
+        var kept = mod.Clear();
 
         // Encuentros y objetos del suelo viven en el mismo GARC de 460 MB, así que se carga una
         // vez, se aplican los dos y se guarda una vez.
@@ -133,7 +134,7 @@ public sealed class RandomizerService(RandomizerOptions options)
         var total = files.Sum(f => new FileInfo(
             Path.Combine(mod.RomFsDirectory, f.Replace('/', Path.DirectorySeparatorChar))).Length);
 
-        return new RandomizationReport(seed, steps, files, total, DateTimeOffset.UtcNow - started);
+        return new RandomizationReport(seed, steps, files, total, DateTimeOffset.UtcNow - started, kept);
     }
 
     /// <summary>

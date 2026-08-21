@@ -46,10 +46,13 @@ public sealed class AchievementServiceTests
         /// <summary>What the bag holds, for the achievements anchored to a reward instead of a counter.</summary>
         public HashSet<int> Items { get; init; } = [];
 
+        /// <summary>The save's own event counters, for what the trainer card never shows.</summary>
+        public Dictionary<int, int> Works { get; init; } = [];
+
         public Task<GameRecordSnapshot> ReadAsync(CancellationToken ct = default) =>
             Task.FromResult(available
                 ? new GameRecordSnapshot(true, null, null,
-                    values.ToDictionary(v => v.Id, v => v.Value), DateTimeOffset.UnixEpoch, Items)
+                    values.ToDictionary(v => v.Id, v => v.Value), DateTimeOffset.UnixEpoch, Items, Works)
                 : GameRecordSnapshot.Unavailable("sin partida", DateTimeOffset.UnixEpoch));
     }
 
@@ -61,6 +64,7 @@ public sealed class AchievementServiceTests
         new("huidas-200", "Pies ligeros", "Huye 200 veces.", null, "sin disparador", 200, 100, Record: 46),
         new("prueba-01", "Primera prueba", "Completa la primera prueba.", null, "sin disparador", 1, 100,
             Item: 807),
+        new("dominsignias-25", "Dominsignias", "Encuentra 25.", null, "sin disparador", 25, 75, Work: 169),
     ];
 
     private static (AchievementService Service, Events Log, Run Run) Build(IGameRecords? records = null)
@@ -259,6 +263,36 @@ public sealed class AchievementServiceTests
 
         Assert.Equal(0, trial.Count);
         Assert.False(service.LastRecords!.Available);
+    }
+
+    /// <summary>
+    /// The save's own event counter is the progress. The Totem Stickers live in one of the
+    /// thousand unlabelled ones and appear nowhere on the trainer card.
+    /// </summary>
+    [Fact]
+    public async Task An_event_counter_of_the_save_is_the_progress()
+    {
+        var (service, _, run) = Build(new Records(true) { Works = { [169] = 7 } });
+
+        var stickers = (await service.GetProgressAsync(run.Id))
+            .Single(p => p.Achievement.Id == "dominsignias-25");
+
+        Assert.Equal(7, stickers.Count);
+        Assert.Equal("7/25", stickers.Label);
+        Assert.True(stickers.Achievement.IsFromGame);
+        Assert.False(stickers.CanMark);
+    }
+
+    /// <summary>A counter nobody has moved reads zero, not "missing".</summary>
+    [Fact]
+    public async Task An_untouched_event_counter_reads_zero()
+    {
+        var (service, _, run) = Build(new Records(true));
+
+        var stickers = (await service.GetProgressAsync(run.Id))
+            .Single(p => p.Achievement.Id == "dominsignias-25");
+
+        Assert.Equal(0, stickers.Count);
     }
 
     /// <summary>A claim that did not happen must leave no trace at all.</summary>
