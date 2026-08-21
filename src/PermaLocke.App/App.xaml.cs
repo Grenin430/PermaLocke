@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using PermaLocke.App.Services;
 using PermaLocke.App.ViewModels;
+using PermaLocke.Core.Abstractions;
 using PermaLocke.Core;
 using PermaLocke.Core.Domain;
 using PermaLocke.Core.Services;
@@ -64,6 +65,11 @@ public partial class App : Application
             JsonAchievementCatalog.Load(Path.Combine(paths.Data, "achievements.json")));
         collection.AddSingleton<AchievementService>();
         collection.AddSingleton<AchievementsViewModel>();
+        collection.AddSingleton<IShopCatalog>(_ =>
+            JsonShopCatalog.Load(Path.Combine(paths.Data, "shop.json")));
+        collection.AddSingleton<IItemDelivery, BagItemDelivery>();
+        collection.AddSingleton<ShopService>();
+        collection.AddSingleton<ShopViewModel>();
         collection.AddSingleton<PokemonViewerViewModel>();
         collection.AddSingleton<MiscellaneousViewModel>();
         collection.AddSingleton<MainViewModel>();

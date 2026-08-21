@@ -35,6 +35,9 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
     /// <summary>The balls live apart so the Pokémon folder stays one file per icon index.</summary>
     private string BallDirectory => Path.Combine(paths.Data, "sprites", "balls");
 
+    /// <summary>Item icons, named by <b>item id</b> and not by icon index: the two are not the same.</summary>
+    private string ItemDirectory => Path.Combine(paths.Data, "sprites", "items");
+
     /// <summary>True when the icons are on disk and the index loaded.</summary>
     public bool IsAvailable => _prepared && _index is { Count: > 0 };
 
@@ -77,6 +80,8 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
             {
                 await Task.Run(() => ExtractBalls(rom.Path, scratch), ct);
             }
+
+            await Task.Run(() => ExtractItems(rom.Path, scratch), ct);
 
             _prepared = true;
             logger.LogInformation("Sprites listos: {Count} especies con icono conocido", _index.Count);
@@ -204,6 +209,62 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
         }
 
         logger.LogInformation("Iconos de Poké Ball extraídos a {Folder}", BallDirectory);
+    }
+
+    /// <summary>
+    /// The icon of any item whose index has been measured, straight from the cartridge.
+    /// </summary>
+    /// <remarks>
+    /// Null for an item nobody has checked. The shop only asks for what it sells, and every one of
+    /// those was identified on screen: see <see cref="ItemIconIndex"/>.
+    /// </remarks>
+    public BitmapSource? GetItem(int itemId)
+    {
+        if (!_prepared || !ItemIconIndex.TryGet(itemId, out _))
+        {
+            return null;
+        }
+
+        var key = -100_000 - itemId;   // otro tramo de claves, para no chocar con nada
+        if (_cache.TryGetValue(key, out var cached))
+        {
+            return cached;
+        }
+
+        var image = Read(Path.Combine(ItemDirectory, $"{itemId:0000}.png"));
+        _cache[key] = image;
+        return image;
+    }
+
+    /// <summary>
+    /// Extracts the icons of the items PermaLocke actually shows, and only those.
+    /// </summary>
+    /// <remarks>
+    /// Cheap enough to check every time: it writes only what is missing, so adding an item to the
+    /// shop makes its icon appear on the next start without anyone clearing a cache.
+    /// </remarks>
+    private void ExtractItems(string romPath, string scratch)
+    {
+        var wanted = ItemIconIndex.KnownItems
+            .Where(item => !File.Exists(Path.Combine(ItemDirectory, $"{item:0000}.png")))
+            .ToList();
+
+        if (wanted.Count == 0)
+        {
+            return;
+        }
+
+        var reader = ItemIconReader.Open(romPath, scratch);
+        Directory.CreateDirectory(ItemDirectory);
+
+        foreach (var item in wanted)
+        {
+            var icon = reader.Read(ItemIconIndex.Of(item) + 1);
+            File.WriteAllBytes(Path.Combine(ItemDirectory, $"{item:0000}.png"),
+                PngImage.Encode(icon.Pixels, icon.Width, icon.Height));
+        }
+
+        logger.LogInformation("{Count} iconos de objeto extraídos a {Folder}", wanted.Count, ItemDirectory);
     }
 
     private void Extract(string romPath, string scratch)

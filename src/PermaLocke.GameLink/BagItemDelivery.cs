@@ -1,0 +1,82 @@
+using Microsoft.Extensions.Logging;
+using PermaLocke.Core.Abstractions;
+
+namespace PermaLocke.GameLink;
+
+/// <summary>
+/// Hands an item over by writing it into the bag of the running game.
+/// </summary>
+/// <remarks>
+/// <para>
+/// Everything hard about this was already solved for the Rare Candy button: the bag block is
+/// found by its own structure — seven pockets in a row followed by a table of pointers, each of
+/// which has to point at its own pocket — so an item can be added even when the player carries
+/// none of it, and there is no searching for a value that may not exist (§22).
+/// </para>
+/// <para>
+/// What this adds is the part a shop needs: <b>the bag is read back afterwards</b> and the
+/// delivery is reported only if the item is really there with the expected count. A purchase that
+/// charged points for nothing would be exactly the kind of quietly-wrong behaviour rule 3 forbids.
+/// </para>
+/// </remarks>
+public sealed class BagItemDelivery(BagService bag, ILogger<BagItemDelivery> logger) : IItemDelivery
+{
+    public Task<ItemDeliveryResult> GiveAsync(int itemId, int amount = 1, CancellationToken ct = default) =>
+        Task.Run(() => Give(itemId, amount, ct), ct);
+
+    public Task<int> CarriedAsync(int itemId, CancellationToken ct = default) =>
+        Task.Run(() => bag.Locate(ct) is null ? -1 : bag.CountOf(itemId, ct), ct);
+
+    private ItemDeliveryResult Give(int itemId, int amount, CancellationToken ct)
+    {
+        try
+        {
+            if (bag.Locate(ct) is null)
+            {
+                return ItemDeliveryResult.Failed(
+                    "No se encuentra la mochila del juego. Abre Azahar con la partida cargada y vuelve a intentarlo.");
+            }
+
+            var before = bag.CountOf(itemId, ct);
+            var result = bag.SetCount(itemId, before + amount, ct);
+
+            if (!result.Succeeded)
+            {
+                return ItemDeliveryResult.Failed(Explain(result));
+            }
+
+            // La comprobación que convierte esto en una entrega y no en un intento: se relee.
+            var after = bag.CountOf(itemId, ct);
+
+            if (after <= before)
+            {
+                logger.LogWarning("Se escribió el objeto {Item} pero al releer sigue en {After}", itemId, after);
+                return new ItemDeliveryResult(false, after,
+                    "Se escribió en la mochila pero al releerla el objeto no está. No se ha cobrado nada.");
+            }
+
+            logger.LogInformation("Entregado el objeto {Item}: de {Before} a {After}", itemId, before, after);
+            return new ItemDeliveryResult(true, after, string.Empty);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Falló la entrega del objeto {Item}", itemId);
+            return ItemDeliveryResult.Failed(
+                "No se pudo escribir en la mochila. El detalle está en la carpeta Logs.");
+        }
+    }
+
+    /// <summary>Turns the bag's own outcome into something the player can act on.</summary>
+    private static string Explain(BagWriteResult result) => result.Outcome switch
+    {
+        BagWriteOutcome.BagNotFound =>
+            "No se encuentra la mochila del juego. Abre Azahar con la partida cargada.",
+        BagWriteOutcome.PocketFull =>
+            "Ese bolsillo de la mochila está lleno. Haz sitio y vuelve a intentarlo.",
+        BagWriteOutcome.UnknownPocket =>
+            "El juego no sabe en qué bolsillo va ese objeto, así que no se escribe nada.",
+        BagWriteOutcome.NotApplied =>
+            "El emulador no aceptó la escritura. ¿Está usando el fork propio de Azahar?",
+        _ => "No se pudo entregar el objeto."
+    };
+}

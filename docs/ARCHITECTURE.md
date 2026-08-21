@@ -3333,3 +3333,56 @@ bajar. No es un fallo que se pueda arreglar con un número.
 
 Como todo lo que decide el juego, el número vive en `Data/wondertrade.json` y no en el código, con
 la medición escrita al lado para que se entienda por qué es asimétrico.
+
+---
+
+## 45. La tienda, y el índice de iconos de objeto que el §34 se dejó a medias (2026-08-21)
+
+### El §34 estaba mal a partir del objeto 100
+
+El §34 dio por bueno que el icono de un objeto es `id - 1` en `a/0/6/1`, y lo apoyó en las
+dieciséis Poké Balls en fila. Las balls son los objetos 1 a 16, así que estaban dentro del único
+tramo donde esa regla vale.
+
+No puede valer entera, y la aritmética lo grita: el cartucho tiene **960 objetos y 769 iconos**.
+Bloques enteros comparten dibujo. Las **cien MT ocupan veinte discos**, uno por tipo, y a partir
+de ahí todo lo que viene detrás se desplaza ochenta huecos.
+
+El desfase es una función escalonada que nadie publica, así que se **midió por zonas**, pintando
+ventanas de iconos y reconociendo cosas que no se pueden confundir:
+
+| zona | desfase | cómo se ancló |
+|---|---|---|
+| 1-100 | −1 | las dieciséis balls, las cinco vitaminas, el Caramelo Raro, los cuatro Abonos |
+| ~149-234 | −18 | la primera baya, Garra Rápida, Campana Alivio, Moneda Amuleto |
+| ~269-297 | −19 | Vidasfera, Toxisfera, Llamasfera, Banda Focus, Pañuelo Elegido |
+| ~538-571 | −127 | Casco Dentado, Globo Helio, Tarjeta Roja, las diecisiete Gemas, las siete Plumas |
+| ~640-660 | −135 | Chaleco Asalto, Holomisor, Carta Profesor, Patines, Tabla Duende |
+
+`ItemIconIndex` guarda **una tabla de lo comprobado, no una fórmula**, y lanza para un objeto que
+nadie ha mirado. Un icono equivocado no se nota: enseñaría una cosa mientras vende otra. Añadir
+uno son dos minutos —pintar su vecindario y reconocerlo—.
+
+Trampa de nombres que también salió de aquí: la competición llama a las cosas de otra manera que
+el juego. *Cinta Elección* es **Cinta Elegida**, *Mineral Evolutivo* es **Mineral Evol**, y *Banda
+Aguante* es la **Banda Focus (275)**, identificada por su sprite y no por su nombre. En
+`Data/shop.json` manda el `id`; el nombre es lo que se enseña.
+
+### La tienda
+
+Dieciocho objetos, los precios de la competición, en `Data/shop.json`. Se paga con puntos de la
+run y **el objeto se escribe en la mochila del juego**, por el bloque que el §22 ya localizaba por
+su estructura, así que se puede entregar algo que el jugador no lleva.
+
+La decisión que importa es el **orden: primero se entrega, después se cobra**. La entrega es el
+paso que puede fallar por cosas de fuera —el emulador cerrado, el bolsillo lleno, la escritura
+rechazada— y a un jugador cobrado por un objeto que no llegó no hay manera de devolverle los
+puntos. Cobrando después, lo peor que pasa es un objeto regalado, que se ve en la mochila y en el
+log. Hay un test que falla si alguien invierte ese orden.
+
+La entrega, además, **relee la mochila** y solo se da por buena si el objeto está ahí con una
+unidad más. Una compra que no se puede verificar no se cobra.
+
+Los iconos se extraen de la ROM del propio jugador la primera vez, a `Data/sprites/items/`,
+nombrados **por id de objeto y no por índice de icono**, precisamente porque los dos números no
+son el mismo.

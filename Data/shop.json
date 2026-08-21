@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "comment": "La tienda de la competición. Cada objeto se paga con puntos de la run y se entrega escribiéndolo en la mochila del juego, que exige el emulador abierto con la partida cargada. Nada de esto está en el código: nombres, precios y orden salen de aquí.",
+
+  "comentarioIds": "id es el objeto REAL del cartucho, comprobado contra su lista de nombres. Ojo: el juego llama a algunas cosas distinto de como las llama la competición. Cinta Elección es Cinta Elegida, Pañuelo Elección es Pañuelo Elegido, Gafas Elección es Gafas Elegidas, Mineral Evolutivo es Mineral Evol, Cápsula Habilidad es Cáps. Habilidad, y Banda Aguante es la Banda Focus (275), identificada por su sprite: la cinta roja de la captura es esa. El nombre que se enseña es el de aquí; el id es el que manda.",
+
+  "comentarioIconos": "icono es el índice dentro de a/0/6/1, y NO es id-1: hay 960 objetos y 769 iconos, así que bloques enteros comparten dibujo -las cien MT gastan veinte discos, uno por tipo-. Cada uno de estos se midió mirando la pantalla. La tabla vive en ItemIconIndex; aquí no se repite para no tener dos verdades.",
+
+  "comentarioPrecios": "Los de la competición, tal cual. Cambiarlos aquí no toca código.",
+
+  "items": [
+    { "id": 220, "name": "Cinta Elección",     "price": 75 },
+    { "id": 287, "name": "Pañuelo Elección",   "price": 75 },
+    { "id": 297, "name": "Gafas Elección",     "price": 75 },
+    { "id": 538, "name": "Mineral Evolutivo",  "price": 150 },
+    { "id": 275, "name": "Banda Aguante",      "price": 150 },
+    { "id": 158, "name": "Baya Zidra",         "price": 150 },
+
+    { "id": 157, "name": "Baya Ziuela",        "price": 150 },
+    { "id": 270, "name": "Vidasfera",          "price": 150 },
+    { "id": 272, "name": "Toxisfera",          "price": 150 },
+    { "id": 640, "name": "Chaleco Asalto",     "price": 150 },
+    { "id": 234, "name": "Restos",             "price": 150 },
+    { "id": 650, "name": "Gafa Protectora",    "price": 150 },
+
+    { "id": 540, "name": "Casco Dentado",      "price": 150 },
+    { "id": 269, "name": "Refleluz",           "price": 150 },
+    { "id": 214, "name": "Hierba Blanca",      "price": 150 },
+    { "id": 271, "name": "Hierba Única",       "price": 150 },
+    { "id": 1,   "name": "Master Ball",        "price": 300 },
+    { "id": 645, "name": "Cápsula Habilidad",  "price": 400 }
+  ]
+}

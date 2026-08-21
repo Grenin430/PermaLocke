@@ -15,7 +15,8 @@ public sealed partial class MainViewModel : ObservableObject
 
     public MainViewModel(HomeViewModel home, RandomizerViewModel randomizer,
         MiscellaneousViewModel miscellaneous, GachaViewModel gacha, PokemonViewerViewModel viewer,
-        AchievementsViewModel achievements, IRunContext runContext, ILogger<MainViewModel> logger)
+        AchievementsViewModel achievements, ShopViewModel shop, IRunContext runContext,
+        ILogger<MainViewModel> logger)
     {
         _home = home;
         _runContext = runContext;
@@ -26,8 +27,7 @@ public sealed partial class MainViewModel : ObservableObject
             home,
             randomizer,
             gacha,
-            new PendingSectionViewModel("TIENDA", "Fase 4",
-                "Catálogo desde Data/shop.json. La entrega del objeto al juego depende de la integración con Azahar."),
+            shop,
             achievements,
             viewer,
             new PendingSectionViewModel("POKE PASTE", "Fase 5",

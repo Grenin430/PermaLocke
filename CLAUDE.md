@@ -368,7 +368,20 @@ o peor y tenía razón: los 23 intercambios de la run dan 14 peores, 6 iguales y
 Con +20% la banda es 552-720 y quedan 19 por encima, media esperada +1,2%. De 680 para arriba no
 cambia nada porque el juego no tiene nada por encima de 720. Ver §44.
 
-**Siguiente.** Tienda, sincronizacion, y probar en partida nueva iniciales, entrenadores y tiendas.
+**Tienda (2026-08-21).** Los dieciocho objetos de la competicion con sus precios, en `Data/shop.json`,
+pagados con puntos de la run y **escritos en la mochila del juego** por el bloque del §22. Orden
+deliberado: **primero se entrega, despues se cobra**, porque la entrega es lo que puede fallar por
+cosas de fuera y a un jugador cobrado por un objeto que no llego no hay como devolverle los puntos;
+hay un test que falla si alguien invierte el orden. La entrega relee la mochila antes de darse por
+buena.
+
+De paso, **el §34 estaba mal a partir del objeto 100**: el icono NO es `id-1`. Hay 960 objetos y 769
+iconos, las cien MT gastan veinte discos, y el desfase es escalonado. Se midio por zonas -1, -18,
+-19, -127, -135- reconociendo cosas inconfundibles, y `ItemIconIndex` guarda **una tabla de lo
+comprobado, no una formula**: lanza para un objeto que nadie ha mirado, porque un icono equivocado
+no se nota. Ver §45.
+
+**Siguiente.** Sincronizacion, y probar en partida nueva iniciales, entrenadores y tiendas.
 
 Lo que NO está resuelto todavía y no debe darse por hecho (detalle en `docs/ARCHITECTURE.md`):
 
@@ -390,7 +403,8 @@ Lo que NO está resuelto todavía y no debe darse por hecho (detalle en `docs/AR
 | Logros y penalizaciones | **HECHO Y VISTO EN LA APP** — motor, pantalla y 6 tests. Falta la lista real de logros, que la tiene que dar el jugador. Ver `ARCHITECTURE.md` §36 |
 | Contadores del juego (movimientos Z, huidas, shiny, entrenadores) | **HECHO Y VISTO EN LA APP** — se leen de `SAV7USUM.Records`; 28/200 huidas y 6/100 entrenadores reales. Ver `ARCHITECTURE.md` §38 |
 | Detectar pruebas, pegatinas y alto mando | **HECHO Y VISTO EN LA APP** — los 21 logros se cuentan solos y no queda un botón de marcar a mano. Las doce pruebas por su cristal Z, con la correspondencia sacada del storytext del cartucho. Ver `ARCHITECTURE.md` §43 |
-| Tienda y sincronización | **SIN EMPEZAR** |
+| Tienda | **HECHA Y VISTA EN LA APP** — 18 objetos con sprites del cartucho; la compra escribe en la mochila y se relee. Falta comprar de verdad con el juego abierto. Ver `ARCHITECTURE.md` §45 |
+| Sincronización | **SIN EMPEZAR** |
 | API concreta de pk3DS.Core | **VERIFICADA** contra la ROM real — ver `ARCHITECTURE.md` §19 |
 
 ---
