@@ -3073,3 +3073,65 @@ comprobable: si con la siguiente gran prueba pasa de 3 a 7, es el campo de las g
 las cuatro se anclan de golpe. Si no, se olvida.
 
 Estado: `prueba-01` y `prueba-02` se cuentan solas y verificadas en la app, 1/1 las dos.
+
+---
+
+## 41. Nombres que faltaban y movimientos Z repartidos (2026-08-21)
+
+Dos fallos que solo se ven jugando, y que tienen la misma forma: algo que parecía que el juego
+resolvería solo y que en realidad hay que escribir.
+
+### El nombre no es un respaldo, es un campo
+
+Todo lo que PermaLocke entregaba —gacha y wonder trade— llegaba **sin nombre**. La suposición era
+que un Pokémon sin mote enseña el nombre de su especie, y no: el mote es un campo dentro del
+Pokémon y el juego enseña lo que haya, así que en blanco se ve en blanco.
+
+`PokemonBuilder` lo escribe ahora, en el idioma de la partida, con `IsNicknamed` en **false** para
+que el juego lo siga tratando como nombre de especie y lo renombre al evolucionar. Si el campo de
+idioma no dice nada PKHeX devuelve cadena vacía, así que hay respaldo a español: escribir un
+nombre vacío sería repetir el fallo con más pasos.
+
+Eso arregla lo que venga. Lo ya entregado está escrito y ningún arreglo lo alcanza: en la partida
+real, **150 de 155** Pokémon estaban sin nombre. De ahí `SaveNameRepair`, con su comando:
+
+```
+Probe --nombres              lista los que no tienen nombre, sin escribir nada
+Probe --nombres --arreglar   los repara, con copia previa y relectura
+```
+
+Listar y arreglar son dos órdenes distintas a propósito: esto escribe en la partida del jugador,
+así que primero lee lo que va a cambiar. Solo se toca lo que está **en blanco** —un mote que puso
+el jugador se queda— y, como toda escritura, se copia la partida antes y se relee después: si al
+releer queda alguno sin nombre, se dice, no se da por bueno.
+
+### Movimientos Z en los aprendizajes
+
+El randomizador repartía movimientos de 1 a `MaxMoveID` sin filtrar, y ahí dentro están los
+movimientos Z. En el mod instalado: **1313 de 16052 aprendizajes**, un 8%, que es exactamente la
+proporción de movimientos Z sobre el total. El juego los ofrece como cualquier otro y pegan por
+cientos con un solo PP.
+
+Cuáles son **no se escribe aquí, se lee de la ROM que se está randomizando**: todo movimiento Z
+lleva `PP = 1` y ningún otro lo lleva, salvo Forcejeo y Esquema, que tampoco pintan nada en un
+aprendizaje —Forcejeo es al que recurre el juego cuando no queda ninguno—. En Ultra Luna eso deja
+fuera 55 de 728: los dieciocho de tipo con sus dos variantes cada uno, los exclusivos, Forcejeo y
+Esquema.
+
+Se probó la otra vía antes: cada movimiento guarda a qué movimiento Z se convierte, así que la
+tentación era recoger esos. Da **18**, solo las variantes físicas, y se habrían colado los otros
+35. La cuenta por PP los coge todos.
+
+Verificado generando con la ROM real: **0 de 16052**. Los entrenadores lo heredan sin tocar nada,
+porque el módulo de entrenadores no elige movimientos, devuelve el moveset al juego para que use
+el aprendizaje.
+
+Si la tabla de movimientos no se puede leer, el módulo **lanza** en vez de randomizar sin filtro:
+repartir movimientos Z en silencio es peor que no randomizar los aprendizajes.
+
+### Lo que esto no arregla
+
+Un Pokémon que ya sabe un movimiento Z lo sigue sabiendo: está escrito en la partida. Y el mod
+instalado sigue siendo el de antes; hace falta volver a generar con la misma seed y reinstalar.
+Como cada módulo tiene su propia fuente aleatoria (§27), regenerar con la misma seed cambia **solo
+los aprendizajes**: los salvajes, los entrenadores, las estadísticas y las tiendas salen idénticos.

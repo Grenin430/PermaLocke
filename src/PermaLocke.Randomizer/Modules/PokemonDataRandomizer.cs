@@ -38,7 +38,7 @@ public sealed class PokemonDataRandomizer(RomWorkspace workspace, RandomizerOpti
         // mundo de quien ya está jugando.
         var entries = RandomizePersonal(mod, random, typeCount, maxAbility, ct);
         var evolutions = RandomizeEvolutions(mod, random.Derive("evolutions"), ct);
-        var moves = RandomizeLearnsets(mod, random.Derive("learnsets"), maxMove, ct);
+        var moves = RandomizeLearnsets(mod, random.Derive("learnsets"), TeachableMoves(maxMove), ct);
 
         await VerifyAsync(mod, ct);
         return new PokemonDataResult(entries, evolutions, moves);
@@ -179,14 +179,42 @@ public sealed class PokemonDataRandomizer(RomWorkspace workspace, RandomizerOpti
     }
 
     /// <summary>
+    /// Every move a level-up learnset may hand out: all of them except the Z-moves.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A Z-move in a learnset is not a curiosity, it is a broken run. They hit for hundreds and
+    /// the game offers them like any other move, so a randomized learnset was handing out an
+    /// unusable-but-devastating attack with a single PP.
+    /// </para>
+    /// <para>
+    /// Which ones they are is <b>read from the cartridge, not written down here</b>: every Z-move
+    /// carries <c>PP = 1</c> and nothing else does, bar Struggle and Sketch — and neither of those
+    /// belongs in a learnset either, Struggle being the move the game falls back to when there are
+    /// none left. On Ultra Moon that leaves out 55 of 728: the eighteen type Z-moves with their
+    /// two variants each, the exclusive ones, Struggle and Sketch.
+    /// </para>
+    /// </remarks>
+    private IReadOnlyList<int> TeachableMoves(int maxMove) =>
+        MoveTable.Teachable([.. workspace.Config.Moves.Select(move => move.PP)], maxMove);
+
+    /// <summary>
     /// Replaces the moves of every level-up learnset, keeping the levels. The entry is a run of
     /// (move, level) pairs closed by a terminator, so swapping moves leaves the length untouched.
     /// </summary>
-    private int RandomizeLearnsets(LayeredFsMod mod, IRandomSource random, int maxMove, CancellationToken ct)
+    private int RandomizeLearnsets(LayeredFsMod mod, IRandomSource random,
+        IReadOnlyList<int> teachable, CancellationToken ct)
     {
         if (!options.RandomizeLearnsets)
         {
             return 0;
+        }
+
+        if (teachable.Count == 0)
+        {
+            throw new InvalidDataException(
+                "No se ha podido leer la tabla de movimientos de la ROM, así que no se sabe cuáles " +
+                "son los movimientos Z. Antes que repartirlos, no se randomizan los aprendizajes.");
         }
 
         var path = mod.Stage(GameFiles.Learnset);
@@ -205,7 +233,8 @@ public sealed class PokemonDataRandomizer(RomWorkspace workspace, RandomizerOpti
 
             for (var pair = 0; pair < pairs; pair++)
             {
-                BitConverter.GetBytes((ushort)random.Next(1, maxMove + 1)).CopyTo(entry, pair * 4);
+                var move = teachable[random.Next(0, teachable.Count)];
+                BitConverter.GetBytes((ushort)move).CopyTo(entry, pair * 4);
                 changed++;
             }
 

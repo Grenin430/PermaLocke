@@ -17,6 +17,7 @@ using PermaLocke.GameLink.Rpc;
 //   Probe --candy [n] [--sweep] bag: locate, list, and optionally write n Rare Candies
 //   Probe --flags [fichero]     dumps the save event flags and counters, to calibrate achievements
 //   Probe --flags-diff a b      what changed between two dumps
+//   Probe --nombres [--arreglar] lists, and optionally restores, the Pokémon left without a name
 
 Console.OutputEncoding = System.Text.Encoding.UTF8;
 
@@ -30,6 +31,12 @@ if (args.Length >= 1 && args[0] == "--flags")
 if (args.Length >= 3 && args[0] == "--flags-diff")
 {
     return PermaLocke.Probe.FlagProbe.Diff(args[1], args[2]);
+}
+
+// Reparación de nombres: tampoco necesita emulador, y para escribir lo exige cerrado.
+if (args.Length >= 1 && args[0] == "--nombres")
+{
+    return PermaLocke.Probe.NameProbe.Run(args.Contains("--arreglar"));
 }
 
 // Comprobación del parche SearchMemory del fork. Va lo primero porque no necesita nada más.

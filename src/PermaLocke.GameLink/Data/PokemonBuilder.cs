@@ -62,12 +62,46 @@ public static class PokemonBuilder
             pokemon.SetShiny();
         }
 
+        NameIt(pokemon);
         SetMovesFor(pokemon);
         pokemon.HealPP();
         pokemon.ResetPartyStats();
         pokemon.RefreshChecksum();
 
         return pokemon;
+    }
+
+    /// <summary>
+    /// Writes the species name into the nickname field, which is where the game reads it from.
+    /// </summary>
+    /// <remarks>
+    /// A Pokémon with no nickname does not fall back to its species name: the field is part of the
+    /// data and the game shows whatever is in it, so leaving it blank meant everything PermaLocke
+    /// handed over — gacha and wonder trade alike — arrived nameless. It goes in the save's own
+    /// language, and <see cref="PKM.IsNicknamed"/> stays false so the game still treats it as the
+    /// plain species name and renames it on evolution.
+    /// </remarks>
+    private static void NameIt(PK7 pokemon)
+    {
+        pokemon.Nickname = SpeciesNameFor(pokemon);
+        pokemon.IsNicknamed = false;
+    }
+
+    /// <summary>
+    /// The species name as the game would write it, in the Pokémon's own language.
+    /// </summary>
+    /// <remarks>
+    /// Falls back to Spanish when the language field says nothing, because PKHeX answers a blank
+    /// string for an unknown one — and a blank name is exactly the bug this exists to avoid.
+    /// Shared with <see cref="SaveNameRepair"/> so a delivery and a repair write the same name.
+    /// </remarks>
+    public static string SpeciesNameFor(PK7 pokemon)
+    {
+        var name = SpeciesName.GetSpeciesNameGeneration(pokemon.Species, pokemon.Language, pokemon.Format);
+
+        return string.IsNullOrWhiteSpace(name)
+            ? SpeciesName.GetSpeciesNameGeneration(pokemon.Species, (int)LanguageID.Spanish, pokemon.Format)
+            : name;
     }
 
     /// <summary>

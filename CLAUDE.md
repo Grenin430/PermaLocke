@@ -327,6 +327,16 @@ tabla de hitos, y no va a converger. Tampoco hay contador de pruebas —la 1 enc
 de 1 a 3, pero el bit 0 ya estaba antes de la primera prueba: queda como predicción, si con la
 siguiente gran prueba pasa de 3 a 7 es el campo de las grandes pruebas. Ver §40.
 
+**Nombres que faltaban y movimientos Z repartidos (2026-08-21).** Dos fallos con la misma forma:
+algo que parecía que el juego resolvería solo. El mote **no es un respaldo, es un campo**: todo lo
+entregado por gacha y wonder trade llegaba en blanco porque nadie lo escribía. Ya se escribe, en el
+idioma de la partida y con `IsNicknamed` en false. Lo ya entregado no lo alcanza ningún arreglo
+—**150 de 155** en la partida real—, así que hay `Probe --nombres [--arreglar]`, con listado
+separado de la escritura, copia previa y relectura. Y el randomizador repartía **movimientos Z** en
+los aprendizajes: 1313 de 16052 en el mod instalado. Cuáles son se lee de la ROM, no se escribe en
+el código: **todo movimiento Z tiene PP = 1** y ningún otro, salvo Forcejeo y Esquema, que tampoco
+pintan nada ahí. Verificado generando: 0 de 16052. Ver §41.
+
 **Siguiente.** Anclar las diez pruebas restantes y las pegatinas —una medición cada una, con
 `Saves/banderas-prueba2.txt` de línea base—, tienda, y probar en partida nueva iniciales,
 entrenadores y tiendas.
