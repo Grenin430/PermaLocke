@@ -175,7 +175,7 @@
                        Margin="0,10,0,0" />
 
             <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,10,0,0" FontSize="11"
-                       Text="Cada tarjeta dice de dónde sale su número. «Lo cuenta el juego» son contadores del propio cartucho, los mismos que enseña la ficha de entrenador: se leen de la partida guardada, así que no se mueven hasta que guardes. «Lo cuenta PermaLocke» sale del historial de la run. «A mano» son los que todavía no se saben detectar -pruebas, pegatinas y alto mando-, y cada marca queda como evento propio firmado por el jugador. Cobrar es aparte, para que el log diga de dónde salió cada punto." />
+                       Text="Cada tarjeta dice de dónde sale su número. «Lo cuenta el juego» son contadores del propio cartucho, los mismos que enseña la ficha de entrenador. «Lo dice tu mochila» son los que se reconocen por su premio: cada prueba entrega su cristal Z, y cuál da cuál lo dice el texto del propio juego. Los dos se leen de la partida guardada, así que no se mueven hasta que guardes. «Lo cuenta PermaLocke» sale del historial de la run, y «a mano» solo aparecería en un logro que todavía no se supiera detectar. Cobrar es aparte, para que el log diga de dónde salió cada punto." />
         </StackPanel>
     </Grid>
 </UserControl>

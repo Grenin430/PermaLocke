@@ -349,8 +349,18 @@ alguien juega. Y las «pegatinas» de la competición son las **Dominsignias**, 
 `work[169]`, anclado con cuatro medidas contra lo que el jugador fue diciendo. `Misc7.Stamps`
 parecía encajar pero son **14 bits** y las Dominsignias son 100. Ver §42.
 
-**Siguiente.** Anclar las diez pruebas restantes -basta con mirar qué cristal Z aparece- y el
-segundo alto mando, tienda, y probar en partida nueva iniciales, entrenadores y tiendas.
+**Los 21 logros se cuentan solos (2026-08-21).** Los nombres de los 170 récords de gen 7 estaban en
+PKHeX y nunca se habian leido: confirman los cinco ya anclados y traen **72 «Stickers Collected»**
+-las pegatinas, que sustituye al work[169] medido y da el mismo numero- y **100 «Champion Title
+Defense»** -el segundo alto mando, objetivo 1 y no 2-. Y que prueba da que cristal **lo publica el
+cartucho**, en el storytext `a/0/4/<idioma>` que el randomizador no extraia: los mensajes de premio
+usan una variable, pero los dialogos de alrededor nombran el cristal en claro, y con eso se cierran
+las doce. La linea f714 nombra los dos cristales y las dos pruebas en la misma frase, y son
+exactamente los dos que ya se habian medido. Salen 12 y la competicion pide 12. Seis cristales de
+tipo NO son de prueba -los regalan PNJ-, asi que contarlos a secas se habria adelantado seis veces
+sin fallar una. **La pantalla ya no tiene un solo boton de marcar a mano.** Ver §43.
+
+**Siguiente.** Tienda, sincronizacion, y probar en partida nueva iniciales, entrenadores y tiendas.
 
 Lo que NO está resuelto todavía y no debe darse por hecho (detalle en `docs/ARCHITECTURE.md`):
 
@@ -371,7 +381,7 @@ Lo que NO está resuelto todavía y no debe darse por hecho (detalle en `docs/AR
 | Wonder trade (banda de BST, escritura, animación) | **MOTOR Y ESCRITURA HECHOS** — 16 tests y verificado contra una copia real del save; la animación está sin ver porque exige un intercambio de verdad. Ver `ARCHITECTURE.md` §33 |
 | Logros y penalizaciones | **HECHO Y VISTO EN LA APP** — motor, pantalla y 6 tests. Falta la lista real de logros, que la tiene que dar el jugador. Ver `ARCHITECTURE.md` §36 |
 | Contadores del juego (movimientos Z, huidas, shiny, entrenadores) | **HECHO Y VISTO EN LA APP** — se leen de `SAV7USUM.Records`; 28/200 huidas y 6/100 entrenadores reales. Ver `ARCHITECTURE.md` §38 |
-| Detectar pruebas y pegatinas | **PRUEBAS 1 Y 2 Y LAS PEGATINAS, HECHAS Y VISTAS EN LA APP** — las pruebas por su cristal Z, las Dominsignias por `work[169]`. Faltan las diez pruebas restantes y el segundo alto mando. Ver `ARCHITECTURE.md` §40 y §42 |
+| Detectar pruebas, pegatinas y alto mando | **HECHO Y VISTO EN LA APP** — los 21 logros se cuentan solos y no queda un botón de marcar a mano. Las doce pruebas por su cristal Z, con la correspondencia sacada del storytext del cartucho. Ver `ARCHITECTURE.md` §43 |
 | Tienda y sincronización | **SIN EMPEZAR** |
 | API concreta de pk3DS.Core | **VERIFICADA** contra la ROM real — ver `ARCHITECTURE.md` §19 |
 

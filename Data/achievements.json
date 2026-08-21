@@ -8,34 +8,36 @@
 
   "comentarioObjetos": "item apunta a un OBJETO DE LA MOCHILA, y el logro está hecho cuando lo tienes. Es la manera de detectar lo que el juego no cuenta en ningún sitio: superar una prueba no mueve ningún récord, y decidir cuál de las 4960 banderas de evento la marca sigue sin poderse tras dos medidas, porque cada tarde enciende decenas y los tramos candidatos están llenos de banderas de historia. Lo que sí deja cada prueba es su premio, y el premio tiene nombre. Solo vale para lo que el juego da y no quita; un objeto consumible se encendería y se apagaría.",
 
-  "comentarioCristales": "Los cristales Z de tipo son los objetos 807 a 824, en el orden de tipos del juego: 807 Normastal, 808 Pirostal, 809 Hidrostal, 810 Electrostal, 811 Fitostal, 812 Criostal, 813 Lizastal, 814 Toxistal, 815 Geostal, 816 Aerostal, 817 Psicostal, 818 Insectostal, 819 Litostal, 820 Espectrostal, 821 Dracostal, 822 Nictostal, 823 Metalostal, 824 Feeristal. Anclados midiendo, no de memoria: prueba 1 dio el Normastal Z (807) y prueba 2 el Lizastal Z (813), cada uno visto entrar en la mochila entre dos volcados. Las siguientes se anclan igual, mirando qué cristal aparece.",
+  "comentarioCristales": "Que prueba da que cristal LO DICE EL CARTUCHO, en su texto de historia (a/0/4/6). No es de memoria y no es de internet: cada linea esta citada. 01 Liam, Normastal 807 (medido, y f714 dice 'la prueba de Liam y la Gran Prueba de Kaudan' junto a un Normastal Z y un Lizastal Z). 02 Gran Prueba de Kaudan, Lizastal 813 (medido, f623 y f714). 03 Nereida, Hidrostal 809 (f159). 04 Kiawe, Pirostal 808 (f165, f180). 05 Lulu, Fitostal 811 (f172). 06 Gran Prueba de Mayla, Litostal 819 (f203). 07 Chris, Electrostal 810 (f239, f258). 08 Zarala, Espectrostal 820 (f261, f271). 09 Gran Prueba de Ula-Ula, Nictostal 822 (f293: 'Poder Z de tipo Siniestro' y 'todas las pruebas de Ula-Ula'). 10 Canon de Poni, Dracostal 821 (f353). 11 Rika, Feeristal 824 (f354, f493). 12 Gran Prueba de Hela, Geostal 815 (f346, y f389 dice que es la ultima). Son 12 y la competicion pide 12: cuadra. Los seis cristales de tipo que NO salen aqui -Criostal, Toxistal, Aerostal, Psicostal, Insectostal, Metalostal- los regalan PNJ, y por eso contar cristales a secas se habria adelantado.",
 
-  "comentarioContadores": "work apunta a uno de los MIL CONTADORES DE EVENTO de la partida, que no salen en la ficha de entrenador. El 169 son las Dominsignias encontradas -lo que la competicion llama pegatinas-: se ancló midiendo, viendolo pasar de 0 a 1 la sesion en que el jugador dijo haber cogido la primera, quedarse quieto durante dos pruebas de las que no dijo nada, y pasar de 1 a 2 la sesion en que dijo tener dos. Ojo: el campo stamps NO es esto, tiene 14 bits y las Dominsignias son 100.",
+  "comentarioContadores": "work apunta a uno de los MIL CONTADORES DE EVENTO de la partida, que no salen en la ficha de entrenador. Hoy no lo usa ningun logro y se deja porque es la unica via a esos mil: las Dominsignias se anclaron primero midiendo el work 169, y luego aparecio el record 72, que se llama literalmente Stickers Collected y daba el mismo numero. Gana el que tiene nombre, pero el 169 sigue valiendo de contraste. Ojo: el campo stamps NO es esto, tiene 14 bits y las Dominsignias son 100.",
 
-  "comentarioPendientes": "Las pruebas 3 a 12, las pegatinas y el segundo alto mando siguen a mano. Para anclar cada una: PermaLocke.Probe --flags antes.txt, jugar hasta que pase la cosa, GUARDAR dentro del juego, --flags despues.txt, y --flags-diff antes.txt despues.txt. Si aparece un objeto nuevo se pone aquí como item; si es una bandera, como flag. Ojo: comprueba el tiempo jugado de los dos volcados, porque si no guardaste son la misma partida y el diff enseña lo de antes.",
+  "comentarioNombresDeRecord": "Los nombres de los 170 records de gen 7 estan en PKHeX, en RecordLists.RecordList_7. Con ellos se confirmo que 41 es Z-Moves Used, 46 Ran From Battles, 5 Trainer Battles, 127 Shiny Pokemon Encountered y 2 Storyline Completed Time, y aparecieron dos que faltaban: 72 Stickers Collected y 100 Champion Title Defense. No hay ningun record de pruebas superadas.",
+
+  "comentarioPendientes": "Ninguno. Los 21 se cuentan solos y no queda un solo boton de marcar a mano. Si algun dia se anade uno que PermaLocke no sepa detectar, sale a mano y con sus botones, que es lo que debe pasar. Para anclar uno nuevo: PermaLocke.Probe --flags antes.txt, jugar hasta que pase la cosa, GUARDAR dentro del juego, --flags despues.txt, y --flags-diff antes.txt despues.txt. Ojo: compara el tiempo jugado de los dos volcados, porque si no guardaste son la misma partida y el diff ensena lo de antes.",
 
   "comentarioPuntos": "Los de las pruebas, las pegatinas y el alto mando salen de la competición. Los de movimientos Z, huidas, shiny y entrenadores los he puesto yo a ojo sobre esa misma escala: cámbialos aquí sin tocar código.",
 
   "achievements": [
-    { "id": "prueba-01", "name": "Primera prueba", "description": "Completa la primera prueba del recorrido insular.", "target": 1, "points": 100, "item": 807 },
-    { "id": "prueba-02", "name": "Segunda prueba", "description": "Completa la segunda prueba del recorrido insular.", "target": 1, "points": 100, "item": 813 },
-    { "id": "prueba-03", "name": "Tercera prueba", "description": "Completa la tercera prueba del recorrido insular.", "target": 1, "points": 100 },
-    { "id": "prueba-04", "name": "Cuarta prueba", "description": "Completa la cuarta prueba del recorrido insular.", "target": 1, "points": 100 },
-    { "id": "prueba-05", "name": "Quinta prueba", "description": "Completa la quinta prueba del recorrido insular.", "target": 1, "points": 100 },
-    { "id": "prueba-06", "name": "Sexta prueba", "description": "Completa la sexta prueba del recorrido insular.", "target": 1, "points": 100 },
-    { "id": "prueba-07", "name": "Séptima prueba", "description": "Completa la séptima prueba del recorrido insular.", "target": 1, "points": 100 },
-    { "id": "prueba-08", "name": "Octava prueba", "description": "Completa la octava prueba del recorrido insular.", "target": 1, "points": 100 },
-    { "id": "prueba-09", "name": "Novena prueba", "description": "Completa la novena prueba del recorrido insular.", "target": 1, "points": 100 },
-    { "id": "prueba-10", "name": "Décima prueba", "description": "Completa la décima prueba del recorrido insular.", "target": 1, "points": 100 },
-    { "id": "prueba-11", "name": "Undécima prueba", "description": "Completa la undécima prueba del recorrido insular.", "target": 1, "points": 100 },
-    { "id": "prueba-12", "name": "Duodécima prueba", "description": "Completa la duodécima prueba del recorrido insular.", "target": 1, "points": 100 },
+    { "id": "prueba-01", "name": "Primera prueba", "description": "Supera la prueba del Capitán Liam.", "target": 1, "points": 100, "item": 807 },
+    { "id": "prueba-02", "name": "Segunda prueba", "description": "Supera la Gran Prueba del Kahuna Kaudan.", "target": 1, "points": 100, "item": 813 },
+    { "id": "prueba-03", "name": "Tercera prueba", "description": "Supera la prueba de la Capitana Nereida.", "target": 1, "points": 100, "item": 809 },
+    { "id": "prueba-04", "name": "Cuarta prueba", "description": "Supera la prueba del Capitán Kiawe.", "target": 1, "points": 100, "item": 808 },
+    { "id": "prueba-05", "name": "Quinta prueba", "description": "Supera la prueba de la Capitana Lulú.", "target": 1, "points": 100, "item": 811 },
+    { "id": "prueba-06", "name": "Sexta prueba", "description": "Supera la Gran Prueba de la Kahuna Mayla.", "target": 1, "points": 100, "item": 819 },
+    { "id": "prueba-07", "name": "Séptima prueba", "description": "Supera la prueba del Capitán Chris.", "target": 1, "points": 100, "item": 810 },
+    { "id": "prueba-08", "name": "Octava prueba", "description": "Supera la prueba de la Capitana Zarala.", "target": 1, "points": 100, "item": 820 },
+    { "id": "prueba-09", "name": "Novena prueba", "description": "Supera la Gran Prueba de Ula-Ula.", "target": 1, "points": 100, "item": 822 },
+    { "id": "prueba-10", "name": "Décima prueba", "description": "Supera la prueba del Cañón de Poni.", "target": 1, "points": 100, "item": 821 },
+    { "id": "prueba-11", "name": "Undécima prueba", "description": "Supera la prueba de la Capitana Rika.", "target": 1, "points": 100, "item": 824 },
+    { "id": "prueba-12", "name": "Duodécima prueba", "description": "Supera la Gran Prueba de la Kahuna Hela, la última.", "target": 1, "points": 100, "item": 815 },
 
     { "id": "alto-mando-campeon", "name": "Campeón", "description": "Derrota al alto mando y proclámate campeón.", "target": 1, "points": 300, "record": 2 },
-    { "id": "alto-mando-otra-vez", "name": "Y otra vez", "description": "Derrota al alto mando de nuevo.", "target": 2, "points": 300 },
+    { "id": "alto-mando-otra-vez", "name": "Y otra vez", "description": "Derrota al alto mando de nuevo y defiende el título.", "target": 1, "points": 300, "record": 100 },
 
-    { "id": "pegatinas-25", "name": "Pegatinas: 25", "description": "Encuentra 25 Dominsignias escondidas por toda la región.", "target": 25, "points": 75, "work": 169 },
-    { "id": "pegatinas-50", "name": "Pegatinas: 50", "description": "Encuentra 50 Dominsignias escondidas por toda la región.", "target": 50, "points": 125, "work": 169 },
-    { "id": "pegatinas-100", "name": "Pegatinas: 100", "description": "Encuentra 100 Dominsignias escondidas por toda la región.", "target": 100, "points": 200, "work": 169 },
+    { "id": "pegatinas-25", "name": "Pegatinas: 25", "description": "Encuentra 25 Dominsignias escondidas por toda la región.", "target": 25, "points": 75, "record": 72 },
+    { "id": "pegatinas-50", "name": "Pegatinas: 50", "description": "Encuentra 50 Dominsignias escondidas por toda la región.", "target": 50, "points": 125, "record": 72 },
+    { "id": "pegatinas-100", "name": "Pegatinas: 100", "description": "Encuentra 100 Dominsignias escondidas por toda la región.", "target": 100, "points": 200, "record": 72 },
 
     { "id": "movimientos-z-100", "name": "Poder Z", "description": "Usa 100 movimientos Z.", "target": 100, "points": 150, "record": 41 },
     { "id": "huidas-200", "name": "Pies ligeros", "description": "Huye 200 veces de un combate.", "target": 200, "points": 100, "record": 46 },

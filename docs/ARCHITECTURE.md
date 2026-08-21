@@ -3206,3 +3206,74 @@ de lo que el jugador decía. Contenía su primera Dominsignia. Lo que no conten�
 
 Un ancla de contador tiene una ventaja sobre una de bandera: **enseña un número que el jugador
 puede comparar**. La tarjeta dice 2/25 y él sabe cuántas lleva. Si algún día no cuadra, se ve.
+
+---
+
+## 43. Los 21 logros se cuentan solos: el cartucho dice qué prueba da qué cristal (2026-08-21)
+
+Quedaban once a mano: las diez pruebas restantes y el segundo alto mando. Se cerraron los tres
+frentes, y el último salió de mirar donde no había mirado.
+
+### Los nombres de los récords existían
+
+PKHeX trae los **170 nombres** de los récords de gen 7 en `RecordLists.RecordList_7`, y nunca se
+habían leído. Confirman los cinco ya anclados —41 «Z-Moves Used», 46 «Ran From Battles», 5
+«Trainer Battles», 127 «Shiny Pokémon Encountered», 2 «Storyline Completed Time»— y traen dos que
+faltaban:
+
+- **72 «Stickers Collected»**, que vale 2 y es lo que la competición llama pegatinas. Sustituye al
+  `work[169]` del §42, que se había anclado midiendo y daba el mismo número: gana el que tiene
+  nombre, y que los dos coincidan es la mejor comprobación posible de ambos.
+- **100 «Champion Title Defense»**, que es exactamente «derrota al alto mando de nuevo». El
+  objetivo pasa de 2 a 1: una defensa del título es una segunda victoria.
+
+No hay ningún récord de pruebas superadas, y ninguno de los mil contadores sube una vez por
+prueba: se comprobaron los mil en los cuatro volcados, buscando la secuencia 0,0,1,2 y también
+cualquiera que subiese uno en cada sesión de prueba. Cero resultados en ambas.
+
+### El cartucho publica qué prueba da qué cristal
+
+La idea era anclar cada prueba a su cristal Z, pero saber cuál da cuál era de memoria — y de
+memoria no se ancla nada, que es justo lo que dice la norma 3. Lo pedido fue: *búscalo*.
+
+Está en el **storytext**, `a/0/4/<idioma>`, un GARC que `GameFiles` no extraía porque el
+randomizador no lo necesita. Los mensajes de «has obtenido X» usan una variable, pero los
+**diálogos alrededor nombran el cristal en texto plano**, y con eso se cierran las doce:
+
+| # | Prueba | Cristal | id | De dónde sale |
+|---|---|---|---|---|
+| 1 | Liam | Normastal Z | 807 | medido, y f714 |
+| 2 | Gran Prueba de Kaudan | Lizastal Z | 813 | medido, y f623, f714 |
+| 3 | Nereida | Hidrostal Z | 809 | f159 |
+| 4 | Kiawe | Pirostal Z | 808 | f165, f180 |
+| 5 | Lulú | Fitostal Z | 811 | f172 |
+| 6 | Gran Prueba de Mayla | Litostal Z | 819 | f203 |
+| 7 | Chris | Electrostal Z | 810 | f239, f258 |
+| 8 | Zarala | Espectrostal Z | 820 | f261, f271 |
+| 9 | Gran Prueba de Ula-Ula | Nictostal Z | 822 | f293 |
+| 10 | Cañón de Poni | Dracostal Z | 821 | f353 |
+| 11 | Rika | Feeristal Z | 824 | f354, f493 |
+| 12 | Gran Prueba de Hela | Geostal Z | 815 | f346, y f389: «la última» |
+
+La línea que lo ata todo es **f714**: «*pero si tienes un Normastal Z y un Lizastal Z... has
+conseguido superar la prueba de Liam y la Gran Prueba de Kaudan*». Nombra los dos cristales y las
+dos pruebas en la misma frase, y son **exactamente los dos que ya se habían medido** entrando en
+la mochila. Dos anclas independientes que coinciden.
+
+Salen **doce**, y la competición pide doce. Que cuadre no estaba garantizado.
+
+### Por qué contar cristales habría estado mal
+
+De los dieciocho cristales de tipo, seis **no** aparecen en esa tabla: Criostal, Toxistal,
+Aerostal, Psicostal, Insectostal y Metalostal. El storytext los enseña regalados por PNJ —«toma
+este Toxistal Z, por si te sirve de ayuda», «conseguí ese Cristal Z durante mi recorrido
+insular»—. Un logro que contase cristales a secas se habría adelantado seis veces sin fallar ni
+una, que es la forma exacta de error que la norma 3 prohíbe. Ahora está medido en vez de
+sospechado.
+
+### Estado
+
+Los **21 logros se cuentan solos**. La pantalla ya no tiene un solo botón de marcar a mano, y el
+resumen pasó de «15 se marcan a mano» a no mencionarlo. Un logro nuevo que PermaLocke no supiera
+detectar seguiría saliendo a mano con sus botones: eso no se ha quitado, simplemente ya no lo usa
+nadie.

@@ -28,6 +28,8 @@ public sealed class SaveRecordReader(PlayerSave save, ILogger<SaveRecordReader> 
     public static readonly int[] Wanted =
     [
         2,    // Momento en que se completó la historia: distinto de cero = campeón
+        72,   // Dominsignias recogidas («Stickers Collected»)
+        100,  // Veces que se ha defendido el título de campeón
         3,    // Combates totales
         4,    // Combates contra salvajes
         5,    // Combates contra entrenadores
