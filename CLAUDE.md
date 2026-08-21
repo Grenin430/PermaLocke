@@ -254,6 +254,15 @@ sí pasa es que se ve **lo último guardado**, y con el juego abierto la pantall
 Trampa: un Pokémon en caja **no lleva sus estadísticas de combate**, hay que calcularlas.
 Ver §32.
 
+**Wonder trade (2026-08-21).** Entregas un Pokémon del visor y vuelve otro con un total base entre
+**-8% y +10%** del que diste, **al mismo nivel** (si no, sería una lavandería: entregas un nivel 1
+del gacha y sacas un nivel 50). La banda está en `Data/wondertrade.json`; los totales salen de la
+ROM y los tipos de PKHeX, que es correcto porque los tipos no se randomizan. Es **la única
+escritura de PermaLocke que destruye algo**, así que comprueba que el hueco sigue teniendo lo que
+la pantalla cree, copia la partida entera y la relee después. Animación: el sprite entra en la
+Poké Ball, sale disparada y otra llega del otro lado cruzándose con ella; antes del Pokémon salen
+**tipo, generación y total base**, en ese orden. Ver §33.
+
 **Siguiente.** Logros (la fuente de puntos), tienda, y probar en partida nueva iniciales,
 entrenadores y tiendas.
 
@@ -273,6 +282,7 @@ Lo que NO está resuelto todavía y no debe darse por hecho (detalle en `docs/AR
 | Extraer los sprites de Pokémon de la ROM | **RESUELTA Y VERIFICADA** — `a/0/6/2`, RGBA5551, 1154 iconos a PNG en 1,4 s; ver `ARCHITECTURE.md` §28 |
 | Saber qué icono es de qué especie | **RESUELTO PARA LAS 807** — construido a mano en dos bloques; el reparto cierra sin iconos libres ni repetidos y hay tests. Ver `ARCHITECTURE.md` §30 y §30 bis |
 | Visor Pokémon (leer el PC de la partida) | **HECHO Y VERIFICADO** en la partida real — 149 Pokémon, 32 cajas, ficha al pinchar. Solo lectura; sin equipo, sin formas, sin cruce con la run. Ver `ARCHITECTURE.md` §32 |
+| Wonder trade (banda de BST, escritura, animación) | **MOTOR Y ESCRITURA HECHOS** — 16 tests y verificado contra una copia real del save; la animación está sin ver porque exige un intercambio de verdad. Ver `ARCHITECTURE.md` §33 |
 | Logros, tienda y sincronización | **SIN EMPEZAR** — hoy no hay forma de ganar puntos |
 | API concreta de pk3DS.Core | **VERIFICADA** contra la ROM real — ver `ARCHITECTURE.md` §19 |
 

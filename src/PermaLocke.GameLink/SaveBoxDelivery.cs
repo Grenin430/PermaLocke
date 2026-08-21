@@ -2,7 +2,7 @@ using Microsoft.Extensions.Logging;
 using PKHeX.Core;
 using PermaLocke.Core.Abstractions;
 using PermaLocke.Core.Domain;
-using PermaLocke.GameLink.Rpc;
+using PermaLocke.GameLink.Data;
 
 namespace PermaLocke.GameLink;
 
@@ -99,7 +99,9 @@ public sealed class SaveBoxDelivery(
 
             Backup(path);
 
-            var pokemon = Build(pull, save);
+            var pokemon = PokemonBuilder.Build(
+                new NewPokemon(pull.Species, pull.Level, pull.Nature, pull.AbilityId, pull.Ivs, pull.IsShiny),
+                save);
             save.SetBoxSlotAtIndex(pokemon, box, slot);
             File.WriteAllBytes(path, save.Write().ToArray());
 
@@ -142,81 +144,6 @@ public sealed class SaveBoxDelivery(
         return (-1, -1);
     }
 
-    /// <summary>
-    /// Builds the Pokémon the roll describes, as the player's own: same trainer, same ids, same
-    /// game. Otherwise the game would treat it as traded and it would not obey the player.
-    /// </summary>
-    private static PK7 Build(GachaPull pull, SAV7USUM save)
-    {
-        var pokemon = new PK7
-        {
-            Species = (ushort)pull.Species,
-            Form = 0,
-            CurrentLevel = (byte)pull.Level,
-            Nature = (Nature)pull.Nature,
-            Ability = pull.AbilityId,
-
-            // El hueco de habilidad tiene que ser uno de los tres que la especie declara; el 0
-            // vale siempre y evita que el juego muestre un hueco imposible.
-            AbilityNumber = 1,
-
-            OriginalTrainerName = save.OT,
-            TID16 = save.TID16,
-            SID16 = save.SID16,
-            OriginalTrainerGender = save.Gender,
-            Language = save.Language,
-            Version = save.Version,
-            Ball = (byte)PKHeX.Core.Ball.Poke,
-            MetLevel = (byte)pull.Level,
-            MetDate = DateOnly.FromDateTime(DateTime.Now),
-            CurrentHandler = 1,
-            HandlingTrainerName = save.OT,
-            HandlingTrainerGender = save.Gender
-        };
-
-        pokemon.IV_HP = pull.Ivs[0];
-        pokemon.IV_ATK = pull.Ivs[1];
-        pokemon.IV_DEF = pull.Ivs[2];
-        pokemon.IV_SPE = pull.Ivs[3];
-        pokemon.IV_SPA = pull.Ivs[4];
-        pokemon.IV_SPD = pull.Ivs[5];
-
-        if (pull.IsShiny)
-        {
-            pokemon.SetShiny();
-        }
-
-        SetMovesFor(pokemon);
-        pokemon.HealPP();
-        pokemon.ResetPartyStats();
-        pokemon.RefreshChecksum();
-
-        return pokemon;
-    }
-
-
-    /// <summary>
-    /// Gives the Pokémon the moves it would know at that level.
-    /// </summary>
-    /// <remarks>
-    /// PKHeX works them out from a legality analysis, which can baulk at a Pokémon the gacha
-    /// made impossible — a random ability its species cannot have, for instance. If it does,
-    /// the Pokémon arrives with no moves rather than not arriving at all: the player can teach
-    /// it or use the move reminder, and that is a far smaller problem than a failed delivery.
-    /// </remarks>
-    private static void SetMovesFor(PK7 pokemon)
-    {
-        try
-        {
-            Span<ushort> moves = stackalloc ushort[4];
-            new LegalityAnalysis(pokemon).GetSuggestedCurrentMoves(moves);
-            pokemon.SetMoves(moves);
-        }
-        catch (Exception)
-        {
-            // Sin movimientos, pero entregado.
-        }
-    }
     private bool Verify(string path, int box, int slot, GachaPull pull)
     {
         if (!SaveUtil.TryGetSaveFile(path, out var loaded) || loaded is not SAV7USUM save)

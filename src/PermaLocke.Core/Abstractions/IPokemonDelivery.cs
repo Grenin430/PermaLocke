@@ -19,6 +19,11 @@ public enum DeliveryOutcome
     /// <summary>All 32 boxes are full.</summary>
     BoxesFull,
 
+    /// <summary>
+    /// The slot no longer holds what the screen thought it did, so nothing was overwritten.
+    /// </summary>
+    SlotChanged,
+
     /// <summary>Something else went wrong; the save was left untouched.</summary>
     Failed
 }
@@ -43,4 +48,21 @@ public interface IPokemonDelivery
     bool CanDeliverNow(out string reason);
 
     Task<DeliveryResult> DeliverAsync(GachaPull pull, Run run, CancellationToken ct = default);
+}
+
+/// <summary>
+/// Replaces one Pokémon of the player's game with another, in the same slot.
+/// </summary>
+/// <remarks>
+/// Separate from <see cref="IPokemonDelivery"/> because it is a different promise: delivery only
+/// ever fills an empty hole, whereas this one <b>destroys</b> what was there. The implementation
+/// is expected to refuse if the slot no longer holds what the caller believes.
+/// </remarks>
+public interface IPokemonSwap
+{
+    /// <summary>True when a swap could be attempted right now.</summary>
+    bool CanSwapNow(out string reason);
+
+    Task<DeliveryResult> SwapAsync(WonderTradeOffer offer, int box, int slot,
+        CancellationToken ct = default);
 }

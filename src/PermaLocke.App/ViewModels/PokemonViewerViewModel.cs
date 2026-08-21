@@ -59,12 +59,20 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
     private BoxSnapshot? _snapshot;
 
     public PokemonViewerViewModel(IBoxReader boxes, PokemonSpriteService sprites,
-        ILogger<PokemonViewerViewModel> logger) : base("VISOR POKÉMON")
+        WonderTradeViewModel trade, ILogger<PokemonViewerViewModel> logger) : base("VISOR POKÉMON")
     {
         _boxes = boxes;
         _sprites = sprites;
         _logger = logger;
+        Trade = trade;
+
+        // Un intercambio cambia la caja por debajo, así que lo que hay en pantalla deja de ser
+        // cierto en cuanto termina.
+        Trade.Finished += async (_, _) => await LoadAsync();
     }
+
+    /// <summary>The wonder trade, which picks its victim from the box on this screen.</summary>
+    public WonderTradeViewModel Trade { get; }
 
     /// <summary>Every box of the PC, in the order the game numbers them.</summary>
     public ObservableCollection<BoxTabViewModel> Boxes { get; } = [];
@@ -231,6 +239,10 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
         Selected = pokemon;
         HasSelection = pokemon is not null;
         SelectedSprite = pokemon is null ? null : SpriteFor(pokemon);
+
+        // Con el intercambio armado, elegir en la caja es elegir a quién se entrega. Un huevo no:
+        // lo que hay dentro no se sabe, así que no se puede decir qué vale.
+        Trade.Choose(pokemon is { IsEgg: false } ? pokemon : null);
 
         Stats.Clear();
 

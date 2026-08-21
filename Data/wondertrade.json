@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "comment": "Wonder trade. Lo que vuelve tiene un TOTAL de estadísticas base parecido al que se entrega, así que el intercambio es una apuesta sobre QUÉ Pokémon toca, no una manera de mejorarlo. La banda sale de aquí y no del código: es el único número que decide si esto es un juego o una lavandería.",
+
+  "comentarioBanda": "porDebajo 0.08 y porEncima 0.10 son el -8% / +10% pedidos. Asimétrico a propósito: puede volver algo mejor, pero no mucho peor. Los totales se leen de Data/species.json, generado desde la ROM, así que la banda sigue valiendo con la ROM randomizada.",
+
+  "comentarioNivel": "El Pokémon recibido conserva el NIVEL del entregado. No es configurable a propósito: si no, bastaría con entregar un nivel 1 del gacha para sacar un nivel 50.",
+
+  "banda": {
+    "porDebajo": 0.08,
+    "porEncima": 0.10
+  },
+
+  "permitirLegendarios": true,
+  "comentarioLegendarios": "La banda ya los limita sola: solo un Pokémon de 600 puede sacar uno. Se deja en true; ponerlo a false los quita del todo si la competición lo prefiere."
+}

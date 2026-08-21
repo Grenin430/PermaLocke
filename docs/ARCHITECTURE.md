@@ -2544,3 +2544,81 @@ Contra la partida real del jugador: **149 Pokémon** en el PC de Grenin430, la c
 (30/30), la caja 5 a 29/30 con su hueco vacío a la vista, y las fichas de **Electivire** y
 **Shieldon** completas —naturaleza, habilidad, ball, entrenador, estadísticas con sus IV y sus
 movimientos—. Los iconos son los de §28, sacados de la ROM del propio jugador.
+
+---
+
+## 33. Wonder trade (2026-08-21)
+
+Entregas un Pokémon y vuelve otro que vale **más o menos lo mismo**: entre un 8% menos y un 10%
+más de total de estadísticas base. La banda es toda la mecánica —hace del intercambio una apuesta
+sobre *qué* Pokémon toca y no una manera de mejorar el que tienes—, así que vive en
+`Data/wondertrade.json` y no en el código.
+
+### Las tres decisiones que no son negociables
+
+**El recibido conserva el nivel del entregado.** Si no, bastaría con entregar un nivel 1 del gacha
+para sacar un nivel 50. No es configurable a propósito.
+
+**El total base sale de la ROM**, de `Data/species.json`, no de PKHeX: el randomizador baraja las
+seis estadísticas pero conserva el total, así que la banda sigue valiendo con la ROM randomizada.
+Los **tipos** sí salen de PKHeX, y es correcto porque en esta run los tipos no se randomizan.
+
+**Se decide, se escribe y se registra antes de animar nada.** Igual que el gacha. Si la escritura
+en la partida falla, no hay animación: no se le enseña al jugador un Pokémon que no tiene.
+
+### La única escritura que destruye algo
+
+Todo lo demás que PermaLocke escribe **añade**. Esto quita. De ahí tres guardarraíles:
+
+1. **Se comprueba que el hueco sigue teniendo lo que la pantalla cree.** Las cajas se leen del
+   fichero; si el jugador ha jugado desde entonces, ese hueco puede tener otra cosa. Si la especie
+   no coincide, el intercambio se rechaza en vez de sobrescribir lo que haya.
+2. **Copia entera de la partida** antes de tocarla, como en la entrega del gacha.
+3. **Se relee del disco** después, y solo entonces se da por hecho.
+
+Además exige el juego cerrado, y se avisa **al armar el intercambio**, no después de haber
+elegido a quién entregar.
+
+`PokemonBuilder` se sacó de `SaveBoxDelivery` para que el gacha y el intercambio construyan
+exactamente el mismo tipo de Pokémon: el del propio jugador, con su nombre y sus ids. Con
+cualquier otro, el juego lo trata como intercambiado y no obedece.
+
+### La animación
+
+Lo pedido, en este orden: el sprite del que se va **se encoge y entra en su Poké Ball**, la bola
+se cierra con un apretón y un fogonazo, sale disparada a la derecha girando, y **a mitad de su
+viaje entra otra por la izquierda**, de modo que las dos se cruzan en mitad del panel. La que
+llega se sacude tres veces, como una bola con algo dentro.
+
+Y entonces, antes del Pokémon, los tres avisos, uno a uno:
+
+1. **El tipo** o los dos tipos, en su color de siempre.
+2. **La generación**.
+3. **El total de estadísticas base**, con la diferencia respecto a lo que se entregó.
+
+Solo después la bola revienta y sale el Pokémon.
+
+Las bolas están **dibujadas con formas** —dos medias esferas, la banda y el botón—, no son un
+asset: es geometría, como los portales del gacha. Los colores de tipo son los de siempre y viven
+en la vista, porque son presentación y no reglas.
+
+El aviso de que la bola ha llegado sale del **final real del movimiento**, no de un reloj, que es
+la lección del §31: con un reloj los tres avisos empezarían con la bola todavía en el aire.
+
+### Trampa que salió probando: el orden de los IV
+
+Escribir un Pokémon y leerlo de vuelta devolvía los IV permutados. No es un fallo: son dos
+órdenes distintos y los dos correctos. La partida guarda **HP/Atk/Def/Spe/SpA/SpD**, que es el
+orden que espera quien escribe; el visor los lee en el orden en que **el juego los enseña**,
+HP/Atk/Def/SpA/SpD/Spe. Está documentado en los dos sitios. Mezclarlos no rompe nada visible
+—el total no depende del orden— pero cambia dos estadísticas de sitio sin avisar.
+
+### Estado
+
+| Pieza | Estado |
+|---|---|
+| Motor: banda, reproducibilidad, evento auditable | **HECHO** — 16 tests |
+| Escritura del intercambio en la partida | **VERIFICADA CONTRA UNA COPIA REAL** del save: Ursaring salió, Garchomp ocupó su hueco, el total de Pokémon no cambió, y repetir el intercambio se rechazó solo |
+| Panel del visor: armar, elegir, ver la banda | **VISTO EN LA APP** — Decidueye, 530 de total, banda 487-583 |
+| La animación | **SIN VER** — exige un intercambio de verdad, que destruye un Pokémon de la partida del jugador. No se ha hecho sin permiso |
+| Coste en puntos | Ninguno, como el gacha mientras no existan los logros |

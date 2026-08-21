@@ -40,6 +40,9 @@ public partial class App : Application
         collection.AddSingleton<ISpeciesStatsCatalog>(_ =>
             JsonSpeciesStatsCatalog.Load(Path.Combine(paths.Data, "species.json")));
         collection.AddSingleton<GachaService>();
+        collection.AddSingleton<IWonderTradeCatalog>(_ =>
+            JsonWonderTradeCatalog.Load(Path.Combine(paths.Data, "wondertrade.json")));
+        collection.AddSingleton<WonderTradeService>();
         collection.AddSingleton<EncounterService>();
         collection.AddSingleton<GameWatcher>();
 
@@ -53,6 +56,7 @@ public partial class App : Application
         collection.AddSingleton<HomeViewModel>();
         collection.AddSingleton<RandomizerViewModel>();
         collection.AddSingleton<GachaViewModel>();
+        collection.AddSingleton<WonderTradeViewModel>();
         collection.AddSingleton<PokemonViewerViewModel>();
         collection.AddSingleton<MiscellaneousViewModel>();
         collection.AddSingleton<MainViewModel>();

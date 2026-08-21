@@ -19,6 +19,7 @@ public static class ServiceCollectionExtensions
 
         services.TryAddSingleton<ILocationLookup>(_ => new PkhexLocationLookup(language));
         services.TryAddSingleton<IItemLookup>(_ => new PkhexItemLookup(language));
+        services.TryAddSingleton<ITypeLookup>(_ => new PkhexTypeLookup(language));
         services.TryAddSingleton<AzaharRpcClient>();
         services.TryAddSingleton(sp => new BagService(
             sp.GetRequiredService<AzaharRpcClient>(),
@@ -46,6 +47,11 @@ public static class ServiceCollectionExtensions
             language,
             sp.GetRequiredService<ILogger<SaveBoxReader>>()));
         services.TryAddSingleton<IBoxReader>(sp => sp.GetRequiredService<SaveBoxReader>());
+        services.TryAddSingleton<SaveBoxSwap>(sp => new SaveBoxSwap(
+            sp.GetRequiredService<PlayerSave>(),
+            backupFolder,
+            sp.GetRequiredService<ILogger<SaveBoxSwap>>()));
+        services.TryAddSingleton<IPokemonSwap>(sp => sp.GetRequiredService<SaveBoxSwap>());
         services.TryAddSingleton<ZoneService>();
         services.TryAddSingleton<IZoneProvider>(sp => sp.GetRequiredService<ZoneService>());
         services.TryAddSingleton<IItemWithholder>(sp => sp.GetRequiredService<BagService>());
