@@ -103,6 +103,24 @@ public sealed class WonderTradeServiceTests
     }
 
     /// <summary>
+    /// The band the competition plays with, -8% / +20%, which is asymmetric on purpose and has to
+    /// stay that way: the species population thins out sharply above 550, so a symmetric band
+    /// hands back something worse nearly every time.
+    /// </summary>
+    [Theory]
+    [InlineData(500, 460, 600)]
+    [InlineData(600, 552, 720)]
+    [InlineData(460, 423, 552)]
+    public void The_wide_band_reaches_further_up_than_down(int given, int min, int max)
+    {
+        var band = new WonderTradeWindow(0.08, 0.20, true).Band(given);
+
+        Assert.Equal(min, band.Min);
+        Assert.Equal(max, band.Max);
+        Assert.True(band.Max - given > given - band.Min);
+    }
+
+    /// <summary>
     /// The whole mechanic in one assertion: whatever comes back is worth about what went in.
     /// Checked over many trades because a single one could land inside the band by luck.
     /// </summary>

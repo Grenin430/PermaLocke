@@ -14,7 +14,7 @@ public sealed class JsonWonderTradeCatalog(WonderTradeWindow window) : IWonderTr
     /// </summary>
     /// <remarks>
     /// Falling back to a working default rather than to nothing: a missing file should not turn
-    /// the wonder trade into a screen that refuses to explain itself. -8% / +10% is what the
+    /// the wonder trade into a screen that refuses to explain itself. -8% / +20% is what the
     /// competition asked for, so it is also what the code assumes.
     /// </remarks>
     public static JsonWonderTradeCatalog Default { get; } = new(new WonderTradeWindow(0.08, 0.10, true));

@@ -11,7 +11,7 @@ namespace PermaLocke.Core.Domain;
 /// it lives in <c>Data/wondertrade.json</c> and not in the code.
 /// </remarks>
 /// <param name="Below">Fraction the received total may fall short by. 0.08 is -8%.</param>
-/// <param name="Above">Fraction it may exceed by. 0.10 is +10%.</param>
+/// <param name="Above">Fraction it may exceed by. 0.20 is +20%.</param>
 /// <param name="AllowLegendaries">
 /// Whether legendaries can come back. The band already gates them — only a 600-point Pokémon can
 /// draw one — but a competition may still want them out.

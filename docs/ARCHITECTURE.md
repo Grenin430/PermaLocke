@@ -3277,3 +3277,59 @@ Los **21 logros se cuentan solos**. La pantalla ya no tiene un solo botón de ma
 resumen pasó de «15 se marcan a mano» a no mencionarlo. Un logro nuevo que PermaLocke no supiera
 detectar seguiría saliendo a mano con sus botones: eso no se ha quitado, simplemente ya no lo usa
 nadie.
+
+---
+
+## 44. El wonder trade devolvía peor: no era el sorteo, era el cartucho (2026-08-21)
+
+El jugador dijo que cada intercambio salía igual o peor. Tenía razón, y la primera reacción —«el
+sorteo estará sesgado»— era la equivocada.
+
+### Lo que decían los 23 intercambios de la run
+
+El log de eventos guarda cada intercambio con el total base entregado y el recibido, así que la
+queja se puede medir en vez de opinar sobre ella:
+
+| | |
+|---|---|
+| Suben | 3 |
+| Igual | 6 |
+| Bajan | **14** |
+| Media | **−2,1%** |
+
+Y seis salieron con el total **exactamente igual** al entregado, que es de donde venía la
+sensación de «siempre el mismo BST».
+
+### La causa
+
+El sorteo elige uniformemente entre las especies de la banda, y eso es correcto. Lo que no es
+uniforme es **cuántas especies hay en cada tramo**:
+
+| total base | especies |
+|---|---|
+| 450-499 | 171 |
+| 500-549 | 128 |
+| 550-599 | 36 |
+| 600-649 | 31 |
+| 650-699 | 18 |
+| 700-749 | **1** |
+
+Por encima de 550 la población se desploma. Entregando un 600 —que es lo que el jugador estaba
+entregando, con la caja llena de tiradas de gacha caras— la banda −8%/+10% daba 552-660, y ahí
+dentro hay **67 especies: 35 por debajo, 31 clavadas en 600 y una sola por encima**. El 31 explica
+los empates: en 600 se amontonan los pseudolegendarios y media caja de legendarios.
+
+Con esa forma, una banda de +10% sobre un 600 no puede subir. No hay a dónde.
+
+### El arreglo
+
+La banda pasa a **−8% / +20%**, a petición del jugador. Sobre un 600 la banda es ahora 552-720 y
+el reparto queda 35 por debajo, 31 iguales y **19 por encima**, con media esperada **+1,2%** en
+lugar de −2,1%.
+
+Aviso que conviene no callarse: **de 680 para arriba esto no cambia nada**. Con 720 la banda es
+662-864 y el cartucho no tiene una sola especie por encima de 720, así que un Arceus solo puede
+bajar. No es un fallo que se pueda arreglar con un número.
+
+Como todo lo que decide el juego, el número vive en `Data/wondertrade.json` y no en el código, con
+la medición escrita al lado para que se entienda por qué es asimétrico.

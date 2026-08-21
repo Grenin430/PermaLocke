@@ -360,6 +360,14 @@ exactamente los dos que ya se habian medido. Salen 12 y la competicion pide 12. 
 tipo NO son de prueba -los regalan PNJ-, asi que contarlos a secas se habria adelantado seis veces
 sin fallar una. **La pantalla ya no tiene un solo boton de marcar a mano.** Ver §43.
 
+**Wonder trade: la banda pasa a −8% / +20% (2026-08-21).** El jugador dijo que salía siempre igual
+o peor y tenía razón: los 23 intercambios de la run dan 14 peores, 6 iguales y 3 mejores, media
+−2,1%. No era el sorteo, que reparte uniforme, sino la forma del cartucho: hay 171 especies entre
+450 y 499 pero solo 36 entre 550 y 599, 18 entre 650 y 699 y **una** entre 700 y 749. Entregando un
+600, la banda vieja 552-660 tenía 35 especies por debajo, 31 clavadas en 600 y **una** por encima.
+Con +20% la banda es 552-720 y quedan 19 por encima, media esperada +1,2%. De 680 para arriba no
+cambia nada porque el juego no tiene nada por encima de 720. Ver §44.
+
 **Siguiente.** Tienda, sincronizacion, y probar en partida nueva iniciales, entrenadores y tiendas.
 
 Lo que NO está resuelto todavía y no debe darse por hecho (detalle en `docs/ARCHITECTURE.md`):
