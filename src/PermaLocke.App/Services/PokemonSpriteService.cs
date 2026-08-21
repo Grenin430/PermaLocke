@@ -24,6 +24,7 @@ namespace PermaLocke.App.Services;
 /// </remarks>
 public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteService> logger)
 {
+    /// <summary>Loaded icons, keyed by icon index rather than species: forms share a picture.</summary>
     private readonly Dictionary<int, BitmapSource?> _cache = [];
     private readonly SemaphoreSlim _gate = new(1, 1);
 
@@ -102,14 +103,18 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
 
 
     /// <summary>The icon of a species, or null when it is not one of the known ones.</summary>
-    public BitmapSource? Get(int species)
-    {
-        if (_index is null || !_index.TryGetValue(species, out var icon))
-        {
-            return null;
-        }
+    public BitmapSource? Get(int species) =>
+        _index is not null && _index.TryGetValue(species, out var icon) ? Load(icon) : null;
 
-        if (_cache.TryGetValue(species, out var cached))
+    /// <summary>
+    /// The egg, which is the one icon of the container that needed no working out: it is the
+    /// first one.
+    /// </summary>
+    public BitmapSource? GetEgg() => _prepared ? Load(PokemonIconIndex.EggIcon) : null;
+
+    private BitmapSource? Load(int icon)
+    {
+        if (_cache.TryGetValue(icon, out var cached))
         {
             return cached;
         }
@@ -135,7 +140,7 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
             }
         }
 
-        _cache[species] = image;
+        _cache[icon] = image;
         return image;
     }
 

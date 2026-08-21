@@ -28,41 +28,12 @@ namespace PermaLocke.GameLink;
 /// </para>
 /// </remarks>
 public sealed class SaveBoxDelivery(
-    AzaharInstallation installation,
-    AzaharRpcClient client,
-    string appDirectory,
+    PlayerSave save,
     string backupFolder,
     ILogger<SaveBoxDelivery> logger) : IPokemonDelivery
 {
-    /// <summary>Ultra Moon (Europe), the only title PermaLocke targets.</summary>
-    private const string TitleFolder = "001b5100";
-
-    /// <summary>Where the 3DS keeps a title's save inside the emulated SD card.</summary>
-    private static string SavePattern => Path.Combine("sdmc", "Nintendo 3DS");
-
     /// <summary>The save file, or null when it cannot be found.</summary>
-    public string? FindSave()
-    {
-        var root = Path.Combine(installation.Locate(appDirectory).UserDirectory, SavePattern);
-
-        if (!Directory.Exists(root))
-        {
-            return null;
-        }
-
-        try
-        {
-            // Las dos carpetas intermedias son identificadores de consola; se buscan en vez de
-            // suponerlas, porque Azahar las genera y no siempre son ceros.
-            return Directory
-                .EnumerateFiles(root, "main", SearchOption.AllDirectories)
-                .FirstOrDefault(path => path.Contains(TitleFolder, StringComparison.OrdinalIgnoreCase));
-        }
-        catch (IOException)
-        {
-            return null;
-        }
-    }
+    public string? FindSave() => save.Find();
 
     /// <summary>
     /// True when the game is not loaded in the emulator. A running game makes any write
@@ -88,19 +59,7 @@ public sealed class SaveBoxDelivery(
         return true;
     }
 
-    private bool IsGameLoaded()
-    {
-        try
-        {
-            return client.ListProcesses()
-                .Any(process => process.TitleId == AzaharGameStateProvider.UltraMoonTitleId);
-        }
-        catch (Exception)
-        {
-            // Sin servidor RPC no hay emulador escuchando, así que no hay juego cargado.
-            return false;
-        }
-    }
+    private bool IsGameLoaded() => save.IsGameLoaded();
 
     public Task<DeliveryResult> DeliverAsync(GachaPull pull, Run run, CancellationToken ct = default) =>
         Task.Run(() => Deliver(pull, run), ct);

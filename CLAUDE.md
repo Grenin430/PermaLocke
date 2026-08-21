@@ -245,6 +245,15 @@ Dos fallos de WPF que costó encontrar y que conviene no repetir: **`OpacityMask
 no pinta nada** (la silueta se cocina ahora en un bitmap) y **un `ItemsControl` dentro de un `Grid`
 se recorta al ancho disponible**, así que una tira larga tiene que ir dentro de un `Canvas`.
 
+**Visor Pokémon: la base, el PC de la partida (2026-08-21).** Las 32 cajas con sus 30 huecos, los
+vacíos incluidos, y al pinchar un Pokémon su ficha: naturaleza, habilidad, objeto, ball,
+entrenador, encuentro, movimientos y la tabla de estadística con IV y EV. Sale del **fichero de
+partida** con PKHeX, igual que la entrega del gacha, pero **leer no exige cerrar el juego**: lo que
+sí pasa es que se ve **lo último guardado**, y con el juego abierto la pantalla lo avisa.
+`PlayerSave` se sacó aparte para que la entrega y el visor coincidan en dónde está la partida.
+Trampa: un Pokémon en caja **no lleva sus estadísticas de combate**, hay que calcularlas.
+Ver §32.
+
 **Siguiente.** Logros (la fuente de puntos), tienda, y probar en partida nueva iniciales,
 entrenadores y tiendas.
 
@@ -263,6 +272,7 @@ Lo que NO está resuelto todavía y no debe darse por hecho (detalle en `docs/AR
 | Entrega del Pokémon al PC del juego | **VERIFICADA EN LA PARTIDA REAL** — dos entregas a la caja 1 con copia previa. Exige el juego cerrado |
 | Extraer los sprites de Pokémon de la ROM | **RESUELTA Y VERIFICADA** — `a/0/6/2`, RGBA5551, 1154 iconos a PNG en 1,4 s; ver `ARCHITECTURE.md` §28 |
 | Saber qué icono es de qué especie | **RESUELTO PARA LAS 807** — construido a mano en dos bloques; el reparto cierra sin iconos libres ni repetidos y hay tests. Ver `ARCHITECTURE.md` §30 y §30 bis |
+| Visor Pokémon (leer el PC de la partida) | **HECHO Y VERIFICADO** en la partida real — 149 Pokémon, 32 cajas, ficha al pinchar. Solo lectura; sin equipo, sin formas, sin cruce con la run. Ver `ARCHITECTURE.md` §32 |
 | Logros, tienda y sincronización | **SIN EMPEZAR** — hoy no hay forma de ganar puntos |
 | API concreta de pk3DS.Core | **VERIFICADA** contra la ROM real — ver `ARCHITECTURE.md` §19 |
 

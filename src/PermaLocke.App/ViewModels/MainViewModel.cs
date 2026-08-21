@@ -14,8 +14,8 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly ILogger<MainViewModel> _logger;
 
     public MainViewModel(HomeViewModel home, RandomizerViewModel randomizer,
-        MiscellaneousViewModel miscellaneous, GachaViewModel gacha, IRunContext runContext,
-        ILogger<MainViewModel> logger)
+        MiscellaneousViewModel miscellaneous, GachaViewModel gacha, PokemonViewerViewModel viewer,
+        IRunContext runContext, ILogger<MainViewModel> logger)
     {
         _home = home;
         _runContext = runContext;
@@ -30,8 +30,7 @@ public sealed partial class MainViewModel : ObservableObject
                 "Catálogo desde Data/shop.json. La entrega del objeto al juego depende de la integración con Azahar."),
             new PendingSectionViewModel("LOGROS", "Fase 4",
                 "Logros declarativos en Data/achievements.json que reaccionan a los eventos de la run."),
-            new PendingSectionViewModel("VISOR POKÉMON", "Fase 5",
-                "Equipo y cajas separados en vivos, muertos, gacha y wonder trade, con detalle de IVs/EVs."),
+            viewer,
             new PendingSectionViewModel("POKE PASTE", "Fase 5",
                 "Importación y exportación en formato Showdown con validación."),
             miscellaneous

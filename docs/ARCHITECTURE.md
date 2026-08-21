@@ -2475,3 +2475,72 @@ en el marco de la ruleta y en el borde de la ficha.
 
 Lo que **no** se ha visto en vivo es la celebración de **shiny o legendario**, porque no ha
 tocado ninguno; el camino está cableado y es el mismo que el resto, pero está sin ver.
+
+---
+
+## 32. El visor Pokémon: el PC de la partida (2026-08-21)
+
+La base pedida: **ver literalmente el PC que hay en el juego**, y al pinchar un Pokémon, su ficha.
+Nada más por ahora; lo demás se monta encima de esto.
+
+### De dónde salen las cajas
+
+Del **fichero de partida**, con PKHeX, por la misma razón que la entrega del gacha escribe ahí
+(§26): es un formato fijo que PKHeX lleva años leyendo y se comporta igual en las diez máquinas
+de la competición, mientras que localizar 960 huecos de caja en memoria sería una investigación
+entera y nueva.
+
+El precio es distinto —y menor— que en la entrega. **Leer no exige cerrar el juego**, porque no
+se escribe nada. Lo que pasa es que el fichero contiene **lo último que el jugador guardó**, así
+que cuando el emulador tiene el juego cargado la pantalla **lo dice**, en vez de colar un PC
+desfasado como si fuera el de ahora mismo.
+
+`PlayerSave` se sacó aparte justo para eso: la entrega y el visor tienen que estar de acuerdo en
+dónde está la partida y en si el emulador la está reteniendo. Antes esa lógica vivía dentro de
+`SaveBoxDelivery` y solo la usaba él.
+
+### Qué se ve
+
+Las 32 cajas, cada una con sus **30 huecos**, vacíos incluidos: la caja del juego tiene treinta
+agujeros estén llenos o no, y pintar solo los ocupados la convertiría en una lista. Se pasa de
+caja con ‹ y ›, y da la vuelta como en el juego. Al pinchar, la ficha: naturaleza, habilidad,
+objeto, ball, entrenador, dónde y a qué nivel se encontró, los movimientos, y una tabla con la
+estadística, su IV y su EV. La barra mide el IV sobre 31, y un 31 se pinta en verde para que se
+vea sin leer el número.
+
+### Detalles que costaron algo
+
+**Un Pokémon en caja no lleva sus estadísticas de combate.** El juego se las calcula al sacarlo,
+así que la ficha enseñaría seis ceros. El lector hace lo mismo en memoria —`ResetPartyStats`—
+antes de describirlo. No se escribe nada en la partida: el visor no toca el fichero.
+
+**El símbolo de sexo salía como un cuadrito.** Lo natural es sospechar de la codificación del
+fichero fuente, y era falso: los bytes eran UTF-8 correcto. Era la **fuente del titular**, que no
+tiene ese glifo. Ese `Run` va con `Segoe UI Symbol` y ya está. Los caracteres se construyen
+además desde su punto de código, para que quede una variable menos en un camino que cruza el
+fichero fuente, el compilador y el render.
+
+**PKHeX no reconoce una partida en blanco escrita a disco.** Se probó con `new SAV7USUM()` y con
+`BlankSaveFile.Get`, y en los dos casos `TryGetSaveFile` la rechaza al releerla: le faltan marcas
+que solo pone la consola o el emulador. Así que el recorrido de las cajas se separó en un método
+que acepta la partida ya abierta, y los tests lo ejercitan con una partida montada en memoria: sin
+emulador, sin ROM y sin datos personales del jugador. Lo único que queda sin test es abrir el
+fichero, que es trabajo de PKHeX.
+
+### Lo que la base todavía no hace
+
+| Cosa | Estado |
+|---|---|
+| Formas | Se enseña el icono de la forma corriente. Un Raichu de Alola sale como un Raichu normal |
+| Shiny | Se marca con la palabra: el contenedor de iconos no trae variantes shiny |
+| Equipo | No sale. Solo el PC |
+| Cruce con la run | Ninguno: el visor no sabe todavía qué Pokémon están vivos, muertos o son del gacha |
+| Buscar y filtrar | Sin empezar |
+| Mover o editar | No, y no está previsto: el visor es de solo lectura |
+
+### Verificado en la aplicación
+
+Contra la partida real del jugador: **149 Pokémon** en el PC de Grenin430, la caja 1 llena
+(30/30), la caja 5 a 29/30 con su hueco vacío a la vista, y las fichas de **Electivire** y
+**Shieldon** completas —naturaleza, habilidad, ball, entrenador, estadísticas con sus IV y sus
+movimientos—. Los iconos son los de §28, sacados de la ROM del propio jugador.

@@ -53,6 +53,7 @@ public partial class App : Application
         collection.AddSingleton<HomeViewModel>();
         collection.AddSingleton<RandomizerViewModel>();
         collection.AddSingleton<GachaViewModel>();
+        collection.AddSingleton<PokemonViewerViewModel>();
         collection.AddSingleton<MiscellaneousViewModel>();
         collection.AddSingleton<MainViewModel>();
 
