@@ -298,7 +298,16 @@ mano, y un logro con récord no se puede marcar a mano. **17 de los 21 siguen si
 -pruebas, alto mando y pegatinas-: no son contadores sino banderas de evento, y eso es otra
 investigación. Ver §38.
 
-**Siguiente.** Tienda, y probar en partida nueva iniciales,
+**Banderas de evento: medir, no adivinar (2026-08-21).** El **campeonato** ya se detecta solo con
+el récord **2**, así que se cuentan solos **5 de los 21**. Los 16 que faltan —doce pruebas, segundo
+alto mando y tres de pegatinas— son **banderas de evento**: 4960 sin etiquetar, 696 encendidas en
+la partida del jugador, y 138 contadores con valores de 1 a 12 que podrían ser cualquier cosa.
+Elegir uno a ojo repartiría puntos por la cosa equivocada sin fallar nunca, así que **se miden**:
+`Probe --flags antes`, jugar, **guardar dentro del juego**, `--flags despues`, `--flags-diff`. Lo
+que salga se escribe en `Data/achievements.json` y el logro pasa a automático sin tocar código.
+Las copias de BxnnyLocke no sirven de referencia: PKHeX no las lee. Ver §39.
+
+**Siguiente.** Anclar las banderas de pruebas y pegatinas, tienda, y probar en partida nueva iniciales,
 entrenadores y tiendas.
 
 Lo que NO está resuelto todavía y no debe darse por hecho (detalle en `docs/ARCHITECTURE.md`):
@@ -320,7 +329,7 @@ Lo que NO está resuelto todavía y no debe darse por hecho (detalle en `docs/AR
 | Wonder trade (banda de BST, escritura, animación) | **MOTOR Y ESCRITURA HECHOS** — 16 tests y verificado contra una copia real del save; la animación está sin ver porque exige un intercambio de verdad. Ver `ARCHITECTURE.md` §33 |
 | Logros y penalizaciones | **HECHO Y VISTO EN LA APP** — motor, pantalla y 6 tests. Falta la lista real de logros, que la tiene que dar el jugador. Ver `ARCHITECTURE.md` §36 |
 | Contadores del juego (movimientos Z, huidas, shiny, entrenadores) | **HECHO Y VISTO EN LA APP** — se leen de `SAV7USUM.Records`; 28/200 huidas y 6/100 entrenadores reales. Ver `ARCHITECTURE.md` §38 |
-| Detectar pruebas superadas, alto mando y pegatinas | **SIN EMPEZAR** — son banderas de evento, no contadores. Bloquea 17 logros y el cap de nivel |
+| Detectar pruebas y pegatinas | **PENDIENTE DE CALIBRAR** — son banderas de evento (4960 sin etiquetar), no contadores. Hay herramienta para anclarlas midiendo: `Probe --flags` antes y después. Ver `ARCHITECTURE.md` §39 |
 | Tienda y sincronización | **SIN EMPEZAR** |
 | API concreta de pk3DS.Core | **VERIFICADA** contra la ROM real — ver `ARCHITECTURE.md` §19 |
 

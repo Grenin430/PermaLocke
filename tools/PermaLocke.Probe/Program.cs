@@ -15,8 +15,22 @@ using PermaLocke.GameLink.Rpc;
 //   Probe --write-test          checks that WriteMemory is accepted
 //   Probe --search "GRENIN"     native search, only on PermaLocke fork of Azahar
 //   Probe --candy [n] [--sweep] bag: locate, list, and optionally write n Rare Candies
+//   Probe --flags [fichero]     dumps the save event flags and counters, to calibrate achievements
+//   Probe --flags-diff a b      what changed between two dumps
 
 Console.OutputEncoding = System.Text.Encoding.UTF8;
+
+// Calibración de banderas: no necesita emulador, solo la partida guardada.
+if (args.Length >= 1 && args[0] == "--flags")
+{
+    var file = args.Length > 1 ? args[1] : Path.Combine(AppContext.BaseDirectory, "banderas.txt");
+    return PermaLocke.Probe.FlagProbe.Dump(file);
+}
+
+if (args.Length >= 3 && args[0] == "--flags-diff")
+{
+    return PermaLocke.Probe.FlagProbe.Diff(args[1], args[2]);
+}
 
 // Comprobación del parche SearchMemory del fork. Va lo primero porque no necesita nada más.
 if (args.Length >= 1 && args[0] == "--candy")

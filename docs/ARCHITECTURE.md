@@ -2921,3 +2921,61 @@ saber cuál vale.
 récords, porque no son contadores sino **banderas de evento** de la partida. Encontrar cuál es
 cuál es otra investigación —del mismo tipo que la del equipo o la mochila— y no se ha hecho.
 Mientras tanto se marcan a mano, que es honesto y funciona.
+
+---
+
+## 39. Las banderas de evento: medirlas, no adivinarlas (2026-08-21)
+
+Quedaban 17 logros sin detectar —las doce pruebas, el alto mando y las pegatinas— y no están entre
+los récords porque **no son contadores, son banderas de evento**. La partida guarda **4960
+banderas y 1000 contadores**, ninguno etiquetado. En la partida del jugador hay 696 encendidas y
+142 contadores distintos de cero.
+
+### Lo que se pudo anclar ya
+
+**Campeón**, con el récord **2**, «momento en que se completó la historia». Vale cero mientras no
+lo seas y se llena en cuanto lo eres, así que no hay nada que interpretar. Lo confirma el Salón de
+la Fama del propio save, que también está a cero: `Fame.First1 = 0`.
+
+De los 21, se cuentan solos **cinco**: movimientos Z, huidas, variocolor, entrenadores y campeón.
+
+### Lo que no se hizo, y por qué no
+
+De las 4960 banderas, 138 contadores tienen un valor entre 1 y 12 en esta partida. Cualquiera
+podría ser «pruebas superadas» y ninguno se puede distinguir mirándolo. Elegir uno sería
+exactamente el mapeo casi-bueno que prohíbe la regla 3: repartiría puntos por la cosa equivocada
+con toda la confianza del mundo.
+
+Se intentó el atajo: comparar dos partidas del jugador con distinto avance. **Las copias de
+BxnnyLocke no las lee PKHeX** —tienen el tamaño correcto, 445.440 bytes, pero no el formato que
+espera—, así que no hay dos puntos de referencia que comparar.
+
+### La herramienta: medir la diferencia
+
+Si no se puede deducir, se mide. `PermaLocke.Probe` gana dos verbos:
+
+```
+PermaLocke.Probe --flags antes.txt          vuelca banderas y contadores de la partida
+PermaLocke.Probe --flags-diff antes despues  dice qué cambió
+```
+
+El procedimiento para anclar cualquiera de los 16 que faltan:
+
+1. Volcar **antes**.
+2. Jugar hasta que pase la cosa —superar una prueba, coger una pegatina—.
+3. **Guardar dentro del juego.** Sin eso el fichero no cambia y los dos volcados salen iguales; el
+   propio volcado avisa si el juego está abierto.
+4. Volcar **después** y comparar.
+
+Entre una prueba y la siguiente se mueven un puñado de cosas, así que la lista sale corta y
+legible. Lo que aparezca se escribe en `Data/achievements.json` y el logro pasa a contarse solo,
+sin tocar código.
+
+El volcado es texto plano a propósito: es **prueba**. Se guarda, se compara más tarde y se le
+puede enseñar a otro.
+
+### Por qué esto y no una lista de banderas sacada de internet
+
+Porque no se puede verificar contra este cartucho sin hacer justo esta medición, y una bandera
+equivocada no falla: reparte puntos en silencio. Medirla cuesta dos minutos de partida y deja el
+número anclado con su evidencia al lado.

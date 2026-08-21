@@ -2,9 +2,11 @@
   "version": 3,
   "comment": "Los logros de la competición. Cada uno cuenta un tipo de evento del historial (trigger) o, si PermaLocke todavía no sabe detectarlo, lo marca el jugador a mano desde la pantalla.",
 
-  "comentarioRecords": "record apunta a un CONTADOR DEL PROPIO JUEGO, el mismo que enseña la ficha de entrenador. Se lee del fichero de partida, así que el número es el de la última vez que guardaste. Los que se usan: 41 movimientos Z, 46 huidas, 127 variocolor encontrados, 5 combates contra entrenadores. Comprueba alguno contra la ficha de entrenador del juego; si no cuadra, se cambia el número aquí y ya.",
+  "comentarioRecords": "record apunta a un CONTADOR DEL PROPIO JUEGO, el mismo que enseña la ficha de entrenador. Se lee del fichero de partida, así que el número es el de la última vez que guardaste. Los que se usan: 41 movimientos Z, 46 huidas, 127 variocolor encontrados, 5 combates contra entrenadores, y 2 -momento en que se completó la historia, distinto de cero en cuanto eres campeón-. Comprueba alguno contra la ficha de entrenador del juego; si no cuadra, se cambia el número aquí y ya.",
 
   "comentarioDisparadores": "trigger tiene que ser un evento que PermaLocke registre de verdad. Hoy son: PokemonCaught, PokemonDied, PokemonTraded, GachaRoll, WonderTrade, ShopPurchase, TeamWiped, LevelCapEnforced, RomRandomized, BallsWithheld. Cualquier otra cosa -o ninguna- hace el logro MANUAL: el progreso lo pone el jugador con los botones, y cada marca queda como evento propio en el historial, con su fecha y firmada por el jugador y no por la detección automática.",
+
+  "comentarioPendientes": "Las doce pruebas, las pegatinas y el segundo alto mando siguen a mano: no son contadores del juego sino BANDERAS DE EVENTO, y hay 4960 sin etiquetar. Para anclarlas: PermaLocke.Probe --flags antes.txt, jugar hasta que pase la cosa, GUARDAR dentro del juego, --flags despues.txt, y --flags-diff antes.txt despues.txt. Lo que salga se pone aquí como flag y el logro pasa a contarse solo.",
 
   "comentarioPuntos": "Los de las pruebas, las pegatinas y el alto mando salen de la competición. Los de movimientos Z, huidas, shiny y entrenadores los he puesto yo a ojo sobre esa misma escala: cámbialos aquí sin tocar código.",
 
@@ -22,7 +24,7 @@
     { "id": "prueba-11", "name": "Undécima prueba", "description": "Completa la undécima prueba del recorrido insular.", "target": 1, "points": 100 },
     { "id": "prueba-12", "name": "Duodécima prueba", "description": "Completa la duodécima prueba del recorrido insular.", "target": 1, "points": 100 },
 
-    { "id": "alto-mando-campeon", "name": "Campeón", "description": "Derrota al alto mando y proclámate campeón.", "target": 1, "points": 300 },
+    { "id": "alto-mando-campeon", "name": "Campeón", "description": "Derrota al alto mando y proclámate campeón.", "target": 1, "points": 300, "record": 2 },
     { "id": "alto-mando-otra-vez", "name": "Y otra vez", "description": "Derrota al alto mando de nuevo.", "target": 2, "points": 300 },
 
     { "id": "pegatinas-25", "name": "Pegatinas: 25", "description": "Encuentra 25 pegatinas escondidas por toda la región.", "target": 25, "points": 75 },
