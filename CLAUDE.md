@@ -263,6 +263,14 @@ la pantalla cree, copia la partida entera y la relee después. Animación: el sp
 Poké Ball, sale disparada y otra llega del otro lado cruzándose con ella; antes del Pokémon salen
 **tipo, generación y total base**, en ese orden. Ver §33.
 
+**Iconos de objeto encontrados; los de tipo no existen (2026-08-21).** Barrido del RomFS entero:
+`a/0/6/1` son los **769 iconos de objeto**, 32×32 RGBA5551, con **índice = id del objeto menos
+uno** —lo prueban las dieciséis Poké Balls en fila—, y se acaba en el 768 con el «?». Sirve
+también para la tienda. Los **iconos de tipo no están en el cartucho**: se buscaron como
+contenedor, tallando los ALYT y por número, y no aparecen, porque el juego **compone la placa**
+con un color y el nombre. Lo que sí hay, 18 y una por tipo, son los **cristales Z**, pero no en
+orden de tipo, así que emparejarlos sería adivinar por color y no se hace. Ver §34.
+
 **Siguiente.** Logros (la fuente de puntos), tienda, y probar en partida nueva iniciales,
 entrenadores y tiendas.
 

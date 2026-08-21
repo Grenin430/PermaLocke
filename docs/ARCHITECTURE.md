@@ -2622,3 +2622,82 @@ HP/Atk/Def/SpA/SpD/Spe. Está documentado en los dos sitios. Mezclarlos no rompe
 | Panel del visor: armar, elegir, ver la banda | **VISTO EN LA APP** — Decidueye, 530 de total, banda 487-583 |
 | La animación | **SIN VER** — exige un intercambio de verdad, que destruye un Pokémon de la partida del jugador. No se ha hecho sin permiso |
 | Coste en puntos | Ninguno, como el gacha mientras no existan los logros |
+
+---
+
+## 34. Iconos de objeto y de tipo: qué hay en el cartucho y qué no (2026-08-21)
+
+Buscando las Poké Balls y los iconos de tipo para el wonder trade se barrió el RomFS entero. El
+resultado sirve para más cosas que el intercambio —la tienda va a querer iconos de objeto— así que
+queda escrito, incluido lo que **no** existe.
+
+### El barrido
+
+El RomFS tiene **747 ficheros**, todos bajo `a/x/y/z` y diez por carpeta, y solo dos son enormes
+(`a/0/8` con 722 MB y `a/0/9` con 1,4 GB). Así que se puede recorrer casi entero: abrir cada
+contenedor como GARC, descomprimir cada subfichero y mirar qué es. Herramientas de un solo uso, en
+el scratchpad, no en el producto.
+
+Contenedores con imágenes BFLIM sueltas:
+
+| Contenedor | Qué es |
+|---|---|
+| `a/0/6/1` | **769 iconos de objeto**, 32x32 RGBA5551 |
+| `a/0/6/2` | los 1154 iconos de Pokémon del §28 |
+| `a/1/5/8` | 122 retratos de entrenador, 64x64 |
+| `a/2/9/4` | las 15 judías Poké |
+| `a/2/6/4` | 48 imágenes que salen mal decodificadas: otra distribución de mosaicos, sin resolver |
+
+### Los iconos de objeto: `a/0/6/1`, índice = id del objeto menos uno
+
+No hizo falta deducirlo: **los dieciséis primeros iconos son las dieciséis Poké Balls**, en el
+orden en que el juego numera los objetos —Master, Ultra, Honor, Poké, Safari, Malla, Buceo, Nido,
+Acopio, Turno, Lujo, Premier, Ocaso, Sanación, Rápida, Gloria—. Verlas en fila es la comprobación.
+
+El contenedor **se acaba en el 768**, y ese último icono es el «?» que el juego enseña para un
+objeto sin dibujo. Los objetos numerados por encima —los cristales Z están en el 776-793— **no
+tienen icono aquí**.
+
+`ItemIconReader` lo lee igual que el de Pokémon: LZ11 + BFLIM + recorte del margen transparente.
+La aplicación extrae **solo las dieciséis bolas** a `Data/sprites/balls/`, porque las otras 753 no
+las quiere nadie todavía.
+
+### Los iconos de tipo: no existen
+
+Se buscaron de tres maneras y ninguna los encontró:
+
+1. **Como contenedor suelto**: no hay ningún GARC con 18 imágenes de tipo.
+2. **Talladas de los ALYT**, que son las pantallas de interfaz: se recorrieron todos buscando la
+   cabecera `FLIM` incrustada y midiendo cada imagen. Aparecen miles, pero **ninguna placa** —una
+   imagen ancha y baja, de 32 a 128 por 10 a 32— repetida 18 veces.
+3. **Por número**: se buscaron grupos de 16 a 22 imágenes del mismo tamaño en todo el RomFS.
+
+Lo que sí hay, exactamente 18 y una por tipo, son los **cristales Z** (`a/1/5/5` y `a/1/4/2`,
+32x32 RGBA5551). Pero **no están en orden de tipo** —el primero es amarillo y el Normalium es
+blanco—, así que emparejarlos con su tipo sería adivinar por color. Los cristales tampoco están en
+el contenedor de objetos, donde el id sí habría dado la respuesta sin dudas.
+
+**Conclusión: el cartucho no guarda placas de tipo porque el juego las compone**, con un color de
+fondo y el nombre del tipo escrito encima. Que es exactamente lo que hace la pantalla del
+intercambio, así que no se pierde nada. Lo que no se va a hacer es colgar la etiqueta «icono del
+cartucho» de una cosa emparejada a ojo por su color.
+
+### La animación, en grande
+
+Con la bola de verdad, la escena creció: bolas de 150 px, Pokémon de 200 y 260, barras de cine
+arriba y abajo, rayas de velocidad de fondo, sacudida de toda la escena y onda de choque en cada
+impacto, y al abrirse la bola **el color del tipo inunda el fondo** y se queda de ambiente. Los
+tres avisos son ahora placas de 26 px que entran desde el triple de su tamaño, la generación a 30
+y el total a **72**.
+
+Detalle de WPF que se repite: el resplandor del tipo se pinta con el **relleno** del color y una
+**OpacityMask con degradado**. Al revés no vale, porque un degradado no se puede colorear desde un
+binding. Y la OpacityMask sí funciona aquí: la que no pinta nada es la de `ImageBrush` (§31).
+
+### Y un fallo de distribución que costó ver
+
+Los dos botones del visor se pusieron en una columna `Auto` con el resumen al lado en una `*`. En
+una ventana estrecha los botones se comen el ancho, la otra columna se queda a **cero**, y el
+resumen envuelve **letra a letra**: treinta y tres líneas, seiscientos píxeles de alto, y la caja
+de arriba encogida a tres filas con barra de scroll. Sin error y sin log, otra vez. Ahora van en
+un `WrapPanel` con el resumen debajo.

@@ -23,10 +23,10 @@ namespace PermaLocke.App.Views;
 public partial class WonderTradeOverlay : UserControl
 {
     /// <summary>How long the Pokémon takes to shrink into its ball.</summary>
-    private static readonly Duration Swallow = new(TimeSpan.FromSeconds(1.1));
+    private static readonly Duration Swallow = new(TimeSpan.FromSeconds(1.3));
 
     /// <summary>How long a ball takes to cross the panel.</summary>
-    private static readonly Duration Travel = new(TimeSpan.FromSeconds(1.5));
+    private static readonly Duration Travel = new(TimeSpan.FromSeconds(1.7));
 
     private WonderTradeViewModel? _model;
 
@@ -72,9 +72,9 @@ public partial class WonderTradeOverlay : UserControl
     {
         // Media pantalla más un margen: la bola tiene que salirse del todo, no quedarse en el
         // borde, y el ancho real solo se conoce ahora.
-        var distance = (ActualWidth / 2) + 140;
+        var distance = (ActualWidth / 2) + 200;
 
-        if (distance <= 140)
+        if (distance <= 200)
         {
             request.BallArrived();
             return;
@@ -95,6 +95,8 @@ public partial class WonderTradeOverlay : UserControl
         GivenScale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
         GivenScale.ScaleX = GivenScale.ScaleY = 1;
 
+        TypeFlood.BeginAnimation(OpacityProperty, null);
+        TypeFlood.Opacity = 0;
         OutgoingBall.Opacity = 0;
         IncomingBall.Opacity = 0;
         OutgoingShift.X = 0;
@@ -176,6 +178,10 @@ public partial class WonderTradeOverlay : UserControl
         // los tres avisos no empiecen con la bola todavía en el aire.
         fly.Completed += (_, _) =>
         {
+            // Aterriza: golpe, onda y sacudida, y solo entonces empiezan los avisos.
+            Shake(16, 0.45);
+            PlayShockwave();
+            FlashOnce(0.5, TimeSpan.FromSeconds(0.8));
             Wiggle();
             request.BallArrived();
         };
@@ -211,27 +217,81 @@ public partial class WonderTradeOverlay : UserControl
         IncomingSpin.BeginAnimation(RotateTransform.AngleProperty, wiggle);
     }
 
-    /// <summary>The ball bursts open and the Pokémon lands.</summary>
+    /// <summary>The ball bursts open, the type floods the screen and the Pokémon lands.</summary>
     private void Open()
     {
-        FlashOnce(0.85, TimeSpan.FromSeconds(1.2));
+        FlashOnce(1, TimeSpan.FromSeconds(1.4));
+        PlayShockwave(3.2);
+        Shake(24, 0.6);
 
-        var burst = new DoubleAnimation(1, 2.6, new Duration(TimeSpan.FromSeconds(0.5)))
+        // El color del tipo se queda de fondo, bajito, para que la ficha final tenga su ambiente.
+        var flood = new DoubleAnimationUsingKeyFrames { Duration = new Duration(TimeSpan.FromSeconds(1.6)) };
+        flood.KeyFrames.Add(new LinearDoubleKeyFrame(0.55, KeyTime.FromPercent(0.12)));
+        flood.KeyFrames.Add(new EasingDoubleKeyFrame(0.22, KeyTime.FromPercent(1))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
+        });
+        TypeFlood.BeginAnimation(OpacityProperty, flood);
+
+        var burst = new DoubleAnimation(1, 3.4, new Duration(TimeSpan.FromSeconds(0.5)))
         {
             EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn },
         };
         IncomingScale.BeginAnimation(ScaleTransform.ScaleXProperty, burst);
         IncomingScale.BeginAnimation(ScaleTransform.ScaleYProperty, burst);
 
-        var vanish = new DoubleAnimation(1, 0, new Duration(TimeSpan.FromSeconds(0.45)));
+        var vanish = new DoubleAnimation(1, 0, new Duration(TimeSpan.FromSeconds(0.4)));
         IncomingBall.BeginAnimation(OpacityProperty, vanish);
 
-        var land = new DoubleAnimation(0.4, 1, new Duration(TimeSpan.FromSeconds(0.7)))
+        var land = new DoubleAnimation(0.25, 1, new Duration(TimeSpan.FromSeconds(0.9)))
         {
-            EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.6 },
+            BeginTime = TimeSpan.FromSeconds(0.15),
+            EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.7 },
         };
         ResultScale.BeginAnimation(ScaleTransform.ScaleXProperty, land);
         ResultScale.BeginAnimation(ScaleTransform.ScaleYProperty, land);
+    }
+
+    /// <summary>The ring that opens out from the middle on every impact.</summary>
+    private void PlayShockwave(double strength = 2.2)
+    {
+        var life = new Duration(TimeSpan.FromSeconds(0.9));
+
+        var fade = new DoubleAnimationUsingKeyFrames { Duration = life };
+        fade.KeyFrames.Add(new LinearDoubleKeyFrame(0.9, KeyTime.FromPercent(0.05)));
+        fade.KeyFrames.Add(new EasingDoubleKeyFrame(0, KeyTime.FromPercent(1))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
+        });
+        Shockwave.BeginAnimation(OpacityProperty, fade);
+
+        var grow = new DoubleAnimation(0.15, strength, life)
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
+        };
+        ShockwaveScale.BeginAnimation(ScaleTransform.ScaleXProperty, grow);
+        ShockwaveScale.BeginAnimation(ScaleTransform.ScaleYProperty, grow);
+    }
+
+    /// <summary>A decaying two-axis shake of the whole scene.</summary>
+    private void Shake(double amount, double seconds)
+    {
+        StageShake.BeginAnimation(TranslateTransform.XProperty, Jolt(amount, seconds, 1));
+        StageShake.BeginAnimation(TranslateTransform.YProperty, Jolt(amount * 0.55, seconds, -1));
+    }
+
+    private static DoubleAnimationUsingKeyFrames Jolt(double amount, double seconds, double sign)
+    {
+        double[] steps = [1, -0.76, 0.54, -0.35, 0.2, -0.09, 0];
+        var shake = new DoubleAnimationUsingKeyFrames { Duration = new Duration(TimeSpan.FromSeconds(seconds)) };
+
+        for (var i = 0; i < steps.Length; i++)
+        {
+            shake.KeyFrames.Add(new LinearDoubleKeyFrame(
+                amount * steps[i] * sign, KeyTime.FromPercent((i + 1) / (double)steps.Length)));
+        }
+
+        return shake;
     }
 
     private void FlashOnce(double from, TimeSpan fade, TimeSpan? delay = null)

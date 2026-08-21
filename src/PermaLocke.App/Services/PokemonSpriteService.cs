@@ -32,6 +32,9 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
     private bool _prepared;
     private string SpriteDirectory => Path.Combine(paths.Data, "sprites");
 
+    /// <summary>The balls live apart so the Pokémon folder stays one file per icon index.</summary>
+    private string BallDirectory => Path.Combine(paths.Data, "sprites", "balls");
+
     /// <summary>True when the icons are on disk and the index loaded.</summary>
     public bool IsAvailable => _prepared && _index is { Count: > 0 };
 
@@ -68,6 +71,11 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
             if (!Directory.Exists(SpriteDirectory) || Directory.GetFiles(SpriteDirectory, "*.png").Length == 0)
             {
                 await Task.Run(() => Extract(rom.Path, scratch), ct);
+            }
+
+            if (!Directory.Exists(BallDirectory) || Directory.GetFiles(BallDirectory, "*.png").Length == 0)
+            {
+                await Task.Run(() => ExtractBalls(rom.Path, scratch), ct);
             }
 
             _prepared = true;
@@ -119,29 +127,83 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
             return cached;
         }
 
-        BitmapSource? image = null;
-        var file = Path.Combine(SpriteDirectory, $"{icon:0000}.png");
-
-        if (File.Exists(file))
-        {
-            try
-            {
-                var bitmap = new BitmapImage();
-                bitmap.BeginInit();
-                bitmap.UriSource = new Uri(file);
-                bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                bitmap.EndInit();
-                bitmap.Freeze();
-                image = bitmap;
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "No se pudo leer el sprite {File}", file);
-            }
-        }
-
+        var image = Read(Path.Combine(SpriteDirectory, $"{icon:0000}.png"));
         _cache[icon] = image;
         return image;
+    }
+
+    private BitmapSource? Read(string file)
+    {
+        if (!File.Exists(file))
+        {
+            return null;
+        }
+
+        try
+        {
+            var bitmap = new BitmapImage();
+            bitmap.BeginInit();
+            bitmap.UriSource = new Uri(file);
+            bitmap.CacheOption = BitmapCacheOption.OnLoad;
+            bitmap.EndInit();
+            bitmap.Freeze();
+            return bitmap;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "No se pudo leer el sprite {File}", file);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// The icon of a Poké Ball, straight from the cartridge. Item 4 is the ordinary one.
+    /// </summary>
+    public BitmapSource? GetBall(int itemId = ItemIconReader.PokeBallItemId)
+    {
+        if (!_prepared)
+        {
+            return null;
+        }
+
+        var key = -itemId;   // negativo para no chocar con los índices de icono de Pokémon
+        if (_cache.TryGetValue(key, out var cached))
+        {
+            return cached;
+        }
+
+        var image = Read(Path.Combine(BallDirectory, $"{itemId:000}.png"));
+        _cache[key] = image;
+        return image;
+    }
+
+    /// <summary>
+    /// The sixteen balls, and only those: the rest of the 769 item icons are not wanted yet and
+    /// writing them all would be a folder nobody asked for.
+    /// </summary>
+    private void ExtractBalls(string romPath, string scratch)
+    {
+        var reader = ItemIconReader.Open(romPath, scratch);
+        Directory.CreateDirectory(BallDirectory);
+
+        for (var item = 1; item <= ItemIconReader.LastBallItemId; item++)
+        {
+            if (!reader.Has(item))
+            {
+                continue;
+            }
+
+            var destination = Path.Combine(BallDirectory, $"{item:000}.png");
+            if (File.Exists(destination))
+            {
+                continue;
+            }
+
+            var icon = reader.Read(item);
+            File.WriteAllBytes(destination, PngImage.Encode(icon.Pixels, icon.Width, icon.Height));
+        }
+
+        logger.LogInformation("Iconos de Poké Ball extraídos a {Folder}", BallDirectory);
     }
 
     private void Extract(string romPath, string scratch)

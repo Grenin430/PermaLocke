@@ -4,89 +4,131 @@
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
-
-        <!-- La Poké Ball, dibujada con formas: media esfera roja, media blanca, la banda y el
-             botón. Nada de assets; es geometría, como los portales del gacha. -->
-        <ControlTemplate x:Key="PokeBall" TargetType="ContentControl">
-            <Grid Width="64" Height="64">
-                <Ellipse Stroke="#101014" StrokeThickness="3">
-                    <Ellipse.Fill>
-                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                            <GradientStop Offset="0" Color="#E8404A" />
-                            <GradientStop Offset="0.5" Color="#C42A34" />
-                            <GradientStop Offset="0.5" Color="#F4F4F6" />
-                            <GradientStop Offset="1" Color="#C9C9D2" />
-                        </LinearGradientBrush>
-                    </Ellipse.Fill>
-                </Ellipse>
-                <Rectangle Height="7" VerticalAlignment="Center" Fill="#101014" />
-                <Ellipse Width="20" Height="20" HorizontalAlignment="Center" VerticalAlignment="Center"
-                         Fill="#101014" />
-                <Ellipse Width="13" Height="13" HorizontalAlignment="Center" VerticalAlignment="Center"
-                         Fill="#F4F4F6" Stroke="#7A7A85" StrokeThickness="1" />
-            </Grid>
-        </ControlTemplate>
     </UserControl.Resources>
 
-    <Grid Background="#E60A0A0F">
-        <!-- Campo de la animación. Todo se posiciona respecto al centro. -->
-        <Grid x:Name="Stage">
+    <Grid Background="#F2070709" ClipToBounds="True">
 
-            <!-- Fogonazo del momento: al cerrarse la bola y al abrirse. -->
+        <!-- El color del tipo inunda el fondo cuando se revela, y solo entonces. -->
+        <!-- El relleno lleva el color del tipo y la máscara le da la forma de resplandor. Al
+             revés no vale: el degradado no se puede pintar del color del tipo desde un binding,
+             y una OpacityMask con degradado sí funciona (con ImageBrush no, ver §31). -->
+        <Rectangle x:Name="TypeFlood" Opacity="0" IsHitTestVisible="False" Fill="{Binding TypeColour}">
+            <Rectangle.OpacityMask>
+                <RadialGradientBrush GradientOrigin="0.5,0.5" Center="0.5,0.5" RadiusX="0.85" RadiusY="1.1">
+                    <GradientStop Offset="0" Color="#FFFFFFFF" />
+                    <GradientStop Offset="1" Color="#00000000" />
+                </RadialGradientBrush>
+            </Rectangle.OpacityMask>
+        </Rectangle>
+
+        <!-- Rayas de velocidad del ultraespacio, corriendo siempre por detrás. -->
+        <Rectangle x:Name="Streaks" Opacity="0.16" IsHitTestVisible="False" Width="2400"
+                   HorizontalAlignment="Left">
+            <Rectangle.Fill>
+                <DrawingBrush TileMode="Tile" Viewport="0,0,300,110" ViewportUnits="Absolute" Stretch="None">
+                    <DrawingBrush.Drawing>
+                        <GeometryDrawing Brush="{StaticResource TextBrush}">
+                            <GeometryDrawing.Geometry>
+                                <GeometryGroup>
+                                    <RectangleGeometry Rect="0,14,120,1" />
+                                    <RectangleGeometry Rect="150,44,70,1" />
+                                    <RectangleGeometry Rect="40,74,140,1" />
+                                    <RectangleGeometry Rect="210,96,60,1" />
+                                </GeometryGroup>
+                            </GeometryDrawing.Geometry>
+                        </GeometryDrawing>
+                    </DrawingBrush.Drawing>
+                </DrawingBrush>
+            </Rectangle.Fill>
+            <Rectangle.RenderTransform>
+                <TranslateTransform X="0" />
+            </Rectangle.RenderTransform>
+            <Rectangle.Triggers>
+                <EventTrigger RoutedEvent="Loaded">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation
+                                Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+                                From="0" To="-300" Duration="0:0:0.7" RepeatBehavior="Forever" />
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+            </Rectangle.Triggers>
+        </Rectangle>
+
+        <!-- Barras de cine, arriba y abajo: es lo que dice "esto es una escena". -->
+        <Rectangle Height="46" VerticalAlignment="Top" Fill="#0A0A0D" IsHitTestVisible="False" />
+        <Rectangle Height="46" VerticalAlignment="Bottom" Fill="#0A0A0D" IsHitTestVisible="False" />
+
+        <Grid x:Name="Stage" RenderTransformOrigin="0.5,0.5">
+            <Grid.RenderTransform>
+                <TranslateTransform x:Name="StageShake" X="0" Y="0" />
+            </Grid.RenderTransform>
+
+            <!-- Fogonazo, del color del tipo que ha tocado. -->
             <Rectangle x:Name="Flash" Opacity="0" IsHitTestVisible="False">
                 <Rectangle.Fill>
-                    <RadialGradientBrush GradientOrigin="0.5,0.5" Center="0.5,0.5" RadiusX="0.7" RadiusY="0.9">
-                        <GradientStop Offset="0" Color="{StaticResource AccentColor}" />
+                    <RadialGradientBrush GradientOrigin="0.5,0.5" Center="0.5,0.5" RadiusX="0.8" RadiusY="1">
+                        <GradientStop Offset="0" Color="#FFFFFFFF" />
                         <GradientStop Offset="1" Color="#00000000" />
                     </RadialGradientBrush>
                 </Rectangle.Fill>
             </Rectangle>
 
-            <TextBlock x:Name="Caption" Style="{StaticResource Mono}" FontSize="12" Opacity="0.55"
-                       HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,18,0,0"
-                       Text="INTERCAMBIO PRODIGIOSO" />
+            <TextBlock Style="{StaticResource Mono}" FontSize="13" Opacity="0.45"
+                       HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,14,0,0"
+                       Text="I N T E R C A M B I O   P R O D I G I O S O" />
 
-            <!-- EL POKÉMON QUE SE VA. Se encoge y entra en su bola. -->
-            <Image x:Name="GivenSprite" Source="{Binding GivenSprite}" Width="96" Height="96"
+            <!-- Onda de choque de cada impacto. -->
+            <Ellipse x:Name="Shockwave" Width="200" Height="200" Opacity="0" StrokeThickness="5"
+                     Stroke="{Binding TypeColour}" IsHitTestVisible="False"
+                     HorizontalAlignment="Center" VerticalAlignment="Center"
+                     RenderTransformOrigin="0.5,0.5">
+                <Ellipse.RenderTransform>
+                    <ScaleTransform x:Name="ShockwaveScale" ScaleX="0.15" ScaleY="0.15" />
+                </Ellipse.RenderTransform>
+            </Ellipse>
+
+            <!-- EL POKÉMON QUE SE VA, grande. -->
+            <Image x:Name="GivenSprite" Source="{Binding GivenSprite}" Width="200" Height="200"
                    Stretch="Uniform" RenderOptions.BitmapScalingMode="NearestNeighbor"
                    HorizontalAlignment="Center" VerticalAlignment="Center"
                    RenderTransformOrigin="0.5,0.5">
                 <Image.RenderTransform>
-                    <TransformGroup>
-                        <ScaleTransform x:Name="GivenScale" ScaleX="1" ScaleY="1" />
-                        <TranslateTransform x:Name="GivenShift" X="0" Y="0" />
-                    </TransformGroup>
+                    <ScaleTransform x:Name="GivenScale" ScaleX="1" ScaleY="1" />
                 </Image.RenderTransform>
             </Image>
 
-            <!-- LA BOLA QUE SE VA. -->
-            <ContentControl x:Name="OutgoingBall" Template="{StaticResource PokeBall}" Opacity="0"
-                            HorizontalAlignment="Center" VerticalAlignment="Center"
-                            RenderTransformOrigin="0.5,0.5" IsHitTestVisible="False">
-                <ContentControl.RenderTransform>
+            <!-- LA BOLA QUE SE VA. Sprite del cartucho del propio jugador. -->
+            <Image x:Name="OutgoingBall" Source="{Binding BallSprite}" Width="150" Height="150"
+                   Stretch="Uniform" RenderOptions.BitmapScalingMode="NearestNeighbor" Opacity="0"
+                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                   RenderTransformOrigin="0.5,0.5" IsHitTestVisible="False">
+                <Image.RenderTransform>
                     <TransformGroup>
                         <ScaleTransform x:Name="OutgoingScale" ScaleX="1" ScaleY="1" />
                         <RotateTransform x:Name="OutgoingSpin" Angle="0" />
                         <TranslateTransform x:Name="OutgoingShift" X="0" Y="0" />
                     </TransformGroup>
-                </ContentControl.RenderTransform>
-            </ContentControl>
+                </Image.RenderTransform>
+            </Image>
 
             <!-- LA BOLA QUE LLEGA, del otro lado y en el mismo plano. -->
-            <ContentControl x:Name="IncomingBall" Template="{StaticResource PokeBall}" Opacity="0"
-                            HorizontalAlignment="Center" VerticalAlignment="Center"
-                            RenderTransformOrigin="0.5,0.5" IsHitTestVisible="False">
-                <ContentControl.RenderTransform>
+            <Image x:Name="IncomingBall" Source="{Binding BallSprite}" Width="150" Height="150"
+                   Stretch="Uniform" RenderOptions.BitmapScalingMode="NearestNeighbor" Opacity="0"
+                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                   RenderTransformOrigin="0.5,0.5" IsHitTestVisible="False">
+                <Image.RenderTransform>
                     <TransformGroup>
                         <ScaleTransform x:Name="IncomingScale" ScaleX="1" ScaleY="1" />
                         <RotateTransform x:Name="IncomingSpin" Angle="0" />
                         <TranslateTransform x:Name="IncomingShift" X="0" Y="0" />
                     </TransformGroup>
-                </ContentControl.RenderTransform>
-            </ContentControl>
+                </Image.RenderTransform>
+            </Image>
 
-            <!-- LOS TRES AVISOS, en orden y sin el Pokémon todavía. -->
-            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,120,0,0">
+            <!-- LOS TRES AVISOS. Uno debajo de otro, grandes, y sin el Pokémon todavía. -->
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,200,0,0">
 
                 <ItemsControl ItemsSource="{Binding Types}" HorizontalAlignment="Center"
                               Visibility="{Binding ShowTypes, Converter={StaticResource BoolToVisibility}}">
@@ -97,29 +139,32 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Background="{Binding Colour}" CornerRadius="4" Padding="16,5"
-                                    Margin="4,0" RenderTransformOrigin="0.5,0.5">
+                            <Border Background="{Binding Colour}" CornerRadius="7" Padding="30,10"
+                                    Margin="7,0" RenderTransformOrigin="0.5,0.5">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="Black" BlurRadius="18" ShadowDepth="0" Opacity="0.7" />
+                                </Border.Effect>
                                 <Border.RenderTransform>
                                     <ScaleTransform ScaleX="1" ScaleY="1" />
                                 </Border.RenderTransform>
                                 <TextBlock Text="{Binding Name}" Style="{StaticResource Mono}"
-                                           FontSize="15" FontWeight="Bold" Foreground="#FFFFFF" />
+                                           FontSize="26" FontWeight="Bold" Foreground="#FFFFFF" />
                                 <Border.Triggers>
                                     <EventTrigger RoutedEvent="Loaded">
                                         <BeginStoryboard>
                                             <Storyboard>
                                                 <DoubleAnimation Storyboard.TargetProperty="Opacity"
                                                                  From="0" To="1" Duration="0:0:0.3" />
-                                                <DoubleAnimation From="2.2" To="1" Duration="0:0:0.55"
+                                                <DoubleAnimation From="3" To="1" Duration="0:0:0.6"
                                                     Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)">
                                                     <DoubleAnimation.EasingFunction>
-                                                        <BackEase EasingMode="EaseOut" Amplitude="0.8" />
+                                                        <BackEase EasingMode="EaseOut" Amplitude="0.9" />
                                                     </DoubleAnimation.EasingFunction>
                                                 </DoubleAnimation>
-                                                <DoubleAnimation From="2.2" To="1" Duration="0:0:0.55"
+                                                <DoubleAnimation From="3" To="1" Duration="0:0:0.6"
                                                     Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)">
                                                     <DoubleAnimation.EasingFunction>
-                                                        <BackEase EasingMode="EaseOut" Amplitude="0.8" />
+                                                        <BackEase EasingMode="EaseOut" Amplitude="0.9" />
                                                     </DoubleAnimation.EasingFunction>
                                                 </DoubleAnimation>
                                             </Storyboard>
@@ -131,9 +176,9 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
 
-                <TextBlock x:Name="Generation" Text="{Binding GenerationText}" Margin="0,14,0,0"
-                           Style="{StaticResource Mono}" FontSize="17" HorizontalAlignment="Center"
-                           Foreground="{StaticResource TextBrush}" RenderTransformOrigin="0.5,0.5"
+                <TextBlock Text="{Binding GenerationText}" Margin="0,20,0,0"
+                           Style="{StaticResource PanelHeading}" FontSize="30" HorizontalAlignment="Center"
+                           RenderTransformOrigin="0.5,0.5"
                            Visibility="{Binding ShowGeneration, Converter={StaticResource BoolToVisibility}}">
                     <TextBlock.RenderTransform>
                         <ScaleTransform ScaleX="1" ScaleY="1" />
@@ -141,49 +186,90 @@
                     <TextBlock.Triggers>
                         <EventTrigger RoutedEvent="Loaded">
                             <BeginStoryboard>
-                                <Storyboard />
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                     From="0" To="1" Duration="0:0:0.3" />
+                                    <DoubleAnimation From="2.6" To="1" Duration="0:0:0.6"
+                                        Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)">
+                                        <DoubleAnimation.EasingFunction>
+                                            <BackEase EasingMode="EaseOut" Amplitude="0.9" />
+                                        </DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                    <DoubleAnimation From="2.6" To="1" Duration="0:0:0.6"
+                                        Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)">
+                                        <DoubleAnimation.EasingFunction>
+                                            <BackEase EasingMode="EaseOut" Amplitude="0.9" />
+                                        </DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                </Storyboard>
                             </BeginStoryboard>
                         </EventTrigger>
                     </TextBlock.Triggers>
                 </TextBlock>
 
-                <StackPanel Margin="0,14,0,0" HorizontalAlignment="Center"
+                <StackPanel Margin="0,18,0,0" HorizontalAlignment="Center" RenderTransformOrigin="0.5,0.5"
                             Visibility="{Binding ShowTotal, Converter={StaticResource BoolToVisibility}}">
-                    <TextBlock Style="{StaticResource Muted}" FontSize="10" HorizontalAlignment="Center"
+                    <StackPanel.RenderTransform>
+                        <ScaleTransform ScaleX="1" ScaleY="1" />
+                    </StackPanel.RenderTransform>
+                    <TextBlock Style="{StaticResource Muted}" FontSize="12" HorizontalAlignment="Center"
                                Text="TOTAL DE ESTADÍSTICAS BASE" />
                     <TextBlock Text="{Binding TotalText}" Style="{StaticResource PanelHeading}"
-                               FontSize="34" HorizontalAlignment="Center" />
+                               FontSize="72" HorizontalAlignment="Center" Margin="0,-6,0,0" />
                     <TextBlock Text="{Binding DifferenceText}" Style="{StaticResource Mono}"
-                               FontSize="11" Opacity="0.7" HorizontalAlignment="Center" />
+                               FontSize="14" Opacity="0.75" HorizontalAlignment="Center" />
+                    <StackPanel.Triggers>
+                        <EventTrigger RoutedEvent="Loaded">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                     From="0" To="1" Duration="0:0:0.3" />
+                                    <DoubleAnimation From="2.4" To="1" Duration="0:0:0.7"
+                                        Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)">
+                                        <DoubleAnimation.EasingFunction>
+                                            <BackEase EasingMode="EaseOut" Amplitude="0.9" />
+                                        </DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                    <DoubleAnimation From="2.4" To="1" Duration="0:0:0.7"
+                                        Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)">
+                                        <DoubleAnimation.EasingFunction>
+                                            <BackEase EasingMode="EaseOut" Amplitude="0.9" />
+                                        </DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                    </StackPanel.Triggers>
                 </StackPanel>
             </StackPanel>
 
-            <!-- Y POR ÚLTIMO EL POKÉMON. -->
+            <!-- Y POR ÚLTIMO EL POKÉMON, a tamaño de escena. -->
             <StackPanel x:Name="Result" HorizontalAlignment="Center" VerticalAlignment="Center"
-                        Margin="0,0,0,150" RenderTransformOrigin="0.5,0.5"
+                        RenderTransformOrigin="0.5,0.5"
                         Visibility="{Binding ShowPokemon, Converter={StaticResource BoolToVisibility}}">
                 <StackPanel.RenderTransform>
                     <ScaleTransform x:Name="ResultScale" ScaleX="1" ScaleY="1" />
                 </StackPanel.RenderTransform>
 
-                <Image Source="{Binding ReceivedSprite}" Width="128" Height="128" Stretch="Uniform"
+                <Image Source="{Binding ReceivedSprite}" Width="260" Height="260" Stretch="Uniform"
                        RenderOptions.BitmapScalingMode="NearestNeighbor" HorizontalAlignment="Center" />
 
                 <TextBlock Text="{Binding Offer.Name}" Style="{StaticResource PanelHeading}"
-                           FontSize="26" HorizontalAlignment="Center" />
+                           FontSize="46" HorizontalAlignment="Center" Margin="0,-14,0,0" />
 
-                <TextBlock Style="{StaticResource Mono}" FontSize="11" HorizontalAlignment="Center"
-                           Foreground="{StaticResource AccentBrush}" Text="SHINY" Margin="0,2,0,0"
+                <TextBlock Style="{StaticResource Mono}" FontSize="14" HorizontalAlignment="Center"
+                           Foreground="{StaticResource AccentBrush}" Text="★ SHINY ★" Margin="0,4,0,0"
                            Visibility="{Binding Offer.IsShiny, Converter={StaticResource BoolToVisibility}}" />
 
-                <TextBlock Style="{StaticResource Body}" HorizontalAlignment="Center" Margin="0,4,0,0">
+                <TextBlock Style="{StaticResource Body}" FontSize="16" HorizontalAlignment="Center"
+                           Margin="0,6,0,0">
                     <Run Text="Nv." /><Run Text="{Binding Offer.Level, Mode=OneWay}" />
                     <Run Text=" · " /><Run Text="{Binding Offer.NatureName, Mode=OneWay}" />
                     <Run Text=" · IV " /><Run Text="{Binding Offer.IvTotal, Mode=OneWay}" />
                 </TextBlock>
 
-                <Button Content="LISTO" Style="{StaticResource PrimaryButton}" MinWidth="150"
-                        Margin="0,16,0,0" HorizontalAlignment="Center"
+                <Button Content="LISTO" Style="{StaticResource PrimaryButton}" MinWidth="180"
+                        Margin="0,22,0,0" HorizontalAlignment="Center"
                         Command="{Binding DismissCommand}" />
             </StackPanel>
         </Grid>

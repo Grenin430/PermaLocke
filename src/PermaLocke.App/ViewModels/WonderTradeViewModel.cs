@@ -88,6 +88,17 @@ public sealed partial class WonderTradeViewModel : ObservableObject
     [ObservableProperty]
     private BitmapSource? _receivedSprite;
 
+    /// <summary>
+    /// The Poké Ball, out of the player's own cartridge. Null when the sprites are not there,
+    /// and then the animation runs without it rather than drawing a fake one.
+    /// </summary>
+    [ObservableProperty]
+    private BitmapSource? _ballSprite;
+
+    /// <summary>Colour of the received Pokémon's first type, which floods the reveal.</summary>
+    [ObservableProperty]
+    private Brush _typeColour = Brushes.Transparent;
+
     [ObservableProperty]
     private WonderTradeOffer? _offer;
 
@@ -241,7 +252,9 @@ public sealed partial class WonderTradeViewModel : ObservableObject
 
             Offer = offer;
             ReceivedSprite = _sprites.Get(offer.Species);
+            BallSprite = _sprites.GetBall();
             Types = BuildTypes(offer);
+            TypeColour = Types[0].Colour;
             OnPropertyChanged(nameof(Types));
             OnPropertyChanged(nameof(GenerationText));
             OnPropertyChanged(nameof(TotalText));
