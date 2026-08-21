@@ -18,15 +18,23 @@ namespace PermaLocke.Core.Services;
 /// </para>
 /// </remarks>
 public sealed class AchievementService(IAchievementCatalog catalog, IPointsService points,
-    IEventStore events, IClock clock)
+    IEventStore events, IClock clock, IGameRecords records)
 {
     public IReadOnlyList<Achievement> All => catalog.All;
+
+    /// <summary>The last reading of the cartridge's own counters, for the screen to explain itself.</summary>
+    public GameRecordSnapshot? LastRecords { get; private set; }
 
     /// <summary>Where every achievement of the run stands right now.</summary>
     public async Task<IReadOnlyList<AchievementProgress>> GetProgressAsync(Guid runId,
         CancellationToken ct = default)
     {
         var all = await events.GetAllAsync(runId, ct).ConfigureAwait(false);
+
+        // Los contadores del propio juego. Si no se pueden leer, esos logros se quedan a cero y
+        // la pantalla dice por qué, en vez de fingir un progreso.
+        var game = await records.ReadAsync(ct).ConfigureAwait(false);
+        LastRecords = game;
 
         var counts = all
             .GroupBy(e => e.Type)
@@ -51,11 +59,30 @@ public sealed class AchievementService(IAchievementCatalog catalog, IPointsServi
         [
             .. catalog.All.Select(achievement => new AchievementProgress(
                 achievement,
-                achievement.Trigger is { } trigger
-                    ? counts.GetValueOrDefault(trigger)
-                    : marked.GetValueOrDefault(achievement.Id),
+                CountFor(achievement, counts, marked, game),
                 claimed.Contains(achievement.Id)))
         ];
+    }
+
+    /// <summary>
+    /// Where one achievement's number comes from: the cartridge first, then the run's own events,
+    /// and only failing both, the player's own marks.
+    /// </summary>
+    /// <remarks>
+    /// The cartridge wins because it has been counting since before PermaLocke existed. Anything
+    /// PermaLocke worked out on its own could only be a second opinion about the same fact.
+    /// </remarks>
+    private static int CountFor(Achievement achievement, IReadOnlyDictionary<GameEventType, int> counts,
+        IReadOnlyDictionary<string, int> marked, GameRecordSnapshot game)
+    {
+        if (achievement.Record is { } record)
+        {
+            return game.Available ? game.Get(record) : 0;
+        }
+
+        return achievement.Trigger is { } trigger
+            ? counts.GetValueOrDefault(trigger)
+            : marked.GetValueOrDefault(achievement.Id);
     }
 
     /// <summary>

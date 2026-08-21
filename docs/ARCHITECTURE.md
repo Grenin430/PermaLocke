@@ -2866,3 +2866,58 @@ La lista anterior era de prueba y el jugador llegó a cobrar cinco de sus logros
 cambiar la lista, esos logros dejan de existir pero **los puntos se quedan**, porque el log es
 inmutable y el saldo es su suma. Quitarlos es un ajuste de administrador, que también deja su
 propio evento. Lo correcto es que cueste, no que se borre solo.
+
+---
+
+## 38. Que lo cuente el juego (2026-08-21)
+
+Para que los logros avancen solos, lo primero era no contar nada. **Ultra Luna lleva sus propios
+contadores desde el principio** —son los que enseña la ficha de entrenador— y PKHeX los expone en
+`SAV7USUM.Records`, con la lista de nombres en `RecordLists.RecordList_7`: unos doscientos.
+
+Volver a contarlos desde fuera, vigilando memoria, habría producido un segundo número que solo
+puede ser peor que el del propio juego. Así que se leen los suyos.
+
+### Los que sirven
+
+| Récord | Qué es | Logro |
+|---|---|---|
+| 41 | Movimientos Z usados | Usa 100 movimientos Z |
+| 46 | Huidas de combate | Huye 200 veces |
+| 127 | Variocolor encontrados | Encuentra 1 variocolor |
+| 5 | Combates contra entrenadores | Derrota a 100 entrenadores |
+
+Se leen del **fichero de partida**, por el mismo camino que las cajas: no hace falta cerrar el
+juego, pero el número es el de la **última vez que se guardó**, y la pantalla lo dice.
+
+### La comprobación que da confianza
+
+Los índices no se creyeron sin más. Contra la partida real: **168 Poké Balls usadas (récord 42) y
+167 Pokémon capturados (récord 6)**. Dos contadores independientes que tienen que salir casi
+iguales, y salen. Eso ancla la numeración.
+
+El 46 dio **28 huidas**, coherente con 196 combates contra salvajes; el 5 dio **6 entrenadores**,
+coherente con lo poco que lleva la run. Aun así el índice 5 no tiene un cruce propio, así que en el
+JSON queda escrito qué récord lee cada logro y la invitación a compararlo con la ficha de
+entrenador del juego: si no cuadra, se cambia un número y ya.
+
+Ojo con el récord 3, «Total Battles»: dio 39 mientras el 4 daba 196 combates contra salvajes. No
+suma, así que **no se usa** hasta entender qué cuenta de verdad.
+
+### Tres orígenes, dicho en cada tarjeta
+
+Cada logro dice de dónde sale su número, porque no son igual de fiables:
+
+- **«Lo cuenta el juego»** — un récord del cartucho. Manda sobre todo lo demás.
+- **«Lo cuenta PermaLocke»** — un tipo de evento del historial de la run.
+- **«A mano»** — lo marca el jugador, y cada marca es un evento firmado por él.
+
+Un logro con récord **no se puede marcar a mano**: dos números para el mismo hecho, sin manera de
+saber cuál vale.
+
+### Lo que sigue sin detectarse
+
+**17 de los 21**: las doce pruebas, el alto mando y las tres de pegatinas. No están entre los
+récords, porque no son contadores sino **banderas de evento** de la partida. Encontrar cuál es
+cuál es otra investigación —del mismo tipo que la del equipo o la mochila— y no se ha hecho.
+Mientras tanto se marcan a mano, que es honesto y funciona.

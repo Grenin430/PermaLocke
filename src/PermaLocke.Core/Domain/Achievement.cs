@@ -9,6 +9,11 @@ namespace PermaLocke.Core.Domain;
 /// </param>
 /// <param name="Target">How many of them unlock it. One means "the first time it happens".</param>
 /// <param name="Points">Awarded when the player claims it, not when it unlocks.</param>
+/// <param name="Record">
+/// A counter the cartridge keeps itself — Z-moves used, battles fled — read straight from the
+/// save. Preferred over anything PermaLocke could count on its own, because the game has been
+/// counting it all along and a second number could only disagree.
+/// </param>
 public sealed record Achievement(
     string Id,
     string Name,
@@ -16,10 +21,14 @@ public sealed record Achievement(
     GameEventType? Trigger,
     string TriggerName,
     int Target,
-    int Points)
+    int Points,
+    int? Record = null)
 {
     /// <summary>PermaLocke counts this one on its own, from the events it already records.</summary>
-    public bool IsAutomatic => Trigger is not null;
+    public bool IsAutomatic => Trigger is not null || Record is not null;
+
+    /// <summary>The number comes from the cartridge's own counter.</summary>
+    public bool IsFromGame => Record is not null;
 
     /// <summary>
     /// The player moves this counter by hand.
@@ -30,7 +39,7 @@ public sealed record Achievement(
     /// player marks them, and every mark is its own event — signed by the player, not by the
     /// automatic detection, so the history always says which of the two it was.
     /// </remarks>
-    public bool IsManual => Trigger is null;
+    public bool IsManual => Trigger is null && Record is null;
 }
 
 /// <summary>

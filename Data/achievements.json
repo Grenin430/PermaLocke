@@ -2,6 +2,8 @@
   "version": 3,
   "comment": "Los logros de la competición. Cada uno cuenta un tipo de evento del historial (trigger) o, si PermaLocke todavía no sabe detectarlo, lo marca el jugador a mano desde la pantalla.",
 
+  "comentarioRecords": "record apunta a un CONTADOR DEL PROPIO JUEGO, el mismo que enseña la ficha de entrenador. Se lee del fichero de partida, así que el número es el de la última vez que guardaste. Los que se usan: 41 movimientos Z, 46 huidas, 127 variocolor encontrados, 5 combates contra entrenadores. Comprueba alguno contra la ficha de entrenador del juego; si no cuadra, se cambia el número aquí y ya.",
+
   "comentarioDisparadores": "trigger tiene que ser un evento que PermaLocke registre de verdad. Hoy son: PokemonCaught, PokemonDied, PokemonTraded, GachaRoll, WonderTrade, ShopPurchase, TeamWiped, LevelCapEnforced, RomRandomized, BallsWithheld. Cualquier otra cosa -o ninguna- hace el logro MANUAL: el progreso lo pone el jugador con los botones, y cada marca queda como evento propio en el historial, con su fecha y firmada por el jugador y no por la detección automática.",
 
   "comentarioPuntos": "Los de las pruebas, las pegatinas y el alto mando salen de la competición. Los de movimientos Z, huidas, shiny y entrenadores los he puesto yo a ojo sobre esa misma escala: cámbialos aquí sin tocar código.",
@@ -27,9 +29,9 @@
     { "id": "pegatinas-50", "name": "Pegatinas: 50", "description": "Encuentra 50 pegatinas escondidas por toda la región.", "target": 50, "points": 125 },
     { "id": "pegatinas-100", "name": "Pegatinas: 100", "description": "Encuentra 100 pegatinas escondidas por toda la región.", "target": 100, "points": 200 },
 
-    { "id": "movimientos-z-100", "name": "Poder Z", "description": "Usa 100 movimientos Z.", "target": 100, "points": 150 },
-    { "id": "huidas-200", "name": "Pies ligeros", "description": "Huye 200 veces de un combate.", "target": 200, "points": 100 },
-    { "id": "shiny-1", "name": "Uno entre mil", "description": "Encuentra 1 Pokémon variocolor.", "target": 1, "points": 200 },
-    { "id": "entrenadores-100", "name": "Cien caídos", "description": "Derrota a 100 entrenadores.", "target": 100, "points": 250 }
+    { "id": "movimientos-z-100", "name": "Poder Z", "description": "Usa 100 movimientos Z.", "target": 100, "points": 150, "record": 41 },
+    { "id": "huidas-200", "name": "Pies ligeros", "description": "Huye 200 veces de un combate.", "target": 200, "points": 100, "record": 46 },
+    { "id": "shiny-1", "name": "Uno entre mil", "description": "Encuentra 1 Pokémon variocolor.", "target": 1, "points": 200, "record": 127 },
+    { "id": "entrenadores-100", "name": "Cien caídos", "description": "Derrota a 100 entrenadores.", "target": 100, "points": 250, "record": 5 }
   ]
 }

@@ -38,6 +38,16 @@ public sealed partial class AchievementRowViewModel(AchievementProgress progress
     /// <summary>The counter can still be moved by hand, so the card shows its two buttons.</summary>
     public bool CanMark => Progress.CanMark;
 
+    /// <summary>Where the number comes from, said out loud on the card.</summary>
+    public string Source => Progress.Achievement switch
+    {
+        { IsFromGame: true } => "lo cuenta el juego",
+        { IsAutomatic: true } => "lo cuenta PermaLocke",
+        _ => "a mano"
+    };
+
+    public bool IsFromGame => Progress.Achievement.IsFromGame;
+
     /// <summary>First letter of the name, which is what the medal carries.</summary>
     public string Initial => string.IsNullOrEmpty(Name) ? "?" : Name[..1].ToUpperInvariant();
 
@@ -96,6 +106,10 @@ public sealed partial class AchievementsViewModel : SectionViewModel
     [ObservableProperty]
     private string _penaltyText = string.Empty;
 
+    /// <summary>Where the game counters come from, and how fresh they are.</summary>
+    [ObservableProperty]
+    private string _recordsText = string.Empty;
+
     [ObservableProperty]
     private int _wipes;
 
@@ -136,6 +150,16 @@ public sealed partial class AchievementsViewModel : SectionViewModel
             Summary = $"{claimed} de {progress.Count} cobrados"
                       + (ready > 0 ? $" · {ready} listos para cobrar" : string.Empty)
                       + (manual > 0 ? $" · {manual} se marcan a mano" : string.Empty);
+
+            // De dónde vienen los números del juego, y desde cuándo. Sin esto, un contador
+            // parado parece roto cuando lo que pasa es que el jugador no ha guardado.
+            RecordsText = _achievements.LastRecords switch
+            {
+                { Available: false } bad => bad.Problem ?? "No se han podido leer los contadores del juego.",
+                { Notice: { Length: > 0 } notice } => notice,
+                { Available: true } => "Los contadores del juego se leen de la partida guardada.",
+                _ => string.Empty
+            };
 
             var rules = _penalties.Rules;
             PenaltyText = $"Cada muerte cuesta {rules.PerDeath} puntos. Que caiga el equipo entero "

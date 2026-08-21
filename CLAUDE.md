@@ -288,6 +288,16 @@ de los 21 es detectable hoy**, así que los logros sin disparador se marcan a ma
 progreso se reconstruye sumando deltas. Ponerle un `trigger` a un logro lo vuelve automático y le
 quita los botones solo. Ver §37.
 
+**Que lo cuente el juego (2026-08-21).** Ultra Luna lleva sus propios contadores -los de la ficha
+de entrenador- y PKHeX los expone en `SAV7USUM.Records`. Contarlos otra vez desde fuera daría un
+segundo número peor, así que se leen los suyos: **41** movimientos Z, **46** huidas, **127**
+variocolor, **5** combates contra entrenadores. Salen del fichero de partida, así que **no se
+mueven hasta que el jugador guarde**. Los índices se anclaron con un cruce que no engaña: 168 balls
+usadas contra 167 capturas. Cada tarjeta dice si su número lo cuenta el juego, PermaLocke o la
+mano, y un logro con récord no se puede marcar a mano. **17 de los 21 siguen sin detectarse**
+-pruebas, alto mando y pegatinas-: no son contadores sino banderas de evento, y eso es otra
+investigación. Ver §38.
+
 **Siguiente.** Tienda, y probar en partida nueva iniciales,
 entrenadores y tiendas.
 
@@ -309,7 +319,8 @@ Lo que NO está resuelto todavía y no debe darse por hecho (detalle en `docs/AR
 | Visor Pokémon (leer el PC de la partida) | **HECHO Y VERIFICADO** en la partida real — 149 Pokémon, 32 cajas, ficha al pinchar. Solo lectura; sin equipo, sin formas, sin cruce con la run. Ver `ARCHITECTURE.md` §32 |
 | Wonder trade (banda de BST, escritura, animación) | **MOTOR Y ESCRITURA HECHOS** — 16 tests y verificado contra una copia real del save; la animación está sin ver porque exige un intercambio de verdad. Ver `ARCHITECTURE.md` §33 |
 | Logros y penalizaciones | **HECHO Y VISTO EN LA APP** — motor, pantalla y 6 tests. Falta la lista real de logros, que la tiene que dar el jugador. Ver `ARCHITECTURE.md` §36 |
-| Detectar entrenadores derrotados y pruebas superadas | **SIN EMPEZAR** — es lo que bloquea la mitad de los logros y el cap de nivel |
+| Contadores del juego (movimientos Z, huidas, shiny, entrenadores) | **HECHO Y VISTO EN LA APP** — se leen de `SAV7USUM.Records`; 28/200 huidas y 6/100 entrenadores reales. Ver `ARCHITECTURE.md` §38 |
+| Detectar pruebas superadas, alto mando y pegatinas | **SIN EMPEZAR** — son banderas de evento, no contadores. Bloquea 17 logros y el cap de nivel |
 | Tienda y sincronización | **SIN EMPEZAR** |
 | API concreta de pk3DS.Core | **VERIFICADA** contra la ROM real — ver `ARCHITECTURE.md` §19 |
 

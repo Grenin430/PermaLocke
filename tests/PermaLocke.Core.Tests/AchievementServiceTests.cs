@@ -40,14 +40,25 @@ public sealed class AchievementServiceTests
         public DateTimeOffset Now => new(2026, 8, 21, 14, 0, 0, TimeSpan.Zero);
     }
 
-    /// <summary>One counted automatically, one marked by hand: the two kinds the screen shows.</summary>
+    /// <summary>Stands in for the cartridge's own counters.</summary>
+    private sealed class Records(bool available, params (int Id, int Value)[] values) : IGameRecords
+    {
+        public Task<GameRecordSnapshot> ReadAsync(CancellationToken ct = default) =>
+            Task.FromResult(available
+                ? new GameRecordSnapshot(true, null, null,
+                    values.ToDictionary(v => v.Id, v => v.Value), DateTimeOffset.UnixEpoch)
+                : GameRecordSnapshot.Unavailable("sin partida", DateTimeOffset.UnixEpoch));
+    }
+
+    /// <summary>The three kinds the screen shows: from the game, from the run, and by hand.</summary>
     private static Achievement[] Catalogue() =>
     [
         new("gacha-3", "Tirador", "Haz 3 tiradas.", GameEventType.GachaRoll, "GachaRoll", 3, 40),
         new("pegatinas-25", "Pegatinas", "Encuentra 25 pegatinas.", null, "sin disparador", 25, 75),
+        new("huidas-200", "Pies ligeros", "Huye 200 veces.", null, "sin disparador", 200, 100, Record: 46),
     ];
 
-    private static (AchievementService Service, Events Log, Run Run) Build()
+    private static (AchievementService Service, Events Log, Run Run) Build(IGameRecords? records = null)
     {
         var log = new Events();
         var clock = new FixedClock();
@@ -63,7 +74,8 @@ public sealed class AchievementServiceTests
             PlayerName = "Grenin"
         };
 
-        return (new AchievementService(new Catalog(Catalogue()), points, log, clock), log, run);
+        return (new AchievementService(new Catalog(Catalogue()), points, log, clock,
+            records ?? new Records(true, (46, 0))), log, run);
     }
 
     private static GameEvent Roll(Guid runId) => new()
@@ -160,6 +172,41 @@ public sealed class AchievementServiceTests
         Assert.False(second.Success);
         Assert.Equal(40, second.NewBalance);
         Assert.Single(log.Appended, e => e.Type == GameEventType.AchievementUnlocked);
+    }
+
+    /// <summary>
+    /// The cartridge's own counter is the progress: PermaLocke does not count battles again.
+    /// </summary>
+    [Fact]
+    public async Task A_game_counter_is_the_progress()
+    {
+        var (service, _, run) = Build(new Records(true, (46, 137)));
+
+        var fled = (await service.GetProgressAsync(run.Id)).Single(p => p.Achievement.Id == "huidas-200");
+
+        Assert.Equal(137, fled.Count);
+        Assert.False(fled.Unlocked);
+        Assert.True(fled.Achievement.IsFromGame);
+
+        // Y no se puede tocar a mano: el número es del juego.
+        Assert.False(fled.CanMark);
+        Assert.False((await service.MarkAsync(run, "huidas-200", complete: true)).Success);
+    }
+
+    /// <summary>
+    /// Without a save there is no counter, and the achievement sits at zero rather than at a
+    /// number somebody made up.
+    /// </summary>
+    [Fact]
+    public async Task An_unreadable_save_leaves_the_counter_at_zero()
+    {
+        var (service, _, run) = Build(new Records(false));
+
+        var fled = (await service.GetProgressAsync(run.Id)).Single(p => p.Achievement.Id == "huidas-200");
+
+        Assert.Equal(0, fled.Count);
+        Assert.False(service.LastRecords!.Available);
+        Assert.NotNull(service.LastRecords.Problem);
     }
 
     /// <summary>A claim that did not happen must leave no trace at all.</summary>

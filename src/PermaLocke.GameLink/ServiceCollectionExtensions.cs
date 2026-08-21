@@ -47,6 +47,10 @@ public static class ServiceCollectionExtensions
             language,
             sp.GetRequiredService<ILogger<SaveBoxReader>>()));
         services.TryAddSingleton<IBoxReader>(sp => sp.GetRequiredService<SaveBoxReader>());
+        services.TryAddSingleton<SaveRecordReader>(sp => new SaveRecordReader(
+            sp.GetRequiredService<PlayerSave>(),
+            sp.GetRequiredService<ILogger<SaveRecordReader>>()));
+        services.TryAddSingleton<IGameRecords>(sp => sp.GetRequiredService<SaveRecordReader>());
         services.TryAddSingleton<SaveBoxSwap>(sp => new SaveBoxSwap(
             sp.GetRequiredService<PlayerSave>(),
             backupFolder,
