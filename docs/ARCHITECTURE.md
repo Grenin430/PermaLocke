@@ -2979,3 +2979,71 @@ puede enseñar a otro.
 Porque no se puede verificar contra este cartucho sin hacer justo esta medición, y una bandera
 equivocada no falla: reparte puntos en silencio. Medirla cuesta dos minutos de partida y deja el
 número anclado con su evidencia al lado.
+
+---
+
+## 40. La primera prueba se ancla en el premio, no en la bandera (2026-08-21)
+
+Se midió la primera prueba con el procedimiento del §39 y salió algo que conviene contar entero,
+porque la primera medición fue **falsa** y solo se vio por casualidad.
+
+### La medición que no era
+
+El jugador dijo haber superado la primera prueba. El diff entre los dos volcados daba 24 banderas
+encendidas, 3 apagadas y 11 contadores nuevos. Cualquiera de esas 24 podría haberse escrito en
+`achievements.json` como «prueba superada» y el logro habría funcionado el resto de la partida.
+
+No era ninguna. Lo que dice la partida de aquella sesión:
+
+| | antes | después |
+|---|---|---|
+| Combates contra entrenadores | 6 | **11** |
+| Combates contra salvajes | 196 | **197** |
+| Movimientos Z usados | 0 | 0 |
+| Cristales Z en la mochila | **0 de 35 huecos** | **0** |
+
+Superar una prueba significa tumbar a los Pokémon de prueba y al Dominante, que son combates
+**contra salvajes**, y el premio es un **cristal Z**. Había un solo combate salvaje y cero
+cristales. Los cinco combates eran contra entrenadores, con una MT01 en la mochila: la Escuela de
+Entrenadores, el paso justo anterior. La prueba llegó en la sesión siguiente, y entonces sí: +8
+combates contra salvajes y el **Normastal Z (objeto 807)** entrando en un bolsillo vacío.
+
+La lección no es «mira los cristales». Es que **un diff no dice qué pasó, dice qué cambió**, y hace
+falta un hecho independiente que confirme que lo que se busca está dentro de la ventana medida.
+Aquí ese hecho fue el bolsillo de cristales Z, que se lee sin filtrar por cantidad porque un objeto
+clave puede estar con cantidad cero y seguir estando —ahí está la Piedra Brillante para probarlo—.
+
+### Por qué el objeto y no la bandera
+
+Con la medición buena quedaron **seis** banderas candidatas: encendidas por la prueba, nunca vistas
+apagarse, y primeras de un bloque de doce vacío. Seis, no una. Elegir entre ellas sería tirar una
+moneda con cinco caras malas, y ninguna avisaría del error.
+
+Ninguno de los contadores del §38 se mueve al superar una prueba, y `Misc7.Stamps` tampoco: vale 1
+antes y después, así que no es la Dominsignia pese al nombre que invita a creerlo.
+
+Lo que sí deja la prueba es el premio, y el premio **el cartucho lo nombra**: 807, «Normastal Z».
+De ahí la tercera fuente de progreso, junto al récord y al disparador:
+
+```json
+{ "id": "prueba-01", "target": 1, "points": 100, "item": 807 }
+```
+
+`GameRecordSnapshot` lleva ahora el conjunto de objetos de la mochila y `Achievement` un `Item`
+opcional. Presencia, no cantidad: está o no está. **Solo vale para lo que el juego da y no quita**;
+con un consumible el logro se encendería y se apagaría. La tarjeta lo dice en voz alta —«lo dice tu
+mochila»— y, como es automático, no se puede marcar a mano.
+
+Una partida ilegible deja el logro en cero, no en «hecho»: una mochila que no se puede leer no es
+una mochila vacía, pero equivocarse hacia «no hecho» solo cuesta un botón, y hacia «hecho» regala
+cien puntos.
+
+### Estado
+
+`prueba-01` se cuenta sola y verificado en la app: 1/1, listo para cobrar. Las once pruebas
+restantes, las pegatinas y el segundo alto mando siguen a mano, y se anclarán igual, una medición
+cada una. `Saves/banderas-prueba1.txt` es la línea base de la segunda.
+
+Con la segunda prueba habrá además una segunda oportunidad para la bandera: de los seis bloques
+candidatos, el que encienda una **segunda** bandera es el de las pruebas. Si eso cierra, las doce
+se anclan de golpe; mientras no cierre, el objeto ya las cuenta bien.

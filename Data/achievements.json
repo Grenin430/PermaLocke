@@ -6,12 +6,14 @@
 
   "comentarioDisparadores": "trigger tiene que ser un evento que PermaLocke registre de verdad. Hoy son: PokemonCaught, PokemonDied, PokemonTraded, GachaRoll, WonderTrade, ShopPurchase, TeamWiped, LevelCapEnforced, RomRandomized, BallsWithheld. Cualquier otra cosa -o ninguna- hace el logro MANUAL: el progreso lo pone el jugador con los botones, y cada marca queda como evento propio en el historial, con su fecha y firmada por el jugador y no por la detección automática.",
 
-  "comentarioPendientes": "Las doce pruebas, las pegatinas y el segundo alto mando siguen a mano: no son contadores del juego sino BANDERAS DE EVENTO, y hay 4960 sin etiquetar. Para anclarlas: PermaLocke.Probe --flags antes.txt, jugar hasta que pase la cosa, GUARDAR dentro del juego, --flags despues.txt, y --flags-diff antes.txt despues.txt. Lo que salga se pone aquí como flag y el logro pasa a contarse solo.",
+  "comentarioObjetos": "item apunta a un OBJETO DE LA MOCHILA, y el logro está hecho cuando lo tienes. Es la manera de detectar lo que el juego no cuenta en ningún sitio: superar una prueba no mueve ningún récord, y decidir cuál de las 4960 banderas de evento la marca es imposible con una sola medida, porque la misma tarde enciende decenas. Lo que sí deja la prueba es el premio, y el premio tiene nombre. Medido: al superar la primera prueba entró el Normastal Z, objeto 807, en un bolsillo que estaba vacío. Solo vale para lo que el juego da y no quita; un objeto consumible se encendería y se apagaría.",
+
+  "comentarioPendientes": "Las pruebas 2 a 12, las pegatinas y el segundo alto mando siguen a mano. Para anclar cada una: PermaLocke.Probe --flags antes.txt, jugar hasta que pase la cosa, GUARDAR dentro del juego, --flags despues.txt, y --flags-diff antes.txt despues.txt. Si aparece un objeto nuevo se pone aquí como item; si es una bandera, como flag. Ojo: comprueba el tiempo jugado de los dos volcados, porque si no guardaste son la misma partida y el diff enseña lo de antes.",
 
   "comentarioPuntos": "Los de las pruebas, las pegatinas y el alto mando salen de la competición. Los de movimientos Z, huidas, shiny y entrenadores los he puesto yo a ojo sobre esa misma escala: cámbialos aquí sin tocar código.",
 
   "achievements": [
-    { "id": "prueba-01", "name": "Primera prueba", "description": "Completa la primera prueba del recorrido insular.", "target": 1, "points": 100 },
+    { "id": "prueba-01", "name": "Primera prueba", "description": "Completa la primera prueba del recorrido insular.", "target": 1, "points": 100, "item": 807 },
     { "id": "prueba-02", "name": "Segunda prueba", "description": "Completa la segunda prueba del recorrido insular.", "target": 1, "points": 100 },
     { "id": "prueba-03", "name": "Tercera prueba", "description": "Completa la tercera prueba del recorrido insular.", "target": 1, "points": 100 },
     { "id": "prueba-04", "name": "Cuarta prueba", "description": "Completa la cuarta prueba del recorrido insular.", "target": 1, "points": 100 },

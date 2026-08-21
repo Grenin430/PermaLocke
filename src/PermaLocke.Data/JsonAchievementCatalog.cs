@@ -44,7 +44,8 @@ public sealed class JsonAchievementCatalog(IReadOnlyList<Achievement> all) : IAc
                     entry.Trigger ?? "sin disparador",
                     Math.Max(1, entry.Target ?? 1),
                     entry.Points ?? 0,
-                    entry.Record))
+                    entry.Record,
+                    entry.Item))
         ]);
     }
 
@@ -62,5 +63,6 @@ public sealed class JsonAchievementCatalog(IReadOnlyList<Achievement> all) : IAc
         [property: JsonPropertyName("trigger")] string? Trigger,
         [property: JsonPropertyName("target")] int? Target,
         [property: JsonPropertyName("points")] int? Points,
-        [property: JsonPropertyName("record")] int? Record);
+        [property: JsonPropertyName("record")] int? Record,
+        [property: JsonPropertyName("item")] int? Item);
 }

@@ -14,6 +14,16 @@ namespace PermaLocke.Core.Domain;
 /// save. Preferred over anything PermaLocke could count on its own, because the game has been
 /// counting it all along and a second number could only disagree.
 /// </param>
+/// <param name="Item">
+/// An item whose presence in the bag <em>is</em> the milestone: done when the player holds it.
+/// <para>
+/// Some things the game marks leave no counter at all. Clearing a trial is one: no record moves,
+/// and which of the 4960 event flags means it cannot be told apart from the dozens the same
+/// session lights up. What it does leave is the reward, and the reward has a name the cartridge
+/// prints — the first trial hands over the Normalium Z, item 807, and that was watched entering
+/// an empty pouch. Only for what the game never takes back; a consumable would flicker.
+/// </para>
+/// </param>
 public sealed record Achievement(
     string Id,
     string Name,
@@ -22,13 +32,14 @@ public sealed record Achievement(
     string TriggerName,
     int Target,
     int Points,
-    int? Record = null)
+    int? Record = null,
+    int? Item = null)
 {
     /// <summary>PermaLocke counts this one on its own, from the events it already records.</summary>
-    public bool IsAutomatic => Trigger is not null || Record is not null;
+    public bool IsAutomatic => Trigger is not null || Record is not null || Item is not null;
 
-    /// <summary>The number comes from the cartridge's own counter.</summary>
-    public bool IsFromGame => Record is not null;
+    /// <summary>The number comes from the player's own save, not from anything PermaLocke counted.</summary>
+    public bool IsFromGame => Record is not null || Item is not null;
 
     /// <summary>
     /// The player moves this counter by hand.
@@ -39,7 +50,7 @@ public sealed record Achievement(
     /// player marks them, and every mark is its own event — signed by the player, not by the
     /// automatic detection, so the history always says which of the two it was.
     /// </remarks>
-    public bool IsManual => Trigger is null && Record is null;
+    public bool IsManual => Trigger is null && Record is null && Item is null;
 }
 
 /// <summary>

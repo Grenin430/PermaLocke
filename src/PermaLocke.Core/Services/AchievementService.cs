@@ -80,6 +80,12 @@ public sealed class AchievementService(IAchievementCatalog catalog, IPointsServi
             return game.Available ? game.Get(record) : 0;
         }
 
+        // Un objeto que el juego entrega y nunca retira: está o no está, así que cuenta uno o cero.
+        if (achievement.Item is { } item)
+        {
+            return game.Available && game.Has(item) ? 1 : 0;
+        }
+
         return achievement.Trigger is { } trigger
             ? counts.GetValueOrDefault(trigger)
             : marked.GetValueOrDefault(achievement.Id);

@@ -307,7 +307,19 @@ Elegir uno a ojo repartiría puntos por la cosa equivocada sin fallar nunca, as�
 que salga se escribe en `Data/achievements.json` y el logro pasa a automático sin tocar código.
 Las copias de BxnnyLocke no sirven de referencia: PKHeX no las lee. Ver §39.
 
-**Siguiente.** Anclar las banderas de pruebas y pegatinas, tienda, y probar en partida nueva iniciales,
+**La primera prueba se cuenta sola, anclada en el premio (2026-08-21).** Medida con el §39, y la
+primera medición era **falsa**: el diff traía 24 banderas encendidas y ninguna era la prueba. Lo
+delató un hecho independiente —el bolsillo de cristales Z, **vacío**, y un solo combate salvaje
+cuando el Dominante es un combate salvaje—: aquella tarde fue la Escuela de Entrenadores. Un diff no
+dice qué pasó, dice qué cambió. Con la medición buena quedaban **seis** banderas igual de
+plausibles, así que no se elige ninguna: lo que la prueba deja con nombre es el premio, el
+**Normastal Z (objeto 807)**, visto entrar en un bolsillo vacío. De ahí una tercera fuente de
+progreso junto al récord y al disparador: `"item": 807`, presencia y no cantidad, **solo para lo que
+el juego da y no quita**. Ningún récord se mueve al superar una prueba, y `Misc7.Stamps` vale 1
+antes y después, así que no es la Dominsignia. Ver §40.
+
+**Siguiente.** Anclar las once pruebas restantes y las pegatinas —una medición cada una, con
+`Saves/banderas-prueba1.txt` de línea base—, tienda, y probar en partida nueva iniciales,
 entrenadores y tiendas.
 
 Lo que NO está resuelto todavía y no debe darse por hecho (detalle en `docs/ARCHITECTURE.md`):
@@ -329,7 +341,7 @@ Lo que NO está resuelto todavía y no debe darse por hecho (detalle en `docs/AR
 | Wonder trade (banda de BST, escritura, animación) | **MOTOR Y ESCRITURA HECHOS** — 16 tests y verificado contra una copia real del save; la animación está sin ver porque exige un intercambio de verdad. Ver `ARCHITECTURE.md` §33 |
 | Logros y penalizaciones | **HECHO Y VISTO EN LA APP** — motor, pantalla y 6 tests. Falta la lista real de logros, que la tiene que dar el jugador. Ver `ARCHITECTURE.md` §36 |
 | Contadores del juego (movimientos Z, huidas, shiny, entrenadores) | **HECHO Y VISTO EN LA APP** — se leen de `SAV7USUM.Records`; 28/200 huidas y 6/100 entrenadores reales. Ver `ARCHITECTURE.md` §38 |
-| Detectar pruebas y pegatinas | **PENDIENTE DE CALIBRAR** — son banderas de evento (4960 sin etiquetar), no contadores. Hay herramienta para anclarlas midiendo: `Probe --flags` antes y después. Ver `ARCHITECTURE.md` §39 |
+| Detectar pruebas y pegatinas | **LA PRIMERA PRUEBA, HECHA Y VISTA EN LA APP** — anclada al Normastal Z, no a una bandera. Las once restantes y las pegatinas, pendientes: una medición cada una. Ver `ARCHITECTURE.md` §39 y §40 |
 | Tienda y sincronización | **SIN EMPEZAR** |
 | API concreta de pk3DS.Core | **VERIFICADA** contra la ROM real — ver `ARCHITECTURE.md` §19 |
 

@@ -88,10 +88,20 @@ public sealed class SaveRecordReader(PlayerSave save, ILogger<SaveRecordReader> 
             values[record] = game.Records.GetRecord(record);
         }
 
-        logger.LogInformation("Récords leídos: {Caught} capturas, {Balls} balls, {Fled} huidas, {Z} movimientos Z",
-            values.GetValueOrDefault(6), values.GetValueOrDefault(42),
-            values.GetValueOrDefault(46), values.GetValueOrDefault(41));
+        // Todo lo que hay en la mochila, sin mirar la cantidad: un objeto clave puede estar con
+        // cantidad cero y seguir estando. Lo que se busca aquí son los premios que el juego da y
+        // no quita, como los cristales Z de las pruebas.
+        var items = game.Inventory.Pouches
+            .SelectMany(pouch => pouch.Items)
+            .Where(item => item.Index != 0)
+            .Select(item => item.Index)
+            .ToHashSet();
 
-        return new GameRecordSnapshot(true, null, notice, values, now);
+        logger.LogInformation(
+            "Récords leídos: {Caught} capturas, {Balls} balls, {Fled} huidas, {Z} movimientos Z, {Items} objetos",
+            values.GetValueOrDefault(6), values.GetValueOrDefault(42),
+            values.GetValueOrDefault(46), values.GetValueOrDefault(41), items.Count);
+
+        return new GameRecordSnapshot(true, null, notice, values, now, items);
     }
 }

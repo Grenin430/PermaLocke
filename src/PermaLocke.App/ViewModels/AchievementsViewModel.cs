@@ -41,6 +41,7 @@ public sealed partial class AchievementRowViewModel(AchievementProgress progress
     /// <summary>Where the number comes from, said out loud on the card.</summary>
     public string Source => Progress.Achievement switch
     {
+        { Item: not null } => "lo dice tu mochila",
         { IsFromGame: true } => "lo cuenta el juego",
         { IsAutomatic: true } => "lo cuenta PermaLocke",
         _ => "a mano"

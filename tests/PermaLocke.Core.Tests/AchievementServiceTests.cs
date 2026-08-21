@@ -43,10 +43,13 @@ public sealed class AchievementServiceTests
     /// <summary>Stands in for the cartridge's own counters.</summary>
     private sealed class Records(bool available, params (int Id, int Value)[] values) : IGameRecords
     {
+        /// <summary>What the bag holds, for the achievements anchored to a reward instead of a counter.</summary>
+        public HashSet<int> Items { get; init; } = [];
+
         public Task<GameRecordSnapshot> ReadAsync(CancellationToken ct = default) =>
             Task.FromResult(available
                 ? new GameRecordSnapshot(true, null, null,
-                    values.ToDictionary(v => v.Id, v => v.Value), DateTimeOffset.UnixEpoch)
+                    values.ToDictionary(v => v.Id, v => v.Value), DateTimeOffset.UnixEpoch, Items)
                 : GameRecordSnapshot.Unavailable("sin partida", DateTimeOffset.UnixEpoch));
     }
 
@@ -56,6 +59,8 @@ public sealed class AchievementServiceTests
         new("gacha-3", "Tirador", "Haz 3 tiradas.", GameEventType.GachaRoll, "GachaRoll", 3, 40),
         new("pegatinas-25", "Pegatinas", "Encuentra 25 pegatinas.", null, "sin disparador", 25, 75),
         new("huidas-200", "Pies ligeros", "Huye 200 veces.", null, "sin disparador", 200, 100, Record: 46),
+        new("prueba-01", "Primera prueba", "Completa la primera prueba.", null, "sin disparador", 1, 100,
+            Item: 807),
     ];
 
     private static (AchievementService Service, Events Log, Run Run) Build(IGameRecords? records = null)
@@ -207,6 +212,53 @@ public sealed class AchievementServiceTests
         Assert.Equal(0, fled.Count);
         Assert.False(service.LastRecords!.Available);
         Assert.NotNull(service.LastRecords.Problem);
+    }
+
+    /// <summary>
+    /// The reward in the bag is the milestone. Clearing the first trial moves no record and lights
+    /// dozens of unlabelled flags, but it hands over the Normalium Z, and that has a number.
+    /// </summary>
+    [Fact]
+    public async Task An_item_in_the_bag_unlocks_its_achievement()
+    {
+        var (service, _, run) = Build(new Records(true) { Items = [807] });
+
+        var trial = (await service.GetProgressAsync(run.Id)).Single(p => p.Achievement.Id == "prueba-01");
+
+        Assert.Equal(1, trial.Count);
+        Assert.True(trial.Unlocked);
+        Assert.True(trial.CanClaim);
+        Assert.True(trial.Achievement.IsFromGame);
+        Assert.False(trial.Achievement.IsManual);
+    }
+
+    /// <summary>Without the reward there is no progress, and no way to type one in either.</summary>
+    [Fact]
+    public async Task Without_the_item_the_achievement_stays_at_zero_and_refuses_a_manual_mark()
+    {
+        var (service, log, run) = Build(new Records(true) { Items = [4, 17] });
+
+        var trial = (await service.GetProgressAsync(run.Id)).Single(p => p.Achievement.Id == "prueba-01");
+        Assert.Equal(0, trial.Count);
+        Assert.False(trial.Unlocked);
+        Assert.False(trial.CanMark);
+
+        var marked = await service.MarkAsync(run, "prueba-01", complete: true);
+
+        Assert.False(marked.Success);
+        Assert.Empty(log.Appended);
+    }
+
+    /// <summary>An unreadable save must not look like an empty bag, which would read as "not done".</summary>
+    [Fact]
+    public async Task An_unreadable_save_leaves_an_item_achievement_at_zero()
+    {
+        var (service, _, run) = Build(new Records(false));
+
+        var trial = (await service.GetProgressAsync(run.Id)).Single(p => p.Achievement.Id == "prueba-01");
+
+        Assert.Equal(0, trial.Count);
+        Assert.False(service.LastRecords!.Available);
     }
 
     /// <summary>A claim that did not happen must leave no trace at all.</summary>
