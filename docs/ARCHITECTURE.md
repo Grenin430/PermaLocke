@@ -3432,3 +3432,16 @@ contesta en el acto con el aviso, con el saldo intacto.
 De paso se quitó una fragilidad: si la entrega fallaba, el servicio decidía si era «el juego no
 está» mirando **si el texto del error contenía una frase**. Ahora `ItemDeliveryResult` lleva un
 `GameReachable`, que es un dato y no una adivinanza sobre una cadena traducible.
+
+### Verificada contra el juego
+
+Compra real, con Azahar abierto y la partida cargada: **Master Ball por 300 puntos**. El historial
+lo deja entero y en orden, que es exactamente el contrato:
+
+```
+21:24:07  ShopPurchase  {"objeto":"1","nombre":"Master Ball","precio":"300","llevaAhora":"1"}
+21:24:07  PointsSpent   -300  Tienda: Master Ball.
+```
+
+El `llevaAhora` no es lo que se pidió escribir: es lo que la mochila **contestó al releerla**. Y el
+cargo va después, como debe. La tienda queda verificada de punta a punta.
