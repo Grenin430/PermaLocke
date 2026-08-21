@@ -102,6 +102,13 @@ public static class FlagProbe
         Console.WriteLine($"Volcado en {destination}");
         Console.WriteLine($"  {on} banderas encendidas de {work.EventFlagCount}");
         Console.WriteLine($"  {set} contadores distintos de cero de {work.EventWorkCount}");
+
+        // El tiempo jugado es la manera de ver de un vistazo hasta dónde llega el volcado. Si no
+        // ha subido desde el anterior, es que la partida no se guardó y lo que se busca no está.
+        Console.WriteLine($"  la partida lleva {game.PlayTimeString} jugados");
+        Console.WriteLine($"  {game.Records.GetRecord(5)} combates contra entrenadores, " +
+                          $"{game.Records.GetRecord(4)} contra salvajes, " +
+                          $"{game.Records.GetRecord(6)} capturas");
         return 0;
     }
 
@@ -120,18 +127,33 @@ public static class FlagProbe
         var a = Read(before);
         var b = Read(after);
 
-        var appeared = b.Where(kv => !a.ContainsKey(kv.Key)).ToList();
-        var gone = a.Where(kv => !b.ContainsKey(kv.Key)).ToList();
+        // Las banderas y los contadores solo se escriben cuando no valen cero, así que una clave
+        // que aparece o desaparece es un cambio de verdad. Los récords y los escalares se escriben
+        // siempre, de modo que ahí una clave nueva significa que ha cambiado la LISTA que pide la
+        // herramienta, no la partida. Mezclar las dos cosas hace leer un cambio donde no lo hay.
+        var appeared = b.Where(kv => !a.ContainsKey(kv.Key) && IsOmittedWhenZero(kv.Key)).ToList();
+        var gone = a.Where(kv => !b.ContainsKey(kv.Key) && IsOmittedWhenZero(kv.Key)).ToList();
         var moved = b.Where(kv => a.TryGetValue(kv.Key, out var old) && old != kv.Value).ToList();
+        var toolOnly = b.Where(kv => !a.ContainsKey(kv.Key) && !IsOmittedWhenZero(kv.Key))
+            .Concat(a.Where(kv => !b.ContainsKey(kv.Key) && !IsOmittedWhenZero(kv.Key)))
+            .ToList();
 
-        Console.WriteLine($"ANTES:   {before}");
-        Console.WriteLine($"DESPUÉS: {after}");
+        Console.WriteLine($"ANTES:   {before}   ({a.PlayTime} jugados)");
+        Console.WriteLine($"DESPUÉS: {after}   ({b.PlayTime} jugados)");
         Console.WriteLine();
+
+        if (a.PlayTime == b.PlayTime)
+        {
+            Console.WriteLine("AVISO: los dos volcados tienen el mismo tiempo jugado, así que son la");
+            Console.WriteLine("       misma partida guardada. Guarda DENTRO del juego y vuelve a volcar.");
+            Console.WriteLine();
+        }
 
         Report("SE HAN ENCENDIDO", appeared);
         Report("SE HAN APAGADO", gone);
         Report("HAN CAMBIADO DE VALOR", moved.Select(kv =>
             new KeyValuePair<string, string>(kv.Key, $"{a[kv.Key]} -> {kv.Value}")).ToList());
+        Report("CLAVES QUE SOLO ESTÁN EN UNO DE LOS DOS (cambió la herramienta, no el juego)", toolOnly);
 
         if (appeared.Count + gone.Count + moved.Count == 0)
         {
@@ -140,6 +162,14 @@ public static class FlagProbe
 
         return 0;
     }
+
+    /// <summary>
+    /// True for the keys the dump leaves out when they are zero, which are the only ones where
+    /// "appears" and "disappears" mean something happened in the game.
+    /// </summary>
+    private static bool IsOmittedWhenZero(string key) =>
+        key.StartsWith("flag[", StringComparison.Ordinal) ||
+        key.StartsWith("work[", StringComparison.Ordinal);
 
     private static void Report(string title, IReadOnlyList<KeyValuePair<string, string>> items)
     {
@@ -162,9 +192,32 @@ public static class FlagProbe
         Console.WriteLine();
     }
 
-    private static Dictionary<string, string> Read(string path) =>
-        File.ReadAllLines(path)
+    private static Snapshot Read(string path)
+    {
+        var lines = File.ReadAllLines(path);
+
+        var playTime = lines
+            .FirstOrDefault(line => line.StartsWith("# jugado:", StringComparison.Ordinal))
+            ?.Split(':', 2)[1].Trim() ?? "?";
+
+        var values = lines
             .Where(line => line.Contains('=') && !line.StartsWith('#'))
             .Select(line => line.Split('=', 2))
             .ToDictionary(parts => parts[0], parts => parts[1], StringComparer.Ordinal);
+
+        return new Snapshot(playTime, values);
+    }
+
+    /// <summary>One dump read back: its values plus the play time that says how far it reaches.</summary>
+    private sealed record Snapshot(string PlayTime, Dictionary<string, string> Values)
+    {
+        public string this[string key] => Values[key];
+
+        public bool ContainsKey(string key) => Values.ContainsKey(key);
+
+        public bool TryGetValue(string key, out string value) => Values.TryGetValue(key, out value!);
+
+        public IEnumerable<KeyValuePair<string, string>> Where(
+            Func<KeyValuePair<string, string>, bool> predicate) => Values.Where(predicate);
+    }
 }
