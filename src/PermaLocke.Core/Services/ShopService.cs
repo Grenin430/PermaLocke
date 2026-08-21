@@ -36,6 +36,11 @@ public sealed class ShopService(
     public Task<int> CarriedAsync(int itemId, CancellationToken ct = default) =>
         delivery.CarriedAsync(itemId, ct);
 
+    /// <summary>How many of each item the bag holds, in one read. Empty when it cannot be read.</summary>
+    public Task<IReadOnlyDictionary<int, int>> CarriedAllAsync(
+        IReadOnlyList<int> itemIds, CancellationToken ct = default) =>
+        delivery.CarriedAllAsync(itemIds, ct);
+
     public async Task<PurchaseResult> BuyAsync(Run run, int itemId, CancellationToken ct = default)
     {
         var balance = await points.GetBalanceAsync(run.Id, ct).ConfigureAwait(false);
@@ -56,9 +61,9 @@ public sealed class ShopService(
 
         if (!given.Delivered)
         {
-            var outcome = given.Problem.Contains("mochila del juego", StringComparison.Ordinal)
-                ? PurchaseOutcome.GameUnreachable
-                : PurchaseOutcome.NotDelivered;
+            var outcome = given.GameReachable
+                ? PurchaseOutcome.NotDelivered
+                : PurchaseOutcome.GameUnreachable;
 
             return new PurchaseResult(outcome, item, balance, 0, given.Problem);
         }

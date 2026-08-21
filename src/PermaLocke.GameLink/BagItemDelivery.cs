@@ -19,18 +19,67 @@ namespace PermaLocke.GameLink;
 /// charged points for nothing would be exactly the kind of quietly-wrong behaviour rule 3 forbids.
 /// </para>
 /// </remarks>
-public sealed class BagItemDelivery(BagService bag, ILogger<BagItemDelivery> logger) : IItemDelivery
+public sealed class BagItemDelivery(
+    BagService bag,
+    Rpc.AzaharRpcClient client,
+    ILogger<BagItemDelivery> logger) : IItemDelivery
 {
     public Task<ItemDeliveryResult> GiveAsync(int itemId, int amount = 1, CancellationToken ct = default) =>
         Task.Run(() => Give(itemId, amount, ct), ct);
 
     public Task<int> CarriedAsync(int itemId, CancellationToken ct = default) =>
-        Task.Run(() => bag.Locate(ct) is null ? -1 : bag.CountOf(itemId, ct), ct);
+        Task.Run(() => Reachable(out _) && bag.Locate(ct) is not null ? bag.CountOf(itemId, ct) : -1, ct);
+
+    public Task<IReadOnlyDictionary<int, int>> CarriedAllAsync(
+        IReadOnlyList<int> itemIds, CancellationToken ct = default) =>
+        Task.Run(() => CarriedAll(itemIds, ct), ct);
+
+    private IReadOnlyDictionary<int, int> CarriedAll(IReadOnlyList<int> itemIds, CancellationToken ct)
+    {
+        if (!Reachable(out _) || bag.Locate(ct) is null)
+        {
+            return new Dictionary<int, int>();
+        }
+
+        // Un solo recorrido de la mochila, y de ahí salen todas las cuentas.
+        var carried = bag.Read(ct)
+            .Where(slot => slot.Entry.ItemId != 0)
+            .GroupBy(slot => slot.Entry.ItemId)
+            .ToDictionary(group => group.Key, group => group.Sum(slot => slot.Entry.Count));
+
+        return itemIds.Distinct().ToDictionary(item => item, item => carried.GetValueOrDefault(item));
+    }
+
+    /// <summary>
+    /// A single, cheap question before anything else: is the emulator even answering?
+    /// </summary>
+    /// <remarks>
+    /// Without this, a closed emulator meant a full sweep of the game's memory that could only
+    /// end in failure, one per call. The shop asked eighteen times on opening and once more per
+    /// click, and simply stopped responding. A ping costs one datagram and a timeout.
+    /// </remarks>
+    private bool Reachable(out string problem)
+    {
+        if (client.TryPing(out _))
+        {
+            problem = string.Empty;
+            return true;
+        }
+
+        problem = "Azahar no responde. Ábrelo, carga la partida y activa Configuración → "
+                  + "Depuración → Activar servidor RPC.";
+        return false;
+    }
 
     private ItemDeliveryResult Give(int itemId, int amount, CancellationToken ct)
     {
         try
         {
+            if (!Reachable(out var unreachable))
+            {
+                return ItemDeliveryResult.Unreachable(unreachable);
+            }
+
             if (bag.Locate(ct) is null)
             {
                 return ItemDeliveryResult.Failed(

@@ -3404,3 +3404,31 @@ saldo, y la tarjeta entera baja a opacidad 0,45, de modo que se ve qué se puede
 nada. Al pasar por encima, borde de acento y sombra del mismo color. El saldo va en su propio
 panel con halo. Lo que ya llevas de cada objeto sale en una cápsula pequeña bajo el nombre, que es
 lo que evita comprar de más.
+
+### La tienda se colgaba con el emulador cerrado
+
+Primera compra real: no pasó nada y **todos los botones se quedaron inhabilitados**. Tres causas
+encadenadas, y ninguna era la compra en sí.
+
+**Preguntar dieciocho veces.** El refresco pedía «cuántos llevas» objeto por objeto, y cada
+pregunta puede acabar en localizar el bloque de la mochila, que es barrer noventa y seis megas de
+memoria del juego por UDP. Con el emulador cerrado eso son dieciocho barridos que solo pueden
+acabar en fracaso, uno detrás de otro, al abrir la pantalla. Ahora se lee la mochila **una vez** y
+de ahí salen las dieciocho cuentas.
+
+**Barrer sin preguntar antes si hay alguien.** El cliente RPC tiene `TryPing`, que cuesta un
+datagrama y un tiempo de espera. No se usaba. Ahora es lo primero: sin respuesta no se barre nada
+y se dice qué hacer.
+
+**El botón que apaga a todos.** `AsyncRelayCommand` se deshabilita mientras se ejecuta, y las
+dieciocho tarjetas comparten el mismo comando, así que un clic que no termina nunca deja la
+rejilla entera muerta. Eso convierte un cuelgue en «la aplicación está rota». Sigue habiendo un
+solo comando —dos compras a la vez no tendrían sentido—, pero ahora **no puede no terminar**: hay
+un tope de veinte segundos, y agotarlo dice que no se ha comprado nada ni se ha cobrado nada.
+
+Medido después: la pantalla abre en **4 s** con el emulador cerrado, en vez de no abrir, y un clic
+contesta en el acto con el aviso, con el saldo intacto.
+
+De paso se quitó una fragilidad: si la entrega fallaba, el servicio decidía si era «el juego no
+está» mirando **si el texto del error contenía una frase**. Ahora `ItemDeliveryResult` lleva un
+`GameReachable`, que es un dato y no una adivinanza sobre una cadena traducible.

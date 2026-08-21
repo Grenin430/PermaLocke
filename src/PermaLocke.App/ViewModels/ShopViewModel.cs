@@ -90,6 +90,17 @@ public sealed partial class ShopViewModel : SectionViewModel
         await RefreshAsync();
     }
 
+    /// <summary>
+    /// Nothing that talks to the emulator is allowed to run longer than this.
+    /// </summary>
+    /// <remarks>
+    /// Locating the bag can mean sweeping the game's memory, and if the emulator is not there the
+    /// sweep can only end in failure — slowly. A purchase that never returns leaves the whole grid
+    /// disabled, because the command is still running, and the screen looks broken rather than
+    /// busy. This is the backstop; the ping in the delivery is what makes it rarely needed.
+    /// </remarks>
+    private static readonly TimeSpan GameTimeout = TimeSpan.FromSeconds(20);
+
     [RelayCommand]
     private async Task RefreshAsync()
     {
@@ -99,19 +110,40 @@ public sealed partial class ShopViewModel : SectionViewModel
             return;
         }
 
-        Balance = await _shop.GetBalanceAsync(run.Id);
-
-        var reachable = await _shop.CarriedAsync(Items[0].Item.Id) >= 0;
-
-        foreach (var card in Items)
+        Busy = true;
+        try
         {
-            card.Affordable = Balance >= card.Price;
-            card.Carried = reachable ? $"llevas {await _shop.CarriedAsync(card.Item.Id)}" : string.Empty;
-        }
+            Balance = await _shop.GetBalanceAsync(run.Id);
 
-        Problem = reachable
-            ? string.Empty
-            : "El juego no está abierto, así que no se puede entregar nada. Abre Azahar con la partida cargada.";
+            foreach (var card in Items)
+            {
+                card.Affordable = Balance >= card.Price;
+            }
+
+            // Una sola lectura de la mochila para las dieciocho. Preguntar una por una era
+            // dieciocho localizaciones del bloque, y con el emulador cerrado, dieciocho fracasos
+            // lentos seguidos: la pantalla se quedaba muerta al abrirla.
+            using var cancel = new CancellationTokenSource(GameTimeout);
+            var carried = await _shop.CarriedAllAsync([.. Items.Select(i => i.Item.Id)], cancel.Token);
+
+            foreach (var card in Items)
+            {
+                card.Carried = carried.TryGetValue(card.Item.Id, out var count) ? $"llevas {count}" : string.Empty;
+            }
+
+            Problem = carried.Count > 0
+                ? string.Empty
+                : "El juego no está abierto, así que no se puede entregar nada. Abre Azahar con la "
+                  + "partida cargada y pulsa ACTUALIZAR.";
+        }
+        catch (OperationCanceledException)
+        {
+            Problem = "El juego ha tardado demasiado en contestar. Comprueba que Azahar está abierto.";
+        }
+        finally
+        {
+            Busy = false;
+        }
     }
 
     [RelayCommand]
@@ -123,19 +155,29 @@ public sealed partial class ShopViewModel : SectionViewModel
         }
 
         Busy = true;
+        Status = string.Empty;
+        Problem = $"Comprando {card.Name}...";
+
         try
         {
-            var result = await _shop.BuyAsync(run, card.Item.Id);
+            using var cancel = new CancellationTokenSource(GameTimeout);
+            var result = await _shop.BuyAsync(run, card.Item.Id, cancel.Token);
 
-            Status = result.Message;
+            Status = result.Succeeded ? result.Message : string.Empty;
             Problem = result.Succeeded ? string.Empty : result.Message;
             Balance = result.Balance;
-
-            await RefreshAsync();
+        }
+        catch (OperationCanceledException)
+        {
+            Status = string.Empty;
+            Problem = "El juego ha tardado demasiado en contestar, así que no se ha comprado nada "
+                      + "ni se te ha quitado ningún punto.";
         }
         finally
         {
             Busy = false;
         }
+
+        await RefreshAsync();
     }
 }

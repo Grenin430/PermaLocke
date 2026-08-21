@@ -1,9 +1,15 @@
 namespace PermaLocke.Core.Abstractions;
 
 /// <param name="Carried">How many the bag holds after the write, re-read from the game.</param>
-public sealed record ItemDeliveryResult(bool Delivered, int Carried, string Problem)
+/// <param name="GameReachable">False when the emulator never answered, which is a different
+/// problem from a write that failed: one is "abre el juego", the other is "algo va mal".</param>
+public sealed record ItemDeliveryResult(
+    bool Delivered, int Carried, string Problem, bool GameReachable = true)
 {
-    public static ItemDeliveryResult Failed(string problem) => new(false, 0, problem);
+    public static ItemDeliveryResult Failed(string problem, bool reachable = true) =>
+        new(false, 0, problem, reachable);
+
+    public static ItemDeliveryResult Unreachable(string problem) => new(false, 0, problem, false);
 }
 
 /// <summary>
@@ -28,4 +34,15 @@ public interface IItemDelivery
 
     /// <summary>How many of an item the bag holds, or -1 when the bag cannot be read.</summary>
     Task<int> CarriedAsync(int itemId, CancellationToken ct = default);
+
+    /// <summary>
+    /// How many of each of several items the bag holds, in <b>one</b> read.
+    /// </summary>
+    /// <remarks>
+    /// Not a convenience: locating the bag can mean sweeping ninety-six megabytes of the game's
+    /// memory over a UDP channel, so asking eighteen times froze the shop for as long as it took
+    /// to fail eighteen times. Empty when the bag cannot be read at all.
+    /// </remarks>
+    Task<IReadOnlyDictionary<int, int>> CarriedAllAsync(
+        IReadOnlyList<int> itemIds, CancellationToken ct = default);
 }

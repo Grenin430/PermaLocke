@@ -51,7 +51,7 @@ public sealed class ShopServiceTests
         {
             if (!works)
             {
-                return Task.FromResult(ItemDeliveryResult.Failed(problem));
+                return Task.FromResult(ItemDeliveryResult.Unreachable(problem));
             }
 
             Given.Add(itemId);
@@ -61,6 +61,12 @@ public sealed class ShopServiceTests
 
         public Task<int> CarriedAsync(int itemId, CancellationToken ct = default) =>
             Task.FromResult(works ? Carried : -1);
+
+        public Task<IReadOnlyDictionary<int, int>> CarriedAllAsync(
+            IReadOnlyList<int> itemIds, CancellationToken ct = default) =>
+            Task.FromResult<IReadOnlyDictionary<int, int>>(works
+                ? itemIds.ToDictionary(id => id, _ => Carried)
+                : new Dictionary<int, int>());
     }
 
     private static readonly ShopItem Candy = new(50, "Caramelo Raro", 150);
