@@ -18,15 +18,19 @@ public sealed record Achievement(
     int Target,
     int Points)
 {
+    /// <summary>PermaLocke counts this one on its own, from the events it already records.</summary>
+    public bool IsAutomatic => Trigger is not null;
+
     /// <summary>
-    /// False when nothing in the run can ever count towards this one.
+    /// The player moves this counter by hand.
     /// </summary>
     /// <remarks>
-    /// A competition list will name things PermaLocke does not watch yet — beating a trainer,
-    /// clearing a trial. Those stay on the list and are shown as pending rather than deleted or,
-    /// worse, silently awarded.
+    /// A competition list names things PermaLocke cannot see: trials cleared, stickers found,
+    /// trainers beaten. Rather than hiding those or, far worse, pretending to detect them, the
+    /// player marks them, and every mark is its own event — signed by the player, not by the
+    /// automatic detection, so the history always says which of the two it was.
     /// </remarks>
-    public bool IsDetectable => Trigger is not null;
+    public bool IsManual => Trigger is null;
 }
 
 /// <summary>
@@ -40,18 +44,19 @@ public sealed record Achievement(
 /// <param name="Count">Qualifying events so far. Can exceed the target.</param>
 public sealed record AchievementProgress(Achievement Achievement, int Count, bool Claimed)
 {
-    public bool Unlocked => Achievement.IsDetectable && Count >= Achievement.Target;
+    public bool Unlocked => Count >= Achievement.Target;
 
     /// <summary>Unlocked and not yet collected: the only state where the button does anything.</summary>
     public bool CanClaim => Unlocked && !Claimed;
 
+    /// <summary>The counter can still be moved by hand: manual, and not there yet.</summary>
+    public bool CanMark => Achievement.IsManual && !Unlocked;
+
     /// <summary>Progress capped at the target, which is what a "3/5" label wants.</summary>
     public int Shown => Math.Min(Count, Achievement.Target);
 
-    /// <summary>"3 / 5", or why it cannot be counted at all.</summary>
-    public string Label => Achievement.IsDetectable
-        ? $"{Shown} / {Achievement.Target}"
-        : "sin detectar";
+    /// <summary>"3/5", as the card shows it.</summary>
+    public string Label => $"{Shown}/{Achievement.Target}";
 }
 
 /// <summary>

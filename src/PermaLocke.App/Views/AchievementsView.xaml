@@ -5,25 +5,21 @@
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
 
+        <!-- Una tarjeta de logro: medalla, texto, progreso, puntos y botón. -->
         <DataTemplate x:Key="AchievementTemplate">
-            <Border Margin="0,0,0,8" Padding="14" CornerRadius="6" BorderThickness="1"
+            <Border Margin="5" Padding="12" CornerRadius="6" BorderThickness="1"
                     Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource SurfaceAltBrush}">
                 <Border.Style>
                     <Style TargetType="Border">
                         <Style.Triggers>
                             <!-- Cobrado: se apaga, ya no pide nada. -->
                             <DataTrigger Binding="{Binding Claimed}" Value="True">
-                                <Setter Property="Opacity" Value="0.55" />
+                                <Setter Property="Opacity" Value="0.5" />
                             </DataTrigger>
                             <!-- Listo para cobrar: se enciende, que es lo que hay que mirar. -->
                             <DataTrigger Binding="{Binding CanClaim}" Value="True">
                                 <Setter Property="BorderBrush" Value="{StaticResource SuccessBrush}" />
                                 <Setter Property="BorderThickness" Value="2" />
-                            </DataTrigger>
-                            <!-- Sin detectar: se dice, no se esconde. -->
-                            <DataTrigger Binding="{Binding IsDetectable}" Value="False">
-                                <Setter Property="Opacity" Value="0.6" />
-                                <Setter Property="BorderBrush" Value="{StaticResource WarningBrush}" />
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
@@ -31,47 +27,46 @@
 
                 <Grid>
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="54" />
                         <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
-                    <StackPanel Grid.Column="0">
-                        <TextBlock Text="{Binding Name}" Style="{StaticResource PanelHeading}" FontSize="15" />
-                        <TextBlock Text="{Binding Description}" Style="{StaticResource Muted}"
-                                   TextWrapping="Wrap" Margin="0,3,0,0" />
+                    <!-- LA MEDALLA. Un rombo, como los cristales del recorrido insular, con la
+                         inicial del logro. Dibujado, no extraído: los cristales Z del cartucho no
+                         se pueden emparejar con nada sin adivinar por color (ver §34). -->
+                    <Grid Grid.Column="0" VerticalAlignment="Top" Width="46" Height="46">
+                        <Path Data="M 23,2 L 44,23 L 23,44 L 2,23 Z" StrokeThickness="2"
+                              Stroke="{StaticResource SurfaceAltBrush}"
+                              Fill="{Binding Medal}" />
+                        <TextBlock Text="{Binding Initial}" Style="{StaticResource PanelHeading}"
+                                   FontSize="16" Foreground="#FF0B0E17"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
 
-                        <TextBlock Text="{Binding Pending}" FontSize="11"
-                                   TextWrapping="Wrap" Margin="0,6,0,0"
-                                   Foreground="{StaticResource WarningBrush}">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock" BasedOn="{StaticResource Mono}">
-                                    <Setter Property="Visibility" Value="Collapsed" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsDetectable}" Value="False">
-                                            <Setter Property="Visibility" Value="Visible" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
+                    <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                        <TextBlock Text="{Binding Description}" Style="{StaticResource Body}"
+                                   TextWrapping="Wrap" MinHeight="52" VerticalAlignment="Top" />
 
-                        <Grid Margin="0,8,0,0" Visibility="{Binding IsDetectable,
-                                                           Converter={StaticResource BoolToVisibility}}">
+                        <Grid Margin="0,6,0,0">
                             <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
 
-                            <ProgressBar Grid.Column="0" Height="7" VerticalAlignment="Center"
+                            <TextBlock Grid.Column="0" Text="{Binding Label}" Style="{StaticResource Mono}"
+                                       FontSize="12" VerticalAlignment="Center" />
+
+                            <ProgressBar Grid.Column="1" Height="6" Margin="8,0" VerticalAlignment="Center"
                                          Minimum="0" Maximum="{Binding Target, Mode=OneWay}"
                                          Value="{Binding Count, Mode=OneWay}"
                                          Background="#22FFFFFF" Foreground="{StaticResource AccentBrush}">
                                 <ProgressBar.Template>
                                     <ControlTemplate TargetType="ProgressBar">
                                         <Grid>
-                                            <Border CornerRadius="4" Background="{TemplateBinding Background}" />
+                                            <Border CornerRadius="3" Background="{TemplateBinding Background}" />
                                             <Border x:Name="PART_Track" />
-                                            <Border x:Name="PART_Indicator" CornerRadius="4"
+                                            <Border x:Name="PART_Indicator" CornerRadius="3"
                                                     HorizontalAlignment="Left"
                                                     Background="{TemplateBinding Foreground}" />
                                         </Grid>
@@ -79,28 +74,40 @@
                                 </ProgressBar.Template>
                             </ProgressBar>
 
-                            <TextBlock Grid.Column="1" Text="{Binding Label}" Style="{StaticResource Mono}"
-                                       FontSize="11" Margin="10,0,0,0" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="2" Text="{Binding Reward}" Style="{StaticResource Mono}"
+                                       FontSize="12" VerticalAlignment="Center"
+                                       Foreground="{StaticResource AccentBrush}" />
                         </Grid>
-                    </StackPanel>
 
-                    <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center"
-                                HorizontalAlignment="Right">
-                        <TextBlock Text="{Binding Reward}" Style="{StaticResource PanelHeading}"
-                                   FontSize="20" HorizontalAlignment="Center"
-                                   Foreground="{StaticResource AccentBrush}" />
+                        <!-- Los botones. "+1" y "COMPLETAR" solo salen en los logros que
+                             PermaLocke no sabe contar todavía; "COBRAR" cuando está al completo. -->
+                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                            <Button Content="+1" Style="{StaticResource PrimaryButton}" MinWidth="40"
+                                    Padding="6,3" FontSize="11" Margin="0,0,5,0"
+                                    Command="{Binding DataContext.MarkCommand,
+                                              RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    CommandParameter="{Binding}"
+                                    Visibility="{Binding CanMark, Converter={StaticResource BoolToVisibility}}" />
 
-                        <Button Content="COBRAR" Style="{StaticResource PrimaryButton}" MinWidth="110"
-                                Margin="0,6,0,0"
-                                Command="{Binding DataContext.ClaimCommand,
-                                          RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                CommandParameter="{Binding}"
-                                Visibility="{Binding CanClaim, Converter={StaticResource BoolToVisibility}}" />
+                            <Button Content="COMPLETAR" Style="{StaticResource PrimaryButton}" MinWidth="88"
+                                    Padding="6,3" FontSize="11" Margin="0,0,5,0"
+                                    Command="{Binding DataContext.CompleteCommand,
+                                              RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    CommandParameter="{Binding}"
+                                    Visibility="{Binding CanMark, Converter={StaticResource BoolToVisibility}}" />
 
-                        <TextBlock Text="COBRADO" Style="{StaticResource Mono}" FontSize="11"
-                                   Margin="0,6,0,0" HorizontalAlignment="Center"
-                                   Foreground="{StaticResource SuccessBrush}"
-                                   Visibility="{Binding Claimed, Converter={StaticResource BoolToVisibility}}" />
+                            <Button Content="COBRAR" Style="{StaticResource PrimaryButton}" MinWidth="88"
+                                    Padding="6,3" FontSize="11"
+                                    Command="{Binding DataContext.ClaimCommand,
+                                              RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    CommandParameter="{Binding}"
+                                    Visibility="{Binding CanClaim, Converter={StaticResource BoolToVisibility}}" />
+
+                            <TextBlock Text="COMPLETADO" Style="{StaticResource Mono}" FontSize="11"
+                                       VerticalAlignment="Center"
+                                       Foreground="{StaticResource SuccessBrush}"
+                                       Visibility="{Binding Claimed, Converter={StaticResource BoolToVisibility}}" />
+                        </StackPanel>
                     </StackPanel>
                 </Grid>
             </Border>
@@ -114,7 +121,7 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- LO QUE CUESTA PERDER. Arriba del todo, porque es lo que más pesa en el marcador. -->
+        <!-- LO QUE CUESTA PERDER, con el saldo al lado. -->
         <Border Grid.Row="0" Style="{StaticResource Panel}" Margin="0,0,0,10">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -140,7 +147,13 @@
 
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <ItemsControl ItemsSource="{Binding Rows}" ItemTemplate="{StaticResource AchievementTemplate}"
-                          Margin="0,0,8,0" />
+                          Margin="0,0,8,0">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Columns="3" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+            </ItemsControl>
         </ScrollViewer>
 
         <StackPanel Grid.Row="2" Margin="0,10,0,0">
@@ -155,7 +168,7 @@
                        Margin="0,10,0,0" />
 
             <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,10,0,0" FontSize="11"
-                       Text="El progreso se recalcula desde el historial cada vez que se abre esta pantalla, así que no puede desviarse de lo que pasó. Los puntos se cobran a mano: el evento del cobro queda en el log con el logro que lo pagó. Los logros que cuentan algo que PermaLocke todavía no detecta salen marcados en vez de desaparecer." />
+                       Text="El progreso se recalcula desde el historial cada vez que se abre esta pantalla, así que no puede desviarse de lo que pasó. PermaLocke todavía no sabe ver pruebas, pegatinas, entrenadores, huidas ni movimientos Z, así que esos se marcan a mano con +1 y COMPLETAR: cada marca queda como un evento propio, con su fecha y firmada por el jugador, no por la detección automática. Cobrar es aparte, para que el log diga de dónde salió cada punto." />
         </StackPanel>
     </Grid>
 </UserControl>

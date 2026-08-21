@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
@@ -34,10 +35,22 @@ public sealed partial class AchievementRowViewModel(AchievementProgress progress
 
     public bool Unlocked => Progress.Unlocked;
 
-    public bool IsDetectable => Progress.Achievement.IsDetectable;
+    /// <summary>The counter can still be moved by hand, so the card shows its two buttons.</summary>
+    public bool CanMark => Progress.CanMark;
 
-    /// <summary>Why it cannot be counted, named so the gap is obvious instead of mysterious.</summary>
-    public string Pending => $"PermaLocke no detecta «{Progress.Achievement.TriggerName}» todavía.";
+    /// <summary>First letter of the name, which is what the medal carries.</summary>
+    public string Initial => string.IsNullOrEmpty(Name) ? "?" : Name[..1].ToUpperInvariant();
+
+    /// <summary>
+    /// Colour of the medal: grey while it is pending, the accent once it is done.
+    /// </summary>
+    /// <remarks>
+    /// Deliberately not a Z-Crystal out of the cartridge. There are eighteen of them and no way to
+    /// tell which is which without matching them by colour, which would be guessing (§34).
+    /// </remarks>
+    public Brush Medal => Progress.Claimed
+        ? Brushes.MediumSeaGreen
+        : Progress.Unlocked ? Brushes.Gold : new SolidColorBrush(Color.FromRgb(0x3A, 0x44, 0x5C));
 }
 
 /// <summary>
@@ -118,11 +131,11 @@ public sealed partial class AchievementsViewModel : SectionViewModel
 
             var claimed = progress.Count(p => p.Claimed);
             var ready = progress.Count(p => p.CanClaim);
-            var blind = progress.Count(p => !p.Achievement.IsDetectable);
+            var manual = progress.Count(p => p.Achievement.IsManual);
 
             Summary = $"{claimed} de {progress.Count} cobrados"
                       + (ready > 0 ? $" · {ready} listos para cobrar" : string.Empty)
-                      + (blind > 0 ? $" · {blind} sin detectar" : string.Empty);
+                      + (manual > 0 ? $" · {manual} se marcan a mano" : string.Empty);
 
             var rules = _penalties.Rules;
             PenaltyText = $"Cada muerte cuesta {rules.PerDeath} puntos. Que caiga el equipo entero "
@@ -156,6 +169,30 @@ public sealed partial class AchievementsViewModel : SectionViewModel
         Status = result.Success
             ? $"«{row.Name}» cobrado: +{row.Progress.Achievement.Points} puntos."
             : result.FailureReason ?? "No se ha podido cobrar.";
+
+        await RefreshAsync();
+    }
+
+    /// <summary>Moves a manual counter one step.</summary>
+    [RelayCommand]
+    private Task MarkAsync(AchievementRowViewModel? row) => AdvanceAsync(row, complete: false);
+
+    /// <summary>Takes a manual counter straight to its target.</summary>
+    [RelayCommand]
+    private Task CompleteAsync(AchievementRowViewModel? row) => AdvanceAsync(row, complete: true);
+
+    private async Task AdvanceAsync(AchievementRowViewModel? row, bool complete)
+    {
+        if (row is null || _runContext.Current is not { } run)
+        {
+            return;
+        }
+
+        var result = await _achievements.MarkAsync(run, row.Id, complete);
+
+        Status = result.Success
+            ? $"«{row.Name}» actualizado a mano. Queda anotado en el historial."
+            : result.FailureReason ?? "No se ha podido marcar.";
 
         await RefreshAsync();
     }

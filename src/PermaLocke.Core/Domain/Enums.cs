@@ -116,5 +116,12 @@ public enum GameEventType
     PointsPenalty,
 
     /// <summary>The whole party was down at once.</summary>
-    TeamWiped
+    TeamWiped,
+
+    /// <summary>
+    /// The player moved an achievement's counter by hand, because PermaLocke cannot see the thing
+    /// it counts. Recorded separately from the automatic events so the log always says which of
+    /// the two it was.
+    /// </summary>
+    AchievementProgressed
 }

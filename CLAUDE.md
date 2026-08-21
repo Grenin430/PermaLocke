@@ -280,10 +280,13 @@ con la app cerrada no se cobra como tal; las muertes sí. Los logros son una pro
 historial y se cobran a mano. Un logro cuyo disparador no existe **no se borra**: sale marcado
 como «sin detectar». Hoy faltan por instrumentar entrenadores y pruebas. Ver §36.
 
-**La lista de logros de BxnnyLocke no se puede leer**: está compilada dentro de su DLL, no hay
-ningún JSON ni base de datos en su instalación que la contenga. Sacarla exigiría descompilar su
-ensamblado, que es lo que la regla 1 prohíbe. Tiene que darla el jugador; el motor está montado
-para que meterla sea editar `Data/achievements.json`.
+**La lista de la competición ya está puesta (2026-08-21).** 21 logros: las doce pruebas a 100, el
+alto mando (300 y 300), las pegatinas 25/50/100 a 75/125/200, y 100 movimientos Z, 200 huidas, 1
+variocolor y 100 entrenadores. Pantalla en rejilla de tarjetas, como la de referencia. **Ninguno
+de los 21 es detectable hoy**, así que los logros sin disparador se marcan a mano con `+1` y
+`COMPLETAR`: cada marca es un evento propio firmado por el jugador, no por la detección, y el
+progreso se reconstruye sumando deltas. Ponerle un `trigger` a un logro lo vuelve automático y le
+quita los botones solo. Ver §37.
 
 **Siguiente.** Tienda, y probar en partida nueva iniciales,
 entrenadores y tiendas.

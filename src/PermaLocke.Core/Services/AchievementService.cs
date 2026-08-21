@@ -33,17 +33,84 @@ public sealed class AchievementService(IAchievementCatalog catalog, IPointsServi
             .ToDictionary(group => group.Key, group => group.Count());
 
         var claimed = all
-            .Where(e => e.Type == GameEventType.AchievementUnlocked && e.Data.TryGetValue("logro", out _))
+            .Where(e => e.Type == GameEventType.AchievementUnlocked && e.Data.ContainsKey("logro"))
             .Select(e => e.Data["logro"])
             .ToHashSet(StringComparer.Ordinal);
+
+        // Las marcas a mano se suman por logro. Cada una es su propio evento con su delta, así
+        // que el progreso se reconstruye igual que el saldo: sumando el historial.
+        var marked = all
+            .Where(e => e.Type == GameEventType.AchievementProgressed && e.Data.ContainsKey("logro"))
+            .GroupBy(e => e.Data["logro"], StringComparer.Ordinal)
+            .ToDictionary(
+                group => group.Key,
+                group => group.Sum(e => int.TryParse(e.Data.GetValueOrDefault("delta"), out var d) ? d : 0),
+                StringComparer.Ordinal);
 
         return
         [
             .. catalog.All.Select(achievement => new AchievementProgress(
                 achievement,
-                achievement.Trigger is { } trigger ? counts.GetValueOrDefault(trigger) : 0,
+                achievement.Trigger is { } trigger
+                    ? counts.GetValueOrDefault(trigger)
+                    : marked.GetValueOrDefault(achievement.Id),
                 claimed.Contains(achievement.Id)))
         ];
+    }
+
+    /// <summary>
+    /// Moves a manual counter, by one step or all the way to the target.
+    /// </summary>
+    /// <remarks>
+    /// Refused on an automatic achievement: letting a hand-typed number sit on top of a counter
+    /// PermaLocke works out itself would make the two disagree with no way to tell which is right.
+    /// </remarks>
+    public async Task<PointsResult> MarkAsync(Run run, string achievementId, bool complete,
+        CancellationToken ct = default)
+    {
+        var progress = await GetProgressAsync(run.Id, ct).ConfigureAwait(false);
+        var balance = await points.GetBalanceAsync(run.Id, ct).ConfigureAwait(false);
+
+        if (progress.FirstOrDefault(p => p.Achievement.Id == achievementId) is not { } found)
+        {
+            return new PointsResult(false, balance, $"No existe el logro «{achievementId}».");
+        }
+
+        if (found.Achievement.IsAutomatic)
+        {
+            return new PointsResult(false, balance,
+                $"«{found.Achievement.Name}» lo cuenta PermaLocke solo; no se marca a mano.");
+        }
+
+        if (found.Unlocked)
+        {
+            return new PointsResult(false, balance, $"«{found.Achievement.Name}» ya está al completo.");
+        }
+
+        var delta = complete ? found.Achievement.Target - found.Count : 1;
+
+        await events.AppendAsync(new GameEvent
+        {
+            Id = Guid.NewGuid(),
+            RunId = run.Id,
+            Timestamp = clock.Now,
+            Type = GameEventType.AchievementProgressed,
+            Source = EventSource.Player,
+            Actor = run.PlayerName,
+            Description = complete
+                ? $"«{found.Achievement.Name}» marcado como completo por el jugador."
+                : $"«{found.Achievement.Name}»: {found.Count + 1} de {found.Achievement.Target}.",
+            Data = new Dictionary<string, string>
+            {
+                ["logro"] = found.Achievement.Id,
+                ["nombre"] = found.Achievement.Name,
+                ["delta"] = delta.ToString(),
+                ["anterior"] = found.Count.ToString(),
+                ["origen"] = "marca manual"
+            }
+        }, ct).ConfigureAwait(false);
+
+        return new PointsResult(true, balance);
     }
 
     /// <summary>
@@ -71,10 +138,8 @@ public sealed class AchievementService(IAchievementCatalog catalog, IPointsServi
 
         if (!found.Unlocked)
         {
-            return new PointsResult(false, balance, found.Achievement.IsDetectable
-                ? $"«{found.Achievement.Name}» va por {found.Count} de {found.Achievement.Target}."
-                : $"«{found.Achievement.Name}» cuenta algo que PermaLocke todavía no detecta "
-                  + $"({found.Achievement.TriggerName}).");
+            return new PointsResult(false, balance,
+                $"«{found.Achievement.Name}» va por {found.Count} de {found.Achievement.Target}.");
         }
 
         // El evento de cobro primero: si algo fallara después, el logro queda cobrado y sin

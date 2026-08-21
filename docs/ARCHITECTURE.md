@@ -2816,3 +2816,53 @@ editar un JSON.
 `ProgressBar.Value` enlaza **en dos direcciones por defecto**. Contra una propiedad calculada de
 solo lectura eso no da un aviso: tira una `XamlParseException` en pleno *measure* y la ventana sale
 **entera en negro**, sin barra lateral ni nada. Hay que poner `Mode=OneWay` a mano.
+
+---
+
+## 37. La lista de logros de la competición (2026-08-21)
+
+El jugador pasó una captura de la pantalla de BxnnyLocke y dictó la lista. Son **21 logros**: las
+doce pruebas del recorrido insular a 100 puntos cada una, el alto mando (campeón, 300; y de nuevo,
+0/2, 300), las pegatinas a 25/50/100 con 75/125/200, y cuatro más —100 movimientos Z, 200 huidas,
+1 variocolor y 100 entrenadores—. Los puntos de esos cuatro los puse yo sobre la misma escala y se
+cambian en el JSON.
+
+La pantalla se rehizo como la de la captura: **rejilla de tres columnas**, tarjeta con medalla,
+descripción, `0/1`, puntos y botón.
+
+### El problema de verdad: PermaLocke no ve casi nada de eso
+
+De los 21, **ninguno** es detectable hoy. No hay evento de prueba superada, ni de pegatina, ni de
+entrenador derrotado, ni de huida, ni de movimiento Z. Un motor puramente automático habría dejado
+una pantalla de 21 tarjetas congeladas a cero.
+
+Las dos salidas malas eran fingir la detección —regla 3— o esconder los logros que no se pueden
+contar. La salida buena es **dejar que los marque el jugador**, y que el historial diga que fue él:
+
+- Un logro **automático** cuenta un tipo de evento del log. No se puede tocar a mano, porque
+  entonces habría dos números para lo mismo sin manera de saber cuál vale.
+- Un logro **manual** —sin disparador, o con uno que esta compilación no conoce— sale con dos
+  botones, `+1` y `COMPLETAR`. Cada pulsación escribe su propio `AchievementProgressed` con su
+  delta, su fecha y `EventSource.Player`.
+
+El progreso se reconstruye sumando esos deltas, igual que el saldo se reconstruye sumando los
+puntos. No hay contador guardado en ningún sitio que pueda desviarse de la historia, y la
+diferencia entre «lo vio PermaLocke» y «lo dijo el jugador» queda escrita en cada evento en vez de
+perderse.
+
+Cuando se instrumente la detección de pruebas o de entrenadores, basta con ponerle su `trigger` al
+logro en el JSON: pasa a automático y los botones desaparecen solos.
+
+### Las medallas no son cristales Z
+
+La captura enseña cristales Z como medalla. El cartucho los tiene —18, en `a/1/5/5`— pero no en
+orden de tipo y no en el contenedor de objetos, donde el id habría dado la respuesta (§34).
+Emparejarlos sería adivinar por color, así que la medalla es un rombo dibujado con la inicial del
+logro, y cambia de color al desbloquear y al cobrar.
+
+### Nota sobre los puntos ya cobrados
+
+La lista anterior era de prueba y el jugador llegó a cobrar cinco de sus logros: 145 puntos. Al
+cambiar la lista, esos logros dejan de existir pero **los puntos se quedan**, porque el log es
+inmutable y el saldo es su suma. Quitarlos es un ajuste de administrador, que también deja su
+propio evento. Lo correcto es que cueste, no que se borre solo.

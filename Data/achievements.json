@@ -1,77 +1,35 @@
 {
-  "version": 2,
-  "comment": "Los logros de la run. Cada uno cuenta un tipo de evento del historial: el progreso se recalcula desde el log, así que no hay contadores que puedan desviarse de la historia.",
+  "version": 3,
+  "comment": "Los logros de la competición. Cada uno cuenta un tipo de evento del historial (trigger) o, si PermaLocke todavía no sabe detectarlo, lo marca el jugador a mano desde la pantalla.",
 
-  "comentarioDisparadores": "trigger tiene que ser un evento que PermaLocke registre de verdad. Hoy son: PokemonCaught, PokemonDied, PokemonTraded, GachaRoll, WonderTrade, ShopPurchase, TeamWiped, LevelCapEnforced, RomRandomized, BallsWithheld. Si pones otro, el logro NO se borra: sale en la pantalla marcado como «sin detectar», con el nombre del disparador que pediste, para que se vea qué falta por instrumentar.",
+  "comentarioDisparadores": "trigger tiene que ser un evento que PermaLocke registre de verdad. Hoy son: PokemonCaught, PokemonDied, PokemonTraded, GachaRoll, WonderTrade, ShopPurchase, TeamWiped, LevelCapEnforced, RomRandomized, BallsWithheld. Cualquier otra cosa -o ninguna- hace el logro MANUAL: el progreso lo pone el jugador con los botones, y cada marca queda como evento propio en el historial, con su fecha y firmada por el jugador y no por la detección automática.",
 
-  "comentarioCobro": "Los puntos se cobran a mano con un botón, no al desbloquear. Así el historial dice de dónde vino cada punto y cuándo.",
+  "comentarioPuntos": "Los de las pruebas, las pegatinas y el alto mando salen de la competición. Los de movimientos Z, huidas, shiny y entrenadores los he puesto yo a ojo sobre esa misma escala: cámbialos aquí sin tocar código.",
 
   "achievements": [
-    {
-      "id": "primera-captura",
-      "name": "Primera captura",
-      "description": "Registra tu primer Pokémon.",
-      "trigger": "PokemonCaught",
-      "target": 1,
-      "points": 25
-    },
-    {
-      "id": "diez-capturas",
-      "name": "Coleccionista",
-      "description": "Registra 10 Pokémon.",
-      "trigger": "PokemonCaught",
-      "target": 10,
-      "points": 75
-    },
-    {
-      "id": "primera-tirada",
-      "name": "Estreno en el ultraespacio",
-      "description": "Haz tu primera tirada de gacha.",
-      "trigger": "GachaRoll",
-      "target": 1,
-      "points": 15
-    },
-    {
-      "id": "primer-intercambio",
-      "name": "A ciegas",
-      "description": "Haz tu primer wonder trade.",
-      "trigger": "WonderTrade",
-      "target": 1,
-      "points": 25
-    },
-    {
-      "id": "cinco-intercambios",
-      "name": "Ludópata del intercambio",
-      "description": "Haz 5 wonder trades.",
-      "trigger": "WonderTrade",
-      "target": 5,
-      "points": 60
-    },
-    {
-      "id": "randomizada",
-      "name": "Cartucho retorcido",
-      "description": "Genera la randomización de la run.",
-      "trigger": "RomRandomized",
-      "target": 1,
-      "points": 20
-    },
+    { "id": "prueba-01", "name": "Primera prueba", "description": "Completa la primera prueba del recorrido insular.", "target": 1, "points": 100 },
+    { "id": "prueba-02", "name": "Segunda prueba", "description": "Completa la segunda prueba del recorrido insular.", "target": 1, "points": 100 },
+    { "id": "prueba-03", "name": "Tercera prueba", "description": "Completa la tercera prueba del recorrido insular.", "target": 1, "points": 100 },
+    { "id": "prueba-04", "name": "Cuarta prueba", "description": "Completa la cuarta prueba del recorrido insular.", "target": 1, "points": 100 },
+    { "id": "prueba-05", "name": "Quinta prueba", "description": "Completa la quinta prueba del recorrido insular.", "target": 1, "points": 100 },
+    { "id": "prueba-06", "name": "Sexta prueba", "description": "Completa la sexta prueba del recorrido insular.", "target": 1, "points": 100 },
+    { "id": "prueba-07", "name": "Séptima prueba", "description": "Completa la séptima prueba del recorrido insular.", "target": 1, "points": 100 },
+    { "id": "prueba-08", "name": "Octava prueba", "description": "Completa la octava prueba del recorrido insular.", "target": 1, "points": 100 },
+    { "id": "prueba-09", "name": "Novena prueba", "description": "Completa la novena prueba del recorrido insular.", "target": 1, "points": 100 },
+    { "id": "prueba-10", "name": "Décima prueba", "description": "Completa la décima prueba del recorrido insular.", "target": 1, "points": 100 },
+    { "id": "prueba-11", "name": "Undécima prueba", "description": "Completa la undécima prueba del recorrido insular.", "target": 1, "points": 100 },
+    { "id": "prueba-12", "name": "Duodécima prueba", "description": "Completa la duodécima prueba del recorrido insular.", "target": 1, "points": 100 },
 
-    {
-      "comentario": "A partir de aquí, logros que la competición quiere y que PermaLocke TODAVÍA NO SABE DETECTAR. Se quedan a la vista, marcados, en vez de desaparecer.",
-      "id": "primer-entrenador",
-      "name": "Primer entrenador",
-      "description": "Derrota a 1 entrenador.",
-      "trigger": "TrainerDefeated",
-      "target": 1,
-      "points": 10
-    },
-    {
-      "id": "primera-prueba",
-      "name": "Primera prueba",
-      "description": "Supera la prueba 1.",
-      "trigger": "TrialCompleted",
-      "target": 1,
-      "points": 100
-    }
+    { "id": "alto-mando-campeon", "name": "Campeón", "description": "Derrota al alto mando y proclámate campeón.", "target": 1, "points": 300 },
+    { "id": "alto-mando-otra-vez", "name": "Y otra vez", "description": "Derrota al alto mando de nuevo.", "target": 2, "points": 300 },
+
+    { "id": "pegatinas-25", "name": "Pegatinas: 25", "description": "Encuentra 25 pegatinas escondidas por toda la región.", "target": 25, "points": 75 },
+    { "id": "pegatinas-50", "name": "Pegatinas: 50", "description": "Encuentra 50 pegatinas escondidas por toda la región.", "target": 50, "points": 125 },
+    { "id": "pegatinas-100", "name": "Pegatinas: 100", "description": "Encuentra 100 pegatinas escondidas por toda la región.", "target": 100, "points": 200 },
+
+    { "id": "movimientos-z-100", "name": "Poder Z", "description": "Usa 100 movimientos Z.", "target": 100, "points": 150 },
+    { "id": "huidas-200", "name": "Pies ligeros", "description": "Huye 200 veces de un combate.", "target": 200, "points": 100 },
+    { "id": "shiny-1", "name": "Uno entre mil", "description": "Encuentra 1 Pokémon variocolor.", "target": 1, "points": 200 },
+    { "id": "entrenadores-100", "name": "Cien caídos", "description": "Derrota a 100 entrenadores.", "target": 100, "points": 250 }
   ]
 }
