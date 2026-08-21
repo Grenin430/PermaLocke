@@ -299,7 +299,12 @@ public sealed partial class WonderTradeViewModel : ObservableObject
         ShowTotal = true;
         await Task.Delay(TimeSpan.FromSeconds(1.6));
 
+        // Los tres avisos se apagan ANTES de que salga el Pokémon. Si se quedan, la ficha final
+        // cae encima de ellos y de la bola, y no hay quien lea nada.
+        ShowTypes = ShowGeneration = ShowTotal = false;
         OpenRequested?.Invoke(this, EventArgs.Empty);
+        await Task.Delay(TimeSpan.FromSeconds(0.35));
+
         ShowPokemon = true;
     }
 

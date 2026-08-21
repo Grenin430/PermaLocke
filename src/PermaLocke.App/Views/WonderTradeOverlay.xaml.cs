@@ -97,10 +97,19 @@ public partial class WonderTradeOverlay : UserControl
 
         TypeFlood.BeginAnimation(OpacityProperty, null);
         TypeFlood.Opacity = 0;
+
         OutgoingBall.Opacity = 0;
+        IncomingBall.BeginAnimation(OpacityProperty, null);
         IncomingBall.Opacity = 0;
-        OutgoingShift.X = 0;
-        IncomingShift.X = 0;
+
+        // También la escala de la bola que llega: la deja en 3,4 el estallido de la tirada
+        // anterior, y sin esto el segundo intercambio empieza con una bola gigante.
+        IncomingScale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
+        IncomingScale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+        IncomingScale.ScaleX = IncomingScale.ScaleY = 1;
+
+        OutgoingShift.X = OutgoingShift.Y = 0;
+        IncomingShift.X = IncomingShift.Y = 0;
     }
 
     /// <summary>The Pokémon shrinks into the ball, and the ball snaps shut with a flash.</summary>
@@ -138,7 +147,13 @@ public partial class WonderTradeOverlay : UserControl
         FlashOnce(0.5, TimeSpan.FromSeconds(0.7), TimeSpan.FromSeconds(0.82 * Swallow.TimeSpan.TotalSeconds));
     }
 
-    /// <summary>The ball leaves to the right, spinning, once the Pokémon is inside.</summary>
+    /// <summary>
+    /// The ball rises off the platform and leaves to the right along an arc, spinning.
+    /// </summary>
+    /// <remarks>
+    /// An arc and not a straight line, because that is how the balls travel in the game's own
+    /// trade: they lift, cross high, and the one arriving comes down onto the middle.
+    /// </remarks>
     private void SendOut(double distance)
     {
         var start = Swallow.TimeSpan;
@@ -149,6 +164,18 @@ public partial class WonderTradeOverlay : UserControl
             EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseIn },
         };
         OutgoingShift.BeginAnimation(TranslateTransform.XProperty, fly);
+
+        // Sube y vuelve a bajar: la parábola del lanzamiento.
+        var arc = new DoubleAnimationUsingKeyFrames { Duration = Travel, BeginTime = start };
+        arc.KeyFrames.Add(new EasingDoubleKeyFrame(-170, KeyTime.FromPercent(0.45))
+        {
+            EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
+        });
+        arc.KeyFrames.Add(new EasingDoubleKeyFrame(-40, KeyTime.FromPercent(1))
+        {
+            EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseIn },
+        });
+        OutgoingShift.BeginAnimation(TranslateTransform.YProperty, arc);
 
         var spin = new DoubleAnimation(0, 900, Travel) { BeginTime = start };
         OutgoingSpin.BeginAnimation(RotateTransform.AngleProperty, spin);
@@ -186,6 +213,15 @@ public partial class WonderTradeOverlay : UserControl
             request.BallArrived();
         };
         IncomingShift.BeginAnimation(TranslateTransform.XProperty, fly);
+
+        // Y cae. El rebote es lo que hace que la bola pese: llega alta, toca el centro y da dos
+        // botes cada vez más cortos antes de quedarse. Es el aterrizaje del intercambio del juego.
+        var fall = new DoubleAnimation(-190, 0, Travel)
+        {
+            BeginTime = start,
+            EasingFunction = new BounceEase { EasingMode = EasingMode.EaseOut, Bounces = 2, Bounciness = 2.6 },
+        };
+        IncomingShift.BeginAnimation(TranslateTransform.YProperty, fall);
 
         var spin = new DoubleAnimation(-900, 0, Travel)
         {

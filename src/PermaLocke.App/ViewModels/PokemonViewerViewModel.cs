@@ -176,6 +176,12 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
             // siguiente hace pensar que no se ha leído nada.
             SelectedBox = Boxes.FirstOrDefault(box => box.Count > 0) ?? Boxes.FirstOrDefault();
 
+            // Y se redibuja a mano, sin esperar a que SelectedBox "cambie". Un intercambio deja
+            // la caja con el mismo número, el mismo nombre y la misma cuenta, y como
+            // BoxTabViewModel es un record, el objeto nuevo es IGUAL al viejo: la propiedad no
+            // notifica nada y la rejilla se quedaba enseñando el Pokémon que ya no está.
+            ShowBox(SelectedBox);
+
             _logger.LogInformation("Visor: {Total} Pokémon en {Boxes} cajas",
                 _snapshot.Total, _snapshot.Boxes.Count);
         }
@@ -209,17 +215,29 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
         SelectedBox = Boxes[(index + direction + Boxes.Count) % Boxes.Count];
     }
 
-    partial void OnSelectedBoxChanged(BoxTabViewModel? value)
+    partial void OnSelectedBoxChanged(BoxTabViewModel? value) => ShowBox(value);
+
+    /// <summary>
+    /// Fills the thirty holes with whatever the last reading says is in that box.
+    /// </summary>
+    /// <remarks>
+    /// Called both when the selected box changes and after every reload, because the second one
+    /// does not imply the first: <see cref="BoxTabViewModel"/> compares by value, so re-reading a
+    /// box whose number, name and count are unchanged produces an equal object and no
+    /// notification at all — which is exactly what a wonder trade leaves behind.
+    /// </remarks>
+    private void ShowBox(BoxTabViewModel? box)
     {
         Slots.Clear();
         Select(null);
+        SelectedSlot = null;
 
-        if (value is null || _snapshot is null)
+        if (box is null || _snapshot is null)
         {
             return;
         }
 
-        var contents = _snapshot.Boxes.FirstOrDefault(box => box.Number == value.Number);
+        var contents = _snapshot.Boxes.FirstOrDefault(b => b.Number == box.Number);
         if (contents is null)
         {
             return;

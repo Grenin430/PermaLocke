@@ -2701,3 +2701,50 @@ una ventana estrecha los botones se comen el ancho, la otra columna se queda a *
 resumen envuelve **letra a letra**: treinta y tres líneas, seiscientos píxeles de alto, y la caja
 de arriba encogida a tres filas con barra de scroll. Sin error y sin log, otra vez. Ahora van en
 un `WrapPanel` con el resumen debajo.
+
+---
+
+## 35. El intercambio no se veía: un record que compara por valor (2026-08-21)
+
+Los cuatro primeros wonder trades del jugador funcionaron —Mew por Genesect, Giratina por Arceus,
+Aromatisse por Lunatone, todos dentro de su banda y escritos en la partida— pero **la caja seguía
+enseñando el Pokémon entregado**. Ni al terminar el intercambio ni pulsando «releer la partida».
+
+La partida estaba bien. Lo que estaba mal era la pantalla.
+
+### Por qué
+
+El visor rellena los treinta huecos desde `OnSelectedBoxChanged`, y `LoadAsync` reasignaba
+`SelectedBox` esperando que eso lo disparase. `BoxTabViewModel` es un **record**, así que compara
+por valor: número, nombre y cuenta. Y un intercambio deja los tres **exactamente iguales** —la
+caja 1 tenía 30 Pokémon antes y 30 después—, de modo que el objeto nuevo era **igual** al viejo,
+`SetProperty` no notificaba nada, y la rejilla se quedaba con los huecos de la lectura anterior.
+
+Es el mismo patrón que ya mordió dos veces en el gacha y una en el visor: **nada falla, nada se
+registra, y lo que se ve es mentira**. Aquí además el caso concreto que lo destapa es justo el que
+la función existe para cubrir, porque un intercambio es la única operación que cambia el contenido
+de una caja sin cambiar su cuenta.
+
+### El arreglo
+
+Rellenar los huecos es ahora un método propio, `ShowBox`, y `LoadAsync` lo llama **a mano** al
+terminar, sin depender de que ninguna propiedad haya «cambiado».
+
+Se comprueba solo: `ShowBox` limpia la selección, así que pulsar «releer la partida» con un
+Pokémon seleccionado tiene que dejar la ficha en blanco. Antes no la dejaba.
+
+### De paso, en la animación
+
+- Los **tres avisos se apagan** antes de que salga el Pokémon. Se quedaban puestos y la ficha
+  final caía encima de ellos y de la bola.
+- La ficha va sobre un **panel oscuro con el borde del color del tipo**: sobre el fondo claro del
+  intercambio y sobre la bola no había quien leyera los datos.
+- El fondo pasa a ser **azul y claro**, con rayos girando, en vez de negro.
+- Las bolas viajan en **arco** y la que llega **cae y rebota** dos veces antes de quedarse, en vez
+  de deslizarse en horizontal.
+- `Reset` devuelve también la escala y la Y de la bola que llega. Sin eso, el segundo intercambio
+  de una sesión empezaba con una bola gigante, porque el estallido del anterior la deja en 3,4.
+
+No se ha podido copiar la animación del juego fotograma a fotograma: no hay forma de verla desde
+aquí. Lo que hay es una reconstrucción de la secuencia conocida —fondo claro, bolas cruzándose en
+arco, la que llega cae y se abre—, y queda pendiente de que el jugador diga en qué se separa.
