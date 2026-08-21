@@ -28,6 +28,8 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
     private readonly Dictionary<int, BitmapSource?> _cache = [];
     private readonly SemaphoreSlim _gate = new(1, 1);
 
+    private string? _romPath;
+    private string _scratch = string.Empty;
     private IReadOnlyDictionary<int, int>? _index;
     private bool _prepared;
     private string SpriteDirectory => Path.Combine(paths.Data, "sprites");
@@ -69,6 +71,8 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
             }
 
             var scratch = Path.Combine(Path.GetTempPath(), "permalocke-sprites");
+            _romPath = rom.Path;
+            _scratch = scratch;
             _index = await PokemonIconIndex.BuildAsync(rom.Path, scratch, ct);
 
             if (!Directory.Exists(SpriteDirectory) || Directory.GetFiles(SpriteDirectory, "*.png").Length == 0)
@@ -220,7 +224,7 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
     /// </remarks>
     public BitmapSource? GetItem(int itemId)
     {
-        if (!_prepared || !ItemIconIndex.TryGet(itemId, out _))
+        if (!_prepared || !ItemIconIndex.TryGet(itemId, out var icon))
         {
             return null;
         }
@@ -231,9 +235,38 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
             return cached;
         }
 
-        var image = Read(Path.Combine(ItemDirectory, $"{itemId:0000}.png"));
+        // Se extrae el que falte, uno a uno. La lista previa solo cubría los objetos medidos, así
+        // que todo lo que va por la regla directa —la Master Ball es el objeto 1— se quedaba sin
+        // fichero y sin dibujo. Pedirlo es ahora lo que lo trae.
+        var file = Path.Combine(ItemDirectory, $"{itemId:0000}.png");
+        if (!File.Exists(file))
+        {
+            ExtractItem(itemId, icon, file);
+        }
+
+        var image = Read(file);
         _cache[key] = image;
         return image;
+    }
+
+    /// <summary>Pulls one item icon out of the cartridge, on demand.</summary>
+    private void ExtractItem(int itemId, int icon, string destination)
+    {
+        if (_romPath is null)
+        {
+            return;
+        }
+
+        try
+        {
+            Directory.CreateDirectory(ItemDirectory);
+            var sprite = ItemIconReader.Open(_romPath, _scratch).Read(icon + 1);
+            File.WriteAllBytes(destination, PngImage.Encode(sprite.Pixels, sprite.Width, sprite.Height));
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "No se pudo extraer el icono del objeto {Item}", itemId);
+        }
     }
 
     /// <summary>

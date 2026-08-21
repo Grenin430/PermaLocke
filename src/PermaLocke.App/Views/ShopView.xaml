@@ -3,58 +3,164 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <UserControl.Resources>
-        <!-- Una tarjeta: icono del cartucho, nombre y el precio como botón. -->
+
+        <!-- El botón del precio: relleno de acento, y en rojo apagado cuando no llega el saldo,
+             para que la tarjeta diga por qué no se puede comprar sin tener que leer nada. -->
+        <Style x:Key="PriceButton" TargetType="Button">
+            <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="#FF05070B" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Chip" CornerRadius="5" Padding="10,7"
+                                BorderThickness="1" BorderBrush="{StaticResource AccentBrush}">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                    <GradientStop Offset="0" Color="#FF63DEF8" />
+                                    <GradientStop Offset="1" Color="{StaticResource AccentColor}" />
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Chip" Property="Background" Value="#FF8CE9FF" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Chip" Property="Background" Value="#FF1A1010" />
+                                <Setter TargetName="Chip" Property="BorderBrush" Value="#FF4A2A2A" />
+                                <Setter Property="Foreground" Value="#FF9A5A57" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Una tarjeta: el icono del cartucho sobre un halo, el nombre, lo que llevas y el precio. -->
         <DataTemplate x:Key="ShopItemTemplate">
-            <Border Margin="4" Padding="10" CornerRadius="6" BorderThickness="1"
-                    Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource SurfaceAltBrush}">
+            <Border x:Name="Card" Margin="6" Padding="12,14" CornerRadius="10" BorderThickness="1"
+                    BorderBrush="{StaticResource SurfaceAltBrush}">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Offset="0" Color="#FF151E2E" />
+                        <GradientStop Offset="1" Color="{StaticResource SurfaceColor}" />
+                    </LinearGradientBrush>
+                </Border.Background>
+
                 <StackPanel>
-                    <Grid Height="52" Margin="0,2,0,8">
-                        <!-- El icono sale de la ROM del propio jugador. Si el cartucho no lo
-                             tiene medido, queda la inicial en vez de un hueco vacío. -->
-                        <TextBlock Text="{Binding Initial}" FontSize="26" FontWeight="Bold"
+                    <!-- EL ICONO. Un halo detrás para que el pixel art no flote sobre el fondo,
+                         y el sprite al doble de tamaño con vecino más próximo: escalado suave
+                         convierte 32x32 del cartucho en una mancha. -->
+                    <Grid Height="86" Margin="0,0,0,10">
+                        <Ellipse Width="76" Height="76" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Ellipse.Fill>
+                                <RadialGradientBrush>
+                                    <GradientStop Offset="0" Color="#33FFFFFF" />
+                                    <GradientStop Offset="0.55" Color="#12000000" />
+                                    <GradientStop Offset="1" Color="#00000000" />
+                                </RadialGradientBrush>
+                            </Ellipse.Fill>
+                        </Ellipse>
+
+                        <TextBlock Text="{Binding Initial}" FontSize="30" FontWeight="Bold"
                                    HorizontalAlignment="Center" VerticalAlignment="Center"
-                                   Foreground="{StaticResource SurfaceAltBrush}" />
-                        <Image Source="{Binding Icon}" Stretch="None"
+                                   Foreground="#FF243348" />
+
+                        <Image Source="{Binding Icon}" Stretch="Uniform" MaxHeight="64" MaxWidth="64"
                                RenderOptions.BitmapScalingMode="NearestNeighbor"
-                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                               HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Image.LayoutTransform>
+                                <ScaleTransform ScaleX="2" ScaleY="2" />
+                            </Image.LayoutTransform>
+                        </Image>
                     </Grid>
 
                     <TextBlock Text="{Binding Name}" TextWrapping="Wrap" TextAlignment="Center"
-                               MinHeight="34" FontSize="12"
+                               MinHeight="36" FontSize="13" FontWeight="SemiBold"
+                               FontFamily="{StaticResource UiFont}"
                                Foreground="{StaticResource TextBrush}" />
 
-                    <TextBlock Text="{Binding Carried}" TextAlignment="Center" FontSize="10"
-                               Margin="0,0,0,6" Foreground="{StaticResource TextMutedBrush}" />
+                    <!-- Lo que ya llevas, discreto pero visible: evita comprar de más. -->
+                    <Border Margin="0,4,0,10" Padding="8,2" CornerRadius="9"
+                            HorizontalAlignment="Center" Background="#FF0A121C">
+                        <TextBlock Text="{Binding Carried}" FontSize="10"
+                                   Foreground="{StaticResource TextMutedBrush}" />
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Visibility" Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Carried}" Value="">
+                                        <Setter Property="Visibility" Value="Hidden" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                    </Border>
 
-                    <Button Content="{Binding PriceText}"
+                    <Button Content="{Binding PriceText}" Style="{StaticResource PriceButton}"
                             IsEnabled="{Binding Affordable}"
                             Command="{Binding DataContext.BuyCommand,
                                       RelativeSource={RelativeSource AncestorType=UserControl}}"
                             CommandParameter="{Binding}" />
                 </StackPanel>
             </Border>
+
+            <DataTemplate.Triggers>
+                <!-- Al pasar por encima la tarjeta se enciende: se ve qué se va a comprar. -->
+                <Trigger SourceName="Card" Property="IsMouseOver" Value="True">
+                    <Setter TargetName="Card" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                    <Setter TargetName="Card" Property="Effect">
+                        <Setter.Value>
+                            <DropShadowEffect Color="{StaticResource AccentColor}" BlurRadius="18"
+                                              ShadowDepth="0" Opacity="0.45" />
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+                <!-- Sin saldo, la tarjeta entera se apaga. -->
+                <DataTrigger Binding="{Binding Affordable}" Value="False">
+                    <Setter TargetName="Card" Property="Opacity" Value="0.45" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
         </DataTemplate>
     </UserControl.Resources>
 
-    <Grid Margin="10">
+    <Grid Margin="12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- Saldo y avisos. -->
-        <Border Grid.Row="0" Padding="14,10" Margin="0,0,0,10" CornerRadius="6"
-                Background="{StaticResource SurfaceBrush}">
+        <!-- CABECERA: saldo grande a la derecha, avisos a la izquierda. -->
+        <Border Grid.Row="0" Padding="18,14" Margin="0,0,0,12" CornerRadius="10"
+                BorderThickness="1" BorderBrush="{StaticResource SurfaceAltBrush}">
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                    <GradientStop Offset="0" Color="{StaticResource SurfaceAltColor}" />
+                    <GradientStop Offset="1" Color="{StaticResource SurfaceColor}" />
+                </LinearGradientBrush>
+            </Border.Background>
+
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding Problem}" TextWrapping="Wrap"
-                               Foreground="{StaticResource WarningBrush}">
+                <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,20,0">
+                    <TextBlock Text="TIENDA DE LA COMPETICIÓN" FontSize="10" FontWeight="Bold"
+                               FontFamily="{StaticResource UiFont}"
+                               Foreground="{StaticResource AccentBrush}" />
+                    <TextBlock Margin="0,4,0,0" TextWrapping="Wrap" FontSize="12"
+                               Foreground="{StaticResource TextMutedBrush}"
+                               Text="Lo que compres se escribe en la mochila de tu partida." />
+
+                    <TextBlock Text="{Binding Problem}" TextWrapping="Wrap" Margin="0,8,0,0"
+                               FontSize="12" Foreground="{StaticResource WarningBrush}">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
                                 <Setter Property="Visibility" Value="Visible" />
@@ -66,21 +172,47 @@
                             </Style>
                         </TextBlock.Style>
                     </TextBlock>
-                    <TextBlock Text="{Binding Status}" TextWrapping="Wrap"
-                               Foreground="{StaticResource SuccessBrush}" />
+
+                    <TextBlock Text="{Binding Status}" TextWrapping="Wrap" Margin="0,8,0,0"
+                               FontSize="12" Foreground="{StaticResource SuccessBrush}">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Status}" Value="">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                 </StackPanel>
 
-                <StackPanel Grid.Column="1" HorizontalAlignment="Right">
-                    <TextBlock Text="SALDO" FontSize="10" HorizontalAlignment="Right"
-                               Foreground="{StaticResource TextMutedBrush}" />
-                    <TextBlock Text="{Binding Balance}" FontSize="26" FontWeight="Bold"
-                               HorizontalAlignment="Right"
-                               Foreground="{StaticResource AccentBrush}" />
-                </StackPanel>
+                <Border Grid.Column="1" Padding="20,10" CornerRadius="8"
+                        Background="#FF0A121C" BorderThickness="1"
+                        BorderBrush="{StaticResource AccentDimBrush}">
+                    <StackPanel>
+                        <TextBlock Text="SALDO" FontSize="10" FontWeight="Bold"
+                                   HorizontalAlignment="Center"
+                                   FontFamily="{StaticResource UiFont}"
+                                   Foreground="{StaticResource TextMutedBrush}" />
+                        <TextBlock Text="{Binding Balance}" FontSize="34" FontWeight="Bold"
+                                   HorizontalAlignment="Center"
+                                   FontFamily="{StaticResource UiFont}"
+                                   Foreground="{StaticResource AccentBrush}">
+                            <TextBlock.Effect>
+                                <DropShadowEffect Color="{StaticResource AccentColor}" BlurRadius="14"
+                                                  ShadowDepth="0" Opacity="0.6" />
+                            </TextBlock.Effect>
+                        </TextBlock>
+                        <TextBlock Text="puntos" FontSize="10" HorizontalAlignment="Center"
+                                   Foreground="{StaticResource TextMutedBrush}" />
+                    </StackPanel>
+                </Border>
             </Grid>
         </Border>
 
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,0,6,0">
             <ItemsControl ItemsSource="{Binding Items}" ItemTemplate="{StaticResource ShopItemTemplate}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
@@ -90,12 +222,12 @@
             </ItemsControl>
         </ScrollViewer>
 
-        <StackPanel Grid.Row="2" Margin="0,10,0,0">
-            <Button Content="ACTUALIZAR" HorizontalAlignment="Left" Padding="18,8"
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,12,0,0">
+            <Button Content="ACTUALIZAR" Style="{StaticResource PrimaryButton}"
                     Command="{Binding RefreshCommand}" />
-            <TextBlock Margin="0,10,0,0" TextWrapping="Wrap" FontSize="11"
+            <TextBlock VerticalAlignment="Center" Margin="16,0,0,0" TextWrapping="Wrap" FontSize="11"
                        Foreground="{StaticResource TextMutedBrush}"
-                       Text="Lo comprado se escribe en la mochila del juego, así que hace falta Azahar abierto con la partida cargada. El objeto se entrega primero y se cobra después: si la escritura falla no se te quita nada. Los iconos salen de tu propia ROM." />
+                       Text="Hace falta Azahar abierto con la partida cargada. El objeto se entrega primero y se cobra después: si la escritura falla, no se te quita nada. Los iconos salen de tu propia ROM." />
         </StackPanel>
     </Grid>
 </UserControl>

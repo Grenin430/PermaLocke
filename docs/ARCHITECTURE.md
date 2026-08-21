@@ -3386,3 +3386,21 @@ unidad más. Una compra que no se puede verificar no se cobra.
 Los iconos se extraen de la ROM del propio jugador la primera vez, a `Data/sprites/items/`,
 nombrados **por id de objeto y no por índice de icono**, precisamente porque los dos números no
 son el mismo.
+
+### La Master Ball que no salía
+
+La extracción inicial recorría `ItemIconIndex.KnownItems`, que es la tabla de **lo medido**, y por
+tanto se dejaba fuera todo lo que va por la regla directa. La Master Ball es el objeto **1**: tenía
+índice conocido y no tenía fichero, así que la tarjeta salía con la inicial y sin dibujo. Ahora el
+icono se extrae **cuando se pide**, uno a uno, así que añadir algo a la tienda le trae su sprite sin
+que nadie borre una caché.
+
+### La pantalla
+
+Rejilla de seis, tarjeta con degradado y el sprite **al doble de tamaño con vecino más próximo**
+sobre un halo radial: escalado suave convierte 32×32 del cartucho en una mancha, y sin fondo el
+pixel art flota. El precio es un botón de acento que se vuelve rojo apagado cuando no llega el
+saldo, y la tarjeta entera baja a opacidad 0,45, de modo que se ve qué se puede comprar sin leer
+nada. Al pasar por encima, borde de acento y sombra del mismo color. El saldo va en su propio
+panel con halo. Lo que ya llevas de cada objeto sale en una cápsula pequeña bajo el nombre, que es
+lo que evita comprar de más.
