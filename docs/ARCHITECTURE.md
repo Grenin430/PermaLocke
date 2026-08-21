@@ -3047,3 +3047,29 @@ cada una. `Saves/banderas-prueba1.txt` es la línea base de la segunda.
 Con la segunda prueba habrá además una segunda oportunidad para la bandera: de los seis bloques
 candidatos, el que encienda una **segunda** bandera es el de las pruebas. Si eso cierra, las doce
 se anclan de golpe; mientras no cierre, el objeto ya las cuenta bien.
+
+### La segunda medición: la bandera no cierra, el objeto sí
+
+La segunda prueba se midió igual, y sirvió para dos cosas.
+
+La primera, anclarla: entró el **Lizastal Z (objeto 813)**. Los cristales de tipo son los objetos
+807 a 824 en el orden de tipos del juego, y el cartucho los nombra, así que cada prueba futura se
+ancla mirando cuál aparece. Nada de esto se sabe de memoria: se ve entrar entre dos volcados.
+
+La segunda, enterrar la vía de la bandera. La predicción era que de los seis bloques candidatos,
+el de las pruebas encendería una **segunda** bandera. El cruce da **21 parejas** plausibles —una
+bandera de cada prueba a menos de 24 de distancia— y casi todas con banderas de la Escuela al
+lado. No converge, y con más medidas tampoco tiene pinta de converger: son tramos densos de
+banderas de historia, no una tabla dispersa de hitos.
+
+Tampoco hay contador de pruebas. La primera encendió `work[51]` y `work[63]`, la segunda encendió
+`work[75]` y `work[765]`: cuatro contadores distintos que valen 1, ninguno que vaya de 1 a 2. Si
+hubiera un «pruebas superadas», habría subido.
+
+Lo único que se movió de forma prometedora fue `stamps`, de **1 a 3**: un campo de bits al que se
+le encendió el bit 1. El bit 0 ya estaba puesto antes de la primera prueba, así que **no** es
+«prueba número N» y con una sola transición observada no se ancla nada. Queda como predicción
+comprobable: si con la siguiente gran prueba pasa de 3 a 7, es el campo de las grandes pruebas y
+las cuatro se anclan de golpe. Si no, se olvida.
+
+Estado: `prueba-01` y `prueba-02` se cuentan solas y verificadas en la app, 1/1 las dos.

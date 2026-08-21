@@ -318,8 +318,17 @@ progreso junto al récord y al disparador: `"item": 807`, presencia y no cantida
 el juego da y no quita**. Ningún récord se mueve al superar una prueba, y `Misc7.Stamps` vale 1
 antes y después, así que no es la Dominsignia. Ver §40.
 
-**Siguiente.** Anclar las once pruebas restantes y las pegatinas —una medición cada una, con
-`Saves/banderas-prueba1.txt` de línea base—, tienda, y probar en partida nueva iniciales,
+**Segunda prueba anclada, y la vía de la bandera enterrada (2026-08-21).** La segunda dio el
+**Lizastal Z (813)**; los cristales de tipo son los objetos 807-824 en orden de tipos, así que cada
+prueba se ancla mirando cuál aparece. La predicción de que el bloque de banderas bueno encendería
+una segunda quedó en **21 parejas plausibles**: son tramos densos de banderas de historia, no una
+tabla de hitos, y no va a converger. Tampoco hay contador de pruebas —la 1 encendió work[51] y
+[63], la 2 encendió work[75] y [765], ninguno subió de 1 a 2—. Lo único prometedor es `stamps`,
+de 1 a 3, pero el bit 0 ya estaba antes de la primera prueba: queda como predicción, si con la
+siguiente gran prueba pasa de 3 a 7 es el campo de las grandes pruebas. Ver §40.
+
+**Siguiente.** Anclar las diez pruebas restantes y las pegatinas —una medición cada una, con
+`Saves/banderas-prueba2.txt` de línea base—, tienda, y probar en partida nueva iniciales,
 entrenadores y tiendas.
 
 Lo que NO está resuelto todavía y no debe darse por hecho (detalle en `docs/ARCHITECTURE.md`):
