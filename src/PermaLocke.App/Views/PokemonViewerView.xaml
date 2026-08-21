@@ -70,7 +70,7 @@
                            HorizontalAlignment="Right" />
 
                 <ProgressBar Grid.Column="2" Height="6" Margin="10,0" Minimum="0" Maximum="31"
-                             Value="{Binding Iv}" VerticalAlignment="Center"
+                             Value="{Binding Iv, Mode=OneWay}" VerticalAlignment="Center"
                              Background="#22FFFFFF" Foreground="{StaticResource AccentBrush}">
                     <ProgressBar.Style>
                         <Style TargetType="ProgressBar">

@@ -271,7 +271,21 @@ contenedor, tallando los ALYT y por número, y no aparecen, porque el juego **co
 con un color y el nombre. Lo que sí hay, 18 y una por tipo, son los **cristales Z**, pero no en
 orden de tipo, así que emparejarlos sería adivinar por color y no se hace. Ver §34.
 
-**Siguiente.** Logros (la fuente de puntos), tienda, y probar en partida nueva iniciales,
+**Logros y penalizaciones (2026-08-21).** Ya se pueden ganar y perder puntos. Cada muerte **−25**;
+que caiga el equipo entero **−100** más, hasta **4 veces (−400)**; y el **saldo puede quedarse en
+negativo**, porque una penalización no es una compra y no pregunta si hay saldo. Números en
+`Data/penalties.json`, y si el fichero falta se cae a los reales, no a cero. El equipo caído se
+cobra **en el flanco** —cuando pasa de tener a alguien en pie a nadie—, así que un equipo que cae
+con la app cerrada no se cobra como tal; las muertes sí. Los logros son una proyección sobre el
+historial y se cobran a mano. Un logro cuyo disparador no existe **no se borra**: sale marcado
+como «sin detectar». Hoy faltan por instrumentar entrenadores y pruebas. Ver §36.
+
+**La lista de logros de BxnnyLocke no se puede leer**: está compilada dentro de su DLL, no hay
+ningún JSON ni base de datos en su instalación que la contenga. Sacarla exigiría descompilar su
+ensamblado, que es lo que la regla 1 prohíbe. Tiene que darla el jugador; el motor está montado
+para que meterla sea editar `Data/achievements.json`.
+
+**Siguiente.** Tienda, y probar en partida nueva iniciales,
 entrenadores y tiendas.
 
 Lo que NO está resuelto todavía y no debe darse por hecho (detalle en `docs/ARCHITECTURE.md`):
@@ -291,7 +305,9 @@ Lo que NO está resuelto todavía y no debe darse por hecho (detalle en `docs/AR
 | Saber qué icono es de qué especie | **RESUELTO PARA LAS 807** — construido a mano en dos bloques; el reparto cierra sin iconos libres ni repetidos y hay tests. Ver `ARCHITECTURE.md` §30 y §30 bis |
 | Visor Pokémon (leer el PC de la partida) | **HECHO Y VERIFICADO** en la partida real — 149 Pokémon, 32 cajas, ficha al pinchar. Solo lectura; sin equipo, sin formas, sin cruce con la run. Ver `ARCHITECTURE.md` §32 |
 | Wonder trade (banda de BST, escritura, animación) | **MOTOR Y ESCRITURA HECHOS** — 16 tests y verificado contra una copia real del save; la animación está sin ver porque exige un intercambio de verdad. Ver `ARCHITECTURE.md` §33 |
-| Logros, tienda y sincronización | **SIN EMPEZAR** — hoy no hay forma de ganar puntos |
+| Logros y penalizaciones | **HECHO Y VISTO EN LA APP** — motor, pantalla y 6 tests. Falta la lista real de logros, que la tiene que dar el jugador. Ver `ARCHITECTURE.md` §36 |
+| Detectar entrenadores derrotados y pruebas superadas | **SIN EMPEZAR** — es lo que bloquea la mitad de los logros y el cap de nivel |
+| Tienda y sincronización | **SIN EMPEZAR** |
 | API concreta de pk3DS.Core | **VERIFICADA** contra la ROM real — ver `ARCHITECTURE.md` §19 |
 
 ---

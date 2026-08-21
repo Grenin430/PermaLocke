@@ -44,6 +44,9 @@ public partial class App : Application
             JsonWonderTradeCatalog.Load(Path.Combine(paths.Data, "wondertrade.json")));
         collection.AddSingleton<WonderTradeService>();
         collection.AddSingleton<EncounterService>();
+        collection.AddSingleton<IPenaltyCatalog>(_ =>
+            JsonPenaltyCatalog.Load(Path.Combine(paths.Data, "penalties.json")));
+        collection.AddSingleton<PenaltyService>();
         collection.AddSingleton<GameWatcher>();
 
         collection.AddSingleton<AzaharInstallation>();
@@ -57,6 +60,10 @@ public partial class App : Application
         collection.AddSingleton<RandomizerViewModel>();
         collection.AddSingleton<GachaViewModel>();
         collection.AddSingleton<WonderTradeViewModel>();
+        collection.AddSingleton<IAchievementCatalog>(_ =>
+            JsonAchievementCatalog.Load(Path.Combine(paths.Data, "achievements.json")));
+        collection.AddSingleton<AchievementService>();
+        collection.AddSingleton<AchievementsViewModel>();
         collection.AddSingleton<PokemonViewerViewModel>();
         collection.AddSingleton<MiscellaneousViewModel>();
         collection.AddSingleton<MainViewModel>();

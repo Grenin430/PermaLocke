@@ -19,6 +19,9 @@
         <DataTemplate DataType="{x:Type vm:GachaViewModel}">
             <views:GachaView />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:AchievementsViewModel}">
+            <views:AchievementsView />
+        </DataTemplate>
         <DataTemplate DataType="{x:Type vm:PokemonViewerViewModel}">
             <views:PokemonViewerView />
         </DataTemplate>

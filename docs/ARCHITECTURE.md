@@ -2748,3 +2748,71 @@ Pokémon seleccionado tiene que dejar la ficha en blanco. Antes no la dejaba.
 No se ha podido copiar la animación del juego fotograma a fotograma: no hay forma de verla desde
 aquí. Lo que hay es una reconstrucción de la secuencia conocida —fondo claro, bolas cruzándose en
 arco, la que llega cae y se abre—, y queda pendiente de que el jugador diga en qué se separa.
+
+---
+
+## 36. Logros y penalizaciones (2026-08-21)
+
+Por fin existe una manera de ganar puntos, y otra de perderlos.
+
+### Lo que cuesta perder
+
+| Regla | Coste |
+|---|---|
+| Cada Pokémon que cae | **−25** |
+| Que caiga el equipo entero | **−100**, además de las muertes que lo componen |
+| Tope de equipos caídos | **4** veces, o sea 400 como mucho |
+
+Y **el saldo puede quedarse en negativo**. Eso no es un detalle: `PointsService.SpendAsync`
+rechaza lo que no se puede pagar, que es correcto para una tienda y falso para una regla. Una
+penalización no es una compra, así que `PenaltyService` escribe su evento con delta negativo y
+ya está. Como el saldo es una proyección sobre el log, el negativo sale solo.
+
+Los números viven en `Data/penalties.json`. Si el fichero falta, el catálogo cae a **los números
+reales**, no a cero: un fichero perdido no puede volver las muertes gratis en silencio.
+
+### Un equipo caído es un flanco, no un estado
+
+El equipo se queda a 0 PS hasta que el jugador llega a un centro Pokémon, y el vigilante mira cada
+tres segundos. Cobrar por el estado cobraría decenas de veces por un solo desastre. Así que se
+cobra en el **flanco**: solo cuando el equipo pasa de tener a alguien en pie a no tener a nadie.
+
+El indicador arranca en «había alguien en pie», de modo que la primera lectura tras abrir
+PermaLocke solo puede inicializarlo, nunca cobrar. Lo que se paga por eso: **un equipo que cae con
+la aplicación cerrada no se cobra como equipo caído**. Las muertes que lo componen sí, porque esas
+se deducen de la run y no de una bandera en memoria. Queda dicho en vez de disimulado.
+
+Pasado el tope, el evento **se sigue escribiendo** con delta cero. Ocurrió, así que la historia
+tiene que decirlo; simplemente deja de costar. No registrar nada haría que el log mintiera.
+
+### Los logros
+
+El progreso es una **proyección sobre el historial**, igual que el saldo: se recalcula entero cada
+vez que se abre la pantalla, así que no hay contador que pueda desviarse de lo que pasó.
+Desbloquear y cobrar están separados —la pantalla enseña `3 / 5` y el jugador cobra con un botón—
+para que el log diga de dónde salió cada punto y cuándo.
+
+### Un logro que no se puede detectar no se borra: se marca
+
+`Data/achievements.json` nombra un evento por logro. Si ese evento no existe en esta compilación,
+el logro **se queda en la lista**, marcado como «sin detectar» y diciendo qué disparador pidió.
+
+Es la diferencia entre una lista de la competición que se ve completa y una que ha perdido
+entradas por el camino sin avisar. Hoy PermaLocke detecta capturas, muertes, tiradas de gacha,
+intercambios, compras, equipos caídos, cap de nivel y randomizaciones. **No** detecta todavía
+entrenadores derrotados ni pruebas superadas, y esos dos salen marcados en pantalla.
+
+### Lo que no se ha hecho, y por qué
+
+El usuario pidió replicar el apartado de logros de BxnnyLocke. **Su lista está compilada dentro de
+`BxnnyLocke.dll`**: no hay ningún JSON, ninguna base de datos ni ningún fichero de configuración
+en su instalación que la contenga —se buscó—. Sacarla exigiría descompilar su ensamblado, que es
+justo lo que la regla 1 de este repositorio prohíbe: se analizan sus formatos, no se copia su
+código. Así que la lista tiene que venir del jugador, y el motor está montado para que meterla sea
+editar un JSON.
+
+### Trampa de WPF, otra más
+
+`ProgressBar.Value` enlaza **en dos direcciones por defecto**. Contra una propiedad calculada de
+solo lectura eso no da un aviso: tira una `XamlParseException` en pleno *measure* y la ventana sale
+**entera en negro**, sin barra lateral ni nada. Hay que poner `Mode=OneWay` a mano.

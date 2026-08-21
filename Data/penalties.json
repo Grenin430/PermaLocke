@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "comment": "Lo que cuesta perder. Los puntos SÍ pueden quedarse en negativo: una penalización no es una compra, así que se aplica siempre, haya saldo o no.",
+
+  "comentarioMuerte": "Cada Pokémon que cae a 0 PS resta. La detección es automática: la muerte se registra sola y la penalización va pegada a ella, en el mismo sitio, para que no exista una muerte sin su coste.",
+  "porMuerte": 25,
+
+  "comentarioEquipo": "Que se caiga el equipo entero resta aparte, ADEMÁS de las muertes que lo componen. Tiene tope: pasado el máximo se sigue registrando el evento -para que la historia esté completa- pero ya no descuenta nada.",
+  "porEquipoCaido": 100,
+  "maximoEquiposCaidos": 4
+}

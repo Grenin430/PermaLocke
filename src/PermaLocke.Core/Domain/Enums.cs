@@ -103,5 +103,18 @@ public enum GameEventType
     BallsWithheld,
 
     /// <summary>Poké Balls were given back, exactly as many as were taken.</summary>
-    BallsReturned
+    BallsReturned,
+
+    /// <summary>
+    /// Points taken away by a rule of the competition, not by a purchase.
+    /// </summary>
+    /// <remarks>
+    /// New values go at the <b>end</b> of this enum and nowhere else: the store keeps the number,
+    /// so inserting one in the middle would silently rewrite the meaning of every event already
+    /// recorded.
+    /// </remarks>
+    PointsPenalty,
+
+    /// <summary>The whole party was down at once.</summary>
+    TeamWiped
 }

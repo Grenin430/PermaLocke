@@ -50,6 +50,9 @@ public sealed class GameLinkMonitor(
     /// <summary>Pokémon seen in the game that the run has not registered yet.</summary>
     public event EventHandler<IReadOnlyList<LivePartyMember>>? UnregisteredDetected;
 
+    /// <summary>Raised when the whole party went down, so a screen can say so out loud.</summary>
+    public event EventHandler<PenaltyResult>? TeamWiped;
+
     public void Start()
     {
         _loop ??= Task.Run(RunAsync);
@@ -132,8 +135,31 @@ public sealed class GameLinkMonitor(
             UnregisteredDetected?.Invoke(this, findings.NewMembers);
         }
 
+        await CheckWipeAsync(run, snapshot);
         await EnforceLevelCapAsync(run, snapshot);
         await ApplyBallRuleAsync(run);
+    }
+
+    /// <summary>
+    /// Charges the extra penalty when the whole party goes down at once.
+    /// </summary>
+    /// <remarks>
+    /// After the individual deaths, not before: each of them costs on its own, and the wipe is
+    /// charged on top for the party falling as a whole.
+    /// </remarks>
+    private async Task CheckWipeAsync(Run run, GameSnapshot snapshot)
+    {
+        var result = await watcher.CheckWipeAsync(run.Id, run.PlayerName, snapshot, _stopping.Token);
+
+        if (result is null)
+        {
+            return;
+        }
+
+        logger.LogWarning("Equipo caído. Penalización: {Points} puntos{Capped}. Saldo: {Balance}",
+            result.Points, result.Capped ? " (tope alcanzado)" : string.Empty, result.NewBalance);
+
+        TeamWiped?.Invoke(this, result);
     }
 
     /// <summary>
