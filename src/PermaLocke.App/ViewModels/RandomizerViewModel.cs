@@ -39,7 +39,7 @@ public sealed partial class RandomizerViewModel : SectionViewModel
     public RandomizerViewModel(IRunContext runContext, IEventStore events, IClock clock,
         IAppDialogs dialogs, AzaharInstallation azahar, AppPaths paths, IRunRoles roles,
         IRoleCatalog roleCatalog, ILogger<RandomizerViewModel> logger)
-        : base("RANDOMIZADOR")
+        : base("RANDOMIZADOR", "Genera la capa del mod desde tu ROM, sin tocar el original")
     {
         _runContext = runContext;
         _events = events;

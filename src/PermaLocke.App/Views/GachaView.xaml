@@ -224,14 +224,20 @@
         </DataTemplate>
     </UserControl.Resources>
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="0,0,8,0">
+    <!-- Rejilla, no una pila con barra de desplazamiento: el botón de TIRAR y los banners tienen
+         que estar siempre a la vista, y el escenario del ultraespacio se queda con lo que sobre. -->
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" MinHeight="300" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
 
-            <Border Style="{StaticResource Panel}" Padding="0" ClipToBounds="True">
+            <Border Grid.Row="0" Style="{StaticResource Inset}" Padding="0" ClipToBounds="True">
                 <!-- Dos capas: el fondo va aparte del contenido a propósito. Metido en el mismo
                      Grid de filas, un rectángulo con RowSpan infla las filas Auto y descoloca
                      todo lo demás. -->
-                <Grid Height="392">
+                <Grid MinHeight="300">
                     <Grid.Background>
                         <RadialGradientBrush GradientOrigin="0.5,0.5" Center="0.5,0.5" RadiusX="0.9" RadiusY="0.9">
                             <GradientStop Color="{StaticResource SurfaceAltColor}" Offset="0" />
@@ -602,8 +608,8 @@
             </Border>
 
             <!-- BANNERS. La selección va al view model; la lista no decide nada. -->
-            <ListBox ItemsSource="{Binding Banners}" SelectedItem="{Binding SelectedBanner}"
-                     Background="Transparent" BorderThickness="0" Margin="0,14,0,0"
+            <ListBox Grid.Row="1" ItemsSource="{Binding Banners}" SelectedItem="{Binding SelectedBanner}"
+                     Background="Transparent" BorderThickness="0" Margin="-4,12,-4,0"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                 <ListBox.ItemsPanel>
                     <ItemsPanelTemplate>
@@ -618,19 +624,25 @@
                         <Setter Property="Template">
                             <Setter.Value>
                                 <ControlTemplate TargetType="ListBoxItem">
-                                    <Border x:Name="Card" Background="{StaticResource SurfaceBrush}"
-                                            CornerRadius="6" BorderThickness="1" Padding="14"
-                                            BorderBrush="{StaticResource SurfaceAltBrush}">
+                                    <Border x:Name="Card" Background="{StaticResource PanelBrush}"
+                                            CornerRadius="8" BorderThickness="1" Padding="14,12"
+                                            BorderBrush="{StaticResource BorderStrongBrush}">
                                         <ContentPresenter />
                                     </Border>
                                     <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="Card" Property="Background"
+                                                    Value="{StaticResource SurfaceHighBrush}" />
+                                            <Setter TargetName="Card" Property="BorderBrush"
+                                                    Value="{StaticResource AccentDimBrush}" />
+                                        </Trigger>
+                                        <!-- El banner elegido se enciende entero: es el que va a
+                                             cobrar cuando se pulse TIRAR, y eso hay que verlo. -->
                                         <Trigger Property="IsSelected" Value="True">
                                             <Setter TargetName="Card" Property="BorderBrush"
                                                     Value="{StaticResource AccentBrush}" />
-                                        </Trigger>
-                                        <Trigger Property="IsMouseOver" Value="True">
                                             <Setter TargetName="Card" Property="Background"
-                                                    Value="{StaticResource SurfaceAltBrush}" />
+                                                    Value="{StaticResource AccentDeepBrush}" />
                                         </Trigger>
                                     </ControlTemplate.Triggers>
                                 </ControlTemplate>
@@ -641,30 +653,67 @@
                 <ListBox.ItemTemplate>
                     <DataTemplate>
                         <StackPanel>
-                            <TextBlock Text="{Binding Name}" Style="{StaticResource PanelHeading}" />
-                            <TextBlock Text="{Binding Cost}" Style="{StaticResource Body}" Margin="0,2,0,6" />
+                            <DockPanel>
+                                <Border DockPanel.Dock="Right" Style="{StaticResource Chip}"
+                                        Background="{StaticResource BackgroundBrush}"
+                                        BorderBrush="{StaticResource AccentDimBrush}">
+                                    <TextBlock Text="{Binding Cost}" Style="{StaticResource ChipText}"
+                                               Foreground="{StaticResource AccentBrightBrush}" />
+                                </Border>
+                                <TextBlock Text="{Binding Name}" Style="{StaticResource PanelHeading}"
+                                           Margin="0" VerticalAlignment="Center" />
+                            </DockPanel>
                             <TextBlock Text="{Binding Description}" Style="{StaticResource Muted}"
-                                       TextWrapping="Wrap" />
-                            <TextBlock Text="{Binding Odds}" Style="{StaticResource Mono}" FontSize="11"
-                                       TextWrapping="Wrap" Margin="0,8,0,0" />
+                                       FontSize="12" Margin="0,8,0,0" />
+                            <TextBlock Text="{Binding Odds}" Style="{StaticResource Mono}" FontSize="10.5"
+                                       Foreground="{StaticResource TextFaintBrush}" Margin="0,8,0,0" />
                         </StackPanel>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
 
-            <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
-                <Button Content="TIRAR" Style="{StaticResource PrimaryButton}"
-                        Command="{Binding RollCommand}" MinWidth="180" />
-                <TextBlock Style="{StaticResource Body}" VerticalAlignment="Center" Margin="16,0,0,0"
-                           Text="{Binding Balance, StringFormat='Saldo: {0} puntos'}" />
-            </StackPanel>
+            <Border Grid.Row="2" Style="{StaticResource Inset}" Padding="14,12" Margin="0,12,0,0">
+                <StackPanel>
+                    <DockPanel>
+                        <Button DockPanel.Dock="Left" Content="TIRAR" Style="{StaticResource PrimaryButton}"
+                                Command="{Binding RollCommand}" MinWidth="180" Padding="16,11" FontSize="14" />
 
-            <TextBlock Text="{Binding Status}" Style="{StaticResource Body}" TextWrapping="Wrap"
-                       Margin="0,14,0,0" />
+                        <!-- El párrafo de cómo funciona la tirada vive en el tooltip: es de leer
+                             una vez, y a pie de pantalla empujaba el botón fuera de la ventana. -->
+                        <TextBlock DockPanel.Dock="Right" Text="¿cómo se decide la tirada?"
+                                   Style="{StaticResource Faint}" VerticalAlignment="Center"
+                                   TextDecorations="Underline" Cursor="Help"
+                                   Foreground="{StaticResource AccentDimBrush}" Margin="14,0,0,0">
+                            <TextBlock.ToolTip>
+                                <TextBlock TextWrapping="Wrap" MaxWidth="440" LineHeight="17"
+                                           Text="Las probabilidades están a la vista y salen de Data/gacha.json. Cada tirada se calcula con la seed de la run y su número de tirada, así que cualquiera puede recomputarla y comprobar que salió lo que dice el historial. La ruleta es presentación: el Pokémon ya está decidido, guardado y entregado antes de que empiece a girar, y las siluetas que pasan no son candidatas. El Pokémon se entrega al PC del juego escribiendo en la partida, lo que exige tener el juego cerrado; si no se puede, la línea de estado dice por qué." />
+                            </TextBlock.ToolTip>
+                        </TextBlock>
 
-            <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,14,0,0"
-                       Text="Las probabilidades están a la vista y salen de Data/gacha.json. Cada tirada se calcula con la seed de la run y su número de tirada, así que cualquiera puede recomputarla y comprobar que salió lo que dice el historial. La ruleta es presentación: el Pokémon ya está decidido, guardado y entregado antes de que empiece a girar, y las siluetas que pasan no son candidatas. El Pokémon se entrega al PC del juego escribiendo en la partida, lo que exige tener el juego cerrado; si no se puede, la línea de estado dice por qué." />
+                        <Border Style="{StaticResource Chip}" HorizontalAlignment="Left" Margin="14,0,0,0"
+                                Padding="12,5"
+                                Background="{StaticResource BackgroundBrush}"
+                                BorderBrush="{StaticResource AccentDimBrush}">
+                            <TextBlock Style="{StaticResource ChipText}" FontSize="12"
+                                       Foreground="{StaticResource AccentBrush}"
+                                       Text="{Binding Balance, StringFormat='{}{0} puntos'}" />
+                        </Border>
+                    </DockPanel>
 
-        </StackPanel>
-    </ScrollViewer>
+                    <TextBlock Text="{Binding Status}" FontSize="12" Margin="0,12,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource Body}">
+                                <Setter Property="Visibility" Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Status}" Value="">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
+    </Grid>
 </UserControl>

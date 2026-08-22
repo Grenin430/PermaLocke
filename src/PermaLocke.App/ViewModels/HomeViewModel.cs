@@ -10,10 +10,19 @@ using PermaLocke.Rules.Services;
 namespace PermaLocke.App.ViewModels;
 
 /// <param name="Timestamp">Local time, preformatted so the view needs no converter.</param>
-public sealed record EventRow(string Timestamp, string Type, string Description, string Points);
+/// <param name="IsGain">Set so the row can be coloured without a converter or a value parse.</param>
+public sealed record EventRow(
+    string Timestamp, string Type, string Description, string Points, bool IsGain, bool IsLoss);
 
 /// <param name="Hp">Preformatted as "25/25" for the view.</param>
-public sealed record TeamRow(string Name, string Level, string Hp, bool IsFainted, bool IsShiny);
+/// <param name="HpRatio">0 to 1, for the bar the view draws next to the number.</param>
+/// <param name="HpState">"ok", "low", "critical" or "fainted" — the colour band, decided here
+/// rather than by four thresholds copied into XAML.</param>
+public sealed record TeamRow(
+    string Name, string Level, string Hp, double HpRatio, string HpState, bool IsShiny);
+
+/// <param name="State">Already in Spanish: the domain enum never reaches the screen.</param>
+public sealed record IslandRow(string Name, string State);
 
 /// <summary>
 /// The run dashboard. With no run it shows an explicit empty state and the button to create
@@ -39,7 +48,7 @@ public sealed partial class HomeViewModel : SectionViewModel
         IUiDispatcher ui,
         GameLinkMonitor gameLink,
         ProgressService progress,
-        ILogger<HomeViewModel> logger) : base("HOME")
+        ILogger<HomeViewModel> logger) : base("HOME", "Estado de la run, equipo en vivo y últimos movimientos")
     {
         _runContext = runContext;
         _events = events;
@@ -120,7 +129,7 @@ public sealed partial class HomeViewModel : SectionViewModel
     private string _stageSourceText = string.Empty;
 
     [ObservableProperty]
-    private IReadOnlyList<Island> _islands = [];
+    private IReadOnlyList<IslandRow> _islands = [];
 
     /// <summary>Integrity of the event chain, checked every time HOME is shown.</summary>
     [ObservableProperty]
@@ -154,11 +163,14 @@ public sealed partial class HomeViewModel : SectionViewModel
 
         foreach (var member in snapshot.Party)
         {
+            var ratio = member.MaxHp > 0 ? (double)member.CurrentHp / member.MaxHp : 0d;
+
             LiveTeam.Add(new TeamRow(
                 string.IsNullOrWhiteSpace(member.Nickname) ? member.SpeciesName : member.Nickname,
                 $"Nv. {member.Level}",
                 $"{member.CurrentHp}/{member.MaxHp}",
-                member.IsFainted,
+                Math.Clamp(ratio, 0d, 1d),
+                member.IsFainted ? "fainted" : ratio <= 0.2 ? "critical" : ratio <= 0.5 ? "low" : "ok",
                 member.IsShiny));
         }
 
@@ -278,7 +290,7 @@ public sealed partial class HomeViewModel : SectionViewModel
         GameName = run.Game == GameVersion.UltraMoon ? "Pokémon Ultra Luna" : "Pokémon Ultra Sol";
         SeedLabel = run.SeedLabel;
         PlayerName = run.PlayerName;
-        Islands = run.Islands;
+        Islands = [.. run.Islands.Select(i => new IslandRow(i.Name, DisplayNames.Of(i.State)))];
 
         // La etapa la deducen los logros: en cuanto el cristal Z de la prueba entra en la
         // mochila, el cap sube solo. El botón de abajo es red de seguridad, no el camino normal.
@@ -303,9 +315,11 @@ public sealed partial class HomeViewModel : SectionViewModel
         {
             RecentEvents.Add(new EventRow(
                 row.Timestamp.LocalDateTime.ToString("dd/MM HH:mm"),
-                row.Type.ToString(),
+                DisplayNames.Of(row.Type),
                 row.Description,
-                row.PointsDelta == 0 ? string.Empty : row.PointsDelta.ToString("+#;-#;0")));
+                row.PointsDelta == 0 ? string.Empty : row.PointsDelta.ToString("+#;-#;0"),
+                row.PointsDelta > 0,
+                row.PointsDelta < 0));
         }
 
         var integrity = await _events.VerifyChainAsync(run.Id);

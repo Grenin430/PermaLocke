@@ -48,7 +48,7 @@ public sealed partial class ShopViewModel : SectionViewModel
     private readonly PokemonSpriteService _sprites;
 
     public ShopViewModel(ShopService shop, IRunContext runs, PokemonSpriteService sprites)
-        : base("TIENDA")
+        : base("TIENDA", "Objetos a cambio de puntos, entregados a la mochila del juego")
     {
         _shop = shop;
         _runs = runs;

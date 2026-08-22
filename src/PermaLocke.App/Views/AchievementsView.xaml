@@ -7,19 +7,24 @@
 
         <!-- Una tarjeta de logro: medalla, texto, progreso, puntos y botón. -->
         <DataTemplate x:Key="AchievementTemplate">
-            <Border Margin="5" Padding="12" CornerRadius="6" BorderThickness="1"
-                    Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource SurfaceAltBrush}">
+            <Border Margin="5" Padding="14">
                 <Border.Style>
                     <Style TargetType="Border">
+                        <Setter Property="Background" Value="{StaticResource PanelBrush}" />
+                        <Setter Property="BorderBrush" Value="{StaticResource BorderStrongBrush}" />
+                        <Setter Property="BorderThickness" Value="1" />
+                        <Setter Property="CornerRadius" Value="{StaticResource RadiusMedium}" />
                         <Style.Triggers>
-                            <!-- Cobrado: se apaga, ya no pide nada. -->
-                            <DataTrigger Binding="{Binding Claimed}" Value="True">
-                                <Setter Property="Opacity" Value="0.5" />
-                            </DataTrigger>
                             <!-- Listo para cobrar: se enciende, que es lo que hay que mirar. -->
                             <DataTrigger Binding="{Binding CanClaim}" Value="True">
                                 <Setter Property="BorderBrush" Value="{StaticResource SuccessBrush}" />
-                                <Setter Property="BorderThickness" Value="2" />
+                                <Setter Property="Background" Value="{StaticResource SuccessDeepBrush}" />
+                            </DataTrigger>
+                            <!-- Cobrado: se apaga, ya no pide nada. -->
+                            <DataTrigger Binding="{Binding Claimed}" Value="True">
+                                <Setter Property="Opacity" Value="0.45" />
+                                <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+                                <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
@@ -27,90 +32,103 @@
 
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="54" />
+                        <ColumnDefinition Width="52" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
                     <!-- LA MEDALLA. Un rombo, como los cristales del recorrido insular, con la
                          inicial del logro. Dibujado, no extraído: los cristales Z del cartucho no
                          se pueden emparejar con nada sin adivinar por color (ver §34). -->
-                    <Grid Grid.Column="0" VerticalAlignment="Top" Width="46" Height="46">
+                    <Grid Grid.Column="0" VerticalAlignment="Top" Width="46" Height="46"
+                          HorizontalAlignment="Left">
                         <Path Data="M 23,2 L 44,23 L 23,44 L 2,23 Z" StrokeThickness="2"
-                              Stroke="{StaticResource SurfaceAltBrush}"
+                              Stroke="{StaticResource BorderStrongBrush}"
                               Fill="{Binding Medal}" />
-                        <TextBlock Text="{Binding Initial}" Style="{StaticResource PanelHeading}"
-                                   FontSize="16" Foreground="#FF0B0E17"
+                        <TextBlock Text="{Binding Initial}"
+                                   FontFamily="{StaticResource UiFont}" FontSize="15" FontWeight="Bold"
+                                   Foreground="#FF060910"
                                    HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Grid>
 
                     <StackPanel Grid.Column="1" Margin="10,0,0,0">
                         <TextBlock Text="{Binding Description}" Style="{StaticResource Body}"
-                                   TextWrapping="Wrap" MinHeight="52" VerticalAlignment="Top" />
+                                   FontSize="12.5" MinHeight="50" VerticalAlignment="Top" />
 
-                        <Grid Margin="0,6,0,0">
+                        <!-- Quién cuenta este número. Un logro que se cuenta solo y uno que se
+                             marca a mano no valen lo mismo, así que la tarjeta lo dice. -->
+                        <Border Style="{StaticResource Chip}" HorizontalAlignment="Left" Margin="0,4,0,0"
+                                Padding="7,2">
+                            <TextBlock Text="{Binding Source}" Style="{StaticResource ChipText}"
+                                       FontSize="9.5" />
+                        </Border>
+
+                        <Grid Margin="0,9,0,0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
 
-                            <StackPanel Grid.Column="0">
-                                <TextBlock Text="{Binding Label}" Style="{StaticResource Mono}"
-                                           FontSize="12" />
-                                <TextBlock Text="{Binding Source}" Style="{StaticResource Muted}"
-                                           FontSize="9" />
-                            </StackPanel>
+                            <TextBlock Grid.Column="0" Text="{Binding Label}" Style="{StaticResource Mono}"
+                                       FontSize="11.5" VerticalAlignment="Center"
+                                       Foreground="{StaticResource TextMutedBrush}" />
 
-                            <ProgressBar Grid.Column="1" Height="6" Margin="8,0" VerticalAlignment="Center"
+                            <ProgressBar Grid.Column="1" Height="6" Margin="9,0" VerticalAlignment="Center"
                                          Minimum="0" Maximum="{Binding Target, Mode=OneWay}"
-                                         Value="{Binding Count, Mode=OneWay}"
-                                         Background="#22FFFFFF" Foreground="{StaticResource AccentBrush}">
-                                <ProgressBar.Template>
-                                    <ControlTemplate TargetType="ProgressBar">
-                                        <Grid>
-                                            <Border CornerRadius="3" Background="{TemplateBinding Background}" />
-                                            <Border x:Name="PART_Track" />
-                                            <Border x:Name="PART_Indicator" CornerRadius="3"
-                                                    HorizontalAlignment="Left"
-                                                    Background="{TemplateBinding Foreground}" />
-                                        </Grid>
-                                    </ControlTemplate>
-                                </ProgressBar.Template>
+                                         Value="{Binding Count, Mode=OneWay}">
+                                <ProgressBar.Style>
+                                    <Style TargetType="ProgressBar" BasedOn="{StaticResource {x:Type ProgressBar}}">
+                                        <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding CanClaim}" Value="True">
+                                                <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Claimed}" Value="True">
+                                                <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ProgressBar.Style>
                             </ProgressBar>
 
                             <TextBlock Grid.Column="2" Text="{Binding Reward}" Style="{StaticResource Mono}"
-                                       FontSize="12" VerticalAlignment="Center"
+                                       FontSize="12" FontWeight="Bold" VerticalAlignment="Center"
                                        Foreground="{StaticResource AccentBrush}" />
                         </Grid>
 
                         <!-- Los botones. "+1" y "COMPLETAR" solo salen en los logros que
                              PermaLocke no sabe contar todavía; "COBRAR" cuando está al completo. -->
-                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                            <Button Content="+1" Style="{StaticResource PrimaryButton}" MinWidth="40"
-                                    Padding="6,3" FontSize="11" Margin="0,0,5,0"
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                            <Button Content="+1" Style="{StaticResource GhostButton}" MinWidth="38"
+                                    Padding="8,4" FontSize="11" Margin="0,0,6,0"
                                     Command="{Binding DataContext.MarkCommand,
                                               RelativeSource={RelativeSource AncestorType=UserControl}}"
                                     CommandParameter="{Binding}"
                                     Visibility="{Binding CanMark, Converter={StaticResource BoolToVisibility}}" />
 
-                            <Button Content="COMPLETAR" Style="{StaticResource PrimaryButton}" MinWidth="88"
-                                    Padding="6,3" FontSize="11" Margin="0,0,5,0"
+                            <Button Content="COMPLETAR" Style="{StaticResource GhostButton}" MinWidth="86"
+                                    Padding="8,4" FontSize="11" Margin="0,0,6,0"
                                     Command="{Binding DataContext.CompleteCommand,
                                               RelativeSource={RelativeSource AncestorType=UserControl}}"
                                     CommandParameter="{Binding}"
                                     Visibility="{Binding CanMark, Converter={StaticResource BoolToVisibility}}" />
 
-                            <Button Content="COBRAR" Style="{StaticResource PrimaryButton}" MinWidth="88"
-                                    Padding="6,3" FontSize="11"
+                            <Button Content="COBRAR" Style="{StaticResource PrimaryButton}" MinWidth="90"
+                                    Padding="8,4" FontSize="11"
                                     Command="{Binding DataContext.ClaimCommand,
                                               RelativeSource={RelativeSource AncestorType=UserControl}}"
                                     CommandParameter="{Binding}"
                                     Visibility="{Binding CanClaim, Converter={StaticResource BoolToVisibility}}" />
 
-                            <TextBlock Text="COMPLETADO" Style="{StaticResource Mono}" FontSize="11"
-                                       VerticalAlignment="Center"
-                                       Foreground="{StaticResource SuccessBrush}"
-                                       Visibility="{Binding Claimed, Converter={StaticResource BoolToVisibility}}" />
+                            <StackPanel Orientation="Horizontal"
+                                        Visibility="{Binding Claimed, Converter={StaticResource BoolToVisibility}}">
+                                <Path Data="M 0 4 L 3.5 7.5 L 10 1" Stroke="{StaticResource SuccessBrush}"
+                                      StrokeThickness="2" StrokeEndLineCap="Round" StrokeStartLineCap="Round"
+                                      VerticalAlignment="Center" Margin="0,0,7,0" />
+                                <TextBlock Text="COBRADO" Style="{StaticResource ChipText}"
+                                           Foreground="{StaticResource SuccessBrush}"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
                         </StackPanel>
                     </StackPanel>
                 </Grid>
@@ -126,32 +144,42 @@
         </Grid.RowDefinitions>
 
         <!-- LO QUE CUESTA PERDER, con el saldo al lado. -->
-        <Border Grid.Row="0" Style="{StaticResource Panel}" Margin="0,0,0,10">
+        <Border Grid.Row="0" Style="{StaticResource Inset}" Padding="18,14" Margin="0,0,0,12">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0">
-                    <TextBlock Text="PENALIZACIONES" Style="{StaticResource Mono}" FontSize="11"
-                               Foreground="{StaticResource DangerBrush}" />
-                    <TextBlock Text="{Binding PenaltyText}" Style="{StaticResource Body}"
-                               TextWrapping="Wrap" Margin="0,6,0,0" />
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <Ellipse Width="6" Height="6" Fill="{StaticResource DangerBrush}"
+                                 VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <TextBlock Text="PENALIZACIONES" Style="{StaticResource StatLabel}"
+                                   Foreground="{StaticResource DangerBrush}" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding PenaltyText}" Style="{StaticResource Muted}"
+                               FontSize="12" Margin="0,7,18,0" />
                 </StackPanel>
 
-                <StackPanel Grid.Column="1" Margin="18,0,0,0" VerticalAlignment="Center">
-                    <TextBlock Text="SALDO" Style="{StaticResource Muted}" FontSize="10"
+                <Border Grid.Column="1" Width="1" Background="{StaticResource BorderBrush}"
+                        Margin="8,4" />
+
+                <StackPanel Grid.Column="2" Margin="22,0,6,0" VerticalAlignment="Center">
+                    <TextBlock Text="SALDO" Style="{StaticResource StatLabel}"
                                HorizontalAlignment="Center" />
-                    <TextBlock Text="{Binding Balance}" Style="{StaticResource PanelHeading}"
-                               FontSize="34" HorizontalAlignment="Center" />
+                    <TextBlock Text="{Binding Balance}"
+                               FontFamily="{StaticResource UiFont}" FontSize="38" FontWeight="Bold"
+                               Foreground="{StaticResource AccentBrush}"
+                               HorizontalAlignment="Center" Margin="0,-2,0,0" />
                 </StackPanel>
             </Grid>
         </Border>
 
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <ItemsControl ItemsSource="{Binding Rows}" ItemTemplate="{StaticResource AchievementTemplate}"
-                          Margin="0,0,8,0">
+                          Margin="-5,0,5,0">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <UniformGrid Columns="3" />
@@ -160,22 +188,47 @@
             </ItemsControl>
         </ScrollViewer>
 
-        <StackPanel Grid.Row="2" Margin="0,10,0,0">
-            <StackPanel Orientation="Horizontal">
-                <Button Content="ACTUALIZAR" Style="{StaticResource PrimaryButton}" MinWidth="150"
-                        Command="{Binding RefreshCommand}" />
-                <TextBlock Style="{StaticResource Body}" VerticalAlignment="Center" Margin="14,0,0,0"
-                           Text="{Binding Summary}" />
-            </StackPanel>
+        <StackPanel Grid.Row="2" Margin="0,12,0,0">
+            <Border Style="{StaticResource Inset}" Padding="14,11">
+                <StackPanel>
+                    <DockPanel>
+                        <Button DockPanel.Dock="Left" Content="ACTUALIZAR"
+                                Style="{StaticResource PrimaryButton}" MinWidth="140"
+                                Padding="16,8" Command="{Binding RefreshCommand}" />
 
-            <TextBlock Text="{Binding RecordsText}" Style="{StaticResource Mono}" FontSize="11"
-                       TextWrapping="Wrap" Margin="0,8,0,0" Opacity="0.75" />
+                        <!-- El párrafo largo de dónde sale cada número vive en el tooltip: es de
+                             leer una vez, y a pie de pantalla se comía tres filas de tarjetas. -->
+                        <TextBlock DockPanel.Dock="Right" Text="¿de dónde salen estos números?"
+                                   Style="{StaticResource Faint}" VerticalAlignment="Center"
+                                   TextDecorations="Underline" Cursor="Help"
+                                   Foreground="{StaticResource AccentDimBrush}" Margin="14,0,0,0">
+                            <TextBlock.ToolTip>
+                                <TextBlock TextWrapping="Wrap" MaxWidth="440" LineHeight="17"
+                                           Text="Cada tarjeta dice de dónde sale su número. «Lo cuenta el juego» son contadores del propio cartucho, los mismos que enseña la ficha de entrenador. «Lo dice tu mochila» son los que se reconocen por su premio: cada prueba entrega su cristal Z, y cuál da cuál lo dice el texto del propio juego. Los dos se leen de la partida guardada, así que no se mueven hasta que guardes. «Lo cuenta PermaLocke» sale del historial de la run, y «a mano» solo aparecería en un logro que todavía no se supiera detectar. Cobrar es aparte, para que el log diga de dónde salió cada punto." />
+                            </TextBlock.ToolTip>
+                        </TextBlock>
 
-            <TextBlock Text="{Binding Status}" Style="{StaticResource Body}" TextWrapping="Wrap"
-                       Margin="0,10,0,0" />
+                        <TextBlock Style="{StaticResource Body}" VerticalAlignment="Center" Margin="14,0,14,0"
+                                   Text="{Binding Summary}" />
+                    </DockPanel>
 
-            <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,10,0,0" FontSize="11"
-                       Text="Cada tarjeta dice de dónde sale su número. «Lo cuenta el juego» son contadores del propio cartucho, los mismos que enseña la ficha de entrenador. «Lo dice tu mochila» son los que se reconocen por su premio: cada prueba entrega su cristal Z, y cuál da cuál lo dice el texto del propio juego. Los dos se leen de la partida guardada, así que no se mueven hasta que guardes. «Lo cuenta PermaLocke» sale del historial de la run, y «a mano» solo aparecería en un logro que todavía no se supiera detectar. Cobrar es aparte, para que el log diga de dónde salió cada punto." />
+                    <TextBlock Text="{Binding RecordsText}" Style="{StaticResource Mono}" FontSize="11"
+                               Foreground="{StaticResource TextFaintBrush}" Margin="0,10,0,0" />
+
+                    <TextBlock Text="{Binding Status}" FontSize="12" Margin="0,10,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource Body}">
+                                <Setter Property="Visibility" Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Status}" Value="">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
         </StackPanel>
     </Grid>
 </UserControl>

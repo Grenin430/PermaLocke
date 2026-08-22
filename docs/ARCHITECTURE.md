@@ -3744,3 +3744,116 @@ Pero alcanza solo hasta donde mira, y conviene decirlo claro:
 Por eso el Yveltal de nivel 100 de la run real llegó hasta ahí — se subió con caramelos raros
 mientras el enlace estaba caído— y por eso el historial tiene un único `LevelCapEnforced` suelto:
 la corrección funcionó la vez que la aplicación llegó a verlo.
+
+---
+
+## 50. La interfaz, rehecha entera (2026-08-22)
+
+La aplicación funcionaba y se veía como lo que era: un tema oscuro plano, con paneles rectangulares
+de borde cian de 1,5 px, cero jerarquía entre lo importante y el relleno, y los controles de Windows
+—barras de desplazamiento, desplegables, casillas— saliendo en gris claro y abriendo un agujero en
+mitad de la pantalla. Esta sección es un repaso **solo de presentación**: no se ha tocado ni una
+regla, ni un servicio, ni un cálculo de puntos.
+
+### Lo que cambia el tema, que es casi todo
+
+`Themes/Palette.xaml` deja de ser una lista plana de colores y pasa a tener **profundidad**: suelo de
+la aplicación, panel, panel elevado y línea de un píxel. Un tema oscuro con un solo color de fondo se
+lee como un agujero; con cuatro escalones, una tarjeta parece una tarjeta sin necesidad de dibujarle
+un borde grueso alrededor. De ahí salen `PanelBrush`, `HeaderBrush`, `SidebarBrush` y
+`AppBackgroundBrush`, todos degradados muy suaves, y los tres radios con nombre para que toda la
+aplicación redondee por las mismas cantidades.
+
+`Themes/Controls.xaml` añade a los estilos que ya había una escala tipográfica (`StatValue`,
+`StatLabel`, `CardTitle`, `Faint`), tres superficies (`Inset`, `Card`, `Chip`), un separador
+(`Divider`) y tres botones con papel distinto: `PrimaryButton` —contorno de acento que se rellena al
+pasar por encima—, `GhostButton` para lo secundario y `DangerButton`, que hoy solo usa el wonder
+trade, que es lo único de PermaLocke que destruye algo.
+
+Y **retempla los controles de Windows como estilos implícitos**, sin `x:Key`, para que ninguna vista
+tenga que acordarse de pedirlos: `ScrollBar` (11 px, sin flechas, el pulgar se ilumina al tocarlo),
+`ComboBox`, `ComboBoxItem`, `CheckBox`, `RadioButton`, `ProgressBar`, `TextBox` y `ToolTip`.
+
+### Tres trampas que costaron dinero
+
+**El `ComboBox` editable necesita `PART_EditableTextBox`.** WPF busca esa parte *por nombre* para
+enganchar el texto y la búsqueda al escribir. Una plantilla propia sin ella no falla, no lanza y no
+escribe nada en el log: el desplegable simplemente **deja de aceptar texto**. Y el selector de
+especie del diálogo de captura se usa exactamente así, escribiendo. La caja va encima del botón con
+fondo `Transparent`, que sí recibe clics, de modo que pinchar en el texto entra en la caja y pinchar
+en la flecha se cuela al botón de abajo y abre la lista.
+
+**Una pila horizontal mide el contenido con ancho infinito.** Las primeras plantillas de `CheckBox`
+y `RadioButton` ponían la marca y el contenido en un `StackPanel` horizontal, así que un texto largo
+dentro de un radio **nunca ajusta línea** y se sale de la ventana. Con eso se entendió por qué las
+tarjetas de rol llevaban un `MaxWidth="400"` a mano. Ahora ambas plantillas son una rejilla de dos
+columnas, `Auto` y `*`, el texto ajusta solo y el `MaxWidth` sobra.
+
+**Un estilo con `x:Key` no hereda del implícito.** `Style="{StaticResource HpBar}"` sobre un
+`ProgressBar` se salta la plantilla implícita entera, así que la barra vuelve a ser la de Windows.
+Hay que decirlo: `BasedOn="{StaticResource {x:Type ProgressBar}}"`.
+
+A la lista de siempre —`OpacityMask` con `ImageBrush` no pinta nada, un `ItemsControl` dentro de un
+`Grid` se recorta al ancho disponible, `ProgressBar.Value` enlaza `TwoWay` por defecto y revienta
+contra una propiedad calculada— se suma una cuarta que ya había mordido antes: poner a la vez el
+atributo `Style="…"` y un bloque `<X.Style>` es `MC3024`.
+
+### La barra de título
+
+WPF no dibuja el marco de la ventana, así que una aplicación oscura se publicaba con una barra de
+título blanca encima y cada diálogo abría otra. `Services/DarkFrame.cs` pide a la gestora de
+ventanas el marco oscuro (`DwmSetWindowAttribute`, atributo 20, con el 19 de reserva para las
+versiones antiguas) y lo aplican las tres ventanas. Es puramente cosmético: si la llamada falla, la
+ventana abre igual que antes y no se le dice nada a nadie.
+
+### Nada de enums en pantalla
+
+El dominio está en inglés, como todo el código, pero el jugador lee el historial, la lista de islas y
+el tipo de encuentro. `ToString()` sobre un enum colaba `LevelCapEnforced`, `InProgress` o `Wild` en
+una pantalla en español. `Services/DisplayNames.cs` traduce una vez, en el borde: los 26 tipos de
+evento, los tres estados de isla y los nueve tipos de encuentro. Un valor sin entrada **cae a su
+propio nombre**, no a la cadena vacía: una etiqueta que nadie ha traducido tiene que parecer sin
+traducir, no desaparecida. Donde el valor enlazado tiene que seguir siendo el enum —el
+`SelectedItem` de un desplegable— lo hace `Converters/DisplayNameConverter.cs`, de una sola
+dirección: de una etiqueta nunca se vuelve a un valor.
+
+### Pantalla por pantalla
+
+- **Marco.** Barra lateral con marca propia, más oscura que el contenido y separada por una línea de
+  un píxel en vez de por un hueco, para que se lea como el marco de la ventana y no como otro panel.
+  La sección elegida se marca con una barra en su borde izquierdo; con ocho secciones, ocho
+  rectángulos rellenos son más ruido que una marca. Abajo, rol y puntos siempre a la vista. La
+  cabecera trae ahora **título y subtítulo**: `SectionViewModel` gana una propiedad `Subtitle`, que
+  es texto y nada más.
+- **HOME.** Cuatro cifras arriba en tarjetas con una banda de color —vivos, muertos, encuentros y
+  cap—, y debajo dos columnas. El equipo en vivo pasa de tres números en fila a **barra de PS por
+  Pokémon**, verde, ámbar o roja; el umbral lo decide el view model en un sitio, no cuatro
+  disparadores repetidos en XAML. El historial gana un punto de color y el delta en verde o rojo. Se
+  aprovechó para enseñar el `IsShiny` que el view model ya traía y la vista se estaba callando.
+- **GACHA.** Era una pila con barra de desplazamiento y el botón de TIRAR caía fuera de la ventana.
+  Ahora es una rejilla de tres filas: escenario del ultraespacio con `MinHeight`, banners y barra de
+  acción, todo a la vez en pantalla. La animación no se toca —el code-behind solo mide el ancho del
+  visor, nunca el alto—, y el banner elegido se enciende entero, que es el que va a cobrar.
+- **TIENDA, LOGROS, VISOR, RANDOMIZADOR, MISCELÁNEA.** Paneles anidados al mismo tono pasan a
+  `Inset`, las tarjetas responden al ratón, y los párrafos largos de pie de pantalla —los de «de
+  dónde salen estos números» y «cómo se decide la tirada»— se van al tooltip. No es por esconderlos:
+  se leen una vez y estaban comiéndose tres filas de tarjetas.
+- **Diálogos.** Crear run y registrar captura, con las tarjetas de rol como objetivo grande —se
+  pulsa una vez en toda la run— y el veredicto de las reglas pintando el fondo además del borde.
+
+### Cómo se comprobó
+
+Con la aplicación real y **sin robar el foco**: `PrintWindow` con `PW_RENDERFULLCONTENT` dibuja una
+ventana esté donde esté, y `SelectionItemPattern.Select` no necesita que esté delante. Los diálogos
+modales se encuentran enumerando las ventanas visibles del proceso **que tienen dueño**, porque
+`FindAll` sobre la raíz de UI Automation no los devolvía.
+
+La pantalla de crear run solo aparece cuando no hay ninguna, así que para verla se montó una copia
+de la aplicación en una carpeta temporal, con su `Data/` y su `Saves/` vacío. Como `AppPaths`
+resuelve la raíz subiendo hasta el `.slnx`, una copia fuera del repositorio arranca sin runs. La
+partida del jugador no se tocó en ningún momento.
+
+Barrido estático de remate: las **100 claves** `StaticResource` que usan las vistas están todas
+definidas. Una clave que falta no rompe la compilación, rompe la ventana al abrirla.
+
+351 pruebas en verde y compilación sin avisos.

@@ -24,7 +24,7 @@ public sealed partial class MiscellaneousViewModel : SectionViewModel
 
     public MiscellaneousViewModel(BagService bag, IItemLookup items, IRunContext runContext,
         IEventStore events, IClock clock, ILogger<MiscellaneousViewModel> logger)
-        : base("MISCELÁNEA")
+        : base("MISCELÁNEA", "Herramientas sueltas y diagnóstico del enlace con el juego")
     {
         _bag = bag;
         _items = items;

@@ -83,7 +83,7 @@ public sealed partial class AchievementsViewModel : SectionViewModel
 
     public AchievementsViewModel(AchievementService achievements, PenaltyService penalties,
         IPointsService points, IRunContext runContext, ILogger<AchievementsViewModel> logger)
-        : base("LOGROS")
+        : base("LOGROS", "Los 21 de la competición, lo que llevas y lo que pagan")
     {
         _achievements = achievements;
         _penalties = penalties;

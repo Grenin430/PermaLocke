@@ -1,86 +1,124 @@
-﻿<Window x:Class="PermaLocke.App.Views.CreateRunWindow"
+<Window x:Class="PermaLocke.App.Views.CreateRunWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="PermaLocke — Nueva run"
-        Height="580" Width="560"
-        MinHeight="420" MinWidth="480"
+        Height="700" Width="620"
+        MinHeight="460" MinWidth="520"
         WindowStartupLocation="CenterOwner"
-        Background="{StaticResource BackgroundBrush}">
+        FontFamily="{StaticResource UiFont}"
+        UseLayoutRounding="True"
+        Background="{StaticResource AppBackgroundBrush}">
 
-    <Border Style="{StaticResource Panel}" Margin="12">
-        <!-- The action row is pinned to the bottom and the form scrolls, so the confirm
-             button can never be pushed off the window by a long ROM status message. -->
-        <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
+    <!-- The action row is pinned to the bottom and the form scrolls, so the confirm
+         button can never be pushed off the window by a long ROM status message. -->
+    <Grid Margin="20,18,20,18">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
 
-            <TextBlock Grid.Row="0" Text="NUEVA RUN" Style="{StaticResource SectionTitle}"
-                       FontSize="26" Margin="0,0,0,16" />
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+            <TextBlock Text="NUEVA RUN" Style="{StaticResource SectionTitle}" FontSize="26" />
+            <TextBlock Style="{StaticResource Muted}" FontSize="12" Margin="0,2,0,0"
+                       Text="Una run se crea una vez y ya no cambia de rol ni de seed." />
+        </StackPanel>
 
-            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,0,6,0">
-                <StackPanel>
-                    <!-- EL ROL VA PRIMERO. No es orden estético: parte del rol se cuece en la
-                         ROM, así que elegirlo después de randomizar significaría randomizar otra
-                         vez, y eso le cambia el mundo a una run ya empezada. -->
-                    <TextBlock Text="ROL" Style="{StaticResource PanelHeading}" />
-                    <TextBlock Style="{StaticResource Muted}" FontSize="11" Margin="0,0,0,8"
-                               Text="Se elige ahora y no se puede cambiar después: el rol decide cómo se edita el juego y cuánto valen tus puntos." />
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled" Padding="0,0,8,0">
+            <StackPanel>
+                <!-- EL ROL VA PRIMERO. No es orden estético: parte del rol se cuece en la
+                     ROM, así que elegirlo después de randomizar significaría randomizar otra
+                     vez, y eso le cambia el mundo a una run ya empezada. -->
+                <TextBlock Text="ROL" Style="{StaticResource StatLabel}" />
+                <TextBlock Style="{StaticResource Faint}" Margin="0,4,0,10"
+                           Text="Se elige ahora y no se puede cambiar después: el rol decide cómo se edita el juego y cuánto valen tus puntos." />
 
-                    <ItemsControl ItemsSource="{Binding Roles}" Margin="0,0,0,6">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <RadioButton GroupName="Rol" Margin="0,0,0,8" Cursor="Hand"
-                                             IsChecked="{Binding IsSelected, Mode=TwoWay}">
+                <ItemsControl ItemsSource="{Binding Roles}" Margin="0,0,0,6">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <!-- La tarjeta entera es el radio: un objetivo grande para un botón
+                                 que sólo se pulsa una vez en toda la run. -->
+                            <Border Margin="0,0,0,8" Padding="14,12"
+                                    CornerRadius="{StaticResource RadiusMedium}" BorderThickness="1">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+                                        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                <Setter Property="Background" Value="{StaticResource AccentDeepBrush}" />
+                                                <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+
+                                <RadioButton GroupName="Rol" IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                             VerticalContentAlignment="Top">
                                     <RadioButton.Content>
-                                        <StackPanel Margin="6,0,0,0">
+                                        <StackPanel Margin="4,0,0,0">
                                             <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="14"
-                                                       FontFamily="{StaticResource UiFont}"
-                                                       Foreground="{StaticResource AccentBrush}" />
-                                            <TextBlock Text="{Binding Description}" TextWrapping="Wrap"
-                                                       FontSize="11" MaxWidth="430"
-                                                       Foreground="{StaticResource TextMutedBrush}" />
-                                            <TextBlock Text="{Binding Effects}" TextWrapping="Wrap"
-                                                       FontSize="11" Margin="0,3,0,0" MaxWidth="430"
+                                                       Foreground="{StaticResource AccentBrightBrush}" />
+                                            <TextBlock Text="{Binding Description}" Style="{StaticResource Muted}"
+                                                       FontSize="11.5" Margin="0,3,0,0" />
+                                            <TextBlock Text="{Binding Effects}" Style="{StaticResource Body}"
+                                                       FontSize="11.5" Margin="0,4,0,0"
                                                        Foreground="{StaticResource WarningBrush}" />
                                         </StackPanel>
                                     </RadioButton.Content>
                                 </RadioButton>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
 
-                    <TextBlock Text="{Binding RoleProblem}" Style="{StaticResource Body}" Margin="0,0,0,14"
-                               TextWrapping="Wrap" Foreground="{StaticResource DangerBrush}" />
+                <TextBlock Text="{Binding RoleProblem}" Style="{StaticResource Body}" FontSize="12"
+                           Margin="0,0,0,14" Foreground="{StaticResource DangerBrush}" />
 
-                    <TextBlock Text="ROM" Style="{StaticResource PanelHeading}" />
-                    <Border BorderBrush="{StaticResource AccentDimBrush}" BorderThickness="1"
-                            Padding="10" Margin="0,0,0,16">
-                        <TextBlock Text="{Binding RomStatus}" Style="{StaticResource Mono}" FontSize="12" />
-                    </Border>
+                <TextBlock Text="ROM" Style="{StaticResource StatLabel}" />
+                <Border Background="{StaticResource BackgroundBrush}"
+                        BorderBrush="{StaticResource AccentDimBrush}" BorderThickness="1"
+                        CornerRadius="{StaticResource RadiusMedium}"
+                        Padding="12,10" Margin="0,5,0,16">
+                    <TextBlock Text="{Binding RomStatus}" Style="{StaticResource Mono}" FontSize="12" />
+                </Border>
 
-                    <TextBlock Text="NOMBRE DE LA RUN" Style="{StaticResource PanelHeading}" />
-                    <TextBox Text="{Binding RunName, UpdateSourceTrigger=PropertyChanged}"
-                             Style="{StaticResource Field}" Margin="0,0,0,14" />
+                <TextBlock Text="NOMBRE DE LA RUN" Style="{StaticResource StatLabel}" />
+                <TextBox Text="{Binding RunName, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource Field}" Margin="0,5,0,14" />
 
-                    <TextBlock Text="NICKNAME DEL JUGADOR" Style="{StaticResource PanelHeading}" />
-                    <TextBox Text="{Binding PlayerName, UpdateSourceTrigger=PropertyChanged}"
-                             Style="{StaticResource Field}" Margin="0,0,0,4" />
-                    <TextBlock Style="{StaticResource Muted}" FontSize="11" Margin="0,0,0,14"
-                               Text="Se contrastará con el nombre del entrenador del save cuando exista integración con el juego." />
-                </StackPanel>
-            </ScrollViewer>
-
-            <StackPanel Grid.Row="2" Margin="0,14,0,0">
-                <TextBlock Text="{Binding ErrorMessage}" Style="{StaticResource Body}"
-                           Foreground="{StaticResource DangerBrush}" Margin="0,0,0,8" />
-                <TextBlock Style="{StaticResource Muted}" FontSize="11" Margin="0,0,0,8"
-                           Text="El botón se activa cuando hay una ROM válida de Ultra Luna, un nombre de run y un nickname." />
-                <Button Content="CREAR RUN" Command="{Binding CreateCommand}"
-                        Style="{StaticResource PrimaryButton}" HorizontalAlignment="Right" />
+                <TextBlock Text="NICKNAME DEL JUGADOR" Style="{StaticResource StatLabel}" />
+                <TextBox Text="{Binding PlayerName, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource Field}" Margin="0,5,0,5" />
+                <TextBlock Style="{StaticResource Faint}" Margin="0,0,0,14"
+                           Text="Se contrastará con el nombre del entrenador del save cuando exista integración con el juego." />
             </StackPanel>
-        </Grid>
-    </Border>
+        </ScrollViewer>
+
+        <Border Grid.Row="2" Style="{StaticResource Inset}" Padding="14,12" Margin="0,14,0,0">
+            <StackPanel>
+                <TextBlock Text="{Binding ErrorMessage}" FontSize="12"
+                           Foreground="{StaticResource DangerBrush}" Margin="0,0,0,8">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource Body}">
+                            <Setter Property="Visibility" Value="Visible" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ErrorMessage}" Value="">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Content="CREAR RUN" Command="{Binding CreateCommand}"
+                            Style="{StaticResource PrimaryButton}" Padding="22,10" />
+                    <TextBlock Style="{StaticResource Faint}" VerticalAlignment="Center" Margin="0,0,14,0"
+                               Text="El botón se activa cuando hay una ROM válida de Ultra Luna, un nombre de run y un nickname." />
+                </DockPanel>
+            </StackPanel>
+        </Border>
+    </Grid>
 </Window>

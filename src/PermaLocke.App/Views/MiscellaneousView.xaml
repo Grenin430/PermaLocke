@@ -2,53 +2,105 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="0,0,8,0">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="0,0,10,0">
 
-            <Border Style="{StaticResource Panel}">
+            <Border Style="{StaticResource Inset}" Padding="18,16">
                 <StackPanel>
-                    <TextBlock Text="MOCHILA DEL JUEGO" Style="{StaticResource PanelHeading}" />
-                    <TextBlock Style="{StaticResource Body}" TextWrapping="Wrap" LineHeight="20" Margin="0,4,0,10"
+                    <TextBlock Text="MOCHILA DEL JUEGO" Style="{StaticResource StatLabel}" />
+                    <TextBlock Style="{StaticResource Body}" Margin="0,7,0,0"
                                Text="PermaLocke localiza la mochila por su estructura: el juego guarda los siete bolsillos seguidos y, justo detrás, una tabla de punteros a cada uno. Solo se acepta como mochila lo que cumple esa condición, así que no hay falsos positivos." />
 
                     <Button Content="LEER LA MOCHILA" Style="{StaticResource PrimaryButton}"
-                            Command="{Binding ReadBagCommand}" HorizontalAlignment="Left" MinWidth="230" />
+                            Command="{Binding ReadBagCommand}" HorizontalAlignment="Left"
+                            MinWidth="210" Padding="16,9" Margin="0,14,0,0" />
 
-                    <TextBlock Text="{Binding BagAddress}" Style="{StaticResource Muted}" Margin="0,10,0,0" />
+                    <Border Margin="0,14,0,0" Padding="14,11"
+                            Background="{StaticResource BackgroundBrush}"
+                            BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                            CornerRadius="{StaticResource RadiusMedium}">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Visibility" Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding BagAddress}" Value="">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <StackPanel>
+                            <TextBlock Text="{Binding BagAddress}" Style="{StaticResource Mono}"
+                                       FontSize="12" Foreground="{StaticResource AccentBrush}" />
 
-                    <ItemsControl ItemsSource="{Binding BagContents}" Margin="0,6,0,0">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding}" Style="{StaticResource Muted}" TextWrapping="Wrap" />
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                            <ItemsControl ItemsSource="{Binding BagContents}" Margin="0,8,0,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding}" Style="{StaticResource Mono}"
+                                                   FontSize="11.5"
+                                                   Foreground="{StaticResource TextMutedBrush}"
+                                                   Margin="0,1" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
             </Border>
 
-            <Border Style="{StaticResource Panel}" Margin="0,14,0,0">
+            <Border Style="{StaticResource Inset}" Padding="18,16" Margin="0,14,0,0">
                 <StackPanel>
-                    <TextBlock Text="CARAMELOS RAROS" Style="{StaticResource PanelHeading}" />
-                    <TextBlock Style="{StaticResource Body}" TextWrapping="Wrap" LineHeight="20" Margin="0,4,0,10"
-                               Text="Herramienta de pruebas: escribe Caramelos Raros en la mochila del juego, para probar el cap de nivel sin jugar horas." />
+                    <DockPanel>
+                        <Border DockPanel.Dock="Right" Style="{StaticResource Chip}"
+                                Background="{StaticResource WarningDeepBrush}"
+                                BorderBrush="{StaticResource WarningBrush}">
+                            <TextBlock Text="HERRAMIENTA DE PRUEBAS" Style="{StaticResource ChipText}"
+                                       Foreground="{StaticResource WarningBrush}" />
+                        </Border>
+                        <TextBlock Text="CARAMELOS RAROS" Style="{StaticResource StatLabel}"
+                                   VerticalAlignment="Center" />
+                    </DockPanel>
 
-                    <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,0,0,12"
+                    <TextBlock Style="{StaticResource Body}" Margin="0,9,0,0"
+                               Text="Escribe Caramelos Raros en la mochila del juego, para probar el cap de nivel sin jugar horas." />
+
+                    <TextBlock Style="{StaticResource Faint}" Margin="0,7,0,0"
                                Text="No hace falta llevar ninguno: si el bolsillo de medicinas no tiene entrada de caramelos, se añade en el primer hueco libre. Después de escribir se vuelve a leer la memoria, y solo se da por buena si ha cambiado de verdad." />
 
-                    <TextBlock Text="Cuántos quieres" Style="{StaticResource PanelHeading}" />
-                    <TextBox Text="{Binding TargetCandies, UpdateSourceTrigger=PropertyChanged}"
-                             Style="{StaticResource Field}" Width="120" HorizontalAlignment="Left" Margin="0,2,0,4" />
-                    <TextBlock Style="{StaticResource Muted}" Margin="0,0,0,14"
-                               Text="El bolsillo de medicinas admite 999 como mucho; lo que se pida por encima se recorta a esa cifra." />
+                    <Border Style="{StaticResource Divider}" Margin="0,15" />
 
-                    <Button Content="ESCRIBIR EN LA MOCHILA" Style="{StaticResource PrimaryButton}"
-                            Command="{Binding GrantCandiesCommand}" HorizontalAlignment="Left" MinWidth="230" />
+                    <TextBlock Text="CUÁNTOS QUIERES" Style="{StaticResource StatLabel}" />
+                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                        <TextBox Text="{Binding TargetCandies, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource Field}" Width="110" VerticalAlignment="Center" />
+                        <Button Content="ESCRIBIR EN LA MOCHILA" Style="{StaticResource PrimaryButton}"
+                                Command="{Binding GrantCandiesCommand}" MinWidth="220" Padding="16,9"
+                                Margin="10,0,0,0" />
+                    </StackPanel>
+
+                    <TextBlock Style="{StaticResource Faint}" Margin="0,8,0,0"
+                               Text="El bolsillo de medicinas admite 999 como mucho; lo que se pida por encima se recorta a esa cifra." />
                 </StackPanel>
             </Border>
 
-            <TextBlock Text="{Binding Status}" Style="{StaticResource Body}" TextWrapping="Wrap" Margin="0,14,0,0" />
+            <Border Padding="14,10" Margin="0,14,0,0"
+                    Background="{StaticResource SurfaceBrush}"
+                    BorderBrush="{StaticResource AccentDimBrush}" BorderThickness="1"
+                    CornerRadius="{StaticResource RadiusMedium}">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Visibility" Value="Visible" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Status}" Value="">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <TextBlock Text="{Binding Status}" Style="{StaticResource Body}" FontSize="12" />
+            </Border>
 
-            <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,14,0,0"
+            <TextBlock Style="{StaticResource Faint}" Margin="2,14,0,0"
                        Text="Escribir exige el fork propio de Azahar: el oficial acepta la escritura y no la aplica, y eso se detecta releyendo. Cada escritura guarda antes una copia de los bytes en Saves/backup y queda registrada como evento auditable de la run." />
 
         </StackPanel>

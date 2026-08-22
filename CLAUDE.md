@@ -428,6 +428,22 @@ Visto en la run real: pasó sola de la 1ª prueba a la 3ª, cap 24. Alcance, que
 claro: corrige **solo el equipo** —lo que duerme en una caja no se toca hasta que entra a jugar— y
 **solo con la aplicación abierta y Azahar respondiendo**. Ver §49.
 
+**La interfaz, rehecha entera (2026-08-22).** Repaso **solo de presentación**: ni una regla, ni un
+servicio, ni un punto. La paleta pasa a tener profundidad -suelo, panel, panel elevado, línea-, todo
+redondea por las mismas tres medidas, y los controles de Windows -barras, desplegables, casillas,
+barras de progreso- se retemplan como **estilos implícitos**, así que ninguna vista tiene que pedirlo.
+La barra de título ya es oscura, también en los diálogos. Y **no queda un enum en pantalla**:
+`DisplayNames` traduce eventos, islas y tipos de encuentro en el borde, y lo que no tiene traducción
+sale con su propio nombre, nunca en blanco.
+
+Tres trampas nuevas que conviene no repetir: un **`ComboBox` editable sin `PART_EditableTextBox`
+deja de aceptar texto en silencio** -sin excepción y sin log-, y así se usa el selector de especie;
+una **pila horizontal mide el contenido con ancho infinito**, así que un texto dentro de un radio
+nunca ajusta línea; y un estilo con `x:Key` **no hereda del implícito** salvo que lleve
+`BasedOn="{StaticResource {x:Type X}}"`. Comprobado contra la aplicación real sin robar el foco, con
+las 100 claves `StaticResource` verificadas y la pantalla de crear run vista en una copia aislada
+fuera del repositorio, sin tocar la partida. Ver `docs/ARCHITECTURE.md` §50.
+
 **Siguiente.** Sincronización, y probar en partida real los combates importantes, los iniciales y
 las tiendas.
 

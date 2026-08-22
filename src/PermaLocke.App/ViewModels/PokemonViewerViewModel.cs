@@ -59,7 +59,7 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
     private BoxSnapshot? _snapshot;
 
     public PokemonViewerViewModel(IBoxReader boxes, PokemonSpriteService sprites,
-        WonderTradeViewModel trade, ILogger<PokemonViewerViewModel> logger) : base("VISOR POKÉMON")
+        WonderTradeViewModel trade, ILogger<PokemonViewerViewModel> logger) : base("VISOR POKÉMON", "Las 32 cajas de la partida, ficha completa e intercambio")
     {
         _boxes = boxes;
         _sprites = sprites;

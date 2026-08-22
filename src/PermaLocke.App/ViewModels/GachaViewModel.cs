@@ -65,7 +65,7 @@ public sealed partial class GachaViewModel : SectionViewModel
 
     public GachaViewModel(GachaService gacha, IRunContext runContext, IPointsService points,
         IPokemonDelivery delivery, PokemonSpriteService sprites, ILogger<GachaViewModel> logger)
-        : base("GACHA")
+        : base("GACHA", "Gasta puntos y llévate un Pokémon al PC de la partida")
     {
         _gacha = gacha;
         _runContext = runContext;

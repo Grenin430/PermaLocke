@@ -11,29 +11,36 @@
         <Style x:Key="SlotStyle" TargetType="ListBoxItem">
             <Setter Property="Margin" Value="2" />
             <Setter Property="Padding" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="VerticalContentAlignment" Value="Stretch" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ListBoxItem">
-                        <Border x:Name="Hole" CornerRadius="4" BorderThickness="1"
-                                Background="#18000000" BorderBrush="{StaticResource SurfaceAltBrush}">
+                        <Border x:Name="Hole" CornerRadius="6" BorderThickness="1"
+                                Background="{StaticResource BackgroundBrush}"
+                                BorderBrush="{StaticResource BorderBrush}">
                             <ContentPresenter />
                         </Border>
                         <ControlTemplate.Triggers>
+                            <!-- Un hueco vacío se nota que está vacío: ni borde ni fondo, solo el
+                                 agujero. Un PC medio lleno tiene que leerse de un vistazo. -->
                             <DataTrigger Binding="{Binding IsEmpty}" Value="True">
-                                <Setter TargetName="Hole" Property="Opacity" Value="0.35" />
+                                <Setter TargetName="Hole" Property="Opacity" Value="0.4" />
+                                <Setter TargetName="Hole" Property="Cursor" Value="Arrow" />
                             </DataTrigger>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="Hole" Property="Background"
-                                        Value="{StaticResource SurfaceAltBrush}" />
+                                        Value="{StaticResource SurfaceHighBrush}" />
+                                <Setter TargetName="Hole" Property="BorderBrush"
+                                        Value="{StaticResource AccentDimBrush}" />
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
                                 <Setter TargetName="Hole" Property="BorderBrush"
                                         Value="{StaticResource AccentBrush}" />
                                 <Setter TargetName="Hole" Property="BorderThickness" Value="2" />
                                 <Setter TargetName="Hole" Property="Background"
-                                        Value="{StaticResource SurfaceAltBrush}" />
+                                        Value="{StaticResource AccentDeepBrush}" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -42,14 +49,14 @@
         </Style>
 
         <DataTemplate x:Key="SlotTemplate">
-            <Grid Height="62">
+            <Grid Height="60">
                 <Image Source="{Binding Sprite}" Width="52" Height="52" Stretch="Uniform"
                        RenderOptions.BitmapScalingMode="NearestNeighbor"
                        HorizontalAlignment="Center" VerticalAlignment="Center" />
                 <!-- Hay Pokémon pero no icono: se dice, no se disimula. -->
-                <TextBlock Text="{Binding Fallback}" FontSize="22" Opacity="0.5"
-                           HorizontalAlignment="Center" VerticalAlignment="Center"
-                           Foreground="{StaticResource TextBrush}" />
+                <TextBlock Text="{Binding Fallback}" FontSize="20"
+                           Foreground="{StaticResource TextFaintBrush}"
+                           HorizontalAlignment="Center" VerticalAlignment="Center" />
             </Grid>
         </DataTemplate>
 
@@ -58,59 +65,66 @@
         <DataTemplate x:Key="StatTemplate">
             <Grid Margin="0,3">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="74" />
-                    <ColumnDefinition Width="40" />
+                    <ColumnDefinition Width="72" />
+                    <ColumnDefinition Width="38" />
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="30" />
-                    <ColumnDefinition Width="34" />
+                    <ColumnDefinition Width="28" />
+                    <ColumnDefinition Width="32" />
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Grid.Column="0" Text="{Binding Name}" Style="{StaticResource Muted}" />
+                <TextBlock Grid.Column="0" Text="{Binding Name}" Style="{StaticResource Muted}"
+                           FontSize="12" VerticalAlignment="Center" />
                 <TextBlock Grid.Column="1" Text="{Binding Value}" Style="{StaticResource Mono}"
-                           HorizontalAlignment="Right" />
+                           FontWeight="Bold" HorizontalAlignment="Right" VerticalAlignment="Center" />
 
                 <ProgressBar Grid.Column="2" Height="6" Margin="10,0" Minimum="0" Maximum="31"
-                             Value="{Binding Iv, Mode=OneWay}" VerticalAlignment="Center"
-                             Background="#22FFFFFF" Foreground="{StaticResource AccentBrush}">
+                             Value="{Binding Iv, Mode=OneWay}" VerticalAlignment="Center">
                     <ProgressBar.Style>
-                        <Style TargetType="ProgressBar">
+                        <Style TargetType="ProgressBar" BasedOn="{StaticResource {x:Type ProgressBar}}">
+                            <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
                             <Style.Triggers>
                                 <!-- Un 31 se ve de un vistazo sin tener que leer el número. -->
                                 <DataTrigger Binding="{Binding Iv}" Value="31">
                                     <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
                                 </DataTrigger>
+                                <DataTrigger Binding="{Binding Iv}" Value="0">
+                                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                                </DataTrigger>
                             </Style.Triggers>
                         </Style>
                     </ProgressBar.Style>
-                    <ProgressBar.Template>
-                        <ControlTemplate TargetType="ProgressBar">
-                            <Grid>
-                                <Border CornerRadius="3" Background="{TemplateBinding Background}" />
-                                <Border x:Name="PART_Track" />
-                                <Border x:Name="PART_Indicator" CornerRadius="3"
-                                        HorizontalAlignment="Left"
-                                        Background="{TemplateBinding Foreground}" />
-                            </Grid>
-                        </ControlTemplate>
-                    </ProgressBar.Template>
                 </ProgressBar>
 
                 <TextBlock Grid.Column="3" Text="{Binding Iv}" Style="{StaticResource Mono}"
-                           HorizontalAlignment="Right" />
+                           FontSize="12" HorizontalAlignment="Right" VerticalAlignment="Center" />
                 <TextBlock Grid.Column="4" Text="{Binding Ev}" Style="{StaticResource Mono}"
-                           HorizontalAlignment="Right" Opacity="0.55" />
+                           FontSize="12" HorizontalAlignment="Right" VerticalAlignment="Center"
+                           Foreground="{StaticResource TextFaintBrush}" />
             </Grid>
         </DataTemplate>
+
+        <!-- Etiqueta de una fila de la ficha. -->
+        <Style x:Key="FieldLabel" TargetType="TextBlock" BasedOn="{StaticResource Muted}">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="{StaticResource TextFaintBrush}" />
+            <Setter Property="Margin" Value="0,0,0,3" />
+        </Style>
+
+        <Style x:Key="FieldValue" TargetType="TextBlock" BasedOn="{StaticResource Body}">
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="Margin" Value="10,0,0,3" />
+        </Style>
     </UserControl.Resources>
 
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="366" />
+            <ColumnDefinition Width="12" />
+            <ColumnDefinition Width="372" />
         </Grid.ColumnDefinitions>
 
-        <!-- EL PC -->
-        <Border Grid.Column="0" Style="{StaticResource Panel}" Margin="0,0,8,0">
+        <!-- =============================================== EL PC -->
+        <Border Grid.Column="0" Style="{StaticResource Inset}" Padding="16,14">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -119,27 +133,35 @@
                 </Grid.RowDefinitions>
 
                 <!-- Cabecera de caja: se pasa de una a otra como en el juego, y da la vuelta. -->
-                <Grid Grid.Row="0" Margin="0,0,0,12">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
+                <Border Grid.Row="0" Margin="0,0,0,12" Padding="8,6"
+                        Background="{StaticResource BackgroundBrush}"
+                        BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                        CornerRadius="{StaticResource RadiusMedium}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
 
-                    <Button Grid.Column="0" Content="‹" Command="{Binding PreviousBoxCommand}"
-                            Style="{StaticResource PrimaryButton}" MinWidth="46" FontSize="16" />
+                        <Button Grid.Column="0" Content="‹" Command="{Binding PreviousBoxCommand}"
+                                Style="{StaticResource GhostButton}" MinWidth="40" Padding="0,4"
+                                FontSize="17" />
 
-                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                        <TextBlock Style="{StaticResource PanelHeading}" HorizontalAlignment="Center"
-                                   Text="{Binding SelectedBox.Name}" />
-                        <TextBlock Style="{StaticResource Mono}" FontSize="11" Opacity="0.6"
-                                   HorizontalAlignment="Center"
-                                   Text="{Binding SelectedBox.Occupancy}" />
-                    </StackPanel>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Style="{StaticResource CardTitle}" HorizontalAlignment="Center"
+                                       Text="{Binding SelectedBox.Name}" />
+                            <TextBlock Style="{StaticResource Mono}" FontSize="11"
+                                       Foreground="{StaticResource TextFaintBrush}"
+                                       HorizontalAlignment="Center"
+                                       Text="{Binding SelectedBox.Occupancy}" />
+                        </StackPanel>
 
-                    <Button Grid.Column="2" Content="›" Command="{Binding NextBoxCommand}"
-                            Style="{StaticResource PrimaryButton}" MinWidth="46" FontSize="16" />
-                </Grid>
+                        <Button Grid.Column="2" Content="›" Command="{Binding NextBoxCommand}"
+                                Style="{StaticResource GhostButton}" MinWidth="40" Padding="0,4"
+                                FontSize="17" />
+                    </Grid>
+                </Border>
 
                 <!-- Seis columnas por cinco filas: el PC del juego, tal cual. -->
                 <ListBox Grid.Row="1" ItemsSource="{Binding Slots}" SelectedItem="{Binding SelectedSlot}"
@@ -162,92 +184,129 @@
                 <StackPanel Grid.Row="2" Margin="0,12,0,0">
                     <WrapPanel Orientation="Horizontal">
                         <Button Content="RELEER LA PARTIDA" Style="{StaticResource PrimaryButton}"
-                                Command="{Binding LoadCommand}" MinWidth="170" Margin="0,0,8,6" />
-                        <Button Content="WONDER TRADE" Style="{StaticResource PrimaryButton}"
-                                Command="{Binding Trade.ArmCommand}" MinWidth="150" Margin="0,0,0,6" />
+                                Command="{Binding LoadCommand}" MinWidth="170" Padding="14,8"
+                                Margin="0,0,8,6" />
+                        <Button Content="WONDER TRADE" Style="{StaticResource GhostButton}"
+                                Command="{Binding Trade.ArmCommand}" MinWidth="150" Padding="14,8"
+                                Margin="0,0,0,6" />
                     </WrapPanel>
-                    <TextBlock Style="{StaticResource Body}" TextWrapping="Wrap" Margin="0,4,0,0"
+                    <TextBlock Style="{StaticResource Faint}" Margin="0,5,0,0"
                                Text="{Binding Summary}" />
                 </StackPanel>
             </Grid>
         </Border>
 
-        <!-- LA FICHA -->
-        <Border Grid.Column="1" Style="{StaticResource Panel}">
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <StackPanel>
+        <!-- =============================================== LA FICHA -->
+        <Border Grid.Column="2" Style="{StaticResource Inset}" Padding="16,14">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
 
-                    <!-- EL INTERCAMBIO. Dice qué se va a entregar y qué banda va a volver antes
-                         de tocar nada: esto es lo único de PermaLocke que destruye algo. -->
-                    <Border Margin="0,0,0,14" Padding="12" CornerRadius="6" BorderThickness="1"
-                            Background="{StaticResource SurfaceAltBrush}"
-                            BorderBrush="{StaticResource AccentBrush}"
-                            Visibility="{Binding Trade.IsArmed, Converter={StaticResource BoolToVisibility}}">
-                        <StackPanel>
-                            <TextBlock Style="{StaticResource Mono}" FontSize="11" Text="WONDER TRADE"
-                                       Foreground="{StaticResource AccentBrush}" />
-
-                            <TextBlock Style="{StaticResource Body}" TextWrapping="Wrap" Margin="0,6,0,0"
-                                       Text="{Binding Trade.Instruction}" />
-
-                            <TextBlock Style="{StaticResource Body}" TextWrapping="Wrap" Margin="0,6,0,0"
+                <!-- EL INTERCAMBIO. Dice qué se va a entregar y qué banda va a volver antes
+                     de tocar nada: esto es lo único de PermaLocke que destruye algo. -->
+                <Border Grid.Row="0" Margin="0,0,0,14" Padding="14"
+                        CornerRadius="{StaticResource RadiusMedium}" BorderThickness="1"
+                        Background="{StaticResource DangerDeepBrush}"
+                        BorderBrush="{StaticResource DangerBrush}"
+                        Visibility="{Binding Trade.IsArmed, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse Width="6" Height="6" Fill="{StaticResource DangerBrush}"
+                                     VerticalAlignment="Center" Margin="0,0,8,0" />
+                            <TextBlock Style="{StaticResource StatLabel}" Text="WONDER TRADE"
                                        Foreground="{StaticResource DangerBrush}"
-                                       Text="{Binding Trade.Problem}" />
-
-                            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                                <Button Content="INTERCAMBIAR" Style="{StaticResource PrimaryButton}"
-                                        Command="{Binding Trade.ConfirmCommand}" MinWidth="140" />
-                                <Button Content="CANCELAR" Style="{StaticResource PrimaryButton}"
-                                        Command="{Binding Trade.CancelCommand}" MinWidth="110" Margin="8,0,0,0" />
-                            </StackPanel>
-
-                            <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,10,0,0"
-                                       FontSize="11"
-                                       Text="El que entregues desaparece de la caja y su sitio lo ocupa el que llegue, que vendrá al mismo nivel. Se copia la partida entera antes de tocarla y se relee después para comprobarlo. Exige el juego cerrado." />
+                                       VerticalAlignment="Center" />
                         </StackPanel>
+
+                        <TextBlock Style="{StaticResource Body}" FontSize="12" Margin="0,8,0,0"
+                                   Text="{Binding Trade.Instruction}" />
+
+                        <TextBlock Style="{StaticResource Body}" FontSize="12" Margin="0,6,0,0"
+                                   Foreground="{StaticResource DangerBrush}"
+                                   Text="{Binding Trade.Problem}" />
+
+                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                            <Button Content="INTERCAMBIAR" Style="{StaticResource DangerButton}"
+                                    Command="{Binding Trade.ConfirmCommand}" MinWidth="140" Padding="14,8" />
+                            <Button Content="CANCELAR" Style="{StaticResource GhostButton}"
+                                    Command="{Binding Trade.CancelCommand}" MinWidth="105" Padding="14,8"
+                                    Margin="8,0,0,0" />
+                        </StackPanel>
+
+                        <TextBlock Style="{StaticResource Faint}" Margin="0,10,0,0"
+                                   Text="El que entregues desaparece de la caja y su sitio lo ocupa el que llegue, que vendrá al mismo nivel. Se copia la partida entera antes de tocarla y se relee después para comprobarlo. Exige el juego cerrado." />
+                    </StackPanel>
+                </Border>
+
+                <!-- Sin selección: un hueco explicado, no un panel en blanco. -->
+                <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center"
+                            MaxWidth="240">
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Setter Property="Visibility" Value="Visible" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasSelection}" Value="True">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+
+                    <Border Width="44" Height="44" CornerRadius="8" HorizontalAlignment="Center"
+                            Background="{StaticResource BackgroundBrush}"
+                            BorderBrush="{StaticResource BorderStrongBrush}" BorderThickness="1">
+                        <Ellipse Width="14" Height="14" Stroke="{StaticResource TextFaintBrush}"
+                                 StrokeThickness="2"
+                                 HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
 
-                    <TextBlock TextWrapping="Wrap"
-                               Text="Pincha un Pokémon de la caja para ver su ficha.">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock" BasedOn="{StaticResource Muted}">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding HasSelection}" Value="True">
-                                        <Setter Property="Visibility" Value="Collapsed" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
+                    <TextBlock Style="{StaticResource Muted}" TextAlignment="Center" Margin="0,14,0,0"
+                               Text="Pincha un Pokémon de la caja para ver su ficha." />
+                </StackPanel>
 
-                    <StackPanel Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibility}}">
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel Margin="0,0,6,0">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
 
-                            <Image Grid.Column="0" Source="{Binding SelectedSprite}" Width="76" Height="76"
-                                   Stretch="Uniform" RenderOptions.BitmapScalingMode="NearestNeighbor"
-                                   VerticalAlignment="Top" />
+                            <Border Grid.Column="0" Width="80" Height="80"
+                                    CornerRadius="{StaticResource RadiusMedium}"
+                                    Background="{StaticResource BackgroundBrush}"
+                                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                                    VerticalAlignment="Top">
+                                <Image Source="{Binding SelectedSprite}" Width="68" Height="68"
+                                       Stretch="Uniform" RenderOptions.BitmapScalingMode="NearestNeighbor" />
+                            </Border>
 
-                            <StackPanel Grid.Column="1" Margin="10,4,0,0">
-                                <TextBlock Style="{StaticResource PanelHeading}" FontSize="19"
-                                           TextWrapping="Wrap">
+                            <StackPanel Grid.Column="1" Margin="12,2,0,0">
+                                <TextBlock Style="{StaticResource CardTitle}" FontSize="19">
                                     <Run Text="{Binding Selected.DisplayName, Mode=OneWay}" /><Run
                                         Text="{Binding Selected.GenderMark, Mode=OneWay}"
                                         FontFamily="Segoe UI Symbol" />
                                 </TextBlock>
-                                <TextBlock Style="{StaticResource Body}" TextWrapping="Wrap"
+                                <TextBlock Style="{StaticResource Muted}" FontSize="12" Margin="0,2,0,0"
                                            Text="{Binding Selected.Subtitle}" />
-                                <TextBlock Style="{StaticResource Mono}" FontSize="11" Margin="0,4,0,0"
-                                           Foreground="{StaticResource AccentBrush}" Text="SHINY"
-                                           Visibility="{Binding Selected.IsShiny,
-                                                        Converter={StaticResource BoolToVisibility}}" />
+
+                                <Border Style="{StaticResource Chip}" HorizontalAlignment="Left"
+                                        Margin="0,7,0,0"
+                                        Background="{StaticResource AccentDeepBrush}"
+                                        BorderBrush="{StaticResource AccentBrush}"
+                                        Visibility="{Binding Selected.IsShiny,
+                                                     Converter={StaticResource BoolToVisibility}}">
+                                    <TextBlock Text="✨ VARIOCOLOR" Style="{StaticResource ChipText}"
+                                               Foreground="{StaticResource AccentBrightBrush}" />
+                                </Border>
                             </StackPanel>
                         </Grid>
 
-                        <Separator Margin="0,12" Opacity="0.2" />
+                        <Border Style="{StaticResource Divider}" Margin="0,14" />
 
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -263,72 +322,80 @@
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
 
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Naturaleza" Style="{StaticResource Muted}" />
-                            <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource Body}"
-                                       Margin="8,0,0,2" Text="{Binding Selected.NatureName}" />
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Naturaleza" Style="{StaticResource FieldLabel}" />
+                            <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}"
+                                       Text="{Binding Selected.NatureName}" />
 
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Habilidad" Style="{StaticResource Muted}" />
-                            <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource Body}"
-                                       Margin="8,0,0,2" TextWrapping="Wrap" Text="{Binding Selected.AbilityName}" />
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Habilidad" Style="{StaticResource FieldLabel}" />
+                            <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource FieldValue}"
+                                       Text="{Binding Selected.AbilityName}" />
 
-                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Objeto" Style="{StaticResource Muted}" />
-                            <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource Body}"
-                                       Margin="8,0,0,2" Text="{Binding Selected.HeldItemName}" />
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Objeto" Style="{StaticResource FieldLabel}" />
+                            <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource FieldValue}"
+                                       Text="{Binding Selected.HeldItemName}" />
 
-                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Ball" Style="{StaticResource Muted}" />
-                            <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource Body}"
-                                       Margin="8,0,0,2" Text="{Binding Selected.BallName}" />
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Ball" Style="{StaticResource FieldLabel}" />
+                            <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource FieldValue}"
+                                       Text="{Binding Selected.BallName}" />
 
-                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Entrenador" Style="{StaticResource Muted}" />
-                            <TextBlock Grid.Row="4" Grid.Column="1" Style="{StaticResource Body}"
-                                       Margin="8,0,0,2" Text="{Binding Selected.TrainerName}" />
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Entrenador" Style="{StaticResource FieldLabel}" />
+                            <TextBlock Grid.Row="4" Grid.Column="1" Style="{StaticResource FieldValue}"
+                                       Text="{Binding Selected.TrainerName}" />
 
-                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Encuentro" Style="{StaticResource Muted}" />
-                            <TextBlock Grid.Row="5" Grid.Column="1" Style="{StaticResource Body}"
-                                       Margin="8,0,0,2" TextWrapping="Wrap">
+                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Encuentro" Style="{StaticResource FieldLabel}" />
+                            <TextBlock Grid.Row="5" Grid.Column="1" Style="{StaticResource FieldValue}">
                                 <Run Text="{Binding Selected.MetLocationName, Mode=OneWay}" />
                                 <Run Text=" · Nv." /><Run Text="{Binding Selected.MetLevel, Mode=OneWay}" />
                             </TextBlock>
                         </Grid>
 
-                        <Separator Margin="0,12" Opacity="0.2" />
+                        <Border Style="{StaticResource Divider}" Margin="0,14" />
 
-                        <Grid Margin="0,0,0,4">
-                            <TextBlock Style="{StaticResource Muted}" FontSize="10" Text="ESTADÍSTICA · IV · EV" />
-                            <TextBlock Style="{StaticResource Mono}" FontSize="11" HorizontalAlignment="Right"
+                        <DockPanel Margin="0,0,0,6">
+                            <TextBlock DockPanel.Dock="Right" Style="{StaticResource Mono}" FontSize="11"
+                                       Foreground="{StaticResource TextFaintBrush}"
                                        Text="{Binding Selected.IvTotal, StringFormat='IV total {0} de 186'}" />
-                        </Grid>
+                            <TextBlock Style="{StaticResource StatLabel}" Text="ESTADÍSTICA · IV · EV" />
+                        </DockPanel>
 
                         <ItemsControl ItemsSource="{Binding Stats}" ItemTemplate="{StaticResource StatTemplate}" />
 
-                        <Separator Margin="0,12" Opacity="0.2" />
+                        <Border Style="{StaticResource Divider}" Margin="0,14" />
 
-                        <TextBlock Style="{StaticResource Muted}" Text="MOVIMIENTOS" FontSize="10" Margin="0,0,0,4" />
+                        <TextBlock Style="{StaticResource StatLabel}" Text="MOVIMIENTOS" Margin="0,0,0,6" />
                         <ItemsControl ItemsSource="{Binding Selected.Moves}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <TextBlock Style="{StaticResource Body}" Text="{Binding}" Margin="0,1" />
+                                    <Border Background="{StaticResource BackgroundBrush}"
+                                            BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                                            CornerRadius="{StaticResource RadiusSmall}"
+                                            Padding="9,5" Margin="0,0,0,4">
+                                        <TextBlock Style="{StaticResource Body}" FontSize="12"
+                                                   Text="{Binding}" />
+                                    </Border>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
 
-                        <TextBlock Style="{StaticResource Mono}" FontSize="10" Margin="0,12,0,0" Opacity="0.45"
+                        <TextBlock Style="{StaticResource Mono}" FontSize="10" Margin="0,14,0,0"
+                                   Foreground="{StaticResource TextFaintBrush}"
                                    Text="{Binding Selected.Pid, StringFormat='PID {0:X8}'}" />
                     </StackPanel>
-                </StackPanel>
-            </ScrollViewer>
+                </ScrollViewer>
+            </Grid>
         </Border>
 
         <!-- Problemas y avisos, encima de todo, porque son lo primero que hay que leer. -->
-        <Border Grid.Column="0" Grid.ColumnSpan="2" VerticalAlignment="Top" Margin="10"
-                Background="{StaticResource SurfaceAltBrush}" CornerRadius="6" Padding="14"
+        <Border Grid.Column="0" Grid.ColumnSpan="3" VerticalAlignment="Top" Margin="12"
+                Background="{StaticResource SurfaceHighBrush}"
+                CornerRadius="{StaticResource RadiusMedium}" Padding="16,13"
                 BorderThickness="1" BorderBrush="{StaticResource AccentBrush}"
                 Visibility="{Binding HasMessage, Converter={StaticResource BoolToVisibility}}">
-            <TextBlock Style="{StaticResource Body}" TextWrapping="Wrap" Text="{Binding Message}" />
+            <TextBlock Style="{StaticResource Body}" FontSize="12" Text="{Binding Message}" />
         </Border>
 
         <!-- LA ANIMACIÓN, encima de todo. Solo aparece con el intercambio en marcha. -->
-        <views:WonderTradeOverlay Grid.Column="0" Grid.ColumnSpan="2" DataContext="{Binding Trade}"
+        <views:WonderTradeOverlay Grid.Column="0" Grid.ColumnSpan="3" DataContext="{Binding Trade}"
                                   Visibility="{Binding IsPlaying, Converter={StaticResource BoolToVisibility}}" />
     </Grid>
 </UserControl>
