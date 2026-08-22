@@ -31,9 +31,22 @@ public sealed class LayeredFsMod(RomWorkspace workspace, string modDirectory)
     /// Copies the vanilla file into the mod folder so it can be patched there, and returns its
     /// path. The extracted workspace copy stays pristine.
     /// </summary>
+    /// <remarks>
+    /// <b>Idempotent on purpose.</b> A second module that needs the same file gets the one already
+    /// there, patches and all. Copying the vanilla over it again would silently undo whatever the
+    /// first module did — which is exactly what happened when the extra-Pokémon module was added
+    /// after the trainer one and quietly threw away every raised level. To start a file over,
+    /// there is <see cref="Revert"/>.
+    /// </remarks>
     public string Stage(string romfsPath)
     {
         var destination = Path.Combine(RomFsDirectory, romfsPath.Replace('/', Path.DirectorySeparatorChar));
+
+        if (_staged.Contains(romfsPath) && File.Exists(destination))
+        {
+            return destination;
+        }
+
         Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
         File.Copy(workspace.PathOf(romfsPath), destination, overwrite: true);
         if (!_staged.Contains(romfsPath))

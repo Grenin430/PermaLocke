@@ -33,11 +33,12 @@ public sealed partial class RandomizerViewModel : SectionViewModel
     private readonly AzaharInstallation _azahar;
     private readonly AppPaths _paths;
     private readonly IRunRoles _roles;
+    private readonly IRoleCatalog _roleCatalog;
     private readonly ILogger<RandomizerViewModel> _logger;
 
     public RandomizerViewModel(IRunContext runContext, IEventStore events, IClock clock,
         IAppDialogs dialogs, AzaharInstallation azahar, AppPaths paths, IRunRoles roles,
-        ILogger<RandomizerViewModel> logger)
+        IRoleCatalog roleCatalog, ILogger<RandomizerViewModel> logger)
         : base("RANDOMIZADOR")
     {
         _runContext = runContext;
@@ -47,6 +48,7 @@ public sealed partial class RandomizerViewModel : SectionViewModel
         _azahar = azahar;
         _paths = paths;
         _roles = roles;
+        _roleCatalog = roleCatalog;
         _logger = logger;
 
         _runContext.CurrentChanged += (_, _) => Refresh();
@@ -156,7 +158,12 @@ public sealed partial class RandomizerViewModel : SectionViewModel
             // configuración que el jugador pudiera cambiar después de haber empezado.
             if (_roles.Of(run.Id) is { } role)
             {
-                options = options with { TrainerLevelPercent = role.TrainerLevelPercent };
+                options = options with
+                {
+                    TrainerLevelPercent = role.TrainerLevelPercent,
+                    ExtraTrainerPokemon = role.ExtraTrainerPokemon,
+                    ImportantTrainerClasses = _roleCatalog.ImportantTrainerClasses,
+                };
             }
 
             var work = Path.Combine(Path.GetTempPath(), "permalocke-randomizer");

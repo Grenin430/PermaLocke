@@ -10,11 +10,13 @@ namespace PermaLocke.Data;
 /// be created without a role, so an empty catalogue stops the competition at the front door
 /// instead of starting everyone on invented rules.
 /// </remarks>
-public sealed class JsonRoleCatalog(IReadOnlyList<Role> all) : IRoleCatalog
+public sealed class JsonRoleCatalog(IReadOnlyList<Role> all, IReadOnlySet<int> important) : IRoleCatalog
 {
     public IReadOnlyList<Role> All { get; } = all;
 
-    public static JsonRoleCatalog Empty { get; } = new([]);
+    public IReadOnlySet<int> ImportantTrainerClasses { get; } = important;
+
+    public static JsonRoleCatalog Empty { get; } = new([], new HashSet<int>());
 
     public Role? Find(string? id) => string.IsNullOrWhiteSpace(id)
         ? null
@@ -35,6 +37,10 @@ public sealed class JsonRoleCatalog(IReadOnlyList<Role> all) : IRoleCatalog
             return Empty;
         }
 
+        var important = file.ImportantClasses is { Count: > 0 } classes
+            ? classes.ToHashSet()
+            : new HashSet<int>();
+
         return new JsonRoleCatalog(
         [
             .. entries
@@ -52,11 +58,12 @@ public sealed class JsonRoleCatalog(IReadOnlyList<Role> all) : IRoleCatalog
                     Math.Clamp(entry.TrainerLevelPercent ?? 0, 0, 200),
                     Math.Clamp(entry.PlayerCapPercent ?? 0, 0, 200),
                     Math.Clamp(entry.ExtraTrainerPokemon ?? 0, 0, 5)))
-        ]);
+        ], important);
     }
 
     private sealed record RoleFile(
-        [property: JsonPropertyName("roles")] IReadOnlyList<RoleEntry>? Roles);
+        [property: JsonPropertyName("roles")] IReadOnlyList<RoleEntry>? Roles,
+        [property: JsonPropertyName("clasesImportantes")] IReadOnlyList<int>? ImportantClasses);
 
     private sealed record RoleEntry(
         [property: JsonPropertyName("id")] string Id,

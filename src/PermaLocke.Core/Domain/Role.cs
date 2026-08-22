@@ -71,6 +71,16 @@ public interface IRoleCatalog
     IReadOnlyList<Role> All { get; }
 
     /// <summary>
+    /// Trainer classes that count as an important battle, by id.
+    /// </summary>
+    /// <remarks>
+    /// Shared by every role, because which battles matter is a property of the competition and
+    /// not of the difficulty. By <b>id</b> and not by name on purpose: Giovanni and the Rainbow
+    /// Rocket grunts share a class name, and only the id tells them apart.
+    /// </remarks>
+    IReadOnlySet<int> ImportantTrainerClasses { get; }
+
+    /// <summary>
     /// The role of an id, or null when it is unknown.
     /// </summary>
     /// <remarks>

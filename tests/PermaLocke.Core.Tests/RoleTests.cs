@@ -54,28 +54,41 @@ public sealed class RoleTests
     }
 
     /// <summary>
-    /// The point of the expert role: the trainers climb past the player's cap. Its own cap stays
-    /// at the base 20%, so the rivals gain seven points of level on it.
+    /// The point of the expert role: the trainers climb and the player's cap does not follow.
     /// </summary>
     [Fact]
     public void The_experto_lets_the_trainers_outgrow_its_own_cap()
     {
         Assert.Equal(20, FixedRole.Normal.TrainerLevelPercent);
         Assert.Equal(27, FixedRole.Experto.TrainerLevelPercent);
-        Assert.Equal(20, FixedRole.Experto.PlayerCapPercent);
         Assert.True(FixedRole.Experto.TrainerLevelPercent > FixedRole.Experto.PlayerCapPercent);
     }
 
-    /// <summary>The base edit applies to everyone: nobody plays the cartridge as it came.</summary>
+    /// <summary>
+    /// The player's cap is the competition's own table and nothing touches it.
+    /// </summary>
+    /// <remarks>
+    /// The trainers going up 20% does not drag the cap with them: that is the whole shape of the
+    /// difficulty, and raising the cap "to match" would quietly hand every role a stronger team.
+    /// </remarks>
     [Theory]
-    [InlineData(14, 17)]
-    [InlineData(20, 24)]
-    [InlineData(73, 88)]
-    public void Every_role_raises_the_players_cap_over_the_cartridge(int cartridge, int expected)
+    [InlineData(14)]
+    [InlineData(20)]
+    [InlineData(73)]
+    public void No_role_moves_the_players_cap(int cartridge)
     {
-        Assert.Equal(expected, FixedRole.Normal.CapFor(cartridge));
-        Assert.Equal(expected, FixedRole.Cagoneta.CapFor(cartridge));
-        Assert.Equal(expected, FixedRole.Experto.CapFor(cartridge));
+        Assert.Equal(cartridge, FixedRole.Normal.CapFor(cartridge));
+        Assert.Equal(cartridge, FixedRole.Cagoneta.CapFor(cartridge));
+        Assert.Equal(cartridge, FixedRole.Experto.CapFor(cartridge));
+    }
+
+    /// <summary>The extra Pokémon: everyone gets one, and the expert gets one more on top.</summary>
+    [Fact]
+    public void Everyone_gets_an_extra_pokemon_and_the_experto_gets_two()
+    {
+        Assert.Equal(1, FixedRole.Normal.ExtraTrainerPokemon);
+        Assert.Equal(1, FixedRole.Cagoneta.ExtraTrainerPokemon);
+        Assert.Equal(2, FixedRole.Experto.ExtraTrainerPokemon);
     }
 
     /// <summary>Nothing goes past 100, which is the highest level the cartridge can hold.</summary>
@@ -83,7 +96,7 @@ public sealed class RoleTests
     public void Levels_never_pass_a_hundred()
     {
         Assert.Equal(100, FixedRole.Experto.TrainerLevelFor(100));
-        Assert.Equal(100, FixedRole.Normal.CapFor(95));
+        Assert.Equal(100, FixedRole.Normal.TrainerLevelFor(95));
     }
 
     /// <summary>

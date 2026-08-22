@@ -60,7 +60,7 @@ switch (command)
             Uso:
               PermaLocke.RomTool inspect              datos de la ROM y de los GARC
               PermaLocke.RomTool names <id> [id...]   nombres de especie leídos de la ROM
-              PermaLocke.RomTool randomize [seed]     genera el mod en la carpeta de Azahar
+              PermaLocke.RomTool randomize [seed] [--rol id] [--install]
               PermaLocke.RomTool sprites [--sheets]   vuelca los iconos de Pokémon a Data/sprites
             """);
         break;
@@ -116,6 +116,30 @@ async Task NamesAsync(int[] ids)
 async Task RandomizeAsync(ulong seed)
 {
     var options = RandomizerOptionsLoader.Load(Path.Combine(root, "Data", "randomizer.json"));
+
+    // El rol manda sobre el fichero de opciones, igual que en la aplicación: --rol experto.
+    var roles = PermaLocke.Data.JsonRoleCatalog.Load(Path.Combine(root, "Data", "roles.json"));
+    var wanted = args.SkipWhile(a => a != "--rol").Skip(1).FirstOrDefault();
+
+    if (wanted is not null)
+    {
+        if (roles.Find(wanted) is not { } role)
+        {
+            Console.WriteLine($"No existe el rol «{wanted}». Hay: {string.Join(", ", roles.All.Select(r => r.Id))}");
+            return;
+        }
+
+        options = options with
+        {
+            TrainerLevelPercent = role.TrainerLevelPercent,
+            ExtraTrainerPokemon = role.ExtraTrainerPokemon,
+            ImportantTrainerClasses = roles.ImportantTrainerClasses,
+        };
+
+        Console.WriteLine($"rol {role.Id}: entrenadores +{role.TrainerLevelPercent}%, "
+                          + $"+{role.ExtraTrainerPokemon} Pokémon en "
+                          + $"{roles.ImportantTrainerClasses.Count} clases importantes");
+    }
 
     // Por defecto se escribe en Randomized/, no en Azahar: instalar el mod cambia la partida en
     // curso, así que es una decisión explícita del jugador.

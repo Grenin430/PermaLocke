@@ -4,20 +4,35 @@
 
   "comentarioPuntos": "ganancia y perdida multiplican los puntos que se GANAN y los que se PIERDEN por penalización. NO tocan lo que se GASTA: una Master Ball cuesta 300 en todos los roles, porque gastar no es perder. Cada evento del historial guarda el número base, el multiplicador y el resultado, así que siempre se puede ver de dónde salió cada punto.",
 
-  "comentarioJuego": "nivelEntrenadores y capDelJugador son porcentajes SOBRE EL CARTUCHO. El juego base de la competición ya viene con +20% en los dos, así que ese es el suelo de todos los roles. pokemonExtra son los Pokémon de más que llevan los combates importantes.",
+  "comentarioJuego": "nivelEntrenadores es el porcentaje que se le suma a los niveles de los entrenadores SOBRE EL CARTUCHO: +20% es la edición base de la competición y el suelo de todos los roles. capDelJugador se queda en 0 a propósito: el cap del jugador es el de Data/levelcaps.json, tal cual lo dio la competición, y no se toca. pokemonExtra son los Pokémon de más que llevan los combates importantes, y el +1 lo llevan todos.",
 
-  "comentarioExperto": "El experto sube los niveles de los entrenadores al 27% -el 20% base más 7- pero su cap se queda en el 20%: los rivales le sacan ventaja, que es justo la gracia. Si la competición lo entendía al revés -cap del jugador sin el 20%- es cambiar capDelJugador a 0 aquí.",
+  "comentarioExperto": "El experto sube los niveles de los entrenadores al 27% -el 20% base más 7- mientras su cap sigue siendo el de la tabla: los rivales le sacan ventaja, que es justo la gracia. Y lleva pokemonExtra 2, que es el extra que llevan todos más uno propio del rol.",
+
+  "comentarioClases": "clasesImportantes son las CLASES DE ENTRENADOR que cuentan como combate importante, por id. Se sacaron mirando el cartucho, no de memoria: se listaron los 700 entrenadores con su clase, su nombre y el tamaño de su equipo. Ojo con esto, que es la trampa: la clase por NOMBRE no vale, porque Giovanni y los reclutas del Team Rainbow Rocket se llaman igual; lo que los separa es el id -206 el jefe, 208 y 209 la tropa-. Quitar o añadir una clase aquí cambia quién lleva Pokémon extra sin tocar código.",
+
+  "clasesImportantes": [
+    31, 49, 50, 51, 141, 164,
+    38, 43, 44, 45, 46, 48, 142, 153,
+    80, 107, 110, 191,
+    70, 103, 100, 194,
+    76, 140, 219,
+    71, 220, 185,
+    165,
+    198, 199, 200, 201, 202, 206
+  ],
+
+  "comentarioQuienEsQuien": "Por bloques, en el orden de arriba: kahunas (Kaudan, Mayla, Denio, Hela), capitanes (Liam, Kiawe, Nereida, Lulú, Chris, Rika), alto mando (Kahili, Zarala, Mayla, Lario), los dos rivales (Gladio y Tilo), Guzmán, la Fundación Æther (Samina y Fabio), el profesor Kukui, y los jefes del Team Rainbow Rocket (Aquiles, Helio, Magno, Ghechis, Lysson, Giovanni). NO están los reclutas de ningún equipo: son relleno, no combates importantes.",
 
   "roles": [
     {
       "id": "normal",
       "name": "NORMAL",
       "summary": "El randomlocke sin cambios.",
-      "description": "Juegas el randomlocke sin ningún cambio. El juego base está editado subiendo el level cap un 20% y todos los combates importantes tendrán un Pokémon extra.",
+      "description": "Juegas el randomlocke sin ningún cambio sobre la base de la competición: los entrenadores van un 20% por encima del cartucho y todos los combates importantes llevan un Pokémon extra.",
       "ganancia": 1.0,
       "perdida": 1.0,
       "nivelEntrenadores": 20,
-      "capDelJugador": 20,
+      "capDelJugador": 0,
       "pokemonExtra": 1
     },
     {
@@ -28,18 +43,18 @@
       "ganancia": 0.5,
       "perdida": 0.0,
       "nivelEntrenadores": 20,
-      "capDelJugador": 20,
+      "capDelJugador": 0,
       "pokemonExtra": 1
     },
     {
       "id": "experto",
       "name": "EXPERTO",
       "summary": "Más difícil: ganas 1,5x, pierdes el doble y los rivales van por delante.",
-      "description": "Juegas el randomlocke de forma más complicada. Ganas 1,5x puntos pero pierdes el doble. El level cap de los combates aumenta un 7% sobre el 20% base, pero mantienes el level cap base, y los entrenadores llevan otro Pokémon extra además del base.",
+      "description": "Juegas el randomlocke de forma más complicada. Ganas 1,5x puntos pero pierdes el doble. Los niveles de los entrenadores suben un 7% sobre el 20% base mientras tu cap de nivel se queda igual, y los entrenadores llevan otro Pokémon extra además del que llevan todos.",
       "ganancia": 1.5,
       "perdida": 2.0,
       "nivelEntrenadores": 27,
-      "capDelJugador": 20,
+      "capDelJugador": 0,
       "pokemonExtra": 2
     }
   ]

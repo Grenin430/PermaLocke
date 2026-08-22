@@ -10,13 +10,13 @@ internal sealed class FixedRole(Role? role) : IRunRoles
     public static FixedRole None { get; } = new(null);
 
     public static Role Normal { get; } =
-        new("normal", "NORMAL", "", "", 1.0, 1.0, 20, 20, 1);
+        new("normal", "NORMAL", "", "", 1.0, 1.0, 20, 0, 1);
 
     public static Role Cagoneta { get; } =
-        new("cagoneta", "CAGONETA", "", "", 0.5, 0.0, 20, 20, 1);
+        new("cagoneta", "CAGONETA", "", "", 0.5, 0.0, 20, 0, 1);
 
     public static Role Experto { get; } =
-        new("experto", "EXPERTO", "", "", 1.5, 2.0, 27, 20, 2);
+        new("experto", "EXPERTO", "", "", 1.5, 2.0, 27, 0, 2);
 
     public Role? Of(Guid runId) => role;
 }

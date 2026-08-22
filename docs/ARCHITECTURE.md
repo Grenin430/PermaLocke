@@ -3509,3 +3509,80 @@ las clases de entrenador. Es un trabajo aparte, con su propia verificación, y s
 Mientras tanto la pantalla del rol lo enseña —«+1 Pokémon en combates importantes»— porque es lo
 que la competición dice que es el rol, y `Data/roles.json` lo guarda; simplemente todavía no lo
 aplica nadie. Aquí queda escrito para que no se dé por hecho.
+
+---
+
+## 47. El Pokémon extra, y el cap que no se toca (2026-08-22)
+
+### Corrección: el cap del jugador se queda como está
+
+El §46 subía el cap del jugador un 20% junto con los entrenadores. No es eso: **el cap del jugador
+es el de `Data/levelcaps.json`, tal cual lo dio la competición, y no se toca**. Lo que sube un 20%
+son los niveles de los entrenadores. `capDelJugador` queda en 0 para los tres roles.
+
+Esto hace la dificultad más limpia de explicar: todos juegan contra rivales un 20% por encima del
+cartucho con su cap de siempre, y el experto los tiene un 27% por encima. Los tests lo fijan.
+
+### Cuáles son los combates importantes
+
+Lo primero era saberlo, y se sacó del cartucho: se listaron los 700 entrenadores con su clase, su
+nombre y el tamaño de su equipo. La trampa está en que **la clase por nombre no sirve**: Giovanni y
+los reclutas del Team Rainbow Rocket se llaman igual, y lo que los separa es el **id** — 206 el
+jefe, 208 y 209 la tropa. Lo mismo con el Team Skull.
+
+De ahí salen las 35 clases de `clasesImportantes`: kahunas, capitanes, alto mando, los dos rivales
+(Gladio y Tilo), Guzmán, la Fundación Æther, Kukui y los seis jefes del Team Rainbow Rocket. Ni un
+recluta. Está en `Data/roles.json` y hay un test que falla si alguien mete la clase 208.
+
+### La única vez que hay que reempaquetar un GARC
+
+Un equipo vive en `trpoke` como una tira de entradas de 0x20 bytes y nada más, así que un séptimo
+Pokémon alarga el subfichero y **el contenedor entero hay que reempaquetarlo**. `GarcPatcher`
+rechaza un tamaño distinto por diseño (§19), así que este módulo usa `LazyGARC`, que sí admite
+subficheros nuevos, y escribe el fichero completo. Donde no se puede parchear en el sitio, la
+seguridad viene de verificar: se releen los dos ficheros y se comprueba que **el equipo de cada
+entrenador mide exactamente lo que su tabla declara**, que nadie pasa de seis, y que a quien se le
+pidieron N acabó con N.
+
+El añadido es una **copia del último Pokémon del equipo** con la especie cambiada. La entrada de
+0x20 tiene campos que aquí nadie ha identificado; copiar a un vecino garantiza que todos ellos son
+algo que el formato de ese entrenador ya contenía. Inventar una entrada desde ceros parecería
+correcta y podría significar cualquier cosa. Hereda además el nivel, que es lo que impide que el
+extra sea un regalo más débil que el resto.
+
+Seis es el techo duro: la cuenta es un byte que el juego lee como tamaño de equipo, y un séptimo
+miembro no existe en el motor de combate. Un jefe que ya va con seis **se deja y se cuenta**, nunca
+se trunca.
+
+### El fallo que casi se cuela
+
+La primera generación salió con los equipos crecidos y **los niveles sin subir**. La causa: el
+módulo nuevo llamaba a `Stage()` sobre `trpoke`, y `Stage()` copiaba el fichero vanilla encima del
+que el módulo de entrenadores acababa de parchear. Los tamaños se veían bien y el informe decía
+«1139 niveles subidos», pero el fichero final no los tenía.
+
+`Stage()` es ahora **idempotente**: un segundo módulo que pide el mismo fichero recibe el que ya
+está, parches incluidos. Volver a copiar la vanilla encima no es nunca lo que quiere quien llama;
+para empezar de cero está `Revert()`. Era un fallo latente para cualquier módulo futuro.
+
+Se descubrió porque la verificación no se hizo con el informe sino **leyendo los ficheros generados
+por fuera**, con el lector de pk3DS, y mirando a los jefes uno a uno.
+
+### Verificado contra la ROM real
+
+`RomTool randomize <seed> --rol <id>` aplica el rol desde la línea de órdenes. Con el experto:
+
+| | antes | después |
+|---|---|---|
+| Capitán Liam | 3, Nv51 | **5**, Nv65 |
+| Kahuna Kaudan | 5, Nv63 | **6**, Nv80 |
+| Kahuna Hela | 5, Nv68/69 | **6**, Nv86/88 |
+| Giovanni | 5, Nv68/70 | **6**, Nv86/89 |
+| Tilo (ya con seis) | 6 | 6, intacto |
+
+Equipos que no cuadran con su cuenta: **0** de 653. Con el rol normal salen 87 añadidos en 87
+combates —exactamente uno cada uno—; con el experto, 139, porque a los que ya iban con cinco solo
+les cabía uno.
+
+Lo que no se puede comprobar sin jugar: si algún combate con guion da por sentado un tamaño de
+equipo concreto. No hay forma de saberlo leyendo ficheros.

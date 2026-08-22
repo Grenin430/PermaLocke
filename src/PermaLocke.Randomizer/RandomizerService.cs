@@ -107,6 +107,18 @@ public sealed class RandomizerService(RandomizerOptions options)
             steps.Add(new RandomizerStep("Entrenadores",
                 $"{result.Pokemon} Pokémon de {result.Trainers} entrenadores, {result.MovesCleared} movesets devueltos al juego"
                 + (result.LevelsRaised > 0 ? $", {result.LevelsRaised} niveles subidos por el rol" : string.Empty)));
+
+            // Después de los entrenadores a propósito: el Pokémon añadido se copia de uno que ya
+            // está en el equipo, así que hereda el nivel que el rol acaba de subir.
+            var extra = await new ExtraPokemonRandomizer(workspace, options)
+                .ApplyAsync(new SeededRandomSource(seed).Derive(Salts.Trainers).Derive("extra"), pool, mod, ct);
+
+            if (extra.Added > 0 || extra.NoRoom > 0)
+            {
+                steps.Add(new RandomizerStep("Pokémon extra del rol",
+                    $"{extra.Added} añadidos en {extra.Battles} combates importantes"
+                    + (extra.NoRoom > 0 ? $"; {extra.NoRoom} ya iban con seis y se quedaron igual" : string.Empty)));
+            }
         }
 
         // Va el último a propósito: los módulos anteriores emparejan por total de estadísticas

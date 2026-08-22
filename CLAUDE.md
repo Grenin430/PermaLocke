@@ -395,8 +395,22 @@ reempaquetar `a/1/0/7`, tocar `a/1/0/6` y ademas decidir cuales son los combates
 trabajo aparte. La pantalla lo anuncia porque es lo que dice la competicion, pero todavia no lo
 aplica nadie. Ver §46.
 
-**Siguiente.** El Pokemon extra por rol, sincronizacion, y probar en partida nueva iniciales,
-entrenadores y tiendas.
+**El Pokémon extra, y el cap corregido (2026-08-22).** Corrección del §46: el **cap del jugador NO se
+toca**, es el de `Data/levelcaps.json` tal cual; lo que sube un 20% son los niveles de los
+entrenadores. Y el Pokémon extra ya está: **35 clases importantes** sacadas del cartucho —kahunas,
+capitanes, alto mando, los dos rivales, Guzmán, la Fundación Æther, Kukui y los seis jefes del
+Rainbow Rocket—, por **id** y no por nombre, porque Giovanni y sus reclutas comparten nombre de
+clase. Es el único módulo que **reempaqueta un GARC**, porque un séptimo Pokémon alarga el
+subfichero; la seguridad viene de releer y comprobar que cada equipo mide lo que su tabla declara.
+El añadido es una copia del último del equipo con la especie cambiada, para no inventar campos que
+nadie ha identificado. Seis es el techo: quien ya va con seis se deja y se cuenta.
+
+De paso se cazó un fallo latente: `Stage()` copiaba la vanilla encima de lo ya parcheado, así que el
+módulo nuevo tiraba a la basura todos los niveles subidos por el anterior. Ahora es **idempotente**.
+Se vio releyendo los ficheros generados por fuera, no fiándose del informe. Ver §47.
+
+**Siguiente.** Sincronización, y probar en partida real los combates importantes, los iniciales y
+las tiendas.
 
 Lo que NO está resuelto todavía y no debe darse por hecho (detalle en `docs/ARCHITECTURE.md`):
 
@@ -418,7 +432,7 @@ Lo que NO está resuelto todavía y no debe darse por hecho (detalle en `docs/AR
 | Logros y penalizaciones | **HECHO Y VISTO EN LA APP** — motor, pantalla y 6 tests. Falta la lista real de logros, que la tiene que dar el jugador. Ver `ARCHITECTURE.md` §36 |
 | Contadores del juego (movimientos Z, huidas, shiny, entrenadores) | **HECHO Y VISTO EN LA APP** — se leen de `SAV7USUM.Records`; 28/200 huidas y 6/100 entrenadores reales. Ver `ARCHITECTURE.md` §38 |
 | Detectar pruebas, pegatinas y alto mando | **HECHO Y VISTO EN LA APP** — los 21 logros se cuentan solos y no queda un botón de marcar a mano. Las doce pruebas por su cristal Z, con la correspondencia sacada del storytext del cartucho. Ver `ARCHITECTURE.md` §43 |
-| Roles | **HECHOS Y VISTOS EN LA APP** — se eligen lo primero, multiplican los puntos y suben los niveles de los entrenadores. **Falta el Pokémon extra** en combates importantes. Ver `ARCHITECTURE.md` §46 |
+| Roles | **HECHOS Y VERIFICADOS CONTRA LA ROM** — se eligen lo primero, multiplican los puntos, suben los niveles de los entrenadores y añaden el Pokémon extra en 35 clases de combate importante. Falta probarlo jugando. Ver `ARCHITECTURE.md` §46 y §47 |
 | Tienda | **HECHA Y VERIFICADA EN EL JUEGO** — 18 objetos con sprites del cartucho. Compra real: Master Ball por 300, releída en la mochila y cobrada después. Ver `ARCHITECTURE.md` §45 |
 | Sincronización | **SIN EMPEZAR** |
 | API concreta de pk3DS.Core | **VERIFICADA** contra la ROM real — ver `ARCHITECTURE.md` §19 |

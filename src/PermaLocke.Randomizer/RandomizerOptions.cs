@@ -75,6 +75,20 @@ public sealed record RandomizerOptions
     /// </remarks>
     public int TrainerLevelPercent { get; init; }
 
+    /// <summary>Pokémon added to each important battle. Zero leaves the parties alone.</summary>
+    /// <remarks>Also from the role. See <see cref="ImportantTrainerClasses"/> for what counts.</remarks>
+    public int ExtraTrainerPokemon { get; init; }
+
+    /// <summary>
+    /// Trainer classes whose battles count as important, by id.
+    /// </summary>
+    /// <remarks>
+    /// By id and not by name: Giovanni and the Rainbow Rocket grunts share a class name, and only
+    /// the id separates the boss from the mooks. The list is measured off the cartridge and lives
+    /// in <c>Data/roles.json</c>.
+    /// </remarks>
+    public IReadOnlySet<int> ImportantTrainerClasses { get; init; } = new HashSet<int>();
+
     /// <summary>Randomize the type or types of every species and form.</summary>
     public bool RandomizeTypes { get; init; } = true;
 
