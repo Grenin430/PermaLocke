@@ -60,11 +60,76 @@ public sealed class ZoneLocatorTests
         Assert.False(ZoneLocator.TryResolve(blank, out _));
     }
 
+    /// <summary>
+    /// A copy that cannot be a zone record does not <em>disagree</em>: it abstains.
+    /// </summary>
+    /// <remarks>
+    /// This used to void the whole reading, and that is why the zone was never established once in
+    /// a real session. Blank memory and an out-of-range number are both "there is no zone record
+    /// here", which is a different thing from two records saying different zones.
+    /// </remarks>
     [Fact]
-    public void A_single_blank_copy_is_enough_to_refuse()
+    public void A_copy_that_cannot_be_a_zone_abstains_instead_of_voiding_the_rest()
     {
         var copies = FourCopies(10);
         copies[1] = copies[1] with { Anchor = 0 };
+
+        Assert.True(ZoneLocator.TryResolve(copies, out var area));
+        Assert.Equal(10, area);
+    }
+
+    /// <summary>
+    /// Exactly what the game held, measured with <c>Probe --zona</c> and the bag where it has
+    /// always been: two copies with a real handle agreeing on area 32, and the other two holding a
+    /// handle of 2 and numbers that are not areas at all.
+    /// </summary>
+    [Fact]
+    public void The_four_copies_as_the_game_really_held_them()
+    {
+        ZoneReading[] measured =
+        [
+            new(0x0461BB94, 32),
+            new(0x00000002, 48074),
+            new(0x0463FF54, 32),
+            new(0x00000002, 65418),
+        ];
+
+        Assert.False(ZoneLocator.CouldBeAnArea(measured[1]));
+        Assert.False(ZoneLocator.CouldBeAnArea(measured[3]));
+
+        Assert.True(ZoneLocator.TryResolve(measured, out var area));
+        Assert.Equal(32, area);
+    }
+
+    /// <summary>One copy on its own is not enough, however sane it looks.</summary>
+    [Fact]
+    public void A_single_usable_copy_does_not_reach_the_quorum()
+    {
+        ZoneReading[] copies =
+        [
+            new(0x0461BB94, 10),
+            new(0x00000002, 48074),
+            new(0x00000002, 65418),
+            new(0, 0),
+        ];
+
+        Assert.False(ZoneLocator.TryResolve(copies, out _));
+    }
+
+    /// <summary>
+    /// Two usable copies that say different zones is the case the whole check exists for, and it
+    /// still refuses: PermaLocke says it does not know rather than picking one.
+    /// </summary>
+    [Fact]
+    public void Two_usable_copies_that_disagree_are_still_refused()
+    {
+        ZoneReading[] copies =
+        [
+            new(0x0461BB94, 10),
+            new(0x0463FF54, 32),
+            new(0x00000002, 48074),
+            new(0, 0),
+        ];
 
         Assert.False(ZoneLocator.TryResolve(copies, out _));
     }

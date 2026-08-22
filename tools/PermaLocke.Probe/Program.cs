@@ -20,6 +20,7 @@ using PermaLocke.GameLink.Rpc;
 //   Probe --nombres [--arreglar] lists, and optionally restores, the Pokémon left without a name
 //   Probe --ev [--probar]       lists the effort values; --probar proves the write on a COPY
 //   Probe --equipo [--cap N]    the live party in every copy, both level fields side by side
+//   Probe --zona                the four copies of the area field, and why they are believed or not
 //   Probe --pk <fichero>        reads a party slot backup; --cap N says what a cap write changes
 
 Console.OutputEncoding = System.Text.Encoding.UTF8;
@@ -46,6 +47,12 @@ if (args.Length >= 1 && args[0] == "--nombres")
 if (args.Length >= 1 && args[0] == "--ev")
 {
     return PermaLocke.Probe.EvProbe.Run(args.Contains("--probar"));
+}
+
+// Las cuatro copias del campo de zona, y por qué se creen o no.
+if (args.Length >= 1 && args[0] == "--zona")
+{
+    return PermaLocke.Probe.ZoneProbe.Run();
 }
 
 // El equipo vivo en todas sus copias, con los dos niveles al lado. Con --cap, además escribe.

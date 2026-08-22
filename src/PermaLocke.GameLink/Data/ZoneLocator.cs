@@ -93,30 +93,54 @@ public sealed class ZoneLocator(AzaharRpcClient client)
     /// Pure on purpose: this is the part that decides whether PermaLocke acts on a zone, and it
     /// has to be testable without an emulator in front of it.
     /// </remarks>
+    /// <summary>How many usable copies have to agree before a reading is believed.</summary>
+    private const int Quorum = 2;
+
+    /// <summary>
+    /// True when this copy could be a zone record at all: a handle that is not blank, and a number
+    /// that is one of the areas <c>encdata</c> has.
+    /// </summary>
+    /// <remarks>
+    /// Measured against the running game with the bag where it has always been: two of the four
+    /// copies held a handle of <c>00000002</c> and areas of <b>48074</b> and <b>65418</b>. Those are
+    /// not zones — <c>encdata</c> has 336 — so that pair simply is not holding a zone record. The
+    /// original rule counted them as <em>disagreement</em> and threw the reading away, which is why
+    /// the zone was never established and the Poké Ball rule never once acted.
+    /// </remarks>
+    public static bool CouldBeAnArea(ZoneReading copy) =>
+        copy.LooksLive && copy.Area < UltraSunMoonAreaCount;
+
     public static bool TryResolve(ReadOnlySpan<ZoneReading> copies, out int area)
     {
         area = -1;
 
-        if (copies.Length == 0)
-        {
-            return false;
-        }
+        int? agreed = null;
+        var usable = 0;
 
         foreach (var copy in copies)
         {
-            // Una sola copia en memoria en blanco basta para no fiarse de ninguna.
-            if (!copy.LooksLive || copy.Area != copies[0].Area)
+            if (!CouldBeAnArea(copy))
+            {
+                continue;
+            }
+
+            // Entre las que sí pueden ser una zona no se admite ninguna discrepancia: eso seguiría
+            // significando que PermaLocke no sabe dónde está el jugador.
+            if (agreed is { } already && already != copy.Area)
             {
                 return false;
             }
+
+            agreed = copy.Area;
+            usable++;
         }
 
-        if (copies[0].Area >= UltraSunMoonAreaCount)
+        if (agreed is not { } found || usable < Quorum)
         {
             return false;
         }
 
-        area = copies[0].Area;
+        area = found;
         return true;
     }
 }

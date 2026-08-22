@@ -521,6 +521,19 @@ con un servidor UDP falso que se porta mal a la carta -y verificando que la prue
 con el código viejo-, y contra el emulador real con la app a 1 Hz y seis sondas barriendo a la vez:
 ni una caída. Ver `docs/ARCHITECTURE.md` §54.
 
+**La regla de las Poké Balls no actuaba porque nunca supo dónde estabas (2026-08-22).** Estaba
+encendida y no hacía nada, y el log lo decía **cada segundo** desde hacía días: «las copias de la zona
+no concuerdan». `Probe --zona` enseña las cuatro: dos con asa normal coinciden en la **zona 32**, y
+las otras dos tienen el asa a **2** y números que no son zonas -48074 y 65418, cuando `encdata` tiene
+336-. Ese par no guarda un registro de zona, pero la regla exigía que **las cuatro** coincidieran, así
+que contaban como desacuerdo y tiraban la lectura entera: **no acertó ni una vez**. Ahora una copia
+solo vota si **puede** ser una zona -asa no nula y número dentro de las 336-; las que no, se abstienen
+en vez de envenenar la votación, y hacen falta al menos **dos** de acuerdo. `LooksLive` no bastaba,
+porque un asa de 2 no es cero. Corrobora que el ancla sigue buena que la zona 32 es **Pueblo Lilii** y
+el §23 midió Pueblo Lilii como área **1**: el cartucho reparte un mismo sitio entre varias áreas
+-Ruta 2 es 5, 37, 57, 58 y 64-. **Falta confirmarlo en el juego** quedándose quieto en un sitio con
+nombre. Ver `docs/ARCHITECTURE.md` §55.
+
 **Siguiente.** Sincronización, y probar en partida real los combates importantes, los iniciales y
 las tiendas.
 

@@ -4247,3 +4247,62 @@ prueba en una prueba.
 Y contra el emulador real: la aplicación sondeando a 1 Hz mientras seis procesos de la sonda barrían
 la memoria a la vez. Los seis contestaron y el enlace **no se cayó ni una vez** en los minutos
 siguientes. Antes, esa misma concurrencia era justo lo que lo mataba.
+
+---
+
+## 55. La regla de las Poké Balls no actuaba porque nunca supo dónde estabas (2026-08-22)
+
+El jugador entró en combate varias veces en la misma ruta y el juego le dejó capturar cada vez. La
+regla que retira las Poké Balls cuando la zona ya ha gastado su encuentro estaba encendida en
+`Data/rules.json` y no hacía nada.
+
+El log lo decía **cada segundo**, desde hacía días:
+
+```
+[WRN] ZoneService: Las copias de la zona no concuerdan; PermaLocke no sabe dónde está el jugador
+```
+
+Y la regla, correctamente, no toca la mochila cuando no sabe dónde está el jugador. Así que no era
+un fallo de la regla: era que la zona no se establecía **nunca**.
+
+### Lo que había de verdad en esas cuatro direcciones
+
+`Probe --zona` lee las cuatro copias y dice por qué se creen o no. Con la mochila exactamente donde
+siempre ha estado, o sea con las distancias del §23 intactas:
+
+```
+Mochila en 0x33011934
+
+  copia 0: 0x330DDCA8  asa 0461BB94  zona  32
+  copia 1: 0x330DDE48  asa 00000002  zona 48074
+  copia 2: 0x331FFAA8  asa 0463FF54  zona  32
+  copia 3: 0x331FFC48  asa 00000002  zona 65418
+```
+
+Dos copias con un asa normal coinciden en la zona 32. Las otras dos tienen el asa a **2** y unos
+números que no son zonas: `encdata` tiene 336 y ahí pone 48074 y 65418. Ese par sencillamente **no
+está guardando un registro de zona**; el §23 supuso que los cuatro lo estarían siempre.
+
+La regla original exigía que las cuatro coincidieran, así que un par que no es una zona contaba como
+**desacuerdo** y tiraba la lectura entera. De ahí que no acertara ni una vez.
+
+### Abstenerse no es discrepar
+
+`TryResolve` ahora distingue las dos cosas. Una copia entra en la votación solo si **puede** ser una
+zona: asa distinta de cero y número dentro de las 336. Las que no, se abstienen. Entre las que sí,
+no se admite ninguna discrepancia —eso seguiría siendo no saber dónde está el jugador— y hacen falta
+al menos **dos** de acuerdo, para que una sola lectura suelta no baste.
+
+`LooksLive` por sí solo no servía: el asa de esas dos copias vale 2, que no es cero, así que pasaban
+la prueba de vida y luego envenenaban la votación con un área imposible.
+
+### Lo que corrobora que el ancla sigue buena
+
+La zona 32 es, según `Data/zones.json`, **Pueblo Lilii**. El §23 midió Pueblo Lilii como área **1**.
+No es contradicción: el cartucho reparte un mismo sitio entre varias áreas de `encdata` —Ruta 2
+aparece como 5, 37, 57, 58 y 64—, así que 1 y 32 siendo los dos Pueblo Lilii es exactamente lo que
+cabe esperar de un ancla que sigue apuntando a donde debe.
+
+Aun así, el número que la regla va a usar para quitar y devolver objetos merece una confirmación en
+el juego antes de darlo por bueno: quedarse quieto en un sitio con nombre y ver si `Probe --zona`
+dice ese sitio.
