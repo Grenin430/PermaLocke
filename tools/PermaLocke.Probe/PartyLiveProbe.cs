@@ -61,10 +61,13 @@ public static class PartyLiveProbe
                 }
 
                 var name = pokemon.Species < names.Length ? names[pokemon.Species] : "?";
-                var mismatch = pokemon.Stat_Level != pokemon.CurrentLevel ? "  <-- NO CUADRAN" : string.Empty;
+                // Stat_Level solo significa algo en la estructura de equipo de verdad; en las
+                // demás cae fuera de sitio y devuelve cualquier cosa. Se enseña para verlo, no
+                // para creerselo.
+                var mismatch = pokemon.Stat_Level != pokemon.CurrentLevel ? "  <-- ese campo no es el nivel aqui" : string.Empty;
 
-                Console.WriteLine($"   hueco {slot} 0x{address:X8}  {name,-12} "
-                                  + $"EXP dice {pokemon.CurrentLevel,3}   Stat_Level {pokemon.Stat_Level,3}{mismatch}");
+                Console.WriteLine($"   hueco {slot} 0x{address:X8}  {name,-12} PID {pokemon.PID:X8}  "
+                                  + $"nivel {pokemon.CurrentLevel,3}   [0xEC] {pokemon.Stat_Level,3}{mismatch}");
             }
 
             Console.WriteLine();
@@ -90,12 +93,12 @@ public static class PartyLiveProbe
                     continue;
                 }
 
-                if (pokemon.CurrentLevel <= wanted && pokemon.Stat_Level <= wanted)
+                if (pokemon.CurrentLevel <= wanted)
                 {
                     continue;
                 }
 
-                var result = writer.EnforceLevelCap(address, wanted);
+                var result = writer.EnforceLevelCap(address, wanted, pokemon.PID);
                 var name = pokemon.Species < names.Length ? names[pokemon.Species] : "?";
 
                 Console.WriteLine($"   0x{address:X8} {name,-12} nivel {pokemon.Stat_Level,3} -> "

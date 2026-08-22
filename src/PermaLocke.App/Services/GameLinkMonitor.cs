@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using PermaLocke.Core.Abstractions;
 using PermaLocke.Core.Domain;
 using PermaLocke.GameLink;
+using PermaLocke.GameLink.Data;
 using PermaLocke.Rules.Services;
 
 namespace PermaLocke.App.Services;
@@ -234,8 +235,12 @@ public sealed class GameLinkMonitor(
 
         foreach (var member in over)
         {
+            // Con el PID por delante: el hueco tiene que contener a ESE Pokémon. El equipo vive en
+            // varias estructuras y no todas se leen igual, así que sin esta comprobación una copia
+            // desalineada se corrige igual y lo que se corrige es el de al lado.
             var results = provider.AllLayouts
-                .Select(layout => writer.EnforceLevelCap(layout.SlotAddress(member.Slot), cap))
+                .Select(layout => writer.EnforceLevelCap(layout.SlotAddress(member.Slot), cap, member.Pid,
+                    layout.Stride == PartyLayoutLocator.CopyStride))
                 .ToList();
 
             var applied = results.Count(r => r.Applied);
@@ -323,7 +328,8 @@ public sealed class GameLinkMonitor(
             // Written into every copy: the one the game reads is among them, and the rest are
             // refreshed from it anyway, so hitting all of them is both safe and sufficient.
             var results = provider.AllLayouts
-                .Select(layout => writer.ApplyDeath(layout.SlotAddress(member.Slot), new DeathTransform()))
+                .Select(layout => writer.ApplyDeath(layout.SlotAddress(member.Slot), new DeathTransform(), pid,
+                    layout.Stride == PartyLayoutLocator.CopyStride))
                 .ToList();
 
             var applied = results.Count(r => r.Applied);

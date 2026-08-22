@@ -54,9 +54,26 @@ public sealed class AzaharGameWriter(
 {
     private static readonly int PartySize = new PK7().SIZE_PARTY;
 
+    /// <summary>The encrypted block, whose layout the checksum vouches for wherever it appears.</summary>
+    private static readonly int StoredSize = new PK7().SIZE_STORED;
+
     /// <summary>Turns a Pokémon into the run's death marker.</summary>
-    public MemoryWriteResult ApplyDeath(uint slotAddress, DeathTransform transform)
+    /// <param name="expectedPid">
+    /// The Pokémon that must be in that slot. The same guard as the level cap and for the same
+    /// reason: the party lives in several structures, not all of them read alike, and writing into
+    /// the wrong slot destroys a Pokémon that is still alive.
+    /// </param>
+    public MemoryWriteResult ApplyDeath(uint slotAddress, DeathTransform transform, uint expectedPid,
+        bool partyStatsAreHere = true)
     {
+        if (Read(slotAddress) is not { ChecksumValid: true } slot || slot.PID != expectedPid)
+        {
+            logger.LogDebug("0x{Address:X8}: ahí no está el PID {Wanted:X8}; no se transforma",
+                slotAddress, expectedPid);
+
+            return MemoryWriteResult.Nothing;
+        }
+
         return Modify(slotAddress, "muerte", pokemon =>
         {
             pokemon.Species = (ushort)transform.Species;
@@ -73,36 +90,61 @@ public sealed class AzaharGameWriter(
 
             pokemon.Nickname = transform.Nickname;
             pokemon.IsNicknamed = true;
-        });
+        }, partyStatsAreHere ? null : StoredSize);
     }
+
+    /// <summary>
+    /// Whether the Pokémon in a slot should be brought down to the cap.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Pulled out of the write so it can be tested on its own. Three conditions, and every one of
+    /// them earned: the block has to be a real Pokémon, it has to be <em>that</em> Pokémon, and its
+    /// <b>experience</b> has to be over the cap.
+    /// </para>
+    /// <para>
+    /// Experience and never <c>Stat_Level</c>. The game keeps the party in several structures and
+    /// only one lays its battle stats out where a PK7 has them; in the others that offset belongs
+    /// to something else and reads anything at all. Trusting it read <b>145</b> for a level 4
+    /// Ledyba, decided it was over a cap of 24, wrote 24 — and the game evolved it into a Ledian.
+    /// The experience lives inside the encrypted block, which the checksum vouches for.
+    /// </para>
+    /// </remarks>
+    public static bool NeedsCapping(PK7? slot, uint expectedPid, int cap) =>
+        slot is { ChecksumValid: true }
+        && slot.PID == expectedPid
+        && slot.CurrentLevel > cap;
 
     /// <summary>
     /// Brings a Pokémon back to the level cap with no progress into the next level. This covers
     /// the three cases the run defines — rare candies, experience gained at the cap, and
     /// levelling past it — because all three end in the same state.
     /// </summary>
-    /// <remarks>
-    /// A party Pokémon carries its level twice: as experience inside the encrypted block, and as
-    /// <c>Stat_Level</c> in the party stats after it. PKHeX's <c>CurrentLevel</c> setter writes
-    /// both, and this checks both afterwards — reading back only the experience would agree with
-    /// itself while the game, which shows <c>Stat_Level</c>, showed something else.
-    /// </remarks>
-    public MemoryWriteResult EnforceLevelCap(uint slotAddress, int cap)
+    /// <param name="expectedPid">
+    /// The Pokémon that must be in that slot: it is written only if it is really there.
+    /// </param>
+    /// <param name="partyStatsAreHere">
+    /// True only for the structure whose entries are laid out as party Pokémon. False keeps the
+    /// write inside the encrypted block, so nothing is put into bytes whose meaning is unknown.
+    /// </param>
+    public MemoryWriteResult EnforceLevelCap(uint slotAddress, int cap, uint expectedPid,
+        bool partyStatsAreHere = true)
     {
         var current = Read(slotAddress);
 
-        if (current is null)
+        if (!NeedsCapping(current, expectedPid, cap))
         {
-            logger.LogDebug("0x{Address:X8}: no hay un Pokémon legible ahí; el cap no lo toca", slotAddress);
+            logger.LogDebug(
+                "0x{Address:X8}: el cap no lo toca (PID {Found}, esperado {Wanted:X8}, nivel {Level}, cap {Cap})",
+                slotAddress, current is null ? "ilegible" : current.PID.ToString("X8"),
+                expectedPid, current?.CurrentLevel, cap);
+
             return MemoryWriteResult.Nothing;
         }
 
-        if (current.CurrentLevel <= cap && current.Stat_Level <= cap)
-        {
-            return MemoryWriteResult.Nothing;
-        }
-
-        var result = Modify(slotAddress, $"cap de nivel {cap}", pokemon => pokemon.CurrentLevel = (byte)cap);
+        var result = Modify(slotAddress, $"cap de nivel {cap}",
+            pokemon => pokemon.CurrentLevel = (byte)cap,
+            partyStatsAreHere ? null : StoredSize);
 
         if (!result.Applied)
         {
@@ -110,15 +152,14 @@ public sealed class AzaharGameWriter(
         }
 
         // Y la comprobación que de verdad importa: no que los bytes estén, sino que el Pokémon
-        // esté al nivel pedido en los dos sitios donde el juego lo guarda.
+        // haya bajado. Por experiencia, que es lo único fiable en todas las estructuras.
         var after = Read(slotAddress);
 
-        if (after is null || after.CurrentLevel > cap || after.Stat_Level > cap)
+        if (after is null || after.CurrentLevel > cap)
         {
             logger.LogWarning(
-                "0x{Address:X8}: los bytes del cap se escribieron pero el Pokémon sigue por encima "
-                + "(EXP dice {ByExp}, Stat_Level dice {Stored}, cap {Cap})",
-                slotAddress, after?.CurrentLevel, after?.Stat_Level, cap);
+                "0x{Address:X8}: los bytes del cap se escribieron pero el Pokémon sigue a nivel {Level}, "
+                + "cap {Cap}", slotAddress, after?.CurrentLevel, cap);
 
             return new MemoryWriteResult(result.Written, 0);
         }
@@ -186,7 +227,13 @@ public sealed class AzaharGameWriter(
         return true;
     }
 
-    private MemoryWriteResult Modify(uint slotAddress, string reason, Action<PK7> change)
+    /// <param name="limit">
+    /// How many bytes of the record may be touched. The party stats live in the last 28 of a 260
+    /// byte entry, and only the structure with the party stride actually keeps them there: in the
+    /// others those offsets belong to something else, so writes stop at the encrypted block, whose
+    /// layout the checksum vouches for.
+    /// </param>
+    private MemoryWriteResult Modify(uint slotAddress, string reason, Action<PK7> change, int? limit = null)
     {
         if (!client.TryReadMemory(slotAddress, PartySize, out var original))
         {
@@ -216,8 +263,9 @@ public sealed class AzaharGameWriter(
         Backup(slotAddress, original, reason);
 
         var touched = new List<int>();
+        var last = Math.Min(limit ?? PartySize, PartySize);
 
-        for (var i = 0; i < PartySize; i++)
+        for (var i = 0; i < last; i++)
         {
             if (modified[i] != reference[i])
             {

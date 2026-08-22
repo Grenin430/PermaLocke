@@ -494,8 +494,20 @@ partida, que el juego pisa. Leer y escribir son cosas distintas: al escribir la 
 checksum de PK7 más la relectura, no que el lector entienda la estructura. De paso, el barrido daba
 **ocho copias que eran dos estructuras** y seis vistas solapadas de ellas, y escribir en una vista
 manda la corrección al Pokémon de al lado; `PartyLayoutLocator.Distinct` lo arregla, con prueba sobre
-las ocho direcciones reales. Ojo también con el enlace: ese día PermaLocke solo estuvo conectado al
-juego **11 y 108 segundos**. Ver `docs/ARCHITECTURE.md` §53.
+las ocho direcciones reales.
+
+**Y una regresión de ese mismo arreglo, que costó un Pokémon:** se añadió «corregir si CUALQUIERA de
+los dos niveles se pasa», incluyendo `Stat_Level`. Pero **`Stat_Level` solo significa algo en la
+estructura de equipo de verdad**; en las de salto `0x1E4` ese offset es de otra cosa y devuelve 145,
+187, 202. Leyó 145 en un **Ledyba de nivel 4**, le escribió el cap de 24 y el juego lo **evolucionó a
+Ledian**. Un cap que sube un Pokémon es lo contrario de un cap. La partida guardada no se enteró, así
+que cerrar sin guardar lo deshizo. Ahora: **solo decide la experiencia** -avalada por el checksum en
+cualquier estructura-, **el PID por delante** para que un hueco desalineado no se toque, y **no se
+escribe más allá del bloque cifrado** en las estructuras cuya cola no está identificada. La lección
+general: un campo solo vale **donde la estructura está identificada**; el mismo offset en otro sitio
+no es una lectura mala, es la lectura de otra cosa, y una condición «por si acaso» encima de eso es
+un disparador aleatorio. Ojo también con el enlace: ese día PermaLocke solo estuvo conectado al juego
+**11 y 108 segundos**. Ver `docs/ARCHITECTURE.md` §53.
 
 **Siguiente.** Sincronización, y probar en partida real los combates importantes, los iniciales y
 las tiendas.

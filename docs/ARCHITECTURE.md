@@ -4146,3 +4146,56 @@ En la estructura de 0x1E4, el byte 0xEC **no es** `Stat_Level` —el Grubbin, qu
 una vez. Es una escritura en un campo sin identificar, con su copia de seguridad. Antes de estrechar
 la escritura al bloque cifrado hay que ver qué enseña el juego en el siguiente combate: si el nivel
 sale correcto, la escritura completa es la que funciona.
+
+### El cap subió un Pokémon, y fue por confiar en el campo equivocado
+
+Al arreglar §53 se añadió una condición que parecía prudente y era un desastre:
+
+```csharp
+if (current.CurrentLevel <= cap && current.Stat_Level <= cap) return Nothing;
+```
+
+Es decir: corregir si **cualquiera** de los dos niveles se pasa. Suena a cinturón y tirantes. Lo que
+hace de verdad es corregir cuando el campo que no vale dice cualquier cosa.
+
+Porque `Stat_Level` **solo significa algo en la estructura de equipo de verdad**. En las de salto
+`0x1E4` esos 28 bytes finales pertenecen a otra cosa, y ahí `Stat_Level` devuelve 145, 187, 202, 250.
+La copia de seguridad que el propio escritor guardó antes de tocar nada lo dice sin discusión:
+
+```
+33F7FE0C-20260822-172417-cap_de_nivel_24.bin
+  especie        165 Ledyba          PID  544CA127
+  EXP            91
+  nivel por EXP  4      <- correcto
+  Stat_Level     145    <- basura: ahi no esta el nivel
+  PS             19579/45376         <- ni las estadisticas
+```
+
+Un Ledyba de nivel 4. La condición leyó 145, decidió que se pasaba del cap de 24, y **le escribió el
+24**. El juego lo aplicó y lo evolucionó a Ledian. Un cap que sube un Pokémon es exactamente lo
+contrario de un cap.
+
+La partida guardada no llegó a enterarse —seguía con `Ledyba Nv.4`—, así que cerrar el emulador sin
+guardar lo deshizo del todo. Ese es el único motivo por el que esto no costó una run.
+
+**Lo que queda en su sitio a partir de ahora:**
+
+- **Solo la experiencia decide.** Vive dentro del bloque cifrado y el checksum del Pokémon responde
+  por ella en todas las estructuras. `Stat_Level` no se lee para decidir nada.
+- **El PID por delante.** `NeedsCapping(slot, expectedPid, cap)` exige que el hueco contenga *ese*
+  Pokémon. El monitor lo saca del equipo leído de la copia fiable, y con eso una estructura
+  desalineada o vieja simplemente no se toca. Igual en la transformación del muerto, donde escribir
+  en el hueco de al lado destruiría un Pokémon vivo.
+- **No se escribe donde no se sabe qué hay.** `Modify` acepta un límite, y las estructuras que no
+  tienen el salto de equipo se escriben solo hasta el final del bloque cifrado. El byte 0xEC de la
+  estructura de `0x1E4` vuelve a ser de nadie.
+
+Y una prueba con los números exactos del Ledyba —nivel 4, `Stat_Level` 145, PID 544CA127— que exige
+que no se toque.
+
+### La lección, que es más general
+
+Este proyecto llevaba varias secciones repitiendo «medir, no adivinar» y aun así se coló. La forma
+del fallo merece recordarse: **un campo leído de una estructura solo vale donde esa estructura está
+identificada**. El mismo offset, en otro sitio, no es una lectura mala — es una lectura de otra cosa.
+Añadir una condición «por si acaso» sobre un campo así no da seguridad, da un disparador aleatorio.
