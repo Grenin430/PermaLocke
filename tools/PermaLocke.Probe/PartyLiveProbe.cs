@@ -31,7 +31,8 @@ public static class PartyLiveProbe
             return 1;
         }
 
-        var layouts = new PartyLayoutLocator(client).LocateAll(trainer ?? string.Empty);
+        var layouts = PartyLayoutLocator.Distinct(
+            new PartyLayoutLocator(client).LocateAll(trainer ?? string.Empty));
 
         if (layouts.Count == 0)
         {
@@ -39,7 +40,7 @@ public static class PartyLiveProbe
             return 1;
         }
 
-        Console.WriteLine($"{layouts.Count} copias del equipo:");
+        Console.WriteLine($"{layouts.Count} estructuras distintas del equipo:");
         Console.WriteLine();
 
         var names = GameInfo.GetStrings("es").specieslist;

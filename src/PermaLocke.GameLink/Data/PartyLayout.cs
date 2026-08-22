@@ -30,6 +30,43 @@ public sealed class PartyLayoutLocator(AzaharRpcClient client)
     /// <summary>Stride of the save-resident copies.</summary>
     public const uint CopyStride = 0x104;
 
+    /// <summary>
+    /// Drops the layouts that are the same structure seen from a later slot.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The sweep starts a candidate wherever a Pokémon header appears, so a party of five turns
+    /// into five "layouts": one per member, each one a view of the same block starting further in.
+    /// The real party had two structures and the locator reported eight.
+    /// </para>
+    /// <para>
+    /// That is not cosmetic. Writes go to <c>SlotAddress(slot)</c> of every layout, so a view that
+    /// starts at slot 1 sends slot 4's correction to slot 5 — a different Pokémon. Keeping only the
+    /// earliest address of each run makes every write land where it was aimed.
+    /// </para>
+    /// </remarks>
+    public static IReadOnlyList<PartyLayout> Distinct(IReadOnlyList<PartyLayout> layouts)
+    {
+        const int PartySlots = 6;
+        var kept = new List<PartyLayout>();
+
+        foreach (var layout in layouts.OrderBy(l => l.Stride).ThenBy(l => l.Address))
+        {
+            var covered = kept.Any(other =>
+                other.Stride == layout.Stride
+                && layout.Address > other.Address
+                && layout.Address < other.Address + (other.Stride * PartySlots)
+                && (layout.Address - other.Address) % other.Stride == 0);
+
+            if (!covered)
+            {
+                kept.Add(layout);
+            }
+        }
+
+        return kept;
+    }
+
     private static readonly int StoredSize = new PK7().SIZE_STORED;
 
     /// <summary>

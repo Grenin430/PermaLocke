@@ -78,7 +78,19 @@ public sealed class AzaharGameStateProvider(
         if (ReadRemembered() is { Count: > 0 } remembered
             && Choose(reader, remembered) is { } fromDisk)
         {
-            _allLayouts = [.. remembered.Where(layout => ReadParty(reader, layout).Count > 0)];
+            // TODAS las recordadas, no solo las que se dejan leer.
+            //
+            // Aquí estaba el fallo que dejaba el cap de nivel sin efecto. La copia autoritativa
+            // -la de salto 0x1E4, la que el juego lee de verdad- guarda las estadísticas de
+            // combate en otro sitio, así que Pk7Reader la rechaza entera: exige unos PS máximos
+            // coherentes y ahí no los encuentra. Filtrar por eso dejaba fuera de la lista de
+            // escritura justo la copia que hay que corregir, y las correcciones iban solo a las
+            // copias del bloque de partida, que el juego pisa.
+            //
+            // Poder leerse y poder escribirse son cosas distintas. Para escribir, la garantía la
+            // pone el escritor: exige un checksum de PK7 válido antes de tocar nada -memoria al
+            // azar no lo pasa- y relee después para comprobar que cuajó.
+            _allLayouts = PartyLayoutLocator.Distinct(remembered);
             _layout = fromDisk;
             _gameTrainer = fromDisk.TrainerName;
 
@@ -104,7 +116,7 @@ public sealed class AzaharGameStateProvider(
         }
 
         _layout = readable;
-        _allLayouts = located;
+        _allLayouts = PartyLayoutLocator.Distinct(located);
         _gameTrainer = readable.TrainerName;
         Remember(located);
 

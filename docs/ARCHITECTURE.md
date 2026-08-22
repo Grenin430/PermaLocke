@@ -4091,3 +4091,58 @@ Y un detalle del log que conviene no perder de vista: en las dos ventanas en que
 conectado al juego ese día estuvo **11 segundos y 108 segundos**. El resto del rato la aplicación
 decía «Azahar no responde». El cap solo vigila mientras hay enlace, así que antes de acusar a la
 escritura hay que descartar que sencillamente no hubiera nadie mirando.
+
+### La copia que el juego lee se caía de la lista de escritura
+
+Con `Probe --equipo` contra el juego en marcha salió lo que faltaba:
+
+```
+0x330128E4  salto 0x104          0x33F7FA44  salto 0x1E4
+   Kommo-o   EXP  24  Stat  24      Kommo-o   EXP  45  Stat 187  <-- NO CUADRAN
+   Grubbin   EXP   8  Stat   8      Grubbin   EXP   8  Stat  14  <-- NO CUADRAN
+   Ledyba    EXP   4  Stat   4      Ledyba    EXP  24  Stat  24
+   Shedinja  EXP   3  Stat   3      Shedinja  EXP  24  Stat  24
+   Yveltal   EXP  24  Stat  24      Yveltal   EXP 100  Stat  65  <-- NO CUADRAN
+```
+
+La de la izquierda tenía el cap puesto. La de la derecha seguía con **45 y 100**, los niveles de
+antes. Y la de la derecha es, según el propio `PartyLayoutLocator`, la que manda:
+`AuthoritativeStride = 0x1E4`, *«la estructura de la que el juego lee»*, averiguada en su día
+escribiendo un mote distinto en cada copia y mirando cuál salía en pantalla.
+
+O sea que la corrección iba a todas partes menos a donde hacía falta. La causa está en una línea del
+proveedor:
+
+```csharp
+_allLayouts = [.. remembered.Where(layout => ReadParty(reader, layout).Count > 0)];
+```
+
+`ReadParty` va por `Pk7Reader.TryRead`, que exige que las estadísticas de combate sean coherentes
+—unos PS máximos mayores que cero y unos PS actuales que no los superen—. En la estructura de 0x1E4
+esas estadísticas **no están donde el lector las busca**: por eso su `Stat_Level` sale 187, 14 y 65.
+Así que el lector la rechaza entera, el filtro la borra de la lista, y las escrituras se quedan en
+las copias del bloque de partida, que el juego pisa en cuanto puede.
+
+**Poder leerse y poder escribirse son cosas distintas.** Para escribir, la garantía no es que el
+lector entienda la estructura, sino que el escritor exija un checksum de PK7 válido antes de tocar
+nada —memoria al azar no lo pasa— y relea después. Con el filtro fuera, la corrección llega a las
+dos y **se queda**: `EXP 45 → 24` y `EXP 100 → 24` en la estructura autoritativa, escrito y releído.
+
+### Ocho copias que eran dos
+
+De paso, el barrido arranca una candidata en cada cabecera de Pokémon que encuentra, así que un
+equipo de cinco se convertía en cinco «copias»: la misma estructura vista desde el miembro 1, el 2,
+el 3… Las ocho direcciones de `equipo.txt` eran **dos** estructuras y seis vistas de ellas.
+
+No es cosmético. Las escrituras van a `SlotAddress(slot)` de cada layout, de modo que una vista que
+empieza en el hueco 1 manda la corrección del hueco 4 al hueco 5: **otro Pokémon**.
+`PartyLayoutLocator.Distinct` se queda con la dirección más temprana de cada tramo, y hay una prueba
+con las ocho direcciones reales que exige que salgan dos.
+
+### Lo que sigue abierto
+
+En la estructura de 0x1E4, el byte 0xEC **no es** `Stat_Level` —el Grubbin, que nadie ha tocado, lee
+14 ahí—, y la corrección lo escribe igualmente porque el asignador de PKHeX escribe los dos sitios de
+una vez. Es una escritura en un campo sin identificar, con su copia de seguridad. Antes de estrechar
+la escritura al bloque cifrado hay que ver qué enseña el juego en el siguiente combate: si el nivel
+sale correcto, la escritura completa es la que funciona.

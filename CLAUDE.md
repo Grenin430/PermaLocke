@@ -484,9 +484,18 @@ PKHeX escribe los dos-, pero `AzaharGameWriter.Modify` **devolvía éxito sin re
 `LevelCapEnforced` en el historial**. La regla 3 en una línea. Ahora `Modify` relee y compara **solo
 los bytes que tocó** -el resto de la entrada se mueve solo mientras se juega-, `EnforceLevelCap`
 comprueba además el nivel en los dos sitios, no se registra nada sin verificar, y **HOME avisa en
-rojo** cuando el cap no se está aplicando. Falta saber qué copia del equipo manda: `Probe --equipo
-[--cap N]` la enseña. Ojo también con el enlace: ese día PermaLocke solo estuvo conectado al juego
-**11 y 108 segundos**. Ver `docs/ARCHITECTURE.md` §53.
+rojo** cuando el cap no se está aplicando.
+
+**Y la causa de fondo, medida contra el juego (`Probe --equipo`):** la copia que el juego lee de
+verdad -salto `0x1E4`, la que el locator ya documentaba como autoritativa- guarda las estadísticas de
+combate en otro sitio, así que `Pk7Reader` la rechaza entera, y un filtro de «solo las copias que se
+dejan leer» **la borraba de la lista de escritura**. Las correcciones iban a las copias del bloque de
+partida, que el juego pisa. Leer y escribir son cosas distintas: al escribir la garantía la pone el
+checksum de PK7 más la relectura, no que el lector entienda la estructura. De paso, el barrido daba
+**ocho copias que eran dos estructuras** y seis vistas solapadas de ellas, y escribir en una vista
+manda la corrección al Pokémon de al lado; `PartyLayoutLocator.Distinct` lo arregla, con prueba sobre
+las ocho direcciones reales. Ojo también con el enlace: ese día PermaLocke solo estuvo conectado al
+juego **11 y 108 segundos**. Ver `docs/ARCHITECTURE.md` §53.
 
 **Siguiente.** Sincronización, y probar en partida real los combates importantes, los iniciales y
 las tiendas.
