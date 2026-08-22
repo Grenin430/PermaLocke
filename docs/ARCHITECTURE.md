@@ -4306,3 +4306,48 @@ cabe esperar de un ancla que sigue apuntando a donde debe.
 Aun así, el número que la regla va a usar para quitar y devolver objetos merece una confirmación en
 el juego antes de darlo por bueno: quedarse quieto en un sitio con nombre y ver si `Probe --zona`
 dice ese sitio.
+
+### Y el ancla estaba muerta: lo que la relajación tapaba
+
+La relajación de arriba se escribió sobre una lectura con el jugador **quieto**, y quieto todo
+parecía coherente. `Probe --zona --vigilar` sigue las cuatro copias en bucle, así que basta con
+andar. El jugador salió de la Ruta 2 y entró en el Centro Pokémon de Ciudad Hauoli:
+
+```
+21:33:03  0461BB94/32  00000002/48074  0463FF54/32  00000002/65418  -> 32 = Pueblo Lilii
+21:34:59  0461BB94/1   0461BBC8/1      0463FF54/1   0463FF88/1      -> 1  = Pueblo Lilii
+21:34:59  00010000/28  00010000/28     00010000/28  00010000/28     -> 28 = Cueva Sotobosque
+21:35:01  0461BB94/32  0461BBC8/32     0463FF54/32  0463FF88/32     -> 32 = Pueblo Lilii
+21:35:02  FF000000/0   FF000000/0      FF000000/0   FF000000/0      -> 0  = Ruta 1
+21:35:08  BD565D86/54493  7FFF0835/22  BD69874A/51442  7FFF0835/22  -> 22 = Cementerio de Hauoli
+...y a partir de ahí, fijo en 22
+```
+
+Las «asas» de las copias 0 y 2 pasan a ser `3D957735`, `BD565D86`, `3DBA2EEA`, `3E008EF3`. Leídas
+como coma flotante son **0,073**, **−0,052**, **0,091** y **0,126**; la de las copias 1 y 3,
+`7FFF0835`, es un **NaN**. Esa memoria ya no guarda un registro de zona: guarda posiciones o cámara.
+
+**El ancla del §23 está muerta.** Las distancias desde el bloque de la mochila apuntaban a un
+registro que el juego ha reutilizado para otra cosa, y el 32 que se leía era un resto.
+
+### La relajación se revierte, y por qué importa
+
+Con la regla estricta —las cuatro copias de acuerdo, vivas y en rango— todo lo de arriba se rechaza,
+y **rechazar es la respuesta correcta**: el jugador estaba en el Centro Pokémon de Hauoli. Con la
+relajada, dos copias «utilizables» coincidían en 22 y PermaLocke habría dicho con toda seguridad
+«Cementerio de Hauoli» y actuado en consecuencia sobre la mochila.
+
+La regla estricta rechazaba por un motivo impreciso y aun así acertaba. Para algo que confisca
+objetos del jugador, acertar es lo único que cuenta, así que vuelve tal cual, con las lecturas
+reales fijadas en las pruebas: las cuatro de la lectura quieta y las de coma flotante.
+
+Es la segunda vez en el mismo día que relajo una comprobación apoyándome en una medida parcial —la
+otra evolucionó un Ledyba—, y las dos veces la forma es la misma: **una medida tomada en una sola
+situación no sostiene una regla que gobierna todas**. Antes de aflojar un guardia hay que moverse.
+
+### Estado
+
+La regla de las Poké Balls queda **apagada** en `Data/rules.json`, con el motivo escrito al lado.
+Volver a encenderla exige localizar el campo de zona otra vez desde cero, que es una investigación
+propia —del tamaño del §22 o del §23— y no un ajuste. `Probe --zona --vigilar` es la herramienta con
+la que hacerla: se anda por el juego y sale de una pasada cada valor que toma el campo candidato.

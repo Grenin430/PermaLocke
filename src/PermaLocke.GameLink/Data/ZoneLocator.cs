@@ -93,54 +93,54 @@ public sealed class ZoneLocator(AzaharRpcClient client)
     /// Pure on purpose: this is the part that decides whether PermaLocke acts on a zone, and it
     /// has to be testable without an emulator in front of it.
     /// </remarks>
-    /// <summary>How many usable copies have to agree before a reading is believed.</summary>
-    private const int Quorum = 2;
-
     /// <summary>
     /// True when this copy could be a zone record at all: a handle that is not blank, and a number
     /// that is one of the areas <c>encdata</c> has.
     /// </summary>
-    /// <remarks>
-    /// Measured against the running game with the bag where it has always been: two of the four
-    /// copies held a handle of <c>00000002</c> and areas of <b>48074</b> and <b>65418</b>. Those are
-    /// not zones — <c>encdata</c> has 336 — so that pair simply is not holding a zone record. The
-    /// original rule counted them as <em>disagreement</em> and threw the reading away, which is why
-    /// the zone was never established and the Poké Ball rule never once acted.
-    /// </remarks>
     public static bool CouldBeAnArea(ZoneReading copy) =>
         copy.LooksLive && copy.Area < UltraSunMoonAreaCount;
 
+    /// <summary>
+    /// Decides whether the copies say the same thing, and whether that thing can be believed.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Pure on purpose: this is the part that decides whether PermaLocke acts on a zone, and it
+    /// has to be testable without an emulator in front of it.
+    /// </para>
+    /// <para>
+    /// <b>The four have to agree.</b> Letting a copy abstain — skipping the ones that cannot be an
+    /// area and believing whatever the rest said — was tried and undone the same day. It looked
+    /// right on a still reading: two copies agreed on a plausible area and the other two held
+    /// obvious rubbish, so counting the rubbish as <em>disagreement</em> seemed like the reason the
+    /// zone was never established. Then the player walked, and those two "usable" copies calmly
+    /// agreed on the Hauoli cemetery while he stood in the Pokémon Center.
+    /// </para>
+    /// <para>
+    /// The strict rule was refusing for an imprecise reason and still arriving at the right answer,
+    /// which for a rule that confiscates the player's items is the answer that matters. Requiring
+    /// all four is what makes «no lo sé» the default.
+    /// </para>
+    /// </remarks>
     public static bool TryResolve(ReadOnlySpan<ZoneReading> copies, out int area)
     {
         area = -1;
 
-        int? agreed = null;
-        var usable = 0;
-
-        foreach (var copy in copies)
-        {
-            if (!CouldBeAnArea(copy))
-            {
-                continue;
-            }
-
-            // Entre las que sí pueden ser una zona no se admite ninguna discrepancia: eso seguiría
-            // significando que PermaLocke no sabe dónde está el jugador.
-            if (agreed is { } already && already != copy.Area)
-            {
-                return false;
-            }
-
-            agreed = copy.Area;
-            usable++;
-        }
-
-        if (agreed is not { } found || usable < Quorum)
+        if (copies.Length == 0)
         {
             return false;
         }
 
-        area = found;
+        foreach (var copy in copies)
+        {
+            // Una sola copia que no pueda ser una zona basta para no fiarse de ninguna.
+            if (!CouldBeAnArea(copy) || copy.Area != copies[0].Area)
+            {
+                return false;
+            }
+        }
+
+        area = copies[0].Area;
         return true;
     }
 }

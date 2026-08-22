@@ -531,8 +531,21 @@ solo vota si **puede** ser una zona -asa no nula y número dentro de las 336-; l
 en vez de envenenar la votación, y hacen falta al menos **dos** de acuerdo. `LooksLive` no bastaba,
 porque un asa de 2 no es cero. Corrobora que el ancla sigue buena que la zona 32 es **Pueblo Lilii** y
 el §23 midió Pueblo Lilii como área **1**: el cartucho reparte un mismo sitio entre varias áreas
--Ruta 2 es 5, 37, 57, 58 y 64-. **Falta confirmarlo en el juego** quedándose quieto en un sitio con
-nombre. Ver `docs/ARCHITECTURE.md` §55.
+-Ruta 2 es 5, 37, 57, 58 y 64-.
+
+**Y al andar se vio que el ancla está muerta, y que la relajación era un error.** Aquella lectura se
+tomó con el jugador **quieto**. Con `Probe --zona --vigilar` andando de la Ruta 2 al Centro Pokémon de
+Hauoli, el campo pasó por 32, 1, 28, 0 y acabó fijo en 22, y las asas se volvieron `3D957735`,
+`BD565D86`, `3DBA2EEA` -que en coma flotante son **0,073, −0,052 y 0,091**- y `7FFF0835`, que es un
+**NaN**. Esa memoria ya no guarda una zona: guarda posiciones. **El ancla del §23 está muerta** y el
+32 era un resto. Con la regla **estricta** todo eso se rechaza, que es lo correcto; con la relajada,
+PermaLocke habría dicho «Cementerio de Hauoli» estando el jugador en el Centro Pokémon. Así que la
+relajación **se revierte** y vuelven las cuatro copias de acuerdo, con las lecturas reales fijadas en
+las pruebas. Segunda vez en el día que aflojo un guardia con una medida parcial -la otra evolucionó
+un Ledyba-, y la forma es la misma: **una medida tomada en una sola situación no sostiene una regla
+que gobierna todas**. La regla de las balls queda **apagada**; reencenderla exige volver a localizar
+el campo de zona desde cero, que es una investigación del tamaño del §22, no un ajuste. Ver
+`docs/ARCHITECTURE.md` §55.
 
 **Siguiente.** Sincronización, y probar en partida real los combates importantes, los iniciales y
 las tiendas.
