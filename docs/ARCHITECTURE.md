@@ -3971,3 +3971,49 @@ propósito**: cambiaría los EV de un Pokémon del jugador con valores que nadie
 de escritura ya está probado por el mismo código sobre una copia del mismo save.
 
 24 pruebas nuevas. 376 en verde.
+
+---
+
+## 52. Darse objetos: dos botones y ninguna cifra que teclear (2026-08-22)
+
+La herramienta de Caramelos Raros de MISCELÁNEA pedía **cuántos quieres** y escribía esa cifra como
+cantidad absoluta. Servía para lo que se hizo —llegar rápido al cap de nivel— y era incómoda para lo
+que se usa: darse un puñado más. Se sustituye por dos botones que **suman**.
+
+- **+10 CARAMELOS RAROS**, diez más sobre lo que ya llevas cada vez que se pulsa.
+- **AMULETO IRIS**, el objeto 632.
+
+### Por la misma puerta que la tienda
+
+Los dos van por `IItemDelivery.GiveAsync`, que es el camino que ya usa la tienda y que ya está
+verificado en el juego real. Trae tres cosas gratis que la herramienta vieja no tenía: **hace ping
+antes** de nada, **suma en vez de reemplazar**, y **relee la mochila antes de decir que sí**.
+
+Ese ping importa más de lo que parece, y por poco se repite el error que colgó la tienda. La primera
+versión preguntaba la capacidad del objeto antes de entregarlo, y preguntar la capacidad **localiza
+la mochila**, que son 96 MB de memoria barridos. Con Azahar cerrado ese barrido no puede acabar más
+que en fallo, y mientras tanto el botón se queda muerto. Ahora la capacidad solo se pregunta cuando
+el ping ha dicho que hay alguien al otro lado: con el emulador cerrado los dos botones contestan en
+**algo más de 400 ms** con «Azahar no responde», en vez de irse a barrer.
+
+### Un objeto clave no es un objeto que se acumula
+
+El Amuleto Iris va al bolsillo de objetos clave, y ese bolsillo admite **uno**. Sin decir nada, dar
+uno a quien ya lo tiene se leería exactamente igual que una escritura que el emulador se ha comido:
+se escribe, se relee, sale el mismo número. Por eso `BagService.CapacityFor` existe — dice cuánto
+cabe— y el botón responde «ya lo llevas» antes de escribir nada.
+
+### Que el id sea el objeto que se cree
+
+Un id tecleado de memoria que caiga en otro objeto entrega la cosa equivocada y **no falla nunca**.
+Contra eso hay dos cosas. La primera, que los ids se buscaron en la tabla del cartucho en vez de
+recordarlos: `Probe --objeto-find "Amuleto Iris"` da **632**, con el Amuleto Oval en 631 al lado, que
+es la pareja que los juegos usan desde la quinta generación. La segunda, que antes de escribir se
+comprueba que el nombre que la tabla da para ese id es el que el botón dice, y si no cuadra no se
+entrega nada.
+
+Y en las pruebas quedan fijados los tres ids que la aplicación usa a mano —Caramelo Raro, Amuleto
+Iris y Poké Ball—, su nombre y el bolsillo al que van, incluido que el de objetos clave tiene tope 1.
+
+Como todo lo que toca el juego, cada entrega deja su `TestItemGranted` con lo que había antes y lo
+que hay después.

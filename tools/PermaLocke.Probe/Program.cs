@@ -144,6 +144,24 @@ if (Index("--species-find") is { } sfIndex)
     return 0;
 }
 
+// Buscar un objeto por su nombre. El id es lo único que entiende la mochila, y teclearlo de
+// memoria es como acaba uno entregando el objeto equivocado sin que nada falle.
+if (Index("--objeto-find") is { } ofIndex)
+{
+    var names = PKHeX.Core.GameInfo.GetStrings("es").itemlist;
+    var query = args[ofIndex + 1];
+
+    for (var id = 0; id < names.Length; id++)
+    {
+        if (names[id].Contains(query, StringComparison.OrdinalIgnoreCase))
+        {
+            Console.WriteLine("  " + id + "  " + names[id]);
+        }
+    }
+
+    return 0;
+}
+
 if (args.Contains("--species"))
 {
     var lookup = new PkhexSpeciesLookup();

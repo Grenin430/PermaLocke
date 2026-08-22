@@ -15,27 +15,30 @@ namespace PermaLocke.App.ViewModels;
 /// </summary>
 public sealed partial class MiscellaneousViewModel : SectionViewModel
 {
+    /// <summary>How many Rare Candies one press hands over.</summary>
+    private const int CandiesPerPress = 10;
+
     private readonly BagService _bag;
+    private readonly IItemDelivery _delivery;
     private readonly IItemLookup _items;
     private readonly IRunContext _runContext;
     private readonly IEventStore _events;
     private readonly IClock _clock;
     private readonly ILogger<MiscellaneousViewModel> _logger;
 
-    public MiscellaneousViewModel(BagService bag, IItemLookup items, IRunContext runContext,
-        IEventStore events, IClock clock, ILogger<MiscellaneousViewModel> logger)
+    public MiscellaneousViewModel(BagService bag, IItemDelivery delivery, IItemLookup items,
+        IRunContext runContext, IEventStore events, IClock clock,
+        ILogger<MiscellaneousViewModel> logger)
         : base("MISCELÁNEA", "Herramientas sueltas y diagnóstico del enlace con el juego")
     {
         _bag = bag;
+        _delivery = delivery;
         _items = items;
         _runContext = runContext;
         _events = events;
         _clock = clock;
         _logger = logger;
     }
-
-    [ObservableProperty]
-    private int _targetCandies = 999;
 
     [ObservableProperty]
     private string _status = string.Empty;
@@ -100,17 +103,49 @@ public sealed partial class MiscellaneousViewModel : SectionViewModel
         }
     }
 
+    /// <summary>Ten more Rare Candies on top of whatever the player already carries.</summary>
+    [RelayCommand(CanExecute = nameof(CanUseTools))]
+    private Task GrantCandiesAsync() =>
+        GiveAsync(BagService.RareCandyItemId, CandiesPerPress, "Caramelo Raro", "Probar el cap de nivel");
+
     /// <summary>
-    /// Writes Rare Candies into the bag. Works whether or not the player already carries any:
-    /// if the pocket has no entry for them, one is added in the first free slot.
+    /// The Shiny Charm, which is a key item: the bag holds exactly one no matter how often this
+    /// is pressed, so pressing it again says so instead of pretending to have given another.
     /// </summary>
     [RelayCommand(CanExecute = nameof(CanUseTools))]
-    private async Task GrantCandiesAsync()
-    {
-        var run = _runContext.Current;
+    private Task GrantShinyCharmAsync() =>
+        GiveAsync(BagService.ShinyCharmItemId, 1, "Amuleto Iris", "Herramienta de pruebas");
 
-        if (run is null)
+    /// <summary>
+    /// Adds an item to the bag on top of what is already there, and records it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Goes through <see cref="IItemDelivery"/>, the same path the shop uses: it pings the
+    /// emulator first, adds to the current count rather than replacing it, and <b>re-reads the bag
+    /// before reporting success</b>, so a button never claims to have changed a game that dropped
+    /// the write.
+    /// </para>
+    /// <para>
+    /// The name is checked against the cartridge table before anything is written. An id typed from
+    /// memory that lands on the wrong item would hand over the wrong thing and never fail, which is
+    /// the worst kind of bug this file could have.
+    /// </para>
+    /// </remarks>
+    private async Task GiveAsync(int itemId, int amount, string expectedName, string reason)
+    {
+        if (_runContext.Current is not { } run)
         {
+            return;
+        }
+
+        if (_items.GetName(itemId) is var actualName && !string.Equals(actualName, expectedName,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            Status = $"No se entrega nada: PermaLocke esperaba que el objeto {itemId} fuese "
+                     + $"«{expectedName}» y la tabla del juego dice «{actualName}».";
+            _logger.LogError("Objeto {Item} esperado {Expected} pero es {Actual}",
+                itemId, expectedName, actualName);
             return;
         }
 
@@ -120,15 +155,41 @@ public sealed partial class MiscellaneousViewModel : SectionViewModel
 
         try
         {
-            var target = Math.Clamp(TargetCandies, 1, BagService.MaxItemCount);
-            var result = await Task.Run(() => _bag.SetCount(BagService.RareCandyItemId, target));
+            // Lo que ya lleva y lo que le cabe, antes de tocar nada: es lo que distingue "ya lo
+            // tienes" de "la escritura no ha cuajado", que si no se parecen demasiado.
+            //
+            // CarriedAsync hace ping primero y devuelve -1 si el emulador no está; solo entonces
+            // se pregunta la capacidad, porque preguntarla barre los 96 MB de memoria del juego y
+            // con Azahar cerrado ese barrido no puede acabar más que en fallo. Es el mismo cuelgue
+            // que tuvo la tienda cuando preguntaba dieciocho veces sin comprobar nada antes.
+            var carried = await _delivery.CarriedAsync(itemId);
 
-            Status = Describe(result, target);
-
-            if (result.Outcome != BagWriteOutcome.Ok)
+            if (carried >= 0)
             {
+                var capacity = await Task.Run(() => _bag.CapacityFor(itemId));
+
+                if (capacity > 0 && carried >= capacity)
+                {
+                    Status = capacity == 1
+                        ? $"Ya llevas el {expectedName}. Es un objeto clave: la mochila solo admite uno."
+                        : $"Ya llevas {carried} {expectedName}, que es el máximo que cabe.";
+                    return;
+                }
+            }
+
+            var result = await _delivery.GiveAsync(itemId, amount);
+
+            if (!result.Delivered)
+            {
+                Status = result.Problem;
                 return;
             }
+
+            Status = carried > 0
+                ? $"{expectedName}: de {carried} a {result.Carried}. "
+                  + "Escrito y releído: la mochila del juego ya lo tiene."
+                : $"{expectedName} entregado: ahora llevas {result.Carried}. "
+                  + "Escrito y releído: la mochila del juego ya lo tiene.";
 
             BagAddress = _bag.Block is { } block ? $"Bloque en 0x{block.BaseAddress:X8}" : BagAddress;
 
@@ -140,25 +201,27 @@ public sealed partial class MiscellaneousViewModel : SectionViewModel
                 Type = GameEventType.TestItemGranted,
                 Source = EventSource.Player,
                 Actor = run.PlayerName,
-                Description = $"Herramienta de pruebas: {result.Applied} Caramelos Raros escritos en la mochila.",
-                Reason = "Probar el cap de nivel",
+                Description = $"Herramienta de pruebas: {expectedName} escrito en la mochila "
+                              + $"({carried} → {result.Carried}).",
+                Reason = reason,
                 Data = new Dictionary<string, string>
                 {
-                    ["itemId"] = BagService.RareCandyItemId.ToString(),
-                    ["previous"] = result.Previous.ToString(),
-                    ["count"] = result.Applied.ToString(),
-                    ["address"] = $"0x{result.Address:X8}",
+                    ["itemId"] = itemId.ToString(),
+                    ["objeto"] = expectedName,
+                    ["entregados"] = amount.ToString(),
+                    ["previous"] = carried.ToString(),
+                    ["count"] = result.Carried.ToString()
                 }
             });
 
-            _logger.LogInformation("Herramienta de pruebas: {Count} Caramelos Raros en 0x{Address:X8}",
-                result.Applied, result.Address);
+            _logger.LogInformation("Herramienta de pruebas: {Item} de {Before} a {After}",
+                expectedName, carried, result.Carried);
 
             await ReadBagAsync();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Falló la entrega de Caramelos Raros");
+            _logger.LogError(ex, "Falló la entrega de {Item}", expectedName);
             Status = "Ha fallado. El detalle está en la carpeta Logs.";
         }
         finally
@@ -167,30 +230,6 @@ public sealed partial class MiscellaneousViewModel : SectionViewModel
             NotifyCommands();
         }
     }
-
-    /// <summary>
-    /// Says what actually happened. The write is read back before this reports success, so a
-    /// button never claims to have changed the game when the emulator dropped the write.
-    /// </summary>
-    private static string Describe(BagWriteResult result, int target) => result.Outcome switch
-    {
-        BagWriteOutcome.Ok when result.Previous == 0 =>
-            $"Añadidos {result.Applied} Caramelos Raros en 0x{result.Address:X8}. "
-            + "Escrito y releído: la memoria del juego ya lo tiene.",
-        BagWriteOutcome.Ok =>
-            $"Caramelos Raros: de {result.Previous} a {result.Applied} en 0x{result.Address:X8}. "
-            + "Escrito y releído: la memoria del juego ya lo tiene.",
-        BagWriteOutcome.BagNotFound =>
-            "No se ha encontrado la mochila en la memoria. Azahar tiene que estar abierto con el juego cargado.",
-        BagWriteOutcome.NotApplied =>
-            "La escritura no ha cuajado: se releyó la memoria y no había cambiado. "
-            + "Eso pasa con el Azahar oficial, que acepta la escritura y no la aplica. Hace falta el fork.",
-        BagWriteOutcome.PocketFull =>
-            "El bolsillo de medicinas está lleno; no queda hueco donde meter los caramelos.",
-        BagWriteOutcome.UnknownPocket =>
-            "Ningún bolsillo de la mochila admite ese objeto.",
-        _ => $"No había nada que hacer con {target} caramelos."
-    };
 
     private static string PocketName(PKHeX.Core.InventoryType pocket) => pocket switch
     {
@@ -208,5 +247,6 @@ public sealed partial class MiscellaneousViewModel : SectionViewModel
     {
         ReadBagCommand.NotifyCanExecuteChanged();
         GrantCandiesCommand.NotifyCanExecuteChanged();
+        GrantShinyCharmCommand.NotifyCanExecuteChanged();
     }
 }

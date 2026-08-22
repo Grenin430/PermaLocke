@@ -463,6 +463,18 @@ rebote se supo que las estadísticas que el visor enseña **de los Pokémon en c
 por la misma razón, así que ahora salen marcadas. `Probe --ev [--probar]` lo comprueba **sobre una
 copia**, nunca sobre la partida. Ver `docs/ARCHITECTURE.md` §51.
 
+**Darse objetos, dos botones (2026-08-22).** La herramienta de Caramelos Raros pedía una cifra y la
+escribía como cantidad absoluta; ahora son **+10 CARAMELOS RAROS** y **AMULETO IRIS** (objeto 632),
+que **suman** a lo que llevas. Van por `IItemDelivery`, el camino de la tienda: ping antes, suma en
+vez de reemplazo y **relectura** antes de dar nada por bueno. Por poco se repite el cuelgue de la
+tienda: preguntar la capacidad de un objeto **localiza la mochila**, o sea 96 MB barridos, así que
+solo se pregunta cuando el ping ha contestado; con Azahar cerrado los dos botones responden en 400 ms
+diciendo la verdad. El Amuleto Iris es objeto clave y el bolsillo admite **uno**, de modo que dárselo
+a quien ya lo tiene se leería igual que una escritura fallida: por eso existe `CapacityFor` y por eso
+el botón dice «ya lo llevas». Los ids se buscan, no se recuerdan -`Probe --objeto-find`-, se
+comprueba el nombre antes de escribir, y hay tests que fijan id, nombre y bolsillo. Ver
+`docs/ARCHITECTURE.md` §52.
+
 **Siguiente.** Sincronización, y probar en partida real los combates importantes, los iniciales y
 las tiendas.
 
@@ -515,6 +527,9 @@ dotnet run --project tools/PermaLocke.RomTool -- randomize 20260818 --install
 # EV de la partida real; --probar demuestra la escritura SOBRE UNA COPIA
 dotnet run --project tools/PermaLocke.Probe -- --ev
 dotnet run --project tools/PermaLocke.Probe -- --ev --probar
+
+# id de un objeto por su nombre, para no teclearlo de memoria
+dotnet run --project tools/PermaLocke.Probe -- --objeto-find "Amuleto Iris"
 ```
 
 SDK requerido: .NET 10 (instalado: 10.0.400).

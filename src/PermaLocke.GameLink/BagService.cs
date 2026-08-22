@@ -68,6 +68,13 @@ public sealed class BagService(
     /// <summary>Rare Candy, confirmed against the cartridge item list.</summary>
     public const int RareCandyItemId = 50;
 
+    /// <summary>
+    /// Shiny Charm, confirmed against the cartridge item list — 632, with the Oval Charm at 631
+    /// beside it, which is the pairing the games have used since generation five.
+    /// </summary>
+    /// <remarks>A key item, so the pocket holds exactly one however many times it is given.</remarks>
+    public const int ShinyCharmItemId = 632;
+
     private readonly BagLocator _locator = new(client);
     private BagBlock? _block;
 
@@ -160,6 +167,19 @@ public sealed class BagService(
     /// <summary>How many of an item the player carries right now.</summary>
     public int CountOf(int itemId, CancellationToken ct = default) =>
         Locate(ct) is { } block ? _locator.Find(block, itemId)?.Entry.Count ?? 0 : 0;
+
+    /// <summary>
+    /// How many of an item the bag will hold, or zero when no pocket takes it.
+    /// </summary>
+    /// <remarks>
+    /// Lets a caller tell "already at the maximum" from "the write failed" before writing
+    /// anything. A key item stops at one, so handing one to somebody who has it would otherwise
+    /// look exactly like a write the emulator dropped.
+    /// </remarks>
+    public int CapacityFor(int itemId, CancellationToken ct = default) =>
+        Locate(ct) is { } block && block.Layout.PocketFor(itemId) is { } pocket
+            ? Math.Min(pocket.MaxCount, BagEntry.MaxCount)
+            : 0;
 
     /// <summary>
     /// Sets how many of an item the player carries. Adds it when they carry none, removes it

@@ -57,10 +57,37 @@ public sealed class BagLayoutTests
     [Theory]
     [InlineData(BagService.PokeBallItemId, InventoryType.Items)]
     [InlineData(BagService.RareCandyItemId, InventoryType.Medicine)]
+    [InlineData(BagService.ShinyCharmItemId, InventoryType.KeyItems)]
     [InlineData(328, InventoryType.TMHMs)]
     public void An_item_is_routed_to_its_own_pocket(int itemId, InventoryType expected)
     {
         Assert.Equal(expected, Layout.PocketFor(itemId)?.Type);
+    }
+
+    /// <summary>
+    /// A key item is one and only one. The tool that hands out the Shiny Charm leans on this to
+    /// tell "you already have it" from "the write did not take", so it is worth pinning down.
+    /// </summary>
+    [Fact]
+    public void A_key_item_pocket_holds_exactly_one_of_each()
+    {
+        var pocket = Layout.PocketFor(BagService.ShinyCharmItemId);
+
+        Assert.NotNull(pocket);
+        Assert.Equal(1, pocket.MaxCount);
+    }
+
+    /// <summary>
+    /// The ids are typed by hand from the cartridge table, and a wrong one would hand over the
+    /// wrong object without anything failing. PKHeX is the same table the game ships.
+    /// </summary>
+    [Theory]
+    [InlineData(BagService.RareCandyItemId, "Caramelo Raro")]
+    [InlineData(BagService.ShinyCharmItemId, "Amuleto Iris")]
+    [InlineData(BagService.PokeBallItemId, "Poké Ball")]
+    public void The_item_ids_name_what_they_are_meant_to(int itemId, string expected)
+    {
+        Assert.Equal(expected, new PkhexItemLookup().GetName(itemId));
     }
 
     [Fact]
