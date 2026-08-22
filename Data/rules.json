@@ -33,7 +33,8 @@
 
   "ballControl": {
     "comment": "Retira las Poké Balls mientras la zona ya haya gastado su encuentro, y las devuelve al salir. Los ids salen de la lista de objetos del cartucho: nombre acabado en 'Ball' en inglés y en español, que es lo que deja fuera la Bola de Humo, la Luminosa y la Férrea, que son objetos equipables.",
-    "enabled": true,
+    "apagadaPorque": "2026-08-22: el campo de zona del §23 ya no dice dónde está el jugador. Medido estando en la Ruta 2, las dos copias buenas leen 32, que no es la Ruta 2 ni como área de encdata (32 = Pueblo Lilii) ni como id de mapa (32 = Ruinas de la Guerra). Retirar Poké Balls con una zona equivocada es peor que no retirarlas, así que la regla queda apagada hasta recalibrar el ancla con Probe --zona --vigilar.",
+    "enabled": false,
     "itemIds": [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 492, 493, 494, 495, 496, 497, 498, 499, 576, 851 ]
   },
 

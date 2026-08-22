@@ -49,10 +49,13 @@ if (args.Length >= 1 && args[0] == "--ev")
     return PermaLocke.Probe.EvProbe.Run(args.Contains("--probar"));
 }
 
-// Las cuatro copias del campo de zona, y por qué se creen o no.
+// Las cuatro copias del campo de zona, y por qué se creen o no. Con --vigilar, en bucle: se anda
+// por el juego y va diciendo cada valor que toma el campo, que es como se recalibra el ancla.
 if (args.Length >= 1 && args[0] == "--zona")
 {
-    return PermaLocke.Probe.ZoneProbe.Run();
+    return args.Contains("--vigilar")
+        ? PermaLocke.Probe.ZoneProbe.Watch()
+        : PermaLocke.Probe.ZoneProbe.Run();
 }
 
 // El equipo vivo en todas sus copias, con los dos niveles al lado. Con --cap, además escribe.
