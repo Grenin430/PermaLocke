@@ -84,7 +84,7 @@ public sealed class AchievementServiceTests
         };
 
         return (new AchievementService(new Catalog(Catalogue()), points, log, clock,
-            records ?? new Records(true, (46, 0))), log, run);
+            records ?? new Records(true, (46, 0)), new FixedRole(FixedRole.Normal)), log, run);
     }
 
     private static GameEvent Roll(Guid runId) => new()

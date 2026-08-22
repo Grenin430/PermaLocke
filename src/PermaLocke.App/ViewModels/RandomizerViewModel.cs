@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using PermaLocke.App.Services;
 using PermaLocke.Core.Abstractions;
 using PermaLocke.Core.Domain;
+using PermaLocke.Core.Services;
 using PermaLocke.GameLink;
 using PermaLocke.Infrastructure;
 using PermaLocke.Randomizer;
@@ -31,10 +32,11 @@ public sealed partial class RandomizerViewModel : SectionViewModel
     private readonly IAppDialogs _dialogs;
     private readonly AzaharInstallation _azahar;
     private readonly AppPaths _paths;
+    private readonly IRunRoles _roles;
     private readonly ILogger<RandomizerViewModel> _logger;
 
     public RandomizerViewModel(IRunContext runContext, IEventStore events, IClock clock,
-        IAppDialogs dialogs, AzaharInstallation azahar, AppPaths paths,
+        IAppDialogs dialogs, AzaharInstallation azahar, AppPaths paths, IRunRoles roles,
         ILogger<RandomizerViewModel> logger)
         : base("RANDOMIZADOR")
     {
@@ -44,6 +46,7 @@ public sealed partial class RandomizerViewModel : SectionViewModel
         _dialogs = dialogs;
         _azahar = azahar;
         _paths = paths;
+        _roles = roles;
         _logger = logger;
 
         _runContext.CurrentChanged += (_, _) => Refresh();
@@ -147,6 +150,15 @@ public sealed partial class RandomizerViewModel : SectionViewModel
         try
         {
             var options = RandomizerOptionsLoader.Load(Path.Combine(_paths.Data, "randomizer.json"));
+
+            // El ROL manda sobre el fichero de opciones: parte de la dificultad se cuece en la
+            // ROM, y quien decide cuánto suben los entrenadores es el rol de la run, no una
+            // configuración que el jugador pudiera cambiar después de haber empezado.
+            if (_roles.Of(run.Id) is { } role)
+            {
+                options = options with { TrainerLevelPercent = role.TrainerLevelPercent };
+            }
+
             var work = Path.Combine(Path.GetTempPath(), "permalocke-randomizer");
             var report = await new RandomizerService(options)
                 .RandomizeAsync(RomPath, work, OutputDirectory, run.Seed);

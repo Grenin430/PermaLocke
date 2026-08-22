@@ -65,6 +65,9 @@ public partial class App : Application
             JsonAchievementCatalog.Load(Path.Combine(paths.Data, "achievements.json")));
         collection.AddSingleton<AchievementService>();
         collection.AddSingleton<AchievementsViewModel>();
+        collection.AddSingleton<IRoleCatalog>(_ =>
+            JsonRoleCatalog.Load(Path.Combine(paths.Data, "roles.json")));
+        collection.AddSingleton<IRunRoles, RunRoles>();
         collection.AddSingleton<IShopCatalog>(_ =>
             JsonShopCatalog.Load(Path.Combine(paths.Data, "shop.json")));
         collection.AddSingleton<IItemDelivery, BagItemDelivery>();

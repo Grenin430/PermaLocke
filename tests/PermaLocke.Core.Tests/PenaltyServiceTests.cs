@@ -42,10 +42,12 @@ public sealed class PenaltyServiceTests
 
     private static readonly Guid Run = Guid.NewGuid();
 
-    private static (PenaltyService Service, Events Log) Build(int death = 25, int wipe = 100, int max = 4)
+    private static (PenaltyService Service, Events Log) Build(int death = 25, int wipe = 100, int max = 4,
+        Role? role = null)
     {
         var log = new Events();
-        return (new PenaltyService(new Catalog(new PenaltyRules(death, wipe, max)), log, new FixedClock()), log);
+        return (new PenaltyService(new Catalog(new PenaltyRules(death, wipe, max)), log, new FixedClock(),
+            new FixedRole(role ?? FixedRole.Normal)), log);
     }
 
     private static PokemonEntry Victim(string name = "Chesnaught") => new()

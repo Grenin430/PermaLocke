@@ -105,7 +105,8 @@ public sealed class RandomizerService(RandomizerOptions options)
             var result = await new TrainerRandomizer(workspace, options)
                 .ApplyAsync(random, pool, mod, ct);
             steps.Add(new RandomizerStep("Entrenadores",
-                $"{result.Pokemon} Pokémon de {result.Trainers} entrenadores, {result.MovesCleared} movesets devueltos al juego"));
+                $"{result.Pokemon} Pokémon de {result.Trainers} entrenadores, {result.MovesCleared} movesets devueltos al juego"
+                + (result.LevelsRaised > 0 ? $", {result.LevelsRaised} niveles subidos por el rol" : string.Empty)));
         }
 
         // Va el último a propósito: los módulos anteriores emparejan por total de estadísticas

@@ -18,7 +18,7 @@ namespace PermaLocke.Core.Services;
 /// </para>
 /// </remarks>
 public sealed class AchievementService(IAchievementCatalog catalog, IPointsService points,
-    IEventStore events, IClock clock, IGameRecords records)
+    IEventStore events, IClock clock, IGameRecords records, IRunRoles roles)
 {
     public IReadOnlyList<Achievement> All => catalog.All;
 
@@ -181,6 +181,11 @@ public sealed class AchievementService(IAchievementCatalog catalog, IPointsServi
                 $"«{found.Achievement.Name}» va por {found.Count} de {found.Achievement.Target}.");
         }
 
+        // Lo que paga el logro depende del rol: la mitad para el cagoneta, vez y media para el
+        // experto. Se guardan los tres números —base, multiplicador y resultado— para que el
+        // historial enseñe la cuenta en vez de un total que hay que creerse.
+        var reward = RoleAdjusted.Reward(roles.Of(run.Id), found.Achievement.Points);
+
         // El evento de cobro primero: si algo fallara después, el logro queda cobrado y sin
         // puntos, que se ve y se arregla. Al revés quedarían puntos sin explicación.
         await events.AppendAsync(new GameEvent
@@ -191,22 +196,25 @@ public sealed class AchievementService(IAchievementCatalog catalog, IPointsServi
             Type = GameEventType.AchievementUnlocked,
             Source = EventSource.Player,
             Actor = run.PlayerName,
-            Description = $"Logro «{found.Achievement.Name}»: +{found.Achievement.Points} puntos.",
+            Description = $"Logro «{found.Achievement.Name}»: +{reward.Final} puntos.{reward.Explain()}",
             Data = new Dictionary<string, string>
             {
                 ["logro"] = found.Achievement.Id,
                 ["nombre"] = found.Achievement.Name,
-                ["puntos"] = found.Achievement.Points.ToString(),
+                ["puntos"] = reward.Final.ToString(),
+                ["base"] = reward.Base.ToString(),
+                ["rol"] = reward.RoleId,
+                ["multiplicador"] = reward.Multiplier.ToString("0.##"),
                 ["contador"] = found.Count.ToString()
             }
         }, ct).ConfigureAwait(false);
 
-        if (found.Achievement.Points <= 0)
+        if (reward.Final <= 0)
         {
             return new PointsResult(true, balance);
         }
 
-        return await points.EarnAsync(run.Id, found.Achievement.Points,
+        return await points.EarnAsync(run.Id, reward.Final,
             $"Logro «{found.Achievement.Name}».", EventSource.Player, run.PlayerName, ct)
             .ConfigureAwait(false);
     }

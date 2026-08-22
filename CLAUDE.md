@@ -381,7 +381,22 @@ iconos, las cien MT gastan veinte discos, y el desfase es escalonado. Se midio p
 comprobado, no una formula**: lanza para un objeto que nadie ha mirado, porque un icono equivocado
 no se nota. Ver §45.
 
-**Siguiente.** Sincronizacion, y probar en partida nueva iniciales, entrenadores y tiendas.
+**Los roles (2026-08-22).** Se eligen **lo primero**, antes de la ROM y de randomizar, porque parte
+del rol se cuece en el cartucho. Tres: NORMAL (x1/x1), CAGONETA (x0,5 y **no pierde puntos**) y
+EXPERTO (x1,5 / x2, entrenadores **+27%** manteniendo su cap en +20%, o sea que los rivales le sacan
+ventaja). El +20% es el suelo de todos. Los multiplicadores tocan lo que se gana y lo que se pierde,
+**nunca lo que se gasta**: la tienda cuesta igual en los tres. Cada evento guarda base,
+multiplicador y resultado, y un rol que no se resuelve cobra la tarifa base diciendo
+`rol=desconocido` en vez de adivinar. Todo en `Data/roles.json`.
+
+**Ojo con lo que NO esta hecho:** el **Pokemon extra en los combates importantes**. Anadir uno alarga
+el subfichero del GARC y `GarcPatcher.Write` rechaza un tamano distinto por diseno (§19); exige
+reempaquetar `a/1/0/7`, tocar `a/1/0/6` y ademas decidir cuales son los combates importantes. Es un
+trabajo aparte. La pantalla lo anuncia porque es lo que dice la competicion, pero todavia no lo
+aplica nadie. Ver §46.
+
+**Siguiente.** El Pokemon extra por rol, sincronizacion, y probar en partida nueva iniciales,
+entrenadores y tiendas.
 
 Lo que NO está resuelto todavía y no debe darse por hecho (detalle en `docs/ARCHITECTURE.md`):
 
@@ -403,6 +418,7 @@ Lo que NO está resuelto todavía y no debe darse por hecho (detalle en `docs/AR
 | Logros y penalizaciones | **HECHO Y VISTO EN LA APP** — motor, pantalla y 6 tests. Falta la lista real de logros, que la tiene que dar el jugador. Ver `ARCHITECTURE.md` §36 |
 | Contadores del juego (movimientos Z, huidas, shiny, entrenadores) | **HECHO Y VISTO EN LA APP** — se leen de `SAV7USUM.Records`; 28/200 huidas y 6/100 entrenadores reales. Ver `ARCHITECTURE.md` §38 |
 | Detectar pruebas, pegatinas y alto mando | **HECHO Y VISTO EN LA APP** — los 21 logros se cuentan solos y no queda un botón de marcar a mano. Las doce pruebas por su cristal Z, con la correspondencia sacada del storytext del cartucho. Ver `ARCHITECTURE.md` §43 |
+| Roles | **HECHOS Y VISTOS EN LA APP** — se eligen lo primero, multiplican los puntos y suben los niveles de los entrenadores. **Falta el Pokémon extra** en combates importantes. Ver `ARCHITECTURE.md` §46 |
 | Tienda | **HECHA Y VERIFICADA EN EL JUEGO** — 18 objetos con sprites del cartucho. Compra real: Master Ball por 300, releída en la mochila y cobrada después. Ver `ARCHITECTURE.md` §45 |
 | Sincronización | **SIN EMPEZAR** |
 | API concreta de pk3DS.Core | **VERIFICADA** contra la ROM real — ver `ARCHITECTURE.md` §19 |

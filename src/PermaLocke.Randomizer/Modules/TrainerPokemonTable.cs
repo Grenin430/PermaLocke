@@ -31,6 +31,18 @@ public static class TrainerPokemonTable
 
     public static int GetLevel(byte[] party, int index) => party[(index * EntrySize) + LevelOffset];
 
+    /// <summary>
+    /// Sets a trainer's level, clamped to what the game can hold.
+    /// </summary>
+    /// <remarks>
+    /// The randomization of species deliberately leaves levels alone, because the cap table is
+    /// built from them. This exists for the <b>role</b>, which is the one thing allowed to move
+    /// them: the competition's base edit raises every trainer by a percentage, and a harder role
+    /// raises them further while the player's own cap stays put. One byte, patched in place.
+    /// </remarks>
+    public static void SetLevel(byte[] party, int index, int level) =>
+        party[(index * EntrySize) + LevelOffset] = (byte)Math.Clamp(level, 1, 100);
+
     public static int GetForm(byte[] party, int index) => party[(index * EntrySize) + FormOffset];
 
     public static int GetItem(byte[] party, int index) =>

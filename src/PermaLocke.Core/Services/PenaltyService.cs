@@ -17,7 +17,8 @@ namespace PermaLocke.Core.Services;
 /// the whole of it. Nothing stores a number that could disagree with the history.
 /// </para>
 /// </remarks>
-public sealed class PenaltyService(IPenaltyCatalog catalog, IEventStore events, IClock clock)
+public sealed class PenaltyService(IPenaltyCatalog catalog, IEventStore events, IClock clock,
+    IRunRoles roles)
 {
     public PenaltyRules Rules => catalog.Rules;
 
@@ -35,7 +36,8 @@ public sealed class PenaltyService(IPenaltyCatalog catalog, IEventStore events, 
     public async Task<PenaltyResult> ChargeDeathAsync(Guid runId, string actor, PokemonEntry entry,
         CancellationToken ct = default)
     {
-        var cost = Math.Max(0, catalog.Rules.PerDeath);
+        var scaled = RoleAdjusted.Penalty(roles.Of(runId), Math.Max(0, catalog.Rules.PerDeath));
+        var cost = scaled.Final;
 
         if (cost == 0)
         {
@@ -52,7 +54,7 @@ public sealed class PenaltyService(IPenaltyCatalog catalog, IEventStore events, 
             Type = GameEventType.PointsPenalty,
             Source = EventSource.AutoDetect,
             Actor = actor,
-            Description = $"−{cost} puntos por la muerte de {name}.",
+            Description = $"−{cost} puntos por la muerte de {name}.{scaled.Explain()}",
             PointsDelta = -cost,
             PokemonId = entry.Id,
             Reason = "muerte",
@@ -60,7 +62,10 @@ public sealed class PenaltyService(IPenaltyCatalog catalog, IEventStore events, 
             {
                 ["motivo"] = "muerte",
                 ["especie"] = entry.Species.ToString(),
-                ["pokemon"] = name
+                ["pokemon"] = name,
+                ["base"] = scaled.Base.ToString(),
+                ["rol"] = scaled.RoleId,
+                ["multiplicador"] = scaled.Multiplier.ToString("0.##")
             }
         }, ct).ConfigureAwait(false);
 
@@ -80,7 +85,8 @@ public sealed class PenaltyService(IPenaltyCatalog catalog, IEventStore events, 
     {
         var already = await CountWipesAsync(runId, ct).ConfigureAwait(false);
         var capped = already >= catalog.Rules.MaxWipes;
-        var cost = capped ? 0 : Math.Max(0, catalog.Rules.PerWipe);
+        var scaled = RoleAdjusted.Penalty(roles.Of(runId), capped ? 0 : Math.Max(0, catalog.Rules.PerWipe));
+        var cost = scaled.Final;
 
         await events.AppendAsync(new GameEvent
         {
@@ -102,7 +108,10 @@ public sealed class PenaltyService(IPenaltyCatalog catalog, IEventStore events, 
                 ["numero"] = (already + 1).ToString(),
                 ["maximo"] = catalog.Rules.MaxWipes.ToString(),
                 ["contados"] = fallen.Count.ToString(),
-                ["equipo"] = string.Join(", ", fallen)
+                ["equipo"] = string.Join(", ", fallen),
+                ["base"] = scaled.Base.ToString(),
+                ["rol"] = scaled.RoleId,
+                ["multiplicador"] = scaled.Multiplier.ToString("0.##")
             }
         }, ct).ConfigureAwait(false);
 

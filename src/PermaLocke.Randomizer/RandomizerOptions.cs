@@ -65,6 +65,16 @@ public sealed record RandomizerOptions
     /// </summary>
     public bool TrainerMovesFromLearnset { get; init; } = true;
 
+    /// <summary>
+    /// Percentage added to every trainer Pokémon's level. Zero leaves the cartridge alone.
+    /// </summary>
+    /// <remarks>
+    /// This comes from the <b>role</b>, not from the randomizer's own configuration, and it is the
+    /// reason the role has to be chosen before anything is generated: two players on different
+    /// roles do not get the same world, and changing role later means randomizing again.
+    /// </remarks>
+    public int TrainerLevelPercent { get; init; }
+
     /// <summary>Randomize the type or types of every species and form.</summary>
     public bool RandomizeTypes { get; init; } = true;
 

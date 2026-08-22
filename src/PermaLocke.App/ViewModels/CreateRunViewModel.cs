@@ -18,12 +18,42 @@ public sealed partial class CreateRunViewModel : ObservableObject
     private readonly AppPaths _paths;
     private readonly ILogger<CreateRunViewModel> _logger;
 
-    public CreateRunViewModel(RunService runs, AppPaths paths, ILogger<CreateRunViewModel> logger)
+    public CreateRunViewModel(RunService runs, AppPaths paths, IRoleCatalog roles,
+        ILogger<CreateRunViewModel> logger)
     {
         _runs = runs;
         _paths = paths;
         _logger = logger;
+
+        foreach (var role in roles.All)
+        {
+            Roles.Add(new RoleChoiceViewModel(role, OnRoleChosen));
+        }
+
+        // Sin roles no se crea nada. Arrancar a todo el mundo con reglas inventadas sería peor
+        // que no arrancar, porque la competición no se enteraría hasta el recuento final.
+        RoleProblem = Roles.Count == 0
+            ? "No hay roles configurados: falta Data/roles.json o está vacío. Sin rol no se puede crear una run."
+            : string.Empty;
+
         DetectRom();
+    }
+
+    /// <summary>The roles on offer, in the order the catalogue lists them.</summary>
+    public System.Collections.ObjectModel.ObservableCollection<RoleChoiceViewModel> Roles { get; } = [];
+
+    [ObservableProperty]
+    private string _roleProblem = string.Empty;
+
+    private void OnRoleChosen(RoleChoiceViewModel chosen)
+    {
+        foreach (var other in Roles.Where(r => !ReferenceEquals(r, chosen)))
+        {
+            other.Clear();
+        }
+
+        RoleId = chosen.Role.Id;
+        CreateCommand.NotifyCanExecuteChanged();
     }
 
     [ObservableProperty]
@@ -34,8 +64,10 @@ public sealed partial class CreateRunViewModel : ObservableObject
     [NotifyCanExecuteChangedFor(nameof(CreateCommand))]
     private string _playerName = string.Empty;
 
+    /// <summary>Chosen role. Empty until one is picked, which is what keeps the button off.</summary>
     [ObservableProperty]
-    private string _roleId = "experto";
+    [NotifyCanExecuteChangedFor(nameof(CreateCommand))]
+    private string _roleId = string.Empty;
 
     [ObservableProperty]
     private string _romStatus = string.Empty;
@@ -78,6 +110,7 @@ public sealed partial class CreateRunViewModel : ObservableObject
 
     private bool CanCreate() =>
         RomIsValid
+        && !string.IsNullOrWhiteSpace(RoleId)
         && !string.IsNullOrWhiteSpace(RunName)
         && !string.IsNullOrWhiteSpace(PlayerName);
 
@@ -113,4 +146,58 @@ public sealed partial class CreateRunViewModel : ObservableObject
         RomIsValid = true;
         _logger.LogInformation("ROM válida detectada: {File} ({TitleId})", _rom.FileName, _rom.TitleId);
     }
+}
+
+/// <summary>One role on the creation screen, with its rules spelled out.</summary>
+/// <remarks>
+/// The effects line is generated from the role's own numbers rather than written by hand, so a
+/// competition that edits <c>Data/roles.json</c> cannot end up with a screen that describes the
+/// old rules.
+/// </remarks>
+public sealed partial class RoleChoiceViewModel(Role role, Action<RoleChoiceViewModel> chosen)
+    : ObservableObject
+{
+    public Role Role { get; } = role;
+
+    public string Name => Role.Name;
+
+    public string Description => Role.Description;
+
+    /// <summary>The numbers, in one line, so nobody has to take the description on trust.</summary>
+    public string Effects
+    {
+        get
+        {
+            var parts = new List<string>
+            {
+                Role.Earn == 1 ? "puntos normales" : $"ganas ×{Role.Earn:0.##}",
+                Role.Lose == 0 ? "no pierdes puntos" : Role.Lose == 1 ? "pierdes normal" : $"pierdes ×{Role.Lose:0.##}",
+                $"entrenadores +{Role.TrainerLevelPercent}%",
+                $"tu cap +{Role.PlayerCapPercent}%"
+            };
+
+            if (Role.ExtraTrainerPokemon > 0)
+            {
+                parts.Add($"+{Role.ExtraTrainerPokemon} Pokémon en combates importantes");
+            }
+
+            return string.Join(" · ", parts);
+        }
+    }
+
+    [ObservableProperty]
+    private bool _isSelected;
+
+    partial void OnIsSelectedChanged(bool value)
+    {
+        if (value)
+        {
+            chosen(this);
+        }
+    }
+
+    /// <summary>
+    /// Unticks this one. Safe against re-entering the callback because only ticking calls it.
+    /// </summary>
+    public void Clear() => IsSelected = false;
 }

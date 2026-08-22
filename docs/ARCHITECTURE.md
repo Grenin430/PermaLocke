@@ -3445,3 +3445,67 @@ lo deja entero y en orden, que es exactamente el contrato:
 
 El `llevaAhora` no es lo que se pidió escribir: es lo que la mochila **contestó al releerla**. Y el
 cargo va después, como debe. La tienda queda verificada de punta a punta.
+
+---
+
+## 46. Los roles (2026-08-22)
+
+Un rol es la forma de jugar la competición, y se elige **antes que nada**: antes de la ROM, antes
+de la seed, antes de randomizar. No es orden estético. Parte del rol se cuece en el cartucho, así
+que elegirlo después significaría randomizar otra vez, y eso le cambia el mundo a una run ya
+empezada.
+
+### Los tres
+
+| | ganancia | pérdida | entrenadores | cap del jugador | Pokémon extra |
+|---|---|---|---|---|---|
+| NORMAL | ×1 | ×1 | +20% | +20% | +1 |
+| CAGONETA | ×0,5 | **×0** | +20% | +20% | +1 |
+| EXPERTO | ×1,5 | ×2 | **+27%** | +20% | +2 |
+
+El +20% es el suelo de todos: la edición base de la competición. El experto sube los niveles de
+los entrenadores siete puntos por encima **sin subir su propio cap**, que es exactamente de dónde
+sale la dificultad: los rivales le sacan ventaja.
+
+Todo vive en `Data/roles.json`. Añadir un rol es editar el fichero.
+
+### Multiplicar puntos sin perder la cuenta
+
+Los multiplicadores tocan lo que se **gana** y lo que se **pierde**, y nunca lo que se **gasta**:
+una Master Ball cuesta 300 en los tres roles, porque gastar no es perder.
+
+La cuenta no se hace en silencio. `RoleAdjusted` lleva juntos el número base, el multiplicador y
+el resultado, y los tres acaban en el evento del historial:
+
+```
+base=25  rol=experto  multiplicador=2   →  −50 puntos por la muerte de Chesnaught (25 × 2 por el rol experto)
+```
+
+Sin eso, un jugador que ve «−50» no puede distinguir una penalización doblada de un fallo.
+
+Un caso que había que decidir y no dejar al azar: **un rol que no se puede resolver**. Se cobra la
+tarifa base y el evento lo dice, con `rol=desconocido`. Ni adivinar «normal» —que pagaría el doble
+a un cagoneta— ni negarse a cobrar una muerte, que dejaría el historial mintiendo.
+
+### Lo que el rol le hace al cartucho
+
+Los niveles de los entrenadores suben por rol, **parcheando un byte en su sitio** (`0x0E` de cada
+entrada de `trpoke`), que es lo único que la norma del §19 permite. El redondeo es hacia arriba a
+propósito: los primeros entrenadores son de nivel 5, y redondear hacia abajo dejaría el +20% en
+nada durante toda la primera isla.
+
+El nivel lo sube **también a las especies protegidas**. Un Cosmog al nivel del cartucho en un juego
+donde todo lo demás va un 20% por encima sería un regalo, no una protección.
+
+### Lo que falta, y por qué no está
+
+**El Pokémon extra en los combates importantes no está hecho**, y no por olvido. Añadir uno a un
+equipo significa alargar su subfichero dentro del GARC, y `GarcPatcher.Write` **rechaza** un
+tamaño distinto por diseño: la norma del §19 nació de dos fallos reales al regenerar estructuras.
+Hacerlo bien exige reempaquetar `a/1/0/7` con offsets nuevos y tocar además el número de Pokémon
+en `a/1/0/6`, y decidir **cuáles son los combates importantes**, que es otra investigación sobre
+las clases de entrenador. Es un trabajo aparte, con su propia verificación, y se hace después.
+
+Mientras tanto la pantalla del rol lo enseña —«+1 Pokémon en combates importantes»— porque es lo
+que la competición dice que es el rol, y `Data/roles.json` lo guarda; simplemente todavía no lo
+aplica nadie. Aquí queda escrito para que no se dé por hecho.

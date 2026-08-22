@@ -8,13 +8,17 @@ namespace PermaLocke.Randomizer.Modules;
 /// <param name="Trainers">Trainers whose party changed.</param>
 /// <param name="Pokemon">Individual trainer Pokémon replaced.</param>
 /// <param name="MovesCleared">Entries whose explicit moveset was handed back to the game.</param>
-public sealed record TrainerResult(int Trainers, int Pokemon, int MovesCleared);
+/// <param name="LevelsRaised">Pokémon whose level the role moved.</param>
+public sealed record TrainerResult(int Trainers, int Pokemon, int MovesCleared, int LevelsRaised = 0);
 
 /// <summary>
-/// Replaces the species of every trainer Pokémon in <c>trpoke</c> (<c>a/1/0/7</c>).
+/// Replaces the species of every trainer Pokémon in <c>trpoke</c> (<c>a/1/0/7</c>), and raises
+/// their levels by whatever the <b>role</b> asks for.
 /// <para>
-/// Levels are never touched. The competition's level caps are read off the Kahuna parties, so
-/// moving a trainer's level would silently move the cap that governs ten players.
+/// The randomization of species still never touches levels: the competition's caps are read off
+/// the Kahuna parties, and moving a level as a side effect of shuffling species would silently
+/// move the cap that governs ten players. Raising them is a separate, declared decision that
+/// comes from the role and applies to every trainer alike.
 /// </para>
 /// </summary>
 public sealed class TrainerRandomizer(RomWorkspace workspace, RandomizerOptions options)
@@ -28,6 +32,7 @@ public sealed class TrainerRandomizer(RomWorkspace workspace, RandomizerOptions 
         var trainers = 0;
         var replaced = 0;
         var movesCleared = 0;
+        var levelsRaised = 0;
 
         using (var patcher = new GarcPatcher(path))
         {
@@ -45,6 +50,22 @@ public sealed class TrainerRandomizer(RomWorkspace workspace, RandomizerOptions 
                 var changed = false;
                 for (var slot = 0; slot < count; slot++)
                 {
+                    // El nivel lo sube el ROL, no la randomización, y se sube SIEMPRE: también en
+                    // los Pokémon protegidos, porque un Cosmog al nivel del cartucho en un juego
+                    // donde todo lo demás va un 20% por encima sería un regalo, no una protección.
+                    if (options.TrainerLevelPercent > 0)
+                    {
+                        var raised = Raise(TrainerPokemonTable.GetLevel(party, slot),
+                            options.TrainerLevelPercent);
+
+                        if (raised != TrainerPokemonTable.GetLevel(party, slot))
+                        {
+                            TrainerPokemonTable.SetLevel(party, slot, raised);
+                            levelsRaised++;
+                            changed = true;
+                        }
+                    }
+
                     var original = TrainerPokemonTable.GetSpecies(party, slot);
                     if (original == 0 || untouchable.Contains(original))
                     {
@@ -74,8 +95,18 @@ public sealed class TrainerRandomizer(RomWorkspace workspace, RandomizerOptions 
         }
 
         await VerifyAsync(path, ct);
-        return new TrainerResult(trainers, replaced, movesCleared);
+        return new TrainerResult(trainers, replaced, movesCleared, levelsRaised);
     }
+
+    /// <summary>
+    /// A cartridge level raised by a percentage, rounded away from zero and capped at 100.
+    /// </summary>
+    /// <remarks>
+    /// Rounding away from zero matters at the bottom of the game: the first trainers are level 5,
+    /// and rounding down would leave +20% meaning nothing at all for the whole first island.
+    /// </remarks>
+    public static int Raise(int level, int percent) =>
+        Math.Clamp((int)Math.Round(level * (1 + (percent / 100.0)), MidpointRounding.AwayFromZero), 1, 100);
 
     /// <summary>
     /// Reads the result back with the pk3DS reader and checks the two things that would ruin a

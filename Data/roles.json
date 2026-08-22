@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "comment": "Los roles de la competición. Se elige UNO al crear la run y es lo primero que se pregunta, antes que la ROM y la seed, porque de él dependen los cambios que se le hacen al juego: una vez randomizado con un rol, cambiar de rol exigiría volver a randomizar.",
+
+  "comentarioPuntos": "ganancia y perdida multiplican los puntos que se GANAN y los que se PIERDEN por penalización. NO tocan lo que se GASTA: una Master Ball cuesta 300 en todos los roles, porque gastar no es perder. Cada evento del historial guarda el número base, el multiplicador y el resultado, así que siempre se puede ver de dónde salió cada punto.",
+
+  "comentarioJuego": "nivelEntrenadores y capDelJugador son porcentajes SOBRE EL CARTUCHO. El juego base de la competición ya viene con +20% en los dos, así que ese es el suelo de todos los roles. pokemonExtra son los Pokémon de más que llevan los combates importantes.",
+
+  "comentarioExperto": "El experto sube los niveles de los entrenadores al 27% -el 20% base más 7- pero su cap se queda en el 20%: los rivales le sacan ventaja, que es justo la gracia. Si la competición lo entendía al revés -cap del jugador sin el 20%- es cambiar capDelJugador a 0 aquí.",
+
+  "roles": [
+    {
+      "id": "normal",
+      "name": "NORMAL",
+      "summary": "El randomlocke sin cambios.",
+      "description": "Juegas el randomlocke sin ningún cambio. El juego base está editado subiendo el level cap un 20% y todos los combates importantes tendrán un Pokémon extra.",
+      "ganancia": 1.0,
+      "perdida": 1.0,
+      "nivelEntrenadores": 20,
+      "capDelJugador": 20,
+      "pokemonExtra": 1
+    },
+    {
+      "id": "cagoneta",
+      "name": "CAGONETA",
+      "summary": "Más relajado: no pierdes puntos, pero ganas la mitad.",
+      "description": "Juegas el randomlocke de forma más relajada. Exactamente igual que el rol normal pero sin perder puntos y sólo ganando la mitad.",
+      "ganancia": 0.5,
+      "perdida": 0.0,
+      "nivelEntrenadores": 20,
+      "capDelJugador": 20,
+      "pokemonExtra": 1
+    },
+    {
+      "id": "experto",
+      "name": "EXPERTO",
+      "summary": "Más difícil: ganas 1,5x, pierdes el doble y los rivales van por delante.",
+      "description": "Juegas el randomlocke de forma más complicada. Ganas 1,5x puntos pero pierdes el doble. El level cap de los combates aumenta un 7% sobre el 20% base, pero mantienes el level cap base, y los entrenadores llevan otro Pokémon extra además del base.",
+      "ganancia": 1.5,
+      "perdida": 2.0,
+      "nivelEntrenadores": 27,
+      "capDelJugador": 20,
+      "pokemonExtra": 2
+    }
+  ]
+}

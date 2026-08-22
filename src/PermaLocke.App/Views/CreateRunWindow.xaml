@@ -22,6 +22,39 @@
 
             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,0,6,0">
                 <StackPanel>
+                    <!-- EL ROL VA PRIMERO. No es orden estético: parte del rol se cuece en la
+                         ROM, así que elegirlo después de randomizar significaría randomizar otra
+                         vez, y eso le cambia el mundo a una run ya empezada. -->
+                    <TextBlock Text="ROL" Style="{StaticResource PanelHeading}" />
+                    <TextBlock Style="{StaticResource Muted}" FontSize="11" Margin="0,0,0,8"
+                               Text="Se elige ahora y no se puede cambiar después: el rol decide cómo se edita el juego y cuánto valen tus puntos." />
+
+                    <ItemsControl ItemsSource="{Binding Roles}" Margin="0,0,0,6">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <RadioButton GroupName="Rol" Margin="0,0,0,8" Cursor="Hand"
+                                             IsChecked="{Binding IsSelected, Mode=TwoWay}">
+                                    <RadioButton.Content>
+                                        <StackPanel Margin="6,0,0,0">
+                                            <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="14"
+                                                       FontFamily="{StaticResource UiFont}"
+                                                       Foreground="{StaticResource AccentBrush}" />
+                                            <TextBlock Text="{Binding Description}" TextWrapping="Wrap"
+                                                       FontSize="11" MaxWidth="430"
+                                                       Foreground="{StaticResource TextMutedBrush}" />
+                                            <TextBlock Text="{Binding Effects}" TextWrapping="Wrap"
+                                                       FontSize="11" Margin="0,3,0,0" MaxWidth="430"
+                                                       Foreground="{StaticResource WarningBrush}" />
+                                        </StackPanel>
+                                    </RadioButton.Content>
+                                </RadioButton>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <TextBlock Text="{Binding RoleProblem}" Style="{StaticResource Body}" Margin="0,0,0,14"
+                               TextWrapping="Wrap" Foreground="{StaticResource DangerBrush}" />
+
                     <TextBlock Text="ROM" Style="{StaticResource PanelHeading}" />
                     <Border BorderBrush="{StaticResource AccentDimBrush}" BorderThickness="1"
                             Padding="10" Margin="0,0,0,16">
@@ -37,10 +70,6 @@
                              Style="{StaticResource Field}" Margin="0,0,0,4" />
                     <TextBlock Style="{StaticResource Muted}" FontSize="11" Margin="0,0,0,14"
                                Text="Se contrastará con el nombre del entrenador del save cuando exista integración con el juego." />
-
-                    <TextBlock Text="ROL" Style="{StaticResource PanelHeading}" />
-                    <TextBox Text="{Binding RoleId, UpdateSourceTrigger=PropertyChanged}"
-                             Style="{StaticResource Field}" />
                 </StackPanel>
             </ScrollViewer>
 
