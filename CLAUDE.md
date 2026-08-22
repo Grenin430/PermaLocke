@@ -448,10 +448,13 @@ fuera del repositorio, sin tocar la partida. Ver `docs/ARCHITECTURE.md` §50.
 que en el save es **otro almacén** y no una caja más: `BoxedPokemon.Box` toma el centinela
 `PartyBox = -1`, negativo para que quien se olvide de mirarlo no caiga en la caja 0 sin enterarse, y
 el wonder trade corta cualquier índice negativo en la puerta. Los EV se editan con los topes del
-propio juego -**252 por estadística y 510 entre las seis**-, que se recortan al escribir y también al
-leer, así que un save tocado por fuera se arregla al guardarlo. Se escribe con el juego cerrado,
-comprobando por **PID** que el hueco sigue teniendo al mismo, con copia previa y relectura, y queda
-como evento `EvsTrained`. **No cuesta puntos**: entrenar es una edición, no una compra.
+propio juego -**252 por estadística y 510 entre las seis**-, que **se aplican de formas distintas a
+propósito**: el 252 se recorta, y el 510 solo se comprueba. Recortar el total obligaba a repartir en
+un orden concreto -para pasar PS a Velocidad había que saber que primero se vacía PS-, así que ahora
+se puede pasar de 510 mientras repartes, el panel se pone en rojo diciendo por cuánto y **GUARDAR se
+apaga** hasta que vuelve a ser legal. Cada fila lleva su `MÁX` y su `0`. Se escribe con el juego
+cerrado, comprobando por **PID** que el hueco sigue teniendo al mismo, con copia previa y relectura,
+y queda como evento `EvsTrained`. **No cuesta puntos**: entrenar es una edición, no una compra.
 
 Hallazgo medido, no supuesto: **recalcular las estadísticas del equipo escribe números falsos**. PKHeX
 calcula con SU tabla de estadísticas base y la ROM lleva `shuffleBaseStats`, así que sobre una copia

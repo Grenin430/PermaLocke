@@ -43,6 +43,16 @@ public sealed class EvTrainingService(IEvTrainer trainer, IEventStore events, IC
 
         var before = EvSpread.Of(target.Evs);
 
+        // El tope de 510 se comprueba aquí y no se recorta al escribirlo, porque recortarlo
+        // decidiría por el jugador de qué estadística quitar. La pantalla deja pasarse mientras
+        // se reparte; lo que no deja es guardarlo.
+        if (!wanted.IsLegal)
+        {
+            return new DeliveryResult(DeliveryOutcome.Failed,
+                $"Te pasas por {wanted.Over} EV: {wanted.Total} de {EvSpread.TotalMax}. "
+                + "Quita de alguna estadística antes de guardar. No se ha tocado la partida.");
+        }
+
         if (before.Equals(wanted))
         {
             return new DeliveryResult(DeliveryOutcome.Failed,

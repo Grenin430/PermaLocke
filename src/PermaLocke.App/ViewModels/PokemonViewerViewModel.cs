@@ -60,14 +60,13 @@ public sealed partial class StatRowViewModel : ObservableObject
     private readonly Action<int, int>? _changed;
 
     public StatRowViewModel(int index, string name, int value, int iv, int ev,
-        int ceiling, Action<int, int>? changed = null)
+        Action<int, int>? changed = null)
     {
         Index = index;
         Name = name;
         Value = value;
         Iv = iv;
         _ev = ev;
-        _ceiling = ceiling;
         _changed = changed;
     }
 
@@ -82,10 +81,6 @@ public sealed partial class StatRowViewModel : ObservableObject
 
     [ObservableProperty]
     private int _ev;
-
-    /// <summary>Most this stat could take without stealing from the other five.</summary>
-    [ObservableProperty]
-    private int _ceiling;
 
     /// <summary>True while this row holds EVs that are not yet in the partida.</summary>
     [ObservableProperty]
@@ -114,7 +109,7 @@ public sealed partial class StatRowViewModel : ObservableObject
     /// The six rows share one budget, so moving one makes the owner rewrite all six. Without this,
     /// that rewrite would come straight back as six more edits.
     /// </remarks>
-    public void Silently(int ev, int ceiling, bool dirty)
+    public void Silently(int ev, bool dirty)
     {
         _quiet = true;
 
@@ -127,7 +122,6 @@ public sealed partial class StatRowViewModel : ObservableObject
             _quiet = false;
         }
 
-        Ceiling = ceiling;
         IsDirty = dirty;
     }
 }
@@ -393,7 +387,6 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
                 pokemon.Stats[index],
                 pokemon.Ivs[index],
                 _savedEvs[index],
-                _savedEvs.CeilingFor(index),
                 EvEdited));
         }
 
@@ -415,15 +408,30 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
     [ObservableProperty]
     private int _evRemaining;
 
+    /// <summary>How far past the 510 the reparto currently is, or zero.</summary>
+    [ObservableProperty]
+    private int _evOver;
+
+    /// <summary>True while the reparto is over 510 and could not be written.</summary>
+    [ObservableProperty]
+    private bool _evOverBudget;
+
     /// <summary>Fraction of the 510 budget spent, for the bar over the editor.</summary>
     [ObservableProperty]
     private double _evFill;
 
     /// <summary>True while the screen holds EVs that are not in the partida yet.</summary>
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(SaveEvsCommand))]
     [NotifyCanExecuteChangedFor(nameof(RevertEvsCommand))]
     private bool _evsChanged;
+
+    /// <summary>
+    /// Changed <b>and</b> legal. Over 510 the reparto is a work in progress, not something to
+    /// write: the button goes dead and the panel says by how much.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(SaveEvsCommand))]
+    private bool _canSaveEvs;
 
     /// <summary>What happened to the last attempt to write EVs. Empty when nothing has been tried.</summary>
     [ObservableProperty]
@@ -435,10 +443,7 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
     [ObservableProperty]
     private bool _isTraining;
 
-    /// <summary>
-    /// One row moved. Reapplies the whole spread, because the 510 budget is shared: raising one
-    /// stat changes what the other five are allowed to hold.
-    /// </summary>
+    /// <summary>One row moved. Reapplies the whole spread, since the six share one budget.</summary>
     private void EvEdited(int index, int value) => Apply(Evs.With(index, value));
 
     /// <summary>Pushes a spread back into the six rows and recomputes the totals.</summary>
@@ -448,8 +453,7 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
 
         foreach (var row in Stats)
         {
-            row.Silently(spread[row.Index], spread.CeilingFor(row.Index),
-                spread[row.Index] != _savedEvs[row.Index]);
+            row.Silently(spread[row.Index], spread[row.Index] != _savedEvs[row.Index]);
         }
 
         RefreshEvTotals();
@@ -458,12 +462,25 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
     private void RefreshEvTotals()
     {
         EvTotal = Evs.Total;
-        EvRemaining = Evs.Remaining;
-        EvFill = (double)Evs.Total / EvSpread.TotalMax;
+        EvRemaining = Math.Max(0, Evs.Remaining);
+        EvOver = Evs.Over;
+        EvOverBudget = !Evs.IsLegal;
+
+        // La barra se llena y se queda llena: pasarse no la hace crecer, lo dice el color.
+        EvFill = Math.Min(1d, (double)Evs.Total / EvSpread.TotalMax);
+
         EvsChanged = !Evs.Equals(_savedEvs);
+        CanSaveEvs = EvsChanged && Evs.IsLegal;
     }
 
-    /// <summary>Fills the stat as far as the shared budget allows.</summary>
+    /// <summary>
+    /// Fills the stat to 252, even if that puts the reparto over 510.
+    /// </summary>
+    /// <remarks>
+    /// Going over is the point. Moving 252 points from PS to Velocidad is two edits, and refusing
+    /// the first one until the second has happened would force the player to work in an order
+    /// nobody would guess. The panel turns red, says by how much, and blocks the save instead.
+    /// </remarks>
     [RelayCommand]
     private void MaxEv(StatRowViewModel? row)
     {
@@ -502,7 +519,7 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
     /// nothing selected, nothing changed, or the game still loaded in the emulator. What gets past
     /// all four goes through the service, which writes first and records afterwards.
     /// </remarks>
-    [RelayCommand(CanExecute = nameof(EvsChanged))]
+    [RelayCommand(CanExecute = nameof(CanSaveEvs))]
     private async Task SaveEvsAsync()
     {
         if (Selected is not { } target || IsTraining)

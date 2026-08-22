@@ -1,10 +1,12 @@
 <UserControl x:Class="PermaLocke.App.Views.PokemonViewerView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:views="clr-namespace:PermaLocke.App.Views">
+             xmlns:views="clr-namespace:PermaLocke.App.Views"
+             xmlns:conv="clr-namespace:PermaLocke.App.Converters">
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+        <conv:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility" />
 
         <!-- Un hueco del PC. Los vacíos también se dibujan: la caja del juego tiene treinta
              agujeros estén llenos o no, y pintar solo los ocupados la convertiría en una lista. -->
@@ -144,14 +146,27 @@
                          Text="{Binding Ev, UpdateSourceTrigger=PropertyChanged,
                                 ValidatesOnExceptions=True}" />
 
-                <Button Grid.Column="5" Content="MÁX" Style="{StaticResource GhostButton}"
-                        Padding="6,4" FontSize="9.5" Margin="4,0,0,0"
-                        ToolTip="Sube esta estadística a 252, o a lo que quede de los 510."
-                        IsEnabled="{Binding DataContext.CanEditEvs,
-                                    RelativeSource={RelativeSource AncestorType=UserControl}}"
-                        Command="{Binding DataContext.MaxEvCommand,
-                                  RelativeSource={RelativeSource AncestorType=UserControl}}"
-                        CommandParameter="{Binding}" />
+                <!-- Máximo y vaciar, uno al lado del otro: mover 252 puntos de una estadística a
+                     otra son dos gestos, y con los dos botones a mano son dos clics. -->
+                <StackPanel Grid.Column="5" Orientation="Horizontal" Margin="4,0,0,0">
+                    <Button Content="MÁX" Style="{StaticResource GhostButton}"
+                            Padding="6,4" FontSize="9.5"
+                            ToolTip="Pone 252 en esta estadística. Si te pasas de 510, el panel te lo dice y no te deja guardar hasta que quites de otra."
+                            IsEnabled="{Binding DataContext.CanEditEvs,
+                                        RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            Command="{Binding DataContext.MaxEvCommand,
+                                      RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            CommandParameter="{Binding}" />
+
+                    <Button Content="0" Style="{StaticResource GhostButton}"
+                            Padding="7,4" FontSize="9.5" Margin="3,0,0,0"
+                            ToolTip="Vacía esta estadística y libera sus EV para las demás."
+                            IsEnabled="{Binding DataContext.CanEditEvs,
+                                        RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            Command="{Binding DataContext.ClearEvCommand,
+                                      RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            CommandParameter="{Binding}" />
+                </StackPanel>
             </Grid>
         </DataTemplate>
 
@@ -443,18 +458,54 @@
                             <StackPanel>
                                 <DockPanel>
                                     <TextBlock DockPanel.Dock="Right" Style="{StaticResource Mono}" FontSize="11">
-                                        <Run Text="{Binding EvTotal, Mode=OneWay}" FontWeight="Bold"
-                                             Foreground="{StaticResource AccentBrush}" /><Run
-                                             Text=" / 510" Foreground="{StaticResource TextFaintBrush}" />
+                                        <Run Text="{Binding EvTotal, Mode=OneWay}" FontWeight="Bold">
+                                            <Run.Style>
+                                                <Style TargetType="Run">
+                                                    <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding EvOverBudget}" Value="True">
+                                                            <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Run.Style>
+                                        </Run><Run Text=" / 510" Foreground="{StaticResource TextFaintBrush}" />
                                     </TextBlock>
                                     <TextBlock Style="{StaticResource StatLabel}" Text="REPARTO DE EV" />
                                 </DockPanel>
 
                                 <ProgressBar Height="6" Minimum="0" Maximum="1" Margin="0,8,0,0"
-                                             Value="{Binding EvFill, Mode=OneWay}" />
+                                             Value="{Binding EvFill, Mode=OneWay}">
+                                    <ProgressBar.Style>
+                                        <Style TargetType="ProgressBar" BasedOn="{StaticResource {x:Type ProgressBar}}">
+                                            <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding EvOverBudget}" Value="True">
+                                                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ProgressBar.Style>
+                                </ProgressBar>
 
+                                <!-- Repartir es libre: puedes poner 252 en Velocidad teniendo ya
+                                     504 repartidos y quitar de PS después, en el orden que te dé
+                                     la gana. Lo único que no se puede es guardarlo así. -->
                                 <TextBlock Style="{StaticResource Faint}" Margin="0,6,0,0"
-                                           Text="{Binding EvRemaining, StringFormat='Quedan {0} EV por repartir. Máximo 252 en cada una y 510 entre las seis: son los topes del propio juego.'}" />
+                                           Visibility="{Binding EvOverBudget,
+                                                        Converter={StaticResource InverseBoolToVisibility}}"
+                                           Text="{Binding EvRemaining, StringFormat='Quedan {0} EV por repartir. Máximo 252 en cada una y 510 entre las seis: son los topes del propio juego. Puedes pasarte mientras repartes y quitar de otra después.'}" />
+
+                                <Border Margin="0,8,0,0" Padding="10,7"
+                                        CornerRadius="{StaticResource RadiusSmall}"
+                                        Background="{StaticResource DangerDeepBrush}"
+                                        BorderBrush="{StaticResource DangerBrush}" BorderThickness="1"
+                                        Visibility="{Binding EvOverBudget,
+                                                     Converter={StaticResource BoolToVisibility}}">
+                                    <TextBlock Style="{StaticResource Body}" FontSize="11.5"
+                                               Foreground="{StaticResource DangerBrush}"
+                                               Text="{Binding EvOver, StringFormat='Te pasas por {0} EV. Quita de otra estadística y podrás guardar; el juego no admite más de 510 entre las seis.'}" />
+                                </Border>
 
                                 <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
                                     <Button Content="GUARDAR EN LA PARTIDA"

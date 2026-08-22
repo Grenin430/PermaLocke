@@ -3881,19 +3881,42 @@ cualquier índice negativo aunque la pantalla ya no se lo ofrezca.
 `SlotsPerBox` se queda para lo que era, pero la rejilla ahora dibuja `contents.Slots`: seis para el
 equipo, treinta para una caja.
 
-### Los dos techos son del juego, no de PermaLocke
+### Los dos techos son del juego, y se aplican de maneras distintas
 
-`EvSpread` clava **252 por estadística y 510 entre las seis**. No es una idea de reparto justo: la
+`EvSpread` conoce **252 por estadística y 510 entre las seis**. No es una idea de reparto justo: la
 generación 7 guarda cada EV en un byte y el juego no reparte más, de modo que pasarse deja un Pokémon
-que el cartucho considera ilegal. El tipo recorta en vez de fiarse, y recorta **contra las otras
-cinco**, no contra el total, para que subir una estadística que ya tiene EV no se cobre dos veces lo
-suyo.
+que el cartucho considera ilegal.
 
-Leer también recorta: un save editado por fuera puede llegar por encima de 510, y entonces la pantalla
-enseña un reparto legal y guardarlo **arregla** al Pokémon en vez de propagar el problema.
+Los dos se hacen cumplir de forma distinta, y en eso está toda la gracia:
 
-Visto en la aplicación real: escribir 999 en PS lo dejó en 252, y 400 en Ataque lo dejó en 240,
-porque entre las dos se comían los 510 justos.
+- **252 por estadística se recorta.** Nunca hay motivo para querer más, y recortar es inmediato y se
+  entiende solo: escribes 999 y ves 252.
+- **510 en total solo se comprueba.** Recortarlo decidiría **el orden en el que hay que trabajar**.
+
+La segunda regla salió de usar la primera versión, que sí recortaba el total. El jugador tenía un
+Pokémon con PS y Ataque a tope y quiso pasar esos EV a Velocidad: escribió 252 en Velocidad y le
+salió 6, porque no quedaba presupuesto. Para conseguirlo había que saber que **primero** se vacía PS.
+Nadie adivina eso, y el historial de la run lo dejó grabado con todas las letras — `Kommo-o:
+4/6/8/1/2/7 → 4/252/244/1/2/7 (Ataque 6→252, Defensa 8→244)`, un 244 que nadie pidió.
+
+Ahora repartir es libre: el reparto puede pasarse de 510 mientras se toca, `Over` dice por cuánto, el
+panel se pone en rojo y **`GUARDAR` se apaga**. El corte está donde tiene que estar, en
+`EvTrainingService`, que rechaza un reparto ilegal antes de abrir nada.
+
+Leer tampoco recorta ya el total: un save editado por fuera se enseña **como está**, marcado como
+ilegal, en vez de decidir por su cuenta de qué estadísticas robar.
+
+Comprobado en la aplicación real, partiendo de un reparto de 510 justos:
+
+```
+0) de partida        4/252/244/1/2/7   = 510   GUARDAR=False
+1) MÁX en Velocidad  4/252/244/1/2/252 = 755   GUARDAR=False
+2) 0 en Defensa      4/252/0/1/2/252   = 511   GUARDAR=False
+3) Ataque a 251      4/251/0/1/2/252   = 510   GUARDAR=True
+```
+
+Cada fila lleva su `MÁX` y su `0` al lado, porque mover 252 puntos de una estadística a otra son dos
+gestos y con los dos botones a mano son dos clics.
 
 ### Lo que se escribe, y lo que no se toca
 

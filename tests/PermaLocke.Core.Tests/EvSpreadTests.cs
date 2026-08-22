@@ -6,8 +6,10 @@ namespace PermaLocke.Core.Tests;
 /// The two ceilings on effort values, which belong to the game and not to PermaLocke.
 /// </summary>
 /// <remarks>
-/// Worth its own file because the whole editor leans on them: the screen lets the player type
-/// anything, and this is what turns "anything" into something the cartridge will accept.
+/// They are enforced differently on purpose, and that difference is what most of this file is
+/// about: 252 per stat is clamped, 510 in total is only checked. Clamping the total would decide
+/// the order somebody has to work in — empty this before filling that — and the whole point of the
+/// editor is to let a spread be moved around freely.
 /// </remarks>
 public class EvSpreadTests
 {
@@ -16,6 +18,7 @@ public class EvSpreadTests
     {
         Assert.Equal(0, EvSpread.Empty.Total);
         Assert.Equal(510, EvSpread.Empty.Remaining);
+        Assert.True(EvSpread.Empty.IsLegal);
         Assert.All(EvSpread.Empty.Values, value => Assert.Equal(0, value));
     }
 
@@ -33,63 +36,69 @@ public class EvSpreadTests
     }
 
     /// <summary>
-    /// The six share 510, so the third full stat only gets what the first two left behind.
+    /// The scenario the editor exists for: 252 in HP and 252 in Attack, and now the player wants
+    /// Speed instead. Filling Speed first has to work, or they would have to know to empty HP
+    /// before touching anything — which nobody would guess.
     /// </summary>
     [Fact]
-    public void The_six_share_one_budget_of_510()
+    public void A_stat_can_be_filled_even_with_no_budget_left()
     {
-        var spread = EvSpread.Empty
-            .With(0, 252)
-            .With(1, 252)
-            .With(2, 252);
+        var full = EvSpread.Empty.With(0, 252).With(1, 252);
 
-        Assert.Equal(252, spread[0]);
-        Assert.Equal(252, spread[1]);
-        Assert.Equal(6, spread[2]);
-        Assert.Equal(510, spread.Total);
-        Assert.Equal(0, spread.Remaining);
+        var overflowing = full.With(5, 252);
+
+        Assert.Equal(252, overflowing[5]);
+        Assert.Equal(756, overflowing.Total);
+        Assert.False(overflowing.IsLegal);
+        Assert.Equal(246, overflowing.Over);
+
+        // Y al quitar de PS vuelve a ser legal, sin haber tenido que hacerlo en ese orden.
+        var settled = overflowing.With(0, 0);
+
+        Assert.True(settled.IsLegal);
+        Assert.Equal(504, settled.Total);
+        Assert.Equal(0, settled.Over);
+    }
+
+    [Fact]
+    public void Exactly_510_is_legal_and_511_is_not()
+    {
+        var exact = EvSpread.Of([252, 252, 6, 0, 0, 0]);
+        Assert.Equal(510, exact.Total);
+        Assert.True(exact.IsLegal);
+        Assert.Equal(0, exact.Over);
+
+        var over = exact.With(3, 1);
+        Assert.False(over.IsLegal);
+        Assert.Equal(1, over.Over);
     }
 
     /// <summary>
-    /// Raising a stat that already holds EVs must not count its own share twice, or a stat sitting
-    /// at 252 could never be re-set to 252.
+    /// Raising a stat that already holds EVs must not count its own share twice: setting 252 on a
+    /// stat that already sits at 252 has to be a no-op, not a refusal.
     /// </summary>
     [Fact]
-    public void Raising_a_stat_does_not_charge_it_for_what_it_already_holds()
+    public void Setting_a_stat_to_what_it_already_holds_changes_nothing()
     {
         var spread = EvSpread.Empty.With(0, 252).With(1, 200);
 
-        var again = spread.With(1, 252);
-
-        Assert.Equal(252, again[1]);
-        Assert.Equal(504, again.Total);
-    }
-
-    [Fact]
-    public void The_ceiling_says_how_far_a_stat_could_go()
-    {
-        var spread = EvSpread.Empty.With(0, 252).With(1, 200);
-
-        // A la 0 le caben sus 252; a la 2 solo le queda lo que sobra de los 510.
-        Assert.Equal(252, spread.CeilingFor(0));
-        Assert.Equal(252, spread.CeilingFor(1));
-        Assert.Equal(58, spread.CeilingFor(2));
+        Assert.Equal(spread, spread.With(0, 252));
     }
 
     /// <summary>
     /// A save edited elsewhere can arrive over the total. Reading it must not throw, and must not
-    /// pass the illegal spread along either: it comes back clamped, so saving it fixes the Pokémon.
+    /// quietly decide which stats to rob either: it comes back as it is, and says it is illegal.
     /// </summary>
     [Fact]
-    public void An_illegal_spread_read_from_a_save_comes_back_clamped()
+    public void An_illegal_spread_read_from_a_save_is_shown_as_it_is_and_flagged()
     {
         var spread = EvSpread.Of([255, 255, 255, 255, 255, 255]);
 
-        Assert.Equal(252, spread[0]);
-        Assert.Equal(252, spread[1]);
-        Assert.Equal(6, spread[2]);
-        Assert.Equal(0, spread[3]);
-        Assert.Equal(510, spread.Total);
+        // 255 pasa de 252, y eso sí se recorta: es el tope de la propia estadística.
+        Assert.All(spread.Values, value => Assert.Equal(252, value));
+        Assert.Equal(1512, spread.Total);
+        Assert.False(spread.IsLegal);
+        Assert.Equal(1002, spread.Over);
     }
 
     [Fact]
@@ -104,30 +113,14 @@ public class EvSpreadTests
     }
 
     /// <summary>Two spreads with the same six numbers are the same spread: the editor asks this.</summary>
-    /// <remarks>
-    /// With headroom to spare on purpose. A spread already at 510 cannot take another point
-    /// anywhere, so an edit on top of it would come back clamped to the same six numbers — which
-    /// is right, and would make this test prove nothing.
-    /// </remarks>
     [Fact]
     public void Equality_is_by_value_so_an_untouched_edit_can_be_recognised()
     {
-        var saved = EvSpread.Of([4, 8, 0, 252, 0, 100]);
-        var edited = EvSpread.Of([4, 8, 0, 252, 0, 100]);
+        var saved = EvSpread.Of([4, 8, 0, 252, 0, 246]);
+        var edited = EvSpread.Of([4, 8, 0, 252, 0, 246]);
 
         Assert.Equal(saved, edited);
         Assert.NotEqual(saved, edited.With(2, 4));
-    }
-
-    /// <summary>A spread with the budget spent takes nothing more, and says so by not changing.</summary>
-    [Fact]
-    public void A_full_spread_cannot_take_another_point()
-    {
-        var full = EvSpread.Of([4, 8, 0, 252, 0, 246]);
-
-        Assert.Equal(510, full.Total);
-        Assert.Equal(0, full.CeilingFor(2));
-        Assert.Equal(full, full.With(2, 4));
     }
 
     [Fact]
