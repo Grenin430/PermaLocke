@@ -509,6 +509,18 @@ no es una lectura mala, es la lectura de otra cosa, y una condición «por si ac
 un disparador aleatorio. Ojo también con el enlace: ese día PermaLocke solo estuvo conectado al juego
 **11 y 108 segundos**. Ver `docs/ARCHITECTURE.md` §53.
 
+**El enlace se moría a media sesión (2026-08-22).** El cap solo vigila mientras hay enlace, y
+PermaLocke aguantaba **11 y 108 segundos**: no parpadeaba, se caía y **ya no volvía**. Estaba en
+`AzaharRpcClient.Send`, que mandaba un datagrama, esperaba uno y lo daba por bueno. Dos defectos: el
+cliente es un **singleton sobre un socket** y el sondeo pregunta cada segundo mientras la tienda, el
+visor y las sondas preguntan desde sus hilos -dos peticiones solapadas y cada una lee la respuesta de
+la otra-; y una **respuesta que llega tarde** se leía como la de ahora, con lo que el socket se
+quedaba *permanentemente una respuesta por detrás* y ya no se recuperaba. Ahora hay **cerrojo**, se
+**vacía la cola** hasta encontrar el id bueno, y hay **tres intentos con el mismo id**. Comprobado
+con un servidor UDP falso que se porta mal a la carta -y verificando que la prueba del descarte falla
+con el código viejo-, y contra el emulador real con la app a 1 Hz y seis sondas barriendo a la vez:
+ni una caída. Ver `docs/ARCHITECTURE.md` §54.
+
 **Siguiente.** Sincronización, y probar en partida real los combates importantes, los iniciales y
 las tiendas.
 

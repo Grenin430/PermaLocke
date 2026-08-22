@@ -43,9 +43,27 @@ public sealed class AzaharRpcClient : IDisposable
     private const int HeaderSize = 16;
     private const uint ProtocolVersion = 1;
 
+    /// <summary>
+    /// How many times a request is repeated before giving up.
+    /// </summary>
+    /// <remarks>
+    /// UDP loses datagrams, and an emulator in the middle of a battle answers late. One lost
+    /// packet used to be reported to the player as "Azahar no responde".
+    /// </remarks>
+    private const int Attempts = 3;
+
     private readonly UdpClient _socket;
     private readonly IPEndPoint _endpoint;
     private readonly Random _requestIds = new();
+
+    /// <summary>One request at a time: the socket is shared by every screen and the poller.</summary>
+    private readonly Lock _gate = new();
+
+    /// <summary>Requests that had to be sent again. Health of the link, for diagnosis.</summary>
+    public int Retries { get; private set; }
+
+    /// <summary>Late replies thrown away. Each one is a desynchronisation that did not happen.</summary>
+    public int Discarded { get; private set; }
 
     public AzaharRpcClient(string host = "127.0.0.1", int port = DefaultPort, int timeoutMilliseconds = 1500)
     {
@@ -306,6 +324,28 @@ public sealed class AzaharRpcClient : IDisposable
     }
     public void Dispose() => _socket.Dispose();
 
+    /// <summary>
+    /// Sends one request and waits for the reply that belongs to it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Two things here are not decoration, and their absence is what made the link die mid-session
+    /// and never come back.
+    /// </para>
+    /// <para>
+    /// <b>One conversation at a time.</b> The client is a singleton over a single socket, and the
+    /// poller asks every second while the shop, the bag tools and the viewer ask from their own
+    /// threads. Two overlapping requests and each one reads the other's answer: both fail, and the
+    /// datagram each needed has already been consumed.
+    /// </para>
+    /// <para>
+    /// <b>A late answer is discarded, not mistaken for this one.</b> UDP keeps whatever arrives
+    /// after a timeout. Reading it as the current reply leaves the socket permanently one behind:
+    /// every later call sees somebody else's id and throws, so a single hiccup while the emulator
+    /// was busy turned into "Azahar no responde" until the application was restarted. Now the
+    /// backlog is drained until the id matches.
+    /// </para>
+    /// </remarks>
     private byte[] Send(RpcRequestType type, byte[] payload)
     {
         var requestId = (uint)_requestIds.Next(int.MinValue, int.MaxValue);
@@ -317,33 +357,70 @@ public sealed class AzaharRpcClient : IDisposable
         BinaryPrimitives.WriteUInt32LittleEndian(request.AsSpan(12), (uint)payload.Length);
         payload.CopyTo(request.AsSpan(HeaderSize));
 
-        _socket.Send(request, request.Length, _endpoint);
-
-        IPEndPoint? from = null;
-        var reply = _socket.Receive(ref from);
-
-        if (reply.Length < HeaderSize)
+        lock (_gate)
         {
-            throw new AzaharRpcException($"Respuesta truncada ({reply.Length} bytes).");
-        }
+            Exception? last = null;
 
-        var replyVersion = BinaryPrimitives.ReadUInt32LittleEndian(reply);
-        var replyId = BinaryPrimitives.ReadUInt32LittleEndian(reply.AsSpan(4));
-        var replyType = BinaryPrimitives.ReadUInt32LittleEndian(reply.AsSpan(8));
-        var replySize = BinaryPrimitives.ReadUInt32LittleEndian(reply.AsSpan(12));
+            for (var attempt = 1; attempt <= Attempts; attempt++)
+            {
+                try
+                {
+                    _socket.Send(request, request.Length, _endpoint);
+                    return Receive(requestId, type);
+                }
+                catch (SocketException ex)
+                {
+                    // Se perdió el datagrama, o el emulador estaba ocupado. Se vuelve a pedir con
+                    // el MISMO id, así que si la respuesta anterior llega tarde todavía sirve.
+                    last = ex;
+                    Retries++;
+                }
+            }
 
-        if (replyVersion != ProtocolVersion || replyId != requestId || replyType != (uint)type)
-        {
             throw new AzaharRpcException(
-                $"Respuesta inesperada: versión {replyVersion}, id {replyId}, tipo {replyType}.");
+                $"Sin respuesta de {_endpoint} tras {Attempts} intentos: {last?.Message}");
         }
+    }
 
-        if (replySize != reply.Length - HeaderSize)
+    /// <summary>Waits for the reply with this id, throwing away anything older that is queued.</summary>
+    private byte[] Receive(uint requestId, RpcRequestType type)
+    {
+        while (true)
         {
-            throw new AzaharRpcException(
-                $"El tamaño declarado ({replySize}) no coincide con el recibido ({reply.Length - HeaderSize}).");
-        }
+            IPEndPoint? from = null;
+            var reply = _socket.Receive(ref from);
 
-        return reply[HeaderSize..];
+            if (reply.Length < HeaderSize)
+            {
+                throw new AzaharRpcException($"Respuesta truncada ({reply.Length} bytes).");
+            }
+
+            var replyVersion = BinaryPrimitives.ReadUInt32LittleEndian(reply);
+            var replyId = BinaryPrimitives.ReadUInt32LittleEndian(reply.AsSpan(4));
+            var replyType = BinaryPrimitives.ReadUInt32LittleEndian(reply.AsSpan(8));
+            var replySize = BinaryPrimitives.ReadUInt32LittleEndian(reply.AsSpan(12));
+
+            if (replyId != requestId)
+            {
+                // La respuesta a una petición anterior que llegó tarde. Se tira y se sigue
+                // esperando: leerla como si fuera esta es lo que desincronizaba el socket.
+                Discarded++;
+                continue;
+            }
+
+            if (replyVersion != ProtocolVersion || replyType != (uint)type)
+            {
+                throw new AzaharRpcException(
+                    $"Respuesta inesperada: versión {replyVersion}, id {replyId}, tipo {replyType}.");
+            }
+
+            if (replySize != reply.Length - HeaderSize)
+            {
+                throw new AzaharRpcException(
+                    $"El tamaño declarado ({replySize}) no coincide con el recibido ({reply.Length - HeaderSize}).");
+            }
+
+            return reply[HeaderSize..];
+        }
     }
 }

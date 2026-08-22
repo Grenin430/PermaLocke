@@ -4199,3 +4199,51 @@ Este proyecto llevaba varias secciones repitiendo «medir, no adivinar» y aun a
 del fallo merece recordarse: **un campo leído de una estructura solo vale donde esa estructura está
 identificada**. El mismo offset, en otro sitio, no es una lectura mala — es una lectura de otra cosa.
 Añadir una condición «por si acaso» sobre un campo así no da seguridad, da un disparador aleatorio.
+
+---
+
+## 54. Por qué el enlace se moría a media sesión (2026-08-22)
+
+El cap de nivel solo vigila mientras hay enlace, y el log decía que el día del incidente PermaLocke
+estuvo conectado al juego **once segundos** una vez y **ciento ocho** la otra. Y no se caía y volvía:
+se caía y **ya no volvía** en toda la sesión. Eso descarta un problema pasajero de red — un corte
+intermitente parpadea— y apunta a algo que se rompe y se queda roto.
+
+Estaba en `AzaharRpcClient.Send`, que hacía exactamente esto: mandar un datagrama, esperar uno, y
+darlo por bueno.
+
+### Dos defectos, y el segundo es el que mata
+
+**Una sola conversación, muchos hablando.** El cliente es un *singleton* sobre un único socket UDP.
+El sondeo pregunta cada segundo desde su tarea, y la tienda, las herramientas de mochila, el visor y
+las sondas preguntan desde las suyas. Dos peticiones solapadas sobre el mismo socket y cada una lee
+la respuesta de la otra: fallan las dos, y encima cada una se ha comido el datagrama que le hacía
+falta a la contraria.
+
+**Una respuesta que llega tarde no es la tuya.** UDP guarda lo que llegue, aunque llegue después del
+plazo. El código leía ese datagrama viejo como si fuera la respuesta de ahora, veía un id que no
+cuadraba y lanzaba. Y el siguiente igual, y el siguiente: el socket se queda **permanentemente una
+respuesta por detrás**. Un hipo con el emulador ocupado en un combate se convertía en «Azahar no
+responde» hasta reiniciar la aplicación. Eso es exactamente lo que cuenta el log.
+
+### Lo que hace ahora
+
+- **Un cerrojo** alrededor de mandar y recibir. Es un protocolo de petición y respuesta sobre un
+  socket: serializar no es una precaución, es lo que el protocolo pide.
+- **Se vacía la cola hasta encontrar la respuesta buena.** Un id que no cuadra ya no es un error, es
+  una respuesta vieja: se tira y se sigue esperando. Ahí se acabó la desincronización.
+- **Tres intentos.** Se repite con el **mismo id**, de modo que si la respuesta del primer intento
+  llega tarde todavía sirve. Un datagrama perdido es un hipo, no una desconexión.
+- Dos contadores públicos, `Retries` y `Discarded`, para poder mirar la salud del enlace en vez de
+  suponerla.
+
+### Comprobado
+
+Con un servidor UDP falso que se porta mal a la carta: uno que se traga el primer datagrama y otro
+que manda una respuesta ajena antes de cada respuesta buena. La prueba del descarte **se verificó que
+falla con el comportamiento viejo**, desactivando solo esa línea, que es lo único que convierte una
+prueba en una prueba.
+
+Y contra el emulador real: la aplicación sondeando a 1 Hz mientras seis procesos de la sonda barrían
+la memoria a la vez. Los seis contestaron y el enlace **no se cayó ni una vez** en los minutos
+siguientes. Antes, esa misma concurrencia era justo lo que lo mataba.
