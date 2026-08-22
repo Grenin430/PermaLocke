@@ -15,13 +15,13 @@ namespace PermaLocke.Core.Domain;
 /// </remarks>
 /// <param name="Earn">Multiplies points <em>gained</em>. Never what is spent.</param>
 /// <param name="Lose">Multiplies points <em>lost</em> to penalties. Zero means a role never loses.</param>
-/// <param name="TrainerLevelPercent">
+/// <param name="EnemyLevelPercent">
 /// How much the trainers' levels are raised over the cartridge, as a percentage. The competition's
 /// base edit is 20 for everyone; a harder role goes above it.
 /// </param>
 /// <param name="PlayerCapPercent">
 /// How much the player's own level cap is raised over the cartridge. Deliberately separate from
-/// <paramref name="TrainerLevelPercent"/>: a role gets harder precisely by letting the rivals
+/// <paramref name="EnemyLevelPercent"/>: a role gets harder precisely by letting the rivals
 /// climb without letting the player follow.
 /// </param>
 /// <param name="ExtraTrainerPokemon">Pokémon added to the important battles.</param>
@@ -32,7 +32,7 @@ public sealed record Role(
     string Description,
     double Earn,
     double Lose,
-    int TrainerLevelPercent,
+    int EnemyLevelPercent,
     int PlayerCapPercent,
     int ExtraTrainerPokemon)
 {
@@ -59,7 +59,7 @@ public sealed record Role(
 
     /// <summary>A trainer's level, raised by whatever this role gives the trainers.</summary>
     public int TrainerLevelFor(int cartridgeLevel) =>
-        Math.Clamp((int)Math.Round(cartridgeLevel * (1 + (TrainerLevelPercent / 100.0)),
+        Math.Clamp((int)Math.Round(cartridgeLevel * (1 + (EnemyLevelPercent / 100.0)),
             MidpointRounding.AwayFromZero), 1, 100);
 }
 

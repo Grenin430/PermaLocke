@@ -131,12 +131,12 @@ async Task RandomizeAsync(ulong seed)
 
         options = options with
         {
-            TrainerLevelPercent = role.TrainerLevelPercent,
+            EnemyLevelPercent = role.EnemyLevelPercent,
             ExtraTrainerPokemon = role.ExtraTrainerPokemon,
             ImportantTrainerClasses = roles.ImportantTrainerClasses,
         };
 
-        Console.WriteLine($"rol {role.Id}: entrenadores +{role.TrainerLevelPercent}%, "
+        Console.WriteLine($"rol {role.Id}: entrenadores +{role.EnemyLevelPercent}%, "
                           + $"+{role.ExtraTrainerPokemon} Pokémon en "
                           + $"{roles.ImportantTrainerClasses.Count} clases importantes");
     }

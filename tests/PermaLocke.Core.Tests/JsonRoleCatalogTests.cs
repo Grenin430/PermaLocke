@@ -88,7 +88,7 @@ public sealed class JsonRoleCatalogTests : IDisposable
 
         Assert.Equal(10, role.Earn);
         Assert.Equal(0, role.Lose);
-        Assert.Equal(200, role.TrainerLevelPercent);
+        Assert.Equal(200, role.EnemyLevelPercent);
         Assert.Equal(5, role.ExtraTrainerPokemon);
     }
 
@@ -118,9 +118,9 @@ public sealed class JsonRoleCatalogTests : IDisposable
         Assert.Equal(2.0, experto.Lose);
 
         // Los entrenadores suben; el cap del jugador es el de la tabla y no se toca.
-        Assert.Equal(20, normal.TrainerLevelPercent);
-        Assert.Equal(20, cagoneta.TrainerLevelPercent);
-        Assert.Equal(27, experto.TrainerLevelPercent);
+        Assert.Equal(20, normal.EnemyLevelPercent);
+        Assert.Equal(20, cagoneta.EnemyLevelPercent);
+        Assert.Equal(27, experto.EnemyLevelPercent);
         Assert.All(catalog.All, role => Assert.Equal(0, role.PlayerCapPercent));
 
         // El extra lo llevan todos; el experto uno más.

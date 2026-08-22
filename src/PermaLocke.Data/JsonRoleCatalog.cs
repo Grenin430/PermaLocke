@@ -55,7 +55,7 @@ public sealed class JsonRoleCatalog(IReadOnlyList<Role> all, IReadOnlySet<int> i
                     // cien no sería una dificultad, sería un error de tecleo.
                     Math.Clamp(entry.Earn ?? 1.0, 0, 10),
                     Math.Clamp(entry.Lose ?? 1.0, 0, 10),
-                    Math.Clamp(entry.TrainerLevelPercent ?? 0, 0, 200),
+                    Math.Clamp(entry.EnemyLevelPercent ?? entry.LegacyTrainerLevelPercent ?? 0, 0, 200),
                     Math.Clamp(entry.PlayerCapPercent ?? 0, 0, 200),
                     Math.Clamp(entry.ExtraTrainerPokemon ?? 0, 0, 5)))
         ], important);
@@ -72,7 +72,8 @@ public sealed class JsonRoleCatalog(IReadOnlyList<Role> all, IReadOnlySet<int> i
         [property: JsonPropertyName("description")] string? Description,
         [property: JsonPropertyName("ganancia")] double? Earn,
         [property: JsonPropertyName("perdida")] double? Lose,
-        [property: JsonPropertyName("nivelEntrenadores")] int? TrainerLevelPercent,
+        [property: JsonPropertyName("nivelEnemigos")] int? EnemyLevelPercent,
+        [property: JsonPropertyName("nivelEntrenadores")] int? LegacyTrainerLevelPercent,
         [property: JsonPropertyName("capDelJugador")] int? PlayerCapPercent,
         [property: JsonPropertyName("pokemonExtra")] int? ExtraTrainerPokemon);
 }

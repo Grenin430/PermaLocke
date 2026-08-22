@@ -9,7 +9,9 @@ namespace PermaLocke.Randomizer.Modules;
 /// <param name="Replaced">Entries whose species changed.</param>
 /// <param name="Protected">Entries left alone because the story depends on them.</param>
 /// <param name="Starters">The three species the player will get to choose from.</param>
-public sealed record StaticEncounterResult(int Replaced, int Protected, IReadOnlyList<string> Starters);
+/// <param name="LevelsRaised">Entries whose level the role moved.</param>
+public sealed record StaticEncounterResult(
+    int Replaced, int Protected, IReadOnlyList<string> Starters, int LevelsRaised = 0);
 
 /// <summary>
 /// Rewrites the starters, the eleven fossils, gifts, static encounters, totems and the species
@@ -26,6 +28,7 @@ public sealed class StaticEncounterRandomizer(RomWorkspace workspace, Randomizer
 
         var replaced = 0;
         var kept = 0;
+        var raised = 0;
         string[] starters;
 
         using (var patcher = new GarcPatcher(path))
@@ -48,12 +51,13 @@ public sealed class StaticEncounterRandomizer(RomWorkspace workspace, Randomizer
                 ct.ThrowIfCancellationRequested();
                 var payload = patcher.Read(layout.Subfile);
                 Randomize(payload, layout, random, pool, untouchable, 0, ref replaced, ref kept);
+                raised += Raise(payload, layout);
                 patcher.Write(layout.Subfile, payload);
             }
         }
 
         await VerifyAsync(path, untouchable, ct);
-        return new StaticEncounterResult(replaced, kept, starters);
+        return new StaticEncounterResult(replaced, kept, starters, raised);
     }
 
     /// <summary>
@@ -108,6 +112,52 @@ public sealed class StaticEncounterRandomizer(RomWorkspace workspace, Randomizer
             StaticEncounterTable.SetSpecies(payload, layout, i, pool.Pick(random, original));
             replaced++;
         }
+    }
+
+    /// <summary>
+    /// Raises the levels of a table by whatever the role asks for, and says how many moved.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This is what makes the trials keep up with the rest of the game. The Totem Pokémon are not
+    /// trainers — they live here, in the statics — so the level raise that reaches every trainer
+    /// was passing straight over them, leaving the eight trial bosses at cartridge level while
+    /// everything around them climbed 20%. The competition's own cap table is <em>built</em> from
+    /// the raised levels, so a Totem left behind is a boss the player outlevels by design.
+    /// </para>
+    /// <para>
+    /// Gifts and trades have no level to raise, and would be the wrong thing to raise anyway: a
+    /// starter or a fossil is something the player receives, and making it stronger is a present,
+    /// not a difficulty. The layout says which tables carry a level, and only those change.
+    /// </para>
+    /// </remarks>
+    private int Raise(byte[] payload, EncounterEntryLayout layout)
+    {
+        if (options.EnemyLevelPercent <= 0 || layout.LevelOffset is null)
+        {
+            return 0;
+        }
+
+        var moved = 0;
+        for (var i = 0; i < StaticEncounterTable.Count(payload, layout); i++)
+        {
+            var level = StaticEncounterTable.GetLevel(payload, layout, i);
+            if (level <= 0)
+            {
+                continue;
+            }
+
+            var raised = TrainerRandomizer.Raise(level, options.EnemyLevelPercent);
+            if (raised == level)
+            {
+                continue;
+            }
+
+            StaticEncounterTable.SetLevel(payload, layout, i, raised);
+            moved++;
+        }
+
+        return moved;
     }
 
     /// <summary>

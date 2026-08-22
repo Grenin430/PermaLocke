@@ -172,7 +172,7 @@ public sealed partial class RoleChoiceViewModel(Role role, Action<RoleChoiceView
             {
                 Role.Earn == 1 ? "puntos normales" : $"ganas ×{Role.Earn:0.##}",
                 Role.Lose == 0 ? "no pierdes puntos" : Role.Lose == 1 ? "pierdes normal" : $"pierdes ×{Role.Lose:0.##}",
-                $"entrenadores +{Role.TrainerLevelPercent}%",
+                $"enemigos +{Role.EnemyLevelPercent}%",
                 $"tu cap +{Role.PlayerCapPercent}%"
             };
 

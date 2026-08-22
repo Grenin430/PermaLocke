@@ -96,7 +96,10 @@ public sealed class RandomizerService(RandomizerOptions options)
             var result = await new StaticEncounterRandomizer(workspace, options)
                 .ApplyAsync(random, pool, mod, ct);
             steps.Add(new RandomizerStep("Iniciales, fósiles y estáticos",
-                $"{result.Replaced} entradas ({result.Protected} intactas). Iniciales: {string.Join(", ", result.Starters)}"));
+                $"{result.Replaced} entradas ({result.Protected} intactas). Iniciales: {string.Join(", ", result.Starters)}"
+                + (result.LevelsRaised > 0
+                    ? $"; {result.LevelsRaised} niveles subidos por el rol (dominantes y legendarios incluidos)"
+                    : string.Empty)));
         }
 
         if (options.Trainers)

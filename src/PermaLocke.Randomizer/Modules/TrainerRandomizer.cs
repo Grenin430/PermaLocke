@@ -53,10 +53,10 @@ public sealed class TrainerRandomizer(RomWorkspace workspace, RandomizerOptions 
                     // El nivel lo sube el ROL, no la randomización, y se sube SIEMPRE: también en
                     // los Pokémon protegidos, porque un Cosmog al nivel del cartucho en un juego
                     // donde todo lo demás va un 20% por encima sería un regalo, no una protección.
-                    if (options.TrainerLevelPercent > 0)
+                    if (options.EnemyLevelPercent > 0)
                     {
                         var raised = Raise(TrainerPokemonTable.GetLevel(party, slot),
-                            options.TrainerLevelPercent);
+                            options.EnemyLevelPercent);
 
                         if (raised != TrainerPokemonTable.GetLevel(party, slot))
                         {

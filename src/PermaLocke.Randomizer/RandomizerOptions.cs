@@ -73,7 +73,7 @@ public sealed record RandomizerOptions
     /// reason the role has to be chosen before anything is generated: two players on different
     /// roles do not get the same world, and changing role later means randomizing again.
     /// </remarks>
-    public int TrainerLevelPercent { get; init; }
+    public int EnemyLevelPercent { get; init; }
 
     /// <summary>Pokémon added to each important battle. Zero leaves the parties alone.</summary>
     /// <remarks>Also from the role. See <see cref="ImportantTrainerClasses"/> for what counts.</remarks>

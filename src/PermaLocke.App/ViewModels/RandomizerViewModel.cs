@@ -160,7 +160,7 @@ public sealed partial class RandomizerViewModel : SectionViewModel
             {
                 options = options with
                 {
-                    TrainerLevelPercent = role.TrainerLevelPercent,
+                    EnemyLevelPercent = role.EnemyLevelPercent,
                     ExtraTrainerPokemon = role.ExtraTrainerPokemon,
                     ImportantTrainerClasses = _roleCatalog.ImportantTrainerClasses,
                 };

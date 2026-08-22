@@ -59,9 +59,9 @@ public sealed class RoleTests
     [Fact]
     public void The_experto_lets_the_trainers_outgrow_its_own_cap()
     {
-        Assert.Equal(20, FixedRole.Normal.TrainerLevelPercent);
-        Assert.Equal(27, FixedRole.Experto.TrainerLevelPercent);
-        Assert.True(FixedRole.Experto.TrainerLevelPercent > FixedRole.Experto.PlayerCapPercent);
+        Assert.Equal(20, FixedRole.Normal.EnemyLevelPercent);
+        Assert.Equal(27, FixedRole.Experto.EnemyLevelPercent);
+        Assert.True(FixedRole.Experto.EnemyLevelPercent > FixedRole.Experto.PlayerCapPercent);
     }
 
     /// <summary>

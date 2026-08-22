@@ -3586,3 +3586,78 @@ les cabía uno.
 
 Lo que no se puede comprobar sin jugar: si algún combate con guion da por sentado un tamaño de
 equipo concreto. No hay forma de saberlo leyendo ficheros.
+
+---
+
+## 48. Los Dominantes también suben, y la tabla de caps se explica sola (2026-08-22)
+
+### El nivel de un estático estaba sin identificar
+
+Los Pokémon dominantes **no son entrenadores**: viven en la tabla de estáticos de `a/1/5/9`, junto
+a Necrozma, Solgaleo, Lunala, los Ultraentes, los Tapus y los legendarios del ultraumbral. Su nivel
+está en el **byte 0x03** de una entrada de 0x38.
+
+Se encontró buscando un byte que valga siempre entre 1 y 100 y varíe, y se confirmó contra cosas
+cuyo nivel no admite duda: Solgaleo y Lunala a 60, el Dominante Gumshoos a 12, el Wishiwashi a 20,
+el Salazzle a 22.
+
+### La tabla de caps de la competición ES el jefe con el +20%
+
+Con los niveles de los jefes en la mano se puede comprobar de dónde salió `Data/levelcaps.json`, y
+la respuesta es limpia: **el cap de cada etapa es el nivel del jefe subido un 20%**.
+
+| etapa | cap | jefe | cartucho | +20% |
+|---|---|---|---|---|
+| 1ª prueba | 14 | Dominante | 12 | **14** |
+| 2ª prueba | 24 | Dominante Araquanid | 20 | **24** |
+| 3ª prueba | 26 | Dominante Salazzle | 22 | **26** |
+| 4ª prueba | 29 | Dominante Lurantis | 24 | **29** |
+| Gran Prueba Mayla | 34 | Kahuna | 28 | **34** |
+| 5ª prueba | 40 | Dominante Togedemaru | 33 | **40** |
+| 6ª prueba | 42 | Dominante Mimikyu | 35 | **42** |
+| Cañón de Poni | 59 | Dominante Kommo-o | 49 | **59** |
+| 7ª prueba | 66 | Dominante Ribombee | 55 | **66** |
+
+Nueve de catorce clavadas. Las que no: la 2ª (cap 20, +20% da 19 y +27% da 20), la 9ª (54 contra
+53) y la 12ª (67 contra 65), diferencias de uno o dos puntos.
+
+Eso convierte lo que parecían dos reglas —«tu cap como está» y «los entrenadores un 20% más»— en
+**una sola cosa mirada desde los dos lados**: llegas a cada jefe exactamente a su nivel.
+
+### Y por eso los Dominantes tenían que subir
+
+Si el cap está calculado sobre el jefe subido y el Dominante se queda al nivel del cartucho, las
+**ocho pruebas** quedan por debajo de lo que la propia tabla presupone: llegas a la primera a nivel
+14 contra un Gumshoos de 12. Las cuatro grandes pruebas iban bien porque los kahunas son
+entrenadores; las pruebas no.
+
+Así que el porcentaje del rol se aplica ahora también a la tabla de estáticos, y con él suben los
+Dominantes, Necrozma, Solgaleo, Lunala, los Ultraentes, los Tapus y los legendarios.
+
+**Los regalos no.** Los iniciales, los fósiles, Código Cero, Magearna, Cosmog y los Dominantes que
+regalan por las pegatinas viven en otra tabla, que ni siquiera lleva nivel. Subirle el nivel a lo
+que te dan sería un premio, no una dificultad, y el propio formato lo impide: `LevelOffset` es null
+en esas tablas y `SetLevel` no hace nada.
+
+Por eso el número del rol dejó de llamarse `nivelEntrenadores` y pasa a ser **`nivelEnemigos`**: ya
+no gobierna solo a los entrenadores. El nombre viejo se sigue leyendo, para que un fichero de antes
+no cambie de significado en silencio.
+
+### Verificado contra la ROM real, rol experto
+
+| | cartucho | +27% |
+|---|---|---|
+| Dominante de la 1ª prueba | 12 | **15** |
+| Dominante Kommo-o | 49 | **62** |
+| Dominante Ribombee | 55 | **70** |
+| Necrozma | 75 | **95** |
+| Solgaleo / Lunala | 60 | **76** |
+| Tapu Koko | 60 | **76** |
+
+252 estáticos subidos, **0 con un nivel distinto del esperado**, y la tabla de regalos byte a byte
+idéntica.
+
+Aviso que conviene tener presente: los legendarios del ultraumbral, que en el cartucho salen todos
+a 60, pasan a **76** con el experto. Eso está por encima del cap de la Liga (73), así que un experto
+que capture uno no podrá usarlo hasta el rematch. Es consecuencia de la regla, no un fallo, pero
+conviene saberlo antes de que pase.
