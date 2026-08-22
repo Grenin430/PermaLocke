@@ -132,9 +132,10 @@ capa que conoce legítimamente el dominio y las reglas a la vez) convierte un in
 en veredictos, un Pokémon persistido y eventos de auditoría. Diálogo de registro en la App con
 evaluación en vivo. Nombres de especie desde **PKHeX.Core** (807 especies, español). 73 tests.
 
-Limitación conocida: `LevelCapRule` está implementada y testeada, pero `RuleContext.LevelCap`
-es siempre null porque **no existe seguimiento de etapa** (pruebas superadas). Empezará a
-disparar cuando se registre el progreso de pruebas.
+Limitación conocida durante mucho tiempo, **ya resuelta el 2026-08-22**: `LevelCapRule` estaba
+implementada y testeada pero `RuleContext.LevelCap` era siempre null porque no había seguimiento de
+etapa. Ahora las doce pruebas se cuentan solas por su cristal Z, así que la etapa **se deduce** de
+los logros. Ver §49 y el apartado del final.
 
 **Lectura en vivo del juego resuelta y verificada.** El equipo se localiza barriendo heap y
 linear y ofreciendo cada offset a PKHeX; se encontró en `0x330128E4`, estable tras reiniciar el
@@ -419,6 +420,13 @@ debajo de lo que la propia tabla presupone. Ahora el porcentaje del rol llega ta
 estáticos —Dominantes, Necrozma, Solgaleo, Ultraentes, Tapus, legendarios—, pero **no a los
 regalos**: esa tabla ni siquiera lleva nivel, y subir lo que te dan sería un premio. El número del
 rol pasa a llamarse `nivelEnemigos`, leyendo aún el nombre viejo. Ver §48.
+
+**Cap de nivel en marcha (2026-08-22).** La etapa ya no se pulsa: **se deduce de los logros**.
+`Data/levelcaps.json` lleva un `logro` por etapa y se toma la más alta desbloqueada; el botón se
+queda y se combina con `Math.Max`, así que **la detección solo puede subir el cap, nunca bajarlo**.
+Visto en la run real: pasó sola de la 1ª prueba a la 3ª, cap 24. Alcance, que conviene tenerlo
+claro: corrige **solo el equipo** —lo que duerme en una caja no se toca hasta que entra a jugar— y
+**solo con la aplicación abierta y Azahar respondiendo**. Ver §49.
 
 **Siguiente.** Sincronización, y probar en partida real los combates importantes, los iniciales y
 las tiendas.
