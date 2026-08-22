@@ -3661,3 +3661,41 @@ Aviso que conviene tener presente: los legendarios del ultraumbral, que en el ca
 a 60, pasan a **76** con el experto. Eso está por encima del cap de la Liga (73), así que un experto
 que capture uno no podrá usarlo hasta el rematch. Es consecuencia de la regla, no un fallo, pero
 conviene saberlo antes de que pase.
+
+### Corrección: hay catorce Dominantes, no ocho
+
+La lista de Dominantes del apartado anterior se sacó filtrando por **nombres de especie que puse a
+mano**, que es exactamente la forma de que se escape algo. Y se escaparon seis.
+
+Enumerándolos por el cartucho salen **catorce**. La marca se encontró comparando los Dominantes
+conocidos contra sus propios acompañantes de la misma prueba: el **byte 0x07 vale 2** en todos
+ellos y 0 en cualquier acompañante. Hay además una segunda marca independiente, los tres bytes de
+**0x21, que leen `FF-99-19`** — el aura que le sube las estadísticas.
+
+| Dominante | Nv | dónde |
+|---|---|---|
+| Raticate (forma 2) | 12 | Cueva Sotobosque — **el de Ultra Luna** |
+| Gumshoos | 12 | Cueva Sotobosque — el de Ultra Sol |
+| Araquanid | 20 | Colina Cascada — **Ultra Luna** |
+| Wishiwashi | 20 | Colina Cascada — Ultra Sol |
+| Marowak (forma 2) | 22 | Área Volcánica — **Ultra Luna** |
+| Salazzle | 22 | Área Volcánica — Ultra Sol |
+| Lurantis | 24 | Jungla Umbría |
+| Togedemaru | 33 | Observatorio — **Ultra Luna** |
+| Vikavolt | 29 | Observatorio — Ultra Sol |
+| Mimikyu (forma 2) | 35 | Supermercado |
+| Kommo-o | 49 | Cañón de Poni |
+| Ribombee | 55 | prueba de Rika |
+| Gumshoos | 60 | revancha de postgame |
+| Raticate | 60 | revancha de postgame |
+
+Ocho son los de la partida que se juega, seis son los de la otra versión y las dos revanchas. Como
+el porcentaje del rol se aplica a **toda** la tabla de estáticos, los catorce ya suben; lo que
+estaba mal era la lista, no el comportamiento.
+
+Las tres filas donde mi tabla de caps nombraba al Dominante de Ultra Sol —Gumshoos, Wishiwashi y
+Salazzle— tienen el mismo nivel que el de Ultra Luna, así que **los caps no cambian**: 12, 20 y 22.
+
+`StaticEncounterTable.IsTotem` exige **las dos marcas a la vez**, y no por gusto: Tapu Koko lleva el
+byte de tipo de un Dominante y ningún aura. Sea lo que sea eso, no es un Dominante, y pedir las dos
+lo deja fuera sin que nadie tenga que nombrarlo.

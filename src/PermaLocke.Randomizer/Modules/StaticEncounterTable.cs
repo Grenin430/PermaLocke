@@ -60,6 +60,49 @@ public static class StaticEncounterTable
         payload[at + layout.FormOffset] = 0;
     }
 
+    /// <summary>
+    /// Byte that says what kind of encounter an entry is. Two means a <b>Totem</b>.
+    /// </summary>
+    /// <remarks>
+    /// Found by diffing the known Totems against their own SOS allies: the eight trial bosses all
+    /// carry 2 here and every ally carries 0. Confirmed by a second, independent mark — the three
+    /// bytes at 0x21 read <c>FF-99-19</c> on a Totem and zero on everything else, which is the aura
+    /// that boosts its stats.
+    /// <para>
+    /// Enumerating by this beats any list of species: there are <b>fourteen</b> Totems, not the
+    /// eight of a single playthrough, because each version has its own for three of the trials and
+    /// two more exist as level 60 rematches. A hand-written list had already missed six of them.
+    /// </para>
+    /// </remarks>
+    public const int KindOffset = 0x07;
+
+    /// <summary>Value of <see cref="KindOffset"/> that marks a Totem.</summary>
+    public const int TotemKind = 2;
+
+    /// <summary>First of the three aura bytes, the second and independent mark of a Totem.</summary>
+    public const int AuraOffset = 0x21;
+
+    /// <summary>
+    /// True when this entry is a Totem, by both marks at once.
+    /// </summary>
+    /// <remarks>
+    /// Both, because they disagree on exactly one entry: Tapu Koko carries the kind byte of a Totem
+    /// and none of the aura. Whatever that means, it is not a Totem, and asking for both keeps it
+    /// out without anyone having to name it.
+    /// </remarks>
+    public static bool IsTotem(byte[] payload, EncounterEntryLayout layout, int index)
+    {
+        if (layout.LevelOffset is null)
+        {
+            return false;
+        }
+
+        var at = index * layout.Stride;
+        return payload[at + KindOffset] == TotemKind
+               && payload[at + AuraOffset] == 0xFF
+               && payload[at + AuraOffset + 1] == 0x99;
+    }
+
     /// <summary>The level of an entry, or zero when the table does not carry one.</summary>
     public static int GetLevel(byte[] payload, EncounterEntryLayout layout, int index) =>
         layout.LevelOffset is { } offset ? payload[(index * layout.Stride) + offset] : 0;

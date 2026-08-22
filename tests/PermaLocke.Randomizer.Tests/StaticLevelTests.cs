@@ -83,6 +83,41 @@ public sealed class StaticLevelTests
     }
 
     /// <summary>
+    /// A Totem is recognised by both marks at once: the kind byte and the aura.
+    /// </summary>
+    /// <remarks>
+    /// Tapu Koko carries the kind byte and no aura, and asking for both is what keeps it out
+    /// without anyone having to name it in a list.
+    /// </remarks>
+    [Fact]
+    public void A_totem_needs_both_marks()
+    {
+        var payload = new byte[StaticEncounterTable.Statics.Stride * 3];
+
+        // 0: los dos marcadores. 1: solo el tipo, como Tapu Koko. 2: nada.
+        payload[StaticEncounterTable.KindOffset] = StaticEncounterTable.TotemKind;
+        payload[StaticEncounterTable.AuraOffset] = 0xFF;
+        payload[StaticEncounterTable.AuraOffset + 1] = 0x99;
+
+        payload[StaticEncounterTable.Statics.Stride + StaticEncounterTable.KindOffset] =
+            StaticEncounterTable.TotemKind;
+
+        Assert.True(StaticEncounterTable.IsTotem(payload, StaticEncounterTable.Statics, 0));
+        Assert.False(StaticEncounterTable.IsTotem(payload, StaticEncounterTable.Statics, 1));
+        Assert.False(StaticEncounterTable.IsTotem(payload, StaticEncounterTable.Statics, 2));
+    }
+
+    /// <summary>A table with no level has no Totems either.</summary>
+    [Fact]
+    public void A_table_without_levels_has_no_totems()
+    {
+        var payload = new byte[StaticEncounterTable.Gifts.Stride * 2];
+        payload[StaticEncounterTable.KindOffset] = StaticEncounterTable.TotemKind;
+
+        Assert.False(StaticEncounterTable.IsTotem(payload, StaticEncounterTable.Gifts, 0));
+    }
+
+    /// <summary>
     /// The Totems at the levels the cartridge really has them, raised by each role. These are the
     /// eight trial bosses, and the whole reason the statics needed raising at all.
     /// </summary>
