@@ -98,10 +98,11 @@ public static class PartyLiveProbe
                     continue;
                 }
 
-                var result = writer.EnforceLevelCap(address, wanted, pokemon.PID);
+                var result = writer.EnforceLevelCap(address, wanted, pokemon.PID,
+                    layout.Stride == PartyLayoutLocator.CopyStride);
                 var name = pokemon.Species < names.Length ? names[pokemon.Species] : "?";
 
-                Console.WriteLine($"   0x{address:X8} {name,-12} nivel {pokemon.Stat_Level,3} -> "
+                Console.WriteLine($"   0x{address:X8} {name,-12} nivel {pokemon.CurrentLevel,3} -> "
                                   + (result.Applied ? "ESCRITO Y RELEIDO"
                                       : result.Rejected ? $"RECHAZADO ({result.Verified}/{result.Written} bytes)"
                                       : "no se ha tocado"));
