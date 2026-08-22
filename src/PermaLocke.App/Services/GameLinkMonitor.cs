@@ -192,7 +192,7 @@ public sealed class GameLinkMonitor(
     /// </remarks>
     private async Task EnforceLevelCapAsync(Run run, GameSnapshot snapshot)
     {
-        if (progress.CurrentCap(run) is not { } cap || provider.AllLayouts.Count == 0)
+        if (await progress.CurrentCapAsync(run, _stopping.Token) is not { } cap || provider.AllLayouts.Count == 0)
         {
             return;
         }

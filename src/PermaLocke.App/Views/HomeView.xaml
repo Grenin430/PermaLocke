@@ -102,7 +102,14 @@
                                            VerticalAlignment="Center" />
                             </DockPanel>
                             <TextBlock Style="{StaticResource Muted}" FontSize="11" Margin="0,2,0,0"
-                                       Text="Cap de nivel en vigor. Nada puede pasar de ahí." />
+                                       TextWrapping="Wrap"
+                                       Text="Cap de nivel en vigor. Nada puede pasar de ahí: lo que se pase vuelve al cap solo, y se ve al entrar en el siguiente combate." />
+                            <TextBlock Text="{Binding StageSourceText}" Style="{StaticResource Muted}"
+                                       FontSize="11" Margin="0,4,0,0" TextWrapping="Wrap"
+                                       Foreground="{StaticResource AccentBrush}" />
+                            <TextBlock Style="{StaticResource Muted}" FontSize="10" Margin="0,6,0,0"
+                                       TextWrapping="Wrap"
+                                       Text="La etapa sube sola en cuanto el cristal Z de la prueba entra en tu mochila. El botón es solo por si la detección se retrasa: puede subir el cap, nunca bajarlo." />
                             <Button Content="HE SUPERADO LA ETAPA" Command="{Binding AdvanceStageCommand}"
                                     Style="{StaticResource PrimaryButton}" Padding="10,5" FontSize="11"
                                     HorizontalAlignment="Left" Margin="0,8,0,0" />

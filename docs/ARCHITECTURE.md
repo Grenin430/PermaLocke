@@ -3699,3 +3699,48 @@ Salazzle— tienen el mismo nivel que el de Ultra Luna, así que **los caps no c
 `StaticEncounterTable.IsTotem` exige **las dos marcas a la vez**, y no por gusto: Tapu Koko lleva el
 byte de tipo de un Dominante y ningún aura. Sea lo que sea eso, no es un Dominante, y pedir las dos
 lo deja fuera sin que nadie tenga que nombrarlo.
+
+---
+
+## 49. El cap de nivel, por fin en marcha (2026-08-22)
+
+Desde la fase 3 había una limitación escrita en todas partes: `LevelCapRule` implementada y probada,
+pero `RuleContext.LevelCap` siempre null porque **no existía seguimiento de etapa**. La etapa solo
+avanzaba con un botón, «HE SUPERADO LA ETAPA», que hay que acordarse de pulsar.
+
+Eso ya no hace falta. Las doce pruebas **se cuentan solas** desde el §43: en cuanto el cristal Z
+entra en la mochila, el logro se marca. Así que la etapa se puede deducir en vez de recordarla.
+
+`Data/levelcaps.json` gana un campo `logro` por etapa, y `ProgressService` calcula las etapas
+superadas como **la más alta cuya logro está desbloqueado**. La más alta y no la cuenta: si la
+detección ve la tercera prueba y no la segunda, el jugador está claramente pasada la tercera, y
+contar dejaría el cap una etapa por detrás.
+
+El botón se queda, y las dos fuentes se combinan con `Math.Max`. **La detección solo puede subir
+el cap**: si se retrasa, o si el fichero de partida no se puede leer, la run cae en lo que se haya
+pulsado. Un cap que bajase dejaría fuera de ley a un equipo que ya era legal.
+
+Leer la etapa significa parsear el fichero de partida, y el enlace con el juego pide el cap cada
+tres segundos, así que la detección se cachea **veinte segundos**: bastante corto para que una
+prueba recién superada valga casi al instante, bastante largo para no releer medio mega en cada
+tic.
+
+Visto en la run real: la etapa pasó sola de la 1ª prueba a la **3ª**, con el cap en **24**, y HOME
+dice de dónde sale el número — «2 etapas superadas, contadas por los logros».
+
+### Lo que el cap alcanza, y lo que no
+
+Lo que sube por encima **vuelve al cap solo**, escribiendo en la memoria del juego, y se ve al
+entrar en el siguiente combate porque el nivel en pantalla es un campo derivado que el juego
+recalcula entonces.
+
+Pero alcanza solo hasta donde mira, y conviene decirlo claro:
+
+- **Solo el equipo.** Un Pokémon por encima del cap guardado en una caja no se toca hasta que entra
+  en el equipo. En combate no puede usarse, así que no rompe ninguna regla, pero ahí está.
+- **Solo con la aplicación abierta y Azahar respondiendo.** Con PermaLocke cerrado nadie vigila. Es
+  inherente: no hay forma de que un programa que no se está ejecutando corrija nada.
+
+Por eso el Yveltal de nivel 100 de la run real llegó hasta ahí — se subió con caramelos raros
+mientras el enlace estaba caído— y por eso el historial tiene un único `LevelCapEnforced` suelto:
+la corrección funcionó la vez que la aplicación llegó a verlo.

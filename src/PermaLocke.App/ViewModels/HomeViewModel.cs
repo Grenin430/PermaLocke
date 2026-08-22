@@ -115,6 +115,10 @@ public sealed partial class HomeViewModel : SectionViewModel
     [ObservableProperty]
     private string _levelCapText = "—";
 
+    /// <summary>Says how many stages are cleared and who worked it out.</summary>
+    [ObservableProperty]
+    private string _stageSourceText = string.Empty;
+
     [ObservableProperty]
     private IReadOnlyList<Island> _islands = [];
 
@@ -276,9 +280,17 @@ public sealed partial class HomeViewModel : SectionViewModel
         PlayerName = run.PlayerName;
         Islands = run.Islands;
 
-        var stage = _progress.CurrentStage(run);
+        // La etapa la deducen los logros: en cuanto el cristal Z de la prueba entra en la
+        // mochila, el cap sube solo. El botón de abajo es red de seguridad, no el camino normal.
+        var cleared = await _progress.ClearedAsync(run);
+        var stage = await _progress.CurrentStageAsync(run);
         StageText = stage is null ? "sin definir" : stage.Name;
         LevelCapText = stage is null ? "—" : stage.Level.ToString();
+        StageSourceText = cleared > run.ClearedStages
+            ? $"{cleared} etapas superadas, contadas por los logros."
+            : cleared == 0
+                ? "Ninguna etapa superada todavía."
+                : $"{cleared} etapas superadas.";
 
         PointsBalance = await _points.GetBalanceAsync(run.Id);
 
