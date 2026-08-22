@@ -4017,3 +4017,77 @@ Iris y Poké Ball—, su nombre y el bolsillo al que van, incluido que el de obj
 
 Como todo lo que toca el juego, cada entrega deja su `TestItemGranted` con lo que había antes y lo
 que hay después.
+
+---
+
+## 53. El cap de nivel no se aplicaba, y el escritor no lo sabía (2026-08-22)
+
+El jugador entró en combate, salió, y su Yveltal seguía a nivel 100 con el cap en 24. El historial
+decía que se había corregido. Las dos cosas no pueden ser ciertas.
+
+### Lo que se midió
+
+Cada escritura guarda antes los bytes que reemplaza, así que la corrección de las 16:49 tenía su
+copia en disco. `Probe --pk` la lee y `--cap 24` dice qué cambiaría:
+
+```
+antes:  EXP 1250000 (nivel 100), Stat_Level 100
+tras poner CurrentLevel = 24:
+        EXP 17280 (nivel 24), Stat_Level 24
+        6 bytes cambiarian: 0x06, 0x07, 0x10, 0x11, 0x12, 0xEC
+```
+
+Dos cosas quedan claras de ahí. La primera, que **el contenido de la escritura era correcto**: un
+Pokémon de equipo lleva el nivel **dos veces** —como experiencia dentro del bloque cifrado y como
+`Stat_Level` en las estadísticas de combate que van detrás— y el asignador de `CurrentLevel` de
+PKHeX escribe los dos, 0x10-0x12 y 0xEC. La sospecha inicial de que solo tocaba la experiencia era
+falsa.
+
+La segunda, que hubo **dos correcciones seguidas al mismo Pokémon**, a las 16:17 y a las 16:49, y
+que la copia de las 16:49 mostraba EXP 1250000 otra vez. Es decir: la primera se deshizo entera.
+
+### El fallo de verdad
+
+`AzaharGameWriter.Modify` escribía byte a byte y devolvía `true` **sin releer nada**. Y ahí estaba
+el problema, porque el hermano de al lado, `SetBagSlot`, sí relee — y lo hace desde el §22
+justamente porque *«el Azahar oficial acepta la escritura y no la aplica»*. Una de las dos rutas de
+escritura aprendió la lección y la otra no.
+
+El resultado es lo peor que puede hacer este proyecto: `EnforceLevelCap` devolvía éxito, el monitor
+escribía en el log «Corregido en 1 copias» y **añadía un `LevelCapEnforced` al historial de la run**,
+todo sobre una escritura que nadie había comprobado. La regla 3 en una línea: un botón que aparenta
+funcionar.
+
+Ahora `Modify` relee el hueco y cuenta cuántos de los bytes que mandó están realmente puestos.
+Compara **solo los bytes que tocó**, porque el resto de una entrada de equipo se mueve solo mientras
+se juega —PS actuales, estado— y comparar los 260 daría un fallo cada vez que el jugador da un paso.
+Devuelve `MemoryWriteResult`, que separa *escritos* de *verificados*, y `Applied` solo es cierto
+cuando coinciden.
+
+`EnforceLevelCap` añade encima la comprobación que de verdad importa, que no es que los bytes estén
+sino que el Pokémon esté al nivel pedido **en los dos sitios**: relee el PK7 y mira `CurrentLevel` y
+`Stat_Level`. Y `ApplyDeath` va por el mismo sitio, así que la transformación del muerto también
+deja de poder mentir.
+
+### Que se note cuando no funciona
+
+El monitor ya no registra un evento que no ha verificado. Si ninguna copia acepta la escritura, sale
+un aviso en el log y **HOME lo dice en rojo**: un cap que calla y no hace nada es peor que no tener
+cap, porque el jugador se cree vigilado.
+
+Y lleva cuenta de a quién ha corregido ya, por PID. Corregir dos veces al mismo Pokémon significa
+que algo lo deshizo entre medias, y eso es información, no ruido: es la diferencia entre «el cap
+funciona» y «el cap se pelea y pierde». Ahora el log y la pantalla lo distinguen.
+
+### Lo que todavía no se sabe
+
+Si la escritura sí cuaja y el juego la deshace después, falta saber **qué copia manda**. El equipo
+aparece en memoria varias veces —`equipo.txt` recuerda ocho direcciones en dos familias, una con
+salto 0x104 y otra con 0x1E4— y la corrección solo se aplicaba a una. `Probe --equipo` enseña ahora
+las seis plazas de todas las copias con los dos niveles al lado, y `--cap N` escribe y dice cuáles
+aceptan; volver a mirar después de un combate dice cuál manda.
+
+Y un detalle del log que conviene no perder de vista: en las dos ventanas en que PermaLocke estuvo
+conectado al juego ese día estuvo **11 segundos y 108 segundos**. El resto del rato la aplicación
+decía «Azahar no responde». El cap solo vigila mientras hay enlace, así que antes de acusar a la
+escritura hay que descartar que sencillamente no hubiera nadie mirando.

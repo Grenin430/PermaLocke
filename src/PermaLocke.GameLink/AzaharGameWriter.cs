@@ -5,6 +5,27 @@ using PermaLocke.GameLink.Rpc;
 
 namespace PermaLocke.GameLink;
 
+/// <summary>
+/// What happened to a write into the game's memory.
+/// </summary>
+/// <param name="Written">Bytes that differed from what was there and were sent.</param>
+/// <param name="Verified">How many of those the game really holds afterwards.</param>
+/// <remarks>
+/// The two are separate because they disagree, and that disagreement is the whole point. The
+/// official Azahar accepts writes to some regions and never applies them, answering OK either
+/// way, so a writer that does not read back reports success it has not earned.
+/// </remarks>
+public readonly record struct MemoryWriteResult(int Written, int Verified)
+{
+    public static MemoryWriteResult Nothing => default;
+
+    /// <summary>Everything that was sent is now in the game.</summary>
+    public bool Applied => Written > 0 && Verified == Written;
+
+    /// <summary>Bytes were sent and the game did not take them.</summary>
+    public bool Rejected => Written > 0 && Verified < Written;
+}
+
 /// <param name="Nickname">Shown in the game, so the player sees the Pokémon is gone.</param>
 public sealed record DeathTransform(
     int Species = 292,
@@ -33,8 +54,8 @@ public sealed class AzaharGameWriter(
 {
     private static readonly int PartySize = new PK7().SIZE_PARTY;
 
-    /// <summary>Turns a Pokémon into the run's death marker. Returns false if nothing was written.</summary>
-    public bool ApplyDeath(uint slotAddress, DeathTransform transform)
+    /// <summary>Turns a Pokémon into the run's death marker.</summary>
+    public MemoryWriteResult ApplyDeath(uint slotAddress, DeathTransform transform)
     {
         return Modify(slotAddress, "muerte", pokemon =>
         {
@@ -60,16 +81,49 @@ public sealed class AzaharGameWriter(
     /// the three cases the run defines — rare candies, experience gained at the cap, and
     /// levelling past it — because all three end in the same state.
     /// </summary>
-    public bool EnforceLevelCap(uint slotAddress, int cap)
+    /// <remarks>
+    /// A party Pokémon carries its level twice: as experience inside the encrypted block, and as
+    /// <c>Stat_Level</c> in the party stats after it. PKHeX's <c>CurrentLevel</c> setter writes
+    /// both, and this checks both afterwards — reading back only the experience would agree with
+    /// itself while the game, which shows <c>Stat_Level</c>, showed something else.
+    /// </remarks>
+    public MemoryWriteResult EnforceLevelCap(uint slotAddress, int cap)
     {
         var current = Read(slotAddress);
 
-        if (current is null || current.CurrentLevel <= cap)
+        if (current is null)
         {
-            return false;
+            logger.LogDebug("0x{Address:X8}: no hay un Pokémon legible ahí; el cap no lo toca", slotAddress);
+            return MemoryWriteResult.Nothing;
         }
 
-        return Modify(slotAddress, $"cap de nivel {cap}", pokemon => pokemon.CurrentLevel = (byte)cap);
+        if (current.CurrentLevel <= cap && current.Stat_Level <= cap)
+        {
+            return MemoryWriteResult.Nothing;
+        }
+
+        var result = Modify(slotAddress, $"cap de nivel {cap}", pokemon => pokemon.CurrentLevel = (byte)cap);
+
+        if (!result.Applied)
+        {
+            return result;
+        }
+
+        // Y la comprobación que de verdad importa: no que los bytes estén, sino que el Pokémon
+        // esté al nivel pedido en los dos sitios donde el juego lo guarda.
+        var after = Read(slotAddress);
+
+        if (after is null || after.CurrentLevel > cap || after.Stat_Level > cap)
+        {
+            logger.LogWarning(
+                "0x{Address:X8}: los bytes del cap se escribieron pero el Pokémon sigue por encima "
+                + "(EXP dice {ByExp}, Stat_Level dice {Stored}, cap {Cap})",
+                slotAddress, after?.CurrentLevel, after?.Stat_Level, cap);
+
+            return new MemoryWriteResult(result.Written, 0);
+        }
+
+        return result;
     }
 
     /// <summary>
@@ -132,12 +186,12 @@ public sealed class AzaharGameWriter(
         return true;
     }
 
-    private bool Modify(uint slotAddress, string reason, Action<PK7> change)
+    private MemoryWriteResult Modify(uint slotAddress, string reason, Action<PK7> change)
     {
         if (!client.TryReadMemory(slotAddress, PartySize, out var original))
         {
             logger.LogWarning("No se pudo leer el Pokémon en 0x{Address:X8}", slotAddress);
-            return false;
+            return MemoryWriteResult.Nothing;
         }
 
         // PK7 wraps the array it is given, so each view needs its own copy.
@@ -150,7 +204,7 @@ public sealed class AzaharGameWriter(
         {
             logger.LogWarning("El bloque en 0x{Address:X8} no es un Pokémon válido; no se escribe",
                 slotAddress);
-            return false;
+            return MemoryWriteResult.Nothing;
         }
 
         change(working);
@@ -161,21 +215,58 @@ public sealed class AzaharGameWriter(
 
         Backup(slotAddress, original, reason);
 
-        var written = 0;
+        var touched = new List<int>();
 
         for (var i = 0; i < PartySize; i++)
         {
             if (modified[i] != reference[i])
             {
                 client.WriteMemory((uint)(slotAddress + i), [modified[i]]);
-                written++;
+                touched.Add(i);
             }
         }
 
-        logger.LogInformation("0x{Address:X8}: {Reason}, {Written} bytes escritos",
-            slotAddress, reason, written);
+        if (touched.Count == 0)
+        {
+            return MemoryWriteResult.Nothing;
+        }
 
-        return written > 0;
+        var verified = Verify(slotAddress, modified, touched);
+
+        if (verified == touched.Count)
+        {
+            logger.LogInformation("0x{Address:X8}: {Reason}, {Written} bytes escritos y releídos",
+                slotAddress, reason, touched.Count);
+        }
+        else
+        {
+            logger.LogWarning(
+                "0x{Address:X8}: {Reason}, se escribieron {Written} bytes y al releer solo {Verified} "
+                + "estaban puestos. La escritura no ha cuajado; el juego manda esa memoria desde otro sitio "
+                + "o el emulador la ha descartado.",
+                slotAddress, reason, touched.Count, verified);
+        }
+
+        return new MemoryWriteResult(touched.Count, verified);
+    }
+
+    /// <summary>
+    /// Reads the slot back and counts how many of the bytes just sent the game actually holds.
+    /// </summary>
+    /// <remarks>
+    /// Only the bytes that were touched are compared. The rest of a party entry moves on its own
+    /// while the game runs — current HP, status — so comparing the whole 260 would report a
+    /// failure every time somebody took a step.
+    /// </remarks>
+    private int Verify(uint slotAddress, byte[] expected, List<int> touched)
+    {
+        if (!client.TryReadMemory(slotAddress, PartySize, out var after))
+        {
+            logger.LogWarning("No se pudo releer 0x{Address:X8} para comprobar la escritura", slotAddress);
+            return 0;
+        }
+
+        return touched.Count(i => after[i] == expected[i]);
     }
 
     private void Backup(uint address, byte[] bytes, string reason)

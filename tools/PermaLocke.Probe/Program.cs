@@ -19,6 +19,8 @@ using PermaLocke.GameLink.Rpc;
 //   Probe --flags-diff a b      what changed between two dumps
 //   Probe --nombres [--arreglar] lists, and optionally restores, the Pokémon left without a name
 //   Probe --ev [--probar]       lists the effort values; --probar proves the write on a COPY
+//   Probe --equipo [--cap N]    the live party in every copy, both level fields side by side
+//   Probe --pk <fichero>        reads a party slot backup; --cap N says what a cap write changes
 
 Console.OutputEncoding = System.Text.Encoding.UTF8;
 
@@ -44,6 +46,25 @@ if (args.Length >= 1 && args[0] == "--nombres")
 if (args.Length >= 1 && args[0] == "--ev")
 {
     return PermaLocke.Probe.EvProbe.Run(args.Contains("--probar"));
+}
+
+// El equipo vivo en todas sus copias, con los dos niveles al lado. Con --cap, además escribe.
+if (args.Length >= 1 && args[0] == "--equipo")
+{
+    var wantedCap = Array.IndexOf(args, "--cap");
+    var wantedTrainer = Array.IndexOf(args, "--entrenador");
+
+    return PermaLocke.Probe.PartyLiveProbe.Run(
+        wantedTrainer >= 0 && args.Length > wantedTrainer + 1 ? args[wantedTrainer + 1] : null,
+        wantedCap >= 0 && args.Length > wantedCap + 1 ? int.Parse(args[wantedCap + 1]) : null);
+}
+
+// Lee una copia de seguridad de un hueco del equipo. Sin emulador: son bytes en disco.
+if (args.Length >= 2 && args[0] == "--pk")
+{
+    return args.Length >= 4 && args[2] == "--cap"
+        ? PermaLocke.Probe.PartyDumpProbe.WhatWouldChange(args[1], int.Parse(args[3]))
+        : PermaLocke.Probe.PartyDumpProbe.Run(args[1]);
 }
 
 // Comprobación del parche SearchMemory del fork. Va lo primero porque no necesita nada más.

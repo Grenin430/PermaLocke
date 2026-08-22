@@ -62,6 +62,7 @@ public sealed partial class HomeViewModel : SectionViewModel
         gameLink.SnapshotChanged += (_, snapshot) => _ = _ui.InvokeAsync(() =>
         {
             ApplySnapshot(snapshot);
+            CapWarning = gameLink.CapProblem;
             return Task.CompletedTask;
         });
 
@@ -146,6 +147,19 @@ public sealed partial class HomeViewModel : SectionViewModel
 
     [ObservableProperty]
     private bool _gameLinkConnected;
+
+    /// <summary>
+    /// Why the level cap is not taking effect, or empty when it is.
+    /// </summary>
+    /// <remarks>
+    /// A cap that quietly does nothing is worse than no cap: the player believes the run is being
+    /// policed. If the correction cannot be written, or the game keeps undoing it, HOME says so.
+    /// </remarks>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasCapWarning))]
+    private string _capWarning = string.Empty;
+
+    public bool HasCapWarning => CapWarning.Length > 0;
 
     public ObservableCollection<EventRow> RecentEvents { get; } = [];
 

@@ -475,6 +475,19 @@ el botón dice «ya lo llevas». Los ids se buscan, no se recuerdan -`Probe --ob
 comprueba el nombre antes de escribir, y hay tests que fijan id, nombre y bolsillo. Ver
 `docs/ARCHITECTURE.md` §52.
 
+**El escritor no releía lo que escribía (2026-08-22).** El cap decía «corregido» y el Yveltal seguía
+a nivel 100. Medido con las copias de seguridad que guarda cada escritura: el **contenido era
+correcto** -un Pokémon de equipo lleva el nivel dos veces, como experiencia y como `Stat_Level`, y
+PKHeX escribe los dos-, pero `AzaharGameWriter.Modify` **devolvía éxito sin releer**, mientras
+`SetBagSlot` sí relee desde el §22. Una ruta de escritura aprendió la lección y la otra no, así que
+`EnforceLevelCap` daba por buena una escritura que nadie había comprobado y el monitor **metía un
+`LevelCapEnforced` en el historial**. La regla 3 en una línea. Ahora `Modify` relee y compara **solo
+los bytes que tocó** -el resto de la entrada se mueve solo mientras se juega-, `EnforceLevelCap`
+comprueba además el nivel en los dos sitios, no se registra nada sin verificar, y **HOME avisa en
+rojo** cuando el cap no se está aplicando. Falta saber qué copia del equipo manda: `Probe --equipo
+[--cap N]` la enseña. Ojo también con el enlace: ese día PermaLocke solo estuvo conectado al juego
+**11 y 108 segundos**. Ver `docs/ARCHITECTURE.md` §53.
+
 **Siguiente.** Sincronización, y probar en partida real los combates importantes, los iniciales y
 las tiendas.
 

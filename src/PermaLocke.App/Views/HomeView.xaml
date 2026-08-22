@@ -318,6 +318,26 @@
                                 </StackPanel>
                             </Border>
 
+                            <!-- El cap que no se aplica. Un cap que calla y no hace nada es peor
+                                 que no tener cap: el jugador se cree vigilado. -->
+                            <Border DockPanel.Dock="Bottom" Margin="0,10,0,0" Padding="12,9"
+                                    Background="{StaticResource DangerDeepBrush}"
+                                    BorderBrush="{StaticResource DangerBrush}" BorderThickness="1"
+                                    CornerRadius="{StaticResource RadiusMedium}">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HasCapWarning}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock Text="{Binding CapWarning}" Style="{StaticResource Body}"
+                                           FontSize="12" Foreground="{StaticResource DangerBrush}" />
+                            </Border>
+
                             <TextBlock DockPanel.Dock="Bottom" Text="{Binding GameLinkStatus}"
                                        FontSize="10.5" Margin="0,10,0,0" TextWrapping="Wrap">
                                 <TextBlock.Style>
