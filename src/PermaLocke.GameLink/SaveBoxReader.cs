@@ -84,7 +84,13 @@ public sealed class SaveBoxReader(PlayerSave save, ILocationLookup locations, st
     public BoxSnapshot ReadFrom(SAV7USUM game, string? notice = null, DateTimeOffset? at = null)
     {
         var now = at ?? DateTimeOffset.Now;
-        var boxes = new List<BoxContents>(game.BoxCount);
+        var boxes = new List<BoxContents>(game.BoxCount + 1)
+        {
+            // El equipo va primero porque es lo que el jugador está usando ahora mismo. Es otro
+            // almacén del save, con seis huecos en vez de treinta, así que se marca como tal:
+            // quien escriba tiene que saber en cuál de los dos está metiendo la mano.
+            ReadParty(game)
+        };
 
         for (var box = 0; box < game.BoxCount; box++)
         {
@@ -98,10 +104,34 @@ public sealed class SaveBoxReader(PlayerSave save, ILocationLookup locations, st
                 }
             }
 
-            boxes.Add(new BoxContents(box + 1, BoxName(game, box), occupants));
+            boxes.Add(new BoxContents(box + 1, BoxName(game, box), occupants, game.BoxSlotCount));
         }
 
         return new BoxSnapshot(true, null, notice, boxes, game.BoxSlotCount, game.OT, now);
+    }
+
+    /// <summary>
+    /// The six the player is carrying.
+    /// </summary>
+    /// <remarks>
+    /// <c>PartyCount</c> is how many are in it, not how big it is, so the loop runs to six and
+    /// skips the empty ones: reading only up to the count would hide a hole left by a Pokémon
+    /// deposited from the middle of the party.
+    /// </remarks>
+    private BoxContents ReadParty(SAV7USUM game)
+    {
+        const int PartySlots = 6;
+        var members = new List<BoxedPokemon>(PartySlots);
+
+        for (var slot = 0; slot < PartySlots; slot++)
+        {
+            if (game.GetPartySlotAtIndex(slot) is PK7 { Species: > 0 } pokemon)
+            {
+                members.Add(Describe(pokemon, BoxedPokemon.PartyBox, slot, inParty: true));
+            }
+        }
+
+        return new BoxContents(0, "Equipo", members, PartySlots, IsParty: true);
     }
 
     /// <summary>The name the player gave the box, or the number when they never renamed it.</summary>
@@ -111,11 +141,22 @@ public sealed class SaveBoxReader(PlayerSave save, ILocationLookup locations, st
         return string.IsNullOrWhiteSpace(name) ? $"Caja {box + 1}" : name;
     }
 
-    private BoxedPokemon Describe(PK7 pokemon, int box, int slot)
+    private BoxedPokemon Describe(PK7 pokemon, int box, int slot, bool inParty = false)
     {
         // Un Pokémon guardado en caja no lleva sus estadísticas de combate: el juego se las
         // calcula al sacarlo. Esto hace lo mismo en memoria. No se escribe nada en la partida.
-        pokemon.ResetPartyStats();
+        //
+        // Ojo con lo que vale ese cálculo: PKHeX saca la estadística de SU tabla de estadísticas
+        // base, y esta competición se juega con la ROM randomizada y shuffleBaseStats activo, así
+        // que esa tabla no es la del cartucho. Por eso sale marcado como calculado: es una
+        // estimación, y la pantalla lo dice en vez de darlo por bueno.
+        //
+        // El equipo sí las lleva guardadas, y esas son las de verdad. Recalcularlas ahí sería
+        // tirar lo que escribió el juego para poner un número peor.
+        if (!inParty)
+        {
+            pokemon.ResetPartyStats();
+        }
 
         return new BoxedPokemon(
             Box: box,
@@ -143,7 +184,8 @@ public sealed class SaveBoxReader(PlayerSave save, ILocationLookup locations, st
             Evs: [pokemon.EV_HP, pokemon.EV_ATK, pokemon.EV_DEF,
                 pokemon.EV_SPA, pokemon.EV_SPD, pokemon.EV_SPE],
             Friendship: pokemon.OriginalTrainerFriendship,
-            Pid: pokemon.PID);
+            Pid: pokemon.PID,
+            StatsAreComputed: !inParty);
     }
 
     /// <summary>The Mars and Venus signs, built from their code points rather than typed.</summary>

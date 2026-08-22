@@ -3857,3 +3857,94 @@ Barrido estático de remate: las **100 claves** `StaticResource` que usan las vi
 definidas. Una clave que falta no rompe la compilación, rompe la ventana al abrirla.
 
 351 pruebas en verde y compilación sin avisos.
+
+---
+
+## 51. El equipo en el visor, y los EV editables (2026-08-22)
+
+Dos cosas pedidas juntas y que se apoyan la una en la otra: el visor enseñaba las 32 cajas pero no
+los seis que el jugador lleva encima, y los EV se veían como un número muerto en la esquina de la
+tabla.
+
+### El equipo es otro almacén, no una caja 33
+
+En el save, el equipo y el PC son dos sitios distintos: seis huecos con las estadísticas de combate
+guardadas frente a treinta sin ellas. Colarlo como una caja más habría funcionado en pantalla y
+habría sido una bomba en cuanto algo escribiese, porque `SetBoxSlotAtIndex` y `SetPartySlotAtIndex`
+no son la misma llamada.
+
+Así que se marca: `BoxContents` gana `Slots` y `IsParty`, y `BoxedPokemon.Box` toma el centinela
+**`PartyBox = -1`**. Negativo a propósito, para que el código que se olvide de mirar **no pueda caer
+en la caja 0 sin enterarse**. El wonder trade, que es lo único que destruye algo, corta en la puerta
+cualquier índice negativo aunque la pantalla ya no se lo ofrezca.
+
+`SlotsPerBox` se queda para lo que era, pero la rejilla ahora dibuja `contents.Slots`: seis para el
+equipo, treinta para una caja.
+
+### Los dos techos son del juego, no de PermaLocke
+
+`EvSpread` clava **252 por estadística y 510 entre las seis**. No es una idea de reparto justo: la
+generación 7 guarda cada EV en un byte y el juego no reparte más, de modo que pasarse deja un Pokémon
+que el cartucho considera ilegal. El tipo recorta en vez de fiarse, y recorta **contra las otras
+cinco**, no contra el total, para que subir una estadística que ya tiene EV no se cobre dos veces lo
+suyo.
+
+Leer también recorta: un save editado por fuera puede llegar por encima de 510, y entonces la pantalla
+enseña un reparto legal y guardarlo **arregla** al Pokémon en vez de propagar el problema.
+
+Visto en la aplicación real: escribir 999 en PS lo dejó en 252, y 400 en Ataque lo dejó en 240,
+porque entre las dos se comían los 510 justos.
+
+### Lo que se escribe, y lo que no se toca
+
+`SaveEvTrainer` sigue la misma disciplina que el wonder trade: comprueba que el hueco **sigue teniendo
+el mismo Pokémon** —por **PID**, que es lo único que sobrevive a motes, niveles y evoluciones—, copia
+la partida entera, escribe y **relee** antes de dar nada por bueno. Con
+`PokemonBuilder.InPlace`, que es el `PutBack` del §42 sacado a un sitio común: sin él, PKHeX vuelve a
+contar cada Pokémon devuelto a su hueco como una captura, una ball y un combate salvaje.
+
+Y aquí el hallazgo que costó una medición. Recalcular las estadísticas de combate del equipo parecía
+lo ordenado —el equipo sí las guarda, la caja no— hasta que la prueba sobre una copia de la partida
+real dijo esto:
+
+```
+  estadísticas antes:   168/85/121/85/105/95
+  estadísticas después: 151/85/121/85/105/95
+```
+
+Un Kommo-o perdiendo 17 PS por escribirle EV. La causa es que **PKHeX calcula con SU tabla de
+estadísticas base**, y esta competición se juega con `shuffleBaseStats` activo: esa tabla no es la del
+cartucho. Así que **no se tocan**. Los EV se guardan y la estadística se pone al día cuando el juego
+la recalcule, que es exactamente lo que le pasa a un Pokémon que gana EV en combate antes de subir de
+nivel. La misma medición repetida después sale `168/... → 168/...`.
+
+De rebote, eso descubre algo que ya estaba pasando: las estadísticas que el visor enseña **de los
+Pokémon en caja** están calculadas por PermaLocke con esas mismas bases vanilla, o sea que son una
+estimación. No se puede arreglar —`Data/species.json` guarda el total, no las seis— pero sí se puede
+decir, así que `BoxedPokemon.StatsAreComputed` lo marca y la ficha lo avisa. Las del equipo son las
+que escribió el juego y no llevan aviso.
+
+### Auditable, y sin precio
+
+`GameEventType.EvsTrained`, al final del enum como manda el propio comentario del fichero.
+`EvTrainingService` escribe primero y registra después, por la misma razón que la tienda: un historial
+que dice cosas que no pasaron es peor que uno que va un instante por detrás. El evento guarda el antes,
+el después y qué estadísticas se movieron.
+
+**No cuesta puntos.** Entrenar es una edición del jugador sobre un Pokémon suyo, no una compra, y
+ponerle precio sería inventarse una regla que la competición no acordó.
+
+### Cómo se comprobó
+
+`Probe --ev` lista los EV de la partida real sin tocarla. `Probe --ev --probar` hace el viaje
+completo **sobre una copia**: escribe, cierra, relee con el lector de verdad —no con el verificador
+interno— y borra la copia. Eso cubre lo que las pruebas unitarias no pueden, porque PKHeX no reconoce
+un save en blanco escrito a disco y el único fichero que sirve es uno real.
+
+En la aplicación, sobre la partida del jugador: el equipo sale con sus cinco, la ficha marca EN EL
+EQUIPO, el recorte funciona escribiendo a mano, GUARDAR se habilita solo cuando hay algo que guardar y
+DESHACER devuelve el reparto de la partida. **La escritura desde la interfaz se deja sin ejecutar a
+propósito**: cambiaría los EV de un Pokémon del jugador con valores que nadie ha elegido, y el camino
+de escritura ya está probado por el mismo código sobre una copia del mismo save.
+
+24 pruebas nuevas. 376 en verde.

@@ -56,6 +56,11 @@ public static class ServiceCollectionExtensions
             backupFolder,
             sp.GetRequiredService<ILogger<SaveBoxSwap>>()));
         services.TryAddSingleton<IPokemonSwap>(sp => sp.GetRequiredService<SaveBoxSwap>());
+        services.TryAddSingleton<SaveEvTrainer>(sp => new SaveEvTrainer(
+            sp.GetRequiredService<PlayerSave>(),
+            backupFolder,
+            sp.GetRequiredService<ILogger<SaveEvTrainer>>()));
+        services.TryAddSingleton<IEvTrainer>(sp => sp.GetRequiredService<SaveEvTrainer>());
         services.TryAddSingleton<ZoneService>();
         services.TryAddSingleton<IZoneProvider>(sp => sp.GetRequiredService<ZoneService>());
         services.TryAddSingleton<IItemWithholder>(sp => sp.GetRequiredService<BagService>());

@@ -36,6 +36,22 @@ public static class PokemonBuilder
         UpdateRecord = EntityImportOption.Disable,
     };
 
+    /// <summary>
+    /// How a Pokémon that is already the player's goes back into its slot: nothing at all is
+    /// updated.
+    /// </summary>
+    /// <remarks>
+    /// For editing in place — renaming, retraining — where the Pokémon never arrived because it was
+    /// already there. §42: left at the default, putting a hundred and fifty of them back added a
+    /// hundred and fifty captures, Poké Balls used and wild battles that never happened.
+    /// </remarks>
+    public static readonly EntityImportSettings InPlace = new()
+    {
+        UpdateToSaveFile = EntityImportOption.Disable,
+        UpdatePokeDex = EntityImportOption.Disable,
+        UpdateRecord = EntityImportOption.Disable,
+    };
+
     public static PK7 Build(NewPokemon spec, SAV7USUM save)
     {
         var pokemon = new PK7

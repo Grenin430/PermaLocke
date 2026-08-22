@@ -72,6 +72,7 @@ public partial class App : Application
             JsonShopCatalog.Load(Path.Combine(paths.Data, "shop.json")));
         collection.AddSingleton<IItemDelivery, BagItemDelivery>();
         collection.AddSingleton<ShopService>();
+        collection.AddSingleton<EvTrainingService>();
         collection.AddSingleton<ShopViewModel>();
         collection.AddSingleton<PokemonViewerViewModel>();
         collection.AddSingleton<MiscellaneousViewModel>();

@@ -123,5 +123,15 @@ public enum GameEventType
     /// it counts. Recorded separately from the automatic events so the log always says which of
     /// the two it was.
     /// </summary>
-    AchievementProgressed
+    AchievementProgressed,
+
+    /// <summary>
+    /// The player rewrote a Pokémon's effort values from the viewer.
+    /// </summary>
+    /// <remarks>
+    /// Its own type rather than an admin adjustment: this edits the partida directly, outside
+    /// anything the game did, and a log that hides that behind a generic label stops being an
+    /// audit. Costs no points; it is a change, not a purchase.
+    /// </remarks>
+    EvsTrained
 }

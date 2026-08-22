@@ -5,6 +5,8 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using PermaLocke.App.Services;
 using PermaLocke.Core.Abstractions;
+using PermaLocke.Core.Domain;
+using PermaLocke.Core.Services;
 
 namespace PermaLocke.App.ViewModels;
 
@@ -27,16 +29,108 @@ public sealed partial class BoxSlotViewModel(BoxedPokemon? pokemon, BitmapSource
     public string Fallback => Pokemon is null ? string.Empty : "?";
 }
 
-/// <summary>A box as the selector lists it.</summary>
-public sealed record BoxTabViewModel(int Number, string Name, int Count)
+/// <summary>A box as the selector lists it, or the party.</summary>
+public sealed record BoxTabViewModel(int Number, string Name, int Count, int Slots, bool IsParty)
 {
-    public string Label => $"{Number}. {Name}";
+    public string Label => IsParty ? Name : $"{Number}. {Name}";
 
-    public string Occupancy => $"{Count}/30";
+    public string Occupancy => $"{Count}/{Slots}";
 }
 
-/// <summary>One row of the stat table: what the game shows, and what it is made of.</summary>
-public sealed record StatRowViewModel(string Name, int Value, int Iv, int Ev);
+/// <summary>
+/// One row of the stat table: what the game shows, what it is made of, and the one part of it
+/// the player is allowed to move.
+/// </summary>
+/// <remarks>
+/// <para>
+/// The EV is the only editable field in the whole viewer, so it is the only thing here that is
+/// not a plain record. It reports every change to the owner, because the six rows share one
+/// budget of 510 and each of them needs to know when a sibling has spent some of it.
+/// </para>
+/// <para>
+/// The stat column keeps showing what the save holds. It is not recomputed as the EV moves:
+/// working out a stat needs the species base values, which PermaLocke reads from the cartridge and
+/// does not keep per stat, and guessing it from the current number would put an invented figure on
+/// screen. It updates when the change is written and the partida re-read, which is also when it
+/// becomes true.
+/// </para>
+/// </remarks>
+public sealed partial class StatRowViewModel : ObservableObject
+{
+    private readonly Action<int, int>? _changed;
+
+    public StatRowViewModel(int index, string name, int value, int iv, int ev,
+        int ceiling, Action<int, int>? changed = null)
+    {
+        Index = index;
+        Name = name;
+        Value = value;
+        Iv = iv;
+        _ev = ev;
+        _ceiling = ceiling;
+        _changed = changed;
+    }
+
+    public int Index { get; }
+
+    public string Name { get; }
+
+    /// <summary>The stat as the save holds it.</summary>
+    public int Value { get; }
+
+    public int Iv { get; }
+
+    [ObservableProperty]
+    private int _ev;
+
+    /// <summary>Most this stat could take without stealing from the other five.</summary>
+    [ObservableProperty]
+    private int _ceiling;
+
+    /// <summary>True while this row holds EVs that are not yet in the partida.</summary>
+    [ObservableProperty]
+    private bool _isDirty;
+
+    /// <summary>Set while the owner is the one writing, so its own write does not echo back.</summary>
+    private bool _quiet;
+
+    partial void OnEvChanged(int value)
+    {
+        OnPropertyChanged(nameof(Fill));
+
+        if (!_quiet)
+        {
+            _changed?.Invoke(Index, value);
+        }
+    }
+
+    /// <summary>Fraction of the per-stat maximum, for the bar the row draws.</summary>
+    public double Fill => (double)Ev / EvSpread.PerStatMax;
+
+    /// <summary>
+    /// Sets the value without telling the owner, for when the owner is the one setting it.
+    /// </summary>
+    /// <remarks>
+    /// The six rows share one budget, so moving one makes the owner rewrite all six. Without this,
+    /// that rewrite would come straight back as six more edits.
+    /// </remarks>
+    public void Silently(int ev, int ceiling, bool dirty)
+    {
+        _quiet = true;
+
+        try
+        {
+            Ev = ev;
+        }
+        finally
+        {
+            _quiet = false;
+        }
+
+        Ceiling = ceiling;
+        IsDirty = dirty;
+    }
+}
 
 /// <summary>
 /// The PC of the player's game: every box, every Pokémon, and the detail of whichever one is
@@ -51,6 +145,8 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
 {
     private readonly IBoxReader _boxes;
     private readonly PokemonSpriteService _sprites;
+    private readonly EvTrainingService _training;
+    private readonly IRunContext _runContext;
     private readonly ILogger<PokemonViewerViewModel> _logger;
 
     private static readonly string[] StatNames =
@@ -58,11 +154,17 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
 
     private BoxSnapshot? _snapshot;
 
+    /// <summary>What the save holds for the selected Pokémon, to compare edits against.</summary>
+    private EvSpread _savedEvs = EvSpread.Empty;
+
     public PokemonViewerViewModel(IBoxReader boxes, PokemonSpriteService sprites,
-        WonderTradeViewModel trade, ILogger<PokemonViewerViewModel> logger) : base("VISOR POKÉMON", "Las 32 cajas de la partida, ficha completa e intercambio")
+        WonderTradeViewModel trade, EvTrainingService training, IRunContext runContext,
+        ILogger<PokemonViewerViewModel> logger) : base("VISOR POKÉMON", "El equipo y las 32 cajas de la partida, con EV editables")
     {
         _boxes = boxes;
         _sprites = sprites;
+        _training = training;
+        _runContext = runContext;
         _logger = logger;
         Trade = trade;
 
@@ -167,12 +269,14 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
 
             foreach (var box in _snapshot.Boxes)
             {
-                Boxes.Add(new BoxTabViewModel(box.Number, box.Name, box.Count));
+                Boxes.Add(new BoxTabViewModel(box.Number, box.Name, box.Count, box.Slots, box.IsParty));
             }
 
-            Summary = $"{_snapshot.Total} Pokémon en el PC de {_snapshot.TrainerName}";
+            var party = _snapshot.Party?.Count ?? 0;
+            Summary = $"{party} en el equipo · {_snapshot.Stored} en el PC de {_snapshot.TrainerName}";
 
-            // La primera caja con algo dentro: abrir en una vacía cuando hay Pokémon en la
+            // El equipo primero cuando lleva algo, que es lo que el jugador está usando; si no, la
+            // primera caja con algo dentro, porque abrir en una vacía teniendo Pokémon en la
             // siguiente hace pensar que no se ha leído nada.
             SelectedBox = Boxes.FirstOrDefault(box => box.Count > 0) ?? Boxes.FirstOrDefault();
 
@@ -243,7 +347,8 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
             return;
         }
 
-        for (var slot = 0; slot < _snapshot.SlotsPerBox; slot++)
+        // Los huecos los pone la caja, no el PC: el equipo tiene seis y una caja treinta.
+        for (var slot = 0; slot < contents.Slots; slot++)
         {
             var pokemon = contents.Pokemon.FirstOrDefault(p => p.Slot == slot);
             Slots.Add(new BoxSlotViewModel(pokemon, pokemon is null ? null : SpriteFor(pokemon)));
@@ -257,22 +362,195 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
         Selected = pokemon;
         HasSelection = pokemon is not null;
         SelectedSprite = pokemon is null ? null : SpriteFor(pokemon);
+        TrainStatus = string.Empty;
 
         // Con el intercambio armado, elegir en la caja es elegir a quién se entrega. Un huevo no:
-        // lo que hay dentro no se sabe, así que no se puede decir qué vale.
-        Trade.Choose(pokemon is { IsEgg: false } ? pokemon : null);
+        // lo que hay dentro no se sabe, así que no se puede decir qué vale. Y un miembro del
+        // equipo tampoco: el intercambio escribe en las cajas, y el equipo es otro almacén.
+        Trade.Choose(pokemon is { IsEgg: false, IsInParty: false } ? pokemon : null);
 
         Stats.Clear();
+        _savedEvs = EvSpread.Empty;
+        Evs = EvSpread.Empty;
 
         if (pokemon is null)
+        {
+            RefreshEvTotals();
+            return;
+        }
+
+        // Un huevo no entrena: el juego no le reparte EV y lo que hay dentro no se conoce.
+        CanEditEvs = !pokemon.IsEgg;
+
+        _savedEvs = EvSpread.Of(pokemon.Evs);
+        Evs = _savedEvs;
+
+        for (var index = 0; index < StatNames.Length; index++)
+        {
+            Stats.Add(new StatRowViewModel(
+                index,
+                StatNames[index],
+                pokemon.Stats[index],
+                pokemon.Ivs[index],
+                _savedEvs[index],
+                _savedEvs.CeilingFor(index),
+                EvEdited));
+        }
+
+        RefreshEvTotals();
+    }
+
+    // ============================================================ EV EDITOR
+
+    /// <summary>The spread on screen, which is the saved one until the player moves something.</summary>
+    private EvSpread Evs { get; set; } = EvSpread.Empty;
+
+    /// <summary>False for an egg, which the game never trains.</summary>
+    [ObservableProperty]
+    private bool _canEditEvs;
+
+    [ObservableProperty]
+    private int _evTotal;
+
+    [ObservableProperty]
+    private int _evRemaining;
+
+    /// <summary>Fraction of the 510 budget spent, for the bar over the editor.</summary>
+    [ObservableProperty]
+    private double _evFill;
+
+    /// <summary>True while the screen holds EVs that are not in the partida yet.</summary>
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(SaveEvsCommand))]
+    [NotifyCanExecuteChangedFor(nameof(RevertEvsCommand))]
+    private bool _evsChanged;
+
+    /// <summary>What happened to the last attempt to write EVs. Empty when nothing has been tried.</summary>
+    [ObservableProperty]
+    private string _trainStatus = string.Empty;
+
+    [ObservableProperty]
+    private bool _trainFailed;
+
+    [ObservableProperty]
+    private bool _isTraining;
+
+    /// <summary>
+    /// One row moved. Reapplies the whole spread, because the 510 budget is shared: raising one
+    /// stat changes what the other five are allowed to hold.
+    /// </summary>
+    private void EvEdited(int index, int value) => Apply(Evs.With(index, value));
+
+    /// <summary>Pushes a spread back into the six rows and recomputes the totals.</summary>
+    private void Apply(EvSpread spread)
+    {
+        Evs = spread;
+
+        foreach (var row in Stats)
+        {
+            row.Silently(spread[row.Index], spread.CeilingFor(row.Index),
+                spread[row.Index] != _savedEvs[row.Index]);
+        }
+
+        RefreshEvTotals();
+    }
+
+    private void RefreshEvTotals()
+    {
+        EvTotal = Evs.Total;
+        EvRemaining = Evs.Remaining;
+        EvFill = (double)Evs.Total / EvSpread.TotalMax;
+        EvsChanged = !Evs.Equals(_savedEvs);
+    }
+
+    /// <summary>Fills the stat as far as the shared budget allows.</summary>
+    [RelayCommand]
+    private void MaxEv(StatRowViewModel? row)
+    {
+        if (row is not null)
+        {
+            Apply(Evs.With(row.Index, EvSpread.PerStatMax));
+        }
+    }
+
+    [RelayCommand]
+    private void ClearEv(StatRowViewModel? row)
+    {
+        if (row is not null)
+        {
+            Apply(Evs.With(row.Index, 0));
+        }
+    }
+
+    [RelayCommand]
+    private void ClearAllEvs() => Apply(EvSpread.Empty);
+
+    /// <summary>Throws the edit away and puts back what the partida holds.</summary>
+    [RelayCommand(CanExecute = nameof(EvsChanged))]
+    private void RevertEvs()
+    {
+        Apply(_savedEvs);
+        TrainStatus = string.Empty;
+        TrainFailed = false;
+    }
+
+    /// <summary>
+    /// Writes the EVs on screen into the partida.
+    /// </summary>
+    /// <remarks>
+    /// Everything that can refuse does so before anything is opened: no run to record it against,
+    /// nothing selected, nothing changed, or the game still loaded in the emulator. What gets past
+    /// all four goes through the service, which writes first and records afterwards.
+    /// </remarks>
+    [RelayCommand(CanExecute = nameof(EvsChanged))]
+    private async Task SaveEvsAsync()
+    {
+        if (Selected is not { } target || IsTraining)
         {
             return;
         }
 
-        for (var index = 0; index < StatNames.Length; index++)
+        if (_runContext.Current is not { } run)
         {
-            Stats.Add(new StatRowViewModel(StatNames[index],
-                pokemon.Stats[index], pokemon.Ivs[index], pokemon.Evs[index]));
+            TrainFailed = true;
+            TrainStatus = "No hay ninguna run activa, así que no habría dónde registrar el cambio.";
+            return;
+        }
+
+        if (!_training.CanTrainNow(out var reason))
+        {
+            TrainFailed = true;
+            TrainStatus = reason;
+            return;
+        }
+
+        IsTraining = true;
+
+        try
+        {
+            var result = await _training.TrainAsync(run, target, Evs);
+
+            TrainFailed = !result.Delivered;
+            TrainStatus = result.Message;
+
+            if (result.Delivered)
+            {
+                _logger.LogInformation("EV escritos para {Name}: {Evs}", target.DisplayName, Evs);
+
+                // La partida ha cambiado por debajo, y con ella las estadísticas que dependen de
+                // los EV. Releerla es lo único que hace que la columna de la izquierda sea cierta.
+                await LoadAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Fallo al escribir los EV de {Name}", target.DisplayName);
+            TrainFailed = true;
+            TrainStatus = "No se han podido escribir los EV. El detalle está en la carpeta Logs.";
+        }
+        finally
+        {
+            IsTraining = false;
         }
     }
 

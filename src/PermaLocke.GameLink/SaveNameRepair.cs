@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using PKHeX.Core;
+using PermaLocke.GameLink.Data;
 
 namespace PermaLocke.GameLink;
 
@@ -122,12 +123,7 @@ public sealed class SaveNameRepair(PlayerSave save, string backupFolder, ILogger
     /// hundred and fifty of a real run added a hundred and fifty captures, a hundred and fifty
     /// Poké Balls used and a hundred and fifty wild battles that never happened.
     /// </remarks>
-    private static readonly EntityImportSettings PutBack = new()
-    {
-        UpdateToSaveFile = EntityImportOption.Disable,
-        UpdatePokeDex = EntityImportOption.Disable,
-        UpdateRecord = EntityImportOption.Disable,
-    };
+    private static readonly EntityImportSettings PutBack = PokemonBuilder.InPlace;
 
     /// <summary>
     /// Names everything nameless in an already-loaded save, and says what it named.

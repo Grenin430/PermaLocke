@@ -444,6 +444,22 @@ nunca ajusta línea; y un estilo con `x:Key` **no hereda del implícito** salvo 
 las 100 claves `StaticResource` verificadas y la pantalla de crear run vista en una copia aislada
 fuera del repositorio, sin tocar la partida. Ver `docs/ARCHITECTURE.md` §50.
 
+**El equipo en el visor y los EV editables (2026-08-22).** El visor enseña ya los seis del equipo,
+que en el save es **otro almacén** y no una caja más: `BoxedPokemon.Box` toma el centinela
+`PartyBox = -1`, negativo para que quien se olvide de mirarlo no caiga en la caja 0 sin enterarse, y
+el wonder trade corta cualquier índice negativo en la puerta. Los EV se editan con los topes del
+propio juego -**252 por estadística y 510 entre las seis**-, que se recortan al escribir y también al
+leer, así que un save tocado por fuera se arregla al guardarlo. Se escribe con el juego cerrado,
+comprobando por **PID** que el hueco sigue teniendo al mismo, con copia previa y relectura, y queda
+como evento `EvsTrained`. **No cuesta puntos**: entrenar es una edición, no una compra.
+
+Hallazgo medido, no supuesto: **recalcular las estadísticas del equipo escribe números falsos**. PKHeX
+calcula con SU tabla de estadísticas base y la ROM lleva `shuffleBaseStats`, así que sobre una copia
+de la partida real un Kommo-o pasó de **168 PS a 151**. No se tocan; el juego las pone al día solo. De
+rebote se supo que las estadísticas que el visor enseña **de los Pokémon en caja** son una estimación
+por la misma razón, así que ahora salen marcadas. `Probe --ev [--probar]` lo comprueba **sobre una
+copia**, nunca sobre la partida. Ver `docs/ARCHITECTURE.md` §51.
+
 **Siguiente.** Sincronización, y probar en partida real los combates importantes, los iniciales y
 las tiendas.
 
@@ -492,6 +508,10 @@ dotnet run --project tools/PermaLocke.RomTool -- zones
 dotnet run --project tools/PermaLocke.RomTool -- species
 dotnet run --project tools/PermaLocke.RomTool -- sprites --sheets
 dotnet run --project tools/PermaLocke.RomTool -- randomize 20260818 --install
+
+# EV de la partida real; --probar demuestra la escritura SOBRE UNA COPIA
+dotnet run --project tools/PermaLocke.Probe -- --ev
+dotnet run --project tools/PermaLocke.Probe -- --ev --probar
 ```
 
 SDK requerido: .NET 10 (instalado: 10.0.400).

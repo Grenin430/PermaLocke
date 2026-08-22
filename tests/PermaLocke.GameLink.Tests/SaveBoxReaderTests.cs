@@ -30,15 +30,55 @@ public class SaveBoxReaderTests : IDisposable
     }
 
     [Fact]
-    public void An_empty_pc_reads_as_thirty_two_empty_boxes()
+    public void An_empty_pc_reads_as_the_party_plus_thirty_two_empty_boxes()
     {
         var snapshot = ReadBack(new SAV7USUM());
 
         Assert.True(snapshot.Available);
         Assert.Null(snapshot.Problem);
-        Assert.Equal(32, snapshot.Boxes.Count);
+        Assert.Equal(33, snapshot.Boxes.Count);
         Assert.Equal(30, snapshot.SlotsPerBox);
         Assert.Equal(0, snapshot.Total);
+    }
+
+    /// <summary>
+    /// The party comes first and is marked as such. It is another store of the save with six holes
+    /// instead of thirty, and anything that writes has to pick the right one, so it cannot pass as
+    /// a thirty-third box.
+    /// </summary>
+    [Fact]
+    public void The_party_leads_the_list_and_says_it_is_the_party()
+    {
+        var snapshot = ReadBack(new SAV7USUM());
+
+        var party = snapshot.Boxes[0];
+        Assert.True(party.IsParty);
+        Assert.Equal(0, party.Number);
+        Assert.Equal(6, party.Slots);
+        Assert.Same(party, snapshot.Party);
+
+        Assert.All(snapshot.Boxes.Skip(1), box => Assert.False(box.IsParty));
+        Assert.All(snapshot.Boxes.Skip(1), box => Assert.Equal(30, box.Slots));
+    }
+
+    /// <summary>
+    /// A Pok�mon in the party is found there, carries the sentinel box, and does not turn up in
+    /// the PC as well.
+    /// </summary>
+    [Fact]
+    public void A_party_member_reads_from_the_party()
+    {
+        var save = new SAV7USUM();
+        save.SetPartySlotAtIndex(Pikachu(save), 2);
+
+        var snapshot = ReadBack(save);
+
+        var found = Assert.Single(snapshot.Party!.Pokemon);
+        Assert.Equal(BoxedPokemon.PartyBox, found.Box);
+        Assert.True(found.IsInParty);
+        Assert.Equal(2, found.Slot);
+        Assert.Equal(1, snapshot.Total);
+        Assert.Equal(0, snapshot.Stored);
     }
 
     /// <summary>
@@ -54,7 +94,7 @@ public class SaveBoxReaderTests : IDisposable
         var snapshot = ReadBack(save);
 
         Assert.Equal(1, snapshot.Total);
-        var found = Assert.Single(snapshot.Boxes[4].Pokemon);
+        var found = Assert.Single(Box(snapshot, 5).Pokemon);
         Assert.Equal(4, found.Box);
         Assert.Equal(17, found.Slot);
         Assert.Equal((int)Species.Pikachu, found.Species);
@@ -71,7 +111,7 @@ public class SaveBoxReaderTests : IDisposable
         var save = new SAV7USUM();
         save.SetBoxSlotAtIndex(Pikachu(save), box: 0, slot: 0);
 
-        var found = ReadBack(save).Boxes[0].Pokemon[0];
+        var found = Box(ReadBack(save), 1).Pokemon[0];
 
         Assert.All(found.Stats, stat => Assert.True(stat > 0, "una estadística salió a cero"));
         Assert.Equal(6, found.Ivs.Count);
@@ -86,7 +126,7 @@ public class SaveBoxReaderTests : IDisposable
         var save = new SAV7USUM();
         save.SetBoxSlotAtIndex(Pikachu(save), box: 0, slot: 0);
 
-        var found = ReadBack(save).Boxes[0].Pokemon[0];
+        var found = Box(ReadBack(save), 1).Pokemon[0];
 
         Assert.False(string.IsNullOrWhiteSpace(found.SpeciesName));
         Assert.False(string.IsNullOrWhiteSpace(found.NatureName));
@@ -102,7 +142,7 @@ public class SaveBoxReaderTests : IDisposable
         var save = new SAV7USUM();
         save.SetBoxSlotAtIndex(Pikachu(save), box: 0, slot: 0);
 
-        var found = ReadBack(save).Boxes[0].Pokemon[0];
+        var found = Box(ReadBack(save), 1).Pokemon[0];
 
         Assert.Equal(string.Empty, found.Nickname);
         Assert.Equal(found.SpeciesName, found.DisplayName);
@@ -142,6 +182,10 @@ public class SaveBoxReaderTests : IDisposable
         pokemon.RefreshChecksum();
         return pokemon;
     }
+
+    /// <summary>By number and not by position: the party sits at the head of the list.</summary>
+    private static BoxContents Box(BoxSnapshot snapshot, int number) =>
+        snapshot.Boxes.Single(box => box.Number == number);
 
     private static BoxSnapshot ReadBack(SAV7USUM save) => Reader().ReadFrom(save);
 

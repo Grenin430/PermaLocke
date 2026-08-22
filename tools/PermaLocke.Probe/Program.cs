@@ -18,6 +18,7 @@ using PermaLocke.GameLink.Rpc;
 //   Probe --flags [fichero]     dumps the save event flags and counters, to calibrate achievements
 //   Probe --flags-diff a b      what changed between two dumps
 //   Probe --nombres [--arreglar] lists, and optionally restores, the Pokémon left without a name
+//   Probe --ev [--probar]       lists the effort values; --probar proves the write on a COPY
 
 Console.OutputEncoding = System.Text.Encoding.UTF8;
 
@@ -37,6 +38,12 @@ if (args.Length >= 3 && args[0] == "--flags-diff")
 if (args.Length >= 1 && args[0] == "--nombres")
 {
     return PermaLocke.Probe.NameProbe.Run(args.Contains("--arreglar"));
+}
+
+// EV: leer no exige nada, y la prueba de escritura va sobre una copia, nunca sobre la partida.
+if (args.Length >= 1 && args[0] == "--ev")
+{
+    return PermaLocke.Probe.EvProbe.Run(args.Contains("--probar"));
 }
 
 // Comprobación del parche SearchMemory del fork. Va lo primero porque no necesita nada más.

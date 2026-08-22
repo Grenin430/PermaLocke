@@ -60,16 +60,39 @@
             </Grid>
         </DataTemplate>
 
-        <!-- Una fila de la tabla: la estadística, y de qué está hecha. La barra mide el IV, de 0
-             a 31, que es lo que de verdad distingue a dos Pokémon de la misma especie y nivel. -->
+        <!-- Caja del EV: pequeña, centrada y de tres dígitos, porque 252 es lo más que cabe.
+             Se recorta sola al escribir, así que un 300 se convierte en 252 delante del jugador
+             en vez de aceptarse y fallar luego al guardar. -->
+        <Style x:Key="EvBox" TargetType="TextBox" BasedOn="{StaticResource Field}">
+            <Setter Property="Width" Value="44" />
+            <Setter Property="MaxLength" Value="3" />
+            <Setter Property="Padding" Value="4,4" />
+            <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="TextAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Style.Triggers>
+                <!-- Lo que todavía no está en la partida se marca, para que "guardar" no sea
+                     un botón que uno pulsa por si acaso. -->
+                <DataTrigger Binding="{Binding IsDirty}" Value="True">
+                    <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
+                    <Setter Property="FontWeight" Value="Bold" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Una fila de la tabla: la estadística, de qué está hecha, y lo único que se puede
+             mover. La barra de arriba mide el IV, de 0 a 31, que es lo que de verdad distingue a
+             dos Pokémon de la misma especie y nivel; la de abajo, el EV de 0 a 252. -->
         <DataTemplate x:Key="StatTemplate">
-            <Grid Margin="0,3">
+            <Grid Margin="0,4">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="72" />
-                    <ColumnDefinition Width="38" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="28" />
+                    <ColumnDefinition Width="64" />
                     <ColumnDefinition Width="32" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="24" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
                 <TextBlock Grid.Column="0" Text="{Binding Name}" Style="{StaticResource Muted}"
@@ -77,29 +100,58 @@
                 <TextBlock Grid.Column="1" Text="{Binding Value}" Style="{StaticResource Mono}"
                            FontWeight="Bold" HorizontalAlignment="Right" VerticalAlignment="Center" />
 
-                <ProgressBar Grid.Column="2" Height="6" Margin="10,0" Minimum="0" Maximum="31"
-                             Value="{Binding Iv, Mode=OneWay}" VerticalAlignment="Center">
-                    <ProgressBar.Style>
-                        <Style TargetType="ProgressBar" BasedOn="{StaticResource {x:Type ProgressBar}}">
-                            <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
-                            <Style.Triggers>
-                                <!-- Un 31 se ve de un vistazo sin tener que leer el número. -->
-                                <DataTrigger Binding="{Binding Iv}" Value="31">
-                                    <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
-                                </DataTrigger>
-                                <DataTrigger Binding="{Binding Iv}" Value="0">
-                                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </ProgressBar.Style>
-                </ProgressBar>
+                <!-- Las dos barras, una encima de otra: IV arriba, EV abajo. -->
+                <StackPanel Grid.Column="2" Margin="9,0" VerticalAlignment="Center">
+                    <ProgressBar Height="5" Minimum="0" Maximum="31"
+                                 Value="{Binding Iv, Mode=OneWay}">
+                        <ProgressBar.Style>
+                            <Style TargetType="ProgressBar" BasedOn="{StaticResource {x:Type ProgressBar}}">
+                                <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                                <Style.Triggers>
+                                    <!-- Un 31 se ve de un vistazo sin tener que leer el número. -->
+                                    <DataTrigger Binding="{Binding Iv}" Value="31">
+                                        <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Iv}" Value="0">
+                                        <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ProgressBar.Style>
+                    </ProgressBar>
+
+                    <ProgressBar Height="5" Minimum="0" Maximum="1" Margin="0,3,0,0"
+                                 Value="{Binding Fill, Mode=OneWay}">
+                        <ProgressBar.Style>
+                            <Style TargetType="ProgressBar" BasedOn="{StaticResource {x:Type ProgressBar}}">
+                                <Setter Property="Foreground" Value="{StaticResource TextFaintBrush}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDirty}" Value="True">
+                                        <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ProgressBar.Style>
+                    </ProgressBar>
+                </StackPanel>
 
                 <TextBlock Grid.Column="3" Text="{Binding Iv}" Style="{StaticResource Mono}"
                            FontSize="12" HorizontalAlignment="Right" VerticalAlignment="Center" />
-                <TextBlock Grid.Column="4" Text="{Binding Ev}" Style="{StaticResource Mono}"
-                           FontSize="12" HorizontalAlignment="Right" VerticalAlignment="Center"
-                           Foreground="{StaticResource TextFaintBrush}" />
+
+                <TextBox Grid.Column="4" Style="{StaticResource EvBox}" Margin="8,0,0,0"
+                         IsEnabled="{Binding DataContext.CanEditEvs,
+                                     RelativeSource={RelativeSource AncestorType=UserControl}}"
+                         Text="{Binding Ev, UpdateSourceTrigger=PropertyChanged,
+                                ValidatesOnExceptions=True}" />
+
+                <Button Grid.Column="5" Content="MÁX" Style="{StaticResource GhostButton}"
+                        Padding="6,4" FontSize="9.5" Margin="4,0,0,0"
+                        ToolTip="Sube esta estadística a 252, o a lo que quede de los 510."
+                        IsEnabled="{Binding DataContext.CanEditEvs,
+                                    RelativeSource={RelativeSource AncestorType=UserControl}}"
+                        Command="{Binding DataContext.MaxEvCommand,
+                                  RelativeSource={RelativeSource AncestorType=UserControl}}"
+                        CommandParameter="{Binding}" />
             </Grid>
         </DataTemplate>
 
@@ -120,7 +172,7 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="12" />
-            <ColumnDefinition Width="372" />
+            <ColumnDefinition Width="410" />
         </Grid.ColumnDefinitions>
 
         <!-- =============================================== EL PC -->
@@ -294,15 +346,28 @@
                                 <TextBlock Style="{StaticResource Muted}" FontSize="12" Margin="0,2,0,0"
                                            Text="{Binding Selected.Subtitle}" />
 
-                                <Border Style="{StaticResource Chip}" HorizontalAlignment="Left"
-                                        Margin="0,7,0,0"
-                                        Background="{StaticResource AccentDeepBrush}"
-                                        BorderBrush="{StaticResource AccentBrush}"
-                                        Visibility="{Binding Selected.IsShiny,
-                                                     Converter={StaticResource BoolToVisibility}}">
-                                    <TextBlock Text="✨ VARIOCOLOR" Style="{StaticResource ChipText}"
-                                               Foreground="{StaticResource AccentBrightBrush}" />
-                                </Border>
+                                <WrapPanel Margin="0,7,0,0">
+                                    <!-- Estar en el equipo cambia lo que se puede hacer con él:
+                                         los EV sí, el wonder trade no, porque ese escribe en las
+                                         cajas y el equipo es otro almacén de la partida. -->
+                                    <Border Style="{StaticResource Chip}" Margin="0,0,6,0"
+                                            Background="{StaticResource SuccessDeepBrush}"
+                                            BorderBrush="{StaticResource SuccessBrush}"
+                                            Visibility="{Binding Selected.IsInParty,
+                                                         Converter={StaticResource BoolToVisibility}}">
+                                        <TextBlock Text="EN EL EQUIPO" Style="{StaticResource ChipText}"
+                                                   Foreground="{StaticResource SuccessBrush}" />
+                                    </Border>
+
+                                    <Border Style="{StaticResource Chip}"
+                                            Background="{StaticResource AccentDeepBrush}"
+                                            BorderBrush="{StaticResource AccentBrush}"
+                                            Visibility="{Binding Selected.IsShiny,
+                                                         Converter={StaticResource BoolToVisibility}}">
+                                        <TextBlock Text="✨ VARIOCOLOR" Style="{StaticResource ChipText}"
+                                                   Foreground="{StaticResource AccentBrightBrush}" />
+                                    </Border>
+                                </WrapPanel>
                             </StackPanel>
                         </Grid>
 
@@ -359,6 +424,80 @@
                         </DockPanel>
 
                         <ItemsControl ItemsSource="{Binding Stats}" ItemTemplate="{StaticResource StatTemplate}" />
+
+                        <!-- Una caja no guarda las estadísticas de combate, así que hay que
+                             calcularlas, y el cálculo usa las bases del cartucho sin randomizar.
+                             Se dice en vez de dar el número por bueno: medido sobre una copia de
+                             la partida real, un Kommo-o con 168 PS se recalculaba en 151. -->
+                        <TextBlock Style="{StaticResource Faint}" Margin="0,8,0,0"
+                                   Visibility="{Binding Selected.StatsAreComputed,
+                                                Converter={StaticResource BoolToVisibility}}"
+                                   Text="La columna de la izquierda está calculada: una caja no guarda las estadísticas de combate. Como tu ROM lleva las bases barajadas, puede no coincidir con lo que verás en el juego. Los del equipo sí son los números que guardó el juego." />
+
+                        <!-- ================================== EL REPARTO DE EV
+                             Los dos techos no son una regla de PermaLocke, son el formato: el juego
+                             no reparte más de 252 en una estadística ni más de 510 en total, y
+                             pasarse deja un Pokémon que el cartucho considera ilegal. -->
+                        <Border Style="{StaticResource Inset}" Padding="12,10" Margin="0,12,0,0"
+                                Visibility="{Binding CanEditEvs, Converter={StaticResource BoolToVisibility}}">
+                            <StackPanel>
+                                <DockPanel>
+                                    <TextBlock DockPanel.Dock="Right" Style="{StaticResource Mono}" FontSize="11">
+                                        <Run Text="{Binding EvTotal, Mode=OneWay}" FontWeight="Bold"
+                                             Foreground="{StaticResource AccentBrush}" /><Run
+                                             Text=" / 510" Foreground="{StaticResource TextFaintBrush}" />
+                                    </TextBlock>
+                                    <TextBlock Style="{StaticResource StatLabel}" Text="REPARTO DE EV" />
+                                </DockPanel>
+
+                                <ProgressBar Height="6" Minimum="0" Maximum="1" Margin="0,8,0,0"
+                                             Value="{Binding EvFill, Mode=OneWay}" />
+
+                                <TextBlock Style="{StaticResource Faint}" Margin="0,6,0,0"
+                                           Text="{Binding EvRemaining, StringFormat='Quedan {0} EV por repartir. Máximo 252 en cada una y 510 entre las seis: son los topes del propio juego.'}" />
+
+                                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                    <Button Content="GUARDAR EN LA PARTIDA"
+                                            Style="{StaticResource PrimaryButton}"
+                                            Padding="12,7" FontSize="11"
+                                            Command="{Binding SaveEvsCommand}" />
+                                    <Button Content="DESHACER" Style="{StaticResource GhostButton}"
+                                            Padding="12,7" FontSize="11" Margin="6,0,0,0"
+                                            Command="{Binding RevertEvsCommand}" />
+                                    <Button Content="A CERO" Style="{StaticResource GhostButton}"
+                                            Padding="12,7" FontSize="11" Margin="6,0,0,0"
+                                            Command="{Binding ClearAllEvsCommand}" />
+                                </StackPanel>
+
+                                <TextBlock Style="{StaticResource Faint}" Margin="0,8,0,0"
+                                           Text="Escribir exige el juego cerrado. Se copia la partida entera antes de tocarla, se relee después para comprobarlo, y el cambio queda en el historial de la run." />
+
+                                <!-- Lo que pasó de verdad al escribir, en verde o en rojo. Nunca
+                                     se da por buena una escritura que no se ha vuelto a leer. -->
+                                <Border Margin="0,10,0,0" Padding="10,7"
+                                        CornerRadius="{StaticResource RadiusSmall}">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                            <Setter Property="Background" Value="{StaticResource SuccessDeepBrush}" />
+                                            <Setter Property="BorderBrush" Value="{StaticResource SuccessBrush}" />
+                                            <Setter Property="BorderThickness" Value="1" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding TrainStatus}" Value="">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding TrainFailed}" Value="True">
+                                                    <Setter Property="Background" Value="{StaticResource DangerDeepBrush}" />
+                                                    <Setter Property="BorderBrush" Value="{StaticResource DangerBrush}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBlock Text="{Binding TrainStatus}" Style="{StaticResource Body}"
+                                               FontSize="11.5" />
+                                </Border>
+                            </StackPanel>
+                        </Border>
 
                         <Border Style="{StaticResource Divider}" Margin="0,14" />
 

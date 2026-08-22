@@ -76,6 +76,16 @@ public sealed class SaveBoxSwap(PlayerSave save, string backupFolder, ILogger<Sa
                     $"El fichero de partida no se ha podido leer como Ultra Luna: {path}");
             }
 
+            // El visor enseña también el equipo, y el equipo es otro almacén del save. Un índice
+            // de equipo aquí caería en la caja 0 y destruiría a un Pokémon que nadie eligió, así
+            // que se corta en la puerta aunque la pantalla ya no lo ofrezca.
+            if (box < 0)
+            {
+                return new DeliveryResult(DeliveryOutcome.SlotChanged,
+                    "El wonder trade solo funciona con Pokémon del PC. Deposita primero en una caja "
+                    + "al que quieras entregar.");
+            }
+
             if (game.GetBoxSlotAtIndex(box, slot) is not { } current || current.Species != offer.GivenSpecies)
             {
                 return new DeliveryResult(DeliveryOutcome.SlotChanged,
