@@ -45,11 +45,42 @@
             <!-- Generar e instalar son dos pasos a propósito: instalar cambia la partida. -->
             <Border Style="{StaticResource Inset}" Padding="18,16" Margin="0,12,0,0">
                 <StackPanel>
-                    <TextBlock Text="QUÉ SE RANDOMIZA" Style="{StaticResource StatLabel}" />
-                    <TextBlock Style="{StaticResource Body}" Margin="0,7,0,0"
-                               Text="Lo decide Data/randomizer.json, no esta pantalla: encuentros salvajes, objetos del suelo, iniciales y fósiles, entrenadores, datos de Pokémon y tiendas especiales." />
-                    <TextBlock Style="{StaticResource Faint}" Margin="0,7,0,0"
-                               Text="Ocupa unos 460 MB, casi todo del fichero de encuentros, que en Ultra Luna lleva los datos de mapa dentro. La ROM original no se modifica nunca." />
+                    <TextBlock Text="CÓMO SE RANDOMIZA" Style="{StaticResource StatLabel}" />
+
+                    <Grid Margin="0,10,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="1." Style="{StaticResource CardTitle}"
+                                   Foreground="{StaticResource AccentBrush}" Margin="0,0,10,0"
+                                   VerticalAlignment="Top" />
+                        <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource Body}" Margin="0,0,0,10"
+                                   Text="GENERAR. Lee tu ROM y escribe una copia randomizada en la carpeta Randomized, con la seed de la run. Tarda un rato y ocupa unos 460 MB. Tu ROM original no se toca nunca, ni aquí ni después." />
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="2." Style="{StaticResource CardTitle}"
+                                   Foreground="{StaticResource AccentBrush}" Margin="0,0,10,0"
+                                   VerticalAlignment="Top" />
+                        <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource Body}" Margin="0,0,0,10"
+                                   Text="INSTALAR EN AZAHAR. Copia lo generado a la carpeta de mods del emulador. El juego lo carga por encima de la ROM, así que a partir del siguiente arranque juegas la versión randomizada. Si ya había un mod instalado no se borra: se aparta a load/permalocke-mod-anterior." />
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="3." Style="{StaticResource CardTitle}"
+                                   Foreground="{StaticResource AccentBrush}" Margin="0,0,10,0"
+                                   VerticalAlignment="Top" />
+                        <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource Body}"
+                                   Text="QUITAR. Desinstala el mod y te deja jugando la ROM tal cual salió del cartucho. Lo generado sigue en Randomized, así que volver a instalarlo es inmediato y no hay que generar otra vez." />
+                    </Grid>
+
+                    <Border Style="{StaticResource Divider}" Margin="0,14" />
+
+                    <TextBlock Style="{StaticResource Faint}"
+                               Text="Se randomiza con la seed de la run, así que la misma seed da siempre exactamente el mismo mundo: se puede regenerar y comprobar. Qué se randomiza —salvajes, objetos del suelo, iniciales y fósiles, entrenadores, datos de Pokémon y tiendas— lo decide Data/randomizer.json, no esta pantalla. Cierra Azahar antes de instalar o quitar." />
 
                     <Border Style="{StaticResource Divider}" Margin="0,15" />
 

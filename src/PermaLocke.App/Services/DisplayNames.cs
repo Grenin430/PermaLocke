@@ -50,7 +50,9 @@ public static class DisplayNames
         [GameEventType.TestItemGranted] = "Objeto de prueba",
         [GameEventType.BallsWithheld] = "Balls retiradas",
         [GameEventType.BallsReturned] = "Balls devueltas",
-        [GameEventType.TeamWiped] = "Equipo caído"
+        [GameEventType.TeamWiped] = "Equipo caído",
+        [GameEventType.EvsTrained] = "EV repartidos",
+        [GameEventType.PokemonDelivered] = "Entregado en la partida"
     };
 
     private static readonly Dictionary<EncounterType, string> Encounters = new()

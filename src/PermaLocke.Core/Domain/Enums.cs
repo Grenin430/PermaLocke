@@ -133,5 +133,16 @@ public enum GameEventType
     /// anything the game did, and a log that hides that behind a generic label stops being an
     /// audit. Costs no points; it is a change, not a purchase.
     /// </remarks>
-    EvsTrained
+    EvsTrained,
+
+    /// <summary>
+    /// A Pokémon the run granted reached the player's game, and the game gave it an identity.
+    /// </summary>
+    /// <remarks>
+    /// Separate from <see cref="GachaRoll"/> and <see cref="WonderTrade"/> because those record a
+    /// <em>decision</em> and this records an <em>arrival</em>: the roll happens whether or not the
+    /// save can be written, and only this one can carry the PID, which does not exist until the
+    /// Pokémon is built. Without it the run owns Pokémon it cannot recognise in memory.
+    /// </remarks>
+    PokemonDelivered
 }

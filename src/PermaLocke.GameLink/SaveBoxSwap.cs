@@ -114,7 +114,7 @@ public sealed class SaveBoxSwap(PlayerSave save, string backupFolder, ILogger<Sa
 
             return new DeliveryResult(DeliveryOutcome.Delivered,
                 $"{offer.GivenName} se ha ido y {offer.Name} ocupa su sitio: caja {box + 1}, hueco {slot + 1}.",
-                box + 1, slot + 1);
+                box + 1, slot + 1, received.PID);
         }
         catch (Exception ex)
         {

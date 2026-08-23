@@ -87,10 +87,7 @@ public static class PokemonBuilder
         pokemon.IV_SPA = spec.Ivs[4];
         pokemon.IV_SPD = spec.Ivs[5];
 
-        if (spec.IsShiny)
-        {
-            pokemon.SetShiny();
-        }
+        GiveItAnIdentity(pokemon, spec.IsShiny);
 
         NameIt(pokemon);
         SetMovesFor(pokemon);
@@ -100,6 +97,33 @@ public static class PokemonBuilder
 
         return pokemon;
     }
+
+    /// <summary>
+    /// Gives the Pokémon a personality value and an encryption constant of its own.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Left out until now, and a <see cref="PK7"/> starts at zero, so everything PermaLocke had
+    /// ever handed over shared the same PID — 149 of the 154 Pokémon in the real save. The PID is
+    /// the one field that identifies a Pokémon for life: <c>GameWatcher</c> matches the live party
+    /// against the run by it and by nothing else, so a party full of zeros is a party the run
+    /// cannot recognise, which is why not one death had ever been recorded.
+    /// </para>
+    /// <para>
+    /// The shininess is set <b>after</b> the roll of the dice and not before it, because a random
+    /// PID is shiny about one time in four thousand: rolling first and correcting second is what
+    /// keeps a Pokémon that was not meant to be shiny from becoming one by accident, and a shiny
+    /// one from losing it.
+    /// </para>
+    /// </remarks>
+    private static void GiveItAnIdentity(PK7 pokemon, bool shiny)
+    {
+        pokemon.PID = Random32();
+        pokemon.EncryptionConstant = Random32();
+        pokemon.SetIsShiny(shiny);
+    }
+
+    private static uint Random32() => (uint)Random.Shared.NextInt64(0, uint.MaxValue + 1L);
 
     /// <summary>
     /// Writes the species name into the nickname field, which is where the game reads it from.

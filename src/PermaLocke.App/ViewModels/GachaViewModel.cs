@@ -60,17 +60,20 @@ public sealed partial class GachaViewModel : SectionViewModel
     private readonly IRunContext _runContext;
     private readonly IPointsService _points;
     private readonly IPokemonDelivery _delivery;
+    private readonly PokemonIdentityService _identity;
     private readonly PokemonSpriteService _sprites;
     private readonly ILogger<GachaViewModel> _logger;
 
     public GachaViewModel(GachaService gacha, IRunContext runContext, IPointsService points,
-        IPokemonDelivery delivery, PokemonSpriteService sprites, ILogger<GachaViewModel> logger)
+        IPokemonDelivery delivery, PokemonIdentityService identity, PokemonSpriteService sprites,
+        ILogger<GachaViewModel> logger)
         : base("GACHA", "Gasta puntos y llévate un Pokémon al PC de la partida")
     {
         _gacha = gacha;
         _runContext = runContext;
         _points = points;
         _delivery = delivery;
+        _identity = identity;
         _sprites = sprites;
         _logger = logger;
     }
@@ -281,6 +284,15 @@ public sealed partial class GachaViewModel : SectionViewModel
             // dejar creer que está en la partida: en la run sí está, en el juego todavía no.
             var delivered = await _delivery.DeliverAsync(pull, run);
             Status = delivered.Message;
+
+            // El PID solo existe cuando el Pokémon se ha construido de verdad, así que se guarda
+            // ahora: es lo único que permite reconocerlo luego en la memoria del juego y darlo por
+            // muerto cuando caiga.
+            if (delivered.Delivered && result.Pokemon is { } entry)
+            {
+                await _identity.RememberDeliveryAsync(run, entry, delivered.Pid,
+                    delivered.Box, delivered.Slot);
+            }
 
             _logger.LogInformation("Gacha {Banner}: {Species} Nv.{Level} ({Tier})",
                 selected.Banner.Id, pull.SpeciesName, pull.Level, pull.TierId);

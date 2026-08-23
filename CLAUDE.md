@@ -547,6 +547,26 @@ que gobierna todas**. La regla de las balls queda **apagada**; reencenderla exig
 el campo de zona desde cero, que es una investigación del tamaño del §22, no un ajuste. Ver
 `docs/ARCHITECTURE.md` §55.
 
+**Ninguna muerte se había contado nunca, y el motivo era un cero (2026-08-23).** El jugador pidió
+comprobar el cap por prueba y el recuento de muertos. El cap está bien -pasó solo de la 1ª a la 3ª
+prueba, cap 24-. Lo otro no: **186 Pokémon registrados y cero muertes**. `GameWatcher` empareja el
+equipo vivo con la run **por PID y por nada más**, y la auditoría nueva lo cuenta: **6 con PID y 180
+sin él**, o sea que el 97 % de lo que hay era invisible. Dos mitades: la run guardaba su entrada
+*antes* de que el Pokémon existiera, así que no había PID que guardar; y peor, `PokemonBuilder` no
+ponía `PID` y un `PK7` nace a cero, de modo que **149 de los 154 Pokémon de la partida real
+compartían el mismo**. Ya se reparte PID y constante de encriptación -tirando primero y corrigiendo
+el brillo después, porque un PID al azar sale shiny una vez de cada cuatro mil-, `DeliveryResult` lo
+devuelve y `PokemonIdentityService` lo guarda con su evento `PokemonDelivered`. Para lo ya entregado
+está `SavePidRepair` (`Probe --pids`), que empareja por **los seis IVs más el shiny** -lo único que
+no cambia nunca- y solo acepta firmas únicas por los dos lados. Ojo: **hay dos órdenes de IVs vivos
+en el repositorio**, el de la tirada y el del lector, y confundirlos dio 0 de 180 emparejados sin
+error ninguno. Alcance que conviene tener claro: detectable no es detectado, el vigilante solo mira
+**el equipo** y solo **con la aplicación abierta**. Ver §56.
+
+**POKE PASTE (2026-08-23).** Exporta el equipo o cualquier caja en el formato de `pokepast.es`.
+**Solo exporta**: leer un pegado sería crear Pokémon a partir de texto. Los nombres van en **inglés**
+porque el sitio se guía por ellos, así que usa un `SaveBoxReader` propio con idioma `en`. Ver §57.
+
 **Siguiente.** Sincronización, y probar en partida real los combates importantes, los iniciales y
 las tiendas.
 
@@ -555,7 +575,8 @@ Lo que NO está resuelto todavía y no debe darse por hecho (detalle en `docs/AR
 | Tema | Estado |
 |---|---|
 | Lectura del equipo en vivo | **RESUELTA Y VERIFICADA** contra el juego real |
-| Detección automática de capturas y muertes | **Sin validar** — falta una captura real |
+| Detección automática de capturas y muertes | **NO FUNCIONABA Y YA PUEDE** — el 97 % de los Pokémon no tenía PID, que es lo único por lo que empareja. Corregido para lo nuevo y reparable para lo viejo con `Probe --pids`; sigue sin haberse visto una muerte real. Ver `ARCHITECTURE.md` §56 |
+| Poke Paste | **HECHO Y VISTO EN LA APP** — exporta equipo o caja en formato `pokepast.es`, en inglés. Solo exporta. Ver `ARCHITECTURE.md` §57 |
 | Randomización vía LayeredFS | **RESUELTA Y VERIFICADA** en el juego — salvajes y textos |
 | Escritura en el juego (Shedinja, cap, objetos) | **RESUELTA Y VERIFICADA** — exige el fork propio de Azahar |
 | Mochila del juego (leer, poner cantidad, añadir lo que no llevas) | **RESUELTA Y VERIFICADA** en el juego — ver `ARCHITECTURE.md` §22 |
@@ -602,6 +623,14 @@ dotnet run --project tools/PermaLocke.Probe -- --ev --probar
 
 # id de un objeto por su nombre, para no teclearlo de memoria
 dotnet run --project tools/PermaLocke.Probe -- --objeto-find "Amuleto Iris"
+
+# auditoría de la run: puntos, muertes, cap por etapa y cobertura de PID
+dotnet run --project tools/PermaLocke.Probe -- --run
+
+# PID que faltan; --probar lo demuestra SOBRE UNA COPIA, --arreglar escribe de verdad
+dotnet run --project tools/PermaLocke.Probe -- --pids
+dotnet run --project tools/PermaLocke.Probe -- --pids --probar
+dotnet run --project tools/PermaLocke.Probe -- --pids --arreglar
 ```
 
 SDK requerido: .NET 10 (instalado: 10.0.400).

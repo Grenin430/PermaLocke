@@ -117,7 +117,8 @@ public sealed class SaveBoxDelivery(
                 pull.SpeciesName, box + 1, slot + 1, path);
 
             return new DeliveryResult(DeliveryOutcome.Delivered,
-                $"{pull.SpeciesName} está en la caja {box + 1}, hueco {slot + 1}.", box + 1, slot + 1);
+                $"{pull.SpeciesName} está en la caja {box + 1}, hueco {slot + 1}.", box + 1, slot + 1,
+                pokemon.PID);
         }
         catch (Exception ex)
         {

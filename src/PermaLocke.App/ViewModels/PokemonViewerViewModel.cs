@@ -176,6 +176,28 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
     /// <summary>The thirty holes of the box on screen, empty ones included.</summary>
     public ObservableCollection<BoxSlotViewModel> Slots { get; } = [];
 
+    /// <summary>
+    /// The six the player is carrying, always on screen.
+    /// </summary>
+    /// <remarks>
+    /// Its own list rather than one more box in the selector: the party is what the run is playing
+    /// with, and having to page round to it to see whether somebody is hurt is a step too many.
+    /// </remarks>
+    public ObservableCollection<BoxSlotViewModel> Party { get; } = [];
+
+    /// <summary>
+    /// Which of the two grids the selection came from.
+    /// </summary>
+    /// <remarks>
+    /// Two <c>ListBox</c>es, one selection. Choosing in one clears the other, so the highlight
+    /// never sits in two places claiming to be the Pokémon on the right.
+    /// </remarks>
+    [ObservableProperty]
+    private BoxSlotViewModel? _selectedPartySlot;
+
+    /// <summary>Guards the two selections from clearing each other in a loop.</summary>
+    private bool _switchingSelection;
+
     /// <summary>The six stats of whatever is selected.</summary>
     public ObservableCollection<StatRowViewModel> Stats { get; } = [];
 
@@ -261,16 +283,18 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
                 return;
             }
 
-            foreach (var box in _snapshot.Boxes)
+            // El selector es solo del PC: el equipo tiene su propia rejilla y está siempre visible.
+            foreach (var box in _snapshot.Boxes.Where(box => !box.IsParty))
             {
                 Boxes.Add(new BoxTabViewModel(box.Number, box.Name, box.Count, box.Slots, box.IsParty));
             }
 
+            ShowParty();
+
             var party = _snapshot.Party?.Count ?? 0;
             Summary = $"{party} en el equipo · {_snapshot.Stored} en el PC de {_snapshot.TrainerName}";
 
-            // El equipo primero cuando lleva algo, que es lo que el jugador está usando; si no, la
-            // primera caja con algo dentro, porque abrir en una vacía teniendo Pokémon en la
+            // La primera caja con algo dentro: abrir en una vacía teniendo Pokémon en la
             // siguiente hace pensar que no se ha leído nada.
             SelectedBox = Boxes.FirstOrDefault(box => box.Count > 0) ?? Boxes.FirstOrDefault();
 
@@ -327,8 +351,17 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
     private void ShowBox(BoxTabViewModel? box)
     {
         Slots.Clear();
-        Select(null);
+
+        // Pasar de caja no debe soltar al del equipo que se está mirando: son dos rejillas y solo
+        // una ficha, y la que manda es la última que se tocó.
+        _switchingSelection = true;
         SelectedSlot = null;
+        _switchingSelection = false;
+
+        if (SelectedPartySlot is null)
+        {
+            Select(null);
+        }
 
         if (box is null || _snapshot is null)
         {
@@ -349,7 +382,56 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
         }
     }
 
-    partial void OnSelectedSlotChanged(BoxSlotViewModel? value) => Select(value?.Pokemon);
+    /// <summary>Draws the six party holes, empty ones included.</summary>
+    private void ShowParty()
+    {
+        Party.Clear();
+
+        if (_snapshot?.Party is not { } party)
+        {
+            return;
+        }
+
+        for (var slot = 0; slot < party.Slots; slot++)
+        {
+            var member = party.Pokemon.FirstOrDefault(p => p.Slot == slot);
+            Party.Add(new BoxSlotViewModel(member, member is null ? null : SpriteFor(member)));
+        }
+    }
+
+    partial void OnSelectedSlotChanged(BoxSlotViewModel? value)
+    {
+        if (_switchingSelection)
+        {
+            return;
+        }
+
+        if (value is not null)
+        {
+            _switchingSelection = true;
+            SelectedPartySlot = null;
+            _switchingSelection = false;
+        }
+
+        Select(value?.Pokemon);
+    }
+
+    partial void OnSelectedPartySlotChanged(BoxSlotViewModel? value)
+    {
+        if (_switchingSelection)
+        {
+            return;
+        }
+
+        if (value is not null)
+        {
+            _switchingSelection = true;
+            SelectedSlot = null;
+            _switchingSelection = false;
+        }
+
+        Select(value?.Pokemon);
+    }
 
     private void Select(BoxedPokemon? pokemon)
     {

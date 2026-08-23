@@ -125,7 +125,41 @@
             </Image>
 
             <!-- LOS TRES AVISOS. En su propia capa, y se apagan antes de que salga el Pokémon. -->
-            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,230,0,0">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,70">
+
+                <TextBlock Text="{Binding GenerationText}" Margin="0,20,0,0"
+                           Style="{StaticResource PanelHeading}" FontSize="30" HorizontalAlignment="Center"
+                           RenderTransformOrigin="0.5,0.5"
+                           Visibility="{Binding ShowGeneration, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock.Effect>
+                        <DropShadowEffect Color="Black" BlurRadius="14" ShadowDepth="0" Opacity="0.9" />
+                    </TextBlock.Effect>
+                    <TextBlock.RenderTransform>
+                        <ScaleTransform ScaleX="1" ScaleY="1" />
+                    </TextBlock.RenderTransform>
+                    <TextBlock.Triggers>
+                        <EventTrigger RoutedEvent="Loaded">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                     From="0" To="1" Duration="0:0:0.3" />
+                                    <DoubleAnimation From="2.6" To="1" Duration="0:0:0.6"
+                                        Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)">
+                                        <DoubleAnimation.EasingFunction>
+                                            <BackEase EasingMode="EaseOut" Amplitude="0.9" />
+                                        </DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                    <DoubleAnimation From="2.6" To="1" Duration="0:0:0.6"
+                                        Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)">
+                                        <DoubleAnimation.EasingFunction>
+                                            <BackEase EasingMode="EaseOut" Amplitude="0.9" />
+                                        </DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                    </TextBlock.Triggers>
+                </TextBlock>
 
                 <ItemsControl ItemsSource="{Binding Types}" HorizontalAlignment="Center"
                               Visibility="{Binding ShowTypes, Converter={StaticResource BoolToVisibility}}">
@@ -173,40 +207,6 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-
-                <TextBlock Text="{Binding GenerationText}" Margin="0,20,0,0"
-                           Style="{StaticResource PanelHeading}" FontSize="30" HorizontalAlignment="Center"
-                           RenderTransformOrigin="0.5,0.5"
-                           Visibility="{Binding ShowGeneration, Converter={StaticResource BoolToVisibility}}">
-                    <TextBlock.Effect>
-                        <DropShadowEffect Color="Black" BlurRadius="14" ShadowDepth="0" Opacity="0.9" />
-                    </TextBlock.Effect>
-                    <TextBlock.RenderTransform>
-                        <ScaleTransform ScaleX="1" ScaleY="1" />
-                    </TextBlock.RenderTransform>
-                    <TextBlock.Triggers>
-                        <EventTrigger RoutedEvent="Loaded">
-                            <BeginStoryboard>
-                                <Storyboard>
-                                    <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                                                     From="0" To="1" Duration="0:0:0.3" />
-                                    <DoubleAnimation From="2.6" To="1" Duration="0:0:0.6"
-                                        Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)">
-                                        <DoubleAnimation.EasingFunction>
-                                            <BackEase EasingMode="EaseOut" Amplitude="0.9" />
-                                        </DoubleAnimation.EasingFunction>
-                                    </DoubleAnimation>
-                                    <DoubleAnimation From="2.6" To="1" Duration="0:0:0.6"
-                                        Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)">
-                                        <DoubleAnimation.EasingFunction>
-                                            <BackEase EasingMode="EaseOut" Amplitude="0.9" />
-                                        </DoubleAnimation.EasingFunction>
-                                    </DoubleAnimation>
-                                </Storyboard>
-                            </BeginStoryboard>
-                        </EventTrigger>
-                    </TextBlock.Triggers>
-                </TextBlock>
 
                 <StackPanel Margin="0,18,0,0" HorizontalAlignment="Center" RenderTransformOrigin="0.5,0.5"
                             Visibility="{Binding ShowTotal, Converter={StaticResource BoolToVisibility}}">

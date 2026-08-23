@@ -678,17 +678,42 @@
                         <Button DockPanel.Dock="Left" Content="TIRAR" Style="{StaticResource PrimaryButton}"
                                 Command="{Binding RollCommand}" MinWidth="180" Padding="16,11" FontSize="14" />
 
-                        <!-- El párrafo de cómo funciona la tirada vive en el tooltip: es de leer
-                             una vez, y a pie de pantalla empujaba el botón fuera de la ventana. -->
-                        <TextBlock DockPanel.Dock="Right" Text="¿cómo se decide la tirada?"
-                                   Style="{StaticResource Faint}" VerticalAlignment="Center"
-                                   TextDecorations="Underline" Cursor="Help"
-                                   Foreground="{StaticResource AccentDimBrush}" Margin="14,0,0,0">
-                            <TextBlock.ToolTip>
-                                <TextBlock TextWrapping="Wrap" MaxWidth="440" LineHeight="17"
-                                           Text="Las probabilidades están a la vista y salen de Data/gacha.json. Cada tirada se calcula con la seed de la run y su número de tirada, así que cualquiera puede recomputarla y comprobar que salió lo que dice el historial. La ruleta es presentación: el Pokémon ya está decidido, guardado y entregado antes de que empiece a girar, y las siluetas que pasan no son candidatas. El Pokémon se entrega al PC del juego escribiendo en la partida, lo que exige tener el juego cerrado; si no se puede, la línea de estado dice por qué." />
-                            </TextBlock.ToolTip>
-                        </TextBlock>
+                        <!-- QUÉ ES CADA TIER, a la vista y no en un tooltip: es lo que hay que
+                             mirar para decidir qué banner tirar. El rango es el TOTAL de
+                             estadísticas base, y el suelo de cada uno es el techo del anterior. -->
+                        <ItemsControl DockPanel.Dock="Right" Margin="14,0,0,0" VerticalAlignment="Center">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+
+                            <Border Style="{StaticResource Chip}" Margin="0,0,5,0"
+                                    BorderBrush="{StaticResource Tier1Brush}">
+                                <TextBlock Style="{StaticResource ChipText}"
+                                           Foreground="{StaticResource Tier1Brush}" Text="T1 · ≤400" />
+                            </Border>
+                            <Border Style="{StaticResource Chip}" Margin="0,0,5,0"
+                                    BorderBrush="{StaticResource Tier2Brush}">
+                                <TextBlock Style="{StaticResource ChipText}"
+                                           Foreground="{StaticResource Tier2Brush}" Text="T2 · 401-490" />
+                            </Border>
+                            <Border Style="{StaticResource Chip}" Margin="0,0,5,0"
+                                    BorderBrush="{StaticResource Tier3Brush}">
+                                <TextBlock Style="{StaticResource ChipText}"
+                                           Foreground="{StaticResource Tier3Brush}" Text="T3 · 491-535" />
+                            </Border>
+                            <Border Style="{StaticResource Chip}" Margin="0,0,5,0"
+                                    BorderBrush="{StaticResource Tier4Brush}">
+                                <TextBlock Style="{StaticResource ChipText}"
+                                           Foreground="{StaticResource Tier4Brush}" Text="T4 · 536-590" />
+                            </Border>
+                            <Border Style="{StaticResource Chip}"
+                                    BorderBrush="{StaticResource Tier5Brush}">
+                                <TextBlock Style="{StaticResource ChipText}"
+                                           Foreground="{StaticResource Tier5Brush}" Text="T5 · 591+ y legendarios" />
+                            </Border>
+                        </ItemsControl>
 
                         <Border Style="{StaticResource Chip}" HorizontalAlignment="Left" Margin="14,0,0,0"
                                 Padding="12,5"

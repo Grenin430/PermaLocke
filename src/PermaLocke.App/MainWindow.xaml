@@ -32,6 +32,9 @@
         <DataTemplate DataType="{x:Type vm:PokemonViewerViewModel}">
             <views:PokemonViewerView />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:PokePasteViewModel}">
+            <views:PokePasteView />
+        </DataTemplate>
         <DataTemplate DataType="{x:Type vm:MiscellaneousViewModel}">
             <views:MiscellaneousView />
         </DataTemplate>
@@ -128,12 +131,10 @@
                     BorderBrush="{StaticResource BorderBrush}"
                     BorderThickness="1"
                     CornerRadius="{StaticResource RadiusLarge}"
-                    Padding="24,16">
-                <StackPanel>
-                    <TextBlock Text="{Binding SelectedSection.Title}" Style="{StaticResource SectionTitle}" />
-                    <TextBlock Text="{Binding SelectedSection.Subtitle}" Style="{StaticResource Muted}"
-                               Margin="0,2,0,0" />
-                </StackPanel>
+                    Padding="24,18">
+                <!-- Solo el título. La línea de descripción se quitó a petición del jugador: en una
+                     aplicación que se usa a diario explica lo que ya se sabe y ocupa sitio. -->
+                <TextBlock Text="{Binding SelectedSection.Title}" Style="{StaticResource SectionTitle}" />
             </Border>
 
             <Border Grid.Row="2" Style="{StaticResource Panel}">

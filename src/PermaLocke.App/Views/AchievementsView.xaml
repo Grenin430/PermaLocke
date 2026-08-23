@@ -196,19 +196,7 @@
                                 Style="{StaticResource PrimaryButton}" MinWidth="140"
                                 Padding="16,8" Command="{Binding RefreshCommand}" />
 
-                        <!-- El párrafo largo de dónde sale cada número vive en el tooltip: es de
-                             leer una vez, y a pie de pantalla se comía tres filas de tarjetas. -->
-                        <TextBlock DockPanel.Dock="Right" Text="¿de dónde salen estos números?"
-                                   Style="{StaticResource Faint}" VerticalAlignment="Center"
-                                   TextDecorations="Underline" Cursor="Help"
-                                   Foreground="{StaticResource AccentDimBrush}" Margin="14,0,0,0">
-                            <TextBlock.ToolTip>
-                                <TextBlock TextWrapping="Wrap" MaxWidth="440" LineHeight="17"
-                                           Text="Cada tarjeta dice de dónde sale su número. «Lo cuenta el juego» son contadores del propio cartucho, los mismos que enseña la ficha de entrenador. «Lo dice tu mochila» son los que se reconocen por su premio: cada prueba entrega su cristal Z, y cuál da cuál lo dice el texto del propio juego. Los dos se leen de la partida guardada, así que no se mueven hasta que guardes. «Lo cuenta PermaLocke» sale del historial de la run, y «a mano» solo aparecería en un logro que todavía no se supiera detectar. Cobrar es aparte, para que el log diga de dónde salió cada punto." />
-                            </TextBlock.ToolTip>
-                        </TextBlock>
-
-                        <TextBlock Style="{StaticResource Body}" VerticalAlignment="Center" Margin="14,0,14,0"
+                        <TextBlock Style="{StaticResource Body}" VerticalAlignment="Center" Margin="14,0,0,0"
                                    Text="{Binding Summary}" />
                     </DockPanel>
 

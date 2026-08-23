@@ -39,7 +39,7 @@ public sealed class SaveBoxReader(PlayerSave save, ILocationLookup locations, st
         }
 
         var notice = save.IsGameLoaded()
-            ? "El juego está abierto: esto es lo último que guardaste, no lo que tienes ahora mismo en pantalla."
+            ? "Guarda y cierra el juego para poder usar el visor Pokémon."
             : null;
 
         try

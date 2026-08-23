@@ -22,6 +22,8 @@ using PermaLocke.GameLink.Rpc;
 //   Probe --equipo [--cap N]    the live party in every copy, both level fields side by side
 //   Probe --zona                the four copies of the area field, and why they are believed or not
 //   Probe --pk <fichero>        reads a party slot backup; --cap N says what a cap write changes
+//   Probe --pids [--arreglar]   gives a PID to what was delivered without one and links it to the run
+//   Probe --pids --probar       does the whole PID repair on a COPY of the partida and checks it
 
 Console.OutputEncoding = System.Text.Encoding.UTF8;
 
@@ -47,6 +49,18 @@ if (args.Length >= 1 && args[0] == "--nombres")
 if (args.Length >= 1 && args[0] == "--ev")
 {
     return PermaLocke.Probe.EvProbe.Run(args.Contains("--probar"));
+}
+
+// PID que faltan: empareja por IVs lo que la run entregó antes de que se guardara el PID.
+if (args.Length >= 1 && args[0] == "--pids")
+{
+    return await PermaLocke.Probe.PidRepairProbe.RunAsync(args.Contains("--arreglar"), args.Contains("--probar"));
+}
+
+// Auditoría de la run contra su propio historial. No necesita emulador.
+if (args.Length >= 1 && args[0] == "--run")
+{
+    return await PermaLocke.Probe.RunAuditProbe.RunAsync();
 }
 
 // Las cuatro copias del campo de zona, y por qué se creen o no. Con --vigilar, en bucle: se anda

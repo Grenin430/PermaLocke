@@ -36,6 +36,7 @@ public sealed partial class WonderTradeViewModel : ObservableObject
 {
     private readonly WonderTradeService _trades;
     private readonly IPokemonSwap _swap;
+    private readonly PokemonIdentityService _identity;
     private readonly IRunContext _runContext;
     private readonly PokemonSpriteService _sprites;
     private readonly ILogger<WonderTradeViewModel> _logger;
@@ -48,11 +49,13 @@ public sealed partial class WonderTradeViewModel : ObservableObject
         "#624D4E", "#EF70EF", "#2E9AA0"
     ];
 
-    public WonderTradeViewModel(WonderTradeService trades, IPokemonSwap swap, IRunContext runContext,
+    public WonderTradeViewModel(WonderTradeService trades, IPokemonSwap swap,
+        PokemonIdentityService identity, IRunContext runContext,
         PokemonSpriteService sprites, ILogger<WonderTradeViewModel> logger)
     {
         _trades = trades;
         _swap = swap;
+        _identity = identity;
         _runContext = runContext;
         _sprites = sprites;
         _logger = logger;
@@ -250,6 +253,14 @@ public sealed partial class WonderTradeViewModel : ObservableObject
 
             _logger.LogInformation("Wonder trade hecho: {Given} por {Received}", given.DisplayName, offer.Name);
 
+            // El que llega solo existe en el juego a partir de aquí, así que su PID se guarda
+            // ahora. Sin él la run tendría un Pokémon suyo al que no sabría reconocer.
+            if (result.Entry is { } entry)
+            {
+                await _identity.RememberDeliveryAsync(run, entry, written.Pid,
+                    written.Box, written.Slot);
+            }
+
             Offer = offer;
             ReceivedSprite = _sprites.Get(offer.Species);
             BallSprite = _sprites.GetBall();
@@ -290,10 +301,12 @@ public sealed partial class WonderTradeViewModel : ObservableObject
         // existe por si la vista nunca llegó a arrancar: una pantalla que no se cuelga.
         await Task.WhenAny(arrived.Task, Task.Delay(TimeSpan.FromSeconds(8)));
 
-        ShowTypes = true;
+        // Generación primero y tipos después, a petición del jugador: la generación acota poco y
+        // los tipos acotan mucho, así que revelarlos en ese orden va cerrando el cerco.
+        ShowGeneration = true;
         await Task.Delay(TimeSpan.FromSeconds(1.3));
 
-        ShowGeneration = true;
+        ShowTypes = true;
         await Task.Delay(TimeSpan.FromSeconds(1.3));
 
         ShowTotal = true;

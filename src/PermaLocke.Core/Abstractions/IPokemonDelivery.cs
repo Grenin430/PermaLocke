@@ -29,7 +29,18 @@ public enum DeliveryOutcome
 }
 
 /// <param name="Box">One-based box number, for telling the player where to look.</param>
-public sealed record DeliveryResult(DeliveryOutcome Outcome, string Message, int Box = 0, int Slot = 0)
+/// <param name="Pid">
+/// The personality value the delivered Pokémon ended up with, or zero when nothing was written.
+/// </param>
+/// <remarks>
+/// The PID is carried back because it is the <b>only</b> handle that ties the run's record to the
+/// Pokémon now living in the player's game: it survives nicknames, levels and evolutions, and it
+/// is what the watcher matches the live party against. A delivery that does not report it produces
+/// a Pokémon the run owns and cannot recognise, which is how a Pokémon can faint in front of the
+/// app without a death being recorded.
+/// </remarks>
+public sealed record DeliveryResult(DeliveryOutcome Outcome, string Message, int Box = 0, int Slot = 0,
+    uint Pid = 0)
 {
     public bool Delivered => Outcome == DeliveryOutcome.Delivered;
 }

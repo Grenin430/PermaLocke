@@ -4351,3 +4351,135 @@ La regla de las Poké Balls queda **apagada** en `Data/rules.json`, con el motiv
 Volver a encenderla exige localizar el campo de zona otra vez desde cero, que es una investigación
 propia —del tamaño del §22 o del §23— y no un ajuste. `Probe --zona --vigilar` es la herramienta con
 la que hacerla: se anda por el juego y sale de una pasada cada valor que toma el campo candidato.
+
+---
+
+## 56. Ninguna muerte se había contado nunca, y el motivo era un cero (2026-08-23)
+
+El jugador pidió comprobar que **el cap cambia con cada prueba y que los muertos se cuentan bien**.
+Lo primero salió bien. Lo segundo destapó un fallo de fondo que llevaba desde el principio.
+
+### La auditoría
+
+`Probe --run` pone el historial al lado de los totales, que es lo que faltaba para poder distinguir
+un número equivocado de un número sorprendente:
+
+```
+POKÉMON REGISTRADOS: 186
+  Alive       186
+    Gacha         152   WonderTrade    28   Capture     6
+
+MUERTES REGISTRADAS: 0
+```
+
+Con 186 Pokémon y meses de partida, cero muertes no es una racha.
+
+### La pregunta correcta no era «¿ha muerto alguno?» sino «¿podría detectarse?»
+
+`GameWatcher` empareja el equipo vivo con la run **por PID y por nada más**. Es la decisión
+correcta —el PID sobrevive a motes, niveles y evoluciones— pero convierte el PID en un requisito:
+sin él, un Pokémon puede caer delante de la aplicación y no pasa nada. Así que la auditoría pasó a
+contar eso:
+
+```
+DETECTABLES POR EL VIGILANTE (emparejamiento por PID)
+  con PID:      6
+  sin PID:    180   <- estos no se pueden detectar muertos
+    Gacha         152   WonderTrade    28
+```
+
+Los seis con PID son **las seis capturas de verdad**, que se registran leyendo la memoria del juego
+y por tanto traen el PID puesto. Todo lo que ha entregado PermaLocke —el 97 %— era invisible.
+
+### Dos mitades del mismo agujero
+
+**Una: la run nunca guardaba el PID.** El gacha y el wonder trade guardan su `PokemonEntry` *antes*
+de que el Pokémon exista: la tirada se decide y se cobra, y solo después la vista pide la entrega.
+El PID nace al construir la entidad, así que cuando se guardaba la entrada todavía no había ninguno.
+
+**Dos, y es peor: el Pokémon tampoco tenía.** `PokemonBuilder.Build` no ponía `PID`, y un `PK7`
+nace a cero. O sea que no es que la run no supiera el PID: es que **149 de los 154 Pokémon de la
+partida real compartían el mismo**, el cero. Los cinco que no eran los shiny, porque `SetShiny()`
+toca el PID de paso.
+
+Medido, no supuesto:
+
+```
+En la partida: 154 Pokémon, 149 con PID cero
+```
+
+### Lo que se arregla
+
+- `PokemonBuilder` reparte **PID y constante de encriptación** aleatorios. El orden importa: se
+  tira primero y se corrige el brillo después con `SetIsShiny`, porque un PID al azar sale shiny
+  una vez de cada cuatro mil y un Pokémon no puede volverse shiny por accidente ni dejar de serlo.
+- `DeliveryResult` devuelve el `Pid`. Una entrega que no lo dice produce un Pokémon que la run
+  posee y no reconoce, que es exactamente el estado del que se viene.
+- `PokemonIdentityService` guarda ese PID en la entrada y anota un evento **`PokemonDelivered`**.
+  Es un tipo aparte de `GachaRoll` y `WonderTrade` a propósito: aquellos registran una *decisión* y
+  este registra una *llegada*. La tirada ocurre aunque la partida no se pueda escribir; solo la
+  llegada puede llevar el PID. Un PID de cero **no se guarda nunca**: emparejaría entre sí a todos
+  los que no tienen.
+
+### Y lo ya entregado, que ningún arreglo alcanza
+
+Los 149 están escritos en las cajas. Para ellos, `SavePidRepair`, con la misma forma que la
+reparación de nombres del §41: copia previa, escritura, **relectura**, y no se da por bueno nada que
+no se haya vuelto a ver. Comprueba dos cosas al releer —que no queda **ninguno a cero** y que no hay
+**ninguno repetido**—, porque repartir dos veces el mismo número reproduce el problema en pequeño.
+Vuelve a su sitio con `PokemonBuilder.InPlace`, que es la lección del §42: al valor por defecto,
+tocar ciento cincuenta Pokémon añadiría ciento cincuenta capturas y ciento cincuenta Poké Balls
+usadas que nadie tiró.
+
+La otra mitad —enseñarle a la run cuál es cuál— se empareja por **los seis IVs más el flag de
+shiny**, que es todo lo que en un Pokémon no cambia nunca: el nivel sube, los EV se reparten, el
+mote cambia y la especie evoluciona. Los IVs no están en `PokemonEntry`; están en el campo `ivs`
+del evento que lo entregó, que es justo para lo que sirve un registro de eventos. Solo se acepta
+una firma **única por los dos lados** —una entrada, un Pokémon en la partida—; lo ambiguo se cuenta
+y se deja.
+
+**Trampa que costó una pasada en falso:** hay dos órdenes de IVs vivos en el repositorio. La tirada
+los guarda en HP/Atk/Def/**Vel**/SpA/SpD y el lector de cajas los expone en HP/Atk/Def/SpA/SpD/**Vel**.
+Los dos son indistinguibles en un Pokémon cuyos IVs especiales y de velocidad coincidan, que es
+justo cómo se esconde un fallo así: empareja unos pocos y falla el resto en silencio. La primera
+medición dio **0 emparejados de 180**; con el orden bueno, 152.
+
+### Herramientas
+
+```
+Probe --run                 la auditoría, ahora con la cobertura de PID
+Probe --pids                qué falta, sin escribir nada
+Probe --pids --probar       la reparación entera SOBRE UNA COPIA, y la copia se borra
+Probe --pids --arreglar     la partida primero, la run después
+```
+
+`--probar` sobre la partida real, con el juego cerrado:
+
+```
+Antes:   149 de 157 Pokémon no tienen PID. Nada escrito todavía.
+Escrito: 149 Pokémon reciben un PID propio, y al releer la partida no queda ninguno a cero ni repetido.
+Releído: Los 157 Pokémon de la partida ya tienen PID. No hay nada que reparar.
+```
+
+### Lo que sigue sin estar resuelto
+
+Que un Pokémon sea detectable no es que se detecte: el vigilante solo mira **el equipo**, y solo
+**mientras la aplicación está abierta y Azahar responde**. Una muerte con PermaLocke cerrado sigue
+sin contarse. Eso no es un fallo nuevo, es el alcance de la detección, y conviene tenerlo escrito.
+
+---
+
+## 57. POKE PASTE (2026-08-23)
+
+Exportar lo que hay en la partida en el formato de `pokepast.es`. Solo exportar: leer un pegado
+significaría **crear Pokémon a partir de texto**, y de dónde salió un Pokémon es lo único con lo que
+una Nuzlocke no puede ser descuidada.
+
+Dos reglas que, mal puestas, producen un pegado que se ve bien y entra mal:
+
+- **En inglés.** El sitio se guía por los nombres ingleses, así que el visor pide la partida a un
+  `SaveBoxReader` propio con idioma `en`. El resto de PermaLocke la lee en español porque es lo que
+  lee el jugador; aquí no vale. Un pegado lleno de «Bola Sombra» y «Miedosa» entra vacío.
+- **Solo lo que importa.** Los EV por encima de cero, los IV por debajo de 31, el nivel solo si no
+  es 100. Una lista de seises ceros no es lo mismo que no decir nada, y `Pikachu (Pikachu)` es como
+  un pegado delata que lo escribió una máquina que no comprobó si había mote.

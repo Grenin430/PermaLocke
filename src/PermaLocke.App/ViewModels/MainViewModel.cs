@@ -15,8 +15,8 @@ public sealed partial class MainViewModel : ObservableObject
 
     public MainViewModel(HomeViewModel home, RandomizerViewModel randomizer,
         MiscellaneousViewModel miscellaneous, GachaViewModel gacha, PokemonViewerViewModel viewer,
-        AchievementsViewModel achievements, ShopViewModel shop, IRunContext runContext,
-        ILogger<MainViewModel> logger)
+        AchievementsViewModel achievements, ShopViewModel shop, PokePasteViewModel pokePaste,
+        IRunContext runContext, ILogger<MainViewModel> logger)
     {
         _home = home;
         _runContext = runContext;
@@ -30,8 +30,7 @@ public sealed partial class MainViewModel : ObservableObject
             shop,
             achievements,
             viewer,
-            new PendingSectionViewModel("POKE PASTE", "Fase 5",
-                "Importación y exportación en formato Showdown con validación."),
+            pokePaste,
             miscellaneous
         ];
 

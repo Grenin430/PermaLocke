@@ -73,8 +73,10 @@ public partial class App : Application
         collection.AddSingleton<IItemDelivery, BagItemDelivery>();
         collection.AddSingleton<ShopService>();
         collection.AddSingleton<EvTrainingService>();
+        collection.AddSingleton<PokemonIdentityService>();
         collection.AddSingleton<ShopViewModel>();
         collection.AddSingleton<PokemonViewerViewModel>();
+        collection.AddSingleton<PokePasteViewModel>();
         collection.AddSingleton<MiscellaneousViewModel>();
         collection.AddSingleton<MainViewModel>();
 

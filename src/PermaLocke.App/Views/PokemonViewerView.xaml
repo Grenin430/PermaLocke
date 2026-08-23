@@ -185,18 +185,53 @@
 
     <Grid>
         <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="12" />
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="12" />
-            <ColumnDefinition Width="410" />
+            <ColumnDefinition Width="400" />
         </Grid.ColumnDefinitions>
 
+        <!-- =============================================== EL EQUIPO
+             Siempre a la vista y aparte del PC, porque es con lo que se está jugando: tener que
+             pasar cajas para ver si alguien viene tocado es un paso de más. -->
+        <Border Grid.Column="0" Style="{StaticResource Inset}" Padding="14">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Top" Text="EQUIPO" Style="{StaticResource StatLabel}"
+                           Margin="0,0,0,10" />
+
+                <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
+                    <Button Content="RELEER LA PARTIDA" Style="{StaticResource PrimaryButton}"
+                            Command="{Binding LoadCommand}" Padding="12,8" FontSize="11.5"
+                            HorizontalAlignment="Stretch" />
+                    <Button Content="WONDER TRADE" Style="{StaticResource GhostButton}"
+                            Command="{Binding Trade.ArmCommand}" Padding="12,8" FontSize="11.5"
+                            HorizontalAlignment="Stretch" Margin="0,6,0,0" />
+                    <TextBlock Style="{StaticResource Faint}" Margin="0,8,0,0" MaxWidth="150"
+                               Text="{Binding Summary}" />
+                </StackPanel>
+
+                <ListBox ItemsSource="{Binding Party}" SelectedItem="{Binding SelectedPartySlot}"
+                         Background="Transparent" BorderThickness="0"
+                         ItemContainerStyle="{StaticResource SlotStyle}"
+                         ItemTemplate="{StaticResource SlotTemplate}"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         VerticalAlignment="Top">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="2" />
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                </ListBox>
+            </DockPanel>
+        </Border>
+
         <!-- =============================================== EL PC -->
-        <Border Grid.Column="0" Style="{StaticResource Inset}" Padding="16,14">
+        <Border Grid.Column="2" Style="{StaticResource Inset}" Padding="16,14">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
-                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
                 <!-- Cabecera de caja: se pasa de una a otra como en el juego, y da la vuelta. -->
@@ -244,27 +279,11 @@
                     </ListBox.ItemsPanel>
                 </ListBox>
 
-                <!-- Botones arriba y resumen debajo, no en columnas. En una ventana estrecha una
-                     columna Auto con dos botones deja la otra a cero de ancho, y entonces el
-                     resumen envuelve letra a letra y estira la fila cientos de píxeles: la caja
-                     de arriba se queda sin sitio sin que nada falle. -->
-                <StackPanel Grid.Row="2" Margin="0,12,0,0">
-                    <WrapPanel Orientation="Horizontal">
-                        <Button Content="RELEER LA PARTIDA" Style="{StaticResource PrimaryButton}"
-                                Command="{Binding LoadCommand}" MinWidth="170" Padding="14,8"
-                                Margin="0,0,8,6" />
-                        <Button Content="WONDER TRADE" Style="{StaticResource GhostButton}"
-                                Command="{Binding Trade.ArmCommand}" MinWidth="150" Padding="14,8"
-                                Margin="0,0,0,6" />
-                    </WrapPanel>
-                    <TextBlock Style="{StaticResource Faint}" Margin="0,5,0,0"
-                               Text="{Binding Summary}" />
-                </StackPanel>
             </Grid>
         </Border>
 
         <!-- =============================================== LA FICHA -->
-        <Border Grid.Column="2" Style="{StaticResource Inset}" Padding="16,14">
+        <Border Grid.Column="4" Style="{StaticResource Inset}" Padding="16,14">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -576,7 +595,7 @@
         </Border>
 
         <!-- Problemas y avisos, encima de todo, porque son lo primero que hay que leer. -->
-        <Border Grid.Column="0" Grid.ColumnSpan="3" VerticalAlignment="Top" Margin="12"
+        <Border Grid.Column="0" Grid.ColumnSpan="5" VerticalAlignment="Top" Margin="12"
                 Background="{StaticResource SurfaceHighBrush}"
                 CornerRadius="{StaticResource RadiusMedium}" Padding="16,13"
                 BorderThickness="1" BorderBrush="{StaticResource AccentBrush}"
@@ -585,7 +604,7 @@
         </Border>
 
         <!-- LA ANIMACIÓN, encima de todo. Solo aparece con el intercambio en marcha. -->
-        <views:WonderTradeOverlay Grid.Column="0" Grid.ColumnSpan="3" DataContext="{Binding Trade}"
+        <views:WonderTradeOverlay Grid.Column="0" Grid.ColumnSpan="5" DataContext="{Binding Trade}"
                                   Visibility="{Binding IsPlaying, Converter={StaticResource BoolToVisibility}}" />
     </Grid>
 </UserControl>

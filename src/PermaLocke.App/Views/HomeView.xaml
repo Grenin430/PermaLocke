@@ -3,41 +3,6 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <UserControl.Resources>
-        <!-- The party HP bar. Green, amber, red: the colour band is decided in the view model so
-             the thresholds live in one place instead of being copied into triggers here. -->
-        <Style x:Key="HpBar" TargetType="ProgressBar" BasedOn="{StaticResource {x:Type ProgressBar}}">
-            <Setter Property="Height" Value="5" />
-            <Setter Property="Minimum" Value="0" />
-            <Setter Property="Maximum" Value="1" />
-            <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding HpState}" Value="low">
-                    <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
-                </DataTrigger>
-                <DataTrigger Binding="{Binding HpState}" Value="critical">
-                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
-                </DataTrigger>
-                <DataTrigger Binding="{Binding HpState}" Value="fainted">
-                    <Setter Property="Foreground" Value="{StaticResource DangerDeepBrush}" />
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
-
-        <Style x:Key="HpNumber" TargetType="TextBlock" BasedOn="{StaticResource Mono}">
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="TextAlignment" Value="Right" />
-            <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding HpState}" Value="critical">
-                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
-                </DataTrigger>
-                <DataTrigger Binding="{Binding HpState}" Value="fainted">
-                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
-                    <Setter Property="FontWeight" Value="Bold" />
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
-
         <!-- Points on an event row: green up, red down, grey when it moved none. -->
         <Style x:Key="EventPoints" TargetType="TextBlock" BasedOn="{StaticResource Mono}">
             <Setter Property="FontSize" Value="12" />
@@ -211,9 +176,9 @@
                     <ColumnDefinition Width="1.25*" />
                 </Grid.ColumnDefinitions>
 
-                <!-- Left: which run this is, and who is on the field right now. -->
-                <DockPanel Grid.Column="0">
-                    <Border DockPanel.Dock="Top" Style="{StaticResource Inset}" Padding="16,14">
+                <!-- Izquierda: qué run es esta y en qué etapa va. -->
+                <Border Grid.Column="0" Style="{StaticResource Inset}" Padding="16,14"
+                        VerticalAlignment="Top">
                         <StackPanel>
                             <TextBlock Text="RUN" Style="{StaticResource StatLabel}" />
                             <TextBlock Text="{Binding RunName}" Style="{StaticResource CardTitle}"
@@ -271,168 +236,10 @@
                                 </Button>
                             </StackPanel>
                         </StackPanel>
-                    </Border>
+                </Border>
 
-                    <Border Style="{StaticResource Inset}" Padding="16,14" Margin="0,12,0,0">
-                        <DockPanel>
-                            <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
-                                <Ellipse DockPanel.Dock="Left" Width="7" Height="7" Margin="0,0,7,0"
-                                         VerticalAlignment="Center">
-                                    <Ellipse.Style>
-                                        <Style TargetType="Ellipse">
-                                            <Setter Property="Fill" Value="{StaticResource WarningBrush}" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding GameLinkConnected}" Value="True">
-                                                    <Setter Property="Fill" Value="{StaticResource SuccessBrush}" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Ellipse.Style>
-                                </Ellipse>
-                                <TextBlock Text="EQUIPO EN EL JUEGO" Style="{StaticResource StatLabel}"
-                                           VerticalAlignment="Center" />
-                            </DockPanel>
-
-                            <!-- A Pokémon the game has and the run has not. Announced, never
-                                 registered behind the player's back: the rules still get to object. -->
-                            <Border DockPanel.Dock="Bottom" Margin="0,10,0,0" Padding="12"
-                                    Background="{StaticResource WarningDeepBrush}"
-                                    BorderBrush="{StaticResource WarningBrush}" BorderThickness="1"
-                                    CornerRadius="{StaticResource RadiusMedium}">
-                                <Border.Style>
-                                    <Style TargetType="Border">
-                                        <Setter Property="Visibility" Value="Collapsed" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding HasDetection}" Value="True">
-                                                <Setter Property="Visibility" Value="Visible" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Border.Style>
-                                <StackPanel>
-                                    <TextBlock Text="{Binding DetectionMessage}" Style="{StaticResource Body}"
-                                               FontSize="12" Foreground="{StaticResource WarningBrush}" />
-                                    <Button Content="REGISTRARLO" Command="{Binding RegisterDetectedCommand}"
-                                            Style="{StaticResource PrimaryButton}" Padding="12,6" FontSize="11.5"
-                                            HorizontalAlignment="Left" Margin="0,10,0,0" />
-                                </StackPanel>
-                            </Border>
-
-                            <!-- El cap que no se aplica. Un cap que calla y no hace nada es peor
-                                 que no tener cap: el jugador se cree vigilado. -->
-                            <Border DockPanel.Dock="Bottom" Margin="0,10,0,0" Padding="12,9"
-                                    Background="{StaticResource DangerDeepBrush}"
-                                    BorderBrush="{StaticResource DangerBrush}" BorderThickness="1"
-                                    CornerRadius="{StaticResource RadiusMedium}">
-                                <Border.Style>
-                                    <Style TargetType="Border">
-                                        <Setter Property="Visibility" Value="Collapsed" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding HasCapWarning}" Value="True">
-                                                <Setter Property="Visibility" Value="Visible" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Border.Style>
-                                <TextBlock Text="{Binding CapWarning}" Style="{StaticResource Body}"
-                                           FontSize="12" Foreground="{StaticResource DangerBrush}" />
-                            </Border>
-
-                            <TextBlock DockPanel.Dock="Bottom" Text="{Binding GameLinkStatus}"
-                                       FontSize="10.5" Margin="0,10,0,0" TextWrapping="Wrap">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock" BasedOn="{StaticResource Mono}">
-                                        <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding GameLinkConnected}" Value="True">
-                                                <Setter Property="Foreground" Value="{StaticResource TextFaintBrush}" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-
-                            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                                <ItemsControl ItemsSource="{Binding LiveTeam}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Grid Margin="0,0,0,9">
-                                                <Grid.RowDefinitions>
-                                                    <RowDefinition Height="Auto" />
-                                                    <RowDefinition Height="Auto" />
-                                                </Grid.RowDefinitions>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*" />
-                                                    <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="Auto" />
-                                                </Grid.ColumnDefinitions>
-
-                                                <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal">
-                                                    <TextBlock Text="{Binding Name}" Style="{StaticResource Body}"
-                                                               TextTrimming="CharacterEllipsis" />
-                                                    <TextBlock Text="✨" FontSize="11" Margin="5,0,0,0"
-                                                               VerticalAlignment="Center">
-                                                        <TextBlock.Style>
-                                                            <Style TargetType="TextBlock">
-                                                                <Setter Property="Visibility" Value="Collapsed" />
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding IsShiny}" Value="True">
-                                                                        <Setter Property="Visibility" Value="Visible" />
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </TextBlock.Style>
-                                                    </TextBlock>
-                                                </StackPanel>
-
-                                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Level}"
-                                                           Style="{StaticResource Mono}" FontSize="12"
-                                                           Foreground="{StaticResource TextMutedBrush}"
-                                                           Margin="10,0,0,0" />
-                                                <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding Hp}"
-                                                           Style="{StaticResource HpNumber}" MinWidth="58" />
-
-                                                <ProgressBar Grid.Row="1" Grid.ColumnSpan="3"
-                                                             Style="{StaticResource HpBar}"
-                                                             Value="{Binding HpRatio, Mode=OneWay}"
-                                                             Margin="0,4,0,0" />
-                                            </Grid>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </ScrollViewer>
-                        </DockPanel>
-                    </Border>
-                </DockPanel>
-
-                <!-- Right: the log, and how far round the islands the run has got. -->
-                <DockPanel Grid.Column="2">
-                    <Border DockPanel.Dock="Bottom" Style="{StaticResource Inset}" Padding="16,12" Margin="0,12,0,0">
-                        <StackPanel>
-                            <TextBlock Text="PROGRESO" Style="{StaticResource StatLabel}" Margin="0,0,0,8" />
-                            <ItemsControl ItemsSource="{Binding Islands}">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <WrapPanel />
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Border Style="{StaticResource Chip}" Margin="0,0,6,6">
-                                            <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="{Binding Name}" Style="{StaticResource ChipText}"
-                                                           Foreground="{StaticResource TextBrush}" />
-                                                <TextBlock Text="{Binding State}" Style="{StaticResource ChipText}"
-                                                           Margin="7,0,0,0" />
-                                            </StackPanel>
-                                        </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-                    </Border>
-
-                    <Border Style="{StaticResource Inset}" Padding="16,14">
+                <!-- Derecha: el historial de la run. -->
+                <Border Grid.Column="2" Style="{StaticResource Inset}" Padding="16,14">
                         <DockPanel>
                             <TextBlock DockPanel.Dock="Top" Text="ÚLTIMAS ACCIONES"
                                        Style="{StaticResource StatLabel}" Margin="0,0,0,10" />
@@ -476,12 +283,59 @@
                                 </ItemsControl>
                             </ScrollViewer>
                         </DockPanel>
-                    </Border>
-                </DockPanel>
+                </Border>
             </Grid>
 
+            <!-- ============================================== AVISOS
+                 Vivían dentro del panel del equipo en vivo, que se quitó. No se van con él: uno
+                 dice que el cap no está haciendo su trabajo y el otro que hay un Pokémon en el
+                 juego que la run no conoce. Callarlos sería peor que no tenerlos. -->
+            <StackPanel Grid.Row="3">
+                <Border Padding="12,9" Margin="0,12,0,0"
+                        CornerRadius="{StaticResource RadiusMedium}"
+                        Background="{StaticResource DangerDeepBrush}"
+                        BorderBrush="{StaticResource DangerBrush}" BorderThickness="1">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasCapWarning}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <TextBlock Text="{Binding CapWarning}" Style="{StaticResource Body}"
+                               FontSize="12" Foreground="{StaticResource DangerBrush}" />
+                </Border>
+
+                <Border Padding="12,9" Margin="0,12,0,0"
+                        CornerRadius="{StaticResource RadiusMedium}"
+                        Background="{StaticResource WarningDeepBrush}"
+                        BorderBrush="{StaticResource WarningBrush}" BorderThickness="1">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasDetection}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <DockPanel>
+                        <Button DockPanel.Dock="Right" Content="REGISTRARLO"
+                                Command="{Binding RegisterDetectedCommand}"
+                                Style="{StaticResource PrimaryButton}" Padding="12,6" FontSize="11.5"
+                                Margin="12,0,0,0" />
+                        <TextBlock Text="{Binding DetectionMessage}" Style="{StaticResource Body}"
+                                   FontSize="12" Foreground="{StaticResource WarningBrush}"
+                                   VerticalAlignment="Center" />
+                    </DockPanel>
+                </Border>
+
             <!-- The chain check. Quiet when it passes, loud when it does not. -->
-            <Border Grid.Row="3" Margin="0,12,0,0" Padding="12,7"
+            <Border Margin="0,12,0,0" Padding="12,7"
                     CornerRadius="{StaticResource RadiusSmall}">
                 <Border.Style>
                     <Style TargetType="Border">
@@ -524,8 +378,25 @@
                             </Style>
                         </TextBlock.Style>
                     </TextBlock>
+
+                    <!-- Si no hay enlace, el cap no vigila. Decirlo aquí es barato y evita creerse
+                         protegido mientras nadie mira. -->
+                    <TextBlock Text="{Binding GameLinkStatus}" FontSize="11" Margin="14,0,0,0"
+                               VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource Mono}">
+                                <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding GameLinkConnected}" Value="True">
+                                        <Setter Property="Foreground" Value="{StaticResource TextFaintBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                 </StackPanel>
             </Border>
+            </StackPanel>
         </Grid>
     </Grid>
 </UserControl>
