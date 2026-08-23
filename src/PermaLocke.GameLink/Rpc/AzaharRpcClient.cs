@@ -20,7 +20,19 @@ public enum RpcRequestType
 /// <param name="TitleId">3DS title id, e.g. 0x00040000001B5100 for Ultra Moon (EUR).</param>
 public sealed record EmulatedProcess(uint ProcessId, ulong TitleId, string Name);
 
-public sealed class AzaharRpcException(string message) : Exception(message);
+/// <param name="NoReply">
+/// True when nobody answered at all, which almost always means the emulator is not running.
+/// </param>
+/// <remarks>
+/// The distinction exists because the two cases read very differently to a player: an emulator
+/// that is closed is a thing they can fix, and the socket's own words for it — "se ha forzado la
+/// interrupción de una conexión existente" — are not the way to tell them. A protocol answer that
+/// makes no sense is worth showing as it is; silence is not.
+/// </remarks>
+public sealed class AzaharRpcException(string message, bool noReply = false) : Exception(message)
+{
+    public bool NoReply { get; } = noReply;
+}
 
 /// <summary>
 /// Client for the RPC server Azahar inherits from Citra. It listens on UDP 127.0.0.1:45987
@@ -378,7 +390,7 @@ public sealed class AzaharRpcClient : IDisposable
             }
 
             throw new AzaharRpcException(
-                $"Sin respuesta de {_endpoint} tras {Attempts} intentos: {last?.Message}");
+                $"Sin respuesta de {_endpoint} tras {Attempts} intentos: {last?.Message}", noReply: true);
         }
     }
 

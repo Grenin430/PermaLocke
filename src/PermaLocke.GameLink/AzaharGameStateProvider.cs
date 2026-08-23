@@ -230,9 +230,18 @@ public sealed class AzaharGameStateProvider(
     }
 
 
+    /// <summary>
+    /// What to tell the player, which is not always what the exception said.
+    /// </summary>
+    /// <remarks>
+    /// Silence from the socket gets the actionable sentence, not the socket's own words for it:
+    /// "se ha forzado la interrupción de una conexión existente" is true, unreadable, and does not
+    /// tell anybody to open the emulator. A reply that arrived and made no sense is different —
+    /// that one is worth showing as it is, because there is no better guess to make.
+    /// </remarks>
     private static string Explain(Exception ex) => ex switch
     {
-        AzaharRpcException => ex.Message,
+        AzaharRpcException { NoReply: false } => ex.Message,
         _ => "Azahar no responde. Ábrelo, carga la ROM y activa "
              + "Configuración → Depuración → Activar servidor RPC."
     };

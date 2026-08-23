@@ -213,6 +213,15 @@ public sealed class GameLinkMonitor(
     /// </remarks>
     private async Task EnforceLevelCapAsync(Run run, GameSnapshot snapshot)
     {
+        if (!snapshot.Connected)
+        {
+            // Sin juego no hay nada que corregir, y decir que el cap «no se está aplicando» con
+            // Azahar cerrado es alarmar por lo evidente: de eso ya avisa la tira del enlace. El
+            // aviso rojo tiene que significar que el juego está delante y aun así no se aplica.
+            CapProblem = string.Empty;
+            return;
+        }
+
         if (await progress.CurrentCapAsync(run, _stopping.Token) is not { } cap)
         {
             return;
