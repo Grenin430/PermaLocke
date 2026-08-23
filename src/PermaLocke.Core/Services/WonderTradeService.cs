@@ -107,6 +107,68 @@ public sealed class WonderTradeService(
         return new WonderTradeResult(true, offer, entry);
     }
 
+    /// <summary>
+    /// Marks the Pokémon that was handed over as gone, once the trade has really been written.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A trade adds one Pokémon and removes another, and only the arrival used to be recorded: the
+    /// one that left stayed <see cref="PokemonStatus.Alive"/> for ever. In the run that had already
+    /// done it twenty-nine times, HOME was counting twenty-eight Pokémon that are not in the game.
+    /// That is the same class of error as a death that goes unrecorded — a number describing
+    /// something other than what it says.
+    /// </para>
+    /// <para>
+    /// It runs <b>after</b> the save is written and not with the rest of the trade, because until
+    /// then nothing has left anywhere. And it matches by PID, which only became possible once
+    /// deliveries started recording one; without it there is no way to tell which of the player's
+    /// three Vanilluxe went.
+    /// </para>
+    /// </remarks>
+    public async Task<PokemonEntry?> MarkGivenAsTradedAsync(Run run, uint pid, string receivedName,
+        CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(run);
+
+        if (pid == 0)
+        {
+            // Cero no identifica a nadie. Antes que marcar al Pokémon equivocado, no se marca.
+            return null;
+        }
+
+        var all = await pokemon.GetAllAsync(run.Id, ct).ConfigureAwait(false);
+        var given = all.FirstOrDefault(p => p.Pid == pid && p.Status == PokemonStatus.Alive);
+
+        if (given is null)
+        {
+            return null;
+        }
+
+        var updated = given with { Status = PokemonStatus.Traded };
+        await pokemon.SaveAsync(updated, ct).ConfigureAwait(false);
+
+        await events.AppendAsync(new GameEvent
+        {
+            Id = Guid.NewGuid(),
+            RunId = run.Id,
+            Timestamp = clock.Now,
+            Type = GameEventType.PokemonTraded,
+            Source = EventSource.Player,
+            Actor = run.PlayerName,
+            Description = $"{given.Nickname ?? given.SpeciesName} se ha ido en el wonder trade "
+                          + $"a cambio de {receivedName}.",
+            PokemonId = given.Id,
+            Data = new Dictionary<string, string>
+            {
+                ["especie"] = given.Species.ToString(),
+                ["pid"] = pid.ToString("X8"),
+                ["recibido"] = receivedName
+            }
+        }, ct).ConfigureAwait(false);
+
+        return updated;
+    }
+
     private Task RecordAsync(Run run, WonderTradeOffer offer, PokemonEntry entry, CancellationToken ct) =>
         events.AppendAsync(new GameEvent
         {

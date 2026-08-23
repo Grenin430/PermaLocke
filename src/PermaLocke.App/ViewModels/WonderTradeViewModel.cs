@@ -261,6 +261,10 @@ public sealed partial class WonderTradeViewModel : ObservableObject
                     written.Box, written.Slot);
             }
 
+            // Y el que se va deja de estar vivo. Se hace aquí y no dentro del intercambio porque
+            // hasta que la partida no está escrita no se ha ido nadie.
+            await _trades.MarkGivenAsTradedAsync(run, given.Pid, offer.Name);
+
             Offer = offer;
             ReceivedSprite = _sprites.Get(offer.Species);
             BallSprite = _sprites.GetBall();

@@ -75,11 +75,41 @@ public sealed class WonderTradeServiceTests
             new SpeciesStats(i + 1, $"Especie {i + 1}", 200 + (i * 10), i == 50, ["Levitación"]))
     ];
 
+    /// <summary>Keeps what it is given, so a status change can be looked at afterwards.</summary>
+    private sealed class Repository(params PokemonEntry[] initial) : IPokemonRepository
+    {
+        public List<PokemonEntry> Entries { get; } = [.. initial];
+
+        public Task<IReadOnlyList<PokemonEntry>> GetAllAsync(Guid runId, CancellationToken ct = default) =>
+            Task.FromResult<IReadOnlyList<PokemonEntry>>(Entries);
+
+        public Task<PokemonEntry?> GetAsync(Guid pokemonId, CancellationToken ct = default) =>
+            Task.FromResult(Entries.FirstOrDefault(p => p.Id == pokemonId));
+
+        public Task SaveAsync(PokemonEntry pokemon, CancellationToken ct = default)
+        {
+            Entries.RemoveAll(p => p.Id == pokemon.Id);
+            Entries.Add(pokemon);
+            return Task.CompletedTask;
+        }
+    }
+
+    private static PokemonEntry Living(uint pid, string name = "Vanilluxe", int species = 584) => new()
+    {
+        Id = Guid.NewGuid(),
+        RunId = Guid.NewGuid(),
+        Species = species,
+        SpeciesName = name,
+        Origin = PokemonOrigin.Gacha,
+        EncounterType = EncounterType.Special,
+        Pid = pid
+    };
+
     private static WonderTradeService Build(double below = 0.08, double above = 0.10,
-        bool legendaries = true, Events? events = null) =>
+        bool legendaries = true, Events? events = null, IPokemonRepository? repository = null) =>
         new(new Catalog(new WonderTradeWindow(below, above, legendaries)),
-            new Species(Catalogue()), new Types(), events ?? new Events(), new NoRepository(),
-            new FixedClock());
+            new Species(Catalogue()), new Types(), events ?? new Events(),
+            repository ?? new NoRepository(), new FixedClock());
 
     private static Run SampleRun() => new()
     {
@@ -241,4 +271,73 @@ public sealed class WonderTradeServiceTests
     [InlineData(807, 7)]
     public void Generations_are_the_national_dex_blocks(int species, int generation) =>
         Assert.Equal(generation, Generations.Of(species));
+
+    /// <summary>
+    /// The one that leaves stops being alive. Recording only the arrival is how a run ends up
+    /// counting twenty-eight Pokémon that are not in the game.
+    /// </summary>
+    [Fact]
+    public async Task The_one_handed_over_is_marked_as_traded()
+    {
+        var given = Living(0xAABBCCDD);
+        var repository = new Repository(given, Living(0x11223344, "Politoed", 186));
+        var events = new Events();
+        var trades = Build(events: events, repository: repository);
+
+        var marked = await trades.MarkGivenAsTradedAsync(SampleRun(), 0xAABBCCDD, "Kommo-o");
+
+        Assert.Equal(PokemonStatus.Traded, marked?.Status);
+        Assert.Equal(PokemonStatus.Traded, repository.Entries.Single(p => p.Id == given.Id).Status);
+
+        // El otro sigue vivo: se marca a quien se fue, no a la caja entera.
+        Assert.Equal(PokemonStatus.Alive, repository.Entries.Single(p => p.Pid == 0x11223344).Status);
+
+        var recorded = Assert.Single(events.Appended);
+        Assert.Equal(GameEventType.PokemonTraded, recorded.Type);
+        Assert.Equal("AABBCCDD", recorded.Data["pid"]);
+        Assert.Contains("Kommo-o", recorded.Description);
+    }
+
+    /// <summary>
+    /// Zero is what a Pokémon with no recorded identity has, and there are plenty of those. Acting
+    /// on it would mark whichever one happened to come first.
+    /// </summary>
+    [Fact]
+    public async Task A_pid_of_zero_marks_nobody()
+    {
+        var repository = new Repository(Living(0) with { Pid = 0 });
+        var events = new Events();
+        var trades = Build(events: events, repository: repository);
+
+        Assert.Null(await trades.MarkGivenAsTradedAsync(SampleRun(), 0, "Kommo-o"));
+        Assert.Equal(PokemonStatus.Alive, repository.Entries.Single().Status);
+        Assert.Empty(events.Appended);
+    }
+
+    /// <summary>A Pokémon the run never registered is not an error, and not something to invent.</summary>
+    [Fact]
+    public async Task An_unknown_pid_changes_nothing()
+    {
+        var repository = new Repository(Living(0xAABBCCDD));
+        var events = new Events();
+        var trades = Build(events: events, repository: repository);
+
+        Assert.Null(await trades.MarkGivenAsTradedAsync(SampleRun(), 0xDEADBEEF, "Kommo-o"));
+        Assert.Equal(PokemonStatus.Alive, repository.Entries.Single().Status);
+        Assert.Empty(events.Appended);
+    }
+
+    /// <summary>Marking the same one twice would write a second departure for one Pokémon.</summary>
+    [Fact]
+    public async Task Marking_twice_only_records_once()
+    {
+        var repository = new Repository(Living(0xAABBCCDD));
+        var events = new Events();
+        var trades = Build(events: events, repository: repository);
+
+        await trades.MarkGivenAsTradedAsync(SampleRun(), 0xAABBCCDD, "Kommo-o");
+        Assert.Null(await trades.MarkGivenAsTradedAsync(SampleRun(), 0xAABBCCDD, "Kommo-o"));
+
+        Assert.Single(events.Appended);
+    }
 }

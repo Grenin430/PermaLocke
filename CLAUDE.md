@@ -578,6 +578,23 @@ paso, `DetectedAsync` se hace pública -sin ella las dos cifras se leen iguales 
 sostiene el cap- y el evento dice «cap **por marcas a mano**», que es lo que ese número significa.
 Ver §58.
 
+**El que se va también cuenta, y el «muerto» que no lo es (2026-08-23).** Repartidos ya los PID
+-157 de 157 en la partida-, quedaban **28 registros sin PID**: tienen IVs guardados y **no hay
+ningún Pokémon en la partida con esa firma**. Son los que el jugador entregó en sus 29 wonder
+trades. `WonderTradeService` daba de alta al que llega y **no decía nada del que se va**, así que su
+registro seguía `Alive` para siempre y HOME contaba **187 vivos** con 28 que no están en el juego:
+el mismo error que una muerte sin registrar. `MarkGivenAsTradedAsync` lo cierra, **después** de
+escribir la partida -antes no se ha ido nadie- y **por PID**, que es lo que solo se pudo hacer desde
+el §56. Lo ya intercambiado se mide con `Probe --intercambiados`, cruzando la especie que el propio
+evento apuntó como entregada: **26 de 28 encajan**, y las 2 en disputa se dejan, porque elegir cuál
+de dos Giratina se fue sería inventar historia en un registro encadenado por hash.
+
+Y el «muerto» del jugador era un **Shedinja apodado MUERTO, sin movimientos, en el equipo**: la
+marca exacta de `DeathTransform`. **No se murió, se escribió**, probando la escritura en memoria. La
+run no lo cuenta y hace bien. Quién era **no se puede saber**: el respaldo de partida más antiguo
+que hay ya lo lleva puesto. Lección: una prueba destructiva sobre la partida de alguien tiene que
+dejar por escrito qué destruyó. Ver §59.
+
 **Siguiente.** Sincronización, y probar en partida real los combates importantes, los iniciales y
 las tiendas.
 
@@ -646,6 +663,10 @@ dotnet run --project tools/PermaLocke.Probe -- --pids --arreglar
 # etapas marcadas a mano; con un número las corrige, dejando su evento
 dotnet run --project tools/PermaLocke.Probe -- --etapas
 dotnet run --project tools/PermaLocke.Probe -- --etapas 0
+
+# entregados en un wonder trade y contados todavía como vivos
+dotnet run --project tools/PermaLocke.Probe -- --intercambiados
+dotnet run --project tools/PermaLocke.Probe -- --intercambiados --arreglar
 ```
 
 SDK requerido: .NET 10 (instalado: 10.0.400).

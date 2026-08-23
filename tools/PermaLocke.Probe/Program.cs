@@ -25,6 +25,7 @@ using PermaLocke.GameLink.Rpc;
 //   Probe --pids [--arreglar]   gives a PID to what was delivered without one and links it to the run
 //   Probe --pids --probar       does the whole PID repair on a COPY of the partida and checks it
 //   Probe --etapas [n]          stages marked by hand; with a number, corrects it through the service
+//   Probe --intercambiados      Pokemon handed over in a wonder trade that the run still counts alive
 
 Console.OutputEncoding = System.Text.Encoding.UTF8;
 
@@ -50,6 +51,12 @@ if (args.Length >= 1 && args[0] == "--nombres")
 if (args.Length >= 1 && args[0] == "--ev")
 {
     return PermaLocke.Probe.EvProbe.Run(args.Contains("--probar"));
+}
+
+// Entregados en un wonder trade y contados como vivos.
+if (args.Length >= 1 && args[0] == "--intercambiados")
+{
+    return await PermaLocke.Probe.TradedAwayProbe.RunAsync(args.Contains("--arreglar"));
 }
 
 // Etapas marcadas a mano: mirar y, con un numero, corregir. Pasa por ProgressService, asi que

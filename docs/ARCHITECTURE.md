@@ -4526,3 +4526,77 @@ Dos detalles que salieron de escribir la herramienta:
   número es el del contador manual y el de HOME es el efectivo. Ahora la descripción dice **«Cap
   por marcas a mano»**, y también cuántas etapas se movieron, porque «etapa revertida» tras
   revertir seis deja al que lee contando.
+
+---
+
+## 59. El que se va también cuenta, y el «muerto» que no lo es (2026-08-23)
+
+Con los PID ya repartidos —157 de 157 en la partida, sin ninguno a cero ni repetido— quedaban
+**28 registros de la run sin PID**. La primera lectura fue «no están en la partida», que es cierta
+pero no explica nada, así que la sonda pasó a decir por qué:
+
+```
+registrados sin PID: 28 de 187
+Pokémon en la partida sin dueño: 2 de 157
+de los que faltan, con IVs en el historial: 28 de 28
+  Vanilluxe   Gacha   23/31/24/20/15/3|False   en la partida: 0
+```
+
+Tienen IVs guardados y **no hay ningún Pokémon en la partida con esa firma**, ni siquiera contando
+los ya asignados. No es que el emparejamiento falle: es que esos Pokémon no existen. Son los que
+el jugador **entregó en sus 29 wonder trades**.
+
+### Un intercambio quita uno y solo se apuntaba el que llega
+
+`WonderTradeService` daba de alta al que viene y no decía nada del que se va, de modo que su
+registro se quedaba `Alive` para siempre. HOME contaba **187 vivos** cuando 28 de ellos no están en
+el juego. Es el mismo error que una muerte sin registrar: un número que describe otra cosa
+distinta de lo que dice.
+
+`MarkGivenAsTradedAsync` lo cierra, y con dos decisiones que importan:
+
+- **Después de escribir la partida, no dentro del intercambio.** Hasta que el save no está escrito
+  no se ha ido nadie, y marcar antes deja al registro mintiendo si la escritura falla.
+- **Por PID.** Que es lo que solo se pudo hacer desde el §56; sin él no hay manera de saber cuál de
+  los tres Vanilluxe del jugador se fue.
+
+### Lo ya intercambiado: se mide, no se supone
+
+`Probe --intercambiados` cruza **la especie que el propio evento apuntó como entregada** contra los
+registros vivos sin PID. Sobre la run real:
+
+```
+wonder trades en el historial: 29
+registrados vivos y sin PID:   28
+
+se pueden marcar como entregados: 26
+en disputa (no se tocan):          2
+  especie 487: el historial dice 2 entregado(s), y sin PID hay 1
+  especie   3: el historial dice 1 entregado(s), y sin PID hay 0
+```
+
+Las dos en disputa se quedan como están. Elegir cuál de dos Giratina se fue sería inventar
+historia, y el registro de eventos está encadenado por hash: lo que se escribe ahí no se quita.
+
+### El «muerto» que había en el equipo
+
+El jugador tenía un Pokémon muerto y preguntó si contaba. Barriendo la partida sale en el
+**equipo, hueco 4**:
+
+```
+Shedinja "MUERTO" Nv.3  mov=0/0/0/0  PID CA63B17E
+```
+
+Esa es exactamente la marca de muerte de PermaLocke: `DeathTransform` convierte al Pokémon en
+**Shedinja (292) apodado MUERTO**, nivel 1 y sin movimientos. O sea que **no se murió: se escribió**,
+probando que la escritura en memoria funcionaba. La run no lo cuenta —cero eventos
+`PokemonDied`— y hace bien: nada se debilitó.
+
+Lo que no tiene arreglo es saber **quién era**. Es una escritura en memoria, y las copias que deja
+son de los bytes reemplazados, no del Pokémon entero; y el respaldo completo de partida más antiguo
+que hay en disco, del 2026-08-20 a la 01:40, **ya lleva el MUERTO puesto**. Lección para la
+próxima: una prueba destructiva sobre la partida de alguien tiene que dejar por escrito qué
+destruyó, no solo los bytes.
+
+De paso se vio el otro Pokémon sin registrar de la partida: un **Kommo-o Nv.24** en el equipo, que
+la run nunca ha llegado a conocer.

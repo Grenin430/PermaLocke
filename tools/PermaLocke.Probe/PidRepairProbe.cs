@@ -177,6 +177,39 @@ public static class PidRepairProbe
 
         var ivs = await IvsByPokemonAsync(events, run.Id);
 
+        // Sin candidatos libres no hay nada que emparejar, y sin IVs guardados tampoco. Son los
+        // dos motivos por los que un «no está en la partida» puede no significar lo que dice.
+        Console.WriteLine($"  Pokémon en la partida sin dueño: {inGame.Count} de "
+                          + $"{snapshot.Boxes.Sum(box => box.Count)}");
+        Console.WriteLine($"  de los que faltan, con IVs en el historial: "
+                          + $"{missing.Count(p => ivs.ContainsKey(p.Id))} de {missing.Count}");
+
+        // Los que están en la partida y no son de nadie. Al revés que la lista de abajo, y tan
+        // interesante: un Pokémon sin registrar es uno que la run no sabe que tiene.
+        foreach (var orphan in inGame)
+        {
+            Console.WriteLine($"    sin registrar: {orphan.SpeciesName,-14} «{orphan.DisplayName}» "
+                              + $"Nv.{orphan.Level} PID {orphan.Pid:X8} "
+                              + $"{(orphan.IsInParty ? "equipo" : $"caja {orphan.Box + 1}")}");
+        }
+
+        // Con el filtro de dueño quitado: dice si el Pokémon está en la partida pero ya asignado,
+        // que es una situación muy distinta de que no esté.
+        var anywhere = snapshot.Boxes
+            .SelectMany(box => box.Pokemon)
+            .Where(p => !p.IsEgg)
+            .GroupBy(Signature)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        foreach (var entry in missing.Take(5))
+        {
+            var signature = ivs.TryGetValue(entry.Id, out var v) ? $"{v}|{entry.IsShiny}" : "(sin IVs)";
+            var found = anywhere.TryGetValue(signature, out var hits) ? hits.Count : 0;
+
+            Console.WriteLine($"    {entry.SpeciesName,-14} {entry.Origin,-12} {signature,-24} "
+                              + $"en la partida: {found}");
+        }
+
         var byGame = inGame.GroupBy(Signature).ToDictionary(g => g.Key, g => g.ToList());
         var byRun = missing
             .GroupBy(entry => ivs.TryGetValue(entry.Id, out var v) ? $"{v}|{entry.IsShiny}" : string.Empty)
