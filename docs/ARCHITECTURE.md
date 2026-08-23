@@ -4647,3 +4647,93 @@ fichero; no se toca código.
 
 La tarjeta enseña siempre cuánto falta —«2/12 pruebas»— en vez de esconder el botón. Un premio que
 no se ve no se persigue.
+
+---
+
+## 61. Los cristales Z, sacados del cartucho por fin (2026-08-23)
+
+Las tarjetas de logro llevaban un rombo dibujado con la inicial del logro, y el §34 explicaba por
+qué: los cristales Z del cartucho **no se podían emparejar con su tipo sin adivinar por color**.
+El jugador pidió los dibujos de verdad, así que se ha vuelto a la pregunta con más herramientas.
+
+### Dónde están, y qué dice el propio cartucho
+
+No están en `a/0/6/1`: ese contenedor se acaba en el icono 769 y los cristales son los objetos
+807-824. Están **incrustados en dos pantallas**, `a/1/5/5` y `a/1/4/2`, que son ficheros **ALYT**
+—descripciones de interfaz— con sus imágenes dentro. Y ahí está el hallazgo que faltaba en el §34:
+la tabla de ficheros de un ALYT trae **nombres**, y los dieciocho se llaman
+
+```
+item_807.bflim  item_808.bflim  …  item_824.bflim
+```
+
+O sea que el cartucho dice **qué objetos son**. Barriendo todas las pantallas del juego —3431
+dibujos— esos dos ALYT son los únicos que los llevan.
+
+Los ids se confirman desde fuera, y por partida doble: los nombres de objeto van
+`Normastal, Pirostal, Hidrostal, Electrostal, Fitostal, Criostal, Lizastal, …`, que es el orden de
+tipos; y **las doce pruebas de `Data/achievements.json` caen cada una en el tipo que su prueba es
+de verdad** —Liam Normal 807, la Gran Prueba de Kaudan Lucha 813, Nereida Agua 809…—. Doce
+comprobaciones independientes, doce aciertos.
+
+### Lo que sigue sin poder medirse
+
+**Un ALYT guarda su tabla de nombres y sus datos en órdenes distintos, y no publica el mapa.** Se
+intentó de tres maneras: emparejar por posición —cuadra en número y da disparates, un
+`Report_BG_All_00` de 32x32 y un `item_818` de 320x240—; recorrer los datos en orden de tabla —el
+primer dato no es el primer nombre—; y leer las secciones `LTBL`/`LMTL`/`LFNL`, que son partes del
+formato de interfaz y no un índice de ficheros.
+
+Así que el **qué** está medido y el **cuál es cuál** no. La prueba de que no lo está: la primera
+imagen de los datos es un cristal dorado y el primer nombre es el Normastal, que es pálido.
+
+### Entonces se empareja por color, y se dice
+
+Cada cristal es del color de su tipo. Los dieciocho, midiendo la media del 40 % de píxeles más
+saturado, se reparten solos en familias: uno amarillo, uno rojo, dos verdes, tres marrones, dos
+rosas, dos morados, **cinco azules**, uno casi gris y uno casi negro — que es exactamente el reparto
+de los dieciocho tipos. Dentro de cada familia las decisiones están escritas en `ZCrystalIndex`:
+el más pálido de todos es Normal y el azul más pálido es Volador, el más oscuro es Siniestro, el
+verde más amarillento es Bicho, el morado más rojizo es Fantasma, y el más profundo de los dos
+azules limpios es Dragón.
+
+Es un ancla **más floja** que las del resto del repositorio y va dicha así, no disimulada. El §34
+rechazó este mismo trabajo por eso; se hace ahora porque aquí **una imagen a un tono de distancia no
+cuesta nada**, mientras que en el §45 —los iconos de la tienda— un icono equivocado le habría
+enseñado al jugador un objeto que no era el que compraba. Cuando lo que está en juego es un dibujo
+y no una decisión, el listón puede bajar; lo que no puede es bajar en silencio.
+
+### Tallar un BFLIM de dentro de otra cosa
+
+Un BFLIM no tiene cabecera: primero van los píxeles y al final una cola de 0x28 bytes. Para
+sacarlos de un ALYT hay que buscar las colas, y **buscar las cuatro letras `FLIM` no vale**: salen
+dentro de los píxeles de otras imágenes y cada falso positivo desplaza todo lo que viene detrás.
+Una cola de verdad lleva además la marca de orden de bytes `FEFF`, un bloque `imag`, y un tamaño
+declarado que tiene que ser exactamente sus píxeles más la cola. Con los tres, veintisiete colas
+válidas; con solo las letras, veintisiete también, pero no las mismas.
+
+De los dieciocho cristales se sabe cuáles son entre las demás imágenes de la misma pantalla porque
+**todos tienen la misma forma**: 32x32, RGBA5551 y exactamente **168 píxeles opacos**. Cambian de
+color y nada más.
+
+### Y los que no son pruebas
+
+`Data/achievements.json` gana un campo `icono`, que es el id de un objeto del cartucho. No es lo
+mismo que `item`: `item` es lo que **desbloquea** el logro y `icono` lo que se **ve**. Coinciden en
+las pruebas, y por eso las pruebas no lo llevan escrito.
+
+- **Las Dominsignias no tienen sprite.** Se barrieron los 3431 dibujos de todas las pantallas del
+  juego y no aparece ninguno: son objetos del mundo, no un icono de interfaz. Las tres pegatinas
+  van con **perla, perla grande y pepita de oro**, que es la familia de cosas que se recogen por el
+  mundo, y queda escrito en el propio JSON que son sustitutos.
+- Campeón lleva **Master Ball** y defender el título **Gloria Ball**, que es la conmemorativa.
+  Movimientos Z, un cristal; huidas, la **Cuerda Huida**; variocolor, **Polvo Estelar**;
+  entrenadores, **Ataque X**.
+
+El rombo dibujado **no se ha borrado**: sigue ahí para cuando no hay ROM de la que sacar iconos.
+Una tarjeta con un hueco sería peor que una dibujada.
+
+### De paso: el Poke Paste se queda solo con el equipo
+
+Un pegado es un **equipo** —seis Pokémon que otro puede cargar y combatir— y una caja de treinta no
+lo es. Para mirar el PC está el visor.

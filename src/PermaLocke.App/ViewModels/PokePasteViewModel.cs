@@ -10,7 +10,7 @@ using PermaLocke.GameLink;
 
 namespace PermaLocke.App.ViewModels;
 
-/// <summary>What can be exported: the party, or one box of the PC.</summary>
+/// <summary>What can be exported. Today only the party, which is what a paste is for.</summary>
 public sealed record PasteSourceViewModel(string Label, int Number, int Count);
 
 /// <summary>
@@ -42,7 +42,14 @@ public sealed partial class PokePasteViewModel : SectionViewModel
         _english = new SaveBoxReader(save, locations, "en", NullLogger<SaveBoxReader>.Instance);
     }
 
-    /// <summary>The party first, then every box that has something in it.</summary>
+    /// <summary>
+    /// What can be exported: the party, and nothing else.
+    /// </summary>
+    /// <remarks>
+    /// The boxes used to be here too and are not any more. A paste is a <em>team</em> — six
+    /// Pokémon somebody else can load and battle with — and a box of thirty is not a team; the PC
+    /// is what the viewer is for.
+    /// </remarks>
     public ObservableCollection<PasteSourceViewModel> Sources { get; } = [];
 
     [ObservableProperty]
@@ -82,14 +89,16 @@ public sealed partial class PokePasteViewModel : SectionViewModel
                 return;
             }
 
-            foreach (var box in _snapshot.Boxes.Where(box => box.IsParty || box.Count > 0))
+            foreach (var box in _snapshot.Boxes.Where(box => box.IsParty))
             {
-                Sources.Add(new PasteSourceViewModel(
-                    box.IsParty ? "Equipo" : box.Name, box.Number, box.Count));
+                Sources.Add(new PasteSourceViewModel("Equipo", box.Number, box.Count));
             }
 
             SelectedSource = Sources.FirstOrDefault();
-            Status = _snapshot.Notice ?? string.Empty;
+
+            Status = Sources.Count == 0
+                ? "No hay equipo en la partida guardada."
+                : _snapshot.Notice ?? string.Empty;
         }
         catch (Exception ex)
         {

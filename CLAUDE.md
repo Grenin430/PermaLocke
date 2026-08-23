@@ -606,6 +606,23 @@ alguien y un botón que se puede repulsar para duplicar lo ya dado, en una compe
 peor. Todo en `Data/rewards.json`, con los ids buscados (`Probe --objeto-find`) y el **nombre
 comprobado contra la tabla del juego antes de escribir**. Ver §60.
 
+**Los cristales Z, sacados del cartucho por fin (2026-08-23).** El §34 decía que no se podían
+emparejar con su tipo sin adivinar por color, y a medias sigue siendo verdad. Lo nuevo: están
+incrustados en dos pantallas -**ALYT** `a/1/5/5` y `a/1/4/2`- y **la tabla de ficheros del ALYT los
+nombra**: `item_807.bflim` … `item_824.bflim`. O sea que el cartucho dice **qué objetos son**, y lo
+confirman por partida doble el orden de nombres de objeto y las **doce pruebas**, que caen cada una
+en el tipo que su prueba es. Lo que sigue sin medirse es **cuál es cuál**: un ALYT guarda su tabla
+de nombres y sus datos en órdenes distintos y no publica el mapa -probado de tres maneras-. Así que
+el emparejamiento va **por color**, con las familias -un amarillo, un rojo, dos verdes, tres
+marrones, dos rosas, dos morados, cinco azules, uno gris y uno negro- y las decisiones escritas en
+`ZCrystalIndex`. Es un ancla **más floja** que las del resto y va dicha así: aquí una imagen a un
+tono de distancia no cuesta nada, mientras que en el §45 un icono equivocado enseñaba un objeto que
+no era. Trampa al tallar: **buscar las letras `FLIM` no vale**, salen dentro de los píxeles de otras
+imágenes; hace falta la marca `FEFF`, el bloque `imag` y que el tamaño declarado cuadre. Y las
+**Dominsignias no tienen sprite** en el cartucho -barridos los 3431 dibujos-, así que van con perla,
+perla grande y pepita de oro, declarado en el JSON. `achievements.json` gana `icono`, que es el id
+del objeto que se **ve** (distinto de `item`, que es el que **desbloquea**). Ver §61.
+
 **Siguiente.** Sincronización, y probar en partida real los combates importantes, los iniciales y
 las tiendas.
 
@@ -615,7 +632,8 @@ Lo que NO está resuelto todavía y no debe darse por hecho (detalle en `docs/AR
 |---|---|
 | Lectura del equipo en vivo | **RESUELTA Y VERIFICADA** contra el juego real |
 | Detección automática de capturas y muertes | **NO FUNCIONABA Y YA PUEDE** — el 97 % de los Pokémon no tenía PID, que es lo único por lo que empareja. Corregido para lo nuevo y reparable para lo viejo con `Probe --pids`; sigue sin haberse visto una muerte real. Ver `ARCHITECTURE.md` §56 |
-| Poke Paste | **HECHO Y VISTO EN LA APP** — exporta equipo o caja en formato `pokepast.es`, en inglés. Solo exporta. Ver `ARCHITECTURE.md` §57 |
+| Poke Paste | **HECHO Y VISTO EN LA APP** — exporta **el equipo** en formato `pokepast.es`, en inglés. Solo exporta. Ver `ARCHITECTURE.md` §57 |
+| Sprites de los cristales Z | **RESUELTO** — tallados del ALYT `a/1/5/5`, que los nombra `item_807..824`. Cuál es cuál va **por color** y así está dicho. Los de Dominsignia **no existen** en el cartucho. Ver `ARCHITECTURE.md` §61 |
 | Randomización vía LayeredFS | **RESUELTA Y VERIFICADA** en el juego — salvajes y textos |
 | Escritura en el juego (Shedinja, cap, objetos) | **RESUELTA Y VERIFICADA** — exige el fork propio de Azahar |
 | Mochila del juego (leer, poner cantidad, añadir lo que no llevas) | **RESUELTA Y VERIFICADA** en el juego — ver `ARCHITECTURE.md` §22 |

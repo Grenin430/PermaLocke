@@ -224,7 +224,12 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
     /// </remarks>
     public BitmapSource? GetItem(int itemId)
     {
-        if (!_prepared || !ItemIconIndex.TryGet(itemId, out var icon))
+        // Los cristales Z no están en el contenedor de objetos, así que van por su propia puerta.
+        // Se atiende aquí y no en un método aparte para que quien pide un dibujo solo tenga que
+        // saber el id del objeto, que es lo único que hay escrito en Data/achievements.json.
+        var crystal = ZCrystalIndex.TryGet(itemId, out _);
+
+        if (!_prepared || (!crystal && !ItemIconIndex.TryGet(itemId, out _)))
         {
             return null;
         }
@@ -241,7 +246,7 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
         var file = Path.Combine(ItemDirectory, $"{itemId:0000}.png");
         if (!File.Exists(file))
         {
-            ExtractItem(itemId, icon, file);
+            ExtractItem(itemId, file, crystal);
         }
 
         var image = Read(file);
@@ -250,7 +255,7 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
     }
 
     /// <summary>Pulls one item icon out of the cartridge, on demand.</summary>
-    private void ExtractItem(int itemId, int icon, string destination)
+    private void ExtractItem(int itemId, string destination, bool crystal)
     {
         if (_romPath is null)
         {
@@ -260,7 +265,11 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
         try
         {
             Directory.CreateDirectory(ItemDirectory);
-            var sprite = ItemIconReader.Open(_romPath, _scratch).Read(icon + 1);
+
+            var sprite = crystal
+                ? ZCrystalIconReader.Open(_romPath, _scratch).Read(itemId)
+                : ItemIconReader.Open(_romPath, _scratch).Read(ItemIconIndex.Of(itemId) + 1);
+
             File.WriteAllBytes(destination, PngImage.Encode(sprite.Pixels, sprite.Width, sprite.Height));
         }
         catch (Exception ex)

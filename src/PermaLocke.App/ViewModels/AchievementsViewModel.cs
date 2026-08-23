@@ -10,9 +10,16 @@ using PermaLocke.Core.Services;
 namespace PermaLocke.App.ViewModels;
 
 /// <summary>One achievement as the list shows it.</summary>
-public sealed partial class AchievementRowViewModel(AchievementProgress progress) : ObservableObject
+public sealed partial class AchievementRowViewModel(
+    AchievementProgress progress, System.Windows.Media.Imaging.BitmapSource? icon = null) : ObservableObject
 {
     public AchievementProgress Progress { get; } = progress;
+
+    /// <summary>The picture, straight out of the player`s cartridge. Null when there is none.</summary>
+    public System.Windows.Media.Imaging.BitmapSource? Icon { get; } = icon;
+
+    /// <summary>False falls back to the drawn medal, so a card is never empty.</summary>
+    public bool HasIcon => Icon is not null;
 
     public string Id => Progress.Achievement.Id;
 
@@ -79,16 +86,19 @@ public sealed partial class AchievementsViewModel : SectionViewModel
     private readonly PenaltyService _penalties;
     private readonly IPointsService _points;
     private readonly IRunContext _runContext;
+    private readonly PermaLocke.App.Services.PokemonSpriteService _sprites;
     private readonly ILogger<AchievementsViewModel> _logger;
 
     public AchievementsViewModel(AchievementService achievements, PenaltyService penalties,
-        IPointsService points, IRunContext runContext, ILogger<AchievementsViewModel> logger)
+        IPointsService points, IRunContext runContext, PermaLocke.App.Services.PokemonSpriteService sprites,
+        ILogger<AchievementsViewModel> logger)
         : base("LOGROS", "Los 21 de la competición, lo que llevas y lo que pagan")
     {
         _achievements = achievements;
         _penalties = penalties;
         _points = points;
         _runContext = runContext;
+        _sprites = sprites;
         _logger = logger;
     }
 
@@ -133,12 +143,16 @@ public sealed partial class AchievementsViewModel : SectionViewModel
 
         try
         {
+            // Los iconos salen de la ROM del propio jugador la primera vez que se abre esto, igual
+            // que los del gacha. Si no hay ROM, las tarjetas se dibujan sin dibujo y ya.
+            await _sprites.PrepareAsync();
+
             var progress = await _achievements.GetProgressAsync(run.Id);
 
             Rows.Clear();
             foreach (var row in progress)
             {
-                Rows.Add(new AchievementRowViewModel(row));
+                Rows.Add(new AchievementRowViewModel(row, IconFor(row)));
             }
 
             Balance = await _points.GetBalanceAsync(run.Id);
@@ -180,6 +194,17 @@ public sealed partial class AchievementsViewModel : SectionViewModel
             IsBusy = false;
         }
     }
+
+    /// <summary>
+    /// The picture that stands for an achievement, out of the player's own cartridge.
+    /// </summary>
+    /// <remarks>
+    /// The id comes from <c>Data/achievements.json</c>, so changing what a card shows is changing a
+    /// number in a file. Null when the cartridge has no icon for it, and then the card falls back
+    /// to the drawn medal instead of leaving a hole.
+    /// </remarks>
+    private System.Windows.Media.Imaging.BitmapSource? IconFor(AchievementProgress progress) =>
+        progress.Achievement.Icon is { } item ? _sprites.GetItem(item) : null;
 
     [RelayCommand]
     private async Task ClaimAsync(AchievementRowViewModel? row)

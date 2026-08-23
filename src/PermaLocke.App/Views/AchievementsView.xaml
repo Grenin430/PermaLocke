@@ -1,9 +1,11 @@
 <UserControl x:Class="PermaLocke.App.Views.AchievementsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="clr-namespace:PermaLocke.App.Converters">
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+        <conv:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility" />
 
         <!-- Una tarjeta de logro: medalla, texto, progreso, puntos y botón. -->
         <DataTemplate x:Key="AchievementTemplate">
@@ -36,18 +38,38 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
-                    <!-- LA MEDALLA. Un rombo, como los cristales del recorrido insular, con la
-                         inicial del logro. Dibujado, no extraído: los cristales Z del cartucho no
-                         se pueden emparejar con nada sin adivinar por color (ver §34). -->
+                    <!-- LA MEDALLA. El dibujo del cartucho cuando lo hay -su cristal Z para cada
+                         prueba- y, si no, el rombo con la inicial, que es lo que había antes. Se
+                         conserva el respaldo a propósito: sin ROM no hay iconos, y una tarjeta
+                         vacía sería peor que una dibujada. -->
                     <Grid Grid.Column="0" VerticalAlignment="Top" Width="46" Height="46"
                           HorizontalAlignment="Left">
-                        <Path Data="M 23,2 L 44,23 L 23,44 L 2,23 Z" StrokeThickness="2"
-                              Stroke="{StaticResource BorderStrongBrush}"
-                              Fill="{Binding Medal}" />
-                        <TextBlock Text="{Binding Initial}"
-                                   FontFamily="{StaticResource UiFont}" FontSize="15" FontWeight="Bold"
-                                   Foreground="#FF060910"
-                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Grid Visibility="{Binding HasIcon, Converter={StaticResource InverseBoolToVisibility}}">
+                            <Path Data="M 23,2 L 44,23 L 23,44 L 2,23 Z" StrokeThickness="2"
+                                  Stroke="{StaticResource BorderStrongBrush}"
+                                  Fill="{Binding Medal}" />
+                            <TextBlock Text="{Binding Initial}"
+                                       FontFamily="{StaticResource UiFont}" FontSize="15" FontWeight="Bold"
+                                       Foreground="#FF060910"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <Image Source="{Binding Icon}" Width="44" Height="44"
+                               RenderOptions.BitmapScalingMode="NearestNeighbor"
+                               Visibility="{Binding HasIcon, Converter={StaticResource BoolToVisibility}}">
+                            <!-- Un logro por cobrar se ve apagado, que es lo que decía el color de
+                                 la medalla y no se puede decir con el dibujo del cartucho. -->
+                            <Image.Style>
+                                <Style TargetType="Image">
+                                    <Setter Property="Opacity" Value="0.38" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Unlocked}" Value="True">
+                                            <Setter Property="Opacity" Value="1" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Image.Style>
+                        </Image>
                     </Grid>
 
                     <StackPanel Grid.Column="1" Margin="10,0,0,0">

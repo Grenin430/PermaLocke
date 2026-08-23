@@ -40,8 +40,20 @@ public sealed record Achievement(
     int Points,
     int? Record = null,
     int? Item = null,
-    int? Work = null)
+    int? Work = null,
+    int? Icon = null)
 {
+    /// <summary>
+    /// An item id whose picture stands for this achievement on screen.
+    /// </summary>
+    /// <remarks>
+    /// Separate from <see cref="Item"/>, which is a <em>trigger</em>: for a trial the two happen to
+    /// be the same Z-Crystal, but "what unlocks it" and "what it looks like" are different
+    /// questions and an achievement with no trigger still wants a picture. It is an id and not a
+    /// file name so nothing has to be shipped: the icon comes out of the player's own cartridge.
+    /// </remarks>
+    public int? Icon { get; init; } = Icon ?? Item;
+
     /// <summary>PermaLocke counts this one on its own, from the events it already records.</summary>
     public bool IsAutomatic => Trigger is not null || Record is not null || Item is not null || Work is not null;
 

@@ -46,7 +46,8 @@ public sealed class JsonAchievementCatalog(IReadOnlyList<Achievement> all) : IAc
                     entry.Points ?? 0,
                     entry.Record,
                     entry.Item,
-                    entry.Work))
+                    entry.Work,
+                    entry.Icon))
         ]);
     }
 
@@ -66,5 +67,6 @@ public sealed class JsonAchievementCatalog(IReadOnlyList<Achievement> all) : IAc
         [property: JsonPropertyName("points")] int? Points,
         [property: JsonPropertyName("record")] int? Record,
         [property: JsonPropertyName("item")] int? Item,
-        [property: JsonPropertyName("work")] int? Work);
+        [property: JsonPropertyName("work")] int? Work,
+        [property: JsonPropertyName("icono")] int? Icon);
 }

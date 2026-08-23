@@ -16,6 +16,8 @@
 
   "comentarioPendientes": "Ninguno. Los 21 se cuentan solos y no queda un solo boton de marcar a mano. Si algun dia se anade uno que PermaLocke no sepa detectar, sale a mano y con sus botones, que es lo que debe pasar. Para anclar uno nuevo: PermaLocke.Probe --flags antes.txt, jugar hasta que pase la cosa, GUARDAR dentro del juego, --flags despues.txt, y --flags-diff antes.txt despues.txt. Ojo: compara el tiempo jugado de los dos volcados, porque si no guardaste son la misma partida y el diff ensena lo de antes.",
 
+  "comentarioIconos": "icono es el id de un OBJETO DEL CARTUCHO cuyo dibujo representa al logro en pantalla. No es lo mismo que item: item es lo que lo DESBLOQUEA y icono es lo que se VE, y solo coinciden en las pruebas, que por eso no lo llevan escrito -si falta, se usa el item-. Las doce pruebas salen con su cristal Z. Los cristales no estan en el contenedor de iconos de objeto: se tallan del ALYT a/1/5/5, donde el propio cartucho los llama item_807..item_824. Cual es cual va por COLOR y esta dicho asi en ZCrystalIndex, porque un ALYT no publica el mapa entre sus nombres y sus datos. Del resto, tres son sustitutos declarados: el cartucho NO tiene sprite de Dominsignia -se barrieron los 3431 dibujos de todas sus pantallas y no aparece-, asi que las pegatinas van con perla, perla grande y pepita de oro, que es la familia de cosas que se recogen por el mundo. Campeon lleva Master Ball y defender el titulo Gloria Ball -la conmemorativa-; movimientos Z, un cristal; huidas, la Cuerda Huida; variocolor, Polvo Estelar; entrenadores, Ataque X. Cambiar cualquiera es cambiar un numero aqui.",
+
   "comentarioPuntos": "Los de las pruebas, las pegatinas y el alto mando salen de la competición. Los de movimientos Z, huidas, shiny y entrenadores los he puesto yo a ojo sobre esa misma escala: cámbialos aquí sin tocar código.",
 
   "achievements": [
@@ -32,16 +34,16 @@
     { "id": "prueba-11", "name": "Undécima prueba", "description": "Supera la prueba de la Capitana Rika.", "target": 1, "points": 100, "item": 824 },
     { "id": "prueba-12", "name": "Duodécima prueba", "description": "Supera la Gran Prueba de la Kahuna Hela, la última.", "target": 1, "points": 100, "item": 815 },
 
-    { "id": "alto-mando-campeon", "name": "Campeón", "description": "Derrota al alto mando y proclámate campeón.", "target": 1, "points": 300, "record": 2 },
-    { "id": "alto-mando-otra-vez", "name": "Y otra vez", "description": "Derrota al alto mando de nuevo y defiende el título.", "target": 1, "points": 300, "record": 100 },
+    { "id": "alto-mando-campeon", "name": "Campeón", "description": "Derrota al alto mando y proclámate campeón.", "target": 1, "points": 300, "record": 2, "icono": 1 },
+    { "id": "alto-mando-otra-vez", "name": "Y otra vez", "description": "Derrota al alto mando de nuevo y defiende el título.", "target": 1, "points": 300, "record": 100, "icono": 16 },
 
-    { "id": "pegatinas-25", "name": "Pegatinas: 25", "description": "Encuentra 25 Dominsignias escondidas por toda la región.", "target": 25, "points": 75, "record": 72 },
-    { "id": "pegatinas-50", "name": "Pegatinas: 50", "description": "Encuentra 50 Dominsignias escondidas por toda la región.", "target": 50, "points": 125, "record": 72 },
-    { "id": "pegatinas-100", "name": "Pegatinas: 100", "description": "Encuentra 100 Dominsignias escondidas por toda la región.", "target": 100, "points": 200, "record": 72 },
+    { "id": "pegatinas-25", "name": "Pegatinas: 25", "description": "Encuentra 25 Dominsignias escondidas por toda la región.", "target": 25, "points": 75, "record": 72, "icono": 88 },
+    { "id": "pegatinas-50", "name": "Pegatinas: 50", "description": "Encuentra 50 Dominsignias escondidas por toda la región.", "target": 50, "points": 125, "record": 72, "icono": 89 },
+    { "id": "pegatinas-100", "name": "Pegatinas: 100", "description": "Encuentra 100 Dominsignias escondidas por toda la región.", "target": 100, "points": 200, "record": 72, "icono": 92 },
 
-    { "id": "movimientos-z-100", "name": "Poder Z", "description": "Usa 100 movimientos Z.", "target": 100, "points": 150, "record": 41 },
-    { "id": "huidas-200", "name": "Pies ligeros", "description": "Huye 200 veces de un combate.", "target": 200, "points": 100, "record": 46 },
-    { "id": "shiny-1", "name": "Uno entre mil", "description": "Encuentra 1 Pokémon variocolor.", "target": 1, "points": 200, "record": 127 },
-    { "id": "entrenadores-100", "name": "Cien caídos", "description": "Derrota a 100 entrenadores.", "target": 100, "points": 250, "record": 5 }
+    { "id": "movimientos-z-100", "name": "Poder Z", "description": "Usa 100 movimientos Z.", "target": 100, "points": 150, "record": 41, "icono": 807 },
+    { "id": "huidas-200", "name": "Pies ligeros", "description": "Huye 200 veces de un combate.", "target": 200, "points": 100, "record": 46, "icono": 78 },
+    { "id": "shiny-1", "name": "Uno entre mil", "description": "Encuentra 1 Pokémon variocolor.", "target": 1, "points": 200, "record": 127, "icono": 90 },
+    { "id": "entrenadores-100", "name": "Cien caídos", "description": "Derrota a 100 entrenadores.", "target": 100, "points": 250, "record": 5, "icono": 57 }
   ]
 }
