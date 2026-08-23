@@ -144,5 +144,15 @@ public enum GameEventType
     /// save can be written, and only this one can carry the PID, which does not exist until the
     /// Pokémon is built. Without it the run owns Pokémon it cannot recognise in memory.
     /// </remarks>
-    PokemonDelivered
+    PokemonDelivered,
+
+    /// <summary>
+    /// A one-off prize for reaching a milestone was collected.
+    /// </summary>
+    /// <remarks>
+    /// Its own type because it is also the <b>lock</b>: a reward is claimable exactly once, and
+    /// what makes that true is that this event is in the history. Folding it into
+    /// <see cref="TestItemGranted"/> would mean any testing tool press looked like a claim.
+    /// </remarks>
+    RewardClaimed
 }

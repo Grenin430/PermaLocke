@@ -1,0 +1,18 @@
+{
+  "comentario": "Premios que la competicion entrega UNA sola vez al llegar a un hito. Los ids de objeto son los del cartucho y el nombre se comprueba contra su tabla antes de escribir nada: un id equivocado entregaria otra cosa y no fallaria nunca. Se buscan con: Probe --objeto-find \"Hiperpocion\".",
+  "rewards": [
+    {
+      "id": "doce-pruebas",
+      "name": "Premio de las doce pruebas",
+      "description": "Por superar las doce pruebas de Alola. Se recoge una sola vez.",
+      "achievements": [
+        "prueba-01", "prueba-02", "prueba-03", "prueba-04", "prueba-05", "prueba-06",
+        "prueba-07", "prueba-08", "prueba-09", "prueba-10", "prueba-11", "prueba-12"
+      ],
+      "items": [
+        { "id": 25, "name": "Hiperpoción", "amount": 12 },
+        { "id": 27, "name": "Cura Total", "amount": 12 }
+      ]
+    }
+  ]
+}

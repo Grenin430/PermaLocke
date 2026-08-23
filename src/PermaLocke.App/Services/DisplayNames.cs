@@ -52,7 +52,8 @@ public static class DisplayNames
         [GameEventType.BallsReturned] = "Balls devueltas",
         [GameEventType.TeamWiped] = "Equipo caído",
         [GameEventType.EvsTrained] = "EV repartidos",
-        [GameEventType.PokemonDelivered] = "Entregado en la partida"
+        [GameEventType.PokemonDelivered] = "Entregado en la partida",
+        [GameEventType.RewardClaimed] = "Premio recogido"
     };
 
     private static readonly Dictionary<EncounterType, string> Encounters = new()

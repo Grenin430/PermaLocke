@@ -4,15 +4,30 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using PermaLocke.Core.Abstractions;
 using PermaLocke.Core.Domain;
+using PermaLocke.Core.Services;
 using PermaLocke.GameLink;
 
 namespace PermaLocke.App.ViewModels;
 
+/// <summary>One of the competition's one-off prizes, as the screen shows it.</summary>
+/// <param name="Detail">What it hands over, spelled out, so nobody has to press to find out.</param>
+public sealed record RewardRowViewModel(
+    string Id, string Name, string Description, string Detail,
+    string Progress, bool CanClaim, bool Claimed)
+{
+    /// <summary>What the button says. A prize already taken says so instead of looking pressable.</summary>
+    public string Action => Claimed ? "YA RECOGIDO" : "RECOGER";
+}
+
 /// <summary>
-/// Testing tools that write straight into the running game. They exist to exercise rules that
-/// are otherwise slow to reach — the level cap needs Rare Candies — and every one of them
-/// leaves an event behind, because nothing may change the game silently.
+/// Testing tools that write straight into the running game, and the competition's one-off prizes.
 /// </summary>
+/// <remarks>
+/// The tools exist to exercise rules that are otherwise slow to reach — the level cap needs Rare
+/// Candies — and every one of them leaves an event behind, because nothing may change the game
+/// silently. The prizes are not tools: they are earned, they are given once, and what makes "once"
+/// true is the event, not a flag on this screen.
+/// </remarks>
 public sealed partial class MiscellaneousViewModel : SectionViewModel
 {
     /// <summary>How many Rare Candies one press hands over.</summary>
@@ -24,10 +39,11 @@ public sealed partial class MiscellaneousViewModel : SectionViewModel
     private readonly IRunContext _runContext;
     private readonly IEventStore _events;
     private readonly IClock _clock;
+    private readonly RewardService _rewards;
     private readonly ILogger<MiscellaneousViewModel> _logger;
 
     public MiscellaneousViewModel(BagService bag, IItemDelivery delivery, IItemLookup items,
-        IRunContext runContext, IEventStore events, IClock clock,
+        IRunContext runContext, IEventStore events, IClock clock, RewardService rewards,
         ILogger<MiscellaneousViewModel> logger)
         : base("MISCELÁNEA", "Herramientas sueltas y diagnóstico del enlace con el juego")
     {
@@ -37,7 +53,101 @@ public sealed partial class MiscellaneousViewModel : SectionViewModel
         _runContext = runContext;
         _events = events;
         _clock = clock;
+        _rewards = rewards;
         _logger = logger;
+    }
+
+    /// <summary>The competition's one-off prizes, with how far off each one is.</summary>
+    public ObservableCollection<RewardRowViewModel> Rewards { get; } = [];
+
+    [ObservableProperty]
+    private bool _hasRewards;
+
+    public override Task ActivateAsync() => RefreshRewardsAsync();
+
+    /// <summary>
+    /// Rebuilds the prize list from the achievements and the history.
+    /// </summary>
+    /// <remarks>
+    /// Needs no emulator: whether a prize is earned comes from the achievements, which read the
+    /// saved game, and whether it is taken comes from the run's own events. Only handing it over
+    /// needs the game open.
+    /// </remarks>
+    private async Task RefreshRewardsAsync()
+    {
+        Rewards.Clear();
+
+        if (_runContext.Current is not { } run)
+        {
+            HasRewards = false;
+            return;
+        }
+
+        try
+        {
+            foreach (var status in await _rewards.GetStatusAsync(run))
+            {
+                Rewards.Add(new RewardRowViewModel(
+                    status.Reward.Id,
+                    status.Reward.Name,
+                    status.Reward.Description,
+                    string.Join(" · ", status.Reward.Items.Select(item => $"{item.Amount} {item.Name}")),
+                    $"{status.Progress} pruebas",
+                    status.CanClaim,
+                    status.Claimed));
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Fallo al leer los premios de la competición");
+        }
+
+        HasRewards = Rewards.Count > 0;
+    }
+
+    /// <summary>
+    /// Hands over a prize, once.
+    /// </summary>
+    /// <remarks>
+    /// Everything that decides whether it can be taken lives in <see cref="RewardService"/> and is
+    /// checked there again: this button being enabled is a convenience for the player, never the
+    /// guard. A screen left open while the history changes underneath would otherwise be enough to
+    /// take a one-off prize twice.
+    /// </remarks>
+    [RelayCommand(CanExecute = nameof(CanUseTools))]
+    private async Task ClaimRewardAsync(RewardRowViewModel? row)
+    {
+        if (row is null || _runContext.Current is not { } run)
+        {
+            return;
+        }
+
+        IsBusy = true;
+        NotifyCommands();
+        Status = $"Entregando «{row.Name}»...";
+
+        try
+        {
+            var result = await _rewards.ClaimAsync(run, row.Id);
+            Status = result.Message;
+
+            if (result.Succeeded)
+            {
+                _logger.LogInformation("Premio {Reward} recogido", row.Id);
+                await ReadBagAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Falló la entrega del premio {Reward}", row.Id);
+            Status = "Ha fallado. El detalle está en la carpeta Logs.";
+        }
+        finally
+        {
+            IsBusy = false;
+            NotifyCommands();
+            await RefreshRewardsAsync();
+        }
     }
 
     [ObservableProperty]
@@ -248,5 +358,6 @@ public sealed partial class MiscellaneousViewModel : SectionViewModel
         ReadBagCommand.NotifyCanExecuteChanged();
         GrantCandiesCommand.NotifyCanExecuteChanged();
         GrantShinyCharmCommand.NotifyCanExecuteChanged();
+        ClaimRewardCommand.NotifyCanExecuteChanged();
     }
 }

@@ -4600,3 +4600,50 @@ destruyó, no solo los bytes.
 
 De paso se vio el otro Pokémon sin registrar de la partida: un **Kommo-o Nv.24** en el equipo, que
 la run nunca ha llegado a conocer.
+
+---
+
+## 60. Premios de una sola vez (2026-08-23)
+
+Un botón en MISCELÁNEA que, **con las doce pruebas superadas**, entrega **12 Hiperpociones y 12
+Curas Totales**, y solo una vez.
+
+### Qué decide cada cosa, y contra qué
+
+Tres condiciones, y ninguna se apoya en una marca que alguien haya puesto en esta pantalla:
+
+- **Ganado**: los doce logros `prueba-01`…`prueba-12` desbloqueados, que es cosa de
+  `AchievementService` y sale del cartucho —cada prueba se detecta por el cristal Z que deja en la
+  mochila, §43—.
+- **No recogido**: que no haya un evento `RewardClaimed` con ese id en el historial. **Eso es lo que
+  hace que «una vez» sea una vez.** Un booleano en el ViewModel no lo sería: basta cerrar la
+  aplicación.
+- **Entregable**: la mochila está ahí para escribir en ella, por el camino de la tienda —ping, suma
+  a lo que ya llevas, y **relectura** antes de dar nada por bueno—.
+
+`RewardClaimed` es un tipo de evento propio y no un `TestItemGranted` justamente porque **es el
+cerrojo**: si el premio se registrase como las herramientas de pruebas, cualquier pulsación de los
+Caramelos Raros parecería un premio recogido.
+
+### El orden, y el caso raro que decide el diseño
+
+Como en la tienda (§45): **primero se entrega, después se registra**. Un premio registrado antes de
+una entrega que falla quema algo que solo se da una vez y no deja al jugador a quién reclamar.
+
+El caso interesante es la **entrega a medias**: son dos objetos, van uno detrás de otro, y el
+emulador puede desaparecer entre los dos. Ahí hay que elegir entre un jugador al que le deben doce
+Curas Totales y un botón que se puede volver a pulsar para duplicar las Hiperpociones que ya dio.
+En una competición **la segunda es peor**, así que media entrega **cuenta como recogida**, el evento
+guarda exactamente qué llegó y qué no, y la pantalla lo dice en voz alta. Si no llega **nada**, no
+se recoge nada: el premio sigue disponible.
+
+### Configuración, no código
+
+`Data/rewards.json`, como la tienda y las penalizaciones. Los ids de objeto son los del cartucho
+—Hiperpoción **25**, Cura Total **27**, buscados con `Probe --objeto-find`— y **el nombre se
+comprueba contra la tabla del juego antes de escribir nada** (§52): un id copiado de memoria que
+caiga en otro objeto entrega otra cosa y no falla nunca. Añadir un premio es una entrada en el
+fichero; no se toca código.
+
+La tarjeta enseña siempre cuánto falta —«2/12 pruebas»— en vez de esconder el botón. Un premio que
+no se ve no se persigue.

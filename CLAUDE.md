@@ -595,6 +595,17 @@ run no lo cuenta y hace bien. Quién era **no se puede saber**: el respaldo de p
 que hay ya lo lleva puesto. Lección: una prueba destructiva sobre la partida de alguien tiene que
 dejar por escrito qué destruyó. Ver §59.
 
+**Premios de una sola vez (2026-08-23).** Botón en MISCELÁNEA que, con las **doce pruebas**
+superadas, da **12 Hiperpociones y 12 Curas Totales**, y solo una vez. Tres condiciones y ninguna
+apoyada en una marca de la pantalla: **ganado** -los doce logros, que salen del cartucho por su
+cristal Z-, **no recogido** -que no haya un evento `RewardClaimed` con ese id, que es lo que hace
+que «una vez» sea una vez; un booleano del ViewModel se cae al cerrar la app- y **entregable**, por
+el camino de la tienda con relectura. Orden como en la tienda: **primero entregar, después
+registrar**. La **entrega a medias cuenta como recogida** a propósito: entre deberle Curas Totales a
+alguien y un botón que se puede repulsar para duplicar lo ya dado, en una competición lo segundo es
+peor. Todo en `Data/rewards.json`, con los ids buscados (`Probe --objeto-find`) y el **nombre
+comprobado contra la tabla del juego antes de escribir**. Ver §60.
+
 **Siguiente.** Sincronización, y probar en partida real los combates importantes, los iniciales y
 las tiendas.
 

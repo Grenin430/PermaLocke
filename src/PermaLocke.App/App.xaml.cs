@@ -74,6 +74,9 @@ public partial class App : Application
         collection.AddSingleton<ShopService>();
         collection.AddSingleton<EvTrainingService>();
         collection.AddSingleton<PokemonIdentityService>();
+        collection.AddSingleton<IRewardCatalog>(_ =>
+            JsonRewardCatalog.Load(Path.Combine(paths.Data, "rewards.json")));
+        collection.AddSingleton<RewardService>();
         collection.AddSingleton<ShopViewModel>();
         collection.AddSingleton<PokemonViewerViewModel>();
         collection.AddSingleton<PokePasteViewModel>();
