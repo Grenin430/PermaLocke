@@ -24,6 +24,7 @@ using PermaLocke.GameLink.Rpc;
 //   Probe --pk <fichero>        reads a party slot backup; --cap N says what a cap write changes
 //   Probe --pids [--arreglar]   gives a PID to what was delivered without one and links it to the run
 //   Probe --pids --probar       does the whole PID repair on a COPY of the partida and checks it
+//   Probe --etapas [n]          stages marked by hand; with a number, corrects it through the service
 
 Console.OutputEncoding = System.Text.Encoding.UTF8;
 
@@ -49,6 +50,14 @@ if (args.Length >= 1 && args[0] == "--nombres")
 if (args.Length >= 1 && args[0] == "--ev")
 {
     return PermaLocke.Probe.EvProbe.Run(args.Contains("--probar"));
+}
+
+// Etapas marcadas a mano: mirar y, con un numero, corregir. Pasa por ProgressService, asi que
+// la correccion queda en el historial.
+if (args.Length >= 1 && args[0] == "--etapas")
+{
+    return await PermaLocke.Probe.StageProbe.RunAsync(
+        args.Length > 1 && int.TryParse(args[1], out var etapas) ? etapas : null);
 }
 
 // PID que faltan: empareja por IVs lo que la run entregó antes de que se guardara el PID.

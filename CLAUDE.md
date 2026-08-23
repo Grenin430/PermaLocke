@@ -567,6 +567,17 @@ error ninguno. Alcance que conviene tener claro: detectable no es detectado, el 
 **Solo exporta**: leer un pegado sería crear Pokémon a partir de texto. Los nombres van en **inglés**
 porque el sitio se guía por ellos, así que usa un `SaveBoxReader` propio con idioma `en`. Ver §57.
 
+**Fuera los dos botones de HOME (2026-08-23).** ETAPA SUPERADA y REGISTRAR CAPTURA hacían lo que ya
+hace otra cosa. La etapa la deducen los logros desde el §49, y el botón «por si la detección se
+retrasa» lo que hace es **adelantarla**: en la run real se había pulsado **seis** veces con **dos**
+pruebas detectadas, y el cap estaba en **40** en vez de 24, porque sale de `Math.Max(a mano,
+detectado)`. Lo que hay en la partida se ve entero en el visor, y lo que aparece sin registrar lo
+anuncia el aviso de HOME con su propio botón. Deshacerlo **no se hace editando `run.json`**: hay
+`Probe --etapas [n]`, que pasa por `ProgressService.AdvanceAsync` y por tanto deja su evento. De
+paso, `DetectedAsync` se hace pública -sin ella las dos cifras se leen iguales y no se ve cuál
+sostiene el cap- y el evento dice «cap **por marcas a mano**», que es lo que ese número significa.
+Ver §58.
+
 **Siguiente.** Sincronización, y probar en partida real los combates importantes, los iniciales y
 las tiendas.
 
@@ -631,6 +642,10 @@ dotnet run --project tools/PermaLocke.Probe -- --run
 dotnet run --project tools/PermaLocke.Probe -- --pids
 dotnet run --project tools/PermaLocke.Probe -- --pids --probar
 dotnet run --project tools/PermaLocke.Probe -- --pids --arreglar
+
+# etapas marcadas a mano; con un número las corrige, dejando su evento
+dotnet run --project tools/PermaLocke.Probe -- --etapas
+dotnet run --project tools/PermaLocke.Probe -- --etapas 0
 ```
 
 SDK requerido: .NET 10 (instalado: 10.0.400).

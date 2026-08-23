@@ -217,24 +217,13 @@
                                            VerticalAlignment="Center" />
                             </DockPanel>
 
-                            <!-- Cómo se mueve el cap va en el tooltip del botón que lo mueve a mano:
-                                 ahí es donde hace falta, y a cuerpo de texto le robaba tres líneas
-                                 al panel del equipo, que entonces cortaba su propio mensaje. -->
+                            <!-- Ya no hay botón de subir etapa: la etapa la deciden los logros, y
+                                 un botón que hace lo mismo que la detección solo sirve para
+                                 desincronizarla. Tampoco el de registrar captura: lo que hay en la
+                                 partida se ve en el visor, y lo que aparece sin registrar lo
+                                 anuncia el aviso de abajo con su propio botón. -->
                             <TextBlock Text="{Binding StageSourceText}" Style="{StaticResource Faint}"
                                        Foreground="{StaticResource AccentBrush}" Margin="0,6,0,0" />
-
-                            <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                                <Button Content="REGISTRAR CAPTURA" Command="{Binding RegisterCaptureCommand}"
-                                        Style="{StaticResource PrimaryButton}" Padding="13,7" FontSize="11.5" />
-                                <Button Content="ETAPA SUPERADA" Command="{Binding AdvanceStageCommand}"
-                                        Style="{StaticResource GhostButton}" Padding="13,7" FontSize="11.5"
-                                        Margin="8,0,0,0">
-                                    <Button.ToolTip>
-                                        <TextBlock TextWrapping="Wrap" MaxWidth="380" LineHeight="17"
-                                                   Text="La etapa sube sola en cuanto el cristal Z de la prueba entra en tu mochila. Este botón sólo hace falta si la detección se retrasa: puede subir el cap, nunca bajarlo." />
-                                    </Button.ToolTip>
-                                </Button>
-                            </StackPanel>
                         </StackPanel>
                 </Border>
 

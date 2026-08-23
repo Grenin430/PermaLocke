@@ -91,7 +91,6 @@ public sealed partial class HomeViewModel : SectionViewModel
     }
 
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(RegisterCaptureCommand))]
     private bool _hasRun;
 
     [ObservableProperty]
@@ -258,32 +257,6 @@ public sealed partial class HomeViewModel : SectionViewModel
         }
     }
 
-    [RelayCommand(CanExecute = nameof(HasRun))]
-    private async Task RegisterCaptureAsync()
-    {
-        if (_dialogs.ShowRegisterCapture())
-        {
-            await RefreshAsync();
-        }
-    }
-
-    /// <summary>
-    /// Records that a trial or milestone has been cleared, which lowers the ceiling the run
-    /// enforces. Explicit on purpose: the flags that would let this be detected from memory
-    /// have not been located, and moving the cap by guesswork is exactly what must not happen.
-    /// </summary>
-    [RelayCommand(CanExecute = nameof(HasRun))]
-    private async Task AdvanceStageAsync()
-    {
-        if (_runContext.Current is not { } run)
-        {
-            return;
-        }
-
-        await _progress.AdvanceAsync(run, 1, run.PlayerName);
-        await RefreshAsync();
-    }
-
     private async Task RefreshAsync()
     {
         var run = _runContext.Current;
@@ -306,8 +279,9 @@ public sealed partial class HomeViewModel : SectionViewModel
         PlayerName = run.PlayerName;
         Islands = [.. run.Islands.Select(i => new IslandRow(i.Name, DisplayNames.Of(i.State)))];
 
-        // La etapa la deducen los logros: en cuanto el cristal Z de la prueba entra en la
-        // mochila, el cap sube solo. El botón de abajo es red de seguridad, no el camino normal.
+        // La etapa la deducen los logros: en cuanto el cristal Z de la prueba entra en la mochila,
+        // el cap sube solo. No hay forma de moverla a mano, y es deliberado: el botón que había
+        // hacía lo mismo que la detección y solo servía para adelantarla.
         var cleared = await _progress.ClearedAsync(run);
         var stage = await _progress.CurrentStageAsync(run);
         StageText = stage is null ? "sin definir" : stage.Name;

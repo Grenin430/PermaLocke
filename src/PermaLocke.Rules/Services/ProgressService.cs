@@ -63,8 +63,12 @@ public sealed class ProgressService(
     /// <remarks>
     /// The highest rather than the count: if detection sees the third trial but not the second,
     /// the player is plainly past the third, and counting would leave the cap a stage behind.
+    ///
+    /// Public so that a tool can tell the two numbers apart. <see cref="ClearedAsync"/> returns the
+    /// higher of this and what somebody pressed, so on a run where the button ran ahead the two
+    /// read the same and there is no way to see which one is holding the cap up.
     /// </remarks>
-    private async Task<int> DetectedAsync(Run run, CancellationToken ct)
+    public async Task<int> DetectedAsync(Run run, CancellationToken ct = default)
     {
         if (_detected is { } cached && cached.Run == run.Id && clock.Now - cached.At < DetectionLife)
         {
@@ -113,12 +117,20 @@ public sealed class ProgressService(
             Type = GameEventType.LevelCapEnforced,
             Source = EventSource.Player,
             Actor = actor,
+            // Dos precisiones que evitan una lectura falsa del historial. Cuántas y no «una»,
+            // porque revertir seis de golpe y leer «etapa revertida» deja contando a mano. Y «por
+            // marcas a mano», porque este número solo sale del contador manual: el cap real es el
+            // mayor de ese y el que detectan los logros, así que la tarjeta de HOME puede decir 24
+            // mientras esta línea dice 14, y las dos tienen razón.
             Description = delta > 0
-                ? $"Etapa superada. Cap de nivel: {stage?.Level.ToString() ?? "sin definir"} ({stage?.Name})."
-                : $"Etapa revertida. Cap de nivel: {stage?.Level.ToString() ?? "sin definir"} ({stage?.Name}).",
+                ? $"{Etapas(delta)} superada{(delta == 1 ? string.Empty : "s")} a mano. "
+                  + $"Cap por marcas a mano: {stage?.Level.ToString() ?? "sin definir"} ({stage?.Name})."
+                : $"{Etapas(-delta)} revertida{(delta == -1 ? string.Empty : "s")}. "
+                  + $"Cap por marcas a mano: {stage?.Level.ToString() ?? "sin definir"} ({stage?.Name}).",
             Data = new Dictionary<string, string>
             {
                 ["etapasSuperadas"] = cleared.ToString(),
+                ["delta"] = delta.ToString(),
                 ["cap"] = stage?.Level.ToString() ?? string.Empty,
                 ["etapa"] = stage?.Name ?? string.Empty
             }
@@ -127,4 +139,6 @@ public sealed class ProgressService(
         context.SetCurrent(updated);
         return updated;
     }
+
+    private static string Etapas(int count) => count == 1 ? "Etapa" : $"{count} etapas";
 }

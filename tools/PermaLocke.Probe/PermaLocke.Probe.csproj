@@ -4,6 +4,7 @@
     <ProjectReference Include="..\..\src\PermaLocke.GameLink\PermaLocke.GameLink.csproj" />
     <ProjectReference Include="..\..\src\PermaLocke.Data\PermaLocke.Data.csproj" />
     <ProjectReference Include="..\..\src\PermaLocke.Rules\PermaLocke.Rules.csproj" />
+    <ProjectReference Include="..\..\src\PermaLocke.Infrastructure\PermaLocke.Infrastructure.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

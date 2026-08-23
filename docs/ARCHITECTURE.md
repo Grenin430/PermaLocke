@@ -4483,3 +4483,46 @@ Dos reglas que, mal puestas, producen un pegado que se ve bien y entra mal:
 - **Solo lo que importa.** Los EV por encima de cero, los IV por debajo de 31, el nivel solo si no
   es 100. Una lista de seises ceros no es lo mismo que no decir nada, y `Pikachu (Pikachu)` es como
   un pegado delata que lo escribió una máquina que no comprobó si había mote.
+
+---
+
+## 58. Fuera los dos botones de HOME, y el contador manual a cero (2026-08-23)
+
+Dos botones que hacían lo que ya hace otra cosa, y por eso estorbaban.
+
+**ETAPA SUPERADA.** Desde el §49 la etapa **se deduce de los logros**: en cuanto el cristal Z de la
+prueba entra en la mochila, el cap sube solo. El botón se dejó como red de seguridad «por si la
+detección se retrasa», y lo que hace un botón así es adelantarla. En la run real se había pulsado
+**seis** veces con **dos** pruebas detectadas, así que el cap en vigor era **40** en vez de 24: el
+cap sale de `Math.Max(a mano, detectado)`, y la mano iba muy por delante.
+
+**REGISTRAR CAPTURA.** Lo que hay en la partida se ve entero en el visor, y lo que aparece en el
+equipo sin registrar lo anuncia el aviso de HOME con su propio botón. El manual solo servía para
+registrar a ciegas.
+
+### Deshacer seis pulsaciones sin tocar el fichero de la run
+
+`run.json` tiene el número, y editarlo a mano habría sido justo el cambio silencioso de estado que
+la regla 4 prohíbe. `Probe --etapas [n]` va por `ProgressService.AdvanceAsync`, o sea que la
+corrección deja su evento como cualquier otra cosa, y relee el repositorio antes de darla por buena:
+
+```
+  etapas marcadas a mano:  6
+  etapas por los logros:   2
+  en vigor (la mayor):     6
+  cap en vigor:            40
+
+Etapas a mano: 6 -> 0
+Cap en vigor:  24
+```
+
+Dos detalles que salieron de escribir la herramienta:
+
+- `ClearedAsync` devuelve **la mayor** de las dos, así que en una run donde la mano va por delante
+  las dos se leen iguales y no hay forma de ver cuál sostiene el cap. `DetectedAsync` pasa a ser
+  pública para poder enseñarlas por separado; es lo único que distingue «lo detecté» de «lo
+  pulsaste».
+- El evento decía «Cap de nivel: 14» mientras HOME decía CAP 24, y las dos tenían razón: ese
+  número es el del contador manual y el de HOME es el efectivo. Ahora la descripción dice **«Cap
+  por marcas a mano»**, y también cuántas etapas se movieron, porque «etapa revertida» tras
+  revertir seis deja al que lee contando.
