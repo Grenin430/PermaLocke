@@ -37,6 +37,7 @@ public sealed partial class WonderTradeViewModel : ObservableObject
     private readonly WonderTradeService _trades;
     private readonly IPokemonSwap _swap;
     private readonly PokemonIdentityService _identity;
+    private readonly CreditService _credits;
     private readonly IRunContext _runContext;
     private readonly PokemonSpriteService _sprites;
     private readonly ILogger<WonderTradeViewModel> _logger;
@@ -50,12 +51,13 @@ public sealed partial class WonderTradeViewModel : ObservableObject
     ];
 
     public WonderTradeViewModel(WonderTradeService trades, IPokemonSwap swap,
-        PokemonIdentityService identity, IRunContext runContext,
+        PokemonIdentityService identity, CreditService credits, IRunContext runContext,
         PokemonSpriteService sprites, ILogger<WonderTradeViewModel> logger)
     {
         _trades = trades;
         _swap = swap;
         _identity = identity;
+        _credits = credits;
         _runContext = runContext;
         _sprites = sprites;
         _logger = logger;
@@ -122,6 +124,32 @@ public sealed partial class WonderTradeViewModel : ObservableObject
     [ObservableProperty]
     private string _problem = string.Empty;
 
+    /// <summary>Wonder trades left, from the trials. Only meaningful when they are limited.</summary>
+    [ObservableProperty]
+    private int _left;
+
+    /// <summary>True when the competition is counting them, so the screen can show the number.</summary>
+    public bool IsLimited => _credits.LimitsWonderTrades;
+
+    /// <summary>Refreshes how many are left. Asked for, never kept: the history owns the number.</summary>
+    public async Task RefreshCreditsAsync()
+    {
+        if (_runContext.Current is not { } run)
+        {
+            Left = 0;
+            return;
+        }
+
+        try
+        {
+            Left = (await _credits.AvailableAsync(run)).WonderTrades;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Fallo al contar los wonder trades disponibles");
+        }
+    }
+
     // Los tres avisos previos, en orden: tipo, generación y total. Cada uno se enciende por
     // separado para que la vista los pueda animar uno a uno.
     [ObservableProperty]
@@ -160,6 +188,7 @@ public sealed partial class WonderTradeViewModel : ObservableObject
 
         IsArmed = !IsArmed;
         Problem = string.Empty;
+        _ = RefreshCreditsAsync();
 
         if (!IsArmed)
         {
@@ -232,8 +261,18 @@ public sealed partial class WonderTradeViewModel : ObservableObject
                 return;
             }
 
+            // Un intercambio gasta un credito de los que dan las pruebas. Se comprueba aqui y no
+            // en el servicio porque es una regla de la competicion y no un hecho del intercambio;
+            // con limitarWonderTrades a false en Data/grants.json vuelven a ser libres.
+            if (_credits.LimitsWonderTrades && Left <= 0)
+            {
+                Problem = "No te quedan wonder trades. Los dan las pruebas: uno por cada una, "
+                          + "cuatro por la liga y cuatro por el rematch.";
+                return;
+            }
+
             var gift = new WonderTradeGift(given.Species, given.DisplayName, given.Level, given.Box, given.Slot);
-            var result = await _trades.TradeAsync(run, gift);
+            var result = await _trades.TradeAsync(run, gift, free: _credits.LimitsWonderTrades);
 
             if (!result.Success || result.Offer is not { } offer)
             {
@@ -285,6 +324,7 @@ public sealed partial class WonderTradeViewModel : ObservableObject
         finally
         {
             IsWorking = false;
+            await RefreshCreditsAsync();
             ConfirmCommand.NotifyCanExecuteChanged();
         }
     }

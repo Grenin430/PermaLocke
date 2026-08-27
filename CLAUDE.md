@@ -654,6 +654,18 @@ y el MT56 escrito. Ver §62.
 **Ojo con las copias aisladas.** Levantar una copia de la app en otra carpeta aísla la **run**, pero
 `PlayerSave` localiza el save de Azahar, que es **el de verdad**. Aislar la run no aísla la partida.
 
+**Tiradas gratis y wonder trades: crédito, no regalos sueltos (2026-08-27).** Dos peticiones que
+son la misma cosa. La ruleta ya **no tira por ti** cuando sale una cara de gacha: da el crédito y
+aparece como «2 tiradas gratis» en el banner que toca, y se tira allí, con su rueda y su sprite. Y
+cada prueba da tiradas y wonder trades según la tabla de la competición, en `Data/grants.json`.
+Misma forma que el §60 y el §62: **ganado** de los logros -más las caras de gacha, leídas de los
+propios eventos de tirada-, **gastado** de los eventos marcados `gratis`, disponible la resta. Nada
+guardado, nada que desincronizar. Esa marca es lo que hace que la regla **no mire hacia atrás**: los
+30 wonder trades que ya había no la llevan, así que no se cobran. **Los wonder trades pasan a estar
+limitados**, que es lo único que hace que «te dan 1 wonder trade» signifique algo -antes eran gratis
+e ilimitados-; va como `limitarWonderTrades` en el JSON, y **si el fichero falta no se limita nada**.
+Ver §63.
+
 **Siguiente.** Sincronización, y probar en partida real los combates importantes, los iniciales y
 las tiendas.
 
@@ -679,6 +691,7 @@ Lo que NO está resuelto todavía y no debe darse por hecho (detalle en `docs/AR
 | Logros y penalizaciones | **HECHO Y VISTO EN LA APP** — motor, pantalla y 6 tests. Falta la lista real de logros, que la tiene que dar el jugador. Ver `ARCHITECTURE.md` §36 |
 | Contadores del juego (movimientos Z, huidas, shiny, entrenadores) | **HECHO Y VISTO EN LA APP** — se leen de `SAV7USUM.Records`; 28/200 huidas y 6/100 entrenadores reales. Ver `ARCHITECTURE.md` §38 |
 | Detectar pruebas, pegatinas y alto mando | **HECHO Y VISTO EN LA APP** — los 21 logros se cuentan solos y no queda un botón de marcar a mano. Las doce pruebas por su cristal Z, con la correspondencia sacada del storytext del cartucho. Ver `ARCHITECTURE.md` §43 |
+| Tiradas gratis y wonder trades por prueba | **HECHO Y VISTO EN LA APP** — crédito ganado de los logros y gastado del historial, con la marca `gratis`; los wonder trades pasan a estar limitados. Ver `ARCHITECTURE.md` §63 |
 | Ruleta del rol LUDÓPATA | **HECHA Y VISTA EN LA APP** — 16 caras, seis en la rueda, tiradas que se deben y se recomputan; escribe equipo, mochila y cajas por el fichero de partida. **Dos tiradas verificadas en la partida real.** Ver `ARCHITECTURE.md` §62 |
 | Roles | **HECHOS Y VERIFICADOS CONTRA LA ROM** — se eligen lo primero, multiplican los puntos, suben el nivel de todo lo que combate contra ti (entrenadores, Dominantes, Necrozma y legendarios) y añaden el Pokémon extra en 35 clases de combate importante. Falta probarlo jugando. Ver `ARCHITECTURE.md` §46, §47 y §48 |
 | Sincronización | **SIN EMPEZAR** |

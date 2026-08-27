@@ -86,6 +86,9 @@ public partial class App : Application
             sp.GetRequiredService<ISpeciesLookup>(), sp.GetRequiredService<IItemLookup>(),
             sp.GetRequiredService<IAbilityLookup>(),
             sp.GetRequiredService<ILogger<SaveRouletteWorld>>()));
+        collection.AddSingleton<ICreditCatalog>(_ =>
+            JsonCreditCatalog.Load(Path.Combine(paths.Data, "grants.json")));
+        collection.AddSingleton<CreditService>();
         collection.AddSingleton<RouletteService>();
         collection.AddSingleton<RouletteViewModel>();
         collection.AddSingleton<ShopViewModel>();

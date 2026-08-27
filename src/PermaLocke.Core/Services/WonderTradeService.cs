@@ -66,7 +66,15 @@ public sealed class WonderTradeService(
         return Generate(gift, source, number);
     }
 
-    public async Task<WonderTradeResult> TradeAsync(Run run, WonderTradeGift gift,
+    /// <param name="free">
+    /// True when a credit is paying for it, which is what marks the event as spent.
+    /// </param>
+    /// <remarks>
+    /// Whether a credit is <em>needed</em> is not decided here: this only records how it was paid.
+    /// The competition rule -- that a wonder trade needs one at all -- lives with the credits,
+    /// because it is a rule and not a fact about trading.
+    /// </remarks>
+    public async Task<WonderTradeResult> TradeAsync(Run run, WonderTradeGift gift, bool free = false,
         CancellationToken ct = default)
     {
         if (BaseStatTotalOf(gift.Species) == 0)
@@ -102,7 +110,7 @@ public sealed class WonderTradeService(
         };
 
         await pokemon.SaveAsync(entry, ct).ConfigureAwait(false);
-        await RecordAsync(run, offer, entry, ct).ConfigureAwait(false);
+        await RecordAsync(run, offer, entry, free, ct).ConfigureAwait(false);
 
         return new WonderTradeResult(true, offer, entry);
     }
@@ -169,7 +177,8 @@ public sealed class WonderTradeService(
         return updated;
     }
 
-    private Task RecordAsync(Run run, WonderTradeOffer offer, PokemonEntry entry, CancellationToken ct) =>
+    private Task RecordAsync(Run run, WonderTradeOffer offer, PokemonEntry entry, bool free,
+        CancellationToken ct) =>
         events.AppendAsync(new GameEvent
         {
             Id = Guid.NewGuid(),
@@ -187,6 +196,7 @@ public sealed class WonderTradeService(
             Data = new Dictionary<string, string>
             {
                 ["intercambio"] = offer.Number.ToString(),
+                ["gratis"] = free.ToString(),
                 ["entregado"] = offer.GivenSpecies.ToString(),
                 ["entregadoNombre"] = offer.GivenName,
                 ["entregadoTotal"] = offer.GivenBaseStatTotal.ToString(),

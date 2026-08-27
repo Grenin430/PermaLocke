@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "comentario": "Lo que da cada hito de la competicion: tiradas de gacha GRATIS y wonder trades. No son objetos ni puntos, son CREDITOS que se gastan en sus pantallas, asi que aqui solo se dice cuantos da cada hito y el resto lo hace el historial.",
+
+  "comentarioComoSeCuenta": "Igual que las tiradas de ruleta y los premios: lo GANADO sale de los logros -que se detectan solos contra el cartucho- y lo GASTADO sale del historial, de los eventos marcados como gratis. Disponible es la resta. No hay nada que marcar a mano y no hay un contador que pueda desincronizarse.",
+
+  "comentarioLimite": "limitarWonderTrades a true significa que un wonder trade EXIGE un credito: sin credito, el boton no deja. Es lo que convierte 'te dan 1 wonder trade' en algo que significa algo, porque antes eran gratis e ilimitados. Solo cuentan como gastados los intercambios marcados como gratis, o sea los hechos a partir de que esto existe: los 30 que ya habia se hicieron con las reglas viejas y no se cobran. Ponlo a false y los wonder trades vuelven a ser libres, quedando el numero como informacion.",
+  "limitarWonderTrades": true,
+
+  "comentarioBanners": "Los ids son los de Data/gacha.json: pocho, decente y bueno. En la lista de la competicion 'pocha' es pocho, 'decente' es decente y 'tocha' es bueno.",
+
+  "hitos": [
+    { "logro": "prueba-01", "nombre": "1ª prueba",  "gacha": { "pocho": 2 },              "wonderTrades": 1 },
+    { "logro": "prueba-02", "nombre": "2ª prueba",  "gacha": { "pocho": 2 },              "wonderTrades": 1 },
+    { "logro": "prueba-03", "nombre": "3ª prueba",  "gacha": { "pocho": 2 },              "wonderTrades": 1 },
+    { "logro": "prueba-04", "nombre": "4ª prueba",  "gacha": { "decente": 2 },            "wonderTrades": 1 },
+    { "logro": "prueba-05", "nombre": "5ª prueba",  "gacha": { "decente": 2 },            "wonderTrades": 1 },
+    { "logro": "prueba-06", "nombre": "6ª prueba",  "gacha": { "decente": 2 },            "wonderTrades": 1 },
+    { "logro": "prueba-07", "nombre": "7ª prueba",  "gacha": { "decente": 2 },            "wonderTrades": 1 },
+    { "logro": "prueba-08", "nombre": "8ª prueba",  "gacha": { "bueno": 1, "decente": 1 }, "wonderTrades": 1 },
+    { "logro": "prueba-09", "nombre": "9ª prueba",  "gacha": { "bueno": 1, "decente": 1 }, "wonderTrades": 1 },
+    { "logro": "prueba-10", "nombre": "10ª prueba", "gacha": { "bueno": 1, "decente": 1 }, "wonderTrades": 1 },
+    { "logro": "prueba-11", "nombre": "11ª prueba", "gacha": { "bueno": 1, "decente": 1 }, "wonderTrades": 1 },
+    { "logro": "prueba-12", "nombre": "12ª prueba", "gacha": { "bueno": 2 },              "wonderTrades": 1 },
+    { "logro": "alto-mando-campeon",  "nombre": "Liga",    "gacha": { "bueno": 3 },       "wonderTrades": 4 },
+    { "logro": "alto-mando-otra-vez", "nombre": "Rematch", "gacha": { "bueno": 3 },       "wonderTrades": 4 }
+  ]
+}

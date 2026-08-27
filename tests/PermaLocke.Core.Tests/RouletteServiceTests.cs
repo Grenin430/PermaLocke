@@ -197,12 +197,8 @@ public sealed class RouletteServiceTests
             new Achievements(Milestones()), new PointsService(log, clock), log, clock,
             records ?? new Records(), new FixedRole(FixedRole.Normal));
 
-        var gacha = new GachaService(new EmptyGacha(), new NoSpecies(), new PointsService(log, clock),
-            log, team, clock);
-
         var service = new RouletteService(catalog ?? new Catalog(), achievements, seen,
-            new Roles(roulette), gacha, new NoDelivery(),
-            new PokemonIdentityService(team, log, clock), team, log, clock);
+            new Roles(roulette), team, log, clock);
 
         return (service, log, seen, team);
     }

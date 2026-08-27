@@ -33,7 +33,7 @@ public sealed partial class PortalViewModel(GachaTier tier, int position) : Obse
 }
 
 /// <summary>One banner as the screen shows it, with its odds spelled out.</summary>
-public sealed class BannerViewModel(GachaBanner banner, string odds)
+public sealed partial class BannerViewModel(GachaBanner banner, string odds) : ObservableObject
 {
     public GachaBanner Banner { get; } = banner;
 
@@ -41,10 +41,25 @@ public sealed class BannerViewModel(GachaBanner banner, string odds)
 
     public string Description => Banner.Description;
 
-    public string Cost => $"{Banner.Cost} puntos";
-
     /// <summary>The odds, written out. Hiding them would be the one thing a gacha must not do.</summary>
     public string Odds { get; } = odds;
+
+    /// <summary>Free rolls waiting on this banner, from the trials and from the wheel.</summary>
+    [ObservableProperty]
+    private int _free;
+
+    /// <summary>What the card says it costs: the points, or that it is on the house.</summary>
+    public string Cost => Free > 0
+        ? $"{Free} tirada{(Free == 1 ? string.Empty : "s")} gratis"
+        : $"{Banner.Cost} puntos";
+
+    public bool HasFree => Free > 0;
+
+    partial void OnFreeChanged(int value)
+    {
+        OnPropertyChanged(nameof(Cost));
+        OnPropertyChanged(nameof(HasFree));
+    }
 }
 
 /// <summary>
@@ -61,12 +76,13 @@ public sealed partial class GachaViewModel : SectionViewModel
     private readonly IPointsService _points;
     private readonly IPokemonDelivery _delivery;
     private readonly PokemonIdentityService _identity;
+    private readonly CreditService _credits;
     private readonly PokemonSpriteService _sprites;
     private readonly ILogger<GachaViewModel> _logger;
 
     public GachaViewModel(GachaService gacha, IRunContext runContext, IPointsService points,
-        IPokemonDelivery delivery, PokemonIdentityService identity, PokemonSpriteService sprites,
-        ILogger<GachaViewModel> logger)
+        IPokemonDelivery delivery, PokemonIdentityService identity, CreditService credits,
+        PokemonSpriteService sprites, ILogger<GachaViewModel> logger)
         : base("GACHA", "Gasta puntos y llévate un Pokémon al PC de la partida")
     {
         _gacha = gacha;
@@ -74,6 +90,7 @@ public sealed partial class GachaViewModel : SectionViewModel
         _points = points;
         _delivery = delivery;
         _identity = identity;
+        _credits = credits;
         _sprites = sprites;
         _logger = logger;
     }
@@ -212,6 +229,7 @@ public sealed partial class GachaViewModel : SectionViewModel
         if (_runContext.Current is { } run)
         {
             Balance = await _points.GetBalanceAsync(run.Id);
+            await RefreshCreditsAsync(run);
         }
 
         // Los iconos salen de la ROM del propio jugador la primera vez. Si no se puede, la
@@ -225,6 +243,31 @@ public sealed partial class GachaViewModel : SectionViewModel
             : string.Empty;
 
         RollCommand.NotifyCanExecuteChanged();
+    }
+
+    /// <summary>
+    /// Puts the free rolls each banner has onto its card.
+    /// </summary>
+    /// <remarks>
+    /// Asked for again after every roll rather than decremented here. The credit is earned minus
+    /// spent, and both come from things this screen does not own; a copy kept locally would be one
+    /// more number able to disagree with the history.
+    /// </remarks>
+    private async Task RefreshCreditsAsync(Run run)
+    {
+        try
+        {
+            var available = await _credits.AvailableAsync(run);
+
+            foreach (var banner in Banners)
+            {
+                banner.Free = available.RollsOn(banner.Banner.Id);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Fallo al contar las tiradas gratis");
+        }
     }
 
     // No se exige SelectedBanner: el ListBox escribe null en el view model mientras se
@@ -255,7 +298,10 @@ public sealed partial class GachaViewModel : SectionViewModel
 
         try
         {
-            var result = await _gacha.RollAsync(run, selected.Banner.Id);
+            // Si hay credito, la tirada es gratis y el evento queda marcado como tal: el credito
+            // disponible es lo ganado menos lo marcado, asi que no hay contador que llevar.
+            var free = selected.Free > 0;
+            var result = await _gacha.RollAsync(run, selected.Banner.Id, free);
 
             Balance = result.Balance;
 
@@ -294,8 +340,14 @@ public sealed partial class GachaViewModel : SectionViewModel
                     delivered.Box, delivered.Slot);
             }
 
-            _logger.LogInformation("Gacha {Banner}: {Species} Nv.{Level} ({Tier})",
-                selected.Banner.Id, pull.SpeciesName, pull.Level, pull.TierId);
+            if (free)
+            {
+                Status = $"Tirada gratis. {Status}";
+            }
+
+            _logger.LogInformation("Gacha {Banner}{Free}: {Species} Nv.{Level} ({Tier})",
+                selected.Banner.Id, free ? " (gratis)" : string.Empty,
+                pull.SpeciesName, pull.Level, pull.TierId);
         }
         catch (Exception ex)
         {
@@ -305,6 +357,12 @@ public sealed partial class GachaViewModel : SectionViewModel
         finally
         {
             IsRolling = false;
+
+            if (_runContext.Current is { } current)
+            {
+                await RefreshCreditsAsync(current);
+            }
+
             RollCommand.NotifyCanExecuteChanged();
         }
     }

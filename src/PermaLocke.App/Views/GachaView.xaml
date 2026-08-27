@@ -654,11 +654,33 @@
                     <DataTemplate>
                         <StackPanel>
                             <DockPanel>
-                                <Border DockPanel.Dock="Right" Style="{StaticResource Chip}"
-                                        Background="{StaticResource BackgroundBrush}"
-                                        BorderBrush="{StaticResource AccentDimBrush}">
-                                    <TextBlock Text="{Binding Cost}" Style="{StaticResource ChipText}"
-                                               Foreground="{StaticResource AccentBrightBrush}" />
+                                <!-- La chapa dice lo que cuesta, y cuando hay tiradas gratis dice
+                                     eso y se pone verde: es el aviso de que ese banner no cobra. -->
+                                <Border DockPanel.Dock="Right">
+                                    <Border.Style>
+                                        <Style TargetType="Border" BasedOn="{StaticResource Chip}">
+                                            <Setter Property="Background" Value="{StaticResource BackgroundBrush}" />
+                                            <Setter Property="BorderBrush" Value="{StaticResource AccentDimBrush}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HasFree}" Value="True">
+                                                    <Setter Property="Background" Value="{StaticResource SuccessDeepBrush}" />
+                                                    <Setter Property="BorderBrush" Value="{StaticResource SuccessBrush}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBlock Text="{Binding Cost}">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock" BasedOn="{StaticResource ChipText}">
+                                                <Setter Property="Foreground" Value="{StaticResource AccentBrightBrush}" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding HasFree}" Value="True">
+                                                        <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
                                 </Border>
                                 <TextBlock Text="{Binding Name}" Style="{StaticResource PanelHeading}"
                                            Margin="0" VerticalAlignment="Center" />
@@ -675,8 +697,21 @@
             <Border Grid.Row="2" Style="{StaticResource Inset}" Padding="14,12" Margin="0,12,0,0">
                 <StackPanel>
                     <DockPanel>
-                        <Button DockPanel.Dock="Left" Content="TIRAR" Style="{StaticResource PrimaryButton}"
-                                Command="{Binding RollCommand}" MinWidth="180" Padding="16,11" FontSize="14" />
+                        <!-- Dice GRATIS cuando el banner elegido tiene credito, para que no haya
+                             que fijarse en la chapa de la tarjeta antes de pulsar. -->
+                        <Button DockPanel.Dock="Left"
+                                Command="{Binding RollCommand}" MinWidth="180" Padding="16,11" FontSize="14">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
+                                    <Setter Property="Content" Value="TIRAR" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding SelectedBanner.HasFree}" Value="True">
+                                            <Setter Property="Content" Value="TIRAR GRATIS" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
 
                         <!-- QUÉ ES CADA TIER, a la vista y no en un tooltip: es lo que hay que
                              mirar para decidir qué banner tirar. El rango es el TOTAL de

@@ -103,8 +103,8 @@ public sealed class RunServiceTests : IDisposable
             "El mod LayeredFS se regeneró para el nuevo rol.");
 
         var reloaded = await new JsonRunRepository(_root).GetAsync(created.Id);
-        var migration = Assert.Single((await _events.GetAllAsync(created.Id))
-            .Where(e => e.Type == GameEventType.RoleChanged));
+        var migration = Assert.Single(await _events.GetAllAsync(created.Id),
+            e => e.Type == GameEventType.RoleChanged);
 
         Assert.Equal("ludopata", changed.RoleId);
         Assert.Equal("ludopata", reloaded!.RoleId);

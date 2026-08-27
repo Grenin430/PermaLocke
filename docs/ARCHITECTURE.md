@@ -4868,3 +4868,62 @@ Ocurrieron desde una **copia aislada** de la aplicación levantada para ver la p
 lección que conviene no repetir: una copia aislada tiene su propia carpeta de run, pero
 `PlayerSave` localiza el save de Azahar, que es **el de verdad**. Aislar la run no aísla la partida.
 La copia se ha borrado por eso.
+
+---
+
+## 63. Tiradas gratis y wonder trades: crédito, no regalos sueltos (2026-08-27)
+
+Dos peticiones que resultaron ser la misma cosa.
+
+**Una:** la ruleta, cuando salía una cara de gacha, tiraba en el acto y ponía el nombre del Pokémon
+en una línea de texto. El jugador quería que en vez de eso apareciera **«1 tirada gratis» en el
+banner que toca**, y que se tirase allí, con su rueda y su sprite. Tiene toda la razón: una tirada
+tiene que ocurrir donde ocurren las tiradas.
+
+**Dos:** superar cada prueba pasa a dar tiradas de gacha y wonder trades, según la tabla de la
+competición: dos pochas en las tres primeras pruebas, dos decentes en las cuatro siguientes, una
+tocha y una decente en las cuatro siguientes, dos tochas en la duodécima, y tres tochas y cuatro
+wonder trades por la liga y otros tantos por el rematch.
+
+Las dos son **crédito**: algo ganado que se guarda y se gasta en su pantalla.
+
+### Ni un contador guardado
+
+Misma forma que los premios del §60 y las tiradas de ruleta del §62, y por la misma razón:
+
+- **Ganado** = los logros desbloqueados, según `Data/grants.json`, más las caras de gacha que haya
+  sacado la ruleta. Estas últimas se leen **de los eventos de tirada**, no se apuntan al vuelo: el
+  evento guarda qué cara salió, y la cara sabe a qué banners paga, así que el crédito y la
+  auditoría son el mismo hecho.
+- **Gastado** = los eventos marcados `gratis`.
+- **Disponible** = la resta, nunca por debajo de cero.
+
+Nada se almacena, así que nada puede desincronizarse.
+
+### La marca `gratis` es lo que hace que esto funcione
+
+`GachaRoll` y `WonderTrade` guardan ahora si se pagaron con crédito. Sin esa marca **todas** las
+tiradas del historial contarían como gastadas, y una run con ciento cincuenta tiradas debería
+créditos que nunca tuvo.
+
+Es también lo que hace que la regla no mire hacia atrás: esta run llevaba **treinta wonder trades**
+hechos cuando los wonder trades eran gratis e ilimitados. Ninguno lleva la marca, así que ninguno se
+cobra. Una regla que alcanza al pasado no es una regla, es un castigo.
+
+### Los wonder trades pasan a estar limitados, y eso es una decisión
+
+Hasta ahora no costaban nada y no había tope. Con eso, «te dan 1 wonder trade» no significaría nada,
+así que **exigen crédito**: sin crédito, el botón no deja y dice de dónde salen. Es la lectura que
+convierte la tabla de la competición en una tabla y no en decoración.
+
+Va en `Data/grants.json` como `limitarWonderTrades`, porque es una regla de la competición y no un
+hecho del intercambio. A false vuelven a ser libres y el número se queda como información. Y **si el
+fichero falta, no se limita nada**: un fichero de configuración que desaparece no puede cerrar una
+función que ya existía.
+
+### En pantalla
+
+La tarjeta del banner cambia «300 puntos» por «**2 tiradas gratis**» y se pone verde; el botón dice
+**TIRAR GRATIS**. El panel del wonder trade lleva una chapa con los que quedan. Los dos números se
+vuelven a pedir después de cada uso en lugar de descontarse en la vista: una copia local sería un
+número más capaz de discrepar del historial.

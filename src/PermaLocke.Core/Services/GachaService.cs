@@ -149,13 +149,13 @@ public sealed class GachaService(
         };
 
         await pokemon.SaveAsync(entry, ct).ConfigureAwait(false);
-        await RecordAsync(run, banner, pull, entry, ct).ConfigureAwait(false);
+        await RecordAsync(run, banner, pull, entry, free, ct).ConfigureAwait(false);
 
         return new GachaRollResult(true, spent.NewBalance, pull, entry);
     }
 
     private Task RecordAsync(Run run, GachaBanner banner, GachaPull pull, PokemonEntry entry,
-        CancellationToken ct) =>
+        bool free, CancellationToken ct) =>
         events.AppendAsync(new GameEvent
         {
             Id = Guid.NewGuid(),
@@ -172,6 +172,11 @@ public sealed class GachaService(
             Data = new Dictionary<string, string>
             {
                 ["banner"] = banner.Id,
+
+                // Lo que convierte una tirada en gastada de las gratis. El credito disponible es
+                // lo ganado menos los eventos con esta marca, asi que sin ella una tirada gratis
+                // no se descontaria de nada.
+                ["gratis"] = free.ToString(),
                 ["rareza"] = pull.TierId,
                 ["tirada"] = pull.Number.ToString(),
                 ["especie"] = pull.Species.ToString(),

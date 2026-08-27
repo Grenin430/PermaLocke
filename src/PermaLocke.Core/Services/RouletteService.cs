@@ -30,9 +30,6 @@ public sealed class RouletteService(
     AchievementService achievements,
     IRouletteWorldPort world,
     IRunRoles roles,
-    GachaService gacha,
-    IPokemonDelivery delivery,
-    PokemonIdentityService identities,
     IPokemonRepository pokemon,
     IEventStore events,
     IClock clock)
@@ -150,8 +147,11 @@ public sealed class RouletteService(
                 lines.Add($"{wheel.Winner.Amount:+#;-#;0} puntos.");
                 break;
 
+            // La ruleta ya no tira por ti: te da el credito y lo gastas en la pantalla del gacha,
+            // con su rueda y su sprite. Una tirada tiene que ocurrir donde ocurren las tiradas, no
+            // como una linea de texto en otra pantalla.
             case RouletteEffect.Gacha:
-                lines.AddRange(await RollAsync(run, wheel.Winner, ct).ConfigureAwait(false));
+                lines.Add(Credited(wheel.Winner));
                 break;
 
             default:
@@ -289,41 +289,12 @@ public sealed class RouletteService(
         return drawn;
     }
 
-    /// <summary>
-    /// The free gacha rolls a face promises, one per banner named.
-    /// </summary>
-    /// <remarks>
-    /// The real gacha, not a copy of it: same seed stream, same roll numbers, same delivery into
-    /// the save and the same <c>GachaRoll</c> event, so a roll the wheel gave is auditable exactly
-    /// like one the player bought. The only difference is that it is not charged.
-    /// </remarks>
-    private async Task<List<string>> RollAsync(Run run, RouletteFace face, CancellationToken ct)
-    {
-        var lines = new List<string>();
-
-        foreach (var bannerId in face.BannerIds)
-        {
-            var rolled = await gacha.RollAsync(run, bannerId, free: true, ct).ConfigureAwait(false);
-
-            if (!rolled.Success || rolled.Pull is not { } pull)
-            {
-                lines.Add($"El banner «{bannerId}» no ha podido tirar: {rolled.Error}");
-                continue;
-            }
-
-            var delivered = await delivery.DeliverAsync(pull, run, ct).ConfigureAwait(false);
-
-            if (delivered.Delivered && rolled.Pokemon is { } entry)
-            {
-                await identities.RememberDeliveryAsync(run, entry, delivered.Pid,
-                    delivered.Box, delivered.Slot, ct).ConfigureAwait(false);
-            }
-
-            lines.Add($"{pull.SpeciesName} Nv.{pull.Level} de «{bannerId}». {delivered.Message}");
-        }
-
-        return lines;
-    }
+    /// <summary>What a gacha face leaves behind: credit, not a Pokémon.</summary>
+    private static string Credited(RouletteFace face) =>
+        face.BannerIds.Count == 1
+            ? $"Una tirada gratis en «{face.BannerIds[0]}». Gástala en la pantalla de GACHA."
+            : $"Tiradas gratis en {string.Join(", ", face.BannerIds.Select(b => $"«{b}»"))}. "
+              + "Gástalas en la pantalla de GACHA.";
 
     /// <summary>
     /// Writes the deaths the wheel caused into the run itself.

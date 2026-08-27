@@ -304,6 +304,17 @@
                             <TextBlock Style="{StaticResource StatLabel}" Text="WONDER TRADE"
                                        Foreground="{StaticResource DangerBrush}"
                                        VerticalAlignment="Center" />
+
+                            <!-- Cuantos quedan. Los dan las pruebas, y sin ninguno el intercambio
+                                 no deja: es lo que hace que la recompensa signifique algo. -->
+                            <Border Style="{StaticResource Chip}" Margin="10,0,0,0"
+                                    VerticalAlignment="Center"
+                                    Visibility="{Binding Trade.IsLimited, Converter={StaticResource BoolToVisibility}}">
+                                <TextBlock Style="{StaticResource ChipText}">
+                                    <Run Text="QUEDAN" />
+                                    <Run Text="{Binding Trade.Left, Mode=OneWay}" FontWeight="Bold" />
+                                </TextBlock>
+                            </Border>
                         </StackPanel>
 
                         <TextBlock Style="{StaticResource Body}" FontSize="12" Margin="0,8,0,0"
