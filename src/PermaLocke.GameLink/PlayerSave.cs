@@ -42,6 +42,39 @@ public sealed class PlayerSave(AzaharInstallation installation, AzaharRpcClient 
         }
     }
 
+    /// <summary>
+    /// The title's save-data folder, <c>…/001b5100/data</c>, or null when there is none.
+    /// </summary>
+    /// <remarks>
+    /// Not the same question as <see cref="Find"/>, and the difference is the whole reason this
+    /// exists. Azahar keeps the save as an archive: a folder holding <c>main</c>, plus a sibling
+    /// <c>&lt;name&gt;.metadata</c> recording that the archive is <b>formatted</b>. A save can
+    /// therefore be missing while the archive still claims to exist, and that combination is what
+    /// the game reports as corrupted data. Deleting a partida means clearing both, so whatever
+    /// does the deleting has to be able to see the folder even when there is no <c>main</c> in it.
+    /// </remarks>
+    public string? FindArchive()
+    {
+        var root = Path.Combine(installation.Locate(appDirectory).UserDirectory, SavePattern);
+
+        if (!Directory.Exists(root))
+        {
+            return null;
+        }
+
+        try
+        {
+            return Directory
+                .EnumerateDirectories(root, TitleFolder, SearchOption.AllDirectories)
+                .Select(title => Path.Combine(title, "data"))
+                .FirstOrDefault(Directory.Exists);
+        }
+        catch (IOException)
+        {
+            return null;
+        }
+    }
+
     /// <summary>True when the game is loaded in the emulator.</summary>
     public bool IsGameLoaded()
     {

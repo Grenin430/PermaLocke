@@ -5178,3 +5178,35 @@ Lo que queda es la línea del log y la copia de la partida con su fecha.
 La primera enumera lo que se pierde y lo que no —la randomización instalada sigue puesta—. La segunda
 es una frase. Un aviso largo se lee en diagonal; una pregunta seca detrás, no. Y el botón va en rojo,
 que es parte del aviso: llegar aquí por costumbre no debería ser fácil.
+
+### El borrado dejó la partida «dañada» (2026-08-28)
+
+El §67 se estrenó fallando, y el fallo tiene una forma que conviene recordar: **borró de menos y eso
+fue peor que borrar de más**.
+
+Azahar no guarda la partida como un fichero suelto: guarda un **archivo de datos**, que es la carpeta
+`…/001b5100/data/00000001/` con `main` dentro **y un hermano `00000001.metadata`** al lado. Esos 16
+bytes -`00 00 04 00`, y después tres unos- son el `ArchiveFormatInfo`: tamaño reservado, y cuántos
+directorios y ficheros declara. Es como el emulador anota que ese archivo **está formateado**.
+
+`SaveEraser` borró los ficheros de dentro de la carpeta y dejó la metadata, porque vive un nivel más
+arriba. Resultado: un archivo que dice «aquí hay una partida» sobre una carpeta vacía. El juego lo
+abre, lo cree, busca `main`, no está — y eso es exactamente **«los datos de guardado están dañados»**.
+Y es el peor de los tres estados posibles, porque desde ahí el jugador **tampoco puede empezar una
+partida nueva**: no es «no se borró del todo», es un estado del que no se sale jugando.
+
+La lección general, que ya había aparecido en el §53 y en el §55 con otra ropa: **una estructura se
+borra entera o no se toca**. Media estructura no es una versión suave de la operación, es un estado
+que nadie diseñó y que nadie sabe leer. Y la concreta: cuando algo se guarda como «archivo» -carpeta
+más metadatos de formato- el objeto real no es el fichero, es el archivo.
+
+Ahora `PlayerSave.FindArchive()` localiza la carpeta **aunque no haya `main` dentro**, que es
+justamente el estado roto, y el borrador se lleva las tres cosas: ficheros, metadata y carpeta. Con
+eso el juego ve un archivo sin formatear, que es lo mismo que ve una consola nueva, y formatea al
+guardar. La metadata **también se copia** antes de borrarla: sin ella la copia no se podría devolver
+a su sitio, porque el juego no reconocería un archivo que nadie declara formateado.
+
+Cuatro pruebas, y la que importa es la de la regresión: después de borrar, `00000001.metadata` no
+existe. Hay otra que parte del estado roto -archivo sin `main`- y exige que el borrador sepa
+terminar el trabajo, porque quien deja a alguien en un estado inconsistente tiene que saber sacarlo
+de él.
