@@ -15,12 +15,28 @@ public sealed record RewardItem(int Id, string Name, int Amount);
 /// Every achievement that has to be unlocked. All of them, not any of them: a reward for clearing
 /// the twelve trials is not a reward for clearing one.
 /// </param>
+/// <param name="Held">
+/// Items the player has to be carrying.
+/// </param>
+/// <remarks>
+/// The second kind of condition, and it exists for the things the game marks by <em>giving</em>
+/// rather than by counting -- the same trick §40 used to anchor the trials on their Z-Crystal.
+/// "The first time somebody hands you Poké Balls" leaves no record anywhere, but it leaves Poké
+/// Balls in the bag, and that can be seen. Only for what the game does not take back.
+/// </remarks>
 public sealed record Reward(
     string Id,
     string Name,
     string Description,
     IReadOnlyList<string> Achievements,
-    IReadOnlyList<RewardItem> Items);
+    IReadOnlyList<RewardItem> Items,
+    IReadOnlyList<int>? Held = null)
+{
+    public IReadOnlyList<int> HeldItems { get; } = Held ?? [];
+
+    /// <summary>How many conditions there are in total, of both kinds.</summary>
+    public int Conditions => Achievements.Count + HeldItems.Count;
+}
 
 /// <summary>The rewards, read from configuration rather than compiled in.</summary>
 /// <remarks>

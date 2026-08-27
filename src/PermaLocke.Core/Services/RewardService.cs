@@ -30,6 +30,7 @@ namespace PermaLocke.Core.Services;
 public sealed class RewardService(
     IRewardCatalog catalog,
     AchievementService achievements,
+    IGameRecords records,
     IItemDelivery delivery,
     IItemLookup items,
     IEventStore events,
@@ -50,12 +51,14 @@ public sealed class RewardService(
         var unlocked = await UnlockedAsync(run, ct).ConfigureAwait(false);
         var claimed = await ClaimedAsync(run.Id, ct).ConfigureAwait(false);
 
+        var held = await HeldAsync(ct).ConfigureAwait(false);
+
         return
         [
             .. catalog.All.Select(reward => new RewardStatus(
                 reward,
-                reward.Achievements.Count(unlocked.Contains),
-                reward.Achievements.Count,
+                reward.Achievements.Count(unlocked.Contains) + reward.HeldItems.Count(held.Contains),
+                reward.Conditions,
                 claimed.Contains(reward.Id)))
         ];
     }
@@ -78,12 +81,16 @@ public sealed class RewardService(
         }
 
         var unlocked = await UnlockedAsync(run, ct).ConfigureAwait(false);
-        var missing = reward.Achievements.Where(id => !unlocked.Contains(id)).ToList();
+        var held = await HeldAsync(ct).ConfigureAwait(false);
+
+        var missing = reward.Achievements.Where(id => !unlocked.Contains(id))
+            .Concat(reward.HeldItems.Where(id => !held.Contains(id)).Select(id => items.GetName(id)))
+            .ToList();
 
         if (missing.Count > 0)
         {
             return new RewardResult(RewardOutcome.NotEarned, reward, missing, [],
-                $"Todavía no: te faltan {missing.Count} de {reward.Achievements.Count}.");
+                $"Todavía no: te faltan {missing.Count} de {reward.Conditions}.");
         }
 
         // El nombre se comprueba contra la tabla del cartucho ANTES de escribir. Un id copiado de
@@ -157,6 +164,27 @@ public sealed class RewardService(
             .Select(e => e.Data.TryGetValue("premio", out var id) ? id : null)
             .OfType<string>()
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// What the player is carrying, from the saved game.
+    /// </summary>
+    /// <remarks>
+    /// Empty when the save cannot be read, which makes an item condition simply not met rather
+    /// than met by accident: a reward that hands itself over because a file was missing would be
+    /// the worst way to fail.
+    /// </remarks>
+    private async Task<IReadOnlySet<int>> HeldAsync(CancellationToken ct)
+    {
+        try
+        {
+            var snapshot = await records.ReadAsync(ct).ConfigureAwait(false);
+            return snapshot.Available && snapshot.Items is { } held ? held : new HashSet<int>();
+        }
+        catch (Exception)
+        {
+            return new HashSet<int>();
+        }
     }
 
     private bool Matches(RewardItem item) =>

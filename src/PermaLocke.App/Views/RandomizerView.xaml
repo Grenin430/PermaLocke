@@ -2,6 +2,10 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+    </UserControl.Resources>
+
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel Margin="0,0,10,0">
 
@@ -41,6 +45,45 @@
                     </StackPanel>
                 </Border>
             </Grid>
+
+            <!-- Los tres iniciales, con nombre. En un random los tres huevos son idénticos y la
+                 única forma de saber qué te toca es cogerlo y recargar si no gusta; el juego no
+                 los esconde a propósito, simplemente no los dice. Se leen del mod, no del informe
+                 de la última generación: lo que importa es lo que el juego va a ofrecer. -->
+            <Border Style="{StaticResource Inset}" Padding="18,16" Margin="0,12,0,0"
+                    Visibility="{Binding HasStarters, Converter={StaticResource BoolToVisibility}}">
+                <StackPanel>
+                    <TextBlock Text="INICIALES" Style="{StaticResource StatLabel}" />
+
+                    <ItemsControl ItemsSource="{Binding Starters}" Margin="0,12,0,0">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="{StaticResource SurfaceBrush}"
+                                        BorderBrush="{StaticResource BorderStrongBrush}" BorderThickness="1"
+                                        CornerRadius="{StaticResource RadiusMedium}"
+                                        Padding="16,12" Margin="0,0,10,10" MinWidth="150">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Slot, StringFormat=OPCIÓN {0}}"
+                                                   Style="{StaticResource StatLabel}" FontSize="10" />
+                                        <Image Source="{Binding Sprite}" Width="64" Height="64"
+                                               Margin="0,6,0,0" HorizontalAlignment="Center"
+                                               RenderOptions.BitmapScalingMode="NearestNeighbor" />
+                                        <TextBlock Text="{Binding Name}" Style="{StaticResource CardTitle}"
+                                                   HorizontalAlignment="Center" Margin="0,4,0,0" />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <TextBlock Text="{Binding StartersSource}" Style="{StaticResource Faint}" />
+                </StackPanel>
+            </Border>
 
             <!-- Generar e instalar son dos pasos a propósito: instalar cambia la partida. -->
             <Border Style="{StaticResource Inset}" Padding="18,16" Margin="0,12,0,0">

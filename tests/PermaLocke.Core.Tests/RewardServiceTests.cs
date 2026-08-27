@@ -54,6 +54,13 @@ public sealed class RewardServiceTests
                 itemsHeld.ToHashSet(), new Dictionary<int, int>()));
     }
 
+    /// <summary>Counters that cannot be read, the way a missing or locked save behaves.</summary>
+    private sealed class Blind : IGameRecords
+    {
+        public Task<GameRecordSnapshot> ReadAsync(CancellationToken ct = default) =>
+            Task.FromResult(GameRecordSnapshot.Unavailable("no hay partida", DateTimeOffset.UnixEpoch));
+    }
+
     /// <summary>Stands in for the bag. Remembers what it was asked to write, and can refuse.</summary>
     private sealed class Bag(params int[] refuse) : IItemDelivery
     {
@@ -88,6 +95,8 @@ public sealed class RewardServiceTests
     {
         public string GetName(int itemId) => itemId switch
         {
+            3 => "Super Ball",
+            4 => "Poké Ball",
             25 => "Hiperpoción",
             27 => "Cura Total",
             _ => $"Objeto {itemId}"
@@ -98,6 +107,18 @@ public sealed class RewardServiceTests
         "doce-pruebas", "Premio de las doce pruebas", "Por superar las doce pruebas.",
         ["prueba-01", "prueba-02"],
         [new RewardItem(25, "Hiperpoción", 12), new RewardItem(27, "Cura Total", 12)]);
+
+    /// <summary>
+    /// A reward earned by <em>carrying</em> something instead of by an achievement.
+    /// </summary>
+    /// <remarks>
+    /// "The first time somebody hands you Poké Balls" moves no counter and lights no flag, but it
+    /// leaves Poké Balls in the bag. Same anchor as the trials on their Z-Crystal (§40), and it only
+    /// works because the game never takes these back.
+    /// </remarks>
+    private static readonly Reward FirstBalls = new(
+        "primeras-balls", "Refuerzo de Poké Balls", "Diez Super Balls de propina.",
+        [], [new RewardItem(3, "Super Ball", 10)], [4]);
 
     /// <summary>Two trials, each anchored to the Z-crystal it hands over, as the real ones are.</summary>
     private static Achievement[] Trials() =>
@@ -118,7 +139,7 @@ public sealed class RewardServiceTests
     };
 
     private static (RewardService Service, Events Log, Bag Bag) Build(
-        Records? records = null, Bag? bag = null, Reward? reward = null)
+        IGameRecords? records = null, Bag? bag = null, Reward? reward = null)
     {
         var log = new Events();
         var clock = new FixedClock();
@@ -128,8 +149,8 @@ public sealed class RewardServiceTests
             new Achievements(Trials()), new PointsService(log, clock), log, clock,
             records ?? new Records(), new FixedRole(FixedRole.Normal));
 
-        return (new RewardService(new Catalog(reward ?? TwelveTrials), achievements, basket,
-            new Items(), log, clock), log, basket);
+        return (new RewardService(new Catalog(reward ?? TwelveTrials), achievements,
+            records ?? new Records(), basket, new Items(), log, clock), log, basket);
     }
 
     [Fact]
@@ -250,6 +271,45 @@ public sealed class RewardServiceTests
 
         Assert.True(status.Claimed);
         Assert.False(status.CanClaim);
+    }
+
+    [Fact]
+    public async Task Carrying_the_item_is_enough_to_earn_it()
+    {
+        var (service, log, bag) = Build(new Records(4), reward: FirstBalls);
+
+        var result = await service.ClaimAsync(TheRun(), "primeras-balls");
+
+        Assert.Equal(RewardOutcome.Delivered, result.Outcome);
+        Assert.Equal((3, 10), Assert.Single(bag.Given));
+        Assert.Contains(log.Appended, e => e.Type == GameEventType.RewardClaimed);
+    }
+
+    [Fact]
+    public async Task Without_the_item_nothing_is_handed_over()
+    {
+        var (service, log, bag) = Build(new Records(807, 813), reward: FirstBalls);
+
+        var result = await service.ClaimAsync(TheRun(), "primeras-balls");
+
+        Assert.Equal(RewardOutcome.NotEarned, result.Outcome);
+        Assert.Equal("Poké Ball", Assert.Single(result.Missing));
+        Assert.Empty(bag.Given);
+        Assert.DoesNotContain(log.Appended, e => e.Type == GameEventType.RewardClaimed);
+    }
+
+    /// <summary>
+    /// A save that cannot be read leaves the condition unmet. It is the direction that matters: a
+    /// prize that hands itself over because a file was missing is the worst way to fail.
+    /// </summary>
+    [Fact]
+    public async Task An_unreadable_save_does_not_earn_it()
+    {
+        var (service, _, bag) = Build(new Blind(), reward: FirstBalls);
+
+        Assert.Equal(RewardOutcome.NotEarned,
+            (await service.ClaimAsync(TheRun(), "primeras-balls")).Outcome);
+        Assert.Empty(bag.Given);
     }
 
     [Fact]

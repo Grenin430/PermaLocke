@@ -60,7 +60,11 @@ public sealed class JsonRewardCatalog(IReadOnlyList<Reward> all) : IRewardCatalo
                 item.Amount))
             .ToList() ?? [];
 
-        if (achievements.Count == 0 || items.Count == 0)
+        var held = entry.Held?.Where(id => id > 0).ToList() ?? [];
+
+        // Hace falta ALGO que ganar y algo que dar. Un premio sin condicion se cobraria el primer
+        // dia, y uno sin objetos seria un boton que no entrega nada.
+        if ((achievements.Count == 0 && held.Count == 0) || items.Count == 0)
         {
             return null;
         }
@@ -70,7 +74,8 @@ public sealed class JsonRewardCatalog(IReadOnlyList<Reward> all) : IRewardCatalo
             string.IsNullOrWhiteSpace(entry.Name) ? entry.Id : entry.Name,
             entry.Description ?? string.Empty,
             achievements,
-            items);
+            items,
+            held);
     }
 
     private sealed record RewardFile(
@@ -81,6 +86,7 @@ public sealed class JsonRewardCatalog(IReadOnlyList<Reward> all) : IRewardCatalo
         [property: JsonPropertyName("name")] string? Name,
         [property: JsonPropertyName("description")] string? Description,
         [property: JsonPropertyName("achievements")] IReadOnlyList<string>? Achievements,
+        [property: JsonPropertyName("objetosEnMochila")] IReadOnlyList<int>? Held,
         [property: JsonPropertyName("items")] IReadOnlyList<RewardItemEntry>? Items);
 
     private sealed record RewardItemEntry(

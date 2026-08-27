@@ -7,32 +7,35 @@ obj/
 # --- Material que NO se redistribuye -----------------------------------------
 # Locke/ es una instalación ajena (BxnnyLocke) con una partida del usuario. Es de
 # solo lectura y material de referencia: no es nuestro y no se publica.
-Locke/
+/Locke/
 
 # La ROM es propiedad de Nintendo. Cada jugador aporta la suya; PermaLocke nunca
 # la modifica ni la distribuye.
-ROM/
+/ROM/
+# Anclado a la raiz con la barra inicial: sin ella, "ROM/" tambien casaba con
+# src/PermaLocke.Randomizer/Rom/, y cinco ficheros de codigo llevaban desde
+# entonces fuera del repositorio. Lo mismo vale para el resto de esta lista.
 
 # Los emuladores, incluido el fork propio, se distribuyen desde su repositorio
 # con su fuente, no metidos aquí.
-Azahar/
-Nuevo_azahar/
+/Azahar/
+/Nuevo_azahar/
 
 
 # --- Generado ----------------------------------------------------------------
 # Mods de LayeredFS: se regeneran desde la ROM y la seed, y pesan cientos de MB.
-Randomized/
+/Randomized/
 
 # Partidas, eventos y copias de seguridad de memoria: datos del jugador.
-Saves/
+/Saves/
 
-Logs/
+/Logs/
 # El fork de Azahar que se reparte con la app: 100 MB de binarios que se reconstruyen desde
 # github.com/Grenin430/azahar. Solo se versiona su LEEME, que dice de dónde salen y bajo qué
 # licencia se distribuyen.
-Emulator/*
-!Emulator/LEEME.md
+/Emulator/*
+!/Emulator/LEEME.md
 
 # Los sprites de Pokémon son de Nintendo. Se extraen de la ROM que cada jugador ya tiene
 # (PermaLocke.RomTool sprites) y nunca se versionan ni se redistribuyen, igual que la ROM.
-Data/sprites/
+/Data/sprites/

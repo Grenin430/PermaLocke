@@ -27,7 +27,14 @@ public sealed record EncounterEntryLayout(
 /// </summary>
 public static class StaticEncounterTable
 {
-    /// <summary>Starters are entries 0-2 and the eleven fossils are entries 3-13.</summary>
+    /// <summary>
+    /// Starters are entries 0-2 and the eleven fossils are entries 3-13.
+    /// <para>
+    /// Measured, not assumed: read straight out of the vanilla cartridge, entries 0, 1 and 2 hold
+    /// 722, 725 and 728 — Rowlet, Litten and Popplio, in the order the game offers them. The check
+    /// is <c>RomTool iniciales &lt;carpeta&gt;</c> against an unpatched <c>a/1/5/9</c>.
+    /// </para>
+    /// </summary>
     public static readonly EncounterEntryLayout Gifts = new(0, 0x14, 0x00, 0x02, "regalos");
 
     public static readonly EncounterEntryLayout Statics = new(1, 0x38, 0x00, 0x02, "estáticos", 0x03);

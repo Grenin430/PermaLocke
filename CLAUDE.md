@@ -689,6 +689,20 @@ comprobación**, que no leía el «antes»; ahora exige `después == recorte(ant
 queda probado que quitar no baja de cero. Vale la pena recordarlo: **una verificación puede estar
 peor pensada que el código que verifica**. Ver §65.
 
+**Diez Super Balls, y los tres iniciales con nombre (2026-08-27).** Dos peticiones pequeñas, las dos
+resueltas leyendo algo que ya existe. «La primera vez que te dan Poké Balls» **no mueve ningún
+récord**, pero deja Poké Balls en la mochila, así que los premios del §60 ganan una segunda clase de
+condición, `objetosEnMochila`, que es el truco del §40 aplicado a otra cosa. Con lo que hay que
+distinguir: un cristal Z el juego no lo quita nunca y una Poké Ball **se gasta**, así que esa
+condición sí puede apagarse -lo que hace que el premio sea de una vez no es la condición sino el
+evento `RewardClaimed`-. Si la partida no se lee, la condición queda **no cumplida**, nunca cumplida
+por accidente. Y los tres iniciales salen ya con nombre y sprite, leídos del `a/1/5/9` **del mod**
+-el instalado antes que el generado, y la pantalla dice de cuál-, no del informe de la última
+generación, que es lo que PermaLocke dijo que hizo y no lo que el juego va a ofrecer. De paso se
+ancló lo que llevaba desde el §19 dicho sin medir: las entradas 0-2 son los iniciales, porque en el
+cartucho sin parchear valen **722, 725 y 728**. Comprobable con `RomTool iniciales <carpeta>`.
+Ver §66.
+
 **Siguiente.** Sincronización, y probar en partida real los combates importantes, los iniciales y
 las tiendas.
 
@@ -740,6 +754,10 @@ dotnet run --project tools/PermaLocke.RomTool -- shops --gen
 dotnet run --project tools/PermaLocke.RomTool -- zones
 dotnet run --project tools/PermaLocke.RomTool -- species
 dotnet run --project tools/PermaLocke.RomTool -- sprites --sheets
+
+# los tres iniciales de un mod ya generado o instalado; sin carpeta mira todo Randomized/
+dotnet run --project tools/PermaLocke.RomTool -- iniciales
+dotnet run --project tools/PermaLocke.RomTool -- iniciales "ruta/al/mod"
 dotnet run --project tools/PermaLocke.RomTool -- randomize 20260818 --install
 
 # EV de la partida real; --probar demuestra la escritura SOBRE UNA COPIA

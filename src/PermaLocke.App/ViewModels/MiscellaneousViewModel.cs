@@ -92,7 +92,7 @@ public sealed partial class MiscellaneousViewModel : SectionViewModel
                     status.Reward.Name,
                     status.Reward.Description,
                     string.Join(" · ", status.Reward.Items.Select(item => $"{item.Amount} {item.Name}")),
-                    $"{status.Progress} pruebas",
+                    status.Progress,
                     status.CanClaim,
                     status.Claimed));
             }

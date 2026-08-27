@@ -52,6 +52,10 @@ switch (command)
     case "dump":
         await DumpAsync(args.Length > 1 ? ulong.Parse(args[1]) : 20260818, args.Length > 2 ? args[2] : "Ruta 1");
         break;
+    case "starters":
+    case "iniciales":
+        Starters(args.Length > 1 ? args[1] : null);
+        break;
     case "randomize":
         await RandomizeAsync(args.Length > 1 ? ulong.Parse(args[1]) : 20260818);
         break;
@@ -732,4 +736,40 @@ void Sprites(bool sheets)
     }
 
     Console.WriteLine($"Hojas de contactos en {sheetDir} ({(reader.Count + perSheet - 1) / perSheet} hojas de {perSheet})");
+}
+
+// Lee los tres iniciales de una carpeta de mod ya generada o instalada. Es la comprobación
+// independiente de lo que la aplicación enseña: no vuelve a tirar el dado, abre el fichero que
+// el emulador carga y dice qué hay dentro.
+void Starters(string? folder)
+{
+    var roots = folder is not null
+        ? new[] { folder }
+        : Directory.Exists(Path.Combine(root, "Randomized"))
+            ? Directory.GetDirectories(Path.Combine(root, "Randomized"))
+            : [];
+
+    if (roots.Length == 0)
+    {
+        Console.WriteLine("No hay ninguna carpeta de mod que mirar.");
+        return;
+    }
+
+    foreach (var mod in roots)
+    {
+        Console.WriteLine(mod);
+
+        var found = StarterReader.Read(mod);
+
+        if (found.Count == 0)
+        {
+            Console.WriteLine("  sin a/1/5/9, o sin iniciales dentro");
+            continue;
+        }
+
+        foreach (var starter in found)
+        {
+            Console.WriteLine($"  opción {starter.Slot}: especie {starter.Species,4}  forma {starter.Form}");
+        }
+    }
 }

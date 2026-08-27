@@ -5027,3 +5027,64 @@ que quitar **no baja de cero**: el Revivir Máximo estaba a 1, la cara pedía tr
 Vale la pena dejarlo escrito porque es un error con forma propia y fácil de repetir: **una
 verificación puede estar peor pensada que el código que verifica**, y entonces lo que falla es la
 prueba. Se distingue mirando el dato concreto que da por malo, no volviendo a leer el código.
+
+---
+
+## 66. Diez Super Balls, y los tres iniciales con nombre (2026-08-27)
+
+Dos peticiones pequeñas que se resolvieron sin escribir ni una línea que decida nada por su cuenta:
+las dos leen algo que ya existe y lo enseñan.
+
+### El premio se ancla en lo que el juego deja, no en lo que el juego cuenta
+
+«La primera vez que el profesor Tilo te da Poké Balls» no mueve ningún récord de la ficha de
+entrenador ni enciende ninguna bandera que se haya identificado. Buscar una a ojo entre las 4960 sin
+etiquetar sería el error del §40 otra vez. Pero ese momento **deja Poké Balls en la mochila**, y eso
+sí se ve.
+
+Así que `Data/rewards.json` gana una segunda clase de condición junto a `achievements`:
+
+```json
+"objetosEnMochila": [4]
+```
+
+Es el mismo truco con el que se anclaron las doce pruebas a su cristal Z, y llega al mismo sitio:
+`RewardService` cuenta contra `reward.Conditions`, que ahora es la suma de las dos clases, y
+`GetStatusAsync` sigue diciendo «1/1» sin saber de qué clase era. Los ids se buscaron
+(`Probe --objeto-find`) en vez de recordarse: **3 es Super Ball y 4 es Poké Ball**, y el nombre se
+comprueba contra la tabla del cartucho antes de escribir, como en el §52.
+
+Una diferencia que conviene tener escrita, porque la primera versión del comentario la tenía mal.
+Un cristal Z el juego **no lo quita nunca**, así que su condición, una vez encendida, no se apaga.
+Una Poké Ball **se gasta**: un jugador que se quede sin ninguna verá el botón apagarse. No es un
+fallo —la condición dice la verdad en todo momento—, pero lo que hace que el premio sea de una sola
+vez no es la condición sino el evento `RewardClaimed`, y ese no se borra al gastar nada. Un premio
+ya recogido sigue recogido con la mochila vacía.
+
+Y la lectura falla hacia el lado seguro: si la partida no se puede leer, `HeldAsync` devuelve un
+conjunto vacío, o sea condición **no cumplida**. Un premio que se entregase solo porque faltaba un
+fichero sería la peor forma posible de fallar, y hay test.
+
+### Los tres iniciales: leer el mod, no el informe
+
+En un random los tres huevos son idénticos, así que la forma habitual de elegir es coger uno,
+mirarlo y volver a un guardado si no gusta. El juego no los esconde a propósito: simplemente no los
+dice.
+
+`StarterReader` abre el `a/1/5/9` **de la carpeta del mod** y lee las tres primeras entradas de la
+tabla de regalos. Es deliberado que no mire el informe de la última generación: un informe es lo que
+PermaLocke **dijo** que hizo, y la pregunta del jugador es qué le va a ofrecer el juego. Por eso
+prefiere el mod **instalado** sobre el generado, y por eso la pantalla dice de cuál de los dos salió
+la lista —tres nombres sin saber a qué partida pertenecen no valen nada—. Sin mod instalado ni
+generado no enseña nada, en vez de enseñar los del cartucho, que exigirían desempaquetar 3,7 GB.
+
+De paso se ancló algo que llevaba desde el §19 escrito como afirmación y nunca medido: **que las
+entradas 0-2 son los iniciales**. Se comprobó leyendo el `a/1/5/9` sin parchear del propio cartucho,
+donde valen **722, 725 y 728** —Rowlet, Litten y Popplio, en el orden en que el juego los ofrece—.
+La comprobación queda como comando: `RomTool iniciales <carpeta>`, que sobre los dos mods generados
+del repositorio saca especies distintas, válidas y todas de primera etapa.
+
+Detalle de implementación con su motivo: `GarcPatcher.ReadOnly` existe porque el constructor normal
+abre el contenedor en lectura/escritura, que es lo que hace falta para parchear. Pedir permiso de
+escritura sobre una carpeta que es del emulador, solo para mirarla, es como un lector acaba
+truncando un fichero que nunca tuvo que tocar.
