@@ -5210,3 +5210,73 @@ Cuatro pruebas, y la que importa es la de la regresión: después de borrar, `00
 existe. Hay otra que parte del estado roto -archivo sin `main`- y exige que el borrador sepa
 terminar el trabajo, porque quien deja a alguien en un estado inconsistente tiene que saber sacarlo
 de él.
+
+---
+
+## 68. Nada de esto contaba porque nadie había pulsado un botón (2026-08-28)
+
+El jugador reportó tres cosas: las Super Balls no llegaban, los muertos no se volvían Shedinja y no
+se restaban puntos. Dos de las tres eran el mismo fallo, y no estaba en el código sino en la forma.
+
+### La medida
+
+`Probe --run` sobre la run nueva:
+
+```
+POKÉMON REGISTRADOS: 0
+  con PID: 0     sin PID: 0
+EVENTOS: 2   (RunCreated, RomRandomized)
+MUERTES REGISTRADAS: 0
+```
+
+`GameWatcher.InspectAsync` decide que alguien ha muerto emparejando el equipo vivo contra **lo
+registrado en la run, por PID**. Con cero registrados la lista de caídos es vacía siempre, y de ahí
+cuelga todo lo demás: sin muerte no hay `PokemonDied`, sin `PokemonDied` no hay −25, y sin muerte no
+se escribe el Shedinja. La cadena estaba entera. Lo que faltaba era el primer eslabón.
+
+Y el primer eslabón era **un botón**. El vigilante anunciaba los Pokémon sin registrar en HOME y
+esperaba a que alguien pulsara REGISTRAR. El §56 ya avisaba de que «detectable no es detectado»;
+esta es la primera vez que se ve en una partida de verdad, y lo que se ve es peor que un fallo:
+el sistema de penalizaciones queda **inerte y en silencio**. Una regla que solo se aplica cuando
+alguien se acuerda de pulsar algo no es una regla.
+
+### Registrar no es arbitrar
+
+Ahora se registra solo, pero **no se inventa lo que no se sabe**. De memoria se leen especie, nivel,
+mote, variocolor, PID y el lugar de encuentro que el propio Pokémon lleva escrito. Lo que no se lee
+es la **ball**, y sin ella no se puede decir el tipo de encuentro — que no es decorativo: decide si
+la captura **gasta el encuentro de la zona**, y dispara las reglas de regalo y de estático.
+
+Poner «salvaje» por defecto habría gastado zonas que el jugador no usó, y sin fallar nunca. Así que
+hay un `EncounterType.Unknown` que **no gasta zona y no dispara reglas especiales**. El Pokémon
+existe, que es lo que hacía falta para que pueda morirse; lo que no hace el registro automático es
+fingir que ha arbitrado la captura. Dos pruebas lo fijan: no gasta la zona, y la deja libre para la
+captura que el jugador sí declare.
+
+Lo que **no** hace: forzar. Una captura que una regla bloquea se queda sin registrar y vuelve al
+aviso de HOME, porque saltarse una regla es decisión del jugador y de nadie más. Y el evento
+`PokemonCaught` guarda ahora **quién lo decidió** (`EventSource.AutoDetect` contra `Player`), porque
+«el vigilante vio aparecer un Pokémon» y «una persona miró el encuentro y dijo lo que era» no son la
+misma afirmación y el historial tiene que poder distinguirlas después.
+
+### Y el premio que era deberes
+
+Las Super Balls estaban bien: eran un premio con su botón en MISCELÁNEA. Pero un premio que tiene
+que llegar **junto** a las Poké Balls que te da Tilo y que en realidad hay que ir a buscar a otra
+pantalla no es un premio, son deberes. `Data/rewards.json` gana `"automatico": true` y el enlace con
+el juego lo entrega en cuanto está ganado.
+
+No relaja ninguna garantía —mismas condiciones, mismo cotejo del nombre contra la tabla del
+cartucho, misma escritura con relectura, mismo `RewardClaimed` que hace que «una vez» sea una vez—:
+lo único que cambia es quién pulsa. Va **limitado a una consulta cada 30 s**, y no por pulcritud:
+saber si está ganado lee el fichero de partida entero con PKHeX, y hacerlo cada segundo al lado del
+sondeo del equipo sería un coste real por una respuesta que cambia dos veces por run.
+
+Con una condición: **se dice**. HOME enseña en verde lo último que PermaLocke ha hecho por su
+cuenta, porque diez Super Balls que aparecen en la mochila sin que nadie las pida tienen que venir
+con una frase que explique de dónde salen. Y la tarjeta del premio dice `LLEGA SOLO` en vez de
+`RECOGER`, que sigue funcionando si se pulsa pero ya no parece obligatorio.
+
+Hay prueba de que el fichero que se reparte lleva de verdad la marca: una bandera que el lector
+ignorase en silencio apagaría la función sin que fallara nada, que es exactamente la forma del bug
+del que sale toda esta sección.

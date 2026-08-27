@@ -18,6 +18,15 @@ public sealed record RewardItem(int Id, string Name, int Amount);
 /// <param name="Held">
 /// Items the player has to be carrying.
 /// </param>
+/// <param name="Automatic">
+/// Hand it over as soon as it is earned, instead of waiting for the player to press RECOGER.
+/// </param>
+/// <remarks>
+/// For prizes that are meant to arrive <em>with</em> something the game gives you, where a button
+/// somewhere else is not a reward, it is homework. The guards do not change: it is still earned
+/// against the same conditions, still written into the bag and read back, and still recorded once
+/// with <c>RewardClaimed</c>, which is what keeps "once" true whoever pressed it.
+/// </remarks>
 /// <remarks>
 /// The second kind of condition, and it exists for the things the game marks by <em>giving</em>
 /// rather than by counting -- the same trick §40 used to anchor the trials on their Z-Crystal.
@@ -30,7 +39,8 @@ public sealed record Reward(
     string Description,
     IReadOnlyList<string> Achievements,
     IReadOnlyList<RewardItem> Items,
-    IReadOnlyList<int>? Held = null)
+    IReadOnlyList<int>? Held = null,
+    bool Automatic = false)
 {
     public IReadOnlyList<int> HeldItems { get; } = Held ?? [];
 

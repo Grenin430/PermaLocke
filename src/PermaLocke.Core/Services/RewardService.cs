@@ -63,6 +63,39 @@ public sealed class RewardService(
         ];
     }
 
+    /// <summary>
+    /// Hands over every prize marked automatic that is earned and not yet taken.
+    /// </summary>
+    /// <remarks>
+    /// Called from the game link, so it only ever runs with the emulator answering. It goes
+    /// through <see cref="ClaimAsync"/> exactly as the button does -- same conditions, same
+    /// name check, same write-then-read, same one-off event -- because the difference between
+    /// automatic and manual is who pressed it, not what is allowed.
+    /// </remarks>
+    public async Task<IReadOnlyList<RewardResult>> ClaimAutomaticAsync(Run run,
+        CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(run);
+
+        if (catalog.All.All(reward => !reward.Automatic))
+        {
+            return [];
+        }
+
+        var pending = (await GetStatusAsync(run, ct).ConfigureAwait(false))
+            .Where(status => status.Reward.Automatic && status.CanClaim)
+            .ToList();
+
+        var given = new List<RewardResult>();
+
+        foreach (var status in pending)
+        {
+            given.Add(await ClaimAsync(run, status.Reward.Id, ct).ConfigureAwait(false));
+        }
+
+        return given;
+    }
+
     public async Task<RewardResult> ClaimAsync(Run run, string rewardId, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(run);

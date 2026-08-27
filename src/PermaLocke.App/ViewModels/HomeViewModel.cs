@@ -83,6 +83,14 @@ public sealed partial class HomeViewModel : SectionViewModel
             return Task.CompletedTask;
         });
 
+        // Un premio que llega solo tiene que decirlo: lo contrario es que aparezcan diez Super
+        // Balls en la mochila y nadie sepa de dónde han salido.
+        gameLink.RewardGiven += (_, given) => _ = _ui.InvokeAsync(async () =>
+        {
+            AutoNotice = given.Message;
+            await RefreshAsync();
+        });
+
         // Fired from whatever thread finished loading the run, so the refresh has to be
         // marshalled to the UI thread before it touches the bound collections.
         _runContext.CurrentChanged += (_, _) => _ = SafeRefreshAsync();
@@ -104,6 +112,13 @@ public sealed partial class HomeViewModel : SectionViewModel
     /// <summary>What EMPEZAR DE CERO did, or why it refused. Empty the rest of the time.</summary>
     [ObservableProperty]
     private string _startOverStatus = string.Empty;
+
+    /// <summary>The last thing PermaLocke did on its own, so nothing happens behind the player.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasAutoNotice))]
+    private string _autoNotice = string.Empty;
+
+    public bool HasAutoNotice => AutoNotice.Length > 0;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ChangeRoleCommand))]

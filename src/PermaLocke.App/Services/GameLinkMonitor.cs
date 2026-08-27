@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using PermaLocke.Core.Abstractions;
 using PermaLocke.Core.Domain;
+using PermaLocke.Core.Services;
 using PermaLocke.GameLink;
 using PermaLocke.GameLink.Data;
 using PermaLocke.Rules.Services;
@@ -24,6 +25,7 @@ public sealed class GameLinkMonitor(
     ProgressService progress,
     BallControlService ballControl,
     EncounterService encounters,
+    RewardService rewards,
     IEventStore events,
     IClock clock,
     ILogger<GameLinkMonitor> logger) : IDisposable
@@ -40,8 +42,12 @@ public sealed class GameLinkMonitor(
     /// </remarks>
     private static readonly TimeSpan Interval = TimeSpan.FromSeconds(1);
 
+    /// <summary>How often the automatic prizes are looked at. Cheap to say, expensive to answer.</summary>
+    private static readonly TimeSpan RewardInterval = TimeSpan.FromSeconds(30);
+
     private readonly CancellationTokenSource _stopping = new();
     private Task? _loop;
+    private DateTimeOffset _lastRewardCheck = DateTimeOffset.MinValue;
 
     /// <summary>Latest snapshot, or null before the first read completes.</summary>
     public GameSnapshot? Latest { get; private set; }
@@ -53,6 +59,9 @@ public sealed class GameLinkMonitor(
 
     /// <summary>Raised when the whole party went down, so a screen can say so out loud.</summary>
     public event EventHandler<PenaltyResult>? TeamWiped;
+
+    /// <summary>Raised when a prize was handed over without anybody asking for it.</summary>
+    public event EventHandler<RewardResult>? RewardGiven;
 
     public void Start()
     {
@@ -110,9 +119,8 @@ public sealed class GameLinkMonitor(
     }
 
     /// <summary>
-    /// Turns the difference between game and run into action: deaths are recorded on the spot,
-    /// while unregistered Pokémon are only announced, because registering one needs a zone and
-    /// the zone is not readable from memory yet.
+    /// Turns the difference between game and run into action: new party members are registered,
+    /// deaths are recorded, and both leave their event behind.
     /// </summary>
     private async Task InspectAsync(GameSnapshot snapshot)
     {
@@ -123,13 +131,22 @@ public sealed class GameLinkMonitor(
 
         var findings = await watcher.InspectAsync(run.Id, snapshot, _stopping.Token);
 
+        // Antes que las muertes: el vigilante empareja por PID contra lo registrado, asi que un
+        // Pokemon sin registrar es invisible y no puede morirse. Registrando primero, uno que
+        // aparece ya caido se cuenta en el mismo ciclo en vez de no contarse nunca. Solo se vuelve
+        // a preguntar si de verdad se registro algo.
+        if (findings.NewMembers.Count > 0
+            && await RegisterNewMembersAsync(run, findings.NewMembers) > 0)
+        {
+            findings = await watcher.InspectAsync(run.Id, snapshot, _stopping.Token);
+        }
+
         foreach (var dead in findings.Fainted)
         {
             logger.LogWarning("Muerte detectada: {Pokemon}", dead.Nickname ?? dead.SpeciesName);
             await watcher.RecordDeathAsync(dead, run.PlayerName, _stopping.Token);
             ApplyDeathInGame(snapshot, dead);
         }
-
 
         if (findings.NewMembers.Count > 0)
         {
@@ -139,6 +156,72 @@ public sealed class GameLinkMonitor(
         await CheckWipeAsync(run, snapshot);
         await EnforceLevelCapAsync(run, snapshot);
         await ApplyBallRuleAsync(run);
+        await ClaimAutomaticRewardsAsync(run);
+    }
+
+    /// <summary>
+    /// Registers whatever turned up in the party that the run does not know about.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This used to be an announcement and a button, and that turned out to be a hole rather than
+    /// a choice: the whole penalty system hangs off the run knowing a Pokémon exists, so a player
+    /// who did not press the button had deaths that were never counted and never told. Measured on
+    /// a real run -- one starter in the party, zero registered, and therefore zero deaths possible.
+    /// A rule that only applies when somebody remembers to press something is not a rule.
+    /// </para>
+    /// <para>
+    /// What it registers is only what the game actually says: species, level, nickname, shiny, PID
+    /// and the met location the Pokémon carries. The <b>encounter type it does not know</b>, and it
+    /// says so with <see cref="EncounterType.Unknown"/> instead of assuming wild -- assuming would
+    /// spend the zone's one encounter on the player's behalf. Registering is not adjudicating.
+    /// </para>
+    /// <para>
+    /// A capture a rule blocks is <b>not</b> forced through: it stays unregistered and goes back to
+    /// being announced, because overriding a rule is the player's call and theirs alone.
+    /// </para>
+    /// </remarks>
+    /// <returns>How many were actually registered.</returns>
+    private async Task<int> RegisterNewMembersAsync(Run run, IReadOnlyList<LivePartyMember> members)
+    {
+        var registered = 0;
+
+        foreach (var member in members)
+        {
+            try
+            {
+                var result = await encounters.RegisterAsync(run.Id, new RegisterCaptureRequest(
+                        member.Species,
+                        member.SpeciesName,
+                        member.MetLocationName,
+                        EncounterType.Unknown,
+                        member.IsShiny,
+                        member.Level,
+                        string.IsNullOrWhiteSpace(member.Nickname) ? null : member.Nickname,
+                        Force: false,
+                        Pid: member.Pid),
+                    run.PlayerName, _stopping.Token, EventSource.AutoDetect);
+
+                if (result.Registered)
+                {
+                    registered++;
+                    logger.LogInformation(
+                        "{Pokemon} Nv.{Level} registrado solo (PID {Pid:X8}, encontrado en {Where})",
+                        member.SpeciesName, member.Level, member.Pid, member.MetLocationName);
+                }
+                else
+                {
+                    logger.LogWarning("{Pokemon} no se registra solo: {Why}", member.SpeciesName,
+                        result.Evaluation.Primary?.Message ?? "una regla lo impide");
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Falló el registro automático de {Pokemon}", member.SpeciesName);
+            }
+        }
+
+        return registered;
     }
 
     /// <summary>
@@ -306,6 +389,44 @@ public sealed class GameLinkMonitor(
                     ["repetida"] = again.ToString()
                 }
             }, _stopping.Token);
+        }
+    }
+
+    /// <summary>
+    /// Hands over the prizes that are meant to arrive on their own.
+    /// </summary>
+    /// <remarks>
+    /// Throttled, and not for tidiness: working out whether a prize is earned reads the whole save
+    /// file through PKHeX, and doing that once a second next to the party poll would be a real
+    /// cost for an answer that changes about twice a run.
+    /// </remarks>
+    private async Task ClaimAutomaticRewardsAsync(Run run)
+    {
+        if (clock.Now - _lastRewardCheck < RewardInterval)
+        {
+            return;
+        }
+
+        _lastRewardCheck = clock.Now;
+
+        try
+        {
+            foreach (var given in await rewards.ClaimAutomaticAsync(run, _stopping.Token))
+            {
+                if (given.Succeeded)
+                {
+                    logger.LogInformation("Premio automático entregado: {Message}", given.Message);
+                    RewardGiven?.Invoke(this, given);
+                }
+                else
+                {
+                    logger.LogWarning("Premio automático no entregado: {Message}", given.Message);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Falló la entrega automática de premios");
         }
     }
 

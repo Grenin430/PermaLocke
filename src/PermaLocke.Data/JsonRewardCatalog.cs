@@ -75,7 +75,8 @@ public sealed class JsonRewardCatalog(IReadOnlyList<Reward> all) : IRewardCatalo
             entry.Description ?? string.Empty,
             achievements,
             items,
-            held);
+            held,
+            entry.Automatic);
     }
 
     private sealed record RewardFile(
@@ -87,6 +88,7 @@ public sealed class JsonRewardCatalog(IReadOnlyList<Reward> all) : IRewardCatalo
         [property: JsonPropertyName("description")] string? Description,
         [property: JsonPropertyName("achievements")] IReadOnlyList<string>? Achievements,
         [property: JsonPropertyName("objetosEnMochila")] IReadOnlyList<int>? Held,
+        [property: JsonPropertyName("automatico")] bool Automatic,
         [property: JsonPropertyName("items")] IReadOnlyList<RewardItemEntry>? Items);
 
     private sealed record RewardItemEntry(

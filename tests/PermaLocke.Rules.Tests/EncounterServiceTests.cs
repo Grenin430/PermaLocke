@@ -108,6 +108,65 @@ public sealed class EncounterServiceTests
         Assert.Equal("no", violation.Data["forzado"]);
     }
 
+    /// <summary>
+    /// The point of "unknown": it registers the Pokémon without spending anything on the player's
+    /// behalf. Automatic registration cannot see how a Pokémon was met, and guessing "wild" would
+    /// burn a zone's one encounter for a gift.
+    /// </summary>
+    [Fact]
+    public async Task An_encounter_nobody_identified_does_not_spend_the_zone()
+    {
+        var (service, _, pokemon) = Build();
+
+        var result = await service.RegisterAsync(RunId,
+            Request(type: EncounterType.Unknown), "javi");
+
+        Assert.True(result.Registered);
+        Assert.False(Assert.Single(await pokemon.GetAllAsync(RunId)).ConsumedZoneEncounter);
+    }
+
+    /// <summary>And so the zone is still free for the capture the player does declare.</summary>
+    [Fact]
+    public async Task An_unknown_encounter_leaves_the_zone_open_for_a_real_one()
+    {
+        var (service, _, pokemon) = Build();
+        await service.RegisterAsync(RunId, Request(type: EncounterType.Unknown), "javi");
+
+        var later = await service.RegisterAsync(RunId, Request(19, "Rattata"), "javi");
+
+        Assert.True(later.Registered);
+        Assert.True((await pokemon.GetAllAsync(RunId))
+            .Single(p => p.SpeciesName == "Rattata").ConsumedZoneEncounter);
+    }
+
+    /// <summary>
+    /// Who decided has to survive into the history: the watcher noticing a Pokémon appear is not
+    /// the same claim as a player looking at an encounter and saying what it was.
+    /// </summary>
+    [Fact]
+    public async Task The_history_says_when_the_watcher_registered_it()
+    {
+        var (service, events, _) = Build();
+
+        await service.RegisterAsync(RunId, Request(type: EncounterType.Unknown), "javi",
+            source: EventSource.AutoDetect);
+
+        var caught = Assert.Single(events.All, e => e.Type == GameEventType.PokemonCaught);
+        Assert.Equal(EventSource.AutoDetect, caught.Source);
+    }
+
+    /// <summary>Registering by hand stays the player's word, and is the default.</summary>
+    [Fact]
+    public async Task Registering_by_hand_is_still_recorded_as_the_players_own()
+    {
+        var (service, events, _) = Build();
+
+        await service.RegisterAsync(RunId, Request(), "javi");
+
+        Assert.Equal(EventSource.Player,
+            Assert.Single(events.All, e => e.Type == GameEventType.PokemonCaught).Source);
+    }
+
     [Fact]
     public async Task A_shiny_in_a_spent_zone_is_registered_as_an_exception()
     {

@@ -67,7 +67,8 @@ public static class DisplayNames
         [EncounterType.Trade] = "Intercambio",
         [EncounterType.Fishing] = "Pesca",
         [EncounterType.Sos] = "Petición de ayuda",
-        [EncounterType.Special] = "Especial"
+        [EncounterType.Special] = "Especial",
+        [EncounterType.Unknown] = "Sin determinar"
     };
 
     private static readonly Dictionary<IslandState, string> Islands = new()

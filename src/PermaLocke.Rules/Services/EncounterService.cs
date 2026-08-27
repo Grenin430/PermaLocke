@@ -49,8 +49,14 @@ public sealed class EncounterService(
         return engine.Evaluate(ToAction(request), context);
     }
 
+    /// <param name="source">
+    /// Who decided. The player pressing REGISTRAR and the watcher noticing a new party member are
+    /// both legitimate, but they are not the same claim: one person looked at the encounter and
+    /// said what it was, the other only saw a Pokémon appear. The history has to be able to tell
+    /// them apart afterwards.
+    /// </param>
     public async Task<RegisterCaptureResult> RegisterAsync(Guid runId, RegisterCaptureRequest request,
-        string actor, CancellationToken ct = default)
+        string actor, CancellationToken ct = default, EventSource source = EventSource.Player)
     {
         var context = await BuildContextAsync(runId, ct).ConfigureAwait(false);
         var action = ToAction(request);
@@ -94,7 +100,7 @@ public sealed class EncounterService(
             RunId = runId,
             Timestamp = clock.Now,
             Type = GameEventType.PokemonCaught,
-            Source = EventSource.Player,
+            Source = source,
             Actor = actor,
             Description = $"{request.SpeciesName} capturado en {request.LocationName}."
                           + (request.IsShiny ? " ¡Shiny!" : string.Empty),
@@ -113,7 +119,7 @@ public sealed class EncounterService(
                 RunId = runId,
                 Timestamp = clock.Now,
                 Type = GameEventType.RuleException,
-                Source = EventSource.Player,
+                Source = source,
                 Actor = actor,
                 Description = $"{exception.Title}: {exception.Message}",
                 PokemonId = entry.Id,

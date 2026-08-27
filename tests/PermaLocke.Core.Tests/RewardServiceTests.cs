@@ -315,6 +315,56 @@ public sealed class RewardServiceTests
         Assert.Empty(bag.Given);
     }
 
+    /// <summary>
+    /// The automatic prize arrives on its own, once, and leaves the same event behind. Being
+    /// automatic changes who pressed it, not what is allowed.
+    /// </summary>
+    [Fact]
+    public async Task An_automatic_prize_is_handed_over_without_being_asked()
+    {
+        var automatic = FirstBalls with { Automatic = true };
+        var (service, log, bag) = Build(new Records(4), reward: automatic);
+        var run = TheRun();
+
+        var given = Assert.Single(await service.ClaimAutomaticAsync(run));
+
+        Assert.Equal(RewardOutcome.Delivered, given.Outcome);
+        Assert.Equal((3, 10), Assert.Single(bag.Given));
+        Assert.Contains(log.Appended, e => e.Type == GameEventType.RewardClaimed);
+    }
+
+    /// <summary>Automatic does not mean repeatedly: the event is still what makes "once" true.</summary>
+    [Fact]
+    public async Task An_automatic_prize_is_not_handed_over_twice()
+    {
+        var (service, _, bag) = Build(new Records(4), reward: FirstBalls with { Automatic = true });
+        var run = TheRun();
+
+        await service.ClaimAutomaticAsync(run);
+        Assert.Empty(await service.ClaimAutomaticAsync(run));
+
+        Assert.Single(bag.Given);
+    }
+
+    [Fact]
+    public async Task An_automatic_prize_that_is_not_earned_yet_is_not_handed_over()
+    {
+        var (service, _, bag) = Build(new Records(807), reward: FirstBalls with { Automatic = true });
+
+        Assert.Empty(await service.ClaimAutomaticAsync(TheRun()));
+        Assert.Empty(bag.Given);
+    }
+
+    /// <summary>A prize nobody marked automatic keeps waiting for its button.</summary>
+    [Fact]
+    public async Task A_manual_prize_is_left_alone()
+    {
+        var (service, _, bag) = Build(new Records(4), reward: FirstBalls);
+
+        Assert.Empty(await service.ClaimAutomaticAsync(TheRun()));
+        Assert.Empty(bag.Given);
+    }
+
     [Fact]
     public async Task An_unknown_reward_is_not_invented()
     {

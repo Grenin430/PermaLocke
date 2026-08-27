@@ -328,6 +328,28 @@
                  dice que el cap no está haciendo su trabajo y el otro que hay un Pokémon en el
                  juego que la run no conoce. Callarlos sería peor que no tenerlos. -->
             <StackPanel Grid.Row="3">
+                <!-- Lo que PermaLocke ha hecho por su cuenta. En verde porque no es un problema,
+                     pero se dice: diez Super Balls que aparecen en la mochila sin que nadie las
+                     haya pedido tienen que venir con una frase que explique de dónde salen. -->
+                <Border Padding="12,9" Margin="0,12,0,0"
+                        CornerRadius="{StaticResource RadiusMedium}"
+                        Background="{StaticResource SuccessDeepBrush}"
+                        BorderBrush="{StaticResource SuccessBrush}" BorderThickness="1">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasAutoNotice}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <TextBlock Text="{Binding AutoNotice}" Style="{StaticResource Body}"
+                               FontSize="12" TextWrapping="Wrap"
+                               Foreground="{StaticResource SuccessBrush}" />
+                </Border>
+
                 <Border Padding="12,9" Margin="0,12,0,0"
                         CornerRadius="{StaticResource RadiusMedium}"
                         Background="{StaticResource DangerDeepBrush}"

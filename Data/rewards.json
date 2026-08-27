@@ -1,14 +1,16 @@
 {
   "comentario": "Premios que la competicion entrega UNA sola vez al llegar a un hito. Los ids de objeto son los del cartucho y el nombre se comprueba contra su tabla antes de escribir nada: un id equivocado entregaria otra cosa y no fallaria nunca. Se buscan con: Probe --objeto-find \"Hiperpocion\".",
   "comentarioObjetosEnMochila": "objetosEnMochila condiciona el premio a que el jugador LLEVE esos objetos, en vez de a un logro. Es el mismo truco con el que se anclaron las pruebas a su cristal Z (§40): hay cosas que el juego no cuenta en ningun sitio pero que deja en la mochila. «La primera vez que te dan Poke Balls» no mueve ningun record ni enciende ningun contador, pero deja Poke Balls, y eso si se ve.",
+  "comentarioAutomatico": "automatico: true entrega el premio en cuanto esta ganado, sin esperar a que nadie pulse RECOGER. Es para lo que tiene que llegar JUNTO a algo que da el juego -las Super Balls con las Poke Balls de Tilo-, donde un boton en otra pantalla no es un premio, son deberes. No relaja ninguna garantia: se gana contra las mismas condiciones, se escribe en la mochila y se relee, y se apunta una sola vez con RewardClaimed, que es lo que hace que «una vez» sea una vez lo pulse quien lo pulse. Exige el juego abierto, porque escribe en la mochila viva.",
   "comentarioObjetosQueSeGastan": "Ojo con la diferencia. Un cristal Z el juego no lo quita nunca, asi que la condicion, una vez encendida, no se apaga. Una Poke Ball se gasta, y si el jugador se queda sin ninguna el boton se apaga hasta que vuelva a llevar alguna. No es un fallo -la condicion dice la verdad en todo momento- pero conviene saberlo: lo que hace que el premio sea de UNA vez no es la condicion, es el evento RewardClaimed, y ese no se borra al gastar nada.",
 
   "rewards": [
     {
       "id": "primeras-balls",
       "name": "Refuerzo de Poké Balls",
-      "description": "La primera vez que te dan Poké Balls, diez Super Balls de propina. Se activa en cuanto llevas alguna Poké Ball encima, y se recoge una sola vez.",
+      "description": "La primera vez que te dan Poké Balls, diez Super Balls de propina. Llegan solas en cuanto llevas alguna Poké Ball encima y PermaLocke está conectado al juego. Una sola vez.",
       "objetosEnMochila": [4],
+      "automatico": true,
       "items": [
         { "id": 3, "name": "Super Ball", "amount": 10 }
       ]

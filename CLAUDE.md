@@ -729,6 +729,27 @@ cuadrando alrededor del hueco; borrar la run entera no deja nada que falsificar.
 no es una run corregida. Por lo mismo no se escribe evento de despedida: iría a la cadena que se está
 borrando. Ver §67.
 
+**Nada contaba porque nadie había pulsado un botón (2026-08-28).** El jugador reportó que no le daban
+las Super Balls, que los muertos no se volvían Shedinja y que no se restaban puntos. Dos de las tres
+eran lo mismo: `Probe --run` daba **0 Pokémon registrados**, y el vigilante empareja por PID contra
+lo registrado, así que la lista de caídos era vacía siempre. La cadena estaba entera; faltaba el
+primer eslabón, y el primer eslabón era **un botón**. El §56 ya avisaba de que «detectable no es
+detectado»: aquí se vio que lo que deja es un sistema de penalizaciones **inerte y en silencio**.
+
+Ahora **se registra solo**, y sin inventar. De memoria salen especie, nivel, mote, variocolor, PID y
+el lugar de encuentro que el Pokémon lleva escrito; lo que no sale es la **ball**, y sin ella no se
+puede decir el tipo de encuentro, que **decide si la captura gasta el encuentro de la zona**. Poner
+«salvaje» habría gastado zonas sin fallar nunca, así que hay un `EncounterType.Unknown` que no gasta
+zona ni dispara reglas especiales. Registrar no es arbitrar. Y una captura que una regla bloquea **no
+se fuerza**: vuelve al aviso de HOME, porque saltarse una regla es del jugador. El evento guarda
+**quién lo decidió**, `AutoDetect` contra `Player`.
+
+Y las Super Balls pasan a `"automatico": true` en `Data/rewards.json`: un premio que tiene que llegar
+junto a las Poké Balls de Tilo y que hay que ir a buscar a otra pantalla no es un premio, son
+deberes. Mismas condiciones, misma relectura, mismo `RewardClaimed`; solo cambia quién pulsa. Va a
+una consulta cada 30 s porque saber si está ganado lee el save entero. Y **se dice**: HOME enseña en
+verde lo último que la app ha hecho sola. Ver §68.
+
 **Siguiente.** Sincronización, y probar en partida real los combates importantes, los iniciales y
 las tiendas.
 

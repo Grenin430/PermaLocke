@@ -13,10 +13,20 @@ namespace PermaLocke.App.ViewModels;
 /// <param name="Detail">What it hands over, spelled out, so nobody has to press to find out.</param>
 public sealed record RewardRowViewModel(
     string Id, string Name, string Description, string Detail,
-    string Progress, bool CanClaim, bool Claimed)
+    string Progress, bool CanClaim, bool Claimed, bool Automatic = false)
 {
-    /// <summary>What the button says. A prize already taken says so instead of looking pressable.</summary>
-    public string Action => Claimed ? "YA RECOGIDO" : "RECOGER";
+    /// <summary>
+    /// What the button says.
+    /// </summary>
+    /// <remarks>
+    /// A prize already taken says so instead of looking pressable. An automatic one that is still
+    /// waiting says it is coming on its own, because a button next to "it arrives by itself" reads
+    /// as a contradiction -- it still works if pressed, and it is the same code path, but nobody
+    /// should feel they have to.
+    /// </remarks>
+    public string Action => Claimed
+        ? "YA RECOGIDO"
+        : Automatic && CanClaim ? "LLEGA SOLO" : "RECOGER";
 }
 
 /// <summary>
@@ -101,7 +111,8 @@ public sealed partial class MiscellaneousViewModel : SectionViewModel
                     string.Join(" · ", status.Reward.Items.Select(item => $"{item.Amount} {item.Name}")),
                     status.Progress,
                     status.CanClaim,
-                    status.Claimed));
+                    status.Claimed,
+                    status.Reward.Automatic));
             }
         }
         catch (Exception ex)

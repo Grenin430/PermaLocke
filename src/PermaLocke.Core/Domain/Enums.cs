@@ -21,7 +21,20 @@ public enum EncounterType
     Trade,
     Fishing,
     Sos,
-    Special
+    Special,
+
+    /// <summary>
+    /// Nobody has said how this one was met.
+    /// </summary>
+    /// <remarks>
+    /// What automatic registration uses. The encounter type is not decoration: it decides whether
+    /// a capture spends the zone's one encounter, and it drives the gift and static rules. The
+    /// game knows the answer, but PermaLocke does not read the ball from memory and the met
+    /// location alone does not say it, so filling in "wild" would quietly spend a zone the player
+    /// never used. The honest answer is that it is unknown. It spends no zone and fires no special
+    /// rule; what it does do is <em>exist</em>, so the watcher can see that Pokémon live and die.
+    /// </remarks>
+    Unknown
 }
 
 public enum PokemonStatus
