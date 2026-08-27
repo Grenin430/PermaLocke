@@ -5096,3 +5096,35 @@ que **no** hace, dicho en el aviso antes de abrir nada, que es donde sirve:
 Los tres avisos son del mismo tipo que el de cambiar de rol (§64): un botón que suena a «reiniciar»
 tiene que decir qué se lleva por delante y qué no, porque las dos suposiciones contrarias —«esto me
 borra los Pokémon» y «esto me deja el mundo nuevo»— llevan a un desastre distinto.
+
+### Abierto o cerrado, dicho en cada pantalla
+
+PermaLocke entra al juego por **dos puertas distintas** y cada una pide lo contrario. La memoria
+está viva y necesita Azahar en marcha (§22); el fichero de partida es un fichero y no se puede
+escribir por debajo de un juego que lo va a pisar al guardar. Eso estaba escrito en el `ARCHITECTURE`
+y suelto en algún texto de alguna pantalla, pero la aplicación **no lo decía donde hace falta**, que
+es en la pantalla en la que estás a punto de pulsar algo.
+
+Ahora cada sección lo declara —`SectionViewModel.Needs`, con su porqué en `NeedsDetail`— y la
+cabecera del shell pinta la insignia arriba a la derecha, en las mismas tres bandas de color que ya
+usa todo lo demás: **verde** juego abierto, **ámbar** juego cerrado, **apagado** da igual. Es una
+propiedad virtual y no una tabla en el shell a propósito: la respuesta sale de por qué puerta escribe
+cada pantalla, y eso solo lo sabe la pantalla.
+
+| Sección | Necesita | Por qué |
+|---|---|---|
+| HOME | abierto | equipo en vivo, detección y cap, todo por memoria |
+| RANDOMIZADOR | cerrado | instalar y quitar tocan la carpeta de mods; generar da igual |
+| GACHA | cerrado | el Pokémon se escribe en el fichero de partida |
+| TIENDA | abierto | escribe en la mochila del juego en marcha |
+| LOGROS | da igual | solo lee el save; enseña lo último guardado |
+| VISOR POKÉMON | cerrado | mirar se puede siempre, pero editar EV y el wonder trade escriben el save |
+| POKE PASTE | da igual | solo lee el save |
+| MISCELÁNEA | abierto | premios y herramientas escriben en la mochila |
+| RULETA | cerrado | equipo, mochila y cajas, todo por el save |
+
+Dos decisiones que no son de estilo. El VISOR va marcado **cerrado** aunque leer funcione siempre,
+porque la insignia tiene que fallar hacia el lado que no rompe nada: quien entra a hacer un wonder
+trade con el juego abierto necesita saberlo antes, y quien solo entra a mirar no pierde nada por
+verlo. Y «da igual» va **apagado** en vez de en un tercer color llamativo, porque es la respuesta
+«no te preocupes»: gritarla le quitaría fuerza a las dos que sí ahorran un fallo.

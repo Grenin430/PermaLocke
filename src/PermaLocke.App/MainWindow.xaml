@@ -13,6 +13,8 @@
         WindowStartupLocation="CenterScreen">
 
     <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+
         <DataTemplate DataType="{x:Type vm:HomeViewModel}">
             <views:HomeView />
         </DataTemplate>
@@ -136,8 +138,67 @@
                     CornerRadius="{StaticResource RadiusLarge}"
                     Padding="24,18">
                 <!-- Solo el título. La línea de descripción se quitó a petición del jugador: en una
-                     aplicación que se usa a diario explica lo que ya se sabe y ocupa sitio. -->
-                <TextBlock Text="{Binding SelectedSection.Title}" Style="{StaticResource SectionTitle}" />
+                     aplicación que se usa a diario explica lo que ya se sabe y ocupa sitio.
+                     A la derecha sí va una cosa, porque no se sabe: si esta pantalla necesita el
+                     juego abierto, cerrado o le da igual. Es lo único que decide si pulsar algo
+                     aquí va a funcionar, y cambia de sección en sección. -->
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Right" MaxWidth="290" Margin="20,0,0,0"
+                                VerticalAlignment="Center" HorizontalAlignment="Right"
+                                Visibility="{Binding SelectedSection.ShowsNeed,
+                                             Converter={StaticResource BoolToVisibility}}">
+                        <Border HorizontalAlignment="Right" CornerRadius="9" Padding="10,4"
+                                BorderThickness="1">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <!-- ABIERTO O CERRADO: apagado a propósito. Es la respuesta
+                                         "no te preocupes", y gritarla le quitaría fuerza a las
+                                         otras dos, que son las que te ahorran un fallo. -->
+                                    <Setter Property="Background" Value="{StaticResource SurfaceHighBrush}" />
+                                    <Setter Property="BorderBrush" Value="{StaticResource BorderStrongBrush}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding SelectedSection.NeedsState}" Value="running">
+                                            <Setter Property="Background" Value="{StaticResource SuccessDeepBrush}" />
+                                            <Setter Property="BorderBrush" Value="{StaticResource SuccessBrush}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding SelectedSection.NeedsState}" Value="closed">
+                                            <Setter Property="Background" Value="{StaticResource WarningDeepBrush}" />
+                                            <Setter Property="BorderBrush" Value="{StaticResource WarningBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+
+                            <TextBlock Text="{Binding SelectedSection.NeedsLabel}"
+                                       FontFamily="{StaticResource UiFont}" FontSize="10.5"
+                                       FontWeight="Bold">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding SelectedSection.NeedsState}" Value="running">
+                                                <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding SelectedSection.NeedsState}" Value="closed">
+                                                <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Border>
+
+                        <!-- El porqué, en pequeño: la insignia sola dice qué hacer pero no qué pasa
+                             si no lo haces, que es la mitad que hace falta cuando algo falla. -->
+                        <TextBlock Text="{Binding SelectedSection.NeedsDetail}"
+                                   FontFamily="{StaticResource UiFont}" FontSize="10.5"
+                                   Foreground="{StaticResource TextFaintBrush}"
+                                   TextWrapping="Wrap" TextAlignment="Right" Margin="0,5,0,0" />
+                    </StackPanel>
+
+                    <TextBlock Text="{Binding SelectedSection.Title}" Style="{StaticResource SectionTitle}"
+                               VerticalAlignment="Center" />
+                </DockPanel>
             </Border>
 
             <Border Grid.Row="2" Style="{StaticResource Panel}">

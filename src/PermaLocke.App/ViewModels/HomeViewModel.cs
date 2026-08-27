@@ -256,6 +256,12 @@ public sealed partial class HomeViewModel : SectionViewModel
         };
     }
 
+    public override GameNeed Needs => GameNeed.Running;
+
+    public override string NeedsDetail =>
+        "El equipo en vivo, la detección de capturas y el cap de nivel necesitan Azahar abierto con "
+        + "la partida cargada. El resto de la pantalla sale de la run y se ve siempre.";
+
     public override Task ActivateAsync() => SafeRefreshAsync();
 
     [RelayCommand]

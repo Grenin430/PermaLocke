@@ -127,6 +127,13 @@ public sealed partial class AchievementsViewModel : SectionViewModel
     [ObservableProperty]
     private bool _isBusy;
 
+    public override GameNeed Needs => GameNeed.Either;
+
+    public override string NeedsDetail =>
+        "Los logros salen del fichero de partida, así que se leen con el juego abierto o cerrado. "
+        + "Lo que ves es lo último que guardaste: si acabas de superar una prueba, guarda dentro "
+        + "del juego y vuelve.";
+
     public override Task ActivateAsync() => RefreshAsync();
 
     [RelayCommand]

@@ -706,7 +706,14 @@ iniciales**, porque en el cartucho sin parchear valen **722, 725 y 728**.
 Y ya se puede **empezar de cero** con una run cargada, cosa que no se podía: CREAR RUN solo existía
 en el HOME vacío. El botón nuevo crea una run con su propia seed y avisa antes de las tres cosas que
 **no** hace -no borra la run vieja, que conserva su historial encadenado; no toca la partida de Ultra
-Luna; y no vuelve a randomizar-. Ver §66.
+Luna; y no vuelve a randomizar-.
+
+Y cada pantalla dice arriba a la derecha si necesita el juego **abierto** (verde), **cerrado**
+(ámbar) o le **da igual** (apagado), con una línea diciendo por qué. Son las dos puertas de siempre
+-memoria viva contra fichero de partida- pero dichas donde hacen falta, que es donde estás a punto de
+pulsar. Cada sección lo declara en `SectionViewModel.Needs`, no hay tabla en el shell: la respuesta
+sale de por qué puerta escribe cada una. El VISOR va marcado **cerrado** aunque leer funcione
+siempre, porque la insignia falla hacia el lado que no rompe nada. Ver §66.
 
 **Siguiente.** Sincronización, y probar en partida real los combates importantes, los iniciales y
 las tiendas.

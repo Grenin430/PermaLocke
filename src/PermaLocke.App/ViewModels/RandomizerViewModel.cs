@@ -95,6 +95,13 @@ public sealed partial class RandomizerViewModel : SectionViewModel
     private string OutputDirectory =>
         Path.Combine(_paths.Randomized, $"seed-{_runContext.Current?.Seed ?? 0}");
 
+    public override GameNeed Needs => GameNeed.Closed;
+
+    public override string NeedsDetail =>
+        "GENERAR solo lee tu ROM y da igual. INSTALAR y QUITAR copian y borran la carpeta de mods "
+        + "del emulador, así que Azahar tiene que estar cerrado del todo; los mods se leen al "
+        + "cargar el juego, no después.";
+
     public override Task ActivateAsync()
     {
         Refresh();

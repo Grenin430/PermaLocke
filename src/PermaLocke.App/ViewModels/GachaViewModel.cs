@@ -206,6 +206,12 @@ public sealed partial class GachaViewModel : SectionViewModel
         LastTierBrushKey = match?.BrushKey ?? "AccentBrush";
     }
 
+    public override GameNeed Needs => GameNeed.Closed;
+
+    public override string NeedsDetail =>
+        "El Pokémon se escribe en el fichero de partida, y con el juego abierto lo pisaría al "
+        + "guardar. Guarda dentro del juego y ciérralo antes de tirar.";
+
     public override async Task ActivateAsync()
     {
         Banners.Clear();

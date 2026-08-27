@@ -249,6 +249,12 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
     [ObservableProperty]
     private bool _isAvailable;
 
+    public override GameNeed Needs => GameNeed.Closed;
+
+    public override string NeedsDetail =>
+        "Mirar se puede siempre, pero verás lo último que guardaste. Editar EV o hacer un wonder "
+        + "trade escribe en el fichero de partida y exige el juego cerrado.";
+
     public override Task ActivateAsync() => LoadAsync();
 
     [RelayCommand]

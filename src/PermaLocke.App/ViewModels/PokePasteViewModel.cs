@@ -64,6 +64,12 @@ public sealed partial class PokePasteViewModel : SectionViewModel
     [ObservableProperty]
     private bool _isLoading;
 
+    public override GameNeed Needs => GameNeed.Either;
+
+    public override string NeedsDetail =>
+        "Solo lee el fichero de partida y no escribe nada, así que da igual. Lo que exporta es lo "
+        + "último que guardaste.";
+
     public override Task ActivateAsync() => LoadAsync();
 
     [RelayCommand]
