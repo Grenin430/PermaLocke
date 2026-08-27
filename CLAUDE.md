@@ -678,6 +678,17 @@ evento dijo que pasó, no de la configuración de hoy. Y la run vuelve a cuadrar
 diez eventos de la copia aislada incorporados -comprobado dos veces que era superconjunto estricto-
 y 26 registros cerrados como entregados. **Alive 189 → 163, Traded 1 → 29.** Ver §64.
 
+**Las dieciséis caras, contra una copia de la partida real (2026-08-27).** `Probe --ruleta --probar`
+pasa **todas** las caras, cada una sobre su **propia copia**, y comprueba releyendo el fichero. Las
+que hacía falta ver eran las que **destruyen** -Shedinja, IV a cero-, que nunca habían tocado una
+partida. Todas hacen lo que dicen, y la fecha del save no se movió. La sonda registra su **propio**
+`IRouletteWorldPort` con la carpeta de respaldo en el temporal, así que ni por error hay una ruta de
+escritura que apunte a la partida: es la lección del §62 aplicada antes, aislar la run no aísla la
+partida. De paso, dos caras salieron MAL en la primera pasada y **la equivocada era la
+comprobación**, que no leía el «antes»; ahora exige `después == recorte(antes + delta)` y de rebote
+queda probado que quitar no baja de cero. Vale la pena recordarlo: **una verificación puede estar
+peor pensada que el código que verifica**. Ver §65.
+
 **Siguiente.** Sincronización, y probar en partida real los combates importantes, los iniciales y
 las tiendas.
 
@@ -749,6 +760,10 @@ dotnet run --project tools/PermaLocke.Probe -- --pids --arreglar
 # etapas marcadas a mano; con un número las corrige, dejando su evento
 dotnet run --project tools/PermaLocke.Probe -- --etapas
 dotnet run --project tools/PermaLocke.Probe -- --etapas 0
+
+# cada cara de la ruleta contra una COPIA; la partida no se toca nunca
+dotnet run --project tools/PermaLocke.Probe -- --ruleta
+dotnet run --project tools/PermaLocke.Probe -- --ruleta --probar
 
 # entregados en un wonder trade y contados todavía como vivos
 dotnet run --project tools/PermaLocke.Probe -- --intercambiados

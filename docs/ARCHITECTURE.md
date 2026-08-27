@@ -4977,3 +4977,53 @@ dice que se entregaron dos Giratina y solo hay uno sin PID, elegir cuál sería 
 antes:   Alive 189,  Traded  1
 después: Alive 163,  Traded 29
 ```
+
+---
+
+## 65. Las dieciséis caras, contra una copia de la partida real (2026-08-27)
+
+Las caras de la ruleta tenían pruebas contra un save construido en memoria, que cubre la edición
+pero no el viaje por un fichero de verdad. Y las que más falta hacía comprobar son justo las que
+**destruyen** algo: un Pokémon convertido en Shedinja, seis IV puestos a cero. Ninguna había tocado
+nunca una partida, así que la primera vez que se ejecutasen de verdad habría sido también la primera
+vez que ese código se ejecutaba.
+
+`Probe --ruleta --probar` las pasa **todas**, cada una sobre su **propia copia** —para que no se
+tapen entre ellas— y comprueba el resultado releyendo el fichero:
+
+```
+  Habilidad buena            OK   Yveltal: Ímpetu Tóxico | Kommo-o: Allanamiento | Ledyba: Cura Natural
+  Objetos curativos          OK   Despertar: 0 → 1 | Revivir: 6 → 7 | Antihielo: 0 → 1
+  1 MT                       OK   MT51: 0 → 1
+  IV al máximo               OK   Ledyba, Yveltal y Grubbin: los seis IV a 31
+  Muere 1 Pokémon            OK   Muere Ledyba (Nv.4, Ledyba)
+  Mueren 3 Pokémon           OK   Muere Ledyba | Muere Grubbin | Muere MUERTO (Nv.3, Shedinja)
+  IV a cero                  OK   Yveltal, MUERTO y Kommo-o: los seis IV a 0
+  Menos 1 MT                 OK   MT56: 1 → 0
+  Menos objetos curativos    OK   Revivir Máximo: 1 → 0 | Revivir: 6 → 5 | Poción: 8 → 7
+
+TODAS LAS CARAS HACEN LO QUE DICEN. La partida no se ha tocado.
+```
+
+Comprobado además por fuera: la fecha del save no se movió.
+
+### Ninguna ruta de escritura apunta a la partida
+
+No basta con no escribir en ella: la sonda registra su **propio** `IRouletteWorldPort` con la carpeta
+de respaldo dentro del temporal, así que aunque algo llamase por error al camino normal de la
+ruleta, la copia de seguridad y la escritura irían ahí. Es la lección del §62 aplicada de antemano:
+aislar la run no aisla la partida, así que lo que hay que aislar es **la ruta de escritura**.
+
+### La comprobación estaba peor escrita que lo comprobado
+
+Dos caras salieron **MAL** en la primera pasada, y las dos eran mentira. La condición decía «si
+bajaba, que no haya quedado con más de uno», que no significa nada: Revivir estaba a 6, bajaba 1 y
+quedó en 5, que es exactamente lo correcto.
+
+El fallo de fondo era que la comprobación no leía el **antes**. Ahora se lee el recuento de la copia
+antes de aplicar y se exige `después == recorte(antes + delta)`, con lo que de paso queda probado
+que quitar **no baja de cero**: el Revivir Máximo estaba a 1, la cara pedía tres y quedó en 0.
+
+Vale la pena dejarlo escrito porque es un error con forma propia y fácil de repetir: **una
+verificación puede estar peor pensada que el código que verifica**, y entonces lo que falla es la
+prueba. Se distingue mirando el dato concreto que da por malo, no volviendo a leer el código.
