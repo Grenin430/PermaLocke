@@ -4740,46 +4740,6 @@ lo es. Para mirar el PC está el visor.
 
 ---
 
-## 62. Rol LUDÓPATA y su Ruleta (2026-08-23)
-
-El cuarto rol no altera los multiplicadores: gana y pierde puntos exactamente como NORMAL. Lo que
-añade es una deuda que no se puede marcar a mano ni esquivar: **una tirada por prueba, tres por
-ganar la liga y dos más por defender el título**. Los logros ya salen del cartucho (§43), y las
-tiradas ya realizadas son eventos `RouletteSpun`; la diferencia es lo que queda por girar.
-
-### Decidir antes de enseñar
-
-`Data/roulette.json` guarda las dieciséis caras: ocho buenas y ocho malas. Cada tirada toma **seis
-sin repetir de las dieciséis juntas**, de modo que puede enseñar seis buenas, seis malas o cualquier
-mezcla; no hay un equilibrado escondido. La seed de la run y el número de tirada derivan tanto esas
-seis como la ganadora y cada objetivo concreto. Reintentar una tirada que no haya podido escribirse
-no cambia el resultado.
-
-La aplicación escribe y registra primero, y solo entonces revela los seis `?` uno a uno y anima la
-rueda hasta la cuña ganadora. No hay un botón que parezca resolver algo que sigue pendiente, ni una
-animación que decida la suerte después de tocar la partida.
-
-### Qué toca y cómo queda constancia
-
-- Gacha gratuito: reutiliza el gacha real, con sus eventos y entrega al PC; uno DECENTE o uno de
-  cada banner.
-- Habilidades, IV y muerte: solo el equipo actual y siempre por PID. Una muerte aplica la marca
-  explícita Shedinja `MUERTO` sin movimientos y deja `PokemonDied` con motivo «ruleta», pero sin
-  delta de penalización.
-- Objetos: salen de los bolsillos que declara el propio cartucho; una MT nueva no puede ser una que
-  ya se lleve, y ninguna resta deja un contador negativo.
-- Puntos: el `PointsDelta` de `RouletteSpun` es exactamente +200 o −200 y no pasa por el
-  multiplicador de rol.
-
-La escritura usa el save con Azahar cerrado, copia completa previa y relectura. La relectura exige
-la habilidad, los **seis** IV o la marca de muerte esperados, y el número final exacto de cada
-objeto; no basta con que PKHeX haya aceptado `Write`. Las mutaciones están probadas sobre partidas
-`SAV7USUM` construidas en memoria —habilidades, IV, muerte, MT, curativos y guardia de PID—. Falta
-la comprobación final **sobre una copia de una partida real**, con Azahar cerrado, antes de usar
-una cara destructiva en una partida en curso.
-
----
-
 ## 62. El rol LUDÓPATA y su ruleta (2026-08-23)
 
 Un cuarto rol que no cambia ni un punto de lo que se gana o se pierde: lo que cambia es que
@@ -4807,6 +4767,28 @@ La rueda enseña **seis de las dieciséis, sorteadas entre todas juntas y sin re
 equilibra: pueden salir seis buenas o seis malas, y hay un test que lo exige —si en cuatrocientas
 tiradas no aparece ninguna rueda de un solo color, algo está amañando el sorteo—.
 
+### Se decide y se escribe antes de animar
+
+El orden importa y es deliberado: la aplicación **decide la cara, toca la partida y registra el
+evento**, y solo entonces revela los seis `?` uno a uno y gira la rueda hasta la cuña ganadora. No
+hay un botón que parezca estar resolviendo algo que sigue pendiente, ni una animación que decida la
+suerte después de haber escrito. Es lo mismo que hace el gacha (§31): la rueda es presentación de un
+resultado que ya existe.
+
+### Qué toca cada clase de cara
+
+- **Gacha**: no tira en el acto. Da **crédito**, que aparece en el banner que toque como «1 tirada
+  gratis» y se gasta allí, con su rueda y su sprite. Cada tirada guarda en su propio evento a qué
+  banners da crédito, para que lo que se cobra salga de lo que el evento dijo y no de la
+  configuración de hoy (§63).
+- **Habilidades, IV y muerte**: solo el equipo actual y siempre **por PID**. Una muerte deja la
+  marca explícita —Shedinja `MUERTO` sin movimientos— y su evento `PokemonDied` con motivo
+  «ruleta», pero sin delta de penalización.
+- **Objetos**: los bolsillos los declara el propio cartucho. Una MT nueva no puede ser una que ya se
+  lleve, y ninguna resta deja un contador por debajo de cero.
+- **Puntos**: el `PointsDelta` de `RouletteSpun` es exactamente +200 o −200, sin pasar por el
+  multiplicador del rol.
+
 ### Todo por el fichero de partida, y esa es la decisión de diseño
 
 Las dieciséis caras entre todas tocan el **equipo** (habilidades, IV, muertes), la **mochila**
@@ -4816,6 +4798,10 @@ mecanismos distintos y, peor, una ruleta que necesitaría el juego **abierto** p
 vez y se relee.
 
 De ahí que la pantalla diga «guarda y cierra el juego» igual que el gacha y el wonder trade.
+
+Y la relectura comprueba el **significado**, no que la escritura devolviera cierto: exige la
+habilidad concreta, los **seis** IV, la marca de muerte o el número final exacto de cada objeto. Que
+PKHeX haya aceptado `Write` no es la garantía; es el paso previo a comprobarlo.
 
 ### Detalles que costaron una medición
 
@@ -4868,6 +4854,10 @@ Ocurrieron desde una **copia aislada** de la aplicación levantada para ver la p
 lección que conviene no repetir: una copia aislada tiene su propia carpeta de run, pero
 `PlayerSave` localiza el save de Azahar, que es **el de verdad**. Aislar la run no aísla la partida.
 La copia se ha borrado por eso.
+
+Esas dos tiradas dejaban sin ver justo lo que más importaba: las caras que **destruyen** algo, que
+nunca habían tocado una partida. Se cerró después pasando **las dieciséis** contra copias de la
+partida real, cada una sobre la suya, en el §65.
 
 ---
 
@@ -5030,10 +5020,7 @@ prueba. Se distingue mirando el dato concreto que da por malo, no volviendo a le
 
 ---
 
-## 66. Diez Super Balls, y los tres iniciales con nombre (2026-08-27)
-
-Dos peticiones pequeñas que se resolvieron sin escribir ni una línea que decida nada por su cuenta:
-las dos leen algo que ya existe y lo enseñan.
+## 66. Diez Super Balls, los iniciales, y empezar de cero (2026-08-27)
 
 ### El premio se ancla en lo que el juego deja, no en lo que el juego cuenta
 
@@ -5065,26 +5052,47 @@ Y la lectura falla hacia el lado seguro: si la partida no se puede leer, `HeldAs
 conjunto vacío, o sea condición **no cumplida**. Un premio que se entregase solo porque faltaba un
 fichero sería la peor forma posible de fallar, y hay test.
 
-### Los tres iniciales: leer el mod, no el informe
+### Los tres iniciales: se leyeron, y luego se quitaron de la app
 
 En un random los tres huevos son idénticos, así que la forma habitual de elegir es coger uno,
-mirarlo y volver a un guardado si no gusta. El juego no los esconde a propósito: simplemente no los
-dice.
+mirarlo y volver a un guardado si no gusta. Se hizo un panel en RANDOMIZADOR que los enseñaba con
+nombre y sprite, y **el jugador pidió quitarlo el mismo día**: saber qué hay dentro de cada huevo
+antes de abrirlo le quita a la elección justo lo que la hace una elección. Queda escrito porque la
+decisión es de diseño y no de implementación, y porque lo que sí sobrevive es lo de debajo.
 
-`StarterReader` abre el `a/1/5/9` **de la carpeta del mod** y lee las tres primeras entradas de la
-tabla de regalos. Es deliberado que no mire el informe de la última generación: un informe es lo que
-PermaLocke **dijo** que hizo, y la pregunta del jugador es qué le va a ofrecer el juego. Por eso
-prefiere el mod **instalado** sobre el generado, y por eso la pantalla dice de cuál de los dos salió
-la lista —tres nombres sin saber a qué partida pertenecen no valen nada—. Sin mod instalado ni
-generado no enseña nada, en vez de enseñar los del cartucho, que exigirían desempaquetar 3,7 GB.
+`StarterReader` sigue en `PermaLocke.Randomizer`, con su comando `RomTool iniciales <carpeta>`. Abre
+el `a/1/5/9` **de la carpeta del mod** y lee las tres primeras entradas de la tabla de regalos. Es
+deliberado que no mire el informe de la última generación: un informe es lo que PermaLocke **dijo**
+que hizo, y la pregunta es qué hay en el fichero que el emulador carga.
 
-De paso se ancló algo que llevaba desde el §19 escrito como afirmación y nunca medido: **que las
-entradas 0-2 son los iniciales**. Se comprobó leyendo el `a/1/5/9` sin parchear del propio cartucho,
-donde valen **722, 725 y 728** —Rowlet, Litten y Popplio, en el orden en que el juego los ofrece—.
-La comprobación queda como comando: `RomTool iniciales <carpeta>`, que sobre los dos mods generados
-del repositorio saca especies distintas, válidas y todas de primera etapa.
+Y se ancló algo que llevaba desde el §19 escrito como afirmación y nunca medido: **que las entradas
+0-2 son los iniciales**. Se comprobó leyendo el `a/1/5/9` sin parchear del propio cartucho, donde
+valen **722, 725 y 728** —Rowlet, Litten y Popplio, en el orden en que el juego los ofrece—. Sobre
+los dos mods generados del repositorio salen especies distintas, válidas y todas de primera etapa.
+Ese anclaje vale para cualquier cosa que en el futuro toque esa tabla, se enseñe o no.
 
 Detalle de implementación con su motivo: `GarcPatcher.ReadOnly` existe porque el constructor normal
 abre el contenedor en lectura/escritura, que es lo que hace falta para parchear. Pedir permiso de
 escritura sobre una carpeta que es del emulador, solo para mirarla, es como un lector acaba
 truncando un fichero que nunca tuvo que tocar.
+
+### Empezar de cero: una run nueva, no un borrado
+
+Con una run cargada no había **ninguna** forma de crear otra: el botón CREAR RUN solo existe en el
+estado vacío de HOME, así que empezar una segunda partida obligaba a tocar la base de datos por
+fuera. Ahora hay EMPEZAR DE CERO junto al rol, que abre la misma pantalla de creación.
+
+Lo que hace es crear una run con su propia seed y dejarla activa —`RunService.CreateAsync` ya llama
+a `SetCurrent`, y el arranque carga la más reciente por fecha, así que no hace falta nada más—. Lo
+que **no** hace, dicho en el aviso antes de abrir nada, que es donde sirve:
+
+- **No borra la run vieja.** Su historial está encadenado por hash; borrar un registro de auditoría
+  para que las cifras queden limpias es exactamente lo que ese registro existe para impedir.
+- **No toca la partida de Ultra Luna.** PermaLocke no empieza partidas, las empieza el jugador. Si
+  quiere una partida nueva, la hace en el juego.
+- **No vuelve a randomizar.** La run nueva tiene otra seed, así que el mundo instalado sigue siendo
+  el de la anterior hasta que se genere e instale otra vez.
+
+Los tres avisos son del mismo tipo que el de cambiar de rol (§64): un botón que suena a «reiniciar»
+tiene que decir qué se lleva por delante y qué no, porque las dos suposiciones contrarias —«esto me
+borra los Pokémon» y «esto me deja el mundo nuevo»— llevan a un desastre distinto.

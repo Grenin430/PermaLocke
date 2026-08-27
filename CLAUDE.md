@@ -689,19 +689,24 @@ comprobación**, que no leía el «antes»; ahora exige `después == recorte(ant
 queda probado que quitar no baja de cero. Vale la pena recordarlo: **una verificación puede estar
 peor pensada que el código que verifica**. Ver §65.
 
-**Diez Super Balls, y los tres iniciales con nombre (2026-08-27).** Dos peticiones pequeñas, las dos
-resueltas leyendo algo que ya existe. «La primera vez que te dan Poké Balls» **no mueve ningún
-récord**, pero deja Poké Balls en la mochila, así que los premios del §60 ganan una segunda clase de
-condición, `objetosEnMochila`, que es el truco del §40 aplicado a otra cosa. Con lo que hay que
-distinguir: un cristal Z el juego no lo quita nunca y una Poké Ball **se gasta**, así que esa
-condición sí puede apagarse -lo que hace que el premio sea de una vez no es la condición sino el
-evento `RewardClaimed`-. Si la partida no se lee, la condición queda **no cumplida**, nunca cumplida
-por accidente. Y los tres iniciales salen ya con nombre y sprite, leídos del `a/1/5/9` **del mod**
--el instalado antes que el generado, y la pantalla dice de cuál-, no del informe de la última
-generación, que es lo que PermaLocke dijo que hizo y no lo que el juego va a ofrecer. De paso se
-ancló lo que llevaba desde el §19 dicho sin medir: las entradas 0-2 son los iniciales, porque en el
-cartucho sin parchear valen **722, 725 y 728**. Comprobable con `RomTool iniciales <carpeta>`.
-Ver §66.
+**Diez Super Balls, los iniciales, y empezar de cero (2026-08-27).** «La primera vez que te dan Poké
+Balls» **no mueve ningún récord**, pero deja Poké Balls en la mochila, así que los premios del §60
+ganan una segunda clase de condición, `objetosEnMochila`, que es el truco del §40 aplicado a otra
+cosa. Con lo que hay que distinguir: un cristal Z el juego no lo quita nunca y una Poké Ball **se
+gasta**, así que esa condición sí puede apagarse -lo que hace que el premio sea de una vez no es la
+condición sino el evento `RewardClaimed`-. Si la partida no se lee, la condición queda **no
+cumplida**, nunca cumplida por accidente.
+
+Los tres iniciales se llegaron a enseñar con nombre y sprite y **el jugador pidió quitarlo el mismo
+día**: saber qué huevo es cuál le quita a la elección lo que la hace una elección. Lo que queda es
+`StarterReader` y su comando `RomTool iniciales <carpeta>`, y sobre todo el anclaje que salió de
+hacerlo, que llevaba desde el §19 dicho sin medir: **las entradas 0-2 de la tabla de regalos son los
+iniciales**, porque en el cartucho sin parchear valen **722, 725 y 728**.
+
+Y ya se puede **empezar de cero** con una run cargada, cosa que no se podía: CREAR RUN solo existía
+en el HOME vacío. El botón nuevo crea una run con su propia seed y avisa antes de las tres cosas que
+**no** hace -no borra la run vieja, que conserva su historial encadenado; no toca la partida de Ultra
+Luna; y no vuelve a randomizar-. Ver §66.
 
 **Siguiente.** Sincronización, y probar en partida real los combates importantes, los iniciales y
 las tiendas.

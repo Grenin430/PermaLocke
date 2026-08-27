@@ -10,15 +10,10 @@ using PermaLocke.Core.Services;
 using PermaLocke.GameLink;
 using PermaLocke.Infrastructure;
 using PermaLocke.Randomizer;
-using PermaLocke.Randomizer.Modules;
 using PermaLocke.Randomizer.Output;
 using PermaLocke.Randomizer.Rom;
 
 namespace PermaLocke.App.ViewModels;
-
-/// <summary>One of the three the game will offer, as the screen draws it.</summary>
-public sealed record StarterRowViewModel(
-    int Slot, string Name, System.Windows.Media.Imaging.BitmapSource? Sprite);
 
 /// <summary>
 /// Generates the LayeredFS mod for the current run and, as a separate and explicit step,
@@ -39,14 +34,11 @@ public sealed partial class RandomizerViewModel : SectionViewModel
     private readonly AppPaths _paths;
     private readonly IRunRoles _roles;
     private readonly IRoleCatalog _roleCatalog;
-    private readonly ISpeciesLookup _species;
-    private readonly PokemonSpriteService _sprites;
     private readonly ILogger<RandomizerViewModel> _logger;
 
     public RandomizerViewModel(IRunContext runContext, IEventStore events, IClock clock,
         IAppDialogs dialogs, AzaharInstallation azahar, AppPaths paths, IRunRoles roles,
-        IRoleCatalog roleCatalog, ISpeciesLookup species, PokemonSpriteService sprites,
-        ILogger<RandomizerViewModel> logger)
+        IRoleCatalog roleCatalog, ILogger<RandomizerViewModel> logger)
         : base("RANDOMIZADOR", "Genera la capa del mod desde tu ROM, sin tocar el original")
     {
         _runContext = runContext;
@@ -57,8 +49,6 @@ public sealed partial class RandomizerViewModel : SectionViewModel
         _paths = paths;
         _roles = roles;
         _roleCatalog = roleCatalog;
-        _species = species;
-        _sprites = sprites;
         _logger = logger;
 
         _runContext.CurrentChanged += (_, _) => Refresh();
@@ -67,16 +57,6 @@ public sealed partial class RandomizerViewModel : SectionViewModel
 
     /// <summary>Lines of the last report, ready to show as they came from the service.</summary>
     public ObservableCollection<string> Steps { get; } = [];
-
-    /// <summary>The three the game will offer, read back from the mod itself.</summary>
-    public ObservableCollection<StarterRowViewModel> Starters { get; } = [];
-
-    [ObservableProperty]
-    private bool _hasStarters;
-
-    /// <summary>Which folder the three names came out of, said plainly.</summary>
-    [ObservableProperty]
-    private string _startersSource = string.Empty;
 
     [ObservableProperty]
     private string _seedLabel = "—";
@@ -115,70 +95,10 @@ public sealed partial class RandomizerViewModel : SectionViewModel
     private string OutputDirectory =>
         Path.Combine(_paths.Randomized, $"seed-{_runContext.Current?.Seed ?? 0}");
 
-    public override async Task ActivateAsync()
+    public override Task ActivateAsync()
     {
         Refresh();
-        await RefreshStartersAsync();
-    }
-
-    /// <summary>
-    /// Reads the three starters back out of the mod and names them.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Reads the <b>installed</b> mod when there is one, because that is the file the emulator
-    /// loads and therefore the only one that answers the question the player is asking. The
-    /// generated folder is the fallback, and the screen says which of the two it was: a list of
-    /// three names is worthless if you cannot tell whether it belongs to the game you are playing.
-    /// </para>
-    /// <para>
-    /// With nothing installed and nothing generated the list stays empty, rather than showing the
-    /// cartridge's own three, which PermaLocke would have to unpack 3,7 GB to find out.
-    /// </para>
-    /// </remarks>
-    private async Task RefreshStartersAsync()
-    {
-        Starters.Clear();
-        HasStarters = false;
-        StartersSource = string.Empty;
-
-        var installed = Azahar is not null && IsInstalled;
-        var root = installed ? ModDirectory : OutputDirectory;
-
-        if (!installed && !IsGenerated)
-        {
-            return;
-        }
-
-        try
-        {
-            var found = await Task.Run(() => StarterReader.Read(root));
-
-            if (found.Count == 0)
-            {
-                return;
-            }
-
-            await _sprites.PrepareAsync();
-
-            foreach (var starter in found)
-            {
-                Starters.Add(new StarterRowViewModel(
-                    starter.Slot, _species.GetName(starter.Species), _sprites.Get(starter.Species)));
-            }
-
-            HasStarters = true;
-            StartersSource = installed
-                ? "Leído del mod instalado: es lo que el juego te va a ofrecer."
-                : "Leído de la randomización generada. Todavía no está instalada, así que el juego "
-                  + "sigue ofreciendo los de siempre.";
-        }
-        catch (Exception ex)
-        {
-            // Sin iniciales la pantalla se queda sin ese panel, que es mejor que enseñar tres
-            // nombres que no se sabe de dónde salen.
-            _logger.LogWarning(ex, "No se han podido leer los iniciales de {Root}", root);
-        }
+        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -292,8 +212,6 @@ public sealed partial class RandomizerViewModel : SectionViewModel
             IsBusy = false;
             Refresh();
         }
-
-        await RefreshStartersAsync();
     }
 
     [RelayCommand(CanExecute = nameof(CanInstall))]
@@ -336,12 +254,10 @@ public sealed partial class RandomizerViewModel : SectionViewModel
             IsBusy = false;
             Refresh();
         }
-
-        await RefreshStartersAsync();
     }
 
     [RelayCommand(CanExecute = nameof(CanRemove))]
-    private async Task RemoveAsync()
+    private void Remove()
     {
         if (Azahar is null)
         {
@@ -373,8 +289,6 @@ public sealed partial class RandomizerViewModel : SectionViewModel
         {
             Refresh();
         }
-
-        await RefreshStartersAsync();
     }
 
     private static void CopyTree(string source, string destination)

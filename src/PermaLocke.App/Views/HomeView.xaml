@@ -239,6 +239,21 @@
                                 <TextBlock Text="{Binding RoleName}" Style="{StaticResource Body}"
                                            VerticalAlignment="Center" />
                             </DockPanel>
+
+                            <Border Style="{StaticResource Divider}" />
+
+                            <!-- Empezar de cero es una run NUEVA, no un borrado: la run vieja se
+                                 queda guardada con su historial encadenado, y la partida del juego
+                                 no se toca. El aviso lo dice antes de abrir nada. -->
+                            <DockPanel>
+                                <Button DockPanel.Dock="Right" Content="EMPEZAR DE CERO"
+                                        Style="{StaticResource GhostButton}"
+                                        Command="{Binding StartOverCommand}"
+                                        Padding="11,5" FontSize="10.5" VerticalAlignment="Center" />
+                                <TextBlock Text="Crea una run nueva y deja esta guardada"
+                                           Style="{StaticResource Faint}" TextWrapping="Wrap"
+                                           VerticalAlignment="Center" Margin="0,0,10,0" />
+                            </DockPanel>
                         </StackPanel>
                 </Border>
 

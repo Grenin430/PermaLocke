@@ -96,6 +96,7 @@ public sealed partial class HomeViewModel : SectionViewModel
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ChangeRoleCommand))]
+    [NotifyCanExecuteChangedFor(nameof(StartOverCommand))]
     private bool _hasRun;
 
     /// <summary>Role of the run, as the catalogue names it. Empty while there is no run.</summary>
@@ -260,6 +261,45 @@ public sealed partial class HomeViewModel : SectionViewModel
     [RelayCommand]
     private async Task CreateRunAsync()
     {
+        if (_dialogs.ShowCreateRun())
+        {
+            await RefreshAsync();
+        }
+    }
+
+    /// <summary>
+    /// Starts a brand new run, leaving the current one stored.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// It is the same creation flow as an empty PermaLocke, reachable with a run already loaded --
+    /// which until now it was not, so beginning a second playthrough meant having no way in.
+    /// </para>
+    /// <para>
+    /// Deliberately <b>not</b> a wipe. The old run keeps its hash-chained history, because deleting
+    /// an audit log to make the numbers look clean is exactly what that log exists to prevent, and
+    /// the game's own save is never touched: PermaLocke does not start playthroughs, the player
+    /// does. The warning says both, so nobody presses this expecting their Pokémon to disappear --
+    /// or expecting them to stay.
+    /// </para>
+    /// </remarks>
+    [RelayCommand(CanExecute = nameof(HasRun))]
+    private async Task StartOverAsync()
+    {
+        if (!_dialogs.Confirm(
+                "Empezar de cero",
+                "Se crea una run NUEVA, con su propia seed, y pasa a ser la activa.\n\n"
+                + "Lo que NO hace:\n"
+                + $"· No borra «{RunName}». Se queda guardada con todo su historial.\n"
+                + "· No toca tu partida de Ultra Luna. Tus Pokémon, tu mochila y tus cajas siguen "
+                + "igual. Si quieres empezar la partida de cero, hazlo tú en el juego.\n"
+                + "· No vuelve a randomizar. La run nueva tiene otra seed, así que si quieres otro "
+                + "mundo hay que generar e instalar otra vez desde RANDOMIZADOR.\n\n"
+                + "¿Crear la run nueva?"))
+        {
+            return;
+        }
+
         if (_dialogs.ShowCreateRun())
         {
             await RefreshAsync();
