@@ -101,12 +101,22 @@ public sealed class JsonRoleCatalogTests : IDisposable
 
         var catalog = JsonRoleCatalog.Load(shipped);
 
-        Assert.Equal(3, catalog.All.Count);
+        Assert.Equal(4, catalog.All.Count);
         Assert.NotEmpty(catalog.ImportantTrainerClasses);
 
         var normal = catalog.Find("normal")!;
         var cagoneta = catalog.Find("cagoneta")!;
         var experto = catalog.Find("experto")!;
+        var ludopata = catalog.Find("ludopata")!;
+
+        // El ludopata no toca los puntos: lo que cambia es que la ruleta decide por el, y eso
+        // es un interruptor y no un multiplicador. Es el unico rol que lo lleva.
+        Assert.Equal(1.0, ludopata.Earn);
+        Assert.Equal(1.0, ludopata.Lose);
+        Assert.True(ludopata.Roulette);
+        Assert.False(normal.Roulette);
+        Assert.False(cagoneta.Roulette);
+        Assert.False(experto.Roulette);
 
         Assert.Equal(1.0, normal.Earn);
         Assert.Equal(1.0, normal.Lose);

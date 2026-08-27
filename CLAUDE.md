@@ -623,6 +623,37 @@ imágenes; hace falta la marca `FEFF`, el bloque `imag` y que el tamaño declara
 perla grande y pepita de oro, declarado en el JSON. `achievements.json` gana `icono`, que es el id
 del objeto que se **ve** (distinto de `item`, que es el que **desbloquea**). Ver §61.
 
+**Rol LUDÓPATA y RULETA (2026-08-23).** Cuarto rol sin cambios en los multiplicadores de puntos:
+debe una tirada por prueba, tres al ganar la liga y dos por el rematch. La deuda sale de los logros
+automáticos menos los eventos `RouletteSpun`; no hay nada manual. `Data/roulette.json` tiene las
+16 caras y cada rueda toma seis sin repetir de todas juntas, con seed reproducible y objetivos
+decididos antes de animar. La pantalla revela los seis `?` y gira con una Poké Ball del cartucho en
+el centro; aparece justo encima de MISCELÁNEA y solo para este rol. Escribe el save con Azahar
+cerrado, backup y relectura completa: habilidades, los seis IV, muerte y los objetos. Tiene pruebas
+en memoria para cada clase de escritura; **queda probar una copia de la partida real antes de usar
+una cara destructiva**. Ver `docs/ARCHITECTURE.md` §62.
+
+**Rol LUDÓPATA y su RULETA (2026-08-23).** Cuarto rol; no cambia ni un punto de lo que se gana o se
+pierde, lo que cambia es que **después de cada hito hay que girar y vivir con lo que salga**: una
+tirada por prueba, tres por la liga, dos por el rematch. Las tiradas **se deben**, con la misma forma
+que los premios del §60 -logros menos eventos `RouletteSpun`- y nada que marcar a mano. Cada tirada
+sale de la seed y del número, así que **se recomputa** y una tirada fallida se repite sin riesgo:
+misma cara. La rueda enseña **seis de las dieciséis sorteadas entre todas juntas**, sin equilibrar:
+pueden salir seis malas, y hay test que lo exige. **Todo va por el fichero de partida** -equipo,
+mochila y cajas están detrás de una sola puerta; por memoria harían falta tres mecanismos y una
+ruleta que necesitase el juego abierto para unas caras y cerrado para otras-. Medidas que costaron:
+las cien MT **no son un rango** -328-419, 618-620 y 690-694- y la lista buena la da
+`pouch.GetAllItems()`; escribir en la mochila del save es `SetPouch(game.Data)` más `Write()`,
+probado sobre una copia; y **diez nombres de habilidad de la lista original no existen** -«Absorbe
+Elec», «Fuerza Mental», «Energía Pura», «Rezagado»...-, así que se resuelven por nombre y un nombre
+que no cuadra **tira un test** en vez de repartir otra habilidad en silencio. Los puntos van en el
+delta del propio evento y **no los multiplica el rol**. Una muerte de ruleta no resta puntos pero
+sigue siendo un `PokemonDied`. **Verificado en la partida real**: dos tiradas, un Archeops entregado
+y el MT56 escrito. Ver §62.
+
+**Ojo con las copias aisladas.** Levantar una copia de la app en otra carpeta aísla la **run**, pero
+`PlayerSave` localiza el save de Azahar, que es **el de verdad**. Aislar la run no aísla la partida.
+
 **Siguiente.** Sincronización, y probar en partida real los combates importantes, los iniciales y
 las tiendas.
 
@@ -648,6 +679,7 @@ Lo que NO está resuelto todavía y no debe darse por hecho (detalle en `docs/AR
 | Logros y penalizaciones | **HECHO Y VISTO EN LA APP** — motor, pantalla y 6 tests. Falta la lista real de logros, que la tiene que dar el jugador. Ver `ARCHITECTURE.md` §36 |
 | Contadores del juego (movimientos Z, huidas, shiny, entrenadores) | **HECHO Y VISTO EN LA APP** — se leen de `SAV7USUM.Records`; 28/200 huidas y 6/100 entrenadores reales. Ver `ARCHITECTURE.md` §38 |
 | Detectar pruebas, pegatinas y alto mando | **HECHO Y VISTO EN LA APP** — los 21 logros se cuentan solos y no queda un botón de marcar a mano. Las doce pruebas por su cristal Z, con la correspondencia sacada del storytext del cartucho. Ver `ARCHITECTURE.md` §43 |
+| Ruleta del rol LUDÓPATA | **HECHA Y VISTA EN LA APP** — 16 caras, seis en la rueda, tiradas que se deben y se recomputan; escribe equipo, mochila y cajas por el fichero de partida. **Dos tiradas verificadas en la partida real.** Ver `ARCHITECTURE.md` §62 |
 | Roles | **HECHOS Y VERIFICADOS CONTRA LA ROM** — se eligen lo primero, multiplican los puntos, suben el nivel de todo lo que combate contra ti (entrenadores, Dominantes, Necrozma y legendarios) y añaden el Pokémon extra en 35 clases de combate importante. Falta probarlo jugando. Ver `ARCHITECTURE.md` §46, §47 y §48 |
 | Sincronización | **SIN EMPEZAR** |
 | API concreta de pk3DS.Core | **VERIFICADA** contra la ROM real — ver `ARCHITECTURE.md` §19 |

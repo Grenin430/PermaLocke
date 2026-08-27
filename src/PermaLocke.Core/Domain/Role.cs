@@ -25,6 +25,13 @@ namespace PermaLocke.Core.Domain;
 /// climb without letting the player follow.
 /// </param>
 /// <param name="ExtraTrainerPokemon">Pokémon added to the important battles.</param>
+/// <param name="Roulette">
+/// True when the run has to spin a wheel after every milestone and live with what comes out.
+/// <para>
+/// A flag and not a fourth number because it is not a dial: it adds a screen, a duty and a set of
+/// consequences that no multiplier can express. Every other role leaves it false.
+/// </para>
+/// </param>
 public sealed record Role(
     string Id,
     string Name,
@@ -34,7 +41,8 @@ public sealed record Role(
     double Lose,
     int EnemyLevelPercent,
     int PlayerCapPercent,
-    int ExtraTrainerPokemon)
+    int ExtraTrainerPokemon,
+    bool Roulette = false)
 {
     /// <summary>What a reward of <paramref name="amount"/> is really worth in this role.</summary>
     /// <remarks>

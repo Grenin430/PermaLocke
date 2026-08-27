@@ -77,6 +77,17 @@ public partial class App : Application
         collection.AddSingleton<IRewardCatalog>(_ =>
             JsonRewardCatalog.Load(Path.Combine(paths.Data, "rewards.json")));
         collection.AddSingleton<RewardService>();
+        collection.AddSingleton<IAbilityLookup>(_ => new PermaLocke.GameLink.Data.PkhexAbilityLookup());
+        collection.AddSingleton<IRouletteCatalog>(sp =>
+            JsonRouletteCatalog.Load(Path.Combine(paths.Data, "roulette.json"),
+                sp.GetRequiredService<IAbilityLookup>()));
+        collection.AddSingleton<IRouletteWorldPort>(sp => new SaveRouletteWorld(
+            sp.GetRequiredService<PlayerSave>(), paths.SaveBackups,
+            sp.GetRequiredService<ISpeciesLookup>(), sp.GetRequiredService<IItemLookup>(),
+            sp.GetRequiredService<IAbilityLookup>(),
+            sp.GetRequiredService<ILogger<SaveRouletteWorld>>()));
+        collection.AddSingleton<RouletteService>();
+        collection.AddSingleton<RouletteViewModel>();
         collection.AddSingleton<ShopViewModel>();
         collection.AddSingleton<PokemonViewerViewModel>();
         collection.AddSingleton<PokePasteViewModel>();

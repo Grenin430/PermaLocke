@@ -94,6 +94,25 @@ public sealed class RunServiceTests : IDisposable
         Assert.Equal(created.Islands.Count, reloaded.Islands.Count);
     }
 
+    [Fact]
+    public async Task Changing_a_role_is_saved_and_leaves_an_audit_event()
+    {
+        var created = await _service.CreateAsync(Request());
+
+        var changed = await _service.ChangeRoleAsync(created, "ludopata",
+            "El mod LayeredFS se regeneró para el nuevo rol.");
+
+        var reloaded = await new JsonRunRepository(_root).GetAsync(created.Id);
+        var migration = Assert.Single((await _events.GetAllAsync(created.Id))
+            .Where(e => e.Type == GameEventType.RoleChanged));
+
+        Assert.Equal("ludopata", changed.RoleId);
+        Assert.Equal("ludopata", reloaded!.RoleId);
+        Assert.Equal(changed, _context.Current);
+        Assert.Equal("experto", migration.Data["desde"]);
+        Assert.Equal("ludopata", migration.Data["hasta"]);
+    }
+
     public void Dispose()
     {
         _events.Dispose();

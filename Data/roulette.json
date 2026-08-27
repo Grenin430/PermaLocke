@@ -1,0 +1,87 @@
+{
+  "version": 1,
+  "comment": "La ruleta del rol LUDÓPATA. Ocho caras buenas y ocho malas; la rueda enseña SEIS de las dieciséis, elegidas al azar entre las dieciséis juntas, así que una tirada puede salir con seis buenas o con seis malas. Cada tirada se calcula con la seed de la run y su número, igual que el gacha, así que se puede recomputar y auditar.",
+
+  "comentarioTiradas": "Cuántas tiradas se DEBEN: una por cada prueba superada, tres por ganar la liga y dos más por el rematch. Sale de los logros, que se detectan solos contra el cartucho, así que no hay nada que marcar a mano. Lo ya tirado sale del historial.",
+
+  "comentarioEfectos": "efecto dice QUÉ hace la cara; cantidad y cada dicen CUÁNTO. Gacha lleva la lista de banners. HabilidadBuena/HabilidadMala, IvPerfectos/IvCero y Muerte usan cantidad como número de Pokémon DEL EQUIPO. Puntos usa cantidad con signo. DarCurativos/QuitarCurativos usan cantidad como cuántos objetos DISTINTOS y cada como cuántos de cada uno. DarMt/QuitarMt usan cantidad como número de MT.",
+
+  "comentarioSiNoSePuede": "Si la cosa no se puede hacer entera se hace lo que se pueda y se dice: quitar una MT a quien no lleva ninguna no hace nada, y subir los IV a tres Pokémon cuando el equipo tiene dos se los sube a esos dos. No se inventa nada ni se falla del todo.",
+
+  "tiradasPorPrueba": 1,
+  "tiradasPorLiga": 3,
+  "tiradasPorRematch": 2,
+  "logrosDePrueba": [
+    "prueba-01", "prueba-02", "prueba-03", "prueba-04", "prueba-05", "prueba-06",
+    "prueba-07", "prueba-08", "prueba-09", "prueba-10", "prueba-11", "prueba-12"
+  ],
+  "logroDeLiga": "alto-mando-campeon",
+  "logroDeRematch": "alto-mando-otra-vez",
+
+  "comentarioCurativos": "Los objetos del bolsillo de medicinas que la ruleta reparte y quita. Ids del cartucho, buscados con Probe --objeto-find y comprobados por nombre antes de escribir. No están los Caramelos Raros a propósito: suben de nivel, que no es curar.",
+  "objetosCurativos": [
+    { "id": 17, "nombre": "Poción" },
+    { "id": 26, "nombre": "Superpoción" },
+    { "id": 25, "nombre": "Hiperpoción" },
+    { "id": 24, "nombre": "Poción Máxima" },
+    { "id": 23, "nombre": "Restaurar Todo" },
+    { "id": 27, "nombre": "Cura Total" },
+    { "id": 28, "nombre": "Revivir" },
+    { "id": 29, "nombre": "Revivir Máximo" },
+    { "id": 18, "nombre": "Antídoto" },
+    { "id": 19, "nombre": "Antiquemar" },
+    { "id": 20, "nombre": "Antihielo" },
+    { "id": 21, "nombre": "Despertar" },
+    { "id": 22, "nombre": "Antiparalizador" }
+  ],
+
+  "comentarioMt": "Las cien MT NO estan aqui a proposito: no son un rango. En Ultra Luna son los objetos 328-419 (MT01-MT92), 618-620 (MT93-MT95) y 690-694 (MT96-MT100), con dos saltos por medio, y 420-427 son las MO de generaciones viejas. La lista buena la da el propio bolsillo de MT de la partida, asi que se lee de ahi y no se teclea.",
+
+  "comentarioHabilidades": "Por NOMBRE y no por número: los nombres los resuelve PKHeX contra la tabla del juego, así que una habilidad mal escrita se ve al arrancar en vez de acabar siendo otra por un id equivocado. Se ponen tal cual, sin mirar si la especie puede tenerlas: es lo que la ruleta promete. Solo valen las de Ultra Luna, o sea de la 1 a la 233: una habilidad de gen 8 o 9 tiene id pero el cartucho no sabe qué es.",
+
+  "comentarioNombres": "Los nombres se comprobaron uno a uno contra la tabla del juego y varios de la lista original no existen con ese nombre. Corregidos: Absorbe Electricidad -> Absorbe Elec, Fuerza Pura -> Energía Pura, Foco Interno -> Fuerza Mental, Bucle Aire -> Esclusa de Aire, Adaptabilidad -> Adaptable, Multiescama -> Multiescamas, Normalización -> Normalidad, Stall -> Rezagado, Escudo Polvo -> Polvo Escudo, Ausente -> Despiste. Y cuatro se quedan fuera porque no son habilidades de este juego y adivinar cuál se quería habría sido inventarlas: Absorbe Hielo y Absorbe Viento son de generación 9, y Torpeza y Debilidad y Mala Suerte no existen -Torpeza y Debilidad ya están cubiertas por Zoquete y Flaqueza, que sí están-. Experto en Combate tampoco existe; Experto sí, y está.",
+
+  "habilidadesBuenas": [
+    "Intimidación", "Robustez", "Levitación", "Absorbe Agua", "Absorbe Elec", "Absorbe Fuego",
+    "Sebo", "Ignífugo", "Multiescamas", "Regeneración", "Piel Seca", "Cura Lluvia", "Clorofila",
+    "Nado Rápido", "Impulso", "Ímpetu Arena", "Garra Dura", "Potencia", "Energía Pura",
+    "Adaptable", "Experto", "Potencia Bruta", "Muro Mágico", "Bromista", "Espejo Mágico",
+    "Ignorante", "Respondón", "Autoestima", "Competitivo", "Cuerpo Puro", "Cabeza Roca",
+    "Inmunidad", "Flexibilidad", "Insomnio", "Espíritu Vital", "Funda", "Fuerza Mental",
+    "Allanamiento", "Pararrayos", "Colector", "Cura Natural", "Escama Especial", "Cuerpo Maldito",
+    "Piel Milagro", "Francotirador", "Manto Níveo", "Velo Arena", "Velo Flor",
+    "Hidratación", "Gula", "Liviano", "Ímpetu Tóxico", "Poder Solar", "Sequía", "Llovizna",
+    "Chorro Arena", "Nevada", "Mar Llamas", "Torrente", "Espesura", "Esclusa de Aire", "Viscosidad",
+    "Velo Dulce", "Ritmo Propio", "Tenacidad", "Cacheo"
+  ],
+  "habilidadesMalas": [
+    "Pereza", "Inicio Lento", "Flaqueza", "Rezagado", "Normalidad", "Armadura Frágil",
+    "Rivalidad", "Cobardía", "Hedor", "Mudar", "Momia", "Zoquete",
+    "Despiste", "Fuga", "Poder Solar", "Piel Seca", "Velo Arena", "Manto Níveo", "Nerviosismo",
+    "Anticipación", "Presión", "Cacheo", "Metal Pesado", "Metal Liviano", "Agallas", "Pies Rápidos",
+    "Madrugar", "Hidratación", "Cura Lluvia", "Cosecha", "Sincronía", "Ritmo Propio", "Cuerpo Llama",
+    "Escudo Magma", "Viscosidad", "Cuerpo Maldito", "Tenacidad", "Ventosas", "Insomnio", "Inmunidad",
+    "Fuerza Mental", "Competitivo", "Espíritu Vital", "Insonorizar", "Punto Tóxico", "Velo Dulce",
+    "Polvo Escudo", "Cura Natural", "Trampa Arena", "Predicción"
+  ],
+
+  "caras": [
+    { "id": "gacha-1", "buena": true, "nombre": "1 tirada de gacha", "detalle": "Una tirada del banner DECENTE, gratis.", "efecto": "Gacha", "banners": ["decente"] },
+    { "id": "gacha-3", "buena": true, "nombre": "3 tiradas de gacha", "detalle": "Una de cada banner: POCHO, DECENTE y BUENO, gratis.", "efecto": "Gacha", "banners": ["pocho", "decente", "bueno"] },
+    { "id": "habilidad-buena", "buena": true, "nombre": "Habilidad buena", "detalle": "Una habilidad buena a 3 Pokémon del equipo.", "efecto": "HabilidadBuena", "cantidad": 3 },
+    { "id": "puntos-mas", "buena": true, "nombre": "+200 puntos", "detalle": "Doscientos puntos a tu favor.", "efecto": "Puntos", "cantidad": 200 },
+    { "id": "curativos-1", "buena": true, "nombre": "Objetos curativos", "detalle": "Tres objetos curativos distintos, uno de cada.", "efecto": "DarCurativos", "cantidad": 3, "cada": 1 },
+    { "id": "curativos-3", "buena": true, "nombre": "Objetos curativos x3", "detalle": "Tres objetos curativos distintos, tres de cada.", "efecto": "DarCurativos", "cantidad": 3, "cada": 3 },
+    { "id": "mt-mas", "buena": true, "nombre": "1 MT", "detalle": "Una MT que no tengas.", "efecto": "DarMt", "cantidad": 1 },
+    { "id": "iv-max", "buena": true, "nombre": "IV al máximo", "detalle": "Los seis IV a 31 en 3 Pokémon del equipo.", "efecto": "IvPerfectos", "cantidad": 3 },
+
+    { "id": "muerte-1", "buena": false, "nombre": "Muere 1 Pokémon", "detalle": "Uno del equipo, al azar. No resta puntos.", "efecto": "Muerte", "cantidad": 1 },
+    { "id": "muerte-3", "buena": false, "nombre": "Mueren 3 Pokémon", "detalle": "Tres del equipo, al azar. No resta puntos.", "efecto": "Muerte", "cantidad": 3 },
+    { "id": "habilidad-mala", "buena": false, "nombre": "Habilidad mala", "detalle": "Una habilidad mala a 3 Pokémon del equipo.", "efecto": "HabilidadMala", "cantidad": 3 },
+    { "id": "puntos-menos", "buena": false, "nombre": "-200 puntos", "detalle": "Doscientos puntos en tu contra.", "efecto": "Puntos", "cantidad": -200 },
+    { "id": "iv-cero", "buena": false, "nombre": "IV a cero", "detalle": "Los seis IV a 0 en 3 Pokémon del equipo.", "efecto": "IvCero", "cantidad": 3 },
+    { "id": "mt-menos", "buena": false, "nombre": "Menos 1 MT", "detalle": "Se te va una MT de las que llevas.", "efecto": "QuitarMt", "cantidad": 1 },
+    { "id": "curativos-menos-1", "buena": false, "nombre": "Menos objetos curativos", "detalle": "Se van tres objetos curativos distintos, uno de cada.", "efecto": "QuitarCurativos", "cantidad": 3, "cada": 1 },
+    { "id": "curativos-menos-3", "buena": false, "nombre": "Menos objetos curativos x3", "detalle": "Se van tres objetos curativos distintos, tres de cada.", "efecto": "QuitarCurativos", "cantidad": 3, "cada": 3 }
+  ]
+}

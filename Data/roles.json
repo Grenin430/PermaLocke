@@ -56,6 +56,18 @@
       "nivelEnemigos": 27,
       "capDelJugador": 0,
       "pokemonExtra": 2
+    },
+    {
+      "id": "ludopata",
+      "name": "LUDÓPATA",
+      "summary": "Los puntos van igual, pero la ruleta decide por ti.",
+      "description": "Juegas el randomlocke a merced de la ruleta. Después de cada prueba tiras una vez, obligatoriamente; después de la liga, tres; y si haces el rematch, dos más. Lo que salga se aplica: puede darte tiradas de gacha, habilidades buenas, IV perfectos, objetos o 200 puntos, y puede matarte Pokémon, dejarte los IV a cero, quitarte objetos o restarte 200. Los puntos que ganas y pierdes por lo demás no cambian.",
+      "ganancia": 1.0,
+      "perdida": 1.0,
+      "nivelEnemigos": 20,
+      "capDelJugador": 0,
+      "pokemonExtra": 1,
+      "ruleta": true
     }
   ]
 }

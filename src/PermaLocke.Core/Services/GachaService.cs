@@ -75,7 +75,17 @@ public sealed class GachaService(
         return Generate(banner, source, number);
     }
 
-    public async Task<GachaRollResult> RollAsync(Run run, string bannerId, CancellationToken ct = default)
+    /// <param name="free">
+    /// True when the roll has already been paid for by something else and must not be charged.
+    /// </param>
+    /// <remarks>
+    /// A flag and not a second method because everything after the charge is identical, and the
+    /// one thing that must never drift between a paid roll and a free one is <em>the roll</em>: the
+    /// number, the seed and the entry. Today the only caller that passes it is the LUDÓPATA wheel,
+    /// which hands out rolls the player did not buy.
+    /// </remarks>
+    public async Task<GachaRollResult> RollAsync(Run run, string bannerId, bool free = false,
+        CancellationToken ct = default)
     {
         var balance = await points.GetBalanceAsync(run.Id, ct).ConfigureAwait(false);
 
@@ -90,7 +100,7 @@ public sealed class GachaService(
                 Error: $"El banner «{banner.Name}» no tiene rarezas configuradas.");
         }
 
-        if (balance < banner.Cost)
+        if (!free && balance < banner.Cost)
         {
             return new GachaRollResult(false, balance,
                 Error: $"Te faltan {banner.Cost - balance} puntos: «{banner.Name}» cuesta {banner.Cost}.");
@@ -111,7 +121,7 @@ public sealed class GachaService(
         // Un banner gratuito no genera gasto: cobrar cero no es cobrar, y PointsService rechaza
         // con razón que se le pidan gastos de cero. Es lo que permite dejar un banner a coste 0
         // para probar sin tocar el motor de puntos.
-        var spent = banner.Cost > 0
+        var spent = banner.Cost > 0 && !free
             ? await points.SpendAsync(run.Id, banner.Cost,
                 $"Tirada de gacha en «{banner.Name}».", EventSource.Player, run.PlayerName, ct)
                 .ConfigureAwait(false)

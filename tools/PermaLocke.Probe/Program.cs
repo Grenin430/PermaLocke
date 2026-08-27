@@ -79,6 +79,13 @@ if (args.Length >= 1 && args[0] == "--run")
     return await PermaLocke.Probe.RunAuditProbe.RunAsync();
 }
 
+// Solo se usa tras regenerar e instalar el LayeredFS para el destino. El cambio de rol queda
+// firmado en el historial; editar run.json a mano dejaría una partida distinta sin decir por qué.
+if (args.Length >= 2 && args[0] == "--rol")
+{
+    return await PermaLocke.Probe.RoleProbe.ChangeAsync(args[1]);
+}
+
 // Las cuatro copias del campo de zona, y por qué se creen o no. Con --vigilar, en bucle: se anda
 // por el juego y va diciendo cada valor que toma el campo, que es como se recalibra el ancla.
 if (args.Length >= 1 && args[0] == "--zona")

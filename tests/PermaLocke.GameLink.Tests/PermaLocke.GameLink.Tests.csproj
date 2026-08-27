@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\PermaLocke.GameLink\PermaLocke.GameLink.csproj" />
+    <ProjectReference Include="..\..\src\PermaLocke.Data\PermaLocke.Data.csproj" />
   </ItemGroup>
 
 </Project>

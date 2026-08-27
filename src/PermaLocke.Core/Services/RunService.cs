@@ -82,6 +82,69 @@ public sealed class RunService(IRunRepository runs, IEventStore events, IRunCont
         return latest;
     }
 
+    /// <summary>
+    /// Changes a role only through an explicit, auditable migration.
+    /// </summary>
+    /// <remarks>
+    /// This method deliberately does not generate or install a ROM mod: that potentially lengthy
+    /// and visible operation must have succeeded <em>before</em> the role moves. It then saves the
+    /// new run and appends the matching event; should appending fail, it puts the previous run back
+    /// rather than leaving a role change with no history behind it.
+    /// </remarks>
+    public async Task<Run> ChangeRoleAsync(Run run, string targetRoleId, string reason,
+        CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(run);
+
+        if (string.IsNullOrWhiteSpace(targetRoleId))
+        {
+            throw new ArgumentException("El rol de destino es obligatorio.", nameof(targetRoleId));
+        }
+
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            throw new ArgumentException("El motivo de la migración es obligatorio.", nameof(reason));
+        }
+
+        var target = targetRoleId.Trim();
+
+        if (string.Equals(run.RoleId, target, StringComparison.OrdinalIgnoreCase))
+        {
+            return run;
+        }
+
+        var updated = run with { RoleId = target };
+        await runs.SaveAsync(updated, ct).ConfigureAwait(false);
+
+        try
+        {
+            await events.AppendAsync(new GameEvent
+            {
+                Id = Guid.NewGuid(),
+                RunId = run.Id,
+                Timestamp = clock.Now,
+                Type = GameEventType.RoleChanged,
+                Source = EventSource.Player,
+                Actor = run.PlayerName,
+                Description = $"Rol cambiado de «{run.RoleId}» a «{target}». {reason}",
+                Data = new Dictionary<string, string>
+                {
+                    ["desde"] = run.RoleId,
+                    ["hasta"] = target,
+                    ["motivo"] = reason
+                }
+            }, ct).ConfigureAwait(false);
+        }
+        catch
+        {
+            await runs.SaveAsync(run, ct).ConfigureAwait(false);
+            throw;
+        }
+
+        context.SetCurrent(updated);
+        return updated;
+    }
+
     /// <summary>Cryptographically random so two players never share a seed by accident.</summary>
     private static ulong GenerateSeed()
     {

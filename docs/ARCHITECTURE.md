@@ -4737,3 +4737,134 @@ Una tarjeta con un hueco sería peor que una dibujada.
 
 Un pegado es un **equipo** —seis Pokémon que otro puede cargar y combatir— y una caja de treinta no
 lo es. Para mirar el PC está el visor.
+
+---
+
+## 62. Rol LUDÓPATA y su Ruleta (2026-08-23)
+
+El cuarto rol no altera los multiplicadores: gana y pierde puntos exactamente como NORMAL. Lo que
+añade es una deuda que no se puede marcar a mano ni esquivar: **una tirada por prueba, tres por
+ganar la liga y dos más por defender el título**. Los logros ya salen del cartucho (§43), y las
+tiradas ya realizadas son eventos `RouletteSpun`; la diferencia es lo que queda por girar.
+
+### Decidir antes de enseñar
+
+`Data/roulette.json` guarda las dieciséis caras: ocho buenas y ocho malas. Cada tirada toma **seis
+sin repetir de las dieciséis juntas**, de modo que puede enseñar seis buenas, seis malas o cualquier
+mezcla; no hay un equilibrado escondido. La seed de la run y el número de tirada derivan tanto esas
+seis como la ganadora y cada objetivo concreto. Reintentar una tirada que no haya podido escribirse
+no cambia el resultado.
+
+La aplicación escribe y registra primero, y solo entonces revela los seis `?` uno a uno y anima la
+rueda hasta la cuña ganadora. No hay un botón que parezca resolver algo que sigue pendiente, ni una
+animación que decida la suerte después de tocar la partida.
+
+### Qué toca y cómo queda constancia
+
+- Gacha gratuito: reutiliza el gacha real, con sus eventos y entrega al PC; uno DECENTE o uno de
+  cada banner.
+- Habilidades, IV y muerte: solo el equipo actual y siempre por PID. Una muerte aplica la marca
+  explícita Shedinja `MUERTO` sin movimientos y deja `PokemonDied` con motivo «ruleta», pero sin
+  delta de penalización.
+- Objetos: salen de los bolsillos que declara el propio cartucho; una MT nueva no puede ser una que
+  ya se lleve, y ninguna resta deja un contador negativo.
+- Puntos: el `PointsDelta` de `RouletteSpun` es exactamente +200 o −200 y no pasa por el
+  multiplicador de rol.
+
+La escritura usa el save con Azahar cerrado, copia completa previa y relectura. La relectura exige
+la habilidad, los **seis** IV o la marca de muerte esperados, y el número final exacto de cada
+objeto; no basta con que PKHeX haya aceptado `Write`. Las mutaciones están probadas sobre partidas
+`SAV7USUM` construidas en memoria —habilidades, IV, muerte, MT, curativos y guardia de PID—. Falta
+la comprobación final **sobre una copia de una partida real**, con Azahar cerrado, antes de usar
+una cara destructiva en una partida en curso.
+
+---
+
+## 62. El rol LUDÓPATA y su ruleta (2026-08-23)
+
+Un cuarto rol que no cambia ni un punto de lo que se gana o se pierde: lo que cambia es que
+**después de cada hito hay que girar una rueda y vivir con lo que salga**. Una tirada por prueba,
+tres por la liga y dos más por el rematch.
+
+### Las tiradas se deben, no se ofrecen
+
+Es la misma forma que los premios del §60, y por la misma razón: los dos números salen de algo real
+y ninguno se marca a mano. **Ganadas** = los logros de prueba, liga y rematch, que se detectan solos
+contra el cartucho. **Gastadas** = cuántos eventos `RouletteSpun` hay en el historial. Se deben las
+primeras menos las segundas, y el botón no se enciende si eso es cero.
+
+`RouletteSpun` es un tipo de evento propio porque **es el contador**, igual que `RewardClaimed` es
+el cerrojo del premio.
+
+### Cada tirada se puede recomputar
+
+Como el gacha: la rueda sale de la seed de la run y del número de tirada. Eso da dos cosas por el
+precio de una — una tirada se puede comprobar después, y **una tirada fallida se puede repetir sin
+riesgo**, porque el mismo número da exactamente la misma cara. Nadie puede volver a girar para
+esquivar una muerte.
+
+La rueda enseña **seis de las dieciséis, sorteadas entre todas juntas y sin repetir**. Nada las
+equilibra: pueden salir seis buenas o seis malas, y hay un test que lo exige —si en cuatrocientas
+tiradas no aparece ninguna rueda de un solo color, algo está amañando el sorteo—.
+
+### Todo por el fichero de partida, y esa es la decisión de diseño
+
+Las dieciséis caras entre todas tocan el **equipo** (habilidades, IV, muertes), la **mochila**
+(objetos curativos, MT) y las **cajas** (las tiradas de gacha gratis). Por memoria serían tres
+mecanismos distintos y, peor, una ruleta que necesitaría el juego **abierto** para unas caras y
+**cerrado** para otras. Por el save es una sola puerta: se abre una vez, se copia, se escribe una
+vez y se relee.
+
+De ahí que la pantalla diga «guarda y cierra el juego» igual que el gacha y el wonder trade.
+
+### Detalles que costaron una medición
+
+- **Las cien MT no son un rango.** En Ultra Luna son 328-419 (MT01-MT92), 618-620 y 690-694, con
+  dos saltos, y 420-427 son las MO de generaciones viejas. La lista buena la da el propio bolsillo:
+  `pouch.GetAllItems()` devuelve exactamente las cien de este cartucho, así que no se teclea.
+- **Escribir en la mochila del save** es `pouch.SetPouch(game.Data)` y luego `game.Write()`.
+  Comprobado sobre una copia de la partida real antes de fiarse: Poción 8 → 13 y un MT02 que no
+  estaba.
+- **Los nombres de habilidad se comprueban uno a uno.** La lista original traía diez mal escritos
+  —«Absorbe Electricidad» es «Absorbe Elec», «Foco Interno» es «Fuerza Mental», «Fuerza Pura» es
+  «Energía Pura», «Stall» es «Rezagado»— y cuatro que no son habilidades de este juego. Un nombre
+  que no resuelve **se cae al cargar el fichero y hay un test que falla**; si se resolviera por
+  número, la cara habría repartido en silencio otra habilidad. Y nada por encima de la 233, que es
+  la última que conoce Ultra Luna: una de gen 8 tiene id pero el cartucho no sabe qué es.
+- **Los puntos van en el delta del propio evento.** El saldo es la suma de los deltas del
+  historial, así que la ruleta mueve puntos con un solo apunte que dice quién los movió. Y **no los
+  multiplica el rol**: la ruleta dice doscientos y son doscientos.
+- **Una muerte de ruleta no resta puntos**, que es lo que pide la competición, pero sigue siendo un
+  `PokemonDied`: esconderla bajo otro nombre dejaría un recuento de muertes que miente.
+
+### Lo que hace cuando no puede hacerlo entero
+
+Quitar una MT a quien no lleva ninguna no hace nada; subir los IV a tres Pokémon cuando el equipo
+tiene dos se los sube a esos dos. Ni se inventa ni se falla del todo, y la línea del resultado lo
+dice. Un hueco que ya no tiene al Pokémon que la rueda eligió —comprobado por PID— **se salta**, en
+vez de escribirle al que esté ahora.
+
+### Un fallo que solo apareció al abrirla
+
+La sección RULETA se mete y se saca de la barra lateral según el rol de la run cargada. La run se
+carga **en segundo plano**, y tocar desde ahí la colección que pinta la barra lateral tira la
+ventana entera:
+
+```
+System.NotSupportedException: Este tipo de CollectionView no admite cambios en el SourceCollection
+de un subproceso distinto del subproceso Dispatcher.
+```
+
+No salta abriendo la aplicación sin run —que es como se prueba casi siempre—, solo arrancando con
+una run ya guardada. Ahora pasa por `IUiDispatcher`.
+
+### Verificado en el juego, y una advertencia
+
+Las dos primeras tiradas se hicieron **contra la partida real**: la primera salió «1 tirada de
+gacha» y entregó un Archeops en la caja 6, hueco 4; la segunda salió «1 MT» y escribió el MT56 en
+la mochila. Las dos con copia previa y relectura.
+
+Ocurrieron desde una **copia aislada** de la aplicación levantada para ver la pantalla, y de ahí una
+lección que conviene no repetir: una copia aislada tiene su propia carpeta de run, pero
+`PlayerSave` localiza el save de Azahar, que es **el de verdad**. Aislar la run no aísla la partida.
+La copia se ha borrado por eso.

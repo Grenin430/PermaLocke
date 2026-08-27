@@ -57,7 +57,8 @@ public sealed class JsonRoleCatalog(IReadOnlyList<Role> all, IReadOnlySet<int> i
                     Math.Clamp(entry.Lose ?? 1.0, 0, 10),
                     Math.Clamp(entry.EnemyLevelPercent ?? entry.LegacyTrainerLevelPercent ?? 0, 0, 200),
                     Math.Clamp(entry.PlayerCapPercent ?? 0, 0, 200),
-                    Math.Clamp(entry.ExtraTrainerPokemon ?? 0, 0, 5)))
+                    Math.Clamp(entry.ExtraTrainerPokemon ?? 0, 0, 5),
+                    entry.Roulette ?? false))
         ], important);
     }
 
@@ -75,5 +76,6 @@ public sealed class JsonRoleCatalog(IReadOnlyList<Role> all, IReadOnlySet<int> i
         [property: JsonPropertyName("nivelEnemigos")] int? EnemyLevelPercent,
         [property: JsonPropertyName("nivelEntrenadores")] int? LegacyTrainerLevelPercent,
         [property: JsonPropertyName("capDelJugador")] int? PlayerCapPercent,
-        [property: JsonPropertyName("pokemonExtra")] int? ExtraTrainerPokemon);
+        [property: JsonPropertyName("pokemonExtra")] int? ExtraTrainerPokemon,
+        [property: JsonPropertyName("ruleta")] bool? Roulette);
 }

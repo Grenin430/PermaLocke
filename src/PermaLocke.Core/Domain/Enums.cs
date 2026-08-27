@@ -154,5 +154,26 @@ public enum GameEventType
     /// what makes that true is that this event is in the history. Folding it into
     /// <see cref="TestItemGranted"/> would mean any testing tool press looked like a claim.
     /// </remarks>
-    RewardClaimed
+    RewardClaimed,
+
+    /// <summary>
+    /// The LUDOPATA wheel was turned once, and this is what it did.
+    /// </summary>
+    /// <remarks>
+    /// Its own type because it is also the <b>counter</b>: how many spins a run has taken is how
+    /// many of these are in the history, and that is what decides whether another one is owed. It
+    /// carries its own <c>PointsDelta</c> when the face was a points face, so the wheel moves
+    /// points with one entry instead of two.
+    /// </remarks>
+    RouletteSpun,
+
+    /// <summary>
+    /// A run changed role after its LayeredFS world was regenerated for the new role.
+    /// </summary>
+    /// <remarks>
+    /// Roles normally belong to run creation because they shape the ROM. This type is the narrow,
+    /// explicit migration path for correcting an existing run: the old and new ids stay in the
+    /// chain, instead of somebody editing <c>run.json</c> and erasing why its world changed.
+    /// </remarks>
+    RoleChanged
 }
