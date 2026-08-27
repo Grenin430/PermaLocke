@@ -224,6 +224,21 @@
                                  anuncia el aviso de abajo con su propio botón. -->
                             <TextBlock Text="{Binding StageSourceText}" Style="{StaticResource Faint}"
                                        Foreground="{StaticResource AccentBrush}" Margin="0,6,0,0" />
+
+                            <Border Style="{StaticResource Divider}" />
+
+                            <TextBlock Text="ROL" Style="{StaticResource StatLabel}" />
+                            <DockPanel Margin="0,3,0,0">
+                                <!-- El rol se elige al crear la run y no debería moverse. El botón
+                                     existe porque un rol al que no se podía llegar -la ruleta del
+                                     ludópata- obligaba a empezar una run nueva para probarlo. -->
+                                <Button DockPanel.Dock="Right" Content="CAMBIAR"
+                                        Style="{StaticResource GhostButton}"
+                                        Command="{Binding ChangeRoleCommand}"
+                                        Padding="11,5" FontSize="10.5" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding RoleName}" Style="{StaticResource Body}"
+                                           VerticalAlignment="Center" />
+                            </DockPanel>
                         </StackPanel>
                 </Border>
 

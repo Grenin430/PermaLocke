@@ -19,6 +19,9 @@ public interface IAppDialogs
     /// <param name="prefill">Pokémon detected in the game, to fill the form with.</param>
     bool ShowRegisterCapture(LivePartyMember? prefill = null);
 
+    /// <returns>True when the run really changed role.</returns>
+    bool ShowChangeRole();
+
     /// <summary>
     /// Asks the player to confirm something that is hard to undo, such as replacing the world of
     /// a game already in progress.
@@ -44,6 +47,9 @@ public sealed class AppDialogs(IServiceProvider services) : IAppDialogs
         return Show(new RegisterCaptureWindow(viewModel));
     }
 
+
+    public bool ShowChangeRole() =>
+        Show(new ChangeRoleWindow(services.GetRequiredService<ChangeRoleViewModel>()));
 
     public bool Confirm(string title, string message) =>
         MessageBox.Show(Application.Current.MainWindow, message, title,

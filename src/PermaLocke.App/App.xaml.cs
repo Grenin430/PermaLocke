@@ -57,6 +57,7 @@ public partial class App : Application
         collection.AddSingleton<PokemonSpriteService>();
         collection.AddTransient<CreateRunViewModel>();
         collection.AddTransient<RegisterCaptureViewModel>();
+        collection.AddTransient<ChangeRoleViewModel>();
         collection.AddSingleton<HomeViewModel>();
         collection.AddSingleton<RandomizerViewModel>();
         collection.AddSingleton<GachaViewModel>();

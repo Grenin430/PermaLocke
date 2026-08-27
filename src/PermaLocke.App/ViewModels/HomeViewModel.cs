@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using PermaLocke.App.Services;
 using PermaLocke.Core.Abstractions;
 using PermaLocke.Core.Domain;
+using PermaLocke.Core.Services;
 using PermaLocke.Rules.Services;
 
 namespace PermaLocke.App.ViewModels;
@@ -37,6 +38,7 @@ public sealed partial class HomeViewModel : SectionViewModel
     private readonly IAppDialogs _dialogs;
     private readonly IUiDispatcher _ui;
     private readonly ProgressService _progress;
+    private readonly IRunRoles _roles;
     private readonly ILogger<HomeViewModel> _logger;
 
     public HomeViewModel(
@@ -48,6 +50,7 @@ public sealed partial class HomeViewModel : SectionViewModel
         IUiDispatcher ui,
         GameLinkMonitor gameLink,
         ProgressService progress,
+        IRunRoles roles,
         ILogger<HomeViewModel> logger) : base("HOME", "Estado de la run, equipo en vivo y últimos movimientos")
     {
         _runContext = runContext;
@@ -57,6 +60,7 @@ public sealed partial class HomeViewModel : SectionViewModel
         _dialogs = dialogs;
         _ui = ui;
         _progress = progress;
+        _roles = roles;
         _logger = logger;
 
         gameLink.SnapshotChanged += (_, snapshot) => _ = _ui.InvokeAsync(() =>
@@ -91,7 +95,12 @@ public sealed partial class HomeViewModel : SectionViewModel
     }
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ChangeRoleCommand))]
     private bool _hasRun;
+
+    /// <summary>Role of the run, as the catalogue names it. Empty while there is no run.</summary>
+    [ObservableProperty]
+    private string _roleName = string.Empty;
 
     [ObservableProperty]
     private string _runName = string.Empty;
@@ -257,6 +266,22 @@ public sealed partial class HomeViewModel : SectionViewModel
         }
     }
 
+    /// <summary>
+    /// Opens the role migration.
+    /// </summary>
+    /// <remarks>
+    /// Not something a run should normally do -- the role is chosen once, before the ROM is
+    /// randomized -- but a role with no way in is a role nobody can play, and that is worse.
+    /// </remarks>
+    [RelayCommand(CanExecute = nameof(HasRun))]
+    private async Task ChangeRoleAsync()
+    {
+        if (_dialogs.ShowChangeRole())
+        {
+            await RefreshAsync();
+        }
+    }
+
     private async Task RefreshAsync()
     {
         var run = _runContext.Current;
@@ -266,7 +291,7 @@ public sealed partial class HomeViewModel : SectionViewModel
 
         if (run is null)
         {
-            RunName = GameName = SeedLabel = PlayerName = string.Empty;
+            RunName = GameName = SeedLabel = PlayerName = RoleName = string.Empty;
             PointsBalance = AliveCount = DeadCount = EncounterCount = 0;
             Islands = [];
             IntegrityStatus = string.Empty;
@@ -277,6 +302,7 @@ public sealed partial class HomeViewModel : SectionViewModel
         GameName = run.Game == GameVersion.UltraMoon ? "Pokémon Ultra Luna" : "Pokémon Ultra Sol";
         SeedLabel = run.SeedLabel;
         PlayerName = run.PlayerName;
+        RoleName = _roles.Of(run.Id)?.Name ?? run.RoleId.ToUpperInvariant();
         Islands = [.. run.Islands.Select(i => new IslandRow(i.Name, DisplayNames.Of(i.State)))];
 
         // La etapa la deducen los logros: en cuanto el cristal Z de la prueba entra en la mochila,

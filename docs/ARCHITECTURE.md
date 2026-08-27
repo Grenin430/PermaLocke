@@ -4927,3 +4927,53 @@ La tarjeta del banner cambia «300 puntos» por «**2 tiradas gratis**» y se po
 **TIRAR GRATIS**. El panel del wonder trade lleva una chapa con los que quedan. Los dos números se
 vuelven a pedir después de cada uso en lugar de descontarse en la vista: una copia local sería un
 número más capaz de discrepar del historial.
+
+---
+
+## 64. Cambiar de rol, y cuadrar la run con la partida (2026-08-27)
+
+Tres cosas pequeñas que se estorbaban entre sí.
+
+### El rol no tenía puerta
+
+`RunService.ChangeRoleAsync` existía desde el §46 —con su motivo obligatorio, su evento y su
+retroceso si el evento falla— y **no había ningún sitio desde el que llamarlo**. Con el rol
+LUDÓPATA recién hecho eso pasó de ser una carencia teórica a un problema: la ruleta solo aparece en
+ese rol, así que para probarla había que empezar una run desde cero.
+
+Ahora hay un botón en la tarjeta de HOME. La ventana marca de entrada el rol actual, exige el
+motivo, y **avisa arriba y en grande de lo único que no se deshace**: cambiar de rol **no vuelve a
+randomizar**. Los niveles de los enemigos y el Pokémon extra de los combates importantes están
+escritos en el mod ya instalado y ahí se quedan; lo que cambia al momento son los puntos y las
+reglas de la aplicación. Venderlo sin decirlo sería vender media dificultad.
+
+### Un crédito que se habría pagado dos veces
+
+Al reconciliar la base de datos apareció un caso que no se ve razonando en abstracto. Las dos
+tiradas de ruleta del §62 salieron **antes** del §63, cuando una cara de gacha tiraba en el acto y
+entregaba el Pokémon. Si el crédito se dedujera de la cara ganadora mirándola en el catálogo, esas
+dos tiradas pagarían **otra vez** ahora, por un Archeops que ya está en la caja 6.
+
+Así que el crédito no se deduce: **cada tirada guarda en su propio evento a qué banners da crédito**,
+en el campo `credito`. Las tiradas viejas no lo llevan y por tanto no pagan nada. De rebote se gana
+otra propiedad que interesa igual: editar `Data/roulette.json` ya no puede reescribir crédito
+concedido.
+
+Es el mismo principio que la marca `gratis` del §63, aplicado del otro lado: **lo que se cobra y lo
+que se paga salen los dos de lo que el evento dijo que pasó**, nunca de la configuración de hoy.
+
+### La run vuelve a cuadrar con la partida
+
+Los diez eventos que se quedaron en la copia aislada del §62 —dos wonder trades, una tirada de
+gacha con su Archeops y las dos tiradas de ruleta— se han incorporado. Se comprobó dos veces que la
+copia era un **superconjunto estricto**: cero eventos en la real que no estuvieran en la copia, diez
+en la copia que no estuvieran en la real.
+
+Y con `Probe --intercambiados --arreglar` se han cerrado **26** registros que seguían `Alive` y cuyos
+Pokémon se habían entregado en wonder trades. Los **5 en disputa** se quedan: cuando el historial
+dice que se entregaron dos Giratina y solo hay uno sin PID, elegir cuál sería inventar historia.
+
+```
+antes:   Alive 189,  Traded  1
+después: Alive 163,  Traded 29
+```

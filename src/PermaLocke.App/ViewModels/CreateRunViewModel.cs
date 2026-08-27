@@ -181,6 +181,11 @@ public sealed partial class RoleChoiceViewModel(Role role, Action<RoleChoiceView
                 parts.Add($"+{Role.ExtraTrainerPokemon} Pokémon en combates importantes");
             }
 
+            if (Role.Roulette)
+            {
+                parts.Add("ruleta obligatoria tras cada hito");
+            }
+
             return string.Join(" · ", parts);
         }
     }

@@ -22,7 +22,6 @@ namespace PermaLocke.Core.Services;
 /// </remarks>
 public sealed class CreditService(
     ICreditCatalog catalog,
-    IRouletteCatalog roulette,
     AchievementService achievements,
     IEventStore events)
 {
@@ -105,35 +104,27 @@ public sealed class CreditService(
     /// Adds the rolls the wheel has handed out.
     /// </summary>
     /// <remarks>
-    /// Read back from the spin events rather than counted at the time: the event stores which face
-    /// won, and the face knows which banners it pays. That way the credit and the audit are the
-    /// same fact, and a wheel whose configuration changes does not rewrite what was already given.
+    /// <para>
+    /// Taken from what each spin <b>recorded that it granted</b>, in its own <c>credito</c> field,
+    /// and not by looking the winning face up in the catalogue. Two things follow, and both matter.
+    /// Editing <c>Data/roulette.json</c> cannot rewrite credit already given. And the spins made
+    /// before gacha faces started granting credit -- back when they rolled on the spot and handed
+    /// over the Pokémon there and then -- carry no such field, so they pay nothing now: otherwise
+    /// they would pay twice for the one Pokémon they already delivered.
+    /// </para>
     /// </remarks>
     private async Task AddWheelRollsAsync(Guid runId, Dictionary<string, int> rolls, CancellationToken ct)
     {
-        if (roulette.Faces.Count == 0)
-        {
-            return;
-        }
-
         var history = await events.GetAllAsync(runId, ct).ConfigureAwait(false);
 
         foreach (var spin in history.Where(e => e.Type == GameEventType.RouletteSpun))
         {
-            if (!spin.Data.TryGetValue("cara", out var faceId))
+            if (!spin.Data.TryGetValue("credito", out var granted) || granted.Length == 0)
             {
                 continue;
             }
 
-            var face = roulette.Faces.FirstOrDefault(f =>
-                string.Equals(f.Id, faceId, StringComparison.OrdinalIgnoreCase));
-
-            if (face is not { Effect: RouletteEffect.Gacha })
-            {
-                continue;
-            }
-
-            foreach (var banner in face.BannerIds)
+            foreach (var banner in granted.Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
             {
                 rolls[banner] = rolls.GetValueOrDefault(banner) + 1;
             }

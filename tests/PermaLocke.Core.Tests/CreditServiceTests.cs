@@ -28,35 +28,6 @@ public sealed class CreditServiceTests
         public bool LimitWonderTrades => limit;
     }
 
-    private sealed class Wheel : IRouletteCatalog
-    {
-        public IReadOnlyList<RouletteFace> Faces { get; init; } =
-        [
-            new("gacha-1", "1 tirada", "", true, RouletteEffect.Gacha, Banners: ["decente"]),
-            new("gacha-3", "3 tiradas", "", true, RouletteEffect.Gacha,
-                Banners: ["pocho", "decente", "bueno"]),
-            new("puntos-mas", "+200", "", true, RouletteEffect.Puntos, 200)
-        ];
-
-        public IReadOnlyList<int> GoodAbilities => [];
-
-        public IReadOnlyList<int> BadAbilities => [];
-
-        public IReadOnlyList<int> HealingItems => [];
-
-        public int SpinsPerTrial => 1;
-
-        public int SpinsForLeague => 3;
-
-        public int SpinsForRematch => 2;
-
-        public IReadOnlyList<string> TrialAchievements => ["prueba-01", "prueba-02", "prueba-08"];
-
-        public string LeagueAchievement => "alto-mando-campeon";
-
-        public string RematchAchievement => "alto-mando-otra-vez";
-    }
-
     private sealed class Events : IEventStore
     {
         public List<GameEvent> Appended { get; } = [];
@@ -115,7 +86,7 @@ public sealed class CreditServiceTests
     };
 
     private static (CreditService Service, Events Log) Build(
-        Records? records = null, Catalog? catalog = null, Wheel? wheel = null)
+        Records? records = null, Catalog? catalog = null)
     {
         var log = new Events();
         var clock = new FixedClock();
@@ -124,7 +95,7 @@ public sealed class CreditServiceTests
             new Achievements(Milestones()), new PointsService(log, clock), log, clock,
             records ?? new Records(), new FixedRole(FixedRole.Normal));
 
-        return (new CreditService(catalog ?? new Catalog(), wheel ?? new Wheel(), achievements, log), log);
+        return (new CreditService(catalog ?? new Catalog(), achievements, log), log);
     }
 
     private static GameEvent Roll(Guid runId, string banner, bool free) => new()
@@ -153,7 +124,7 @@ public sealed class CreditServiceTests
             : new Dictionary<string, string>()
     };
 
-    private static GameEvent Spin(Guid runId, string face) => new()
+    private static GameEvent Spin(Guid runId, string face, string credit = "") => new()
     {
         Id = Guid.NewGuid(),
         RunId = runId,
@@ -162,7 +133,7 @@ public sealed class CreditServiceTests
         Source = EventSource.System,
         Actor = "Grenin",
         Description = "ruleta",
-        Data = new Dictionary<string, string> { ["cara"] = face }
+        Data = new Dictionary<string, string> { ["cara"] = face, ["credito"] = credit }
     };
 
     [Fact]
@@ -210,8 +181,8 @@ public sealed class CreditServiceTests
         var (service, log) = Build(new Records(807));
         var run = TheRun();
 
-        await log.AppendAsync(Spin(run.Id, "gacha-1"));
-        await log.AppendAsync(Spin(run.Id, "gacha-3"));
+        await log.AppendAsync(Spin(run.Id, "gacha-1", "decente"));
+        await log.AppendAsync(Spin(run.Id, "gacha-3", "pocho,decente,bueno"));
         await log.AppendAsync(Spin(run.Id, "puntos-mas"));
 
         var earned = await service.EarnedAsync(run);

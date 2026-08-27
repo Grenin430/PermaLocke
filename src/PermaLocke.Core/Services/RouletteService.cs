@@ -373,6 +373,14 @@ public sealed class RouletteService(
                 ["buena"] = wheel.Winner.Good.ToString(),
                 ["efecto"] = action.Effect.ToString(),
                 ["ruedaCompleta"] = string.Join(", ", wheel.Faces.Select(f => f.Id)),
+
+                // Los banners a los que esta tirada da credito, o vacio. Va en el evento y no se
+                // deduce luego de la cara: asi el credito es lo que la tirada DIJO que daba, y ni
+                // editar Data/roulette.json ni el hecho de que las caras de gacha antes tirasen en
+                // el acto reescriben lo que ya se cobro.
+                ["credito"] = wheel.Winner.Effect == RouletteEffect.Gacha
+                    ? string.Join(",", wheel.Winner.BannerIds)
+                    : string.Empty,
                 ["hecho"] = string.Join(" | ", lines)
             }
         }, ct);

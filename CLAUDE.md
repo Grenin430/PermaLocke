@@ -666,6 +666,18 @@ limitados**, que es lo único que hace que «te dan 1 wonder trade» signifique 
 e ilimitados-; va como `limitarWonderTrades` en el JSON, y **si el fichero falta no se limita nada**.
 Ver §63.
 
+**Cambiar de rol, y cuadrar la run con la partida (2026-08-27).** `ChangeRoleAsync` existía desde el
+§46 y **no tenía ningún sitio desde el que llamarse**, así que el rol LUDÓPATA era inalcanzable sin
+empezar una run nueva. Ya hay botón en HOME: marca el rol actual, exige el motivo y **avisa de que
+cambiar de rol NO vuelve a randomizar** -los niveles y el Pokémon extra están escritos en el mod
+instalado-. De paso apareció un crédito que se habría pagado dos veces: las dos tiradas de ruleta
+son de cuando la cara de gacha tiraba en el acto, así que **cada tirada guarda ahora en su evento a
+qué banners da crédito** (`credito`) en vez de deducirlo de la cara; las viejas no lo llevan y no
+pagan. Mismo principio que la marca `gratis`: lo que se cobra y lo que se paga salen de lo que el
+evento dijo que pasó, no de la configuración de hoy. Y la run vuelve a cuadrar con la partida: los
+diez eventos de la copia aislada incorporados -comprobado dos veces que era superconjunto estricto-
+y 26 registros cerrados como entregados. **Alive 189 → 163, Traded 1 → 29.** Ver §64.
+
 **Siguiente.** Sincronización, y probar en partida real los combates importantes, los iniciales y
 las tiendas.
 
