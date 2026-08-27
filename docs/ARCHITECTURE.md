@@ -5280,3 +5280,32 @@ con una frase que explique de dónde salen. Y la tarjeta del premio dice `LLEGA 
 Hay prueba de que el fichero que se reparte lleva de verdad la marca: una bandera que el lector
 ignorase en silencio apagaría la función sin que fallara nada, que es exactamente la forma del bug
 del que sale toda esta sección.
+
+### Y en vivo, como el cap (2026-08-28)
+
+El Shedinja y las muertes ya funcionaban en vivo, porque van por memoria. Lo que seguía pidiendo
+guardar a mano eran otras dos cosas, y las dos por el mismo motivo de fondo: **preguntarle al
+fichero de partida algo que la memoria sabe antes**.
+
+**La condición del premio.** «¿Lleva Poké Balls?» se leía de `IGameRecords`, que lee el save, o sea
+que las Super Balls no llegaban hasta que el jugador guardaba. Pero la mochila viva se lee desde el
+§22, así que ahora se pregunta **primero al juego en marcha y solo después al fichero**. El orden es
+todo el arreglo: el save dice lo que había la última vez que se guardó, y la memoria dice lo que hay.
+
+El respaldo no es adorno: con Azahar cerrado la mochila viva no puede contestar, y la pantalla tiene
+que poder seguir diciendo si un premio está ganado. Lo que no puede hacer es contestar **mal**, así
+que los dos extremos fallan hacia «no ganado». Hay una trampa de contrato que quedó escrita en el
+propio código y en el doble del test: `CarriedAllAsync` devuelve **una entrada por id preguntado,
+aunque valga cero**, cuando el juego responde, y **el diccionario vacío** cuando no. Por eso vacío
+significa «no se sabe» y no «no lleva ninguno», y por eso solo se pregunta con una lista no vacía.
+
+De paso, la comprobación automática dejó de pasar por `GetStatusAsync`: se llama en bucle, así que
+mira primero el historial y, si los premios automáticos ya están recogidos, **no toca ni la partida
+ni la mochila**. Un premio de una vez no se des-recoge nunca. Con eso el intervalo baja de 30 s a 5.
+
+**Y lo que la app hacía sin que se viera.** Una muerte se registraba y se cobraba bien, y HOME
+seguía enseñando el saldo viejo hasta que el jugador salía de la sección y volvía a entrar. El
+evento `TeamWiped` llevaba desde el §36 lanzándose **sin que nadie lo escuchara**. Ahora el monitor
+lanza `RunDataChanged` una vez por ciclo y **solo si de verdad cambió algo** —registro, muerte,
+equipo caído, premio—, y HOME se refresca con eso. Trabajo hecho y sin verse se lee igual que
+trabajo no hecho.

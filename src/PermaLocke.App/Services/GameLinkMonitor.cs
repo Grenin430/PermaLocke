@@ -42,8 +42,16 @@ public sealed class GameLinkMonitor(
     /// </remarks>
     private static readonly TimeSpan Interval = TimeSpan.FromSeconds(1);
 
-    /// <summary>How often the automatic prizes are looked at. Cheap to say, expensive to answer.</summary>
-    private static readonly TimeSpan RewardInterval = TimeSpan.FromSeconds(30);
+    /// <summary>
+    /// How often the automatic prizes are looked at.
+    /// </summary>
+    /// <remarks>
+    /// Five seconds, because the answer now comes from the live bag rather than the save file and
+    /// the check short-circuits on the history once everything automatic is taken. It was thirty
+    /// while it parsed the whole partida every time, and thirty seconds is a long time to stand
+    /// there wondering whether it worked.
+    /// </remarks>
+    private static readonly TimeSpan RewardInterval = TimeSpan.FromSeconds(5);
 
     private readonly CancellationTokenSource _stopping = new();
     private Task? _loop;
@@ -62,6 +70,17 @@ public sealed class GameLinkMonitor(
 
     /// <summary>Raised when a prize was handed over without anybody asking for it.</summary>
     public event EventHandler<RewardResult>? RewardGiven;
+
+    /// <summary>
+    /// Raised whenever the monitor changed the run: a registration, a death, a wipe, a prize.
+    /// </summary>
+    /// <remarks>
+    /// So the screens follow the game instead of the player's navigation. Without it a death was
+    /// recorded and charged correctly and HOME kept showing the old balance until somebody left
+    /// the section and came back — the work was done and invisible, which reads exactly like the
+    /// work not being done.
+    /// </remarks>
+    public event EventHandler? RunDataChanged;
 
     public void Start()
     {
@@ -130,6 +149,7 @@ public sealed class GameLinkMonitor(
         }
 
         var findings = await watcher.InspectAsync(run.Id, snapshot, _stopping.Token);
+        var changed = false;
 
         // Antes que las muertes: el vigilante empareja por PID contra lo registrado, asi que un
         // Pokemon sin registrar es invisible y no puede morirse. Registrando primero, uno que
@@ -138,6 +158,7 @@ public sealed class GameLinkMonitor(
         if (findings.NewMembers.Count > 0
             && await RegisterNewMembersAsync(run, findings.NewMembers) > 0)
         {
+            changed = true;
             findings = await watcher.InspectAsync(run.Id, snapshot, _stopping.Token);
         }
 
@@ -146,6 +167,7 @@ public sealed class GameLinkMonitor(
             logger.LogWarning("Muerte detectada: {Pokemon}", dead.Nickname ?? dead.SpeciesName);
             await watcher.RecordDeathAsync(dead, run.PlayerName, _stopping.Token);
             ApplyDeathInGame(snapshot, dead);
+            changed = true;
         }
 
         if (findings.NewMembers.Count > 0)
@@ -153,10 +175,17 @@ public sealed class GameLinkMonitor(
             UnregisteredDetected?.Invoke(this, findings.NewMembers);
         }
 
-        await CheckWipeAsync(run, snapshot);
+        changed |= await CheckWipeAsync(run, snapshot);
         await EnforceLevelCapAsync(run, snapshot);
         await ApplyBallRuleAsync(run);
-        await ClaimAutomaticRewardsAsync(run);
+        changed |= await ClaimAutomaticRewardsAsync(run);
+
+        // Una sola vez por ciclo, y solo si de verdad cambio algo: las pantallas se refrescan
+        // porque el juego se movio, no porque el reloj haya dado otra vuelta.
+        if (changed)
+        {
+            RunDataChanged?.Invoke(this, EventArgs.Empty);
+        }
     }
 
     /// <summary>
@@ -231,19 +260,21 @@ public sealed class GameLinkMonitor(
     /// After the individual deaths, not before: each of them costs on its own, and the wipe is
     /// charged on top for the party falling as a whole.
     /// </remarks>
-    private async Task CheckWipeAsync(Run run, GameSnapshot snapshot)
+    /// <returns>True when the wipe was charged, so the screens know to catch up.</returns>
+    private async Task<bool> CheckWipeAsync(Run run, GameSnapshot snapshot)
     {
         var result = await watcher.CheckWipeAsync(run.Id, run.PlayerName, snapshot, _stopping.Token);
 
         if (result is null)
         {
-            return;
+            return false;
         }
 
         logger.LogWarning("Equipo caído. Penalización: {Points} puntos{Capped}. Saldo: {Balance}",
             result.Points, result.Capped ? " (tope alcanzado)" : string.Empty, result.NewBalance);
 
         TeamWiped?.Invoke(this, result);
+        return true;
     }
 
     /// <summary>
@@ -400,14 +431,16 @@ public sealed class GameLinkMonitor(
     /// file through PKHeX, and doing that once a second next to the party poll would be a real
     /// cost for an answer that changes about twice a run.
     /// </remarks>
-    private async Task ClaimAutomaticRewardsAsync(Run run)
+    /// <returns>True when something was actually handed over.</returns>
+    private async Task<bool> ClaimAutomaticRewardsAsync(Run run)
     {
         if (clock.Now - _lastRewardCheck < RewardInterval)
         {
-            return;
+            return false;
         }
 
         _lastRewardCheck = clock.Now;
+        var handed = false;
 
         try
         {
@@ -415,6 +448,7 @@ public sealed class GameLinkMonitor(
             {
                 if (given.Succeeded)
                 {
+                    handed = true;
                     logger.LogInformation("Premio automático entregado: {Message}", given.Message);
                     RewardGiven?.Invoke(this, given);
                 }
@@ -428,6 +462,8 @@ public sealed class GameLinkMonitor(
         {
             logger.LogError(ex, "Falló la entrega automática de premios");
         }
+
+        return handed;
     }
 
     /// <summary>

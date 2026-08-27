@@ -748,7 +748,16 @@ Y las Super Balls pasan a `"automatico": true` en `Data/rewards.json`: un premio
 junto a las Poké Balls de Tilo y que hay que ir a buscar a otra pantalla no es un premio, son
 deberes. Mismas condiciones, misma relectura, mismo `RewardClaimed`; solo cambia quién pulsa. Va a
 una consulta cada 30 s porque saber si está ganado lee el save entero. Y **se dice**: HOME enseña en
-verde lo último que la app ha hecho sola. Ver §68.
+verde lo último que la app ha hecho sola.
+
+Y todo eso **en vivo, como el cap**: la condición del premio se preguntaba al fichero de partida, o
+sea que exigía guardar a mano; ahora se pregunta **primero a la mochila viva** (§22) y solo se cae al
+save si Azahar está cerrado. Trampa de contrato que conviene no olvidar: `CarriedAllAsync` devuelve
+una entrada por id **aunque valga cero** cuando el juego responde, y el diccionario **vacío** cuando
+no, así que vacío es «no se sabe» y no «no lleva ninguno». Además el monitor lanza `RunDataChanged`
+cuando de verdad cambia algo y HOME se refresca solo: `TeamWiped` llevaba desde el §36 lanzándose
+**sin que nadie lo escuchara**, así que una muerte se cobraba bien y el saldo de la pantalla no se
+movía hasta salir y volver a entrar. Ver §68.
 
 **Siguiente.** Sincronización, y probar en partida real los combates importantes, los iniciales y
 las tiendas.

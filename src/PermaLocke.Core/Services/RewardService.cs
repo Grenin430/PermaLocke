@@ -51,7 +51,7 @@ public sealed class RewardService(
         var unlocked = await UnlockedAsync(run, ct).ConfigureAwait(false);
         var claimed = await ClaimedAsync(run.Id, ct).ConfigureAwait(false);
 
-        var held = await HeldAsync(ct).ConfigureAwait(false);
+        var held = await HeldAsync(WantedItems(catalog.All), ct).ConfigureAwait(false);
 
         return
         [
@@ -77,24 +77,50 @@ public sealed class RewardService(
     {
         ArgumentNullException.ThrowIfNull(run);
 
-        if (catalog.All.All(reward => !reward.Automatic))
+        var automatic = catalog.All.Where(reward => reward.Automatic).ToList();
+
+        if (automatic.Count == 0)
         {
             return [];
         }
 
-        var pending = (await GetStatusAsync(run, ct).ConfigureAwait(false))
-            .Where(status => status.Reward.Automatic && status.CanClaim)
-            .ToList();
+        // Deliberadamente NO pasa por GetStatusAsync, que pregunta por todos los premios. Esto se
+        // llama en bucle desde el enlace con el juego, asi que cada lectura que no haga falta se
+        // paga muchas veces: una vez recogidos, la comprobacion no toca ni la partida ni la
+        // mochila, solo el historial, y un premio de una vez no se des-recoge nunca.
+        var claimed = await ClaimedAsync(run.Id, ct).ConfigureAwait(false);
+        var pending = automatic.Where(reward => !claimed.Contains(reward.Id)).ToList();
+
+        if (pending.Count == 0)
+        {
+            return [];
+        }
+
+        var held = await HeldAsync(WantedItems(pending), ct).ConfigureAwait(false);
+
+        var unlocked = pending.Any(reward => reward.Achievements.Count > 0)
+            ? await UnlockedAsync(run, ct).ConfigureAwait(false)
+            : [];
 
         var given = new List<RewardResult>();
 
-        foreach (var status in pending)
+        foreach (var reward in pending)
         {
-            given.Add(await ClaimAsync(run, status.Reward.Id, ct).ConfigureAwait(false));
+            var earned = reward.Achievements.All(unlocked.Contains)
+                         && reward.HeldItems.All(held.Contains);
+
+            if (earned)
+            {
+                given.Add(await ClaimAsync(run, reward.Id, ct).ConfigureAwait(false));
+            }
         }
 
         return given;
     }
+
+    /// <summary>Every item id some reward is waiting on, asked for in one go.</summary>
+    private static IReadOnlyList<int> WantedItems(IEnumerable<Reward> rewards) =>
+        [.. rewards.SelectMany(reward => reward.HeldItems).Distinct()];
 
     public async Task<RewardResult> ClaimAsync(Run run, string rewardId, CancellationToken ct = default)
     {
@@ -114,7 +140,7 @@ public sealed class RewardService(
         }
 
         var unlocked = await UnlockedAsync(run, ct).ConfigureAwait(false);
-        var held = await HeldAsync(ct).ConfigureAwait(false);
+        var held = await HeldAsync(reward.HeldItems, ct).ConfigureAwait(false);
 
         var missing = reward.Achievements.Where(id => !unlocked.Contains(id))
             .Concat(reward.HeldItems.Where(id => !held.Contains(id)).Select(id => items.GetName(id)))
@@ -200,15 +226,47 @@ public sealed class RewardService(
     }
 
     /// <summary>
-    /// What the player is carrying, from the saved game.
+    /// What the player is carrying: the live bag first, the saved game as the fallback.
     /// </summary>
     /// <remarks>
-    /// Empty when the save cannot be read, which makes an item condition simply not met rather
-    /// than met by accident: a reward that hands itself over because a file was missing would be
-    /// the worst way to fail.
+    /// <para>
+    /// The order is the whole point. The save only tells you what the bag held the last time the
+    /// player saved, so a prize conditioned on carrying something would sit there dark until they
+    /// remembered to save — which is exactly the complaint that produced this. The running game's
+    /// bag is readable directly (§22) and changes the moment the item does, so the prize arrives
+    /// on picking the item up, the same way the level cap acts without anybody saving.
+    /// </para>
+    /// <para>
+    /// The fallback is not decoration: with Azahar closed the live bag cannot answer at all, and
+    /// falling back means the screen can still say whether a prize is earned. What it must never
+    /// do is answer <em>wrongly</em>, so an unreachable game returns no items rather than none
+    /// carried, and both ends fail towards "not earned".
+    /// </para>
     /// </remarks>
-    private async Task<IReadOnlySet<int>> HeldAsync(CancellationToken ct)
+    private async Task<IReadOnlySet<int>> HeldAsync(IReadOnlyList<int> wanted, CancellationToken ct)
     {
+        if (wanted.Count == 0)
+        {
+            return new HashSet<int>();
+        }
+
+        try
+        {
+            // Con el juego respondiendo devuelve una entrada por id pedido, aunque sea cero; con el
+            // juego cerrado devuelve el diccionario vacio. Por eso vacio significa «no se sabe» y
+            // no «no lleva ninguno», y por eso se pregunta solo por una lista no vacia.
+            var live = await delivery.CarriedAllAsync(wanted, ct).ConfigureAwait(false);
+
+            if (live.Count > 0)
+            {
+                return live.Where(pair => pair.Value > 0).Select(pair => pair.Key).ToHashSet();
+            }
+        }
+        catch (Exception)
+        {
+            // Se cae al fichero de partida, que es peor pero es algo.
+        }
+
         try
         {
             var snapshot = await records.ReadAsync(ct).ConfigureAwait(false);

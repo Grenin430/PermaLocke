@@ -87,11 +87,23 @@ public sealed class RewardServiceTests
             return Task.FromResult(new ItemDeliveryResult(true, amount, string.Empty));
         }
 
-        public Task<int> CarriedAsync(int itemId, CancellationToken ct = default) => Task.FromResult(0);
+        /// <summary>Item ids the live bag holds. Nothing to do with what the save remembers.</summary>
+        public IReadOnlyList<int> Carrying { get; init; } = [];
 
+        public Task<int> CarriedAsync(int itemId, CancellationToken ct = default) =>
+            Task.FromResult(Carrying.Contains(itemId) ? 1 : 0);
+
+        /// <summary>
+        /// Copies the real contract, because the caller depends on it: a reachable game answers
+        /// with one entry per id asked for, even when the count is zero, and an unreachable one
+        /// answers with nothing at all. That is what lets "empty" mean "cannot tell" instead of
+        /// "carries none", and a fake that blurred the two would hide the bug it exists to catch.
+        /// </summary>
         public Task<IReadOnlyDictionary<int, int>> CarriedAllAsync(
             IReadOnlyList<int> itemIds, CancellationToken ct = default) =>
-            Task.FromResult<IReadOnlyDictionary<int, int>>(new Dictionary<int, int>());
+            Task.FromResult<IReadOnlyDictionary<int, int>>(Reachable
+                ? itemIds.Distinct().ToDictionary(id => id, id => Carrying.Contains(id) ? 1 : 0)
+                : new Dictionary<int, int>());
     }
 
     private sealed class Items : IItemLookup
@@ -276,16 +288,49 @@ public sealed class RewardServiceTests
         Assert.False(status.CanClaim);
     }
 
+    /// <summary>
+    /// Carrying it in the <b>running game</b> is enough, with a save that knows nothing about it.
+    /// </summary>
+    /// <remarks>
+    /// The point of reading the live bag: the save only says what the bag held last time the player
+    /// saved, so a prize that waited for it would sit dark until somebody remembered to save.
+    /// </remarks>
     [Fact]
-    public async Task Carrying_the_item_is_enough_to_earn_it()
+    public async Task Carrying_the_item_in_the_running_game_is_enough()
     {
-        var (service, log, bag) = Build(new Records(4), reward: FirstBalls);
+        var (service, log, bag) = Build(new Records(), new Bag { Carrying = [4] }, FirstBalls);
 
         var result = await service.ClaimAsync(TheRun(), "primeras-balls");
 
         Assert.Equal(RewardOutcome.Delivered, result.Outcome);
         Assert.Equal((3, 10), Assert.Single(bag.Given));
         Assert.Contains(log.Appended, e => e.Type == GameEventType.RewardClaimed);
+    }
+
+    /// <summary>With the game closed the save answers, so the screen is not left blank.</summary>
+    [Fact]
+    public async Task With_the_game_closed_the_save_still_answers()
+    {
+        var (service, _, _) = Build(new Records(4),
+            new Bag { Reachable = false }, FirstBalls);
+
+        var status = Assert.Single(await service.GetStatusAsync(TheRun()));
+
+        Assert.True(status.CanClaim);
+    }
+
+    /// <summary>
+    /// The live bag wins over the save when both can speak. A Poké Ball is spent, unlike a
+    /// Z-Crystal, so the truthful answer is the current one even when it turns the prize off.
+    /// </summary>
+    [Fact]
+    public async Task The_running_game_wins_over_what_the_save_remembers()
+    {
+        var (service, _, bag) = Build(new Records(4), new Bag(), FirstBalls);
+
+        Assert.Equal(RewardOutcome.NotEarned,
+            (await service.ClaimAsync(TheRun(), "primeras-balls")).Outcome);
+        Assert.Empty(bag.Given);
     }
 
     [Fact]
@@ -302,13 +347,13 @@ public sealed class RewardServiceTests
     }
 
     /// <summary>
-    /// A save that cannot be read leaves the condition unmet. It is the direction that matters: a
-    /// prize that hands itself over because a file was missing is the worst way to fail.
+    /// Neither source can answer, so the condition is unmet. It is the direction that matters: a
+    /// prize that hands itself over because nothing could be read is the worst way to fail.
     /// </summary>
     [Fact]
-    public async Task An_unreadable_save_does_not_earn_it()
+    public async Task With_nothing_readable_it_is_not_earned()
     {
-        var (service, _, bag) = Build(new Blind(), reward: FirstBalls);
+        var (service, _, bag) = Build(new Blind(), new Bag { Reachable = false }, FirstBalls);
 
         Assert.Equal(RewardOutcome.NotEarned,
             (await service.ClaimAsync(TheRun(), "primeras-balls")).Outcome);
@@ -323,7 +368,7 @@ public sealed class RewardServiceTests
     public async Task An_automatic_prize_is_handed_over_without_being_asked()
     {
         var automatic = FirstBalls with { Automatic = true };
-        var (service, log, bag) = Build(new Records(4), reward: automatic);
+        var (service, log, bag) = Build(new Records(), new Bag { Carrying = [4] }, automatic);
         var run = TheRun();
 
         var given = Assert.Single(await service.ClaimAutomaticAsync(run));
@@ -337,7 +382,8 @@ public sealed class RewardServiceTests
     [Fact]
     public async Task An_automatic_prize_is_not_handed_over_twice()
     {
-        var (service, _, bag) = Build(new Records(4), reward: FirstBalls with { Automatic = true });
+        var (service, _, bag) = Build(new Records(), new Bag { Carrying = [4] },
+            FirstBalls with { Automatic = true });
         var run = TheRun();
 
         await service.ClaimAutomaticAsync(run);
@@ -359,7 +405,7 @@ public sealed class RewardServiceTests
     [Fact]
     public async Task A_manual_prize_is_left_alone()
     {
-        var (service, _, bag) = Build(new Records(4), reward: FirstBalls);
+        var (service, _, bag) = Build(new Records(), new Bag { Carrying = [4] }, FirstBalls);
 
         Assert.Empty(await service.ClaimAutomaticAsync(TheRun()));
         Assert.Empty(bag.Given);

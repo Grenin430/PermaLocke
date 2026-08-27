@@ -85,11 +85,23 @@ public sealed partial class HomeViewModel : SectionViewModel
 
         // Un premio que llega solo tiene que decirlo: lo contrario es que aparezcan diez Super
         // Balls en la mochila y nadie sepa de dónde han salido.
-        gameLink.RewardGiven += (_, given) => _ = _ui.InvokeAsync(async () =>
+        gameLink.RewardGiven += (_, given) => _ = _ui.InvokeAsync(() =>
         {
             AutoNotice = given.Message;
-            await RefreshAsync();
+            return Task.CompletedTask;
         });
+
+        gameLink.TeamWiped += (_, penalty) => _ = _ui.InvokeAsync(() =>
+        {
+            AutoNotice = $"Equipo caído. {penalty.Points} puntos"
+                         + (penalty.Capped ? " (tope alcanzado)." : ".");
+            return Task.CompletedTask;
+        });
+
+        // Lo que la app hace sola tiene que verse sola. Sin esto una muerte quedaba registrada y
+        // cobrada bien, y HOME seguía enseñando el saldo viejo hasta que el jugador salía de la
+        // sección y volvía a entrar: el trabajo hecho y sin verse, que se lee igual que no hecho.
+        gameLink.RunDataChanged += (_, _) => _ = SafeRefreshAsync();
 
         // Fired from whatever thread finished loading the run, so the refresh has to be
         // marshalled to the UI thread before it touches the bound collections.
