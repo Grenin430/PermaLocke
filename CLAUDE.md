@@ -704,9 +704,7 @@ hacerlo, que llevaba desde el §19 dicho sin medir: **las entradas 0-2 de la tab
 iniciales**, porque en el cartucho sin parchear valen **722, 725 y 728**.
 
 Y ya se puede **empezar de cero** con una run cargada, cosa que no se podía: CREAR RUN solo existía
-en el HOME vacío. El botón nuevo crea una run con su propia seed y avisa antes de las tres cosas que
-**no** hace -no borra la run vieja, que conserva su historial encadenado; no toca la partida de Ultra
-Luna; y no vuelve a randomizar-.
+en el HOME vacío.
 
 Y cada pantalla dice arriba a la derecha si necesita el juego **abierto** (verde), **cerrado**
 (ámbar) o le **da igual** (apagado), con una línea diciendo por qué. Son las dos puertas de siempre
@@ -714,6 +712,22 @@ Y cada pantalla dice arriba a la derecha si necesita el juego **abierto** (verde
 pulsar. Cada sección lo declara en `SectionViewModel.Needs`, no hay tabla en el shell: la respuesta
 sale de por qué puerta escribe cada una. El VISOR va marcado **cerrado** aunque leer funcione
 siempre, porque la insignia falla hacia el lado que no rompe nada. Ver §66.
+
+**Empezar de cero borra de verdad (2026-08-27).** A petición del jugador, el botón del §66 pasa de
+crear una run nueva a **borrar la run entera y la partida**. La run son tres almacenes -carpeta,
+tabla `events`, tabla `pokemon`- con un test por cada uno y otro que exige que **una segunda run no
+sea daño colateral**. La partida es fichero de otro programa: `SaveEraser` la **copia antes y sin
+copia no borra**, va a `Saves/backup/borrada-<fecha>/`, y es deliberadamente estrecho -vacía la
+carpeta del título y **se niega** si esa carpeta no es la de Ultra Luna, en cuyo caso borra solo el
+`main` que localizó-. El orden lo decide qué puede fallar: **primero la partida**, que es la que
+puede negarse porque Azahar la tenga abierta, y así fallar ahí lo deja todo como estaba.
+
+Y una aclaración sobre el registro encadenado: `DeleteRunAsync` es el único DELETE y **no es una
+grieta**, porque no existe forma de borrar **un** evento -la cláusula es `WHERE run_id` y no hay
+sobrecarga que acepte un id de evento-. Borrar uno suelto dejaría una cadena cuyos hashes siguen
+cuadrando alrededor del hueco; borrar la run entera no deja nada que falsificar. Una run descartada
+no es una run corregida. Por lo mismo no se escribe evento de despedida: iría a la cadena que se está
+borrando. Ver §67.
 
 **Siguiente.** Sincronización, y probar en partida real los combates importantes, los iniciales y
 las tiendas.

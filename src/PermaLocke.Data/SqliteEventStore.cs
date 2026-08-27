@@ -91,6 +91,27 @@ public sealed class SqliteEventStore : IEventStore, IDisposable
         return await ReadAllAsync(command, ct).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Deletes every event of one run.
+    /// </summary>
+    /// <remarks>
+    /// The only DELETE in the store, and it is deliberately all-or-nothing per run: the clause is
+    /// <c>WHERE run_id</c> and there is no overload that takes an event id. Removing a single event
+    /// would leave a chain whose hashes still line up around the gap, which is the one thing this
+    /// table exists to make impossible.
+    /// </remarks>
+    public async Task<int> DeleteRunAsync(Guid runId, CancellationToken ct = default)
+    {
+        await using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync(ct).ConfigureAwait(false);
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = "DELETE FROM events WHERE run_id = $run;";
+        command.Parameters.AddWithValue("$run", runId.ToString("N"));
+
+        return await command.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+    }
+
     public async Task<IntegrityReport> VerifyChainAsync(Guid runId, CancellationToken ct = default)
     {
         var all = await GetAllAsync(runId, ct).ConfigureAwait(false);

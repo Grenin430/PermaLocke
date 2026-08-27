@@ -26,6 +26,9 @@ public sealed class EvTrainingServiceTests
         public Task<IReadOnlyList<GameEvent>> GetLatestAsync(Guid runId, int count, CancellationToken ct = default) =>
             Task.FromResult<IReadOnlyList<GameEvent>>(Appended);
 
+        public Task<int> DeleteRunAsync(Guid runId, CancellationToken ct = default) =>
+            throw new NotSupportedException();
+
         public Task<IntegrityReport> VerifyChainAsync(Guid runId, CancellationToken ct = default) =>
             throw new NotSupportedException();
     }

@@ -40,7 +40,8 @@ public static class RoleProbe
 
         using var events = new SqliteEventStore(Path.Combine(saves, "permalocke.db"));
         var context = new RunContext();
-        var service = new RunService(repository, events, context, new SystemClock());
+        var pokemon = new SqlitePokemonRepository(Path.Combine(saves, "permalocke.db"));
+        var service = new RunService(repository, events, pokemon, context, new SystemClock());
         var updated = await service.ChangeRoleAsync(run, target.Id,
             "Mod LayeredFS regenerado e instalado antes de migrar la run.");
 

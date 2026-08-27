@@ -37,6 +37,19 @@ public sealed class SqlitePokemonRepository : IPokemonRepository
         return await ReadAllAsync(command, ct).ConfigureAwait(false);
     }
 
+    /// <summary>Deletes every Pokémon of one run, and only of that run.</summary>
+    public async Task<int> DeleteRunAsync(Guid runId, CancellationToken ct = default)
+    {
+        await using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync(ct).ConfigureAwait(false);
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = "DELETE FROM pokemon WHERE run_id = $run;";
+        command.Parameters.AddWithValue("$run", runId.ToString("N"));
+
+        return await command.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+    }
+
     public async Task<PokemonEntry?> GetAsync(Guid pokemonId, CancellationToken ct = default)
     {
         await using var connection = new SqliteConnection(_connectionString);

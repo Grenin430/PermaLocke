@@ -48,6 +48,9 @@ public sealed class WonderTradeServiceTests
         public Task<IReadOnlyList<GameEvent>> GetLatestAsync(Guid runId, int count, CancellationToken ct = default) =>
             Task.FromResult<IReadOnlyList<GameEvent>>(Appended);
 
+        public Task<int> DeleteRunAsync(Guid runId, CancellationToken ct = default) =>
+            throw new NotSupportedException();
+
         public Task<IntegrityReport> VerifyChainAsync(Guid runId, CancellationToken ct = default) =>
             throw new NotSupportedException();
     }
@@ -59,6 +62,11 @@ public sealed class WonderTradeServiceTests
 
         public Task<PokemonEntry?> GetAsync(Guid pokemonId, CancellationToken ct = default) =>
             Task.FromResult<PokemonEntry?>(null);
+
+        public Task<int> DeleteRunAsync(Guid runId, CancellationToken ct = default) =>
+
+            throw new NotSupportedException();
+
 
         public Task SaveAsync(PokemonEntry pokemon, CancellationToken ct = default) => Task.CompletedTask;
     }
@@ -85,6 +93,11 @@ public sealed class WonderTradeServiceTests
 
         public Task<PokemonEntry?> GetAsync(Guid pokemonId, CancellationToken ct = default) =>
             Task.FromResult(Entries.FirstOrDefault(p => p.Id == pokemonId));
+
+        public Task<int> DeleteRunAsync(Guid runId, CancellationToken ct = default) =>
+
+            throw new NotSupportedException();
+
 
         public Task SaveAsync(PokemonEntry pokemon, CancellationToken ct = default)
         {

@@ -10,6 +10,7 @@ public sealed class RunServiceTests : IDisposable
 {
     private readonly string _root = Path.Combine(Path.GetTempPath(), $"permalocke-run-{Guid.NewGuid():N}");
     private readonly SqliteEventStore _events;
+    private readonly SqlitePokemonRepository _pokemon;
     private readonly RunService _service;
     private readonly RunContext _context = new();
 
@@ -17,7 +18,9 @@ public sealed class RunServiceTests : IDisposable
     {
         Directory.CreateDirectory(_root);
         _events = new SqliteEventStore(Path.Combine(_root, "permalocke.db"));
-        _service = new RunService(new JsonRunRepository(_root), _events, _context, new FixedClock());
+        _pokemon = new SqlitePokemonRepository(Path.Combine(_root, "permalocke.db"));
+        _service = new RunService(new JsonRunRepository(_root), _events, _pokemon,
+            _context, new FixedClock());
     }
 
     private static CreateRunRequest Request(string name = "Run de prueba") =>
@@ -111,6 +114,78 @@ public sealed class RunServiceTests : IDisposable
         Assert.Equal(changed, _context.Current);
         Assert.Equal("experto", migration.Data["desde"]);
         Assert.Equal("ludopata", migration.Data["hasta"]);
+    }
+
+    /// <summary>
+    /// Deleting a run takes the whole thing: folder, events and Pokémon.
+    /// </summary>
+    /// <remarks>
+    /// The three are checked separately on purpose. Each lives in a different place -- a folder, a
+    /// table, another table -- and a deletion that forgot one of them would leave the app looking
+    /// clean while the rows it no longer names sat in the database forever.
+    /// </remarks>
+    [Fact]
+    public async Task Deleting_a_run_takes_its_folder_its_events_and_its_pokemon()
+    {
+        var run = await _service.CreateAsync(Request());
+
+        await _pokemon.SaveAsync(new PokemonEntry
+        {
+            Id = Guid.NewGuid(),
+            RunId = run.Id,
+            Species = 25,
+            SpeciesName = "Pikachu",
+            Level = 5,
+            Origin = PokemonOrigin.Capture,
+            EncounterType = EncounterType.Wild,
+            ObtainedAt = new DateTimeOffset(2026, 8, 17, 12, 0, 0, TimeSpan.Zero)
+        });
+
+        var gone = await _service.DeleteAsync(run.Id);
+
+        Assert.True(gone.Deleted);
+        Assert.Equal("Run de prueba", gone.Name);
+        Assert.Equal(1, gone.Events);
+        Assert.Equal(1, gone.Pokemon);
+
+        Assert.False(Directory.Exists(Path.Combine(_root, run.Id.ToString("N"))));
+        Assert.Empty(await _events.GetAllAsync(run.Id));
+        Assert.Empty(await _pokemon.GetAllAsync(run.Id));
+    }
+
+    /// <summary>A deleted run must not stay loaded, or the app points at something gone.</summary>
+    [Fact]
+    public async Task Deleting_the_loaded_run_leaves_the_app_with_none()
+    {
+        var run = await _service.CreateAsync(Request());
+        Assert.Equal(run, _context.Current);
+
+        await _service.DeleteAsync(run.Id);
+
+        Assert.Null(_context.Current);
+    }
+
+    /// <summary>Only the run asked for: a second run is not collateral damage.</summary>
+    [Fact]
+    public async Task Deleting_one_run_leaves_the_others_alone()
+    {
+        var first = await _service.CreateAsync(Request("La primera"));
+        var second = await _service.CreateAsync(Request("La segunda"));
+
+        await _service.DeleteAsync(first.Id);
+
+        Assert.Single(await _events.GetAllAsync(second.Id));
+        Assert.True(File.Exists(Path.Combine(_root, second.Id.ToString("N"), "run.json")));
+        Assert.Equal(second, _context.Current);
+    }
+
+    [Fact]
+    public async Task Deleting_a_run_that_is_not_there_says_so_instead_of_throwing()
+    {
+        var gone = await _service.DeleteAsync(Guid.NewGuid());
+
+        Assert.False(gone.Deleted);
+        Assert.Equal(0, gone.Events);
     }
 
     public void Dispose()

@@ -74,5 +74,26 @@ public sealed class JsonRunRepository(string savesRoot) : IRunRepository
         File.Move(temp, path, overwrite: true);
     }
 
+    /// <summary>
+    /// Deletes the run's folder, run.json included.
+    /// </summary>
+    /// <remarks>
+    /// Only ever the folder named after this run's own id, which is the same path
+    /// <see cref="PathFor"/> writes to: the deletion can therefore only reach what this repository
+    /// created, never a sibling run and never the shared database that lives above it.
+    /// </remarks>
+    public Task<bool> DeleteAsync(Guid runId, CancellationToken ct = default)
+    {
+        var folder = Path.GetDirectoryName(PathFor(runId))!;
+
+        if (!Directory.Exists(folder))
+        {
+            return Task.FromResult(false);
+        }
+
+        Directory.Delete(folder, recursive: true);
+        return Task.FromResult(true);
+    }
+
     private string PathFor(Guid runId) => Path.Combine(savesRoot, runId.ToString("N"), "run.json");
 }

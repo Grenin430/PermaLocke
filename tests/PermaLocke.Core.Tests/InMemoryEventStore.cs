@@ -27,6 +27,12 @@ internal sealed class InMemoryEventStore : IEventStore
         Task.FromResult<IReadOnlyList<GameEvent>>(
             [.. _events.Where(e => e.RunId == runId).TakeLast(count).Reverse()]);
 
+    public Task<int> DeleteRunAsync(Guid runId, CancellationToken ct = default)
+    {
+        var gone = _events.RemoveAll(e => e.RunId == runId);
+        return Task.FromResult(gone);
+    }
+
     public Task<IntegrityReport> VerifyChainAsync(Guid runId, CancellationToken ct = default)
     {
         var expectedPrevious = string.Empty;

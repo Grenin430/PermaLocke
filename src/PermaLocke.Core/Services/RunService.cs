@@ -13,8 +13,13 @@ public sealed record CreateRunRequest(
     string? RomHash = null,
     string? TitleId = null);
 
+/// <param name="Events">How many events went with it.</param>
+/// <param name="Pokemon">How many registered Pokémon went with it.</param>
+public sealed record RunDeletion(bool Deleted, string Name, int Events, int Pokemon);
+
 /// <summary>Creates and loads runs. Creation is the only place a seed is decided.</summary>
-public sealed class RunService(IRunRepository runs, IEventStore events, IRunContext context, IClock clock)
+public sealed class RunService(IRunRepository runs, IEventStore events, IPokemonRepository pokemon,
+    IRunContext context, IClock clock)
 {
     /// <summary>The four islands of the Alola tour, in the order they are played.</summary>
     private static readonly (string Id, string Name)[] IslandOrder =
@@ -143,6 +148,44 @@ public sealed class RunService(IRunRepository runs, IEventStore events, IRunCont
 
         context.SetCurrent(updated);
         return updated;
+    }
+
+    /// <summary>
+    /// Throws a run away whole: its events, its Pokémon and its folder.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The counterpart of <see cref="CreateAsync"/>, and the only thing in PermaLocke that removes
+    /// run data. It is not a correction and leaves no compensating event, because there would be
+    /// nowhere to put one: the chain it would belong to is what is being deleted. Whoever calls
+    /// this has to have asked the player first, in words that say the run is not coming back.
+    /// </para>
+    /// <para>
+    /// Order matters. The rows go before the folder, so a failure half way leaves a run that still
+    /// has its <c>run.json</c> and can be deleted again -- rather than a folder-less run whose
+    /// events sit in the database with nothing naming them.
+    /// </para>
+    /// </remarks>
+    public async Task<RunDeletion> DeleteAsync(Guid runId, CancellationToken ct = default)
+    {
+        if (await runs.GetAsync(runId, ct).ConfigureAwait(false) is not { } run)
+        {
+            return new RunDeletion(false, string.Empty, 0, 0);
+        }
+
+        var goneEvents = await events.DeleteRunAsync(runId, ct).ConfigureAwait(false);
+        var gonePokemon = await pokemon.DeleteRunAsync(runId, ct).ConfigureAwait(false);
+
+        await runs.DeleteAsync(runId, ct).ConfigureAwait(false);
+
+        // Si era la run cargada, la aplicación se queda sin run en vez de apuntando a una que ya no
+        // existe, que es como se llega a un fallo cinco pantallas más allá sin saber por qué.
+        if (context.Current?.Id == runId)
+        {
+            context.SetCurrent(null);
+        }
+
+        return new RunDeletion(true, run.Name, goneEvents, gonePokemon);
     }
 
     /// <summary>Cryptographically random so two players never share a seed by accident.</summary>

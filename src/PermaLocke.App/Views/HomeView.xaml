@@ -242,18 +242,36 @@
 
                             <Border Style="{StaticResource Divider}" />
 
-                            <!-- Empezar de cero es una run NUEVA, no un borrado: la run vieja se
-                                 queda guardada con su historial encadenado, y la partida del juego
-                                 no se toca. El aviso lo dice antes de abrir nada. -->
+                            <!-- Borra de verdad: la run entera y la partida de Ultra Luna. Por eso
+                                 va en rojo y no como el resto de botones: el color es parte del
+                                 aviso, y llegar aquí por costumbre no debería ser fácil. La copia
+                                 de la partida y las dos confirmaciones están en el ViewModel. -->
                             <DockPanel>
                                 <Button DockPanel.Dock="Right" Content="EMPEZAR DE CERO"
-                                        Style="{StaticResource GhostButton}"
                                         Command="{Binding StartOverCommand}"
+                                        Style="{StaticResource GhostButton}"
+                                        Foreground="{StaticResource DangerBrush}"
+                                        BorderBrush="{StaticResource DangerBrush}"
                                         Padding="11,5" FontSize="10.5" VerticalAlignment="Center" />
-                                <TextBlock Text="Crea una run nueva y deja esta guardada"
+                                <TextBlock Text="Borra la run y la partida. Se copia antes."
                                            Style="{StaticResource Faint}" TextWrapping="Wrap"
                                            VerticalAlignment="Center" Margin="0,0,10,0" />
                             </DockPanel>
+
+                            <TextBlock Text="{Binding StartOverStatus}"
+                                       Foreground="{StaticResource DangerBrush}" TextWrapping="Wrap"
+                                       Margin="0,8,0,0">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource Faint}">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding StartOverStatus}" Value="">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
                         </StackPanel>
                 </Border>
 

@@ -36,6 +36,11 @@ public static class ServiceCollectionExtensions
             sp.GetRequiredService<AzaharInstallation>(),
             sp.GetRequiredService<AzaharRpcClient>(),
             AppContext.BaseDirectory));
+        services.TryAddSingleton(sp => new SaveEraser(
+            sp.GetRequiredService<PlayerSave>(),
+            backupFolder,
+            sp.GetRequiredService<IClock>(),
+            sp.GetRequiredService<ILogger<SaveEraser>>()));
         services.TryAddSingleton<SaveBoxDelivery>(sp => new SaveBoxDelivery(
             sp.GetRequiredService<PlayerSave>(),
             backupFolder,

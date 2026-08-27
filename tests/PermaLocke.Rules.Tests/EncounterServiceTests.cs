@@ -211,6 +211,9 @@ public sealed class EncounterServiceTests
         public Task<IReadOnlyList<GameEvent>> GetLatestAsync(Guid runId, int count, CancellationToken ct = default) =>
             Task.FromResult<IReadOnlyList<GameEvent>>([.. All.Where(e => e.RunId == runId).TakeLast(count)]);
 
+        public Task<int> DeleteRunAsync(Guid runId, CancellationToken ct = default) =>
+            throw new NotSupportedException();
+
         public Task<IntegrityReport> VerifyChainAsync(Guid runId, CancellationToken ct = default) =>
             Task.FromResult(new IntegrityReport(true, All.Count, null, null));
     }
@@ -224,6 +227,11 @@ public sealed class EncounterServiceTests
 
         public Task<PokemonEntry?> GetAsync(Guid pokemonId, CancellationToken ct = default) =>
             Task.FromResult(_entries.FirstOrDefault(p => p.Id == pokemonId));
+
+        public Task<int> DeleteRunAsync(Guid runId, CancellationToken ct = default) =>
+
+            throw new NotSupportedException();
+
 
         public Task SaveAsync(PokemonEntry pokemon, CancellationToken ct = default)
         {

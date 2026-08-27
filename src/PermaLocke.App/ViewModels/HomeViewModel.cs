@@ -6,6 +6,7 @@ using PermaLocke.App.Services;
 using PermaLocke.Core.Abstractions;
 using PermaLocke.Core.Domain;
 using PermaLocke.Core.Services;
+using PermaLocke.GameLink;
 using PermaLocke.Rules.Services;
 
 namespace PermaLocke.App.ViewModels;
@@ -39,6 +40,8 @@ public sealed partial class HomeViewModel : SectionViewModel
     private readonly IUiDispatcher _ui;
     private readonly ProgressService _progress;
     private readonly IRunRoles _roles;
+    private readonly RunService _runs;
+    private readonly SaveEraser _eraser;
     private readonly ILogger<HomeViewModel> _logger;
 
     public HomeViewModel(
@@ -51,6 +54,8 @@ public sealed partial class HomeViewModel : SectionViewModel
         GameLinkMonitor gameLink,
         ProgressService progress,
         IRunRoles roles,
+        RunService runs,
+        SaveEraser eraser,
         ILogger<HomeViewModel> logger) : base("HOME", "Estado de la run, equipo en vivo y últimos movimientos")
     {
         _runContext = runContext;
@@ -61,6 +66,8 @@ public sealed partial class HomeViewModel : SectionViewModel
         _ui = ui;
         _progress = progress;
         _roles = roles;
+        _runs = runs;
+        _eraser = eraser;
         _logger = logger;
 
         gameLink.SnapshotChanged += (_, snapshot) => _ = _ui.InvokeAsync(() =>
@@ -93,6 +100,10 @@ public sealed partial class HomeViewModel : SectionViewModel
             _logger.LogError(ex, "Fallo al refrescar HOME");
         }
     }
+
+    /// <summary>What EMPEZAR DE CERO did, or why it refused. Empty the rest of the time.</summary>
+    [ObservableProperty]
+    private string _startOverStatus = string.Empty;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ChangeRoleCommand))]
@@ -274,37 +285,76 @@ public sealed partial class HomeViewModel : SectionViewModel
     }
 
     /// <summary>
-    /// Starts a brand new run, leaving the current one stored.
+    /// Wipes the run and the saved game, then opens the flow to create a new one.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// It is the same creation flow as an empty PermaLocke, reachable with a run already loaded --
-    /// which until now it was not, so beginning a second playthrough meant having no way in.
+    /// The one destructive thing in PermaLocke, and it destroys two separate things that live in
+    /// two separate places: the run -- events, Pokémon, points, folder -- and the player's Ultra
+    /// Moon save. Both are gone for good. The save is copied first and the message says where the
+    /// copy went, because "start over" and "lose a playthrough you meant to keep" look identical
+    /// until the moment after.
     /// </para>
     /// <para>
-    /// Deliberately <b>not</b> a wipe. The old run keeps its hash-chained history, because deleting
-    /// an audit log to make the numbers look clean is exactly what that log exists to prevent, and
-    /// the game's own save is never touched: PermaLocke does not start playthroughs, the player
-    /// does. The warning says both, so nobody presses this expecting their Pokémon to disappear --
-    /// or expecting them to stay.
+    /// Two confirmations on purpose, and the second one is short. A long warning gets skimmed; a
+    /// blunt second question after it does not. What it does <b>not</b> ask twice about is the
+    /// randomization: the mod stays installed and the new run has a different seed, which is worth
+    /// saying but is not the part that loses anything.
+    /// </para>
+    /// <para>
+    /// Order: save first, run second. The save is the deletion that can refuse -- Azahar may be
+    /// holding it -- so failing there leaves everything intact, whereas deleting the run first
+    /// would leave a player with no run and the old partida still sitting on disk.
     /// </para>
     /// </remarks>
     [RelayCommand(CanExecute = nameof(HasRun))]
     private async Task StartOverAsync()
     {
-        if (!_dialogs.Confirm(
-                "Empezar de cero",
-                "Se crea una run NUEVA, con su propia seed, y pasa a ser la activa.\n\n"
-                + "Lo que NO hace:\n"
-                + $"· No borra «{RunName}». Se queda guardada con todo su historial.\n"
-                + "· No toca tu partida de Ultra Luna. Tus Pokémon, tu mochila y tus cajas siguen "
-                + "igual. Si quieres empezar la partida de cero, hazlo tú en el juego.\n"
-                + "· No vuelve a randomizar. La run nueva tiene otra seed, así que si quieres otro "
-                + "mundo hay que generar e instalar otra vez desde RANDOMIZADOR.\n\n"
-                + "¿Crear la run nueva?"))
+        if (_runContext.Current is not { } run)
         {
             return;
         }
+
+        if (!_dialogs.Confirm(
+                "Empezar de cero",
+                "Esto BORRA dos cosas, y no se pueden deshacer desde la aplicación:\n\n"
+                + $"· La run «{run.Name}»: sus puntos, sus Pokémon registrados y todo su historial.\n"
+                + "· Tu partida de Pokémon Ultra Luna. Se hace una copia antes, y al terminar se te "
+                + "dice dónde ha quedado.\n\n"
+                + "Lo que NO borra: la randomización instalada sigue puesta. La run nueva tendrá "
+                + "otra seed, así que si quieres otro mundo hay que generar e instalar otra vez "
+                + "desde RANDOMIZADOR.\n\n"
+                + "Azahar tiene que estar cerrado del todo.\n\n¿Seguir?"))
+        {
+            return;
+        }
+
+        if (!_dialogs.Confirm("Última pregunta",
+                $"Se borra la run «{run.Name}» y la partida. ¿Seguro?"))
+        {
+            return;
+        }
+
+        // Primero la partida: es la que puede negarse -Azahar puede tenerla abierta-, y fallar ahi
+        // lo deja todo como estaba. Al reves, el jugador se quedaria sin run y con la partida vieja.
+        var erased = await Task.Run(_eraser.Erase);
+
+        if (!erased.Erased)
+        {
+            StartOverStatus = erased.Message;
+            _logger.LogWarning("Empezar de cero cancelado: {Problem}", erased.Message);
+            return;
+        }
+
+        var deleted = await _runs.DeleteAsync(run.Id);
+
+        _logger.LogWarning("Run {Name} borrada: {Events} eventos, {Pokemon} Pokémon. {Save}",
+            deleted.Name, deleted.Events, deleted.Pokemon, erased.Message);
+
+        StartOverStatus = $"Borrado: {deleted.Events} eventos y {deleted.Pokemon} Pokémon de la run, "
+                          + $"y la partida. {erased.Message}";
+
+        await RefreshAsync();
 
         if (_dialogs.ShowCreateRun())
         {

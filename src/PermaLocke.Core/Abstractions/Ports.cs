@@ -27,6 +27,17 @@ public interface IEventStore
 
     /// <summary>Walks the hash chain and reports the first inconsistency found, if any.</summary>
     Task<IntegrityReport> VerifyChainAsync(Guid runId, CancellationToken ct = default);
+
+    /// <summary>
+    /// Throws away every event of one run. Returns how many went.
+    /// </summary>
+    /// <remarks>
+    /// Not a hole in the rule above, and the difference is the whole point: there is no way to
+    /// delete <em>an</em> event, which is what would let somebody drop the death they did not like
+    /// and leave a chain that still verifies. This takes the run whole -- events, Pokémon, the lot
+    /// -- so nothing survives to be falsified. A discarded run is not a corrected one.
+    /// </remarks>
+    Task<int> DeleteRunAsync(Guid runId, CancellationToken ct = default);
 }
 
 /// <param name="IsValid">False when the chain was broken, i.e. the log was tampered with.</param>
@@ -42,6 +53,9 @@ public interface IPokemonRepository
 
     /// <summary>Inserts or replaces. Callers must also append the matching event.</summary>
     Task SaveAsync(PokemonEntry pokemon, CancellationToken ct = default);
+
+    /// <summary>Throws away every Pokémon of one run. Returns how many went.</summary>
+    Task<int> DeleteRunAsync(Guid runId, CancellationToken ct = default);
 }
 
 public interface IRunRepository
@@ -51,6 +65,9 @@ public interface IRunRepository
     Task<IReadOnlyList<Run>> GetAllAsync(CancellationToken ct = default);
 
     Task SaveAsync(Run run, CancellationToken ct = default);
+
+    /// <summary>Removes the run and its folder. False when there was nothing to remove.</summary>
+    Task<bool> DeleteAsync(Guid runId, CancellationToken ct = default);
 }
 
 /// <summary>

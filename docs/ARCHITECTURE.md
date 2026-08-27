@@ -5128,3 +5128,53 @@ porque la insignia tiene que fallar hacia el lado que no rompe nada: quien entra
 trade con el juego abierto necesita saberlo antes, y quien solo entra a mirar no pierde nada por
 verlo. Y «da igual» va **apagado** en vez de en un tercer color llamativo, porque es la respuesta
 «no te preocupes»: gritarla le quitaría fuerza a las dos que sí ahorran un fallo.
+
+---
+
+## 67. Empezar de cero borra de verdad (2026-08-27)
+
+El botón del §66 creaba una run nueva y dejaba la vieja guardada. El jugador pidió lo otro: que
+**borre la run entera y la partida**. Se hace, y lo que cambia respecto de la primera versión no es
+solo el alcance sino qué hay que garantizar.
+
+### Dos cosas, en dos sitios, con dos riesgos distintos
+
+La **run** son tres almacenes: la carpeta `Saves/<id>/` con su `run.json`, las filas de `events` y
+las de `pokemon`. Hay un test por cada uno, separados a propósito: un borrado que se olvidase de una
+tabla dejaría la aplicación con aspecto limpio y filas huérfanas en la base para siempre. Y otro test
+que exige que una **segunda run no sea daño colateral**, porque las tres consultas van por `run_id` y
+la carpeta va por el id, no por «lo que haya en Saves».
+
+La **partida** es un fichero de otro programa. `SaveEraser` la copia antes y **sin copia no borra**:
+es la misma norma que cumple cada escritura del proyecto, aplicada al caso en que lo que se escribe
+es la nada. La copia va a `Saves/backup/borrada-<fecha>/` y el mensaje dice dónde, porque «empezar de
+cero» y «perder una partida que querías» se parecen mucho hasta el segundo siguiente.
+
+Deliberadamente estrecho: vacía la carpeta del título y **se niega** si esa carpeta no es la de Ultra
+Luna, en cuyo caso borra solo el fichero `main` que localizó. Un «empezar de cero» que llegue más
+lejos que el juego al que le apuntaron es como alguien pierde un save del que nadie estaba hablando.
+Y relee: que `File.Delete` no lanzara no es que el fichero se haya ido.
+
+### El orden lo decide qué puede fallar
+
+Primero la partida, después la run. La partida es la que **puede negarse** —Azahar puede tenerla
+abierta—, así que fallar ahí lo deja todo como estaba. Al revés, el jugador se quedaría sin run y con
+la partida vieja intacta, que es el peor de los dos estados a medias.
+
+### El único DELETE del registro encadenado, y por qué no es una grieta
+
+`IEventStore` decía, y sigue diciendo, que no hay Update ni Delete: un error se corrige añadiendo un
+evento compensatorio. `DeleteRunAsync` no es una excepción a eso, y la diferencia es justo la que
+importa: **no existe forma de borrar un evento**. La cláusula es `WHERE run_id` y no hay sobrecarga
+que acepte un id de evento. Borrar uno suelto dejaría una cadena cuyos hashes siguen cuadrando
+alrededor del hueco, que es lo único que esa tabla existe para impedir; borrar la run entera no deja
+nada que falsificar. **Una run descartada no es una run corregida.**
+
+Por lo mismo no se escribe ningún evento de despedida: iría a la cadena que se está borrando.
+Lo que queda es la línea del log y la copia de la partida con su fecha.
+
+### Dos confirmaciones, y la segunda corta
+
+La primera enumera lo que se pierde y lo que no —la randomización instalada sigue puesta—. La segunda
+es una frase. Un aviso largo se lee en diagonal; una pregunta seca detrás, no. Y el botón va en rojo,
+que es parte del aviso: llegar aquí por costumbre no debería ser fácil.
