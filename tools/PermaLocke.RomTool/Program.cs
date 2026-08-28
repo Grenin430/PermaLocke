@@ -55,6 +55,9 @@ switch (command)
     case "item-iconos":
         ItemIcons(int.Parse(args[1]), int.Parse(args[2]));
         break;
+    case "importantes":
+        await ImportantesAsync();
+        break;
     case "megas":
         await MegasAsync();
         break;
@@ -1027,4 +1030,89 @@ void ItemIcons(int fromIcon, int toIcon)
 
     Console.WriteLine($"{written} iconos ({fromIcon}..{toIcon}) escritos en {outDir}");
     Console.WriteLine($"El contenedor tiene {reader.Count} iconos.");
+}
+
+// Los combates importantes del cartucho con el nivel de su equipo, para poder elegir un corte
+// -«de la 7a prueba en adelante»- con un numero medido y no a ojo.
+async Task ImportantesAsync()
+{
+    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work);
+    var roles = PermaLocke.Data.JsonRoleCatalog.Load(Path.Combine(root, "Data", "roles.json"));
+    var classes = roles.ImportantTrainerClasses.ToHashSet();
+    var classNames = workspace.Config.GetText(TextName.TrainerClasses);
+
+    // Con una ruta, lee el trpoke de un mod ya generado: comprobar lo escrito releyendolo.
+    var trpoke = args.Length > 1 && File.Exists(args[1])
+        ? args[1]
+        : workspace.PathOf(GameFiles.TrainerPokemon);
+
+    Console.WriteLine($"trpoke: {trpoke}");
+    var parties = new GARC.LazyGARC(await File.ReadAllBytesAsync(trpoke));
+
+    // La tabla de entrenadores tiene que venir del MISMO sitio que el trpoke: el modulo del
+    // Pokemon extra cambia las cuentas, y cruzar la tabla vanilla con un trpoke ya generado hace
+    // que no cuadre ninguna y se salten en silencio.
+    var trdata = trpoke == workspace.PathOf(GameFiles.TrainerPokemon)
+        ? workspace.PathOf(GameFiles.TrainerData)
+        : Path.Combine(Path.GetDirectoryName(trpoke)!, "6");
+
+    Console.WriteLine($"trdata: {trdata}");
+
+    using var trainers = new GarcPatcher(trdata);
+    var rows = new List<(int Id, int Class, int Count, int Max)>();
+
+    for (var trainer = 0; trainer < trainers.FileCount; trainer++)
+    {
+        var entry = trainers.Read(trainer);
+        if (entry.Length < 0x14)
+        {
+            continue;
+        }
+
+        var trainerClass = BitConverter.ToUInt16(entry, ExtraPokemonRandomizer.ClassOffset);
+        var count = entry[ExtraPokemonRandomizer.CountOffset];
+
+        if (!classes.Contains(trainerClass) || count == 0 || trainer >= parties.FileCount)
+        {
+            continue;
+        }
+
+        var party = parties[trainer];
+        if (party.Length != count * TrainerPokemonTable.EntrySize)
+        {
+            continue;
+        }
+
+        var max = Enumerable.Range(0, count).Max(i => TrainerPokemonTable.GetLevel(party, i));
+
+        var megas = Enumerable.Range(0, count)
+            .Where(i => TrainerPokemonTable.GetForm(party, i) > 0)
+            .Select(i => $"especie {TrainerPokemonTable.GetSpecies(party, i)} "
+                         + $"forma {TrainerPokemonTable.GetForm(party, i)}")
+            .ToList();
+
+        if (megas.Count > 0)
+        {
+            Console.WriteLine($"  MEGA entrenador {trainer,4} nivel {max,3} ({count} Pokemon): "
+                              + string.Join(", ", megas));
+        }
+
+        rows.Add((trainer, trainerClass, count, max));
+    }
+
+    Console.WriteLine($"COMBATES IMPORTANTES: {rows.Count} (clases: {classes.Count})");
+    Console.WriteLine();
+
+    foreach (var row in rows.OrderBy(r => r.Max).ThenBy(r => r.Id))
+    {
+        var name = row.Class < classNames.Length ? classNames[row.Class] : "?";
+        Console.WriteLine($"  entrenador {row.Id,4}  clase {row.Class,3} {name,-22} "
+                          + $"{row.Count} Pokemon, nivel maximo {row.Max}");
+    }
+
+    Console.WriteLine();
+    foreach (var floor in (int[])[25, 30, 33, 35, 40, 45, 50])
+    {
+        Console.WriteLine($"  con nivel maximo >= {floor,2}: {rows.Count(r => r.Max >= floor),3} combates");
+    }
 }

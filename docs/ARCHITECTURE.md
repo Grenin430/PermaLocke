@@ -5618,3 +5618,68 @@ corazonada:
 
 Más veinte que no dependen del nivel. Con cap 40 está la mayoría del catálogo, y solo seis quedan
 fuera: Aggron y Glalie a 42, Metagross a 45, Garchomp a 48, Salamence a 50 y Tyranitar a 55.
+
+## 73. Los jefes con mega: es una forma, no una especie (2026-08-28)
+
+Con la megaevolución del jugador abierta desde la 6ª prueba (§72), los combates importantes tenían
+que responder o la curva de dificultad se venía abajo: una mega son unos +100 de estadísticas base.
+
+La pregunta del jugador —que venía de haber visto en otro randomizador un jefe que salía **ya
+megaevolucionado**, como un Pokémon normal— resultó ser la buena.
+
+### La medida que lo decide
+
+La tabla `a/0/1/5` es `especie → (forma, piedra)`, y el primer campo **es el número de forma**:
+
+```
+especie   6 hueco 0  campo0=1  -> Charizardita X    <- forma 1 = Mega X
+especie   6 hueco 1  campo0=2  -> Charizardita Y    <- forma 2 = Mega Y
+especie 150 hueco 0  campo0=1  -> Mewtwoita X
+especie 150 hueco 1  campo0=2  -> Mewtwoita Y
+```
+
+Las dos especies con dos megas tienen dos entradas, forma 1 y forma 2; las otras 44, una con forma 1.
+Y la tabla de entrenadores ya tenía **campo de forma** en el offset `0x12`.
+
+Así que un jefe con mega es **especie + forma**. Un byte, y ninguna dependencia de la IA.
+
+Lo que se pierde va dicho: **no megaevoluciona, llega mega**. No hay animación ni «el rival está
+megaevolucionando», porque nada evoluciona. La alternativa —darle la piedra y confiar en la IA—
+depende de comportamiento sin medir; ésta no depende de nada.
+
+### El corte: no se puede gatear por prueba, se gatea por fuerza
+
+La ROM se randomiza **una vez**, antes de empezar, así que no puede saber que el jugador lleva seis
+pruebas. Lo que sí puede es mirar **cómo de fuerte es el combate**, que es lo mismo visto del otro
+lado. El suelo es **nivel 33 del cartucho**: la 7ª prueba tiene cap 40 y el §48 midió que un cap es
+su jefe subido un quinto.
+
+El umbral se sube con la **misma cuenta** que subió los equipos —`TrainerRandomizer.Raise`— así que
+se mueve exactamente igual que ellos. Comparar un umbral vanilla contra niveles ya subidos dejaría
+entrar combates de antes de la séptima.
+
+Medido sobre el cartucho: **62 de los 96** combates importantes pasan el corte.
+
+### Sustituye, no añade
+
+Lo que pidió la competición: un jefe con cinco sigue teniendo cinco y **uno de ellos** es la mega.
+Añadir habría sido una segunda ración del Pokémon extra del rol (§47), que es otra cosa. Va después
+de ese módulo a propósito, para que «uno de los cinco» sea de verdad uno de los cinco.
+
+Como máximo **uno por combate**, y las candidatas son las 46 del cartucho menos Rayquaza —cuya mega
+va por movimiento y no tiene piedra— y menos los legendarios de `bannedSpecies`: quedan **41**. Un
+Mega Mewtwo de regalo a mitad de partida es justo lo que esa lista existe para evitar.
+
+### Verificado releyendo, y dos fallos por el camino
+
+Generando con la seed 20260831 y el rol real, y **releyendo el `trpoke` generado con otro programa**:
+62 combates con mega, **cero con más de una**, cero formas que la especie no tenga, y el más temprano
+a nivel 41. Los números cierran con el informe y entre sí: 62 + 34 fuera = 96.
+
+Dos fallos que costaron una vuelta cada uno, los dos en la comprobación y no en el módulo:
+
+- El bucle de verificación admitía un hueco que **no cabía entero** (`< Length` en vez de
+  `(slot+1)*Entry <= Length`), y el campo de forma, que va en 0x12, se salía del array.
+- La comprobación independiente cruzaba la tabla de entrenadores **vanilla** con el `trpoke` del mod.
+  El módulo del Pokémon extra cambia las cuentas, así que ninguna cuadraba y **se saltaban en
+  silencio**: daba 9 megas en vez de 62. La tabla y el equipo tienen que salir del mismo sitio.

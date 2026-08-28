@@ -140,6 +140,20 @@ public sealed class RandomizerService(RandomizerOptions options)
                 $"{result.Entries} especies y formas, {result.Evolutions} evoluciones, {result.LearnsetMoves} movimientos por nivel"));
         }
 
+        // Después de los entrenadores y del Pokémon extra: la mega SUSTITUYE a uno de los suyos,
+        // así que tiene que ver el equipo ya completo para que «uno de los cinco» sea de verdad
+        // uno de los cinco.
+        if (options.MegaTrainers && options.Trainers)
+        {
+            var random = new SeededRandomSource(seed).Derive(Salts.Trainers).Derive("megas");
+            var result = await new MegaTrainerRandomizer(workspace, options).ApplyAsync(random, mod, ct);
+
+            steps.Add(new RandomizerStep("Megas de los combates importantes",
+                $"{result.Battles} combates con un Pokémon ya megaevolucionado, elegido entre "
+                + $"{result.Candidates} especies; {result.TooEarly} quedaron fuera por ser de antes "
+                + $"del nivel {options.MegaTrainerMinimumLevel} del cartucho"));
+        }
+
         // Después de los datos de Pokémon a propósito: ese módulo puede cambiar a QUIÉN evoluciona
         // cada uno, y esto arregla CÓMO. Al revés, una evolución recién redirigida se quedaría con
         // su método de intercambio intacto.

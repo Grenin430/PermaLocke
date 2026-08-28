@@ -72,9 +72,23 @@ public static class TrainerPokemonTable
     /// </summary>
     public static void SetSpecies(byte[] party, int index, int species)
     {
+        SetSpecies(party, index, species, form: 0);
+    }
+
+    /// <summary>
+    /// Writes the species and a form on purpose.
+    /// </summary>
+    /// <remarks>
+    /// For the one case where the form carries meaning: a mega is a <b>form</b> of its species, not
+    /// a species of its own, so form 1 -- or 2 for the X/Y pairs -- is a Pokemon that walks into
+    /// the battle already mega evolved. Everywhere else the form is cleared, because an index valid
+    /// for the old species need not exist in the new one.
+    /// </remarks>
+    public static void SetSpecies(byte[] party, int index, int species, int form)
+    {
         var at = index * EntrySize;
         BitConverter.GetBytes((ushort)species).CopyTo(party, at + SpeciesOffset);
-        party[at + FormOffset] = 0;
+        party[at + FormOffset] = (byte)form;
     }
 
     /// <summary>

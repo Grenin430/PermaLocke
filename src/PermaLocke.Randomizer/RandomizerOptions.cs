@@ -92,6 +92,23 @@ public sealed record RandomizerOptions
     public int TradeEvolutionLevel { get; init; } = 37;
 
     /// <summary>
+    /// Give the late important battles one Pokemon that is already mega evolved.
+    /// </summary>
+    public bool MegaTrainers { get; init; } = true;
+
+    /// <summary>
+    /// Cartridge level a trainer has to reach before one of its Pokemon may be a mega.
+    /// </summary>
+    /// <remarks>
+    /// The ROM is randomized once, before the run starts, so it cannot know the player has cleared
+    /// six trials. What it can do is look at how strong the battle is, which is the same thing seen
+    /// from the other side. 33 is the seventh trial: its cap is 40 and §48 measured that a cap is
+    /// its boss raised a fifth. Measured against the cartridge, that lets 62 of the 96 important
+    /// battles through.
+    /// </remarks>
+    public int MegaTrainerMinimumLevel { get; init; } = 33;
+
+    /// <summary>
     /// Items the ordinary Pokémon Center counters stop selling, and what they sell instead.
     /// </summary>
     /// <remarks>
