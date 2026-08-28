@@ -759,6 +759,24 @@ cuando de verdad cambia algo y HOME se refresca solo: `TeamWiped` llevaba desde 
 **sin que nadie lo escuchara**, así que una muerte se cobraba bien y el saldo de la pantalla no se
 movía hasta salir y volver a entrar. Ver §68.
 
+**Los iniciales, primera etapa de una línea de tres (2026-08-28).** La competición pide que un
+inicial sea algo que **crece**: dos evoluciones por delante. No es una lista de especies sino una
+propiedad leída del cartucho — `EvolutionTable` interpreta `a/0/1/4` (subfichero por especie,
+entradas de 8 bytes, método en 0 y destino en 4) y responde a una sola pregunta. Medido con
+`RomTool evoluciones`: de 589 primeras etapas, **298 no evolucionan, 197 son de dos etapas y 94 son
+de tres**. Trece anclas comprobadas, y las trece cuadran -Pikachu fuera porque evoluciona de Pichu,
+Eevee fuera porque sus ramas son de un paso-. De 94 a las **92** que usa el randomizador: una está
+por encima de `maxSpecies` y **Cosmog** está en `bannedSpecies`.
+
+`SpeciesPool.Where` estrecha el saco en vez de repetir la tirada, a propósito: con un filtro no hay
+un límite de intentos del que caerse, que es como una restricción deja de serlo justo cuando más
+cuesta cumplirla. Dos fallos los cazaron los tests, no la ROM: `FromTargets` no limpiaba las
+autoevoluciones como sí hacía `Read`, y la profundidad **memorizaba resultados obtenidos cortando un
+ciclo**, que dependen del camino de llegada -o sea que la tabla contestaba distinto según el orden de
+las preguntas-. Verificado generando: seed 20260828 da Duskull, Fletchling y Nidoran♂. Ojo con que
+los iniciales se eligen **antes** de que se toquen las líneas evolutivas, así que con
+`randomizeEvolutions` en true la garantía es sobre las familias del cartucho. Ver §69.
+
 **Siguiente.** Sincronización, y probar en partida real los combates importantes, los iniciales y
 las tiendas.
 
@@ -814,6 +832,9 @@ dotnet run --project tools/PermaLocke.RomTool -- sprites --sheets
 # los tres iniciales de un mod ya generado o instalado; sin carpeta mira todo Randomized/
 dotnet run --project tools/PermaLocke.RomTool -- iniciales
 dotnet run --project tools/PermaLocke.RomTool -- iniciales "ruta/al/mod"
+
+# especies que son primera etapa de una linea de tres, contra la tabla del cartucho
+dotnet run --project tools/PermaLocke.RomTool -- evoluciones "ruta/a/a/0/1/4"
 dotnet run --project tools/PermaLocke.RomTool -- randomize 20260818 --install
 
 # EV de la partida real; --probar demuestra la escritura SOBRE UNA COPIA

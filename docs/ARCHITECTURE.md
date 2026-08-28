@@ -5340,3 +5340,62 @@ vacía de la copia. La propiedad derivada mentía en silencio.
 `with { Held = ... }`. Las dos son ahora propiedades **calculadas** (`=> Held ?? []`). La regla que
 queda: en un record, una propiedad derivada de un parámetro posicional se calcula, no se inicializa,
 o `with` la deja desincronizada del parámetro del que dice depender.
+
+## 69. Los iniciales, primera etapa de una línea de tres (2026-08-28)
+
+La competición pide que un inicial sea algo que **crece**: dos evoluciones por delante, tres formas
+en total. No una lista de especies mantenida a mano, sino una propiedad que se lee del cartucho.
+
+### La tabla de evoluciones, leída en vez de escrita
+
+`a/0/1/4` tiene un subfichero por especie con entradas de ocho bytes: método en un `u16` en 0 y
+especie destino en un `u16` en 4; método cero es un hueco. Es exactamente el formato que el módulo
+de datos parchea, leído aquí. `EvolutionTable` lo convierte en la única pregunta que interesa:
+**¿tiene esta especie dos evoluciones por delante?** No modela métodos, ni niveles, ni objetos.
+
+Medido contra la ROM real con `RomTool evoluciones`:
+
+```
+Primeras etapas (nadie evoluciona en ellas): 589
+  lineas de 1 etapa(s): 298
+  lineas de 2 etapa(s): 197
+  lineas de 3 etapa(s):  94
+```
+
+Trece anclas comprobadas a mano, y las trece cuadran: Bulbasaur, Charmander, Squirtle, los tres del
+cartucho, Caterpie y Treecko dentro; Pikachu fuera **porque evoluciona de Pichu** y por tanto no es
+primera etapa; Eevee fuera porque sus muchas ramas son de un solo paso; Magikarp fuera por tener dos
+etapas; Ditto y Articuno fuera por no evolucionar.
+
+De 94 a las 92 que el randomizador usa hay una diferencia que conviene tener explicada y no
+redondeada: **una** está por encima de `maxSpecies` (la 924, una forma) y **Cosmog** está en
+`bannedSpecies`. 94 − 1 − 1 = 92, y el informe de la generación dice ese número.
+
+### Filtrar el saco, no repetir la tirada
+
+`SpeciesPool.Where` devuelve un saco más estrecho con las mismas reglas de reparto. Es
+deliberadamente eso y no «tira hasta que salga una que valga»: con un filtro no hay un límite de
+intentos del que caerse, que es como una restricción deja de serlo justo cuando más cuesta
+cumplirla. Y el respaldo de la banda de fuerza —que se ensancha y acaba tirando de todo el saco—
+sigue dentro del saco estrecho, con test propio.
+
+### Dos fallos que cazaron los tests, no la ROM
+
+`EvolutionTable.FromTargets`, la puerta que existe para poder probar la lógica sin cartucho, **no
+limpiaba las autoevoluciones** como sí hacía `Read`: una especie que evoluciona en sí misma contaba
+como una etapa más. Y la profundidad memorizaba resultados obtenidos **cortando un ciclo**, que
+dependen del camino de llegada, así que la tabla podía contestar distinto según el orden en que se
+le preguntara. Ahora una profundidad que vino de romper un ciclo no se guarda, y hay un test que
+pregunta hacia delante y hacia atrás y exige las mismas respuestas.
+
+El cartucho no tiene ciclos, pero esta tabla se lee de un fichero que un randomizador escribe, y
+apuntar una evolución de vuelta a su propia línea es precisamente lo que ese randomizador hace.
+
+### Verificado generando
+
+Con seed 20260828 salen **Duskull, Fletchling y Nidoran♂** — 355, 661 y 32 leídos del `a/1/5/9`
+generado—, las tres primeras etapas de líneas de tres.
+
+Aviso que va en el informe y no solo aquí: los iniciales se eligen **antes** de que el módulo de
+datos toque las líneas evolutivas, así que con `randomizeEvolutions` en true la garantía es sobre
+las familias del cartucho. Con la configuración actual está apagado y no hay diferencia.

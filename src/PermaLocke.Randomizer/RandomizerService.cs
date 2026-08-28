@@ -97,6 +97,12 @@ public sealed class RandomizerService(RandomizerOptions options)
                 .ApplyAsync(random, pool, mod, ct);
             steps.Add(new RandomizerStep("Iniciales, fósiles y estáticos",
                 $"{result.Replaced} entradas ({result.Protected} intactas). Iniciales: {string.Join(", ", result.Starters)}"
+                + (options.StartersWithTwoEvolutions
+                    ? $" (elegidos entre {result.StarterCandidates} especies con dos evoluciones por delante"
+                      + (options.RandomizeEvolutions
+                          ? ", según las líneas del cartucho: las evoluciones se randomizan después)"
+                          : ")")
+                    : string.Empty)
                 + (result.LevelsRaised > 0
                     ? $"; {result.LevelsRaised} niveles subidos por el rol (dominantes y legendarios incluidos)"
                     : string.Empty)));

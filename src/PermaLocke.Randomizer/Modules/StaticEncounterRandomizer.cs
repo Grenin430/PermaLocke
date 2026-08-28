@@ -10,8 +10,10 @@ namespace PermaLocke.Randomizer.Modules;
 /// <param name="Protected">Entries left alone because the story depends on them.</param>
 /// <param name="Starters">The three species the player will get to choose from.</param>
 /// <param name="LevelsRaised">Entries whose level the role moved.</param>
+/// <param name="StarterCandidates">How many species the starters could have been drawn from.</param>
 public sealed record StaticEncounterResult(
-    int Replaced, int Protected, IReadOnlyList<string> Starters, int LevelsRaised = 0);
+    int Replaced, int Protected, IReadOnlyList<string> Starters, int LevelsRaised = 0,
+    int StarterCandidates = 0);
 
 /// <summary>
 /// Rewrites the starters, the eleven fossils, gifts, static encounters, totems and the species
@@ -31,11 +33,13 @@ public sealed class StaticEncounterRandomizer(RomWorkspace workspace, Randomizer
         var raised = 0;
         string[] starters;
 
+        var starterPool = StarterPool(pool);
+
         using (var patcher = new GarcPatcher(path))
         {
             var gifts = patcher.Read(StaticEncounterTable.Gifts.Subfile);
 
-            RandomizeStarters(gifts, random, pool, untouchable, ref replaced, ref kept);
+            RandomizeStarters(gifts, random, starterPool, untouchable, ref replaced, ref kept);
             starters =
             [
                 .. Enumerable.Range(0, StaticEncounterTable.StarterCount)
@@ -57,7 +61,35 @@ public sealed class StaticEncounterRandomizer(RomWorkspace workspace, Randomizer
         }
 
         await VerifyAsync(path, untouchable, ct);
-        return new StaticEncounterResult(replaced, kept, starters, raised);
+        return new StaticEncounterResult(replaced, kept, starters, raised, starterPool.Count);
+    }
+
+    /// <summary>
+    /// The pool the starters are drawn from: species with two evolutions ahead of them.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Read from the cartridge's own evolution table rather than from a list of species, so it
+    /// stays right for every family without anybody maintaining it, and so a species added or
+    /// changed upstream cannot silently drop out of the answer.
+    /// </para>
+    /// <para>
+    /// The table is read <b>as the module sees it</b>: the starters are chosen before the data
+    /// module touches the evolution lines, so with those randomized the guarantee is about the
+    /// cartridge's families. The report says which, instead of implying more than it checked.
+    /// </para>
+    /// </remarks>
+    private SpeciesPool StarterPool(SpeciesPool pool)
+    {
+        if (!options.StartersWithTwoEvolutions)
+        {
+            return pool;
+        }
+
+        var evolutions = EvolutionTable.Read(workspace.PathOf(GameFiles.Evolution));
+
+        return pool.Where(evolutions.HasTwoEvolutionsAhead,
+            "ser la primera etapa de una linea de tres");
     }
 
     /// <summary>

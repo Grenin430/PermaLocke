@@ -60,6 +60,21 @@ public sealed record RandomizerOptions
     public bool DistinctStarters { get; init; } = true;
 
     /// <summary>
+    /// The three starters must be the first stage of a family with three stages.
+    /// </summary>
+    /// <remarks>
+    /// What the competition asks: a starter is what you carry all game, so it should have two
+    /// evolutions ahead of it rather than being something that never grows or is already finished.
+    /// Worked out from the cartridge's own evolution table, not from a list of species.
+    /// <para>
+    /// Read before the evolution lines are touched, because the starters are chosen first. With
+    /// <see cref="RandomizeEvolutions"/> on, the guarantee is therefore about the families the
+    /// cartridge has, which is worth knowing and is why the report says so.
+    /// </para>
+    /// </remarks>
+    public bool StartersWithTwoEvolutions { get; init; } = true;
+
+    /// <summary>
     /// Blank a trainer Pokémon's moves when its species changes, so the game builds a moveset
     /// from the new species' learnset instead of keeping one picked for the old one.
     /// </summary>

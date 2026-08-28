@@ -52,6 +52,9 @@ switch (command)
     case "dump":
         await DumpAsync(args.Length > 1 ? ulong.Parse(args[1]) : 20260818, args.Length > 2 ? args[2] : "Ruta 1");
         break;
+    case "evoluciones":
+        Evoluciones(args.Length > 1 ? args[1] : null);
+        break;
     case "starters":
     case "iniciales":
         Starters(args.Length > 1 ? args[1] : null);
@@ -772,4 +775,66 @@ void Starters(string? folder)
             Console.WriteLine($"  opción {starter.Slot}: especie {starter.Species,4}  forma {starter.Form}");
         }
     }
+}
+
+// Cuenta, contra la tabla del cartucho, cuantas especies son primera etapa de una linea de tres:
+// lo que la competicion exige de un inicial. Sin esta medida el filtro seria una afirmacion.
+// Toma la ruta de a/0/1/4 ya extraido; sin argumento extrae la ROM, que tarda.
+void Evoluciones(string? evolutionPath)
+{
+    var path = evolutionPath ?? Path.Combine(work, "a", "0", "1", "4");
+
+    if (!File.Exists(path))
+    {
+        Console.WriteLine($"No esta {path}. Pasa la ruta de a/0/1/4 extraido, o ejecuta antes inspect.");
+        return;
+    }
+
+    Console.WriteLine($"Tabla de evoluciones: {path}");
+
+    var table = EvolutionTable.Read(path);
+    var bases = Enumerable.Range(1, table.Count).Where(table.IsBase).ToList();
+
+    Console.WriteLine($"Especies en la tabla: {table.Count}");
+    Console.WriteLine($"Primeras etapas (nadie evoluciona en ellas): {bases.Count}");
+
+    foreach (var group in bases.GroupBy(table.Stages).OrderBy(g => g.Key))
+    {
+        Console.WriteLine($"  lineas de {group.Key} etapa(s): {group.Count()}");
+    }
+
+    var three = bases.Where(table.HasTwoEvolutionsAhead).ToList();
+    Console.WriteLine();
+    Console.WriteLine($"CANDIDATAS A INICIAL: {three.Count}");
+    Console.WriteLine("  ids: " + string.Join(" ", three.Take(30)));
+    Console.WriteLine($"  de esas, con id <= 807 (el tope del randomizador): {three.Count(s => s <= 807)}");
+    Console.WriteLine("  por encima de 807: " + string.Join(" ", three.Where(s => s > 807)));
+    Console.WriteLine();
+
+    // Anclas conocidas sin necesidad de nombres: si alguna falla, el lector esta mal.
+    (int Species, bool Expected, string Name)[] anchors =
+    [
+        (1, true, "Bulbasaur"), (4, true, "Charmander"), (7, true, "Squirtle"),
+        (722, true, "Rowlet"), (725, true, "Litten"), (728, true, "Popplio"),
+        (10, true, "Caterpie"), (252, true, "Treecko"),
+        (25, false, "Pikachu (evoluciona de Pichu)"),
+        (133, false, "Eevee (ramas, pero dos etapas)"),
+        (129, false, "Magikarp (dos etapas)"),
+        (132, false, "Ditto (no evoluciona)"),
+        (144, false, "Articuno (no evoluciona)"),
+    ];
+
+    var wrong = 0;
+
+    foreach (var (species, expected, name) in anchors)
+    {
+        var actual = table.HasTwoEvolutionsAhead(species);
+        wrong += actual == expected ? 0 : 1;
+
+        Console.WriteLine($"  {(actual == expected ? "ok  " : "MAL ")}{name,-34} "
+                          + $"etapas={table.Stages(species)} base={table.IsBase(species)}");
+    }
+
+    Console.WriteLine();
+    Console.WriteLine(wrong == 0 ? "TODAS LAS ANCLAS CUADRAN." : $"{wrong} anclas no cuadran.");
 }

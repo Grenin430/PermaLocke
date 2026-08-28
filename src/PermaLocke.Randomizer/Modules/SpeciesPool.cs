@@ -34,7 +34,36 @@ public sealed class SpeciesPool
         }
     }
 
+    private SpeciesPool(int[] allowed, int[] baseStatTotals, RandomizerOptions options)
+    {
+        _allowed = allowed;
+        _baseStatTotals = baseStatTotals;
+        _options = options;
+    }
+
     public int Count => _allowed.Length;
+
+    /// <summary>
+    /// A narrower pool: the same species and the same picking rules, minus whatever fails the test.
+    /// </summary>
+    /// <remarks>
+    /// For a module that needs more of a species than the others do — the starters have to be the
+    /// first stage of a three-stage family. Narrowing the pool rather than rolling until something
+    /// fits keeps the pick honest: with a filter there is no "give up after sixteen tries and hand
+    /// over whatever came out", which is how a constraint quietly stops being one.
+    /// </remarks>
+    /// <exception cref="ArgumentException">Nothing survives, so there is nothing to hand out.</exception>
+    public SpeciesPool Where(Func<int, bool> keep, string what)
+    {
+        var kept = _allowed.Where(keep).ToArray();
+
+        if (kept.Length == 0)
+        {
+            throw new ArgumentException($"Ninguna especie disponible cumple: {what}.", nameof(keep));
+        }
+
+        return new SpeciesPool(kept, _baseStatTotals, _options);
+    }
 
     /// <summary>Reads the base stat totals out of the cartridge's personal table.</summary>
     public static SpeciesPool FromGame(GameConfig config, RandomizerOptions options)
