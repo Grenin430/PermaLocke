@@ -1,0 +1,214 @@
+<UserControl x:Class="PermaLocke.App.Views.StatisticsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <UserControl.Resources>
+        <!-- Una linea del libro: concepto, barra, total y cuantas veces. La barra es proporcional
+             al mayor de su grupo, no al saldo, porque lo que se compara aqui es una fuente contra
+             otra y no cada una contra el total. -->
+        <DataTemplate x:Key="LedgerTemplate">
+            <Border Style="{StaticResource Row}" Padding="0,7">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="150" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="72" />
+                        <ColumnDefinition Width="46" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0" Text="{Binding Label}" Style="{StaticResource Body}"
+                               VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+
+                    <ProgressBar Grid.Column="1" Height="5" Margin="12,0"
+                                 Minimum="0" Maximum="1" VerticalAlignment="Center"
+                                 Value="{Binding Share, Mode=OneWay}" />
+
+                    <TextBlock Grid.Column="2" Text="{Binding Total}" Style="{StaticResource Numeric}"
+                               TextAlignment="Right" VerticalAlignment="Center" />
+
+                    <TextBlock Grid.Column="3" Text="{Binding Count, StringFormat=×{0}}"
+                               Style="{StaticResource Faint}" TextAlignment="Right"
+                               VerticalAlignment="Center" Margin="8,0,0,0" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <DataTemplate x:Key="TallyTemplate">
+            <Border Style="{StaticResource Row}" Padding="0,6">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="130" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="42" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0" Text="{Binding Label}" Style="{StaticResource Body}"
+                               VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+
+                    <ProgressBar Grid.Column="1" Height="5" Margin="12,0"
+                                 Minimum="0" Maximum="1" VerticalAlignment="Center"
+                                 Value="{Binding Share, Mode=OneWay}" />
+
+                    <TextBlock Grid.Column="2" Text="{Binding Count}" Style="{StaticResource Numeric}"
+                               TextAlignment="Right" VerticalAlignment="Center" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <DataTemplate x:Key="RecordTemplate">
+            <Border Style="{StaticResource Row}" Padding="0,8">
+                <StackPanel>
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Right" Text="{Binding Value}"
+                                   Style="{StaticResource CardTitle}"
+                                   Foreground="{StaticResource AccentBrush}"
+                                   VerticalAlignment="Center" Margin="12,0,0,0" />
+                        <TextBlock Text="{Binding Label}" Style="{StaticResource Body}"
+                                   VerticalAlignment="Center" />
+                    </DockPanel>
+                    <TextBlock Text="{Binding Detail}" Margin="0,2,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource Faint}">
+                                <Setter Property="Visibility" Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Detail}" Value="">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <Grid>
+        <!-- Sin run: se dice, en vez de enseñar ceros que se leerian como una run que va fatal. -->
+        <TextBlock Text="Crea una run y aquí aparecerá todo lo que vaya pasando."
+                   Style="{StaticResource Muted}"
+                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                   Visibility="{Binding HasRun, Converter={StaticResource InverseBoolToVisibility}}" />
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                      Visibility="{Binding HasRun, Converter={StaticResource BoolToVisibility}}">
+            <StackPanel Margin="0,0,10,0">
+
+                <!-- ================================================== EL BALANCE Y LA CURVA
+                     Las tres cifras que resumen la economía, y debajo cómo llegó ahí. La curva se
+                     escala entre su propio mínimo y su máximo y no desde cero, porque el saldo
+                     PUEDE quedarse en negativo -una penalización no es una compra y no pregunta si
+                     puedes pagarla-, y anclada a cero una run que se hundió se dibujaría plana. -->
+                <Border Style="{StaticResource Inset}">
+                    <StackPanel>
+                        <TextBlock Text="LA ECONOMÍA DE LA RUN" Style="{StaticResource PanelHeading}" />
+
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                            <StackPanel Margin="0,0,32,0">
+                                <TextBlock Text="SALDO" Style="{StaticResource StatLabel}" />
+                                <TextBlock Text="{Binding BalanceText}" Style="{StaticResource Display}"
+                                           Foreground="{StaticResource AccentBrush}" />
+                            </StackPanel>
+
+                            <StackPanel Margin="0,0,32,0" VerticalAlignment="Bottom">
+                                <TextBlock Text="GANADO" Style="{StaticResource StatLabel}" />
+                                <TextBlock Text="{Binding EarnedText}" Style="{StaticResource StatValue}"
+                                           Foreground="{StaticResource SuccessBrush}" />
+                            </StackPanel>
+
+                            <StackPanel VerticalAlignment="Bottom">
+                                <TextBlock Text="GASTADO Y PERDIDO" Style="{StaticResource StatLabel}" />
+                                <TextBlock Text="{Binding SpentText}" Style="{StaticResource StatValue}"
+                                           Foreground="{StaticResource DangerBrush}" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <Border Height="64" Margin="0,16,0,0"
+                                Visibility="{Binding HasCurve, Converter={StaticResource BoolToVisibility}}">
+                            <Polyline Points="{Binding Curve}" Stretch="Fill"
+                                      Stroke="{StaticResource AccentBrush}" StrokeThickness="1.6"
+                                      StrokeLineJoin="Round" />
+                        </Border>
+
+                        <TextBlock Text="El saldo evento a evento, de la primera anotación a la última."
+                                   Style="{StaticResource Faint}" Margin="0,6,0,0"
+                                   Visibility="{Binding HasCurve, Converter={StaticResource BoolToVisibility}}" />
+                    </StackPanel>
+                </Border>
+
+                <!-- ================================================== EL LIBRO
+                     La pregunta que la aplicación no sabía contestar: por qué tienes los puntos
+                     que tienes. Sale del PointsDelta que cada evento guardó en su momento, no de
+                     los precios de hoy: así sigue siendo verdad aunque se cambie la configuración
+                     con una run ya empezada. -->
+                <Grid Margin="0,12,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Style="{StaticResource Well}">
+                        <StackPanel>
+                            <TextBlock Text="DE DÓNDE SALEN" Style="{StaticResource PanelHeading}"
+                                       Foreground="{StaticResource SuccessBrush}" />
+                            <ItemsControl ItemsSource="{Binding Income}" Margin="0,6,0,0"
+                                          ItemTemplate="{StaticResource LedgerTemplate}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="2" Style="{StaticResource Well}">
+                        <StackPanel>
+                            <TextBlock Text="EN QUÉ SE VAN" Style="{StaticResource PanelHeading}"
+                                       Foreground="{StaticResource DangerBrush}" />
+                            <ItemsControl ItemsSource="{Binding Outgoings}" Margin="0,6,0,0"
+                                          ItemTemplate="{StaticResource LedgerTemplate}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- ================================================== LA COLECCIÓN -->
+                <Grid Margin="0,12,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Style="{StaticResource Inset}">
+                        <StackPanel>
+                            <TextBlock Text="DE DÓNDE VIENEN TUS POKÉMON" Style="{StaticResource PanelHeading}" />
+                            <ItemsControl ItemsSource="{Binding Origins}" Margin="0,6,0,0"
+                                          ItemTemplate="{StaticResource TallyTemplate}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="2" Style="{StaticResource Inset}">
+                        <StackPanel>
+                            <TextBlock Text="CÓMO HAN ACABADO" Style="{StaticResource PanelHeading}" />
+                            <ItemsControl ItemsSource="{Binding Fates}" Margin="0,6,0,0"
+                                          ItemTemplate="{StaticResource TallyTemplate}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- ================================================== RÉCORDS -->
+                <Border Style="{StaticResource Inset}" Margin="0,12,0,0">
+                    <StackPanel>
+                        <DockPanel>
+                            <Button DockPanel.Dock="Right" Content="ACTUALIZAR"
+                                    Style="{StaticResource SubtleButton}"
+                                    Command="{Binding RefreshCommand}" MinWidth="120" />
+                            <TextBlock Text="RÉCORDS DE LA RUN" Style="{StaticResource PanelHeading}"
+                                       VerticalAlignment="Center" />
+                        </DockPanel>
+
+                        <ItemsControl ItemsSource="{Binding Records}" Margin="0,8,0,0"
+                                      ItemTemplate="{StaticResource RecordTemplate}" />
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

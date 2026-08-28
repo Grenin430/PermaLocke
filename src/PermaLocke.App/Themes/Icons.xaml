@@ -50,6 +50,9 @@
     <!-- MISCELÁNEA. Llave inglesa: herramientas. -->
     <Geometry x:Key="IconTools">M16.4,2.6 A6.4,6.4 0 0 0 9.4,12.8 L2.8,19.4 L4.9,21.5 L11.5,14.9 A6.4,6.4 0 0 0 21.6,7.9 L18,11.5 L13.2,10.3 L12,5.5 Z</Geometry>
 
+    <!-- ESTADISTICAS. Tres barras de distinta altura: lo que se cuenta y se compara. -->
+    <Geometry x:Key="IconChart">M3.4,13.6 L8.2,13.6 L8.2,21 L3.4,21 Z M9.6,8.4 L14.4,8.4 L14.4,21 L9.6,21 Z M15.8,3.4 L20.6,3.4 L20.6,21 L15.8,21 Z</Geometry>
+
     <!-- PUNTOS. Rombo facetado: la moneda del sistema. -->
     <Geometry x:Key="IconPoints">M12,2.2 L21.8,12 L12,21.8 L2.2,12 Z</Geometry>
 

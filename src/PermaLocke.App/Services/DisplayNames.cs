@@ -86,4 +86,33 @@ public static class DisplayNames
 
     public static string Of(IslandState state) =>
         Islands.TryGetValue(state, out var name) ? name : state.ToString();
+
+    /// <summary>Where a Pokémon came into the run from.</summary>
+    private static readonly Dictionary<PokemonOrigin, string> Origins = new()
+    {
+        [PokemonOrigin.Capture] = "Capturado",
+        [PokemonOrigin.Gacha] = "Gacha",
+        [PokemonOrigin.WonderTrade] = "Wonder trade",
+        [PokemonOrigin.Gift] = "Regalo",
+        [PokemonOrigin.Starter] = "Inicial",
+        [PokemonOrigin.AdminGrant] = "Dado por el admin"
+    };
+
+    /// <summary>
+    /// How a Pokémon ended up. In the past tense on purpose: these read as a fate in a list, not as
+    /// a state in a form.
+    /// </summary>
+    private static readonly Dictionary<PokemonStatus, string> Fates = new()
+    {
+        [PokemonStatus.Alive] = "En pie",
+        [PokemonStatus.Dead] = "Caído",
+        [PokemonStatus.Released] = "Liberado",
+        [PokemonStatus.Traded] = "Entregado"
+    };
+
+    public static string Of(PokemonOrigin origin) =>
+        Origins.TryGetValue(origin, out var name) ? name : origin.ToString();
+
+    public static string Of(PokemonStatus status) =>
+        Fates.TryGetValue(status, out var name) ? name : status.ToString();
 }
