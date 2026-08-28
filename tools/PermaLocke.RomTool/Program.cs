@@ -1040,6 +1040,7 @@ async Task ImportantesAsync()
     var roles = PermaLocke.Data.JsonRoleCatalog.Load(Path.Combine(root, "Data", "roles.json"));
     var classes = roles.ImportantTrainerClasses.ToHashSet();
     var classNames = workspace.Config.GetText(TextName.TrainerClasses);
+    var trainerNames = workspace.Config.GetText(TextName.TrainerNames);
 
     // Con una ruta, lee el trpoke de un mod ya generado: comprobar lo escrito releyendolo.
     var trpoke = args.Length > 1 && File.Exists(args[1])
@@ -1093,7 +1094,7 @@ async Task ImportantesAsync()
 
         if (megas.Count > 0)
         {
-            Console.WriteLine($"  MEGA entrenador {trainer,4} nivel {max,3} ({count} Pokemon): "
+            Console.WriteLine($"  FORMA entrenador {trainer,4} nivel {max,3} ({count} Pokemon): "
                               + string.Join(", ", megas));
         }
 
@@ -1106,8 +1107,11 @@ async Task ImportantesAsync()
     foreach (var row in rows.OrderBy(r => r.Max).ThenBy(r => r.Id))
     {
         var name = row.Class < classNames.Length ? classNames[row.Class] : "?";
-        Console.WriteLine($"  entrenador {row.Id,4}  clase {row.Class,3} {name,-22} "
-                          + $"{row.Count} Pokemon, nivel maximo {row.Max}");
+        var who = row.Id < trainerNames.Length ? trainerNames[row.Id] : "?";
+        var mark = row.Max >= 33 ? "MEGA" : "    ";
+
+        Console.WriteLine($"  {mark} {name,-20} {who,-14} nivel {row.Max,3}, {row.Count} Pokemon "
+                          + $"(entrenador {row.Id})");
     }
 
     Console.WriteLine();

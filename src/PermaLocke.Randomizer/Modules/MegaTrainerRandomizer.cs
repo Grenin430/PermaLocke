@@ -111,8 +111,13 @@ public sealed class MegaTrainerRandomizer(RomWorkspace workspace, RandomizerOpti
         // vanilla contra niveles ya subidos dejaría entrar combates de antes de la séptima prueba.
         var floor = TrainerRandomizer.Raise(options.MegaTrainerMinimumLevel, options.EnemyLevelPercent);
 
-        var battles = 0;
         var tooEarly = 0;
+
+        // Lo que ESTE modulo escribio, para poder comprobar solo eso. El cartucho ya usa el campo
+        // de forma para formas normales -el Lycanroc Noche de un entrenador es la forma 1- asi que
+        // exigir que toda forma sea una mega abortaria la randomizacion en cuanto una sobreviviera,
+        // por ejemplo con el modulo de entrenadores apagado.
+        var written = new Dictionary<(int Trainer, int Slot), (int Species, int Form)>();
 
         using (var trainers = new GarcPatcher(dataPath))
         {
@@ -157,60 +162,55 @@ public sealed class MegaTrainerRandomizer(RomWorkspace workspace, RandomizerOpti
                 var species = candidates[random.Next(candidates.Length)];
                 var choices = forms[species];
 
-                TrainerPokemonTable.SetSpecies(party, slot, species, choices[random.Next(choices.Count)]);
+                var form = choices[random.Next(choices.Count)];
+
+                TrainerPokemonTable.SetSpecies(party, slot, species, form);
                 TrainerPokemonTable.ClearMoves(party, slot);
 
                 parties[trainer] = party;
-                battles++;
+                written[(trainer, slot)] = (species, form);
+                // el contador es el propio diccionario
             }
         }
 
         await mod.WriteAsync(GameFiles.TrainerPokemon, await Task.Run(parties.Save, ct), ct);
-        await VerifyAsync(mod, forms, ct);
+        await VerifyAsync(mod, written, ct);
 
-        return new MegaTrainerResult(battles, tooEarly, candidates.Length);
+        return new MegaTrainerResult(written.Count, tooEarly, candidates.Length);
     }
 
     /// <summary>
-    /// Reads the written file back and checks that every form it wrote is one the cartridge has.
+    /// Reads the written file back and checks that every mega this module wrote is really there.
     /// </summary>
     /// <remarks>
-    /// A form index the species does not own is the failure that would not announce itself: the
-    /// game would draw something, or nothing, and no error would be raised anywhere.
+    /// <b>Only what it wrote.</b> The cartridge already uses the form field for ordinary alternate
+    /// forms — a trainer's Lycanroc Midnight is form 1 — so demanding that every form in the file be
+    /// a mega would abort the whole randomization the moment one survived, which is exactly what
+    /// happens with the trainer module switched off. What has to be true is narrower and stronger:
+    /// the slots this module touched hold the species and form it chose.
     /// </remarks>
-    private async Task VerifyAsync(LayeredFsMod mod,
-        IReadOnlyDictionary<int, IReadOnlyList<int>> forms, CancellationToken ct)
+    private static async Task VerifyAsync(LayeredFsMod mod,
+        IReadOnlyDictionary<(int Trainer, int Slot), (int Species, int Form)> expected,
+        CancellationToken ct)
     {
-        var written = new GARC.LazyGARC(
+        var file = new GARC.LazyGARC(
             await File.ReadAllBytesAsync(Path.Combine(mod.RomFsDirectory,
                 GameFiles.TrainerPokemon.Replace('/', Path.DirectorySeparatorChar)), ct));
 
-        for (var trainer = 0; trainer < written.FileCount; trainer++)
+        foreach (var (where, what) in expected)
         {
-            var party = written[trainer];
+            var party = file[where.Trainer];
 
-            // El hueco tiene que caber ENTERO: con «< Length» el ultimo se leia a medias y el
-            // campo de forma, que va en 0x12, caia fuera del array.
-            for (var slot = 0; (slot + 1) * TrainerPokemonTable.EntrySize <= party.Length; slot++)
+            if ((where.Slot + 1) * TrainerPokemonTable.EntrySize <= party.Length
+                && TrainerPokemonTable.GetSpecies(party, where.Slot) == what.Species
+                && TrainerPokemonTable.GetForm(party, where.Slot) == what.Form)
             {
-                var form = TrainerPokemonTable.GetForm(party, slot);
-
-                if (form == 0)
-                {
-                    continue;
-                }
-
-                var species = TrainerPokemonTable.GetSpecies(party, slot);
-
-                if (forms.TryGetValue(species, out var valid) && valid.Contains(form))
-                {
-                    continue;
-                }
-
-                throw new InvalidDataException(
-                    $"El entrenador {trainer}, hueco {slot + 1}, quedó con la especie {species} en "
-                    + $"forma {form}, que no es una megaevolución del cartucho.");
+                continue;
             }
+
+            throw new InvalidDataException(
+                $"El entrenador {where.Trainer}, hueco {where.Slot + 1}, debía quedar con la especie "
+                + $"{what.Species} en forma {what.Form} y no es lo que hay en el fichero.");
         }
     }
 }
