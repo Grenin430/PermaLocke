@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
 
         <!-- El botón del precio: relleno de acento, y en rojo apagado cuando no llega el saldo,
              para que la tarjeta diga por qué no se puede comprar sin tener que leer nada. -->
@@ -131,6 +132,7 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
@@ -212,8 +214,47 @@
             </Grid>
         </Border>
 
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,0,6,0">
-            <ItemsControl ItemsSource="{Binding Items}" ItemTemplate="{StaticResource ShopItemTemplate}">
+        <!-- Dos mostradores. Las cuarenta y siete megapiedras mezcladas con los objetos de
+             combate enterrarían a estos últimos, que son los que se compran a diario. -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,12">
+            <Button Content="{Binding BattleTab}" Command="{Binding ShowBattleCommand}"
+                    Padding="16,7" MinWidth="150">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource GhostButton}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ShowingMegaStones}" Value="False">
+                                <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                                <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+
+            <Button Content="{Binding MegaTab}" Command="{Binding ShowMegaStonesCommand}"
+                    Padding="16,7" MinWidth="180" Margin="10,0,0,0">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource GhostButton}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ShowingMegaStones}" Value="True">
+                                <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                                <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+
+            <!-- Lo que la pantalla no puede saber por ti: la piedra vale para UNA especie, y para
+                 la forma final. Callarlo sería vender quinientos puntos de nada. -->
+            <TextBlock Style="{StaticResource Faint}" VerticalAlignment="Center"
+                       Margin="16,0,0,0" TextWrapping="Wrap" MaxWidth="520"
+                       Text="Cada piedra sirve para una sola especie, y para su forma FINAL: una Swampertita no hace nada en un Marshtomp. Y hace falta la Piedra Activadora en la mochila."
+                       Visibility="{Binding ShowingMegaStones, Converter={StaticResource BoolToVisibility}}" />
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Padding="0,0,6,0">
+            <ItemsControl ItemsSource="{Binding Visible}" ItemTemplate="{StaticResource ShopItemTemplate}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <UniformGrid Columns="6" />
@@ -222,7 +263,7 @@
             </ItemsControl>
         </ScrollViewer>
 
-        <DockPanel Grid.Row="2" Margin="0,12,0,0">
+        <DockPanel Grid.Row="3" Margin="0,12,0,0">
             <Button DockPanel.Dock="Left" Content="ACTUALIZAR" Style="{StaticResource PrimaryButton}"
                     Command="{Binding RefreshCommand}" />
             <TextBlock VerticalAlignment="Center" Margin="16,0,0,0" TextWrapping="Wrap" FontSize="11"

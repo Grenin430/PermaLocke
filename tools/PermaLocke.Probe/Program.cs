@@ -136,6 +136,21 @@ if (args.Length >= 1 && args[0] == "--candy")
     return 0;
 }
 
+// Pone un Pokemon concreto en el PC, para medir cosas que necesitan una especie que la run no
+// tiene: --dar-pokemon <especie> <nivel>. Exige el juego cerrado, como el gacha.
+if (args.Length >= 3 && args[0] == "--dar-pokemon")
+{
+    return PermaLocke.Probe.GivePokemonProbe.Run(int.Parse(args[1]), int.Parse(args[2]));
+}
+
+// Escribe CUALQUIER objeto en la mochila del juego en marcha, para medir cosas que aún no tienen
+// botón: --dar <id> <cantidad>. Misma ruta que la tienda, o sea con relectura.
+if (args.Length >= 3 && args[0] == "--dar")
+{
+    PermaLocke.Probe.BagProbe.Run(int.Parse(args[2]), sweep: false, itemId: int.Parse(args[1]));
+    return 0;
+}
+
 if (args.Length >= 2 && args[0] == "--search")
 {
     PermaLocke.Probe.SearchProbe.Run(args[1]);

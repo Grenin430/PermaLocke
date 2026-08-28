@@ -6,7 +6,16 @@ namespace PermaLocke.Core.Domain;
 /// What the competition calls it, which is not always what the cartridge calls it: the shop says
 /// "Cinta Elección" where Ultra Moon says "Cinta Elegida". The name is decoration; the id decides.
 /// </param>
-public sealed record ShopItem(int Id, string Name, int Price);
+/// <param name="Category">
+/// Which counter it sits behind. The shop grew a second one -- the Mega Stones -- and mixing
+/// forty-seven stones into the same grid as the battle items would bury the battle items.
+/// </param>
+public sealed record ShopItem(int Id, string Name, int Price, string Category = ShopItem.Battle)
+{
+    public const string Battle = "combate";
+
+    public const string MegaStones = "megapiedras";
+}
 
 /// <summary>What the shop sells, read from configuration rather than compiled in.</summary>
 public interface IShopCatalog

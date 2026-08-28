@@ -18,7 +18,7 @@ namespace PermaLocke.Probe;
 /// </remarks>
 public static class BagProbe
 {
-    public static void Run(int? candies, bool sweep)
+    public static void Run(int? candies, bool sweep, int itemId = BagService.RareCandyItemId)
     {
         using var client = new AzaharRpcClient();
 
@@ -82,9 +82,9 @@ public static class BagProbe
             return;
         }
 
-        var result = bag.SetCount(BagService.RareCandyItemId, candies.Value);
+        var result = bag.SetCount(itemId, candies.Value);
 
-        Console.WriteLine($"\nSetCount(Caramelo Raro, {candies}) -> {result.Outcome}");
+        Console.WriteLine($"\nSetCount({names[itemId]}, {candies}) -> {result.Outcome}");
         Console.WriteLine($"  antes {result.Previous}, después {result.Applied}, en 0x{result.Address:X8}");
         Console.WriteLine(result.Outcome switch
         {

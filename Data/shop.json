@@ -8,6 +8,10 @@
 
   "comentarioPrecios": "Los de la competición, tal cual. Cambiarlos aquí no toca código.",
 
+  "comentarioCategorias": "categoria decide detrás de qué mostrador va cada cosa. Sin ella, combate. Las megapiedras van aparte porque son cuarenta y siete y mezcladas enterrarían los objetos de combate. Son TODAS las del cartucho menos la de Rayquaza, que no tiene piedra: su mega va por el movimiento Ascenso Draco.",
+
+  "comentarioMegapiedras": "Ojo con lo que compras: la piedra sirve para UNA especie, y la mega la tiene la forma FINAL. Una Swampertita no hace nada en un Marshtomp. Y con las especies randomizadas hay 46 especies con mega de 807, así que comprar a ciegas es tirar puntos. Además hace falta la Piedra Activadora (objeto 773) en la mochila, que es lo que el juego mira para dejarte megaevolucionar.",
+
   "items": [
     { "id": 220, "name": "Cinta Elección",     "price": 75 },
     { "id": 287, "name": "Pañuelo Elección",   "price": 75 },
@@ -28,6 +32,56 @@
     { "id": 214, "name": "Hierba Blanca",      "price": 150 },
     { "id": 271, "name": "Hierba Única",       "price": 150 },
     { "id": 1,   "name": "Master Ball",        "price": 300 },
-    { "id": 645, "name": "Cápsula Habilidad",  "price": 400 }
+    { "id": 645, "name": "Cápsula Habilidad",  "price": 400 },
+
+    { "id": 656, "name": "Gengarita",      "price": 500, "categoria": "megapiedras" },
+    { "id": 657, "name": "Gardevoirita",   "price": 500, "categoria": "megapiedras" },
+    { "id": 658, "name": "Ampharosita",    "price": 500, "categoria": "megapiedras" },
+    { "id": 659, "name": "Venusaurita",    "price": 500, "categoria": "megapiedras" },
+    { "id": 660, "name": "Charizardita X", "price": 500, "categoria": "megapiedras" },
+    { "id": 661, "name": "Blastoisita",    "price": 500, "categoria": "megapiedras" },
+    { "id": 662, "name": "Mewtwoita X",    "price": 500, "categoria": "megapiedras" },
+    { "id": 663, "name": "Mewtwoita Y",    "price": 500, "categoria": "megapiedras" },
+    { "id": 664, "name": "Blazikenita",    "price": 500, "categoria": "megapiedras" },
+    { "id": 665, "name": "Medichamita",    "price": 500, "categoria": "megapiedras" },
+    { "id": 666, "name": "Houndoomita",    "price": 500, "categoria": "megapiedras" },
+    { "id": 667, "name": "Aggronita",      "price": 500, "categoria": "megapiedras" },
+    { "id": 668, "name": "Banettita",      "price": 500, "categoria": "megapiedras" },
+    { "id": 669, "name": "Tyranitarita",   "price": 500, "categoria": "megapiedras" },
+    { "id": 670, "name": "Scizorita",      "price": 500, "categoria": "megapiedras" },
+    { "id": 671, "name": "Pinsirita",      "price": 500, "categoria": "megapiedras" },
+    { "id": 672, "name": "Aerodactylita",  "price": 500, "categoria": "megapiedras" },
+    { "id": 673, "name": "Lucarita",       "price": 500, "categoria": "megapiedras" },
+    { "id": 674, "name": "Abomasnowita",   "price": 500, "categoria": "megapiedras" },
+    { "id": 675, "name": "Kangaskhanita",  "price": 500, "categoria": "megapiedras" },
+    { "id": 676, "name": "Gyaradosita",    "price": 500, "categoria": "megapiedras" },
+    { "id": 677, "name": "Absolita",       "price": 500, "categoria": "megapiedras" },
+    { "id": 678, "name": "Charizardita Y", "price": 500, "categoria": "megapiedras" },
+    { "id": 679, "name": "Alakazamita",    "price": 500, "categoria": "megapiedras" },
+    { "id": 680, "name": "Heracrossita",   "price": 500, "categoria": "megapiedras" },
+    { "id": 681, "name": "Mawilita",       "price": 500, "categoria": "megapiedras" },
+    { "id": 682, "name": "Manectricita",   "price": 500, "categoria": "megapiedras" },
+    { "id": 683, "name": "Garchompita",    "price": 500, "categoria": "megapiedras" },
+    { "id": 684, "name": "Latiasita",      "price": 500, "categoria": "megapiedras" },
+    { "id": 685, "name": "Latiosita",      "price": 500, "categoria": "megapiedras" },
+
+    { "id": 752, "name": "Swampertita",    "price": 500, "categoria": "megapiedras" },
+    { "id": 753, "name": "Sceptilita",     "price": 500, "categoria": "megapiedras" },
+    { "id": 754, "name": "Sableynita",     "price": 500, "categoria": "megapiedras" },
+    { "id": 755, "name": "Altarianita",    "price": 500, "categoria": "megapiedras" },
+    { "id": 756, "name": "Galladita",      "price": 500, "categoria": "megapiedras" },
+    { "id": 757, "name": "Audinita",       "price": 500, "categoria": "megapiedras" },
+    { "id": 758, "name": "Metagrossita",   "price": 500, "categoria": "megapiedras" },
+    { "id": 759, "name": "Sharpedonita",   "price": 500, "categoria": "megapiedras" },
+    { "id": 760, "name": "Slowbronita",    "price": 500, "categoria": "megapiedras" },
+    { "id": 761, "name": "Steelixita",     "price": 500, "categoria": "megapiedras" },
+    { "id": 762, "name": "Pidgeotita",     "price": 500, "categoria": "megapiedras" },
+    { "id": 763, "name": "Glalita",        "price": 500, "categoria": "megapiedras" },
+    { "id": 764, "name": "Diancita",       "price": 500, "categoria": "megapiedras" },
+
+    { "id": 767, "name": "Cameruptita",    "price": 500, "categoria": "megapiedras" },
+    { "id": 768, "name": "Lopunnita",      "price": 500, "categoria": "megapiedras" },
+    { "id": 769, "name": "Salamencita",    "price": 500, "categoria": "megapiedras" },
+    { "id": 770, "name": "Beedrillita",    "price": 500, "categoria": "megapiedras" }
   ]
 }

@@ -57,6 +57,25 @@ public static class ItemIconIndex
         [640] = 505, // Chaleco Asalto
         [645] = 510, // Capsula Habilidad
         [650] = 515, // Gafa Protectora
+
+        // Las treinta megapiedras de 656 a 685, seguidas, en los iconos 521 a 550. El desfase
+        // sigue siendo -135 y el bloque esta anclado por los DOS extremos mirando los dibujos:
+        // 521 es morada (Gengarita), 523 amarilla (Ampharosita), 524 verde (Venusaurita) y 550
+        // azul (Latiosita). Y el icono 551, el siguiente, ya es una baya, que es lo que confirma
+        // donde acaba: el objeto 686 es la Baya Hibis.
+        [656] = 521, [657] = 522, [658] = 523, [659] = 524, [660] = 525,
+        [661] = 526, [662] = 527, [663] = 528, [664] = 529, [665] = 530,
+        [666] = 531, [667] = 532, [668] = 533, [669] = 534, [670] = 535,
+        [671] = 536, [672] = 537, [673] = 538, [674] = 539, [675] = 540,
+        [676] = 541, [677] = 542, [678] = 543, [679] = 544, [680] = 545,
+        [681] = 546, [682] = 547, [683] = 548, [684] = 549, [685] = 550,
+
+        // Las diecisiete megapiedras del segundo bloque (752-764 y 767-770) NO estan aqui, y no
+        // es un olvido. El bloque empieza bien -752 Swampertita es el icono 617, azul- pero el
+        // desfase se rompe antes de acabarlo: con -135 la ultima caeria en el icono 629 y el 629
+        // es una herramienta, no una piedra. Donde se rompe exactamente no se ha medido, y una
+        // piedra con el dibujo de la de al lado es justo el error que esta tabla existe para
+        // impedir. Sin icono se dibuja el hueco; con uno adivinado, nadie se entera (§45).
     };
 
     /// <summary>True when this item's icon has been checked and can be drawn.</summary>

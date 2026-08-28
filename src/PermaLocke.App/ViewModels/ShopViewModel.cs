@@ -55,7 +55,47 @@ public sealed partial class ShopViewModel : SectionViewModel
         _sprites = sprites;
     }
 
+    /// <summary>Everything on sale, both counters. What the bag is asked about in one go.</summary>
     public ObservableCollection<ShopItemViewModel> Items { get; } = [];
+
+    /// <summary>
+    /// The counter the player is looking at.
+    /// </summary>
+    /// <remarks>
+    /// Refilled rather than filtered through a view, because the grid is bound straight to it and
+    /// a CollectionView touched from anywhere but the UI thread takes the window down (§62).
+    /// </remarks>
+    public ObservableCollection<ShopItemViewModel> Visible { get; } = [];
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(BattleTab))]
+    [NotifyPropertyChangedFor(nameof(MegaTab))]
+    private bool _showingMegaStones;
+
+    /// <summary>Counts on the tabs, so nobody has to open one to find out it is empty.</summary>
+    public string BattleTab => $"COMBATE ({Items.Count(i => !IsMega(i))})";
+
+    public string MegaTab => $"MEGAPIEDRAS ({Items.Count(IsMega)})";
+
+    private static bool IsMega(ShopItemViewModel card) =>
+        string.Equals(card.Item.Category, ShopItem.MegaStones, StringComparison.OrdinalIgnoreCase);
+
+    [RelayCommand]
+    private void ShowBattle() => Show(mega: false);
+
+    [RelayCommand]
+    private void ShowMegaStones() => Show(mega: true);
+
+    private void Show(bool mega)
+    {
+        ShowingMegaStones = mega;
+        Visible.Clear();
+
+        foreach (var card in Items.Where(card => IsMega(card) == mega))
+        {
+            Visible.Add(card);
+        }
+    }
 
     [ObservableProperty]
     private int _balance;
@@ -85,6 +125,10 @@ public sealed partial class ShopViewModel : SectionViewModel
             {
                 Items.Add(new ShopItemViewModel(item, _sprites.GetItem(item.Id)));
             }
+
+            OnPropertyChanged(nameof(BattleTab));
+            OnPropertyChanged(nameof(MegaTab));
+            Show(ShowingMegaStones);
         }
 
         if (Items.Count == 0)

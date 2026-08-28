@@ -52,6 +52,12 @@ switch (command)
     case "dump":
         await DumpAsync(args.Length > 1 ? ulong.Parse(args[1]) : 20260818, args.Length > 2 ? args[2] : "Ruta 1");
         break;
+    case "item-iconos":
+        ItemIcons(int.Parse(args[1]), int.Parse(args[2]));
+        break;
+    case "megas":
+        await MegasAsync();
+        break;
     case "evo-dump":
         EvoDump(args.Length > 1 ? args[1] : null);
         break;
@@ -916,4 +922,109 @@ void EvoDump(string? evolutionPath)
                               + $"-> {row.Target,4} forma {row.Form,2}  arg {row.Argument,4}  nivel {row.Level,3}");
         }
     }
+}
+
+// Las megaevoluciones del cartucho cruzadas con la tabla de evoluciones: que especie, con que
+// piedra, y a que nivel se llega a esa especie. Lo segundo es lo que decide si una mega es
+// alcanzable dentro del cap de la competicion o es decorado.
+async Task MegasAsync()
+{
+    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work);
+    var species = workspace.Config.GetText(TextName.SpeciesNames);
+    var items = workspace.Config.GetText(TextName.ItemNames);
+
+    var megaPath = workspace.PathOf(GameFiles.MegaEvolution);
+    var evoPath = workspace.PathOf(GameFiles.Evolution);
+
+    // A que nivel se obtiene cada especie: el nivel de la entrada de evolucion que apunta a ella.
+    // Cero significa que no se llega subiendo de nivel -piedra, intercambio, o es una base-.
+    var levelOf = new Dictionary<int, int>();
+    using (var evo = new GarcPatcher(evoPath))
+    {
+        for (var from = 0; from < evo.FileCount; from++)
+        {
+            var entry = evo.Read(from);
+            for (var at = 0; at + 8 <= entry.Length; at += 8)
+            {
+                if (BitConverter.ToUInt16(entry, at) == 0)
+                {
+                    continue;
+                }
+
+                var target = BitConverter.ToUInt16(entry, at + 4);
+                var level = entry[at + 7];
+
+                if (target > 0 && (!levelOf.TryGetValue(target, out var known) || known < level))
+                {
+                    levelOf[target] = level;
+                }
+            }
+        }
+    }
+
+    using var mega = new GarcPatcher(megaPath);
+    var rows = new List<(int Species, int Stone, int Level)>();
+
+    for (var s = 0; s < mega.FileCount; s++)
+    {
+        var entry = mega.Read(s);
+        for (var at = 0; at + 8 <= entry.Length; at += 8)
+        {
+            if (BitConverter.ToUInt16(entry, at) == 0)
+            {
+                continue;
+            }
+
+            rows.Add((s, BitConverter.ToUInt16(entry, at + 4), levelOf.GetValueOrDefault(s)));
+        }
+    }
+
+    Console.WriteLine($"MEGAEVOLUCIONES: {rows.Count} entradas, {rows.Select(r => r.Species).Distinct().Count()} especies");
+    Console.WriteLine();
+
+    foreach (var row in rows.OrderBy(r => r.Level).ThenBy(r => r.Species))
+    {
+        var reach = row.Level == 0 ? "no por nivel" : $"nivel {row.Level}";
+        Console.WriteLine($"  {row.Species,4} {species[row.Species],-13} {items[row.Stone],-18} "
+                          + $"se llega a la especie: {reach}");
+    }
+
+    Console.WriteLine();
+    foreach (var cap in (int[])[24, 34, 40, 42, 54, 67, 85])
+    {
+        var reachable = rows.Count(r => r.Level > 0 && r.Level <= cap);
+        var noLevel = rows.Count(r => r.Level == 0);
+        Console.WriteLine($"  con cap {cap,3}: {reachable,2} alcanzables subiendo de nivel "
+                          + $"(+{noLevel} que no dependen del nivel)");
+    }
+}
+
+// Vuelca un tramo de iconos de OBJETO a PNG, nombrados por su indice de icono. Es la unica forma
+// de anclar un objeto nuevo: el desfase entre id e indice es escalonado y solo se sabe mirando.
+void ItemIcons(int fromIcon, int toIcon)
+{
+    var rom = RequireRom();
+    var reader = ItemIconReader.Open(rom, work);
+    var outDir = Path.Combine(Path.GetTempPath(), "permalocke-item-iconos");
+    Directory.CreateDirectory(outDir);
+
+    var written = 0;
+
+    for (var icon = fromIcon; icon <= toIcon && icon < reader.Count; icon++)
+    {
+        // Read() toma el id, no el indice, y lee el indice id-1: por eso el +1.
+        var picture = reader.Read(icon + 1);
+
+        if (picture.Pixels.All(b => b == 0))
+        {
+            continue;
+        }
+
+        File.WriteAllBytes(Path.Combine(outDir, $"icono-{icon:0000}.png"),
+            PngImage.Encode(picture.Pixels, picture.Width, picture.Height));
+        written++;
+    }
+
+    Console.WriteLine($"{written} iconos ({fromIcon}..{toIcon}) escritos en {outDir}");
+    Console.WriteLine($"El contenedor tiene {reader.Count} iconos.");
 }

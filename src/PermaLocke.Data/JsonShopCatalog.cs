@@ -38,7 +38,8 @@ public sealed class JsonShopCatalog(IReadOnlyList<ShopItem> items) : IShopCatalo
                 .Select(entry => new ShopItem(
                     entry.Id,
                     string.IsNullOrWhiteSpace(entry.Name) ? $"Objeto {entry.Id}" : entry.Name,
-                    entry.Price))
+                    entry.Price,
+                    string.IsNullOrWhiteSpace(entry.Category) ? ShopItem.Battle : entry.Category.Trim()))
         ]);
     }
 
@@ -48,5 +49,6 @@ public sealed class JsonShopCatalog(IReadOnlyList<ShopItem> items) : IShopCatalo
     private sealed record ShopEntry(
         [property: JsonPropertyName("id")] int Id,
         [property: JsonPropertyName("name")] string? Name,
-        [property: JsonPropertyName("price")] int Price);
+        [property: JsonPropertyName("price")] int Price,
+        [property: JsonPropertyName("categoria")] string? Category);
 }
