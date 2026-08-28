@@ -68,6 +68,13 @@ if (args.Length >= 1 && args[0] == "--ruleta")
 
 // Etapas marcadas a mano: mirar y, con un numero, corregir. Pasa por ProgressService, asi que
 // la correccion queda en el historial.
+if (args.Length >= 1 && args[0] == "--credito")
+{
+    return await PermaLocke.Probe.CreditProbe.RunAsync(
+        args.Length > 1 ? args[1] : null,
+        args.Length > 2 ? string.Join(" ", args.Skip(2)) : null);
+}
+
 if (args.Length >= 1 && args[0] == "--etapas")
 {
     return await PermaLocke.Probe.StageProbe.RunAsync(

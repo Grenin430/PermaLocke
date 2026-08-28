@@ -54,7 +54,7 @@ public sealed class CreditService(
             trades += milestone.WonderTrades;
         }
 
-        await AddWheelRollsAsync(run.Id, rolls, ct).ConfigureAwait(false);
+        await AddGrantedRollsAsync(run.Id, rolls, ct).ConfigureAwait(false);
 
         return new RunCredits(rolls, trades);
     }
@@ -101,30 +101,34 @@ public sealed class CreditService(
         && string.Equals(free, bool.TrueString, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
-    /// Adds the rolls the wheel has handed out.
+    /// Adds every roll the history says was granted, whoever granted it.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Taken from what each spin <b>recorded that it granted</b>, in its own <c>credito</c> field,
-    /// and not by looking the winning face up in the catalogue. Two things follow, and both matter.
-    /// Editing <c>Data/roulette.json</c> cannot rewrite credit already given. And the spins made
-    /// before gacha faces started granting credit -- back when they rolled on the spot and handed
-    /// over the Pokémon there and then -- carry no such field, so they pay nothing now: otherwise
-    /// they would pay twice for the one Pokémon they already delivered.
+    /// Keyed on the <c>credito</c> field and <b>not</b> on the event type, so a wheel spin, a
+    /// one-off prize and an admin adjustment all pay in the same way and nothing has to be taught
+    /// about each new source. What the event recorded is the whole of it: looking the source up in
+    /// today's configuration instead would mean that editing a JSON file rewrites credit already
+    /// given, and would pay twice for spins made back when a gacha face rolled on the spot and
+    /// handed the Pokémon over there and then. Those carry no such field, so they pay nothing.
+    /// </para>
+    /// <para>
+    /// One entry per banner named, so a source that grants two of the same writes it twice.
     /// </para>
     /// </remarks>
-    private async Task AddWheelRollsAsync(Guid runId, Dictionary<string, int> rolls, CancellationToken ct)
+    private async Task AddGrantedRollsAsync(Guid runId, Dictionary<string, int> rolls, CancellationToken ct)
     {
         var history = await events.GetAllAsync(runId, ct).ConfigureAwait(false);
 
-        foreach (var spin in history.Where(e => e.Type == GameEventType.RouletteSpun))
+        foreach (var e in history)
         {
-            if (!spin.Data.TryGetValue("credito", out var granted) || granted.Length == 0)
+            if (!e.Data.TryGetValue("credito", out var granted) || granted.Length == 0)
             {
                 continue;
             }
 
-            foreach (var banner in granted.Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            foreach (var banner in granted.Split(",",
+                         StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
             {
                 rolls[banner] = rolls.GetValueOrDefault(banner) + 1;
             }

@@ -16,23 +16,19 @@ public sealed record RewardItem(int Id, string Name, int Amount);
 /// the twelve trials is not a reward for clearing one.
 /// </param>
 /// <param name="Held">
-/// Items the player has to be carrying.
+/// Items the player has to be carrying. The second kind of condition, for the things the game marks
+/// by <em>giving</em> rather than by counting -- the same trick §40 used to anchor the trials on
+/// their Z-Crystal. "The first time somebody hands you Poké Balls" leaves no record anywhere, but
+/// it leaves Poké Balls in the bag, and that can be seen.
 /// </param>
 /// <param name="Automatic">
-/// Hand it over as soon as it is earned, instead of waiting for the player to press RECOGER.
+/// Hand it over as soon as it is earned, instead of waiting for the player to press RECOGER. For
+/// prizes meant to arrive <em>with</em> something the game gives you, where a button on another
+/// screen is not a reward, it is homework. The guards do not change: same conditions, same write
+/// and read back, same one-off <c>RewardClaimed</c>, which is what keeps "once" true whoever
+/// pressed it.
 /// </param>
-/// <remarks>
-/// For prizes that are meant to arrive <em>with</em> something the game gives you, where a button
-/// somewhere else is not a reward, it is homework. The guards do not change: it is still earned
-/// against the same conditions, still written into the bag and read back, and still recorded once
-/// with <c>RewardClaimed</c>, which is what keeps "once" true whoever pressed it.
-/// </remarks>
-/// <remarks>
-/// The second kind of condition, and it exists for the things the game marks by <em>giving</em>
-/// rather than by counting -- the same trick §40 used to anchor the trials on their Z-Crystal.
-/// "The first time somebody hands you Poké Balls" leaves no record anywhere, but it leaves Poké
-/// Balls in the bag, and that can be seen. Only for what the game does not take back.
-/// </remarks>
+/// <param name="Credit">Banners it hands a free gacha roll on, one entry per roll.</param>
 public sealed record Reward(
     string Id,
     string Name,
@@ -40,9 +36,32 @@ public sealed record Reward(
     IReadOnlyList<string> Achievements,
     IReadOnlyList<RewardItem> Items,
     IReadOnlyList<int>? Held = null,
-    bool Automatic = false)
+    bool Automatic = false,
+    IReadOnlyList<string>? Credit = null)
 {
-    public IReadOnlyList<int> HeldItems { get; } = Held ?? [];
+    /// <summary>
+    /// The held-item condition, never null.
+    /// </summary>
+    /// <remarks>
+    /// Computed and not stored, and that is not a style choice. A record's <c>with</c> copies the
+    /// fields and then applies the new values; it does <b>not</b> re-run the initialisers in the
+    /// body. Stored as <c>{ get; } = Held ?? []</c>, <c>reward with { Held = [4] }</c> would set
+    /// <c>Held</c> and leave this one holding the copy's old empty list, so the condition would
+    /// silently vanish. Caught by a test that did exactly that with the credits below.
+    /// </remarks>
+    public IReadOnlyList<int> HeldItems => Held ?? [];
+
+    /// <summary>
+    /// Banners this prize hands a free roll on, one entry per roll.
+    /// </summary>
+    /// <remarks>
+    /// A prize can give something that is not an item. The credit is not stored anywhere: it is
+    /// written into the <c>RewardClaimed</c> event and counted back out of the history by
+    /// <c>CreditService</c>, the same way the wheel's do. Which means editing this list never
+    /// rewrites credit already given, and a prize claimed before it granted any keeps granting
+    /// none -- so adding a roll here cannot quietly pay out to everyone who already claimed.
+    /// </remarks>
+    public IReadOnlyList<string> Credits => Credit ?? [];
 
     /// <summary>How many conditions there are in total, of both kinds.</summary>
     public int Conditions => Achievements.Count + HeldItems.Count;

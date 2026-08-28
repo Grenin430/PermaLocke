@@ -73,6 +73,45 @@ public sealed class JsonRewardCatalogTests : IDisposable
         Assert.True(balls.Automatic);
         Assert.Equal([4], balls.HeldItems);
         Assert.Equal(3, Assert.Single(balls.Items).Id);
+        Assert.Equal("decente", Assert.Single(balls.Credits));
+    }
+
+    /// <summary>A prize that only hands out rolls is valid: what it gives need not be an item.</summary>
+    [Fact]
+    public void A_prize_of_only_free_rolls_is_kept()
+    {
+        Given("""
+        {
+          "rewards": [
+            {
+              "id": "solo-tiradas",
+              "name": "Tiradas",
+              "objetosEnMochila": [4],
+              "tiradasGratis": ["decente", "decente"]
+            }
+          ]
+        }
+        """);
+
+        var reward = Assert.Single(JsonRewardCatalog.Load(_path).All);
+
+        Assert.Empty(reward.Items);
+        Assert.Equal(2, reward.Credits.Count);
+    }
+
+    /// <summary>But one that gives nothing at all is still dropped: a button that lies.</summary>
+    [Fact]
+    public void A_prize_that_gives_nothing_is_dropped()
+    {
+        Given("""
+        {
+          "rewards": [
+            { "id": "nada", "name": "Nada", "objetosEnMochila": [4] }
+          ]
+        }
+        """);
+
+        Assert.Empty(JsonRewardCatalog.Load(_path).All);
     }
 
     private static string Repository()

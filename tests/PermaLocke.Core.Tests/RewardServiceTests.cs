@@ -411,6 +411,43 @@ public sealed class RewardServiceTests
         Assert.Empty(bag.Given);
     }
 
+    /// <summary>
+    /// A prize can hand over a free roll as well as items, and the roll lives in the event.
+    /// </summary>
+    /// <remarks>
+    /// Written into <c>credito</c> and counted back out by <c>CreditService</c>, the same field the
+    /// wheel writes. Which is what makes adding a roll to a prize safe: a claim made before the
+    /// roll existed carries no such field and pays nothing, so editing the catalogue cannot hand
+    /// credit backwards to everyone who already claimed.
+    /// </remarks>
+    [Fact]
+    public async Task A_prize_can_grant_a_free_roll_and_the_event_records_it()
+    {
+        var withRoll = FirstBalls with { Credit = ["decente"] };
+        var (service, log, bag) = Build(new Records(), new Bag { Carrying = [4] }, withRoll);
+
+        var result = await service.ClaimAsync(TheRun(), "primeras-balls");
+
+        Assert.Equal(RewardOutcome.Delivered, result.Outcome);
+        Assert.Equal((3, 10), Assert.Single(bag.Given));
+        Assert.Contains("decente", result.Message);
+
+        var claimed = Assert.Single(log.Appended, e => e.Type == GameEventType.RewardClaimed);
+        Assert.Equal("decente", claimed.Data["credito"]);
+    }
+
+    /// <summary>A prize with no roll writes an empty field, which grants nothing.</summary>
+    [Fact]
+    public async Task A_prize_with_no_roll_grants_no_credit()
+    {
+        var (service, log, _) = Build(new Records(807, 813));
+
+        await service.ClaimAsync(TheRun(), "doce-pruebas");
+
+        var claimed = Assert.Single(log.Appended, e => e.Type == GameEventType.RewardClaimed);
+        Assert.Equal(string.Empty, claimed.Data["credito"]);
+    }
+
     [Fact]
     public async Task An_unknown_reward_is_not_invented()
     {

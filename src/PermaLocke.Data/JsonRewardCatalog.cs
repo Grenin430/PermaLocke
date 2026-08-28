@@ -62,9 +62,15 @@ public sealed class JsonRewardCatalog(IReadOnlyList<Reward> all) : IRewardCatalo
 
         var held = entry.Held?.Where(id => id > 0).ToList() ?? [];
 
-        // Hace falta ALGO que ganar y algo que dar. Un premio sin condicion se cobraria el primer
-        // dia, y uno sin objetos seria un boton que no entrega nada.
-        if ((achievements.Count == 0 && held.Count == 0) || items.Count == 0)
+        var credit = entry.Credit?
+            .Where(banner => !string.IsNullOrWhiteSpace(banner))
+            .ToList() ?? [];
+
+        // Hace falta ALGO que ganar y ALGO que dar. Un premio sin condicion se cobraria el primer
+        // dia, y uno que no entrega nada es un boton que miente. Lo que da puede ser objetos o
+        // tiradas: se piden las dos por separado para que un premio de solo tiradas valga, en vez
+        // de caerse en silencio, que es como una linea de configuracion deja de existir sin avisar.
+        if ((achievements.Count == 0 && held.Count == 0) || (items.Count == 0 && credit.Count == 0))
         {
             return null;
         }
@@ -76,7 +82,8 @@ public sealed class JsonRewardCatalog(IReadOnlyList<Reward> all) : IRewardCatalo
             achievements,
             items,
             held,
-            entry.Automatic);
+            entry.Automatic,
+            credit);
     }
 
     private sealed record RewardFile(
@@ -89,6 +96,7 @@ public sealed class JsonRewardCatalog(IReadOnlyList<Reward> all) : IRewardCatalo
         [property: JsonPropertyName("achievements")] IReadOnlyList<string>? Achievements,
         [property: JsonPropertyName("objetosEnMochila")] IReadOnlyList<int>? Held,
         [property: JsonPropertyName("automatico")] bool Automatic,
+        [property: JsonPropertyName("tiradasGratis")] IReadOnlyList<string>? Credit,
         [property: JsonPropertyName("items")] IReadOnlyList<RewardItemEntry>? Items);
 
     private sealed record RewardItemEntry(

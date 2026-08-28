@@ -5309,3 +5309,34 @@ evento `TeamWiped` llevaba desde el §36 lanzándose **sin que nadie lo escuchar
 lanza `RunDataChanged` una vez por ciclo y **solo si de verdad cambió algo** —registro, muerte,
 equipo caído, premio—, y HOME se refresca con eso. Trabajo hecho y sin verse se lee igual que
 trabajo no hecho.
+
+### Un premio puede dar tiradas, no solo objetos (2026-08-28)
+
+`Data/rewards.json` gana `tiradasGratis`, una lista de banners con **una entrada por tirada**. El de
+las primeras Poké Balls pasa a dar diez Super Balls **y una tirada en DECENTE**.
+
+No se guarda en ningún sitio: se escribe en el `credito` del evento `RewardClaimed` y `CreditService`
+lo cuenta de vuelta desde el historial, exactamente como las tiradas de la ruleta. Y de paso se
+generalizó lo que ya existía: `AddGrantedRollsAsync` mira **el campo `credito` y no el tipo de
+evento**, así que una tirada de ruleta, un premio y un ajuste a mano pagan igual y el servicio no
+tiene que aprenderse cada fuente nueva.
+
+Consecuencia deliberada, que es el §64 otra vez: **añadir una tirada a un premio no le paga nada a
+quien ya lo recogió**, porque su evento no la lleva escrita. Correcto, y por eso hace falta una
+forma de decir «dame una» en voz alta en vez de volver la regla retroactiva por lo bajo:
+`Probe --credito <banner> [motivo]` escribe un `AdminAdjustment` con su `credito` y su porqué. El
+historial dice que se concedió a mano, cuándo y por qué; no hay ningún número editado en ninguna
+parte.
+
+### La trampa del `with` en un record
+
+El test de esto falló, y lo que fallaba era el código. `Reward.Credits` estaba escrito como
+`public IReadOnlyList<string> Credits { get; } = Credit ?? [];`, y `reward with { Credit = ["decente"] }`
+**no vuelve a ejecutar los inicializadores del cuerpo**: el constructor de copia copia los campos y
+luego aplica los valores nuevos, así que `Credit` quedaba puesto y `Credits` seguía siendo la lista
+vacía de la copia. La propiedad derivada mentía en silencio.
+
+`HeldItems` tenía exactamente la misma forma y nadie lo había notado porque ningún test usaba
+`with { Held = ... }`. Las dos son ahora propiedades **calculadas** (`=> Held ?? []`). La regla que
+queda: en un record, una propiedad derivada de un parámetro posicional se calcula, no se inicializa,
+o `with` la deja desincronizada del parámetro del que dice depender.

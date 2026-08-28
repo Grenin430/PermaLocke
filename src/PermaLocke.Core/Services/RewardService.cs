@@ -179,7 +179,9 @@ public sealed class RewardService(
             reachable &= result.GameReachable;
         }
 
-        if (delivered.Count == 0)
+        // Un premio que no lleva objetos no tiene nada que llegar a la mochila, asi que no se le
+        // puede exigir que llegue algo: lo que entrega son tiradas, y esas viven en el evento.
+        if (reward.Items.Count > 0 && delivered.Count == 0)
         {
             // Nada ha llegado, así que nada se recoge: el premio sigue disponible.
             return new RewardResult(
@@ -194,9 +196,20 @@ public sealed class RewardService(
 
         var what = string.Join(" y ", delivered.Select(item => $"{item.Amount} {item.Name}"));
 
+        // Las tiradas se dicen aparte porque no van a la mochila: van al banner que toque, y el
+        // jugador tiene que saber dónde ir a buscarlas.
+        var rolls = reward.Credits.Count == 0
+            ? string.Empty
+            : $" Y {reward.Credits.Count} "
+              + (reward.Credits.Count == 1 ? "tirada gratis" : "tiradas gratis")
+              + $" en {string.Join(", ", reward.Credits.Distinct())}, en la pantalla del gacha.";
+
         return delivered.Count == reward.Items.Count
             ? new RewardResult(RewardOutcome.Delivered, reward, [], delivered,
-                $"{what} en la mochila. Escrito y releído. «{reward.Name}» queda recogido.")
+                (delivered.Count == 0
+                    ? $"«{reward.Name}» recogido."
+                    : $"{what} en la mochila. Escrito y releído. «{reward.Name}» queda recogido.")
+                + rolls)
             : new RewardResult(RewardOutcome.PartlyDelivered, reward, [], delivered,
                 $"Solo ha llegado parte: {what}. No llegó {string.Join("; ", failed)}. "
                 + "El premio queda recogido igualmente para que el botón no lo dé dos veces.");
@@ -301,7 +314,13 @@ public sealed class RewardService(
                 ["entregado"] = string.Join(", ",
                     delivered.Select(item => $"{item.Id}x{item.Amount}")),
                 ["completo"] = (failed.Count == 0).ToString(),
-                ["noEntregado"] = string.Join("; ", failed)
+                ["noEntregado"] = string.Join("; ", failed),
+
+                // Las tiradas que este premio concede, escritas AQUI y contadas de vuelta desde el
+                // historial. Igual que la ruleta (§64): lo que se paga sale de lo que el evento dijo
+                // que pasó, no de la configuración de hoy, así que añadir una tirada a este premio
+                // no le paga nada a quien ya lo recogió.
+                ["credito"] = string.Join(",", reward.Credits)
             }
         }, ct);
 }

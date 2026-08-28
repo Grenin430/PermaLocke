@@ -278,6 +278,41 @@ public sealed class CreditServiceTests
     /// <summary>
     /// Without the file nothing is limited, so a missing config cannot lock a feature that worked.
     /// </summary>
+    /// <summary>
+    /// Credit is keyed on the <c>credito</c> field, not on the kind of event that carries it.
+    /// </summary>
+    /// <remarks>
+    /// So a prize pays in exactly like a wheel spin, and so does anything granted by hand, without
+    /// this service having to be taught about each new source. The test uses a prize and an admin
+    /// adjustment precisely because neither is a spin.
+    /// </remarks>
+    [Fact]
+    public async Task Any_event_that_recorded_a_credit_pays_in()
+    {
+        var (service, log) = Build(new Records());
+        var run = TheRun();
+
+        await log.AppendAsync(Granted(run.Id, GameEventType.RewardClaimed, "decente"));
+        await log.AppendAsync(Granted(run.Id, GameEventType.AdminAdjustment, "decente"));
+        await log.AppendAsync(Granted(run.Id, GameEventType.RewardClaimed, string.Empty));
+
+        var earned = await service.EarnedAsync(run);
+
+        Assert.Equal(2, earned.Rolls["decente"]);
+    }
+
+    private static GameEvent Granted(Guid runId, GameEventType type, string credit) => new()
+    {
+        Id = Guid.NewGuid(),
+        RunId = runId,
+        Timestamp = DateTimeOffset.UnixEpoch,
+        Type = type,
+        Source = EventSource.System,
+        Actor = "Grenin",
+        Description = "concedido",
+        Data = new Dictionary<string, string> { ["credito"] = credit }
+    };
+
     [Fact]
     public void An_empty_catalogue_limits_nothing()
     {
