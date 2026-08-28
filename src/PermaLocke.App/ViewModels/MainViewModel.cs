@@ -22,6 +22,7 @@ public sealed partial class MainViewModel : ObservableObject
         MiscellaneousViewModel miscellaneous, GachaViewModel gacha, PokemonViewerViewModel viewer,
         AchievementsViewModel achievements, ShopViewModel shop, PokePasteViewModel pokePaste,
         RouletteViewModel roulette, RouletteService wheel,
+        PermaLocke.App.Services.GameLinkMonitor gameLink,
         PermaLocke.App.Services.IUiDispatcher ui,
         IRunContext runContext, ILogger<MainViewModel> logger)
     {
@@ -32,6 +33,15 @@ public sealed partial class MainViewModel : ObservableObject
         _ui = ui;
         _runContext = runContext;
         _logger = logger;
+
+        // La insignia de cada pantalla deja de ser una etiqueta y pasa a ser un indicador: dice si
+        // el requisito se CUMPLE, no cuál es.
+        gameLink.SnapshotChanged += (_, snapshot) => _ = _ui.InvokeAsync(() =>
+        {
+            _linkProblem = snapshot.Problem ?? string.Empty;
+            GameConnected = snapshot.Connected;
+            return Task.CompletedTask;
+        });
 
         Sections =
         [
@@ -104,7 +114,71 @@ public sealed partial class MainViewModel : ObservableObject
     public ObservableCollection<SectionViewModel> Sections { get; }
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(NeedLabel))]
+    [NotifyPropertyChangedFor(nameof(NeedState))]
+    [NotifyPropertyChangedFor(nameof(NeedDetail))]
+    [NotifyPropertyChangedFor(nameof(ShowsNeed))]
     private SectionViewModel _selectedSection;
+
+    /// <summary>Whether the emulator is answering right now.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(NeedLabel))]
+    [NotifyPropertyChangedFor(nameof(NeedState))]
+    [NotifyPropertyChangedFor(nameof(NeedDetail))]
+    private bool _gameConnected;
+
+    /// <summary>Why the link is down, in the emulator's own words. Empty while it is up.</summary>
+    private string _linkProblem = string.Empty;
+
+    public bool ShowsNeed => SelectedSection.ShowsNeed;
+
+    /// <summary>
+    /// The badge, which says whether the section's requirement is <b>met</b> and not merely what it
+    /// is.
+    /// </summary>
+    /// <remarks>
+    /// It started out static — "JUEGO ABIERTO" whether or not it was — and that turned out to be the
+    /// difference between an indicator and a label. A whole session was played with the link down:
+    /// nothing was registered, no death was counted, and every screen went on calmly stating the
+    /// requirement it was failing. A requirement that never turns red is decoration.
+    /// </remarks>
+    public string NeedLabel => SelectedSection.Needs switch
+    {
+        GameNeed.Running => GameConnected ? "JUEGO CONECTADO" : "SIN CONEXIÓN",
+        GameNeed.Closed => GameConnected ? "CIERRA EL JUEGO" : "JUEGO CERRADO",
+        GameNeed.Either => "ABIERTO O CERRADO",
+        _ => string.Empty
+    };
+
+    /// <summary>
+    /// Colour band. Only the two answers PermaLocke can actually confirm go green or red.
+    /// </summary>
+    /// <remarks>
+    /// A section that needs the game <em>shut</em> and finds no answer is <b>not</b> confirmed shut:
+    /// Azahar may be running with its RPC server off, and writing the save under it would fail. So
+    /// that case keeps the plain "this is what is needed" amber instead of a green that would be a
+    /// guess. Green and red are for what was measured.
+    /// </remarks>
+    public string NeedState => SelectedSection.Needs switch
+    {
+        GameNeed.Running => GameConnected ? "ok" : "problem",
+        GameNeed.Closed => GameConnected ? "problem" : "closed",
+        GameNeed.Either => "either",
+        _ => "none"
+    };
+
+    public string NeedDetail => SelectedSection.Needs switch
+    {
+        GameNeed.Running when !GameConnected =>
+            (_linkProblem.Length > 0 ? _linkProblem + " " : string.Empty)
+            + "Mientras tanto esta pantalla no puede hacer nada, y las muertes no se cuentan.",
+
+        GameNeed.Closed when GameConnected =>
+            "Azahar está respondiendo, así que el juego está abierto. Guarda dentro del juego y "
+            + "ciérralo del todo antes de escribir nada aquí.",
+
+        _ => SelectedSection.NeedsDetail
+    };
 
     [ObservableProperty]
     private string _roleText = "—";

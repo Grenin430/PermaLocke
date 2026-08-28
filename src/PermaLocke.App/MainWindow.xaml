@@ -145,23 +145,28 @@
                 <DockPanel>
                     <StackPanel DockPanel.Dock="Right" MaxWidth="290" Margin="20,0,0,0"
                                 VerticalAlignment="Center" HorizontalAlignment="Right"
-                                Visibility="{Binding SelectedSection.ShowsNeed,
+                                Visibility="{Binding ShowsNeed,
                                              Converter={StaticResource BoolToVisibility}}">
                         <Border HorizontalAlignment="Right" CornerRadius="9" Padding="10,4"
                                 BorderThickness="1">
                             <Border.Style>
                                 <Style TargetType="Border">
-                                    <!-- ABIERTO O CERRADO: apagado a propósito. Es la respuesta
-                                         "no te preocupes", y gritarla le quitaría fuerza a las
-                                         otras dos, que son las que te ahorran un fallo. -->
+                                    <!-- Apagado por defecto: es la respuesta "no te preocupes", y
+                                         gritarla le quitaría fuerza a las que sí ahorran un fallo.
+                                         Verde y rojo solo para lo COMPROBADO: que el emulador
+                                         conteste, o que no conteste. -->
                                     <Setter Property="Background" Value="{StaticResource SurfaceHighBrush}" />
                                     <Setter Property="BorderBrush" Value="{StaticResource BorderStrongBrush}" />
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding SelectedSection.NeedsState}" Value="running">
+                                        <DataTrigger Binding="{Binding NeedState}" Value="ok">
                                             <Setter Property="Background" Value="{StaticResource SuccessDeepBrush}" />
                                             <Setter Property="BorderBrush" Value="{StaticResource SuccessBrush}" />
                                         </DataTrigger>
-                                        <DataTrigger Binding="{Binding SelectedSection.NeedsState}" Value="closed">
+                                        <DataTrigger Binding="{Binding NeedState}" Value="problem">
+                                            <Setter Property="Background" Value="{StaticResource DangerDeepBrush}" />
+                                            <Setter Property="BorderBrush" Value="{StaticResource DangerBrush}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding NeedState}" Value="closed">
                                             <Setter Property="Background" Value="{StaticResource WarningDeepBrush}" />
                                             <Setter Property="BorderBrush" Value="{StaticResource WarningBrush}" />
                                         </DataTrigger>
@@ -169,17 +174,20 @@
                                 </Style>
                             </Border.Style>
 
-                            <TextBlock Text="{Binding SelectedSection.NeedsLabel}"
+                            <TextBlock Text="{Binding NeedLabel}"
                                        FontFamily="{StaticResource UiFont}" FontSize="10.5"
                                        FontWeight="Bold">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
                                         <Style.Triggers>
-                                            <DataTrigger Binding="{Binding SelectedSection.NeedsState}" Value="running">
+                                            <DataTrigger Binding="{Binding NeedState}" Value="ok">
                                                 <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
                                             </DataTrigger>
-                                            <DataTrigger Binding="{Binding SelectedSection.NeedsState}" Value="closed">
+                                            <DataTrigger Binding="{Binding NeedState}" Value="problem">
+                                                <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding NeedState}" Value="closed">
                                                 <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
                                             </DataTrigger>
                                         </Style.Triggers>
@@ -190,7 +198,7 @@
 
                         <!-- El porqué, en pequeño: la insignia sola dice qué hacer pero no qué pasa
                              si no lo haces, que es la mitad que hace falta cuando algo falla. -->
-                        <TextBlock Text="{Binding SelectedSection.NeedsDetail}"
+                        <TextBlock Text="{Binding NeedDetail}"
                                    FontFamily="{StaticResource UiFont}" FontSize="10.5"
                                    Foreground="{StaticResource TextFaintBrush}"
                                    TextWrapping="Wrap" TextAlignment="Right" Margin="0,5,0,0" />

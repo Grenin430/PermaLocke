@@ -5473,3 +5473,48 @@ uno y esto decide **cómo**. Al revés, una evolución recién redirigida se que
 intercambio intacto. Por lo mismo, la tabla de movimiento está indexada por especie **y** destino: si
 las líneas se randomizan y Lickitung ya no apunta a Lickilicky, darle el nivel 33 de Lickilicky sería
 inventar un número para una pareja que nadie ha medido, así que se deja como está.
+
+### La insignia era una etiqueta, no un indicador (2026-08-28)
+
+El jugador wipeó y ningún Pokémon se convirtió en Shedinja. La medida, antes de tocar nada:
+
+```
+grep "Muerte detectada"  -> una sola en todo el dia, y esa SI se transformo
+grep "Equipo caido"      -> ninguna
+grep "Conectado al juego" -> la ultima a las 02:17:12
+```
+
+O sea que durante esa partida **PermaLocke no estaba mirando**. El vigilante lee el equipo de la
+memoria del emulador; sin enlace no hay equipo que leer, no hay muertes que detectar y no hay nada
+que escribir. La cadena entera estaba correcta y desconectada.
+
+Lo que falla ahí no es la detección: es que **se pudo jugar una sesión entera sin enterarse**. La
+insignia del §66 decía «JUEGO ABIERTO» en todas las pantallas que lo necesitan, estuviera abierto o
+no, porque salía solo de lo que la sección declara. Un requisito que nunca se pone en rojo es
+decoración.
+
+Ahora el shell escucha `SnapshotChanged` y la insignia dice si el requisito **se cumple**:
+
+| Sección necesita | El emulador contesta | Insignia |
+|---|---|---|
+| abierto | sí | verde, JUEGO CONECTADO |
+| abierto | no | **rojo, SIN CONEXIÓN** |
+| cerrado | sí | **rojo, CIERRA EL JUEGO** |
+| cerrado | no | ámbar, JUEGO CERRADO |
+| da igual | — | apagado |
+
+El único caso que no se pinta de verde es «necesita cerrado y nadie contesta», y es a propósito: que
+el RPC no conteste **no demuestra** que el juego esté cerrado —Azahar puede estar abierto con el
+servidor apagado— y un verde ahí sería una suposición. Verde y rojo son para lo medido; el ámbar
+sigue diciendo qué hace falta.
+
+### Lo que sigue sin poder afirmarse del wipe
+
+Que la cadena esté bien no es haberla visto funcionar. La única muerte observada nunca fue un wipe, y
+además llegó **con el Pokémon ya a 0 PS** cuando el vigilante lo vio por primera vez, así que
+tampoco prueba que la lectura del equipo funcione **durante** un combate.
+
+Y un wipe se cura solo: al despertar en el Centro Pokémon el juego restaura el equipo, de modo que
+la ventana en la que los seis se leen a 0 PS es la del final del combate y el fundido, no un estado
+que se quede ahí como el de una muerte suelta. Con el sondeo a 1 Hz debería bastar, pero **debería
+no es se comprobó**. Queda por medir con el enlace levantado y un combate perdido delante.

@@ -34,7 +34,7 @@ public sealed class GameWatcher(IPokemonRepository pokemon, IEventStore events, 
     /// </summary>
     /// <remarks>
     /// A wipe is an <b>edge</b>, not a state: the party stays at zero HP for as long as the player
-    /// takes to reach a Pokémon Centre, and the watcher looks every three seconds. Charging on the
+    /// takes to reach a Pokémon Centre, and the watcher looks once a second. Charging on the
     /// state would charge dozens of times for one wipe.
     ///
     /// It starts true on purpose, so the first look after opening PermaLocke can only initialise
