@@ -22,7 +22,7 @@ public sealed partial class MainViewModel : ObservableObject
         MiscellaneousViewModel miscellaneous, GachaViewModel gacha, PokemonViewerViewModel viewer,
         AchievementsViewModel achievements, ShopViewModel shop, PokePasteViewModel pokePaste,
         RouletteViewModel roulette, RouletteService wheel, MaintenanceViewModel maintenance,
-        StatisticsViewModel statistics,
+        StatisticsViewModel statistics, SyncViewModel sync,
         PermaLocke.App.Services.GameLinkMonitor gameLink,
         PermaLocke.App.Services.IUiDispatcher ui,
         IRunContext runContext, ILogger<MainViewModel> logger)
@@ -53,6 +53,7 @@ public sealed partial class MainViewModel : ObservableObject
             viewer,
             pokePaste,
             statistics,
+            sync,
             miscellaneous,
             maintenance
         ];
