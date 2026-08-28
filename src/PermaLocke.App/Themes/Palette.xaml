@@ -17,67 +17,68 @@
         LA REGLA DEL COLOR, que es la que sostiene el resto:
 
           · El gris hace el trabajo.  Fondo, superficies, bordes y la mayoría del texto son
-            neutros fríos. Una pantalla en reposo es casi monocroma.
-          · El latón es el valor.     Un único acento. Marca lo que vale (puntos), lo que
-            progresa y lo que se puede pulsar. Si algo es de latón, o es dinero o es una acción.
+            neutros violáceos. Una pantalla en reposo es casi monocroma.
+          · El violeta es el valor.   Un único acento. Marca lo que vale (puntos), lo que
+            progresa y lo que se puede pulsar. Si algo es violeta, o es dinero o es una acción.
           · Los semánticos avisan.    Verde, naranja, rojo y azul solo en distintivos pequeños con
             fondo teñido, nunca como relleno grande. Son señales, no decoración.
           · La rareza vive en su sitio. Los cinco colores de tier son del gacha y de la colección.
             No pintan la interfaz general.
 
-        Por qué latón y no el cian de antes: cian sobre azul marino es la paleta por defecto de
-        cualquier panel de control, y no dice nada de una partida. El oro es el color de la
-        recompensa y del progreso en cualquier RPG, y aquí además ES la moneda.
+        Por qué violeta y no el cian de antes: cian sobre azul marino es la paleta por defecto de
+        cualquier panel de control, y no dice nada de una partida. El violeta es el color del
+        ultraespacio de Ultra Luna y el de lo raro en cualquier juego, así que sirve para las dos
+        cosas que este acento tiene que decir: esto vale, y esto es de aquí.
     -->
 
     <!--
         ============================ 1. NEUTROS ============================
-        Rampa fría de carboncillo, ocho escalones del suelo hacia arriba. Neutro de verdad, con un
-        punto de azul para que no se vea sucio: un gris exacto sobre pantalla se lee verdoso.
+        Rampa de carboncillo violáceo, ocho escalones del suelo hacia arriba. Casi neutra, con un
+        punto de morado: un gris exacto debajo de un acento violeta se lee sucio y verdoso.
 
         El sitio de cada uno lo dice su nombre, y de ahí sale la elevación: nada flota porque tenga
         sombra, flota porque está un escalón más arriba que lo que tiene debajo.
     -->
-    <Color x:Key="CanvasColor">#FF0B0C0F</Color>
-    <Color x:Key="SunkenColor">#FF101318</Color>
-    <Color x:Key="SurfaceColor">#FF15181E</Color>
-    <Color x:Key="SurfaceAltColor">#FF1B1F26</Color>
-    <Color x:Key="SurfaceHighColor">#FF232830</Color>
-    <Color x:Key="BorderSubtleColor">#FF23272F</Color>
-    <Color x:Key="BorderColor">#FF313742</Color>
-    <Color x:Key="BorderStrongColor">#FF454C59</Color>
+    <Color x:Key="CanvasColor">#FF09070E</Color>
+    <Color x:Key="SunkenColor">#FF0E0B18</Color>
+    <Color x:Key="SurfaceColor">#FF130F1F</Color>
+    <Color x:Key="SurfaceAltColor">#FF1A152C</Color>
+    <Color x:Key="SurfaceHighColor">#FF231C3B</Color>
+    <Color x:Key="BorderSubtleColor">#FF261E3E</Color>
+    <Color x:Key="BorderColor">#FF352A55</Color>
+    <Color x:Key="BorderStrongColor">#FF4B3B74</Color>
 
     <!-- Nombres heredados. Las vistas los consumen desde antes del rediseño y siguen valiendo. -->
-    <Color x:Key="BackgroundColor">#FF0B0C0F</Color>
-    <Color x:Key="BackgroundLiftColor">#FF101318</Color>
+    <Color x:Key="BackgroundColor">#FF09070E</Color>
+    <Color x:Key="BackgroundLiftColor">#FF0E0B18</Color>
 
     <!--
-        ============================ 2. ACENTO: LATÓN ============================
+        ============================ 2. ACENTO: VIOLETA ============================
         Un acento y nada más. Cuatro pasos para poder usarlo en texto, en relleno, en borde apagado
         y como fondo teñido sin salirse de la familia.
 
-        OnAccent es el texto que va ENCIMA del relleno de latón. Existe como token porque estaba
+        OnAccent es el texto que va ENCIMA del relleno violeta. Existe como token porque estaba
         escrito a mano en tres vistas distintas, cada una con un negro diferente.
     -->
-    <Color x:Key="AccentColor">#FFD9A441</Color>
-    <Color x:Key="AccentBrightColor">#FFF0C572</Color>
-    <Color x:Key="AccentDimColor">#FF8A6A2B</Color>
-    <Color x:Key="AccentDeepColor">#FF33270F</Color>
-    <Color x:Key="OnAccentColor">#FF120E07</Color>
+    <Color x:Key="AccentColor">#FFB07BF0</Color>
+    <Color x:Key="AccentBrightColor">#FFD2ADFF</Color>
+    <Color x:Key="AccentDimColor">#FF6C4AA6</Color>
+    <Color x:Key="AccentDeepColor">#FF281847</Color>
+    <Color x:Key="OnAccentColor">#FF120A1F</Color>
 
     <!--
         ============================ 3. TEXTO ============================
         Tres niveles y se acabó. El primario no es blanco puro: #FFFFFF sobre casi negro vibra y
         cansa en una sesión larga, que es exactamente el uso de esta aplicación.
     -->
-    <Color x:Key="TextColor">#FFE7E9ED</Color>
-    <Color x:Key="TextMutedColor">#FF99A0AC</Color>
-    <Color x:Key="TextFaintColor">#FF646B77</Color>
-    <Color x:Key="TextDisabledColor">#FF4A505B</Color>
+    <Color x:Key="TextColor">#FFEAE7F2</Color>
+    <Color x:Key="TextMutedColor">#FFA098B8</Color>
+    <Color x:Key="TextFaintColor">#FF6C6484</Color>
+    <Color x:Key="TextDisabledColor">#FF4E4866</Color>
 
     <!--
         ============================ 4. SEMÁNTICOS ============================
-        Desaturados a propósito, para que el latón siga siendo lo más fuerte de la pantalla. Cada
+        Desaturados a propósito, para que el violeta siga siendo lo más fuerte de la pantalla. Cada
         uno con su fondo teñido, que es como se usan: distintivo pequeño, no relleno grande.
 
         Nota deliberada sobre naranja y latón: son vecinos. Se distinguen por TRATAMIENTO, no por
@@ -97,17 +98,18 @@
     <!--
         ============================ 5. RAREZA ============================
         La escala que cualquiera que haya jugado a algo reconoce sin leyenda: gris, verde, azul,
-        violeta, oro. No es una copia de nada, es una convención, y por eso funciona.
+        magenta, oro. No es una copia de nada, es una convención, y por eso funciona.
 
-        El tier 5 ES el latón a propósito: legendario y «lo más valioso» tienen que ser el mismo
-        color, si no la aplicación diría dos cosas distintas sobre lo mismo.
+        El tier 4 se movió a magenta: era violeta, y con el acento violeta habrían sido el mismo
+        color diciendo dos cosas. El tier 5 se queda en oro, que es lo que todo el mundo lee como
+        legendario y ya no compite con nada.
 
         Y se quedan AQUÍ: el gacha y la colección los usan, el resto de la aplicación no.
     -->
     <Color x:Key="Tier1Color">#FF7C8593</Color>
     <Color x:Key="Tier2Color">#FF5FA86F</Color>
     <Color x:Key="Tier3Color">#FF4E8BC9</Color>
-    <Color x:Key="Tier4Color">#FF9C6BCB</Color>
+    <Color x:Key="Tier4Color">#FFD75FA8</Color>
     <Color x:Key="Tier5Color">#FFD9A441</Color>
 
     <!-- ============================ BROCHAS ============================ -->
@@ -214,17 +216,17 @@
         veinticinco. La razón entre pasos se aprieta arriba a propósito: en una aplicación que se
         consulta de un vistazo hace falta contraste, no titulares de revista.
     -->
-    <FontFamily x:Key="DisplayFont">Bahnschrift SemiBold Condensed, Bahnschrift Condensed, Bahnschrift, Segoe UI</FontFamily>
-    <FontFamily x:Key="DisplayFontLight">Bahnschrift SemiCondensed, Bahnschrift, Segoe UI</FontFamily>
+    <FontFamily x:Key="DisplayFont">Bahnschrift SemiBold, Bahnschrift, Segoe UI Semibold, Segoe UI</FontFamily>
+    <FontFamily x:Key="DisplayFontLight">Bahnschrift, Segoe UI</FontFamily>
     <FontFamily x:Key="UiFont">Segoe UI, Segoe UI Variable Text, Tahoma</FontFamily>
     <FontFamily x:Key="MonoFont">Consolas, Cascadia Mono, Courier New</FontFamily>
 
-    <sys:Double x:Key="FontSizeMicro">10</sys:Double>
-    <sys:Double x:Key="FontSizeSmall">11.5</sys:Double>
-    <sys:Double x:Key="FontSizeBody">13</sys:Double>
-    <sys:Double x:Key="FontSizeLead">15</sys:Double>
-    <sys:Double x:Key="FontSizeSection">18</sys:Double>
-    <sys:Double x:Key="FontSizeTitle">23</sys:Double>
-    <sys:Double x:Key="FontSizeHuge">34</sys:Double>
+    <sys:Double x:Key="FontSizeMicro">11</sys:Double>
+    <sys:Double x:Key="FontSizeSmall">12.5</sys:Double>
+    <sys:Double x:Key="FontSizeBody">13.5</sys:Double>
+    <sys:Double x:Key="FontSizeLead">16</sys:Double>
+    <sys:Double x:Key="FontSizeSection">19</sys:Double>
+    <sys:Double x:Key="FontSizeTitle">25</sys:Double>
+    <sys:Double x:Key="FontSizeHuge">36</sys:Double>
 
 </ResourceDictionary>
