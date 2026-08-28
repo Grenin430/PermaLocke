@@ -301,6 +301,8 @@ public sealed partial class HomeViewModel : SectionViewModel
         };
     }
 
+    public override string IconKey => "IconHome";
+
     public override GameNeed Needs => GameNeed.Running;
 
     /// <summary>

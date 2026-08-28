@@ -249,6 +249,8 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
     [ObservableProperty]
     private bool _isAvailable;
 
+    public override string IconKey => "IconGrid";
+
     public override GameNeed Needs => GameNeed.Closed;
 
     public override Task ActivateAsync() => LoadAsync();

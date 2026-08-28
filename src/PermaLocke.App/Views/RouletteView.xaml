@@ -113,7 +113,7 @@
                                                        TextWrapping="Wrap" MaxHeight="38"
                                                        FontFamily="{StaticResource UiFont}"
                                                        FontSize="11.5" FontWeight="Bold"
-                                                       Foreground="#FF0B0E16"
+                                                       Foreground="{StaticResource OnAccentBrush}"
                                                        VerticalAlignment="Center" />
                                         </Grid>
                                     </DataTemplate>

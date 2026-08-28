@@ -7,33 +7,37 @@
 
         <!-- El botón del precio: relleno de acento, y en rojo apagado cuando no llega el saldo,
              para que la tarjeta diga por qué no se puede comprar sin tener que leer nada. -->
-        <Style x:Key="PriceButton" TargetType="Button">
-            <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
-            <Setter Property="FontSize" Value="13" />
-            <Setter Property="FontWeight" Value="Bold" />
-            <Setter Property="Foreground" Value="#FF05070B" />
-            <Setter Property="Cursor" Value="Hand" />
+        <!-- El precio ES el boton de compra: no hay una etiqueta con el precio y aparte un boton
+             que diga COMPRAR, porque en una tienda de juego se pulsa el precio. Comparte la forma
+             del boton primario del tema (relleno de laton, radio y alto), asi que cuesta lo mismo
+             de reconocer que cualquier otra accion de la aplicacion.
+
+             No se lo puedes pagar: se apaga a rojo apagado en vez de simplemente atenuarse. La
+             diferencia importa, porque "no llegas" y "esto no se puede pulsar" son cosas
+             distintas y el jugador necesita saber cual de las dos es. -->
+        <Style x:Key="PriceButton" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
+            <Setter Property="FontSize" Value="{StaticResource FontSizeBody}" />
+            <Setter Property="Padding" Value="{StaticResource PadTight}" />
+            <Setter Property="MinHeight" Value="28" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Chip" CornerRadius="5" Padding="10,7"
-                                BorderThickness="1" BorderBrush="{StaticResource AccentBrush}">
-                            <Border.Background>
-                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                    <GradientStop Offset="0" Color="#FF63DEF8" />
-                                    <GradientStop Offset="1" Color="{StaticResource AccentColor}" />
-                                </LinearGradientBrush>
-                            </Border.Background>
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Border x:Name="Chip" CornerRadius="{StaticResource RadiusMedium}"
+                                Padding="{TemplateBinding Padding}"
+                                Background="{StaticResource AccentBrush}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              TextElement.Foreground="{TemplateBinding Foreground}" />
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Chip" Property="Background" Value="#FF8CE9FF" />
+                                <Setter TargetName="Chip" Property="Background" Value="{StaticResource AccentBrightBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Chip" Property="Background" Value="{StaticResource AccentDimBrush}" />
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="Chip" Property="Background" Value="#FF1A1010" />
-                                <Setter TargetName="Chip" Property="BorderBrush" Value="#FF4A2A2A" />
-                                <Setter Property="Foreground" Value="#FF9A5A57" />
+                                <Setter TargetName="Chip" Property="Background" Value="{StaticResource DangerDeepBrush}" />
+                                <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -43,14 +47,10 @@
 
         <!-- Una tarjeta: el icono del cartucho sobre un halo, el nombre, lo que llevas y el precio. -->
         <DataTemplate x:Key="ShopItemTemplate">
-            <Border x:Name="Card" Margin="5" Padding="11,12" CornerRadius="10" BorderThickness="1"
-                    BorderBrush="{StaticResource BorderStrongBrush}">
-                <Border.Background>
-                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                        <GradientStop Offset="0" Color="#FF151E2E" />
-                        <GradientStop Offset="1" Color="{StaticResource SurfaceColor}" />
-                    </LinearGradientBrush>
-                </Border.Background>
+            <Border x:Name="Card" Margin="4" Padding="{StaticResource PadPanel}"
+                    CornerRadius="{StaticResource RadiusMedium}" BorderThickness="1"
+                    Background="{StaticResource SurfaceAltBrush}"
+                    BorderBrush="{StaticResource BorderSubtleBrush}">
 
                 <StackPanel>
                     <!-- EL ICONO. Un halo detrás para que el pixel art no flote sobre el fondo,
@@ -60,7 +60,7 @@
                         <Ellipse Width="70" Height="70" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <Ellipse.Fill>
                                 <RadialGradientBrush>
-                                    <GradientStop Offset="0" Color="#33FFFFFF" />
+                                    <GradientStop Offset="0" Color="#26FFFFFF" />
                                     <GradientStop Offset="0.55" Color="#12000000" />
                                     <GradientStop Offset="1" Color="#00000000" />
                                 </RadialGradientBrush>
@@ -69,7 +69,7 @@
 
                         <TextBlock Text="{Binding Initial}" FontSize="30" FontWeight="Bold"
                                    HorizontalAlignment="Center" VerticalAlignment="Center"
-                                   Foreground="#FF243348" />
+                                   Foreground="{StaticResource TextDisabledBrush}" />
 
                         <Image Source="{Binding Icon}" Stretch="Uniform" MaxHeight="64" MaxWidth="64"
                                RenderOptions.BitmapScalingMode="NearestNeighbor"
@@ -190,27 +190,9 @@
                     </TextBlock>
                 </StackPanel>
 
-                <Border Grid.Column="1" Padding="20,10" CornerRadius="8"
-                        Background="{StaticResource BackgroundBrush}" BorderThickness="1"
-                        BorderBrush="{StaticResource AccentDimBrush}">
-                    <StackPanel>
-                        <TextBlock Text="SALDO" FontSize="10" FontWeight="Bold"
-                                   HorizontalAlignment="Center"
-                                   FontFamily="{StaticResource UiFont}"
-                                   Foreground="{StaticResource TextMutedBrush}" />
-                        <TextBlock Text="{Binding Balance}" FontSize="34" FontWeight="Bold"
-                                   HorizontalAlignment="Center"
-                                   FontFamily="{StaticResource UiFont}"
-                                   Foreground="{StaticResource AccentBrush}">
-                            <TextBlock.Effect>
-                                <DropShadowEffect Color="{StaticResource AccentColor}" BlurRadius="14"
-                                                  ShadowDepth="0" Opacity="0.6" />
-                            </TextBlock.Effect>
-                        </TextBlock>
-                        <TextBlock Text="puntos" FontSize="10" HorizontalAlignment="Center"
-                                   Foreground="{StaticResource TextMutedBrush}" />
-                    </StackPanel>
-                </Border>
+                <!-- El saldo se quito de aqui: vive en la cabecera y se ve desde cualquier
+                     pantalla. Ensenar el mismo numero dos veces en la misma pantalla no informa
+                     el doble, solo hace dudar de cual de los dos es el bueno. -->
             </Grid>
         </Border>
 

@@ -127,6 +127,8 @@ public sealed partial class AchievementsViewModel : SectionViewModel
     [ObservableProperty]
     private bool _isBusy;
 
+    public override string IconKey => "IconTrophy";
+
     public override GameNeed Needs => GameNeed.Either;
 
     public override Task ActivateAsync() => RefreshAsync();

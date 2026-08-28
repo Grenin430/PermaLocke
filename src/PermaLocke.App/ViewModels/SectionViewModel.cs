@@ -46,6 +46,16 @@ public abstract partial class SectionViewModel : ObservableObject
     public string Subtitle { get; }
 
     /// <summary>
+    /// Key of the navigation icon, resolved against <c>Themes/Icons.xaml</c>.
+    /// </summary>
+    /// <remarks>
+    /// A key and not a geometry: the view models must not reference WPF drawing types, and the
+    /// shape of an icon is the theme's business. A section that forgets to answer gets a dot,
+    /// which is visibly a placeholder rather than an empty gap in the menu.
+    /// </remarks>
+    public virtual string IconKey => "IconDot";
+
+    /// <summary>
     /// What this section needs of the emulator. Each screen answers for itself, because the answer
     /// comes from which door it writes through and only the screen knows that.
     /// </summary>

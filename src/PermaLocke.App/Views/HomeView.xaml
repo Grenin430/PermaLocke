@@ -95,94 +95,85 @@
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
+            <!-- ============================================ LÍNEA DE ESTADO
+                 UNA banda, no cuatro tarjetas. La rejilla de cuatro recuadros arriba es el gesto
+                 más reconocible de una plantilla, y además mentía: daba el mismo peso a cuatro
+                 cifras que no valen lo mismo.
 
-            <!-- Las cifras, encima de todo. El filo de color de cada tarjeta lleva el significado,
-                 asi que los numeros pueden ir todos al mismo peso.
+                 Ahora es una línea de instrumentos: las cifras van seguidas, separadas por una
+                 raya fina, y la última —la que gobierna cómo juegas ahora mismo— se queda con el
+                 sitio grande de la derecha. El color solo donde informa: verde y rojo son estados
+                 de tus Pokémon; encuentros y cap no son estados, así que van en el color del texto.
 
-                 El cap va mas ancho que los otros tres y lleva su etapa dentro: un 24 a secas no
-                 dice nada, y lo que el jugador necesita saber es de que prueba sale. -->
-            <Grid Grid.Row="0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="12" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="12" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="12" />
-                    <ColumnDefinition Width="1.35*" />
-                </Grid.ColumnDefinitions>
+                 Lo que hace que se lea como un panel y no como una lista es que las cifras están
+                 en Bahnschrift con cifras tabulares: mismo ancho por dígito, así que al subir de
+                 9 a 10 no se mueve nada. -->
+            <Border Grid.Row="0" Style="{StaticResource Inset}" Padding="4,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
 
-                <Border Grid.Column="0" Style="{StaticResource Inset}" Padding="0">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="3" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-                        <Border Grid.Row="0" Background="{StaticResource SuccessBrush}" CornerRadius="7,7,0,0" />
-                        <StackPanel Grid.Row="1" Margin="16,10,16,12">
-                            <TextBlock Text="VIVOS" Style="{StaticResource StatLabel}" />
-                            <TextBlock Text="{Binding AliveCount}" Style="{StaticResource StatValue}"
-                                       Foreground="{StaticResource SuccessBrush}" />
-                        </StackPanel>
-                    </Grid>
-                </Border>
+                    <StackPanel Grid.Column="0" Margin="16,12,22,12">
+                        <TextBlock Text="EN PIE" Style="{StaticResource StatLabel}" />
+                        <TextBlock Text="{Binding AliveCount}" Style="{StaticResource StatValue}"
+                                   Foreground="{StaticResource SuccessBrush}" Margin="0,2,0,0" />
+                    </StackPanel>
 
-                <Border Grid.Column="2" Style="{StaticResource Inset}" Padding="0">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="3" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-                        <Border Grid.Row="0" Background="{StaticResource DangerBrush}" CornerRadius="7,7,0,0" />
-                        <StackPanel Grid.Row="1" Margin="16,10,16,12">
-                            <TextBlock Text="MUERTOS" Style="{StaticResource StatLabel}" />
-                            <TextBlock Text="{Binding DeadCount}" Style="{StaticResource StatValue}"
-                                       Foreground="{StaticResource DangerBrush}" />
-                        </StackPanel>
-                    </Grid>
-                </Border>
+                    <Border Grid.Column="1" Width="1" Margin="0,14"
+                            Background="{StaticResource BorderSubtleBrush}" />
 
-                <Border Grid.Column="4" Style="{StaticResource Inset}" Padding="0">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="3" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-                        <Border Grid.Row="0" Background="{StaticResource AccentBrush}" CornerRadius="7,7,0,0" />
-                        <StackPanel Grid.Row="1" Margin="16,10,16,12">
-                            <TextBlock Text="ENCUENTROS" Style="{StaticResource StatLabel}" />
-                            <TextBlock Text="{Binding EncounterCount}" Style="{StaticResource StatValue}"
-                                       Foreground="{StaticResource AccentBrush}" />
-                        </StackPanel>
-                    </Grid>
-                </Border>
+                    <StackPanel Grid.Column="2" Margin="22,12">
+                        <TextBlock Text="CAÍDOS" Style="{StaticResource StatLabel}" />
+                        <TextBlock Text="{Binding DeadCount}" Style="{StaticResource StatValue}"
+                                   Foreground="{StaticResource DangerBrush}" Margin="0,2,0,0" />
+                    </StackPanel>
 
-                <Border Grid.Column="6" Style="{StaticResource Inset}" Padding="0">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="3" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-                        <Border Grid.Row="0" Background="{StaticResource WarningBrush}" CornerRadius="7,7,0,0" />
-                        <StackPanel Grid.Row="1" Margin="16,10,16,12">
-                            <DockPanel>
-                                <StackPanel DockPanel.Dock="Right" VerticalAlignment="Bottom"
-                                            HorizontalAlignment="Right" Margin="12,0,0,3">
-                                    <TextBlock Text="{Binding StageText}" Style="{StaticResource Body}"
-                                               FontSize="12" FontWeight="Bold" TextAlignment="Right"
-                                               TextTrimming="CharacterEllipsis" />
-                                </StackPanel>
+                    <Border Grid.Column="3" Width="1" Margin="0,14"
+                            Background="{StaticResource BorderSubtleBrush}" />
 
-                                <StackPanel>
-                                    <TextBlock Text="CAP DE NIVEL" Style="{StaticResource StatLabel}" />
-                                    <TextBlock Text="{Binding LevelCapText}" Style="{StaticResource StatValue}"
-                                               Foreground="{StaticResource WarningBrush}" />
-                                </StackPanel>
-                            </DockPanel>
-                        </StackPanel>
-                    </Grid>
-                </Border>
-            </Grid>
+                    <StackPanel Grid.Column="4" Margin="22,12">
+                        <TextBlock Text="ENCUENTROS" Style="{StaticResource StatLabel}" />
+                        <TextBlock Text="{Binding EncounterCount}" Style="{StaticResource StatValue}"
+                                   Margin="0,2,0,0" />
+                    </StackPanel>
+
+                    <Border Grid.Column="5" Width="1" Margin="0,14"
+                            Background="{StaticResource BorderSubtleBrush}" />
+
+                    <!-- El cap se lleva el sitio ancho porque es la única cifra que te dice qué
+                         puedes hacer AHORA. Su etapa va al lado, no debajo, para que se lea como
+                         una frase: «tope 20, segunda prueba». -->
+                    <Border Grid.Column="6" Margin="22,10,12,10" Padding="14,7"
+                            HorizontalAlignment="Right"
+                            Background="{StaticResource AccentDeepBrush}"
+                            CornerRadius="{StaticResource RadiusMedium}">
+                        <DockPanel>
+                            <StackPanel DockPanel.Dock="Right" VerticalAlignment="Center"
+                                        HorizontalAlignment="Right" Margin="14,0,0,0">
+                                <TextBlock Text="{Binding StageText}" Style="{StaticResource CardTitle}"
+                                           FontSize="{StaticResource FontSizeBody}"
+                                           TextAlignment="Right" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="ETAPA ACTUAL" Style="{StaticResource StatLabel}"
+                                           TextAlignment="Right" />
+                            </StackPanel>
+
+                            <StackPanel>
+                                <TextBlock Text="TOPE DE NIVEL" Style="{StaticResource StatLabel}"
+                                           Foreground="{StaticResource AccentDimBrush}" />
+                                <TextBlock Text="{Binding LevelCapText}" Style="{StaticResource StatValue}"
+                                           Foreground="{StaticResource AccentBrush}" Margin="0,2,0,0" />
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
+                </Grid>
+            </Border>
 
             <!-- ================================================ EL EQUIPO
                  Los seis, con el icono del cartucho. Es una aplicación de Pokémon y hasta ahora
@@ -303,87 +294,73 @@
                     <ColumnDefinition Width="1.25*" />
                 </Grid.ColumnDefinitions>
 
-                <!-- Izquierda: qué run es esta y en qué etapa va. -->
-                <Border Grid.Column="0" Style="{StaticResource Inset}" Padding="16,14"
-                        VerticalAlignment="Top">
-                        <StackPanel>
-                            <TextBlock Text="RUN" Style="{StaticResource StatLabel}" />
-                            <TextBlock Text="{Binding RunName}" Style="{StaticResource CardTitle}"
-                                       FontSize="18" Margin="0,3,0,0" />
+                <!-- ==================================== IDENTIDAD DE LA PARTIDA
+                     Qué partida es esta. Ya no repite la etapa ni el tope ni el rol: la etapa y el
+                     tope están en la línea de estado de arriba y el rol en la cabecera, donde se
+                     ven desde cualquier pantalla. Decir lo mismo dos veces en la misma pantalla es
+                     lo que la tenía apretada.
 
-                            <WrapPanel Margin="0,10,0,0">
-                                <Border Style="{StaticResource Chip}" Margin="0,0,6,6">
-                                    <TextBlock Text="{Binding GameName}" Style="{StaticResource ChipText}" />
-                                </Border>
-                                <Border Style="{StaticResource Chip}" Margin="0,0,6,6">
-                                    <TextBlock Text="{Binding PlayerName}" Style="{StaticResource ChipText}" />
-                                </Border>
-                                <Border Style="{StaticResource Chip}" Margin="0,0,6,6"
-                                        Background="{StaticResource AccentDeepBrush}"
-                                        BorderBrush="{StaticResource AccentDimBrush}">
-                                    <TextBlock Text="{Binding SeedLabel}"
-                                               FontFamily="{StaticResource MonoFont}" FontSize="10.5"
-                                               Foreground="{StaticResource AccentBrightBrush}" />
-                                </Border>
-                            </WrapPanel>
+                     SIN CAJA. Un rótulo, el nombre y sus distintivos. Agrupa el aire, no un marco. -->
+                <StackPanel Grid.Column="0" VerticalAlignment="Top">
+                    <TextBlock Text="PARTIDA" Style="{StaticResource PanelHeading}" />
 
-                            <Border Style="{StaticResource Divider}" />
+                    <DockPanel Margin="0,4,0,0">
+                        <Border DockPanel.Dock="Left" Style="{StaticResource Rail}"
+                                Height="26" VerticalAlignment="Center" Margin="0,0,10,0" />
+                        <TextBlock Text="{Binding RunName}" Style="{StaticResource SectionTitle}"
+                                   FontSize="{StaticResource FontSizeSection}"
+                                   VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                    </DockPanel>
 
-                            <TextBlock Text="ETAPA ACTUAL" Style="{StaticResource StatLabel}" />
-                            <DockPanel Margin="0,3,0,0">
-                                <Border DockPanel.Dock="Right" Style="{StaticResource Chip}"
-                                        Background="{StaticResource WarningDeepBrush}"
-                                        BorderBrush="{StaticResource WarningBrush}">
-                                    <TextBlock Style="{StaticResource ChipText}"
-                                               Foreground="{StaticResource WarningBrush}">
-                                        <Run Text="CAP" />
-                                        <Run Text="{Binding LevelCapText, Mode=OneWay}" FontWeight="Bold" />
-                                    </TextBlock>
-                                </Border>
-                                <TextBlock Text="{Binding StageText}" Style="{StaticResource Body}"
-                                           VerticalAlignment="Center" />
-                            </DockPanel>
+                    <WrapPanel Margin="0,12,0,0">
+                        <Border Style="{StaticResource Chip}" Margin="0,0,6,6">
+                            <TextBlock Text="{Binding GameName}" Style="{StaticResource ChipText}" />
+                        </Border>
+                        <Border Style="{StaticResource Chip}" Margin="0,0,6,6">
+                            <TextBlock Text="{Binding PlayerName}" Style="{StaticResource ChipText}" />
+                        </Border>
+                        <Border Style="{StaticResource ChipAccent}" Margin="0,0,6,6">
+                            <TextBlock Text="{Binding SeedLabel}"
+                                       FontFamily="{StaticResource MonoFont}"
+                                       FontSize="{StaticResource FontSizeMicro}"
+                                       Foreground="{StaticResource AccentBrightBrush}" />
+                        </Border>
+                    </WrapPanel>
 
-                            <!-- Ya no hay botón de subir etapa: la etapa la deciden los logros, y
-                                 un botón que hace lo mismo que la detección solo sirve para
-                                 desincronizarla. Tampoco el de registrar captura: lo que hay en la
-                                 partida se ve en el visor, y lo que aparece sin registrar lo
-                                 anuncia el aviso de abajo con su propio botón. -->
-                            <TextBlock Text="{Binding StageSourceText}" Style="{StaticResource Faint}"
-                                       Foreground="{StaticResource AccentBrush}" Margin="0,6,0,0" />
+                    <TextBlock Text="{Binding StageSourceText}" Style="{StaticResource Faint}"
+                               Margin="0,4,0,0" />
 
-                            <Border Style="{StaticResource Divider}" />
+                    <!-- Las dos acciones sobre la partida, en filas de lista y no en cajas. Se
+                         separan por una línea abajo, que es como se lista algo. -->
+                    <Border Style="{StaticResource Row}" Margin="0,16,0,0">
+                        <DockPanel>
+                            <Button DockPanel.Dock="Right" Content="CAMBIAR"
+                                    Style="{StaticResource SubtleButton}"
+                                    Command="{Binding ChangeRoleCommand}"
+                                    VerticalAlignment="Center" Margin="12,0,0,0" />
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="ROL" Style="{StaticResource StatLabel}" />
+                                <TextBlock Text="{Binding RoleName}" Style="{StaticResource CardTitle}"
+                                           FontSize="{StaticResource FontSizeBody}" Margin="0,1,0,0" />
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
 
-                            <TextBlock Text="ROL" Style="{StaticResource StatLabel}" />
-                            <DockPanel Margin="0,3,0,0">
-                                <!-- El rol se elige al crear la run y no debería moverse. El botón
-                                     existe porque un rol al que no se podía llegar -la ruleta del
-                                     ludópata- obligaba a empezar una run nueva para probarlo. -->
-                                <Button DockPanel.Dock="Right" Content="CAMBIAR"
-                                        Style="{StaticResource GhostButton}"
-                                        Command="{Binding ChangeRoleCommand}"
-                                        Padding="11,5" FontSize="10.5" VerticalAlignment="Center" />
-                                <TextBlock Text="{Binding RoleName}" Style="{StaticResource Body}"
-                                           VerticalAlignment="Center" />
-                            </DockPanel>
-
-                            <Border Style="{StaticResource Divider}" />
-
-                            <!-- Borra de verdad: la run entera y la partida de Ultra Luna. Por eso
-                                 va en rojo y no como el resto de botones: el color es parte del
-                                 aviso, y llegar aquí por costumbre no debería ser fácil. La copia
-                                 de la partida y las dos confirmaciones están en el ViewModel. -->
-                            <DockPanel>
-                                <Button DockPanel.Dock="Right" Content="EMPEZAR DE CERO"
-                                        Command="{Binding StartOverCommand}"
-                                        Style="{StaticResource GhostButton}"
-                                        Foreground="{StaticResource DangerBrush}"
-                                        BorderBrush="{StaticResource DangerBrush}"
-                                        Padding="11,5" FontSize="10.5" VerticalAlignment="Center" />
-                                <TextBlock Text="Borra la run y la partida. Se copia antes."
-                                           Style="{StaticResource Faint}" TextWrapping="Wrap"
-                                           VerticalAlignment="Center" Margin="0,0,10,0" />
-                            </DockPanel>
+                    <!-- Borra de verdad: la run entera y la partida de Ultra Luna. Va en rojo y
+                         hueco, nunca relleno: un botón rojo macizo pide que lo pulses, y este es
+                         justo el que no. Las dos confirmaciones y la copia están en el ViewModel. -->
+                    <Border Style="{StaticResource Row}" BorderThickness="0">
+                        <DockPanel>
+                            <Button DockPanel.Dock="Right" Content="EMPEZAR DE CERO"
+                                    Command="{Binding StartOverCommand}"
+                                    Style="{StaticResource DangerButton}"
+                                    FontSize="{StaticResource FontSizeSmall}"
+                                    Padding="{StaticResource PadTight}" MinHeight="26"
+                                    VerticalAlignment="Center" Margin="12,0,0,0" />
+                            <TextBlock Text="Borra la run y la partida. Se copia antes."
+                                       Style="{StaticResource Faint}" VerticalAlignment="Center" />
+                        </DockPanel>
+                    </Border>
 
                             <TextBlock Text="{Binding StartOverStatus}"
                                        Foreground="{StaticResource DangerBrush}" TextWrapping="Wrap"
@@ -399,11 +376,10 @@
                                     </Style>
                                 </TextBlock.Style>
                             </TextBlock>
-                        </StackPanel>
-                </Border>
+                </StackPanel>
 
                 <!-- Derecha: el historial de la run. -->
-                <Border Grid.Column="2" Style="{StaticResource Inset}" Padding="16,14">
+                <Border Grid.Column="2" Style="{StaticResource Well}">
                         <DockPanel>
                             <TextBlock DockPanel.Dock="Top" Text="ÚLTIMAS ACCIONES"
                                        Style="{StaticResource StatLabel}" Margin="0,0,0,10" />

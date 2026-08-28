@@ -64,6 +64,8 @@ public sealed partial class PokePasteViewModel : SectionViewModel
     [ObservableProperty]
     private bool _isLoading;
 
+    public override string IconKey => "IconDocument";
+
     public override GameNeed Needs => GameNeed.Either;
 
     public override Task ActivateAsync() => LoadAsync();

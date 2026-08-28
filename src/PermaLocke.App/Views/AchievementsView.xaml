@@ -50,7 +50,7 @@
                                   Fill="{Binding Medal}" />
                             <TextBlock Text="{Binding Initial}"
                                        FontFamily="{StaticResource UiFont}" FontSize="15" FontWeight="Bold"
-                                       Foreground="#FF060910"
+                                       Foreground="{StaticResource OnAccentBrush}"
                                        HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Grid>
 
@@ -185,17 +185,6 @@
                                FontSize="12" Margin="0,7,18,0" />
                 </StackPanel>
 
-                <Border Grid.Column="1" Width="1" Background="{StaticResource BorderBrush}"
-                        Margin="8,4" />
-
-                <StackPanel Grid.Column="2" Margin="22,0,6,0" VerticalAlignment="Center">
-                    <TextBlock Text="SALDO" Style="{StaticResource StatLabel}"
-                               HorizontalAlignment="Center" />
-                    <TextBlock Text="{Binding Balance}"
-                               FontFamily="{StaticResource UiFont}" FontSize="38" FontWeight="Bold"
-                               Foreground="{StaticResource AccentBrush}"
-                               HorizontalAlignment="Center" Margin="0,-2,0,0" />
-                </StackPanel>
             </Grid>
         </Border>
 

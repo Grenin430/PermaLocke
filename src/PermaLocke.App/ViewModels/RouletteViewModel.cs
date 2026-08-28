@@ -168,6 +168,8 @@ public sealed partial class RouletteViewModel : SectionViewModel
 
     partial void OnIsSpinningChanged(bool value) => SpinCommand.NotifyCanExecuteChanged();
 
+    public override string IconKey => "IconWheel";
+
     public override GameNeed Needs => GameNeed.Closed;
 
     public override async Task ActivateAsync()

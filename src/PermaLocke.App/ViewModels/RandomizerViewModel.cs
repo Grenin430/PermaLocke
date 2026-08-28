@@ -88,6 +88,8 @@ public sealed partial class RandomizerViewModel : SectionViewModel
     private string OutputDirectory =>
         Path.Combine(_paths.Randomized, $"seed-{_runContext.Current?.Seed ?? 0}");
 
+    public override string IconKey => "IconRandomizer";
+
     public override GameNeed Needs => GameNeed.Closed;
 
     public override Task ActivateAsync()

@@ -76,6 +76,8 @@ public sealed partial class MiscellaneousViewModel : SectionViewModel
     [ObservableProperty]
     private bool _hasRewards;
 
+    public override string IconKey => "IconTools";
+
     public override GameNeed Needs => GameNeed.Running;
 
     public override Task ActivateAsync() => RefreshRewardsAsync();

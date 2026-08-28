@@ -1,40 +1,114 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+                    xmlns:conv="clr-namespace:PermaLocke.App.Converters">
+
+    <!-- Conversores compartidos. Estaban declarados vista por vista, asi que cada pantalla que
+         los necesitaba se los volvia a inventar; desde aqui los tiene toda la aplicacion. -->
+    <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+    <conv:ResourceKeyConverter x:Key="ResourceKey" />
+    <conv:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility" />
+    <conv:DisplayNameConverter x:Key="DisplayName" />
 
     <!--
-        Shared control styles. Views compose these; a view that needs a one-off look derives from
-        one with BasedOn rather than restating colours, so retheming stays a single-file job.
+        ============================================================================================
+        COMPONENTES DE PERMALOCKE
+        ============================================================================================
 
-        Everything rounds, everything sits on a depth step from Palette.xaml, and every control
-        that can be hovered says so. WPF's stock ScrollBar, ComboBox and CheckBox are light-grey
-        Windows chrome that punch a hole through a dark theme, so all three are retemplated here
-        as implicit styles: no view has to opt in.
+        Los tokens están en Palette.xaml; aquí se convierten en las piezas con las que se montan las
+        pantallas. Ninguna vista debería inventarse una pieza: si hace falta una nueva, se añade
+        aquí y la usan todas.
+
+        ==========================================================================================
+        LOS CUATRO MATERIALES, que es la parte que de verdad cambia cómo se ve la aplicación
+        ==========================================================================================
+
+        El problema medido antes de esto: 29 usos de un mismo contenedor con borde. Todo era una
+        tarjeta — un dato suelto, un párrafo de ayuda, una lista, un botón — y una pantalla donde
+        todo está encajonado no tiene jerarquía, tiene ruido. Es además la marca más reconocible
+        de una interfaz hecha de plantilla.
+
+        Ahora hay cuatro materiales y cada uno tiene un trabajo:
+
+          Section   NADA. Un rótulo y aire. Es el material POR DEFECTO: la mayoría de los bloques
+                    no necesitan caja, necesitan estar separados. Se agrupa con espacio, no con
+                    bordes.
+          Inset     Un plano un escalón por encima del fondo, SIN BORDE. Para agrupar de verdad.
+                    Como es la clave que usaban esos 29 sitios, redefinirla aquí desencajona la
+                    aplicación entera sin tocar una sola vista.
+          Well      Hundido, más oscuro que el fondo. Para listas, historiales e inventarios:
+                    lo que en un juego es la ranura donde caen las cosas.
+          Card      Con borde y relieve. SOLO para objetos: un Pokémon, un artículo de la tienda,
+                    un logro. Si tiene borde, es una cosa que se puede coger.
+
+        La elevación la da el escalón de gris, no una sombra. Por eso no hay ni una sombra en todo
+        el fichero: son caras de dibujar y en un tema oscuro apenas se ven.
     -->
 
-    <sys:Double x:Key="FontSizeHuge">34</sys:Double>
-    <sys:Double x:Key="FontSizeTitle">20</sys:Double>
-    <sys:Double x:Key="FontSizeBody">13</sys:Double>
-    <sys:Double x:Key="FontSizeSmall">11.5</sys:Double>
+    <!-- ==================================================================== TIPOGRAFÍA -->
 
-    <!-- ============================================================ TYPOGRAPHY -->
+    <!--
+        Siete tamaños y tres familias, y cada estilo dice para qué sirve. Antes había 25 tamaños
+        sueltos repartidos por las vistas, que no es una jerarquía sino veinticinco.
+
+        Bahnschrift para cifras y rótulos, Segoe para lo que se lee en frases. La regla de cuándo
+        toca cada una: si es un DATO, va en Bahnschrift; si es una FRASE, en Segoe.
+    -->
+
+    <!-- El número grande: saldo, contadores. Cifras tabulares para que no baile al cambiar. -->
+    <Style x:Key="Display" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeHuge}" />
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+        <Setter Property="Typography.NumeralAlignment" Value="Tabular" />
+        <Setter Property="TextOptions.TextFormattingMode" Value="Ideal" />
+    </Style>
 
     <Style x:Key="SectionTitle" TargetType="TextBlock">
-        <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
-        <Setter Property="FontSize" Value="{StaticResource FontSizeHuge}" />
-        <Setter Property="FontWeight" Value="Bold" />
-        <Setter Property="FontStyle" Value="Italic" />
+        <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeTitle}" />
         <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+        <Setter Property="TextOptions.TextFormattingMode" Value="Ideal" />
     </Style>
 
+    <!--
+        El rótulo de sección. Es la pieza que sustituye a media docena de cajas: en vez de meter el
+        bloque en un marco, se le pone nombre. Espaciado entre letras porque en tamaño pequeño y en
+        mayúsculas es lo que lo hace legible y lo que le da el aire de panel de instrumentos.
+    -->
     <Style x:Key="PanelHeading" TargetType="TextBlock">
-        <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+        <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
         <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}" />
-        <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
-        <Setter Property="Margin" Value="0,0,0,8" />
+        <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+        <Setter Property="TextOptions.TextFormattingMode" Value="Ideal" />
     </Style>
 
+    <Style x:Key="StatLabel" TargetType="TextBlock" BasedOn="{StaticResource PanelHeading}">
+        <Setter Property="FontSize" Value="{StaticResource FontSizeMicro}" />
+        <Setter Property="Foreground" Value="{StaticResource TextFaintBrush}" />
+    </Style>
+
+    <Style x:Key="CardTitle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeLead}" />
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+        <Setter Property="TextOptions.TextFormattingMode" Value="Ideal" />
+    </Style>
+
+    <!-- Cualquier cifra dentro de una fila. Tabular para que las columnas cuadren. -->
+    <Style x:Key="StatValue" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeTitle}" />
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+        <Setter Property="Typography.NumeralAlignment" Value="Tabular" />
+        <Setter Property="TextOptions.TextFormattingMode" Value="Ideal" />
+    </Style>
+
+    <Style x:Key="Numeric" TargetType="TextBlock" BasedOn="{StaticResource StatValue}">
+        <Setter Property="FontSize" Value="{StaticResource FontSizeBody}" />
+    </Style>
+
+    <!-- Lo que se lee en frases. Interlineado holgado: se consulta de un vistazo y a menudo de reojo. -->
     <Style x:Key="Body" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
         <Setter Property="FontSize" Value="{StaticResource FontSizeBody}" />
@@ -49,135 +123,177 @@
     </Style>
 
     <Style x:Key="Faint" TargetType="TextBlock" BasedOn="{StaticResource Body}">
-        <Setter Property="Foreground" Value="{StaticResource TextFaintBrush}" />
         <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}" />
+        <Setter Property="Foreground" Value="{StaticResource TextFaintBrush}" />
     </Style>
 
     <Style x:Key="Mono" TargetType="TextBlock" BasedOn="{StaticResource Body}">
         <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}" />
     </Style>
 
-    <!-- A number worth reading from across the room, with its caption underneath. -->
-    <Style x:Key="StatValue" TargetType="TextBlock">
-        <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
-        <Setter Property="FontSize" Value="26" />
-        <Setter Property="FontWeight" Value="Bold" />
-        <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
-    </Style>
+    <!-- ==================================================================== MATERIALES -->
 
-    <Style x:Key="StatLabel" TargetType="TextBlock">
-        <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
-        <Setter Property="FontSize" Value="10.5" />
-        <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="Foreground" Value="{StaticResource TextFaintBrush}" />
-    </Style>
-
-    <Style x:Key="CardTitle" TargetType="TextBlock">
-        <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
-        <Setter Property="FontSize" Value="14" />
-        <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
-        <Setter Property="TextWrapping" Value="Wrap" />
-    </Style>
-
-    <!-- ============================================================ SURFACES -->
-
+    <!--
+        El contenedor de una pantalla entera. Uno por vista como mucho: es el suelo del contenido,
+        no una tarjeta.
+    -->
     <Style x:Key="Panel" TargetType="Border">
         <Setter Property="Background" Value="{StaticResource PanelBrush}" />
-        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{StaticResource RadiusLarge}" />
-        <Setter Property="Padding" Value="18" />
+        <Setter Property="Padding" Value="{StaticResource PadPanelWide}" />
     </Style>
 
-    <!-- A panel inside a panel: one step up, so nesting still reads. -->
+    <!--
+        SIN BORDE, y esa es toda la diferencia. Esta clave se usa en 29 sitios, así que quitarle el
+        marco aquí es lo que desencajona la aplicación entera de una vez. Lo que agrupa ahora es
+        que el plano esté un escalón por encima, no una línea alrededor.
+    -->
     <Style x:Key="Inset" TargetType="Border">
-        <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
-        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Background" Value="{StaticResource SurfaceAltBrush}" />
         <Setter Property="CornerRadius" Value="{StaticResource RadiusMedium}" />
-        <Setter Property="Padding" Value="12" />
+        <Setter Property="Padding" Value="{StaticResource PadPanel}" />
     </Style>
 
-    <!-- A card that answers the mouse. Used wherever a list item is a thing, not a row. -->
+    <!-- Hundido. La ranura donde caen las cosas: listas, historial, inventario. -->
+    <Style x:Key="Well" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource SunkenBrush}" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusMedium}" />
+        <Setter Property="Padding" Value="{StaticResource PadPanel}" />
+    </Style>
+
+    <!--
+        Un OBJETO: algo que se coge, se compra o se mira de cerca. Es el único material con borde,
+        y por eso el borde vuelve a significar algo.
+    -->
     <Style x:Key="Card" TargetType="Border">
-        <Setter Property="Background" Value="{StaticResource PanelBrush}" />
-        <Setter Property="BorderBrush" Value="{StaticResource BorderStrongBrush}" />
+        <Setter Property="Background" Value="{StaticResource SurfaceAltBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BorderSubtleBrush}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="{StaticResource RadiusMedium}" />
-        <Setter Property="Padding" Value="14" />
+        <Setter Property="Padding" Value="{StaticResource PadPanel}" />
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="BorderBrush" Value="{StaticResource AccentDimBrush}" />
                 <Setter Property="Background" Value="{StaticResource SurfaceHighBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
             </Trigger>
         </Style.Triggers>
     </Style>
 
-    <!-- A hairline. Cheaper to read than a border on everything. -->
-    <Style x:Key="Divider" TargetType="Border">
-        <Setter Property="Height" Value="1" />
-        <Setter Property="Background" Value="{StaticResource BorderBrush}" />
-        <Setter Property="Margin" Value="0,10" />
+    <!--
+        La barra de acento a la izquierda de un bloque. Es el recurso de menú de juego para decir
+        «esto de aquí» sin encender un marco entero, y sale más barato de leer que un borde.
+    -->
+    <Style x:Key="Rail" TargetType="Border">
+        <Setter Property="Width" Value="3" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusSmall}" />
+        <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+        <Setter Property="VerticalAlignment" Value="Stretch" />
     </Style>
 
-    <!-- A word in a box: state, tier, tag. Recolour Background/BorderBrush per use. -->
+    <Style x:Key="Divider" TargetType="Border">
+        <Setter Property="Height" Value="1" />
+        <Setter Property="Background" Value="{StaticResource BorderSubtleBrush}" />
+    </Style>
+
+    <!-- Fila de lista: se separan por una línea abajo, no metiendo cada una en su caja. -->
+    <Style x:Key="Row" TargetType="Border">
+        <Setter Property="BorderBrush" Value="{StaticResource BorderSubtleBrush}" />
+        <Setter Property="BorderThickness" Value="0,0,0,1" />
+        <Setter Property="Padding" Value="0,10" />
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+
+    <!-- ==================================================================== DISTINTIVOS -->
+
+    <!--
+        Los semánticos viven aquí y solo aquí: pequeños, con fondo teñido y borde de su familia.
+        Nunca un relleno grande de color — es lo que convierte una interfaz en un semáforo.
+    -->
     <Style x:Key="Chip" TargetType="Border">
         <Setter Property="Background" Value="{StaticResource SurfaceHighBrush}" />
-        <Setter Property="BorderBrush" Value="{StaticResource BorderStrongBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="9" />
-        <Setter Property="Padding" Value="9,3" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusSmall}" />
+        <Setter Property="Padding" Value="7,3" />
         <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
 
     <Style x:Key="ChipText" TargetType="TextBlock">
-        <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
-        <Setter Property="FontSize" Value="10.5" />
-        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeMicro}" />
         <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+        <Setter Property="TextOptions.TextFormattingMode" Value="Ideal" />
     </Style>
 
-    <!-- ============================================================ NAVIGATION -->
+    <Style x:Key="ChipAccent" TargetType="Border" BasedOn="{StaticResource Chip}">
+        <Setter Property="Background" Value="{StaticResource AccentDeepBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource AccentDimBrush}" />
+    </Style>
+
+    <Style x:Key="ChipSuccess" TargetType="Border" BasedOn="{StaticResource Chip}">
+        <Setter Property="Background" Value="{StaticResource SuccessDeepBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource SuccessBrush}" />
+    </Style>
+
+    <Style x:Key="ChipWarning" TargetType="Border" BasedOn="{StaticResource Chip}">
+        <Setter Property="Background" Value="{StaticResource WarningDeepBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource WarningBrush}" />
+    </Style>
+
+    <Style x:Key="ChipDanger" TargetType="Border" BasedOn="{StaticResource Chip}">
+        <Setter Property="Background" Value="{StaticResource DangerDeepBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource DangerBrush}" />
+    </Style>
+
+    <Style x:Key="ChipInfo" TargetType="Border" BasedOn="{StaticResource Chip}">
+        <Setter Property="Background" Value="{StaticResource InfoDeepBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource InfoBrush}" />
+    </Style>
+
+    <!-- ==================================================================== NAVEGACIÓN -->
 
     <!--
-        Sidebar entry. The selected one is marked by a bar down its left edge rather than by a
-        filled block: with eight sections a wall of filled rectangles is noisier than one mark.
+        Cada sección con su icono y su barra de acento al seleccionarse. Antes era una lista de
+        palabras: se leía, no se reconocía, y en algo que se usa cientos de horas la diferencia
+        entre leer y reconocer es toda.
+
+        El fondo del seleccionado sube un escalón y aparece la barra. No hay degradado ni brillo:
+        una pestaña de menú es una pestaña, se ve hundida o levantada.
     -->
     <Style x:Key="NavItem" TargetType="ListBoxItem">
-        <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+        <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
         <Setter Property="FontSize" Value="{StaticResource FontSizeBody}" />
-        <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
-        <Setter Property="Margin" Value="0,1" />
-        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ListBoxItem">
-                    <Grid>
+                    <Grid x:Name="Root" Background="Transparent" Height="38">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="3" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
 
-                        <Border x:Name="Mark" Grid.Column="0" CornerRadius="2"
-                                Background="Transparent" Margin="0,4" />
+                        <Border x:Name="Bar" Grid.Column="0" Background="Transparent"
+                                CornerRadius="0,2,2,0" Margin="0,7" />
 
-                        <Border x:Name="Chrome" Grid.Column="1" Background="Transparent"
-                                CornerRadius="0,8,8,0" Padding="14,9">
-                            <ContentPresenter VerticalAlignment="Center" />
+                        <Border x:Name="Fill" Grid.Column="1" Background="Transparent"
+                                CornerRadius="{StaticResource RadiusMedium}" Margin="6,1,10,1">
+                            <ContentPresenter VerticalAlignment="Center" Margin="10,0" />
                         </Border>
                     </Grid>
 
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Chrome" Property="Background" Value="{StaticResource SurfaceAltBrush}" />
+                            <Setter TargetName="Fill" Property="Background" Value="{StaticResource SurfaceBrush}" />
                             <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
-                            <Setter TargetName="Mark" Property="Background" Value="{StaticResource AccentBrush}" />
-                            <Setter TargetName="Chrome" Property="Background" Value="{StaticResource AccentDeepBrush}" />
-                            <Setter Property="Foreground" Value="{StaticResource AccentBrightBrush}" />
+                            <Setter TargetName="Fill" Property="Background" Value="{StaticResource SurfaceAltBrush}" />
+                            <Setter TargetName="Bar" Property="Background" Value="{StaticResource AccentBrush}" />
+                            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -185,47 +301,46 @@
         </Setter>
     </Style>
 
-    <!-- ============================================================ BUTTONS -->
+    <!-- ==================================================================== BOTONES -->
 
     <!--
-        The workhorse. Sits as an accent-tinted outline and fills on hover, so a screen full of
-        them stays legible while the one under the cursor is unmistakable.
+        Tres pesos y no más: la acción de la pantalla, las demás, y la destructiva. Alto fijo de
+        32 px, que es tamaño de herramienta. Un botón grande no es más importante, solo es más
+        grande, y llena la pantalla de bultos.
+
+        El primario va relleno de latón porque el latón es «esto vale y esto se pulsa». Como
+        consecuencia solo debería haber UNO por pantalla; los demás van fantasma.
     -->
     <Style x:Key="PrimaryButton" TargetType="Button">
-        <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+        <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
         <Setter Property="FontSize" Value="{StaticResource FontSizeBody}" />
-        <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="Foreground" Value="{StaticResource AccentBrightBrush}" />
-        <Setter Property="Padding" Value="16,8" />
+        <Setter Property="Foreground" Value="{StaticResource OnAccentBrush}" />
+        <Setter Property="Padding" Value="{StaticResource PadControl}" />
+        <Setter Property="MinHeight" Value="32" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="Chrome"
-                            Background="{StaticResource AccentDeepBrush}"
-                            BorderBrush="{StaticResource AccentDimBrush}"
-                            BorderThickness="1"
+                            Background="{StaticResource AccentBrush}"
                             CornerRadius="{StaticResource RadiusMedium}"
-                            Padding="{TemplateBinding Padding}">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            Padding="{TemplateBinding Padding}"
+                            SnapsToDevicePixels="True">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                          TextElement.Foreground="{TemplateBinding Foreground}" />
                     </Border>
 
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Chrome" Property="Background" Value="{StaticResource AccentFillBrush}" />
-                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{StaticResource AccentBrightBrush}" />
-                            <Setter Property="Foreground" Value="{StaticResource BackgroundBrush}" />
+                            <Setter TargetName="Chrome" Property="Background" Value="{StaticResource AccentBrightBrush}" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="Chrome" Property="Background" Value="{StaticResource AccentDimBrush}" />
-                            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="Chrome" Property="Background" Value="{StaticResource SurfaceBrush}" />
-                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{StaticResource BorderBrush}" />
-                            <Setter Property="Foreground" Value="{StaticResource TextFaintBrush}" />
-                            <Setter Property="Cursor" Value="Arrow" />
+                            <Setter TargetName="Chrome" Property="Background" Value="{StaticResource SurfaceHighBrush}" />
+                            <Setter Property="Foreground" Value="{StaticResource TextDisabledBrush}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -233,7 +348,6 @@
         </Setter>
     </Style>
 
-    <!-- Secondary action: same shape, no accent, so it never competes with the primary one. -->
     <Style x:Key="GhostButton" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
         <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
         <Setter Property="Template">
@@ -241,26 +355,27 @@
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="Chrome"
                             Background="Transparent"
-                            BorderBrush="{StaticResource BorderStrongBrush}"
+                            BorderBrush="{StaticResource BorderBrush}"
                             BorderThickness="1"
                             CornerRadius="{StaticResource RadiusMedium}"
-                            Padding="{TemplateBinding Padding}">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            Padding="{TemplateBinding Padding}"
+                            SnapsToDevicePixels="True">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                          TextElement.Foreground="{TemplateBinding Foreground}" />
                     </Border>
 
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Chrome" Property="Background" Value="{StaticResource SurfaceHighBrush}" />
-                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{StaticResource AccentDimBrush}" />
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{StaticResource BorderStrongBrush}" />
                             <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="Chrome" Property="Background" Value="{StaticResource SurfaceBrush}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter Property="Foreground" Value="{StaticResource TextFaintBrush}" />
-                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{StaticResource BorderBrush}" />
-                            <Setter Property="Cursor" Value="Arrow" />
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{StaticResource BorderSubtleBrush}" />
+                            <Setter Property="Foreground" Value="{StaticResource TextDisabledBrush}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -268,31 +383,34 @@
         </Setter>
     </Style>
 
-    <!-- For anything that destroys: the wonder trade, and nothing else so far. -->
-    <Style x:Key="DangerButton" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
+    <!--
+        Destructiva. Va fantasma con el borde rojo y no rellena: un botón rojo macizo pide que lo
+        pulses, y este es justo el que no.
+    -->
+    <Style x:Key="DangerButton" TargetType="Button" BasedOn="{StaticResource GhostButton}">
         <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="Chrome"
-                            Background="{StaticResource DangerDeepBrush}"
-                            BorderBrush="{StaticResource DangerBrush}"
+                            Background="Transparent"
+                            BorderBrush="{StaticResource DangerDeepBrush}"
                             BorderThickness="1"
                             CornerRadius="{StaticResource RadiusMedium}"
-                            Padding="{TemplateBinding Padding}">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            Padding="{TemplateBinding Padding}"
+                            SnapsToDevicePixels="True">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                          TextElement.Foreground="{TemplateBinding Foreground}" />
                     </Border>
 
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Chrome" Property="Background" Value="{StaticResource DangerBrush}" />
-                            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+                            <Setter TargetName="Chrome" Property="Background" Value="{StaticResource DangerDeepBrush}" />
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{StaticResource DangerBrush}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="Chrome" Property="Background" Value="{StaticResource SurfaceBrush}" />
-                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{StaticResource BorderBrush}" />
-                            <Setter Property="Foreground" Value="{StaticResource TextFaintBrush}" />
-                            <Setter Property="Cursor" Value="Arrow" />
+                            <Setter Property="Foreground" Value="{StaticResource TextDisabledBrush}" />
+                            <Setter TargetName="Chrome" Property="BorderBrush" Value="{StaticResource BorderSubtleBrush}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -300,9 +418,15 @@
         </Setter>
     </Style>
 
-    <!-- Any Button a view did not style explicitly still gets the house look. -->
-    <Style TargetType="Button" BasedOn="{StaticResource PrimaryButton}" />
+    <!-- Botón de fila: para acciones dentro de una lista, donde uno normal pesaría demasiado. -->
+    <Style x:Key="SubtleButton" TargetType="Button" BasedOn="{StaticResource GhostButton}">
+        <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}" />
+        <Setter Property="Padding" Value="{StaticResource PadTight}" />
+        <Setter Property="MinHeight" Value="26" />
+    </Style>
 
+    <!-- Un botón sin estilo explícito sigue teniendo la cara de la casa. -->
+    <Style TargetType="Button" BasedOn="{StaticResource PrimaryButton}" />
     <!-- ============================================================ INPUT -->
 
     <Style x:Key="Field" TargetType="TextBox">

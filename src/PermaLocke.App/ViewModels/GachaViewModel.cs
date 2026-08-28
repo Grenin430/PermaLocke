@@ -206,6 +206,8 @@ public sealed partial class GachaViewModel : SectionViewModel
         LastTierBrushKey = match?.BrushKey ?? "AccentBrush";
     }
 
+    public override string IconKey => "IconGacha";
+
     public override GameNeed Needs => GameNeed.Closed;
 
     public override async Task ActivateAsync()

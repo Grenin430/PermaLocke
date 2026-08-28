@@ -109,6 +109,8 @@ public sealed partial class ShopViewModel : SectionViewModel
     [ObservableProperty]
     private bool _busy;
 
+    public override string IconKey => "IconShop";
+
     public override GameNeed Needs => GameNeed.Running;
 
     public override async Task ActivateAsync()

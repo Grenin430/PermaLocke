@@ -1,101 +1,146 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
 
     <!--
-        Colour tokens. Every brush in the app comes from here; no literal colours in views.
+        ============================================================================================
+        TOKENS DE PERMALOCKE
+        ============================================================================================
 
-        The set is layered rather than flat: a dark theme with a single background colour reads
-        as a hole, so there are four steps of depth — the app floor, a panel, a raised panel and
-        a hairline — and everything on screen sits on one of them. That is what lets a card look
-        like a card without drawing a heavy border around it.
+        Todo lo visual de la aplicación sale de aquí: color, espaciado, radio y tipografía. Ninguna
+        vista escribe un color, un tamaño de letra ni un radio a mano.
+
+        DIRECCIÓN. Bitácora de expedición. Ni Pokédex ni panel de control de empresa: una
+        herramienta que alguien tiene abierta cientos de horas mientras juega. Base neutra y
+        callada; el color aparece cuando SIGNIFICA algo.
+
+        LA REGLA DEL COLOR, que es la que sostiene el resto:
+
+          · El gris hace el trabajo.  Fondo, superficies, bordes y la mayoría del texto son
+            neutros fríos. Una pantalla en reposo es casi monocroma.
+          · El latón es el valor.     Un único acento. Marca lo que vale (puntos), lo que
+            progresa y lo que se puede pulsar. Si algo es de latón, o es dinero o es una acción.
+          · Los semánticos avisan.    Verde, naranja, rojo y azul solo en distintivos pequeños con
+            fondo teñido, nunca como relleno grande. Son señales, no decoración.
+          · La rareza vive en su sitio. Los cinco colores de tier son del gacha y de la colección.
+            No pintan la interfaz general.
+
+        Por qué latón y no el cian de antes: cian sobre azul marino es la paleta por defecto de
+        cualquier panel de control, y no dice nada de una partida. El oro es el color de la
+        recompensa y del progreso en cualquier RPG, y aquí además ES la moneda.
     -->
 
-    <!-- Depth, from the floor upwards. -->
-    <Color x:Key="BackgroundColor">#FF05070B</Color>
-    <Color x:Key="BackgroundLiftColor">#FF090E17</Color>
-    <Color x:Key="SurfaceColor">#FF0B1018</Color>
-    <Color x:Key="SurfaceAltColor">#FF111827</Color>
-    <Color x:Key="SurfaceHighColor">#FF17202F</Color>
-    <Color x:Key="BorderColor">#FF1C2637</Color>
-    <Color x:Key="BorderStrongColor">#FF283449</Color>
+    <!--
+        ============================ 1. NEUTROS ============================
+        Rampa fría de carboncillo, ocho escalones del suelo hacia arriba. Neutro de verdad, con un
+        punto de azul para que no se vea sucio: un gris exacto sobre pantalla se lee verdoso.
 
-    <!-- Accent. -->
-    <Color x:Key="AccentColor">#FF3FD0F0</Color>
-    <Color x:Key="AccentBrightColor">#FF7EE4FA</Color>
-    <Color x:Key="AccentDimColor">#FF1B6C80</Color>
-    <Color x:Key="AccentDeepColor">#FF0E3A47</Color>
+        El sitio de cada uno lo dice su nombre, y de ahí sale la elevación: nada flota porque tenga
+        sombra, flota porque está un escalón más arriba que lo que tiene debajo.
+    -->
+    <Color x:Key="CanvasColor">#FF0B0C0F</Color>
+    <Color x:Key="SunkenColor">#FF101318</Color>
+    <Color x:Key="SurfaceColor">#FF15181E</Color>
+    <Color x:Key="SurfaceAltColor">#FF1B1F26</Color>
+    <Color x:Key="SurfaceHighColor">#FF232830</Color>
+    <Color x:Key="BorderSubtleColor">#FF23272F</Color>
+    <Color x:Key="BorderColor">#FF313742</Color>
+    <Color x:Key="BorderStrongColor">#FF454C59</Color>
 
-    <!-- Text. -->
-    <Color x:Key="TextColor">#FFF2F6FA</Color>
-    <Color x:Key="TextMutedColor">#FF8FA3B4</Color>
-    <Color x:Key="TextFaintColor">#FF5B6B7D</Color>
+    <!-- Nombres heredados. Las vistas los consumen desde antes del rediseño y siguen valiendo. -->
+    <Color x:Key="BackgroundColor">#FF0B0C0F</Color>
+    <Color x:Key="BackgroundLiftColor">#FF101318</Color>
 
-    <!-- Meaning. -->
-    <Color x:Key="DangerColor">#FFE0544F</Color>
-    <Color x:Key="DangerDeepColor">#FF3A1614</Color>
-    <Color x:Key="SuccessColor">#FF4FE08A</Color>
-    <Color x:Key="SuccessDeepColor">#FF10321F</Color>
-    <Color x:Key="WarningColor">#FFE0B34F</Color>
-    <Color x:Key="WarningDeepColor">#FF3A2C11</Color>
+    <!--
+        ============================ 2. ACENTO: LATÓN ============================
+        Un acento y nada más. Cuatro pasos para poder usarlo en texto, en relleno, en borde apagado
+        y como fondo teñido sin salirse de la familia.
 
-    <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource BackgroundColor}" />
+        OnAccent es el texto que va ENCIMA del relleno de latón. Existe como token porque estaba
+        escrito a mano en tres vistas distintas, cada una con un negro diferente.
+    -->
+    <Color x:Key="AccentColor">#FFD9A441</Color>
+    <Color x:Key="AccentBrightColor">#FFF0C572</Color>
+    <Color x:Key="AccentDimColor">#FF8A6A2B</Color>
+    <Color x:Key="AccentDeepColor">#FF33270F</Color>
+    <Color x:Key="OnAccentColor">#FF120E07</Color>
+
+    <!--
+        ============================ 3. TEXTO ============================
+        Tres niveles y se acabó. El primario no es blanco puro: #FFFFFF sobre casi negro vibra y
+        cansa en una sesión larga, que es exactamente el uso de esta aplicación.
+    -->
+    <Color x:Key="TextColor">#FFE7E9ED</Color>
+    <Color x:Key="TextMutedColor">#FF99A0AC</Color>
+    <Color x:Key="TextFaintColor">#FF646B77</Color>
+    <Color x:Key="TextDisabledColor">#FF4A505B</Color>
+
+    <!--
+        ============================ 4. SEMÁNTICOS ============================
+        Desaturados a propósito, para que el latón siga siendo lo más fuerte de la pantalla. Cada
+        uno con su fondo teñido, que es como se usan: distintivo pequeño, no relleno grande.
+
+        Nota deliberada sobre naranja y latón: son vecinos. Se distinguen por TRATAMIENTO, no por
+        tono — la advertencia va siempre en distintivo con fondo teñido y borde, y el latón va en
+        relleno sólido o en texto pelado. Además nunca compiten por el mismo papel: latón es valor
+        y acción, naranja es cuidado.
+    -->
+    <Color x:Key="SuccessColor">#FF58A56E</Color>
+    <Color x:Key="SuccessDeepColor">#FF14251A</Color>
+    <Color x:Key="WarningColor">#FFD9772F</Color>
+    <Color x:Key="WarningDeepColor">#FF2B1A0C</Color>
+    <Color x:Key="DangerColor">#FFCF5044</Color>
+    <Color x:Key="DangerDeepColor">#FF2B1312</Color>
+    <Color x:Key="InfoColor">#FF5B8AC4</Color>
+    <Color x:Key="InfoDeepColor">#FF121E2B</Color>
+
+    <!--
+        ============================ 5. RAREZA ============================
+        La escala que cualquiera que haya jugado a algo reconoce sin leyenda: gris, verde, azul,
+        violeta, oro. No es una copia de nada, es una convención, y por eso funciona.
+
+        El tier 5 ES el latón a propósito: legendario y «lo más valioso» tienen que ser el mismo
+        color, si no la aplicación diría dos cosas distintas sobre lo mismo.
+
+        Y se quedan AQUÍ: el gacha y la colección los usan, el resto de la aplicación no.
+    -->
+    <Color x:Key="Tier1Color">#FF7C8593</Color>
+    <Color x:Key="Tier2Color">#FF5FA86F</Color>
+    <Color x:Key="Tier3Color">#FF4E8BC9</Color>
+    <Color x:Key="Tier4Color">#FF9C6BCB</Color>
+    <Color x:Key="Tier5Color">#FFD9A441</Color>
+
+    <!-- ============================ BROCHAS ============================ -->
+
+    <SolidColorBrush x:Key="CanvasBrush" Color="{StaticResource CanvasColor}" />
+    <SolidColorBrush x:Key="SunkenBrush" Color="{StaticResource SunkenColor}" />
+    <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource CanvasColor}" />
     <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}" />
     <SolidColorBrush x:Key="SurfaceAltBrush" Color="{StaticResource SurfaceAltColor}" />
     <SolidColorBrush x:Key="SurfaceHighBrush" Color="{StaticResource SurfaceHighColor}" />
+    <SolidColorBrush x:Key="BorderSubtleBrush" Color="{StaticResource BorderSubtleColor}" />
     <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}" />
     <SolidColorBrush x:Key="BorderStrongBrush" Color="{StaticResource BorderStrongColor}" />
+
     <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
     <SolidColorBrush x:Key="AccentBrightBrush" Color="{StaticResource AccentBrightColor}" />
     <SolidColorBrush x:Key="AccentDimBrush" Color="{StaticResource AccentDimColor}" />
     <SolidColorBrush x:Key="AccentDeepBrush" Color="{StaticResource AccentDeepColor}" />
+    <SolidColorBrush x:Key="OnAccentBrush" Color="{StaticResource OnAccentColor}" />
+
     <SolidColorBrush x:Key="TextBrush" Color="{StaticResource TextColor}" />
     <SolidColorBrush x:Key="TextMutedBrush" Color="{StaticResource TextMutedColor}" />
     <SolidColorBrush x:Key="TextFaintBrush" Color="{StaticResource TextFaintColor}" />
-    <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource DangerColor}" />
-    <SolidColorBrush x:Key="DangerDeepBrush" Color="{StaticResource DangerDeepColor}" />
+    <SolidColorBrush x:Key="TextDisabledBrush" Color="{StaticResource TextDisabledColor}" />
+
     <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}" />
     <SolidColorBrush x:Key="SuccessDeepBrush" Color="{StaticResource SuccessDeepColor}" />
     <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}" />
     <SolidColorBrush x:Key="WarningDeepBrush" Color="{StaticResource WarningDeepColor}" />
-
-    <!-- The floor of the whole window: a slow vertical lift so the screen has a top and a bottom. -->
-    <LinearGradientBrush x:Key="AppBackgroundBrush" StartPoint="0,0" EndPoint="0.35,1">
-        <GradientStop Offset="0" Color="{StaticResource BackgroundLiftColor}" />
-        <GradientStop Offset="1" Color="{StaticResource BackgroundColor}" />
-    </LinearGradientBrush>
-
-    <!-- A card. Barely a gradient on purpose: enough to catch the light, not enough to notice. -->
-    <LinearGradientBrush x:Key="PanelBrush" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Offset="0" Color="{StaticResource SurfaceAltColor}" />
-        <GradientStop Offset="1" Color="{StaticResource SurfaceColor}" />
-    </LinearGradientBrush>
-
-    <!-- A header strip: the accent bleeding in from the left. -->
-    <LinearGradientBrush x:Key="HeaderBrush" StartPoint="0,0" EndPoint="1,0">
-        <GradientStop Offset="0" Color="{StaticResource AccentDeepColor}" />
-        <GradientStop Offset="0.55" Color="{StaticResource SurfaceAltColor}" />
-        <GradientStop Offset="1" Color="{StaticResource SurfaceColor}" />
-    </LinearGradientBrush>
-
-    <!-- A filled accent button. -->
-    <LinearGradientBrush x:Key="AccentFillBrush" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Offset="0" Color="{StaticResource AccentBrightColor}" />
-        <GradientStop Offset="1" Color="{StaticResource AccentColor}" />
-    </LinearGradientBrush>
-
-    <!-- The sidebar: darker than the content, so the eye knows which one is furniture. -->
-    <LinearGradientBrush x:Key="SidebarBrush" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Offset="0" Color="{StaticResource SurfaceColor}" />
-        <GradientStop Offset="1" Color="{StaticResource BackgroundColor}" />
-    </LinearGradientBrush>
-
-    <!-- Un color por rareza del gacha. La animación del ultraespacio pinta un portal de cada
-         uno, y el que se ilumina al final es el del tier que ha tocado. -->
-    <Color x:Key="Tier1Color">#FF7C8AA0</Color>
-    <Color x:Key="Tier2Color">#FF4FE08A</Color>
-    <Color x:Key="Tier3Color">#FF3FD0F0</Color>
-    <Color x:Key="Tier4Color">#FFB061F0</Color>
-    <Color x:Key="Tier5Color">#FFFFB03F</Color>
+    <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource DangerColor}" />
+    <SolidColorBrush x:Key="DangerDeepBrush" Color="{StaticResource DangerDeepColor}" />
+    <SolidColorBrush x:Key="InfoBrush" Color="{StaticResource InfoColor}" />
+    <SolidColorBrush x:Key="InfoDeepBrush" Color="{StaticResource InfoDeepColor}" />
 
     <SolidColorBrush x:Key="Tier1Brush" Color="{StaticResource Tier1Color}" />
     <SolidColorBrush x:Key="Tier2Brush" Color="{StaticResource Tier2Color}" />
@@ -103,12 +148,83 @@
     <SolidColorBrush x:Key="Tier4Brush" Color="{StaticResource Tier4Color}" />
     <SolidColorBrush x:Key="Tier5Brush" Color="{StaticResource Tier5Color}" />
 
-    <FontFamily x:Key="UiFont">Segoe UI</FontFamily>
-    <FontFamily x:Key="MonoFont">Consolas</FontFamily>
+    <!--
+        Cuatro brochas compuestas y ni una más. Antes había gradientes en el fondo, en las tarjetas,
+        en la cabecera, en los botones y en la barra lateral: cinco degradados para decir nada.
 
-    <!-- Corner radii, named so the whole app rounds by the same amounts. -->
-    <CornerRadius x:Key="RadiusSmall">4</CornerRadius>
-    <CornerRadius x:Key="RadiusMedium">8</CornerRadius>
-    <CornerRadius x:Key="RadiusLarge">12</CornerRadius>
+        El suelo lleva uno porque una pantalla grande de un solo tono se lee como un agujero. El
+        resto son planos: un panel se distingue por estar un escalón más arriba, no por brillar.
+    -->
+    <LinearGradientBrush x:Key="AppBackgroundBrush" StartPoint="0,0" EndPoint="0.2,1">
+        <GradientStop Offset="0" Color="{StaticResource SunkenColor}" />
+        <GradientStop Offset="1" Color="{StaticResource CanvasColor}" />
+    </LinearGradientBrush>
+
+    <SolidColorBrush x:Key="PanelBrush" Color="{StaticResource SurfaceColor}" />
+    <SolidColorBrush x:Key="SidebarBrush" Color="{StaticResource SunkenColor}" />
+    <SolidColorBrush x:Key="HeaderBrush" Color="{StaticResource SurfaceColor}" />
+    <SolidColorBrush x:Key="AccentFillBrush" Color="{StaticResource AccentColor}" />
+
+    <!--
+        ============================ 6. RADIO ============================
+        Pequeños. El redondeo grande es lo que hace que todo parezca la misma pastilla, y una
+        herramienta tiene que verse construida, no inflada. 2 para lo diminuto, 4 para controles,
+        8 solo para contenedores.
+    -->
+    <CornerRadius x:Key="RadiusSmall">2</CornerRadius>
+    <CornerRadius x:Key="RadiusMedium">4</CornerRadius>
+    <CornerRadius x:Key="RadiusLarge">8</CornerRadius>
+    <CornerRadius x:Key="RadiusPill">999</CornerRadius>
+
+    <!--
+        ============================ 7. ESPACIADO ============================
+        Escala de 4. Había 50 valores de padding distintos por las vistas; a partir de aquí hay
+        seis, y cada hueco tiene que justificar cuál de los seis es.
+    -->
+    <sys:Double x:Key="Space1">4</sys:Double>
+    <sys:Double x:Key="Space2">8</sys:Double>
+    <sys:Double x:Key="Space3">12</sys:Double>
+    <sys:Double x:Key="Space4">16</sys:Double>
+    <sys:Double x:Key="Space5">24</sys:Double>
+    <sys:Double x:Key="Space6">32</sys:Double>
+
+    <Thickness x:Key="PadTight">8,6</Thickness>
+    <Thickness x:Key="PadControl">14,8</Thickness>
+    <Thickness x:Key="PadPanel">16,14</Thickness>
+    <Thickness x:Key="PadPanelWide">20,18</Thickness>
+    <Thickness x:Key="GapSection">0,24,0,0</Thickness>
+    <Thickness x:Key="GapBlock">0,12,0,0</Thickness>
+
+    <!--
+        ============================ 8. TIPOGRAFÍA ============================
+
+        DOS familias con papeles distintos, que es lo que da carácter sin disfrazar nada:
+
+          Bahnschrift  para cifras, rótulos y títulos. Es la DIN que trae Windows 10 en adelante,
+                       así que viaja en la carpeta de reparto sin licencia ni fichero: condensada,
+                       técnica, de panel de instrumentos. Es la que hace que un número parezca un
+                       dato y no un texto grande.
+          Segoe UI     para todo lo que se lee en frases. Bahnschrift en párrafos cansa.
+          Consolas     para lo que tiene que alinearse en columna: seeds, hashes, PID, horas.
+
+        Las tres llevan familia de respaldo, porque una fuente que falta se sustituye por la de
+        sistema sin avisar y la pantalla se descuadra en silencio.
+
+        ESCALA. Siete tamaños. Había 25 sueltos por las vistas, que es no tener jerarquía sino
+        veinticinco. La razón entre pasos se aprieta arriba a propósito: en una aplicación que se
+        consulta de un vistazo hace falta contraste, no titulares de revista.
+    -->
+    <FontFamily x:Key="DisplayFont">Bahnschrift SemiBold Condensed, Bahnschrift Condensed, Bahnschrift, Segoe UI</FontFamily>
+    <FontFamily x:Key="DisplayFontLight">Bahnschrift SemiCondensed, Bahnschrift, Segoe UI</FontFamily>
+    <FontFamily x:Key="UiFont">Segoe UI, Segoe UI Variable Text, Tahoma</FontFamily>
+    <FontFamily x:Key="MonoFont">Consolas, Cascadia Mono, Courier New</FontFamily>
+
+    <sys:Double x:Key="FontSizeMicro">10</sys:Double>
+    <sys:Double x:Key="FontSizeSmall">11.5</sys:Double>
+    <sys:Double x:Key="FontSizeBody">13</sys:Double>
+    <sys:Double x:Key="FontSizeLead">15</sys:Double>
+    <sys:Double x:Key="FontSizeSection">18</sys:Double>
+    <sys:Double x:Key="FontSizeTitle">23</sys:Double>
+    <sys:Double x:Key="FontSizeHuge">34</sys:Double>
 
 </ResourceDictionary>

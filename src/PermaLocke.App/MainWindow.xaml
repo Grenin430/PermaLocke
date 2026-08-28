@@ -95,7 +95,12 @@
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding Title}" />
+                            <StackPanel Orientation="Horizontal">
+                                <Path Style="{StaticResource IconNav}"
+                                      Data="{Binding IconKey, Converter={StaticResource ResourceKey}}"
+                                      Margin="0,0,11,0" />
+                                <TextBlock Text="{Binding Title}" VerticalAlignment="Center" />
+                            </StackPanel>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
@@ -110,15 +115,12 @@
                 <RowDefinition Height="16" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
-
-            <!-- Heading. The accent bleeds in from the left edge of the strip, which ties the
-                 header back to the selected entry in the sidebar right beside it. -->
-            <Border Grid.Row="0"
-                    Background="{StaticResource HeaderBrush}"
-                    BorderBrush="{StaticResource BorderBrush}"
-                    BorderThickness="1"
-                    CornerRadius="{StaticResource RadiusLarge}"
-                    Padding="24,18">
+            <!-- Cabecera. SIN CAJA: era un recuadro redondeado encima de otro recuadro
+                 redondeado, y dos marcos apilados no separan nada, solo apelmazan. Ahora es una
+                 barra sobre el lienzo, separada del contenido por una linea. Es la diferencia
+                 entre el armazon de la ventana y lo que hay dentro. -->
+            <Border Grid.Row="0" Background="Transparent" Padding="4,0,4,16"
+                    BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,0,0,1">
                 <!-- Solo el título. La línea de descripción se quitó a petición del jugador: en una
                      aplicación que se usa a diario explica lo que ya se sabe y ocupa sitio.
                      A la derecha sí va una cosa, porque no se sabe: si esta pantalla necesita el
@@ -178,29 +180,39 @@
                             </TextBlock>
                         </Border>
                     </StackPanel>
+                    <!-- ==================================== LOS PUNTOS
+                         La moneda del sistema, y por eso no van en una tarjeta con una estrella
+                         delante: van como va un contador de recurso en un juego, en la esquina
+                         de la barra superior, presentes en todas las pantallas y siempre en el
+                         mismo sitio.
 
-                    <!-- Los puntos, en la cabecera y en TODAS las pantallas.
-                         Son la moneda de la competición: lo que se gana, lo que se pierde y lo
-                         que cuesta la tienda. Estaban abajo del todo de la barra lateral, en
-                         pequeño, debajo de la navegación. Aquí se ven desde cualquier sección,
-                         que es donde importa: al ir a comprar o al ver una penalización. -->
+                         Tres piezas, y cada una hace algo:
+                           · el rombo de latón, que es el símbolo del recurso y lo hace reconocible
+                             de reojo sin leer la palabra;
+                           · la cifra, en Bahnschrift con cifras tabulares, para que al pasar de
+                             99 a 100 no se desplace nada de al lado;
+                           · el rótulo pequeño debajo, que solo hace falta la primera vez.
+
+                         El latón se usa aquí y en los botones de acción, y en ningún sitio más.
+                         Eso es lo que hace que este número se lea como dinero. -->
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
-                                VerticalAlignment="Center" Margin="18,0,0,0">
-                        <Border CornerRadius="9" Padding="10,4" VerticalAlignment="Center"
-                                Background="{StaticResource SurfaceHighBrush}"
-                                BorderBrush="{StaticResource BorderStrongBrush}" BorderThickness="1">
-                            <TextBlock Text="{Binding RoleText}"
-                                       FontFamily="{StaticResource UiFont}" FontSize="10.5"
-                                       FontWeight="Bold"
-                                       Foreground="{StaticResource TextMutedBrush}" />
+                                VerticalAlignment="Center" Margin="20,0,0,0">
+                        <Border Style="{StaticResource Chip}" VerticalAlignment="Center"
+                                Margin="0,0,14,0">
+                            <TextBlock Text="{Binding RoleText}" Style="{StaticResource ChipText}" />
                         </Border>
 
-                        <TextBlock Text="PUNTOS" Style="{StaticResource StatLabel}"
-                                   VerticalAlignment="Center" Margin="16,0,8,0" />
+                        <Path Style="{StaticResource Icon}" Data="{StaticResource IconPoints}"
+                              Fill="{StaticResource AccentBrush}" Width="13" Height="13"
+                              Margin="0,0,8,0" />
 
-                        <TextBlock Text="{Binding PointsText}" Style="{StaticResource Mono}"
-                                   FontSize="26" FontWeight="Bold" VerticalAlignment="Center"
-                                   Foreground="{StaticResource AccentBrush}" />
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="{Binding PointsText}" Style="{StaticResource StatValue}"
+                                       Foreground="{StaticResource AccentBrush}"
+                                       LineHeight="24" LineStackingStrategy="BlockLineHeight" />
+                            <TextBlock Text="PUNTOS" Style="{StaticResource StatLabel}"
+                                       Foreground="{StaticResource AccentDimBrush}" />
+                        </StackPanel>
                     </StackPanel>
 
                     <TextBlock Text="{Binding SelectedSection.Title}" Style="{StaticResource SectionTitle}"
@@ -208,7 +220,10 @@
                 </DockPanel>
             </Border>
 
-            <Border Grid.Row="2" Style="{StaticResource Panel}">
+            <!-- El contenido se apoya en el lienzo, sin marco propio: la pantalla ya esta acotada
+                 por la barra lateral y por la cabecera. Un tercer recuadro alrededor no acota
+                 nada mas, solo mete otro borde. -->
+            <Border Grid.Row="2" Background="Transparent" Padding="4,0">
                 <ContentControl Content="{Binding SelectedSection}" />
             </Border>
         </Grid>
