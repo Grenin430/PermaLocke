@@ -446,10 +446,10 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
         SelectedSprite = pokemon is null ? null : SpriteFor(pokemon);
         TrainStatus = string.Empty;
 
-        // Con el intercambio armado, elegir en la caja es elegir a quién se entrega. Un huevo no:
-        // lo que hay dentro no se sabe, así que no se puede decir qué vale. Y un miembro del
-        // equipo tampoco: el intercambio escribe en las cajas, y el equipo es otro almacén.
-        Trade.Choose(pokemon is { IsEgg: false, IsInParty: false } ? pokemon : null);
+        // Con el intercambio armado, elegir es elegir a quién se entrega, esté en una caja o en el
+        // equipo: el escritor sabe distinguir los dos almacenes. Un huevo no, porque lo que hay
+        // dentro no se sabe y por tanto no se puede decir qué vale.
+        Trade.Choose(pokemon is { IsEgg: false } ? pokemon : null);
 
         Stats.Clear();
         _savedEvs = EvSpread.Empty;

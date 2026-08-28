@@ -13,6 +13,14 @@ public enum SpeciesPickMode
     OneToOne,
 }
 
+/// <param name="Id">The cartridge's own item id, which is what gets written into the shop.</param>
+/// <param name="Name">
+/// What that id is called, checked against the cartridge's item table before anything is written.
+/// An id that lands on the wrong item stocks the wrong thing and never fails, so the name is not
+/// documentation here: it is the guard (§52).
+/// </param>
+public sealed record MartItem(int Id, string Name);
+
 /// <summary>
 /// What to randomize and how. Lives in <c>Data/randomizer.json</c>, never in the code, so the
 /// admin can change the competition's rules without a rebuild.
@@ -82,6 +90,23 @@ public sealed record RandomizerOptions
 
     /// <summary>What a plain trade evolution becomes: level up at this level.</summary>
     public int TradeEvolutionLevel { get; init; } = 37;
+
+    /// <summary>
+    /// Items the ordinary Pokémon Center counters stop selling, and what they sell instead.
+    /// </summary>
+    /// <remarks>
+    /// The eight ordinary inventories are otherwise left alone, because they are where a Nuzlocke
+    /// buys its balls. This turns the six status medicines into more of them. The name travels with
+    /// the id and is checked against the cartridge before anything is written: an id typed from
+    /// memory that lands on another item stocks the wrong thing and never fails (§52).
+    /// </remarks>
+    public IReadOnlyList<MartItem> RegularMartReplaced { get; init; } =
+    [
+        new(17, "Poción"), new(18, "Antídoto"), new(19, "Antiquemar"),
+        new(20, "Antihielo"), new(21, "Despertar"), new(22, "Antiparalizador"),
+    ];
+
+    public MartItem RegularMartReplacement { get; init; } = new(4, "Poké Ball");
 
     /// <summary>
     /// Blank a trainer Pokémon's moves when its species changes, so the game builds a moveset

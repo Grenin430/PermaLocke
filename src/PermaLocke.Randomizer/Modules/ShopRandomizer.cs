@@ -8,13 +8,16 @@ namespace PermaLocke.Randomizer.Modules;
 /// <param name="TechnicalMachineShops">Shops that sell TMs and got a new set of them.</param>
 /// <param name="RestockedShops">Shops filled with the configured fallback item.</param>
 /// <param name="Slots">Individual shop slots rewritten.</param>
-public sealed record ShopResult(int TechnicalMachineShops, int RestockedShops, int Slots);
+/// <param name="MedicineSlots">Ordinary counter slots that stopped selling a status medicine.</param>
+public sealed record ShopResult(
+    int TechnicalMachineShops, int RestockedShops, int Slots, int MedicineSlots = 0);
 
 /// <summary>
-/// Rewrites the special mart counters of the Pokémon Centers, inside <c>Shop.cro</c>.
+/// Rewrites the mart inventories of the Pokémon Centers, inside <c>Shop.cro</c>.
 /// <para>
-/// The eight ordinary inventories, which grow as trials are cleared, are left alone: they are
-/// where a player buys potions and balls, and a Nuzlocke needs them working.
+/// The eight ordinary inventories, which grow as trials are cleared, keep their shape: they are
+/// where a player buys balls, and a Nuzlocke needs them working. The only thing that changes there
+/// is the six status medicines, which become more balls.
 /// </para>
 /// </summary>
 public sealed class ShopRandomizer(RomWorkspace workspace, RandomizerOptions options)
@@ -32,6 +35,8 @@ public sealed class ShopRandomizer(RomWorkspace workspace, RandomizerOptions opt
         var machineShops = 0;
         var restocked = 0;
         var slots = 0;
+
+        var medicine = ReplaceMedicines(options, cro, shops, itemNames);
 
         foreach (var shop in shops.Where(s => s.Index >= ShopTable.RegularMartCount))
         {
@@ -56,7 +61,66 @@ public sealed class ShopRandomizer(RomWorkspace workspace, RandomizerOptions opt
 
         await File.WriteAllBytesAsync(path, cro, ct);
         await VerifyAsync(path, machines, ct);
-        return new ShopResult(machineShops, restocked, slots);
+        return new ShopResult(machineShops, restocked, slots, medicine);
+    }
+
+    /// <summary>
+    /// Turns the status medicines of the ordinary counters into the replacement item.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Only the eight ordinary inventories, and only the ids the options name: the special counters
+    /// are handled below and a shop that sells nothing but Antidotes elsewhere is somebody else's
+    /// problem. Slots are matched by id, so it does not matter that the medicines sit in a different
+    /// place in each of the eight, nor that the later ones sell more things.
+    /// </para>
+    /// <para>
+    /// Every id is checked against the cartridge's own item table first, and a mismatch <b>throws</b>
+    /// rather than writing: swapping the wrong item into a shop produces a game that works, sells
+    /// the wrong thing, and never reports anything. The same guard the prizes use (§52).
+    /// </para>
+    /// </remarks>
+    /// <param name="options">Passed in, and the method is static, so a test needs no cartridge.</param>
+    public static int ReplaceMedicines(RandomizerOptions options, byte[] cro,
+        IReadOnlyList<ShopInventory> shops, string[] itemNames)
+    {
+        if (options.RegularMartReplaced.Count == 0)
+        {
+            return 0;
+        }
+
+        foreach (var expected in options.RegularMartReplaced.Append(options.RegularMartReplacement))
+        {
+            var actual = expected.Id >= 0 && expected.Id < itemNames.Length
+                ? itemNames[expected.Id]
+                : "(fuera de la tabla)";
+
+            if (!string.Equals(actual, expected.Name, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidDataException(
+                    $"El objeto {expected.Id} debería ser «{expected.Name}» y el cartucho dice "
+                    + $"«{actual}». No se toca ninguna tienda.");
+            }
+        }
+
+        var replaced = options.RegularMartReplaced.Select(item => item.Id).ToHashSet();
+        var changed = 0;
+
+        foreach (var shop in shops.Where(s => s.Index < ShopTable.RegularMartCount))
+        {
+            for (var slot = 0; slot < shop.Count; slot++)
+            {
+                if (!replaced.Contains(ShopTable.GetItem(cro, shop, slot)))
+                {
+                    continue;
+                }
+
+                ShopTable.SetItem(cro, shop, slot, options.RegularMartReplacement.Id);
+                changed++;
+            }
+        }
+
+        return changed;
     }
 
     /// <summary>Gives a TM shop a fresh set of TMs, without repeating one within the same shop.</summary>

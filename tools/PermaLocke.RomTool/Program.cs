@@ -439,7 +439,12 @@ async Task ShopsAsync()
 {
     using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work);
     var items = workspace.Config.GetText(TextName.ItemNames);
-    var generated = Path.Combine(root, "Randomized", "seed-20260818", "romfs", "Shop.cro");
+    // --gen <ruta> lee el Shop.cro de un mod ya generado, que es la unica forma honesta de
+    // comprobar lo que se escribio: releerlo, no fiarse del informe.
+    var explicit_ = args.SkipWhile(a => a != "--gen").Skip(1).FirstOrDefault();
+    var generated = explicit_ is not null && File.Exists(explicit_)
+        ? explicit_
+        : Path.Combine(root, "Randomized", "seed-20260818", "romfs", "Shop.cro");
     var useGenerated = args.Contains("--gen") && File.Exists(generated);
     var cro = await File.ReadAllBytesAsync(useGenerated ? generated : workspace.PathOf(GameFiles.Shop));
     Console.WriteLine(useGenerated ? "=== FICHERO GENERADO ===" : "=== VANILLA ===");

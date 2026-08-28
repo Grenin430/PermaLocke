@@ -76,30 +76,25 @@ public sealed class SaveBoxSwap(PlayerSave save, string backupFolder, ILogger<Sa
                     $"El fichero de partida no se ha podido leer como Ultra Luna: {path}");
             }
 
-            // El visor enseña también el equipo, y el equipo es otro almacén del save. Un índice
-            // de equipo aquí caería en la caja 0 y destruiría a un Pokémon que nadie eligió, así
-            // que se corta en la puerta aunque la pantalla ya no lo ofrezca.
-            if (box < 0)
+            // El equipo es otro almacén del save, no la caja -1. Se acepta, pero por su propia
+            // puerta: un índice de equipo tratado como caja caería en la caja 0 y destruiría a un
+            // Pokémon que nadie eligió.
+            if (box != BoxedPokemon.PartyBox && box < 0)
             {
                 return new DeliveryResult(DeliveryOutcome.SlotChanged,
-                    "El wonder trade solo funciona con Pokémon del PC. Deposita primero en una caja "
-                    + "al que quieras entregar.");
+                    $"Caja {box} no existe. El intercambio no se ha hecho.");
             }
 
-            if (game.GetBoxSlotAtIndex(box, slot) is not { } current || current.Species != offer.GivenSpecies)
+            if (Read(game, box, slot) is not { } current || current.Species != offer.GivenSpecies)
             {
                 return new DeliveryResult(DeliveryOutcome.SlotChanged,
-                    $"En la caja {box + 1}, hueco {slot + 1} ya no está {offer.GivenName}. "
+                    $"En {Where(box, slot)} ya no está {offer.GivenName}. "
                     + "La partida ha cambiado desde que se leyó: vuelve a leerla y repite el intercambio.");
             }
 
             Backup(path);
 
-            var received = PokemonBuilder.Build(
-                new NewPokemon(offer.Species, offer.Level, offer.Nature, offer.AbilityId, offer.Ivs, offer.IsShiny),
-                game);
-
-            game.SetBoxSlotAtIndex(received, box, slot, PokemonBuilder.Handover);
+            var received = ApplyTo(game, offer, box, slot);
             File.WriteAllBytes(path, game.Write().ToArray());
 
             if (!Verify(path, box, slot, offer))
@@ -109,11 +104,19 @@ public sealed class SaveBoxSwap(PlayerSave save, string backupFolder, ILogger<Sa
                     + "La copia de seguridad está en Saves/backup.");
             }
 
-            logger.LogInformation("Wonder trade: {Given} sale y entra {Received} en la caja {Box}, hueco {Slot}",
-                offer.GivenName, offer.Name, box + 1, slot + 1);
+            logger.LogInformation("Wonder trade: {Given} sale y entra {Received} en {Where}",
+                offer.GivenName, offer.Name, Where(box, slot));
+
+            // Del equipo se avisa de algo que en una caja no pasa: las estadísticas de combate las
+            // calcula PKHeX con SU tabla de base, y la ROM las baraja (§51), así que el número que
+            // enseñe hasta que el juego lo recalcule -curarse en un Centro basta- puede no cuadrar.
+            var caveat = box == BoxedPokemon.PartyBox
+                ? " Sus estadísticas se ajustan solas la primera vez que el juego las recalcule; "
+                  + "cúralo en un Centro Pokémon si quieres verlas ya."
+                : string.Empty;
 
             return new DeliveryResult(DeliveryOutcome.Delivered,
-                $"{offer.GivenName} se ha ido y {offer.Name} ocupa su sitio: caja {box + 1}, hueco {slot + 1}.",
+                $"{offer.GivenName} se ha ido y {offer.Name} ocupa su sitio: {Where(box, slot)}." + caveat,
                 box + 1, slot + 1, received.PID);
         }
         catch (Exception ex)
@@ -132,9 +135,59 @@ public sealed class SaveBoxSwap(PlayerSave save, string backupFolder, ILogger<Sa
             return false;
         }
 
-        var written = game.GetBoxSlotAtIndex(box, slot);
+        var written = Read(game, box, slot);
         return written is { } found && found.Species == offer.Species && found.CurrentLevel == offer.Level;
     }
+
+    /// <summary>
+    /// Does the swap on a loaded save: builds what arrives and puts it where the other one was.
+    /// </summary>
+    /// <remarks>
+    /// Separate from the file handling so it can be exercised on a save built in memory — no
+    /// emulator, no ROM, nobody's personal data. Same seam as the EV trainer's <c>ApplyTo</c>, and
+    /// for the same reason: PKHeX will not read a blank save written back to disk, so a test that
+    /// insisted on a real file could not cover this at all.
+    /// </remarks>
+    public static PK7 ApplyTo(SAV7USUM game, WonderTradeOffer offer, int box, int slot)
+    {
+        var received = PokemonBuilder.Build(
+            new NewPokemon(offer.Species, offer.Level, offer.Nature, offer.AbilityId, offer.Ivs,
+                offer.IsShiny),
+            game);
+
+        Store(game, received, box, slot);
+        return received;
+    }
+
+    /// <summary>Reads a slot, from the party or from a box, whichever the index means.</summary>
+    public static PKM? Read(SAV7USUM game, int box, int slot) =>
+        box == BoxedPokemon.PartyBox
+            ? slot >= 0 && slot < game.PartyCount ? game.GetPartySlotAtIndex(slot) : null
+            : game.GetBoxSlotAtIndex(box, slot);
+
+    /// <summary>
+    /// Writes the one that arrived into the slot the other one left.
+    /// </summary>
+    /// <remarks>
+    /// With <see cref="PokemonBuilder.Handover"/> in both cases: what arrives is a Pokémon the
+    /// player did not have, so the Pokédex may learn about it, but no record moves — nobody threw a
+    /// ball at a wonder trade (§42).
+    /// </remarks>
+    private static void Store(SAV7USUM game, PK7 pokemon, int box, int slot)
+    {
+        if (box == BoxedPokemon.PartyBox)
+        {
+            game.SetPartySlotAtIndex(pokemon, slot, PokemonBuilder.Handover);
+            return;
+        }
+
+        game.SetBoxSlotAtIndex(pokemon, box, slot, PokemonBuilder.Handover);
+    }
+
+    private static string Where(int box, int slot) =>
+        box == BoxedPokemon.PartyBox
+            ? $"el equipo, puesto {slot + 1}"
+            : $"la caja {box + 1}, hueco {slot + 1}";
 
     /// <summary>
     /// Copies the whole save before touching it. If the backup cannot be written, the trade does

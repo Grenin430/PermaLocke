@@ -158,8 +158,12 @@ public sealed class RandomizerService(RandomizerOptions options)
         {
             var random = new SeededRandomSource(seed).Derive(Salts.Shops);
             var result = await new ShopRandomizer(workspace, options).ApplyAsync(random, mod, ct);
-            steps.Add(new RandomizerStep("Tiendas especiales",
-                $"{result.TechnicalMachineShops} tiendas de MT randomizadas, {result.RestockedShops} surtidas de Poké Balls, {result.Slots} huecos"));
+            steps.Add(new RandomizerStep("Tiendas",
+                $"{result.TechnicalMachineShops} tiendas de MT randomizadas, "
+                + $"{result.RestockedShops} surtidas de Poké Balls, {result.Slots} huecos"
+                + (result.MedicineSlots > 0
+                    ? $"; {result.MedicineSlots} curativos de las tiendas normales pasados a Poké Ball"
+                    : string.Empty)));
         }
 
         // Un módulo pedido y no implementado se dice, no se ignora. Callarlo dejaría al jugador

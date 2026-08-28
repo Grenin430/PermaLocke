@@ -117,7 +117,7 @@ public sealed partial class WonderTradeViewModel : ObservableObject
     /// </summary>
     public string Instruction => BandText.Length > 0
         ? BandText
-        : "Elige en la caja el Pokémon que quieres entregar.";
+        : "Elige el Pokémon que quieres entregar, del equipo o de una caja.";
 
     partial void OnBandTextChanged(string value) => OnPropertyChanged(nameof(Instruction));
 

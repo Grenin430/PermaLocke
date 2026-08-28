@@ -5518,3 +5518,43 @@ Y un wipe se cura solo: al despertar en el Centro Pokémon el juego restaura el 
 la ventana en la que los seis se leen a 0 PS es la del final del combate y el fundido, no un estado
 que se quede ahí como el de una muerte suelta. Con el sondeo a 1 Hz debería bastar, pero **debería
 no es se comprobó**. Queda por medir con el enlace levantado y un combate perdido delante.
+
+## 71. Poké Balls en el mostrador, y el equipo entra al wonder trade (2026-08-28)
+
+### Los seis curativos de estado pasan a ser Poké Balls
+
+Las ocho tiendas normales de los Centros —las que van creciendo según superas pruebas— seguían
+intactas a propósito: son donde un Nuzlocke compra balls. Ahora cambian una cosa: los **seis
+curativos de estado** se venden como Poké Balls.
+
+Los ids salieron de la tabla del cartucho, no de la memoria: **17 Poción, 18 Antídoto, 19
+Antiquemar, 20 Antihielo, 21 Despertar, 22 Antiparalizador**. Están seguidos, que es por qué «de la
+poción hasta el antihielo» y la lista de seis nombran exactamente lo mismo. Lo que **no** entra:
+Superpoción, Hiperpoción, Poción Máxima, Restaurar Todo, Revivir y Cura Total, que no estaban en la
+lista y siguen a la venta.
+
+El emparejamiento es **por id y no por posición**, porque los seis están en un sitio distinto en cada
+una de las ocho tiendas y las últimas venden más cosas. Y cada id viaja con su nombre en
+`Data/randomizer.json`, comprobado contra la tabla del cartucho **antes** de escribir: un id que
+caiga en otro objeto surte la tienda con otra cosa, el juego funciona perfectamente y nadie se entera
+nunca. Un desajuste lanza y no se toca ninguna tienda (§52).
+
+Verificado releyendo el `Shop.cro` generado, con `RomTool shops --gen <ruta>`, que ahora acepta la
+ruta del mod: **48 huecos** cambiados, que es 8 tiendas × 6 curativos, y en las ocho quedan las
+Poké Balls con el resto del surtido intacto.
+
+### El wonder trade acepta Pokémon del equipo
+
+El §51 dejó el equipo fuera con una razón buena —el equipo es **otro almacén** del save, y un índice
+de equipo tratado como caja cae en la **caja 0** y destruye a un Pokémon que nadie eligió—, y el
+corte se puso en la puerta del escritor. Ahora en vez de cortarlo se atiende: `SaveBoxSwap` bifurca
+igual que hace `SaveEvTrainer` desde el §51, con `GetPartySlotAtIndex` / `SetPartySlotAtIndex`.
+
+Lo que se guarda con test es justo el error que el corte evitaba: entregar al del equipo escribe en
+el equipo y **la caja 0 se queda como estaba**. Un fallo ahí no se notaría, porque algo se habría
+escrito y el intercambio diría que salió bien.
+
+Aviso que va en el mensaje del resultado, no escondido: un Pokémon que entra al **equipo** llega con
+las estadísticas que calcula PKHeX, y la ROM baraja las bases (§51), así que el número puede no
+cuadrar hasta que el juego las recalcule. Curarse en un Centro basta. En una caja no pasa porque un
+Pokémon en caja no lleva estadísticas de combate.
