@@ -170,10 +170,6 @@ public sealed partial class RouletteViewModel : SectionViewModel
 
     public override GameNeed Needs => GameNeed.Closed;
 
-    public override string NeedsDetail =>
-        "Las caras tocan equipo, mochila y cajas, y todo va por el fichero de partida. Guarda "
-        + "dentro del juego y ciérralo antes de girar.";
-
     public override async Task ActivateAsync()
     {
         await _sprites.PrepareAsync();

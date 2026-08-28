@@ -55,12 +55,8 @@ public sealed partial class RandomizerViewModel : SectionViewModel
         Refresh();
     }
 
-    /// <summary>Lines of the last report, ready to show as they came from the service.</summary>
-    public ObservableCollection<string> Steps { get; } = [];
-
     [ObservableProperty]
     private string _seedLabel = "—";
-
     [ObservableProperty]
     private string _romText = "Sin comprobar";
 
@@ -69,9 +65,6 @@ public sealed partial class RandomizerViewModel : SectionViewModel
 
     [ObservableProperty]
     private string _status = string.Empty;
-
-    [ObservableProperty]
-    private string _outputText = string.Empty;
 
     [ObservableProperty]
     private bool _isBusy;
@@ -96,11 +89,6 @@ public sealed partial class RandomizerViewModel : SectionViewModel
         Path.Combine(_paths.Randomized, $"seed-{_runContext.Current?.Seed ?? 0}");
 
     public override GameNeed Needs => GameNeed.Closed;
-
-    public override string NeedsDetail =>
-        "GENERAR solo lee tu ROM y da igual. INSTALAR y QUITAR copian y borran la carpeta de mods "
-        + "del emulador, así que Azahar tiene que estar cerrado del todo; los mods se leen al "
-        + "cargar el juego, no después.";
 
     public override Task ActivateAsync()
     {
@@ -132,7 +120,6 @@ public sealed partial class RandomizerViewModel : SectionViewModel
             : $"Azahar instalado: {Azahar.UserDirectory}";
 
         IsGenerated = Directory.Exists(Path.Combine(OutputDirectory, "romfs"));
-        OutputText = IsGenerated ? OutputDirectory : string.Empty;
         IsInstalled = Azahar is not null && Directory.Exists(Path.Combine(ModDirectory, "romfs"));
 
         NotifyCommands();
@@ -153,7 +140,6 @@ public sealed partial class RandomizerViewModel : SectionViewModel
 
         IsBusy = true;
         NotifyCommands();
-        Steps.Clear();
         Status = "Generando. La ROM no se toca: se lee y se escribe aparte.";
 
         try
@@ -176,11 +162,6 @@ public sealed partial class RandomizerViewModel : SectionViewModel
             var work = Path.Combine(Path.GetTempPath(), "permalocke-randomizer");
             var report = await new RandomizerService(options)
                 .RandomizeAsync(RomPath, work, OutputDirectory, run.Seed);
-
-            foreach (var step in report.Steps)
-            {
-                Steps.Add($"{step.Module}: {step.Detail}");
-            }
 
             Status = $"Listo en {report.Elapsed.TotalSeconds:F1} s · "
                      + $"{report.Files.Count} ficheros · {report.TotalBytes / 1024.0 / 1024.0:F0} MB";
@@ -212,7 +193,6 @@ public sealed partial class RandomizerViewModel : SectionViewModel
         {
             _logger.LogError(ex, "Falló la randomización");
             Status = "La randomización ha fallado. El detalle está en la carpeta Logs.";
-            Steps.Clear();
         }
         finally
         {

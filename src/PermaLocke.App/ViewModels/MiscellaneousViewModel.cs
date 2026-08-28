@@ -75,11 +75,6 @@ public sealed partial class MiscellaneousViewModel : SectionViewModel
 
     public override GameNeed Needs => GameNeed.Running;
 
-    public override string NeedsDetail =>
-        "Los premios y las herramientas escriben en la mochila del juego en marcha, así que Azahar "
-        + "tiene que estar abierto con la partida cargada. Saber si un premio está ganado sí se ve "
-        + "sin él.";
-
     public override Task ActivateAsync() => RefreshRewardsAsync();
 
     /// <summary>

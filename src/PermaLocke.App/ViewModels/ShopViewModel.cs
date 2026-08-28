@@ -111,10 +111,6 @@ public sealed partial class ShopViewModel : SectionViewModel
 
     public override GameNeed Needs => GameNeed.Running;
 
-    public override string NeedsDetail =>
-        "Lo comprado se escribe en la mochila del juego en marcha y se relee para confirmarlo, así "
-        + "que Azahar tiene que estar abierto con la partida cargada.";
-
     public override async Task ActivateAsync()
     {
         await _sprites.PrepareAsync();

@@ -116,39 +116,6 @@
                 <TextBlock Text="{Binding Status}" Style="{StaticResource Body}" FontSize="12" />
             </Border>
 
-            <Border Margin="0,12,0,0">
-                <Border.Style>
-                    <Style TargetType="Border" BasedOn="{StaticResource Inset}">
-                        <Setter Property="Visibility" Value="Collapsed" />
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding IsGenerated}" Value="True">
-                                <Setter Property="Visibility" Value="Visible" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </Border.Style>
-                <StackPanel>
-                    <TextBlock Text="ÚLTIMO RESULTADO" Style="{StaticResource StatLabel}" Margin="0,0,0,8" />
-
-                    <ItemsControl ItemsSource="{Binding Steps}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <DockPanel Margin="0,2">
-                                    <Ellipse DockPanel.Dock="Left" Width="5" Height="5"
-                                             Fill="{StaticResource AccentDimBrush}"
-                                             VerticalAlignment="Center" Margin="0,0,9,0" />
-                                    <TextBlock Text="{Binding}" Style="{StaticResource Mono}"
-                                               FontSize="11.5" Foreground="{StaticResource TextMutedBrush}" />
-                                </DockPanel>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-
-                    <Border Style="{StaticResource Divider}" />
-
-                    <TextBlock Text="{Binding OutputText}" Style="{StaticResource Faint}" />
-                </StackPanel>
-            </Border>
 
         </StackPanel>
     </ScrollViewer>

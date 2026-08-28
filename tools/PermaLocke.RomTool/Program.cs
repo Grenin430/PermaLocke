@@ -493,7 +493,7 @@ async Task FieldItemsAsync()
     var garc = new GARC.LazyGARC(await File.ReadAllBytesAsync(useGen ? generatedEnc : workspace.PathOf(GameFiles.EncounterDataUltraMoon)));
 
     var zones = garc.FileCount / FieldItemTable.SubfilesPerZone;
-    int total = 0, machines = 0, zonesWith = 0, unnamed = 0;
+    int total = 0, machines = 0, zonesWith = 0, unnamed = 0, berries = 0;
     var sample = new List<string>();
 
     for (var zone = 0; zone < zones; zone++)
@@ -510,12 +510,14 @@ async Task FieldItemsAsync()
             if (ShopTable.IsTechnicalMachine(item)) machines++;
             if (item >= items.Length || items[item] == "(?)" || string.IsNullOrWhiteSpace(items[item])) unnamed++;
             if (sample.Count < 22 && item != 0) sample.Add($"z{zone}:{(item < items.Length ? items[item] : item.ToString())}");
+            if (item < items.Length && items[item].StartsWith("Baya", StringComparison.OrdinalIgnoreCase)) berries++;
         }
     }
 
     Console.WriteLine($"\n{zones} zonas, {zonesWith} con objetos en el suelo");
     Console.WriteLine($"  {total} objetos localizados");
     Console.WriteLine($"  de los cuales MT (las Poké Ball doradas): {machines}");
+    Console.WriteLine($"  de los cuales BAYAS: {berries}");
     Console.WriteLine($"  ids sin nombre real: {unnamed}   (mucho = el localizador está mal)");
     Console.WriteLine($"\n  muestra: {string.Join(", ", sample)}");
 }

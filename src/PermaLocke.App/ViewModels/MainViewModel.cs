@@ -38,7 +38,6 @@ public sealed partial class MainViewModel : ObservableObject
         // el requisito se CUMPLE, no cuál es.
         gameLink.SnapshotChanged += (_, snapshot) => _ = _ui.InvokeAsync(() =>
         {
-            _linkProblem = snapshot.Problem ?? string.Empty;
             GameConnected = snapshot.Connected;
             return Task.CompletedTask;
         });
@@ -116,7 +115,6 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(NeedLabel))]
     [NotifyPropertyChangedFor(nameof(NeedState))]
-    [NotifyPropertyChangedFor(nameof(NeedDetail))]
     [NotifyPropertyChangedFor(nameof(ShowsNeed))]
     private SectionViewModel _selectedSection;
 
@@ -124,11 +122,7 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(NeedLabel))]
     [NotifyPropertyChangedFor(nameof(NeedState))]
-    [NotifyPropertyChangedFor(nameof(NeedDetail))]
     private bool _gameConnected;
-
-    /// <summary>Why the link is down, in the emulator's own words. Empty while it is up.</summary>
-    private string _linkProblem = string.Empty;
 
     public bool ShowsNeed => SelectedSection.ShowsNeed;
 
@@ -165,19 +159,6 @@ public sealed partial class MainViewModel : ObservableObject
         GameNeed.Closed => GameConnected ? "problem" : "closed",
         GameNeed.Either => "either",
         _ => "none"
-    };
-
-    public string NeedDetail => SelectedSection.Needs switch
-    {
-        GameNeed.Running when !GameConnected =>
-            (_linkProblem.Length > 0 ? _linkProblem + " " : string.Empty)
-            + "Mientras tanto esta pantalla no puede hacer nada, y las muertes no se cuentan.",
-
-        GameNeed.Closed when GameConnected =>
-            "Azahar está respondiendo, así que el juego está abierto. Guarda dentro del juego y "
-            + "ciérralo del todo antes de escribir nada aquí.",
-
-        _ => SelectedSection.NeedsDetail
     };
 
     [ObservableProperty]

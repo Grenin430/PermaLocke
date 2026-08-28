@@ -51,12 +51,6 @@ public abstract partial class SectionViewModel : ObservableObject
     /// </summary>
     public virtual GameNeed Needs => GameNeed.None;
 
-    /// <summary>
-    /// One line saying why, shown next to the badge. A badge alone says what to do without saying
-    /// what happens otherwise, which is the half a player actually needs when it goes wrong.
-    /// </summary>
-    public virtual string NeedsDetail => string.Empty;
-
     /// <summary>The badge text, in Spanish: the enum never reaches the screen.</summary>
     public string NeedsLabel => Needs switch
     {
