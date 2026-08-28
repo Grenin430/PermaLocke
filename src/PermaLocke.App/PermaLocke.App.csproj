@@ -40,6 +40,28 @@
     <None Include="@(EmulatorFiles)"
           Link="Emulator\%(RecursiveDir)%(Filename)%(Extension)"
           CopyToOutputDirectory="Never"
-          CopyToPublishDirectory="PreserveNewest" />
+          CopyToPublishDirectory="PreserveNewest"
+          ExcludeFromSingleFile="true" />
   </ItemGroup>
+
+  <!--
+    La configuración del juego (puntos, precios, probabilidades, reglas, logros, roles) vive en
+    JSON bajo Data\ y la aplicación la lee de la carpeta que tiene al lado. Sin esto, quien recibe
+    la carpeta arranca con un Data\ vacío y la mitad de las pantallas no encuentra su fichero.
+
+    Solo los .json, y NUNCA Data\sprites\: esos son los iconos del cartucho, se extraen de la ROM
+    de cada jugador la primera vez que abre el gacha, y no son nuestros para repartirlos.
+
+    Solo al PUBLICAR, igual que el emulador: en desarrollo AppPaths sube hasta la raíz del
+    repositorio y ya lee estos mismos ficheros desde su sitio.
+  -->
+  <ItemGroup>
+    <DataFiles Include="$(MSBuildThisFileDirectory)..\..\Data\*.json" />
+    <None Include="@(DataFiles)"
+          Link="Data\%(Filename)%(Extension)"
+          CopyToOutputDirectory="Never"
+          CopyToPublishDirectory="PreserveNewest"
+          ExcludeFromSingleFile="true" />
+  </ItemGroup>
+
 </Project>

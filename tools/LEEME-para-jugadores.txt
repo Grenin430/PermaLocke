@@ -1,0 +1,86 @@
+PermaLocke
+==========
+
+Gestor de Nuzlocke para Pokemon Ultra Luna. Lleva la cuenta de puntos, muertes, logros,
+cap de nivel, gacha, tienda y wonder trade, y randomiza el juego con la seed de tu run.
+
+Trae el emulador dentro. No hace falta instalar nada, ni .NET, ni Azahar aparte.
+
+
+LO PRIMERO: TU ROM
+------------------
+
+NO viene incluida, y no es un olvido: la ROM es de Nintendo. Vuelca la tuya del cartucho de
+Pokemon Ultra Luna y dejala dentro de la carpeta ROM\, que aparece sola la primera vez que
+abres PermaLocke.
+
+Tiene que ser Ultra Luna (Ultra Moon) europea y DESENCRIPTADA. Si esta encriptada, PermaLocke
+te lo dira al comprobarla en vez de randomizar cualquier cosa.
+
+
+COMO SE EMPIEZA
+---------------
+
+1.  Doble clic en PermaLocke.exe. Se crean solas las carpetas ROM, Saves, Randomized, Logs
+    y Config.
+
+2.  Deja tu ROM en ROM\ y vuelve a abrir la aplicacion.
+
+3.  CREAR RUN. Te pide tu nombre y tu ROL, y el rol se elige AQUI porque parte de el se cuece
+    dentro de la ROM: los niveles de los rivales y su Pokemon extra se escriben al randomizar.
+    Cambiar de rol despues NO vuelve a randomizar.
+
+      NORMAL      puntos x1, se pierden x1
+      CAGONETA    puntos x0,5, y NO pierde puntos al morir
+      EXPERTO     ganas x1,5 y pierdes x2; los rivales van un 27% por encima
+      LUDOPATA    los puntos igual que NORMAL, pero cada prueba te obliga a girar la ruleta
+                  y vivir con lo que salga
+
+4.  RANDOMIZADOR -> GENERAR. Lee tu ROM y escribe una copia randomizada en Randomized\.
+    Tarda un rato y ocupa unos 460 MB. Tu ROM original no se toca nunca.
+
+5.  RANDOMIZADOR -> INSTALAR EN AZAHAR. Con Azahar CERRADO.
+
+6.  Abre el juego desde la propia carpeta Emulator\azahar.exe y empieza a jugar.
+
+
+CON EL JUEGO ABIERTO O CERRADO
+------------------------------
+
+Cada pantalla lo dice arriba a la derecha, en verde, ambar o apagado. Es la diferencia entre
+las dos formas que tiene PermaLocke de hablar con el juego:
+
+  JUEGO ABIERTO   lee y escribe en la memoria del emulador en marcha. Es lo que hace que las
+                  muertes se cuenten solas, que el cap de nivel se aplique y que la tienda te
+                  ponga los objetos en la mochila.
+
+  JUEGO CERRADO   escribe en el fichero de la partida. El gacha, el wonder trade, la ruleta y
+                  los EV van por aqui, y con el juego abierto lo pisaria al guardar. Guarda
+                  DENTRO del juego y cierralo del todo antes.
+
+Deja PermaLocke abierto mientras juegas. Es lo unico que hace que las muertes se registren y
+que el cap de nivel se corrija; con la aplicacion cerrada no se entera de nada.
+
+
+DONDE ESTA CADA COSA
+--------------------
+
+  PermaLocke.exe   la aplicacion
+  Data\            puntos, precios, probabilidades, reglas y logros, en JSON. Se puede editar
+                   sin recompilar nada, pero si jugais una competicion, todos con los mismos.
+  Emulator\        Azahar, ya configurado. Se puede abrir directamente.
+  ROM\             tu ROM va aqui
+  Randomized\      lo que genera el randomizador
+  Saves\           tu run y las copias de seguridad de tu partida
+  Logs\            si algo falla, el detalle esta aqui
+
+
+LICENCIA
+--------
+
+GPLv3. PermaLocke usa PKHeX.Core y pk3DS.Core, que son GPLv3, asi que esto tambien lo es y su
+codigo esta disponible. El emulador de Emulator\ es un fork propio de Azahar; su procedencia y
+su licencia estan en Emulator\LEEME.md.
+
+Ni la ROM ni los sprites del juego se reparten con esto. Los sprites los saca PermaLocke de tu
+propia ROM la primera vez que abres el gacha.
