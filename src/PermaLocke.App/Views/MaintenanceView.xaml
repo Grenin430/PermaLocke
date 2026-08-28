@@ -134,6 +134,102 @@
                 </StackPanel>
             </Border>
 
+
+            <!-- ================================================== CERRAR ENTREGADOS
+                 Un wonder trade daba de alta al que llega y no decía nada del que se va, así que su
+                 registro se quedaba «en pie» para siempre. En esta run eran 28 Pokémon que no están
+                 en la partida, y contarlos entre los vivos es el mismo error que no contar una
+                 muerte: un número que describe otra cosa de la que dice.
+
+                 Las entregas ya se arreglaron en su sitio, así que esto solo mira hacia atrás. -->
+            <Border Style="{StaticResource Inset}" Margin="0,12,0,0">
+                <StackPanel>
+                    <DockPanel>
+                        <Border DockPanel.Dock="Right" Style="{StaticResource ChipInfo}">
+                            <TextBlock Text="SOLO LA RUN" Style="{StaticResource ChipText}"
+                                       Foreground="{StaticResource InfoBrush}" />
+                        </Border>
+                        <TextBlock Text="CERRAR LOS ENTREGADOS" Style="{StaticResource PanelHeading}"
+                                   VerticalAlignment="Center" />
+                    </DockPanel>
+
+                    <TextBlock Style="{StaticResource Body}" Margin="0,9,0,0"
+                               Text="Marca como entregados los Pokémon que diste en un wonder trade y la run sigue contando entre los vivos. No toca la partida: solo el registro, y cada uno deja su propio evento." />
+
+                    <TextBlock Style="{StaticResource Faint}" Margin="0,6,0,0"
+                               Text="Se identifica por la especie que el propio evento apuntó como entregada, cruzada con los registros sin PID, que ahora son exactamente los que ya no están en la partida. Si las dos cuentas no coinciden para una especie, esa especie se deja en paz: elegir cuál de dos Giratina se fue sería inventar historia en un registro encadenado por hash." />
+
+                    <Border Style="{StaticResource Divider}" Margin="0,14" />
+
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="MIRAR CUÁNTOS HAY" Style="{StaticResource GhostButton}"
+                                Command="{Binding InspectTradedCommand}" MinWidth="190" />
+                        <Button Content="CERRARLOS" Style="{StaticResource PrimaryButton}"
+                                Command="{Binding RepairTradedCommand}" MinWidth="140"
+                                Margin="10,0,0,0" />
+                    </StackPanel>
+
+                    <TextBlock Text="{Binding TradedStatus}" Margin="0,12,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource Body}">
+                                <Setter Property="Visibility" Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding TradedStatus}" Value="">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
+            <!-- ================================================== ETAPAS
+                 El tope en vigor es el MAYOR de dos números: lo que detectan los logros y lo que
+                 alguien pulsó cuando HOME todavía tenía botón. Leídos como uno solo no se
+                 distinguen, y una run cuyo contador a mano se adelantó tiene un tope que nada
+                 justifica: esta llegó a 40 con dos pruebas detectadas.
+
+                 Solo se corrige el de a mano. El detectado lo dice el cartucho. -->
+            <Border Style="{StaticResource Inset}" Margin="0,12,0,0">
+                <StackPanel>
+                    <TextBlock Text="ETAPAS Y TOPE DE NIVEL" Style="{StaticResource PanelHeading}" />
+
+                    <TextBlock Style="{StaticResource Body}" Margin="0,9,0,0"
+                               Text="El tope en vigor es el mayor entre lo que detectan los logros y lo que se marcó a mano. Si el contador de a mano se adelantó, el tope sube sin que ninguna prueba lo respalde. Aquí se corrige." />
+
+                    <Border Style="{StaticResource Well}" Margin="0,12,0,0" Padding="14,11">
+                        <TextBlock Text="{Binding StageSummary}" Style="{StaticResource Mono}"
+                                   Foreground="{StaticResource TextBrush}" />
+                    </Border>
+
+                    <Border Style="{StaticResource Divider}" Margin="0,14" />
+
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="ETAPAS A MANO" Style="{StaticResource StatLabel}"
+                                   VerticalAlignment="Center" Margin="0,0,10,0" />
+                        <TextBox Text="{Binding ManualStages, UpdateSourceTrigger=PropertyChanged}"
+                                 Width="70" VerticalAlignment="Center" />
+                        <Button Content="CORREGIR" Style="{StaticResource GhostButton}"
+                                Command="{Binding SetStagesCommand}" MinWidth="130"
+                                Margin="10,0,0,0" />
+                    </StackPanel>
+
+                    <TextBlock Text="{Binding StageStatus}" Margin="0,12,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource Body}">
+                                <Setter Property="Visibility" Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding StageStatus}" Value="">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
         </StackPanel>
     </ScrollViewer>
 </UserControl>

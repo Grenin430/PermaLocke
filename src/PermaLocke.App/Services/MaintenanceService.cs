@@ -2,8 +2,10 @@ using PermaLocke.Infrastructure;
 using Microsoft.Extensions.Logging;
 using PermaLocke.Core.Abstractions;
 using PermaLocke.Core.Domain;
+using PermaLocke.Core.Services;
 using PermaLocke.Data;
 using PermaLocke.GameLink;
+using PermaLocke.Rules.Services;
 
 namespace PermaLocke.App.Services;
 
@@ -46,6 +48,8 @@ public sealed class MaintenanceService(
     IEventStore events,
     IPointsService points,
     RunBackup backup,
+    TradedAwayReconciler traded,
+    ProgressService progress,
     PlayerSave save,
     AppPaths paths,
     ILoggerFactory loggers,
@@ -77,14 +81,14 @@ public sealed class MaintenanceService(
 
         var alive = team.Count(p => p.Status == PokemonStatus.Alive);
         var dead = team.Count(p => p.Status == PokemonStatus.Dead);
-        var traded = team.Count(p => p.Status == PokemonStatus.Traded);
+        var tradedAway = team.Count(p => p.Status == PokemonStatus.Traded);
 
         var rows = new List<AuditRow>
         {
             new("Pokémon registrados", team.Count.ToString(), "ok"),
             new("En pie", alive.ToString(), "ok"),
             new("Caídos", dead.ToString(), "ok"),
-            new("Entregados en wonder trade", traded.ToString(), "ok"),
+            new("Entregados en wonder trade", tradedAway.ToString(), "ok"),
 
             new("Detectables por el vigilante", withPid.ToString(),
                 withPid == team.Count ? "ok" : "warn",
@@ -156,4 +160,81 @@ public sealed class MaintenanceService(
 
     private SavePidRepair NewPidRepair() =>
         new(save, paths.SaveBackups, loggers.CreateLogger<SavePidRepair>());
+
+    /// <summary>Works out which wonder-trade records can be closed, and writes nothing.</summary>
+    public Task<TradedAwayReport> InspectTradedAsync(CancellationToken ct = default) =>
+        runContext.Current is { } run
+            ? traded.InspectAsync(run, ct)
+            : Task.FromResult(NoRunTraded);
+
+    /// <summary>Closes the ones it can place without guessing, leaving an event for each.</summary>
+    public Task<TradedAwayReport> RepairTradedAsync(CancellationToken ct = default) =>
+        runContext.Current is { } run
+            ? traded.RepairAsync(run, ct)
+            : Task.FromResult(NoRunTraded);
+
+    private static readonly TradedAwayReport NoRunTraded =
+        new(0, 0, [], [], false, "No hay ninguna run cargada.");
+
+    /// <summary>
+    /// The three numbers behind the level cap, which is the one figure that governs how the run is
+    /// played and the one nobody can see the workings of.
+    /// </summary>
+    /// <remarks>
+    /// The cap in force is the higher of two: what the achievements detect, and what somebody
+    /// pressed back when HOME still had a button for it. Read as one number they are
+    /// indistinguishable, and a run whose manual count ran ahead has a cap nothing justifies — this
+    /// run reached 40 with two trials detected. Split apart, it is obvious which one is wrong.
+    /// </remarks>
+    public async Task<StageReadout> ReadStagesAsync(CancellationToken ct = default)
+    {
+        if (runContext.Current is not { } run)
+        {
+            return new StageReadout(0, 0, 0, null);
+        }
+
+        return new StageReadout(
+            run.ClearedStages,
+            await progress.DetectedAsync(run, ct),
+            await progress.ClearedAsync(run, ct),
+            await progress.CurrentCapAsync(run, ct));
+    }
+
+    /// <summary>
+    /// Sets the by-hand stage count, through the domain so the correction lands in the history.
+    /// </summary>
+    /// <remarks>
+    /// Goes through <see cref="ProgressService.AdvanceAsync"/> and not near <c>run.json</c>:
+    /// correcting a cap by editing the run file would be exactly the silent state change rule 4
+    /// forbids. The detected count is never touched — it is what the cartridge says.
+    /// </remarks>
+    public async Task<string> SetManualStagesAsync(int wanted, CancellationToken ct = default)
+    {
+        if (runContext.Current is not { } run)
+        {
+            return "No hay ninguna run cargada.";
+        }
+
+        if (wanted == run.ClearedStages)
+        {
+            return $"Ya está en {wanted}. No hay nada que cambiar.";
+        }
+
+        await progress.AdvanceAsync(run, wanted - run.ClearedStages, run.PlayerName, ct);
+
+        // Se relee del contexto: no se da por buena una correccion que no se ha vuelto a ver.
+        var after = runContext.Current;
+        var readout = await ReadStagesAsync(ct);
+
+        logger.LogInformation("Etapas a mano corregidas a {Wanted} (quedan en {Actual})",
+            wanted, after?.ClearedStages);
+
+        return $"Etapas a mano: {run.ClearedStages} → {after?.ClearedStages}. "
+               + $"Tope en vigor: {readout.Cap?.ToString() ?? "sin definir"}.";
+    }
 }
+
+/// <param name="Manual">Stages somebody marked by hand.</param>
+/// <param name="Detected">Stages the achievements work out from the cartridge.</param>
+/// <param name="InForce">The higher of the two, which is what the cap comes from.</param>
+public sealed record StageReadout(int Manual, int Detected, int InForce, int? Cap);

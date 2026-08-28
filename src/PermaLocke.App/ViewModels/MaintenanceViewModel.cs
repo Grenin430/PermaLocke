@@ -74,7 +74,11 @@ public sealed partial class MaintenanceViewModel : SectionViewModel
 
     private bool CanRepair => CanWork && PidsToWrite > 0;
 
-    public override Task ActivateAsync() => AuditAsync();
+    public override async Task ActivateAsync()
+    {
+        await AuditAsync();
+        await LoadStagesAsync();
+    }
 
     [RelayCommand(CanExecute = nameof(CanWork))]
     private async Task AuditAsync()
@@ -171,6 +175,152 @@ public sealed partial class MaintenanceViewModel : SectionViewModel
         {
             _logger.LogError(ex, "Falló la reparación de PID");
             PidStatus = "La reparación ha fallado. La copia previa está en Saves\\backup.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    // ============================================================ INTERCAMBIADOS
+
+    [ObservableProperty]
+    private string _tradedStatus = string.Empty;
+
+    /// <summary>Records that can be closed. Below zero means nobody has looked yet.</summary>
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(RepairTradedCommand))]
+    private int _tradedToClose = -1;
+
+    private bool CanCloseTraded => CanWork && TradedToClose > 0;
+
+    [RelayCommand(CanExecute = nameof(CanWork))]
+    private async Task InspectTradedAsync()
+    {
+        IsBusy = true;
+
+        try
+        {
+            var report = await _maintenance.InspectTradedAsync();
+
+            TradedToClose = report.Matched.Count;
+            TradedStatus = Describe(report);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Falló la inspección de intercambiados");
+            TradedToClose = 0;
+            TradedStatus = "No se ha podido mirar. El detalle está en la carpeta Logs.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanCloseTraded))]
+    private async Task RepairTradedAsync()
+    {
+        var confirmed = _dialogs.Confirm(
+            "Cerrar los entregados",
+            $"Se van a marcar {TradedToClose} registro(s) como entregados en un wonder trade.\n\n"
+            + "Esto no toca la partida: solo la run. Cada uno deja su propio evento en el "
+            + "historial.\n\n¿Seguir?");
+
+        if (!confirmed)
+        {
+            return;
+        }
+
+        IsBusy = true;
+
+        try
+        {
+            var report = await _maintenance.RepairTradedAsync();
+
+            TradedStatus = report.Message;
+            TradedToClose = report.Written ? 0 : report.Matched.Count;
+
+            await AuditAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Falló el cierre de intercambiados");
+            TradedStatus = "No se ha podido escribir. El detalle está en la carpeta Logs.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// Says what was found, and names what it refuses to touch.
+    /// </summary>
+    /// <remarks>
+    /// The disputed ones are spelled out rather than summarised: a player who is told "2 in
+    /// dispute" learns nothing, and the whole reason they are left alone is that only a person can
+    /// know which of two identical Giratina actually left.
+    /// </remarks>
+    private static string Describe(Core.Services.TradedAwayReport report)
+    {
+        var text = report.Message;
+
+        if (report.Disputed.Count > 0)
+        {
+            text += Environment.NewLine + string.Join(Environment.NewLine, report.Disputed);
+        }
+
+        return text;
+    }
+
+    // ============================================================ ETAPAS
+
+    [ObservableProperty]
+    private string _stageSummary = string.Empty;
+
+    /// <summary>What the player is about to set the by-hand count to.</summary>
+    [ObservableProperty]
+    private int _manualStages;
+
+    [ObservableProperty]
+    private string _stageStatus = string.Empty;
+
+    private async Task LoadStagesAsync()
+    {
+        var readout = await _maintenance.ReadStagesAsync();
+
+        ManualStages = readout.Manual;
+        StageSummary = $"A mano: {readout.Manual}   ·   Por los logros: {readout.Detected}"
+                       + $"   ·   En vigor: {readout.InForce}"
+                       + $"   ·   Tope: {readout.Cap?.ToString() ?? "sin definir"}";
+    }
+
+    [RelayCommand(CanExecute = nameof(CanWork))]
+    private async Task SetStagesAsync()
+    {
+        var confirmed = _dialogs.Confirm(
+            "Corregir las etapas a mano",
+            $"Se va a poner el contador de etapas marcadas a mano en {ManualStages}.\n\n"
+            + "Las que detectan los logros no se tocan: eso lo dice el cartucho. El tope en vigor "
+            + "es el mayor de los dos.\n\nLa corrección queda en el historial.\n\n¿Seguir?");
+
+        if (!confirmed)
+        {
+            return;
+        }
+
+        IsBusy = true;
+
+        try
+        {
+            StageStatus = await _maintenance.SetManualStagesAsync(ManualStages);
+            await LoadStagesAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Falló la corrección de etapas");
+            StageStatus = "No se ha podido corregir. El detalle está en la carpeta Logs.";
         }
         finally
         {

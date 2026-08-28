@@ -105,6 +105,7 @@ public partial class App : Application
         collection.AddSingleton<PokemonViewerViewModel>();
         collection.AddSingleton<PokePasteViewModel>();
         collection.AddSingleton<MiscellaneousViewModel>();
+        collection.AddSingleton<TradedAwayReconciler>();
         collection.AddSingleton<MaintenanceService>();
         collection.AddSingleton<MaintenanceViewModel>();
         collection.AddSingleton<MainViewModel>();
