@@ -37,7 +37,8 @@ public sealed record Reward(
     IReadOnlyList<RewardItem> Items,
     IReadOnlyList<int>? Held = null,
     bool Automatic = false,
-    IReadOnlyList<string>? Credit = null)
+    IReadOnlyList<string>? Credit = null,
+    IReadOnlyList<string>? Unlocks = null)
 {
     /// <summary>
     /// The held-item condition, never null.
@@ -62,6 +63,16 @@ public sealed record Reward(
     /// none -- so adding a roll here cannot quietly pay out to everyone who already claimed.
     /// </remarks>
     public IReadOnlyList<string> Credits => Credit ?? [];
+
+    /// <summary>
+    /// Things the saved game has to be told, by key. Today only the Mega Evolution unlock.
+    /// </summary>
+    /// <remarks>
+    /// Never together with <see cref="Items"/>: the bag is written in the running game and this is
+    /// written in the save file, so a prize with both could never be claimed in any state of the
+    /// emulator. The catalogue refuses such a prize instead of shipping one nobody can take.
+    /// </remarks>
+    public IReadOnlyList<string> Unlocked => Unlocks ?? [];
 
     /// <summary>How many conditions there are in total, of both kinds.</summary>
     public int Conditions => Achievements.Count + HeldItems.Count;

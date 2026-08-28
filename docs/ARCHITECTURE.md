@@ -5558,3 +5558,63 @@ Aviso que va en el mensaje del resultado, no escondido: un Pokémon que entra al
 las estadísticas que calcula PKHeX, y la ROM baraja las bases (§51), así que el número puede no
 cuadrar hasta que el juego las recalcule. Curarse en un Centro basta. En una caja no pasa porque un
 Pokémon en caja no lleva estadísticas de combate.
+
+## 72. Megaevolución temprana: no era el objeto, era un campo con nombre (2026-08-28)
+
+En Ultra Luna la megaevolución no llega hasta después del Alto Mando. La competición la quiere
+antes, y la primera hipótesis —darle al jugador la Piedra Activadora— resultó **falsa**, medida:
+
+```
+EQUIPO:  1. Swampert Nv.16  lleva: Swampertita (752)
+MOCHILA clave: Piedra Activadora (773)
+```
+
+Todo puesto, releído, y el botón no salía. **El juego no mira el objeto.** Lo que mira es
+`MyStatus.MegaUnlocked`, un booleano del bloque de entrenador, y lo que lo identificó fue su vecino:
+`MyStatus.ZMoveUnlocked = True`, ya encendido, porque los movimientos Z sí funcionaban. Un par de
+banderas hermanas, una a true y otra a false, explicando exactamente lo que se veía y lo que no.
+
+Encenderlo y ver el botón lo confirmó.
+
+Vale la pena decir cómo se encontró, porque el primer barrido **no lo vio**: se listaron las
+propiedades de `SAV7USUM` y ahí no está. Está en un sub-bloque. Buscar solo en la raíz de un objeto
+grande es como no buscar.
+
+### Segunda clase de premio
+
+`Data/rewards.json` gana `desbloquea`, una lista de llaves. Hoy hay una. La maquinaria del §60 se
+reutiliza entera —ganado por los logros, no recogido por el evento `RewardClaimed`, entregable— y lo
+único nuevo es por dónde se escribe.
+
+Y ahí está la restricción que obliga a una regla: los objetos se escriben en la **mochila del juego
+en marcha** y esto en el **fichero de partida**, que exige el juego **cerrado**. Un premio con las
+dos cosas no se podría recoger en ningún estado del emulador, así que el catálogo lo **rechaza** en
+vez de mandar a la pantalla un botón que siempre falla. Con test.
+
+Por lo mismo este premio **no puede ser automático**: la entrega automática corre desde el enlace con
+el juego, que por definición solo existe con el juego abierto.
+
+Tres guardas, las de siempre: se niega con el juego cargado, copia la partida entera antes, y
+**relee el flag del fichero** antes de dar el premio por recogido. Y una llave que el escritor no
+conozca se rechaza en vez de ignorarse: una errata en el JSON que no hiciera nada dejaría un premio
+que se cobra y no desbloquea.
+
+Un test guarda el caso que importa: **con el juego abierto no se escribe nada y no se recoge nada**,
+así que el premio sigue ahí para después. Un premio de una vez quemado porque el emulador estaba
+abierto sería uno que el jugador no recibe nunca.
+
+### Y de paso, a qué nivel llega cada mega
+
+`RomTool megas` cruza las 48 megaevoluciones con la tabla de evoluciones y dice a qué nivel se llega
+a la especie que puede megaevolucionar. Con eso la elección de la 6ª prueba deja de ser una
+corazonada:
+
+| Cap | Megas alcanzables subiendo de nivel |
+|---|---|
+| 24 | 3 |
+| 34 | 10 |
+| **40** (7ª prueba) | **22** |
+| 54 | 27 |
+
+Más veinte que no dependen del nivel. Con cap 40 está la mayoría del catálogo, y solo seis quedan
+fuera: Aggron y Glalie a 42, Metagross a 45, Garchomp a 48, Salamence a 50 y Tyranitar a 55.

@@ -57,6 +57,34 @@ public sealed class RewardServiceTests
                 itemsHeld.ToHashSet(), new Dictionary<int, int>()));
     }
 
+    /// <summary>Stands in for the save-file unlocks. Records what it was asked to turn on.</summary>
+    private sealed class NoUnlocks : IGameUnlocks
+    {
+        public List<string> Applied { get; } = [];
+
+        public bool Reachable { get; init; } = true;
+
+        public IReadOnlySet<string> Known { get; } =
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "megaevolucion" };
+
+        public bool CanApplyNow(out string reason)
+        {
+            reason = Reachable ? string.Empty : "El juego está cargado en Azahar.";
+            return Reachable;
+        }
+
+        public Task<UnlockResult> ApplyAsync(IReadOnlyList<string> keys, CancellationToken ct = default)
+        {
+            if (!Reachable)
+            {
+                return Task.FromResult(new UnlockResult(false, "El juego está cargado en Azahar."));
+            }
+
+            Applied.AddRange(keys);
+            return Task.FromResult(new UnlockResult(true, "Desbloqueado."));
+        }
+    }
+
     /// <summary>Counters that cannot be read, the way a missing or locked save behaves.</summary>
     private sealed class Blind : IGameRecords
     {
@@ -165,7 +193,8 @@ public sealed class RewardServiceTests
             records ?? new Records(), new FixedRole(FixedRole.Normal));
 
         return (new RewardService(new Catalog(reward ?? TwelveTrials), achievements,
-            records ?? new Records(), basket, new Items(), log, clock), log, basket);
+            records ?? new Records(), basket, new NoUnlocks(), new Items(), log, clock),
+            log, basket);
     }
 
     [Fact]
@@ -446,6 +475,91 @@ public sealed class RewardServiceTests
 
         var claimed = Assert.Single(log.Appended, e => e.Type == GameEventType.RewardClaimed);
         Assert.Equal(string.Empty, claimed.Data["credito"]);
+    }
+
+    /// <summary>A prize whose whole content is a flag in the saved game.</summary>
+    private static readonly Reward Megas = new(
+        "megaevolucion", "Megaevolución", "Tras las seis primeras pruebas.",
+        ["prueba-01", "prueba-02"], [], Unlocks: ["megaevolucion"]);
+
+    private static (RewardService Service, Events Log, NoUnlocks Unlocks) BuildWithUnlocks(
+        NoUnlocks unlocks, Reward reward)
+    {
+        var log = new Events();
+        var clock = new FixedClock();
+        var records = new Records(807, 813);
+
+        var achievements = new AchievementService(
+            new Achievements(Trials()), new PointsService(log, clock), log, clock,
+            records, new FixedRole(FixedRole.Normal));
+
+        return (new RewardService(new Catalog(reward), achievements, records, new Bag(),
+            unlocks, new Items(), log, clock), log, unlocks);
+    }
+
+    /// <summary>
+    /// The unlock is applied and the prize is recorded, with no items involved at all.
+    /// </summary>
+    /// <remarks>
+    /// Measured, not assumed: Ultra Moon does not gate Mega Evolution on carrying the Key Stone.
+    /// The item went into the bag and was read back, the Pokémon held its stone, and no button
+    /// appeared. What gates it is a field in the trainer block.
+    /// </remarks>
+    [Fact]
+    public async Task A_prize_can_unlock_something_in_the_saved_game()
+    {
+        var (service, log, unlocks) = BuildWithUnlocks(new NoUnlocks(), Megas);
+
+        var result = await service.ClaimAsync(TheRun(), "megaevolucion");
+
+        Assert.Equal(RewardOutcome.Delivered, result.Outcome);
+        Assert.Equal(["megaevolucion"], unlocks.Applied);
+        Assert.Contains(log.Appended, e => e.Type == GameEventType.RewardClaimed);
+    }
+
+    /// <summary>
+    /// With the game open nothing is written and nothing is recorded, so it can be claimed later.
+    /// </summary>
+    /// <remarks>
+    /// The one that matters: this writes the save file, and a prize burned because the emulator
+    /// happened to be running would be a one-off the player never got.
+    /// </remarks>
+    [Fact]
+    public async Task With_the_game_open_the_unlock_is_refused_and_nothing_is_claimed()
+    {
+        var (service, log, unlocks) = BuildWithUnlocks(new NoUnlocks { Reachable = false }, Megas);
+        var run = TheRun();
+
+        var refused = await service.ClaimAsync(run, "megaevolucion");
+
+        Assert.Equal(RewardOutcome.GameUnreachable, refused.Outcome);
+        Assert.Empty(unlocks.Applied);
+        Assert.DoesNotContain(log.Appended, e => e.Type == GameEventType.RewardClaimed);
+
+        // Y sigue ahí para cuando cierre el juego.
+        Assert.True(Assert.Single(await service.GetStatusAsync(run)).CanClaim);
+    }
+
+    /// <summary>Not earned means the save is never even opened.</summary>
+    [Fact]
+    public async Task An_unearned_unlock_never_touches_the_save()
+    {
+        var log = new Events();
+        var clock = new FixedClock();
+        var records = new Records(807);
+        var unlocks = new NoUnlocks();
+
+        var achievements = new AchievementService(
+            new Achievements(Trials()), new PointsService(log, clock), log, clock,
+            records, new FixedRole(FixedRole.Normal));
+
+        var service = new RewardService(new Catalog(Megas), achievements, records, new Bag(),
+            unlocks, new Items(), log, clock);
+
+        Assert.Equal(RewardOutcome.NotEarned,
+            (await service.ClaimAsync(TheRun(), "megaevolucion")).Outcome);
+
+        Assert.Empty(unlocks.Applied);
     }
 
     [Fact]

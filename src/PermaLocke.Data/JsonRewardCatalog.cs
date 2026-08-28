@@ -66,11 +66,25 @@ public sealed class JsonRewardCatalog(IReadOnlyList<Reward> all) : IRewardCatalo
             .Where(banner => !string.IsNullOrWhiteSpace(banner))
             .ToList() ?? [];
 
+        var unlocks = entry.Unlocks?
+            .Where(key => !string.IsNullOrWhiteSpace(key))
+            .Select(key => key.Trim())
+            .ToList() ?? [];
+
+        // Objetos y desbloqueos no pueden ir juntos: la mochila se escribe en el juego EN MARCHA y
+        // el desbloqueo en el fichero de partida, que exige el juego CERRADO. Un premio con las dos
+        // cosas no se podria recoger en ningun estado del emulador, asi que se rechaza aqui en vez
+        // de mandarlo a la pantalla para que falle.
+        if (unlocks.Count > 0 && items.Count > 0)
+        {
+            return null;
+        }
+
         // Hace falta ALGO que ganar y ALGO que dar. Un premio sin condicion se cobraria el primer
         // dia, y uno que no entrega nada es un boton que miente. Lo que da puede ser objetos o
         // tiradas: se piden las dos por separado para que un premio de solo tiradas valga, en vez
         // de caerse en silencio, que es como una linea de configuracion deja de existir sin avisar.
-        if ((achievements.Count == 0 && held.Count == 0) || (items.Count == 0 && credit.Count == 0))
+        if ((achievements.Count == 0 && held.Count == 0) || (items.Count == 0 && credit.Count == 0 && unlocks.Count == 0))
         {
             return null;
         }
@@ -83,7 +97,8 @@ public sealed class JsonRewardCatalog(IReadOnlyList<Reward> all) : IRewardCatalo
             items,
             held,
             entry.Automatic,
-            credit);
+            credit,
+            unlocks);
     }
 
     private sealed record RewardFile(
@@ -97,6 +112,7 @@ public sealed class JsonRewardCatalog(IReadOnlyList<Reward> all) : IRewardCatalo
         [property: JsonPropertyName("objetosEnMochila")] IReadOnlyList<int>? Held,
         [property: JsonPropertyName("automatico")] bool Automatic,
         [property: JsonPropertyName("tiradasGratis")] IReadOnlyList<string>? Credit,
+        [property: JsonPropertyName("desbloquea")] IReadOnlyList<string>? Unlocks,
         [property: JsonPropertyName("items")] IReadOnlyList<RewardItemEntry>? Items);
 
     private sealed record RewardItemEntry(

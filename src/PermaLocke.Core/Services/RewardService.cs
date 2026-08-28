@@ -32,6 +32,7 @@ public sealed class RewardService(
     AchievementService achievements,
     IGameRecords records,
     IItemDelivery delivery,
+    IGameUnlocks unlocks,
     IItemLookup items,
     IEventStore events,
     IClock clock)
@@ -161,6 +162,22 @@ public sealed class RewardService(
                 + $"«{wrong.Name}» y la tabla del juego dice «{items.GetName(wrong.Id)}».");
         }
 
+        // Los desbloqueos van primero y son todo o nada: escriben el fichero de partida, así que
+        // si el juego está abierto no hay nada que hacer y es mejor no haber tocado la mochila.
+        var unlockNote = string.Empty;
+
+        if (reward.Unlocked.Count > 0)
+        {
+            var result = await unlocks.ApplyAsync(reward.Unlocked, ct).ConfigureAwait(false);
+
+            if (!result.Applied)
+            {
+                return new RewardResult(RewardOutcome.GameUnreachable, reward, [], [], result.Message);
+            }
+
+            unlockNote = " " + result.Message;
+        }
+
         var delivered = new List<RewardItem>();
         var failed = new List<string>();
         var reachable = true;
@@ -209,7 +226,7 @@ public sealed class RewardService(
                 (delivered.Count == 0
                     ? $"«{reward.Name}» recogido."
                     : $"{what} en la mochila. Escrito y releído. «{reward.Name}» queda recogido.")
-                + rolls)
+                + unlockNote + rolls)
             : new RewardResult(RewardOutcome.PartlyDelivered, reward, [], delivered,
                 $"Solo ha llegado parte: {what}. No llegó {string.Join("; ", failed)}. "
                 + "El premio queda recogido igualmente para que el botón no lo dé dos veces.");

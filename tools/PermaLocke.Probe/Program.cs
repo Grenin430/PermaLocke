@@ -143,6 +143,14 @@ if (args.Length >= 3 && args[0] == "--dar-pokemon")
     return PermaLocke.Probe.GivePokemonProbe.Run(int.Parse(args[1]), int.Parse(args[2]));
 }
 
+// Que sabe PKHeX del desbloqueo de megaevolucion en la partida. Solo mira, no escribe.
+if (args.Length >= 1 && args[0] == "--mega")
+{
+    return args.Contains("--activar")
+        ? PermaLocke.Probe.MegaProbe.Enable()
+        : PermaLocke.Probe.MegaProbe.Run();
+}
+
 // Escribe CUALQUIER objeto en la mochila del juego en marcha, para medir cosas que aún no tienen
 // botón: --dar <id> <cantidad>. Misma ruta que la tienda, o sea con relectura.
 if (args.Length >= 3 && args[0] == "--dar")

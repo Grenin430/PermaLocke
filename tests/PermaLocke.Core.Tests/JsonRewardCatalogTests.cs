@@ -76,6 +76,47 @@ public sealed class JsonRewardCatalogTests : IDisposable
         Assert.Equal("decente", Assert.Single(balls.Credits));
     }
 
+    /// <summary>
+    /// A prize may not hand over items and unlocks at once, and the catalogue refuses it.
+    /// </summary>
+    /// <remarks>
+    /// The bag is written in the running game and the unlock in the save file, so such a prize
+    /// could not be claimed in any state of the emulator. Dropping it here beats shipping a button
+    /// that always fails.
+    /// </remarks>
+    [Fact]
+    public void A_prize_that_needs_the_game_open_and_shut_at_once_is_dropped()
+    {
+        Given("""
+        {
+          "rewards": [
+            {
+              "id": "imposible",
+              "name": "Imposible",
+              "achievements": ["prueba-01"],
+              "desbloquea": ["megaevolucion"],
+              "items": [ { "id": 3, "name": "Super Ball", "amount": 1 } ]
+            }
+          ]
+        }
+        """);
+
+        Assert.Empty(JsonRewardCatalog.Load(_path).All);
+    }
+
+    /// <summary>The shipped mega prize: six trials, no items, one unlock.</summary>
+    [Fact]
+    public void The_shipped_file_unlocks_megas_after_six_trials()
+    {
+        var data = Path.Combine(Repository(), "Data", "rewards.json");
+        var mega = Assert.Single(JsonRewardCatalog.Load(data).All, r => r.Id == "megaevolucion");
+
+        Assert.Equal("megaevolucion", Assert.Single(mega.Unlocked));
+        Assert.Empty(mega.Items);
+        Assert.Equal(6, mega.Achievements.Count);
+        Assert.False(mega.Automatic);
+    }
+
     /// <summary>A prize that only hands out rolls is valid: what it gives need not be an item.</summary>
     [Fact]
     public void A_prize_of_only_free_rolls_is_kept()
