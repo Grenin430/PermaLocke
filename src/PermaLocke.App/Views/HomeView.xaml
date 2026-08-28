@@ -90,12 +90,17 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="14" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="14" />
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <!-- Four numbers, above everything else. A coloured cap on each tile carries the
-                 meaning, so the numbers themselves can stay the same weight. -->
+            <!-- Las cifras, encima de todo. El filo de color de cada tarjeta lleva el significado,
+                 asi que los numeros pueden ir todos al mismo peso.
+
+                 El cap va mas ancho que los otros tres y lleva su etapa dentro: un 24 a secas no
+                 dice nada, y lo que el jugador necesita saber es de que prueba sale. -->
             <Grid Grid.Row="0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -104,7 +109,7 @@
                     <ColumnDefinition Width="12" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="12" />
-                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="1.35*" />
                 </Grid.ColumnDefinitions>
 
                 <Border Grid.Column="0" Style="{StaticResource Inset}" Padding="0">
@@ -160,16 +165,138 @@
                         </Grid.RowDefinitions>
                         <Border Grid.Row="0" Background="{StaticResource WarningBrush}" CornerRadius="7,7,0,0" />
                         <StackPanel Grid.Row="1" Margin="16,10,16,12">
-                            <TextBlock Text="CAP DE NIVEL" Style="{StaticResource StatLabel}" />
-                            <TextBlock Text="{Binding LevelCapText}" Style="{StaticResource StatValue}"
-                                       Foreground="{StaticResource WarningBrush}" />
+                            <DockPanel>
+                                <StackPanel DockPanel.Dock="Right" VerticalAlignment="Bottom"
+                                            HorizontalAlignment="Right" Margin="12,0,0,3">
+                                    <TextBlock Text="{Binding StageText}" Style="{StaticResource Body}"
+                                               FontSize="12" FontWeight="Bold" TextAlignment="Right"
+                                               TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+
+                                <StackPanel>
+                                    <TextBlock Text="CAP DE NIVEL" Style="{StaticResource StatLabel}" />
+                                    <TextBlock Text="{Binding LevelCapText}" Style="{StaticResource StatValue}"
+                                               Foreground="{StaticResource WarningBrush}" />
+                                </StackPanel>
+                            </DockPanel>
                         </StackPanel>
                     </Grid>
                 </Border>
             </Grid>
 
+            <!-- ================================================ EL EQUIPO
+                 Los seis, con el icono del cartucho. Es una aplicación de Pokémon y hasta ahora
+                 no enseñaba ninguno: los datos ya estaban en LiveTeam, sin nadie que los pintara.
+
+                 Se esconde entera cuando no hay enlace, en vez de dejar seis huecos vacíos que
+                 se leerían como un equipo muerto en lugar de como un juego cerrado. Lo que pasa
+                 sin enlace ya lo dice la insignia de arriba.
+
+                 El sprite puede faltar, porque quien no haya abierto nunca el gacha no los tiene
+                 extraídos, así que debajo va siempre el nombre y la tira funciona sin ellos. -->
+            <Border Grid.Row="2" Padding="16,13">
+                <Border.Style>
+                    <Style TargetType="Border" BasedOn="{StaticResource Inset}">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding GameLinkConnected}" Value="True">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+
+                <StackPanel>
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Right" Text="{Binding GameLinkStatus}"
+                                   Style="{StaticResource Faint}" VerticalAlignment="Center"
+                                   TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="EQUIPO EN VIVO" Style="{StaticResource StatLabel}"
+                                   VerticalAlignment="Center" />
+                    </DockPanel>
+
+                    <ItemsControl ItemsSource="{Binding LiveTeam}" Margin="0,11,0,0">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Rows="1" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Margin="0,0,8,0" Padding="8,9"
+                                        CornerRadius="{StaticResource RadiusMedium}"
+                                        Background="{StaticResource SurfaceHighBrush}"
+                                        BorderThickness="1">
+                                    <!-- Debilitado: la tarjeta entera se apaga. Un Pokémon caído
+                                         tiene que verse caído sin leer el número. -->
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Opacity" Value="1" />
+                                            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HpState}" Value="fainted">
+                                                    <Setter Property="Opacity" Value="0.45" />
+                                                    <Setter Property="BorderBrush" Value="{StaticResource DangerDeepBrush}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+
+                                    <StackPanel>
+                                        <Image Source="{Binding Sprite}" Stretch="Uniform"
+                                               Width="48" Height="48"
+                                               RenderOptions.BitmapScalingMode="NearestNeighbor" />
+
+                                        <TextBlock Text="{Binding Name}" Style="{StaticResource Body}"
+                                                   FontSize="11.5" FontWeight="Bold"
+                                                   TextAlignment="Center" TextTrimming="CharacterEllipsis"
+                                                   Margin="0,4,0,0" />
+
+                                        <TextBlock Text="{Binding Level}" Style="{StaticResource Faint}"
+                                                   TextAlignment="Center" />
+                                        <!-- La barra de PS es lo que hace la tira útil y no solo
+                                             bonita: de un vistazo se ve quién va tocado.
+
+                                             ProgressBar y no dos Border anidados: un ancho en
+                                             píxeles atado a la proporción exigiría saber cuánto
+                                             mide la tarjeta, y la tarjeta mide lo que le toque
+                                             según el ancho de la ventana. La plantilla de §50 ya
+                                             deja el indicador alineado a la izquierda. -->
+                                        <ProgressBar Height="4" Margin="0,7,0,0"
+                                                     Minimum="0" Maximum="1"
+                                                     Value="{Binding HpRatio, Mode=OneWay}">
+                                            <ProgressBar.Style>
+                                                <Style TargetType="ProgressBar" BasedOn="{StaticResource {x:Type ProgressBar}}">
+                                                    <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding HpState}" Value="low">
+                                                            <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding HpState}" Value="critical">
+                                                            <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding HpState}" Value="fainted">
+                                                            <Setter Property="Foreground" Value="{StaticResource BorderStrongBrush}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </ProgressBar.Style>
+                                        </ProgressBar>
+
+                                        <TextBlock Text="{Binding Hp}" Style="{StaticResource Mono}"
+                                                   FontSize="10.5" TextAlignment="Center" Margin="0,3,0,0"
+                                                   Foreground="{StaticResource TextFaintBrush}" />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
             <!-- ============================================== TWO COLUMNS -->
-            <Grid Grid.Row="2">
+            <Grid Grid.Row="4">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="14" />
@@ -327,7 +454,7 @@
                  Vivían dentro del panel del equipo en vivo, que se quitó. No se van con él: uno
                  dice que el cap no está haciendo su trabajo y el otro que hay un Pokémon en el
                  juego que la run no conoce. Callarlos sería peor que no tenerlos. -->
-            <StackPanel Grid.Row="3">
+            <StackPanel Grid.Row="5">
                 <!-- Lo que PermaLocke ha hecho por su cuenta. En verde porque no es un problema,
                      pero se dice: diez Super Balls que aparecen en la mochila sin que nadie las
                      haya pedido tienen que venir con una frase que explique de dónde salen. -->

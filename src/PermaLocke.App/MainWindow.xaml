@@ -100,24 +100,6 @@
                     </ListBox.ItemTemplate>
                 </ListBox>
 
-                <!-- Run summary. The two numbers that matter, always on screen. -->
-                <Border Grid.Row="2" Style="{StaticResource Inset}" Margin="16,16,16,18" Padding="14,12">
-                    <StackPanel>
-                        <TextBlock Text="ROL" Style="{StaticResource StatLabel}" />
-                        <TextBlock Text="{Binding RoleText}"
-                                   FontSize="15" FontWeight="Bold"
-                                   Foreground="{StaticResource TextBrush}"
-                                   Margin="0,2,0,0" TextTrimming="CharacterEllipsis" />
-
-                        <Border Style="{StaticResource Divider}" Margin="0,11" />
-
-                        <TextBlock Text="PUNTOS" Style="{StaticResource StatLabel}" />
-                        <TextBlock Text="{Binding PointsText}"
-                                   FontSize="30" FontWeight="Bold"
-                                   Foreground="{StaticResource AccentBrush}"
-                                   Margin="0,-2,0,0" />
-                    </StackPanel>
-                </Border>
             </Grid>
         </Border>
 
@@ -195,6 +177,30 @@
                                 </TextBlock.Style>
                             </TextBlock>
                         </Border>
+                    </StackPanel>
+
+                    <!-- Los puntos, en la cabecera y en TODAS las pantallas.
+                         Son la moneda de la competición: lo que se gana, lo que se pierde y lo
+                         que cuesta la tienda. Estaban abajo del todo de la barra lateral, en
+                         pequeño, debajo de la navegación. Aquí se ven desde cualquier sección,
+                         que es donde importa: al ir a comprar o al ver una penalización. -->
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
+                                VerticalAlignment="Center" Margin="18,0,0,0">
+                        <Border CornerRadius="9" Padding="10,4" VerticalAlignment="Center"
+                                Background="{StaticResource SurfaceHighBrush}"
+                                BorderBrush="{StaticResource BorderStrongBrush}" BorderThickness="1">
+                            <TextBlock Text="{Binding RoleText}"
+                                       FontFamily="{StaticResource UiFont}" FontSize="10.5"
+                                       FontWeight="Bold"
+                                       Foreground="{StaticResource TextMutedBrush}" />
+                        </Border>
+
+                        <TextBlock Text="PUNTOS" Style="{StaticResource StatLabel}"
+                                   VerticalAlignment="Center" Margin="16,0,8,0" />
+
+                        <TextBlock Text="{Binding PointsText}" Style="{StaticResource Mono}"
+                                   FontSize="26" FontWeight="Bold" VerticalAlignment="Center"
+                                   Foreground="{StaticResource AccentBrush}" />
                     </StackPanel>
 
                     <TextBlock Text="{Binding SelectedSection.Title}" Style="{StaticResource SectionTitle}"

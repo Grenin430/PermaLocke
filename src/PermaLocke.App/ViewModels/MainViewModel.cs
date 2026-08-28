@@ -196,7 +196,20 @@ public sealed partial class MainViewModel : ObservableObject
         {
             PointsText = _home.HasRun ? _home.PointsBalance.ToString() : "—";
         }
+
+        if (e.PropertyName is nameof(HomeViewModel.RoleName) or nameof(HomeViewModel.HasRun))
+        {
+            UpdateRole();
+        }
     }
 
-    private void UpdateRole() => RoleText = _runContext.Current?.RoleId ?? "—";
+    /// <summary>
+    /// The role as the catalogue names it, falling back to its id only if the catalogue has not
+    /// answered yet. The id is a slug -- "ludopata" -- and §50 is that no identifier reaches the
+    /// screen; showing it in the header as well would only have spread that further.
+    /// </summary>
+    private void UpdateRole() =>
+        RoleText = _home.RoleName.Length > 0
+            ? _home.RoleName
+            : _runContext.Current?.RoleId ?? "—";
 }

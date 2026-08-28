@@ -20,8 +20,11 @@ public sealed record EventRow(
 /// <param name="HpRatio">0 to 1, for the bar the view draws next to the number.</param>
 /// <param name="HpState">"ok", "low", "critical" or "fainted" — the colour band, decided here
 /// rather than by four thresholds copied into XAML.</param>
+/// <param name="Sprite">The species icon out of the player's own cartridge, or null when the
+/// sprites have not been extracted yet. The view falls back to the name, never to a blank.</param>
 public sealed record TeamRow(
-    string Name, string Level, string Hp, double HpRatio, string HpState, bool IsShiny);
+    string Name, string Level, string Hp, double HpRatio, string HpState, bool IsShiny,
+    System.Windows.Media.Imaging.BitmapSource? Sprite = null);
 
 /// <param name="State">Already in Spanish: the domain enum never reaches the screen.</param>
 public sealed record IslandRow(string Name, string State);
@@ -42,6 +45,7 @@ public sealed partial class HomeViewModel : SectionViewModel
     private readonly IRunRoles _roles;
     private readonly RunService _runs;
     private readonly SaveEraser _eraser;
+    private readonly PokemonSpriteService _sprites;
     private readonly ILogger<HomeViewModel> _logger;
 
     public HomeViewModel(
@@ -56,6 +60,7 @@ public sealed partial class HomeViewModel : SectionViewModel
         IRunRoles roles,
         RunService runs,
         SaveEraser eraser,
+        PokemonSpriteService sprites,
         ILogger<HomeViewModel> logger) : base("HOME", "Estado de la run, equipo en vivo y últimos movimientos")
     {
         _runContext = runContext;
@@ -68,6 +73,7 @@ public sealed partial class HomeViewModel : SectionViewModel
         _roles = roles;
         _runs = runs;
         _eraser = eraser;
+        _sprites = sprites;
         _logger = logger;
 
         gameLink.SnapshotChanged += (_, snapshot) => _ = _ui.InvokeAsync(() =>
@@ -232,7 +238,8 @@ public sealed partial class HomeViewModel : SectionViewModel
                 $"{member.CurrentHp}/{member.MaxHp}",
                 Math.Clamp(ratio, 0d, 1d),
                 member.IsFainted ? "fainted" : ratio <= 0.2 ? "critical" : ratio <= 0.5 ? "low" : "ok",
-                member.IsShiny));
+                member.IsShiny,
+                _sprites.Get(member.Species)));
         }
 
         GameLinkStatus = snapshot.Party.Count == 0
@@ -296,7 +303,27 @@ public sealed partial class HomeViewModel : SectionViewModel
 
     public override GameNeed Needs => GameNeed.Running;
 
-    public override Task ActivateAsync() => SafeRefreshAsync();
+    /// <summary>
+    /// Extracts the cartridge icons before the first refresh, so the team strip has sprites the
+    /// first time it is drawn instead of popping them in a second later.
+    /// </summary>
+    /// <remarks>
+    /// Preparing twice is free -- the service keeps its index -- and it must not be fatal: with no
+    /// ROM there are no sprites, and HOME still has everything else to show.
+    /// </remarks>
+    public override async Task ActivateAsync()
+    {
+        try
+        {
+            await _sprites.PrepareAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "No se han podido preparar los sprites para HOME");
+        }
+
+        await SafeRefreshAsync();
+    }
 
     [RelayCommand]
     private async Task CreateRunAsync()
