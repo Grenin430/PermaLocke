@@ -52,6 +52,9 @@ switch (command)
     case "dump":
         await DumpAsync(args.Length > 1 ? ulong.Parse(args[1]) : 20260818, args.Length > 2 ? args[2] : "Ruta 1");
         break;
+    case "evo-dump":
+        EvoDump(args.Length > 1 ? args[1] : null);
+        break;
     case "evoluciones":
         Evoluciones(args.Length > 1 ? args[1] : null);
         break;
@@ -837,4 +840,75 @@ void Evoluciones(string? evolutionPath)
 
     Console.WriteLine();
     Console.WriteLine(wrong == 0 ? "TODAS LAS ANCLAS CUADRAN." : $"{wrong} anclas no cuadran.");
+}
+
+// Vuelca las entradas de evolucion tal cual estan en el cartucho, agrupadas por metodo. Es lo que
+// permite decidir que hacer con las evoluciones por intercambio sin suponer la tabla de metodos.
+void EvoDump(string? evolutionPath)
+{
+    var path = evolutionPath ?? Path.Combine(work, "a", "0", "1", "4");
+
+    if (!File.Exists(path))
+    {
+        Console.WriteLine($"No esta {path}.");
+        return;
+    }
+
+    using var patcher = new GarcPatcher(path);
+    var rows = new List<(int Species, int Slot, int Method, int Argument, int Target, int Form, int Level)>();
+
+    for (var species = 0; species < patcher.FileCount; species++)
+    {
+        var entry = patcher.Read(species);
+
+        for (var slot = 0; slot * 8 + 8 <= entry.Length; slot++)
+        {
+            var at = slot * 8;
+            var method = BitConverter.ToUInt16(entry, at);
+
+            if (method != 0)
+            {
+                rows.Add((species, slot, method,
+                    BitConverter.ToUInt16(entry, at + 2),
+                    BitConverter.ToUInt16(entry, at + 4),
+                    (sbyte)entry[at + 6], entry[at + 7]));
+            }
+        }
+    }
+
+    Console.WriteLine($"Entradas con metodo: {rows.Count}");
+    Console.WriteLine();
+    Console.WriteLine("POR METODO");
+
+    foreach (var group in rows.GroupBy(r => r.Method).OrderBy(g => g.Key))
+    {
+        Console.WriteLine($"  metodo {group.Key,3}: {group.Count(),4} entradas   "
+                          + $"ejemplo especie {group.First().Species} -> {group.First().Target} "
+                          + $"(arg {group.First().Argument}, nivel {group.First().Level})");
+    }
+
+    Console.WriteLine();
+    Console.WriteLine("INTERCAMBIO (metodos 5, 6 y 7)");
+
+    if (args.Length > 2 && int.TryParse(args[2], out var only))
+    {
+        Console.WriteLine($"SOLO EL METODO {only}");
+        Show(only);
+        return;
+    }
+
+    Show(5, 6, 7);
+
+    Console.WriteLine();
+    Console.WriteLine("POR MOVIMIENTO APRENDIDO (metodo 21)");
+    Show(21);
+
+    void Show(params int[] methods)
+    {
+        foreach (var row in rows.Where(r => methods.Contains(r.Method)).OrderBy(r => r.Species))
+        {
+            Console.WriteLine($"  especie {row.Species,4} hueco {row.Slot}  metodo {row.Method,2}  "
+                              + $"-> {row.Target,4} forma {row.Form,2}  arg {row.Argument,4}  nivel {row.Level,3}");
+        }
+    }
 }

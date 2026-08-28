@@ -777,6 +777,24 @@ las preguntas-. Verificado generando: seed 20260828 da Duskull, Fletchling y Nid
 los iniciales se eligen **antes** de que se toquen las líneas evolutivas, así que con
 `randomizeEvolutions` en true la garantía es sobre las familias del cartucho. Ver §69.
 
+**Las evoluciones que a solas no existen (2026-08-28).** Un Nuzlocke se juega solo, así que una
+evolución por intercambio es una evolución que **no existe**, y con `randomizeLearnsets` en true las
+nueve que esperan un movimiento tampoco llegan. Qué cambiar sale de la lista de Universal Pokémon
+Randomizer ZX que pasó el jugador; los **números de método se midieron** con `RomTool evo-dump`, cada
+uno anclado a un caso reconocible: 5 es intercambio a secas (Kadabra), 6 con objeto (Poliwhirl con la
+Roca del Rey, arg 221), 7 las dos que se cambian entre sí, 19 subir de nivel con objeto **de día**
+(Happiny con la Piedra Oval), 22 con otra en el equipo (Mantyke con Remoraid). Conversión: 5→4 a
+nivel 37, 6→19 conservando el objeto, 7→22 con la otra de argumento, y las de movimiento a nivel.
+**Solo hay variante de día y de noche**, así que esas evoluciones piden ahora que sea de día.
+
+Se buscan **por método y no por lista de especies**, y no es estilo: la lista enumera 27 casos y el
+cartucho tiene **30**, porque las tres tallas de Calabruja y el Geodude de Alola son entradas propias
+que nadie nombra. El emparejamiento Karrablast/Shelmet tampoco está escrito: **se deduce** de que hay
+exactamente dos entradas de método 7. La única excepción a mano es Slowking, que pasa a Piedra Agua
+porque su entrada lleva nivel 37, justo el nivel al que Slowpoke ya se hace Slowbro. Verificado
+releyendo el mod generado: metodo 4 de 266 a 287, el 8 de 43 a 44, el 19 de 1 a 16, el 22 de 1 a 3, y
+los métodos 5, 6, 7 y 21 desaparecen. Ver §70.
+
 **Siguiente.** Sincronización, y probar en partida real los combates importantes, los iniciales y
 las tiendas.
 
@@ -835,6 +853,10 @@ dotnet run --project tools/PermaLocke.RomTool -- iniciales "ruta/al/mod"
 
 # especies que son primera etapa de una linea de tres, contra la tabla del cartucho
 dotnet run --project tools/PermaLocke.RomTool -- evoluciones "ruta/a/a/0/1/4"
+
+# la tabla de evoluciones en crudo, agrupada por metodo; con un metodo, solo ese
+dotnet run --project tools/PermaLocke.RomTool -- evo-dump "ruta/a/a/0/1/4"
+dotnet run --project tools/PermaLocke.RomTool -- evo-dump "ruta/a/a/0/1/4" 19
 dotnet run --project tools/PermaLocke.RomTool -- randomize 20260818 --install
 
 # EV de la partida real; --probar demuestra la escritura SOBRE UNA COPIA

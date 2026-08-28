@@ -5399,3 +5399,77 @@ generado—, las tres primeras etapas de líneas de tres.
 Aviso que va en el informe y no solo aquí: los iniciales se eligen **antes** de que el módulo de
 datos toque las líneas evolutivas, así que con `randomizeEvolutions` en true la garantía es sobre
 las familias del cartucho. Con la configuración actual está apagado y no hay diferencia.
+
+## 70. Las evoluciones que a solas no existen (2026-08-28)
+
+Un Nuzlocke se juega solo, así que una evolución por intercambio es una evolución que **no existe**:
+Kadabra, Machoke, Haunter y veintisiete más se quedan a medias para siempre. Y con
+`randomizeLearnsets` en true, las nueve que esperan un movimiento concreto tampoco llegan, porque ese
+movimiento puede no aprenderse nunca.
+
+Qué cambiar y por qué sale de la lista de Universal Pokémon Randomizer ZX para Sol/Luna/USUM que
+pasó el jugador. Los números de método, **no**: esos se midieron.
+
+### Los métodos, sacados del cartucho
+
+`RomTool evo-dump` vuelca `a/0/1/4` agrupado por método, y con eso cada número queda anclado a un
+caso reconocible:
+
+| Método | Qué es | Cómo se sabe |
+|---|---|---|
+| 5 | intercambio a secas | Kadabra → Alakazam, sin argumento |
+| 6 | intercambio con objeto | Poliwhirl → Politoed, arg **221** = Roca del Rey |
+| 7 | intercambio con la otra | las **dos** que se cambian entre sí |
+| 8 | usar piedra | Pikachu → Raichu, arg 83 |
+| 19 | subir de nivel con objeto, **de día** | Happiny → Chansey con la Piedra Oval |
+| 20 | lo mismo de noche | Gligar → Gliscor con el Colmillo Agudo |
+| 22 | subir de nivel con otra en el equipo | Mantyke → Mantine con Remoraid |
+
+De ahí las conversiones: 5 → 4 (nivel 37), 6 → 19 conservando el objeto, 7 → 22 con la otra como
+argumento, y las de movimiento a 4 con su nivel. **Solo existen las variantes de día y de noche**
+para «subir de nivel con objeto», así que esas evoluciones piden ahora que sea de día. Es una
+restricción real y va dicha.
+
+### Por método, no por lista de especies
+
+La diferencia no es de estilo. La lista de referencia enumera 27 casos; el cartucho tiene **30**
+entradas de intercambio, porque las **tres tallas de Calabruja** y el **Geodude de Alola** son
+entradas propias que esa lista no nombra. Buscar por método las coge todas.
+
+Igual con el emparejamiento de Karrablast y Shelmet: no está escrito en el código sino **deducido**
+—el cartucho tiene exactamente dos entradas de método 7 y cada una es la pareja de la otra—. Con
+cualquier otro número el emparejamiento deja de ser obvio, así que no se adivina: esas entradas se
+quedan como estaban y el paso de verificación las cuenta como imposibles en vez de dejarlas pasar.
+
+### La única excepción hecha a mano
+
+Slowking pasa a **Piedra Agua** (objeto 84, comprobado contra la tabla del cartucho) en vez de a
+«subir de nivel con la Roca del Rey». Es la excepción de la lista de referencia y tiene motivo: en el
+cartucho la entrada de Slowking lleva **nivel 37**, que es exactamente el nivel al que Slowpoke ya se
+convierte en Slowbro. Dejarla en el método 19 pondría dos evoluciones sobre disparadores solapados y
+haría que cuál te toca dependa del orden de los huecos. Una piedra es un disparador aparte.
+
+### Verificado sobre el mod generado
+
+Generando con seed 20260829 y **releyendo el fichero con el volcador**, no el informe:
+
+```
+metodo  4:  266 -> 287   (+21: 12 intercambios + 9 movimientos)
+metodo  8:   43 ->  44   (+1: Slowking)
+metodo 19:    1 ->  16   (+15: los 16 con objeto menos Slowking)
+metodo 22:    1 ->   3   (+2: Karrablast y Shelmet)
+metodos 5, 6, 7 y 21: desaparecen
+```
+
+Cada cuenta cuadra con la anterior. Y cuatro comprobaciones puntuales: Slowpoke → 199 por método 8
+con arg 84; Karrablast → 589 por método 22 con arg **616** y Shelmet → 617 con arg **588**, cruzados;
+Kadabra → 65 a nivel 37; y Geodude-Alola (925) → Golem-Alola (76, forma 1) a nivel 37, que es una de
+las cuatro que la lista no enumera.
+
+### Orden
+
+Va **después** del módulo de datos de Pokémon, a propósito: ese decide **a quién** evoluciona cada
+uno y esto decide **cómo**. Al revés, una evolución recién redirigida se quedaría con su método de
+intercambio intacto. Por lo mismo, la tabla de movimiento está indexada por especie **y** destino: si
+las líneas se randomizan y Lickitung ya no apunta a Lickilicky, darle el nivel 33 de Lickilicky sería
+inventar un número para una pareja que nadie ha medido, así que se deja como está.

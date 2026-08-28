@@ -35,6 +35,12 @@
   "_startersWithTwoEvolutions": "Los tres iniciales tienen que ser la primera etapa de una linea de TRES: dos evoluciones por delante. Un inicial es lo que te acompana toda la partida, asi que no deberia ser algo que no evoluciona o que ya esta acabado. No es una lista de especies: sale de la tabla de evoluciones del propio cartucho, donde hay 94 que cumplen -medido con RomTool evoluciones-. Ojo: los iniciales se eligen ANTES de que el modulo de datos toque las lineas evolutivas, asi que con randomizeEvolutions en true la garantia es sobre las familias del cartucho.",
   "startersWithTwoEvolutions": true,
 
+  "_fixImpossibleEvolutions": "Reescribe las evoluciones que a solas no se pueden alcanzar. Un Nuzlocke se juega solo, asi que una evolucion por intercambio es una evolucion que no existe: Kadabra, Machoke, Haunter y veintisiete mas se quedan a medias. Lo mismo con las nueve que esperan un movimiento concreto, porque con randomizeLearnsets en true ese movimiento puede no aprenderse nunca. Que se cambia y por que sale de la lista de Universal Pokemon Randomizer ZX para Sol/Luna/USUM, pero las entradas se buscan POR METODO y no por una lista de especies: el cartucho tiene cuatro que esa lista no enumera -las tres tallas de Calabruja y el Geodude de Alola-. Intercambio a secas pasa a subir de nivel; con objeto, a subir de nivel llevandolo puesto DE DIA -el juego solo tiene esa variante y la de noche-; y las dos que se intercambian entre si, a subir de nivel con la otra en el equipo. La unica excepcion es Slowking, que pasa a Piedra Agua porque Slowpoke ya evoluciona a Slowbro subiendo de nivel.",
+  "fixImpossibleEvolutions": true,
+
+  "_tradeEvolutionLevel": "El nivel al que evoluciona lo que antes exigia un intercambio a secas. 37 es lo que usa la lista de referencia.",
+  "tradeEvolutionLevel": 37,
+
   "_trainerMovesFromLearnset": "Al cambiar la especie de un Pokémon de entrenador, deja sus movimientos a cero para que el juego le dé los suyos. 518 de los 1139 del cartucho ya vienen así, o sea que el juego lo soporta.",
   "trainerMovesFromLearnset": true,
 

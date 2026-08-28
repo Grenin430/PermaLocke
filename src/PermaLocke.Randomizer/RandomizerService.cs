@@ -140,6 +140,20 @@ public sealed class RandomizerService(RandomizerOptions options)
                 $"{result.Entries} especies y formas, {result.Evolutions} evoluciones, {result.LearnsetMoves} movimientos por nivel"));
         }
 
+        // Después de los datos de Pokémon a propósito: ese módulo puede cambiar a QUIÉN evoluciona
+        // cada uno, y esto arregla CÓMO. Al revés, una evolución recién redirigida se quedaría con
+        // su método de intercambio intacto.
+        if (options.FixImpossibleEvolutions)
+        {
+            var result = await new ImpossibleEvolutionFixer(options).ApplyAsync(mod, ct);
+            steps.Add(new RandomizerStep("Evoluciones imposibles a solas",
+                $"{result.Trades} por intercambio arregladas"
+                + (result.Moves > 0 ? $", {result.Moves} por movimiento pasadas a nivel" : string.Empty)
+                + (result.Left > 0
+                    ? $". OJO: quedan {result.Left} que siguen exigiendo otro jugador"
+                    : ". No queda ninguna que exija otro jugador")));
+        }
+
         if (options.SpecialMarts)
         {
             var random = new SeededRandomSource(seed).Derive(Salts.Shops);

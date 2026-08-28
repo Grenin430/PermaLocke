@@ -75,6 +75,15 @@ public sealed record RandomizerOptions
     public bool StartersWithTwoEvolutions { get; init; } = true;
 
     /// <summary>
+    /// Rewrite the evolutions a solo player can never reach: trades, and moves once the learnsets
+    /// are randomized.
+    /// </summary>
+    public bool FixImpossibleEvolutions { get; init; } = true;
+
+    /// <summary>What a plain trade evolution becomes: level up at this level.</summary>
+    public int TradeEvolutionLevel { get; init; } = 37;
+
+    /// <summary>
     /// Blank a trainer Pokémon's moves when its species changes, so the game builds a moveset
     /// from the new species' learnset instead of keeping one picked for the old one.
     /// </summary>
