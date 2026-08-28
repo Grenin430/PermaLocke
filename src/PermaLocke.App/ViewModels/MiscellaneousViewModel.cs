@@ -43,6 +43,9 @@ public sealed partial class MiscellaneousViewModel : SectionViewModel
     /// <summary>How many Rare Candies one press hands over.</summary>
     private const int CandiesPerPress = 10;
 
+    /// <summary>How many Heart Scales one press hands over.</summary>
+    private const int ScalesPerPress = 10;
+
     private readonly BagService _bag;
     private readonly IItemDelivery _delivery;
     private readonly IItemLookup _items;
@@ -238,6 +241,15 @@ public sealed partial class MiscellaneousViewModel : SectionViewModel
     [RelayCommand(CanExecute = nameof(CanUseTools))]
     private Task GrantShinyCharmAsync() =>
         GiveAsync(BagService.ShinyCharmItemId, 1, "Amuleto Iris", "Herramienta de pruebas");
+
+    /// <summary>
+    /// Ten more Heart Scales. Unlike the Shiny Charm this one stacks, so pressing it twice really
+    /// does hand over twenty: the move relearner charges one per move, and a Nuzlocke wants a
+    /// pile of them right before the league.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanUseTools))]
+    private Task GrantHeartScalesAsync() =>
+        GiveAsync(BagService.HeartScaleItemId, ScalesPerPress, "Escama Corazón", "Recordar movimientos");
 
     /// <summary>
     /// Adds an item to the bag on top of what is already there, and records it.

@@ -58,6 +58,7 @@ public sealed class BagLayoutTests
     [InlineData(BagService.PokeBallItemId, InventoryType.Items)]
     [InlineData(BagService.RareCandyItemId, InventoryType.Medicine)]
     [InlineData(BagService.ShinyCharmItemId, InventoryType.KeyItems)]
+    [InlineData(BagService.HeartScaleItemId, InventoryType.Items)]
     [InlineData(328, InventoryType.TMHMs)]
     public void An_item_is_routed_to_its_own_pocket(int itemId, InventoryType expected)
     {
@@ -78,12 +79,27 @@ public sealed class BagLayoutTests
     }
 
     /// <summary>
+    /// The Heart Scale <b>stacks</b>, which is the whole difference between its button and the
+    /// Shiny Charm's: pressing "+10" twice really does leave twenty. If its pocket ever capped at
+    /// one, the second press would report "you already have it" and the button would be a lie.
+    /// </summary>
+    [Fact]
+    public void Heart_scales_pile_up_rather_than_capping_at_one()
+    {
+        var pocket = Layout.PocketFor(BagService.HeartScaleItemId);
+
+        Assert.NotNull(pocket);
+        Assert.True(pocket.MaxCount >= 20);
+    }
+
+    /// <summary>
     /// The ids are typed by hand from the cartridge table, and a wrong one would hand over the
     /// wrong object without anything failing. PKHeX is the same table the game ships.
     /// </summary>
     [Theory]
     [InlineData(BagService.RareCandyItemId, "Caramelo Raro")]
     [InlineData(BagService.ShinyCharmItemId, "Amuleto Iris")]
+    [InlineData(BagService.HeartScaleItemId, "Escama Corazón")]
     [InlineData(BagService.PokeBallItemId, "Poké Ball")]
     public void The_item_ids_name_what_they_are_meant_to(int itemId, string expected)
     {

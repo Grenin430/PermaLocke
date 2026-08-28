@@ -75,6 +75,17 @@ public sealed class BagService(
     /// <remarks>A key item, so the pocket holds exactly one however many times it is given.</remarks>
     public const int ShinyCharmItemId = 632;
 
+    /// <summary>
+    /// Heart Scale, confirmed against the cartridge item list. It sits at the end of the treasure
+    /// run the games have kept in order since generation three -- 88 Perla, 89 Perla Grande,
+    /// 90 Polvo Estelar, 92 Pepita de Oro, 93 Escama Corazón -- which is what anchors it.
+    /// </summary>
+    /// <remarks>
+    /// An ordinary item, so the pocket stacks it: pressing twice really does hand over twenty.
+    /// The move relearner charges one per move, and a Nuzlocke wants them right before the league.
+    /// </remarks>
+    public const int HeartScaleItemId = 93;
+
     private readonly BagLocator _locator = new(client);
     private BagBlock? _block;
 

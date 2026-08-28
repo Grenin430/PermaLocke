@@ -125,6 +125,11 @@
                                 Command="{Binding GrantShinyCharmCommand}" MinWidth="170" Padding="16,10"
                                 Margin="10,0,0,0"
                                 ToolTip="Objeto clave: la mochila solo admite uno, así que pulsarlo dos veces no da dos." />
+
+                        <Button Content="+10 ESCAMAS CORAZÓN" Style="{StaticResource PrimaryButton}"
+                                Command="{Binding GrantHeartScalesCommand}" MinWidth="215" Padding="16,10"
+                                Margin="10,0,0,0"
+                                ToolTip="Diez más cada vez que lo pulses. Sirven para que el recordador de movimientos te devuelva uno, a una escama por movimiento." />
                     </StackPanel>
                 </StackPanel>
             </Border>
