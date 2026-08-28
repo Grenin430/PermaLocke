@@ -1,0 +1,139 @@
+<UserControl x:Class="PermaLocke.App.Views.MaintenanceView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <UserControl.Resources>
+        <!-- Una fila de la auditoría, no una tarjeta. Se separan por una línea abajo, que es como
+             se lista algo, y el estado se dice con el color de la cifra y no metiendo cada dato en
+             su propio recuadro de colores. -->
+        <DataTemplate x:Key="AuditRowTemplate">
+            <Border Style="{StaticResource Row}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="240" />
+                        <ColumnDefinition Width="70" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0" Text="{Binding Label}" Style="{StaticResource Body}"
+                               VerticalAlignment="Center" />
+
+                    <TextBlock Grid.Column="1" Text="{Binding Value}"
+                               FontSize="{StaticResource FontSizeLead}"
+                               TextAlignment="Right" VerticalAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource Numeric}">
+                                <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding State}" Value="warn">
+                                        <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding State}" Value="bad">
+                                        <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <TextBlock Grid.Column="2" Text="{Binding Note}" Style="{StaticResource Faint}"
+                               VerticalAlignment="Center" Margin="16,0,0,0" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="0,0,10,0">
+
+            <!-- ================================================== POR QUÉ EXISTE -->
+            <Border Style="{StaticResource Inset}">
+                <StackPanel>
+                    <TextBlock Text="ESTADO DE LA RUN" Style="{StaticResource PanelHeading}" />
+                    <TextBlock Style="{StaticResource Body}" Margin="0,8,0,0"
+                               Text="Comprueba que lo que la aplicación tiene guardado cuadra con lo que hay en la partida. Las cifras en rojo son cosas que hay que arreglar; las de color ámbar, cosas que conviene mirar." />
+
+                    <Border Style="{StaticResource Divider}" Margin="0,14" />
+
+                    <DockPanel>
+                        <Button DockPanel.Dock="Right" Content="COMPROBAR"
+                                Style="{StaticResource PrimaryButton}"
+                                Command="{Binding AuditCommand}" MinWidth="130"
+                                VerticalAlignment="Center" Margin="16,0,0,0" />
+
+                        <TextBlock Text="{Binding Headline}" VerticalAlignment="Center">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource Body}">
+                                    <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Healthy}" Value="False">
+                                            <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </DockPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- ================================================== LA AUDITORÍA -->
+            <Border Style="{StaticResource Well}" Margin="0,12,0,0">
+                <ItemsControl ItemsSource="{Binding Rows}"
+                              ItemTemplate="{StaticResource AuditRowTemplate}" />
+            </Border>
+
+            <!-- ================================================== REPARAR PID
+                 La única reparación que se expone, porque es la única que un jugador puede
+                 necesitar y no puede hacer de otra forma. El resto de Probe es investigación
+                 -barridos de memoria, diffs de banderas- y se queda en la terminal.
+
+                 Dos botones y no uno, a propósito: primero se mira y se dice cuántos, después se
+                 escribe. Un solo botón que hiciera las dos cosas escribiría en la partida sin que
+                 nadie hubiera visto antes cuánto iba a tocar. -->
+            <Border Style="{StaticResource Inset}" Margin="0,12,0,0">
+                <StackPanel>
+                    <DockPanel>
+                        <Border DockPanel.Dock="Right" Style="{StaticResource ChipWarning}">
+                            <TextBlock Text="ESCRIBE EN LA PARTIDA" Style="{StaticResource ChipText}"
+                                       Foreground="{StaticResource WarningBrush}" />
+                        </Border>
+                        <TextBlock Text="REPARAR LOS PID" Style="{StaticResource PanelHeading}"
+                                   VerticalAlignment="Center" />
+                    </DockPanel>
+
+                    <TextBlock Style="{StaticResource Body}" Margin="0,9,0,0"
+                               Text="El vigilante empareja el equipo del juego con la run por PID, así que un Pokémon registrado sin PID no se puede detectar: puede caer delante de la aplicación y no se registra su muerte. Esto se lo pone." />
+
+                    <TextBlock Style="{StaticResource Faint}" Margin="0,6,0,0"
+                               Text="Empareja por los seis IV más el variocolor, que es lo único que no cambia nunca, y solo acepta firmas únicas por los dos lados. Al que no puede colocar sin ninguna duda lo deja en paz en vez de adivinar. Copia la partida antes y la relee después." />
+
+                    <Border Style="{StaticResource Divider}" Margin="0,14" />
+
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="MIRAR CUÁNTOS FALTAN" Style="{StaticResource GhostButton}"
+                                Command="{Binding InspectPidsCommand}" MinWidth="200" />
+                        <Button Content="ESCRIBIRLOS" Style="{StaticResource PrimaryButton}"
+                                Command="{Binding RepairPidsCommand}" MinWidth="150"
+                                Margin="10,0,0,0" />
+                    </StackPanel>
+
+                    <TextBlock Text="{Binding PidStatus}"
+                               Margin="0,12,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource Body}">
+                                <Setter Property="Visibility" Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding PidStatus}" Value="">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

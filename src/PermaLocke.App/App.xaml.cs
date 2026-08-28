@@ -27,6 +27,15 @@ public partial class App : Application
         var paths = new AppPaths();
         paths.EnsureCreated();
 
+        // ANTES de que nada abra la base de datos, y por eso está aquí arriba y no dentro de un
+        // servicio: es el único momento en el que el fichero está garantizadamente en reposo.
+        // Copiar un SQLite que otro está escribiendo puede capturar una página a medias, y una
+        // copia que quizá esté corrupta es peor que ninguna, porque en ella se confía.
+        //
+        // No se espera a que falle nada ni se comprueba el resultado: Run() no lanza nunca, y un
+        // arranque no se detiene porque una copia no haya salido. Lo que pasó queda en el log.
+        new RunBackup(paths.Saves).Run(DateTimeOffset.Now);
+
         var collection = new ServiceCollection();
         collection.AddPermaLockeInfrastructure(paths, "permalocke");
         collection.AddPermaLockeData(paths.Saves);
@@ -96,6 +105,8 @@ public partial class App : Application
         collection.AddSingleton<PokemonViewerViewModel>();
         collection.AddSingleton<PokePasteViewModel>();
         collection.AddSingleton<MiscellaneousViewModel>();
+        collection.AddSingleton<MaintenanceService>();
+        collection.AddSingleton<MaintenanceViewModel>();
         collection.AddSingleton<MainViewModel>();
 
         _services = collection.BuildServiceProvider();

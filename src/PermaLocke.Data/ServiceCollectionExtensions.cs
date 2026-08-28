@@ -9,6 +9,9 @@ public static class ServiceCollectionExtensions
     /// <param name="savesRoot">The <c>Saves/</c> folder: one run.json per run plus the shared event database.</param>
     public static IServiceCollection AddPermaLockeData(this IServiceCollection services, string savesRoot)
     {
+        services.TryAddSingleton(sp => new RunBackup(savesRoot,
+            sp.GetService<Microsoft.Extensions.Logging.ILogger<RunBackup>>()));
+
         services.TryAddSingleton<IEventStore>(_ =>
             new SqliteEventStore(Path.Combine(savesRoot, "permalocke.db")));
 

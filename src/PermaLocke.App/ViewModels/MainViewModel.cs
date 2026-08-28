@@ -21,7 +21,7 @@ public sealed partial class MainViewModel : ObservableObject
     public MainViewModel(HomeViewModel home, RandomizerViewModel randomizer,
         MiscellaneousViewModel miscellaneous, GachaViewModel gacha, PokemonViewerViewModel viewer,
         AchievementsViewModel achievements, ShopViewModel shop, PokePasteViewModel pokePaste,
-        RouletteViewModel roulette, RouletteService wheel,
+        RouletteViewModel roulette, RouletteService wheel, MaintenanceViewModel maintenance,
         PermaLocke.App.Services.GameLinkMonitor gameLink,
         PermaLocke.App.Services.IUiDispatcher ui,
         IRunContext runContext, ILogger<MainViewModel> logger)
@@ -51,7 +51,8 @@ public sealed partial class MainViewModel : ObservableObject
             achievements,
             viewer,
             pokePaste,
-            miscellaneous
+            miscellaneous,
+            maintenance
         ];
 
         _selectedSection = Sections[0];
