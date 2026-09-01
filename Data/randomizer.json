@@ -52,6 +52,31 @@
   "regularMartReplaced": [],
   "regularMartReplacement": { "id": 4, "name": "Poké Ball" },
 
+  "_specialMartItems": "Objetos que se ponen a la venta en las tiendas ESPECIALES que no son de MT, en orden de indice y pasando a la siguiente cuando una se llena. Son los objetos de evolucion que anade el mod de gen 8 y 9: sin ellos, Ceruledge, Alcremie, Urshifu, Gholdengo y compania no pueden evolucionar, porque el mod no los coloca en ninguna Poke Ball del suelo. Van en INGLES porque es como el mod los nombra y el indice de PKHeX no cuadra en ese tramo -ver docs/MOD-EXPANSION.md §6 bis-. El nombre se comprueba contra la tabla del cartucho ANTES de escribir: si no cuadra, no se toca ninguna tienda (§52). Deja la lista vacia para que las especiales vuelvan a surtirse de nonMachineMartItem.",
+  "specialMartItems": [
+    { "id": 971, "name": "Galarica Cuff" },
+    { "id": 972, "name": "Galarica Wreath" },
+    { "id": 973, "name": "Tart Apple" },
+    { "id": 974, "name": "Sweet Apple" },
+    { "id": 975, "name": "Cracked Pot" },
+    { "id": 976, "name": "Chipped Pot" },
+    { "id": 977, "name": "Strawberry Sweet" },
+    { "id": 984, "name": "Darkness Scroll" },
+    { "id": 985, "name": "Scroll of Waters" },
+    { "id": 986, "name": "Black Augurite" },
+    { "id": 987, "name": "Peat Block" },
+    { "id": 988, "name": "Auspicious Armor" },
+    { "id": 989, "name": "Malicious Armor" },
+    { "id": 990, "name": "Leader's Crest" },
+    { "id": 991, "name": "Syrupy Apple" },
+    { "id": 992, "name": "Unremarkable Cup" },
+    { "id": 993, "name": "Masterpiece Cup" },
+    { "id": 994, "name": "Gimmighoul Coin" }
+  ],
+
+  "_specialMartItemPrice": "Lo que cuesta cada uno de specialMartItems. El precio vive en la tabla de objetos y NO en la tienda, asi que cambiarlo los encarece en todas partes, tambien al venderlos. El campo es un ushort que guarda el precio entre diez, o sea que el tope real son 655350 y tiene que ser multiplo de 10. Cero deja los precios como esten.",
+  "specialMartItemPrice": 50000,
+
   "_trainerMovesFromLearnset": "Al cambiar la especie de un Pokémon de entrenador, deja sus movimientos a cero para que el juego le dé los suyos. 518 de los 1139 del cartucho ya vienen así, o sea que el juego lo soporta.",
   "trainerMovesFromLearnset": true,
 

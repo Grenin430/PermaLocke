@@ -181,7 +181,10 @@ public sealed class RandomizerService(RandomizerOptions options)
             var result = await new ShopRandomizer(workspace, options).ApplyAsync(random, mod, ct);
             steps.Add(new RandomizerStep("Tiendas",
                 $"{result.TechnicalMachineShops} tiendas de MT randomizadas, "
-                + $"{result.RestockedShops} surtidas de Poké Balls, {result.Slots} huecos"
+                + $"{result.RestockedShops} surtidas, {result.Slots} huecos"
+                + (result.SpecialItems > 0
+                    ? $"; {result.SpecialItems} objetos de evolución del mod a la venta"
+                    : string.Empty)
                 + (result.MedicineSlots > 0
                     ? $"; {result.MedicineSlots} curativos de las tiendas normales pasados a Poké Ball"
                     : string.Empty)));

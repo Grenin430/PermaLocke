@@ -184,6 +184,30 @@ public sealed record RandomizerOptions
     public int NonMachineMartItem { get; init; } = 4;
 
     /// <summary>
+    /// Items put on sale in the special marts that do not sell TMs, in shop order and spilling
+    /// into the next shop when one fills up. Empty leaves those shops stocked with
+    /// <see cref="NonMachineMartItem"/>.
+    /// </summary>
+    /// <remarks>
+    /// It exists for the gen 8-9 expansion, and for a reason that is not cosmetic: the mod's
+    /// evolution items — the Malicious Armor that turns Charcadet into Ceruledge, the scrolls
+    /// Urshifu needs, the Gimmighoul Coin — are in the item table and <b>are not placed anywhere
+    /// on the ground</b>, so without a shop selling them those evolutions cannot happen at all.
+    /// </remarks>
+    public IReadOnlyList<MartItem> SpecialMartItems { get; init; } = [];
+
+    /// <summary>
+    /// What each of <see cref="SpecialMartItems"/> costs. Zero leaves prices alone.
+    /// </summary>
+    /// <remarks>
+    /// The price lives in the <b>item table</b> and not in the shop, so this makes them cost that
+    /// everywhere, selling included. The field is a <c>ushort</c> holding the price divided by ten,
+    /// which is why the ceiling is 655350 and why it has to be a multiple of ten: 50000 is stored
+    /// as 5000, and a number that does not divide cleanly would be silently truncated.
+    /// </remarks>
+    public int SpecialMartItemPrice { get; init; }
+
+    /// <summary>
     /// Species left exactly as the cartridge has them, wherever they appear. Cosmog is here by
     /// default: the story hands it over and later requires it to become Solgaleo or Lunala, and
     /// whether the game survives having it replaced has not been tested.

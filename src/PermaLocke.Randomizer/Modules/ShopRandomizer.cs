@@ -9,8 +9,10 @@ namespace PermaLocke.Randomizer.Modules;
 /// <param name="RestockedShops">Shops filled with the configured fallback item.</param>
 /// <param name="Slots">Individual shop slots rewritten.</param>
 /// <param name="MedicineSlots">Ordinary counter slots that stopped selling a status medicine.</param>
+/// <param name="SpecialItems">Objetos de evolucion del mod puestos a la venta.</param>
 public sealed record ShopResult(
-    int TechnicalMachineShops, int RestockedShops, int Slots, int MedicineSlots = 0);
+    int TechnicalMachineShops, int RestockedShops, int Slots, int MedicineSlots = 0,
+    int SpecialItems = 0);
 
 /// <summary>
 /// Rewrites the mart inventories of the Pokémon Centers, inside <c>Shop.cro</c>.
@@ -38,6 +40,14 @@ public sealed class ShopRandomizer(RomWorkspace workspace, RandomizerOptions opt
         var restocked = 0;
         var slots = 0;
 
+        // Se comprueban los nombres ANTES de tocar una sola tienda. Un id que haya caído en otro
+        // objeto surtiría la tienda con otra cosa y no fallaría nunca (§52), y aquí es peor de lo
+        // normal: son los objetos con los que evolucionan los Pokémon del mod, así que vender el
+        // equivocado deja una evolución sin forma de conseguirse y nadie sabría por qué.
+        var wanted = options.SpecialMartItems;
+        VerifyNames(wanted, itemNames);
+
+        var stocked = 0;
         var medicine = ReplaceMedicines(options, cro, shops, itemNames);
 
         foreach (var shop in shops.Where(s => s.Index >= ShopTable.RegularMartCount))
@@ -53,7 +63,10 @@ public sealed class ShopRandomizer(RomWorkspace workspace, RandomizerOptions opt
             {
                 for (var slot = 0; slot < shop.Count; slot++)
                 {
-                    ShopTable.SetItem(cro, shop, slot, options.NonMachineMartItem);
+                    // Los objetos de la lista primero, en orden y pasando de tienda cuando una se
+                    // llena; lo que sobre de estanterías vuelve al artículo de relleno.
+                    ShopTable.SetItem(cro, shop, slot,
+                        stocked < wanted.Count ? wanted[stocked++].Id : options.NonMachineMartItem);
                 }
                 restocked++;
             }
@@ -63,7 +76,88 @@ public sealed class ShopRandomizer(RomWorkspace workspace, RandomizerOptions opt
 
         await File.WriteAllBytesAsync(path, cro, ct);
         await VerifyAsync(path, machines, ct);
-        return new ShopResult(machineShops, restocked, slots, medicine);
+
+        if (stocked < wanted.Count)
+        {
+            throw new InvalidDataException(
+                $"Solo cupieron {stocked} de los {wanted.Count} objetos en las tiendas especiales. "
+                + "Quita objetos de specialMartItems o el resto no se podrá comprar en ninguna parte.");
+        }
+
+        await PriceAsync(mod, wanted, ct);
+        return new ShopResult(machineShops, restocked, slots, medicine, stocked);
+    }
+
+    /// <summary>
+    /// Refuses to touch anything when an id and the name written beside it disagree.
+    /// </summary>
+    private static void VerifyNames(IReadOnlyList<MartItem> items, string[] names)
+    {
+        foreach (var item in items)
+        {
+            if (item.Id < 0 || item.Id >= names.Length || names[item.Id] != item.Name)
+            {
+                throw new InvalidDataException(
+                    $"El objeto {item.Id} debería llamarse «{item.Name}» y la ROM dice "
+                    + $"«{(item.Id >= 0 && item.Id < names.Length ? names[item.Id] : "fuera de rango")}». "
+                    + "No se toca ninguna tienda.");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Writes the configured price into the item table, and reads it back.
+    /// </summary>
+    /// <remarks>
+    /// The price is the first field of each 36 byte entry, a <c>ushort</c> holding the price
+    /// divided by ten. A value that does not divide cleanly, or one past 655350, would be truncated
+    /// into some other number and the shop would quietly charge it, so both are refused rather than
+    /// rounded.
+    /// </remarks>
+    private async Task PriceAsync(LayeredFsMod mod, IReadOnlyList<MartItem> items,
+        CancellationToken ct)
+    {
+        const int max = ushort.MaxValue * 10;
+        var price = options.SpecialMartItemPrice;
+
+        if (price <= 0 || items.Count == 0)
+        {
+            return;
+        }
+
+        if (price % 10 != 0 || price > max)
+        {
+            throw new ArgumentOutOfRangeException(nameof(options),
+                $"El precio {price} no vale: tiene que ser múltiplo de 10 y como mucho {max}.");
+        }
+
+        var path = mod.Stage(GameFiles.Item);
+
+        using (var patcher = new GarcPatcher(path))
+        {
+            foreach (var item in items)
+            {
+                var entry = patcher.Read(item.Id);
+                BitConverter.GetBytes((ushort)(price / 10)).CopyTo(entry, 0);
+                patcher.Write(item.Id, entry);
+            }
+        }
+
+        await Task.Run(() =>
+        {
+            using var back = new GarcPatcher(path);
+
+            foreach (var item in items)
+            {
+                var written = BitConverter.ToUInt16(back.Read(item.Id), 0) * 10;
+
+                if (written != price)
+                {
+                    throw new InvalidDataException(
+                        $"El objeto {item.Id} quedó a {written} y se pedían {price}.");
+                }
+            }
+        }, ct);
     }
 
     /// <summary>
@@ -184,10 +278,15 @@ public sealed class ShopRandomizer(RomWorkspace workspace, RandomizerOptions opt
                     throw new InvalidDataException(
                         $"La tienda de MT {shop.Index} acabó vendiendo el objeto {item}, que no es una MT válida.");
                 }
-                if (!wasMachineShop && item != options.NonMachineMartItem)
+                // Una tienda que no es de MT vende, o uno de los objetos de la lista, o el relleno.
+                // Cualquier otra cosa significa que algo escribió donde no debía.
+                if (!wasMachineShop
+                    && item != options.NonMachineMartItem
+                    && !options.SpecialMartItems.Any(m => m.Id == item))
                 {
                     throw new InvalidDataException(
-                        $"La tienda {shop.Index} acabó vendiendo el objeto {item} en vez de {options.NonMachineMartItem}.");
+                        $"La tienda {shop.Index} acabó vendiendo el objeto {item}, que no está en "
+                        + $"specialMartItems ni es {options.NonMachineMartItem}.");
                 }
             }
         }
