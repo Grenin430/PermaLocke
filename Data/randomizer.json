@@ -64,7 +64,14 @@
   "_protectedSpecies": "Especies que se dejan tal cual estén donde estén. Cosmog (789) por defecto: la historia lo entrega y luego exige que evolucione a Solgaleo o Lunala, y no está probado que el juego aguante que lo cambies.",
   "protectedSpecies": [789],
 
-  "maxSpecies": 807,
+  "_maxSpecies": "Techo de especies que se pueden repartir. CERO significa 'las que tenga el juego', que es lo normal: el cartucho da 807 y el mod de expansión de gen 8 y 9 da 1025, y en los dos casos sale bien sin tocar nada. Ponle un número solo si quieres un tope de verdad -jugar solo con la primera generación, por ejemplo-. Antes esto era un 807 fijo, y con el mod instalado habría hecho que los 354 Pokémon nuevos NO SALIERAN NUNCA sin que nada fallara.",
+  "maxSpecies": 0,
+
+  "_maxAbility": "Techo de habilidades. CERO son todas las que declare el juego. En el cartucho da igual; con el mod de expansión hay que ponerlo en 233. El campo de habilidad es un byte, o sea tope 255: el cartucho usa 233 y el mod metió 22 más hasta llenarlo, y esas 22 NO FUNCIONAN -sale el nombre en la ficha y en combate no pasa nada-. Ver docs/MOD-EXPANSION.md §5.",
+  "maxAbility": 0,
+
+  "_maxMove": "Techo de movimientos en los aprendizajes. CERO son todos los que declare el juego. Con el mod de expansión, ponerlo en 729 -los del cartucho- deja fuera los 32 movimientos nuevos que piden una rutina de combate que solo existiría en el code.bin del mod, sin comprobar. Los otros 160 nuevos reutilizan rutinas que ya existen y funcionan. Ver docs/MOD-EXPANSION.md §6.",
+  "maxMove": 0,
 
   "_bannedSpecies": "Legendarios y singulares de la 1 a la 7. Quita ids de esta lista si quieres que salgan.",
   "bannedSpecies": [

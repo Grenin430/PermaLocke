@@ -60,6 +60,7 @@ public partial class App : Application
         collection.AddSingleton<GameWatcher>();
 
         collection.AddSingleton<AzaharInstallation>();
+        collection.AddSingleton<InstalledWorld>();
         collection.AddSingleton<IAppDialogs, AppDialogs>();
         collection.AddSingleton<IUiDispatcher, WpfUiDispatcher>();
         collection.AddSingleton<GameLinkMonitor>();
@@ -143,6 +144,10 @@ public partial class App : Application
             logger.LogError(args.Exception, "Excepción de tarea sin observar");
             args.SetObserved();
         };
+
+        // Antes de que el enlace con el juego empiece a leer: fija el techo de especies segun el
+        // mundo que Azahar va a cargar de verdad. Ver InstalledWorld.
+        _services.GetRequiredService<InstalledWorld>().Apply(AppContext.BaseDirectory);
 
         var main = _services.GetRequiredService<MainViewModel>();
         var window = new MainWindow { DataContext = main };

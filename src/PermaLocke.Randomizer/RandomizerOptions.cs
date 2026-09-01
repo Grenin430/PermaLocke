@@ -193,6 +193,60 @@ public sealed record RandomizerOptions
     /// <summary>Species that may never be handed out. Legendaries and mythicals, typically.</summary>
     public IReadOnlyList<int> BannedSpecies { get; init; } = [];
 
-    /// <summary>Highest species id the game knows. Ultra Sun/Moon stop at Melmetal's predecessor.</summary>
-    public int MaxSpecies { get; init; } = 807;
+    /// <summary>
+    /// A deliberate ceiling on which species may be handed out. <b>Zero means no ceiling</b> and the
+    /// game's own tables decide.
+    /// </summary>
+    /// <remarks>
+    /// Zero is the default because the alternative has a trap in it. A fixed 807 is right for the
+    /// cartridge and quietly wrong on a mod that adds Pokémon: install the expansion, forget to
+    /// raise this number, and the randomization succeeds while not one of the three hundred and
+    /// fifty new species ever appears. Nothing fails, so nothing tells you. Defaulting to "whatever
+    /// the game has" makes the safe case the one you get by not thinking about it, and leaves the
+    /// ceiling for when somebody actually wants one — capping a vanilla run to the first
+    /// generation, say.
+    /// </remarks>
+    public int MaxSpecies { get; init; }
+
+    /// <summary>The ceiling actually in force, given what the loaded game turned out to hold.</summary>
+    public int EffectiveMaxSpecies(int gameMaxSpecies) =>
+        MaxSpecies > 0 ? Math.Min(MaxSpecies, gameMaxSpecies) : gameMaxSpecies;
+
+    /// <summary>
+    /// Highest ability id the randomizer may hand out. Zero means whatever the game declares.
+    /// </summary>
+    /// <remarks>
+    /// This exists because of a measured failure, not a hypothetical one. The ability field of the
+    /// personal table is <b>one byte</b>, so a game can address at most 255 abilities; the cartridge
+    /// uses 233 and the gen 8-9 expansion fills the rest, hitting the ceiling exactly. The
+    /// twenty-two it added do not work: the mod's own issue tracker reports that a Pokémon given
+    /// one shows the name in the summary and nothing happens in battle.
+    /// <para>
+    /// So on that mod this is set to 233, and the point is that the failure it avoids is the kind
+    /// PermaLocke exists to refuse — the ability is not missing, it is <em>displayed and inert</em>.
+    /// See <c>docs/MOD-EXPANSION.md</c> §5.
+    /// </para>
+    /// </remarks>
+    public int MaxAbility { get; init; }
+
+    /// <inheritdoc cref="EffectiveMaxSpecies"/>
+    public int EffectiveMaxAbility(int gameMaxAbility) =>
+        MaxAbility > 0 ? Math.Min(MaxAbility, gameMaxAbility) : gameMaxAbility;
+
+    /// <summary>
+    /// Highest move id a randomized learnset may hand out. Zero means whatever the game declares.
+    /// </summary>
+    /// <remarks>
+    /// The companion to <see cref="MaxAbility"/>, and a softer case. Of the expansion's 192 new
+    /// moves, 160 reuse a battle routine the engine already has and 32 ask for one the cartridge
+    /// never uses — those 32 rely on the mod's patched <c>code.bin</c>, which nobody here has
+    /// disassembled. Setting this to the cartridge's move count keeps learnsets to what is known to
+    /// work; leaving it at zero trusts the mod. Which of the two is right is the player's call, so
+    /// it is a number in the configuration and not a decision baked into the code.
+    /// </remarks>
+    public int MaxMove { get; init; }
+
+    /// <inheritdoc cref="EffectiveMaxSpecies"/>
+    public int EffectiveMaxMove(int gameMaxMove) =>
+        MaxMove > 0 ? Math.Min(MaxMove, gameMaxMove) : gameMaxMove;
 }

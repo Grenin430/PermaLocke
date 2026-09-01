@@ -142,7 +142,7 @@ public sealed class PartyLayoutLocator(AzaharRpcClient client)
         var pokemon = new PK7(block);
 
         return pokemon.ChecksumValid
-               && pokemon.Species is > 0 and <= 807
+               && WorldLimits.IsKnownSpecies(pokemon.Species)
                && pokemon.CurrentLevel is > 0 and <= 100
                && !string.IsNullOrWhiteSpace(pokemon.OriginalTrainerName)
             ? pokemon

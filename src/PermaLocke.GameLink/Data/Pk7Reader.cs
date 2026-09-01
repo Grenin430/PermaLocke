@@ -45,7 +45,7 @@ public sealed class Pk7Reader(AzaharRpcClient client)
 
         var pokemon = new PK7(data);
 
-        if (pokemon.Species is <= 0 or > 807 || pokemon.CurrentLevel is <= 0 or > 100)
+        if (!WorldLimits.IsKnownSpecies(pokemon.Species) || pokemon.CurrentLevel is <= 0 or > 100)
         {
             return null;
         }

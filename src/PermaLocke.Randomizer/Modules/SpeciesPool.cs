@@ -23,7 +23,7 @@ public sealed class SpeciesPool
         _baseStatTotals = baseStatTotals;
         _options = options;
 
-        var max = Math.Min(options.MaxSpecies, baseStatTotals.Length - 1);
+        var max = options.EffectiveMaxSpecies(baseStatTotals.Length - 1);
         var banned = options.BannedSpecies.ToHashSet();
         _allowed = [.. Enumerable.Range(1, Math.Max(max, 0)).Where(s => !banned.Contains(s))];
 
@@ -65,10 +65,21 @@ public sealed class SpeciesPool
         return new SpeciesPool(kept, _baseStatTotals, _options);
     }
 
-    /// <summary>Reads the base stat totals out of the cartridge's personal table.</summary>
-    public static SpeciesPool FromGame(GameConfig config, RandomizerOptions options)
+    /// <summary>Reads the base stat totals out of the loaded personal table.</summary>
+    /// <param name="gameMaxSpecies">
+    /// How many species the loaded tables describe, from <c>RomWorkspace.MaxSpecies</c>.
+    /// </param>
+    /// <remarks>
+    /// This used to clamp against <c>config.MaxSpeciesID</c>, which is a pk3DS <b>constant</b> fixed
+    /// at 807 that never looks at the files. On the cartridge the two agree; on a mod that adds
+    /// Pokémon the clamp would have silently thrown away everything past 807 — the pool would build,
+    /// the randomization would succeed, and not one of the new species would ever appear. Nothing
+    /// would have failed to say so.
+    /// </remarks>
+    public static SpeciesPool FromGame(GameConfig config, RandomizerOptions options,
+        int gameMaxSpecies)
     {
-        var max = Math.Min(options.MaxSpecies, config.MaxSpeciesID);
+        var max = options.EffectiveMaxSpecies(gameMaxSpecies);
         var totals = new int[max + 1];
         for (var species = 1; species <= max; species++)
         {

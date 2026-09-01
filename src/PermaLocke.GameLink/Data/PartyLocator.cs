@@ -79,7 +79,7 @@ public sealed class PartyLocator(AzaharRpcClient client)
     public static bool IsPlausible(PK7 pokemon) =>
         // The checksum is the decisive test: random memory does not satisfy it.
         pokemon.ChecksumValid
-        && pokemon.Species is > 0 and <= 807
+        && WorldLimits.IsKnownSpecies(pokemon.Species)
         && pokemon.CurrentLevel is > 0 and <= 100
         && pokemon.Stat_HPMax is > 0 and <= 999
         && pokemon.Stat_HPCurrent >= 0

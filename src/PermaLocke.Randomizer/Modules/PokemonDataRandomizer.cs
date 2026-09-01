@@ -25,8 +25,8 @@ public sealed class PokemonDataRandomizer(RomWorkspace workspace, RandomizerOpti
         CancellationToken ct = default)
     {
         var typeCount = workspace.Config.GetText(TextName.Types).Length;
-        var maxAbility = workspace.Config.Info.MaxAbilityID;
-        var maxMove = workspace.Config.Info.MaxMoveID;
+        var maxAbility = options.EffectiveMaxAbility(workspace.Config.Info.MaxAbilityID);
+        var maxMove = options.EffectiveMaxMove(workspace.Config.Info.MaxMoveID);
 
         // Cada parte con su propia fuente, por la misma razón que cada módulo tiene la suya
         // (§20): activar o desactivar una no debe mover los resultados de las demás. Aquí faltaba,
@@ -37,7 +37,8 @@ public sealed class PokemonDataRandomizer(RomWorkspace workspace, RandomizerOpti
         // en las partidas ya en curso. Derivarla también sería más limpio, pero cambiaría el
         // mundo de quien ya está jugando.
         var entries = RandomizePersonal(mod, random, typeCount, maxAbility, ct);
-        var evolutions = RandomizeEvolutions(mod, random.Derive("evolutions"), ct);
+        var evolutions = RandomizeEvolutions(mod, random.Derive("evolutions"),
+            options.EffectiveMaxSpecies(workspace.MaxSpecies), ct);
         var moves = RandomizeLearnsets(mod, random.Derive("learnsets"), TeachableMoves(maxMove), ct);
 
         await VerifyAsync(mod, ct);
@@ -129,7 +130,8 @@ public sealed class PokemonDataRandomizer(RomWorkspace workspace, RandomizerOpti
     /// Redirects what each species evolves into, leaving the trigger alone: the method, its
     /// argument and the level stay as they were, so an evolution still happens when it used to.
     /// </summary>
-    private int RandomizeEvolutions(LayeredFsMod mod, IRandomSource random, CancellationToken ct)
+    private int RandomizeEvolutions(LayeredFsMod mod, IRandomSource random, int maxSpeciesHere,
+        CancellationToken ct)
     {
         if (!options.RandomizeEvolutions)
         {
@@ -157,10 +159,10 @@ public sealed class PokemonDataRandomizer(RomWorkspace workspace, RandomizerOpti
                     continue; // no method, so no evolution in this slot
                 }
 
-                var replacement = random.Next(1, options.MaxSpecies + 1);
+                var replacement = random.Next(1, maxSpeciesHere + 1);
                 for (var attempt = 0; attempt < 16 && replacement == species; attempt++)
                 {
-                    replacement = random.Next(1, options.MaxSpecies + 1);
+                    replacement = random.Next(1, maxSpeciesHere + 1);
                 }
 
                 BitConverter.GetBytes((ushort)replacement).CopyTo(entry, at + speciesOffset);

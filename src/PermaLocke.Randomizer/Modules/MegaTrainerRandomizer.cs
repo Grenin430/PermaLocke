@@ -92,7 +92,8 @@ public sealed class MegaTrainerRandomizer(RomWorkspace workspace, RandomizerOpti
         // Los legendarios prohibidos siguen prohibidos: la lista dice «esto no se reparte nunca», y
         // un Mega Mewtwo de regalo en un combate de mitad de partida es exactamente lo que evita.
         var candidates = forms.Keys
-            .Where(species => species <= options.MaxSpecies && !banned.Contains(species))
+            .Where(species => species <= options.EffectiveMaxSpecies(workspace.MaxSpecies)
+                && !banned.Contains(species))
             .OrderBy(species => species)
             .ToArray();
 

@@ -49,7 +49,7 @@ public sealed class RandomizerService(RandomizerOptions options)
         var steps = new List<RandomizerStep>();
 
         using var workspace = await RomWorkspace.ExtractAsync(romPath, workDirectory, ct: ct);
-        var pool = SpeciesPool.FromGame(workspace.Config, options);
+        var pool = SpeciesPool.FromGame(workspace.Config, options, workspace.MaxSpecies);
         var mod = new LayeredFsMod(workspace, modDirectory);
 
         // Se vacía antes de escribir. Sin esto, un módulo que se apaga deja su fichero de la
