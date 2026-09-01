@@ -146,6 +146,31 @@ esa lista: en su FAQ dicen que arreglan movimientos y habilidades **según se lo
 
 ---
 
+## 6 bis. El mod solo trae el texto en INGLÉS, y eso se nota jugando
+
+Medido, y no es lo mismo que «la página está en inglés».
+
+El texto del juego vive en `a/0/3/{idioma}`, un fichero por idioma. **El mod trae únicamente
+`a/0/3/2`, que es el inglés.** Cargando cada idioma y pidiendo la lista de nombres de especie:
+
+| idioma | nombres | 807 | 810 | 1025 |
+|---|---:|---|---|---|
+| inglés (`a/0/3/2`, del mod) | **1026** | Zeraora | Grookey | Pecharunt |
+| español (`a/0/3/6`, del cartucho) | **808** | Zeraora | — | — |
+
+O sea que **en español los 354 Pokémon nuevos no tienen nombre en el juego**. La lista se acaba en
+Zeraora. Cualquier «versión en español» del mod es un parche aparte de la comunidad, y habría que
+identificar cuál.
+
+Dentro de PermaLocke esto **no** es un problema: los nombres los da PKHeX, cuya lista tiene 1026
+entradas y conoce a Grookey en español. El problema es del juego.
+
+Y dejó una trampa: `RomTool` indexaba la lista del juego directamente y **reventaba** al pedir el
+810. Ahora un nombre que el idioma cargado no tiene sale como `#810`. Decir el número es la
+respuesta honesta; dejarlo en blanco o inventar un nombre sería peor.
+
+---
+
 ## 7. Los modelos 3D: lo que se puede y lo que no
 
 `a/0/9/4` es el fichero de modelos. **En el cartucho pesa 1.273 MB** —él solo es más de un tercio del

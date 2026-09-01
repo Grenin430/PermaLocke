@@ -39,3 +39,7 @@ obj/
 # Los sprites de Pokémon son de Nintendo. Se extraen de la ROM que cada jugador ya tiene
 # (PermaLocke.RomTool sprites) y nunca se versionan ni se redistribuyen, igual que la ROM.
 /Data/sprites/
+
+# El romfs de otro mod sobre el que randomizar. Son gigabytes y son assets de Nintendo:
+# igual que ROM/, cada jugador se lo consigue por su cuenta. Ver docs/MOD-EXPANSION.md.
+/Expansion/

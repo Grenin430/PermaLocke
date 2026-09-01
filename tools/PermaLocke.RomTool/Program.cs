@@ -12,6 +12,15 @@ using pk3DS.Core.CTR;
 
 var root = FindRepositoryRoot() ?? Directory.GetCurrentDirectory();
 
+// El nombre de una especie, o su numero si el idioma cargado no la nombra. Hace falta porque el
+// mod de expansion solo trae el texto en INGLES (a/0/3/2): en espanol la lista se acaba en Zeraora,
+// 808 nombres frente a 1026, asi que pedir el 810 reventaba. Decir "#810" es la respuesta honesta;
+// inventar un nombre o dejarlo en blanco seria peor que el numero.
+static string SpeciesName(string[] names, int species) =>
+    species >= 0 && species < names.Length && names[species].Length > 0
+        ? names[species]
+        : $"#{species}";
+
 // Si hay un mod base en Expansion/romfs, TODOS los comandos trabajan sobre el en vez de sobre el
 // cartucho. Es lo mismo que hace la aplicacion, y a proposito no es un argumento: una herramienta
 // que puede mirar un mundo distinto del que mira la app segun como la invoques acaba dando dos
@@ -125,7 +134,13 @@ async Task InspectAsync()
     Console.WriteLine($"\nExtraídos {GameFiles.All.Count} ficheros en {sw.ElapsedMilliseconds} ms");
 
     var config = workspace.Config;
-    Console.WriteLine($"{config.Version}  gen {config.Generation}  especies {config.MaxSpeciesID}  encdata -> {config.GetGARCFileName("encdata")}");
+    Console.WriteLine($"{config.Version}  gen {config.Generation}  encdata -> {config.GetGARCFileName("encdata")}");
+
+    // Las dos cuentas juntas y dichas por su nombre. La de pk3DS es una CONSTANTE que no mira los
+    // ficheros, asi que sobre un mod que anade Pokemon miente; la otra sale de la tabla. Verlas
+    // discrepar es la senal de que el mod se ha leido de verdad.
+    Console.WriteLine($"especies: {workspace.MaxSpecies} segun la tabla, "
+                      + $"{config.MaxSpeciesID} segun la constante de pk3DS");
     Console.WriteLine($"personal {config.Personal.Table.Length}  movimientos {config.Moves.Length}  evoluciones {config.Evolutions.Length}");
 
     foreach (var file in GameFiles.All)
@@ -182,7 +197,8 @@ async Task RandomizeAsync(ulong seed)
         : Path.Combine(root, "Randomized", $"seed-{seed}");
 
     Console.WriteLine($"seed {seed}\nsalida {mod}{(install ? "  (INSTALANDO EN AZAHAR)" : "")}\n");
-    var report = await new RandomizerService(options).RandomizeAsync(RequireRom(), work, mod, seed);
+    var report = await new RandomizerService(options)
+        .RandomizeAsync(RequireRom(), work, mod, seed, baseLayer);
 
     Console.WriteLine();
     foreach (var step in report.Steps)
@@ -245,7 +261,7 @@ async Task DumpAsync(ulong seed, string zone)
         {
             var e = t.Encounter7s[0][i];
             if (e.Species == 0) continue;
-            Console.WriteLine($"  {t.Rates[i],3}%  #{e.Species,3} {names[(int)e.Species]}");
+            Console.WriteLine($"  {t.Rates[i],3}%  #{e.Species,3} {SpeciesName(names, (int)e.Species)}");
         }
     }
 }
@@ -293,7 +309,7 @@ async Task StaticsAsync(ulong seed)
             if (banned.Contains(newSpecies) && !options.ProtectedSpecies.Contains(newSpecies))
             {
                 offenders++;
-                Console.WriteLine($"    ¡PROHIBIDA! {layout.Name} entrada {i}: {names[newSpecies]}");
+                Console.WriteLine($"    ¡PROHIBIDA! {layout.Name} entrada {i}: {SpeciesName(names, newSpecies)}");
             }
         }
 
@@ -318,7 +334,7 @@ async Task StaticsAsync(ulong seed)
                 continue;
             }
             var expected = options.ProtectedSpecies.Contains(oldSpecies) ? "protegida" : "¡SIN CAMBIAR SIN MOTIVO!";
-            Console.WriteLine($"  intacta: {layout.Name} entrada {i} = {names[oldSpecies]} ({expected})");
+            Console.WriteLine($"  intacta: {layout.Name} entrada {i} = {SpeciesName(names, oldSpecies)} ({expected})");
         }
     }
 
@@ -330,7 +346,7 @@ async Task StaticsAsync(ulong seed)
         var was = StaticEncounterTable.GetSpecies(vanillaGifts, StaticEncounterTable.Gifts, i);
         var now = StaticEncounterTable.GetSpecies(gifts, StaticEncounterTable.Gifts, i);
         var label = i < 3 ? "inicial" : "fósil";
-        Console.WriteLine($"  {label,-8} {names[was],-14} -> {names[now]}");
+        Console.WriteLine($"  {label,-8} {SpeciesName(names, was),-14} -> {SpeciesName(names, now)}");
     }
 }
 
@@ -388,7 +404,7 @@ async Task TrainersAsync(ulong seed)
     Console.WriteLine($"\nentrenador {highestTrainer}, el de nivel más alto:");
     for (var s = 0; s < TrainerPokemonTable.Count(sample); s++)
     {
-        Console.WriteLine($"  Nv.{TrainerPokemonTable.GetLevel(sample, s),3}  {names[TrainerPokemonTable.GetSpecies(sampleVanilla, s)],-14} -> {names[TrainerPokemonTable.GetSpecies(sample, s)]}");
+        Console.WriteLine($"  Nv.{TrainerPokemonTable.GetLevel(sample, s),3}  {SpeciesName(names, TrainerPokemonTable.GetSpecies(sampleVanilla, s)),-14} -> {SpeciesName(names, TrainerPokemonTable.GetSpecies(sample, s))}");
     }
 }
 
@@ -452,7 +468,7 @@ async Task PokemonAsync(ulong seed)
         var (o1, o2) = PersonalEntry7.GetTypes(packedBefore, at);
         var before = string.Join("/", Enumerable.Range(0, 6).Select(s => PersonalEntry7.GetStat(packedBefore, at, s)));
         var after = string.Join("/", Enumerable.Range(0, 6).Select(s => PersonalEntry7.GetStat(packedAfter, at, s)));
-        Console.WriteLine($"\n{names[species]}: {types[o1]}/{types[o2]} -> {types[t1]}/{types[t2]}");
+        Console.WriteLine($"\n{SpeciesName(names, species)}: {types[o1]}/{types[o2]} -> {types[t1]}/{types[t2]}");
         Console.WriteLine($"  stats {before}  ->  {after}   (total {PersonalEntry7.BaseStatTotal(packedBefore, at)} -> {PersonalEntry7.BaseStatTotal(packedAfter, at)})");
     }
 }
