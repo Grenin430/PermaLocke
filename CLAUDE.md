@@ -888,7 +888,10 @@ Lo que puede romperlo es la randomización, no el emulador: un combate por link 
 paso fijo** y las dos consolas calculan lo mismo. Medido, de los **ocho ficheros** que el mod
 reemplaza **siete no se leen en combate**; solo `a/0/1/7` sí, y de él solo cambian `shuffleBaseStats`
 y `randomizeAbilities` —los tipos ya están en false y **los datos de movimiento no se tocan nunca**—.
-O sea que **se puede combatir con cada uno su propio mundo** con esas dos iguales en todos. Salvajes,
+Y esta **medido, no razonado**: tres combates cambiando una sola cosa cada vez. Vanilla funciona;
+dos mundos distintos con esas dos en `true` **se desincronizan**; los mismos dos mundos con esas dos
+en `false` funcionan. Entre el segundo y el tercero solo cambian esos interruptores, asi que la causa
+queda identificada. **Se puede combatir con cada uno su propio mundo** con esas dos iguales en todos. Salvajes,
 entrenadores, iniciales, objetos del suelo, tiendas, el Pokémon extra y las megas de jefe pueden ser
 distintos sin problema.
 
@@ -908,10 +911,10 @@ los espeja del nombre de la consola (`Emulación → Configurar → Sistema`). V
 el mismo barajado que el resto. Lo que no se ha comprobado es si las que caen al **sacudir un árbol**
 salen de esa misma tabla.
 
-**Siguiente.** Probar en partida real los combates importantes, los iniciales y las tiendas. Y el
-**paso 2 del combate por link**: repetirlo con las randomizaciones y `shuffleBaseStats` y
-`randomizeAbilities` en `false` en todos. La prueba está montada en `Escritorio\PermaLocke prueba
-link`, con el resultado del paso 1 escrito dentro.
+**Siguiente.** Probar en partida real los combates importantes, los iniciales y las tiendas.
+
+Y decidir entre los cinco el trueque del combate por link, que ya está medido: **o estadísticas
+barajadas y habilidades al azar, o poder pelear entre vosotros.** Las dos cosas a la vez no.
 
 Lo que NO está resuelto todavía y no debe darse por hecho (detalle en `docs/ARCHITECTURE.md`):
 
@@ -939,7 +942,7 @@ Lo que NO está resuelto todavía y no debe darse por hecho (detalle en `docs/AR
 | Ruleta del rol LUDÓPATA | **HECHA Y VISTA EN LA APP** — 16 caras, seis en la rueda, tiradas que se deben y se recomputan; escribe equipo, mochila y cajas por el fichero de partida. **Dos tiradas verificadas en la partida real.** Ver `ARCHITECTURE.md` §62 |
 | Roles | **HECHOS Y VERIFICADOS CONTRA LA ROM** — se eligen lo primero, multiplican los puntos, suben el nivel de todo lo que combate contra ti (entrenadores, Dominantes, Necrozma y legendarios) y añaden el Pokémon extra en 35 clases de combate importante. Falta probarlo jugando. Ver `ARCHITECTURE.md` §46, §47 y §48 |
 | Sincronización | **HECHA Y VISTA EN LA APP** — clasificación por carpeta compartida, sin servidor ni cuentas. Cada uno publica un resumen y lee los de los demás. **No es una verificación y la pantalla lo dice.** Falta probarla con la carpeta sincronizando de verdad entre dos máquinas. Ver `ARCHITECTURE.md` §79 |
-| Combate por link entre jugadores | **VERIFICADO** — dos Azahar en el mismo PC, combate completo de séptima generación. Se puede con cada uno su mundo si `shuffleBaseStats` y `randomizeAbilities` son iguales en todos. **Falta el paso 2**: repetirlo ya randomizado. Ver `ARCHITECTURE.md` §80 |
+| Combate por link entre jugadores | **VERIFICADO Y CERRADO** — se puede combatir con cada uno su propio mundo, siempre que `shuffleBaseStats` y `randomizeAbilities` esten en `false` en todos. **Medido con una prueba controlada**: con esas dos en `true` el combate se desincroniza, con ellas en `false` no. Ver `ARCHITECTURE.md` §80 |
 | Copia de seguridad de la run | **HECHA** — al arrancar, diez copias rotativas. Antes había 319 copias de la partida y cero de la run. Ver `ARCHITECTURE.md` §76 |
 | Mantenimiento desde la aplicación | **HECHO Y VISTO EN LA APP** — auditoría, reparar PID, cerrar entregados y corregir etapas, sin terminal. Ver `ARCHITECTURE.md` §77 |
 | Estadísticas | **HECHA Y VISTA EN LA APP** — libro de puntos, curva de saldo, colección y récords, todo proyectado sobre la cadena de eventos. Ver `ARCHITECTURE.md` §78 |

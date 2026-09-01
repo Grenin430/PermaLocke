@@ -5979,6 +5979,27 @@ están en `false` y **los datos de movimiento (`a/0/1/1`) no se tocan nunca**.
 iguales en todos —lo simple, las dos en `false`—. Salvajes, entrenadores, iniciales, objetos del
 suelo, tiendas, el Pokémon extra y las megas de jefe pueden ser distintos sin ningún problema.
 
+### La prueba controlada que lo cierra (2026-09-01)
+
+Tres combates, cambiando **una sola cosa cada vez**:
+
+| | Configuración | Resultado |
+|---|---|---|
+| 1 | Vanilla en las dos instancias | **funciona** |
+| 2 | Dos mundos distintos, `shuffleBaseStats` y `randomizeAbilities` en `true` | **SE DESINCRONIZA** |
+| 3 | Los mismos dos mundos, esas dos en `false` | **funciona** |
+
+Entre 2 y 3 **solo cambian esos dos interruptores** y el resultado se da la vuelta. No es
+correlación: es la causa.
+
+Y de paso entierra una duda que estuvo sobre la mesa. El §51 midió que un Pokémon de equipo lleva
+**sus estadísticas de combate ya calculadas dentro**, y eso hacía pensar que quizá viajaban por el
+link y que las estadísticas base locales daban igual. **No dan igual.** Lo que viaje no basta: las
+dos consolas acaban leyendo `a/0/1/7` y separándose.
+
+El aviso de COMPETICIÓN (§79) no es una precaución teórica, entonces: está evitando un fallo real
+que se ha visto en pantalla.
+
 ### El aviso en COMPETICIÓN
 
 Existe para que nadie descubra al mes que no puede pelear con nadie.
