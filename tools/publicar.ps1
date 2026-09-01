@@ -48,6 +48,7 @@ if ($LASTEXITCODE -ne 0) { throw "La publicacion ha fallado." }
 Rename-Item (Join-Path $Destino 'PermaLocke.App.exe') 'PermaLocke.exe'
 Copy-Item (Join-Path $raiz 'tools\LEEME-para-jugadores.txt') (Join-Path $Destino 'LEEME.txt')
 Copy-Item (Join-Path $raiz 'tools\LEEME-competicion.txt') (Join-Path $Destino 'LEEME - COMPETICION.txt')
+Copy-Item (Join-Path $raiz 'tools\LEEME-EXPANSION.txt') (Join-Path $Destino 'LEEME - GEN 8 Y 9.txt')
 Copy-Item (Join-Path $raiz 'LICENSE') $Destino
 
 # Se comprueba lo que se acaba de escribir, no lo que se pretendia escribir.
@@ -58,6 +59,9 @@ if (-not (Test-Path (Join-Path $Destino 'LEEME - COMPETICION.txt'))) { $fallos +
 if (Test-Path (Join-Path $Destino 'Data\sprites'))                   { $fallos += 'se ha colado Data\sprites (son de Nintendo)' }
 if (Test-Path (Join-Path $Destino 'Saves'))                          { $fallos += 'se ha colado Saves (es tu partida)' }
 if (Test-Path (Join-Path $Destino 'ROM'))                            { $fallos += 'se ha colado ROM' }
+# El mod de expansion son 2,5 GB de ficheros del juego: se lo baja cada uno, no se reparte.
+if (Test-Path (Join-Path $Destino 'Expansion'))                      { $fallos += 'se ha colado Expansion (2,5 GB de ficheros del juego)' }
+if (-not (Test-Path (Join-Path $Destino 'LEEME - GEN 8 Y 9.txt')))   { $fallos += 'falta la guia de la expansion' }
 
 $jsons = (Get-ChildItem (Join-Path $Destino 'Data') -Filter *.json).Count
 if ($jsons -lt 14) { $fallos += "solo hay $jsons ficheros de configuracion en Data, esperaba 14" }

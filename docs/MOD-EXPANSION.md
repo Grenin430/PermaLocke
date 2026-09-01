@@ -260,6 +260,46 @@ fallos abiertos. Para una competición en curso eso se paga; para la siguiente, 
 
 ---
 
+## 9 bis. Qué está hecho de todo eso, a 2026-09-01
+
+| | estado |
+|---|---|
+| 1. Salvajes nuevos | **HECHO Y VISTO** — la Ruta 1 da Dreepy, Meltan, Snom y Tarountula |
+| 2. Sprites de los nuevos | **HECHO** — una fórmula, `1154 + (especie − 808)`. Sin ver en la app |
+| 3. Las 48 megas | **HECHO** — se leen de la tabla del mod como las 45 de siempre |
+| 4. Objetos nuevos | **NO HACE FALTA**, ver abajo |
+| 5. Aprendizajes y evoluciones | **HECHO** — vienen del mod y se randomizan encima |
+| 6. Capa de partida | **HECHO** — PK7 con especie 810 con checksum válido |
+| 7. Totales base | **HECHO** — `species.json` regenerado: **1025 especies** |
+| 8. Combate por link | **SIN PROBAR** — exige que los cinco lleven el mismo mod y `code.bin` |
+| 9-10. Topes | **PUESTOS** — `maxAbility` 233 y `maxMove` 729 |
+| 11. Tabla de iconos | **HECHO**, y salió una línea en vez de una investigación |
+| 12. Filtros de 807 | **HECHO** — `WorldLimits`, puesto por `InstalledWorld` |
+| 13. `maxSpecies` | **HECHO** — cero significa «las que tenga el juego» |
+| 14. Randomizar sobre el mod | **HECHO Y VISTO** — carpeta `Expansion/`, e instalar copia la capa entera |
+| Nombres en español | **HECHO** — §6 bis |
+
+### Los dos iconos que no se mapean, y por qué
+
+**Los 64 objetos nuevos son «Caramelo Bulbasaur», «Caramelo Zubat»…** — los caramelos de especie
+de Let's Go, que este mod no usa para nada y que la tienda no vende. El mod añade 80 iconos de
+objeto (769 → 849, con los 769 primeros byte a byte idénticos), pero mapearlos no compra nada.
+`GetItem` devuelve **null** para un objeto que nadie ha medido, así que el resultado es que no
+sale dibujo, no que algo reviente.
+
+**Las 136 formas nuevas** tampoco se mapean, y eso **no es una regresión**: la tabla del §30 nunca
+ha mapeado formas ni en el cartucho. Un Pokémon en una forma nueva enseña el icono de su especie
+base, exactamente igual que ya pasa hoy con las del cartucho.
+
+### Lo que sigue sin comprobarse, y es lo que más pesa
+
+**Nadie lo ha jugado.** Todo lo anterior está verificado contra los ficheros, con nuestras propias
+herramientas. Eso no es lo mismo que arrancar Azahar y ver un Dreepy en la hierba. Sin comprobar
+en el juego: que la instalación funcione, que el `code.bin` del mod arranque, que el texto español
+generado se lea sin colgarse, y que dos personas puedan combatir.
+
+---
+
 ## 10. Cómo se midió, para poder repetirlo
 
 - Repositorio clonado a un temporal fuera del proyecto. Los ficheros del mod son GARC sueltos, así

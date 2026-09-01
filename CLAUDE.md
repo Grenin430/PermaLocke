@@ -911,6 +911,54 @@ los espeja del nombre de la consola (`Emulación → Configurar → Sistema`). V
 el mismo barajado que el resto. Lo que no se ha comprobado es si las que caen al **sacudir un árbol**
 salen de esa misma tabla.
 
+**Gen 8 y 9: PermaLocke puede randomizar encima de otro mod (2026-09-01).** Existe un mod de la
+comunidad que mete las generaciones 8 y 9 en Ultra Luna, con las megas de Leyendas Z-A incluida la
+de Dragonite. Se define a sí mismo como un **andamio** y a propósito **no trae encuentros salvajes**:
+los Pokémon nuevos solo se pueden meter a mano con PKHeX, o sea que en un Nuzlocke **no existen**.
+Escribir `a/0/8/3` es justo lo que hacemos, así que el encaje es bueno: **PermaLocke es la pieza que
+le falta.** Todo medido en `docs/MOD-EXPANSION.md`; **nada de esto se ha jugado todavía.**
+
+Hay una carpeta `Expansion/` al lado de `ROM/`, con sus mismas reglas —solo lectura, y en el
+`.gitignore` porque son gigabytes de Nintendo—. Si está, **todo** se randomiza encima de ella. Se
+detecta por existir y no por un interruptor: un interruptor puede discrepar del disco, y entonces la
+pantalla estaría diciendo que randomizó un mundo que no leyó.
+
+**El fallo que se habría comido el proyecto entero sin decir nada:** `SpeciesPool` recortaba contra
+`config.MaxSpeciesID`, que es una **constante de pk3DS clavada en 807** que no mira los ficheros. El
+saco se habría construido, la randomización habría dicho «listo», y ni uno de los 354 Pokémon nuevos
+habría aparecido jamás. Ahora la cuenta **se deduce de la tabla** —del índice de forma más bajo que
+declara cualquier especie—, verificada en los dos mundos: cartucho 807, mod 1025, las dos respuestas
+conocidas. Y `maxSpecies: 0` pasa a significar «las que tenga el juego», para que el caso seguro sea
+el que sale de no pensarlo.
+
+**Los sprites costaron una línea en vez de una investigación**, y solo porque se midió antes de
+empezar: los **1154 iconos del cartucho son byte a byte idénticos** en el mod, así que añade en vez
+de reordenar y la tabla del §30 sigue valiendo entera. Lo añadido va en orden nacional y está
+anclado por los dos extremos —icono 1154 = Meltan (808), icono 1371 = Pecharunt (1025)—, y cierra
+sin holgura: 217 = 217.
+
+**El mod solo trae el texto en INGLÉS**, y eso no es lo mismo que «la página está en inglés». Medido:
+inglés 1026 nombres, español **808**, se acaba en Zeraora. Así que los nombres nuevos **se ponen
+desde PermaLocke**, y no es traducir: los nombres españoles son **oficiales** y PKHeX los lleva.
+El ancla es que estas listas se direccionan **por índice**, así que una desplazada un puesto le
+pondría a cada Pokémon el nombre de su vecino sin que nada fallara: 805 de 808 especies coinciden.
+Y esa medida cambió el diseño — movimientos coinciden 659/729 y objetos 738/960, pero **no son
+errores**: el cartucho abrevia para que le quepa («Picotazo Ven») y usa las traducciones de su
+generación («Golpe» donde hoy es «Saña»). Así que la fusión **solo añade, nunca reescribe**. Las
+descripciones se copian del inglés del mod, porque no hay fuente oficial y **una descripción de
+movimiento equivocada mata un Pokémon**.
+
+**Instalar copia la capa base entera y lo nuestro encima**, más el `exefs` —que va al lado de romfs,
+no dentro—. Antes copiaba los siete ficheros del randomizador y nada más, así que los datos de
+especie, los aprendizajes y los 2,5 GB de modelos se quedaban fuera: los Pokémon nuevos salían en
+las tablas y el juego no tenía con qué dibujarlos.
+
+Y dos topes puestos, los dos por medidas: **`maxAbility` 233**, porque el campo de habilidad es un
+byte y el mod llenó los 22 huecos que quedaban con habilidades que **salen con nombre y no hacen
+nada** (es una trampa latente, no un fallo activo: `randomizeAbilities` está en `false`); y
+**`maxMove` 729**, que ese sí estaba vivo con `randomizeLearnsets` en `true`, porque 32 de los 192
+movimientos nuevos piden una rutina de combate que solo existiría en el `code.bin` del mod.
+
 **Siguiente.** Probar en partida real los combates importantes, los iniciales y las tiendas.
 
 Y decidir entre los cinco el trueque del combate por link, que ya está medido: **o estadísticas
@@ -942,6 +990,7 @@ Lo que NO está resuelto todavía y no debe darse por hecho (detalle en `docs/AR
 | Ruleta del rol LUDÓPATA | **HECHA Y VISTA EN LA APP** — 16 caras, seis en la rueda, tiradas que se deben y se recomputan; escribe equipo, mochila y cajas por el fichero de partida. **Dos tiradas verificadas en la partida real.** Ver `ARCHITECTURE.md` §62 |
 | Roles | **HECHOS Y VERIFICADOS CONTRA LA ROM** — se eligen lo primero, multiplican los puntos, suben el nivel de todo lo que combate contra ti (entrenadores, Dominantes, Necrozma y legendarios) y añaden el Pokémon extra en 35 clases de combate importante. Falta probarlo jugando. Ver `ARCHITECTURE.md` §46, §47 y §48 |
 | Sincronización | **HECHA Y VISTA EN LA APP** — clasificación por carpeta compartida, sin servidor ni cuentas. Cada uno publica un resumen y lee los de los demás. **No es una verificación y la pantalla lo dice.** Falta probarla con la carpeta sincronizando de verdad entre dos máquinas. Ver `ARCHITECTURE.md` §79 |
+| Mod de expansión de gen 8 y 9 | **IMPLEMENTADO Y VERIFICADO CONTRA LOS FICHEROS, SIN JUGAR** — randomiza encima del mod, 1025 especies, sprites, nombres en español oficial e instalación de la capa entera. La Ruta 1 da Dreepy, Meltan, Snom y Tarountula. **Nadie ha arrancado el juego con esto**: sin comprobar que instale, que el `code.bin` del mod arranque, que el texto generado no cuelgue, ni el combate por link. Ver `docs/MOD-EXPANSION.md` |
 | Combate por link entre jugadores | **VERIFICADO Y CERRADO** — se puede combatir con cada uno su propio mundo, siempre que `shuffleBaseStats` y `randomizeAbilities` esten en `false` en todos. **Medido con una prueba controlada**: con esas dos en `true` el combate se desincroniza, con ellas en `false` no. Ver `ARCHITECTURE.md` §80 |
 | Copia de seguridad de la run | **HECHA** — al arrancar, diez copias rotativas. Antes había 319 copias de la partida y cero de la run. Ver `ARCHITECTURE.md` §76 |
 | Mantenimiento desde la aplicación | **HECHO Y VISTO EN LA APP** — auditoría, reparar PID, cerrar entregados y corregir etapas, sin terminal. Ver `ARCHITECTURE.md` §77 |
@@ -976,6 +1025,10 @@ dotnet run --project tools/PermaLocke.RomTool -- sprites --sheets
 # los tres iniciales de un mod ya generado o instalado; sin carpeta mira todo Randomized/
 dotnet run --project tools/PermaLocke.RomTool -- iniciales
 dotnet run --project tools/PermaLocke.RomTool -- iniciales "ruta/al/mod"
+
+# pone en espanol los nombres que un mod base solo trae en ingles. Sin --escribir solo mide.
+dotnet run --project tools/PermaLocke.RomTool -- traducir
+dotnet run --project tools/PermaLocke.RomTool -- traducir --escribir
 
 # especies que son primera etapa de una linea de tres, contra la tabla del cartucho
 dotnet run --project tools/PermaLocke.RomTool -- evoluciones "ruta/a/a/0/1/4"

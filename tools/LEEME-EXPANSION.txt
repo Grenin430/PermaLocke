@@ -1,0 +1,124 @@
+PERMALOCKE - JUGAR CON LOS POKEMON DE 8a Y 9a GENERACION
+=========================================================
+
+Esto es OPCIONAL y lo teneis que hacer LOS CINCO o NINGUNO.
+
+Anade los Pokemon de Espada/Escudo y Escarlata/Purpura -354 entre especies y
+formas- mas 48 megaevoluciones nuevas, las de Leyendas Z-A, Mega Dragonite
+incluida. PermaLocke los reparte por la hierba, que es justo lo que el mod no
+hace por su cuenta.
+
+
+-----------------------------------------------------------------------------
+ANTES DE EMPEZAR: LEED ESTO
+-----------------------------------------------------------------------------
+
+  * El mod NO es nuestro. Es de la comunidad, va por el 83 % y AVISA DE
+    CUELGUES. Si os pasa algo raro, es del mod, no de PermaLocke.
+
+  * Son 2,5 GB de descarga POR PERSONA. No se puede repartir en la carpeta de
+    PermaLocke: son ficheros del juego y no se redistribuyen.
+
+  * Hay que EMPEZAR DE CERO. Cambia el mundo entero, asi que no se puede meter
+    a mitad de una partida.
+
+  * Todos con la MISMA version. Si uno lleva otra, ese no puede combatir con
+    los demas por link.
+
+  * El juego se juega en INGLES. El mod solo trae su texto en ingles: los
+    menus y los dialogos saldran en ingles. PermaLocke sigue en espanol, y los
+    NOMBRES de Pokemon, movimientos, habilidades y objetos tambien, porque los
+    pone PermaLocke al generar tu mundo.
+
+
+-----------------------------------------------------------------------------
+PASO 1. Bajar el mod
+-----------------------------------------------------------------------------
+
+Son dos descargas de sitios distintos. Las dos son gratis.
+
+  1. Los datos, de GitHub:
+     https://github.com/TheSomewhatUnknownGuy/PokemonUSUMExpansion
+
+     Boton verde "Code" -> "Download ZIP". Son unos 44 MB.
+     Dentro hay dos carpetas; te interesa la de ULTRA LUNA:
+     UltraMoon_ExpansionNoModelAndEncounterFile
+
+  2. Los modelos 3D, el fichero grande. El enlace lo publica ese mismo
+     GitHub en su descripcion, arriba del todo. Son 2,5 GB y el fichero se
+     llama simplemente  4
+
+
+-----------------------------------------------------------------------------
+PASO 2. Montar la carpeta Expansion
+-----------------------------------------------------------------------------
+
+Al lado de PermaLocke.exe crea una carpeta que se llame EXACTAMENTE
+
+  Expansion
+
+Dentro tiene que quedar asi:
+
+  Expansion\
+      romfs\        <- la carpeta romfs del ZIP
+      exefs\        <- la carpeta exefs del ZIP
+
+Y ahora el fichero grande:
+
+  1. Entra en  Expansion\romfs\a\0\9\
+  2. Veras un fichero de texto que pone PLACEMODELFILEHERE... : BORRALO.
+  3. Deja ahi el fichero  4  que bajaste. Sin extension, sin renombrar.
+
+Comprobacion: la carpeta Expansion tiene que ocupar unos 2,4 GB. Si ocupa
+44 MB, te falta el fichero de modelos.
+
+
+-----------------------------------------------------------------------------
+PASO 3. Generar tu mundo
+-----------------------------------------------------------------------------
+
+  1. Abre PermaLocke y ve a RANDOMIZADOR.
+
+  2. Arriba, donde pone MOD BASE, tiene que decir "Mod base detectado".
+     Si dice "Sin mod base", la carpeta no esta donde toca o se llama de otra
+     forma. Revisa el paso 2.
+
+  3. Pulsa GENERAR. Al acabar, el resumen tiene que decir 1025 ESPECIES.
+     Si dice 807, el mod no se ha leido: para y revisa el paso 2.
+
+  4. Pulsa INSTALAR. La primera vez tarda unos minutos porque copia los
+     2,5 GB. Las siguientes solo copia lo que cambie.
+
+  5. Cierra Azahar DEL TODO y vuelve a abrirlo. Los mods se leen al arrancar.
+
+
+-----------------------------------------------------------------------------
+SI ALGO VA MAL
+-----------------------------------------------------------------------------
+
+El juego se queda en pantalla negra
+  Casi siempre es que falta el exefs\code.bin o que la carpeta Expansion esta
+  mal montada. Repasa el paso 2.
+
+Salen los Pokemon de siempre y ninguno nuevo
+  El resumen del RANDOMIZADOR decia 807 en vez de 1025. El mod base no se
+  esta leyendo.
+
+Un Pokemon nuevo sale con el nombre en ingles
+  Normal en unos pocos. Los nombres oficiales en espanol se ponen solos, pero
+  el mod tiene 320 habilidades y la lista oficial llega a 311: las ultimas se
+  quedan como estan.
+
+Se cuelga en el Poke Finder o en Mi Album
+  Es un fallo conocido DEL MOD, esta reportado. No entreis ahi.
+
+
+-----------------------------------------------------------------------------
+VOLVER ATRAS
+-----------------------------------------------------------------------------
+
+En RANDOMIZADOR, boton QUITAR. El juego vuelve a ser el original.
+
+Tu partida NO se toca en ningun momento, ni al instalar ni al quitar. Pero un
+Pokemon de 8a o 9a generacion en tu equipo deja de existir si quitas el mod,
+asi que no lo hagas a mitad de partida.
