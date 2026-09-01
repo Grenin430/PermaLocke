@@ -29,6 +29,14 @@ namespace PermaLocke.Core.Domain;
 public sealed record RunSnapshot
 {
     /// <summary>Current format. Bump only when a reader would get it wrong otherwise.</summary>
+    /// <remarks>
+    /// It stayed at 1 when <see cref="BattleReady"/> was added, deliberately. A reader refuses a
+    /// snapshot from a <em>newer</em> schema, so bumping it would make every friend still on the
+    /// old build reject every new snapshot and see an empty scoreboard — a much worse failure than
+    /// missing one field. Adding optional fields is safe in both directions: an old reader ignores
+    /// what it does not know, and a new reader gets null and says "sin dato". Bump it only when a
+    /// change would make an old reader get something <b>wrong</b> rather than merely miss it.
+    /// </remarks>
     public const int CurrentSchema = 1;
 
     public int Schema { get; init; } = CurrentSchema;
@@ -65,6 +73,26 @@ public sealed record RunSnapshot
     public int EventCount { get; init; }
 
     public string ChainHead { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Whether this player's world can link-battle against another compatible one.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A link battle is a lockstep simulation: both consoles compute the same battle and exchange
+    /// only the orders. That works with two <b>different</b> randomizations as long as neither
+    /// touches the data the game reads <em>during</em> a battle — and of everything PermaLocke
+    /// randomizes, only two options do: the shuffled base stats and the random abilities. Wild
+    /// encounters, trainers, starters, field items, shops, the extra Pokémon and the boss megas can
+    /// all differ freely, because none of them is consulted mid-battle.
+    /// </para>
+    /// <para>
+    /// Null means <b>not known</b>, which is a third answer and not a "no": a run randomized before
+    /// this was recorded has no such data, and saying "cannot battle" about it would be inventing a
+    /// verdict. The screen says "sin dato" and leaves it to the player.
+    /// </para>
+    /// </remarks>
+    public bool? BattleReady { get; init; }
 
     public DateTimeOffset RunCreatedAt { get; init; }
 

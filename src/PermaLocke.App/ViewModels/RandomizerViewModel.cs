@@ -185,6 +185,15 @@ public sealed partial class RandomizerViewModel : SectionViewModel
                     ["files"] = report.Files.Count.ToString(),
                     ["bytes"] = report.TotalBytes.ToString(),
                     ["modules"] = string.Join(",", report.Steps.Select(s => s.Module)),
+
+                    // Las dos unicas opciones que cambian datos que el juego lee DURANTE un
+                    // combate por link. Se guardan AQUI, en el evento, y no se leen de
+                    // randomizer.json cuando hacen falta: el fichero dice como esta configurado
+                    // HOY y el evento dice con que se genero el mundo que estas jugando. Si
+                    // alguien cambia el JSON y no regenera, son cosas distintas, y la que manda
+                    // para saber si puedes combatir es la segunda.
+                    ["shuffleBaseStats"] = options.ShuffleBaseStats.ToString(),
+                    ["randomizeAbilities"] = options.RandomizeAbilities.ToString(),
                 }
             });
 

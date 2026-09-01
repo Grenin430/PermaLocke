@@ -148,6 +148,67 @@
                 </StackPanel>
             </Border>
 
+
+            <!-- ================================================== COMBATE POR LINK
+                 Verificado el 01/09/2026: dos Azahar en el mismo PC, combate completo de septima
+                 generacion por red local emulada. La via existe.
+
+                 Lo que puede romperla no es el emulador, es la randomizacion. Un combate por link
+                 es una simulacion en paso fijo: las dos consolas calculan lo mismo y solo se
+                 intercambian las ordenes. Si vuestros mundos no coinciden en los datos que el
+                 juego lee DURANTE el combate, cada maquina calcula un daño distinto y se separan
+                 en el primer turno.
+
+                 De todo lo que PermaLocke randomiza, solo DOS opciones tocan esos datos. El resto
+                 -salvajes, entrenadores, iniciales, objetos del suelo, tiendas, el Pokemon extra,
+                 las megas de los jefes- puede ser distinto en cada uno sin ningun problema.
+
+                 Este aviso existe para que nadie descubra al mes que no puede pelear con nadie. -->
+            <Border Style="{StaticResource Inset}" Margin="0,12,0,0"
+                    Visibility="{Binding HasBattleNote, Converter={StaticResource BoolToVisibility}}">
+                <StackPanel>
+                    <DockPanel>
+                        <Border DockPanel.Dock="Right">
+                            <Border.Style>
+                                <Style TargetType="Border" BasedOn="{StaticResource ChipSuccess}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding BattleState}" Value="warn">
+                                            <Setter Property="Background" Value="{StaticResource WarningDeepBrush}" />
+                                            <Setter Property="BorderBrush" Value="{StaticResource WarningBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <TextBlock>
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource ChipText}">
+                                        <Setter Property="Text" Value="COMPATIBLES" />
+                                        <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding BattleState}" Value="warn">
+                                                <Setter Property="Text" Value="REVISAR" />
+                                                <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Border>
+                        <TextBlock Text="COMBATIR ENTRE VOSOTROS" Style="{StaticResource PanelHeading}"
+                                   VerticalAlignment="Center" />
+                    </DockPanel>
+
+                    <TextBlock Text="{Binding BattleNote}" Style="{StaticResource Body}"
+                               Margin="0,9,0,0" />
+
+                    <TextBlock Style="{StaticResource Faint}" Margin="0,6,0,0"
+                               Text="Podéis combatir por link con cada uno su propio mundo. Lo único que tiene que coincidir son shuffleBaseStats y randomizeAbilities de Data\randomizer.json, apagadas en todos: son las dos únicas que cambian datos que el juego consulta durante el combate. Salvajes, entrenadores, iniciales, objetos del suelo, tiendas y las megas de los jefes pueden ser distintos sin problema." />
+
+                    <TextBlock Style="{StaticResource Faint}" Margin="0,6,0,0"
+                               Text="El dato sale de la última randomización que se generó, no de cómo esté el fichero ahora: quien lo edite y no regenere sigue jugando el mundo viejo, y es ese el que decide si puede combatir." />
+                </StackPanel>
+            </Border>
+
             <!-- ================================================== LO QUE ESTO NO ES
                  Hay que decirlo, y decirlo aqui. La regla 3 del proyecto prohibe un anti-trampas
                  de mentira, asi que no hay ninguno fingiendo estar. Lo que si se puede ofrecer sin

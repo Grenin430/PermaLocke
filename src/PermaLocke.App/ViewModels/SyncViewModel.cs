@@ -47,6 +47,16 @@ public sealed partial class SyncViewModel : SectionViewModel
     [ObservableProperty]
     private bool _hasBroken;
 
+    /// <summary>Who can link-battle whom, or empty with nobody published.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasBattleNote))]
+    private string _battleNote = string.Empty;
+
+    [ObservableProperty]
+    private string _battleState = "none";
+
+    public bool HasBattleNote => BattleNote.Length > 0;
+
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(PublishCommand))]
     private string _folder = string.Empty;
@@ -88,6 +98,8 @@ public sealed partial class SyncViewModel : SectionViewModel
         }
 
         HasBroken = Broken.Count > 0;
+        BattleNote = standings.BattleNote;
+        BattleState = standings.BattleState;
         Message = standings.Message;
     }
 
