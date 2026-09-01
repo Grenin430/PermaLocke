@@ -32,13 +32,33 @@ public sealed class PokemonIconReader
     public int Count => _garc.FileCount;
 
     /// <summary>Opens the icon container straight from the cartridge, without extracting the RomFS.</summary>
-    public static PokemonIconReader Open(string romPath, string scratchDirectory)
+    /// <param name="baseLayer">
+    /// A romfs folder whose copy of the container wins over the cartridge's, for a mod that adds
+    /// Pokémon. Null is the ordinary case.
+    /// </param>
+    /// <remarks>
+    /// The scratch copy is named after where it came from. Without that, installing a mod would
+    /// leave the cartridge's container sitting in the cache under the same name and every new
+    /// species would silently draw nothing — the §27 mistake, where a stale file from the previous
+    /// generation stayed active while the report cheerfully described the new one.
+    /// </remarks>
+    public static PokemonIconReader Open(string romPath, string scratchDirectory,
+        string? baseLayer = null)
     {
-        var reader = new RomFsReader(romPath);
         Directory.CreateDirectory(scratchDirectory);
+
+        var fromLayer = baseLayer is null
+            ? null
+            : Path.Combine(baseLayer, IconGarcPath.Replace('/', Path.DirectorySeparatorChar));
+
+        if (fromLayer is not null && File.Exists(fromLayer))
+        {
+            return new PokemonIconReader(new GARC.MemGARC(File.ReadAllBytes(fromLayer)));
+        }
+
         var extracted = Path.Combine(scratchDirectory, "pokemon-icons.garc");
 
-        if (!File.Exists(extracted) && !reader.ExtractTo(IconGarcPath, extracted))
+        if (!File.Exists(extracted) && !new RomFsReader(romPath).ExtractTo(IconGarcPath, extracted))
         {
             throw new InvalidDataException(
                 $"La ROM no contiene {IconGarcPath}. ¿Es realmente Pokémon Ultra Luna sin encriptar?");

@@ -326,9 +326,10 @@ public static class PokemonIconIndex
 
     /// <summary>Builds the table straight from a cartridge.</summary>
     public static async Task<IReadOnlyDictionary<int, int>> BuildAsync(string romPath, string scratchDirectory,
-        CancellationToken ct = default)
+        string? baseLayer = null, CancellationToken ct = default)
     {
-        using var workspace = await RomWorkspace.ExtractAsync(romPath, scratchDirectory, ct: ct);
-        return Build(workspace.Config);
+        using var workspace = await RomWorkspace.ExtractAsync(romPath, scratchDirectory,
+            baseLayer: baseLayer, ct: ct);
+        return Build(workspace.Config, workspace.MaxSpecies);
     }
 }

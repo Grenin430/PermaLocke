@@ -29,6 +29,7 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
     private readonly SemaphoreSlim _gate = new(1, 1);
 
     private string? _romPath;
+    private string? _baseLayer;
     private string _scratch = string.Empty;
     private IReadOnlyDictionary<int, int>? _index;
     private bool _prepared;
@@ -70,15 +71,28 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
                 return;
             }
 
-            var scratch = Path.Combine(Path.GetTempPath(), "permalocke-sprites");
+            // Si hay un mod base, los iconos de Pokemon salen de EL: es donde estan los que anade,
+            // y el cartucho no los tiene. Los de objeto se siguen leyendo del cartucho a proposito,
+            // porque la tabla medida del §45 cubre los ids de vanilla, que son los unicos que la
+            // tienda vende.
+            var expansion = Path.Combine(paths.Expansion, "romfs");
+            var baseLayer = Directory.Exists(expansion) ? expansion : null;
+
+            // El temporal lleva el nombre del mundo: si compartiera nombre, instalar un mod dejaria
+            // activo el contenedor del cartucho y las especies nuevas no dibujarian nada, sin que
+            // nada fallara (§27).
+            var scratch = Path.Combine(Path.GetTempPath(),
+                baseLayer is null ? "permalocke-sprites" : "permalocke-sprites-mod");
             _romPath = rom.Path;
             _scratch = scratch;
-            _index = await PokemonIconIndex.BuildAsync(rom.Path, scratch, ct);
+            _baseLayer = baseLayer;
+            _index = await PokemonIconIndex.BuildAsync(rom.Path, scratch, baseLayer, ct);
 
-            if (!Directory.Exists(SpriteDirectory) || Directory.GetFiles(SpriteDirectory, "*.png").Length == 0)
-            {
-                await Task.Run(() => Extract(rom.Path, scratch), ct);
-            }
+            // Siempre, no solo cuando la carpeta esta vacia. Extract salta lo que ya existe, asi que
+            // cuesta poco; y el guardia de antes -"si hay algun png, no extraigas"- habria dejado sin
+            // dibujo a las 354 especies nuevas de quien instalara el mod DESPUES de haber jugado,
+            // que es el caso normal y el que menos se prueba.
+            await Task.Run(() => Extract(rom.Path, scratch), ct);
 
             if (!Directory.Exists(BallDirectory) || Directory.GetFiles(BallDirectory, "*.png").Length == 0)
             {
@@ -311,7 +325,7 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
 
     private void Extract(string romPath, string scratch)
     {
-        var reader = PokemonIconReader.Open(romPath, scratch);
+        var reader = PokemonIconReader.Open(romPath, scratch, _baseLayer);
         Directory.CreateDirectory(SpriteDirectory);
 
         for (var i = 0; i < reader.Count; i++)

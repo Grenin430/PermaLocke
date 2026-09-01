@@ -11,7 +11,20 @@ using pk3DS.Core.CTR;
 // Azahar lo lee. No forma parte de la aplicación que usan los jugadores.
 
 var root = FindRepositoryRoot() ?? Directory.GetCurrentDirectory();
-var work = Path.Combine(Path.GetTempPath(), "permalocke-romtool");
+
+// Si hay un mod base en Expansion/romfs, TODOS los comandos trabajan sobre el en vez de sobre el
+// cartucho. Es lo mismo que hace la aplicacion, y a proposito no es un argumento: una herramienta
+// que puede mirar un mundo distinto del que mira la app segun como la invoques acaba dando dos
+// respuestas a la misma pregunta.
+var expansion = Path.Combine(root, "Expansion", "romfs");
+var baseLayer = Directory.Exists(expansion) ? expansion : null;
+var work = Path.Combine(Path.GetTempPath(),
+    baseLayer is null ? "permalocke-romtool" : "permalocke-romtool-mod");
+
+if (baseLayer is not null)
+{
+    Console.WriteLine($"MOD BASE: {expansion}");
+}
 
 var command = args.Length > 0 ? args[0] : "help";
 switch (command)
@@ -108,7 +121,7 @@ string RequireRom()
 async Task InspectAsync()
 {
     var sw = Stopwatch.StartNew();
-    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work);
+    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work, baseLayer: baseLayer);
     Console.WriteLine($"\nExtraídos {GameFiles.All.Count} ficheros en {sw.ElapsedMilliseconds} ms");
 
     var config = workspace.Config;
@@ -124,7 +137,7 @@ async Task InspectAsync()
 
 async Task NamesAsync(int[] ids)
 {
-    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work);
+    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work, baseLayer: baseLayer);
     var names = workspace.Config.GetText(TextName.SpeciesNames);
     foreach (var id in ids)
     {
@@ -186,7 +199,7 @@ async Task RandomizeAsync(ulong seed)
 
 async Task DumpAsync(ulong seed, string zone)
 {
-    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work);
+    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work, baseLayer: baseLayer);
     var names = workspace.Config.GetText(TextName.SpeciesNames);
     var locations = workspace.Config.GetText(TextName.metlist_000000);
 
@@ -239,7 +252,7 @@ async Task DumpAsync(ulong seed, string zone)
 
 async Task StaticsAsync(ulong seed)
 {
-    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work);
+    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work, baseLayer: baseLayer);
     var names = workspace.Config.GetText(TextName.SpeciesNames);
     var options = RandomizerOptionsLoader.Load(Path.Combine(root, "Data", "randomizer.json"));
     var banned = options.BannedSpecies.ToHashSet();
@@ -323,7 +336,7 @@ async Task StaticsAsync(ulong seed)
 
 async Task TrainersAsync(ulong seed)
 {
-    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work);
+    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work, baseLayer: baseLayer);
     var names = workspace.Config.GetText(TextName.SpeciesNames);
     var options = RandomizerOptionsLoader.Load(Path.Combine(root, "Data", "randomizer.json"));
     var banned = options.BannedSpecies.ToHashSet();
@@ -381,7 +394,7 @@ async Task TrainersAsync(ulong seed)
 
 async Task PokemonAsync(ulong seed)
 {
-    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work);
+    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work, baseLayer: baseLayer);
     var names = workspace.Config.GetText(TextName.SpeciesNames);
     var types = workspace.Config.GetText(TextName.Types);
 
@@ -446,7 +459,7 @@ async Task PokemonAsync(ulong seed)
 
 async Task ShopsAsync()
 {
-    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work);
+    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work, baseLayer: baseLayer);
     var items = workspace.Config.GetText(TextName.ItemNames);
     // --gen <ruta> lee el Shop.cro de un mod ya generado, que es la unica forma honesta de
     // comprobar lo que se escribio: releerlo, no fiarse del informe.
@@ -473,7 +486,7 @@ async Task ShopsAsync()
 
 async Task ItemsAsync(int from, int to)
 {
-    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work);
+    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work, baseLayer: baseLayer);
     var items = workspace.Config.GetText(TextName.ItemNames);
     Console.WriteLine($"lista de objetos: {items.Length} entradas");
     for (var i = from; i <= to && i < items.Length; i++)
@@ -484,7 +497,7 @@ async Task ItemsAsync(int from, int to)
 
 async Task FieldItemsAsync()
 {
-    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work);
+    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work, baseLayer: baseLayer);
     var items = workspace.Config.GetText(TextName.ItemNames);
     var locations = workspace.Config.GetText(TextName.metlist_000000);
     var generatedEnc = Path.Combine(root, "Randomized", "seed-20260818", "romfs", "a", "0", "8", "3");
@@ -527,7 +540,7 @@ async Task FieldItemsAsync()
 // que se identifica por el nombre normalizado de la localización.
 async Task ZonesAsync()
 {
-    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work);
+    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work, baseLayer: baseLayer);
     var locations = workspace.Config.GetText(TextName.metlist_000000);
 
     var areas = Area7.GetArray(workspace.Config.GetlzGARCData("encdata"),
@@ -584,7 +597,7 @@ async Task ZonesAsync()
 // con una ROM randomizada.
 async Task SpeciesAsync()
 {
-    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work);
+    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work, baseLayer: baseLayer);
     var speciesNames = workspace.Config.GetText(TextName.SpeciesNames);
     var abilityNames = workspace.Config.GetText(TextName.AbilityNames);
     var natureNames = workspace.Config.GetText(TextName.Natures);
@@ -934,7 +947,7 @@ void EvoDump(string? evolutionPath)
 // alcanzable dentro del cap de la competicion o es decorado.
 async Task MegasAsync()
 {
-    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work);
+    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work, baseLayer: baseLayer);
     var species = workspace.Config.GetText(TextName.SpeciesNames);
     var items = workspace.Config.GetText(TextName.ItemNames);
 
@@ -1038,7 +1051,7 @@ void ItemIcons(int fromIcon, int toIcon)
 // -«de la 7a prueba en adelante»- con un numero medido y no a ojo.
 async Task ImportantesAsync()
 {
-    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work);
+    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work, baseLayer: baseLayer);
     var roles = PermaLocke.Data.JsonRoleCatalog.Load(Path.Combine(root, "Data", "roles.json"));
     var classes = roles.ImportantTrainerClasses.ToHashSet();
     var classNames = workspace.Config.GetText(TextName.TrainerClasses);
