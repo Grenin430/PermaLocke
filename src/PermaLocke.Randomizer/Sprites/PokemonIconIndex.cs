@@ -1,3 +1,4 @@
+using PermaLocke.Randomizer.Modules;
 using PermaLocke.Randomizer.Rom;
 using pk3DS.Core;
 
@@ -328,8 +329,42 @@ public static class PokemonIconIndex
     public static async Task<IReadOnlyDictionary<int, int>> BuildAsync(string romPath, string scratchDirectory,
         string? baseLayer = null, CancellationToken ct = default)
     {
-        using var workspace = await RomWorkspace.ExtractAsync(romPath, scratchDirectory,
-            baseLayer: baseLayer, ct: ct);
-        return Build(workspace.Config, workspace.MaxSpecies);
+        // Los recuentos de forma salen SIEMPRE del cartucho, nunca del mod, y esto costó que la
+        // aplicación se quedara sin un solo sprite.
+        //
+        // El razonamiento es el mismo que hizo que el bloque añadido fuese una línea: los 1154
+        // iconos del cartucho son byte a byte idénticos en el mod, o sea que ese tramo está
+        // repartido según las formas que declaraba el CARTUCHO. El mod cambia 343 entradas de la
+        // tabla de especies —las que ganan una mega declaran una forma más—, así que pasarle sus
+        // recuentos hacía que el bloque ordenado no sumara los 866 iconos exigidos y Build lanzaba.
+        //
+        // Lanzar era lo correcto: la comprobación existe justamente para eso, y sin ella cada
+        // especie a partir de Venusaur habría dibujado la de al lado. Lo que estaba mal era la
+        // pregunta.
+        using var cartridge = await RomWorkspace.ExtractAsync(romPath, scratchDirectory, ct: ct);
+        return Build(cartridge.Config, MaxSpeciesOf(baseLayer));
+    }
+
+    /// <summary>
+    /// How far the appended block reaches, read from the mod's own species table. The cartridge's
+    /// own answer needs no reading: it is <see cref="LastSpecies"/>.
+    /// </summary>
+    private static int MaxSpeciesOf(string? baseLayer)
+    {
+        if (baseLayer is null)
+        {
+            return LastSpecies;
+        }
+
+        var personal = Path.Combine(baseLayer,
+            GameFiles.Personal.Replace('/', Path.DirectorySeparatorChar));
+
+        if (!File.Exists(personal))
+        {
+            return LastSpecies;
+        }
+
+        using var patcher = new GarcPatcher(personal);
+        return PersonalEntry7.SpeciesCount(patcher.Read(patcher.FileCount - 1));
     }
 }

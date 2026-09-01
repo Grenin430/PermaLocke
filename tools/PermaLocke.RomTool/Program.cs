@@ -1210,7 +1210,14 @@ async Task TranslateAsync(bool write)
         (TextName.SpeciesNames, "especies",    es.specieslist),
         (TextName.MoveNames,    "movimientos", es.movelist),
         (TextName.AbilityNames, "habilidades", es.abilitylist),
-        (TextName.ItemNames,    "objetos",     es.itemlist),
+        // Los objetos van con lista oficial VACIA a proposito, o sea que los nuevos se quedan con
+        // el ingles del mod. El ancla lo exige: en especies PKHeX coincide 805 de 808 y en objetos
+        // solo 738 de 960, y sobre los ids nuevos se rompe del todo. Medido: el mod pone ahi sus
+        // objetos de evolucion -989 es "Malicious Armor"- y PKHeX pone caramelos, asi que copiar
+        // por indice bautizaba la armadura de Ceruledge como "Caramelo Mente".
+        //
+        // Un nombre equivocado es peor que uno en ingles: manda a buscar el objeto que no es.
+        (TextName.ItemNames,    "objetos",     []),
     ];
 
     using var spanish = await RomWorkspace.ExtractAsync(RequireRom(),
