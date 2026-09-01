@@ -70,4 +70,58 @@ public static class PersonalEntry7
             entry[at + StatOffsets[i]] = stats[i];
         }
     }
+
+    /// <summary>Where a species' alternate forms begin, as an entry index. Zero means it has none.</summary>
+    public const int FormStatsIndexOffset = 0x1C;
+
+    public static int GetFormStatsIndex(byte[] entry, int at) =>
+        BitConverter.ToUInt16(entry, at + FormStatsIndexOffset);
+
+    /// <summary>
+    /// How many species the table describes, read from the table itself.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The table is laid out as every species first and every alternate form after them, so the
+    /// <b>lowest form index any species points at</b> is the first entry that is not a species —
+    /// and one less than that is the last species. Nothing else in the file states the count.
+    /// </para>
+    /// <para>
+    /// It is derived rather than declared because pk3DS answers this question with a <b>constant</b>
+    /// (<c>MaxSpeciesID_7_USUM = 807</c>) that does not look at the loaded files at all. On the
+    /// cartridge that constant is right; on a mod that adds Pokémon it is silently wrong, and
+    /// wrong in the §68 direction — everything past 807 would simply never be picked, with nothing
+    /// failing to show for it.
+    /// </para>
+    /// <para>
+    /// Verified against both worlds: the cartridge's first form index is 808, giving 807, which is
+    /// the known answer; the gen 8-9 expansion's is 1026, giving 1025, which is the known last
+    /// species of the ninth generation. A derivation that reproduces two independently known
+    /// numbers is a measurement and not a guess.
+    /// </para>
+    /// </remarks>
+    /// <param name="packed">The concatenated table, which is the GARC's last subfile.</param>
+    public static int SpeciesCount(byte[] packed)
+    {
+        var rows = packed.Length / Size;
+        var first = 0;
+
+        for (var row = 0; row < rows; row++)
+        {
+            var index = GetFormStatsIndex(packed, row * Size);
+
+            if (index > 0 && (first == 0 || index < first))
+            {
+                first = index;
+            }
+        }
+
+        // A table where nothing declares a form is not a table this code understands, and guessing
+        // the row count instead would hand back a number that mixes species with forms.
+        return first > 0
+            ? first - 1
+            : throw new InvalidDataException(
+                "La tabla de datos de especie no declara ninguna forma, así que no se puede deducir "
+                + "cuántas especies tiene. Ver PersonalEntry7.SpeciesCount.");
+    }
 }

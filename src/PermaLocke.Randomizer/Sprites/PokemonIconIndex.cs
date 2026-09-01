@@ -236,12 +236,17 @@ public static class PokemonIconIndex
     /// right, so a mismatch means the table, the cartridge or the form counts changed, and the
     /// result must not be used.
     /// </exception>
-    public static IReadOnlyDictionary<int, int> Build(GameConfig config) =>
-        Build(species => config.Personal[species].FormeCount);
+    public static IReadOnlyDictionary<int, int> Build(GameConfig config, int maxSpecies = LastSpecies) =>
+        Build(species => config.Personal[species].FormeCount, maxSpecies);
 
-    /// <inheritdoc cref="Build(GameConfig)"/>
+    /// <inheritdoc cref="Build(GameConfig, int)"/>
     /// <param name="formCountOf">How many forms a species declares, as the cartridge says.</param>
-    public static IReadOnlyDictionary<int, int> Build(Func<int, int> formCountOf)
+    /// <param name="maxSpecies">
+    /// The last species the loaded tables describe. <see cref="LastSpecies"/> for the cartridge;
+    /// higher when a mod has added Pokémon, and then the expansion block is appended.
+    /// </param>
+    public static IReadOnlyDictionary<int, int> Build(Func<int, int> formCountOf,
+        int maxSpecies = LastSpecies)
     {
         var index = new Dictionary<int, int>(LastSpecies);
         var cursor = 1;   // 0 is the egg
@@ -277,7 +282,46 @@ public static class PokemonIconIndex
             index[species] = icon;
         }
 
+        AddExpansionBlock(index, maxSpecies);
         return index;
+    }
+
+    /// <summary>
+    /// The species a mod has added, which sit in one straight run after the cartridge's icons.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This is the whole of the work the gen 8-9 expansion needs on the icon side, and it is one
+    /// line, which was not the expectation. Two measurements made it that small:
+    /// </para>
+    /// <para>
+    /// First, the cartridge's <b>1154 icons are byte-for-byte identical</b> in the mod's container
+    /// — all 1154, hashed one by one. So the mod <em>appended</em> rather than reordered, and the
+    /// hand-built table above (§30) stays valid untouched instead of having to be redone.
+    /// </para>
+    /// <para>
+    /// Second, the appended run is in plain national order and is anchored at <b>both ends</b>:
+    /// icon 1154 is Meltan (808) and icon 1371 is Pecharunt (1025), the last species of the ninth
+    /// generation. 1371 − 1154 = 217 = 1025 − 808, so the run closes exactly with no slack, and
+    /// the icons after it are the mod's new <em>forms</em>, which this table does not claim to map.
+    /// </para>
+    /// <para>
+    /// The count is deliberately checked rather than assumed: a species past the end of the
+    /// container would draw somebody else's picture, which is the §45 hazard — a wrong sprite looks
+    /// perfectly fine and nobody notices.
+    /// </para>
+    /// </remarks>
+    private static void AddExpansionBlock(Dictionary<int, int> index, int maxSpecies)
+    {
+        if (maxSpecies <= LastSpecies)
+        {
+            return;
+        }
+
+        for (var species = LastSpecies + 1; species <= maxSpecies; species++)
+        {
+            index[species] = ContainerIcons + (species - (LastSpecies + 1));
+        }
     }
 
     /// <summary>Builds the table straight from a cartridge.</summary>
