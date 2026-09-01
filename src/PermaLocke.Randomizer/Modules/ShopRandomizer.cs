@@ -26,7 +26,9 @@ public sealed class ShopRandomizer(RomWorkspace workspace, RandomizerOptions opt
         CancellationToken ct = default)
     {
         var itemNames = workspace.Config.GetText(TextName.ItemNames);
-        var machines = ValidTechnicalMachines(itemNames);
+        // Por nombre y no por rango: las cien MT no son un tramo seguido, y el rango dejaba fuera
+        // las ocho ultimas -MT93 a MT100-, que asi no aparecian nunca en una tienda.
+        var machines = ShopTable.TechnicalMachines(itemNames);
 
         var path = mod.Stage(GameFiles.Shop);
         var cro = await File.ReadAllBytesAsync(path, ct);
@@ -144,24 +146,7 @@ public sealed class ShopRandomizer(RomWorkspace workspace, RandomizerOptions opt
     /// rather than trusted: the ids right after it are the gen 6 HM slots and two unnamed
     /// entries, and stocking a shop with those would sell the player nothing.
     /// </summary>
-    private static int[] ValidTechnicalMachines(string[] itemNames)
-    {
-        var machines = Enumerable
-            .Range(ShopTable.FirstTechnicalMachine,
-                ShopTable.LastTechnicalMachine - ShopTable.FirstTechnicalMachine + 1)
-            .Where(id => id < itemNames.Length
-                         && !string.IsNullOrWhiteSpace(itemNames[id])
-                         && itemNames[id] != "(?)")
-            .ToArray();
 
-        if (machines.Length == 0)
-        {
-            throw new InvalidDataException(
-                "No se encontró ninguna MT con nombre en la ROM; se aborta antes de tocar las tiendas.");
-        }
-
-        return machines;
-    }
 
     /// <summary>
     /// Reads the written CRO back and checks the three things that would break a shop: a changed

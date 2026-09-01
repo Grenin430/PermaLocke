@@ -48,14 +48,8 @@
   "megaTrainerMinimumLevel": 33,
 
   "_regularMartReplaced": "Los objetos que las tiendas NORMALES -las ocho de los Centros Pokemon, las que crecen segun superas pruebas- dejan de vender, y por que se cambian. Son los seis curativos de estado, ids 17 a 22 seguidos en la tabla del cartucho, y pasan a ser Poke Balls. El resto de esas tiendas se queda como esta. El nombre viaja con el id y se comprueba contra la tabla de objetos del cartucho ANTES de escribir: un id que caiga en otro objeto surtiria la tienda con otra cosa y no fallaria nunca, asi que un desajuste lanza y no se toca ninguna tienda (§52). Deja la lista vacia para que las tiendas normales no se toquen.",
-  "regularMartReplaced": [
-    { "id": 17, "name": "Poción" },
-    { "id": 18, "name": "Antídoto" },
-    { "id": 19, "name": "Antiquemar" },
-    { "id": 20, "name": "Antihielo" },
-    { "id": 21, "name": "Despertar" },
-    { "id": 22, "name": "Antiparalizador" }
-  ],
+  "_regularMartReplacedApagado": "Vacia a peticion del jugador el 2026-09-02: las tiendas normales se quedan EXACTAMENTE como el cartucho las trae. Para volver a cambiar los seis curativos de estado por Poke Balls, devuelve a la lista los ids 17 a 22.",
+  "regularMartReplaced": [],
   "regularMartReplacement": { "id": 4, "name": "Poké Ball" },
 
   "_trainerMovesFromLearnset": "Al cambiar la especie de un Pokémon de entrenador, deja sus movimientos a cero para que el juego le dé los suyos. 518 de los 1139 del cartucho ya vienen así, o sea que el juego lo soporta.",

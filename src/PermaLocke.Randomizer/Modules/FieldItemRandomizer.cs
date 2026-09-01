@@ -24,7 +24,20 @@ public sealed class FieldItemRandomizer(RomWorkspace workspace)
     public FieldItemResult Apply(IRandomSource random, GARC.LazyGARC encounterData, CancellationToken ct = default)
     {
         var itemNames = workspace.Config.GetText(TextName.ItemNames);
-        var machines = ValidTechnicalMachines(itemNames);
+
+        // Qué es una MT lo dice el cartucho por su nombre, no un rango escrito aquí. Las cien no
+        // son un tramo seguido -son 328-419, 618-620 y 690-694-, y darlo por seguido dejaba ocho
+        // fuera: una Poké Ball dorada con la MT97 no se reconocía, caía al barajado normal y
+        // entregaba una Poción donde tenía que haber una MT.
+        var machines = ShopTable.TechnicalMachines(itemNames);
+
+        if (machines.Length == 0)
+        {
+            throw new InvalidDataException(
+                "No se encontró ninguna MT con nombre en la ROM; se aborta antes de tocar los objetos del suelo.");
+        }
+
+        var isMachine = machines.ToHashSet();
 
         var zones = encounterData.FileCount / FieldItemTable.SubfilesPerZone;
         var found = new List<(int Zone, byte[] Environment, int Slot)>();
@@ -40,16 +53,27 @@ public sealed class FieldItemRandomizer(RomWorkspace workspace)
             }
         }
 
-        // The ordinary items get redistributed among their own positions.
-        var pool = found
+        // DOS sacos, y los dos se construyen con lo que el cartucho ya tenía puesto en esos mismos
+        // sitios: se baraja y se reparte, nunca se sortea de la tabla de objetos entera. Así ningún
+        // id aparece donde el juego no lo ponía ya, y el número de cada cosa se conserva exacto.
+        //
+        // Las MT van aparte porque su hueco es un hueco de MT -la Poké Ball dorada-, así que una MT
+        // se cambia por otra MT y nunca por una Poción. Barajar las cuarenta que hay entre sí, en
+        // vez de sortear del catálogo de cien, es lo que hace el Universal Pokémon Randomizer y es
+        // lo que mantiene la cuenta: cuarenta huecos, las mismas cuarenta MT, en otro orden.
+        var placed = found
             .Select(f => FieldItemTable.GetItem(f.Environment, f.Slot))
-            .Where(item => item != 0 && !ShopTable.IsTechnicalMachine(item))
+            .Where(item => item != 0)
             .ToList();
-        Shuffle(pool, random);
+
+        var machinePool = placed.Where(isMachine.Contains).ToList();
+        var regularPool = placed.Where(item => !isMachine.Contains(item)).ToList();
+
+        Shuffle(machinePool, random);
+        Shuffle(regularPool, random);
 
         var machineCount = 0;
         var regularCount = 0;
-        var next = 0;
         var touchedZones = new HashSet<int>();
 
         foreach (var (zone, environment, slot) in found)
@@ -60,15 +84,13 @@ public sealed class FieldItemRandomizer(RomWorkspace workspace)
                 continue;
             }
 
-            if (ShopTable.IsTechnicalMachine(item))
+            if (isMachine.Contains(item))
             {
-                FieldItemTable.SetItem(environment, slot, machines[random.Next(machines.Length)]);
-                machineCount++;
+                FieldItemTable.SetItem(environment, slot, machinePool[machineCount++]);
             }
             else
             {
-                FieldItemTable.SetItem(environment, slot, pool[next++]);
-                regularCount++;
+                FieldItemTable.SetItem(environment, slot, regularPool[regularCount++]);
             }
 
             touchedZones.Add(zone);
@@ -93,26 +115,5 @@ public sealed class FieldItemRandomizer(RomWorkspace workspace)
         }
     }
 
-    /// <summary>
-    /// The TMs this cartridge actually has, checked against the item names: the ids right after
-    /// the range are the gen 6 HM slots, which do nothing in Ultra Moon.
-    /// </summary>
-    private static int[] ValidTechnicalMachines(string[] itemNames)
-    {
-        var machines = Enumerable
-            .Range(ShopTable.FirstTechnicalMachine,
-                ShopTable.LastTechnicalMachine - ShopTable.FirstTechnicalMachine + 1)
-            .Where(id => id < itemNames.Length
-                         && !string.IsNullOrWhiteSpace(itemNames[id])
-                         && itemNames[id] != "(?)")
-            .ToArray();
 
-        if (machines.Length == 0)
-        {
-            throw new InvalidDataException(
-                "No se encontró ninguna MT con nombre en la ROM; se aborta antes de tocar los objetos del suelo.");
-        }
-
-        return machines;
-    }
 }

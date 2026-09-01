@@ -559,6 +559,7 @@ async Task FieldItemsAsync()
     var garc = new GARC.LazyGARC(await File.ReadAllBytesAsync(useGen ? generatedEnc : workspace.PathOf(GameFiles.EncounterDataUltraMoon)));
 
     var zones = garc.FileCount / FieldItemTable.SubfilesPerZone;
+    var machineIds = ShopTable.TechnicalMachines(items).ToHashSet();
     int total = 0, machines = 0, zonesWith = 0, unnamed = 0, berries = 0;
     var sample = new List<string>();
 
@@ -573,7 +574,7 @@ async Task FieldItemsAsync()
         {
             var item = FieldItemTable.GetItem(environment, slot);
             total++;
-            if (ShopTable.IsTechnicalMachine(item)) machines++;
+            if (machineIds.Contains(item)) machines++;
             if (item >= items.Length || items[item] == "(?)" || string.IsNullOrWhiteSpace(items[item])) unnamed++;
             if (sample.Count < 22 && item != 0) sample.Add($"z{zone}:{(item < items.Length ? items[item] : item.ToString())}");
             if (item < items.Length && items[item].StartsWith("Baya", StringComparison.OrdinalIgnoreCase)) berries++;

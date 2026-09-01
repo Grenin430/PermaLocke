@@ -45,11 +45,11 @@ public class ShopTableTests
         Assert.Equal(419, ShopTable.LastTechnicalMachine);
         Assert.Equal(92, ShopTable.LastTechnicalMachine - ShopTable.FirstTechnicalMachine + 1);
 
-        Assert.True(ShopTable.IsTechnicalMachine(328));
-        Assert.True(ShopTable.IsTechnicalMachine(419));
-        Assert.False(ShopTable.IsTechnicalMachine(420)); // MO01
-        Assert.False(ShopTable.IsTechnicalMachine(427)); // sin nombre
-        Assert.False(ShopTable.IsTechnicalMachine(4));   // Poké Ball
+        Assert.True(ShopTable.IsInMachineRange(328));
+        Assert.True(ShopTable.IsInMachineRange(419));
+        Assert.False(ShopTable.IsInMachineRange(420)); // MO01
+        Assert.False(ShopTable.IsInMachineRange(427)); // sin nombre
+        Assert.False(ShopTable.IsInMachineRange(4));   // Poké Ball
     }
 
     [Fact]
