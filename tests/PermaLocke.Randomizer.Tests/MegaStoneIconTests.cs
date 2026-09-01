@@ -41,21 +41,68 @@ public sealed class MegaStoneIconTests
     }
 
     /// <summary>
-    /// The second block is deliberately absent, and that has to stay a decision rather than
-    /// becoming a bug somebody "fixes" by extrapolating.
+    /// The second block, which was left without an icon for a long time on the strength of a
+    /// reading that turned out to be wrong.
     /// </summary>
     /// <remarks>
-    /// It starts at 752 (Swampertita, icon 617, blue) but the offset breaks before the end: with
-    /// the same -135 the last would land on icon 629, and 629 is a tool. Until somebody measures
-    /// where it breaks, no icon is better than the wrong one.
+    /// <para>
+    /// The comment that used to sit here said the block began at icon 617 and that its offset
+    /// "broke before the end". Both halves were false: 617 is white, blue and black — Glalita —
+    /// and the offset is a clean -146 from end to end. The mistake had been sitting in a comment
+    /// nobody could check, which is exactly the kind of claim §45 says has to be measured.
+    /// </para>
+    /// <para>
+    /// What these assertions protect is the <b>shape</b>: thirteen stones, a gap of two, four more.
+    /// That shape is what makes the alignment falsifiable — the two items in the gap are not stones
+    /// (766 is the Megabrazalete, and its icon is a bracelet), so an off-by-one would put a stone
+    /// on a bracelet and the count of thirteen would break.
+    /// </para>
     /// </remarks>
     [Fact]
-    public void The_second_block_is_left_without_an_icon_on_purpose()
+    public void The_second_block_is_thirteen_then_a_gap_of_two_then_four()
     {
-        foreach (var item in (int[])[752, 758, 764, 767, 770])
+        for (var item = 752; item <= 764; item++)
         {
-            Assert.False(ItemIconIndex.TryGet(item, out _),
-                $"el objeto {item} tiene icono sin haberse medido");
+            Assert.True(ItemIconIndex.TryGet(item, out var icon), $"falta el objeto {item}");
+            Assert.Equal(item - 146, icon);
         }
+
+        for (var item = 767; item <= 770; item++)
+        {
+            Assert.True(ItemIconIndex.TryGet(item, out var icon), $"falta el objeto {item}");
+            Assert.Equal(item - 146, icon);
+        }
+    }
+
+    /// <summary>
+    /// The anchor that catches an off-by-one, and the only one in the block that is not a stone.
+    /// </summary>
+    /// <remarks>
+    /// Colour tells a Swampertita from a Sceptilita, but every stone is a stone: shifting the whole
+    /// block by one would still land each item on something round and shiny. The Megabrazalete is
+    /// a <b>bracelet</b>, so it only fits one icon, and it sits outside the run being measured.
+    /// </remarks>
+    [Fact]
+    public void The_bracelet_anchors_the_block_from_outside_it()
+    {
+        Assert.True(ItemIconIndex.TryGet(766, out var bracelet));
+        Assert.Equal(620, bracelet);
+    }
+
+    /// <summary>Every mega stone the shop sells can show a picture.</summary>
+    /// <remarks>
+    /// The reason the block was finished at all. A stone with no icon is not a crash: <c>Of</c>
+    /// throws, and the shop would have shown a hole where the item is.
+    /// </remarks>
+    [Fact]
+    public void Both_blocks_together_cover_the_forty_seven_the_shop_sells()
+    {
+        int[] stones = [.. Enumerable.Range(656, 30), .. Enumerable.Range(752, 13),
+            .. Enumerable.Range(767, 4)];
+
+        Assert.Equal(47, stones.Length);
+
+        var icons = stones.Select(ItemIconIndex.Of).ToArray();
+        Assert.Equal(47, icons.Distinct().Count());
     }
 }

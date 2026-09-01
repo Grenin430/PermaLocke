@@ -69,13 +69,31 @@ public static class ItemIconIndex
         [671] = 536, [672] = 537, [673] = 538, [674] = 539, [675] = 540,
         [676] = 541, [677] = 542, [678] = 543, [679] = 544, [680] = 545,
         [681] = 546, [682] = 547, [683] = 548, [684] = 549, [685] = 550,
+        // Zona de -146: el SEGUNDO bloque de megapiedras. El desfase cambia otra vez, y el
+        // comentario que estuvo aqui decia que 752 era el icono 617; era una lectura equivocada.
+        //
+        // Se midio rindiendo los iconos 604-626 y mirandolos. La forma del bloque encaja por si
+        // sola: TRECE piedras seguidas (606-618), un hueco de dos, y CUATRO mas (621-624). Los
+        // objetos tienen exactamente esa forma -752-764 son trece, 765 y 766 no son piedras, y
+        // 767-770 son cuatro-, y eso ya seria dificil de atribuir a la casualidad.
+        //
+        // Pero ademas cuadra el COLOR de las diecisiete, una a una, que es el ancla independiente
+        // del §61: 606 azul y naranja (Swampert), 607 verde y rojo (Sceptile), 611 rosa y crema
+        // (Audino), 615 gris acero (Steelix), 617 blanco, azul y negro (Glalie), 618 rosa
+        // (Diancie), 622 marron y crema (Lopunny), 623 azul y rojo (Salamence), 624 amarillo y
+        // negro (Beedrill).
+        //
+        // Y el remache que caza un desfase de UNO, que es el error que el color no distingue: el
+        // objeto 766 es el MEGABRAZALETE, y el icono 620 -uno de los dos del hueco- es un
+        // brazalete rojo y negro. Ese ancla no es una piedra, asi que confirma el -146 por fuera
+        // del bloque que se esta midiendo.
+        [752] = 606, [753] = 607, [754] = 608, [755] = 609, [756] = 610,
+        [757] = 611, [758] = 612, [759] = 613, [760] = 614, [761] = 615,
+        [762] = 616, [763] = 617, [764] = 618,
 
-        // Las diecisiete megapiedras del segundo bloque (752-764 y 767-770) NO estan aqui, y no
-        // es un olvido. El bloque empieza bien -752 Swampertita es el icono 617, azul- pero el
-        // desfase se rompe antes de acabarlo: con -135 la ultima caeria en el icono 629 y el 629
-        // es una herramienta, no una piedra. Donde se rompe exactamente no se ha medido, y una
-        // piedra con el dibujo de la de al lado es justo el error que esta tabla existe para
-        // impedir. Sin icono se dibuja el hueco; con uno adivinado, nadie se entera (§45).
+        [766] = 620, // Megabrazalete, el ancla del hueco
+
+        [767] = 621, [768] = 622, [769] = 623, [770] = 624,
     };
 
     /// <summary>True when this item's icon has been checked and can be drawn.</summary>
