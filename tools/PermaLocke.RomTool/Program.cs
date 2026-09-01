@@ -93,6 +93,9 @@ switch (command)
     case "iniciales":
         Starters(args.Length > 1 ? args[1] : null);
         break;
+    case "traducir":
+        await TranslateAsync(args.Contains("--escribir"));
+        break;
     case "randomize":
         await RandomizeAsync(args.Length > 1 ? ulong.Parse(args[1]) : 20260818);
         break;
@@ -1151,3 +1154,145 @@ async Task ImportantesAsync()
         Console.WriteLine($"  con nivel maximo >= {floor,2}: {rows.Count(r => r.Max >= floor),3} combates");
     }
 }
+
+// Pone en espanol los nombres que el mod de expansion solo trae en ingles. No es una traduccion:
+// los nombres espanoles de especies, movimientos, habilidades y objetos son OFICIALES y PKHeX los
+// lleva, asi que esto es copiarlos a su sitio. Sin --escribir solo mide y no toca nada.
+async Task TranslateAsync(bool write)
+{
+    const int Spanish = 6, English = 2;
+
+    if (baseLayer is null)
+    {
+        Console.WriteLine("No hay mod base en Expansion/romfs: no hay nada que traducir.");
+        return;
+    }
+
+    // Los cuatro ficheros de NOMBRES que el mod agranda, con la lista oficial de PKHeX que les toca.
+    var es = PKHeX.Core.GameInfo.GetStrings("es");
+    (TextName Name, string What, string[] Official)[] targets =
+    [
+        (TextName.SpeciesNames, "especies",    es.specieslist),
+        (TextName.MoveNames,    "movimientos", es.movelist),
+        (TextName.AbilityNames, "habilidades", es.abilitylist),
+        (TextName.ItemNames,    "objetos",     es.itemlist),
+    ];
+
+    using var spanish = await RomWorkspace.ExtractAsync(RequireRom(),
+        Path.Combine(Path.GetTempPath(), "permalocke-tr-es"), Spanish, baseLayer: baseLayer);
+    using var english = await RomWorkspace.ExtractAsync(RequireRom(),
+        Path.Combine(Path.GetTempPath(), "permalocke-tr-en"), English, baseLayer: baseLayer);
+
+    Console.WriteLine("\nANCLA: los nombres que YA existen tienen que coincidir con los de PKHeX.");
+    Console.WriteLine("Si no coinciden, el indice no esta alineado y traducir moveria cada nombre de sitio.\n");
+
+    foreach (var (name, what, official) in targets)
+    {
+        var current = spanish.Config.GetText(name);
+        var target = english.Config.GetText(name);
+
+        var shared = Math.Min(current.Length, official.Count());
+        var same = 0;
+        var examples = new List<string>();
+
+        for (var i = 0; i < shared; i++)
+        {
+            if (current[i] == official[i]) { same++; }
+            else if (examples.Count < 4 && current[i].Length > 0)
+            {
+                examples.Add($"{i}: cartucho '{current[i]}' vs PKHeX '{official[i]}'");
+            }
+        }
+
+        var pct = shared == 0 ? 0 : 100.0 * same / shared;
+        Console.WriteLine($"{what,-12} cartucho {current.Length,5} · mod(ingles) {target.Length,5} · "
+                          + $"PKHeX {official.Length,5} · faltan {Math.Max(0, target.Length - current.Length),4}");
+        Console.WriteLine($"{"",-12} coinciden {same}/{shared} ({pct:F1}%)");
+
+        foreach (var e in examples)
+        {
+            Console.WriteLine($"{"",-12}   {e}");
+        }
+    }
+
+    if (!write)
+    {
+        Console.WriteLine("\nSolo medida. Añade --escribir para generar el texto en español.");
+        return;
+    }
+
+    // Los DIEZ subficheros que el mod agranda se tratan igual: se conserva lo que el juego ya dice
+    // y se añade lo que falta. Los cuatro de NOMBRES se rellenan con la lista oficial; los otros
+    // seis son descripciones y ahí se copia el inglés del propio mod.
+    //
+    // Y eso último es una decisión, no una dejadez: no hay fuente oficial para las descripciones, y
+    // en un Nuzlocke una descripción de movimiento equivocada mata un Pokémon. Correcta en inglés
+    // vale más que bonita e inventada. Dejarlas cortas tampoco vale, porque se indexan por id.
+    var index = targets.ToDictionary(t => TextIndex(t.Name), t => t);
+    var garc = new GARC.LazyGARC(await File.ReadAllBytesAsync(
+        spanish.PathOf(GameFiles.GameText(Spanish))));
+    var theirs = new GARC.LazyGARC(await File.ReadAllBytesAsync(
+        Path.Combine(baseLayer, "a", "0", "3", English.ToString())));
+
+    Console.WriteLine();
+    var touched = 0;
+
+    for (var i = 0; i < garc.FileCount && i < theirs.FileCount; i++)
+    {
+        var mine = TextFile.GetStrings(spanish.Config, garc[i]);
+        var mod = TextFile.GetStrings(english.Config, theirs[i]);
+
+        if (mod.Length <= mine.Length)
+        {
+            continue;
+        }
+
+        var official = index.TryGetValue(i, out var t) ? t.Official : [];
+        var merged = NameLocalizer.Extend(mine, mod, official);
+        garc[i] = TextFile.GetBytes(spanish.Config, merged.Lines);
+
+        Console.WriteLine($"  subfichero {i,3}: {merged.Kept,5} tal cual · "
+                          + $"+{merged.Translated,4} en español · +{merged.Borrowed,4} en inglés"
+                          + (index.TryGetValue(i, out var w) ? $"   [{w.What}]" : "   [descripciones]"));
+        touched++;
+    }
+
+    var outPath = Path.Combine(root, "Expansion", "romfs", "a", "0", "3", Spanish.ToString());
+    Directory.CreateDirectory(Path.GetDirectoryName(outPath)!);
+    await File.WriteAllBytesAsync(outPath, garc.Save());
+
+    // Se relee, que es lo único que convierte «escrito» en «hecho». Reempaquetar un GARC es la
+    // operación que más veces ha salido mal en este proyecto.
+    var back = new GARC.LazyGARC(await File.ReadAllBytesAsync(outPath));
+
+    if (back.FileCount != garc.FileCount)
+    {
+        throw new InvalidDataException(
+            $"El texto se quedó con {back.FileCount} subficheros en vez de {garc.FileCount}.");
+    }
+
+    Console.WriteLine();
+
+    foreach (var (name, what, _) in targets)
+    {
+        var at = TextIndex(name);
+        var lines = TextFile.GetStrings(spanish.Config, back[at]);
+        var expected = TextFile.GetStrings(english.Config, theirs[at]).Length;
+
+        if (lines.Length != expected)
+        {
+            throw new InvalidDataException(
+                $"{what}: quedaron {lines.Length} y el mod tiene {expected}.");
+        }
+
+        Console.WriteLine($"  releído {what,-12} {lines.Length,5} · "
+                          + $"la 808 es '{lines[Math.Min(808, lines.Length - 1)]}'");
+    }
+
+    Console.WriteLine($"\n{touched} subficheros reescritos en {outPath}");
+}
+
+// El indice de un fichero de texto dentro del GARC. pk3DS lo resuelve por dentro y no lo publica,
+// pero su tabla si es publica.
+static int TextIndex(TextName name) =>
+    TextReference.GameText_USUM.First(r => r.Name == name).Index;
