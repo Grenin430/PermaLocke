@@ -53,6 +53,9 @@
     <!-- ESTADISTICAS. Tres barras de distinta altura: lo que se cuenta y se compara. -->
     <Geometry x:Key="IconChart">M3.4,13.6 L8.2,13.6 L8.2,21 L3.4,21 Z M9.6,8.4 L14.4,8.4 L14.4,21 L9.6,21 Z M15.8,3.4 L20.6,3.4 L20.6,21 L15.8,21 Z</Geometry>
 
+    <!-- COMBATES. Dos espadas cruzadas: pelear con otro jugador. -->
+    <Geometry x:Key="IconSwords">M3.2,2.4 L6.4,2.4 L20.8,16.8 L20.8,20.4 L17.2,20.4 L2.8,6 Z M20.8,2.4 L17.6,2.4 L3.2,16.8 L3.2,20.4 L6.8,20.4 L21.2,6 Z</Geometry>
+
     <!-- COMPETICION. Tres siluetas: el grupo con el que juegas. -->
     <Geometry x:Key="IconPeople">M9,11.4 A3.7,3.7 0 1 0 9,4 A3.7,3.7 0 0 0 9,11.4 Z M9,13 C4.9,13 1.8,15.1 1.8,17.7 L1.8,21 L16.2,21 L16.2,17.7 C16.2,15.1 13.1,13 9,13 Z M17.4,10.6 A3,3 0 1 0 17.4,4.6 A3,3 0 0 0 17.4,10.6 Z M18.2,12.3 C21,12.7 22.6,14.3 22.6,16.2 L22.6,21 L18.2,21 Z</Geometry>
 

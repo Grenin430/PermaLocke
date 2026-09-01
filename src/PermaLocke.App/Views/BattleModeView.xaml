@@ -1,0 +1,157 @@
+<UserControl x:Class="PermaLocke.App.Views.BattleModeView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="0,0,10,0">
+
+            <!-- ================================================== EL ESTADO
+                 Lo mas ruidoso de la pantalla, y a proposito. Todo el riesgo de esta funcion es
+                 OLVIDARSE de que la tienes puesta: jugar media hora sobre el cartucho sin darte
+                 cuenta, extranado de que los salvajes sean los de siempre.
+
+                 Por eso el estado no dice solo COMO esta, dice QUE HACER AHORA. -->
+            <Border Padding="{StaticResource PadPanelWide}"
+                    CornerRadius="{StaticResource RadiusLarge}" BorderThickness="1">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Background" Value="{StaticResource SurfaceAltBrush}" />
+                        <Setter Property="BorderBrush" Value="{StaticResource BorderSubtleBrush}" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsInBattle}" Value="True">
+                                <Setter Property="Background" Value="{StaticResource WarningDeepBrush}" />
+                                <Setter Property="BorderBrush" Value="{StaticResource WarningBrush}" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+
+                <StackPanel>
+                    <DockPanel>
+                        <Border DockPanel.Dock="Right"
+                                Visibility="{Binding IsInBattle, Converter={StaticResource BoolToVisibility}}">
+                            <Border.Style>
+                                <Style TargetType="Border" BasedOn="{StaticResource ChipWarning}">
+                                    <Setter Property="Background" Value="{StaticResource WarningBrush}" />
+                                </Style>
+                            </Border.Style>
+                            <TextBlock Text="MUNDO GUARDADO" Style="{StaticResource ChipText}"
+                                       Foreground="{StaticResource OnAccentBrush}" />
+                        </Border>
+
+                        <TextBlock Text="{Binding Headline}"
+                                   FontSize="{StaticResource FontSizeSection}"
+                                   VerticalAlignment="Center" TextWrapping="Wrap">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource SectionTitle}">
+                                    <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsInBattle}" Value="True">
+                                            <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </DockPanel>
+
+                    <TextBlock Text="{Binding Explanation}" Style="{StaticResource Body}"
+                               Margin="0,10,0,0" />
+
+                    <Border Style="{StaticResource Divider}" Margin="0,16" />
+
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="PREPARAR PARA COMBATIR"
+                                Style="{StaticResource PrimaryButton}"
+                                Command="{Binding PrepareCommand}" MinWidth="230"
+                                Visibility="{Binding IsInBattle, Converter={StaticResource InverseBoolToVisibility}}" />
+
+                        <Button Content="DEVOLVER MI MUNDO"
+                                Style="{StaticResource PrimaryButton}"
+                                Command="{Binding RestoreCommand}" MinWidth="200"
+                                Visibility="{Binding IsInBattle, Converter={StaticResource BoolToVisibility}}" />
+
+                        <Button Content="COMPROBAR" Style="{StaticResource GhostButton}"
+                                Command="{Binding RefreshCommand}" MinWidth="130"
+                                Margin="10,0,0,0" />
+                    </StackPanel>
+
+                    <TextBlock Text="{Binding Status}" Margin="0,14,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource Body}">
+                                <Setter Property="Visibility" Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Status}" Value="">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
+            <!-- ================================================== CÓMO SE HACE -->
+            <Border Style="{StaticResource Inset}" Margin="0,12,0,0">
+                <StackPanel>
+                    <TextBlock Text="CÓMO SE PELEA" Style="{StaticResource PanelHeading}" />
+
+                    <Grid Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="1." Style="{StaticResource CardTitle}"
+                                   Foreground="{StaticResource AccentBrush}" Margin="0,0,12,0" VerticalAlignment="Top" />
+                        <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource Body}" Margin="0,0,0,10"
+                                   Text="Guarda dentro del juego y cierra Azahar del todo. Los mods se leen al arrancar, así que con el emulador abierto esto no serviría de nada." />
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="2." Style="{StaticResource CardTitle}"
+                                   Foreground="{StaticResource AccentBrush}" Margin="0,0,12,0" VerticalAlignment="Top" />
+                        <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource Body}" Margin="0,0,0,10"
+                                   Text="Pulsa PREPARAR PARA COMBATIR. Lo tenéis que hacer TODOS los que vayáis a pelear." />
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="3." Style="{StaticResource CardTitle}"
+                                   Foreground="{StaticResource AccentBrush}" Margin="0,0,12,0" VerticalAlignment="Top" />
+                        <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource Body}" Margin="0,0,0,10"
+                                   Text="Abrid Azahar y a pelear: Multijugador para conectaros, y dentro del juego X → Plaza Festival → Combate → Combate Link." />
+
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="4." Style="{StaticResource CardTitle}"
+                                   Foreground="{StaticResource AccentBrush}" Margin="0,0,12,0" VerticalAlignment="Top" />
+                        <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource Body}"
+                                   Text="Al terminar, cerrad Azahar y pulsad DEVOLVER MI MUNDO. Todo vuelve a estar como estaba." />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- ================================================== POR QUÉ HACE FALTA -->
+            <Border Style="{StaticResource Inset}" Margin="0,12,0,0">
+                <StackPanel>
+                    <TextBlock Text="POR QUÉ HACE FALTA" Style="{StaticResource PanelHeading}" />
+
+                    <TextBlock Style="{StaticResource Body}" Margin="0,9,0,0"
+                               Text="Cuando peleáis, las dos consolas van calculando el combate cada una por su lado y solo se mandan las órdenes. Si un Pokémon tiene fuerzas distintas en tu juego y en el de tu amigo, cada uno calcula una cosa y el combate se rompe a mitad." />
+
+                    <TextBlock Style="{StaticResource Body}" Margin="0,8,0,0"
+                               Text="Con el mundo apartado, los cinco jugáis el juego original durante el combate, así que todos calculáis igual. Después cada uno recupera el suyo." />
+
+                    <TextBlock Style="{StaticResource Faint}" Margin="0,8,0,0"
+                               Text="Está medido, no supuesto: con las estadísticas barajadas y las habilidades al azar el combate se desincroniza; con el juego original, no. La alternativa a esto es apagar esas dos opciones para siempre, y entonces no hace falta apartar nada — pero se pierde esa parte del caos." />
+
+                    <Border Style="{StaticResource Divider}" Margin="0,14" />
+
+                    <TextBlock Style="{StaticResource Faint}"
+                               Text="Tu mundo no se borra: se guarda en la carpeta load de Azahar y vuelve tal cual. Tu partida no se toca en ningún momento, ni al apartarlo ni al devolverlo." />
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

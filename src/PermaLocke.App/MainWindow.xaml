@@ -40,6 +40,9 @@
         <DataTemplate DataType="{x:Type vm:RouletteViewModel}">
             <views:RouletteView />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:BattleModeViewModel}">
+            <views:BattleModeView />
+        </DataTemplate>
         <DataTemplate DataType="{x:Type vm:SyncViewModel}">
             <views:SyncView />
         </DataTemplate>

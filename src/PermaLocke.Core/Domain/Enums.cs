@@ -188,5 +188,20 @@ public enum GameEventType
     /// explicit migration path for correcting an existing run: the old and new ids stay in the
     /// chain, instead of somebody editing <c>run.json</c> and erasing why its world changed.
     /// </remarks>
-    RoleChanged
+    RoleChanged,
+
+    /// <summary>
+    /// The randomized world was set aside so the player could link-battle, or put back afterwards.
+    /// </summary>
+    /// <remarks>
+    /// A link battle is a lockstep simulation, so every player has to be running the same species
+    /// data or the two consoles compute different battles and drift apart — measured, not assumed
+    /// (§80). Setting the mod aside puts everybody on the cartridge for the duration.
+    /// <para>
+    /// It leaves an event because it is a change to the world the run is being played in, and a
+    /// competition should be able to see it. "Was he on vanilla when he caught that?" is a
+    /// question the history has to be able to answer.
+    /// </para>
+    /// </remarks>
+    BattleModeChanged
 }

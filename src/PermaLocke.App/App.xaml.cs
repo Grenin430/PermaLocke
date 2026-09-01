@@ -106,6 +106,8 @@ public partial class App : Application
         collection.AddSingleton<PokePasteViewModel>();
         collection.AddSingleton<MiscellaneousViewModel>();
         collection.AddSingleton<TradedAwayReconciler>();
+        collection.AddSingleton<BattleModeService>();
+        collection.AddSingleton<BattleModeViewModel>();
         collection.AddSingleton<SnapshotStore>();
         collection.AddSingleton<SyncService>();
         collection.AddSingleton<SyncViewModel>();
