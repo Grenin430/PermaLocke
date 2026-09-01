@@ -42,6 +42,18 @@
                 </Border>
             </Grid>
 
+            <!-- ================================================== MOD BASE
+                 Sale siempre, tengas mod o no. Un aviso que solo aparece cuando hay algo deja al
+                 jugador sin forma de saber que el sitio existe, y esto decide sobre qué mundo se
+                 randomiza: enterarse DESPUÉS de generar es enterarse tarde. -->
+            <Border Style="{StaticResource Inset}" Padding="16,13" Margin="0,12,0,0">
+                <StackPanel>
+                    <TextBlock Text="MOD BASE" Style="{StaticResource StatLabel}" />
+                    <TextBlock Text="{Binding ExpansionText}" Style="{StaticResource Body}"
+                               FontSize="12" Margin="0,5,0,0" TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+
             <!-- Generar e instalar son dos pasos a propósito: instalar cambia la partida. -->
             <Border Style="{StaticResource Inset}" Padding="18,16" Margin="0,12,0,0">
                 <StackPanel>

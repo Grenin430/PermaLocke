@@ -60,6 +60,10 @@ public sealed partial class RandomizerViewModel : SectionViewModel
     [ObservableProperty]
     private string _romText = "Sin comprobar";
 
+    /// <summary>What the screen says about a base mod, which is either there or it is not.</summary>
+    [ObservableProperty]
+    private string _expansionText = "Sin comprobar";
+
     [ObservableProperty]
     private string _azaharText = "Sin comprobar";
 
@@ -87,6 +91,16 @@ public sealed partial class RandomizerViewModel : SectionViewModel
 
     private string OutputDirectory =>
         Path.Combine(_paths.Randomized, $"seed-{_runContext.Current?.Seed ?? 0}");
+
+    /// <summary>
+    /// The romfs of another mod to randomize on top of, or null to use the cartridge.
+    /// </summary>
+    /// <remarks>
+    /// Detected by the folder simply being there, the same way the cartridge is. There is no
+    /// switch for it because a switch could disagree with the folder, and the screen would then be
+    /// claiming to have randomized a world it did not read.
+    /// </remarks>
+    private string? BaseLayer { get; set; }
 
     public override string IconKey => "IconRandomizer";
 
@@ -120,6 +134,12 @@ public sealed partial class RandomizerViewModel : SectionViewModel
         AzaharText = Azahar.IsPortable
             ? $"Emulador propio, ya configurado: {Azahar.UserDirectory}"
             : $"Azahar instalado: {Azahar.UserDirectory}";
+
+        var expansion = Path.Combine(_paths.Expansion, "romfs");
+        BaseLayer = Directory.Exists(expansion) ? expansion : null;
+        ExpansionText = BaseLayer is null
+            ? $"Sin mod base: se randomiza sobre el cartucho. Para usar uno, deja su romfs en {_paths.Expansion}"
+            : $"Mod base detectado en {_paths.Expansion}. Se randomiza ENCIMA de él, no del cartucho.";
 
         IsGenerated = Directory.Exists(Path.Combine(OutputDirectory, "romfs"));
         IsInstalled = Azahar is not null && Directory.Exists(Path.Combine(ModDirectory, "romfs"));
@@ -163,10 +183,14 @@ public sealed partial class RandomizerViewModel : SectionViewModel
 
             var work = Path.Combine(Path.GetTempPath(), "permalocke-randomizer");
             var report = await new RandomizerService(options)
-                .RandomizeAsync(RomPath, work, OutputDirectory, run.Seed);
+                .RandomizeAsync(RomPath, work, OutputDirectory, run.Seed, BaseLayer);
 
             Status = $"Listo en {report.Elapsed.TotalSeconds:F1} s · "
-                     + $"{report.Files.Count} ficheros · {report.TotalBytes / 1024.0 / 1024.0:F0} MB";
+                     + $"{report.Files.Count} ficheros · {report.TotalBytes / 1024.0 / 1024.0:F0} MB"
+                     + $" · {report.MaxSpecies} especies"
+                     + (report.BaseLayerFiles is { Count: > 0 } b
+                         ? $" · {b.Count} ficheros del mod base"
+                         : string.Empty);
 
             await _events.AppendAsync(new GameEvent
             {
@@ -194,6 +218,15 @@ public sealed partial class RandomizerViewModel : SectionViewModel
                     // para saber si puedes combatir es la segunda.
                     ["shuffleBaseStats"] = options.ShuffleBaseStats.ToString(),
                     ["randomizeAbilities"] = options.RandomizeAbilities.ToString(),
+
+                    // Con que mundo se genero esto. Va aqui por lo mismo que las dos de arriba: la
+                    // carpeta Expansion puede vaciarse o llenarse despues, y entonces mirarla no
+                    // diria con que se genero LO QUE SE ESTA JUGANDO. Y el numero de especies es
+                    // lo que permite ver de un vistazo si el mod se leyo de verdad: 807 con un mod
+                    // base declarado significa que algo no se aplico.
+                    ["baseLayer"] = (report.BaseLayerFiles?.Count ?? 0).ToString(),
+                    ["baseLayerFiles"] = string.Join(",", report.BaseLayerFiles ?? []),
+                    ["maxSpecies"] = report.MaxSpecies.ToString(),
                 }
             });
 

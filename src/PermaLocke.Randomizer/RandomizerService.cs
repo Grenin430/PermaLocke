@@ -19,7 +19,13 @@ public sealed record RandomizationReport(
     IReadOnlyList<string> Files,
     long TotalBytes,
     TimeSpan Elapsed,
-    string? PreviousModKept = null);
+    string? PreviousModKept = null,
+
+    /// <summary>Files taken from a base layer instead of from the cartridge. Empty is the norm.</summary>
+    IReadOnlyList<string>? BaseLayerFiles = null,
+
+    /// <summary>How many species the world that was randomized turned out to hold.</summary>
+    int MaxSpecies = 0);
 
 /// <summary>
 /// Turns a vanilla cartridge plus a seed into a LayeredFS mod folder that Azahar loads.
@@ -43,12 +49,13 @@ public sealed class RandomizerService(RandomizerOptions options)
     }
 
     public async Task<RandomizationReport> RandomizeAsync(string romPath, string workDirectory,
-        string modDirectory, ulong seed, CancellationToken ct = default)
+        string modDirectory, ulong seed, string? baseLayer = null, CancellationToken ct = default)
     {
         var started = DateTimeOffset.UtcNow;
         var steps = new List<RandomizerStep>();
 
-        using var workspace = await RomWorkspace.ExtractAsync(romPath, workDirectory, ct: ct);
+        using var workspace = await RomWorkspace.ExtractAsync(romPath, workDirectory,
+            baseLayer: baseLayer, ct: ct);
         var pool = SpeciesPool.FromGame(workspace.Config, options, workspace.MaxSpecies);
         var mod = new LayeredFsMod(workspace, modDirectory);
 
@@ -188,7 +195,8 @@ public sealed class RandomizerService(RandomizerOptions options)
         var total = files.Sum(f => new FileInfo(
             Path.Combine(mod.RomFsDirectory, f.Replace('/', Path.DirectorySeparatorChar))).Length);
 
-        return new RandomizationReport(seed, steps, files, total, DateTimeOffset.UtcNow - started, kept);
+        return new RandomizationReport(seed, steps, files, total, DateTimeOffset.UtcNow - started, kept,
+            workspace.BaseLayerFiles, workspace.MaxSpecies);
     }
 
     /// <summary>
