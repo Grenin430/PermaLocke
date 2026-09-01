@@ -795,8 +795,123 @@ porque su entrada lleva nivel 37, justo el nivel al que Slowpoke ya se hace Slow
 releyendo el mod generado: metodo 4 de 266 a 287, el 8 de 43 a 44, el 19 de 1 a 16, el 22 de 1 a 3, y
 los métodos 5, 6, 7 y 21 desaparecen. Ver §70.
 
-**Siguiente.** Sincronización, y probar en partida real los combates importantes, los iniciales y
-las tiendas.
+**La interfaz, con identidad propia (2026-09-01).** Segundo repaso visual, y esta vez no de orden
+sino de carácter: el jugador pidió que pareciera un producto de videojuego y no un tema aplicado por
+encima. Lo primero fue medir qué la hacía parecer una plantilla: **25 tamaños de letra** en 132 usos
+—con los cuatro tokens `FontSize*` sin usar por nadie—, **50 valores de padding**, **10 radios** a
+mano, **37 colores fuera del tema** con una subpaleta entera dentro de `ShopView.xaml`, y **29 usos
+del mismo contenedor con borde**: todo era una tarjeta. No faltaba gusto, faltaba sistema.
+
+La regla nueva: **el gris hace el trabajo y un único acento significa valor y acción**. Si algo es
+del color de acento, o es dinero o se pulsa. Los semánticos solo como distintivos pequeños con fondo
+teñido, y la rareza confinada al gacha. Empezó en latón y **el jugador lo pasó a violeta**, el del
+ultraespacio; con el cambio se tiñeron también los neutros, porque un gris exacto debajo de un
+violeta se lee sucio. Y salió una colisión: **el tier 4 ERA violeta**, así que pasó a magenta para no
+decir dos cosas con el mismo color.
+
+**Cuatro materiales en vez de una card para todo** —sección sin caja por defecto, `Inset` plano sin
+borde, `Well` hundido para listas, `Card` con borde solo para objetos que se cogen—, y la palanca
+fue que `Inset` se usaba en 29 sitios: quitarle el marco **en el tema** desencajonó la aplicación
+entera sin tocar una vista. La elevación la da el escalón de gris; no hay ni una sombra.
+
+Tipografía de dos papeles: **Bahnschrift** para cifras y rótulos, Segoe para frases, Consolas para lo
+que se alinea en columna. La trae Windows 10 en adelante, así que viaja en el reparto sin licencia.
+Primer intento con la **condensada**, que a 10 px se cierra y no se lee: se vio en una etiqueta, no
+en el contador de puntos, donde quedaba bien. Y **catorce iconos propios**, silueta rellena porque a
+18 px un trazo de 1,5 px se emborrona. Ver §74.
+
+Tres trampas de WPF de esta tanda: **`Style` puesto como atributo Y como `<TextBlock.Style>` es error
+de compilación** —cayó cuatro veces—; **los comentarios XML no admiten `--`**; y `PrintWindow`
+**devuelve el dibujo anterior** si la ventana no está delante y WPF no ha repintado, así que dos
+capturas de verificación iban desfasadas una pantalla.
+
+**La carpeta que se reparte (2026-09-01).** `tools\publicar.ps1` construye el reparto: un exe
+autocontenido más `Data\` y `Emulator\`, y nada más. Dos cosas estaban rotas y **no se veían
+jugando**: `Data\` no se publicaba —solo el emulador estaba en el csproj—, y el empaquetado de
+fichero único **se tragaba el emulador**, dejando `Emulator\` con tres ficheros y el exe en 267 MB.
+Eso solo habría fallado en el ordenador de quien la recibiera. El script comprueba **lo que acaba de
+escribir**: exe, `azahar.exe`, los catorce json, la guía, y que no se hayan colado sprites, `Saves`
+ni `ROM`. Ver §75.
+
+**La run no se copiaba nunca (2026-09-01).** 319 copias de la partida y **cero de la run**:
+PermaLocke respaldaba el fichero de otro programa antes de cada escritura y no respaldaba su propia
+base de datos, con la cadena firmada por hash, los puntos y los 157 Pokémon dentro. `RunBackup` copia
+al arrancar y conserva las diez últimas. Va en `App.OnStartup` **antes de que nada abra la base de
+datos**, que es el único momento en que el fichero está en reposo —copiar un SQLite que otro escribe
+puede capturar media página, y una copia que quizá esté corrupta es peor que ninguna—. No lanza
+nunca, y la rotación ordena **por nombre y no por fecha**, que es lo único que sobrevive a copiar o
+restaurar la carpeta. Ver §76.
+
+**El mantenimiento sale de la terminal (2026-09-01).** `Probe` tiene 62 comandos y la carpeta que se
+reparte lleva `PermaLocke.exe` y nada más. Cuando esta run se desincronizó se arregló desde una línea
+de comandos; **la de otro se habría quedado rota para siempre**. Sección MANTENIMIENTO con auditoría
+de la run, reparar PID, cerrar entregados y corregir etapas, todas **en dos pasos** —mirar cuántos, y
+solo entonces se enciende el botón que escribe—.
+
+La fila que importa de la auditoría es **SIN PID**, porque el vigilante empareja por PID y por nada
+más y HOME no distingue eso de «no ha muerto ninguno». De las cuatro herramientas, **las etapas no
+tenían nada que extraer** —la lógica ya estaba en `ProgressService`— y lo que aporta la pantalla es
+**separar los tres números**: a mano, detectado y en vigor. Los intercambiados sí tenían lógica y solo
+en el probe: sale a `TradedAwayReconciler` y **el probe pasa a usarlo**, porque dos implementaciones
+de «cuál se fue» acabarían discrepando. Su test principal es el que **se niega a adivinar**: tres
+Giratina sin PID y dos entregas no cuadran, así que no toca ninguno. Ver §77.
+
+**ESTADÍSTICAS (2026-09-01).** La aplicación guardaba una cadena firmada con todo lo que ha pasado,
+enseñaba las últimas veinte líneas y tiraba el resto. La pantalla no calcula nada nuevo: es esa
+cadena, contada. El centro es **el libro de puntos**, que contesta por qué tienes los que tienes, y
+sale del `PointsDelta` que cada evento guardó **en su momento** y no de los precios de hoy — así
+sigue siendo verdad si se cambia la configuración con una run empezada. La curva se escala entre su
+mínimo y su máximo **y no desde cero**, porque el saldo puede quedarse en negativo y anclada a cero
+una run hundida se dibujaría plana. Y la racha sin bajas se cuenta **en eventos**, con la etiqueta
+diciéndolo: PermaLocke solo ve lo que pasa con la aplicación abierta. Ver §78.
+
+**COMPETICIÓN: la clasificación (2026-09-01).** Lo único que estaba sin empezar. **No hay servidor y
+no lo va a haber**: el transporte es una carpeta compartida —Drive, Dropbox, red, un pendrive— donde
+cada aplicación escribe **un** fichero con el resumen de su run y lee los de las demás. Se publica un
+resumen y no la run: mandar la cadena entera sería mandar el diario para que lean la última página.
+
+**No está verificado y no puede estarlo** sin ese servidor, así que la pantalla lo dice con su
+distintivo SIN VERIFICAR en vez de fingir un anti-trampas. Lo que sí guarda es el número de eventos y
+el hash del último: no demuestran que un número sea cierto, pero hacen **comparables** dos
+instantáneas de la misma run —un contador que baja es una copia restaurada, un hash que cambia sin
+que el contador suba es historial reescrito—. Detalles que se pagan si no se piensan: se escribe a un
+temporal y se mueve porque la carpeta la sincroniza otro programa; el fichero va **por id de run** y
+no por nombre, que dos Ash se pisarían; los empatados comparten puesto; y un fichero ajeno roto **se
+dice por nombre** sin impedir que carguen los demás. Ver §79.
+
+**Se puede combatir entre los jugadores, y está verificado (2026-09-01).** Dos Azahar en el mismo PC,
+**combate completo de séptima generación** por red local emulada. Era la única incógnita y estaba en
+el lado que no controlamos: la red de Nintendo cerró en abril de 2024, así que el modo local es la
+única vía.
+
+Lo que puede romperlo es la randomización, no el emulador: un combate por link es una **simulación en
+paso fijo** y las dos consolas calculan lo mismo. Medido, de los **ocho ficheros** que el mod
+reemplaza **siete no se leen en combate**; solo `a/0/1/7` sí, y de él solo cambian `shuffleBaseStats`
+y `randomizeAbilities` —los tipos ya están en false y **los datos de movimiento no se tocan nunca**—.
+O sea que **se puede combatir con cada uno su propio mundo** con esas dos iguales en todos. Salvajes,
+entrenadores, iniciales, objetos del suelo, tiendas, el Pokémon extra y las megas de jefe pueden ser
+distintos sin problema.
+
+COMPETICIÓN avisa de quién puede y quién no, con el dato sacado **del evento `RomRandomized` y no de
+`randomizer.json`**: el fichero dice cómo se generaría la próxima vez, el evento con qué se hizo el
+mundo que se está jugando. Tres estados y no dos, porque `null` es **«no se sabe»** y jamás se lee
+como «no puede». Y el formato de la instantánea **se queda en 1** a propósito: un lector rechaza
+cualquier formato más nuevo, así que subirlo habría dejado a todo amigo con la versión anterior
+viendo una clasificación vacía.
+
+Montar la prueba costó dos hallazgos que no documenta nadie: **`CITRA_USER_DIR` no funciona** —el
+emulador la ignora y se va a la instalación real; hay que usar modo portátil con una carpeta `user\`
+junto al ejecutable— y **los dos campos de apodo de multijugador están bloqueados**, porque Azahar
+los espeja del nombre de la consola (`Emulación → Configurar → Sistema`). Ver §80.
+
+**Y las bayas del suelo están randomizadas:** 97 de los 539 objetos del suelo son bayas y entran en
+el mismo barajado que el resto. Lo que no se ha comprobado es si las que caen al **sacudir un árbol**
+salen de esa misma tabla.
+
+**Siguiente.** Probar en partida real los combates importantes, los iniciales y las tiendas. Y el
+**paso 2 del combate por link**: repetirlo con las randomizaciones y `shuffleBaseStats` y
+`randomizeAbilities` en `false` en todos. La prueba está montada en `Escritorio\PermaLocke prueba
+link`, con el resultado del paso 1 escrito dentro.
 
 Lo que NO está resuelto todavía y no debe darse por hecho (detalle en `docs/ARCHITECTURE.md`):
 
@@ -823,7 +938,12 @@ Lo que NO está resuelto todavía y no debe darse por hecho (detalle en `docs/AR
 | Tiradas gratis y wonder trades por prueba | **HECHO Y VISTO EN LA APP** — crédito ganado de los logros y gastado del historial, con la marca `gratis`; los wonder trades pasan a estar limitados. Ver `ARCHITECTURE.md` §63 |
 | Ruleta del rol LUDÓPATA | **HECHA Y VISTA EN LA APP** — 16 caras, seis en la rueda, tiradas que se deben y se recomputan; escribe equipo, mochila y cajas por el fichero de partida. **Dos tiradas verificadas en la partida real.** Ver `ARCHITECTURE.md` §62 |
 | Roles | **HECHOS Y VERIFICADOS CONTRA LA ROM** — se eligen lo primero, multiplican los puntos, suben el nivel de todo lo que combate contra ti (entrenadores, Dominantes, Necrozma y legendarios) y añaden el Pokémon extra en 35 clases de combate importante. Falta probarlo jugando. Ver `ARCHITECTURE.md` §46, §47 y §48 |
-| Sincronización | **SIN EMPEZAR** |
+| Sincronización | **HECHA Y VISTA EN LA APP** — clasificación por carpeta compartida, sin servidor ni cuentas. Cada uno publica un resumen y lee los de los demás. **No es una verificación y la pantalla lo dice.** Falta probarla con la carpeta sincronizando de verdad entre dos máquinas. Ver `ARCHITECTURE.md` §79 |
+| Combate por link entre jugadores | **VERIFICADO** — dos Azahar en el mismo PC, combate completo de séptima generación. Se puede con cada uno su mundo si `shuffleBaseStats` y `randomizeAbilities` son iguales en todos. **Falta el paso 2**: repetirlo ya randomizado. Ver `ARCHITECTURE.md` §80 |
+| Copia de seguridad de la run | **HECHA** — al arrancar, diez copias rotativas. Antes había 319 copias de la partida y cero de la run. Ver `ARCHITECTURE.md` §76 |
+| Mantenimiento desde la aplicación | **HECHO Y VISTO EN LA APP** — auditoría, reparar PID, cerrar entregados y corregir etapas, sin terminal. Ver `ARCHITECTURE.md` §77 |
+| Estadísticas | **HECHA Y VISTA EN LA APP** — libro de puntos, curva de saldo, colección y récords, todo proyectado sobre la cadena de eventos. Ver `ARCHITECTURE.md` §78 |
+| `PermaLocke.Admin` | **SIGUE SIENDO EL ANDAMIO DE VISUAL STUDIO** — 66 líneas, `Title="MainWindow"` y un `Grid` vacío. O se construye o se borra |
 | API concreta de pk3DS.Core | **VERIFICADA** contra la ROM real — ver `ARCHITECTURE.md` §19 |
 
 ---
@@ -833,7 +953,10 @@ Lo que NO está resuelto todavía y no debe darse por hecho (detalle en `docs/AR
 ```bash
 dotnet build
 dotnet test
-dotnet publish src/PermaLocke.App -c Release -r win-x64 --self-contained true
+# la carpeta que se le pasa a otro jugador: exe autocontenido + Data + Emulator.
+# Comprueba lo que acaba de escribir y lanza si falta algo. NO incluye ROM ni tu partida.
+pwsh -File tools/publicar.ps1
+pwsh -File tools/publicar.ps1 -Destino "otra/ruta"
 
 # randomizador contra la ROM real (escribe en Randomized/, no en Azahar)
 dotnet run --project tools/PermaLocke.RomTool -- inspect

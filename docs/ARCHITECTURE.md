@@ -5683,3 +5683,340 @@ Dos fallos que costaron una vuelta cada uno, los dos en la comprobación y no en
 - La comprobación independiente cruzaba la tabla de entrenadores **vanilla** con el `trpoke` del mod.
   El módulo del Pokémon extra cambia las cuentas, así que ninguna cuadraba y **se saltaban en
   silencio**: daba 9 megas en vez de 62. La tabla y el equipo tienen que salir del mismo sitio.
+
+---
+
+## 74. La interfaz vuelve a hacerse, esta vez con identidad (2026-09-01)
+
+El §50 ya había ordenado la presentación. Lo de hoy es distinto: el jugador pidió que la aplicación
+**pareciera un producto de videojuego y no un tema aplicado por encima**, y para eso hubo que medir
+primero qué la hacía parecer una plantilla.
+
+### El diagnóstico, contado en números
+
+| | Antes |
+|---|---|
+| Tamaños de letra | **25 distintos** en 132 usos, y los cuatro tokens `FontSize*` sin usar por nadie |
+| Padding | **50 valores** distintos |
+| Radios | **10** a mano, ignorando los tres tokens |
+| Colores fuera del tema | **37**, con una subpaleta entera dentro de `ShopView.xaml` |
+| Contenedores con borde | **29** usos de `Inset`: todo era una tarjeta |
+| Navegación | Una lista de palabras, sin un solo icono |
+
+No era «falta gusto»: era que **no había sistema**, había veinticinco.
+
+### La regla del color
+
+El gris hace el trabajo y **un único acento** significa valor y acción. Si algo es del color de
+acento, o es dinero o se pulsa. Los semánticos solo aparecen como distintivos pequeños con fondo
+teñido, nunca como relleno grande, y la rampa de rareza se queda en el gacha y la colección.
+
+El acento empezó siendo **latón** —el color de la recompensa en cualquier RPG, y aquí además la
+moneda— y el jugador lo cambió a **violeta**, que es el del ultraespacio de Ultra Luna. Con el
+cambio se tiñeron también los neutros: un gris exacto debajo de un violeta se lee sucio y verdoso.
+
+Y salió una colisión que había que resolver: **el tier 4 de la rareza ERA violeta**. Con el acento
+violeta habrían sido el mismo color diciendo dos cosas distintas, así que el tier 4 pasó a magenta.
+El tier 5 se queda en oro, que todo el mundo lee como legendario.
+
+### Cuatro materiales en vez de una card para todo
+
+```
+Section   NADA. Un rótulo y aire. Es el material POR DEFECTO.
+Inset     Un plano un escalón por encima del fondo, SIN BORDE.
+Well      Hundido. Listas, historiales, inventarios.
+Card      Con borde. SOLO para objetos que se cogen.
+```
+
+La palanca que lo cambió todo: `Inset` se usaba en **29 sitios**, así que quitarle el marco en el
+tema desencajonó la aplicación entera **sin tocar una sola vista**.
+
+La elevación la da el escalón de gris. **No hay ni una sombra** en todo el tema.
+
+### La tipografía, y el fallo que costó una iteración
+
+Dos familias con papeles distintos: **Bahnschrift** para cifras y rótulos, **Segoe** para frases,
+**Consolas** para lo que se alinea en columna. Bahnschrift la trae Windows 10 en adelante, así que
+viaja en la carpeta de reparto sin licencia ni fichero.
+
+El fallo: se eligió **Bahnschrift SemiBold Condensed**. Una condensada a 10 px se estrecha y se
+cierra, y no se vio mirando el contador de puntos —donde queda bien— sino en una etiqueta de once
+caracteres. Pasó a SemiBold normal y la escala subió un escalón: 11 / 12,5 / 13,5 / 16 / 19 / 25 / 36.
+
+**Cifras tabulares en todos los números**, que es lo que impide que algo baile al pasar de 9 a 10.
+
+### Iconografía propia
+
+Catorce geometrías dibujadas aquí, lienzo de 24×24, **silueta rellena y no contorno** —a 18 px un
+trazo de 1,5 px se emborrona en pantallas sin escalado entero—, y peso óptico parejo para que
+ninguno pese más que los demás en una lista. Ni un emoji.
+
+### Las tres trampas de WPF de esta tanda
+
+1. **`Style` puesto dos veces** en el mismo `TextBlock` —como atributo y como `<TextBlock.Style>`—
+   no es un aviso, es un error de compilación. Cayó **cuatro veces** en la misma sesión.
+2. **Los comentarios XML no admiten `--`**, así que un separador de guiones dentro de un comentario
+   rompe el XAML y también el `.csproj`.
+3. Un estilo con `x:Key` **no hereda del implícito** salvo `BasedOn="{StaticResource {x:Type X}}"`.
+
+### Lo que se verificó, y cómo
+
+Recorriendo las nueve pantallas por **automatización de interfaz** y mirando cada captura. De ahí
+salió un fallo de método que conviene recordar: **`PrintWindow` devuelve el dibujo anterior si la
+ventana no está delante y WPF aún no ha repintado**, así que dos capturas del recorrido iban
+desfasadas una pantalla. Se corrige con un disparo de calentamiento.
+
+Se conservan las **57 claves** que las vistas ya consumían, así que ninguna pantalla se queda sin
+recurso.
+
+---
+
+## 75. La carpeta que se le pasa a otro jugador (2026-09-01)
+
+`tools\publicar.ps1` construye el reparto: un solo exe autocontenido más `Data\` y `Emulator\`.
+Quien la recibe no instala .NET ni Azahar; `ROM\`, `Saves\`, `Randomized\`, `Logs\` y `Config\` se
+crean solas al arrancar.
+
+### Dos cosas que estaban rotas y no se veían jugando
+
+**`Data\` no se publicaba.** Solo el emulador estaba en el `.csproj`, así que la copia publicada
+arrancaba con un `Data\` vacío y media aplicación no encontraba su fichero. Ahora se copian los
+catorce `.json` al publicar, y **nunca `Data\sprites\`**, que son del cartucho de cada uno.
+
+**El empaquetado de fichero único se tragaba el emulador.** Con
+`IncludeNativeLibrariesForSelfExtract`, `azahar.exe` y sus DLL entraban en el bundle: el exe pasaba
+de 162 MB a **267 MB** y `Emulator\` se quedaba con **tres ficheros**, así que la aplicación buscaba
+`Emulator\azahar.exe` a su lado y no había nada.
+
+Eso **solo habría fallado en el ordenador de quien la recibiera**. `ExcludeFromSingleFile` lo deja
+fuera.
+
+### La norma del script
+
+Comprueba **lo que acaba de escribir**, no lo que pretendía escribir: el exe, `azahar.exe`, los
+catorce json, la guía, y que no se hayan colado ni sprites, ni `Saves`, ni `ROM`. Si algo falta,
+lanza en vez de dejar una carpeta a medias.
+
+---
+
+## 76. La run no se copiaba nunca (2026-09-01)
+
+**319 copias de la partida. Cero de la run.**
+
+PermaLocke respaldaba religiosamente el fichero de **otro programa** —la partida de Ultra Luna—
+antes de cada escritura, y no respaldaba **su propia base de datos** ni una vez. Dentro viven la
+cadena de eventos firmada por hash, los puntos y los 157 Pokémon.
+
+`RunBackup` copia al arrancar y conserva las diez últimas en `Saves/backup/run/`.
+
+### Las tres decisiones
+
+**Va en `App.OnStartup`, antes de que nada abra la base de datos**, y no dentro de un servicio. Es
+el único momento en el que el fichero está garantizadamente en reposo: copiar un SQLite que otro
+está escribiendo puede capturar una página a medias, y **una copia que quizá esté corrupta es peor
+que ninguna, porque en ella se confía**.
+
+**No lanza nunca.** Un arranque no se detiene porque una copia no salga; quien abre la aplicación
+viene a jugar. Lo que pasó queda en el log.
+
+**La rotación ordena por NOMBRE, no por fecha de fichero.** Es lo único que sobrevive a copiar,
+restaurar o sincronizar la carpeta —cualquiera de esas cosas reescribe las fechas y el recortador
+borraría las equivocadas—. Y solo mira los ficheros que escribió ella: una copia hecha a mano es de
+quien la hizo.
+
+Siete tests, incluido que **dos arranques en el mismo segundo no se pisen**, que costaría una de las
+diez en silencio.
+
+---
+
+## 77. El mantenimiento sale de la terminal (2026-09-01)
+
+`Probe` tiene **62 comandos** y la carpeta que se le pasa a otro jugador lleva `PermaLocke.exe` y
+nada más.
+
+Cuando esta run se desincronizó —28 registros sin PID (§56), 26 sin cerrar tras un wonder trade
+(§59)— se arregló desde una línea de comandos. **La run de otro se habría roto igual y se habría
+quedado así**, porque no tiene ni la herramienta ni a quién preguntar.
+
+### Qué se expone y qué no
+
+Solo lo que un jugador puede necesitar y no puede hacer de otra forma: auditoría de la run, reparar
+PID, cerrar entregados y corregir etapas. El resto de `Probe` es investigación —barridos de memoria,
+diffs de banderas, cazas de patrones— y se queda donde está.
+
+La fila que importa de la auditoría es **SIN PID**: el vigilante empareja por PID y por nada más,
+así que un registro sin él es invisible y puede caer delante de la aplicación sin que se registre
+nada. HOME no distingue eso de «no ha muerto ninguno», y por eso tiene fila y aviso propios.
+
+### Las tres herramientas, en dos pasos
+
+Mirar cuántos, y **solo entonces** se enciende el botón que escribe. Un botón único escribiría en la
+partida sin que nadie hubiera visto antes cuánto iba a tocar.
+
+### Lo que costó traerlas, y que salió distinto de lo esperado
+
+**Etapas: no había nada que extraer.** Toda la lógica estaba ya en `ProgressService`
+—`DetectedAsync`, `ClearedAsync`, `CurrentCapAsync`, `AdvanceAsync`— y `StageProbe` era cableado y
+`Console.WriteLine`.
+
+Lo que sí aporta la pantalla es **separar los tres números**. El tope en vigor es el mayor entre lo
+detectado y lo marcado a mano; leídos como uno solo no se distinguen, y una run cuyo contador a mano
+se adelantó tiene un tope que nada respalda —ésta llegó a **40 con dos pruebas detectadas** (§58)—.
+
+**Intercambiados: aquí sí había lógica, y solo en el probe.** Sale a `TradedAwayReconciler` en
+`Core/Services`, y **el probe pasa a usarlo**: una sola implementación de «cuál se fue», porque dos
+acabarían discrepando y solo una sería la que ve el jugador.
+
+El test que importa es el que **se niega a adivinar**: tres Giratina sin PID y dos entregas en el
+historial son cuentas que no cuadran, así que no toca ninguno y lo dice. Elegir cuál de los tres se
+fue sería inventar historia dentro de un registro encadenado por hash.
+
+---
+
+## 78. ESTADÍSTICAS: la cadena de eventos, leída del revés (2026-09-01)
+
+La aplicación guardaba con cuidado una cadena firmada por hash con todo lo que ha pasado, enseñaba
+las últimas veinte líneas en HOME y **tiraba el resto**.
+
+Esta pantalla no calcula nada nuevo: es esa cadena, contada.
+
+### El libro de puntos
+
+Contesta la pregunta que la aplicación no sabía contestar: **por qué tienes los puntos que tienes**.
+De dónde salen a la izquierda, en qué se van a la derecha, agrupado por lo que los movió.
+
+Sale del `PointsDelta` que cada evento guardó **en su momento**, no de los precios de hoy. Eso es lo
+que lo mantiene honesto cuando se cambia la configuración con una run ya empezada: el libro dice lo
+que pasó, no lo que costaría ahora.
+
+### Tres decisiones que no son obvias
+
+**La curva se escala entre su propio mínimo y su máximo, no desde cero.** El saldo **puede quedarse
+en negativo** —una penalización no es una compra y no pregunta si puedes pagarla (§36)—, y anclada a
+cero una run que se hundió se dibujaría plana.
+
+**Se muestrea a 120 puntos.** Mil segmentos en 700 píxeles son un borrón, y la curva solo está para
+la forma.
+
+**La racha sin bajas se cuenta en EVENTOS, y la etiqueta lo dice.** PermaLocke solo ve lo que pasa
+con la aplicación abierta, así que contarla en días convertiría una semana sin jugar en una semana
+sobreviviendo.
+
+Verificado contra la run real: saldo 75 = ganado 100 menos perdido 25, y 6 capturados + 3 de gacha +
+1 de wonder trade = los 10 registrados = 8 en pie + 1 caído + 1 entregado.
+
+---
+
+## 79. COMPETICIÓN: la clasificación, por una carpeta compartida (2026-09-01)
+
+Lo único de la tabla que estaba **sin empezar**, y lo que convierte cinco aplicaciones aisladas en
+una competición.
+
+### La decisión de arquitectura
+
+**No hay servidor y no lo va a haber.** Montar una API son hospedaje, cuentas y despliegue para
+cinco amigos que nadie va a mantener. El transporte **es una carpeta compartida** —Drive, Dropbox,
+OneDrive, red, un pendrive—: cada aplicación escribe **un** fichero con el resumen de su run y lee
+los de las demás. De ahí sale gratis exportar y mandarlo por donde sea: es el mismo fichero.
+
+**Se publica un resumen, no la run.** La cadena son miles de filas; lo que una competición necesita
+ver es el marcador. Mandarla entera sería mandar tu diario para que lean la última página.
+
+### Lo que no es
+
+Son ficheros escritos por la aplicación de otro, en una carpeta que puede abrir. **No está
+verificado y no puede estarlo** sin ese servidor. La regla 3 prohíbe un anti-trampas de mentira, así
+que no hay ninguno fingiendo estar: la pantalla lo dice con su distintivo **SIN VERIFICAR**.
+
+Lo que sí se guarda es el **número de eventos y el hash del último**. No demuestran que un número sea
+cierto —nada puede— pero hacen **comparables** dos instantáneas de la misma run: un contador que baja
+significa que se restauró una copia, y un hash que cambia sin que el contador se mueva significa que
+se reescribió el historial.
+
+### Detalles que se pagan si no se piensan
+
+- **Se escribe a un temporal y se mueve.** La carpeta la sincroniza otro programa, y escribir en el
+  sitio deja que Drive suba media versión.
+- **El fichero va por id de run, no por nombre de jugador.** Dos Ash se pisarían, y una segunda run
+  borraría la primera.
+- **Los empatados comparten puesto.** Dar el 3 y el 4 a dos runs idénticas sería inventar una
+  diferencia.
+- **La antigüedad va al lado del número.** Una clasificación donde alguien publicó hace una semana y
+  nadie lo dice se lee como alguien que ha dejado de jugar.
+- Todo lo que se lee es un fichero ajeno: se analiza a la defensiva, y **uno roto se dice por nombre**
+  sin impedir que carguen los demás.
+
+---
+
+## 80. El combate por link entre los jugadores (2026-09-01)
+
+**Verificado: dos Azahar en el mismo PC, combate completo de séptima generación por red local
+emulada.** Era la única incógnita, y estaba en el lado que no controlamos: la red de Nintendo cerró
+en abril de 2024, así que el modo local es la única vía.
+
+### La randomización es lo que puede romperlo, no el emulador
+
+Un combate por link es una **simulación en paso fijo**: las dos consolas calculan lo mismo y solo se
+intercambian las órdenes. Si los mundos no coinciden en lo que el juego lee **durante** el combate,
+cada máquina calcula un daño distinto y se separan en el primer turno.
+
+Medido: de los **ocho ficheros** que el mod reemplaza, **siete no se leen en combate**.
+
+| Fichero | Qué es | ¿En combate? |
+|---|---|---|
+| `a/0/1/3` | aprendizajes por nivel | No — los movimientos van dentro del Pokémon |
+| `a/0/1/4` | evoluciones | No |
+| **`a/0/1/7`** | **datos de especie** | **SÍ** |
+| `a/0/8/3` | salvajes y objetos del suelo | No |
+| `a/1/0/6` · `a/1/0/7` | entrenadores | No |
+| `a/1/5/9` | estáticos | No |
+| `Shop.cro` | tiendas | No |
+
+Y de `a/0/1/7` solo se cambian dos cosas: `shuffleBaseStats` y `randomizeAbilities`. Los tipos ya
+están en `false` y **los datos de movimiento (`a/0/1/1`) no se tocan nunca**.
+
+**Conclusión: se puede combatir con cada uno su propio mundo**, siempre que esas dos opciones sean
+iguales en todos —lo simple, las dos en `false`—. Salvajes, entrenadores, iniciales, objetos del
+suelo, tiendas, el Pokémon extra y las megas de jefe pueden ser distintos sin ningún problema.
+
+### El aviso en COMPETICIÓN
+
+Existe para que nadie descubra al mes que no puede pelear con nadie.
+
+**El dato sale del evento `RomRandomized`, no de `randomizer.json`.** El fichero dice cómo estaría
+configurada la *próxima* generación; el evento dice con qué se hizo el mundo que se está jugando.
+Quien edite el JSON y no regenere sigue jugando el viejo, y es ése el que decide. Mismo principio
+que la marca `gratis` y el crédito de la ruleta (§63, §64).
+
+**Tres estados y no dos.** `null` es **«no se sabe»** —una run randomizada antes de que esto se
+guardara— y jamás se lee como «no puede»: eso sería un veredicto que nadie ha medido.
+
+**El formato de la instantánea se queda en 1**, y es lo delicado del cambio. Un lector rechaza
+cualquier instantánea de formato **más nuevo**, así que subirlo habría hecho que todo amigo con la
+versión anterior rechazara todas las instantáneas nuevas y viera **una clasificación vacía**: un
+fallo mucho peor que perder un campo. Añadir campos opcionales es seguro en los dos sentidos, y hay
+un test que lo fija.
+
+### Montar la prueba: lo que costó averiguarlo
+
+Está en `Escritorio\PermaLocke prueba link`. Dos cosas que no documenta nadie:
+
+**`CITRA_USER_DIR` NO funciona.** La variable existe en el binario, pero el emulador la ignora y se
+va a `%APPDATA%\Azahar`, o sea a la instalación real y a la partida buena. Se descubrió mirando la
+fecha de la configuración real: escrita 25 segundos antes. Lo que sí funciona es el **modo portátil**:
+una carpeta `user\` **junto al ejecutable**, lo que obliga a duplicar el emulador.
+
+**Los dos campos de apodo de multijugador están bloqueados.** Medido por automatización de interfaz:
+
+```
+QApplication.HostRoom.settings.username    ReadOnly=True
+QApplication.DirectConnect.nickname        ReadOnly=True
+```
+
+No es el validador ni la selección: **no se puede escribir en ellos**. Azahar los espeja del
+**nombre de la consola emulada**, cuyo valor por defecto es `AZAHAR`, así que dos carpetas `user`
+nuevas dan dos consolas con el mismo nombre y la sala rechaza el duplicado. Se cambia en
+**Emulación → Configurar → Sistema**, y basta con cambiarlo en una de las dos.
+
+La otra colisión, la de la MAC, se resuelve sola con carpetas separadas: cada una genera la suya en
+`user\sysdata\mac.txt`.
