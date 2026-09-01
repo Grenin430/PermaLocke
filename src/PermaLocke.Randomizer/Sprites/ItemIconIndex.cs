@@ -69,29 +69,36 @@ public static class ItemIconIndex
         [671] = 536, [672] = 537, [673] = 538, [674] = 539, [675] = 540,
         [676] = 541, [677] = 542, [678] = 543, [679] = 544, [680] = 545,
         [681] = 546, [682] = 547, [683] = 548, [684] = 549, [685] = 550,
-        // Zona de -146: el SEGUNDO bloque de megapiedras. El desfase cambia otra vez, y el
-        // comentario que estuvo aqui decia que 752 era el icono 617; era una lectura equivocada.
+        // Zona de -146: el SEGUNDO bloque de megapiedras. Estuvo sin icono mucho tiempo por un
+        // comentario que decia que el desfase "se rompe antes de acabarlo" y que 752 era el icono
+        // 617. Las dos mitades eran falsas, y era una afirmacion que nadie podia comprobar sin
+        // volver a mirar el contenedor, que es justo lo que este fichero existe para evitar.
         //
-        // Se midio rindiendo los iconos 604-626 y mirandolos. La forma del bloque encaja por si
-        // sola: TRECE piedras seguidas (606-618), un hueco de dos, y CUATRO mas (621-624). Los
-        // objetos tienen exactamente esa forma -752-764 son trece, 765 y 766 no son piedras, y
-        // 767-770 son cuatro-, y eso ya seria dificil de atribuir a la casualidad.
+        // Lo que ancla el bloque NO es el color, es la FORMA, y por eso es rigida. Rindiendo los
+        // iconos 604-628 se ve: 604 una tiara, 605 una concha, TRECE esferas seguidas (606-618),
+        // DOS objetos que no son esferas (619-620), CUATRO esferas (621-624), y 625-626 vuelven a
+        // ser conchas. La tirada de esferas esta acotada por los dos lados.
         //
-        // Pero ademas cuadra el COLOR de las diecisiete, una a una, que es el ancla independiente
-        // del §61: 606 azul y naranja (Swampert), 607 verde y rojo (Sceptile), 611 rosa y crema
-        // (Audino), 615 gris acero (Steelix), 617 blanco, azul y negro (Glalie), 618 rosa
-        // (Diancie), 622 marron y crema (Lopunny), 623 azul y rojo (Salamence), 624 amarillo y
-        // negro (Beedrill).
+        // Los objetos tienen exactamente esa forma: 752-764 son trece megapiedras, 765 es la
+        // Vasija de Castigo, 766 el Megabrazalete, y 767-770 son cuatro megapiedras. Trece, dos y
+        // cuatro solo encaja de una manera: correr el bloque un puesto exigiria que hubiera doce
+        // esferas antes del hueco, y hay trece.
         //
-        // Y el remache que caza un desfase de UNO, que es el error que el color no distingue: el
-        // objeto 766 es el MEGABRAZALETE, y el icono 620 -uno de los dos del hueco- es un
-        // brazalete rojo y negro. Ese ancla no es una piedra, asi que confirma el -146 por fuera
-        // del bloque que se esta midiendo.
+        // El color corrobora pero no decide, y conviene dejarlo dicho porque la primera lectura de
+        // este bloque se hizo por color y varias estaban mal. Las inconfundibles: 617 blanco, azul
+        // y negro es Glalita (763); 622 marron y crema es Lopunnita (768); 624 amarillo y negro es
+        // Beedrillita (770); 611 rosa y crema es Audinita (757).
+        //
+        // El desfase es -146 y no -135, uniforme de 752 a 770.
         [752] = 606, [753] = 607, [754] = 608, [755] = 609, [756] = 610,
         [757] = 611, [758] = 612, [759] = 613, [760] = 614, [761] = 615,
         [762] = 616, [763] = 617, [764] = 618,
 
-        [766] = 620, // Megabrazalete, el ancla del hueco
+        // Los dos del hueco. No los usa ninguna pantalla, y estan aqui porque son ELLOS los que
+        // hacen falsificable la alineacion: si el bloque estuviera corrido un puesto, alguno de
+        // los dos caeria sobre una esfera.
+        [765] = 619, // Vasija de Castigo, roja y con aros, el objeto de Hoopa
+        [766] = 620, // Megabrazalete, un aparato negro y rojo de muneca
 
         [767] = 621, [768] = 622, [769] = 623, [770] = 624,
     };

@@ -73,20 +73,29 @@ public sealed class MegaStoneIconTests
             Assert.Equal(item - 146, icon);
         }
     }
-
     /// <summary>
-    /// The anchor that catches an off-by-one, and the only one in the block that is not a stone.
+    /// The pair in the gap, which is what makes the alignment falsifiable.
     /// </summary>
     /// <remarks>
-    /// Colour tells a Swampertita from a Sceptilita, but every stone is a stone: shifting the whole
-    /// block by one would still land each item on something round and shiny. The Megabrazalete is
-    /// a <b>bracelet</b>, so it only fits one icon, and it sits outside the run being measured.
+    /// Colour tells a Swampertita from a Sceptilita, but every stone is a stone: sliding the whole
+    /// block by one would still land each item on something round and shiny, and nobody would ever
+    /// notice. What cannot slide is the <b>shape</b> — the cartridge has thirteen spheres, then two
+    /// things that are not spheres, then four more — so pinning the two non-spheres pins the block.
+    /// The Vasija de Castigo is a red vessel with rings and the Megabrazalete a wrist device.
     /// </remarks>
     [Fact]
-    public void The_bracelet_anchors_the_block_from_outside_it()
+    public void The_two_things_that_are_not_stones_anchor_the_block()
     {
+        Assert.True(ItemIconIndex.TryGet(765, out var bottle));
+        Assert.Equal(619, bottle);
+
         Assert.True(ItemIconIndex.TryGet(766, out var bracelet));
         Assert.Equal(620, bracelet);
+
+        // Y lo que hace que esos dos signifiquen algo: las piedras que los rodean son contiguas,
+        // asi que el hueco de dos esta donde tiene que estar y no en otro sitio.
+        Assert.Equal(618, ItemIconIndex.Of(764));
+        Assert.Equal(621, ItemIconIndex.Of(767));
     }
 
     /// <summary>Every mega stone the shop sells can show a picture.</summary>
