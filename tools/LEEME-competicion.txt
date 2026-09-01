@@ -1,0 +1,176 @@
+PERMALOCKE - LA CLASIFICACION DE LA COMPETICION
+===============================================
+
+Como conectar las aplicaciones de todos para ver quien va ganando.
+
+No hace falta servidor, ni cuentas, ni registrarse en nada. El transporte es una
+carpeta compartida: cada aplicacion escribe UN fichero con el resumen de su run y
+lee los de las demas.
+
+
+-----------------------------------------------------------------------------
+PARTE 1 - ESTO LO HACE UNA SOLA PERSONA, UNA SOLA VEZ
+-----------------------------------------------------------------------------
+
+PASO 1. Crear la carpeta compartida
+-----------------------------------
+
+Vale Google Drive, Dropbox o OneDrive. La que ya useis.
+
+  1. Instala el programa de ESCRITORIO del servicio:
+       Google Drive para escritorio, Dropbox u OneDrive.
+
+     OJO, AQUI ES DONDE FALLA LA GENTE: no vale usar Drive solo desde el
+     navegador. PermaLocke necesita una carpeta DE VERDAD en el disco, con su
+     letra de unidad. Si no puedes entrar en ella desde el explorador de
+     Windows, la aplicacion tampoco puede.
+
+  2. Crea dentro una carpeta, por ejemplo:  PermaLocke competicion
+
+  3. Compartela con los demas CON PERMISO DE EDICION.
+
+     Con permiso de solo lectura podran ver la clasificacion pero no publicar
+     la suya.
+
+
+PASO 2. Repartir la aplicacion
+------------------------------
+
+Comprime en ZIP la carpeta "PermaLocke para amigos" (unos 255 MB) y mandala por
+WeTransfer, Drive o lo que useis.
+
+NO metas tu ROM ahi. No viene incluida a proposito: cada uno tiene que volcar la
+suya de su propio cartucho.
+
+
+-----------------------------------------------------------------------------
+PARTE 2 - ESTO LO HACE CADA UNO EN SU ORDENADOR
+-----------------------------------------------------------------------------
+
+PASO 3. Descomprimir y arrancar
+-------------------------------
+
+Descomprime el ZIP donde quieras y haz doble clic en PermaLocke.exe
+
+Se crean solas las carpetas ROM, Saves, Randomized, Logs y Config.
+
+
+PASO 4. Poner tu ROM
+--------------------
+
+Vuelca la tuya de Pokemon Ultra Luna EUROPEA y DESENCRIPTADA, dejala dentro de
+la carpeta ROM\ y vuelve a abrir la aplicacion.
+
+Si esta encriptada, PermaLocke te lo dira al comprobarla en vez de randomizar
+cualquier cosa.
+
+
+PASO 5. Crear tu run
+--------------------
+
+Pulsa CREAR RUN y rellena:
+
+  - Nombre de la run
+  - TU NOMBRE DE JUGADOR   <- este es el que sale en la clasificacion, asi que
+                              que no os pongais los cinco "Ash"
+  - TU ROL
+
+El rol se elige AQUI y no despues, porque parte de el se escribe dentro de la
+ROM al randomizar. Cambiar de rol mas tarde NO vuelve a randomizar.
+
+  NORMAL      puntos x1, se pierden x1
+  CAGONETA    puntos x0,5, y NO pierde puntos al morir
+  EXPERTO     ganas x1,5 y pierdes x2; los rivales van un 27% por encima
+  LUDOPATA    los puntos como NORMAL, pero cada prueba te obliga a girar la
+              ruleta y vivir con lo que salga
+
+
+PASO 6. Randomizar
+------------------
+
+  RANDOMIZADOR -> GENERAR              (tarda un rato, ocupa unos 460 MB)
+  RANDOMIZADOR -> INSTALAR EN AZAHAR   (con Azahar CERRADO)
+
+Cada uno tendra un mundo distinto, porque la seed sale de su propia run.
+
+
+PASO 7. Conectarte a la clasificacion
+-------------------------------------
+
+  COMPETICION -> ELEGIR CARPETA
+
+Señala la carpeta compartida del PASO 1, la que esta dentro de tu Drive,
+Dropbox u OneDrive.
+
+  COMPETICION -> PUBLICAR LA MIA
+
+
+PASO 8. Ver a los demas
+-----------------------
+
+  COMPETICION -> ACTUALIZAR
+
+Apareceis todos los que hayais publicado, ordenados por puntos. La tuya lleva
+una barra violeta a la izquierda para que la encuentres de un vistazo.
+
+
+-----------------------------------------------------------------------------
+Y A PARTIR DE AHI
+-----------------------------------------------------------------------------
+
+PUBLICAR ES MANUAL, A BOTON. No se envia nada solo. Cuando quieras que los demas
+vean como vas, entra en COMPETICION y pulsa PUBLICAR LA MIA. Lo suyo es hacerlo
+al terminar cada sesion de juego.
+
+LO QUE VEN LOS DEMAS DE TI:
+
+  tu nombre, el nombre de tu run, tu rol, tus puntos, cuantos tienes en pie,
+  cuantos han caido, en que etapa vas y cuantos logros llevas.
+
+  Nada mas. Ni tus Pokemon, ni tu historial, ni tu partida.
+
+
+-----------------------------------------------------------------------------
+SI ALGO NO VA
+-----------------------------------------------------------------------------
+
+"La carpeta configurada no existe"
+
+  Casi siempre es que Drive todavia no ha bajado la carpeta a ese ordenador.
+  Abrela una vez desde el explorador de Windows y vuelve a pulsar ACTUALIZAR.
+
+Alguien sale con "hace 3 dias"
+
+  No es que haya dejado de jugar: es que no ha pulsado PUBLICAR. Por eso la
+  antiguedad sale al lado de cada numero.
+
+Aparece un aviso de ficheros que no se entienden
+
+  Alguien ha dejado algo raro en la carpeta, o un fichero se subio a medias.
+  La aplicacion te dice CUAL es por su nombre y sigue leyendo los demas. Se
+  borra y ya esta; quien fuera vuelve a pulsar PUBLICAR.
+
+No sale el boton PUBLICAR
+
+  Necesitas tener una run creada y la carpeta elegida.
+
+
+-----------------------------------------------------------------------------
+UNA ADVERTENCIA HONESTA
+-----------------------------------------------------------------------------
+
+Esto NO COMPRUEBA NADA.
+
+Son ficheros que escribe la aplicacion de cada uno, en una carpeta que
+cualquiera puede abrir y editar. No es una verificacion y no puede serlo sin un
+servidor que nadie va a montar. PermaLocke te lo dice en su propia pantalla, con
+un distintivo que pone SIN VERIFICAR, y no finge lo contrario.
+
+Lo que SI se guarda de cada run es el numero de eventos y el hash del ultimo. No
+demuestran que un numero sea cierto -nada puede-, pero hacen comparables dos
+instantaneas de la misma run:
+
+  - si alguien restaura una copia vieja, su contador de eventos BAJA
+  - si alguien reescribe su historial, el hash cambia sin que el contador suba
+
+Eso ya lo podeis mirar entre vosotros. Para cinco amigos, con eso sobra.

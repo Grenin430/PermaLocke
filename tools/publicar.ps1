@@ -47,12 +47,14 @@ if ($LASTEXITCODE -ne 0) { throw "La publicacion ha fallado." }
 
 Rename-Item (Join-Path $Destino 'PermaLocke.App.exe') 'PermaLocke.exe'
 Copy-Item (Join-Path $raiz 'tools\LEEME-para-jugadores.txt') (Join-Path $Destino 'LEEME.txt')
+Copy-Item (Join-Path $raiz 'tools\LEEME-competicion.txt') (Join-Path $Destino 'LEEME - COMPETICION.txt')
 Copy-Item (Join-Path $raiz 'LICENSE') $Destino
 
 # Se comprueba lo que se acaba de escribir, no lo que se pretendia escribir.
 $fallos = @()
 if (-not (Test-Path (Join-Path $Destino 'PermaLocke.exe')))          { $fallos += 'falta PermaLocke.exe' }
 if (-not (Test-Path (Join-Path $Destino 'Emulator\azahar.exe')))     { $fallos += 'falta Emulator\azahar.exe' }
+if (-not (Test-Path (Join-Path $Destino 'LEEME - COMPETICION.txt'))) { $fallos += 'falta la guia de la competicion' }
 if (Test-Path (Join-Path $Destino 'Data\sprites'))                   { $fallos += 'se ha colado Data\sprites (son de Nintendo)' }
 if (Test-Path (Join-Path $Destino 'Saves'))                          { $fallos += 'se ha colado Saves (es tu partida)' }
 if (Test-Path (Join-Path $Destino 'ROM'))                            { $fallos += 'se ha colado ROM' }
