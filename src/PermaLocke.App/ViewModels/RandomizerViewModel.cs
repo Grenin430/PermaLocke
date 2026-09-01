@@ -257,7 +257,13 @@ public sealed partial class RandomizerViewModel : SectionViewModel
                 "Instalar la randomización en Azahar",
                 "Esto cambia el mundo del juego: encuentros, entrenadores, tiendas y objetos.\n\n"
                 + "Si ya tienes una partida empezada, se verá afectada. Lo normal es instalarlo "
-                + "antes de empezar.\n\n¿Instalar?"))
+                + "antes de empezar.\n\n"
+                + (BaseLayer is null
+                    ? string.Empty
+                    : "Hay un mod base, así que también se copia entero: son varios GB y la primera "
+                      + "vez tarda unos minutos. Las siguientes veces solo se copia lo que ha "
+                      + "cambiado.\n\n")
+                + "¿Instalar?"))
         {
             return;
         }
@@ -269,8 +275,15 @@ public sealed partial class RandomizerViewModel : SectionViewModel
         try
         {
             var destination = Path.Combine(ModDirectory, "romfs");
-            var source = Path.Combine(OutputDirectory, "romfs");
-            await Task.Run(() => CopyTree(source, destination));
+
+            // La capa base ENTERA primero y lo nuestro encima. Sin esto, Azahar recibia nuestros
+            // siete ficheros y el cartucho para todo lo demas: los datos de especie, los
+            // aprendizajes y los 2,5 GB de modelos se quedaban fuera, asi que los Pokemon nuevos
+            // aparecian en las tablas de encuentro y el juego no tenia con que dibujarlos.
+            await Task.Run(() => ModInstaller.Install(
+                OutputDirectory, ModDirectory, BaseLayer,
+                Path.Combine(_paths.Expansion, "exefs"),
+                message => Status = message));
 
             Status = "Instalado. Cierra Azahar del todo y vuelve a abrirlo: los mods se leen al cargar el juego.";
             _logger.LogInformation("Randomización instalada en {Destination}", destination);
@@ -322,16 +335,6 @@ public sealed partial class RandomizerViewModel : SectionViewModel
         }
     }
 
-    private static void CopyTree(string source, string destination)
-    {
-        Directory.CreateDirectory(destination);
-        foreach (var file in Directory.EnumerateFiles(source, "*", SearchOption.AllDirectories))
-        {
-            var target = Path.Combine(destination, Path.GetRelativePath(source, file));
-            Directory.CreateDirectory(Path.GetDirectoryName(target)!);
-            File.Copy(file, target, overwrite: true);
-        }
-    }
 
     private void NotifyCommands()
     {

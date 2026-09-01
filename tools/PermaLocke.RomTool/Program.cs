@@ -194,12 +194,15 @@ async Task RandomizeAsync(ulong seed)
     // Por defecto se escribe en Randomized/, no en Azahar: instalar el mod cambia la partida en
     // curso, así que es una decisión explícita del jugador.
     var install = args.Contains("--install");
-    var mod = install
-        ? LayeredFsMod.DirectoryFor(Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Azahar"))
-        : Path.Combine(root, "Randomized", $"seed-{seed}");
 
-    Console.WriteLine($"seed {seed}\nsalida {mod}{(install ? "  (INSTALANDO EN AZAHAR)" : "")}\n");
+    // Siempre se genera aparte, aunque se vaya a instalar. Antes se escribía directo en la carpeta
+    // de Azahar, y con una capa base eso no puede ser: RandomizeAsync VACÍA la carpeta del mod
+    // antes de escribir, así que el mod base copiado ahí se habría borrado, y copiarlo después
+    // habría pisado lo randomizado. Generar aparte y copiar en orden -base primero, lo nuestro
+    // encima- es la única secuencia en la que ninguna de las dos capas se come a la otra.
+    var mod = Path.Combine(root, "Randomized", $"seed-{seed}");
+
+    Console.WriteLine($"seed {seed}\nsalida {mod}{(install ? "  (SE INSTALARÁ EN AZAHAR)" : "")}\n");
     var report = await new RandomizerService(options)
         .RandomizeAsync(RequireRom(), work, mod, seed, baseLayer);
 
@@ -214,7 +217,38 @@ async Task RandomizeAsync(ulong seed)
     {
         Console.WriteLine($"El mod anterior está guardado en {kept}, por si hay que volver a él.");
     }
+
+    if (!install)
+    {
+        return;
+    }
+
+    var target = LayeredFsMod.DirectoryFor(Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Azahar"));
+    var romfs = Path.Combine(target, "romfs");
+
+    if (baseLayer is not null)
+    {
+        Console.WriteLine($"\nCopiando el mod base entero a {romfs} (son varios GB)...");
+        var sw = Stopwatch.StartNew();
+        var copied = ModInstaller.CopyTree(baseLayer, romfs, skipUnchanged: true);
+        Console.WriteLine($"  {copied} ficheros en {sw.Elapsed.TotalSeconds:F0} s");
+
+        var exefs = Path.Combine(root, "Expansion", "exefs");
+
+        if (Directory.Exists(exefs))
+        {
+            // Fuera de romfs, a su lado. El mod parchea code.bin y sin él los Pokémon nuevos no
+            // existen para el motor por muchos datos que tengan.
+            ModInstaller.CopyTree(exefs, Path.Combine(target, "exefs"), skipUnchanged: true);
+            Console.WriteLine("  exefs/code.bin copiado");
+        }
+    }
+
+    ModInstaller.CopyTree(Path.Combine(mod, "romfs"), romfs);
+    Console.WriteLine($"Instalado en {target}. Cierra Azahar del todo antes de abrirlo.");
 }
+
 
 async Task DumpAsync(ulong seed, string zone)
 {
