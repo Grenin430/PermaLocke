@@ -93,6 +93,16 @@ switch (command)
     case "mapa-tallar":
         MapaTallar(args.Length > 1 ? int.Parse(args[1]) : 128);
         break;
+    case "mapa-exportar":
+        MapaExportar(args.Length > 1 ? args[1] : "a/1/6/3", args.Length > 2 ? int.Parse(args[2]) : 4,
+            args.Length > 3 ? args[3] : Path.Combine(root, "Data", "mapa-areas"));
+        break;
+    case "mapa-vacias":
+        MapaVacias(args.Length > 1 ? args[1] : "a/1/6/3");
+        break;
+    case "mapa-perfil":
+        MapaPerfil(args[1], args.Length > 2 ? int.Parse(args[2]) : 4);
+        break;
     case "mapa-segmentar":
         MapaSegmentar(args[1], args.Length > 2 ? int.Parse(args[2]) : 4,
             args.Length > 3 ? double.Parse(args[3]) : 40);
@@ -2512,4 +2522,260 @@ void MapaPistas(string folder)
             + $"   <336 {areaRefs * 100 / words,3}%"
             + $"   cuestas {runs,6}");
     }
+}
+
+// El perfil de saltos entre filas, para elegir el corte con criterio en vez de a ojo.
+void MapaPerfil(string romfsPath, int columns)
+{
+    var tiles = LoadTiles(romfsPath, 0, 5000);
+    var rows = tiles.Count / columns;
+    var costs = new List<double>();
+
+    for (var row = 0; row + 1 < rows; row++)
+    {
+        double total = 0;
+
+        for (var c = 0; c < columns; c++)
+        {
+            total += VerticalSeam(tiles[(row * columns) + c], tiles[((row + 1) * columns) + c]);
+        }
+
+        costs.Add(total / columns);
+    }
+
+    Console.WriteLine($"{costs.Count} saltos entre filas");
+    Console.WriteLine();
+
+    foreach (var threshold in new[] { 20, 30, 40, 50, 60, 70, 80, 90, 100, 120, 140 })
+    {
+        var over = costs.Count(c => c > threshold);
+        Console.WriteLine($"    umbral {threshold,3}  ->  {over,4} cortes, {over + 1,4} mapas");
+    }
+
+    Console.WriteLine();
+    Console.WriteLine("Los veinte saltos mayores, con su fila:");
+
+    foreach (var top in costs.Select((c, i) => (Cost: c, Row: i))
+        .OrderByDescending(x => x.Cost).Take(20).OrderBy(x => x.Row))
+    {
+        Console.WriteLine($"    fila {top.Row,4} -> {top.Row + 1,4}   {top.Cost,7:F1}");
+    }
+}
+
+// Exporta cada mapa de area como un PNG, para que una persona que conozca el juego les ponga
+// nombre. Es lo unico que falta para poder usar el arte real del cartucho: las piezas se cosen
+// solas, pero QUE SITIO es cada mapa no lo dice el cartucho en ningun lado que se haya encontrado.
+//
+// El corte va en dos pasadas a proposito. Un umbral unico no vale: alto fusiona dos sitios en una
+// imagen y bajo parte una fila de agua en dos. Primero se cortan los saltos fuertes y despues, si
+// un trozo sigue siendo demasiado alto para ser un mapa, se vuelve a partir por su mayor salto
+// interno. Y ante la duda se corta de mas: dos mitades del mismo sitio se nombran igual y se
+// arreglan, mientras que dos sitios en una imagen no hay forma de nombrarlos.
+void MapaExportar(string romfsPath, int _, string destination)
+{
+    var tiles = LoadTiles(romfsPath, 0, 5000);
+
+    // Cada mapa trae SU anchura, y eso costo cuatro intentos descubrirlo: todo el corte anterior
+    // daba por hecho cuatro columnas para las 866 piezas porque el primer mapa las tiene, y en la
+    // pieza 256 gana cinco -- 31,9 de salto contra 48,2 de cuatro--. Un mapa de cinco cosido a
+    // cuatro sale en diagonal y no hay umbral que arregle eso.
+    //
+    // Asi que se buscan las dos cosas a la vez y de izquierda a derecha: en cada posicion se elige
+    // la anchura que mejor encaja y despues se alarga el mapa mientras las filas sigan encajando.
+    var maps = new List<(int First, int Width, int Height)>();
+    var at = 0;
+
+    while (at < tiles.Count)
+    {
+        var left = tiles.Count - at;
+        var bestWidth = Math.Min(4, left);
+        var bestScore = double.MaxValue;
+
+        for (var w = 2; w <= 8; w++)
+        {
+            if (w > left)
+            {
+                continue;
+            }
+
+            var score = Fit(tiles, at, w, Math.Max(1, Math.Min(3, left / w)));
+
+            if (score < bestScore)
+            {
+                bestScore = score;
+                bestWidth = w;
+            }
+        }
+
+        // Y ahora cuanto dura: se anaden filas mientras la que viene encaje tan bien como las que
+        // ya hay. El «tan bien como» es relativo al propio mapa a proposito -- un mapa de desierto
+        // tiene saltos altos en todas sus filas y uno de mar los tiene bajos, asi que una cifra
+        // fija cortaria el desierto en tiras y no cortaria el mar nunca.
+        // Empieza en UNA fila, no en dos: de la pieza 366 en adelante los mapas son franjas anchas
+        // y bajas, y exigir dos filas hacia que el algoritmo tragase dos mapas de una vez o se
+        // inventase una anchura absurda para que le cuadrasen.
+        var height = 1;
+        double inside = -1;
+
+        // Con tope: un mapa no mide sesenta filas, y sin el tope el algoritmo se quedaba con una
+        // anchura mala y engullia la mitad del cartucho en un solo bloque. Al toparlo vuelve a
+        // elegir anchura, que es la decision que hay que darle otra oportunidad de acertar.
+        while ((height + 1) * bestWidth <= left && height < 12)
+        {
+            var next = RowSeam(tiles, at, bestWidth, height - 1);
+            var limit = inside < 0 ? 30 : Math.Max(28, inside * 2.0);
+
+            if (next > limit)
+            {
+                break;
+            }
+
+            inside = inside < 0 ? next : ((inside * (height - 1)) + next) / height;
+            height++;
+        }
+
+        if (bestWidth * height > left)
+        {
+            height = left / bestWidth;
+        }
+
+        if (height < 1)
+        {
+            break;
+        }
+
+        maps.Add((at, bestWidth, height));
+        at += bestWidth * height;
+    }
+
+    Directory.CreateDirectory(destination);
+
+    foreach (var stale in Directory.EnumerateFiles(destination, "*.png"))
+    {
+        File.Delete(stale);
+    }
+
+    var written = 0;
+
+    foreach (var map in maps)
+    {
+        var tileWidth = tiles[0].Width;
+        var tileHeight = tiles[0].Height;
+        var width = map.Width * tileWidth;
+        var canvas = new byte[width * map.Height * tileHeight * 4];
+
+        for (var row = 0; row < map.Height; row++)
+        {
+            for (var c = 0; c < map.Width; c++)
+            {
+                var tile = tiles[map.First + (row * map.Width) + c];
+
+                for (var y = 0; y < tile.Height; y++)
+                {
+                    var source = y * tile.Width * 4;
+                    var target = ((((row * tileHeight) + y) * width) + (c * tileWidth)) * 4;
+                    Array.Copy(tile.Pixels, source, canvas, target, tile.Width * 4);
+                }
+            }
+        }
+
+        written++;
+        var last = map.First + (map.Width * map.Height) - 1;
+        File.WriteAllBytes(
+            Path.Combine(destination, $"{written:00}_{map.Width}x{map.Height}_piezas-{map.First:000}-{last:000}.png"),
+            PngImage.Encode(canvas, width, map.Height * tileHeight));
+    }
+
+    Console.WriteLine($"{written} mapas en {destination}");
+
+    foreach (var group in maps.GroupBy(m => m.Width).OrderBy(g => g.Key))
+    {
+        Console.WriteLine($"    {group.Count(),3} mapas de {group.Key} columnas");
+    }
+}
+
+// Como de bien encaja una rejilla de anchura w empezando en «at»: mezcla el salto lateral dentro
+// de cada fila con el vertical entre filas. Cuanto mas bajo, mejor encaja.
+double Fit(List<BflimTexture> tiles, int at, int w, int rows)
+{
+    if (rows < 1)
+    {
+        return double.MaxValue;
+    }
+
+    double total = 0;
+    var count = 0;
+
+    for (var row = 0; row < rows; row++)
+    {
+        for (var c = 0; c + 1 < w; c++)
+        {
+            total += HorizontalSeam(tiles[at + (row * w) + c], tiles[at + (row * w) + c + 1]);
+            count++;
+        }
+    }
+
+    for (var row = 0; row + 1 < rows; row++)
+    {
+        for (var c = 0; c < w; c++)
+        {
+            total += VerticalSeam(tiles[at + (row * w) + c], tiles[at + ((row + 1) * w) + c]);
+            count++;
+        }
+    }
+
+    return count == 0 ? double.MaxValue : total / count;
+}
+
+// El salto vertical entre la fila «row» y la siguiente, dentro de un mapa que empieza en «at».
+double RowSeam(List<BflimTexture> tiles, int at, int w, int row)
+{
+    double total = 0;
+
+    for (var c = 0; c < w; c++)
+    {
+        var above = at + (row * w) + c;
+        var below = above + w;
+
+        if (below >= tiles.Count)
+        {
+            return double.MaxValue;
+        }
+
+        total += VerticalSeam(tiles[above], tiles[below]);
+    }
+
+    return total / w;
+}
+
+// Busca piezas de relleno: si un mapa no llena su ultima fila, lo que sobra va en negro o vacio, y
+// eso marca donde acaba mucho mejor que cualquier umbral sobre las costuras.
+void MapaVacias(string romfsPath)
+{
+    var tiles = LoadTiles(romfsPath, 0, 5000);
+    var empty = new List<int>();
+
+    for (var i = 0; i < tiles.Count; i++)
+    {
+        var dark = 0;
+
+        for (var p = 0; p < tiles[i].Pixels.Length; p += 4)
+        {
+            if (tiles[i].Pixels[p] < 12 && tiles[i].Pixels[p + 1] < 12 && tiles[i].Pixels[p + 2] < 12)
+            {
+                dark++;
+            }
+        }
+
+        if (dark > tiles[i].Width * tiles[i].Height * 0.9)
+        {
+            empty.Add(i);
+        }
+    }
+
+    Console.WriteLine($"{tiles.Count} laminas, {empty.Count} practicamente negras");
+    Console.WriteLine($"    {string.Join(" ", empty.Take(80))}");
+    Console.WriteLine();
+    Console.WriteLine("Su posicion dentro de la fila de cuatro (3 = ultima columna):");
+    Console.WriteLine($"    {string.Join(" ", empty.GroupBy(i => i % 4).OrderBy(g => g.Key).Select(g => $"col {g.Key}: {g.Count()}"))}");
 }
