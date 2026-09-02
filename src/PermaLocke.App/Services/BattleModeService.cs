@@ -54,6 +54,7 @@ public sealed class BattleModeService(
     IRunContext runContext,
     IEventStore events,
     IClock clock,
+    PermaLocke.Infrastructure.AppPaths paths,
     ILogger<BattleModeService> logger)
 {
     /// <summary>Where the world waits while the group is battling.</summary>
@@ -62,6 +63,25 @@ public sealed class BattleModeService(
     /// mistakes it for something the emulator loads: only <c>load\mods\&lt;titleid&gt;</c> is read.
     /// </remarks>
     private const string HoldingName = "permalocke-mundo-en-espera";
+
+    /// <summary>Marca que dice que el mundo esta apartado, cuando hay un mod base debajo.</summary>
+    /// <remarks>
+    /// Con mod base la carpeta NO se mueve: se sobreescriben los ficheros randomizados con los del
+    /// mod y luego al reves, asi que no hay ausencia que mirar. Las dos operaciones son
+    /// idempotentes, de modo que una marca que se quedara colgada cuesta una copia de mas y nunca
+    /// un mundo perdido.
+    /// </remarks>
+    private const string BattleMarker = "permalocke-en-combate.txt";
+
+    /// <summary>El romfs del mod base, si el jugador tiene uno.</summary>
+    private string? BaseRomfs =>
+        Directory.Exists(Path.Combine(paths.Expansion, "romfs"))
+            ? Path.Combine(paths.Expansion, "romfs")
+            : null;
+
+    private string? Generated => runContext.Current is { } run
+        ? Path.Combine(paths.Randomized, $"seed-{run.Seed}")
+        : null;
 
     private AzaharLocation? Where => azahar.Locate(AppContext.BaseDirectory);
 
@@ -82,6 +102,20 @@ public sealed class BattleModeService(
                 return BattleModeState.Nothing;
             }
 
+            // Con mod base la carpeta nunca se va, asi que la ausencia no dice nada: lo dice la
+            // marca, que solo existe mientras el mundo esta apartado.
+            if (BaseRomfs is not null)
+            {
+                if (!Directory.Exists(Path.Combine(mod, "romfs")))
+                {
+                    return BattleModeState.Nothing;
+                }
+
+                return File.Exists(Path.Combine(mod, BattleMarker))
+                    ? BattleModeState.InBattle
+                    : BattleModeState.Playing;
+            }
+
             if (Directory.Exists(Path.Combine(mod, "romfs")))
             {
                 return BattleModeState.Playing;
@@ -95,12 +129,116 @@ public sealed class BattleModeService(
 
     /// <summary>Sets the world aside. The game becomes the cartridge until it is put back.</summary>
     public Task<BattleModeResult> PrepareAsync(CancellationToken ct = default) =>
-        SwapAsync(ModFolder, Holding, toBattle: true, ct);
+        BaseRomfs is not null
+            ? LayerAsync(toBattle: true, ct)
+            : SwapAsync(ModFolder, Holding, toBattle: true, ct);
 
     /// <summary>Puts the world back exactly as it was.</summary>
     public Task<BattleModeResult> RestoreAsync(CancellationToken ct = default) =>
-        SwapAsync(Holding, ModFolder, toBattle: false, ct);
+        BaseRomfs is not null
+            ? LayerAsync(toBattle: false, ct)
+            : SwapAsync(Holding, ModFolder, toBattle: false, ct);
 
+
+    /// <summary>
+    /// Con un mod base debajo, el mundo NO se aparta: se vuelve al mod SIN randomizar.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Es mejor que dejarlo en el cartucho, y la diferencia la decidió una medida. Ultra Luna
+    /// original con un Pokémon de gen 8 o 9 encima no se cuelga, pero lo enseña como otra cosa:
+    /// tipo Normal, sprite de Bulbasaur, estadísticas ajenas y «para subir de nivel: −985». Está
+    /// calculando con una especie que no existe.
+    /// </para>
+    /// <para>
+    /// Volviendo al mod en vez de al cartucho, los Pokémon nuevos siguen existiendo y los dos
+    /// jugadores tienen exactamente los mismos datos de especie, que es lo único que el §80 midió
+    /// como causa de la desincronización. La condición pasa de «los dos en vanilla» a <b>los dos
+    /// con la misma versión del mod</b>, que es la que ya hacía falta para jugar.
+    /// </para>
+    /// <para>
+    /// Se copia encima en vez de mover, así que no hay ausencia que mirar y hace falta una marca.
+    /// Las dos direcciones son idempotentes: repetir una copia no rompe nada, de modo que una marca
+    /// colgada cuesta una copia de más y nunca un mundo perdido.
+    /// </para>
+    /// </remarks>
+    private async Task<BattleModeResult> LayerAsync(bool toBattle, CancellationToken ct)
+    {
+        if (ModFolder is not { } mod || BaseRomfs is not { } baseRomfs)
+        {
+            return new BattleModeResult(false, "No encuentro la carpeta de mods de Azahar.");
+        }
+
+        if (System.Diagnostics.Process.GetProcessesByName("azahar").Length > 0)
+        {
+            return new BattleModeResult(false,
+                "Azahar está abierto. Ciérralo del todo antes: el juego lee los mods al arrancar, "
+                + "así que un cambio con él abierto no serviría de nada.");
+        }
+
+        if (!Directory.Exists(Path.Combine(mod, "romfs")))
+        {
+            return new BattleModeResult(false, "No hay ningún mundo instalado.");
+        }
+
+        var marker = Path.Combine(mod, BattleMarker);
+
+        if (!toBattle && Generated is not { } gen)
+        {
+            return new BattleModeResult(false,
+                "No hay ninguna run cargada, así que no sé qué mundo devolver.");
+        }
+
+        try
+        {
+            if (toBattle)
+            {
+                // Los ficheros del mod ENCIMA de los randomizados: deshace lo nuestro sin tocar
+                // los 2,5 GB de modelos, que son idénticos y el salto por fecha y tamaño evita.
+                await Task.Run(() => ModInstaller.CopyTree(baseRomfs, Path.Combine(mod, "romfs"),
+                    skipUnchanged: true), ct);
+
+                var exefs = Path.Combine(paths.Expansion, "exefs");
+
+                if (Directory.Exists(exefs))
+                {
+                    await Task.Run(() => ModInstaller.CopyTree(exefs, Path.Combine(mod, "exefs")), ct);
+                }
+
+                await File.WriteAllTextAsync(marker,
+                    "El mundo randomizado está apartado para poder combatir. "
+                    + "Devuélvelo desde PermaLocke, en COMBATES.", ct);
+            }
+            else
+            {
+                await Task.Run(() => ModInstaller.Install(Generated!, mod, baseRomfs,
+                    Path.Combine(paths.Expansion, "exefs")), ct);
+
+                File.Delete(marker);
+            }
+
+            // Se relee: no se da por hecho lo que no se ha vuelto a mirar.
+            if (File.Exists(marker) != toBattle)
+            {
+                return new BattleModeResult(false,
+                    "El cambio no ha quedado como debía. Mira la carpeta load de Azahar antes de "
+                    + "volver a jugar.");
+            }
+
+            await RecordAsync(toBattle, ct);
+
+            return new BattleModeResult(true, toBattle
+                ? "Listo. Tu juego es ahora el mod SIN randomizar, así que los Pokémon de octava y "
+                  + "novena siguen existiendo. Todos tenéis que llevar la misma versión del mod."
+                : "Tu mundo ha vuelto. Los encuentros y los entrenadores son otra vez los tuyos.");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Falló el cambio de modo combate con mod base");
+            return new BattleModeResult(false,
+                "No se ha podido cambiar. El detalle está en la carpeta Logs.");
+        }
+    }
     private async Task<BattleModeResult> SwapAsync(string? from, string? to, bool toBattle,
         CancellationToken ct)
     {
