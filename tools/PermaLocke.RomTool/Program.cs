@@ -71,6 +71,15 @@ switch (command)
     case "zones":
         await ZonesAsync();
         break;
+    case "mapa-pistas":
+        MapaPistas(args[1]);
+        break;
+    case "mapa-datos-volcar":
+        MapaDatosVolcar(args[1]);
+        break;
+    case "mapa-datos":
+        MapaDatos(args[1], args.Length > 2 ? int.Parse(args[2]) : 16);
+        break;
     case "mapa-islas":
         MapaIslas(args.Length > 1 ? int.Parse(args[1]) : 200,
             args.Length > 2 ? double.Parse(args[2]) : 0.15);
@@ -1581,10 +1590,6 @@ void WriteIslands(Dictionary<string, string> byName, (string Token, string Islan
 void MapaBuscar()
 {
     var reader = new RomFsReader(RequireRom());
-    foreach (var f in reader.Files.Values.Where(f => f.Path.StartsWith("a/1/6/")).OrderBy(f => f.Path, StringComparer.Ordinal))
-    {
-        Console.WriteLine(f.Path + "  " + f.Size);
-    }
 
     // Los cuatro gigantes son modelos, encuentros y sonido: ni uno es una lamina, y abrirlos
     // cuesta minutos. Todo lo demas se mira.
@@ -2366,4 +2371,145 @@ void MapaIslas(int minimum, double clearAtLeast)
     }
 
     Console.WriteLine($"{hits} candidatas en {outputDir}");
+}
+
+// Enseña la forma de un GARC que no lleva imágenes: cuántos subficheros, de qué tamaño y con qué
+// empiezan. Es el primer paso para saber si un fichero es una tabla y de qué.
+void MapaDatos(string romfsPath, int show)
+{
+    var reader = new RomFsReader(RequireRom());
+    var temp = Path.Combine(Path.GetTempPath(), "permalocke-mapa");
+    Directory.CreateDirectory(temp);
+
+    var extracted = Path.Combine(temp, romfsPath.Replace('/', '_'));
+
+    if (!File.Exists(extracted) && !reader.ExtractTo(romfsPath, extracted))
+    {
+        Console.WriteLine($"No pude extraer {romfsPath}");
+        return;
+    }
+
+    var garc = new GARC.MemGARC(File.ReadAllBytes(extracted));
+    Console.WriteLine($"{romfsPath}: {garc.FileCount} subficheros");
+
+    var sizes = new List<int>();
+
+    for (var i = 0; i < garc.FileCount; i++)
+    {
+        try { sizes.Add(garc.GetFile(i).Length); } catch { sizes.Add(-1); }
+    }
+
+    foreach (var group in sizes.Where(s => s >= 0).GroupBy(s => s).OrderByDescending(g => g.Count()).Take(10))
+    {
+        Console.WriteLine($"    {group.Count(),5} subficheros de {group.Key,9:N0} bytes");
+    }
+
+    Console.WriteLine();
+
+    for (var i = 0; i < Math.Min(garc.FileCount, show); i++)
+    {
+        byte[] data;
+        try { data = garc.GetFile(i); } catch { continue; }
+
+        if (data.Length > 0 && data[0] == 0x11)
+        {
+            try
+            {
+                using var output = new MemoryStream();
+                LZSS.Decompress(new MemoryStream(data), data.Length, output);
+                data = output.ToArray();
+            }
+            catch { }
+        }
+
+        var head = string.Join(" ", data.Take(24).Select(b => b.ToString("X2")));
+        var text = new string(data.Take(32).Select(b => b >= 32 && b < 127 ? (char)b : (char)46).ToArray());
+        Console.WriteLine($"    {i,4}  {data.Length,8:N0}  {head}  |{text}|");
+    }
+}
+
+// Escribe a disco los subficheros ya descomprimidos, para poder mirarlos con otras herramientas.
+void MapaDatosVolcar(string romfsPath)
+{
+    var reader = new RomFsReader(RequireRom());
+    var temp = Path.Combine(Path.GetTempPath(), "permalocke-mapa");
+    var outputDir = Path.Combine(temp, "datos", romfsPath.Replace('/', '_'));
+    Directory.CreateDirectory(outputDir);
+
+    var extracted = Path.Combine(temp, romfsPath.Replace('/', '_'));
+
+    if (!File.Exists(extracted) && !reader.ExtractTo(romfsPath, extracted))
+    {
+        Console.WriteLine($"No pude extraer {romfsPath}");
+        return;
+    }
+
+    var garc = new GARC.MemGARC(File.ReadAllBytes(extracted));
+
+    for (var i = 0; i < garc.FileCount; i++)
+    {
+        byte[] data;
+        try { data = garc.GetFile(i); } catch { continue; }
+
+        if (data.Length > 0 && data[0] == 0x11)
+        {
+            try
+            {
+                using var output = new MemoryStream();
+                LZSS.Decompress(new MemoryStream(data), data.Length, output);
+                data = output.ToArray();
+            }
+            catch { }
+        }
+
+        File.WriteAllBytes(Path.Combine(outputDir, $"{i:0000}.bin"), data);
+    }
+
+    Console.WriteLine($"{garc.FileCount} subficheros en {outputDir}");
+}
+
+// Busca en un fichero de datos rastros de lo que ya conocemos: referencias a las 866 piezas del
+// mapa, a las 336 areas de encdata, o coordenadas en coma flotante. Es la forma de decidir si una
+// tabla desconocida habla de lo que nos interesa antes de gastar horas en su formato.
+void MapaPistas(string folder)
+{
+    foreach (var path in Directory.EnumerateFiles(folder, "*.bin").OrderBy(p => p, StringComparer.Ordinal))
+    {
+        var data = File.ReadAllBytes(path);
+
+        var floats = 0;
+        var tileRefs = 0;
+        var areaRefs = 0;
+        var runs = 0;
+        var previous = -1;
+
+        for (var i = 0; i + 4 <= data.Length; i += 4)
+        {
+            var raw = BitConverter.ToSingle(data, i);
+
+            if (float.IsFinite(raw) && Math.Abs(raw) is > 0.01f and < 100000f)
+            {
+                floats++;
+            }
+        }
+
+        for (var i = 0; i + 2 <= data.Length; i += 2)
+        {
+            int value = BitConverter.ToUInt16(data, i);
+
+            if (value < 866) tileRefs++;
+            if (value < 336) areaRefs++;
+
+            // Una tabla de indices suele ir en cuesta: 0,1,2,... o al menos creciendo.
+            if (value < 866 && value == previous + 1) runs++;
+            previous = value < 866 ? value : -1;
+        }
+
+        var words = Math.Max(1, data.Length / 2);
+        Console.WriteLine($"    {Path.GetFileName(path)}  {data.Length,8:N0} bytes"
+            + $"   floats {floats * 4 * 100 / Math.Max(1, data.Length),3}%"
+            + $"   <866 {tileRefs * 100 / words,3}%"
+            + $"   <336 {areaRefs * 100 / words,3}%"
+            + $"   cuestas {runs,6}");
+    }
 }

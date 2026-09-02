@@ -6201,8 +6201,22 @@ Que `a/1/6/6` sean 4 MB sin imágenes lo explica: **el juego dibuja el mapa en 3
 existe la lámina plana por isla que haría falta.
 
 Consecuencia para PermaLocke: se pueden mostrar los mapas de área, pero **no se sabe qué sitio es
-cada uno**, y sin eso no se le pueden poner marcadores encima. `a/1/6/9` —573 KB y ninguna imagen—
-es el candidato a llevar esa tabla, y está sin mirar.
+cada uno**, y sin eso no se le pueden poner marcadores encima.
+
+### El candidato a la tabla, descartado
+
+`a/1/6/9` —573 KB y ninguna imagen— parecía el sitio donde estaría la tabla de «qué área es cada
+mapa». **No lo es.** Son doce subficheros comprimidos con la forma «cuenta + tabla de
+desplazamientos relativos al byte 4 + secciones», y lo que hay dentro son `Head`, `Hips`, `LArm`,
+`LFeeler1`, `LFingerA1`, `LEar1`, `LEye`, `LFoot`: **esqueletos 3D de Pokémon**.
+
+Antes de mirar los nombres, la medida numérica ya lo apuntaba: ninguno de los doce es una lista de
+índices —un 10-19% de valores por debajo de 866 y un 18% de coma flotante es lo que tiene
+cualquier binario de geometría, no una tabla—. Que un fichero esté al lado de otro en el RomFS no
+lo hace de su familia, y ese es el único motivo por el que era candidato.
+
+Así que **la correspondencia mapa → sitio sigue sin localizarse**, y con ella la única vía barata
+para usar el arte real del cartucho.
 
 ### Lo que se montó
 
