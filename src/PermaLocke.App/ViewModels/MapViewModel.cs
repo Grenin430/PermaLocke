@@ -14,8 +14,8 @@ using PermaLocke.Rules.Services;
 namespace PermaLocke.App.ViewModels;
 
 /// <summary>One zone on the map: free, spent, or spent by somebody who died.</summary>
-public sealed partial class MapZoneViewModel(int number, string name, string island, double left, double top)
-    : ObservableObject
+public sealed partial class MapZoneViewModel(int number, string name, string island, double left,
+    double top, System.Windows.Media.Imaging.BitmapSource? photo) : ObservableObject
 {
     /// <summary>Its place in its island, which is what the marker shows.</summary>
     /// <remarks>
@@ -36,6 +36,15 @@ public sealed partial class MapZoneViewModel(int number, string name, string isl
     public double Left { get; } = left;
 
     public double Top { get; } = top;
+
+    /// <summary>A picture of the place, for the card that appears on hover.</summary>
+    /// <remarks>
+    /// Null when there is none, and the card then shows just the name. A missing picture is a
+    /// smaller card, never an empty frame.
+    /// </remarks>
+    public System.Windows.Media.Imaging.BitmapSource? Photo { get; } = photo;
+
+    public bool HasPhoto => Photo is not null;
 
     [ObservableProperty]
     private string _caughtWhat = string.Empty;
@@ -129,11 +138,12 @@ public sealed partial class MapViewModel : SectionViewModel
     private readonly JsonIslandMap _map;
     private readonly IslandMapService _art;
     private readonly JsonZoneMarkers _markers;
+    private readonly ZonePhotoService _photos;
     private readonly ILogger<MapViewModel> _logger;
 
     public MapViewModel(EncounterService encounters, IPokemonRepository pokemon,
-        IRunContext runContext, JsonIslandMap map, IslandMapService art, AppPaths paths,
-        ILogger<MapViewModel> logger)
+        IRunContext runContext, JsonIslandMap map, IslandMapService art, ZonePhotoService photos,
+        AppPaths paths, ILogger<MapViewModel> logger)
         : base("MAPA", "Las zonas de Alola: cuál gastó cada captura y cuáles quedan libres")
     {
         _encounters = encounters;
@@ -141,6 +151,7 @@ public sealed partial class MapViewModel : SectionViewModel
         _runContext = runContext;
         _map = map;
         _art = art;
+        _photos = photos;
         _logger = logger;
         _markers = JsonZoneMarkers.Load(Path.Combine(paths.Data, "marcadores.json"));
     }
@@ -232,7 +243,7 @@ public sealed partial class MapViewModel : SectionViewModel
                 }
 
                 zones.Add(new MapZoneViewModel(number++, zone.Name, island,
-                    marker.X * picture.PixelWidth, marker.Y * picture.PixelHeight));
+                    marker.X * picture.PixelWidth, marker.Y * picture.PixelHeight, _photos.Photo(id)));
             }
 
             if (zones.Count > 0)

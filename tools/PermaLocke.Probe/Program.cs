@@ -87,6 +87,13 @@ if (args.Length >= 1 && args[0] == "--pids")
     return await PermaLocke.Probe.PidRepairProbe.RunAsync(args.Contains("--arreglar"), args.Contains("--probar"));
 }
 
+// Empareja las fotos de zona de islas/ con las zonas del mapa. No necesita emulador ni run.
+if (args.Length >= 1 && args[0] == "--fotos")
+{
+    return PermaLocke.Probe.ZonePhotoMatcher.Run(
+        new PermaLocke.Infrastructure.AppPaths().Root);
+}
+
 // Auditoría de la run contra su propio historial. No necesita emulador.
 if (args.Length >= 1 && args[0] == "--run")
 {

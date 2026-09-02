@@ -54,3 +54,7 @@ obj/
 
 # Los mapas de isla cosidos del cartucho. Pixeles de Nintendo, igual que Data/sprites/.
 /Data/mapa-islas/
+
+# Las fotos de cada zona que el jugador reunio para el mapa. Son imagenes del juego,
+# igual que Data/sprites/ y Data/mapa-islas/: no se versionan.
+/islas/

@@ -143,6 +143,14 @@
                             <!-- La capa de marcadores. El clic para colocar lo recoge el
                                  code-behind, que es lo unico que sabe donde se ha pinchado. -->
                             <Canvas x:Name="MarkerLayer" Background="Transparent">
+                                <!-- La carta tarda un momento en salir a proposito: apareciendo al
+                                     instante, cruzar el mapa dispara veinte. -->
+                                <Canvas.Resources>
+                                    <Style TargetType="ToolTip">
+                                        <Setter Property="Placement" Value="Right" />
+                                        <Setter Property="HorizontalOffset" Value="8" />
+                                    </Style>
+                                </Canvas.Resources>
                                 <ItemsControl ItemsSource="{Binding SelectedIsland.Zones}">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
@@ -165,14 +173,35 @@
                                                     Style="{StaticResource ZoneMarker}"
                                                     Command="{Binding DataContext.ClickZoneCommand,
                                                         RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                    CommandParameter="{Binding}">
+                                                    CommandParameter="{Binding}"
+                                                    ToolTipService.InitialShowDelay="350"
+                                                    ToolTipService.ShowDuration="30000">
                                                 <Button.ToolTip>
-                                                    <ToolTip>
-                                                        <StackPanel MaxWidth="260">
-                                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
-                                                            <TextBlock Text="{Binding Tooltip}"
-                                                                       TextWrapping="Wrap" Margin="0,3,0,0" />
-                                                        </StackPanel>
+                                                    <ToolTip Padding="0" Background="Transparent"
+                                                             BorderThickness="0" HasDropShadow="True">
+                                                        <Border Background="{StaticResource PanelBrush}"
+                                                                BorderBrush="{StaticResource BorderStrongBrush}"
+                                                                BorderThickness="1" CornerRadius="8"
+                                                                Width="280">
+                                                            <StackPanel>
+                                                                <!-- La foto arriba, recortada al
+                                                                     ancho de la carta. -->
+                                                                <Image Source="{Binding Photo}"
+                                                                       Stretch="UniformToFill"
+                                                                       MaxHeight="180"
+                                                                       Visibility="{Binding HasPhoto,
+                                                                           Converter={StaticResource BoolToVisibility}}" />
+
+                                                                <StackPanel Margin="12,10,12,11">
+                                                                    <TextBlock Text="{Binding Name}"
+                                                                               FontFamily="{StaticResource DisplayFont}"
+                                                                               FontSize="14" TextWrapping="Wrap" />
+                                                                    <TextBlock Text="{Binding Tooltip}"
+                                                                               Style="{StaticResource Faint}"
+                                                                               TextWrapping="Wrap" Margin="0,4,0,0" />
+                                                                </StackPanel>
+                                                            </StackPanel>
+                                                        </Border>
                                                     </ToolTip>
                                                 </Button.ToolTip>
                                             </Button>

@@ -6334,3 +6334,27 @@ por accidente. Con ella se va `JsonZoneEncounters`, que existía solo para avisa
 Un guardia que se queda: una zona **gastada que no esté en el mapa** se dice en rojo. Pasaría si
 alguien recorta `marcadores.json` con una run empezada, y callarlo dejaría un encuentro gastado que
 la pantalla jura que sigue libre.
+
+### 83 quater. La foto de cada zona
+
+El jugador reunió **57 imágenes** de las zonas y las dejó en `islas/`, una carpeta por isla. Al
+pasar el ratón por un marcador sale una tarjeta con la foto, el nombre y lo que se cazó allí.
+
+**El emparejamiento tiene que cerrar.** Los ficheros vienen con nombre de wiki —
+`285px-Ruta_4_(Alola).png`, `1200px-Ciudad_Konikoni_USUL.png`— así que casi todo casa quitando la
+decoración, y **lo que no casa se escribe a mano** en vez de adivinarlo. `Probe --fotos` se niega a
+escribir `Data/fotos.json` mientras quede una zona sin foto o una foto sin zona: un emparejamiento
+malo pondría Ruta 4 sobre Ruta 5 y **se vería perfectamente bien**, que es la misma forma de fallo
+que el §30.
+
+Un fichero `(COMPLETO)` cubre una zona y sus sublugares en una sola imagen. Detalle que costó una
+pasada: cuando el padre **también** es una zona con marcador —Colina Dequilate y su Caldera
+Remota—, quedarse en la coincidencia exacta dejaba al sublugar sin foto. Un `(COMPLETO)` responde
+por los dos.
+
+Siete venían en **WebP**, que WPF solo lee si está instalado `Microsoft.WebpImageExtension`, un
+añadido opcional del Store. Aquí estaba y se veían; en la máquina de otro habría salido un hueco en
+blanco sin decir por qué. Convertidas a PNG con el propio códec.
+
+Las imágenes son del juego, así que `islas/` va al `.gitignore` como `Data/sprites/` y
+`Data/mapa-islas/`. **Lo que sí se versiona es `Data/fotos.json`**, que es solo el emparejamiento.

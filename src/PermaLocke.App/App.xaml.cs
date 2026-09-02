@@ -110,6 +110,7 @@ public partial class App : Application
         collection.AddSingleton<PokemonViewerViewModel>();
         collection.AddSingleton<PokePasteViewModel>();
         collection.AddSingleton<IslandMapService>();
+        collection.AddSingleton<ZonePhotoService>();
         collection.AddSingleton<MapViewModel>();
         collection.AddSingleton<MiscellaneousViewModel>();
         collection.AddSingleton<TradedAwayReconciler>();
