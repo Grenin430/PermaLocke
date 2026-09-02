@@ -58,6 +58,10 @@ public sealed class ExtraPokemonRandomizer(RomWorkspace workspace, RandomizerOpt
         var parties = new GARC.LazyGARC(await File.ReadAllBytesAsync(partyPath, ct));
         var untouchable = options.ProtectedSpecies.ToHashSet();
 
+        // Los mismos suelos por clase que usa el randomizador de entrenadores, construidos con la
+        // misma funcion: dos definiciones de «el Alto Mando va desde 500» acabarian discrepando.
+        var floors = TrainerRandomizer.FloorPools(workspace, options, pool);
+
         int battles = 0, added = 0, noRoom = 0;
         var counts = new Dictionary<int, int>();
 
@@ -116,7 +120,11 @@ public sealed class ExtraPokemonRandomizer(RomWorkspace workspace, RandomizerOpt
                     var original = TrainerPokemonTable.GetSpecies(grown, source);
                     if (original != 0 && !untouchable.Contains(original))
                     {
-                        TrainerPokemonTable.SetSpecies(grown, slot, pool.Pick(random, original));
+                        // El suelo de la clase manda tambien aqui. Sin esto, el septimo Pokemon
+                        // del rol entraba en la liga sacado del saco entero: se veia un Volbeat de
+                        // 430 al lado de cinco de 500 para arriba.
+                        var here = floors.TryGetValue(trainerClass, out var floor) ? floor : pool;
+                        TrainerPokemonTable.SetSpecies(grown, slot, here.Pick(random, original));
                     }
 
                     // Los movimientos del copiado no son de esta especie, y el nivel se hereda a

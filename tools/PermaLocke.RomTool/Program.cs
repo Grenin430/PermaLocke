@@ -148,6 +148,9 @@ switch (command)
     case "entrenadores-ev":
         await EntrenadoresEvAsync();
         break;
+    case "liga":
+        await LigaAsync(args.Length > 1 ? ulong.Parse(args[1]) : 20260902);
+        break;
     case "importantes":
         await ImportantesAsync();
         break;
@@ -3143,7 +3146,7 @@ async Task EntrenadoresEvAsync()
         .ThenByDescending(g => g.Total))
     {
         var name = group.Class < classNames.Length ? classNames[group.Class] : $"clase {group.Class}";
-        Console.WriteLine($"    {name,-26} {group.With,3} de {group.Total,3}"
+        Console.WriteLine($"    [{group.Class,3}] {name,-24} {group.With,3} de {group.Total,3}"
             + $"   ({group.With * 100 / group.Total,3}%)  nivel minimo {group.Level}");
     }
 
@@ -3233,7 +3236,13 @@ async Task MegasCuentaAsync()
     using var patcher = new GarcPatcher(workspace.PathOf(GameFiles.MegaEvolution));
     Console.WriteLine($"la tabla de megas tiene {patcher.FileCount} subficheros");
     Console.WriteLine($"nombres de especie disponibles: {names.Length}");
+    var options = RandomizerOptionsLoader.Load(Path.Combine(root, "Data", "randomizer.json"));
     Console.WriteLine($"claves con mega: {forms.Count}, de {forms.Keys.Min()} a {forms.Keys.Max()}");
+    Console.WriteLine($"workspace.MaxSpecies = {workspace.MaxSpecies}");
+    Console.WriteLine($"options.MaxSpecies = {options.MaxSpecies}");
+    Console.WriteLine($"EffectiveMaxSpecies = {options.EffectiveMaxSpecies(workspace.MaxSpecies)}");
+    Console.WriteLine($"bannedSpecies = {options.BannedSpecies.Count}");
+    Console.WriteLine($"candidatas = {MegaTrainerRandomizer.Candidates(forms, options, workspace.MaxSpecies).Length}");
     Console.WriteLine();
 
     foreach (var key in forms.Keys.Order())
@@ -3241,4 +3250,90 @@ async Task MegasCuentaAsync()
         var name = key > 0 && key < names.Length ? names[key] : "??? FUERA DE LA LISTA";
         Console.WriteLine($"    {key,5}  {name,-16} formas {string.Join(",", forms[key])}");
     }
+}
+
+// Los equipos de una clase de entrenador en el mod ya generado, con el total base de cada Pokemon.
+// Es la unica forma de comprobar que un suelo se aplico: el informe dice lo que quiso hacer, el
+// fichero dice lo que hay.
+async Task LigaAsync(ulong seed)
+{
+    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work, baseLayer: baseLayer);
+    var options = RandomizerOptionsLoader.Load(Path.Combine(root, "Data", "randomizer.json"));
+    var names = workspace.Config.GetText(TextName.SpeciesNames);
+    var classNames = workspace.Config.GetText(TextName.TrainerClasses);
+    var trainerNames = workspace.Config.GetText(TextName.TrainerNames);
+    var pool = SpeciesPool.FromGame(workspace.Config, options, workspace.MaxSpecies);
+
+    var folder = Path.Combine(root, "Randomized", $"seed-{seed}", "romfs");
+    var partyPath = Path.Combine(folder, GameFiles.TrainerPokemon.Replace('/', Path.DirectorySeparatorChar));
+    var dataPath = Path.Combine(folder, GameFiles.TrainerData.Replace('/', Path.DirectorySeparatorChar));
+
+    if (!File.Exists(partyPath))
+    {
+        Console.WriteLine($"No existe {partyPath}. Ejecuta antes: randomize {seed}");
+        return;
+    }
+
+    var wanted = options.TrainerMinimums.ToDictionary(m => m.Class);
+    var parties = new GARC.LazyGARC(await File.ReadAllBytesAsync(partyPath));
+    using var trainers = new GarcPatcher(dataPath);
+
+    var below = 0;
+    var seen = 0;
+
+    for (var trainer = 0; trainer < Math.Min(trainers.FileCount, parties.FileCount); trainer++)
+    {
+        var entry = trainers.Read(trainer);
+
+        if (entry.Length < 0x14)
+        {
+            continue;
+        }
+
+        var trainerClass = BitConverter.ToUInt16(entry, ExtraPokemonRandomizer.ClassOffset);
+
+        if (!wanted.TryGetValue(trainerClass, out var rule))
+        {
+            continue;
+        }
+
+        var party = parties[trainer];
+        var count = TrainerPokemonTable.Count(party);
+
+        if (count == 0)
+        {
+            continue;
+        }
+
+        seen++;
+        var line = new List<string>();
+        var megas = 0;
+
+        for (var slot = 0; slot < count; slot++)
+        {
+            var species = TrainerPokemonTable.GetSpecies(party, slot);
+            var form = TrainerPokemonTable.GetForm(party, slot);
+            var bst = pool.BaseStatTotal(species);
+            var name = species < names.Length ? names[species] : $"?{species}";
+
+            // Una forma alternativa no se juzga por el total de su forma BASE: Mega Sableye suma
+            // 480 y el Sableye normal 380, asi que contarla como baja seria contar otra cosa.
+            // Ese hueco lo gobierna la regla de las megas, no el suelo.
+            var alternate = form > 0;
+
+            if (alternate) megas++;
+            else if (bst < rule.MinimumBaseStatTotal) below++;
+
+            line.Add($"{name}{(alternate ? $"-{form}" : "")} {bst}"
+                + (alternate ? " (forma)" : bst < rule.MinimumBaseStatTotal ? " BAJO" : ""));
+        }
+
+        Console.WriteLine($"  {classNames[trainerClass]} {trainerNames[trainer],-10} Nv"
+            + $"{TrainerPokemonTable.GetLevel(party, count - 1),3}  formas>0: {megas}");
+        Console.WriteLine($"      {string.Join(" | ", line)}");
+    }
+
+    Console.WriteLine();
+    Console.WriteLine($"{seen} combates de la liga, {below} Pokemon de forma base por debajo del suelo");
+    Console.WriteLine("Las formas alternativas no cuentan: las gobierna la regla de las megas.");
 }

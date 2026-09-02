@@ -1,6 +1,7 @@
 using PermaLocke.Core.Abstractions;
 using PermaLocke.Randomizer.Output;
 using PermaLocke.Randomizer.Rom;
+using pk3DS.Core;
 using pk3DS.Core.CTR;
 
 namespace PermaLocke.Randomizer.Modules;
@@ -23,9 +24,81 @@ public sealed record TrainerResult(int Trainers, int Pokemon, int MovesCleared, 
 /// </summary>
 public sealed class TrainerRandomizer(RomWorkspace workspace, RandomizerOptions options)
 {
+    /// <summary>
+    /// Builds one pool per trainer class that has a floor, checking the class names first.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The name is verified against the cartridge before anything is written, which is the §52
+    /// rule: a class id typed from memory that lands on somebody else would quietly make the wrong
+    /// battle harder and never fail. A mismatch stops the randomization.
+    /// </para>
+    /// <para>
+    /// The pools are built once and shared, not per trainer, because filtering the species list is
+    /// the expensive part and there are only a handful of classes.
+    /// </para>
+    /// </remarks>
+    public static Dictionary<int, SpeciesPool> FloorPools(RomWorkspace workspace,
+        RandomizerOptions options, SpeciesPool pool)
+    {
+        var pools = new Dictionary<int, SpeciesPool>();
+
+        if (options.TrainerMinimums.Count == 0)
+        {
+            return pools;
+        }
+
+        var names = workspace.Config.GetText(TextName.TrainerClasses);
+
+        foreach (var rule in options.TrainerMinimums)
+        {
+            var actual = rule.Class >= 0 && rule.Class < names.Length ? names[rule.Class] : null;
+
+            if (!string.Equals(actual, rule.Name, StringComparison.Ordinal))
+            {
+                throw new InvalidDataException(
+                    $"La clase {rule.Class} se llama «{actual ?? "(no existe)"}» y la configuración "
+                    + $"dice «{rule.Name}» ({rule.Note}). No se toca ningún entrenador: subir el "
+                    + "suelo del combate equivocado no falla, solo sale mal al jugarlo.");
+            }
+
+            pools[rule.Class] = pool.Where(
+                s => pool.BaseStatTotal(s) >= rule.MinimumBaseStatTotal,
+                $"un total base de {rule.MinimumBaseStatTotal} o más");
+        }
+
+        return pools;
+    }
+
+    /// <summary>The class of every trainer, so a floor can be aimed at one.</summary>
+    /// <remarks>
+    /// Read from the trainer table and not from the party file, which does not carry it. Both come
+    /// from the same staged mod so the indices line up — crossing a vanilla table with a generated
+    /// party file is the §47 mistake.
+    /// </remarks>
+    private int[] TrainerClasses(LayeredFsMod mod)
+    {
+        using var trainers = new GarcPatcher(mod.Stage(GameFiles.TrainerData));
+        var classes = new int[trainers.FileCount];
+
+        for (var i = 0; i < trainers.FileCount; i++)
+        {
+            var entry = trainers.Read(i);
+
+            classes[i] = entry.Length >= 0x14
+                ? BitConverter.ToUInt16(entry, ExtraPokemonRandomizer.ClassOffset)
+                : -1;
+        }
+
+        return classes;
+    }
+
     public async Task<TrainerResult> ApplyAsync(IRandomSource random, SpeciesPool pool,
         LayeredFsMod mod, CancellationToken ct = default)
     {
+        var floors = FloorPools(workspace, options, pool);
+        var classes = floors.Count > 0 ? TrainerClasses(mod) : [];
+
         var path = mod.Stage(GameFiles.TrainerPokemon);
         var untouchable = options.ProtectedSpecies.ToHashSet();
 
@@ -42,6 +115,11 @@ public sealed class TrainerRandomizer(RomWorkspace workspace, RandomizerOptions 
 
                 var party = patcher.Read(trainer);
                 var count = TrainerPokemonTable.Count(party);
+
+                // El suelo lo pone la CLASE, asi que un combate de la liga se sortea de otro saco.
+                var here = trainer < classes.Length && floors.TryGetValue(classes[trainer], out var floor)
+                    ? floor
+                    : pool;
                 if (count == 0)
                 {
                     continue; // the cartridge holds one six byte subfile with no party at all
@@ -72,7 +150,7 @@ public sealed class TrainerRandomizer(RomWorkspace workspace, RandomizerOptions 
                         continue;
                     }
 
-                    TrainerPokemonTable.SetSpecies(party, slot, pool.Pick(random, original));
+                    TrainerPokemonTable.SetSpecies(party, slot, here.Pick(random, original));
                     replaced++;
                     changed = true;
 

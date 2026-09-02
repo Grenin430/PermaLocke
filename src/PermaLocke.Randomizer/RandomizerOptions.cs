@@ -120,6 +120,17 @@ public sealed record RandomizerOptions
     public int MegaTrainerMinimumLevel { get; init; } = 33;
 
     /// <summary>
+    /// Trainer classes whose Pokémon are drawn from a floor instead of from the whole pool.
+    /// </summary>
+    /// <remarks>
+    /// It exists for the league. Similar-strength drawing keeps a replacement near what it
+    /// replaced, which is right almost everywhere and wrong at the end: the Elite Four's cartridge
+    /// teams are not uniformly strong, so half of a final battle could come out as things nobody
+    /// would bring to one.
+    /// </remarks>
+    public IReadOnlyList<TrainerMinimum> TrainerMinimums { get; init; } = [];
+
+    /// <summary>
     /// Static encounters that get their own rule instead of the ordinary draw.
     /// </summary>
     /// <remarks>

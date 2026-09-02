@@ -92,6 +92,15 @@
   "_maxMove": "Techo de movimientos en los aprendizajes. CERO son todos los que declare el juego. Puesto en 729 -los del cartucho- porque randomizeLearnsets esta en true: de los 192 que anade el mod, 32 piden una rutina de combate que el cartucho no usa y que solo existiria en su code.bin, sin comprobar por nadie. Repartir un movimiento que no hace lo que dice mata un Pokemon en un Nuzlocke. El precio es que tambien quedan fuera los otros 160, que si funcionan: distinguirlos exige comparar rutina a rutina contra el cartucho al generar, y eso esta sin hacer. Ver docs/MOD-EXPANSION.md §6.",
   "maxMove": 729,
 
+  "_trainerMinimums": "Clases de entrenador cuyos Pokemon se sortean desde un suelo en vez de del saco entero. Es para la liga: el sorteo por fuerza parecida mantiene al reemplazo cerca de lo que reemplazo, que esta bien en todas partes menos al final, porque los equipos del Alto Mando en el cartucho no son uniformemente fuertes y medio combate final podia salir con cosas que nadie llevaria a uno. El NOMBRE viaja con el id y se comprueba contra el cartucho antes de escribir (§52): un id de memoria que caiga en otra clase haria mas dificil el combate equivocado y no fallaria nunca.",
+  "trainerMinimums": [
+    { "note": "Alto Mando (Zarala)", "class": 80,  "name": "Alto Mando", "minimumBaseStatTotal": 500 },
+    { "note": "Alto Mando (Mayla)",  "class": 107, "name": "Alto Mando", "minimumBaseStatTotal": 500 },
+    { "note": "Alto Mando (Kahili)", "class": 110, "name": "Alto Mando", "minimumBaseStatTotal": 500 },
+    { "note": "Alto Mando (Lario)",  "class": 191, "name": "Alto Mando", "minimumBaseStatTotal": 500 },
+    { "note": "Campeon Kukui",       "class": 165, "name": "Profesor Pokémon", "minimumBaseStatTotal": 500 }
+  ],
+
   "_staticOverrides": "Estaticos con regla propia en vez del sorteo corriente. Se buscan por la ESPECIE Y LA FORMA que el cartucho tiene ahi, no por el numero de fila: una fila es un numero que significa lo que haya en el, y si la tabla se mueve la regla cae en otro encuentro sin fallar. Con especie y forma, si no esta, el randomizador para. Necrozma son CUATRO encuentros distintos y solo la forma dice cual: 0 normal, 1 Melena Crepuscular, 2 Alas del Alba, 3 ULTRA. Las formas 1 y 2 son los combates de la historia y se quedan con el sorteo normal.",
   "staticOverrides": [
     { "note": "Ultra Necrozma, el jefe de la Torre Megalo", "species": 800, "form": 3, "rule": "Mega" },
