@@ -35,6 +35,16 @@ public sealed class AzaharGameStateProvider(
 
     private IReadOnlyList<PartyLayout> _remembered = [];
     private int _notReadyPolls;
+
+    /// <summary>Fallos seguidos antes de dar por perdido el equipo ya localizado.</summary>
+    /// <remarks>
+    /// Uno suelto es casi siempre un datagrama perdido. Tirar la dirección por eso obliga a
+    /// revalidar, y si la revalidación tampoco cuaja, a barrer: diez minutos por un paquete.
+    /// </remarks>
+    private const int FailuresBeforeGivingUp = 5;
+
+    private bool _attached;
+    private int _failures;
     private IReadOnlyList<PartyLayout> _allLayouts = [];
     private string _gameTrainer = string.Empty;
 
@@ -64,15 +74,38 @@ public sealed class AzaharGameStateProvider(
     {
         var now = DateTimeOffset.Now;
 
+        // Engancharse cuesta TRES viajes de ida y vuelta -listar procesos, fijar el proceso y
+        // comprobar cuál quedó fijado-, y antes se hacía en cada lectura. Con el equipo eso son
+        // cuatro peticiones por segundo donde basta una, y cuatro ocasiones de que alguna expire:
+        // cualquiera de las tres que se perdiera tiraba la conexión entera.
+        //
+        // El proceso no cambia mientras el juego está abierto, así que se engancha una vez y se
+        // suelta solo cuando algo falla de verdad. Medido en una sesión real: el enlace se caía
+        // solo cada pocos minutos, y en esos huecos no se vigila nada.
         try
         {
-            client.AttachTo(UltraMoonTitleId);
+            if (!_attached)
+            {
+                client.AttachTo(UltraMoonTitleId);
+                _attached = true;
+            }
         }
         catch (Exception ex)
         {
-            _layout = null;
+            _attached = false;
+
+            // El equipo localizado NO se tira a la primera. Un fallo suelto es casi siempre un
+            // datagrama perdido, y volver a barrer por eso sería pagar diez minutos por un paquete.
+            // Solo tras varios seguidos se admite que el juego se ha ido de verdad.
+            if (++_failures >= FailuresBeforeGivingUp)
+            {
+                _layout = null;
+            }
+
             return GameSnapshot.Disconnected(Explain(ex), now);
         }
+
+        _failures = 0;
 
         var reader = new Pk7Reader(client);
 
@@ -123,6 +156,11 @@ public sealed class AzaharGameStateProvider(
         // cuando no hacía falta cuesta diez minutos a ciegas.
         if (_remembered.Count > 0 && ++_notReadyPolls < PollsBeforeSweeping)
         {
+            // Y se suelta el enganche: si el equipo ha dejado de leerse puede ser que el juego se
+            // haya cerrado y abierto, y entonces el proceso fijado ya no es el bueno. Reengancharse
+            // cuesta tres peticiones una vez, no cuatro cada segundo.
+            _attached = false;
+
             return GameSnapshot.Disconnected(
                 "Azahar responde pero la partida todavía no está cargada. "
                 + "Entra en ella y en unos segundos se engancha solo.", now);
