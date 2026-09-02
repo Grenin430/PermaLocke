@@ -4,14 +4,52 @@
 
     <UserControl.Resources>
 
-        <!-- Una zona. Los tres estados los decide el ViewModel en State, para no repartir la
-             misma decisión entre tres disparadores copiados. -->
-        <Style x:Key="ZoneTile" TargetType="Button" BasedOn="{StaticResource GhostButton}">
-            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-            <Setter Property="Padding" Value="10,8" />
-            <Setter Property="Margin" Value="0,0,6,6" />
-            <Setter Property="MinWidth" Value="150" />
-            <Setter Property="FontSize" Value="11.5" />
+        <!-- Un marcador de zona. Los tres estados los decide el ViewModel en State, para no
+             repartir la misma decisión entre tres disparadores copiados en cada sitio. -->
+        <Style x:Key="ZoneMarker" TargetType="Button">
+            <Setter Property="Width" Value="30" />
+            <Setter Property="Height" Value="30" />
+            <Setter Property="Margin" Value="0,0,5,5" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+            <Setter Property="Background" Value="{StaticResource SunkenBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderStrongBrush}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid>
+                            <Border x:Name="Pin" CornerRadius="5" BorderThickness="1.5"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}" />
+                            <TextBlock Text="{TemplateBinding Content}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       Foreground="{TemplateBinding Foreground}"
+                                       FontFamily="{TemplateBinding FontFamily}"
+                                       FontSize="{TemplateBinding FontSize}" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Pin" Property="BorderBrush"
+                                        Value="{StaticResource AccentBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding State}" Value="spent">
+                    <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+                    <Setter Property="BorderBrush" Value="{StaticResource AccentBrightBrush}" />
+                    <Setter Property="Foreground" Value="{StaticResource OnAccentBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding State}" Value="dead">
+                    <Setter Property="Background" Value="{StaticResource DangerBrush}" />
+                    <Setter Property="BorderBrush" Value="{StaticResource DangerBrush}" />
+                    <Setter Property="Foreground" Value="{StaticResource OnAccentBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
 
     </UserControl.Resources>
@@ -19,104 +57,107 @@
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="270" />
+            <ColumnDefinition Width="290" />
         </Grid.ColumnDefinitions>
 
-        <!-- EL MAPA -->
-        <Border Style="{StaticResource Inset}" Padding="16,14">
+        <Border Style="{StaticResource Inset}" Padding="18,16">
             <DockPanel>
 
-                <DockPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+                <!-- CABECERA: lo único que hay que ver de un vistazo es cuánto llevas. -->
+                <DockPanel DockPanel.Dock="Top" Margin="0,0,0,4">
                     <Button DockPanel.Dock="Right" Content="RELEER" Style="{StaticResource GhostButton}"
-                            Command="{Binding RefreshCommand}" Padding="14,8" FontSize="11.5" />
+                            Command="{Binding RefreshCommand}" Padding="14,8" FontSize="11.5"
+                            VerticalAlignment="Top" />
 
                     <StackPanel>
                         <TextBlock Text="ALOLA" Style="{StaticResource StatLabel}" />
-                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                        <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
                             <TextBlock Text="{Binding SpentCount}" Style="{StaticResource StatValue}" />
-                            <TextBlock Text=" de " Style="{StaticResource Muted}" VerticalAlignment="Bottom"
-                                       Margin="4,0,4,3" />
-                            <TextBlock Text="{Binding ZoneCount}" Style="{StaticResource Muted}"
-                                       VerticalAlignment="Bottom" Margin="0,0,6,3" />
-                            <TextBlock Text="zonas gastadas" Style="{StaticResource Muted}"
-                                       VerticalAlignment="Bottom" Margin="0,0,0,3" />
+                            <TextBlock Style="{StaticResource Muted}" VerticalAlignment="Bottom"
+                                       Margin="6,0,0,4">
+                                <Run Text="de" />
+                                <Run Text="{Binding ZoneCount, Mode=OneWay}" />
+                                <Run Text="zonas gastadas" />
+                            </TextBlock>
                         </StackPanel>
                     </StackPanel>
                 </DockPanel>
 
-                <!-- Sin islas.json no se dibuja media Alola: se dice. -->
+                <!-- LEYENDA: tres colores y lo que significan, como en cualquier mapa. -->
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,10,0,14">
+                    <Border Width="14" Height="14" CornerRadius="4" VerticalAlignment="Center"
+                            Background="{StaticResource SunkenBrush}" BorderThickness="1.5"
+                            BorderBrush="{StaticResource BorderStrongBrush}" />
+                    <TextBlock Text="libre" Style="{StaticResource Faint}" Margin="6,0,16,0"
+                               VerticalAlignment="Center" />
+
+                    <Border Width="14" Height="14" CornerRadius="4" VerticalAlignment="Center"
+                            Background="{StaticResource AccentBrush}" />
+                    <TextBlock Text="gastada" Style="{StaticResource Faint}" Margin="6,0,16,0"
+                               VerticalAlignment="Center" />
+
+                    <Border Width="14" Height="14" CornerRadius="4" VerticalAlignment="Center"
+                            Background="{StaticResource DangerBrush}" />
+                    <TextBlock Text="su Pokémon murió" Style="{StaticResource Faint}" Margin="6,0,0,0"
+                               VerticalAlignment="Center" />
+                </StackPanel>
+
                 <TextBlock DockPanel.Dock="Top" Style="{StaticResource Faint}" TextWrapping="Wrap"
                            Visibility="{Binding HasMap, Converter={StaticResource InverseBoolToVisibility}}"
-                           Text="Falta Data/islas.json. Lo genera «RomTool mundos» leyendo el reparto de zonas del propio cartucho." />
+                           Text="Falta Data/islas.json. Lo genera «RomTool mundos» leyendo del propio cartucho a qué isla pertenece cada zona." />
 
                 <ScrollViewer VerticalScrollBarVisibility="Auto"
                               Visibility="{Binding HasMap, Converter={StaticResource BoolToVisibility}}">
                     <ItemsControl ItemsSource="{Binding Islands}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <StackPanel Margin="0,0,0,18">
+                                <Border Background="{StaticResource PanelBrush}" CornerRadius="10"
+                                        Padding="14,12" Margin="0,0,0,10">
+                                    <StackPanel>
 
-                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                                        <TextBlock Text="{Binding Name}" Style="{StaticResource PanelHeading}" />
-                                        <Border Style="{StaticResource Chip}" Margin="8,0,0,0"
-                                                VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding Count}" Style="{StaticResource ChipText}" />
-                                        </Border>
+                                        <DockPanel Margin="0,0,0,10">
+                                            <TextBlock DockPanel.Dock="Right" Style="{StaticResource Mono}"
+                                                       VerticalAlignment="Center" FontSize="11.5">
+                                                <Run Text="{Binding SpentCount, Mode=OneWay}" />
+                                                <Run Text="/" />
+                                                <Run Text="{Binding Count, Mode=OneWay}" />
+                                            </TextBlock>
+
+                                            <TextBlock Text="{Binding Name}"
+                                                       Style="{StaticResource PanelHeading}" />
+                                        </DockPanel>
+
+                                        <ItemsControl ItemsSource="{Binding Zones}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <WrapPanel Orientation="Horizontal" />
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Button Content="{Binding Number}"
+                                                            Style="{StaticResource ZoneMarker}"
+                                                            Command="{Binding DataContext.ClickZoneCommand,
+                                                                RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                            CommandParameter="{Binding}">
+                                                        <Button.ToolTip>
+                                                            <ToolTip>
+                                                                <StackPanel MaxWidth="260">
+                                                                    <TextBlock Text="{Binding Name}"
+                                                                               FontWeight="SemiBold" />
+                                                                    <TextBlock Text="{Binding Tooltip}"
+                                                                               TextWrapping="Wrap"
+                                                                               Margin="0,3,0,0" />
+                                                                </StackPanel>
+                                                            </ToolTip>
+                                                        </Button.ToolTip>
+                                                    </Button>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
                                     </StackPanel>
-
-                                    <ItemsControl ItemsSource="{Binding Zones}">
-                                        <ItemsControl.ItemsPanel>
-                                            <ItemsPanelTemplate>
-                                                <WrapPanel Orientation="Horizontal" />
-                                            </ItemsPanelTemplate>
-                                        </ItemsControl.ItemsPanel>
-
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <Button Command="{Binding DataContext.ClickZoneCommand,
-                                                            RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                        CommandParameter="{Binding}">
-                                                    <Button.Style>
-                                                        <Style TargetType="Button" BasedOn="{StaticResource ZoneTile}">
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding State}" Value="spent">
-                                                                    <Setter Property="Background"
-                                                                            Value="{StaticResource AccentDeepBrush}" />
-                                                                    <Setter Property="BorderBrush"
-                                                                            Value="{StaticResource AccentBrush}" />
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding State}" Value="dead">
-                                                                    <Setter Property="Background"
-                                                                            Value="{StaticResource DangerDeepBrush}" />
-                                                                    <Setter Property="BorderBrush"
-                                                                            Value="{StaticResource DangerBrush}" />
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Button.Style>
-
-                                                    <StackPanel>
-                                                        <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
-                                                        <TextBlock Text="{Binding CaughtWhat}" FontSize="10.5"
-                                                                   Margin="0,3,0,0" TextTrimming="CharacterEllipsis"
-                                                                   Opacity="0.75">
-                                                            <TextBlock.Style>
-                                                                <Style TargetType="TextBlock">
-                                                                    <Setter Property="Visibility" Value="Visible" />
-                                                                    <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding CaughtWhat}" Value="">
-                                                                            <Setter Property="Visibility" Value="Collapsed" />
-                                                                        </DataTrigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </TextBlock.Style>
-                                                        </TextBlock>
-                                                    </StackPanel>
-                                                </Button>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </StackPanel>
+                                </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
@@ -133,7 +174,7 @@
 
                 <TextBlock DockPanel.Dock="Top" Style="{StaticResource Faint}" TextWrapping="Wrap"
                            Margin="0,0,0,10"
-                           Text="Elige una captura y pincha en el mapa la zona donde salió. Pinchar una zona ya gastada la libera." />
+                           Text="Elige una captura y pincha el número de la zona donde salió. Pasa el ratón por un número para ver qué zona es. Pinchar una gastada la libera." />
 
                 <TextBlock DockPanel.Dock="Bottom" Text="{Binding Status}" TextWrapping="Wrap"
                            FontSize="11.5" Margin="0,10,0,0">
@@ -151,6 +192,11 @@
                         </Style>
                     </TextBlock.Style>
                 </TextBlock>
+
+                <TextBlock DockPanel.Dock="Bottom" Style="{StaticResource Faint}" TextWrapping="Wrap"
+                           Margin="0,10,0,0"
+                           Visibility="{Binding HasPending, Converter={StaticResource InverseBoolToVisibility}}"
+                           Text="Nada pendiente: todas tus capturas tienen su zona dicha." />
 
                 <!-- Cuál está elegido tiene que verse: es el que se lleva el clic del mapa, y
                      equivocarse de fila reparte la zona al Pokémon que no es. -->

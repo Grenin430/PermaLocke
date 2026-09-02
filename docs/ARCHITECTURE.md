@@ -6151,3 +6151,72 @@ Quedan 113 y no 116 porque tres de los nombres de PKHeX no son sitios: «Lugar m
 apagado**, y va a seguir: necesita la zona en vivo, cuyo anclaje murió en el §55, y **BxnnyLocke
 tampoco lo hace** (medido: `MetLocation` 31 apariciones, `ZonaActual`/`CurrentZone`/`ZonaId` cero).
 Reactivarlo es una investigación del tamaño del §22 para algo que la referencia no hace.
+
+---
+
+## 82. El mapa del cartucho: lo que hay y lo que no (2026-09-02)
+
+El jugador enseñó un mapa de Kanto de otro tracker —fondo pintado, marcadores numerados, colores
+por estado— y pidió algo así. Ese dibujo es de Game Freak, así que no puede viajar en el
+repositorio; la pregunta era si se puede sacar de **su propia ROM**, como los sprites del §28.
+
+### El decodificador que faltaba
+
+Barrido del RomFS entero: 747 ficheros, 235 GARC. Salen **2271 láminas de 64×64 para arriba y
+todas son `Etc1A4`** — justo el formato del que el §28 se libró porque los iconos son RGBA5551.
+Así que había que escribir el decodificador de ETC1, y está escrito en `Etc1Texture`.
+
+ETC1 es un formato publicado de Khronos: bloques de 4×4 con dos colores base, dos tablas de brillo
+y dos bits por píxel, más un plano de alfa de cuatro bits. Lo que **no** publica nadie es cómo
+ordena la consola los bloques, y eso se fijó mirando.
+
+**La trampa que costó una pasada:** invertir los bytes es la lectura obvia de una especificación
+que numera sus bits al revés, y produce una imagen con **la silueta correcta, el alfa correcto y el
+color en ruido puro**. Ni un checksum ni una comprobación de tamaño habrían dicho una palabra. Se
+lee en little-endian directo. Para una imagen, **el ojo es el único oráculo** que caza esto.
+
+### Lo que hay
+
+| Fichero | Contenido |
+|---|---|
+| `a/1/6/3` | **866 piezas de 128×64: los mapas de área**, a 4 columnas |
+| `a/1/6/0` | **una** vista de isla, 256×256, recortada (76% transparente) |
+| `a/1/6/6` | 4 MB **sin una sola imagen** — casi seguro la geometría 3D |
+| `a/2/7/3` | 1157 ilustraciones de Pokémon a 256×256 y 512×256 |
+| `a/1/2/5` | **las placas de tipo**, que el §34 daba por inexistentes |
+| `a/1/3/8` | arte de efectos de combate |
+
+La anchura de 4 columnas **está medida, no tanteada**: el salto medio entre el borde de abajo de
+una pieza y el de arriba de la que va `w` más allá es **14,6 para w=4** y de 64 a 79 para todas las
+demás. Cosidas así, las piezas 0-15 dan un 512×256 impecable de la zona de Ciudad Hauoli.
+
+### Lo que NO hay, y por qué importa
+
+**No hay cuatro mapas de isla.** Buscando por todo el cartucho cualquier lámina grande y
+*recortada* —transparencia alrededor, que es lo que distingue una vista de isla de un mapa de área,
+pintado hasta el borde— aparecen exactamente **dos**: las placas de tipo y una sola isla. Y ninguna
+de las 866 piezas de `a/1/6/3` tiene un solo píxel transparente.
+
+Que `a/1/6/6` sean 4 MB sin imágenes lo explica: **el juego dibuja el mapa en 3D**, así que no
+existe la lámina plana por isla que haría falta.
+
+Consecuencia para PermaLocke: se pueden mostrar los mapas de área, pero **no se sabe qué sitio es
+cada uno**, y sin eso no se le pueden poner marcadores encima. `a/1/6/9` —573 KB y ninguna imagen—
+es el candidato a llevar esa tabla, y está sin mirar.
+
+### Lo que se montó
+
+Marcadores numerados por isla, que es lo que hace legible la imagen de referencia: el número cabe,
+el nombre está a un ratón de distancia, y **cuánto llevas de Alola se ve desde el otro lado de la
+habitación**. Cada isla lleva su propia cuenta, y los tres estados —libre, gastada, su Pokémon
+murió— tienen leyenda.
+
+Nada de esto inventa geografía: la isla de cada zona sale del cartucho (§81) y el número es su
+puesto dentro de ella. Poner un marcador en unas coordenadas elegidas a ojo sobre una isla dibujada
+a ojo habría sido decir dónde están las cosas sin saberlo.
+
+### Herramientas
+
+`RomTool mapa-buscar`, `mapa-tallar`, `mapa-volcar`, `mapa-tallar-png`, `mapa-coser`, `mapa-medir`,
+`mapa-segmentar`, `mapa-transparencia` y `mapa-islas`. Ninguna escribe en el juego y todo lo que
+sacan va al temporal, **nunca al repositorio**: son píxeles de Nintendo.

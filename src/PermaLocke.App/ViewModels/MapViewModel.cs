@@ -10,8 +10,16 @@ using PermaLocke.Rules.Services;
 namespace PermaLocke.App.ViewModels;
 
 /// <summary>One zone on the map: free, spent, or spent by somebody who died.</summary>
-public sealed partial class MapZoneViewModel(string name, string island) : ObservableObject
+public sealed partial class MapZoneViewModel(int number, string name, string island) : ObservableObject
 {
+    /// <summary>Its place in its island, which is what the marker shows.</summary>
+    /// <remarks>
+    /// A hundred and thirteen names do not fit on a board, and shrinking them to fit makes a wall
+    /// of text nobody reads. A number fits, the name is one hover away, and the whole point of the
+    /// screen -- how much of Alola is spent -- survives being looked at from across the room.
+    /// </remarks>
+    public int Number { get; } = number;
+
     public string Name { get; } = name;
 
     public string Island { get; } = island;
@@ -32,22 +40,42 @@ public sealed partial class MapZoneViewModel(string name, string island) : Obser
     /// </summary>
     public string State => !IsSpent ? "free" : IsDead ? "dead" : "spent";
 
-    partial void OnIsSpentChanged(bool value) => OnPropertyChanged(nameof(State));
+    /// <summary>The line under the name when hovering: who spent it, or that it is still free.</summary>
+    public string Tooltip => !IsSpent
+        ? "Libre. Todavía no has gastado su encuentro."
+        : IsDead ? $"{CaughtWhat} — murió" : CaughtWhat;
 
-    partial void OnIsDeadChanged(bool value) => OnPropertyChanged(nameof(State));
+    partial void OnIsSpentChanged(bool value)
+    {
+        OnPropertyChanged(nameof(State));
+        OnPropertyChanged(nameof(Tooltip));
+    }
+
+    partial void OnIsDeadChanged(bool value)
+    {
+        OnPropertyChanged(nameof(State));
+        OnPropertyChanged(nameof(Tooltip));
+    }
+
+    partial void OnCaughtWhatChanged(string value) => OnPropertyChanged(nameof(Tooltip));
 }
 
 /// <summary>A capture that has not yet said which zone it spent.</summary>
 public sealed record PendingCaptureViewModel(Guid Id, string Label, string Where);
 
 /// <summary>One island and its zones, which is how the map is laid out.</summary>
-public sealed class IslandViewModel(string name, IReadOnlyList<MapZoneViewModel> zones)
+public sealed partial class IslandViewModel(string name, IReadOnlyList<MapZoneViewModel> zones)
+    : ObservableObject
 {
     public string Name { get; } = name;
 
     public IReadOnlyList<MapZoneViewModel> Zones { get; } = zones;
 
     public int Count => Zones.Count;
+
+    /// <summary>How many of this island's zones are spent, so each one carries its own score.</summary>
+    [ObservableProperty]
+    private int _spentCount;
 }
 
 /// <summary>
@@ -96,7 +124,7 @@ public sealed partial class MapViewModel : SectionViewModel
             }
 
             Islands.Add(new IslandViewModel(island,
-                [.. zones.Select(zone => new MapZoneViewModel(zone.Name, island))]));
+                [.. zones.Select((zone, at) => new MapZoneViewModel(at + 1, zone.Name, island))]));
         }
 
         ZoneCount = Islands.Sum(island => island.Zones.Count);
@@ -132,6 +160,9 @@ public sealed partial class MapViewModel : SectionViewModel
     /// <summary>False when the file is missing, so the screen says so instead of drawing nothing.</summary>
     public bool HasMap => _map.Zones.Count > 0;
 
+    /// <summary>Whether anything is waiting to be placed, so the empty list can say why it is empty.</summary>
+    public bool HasPending => Pending.Count > 0;
+
     [RelayCommand]
     public async Task RefreshAsync()
     {
@@ -153,18 +184,26 @@ public sealed partial class MapViewModel : SectionViewModel
 
             var count = 0;
 
-            foreach (var zone in Islands.SelectMany(island => island.Zones))
+            foreach (var island in Islands)
             {
-                var here = spent.GetValueOrDefault(EncounterService.NormaliseLocationId(zone.Name));
+                var here = 0;
 
-                zone.IsSpent = here is not null;
-                zone.IsDead = here?.Status == PokemonStatus.Dead;
-                zone.CaughtWhat = here is null ? string.Empty : Label(here);
-
-                if (here is not null)
+                foreach (var zone in island.Zones)
                 {
-                    count++;
+                    var owner = spent.GetValueOrDefault(EncounterService.NormaliseLocationId(zone.Name));
+
+                    zone.IsSpent = owner is not null;
+                    zone.IsDead = owner?.Status == PokemonStatus.Dead;
+                    zone.CaughtWhat = owner is null ? string.Empty : Label(owner);
+
+                    if (owner is not null)
+                    {
+                        here++;
+                    }
                 }
+
+                island.SpentCount = here;
+                count += here;
             }
 
             SpentCount = count;
@@ -181,6 +220,7 @@ public sealed partial class MapViewModel : SectionViewModel
             }
 
             Selected ??= Pending.FirstOrDefault();
+            OnPropertyChanged(nameof(HasPending));
         }
         catch (Exception ex)
         {

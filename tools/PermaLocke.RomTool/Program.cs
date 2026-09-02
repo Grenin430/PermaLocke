@@ -71,6 +71,27 @@ switch (command)
     case "zones":
         await ZonesAsync();
         break;
+    case "mapa-islas":
+        MapaIslas(args.Length > 1 ? int.Parse(args[1]) : 200,
+            args.Length > 2 ? double.Parse(args[2]) : 0.15);
+        break;
+    case "mapa-transparencia":
+        MapaTransparencia(args[1], args.Length > 2 ? double.Parse(args[2]) : 0.15);
+        break;
+    case "mapa-tallar-png":
+        MapaTallarPng(args[1], args.Length > 2 ? int.Parse(args[2]) : 128);
+        break;
+    case "mapa-tallar":
+        MapaTallar(args.Length > 1 ? int.Parse(args[1]) : 128);
+        break;
+    case "mapa-segmentar":
+        MapaSegmentar(args[1], args.Length > 2 ? int.Parse(args[2]) : 4,
+            args.Length > 3 ? double.Parse(args[3]) : 40);
+        break;
+    case "mapa-medir":
+        MapaMedir(args[1], args.Length > 2 ? int.Parse(args[2]) : 0,
+            args.Length > 3 ? int.Parse(args[3]) : 64);
+        break;
     case "mapa-coser":
         MapaCoser(args[1], int.Parse(args[2]), args.Length > 3 ? int.Parse(args[3]) : 0,
             args.Length > 4 ? int.Parse(args[4]) : 1000);
@@ -1560,6 +1581,10 @@ void WriteIslands(Dictionary<string, string> byName, (string Token, string Islan
 void MapaBuscar()
 {
     var reader = new RomFsReader(RequireRom());
+    foreach (var f in reader.Files.Values.Where(f => f.Path.StartsWith("a/1/6/")).OrderBy(f => f.Path, StringComparer.Ordinal))
+    {
+        Console.WriteLine(f.Path + "  " + f.Size);
+    }
 
     // Los cuatro gigantes son modelos, encuentros y sonido: ni uno es una lamina, y abrirlos
     // cuesta minutos. Todo lo demas se mira.
@@ -1813,4 +1838,532 @@ void MapaCoser(string romfsPath, int columns, int from, int count)
     var path = Path.Combine(temp, $"cosido_{romfsPath.Replace('/', '_')}_{columns}c_{from}.png");
     File.WriteAllBytes(path, PngImage.Encode(canvas, width, height));
     Console.WriteLine($"{tiles.Count} laminas cosidas en {width}x{height}: {path}");
+}
+
+// Deduce la anchura de cada mapa contando costuras. Dos piezas contiguas comparten borde, asi que
+// si un mapa tiene w columnas, la pieza i y la i+w encajan por arriba y por abajo. Se prueba cada
+// anchura y gana la que menos salto deja: es una medida, no un tanteo a ojo.
+void MapaMedir(string romfsPath, int from, int count)
+{
+    var tiles = LoadTiles(romfsPath, from, count);
+
+    if (tiles.Count < 4)
+    {
+        Console.WriteLine("Muy pocas laminas para medir.");
+        return;
+    }
+
+    Console.WriteLine($"{tiles.Count} laminas de {tiles[0].Width}x{tiles[0].Height}");
+    Console.WriteLine();
+    Console.WriteLine("Salto medio entre la fila de abajo de i y la de arriba de i+w:");
+
+    for (var w = 1; w <= 12; w++)
+    {
+        double total = 0;
+        var pairs = 0;
+
+        for (var i = 0; i + w < tiles.Count; i++)
+        {
+            total += VerticalSeam(tiles[i], tiles[i + w]);
+            pairs++;
+        }
+
+        if (pairs > 0)
+        {
+            Console.WriteLine($"    w={w,2}  {total / pairs,8:F2}");
+        }
+    }
+
+    Console.WriteLine();
+    Console.WriteLine("Salto lateral entre i e i+1 (un pico marca final de fila o de mapa):");
+
+    for (var i = 0; i + 1 < Math.Min(tiles.Count, 40); i++)
+    {
+        Console.WriteLine($"    {from + i,4} -> {from + i + 1,4}  {HorizontalSeam(tiles[i], tiles[i + 1]),8:F2}");
+    }
+}
+
+List<BflimTexture> LoadTiles(string romfsPath, int from, int count)
+{
+    var reader = new RomFsReader(RequireRom());
+    var temp = Path.Combine(Path.GetTempPath(), "permalocke-mapa");
+    Directory.CreateDirectory(temp);
+
+    var extracted = Path.Combine(temp, romfsPath.Replace('/', '_'));
+
+    if (!File.Exists(extracted) && !reader.ExtractTo(romfsPath, extracted))
+    {
+        return [];
+    }
+
+    var garc = new GARC.MemGARC(File.ReadAllBytes(extracted));
+    var tiles = new List<BflimTexture>();
+
+    for (var i = from; i < Math.Min(garc.FileCount, from + count); i++)
+    {
+        try
+        {
+            var data = garc.GetFile(i);
+
+            if (data.Length > 0 && data[0] == 0x11)
+            {
+                using var output = new MemoryStream();
+                LZSS.Decompress(new MemoryStream(data), data.Length, output);
+                data = output.ToArray();
+            }
+
+            tiles.Add(BflimTexture.Decode(data));
+        }
+        catch
+        {
+            // Lo que no es lamina no cuenta como pieza del mapa.
+        }
+    }
+
+    return tiles;
+}
+
+// Diferencia media por canal entre la ultima fila de arriba y la primera de abajo.
+double VerticalSeam(BflimTexture above, BflimTexture below)
+{
+    if (above.Width != below.Width)
+    {
+        return 999;
+    }
+
+    double total = 0;
+
+    for (var x = 0; x < above.Width; x++)
+    {
+        var a = (((above.Height - 1) * above.Width) + x) * 4;
+        var b = x * 4;
+
+        for (var channel = 0; channel < 3; channel++)
+        {
+            total += Math.Abs(above.Pixels[a + channel] - below.Pixels[b + channel]);
+        }
+    }
+
+    return total / (above.Width * 3);
+}
+
+double HorizontalSeam(BflimTexture left, BflimTexture right)
+{
+    if (left.Height != right.Height)
+    {
+        return 999;
+    }
+
+    double total = 0;
+
+    for (var y = 0; y < left.Height; y++)
+    {
+        var a = ((y * left.Width) + left.Width - 1) * 4;
+        var b = (y * right.Width) * 4;
+
+        for (var channel = 0; channel < 3; channel++)
+        {
+            total += Math.Abs(left.Pixels[a + channel] - right.Pixels[b + channel]);
+        }
+    }
+
+    return total / (left.Height * 3);
+}
+
+// Con la anchura ya medida, busca donde acaba un mapa y empieza el siguiente: entre dos filas del
+// mismo mapa el salto es pequeno, y en el corte se dispara.
+void MapaSegmentar(string romfsPath, int columns, double threshold)
+{
+    var tiles = LoadTiles(romfsPath, 0, 5000);
+    var rows = tiles.Count / columns;
+
+    Console.WriteLine($"{tiles.Count} laminas, {rows} filas de {columns}");
+    Console.WriteLine();
+
+    var cuts = new List<int> { 0 };
+
+    for (var row = 0; row + 1 < rows; row++)
+    {
+        double total = 0;
+
+        for (var c = 0; c < columns; c++)
+        {
+            total += VerticalSeam(tiles[(row * columns) + c], tiles[((row + 1) * columns) + c]);
+        }
+
+        if (total / columns > threshold)
+        {
+            cuts.Add(row + 1);
+        }
+    }
+
+    cuts.Add(rows);
+
+    Console.WriteLine($"{cuts.Count - 1} mapas encontrados (umbral {threshold}):");
+
+    for (var i = 0; i + 1 < cuts.Count; i++)
+    {
+        var height = cuts[i + 1] - cuts[i];
+        Console.WriteLine($"    mapa {i,3}: laminas {cuts[i] * columns,4}..{(cuts[i + 1] * columns) - 1,4}"
+            + $"  {columns}x{height}  =  {columns * 128}x{height * 64}");
+    }
+}
+
+// Talla BFLIM incrustados dentro de otros ficheros. El barrido anterior solo miraba subficheros que
+// SON un BFLIM, y las pantallas del juego son ALYT con las imagenes dentro: por ahi se le escapo
+// todo lo que dibuja una pantalla. Es la tecnica del §61, con su misma trampa: buscar las letras
+// FLIM a secas da falsos positivos dentro de los pixeles de otras imagenes, asi que ademas se exige
+// la marca FEFF, el bloque imag, y que el tamano declarado quepa donde dice.
+void MapaTallar(int minimum)
+{
+    var reader = new RomFsReader(RequireRom());
+    var temp = Path.Combine(Path.GetTempPath(), "permalocke-mapa");
+    Directory.CreateDirectory(temp);
+
+    var found = new List<(string File, int Sub, int Offset, int W, int H)>();
+    var scanned = 0;
+
+    foreach (var candidate in reader.Files.Values
+        .Where(f => f.Size is > 4096 and < 40_000_000)
+        .OrderBy(f => f.Path, StringComparer.Ordinal))
+    {
+        var extracted = Path.Combine(temp, candidate.Path.Replace('/', '_'));
+
+        try
+        {
+            if (!File.Exists(extracted) && !reader.ExtractTo(candidate.Path, extracted))
+            {
+                continue;
+            }
+
+            var bytes = File.ReadAllBytes(extracted);
+
+            if (bytes.Length < 8 || bytes[0] != 'C' || bytes[1] != 'R' || bytes[2] != 'A' || bytes[3] != 'G')
+            {
+                File.Delete(extracted);
+                continue;
+            }
+
+            var garc = new GARC.MemGARC(bytes);
+            scanned++;
+
+            for (var i = 0; i < garc.FileCount; i++)
+            {
+                byte[] data;
+
+                try
+                {
+                    data = garc.GetFile(i);
+                }
+                catch
+                {
+                    continue;
+                }
+
+                if (data.Length > 0 && data[0] == 0x11)
+                {
+                    try
+                    {
+                        using var output = new MemoryStream();
+                        LZSS.Decompress(new MemoryStream(data), data.Length, output);
+                        data = output.ToArray();
+                    }
+                    catch
+                    {
+                        continue;
+                    }
+                }
+
+                // Un BFLIM que ya es el subfichero entero lo vio el barrido anterior; aqui interesa
+                // lo que va DENTRO, asi que se busca a partir del byte 1.
+                for (var at = 1; at + 0x28 <= data.Length; at++)
+                {
+                    if (data[at] != 'F' || data[at + 1] != 'L' || data[at + 2] != 'I' || data[at + 3] != 'M')
+                    {
+                        continue;
+                    }
+
+                    if (data[at + 4] != 0xFF || data[at + 5] != 0xFE)
+                    {
+                        continue;
+                    }
+
+                    if (data[at + 0x14] != 'i' || data[at + 0x15] != 'm' ||
+                        data[at + 0x16] != 'a' || data[at + 0x17] != 'g')
+                    {
+                        continue;
+                    }
+
+                    int w = BitConverter.ToUInt16(data, at + 0x1C);
+                    int h = BitConverter.ToUInt16(data, at + 0x1E);
+                    var declared = (int)BitConverter.ToUInt32(data, at + 0x0C);
+
+                    if (w < minimum || h < minimum || declared <= 0x28 || declared > at + 0x28)
+                    {
+                        continue;
+                    }
+
+                    found.Add((candidate.Path, i, at + 0x28 - declared, w, h));
+                }
+            }
+
+            File.Delete(extracted);
+        }
+        catch
+        {
+            try { File.Delete(extracted); } catch { }
+        }
+    }
+
+    Console.WriteLine($"{scanned} GARC mirados, {found.Count} laminas incrustadas de {minimum}px o mas");
+    Console.WriteLine();
+
+    foreach (var group in found.GroupBy(f => f.File).OrderByDescending(g => g.Count()))
+    {
+        var sizes = group.Select(f => $"{f.W}x{f.H}").Distinct().OrderBy(s => s, StringComparer.Ordinal);
+        Console.WriteLine($"    {group.Key,-10} {group.Count(),4}   {string.Join(" ", sizes.Take(10))}");
+    }
+}
+
+// Talla a PNG las laminas incrustadas de UN fichero, para poder mirarlas.
+void MapaTallarPng(string romfsPath, int minimum)
+{
+    var reader = new RomFsReader(RequireRom());
+    var temp = Path.Combine(Path.GetTempPath(), "permalocke-mapa");
+    Directory.CreateDirectory(temp);
+
+    var extracted = Path.Combine(temp, romfsPath.Replace('/', '_'));
+
+    if (!File.Exists(extracted) && !reader.ExtractTo(romfsPath, extracted))
+    {
+        Console.WriteLine($"No pude extraer {romfsPath}");
+        return;
+    }
+
+    var garc = new GARC.MemGARC(File.ReadAllBytes(extracted));
+    var outputDir = Path.Combine(temp, "tallado", romfsPath.Replace('/', '_'));
+    Directory.CreateDirectory(outputDir);
+
+    var written = 0;
+
+    for (var i = 0; i < garc.FileCount; i++)
+    {
+        byte[] data;
+
+        try
+        {
+            data = garc.GetFile(i);
+        }
+        catch
+        {
+            continue;
+        }
+
+        if (data.Length > 0 && data[0] == 0x11)
+        {
+            try
+            {
+                using var output = new MemoryStream();
+                LZSS.Decompress(new MemoryStream(data), data.Length, output);
+                data = output.ToArray();
+            }
+            catch
+            {
+                continue;
+            }
+        }
+
+        for (var at = 0; at + 0x28 <= data.Length; at++)
+        {
+            if (data[at] != 'F' || data[at + 1] != 'L' || data[at + 2] != 'I' || data[at + 3] != 'M') continue;
+            if (data[at + 4] != 0xFF || data[at + 5] != 0xFE) continue;
+            if (data[at + 0x14] != 'i' || data[at + 0x15] != 'm' ||
+                data[at + 0x16] != 'a' || data[at + 0x17] != 'g') continue;
+
+            int w = BitConverter.ToUInt16(data, at + 0x1C);
+            int h = BitConverter.ToUInt16(data, at + 0x1E);
+            var declared = (int)BitConverter.ToUInt32(data, at + 0x0C);
+
+            if (w < minimum || h < minimum || declared <= 0x28 || declared > at + 0x28) continue;
+
+            try
+            {
+                var start = at + 0x28 - declared;
+                var texture = BflimTexture.Decode(data.AsSpan(start, declared));
+                var clear = 0;
+                for (var p = 3; p < texture.Pixels.Length; p += 4) if (texture.Pixels[p] < 8) clear++;
+                Console.WriteLine("    sub " + i + " " + w + "x" + h + " " + texture.Format
+                    + " transparente " + (100.0 * clear / (w * h)).ToString("F1") + "%");
+                var png = Path.Combine(outputDir, $"{i:0000}_{start:X6}_{w}x{h}.png");
+                File.WriteAllBytes(png, PngImage.Encode(texture.Pixels, texture.Width, texture.Height));
+                written++;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"    {i} @{at:X6} {w}x{h}: {ex.Message}");
+            }
+        }
+    }
+
+    Console.WriteLine($"{written} PNG en {outputDir}");
+}
+
+// Busca piezas con transparencia. Una vista de isla se recorta contra el fondo, asi que su mar es
+// transparente; un mapa de area tiene el agua pintada de azul y es opaco entero. Es la forma de
+// encontrar las vistas de isla sin mirar 866 laminas una a una.
+void MapaTransparencia(string romfsPath, double minimum)
+{
+    var tiles = LoadTiles(romfsPath, 0, 5000);
+    Console.WriteLine($"{tiles.Count} laminas");
+
+    var runs = new List<(int First, int Last)>();
+    var start = -1;
+
+    for (var i = 0; i < tiles.Count; i++)
+    {
+        var clear = 0;
+
+        for (var p = 3; p < tiles[i].Pixels.Length; p += 4)
+        {
+            if (tiles[i].Pixels[p] < 8) clear++;
+        }
+
+        var fraction = (double)clear / (tiles[i].Width * tiles[i].Height);
+
+        if (fraction >= minimum)
+        {
+            if (start < 0) start = i;
+        }
+        else if (start >= 0)
+        {
+            runs.Add((start, i - 1));
+            start = -1;
+        }
+    }
+
+    if (start >= 0)
+    {
+        runs.Add((start, tiles.Count - 1));
+    }
+
+    Console.WriteLine($"{runs.Count} tramos con al menos {minimum:P0} transparente:");
+
+    foreach (var run in runs)
+    {
+        Console.WriteLine($"    {run.First,4}..{run.Last,4}  ({run.Last - run.First + 1} laminas)");
+    }
+}
+
+// Busca vistas de isla por todo el RomFS: una lamina grande, recortada -- o sea con una buena parte
+// transparente -- es la forma que tiene un mapa de isla y no la tiene ningun mapa de area, que va
+// pintado hasta el borde. Junta el tallado de dentro de los ALYT con la prueba de transparencia.
+void MapaIslas(int minimum, double clearAtLeast)
+{
+    var reader = new RomFsReader(RequireRom());
+    var temp = Path.Combine(Path.GetTempPath(), "permalocke-mapa");
+    var outputDir = Path.Combine(temp, "islas");
+    Directory.CreateDirectory(outputDir);
+
+    var hits = 0;
+
+    foreach (var candidate in reader.Files.Values
+        .Where(f => f.Size is > 4096 and < 40_000_000)
+        .OrderBy(f => f.Path, StringComparer.Ordinal))
+    {
+        var extracted = Path.Combine(temp, candidate.Path.Replace('/', '_'));
+
+        try
+        {
+            if (!File.Exists(extracted) && !reader.ExtractTo(candidate.Path, extracted))
+            {
+                continue;
+            }
+
+            var bytes = File.ReadAllBytes(extracted);
+
+            if (bytes.Length < 8 || bytes[0] != 'C' || bytes[1] != 'R' || bytes[2] != 'A' || bytes[3] != 'G')
+            {
+                File.Delete(extracted);
+                continue;
+            }
+
+            var garc = new GARC.MemGARC(bytes);
+
+            for (var i = 0; i < garc.FileCount; i++)
+            {
+                byte[] data;
+
+                try { data = garc.GetFile(i); } catch { continue; }
+
+                if (data.Length > 0 && data[0] == 0x11)
+                {
+                    try
+                    {
+                        using var output = new MemoryStream();
+                        LZSS.Decompress(new MemoryStream(data), data.Length, output);
+                        data = output.ToArray();
+                    }
+                    catch { continue; }
+                }
+
+                for (var at = 0; at + 0x28 <= data.Length; at++)
+                {
+                    if (data[at] != 'F' || data[at + 1] != 'L' || data[at + 2] != 'I' || data[at + 3] != 'M') continue;
+                    if (data[at + 4] != 0xFF || data[at + 5] != 0xFE) continue;
+                    if (data[at + 0x14] != 'i' || data[at + 0x15] != 'm' ||
+                        data[at + 0x16] != 'a' || data[at + 0x17] != 'g') continue;
+
+                    int w = BitConverter.ToUInt16(data, at + 0x1C);
+                    int h = BitConverter.ToUInt16(data, at + 0x1E);
+                    var declared = (int)BitConverter.ToUInt32(data, at + 0x0C);
+
+                    if (w < minimum || h < minimum || declared <= 0x28 || declared > at + 0x28) continue;
+
+                    try
+                    {
+                        var texture = BflimTexture.Decode(data.AsSpan(at + 0x28 - declared, declared));
+
+                        if (texture.Format is BflimFormat.A4 or BflimFormat.L4)
+                        {
+                            continue;
+                        }
+
+                        var clear = 0;
+
+                        for (var p = 3; p < texture.Pixels.Length; p += 4)
+                        {
+                            if (texture.Pixels[p] < 8) clear++;
+                        }
+
+                        var fraction = (double)clear / (texture.Width * texture.Height);
+
+                        if (fraction < clearAtLeast)
+                        {
+                            continue;
+                        }
+
+                        var name = $"{candidate.Path.Replace('/', '_')}_{i:0000}_{w}x{h}_{fraction:P0}.png"
+                            .Replace("%", "pc").Replace(" ", "");
+                        File.WriteAllBytes(Path.Combine(outputDir, name),
+                            PngImage.Encode(texture.Pixels, texture.Width, texture.Height));
+
+                        Console.WriteLine($"    {candidate.Path,-10} sub {i,4}  {w}x{h}  {fraction:P0} transparente");
+                        hits++;
+                    }
+                    catch
+                    {
+                        // Lo que no decodifica no es una isla: se pasa.
+                    }
+                }
+            }
+
+            File.Delete(extracted);
+        }
+        catch
+        {
+            try { File.Delete(extracted); } catch { }
+        }
+    }
+
+    Console.WriteLine($"{hits} candidatas en {outputDir}");
 }

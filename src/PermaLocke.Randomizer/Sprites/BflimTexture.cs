@@ -105,6 +105,12 @@ public sealed class BflimTexture
             return Etc1Texture.Decode(data, width, height, format == BflimFormat.Etc1A4);
         }
 
+        // Half a byte per pixel, which the loop below cannot express.
+        if (format is BflimFormat.A4 or BflimFormat.L4)
+        {
+            return UntileNibbles(data, width, height, format == BflimFormat.A4);
+        }
+
         var bytesPerPixel = format switch
         {
             BflimFormat.Rgba5551 or BflimFormat.Rgba4444 or BflimFormat.Rgb565 or BflimFormat.La8 => 2,
@@ -131,6 +137,46 @@ public sealed class BflimTexture
             index++;
             var target = ((y * width) + x) * 4;
             WritePixel(data, source, format, output, target);
+        }
+
+        return output;
+    }
+
+    /// <summary>
+    /// Four bits per pixel: A4 is a cut-out mask and L4 a grey ramp.
+    /// </summary>
+    /// <remarks>
+    /// A mask is rendered as white so that it can be looked at. Left as pure alpha it decodes to a
+    /// transparent rectangle, which is indistinguishable from a decoder that produced nothing --
+    /// and telling those two apart is the whole reason for opening one.
+    /// </remarks>
+    private static byte[] UntileNibbles(ReadOnlySpan<byte> data, int width, int height, bool mask)
+    {
+        var output = new byte[width * height * 4];
+        var index = 0;
+
+        for (var tileY = 0; tileY < height / 8; tileY++)
+        for (var tileX = 0; tileX < width / 8; tileX++)
+        for (var p = 0; p < 64; p++)
+        {
+            var localX = (p & 1) | ((p >> 1) & 2) | ((p >> 2) & 4);
+            var localY = ((p >> 1) & 1) | ((p >> 2) & 2) | ((p >> 3) & 4);
+            var x = (tileX * 8) + localX;
+            var y = (tileY * 8) + localY;
+
+            var at = index / 2;
+            var nibble = at >= data.Length
+                ? 0
+                : (index % 2 == 0 ? data[at] & 0xF : data[at] >> 4);
+            index++;
+
+            var value = (byte)(nibble * 17);
+            var target = ((y * width) + x) * 4;
+
+            output[target + 0] = mask ? value : value;
+            output[target + 1] = mask ? value : value;
+            output[target + 2] = mask ? value : value;
+            output[target + 3] = 255;
         }
 
         return output;
