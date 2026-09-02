@@ -8,49 +8,42 @@ namespace PermaLocke.App;
 /// </summary>
 public partial class MainWindow : Window
 {
-    /// <summary>
-    /// The size the window is fixed at, declared here and not in the XAML so the fitting below
-    /// has something to compare against.
-    /// </summary>
-    /// <remarks>
-    /// It is the widest thing the application has to show plus room to breathe: the map's largest
-    /// island is 1024 across and its side panel another 290. Changing the window's size is these
-    /// two numbers and nothing else.
-    /// </remarks>
-    private const double FixedWidth = 1180;
-
-    private const double FixedHeight = 760;
-
     public MainWindow()
     {
         InitializeComponent();
         DarkFrame.Apply(this);
-        FitToScreen();
     }
 
     /// <summary>
-    /// Sets the window to its fixed size, shrinking it only if this screen cannot take it.
+    /// Sets the window to the chosen size, shrinking it only if this screen cannot take it.
     /// </summary>
     /// <remarks>
-    /// The shrinking is not a loophole in «fixed», it is what stops a fixed size from being a bug
-    /// on somebody else's machine. 760 plus a title bar plus a taskbar is taller than a 1366×768
-    /// laptop, so on one of those the window opened with its own bottom edge off the screen —
+    /// The shrinking is not a loophole in «fixed», it is what stops a chosen size from being a bug
+    /// on somebody else's machine. 860 plus a title bar plus a taskbar is taller than a 1366×768
+    /// laptop, so without this the window would open with its own bottom edge off the screen —
     /// buttons included. A size that does not fit is not a size.
     /// <para>
     /// It reads the <b>working area</b> rather than the screen, because the taskbar is not screen
     /// the window can use.
     /// </para>
     /// </remarks>
-    private void FitToScreen()
+    public void Resize(WindowSize size)
     {
         var area = SystemParameters.WorkArea;
 
-        Width = Math.Min(FixedWidth, area.Width);
-        Height = Math.Min(FixedHeight, area.Height);
+        // El minimo y el maximo se sueltan antes de medir: si no, el tamaño anterior impide crecer.
+        MinWidth = MinHeight = 0;
+        MaxWidth = MaxHeight = double.PositiveInfinity;
+
+        Width = Math.Min(size.Width, area.Width);
+        Height = Math.Min(size.Height, area.Height);
 
         // Y se fija ahí: sin margen de redimensión, la única medida posible es la que se acaba de
         // calcular, de modo que nadie ve una ventana a medio estirar.
         MinWidth = MaxWidth = Width;
         MinHeight = MaxHeight = Height;
+
+        Left = area.Left + ((area.Width - Width) / 2);
+        Top = area.Top + ((area.Height - Height) / 2);
     }
 }

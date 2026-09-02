@@ -1,3 +1,4 @@
+using System.Windows;
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using PermaLocke.Core.Domain;
@@ -20,18 +21,21 @@ public sealed partial class MaintenanceViewModel : SectionViewModel
     private readonly MaintenanceService _maintenance;
     private readonly IRunContext _runContext;
     private readonly IAppDialogs _dialogs;
+    private readonly WindowSizeService _windowSizes;
     private readonly ILogger<MaintenanceViewModel> _logger;
 
     public MaintenanceViewModel(
         MaintenanceService maintenance,
         IRunContext runContext,
         IAppDialogs dialogs,
+        WindowSizeService windowSizes,
         ILogger<MaintenanceViewModel> logger)
         : base("MANTENIMIENTO", "Comprobar que la run cuadra y reparar lo que se haya desajustado")
     {
         _maintenance = maintenance;
         _runContext = runContext;
         _dialogs = dialogs;
+        _windowSizes = windowSizes;
         _logger = logger;
 
         _runContext.CurrentChanged += (_, _) => _ = AuditAsync();
@@ -45,6 +49,42 @@ public sealed partial class MaintenanceViewModel : SectionViewModel
     /// fail towards the side that breaks nothing.
     /// </summary>
     public override GameNeed Needs => GameNeed.Closed;
+
+    /// <summary>The window sizes on offer, so the layout can bind to them.</summary>
+    public IReadOnlyList<WindowSize> WindowSizes { get; } = WindowSizeService.Sizes;
+
+    /// <summary>
+    /// Applies a window size and remembers it.
+    /// </summary>
+    /// <remarks>
+    /// It lives here and not in a settings screen because there is no settings screen, and one
+    /// option does not earn one. The window is a fixed size on purpose — the map has to be seen
+    /// whole — but which fixed size belongs to whoever is looking at it, not to whoever picked the
+    /// number.
+    /// </remarks>
+    [RelayCommand]
+    public void SetWindowSize(WindowSize? size)
+    {
+        if (size is null)
+        {
+            return;
+        }
+
+        try
+        {
+            _windowSizes.Set(size);
+            (Application.Current?.MainWindow as MainWindow)?.Resize(size);
+            WindowSizeStatus = $"Ventana en {size.Name.ToLowerInvariant()}.";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "No se pudo cambiar el tamaño de ventana");
+            WindowSizeStatus = "No se pudo guardar el tamaño.";
+        }
+    }
+
+    [ObservableProperty]
+    private string _windowSizeStatus = string.Empty;
 
     public ObservableCollection<AuditRow> Rows { get; } = [];
 

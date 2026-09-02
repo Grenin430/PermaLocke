@@ -323,6 +323,48 @@
                 </StackPanel>
             </Border>
 
+            <!-- ACCESIBILIDAD. La ventana es de tamano fijo porque el mapa tiene que verse entero,
+                 pero QUE tamano es de quien la mira, no de quien eligio el numero. -->
+            <Border Style="{StaticResource Inset}" Margin="0,12,0,0">
+                <StackPanel>
+                    <TextBlock Text="TAMAÑO DE LA VENTANA" Style="{StaticResource StatLabel}" />
+                    <TextBlock Style="{StaticResource Faint}" TextWrapping="Wrap" Margin="0,6,0,12"
+                               Text="Se aplica al momento y se recuerda. Si tu pantalla no da para el tamaño elegido, la ventana se ajusta a lo que quepa." />
+
+                    <ItemsControl ItemsSource="{Binding WindowSizes}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <DockPanel Margin="0,0,0,8">
+                                    <Button DockPanel.Dock="Left" Content="{Binding Name}"
+                                            Style="{StaticResource GhostButton}"
+                                            Padding="16,8" FontSize="11.5" MinWidth="130"
+                                            Command="{Binding DataContext.SetWindowSizeCommand,
+                                                RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}" />
+
+                                    <TextBlock Text="{Binding Why}" Style="{StaticResource Faint}"
+                                               VerticalAlignment="Center" Margin="12,0,0,0"
+                                               TextWrapping="Wrap" />
+                                </DockPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <TextBlock Text="{Binding WindowSizeStatus}" Margin="0,4,0,0" FontSize="11.5">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource Body}">
+                                <Setter Property="Visibility" Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding WindowSizeStatus}" Value="">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
         </StackPanel>
     </ScrollViewer>
 </UserControl>

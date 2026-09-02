@@ -13,7 +13,7 @@
             <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
             <Setter Property="FontSize" Value="11.5" />
             <Setter Property="Foreground" Value="{StaticResource OnAccentBrush}" />
-            <Setter Property="Background" Value="#66202020" />
+            <Setter Property="Background" Value="#40202020" />
             <Setter Property="BorderBrush" Value="#E0FFFFFF" />
             <Setter Property="Template">
                 <Setter.Value>
@@ -43,7 +43,7 @@
                     <Setter Property="Background" Value="#E0D93A3A" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding State}" Value="Fled">
-                    <Setter Property="Background" Value="#E01A1A1A" />
+                    <Setter Property="Background" Value="#FF080808" />
                 </DataTrigger>
             </Style.Triggers>
         </Style>
@@ -64,7 +64,7 @@
                     <Setter Property="Foreground" Value="White" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding State}" Value="Fled">
-                    <Setter Property="Background" Value="#1A1A1A" />
+                    <Setter Property="Background" Value="#080808" />
                     <Setter Property="Foreground" Value="White" />
                 </DataTrigger>
             </Style.Triggers>
@@ -299,7 +299,7 @@
                         </ItemsControl.Resources>
 
                         <StackPanel Style="{StaticResource LegendRow}">
-                            <Border Style="{StaticResource LegendDot}" Background="#66202020" />
+                            <Border Style="{StaticResource LegendDot}" Background="#40202020" />
                             <TextBlock Style="{StaticResource LegendText}" Text="Sin marcar" />
                         </StackPanel>
 
@@ -314,7 +314,7 @@
                         </StackPanel>
 
                         <StackPanel Style="{StaticResource LegendRow}">
-                            <Border Style="{StaticResource LegendDot}" Background="#E01A1A1A" />
+                            <Border Style="{StaticResource LegendDot}" Background="#FF080808" />
                             <TextBlock Style="{StaticResource LegendText}" Text="Primer encuentro: huida" />
                         </StackPanel>
                     </ItemsControl>

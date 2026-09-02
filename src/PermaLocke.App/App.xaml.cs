@@ -112,6 +112,7 @@ public partial class App : Application
         collection.AddSingleton<PokePasteViewModel>();
         collection.AddSingleton<IslandMapService>();
         collection.AddSingleton<ZonePhotoService>();
+        collection.AddSingleton<WindowSizeService>();
         collection.AddSingleton<MapViewModel>();
         collection.AddSingleton<MiscellaneousViewModel>();
         collection.AddSingleton<TradedAwayReconciler>();
@@ -159,6 +160,7 @@ public partial class App : Application
 
         var main = _services.GetRequiredService<MainViewModel>();
         var window = new MainWindow { DataContext = main };
+        window.Resize(_services.GetRequiredService<WindowSizeService>().Current);
         MainWindow = window;
         window.Show();
 
