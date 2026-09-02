@@ -59,6 +59,9 @@ switch (command)
     case "trainers":
         await TrainersAsync(args.Length > 1 ? ulong.Parse(args[1]) : 20260818);
         break;
+    case "estaticos-crudo":
+        await EstaticosCrudoAsync([.. args.Skip(1).Select(int.Parse)]);
+        break;
     case "estaticos-dump":
         await EstaticosDumpAsync(args.Length > 1 && args[1] != "-" ? args[1] : null,
             args.Length > 2 ? args[2] : null);
@@ -3336,4 +3339,49 @@ async Task LigaAsync(ulong seed)
     Console.WriteLine();
     Console.WriteLine($"{seen} combates de la liga, {below} Pokemon de forma base por debajo del suelo");
     Console.WriteLine("Las formas alternativas no cuentan: las gobierna la regla de las megas.");
+}
+
+// Los bytes en crudo de unas entradas de estaticos, para compararlas entre si. Cuando dos filas
+// tienen la misma especie y no se sabe que son, lo unico que lo dice es en que se diferencian.
+async Task EstaticosCrudoAsync(int[] indices)
+{
+    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work, baseLayer: baseLayer);
+    var names = workspace.Config.GetText(TextName.SpeciesNames);
+    var layout = StaticEncounterTable.Statics;
+
+    using var patcher = new GarcPatcher(workspace.PathOf(GameFiles.EncounterStatic));
+    var payload = patcher.Read(layout.Subfile);
+
+    foreach (var index in indices)
+    {
+        var at = index * layout.Stride;
+        var species = StaticEncounterTable.GetSpecies(payload, layout, index);
+        var name = species > 0 && species < names.Length ? names[species] : $"?{species}";
+
+        Console.WriteLine($"[{index,3}] {name}");
+
+        for (var row = 0; row < layout.Stride; row += 16)
+        {
+            var bytes = payload.Skip(at + row).Take(Math.Min(16, layout.Stride - row));
+            Console.WriteLine($"    {row:X2}: {string.Join(" ", bytes.Select(b => b.ToString("X2")))}");
+        }
+    }
+
+    // Y en que se diferencian, que es la pregunta de verdad.
+    if (indices.Length == 2)
+    {
+        Console.WriteLine();
+        Console.WriteLine($"diferencias entre [{indices[0]}] y [{indices[1]}]:");
+
+        for (var b = 0; b < layout.Stride; b++)
+        {
+            var a = payload[(indices[0] * layout.Stride) + b];
+            var c = payload[(indices[1] * layout.Stride) + b];
+
+            if (a != c)
+            {
+                Console.WriteLine($"    byte 0x{b:X2}: {a,3} vs {c,3}   (0x{a:X2} vs 0x{c:X2})");
+            }
+        }
+    }
 }
