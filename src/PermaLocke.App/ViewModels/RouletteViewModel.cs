@@ -20,11 +20,17 @@ namespace PermaLocke.App.ViewModels;
 public sealed partial class RouletteSlotViewModel(int index, Geometry wedge, Brush colour) : ObservableObject
 {
     /// <summary>Where the wheel sits, in pixels. Everything else is derived from it.</summary>
-    public const double Size = 340;
+    /// <remarks>
+    /// It has to fit the narrowest window on offer -- 1180 minus the 216 of the sidebar and the 330
+    /// of the side panel- so this is about as big as it goes without the wheel meeting the panel.
+    /// </remarks>
+    public const double Size = 460;
 
-    private const double Radius = 158;
+    /// <summary>The wedges, and the ring the labels sit on. Fractions of the size and not their
+    /// own numbers: three constants that have to agree are two chances to make them disagree.</summary>
+    private const double Radius = Size * 0.4647;
 
-    private const double LabelRadius = 104;
+    private const double LabelRadius = Size * 0.3059;
 
     public int Index { get; } = index;
 
@@ -126,6 +132,12 @@ public sealed partial class RouletteViewModel : SectionViewModel
     }
 
     /// <summary>Raised when the wheel should turn. The view animates; this owns the plan.</summary>
+    /// <summary>Cuanto gira y cuanto dura. Doce segundos y once vueltas: la gracia esta en el
+    /// final, cuando ya casi no se mueve y se puede leer cada cuna que pasa.</summary>
+    private static readonly TimeSpan SpinTime = TimeSpan.FromSeconds(12);
+
+    private const int Turns = 11;
+
     public event EventHandler<SpinTheWheel>? SpinRequested;
 
     public ObservableCollection<RouletteSlotViewModel> Slots { get; } = [];
@@ -282,22 +294,26 @@ public sealed partial class RouletteViewModel : SectionViewModel
         {
             Slots[index].Text = wheel.Faces[index].Name;
             Slots[index].Revealed = true;
-            await Task.Delay(TimeSpan.FromMilliseconds(420));
+            // Hay que poder LEER lo que va saliendo: son dieciseis caras posibles y seis en la
+            // rueda, asi que verlas pasar sin tiempo de leerlas no es enterarse de nada.
+            await Task.Delay(TimeSpan.FromMilliseconds(1500));
         }
 
         await Task.Delay(TimeSpan.FromMilliseconds(350));
 
         // La marca está arriba, así que la cuña ganadora tiene que acabar debajo de ella: se gira
         // hacia atrás el centro de esa cuña, más unas cuantas vueltas enteras para que frene.
-        var target = (360 * 6) - ((wheel.WinningIndex * 60) + 30);
+        var target = (360 * Turns) - ((wheel.WinningIndex * 60) + 30);
 
         var stopped = new TaskCompletionSource();
-        SpinRequested?.Invoke(this, new SpinTheWheel(6, target, TimeSpan.FromSeconds(4.5),
+        SpinRequested?.Invoke(this, new SpinTheWheel(Turns, target, SpinTime,
             () => stopped.TrySetResult()));
 
         // Se espera a que pare de verdad, no a que pase el tiempo. La red de seguridad existe por
         // si la vista nunca llegó a arrancar: una pantalla que no se cuelga.
-        await Task.WhenAny(stopped.Task, Task.Delay(TimeSpan.FromSeconds(8)));
+        // La red se calcula desde la duracion y no se escribe aparte: alargar el giro y olvidarse
+        // de esto haria que la pantalla se diera por vencida antes de que la rueda parase.
+        await Task.WhenAny(stopped.Task, Task.Delay(SpinTime + TimeSpan.FromSeconds(3)));
 
         Slots[wheel.WinningIndex].IsWinner = true;
     }

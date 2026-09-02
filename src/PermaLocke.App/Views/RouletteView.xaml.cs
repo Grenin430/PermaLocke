@@ -55,7 +55,9 @@ public partial class RouletteView : UserControl
             From = from,
             To = from + request.FinalAngle,
             Duration = request.Duration,
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            // Potencia 5 en vez de un cubico: frena antes y se arrastra al final, que es donde
+            // esta la gracia -- ver pasar las cunas una a una y poder leerlas.
+            EasingFunction = new PowerEase { Power = 5, EasingMode = EasingMode.EaseOut }
         };
 
         animation.Completed += (_, _) => request.Stopped();
