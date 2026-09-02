@@ -18,7 +18,7 @@ public sealed class PkhexAbilityLookup : IAbilityLookup
     /// carries abilities that exist in gen 8 and 9 and not here. Written into a PK7 they are a
     /// number the game has no name for.
     /// </remarks>
-    public const int LastGen7Ability = 233;
+    public const int LastGen7Ability = IAbilityLookup.LastUsableAbility;
 
     private readonly string[] _names;
     private readonly Dictionary<string, int> _ids;

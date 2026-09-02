@@ -24,7 +24,7 @@ public sealed class GachaServiceTests
 
         public IReadOnlyList<string> Natures { get; } = [.. Enumerable.Range(0, 25).Select(n => $"Naturaleza {n}")];
 
-        public IReadOnlyList<string> Abilities { get; } = ["Levitación", "Impostor", "Presión"];
+        public IReadOnlyList<string> Abilities { get; init; } = ["Levitación", "Impostor", "Presión"];
     }
 
     /// <summary>The five bands the run defines, by base stat total.</summary>
@@ -177,6 +177,43 @@ public sealed class GachaServiceTests
 
         Assert.True(fromTop > 4000, $"el tier 5 debería salir un 25% de las veces, salió {fromTop}");
         Assert.InRange(legendary / (double)fromTop, 0.37, 0.43);
+    }
+
+    /// <summary>
+    /// Nothing above <see cref="IAbilityLookup.LastUsableAbility"/> is ever handed out.
+    /// </summary>
+    /// <remarks>
+    /// The bug this fixes wrote a <b>valid</b> number, which is why nothing caught it. With the
+    /// expansion mod the ability list runs to 319 and a gen 7 Pokémon stores its ability in one
+    /// byte, so 293 — «General Supremo» — was written and read back as 37, «Potencia». The screen
+    /// announced one ability and the box held another, and both looked perfectly normal.
+    /// <para>
+    /// Two hundred pulls over a table that is mostly out of range: if the ceiling were dropped,
+    /// this fails within a handful of them.
+    /// </para>
+    /// </remarks>
+    [Fact]
+    public void No_pull_carries_an_ability_this_game_cannot_hold()
+    {
+        // Una lista como la del mod: válidas hasta la 233 y basura de generaciones posteriores
+        // por encima, incluida la 293 que es la que se daba la vuelta.
+        var names = new List<string> { "-" };
+        for (var id = 1; id < 320; id++)
+        {
+            names.Add(id <= IAbilityLookup.LastUsableAbility ? $"Habilidad {id}" : $"Posterior {id}");
+        }
+
+        var service = new GachaService(new Catalog(Tiers(), [Pocho()]),
+            new Species(SpeciesTable()) { Abilities = names }, null!, null!, null!, null!);
+
+        for (var number = 0; number < 200; number++)
+        {
+            var pull = service.Preview(Pocho(), 1, number);
+
+            Assert.NotNull(pull);
+            Assert.InRange(pull.AbilityId, 0, IAbilityLookup.LastUsableAbility);
+            Assert.DoesNotContain("Posterior", pull.Ability);
+        }
     }
 
     [Fact]

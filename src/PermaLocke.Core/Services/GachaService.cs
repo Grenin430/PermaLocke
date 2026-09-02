@@ -226,6 +226,13 @@ public sealed class GachaService(
         // gacha, y que un Magikarp salga con Levitación es parte de la gracia. La posición en
         // la lista es el id que el juego usa, así que se sortea sobre ella y se descartan los
         // huecos sin nombre en vez de compactarla, que desplazaría todos los ids.
+        //
+        // Y se descarta igual lo que el juego no puede guardar. Con el mod de expansión la lista
+        // llega a 319 y el campo es un byte, así que una habilidad de la 256 en adelante se daba
+        // la vuelta al escribirla: salía «General Supremo» (293) y en la caja aparecía «Potencia»
+        // (37). Se descarta en vez de recortarse el sorteo porque así el número de tiradas que
+        // cambian es el mínimo: las que ya sacaban una habilidad válida se recomputan igual que
+        // siempre, y solo cambian las que estaban rotas.
         var abilities = speciesStats.Abilities;
         var abilityId = 0;
 
@@ -233,7 +240,8 @@ public sealed class GachaService(
         {
             var candidate = source.Next(1, abilities.Count);
 
-            if (!string.IsNullOrWhiteSpace(abilities[candidate]) && abilities[candidate] != "-")
+            if (candidate <= IAbilityLookup.LastUsableAbility
+                && !string.IsNullOrWhiteSpace(abilities[candidate]) && abilities[candidate] != "-")
             {
                 abilityId = candidate;
                 break;

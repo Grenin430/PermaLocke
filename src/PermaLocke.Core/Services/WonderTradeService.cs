@@ -232,10 +232,38 @@ public sealed class WonderTradeService(
 
         // La habilidad sale de las que la especie declara, no de todas las del juego: esto es un
         // intercambio, no un gacha, y lo que llega tiene que poder existir.
+        //
+        // Con el mod de expansión hay especies cuya habilidad es de novena generación, y el campo
+        // del cartucho es un byte: escribir la 293 guarda la 37. Así que si la sorteada no cabe se
+        // recorre la propia lista de la especie hasta la primera que sí, sin sacar otro número del
+        // sorteo -- gastar una tirada más desplazaría todo lo que viene detrás y las entregas
+        // anteriores dejarían de recomputarse igual.
         var abilities = chosen.Abilities.Count > 0 ? chosen.Abilities : [];
         var abilityIndex = abilities.Count > 0 ? source.Next(abilities.Count) : -1;
         var abilityName = abilityIndex >= 0 ? abilities[abilityIndex] : string.Empty;
-        var abilityId = speciesStats.Abilities.ToList().IndexOf(abilityName);
+        var known = speciesStats.Abilities;
+        var abilityId = known.ToList().IndexOf(abilityName);
+
+        for (var step = 1; step <= abilities.Count && abilityId > IAbilityLookup.LastUsableAbility; step++)
+        {
+            var fallback = abilities[(abilityIndex + step) % abilities.Count];
+            var id = known.ToList().IndexOf(fallback);
+
+            if (id > 0 && id <= IAbilityLookup.LastUsableAbility)
+            {
+                abilityName = fallback;
+                abilityId = id;
+            }
+        }
+
+        // Una especie cuyas habilidades son TODAS posteriores a este juego -- Great Tusk, Iron
+        // Treads, Glastrier -- se queda sin ninguna, que es lo que ya pasaba con un nombre que no
+        // resolvía. Mejor sin habilidad que con otra distinta de la que la pantalla anunció.
+        if (abilityId > IAbilityLookup.LastUsableAbility)
+        {
+            abilityId = 0;
+            abilityName = string.Empty;
+        }
 
         var ivs = new int[6];
         for (var stat = 0; stat < ivs.Length; stat++)
