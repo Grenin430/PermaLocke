@@ -103,8 +103,20 @@ public static class ItemIconIndex
         [767] = 621, [768] = 622, [769] = 623, [770] = 624,
     };
 
-    /// <summary>True when this item's icon has been checked and can be drawn.</summary>
-    public static bool TryGet(int itemId, out int icon)
+    /// <summary>Iconos que el contenedor del cartucho trae. Más significa que hay un mod.</summary>
+    public const int CartridgeIcons = 769;
+
+    /// <summary>Iconos que trae el contenedor con el mod de gen 8 y 9 instalado.</summary>
+    public const int ExpansionIcons = 849;
+
+    /// <summary>
+    /// True when this item's icon has been checked and can be drawn.
+    /// </summary>
+    /// <param name="containerIcons">
+    /// Cuántos iconos tiene el contenedor cargado. Con los del cartucho manda la tabla medida; con
+    /// los del mod se añaden sus dos bloques.
+    /// </param>
+    public static bool TryGet(int itemId, out int icon, int containerIcons = CartridgeIcons)
     {
         if (itemId > 0 && itemId <= LastDirectItem)
         {
@@ -112,7 +124,55 @@ public static class ItemIconIndex
             return true;
         }
 
+        if (containerIcons >= ExpansionIcons && TryExpansion(itemId, out icon))
+        {
+            return true;
+        }
+
         return Measured.TryGetValue(itemId, out icon);
+    }
+
+    /// <summary>
+    /// Los ochenta iconos que añade el mod de gen 8 y 9, en dos bloques.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// El ancla NO son las megapiedras: entre cuarenta y tres esferas con franjas de dos o tres
+    /// tonos, «esta es la de Dragonite» es una corazonada, y un icono equivocado no se nota (§45).
+    /// El ancla son los objetos de EVOLUCIÓN, que son inconfundibles: dos aros de Galarica, tres
+    /// manzanas, dos teteras, dos pergaminos, dos armaduras, dos tazas y una moneda de oro. Nueve
+    /// parejas reconocidas de un vistazo dan el desfase, <b>-191</b>, sin adivinar nada.
+    /// </para>
+    /// <para>
+    /// Y entonces las piedras confirman solas: 997 Clefablite es rosa, 1000 Dragoninite naranja y
+    /// crema, 1011 Chesnaughtite verde y marrón, 1019 Falinksite amarillo y negro, 1023 Darkranite
+    /// negro y blanco. Cada una del color de su Pokémon.
+    /// </para>
+    /// <para>
+    /// Lo que convierte esto en una medida y no en una corazonada es que <b>la cuenta cierra</b>:
+    /// los objetos 960-1023 son 64 y ocupan los iconos 769-832, que son 64; quedan 833-848, que son
+    /// 16, y los objetos que el mod renombra son exactamente 16, del 505 al 520. 64 + 16 = 80, que
+    /// es justo lo que el contenedor crece. Ni un icono libre ni uno repetido.
+    /// </para>
+    /// </remarks>
+    private static bool TryExpansion(int itemId, out int icon)
+    {
+        // Los objetos que el mod añade.
+        if (itemId is >= 960 and <= 1023)
+        {
+            icon = itemId - 191;
+            return true;
+        }
+
+        // Los dieciséis que reutiliza: eran Tarjetas de Datos y ahora son megapiedras.
+        if (itemId is >= 505 and <= 520)
+        {
+            icon = itemId + 328;
+            return true;
+        }
+
+        icon = 0;
+        return false;
     }
 
     /// <summary>
@@ -122,12 +182,16 @@ public static class ItemIconIndex
     /// Throwing beats returning a plausible number: a wrong icon looks perfectly fine and would
     /// sell the player one thing while showing another.
     /// </remarks>
-    public static int Of(int itemId) => TryGet(itemId, out var icon)
+    public static int Of(int itemId, int containerIcons = CartridgeIcons) =>
+        TryGet(itemId, out var icon, containerIcons)
         ? icon
         : throw new KeyNotFoundException(
             $"No se ha medido qué icono le toca al objeto {itemId}. El índice no es id-1 salvo en " +
             $"los primeros {LastDirectItem}: hay 960 objetos y 769 iconos. Ver ARCHITECTURE.md §45.");
 
     /// <summary>Every item whose icon is known, for whoever has to extract them.</summary>
-    public static IEnumerable<int> KnownItems => Measured.Keys;
+    public static IEnumerable<int> KnownItems(int containerIcons = CartridgeIcons) =>
+        containerIcons >= ExpansionIcons
+            ? [.. Measured.Keys, .. Enumerable.Range(960, 64), .. Enumerable.Range(505, 16)]
+            : Measured.Keys;
 }

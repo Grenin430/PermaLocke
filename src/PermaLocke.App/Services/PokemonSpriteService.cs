@@ -30,6 +30,9 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
 
     private string? _romPath;
     private string? _baseLayer;
+
+    /// <summary>Cuántos iconos de objeto tiene el contenedor cargado, que dice si hay mod.</summary>
+    private int _itemIcons = ItemIconIndex.CartridgeIcons;
     private string _scratch = string.Empty;
     private IReadOnlyDictionary<int, int>? _index;
     private bool _prepared;
@@ -98,6 +101,10 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
             {
                 await Task.Run(() => ExtractBalls(rom.Path, scratch), ct);
             }
+
+            // Cuantos iconos de objeto hay decide si valen las reglas del mod. Se lee del propio
+            // contenedor, no de si la carpeta existe: la carpeta puede estar y el fichero no.
+            _itemIcons = ItemIconReader.Open(rom.Path, scratch, baseLayer).Count;
 
             await Task.Run(() => ExtractItems(rom.Path, scratch), ct);
 
@@ -206,7 +213,7 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
     /// </summary>
     private void ExtractBalls(string romPath, string scratch)
     {
-        var reader = ItemIconReader.Open(romPath, scratch);
+        var reader = ItemIconReader.Open(romPath, scratch, _baseLayer);
         Directory.CreateDirectory(BallDirectory);
 
         for (var item = 1; item <= ItemIconReader.LastBallItemId; item++)
@@ -243,7 +250,7 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
         // saber el id del objeto, que es lo único que hay escrito en Data/achievements.json.
         var crystal = ZCrystalIndex.TryGet(itemId, out _);
 
-        if (!_prepared || (!crystal && !ItemIconIndex.TryGet(itemId, out _)))
+        if (!_prepared || (!crystal && !ItemIconIndex.TryGet(itemId, out _, _itemIcons)))
         {
             return null;
         }
@@ -282,7 +289,8 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
 
             var sprite = crystal
                 ? ZCrystalIconReader.Open(_romPath, _scratch).Read(itemId)
-                : ItemIconReader.Open(_romPath, _scratch).Read(ItemIconIndex.Of(itemId) + 1);
+                : ItemIconReader.Open(_romPath, _scratch, _baseLayer)
+                    .Read(ItemIconIndex.Of(itemId, _itemIcons) + 1);
 
             File.WriteAllBytes(destination, PngImage.Encode(sprite.Pixels, sprite.Width, sprite.Height));
         }
@@ -301,7 +309,7 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
     /// </remarks>
     private void ExtractItems(string romPath, string scratch)
     {
-        var wanted = ItemIconIndex.KnownItems
+        var wanted = ItemIconIndex.KnownItems(_itemIcons)
             .Where(item => !File.Exists(Path.Combine(ItemDirectory, $"{item:0000}.png")))
             .ToList();
 
@@ -310,12 +318,12 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
             return;
         }
 
-        var reader = ItemIconReader.Open(romPath, scratch);
+        var reader = ItemIconReader.Open(romPath, scratch, _baseLayer);
         Directory.CreateDirectory(ItemDirectory);
 
         foreach (var item in wanted)
         {
-            var icon = reader.Read(ItemIconIndex.Of(item) + 1);
+            var icon = reader.Read(ItemIconIndex.Of(item, _itemIcons) + 1);
             File.WriteAllBytes(Path.Combine(ItemDirectory, $"{item:0000}.png"),
                 PngImage.Encode(icon.Pixels, icon.Width, icon.Height));
         }
