@@ -13,7 +13,7 @@
             <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
             <Setter Property="FontSize" Value="11.5" />
             <Setter Property="Foreground" Value="{StaticResource OnAccentBrush}" />
-            <Setter Property="Background" Value="#B0202020" />
+            <Setter Property="Background" Value="#66202020" />
             <Setter Property="BorderBrush" Value="#E0FFFFFF" />
             <Setter Property="Template">
                 <Setter.Value>
@@ -36,11 +36,14 @@
                 </Setter.Value>
             </Setter>
             <Style.Triggers>
-                <DataTrigger Binding="{Binding State}" Value="spent">
-                    <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+                <DataTrigger Binding="{Binding State}" Value="Caught">
+                    <Setter Property="Background" Value="#E024A148" />
                 </DataTrigger>
-                <DataTrigger Binding="{Binding State}" Value="dead">
-                    <Setter Property="Background" Value="{StaticResource DangerBrush}" />
+                <DataTrigger Binding="{Binding State}" Value="Died">
+                    <Setter Property="Background" Value="#E0D93A3A" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding State}" Value="Fled">
+                    <Setter Property="Background" Value="#E01A1A1A" />
                 </DataTrigger>
             </Style.Triggers>
         </Style>
@@ -52,46 +55,19 @@
             <Setter Property="BorderBrush" Value="{StaticResource BorderStrongBrush}" />
             <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
             <Style.Triggers>
-                <DataTrigger Binding="{Binding State}" Value="spent">
-                    <Setter Property="Background" Value="{StaticResource AccentBrush}" />
-                    <Setter Property="Foreground" Value="{StaticResource OnAccentBrush}" />
+                <DataTrigger Binding="{Binding State}" Value="Caught">
+                    <Setter Property="Background" Value="#24A148" />
+                    <Setter Property="Foreground" Value="White" />
                 </DataTrigger>
-                <DataTrigger Binding="{Binding State}" Value="dead">
-                    <Setter Property="Background" Value="{StaticResource DangerBrush}" />
-                    <Setter Property="Foreground" Value="{StaticResource OnAccentBrush}" />
+                <DataTrigger Binding="{Binding State}" Value="Died">
+                    <Setter Property="Background" Value="#D93A3A" />
+                    <Setter Property="Foreground" Value="White" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding State}" Value="Fled">
+                    <Setter Property="Background" Value="#1A1A1A" />
+                    <Setter Property="Foreground" Value="White" />
                 </DataTrigger>
             </Style.Triggers>
-        </Style>
-
-        <!-- Fila de lista, con la elegida encendida: es la que se lleva el clic del mapa, y
-             equivocarse de fila coloca o gasta la zona del que no es. -->
-        <Style x:Key="ZoneRow" TargetType="ListBoxItem">
-            <Setter Property="Margin" Value="0,0,0,4" />
-            <Setter Property="Padding" Value="0" />
-            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ListBoxItem">
-                        <Border x:Name="Row" Background="{StaticResource PanelBrush}"
-                                CornerRadius="6" BorderThickness="1" Padding="10,8"
-                                BorderBrush="{StaticResource BorderSubtleBrush}">
-                            <ContentPresenter />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Row" Property="Background"
-                                        Value="{StaticResource SurfaceHighBrush}" />
-                            </Trigger>
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="Row" Property="Background"
-                                        Value="{StaticResource AccentDeepBrush}" />
-                                <Setter TargetName="Row" Property="BorderBrush"
-                                        Value="{StaticResource AccentBrush}" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
         </Style>
 
         <Style x:Key="IslandTab" TargetType="Button" BasedOn="{StaticResource GhostButton}">
@@ -124,7 +100,7 @@
                                        Margin="6,0,0,4">
                                 <Run Text="de" />
                                 <Run Text="{Binding ZoneCount, Mode=OneWay}" />
-                                <Run Text="zonas gastadas" />
+                                <Run Text="zonas marcadas" />
                             </TextBlock>
                         </StackPanel>
                     </StackPanel>
@@ -293,33 +269,59 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
 
-                <DockPanel>
-                    <TextBlock DockPanel.Dock="Top" Text="SIN ZONA"
-                               Style="{StaticResource StatLabel}" Margin="0,0,0,4" />
-                    <TextBlock DockPanel.Dock="Top" Style="{StaticResource Faint}" TextWrapping="Wrap"
-                               Margin="0,0,0,10"
-                               Text="Elige una captura y pincha el marcador de la zona donde salió. Pinchar una gastada la libera." />
+                <!-- LEYENDA. El mapa es lo unico que hay que mirar, asi que el panel solo explica
+                     que significa cada color y no pide nada. -->
+                <StackPanel>
+                    <TextBlock Text="LEYENDA" Style="{StaticResource StatLabel}" Margin="0,0,0,4" />
+                    <TextBlock Style="{StaticResource Faint}" TextWrapping="Wrap" Margin="0,0,0,12"
+                               Text="Pincha una zona para marcar lo que pasó. Cada clic pasa al siguiente, y el cuarto la deja sin marcar." />
 
-                    <TextBlock DockPanel.Dock="Bottom" Style="{StaticResource Faint}" TextWrapping="Wrap"
-                               Margin="0,10,0,0"
-                               Visibility="{Binding HasPending, Converter={StaticResource InverseBoolToVisibility}}"
-                               Text="Nada pendiente: todas tus capturas tienen su zona dicha." />
+                    <ItemsControl>
+                        <ItemsControl.Resources>
+                            <Style x:Key="LegendDot" TargetType="Border">
+                                <Setter Property="Width" Value="22" />
+                                <Setter Property="Height" Value="22" />
+                                <Setter Property="CornerRadius" Value="11" />
+                                <Setter Property="BorderThickness" Value="2" />
+                                <Setter Property="BorderBrush" Value="#E0FFFFFF" />
+                                <Setter Property="VerticalAlignment" Value="Center" />
+                            </Style>
+                            <Style x:Key="LegendRow" TargetType="StackPanel">
+                                <Setter Property="Orientation" Value="Horizontal" />
+                                <Setter Property="Margin" Value="0,0,0,10" />
+                            </Style>
+                            <Style x:Key="LegendText" TargetType="TextBlock" BasedOn="{StaticResource Body}">
+                                <Setter Property="VerticalAlignment" Value="Center" />
+                                <Setter Property="Margin" Value="10,0,0,0" />
+                                <Setter Property="FontSize" Value="12" />
+                                <Setter Property="TextWrapping" Value="Wrap" />
+                            </Style>
+                        </ItemsControl.Resources>
 
-                    <ListBox ItemsSource="{Binding Pending}" SelectedItem="{Binding Selected}"
-                             BorderThickness="0" Background="Transparent"
-                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                             ItemContainerStyle="{StaticResource ZoneRow}">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel>
-                                    <TextBlock Text="{Binding Label}" FontSize="12" TextWrapping="Wrap" />
-                                    <TextBlock Text="{Binding Where}" Style="{StaticResource Faint}"
-                                               FontSize="10.5" Margin="0,2,0,0" TextWrapping="Wrap" />
-                                </StackPanel>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                </DockPanel>
+                        <StackPanel Style="{StaticResource LegendRow}">
+                            <Border Style="{StaticResource LegendDot}" Background="#66202020" />
+                            <TextBlock Style="{StaticResource LegendText}" Text="Sin marcar" />
+                        </StackPanel>
+
+                        <StackPanel Style="{StaticResource LegendRow}">
+                            <Border Style="{StaticResource LegendDot}" Background="#E024A148" />
+                            <TextBlock Style="{StaticResource LegendText}" Text="Atrapado en esta zona" />
+                        </StackPanel>
+
+                        <StackPanel Style="{StaticResource LegendRow}">
+                            <Border Style="{StaticResource LegendDot}" Background="#E0D93A3A" />
+                            <TextBlock Style="{StaticResource LegendText}" Text="Primer pokémon matado" />
+                        </StackPanel>
+
+                        <StackPanel Style="{StaticResource LegendRow}">
+                            <Border Style="{StaticResource LegendDot}" Background="#E01A1A1A" />
+                            <TextBlock Style="{StaticResource LegendText}" Text="Primer encuentro: huida" />
+                        </StackPanel>
+                    </ItemsControl>
+
+                    <TextBlock Style="{StaticResource Faint}" TextWrapping="Wrap" Margin="0,8,0,0"
+                               Text="Pasa el ratón por un marcador para ver de qué zona es." />
+                </StackPanel>
             </DockPanel>
         </Border>
     </Grid>

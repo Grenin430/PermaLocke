@@ -37,6 +37,28 @@ public enum EncounterType
     Unknown
 }
 
+/// <summary>
+/// What happened at a zone.s single encounter.
+/// </summary>
+/// <remarks>
+/// Anything but <see cref="ZoneOutcome.Free"/> spends the zone. Which of the three it was does not
+/// change that -- it changes what the player sees, and a Nuzlocke map is mostly read, not counted.
+/// </remarks>
+public enum ZoneOutcome
+{
+    /// <summary>Nothing has happened here yet.</summary>
+    Free,
+
+    /// <summary>Something was caught here.</summary>
+    Caught,
+
+    /// <summary>The first Pokémon here died.</summary>
+    Died,
+
+    /// <summary>The first encounter fled, which spends the zone all the same.</summary>
+    Fled
+}
+
 public enum PokemonStatus
 {
     Alive,
@@ -220,6 +242,18 @@ public enum GameEventType
     /// </para>
     /// </remarks>
     ZoneConfirmed,
+
+    /// <summary>
+    /// What happened at a zone.s one encounter, said by the player on the map.
+    /// </summary>
+    /// <remarks>
+    /// It replaces pinning a capture to a zone, and it says more than that could. A Nuzlocke zone
+    /// is spent by <b>whatever</b> happened there first, and two of the three outcomes have no
+    /// Pokémon to pin: a first encounter that fled leaves nothing behind, and neither does one that
+    /// died before a ball was thrown. The old shape could not express either, so those zones sat
+    /// looking free.
+    /// </remarks>
+    ZoneOutcomeSet,
 
     /// <summary>The player took back a zone confirmation, freeing the zone again.</summary>
     /// <remarks>

@@ -1,4 +1,5 @@
 {
+  "_firstEncounter": "APAGADA a peticion del jugador el 2026-09-02. El mapa dejo de ser un arbitro y paso a ser un tablero: se marca a mano lo que paso en cada zona -atrapado, muerto, huida- y eso no alimenta ninguna regla. Con nada que gaste zonas, esta regla no tendria con que comparar, y dejarla encendida y muda es exactamente el fallo del §81. Ponla en true si vuelve a haber una fuente de zonas gastadas.",
   "version": 1,
   "comment": "Configuración de reglas y economía de puntos. Ningún valor de esta lista vive en el código.",
 
@@ -20,7 +21,7 @@
   "defaultRuleMode": "Block",
 
   "rules": {
-    "firstEncounter": { "enabled": true, "mode": "Block" },
+    "firstEncounter": { "enabled": false, "mode": "Block" },
     "shinyClause":    { "enabled": true, "mode": "WarnOnly", "consumesEncounter": false },
     "dupesClause":    { "enabled": true, "mode": "WarnOnly", "ignoreEvolutionaryLine": true },
     "speciesClause":  { "enabled": false, "mode": "Disabled" },

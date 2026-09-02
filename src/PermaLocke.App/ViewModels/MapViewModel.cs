@@ -13,7 +13,7 @@ using PermaLocke.Rules.Services;
 
 namespace PermaLocke.App.ViewModels;
 
-/// <summary>One zone on the map: free, spent, or spent by somebody who died.</summary>
+/// <summary>One zone on the map, and what the player marked happened there.</summary>
 public sealed partial class MapZoneViewModel(int number, string name, string island, double left,
     double top, System.Windows.Media.Imaging.BitmapSource? photo) : ObservableObject
 {
@@ -29,7 +29,7 @@ public sealed partial class MapZoneViewModel(int number, string name, string isl
 
     public string Island { get; } = island;
 
-    /// <summary>The id the run stores against a capture, so a marker and a Pokémon match up.</summary>
+    /// <summary>The zone.s stable id, which is what a mark is stored against.</summary>
     public string ZoneId { get; } = EncounterService.NormaliseLocationId(name);
 
     /// <summary>Where it sits on its island's picture, in that picture's own pixels.</summary>
@@ -46,44 +46,28 @@ public sealed partial class MapZoneViewModel(int number, string name, string isl
 
     public bool HasPhoto => Photo is not null;
 
+    /// <summary>What the player has marked happened here. Each click moves it on one.</summary>
     [ObservableProperty]
-    private string _caughtWhat = string.Empty;
-
-    [ObservableProperty]
-    private bool _isSpent;
-
-    [ObservableProperty]
-    private bool _isDead;
+    private ZoneOutcome _outcome;
 
     /// <summary>
-    /// "free" / "spent" / "dead", so the template picks a look without three triggers of its own.
-    /// A zone whose Pokémon died stays spent — that is the whole point of a Nuzlocke — but it reads
-    /// differently, and a player wants to see the graveyard at a glance.
+    /// The outcome's own name, so the template picks a look without four triggers of its own.
     /// </summary>
-    public string State => !IsSpent ? "free" : IsDead ? "dead" : "spent";
+    public string State => Outcome.ToString();
 
-    /// <summary>The line under the name when hovering: who spent it, or that it is still free.</summary>
-    public string Tooltip => !IsSpent
-        ? "Libre. Todavía no has gastado su encuentro."
-        : IsDead ? $"{CaughtWhat} — murió" : CaughtWhat;
+    /// <summary>The line under the name when hovering.</summary>
+    public string Tooltip => ZoneOutcomeService.Label(Outcome);
 
-    partial void OnIsSpentChanged(bool value)
+    /// <summary>An unmarked zone is drawn hollow, so the map reads as what is left to do.</summary>
+    public bool IsMarked => Outcome != ZoneOutcome.Free;
+
+    partial void OnOutcomeChanged(ZoneOutcome value)
     {
         OnPropertyChanged(nameof(State));
         OnPropertyChanged(nameof(Tooltip));
+        OnPropertyChanged(nameof(IsMarked));
     }
-
-    partial void OnIsDeadChanged(bool value)
-    {
-        OnPropertyChanged(nameof(State));
-        OnPropertyChanged(nameof(Tooltip));
-    }
-
-    partial void OnCaughtWhatChanged(string value) => OnPropertyChanged(nameof(Tooltip));
 }
-
-/// <summary>A capture that has not yet said which zone it spent.</summary>
-public sealed record PendingCaptureViewModel(Guid Id, string Label, string Where);
 
 /// <summary>One island and its catchable zones.</summary>
 public sealed partial class IslandViewModel(string name, IReadOnlyList<MapZoneViewModel> zones)
@@ -95,22 +79,21 @@ public sealed partial class IslandViewModel(string name, IReadOnlyList<MapZoneVi
 
     public int Count => Zones.Count;
 
-    /// <summary>How many of this island's zones are spent, so each one carries its own score.</summary>
+    /// <summary>How many of this island.s zones are marked, so each one carries its own score.</summary>
     [ObservableProperty]
     private int _spentCount;
 }
 
 /// <summary>
-/// The map of Alola: which zones the run has spent and which are still free.
+/// The map of Alola: a board of what happened at each zone.
 /// </summary>
 /// <remarks>
 /// <para>
-/// It exists because the first-encounter rule had never fired once. The seventh generation stores
-/// no field saying an encounter was wild — measured on the real save, where a gift and a wild
-/// capture are identical down to the ball — so the watcher registers every automatic capture as
-/// <see cref="EncounterType.Unknown"/>, which spends no zone, and the rule spent the whole run with
-/// an empty list to compare against. Clicking a zone here is what says otherwise, and it is
-/// recorded as a claim by the player — <c>ZoneConfirmed</c> — never as a deduction.
+/// Clicking a marker walks it round four states — sin marcar, atrapado, muerto, huida — and that is
+/// all it does. It arbitrates nothing: no rule reads these marks and no points move, because the
+/// player asked for something to look at rather than a referee. The first-encounter rule is
+/// switched off in <c>Data/rules.json</c> for the same reason, rather than left enabled with
+/// nothing feeding it, which is exactly the §81 fault.
 /// </para>
 /// <para>
 /// The island art comes out of the player's own cartridge. Where each marker goes does not: nothing
@@ -132,8 +115,7 @@ public sealed partial class IslandViewModel(string name, IReadOnlyList<MapZoneVi
 /// </remarks>
 public sealed partial class MapViewModel : SectionViewModel
 {
-    private readonly EncounterService _encounters;
-    private readonly IPokemonRepository _pokemon;
+    private readonly ZoneOutcomeService _outcomes;
     private readonly IRunContext _runContext;
     private readonly JsonIslandMap _map;
     private readonly IslandMapService _art;
@@ -141,13 +123,11 @@ public sealed partial class MapViewModel : SectionViewModel
     private readonly ZonePhotoService _photos;
     private readonly ILogger<MapViewModel> _logger;
 
-    public MapViewModel(EncounterService encounters, IPokemonRepository pokemon,
-        IRunContext runContext, JsonIslandMap map, IslandMapService art, ZonePhotoService photos,
-        AppPaths paths, ILogger<MapViewModel> logger)
-        : base("MAPA", "Las zonas de Alola: cuál gastó cada captura y cuáles quedan libres")
+    public MapViewModel(ZoneOutcomeService outcomes, IRunContext runContext, JsonIslandMap map,
+        IslandMapService art, ZonePhotoService photos, AppPaths paths, ILogger<MapViewModel> logger)
+        : base("MAPA", "Las zonas de Alola: marca lo que pasó en cada una")
     {
-        _encounters = encounters;
-        _pokemon = pokemon;
+        _outcomes = outcomes;
         _runContext = runContext;
         _map = map;
         _art = art;
@@ -172,13 +152,8 @@ public sealed partial class MapViewModel : SectionViewModel
 
     public ObservableCollection<IslandViewModel> Islands { get; } = [];
 
-    public ObservableCollection<PendingCaptureViewModel> Pending { get; } = [];
-
     [ObservableProperty]
     private IslandViewModel? _selectedIsland;
-
-    [ObservableProperty]
-    private PendingCaptureViewModel? _selected;
 
     [ObservableProperty]
     private string _status = string.Empty;
@@ -197,8 +172,6 @@ public sealed partial class MapViewModel : SectionViewModel
 
     /// <summary>Whether the island pictures could be extracted from the cartridge.</summary>
     public bool HasArt => _art.IsAvailable && IslandImage is not null;
-
-    public bool HasPending => Pending.Count > 0;
 
     public BitmapSource? IslandImage =>
         SelectedIsland is null ? null : _art.Map(SelectedIsland.Name);
@@ -270,15 +243,8 @@ public sealed partial class MapViewModel : SectionViewModel
 
         try
         {
-            var all = await _pokemon.GetAllAsync(run.Id);
-
-            var spent = all
-                .Where(entry => entry is { ConsumedZoneEncounter: true, LocationId: not null })
-                .GroupBy(entry => entry.LocationId!, StringComparer.Ordinal)
-                .ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
-
+            var outcomes = await _outcomes.GetAsync(run.Id);
             var count = 0;
-            var drawn = new HashSet<string>(StringComparer.Ordinal);
 
             foreach (var island in Islands)
             {
@@ -286,14 +252,9 @@ public sealed partial class MapViewModel : SectionViewModel
 
                 foreach (var zone in island.Zones)
                 {
-                    drawn.Add(zone.ZoneId);
-                    var owner = spent.GetValueOrDefault(zone.ZoneId);
+                    zone.Outcome = outcomes.GetValueOrDefault(zone.ZoneId);
 
-                    zone.IsSpent = owner is not null;
-                    zone.IsDead = owner?.Status == PokemonStatus.Dead;
-                    zone.CaughtWhat = owner is null ? string.Empty : Label(owner);
-
-                    if (owner is not null)
+                    if (zone.IsMarked)
                     {
                         here++;
                     }
@@ -304,29 +265,6 @@ public sealed partial class MapViewModel : SectionViewModel
             }
 
             SpentCount = count;
-            Pending.Clear();
-
-            foreach (var entry in all
-                .Where(entry => entry is { ConsumedZoneEncounter: false, Origin: PokemonOrigin.Capture })
-                .OrderBy(entry => entry.ObtainedAt))
-            {
-                Pending.Add(new PendingCaptureViewModel(entry.Id, Label(entry),
-                    entry.LocationId ?? "sin lugar"));
-            }
-
-            Selected ??= Pending.FirstOrDefault();
-            OnPropertyChanged(nameof(HasPending));
-
-            // Una zona gastada que no está en el mapa no se puede ver ni liberar, así que se dice.
-            // Pasaría si alguien recorta marcadores.json con una run ya empezada, y callarlo
-            // dejaría un encuentro gastado que la pantalla jura que sigue libre.
-            var orphans = spent.Keys.Where(id => !drawn.Contains(id)).ToArray();
-
-            if (orphans.Length > 0)
-            {
-                Say($"{orphans.Length} zonas gastadas no están en el mapa: "
-                    + string.Join(", ", orphans.Take(5)), bad: true);
-            }
         }
         catch (Exception ex)
         {
@@ -335,7 +273,14 @@ public sealed partial class MapViewModel : SectionViewModel
         }
     }
 
-    /// <summary>Clicking a marker: spends its zone on the selected capture, or frees it.</summary>
+    /// <summary>
+    /// Clicking a marker moves it on one: sin marcar, atrapado, muerto, huida, y vuelta a empezar.
+    /// </summary>
+    /// <remarks>
+    /// A cycle and not four buttons because the map has sixty-one markers and a menu on each would
+    /// bury the thing it is for. Going round rather than stopping at the last state is what makes a
+    /// mis-click cost three clicks instead of a trip somewhere else to undo it.
+    /// </remarks>
     [RelayCommand]
     public async Task ClickZoneAsync(MapZoneViewModel? zone)
     {
@@ -346,54 +291,23 @@ public sealed partial class MapViewModel : SectionViewModel
             return;
         }
 
-        if (zone.IsSpent)
+        var next = ZoneOutcomeService.Next(zone.Outcome);
+
+        try
         {
-            await FreeAsync(run, zone);
+            await _outcomes.SetAsync(run.Id, zone.ZoneId, zone.Name, next, run.PlayerName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "No se pudo marcar {Zone}", zone.Name);
+            Say($"No se pudo marcar {zone.Name}.", bad: true);
             return;
         }
 
-        if (Selected is null)
-        {
-            Say("Elige primero qué captura gastó esta zona.", bad: true);
-            return;
-        }
-
-        var chosen = Selected;
-        var result = await _encounters.ConfirmZoneAsync(run.Id, chosen.Id, zone.Name, run.PlayerName);
-
-        if (!result.Confirmed)
-        {
-            Say(result.Reason ?? "No se pudo.", bad: true);
-            return;
-        }
-
-        Say($"{chosen.Label} gastó el encuentro de {zone.Name}.", bad: false);
-        Selected = null;
+        zone.Outcome = next;
+        Say($"{zone.Name}: {ZoneOutcomeService.Label(next).ToLowerInvariant()}.", bad: false);
         await RefreshAsync();
     }
-
-    private async Task FreeAsync(Run run, MapZoneViewModel zone)
-    {
-        var all = await _pokemon.GetAllAsync(run.Id);
-        var owner = all.FirstOrDefault(entry =>
-            entry.ConsumedZoneEncounter && entry.LocationId == zone.ZoneId);
-
-        if (owner is null)
-        {
-            return;
-        }
-
-        var result = await _encounters.ClearZoneAsync(run.Id, owner.Id, run.PlayerName);
-
-        Say(result.Confirmed ? $"{zone.Name} vuelve a estar libre." : result.Reason ?? "No se pudo.",
-            bad: !result.Confirmed);
-
-        await RefreshAsync();
-    }
-
-    private static string Label(PokemonEntry entry) => entry.Nickname is { Length: > 0 } nickname
-        ? $"{nickname} ({entry.SpeciesName})"
-        : entry.SpeciesName;
 
     private void Say(string what, bool bad)
     {

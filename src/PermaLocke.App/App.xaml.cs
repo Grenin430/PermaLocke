@@ -54,6 +54,7 @@ public partial class App : Application
             JsonWonderTradeCatalog.Load(Path.Combine(paths.Data, "wondertrade.json")));
         collection.AddSingleton<WonderTradeService>();
         collection.AddSingleton<EncounterService>();
+        collection.AddSingleton<ZoneOutcomeService>();
         collection.AddSingleton<IPenaltyCatalog>(_ =>
             JsonPenaltyCatalog.Load(Path.Combine(paths.Data, "penalties.json")));
         collection.AddSingleton<PenaltyService>();
