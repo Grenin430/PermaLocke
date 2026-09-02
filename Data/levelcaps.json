@@ -4,6 +4,9 @@
   "comment": "Cap de nivel vigente tras superar cada hito. Editable desde PermaLocke.Admin.",
 
   "comentarioLogro": "logro es el logro que da por superada esa etapa. Como los 21 logros se cuentan solos, el cap sube SOLO: en cuanto el cristal Z de la prueba entra en tu mochila, la etapa cuenta como superada y el cap pasa al siguiente. El botón de HOME sigue existiendo como red de seguridad y solo puede subir el cap, nunca bajarlo.",
+  "comentarioCorregir": "corregirEnMemoria en false: PermaLocke AVISA de quien se pasa del cap, pero NO le baja el nivel al juego. Es como lo hace la competicion, medido sobre sus propios binarios: no accede a la memoria del emulador por ningun sitio y del cap solo tiene la lista. Forzarlo reescribiendo el juego en marcha es una pelea que no se gana -el equipo vive en veinticinco sitios de la memoria y el juego lo restaura desde el que quiere- y cuando sale mal no falla, cambia el Pokemon de alguien. Ponlo en true bajo tu responsabilidad: el mecanismo esta escrito y probado, pero no es fiable.",
+  "corregirEnMemoria": false,
+
   "caps": [
     { "id": "trial-01", "order": 1,  "name": "1ª prueba",  "level": 14, "logro": "prueba-01" },
     { "id": "trial-02", "order": 2,  "name": "2ª prueba",  "level": 20, "logro": "prueba-02" },

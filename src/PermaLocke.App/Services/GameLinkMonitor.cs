@@ -4,6 +4,7 @@ using PermaLocke.Core.Domain;
 using PermaLocke.Core.Services;
 using PermaLocke.GameLink;
 using PermaLocke.GameLink.Data;
+using PermaLocke.Rules;
 using PermaLocke.Rules.Services;
 
 namespace PermaLocke.App.Services;
@@ -23,6 +24,7 @@ public sealed class GameLinkMonitor(
     GameWatcher watcher,
     AzaharGameWriter writer,
     ProgressService progress,
+    LevelCapTable caps,
     BallControlService ballControl,
     EncounterService encounters,
     RewardService rewards,
@@ -355,6 +357,37 @@ public sealed class GameLinkMonitor(
         }
 
         var over = snapshot.Party.Where(m => m.Level > cap).ToList();
+
+        // Aviso primero, y sin escribir nada, que es como lo hace la competición.
+        //
+        // Medido sobre los binarios de la referencia: NO accede a la memoria del emulador por
+        // ningún sitio -- ni WriteMemory, ni RPC, ni el puerto 45987 -- y del cap tiene un único
+        // símbolo, el getter de la lista. Allí el cap es una regla que el jugador cumple y la
+        // aplicación le enseña. Forzarlo reescribiendo el juego en marcha es una pelea que no se
+        // gana: el equipo vive en veinticinco sitios de la memoria a la vez, el juego lo restaura
+        // desde el que quiere, y una escritura que entra y se relee bien pierde igual. Y cuando
+        // sale mal no falla, CAMBIA el Pokémon de alguien: el §53 evolucionó un Ledyba así.
+        if (over.Count > 0)
+        {
+            var who = string.Join(", ",
+                over.Select(m => $"{m.SpeciesName} (Nv.{m.Level})"));
+
+            CapProblem = over.Count == 1
+                ? $"{who} pasa del cap de nivel, que es {cap}. Bájalo tú: la competición no lo "
+                  + "corrige sola."
+                : $"Pasan del cap de nivel, que es {cap}: {who}. Bájalos tú: la competición no lo "
+                  + "corrige sola.";
+        }
+
+        if (!caps.CorrectInMemory)
+        {
+            if (over.Count == 0)
+            {
+                CapProblem = string.Empty;
+            }
+
+            return;
+        }
 
         if (over.Count == 0)
         {
