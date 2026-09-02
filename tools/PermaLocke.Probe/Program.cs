@@ -26,6 +26,7 @@ using PermaLocke.GameLink.Rpc;
 //   Probe --pids --probar       does the whole PID repair on a COPY of the partida and checks it
 //   Probe --etapas [n]          stages marked by hand; with a number, corrects it through the service
 //   Probe --ruleta [--probar]   every face of the wheel against a COPY of the partida
+//   Probe --tiradas [n] "motivo"  roulette ledger; with a number, grants spins through the service
 //   Probe --intercambiados      Pokemon handed over in a wonder trade that the run still counts alive
 
 Console.OutputEncoding = System.Text.Encoding.UTF8;
@@ -61,6 +62,13 @@ if (args.Length >= 1 && args[0] == "--intercambiados")
 }
 
 // Cada cara de la ruleta contra una COPIA de la partida. La partida no se toca nunca.
+if (args.Length >= 1 && args[0] == "--tiradas")
+{
+    return await PermaLocke.Probe.GrantSpinProbe.RunAsync(
+        args.Length > 1 && int.TryParse(args[1], out var tiradas) ? tiradas : null,
+        args.Length > 2 ? args[2] : null);
+}
+
 if (args.Length >= 1 && args[0] == "--ruleta")
 {
     return await PermaLocke.Probe.RouletteProbe.RunAsync(args.Contains("--probar"));

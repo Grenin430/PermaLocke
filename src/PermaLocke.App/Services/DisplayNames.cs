@@ -55,6 +55,7 @@ public static class DisplayNames
         [GameEventType.PokemonDelivered] = "Entregado en la partida",
         [GameEventType.RewardClaimed] = "Premio recogido",
         [GameEventType.RouletteSpun] = "Ruleta",
+        [GameEventType.RouletteGranted] = "Tiradas concedidas",
         [GameEventType.BattleModeChanged] = "Modo combate",
         [GameEventType.ZoneConfirmed] = "Zona gastada",
         [GameEventType.ZoneCleared] = "Zona liberada",

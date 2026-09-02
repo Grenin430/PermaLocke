@@ -260,5 +260,23 @@ public enum GameEventType
     /// A mis-click on a map has to be undoable, and undoing it by editing the database would break
     /// the chain. So it is its own event: the zone was spent, and then it was not.
     /// </remarks>
-    ZoneCleared
+    ZoneCleared,
+
+    /// <summary>
+    /// Spins handed to the player outside the milestones that normally pay for them.
+    /// </summary>
+    /// <remarks>
+    /// Its own type because it is the <b>other half of the counter</b>. How many spins a run owes
+    /// is what the milestones earned minus the <see cref="RouletteSpun"/> entries, and a spin
+    /// cannot be un-spun: there is no way to delete one event, by design, and deleting the run is
+    /// the only DELETE there is. So giving a spin back has to be an addition, and an addition that
+    /// says who decided it and why â otherwise the only way to do it would be editing the database
+    /// underneath the chain, which is exactly what the chain exists to make impossible.
+    /// <para>
+    /// It carries <c>tiradas</c>, how many, and the reason in its description. It is deliberately
+    /// visible in the history and in the shared standings' event count: a granted spin is not the
+    /// same as an earned one, and nothing here pretends it is.
+    /// </para>
+    /// </remarks>
+    RouletteGranted
 }

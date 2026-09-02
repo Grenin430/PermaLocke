@@ -61,7 +61,61 @@ public sealed class RouletteService(
         var league = unlocked.Contains(catalog.LeagueAchievement) ? catalog.SpinsForLeague : 0;
         var rematch = unlocked.Contains(catalog.RematchAchievement) ? catalog.SpinsForRematch : 0;
 
-        return trials + league + rematch;
+        return trials + league + rematch + await GrantedAsync(run.Id, ct).ConfigureAwait(false);
+    }
+
+    /// <summary>Spins handed over outside the milestones, read back out of the history.</summary>
+    /// <remarks>
+    /// Same shape as the free gacha pulls and the one-off rewards: what was given comes from the
+    /// events that gave it, never from a stored number. A count kept anywhere else would be a
+    /// second truth to keep in step with the chain.
+    /// </remarks>
+    public async Task<int> GrantedAsync(Guid runId, CancellationToken ct = default)
+    {
+        var history = await events.GetAllAsync(runId, ct).ConfigureAwait(false);
+
+        return history
+            .Where(e => e.Type == GameEventType.RouletteGranted)
+            .Sum(e => e.Data.TryGetValue("tiradas", out var many)
+                      && int.TryParse(many, out var count) ? count : 0);
+    }
+
+    /// <summary>
+    /// Hands the player spins they did not earn, with the reason on the record.
+    /// </summary>
+    /// <remarks>
+    /// There is no way to un-spin a wheel â a single event cannot be deleted, by design â so a
+    /// correction can only ever be an addition. Making it one keeps both halves visible: the spins
+    /// that were taken are still in the history, and so is the fact that somebody handed two back
+    /// and why. A reason is required rather than optional for the same reason the role change asks
+    /// for one: in six months the entry has to explain itself.
+    /// </remarks>
+    public async Task<int> GrantAsync(Run run, int count, string reason,
+        CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(run);
+        ArgumentOutOfRangeException.ThrowIfLessThan(count, 1);
+        ArgumentException.ThrowIfNullOrWhiteSpace(reason);
+
+        await events.AppendAsync(new GameEvent
+        {
+            Id = Guid.NewGuid(),
+            RunId = run.Id,
+            Timestamp = clock.Now,
+            Type = GameEventType.RouletteGranted,
+            // El jugador y no el sistema: esto no lo dedujo nada, lo decidio alguien.
+            Source = EventSource.Player,
+            Actor = run.PlayerName,
+            Description = $"{count} tirada{(count == 1 ? string.Empty : "s")} de ruleta "
+                          + $"concedida{(count == 1 ? string.Empty : "s")}: {reason}",
+            Data = new Dictionary<string, string>
+            {
+                ["tiradas"] = count.ToString(),
+                ["motivo"] = reason
+            }
+        }, ct).ConfigureAwait(false);
+
+        return await OwedAsync(run, ct).ConfigureAwait(false);
     }
 
     /// <summary>How many spins the history says have already been taken.</summary>

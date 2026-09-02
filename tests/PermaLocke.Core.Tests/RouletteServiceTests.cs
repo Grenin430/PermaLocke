@@ -245,6 +245,78 @@ public sealed class RouletteServiceTests
         Assert.Equal(0, await service.OwedAsync(TheRun()));
     }
 
+    /// <summary>
+    /// A granted spin is owed like an earned one, and it can only ever be an addition.
+    /// </summary>
+    /// <remarks>
+    /// This is the only way there is to give a spin back, because there is no way to take one
+    /// away: a single event cannot be deleted, so the ledger only grows. The count comes back out
+    /// of the event that granted it rather than a stored number, so it is the history that says
+    /// how many were handed over, not a field somebody could set.
+    /// </remarks>
+    [Fact]
+    public async Task A_granted_spin_is_owed_and_says_who_decided_it()
+    {
+        var (service, log, _, _) = Build(new Records());
+        var run = TheRun();
+
+        Assert.Equal(0, await service.OwedAsync(run));
+
+        Assert.Equal(2, await service.GrantAsync(run, 2, "se rompiÃ³ la animaciÃ³n"));
+
+        Assert.Equal(2, await service.GrantedAsync(run.Id));
+        Assert.Equal(2, await service.OwedAsync(run));
+
+        var granted = Assert.Single(log.Appended, e => e.Type == GameEventType.RouletteGranted);
+        Assert.Equal(EventSource.Player, granted.Source);
+        Assert.Equal("2", granted.Data["tiradas"]);
+        Assert.Contains("se rompiÃ³ la animaciÃ³n", granted.Data["motivo"]);
+    }
+
+    /// <summary>Granted spins add to the earned ones instead of replacing them.</summary>
+    [Fact]
+    public async Task Granting_adds_to_what_the_milestones_paid_for()
+    {
+        var (service, _, _, _) = Build(new Records(807, 813));
+        var run = TheRun();
+
+        await service.GrantAsync(run, 1, "prueba");
+
+        Assert.Equal(3, await service.EarnedAsync(run));
+        Assert.Equal(3, await service.OwedAsync(run));
+    }
+
+    /// <summary>An entry nobody can read later is not a record.</summary>
+    [Fact]
+    public async Task A_grant_without_a_reason_is_refused()
+    {
+        var (service, log, _, _) = Build(new Records());
+
+        await Assert.ThrowsAsync<ArgumentException>(
+            () => service.GrantAsync(TheRun(), 1, "   "));
+
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
+            () => service.GrantAsync(TheRun(), 0, "ninguna"));
+
+        Assert.DoesNotContain(log.Appended, e => e.Type == GameEventType.RouletteGranted);
+    }
+
+    /// <summary>A granted spin turns the wheel like any other, and is spent by turning it.</summary>
+    [Fact]
+    public async Task A_granted_spin_actually_turns_the_wheel()
+    {
+        var (service, log, _, _) = Build(new Records());
+        var run = TheRun();
+
+        await service.GrantAsync(run, 2, "se rompiÃ³ la animaciÃ³n");
+
+        var result = await service.SpinAsync(run);
+
+        Assert.Equal(RouletteOutcome.Spun, result.Outcome);
+        Assert.Equal(1, result.Owed);
+        Assert.Single(log.Appended, e => e.Type == GameEventType.RouletteSpun);
+    }
+
     /// <summary>A wheel anybody could spin at will would not be a rule.</summary>
     [Fact]
     public async Task It_refuses_to_turn_when_nothing_is_owed()
