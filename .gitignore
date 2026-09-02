@@ -51,3 +51,6 @@ obj/
 # Los mapas de area sacados del cartucho para ponerles nombre. Son pixeles de
 # Nintendo, igual que Data/sprites/: se extraen de la ROM de cada jugador.
 /Data/mapa-areas/
+
+# Los mapas de isla cosidos del cartucho. Pixeles de Nintendo, igual que Data/sprites/.
+/Data/mapa-islas/

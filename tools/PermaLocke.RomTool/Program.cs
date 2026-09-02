@@ -107,6 +107,16 @@ switch (command)
         MapaSegmentar(args[1], args.Length > 2 ? int.Parse(args[2]) : 4,
             args.Length > 3 ? double.Parse(args[3]) : 40);
         break;
+    case "mapa-cuatro":
+        MapaCuatro("a/1/6/3", Path.Combine(root, "Data", "mapa-islas"));
+        break;
+    case "mapa-isla":
+        MapaIsla(args[1], int.Parse(args[2]), int.Parse(args[3]), int.Parse(args[4]),
+            Path.Combine(root, "Data", "mapa-islas"));
+        break;
+    case "mapa-fase":
+        MapaFase(args[1], int.Parse(args[2]), int.Parse(args[3]), int.Parse(args[4]));
+        break;
     case "mapa-medir":
         MapaMedir(args[1], args.Length > 2 ? int.Parse(args[2]) : 0,
             args.Length > 3 ? int.Parse(args[3]) : 64);
@@ -1872,7 +1882,7 @@ void MapaMedir(string romfsPath, int from, int count)
     Console.WriteLine();
     Console.WriteLine("Salto medio entre la fila de abajo de i y la de arriba de i+w:");
 
-    for (var w = 1; w <= 12; w++)
+    for (var w = 1; w <= 20; w++)
     {
         double total = 0;
         var pairs = 0;
@@ -2778,4 +2788,186 @@ void MapaVacias(string romfsPath)
     Console.WriteLine();
     Console.WriteLine("Su posicion dentro de la fila de cuatro (3 = ultima columna):");
     Console.WriteLine($"    {string.Join(" ", empty.GroupBy(i => i % 4).OrderBy(g => g.Key).Select(g => $"col {g.Key}: {g.Count()}"))}");
+}
+
+// Encuentra la FASE de una rejilla: con que pieza empieza cada fila. La anchura la dan las
+// costuras verticales, pero se cumplen igual para cualquier desplazamiento -- si todas las filas
+// arrancan corridas lo mismo, la pieza i y la i+w siguen siendo vecinas. Lo que delata la fase es
+// la costura LATERAL: dentro de una fila las piezas encajan, y en el salto de linea no.
+void MapaFase(string romfsPath, int at, int count, int width)
+{
+    var tiles = LoadTiles(romfsPath, at, count);
+    Console.WriteLine($"{tiles.Count} laminas desde {at}, rejilla de {width}");
+    Console.WriteLine();
+    Console.WriteLine("Por cada fase: salto lateral DENTRO de la fila y EN el salto de linea.");
+    Console.WriteLine("La buena es la que tiene el de dentro bajo y el de fuera alto.");
+
+    for (var phase = 0; phase < width; phase++)
+    {
+        double inside = 0, outside = 0;
+        int insideCount = 0, outsideCount = 0;
+
+        for (var i = 0; i + 1 < tiles.Count; i++)
+        {
+            var seam = HorizontalSeam(tiles[i], tiles[i + 1]);
+
+            if (((i - phase) % width + width) % width == width - 1)
+            {
+                outside += seam;
+                outsideCount++;
+            }
+            else
+            {
+                inside += seam;
+                insideCount++;
+            }
+        }
+
+        var dentro = insideCount == 0 ? 0 : inside / insideCount;
+        var fuera = outsideCount == 0 ? 0 : outside / outsideCount;
+        Console.WriteLine($"    fase {phase}   dentro {dentro,7:F2}   fuera {fuera,7:F2}   diferencia {fuera - dentro,7:F2}");
+    }
+}
+
+// Encuentra el encuadre de un mapa de isla probando por donde empieza y quedandose con el que deja
+// los bordes laterales limpios de tierra.
+//
+// Es la medida que habia que usar desde el principio. Las costuras no valen aqui: un mapa de isla
+// es casi todo oceano, y el oceano encaja consigo mismo en cualquier desplazamiento, asi que la
+// fase salia con una diferencia de 5,5 contra 8,9 -- ruido-. Lo que NO se cumple por casualidad es
+// que la isla quede entera dentro del marco: si el arranque esta corrido, la isla se parte y sus
+// dos mitades tocan los dos bordes.
+void MapaIsla(string romfsPath, int around, int width, int height, string destination,
+    string? name = null)
+{
+    // Se busca tambien la ALTURA, y se miran los cuatro bordes. Mirando solo los laterales, Akala
+    // salia con el rancho cortado por abajo: el marco estaba bien de ancho y mal de alto.
+    var from = Math.Max(0, around - (width * 4));
+    var tiles = LoadTiles(romfsPath, from, width * (height + 8));
+
+    var best = -1;
+    var bestHeight = height;
+    var bestEdge = double.MaxValue;
+
+    // De mayor a menor: cuando varios marcos empatan a cero -- y empatan, porque cualquier recorte
+    // que caiga en mar puntua igual de bien -- gana el mas grande, que es el que no deja fuera
+    // ningun trozo de isla.
+    for (var h = height + 2; h >= height - 2; h--)
+    {
+        for (var start = 0; start + (width * h) <= tiles.Count; start++)
+        {
+            double edge = 0;
+
+            for (var row = 0; row < h; row++)
+            {
+                edge += EdgeLand(tiles[start + (row * width)], left: true);
+                edge += EdgeLand(tiles[start + (row * width) + width - 1], left: false);
+            }
+
+            for (var c = 0; c < width; c++)
+            {
+                edge += EdgeRowLand(tiles[start + c], top: true);
+                edge += EdgeRowLand(tiles[start + ((h - 1) * width) + c], top: false);
+            }
+
+            // Por lamina de borde, para que un marco mas alto no gane solo por tener mas bordes.
+            var score = edge / ((h * 2) + (width * 2));
+
+            if (score < bestEdge)
+            {
+                bestEdge = score;
+                best = start;
+                bestHeight = h;
+            }
+        }
+    }
+
+    height = bestHeight;
+    var span = width * height;
+    var first = from + best;
+    Console.WriteLine($"Mejor encuadre: empieza en la pieza {first}, {width}x{height}, "
+        + $"tierra en los bordes {bestEdge:P1}");
+
+    Directory.CreateDirectory(destination);
+    var tileWidth = tiles[0].Width;
+    var tileHeight = tiles[0].Height;
+    var canvasWidth = width * tileWidth;
+    var canvas = new byte[canvasWidth * height * tileHeight * 4];
+
+    for (var row = 0; row < height; row++)
+    {
+        for (var c = 0; c < width; c++)
+        {
+            var tile = tiles[best + (row * width) + c];
+
+            for (var y = 0; y < tile.Height; y++)
+            {
+                Array.Copy(tile.Pixels, y * tile.Width * 4, canvas,
+                    ((((row * tileHeight) + y) * canvasWidth) + (c * tileWidth)) * 4, tile.Width * 4);
+            }
+        }
+    }
+
+    var path = Path.Combine(destination,
+        name is null ? $"isla_{first:000}_{width}x{height}.png" : $"{name}.png");
+    File.WriteAllBytes(path, PngImage.Encode(canvas, canvasWidth, height * tileHeight));
+    Console.WriteLine($"    {path}");
+}
+
+// Cuanta tierra toca el borde de una pieza. El oceano del mapa es un azul muy saturado y bastante
+// plano, asi que se cuenta lo que NO lo es.
+double EdgeLand(BflimTexture tile, bool left)
+{
+    var land = 0;
+
+    for (var y = 0; y < tile.Height; y++)
+    {
+        var at = ((y * tile.Width) + (left ? 0 : tile.Width - 1)) * 4;
+        int r = tile.Pixels[at], g = tile.Pixels[at + 1], b = tile.Pixels[at + 2];
+
+        if (!(b > 120 && b > r + 60 && b > g + 40))
+        {
+            land++;
+        }
+    }
+
+    return (double)land / tile.Height;
+}
+
+// Lo mismo para el borde de arriba o el de abajo de una pieza.
+double EdgeRowLand(BflimTexture tile, bool top)
+{
+    var land = 0;
+
+    for (var x = 0; x < tile.Width; x++)
+    {
+        var at = (((top ? 0 : tile.Height - 1) * tile.Width) + x) * 4;
+        int r = tile.Pixels[at], g = tile.Pixels[at + 1], b = tile.Pixels[at + 2];
+
+        if (!(b > 120 && b > r + 60 && b > g + 40))
+        {
+            land++;
+        }
+    }
+
+    return (double)land / tile.Width;
+}
+
+// Saca los cuatro mapas de isla del cartucho, ya encuadrados y con su nombre.
+//
+// Las piezas por las que empieza cada uno estan MEDIDAS -- son las que la segmentacion encontro y
+// el encuadre afino-, no elegidas. Y el nombre de cada isla se leyo de sus propios accidentes:
+// Malie amurallada con su jardin, el Lanakila nevado y el desierto de Haina no son Melemele.
+void MapaCuatro(string romfsPath, string destination)
+{
+    (int Around, string Name)[] islands =
+    [
+        (366, "melemele"), (494, "akala"), (614, "ulaula"), (710, "poni")
+    ];
+
+    foreach (var (around, name) in islands)
+    {
+        Console.Write($"{name,-10} ");
+        MapaIsla(romfsPath, around, 8, 12, destination, name);
+    }
 }
