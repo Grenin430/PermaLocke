@@ -78,7 +78,17 @@ public sealed class GameWatcher(IPokemonRepository pokemon, IEventStore events, 
     /// Records a death: the Pokémon is marked dead and an auditable event is written. Fainting
     /// is death in a Nuzlocke, so no confirmation is asked for; the event carries the evidence.
     /// </summary>
-    public async Task RecordDeathAsync(PokemonEntry entry, string actor, CancellationToken ct = default)
+    /// <param name="source">
+    /// Who decided it. <see cref="EventSource.AutoDetect"/> when the watcher saw the Pokémon at
+    /// zero HP, <see cref="EventSource.Player"/> when a person marked it by hand.
+    /// </param>
+    /// <param name="detection">
+    /// How it was known, written into the event. It matters because the two are not equally
+    /// trustworthy and the historial has to say which one this was.
+    /// </param>
+    public async Task RecordDeathAsync(PokemonEntry entry, string actor,
+        EventSource source = EventSource.AutoDetect, string detection = "memoria del juego",
+        CancellationToken ct = default)
     {
         await penalties.ChargeDeathAsync(entry.RunId, actor, entry, ct).ConfigureAwait(false);
 
@@ -88,16 +98,18 @@ public sealed class GameWatcher(IPokemonRepository pokemon, IEventStore events, 
             RunId = entry.RunId,
             Timestamp = clock.Now,
             Type = GameEventType.PokemonDied,
-            Source = EventSource.AutoDetect,
+            Source = source,
             Actor = actor,
-            Description = $"{entry.Nickname ?? entry.SpeciesName} ha caído a 0 PS.",
+            Description = source == EventSource.Player
+                ? $"{entry.Nickname ?? entry.SpeciesName} marcado como caído a mano."
+                : $"{entry.Nickname ?? entry.SpeciesName} ha caído a 0 PS.",
             PokemonId = entry.Id,
             LocationId = entry.LocationId,
             Data = new Dictionary<string, string>
             {
                 ["especie"] = entry.Species.ToString(),
                 ["nivel"] = entry.Level.ToString(),
-                ["deteccion"] = "memoria del juego"
+                ["deteccion"] = detection
             }
         }, ct).ConfigureAwait(false);
 

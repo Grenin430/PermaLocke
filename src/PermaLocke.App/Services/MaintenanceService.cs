@@ -50,6 +50,7 @@ public sealed class MaintenanceService(
     RunBackup backup,
     TradedAwayReconciler traded,
     ProgressService progress,
+    GameWatcher watcher,
     PlayerSave save,
     AppPaths paths,
     ILoggerFactory loggers,
@@ -160,6 +161,70 @@ public sealed class MaintenanceService(
 
     private SavePidRepair NewPidRepair() =>
         new(save, paths.SaveBackups, loggers.CreateLogger<SavePidRepair>());
+
+    /// <summary>Everything the run still counts as standing, newest first.</summary>
+    public async Task<IReadOnlyList<PokemonEntry>> AliveAsync(CancellationToken ct = default)
+    {
+        if (runContext.Current is not { } run)
+        {
+            return [];
+        }
+
+        var all = await pokemon.GetAllAsync(run.Id, ct).ConfigureAwait(false);
+
+        return [.. all.Where(p => p.Status == PokemonStatus.Alive).OrderByDescending(p => p.ObtainedAt)];
+    }
+
+    /// <summary>
+    /// Marks one as fallen by hand, charging the penalty and writing the event like any other death.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// It exists because the watcher <b>cannot</b> see every death, and that is structural rather
+    /// than a bug to fix: fainting is an <em>event</em> and what PermaLocke reads is a <em>state</em>,
+    /// sampled every few seconds. After a Totem battle the game heals the party before handing
+    /// control back, so the Pokémon is at full HP again long before the next read. No amount of
+    /// polling closes that window.
+    /// </para>
+    /// <para>
+    /// This is not the §58 mistake of adding a button that duplicates detection. It covers a case
+    /// detection is blind to, and the event says so: the source is the <b>player</b> and not
+    /// AutoDetect, so the historial never claims PermaLocke saw something it did not.
+    /// </para>
+    /// </remarks>
+    public async Task<string> MarkDeadAsync(Guid pokemonId, string why, CancellationToken ct = default)
+    {
+        if (runContext.Current is not { } run)
+        {
+            return "No hay ninguna run cargada.";
+        }
+
+        var entry = (await pokemon.GetAllAsync(run.Id, ct).ConfigureAwait(false))
+            .FirstOrDefault(p => p.Id == pokemonId);
+
+        if (entry is null)
+        {
+            return "Ese Pokémon ya no está en la run.";
+        }
+
+        if (entry.Status != PokemonStatus.Alive)
+        {
+            // Cobrar dos veces por la misma muerte es peor que no cobrar: el saldo deja de
+            // reconstruirse sumando el historial.
+            return $"{entry.Nickname ?? entry.SpeciesName} ya figura como {entry.Status}.";
+        }
+
+        var reason = string.IsNullOrWhiteSpace(why) ? "sin motivo anotado" : why.Trim();
+
+        await watcher.RecordDeathAsync(entry, run.PlayerName, EventSource.Player,
+            $"a mano: {reason}", ct).ConfigureAwait(false);
+
+        logger.LogInformation("Muerte marcada a mano: {Pokemon} ({Motivo})",
+            entry.Nickname ?? entry.SpeciesName, reason);
+
+        return $"{entry.Nickname ?? entry.SpeciesName} marcado como caído. "
+               + "La penalización se ha cobrado y queda en el historial como marca del jugador.";
+    }
 
     /// <summary>Works out which wonder-trade records can be closed, and writes nothing.</summary>
     public Task<TradedAwayReport> InspectTradedAsync(CancellationToken ct = default) =>

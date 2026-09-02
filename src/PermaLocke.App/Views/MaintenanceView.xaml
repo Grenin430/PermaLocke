@@ -230,6 +230,59 @@
                 </StackPanel>
             </Border>
 
+
+            <!-- ================================================== MARCAR UNA MUERTE A MANO
+                 El vigilante NO puede ver todas las muertes, y no por un fallo: caer es un suceso
+                 y lo que leemos es un estado, muestreado cada pocos segundos. Tras un Dominante el
+                 juego cura al equipo antes de devolver el control, así que a la siguiente lectura
+                 el Pokémon ya está entero. Ningún sondeo cierra esa ventana. -->
+            <Border Style="{StaticResource Inset}" Margin="0,12,0,0">
+                <StackPanel>
+                    <TextBlock Text="MARCAR UNA MUERTE A MANO" Style="{StaticResource PanelHeading}" />
+
+                    <TextBlock Style="{StaticResource Body}" Margin="0,9,0,0" TextWrapping="Wrap"
+                               Text="Para cuando un Pokémon cae y la aplicación no llega a verlo: después de una prueba Dominante el juego cura al equipo antes de devolverte el control, y para cuando PermaLocke vuelve a mirar ya está curado." />
+
+                    <TextBlock Style="{StaticResource Faint}" Margin="0,8,0,0" TextWrapping="Wrap"
+                               Text="Queda en el historial como marca TUYA, no como algo que la aplicación haya detectado. Cobra la penalización igual que una muerte normal." />
+
+                    <ComboBox ItemsSource="{Binding AlivePokemon}"
+                              SelectedItem="{Binding SelectedAlive}"
+                              Margin="0,14,0,0" Width="420" HorizontalAlignment="Left">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock>
+                                    <Run Text="{Binding SpeciesName, Mode=OneWay}" />
+                                    <Run Text=" · Nv." />
+                                    <Run Text="{Binding Level, Mode=OneWay}" />
+                                </TextBlock>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+
+                    <TextBox Text="{Binding DeathReason, UpdateSourceTrigger=PropertyChanged}"
+                             Margin="0,10,0,0" Width="420" HorizontalAlignment="Left"
+                             Tag="Qué pasó (queda escrito en el historial)" />
+
+                    <Button Content="MARCAR COMO CAÍDO" Style="{StaticResource PrimaryButton}"
+                            Command="{Binding MarkDeadCommand}" MinWidth="220"
+                            HorizontalAlignment="Left" Margin="0,12,0,0" />
+
+                    <TextBlock Text="{Binding DeathStatus}"
+                               Margin="0,12,0,0" TextWrapping="Wrap">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource Body}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding DeathStatus}" Value="">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
         </StackPanel>
     </ScrollViewer>
 </UserControl>

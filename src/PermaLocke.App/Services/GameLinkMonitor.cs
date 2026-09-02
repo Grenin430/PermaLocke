@@ -165,7 +165,7 @@ public sealed class GameLinkMonitor(
         foreach (var dead in findings.Fainted)
         {
             logger.LogWarning("Muerte detectada: {Pokemon}", dead.Nickname ?? dead.SpeciesName);
-            await watcher.RecordDeathAsync(dead, run.PlayerName, _stopping.Token);
+            await watcher.RecordDeathAsync(dead, run.PlayerName, ct: _stopping.Token);
             ApplyDeathInGame(snapshot, dead);
             changed = true;
         }

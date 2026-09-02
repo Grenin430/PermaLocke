@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
+using PermaLocke.Core.Domain;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using PermaLocke.App.Services;
@@ -321,6 +322,84 @@ public sealed partial class MaintenanceViewModel : SectionViewModel
         {
             _logger.LogError(ex, "Falló la corrección de etapas");
             StageStatus = "No se ha podido corregir. El detalle está en la carpeta Logs.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    // ================================================== MARCAR UNA MUERTE A MANO
+
+    /// <summary>Los que la run cuenta como en pie, para poder señalar uno.</summary>
+    public ObservableCollection<PokemonEntry> AlivePokemon { get; } = [];
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(MarkDeadCommand))]
+    private PokemonEntry? _selectedAlive;
+
+    /// <summary>Qué pasó. Va al evento, así que dentro de un mes seguirá diciéndolo.</summary>
+    [ObservableProperty]
+    private string _deathReason = string.Empty;
+
+    [ObservableProperty]
+    private string _deathStatus = string.Empty;
+
+    private bool CanMarkDead => !IsBusy && SelectedAlive is not null;
+
+    private async Task LoadAliveAsync()
+    {
+        var alive = await _maintenance.AliveAsync();
+
+        AlivePokemon.Clear();
+
+        foreach (var entry in alive)
+        {
+            AlivePokemon.Add(entry);
+        }
+    }
+
+    /// <summary>
+    /// Marks one as fallen when the watcher could not see it.
+    /// </summary>
+    /// <remarks>
+    /// Asks first, and says out loud that the penalty is charged, because this is the one button
+    /// here that <b>takes points away</b>. Everything else on this screen repairs bookkeeping.
+    /// </remarks>
+    [RelayCommand(CanExecute = nameof(CanMarkDead))]
+    private async Task MarkDeadAsync()
+    {
+        if (SelectedAlive is not { } entry)
+        {
+            return;
+        }
+
+        var name = entry.Nickname ?? entry.SpeciesName;
+
+        if (!_dialogs.Confirm(
+                "Marcar como caído",
+                $"{name} pasa a contar como muerto.\n\n"
+                + "Se cobra la penalización y queda en el historial como marca TUYA, no como algo "
+                + "que la aplicación haya visto.\n\n"
+                + "Esto no se puede deshacer desde aquí.\n\n¿Seguro?"))
+        {
+            return;
+        }
+
+        IsBusy = true;
+
+        try
+        {
+            DeathStatus = await _maintenance.MarkDeadAsync(entry.Id, DeathReason);
+            DeathReason = string.Empty;
+            SelectedAlive = null;
+            await LoadAliveAsync();
+            await AuditAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Falló marcar una muerte a mano");
+            DeathStatus = "No se ha podido marcar. El detalle está en la carpeta Logs.";
         }
         finally
         {
