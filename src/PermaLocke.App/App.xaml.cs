@@ -109,6 +109,7 @@ public partial class App : Application
         collection.AddSingleton<ShopViewModel>();
         collection.AddSingleton<PokemonViewerViewModel>();
         collection.AddSingleton<PokePasteViewModel>();
+        collection.AddSingleton<IslandMapService>();
         collection.AddSingleton<MapViewModel>();
         collection.AddSingleton<MiscellaneousViewModel>();
         collection.AddSingleton<TradedAwayReconciler>();

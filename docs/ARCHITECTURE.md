@@ -6234,3 +6234,60 @@ a ojo habría sido decir dónde están las cosas sin saberlo.
 `RomTool mapa-buscar`, `mapa-tallar`, `mapa-volcar`, `mapa-tallar-png`, `mapa-coser`, `mapa-medir`,
 `mapa-segmentar`, `mapa-transparencia` y `mapa-islas`. Ninguna escribe en el juego y todo lo que
 sacan va al temporal, **nunca al repositorio**: son píxeles de Nintendo.
+
+---
+
+## 83. El mapa de verdad: arte del cartucho y marcadores puestos a mano (2026-09-02)
+
+### Las cuatro islas
+
+Están en `a/1/6/3`, y llegar a ellas costó cuatro segmentaciones fallidas. Lo que las tumbó todas
+fue una suposición: **la anchura no es la misma para todos los mapas.** Los de área son de cuatro
+columnas y los de isla de **ocho**. Un mapa de cinco cosido a cuatro sale en diagonal, y contra eso
+no hay umbral que valga.
+
+Y aun con la anchura buena quedaba **por dónde empieza cada mapa**, que es un fallo que las
+costuras no pueden ver: un desfase igual en todas las filas deja la pieza *i* y la *i+8* vecinas,
+así que las costuras verticales salen perfectas mientras cada fila sale girada. La isla se parte y
+sus dos mitades tocan los bordes. Medir la fase por las costuras laterales tampoco valió: un mapa
+de isla es casi todo océano, y el océano encaja consigo mismo en cualquier desplazamiento —salía
+5,5 contra 8,9, que es ruido—.
+
+**La medida que sí funciona es específica de lo que se busca: una isla bien encuadrada tiene mar en
+los cuatro bordes.** Eso no pasa por casualidad. Con ella se fijan el arranque y la altura, y en
+caso de empate gana el marco **más grande**, porque cualquier recorte que caiga en agua puntúa
+igual de bien que el correcto —mirando solo los bordes laterales, Akala salía con el Rancho Ohana
+cortado—. Después se recorta a la tierra: el cartucho encuadra cada isla en una esquina de un mar
+enorme, que es donde el juego dibuja las demás al alejarte, y Poni ocupaba menos de media lámina.
+
+Vive en `IslandMapReader`, no en la herramienta, para que la aplicación y `RomTool mapa-cuatro`
+usen el mismo cosido. Las imágenes se extraen de la ROM del propio jugador la primera vez que se
+abre la pantalla, como los sprites del §28, y `Data/mapa-islas/` está en `.gitignore`.
+
+Trampa al leerlas: si una lámina no decodifica **se para**, no se salta. Saltarla correría todas
+las siguientes un puesto y los mapas saldrían en diagonal sin que nada avisara.
+
+### Los marcadores
+
+Dónde va cada zona sobre el dibujo **no está en el cartucho**. Se buscó —`a/1/6/9` era el candidato
+y resultaron ser esqueletos 3D— y no aparece. Así que lo pone una persona: MODO COLOCAR, eliges la
+zona, pinchas el mapa, y se guarda en `Data/marcadores.json`.
+
+Tres decisiones que valen la pena:
+
+- **Se guarda en fracción de la imagen, no en píxeles.** Si el mapa se vuelve a extraer con otro
+  recorte, un marcador en píxeles apuntaría a otro sitio sin que nada fallara.
+- **La clave es el identificador normalizado de zona**, el mismo que la run guarda en cada captura,
+  así que un marcador y un Pokémon hablan del mismo sitio por construcción.
+- **Una posición fuera del cuadro se descarta, no se recorta.** Recortarla la pegaría al borde y la
+  conservaría, y eso se lee como una respuesta. Una zona sin marcador es honesta; una clavada en el
+  borde porque alguien editó el fichero miente sobre dónde está.
+
+El fichero **sí viaja con PermaLocke**, al revés que las imágenes: es trabajo nuestro, así que uno
+coloca y los cinco lo tienen.
+
+El modo es un interruptor explícito y no una deducción de lo que esté elegido: el mismo clic
+significaría dos cosas y una de ellas escribe en el historial de la run.
+
+Y si faltan las imágenes —alguien sin la ROM en su sitio— la pantalla cae al tablero numerado del
+§82, que funciona igual de bien. Que falte un dibujo no puede costarle a nadie su seguimiento.

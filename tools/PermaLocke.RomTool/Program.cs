@@ -2964,17 +2964,17 @@ double EdgeRowLand(BflimTexture tile, bool top)
 // Las piezas por las que empieza cada uno estan MEDIDAS -- son las que la segmentacion encontro y
 // el encuadre afino-, no elegidas. Y el nombre de cada isla se leyo de sus propios accidentes:
 // Malie amurallada con su jardin, el Lanakila nevado y el desierto de Haina no son Melemele.
-void MapaCuatro(string romfsPath, string destination)
+void MapaCuatro(string _, string destination)
 {
-    (int Around, string Name)[] islands =
-    [
-        (366, "melemele"), (494, "akala"), (614, "ulaula"), (710, "poni")
-    ];
+    Directory.CreateDirectory(destination);
+    var scratch = Path.Combine(Path.GetTempPath(), "permalocke-mapa");
+    var reader = IslandMapReader.Open(RequireRom(), scratch);
 
-    foreach (var (around, name) in islands)
+    foreach (var island in reader.ReadAll())
     {
-        Console.Write($"{name,-10} ");
-        MapaIsla(romfsPath, around, 8, 12, destination, name);
+        var path = Path.Combine(destination, $"{island.Name}.png");
+        File.WriteAllBytes(path, PngImage.Encode(island.Pixels, island.Width, island.Height));
+        Console.WriteLine($"    {island.Name,-10} {island.Width}x{island.Height}  {path}");
     }
 }
 

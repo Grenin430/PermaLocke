@@ -7,22 +7,20 @@
         <!-- Un marcador de zona. Los tres estados los decide el ViewModel en State, para no
              repartir la misma decisión entre tres disparadores copiados en cada sitio. -->
         <Style x:Key="ZoneMarker" TargetType="Button">
-            <Setter Property="Width" Value="30" />
-            <Setter Property="Height" Value="30" />
-            <Setter Property="Margin" Value="0,0,5,5" />
+            <Setter Property="Width" Value="26" />
+            <Setter Property="Height" Value="26" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
-            <Setter Property="Background" Value="{StaticResource SunkenBrush}" />
-            <Setter Property="BorderBrush" Value="{StaticResource BorderStrongBrush}" />
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="Foreground" Value="{StaticResource OnAccentBrush}" />
+            <Setter Property="Background" Value="#B0202020" />
+            <Setter Property="BorderBrush" Value="#E0FFFFFF" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Grid>
-                            <Border x:Name="Pin" CornerRadius="5" BorderThickness="1.5"
-                                    Background="{TemplateBinding Background}"
-                                    BorderBrush="{TemplateBinding BorderBrush}" />
+                            <Ellipse x:Name="Pin" Fill="{TemplateBinding Background}"
+                                     Stroke="{TemplateBinding BorderBrush}" StrokeThickness="2" />
                             <TextBlock Text="{TemplateBinding Content}"
                                        HorizontalAlignment="Center" VerticalAlignment="Center"
                                        Foreground="{TemplateBinding Foreground}"
@@ -31,8 +29,7 @@
                         </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Pin" Property="BorderBrush"
-                                        Value="{StaticResource AccentBrush}" />
+                                <Setter TargetName="Pin" Property="StrokeThickness" Value="3" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -41,15 +38,66 @@
             <Style.Triggers>
                 <DataTrigger Binding="{Binding State}" Value="spent">
                     <Setter Property="Background" Value="{StaticResource AccentBrush}" />
-                    <Setter Property="BorderBrush" Value="{StaticResource AccentBrightBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding State}" Value="dead">
+                    <Setter Property="Background" Value="{StaticResource DangerBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- El mismo marcador para el tablero de respaldo, cuadrado y sin mapa debajo. -->
+        <Style x:Key="BoardMarker" TargetType="Button" BasedOn="{StaticResource ZoneMarker}">
+            <Setter Property="Margin" Value="0,0,5,5" />
+            <Setter Property="Background" Value="{StaticResource SunkenBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderStrongBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding State}" Value="spent">
+                    <Setter Property="Background" Value="{StaticResource AccentBrush}" />
                     <Setter Property="Foreground" Value="{StaticResource OnAccentBrush}" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding State}" Value="dead">
                     <Setter Property="Background" Value="{StaticResource DangerBrush}" />
-                    <Setter Property="BorderBrush" Value="{StaticResource DangerBrush}" />
                     <Setter Property="Foreground" Value="{StaticResource OnAccentBrush}" />
                 </DataTrigger>
             </Style.Triggers>
+        </Style>
+
+        <!-- Fila de lista, con la elegida encendida: es la que se lleva el clic del mapa, y
+             equivocarse de fila coloca o gasta la zona del que no es. -->
+        <Style x:Key="ZoneRow" TargetType="ListBoxItem">
+            <Setter Property="Margin" Value="0,0,0,4" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="Row" Background="{StaticResource PanelBrush}"
+                                CornerRadius="6" BorderThickness="1" Padding="10,8"
+                                BorderBrush="{StaticResource BorderSubtleBrush}">
+                            <ContentPresenter />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Row" Property="Background"
+                                        Value="{StaticResource SurfaceHighBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Row" Property="Background"
+                                        Value="{StaticResource AccentDeepBrush}" />
+                                <Setter TargetName="Row" Property="BorderBrush"
+                                        Value="{StaticResource AccentBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="IslandTab" TargetType="Button" BasedOn="{StaticResource GhostButton}">
+            <Setter Property="Padding" Value="10,7" />
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="Margin" Value="0,0,5,5" />
         </Style>
 
     </UserControl.Resources>
@@ -60,11 +108,10 @@
             <ColumnDefinition Width="290" />
         </Grid.ColumnDefinitions>
 
-        <Border Style="{StaticResource Inset}" Padding="18,16">
+        <Border Style="{StaticResource Inset}" Padding="16,14">
             <DockPanel>
 
-                <!-- CABECERA: lo único que hay que ver de un vistazo es cuánto llevas. -->
-                <DockPanel DockPanel.Dock="Top" Margin="0,0,0,4">
+                <DockPanel DockPanel.Dock="Top" Margin="0,0,0,12">
                     <Button DockPanel.Dock="Right" Content="RELEER" Style="{StaticResource GhostButton}"
                             Command="{Binding RefreshCommand}" Padding="14,8" FontSize="11.5"
                             VerticalAlignment="Top" />
@@ -83,38 +130,73 @@
                     </StackPanel>
                 </DockPanel>
 
-                <!-- LEYENDA: tres colores y lo que significan, como en cualquier mapa. -->
-                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,10,0,14">
-                    <Border Width="14" Height="14" CornerRadius="4" VerticalAlignment="Center"
-                            Background="{StaticResource SunkenBrush}" BorderThickness="1.5"
-                            BorderBrush="{StaticResource BorderStrongBrush}" />
-                    <TextBlock Text="libre" Style="{StaticResource Faint}" Margin="6,0,16,0"
-                               VerticalAlignment="Center" />
-
-                    <Border Width="14" Height="14" CornerRadius="4" VerticalAlignment="Center"
-                            Background="{StaticResource AccentBrush}" />
-                    <TextBlock Text="gastada" Style="{StaticResource Faint}" Margin="6,0,16,0"
-                               VerticalAlignment="Center" />
-
-                    <Border Width="14" Height="14" CornerRadius="4" VerticalAlignment="Center"
-                            Background="{StaticResource DangerBrush}" />
-                    <TextBlock Text="su Pokémon murió" Style="{StaticResource Faint}" Margin="6,0,0,0"
-                               VerticalAlignment="Center" />
-                </StackPanel>
-
                 <TextBlock DockPanel.Dock="Top" Style="{StaticResource Faint}" TextWrapping="Wrap"
                            Visibility="{Binding HasMap, Converter={StaticResource InverseBoolToVisibility}}"
                            Text="Falta Data/islas.json. Lo genera «RomTool mundos» leyendo del propio cartucho a qué isla pertenece cada zona." />
 
+                <!-- EL MAPA, con el arte del cartucho -->
+                <Grid Visibility="{Binding HasArt, Converter={StaticResource BoolToVisibility}}">
+                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                        <Grid x:Name="MapSurface" HorizontalAlignment="Left" VerticalAlignment="Top">
+                            <Image Source="{Binding IslandImage}" Stretch="None" />
+
+                            <!-- La capa de marcadores. El clic para colocar lo recoge el
+                                 code-behind, que es lo unico que sabe donde se ha pinchado. -->
+                            <Canvas x:Name="MarkerLayer" Background="Transparent"
+                                    MouseLeftButtonDown="OnMapClicked">
+                                <ItemsControl ItemsSource="{Binding SelectedIsland.Zones}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <Canvas />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+
+                                    <ItemsControl.ItemContainerStyle>
+                                        <Style TargetType="ContentPresenter">
+                                            <Setter Property="Canvas.Left" Value="{Binding Left}" />
+                                            <Setter Property="Canvas.Top" Value="{Binding Top}" />
+                                        </Style>
+                                    </ItemsControl.ItemContainerStyle>
+
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <!-- El margen negativo centra el circulo en el punto
+                                                 que se pincho, en vez de colgarlo de su esquina. -->
+                                            <Button Content="{Binding Number}" Margin="-13,-13,0,0"
+                                                    Style="{StaticResource ZoneMarker}"
+                                                    Visibility="{Binding IsPlaced,
+                                                        Converter={StaticResource BoolToVisibility}}"
+                                                    Command="{Binding DataContext.ClickZoneCommand,
+                                                        RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}">
+                                                <Button.ToolTip>
+                                                    <ToolTip>
+                                                        <StackPanel MaxWidth="260">
+                                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                                                            <TextBlock Text="{Binding Tooltip}"
+                                                                       TextWrapping="Wrap" Margin="0,3,0,0" />
+                                                        </StackPanel>
+                                                    </ToolTip>
+                                                </Button.ToolTip>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Canvas>
+                        </Grid>
+                    </ScrollViewer>
+                </Grid>
+
+                <!-- RESPALDO: sin las imagenes del cartucho, el tablero numerado de siempre. Que
+                     falte un dibujo no puede costarle a nadie su seguimiento de zonas. -->
                 <ScrollViewer VerticalScrollBarVisibility="Auto"
-                              Visibility="{Binding HasMap, Converter={StaticResource BoolToVisibility}}">
+                              Visibility="{Binding HasArt, Converter={StaticResource InverseBoolToVisibility}}">
                     <ItemsControl ItemsSource="{Binding Islands}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Border Background="{StaticResource PanelBrush}" CornerRadius="10"
                                         Padding="14,12" Margin="0,0,0,10">
                                     <StackPanel>
-
                                         <DockPanel Margin="0,0,0,10">
                                             <TextBlock DockPanel.Dock="Right" Style="{StaticResource Mono}"
                                                        VerticalAlignment="Center" FontSize="11.5">
@@ -122,9 +204,7 @@
                                                 <Run Text="/" />
                                                 <Run Text="{Binding Count, Mode=OneWay}" />
                                             </TextBlock>
-
-                                            <TextBlock Text="{Binding Name}"
-                                                       Style="{StaticResource PanelHeading}" />
+                                            <TextBlock Text="{Binding Name}" Style="{StaticResource PanelHeading}" />
                                         </DockPanel>
 
                                         <ItemsControl ItemsSource="{Binding Zones}">
@@ -133,22 +213,19 @@
                                                     <WrapPanel Orientation="Horizontal" />
                                                 </ItemsPanelTemplate>
                                             </ItemsControl.ItemsPanel>
-
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
                                                     <Button Content="{Binding Number}"
-                                                            Style="{StaticResource ZoneMarker}"
+                                                            Style="{StaticResource BoardMarker}"
                                                             Command="{Binding DataContext.ClickZoneCommand,
                                                                 RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                             CommandParameter="{Binding}">
                                                         <Button.ToolTip>
                                                             <ToolTip>
                                                                 <StackPanel MaxWidth="260">
-                                                                    <TextBlock Text="{Binding Name}"
-                                                                               FontWeight="SemiBold" />
+                                                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
                                                                     <TextBlock Text="{Binding Tooltip}"
-                                                                               TextWrapping="Wrap"
-                                                                               Margin="0,3,0,0" />
+                                                                               TextWrapping="Wrap" Margin="0,3,0,0" />
                                                                 </StackPanel>
                                                             </ToolTip>
                                                         </Button.ToolTip>
@@ -165,16 +242,34 @@
             </DockPanel>
         </Border>
 
-        <!-- LO QUE FALTA POR DECIR -->
+        <!-- PANEL LATERAL -->
         <Border Grid.Column="1" Style="{StaticResource Inset}" Padding="14,12" Margin="10,0,0,0">
             <DockPanel>
 
-                <TextBlock DockPanel.Dock="Top" Text="SIN ZONA" Style="{StaticResource StatLabel}"
-                           Margin="0,0,0,4" />
+                <!-- Las cuatro islas -->
+                <ItemsControl DockPanel.Dock="Top" ItemsSource="{Binding Islands}" Margin="0,0,0,8">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Button Content="{Binding Name}" Style="{StaticResource IslandTab}"
+                                    Command="{Binding DataContext.SelectIslandCommand,
+                                        RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    CommandParameter="{Binding}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
 
-                <TextBlock DockPanel.Dock="Top" Style="{StaticResource Faint}" TextWrapping="Wrap"
-                           Margin="0,0,0,10"
-                           Text="Elige una captura y pincha el número de la zona donde salió. Pasa el ratón por un número para ver qué zona es. Pinchar una gastada la libera." />
+                <CheckBox DockPanel.Dock="Top" Content="MODO COLOCAR"
+                          IsChecked="{Binding IsPlacingMode}" Margin="0,0,0,4"
+                          Visibility="{Binding HasArt, Converter={StaticResource BoolToVisibility}}" />
+
+                <TextBlock DockPanel.Dock="Top" Text="{Binding MarkerCount}"
+                           Style="{StaticResource Faint}" Margin="0,0,0,10"
+                           Visibility="{Binding HasArt, Converter={StaticResource BoolToVisibility}}" />
 
                 <TextBlock DockPanel.Dock="Bottom" Text="{Binding Status}" TextWrapping="Wrap"
                            FontSize="11.5" Margin="0,10,0,0">
@@ -193,57 +288,58 @@
                     </TextBlock.Style>
                 </TextBlock>
 
-                <TextBlock DockPanel.Dock="Bottom" Style="{StaticResource Faint}" TextWrapping="Wrap"
-                           Margin="0,10,0,0"
-                           Visibility="{Binding HasPending, Converter={StaticResource InverseBoolToVisibility}}"
-                           Text="Nada pendiente: todas tus capturas tienen su zona dicha." />
+                <Grid>
+                    <!-- COLOCAR: elige una zona y pincha el mapa -->
+                    <DockPanel Visibility="{Binding IsPlacingMode, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock DockPanel.Dock="Top" Text="SIN COLOCAR"
+                                   Style="{StaticResource StatLabel}" Margin="0,0,0,4" />
+                        <TextBlock DockPanel.Dock="Top" Style="{StaticResource Faint}" TextWrapping="Wrap"
+                                   Margin="0,0,0,10"
+                                   Text="Elige una zona y pincha en el mapa dónde va. Se guarda sola, y solo hay que hacerlo una vez." />
 
-                <!-- Cuál está elegido tiene que verse: es el que se lleva el clic del mapa, y
-                     equivocarse de fila reparte la zona al Pokémon que no es. -->
-                <ListBox ItemsSource="{Binding Pending}" SelectedItem="{Binding Selected}"
-                         BorderThickness="0" Background="Transparent"
-                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                    <ListBox.ItemContainerStyle>
-                        <Style TargetType="ListBoxItem">
-                            <Setter Property="Margin" Value="0,0,0,4" />
-                            <Setter Property="Padding" Value="0" />
-                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                            <Setter Property="Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="ListBoxItem">
-                                        <Border x:Name="Row" Background="{StaticResource PanelBrush}"
-                                                CornerRadius="6" BorderThickness="1" Padding="10,8"
-                                                BorderBrush="{StaticResource BorderSubtleBrush}">
-                                            <ContentPresenter />
-                                        </Border>
-                                        <ControlTemplate.Triggers>
-                                            <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter TargetName="Row" Property="Background"
-                                                        Value="{StaticResource SurfaceHighBrush}" />
-                                            </Trigger>
-                                            <Trigger Property="IsSelected" Value="True">
-                                                <Setter TargetName="Row" Property="Background"
-                                                        Value="{StaticResource AccentDeepBrush}" />
-                                                <Setter TargetName="Row" Property="BorderBrush"
-                                                        Value="{StaticResource AccentBrush}" />
-                                            </Trigger>
-                                        </ControlTemplate.Triggers>
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                        </Style>
-                    </ListBox.ItemContainerStyle>
+                        <ListBox ItemsSource="{Binding Unplaced}" SelectedItem="{Binding Placing}"
+                                 BorderThickness="0" Background="Transparent"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                 ItemContainerStyle="{StaticResource ZoneRow}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Name}" FontSize="12" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </DockPanel>
 
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel>
-                                <TextBlock Text="{Binding Label}" FontSize="12" TextWrapping="Wrap" />
-                                <TextBlock Text="{Binding Where}" Style="{StaticResource Faint}"
-                                           FontSize="10.5" Margin="0,2,0,0" TextWrapping="Wrap" />
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
+                    <!-- NORMAL: las capturas que aún no han dicho su zona -->
+                    <DockPanel Visibility="{Binding IsPlacingMode, Converter={StaticResource InverseBoolToVisibility}}">
+                        <TextBlock DockPanel.Dock="Top" Text="SIN ZONA"
+                                   Style="{StaticResource StatLabel}" Margin="0,0,0,4" />
+                        <TextBlock DockPanel.Dock="Top" Style="{StaticResource Faint}" TextWrapping="Wrap"
+                                   Margin="0,0,0,10"
+                                   Text="Elige una captura y pincha el marcador de la zona donde salió. Pinchar una gastada la libera." />
+
+                        <TextBlock DockPanel.Dock="Bottom" Style="{StaticResource Faint}" TextWrapping="Wrap"
+                                   Margin="0,10,0,0"
+                                   Visibility="{Binding HasPending, Converter={StaticResource InverseBoolToVisibility}}"
+                                   Text="Nada pendiente: todas tus capturas tienen su zona dicha." />
+
+                        <ListBox ItemsSource="{Binding Pending}" SelectedItem="{Binding Selected}"
+                                 BorderThickness="0" Background="Transparent"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                 ItemContainerStyle="{StaticResource ZoneRow}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Label}" FontSize="12" TextWrapping="Wrap" />
+                                        <TextBlock Text="{Binding Where}" Style="{StaticResource Faint}"
+                                                   FontSize="10.5" Margin="0,2,0,0" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </DockPanel>
+                </Grid>
             </DockPanel>
         </Border>
     </Grid>
