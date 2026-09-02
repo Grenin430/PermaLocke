@@ -1076,7 +1076,7 @@ async Task MegasAsync()
 void ItemIcons(int fromIcon, int toIcon)
 {
     var rom = RequireRom();
-    var reader = ItemIconReader.Open(rom, work);
+    var reader = ItemIconReader.Open(rom, work, baseLayer);
     var outDir = Path.Combine(Path.GetTempPath(), "permalocke-item-iconos");
     Directory.CreateDirectory(outDir);
 
@@ -1225,6 +1225,12 @@ async Task TranslateAsync(bool write)
     using var english = await RomWorkspace.ExtractAsync(RequireRom(),
         Path.Combine(Path.GetTempPath(), "permalocke-tr-en"), English, baseLayer: baseLayer);
 
+    // El ingles del CARTUCHO, sin mod. Es lo unico que distingue "el cartucho lo traduce distinto"
+    // de "el mod ha reutilizado ese id para otra cosa". El mod renombra 16 objetos, del 505 al 520,
+    // que eran Tarjetas de Datos y ahora son megapiedras.
+    using var plain = await RomWorkspace.ExtractAsync(RequireRom(),
+        Path.Combine(Path.GetTempPath(), "permalocke-tr-van"), English);
+
     Console.WriteLine("\nANCLA: los nombres que YA existen tienen que coincidir con los de PKHeX.");
     Console.WriteLine("Si no coinciden, el indice no esta alineado y traducir moveria cada nombre de sitio.\n");
 
@@ -1290,7 +1296,9 @@ async Task TranslateAsync(bool write)
         }
 
         var official = index.TryGetValue(i, out var t) ? t.Official : [];
-        var merged = NameLocalizer.Extend(mine, mod, official);
+        var merged = NameLocalizer.Extend(mine, mod, official,
+            TextFile.GetStrings(plain.Config, new GARC.LazyGARC(
+                await File.ReadAllBytesAsync(plain.PathOf(GameFiles.GameText(English))))[i]));
         garc[i] = TextFile.GetBytes(spanish.Config, merged.Lines);
 
         Console.WriteLine($"  subfichero {i,3}: {merged.Kept,5} tal cual · "

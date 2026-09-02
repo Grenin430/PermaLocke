@@ -40,10 +40,24 @@ public sealed class ItemIconReader
     /// <summary>How many icons the cartridge carries. 769 on Ultra Moon.</summary>
     public int Count => _garc.FileCount;
 
-    public static ItemIconReader Open(string romPath, string scratchDirectory)
+    /// <param name="baseLayer">
+    /// Un romfs cuyo contenedor manda sobre el del cartucho, para un mod que anade objetos. Nulo es
+    /// el caso normal.
+    /// </param>
+    public static ItemIconReader Open(string romPath, string scratchDirectory, string? baseLayer = null)
     {
-        var reader = new RomFsReader(romPath);
         Directory.CreateDirectory(scratchDirectory);
+
+        var fromLayer = baseLayer is null
+            ? null
+            : Path.Combine(baseLayer, IconGarcPath.Replace('/', Path.DirectorySeparatorChar));
+
+        if (fromLayer is not null && File.Exists(fromLayer))
+        {
+            return new ItemIconReader(new GARC.MemGARC(File.ReadAllBytes(fromLayer)));
+        }
+
+        var reader = new RomFsReader(romPath);
         var extracted = Path.Combine(scratchDirectory, "item-icons.garc");
 
         if (!File.Exists(extracted) && !reader.ExtractTo(IconGarcPath, extracted))

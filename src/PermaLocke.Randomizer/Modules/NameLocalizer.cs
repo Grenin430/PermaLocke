@@ -46,8 +46,21 @@ public static class NameLocalizer
     /// The official names of that language, indexed the same way. May be shorter than
     /// <paramref name="english"/>, and then the rest is borrowed from it.
     /// </param>
+    /// <param name="cartridgeEnglish">
+    /// The same list as the <b>cartridge</b> ships it, in the language the mod writes in. When
+    /// given, an entry the mod renamed there is taken from the mod instead of being kept.
+    /// </param>
+    /// <remarks>
+    /// That third list is what tells a <em>translation difference</em> from a <em>repurposed
+    /// id</em>, and without it the merge gets one of the two wrong. Measured on the gen 8-9
+    /// expansion: it renames exactly sixteen existing items, 505 to 520, all of them "Data Card 01"
+    /// and friends turned into mega stones — Golurkite, Greninjite, Magearnite. Keeping the
+    /// cartridge's Spanish there left the game selling "Tarjeta Datos 01" for a stone, which is a
+    /// name that sends the player to look for the wrong thing. The other 944 are untouched by the
+    /// mod and keep their Spanish, abbreviations and all.
+    /// </remarks>
     public static LocalizedNames Extend(string[] current, string[] english,
-        IReadOnlyList<string> official)
+        IReadOnlyList<string> official, string[]? cartridgeEnglish = null)
     {
         ArgumentNullException.ThrowIfNull(current);
         ArgumentNullException.ThrowIfNull(english);
@@ -65,6 +78,24 @@ public static class NameLocalizer
 
         var translated = 0;
         var borrowed = 0;
+        var repurposed = 0;
+
+        // Lo que el mod RENOMBRO se toma de el. No es una excepcion a "solo se anade": es que un
+        // id renombrado ya no es el mismo objeto, asi que conservar el nombre viejo no seria
+        // conservar nada, seria mentir sobre que hay ahi.
+        if (cartridgeEnglish is not null)
+        {
+            var shared = Math.Min(current.Length, Math.Min(english.Length, cartridgeEnglish.Length));
+
+            for (var i = 0; i < shared; i++)
+            {
+                if (english[i] != cartridgeEnglish[i] && english[i].Length > 0)
+                {
+                    lines[i] = english[i];
+                    repurposed++;
+                }
+            }
+        }
 
         for (var i = current.Length; i < english.Length; i++)
         {
@@ -82,7 +113,7 @@ public static class NameLocalizer
             }
         }
 
-        return new LocalizedNames(lines, current.Length, translated, borrowed);
+        return new LocalizedNames(lines, current.Length - repurposed, translated, borrowed + repurposed);
     }
 
     /// <summary>
