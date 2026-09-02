@@ -39,6 +39,12 @@ public sealed class AzaharGameStateProvider(
     /// <summary>Set when something proves the remembered copies are not all of them.</summary>
     private bool _sweepNext;
 
+    /// <summary>When the last full sweep ran, so a correction that never sticks cannot turn the
+    /// monitor into a permanent memory scan while somebody is playing.</summary>
+    private DateTimeOffset _lastSweep = DateTimeOffset.MinValue;
+
+    private static readonly TimeSpan SweepCooldown = TimeSpan.FromSeconds(30);
+
     /// <summary>Fallos seguidos antes de dar por perdido el equipo ya localizado.</summary>
     /// <remarks>
     /// Uno suelto es casi siempre un datagrama perdido. Tirar la dirección por eso obliga a
@@ -86,7 +92,13 @@ public sealed class AzaharGameStateProvider(
     /// whenever the cap has to correct somebody is cheap, and correcting is rare.
     /// </para>
     /// </remarks>
-    public void SweepAgain() => _sweepNext = true;
+    public void SweepAgain()
+    {
+        if (DateTimeOffset.Now - _lastSweep >= SweepCooldown)
+        {
+            _sweepNext = true;
+        }
+    }
 
     public Task<GameSnapshot> ReadAsync(CancellationToken ct = default) =>
         Task.Run(() => Read(ct), ct);
@@ -130,7 +142,13 @@ public sealed class AzaharGameStateProvider(
 
         var reader = new Pk7Reader(client);
 
-        if (_layout is { } cached && ReadParty(reader, cached) is { Count: > 0 } cachedParty)
+        // El atajo de la dirección cacheada tiene que respetar el barrido pedido, y no lo hacía.
+        // Salía por aquí antes de mirar _sweepNext, o sea que SweepAgain() no se consultaba nunca
+        // mientras la dirección de siempre siguiera leyendo -- que es siempre. El cap pidió barrer
+        // en cada corrección y no barrió ni una vez: «corregido y releído en 1 copias», con cinco
+        // estructuras del equipo en memoria.
+        if (!_sweepNext && _layout is { } cached
+            && ReadParty(reader, cached) is { Count: > 0 } cachedParty)
         {
             return new GameSnapshot(true, null, cachedParty, now, TrainerNotice());
         }
@@ -205,6 +223,7 @@ public sealed class AzaharGameStateProvider(
         _layout = readable;
         _notReadyPolls = 0;
         _sweepNext = false;
+        _lastSweep = DateTimeOffset.Now;
         _allLayouts = PartyLayoutLocator.Distinct(located);
         _gameTrainer = readable.TrainerName;
         Remember(located);
