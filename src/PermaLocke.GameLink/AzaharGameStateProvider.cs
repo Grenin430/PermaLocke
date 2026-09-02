@@ -25,6 +25,16 @@ public sealed class AzaharGameStateProvider(
     public const ulong UltraMoonTitleId = 0x00040000001B5100;
 
     private PartyLayout? _layout;
+
+    /// <summary>Cuántas lecturas seguidas se esperan antes de barrer los 96 MB.</summary>
+    /// <remarks>
+    /// A una lectura por segundo son unos veinte segundos, que es de sobra para cargar una partida
+    /// y ridículo al lado de los diez minutos que cuesta un barrido completo.
+    /// </remarks>
+    private const int PollsBeforeSweeping = 20;
+
+    private IReadOnlyList<PartyLayout> _remembered = [];
+    private int _notReadyPolls;
     private IReadOnlyList<PartyLayout> _allLayouts = [];
     private string _gameTrainer = string.Empty;
 
@@ -75,8 +85,9 @@ public sealed class AzaharGameStateProvider(
         // y decenas de miles de peticiones, y hacerlo en cada arranque llegó a tumbar el
         // emulador. Fiarse de ellas es seguro porque no se confía: cada copia tiene que devolver
         // un equipo coherente de este entrenador antes de usarse.
-        if (ReadRemembered() is { Count: > 0 } remembered
-            && Choose(reader, remembered) is { } fromDisk)
+        var remembered = _remembered = ReadRemembered();
+
+        if (remembered is { Count: > 0 } && Choose(reader, remembered) is { } fromDisk)
         {
             // TODAS las recordadas, no solo las que se dejan leer.
             //
@@ -92,12 +103,29 @@ public sealed class AzaharGameStateProvider(
             // azar no lo pasa- y relee después para comprobar que cuajó.
             _allLayouts = PartyLayoutLocator.Distinct(remembered);
             _layout = fromDisk;
+            _notReadyPolls = 0;
             _gameTrainer = fromDisk.TrainerName;
 
             logger.LogInformation("Equipo en 0x{Address:X8}, el de la última vez, revalidado sin barrer",
                 fromDisk.Address);
 
             return new GameSnapshot(true, null, ReadParty(reader, fromDisk), now, TrainerNotice());
+        }
+
+        // Las direcciones de la última vez existen pero todavía no tienen un equipo dentro. Casi
+        // siempre eso no significa que se hayan movido: significa que Azahar está abierto y la
+        // partida aún no está cargada, que es exactamente el minuto en el que uno abre las dos
+        // cosas a la vez.
+        //
+        // Antes se barría en el acto, y un barrido son 96 MB. Medido en una sesión real: diez
+        // minutos y nueve segundos, DURANTE LOS CUALES NO SE VIGILA NADA. En ese hueco murió un
+        // Pokémon en una prueba y no se contó. Esperar unos segundos cuesta segundos; barrer
+        // cuando no hacía falta cuesta diez minutos a ciegas.
+        if (_remembered.Count > 0 && ++_notReadyPolls < PollsBeforeSweeping)
+        {
+            return GameSnapshot.Disconnected(
+                "Azahar responde pero la partida todavía no está cargada. "
+                + "Entra en ella y en unos segundos se engancha solo.", now);
         }
 
         logger.LogInformation("Localizando el equipo en memoria (barrido completo)...");
@@ -116,6 +144,7 @@ public sealed class AzaharGameStateProvider(
         }
 
         _layout = readable;
+        _notReadyPolls = 0;
         _allLayouts = PartyLayoutLocator.Distinct(located);
         _gameTrainer = readable.TrainerName;
         Remember(located);
