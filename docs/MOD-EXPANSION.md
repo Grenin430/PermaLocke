@@ -300,6 +300,41 @@ generado se lea sin colgarse, y que dos personas puedan combatir.
 
 ---
 
+## 9 ter. MODO COMBATE con el mod puesto: medido, y no vale
+
+MODO COMBATE (§80) aparta el mundo para que los cinco peleen sobre el juego original. Con el mod de
+expansión encima aparece una pregunta que antes no existía: **¿qué hace Ultra Luna original con un
+Pokémon de gen 8 o 9 en el equipo?** Para él la especie 935 no existe.
+
+Medido el 2026-09-02 sobre una **copia** de la partida real, en un Azahar portátil aislado y sin
+ningún mod. La partida de verdad no se tocó — comprobado por hash antes y después.
+
+La partida tenía un **Charcadet (935) de nivel 21 en el equipo**, más Maushold (925) y Cufant (878)
+en la caja 1.
+
+**No se cuelga.** El menú de continuar lee la partida, el juego entra, el mapa corre a 30 FPS y la
+ficha del Pokémon se abre. Eso era lo que más se temía y no pasa.
+
+**Pero lo enseña como otra cosa**, y esa es la respuesta de verdad:
+
+| | lo que muestra vanilla |
+|---|---|
+| Tipo | **NORMAL** (Charcadet es Fuego) |
+| Sprite | **un Bulbasaur** |
+| Estadísticas | 49 PS, 28 Ataque… las de otro |
+| Para subir de nivel | **−985** |
+
+Ese número negativo es lo que decide. No es un dibujo mal elegido: el juego está **calculando con una
+especie que no existe** y le sale un número imposible. Lo que haga a partir de ahí —en combate, o al
+guardar— no está medido y no hay por qué medirlo, porque ya se sabe lo suficiente.
+
+**Conclusión: no se pelea por link llevando encima Pokémon de gen 8 o 9.** Antes de usar MODO
+COMBATE hay que dejarlos en el PC y salir con un equipo de la 1 a la 7. Lo que no se ha comprobado,
+y sería lo único que faltaría por saber, es si **guardar** en ese estado destruye el Pokémon: es una
+prueba más que se puede hacer sobre otra copia el día que haga falta.
+
+---
+
 ## 10. Cómo se midió, para poder repetirlo
 
 - Repositorio clonado a un temporal fuera del proyecto. Los ficheros del mod son GARC sueltos, así
