@@ -6315,3 +6315,22 @@ Por qué la respuesta puede ser «no lo sé»: el cartucho nombra corto —«Ciu
 largo —«Ciudad Hauoli (Puerto)»—, así que un sublugar hereda del padre, y un padre con áreas de
 los dos tipos no puede contestar por su hijo. `JsonZoneEncounters.HasEncounters` devuelve null en
 vez de adivinar.
+
+### 83 ter. El mapa se cierra: 61 marcadores y ninguna puerta abierta
+
+Terminadas las cuatro islas, el mapa deja de editarse. **61 marcadores colocados y 52 zonas sin
+encuentros**, que son las 113 exactas.
+
+Las estériles **ya no se dibujan apagadas: no se construyen**. Pintarlas era peor que inútil —no se
+pueden gastar nunca, así que no son parte del mapa— y dejarlas dentro hacía que el contador no
+pudiera llegar a su propio tope. El número de cada marcador se reparte ahora entre las que quedan,
+así que significa algo.
+
+Y **no hay modo de colocar**. El fichero viaja con la aplicación, así que una pantalla que dejara a
+cinco personas arrastrar Alola acabaría con cinco Alolas distintas. `Data/marcadores.json` se queda
+como fuente única, y volver a abrir la edición es un cambio pequeño aquí, no algo que pueda pasar
+por accidente. Con ella se va `JsonZoneEncounters`, que existía solo para avisar al marcar una isla.
+
+Un guardia que se queda: una zona **gastada que no esté en el mapa** se dice en rojo. Pasaría si
+alguien recorta `marcadores.json` con una run empezada, y callarlo dejaría un encuentro gastado que
+la pantalla jura que sigue libre.

@@ -13,14 +13,15 @@ using PermaLocke.Rules.Services;
 
 namespace PermaLocke.App.ViewModels;
 
-/// <summary>One zone: free, spent, or spent by somebody who died.</summary>
-public sealed partial class MapZoneViewModel(int number, string name, string island) : ObservableObject
+/// <summary>One zone on the map: free, spent, or spent by somebody who died.</summary>
+public sealed partial class MapZoneViewModel(int number, string name, string island, double left, double top)
+    : ObservableObject
 {
     /// <summary>Its place in its island, which is what the marker shows.</summary>
     /// <remarks>
-    /// A hundred and thirteen names do not fit on a map, and shrinking them to fit makes a wall of
-    /// text nobody reads. A number fits, the name is one hover away, and the whole point of the
-    /// screen — how much of Alola is spent — survives being looked at from across the room.
+    /// A name does not fit on a marker, and shrinking one to fit makes a wall of text nobody reads.
+    /// A number fits, the name is one hover away, and the whole point of the screen — how much of
+    /// Alola is spent — survives being looked at from across the room.
     /// </remarks>
     public int Number { get; } = number;
 
@@ -31,6 +32,11 @@ public sealed partial class MapZoneViewModel(int number, string name, string isl
     /// <summary>The id the run stores against a capture, so a marker and a Pokémon match up.</summary>
     public string ZoneId { get; } = EncounterService.NormaliseLocationId(name);
 
+    /// <summary>Where it sits on its island's picture, in that picture's own pixels.</summary>
+    public double Left { get; } = left;
+
+    public double Top { get; } = top;
+
     [ObservableProperty]
     private string _caughtWhat = string.Empty;
 
@@ -40,35 +46,17 @@ public sealed partial class MapZoneViewModel(int number, string name, string isl
     [ObservableProperty]
     private bool _isDead;
 
-    /// <summary>Where it sits on its island.s picture, in pixels.</summary>
-    /// <remarks>
-    /// Plain doubles with a flag beside them, and not nullables: Canvas.Left does not take a null,
-    /// so a hundred and thirteen unplaced zones would each log a binding failure on every refresh.
-    /// </remarks>
-    [ObservableProperty]
-    private double _left;
-
-    [ObservableProperty]
-    private double _top;
-
-    [ObservableProperty]
-    private bool _isPlaced;
-
-    /// <summary>Aqui no se puede atrapar nada, asi que esta zona no cuenta.</summary>
-    [ObservableProperty]
-    private bool _isBarren;
-
     /// <summary>
     /// "free" / "spent" / "dead", so the template picks a look without three triggers of its own.
     /// A zone whose Pokémon died stays spent — that is the whole point of a Nuzlocke — but it reads
     /// differently, and a player wants to see the graveyard at a glance.
     /// </summary>
-    public string State => IsSpent ? (IsDead ? "dead" : "spent") : IsBarren ? "barren" : "free";
+    public string State => !IsSpent ? "free" : IsDead ? "dead" : "spent";
 
     /// <summary>The line under the name when hovering: who spent it, or that it is still free.</summary>
-    public string Tooltip => IsSpent
-        ? (IsDead ? $"{CaughtWhat} — murió" : CaughtWhat)
-        : IsBarren ? "Aquí no se puede atrapar nada." : "Libre. Todavía no has gastado su encuentro.";
+    public string Tooltip => !IsSpent
+        ? "Libre. Todavía no has gastado su encuentro."
+        : IsDead ? $"{CaughtWhat} — murió" : CaughtWhat;
 
     partial void OnIsSpentChanged(bool value)
     {
@@ -83,19 +71,12 @@ public sealed partial class MapZoneViewModel(int number, string name, string isl
     }
 
     partial void OnCaughtWhatChanged(string value) => OnPropertyChanged(nameof(Tooltip));
-
-    partial void OnIsBarrenChanged(bool value)
-    {
-        OnPropertyChanged(nameof(State));
-        OnPropertyChanged(nameof(Tooltip));
-    }
-
 }
 
 /// <summary>A capture that has not yet said which zone it spent.</summary>
 public sealed record PendingCaptureViewModel(Guid Id, string Label, string Where);
 
-/// <summary>One island and its zones.</summary>
+/// <summary>One island and its catchable zones.</summary>
 public sealed partial class IslandViewModel(string name, IReadOnlyList<MapZoneViewModel> zones)
     : ObservableObject
 {
@@ -105,13 +86,9 @@ public sealed partial class IslandViewModel(string name, IReadOnlyList<MapZoneVi
 
     public int Count => Zones.Count;
 
-    /// <summary>How many of this island.s zones are spent, so each one carries its own score.</summary>
+    /// <summary>How many of this island's zones are spent, so each one carries its own score.</summary>
     [ObservableProperty]
     private int _spentCount;
-
-    /// <summary>How many of its zones something can actually be caught in.</summary>
-    [ObservableProperty]
-    private int _catchable;
 }
 
 /// <summary>
@@ -123,18 +100,25 @@ public sealed partial class IslandViewModel(string name, IReadOnlyList<MapZoneVi
 /// no field saying an encounter was wild — measured on the real save, where a gift and a wild
 /// capture are identical down to the ball — so the watcher registers every automatic capture as
 /// <see cref="EncounterType.Unknown"/>, which spends no zone, and the rule spent the whole run with
-/// an empty list to compare against.
-/// </para>
-/// <para>
-/// So somebody has to say it, and this is the pleasant way of saying it: the player clicks the zone
-/// on the island and watches Alola fill up. The claim recorded is the same as answering a dialog,
-/// and it is recorded as a claim — <c>ZoneConfirmed</c>, by the player — never as a deduction.
+/// an empty list to compare against. Clicking a zone here is what says otherwise, and it is
+/// recorded as a claim by the player — <c>ZoneConfirmed</c> — never as a deduction.
 /// </para>
 /// <para>
 /// The island art comes out of the player's own cartridge. Where each marker goes does not: nothing
-/// in the RomFS says where Ruta 3 is on the picture, so the positions are placed by hand here and
-/// saved to <c>Data/marcadores.json</c>, which unlike the pictures is PermaLocke's own work and
-/// travels with it.
+/// in the RomFS says where Ruta 3 is on the picture, so somebody placed the sixty-one markers by
+/// hand once, and <c>Data/marcadores.json</c> is what that produced. Unlike the pictures, that file
+/// <b>ships with PermaLocke</b>: one person places them and everybody in the competition has them.
+/// </para>
+/// <para>
+/// Which is why there is no placing mode any more. The map is finished and travels finished, and a
+/// screen that lets five people each drag Alola around would end with five different Alolas. The
+/// file stays the single source of truth, so correcting it later is a small change here rather than
+/// something anyone can do by accident.
+/// </para>
+/// <para>
+/// Zones the file marks as having no encounters are <b>not built at all</b>. Drawing them greyed
+/// out was worse than useless: they can never be spent, so they are not part of the map, and
+/// leaving them in made the count something that could never reach its own top.
 /// </para>
 /// </remarks>
 public sealed partial class MapViewModel : SectionViewModel
@@ -143,46 +127,23 @@ public sealed partial class MapViewModel : SectionViewModel
     private readonly IPokemonRepository _pokemon;
     private readonly IRunContext _runContext;
     private readonly JsonIslandMap _map;
-    private readonly JsonZoneEncounters _cartridge;
     private readonly IslandMapService _art;
-    private readonly AppPaths _paths;
+    private readonly JsonZoneMarkers _markers;
     private readonly ILogger<MapViewModel> _logger;
 
-    private JsonZoneMarkers _markers;
-
     public MapViewModel(EncounterService encounters, IPokemonRepository pokemon,
-        IRunContext runContext, JsonIslandMap map, JsonZoneEncounters cartridgeEncounters,
-        IslandMapService art, AppPaths paths, ILogger<MapViewModel> logger)
+        IRunContext runContext, JsonIslandMap map, IslandMapService art, AppPaths paths,
+        ILogger<MapViewModel> logger)
         : base("MAPA", "Las zonas de Alola: cuál gastó cada captura y cuáles quedan libres")
     {
         _encounters = encounters;
         _pokemon = pokemon;
         _runContext = runContext;
         _map = map;
-        _cartridge = cartridgeEncounters;
         _art = art;
-        _paths = paths;
         _logger = logger;
-        _markers = JsonZoneMarkers.Load(MarkerPath);
-
-        foreach (var island in JsonIslandMap.Order)
-        {
-            var zones = map.Of(island);
-
-            if (zones.Count == 0)
-            {
-                continue;
-            }
-
-            Islands.Add(new IslandViewModel(island,
-                [.. zones.Select((zone, at) => new MapZoneViewModel(at + 1, zone.Name, island))]));
-        }
-
-        ZoneCount = Islands.Sum(island => island.Zones.Count);
-        _selectedIsland = Islands.FirstOrDefault();
+        _markers = JsonZoneMarkers.Load(Path.Combine(paths.Data, "marcadores.json"));
     }
-
-    private string MarkerPath => Path.Combine(_paths.Data, "marcadores.json");
 
     public override string IconKey => "IconGrid";
 
@@ -191,9 +152,10 @@ public sealed partial class MapViewModel : SectionViewModel
 
     public override async Task ActivateAsync()
     {
+        // Las islas no se pueden construir hasta que las imagenes esten, porque la posicion de cada
+        // marcador se guarda en fraccion y hay que multiplicarla por el tamaño de su dibujo.
         await _art.PrepareAsync();
-        OnPropertyChanged(nameof(IslandImage));
-        OnPropertyChanged(nameof(HasArt));
+        BuildIslands();
         await RefreshAsync();
     }
 
@@ -206,18 +168,6 @@ public sealed partial class MapViewModel : SectionViewModel
 
     [ObservableProperty]
     private PendingCaptureViewModel? _selected;
-
-    /// <summary>The zone whose marker the next click on the map will place.</summary>
-    [ObservableProperty]
-    private MapZoneViewModel? _placing;
-
-    /// <summary>Whether clicking the map drops a marker instead of spending a zone.</summary>
-    /// <remarks>
-    /// An explicit switch and not a guess from what is selected: the same click would otherwise
-    /// mean two different things, and one of them writes to the run's history.
-    /// </remarks>
-    [ObservableProperty]
-    private bool _isPlacingMode;
 
     [ObservableProperty]
     private string _status = string.Empty;
@@ -242,27 +192,11 @@ public sealed partial class MapViewModel : SectionViewModel
     public BitmapSource? IslandImage =>
         SelectedIsland is null ? null : _art.Map(SelectedIsland.Name);
 
-    /// <summary>This island.s zones, the ones still to place first.</summary>
-    /// <remarks>
-    /// Todas y no solo las que faltan, que es como estaba y era un callejon: una colocada por
-    /// error no aparecia en ninguna lista, asi que no habia forma de elegirla para quitarla.
-    /// </remarks>
-    public ObservableCollection<MapZoneViewModel> Placeable { get; } = [];
-
-    public string MarkerCount => $"{_markers.Count} de {ZoneCount} colocadas";
-
-    /// <summary>Whether the chosen zone has a pin to take off.</summary>
-    public bool CanForget => Placing is { IsPlaced: true };
-
     partial void OnSelectedIslandChanged(IslandViewModel? value)
     {
         OnPropertyChanged(nameof(IslandImage));
         OnPropertyChanged(nameof(HasArt));
-        Placing = null;
-        RefreshPlaceable();
     }
-
-    partial void OnPlacingChanged(MapZoneViewModel? value) => OnPropertyChanged(nameof(CanForget));
 
     [RelayCommand]
     public void SelectIsland(IslandViewModel? island)
@@ -271,6 +205,46 @@ public sealed partial class MapViewModel : SectionViewModel
         {
             SelectedIsland = island;
         }
+    }
+
+    /// <summary>
+    /// Builds the islands from the marker file, leaving out everything that cannot be caught in.
+    /// </summary>
+    private void BuildIslands()
+    {
+        Islands.Clear();
+
+        foreach (var island in JsonIslandMap.Order)
+        {
+            var picture = _art.Map(island);
+            var zones = new List<MapZoneViewModel>();
+            var number = 1;
+
+            foreach (var zone in _map.Of(island))
+            {
+                var id = EncounterService.NormaliseLocationId(zone.Name);
+                var marker = _markers.For(id);
+
+                // Sin marcador no hay sitio donde dibujarla, y sin dibujo no se puede pinchar.
+                if (marker is null || picture is null || _markers.NoEncounters.Contains(id))
+                {
+                    continue;
+                }
+
+                zones.Add(new MapZoneViewModel(number++, zone.Name, island,
+                    marker.X * picture.PixelWidth, marker.Y * picture.PixelHeight));
+            }
+
+            if (zones.Count > 0)
+            {
+                Islands.Add(new IslandViewModel(island, zones));
+            }
+        }
+
+        ZoneCount = Islands.Sum(island => island.Zones.Count);
+        SelectedIsland ??= Islands.FirstOrDefault();
+        OnPropertyChanged(nameof(IslandImage));
+        OnPropertyChanged(nameof(HasArt));
     }
 
     [RelayCommand]
@@ -293,28 +267,20 @@ public sealed partial class MapViewModel : SectionViewModel
                 .ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
 
             var count = 0;
+            var drawn = new HashSet<string>(StringComparer.Ordinal);
 
             foreach (var island in Islands)
             {
                 var here = 0;
-                var picture = _art.Map(island.Name);
 
                 foreach (var zone in island.Zones)
                 {
+                    drawn.Add(zone.ZoneId);
                     var owner = spent.GetValueOrDefault(zone.ZoneId);
 
                     zone.IsSpent = owner is not null;
                     zone.IsDead = owner?.Status == PokemonStatus.Dead;
                     zone.CaughtWhat = owner is null ? string.Empty : Label(owner);
-
-                    zone.IsBarren = _markers.NoEncounters.Contains(zone.ZoneId);
-                    var marker = _markers.For(zone.ZoneId);
-
-                    // La posicion se guarda en fraccion y se pinta en pixeles, asi que sin la
-                    // imagen no hay donde ponerla y el marcador se queda sin colocar.
-                    zone.IsPlaced = marker is not null && picture is not null;
-                    zone.Left = zone.IsPlaced ? marker!.X * picture!.PixelWidth : 0;
-                    zone.Top = zone.IsPlaced ? marker!.Y * picture!.PixelHeight : 0;
 
                     if (owner is not null)
                     {
@@ -323,19 +289,12 @@ public sealed partial class MapViewModel : SectionViewModel
                 }
 
                 island.SpentCount = here;
-                island.Catchable = island.Zones.Count(zone => !zone.IsBarren);
                 count += here;
             }
 
             SpentCount = count;
-
-            // El total cuenta solo donde se PUEDE atrapar: con las esteriles dentro, la cifra
-            // nunca puede llegar a su propio tope y no significa nada.
-            ZoneCount = Islands.Sum(one => one.Catchable);
             Pending.Clear();
 
-            // Lo que falta por decir: capturas que no han gastado zona. Las entregas del gacha y
-            // los wonder trades no salen, porque nunca gastaron el encuentro de ningún sitio.
             foreach (var entry in all
                 .Where(entry => entry is { ConsumedZoneEncounter: false, Origin: PokemonOrigin.Capture })
                 .OrderBy(entry => entry.ObtainedAt))
@@ -345,9 +304,18 @@ public sealed partial class MapViewModel : SectionViewModel
             }
 
             Selected ??= Pending.FirstOrDefault();
-            RefreshPlaceable();
             OnPropertyChanged(nameof(HasPending));
-            OnPropertyChanged(nameof(MarkerCount));
+
+            // Una zona gastada que no está en el mapa no se puede ver ni liberar, así que se dice.
+            // Pasaría si alguien recorta marcadores.json con una run ya empezada, y callarlo
+            // dejaría un encuentro gastado que la pantalla jura que sigue libre.
+            var orphans = spent.Keys.Where(id => !drawn.Contains(id)).ToArray();
+
+            if (orphans.Length > 0)
+            {
+                Say($"{orphans.Length} zonas gastadas no están en el mapa: "
+                    + string.Join(", ", orphans.Take(5)), bad: true);
+            }
         }
         catch (Exception ex)
         {
@@ -364,14 +332,6 @@ public sealed partial class MapViewModel : SectionViewModel
 
         if (zone is null || run is null)
         {
-            return;
-        }
-
-        // En modo colocar, pinchar un marcador es elegirlo para moverlo, no gastar su zona.
-        if (IsPlacingMode)
-        {
-            Placing = zone;
-            Say($"Pincha en el mapa dónde va {zone.Name}.", bad: false);
             return;
         }
 
@@ -399,213 +359,6 @@ public sealed partial class MapViewModel : SectionViewModel
         Say($"{chosen.Label} gastó el encuentro de {zone.Name}.", bad: false);
         Selected = null;
         await RefreshAsync();
-    }
-
-    /// <summary>Drops the chosen zone's marker where the map was clicked.</summary>
-    /// <param name="x">Across the picture, in its own pixels.</param>
-    /// <param name="y">Down the picture, in its own pixels.</param>
-    public async Task PlaceAtAsync(double x, double y)
-    {
-        var picture = IslandImage;
-        var island = SelectedIsland;
-
-        if (!IsPlacingMode || Placing is null || picture is null || island is null)
-        {
-            return;
-        }
-
-        var zone = Placing;
-
-        // Se guarda en FRACCION de la imagen, no en pixeles: si el mapa se vuelve a extraer con
-        // otro recorte, un marcador en pixeles apuntaria a otro sitio sin que nada fallara.
-        _markers = _markers.With(zone.ZoneId,
-            new ZoneMarker(island.Name,
-                Math.Clamp(x / picture.PixelWidth, 0, 1),
-                Math.Clamp(y / picture.PixelHeight, 0, 1)));
-
-        try
-        {
-            await _markers.SaveAsync(MarkerPath);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "No se pudo guardar el marcador de {Zone}", zone.Name);
-            Say("No se pudo guardar el marcador.", bad: true);
-            return;
-        }
-
-        zone.Left = x;
-        zone.Top = y;
-        zone.IsPlaced = true;
-
-        Say($"{zone.Name} colocada.", bad: false);
-        OnPropertyChanged(nameof(CanForget));
-        Placing = Placeable.FirstOrDefault(candidate =>
-            candidate != zone && !candidate.IsPlaced && !candidate.IsBarren);
-        RefreshPlaceable();
-        OnPropertyChanged(nameof(MarkerCount));
-    }
-
-    /// <summary>
-    /// Says that everything still unplaced on this island is a place nothing can be caught in.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// It is how a finished island stops lying about its own total. Left implicit, «no marker»
-    /// means both «no la he colocado» and «aquí no se atrapa nada», and the count on screen can
-    /// never reach its top because it includes places that can never be spent.
-    /// </para>
-    /// <para>
-    /// The cartridge gets a say. <c>encdata</c> knows which areas carry encounter tables, so any
-    /// zone the player is about to write off that the cartridge says <b>does</b> have them is
-    /// reported by name. It is not overruled — the player has played the game and the join between
-    /// the two name lists is lossy — but a disagreement is worth stopping for, and this one found
-    /// a real case the first time it ran.
-    /// </para>
-    /// </remarks>
-    [RelayCommand]
-    public async Task MarkRestAsBarrenAsync()
-    {
-        var island = SelectedIsland;
-
-        if (island is null)
-        {
-            return;
-        }
-
-        var rest = island.Zones.Where(zone => !zone.IsPlaced && !zone.IsBarren).ToArray();
-
-        if (rest.Length == 0)
-        {
-            Say("No queda ninguna sin colocar en esta isla.", bad: false);
-            return;
-        }
-
-        var disputed = rest
-            .Where(zone => _cartridge.HasEncounters(zone.Name) == true)
-            .Select(zone => zone.Name)
-            .ToArray();
-
-        _markers = _markers.WithNoEncounters(rest.Select(zone => zone.ZoneId));
-
-        try
-        {
-            await _markers.SaveAsync(MarkerPath);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "No se pudo guardar las zonas sin encuentros de {Island}", island.Name);
-            Say("No se pudo guardar.", bad: true);
-            return;
-        }
-
-        foreach (var zone in rest)
-        {
-            zone.IsBarren = true;
-        }
-
-        await RefreshAsync();
-
-        Say(disputed.Length == 0
-            ? $"{rest.Length} zonas de {island.Name} marcadas como sin encuentros."
-            : $"{rest.Length} marcadas, pero el cartucho dice que sí hay encuentros en: "
-              + string.Join(", ", disputed) + ". Compruébalas.",
-            bad: disputed.Length > 0);
-    }
-
-    /// <summary>Takes this island's zones back out of «sin encuentros», so they count again.</summary>
-    [RelayCommand]
-    public async Task UndoBarrenAsync()
-    {
-        var island = SelectedIsland;
-
-        if (island is null)
-        {
-            return;
-        }
-
-        var barren = island.Zones.Where(zone => zone.IsBarren).ToArray();
-
-        if (barren.Length == 0)
-        {
-            return;
-        }
-
-        _markers = _markers.WithEncounters(barren.Select(zone => zone.ZoneId));
-
-        try
-        {
-            await _markers.SaveAsync(MarkerPath);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "No se pudo deshacer las zonas sin encuentros de {Island}", island.Name);
-            Say("No se pudo guardar.", bad: true);
-            return;
-        }
-
-        foreach (var zone in barren)
-        {
-            zone.IsBarren = false;
-        }
-
-        await RefreshAsync();
-        Say($"{barren.Length} zonas de {island.Name} vuelven a contar.", bad: false);
-    }
-
-    /// <summary>Takes a marker off the map. The zone keeps whatever it had; only the pin goes.</summary>
-    [RelayCommand]
-    public async Task ForgetMarkerAsync()
-    {
-        var zone = Placing;
-
-        if (zone is null || !zone.IsPlaced)
-        {
-            return;
-        }
-
-        _markers = _markers.Without(zone.ZoneId);
-
-        try
-        {
-            await _markers.SaveAsync(MarkerPath);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "No se pudo guardar tras quitar el marcador de {Zone}", zone.Name);
-            Say("No se pudo guardar.", bad: true);
-            return;
-        }
-
-        zone.IsPlaced = false;
-        Say($"{zone.Name} vuelve a estar sin colocar.", bad: false);
-        RefreshPlaceable();
-        OnPropertyChanged(nameof(MarkerCount));
-        OnPropertyChanged(nameof(CanForget));
-    }
-
-    private void RefreshPlaceable()
-    {
-        Placeable.Clear();
-
-        if (SelectedIsland is null)
-        {
-            return;
-        }
-
-        // Las que faltan primero: es lo que se esta haciendo, y las ya puestas solo se buscan
-        // cuando hay que corregir una.
-        // Las que quedan por hacer primero, despues las colocadas y al final las esteriles. Estas
-        // ultimas se quedan en la lista, no desaparecen: si no, rescatar una marcada por error
-        // exigiria deshacer la isla entera.
-        foreach (var zone in SelectedIsland.Zones
-            .OrderBy(zone => zone.IsBarren ? 2 : zone.IsPlaced ? 1 : 0)
-            .ThenBy(zone => zone.Number))
-        {
-            Placeable.Add(zone);
-        }
-
-        Placing ??= Placeable.FirstOrDefault(zone => !zone.IsPlaced && !zone.IsBarren);
     }
 
     private async Task FreeAsync(Run run, MapZoneViewModel zone)

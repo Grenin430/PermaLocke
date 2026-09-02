@@ -42,11 +42,6 @@
                 <DataTrigger Binding="{Binding State}" Value="dead">
                     <Setter Property="Background" Value="{StaticResource DangerBrush}" />
                 </DataTrigger>
-                <!-- Sin encuentros: se ve, pero apagada. No es lo mismo que libre, y confundirlas
-                     haria pensar que queda algo por cazar donde no hay nada. -->
-                <DataTrigger Binding="{Binding State}" Value="barren">
-                    <Setter Property="Opacity" Value="0.35" />
-                </DataTrigger>
             </Style.Triggers>
         </Style>
 
@@ -64,9 +59,6 @@
                 <DataTrigger Binding="{Binding State}" Value="dead">
                     <Setter Property="Background" Value="{StaticResource DangerBrush}" />
                     <Setter Property="Foreground" Value="{StaticResource OnAccentBrush}" />
-                </DataTrigger>
-                <DataTrigger Binding="{Binding State}" Value="barren">
-                    <Setter Property="Opacity" Value="0.35" />
                 </DataTrigger>
             </Style.Triggers>
         </Style>
@@ -150,8 +142,7 @@
 
                             <!-- La capa de marcadores. El clic para colocar lo recoge el
                                  code-behind, que es lo unico que sabe donde se ha pinchado. -->
-                            <Canvas x:Name="MarkerLayer" Background="Transparent"
-                                    MouseLeftButtonDown="OnMapClicked">
+                            <Canvas x:Name="MarkerLayer" Background="Transparent">
                                 <ItemsControl ItemsSource="{Binding SelectedIsland.Zones}">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
@@ -172,8 +163,6 @@
                                                  que se pincho, en vez de colgarlo de su esquina. -->
                                             <Button Content="{Binding Number}" Margin="-13,-13,0,0"
                                                     Style="{StaticResource ZoneMarker}"
-                                                    Visibility="{Binding IsPlaced,
-                                                        Converter={StaticResource BoolToVisibility}}"
                                                     Command="{Binding DataContext.ClickZoneCommand,
                                                         RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                     CommandParameter="{Binding}">
@@ -271,107 +260,33 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
 
-                <CheckBox DockPanel.Dock="Top" Content="MODO COLOCAR"
-                          IsChecked="{Binding IsPlacingMode}" Margin="0,0,0,4"
-                          Visibility="{Binding HasArt, Converter={StaticResource BoolToVisibility}}" />
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top" Text="SIN ZONA"
+                               Style="{StaticResource StatLabel}" Margin="0,0,0,4" />
+                    <TextBlock DockPanel.Dock="Top" Style="{StaticResource Faint}" TextWrapping="Wrap"
+                               Margin="0,0,0,10"
+                               Text="Elige una captura y pincha el marcador de la zona donde salió. Pinchar una gastada la libera." />
 
-                <TextBlock DockPanel.Dock="Top" Text="{Binding MarkerCount}"
-                           Style="{StaticResource Faint}" Margin="0,0,0,10"
-                           Visibility="{Binding HasArt, Converter={StaticResource BoolToVisibility}}" />
+                    <TextBlock DockPanel.Dock="Bottom" Style="{StaticResource Faint}" TextWrapping="Wrap"
+                               Margin="0,10,0,0"
+                               Visibility="{Binding HasPending, Converter={StaticResource InverseBoolToVisibility}}"
+                               Text="Nada pendiente: todas tus capturas tienen su zona dicha." />
 
-                <TextBlock DockPanel.Dock="Bottom" Text="{Binding Status}" TextWrapping="Wrap"
-                           FontSize="11.5" Margin="0,10,0,0">
-                    <TextBlock.Style>
-                        <Style TargetType="TextBlock" BasedOn="{StaticResource Body}">
-                            <Setter Property="Visibility" Value="Visible" />
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding Status}" Value="">
-                                    <Setter Property="Visibility" Value="Collapsed" />
-                                </DataTrigger>
-                                <DataTrigger Binding="{Binding StatusIsBad}" Value="True">
-                                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBlock.Style>
-                </TextBlock>
-
-                <Grid>
-                    <!-- COLOCAR: elige una zona y pincha el mapa -->
-                    <DockPanel Visibility="{Binding IsPlacingMode, Converter={StaticResource BoolToVisibility}}">
-                        <TextBlock DockPanel.Dock="Top" Text="SIN COLOCAR"
-                                   Style="{StaticResource StatLabel}" Margin="0,0,0,4" />
-                        <TextBlock DockPanel.Dock="Top" Style="{StaticResource Faint}" TextWrapping="Wrap"
-                                   Margin="0,0,0,10"
-                                   Text="Elige una zona y pincha en el mapa dónde va. Se guarda sola. Las que llevan punto ya están puestas: elígela y vuelve a pinchar para moverla, o quítala." />
-
-                        <Button DockPanel.Dock="Bottom" Content="AQUÍ NO SE ATRAPA NADA"
-                                Style="{StaticResource SubtleButton}" Margin="0,6,0,0"
-                                Padding="12,8" FontSize="11"
-                                Command="{Binding MarkRestAsBarrenCommand}"
-                                ToolTip="Marca todas las que quedan sin colocar en esta isla como zonas donde no se puede atrapar nada, para que dejen de contar." />
-
-                        <Button DockPanel.Dock="Bottom" Content="QUITAR EL MARCADOR"
-                                Style="{StaticResource DangerButton}" Margin="0,8,0,0"
-                                Padding="12,8" FontSize="11.5"
-                                Command="{Binding ForgetMarkerCommand}"
-                                IsEnabled="{Binding CanForget}" />
-
-                        <ListBox ItemsSource="{Binding Placeable}" SelectedItem="{Binding Placing}"
-                                 BorderThickness="0" Background="Transparent"
-                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                 ItemContainerStyle="{StaticResource ZoneRow}">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <DockPanel>
-                                        <!-- La marca dice cuales ya estan puestas, que es lo que
-                                             permite volver a una para moverla o quitarla. -->
-                                        <TextBlock DockPanel.Dock="Right" Text="&#x25CF;"
-                                                   VerticalAlignment="Center" Margin="6,0,0,0"
-                                                   Foreground="{StaticResource AccentBrush}"
-                                                   Visibility="{Binding IsPlaced,
-                                                       Converter={StaticResource BoolToVisibility}}" />
-                                        <TextBlock DockPanel.Dock="Right" Text="sin encuentros"
-                                                   Style="{StaticResource Faint}" FontSize="10"
-                                                   VerticalAlignment="Center" Margin="6,0,0,0"
-                                                   Visibility="{Binding IsBarren,
-                                                       Converter={StaticResource BoolToVisibility}}" />
-                                        <TextBlock Text="{Binding Name}" FontSize="12" TextWrapping="Wrap" />
-                                    </DockPanel>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
-                    </DockPanel>
-
-                    <!-- NORMAL: las capturas que aún no han dicho su zona -->
-                    <DockPanel Visibility="{Binding IsPlacingMode, Converter={StaticResource InverseBoolToVisibility}}">
-                        <TextBlock DockPanel.Dock="Top" Text="SIN ZONA"
-                                   Style="{StaticResource StatLabel}" Margin="0,0,0,4" />
-                        <TextBlock DockPanel.Dock="Top" Style="{StaticResource Faint}" TextWrapping="Wrap"
-                                   Margin="0,0,0,10"
-                                   Text="Elige una captura y pincha el marcador de la zona donde salió. Pinchar una gastada la libera." />
-
-                        <TextBlock DockPanel.Dock="Bottom" Style="{StaticResource Faint}" TextWrapping="Wrap"
-                                   Margin="0,10,0,0"
-                                   Visibility="{Binding HasPending, Converter={StaticResource InverseBoolToVisibility}}"
-                                   Text="Nada pendiente: todas tus capturas tienen su zona dicha." />
-
-                        <ListBox ItemsSource="{Binding Pending}" SelectedItem="{Binding Selected}"
-                                 BorderThickness="0" Background="Transparent"
-                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                 ItemContainerStyle="{StaticResource ZoneRow}">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <StackPanel>
-                                        <TextBlock Text="{Binding Label}" FontSize="12" TextWrapping="Wrap" />
-                                        <TextBlock Text="{Binding Where}" Style="{StaticResource Faint}"
-                                                   FontSize="10.5" Margin="0,2,0,0" TextWrapping="Wrap" />
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
-                    </DockPanel>
-                </Grid>
+                    <ListBox ItemsSource="{Binding Pending}" SelectedItem="{Binding Selected}"
+                             BorderThickness="0" Background="Transparent"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                             ItemContainerStyle="{StaticResource ZoneRow}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Label}" FontSize="12" TextWrapping="Wrap" />
+                                    <TextBlock Text="{Binding Where}" Style="{StaticResource Faint}"
+                                               FontSize="10.5" Margin="0,2,0,0" TextWrapping="Wrap" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
             </DockPanel>
         </Border>
     </Grid>
