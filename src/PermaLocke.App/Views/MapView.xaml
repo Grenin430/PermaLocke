@@ -136,7 +136,11 @@
 
                 <!-- EL MAPA, con el arte del cartucho -->
                 <Grid Visibility="{Binding HasArt, Converter={StaticResource BoolToVisibility}}">
-                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                    <!-- La isla se escala para caber entera en el hueco que haya. Un Viewbox y no
+                         un ScrollViewer porque un mapa con barras de desplazamiento no es un mapa:
+                         lo que se mira de un vistazo es cuanto queda por gastar, y eso exige verlo
+                         todo. Los marcadores van dentro, asi que escalan con el. -->
+                    <Viewbox Stretch="Uniform" StretchDirection="Both">
                         <Grid x:Name="MapSurface" HorizontalAlignment="Left" VerticalAlignment="Top">
                             <Image Source="{Binding IslandImage}" Stretch="None" />
 
@@ -210,7 +214,7 @@
                                 </ItemsControl>
                             </Canvas>
                         </Grid>
-                    </ScrollViewer>
+                    </Viewbox>
                 </Grid>
 
                 <!-- RESPALDO: sin las imagenes del cartucho, el tablero numerado de siempre. Que

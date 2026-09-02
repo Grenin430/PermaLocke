@@ -5,7 +5,7 @@
         xmlns:views="clr-namespace:PermaLocke.App.Views"
         Title="PermaLocke"
         Height="760" Width="1180"
-        MinHeight="600" MinWidth="960"
+        ResizeMode="CanMinimize"
         Background="{StaticResource AppBackgroundBrush}"
         FontFamily="{StaticResource UiFont}"
         UseLayoutRounding="True"
