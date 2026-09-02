@@ -80,9 +80,10 @@ public sealed class AzaharGameStateProvider(
     /// them back correct — and the game restored the level from a copy nobody had ever looked for.
     /// Three corrections in a minute, each one honestly reporting success.
     /// <para>
-    /// A sweep is 96 MB and ten minutes of not watching anything, so it must never be routine.
-    /// This is the one signal worth paying it for: a correction that had to be repeated is proof
-    /// that the write list is incomplete, which no amount of re-reading can show.
+    /// A sweep used to be 96 MB and ten minutes of watching nothing. That number is <b>stale</b>:
+    /// it was measured before §54 fixed the RPC client, which was losing replies and retrying.
+    /// Timed again today against the running game, it is about five seconds — so paying for one
+    /// whenever the cap has to correct somebody is cheap, and correcting is rare.
     /// </para>
     /// </remarks>
     public void SweepAgain() => _sweepNext = true;

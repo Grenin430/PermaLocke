@@ -407,15 +407,22 @@ public sealed class GameLinkMonitor(
             var again = _cappedAt.ContainsKey(member.Pid);
             _cappedAt[member.Pid] = cap;
 
+            // Se vuelve a barrer SIEMPRE que hay que corregir, no solo cuando se repite.
+            //
+            // Esperar a la repetición no valía, y el motivo es que el monitor lee y escribe LA
+            // MISMA copia: corrige la que lee, la relee correcta, y la copia desde la que el juego
+            // restaura el nivel le es invisible. La repetición que dispararía el barrido no puede
+            // llegar a detectarse. Medido en la run real: cinco estructuras del equipo en memoria
+            // y la lista de escritura tenía UNA.
+            //
+            // Y ahora se puede pagar. El barrido costaba diez minutos cuando se midió, pero
+            // aquello fue antes de que el §54 arreglase el cliente RPC, que perdía respuestas y
+            // reintentaba: hoy son unos cinco segundos, cronometrados. Corregir el cap es raro
+            // -- solo pasa al pasarse de nivel --, así que cinco segundos por acertar es barato.
+            provider.SweepAgain();
+
             if (again)
             {
-                // Que haya que repetirla significa que se está escribiendo en un subconjunto: la
-                // lista de copias sale de las direcciones recordadas, que se revalidan para
-                // siempre y NO SE ENSANCHAN NUNCA, y el juego restaura el nivel desde una copia
-                // que nadie ha buscado. Releer no puede detectarlo -- lo escrito está donde se
-                // escribió --, así que la única salida es volver a barrer.
-                provider.SweepAgain();
-
                 CapProblem = $"{member.SpeciesName} vuelve a estar por encima del cap. El juego lo "
                              + $"está deshaciendo desde una copia que no conozco (tengo {applied} "
                              + "de las que hay): se ha vuelto a aplicar y se está buscando el resto.";
