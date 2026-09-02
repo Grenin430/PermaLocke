@@ -6041,3 +6041,113 @@ nuevas dan dos consolas con el mismo nombre y la sala rechaza el duplicado. Se c
 
 La otra colisión, la de la MAC, se resuelve sola con carpetas separadas: cada una genera la suya en
 `user\sysdata\mac.txt`.
+
+---
+
+## 81. El mapa de Alola, y la regla que nunca se había ejecutado (2026-09-02)
+
+El jugador preguntó por la regla de las Poké Balls con la primera captura. Al medirla salió algo
+peor de lo que se buscaba: **`FirstEncounterRule` no había actuado ni una sola vez en toda la run.**
+
+### Lo medido
+
+La base de datos de la partida real:
+
+```
+origin=captura  encounter_type=9 (Unknown)  consumed_zone=0  n=7
+origin=gacha    encounter_type=8            consumed_zone=0  n=5
+origin=wt       encounter_type=5            consumed_zone=0  n=2
+                                            TOTAL 14, marcadas 0
+
+ruta-1   n=2   gastan=0     ← dos capturas en la misma zona, y ni una palabra
+```
+
+### Por qué
+
+Dos decisiones correctas por separado que juntas se anulan:
+
+1. `encounterTypesThatConsumeZone` vale `[Wild, Fishing, Sos]`.
+2. El §68 hizo que el vigilante registre toda captura automática como `Unknown`, porque no sabe
+   deducir el tipo de encuentro — «registrar no es arbitrar».
+
+`Unknown` no está en esa lista, así que **ninguna captura automática gasta zona jamás**,
+`RuleContext.UsedZones` queda vacío para siempre y la regla no tiene con qué comparar. Tenía
+código, configuración y **tests propios**, y todos registraban una captura `Wild` a mano: ninguno
+pasaba por el camino que la aplicación toma de verdad.
+
+Es la tercera vez con la misma forma —§55 y §68 son las otras—: **un guardia hecho tan prudente que
+no puede equivocarse nunca, y por eso tampoco puede acertar.**
+
+### Por qué no se puede deducir
+
+La séptima generación **no guarda ningún campo que diga que un encuentro fue salvaje**. Medido
+sobre la partida real:
+
+```
+Bidoof      Super Ball   met=46   nv.enc=9     ← captura salvaje
+Ivysaur     Poké Ball    met=8    nv.enc=5     ← captura salvaje
+Kingler     Poké Ball    met=0    nv.enc=1     ← entrega del gacha
+```
+
+Las entregas se distinguen (`met=0`, nivel 1), pero un **regalo del juego es idéntico a una captura
+salvaje**: misma ball, lugar real, nivel real, `FatefulEncounter` en false. De paso quedó
+desmentido el §68 en un detalle: la ball **sí se puede leer** —`Pk7Reader` recibe un `PK7` entero
+con checksum válido— solo que nadie le había pedido el campo. No ayuda, porque no es la ball lo que
+distingue.
+
+BxnnyLocke tampoco lo deduce: **te lo pregunta**.
+
+### La solución: un mapa
+
+En vez de una pregunta seca, la sección **MAPA** dibuja Alola por islas y el jugador pincha la zona
+donde salió cada captura. Lo que se registra es lo mismo, y se registra como lo que es —una
+afirmación del jugador, `ZoneConfirmed`, `EventSource.Player`—, nunca como algo deducido.
+`ZoneCleared` deshace un clic equivocado, porque deshacerlo editando la base de datos dejaría una
+cadena cuyos hashes cuadran alrededor de un hueco.
+
+Confirmar la zona **es** decir que fue salvaje, así que el tipo pasa de `Unknown` a `Wild`. Un tipo
+que alguien afirmó mirando el encuentro **no se toca**: esto no sabe más que él.
+
+Y lo que **no** hace: bloquear al vigilante. Una captura automática en una zona gastada **se sigue
+registrando**, porque un Pokémon del que la run no se entera es un Pokémon cuya muerte no se cuenta,
+que es justo el agujero que cerró el §68. Lo que se bloquea es la captura **declarada**, la del
+diálogo, donde alguien miró el encuentro y dijo que era salvaje.
+
+### El reparto por islas: medido, no recordado
+
+Repartir las zonas entre las cuatro islas de memoria habría sido inventar datos. El cartucho lo
+publica, aunque no donde parece: `ZoneData7` da a cada zona un `WorldIndex`, y aunque un «mundo» es
+un mapa y no una isla —hay **303**—, los cuatro **exteriores** son exactamente las cuatro islas,
+cada uno con su tramo de rutas:
+
+| Mundo | Isla | Rutas |
+|---|---|---|
+| 0 | Melemele | 1-3 |
+| 58 | Akala | 4-9 |
+| 117 | Ula-Ula | 10-17 |
+| 197 | Poni | — |
+
+Los interiores se numeran **entre** ellos, así que el índice de mundo coloca cualquier zona.
+Comprobado contra **21 nombres que solo pueden ser de una isla** —Hauoli, Konikoni, Lanakila…— con
+**cero contradicciones**. Valía la pena: de memoria se habían colocado mal **Playa Big Wave** (es de
+Melemele, no de Akala) y **Colina Saltagua** (Akala). Lo genera `RomTool mundos` en `Data/islas.json`.
+
+### La trampa que casi se cuela: son dos listas de nombres
+
+El cartucho dice «Ciudad Hauoli»; PKHeX dice «Ciudad Hauoli (Zona Comercial)». **La que la run
+guarda en cada captura es la segunda.** Un mapa dibujado con los nombres cortos habría producido
+`ciudad-hauoli` al pinchar, contra una captura registrada como `ciudad-hauoli-zona-comercial`: un
+clic que no casa con nada y no falla nunca. Lo cazó un test que contaba las zonas —101 en vez de
+116—, no la vista. Así que `islas.json` guarda **los nombres largos**, heredando de los cortos la
+isla que se midió, y hay una teoría que fija los cuatro identificadores contra los que la run real
+tiene guardados.
+
+Quedan 113 y no 116 porque tres de los nombres de PKHeX no son sitios: «Lugar misterioso»,
+«Lugar lejano (-)» y un guion suelto.
+
+### Lo que sigue sin resolverse
+
+`BallControlService` —quitarle al jugador las Poké Balls mientras la zona está gastada— **sigue
+apagado**, y va a seguir: necesita la zona en vivo, cuyo anclaje murió en el §55, y **BxnnyLocke
+tampoco lo hace** (medido: `MetLocation` 31 apariciones, `ZonaActual`/`CurrentZone`/`ZonaId` cero).
+Reactivarlo es una investigación del tamaño del §22 para algo que la referencia no hace.

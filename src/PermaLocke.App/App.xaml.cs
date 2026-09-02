@@ -81,6 +81,10 @@ public partial class App : Application
         collection.AddSingleton<IRunRoles, RunRoles>();
         collection.AddSingleton<IShopCatalog>(_ =>
             JsonShopCatalog.Load(Path.Combine(paths.Data, "shop.json")));
+        // El reparto de zonas por isla, medido del cartucho con «RomTool mundos». Si falta el
+        // fichero, el mapa lo dice en vez de dibujar media Alola.
+        collection.AddSingleton(_ =>
+            JsonIslandMap.Load(Path.Combine(paths.Data, "islas.json")));
         collection.AddSingleton<IItemDelivery, BagItemDelivery>();
         collection.AddSingleton<ShopService>();
         collection.AddSingleton<EvTrainingService>();
@@ -105,6 +109,7 @@ public partial class App : Application
         collection.AddSingleton<ShopViewModel>();
         collection.AddSingleton<PokemonViewerViewModel>();
         collection.AddSingleton<PokePasteViewModel>();
+        collection.AddSingleton<MapViewModel>();
         collection.AddSingleton<MiscellaneousViewModel>();
         collection.AddSingleton<TradedAwayReconciler>();
         collection.AddSingleton<BattleModeService>();

@@ -43,3 +43,7 @@ obj/
 # El romfs de otro mod sobre el que randomizar. Son gigabytes y son assets de Nintendo:
 # igual que ROM/, cada jugador se lo consigue por su cuenta. Ver docs/MOD-EXPANSION.md.
 /Expansion/
+
+# La copia del mod anterior que deja el randomizador al reinstalar (§42). Son ficheros
+# del juego, igual que ROM/ y Expansion/: se conservan en el disco pero NO se versionan.
+/permalocke-mod-anterior/

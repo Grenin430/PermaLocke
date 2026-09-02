@@ -55,7 +55,9 @@ public static class DisplayNames
         [GameEventType.PokemonDelivered] = "Entregado en la partida",
         [GameEventType.RewardClaimed] = "Premio recogido",
         [GameEventType.RouletteSpun] = "Ruleta",
-        [GameEventType.BattleModeChanged] = "Modo combate"
+        [GameEventType.BattleModeChanged] = "Modo combate",
+        [GameEventType.ZoneConfirmed] = "Zona gastada",
+        [GameEventType.ZoneCleared] = "Zona liberada"
     };
 
     private static readonly Dictionary<EncounterType, string> Encounters = new()

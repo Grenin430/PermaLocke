@@ -1,0 +1,170 @@
+<UserControl x:Class="PermaLocke.App.Views.MapView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <UserControl.Resources>
+
+        <!-- Una zona. Los tres estados los decide el ViewModel en State, para no repartir la
+             misma decisión entre tres disparadores copiados. -->
+        <Style x:Key="ZoneTile" TargetType="Button" BasedOn="{StaticResource GhostButton}">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Padding" Value="10,8" />
+            <Setter Property="Margin" Value="0,0,6,6" />
+            <Setter Property="MinWidth" Value="150" />
+            <Setter Property="FontSize" Value="11.5" />
+        </Style>
+
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="270" />
+        </Grid.ColumnDefinitions>
+
+        <!-- EL MAPA -->
+        <Border Style="{StaticResource Inset}" Padding="16,14">
+            <DockPanel>
+
+                <DockPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+                    <Button DockPanel.Dock="Right" Content="RELEER" Style="{StaticResource GhostButton}"
+                            Command="{Binding RefreshCommand}" Padding="14,8" FontSize="11.5" />
+
+                    <StackPanel>
+                        <TextBlock Text="ALOLA" Style="{StaticResource StatLabel}" />
+                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                            <TextBlock Text="{Binding SpentCount}" Style="{StaticResource StatValue}" />
+                            <TextBlock Text=" de " Style="{StaticResource Muted}" VerticalAlignment="Bottom"
+                                       Margin="4,0,4,3" />
+                            <TextBlock Text="{Binding ZoneCount}" Style="{StaticResource Muted}"
+                                       VerticalAlignment="Bottom" Margin="0,0,6,3" />
+                            <TextBlock Text="zonas gastadas" Style="{StaticResource Muted}"
+                                       VerticalAlignment="Bottom" Margin="0,0,0,3" />
+                        </StackPanel>
+                    </StackPanel>
+                </DockPanel>
+
+                <!-- Sin islas.json no se dibuja media Alola: se dice. -->
+                <TextBlock DockPanel.Dock="Top" Style="{StaticResource Faint}" TextWrapping="Wrap"
+                           Visibility="{Binding HasMap, Converter={StaticResource InverseBoolToVisibility}}"
+                           Text="Falta Data/islas.json. Lo genera «RomTool mundos» leyendo el reparto de zonas del propio cartucho." />
+
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              Visibility="{Binding HasMap, Converter={StaticResource BoolToVisibility}}">
+                    <ItemsControl ItemsSource="{Binding Islands}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Margin="0,0,0,18">
+
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                        <TextBlock Text="{Binding Name}" Style="{StaticResource PanelHeading}" />
+                                        <Border Style="{StaticResource Chip}" Margin="8,0,0,0"
+                                                VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Count}" Style="{StaticResource ChipText}" />
+                                        </Border>
+                                    </StackPanel>
+
+                                    <ItemsControl ItemsSource="{Binding Zones}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel Orientation="Horizontal" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Button Command="{Binding DataContext.ClickZoneCommand,
+                                                            RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button" BasedOn="{StaticResource ZoneTile}">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding State}" Value="spent">
+                                                                    <Setter Property="Background"
+                                                                            Value="{StaticResource AccentDeepBrush}" />
+                                                                    <Setter Property="BorderBrush"
+                                                                            Value="{StaticResource AccentBrush}" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding State}" Value="dead">
+                                                                    <Setter Property="Background"
+                                                                            Value="{StaticResource DangerDeepBrush}" />
+                                                                    <Setter Property="BorderBrush"
+                                                                            Value="{StaticResource DangerBrush}" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+
+                                                    <StackPanel>
+                                                        <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock Text="{Binding CaughtWhat}" FontSize="10.5"
+                                                                   Margin="0,3,0,0" TextTrimming="CharacterEllipsis"
+                                                                   Opacity="0.75">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Setter Property="Visibility" Value="Visible" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding CaughtWhat}" Value="">
+                                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                    </StackPanel>
+                                                </Button>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </DockPanel>
+        </Border>
+
+        <!-- LO QUE FALTA POR DECIR -->
+        <Border Grid.Column="1" Style="{StaticResource Inset}" Padding="14,12" Margin="10,0,0,0">
+            <DockPanel>
+
+                <TextBlock DockPanel.Dock="Top" Text="SIN ZONA" Style="{StaticResource StatLabel}"
+                           Margin="0,0,0,4" />
+
+                <TextBlock DockPanel.Dock="Top" Style="{StaticResource Faint}" TextWrapping="Wrap"
+                           Margin="0,0,0,10"
+                           Text="Elige una captura y pincha en el mapa la zona donde salió. Pinchar una zona ya gastada la libera." />
+
+                <TextBlock DockPanel.Dock="Bottom" Text="{Binding Status}" TextWrapping="Wrap"
+                           FontSize="11.5" Margin="0,10,0,0">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource Body}">
+                            <Setter Property="Visibility" Value="Visible" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Status}" Value="">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding StatusIsBad}" Value="True">
+                                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+
+                <ListBox ItemsSource="{Binding Pending}" SelectedItem="{Binding Selected}"
+                         Style="{StaticResource Rail}" BorderThickness="0" Background="Transparent">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Margin="0,3">
+                                <TextBlock Text="{Binding Label}" FontSize="12" />
+                                <TextBlock Text="{Binding Where}" Style="{StaticResource Faint}"
+                                           FontSize="10.5" Margin="0,2,0,0" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+        </Border>
+    </Grid>
+</UserControl>

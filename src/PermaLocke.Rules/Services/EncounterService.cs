@@ -142,6 +142,125 @@ public sealed class EncounterService(
         return new RegisterCaptureResult(true, evaluation, entry);
     }
 
+
+    /// <param name="Reason">Why not, when the map refuses the click.</param>
+    public sealed record ConfirmZoneResult(bool Confirmed, string? Reason, PokemonEntry? Pokemon);
+
+    /// <summary>
+    /// Records that a capture spent a zone's one encounter, which is what the map's clicks do.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This is the missing half of the first-encounter rule. The seventh generation stores no field
+    /// saying an encounter was wild — measured on the real save, where a gift and a wild capture are
+    /// identical down to the ball — so the watcher registers every automatic capture as
+    /// <see cref="EncounterType.Unknown"/>, which spends nothing. Without somebody saying which zone
+    /// was spent, <c>UsedZones</c> is empty forever and the rule never fires: fourteen Pokémon in
+    /// the real run, zero zones spent, two captures in Ruta 1 and not a word.
+    /// </para>
+    /// <para>
+    /// It refuses when the zone is already spent by somebody else, and <b>that refusal is the rule
+    /// finally doing its job</b>. It does not force, because overriding a rule is the player's call
+    /// and belongs to the capture dialog, which records it as a violation.
+    /// </para>
+    /// </remarks>
+    public async Task<ConfirmZoneResult> ConfirmZoneAsync(Guid runId, Guid pokemonId,
+        string locationName, string actor, CancellationToken ct = default)
+    {
+        var all = await pokemon.GetAllAsync(runId, ct).ConfigureAwait(false);
+        var entry = all.FirstOrDefault(p => p.Id == pokemonId);
+
+        if (entry is null)
+        {
+            return new ConfirmZoneResult(false, "Ese Pokémon no está en la run.", null);
+        }
+
+        var locationId = NormaliseLocationId(locationName);
+        var owner = all.FirstOrDefault(p =>
+            p.Id != pokemonId && p.ConsumedZoneEncounter && p.LocationId == locationId);
+
+        if (owner is not null)
+        {
+            return new ConfirmZoneResult(false,
+                $"{locationName} ya la gastó {owner.SpeciesName}.", null);
+        }
+
+        var updated = entry with
+        {
+            LocationId = locationId,
+            ConsumedZoneEncounter = true,
+
+            // Confirmar la zona ES decir que fue un encuentro salvaje: es lo único que gasta el
+            // encuentro de una zona. Lo que ya venía con un tipo dicho no se toca, porque eso lo
+            // afirmó alguien mirando la captura y esto no sabe más que él.
+            EncounterType = entry.EncounterType == EncounterType.Unknown
+                ? EncounterType.Wild
+                : entry.EncounterType
+        };
+
+        await events.AppendAsync(new GameEvent
+        {
+            Id = Guid.NewGuid(),
+            RunId = runId,
+            Timestamp = clock.Now,
+            Type = GameEventType.ZoneConfirmed,
+            Source = EventSource.Player,
+            Actor = actor,
+            Description = $"{entry.SpeciesName} gastó el encuentro de {locationName}.",
+            PokemonId = entry.Id,
+            LocationId = locationId,
+            Data = new Dictionary<string, string>
+            {
+                ["zona"] = locationName,
+                ["zonaAnterior"] = entry.LocationId ?? "(ninguna)",
+                ["tipoAnterior"] = entry.EncounterType.ToString()
+            }
+        }, ct).ConfigureAwait(false);
+
+        await pokemon.SaveAsync(updated, ct).ConfigureAwait(false);
+        return new ConfirmZoneResult(true, null, updated);
+    }
+
+    /// <summary>Takes back a confirmation, freeing the zone. For a mis-click on the map.</summary>
+    /// <remarks>
+    /// Undoing by editing the database would leave a chain whose hashes still line up around a hole,
+    /// so it is its own event instead: the zone was spent, and then it was not.
+    /// </remarks>
+    public async Task<ConfirmZoneResult> ClearZoneAsync(Guid runId, Guid pokemonId, string actor,
+        CancellationToken ct = default)
+    {
+        var all = await pokemon.GetAllAsync(runId, ct).ConfigureAwait(false);
+        var entry = all.FirstOrDefault(p => p.Id == pokemonId);
+
+        if (entry is null)
+        {
+            return new ConfirmZoneResult(false, "Ese Pokémon no está en la run.", null);
+        }
+
+        if (!entry.ConsumedZoneEncounter)
+        {
+            return new ConfirmZoneResult(false, $"{entry.SpeciesName} no tenía ninguna zona gastada.", null);
+        }
+
+        var updated = entry with { ConsumedZoneEncounter = false };
+
+        await events.AppendAsync(new GameEvent
+        {
+            Id = Guid.NewGuid(),
+            RunId = runId,
+            Timestamp = clock.Now,
+            Type = GameEventType.ZoneCleared,
+            Source = EventSource.Player,
+            Actor = actor,
+            Description = $"{entry.SpeciesName} deja libre {entry.LocationId}.",
+            PokemonId = entry.Id,
+            LocationId = entry.LocationId,
+            Data = new Dictionary<string, string> { ["zona"] = entry.LocationId ?? "(ninguna)" }
+        }, ct).ConfigureAwait(false);
+
+        await pokemon.SaveAsync(updated, ct).ConfigureAwait(false);
+        return new ConfirmZoneResult(true, null, updated);
+    }
     /// <summary>Zones already used, so the UI can offer them and rules can consult them.</summary>
     public async Task<IReadOnlyList<string>> GetKnownLocationsAsync(Guid runId, CancellationToken ct = default)
     {

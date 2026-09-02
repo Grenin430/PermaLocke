@@ -71,6 +71,9 @@ switch (command)
     case "zones":
         await ZonesAsync();
         break;
+    case "mundos":
+        await MundosAsync();
+        break;
     case "dump":
         await DumpAsync(args.Length > 1 ? ulong.Parse(args[1]) : 20260818, args.Length > 2 ? args[2] : "Ruta 1");
         break;
@@ -1346,3 +1349,194 @@ async Task TranslateAsync(bool write)
 // pero su tabla si es publica.
 static int TextIndex(TextName name) =>
     TextReference.GameText_USUM.First(r => r.Name == name).Index;
+
+// Qué zonas cubre cada mundo. En Alola un "mundo" de zonedata es una isla, y esto es lo que lo
+// demuestra: sale del cartucho -campo WorldIndex de ZoneData7- en vez de escribirse de memoria.
+// Es el ancla del mapa de la aplicación: sin ella, repartir 116 zonas entre cuatro islas sería
+// recordar, y de memoria ya se colocó mal Colina Saltagua.
+async Task MundosAsync()
+{
+    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work, baseLayer: baseLayer);
+    var locations = workspace.Config.GetText(TextName.metlist_000000);
+
+    var zoneGarc = workspace.Config.GetlzGARCData("zonedata");
+    var worldGarc = workspace.Config.GetlzGARCData("worlddata");
+    var worlds = worldGarc.Files.Select(f => pk3DS.Core.CTR.Mini.UnpackMini(f, "WD")[0]).ToArray();
+
+    var files = zoneGarc.Files;
+    var zones = pk3DS.Core.Structures.ZoneData7.GetZoneData7Array(
+        files[0], files[1], locations, worlds);
+
+    // Los cuatro exteriores, medidos: son los unicos mundos que cubren muchos nombres a la vez, y
+    // cada uno trae el juego de rutas de su isla (1-3, 4-9, 10-17, y las de Poni).
+    (int First, string Island)[] outdoors =
+    [
+        (0, "Melemele"), (58, "Akala"), (117, "Ula-Ula"), (197, "Poni")
+    ];
+
+    string IslandOf(int world)
+    {
+        var island = "Otros";
+        foreach (var (first, name) in outdoors)
+        {
+            if (world >= first) island = name;
+        }
+        return island;
+    }
+
+    // Nombres que solo pueden ser de una isla, para comprobar el reparto por rangos. No cubren
+    // todo: cubren lo suficiente para que un rango mal puesto choque contra alguno.
+    (string Token, string Island)[] tells =
+    [
+        ("Melemele", "Melemele"), ("Hauoli", "Melemele"), ("Lilii", "Melemele"),
+        ("Mahalo", "Melemele"), ("Kalae", "Melemele"), ("Dequilate", "Melemele"),
+        ("Akala", "Akala"), ("Konikoni", "Akala"), ("Ohana", "Akala"),
+        ("Kantai", "Akala"), ("Hanohano", "Akala"), ("Wela", "Akala"),
+        ("Ula-Ula", "Ula-Ula"), ("Malíe", "Ula-Ula"), ("Hokulani", "Ula-Ula"),
+        ("Po", "Ula-Ula"), ("Haina", "Ula-Ula"), ("Lanakila", "Ula-Ula"),
+        ("Poni", "Poni"), ("Marina", "Poni"), ("Exeggutor", "Poni")
+    ];
+
+    var byName = new Dictionary<string, string>(StringComparer.Ordinal);
+    var clashes = new List<string>();
+
+    foreach (var zone in zones)
+    {
+        var name = zone.LocationName;
+        if (string.IsNullOrWhiteSpace(name) || name == "\uFF0D") continue;
+
+        var island = IslandOf(zone.WorldIndex);
+
+        if (byName.TryGetValue(name, out var already) && already != island)
+        {
+            clashes.Add($"«{name}» sale en {already} y en {island} (mundo {zone.WorldIndex})");
+            continue;
+        }
+        byName[name] = island;
+    }
+
+    Console.WriteLine($"{byName.Count} nombres repartidos entre {byName.Values.Distinct().Count()} islas");
+
+    foreach (var island in byName.GroupBy(p => p.Value).OrderBy(g => g.Key, StringComparer.Ordinal))
+    {
+        Console.WriteLine();
+        Console.WriteLine($"{island.Key.ToUpperInvariant()}  ({island.Count()})");
+        foreach (var name in island.Select(p => p.Key).OrderBy(n => n, StringComparer.Ordinal))
+        {
+            Console.WriteLine($"    {name}");
+        }
+    }
+
+    Console.WriteLine();
+    Console.WriteLine("COMPROBACIÓN por nombres que solo pueden ser de una isla:");
+    var wrong = 0;
+
+    foreach (var (name, island) in byName)
+    {
+        foreach (var (token, expected) in tells)
+        {
+            var word = name.Contains(token, StringComparison.Ordinal);
+            if (token == "Po") word = name.Contains("Pueblo Po", StringComparison.Ordinal);
+            if (!word || island == expected) continue;
+
+            Console.WriteLine($"    MAL: «{name}» cae en {island} y su nombre dice {expected}");
+            wrong++;
+        }
+    }
+
+    Console.WriteLine($"    contradicciones: {wrong}");
+    foreach (var clash in clashes) Console.WriteLine($"    AMBIGUO: {clash}");
+
+    WriteIslands(byName, tells, wrong, clashes.Count);
+}
+
+// Escribe Data/islas.json y comprueba que cubre la OTRA lista de nombres, la de PKHeX, que es la
+// que los Pokémon llevan escrita y con la que la run identifica una zona. Son dos listas distintas
+// -el cartucho dice «Ciudad Hauoli», PKHeX «Ciudad Hauoli (Puerto)»- y el puente es quitar el
+// paréntesis. Un nombre de PKHeX que no case aquí saldría en el mapa sin isla, así que se cuenta.
+void WriteIslands(Dictionary<string, string> byName, (string Token, string Island)[] tells,
+    int wrong, int ambiguous)
+{
+    if (wrong > 0)
+    {
+        throw new InvalidDataException(
+            "El reparto por islas se contradice con los nombres. No se escribe nada.");
+    }
+
+    var strings = PKHeX.Core.GameInfo.GetStrings("es");
+    var met = new List<(int Id, string Name)>();
+
+    for (var id = 0; id <= 700; id++)
+    {
+        var name = strings.GetLocationName(false, (ushort)id, 7, 7, PKHeX.Core.GameVersion.UM);
+        if (!string.IsNullOrWhiteSpace(name)) met.Add((id, name));
+    }
+
+    string Base(string name)
+    {
+        var cut = name.IndexOf(" (", StringComparison.Ordinal);
+        return cut < 0 ? name : name[..cut];
+    }
+
+    // Tres marcadores de PKHeX que no son sitios: no van al mapa.
+    string[] notPlaces = ["Lugar lejano (-)", "Lugar misterioso", "FF0D"];
+
+    // Y el respaldo para lo que zonedata no nombra: la propia isla lo dice. Es el MISMO criterio
+    // que la comprobacion de arriba, la que dio cero contradicciones, aplicado a ocho casos.
+    foreach (var name in met.Select(m => m.Name).Distinct())
+    {
+        if (byName.ContainsKey(Base(name)) || notPlaces.Contains(name)) continue;
+
+        foreach (var (token, island) in tells)
+        {
+            if (!name.Contains(token, StringComparison.Ordinal)) continue;
+            byName[name] = island;
+            break;
+        }
+    }
+
+    var orphans = met.Select(m => m.Name)
+        .Where(n => !byName.ContainsKey(Base(n)) && !notPlaces.Contains(n) && n.Any(char.IsLetter))
+        .Distinct().OrderBy(n => n, StringComparer.Ordinal).ToArray();
+
+    Console.WriteLine();
+    Console.WriteLine($"Lista de PKHeX: {met.Count} lugares, {met.Select(m => m.Name).Distinct().Count()} nombres");
+    Console.WriteLine($"    sin isla: {orphans.Length}");
+    foreach (var orphan in orphans) Console.WriteLine($"        {orphan}");
+
+    var document = new
+    {
+        comment = "Generado por: PermaLocke.RomTool mundos. No editar a mano.",
+        source = "a/0/7/7 (zonedata, campo WorldIndex) + a/0/9/1 (worlddata)",
+        how = "Los cuatro exteriores del cartucho -mundos 0, 58, 117 y 197- son las cuatro islas, "
+            + "y los interiores se numeran entre ellos. Comprobado contra 21 nombres que solo "
+            + "pueden ser de una isla: cero contradicciones.",
+        ambiguous,
+
+        // Se escriben los nombres de PKHEX, no los del cartucho. Son dos listas -el cartucho dice
+        // «Ciudad Hauoli» y PKHeX «Ciudad Hauoli (Puerto)»- y la que la run guarda en cada captura
+        // es la segunda. Un mapa dibujado con la primera tendría casillas que no casan con ningún
+        // Pokémon: pinchar «Ciudad Hauoli» daría ciudad-hauoli y la captura dice ciudad-hauoli-puerto.
+        // La isla la hereda el nombre largo del corto, que es de donde se midió.
+        islands = met.Select(entry => entry.Name).Distinct()
+            .Where(name => name.Any(char.IsLetter))
+            .Select(name => (Name: name, Island: byName.GetValueOrDefault(Base(name))
+                                                ?? byName.GetValueOrDefault(name)))
+            .Where(pair => pair.Island is not null)
+            .GroupBy(pair => pair.Island!)
+            .OrderBy(group => group.Key, StringComparer.Ordinal)
+            .ToDictionary(group => group.Key,
+                group => group.Select(pair => pair.Name)
+                    .OrderBy(name => name, StringComparer.Ordinal).ToArray())
+    };
+
+    var path = Path.Combine(root, "Data", "islas.json");
+    File.WriteAllText(path, System.Text.Json.JsonSerializer.Serialize(document,
+        new System.Text.Json.JsonSerializerOptions
+        {
+            WriteIndented = true,
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+        }));
+
+    Console.WriteLine($"escrito {path}");
+}

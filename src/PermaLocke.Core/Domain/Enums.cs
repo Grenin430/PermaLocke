@@ -203,5 +203,28 @@ public enum GameEventType
     /// question the history has to be able to answer.
     /// </para>
     /// </remarks>
-    BattleModeChanged
+    BattleModeChanged,
+
+    /// <summary>
+    /// The player said on the map which zone a capture spent, so the zone counts as used.
+    /// </summary>
+    /// <remarks>
+    /// It exists because the seventh generation stores <b>no field saying an encounter was wild</b>
+    /// — measured on a real save, where a gift and a wild capture are identical down to the ball.
+    /// So the watcher files every automatic capture as <see cref="EncounterType.Unknown"/>, which
+    /// spends no zone, and until somebody says otherwise the first-encounter rule has nothing to
+    /// compare against. Measured on the real run: fourteen Pokémon, zero zones spent, two captures
+    /// in Ruta 1 and not a word.
+    /// <para>
+    /// Confirming is therefore a claim by the player, not a deduction, and it is recorded as one.
+    /// </para>
+    /// </remarks>
+    ZoneConfirmed,
+
+    /// <summary>The player took back a zone confirmation, freeing the zone again.</summary>
+    /// <remarks>
+    /// A mis-click on a map has to be undoable, and undoing it by editing the database would break
+    /// the chain. So it is its own event: the zone was spent, and then it was not.
+    /// </remarks>
+    ZoneCleared
 }
