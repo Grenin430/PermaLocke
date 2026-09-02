@@ -97,6 +97,17 @@ public sealed record RandomizerOptions
     public bool MegaTrainers { get; init; } = true;
 
     /// <summary>
+    /// Baraja qué movimiento enseña cada MT. Solo funciona sobre un mod que traiga su code.bin.
+    /// </summary>
+    /// <remarks>
+    /// La lista de las cien MT no está en el RomFS: son cien ids de movimiento dentro del
+    /// ejecutable. Por eso, hasta ahora, PermaLocke movía las MT de sitio pero la MT54 seguía
+    /// siendo Falso Tortazo. Se barajan entre ellas, no se sortean de la tabla entera, así que el
+    /// conjunto sigue siendo el mismo y ninguna MT acaba enseñando algo que no valga una MT.
+    /// </remarks>
+    public bool RandomizeMachines { get; init; } = true;
+
+    /// <summary>
     /// Cartridge level a trainer has to reach before one of its Pokemon may be a mega.
     /// </summary>
     /// <remarks>

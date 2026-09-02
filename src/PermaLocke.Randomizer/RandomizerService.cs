@@ -45,6 +45,7 @@ public sealed class RandomizerService(RandomizerOptions options)
         public const string Trainers = "trainers";
         public const string PokemonData = "pokemon-data";
         public const string Shops = "special-marts";
+        public const string Machines = "technical-machines";
         public const string FieldItems = "field-items";
     }
 
@@ -188,6 +189,20 @@ public sealed class RandomizerService(RandomizerOptions options)
                 + (result.MedicineSlots > 0
                     ? $"; {result.MedicineSlots} curativos de las tiendas normales pasados a Poké Ball"
                     : string.Empty)));
+        }
+
+        if (options.RandomizeMachines && baseLayer is not null)
+        {
+            // El exefs va AL LADO del romfs, no dentro, asi que se deduce del romfs del mod base.
+            var exefs = Path.Combine(Path.GetDirectoryName(baseLayer.TrimEnd(Path.DirectorySeparatorChar))!, "exefs");
+            var random = new SeededRandomSource(seed).Derive(Salts.Machines);
+            var result = await new MachineRandomizer(options).ApplyAsync(random, mod, exefs, ct);
+
+            steps.Add(new RandomizerStep("MT",
+                result.Machines > 0
+                    ? $"{result.Machines} de las 100 MT ensenan otro movimiento "
+                      + $"(tabla encontrada en code.bin, offset {result.Offset})"
+                    : "sin cambios: no hay code.bin que parchear"));
         }
 
         // Un módulo pedido y no implementado se dice, no se ignora. Callarlo dejaría al jugador

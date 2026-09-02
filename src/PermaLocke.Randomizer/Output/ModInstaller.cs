@@ -102,5 +102,15 @@ public static class ModInstaller
 
         onProgress?.Invoke("Copiando la randomización...");
         CopyTree(Path.Combine(generated, "romfs"), romfs);
+
+        // Y el exefs generado ENCIMA del de la capa base, si lo hay: es el mismo code.bin del mod
+        // con la tabla de MT barajada. Va despues por la misma razon que el romfs, y si no existe
+        // no pasa nada, porque entonces el bueno es el que ya se copio.
+        var ours = Path.Combine(generated, "exefs");
+
+        if (Directory.Exists(ours))
+        {
+            CopyTree(ours, Path.Combine(modDirectory, "exefs"));
+        }
     }
 }
