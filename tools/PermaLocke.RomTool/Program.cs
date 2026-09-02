@@ -1057,7 +1057,7 @@ async Task MegasAsync()
     foreach (var row in rows.OrderBy(r => r.Level).ThenBy(r => r.Species))
     {
         var reach = row.Level == 0 ? "no por nivel" : $"nivel {row.Level}";
-        Console.WriteLine($"  {row.Species,4} {species[row.Species],-13} {items[row.Stone],-18} "
+        Console.WriteLine($"  {row.Species,4} {SpeciesName(species, row.Species),-13} {(row.Stone < items.Length ? items[row.Stone] : "#" + row.Stone),-18} "
                           + $"se llega a la especie: {reach}");
     }
 
