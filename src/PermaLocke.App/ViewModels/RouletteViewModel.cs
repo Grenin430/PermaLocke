@@ -175,6 +175,15 @@ public sealed partial class RouletteViewModel : SectionViewModel
 
     public event EventHandler<SpinTheWheel>? SpinRequested;
 
+    /// <summary>Raised as each wedge is turned over, carrying which one.</summary>
+    /// <remarks>
+    /// An event and not a trigger on <c>Revealed</c>. The trigger version threw on the first wedge
+    /// â a storyboard inside a DataTemplate cannot reach a transform by property path â and because
+    /// the reveal happens inside the spin, it took the rest of the show down with it: the effect
+    /// had already been written to the save and the player never found out what came out.
+    /// </remarks>
+    public event EventHandler<int>? RevealRequested;
+
     public ObservableCollection<RouletteSlotViewModel> Slots { get; } = [];
 
     /// <summary>Everything the wheel can land on, for the screen to list before anyone spins.</summary>
@@ -287,7 +296,18 @@ public sealed partial class RouletteViewModel : SectionViewModel
                 return;
             }
 
-            await PlayAsync(wheel);
+            // El espectÃ¡culo va aparte. Lo de debajo ya ha pasado -- estÃ¡ en la partida y en el
+            // historial -- asÃ­ que una animaciÃ³n rota puede costar la animaciÃ³n y nada mÃ¡s. CostÃ³
+            // dos tiradas aprenderlo: una excepciÃ³n en el primer desvelado abortaba el mÃ©todo
+            // entero y el jugador se quedaba sin saber quÃ© le habÃ­a tocado.
+            try
+            {
+                await PlayAsync(wheel);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "FallÃ³ la animaciÃ³n de la ruleta; el resultado sÃ­ es vÃ¡lido");
+            }
 
             ResultName = wheel.Winner.Name;
             ResultDetail = wheel.Winner.Detail;
@@ -329,6 +349,7 @@ public sealed partial class RouletteViewModel : SectionViewModel
         {
             Slots[index].Text = wheel.Faces[index].Name;
             Slots[index].Revealed = true;
+            RevealRequested?.Invoke(this, index);
 
             // La lista de las diecisÃ©is marca la que se acaba de desvelar, al mismo tiempo que la
             // cuÃ±a: asÃ­ se ve cuÃ¡les de todas estÃ¡n en juego sin tener que ir leyendo la rueda.

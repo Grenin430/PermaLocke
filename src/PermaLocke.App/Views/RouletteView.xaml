@@ -83,7 +83,7 @@
                                 <RotateTransform x:Name="WheelSpin" Angle="0" />
                             </Grid.RenderTransform>
 
-                            <ItemsControl ItemsSource="{Binding Slots}">
+                            <ItemsControl x:Name="Labels" ItemsSource="{Binding Slots}">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
                                         <Canvas Width="460" Height="460" />
@@ -118,7 +118,8 @@
                                                                             From="0.25" To="1"
                                                                             Duration="0:0:0.28"
                                                                             AutoReverse="True"
-                                                                            RepeatBehavior="3x" />
+                                                                            RepeatBehavior="3x"
+                                                                            FillBehavior="Stop" />
                                                                     </Storyboard>
                                                                 </BeginStoryboard>
                                                             </DataTrigger.EnterActions>
@@ -154,16 +155,9 @@
                                         <Grid Width="128" Height="46" Margin="-64,-23,0,0"
                                               RenderTransformOrigin="0.5,0.5">
                                             <Grid.RenderTransform>
-                                                <TransformGroup>
-                                                    <!-- El volteo al desvelar. Escala en X desde
-                                                         cero, que es una carta girandose: el
-                                                         cambio de Â«?Â» al nombre ocurre con la
-                                                         etiqueta de canto y no se ve saltar. -->
-                                                    <ScaleTransform ScaleX="1" />
-                                                    <RotateTransform Angle="{Binding Angle,
-                                                        ElementName=WheelSpin,
-                                                        Converter={StaticResource Negate}}" />
-                                                </TransformGroup>
+                                                <RotateTransform Angle="{Binding Angle,
+                                                    ElementName=WheelSpin,
+                                                    Converter={StaticResource Negate}}" />
                                             </Grid.RenderTransform>
                                             <TextBlock Text="{Binding Text}" TextAlignment="Center"
                                                        TextWrapping="Wrap" MaxHeight="44"
@@ -172,34 +166,6 @@
                                                        Foreground="{StaticResource OnAccentBrush}"
                                                        VerticalAlignment="Center" />
                                         </Grid>
-
-                                        <DataTemplate.Triggers>
-                                            <DataTrigger Binding="{Binding Revealed}" Value="True">
-                                                <DataTrigger.EnterActions>
-                                                    <BeginStoryboard>
-                                                        <Storyboard>
-                                                            <!-- Se llega a la escala por su ruta y
-                                                                 no por un nombre: poner un x:Name
-                                                                 dentro de la plantilla le abre su
-                                                                 propio Ã¡mbito de nombres, y el
-                                                                 ElementName=WheelSpin de la
-                                                                 etiqueta de al lado se resuelve
-                                                                 ahÃ­. DejarÃ­a de contragirar, y
-                                                                 medio giro de cada vuelta volverÃ­a
-                                                                 a verse del revÃ©s. -->
-                                                            <DoubleAnimation
-                                                                Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[0].(ScaleTransform.ScaleX)"
-                                                                From="0" To="1" Duration="0:0:0.45">
-                                                                <DoubleAnimation.EasingFunction>
-                                                                    <BackEase Amplitude="0.4"
-                                                                              EasingMode="EaseOut" />
-                                                                </DoubleAnimation.EasingFunction>
-                                                            </DoubleAnimation>
-                                                        </Storyboard>
-                                                    </BeginStoryboard>
-                                                </DataTrigger.EnterActions>
-                                            </DataTrigger>
-                                        </DataTemplate.Triggers>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>

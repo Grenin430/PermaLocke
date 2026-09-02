@@ -43,6 +43,7 @@ public partial class RouletteView : UserControl
         {
             _model = model;
             model.SpinRequested += OnSpinRequested;
+            model.RevealRequested += OnRevealRequested;
         }
     }
 
@@ -51,6 +52,7 @@ public partial class RouletteView : UserControl
         if (_model is not null)
         {
             _model.SpinRequested -= OnSpinRequested;
+            _model.RevealRequested -= OnRevealRequested;
             _model = null;
         }
     }
@@ -71,6 +73,62 @@ public partial class RouletteView : UserControl
             Duration = TimeSpan.FromSeconds(120),
             RepeatBehavior = RepeatBehavior.Forever
         });
+
+    /// <summary>
+    /// Turns a wedge's label over as it is revealed.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// In code because of what a scale in the template costs. The transform has to be built here
+    /// and assigned fresh: a <see cref="ScaleTransform"/> written into a DataTemplate can be frozen
+    /// by WPF, and an animation on a frozen Freezable throws. That is the actual bug this replaces,
+    /// and it did not fail at build time or at startup â it fired on the first wedge of a real spin.
+    /// </para>
+    /// <para>
+    /// It scales the text and not the container: the container already carries the counter-rotation
+    /// that keeps the label the right way up, and the two compose without either knowing about the
+    /// other.
+    /// </para>
+    /// </remarks>
+    private void OnRevealRequested(object? sender, int index)
+    {
+        if (Labels.ItemContainerGenerator.ContainerFromIndex(index) is not DependencyObject container
+            || FindText(container) is not { } text)
+        {
+            return;
+        }
+
+        var flip = new ScaleTransform(0, 1);
+        text.RenderTransformOrigin = new Point(0.5, 0.5);
+        text.RenderTransform = flip;
+
+        flip.BeginAnimation(ScaleTransform.ScaleXProperty, new DoubleAnimation
+        {
+            From = 0,
+            To = 1,
+            Duration = TimeSpan.FromMilliseconds(450),
+            EasingFunction = new BackEase { Amplitude = 0.4, EasingMode = EasingMode.EaseOut }
+        });
+    }
+
+    /// <summary>The label's TextBlock, wherever the template put it.</summary>
+    private static TextBlock? FindText(DependencyObject from)
+    {
+        if (from is TextBlock found)
+        {
+            return found;
+        }
+
+        for (var i = 0; i < VisualTreeHelper.GetChildrenCount(from); i++)
+        {
+            if (FindText(VisualTreeHelper.GetChild(from, i)) is { } text)
+            {
+                return text;
+            }
+        }
+
+        return null;
+    }
 
     private void OnSpinRequested(object? sender, SpinTheWheel request)
     {
