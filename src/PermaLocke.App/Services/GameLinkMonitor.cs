@@ -308,6 +308,13 @@ public sealed class GameLinkMonitor(
     /// </remarks>
     private readonly Dictionary<uint, int> _cappedAt = [];
 
+    /// <summary>Polls in a row with nobody over the cap. The record of who has been corrected
+    /// is only forgotten after a good few, never on the first quiet one.</summary>
+    private int _calmPolls;
+
+    /// <summary>Roughly a minute at the monitor's cadence.</summary>
+    private const int CalmPollsBeforeForgetting = 20;
+
     /// <summary>Why the cap is not being applied, or empty when it is. Shown on HOME.</summary>
     public string CapProblem { get; private set; } = string.Empty;
 
@@ -352,9 +359,21 @@ public sealed class GameLinkMonitor(
         if (over.Count == 0)
         {
             CapProblem = string.Empty;
-            _cappedAt.Clear();
+
+            // No se olvida a la primera lectura buena, y ese detalle es el que ocultó el fallo.
+            // El equipo vive en varias copias y no todas se corrigen a la vez, así que en cuanto
+            // una lectura caía por debajo del cap el registro se borraba entero -- y la siguiente
+            // corrección del MISMO Pokémon volvía a parecer la primera. Tres seguidas en un
+            // minuto, ninguna marcada como repetición, y el aviso rojo nunca llegó a salir.
+            if (++_calmPolls >= CalmPollsBeforeForgetting)
+            {
+                _cappedAt.Clear();
+            }
+
             return;
         }
+
+        _calmPolls = 0;
 
         foreach (var member in over)
         {
@@ -390,8 +409,16 @@ public sealed class GameLinkMonitor(
 
             if (again)
             {
-                CapProblem = $"{member.SpeciesName} vuelve a estar por encima del cap. El juego está "
-                             + "deshaciendo la corrección: se ha vuelto a aplicar.";
+                // Que haya que repetirla significa que se está escribiendo en un subconjunto: la
+                // lista de copias sale de las direcciones recordadas, que se revalidan para
+                // siempre y NO SE ENSANCHAN NUNCA, y el juego restaura el nivel desde una copia
+                // que nadie ha buscado. Releer no puede detectarlo -- lo escrito está donde se
+                // escribió --, así que la única salida es volver a barrer.
+                provider.SweepAgain();
+
+                CapProblem = $"{member.SpeciesName} vuelve a estar por encima del cap. El juego lo "
+                             + $"está deshaciendo desde una copia que no conozco (tengo {applied} "
+                             + "de las que hay): se ha vuelto a aplicar y se está buscando el resto.";
             }
 
             logger.LogWarning(

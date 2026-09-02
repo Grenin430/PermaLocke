@@ -36,6 +36,9 @@ public sealed class AzaharGameStateProvider(
     private IReadOnlyList<PartyLayout> _remembered = [];
     private int _notReadyPolls;
 
+    /// <summary>Set when something proves the remembered copies are not all of them.</summary>
+    private bool _sweepNext;
+
     /// <summary>Fallos seguidos antes de dar por perdido el equipo ya localizado.</summary>
     /// <remarks>
     /// Uno suelto es casi siempre un datagrama perdido. Tirar la dirección por eso obliga a
@@ -66,6 +69,23 @@ public sealed class AzaharGameStateProvider(
 
     /// <summary>Trainer name recorded in the run. Preferred when locating, never required.</summary>
     public string TrainerName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Forces a full sweep on the next read instead of trusting the remembered addresses.
+    /// </summary>
+    /// <remarks>
+    /// The remembered set is revalidated for ever and <b>never widened</b>, and that is what made
+    /// the level cap lose. Measured on the real run: at 21:45 there was one copy of the party, at
+    /// 22:14 there were two and an hour later five. The cap wrote to the ones it remembered, read
+    /// them back correct — and the game restored the level from a copy nobody had ever looked for.
+    /// Three corrections in a minute, each one honestly reporting success.
+    /// <para>
+    /// A sweep is 96 MB and ten minutes of not watching anything, so it must never be routine.
+    /// This is the one signal worth paying it for: a correction that had to be repeated is proof
+    /// that the write list is incomplete, which no amount of re-reading can show.
+    /// </para>
+    /// </remarks>
+    public void SweepAgain() => _sweepNext = true;
 
     public Task<GameSnapshot> ReadAsync(CancellationToken ct = default) =>
         Task.Run(() => Read(ct), ct);
@@ -120,7 +140,7 @@ public sealed class AzaharGameStateProvider(
         // un equipo coherente de este entrenador antes de usarse.
         var remembered = _remembered = ReadRemembered();
 
-        if (remembered is { Count: > 0 } && Choose(reader, remembered) is { } fromDisk)
+        if (!_sweepNext && remembered is { Count: > 0 } && Choose(reader, remembered) is { } fromDisk)
         {
             // TODAS las recordadas, no solo las que se dejan leer.
             //
@@ -154,7 +174,7 @@ public sealed class AzaharGameStateProvider(
         // minutos y nueve segundos, DURANTE LOS CUALES NO SE VIGILA NADA. En ese hueco murió un
         // Pokémon en una prueba y no se contó. Esperar unos segundos cuesta segundos; barrer
         // cuando no hacía falta cuesta diez minutos a ciegas.
-        if (_remembered.Count > 0 && ++_notReadyPolls < PollsBeforeSweeping)
+        if (!_sweepNext && _remembered.Count > 0 && ++_notReadyPolls < PollsBeforeSweeping)
         {
             // Y se suelta el enganche: si el equipo ha dejado de leerse puede ser que el juego se
             // haya cerrado y abierto, y entonces el proceso fijado ya no es el bueno. Reengancharse
@@ -183,6 +203,7 @@ public sealed class AzaharGameStateProvider(
 
         _layout = readable;
         _notReadyPolls = 0;
+        _sweepNext = false;
         _allLayouts = PartyLayoutLocator.Distinct(located);
         _gameTrainer = readable.TrainerName;
         Remember(located);
