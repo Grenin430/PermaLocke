@@ -406,4 +406,74 @@ public sealed partial class MaintenanceViewModel : SectionViewModel
             IsBusy = false;
         }
     }
+
+    // ================================================== HACER PERMANENTE LA MUERTE
+
+    [ObservableProperty]
+    private string _shedinjaSummary = string.Empty;
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(EnforceDeathsCommand))]
+    private bool _hasDeathsToMark;
+
+    [ObservableProperty]
+    private string _shedinjaStatus = string.Empty;
+
+    private bool CanEnforceDeaths => !IsBusy && HasDeathsToMark;
+
+    [RelayCommand(CanExecute = nameof(CanWork))]
+    private async Task InspectDeathsAsync()
+    {
+        IsBusy = true;
+
+        try
+        {
+            var report = await _maintenance.InspectDeathsAsync();
+            HasDeathsToMark = report.Alive > 0;
+            ShedinjaSummary = $"Sin marcar: {report.Alive}   ·   Ya son Shedinja: {report.AlreadyMarked}"
+                              + $"   ·   No están en la partida: {report.Missing}";
+            ShedinjaStatus = report.Message;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Falló mirar los caídos sin marcar");
+            ShedinjaStatus = "No se ha podido mirar. El detalle está en la carpeta Logs.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanEnforceDeaths))]
+    private async Task EnforceDeathsAsync()
+    {
+        if (!_dialogs.Confirm(
+                "Convertir a los caídos en Shedinja",
+                "Se escribe en tu PARTIDA, así que Azahar tiene que estar cerrado.\n\n"
+                + "Cada Pokémon caído pasa a ser un Shedinja llamado MUERTO, de nivel 1 y sin "
+                + "movimientos. Es PERMANENTE: queda escrito en la partida, no en memoria.\n\n"
+                + "Se hace una copia de la partida antes de tocar nada.\n\n¿Seguir?"))
+        {
+            return;
+        }
+
+        IsBusy = true;
+
+        try
+        {
+            var report = await _maintenance.EnforceDeathsAsync();
+            ShedinjaStatus = report.Message;
+            await InspectDeathsAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Falló marcar a los caídos como Shedinja");
+            ShedinjaStatus = "No se ha podido. ¿Está Azahar cerrado? El detalle está en Logs.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
 }

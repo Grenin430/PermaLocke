@@ -226,6 +226,29 @@ public sealed class MaintenanceService(
                + "La penalización se ha cobrado y queda en el historial como marca del jugador.";
     }
 
+    /// <summary>Counts the dead that are still whole in the save, writing nothing.</summary>
+    public async Task<DeathEnforcementReport> InspectDeathsAsync(CancellationToken ct = default) =>
+        NewDeathEnforcer().Inspect(await RegisteredAsync(ct).ConfigureAwait(false));
+
+    /// <summary>
+    /// Turns every dead Pokémon of the run into a Shedinja inside the save, for good.
+    /// </summary>
+    /// <remarks>
+    /// The watcher writes the marker into the running game, but that is memory: it survives only if
+    /// the player saves, and it never happens for a death the watcher could not see. This writes the
+    /// save itself, so it is permanent, and it is idempotent — one already marked is skipped.
+    /// </remarks>
+    public async Task<DeathEnforcementReport> EnforceDeathsAsync(CancellationToken ct = default) =>
+        NewDeathEnforcer().Apply(await RegisteredAsync(ct).ConfigureAwait(false));
+
+    private async Task<IReadOnlyList<PokemonEntry>> RegisteredAsync(CancellationToken ct) =>
+        runContext.Current is { } run
+            ? await pokemon.GetAllAsync(run.Id, ct).ConfigureAwait(false)
+            : [];
+
+    private SaveDeathEnforcer NewDeathEnforcer() =>
+        new(save, paths.SaveBackups, loggers.CreateLogger<SaveDeathEnforcer>());
+
     /// <summary>Works out which wonder-trade records can be closed, and writes nothing.</summary>
     public Task<TradedAwayReport> InspectTradedAsync(CancellationToken ct = default) =>
         runContext.Current is { } run

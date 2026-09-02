@@ -283,6 +283,46 @@
                 </StackPanel>
             </Border>
 
+            <!-- ================================================== HACER PERMANENTE LA MUERTE
+                 Lo del vigilante es una escritura en MEMORIA: sobrevive solo si el jugador guarda
+                 después, y no ocurre siquiera cuando la muerte no se llegó a ver. Esto escribe la
+                 partida, así que es definitivo, y es idempotente. -->
+            <Border Style="{StaticResource Inset}" Margin="0,12,0,0">
+                <StackPanel>
+                    <TextBlock Text="CONVERTIR A LOS CAÍDOS EN SHEDINJA" Style="{StaticResource PanelHeading}" />
+
+                    <TextBlock Style="{StaticResource Body}" Margin="0,9,0,0" TextWrapping="Wrap"
+                               Text="Todo Pokémon que la run cuenta como caído pasa a ser un Shedinja llamado MUERTO, nivel 1 y sin movimientos. Se escribe en la PARTIDA, así que es permanente y hace falta Azahar cerrado." />
+
+                    <TextBlock Style="{StaticResource Faint}" Margin="0,8,0,0" TextWrapping="Wrap"
+                               Text="Se puede repetir sin miedo: uno que ya esté marcado se salta. Lo suyo es pasarlo al terminar cada sesión, porque la transformación que hace la aplicación mientras juegas vive en memoria y se pierde si no guardas." />
+
+                    <Border Style="{StaticResource Well}" Margin="0,12,0,0" Padding="14,10">
+                        <TextBlock Text="{Binding ShedinjaSummary}" Style="{StaticResource Mono}" />
+                    </Border>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                        <Button Content="MIRAR CUÁNTOS HAY" Style="{StaticResource GhostButton}"
+                                Command="{Binding InspectDeathsCommand}" MinWidth="200" />
+                        <Button Content="CONVERTIRLOS" Style="{StaticResource PrimaryButton}"
+                                Command="{Binding EnforceDeathsCommand}" MinWidth="170"
+                                Margin="10,0,0,0" />
+                    </StackPanel>
+
+                    <TextBlock Text="{Binding ShedinjaStatus}" Margin="0,12,0,0" TextWrapping="Wrap">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource Body}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ShedinjaStatus}" Value="">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
         </StackPanel>
     </ScrollViewer>
 </UserControl>

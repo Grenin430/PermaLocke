@@ -247,16 +247,9 @@ public sealed class SaveRouletteWorld(
                 // qué destruyó deja un Pokémon que nadie puede identificar después (§59).
                 var who = $"{Name(pokemon)} (Nv.{pokemon.CurrentLevel}, {species.GetName(pokemon.Species)})";
 
-                var death = new DeathTransform();
-                pokemon.Species = (ushort)death.Species;
-                pokemon.Form = 0;
-                pokemon.Ability = death.Ability;
-                pokemon.CurrentLevel = (byte)death.Level;
-                pokemon.Move1 = pokemon.Move2 = pokemon.Move3 = pokemon.Move4 = 0;
-                pokemon.Move1_PP = pokemon.Move2_PP = pokemon.Move3_PP = pokemon.Move4_PP = 0;
-                pokemon.Move1_PPUps = pokemon.Move2_PPUps = pokemon.Move3_PPUps = pokemon.Move4_PPUps = 0;
-                pokemon.Nickname = death.Nickname;
-                pokemon.IsNicknamed = true;
+                // La MISMA marca que usa el resto de la run. Una segunda copia de "qué le pasa a
+                // un muerto" acabaría discrepando de esta.
+                DeathMark.Apply(pokemon);
 
                 return $"Muere {who}.";
             }
