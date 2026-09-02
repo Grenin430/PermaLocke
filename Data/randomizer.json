@@ -12,7 +12,7 @@
   "_randomizeTypes": "FALSE a peticion del usuario: los tipos se quedan como el cartucho. Un Latios sigue siendo Dragon/Psiquico.",
   "randomizeTypes": false,
   "shuffleBaseStats": false,
-  "randomizeAbilities": false,
+  "randomizeAbilities": true,
   "_randomizeEvolutions": "FALSE a peticion del usuario: si te toca un Rowlet salvaje, quieres acabar con un Decidueye. Las lineas evolutivas se quedan como el cartucho; todo lo demas sigue randomizado.",
   "randomizeEvolutions": false,
   "randomizeLearnsets": true,
