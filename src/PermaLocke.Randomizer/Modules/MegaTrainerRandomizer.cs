@@ -78,6 +78,37 @@ public sealed class MegaTrainerRandomizer(RomWorkspace workspace, RandomizerOpti
         return forms;
     }
 
+    /// <summary>
+    /// The mega species that may actually be handed out.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Two filters, and both earn their place. Banned legendaries stay banned — the list says «this
+    /// is never handed out», and a Mega Mewtwo in a mid-game battle is exactly what it is for.
+    /// </para>
+    /// <para>
+    /// And the <b>species ceiling</b>, which is not paperwork: the mega table is not indexed by
+    /// species alone. Measured on the expansion mod, it has <b>1330 entries for 1026 species</b>,
+    /// because the rows above the species count are alternate forms. Eight of its keys name nothing
+    /// at all. Written without this filter, a boss became «species 1315, form 4» — a Pokémon that
+    /// does not exist, in a file that saved without complaint.
+    /// </para>
+    /// <para>
+    /// It lives here, shared, because it was written twice: this module had it and the static
+    /// override did not, and the one that did not is the one that produced the ghost.
+    /// </para>
+    /// </remarks>
+    public static int[] Candidates(IReadOnlyDictionary<int, IReadOnlyList<int>> forms,
+        RandomizerOptions options, int gameMaxSpecies)
+    {
+        var banned = options.BannedSpecies.ToHashSet();
+
+        return [.. forms.Keys
+            .Where(species => species <= options.EffectiveMaxSpecies(gameMaxSpecies)
+                && !banned.Contains(species))
+            .Order()];
+    }
+
     public async Task<MegaTrainerResult> ApplyAsync(IRandomSource random, LayeredFsMod mod,
         CancellationToken ct = default)
     {
@@ -87,15 +118,7 @@ public sealed class MegaTrainerRandomizer(RomWorkspace workspace, RandomizerOpti
         }
 
         var forms = ReadForms(workspace.PathOf(GameFiles.MegaEvolution));
-        var banned = options.BannedSpecies.ToHashSet();
-
-        // Los legendarios prohibidos siguen prohibidos: la lista dice «esto no se reparte nunca», y
-        // un Mega Mewtwo de regalo en un combate de mitad de partida es exactamente lo que evita.
-        var candidates = forms.Keys
-            .Where(species => species <= options.EffectiveMaxSpecies(workspace.MaxSpecies)
-                && !banned.Contains(species))
-            .OrderBy(species => species)
-            .ToArray();
+        var candidates = Candidates(forms, options, workspace.MaxSpecies);
 
         if (candidates.Length == 0)
         {

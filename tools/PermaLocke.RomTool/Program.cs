@@ -59,6 +59,10 @@ switch (command)
     case "trainers":
         await TrainersAsync(args.Length > 1 ? ulong.Parse(args[1]) : 20260818);
         break;
+    case "estaticos-dump":
+        await EstaticosDumpAsync(args.Length > 1 && args[1] != "-" ? args[1] : null,
+            args.Length > 2 ? args[2] : null);
+        break;
     case "statics":
         await StaticsAsync(args.Length > 1 ? ulong.Parse(args[1]) : 20260818);
         break;
@@ -146,6 +150,9 @@ switch (command)
         break;
     case "importantes":
         await ImportantesAsync();
+        break;
+    case "megas-cuenta":
+        await MegasCuentaAsync();
         break;
     case "megas":
         await MegasAsync();
@@ -3156,5 +3163,82 @@ async Task EntrenadoresEvAsync()
         var className = row.Class < classNames.Length ? classNames[row.Class] : $"clase {row.Class}";
         Console.WriteLine($"    id {row.Id,4}  Nv{row.Level,3}  EV total {row.Total,4} "
             + $"(mayor {row.Best,3})  {className} {row.Name}");
+    }
+}
+
+// Vuelca la tabla de estaticos entera: indice, especie, forma, nivel y tipo. Es lo que hace falta
+// para senalar una entrada concreta -- el Ultra Necrozma del jefe, el Lunala que se atrapa- sin
+// adivinar cual es.
+async Task EstaticosDumpAsync(string? filter, string? generated = null)
+{
+    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work, baseLayer: baseLayer);
+    var names = workspace.Config.GetText(TextName.SpeciesNames);
+
+    var source = generated ?? workspace.PathOf(GameFiles.EncounterStatic);
+    Console.WriteLine($"leyendo {source}");
+    using var patcher = new GarcPatcher(source);
+
+    foreach (var layout in new[]
+    {
+        StaticEncounterTable.Gifts, StaticEncounterTable.Statics, StaticEncounterTable.Trades
+    })
+    {
+        var payload = patcher.Read(layout.Subfile);
+        var count = StaticEncounterTable.Count(payload, layout);
+
+        Console.WriteLine();
+        Console.WriteLine($"=== {layout.Name}: {count} entradas de {layout.Stride} bytes ===");
+
+        for (var i = 0; i < count; i++)
+        {
+            var species = StaticEncounterTable.GetSpecies(payload, layout, i);
+
+            var name = species > 0 && species < names.Length ? names[species] : "??? " + species;
+
+            if (species == 0)
+            {
+                continue;
+            }
+
+
+            if (species == 0 && filter is not null) continue;
+            if (filter is not null && !name.Contains(filter, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var form = StaticEncounterTable.GetForm(payload, layout, i);
+            var level = layout.LevelOffset is null
+                ? -1
+                : StaticEncounterTable.GetLevel(payload, layout, i);
+            var kind = layout == StaticEncounterTable.Statics
+                ? payload[(i * layout.Stride) + StaticEncounterTable.KindOffset]
+                : -1;
+
+            Console.WriteLine($"    [{i,3}] {name,-14} especie {species,4}  forma {form,2}"
+                + $"  nivel {level,3}  tipo {kind,2}");
+        }
+    }
+}
+
+// Cuantas entradas tiene la tabla de megas y hasta que numero llegan las que la tienen. Con el mod
+// de expansion instalado la cuenta no es la del cartucho, y suponerla escribe una especie que no
+// existe sin que nada falle.
+async Task MegasCuentaAsync()
+{
+    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work, baseLayer: baseLayer);
+    var names = workspace.Config.GetText(TextName.SpeciesNames);
+    var forms = MegaTrainerRandomizer.ReadForms(workspace.PathOf(GameFiles.MegaEvolution));
+
+    using var patcher = new GarcPatcher(workspace.PathOf(GameFiles.MegaEvolution));
+    Console.WriteLine($"la tabla de megas tiene {patcher.FileCount} subficheros");
+    Console.WriteLine($"nombres de especie disponibles: {names.Length}");
+    Console.WriteLine($"claves con mega: {forms.Count}, de {forms.Keys.Min()} a {forms.Keys.Max()}");
+    Console.WriteLine();
+
+    foreach (var key in forms.Keys.Order())
+    {
+        var name = key > 0 && key < names.Length ? names[key] : "??? FUERA DE LA LISTA";
+        Console.WriteLine($"    {key,5}  {name,-16} formas {string.Join(",", forms[key])}");
     }
 }

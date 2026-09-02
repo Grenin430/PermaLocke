@@ -120,6 +120,25 @@ public sealed record RandomizerOptions
     public int MegaTrainerMinimumLevel { get; init; } = 33;
 
     /// <summary>
+    /// Static encounters that get their own rule instead of the ordinary draw.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// They are addressed by <b>the species and form the cartridge has there</b>, not by the row's
+    /// index. An index is a number that means whatever is at it: if the table ever shifts, entry
+    /// 160 quietly becomes some other encounter and the rule lands on the wrong one without
+    /// failing. Species plus form says what it is looking for, so it can also say when it is not
+    /// there — and the randomizer stops rather than guessing.
+    /// </para>
+    /// <para>
+    /// The rules exist because two of these battles are not ordinary encounters: Ultra Necrozma is
+    /// the roof of the story and gets a mega, while the Necrozma and Lunala the player can actually
+    /// keep should be worth keeping, which is what the minimum total is for.
+    /// </para>
+    /// </remarks>
+    public IReadOnlyList<StaticOverride> StaticOverrides { get; init; } = [];
+
+    /// <summary>
     /// Items the ordinary Pokémon Center counters stop selling, and what they sell instead.
     /// </summary>
     /// <remarks>

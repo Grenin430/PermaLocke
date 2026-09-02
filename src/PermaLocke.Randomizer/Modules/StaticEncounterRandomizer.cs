@@ -54,7 +54,13 @@ public sealed class StaticEncounterRandomizer(RomWorkspace workspace, Randomizer
             {
                 ct.ThrowIfCancellationRequested();
                 var payload = patcher.Read(layout.Subfile);
-                Randomize(payload, layout, random, pool, untouchable, 0, ref replaced, ref kept);
+
+                var claimed = layout == StaticEncounterTable.Statics
+                    ? ApplyOverrides(payload, layout, random, pool, ref replaced)
+                    : [];
+
+                Randomize(payload, layout, random, pool, untouchable, 0, ref replaced, ref kept,
+                    claimed);
                 raised += Raise(payload, layout);
                 patcher.Write(layout.Subfile, payload);
             }
@@ -62,6 +68,86 @@ public sealed class StaticEncounterRandomizer(RomWorkspace workspace, Randomizer
 
         await VerifyAsync(path, untouchable, ct);
         return new StaticEncounterResult(replaced, kept, starters, raised, starterPool.Count);
+    }
+
+    /// <summary>
+    /// Applies the per-encounter rules, and returns the entries they claimed.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// It runs <b>before</b> the ordinary draw and hands back what it touched, so nothing gets
+    /// rolled twice: an entry that was made a mega and then re-rolled would end up an ordinary
+    /// species with a form index left over from somebody else, which is the sort of thing that
+    /// draws a Pokémon with no model.
+    /// </para>
+    /// <para>
+    /// An override that matches nothing <b>throws</b>. It is aimed at a species and a form the
+    /// cartridge is supposed to have; if it is not there, either the table moved or somebody typed
+    /// it wrong, and both of those are worth stopping for. Writing a world where the rule silently
+    /// did nothing is how you find out six hours into a run.
+    /// </para>
+    /// </remarks>
+    private HashSet<int> ApplyOverrides(byte[] payload, EncounterEntryLayout layout,
+        IRandomSource random, SpeciesPool pool, ref int replaced)
+    {
+        var claimed = new HashSet<int>();
+
+        if (options.StaticOverrides.Count == 0)
+        {
+            return claimed;
+        }
+
+        var megaForms = MegaTrainerRandomizer.ReadForms(workspace.PathOf(GameFiles.MegaEvolution));
+        var megas = MegaTrainerRandomizer.Candidates(megaForms, options, workspace.MaxSpecies);
+        var count = StaticEncounterTable.Count(payload, layout);
+
+        foreach (var rule in options.StaticOverrides)
+        {
+            var hits = Enumerable.Range(0, count)
+                .Where(i => StaticEncounterTable.GetSpecies(payload, layout, i) == rule.Species
+                            && StaticEncounterTable.GetForm(payload, layout, i) == rule.Form)
+                .ToArray();
+
+            if (hits.Length == 0)
+            {
+                throw new InvalidDataException(
+                    $"No hay ningún estático con la especie {rule.Species} y la forma {rule.Form} "
+                    + $"({rule.Note}). O la tabla ha cambiado o el número está mal, y en los dos "
+                    + "casos escribir un mundo donde la regla no hizo nada es peor que parar.");
+            }
+
+            foreach (var index in hits)
+            {
+                if (rule.Rule == StaticOverrideRule.Mega)
+                {
+                    if (megas.Length == 0)
+                    {
+                        throw new InvalidDataException(
+                            "No queda ninguna mega elegible: todas están en bannedSpecies.");
+                    }
+
+                    var species = megas[random.Next(megas.Length)];
+                    var forms = megaForms[species];
+                    var form = forms[random.Next(forms.Count)];
+
+                    StaticEncounterTable.SetSpecies(payload, layout, index, species, form);
+                }
+                else
+                {
+                    // Forma 0 y nada mas, que es lo que hace que nunca salga una mega por aqui.
+                    var strong = pool.Where(s => pool.BaseStatTotal(s) >= rule.MinimumBaseStatTotal,
+                        $"un total base de {rule.MinimumBaseStatTotal} o mas");
+
+                    StaticEncounterTable.SetSpecies(payload, layout, index,
+                        strong.Pick(random, rule.Species));
+                }
+
+                claimed.Add(index);
+                replaced++;
+            }
+        }
+
+        return claimed;
     }
 
     /// <summary>
@@ -125,10 +211,18 @@ public sealed class StaticEncounterRandomizer(RomWorkspace workspace, Randomizer
     }
 
     private static void Randomize(byte[] payload, EncounterEntryLayout layout, IRandomSource random,
-        SpeciesPool pool, HashSet<int> untouchable, int from, ref int replaced, ref int kept)
+        SpeciesPool pool, HashSet<int> untouchable, int from, ref int replaced, ref int kept,
+        HashSet<int>? claimed = null)
     {
         for (var i = from; i < StaticEncounterTable.Count(payload, layout); i++)
         {
+            // Lo que ya se llevo una regla propia no se vuelve a sortear: quedaria una especie
+            // corriente con el indice de forma de otra, que es como se dibuja un Pokemon sin modelo.
+            if (claimed is not null && claimed.Contains(i))
+            {
+                continue;
+            }
+
             var original = StaticEncounterTable.GetSpecies(payload, layout, i);
             if (original == 0)
             {

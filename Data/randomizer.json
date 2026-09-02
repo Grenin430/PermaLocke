@@ -92,6 +92,13 @@
   "_maxMove": "Techo de movimientos en los aprendizajes. CERO son todos los que declare el juego. Puesto en 729 -los del cartucho- porque randomizeLearnsets esta en true: de los 192 que anade el mod, 32 piden una rutina de combate que el cartucho no usa y que solo existiria en su code.bin, sin comprobar por nadie. Repartir un movimiento que no hace lo que dice mata un Pokemon en un Nuzlocke. El precio es que tambien quedan fuera los otros 160, que si funcionan: distinguirlos exige comparar rutina a rutina contra el cartucho al generar, y eso esta sin hacer. Ver docs/MOD-EXPANSION.md §6.",
   "maxMove": 729,
 
+  "_staticOverrides": "Estaticos con regla propia en vez del sorteo corriente. Se buscan por la ESPECIE Y LA FORMA que el cartucho tiene ahi, no por el numero de fila: una fila es un numero que significa lo que haya en el, y si la tabla se mueve la regla cae en otro encuentro sin fallar. Con especie y forma, si no esta, el randomizador para. Necrozma son CUATRO encuentros distintos y solo la forma dice cual: 0 normal, 1 Melena Crepuscular, 2 Alas del Alba, 3 ULTRA. Las formas 1 y 2 son los combates de la historia y se quedan con el sorteo normal.",
+  "staticOverrides": [
+    { "note": "Ultra Necrozma, el jefe de la Torre Megalo", "species": 800, "form": 3, "rule": "Mega" },
+    { "note": "Necrozma atrapable (Nv 65 y Nv 75)", "species": 800, "form": 0, "rule": "Strong", "minimumBaseStatTotal": 550 },
+    { "note": "Lunala del Altar, atrapable", "species": 792, "form": 0, "rule": "Strong", "minimumBaseStatTotal": 550 }
+  ],
+
   "_bannedSpecies": "Legendarios y singulares de la 1 a la 7. Quita ids de esta lista si quieres que salgan.",
   "bannedSpecies": [
     144, 145, 146, 150, 151,

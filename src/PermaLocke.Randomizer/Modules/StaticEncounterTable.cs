@@ -68,6 +68,23 @@ public static class StaticEncounterTable
     }
 
     /// <summary>
+    /// Writes the species <b>and</b> a form, for the one case where the form is the point.
+    /// </summary>
+    /// <remarks>
+    /// A mega is a form of its species and not a species of its own, so replacing a boss with «a
+    /// random mega» is species plus form and nothing else. Kept apart from the ordinary setter
+    /// because that one clears the form on purpose, and it must go on doing so: a form index that
+    /// was valid for the old species is not necessarily valid for the new one.
+    /// </remarks>
+    public static void SetSpecies(byte[] payload, EncounterEntryLayout layout, int index,
+        int species, int form)
+    {
+        var at = index * layout.Stride;
+        BitConverter.GetBytes((ushort)species).CopyTo(payload, at + layout.SpeciesOffset);
+        payload[at + layout.FormOffset] = (byte)form;
+    }
+
+    /// <summary>
     /// Byte that says what kind of encounter an entry is. Two means a <b>Totem</b>.
     /// </summary>
     /// <remarks>
