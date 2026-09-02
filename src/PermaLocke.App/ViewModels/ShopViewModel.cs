@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Collections.ObjectModel;
 using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -86,16 +87,52 @@ public sealed partial class ShopViewModel : SectionViewModel
     [RelayCommand]
     private void ShowMegaStones() => Show(mega: true);
 
+    /// <summary>What the player has typed in the box. Empty shows the whole counter.</summary>
+    /// <remarks>
+    /// It earns its place on the mega stone tab, which went from 47 items to 93 when the gen 8-9
+    /// expansion arrived: finding Dragoninite in that grid by scrolling is a chore. The battle
+    /// counter has eighteen and does not need it, but the box is on both because a search that
+    /// appears and disappears is worse than one that is always in the same place.
+    /// </remarks>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(NothingFound))]
+    private string _search = string.Empty;
+
+    /// <summary>True when the box has something in it and nothing matches.</summary>
+    public bool NothingFound => Search.Length > 0 && Visible.Count == 0;
+
+    partial void OnSearchChanged(string value) => Show(ShowingMegaStones);
+
+    [RelayCommand]
+    private void ClearSearch() => Search = string.Empty;
+
     private void Show(bool mega)
     {
         ShowingMegaStones = mega;
         Visible.Clear();
 
-        foreach (var card in Items.Where(card => IsMega(card) == mega))
+        foreach (var card in Items.Where(card => IsMega(card) == mega && Matches(card)))
         {
             Visible.Add(card);
         }
+
+        OnPropertyChanged(nameof(NothingFound));
     }
+
+    /// <summary>
+    /// Whether the card's name contains what was typed, ignoring case and accents.
+    /// </summary>
+    /// <remarks>
+    /// Accents are ignored on purpose and it is not politeness: the counter mixes the cartridge's
+    /// Spanish — «Poción», «Protección X» — with the mod's English names, which are the only ones
+    /// the mod publishes. Somebody typing "pocion" is not making a mistake, and a search that
+    /// answers nothing to that would look broken.
+    /// </remarks>
+    private bool Matches(ShopItemViewModel card) =>
+        Search.Length == 0
+        || CultureInfo.InvariantCulture.CompareInfo.IndexOf(
+            card.Item.Name, Search.Trim(),
+            CompareOptions.IgnoreCase | CompareOptions.IgnoreNonSpace) >= 0;
 
     [ObservableProperty]
     private int _balance;

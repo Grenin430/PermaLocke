@@ -227,10 +227,31 @@
                 </Button.Style>
             </Button>
 
+            <!-- El buscador, en los DOS mostradores. Con noventa y tres megapiedras, dar con
+                 Dragoninite pasando la rueda es una faena; el de combate tiene dieciocho y no lo
+                 necesita, pero una caja que aparece y desaparece es peor que una que siempre esta
+                 en el mismo sitio. -->
+            <TextBox Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}"
+                     Width="200" Margin="16,0,0,0" VerticalAlignment="Center"
+                     ToolTip="Escribe parte del nombre. No hacen falta tildes." />
+
+            <Button Content="✕" Command="{Binding ClearSearchCommand}" Padding="12,7"
+                    Margin="6,0,0,0" ToolTip="Quitar el filtro">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource GhostButton}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Search}" Value="">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+
             <!-- Lo que la pantalla no puede saber por ti: la piedra vale para UNA especie, y para
                  la forma final. Callarlo sería vender quinientos puntos de nada. -->
-            <TextBlock Style="{StaticResource Faint}" VerticalAlignment="Center"
-                       Margin="16,0,0,0" TextWrapping="Wrap" MaxWidth="520"
+            <TextBlock Style="{StaticResource Faint}" VerticalAlignment="Center" FontSize="11"
+                       Margin="16,0,0,0" TextWrapping="Wrap" MaxWidth="270"
                        Text="Cada piedra sirve para una sola especie, y para su forma FINAL: una Swampertita no hace nada en un Marshtomp. Y hace falta la Piedra Activadora en la mochila."
                        Visibility="{Binding ShowingMegaStones, Converter={StaticResource BoolToVisibility}}" />
         </StackPanel>
