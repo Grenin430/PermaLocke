@@ -17,6 +17,10 @@ public static class PersonalEntry7
     /// <summary>Base stats, in the order the cartridge stores them.</summary>
     public static readonly int[] StatOffsets = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05];
 
+    /// <summary>Experience curve: 0 medium fast, 1 erratic, 2 fluctuating, 3 medium slow,
+    /// 4 fast, 5 slow. Anchored on the real cartridge -- ver InstalledWorld.</summary>
+    private const int GrowthOffset = 0x15;
+
     private const int Type1Offset = 0x06;
     private const int Type2Offset = 0x07;
 
@@ -101,6 +105,25 @@ public static class PersonalEntry7
     /// </para>
     /// </remarks>
     /// <param name="packed">The concatenated table, which is the GARC's last subfile.</param>
+    /// <summary>Experience curve, one byte per species, indexed by species id.</summary>
+    /// <remarks>
+    /// A level is not stored anywhere: it is computed from experience, and which curve to use is a
+    /// property of the species. PKHeX's gen 7 table stops at 807, so for everything the expansion
+    /// mod adds it silently falls back to Medium Fast — which is not a missing value, it is a wrong
+    /// level. Index 0 is padding so the array can be indexed by species id directly.
+    /// </remarks>
+    public static byte[] GrowthRates(byte[] packed, int speciesCount)
+    {
+        var rates = new byte[speciesCount + 1];
+
+        for (var species = 1; species <= speciesCount; species++)
+        {
+            rates[species] = packed[(species * Size) + GrowthOffset];
+        }
+
+        return rates;
+    }
+
     public static int SpeciesCount(byte[] packed)
     {
         var rows = packed.Length / Size;

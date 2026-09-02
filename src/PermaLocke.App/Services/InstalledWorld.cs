@@ -39,7 +39,16 @@ public sealed class InstalledWorld(AzaharInstallation azahar, ILogger<InstalledW
     /// </summary>
     public void Apply(string appDirectory)
     {
-        var species = Read(appDirectory);
+        var (species, growth) = Read(appDirectory);
+
+        if (growth is not null)
+        {
+            // Las curvas van SIEMPRE que se pueda leer la tabla, aunque el techo de especies no
+            // cambie: es la tabla del juego que se está jugando, y manda sobre la de PKHeX.
+            WorldLimits.GrowthRates = growth;
+            logger.LogInformation("Mundo instalado: curvas de experiencia leídas para {Count} especies",
+                growth.Length - 1);
+        }
 
         if (species is null)
         {
@@ -60,7 +69,7 @@ public sealed class InstalledWorld(AzaharInstallation azahar, ILogger<InstalledW
             species.Value);
     }
 
-    private int? Read(string appDirectory)
+    private (int? Species, byte[]? Growth) Read(string appDirectory)
     {
         try
         {
@@ -70,18 +79,21 @@ public sealed class InstalledWorld(AzaharInstallation azahar, ILogger<InstalledW
 
             if (!File.Exists(path))
             {
-                return null;
+                return (null, null);
             }
 
             using var personal = new GarcPatcher(path);
-            return PersonalEntry7.SpeciesCount(personal.Read(personal.FileCount - 1));
+            var packed = personal.Read(personal.FileCount - 1);
+            var count = PersonalEntry7.SpeciesCount(packed);
+
+            return (count, PersonalEntry7.GrowthRates(packed, count));
         }
         catch (Exception ex)
         {
             // Nunca impide arrancar: un techo que no se ha podido leer se queda en el del cartucho,
             // que es el lado que no afloja ningún filtro.
             logger.LogWarning(ex, "No se pudo leer cuántas especies tiene el mundo instalado");
-            return null;
+            return (null, null);
         }
     }
 }

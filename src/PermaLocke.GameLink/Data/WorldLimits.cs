@@ -49,4 +49,35 @@ public static class WorldLimits
 
     /// <summary>True when the species could exist in this world at all.</summary>
     public static bool IsKnownSpecies(int species) => species > 0 && species <= MaxSpecies;
+
+    /// <summary>
+    /// Experience growth rate per species, straight out of the installed game's own table.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Empty by default, which means «ask PKHeX». It is filled in from the installed world's
+    /// personal file at startup, and it matters because a level is not stored: it is
+    /// <b>computed</b> from experience, and the curve to compute it with is a property of the
+    /// species. PKHeX's gen 7 table stops at 807, so for anything the expansion mod adds it falls
+    /// back to Medium Fast — and that is not an error message, it is a wrong number.
+    /// </para>
+    /// <para>
+    /// Measured on the real run, and it is exactly two levels: a Dragapult with 53593 experience.
+    /// That is 1.25 x 35³ to the unit, level 35 on the <b>Slow</b> curve, and the game's own
+    /// Stat_Level field said 35. PermaLocke read 37. With a cap of 34 it corrected a Pokémon by
+    /// three levels that was over by one, and wrote back the experience for «34» on the wrong
+    /// curve, which in the game is level 31.
+    /// </para>
+    /// </remarks>
+    public static IReadOnlyList<byte> GrowthRates { get; set; } = [];
+
+    /// <summary>
+    /// The growth curve for a species, or null when this world has not published its table.
+    /// </summary>
+    /// <remarks>
+    /// Null and not a default: guessing Medium Fast here is precisely the bug. A caller that gets
+    /// null has to fall back to PKHeX and knows it is doing so.
+    /// </remarks>
+    public static byte? GrowthOf(int species) =>
+        species > 0 && species < GrowthRates.Count ? GrowthRates[species] : null;
 }

@@ -79,7 +79,7 @@ public sealed class AzaharGameWriter(
             pokemon.Species = (ushort)transform.Species;
             pokemon.Form = 0;
             pokemon.Ability = transform.Ability;
-            pokemon.CurrentLevel = (byte)transform.Level;
+            Data.GameLevels.Set(pokemon, transform.Level);
 
             if (transform.ClearMoves)
             {
@@ -113,7 +113,7 @@ public sealed class AzaharGameWriter(
     public static bool NeedsCapping(PK7? slot, uint expectedPid, int cap) =>
         slot is { ChecksumValid: true }
         && slot.PID == expectedPid
-        && slot.CurrentLevel > cap;
+        && Data.GameLevels.Of(slot) > cap;
 
     /// <summary>
     /// Brings a Pokémon back to the level cap with no progress into the next level. This covers
@@ -137,13 +137,13 @@ public sealed class AzaharGameWriter(
             logger.LogDebug(
                 "0x{Address:X8}: el cap no lo toca (PID {Found}, esperado {Wanted:X8}, nivel {Level}, cap {Cap})",
                 slotAddress, current is null ? "ilegible" : current.PID.ToString("X8"),
-                expectedPid, current?.CurrentLevel, cap);
+                expectedPid, current is null ? null : Data.GameLevels.Of(current), cap);
 
             return MemoryWriteResult.Nothing;
         }
 
         var result = Modify(slotAddress, $"cap de nivel {cap}",
-            pokemon => pokemon.CurrentLevel = (byte)cap,
+            pokemon => Data.GameLevels.Set(pokemon, cap),
             partyStatsAreHere ? null : StoredSize);
 
         if (!result.Applied)
@@ -155,11 +155,11 @@ public sealed class AzaharGameWriter(
         // haya bajado. Por experiencia, que es lo único fiable en todas las estructuras.
         var after = Read(slotAddress);
 
-        if (after is null || after.CurrentLevel > cap)
+        if (after is null || Data.GameLevels.Of(after) > cap)
         {
             logger.LogWarning(
                 "0x{Address:X8}: los bytes del cap se escribieron pero el Pokémon sigue a nivel {Level}, "
-                + "cap {Cap}", slotAddress, after?.CurrentLevel, cap);
+                + "cap {Cap}", slotAddress, after is null ? null : Data.GameLevels.Of(after), cap);
 
             return new MemoryWriteResult(result.Written, 0);
         }
