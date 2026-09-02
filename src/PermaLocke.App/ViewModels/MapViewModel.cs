@@ -61,6 +61,10 @@ public sealed partial class MapZoneViewModel(int number, string name, string isl
     /// <summary>An unmarked zone is drawn hollow, so the map reads as what is left to do.</summary>
     public bool IsMarked => Outcome != ZoneOutcome.Free;
 
+    /// <summary>Faded because the legend is pointing at some other state right now.</summary>
+    [ObservableProperty]
+    private bool _isDimmed;
+
     partial void OnOutcomeChanged(ZoneOutcome value)
     {
         OnPropertyChanged(nameof(State));
@@ -90,7 +94,14 @@ public sealed partial class IslandViewModel(string name, IReadOnlyList<MapZoneVi
     /// <summary>Every zone on it accounted for, which is the thing worth seeing from the sidebar.</summary>
     public bool IsComplete => Count > 0 && SpentCount >= Count;
 
-    partial void OnSpentCountChanged(int value) => OnPropertyChanged(nameof(IsComplete));
+    /// <summary>How far along, for the fill behind the button.s text.</summary>
+    public double Progress => Count == 0 ? 0 : (double)SpentCount / Count;
+
+    partial void OnSpentCountChanged(int value)
+    {
+        OnPropertyChanged(nameof(IsComplete));
+        OnPropertyChanged(nameof(Progress));
+    }
 }
 
 /// <summary>
@@ -226,6 +237,15 @@ public sealed partial class MapViewModel : SectionViewModel
         foreach (var island in Islands)
         {
             island.IsSelected = ReferenceEquals(island, value);
+        }
+    }
+
+    /// <summary>Points the map at one state, dimming everything else. Null puts it all back.</summary>
+    public void Highlight(ZoneOutcome? outcome)
+    {
+        foreach (var zone in Islands.SelectMany(island => island.Zones))
+        {
+            zone.IsDimmed = outcome is not null && zone.Outcome != outcome;
         }
     }
 

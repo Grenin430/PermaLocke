@@ -1,9 +1,13 @@
 <UserControl x:Class="PermaLocke.App.Views.MapView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:svc="clr-namespace:PermaLocke.App.Services">
+             xmlns:svc="clr-namespace:PermaLocke.App.Services"
+             xmlns:conv="clr-namespace:PermaLocke.App.Converters">
 
     <UserControl.Resources>
+
+        <conv:FractionToStarConverter x:Key="FractionToStar" />
+
 
         <!-- Un marcador de zona. Los tres estados los decide el ViewModel en State, para no
              repartir la misma decisión entre tres disparadores copiados en cada sitio. -->
@@ -31,6 +35,7 @@
                                         ScaleY="{Binding DataContext.MarkerScale,
                                             RelativeSource={RelativeSource AncestorType=UserControl}}" />
                                     <ScaleTransform x:Name="Press" ScaleX="1" ScaleY="1" />
+                                    <ScaleTransform x:Name="Hover" ScaleX="1" ScaleY="1" />
                                 </TransformGroup>
                             </Grid.RenderTransform>
                             <!-- La onda: sale del marcador al pulsarlo y se va. Vive debajo de
@@ -43,8 +48,15 @@
                                 </Ellipse.RenderTransform>
                             </Ellipse>
 
+                            <!-- Sombra propia: convierte un circulo pintado en una chincheta
+                                 apoyada sobre el mapa. -->
                             <Ellipse x:Name="Pin" Fill="{TemplateBinding Background}"
-                                     Stroke="{TemplateBinding BorderBrush}" StrokeThickness="2" />
+                                     Stroke="{TemplateBinding BorderBrush}" StrokeThickness="2">
+                                <Ellipse.Effect>
+                                    <DropShadowEffect BlurRadius="6" ShadowDepth="1.5"
+                                                      Direction="270" Opacity="0.6" Color="Black" />
+                                </Ellipse.Effect>
+                            </Ellipse>
 
                             <TextBlock x:Name="Number" Text="{TemplateBinding Content}"
                                        HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -62,7 +74,42 @@
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="Pin" Property="StrokeThickness" Value="3" />
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Hover"
+                                                             Storyboard.TargetProperty="ScaleX"
+                                                             To="1.14" Duration="0:0:0.12" />
+                                            <DoubleAnimation Storyboard.TargetName="Hover"
+                                                             Storyboard.TargetProperty="ScaleY"
+                                                             To="1.14" Duration="0:0:0.12" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Hover"
+                                                             Storyboard.TargetProperty="ScaleX"
+                                                             To="1" Duration="0:0:0.14" />
+                                            <DoubleAnimation Storyboard.TargetName="Hover"
+                                                             Storyboard.TargetProperty="ScaleY"
+                                                             To="1" Duration="0:0:0.14" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
                             </Trigger>
+
+                            <!-- Marcada: el numero deja de importar y baja de tono, con lo que los
+                                 huecos que quedan cantan mas. -->
+                            <DataTrigger Binding="{Binding IsMarked}" Value="True">
+                                <Setter TargetName="Number" Property="Opacity" Value="0.7" />
+                            </DataTrigger>
+
+                            <!-- Atenuada porque la leyenda esta senalando otro estado. -->
+                            <DataTrigger Binding="{Binding IsDimmed}" Value="True">
+                                <Setter Property="Opacity" Value="0.18" />
+                            </DataTrigger>
 
                             <DataTrigger Binding="{Binding State}" Value="Died">
                                 <Setter TargetName="Cross" Property="Visibility" Value="Visible" />
@@ -165,13 +212,28 @@
                                     BorderBrush="{TemplateBinding BorderBrush}"
                                     BorderThickness="1" ClipToBounds="True">
                                 <Grid>
+                                    <!-- La barra de progreso, detras de todo: dos columnas de
+                                         estrella son la unica forma de dimensionar por proporcion
+                                         sin saber antes el ancho. Sustituye a la cifra suelta, que
+                                         decia lo mismo peor. -->
+                                    <Grid IsHitTestVisible="False">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="{Binding Progress,
+                                                Converter={StaticResource FractionToStar}}" />
+                                            <ColumnDefinition Width="{Binding Progress,
+                                                Converter={StaticResource FractionToStar},
+                                                ConverterParameter=resto}" />
+                                        </Grid.ColumnDefinitions>
+                                        <Rectangle Fill="{StaticResource ZoneDoneFillBrush}" />
+                                    </Grid>
+
                                     <!-- El brillo que recorre la isla elegida. Va dentro del borde
                                          recortado, asi que barre el boton y no se sale. -->
                                     <Rectangle x:Name="Sheen" Opacity="0" IsHitTestVisible="False">
                                         <Rectangle.Fill>
                                             <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
                                                 <GradientStop Color="Transparent" Offset="0" />
-                                                <GradientStop Color="#33FFFFFF" Offset="0.5" />
+                                                <GradientStop Color="{StaticResource SheenColor}" Offset="0.5" />
                                                 <GradientStop Color="Transparent" Offset="1" />
                                                 <LinearGradientBrush.Transform>
                                                     <TranslateTransform x:Name="SheenSlide" X="-260" />
@@ -312,6 +374,19 @@
                             <!-- La isla necesita suelo. Recortada sobre un panel liso flota, y por
                                  eso se lee pequena aunque ocupe su hueco: no hay nada que diga
                                  donde acaba el mapa y empieza la aplicacion. -->
+                            <!-- Dos copias de la misma imagen: la de atras con un halo claro que
+                                 despega la isla del fondo, la de delante con su sombra. Un elemento
+                                 solo admite UN efecto, y hacian falta los dos. La fuente es la
+                                 misma, asi que no se decodifica dos veces. -->
+                            <Image Source="{Binding IslandImage}" Stretch="None"
+                                   IsHitTestVisible="False">
+                                <Image.Effect>
+                                    <DropShadowEffect BlurRadius="34" ShadowDepth="0"
+                                                      Opacity="0.5"
+                                                      Color="{StaticResource IslandHaloColor}" />
+                                </Image.Effect>
+                            </Image>
+
                             <Image Source="{Binding IslandImage}" Stretch="None">
                                 <Image.Effect>
                                     <DropShadowEffect BlurRadius="26" ShadowDepth="0"
@@ -330,7 +405,7 @@
                                         <Setter Property="HorizontalOffset" Value="8" />
                                     </Style>
                                 </Canvas.Resources>
-                                <ItemsControl ItemsSource="{Binding SelectedIsland.Zones}"
+                                <ItemsControl x:Name="Markers" ItemsSource="{Binding SelectedIsland.Zones}"
                                               Loaded="OnMarkersLoaded">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
@@ -467,18 +542,6 @@
                                     CommandParameter="{Binding}">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
-                                    <!-- El color se ata al boton: Mono hereda de Body, que fija el
-                                         suyo, asi que sin esto la cuenta se quedaria gris cuando la
-                                         isla se pone verde. -->
-                                    <TextBlock Style="{StaticResource Mono}" FontSize="10.5"
-                                               VerticalAlignment="Center" Margin="8,0,0,0"
-                                               Opacity="0.75"
-                                               Foreground="{Binding Foreground,
-                                                   RelativeSource={RelativeSource AncestorType=Button}}">
-                                        <Run Text="{Binding SpentCount, Mode=OneWay}" />
-                                        <Run Text="/" />
-                                        <Run Text="{Binding Count, Mode=OneWay}" />
-                                    </TextBlock>
                                 </StackPanel>
                             </Button>
                         </DataTemplate>
@@ -502,8 +565,13 @@
                                 <Setter Property="BorderBrush" Value="{StaticResource ZoneRingBrush}" />
                                 <Setter Property="VerticalAlignment" Value="Center" />
                             </Style>
+                            <!-- Las filas responden al raton: iluminan sus zonas en el mapa. Es lo
+                                 unico de la pantalla que ademas contesta algo -donde he perdido
+                                 gente- que con sesenta y un marcadores no se ve de otra forma. -->
                             <Style x:Key="LegendRow" TargetType="DockPanel">
                                 <Setter Property="Margin" Value="0,0,0,10" />
+                                <Setter Property="Background" Value="Transparent" />
+                                <Setter Property="Cursor" Value="Hand" />
                             </Style>
                             <Style x:Key="LegendText" TargetType="TextBlock" BasedOn="{StaticResource Body}">
                                 <Setter Property="VerticalAlignment" Value="Center" />
@@ -521,7 +589,8 @@
                             </Style>
                         </ItemsControl.Resources>
 
-                        <DockPanel Style="{StaticResource LegendRow}">
+                        <DockPanel Style="{StaticResource LegendRow}" Tag="Free"
+                                   MouseEnter="OnLegendEnter" MouseLeave="OnLegendLeave">
                             <Border DockPanel.Dock="Left" Style="{StaticResource LegendDot}"
                                     Background="{StaticResource ZoneFreeBrush}" />
                             <TextBlock DockPanel.Dock="Right" Style="{StaticResource LegendCount}"
@@ -529,7 +598,8 @@
                             <TextBlock Style="{StaticResource LegendText}" Text="Sin marcar" />
                         </DockPanel>
 
-                        <DockPanel Style="{StaticResource LegendRow}">
+                        <DockPanel Style="{StaticResource LegendRow}" Tag="Caught"
+                                   MouseEnter="OnLegendEnter" MouseLeave="OnLegendLeave">
                             <Border DockPanel.Dock="Left" Style="{StaticResource LegendDot}"
                                     Background="{StaticResource ZoneCaughtBrush}" />
                             <TextBlock DockPanel.Dock="Right" Style="{StaticResource LegendCount}"
@@ -537,7 +607,8 @@
                             <TextBlock Style="{StaticResource LegendText}" Text="Atrapado en esta zona" />
                         </DockPanel>
 
-                        <DockPanel Style="{StaticResource LegendRow}">
+                        <DockPanel Style="{StaticResource LegendRow}" Tag="Died"
+                                   MouseEnter="OnLegendEnter" MouseLeave="OnLegendLeave">
                             <Border DockPanel.Dock="Left" Style="{StaticResource LegendDot}"
                                     Background="{StaticResource ZoneDiedBrush}" />
                             <TextBlock DockPanel.Dock="Right" Style="{StaticResource LegendCount}"
@@ -545,7 +616,8 @@
                             <TextBlock Style="{StaticResource LegendText}" Text="Primer pokémon matado" />
                         </DockPanel>
 
-                        <DockPanel Style="{StaticResource LegendRow}">
+                        <DockPanel Style="{StaticResource LegendRow}" Tag="Fled"
+                                   MouseEnter="OnLegendEnter" MouseLeave="OnLegendLeave">
                             <Border DockPanel.Dock="Left" Style="{StaticResource LegendDot}"
                                     Background="{StaticResource ZoneFledBrush}" />
                             <TextBlock DockPanel.Dock="Right" Style="{StaticResource LegendCount}"

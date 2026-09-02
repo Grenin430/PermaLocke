@@ -234,6 +234,13 @@
     <SolidColorBrush x:Key="ZoneFreeBrush" Color="#202020" Opacity="0.25" />
     <SolidColorBrush x:Key="ZoneRingBrush" Color="#FFFFFF" Opacity="0.88" />
 
+    <!-- El halo bajo la isla. Azul palido, del color del mar que la rodea en el propio dibujo. -->
+    <Color x:Key="IslandHaloColor">#FF7FD8FF</Color>
+
+    <!-- El brillo que recorre el boton de la isla elegida. Blanco muy velado: mas que esto deja
+         de leerse como un reflejo y pasa a leerse como una franja. -->
+    <Color x:Key="SheenColor">#33FFFFFF</Color>
+
     <SolidColorBrush x:Key="ZoneCaughtBrush" Color="{StaticResource ZoneCaughtColor}" />
     <SolidColorBrush x:Key="ZoneCaughtLightBrush" Color="{StaticResource ZoneCaughtLightColor}" />
     <SolidColorBrush x:Key="ZoneDiedBrush" Color="{StaticResource ZoneDiedColor}" />
