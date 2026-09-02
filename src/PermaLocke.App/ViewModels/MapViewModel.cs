@@ -82,6 +82,15 @@ public sealed partial class IslandViewModel(string name, IReadOnlyList<MapZoneVi
     /// <summary>How many of this island.s zones are marked, so each one carries its own score.</summary>
     [ObservableProperty]
     private int _spentCount;
+
+    /// <summary>Which island the map is showing, so its button can say so.</summary>
+    [ObservableProperty]
+    private bool _isSelected;
+
+    /// <summary>Every zone on it accounted for, which is the thing worth seeing from the sidebar.</summary>
+    public bool IsComplete => Count > 0 && SpentCount >= Count;
+
+    partial void OnSpentCountChanged(int value) => OnPropertyChanged(nameof(IsComplete));
 }
 
 /// <summary>
@@ -180,6 +189,13 @@ public sealed partial class MapViewModel : SectionViewModel
     {
         OnPropertyChanged(nameof(IslandImage));
         OnPropertyChanged(nameof(HasArt));
+
+        // La marca vive en cada isla y no en un disparador sobre el elemento, porque los botones
+        // no son una lista con seleccion: son cuatro botones sueltos y nadie mas sabe cual manda.
+        foreach (var island in Islands)
+        {
+            island.IsSelected = ReferenceEquals(island, value);
+        }
     }
 
     [RelayCommand]
@@ -227,6 +243,12 @@ public sealed partial class MapViewModel : SectionViewModel
 
         ZoneCount = Islands.Sum(island => island.Zones.Count);
         SelectedIsland ??= Islands.FirstOrDefault();
+
+        // La primera vez, el ??= no dispara el cambio porque no lo hay: se marca a mano.
+        foreach (var island in Islands)
+        {
+            island.IsSelected = ReferenceEquals(island, SelectedIsland);
+        }
         OnPropertyChanged(nameof(IslandImage));
         OnPropertyChanged(nameof(HasArt));
     }

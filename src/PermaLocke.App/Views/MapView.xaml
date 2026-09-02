@@ -70,10 +70,33 @@
             </Style.Triggers>
         </Style>
 
+        <!-- El boton de cada isla dice tres cosas: cual es, cuanto llevas, y si esta terminada.
+             La ultima en verde, el mismo verde que «atrapado», porque es la suma de lo que hay
+             en el mapa y no un color nuevo que aprenderse. -->
         <Style x:Key="IslandTab" TargetType="Button" BasedOn="{StaticResource GhostButton}">
             <Setter Property="Padding" Value="10,7" />
             <Setter Property="FontSize" Value="11.5" />
             <Setter Property="Margin" Value="0,0,5,5" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="MinWidth" Value="128" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                    <Setter Property="Background" Value="{StaticResource AccentDeepBrush}" />
+                    <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsComplete}" Value="True">
+                    <Setter Property="Background" Value="#2624A148" />
+                    <Setter Property="BorderBrush" Value="#24A148" />
+                    <Setter Property="Foreground" Value="#5BD97E" />
+                </DataTrigger>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding IsComplete}" Value="True" />
+                        <Condition Binding="{Binding IsSelected}" Value="True" />
+                    </MultiDataTrigger.Conditions>
+                    <Setter Property="Background" Value="#4D24A148" />
+                </MultiDataTrigger>
+            </Style.Triggers>
         </Style>
 
     </UserControl.Resources>
@@ -261,10 +284,26 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Button Content="{Binding Name}" Style="{StaticResource IslandTab}"
+                            <Button Style="{StaticResource IslandTab}"
                                     Command="{Binding DataContext.SelectIslandCommand,
                                         RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                    CommandParameter="{Binding}" />
+                                    CommandParameter="{Binding}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
+                                    <!-- El color se ata al boton: Mono hereda de Body, que fija el
+                                         suyo, asi que sin esto la cuenta se quedaria gris cuando la
+                                         isla se pone verde. -->
+                                    <TextBlock Style="{StaticResource Mono}" FontSize="10.5"
+                                               VerticalAlignment="Center" Margin="8,0,0,0"
+                                               Opacity="0.75"
+                                               Foreground="{Binding Foreground,
+                                                   RelativeSource={RelativeSource AncestorType=Button}}">
+                                        <Run Text="{Binding SpentCount, Mode=OneWay}" />
+                                        <Run Text="/" />
+                                        <Run Text="{Binding Count, Mode=OneWay}" />
+                                    </TextBlock>
+                                </StackPanel>
+                            </Button>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>

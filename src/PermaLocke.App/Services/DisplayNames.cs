@@ -57,7 +57,8 @@ public static class DisplayNames
         [GameEventType.RouletteSpun] = "Ruleta",
         [GameEventType.BattleModeChanged] = "Modo combate",
         [GameEventType.ZoneConfirmed] = "Zona gastada",
-        [GameEventType.ZoneCleared] = "Zona liberada"
+        [GameEventType.ZoneCleared] = "Zona liberada",
+        [GameEventType.ZoneOutcomeSet] = "Zona marcada"
     };
 
     private static readonly Dictionary<EncounterType, string> Encounters = new()
