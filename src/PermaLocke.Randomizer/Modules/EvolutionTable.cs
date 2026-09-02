@@ -175,4 +175,62 @@ public sealed class EvolutionTable
     /// A family of exactly three stages, seen from its first one: two evolutions ahead.
     /// </summary>
     public bool HasTwoEvolutionsAhead(int species) => IsBase(species) && Stages(species) == 3;
+
+    /// <summary>
+    /// Where this species' line ends: the last stage it can reach.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A species that does not evolve is already its own final form and comes back unchanged, so a
+    /// caller never has to ask whether it should call this.
+    /// </para>
+    /// <para>
+    /// A branching family has more than one ending — Eevee has eight — and this walks the
+    /// <b>deepest</b> branch, taking the lowest species id to break a tie. Deepest because that is
+    /// what «fully evolved» means when the branches differ in length (Wurmple), and lowest id
+    /// because the alternative is picking at random, and then the same trainer would come out
+    /// different every time the same seed was used. A randomizer that cannot be recomputed cannot
+    /// be audited.
+    /// </para>
+    /// <para>
+    /// Loops get the same treatment as in <see cref="Depth"/> and for the same reason: the vanilla
+    /// cartridge has none, but a randomized evolution table can, and this is exactly the code that
+    /// would recurse until the stack ran out.
+    /// </para>
+    /// </remarks>
+    public int FinalOf(int species)
+    {
+        if (species <= 0 || species >= _into.Length)
+        {
+            return species;
+        }
+
+        return Last(species, []);
+    }
+
+    private int Last(int species, HashSet<int> seen)
+    {
+        if (!seen.Add(species) || _into[species].Count == 0)
+        {
+            return species;
+        }
+
+        var best = species;
+        var bestDepth = 0;
+
+        foreach (var target in _into[species])
+        {
+            var end = Last(target, seen);
+            var depth = Stages(target);
+
+            if (depth > bestDepth || (depth == bestDepth && end < best))
+            {
+                best = end;
+                bestDepth = depth;
+            }
+        }
+
+        seen.Remove(species);
+        return best;
+    }
 }

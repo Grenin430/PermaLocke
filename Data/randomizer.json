@@ -7,6 +7,9 @@
   "fieldItems": true,
   "staticEncounters": true,
   "trainers": true,
+
+  "_fullyEvolvedFromLevel": "De la SEXTA PRUEBA en adelante, todos los entrenadores llevan evoluciones finales. El mod se genera una vez, antes de la primera prueba, asi que no puede consultar por donde vas: lo unico que la tabla de entrenadores lleva y que sigue el avance de la historia es el nivel que el cartucho le dio a cada equipo. De ahi que sea un nivel, y de ahi el 34, que es el cap de la sexta prueba. Se compara contra el nivel del CARTUCHO y nunca contra el que sube el rol: con un rol todo enemigo va un 20-27% por encima, asi que un entrenador puesto en el 30 llegaria a 36 y cruzaria la linea estando aun, en la historia, muy antes de la sexta. Un 0 lo apaga.",
+  "fullyEvolvedFromLevel": 34,
   "_pokemonData": "Cambia el juego mucho más que el resto: tipos, estadísticas, habilidades, evoluciones y aprendizajes. Se aplica el último, para que los demás módulos emparejen por las estadísticas del cartucho y no por unas ya randomizadas.",
   "pokemonData": true,
   "_randomizeTypes": "FALSE a peticion del usuario: los tipos se quedan como el cartucho. Un Latios sigue siendo Dragon/Psiquico.",

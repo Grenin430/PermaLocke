@@ -490,6 +490,16 @@ async Task TrainersAsync(ulong seed)
     var highest = 0;
     var highestTrainer = -1;
 
+    // La regla de la sexta prueba se comprueba releyendo lo generado, no fiandose del informe: el
+    // modulo cuenta lo que cree haber hecho y esto cuenta lo que hay en el fichero.
+    var evolutionPath = Path.Combine(Path.GetDirectoryName(generatedPath)!, "..", "..", "0", "1", "4");
+    var evolutions = File.Exists(Path.GetFullPath(evolutionPath))
+        ? EvolutionTable.Read(Path.GetFullPath(evolutionPath))
+        : null;
+    var threshold = options.FullyEvolvedFromLevel;
+    var unevolved = 0;
+    var checkedAbove = 0;
+
     for (var t = 0; t < modded.FileCount; t++)
     {
         var before = vanilla[t];
@@ -506,6 +516,19 @@ async Task TrainersAsync(ulong seed)
 
             var level = TrainerPokemonTable.GetLevel(after, s);
             if (level > highest) { highest = level; highestTrainer = t; }
+
+            // Contra el nivel del CARTUCHO, que es el mismo criterio con el que se genero.
+            if (evolutions is not null && threshold > 0
+                && TrainerPokemonTable.GetLevel(before, s) >= threshold)
+            {
+                checkedAbove++;
+                var species = TrainerPokemonTable.GetSpecies(after, s);
+
+                if (species > 0 && evolutions.FinalOf(species) != species)
+                {
+                    unevolved++;
+                }
+            }
         }
     }
 
@@ -515,6 +538,12 @@ async Task TrainersAsync(ulong seed)
     Console.WriteLine($"  objetos alterados: {itemsLost}   (debe ser 0)");
     Console.WriteLine($"  especies prohibidas: {offenders}   (debe ser 0)");
     Console.WriteLine($"  nivel más alto del juego: {highest} (entrenador {highestTrainer})");
+
+    if (evolutions is not null && threshold > 0)
+    {
+        Console.WriteLine($"  de nivel {threshold} en adelante (6ª prueba): {checkedAbove} Pokémon, "
+                          + $"{unevolved} SIN evolucionar del todo   (debe ser 0)");
+    }
 
     var sample = modded[highestTrainer];
     var sampleVanilla = vanilla[highestTrainer];

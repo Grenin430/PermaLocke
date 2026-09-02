@@ -180,6 +180,26 @@ public sealed record RandomizerOptions
     /// reason the role has to be chosen before anything is generated: two players on different
     /// roles do not get the same world, and changing role later means randomizing again.
     /// </remarks>
+    /// <summary>
+    /// From this cartridge level up, every trainer Pokémon comes fully evolved. Zero turns it off.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The rule the competition asked for is «after the sixth trial», and that is a point in the
+    /// story. The mod is generated once, before a single trial is done, so the story is not
+    /// something it can consult: the only thing the trainer table carries that tracks progress is
+    /// the level the cartridge gave each team. Hence a level, and hence <b>34</b>, which is the
+    /// sixth trial's own cap.
+    /// </para>
+    /// <para>
+    /// It is compared against the level the <b>cartridge</b> shipped, never the one the role raised.
+    /// A role puts every enemy 20-27% higher, so a trainer the cartridge placed at 30 arrives at 36
+    /// and would cross the line while still being, in the story, well before the sixth trial. The
+    /// threshold asks «when does this trainer appear», and only the original level answers that.
+    /// </para>
+    /// </remarks>
+    public int FullyEvolvedFromLevel { get; init; }
+
     public int EnemyLevelPercent { get; init; }
 
     /// <summary>Pokémon added to each important battle. Zero leaves the parties alone.</summary>

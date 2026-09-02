@@ -10,7 +10,8 @@ namespace PermaLocke.Randomizer.Modules;
 /// <param name="Pokemon">Individual trainer Pokémon replaced.</param>
 /// <param name="MovesCleared">Entries whose explicit moveset was handed back to the game.</param>
 /// <param name="LevelsRaised">Pokémon whose level the role moved.</param>
-public sealed record TrainerResult(int Trainers, int Pokemon, int MovesCleared, int LevelsRaised = 0);
+public sealed record TrainerResult(int Trainers, int Pokemon, int MovesCleared, int LevelsRaised = 0,
+    int FullyEvolved = 0);
 
 /// <summary>
 /// Replaces the species of every trainer Pokémon in <c>trpoke</c> (<c>a/1/0/7</c>), and raises
@@ -102,6 +103,14 @@ public sealed class TrainerRandomizer(RomWorkspace workspace, RandomizerOptions 
         var path = mod.Stage(GameFiles.TrainerPokemon);
         var untouchable = options.ProtectedSpecies.ToHashSet();
 
+        // La tabla de evoluciones se lee del MOD, no del cartucho, porque si las lineas evolutivas
+        // se han randomizado la final de cada especie es otra. Se abre una sola vez.
+        var evolutions = options.FullyEvolvedFromLevel > 0
+            ? EvolutionTable.Read(mod.Stage(GameFiles.Evolution))
+            : null;
+
+        var evolved = 0;
+
         var trainers = 0;
         var replaced = 0;
         var movesCleared = 0;
@@ -128,6 +137,10 @@ public sealed class TrainerRandomizer(RomWorkspace workspace, RandomizerOptions 
                 var changed = false;
                 for (var slot = 0; slot < count; slot++)
                 {
+                    // El nivel del CARTUCHO, guardado antes de que el rol lo suba: es lo que dice
+                    // en que momento de la historia aparece este entrenador.
+                    var storyLevel = TrainerPokemonTable.GetLevel(party, slot);
+
                     // El nivel lo sube el ROL, no la randomización, y se sube SIEMPRE: también en
                     // los Pokémon protegidos, porque un Cosmog al nivel del cartucho en un juego
                     // donde todo lo demás va un 20% por encima sería un regalo, no una protección.
@@ -150,7 +163,21 @@ public sealed class TrainerRandomizer(RomWorkspace workspace, RandomizerOptions 
                         continue;
                     }
 
-                    TrainerPokemonTable.SetSpecies(party, slot, here.Pick(random, original));
+                    var species = here.Pick(random, original);
+
+                    // De la sexta prueba en adelante, todos evolucionados del todo.
+                    if (evolutions is not null && storyLevel >= options.FullyEvolvedFromLevel)
+                    {
+                        var last = evolutions.FinalOf(species);
+
+                        if (last != species)
+                        {
+                            species = last;
+                            evolved++;
+                        }
+                    }
+
+                    TrainerPokemonTable.SetSpecies(party, slot, species);
                     replaced++;
                     changed = true;
 
@@ -173,7 +200,7 @@ public sealed class TrainerRandomizer(RomWorkspace workspace, RandomizerOptions 
         }
 
         await VerifyAsync(path, ct);
-        return new TrainerResult(trainers, replaced, movesCleared, levelsRaised);
+        return new TrainerResult(trainers, replaced, movesCleared, levelsRaised, evolved);
     }
 
     /// <summary>

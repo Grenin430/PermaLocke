@@ -123,7 +123,12 @@ public sealed class RandomizerService(RandomizerOptions options)
                 .ApplyAsync(random, pool, mod, ct);
             steps.Add(new RandomizerStep("Entrenadores",
                 $"{result.Pokemon} Pokémon de {result.Trainers} entrenadores, {result.MovesCleared} movesets devueltos al juego"
-                + (result.LevelsRaised > 0 ? $", {result.LevelsRaised} niveles subidos por el rol" : string.Empty)));
+                + (result.LevelsRaised > 0
+                    ? $", {result.LevelsRaised} niveles subidos por el rol"
+                    : string.Empty)
+                + (result.FullyEvolved > 0
+                    ? $", {result.FullyEvolved} evolucionados del todo (6ª prueba en adelante)"
+                    : string.Empty)));
 
             // Después de los entrenadores a propósito: el Pokémon añadido se copia de uno que ya
             // está en el equipo, así que hereda el nivel que el rol acaba de subir.
