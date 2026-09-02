@@ -2843,7 +2843,7 @@ void MapaIsla(string romfsPath, int around, int width, int height, string destin
     // Se busca tambien la ALTURA, y se miran los cuatro bordes. Mirando solo los laterales, Akala
     // salia con el rancho cortado por abajo: el marco estaba bien de ancho y mal de alto.
     var from = Math.Max(0, around - (width * 4));
-    var tiles = LoadTiles(romfsPath, from, width * (height + 8));
+    var tiles = LoadTiles(romfsPath, from, width * (height + 12));
 
     var best = -1;
     var bestHeight = height;
@@ -2852,7 +2852,7 @@ void MapaIsla(string romfsPath, int around, int width, int height, string destin
     // De mayor a menor: cuando varios marcos empatan a cero -- y empatan, porque cualquier recorte
     // que caiga en mar puntua igual de bien -- gana el mas grande, que es el que no deja fuera
     // ningun trozo de isla.
-    for (var h = height + 2; h >= height - 2; h--)
+    for (var h = height + 5; h >= height - 2; h--)
     {
         for (var start = 0; start + (width * h) <= tiles.Count; start++)
         {
@@ -2908,9 +2908,15 @@ void MapaIsla(string romfsPath, int around, int width, int height, string destin
         }
     }
 
+    // Y se recorta a la isla, con su margen. Un mapa del cartucho es en su mayor parte oceano
+    // vacio -- Poni ocupa menos de la mitad de su lamina-, asi que sin recortar la isla sale
+    // pequena y descentrada por mucho que el marco sea correcto.
+    var cropped = CropToLand(canvas, canvasWidth, height * tileHeight, 24,
+        out var croppedWidth, out var croppedHeight);
+
     var path = Path.Combine(destination,
         name is null ? $"isla_{first:000}_{width}x{height}.png" : $"{name}.png");
-    File.WriteAllBytes(path, PngImage.Encode(canvas, canvasWidth, height * tileHeight));
+    File.WriteAllBytes(path, PngImage.Encode(cropped, croppedWidth, croppedHeight));
     Console.WriteLine($"    {path}");
 }
 
@@ -2970,4 +2976,55 @@ void MapaCuatro(string romfsPath, string destination)
         Console.Write($"{name,-10} ");
         MapaIsla(romfsPath, around, 8, 12, destination, name);
     }
+}
+
+// Recorta una lamina a lo que no es oceano, dejando un margen. Es lo que centra la isla: el marco
+// del cartucho la deja en una esquina rodeada de mar, porque ese mar es donde el juego dibuja las
+// otras islas cuando te alejas.
+byte[] CropToLand(byte[] pixels, int width, int height, int margin, out int outWidth, out int outHeight)
+{
+    int minX = width, minY = height, maxX = -1, maxY = -1;
+
+    for (var y = 0; y < height; y++)
+    {
+        for (var x = 0; x < width; x++)
+        {
+            var at = ((y * width) + x) * 4;
+            int r = pixels[at], g = pixels[at + 1], b = pixels[at + 2];
+
+            if (b > 120 && b > r + 60 && b > g + 40)
+            {
+                continue;
+            }
+
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+        }
+    }
+
+    if (maxX < 0)
+    {
+        outWidth = width;
+        outHeight = height;
+        return pixels;
+    }
+
+    minX = Math.Max(0, minX - margin);
+    minY = Math.Max(0, minY - margin);
+    maxX = Math.Min(width - 1, maxX + margin);
+    maxY = Math.Min(height - 1, maxY + margin);
+
+    outWidth = maxX - minX + 1;
+    outHeight = maxY - minY + 1;
+    var output = new byte[outWidth * outHeight * 4];
+
+    for (var y = 0; y < outHeight; y++)
+    {
+        Array.Copy(pixels, (((minY + y) * width) + minX) * 4,
+            output, y * outWidth * 4, outWidth * 4);
+    }
+
+    return output;
 }
