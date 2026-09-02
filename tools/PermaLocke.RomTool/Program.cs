@@ -141,6 +141,9 @@ switch (command)
     case "item-iconos":
         ItemIcons(int.Parse(args[1]), int.Parse(args[2]));
         break;
+    case "entrenadores-ev":
+        await EntrenadoresEvAsync();
+        break;
     case "importantes":
         await ImportantesAsync();
         break;
@@ -3027,4 +3030,131 @@ byte[] CropToLand(byte[] pixels, int width, int height, int margin, out int outW
     }
 
     return output;
+}
+
+// A partir de que punto los entrenadores llevan los EV al maximo. La pregunta importa para un
+// Nuzlocke: un rival con 252 en dos estadisticas pega bastante mas de lo que su nivel sugiere, y
+// saber donde empieza eso dice donde hay que dejar de improvisar.
+//
+// El EV vive en los bytes 0x2 a 0x7 de cada entrada de trpoke, uno por estadistica.
+async Task EntrenadoresEvAsync()
+{
+    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work, baseLayer: baseLayer);
+    var classNames = workspace.Config.GetText(TextName.TrainerClasses);
+    var trainerNames = workspace.Config.GetText(TextName.TrainerNames);
+    var species = workspace.Config.GetText(TextName.SpeciesNames);
+
+    var parties = new GARC.LazyGARC(
+        await File.ReadAllBytesAsync(workspace.PathOf(GameFiles.TrainerPokemon)));
+    using var trainers = new GarcPatcher(workspace.PathOf(GameFiles.TrainerData));
+
+    var rows = new List<(int Id, int Class, string Name, int Level, int Total, int Best, int Count)>();
+
+    for (var trainer = 0; trainer < Math.Min(trainers.FileCount, parties.FileCount); trainer++)
+    {
+        var entry = trainers.Read(trainer);
+
+        if (entry.Length < 0x14)
+        {
+            continue;
+        }
+
+        var trainerClass = BitConverter.ToUInt16(entry, ExtraPokemonRandomizer.ClassOffset);
+        var count = entry[ExtraPokemonRandomizer.CountOffset];
+        var party = parties[trainer];
+
+        if (count == 0 || party.Length != count * TrainerPokemonTable.EntrySize)
+        {
+            continue;
+        }
+
+        var level = 0;
+        var total = 0;
+        var best = 0;
+
+        for (var i = 0; i < count; i++)
+        {
+            var at = i * TrainerPokemonTable.EntrySize;
+            var sum = 0;
+
+            for (var stat = 0; stat < 6; stat++)
+            {
+                var ev = party[at + 2 + stat];
+                sum += ev;
+                if (ev > best) best = ev;
+            }
+
+            if (sum > total) total = sum;
+            level = Math.Max(level, party[at + 0x0E]);
+        }
+
+        var name = trainer < trainerNames.Length ? trainerNames[trainer] : "?";
+        rows.Add((trainer, trainerClass, name, level, total, best, count));
+    }
+
+    var withEv = rows.Where(r => r.Total > 0).ToArray();
+
+    Console.WriteLine($"{rows.Count} entrenadores con equipo, {withEv.Length} con algun EV puesto");
+    Console.WriteLine();
+
+    Console.WriteLine("Reparto del EV mas alto de una sola estadistica:");
+    foreach (var group in rows.GroupBy(r => r.Best).OrderBy(g => g.Key))
+    {
+        Console.WriteLine($"    EV maximo {group.Key,3}: {group.Count(),4} entrenadores");
+    }
+
+    if (withEv.Length == 0)
+    {
+        Console.WriteLine();
+        Console.WriteLine("Ninguno lleva EV. En este cartucho no existe ese punto.");
+        return;
+    }
+
+    Console.WriteLine();
+    Console.WriteLine("Por nivel del entrenador, cuantos llevan EV:");
+
+    foreach (var band in rows.GroupBy(r => r.Level / 10).OrderBy(g => g.Key))
+    {
+        var some = band.Count(r => r.Total > 0);
+        Console.WriteLine($"    Nv {band.Key * 10,2}-{(band.Key * 10) + 9,2}: "
+            + $"{some,4} de {band.Count(),4} llevan EV");
+    }
+
+    Console.WriteLine();
+    Console.WriteLine("Por CLASE de entrenador, cuantos de los suyos llevan EV:");
+
+    foreach (var group in rows.GroupBy(r => r.Class)
+        .Select(g => new
+        {
+            Class = g.Key,
+            Total = g.Count(),
+            With = g.Count(r => r.Total > 0),
+            Level = g.Min(r => r.Level)
+        })
+        .Where(g => g.With > 0)
+        .OrderByDescending(g => (double)g.With / g.Total)
+        .ThenByDescending(g => g.Total))
+    {
+        var name = group.Class < classNames.Length ? classNames[group.Class] : $"clase {group.Class}";
+        Console.WriteLine($"    {name,-26} {group.With,3} de {group.Total,3}"
+            + $"   ({group.With * 100 / group.Total,3}%)  nivel minimo {group.Level}");
+    }
+
+    Console.WriteLine();
+    Console.WriteLine("Reparto total de EV por Pokemon (cuantas estadisticas a 252):");
+
+    foreach (var group in withEv.GroupBy(r => r.Total).OrderBy(g => g.Key))
+    {
+        Console.WriteLine($"    {group.Key,4} EV: {group.Count(),4} entrenadores");
+    }
+
+    Console.WriteLine();
+    Console.WriteLine("Los primeros veinte con EV, en orden de id (que es orden de juego):");
+
+    foreach (var row in withEv.OrderBy(r => r.Id).Take(20))
+    {
+        var className = row.Class < classNames.Length ? classNames[row.Class] : $"clase {row.Class}";
+        Console.WriteLine($"    id {row.Id,4}  Nv{row.Level,3}  EV total {row.Total,4} "
+            + $"(mayor {row.Best,3})  {className} {row.Name}");
+    }
 }
