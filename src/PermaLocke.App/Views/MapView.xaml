@@ -152,14 +152,48 @@
                     </TextBlock.Style>
                 </TextBlock>
 
+                <!-- Cuál está elegido tiene que verse: es el que se lleva el clic del mapa, y
+                     equivocarse de fila reparte la zona al Pokémon que no es. -->
                 <ListBox ItemsSource="{Binding Pending}" SelectedItem="{Binding Selected}"
-                         Style="{StaticResource Rail}" BorderThickness="0" Background="Transparent">
+                         BorderThickness="0" Background="Transparent"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="Margin" Value="0,0,0,4" />
+                            <Setter Property="Padding" Value="0" />
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListBoxItem">
+                                        <Border x:Name="Row" Background="{StaticResource PanelBrush}"
+                                                CornerRadius="6" BorderThickness="1" Padding="10,8"
+                                                BorderBrush="{StaticResource BorderSubtleBrush}">
+                                            <ContentPresenter />
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Row" Property="Background"
+                                                        Value="{StaticResource SurfaceHighBrush}" />
+                                            </Trigger>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter TargetName="Row" Property="Background"
+                                                        Value="{StaticResource AccentDeepBrush}" />
+                                                <Setter TargetName="Row" Property="BorderBrush"
+                                                        Value="{StaticResource AccentBrush}" />
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+
                     <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <StackPanel Margin="0,3">
-                                <TextBlock Text="{Binding Label}" FontSize="12" />
+                            <StackPanel>
+                                <TextBlock Text="{Binding Label}" FontSize="12" TextWrapping="Wrap" />
                                 <TextBlock Text="{Binding Where}" Style="{StaticResource Faint}"
-                                           FontSize="10.5" Margin="0,2,0,0" />
+                                           FontSize="10.5" Margin="0,2,0,0" TextWrapping="Wrap" />
                             </StackPanel>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
