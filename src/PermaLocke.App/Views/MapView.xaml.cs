@@ -1,7 +1,5 @@
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Media.Animation;
 using PermaLocke.App.ViewModels;
 
@@ -9,14 +7,6 @@ namespace PermaLocke.App.Views;
 
 public partial class MapView : UserControl
 {
-    /// <summary>How far the island slides away from the cursor, in pixels at each edge.</summary>
-    /// <remarks>
-    /// Small on purpose. WPF cannot tilt flat content without dragging in the 3D pipeline, so this
-    /// is a shift and not a tilt — and a shift that anybody notices stops reading as the map being
-    /// alive and starts reading as the map being loose.
-    /// </remarks>
-    private const double ParallaxReach = 7;
-
     public MapView()
     {
         InitializeComponent();
@@ -82,36 +72,5 @@ public partial class MapView : UserControl
                 });
             }
         }, System.Windows.Threading.DispatcherPriority.Loaded);
-    }
-
-    /// <summary>The island drifts a little away from the cursor, which makes it feel like a map.</summary>
-    private void OnMapHover(object sender, MouseEventArgs e)
-    {
-        if (Parallax is null || MapFrame.ActualWidth <= 0 || MapFrame.ActualHeight <= 0)
-        {
-            return;
-        }
-
-        var point = e.GetPosition(MapFrame);
-
-        Parallax.X = -((point.X / MapFrame.ActualWidth) - 0.5) * 2 * ParallaxReach;
-        Parallax.Y = -((point.Y / MapFrame.ActualHeight) - 0.5) * 2 * ParallaxReach;
-    }
-
-    /// <summary>And goes back to where it was when the cursor leaves, rather than staying askew.</summary>
-    private void OnMapLeft(object sender, MouseEventArgs e)
-    {
-        if (Parallax is null)
-        {
-            return;
-        }
-
-        var home = new DoubleAnimation(0, TimeSpan.FromMilliseconds(260))
-        {
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-        };
-
-        Parallax.BeginAnimation(TranslateTransform.XProperty, home);
-        Parallax.BeginAnimation(TranslateTransform.YProperty, home);
     }
 }

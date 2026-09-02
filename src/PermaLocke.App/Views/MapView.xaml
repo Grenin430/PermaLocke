@@ -306,12 +306,9 @@
                          lo que se mira de un vistazo es cuanto queda por gastar, y eso exige verlo
                          todo. Los marcadores van dentro, asi que escalan con el. -->
                     <Viewbox x:Name="MapFrame" Stretch="Uniform" StretchDirection="Both" Margin="6"
-                             SizeChanged="OnMapSized" MouseMove="OnMapHover" MouseLeave="OnMapLeft">
+                             SizeChanged="OnMapSized">
                         <Grid x:Name="MapSurface" HorizontalAlignment="Left" VerticalAlignment="Top"
                               SizeChanged="OnMapSized">
-                            <Grid.RenderTransform>
-                                <TranslateTransform x:Name="Parallax" />
-                            </Grid.RenderTransform>
                             <!-- La isla necesita suelo. Recortada sobre un panel liso flota, y por
                                  eso se lee pequena aunque ocupe su hueco: no hay nada que diga
                                  donde acaba el mapa y empieza la aplicacion. -->
