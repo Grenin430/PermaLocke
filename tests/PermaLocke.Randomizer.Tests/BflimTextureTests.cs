@@ -126,11 +126,30 @@ public class BflimTextureTests
     }
 
     /// <summary>A format the cartridge does not use must fail loudly, not draw something wrong.</summary>
+    /// <remarks>
+    /// This used to be <c>Etc1A4</c>, which is now decoded: it turned out to be the format of every
+    /// large image in the cartridge, the region map included. <c>HiLo8</c> takes its place because
+    /// nothing has ever needed it, so it is still the honest example of refusing rather than
+    /// guessing.
+    /// </remarks>
     [Fact]
     public void An_unsupported_pixel_format_is_refused()
     {
         var data = new byte[64];
-        var file = (byte[])[.. data, .. Footer(8, 8, BflimFormat.Etc1A4, 0, data.Length)];
+        var file = (byte[])[.. data, .. Footer(8, 8, BflimFormat.HiLo8, 0, data.Length)];
         Assert.Throws<NotSupportedException>(() => BflimTexture.Decode(file));
+    }
+
+    /// <summary>And ETC1A4 no longer is: it decodes to a full image.</summary>
+    [Fact]
+    public void The_compressed_format_of_the_big_artwork_now_decodes()
+    {
+        var data = new byte[16 * 4];
+        var file = (byte[])[.. data, .. Footer(8, 8, BflimFormat.Etc1A4, 0, data.Length)];
+
+        var texture = BflimTexture.Decode(file);
+
+        Assert.Equal(8, texture.Width);
+        Assert.Equal(8 * 8 * 4, texture.Pixels.Length);
     }
 }

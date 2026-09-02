@@ -99,6 +99,12 @@ public sealed class BflimTexture
     /// </summary>
     private static byte[] Untile(ReadOnlySpan<byte> data, int width, int height, BflimFormat format)
     {
+        // ETC1 is block compression, not pixels in an order, so it untiles itself.
+        if (format is BflimFormat.Etc1 or BflimFormat.Etc1A4)
+        {
+            return Etc1Texture.Decode(data, width, height, format == BflimFormat.Etc1A4);
+        }
+
         var bytesPerPixel = format switch
         {
             BflimFormat.Rgba5551 or BflimFormat.Rgba4444 or BflimFormat.Rgb565 or BflimFormat.La8 => 2,

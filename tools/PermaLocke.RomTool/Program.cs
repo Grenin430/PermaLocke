@@ -71,6 +71,17 @@ switch (command)
     case "zones":
         await ZonesAsync();
         break;
+    case "mapa-coser":
+        MapaCoser(args[1], int.Parse(args[2]), args.Length > 3 ? int.Parse(args[3]) : 0,
+            args.Length > 4 ? int.Parse(args[4]) : 1000);
+        break;
+    case "mapa-volcar":
+        MapaVolcar(args[1], args.Length > 2 ? int.Parse(args[2]) : 0,
+            args.Length > 3 ? int.Parse(args[3]) : 20);
+        break;
+    case "mapa-buscar":
+        MapaBuscar();
+        break;
     case "mundos":
         await MundosAsync();
         break;
@@ -1539,4 +1550,267 @@ void WriteIslands(Dictionary<string, string> byName, (string Token, string Islan
         }));
 
     Console.WriteLine($"escrito {path}");
+}
+
+
+// Barre el RomFS entero buscando el dibujo del mapa de Alola. La pregunta que contesta es si el
+// cartucho lo lleva y en que formato: si esta, el mapa de la aplicacion puede ser EL mapa, sacado
+// de la ROM del propio jugador como los sprites del §28, sin que viaje ningun asset de Nintendo.
+// Se buscan DIBUJOS GRANDES, que es lo que un mapa de region es y lo que un icono no.
+void MapaBuscar()
+{
+    var reader = new RomFsReader(RequireRom());
+
+    // Los cuatro gigantes son modelos, encuentros y sonido: ni uno es una lamina, y abrirlos
+    // cuesta minutos. Todo lo demas se mira.
+    var candidates = reader.Files.Values
+        .Where(f => f.Size is > 4096 and < 40_000_000)
+        .OrderBy(f => f.Path, StringComparer.Ordinal)
+        .ToArray();
+
+    Console.WriteLine($"{candidates.Length} ficheros por mirar (de {reader.Files.Count})");
+
+    var temp = Path.Combine(Path.GetTempPath(), "permalocke-mapa");
+    Directory.CreateDirectory(temp);
+
+    var found = new List<(string File, int Sub, int W, int H, string Format)>();
+    var opened = 0;
+
+    foreach (var candidate in candidates)
+    {
+        var extracted = Path.Combine(temp, candidate.Path.Replace('/', '_'));
+
+        try
+        {
+            if (!File.Exists(extracted) && !reader.ExtractTo(candidate.Path, extracted))
+            {
+                continue;
+            }
+
+            var bytes = File.ReadAllBytes(extracted);
+
+            if (bytes.Length < 8 || bytes[0] != 'C' || bytes[1] != 'R' || bytes[2] != 'A' || bytes[3] != 'G')
+            {
+                File.Delete(extracted);
+                continue;
+            }
+
+            var garc = new GARC.MemGARC(bytes);
+            opened++;
+
+            for (var i = 0; i < garc.FileCount; i++)
+            {
+                byte[] raw;
+
+                try
+                {
+                    raw = garc.GetFile(i);
+                }
+                catch
+                {
+                    continue;
+                }
+
+                if (raw.Length < 0x2C)
+                {
+                    continue;
+                }
+
+                var data = Decompress(raw);
+
+                if (data.Length < 0x28)
+                {
+                    continue;
+                }
+
+                var footer = data.AsSpan(data.Length - 0x28);
+
+                if (footer[0] != 'F' || footer[1] != 'L' || footer[2] != 'I' || footer[3] != 'M')
+                {
+                    continue;
+                }
+
+                int w = BitConverter.ToUInt16(footer[0x1C..]);
+                int h = BitConverter.ToUInt16(footer[0x1E..]);
+                var fmt = footer[0x22];
+
+                // Un mapa de region es grande. Los iconos del cartucho son 40x30 y 32x32.
+                if (w >= 64 && h >= 64)
+                {
+                    found.Add((candidate.Path, i, w, h, $"fmt{fmt}"));
+                }
+            }
+
+            File.Delete(extracted);
+        }
+        catch
+        {
+            try { File.Delete(extracted); } catch { }
+        }
+    }
+
+    Console.WriteLine($"{opened} GARC abiertos, {found.Count} laminas de 64x64 o mas");
+    Console.WriteLine();
+
+    foreach (var group in found.GroupBy(f => f.File).OrderByDescending(g => g.Count()))
+    {
+        var sizes = group.Select(f => $"{f.W}x{f.H}").Distinct().OrderBy(s => s, StringComparer.Ordinal);
+        Console.WriteLine($"    {group.Key,-10} {group.Count(),4} laminas   {string.Join(" ", sizes.Take(8))}");
+    }
+
+    static byte[] Decompress(byte[] data)
+    {
+        if (data.Length == 0 || data[0] != 0x11)
+        {
+            return data;
+        }
+
+        try
+        {
+            using var output = new MemoryStream();
+            LZSS.Decompress(new MemoryStream(data), data.Length, output);
+            return output.ToArray();
+        }
+        catch
+        {
+            return data;
+        }
+    }
+}
+
+// Vuelca a PNG las laminas de un GARC, para poder MIRARLAS. Un barrido dice que hay 1157 dibujos
+// de 512x256; solo abrirlos dice si son el mapa de Alola o el fondo de la Pokedex.
+void MapaVolcar(string romfsPath, int from, int count)
+{
+    var reader = new RomFsReader(RequireRom());
+    var temp = Path.Combine(Path.GetTempPath(), "permalocke-mapa");
+    Directory.CreateDirectory(temp);
+
+    var extracted = Path.Combine(temp, romfsPath.Replace('/', '_'));
+
+    if (!File.Exists(extracted) && !reader.ExtractTo(romfsPath, extracted))
+    {
+        Console.WriteLine($"No pude extraer {romfsPath}");
+        return;
+    }
+
+    var garc = new GARC.MemGARC(File.ReadAllBytes(extracted));
+    Console.WriteLine($"{romfsPath}: {garc.FileCount} subficheros");
+    var outputDir = Path.Combine(temp, "png", romfsPath.Replace('/', '_'));
+    Directory.CreateDirectory(outputDir);
+
+    var written = 0;
+
+    for (var i = from; i < Math.Min(garc.FileCount, from + count); i++)
+    {
+        try
+        {
+            var data = garc.GetFile(i);
+
+            if (data.Length > 0 && data[0] == 0x11)
+            {
+                using var output = new MemoryStream();
+                LZSS.Decompress(new MemoryStream(data), data.Length, output);
+                data = output.ToArray();
+            }
+
+            var texture = BflimTexture.Decode(data);
+
+            if (texture.Width < 64 || texture.Height < 64)
+            {
+                continue;
+            }
+
+            var png = Path.Combine(outputDir, $"{i:0000}_{texture.Width}x{texture.Height}.png");
+            File.WriteAllBytes(png, PngImage.Encode(texture.Pixels, texture.Width, texture.Height));
+            written++;
+        }
+        catch
+        {
+            // Un subfichero que no es una lamina no es un fallo: el GARC mezcla cosas.
+        }
+    }
+
+    Console.WriteLine($"{written} PNG en {outputDir}");
+}
+
+// Cose las laminas de un GARC en una sola imagen, en el orden en que estan. Es lo que dice si un
+// monton de piezas de 128x64 son un mapa troceado y con que anchura se recompone.
+void MapaCoser(string romfsPath, int columns, int from, int count)
+{
+    var reader = new RomFsReader(RequireRom());
+    var temp = Path.Combine(Path.GetTempPath(), "permalocke-mapa");
+    Directory.CreateDirectory(temp);
+
+    var extracted = Path.Combine(temp, romfsPath.Replace('/', '_'));
+
+    if (!File.Exists(extracted) && !reader.ExtractTo(romfsPath, extracted))
+    {
+        Console.WriteLine($"No pude extraer {romfsPath}");
+        return;
+    }
+
+    var garc = new GARC.MemGARC(File.ReadAllBytes(extracted));
+    var tiles = new List<BflimTexture>();
+
+    for (var i = from; i < Math.Min(garc.FileCount, from + count); i++)
+    {
+        try
+        {
+            var data = garc.GetFile(i);
+
+            if (data.Length > 0 && data[0] == 0x11)
+            {
+                using var output = new MemoryStream();
+                LZSS.Decompress(new MemoryStream(data), data.Length, output);
+                data = output.ToArray();
+            }
+
+            tiles.Add(BflimTexture.Decode(data));
+        }
+        catch
+        {
+            // Un subfichero que no es lamina no rompe el cosido: se salta.
+        }
+    }
+
+    if (tiles.Count == 0)
+    {
+        Console.WriteLine("Ninguna lamina que coser.");
+        return;
+    }
+
+    var tileWidth = tiles[0].Width;
+    var tileHeight = tiles[0].Height;
+    var rows = (tiles.Count + columns - 1) / columns;
+    var width = columns * tileWidth;
+    var height = rows * tileHeight;
+    var canvas = new byte[width * height * 4];
+
+    for (var t = 0; t < tiles.Count; t++)
+    {
+        var tile = tiles[t];
+
+        if (tile.Width != tileWidth || tile.Height != tileHeight)
+        {
+            continue;
+        }
+
+        var originX = (t % columns) * tileWidth;
+        var originY = (t / columns) * tileHeight;
+
+        for (var y = 0; y < tileHeight; y++)
+        {
+            for (var x = 0; x < tileWidth; x++)
+            {
+                var source = ((y * tileWidth) + x) * 4;
+                var target = (((originY + y) * width) + originX + x) * 4;
+                Array.Copy(tile.Pixels, source, canvas, target, 4);
+            }
+        }
+    }
+
+    var path = Path.Combine(temp, $"cosido_{romfsPath.Replace('/', '_')}_{columns}c_{from}.png");
+    File.WriteAllBytes(path, PngImage.Encode(canvas, width, height));
+    Console.WriteLine($"{tiles.Count} laminas cosidas en {width}x{height}: {path}");
 }
