@@ -64,7 +64,13 @@ public sealed class LevelCapSwitchTests
         }
     }
 
-    /// <summary>The file the app ships with says no, and that is the point of the test.</summary>
+    /// <summary>The file the app ships with asks for the correction, and says so out loud.</summary>
+    /// <remarks>
+    /// The default in code is off, because a correction that goes wrong changes somebody Pokémon.
+    /// The file that ships turns it on, because PermaLocke has the emulator link the reference does
+    /// not -- measured: no sockets anywhere in its binaries -- and the player wants the cap applied.
+    /// Two different questions, answered separately on purpose.
+    /// </remarks>
     [Fact]
     public void The_file_that_ships_leaves_it_off()
     {
@@ -76,6 +82,6 @@ public sealed class LevelCapSwitchTests
             return;
         }
 
-        Assert.False(LevelCapTable.Load(shipped).CorrectInMemory);
+        Assert.True(LevelCapTable.Load(shipped).CorrectInMemory);
     }
 }

@@ -372,11 +372,11 @@ public sealed class GameLinkMonitor(
             var who = string.Join(", ",
                 over.Select(m => $"{m.SpeciesName} (Nv.{m.Level})"));
 
-            CapProblem = over.Count == 1
-                ? $"{who} pasa del cap de nivel, que es {cap}. Bájalo tú: la competición no lo "
-                  + "corrige sola."
-                : $"Pasan del cap de nivel, que es {cap}: {who}. Bájalos tú: la competición no lo "
-                  + "corrige sola.";
+            CapProblem = caps.CorrectInMemory
+                ? $"{who} pasa del cap, que es {cap}. Se le está bajando: entra en un combate y "
+                  + "sal, que el juego no repinta el nivel hasta que recarga el equipo."
+                : $"{who} pasa del cap de nivel, que es {cap}. Bájalo tú: PermaLocke está puesto "
+                  + "para avisar y no para corregir.";
         }
 
         if (!caps.CorrectInMemory)
