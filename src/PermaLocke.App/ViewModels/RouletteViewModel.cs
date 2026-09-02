@@ -364,9 +364,9 @@ public sealed partial class RouletteViewModel : SectionViewModel
 
         await Task.Delay(TimeSpan.FromMilliseconds(350));
 
-        // La marca está arriba, así que la cuña ganadora tiene que acabar debajo de ella: se gira
-        // hacia atrás el centro de esa cuña, más unas cuantas vueltas enteras para que frene.
-        var target = (360 * Turns) - ((wheel.WinningIndex * 60) + 30);
+        // Dónde tiene que quedarse la rueda, en absoluto: la marca está arriba, así que el centro
+        // de la cuña ganadora -- que está a (índice*60 + 30) del origen -- tiene que acabar ahí.
+        var target = RestingAngle(wheel.WinningIndex);
 
         var stopped = new TaskCompletionSource();
         SpinRequested?.Invoke(this, new SpinTheWheel(Turns, target, SpinTime,
@@ -385,6 +385,18 @@ public sealed partial class RouletteViewModel : SectionViewModel
             entry.Won = true;
         }
     }
+
+    /// <summary>Where the wheel has to come to rest for wedge <paramref name="index"/> to be under
+    /// the marker, as an absolute angle in (0, 360].</summary>
+    /// <remarks>
+    /// A position and not a distance, which is the whole point. It used to hand the view the whole
+    /// sweep -- eleven turns minus the offset -- and the view added it to wherever the wheel
+    /// happened to be. The first spin of a session looked perfect because the wheel started at
+    /// zero; every one after it carried the previous spin's offset, so the second landed half a
+    /// wedge out, with the marker on a seam and the winning face a quarter turn away. Seen on the
+    /// real run: the card said «Mueren 3 Pokémon» and the arrow pointed between two other wedges.
+    /// </remarks>
+    public static double RestingAngle(int index) => 360 - ((index * 60) + 30);
 
     private void Reset()
     {

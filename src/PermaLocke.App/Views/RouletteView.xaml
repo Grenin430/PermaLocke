@@ -53,7 +53,7 @@
 
                     <!-- La marca. Apunta a la cuña que gana, y por eso la rueda gira hasta ponerla
                          justo debajo. -->
-                    <Path Grid.Row="0" Data="M 12,0 L 24,26 L 0,26 Z" HorizontalAlignment="Center"
+                    <Path Grid.Row="0" Data="M 0,0 L 24,0 L 12,26 Z" HorizontalAlignment="Center"
                           Fill="{StaticResource AccentBrightBrush}"
                           Stroke="{StaticResource BackgroundBrush}" StrokeThickness="2"
                           RenderTransformOrigin="0.5,0">

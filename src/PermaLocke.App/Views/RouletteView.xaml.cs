@@ -133,9 +133,11 @@ public partial class RouletteView : UserControl
     private void OnSpinRequested(object? sender, SpinTheWheel request)
     {
         // Se parte del ángulo en el que quedó la vez anterior, así que la rueda no da un salto
-        // antes de empezar a girar.
-        var from = WheelSpin.Angle % 360;
-        var to = from + request.FinalAngle;
+        // antes de empezar a girar; y se llega a una POSICIÓN, no se avanza una distancia. Sumar
+        // un recorrido fijo a donde estuviera hacía que cada tirada heredase el desvío de la
+        // anterior: la primera de la sesión caía bien y la segunda media cuña corrida.
+        var from = Wrap(WheelSpin.Angle);
+        var to = from + (360 * request.Turns) + Wrap(request.FinalAngle - from);
 
         var animation = new DoubleAnimation
         {
@@ -157,6 +159,10 @@ public partial class RouletteView : UserControl
         StartWatching();
         WheelSpin.BeginAnimation(RotateTransform.AngleProperty, animation);
     }
+
+    /// <summary>An angle brought into [0, 360). C#'s remainder keeps the sign of the dividend, so
+    /// a plain % leaves negatives negative and the sweep short by a turn.</summary>
+    private static double Wrap(double angle) => ((angle % 360) + 360) % 360;
 
     /// <summary>Watches the wheel go past so the marker can be knocked by each wedge.</summary>
     /// <remarks>
