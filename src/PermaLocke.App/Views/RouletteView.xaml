@@ -55,11 +55,28 @@
                          justo debajo. -->
                     <Path Grid.Row="0" Data="M 12,0 L 24,26 L 0,26 Z" HorizontalAlignment="Center"
                           Fill="{StaticResource AccentBrightBrush}"
-                          Stroke="{StaticResource BackgroundBrush}" StrokeThickness="2" />
+                          Stroke="{StaticResource BackgroundBrush}" StrokeThickness="2"
+                          RenderTransformOrigin="0.5,0">
+                        <!-- La marca golpea cada vez que pasa una cuna, como el diente de una
+                             ruleta de verdad. El giro cuelga de arriba y no del centro, que es
+                             donde estaria el eje si esto fuera una pieza. -->
+                        <Path.RenderTransform>
+                            <RotateTransform x:Name="MarkerKick" Angle="0" />
+                        </Path.RenderTransform>
+                    </Path>
 
                     <Grid Grid.Row="1" Width="460" Height="460">
-                        <Ellipse Width="456" Height="456" Fill="{StaticResource SurfaceBrush}"
-                                 Stroke="{StaticResource BorderStrongBrush}" StrokeThickness="2" />
+                        <!-- El aro exterior, con su sombra. Es lo que convierte el dibujo plano en
+                             un objeto apoyado: antes la rueda flotaba sobre el panel. -->
+                        <Ellipse Width="458" Height="458" Fill="{StaticResource WheelRimBrush}"
+                                 Stroke="{StaticResource WheelEdgeBrush}" StrokeThickness="2">
+                            <Ellipse.Effect>
+                                <DropShadowEffect BlurRadius="30" ShadowDepth="4" Direction="270"
+                                                  Opacity="0.6" Color="Black" />
+                            </Ellipse.Effect>
+                        </Ellipse>
+
+                        <Ellipse Width="430" Height="430" Fill="{StaticResource SurfaceBrush}" />
 
                         <Grid x:Name="Wheel" Width="460" Height="460" RenderTransformOrigin="0.5,0.5">
                             <Grid.RenderTransform>
@@ -75,13 +92,36 @@
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <Path Data="{Binding Wedge}" Fill="{Binding Colour}"
-                                              Stroke="{StaticResource BackgroundBrush}" StrokeThickness="2">
+                                              Stroke="{StaticResource WheelSeamBrush}" StrokeThickness="1.5">
                                             <Path.Style>
                                                 <Style TargetType="Path">
                                                     <Setter Property="Opacity" Value="0.42" />
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding Revealed}" Value="True">
                                                             <Setter Property="Opacity" Value="1" />
+                                                        </DataTrigger>
+
+                                                        <!-- La cuna que gana. IsWinner se calculaba
+                                                             y no lo usaba NADIE: tras veintiun
+                                                             segundos de espectaculo la rueda paraba
+                                                             sin senalar nada, y el resultado solo
+                                                             salia en la tarjeta de al lado. -->
+                                                        <DataTrigger Binding="{Binding IsWinner}" Value="True">
+                                                            <Setter Property="Stroke"
+                                                                    Value="{StaticResource OnAccentBrush}" />
+                                                            <Setter Property="StrokeThickness" Value="4" />
+                                                            <DataTrigger.EnterActions>
+                                                                <BeginStoryboard>
+                                                                    <Storyboard>
+                                                                        <DoubleAnimation
+                                                                            Storyboard.TargetProperty="Opacity"
+                                                                            From="0.25" To="1"
+                                                                            Duration="0:0:0.28"
+                                                                            AutoReverse="True"
+                                                                            RepeatBehavior="3x" />
+                                                                    </Storyboard>
+                                                                </BeginStoryboard>
+                                                            </DataTrigger.EnterActions>
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
@@ -114,9 +154,16 @@
                                         <Grid Width="128" Height="46" Margin="-64,-23,0,0"
                                               RenderTransformOrigin="0.5,0.5">
                                             <Grid.RenderTransform>
-                                                <RotateTransform Angle="{Binding Angle,
-                                                    ElementName=WheelSpin,
-                                                    Converter={StaticResource Negate}}" />
+                                                <TransformGroup>
+                                                    <!-- El volteo al desvelar. Escala en X desde
+                                                         cero, que es una carta girandose: el
+                                                         cambio de Â«?Â» al nombre ocurre con la
+                                                         etiqueta de canto y no se ve saltar. -->
+                                                    <ScaleTransform ScaleX="1" />
+                                                    <RotateTransform Angle="{Binding Angle,
+                                                        ElementName=WheelSpin,
+                                                        Converter={StaticResource Negate}}" />
+                                                </TransformGroup>
                                             </Grid.RenderTransform>
                                             <TextBlock Text="{Binding Text}" TextAlignment="Center"
                                                        TextWrapping="Wrap" MaxHeight="44"
@@ -125,18 +172,73 @@
                                                        Foreground="{StaticResource OnAccentBrush}"
                                                        VerticalAlignment="Center" />
                                         </Grid>
+
+                                        <DataTemplate.Triggers>
+                                            <DataTrigger Binding="{Binding Revealed}" Value="True">
+                                                <DataTrigger.EnterActions>
+                                                    <BeginStoryboard>
+                                                        <Storyboard>
+                                                            <!-- Se llega a la escala por su ruta y
+                                                                 no por un nombre: poner un x:Name
+                                                                 dentro de la plantilla le abre su
+                                                                 propio Ã¡mbito de nombres, y el
+                                                                 ElementName=WheelSpin de la
+                                                                 etiqueta de al lado se resuelve
+                                                                 ahÃ­. DejarÃ­a de contragirar, y
+                                                                 medio giro de cada vuelta volverÃ­a
+                                                                 a verse del revÃ©s. -->
+                                                            <DoubleAnimation
+                                                                Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[0].(ScaleTransform.ScaleX)"
+                                                                From="0" To="1" Duration="0:0:0.45">
+                                                                <DoubleAnimation.EasingFunction>
+                                                                    <BackEase Amplitude="0.4"
+                                                                              EasingMode="EaseOut" />
+                                                                </DoubleAnimation.EasingFunction>
+                                                            </DoubleAnimation>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </DataTrigger.EnterActions>
+                                            </DataTrigger>
+                                        </DataTemplate.Triggers>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
                         </Grid>
 
-                        <!-- El eje: la Poké Ball del propio cartucho, quieta mientras la rueda gira. -->
+                        <!-- Sombreado: un poco de luz arriba y sombra abajo, para que la rueda
+                             tenga bulto en vez de ser un circulo de colores planos. -->
+                        <Ellipse Width="430" Height="430" IsHitTestVisible="False">
+                            <Ellipse.Fill>
+                                <RadialGradientBrush GradientOrigin="0.35,0.25" Center="0.5,0.5"
+                                                     RadiusX="0.75" RadiusY="0.75">
+                                    <GradientStop Color="#26FFFFFF" Offset="0" />
+                                    <GradientStop Color="#00000000" Offset="0.55" />
+                                    <GradientStop Color="#59000000" Offset="1" />
+                                </RadialGradientBrush>
+                            </Ellipse.Fill>
+                        </Ellipse>
+
+                        <!-- La onda al parar, disparada desde el code-behind. -->
+                        <Ellipse x:Name="Landing" Width="200" Height="200" Opacity="0"
+                                 IsHitTestVisible="False" Fill="Transparent" StrokeThickness="4"
+                                 Stroke="{StaticResource OnAccentBrush}"
+                                 RenderTransformOrigin="0.5,0.5">
+                            <Ellipse.RenderTransform>
+                                <ScaleTransform x:Name="LandingScale" ScaleX="1" ScaleY="1" />
+                            </Ellipse.RenderTransform>
+                        </Ellipse>
+
+                        <!-- El eje: la Poké Ball del propio cartucho, que contragira despacio. -->
                         <Ellipse Width="112" Height="112" Fill="{StaticResource BackgroundBrush}"
                                  Stroke="{StaticResource BorderStrongBrush}" StrokeThickness="2"
                                  HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        <Image Source="{Binding Hub}" Width="76" Height="76"
-                               RenderOptions.BitmapScalingMode="NearestNeighbor"
-                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Image x:Name="Hub" Source="{Binding Hub}" Width="76" Height="76"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                               RenderTransformOrigin="0.5,0.5">
+                            <Image.RenderTransform>
+                                <RotateTransform x:Name="HubSpin" Angle="0" />
+                            </Image.RenderTransform>
+                        </Image>
                     </Grid>
                 </Grid>
             </DockPanel>
@@ -192,12 +294,24 @@
                                         Background="{StaticResource SurfaceBrush}">
                                     <Border.Style>
                                         <Style TargetType="Border">
-                                            <Setter Property="BorderThickness" Value="0,0,0,0" />
+                                            <!-- Las que no estÃ¡n en esta rueda se apagan: de las
+                                                 diecisÃ©is solo seis se juegan, y la lista no lo
+                                                 decÃ­a por ninguna parte. -->
+                                            <Setter Property="BorderThickness" Value="0" />
                                             <Setter Property="BorderBrush" Value="{StaticResource DangerBrush}" />
+                                            <Setter Property="Opacity" Value="0.45" />
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding Good}" Value="True">
                                                     <Setter Property="BorderBrush"
                                                             Value="{StaticResource SuccessBrush}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding OnTheWheel}" Value="True">
+                                                    <Setter Property="Opacity" Value="1" />
+                                                    <Setter Property="Background"
+                                                            Value="{StaticResource SurfaceHighBrush}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Won}" Value="True">
+                                                    <Setter Property="BorderThickness" Value="1.5" />
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>

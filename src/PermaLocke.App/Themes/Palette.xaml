@@ -241,6 +241,23 @@
          de leerse como un reflejo y pasa a leerse como una franja. -->
     <Color x:Key="SheenColor">#33FFFFFF</Color>
 
+    <!-- ================================================================ LA RULETA -->
+    <!-- Las seis cunas. Aqui y no en el ViewModel, que estaban escritas como cadenas y convertidas
+         con BrushConverter: colores fuera del tema y ademas en la capa que no deberia saber de
+         colores. Seis tonos que se distinguen de un vistazo y NO dicen nada de la cara que llevan:
+         un verde para lo bueno y un rojo para lo malo chafaria la tension media vuelta antes. -->
+    <SolidColorBrush x:Key="Wedge0" Color="#FFE0553F" />
+    <SolidColorBrush x:Key="Wedge1" Color="#FFE8A13A" />
+    <SolidColorBrush x:Key="Wedge2" Color="#FF57B45F" />
+    <SolidColorBrush x:Key="Wedge3" Color="#FF2FA5C0" />
+    <SolidColorBrush x:Key="Wedge4" Color="#FF6E63C6" />
+    <SolidColorBrush x:Key="Wedge5" Color="#FFC74E93" />
+
+    <!-- El aro y las juntas entre cunas: lo que convierte un dibujo plano en un objeto. -->
+    <SolidColorBrush x:Key="WheelRimBrush" Color="#FF14161B" />
+    <SolidColorBrush x:Key="WheelEdgeBrush" Color="#FFFFFFFF" Opacity="0.22" />
+    <SolidColorBrush x:Key="WheelSeamBrush" Color="#FF0E1014" Opacity="0.55" />
+
     <SolidColorBrush x:Key="ZoneCaughtBrush" Color="{StaticResource ZoneCaughtColor}" />
     <SolidColorBrush x:Key="ZoneCaughtLightBrush" Color="{StaticResource ZoneCaughtLightColor}" />
     <SolidColorBrush x:Key="ZoneDiedBrush" Color="{StaticResource ZoneDiedColor}" />

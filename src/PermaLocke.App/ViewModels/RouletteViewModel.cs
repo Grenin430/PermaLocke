@@ -81,6 +81,32 @@ public sealed partial class RouletteSlotViewModel(int index, Geometry wedge, Bru
     }
 }
 
+/// <summary>One of the sixteen faces in the side list, and whether this wheel drew it.</summary>
+/// <remarks>
+/// A wrapper and not the record itself because <see cref="OnTheWheel"/> changes while the screen is
+/// open, and a record cannot tell the list it did. What it buys is the answer to the question the
+/// list actually raises â Â«of all this, which six am I playing forÂ» â which was there in the wedges
+/// and nowhere in the list of everything.
+/// </remarks>
+public sealed partial class RouletteFaceViewModel(RouletteFace face) : ObservableObject
+{
+    public string Id { get; } = face.Id;
+
+    public string Name { get; } = face.Name;
+
+    public string Detail { get; } = face.Detail;
+
+    public bool Good { get; } = face.Good;
+
+    /// <summary>True while this face is one of the six drawn for the wheel on screen.</summary>
+    [ObservableProperty]
+    private bool _onTheWheel;
+
+    /// <summary>True for the one it landed on.</summary>
+    [ObservableProperty]
+    private bool _won;
+}
+
 /// <param name="Turns">How many whole turns before it settles, so the stop is not instant.</param>
 /// <param name="FinalAngle">Where the wheel ends up, with the winning wedge under the marker.</param>
 /// <param name="Stopped">Called when the wheel has really stopped, which is what starts the result.</param>
@@ -103,11 +129,21 @@ public sealed record SpinTheWheel(int Turns, double FinalAngle, TimeSpan Duratio
 /// </remarks>
 public sealed partial class RouletteViewModel : SectionViewModel
 {
-    /// <summary>One colour per wedge. Six that tell each other apart at a glance.</summary>
-    private static readonly string[] WedgeColours =
-    [
-        "#E0553F", "#E8A13A", "#57B45F", "#2FA5C0", "#6E63C6", "#C74E93"
-    ];
+    /// <summary>
+    /// One brush per wedge, taken from the theme.
+    /// </summary>
+    /// <remarks>
+    /// They used to be six hex strings right here, converted with a BrushConverter -- colours
+    /// outside the theme, in the layer that has the least business knowing about colours. The
+    /// fallback is grey rather than a guessed palette: a wheel with six grey wedges is obviously
+    /// missing its theme, while six invented colours look deliberate.
+    /// </remarks>
+    private static Brush WedgeBrush(int index)
+    {
+        var found = Application.Current?.TryFindResource($"Wedge{index}") as Brush;
+
+        return found ?? Brushes.Gray;
+    }
 
     private readonly RouletteService _roulette;
     private readonly IRunContext _runContext;
@@ -125,9 +161,8 @@ public sealed partial class RouletteViewModel : SectionViewModel
 
         for (var index = 0; index < RouletteService.FacesOnTheWheel; index++)
         {
-            var colour = (SolidColorBrush)new BrushConverter().ConvertFromString(WedgeColours[index])!;
-            colour.Freeze();
-            Slots.Add(new RouletteSlotViewModel(index, RouletteSlotViewModel.Slice(index), colour));
+            Slots.Add(new RouletteSlotViewModel(index, RouletteSlotViewModel.Slice(index),
+                WedgeBrush(index)));
         }
     }
 
@@ -143,7 +178,7 @@ public sealed partial class RouletteViewModel : SectionViewModel
     public ObservableCollection<RouletteSlotViewModel> Slots { get; } = [];
 
     /// <summary>Everything the wheel can land on, for the screen to list before anyone spins.</summary>
-    public ObservableCollection<RouletteFace> Pool { get; } = [];
+    public ObservableCollection<RouletteFaceViewModel> Pool { get; } = [];
 
     /// <summary>What came out, line by line: who died, what changed, what arrived.</summary>
     public ObservableCollection<string> Lines { get; } = [];
@@ -192,7 +227,7 @@ public sealed partial class RouletteViewModel : SectionViewModel
         Pool.Clear();
         foreach (var face in _roulette.Faces)
         {
-            Pool.Add(face);
+            Pool.Add(new RouletteFaceViewModel(face));
         }
 
         await RefreshAsync();
@@ -294,6 +329,13 @@ public sealed partial class RouletteViewModel : SectionViewModel
         {
             Slots[index].Text = wheel.Faces[index].Name;
             Slots[index].Revealed = true;
+
+            // La lista de las diecisÃ©is marca la que se acaba de desvelar, al mismo tiempo que la
+            // cuÃ±a: asÃ­ se ve cuÃ¡les de todas estÃ¡n en juego sin tener que ir leyendo la rueda.
+            foreach (var entry in Pool.Where(entry => entry.Id == wheel.Faces[index].Id))
+            {
+                entry.OnTheWheel = true;
+            }
             // Hay que poder LEER lo que va saliendo: son dieciseis caras posibles y seis en la
             // rueda, asi que verlas pasar sin tiempo de leerlas no es enterarse de nada.
             await Task.Delay(TimeSpan.FromMilliseconds(1500));
@@ -316,6 +358,11 @@ public sealed partial class RouletteViewModel : SectionViewModel
         await Task.WhenAny(stopped.Task, Task.Delay(SpinTime + TimeSpan.FromSeconds(3)));
 
         Slots[wheel.WinningIndex].IsWinner = true;
+
+        foreach (var entry in Pool.Where(entry => entry.Id == wheel.Winner.Id))
+        {
+            entry.Won = true;
+        }
     }
 
     private void Reset()
@@ -325,6 +372,12 @@ public sealed partial class RouletteViewModel : SectionViewModel
             slot.Text = "?";
             slot.Revealed = false;
             slot.IsWinner = false;
+        }
+
+        foreach (var entry in Pool)
+        {
+            entry.OnTheWheel = false;
+            entry.Won = false;
         }
     }
 }
