@@ -13,12 +13,25 @@
             <Setter Property="FontFamily" Value="{StaticResource DisplayFont}" />
             <Setter Property="FontSize" Value="11.5" />
             <Setter Property="Foreground" Value="{StaticResource OnAccentBrush}" />
-            <Setter Property="Background" Value="#40202020" />
-            <Setter Property="BorderBrush" Value="#E0FFFFFF" />
+            <Setter Property="Background" Value="{StaticResource ZoneFreeBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource ZoneRingBrush}" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Grid>
+                        <Grid RenderTransformOrigin="0.5,0.5">
+                            <Grid.RenderTransform>
+                                <TransformGroup>
+                                    <!-- Contra-escala: el Viewbox encoge el mapa entero y con el
+                                         los marcadores, dejando el numero en nueve pixeles. Un mapa
+                                         de verdad conserva el tamano de sus chinchetas al alejar. -->
+                                    <ScaleTransform
+                                        ScaleX="{Binding DataContext.MarkerScale,
+                                            RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        ScaleY="{Binding DataContext.MarkerScale,
+                                            RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                                    <ScaleTransform x:Name="Press" ScaleX="1" ScaleY="1" />
+                                </TransformGroup>
+                            </Grid.RenderTransform>
                             <Ellipse x:Name="Pin" Fill="{TemplateBinding Background}"
                                      Stroke="{TemplateBinding BorderBrush}" StrokeThickness="2" />
                             <TextBlock Text="{TemplateBinding Content}"
@@ -31,19 +44,43 @@
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="Pin" Property="StrokeThickness" Value="3" />
                             </Trigger>
+
+                            <!-- Un rebote al pulsar. Es el gesto que mas se repite en toda la
+                                 aplicacion -sesenta y una zonas por cuatro estados- y sin acuse de
+                                 recibo un doble clic sin querer no se distingue de uno solo. -->
+                            <EventTrigger RoutedEvent="Button.Click">
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Press"
+                                                         Storyboard.TargetProperty="ScaleX"
+                                                         From="0.72" To="1" Duration="0:0:0.22">
+                                            <DoubleAnimation.EasingFunction>
+                                                <BackEase EasingMode="EaseOut" Amplitude="0.9" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="Press"
+                                                         Storyboard.TargetProperty="ScaleY"
+                                                         From="0.72" To="1" Duration="0:0:0.22">
+                                            <DoubleAnimation.EasingFunction>
+                                                <BackEase EasingMode="EaseOut" Amplitude="0.9" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
             <Style.Triggers>
                 <DataTrigger Binding="{Binding State}" Value="Caught">
-                    <Setter Property="Background" Value="#E024A148" />
+                    <Setter Property="Background" Value="{StaticResource ZoneCaughtBrush}" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding State}" Value="Died">
-                    <Setter Property="Background" Value="#E0D93A3A" />
+                    <Setter Property="Background" Value="{StaticResource ZoneDiedBrush}" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding State}" Value="Fled">
-                    <Setter Property="Background" Value="#FF080808" />
+                    <Setter Property="Background" Value="{StaticResource ZoneFledBrush}" />
                 </DataTrigger>
             </Style.Triggers>
         </Style>
@@ -56,15 +93,15 @@
             <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
             <Style.Triggers>
                 <DataTrigger Binding="{Binding State}" Value="Caught">
-                    <Setter Property="Background" Value="#24A148" />
+                    <Setter Property="Background" Value="{StaticResource ZoneCaughtBrush}" />
                     <Setter Property="Foreground" Value="White" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding State}" Value="Died">
-                    <Setter Property="Background" Value="#D93A3A" />
+                    <Setter Property="Background" Value="{StaticResource ZoneDiedBrush}" />
                     <Setter Property="Foreground" Value="White" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding State}" Value="Fled">
-                    <Setter Property="Background" Value="#080808" />
+                    <Setter Property="Background" Value="{StaticResource ZoneFledBrush}" />
                     <Setter Property="Foreground" Value="White" />
                 </DataTrigger>
             </Style.Triggers>
@@ -85,16 +122,16 @@
                     <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding IsComplete}" Value="True">
-                    <Setter Property="Background" Value="#2624A148" />
-                    <Setter Property="BorderBrush" Value="#24A148" />
-                    <Setter Property="Foreground" Value="#5BD97E" />
+                    <Setter Property="Background" Value="{StaticResource ZoneDoneFillBrush}" />
+                    <Setter Property="BorderBrush" Value="{StaticResource ZoneCaughtBrush}" />
+                    <Setter Property="Foreground" Value="{StaticResource ZoneCaughtLightBrush}" />
                 </DataTrigger>
                 <MultiDataTrigger>
                     <MultiDataTrigger.Conditions>
                         <Condition Binding="{Binding IsComplete}" Value="True" />
                         <Condition Binding="{Binding IsSelected}" Value="True" />
                     </MultiDataTrigger.Conditions>
-                    <Setter Property="Background" Value="#4D24A148" />
+                    <Setter Property="Background" Value="{StaticResource ZoneDoneFillStrongBrush}" />
                 </MultiDataTrigger>
             </Style.Triggers>
         </Style>
@@ -133,15 +170,27 @@
                            Visibility="{Binding HasMap, Converter={StaticResource InverseBoolToVisibility}}"
                            Text="Falta Data/islas.json. Lo genera «RomTool mundos» leyendo del propio cartucho a qué isla pertenece cada zona." />
 
-                <!-- EL MAPA, con el arte del cartucho -->
-                <Grid Visibility="{Binding HasArt, Converter={StaticResource BoolToVisibility}}">
+                <!-- EL MAPA, con el arte del cartucho. Hundido: el escalon de gris es lo que
+                     separa el mapa del resto de la pantalla, sin una sola sombra de caja. -->
+                <Border Style="{StaticResource Well}" Padding="4"
+                        Visibility="{Binding HasArt, Converter={StaticResource BoolToVisibility}}">
                     <!-- La isla se escala para caber entera en el hueco que haya. Un Viewbox y no
                          un ScrollViewer porque un mapa con barras de desplazamiento no es un mapa:
                          lo que se mira de un vistazo es cuanto queda por gastar, y eso exige verlo
                          todo. Los marcadores van dentro, asi que escalan con el. -->
-                    <Viewbox Stretch="Uniform" StretchDirection="Both">
-                        <Grid x:Name="MapSurface" HorizontalAlignment="Left" VerticalAlignment="Top">
-                            <Image Source="{Binding IslandImage}" Stretch="None" />
+                    <Viewbox x:Name="MapFrame" Stretch="Uniform" StretchDirection="Both" Margin="6"
+                             SizeChanged="OnMapSized">
+                        <Grid x:Name="MapSurface" HorizontalAlignment="Left" VerticalAlignment="Top"
+                              SizeChanged="OnMapSized">
+                            <!-- La isla necesita suelo. Recortada sobre un panel liso flota, y por
+                                 eso se lee pequena aunque ocupe su hueco: no hay nada que diga
+                                 donde acaba el mapa y empieza la aplicacion. -->
+                            <Image Source="{Binding IslandImage}" Stretch="None">
+                                <Image.Effect>
+                                    <DropShadowEffect BlurRadius="26" ShadowDepth="0"
+                                                      Opacity="0.55" Color="Black" />
+                                </Image.Effect>
+                            </Image>
 
                             <!-- La capa de marcadores. El clic para colocar lo recoge el
                                  code-behind, que es lo unico que sabe donde se ha pinchado. -->
@@ -214,7 +263,7 @@
                             </Canvas>
                         </Grid>
                     </Viewbox>
-                </Grid>
+                </Border>
 
                 <!-- RESPALDO: sin las imagenes del cartucho, el tablero numerado de siempre. Que
                      falte un dibujo no puede costarle a nadie su seguimiento de zonas. -->
@@ -322,11 +371,10 @@
                                 <Setter Property="Height" Value="22" />
                                 <Setter Property="CornerRadius" Value="11" />
                                 <Setter Property="BorderThickness" Value="2" />
-                                <Setter Property="BorderBrush" Value="#E0FFFFFF" />
+                                <Setter Property="BorderBrush" Value="{StaticResource ZoneRingBrush}" />
                                 <Setter Property="VerticalAlignment" Value="Center" />
                             </Style>
-                            <Style x:Key="LegendRow" TargetType="StackPanel">
-                                <Setter Property="Orientation" Value="Horizontal" />
+                            <Style x:Key="LegendRow" TargetType="DockPanel">
                                 <Setter Property="Margin" Value="0,0,0,10" />
                             </Style>
                             <Style x:Key="LegendText" TargetType="TextBlock" BasedOn="{StaticResource Body}">
@@ -335,29 +383,48 @@
                                 <Setter Property="FontSize" Value="12" />
                                 <Setter Property="TextWrapping" Value="Wrap" />
                             </Style>
+                            <!-- La cifra a la derecha, en la fuente que se alinea en columna: son
+                                 cuatro numeros que se leen juntos, no cuatro frases. -->
+                            <Style x:Key="LegendCount" TargetType="TextBlock" BasedOn="{StaticResource Mono}">
+                                <Setter Property="VerticalAlignment" Value="Center" />
+                                <Setter Property="Margin" Value="8,0,0,0" />
+                                <Setter Property="MinWidth" Value="22" />
+                                <Setter Property="TextAlignment" Value="Right" />
+                            </Style>
                         </ItemsControl.Resources>
 
-                        <StackPanel Style="{StaticResource LegendRow}">
-                            <Border Style="{StaticResource LegendDot}" Background="#40202020" />
+                        <DockPanel Style="{StaticResource LegendRow}">
+                            <Border DockPanel.Dock="Left" Style="{StaticResource LegendDot}"
+                                    Background="{StaticResource ZoneFreeBrush}" />
+                            <TextBlock DockPanel.Dock="Right" Style="{StaticResource LegendCount}"
+                                       Text="{Binding FreeCount}" />
                             <TextBlock Style="{StaticResource LegendText}" Text="Sin marcar" />
-                        </StackPanel>
+                        </DockPanel>
 
-                        <StackPanel Style="{StaticResource LegendRow}">
-                            <Border Style="{StaticResource LegendDot}" Background="#E024A148" />
+                        <DockPanel Style="{StaticResource LegendRow}">
+                            <Border DockPanel.Dock="Left" Style="{StaticResource LegendDot}"
+                                    Background="{StaticResource ZoneCaughtBrush}" />
+                            <TextBlock DockPanel.Dock="Right" Style="{StaticResource LegendCount}"
+                                       Text="{Binding CaughtCount}" />
                             <TextBlock Style="{StaticResource LegendText}" Text="Atrapado en esta zona" />
-                        </StackPanel>
+                        </DockPanel>
 
-                        <StackPanel Style="{StaticResource LegendRow}">
-                            <Border Style="{StaticResource LegendDot}" Background="#E0D93A3A" />
+                        <DockPanel Style="{StaticResource LegendRow}">
+                            <Border DockPanel.Dock="Left" Style="{StaticResource LegendDot}"
+                                    Background="{StaticResource ZoneDiedBrush}" />
+                            <TextBlock DockPanel.Dock="Right" Style="{StaticResource LegendCount}"
+                                       Text="{Binding DiedCount}" />
                             <TextBlock Style="{StaticResource LegendText}" Text="Primer pokémon matado" />
-                        </StackPanel>
+                        </DockPanel>
 
-                        <StackPanel Style="{StaticResource LegendRow}">
-                            <Border Style="{StaticResource LegendDot}" Background="#FF080808" />
+                        <DockPanel Style="{StaticResource LegendRow}">
+                            <Border DockPanel.Dock="Left" Style="{StaticResource LegendDot}"
+                                    Background="{StaticResource ZoneFledBrush}" />
+                            <TextBlock DockPanel.Dock="Right" Style="{StaticResource LegendCount}"
+                                       Text="{Binding FledCount}" />
                             <TextBlock Style="{StaticResource LegendText}" Text="Primer encuentro: huida" />
-                        </StackPanel>
+                        </DockPanel>
                     </ItemsControl>
-
                     <TextBlock Style="{StaticResource Faint}" TextWrapping="Wrap" Margin="0,8,0,0"
                                Text="Pasa el ratón por un marcador para ver de qué zona es." />
                 </StackPanel>

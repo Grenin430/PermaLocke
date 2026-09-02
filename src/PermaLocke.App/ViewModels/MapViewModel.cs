@@ -176,6 +176,37 @@ public sealed partial class MapViewModel : SectionViewModel
     [ObservableProperty]
     private int _zoneCount;
 
+    /// <summary>Cuantas hay de cada estado, para que la leyenda cuente ademas de explicar.</summary>
+    /// <remarks>
+    /// Es la misma pasada que ya recorre las zonas para pintarlas, asi que no cuesta nada, y
+    /// convierte cuatro filas estaticas en como va la run de un vistazo.
+    /// </remarks>
+    [ObservableProperty]
+    private int _caughtCount;
+
+    [ObservableProperty]
+    private int _diedCount;
+
+    [ObservableProperty]
+    private int _fledCount;
+
+    [ObservableProperty]
+    private int _freeCount;
+
+    /// <summary>Lo que hay que deshacer del encogido del mapa para que un marcador no encoja.</summary>
+    /// <remarks>
+    /// La pone la vista, que es la unica que sabe a que escala acabo dibujandose el Viewbox. Vive
+    /// aqui porque es a esto a lo que se enlazan los marcadores, y se topa a 1,6 para que en una
+    /// ventana pequena no acaben pisandose unos a otros.
+    /// </remarks>
+    public double MarkerScale
+    {
+        get => _markerScale;
+        set => SetProperty(ref _markerScale, Math.Clamp(value, 1, 1.6));
+    }
+
+    private double _markerScale = 1;
+
     /// <summary>False when islas.json is missing, so the screen says so instead of drawing nothing.</summary>
     public bool HasMap => _map.Zones.Count > 0;
 
@@ -267,6 +298,7 @@ public sealed partial class MapViewModel : SectionViewModel
         {
             var outcomes = await _outcomes.GetAsync(run.Id);
             var count = 0;
+            int caught = 0, died = 0, fled = 0, free = 0;
 
             foreach (var island in Islands)
             {
@@ -275,6 +307,14 @@ public sealed partial class MapViewModel : SectionViewModel
                 foreach (var zone in island.Zones)
                 {
                     zone.Outcome = outcomes.GetValueOrDefault(zone.ZoneId);
+
+                    switch (zone.Outcome)
+                    {
+                        case ZoneOutcome.Caught: caught++; break;
+                        case ZoneOutcome.Died: died++; break;
+                        case ZoneOutcome.Fled: fled++; break;
+                        default: free++; break;
+                    }
 
                     if (zone.IsMarked)
                     {
@@ -287,6 +327,10 @@ public sealed partial class MapViewModel : SectionViewModel
             }
 
             SpentCount = count;
+            CaughtCount = caught;
+            DiedCount = died;
+            FledCount = fled;
+            FreeCount = free;
         }
         catch (Exception ex)
         {
