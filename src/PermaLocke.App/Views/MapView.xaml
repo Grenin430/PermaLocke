@@ -295,17 +295,30 @@
                                    Style="{StaticResource StatLabel}" Margin="0,0,0,4" />
                         <TextBlock DockPanel.Dock="Top" Style="{StaticResource Faint}" TextWrapping="Wrap"
                                    Margin="0,0,0,10"
-                                   Text="Elige una zona y pincha en el mapa dónde va. Se guarda sola, y solo hay que hacerlo una vez." />
+                                   Text="Elige una zona y pincha en el mapa dónde va. Se guarda sola. Las que llevan punto ya están puestas: elígela y vuelve a pinchar para moverla, o quítala." />
 
-                        <ListBox ItemsSource="{Binding Unplaced}" SelectedItem="{Binding Placing}"
+                        <Button DockPanel.Dock="Bottom" Content="QUITAR EL MARCADOR"
+                                Style="{StaticResource DangerButton}" Margin="0,8,0,0"
+                                Padding="12,8" FontSize="11.5"
+                                Command="{Binding ForgetMarkerCommand}"
+                                IsEnabled="{Binding CanForget}" />
+
+                        <ListBox ItemsSource="{Binding Placeable}" SelectedItem="{Binding Placing}"
                                  BorderThickness="0" Background="Transparent"
                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                  ItemContainerStyle="{StaticResource ZoneRow}">
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
-                                    <StackPanel>
+                                    <DockPanel>
+                                        <!-- La marca dice cuales ya estan puestas, que es lo que
+                                             permite volver a una para moverla o quitarla. -->
+                                        <TextBlock DockPanel.Dock="Right" Text="&#x25CF;"
+                                                   VerticalAlignment="Center" Margin="6,0,0,0"
+                                                   Foreground="{StaticResource AccentBrush}"
+                                                   Visibility="{Binding IsPlaced,
+                                                       Converter={StaticResource BoolToVisibility}}" />
                                         <TextBlock Text="{Binding Name}" FontSize="12" TextWrapping="Wrap" />
-                                    </StackPanel>
+                                    </DockPanel>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>

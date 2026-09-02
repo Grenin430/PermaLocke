@@ -226,18 +226,27 @@ public sealed partial class MapViewModel : SectionViewModel
     public BitmapSource? IslandImage =>
         SelectedIsland is null ? null : _art.Map(SelectedIsland.Name);
 
-    /// <summary>This island's zones that nobody has placed yet, which is the placing worklist.</summary>
-    public ObservableCollection<MapZoneViewModel> Unplaced { get; } = [];
+    /// <summary>This island.s zones, the ones still to place first.</summary>
+    /// <remarks>
+    /// Todas y no solo las que faltan, que es como estaba y era un callejon: una colocada por
+    /// error no aparecia en ninguna lista, asi que no habia forma de elegirla para quitarla.
+    /// </remarks>
+    public ObservableCollection<MapZoneViewModel> Placeable { get; } = [];
 
     public string MarkerCount => $"{_markers.Count} de {ZoneCount} colocadas";
+
+    /// <summary>Whether the chosen zone has a pin to take off.</summary>
+    public bool CanForget => Placing is { IsPlaced: true };
 
     partial void OnSelectedIslandChanged(IslandViewModel? value)
     {
         OnPropertyChanged(nameof(IslandImage));
         OnPropertyChanged(nameof(HasArt));
         Placing = null;
-        RefreshUnplaced();
+        RefreshPlaceable();
     }
+
+    partial void OnPlacingChanged(MapZoneViewModel? value) => OnPropertyChanged(nameof(CanForget));
 
     [RelayCommand]
     public void SelectIsland(IslandViewModel? island)
@@ -314,7 +323,7 @@ public sealed partial class MapViewModel : SectionViewModel
             }
 
             Selected ??= Pending.FirstOrDefault();
-            RefreshUnplaced();
+            RefreshPlaceable();
             OnPropertyChanged(nameof(HasPending));
             OnPropertyChanged(nameof(MarkerCount));
         }
@@ -408,15 +417,18 @@ public sealed partial class MapViewModel : SectionViewModel
         zone.IsPlaced = true;
 
         Say($"{zone.Name} colocada.", bad: false);
-        Placing = Unplaced.FirstOrDefault(candidate => candidate != zone);
-        RefreshUnplaced();
+        OnPropertyChanged(nameof(CanForget));
+        Placing = Placeable.FirstOrDefault(candidate => candidate != zone && !candidate.IsPlaced);
+        RefreshPlaceable();
         OnPropertyChanged(nameof(MarkerCount));
     }
 
     /// <summary>Takes a marker off the map. The zone keeps whatever it had; only the pin goes.</summary>
     [RelayCommand]
-    public async Task ForgetMarkerAsync(MapZoneViewModel? zone)
+    public async Task ForgetMarkerAsync()
     {
+        var zone = Placing;
+
         if (zone is null || !zone.IsPlaced)
         {
             return;
@@ -437,25 +449,28 @@ public sealed partial class MapViewModel : SectionViewModel
 
         zone.IsPlaced = false;
         Say($"{zone.Name} vuelve a estar sin colocar.", bad: false);
-        RefreshUnplaced();
+        RefreshPlaceable();
         OnPropertyChanged(nameof(MarkerCount));
+        OnPropertyChanged(nameof(CanForget));
     }
 
-    private void RefreshUnplaced()
+    private void RefreshPlaceable()
     {
-        Unplaced.Clear();
+        Placeable.Clear();
 
         if (SelectedIsland is null)
         {
             return;
         }
 
-        foreach (var zone in SelectedIsland.Zones.Where(zone => !zone.IsPlaced))
+        // Las que faltan primero: es lo que se esta haciendo, y las ya puestas solo se buscan
+        // cuando hay que corregir una.
+        foreach (var zone in SelectedIsland.Zones.OrderBy(zone => zone.IsPlaced).ThenBy(zone => zone.Number))
         {
-            Unplaced.Add(zone);
+            Placeable.Add(zone);
         }
 
-        Placing ??= Unplaced.FirstOrDefault();
+        Placing ??= Placeable.FirstOrDefault(zone => !zone.IsPlaced);
     }
 
     private async Task FreeAsync(Run run, MapZoneViewModel zone)

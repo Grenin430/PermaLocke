@@ -1,0 +1,20 @@
+{
+  "comentario": "Donde va el marcador de cada zona sobre el mapa de su isla, en fraccion de la imagen. Lo coloca una persona desde la aplicacion: el cartucho no lo dice en ninguna parte.",
+  "marcadores": {
+    "bahia-kalae": {
+      "isla": "Melemele",
+      "x": 0.6222791293213829,
+      "y": 0.51010101010101
+    },
+    "cementerio-de-hauoli": {
+      "isla": "Melemele",
+      "x": 0.5787451984635084,
+      "y": 0.5757575757575758
+    },
+    "ciudad-hauoli-paseo-maritimo": {
+      "isla": "Melemele",
+      "x": 0.5556978233034571,
+      "y": 0.702020202020202
+    }
+  }
+}
