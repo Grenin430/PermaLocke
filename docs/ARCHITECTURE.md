@@ -6291,3 +6291,27 @@ significaría dos cosas y una de ellas escribe en el historial de la run.
 
 Y si faltan las imágenes —alguien sin la ROM en su sitio— la pantalla cae al tablero numerado del
 §82, que funciona igual de bien. Que falte un dibujo no puede costarle a nadie su seguimiento.
+
+### 83 bis. «Aquí no se atrapa nada» es un estado, no una ausencia
+
+Terminada Melemele, el jugador dijo que las que había dejado sin colocar eran **zonas donde no se
+puede atrapar de ninguna forma**. Eso hacía falta decirlo en voz alta: sin ello, una zona sin
+marcador significa dos cosas —«no la he colocado todavía» y «aquí no hay nada»— y el contador de
+la pantalla incluye sitios que **nunca se pueden gastar**, así que no puede llegar a su propio tope.
+
+Ahora `marcadores.json` lleva `sinEncuentros`, y el total cuenta solo donde se puede atrapar. Un
+marcador y esa marca se excluyen: colocar un pin **es** decir que el sitio vale uno.
+
+**Y el cartucho tiene voz.** `encdata` sabe qué áreas llevan tabla de encuentros, así que al
+marcar la isla se contrasta y se avisa por su nombre de cualquier zona que el jugador esté
+descartando y que el cartucho diga que **sí** los tiene. No se le lleva la contraria —él ha jugado,
+y el cruce de nombres es imperfecto— pero una discrepancia merece un alto.
+
+La primera vez que se pasó ya encontró una: de las nueve que dejó sin colocar, el cartucho
+corrobora Pueblo Lilii, Senda Mahalo, Ruinas de la Guerra y Playa Big Wave, y **discrepa en Huerto
+de Bayas**, que tiene tabla.
+
+Por qué la respuesta puede ser «no lo sé»: el cartucho nombra corto —«Ciudad Hauoli»— y la run
+largo —«Ciudad Hauoli (Puerto)»—, así que un sublugar hereda del padre, y un padre con áreas de
+los dos tipos no puede contestar por su hijo. `JsonZoneEncounters.HasEncounters` devuelve null en
+vez de adivinar.

@@ -40,14 +40,27 @@ public sealed record ZoneMarker(
 public sealed class JsonZoneMarkers
 {
     private readonly Dictionary<string, ZoneMarker> _markers;
+    private readonly HashSet<string> _noEncounters;
 
-    private JsonZoneMarkers(Dictionary<string, ZoneMarker> markers) => _markers = markers;
+    private JsonZoneMarkers(Dictionary<string, ZoneMarker> markers, HashSet<string>? noEncounters = null)
+    {
+        _markers = markers;
+        _noEncounters = noEncounters ?? new HashSet<string>(StringComparer.Ordinal);
+    }
 
     public static JsonZoneMarkers Empty => new([]);
 
     public IReadOnlyDictionary<string, ZoneMarker> All => _markers;
 
     public int Count => _markers.Count;
+
+    /// <summary>Zones where nothing can be caught, so they never count as a spendable encounter.</summary>
+    /// <remarks>
+    /// Said out loud instead of left implicit. Without this, a zone with no marker means two
+    /// different things -- «no la he colocado todavia» y «aqui no se puede atrapar nada»- and the
+    /// total on screen counts places that can never be spent, so it can never reach its own top.
+    /// </remarks>
+    public IReadOnlySet<string> NoEncounters => _noEncounters;
 
     public static JsonZoneMarkers Load(string path)
     {
@@ -61,14 +74,18 @@ public sealed class JsonZoneMarkers
             using var stream = File.OpenRead(path);
             var file = JsonSerializer.Deserialize<MarkerFile>(stream);
 
-            if (file?.Markers is not { Count: > 0 } entries)
+            if (file is null)
             {
                 return Empty;
             }
 
+            var barren = new HashSet<string>(
+                (file.NoEncounters ?? []).Where(id => !string.IsNullOrWhiteSpace(id)),
+                StringComparer.Ordinal);
+
             var markers = new Dictionary<string, ZoneMarker>(StringComparer.Ordinal);
 
-            foreach (var (zone, marker) in entries)
+            foreach (var (zone, marker) in file.Markers ?? new Dictionary<string, ZoneMarker?>())
             {
                 // Una posicion fuera del cuadro no se corrige, se descarta: un marcador pegado al
                 // borde porque alguien edito el fichero a mano miente sobre donde esta esa zona.
@@ -81,7 +98,7 @@ public sealed class JsonZoneMarkers
                 markers[zone] = new ZoneMarker(marker.Island.Trim(), marker.X, marker.Y);
             }
 
-            return new JsonZoneMarkers(markers);
+            return new JsonZoneMarkers(markers, barren);
         }
         catch (JsonException)
         {
@@ -102,14 +119,49 @@ public sealed class JsonZoneMarkers
             [zoneId] = marker
         };
 
-        return new JsonZoneMarkers(markers);
+        // Colocar una zona la saca de las estériles: si le pones marcador es porque se caza.
+        var barren = new HashSet<string>(_noEncounters, StringComparer.Ordinal);
+        barren.Remove(zoneId);
+
+        return new JsonZoneMarkers(markers, barren);
     }
 
     public JsonZoneMarkers Without(string zoneId)
     {
         var markers = new Dictionary<string, ZoneMarker>(_markers, StringComparer.Ordinal);
         markers.Remove(zoneId);
-        return new JsonZoneMarkers(markers);
+        return new JsonZoneMarkers(markers, new HashSet<string>(_noEncounters, StringComparer.Ordinal));
+    }
+
+    /// <summary>Records that nothing can be caught in these zones.</summary>
+    /// <remarks>
+    /// Only zones with no marker: having placed one is itself the statement that the place is
+    /// worth a pin, and the two claims cannot both be true.
+    /// </remarks>
+    public JsonZoneMarkers WithNoEncounters(IEnumerable<string> zoneIds)
+    {
+        var barren = new HashSet<string>(_noEncounters, StringComparer.Ordinal);
+
+        foreach (var id in zoneIds)
+        {
+            if (!string.IsNullOrWhiteSpace(id) && !_markers.ContainsKey(id))
+            {
+                barren.Add(id);
+            }
+        }
+
+        return new JsonZoneMarkers(
+            new Dictionary<string, ZoneMarker>(_markers, StringComparer.Ordinal), barren);
+    }
+
+    /// <summary>Takes zones back out of the barren set, so they count again.</summary>
+    public JsonZoneMarkers WithEncounters(IEnumerable<string> zoneIds)
+    {
+        var barren = new HashSet<string>(_noEncounters, StringComparer.Ordinal);
+        barren.ExceptWith(zoneIds);
+
+        return new JsonZoneMarkers(
+            new Dictionary<string, ZoneMarker>(_markers, StringComparer.Ordinal), barren);
     }
 
     /// <summary>
@@ -124,9 +176,11 @@ public sealed class JsonZoneMarkers
     {
         var document = new MarkerFile(
             "Donde va el marcador de cada zona sobre el mapa de su isla, en fraccion de la imagen. "
-            + "Lo coloca una persona desde la aplicacion: el cartucho no lo dice en ninguna parte.",
+            + "Lo coloca una persona desde la aplicacion: el cartucho no lo dice en ninguna parte. "
+            + "sinEncuentros son las zonas donde no se puede atrapar nada, asi que no cuentan.",
             _markers.OrderBy(pair => pair.Key, StringComparer.Ordinal)
-                .ToDictionary(pair => pair.Key, pair => (ZoneMarker?)pair.Value));
+                .ToDictionary(pair => pair.Key, pair => (ZoneMarker?)pair.Value),
+            [.. _noEncounters.Order(StringComparer.Ordinal)]);
 
         var json = JsonSerializer.Serialize(document, new JsonSerializerOptions
         {
@@ -142,5 +196,6 @@ public sealed class JsonZoneMarkers
 
     private sealed record MarkerFile(
         [property: JsonPropertyName("comentario")] string? Comment,
-        [property: JsonPropertyName("marcadores")] IReadOnlyDictionary<string, ZoneMarker?>? Markers);
+        [property: JsonPropertyName("marcadores")] IReadOnlyDictionary<string, ZoneMarker?>? Markers,
+        [property: JsonPropertyName("sinEncuentros")] IReadOnlyList<string>? NoEncounters = null);
 }

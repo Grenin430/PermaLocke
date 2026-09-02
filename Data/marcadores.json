@@ -3,18 +3,88 @@
   "marcadores": {
     "bahia-kalae": {
       "isla": "Melemele",
-      "x": 0.6222791293213829,
-      "y": 0.51010101010101
+      "x": 0.614596670934699,
+      "y": 0.19696969696969696
     },
     "cementerio-de-hauoli": {
       "isla": "Melemele",
-      "x": 0.5787451984635084,
-      "y": 0.5757575757575758
+      "x": 0.28425096030729835,
+      "y": 0.3888888888888889
     },
     "ciudad-hauoli-paseo-maritimo": {
       "isla": "Melemele",
-      "x": 0.5556978233034571,
-      "y": 0.702020202020202
+      "x": 0.4532650448143406,
+      "y": 0.632996632996633
+    },
+    "ciudad-hauoli-zona-comercial": {
+      "isla": "Melemele",
+      "x": 0.28297055057618437,
+      "y": 0.5757575757575758
+    },
+    "colina-dequilate": {
+      "isla": "Melemele",
+      "x": 0.5710627400768246,
+      "y": 0.8400673400673401
+    },
+    "colina-dequilate-caldera-remota": {
+      "isla": "Melemele",
+      "x": 0.6875800256081946,
+      "y": 0.7356902356902357
+    },
+    "cueva-costera": {
+      "isla": "Melemele",
+      "x": 0.09475032010243278,
+      "y": 0.3164983164983165
+    },
+    "cueva-sotobosque-sala-de-la-prueba": {
+      "isla": "Melemele",
+      "x": 0.3585147247119078,
+      "y": 0.20875420875420875
+    },
+    "cueva-sotobosque-sala-del-dominante": {
+      "isla": "Melemele",
+      "x": 0.3866837387964149,
+      "y": 0.23063973063973064
+    },
+    "gruta-unemar": {
+      "isla": "Melemele",
+      "x": 0.44302176696542894,
+      "y": 0.20707070707070707
+    },
+    "jardines-de-melemele": {
+      "isla": "Melemele",
+      "x": 0.469910371318822,
+      "y": 0.18518518518518517
+    },
+    "mar-de-melemele": {
+      "isla": "Melemele",
+      "x": 0.7464788732394366,
+      "y": 0.8080808080808081
+    },
+    "ruta-1": {
+      "isla": "Melemele",
+      "x": 0.5749039692701664,
+      "y": 0.4562289562289562
+    },
+    "ruta-1-afueras-de-hauoli": {
+      "isla": "Melemele",
+      "x": 0.737516005121639,
+      "y": 0.6498316498316499
+    },
+    "ruta-1-escuela-entrenadores": {
+      "isla": "Melemele",
+      "x": 0.5953905249679897,
+      "y": 0.6094276094276094
+    },
+    "ruta-2": {
+      "isla": "Melemele",
+      "x": 0.176696542893726,
+      "y": 0.3434343434343434
+    },
+    "ruta-3": {
+      "isla": "Melemele",
+      "x": 0.43021766965428937,
+      "y": 0.11784511784511785
     }
   }
 }

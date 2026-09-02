@@ -42,6 +42,11 @@
                 <DataTrigger Binding="{Binding State}" Value="dead">
                     <Setter Property="Background" Value="{StaticResource DangerBrush}" />
                 </DataTrigger>
+                <!-- Sin encuentros: se ve, pero apagada. No es lo mismo que libre, y confundirlas
+                     haria pensar que queda algo por cazar donde no hay nada. -->
+                <DataTrigger Binding="{Binding State}" Value="barren">
+                    <Setter Property="Opacity" Value="0.35" />
+                </DataTrigger>
             </Style.Triggers>
         </Style>
 
@@ -59,6 +64,9 @@
                 <DataTrigger Binding="{Binding State}" Value="dead">
                     <Setter Property="Background" Value="{StaticResource DangerBrush}" />
                     <Setter Property="Foreground" Value="{StaticResource OnAccentBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding State}" Value="barren">
+                    <Setter Property="Opacity" Value="0.35" />
                 </DataTrigger>
             </Style.Triggers>
         </Style>
@@ -297,6 +305,12 @@
                                    Margin="0,0,0,10"
                                    Text="Elige una zona y pincha en el mapa dónde va. Se guarda sola. Las que llevan punto ya están puestas: elígela y vuelve a pinchar para moverla, o quítala." />
 
+                        <Button DockPanel.Dock="Bottom" Content="AQUÍ NO SE ATRAPA NADA"
+                                Style="{StaticResource SubtleButton}" Margin="0,6,0,0"
+                                Padding="12,8" FontSize="11"
+                                Command="{Binding MarkRestAsBarrenCommand}"
+                                ToolTip="Marca todas las que quedan sin colocar en esta isla como zonas donde no se puede atrapar nada, para que dejen de contar." />
+
                         <Button DockPanel.Dock="Bottom" Content="QUITAR EL MARCADOR"
                                 Style="{StaticResource DangerButton}" Margin="0,8,0,0"
                                 Padding="12,8" FontSize="11.5"
@@ -316,6 +330,11 @@
                                                    VerticalAlignment="Center" Margin="6,0,0,0"
                                                    Foreground="{StaticResource AccentBrush}"
                                                    Visibility="{Binding IsPlaced,
+                                                       Converter={StaticResource BoolToVisibility}}" />
+                                        <TextBlock DockPanel.Dock="Right" Text="sin encuentros"
+                                                   Style="{StaticResource Faint}" FontSize="10"
+                                                   VerticalAlignment="Center" Margin="6,0,0,0"
+                                                   Visibility="{Binding IsBarren,
                                                        Converter={StaticResource BoolToVisibility}}" />
                                         <TextBlock Text="{Binding Name}" FontSize="12" TextWrapping="Wrap" />
                                     </DockPanel>

@@ -136,4 +136,77 @@ public sealed class ZoneMarkerTests
 
         Assert.Equal(0, JsonZoneMarkers.Load(path).Count);
     }
+
+    /// <summary>Zones with no encounters survive the round trip and keep out of the count.</summary>
+    [Fact]
+    public async Task Zones_with_no_encounters_are_kept()
+    {
+        var path = Scratch();
+        var markers = JsonZoneMarkers.Empty
+            .With("ruta-1", new ZoneMarker("Melemele", 0.4, 0.4))
+            .WithNoEncounters(["pueblo-lilii", "senda-mahalo"]);
+
+        await markers.SaveAsync(path);
+        var back = JsonZoneMarkers.Load(path);
+
+        Assert.Equal(1, back.Count);
+        Assert.Contains("pueblo-lilii", back.NoEncounters);
+        Assert.Contains("senda-mahalo", back.NoEncounters);
+    }
+
+    /// <summary>A zone with a marker cannot also be one where nothing can be caught.</summary>
+    /// <remarks>
+    /// Having placed a pin is itself the claim that the place is worth one, so the two statements
+    /// contradict each other and the marker wins.
+    /// </remarks>
+    [Fact]
+    public void A_placed_zone_is_not_written_off()
+    {
+        var markers = JsonZoneMarkers.Empty
+            .With("ruta-1", new ZoneMarker("Melemele", 0.4, 0.4))
+            .WithNoEncounters(["ruta-1", "pueblo-lilii"]);
+
+        Assert.DoesNotContain("ruta-1", markers.NoEncounters);
+        Assert.Contains("pueblo-lilii", markers.NoEncounters);
+    }
+
+    /// <summary>And placing one later takes it back out.</summary>
+    [Fact]
+    public void Placing_a_marker_undoes_writing_the_zone_off()
+    {
+        var markers = JsonZoneMarkers.Empty
+            .WithNoEncounters(["huerto-de-bayas"])
+            .With("huerto-de-bayas", new ZoneMarker("Melemele", 0.5, 0.5));
+
+        Assert.Empty(markers.NoEncounters);
+        Assert.NotNull(markers.For("huerto-de-bayas"));
+    }
+
+    [Fact]
+    public async Task Writing_zones_off_can_be_undone()
+    {
+        var path = Scratch();
+        var markers = JsonZoneMarkers.Empty.WithNoEncounters(["a", "b", "c"]);
+
+        await markers.WithEncounters(["b"]).SaveAsync(path);
+        var back = JsonZoneMarkers.Load(path);
+
+        Assert.Equal(2, back.NoEncounters.Count);
+        Assert.DoesNotContain("b", back.NoEncounters);
+    }
+
+    /// <summary>A file written before this existed still loads, with nothing written off.</summary>
+    [Fact]
+    public void A_file_without_the_section_loads_with_nothing_written_off()
+    {
+        var path = Scratch();
+        File.WriteAllText(path, """
+            { "marcadores": { "ruta-1": { "isla": "Melemele", "x": 0.5, "y": 0.5 } } }
+            """);
+
+        var markers = JsonZoneMarkers.Load(path);
+
+        Assert.Equal(1, markers.Count);
+        Assert.Empty(markers.NoEncounters);
+    }
 }

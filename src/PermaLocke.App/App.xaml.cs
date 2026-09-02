@@ -85,6 +85,10 @@ public partial class App : Application
         // fichero, el mapa lo dice en vez de dibujar media Alola.
         collection.AddSingleton(_ =>
             JsonIslandMap.Load(Path.Combine(paths.Data, "islas.json")));
+
+        // Lo que el cartucho sabe de donde hay encuentros, para contrastar lo que diga el jugador.
+        collection.AddSingleton(_ =>
+            JsonZoneEncounters.Load(Path.Combine(paths.Data, "zones.json")));
         collection.AddSingleton<IItemDelivery, BagItemDelivery>();
         collection.AddSingleton<ShopService>();
         collection.AddSingleton<EvTrainingService>();
