@@ -1,6 +1,7 @@
 <UserControl x:Class="PermaLocke.App.Views.MapView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:svc="clr-namespace:PermaLocke.App.Services">
 
     <UserControl.Resources>
 
@@ -32,18 +33,46 @@
                                     <ScaleTransform x:Name="Press" ScaleX="1" ScaleY="1" />
                                 </TransformGroup>
                             </Grid.RenderTransform>
+                            <!-- La onda: sale del marcador al pulsarlo y se va. Vive debajo de
+                                 todo y con Opacity 0, asi que fuera de su medio segundo no existe. -->
+                            <Ellipse x:Name="Wave" Stroke="{TemplateBinding Background}"
+                                     StrokeThickness="3" Fill="Transparent" Opacity="0"
+                                     RenderTransformOrigin="0.5,0.5">
+                                <Ellipse.RenderTransform>
+                                    <ScaleTransform x:Name="WaveScale" ScaleX="1" ScaleY="1" />
+                                </Ellipse.RenderTransform>
+                            </Ellipse>
+
                             <Ellipse x:Name="Pin" Fill="{TemplateBinding Background}"
                                      Stroke="{TemplateBinding BorderBrush}" StrokeThickness="2" />
-                            <TextBlock Text="{TemplateBinding Content}"
+
+                            <TextBlock x:Name="Number" Text="{TemplateBinding Content}"
                                        HorizontalAlignment="Center" VerticalAlignment="Center"
                                        Foreground="{TemplateBinding Foreground}"
                                        FontFamily="{TemplateBinding FontFamily}"
                                        FontSize="{TemplateBinding FontSize}" />
+
+                            <!-- El tachado de las muertas. Se lee antes que el color y ahorra ir a
+                                 la leyenda: es el unico de estos adornos que ademas informa. -->
+                            <Path x:Name="Cross" Stroke="{TemplateBinding Foreground}"
+                                  StrokeThickness="2.2" StrokeStartLineCap="Round"
+                                  StrokeEndLineCap="Round" Visibility="Collapsed"
+                                  Data="M 6,20 L 20,6" />
                         </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="Pin" Property="StrokeThickness" Value="3" />
                             </Trigger>
+
+                            <DataTrigger Binding="{Binding State}" Value="Died">
+                                <Setter TargetName="Cross" Property="Visibility" Value="Visible" />
+                                <Setter TargetName="Number" Property="Opacity" Value="0.45" />
+                            </DataTrigger>
+
+                            <!-- La huida con el anillo roto: algo que se escapo. -->
+                            <DataTrigger Binding="{Binding State}" Value="Fled">
+                                <Setter TargetName="Pin" Property="StrokeDashArray" Value="2.2 1.6" />
+                            </DataTrigger>
 
                             <!-- Un rebote al pulsar. Es el gesto que mas se repite en toda la
                                  aplicacion -sesenta y una zonas por cuatro estados- y sin acuse de
@@ -65,6 +94,17 @@
                                                 <BackEase EasingMode="EaseOut" Amplitude="0.9" />
                                             </DoubleAnimation.EasingFunction>
                                         </DoubleAnimation>
+                                        <!-- Y la onda, que sale del propio marcador y se apaga.
+                                             El mismo recurso que el gacha al parar la ruleta. -->
+                                        <DoubleAnimation Storyboard.TargetName="WaveScale"
+                                                         Storyboard.TargetProperty="ScaleX"
+                                                         From="1" To="2.6" Duration="0:0:0.45" />
+                                        <DoubleAnimation Storyboard.TargetName="WaveScale"
+                                                         Storyboard.TargetProperty="ScaleY"
+                                                         From="1" To="2.6" Duration="0:0:0.45" />
+                                        <DoubleAnimation Storyboard.TargetName="Wave"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         From="0.85" To="0" Duration="0:0:0.45" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </EventTrigger>
@@ -116,6 +156,92 @@
             <Setter Property="Margin" Value="0,0,5,5" />
             <Setter Property="HorizontalContentAlignment" Value="Left" />
             <Setter Property="MinWidth" Value="128" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid>
+                            <Border x:Name="Body" CornerRadius="{StaticResource RadiusSmall}"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="1" ClipToBounds="True">
+                                <Grid>
+                                    <!-- El brillo que recorre la isla elegida. Va dentro del borde
+                                         recortado, asi que barre el boton y no se sale. -->
+                                    <Rectangle x:Name="Sheen" Opacity="0" IsHitTestVisible="False">
+                                        <Rectangle.Fill>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                <GradientStop Color="Transparent" Offset="0" />
+                                                <GradientStop Color="#33FFFFFF" Offset="0.5" />
+                                                <GradientStop Color="Transparent" Offset="1" />
+                                                <LinearGradientBrush.Transform>
+                                                    <TranslateTransform x:Name="SheenSlide" X="-260" />
+                                                </LinearGradientBrush.Transform>
+                                            </LinearGradientBrush>
+                                        </Rectangle.Fill>
+                                    </Rectangle>
+
+                                    <!-- El fogonazo al completar una isla. Es el unico momento de
+                                         la pantalla que merece celebrarse y ocurria en silencio. -->
+                                    <Rectangle x:Name="Flash" Opacity="0" IsHitTestVisible="False"
+                                               Fill="{StaticResource ZoneCaughtLightBrush}" />
+
+                                    <ContentPresenter Margin="{TemplateBinding Padding}"
+                                                      HorizontalAlignment="Left"
+                                                      VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+                        </Grid>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Body" Property="Opacity" Value="0.85" />
+                            </Trigger>
+
+                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                <DataTrigger.EnterActions>
+                                    <BeginStoryboard x:Name="Shine">
+                                        <Storyboard RepeatBehavior="Forever">
+                                            <DoubleAnimation Storyboard.TargetName="Sheen"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="1" Duration="0:0:0.2" />
+                                            <DoubleAnimation Storyboard.TargetName="SheenSlide"
+                                                             Storyboard.TargetProperty="X"
+                                                             From="-260" To="260" Duration="0:0:2.6"
+                                                             BeginTime="0:0:1" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </DataTrigger.EnterActions>
+                                <DataTrigger.ExitActions>
+                                    <StopStoryboard BeginStoryboardName="Shine" />
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Sheen"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="0" Duration="0:0:0.2" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </DataTrigger.ExitActions>
+                            </DataTrigger>
+
+                            <DataTrigger Binding="{Binding IsComplete}" Value="True">
+                                <DataTrigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Flash"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             From="0.55" To="0" Duration="0:0:0.9">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <CubicEase EasingMode="EaseOut" />
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </DataTrigger.EnterActions>
+                            </DataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
             <Style.Triggers>
                 <DataTrigger Binding="{Binding IsSelected}" Value="True">
                     <Setter Property="Background" Value="{StaticResource AccentDeepBrush}" />
@@ -155,7 +281,8 @@
                     <StackPanel>
                         <TextBlock Text="ALOLA" Style="{StaticResource StatLabel}" />
                         <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
-                            <TextBlock Text="{Binding SpentCount}" Style="{StaticResource StatValue}" />
+                            <TextBlock Style="{StaticResource StatValue}"
+                                       svc:Rolling.To="{Binding SpentCount}" />
                             <TextBlock Style="{StaticResource Muted}" VerticalAlignment="Bottom"
                                        Margin="6,0,0,4">
                                 <Run Text="de" />
@@ -179,9 +306,12 @@
                          lo que se mira de un vistazo es cuanto queda por gastar, y eso exige verlo
                          todo. Los marcadores van dentro, asi que escalan con el. -->
                     <Viewbox x:Name="MapFrame" Stretch="Uniform" StretchDirection="Both" Margin="6"
-                             SizeChanged="OnMapSized">
+                             SizeChanged="OnMapSized" MouseMove="OnMapHover" MouseLeave="OnMapLeft">
                         <Grid x:Name="MapSurface" HorizontalAlignment="Left" VerticalAlignment="Top"
                               SizeChanged="OnMapSized">
+                            <Grid.RenderTransform>
+                                <TranslateTransform x:Name="Parallax" />
+                            </Grid.RenderTransform>
                             <!-- La isla necesita suelo. Recortada sobre un panel liso flota, y por
                                  eso se lee pequena aunque ocupe su hueco: no hay nada que diga
                                  donde acaba el mapa y empieza la aplicacion. -->
@@ -203,7 +333,8 @@
                                         <Setter Property="HorizontalOffset" Value="8" />
                                     </Style>
                                 </Canvas.Resources>
-                                <ItemsControl ItemsSource="{Binding SelectedIsland.Zones}">
+                                <ItemsControl ItemsSource="{Binding SelectedIsland.Zones}"
+                                              Loaded="OnMarkersLoaded">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
                                             <Canvas />
@@ -397,7 +528,7 @@
                             <Border DockPanel.Dock="Left" Style="{StaticResource LegendDot}"
                                     Background="{StaticResource ZoneFreeBrush}" />
                             <TextBlock DockPanel.Dock="Right" Style="{StaticResource LegendCount}"
-                                       Text="{Binding FreeCount}" />
+                                       svc:Rolling.To="{Binding FreeCount}" />
                             <TextBlock Style="{StaticResource LegendText}" Text="Sin marcar" />
                         </DockPanel>
 
@@ -405,7 +536,7 @@
                             <Border DockPanel.Dock="Left" Style="{StaticResource LegendDot}"
                                     Background="{StaticResource ZoneCaughtBrush}" />
                             <TextBlock DockPanel.Dock="Right" Style="{StaticResource LegendCount}"
-                                       Text="{Binding CaughtCount}" />
+                                       svc:Rolling.To="{Binding CaughtCount}" />
                             <TextBlock Style="{StaticResource LegendText}" Text="Atrapado en esta zona" />
                         </DockPanel>
 
@@ -413,7 +544,7 @@
                             <Border DockPanel.Dock="Left" Style="{StaticResource LegendDot}"
                                     Background="{StaticResource ZoneDiedBrush}" />
                             <TextBlock DockPanel.Dock="Right" Style="{StaticResource LegendCount}"
-                                       Text="{Binding DiedCount}" />
+                                       svc:Rolling.To="{Binding DiedCount}" />
                             <TextBlock Style="{StaticResource LegendText}" Text="Primer pokémon matado" />
                         </DockPanel>
 
@@ -421,7 +552,7 @@
                             <Border DockPanel.Dock="Left" Style="{StaticResource LegendDot}"
                                     Background="{StaticResource ZoneFledBrush}" />
                             <TextBlock DockPanel.Dock="Right" Style="{StaticResource LegendCount}"
-                                       Text="{Binding FledCount}" />
+                                       svc:Rolling.To="{Binding FledCount}" />
                             <TextBlock Style="{StaticResource LegendText}" Text="Primer encuentro: huida" />
                         </DockPanel>
                     </ItemsControl>
