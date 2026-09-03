@@ -18,10 +18,11 @@
     76, 140, 219,
     71, 220, 185,
     165,
-    198, 199, 200, 201, 202, 206
+    198, 199, 200, 201, 202, 206,
+    222
   ],
 
-  "comentarioQuienEsQuien": "Por bloques, en el orden de arriba: kahunas (Kaudan, Mayla, Denio, Hela), capitanes (Liam, Kiawe, Nereida, Lulú, Chris, Rika), alto mando (Kahili, Zarala, Mayla, Lario), los dos rivales (Gladio y Tilo), Guzmán, la Fundación Æther (Samina y Fabio), el profesor Kukui, y los jefes del Team Rainbow Rocket (Aquiles, Helio, Magno, Ghechis, Lysson, Giovanni). NO están los reclutas de ningún equipo: son relleno, no combates importantes.",
+  "comentarioQuienEsQuien": "Por bloques, en el orden de arriba: kahunas (Kaudan, Mayla, Denio, Hela), capitanes (Liam, Kiawe, Nereida, Lulú, Chris, Rika), alto mando (Kahili, Zarala, Mayla, Lario), los dos rivales (Gladio y Tilo), Guzmán, la Fundación Æther (Samina y Fabio), el profesor Kukui, y los jefes del Team Rainbow Rocket (Aquiles, Helio, Magno, Ghechis, Lysson, Giovanni). NO están los reclutas de ningún equipo: son relleno, no combates importantes. La 222 se añadió DESPUÉS, y así es como aparecen los huecos de esta lista: el jugador peleó un combate de nivel 34 con Lotad, Scizor y Araquanid, no le salió mega, y al buscar ese equipo en la tabla resultó ser la clase 222 -- seis entrenadores, #76-78 y #217-219, o sea dos escenas en sus tres variantes, que es la firma de un personaje con nombre y no de relleno. Si vuelve a pasar con otro combate, el camino es ese: RomTool trainers busca el equipo y dice su clase.",
 
   "roles": [
     {
