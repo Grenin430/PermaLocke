@@ -266,6 +266,44 @@ if (Index("--species-find") is { } sfIndex)
 
 // Buscar un objeto por su nombre. El id es lo único que entiende la mochila, y teclearlo de
 // memoria es como acaba uno entregando el objeto equivocado sin que nada falle.
+// Id de un movimiento por su nombre, para anclar tablas que solo se conocen por lo que enseñan.
+// Varios nombres a la vez y en orden: una lista de dieciseis movimientos leida en pantalla es lo
+// unico que identifica al tutor que los vende, y buscar esa secuencia exige los ids en ese orden.
+if (Index("--movimiento-find") is { } mfIndex)
+{
+    var moves = PKHeX.Core.GameInfo.GetStrings("es").movelist;
+
+    foreach (var query in args.Skip(mfIndex + 1))
+    {
+        var hits = 0;
+
+        for (var id = 0; id < moves.Length; id++)
+        {
+            if (moves[id].Equals(query, StringComparison.OrdinalIgnoreCase))
+            {
+                Console.WriteLine($"{id,4}  {moves[id]}");
+                hits++;
+            }
+        }
+
+        if (hits == 0)
+        {
+            // Ni se adivina ni se calla: un nombre que no resuelve invalida el anclaje entero.
+            Console.WriteLine($"   ?  «{query}» NO EXISTE con ese nombre exacto");
+
+            for (var id = 0; id < moves.Length; id++)
+            {
+                if (moves[id].Contains(query.Split(' ')[0], StringComparison.OrdinalIgnoreCase))
+                {
+                    Console.WriteLine($"        parecido: {id} {moves[id]}");
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+
 if (Index("--objeto-find") is { } ofIndex)
 {
     var names = PKHeX.Core.GameInfo.GetStrings("es").itemlist;
