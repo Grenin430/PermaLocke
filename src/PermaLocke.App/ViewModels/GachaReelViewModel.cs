@@ -37,4 +37,6 @@ public sealed partial class ReelCellViewModel(BitmapSource? sprite, bool isWinne
 /// the request, and a timed reveal fired while the reel was still moving — leaving the winner
 /// half a cell outside its own frame.
 /// </param>
-public sealed record SpinRequest(int WinnerIndex, TimeSpan Duration, Action Stopped);
+/// <param name="Ending">How it comes to a stop. Drawn apart from the result on purpose.</param>
+public sealed record SpinRequest(int WinnerIndex, TimeSpan Duration, Action Stopped,
+    PermaLocke.App.Views.ReelEnding Ending);

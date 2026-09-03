@@ -265,46 +265,57 @@
                         </RadialGradientBrush>
                     </Grid.Background>
 
-                    <!-- Dos capas de estrellas a distinta velocidad: el paralaje da profundidad
-                         sin dibujar nada. Se mueve el rectángulo, no el mosaico: animar un pincel
-                         de un diccionario de recursos falla porque WPF los congela. -->
-                    <Rectangle Fill="{StaticResource StarfieldFar}" Opacity="0.3"
-                               Width="1000" HorizontalAlignment="Left" IsHitTestVisible="False">
+                    <!-- EL TÚNEL. Las estrellas salen del centro y crecen hacia fuera, en vez de
+                         deslizarse de lado como antes: el deslizamiento lateral se lee como papel
+                         pintado pasando por detrás, y el ultraespacio es un sitio al que ENTRAS.
+                         Es el mismo mosaico y el mismo coste; lo que cambia es qué se anima.
+
+                         Dos capas desfasadas media vuelta, que es lo que evita el latido: con una
+                         sola, cada vez que reinicia el ciclo el campo parpadea entero. El
+                         code-behind las acelera durante el giro por su SpeedRatio, así que no hace
+                         falta reiniciar nada y no dan tirones. -->
+                    <Rectangle x:Name="StarsNear" Fill="{StaticResource StarfieldNear}" Opacity="0"
+                               IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5">
                         <Rectangle.RenderTransform>
-                            <TranslateTransform X="0" />
+                            <ScaleTransform ScaleX="1" ScaleY="1" />
                         </Rectangle.RenderTransform>
-                        <Rectangle.Triggers>
-                            <EventTrigger RoutedEvent="Loaded">
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation
-                                            Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
-                                            From="0" To="-110" Duration="0:0:24" RepeatBehavior="Forever" />
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </EventTrigger>
-                        </Rectangle.Triggers>
                     </Rectangle>
 
-                    <Rectangle Fill="{StaticResource StarfieldNear}" Opacity="0.45"
-                               Width="1000" HorizontalAlignment="Left" IsHitTestVisible="False">
+                    <Rectangle x:Name="StarsFar" Fill="{StaticResource StarfieldFar}" Opacity="0"
+                               IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5">
                         <Rectangle.RenderTransform>
-                            <TranslateTransform X="0" />
+                            <ScaleTransform ScaleX="1" ScaleY="1" />
                         </Rectangle.RenderTransform>
-                        <Rectangle.Triggers>
-                            <EventTrigger RoutedEvent="Loaded">
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation
-                                            Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
-                                            From="0" To="-180" Duration="0:0:13" RepeatBehavior="Forever" />
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </EventTrigger>
-                        </Rectangle.Triggers>
                     </Rectangle>
 
-                    <!-- Rayas de velocidad. Corren siempre, pero con opacidad 0: el code-behind
+                    <!-- EL VÓRTICE, detrás de todo. Sin él el panel es un campo uniforme y la
+                         ruleta flota encima sin estar en ninguna parte; con él hay un fondo del
+                         que la tirada sale. Gira muy despacio y va muy apagado a propósito: es
+                         escenografía, no un elemento que compita con el visor. -->
+                    <Grid x:Name="Vortex" Width="520" Height="520" Opacity="0.16"
+                          IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5"
+                          HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Grid.RenderTransform>
+                            <RotateTransform Angle="0" />
+                        </Grid.RenderTransform>
+
+                        <Ellipse Width="520" Height="520" StrokeThickness="1.5"
+                                 Stroke="{StaticResource AccentBrush}" Opacity="0.30" />
+                        <Ellipse Width="400" Height="400" StrokeThickness="1.5"
+                                 Stroke="{StaticResource AccentBrush}" Opacity="0.45" />
+                        <Ellipse Width="280" Height="280" StrokeThickness="2"
+                                 Stroke="{StaticResource AccentBrightBrush}" Opacity="0.55" />
+                        <Ellipse Width="160" Height="160" StrokeThickness="2"
+                                 Stroke="{StaticResource AccentBrightBrush}" Opacity="0.75" />
+
+                        <!-- Cuatro radios: son los que hacen que el giro se vea. Con aros solos,
+                             un círculo girando es un círculo quieto. -->
+                        <Path Stroke="{StaticResource AccentBrush}" StrokeThickness="1" Opacity="0.35"
+                              Data="M 260,0 L 260,520 M 0,260 L 520,260 M 84,84 L 436,436 M 436,84 L 84,436" />
+                    </Grid>
+
+                    <!-- Rayas de velocidad
+. Corren siempre, pero con opacidad 0: el code-behind
                          solo las enciende mientras la rueda va lanzada. -->
                     <Rectangle x:Name="Streaks" Fill="{StaticResource Hyperstreaks}" Opacity="0"
                                Width="1400" HorizontalAlignment="Left" IsHitTestVisible="False">

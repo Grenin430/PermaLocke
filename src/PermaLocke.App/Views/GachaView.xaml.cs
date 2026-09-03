@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Effects;
+using System.Windows.Threading;
 using PermaLocke.App.ViewModels;
 
 namespace PermaLocke.App.Views;
@@ -38,14 +39,22 @@ public partial class GachaView : UserControl
     /// The number of clicks is the same for every tier on purpose: making the rare ones click more
     /// would give the result away before the reel gets there.
     /// </remarks>
-    private static readonly double[] Clicks = [0.72, 0.84, 0.93];
-
     private GachaViewModel? _model;
+
+    /// <summary>The background loops, kept so their speed can be changed while they run.</summary>
+    private Storyboard? _near;
+
+    private Storyboard? _far;
+
+    /// <summary>Steps the field back down to its resting speed instead of dropping it.</summary>
+    private DispatcherTimer? _settle;
+
 
     public GachaView()
     {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
+        Loaded += (_, _) => StartBackground();
         Loaded += (_, _) => BreatheWhileWaiting();
         Unloaded += (_, _) => Detach();
     }
@@ -115,7 +124,99 @@ public partial class GachaView : UserControl
         Dispatcher.BeginInvoke(() => StartSpin(request), System.Windows.Threading.DispatcherPriority.Loaded);
     }
 
+    /// <summary>
+    /// The tunnel and the vortex: the resting state of the screen.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The stars come <b>towards</b> the viewer instead of sliding sideways. Sideways drift reads
+    /// as wallpaper passing behind the panel; Ultra Space is somewhere you go into, and the only
+    /// thing that changes is which property is animated — same tiles, same cost.
+    /// </para>
+    /// <para>
+    /// The two layers run at <b>different periods</b> rather than the same one offset, because a
+    /// tiled layer that fades to nothing and restarts makes the whole field blink in time with
+    /// itself. Six and nine and a half seconds never line up, so there is no beat.
+    /// </para>
+    /// <para>
+    /// They are Storyboards and not <c>BeginAnimation</c> calls for one reason: a Storyboard
+    /// started as controllable can have its <c>SpeedRatio</c> changed while it runs, which is what
+    /// lets the field accelerate with the reel without restarting anything. Restarting would snap
+    /// every star back to the centre in the middle of a spin.
+    /// </para>
+    /// </remarks>
+    private void StartBackground()
+    {
+        _near = Tunnel(StarsNear, 6.0, 2.4, 0.40);
+        _far = Tunnel(StarsFar, 9.5, 1.9, 0.26);
+
+        var turn = new DoubleAnimation(0, 360, new Duration(TimeSpan.FromSeconds(90)))
+        {
+            RepeatBehavior = RepeatBehavior.Forever,
+        };
+
+        ((RotateTransform)Vortex.RenderTransform).BeginAnimation(RotateTransform.AngleProperty, turn);
+    }
+
+    private Storyboard Tunnel(FrameworkElement layer, double seconds, double to, double peak)
+    {
+        var duration = new Duration(TimeSpan.FromSeconds(seconds));
+        var board = new Storyboard { RepeatBehavior = RepeatBehavior.Forever };
+
+        foreach (var axis in (string[])["ScaleX", "ScaleY"])
+        {
+            var grow = new DoubleAnimation(1, to, duration);
+            Storyboard.SetTarget(grow, layer);
+            Storyboard.SetTargetProperty(grow,
+                new PropertyPath($"(UIElement.RenderTransform).(ScaleTransform.{axis})"));
+            board.Children.Add(grow);
+        }
+
+        // Aparece y se apaga dentro del propio ciclo: una estrella que llega al borde a plena luz
+        // y desaparece de golpe delata el bucle.
+        var fade = new DoubleAnimationUsingKeyFrames { Duration = duration };
+        fade.KeyFrames.Add(new LinearDoubleKeyFrame(0, KeyTime.FromPercent(0)));
+        fade.KeyFrames.Add(new LinearDoubleKeyFrame(peak, KeyTime.FromPercent(0.30)));
+        fade.KeyFrames.Add(new LinearDoubleKeyFrame(peak, KeyTime.FromPercent(0.68)));
+        fade.KeyFrames.Add(new LinearDoubleKeyFrame(0, KeyTime.FromPercent(1)));
+        Storyboard.SetTarget(fade, layer);
+        Storyboard.SetTargetProperty(fade, new PropertyPath(OpacityProperty));
+        board.Children.Add(fade);
+
+        board.Begin(this, HandoffBehavior.SnapshotAndReplace, isControllable: true);
+        return board;
+    }
+
+    /// <summary>How fast the field is travelling. One is standing still and watching.</summary>
+    private void Field(double ratio)
+    {
+        _near?.SetSpeedRatio(this, ratio);
+        _far?.SetSpeedRatio(this, ratio);
+    }
+
+    /// <summary>
+    /// Brings the field back down in two steps instead of one.
+    /// </summary>
+    /// <remarks>
+    /// Dropping straight from cruise to rest looks like the animation broke. Two steps read as
+    /// something heavy losing its momentum, which is what the reel is doing at the same moment.
+    /// </remarks>
+    private void SettleField()
+    {
+        Field(1.9);
+
+        _settle?.Stop();
+        _settle = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(750) };
+        _settle.Tick += (_, _) =>
+        {
+            _settle?.Stop();
+            Field(1);
+        };
+        _settle.Start();
+    }
+
     private void StartSpin(SpinRequest request)
+
     {
         var viewport = ReelViewport.ActualWidth;
         if (viewport <= 0)
@@ -140,29 +241,42 @@ public partial class GachaView : UserControl
             EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseIn },
         });
         slide.KeyFrames.Add(new LinearDoubleKeyFrame(target * 0.34, KeyTime.FromPercent(0.26)));
-        slide.KeyFrames.Add(new EasingDoubleKeyFrame(target + (CellWidth * 3), KeyTime.FromPercent(0.72))
+        // El cierre lo dicta el perfil sorteado, no una escalera fija: se planta donde diga su
+        // primera parada y va dando clics por las suyas. Cinco perfiles con el mismo final, para
+        // que jugar mucho no enseñe a leer dónde va a parar. Ver ReelEnding.
+        var ending = request.Ending;
+
+        slide.KeyFrames.Add(new EasingDoubleKeyFrame(
+            target + (CellWidth * ending.Stops[0]), KeyTime.FromPercent(ending.At[0]))
         {
             // Exponente bajo a propósito: con uno alto la rueda se planta a mitad de tirada y el
             // tramo siguiente se queda muerto. Así sigue arrastrándose hasta el primer clic.
             EasingFunction = new ExponentialEase { EasingMode = EasingMode.EaseOut, Exponent = 3.2 },
         });
-        slide.KeyFrames.Add(new LinearDoubleKeyFrame(target + (CellWidth * 3), KeyTime.FromPercent(0.78)));
-        slide.KeyFrames.Add(new EasingDoubleKeyFrame(target + (CellWidth * 2), KeyTime.FromPercent(0.84))
+
+        for (var i = 1; i < ending.Stops.Length; i++)
         {
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
-        });
-        slide.KeyFrames.Add(new LinearDoubleKeyFrame(target + (CellWidth * 2), KeyTime.FromPercent(0.88)));
-        slide.KeyFrames.Add(new EasingDoubleKeyFrame(target + CellWidth, KeyTime.FromPercent(0.93))
-        {
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
-        });
-        slide.KeyFrames.Add(new LinearDoubleKeyFrame(target + CellWidth, KeyTime.FromPercent(0.96)));
-        // El último clic se pasa de largo y vuelve, que es lo que hace pensar por un instante que
-        // se iba a una casilla más. El BackEase mete ese rebote dentro del propio tramo.
-        slide.KeyFrames.Add(new EasingDoubleKeyFrame(target, KeyTime.FromPercent(1))
-        {
-            EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.55 },
-        });
+            // La pausa ANTES de cada clic es la tensión: sin ella son varios movimientos seguidos
+            // y no varias decisiones. Ocupa el primer tercio del hueco entre parada y parada.
+            var from = ending.At[i - 1];
+            var to = ending.At[i];
+
+            slide.KeyFrames.Add(new LinearDoubleKeyFrame(
+                target + (CellWidth * ending.Stops[i - 1]),
+                KeyTime.FromPercent(from + ((to - from) * 0.34))));
+
+            var last = i == ending.Stops.Length - 1;
+
+            slide.KeyFrames.Add(new EasingDoubleKeyFrame(
+                target + (CellWidth * ending.Stops[i]), KeyTime.FromPercent(to))
+            {
+                // El rebote del último clic hace pensar por un instante que se iba una casilla
+                // más. No lo llevan todos: en el que se pasa de verdad sobraría.
+                EasingFunction = last && ending.Overshoot
+                    ? new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.55 }
+                    : new CubicEase { EasingMode = EasingMode.EaseOut },
+            });
+        }
         // El aviso sale de aquí, del final real del movimiento: es lo que garantiza que el
         // ganador quede dentro de su marco cuando se revela.
         slide.Completed += (_, _) => Land(request);
@@ -184,7 +298,12 @@ public partial class GachaView : UserControl
         blurring.Completed += (_, _) => ReelStrip.Effect = null;
         blur.BeginAnimation(BlurEffect.RadiusProperty, blurring);
 
-        StartClickFeedback(request.Duration);
+        // El campo se lanza con la rueda: antes las rayas se encendian y las estrellas seguian a
+        // su ritmo de siempre, que es justo la desconexion que hacia que el fondo pareciera otra
+        // pantalla pegada detras.
+        Field(4.5);
+
+        StartClickFeedback(request.Duration, ending.Clicks);
         StartApproach(request.Duration);
     }
 
@@ -196,14 +315,14 @@ public partial class GachaView : UserControl
     /// click with its own delay: two animations on the same property replace each other, so the
     /// second click would cancel the first mid-bounce.
     /// </remarks>
-    private void StartClickFeedback(TimeSpan duration)
+    private void StartClickFeedback(TimeSpan duration, double[] clicks)
     {
         var kick = new DoubleAnimationUsingKeyFrames { Duration = duration };
         var jolt = new DoubleAnimationUsingKeyFrames { Duration = duration };
         kick.KeyFrames.Add(new LinearDoubleKeyFrame(1, KeyTime.FromPercent(0)));
         jolt.KeyFrames.Add(new LinearDoubleKeyFrame(0, KeyTime.FromPercent(0)));
 
-        foreach (var click in Clicks)
+        foreach (var click in clicks)
         {
             kick.KeyFrames.Add(new LinearDoubleKeyFrame(1, KeyTime.FromPercent(click - 0.004)));
             kick.KeyFrames.Add(new LinearDoubleKeyFrame(1.18, KeyTime.FromPercent(click + 0.006)));
@@ -254,6 +373,7 @@ public partial class GachaView : UserControl
     /// <summary>Everything that happens the instant the wheel plants itself.</summary>
     private void Land(SpinRequest request)
     {
+        SettleField();
         request.Stopped();
 
         FlashOnce(0.75, TimeSpan.FromSeconds(1.2));

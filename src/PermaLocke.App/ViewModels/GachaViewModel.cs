@@ -456,7 +456,10 @@ public sealed partial class GachaViewModel : SectionViewModel
         var duration = SpinTimeFor(tierIndex);
 
         var stopped = new TaskCompletionSource();
-        SpinRequested?.Invoke(this, new SpinRequest(ReelWinnerIndex, duration, () => stopped.TrySetResult()));
+        // El cierre se sortea con SU PROPIA semilla. Con uno solo, quien juegue mucho aprende
+        // donde va a parar tres clics antes de que pare; y si dependiera del tier, lo cantaria.
+        SpinRequested?.Invoke(this, new SpinRequest(ReelWinnerIndex, duration,
+            () => stopped.TrySetResult(), Views.ReelEnding.For(pull.Seed, pull.Number)));
 
         // El engaño: se arranca encendido en el tier más barato y se sube. Los dos tiers de
         // arriba suben en dos pasos, que es lo que hace que un legendario se note venir.
