@@ -119,7 +119,7 @@
   "_staticOverrides": "Estaticos con regla propia en vez del sorteo corriente. Se buscan por la ESPECIE Y LA FORMA que el cartucho tiene ahi, no por el numero de fila: una fila es un numero que significa lo que haya en el, y si la tabla se mueve la regla cae en otro encuentro sin fallar. Con especie y forma, si no esta, el randomizador para. Necrozma son CUATRO encuentros distintos y solo la forma dice cual: 0 normal, 1 Melena Crepuscular, 2 Alas del Alba, 3 ULTRA. Las formas 1 y 2 son los combates de la historia y se quedan con el sorteo normal.",
   "staticOverrides": [
     { "note": "Ultra Necrozma, el jefe de la Torre Megalo", "species": 800, "form": 3, "rule": "Mega" },
-    { "note": "Nihilego del Paraiso Aether (hay cuatro en la tabla: Nv 27, 55, 55 y 60, y solo el nivel los distingue)", "species": 793, "form": 0, "level": 55, "rule": "Mega" },
+    { "note": "Nihilego del Paraiso Aether (hay cuatro Nihilego en la tabla: Nv 27, 55, 55 y 60, y solo el nivel los distingue. El del Paraiso es el de 27: MEDIDO en la partida, donde salio a nivel 32, que es 27 subido el 20% del rol)", "species": 793, "form": 0, "level": 27, "rule": "Mega" },
     { "note": "Necrozma atrapable (Nv 65 y Nv 75)", "species": 800, "form": 0, "rule": "Strong", "minimumBaseStatTotal": 550 },
     { "note": "Lunala del Altar, atrapable", "species": 792, "form": 0, "rule": "Strong", "minimumBaseStatTotal": 550 }
   ],
