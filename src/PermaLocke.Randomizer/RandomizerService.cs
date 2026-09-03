@@ -46,6 +46,10 @@ public sealed class RandomizerService(RandomizerOptions options)
         public const string PokemonData = "pokemon-data";
         public const string Shops = "special-marts";
         public const string Machines = "technical-machines";
+
+        // Su propia sal: sin ella, encender o apagar los tutores desplazaria lo que sacan los
+        // demas modulos y la misma seed daria otro mundo. §27.
+        public const string Tutors = "move-tutors";
         public const string FieldItems = "field-items";
     }
 
@@ -210,6 +214,22 @@ public sealed class RandomizerService(RandomizerOptions options)
                 result.Machines > 0
                     ? $"{result.Machines} de las 100 MT ensenan otro movimiento "
                       + $"(tabla encontrada en code.bin, offset {result.Offset})"
+                    : "sin cambios: no hay code.bin que parchear"));
+        }
+
+        // DESPUES de las MT a proposito: las dos escriben el mismo code.bin, y el modulo de
+        // tutores lee el ya parcheado cuando existe. Al reves, o leyendo los dos la capa base, el
+        // segundo se llevaria por delante el trabajo del primero -- §47.
+        if (options.RandomizeTutors && baseLayer is not null)
+        {
+            var exefs = Path.Combine(Path.GetDirectoryName(baseLayer.TrimEnd(Path.DirectorySeparatorChar))!, "exefs");
+            var random = new SeededRandomSource(seed).Derive(Salts.Tutors);
+            var result = await new TutorRandomizer(options).ApplyAsync(random, mod, exefs, ct);
+
+            steps.Add(new RandomizerStep("Tutores",
+                result.Total > 0
+                    ? $"{result.Changed} de los {result.Total} movimientos de tutor cambian de sitio "
+                      + $"(lista encontrada en code.bin, offset {result.At})"
                     : "sin cambios: no hay code.bin que parchear"));
         }
 

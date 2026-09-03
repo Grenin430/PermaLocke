@@ -223,6 +223,16 @@ public sealed record RandomizerOptions
     /// repricing all hundred would change the ones the player finds on the ground too, and those
     /// are not bought.
     /// </remarks>
+    /// <summary>
+    /// Shuffles what the move tutors teach. Needs a world that brings its own <c>code.bin</c>.
+    /// </summary>
+    /// <remarks>
+    /// The tutors are the stalls that charge BP -- the Mantine Surf ones on the beaches among them
+    /// -- and their list is not in the RomFS: it is sixty-seven move ids inside the executable.
+    /// Same condition as the TMs, so a plain cartridge leaves it alone rather than pretending.
+    /// </remarks>
+    public bool RandomizeTutors { get; init; } = true;
+
     public int MachineMartPrice { get; init; }
 
     public int[] SpecialMartOrder { get; init; } = [];

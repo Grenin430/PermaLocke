@@ -22,6 +22,9 @@
   "_specialMarts": "Solo los mostradores especiales de los centros Pokémon; los ocho inventarios normales se dejan intactos. Las tiendas de MT se randomizan por otras MT; las demás se surten del objeto de abajo en todos sus huecos.",
   "specialMarts": true,
   "_specialMartOrder": "Por que mostradores especiales se empieza a surtir, por indice. La lista de objetos de evolucion se derrama de uno al siguiente segun se llenan, asi que esto decide cuanto tiene que andar el jugador para completarla. En orden de indice se empezaba por el 8, que es Konikoni, ya bien entrada la region, y hacian falta tres mostradores. Los indices se MIDEN jugando, porque el cartucho no dice que mostrador es de que pueblo: 10 es el Centro Pokemon de Ciudad Hauoli (8 huecos) y 11 el de la Ruta 2 (12). Veinte huecos para dieciocho objetos, o sea la lista entera en los dos primeros mostradores del juego. Un indice que no exista se ignora, y lo que no se nombre sigue yendo en orden.",
+  "_randomizeTutors": "Baraja lo que enseñan los TUTORES: los puestos que cobran PB, incluidos los del Mantine Surf de las playas. No es una tienda -Shop.cro tiene 28 inventarios y ninguno es este- sino una lista de 67 ids de movimiento dentro de code.bin, asi que solo funciona sobre un mundo que traiga su propio ejecutable, igual que las MT. Se BARAJA en vez de sortear de nuevo: asi todo movimiento de tutor lo sigue enseñando algun tutor, y a diferencia de una MT no hay una segunda copia por el suelo si se pierde.",
+  "randomizeTutors": true,
+
   "_machineMartPrice": "Lo que cuesta cada MT en los mostradores de MT de los centros Pokemon. Es el precio del OBJETO, no del hueco, asi que vale alli donde esa MT se venda. Solo se retocan las que acaban en un mostrador: cambiar el precio de las cien tocaria tambien las que se encuentran por el suelo, y esas no se compran. Multiplo de 10 y como mucho 655350. Un 0 deja los precios del cartucho.",
   "machineMartPrice": 35000,
 
