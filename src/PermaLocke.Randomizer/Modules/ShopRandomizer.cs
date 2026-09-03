@@ -12,7 +12,7 @@ namespace PermaLocke.Randomizer.Modules;
 /// <param name="SpecialItems">Objetos de evolucion del mod puestos a la venta.</param>
 public sealed record ShopResult(
     int TechnicalMachineShops, int RestockedShops, int Slots, int MedicineSlots = 0,
-    int SpecialItems = 0);
+    int SpecialItems = 0, int PricedMachines = 0);
 
 /// <summary>
 /// Rewrites the mart inventories of the Pokémon Centers, inside <c>Shop.cro</c>.
@@ -48,6 +48,7 @@ public sealed class ShopRandomizer(RomWorkspace workspace, RandomizerOptions opt
         VerifyNames(wanted, itemNames);
 
         var stocked = 0;
+        var priced = new HashSet<int>();
         var medicine = ReplaceMedicines(options, cro, shops, itemNames);
 
         // Por donde se empieza a surtir, y eso decide cuanto tiene que andar el jugador.
@@ -79,6 +80,13 @@ public sealed class ShopRandomizer(RomWorkspace workspace, RandomizerOptions opt
             {
                 FillWithMachines(cro, shop, random, machines);
                 machineShops++;
+
+                // Solo las que acaban en un mostrador: reponer el precio de las cien tocaria
+                // tambien las que se encuentran por el suelo, y esas no se compran.
+                for (var slot = 0; slot < shop.Count; slot++)
+                {
+                    priced.Add(ShopTable.GetItem(cro, shop, slot));
+                }
             }
             else
             {
@@ -106,7 +114,9 @@ public sealed class ShopRandomizer(RomWorkspace workspace, RandomizerOptions opt
         }
 
         await PriceAsync(mod, wanted, ct);
-        return new ShopResult(machineShops, restocked, slots, medicine, stocked);
+        await PriceMachinesAsync(mod, priced, ct);
+        return new ShopResult(machineShops, restocked, slots, medicine, stocked,
+            options.MachineMartPrice > 0 ? priced.Count : 0);
     }
 
     /// <summary>
@@ -176,6 +186,61 @@ public sealed class ShopRandomizer(RomWorkspace workspace, RandomizerOptions opt
                 {
                     throw new InvalidDataException(
                         $"El objeto {item.Id} quedó a {written} y se pedían {price}.");
+                }
+            }
+        }, ct);
+    }
+
+    /// <summary>
+    /// Puts one price on every TM that ended up on a Pokémon Center shelf.
+    /// </summary>
+    /// <remarks>
+    /// Same field and same guards as the evolution items — the price is the first <c>ushort</c> of
+    /// the item entry and holds a tenth of it — and it is read back before being called done. The
+    /// ids come from the cartridge's own shop table rather than from anything written by hand, so
+    /// there is nothing here to check a name against: a TM id that reached a shelf is a TM id.
+    /// </remarks>
+    private async Task PriceMachinesAsync(LayeredFsMod mod, IReadOnlyCollection<int> machines,
+        CancellationToken ct)
+    {
+        const int max = ushort.MaxValue * 10;
+        var price = options.MachineMartPrice;
+
+        if (price <= 0 || machines.Count == 0)
+        {
+            return;
+        }
+
+        if (price % 10 != 0 || price > max)
+        {
+            throw new ArgumentOutOfRangeException(nameof(options),
+                $"El precio de MT {price} no vale: tiene que ser múltiplo de 10 y como mucho {max}.");
+        }
+
+        var path = mod.Stage(GameFiles.Item);
+
+        using (var patcher = new GarcPatcher(path))
+        {
+            foreach (var machine in machines)
+            {
+                var entry = patcher.Read(machine);
+                BitConverter.GetBytes((ushort)(price / 10)).CopyTo(entry, 0);
+                patcher.Write(machine, entry);
+            }
+        }
+
+        await Task.Run(() =>
+        {
+            using var back = new GarcPatcher(path);
+
+            foreach (var machine in machines)
+            {
+                var written = BitConverter.ToUInt16(back.Read(machine), 0) * 10;
+
+                if (written != price)
+                {
+                    throw new InvalidDataException(
+                        $"La MT {machine} quedó a {written} y se pedían {price}.");
                 }
             }
         }, ct);

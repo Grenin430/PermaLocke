@@ -216,6 +216,15 @@ public sealed record RandomizerOptions
     /// earliest counters in the game.
     /// </para>
     /// </remarks>
+    /// <summary>What every TM sold in a Pokémon Center counter costs. Zero leaves prices alone.</summary>
+    /// <remarks>
+    /// It is the price of the ITEM, not of the shelf, so it applies wherever that TM is sold and
+    /// wherever the game quotes it. Only the machines actually placed in a counter are touched:
+    /// repricing all hundred would change the ones the player finds on the ground too, and those
+    /// are not bought.
+    /// </remarks>
+    public int MachineMartPrice { get; init; }
+
     public int[] SpecialMartOrder { get; init; } = [];
 
     public int FullyEvolvedFromLevel { get; init; }

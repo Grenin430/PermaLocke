@@ -193,6 +193,9 @@ public sealed class RandomizerService(RandomizerOptions options)
                     : string.Empty)
                 + (result.MedicineSlots > 0
                     ? $"; {result.MedicineSlots} curativos de las tiendas normales pasados a Poké Ball"
+                    : string.Empty)
+                + (result.PricedMachines > 0
+                    ? $"; {result.PricedMachines} MT a {options.MachineMartPrice} cada una"
                     : string.Empty)));
         }
 
