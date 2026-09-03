@@ -50,7 +50,28 @@ public sealed class ShopRandomizer(RomWorkspace workspace, RandomizerOptions opt
         var stocked = 0;
         var medicine = ReplaceMedicines(options, cro, shops, itemNames);
 
-        foreach (var shop in shops.Where(s => s.Index >= ShopTable.RegularMartCount))
+        // Por donde se empieza a surtir, y eso decide cuanto tiene que andar el jugador.
+        //
+        // En orden de indice se empieza por el 8, que es Konikoni -- ya bien entrada la region --
+        // y la lista se reparte entre tres mostradores. Con el orden puesto en el fichero se
+        // empieza por Hau'oli (8 huecos) y sigue por la Ruta 2 (12): veinte huecos para dieciocho
+        // objetos, o sea la lista entera en los dos primeros mostradores del juego.
+        //
+        // Los indices salen de MEDIRLOS en la partida, que es la unica via: el cartucho no dice
+        // que mostrador es de que pueblo. Un indice que no exista se ignora en vez de fallar: la
+        // lista es una preferencia, y lo que no se nombre sigue yendo en orden.
+        var preferred = options.SpecialMartOrder;
+
+        var special = shops
+            .Where(s => s.Index >= ShopTable.RegularMartCount)
+            .OrderBy(s =>
+            {
+                var wish = Array.IndexOf(preferred, s.Index);
+                return wish >= 0 ? wish : preferred.Length + s.Index;
+            })
+            .ToList();
+
+        foreach (var shop in special)
         {
             ct.ThrowIfCancellationRequested();
 

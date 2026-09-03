@@ -628,7 +628,7 @@ async Task ShopsAsync()
     var explicit_ = args.SkipWhile(a => a != "--gen").Skip(1).FirstOrDefault();
     var generated = explicit_ is not null && File.Exists(explicit_)
         ? explicit_
-        : Path.Combine(root, "Randomized", "seed-20260818", "romfs", "Shop.cro");
+        : LatestGenerated(root);
     var useGenerated = args.Contains("--gen") && File.Exists(generated);
     var cro = await File.ReadAllBytesAsync(useGenerated ? generated : workspace.PathOf(GameFiles.Shop));
     Console.WriteLine(useGenerated ? "=== FICHERO GENERADO ===" : "=== VANILLA ===");
@@ -3413,4 +3413,28 @@ async Task EstaticosCrudoAsync(int[] indices)
             }
         }
     }
+}
+
+// El Shop.cro generado mas reciente, para que «shops --gen» sin ruta lea lo ultimo.
+//
+// Antes aqui habia una seed escrita a mano -seed-20260818-, asi que el volcado enseñaba
+// tranquilamente el mod de otro dia mientras uno creia estar mirando el que acababa de generar.
+// No fallaba, no avisaba: contestaba de otro fichero. Es la misma clase de mentira que los rangos
+// de tier escritos a mano en el XAML del gacha, y cuesta el mismo rato descubrirla.
+static string LatestGenerated(string root)
+{
+    var randomized = Path.Combine(root, "Randomized");
+
+    if (!Directory.Exists(randomized))
+    {
+        return Path.Combine(randomized, "sin-generar", "romfs", "Shop.cro");
+    }
+
+    var newest = Directory.EnumerateDirectories(randomized, "seed-*")
+        .Select(d => Path.Combine(d, "romfs", "Shop.cro"))
+        .Where(File.Exists)
+        .OrderByDescending(File.GetLastWriteTimeUtc)
+        .FirstOrDefault();
+
+    return newest ?? Path.Combine(randomized, "sin-generar", "romfs", "Shop.cro");
 }

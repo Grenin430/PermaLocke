@@ -198,6 +198,26 @@ public sealed record RandomizerOptions
     /// threshold asks «when does this trainer appear», and only the original level answers that.
     /// </para>
     /// </remarks>
+    /// <summary>
+    /// Special counters to stock first, by index, before falling back to index order.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The evolution items spill from one counter to the next as each fills up, and which counter
+    /// comes first decides how far the player has to walk. Left in index order they start at 8,
+    /// which is Konikoni -- most of the way through the island chain -- and reach three counters.
+    /// </para>
+    /// <para>
+    /// The two indices anchored so far were <b>measured by the player in the running game</b>, which
+    /// is the only way there is: the cartridge does not say which counter belongs to which town.
+    /// Konikoni is 8, identified from the five species its stock could evolve. Hau'oli City's
+    /// Pokémon Center is 10 and Route 2's is 11, identified from what each was selling. Eight
+    /// slots plus twelve is twenty, and there are eighteen items: the whole list fits in the two
+    /// earliest counters in the game.
+    /// </para>
+    /// </remarks>
+    public int[] SpecialMartOrder { get; init; } = [];
+
     public int FullyEvolvedFromLevel { get; init; }
 
     public int EnemyLevelPercent { get; init; }
