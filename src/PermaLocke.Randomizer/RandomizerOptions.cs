@@ -231,6 +231,13 @@ public sealed record RandomizerOptions
     /// -- and their list is not in the RomFS: it is sixty-seven move ids inside the executable.
     /// Same condition as the TMs, so a plain cartridge leaves it alone rather than pretending.
     /// </remarks>
+    /// <summary>Deals each species' TM compatibility again, keeping how many TMs it can learn.</summary>
+    /// <remarks>
+    /// Shuffled rather than drawn, so nobody ends up able to learn almost nothing: the totals stay
+    /// the cartridge's. What changes is WHICH hundred bits, not how many.
+    /// </remarks>
+    public bool ShuffleMachineCompatibility { get; init; } = true;
+
     public bool RandomizeTutors { get; init; } = true;
 
     public int MachineMartPrice { get; init; }

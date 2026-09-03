@@ -63,7 +63,8 @@ public sealed class PokemonDataRandomizer(RomWorkspace workspace, RandomizerOpti
         // Una fuente por aspecto: desactivar los tipos ya no desplaza las estadisticas ni las
         // habilidades, que es lo que pasaba compartiendo una sola fuente en cadena.
         var sources = new EntrySources(
-            random.Derive("types"), random.Derive("stats"), random.Derive("abilities"));
+            random.Derive("types"), random.Derive("stats"), random.Derive("abilities"),
+            random.Derive("machine-flags"));
 
         for (var row = 1; row < rows; row++) // row 0 is a placeholder, not a species
         {
@@ -89,9 +90,32 @@ public sealed class PokemonDataRandomizer(RomWorkspace workspace, RandomizerOpti
         return changed;
     }
 
+    /// <summary>
+    /// Deals a species' hundred TM flags again, keeping <b>how many</b> it has.
+    /// </summary>
+    /// <remarks>
+    /// A shuffle and not a fresh draw, because a draw can leave something with almost nothing —
+    /// and unlike a level-up move, a TM a Pokémon cannot learn is a move it will never have. This
+    /// way a Magikarp still learns as little as it did and a Mew still learns everything, which is
+    /// also the reason it cannot make the game unplayable: the totals are the cartridge's own.
+    /// </remarks>
+    private static void ShuffleMachines(byte[] table, int species, IRandomSource random)
+    {
+        var flags = MachineFlags.Read(table, species);
+
+        for (var i = flags.Length - 1; i > 0; i--)
+        {
+            var j = random.Next(i + 1);
+            (flags[i], flags[j]) = (flags[j], flags[i]);
+        }
+
+        MachineFlags.Write(table, species, flags);
+    }
+
     /// <summary>One random stream per aspect, so switching one off leaves the others alone.</summary>
+
     private readonly record struct EntrySources(
-        IRandomSource Types, IRandomSource Stats, IRandomSource Abilities);
+        IRandomSource Types, IRandomSource Stats, IRandomSource Abilities, IRandomSource Machines);
 
     private void RandomizeEntry(byte[] table, int at, EntrySources sources, int typeCount, int maxAbility)
     {
@@ -110,6 +134,11 @@ public sealed class PokemonDataRandomizer(RomWorkspace workspace, RandomizerOpti
         if (options.ShuffleBaseStats)
         {
             PersonalEntry7.ShuffleStats(table, at, sources.Stats.Next);
+        }
+
+        if (options.ShuffleMachineCompatibility)
+        {
+            ShuffleMachines(table, at / PersonalEntry7.Size, sources.Machines);
         }
 
         if (options.RandomizeAbilities)
