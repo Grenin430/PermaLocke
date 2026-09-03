@@ -107,9 +107,16 @@ public sealed class RandomizerService(RandomizerOptions options)
         if (options.StaticEncounters)
         {
             var random = new SeededRandomSource(seed).Derive(Salts.Static);
-            var result = await new StaticEncounterRandomizer(workspace, options)
-                .ApplyAsync(random, pool, mod, ct);
+            var statics = new StaticEncounterRandomizer(workspace, options);
+            var result = await statics.ApplyAsync(random, pool, mod, ct);
+            if (statics.Touched.Count > 0)
+            {
+                steps.Add(new RandomizerStep("Estáticos con regla propia",
+                    string.Join("; ", statics.Touched)));
+            }
+
             steps.Add(new RandomizerStep("Iniciales, fósiles y estáticos",
+
                 $"{result.Replaced} entradas ({result.Protected} intactas). Iniciales: {string.Join(", ", result.Starters)}"
                 + (options.StartersWithTwoEvolutions
                     ? $" (elegidos entre {result.StarterCandidates} especies con dos evoluciones por delante"

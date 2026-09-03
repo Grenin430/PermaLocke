@@ -87,7 +87,11 @@ public sealed class StaticEncounterRandomizer(RomWorkspace workspace, Randomizer
     /// did nothing is how you find out six hours into a run.
     /// </para>
     /// </remarks>
+    /// <summary>What each override rule matched, for the report.</summary>
+    public List<string> Touched { get; } = [];
+
     private HashSet<int> ApplyOverrides(byte[] payload, EncounterEntryLayout layout,
+
         IRandomSource random, SpeciesPool pool, ref int replaced)
     {
         var claimed = new HashSet<int>();
@@ -105,16 +109,26 @@ public sealed class StaticEncounterRandomizer(RomWorkspace workspace, Randomizer
         {
             var hits = Enumerable.Range(0, count)
                 .Where(i => StaticEncounterTable.GetSpecies(payload, layout, i) == rule.Species
-                            && StaticEncounterTable.GetForm(payload, layout, i) == rule.Form)
+                            && StaticEncounterTable.GetForm(payload, layout, i) == rule.Form
+                            && (rule.Level is not { } wanted
+                                || StaticEncounterTable.GetLevel(payload, layout, i) == wanted))
                 .ToArray();
 
             if (hits.Length == 0)
             {
                 throw new InvalidDataException(
-                    $"No hay ningún estático con la especie {rule.Species} y la forma {rule.Form} "
+                    $"No hay ningún estático con la especie {rule.Species} la forma {rule.Form} y el nivel {rule.Level} "
                     + $"({rule.Note}). O la tabla ha cambiado o el número está mal, y en los dos "
                     + "casos escribir un mundo donde la regla no hizo nada es peor que parar.");
             }
+
+            // Cuantas entradas toca cada regla. Una especie puede salir varias veces en la tabla
+            // -- los ultraentes aparecen en la historia y otra vez en el ultraespacio -- y la regla
+            // las coge TODAS. Decirlo es la diferencia entre saber lo que se ha hecho y suponerlo.
+            Touched.Add(rule.Note + ": " + hits.Length + " ("
+                + string.Join(", ", hits.Select(i => "Nv."
+                    + StaticEncounterTable.GetLevel(payload, layout, i))) + ")");
+
 
             foreach (var index in hits)
             {
