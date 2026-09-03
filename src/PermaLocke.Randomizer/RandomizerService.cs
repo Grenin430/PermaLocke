@@ -50,6 +50,8 @@ public sealed class RandomizerService(RandomizerOptions options)
         // Su propia sal: sin ella, encender o apagar los tutores desplazaria lo que sacan los
         // demas modulos y la misma seed daria otro mundo. §27.
         public const string Tutors = "move-tutors";
+
+        public const string MachineFlags = "machine-compatibility";
         public const string FieldItems = "field-items";
     }
 
@@ -232,6 +234,24 @@ public sealed class RandomizerService(RandomizerOptions options)
                       + $"(lista encontrada en code.bin, offset {result.At})"
                     : "sin cambios: no hay code.bin que parchear"));
         }
+
+        // DESPUES de las MT, y por eso no vive en el modulo de datos: preferir el tipo de un
+        // movimiento no significa nada si todavia no se sabe que enseña cada MT, y los datos de
+        // Pokemon se aplican mucho antes de que las MT se barajen.
+        if (options.MachineCompatibility != MachineCompatibility.Unchanged)
+        {
+            var exefs = baseLayer is null
+                ? null
+                : Path.Combine(Path.GetDirectoryName(baseLayer.TrimEnd(Path.DirectorySeparatorChar))!, "exefs");
+            var random = new SeededRandomSource(seed).Derive(Salts.MachineFlags);
+            var result = await new MachineCompatibilityRandomizer(workspace, options)
+                .ApplyAsync(random, mod, exefs, ct);
+
+            steps.Add(new RandomizerStep("MT que aprende cada Pokémon",
+                $"{result.Changed} de {result.Species} especies cambian; "
+                + $"{result.Learnable} MT aprendibles en total, antes {result.Before}"));
+        }
+
 
         // Un módulo pedido y no implementado se dice, no se ignora. Callarlo dejaría al jugador
         // creyendo que su partida está randomizada de una forma en la que no lo está.

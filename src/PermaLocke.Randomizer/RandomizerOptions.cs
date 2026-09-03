@@ -1,3 +1,5 @@
+using PermaLocke.Randomizer.Modules;
+
 namespace PermaLocke.Randomizer;
 
 /// <summary>How a replacement species is chosen.</summary>
@@ -231,12 +233,14 @@ public sealed record RandomizerOptions
     /// -- and their list is not in the RomFS: it is sixty-seven move ids inside the executable.
     /// Same condition as the TMs, so a plain cartridge leaves it alone rather than pretending.
     /// </remarks>
-    /// <summary>Deals each species' TM compatibility again, keeping how many TMs it can learn.</summary>
+    /// <summary>How which TMs each species can learn is dealt again.</summary>
     /// <remarks>
-    /// Shuffled rather than drawn, so nobody ends up able to learn almost nothing: the totals stay
-    /// the cartridge's. What changes is WHICH hundred bits, not how many.
+    /// <c>PreferType</c> is how Universal Pokémon Randomizer does it and is the default: a roll per
+    /// TM, nine in ten when the move shares a type with the species, one in two for a Normal move,
+    /// one in four otherwise. <c>Shuffle</c> keeps every species' total and only moves which ones,
+    /// which is safer and duller — a Magikarp stays useless and a Mew stays universal.
     /// </remarks>
-    public bool ShuffleMachineCompatibility { get; init; } = true;
+    public MachineCompatibility MachineCompatibility { get; init; } = MachineCompatibility.PreferType;
 
     public bool RandomizeTutors { get; init; } = true;
 

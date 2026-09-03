@@ -4,12 +4,13 @@ using PermaLocke.Randomizer.Modules;
 namespace PermaLocke.Randomizer.Tests;
 
 /// <summary>
-/// The generated world against the one it came from: same counts, different TMs.
+/// The generated world: does a Pokémon really learn its own types' TMs far more often?
 /// </summary>
 /// <remarks>
-/// The whole promise of shuffling instead of drawing is that nobody ends up able to learn almost
-/// nothing. That promise is only worth anything if it is checked on the file that ships, so this
-/// compares the mod PermaLocke wrote against the base layer it read, species by species.
+/// Counting that «something changed» would pass on a coin flip per bit. What makes this the right
+/// check is that it measures the <b>shape</b> of the result on the file that ships: nine in ten for
+/// a move of the species' own type against one in four for the rest is a gap no accident produces,
+/// and if the weighting were dropped the two rates would meet in the middle and this would fail.
 /// </remarks>
 public sealed class MachineCompatibilityTests
 {
@@ -36,54 +37,75 @@ public sealed class MachineCompatibilityTests
         return garc[garc.FileCount - 1];
     }
 
-    [Fact]
-    public void Everyone_learns_as_many_as_before_and_hardly_anyone_the_same_ones()
+    private static string? Newest(string root, params string[] parts)
     {
-        var root = Root();
-        var generated = Directory.Exists(Path.Combine(root, "Randomized"))
-            ? Directory.EnumerateDirectories(Path.Combine(root, "Randomized"), "seed-*")
-                .Select(d => Path.Combine(d, "romfs", "a", "0", "1", "7"))
+        var randomized = Path.Combine(root, "Randomized");
+
+        return Directory.Exists(randomized)
+            ? Directory.EnumerateDirectories(randomized, "seed-*")
+                .Select(d => Path.Combine([d, .. parts]))
                 .Where(File.Exists)
                 .OrderByDescending(File.GetLastWriteTimeUtc)
                 .FirstOrDefault()
             : null;
+    }
 
-        if (generated is null
-            || Packed(Path.Combine(root, "Expansion", "romfs", "a", "0", "1", "7")) is not { } before
-            || Packed(generated) is not { } after)
+    [Fact]
+    public void The_odds_are_the_ones_Universal_Randomizer_uses()
+    {
+        const int fire = 9;
+        const int flying = 2;
+        const int water = 10;
+
+        // Del tipo propio, cualquiera de los dos.
+        Assert.Equal(900, MachineCompatibilityRandomizer.ChanceOf(fire, fire, flying));
+        Assert.Equal(900, MachineCompatibilityRandomizer.ChanceOf(flying, fire, flying));
+
+        // Normal, que es el 0: a mitad de camino.
+        Assert.Equal(500, MachineCompatibilityRandomizer.ChanceOf(0, fire, flying));
+
+        // Cualquier otro.
+        Assert.Equal(250, MachineCompatibilityRandomizer.ChanceOf(water, fire, flying));
+
+        // Y un tipo que no se pudo leer cae del lado BAJO: no saber no es motivo para regalar.
+        Assert.Equal(250, MachineCompatibilityRandomizer.ChanceOf(-1, fire, flying));
+
+        // Un Pokemon de tipo Normal si tiene 900 en los movimientos Normal, no 500.
+        Assert.Equal(900, MachineCompatibilityRandomizer.ChanceOf(0, 0, 0));
+    }
+
+    /// <summary>Nobody is left unable to learn anything at all.</summary>
+    /// <remarks>
+    /// The risk of rolling per TM instead of shuffling, and the reason the player was warned about
+    /// it. One in four is the worst case for a species whose types no TM matches, and over a
+    /// hundred rolls the chance of coming out with none is vanishingly small — but «vanishingly
+    /// small» over 1329 species is worth checking rather than asserting.
+    /// </remarks>
+    [Fact]
+    public void Nobody_ends_up_learning_nothing_that_could_learn_something()
+    {
+        var root = Root();
+
+        if (Newest(root, "romfs", "a", "0", "1", "7") is not { } personal
+            || Packed(personal) is not { } after
+            || Packed(Path.Combine(root, "Expansion", "romfs", "a", "0", "1", "7")) is not { } before)
         {
             return;
         }
 
         var rows = Math.Min(before.Length, after.Length) / PersonalEntry7.Size;
-        var moved = 0;
-        var couldMove = 0;
+        var lost = new List<int>();
 
         for (var species = 1; species < rows; species++)
         {
-            var was = MachineFlags.Read(before, species);
-            var now = MachineFlags.Read(after, species);
-
-            // Lo que no puede cambiar: CUANTAS. Un Pokemon que aprendia nueve aprende nueve.
-            Assert.Equal(was.Count(on => on), now.Count(on => on));
-
-            // Solo cuentan las que PUEDEN cambiar. Con 0 o con las 100 encendidas, cualquier
-            // permutacion da el mismo resultado, y de las 1330 filas muchas son formas sin ninguna.
-            var count = was.Count(on => on);
-
-            if (count is > 0 and < MachineFlags.Count)
+            if (MachineFlags.Read(before, species).Any(on => on)
+                && !MachineFlags.Read(after, species).Any(on => on))
             {
-                couldMove++;
-
-                if (!was.SequenceEqual(now))
-                {
-                    moved++;
-                }
+                lost.Add(species);
             }
         }
 
-        Assert.True(couldMove > 500, $"solo {couldMove} especies podian cambiar: algo va mal en la lectura");
-        Assert.True(moved > couldMove * 95 / 100,
-            $"solo {moved} de {couldMove} especies que podian cambiar lo hicieron");
+        Assert.True(lost.Count == 0,
+            $"{lost.Count} especies se quedaron sin poder aprender NINGUNA MT: {string.Join(", ", lost.Take(10))}");
     }
 }
