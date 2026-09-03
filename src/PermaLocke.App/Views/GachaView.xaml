@@ -94,6 +94,17 @@
 
                 <TextBlock x:Name="Label" Text="{Binding Name}" Style="{StaticResource Mono}"
                            FontSize="9" HorizontalAlignment="Center" Opacity="0.3" Margin="0,2,0,0" />
+
+                <!-- La probabilidad en el banner elegido y la banda de estadisticas base. Estaban
+                     repartidas entre la tarjeta del banner y cinco chapas al pie de la pantalla, en
+                     tres idiomas visuales distintos; aqui van sobre la cosa que YA es el tier. -->
+                <TextBlock x:Name="Chance" Text="{Binding Chance}" Style="{StaticResource Mono}"
+                           FontSize="11" FontWeight="Bold" HorizontalAlignment="Center"
+                           Foreground="{Binding BrushKey, Converter={StaticResource ResourceKey}}"
+                           Opacity="0.85" />
+
+                <TextBlock Text="{Binding Range}" Style="{StaticResource Mono}"
+                           FontSize="9" HorizontalAlignment="Center" Opacity="0.35" />
             </StackPanel>
 
             <DataTemplate.Triggers>
@@ -106,6 +117,15 @@
                         </Storyboard>
                     </BeginStoryboard>
                 </EventTrigger>
+
+                <!-- Se queda encendido donde cayo la ultima tirada, hasta la siguiente. Es lo que
+                     une la animacion con la escalera de rareza: de un vistazo, en que peldaño. -->
+                <DataTrigger Binding="{Binding IsLanded}" Value="True">
+                    <Setter TargetName="Ring" Property="Opacity" Value="1" />
+                    <Setter TargetName="Ring" Property="StrokeThickness" Value="3.5" />
+                    <Setter TargetName="Label" Property="Opacity" Value="0.9" />
+                    <Setter TargetName="Glow" Property="Opacity" Value="0.30" />
+                </DataTrigger>
 
                 <DataTrigger Binding="{Binding IsActive}" Value="True">
                     <DataTrigger.EnterActions>
@@ -328,15 +348,13 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0" Text="ULTRAESPACIO" Style="{StaticResource Muted}" FontSize="11"
-                               HorizontalAlignment="Center" Margin="0,10,0,4" Opacity="0.5" />
-
                     <ItemsControl Grid.Row="1" ItemsSource="{Binding Portals}"
                                   ItemTemplate="{StaticResource PortalTemplate}"
-                                  HorizontalAlignment="Center" Margin="0,0,0,6">
+                                  HorizontalAlignment="Center" Margin="0,14,0,8">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <StackPanel Orientation="Horizontal" />
@@ -362,7 +380,7 @@
                         </Grid.RenderTransform>
 
                     <Border x:Name="ReelViewport" Height="104" Margin="14,0" CornerRadius="3"
-                            ClipToBounds="True" Background="#22000000" BorderThickness="1"
+                            ClipToBounds="True" Background="{StaticResource SunkenBrush}" BorderThickness="1"
                             BorderBrush="{StaticResource SurfaceAltBrush}">
                         <Grid>
                             <!-- Dentro de un Canvas a propósito: en un Grid, WPF le recorta el
@@ -473,7 +491,7 @@
 
                     <!-- Resultado. Entra con su propia animación; los datos ya estaban decididos
                          y guardados antes de que la rueda empezase a girar. -->
-                    <Border Grid.Row="3" VerticalAlignment="Center" HorizontalAlignment="Center"
+                    <Border Grid.Row="3" VerticalAlignment="Top" HorizontalAlignment="Center"
                             Background="{StaticResource SurfaceBrush}" CornerRadius="6"
                             Padding="20,8" Margin="0,6,0,8" BorderThickness="1"
                             RenderTransformOrigin="0.5,0.5"
@@ -505,9 +523,16 @@
                             </Style>
                         </Border.Style>
 
-                        <!-- Sin icono aquí: el sprite ya lo enseña la ruleta, grande y a color, y
-                             repetirlo dos veces en la misma pantalla no aporta nada. -->
-                        <StackPanel>
+                        <!-- CON icono, y es una correccion. Antes no lo llevaba «porque ya lo
+                             enseña la ruleta», y eso vale mientras la ruleta gira: parada, la
+                             casilla ganadora mide 56 px dentro de una banda de 104 y compite con
+                             las de al lado. La ficha es donde se mira al final, asi que es donde
+                             el Pokemon tiene que verse. -->
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="{Binding LastSprite}" Width="64" Height="64"
+                                   Margin="0,0,14,0" VerticalAlignment="Center"
+                                   RenderOptions.BitmapScalingMode="NearestNeighbor" />
+                            <StackPanel VerticalAlignment="Center">
                             <TextBlock Style="{StaticResource Mono}" HorizontalAlignment="Center" FontSize="10"
                                        Opacity="0.75" Text="{Binding LastTierName}"
                                        Foreground="{Binding LastTierBrushKey, Converter={StaticResource ResourceKey}}" />
@@ -601,8 +626,40 @@
                             <TextBlock Style="{StaticResource Mono}" HorizontalAlignment="Center" Margin="0,2,0,0"
                                        FontSize="11"
                                        Text="{Binding LastPull.IvTotal, StringFormat='IV total {0} de 186'}" />
+                            </StackPanel>
                         </StackPanel>
                     </Border>
+
+                    <!-- LO QUE YA HA SALIDO. Llena los cuatrocientos y pico pixeles que la
+                         pantalla tenia en negro, y de paso contesta la pregunta que un gacha
+                         siempre levanta y esta no contestaba: que llevas. Cada uno con el borde
+                         de su tier, asi que la racha se lee de un vistazo. -->
+                    <StackPanel Grid.Row="4" VerticalAlignment="Bottom" Margin="0,0,0,16"
+                                Visibility="{Binding HasHistory, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock Text="LO QUE HA SALIDO" Style="{StaticResource Mono}" FontSize="9"
+                                   HorizontalAlignment="Center" Opacity="0.35" Margin="0,0,0,6" />
+
+                        <ItemsControl ItemsSource="{Binding History}" HorizontalAlignment="Center">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Width="46" Height="46" Margin="3,0" CornerRadius="4"
+                                            BorderThickness="1.5"
+                                            Background="{StaticResource SunkenBrush}"
+                                            ToolTip="{Binding SpeciesName}"
+                                            BorderBrush="{Binding BrushKey,
+                                                Converter={StaticResource ResourceKey}}">
+                                        <Image Source="{Binding Sprite}" Width="38" Height="38"
+                                               RenderOptions.BitmapScalingMode="NearestNeighbor" />
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
                     </Grid>
                 </Grid>
             </Border>
@@ -643,6 +700,10 @@
                                                     Value="{StaticResource AccentBrush}" />
                                             <Setter TargetName="Card" Property="Background"
                                                     Value="{StaticResource AccentDeepBrush}" />
+                                            <!-- Y con grosor, que el tono solo no se veia: en la
+                                                 captura el elegido y los otros dos se distinguian
+                                                 por un gris de diferencia. -->
+                                            <Setter TargetName="Card" Property="BorderThickness" Value="2" />
                                         </Trigger>
                                     </ControlTemplate.Triggers>
                                 </ControlTemplate>
@@ -697,58 +758,24 @@
             <Border Grid.Row="2" Style="{StaticResource Inset}" Padding="14,12" Margin="0,12,0,0">
                 <StackPanel>
                     <DockPanel>
-                        <!-- Dice GRATIS cuando el banner elegido tiene credito, para que no haya
-                             que fijarse en la chapa de la tarjeta antes de pulsar. -->
-                        <Button DockPanel.Dock="Left"
-                                Command="{Binding RollCommand}" MinWidth="180" Padding="16,11" FontSize="14">
-                            <Button.Style>
-                                <Style TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
-                                    <Setter Property="Content" Value="TIRAR" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding SelectedBanner.HasFree}" Value="True">
-                                            <Setter Property="Content" Value="TIRAR GRATIS" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Button.Style>
+                        <!-- El precio va EN el boton. Antes ponia «TIRAR» y al lado una chapa con
+                             los puntos, que es el SALDO y no lo que cuesta: para saber que te iban
+                             a cobrar habia que mirar a otro sitio, la insignia del banner elegido,
+                             y cual estaba elegido se distinguia por un fondo un tono mas claro. -->
+                        <Button DockPanel.Dock="Left" Command="{Binding RollCommand}"
+                                Style="{StaticResource PrimaryButton}"
+                                MinWidth="200" Padding="18,9">
+                            <StackPanel>
+                                <TextBlock Text="{Binding RollLabel}" FontSize="14" FontWeight="Bold"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Text="{Binding RollCost}" FontSize="10.5" Opacity="0.8"
+                                           HorizontalAlignment="Center" Margin="0,1,0,0" />
+                            </StackPanel>
                         </Button>
 
-                        <!-- QUÉ ES CADA TIER, a la vista y no en un tooltip: es lo que hay que
-                             mirar para decidir qué banner tirar. El rango es el TOTAL de
-                             estadísticas base, y el suelo de cada uno es el techo del anterior. -->
-                        <ItemsControl DockPanel.Dock="Right" Margin="14,0,0,0" VerticalAlignment="Center">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <StackPanel Orientation="Horizontal" />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-
-                            <Border Style="{StaticResource Chip}" Margin="0,0,5,0"
-                                    BorderBrush="{StaticResource Tier1Brush}">
-                                <TextBlock Style="{StaticResource ChipText}"
-                                           Foreground="{StaticResource Tier1Brush}" Text="T1 · ≤400" />
-                            </Border>
-                            <Border Style="{StaticResource Chip}" Margin="0,0,5,0"
-                                    BorderBrush="{StaticResource Tier2Brush}">
-                                <TextBlock Style="{StaticResource ChipText}"
-                                           Foreground="{StaticResource Tier2Brush}" Text="T2 · 401-490" />
-                            </Border>
-                            <Border Style="{StaticResource Chip}" Margin="0,0,5,0"
-                                    BorderBrush="{StaticResource Tier3Brush}">
-                                <TextBlock Style="{StaticResource ChipText}"
-                                           Foreground="{StaticResource Tier3Brush}" Text="T3 · 491-535" />
-                            </Border>
-                            <Border Style="{StaticResource Chip}" Margin="0,0,5,0"
-                                    BorderBrush="{StaticResource Tier4Brush}">
-                                <TextBlock Style="{StaticResource ChipText}"
-                                           Foreground="{StaticResource Tier4Brush}" Text="T4 · 536-590" />
-                            </Border>
-                            <Border Style="{StaticResource Chip}"
-                                    BorderBrush="{StaticResource Tier5Brush}">
-                                <TextBlock Style="{StaticResource ChipText}"
-                                           Foreground="{StaticResource Tier5Brush}" Text="T5 · 591+ y legendarios" />
-                            </Border>
-                        </ItemsControl>
+                        <!-- Las cinco chapas de tier vivian aqui, con «T1 · ≤400» y compañia escritos
+                             A MANO en el XAML: editar Data/gacha.json las dejaba mintiendo. Ahora
+                             cada rango va bajo su portal, calculado de los propios tiers. -->
 
                         <Border Style="{StaticResource Chip}" HorizontalAlignment="Left" Margin="14,0,0,0"
                                 Padding="12,5"

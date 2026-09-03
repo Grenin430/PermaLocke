@@ -30,6 +30,42 @@ public sealed partial class PortalViewModel(GachaTier tier, int position) : Obse
     /// <summary>True while this portal is the one the roll landed on.</summary>
     [ObservableProperty]
     private bool _isActive;
+
+    /// <summary>
+    /// The band of base stat totals this tier covers, as the screen writes it.
+    /// </summary>
+    /// <remarks>
+    /// Computed from the tiers themselves — each one's floor is the previous one's ceiling — and
+    /// not typed in. It used to be five chips at the bottom of the screen with «T1 · ≤400» and the
+    /// rest written by hand in XAML, so editing <c>Data/gacha.json</c> left the screen stating
+    /// bands the roll no longer used. A number nobody can contradict is worth more than a tidy
+    /// literal.
+    /// </remarks>
+    public string Range { get; init; } = string.Empty;
+
+    /// <summary>Chance of this tier on the banner currently chosen, or blank when it cannot come out.</summary>
+    [ObservableProperty]
+    private string _chance = string.Empty;
+
+    /// <summary>Stays lit on the tier the last roll produced, after the flash is over.</summary>
+    [ObservableProperty]
+    private bool _isLanded;
+}
+
+/// <summary>One line of what has already come out.</summary>
+/// <remarks>
+/// The screen used to forget every roll the moment the next one started; what you had pulled lived
+/// only in the STATISTICS screen. A gacha with no memory of its own is missing the half that makes
+/// the odds mean anything.
+/// </remarks>
+public sealed class GachaHistoryViewModel(string speciesName, string brushKey,
+    System.Windows.Media.Imaging.BitmapSource? sprite)
+{
+    public string SpeciesName { get; } = speciesName;
+
+    public string BrushKey { get; } = brushKey;
+
+    public System.Windows.Media.Imaging.BitmapSource? Sprite { get; } = sprite;
 }
 
 /// <summary>One banner as the screen shows it, with its odds spelled out.</summary>
@@ -78,11 +114,14 @@ public sealed partial class GachaViewModel : SectionViewModel
     private readonly PokemonIdentityService _identity;
     private readonly CreditService _credits;
     private readonly PokemonSpriteService _sprites;
+    private readonly IEventStore _events;
+    private readonly ISpeciesLookup _species;
     private readonly ILogger<GachaViewModel> _logger;
 
     public GachaViewModel(GachaService gacha, IRunContext runContext, IPointsService points,
         IPokemonDelivery delivery, PokemonIdentityService identity, CreditService credits,
-        PokemonSpriteService sprites, ILogger<GachaViewModel> logger)
+        PokemonSpriteService sprites, IEventStore events, ISpeciesLookup species,
+        ILogger<GachaViewModel> logger)
         : base("GACHA", "Gasta puntos y llévate un Pokémon al PC de la partida")
     {
         _gacha = gacha;
@@ -91,6 +130,8 @@ public sealed partial class GachaViewModel : SectionViewModel
         _delivery = delivery;
         _identity = identity;
         _credits = credits;
+        _events = events;
+        _species = species;
         _sprites = sprites;
         _logger = logger;
     }
@@ -125,6 +166,16 @@ public sealed partial class GachaViewModel : SectionViewModel
 
     /// <summary>One portal per tier, in order of price. Built from the catalogue, not from XAML.</summary>
     public ObservableCollection<PortalViewModel> Portals { get; } = [];
+
+    /// <summary>The last few rolls, newest first. Not persisted: it is what this sitting has seen.</summary>
+    public ObservableCollection<GachaHistoryViewModel> History { get; } = [];
+
+    /// <summary>How many fit under the reel without the strip wrapping or shrinking.</summary>
+    private const int HistoryKept = 10;
+
+    /// <summary>So the strip and its heading stay out of the way until there is something to show.</summary>
+    [ObservableProperty]
+    private bool _hasHistory;
 
     [ObservableProperty]
     private BannerViewModel? _selectedBanner;
@@ -222,13 +273,26 @@ public sealed partial class GachaViewModel : SectionViewModel
         if (Portals.Count == 0)
         {
             var position = 1;
+            var floor = 0;
+
             foreach (var tier in _gacha.Tiers)
             {
-                Portals.Add(new PortalViewModel(tier, position++));
+                // El ultimo no tiene techo: es «de aqui para arriba», legendarios incluidos.
+                var last = position == _gacha.Tiers.Count;
+
+                Portals.Add(new PortalViewModel(tier, position++)
+                {
+                    Range = last
+                        ? $"{floor + 1}+"
+                        : floor == 0 ? $"≤{tier.MaxBaseStatTotal}" : $"{floor + 1}-{tier.MaxBaseStatTotal}"
+                });
+
+                floor = tier.MaxBaseStatTotal;
             }
         }
 
         SelectedBanner ??= Banners.FirstOrDefault();
+        ShowOddsOf(SelectedBanner);
 
         if (_runContext.Current is { } run)
         {
@@ -239,6 +303,8 @@ public sealed partial class GachaViewModel : SectionViewModel
         // Los iconos salen de la ROM del propio jugador la primera vez. Si no se puede, la
         // pantalla funciona igual: enseña la ficha sin dibujo.
         await _sprites.PrepareAsync();
+
+        await SeedHistoryAsync();
 
         _logger.LogInformation("Gacha: {Count} banners cargados, saldo {Balance}", Banners.Count, Balance);
 
@@ -267,6 +333,11 @@ public sealed partial class GachaViewModel : SectionViewModel
             {
                 banner.Free = available.RollsOn(banner.Banner.Id);
             }
+
+            // El boton lleva el precio, asi que tiene que enterarse cuando el credito cambia:
+            // gastar la ultima tirada gratis lo devuelve a cobrar puntos.
+            OnPropertyChanged(nameof(RollLabel));
+            OnPropertyChanged(nameof(RollCost));
         }
         catch (Exception ex)
         {
@@ -329,6 +400,8 @@ public sealed partial class GachaViewModel : SectionViewModel
             };
             LastSprite = _sprites.Get(pull.Species);
             HasResult = true;
+
+            Remember(pull);
 
             // El Pokémon va al PC del juego. Si no se puede ahora, se dice por qué en vez de
             // dejar creer que está en la partida: en la run sí está, en el juego todavía no.
@@ -447,8 +520,141 @@ public sealed partial class GachaViewModel : SectionViewModel
         }
     }
 
-    partial void OnSelectedBannerChanged(BannerViewModel? value) =>
+    partial void OnSelectedBannerChanged(BannerViewModel? value)
+    {
         RollCommand.NotifyCanExecuteChanged();
+        ShowOddsOf(value);
+        OnPropertyChanged(nameof(RollLabel));
+        OnPropertyChanged(nameof(RollCost));
+    }
+
+    /// <summary>
+    /// Writes each tier's chance onto its own portal, for the banner currently chosen.
+    /// </summary>
+    /// <remarks>
+    /// The odds used to be told three times over — the portals up top, the percentages on the
+    /// banner card, and five hand-written chips at the bottom with the stat bands — in three
+    /// different visual languages, none of them joined up. This is the one place they belong: the
+    /// portal already IS the tier, it already carries its colour, and it is what lights up when a
+    /// roll lands there. A tier a banner cannot produce says so by going blank rather than by
+    /// showing a zero, which would read as a number rather than as an absence.
+    /// </remarks>
+    private void ShowOddsOf(BannerViewModel? banner)
+    {
+        foreach (var portal in Portals)
+        {
+            portal.Chance = banner is not null
+                            && banner.Banner.TierChances.TryGetValue(portal.TierId, out var chance)
+                            && chance > 0
+                ? chance.ToString("P0")
+                : string.Empty;
+        }
+    }
+
+    /// <summary>What the roll button says, so the price is on the thing you press.</summary>
+    /// <remarks>
+    /// It used to say «TIRAR» with the <b>balance</b> on a chip beside it, which is not the price:
+    /// to find out what a roll cost you had to look away, at the badge on whichever banner card was
+    /// selected — and which one that was could only be told apart by a background one shade lighter.
+    /// </remarks>
+    public string RollLabel => (SelectedBanner ?? Banners.FirstOrDefault())?.Free > 0
+        ? "TIRAR GRATIS"
+        : "TIRAR";
+
+    public string RollCost
+    {
+        get
+        {
+            var banner = SelectedBanner ?? Banners.FirstOrDefault();
+
+            if (banner is null)
+            {
+                return string.Empty;
+            }
+
+            return banner.Free > 0
+                ? $"te quedan {banner.Free}"
+                : $"{banner.Banner.Cost} puntos";
+        }
+    }
+
+    /// <summary>
+    /// Fills the strip from the run's own history when the screen opens.
+    /// </summary>
+    /// <remarks>
+    /// Without this the strip only remembers the rolls made since the window was opened, which is
+    /// not memory, it is amnesia with extra steps: open the screen and the four hundred pixels are
+    /// blank again. The rolls are already in the chained history — every one carries its species
+    /// and its tier — so the screen is reading what happened rather than keeping a second copy of
+    /// it, which is the same rule the credits follow.
+    /// <para>
+    /// Failing to read them costs the strip and nothing else. A gacha screen that will not open
+    /// because it could not draw its own scrollback would be a worse trade than an empty strip.
+    /// </para>
+    /// </remarks>
+    private async Task SeedHistoryAsync()
+    {
+        if (History.Count > 0 || _runContext.Current is not { } run)
+        {
+            return;
+        }
+
+        try
+        {
+            var rolls = (await _events.GetAllAsync(run.Id))
+                .Where(e => e.Type == GameEventType.GachaRoll)
+                .Reverse()
+                .Take(HistoryKept);
+
+            foreach (var roll in rolls)
+            {
+                if (!roll.Data.TryGetValue("especie", out var text)
+                    || !int.TryParse(text, out var species))
+                {
+                    continue;
+                }
+
+                var tier = roll.Data.GetValueOrDefault("rareza", string.Empty);
+                var portal = Portals.FirstOrDefault(p =>
+                    string.Equals(p.TierId, tier, StringComparison.OrdinalIgnoreCase));
+
+                History.Add(new GachaHistoryViewModel(_species.GetName(species),
+                    portal?.BrushKey ?? "AccentBrush", _sprites.Get(species)));
+            }
+
+            HasHistory = History.Count > 0;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "No se pudo leer el historial de tiradas del gacha");
+        }
+    }
+
+    /// <summary>Adds a roll to the strip under the reel, and lights the tier it landed on.</summary>
+    /// <remarks>
+    /// Newest first and capped, because the point is the last handful and an unbounded list would
+    /// quietly become a memory leak on a screen somebody leaves open all evening.
+    /// </remarks>
+    private void Remember(GachaPull pull)
+    {
+        var portal = Portals.FirstOrDefault(p =>
+            string.Equals(p.TierId, pull.TierId, StringComparison.OrdinalIgnoreCase));
+
+        foreach (var other in Portals)
+        {
+            other.IsLanded = ReferenceEquals(other, portal);
+        }
+
+        History.Insert(0, new GachaHistoryViewModel(pull.SpeciesName,
+            portal?.BrushKey ?? "AccentBrush", _sprites.Get(pull.Species)));
+
+        while (History.Count > HistoryKept)
+        {
+            History.RemoveAt(History.Count - 1);
+        }
+
+        HasHistory = History.Count > 0;
+    }
 
     /// <summary>"60% Tier 2 · 25% Tier 3 · 15% Tier 1", ordered by how likely each one is.</summary>
     private string DescribeOdds(GachaBanner banner)

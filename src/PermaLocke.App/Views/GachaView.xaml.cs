@@ -46,6 +46,7 @@ public partial class GachaView : UserControl
     {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
+        Loaded += (_, _) => BreatheWhileWaiting();
         Unloaded += (_, _) => Detach();
     }
 
@@ -354,6 +355,34 @@ public partial class GachaView : UserControl
     }
 
     /// <summary>A short punch of the marker, so a tier climb is felt and not just seen.</summary>
+    /// <summary>
+    /// Keeps the marker breathing while nothing is happening.
+    /// </summary>
+    /// <remarks>
+    /// The viewport at rest was an empty bordered box with an empty outline inside it, and that
+    /// reads as «broken» or «still loading», not as «ready». A gacha at rest has to invite the
+    /// pull. Very slow and very shallow on purpose — four seconds a cycle, a twentieth of the
+    /// element — because this is the resting state of a screen somebody leaves open, and anything
+    /// faster stops being an invitation and becomes a distraction.
+    /// <para>
+    /// It runs for ever and is never stopped: the spin animates the marker's <b>scale</b> through
+    /// the same transform, and an animation started later on the same property simply takes over,
+    /// so the two cannot fight. What comes back afterwards is this one, which is what should
+    /// happen.
+    /// </para>
+    /// </remarks>
+    private void BreatheWhileWaiting() => MarkerScale().BeginAnimation(
+        ScaleTransform.ScaleYProperty,
+        new DoubleAnimation
+        {
+            From = 1,
+            To = 1.05,
+            Duration = TimeSpan.FromSeconds(2),
+            AutoReverse = true,
+            RepeatBehavior = RepeatBehavior.Forever,
+            EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut },
+        });
+
     private void KickMarker()
     {
         var kick = new DoubleAnimation(1.22, 1, new Duration(TimeSpan.FromSeconds(0.45)))
