@@ -532,7 +532,82 @@ async Task TrainersAsync(ulong seed)
         }
     }
 
+    // AUDITORIA DE CLASES IMPORTANTES.
+    //
+    // La lista de roles.json se hizo mirando el cartucho y ya se le encontro un hueco -- la clase
+    // 222, el combate que el jugador jugaba --, asi que conviene poder repasarla entera. Un
+    // personaje con nombre deja firma: aparece POCAS veces y con equipos GRANDES. Un entrenador
+    // de relleno aparece decenas de veces y lleva uno o dos Pokemon.
+    var classNames = workspace.Config.GetText(TextName.TrainerClasses);
+    var keyClasses = new HashSet<int>
+    {
+        31, 49, 50, 51, 141, 164, 38, 43, 44, 45, 46, 48, 142, 153,
+        80, 107, 110, 191, 70, 103, 100, 194, 76, 140, 219, 71, 220, 185, 165,
+        198, 199, 200, 201, 202, 206, 222,
+        83, 84, 86, 101, 102, 79, 81, 143,
+    };
+
+    var classPath = Path.Combine(Path.GetDirectoryName(generatedPath)!, "..", "0", "6");
+
+    if (File.Exists(classPath))
+    {
+        var meta = new GARC.LazyGARC(await File.ReadAllBytesAsync(classPath));
+        var seen = new Dictionary<int, (int Count, int MaxParty, int MaxLevel)>();
+        var byClassIndex = new Dictionary<int, List<int>>();
+        var trainerNames = workspace.Config.GetText(TextName.TrainerNames);
+
+        for (var t = 0; t < Math.Min(meta.FileCount, vanilla.FileCount); t++)
+        {
+            var e = meta[t];
+            var cls = e.Length >= 0x14 ? BitConverter.ToUInt16(e, 0x00) : -1;
+
+            if (cls < 0) { continue; }
+
+            var party = vanilla[t];
+            var n = TrainerPokemonTable.Count(party);
+
+            if (n == 0 || party.Length != n * TrainerPokemonTable.EntrySize) { continue; }
+
+            var top = Enumerable.Range(0, n).Max(s => TrainerPokemonTable.GetLevel(party, s));
+            var had = seen.GetValueOrDefault(cls);
+            seen[cls] = (had.Count + 1, Math.Max(had.MaxParty, n), Math.Max(had.MaxLevel, top));
+
+            if (!byClassIndex.TryGetValue(cls, out var who2)) { byClassIndex[cls] = who2 = []; }
+
+            who2.Add(t);
+        }
+
+        Console.WriteLine("\n  CLASES SOSPECHOSAS que NO están en la lista:");
+        Console.WriteLine("  (pocas apariciones y equipo grande = personaje con nombre)");
+
+        foreach (var (cls, info) in seen
+            .Where(kv => !keyClasses.Contains(kv.Key) && kv.Value.Count <= 12 && kv.Value.MaxParty >= 4)
+            .OrderByDescending(kv => kv.Value.MaxParty)
+            .ThenBy(kv => kv.Value.Count))
+        {
+            var name = cls < classNames.Length ? classNames[cls] : "?";
+            var who = string.Join(", ", byClassIndex.GetValueOrDefault(cls, [])
+                .Select(t => t < trainerNames.Length ? trainerNames[t] : "?")
+                .Distinct()
+                .Take(4));
+
+            Console.WriteLine($"    clase {cls,3} «{name}»: {info.Count} entrenadores, "
+                + $"hasta {info.MaxParty} Pokémon, Nv. máx {info.MaxLevel}  -> {who}");
+        }
+
+        Console.WriteLine("\n  LAS QUE SÍ ESTÁN:");
+
+        foreach (var cls in keyClasses.OrderBy(c => c))
+        {
+            var name = cls < classNames.Length ? classNames[cls] : "?";
+            var info = seen.GetValueOrDefault(cls);
+            Console.WriteLine($"    clase {cls,3} «{name}»: {info.Count} entrenadores, "
+                + $"hasta {info.MaxParty} Pokémon");
+        }
+    }
+
     Console.WriteLine($"  {total} Pokémon, {replaced} con especie nueva");
+
     Console.WriteLine($"  equipos que cambiaron de tamaño: {sizeChanged}   (debe ser 0)");
     Console.WriteLine($"  NIVELES movidos: {levelsMoved}   (debe ser 0: de ahí salen los caps)");
     Console.WriteLine($"  objetos alterados: {itemsLost}   (debe ser 0)");

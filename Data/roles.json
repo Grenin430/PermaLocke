@@ -19,10 +19,11 @@
     71, 220, 185,
     165,
     198, 199, 200, 201, 202, 206,
-    222
+    222,
+    83, 84, 86, 101, 102, 79, 81, 143
   ],
 
-  "comentarioQuienEsQuien": "Por bloques, en el orden de arriba: kahunas (Kaudan, Mayla, Denio, Hela), capitanes (Liam, Kiawe, Nereida, Lulú, Chris, Rika), alto mando (Kahili, Zarala, Mayla, Lario), los dos rivales (Gladio y Tilo), Guzmán, la Fundación Æther (Samina y Fabio), el profesor Kukui, y los jefes del Team Rainbow Rocket (Aquiles, Helio, Magno, Ghechis, Lysson, Giovanni). NO están los reclutas de ningún equipo: son relleno, no combates importantes. La 222 se añadió DESPUÉS, y así es como aparecen los huecos de esta lista: el jugador peleó un combate de nivel 34 con Lotad, Scizor y Araquanid, no le salió mega, y al buscar ese equipo en la tabla resultó ser la clase 222 -- seis entrenadores, #76-78 y #217-219, o sea dos escenas en sus tres variantes, que es la firma de un personaje con nombre y no de relleno. Si vuelve a pasar con otro combate, el camino es ese: RomTool trainers busca el equipo y dice su clase.",
+  "comentarioQuienEsQuien": "Por bloques, en el orden de arriba: kahunas (Kaudan, Mayla, Denio, Hela), capitanes (Liam, Kiawe, Nereida, Lulú, Chris, Rika), alto mando (Kahili, Zarala, Mayla, Lario), los dos rivales (Gladio y Tilo), Guzmán, la Fundación Æther (Samina y Fabio), el profesor Kukui, y los jefes del Team Rainbow Rocket (Aquiles, Helio, Magno, Ghechis, Lysson, Giovanni). NO están los reclutas de ningún equipo: son relleno, no combates importantes. La 222 se añadió DESPUÉS, y así es como aparecen los huecos de esta lista: el jugador peleó un combate de nivel 34 con Lotad, Scizor y Araquanid, no le salió mega, y al buscar ese equipo en la tabla resultó ser la clase 222 -- seis entrenadores, #76-78 y #217-219, o sea dos escenas en sus tres variantes, que es la firma de un personaje con nombre y no de relleno. Si vuelve a pasar con otro combate, el camino es ese: RomTool trainers busca el equipo y dice su clase. Y despues de esa se REPASO la lista entera: RomTool trainers lista las clases que NO estan y a las que se les nota el personaje -pocas apariciones y equipo grande- CON EL NOMBRE de sus entrenadores, que es lo que habria evitado tres rondas de ajustar umbrales. Salieron ocho mas: 83 Rojo, 84 Azul, 86 Dexio, 101 Tilo otra vez, 102 Gladio otra vez, 79 Francine, y 81 y 143 Olano. Se dejaron fuera «Veterano» (19) y «Bailarina» (53) -diez y cuatro entrenadores con nombres sueltos, o sea relleno- y la 163 «Joven» de un tal Jose, que por clase y por nombre no es un personaje relevante aunque lleve cinco Pokemon.",
 
   "roles": [
     {
