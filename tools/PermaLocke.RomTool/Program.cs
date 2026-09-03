@@ -539,6 +539,108 @@ async Task TrainersAsync(ulong seed)
     Console.WriteLine($"  especies prohibidas: {offenders}   (debe ser 0)");
     Console.WriteLine($"  nivel más alto del juego: {highest} (entrenador {highestTrainer})");
 
+    // Que combates llevan un Pokemon ya megaevolucionado, y a que nivel van. Sin esto, «no me
+    // sale ninguna mega» solo se puede contestar suponiendo.
+    var withMega = new List<string>();
+
+    for (var t = 0; t < modded.FileCount; t++)
+    {
+        var party = modded[t];
+        var slots = TrainerPokemonTable.Count(party);
+
+        if (slots == 0 || party.Length != slots * TrainerPokemonTable.EntrySize)
+        {
+            continue;
+        }
+
+        var mega = Enumerable.Range(0, slots)
+            .Any(s => TrainerPokemonTable.GetForm(party, s) > 0);
+
+        if (mega)
+        {
+            var top = Enumerable.Range(0, slots).Max(s => TrainerPokemonTable.GetLevel(party, s));
+            withMega.Add($"#{t} Nv.{top}");
+        }
+    }
+
+    // Y los que caen en la franja del umbral, con y sin mega: es donde se ve si un combate se
+    // quedo fuera por nivel o por no ser de una clase importante.
+    var band = new List<string>();
+
+    for (var t = 0; t < modded.FileCount; t++)
+    {
+        var party = modded[t];
+        var slots = TrainerPokemonTable.Count(party);
+
+        if (slots == 0 || party.Length != slots * TrainerPokemonTable.EntrySize)
+        {
+            continue;
+        }
+
+        var top = Enumerable.Range(0, slots).Max(s => TrainerPokemonTable.GetLevel(party, s));
+
+        if (top is >= 33 and <= 42)
+        {
+            var mega = Enumerable.Range(0, slots).Any(s => TrainerPokemonTable.GetForm(party, s) > 0);
+            band.Add($"#{t} Nv.{top}{(mega ? " MEGA" : "")}");
+        }
+    }
+
+    Console.WriteLine($"  entrenadores de Nv.33 a 42: {band.Count} -> {string.Join(", ", band.Take(24))}");
+    // Los combates IMPORTANTES por clase, con su nivel y si llevan mega. Es lo unico que contesta
+    // «por que este no lleva»: o esta por debajo del umbral, o su clase no cuenta como importante.
+    var classFile = Path.Combine(Path.GetDirectoryName(generatedPath)!, "..", "0", "6");
+
+    if (File.Exists(classFile))
+    {
+        var meta = new GARC.LazyGARC(await File.ReadAllBytesAsync(classFile));
+        var important = new HashSet<int>
+        {
+            31, 49, 50, 51, 141, 164, 38, 43, 44, 45, 46, 48, 142, 153,
+            80, 107, 110, 191, 70, 103, 100, 194, 76, 140, 219, 71, 220, 185, 165,
+            198, 199, 200, 201, 202, 206,
+        };
+
+        var rows = new List<(int Level, string Text)>();
+
+        for (var t = 0; t < Math.Min(meta.FileCount, modded.FileCount); t++)
+        {
+            var entry = meta[t];
+            var cls = entry.Length >= 0x14 ? BitConverter.ToUInt16(entry, 0x00) : -1;
+
+            if (!important.Contains(cls))
+            {
+                continue;
+            }
+
+            var party = modded[t];
+            var slots = TrainerPokemonTable.Count(party);
+
+            if (slots == 0 || party.Length != slots * TrainerPokemonTable.EntrySize)
+            {
+                continue;
+            }
+
+            var top = Enumerable.Range(0, slots).Max(s => TrainerPokemonTable.GetLevel(party, s));
+            var mega = Enumerable.Range(0, slots).Any(s => TrainerPokemonTable.GetForm(party, s) > 0);
+            rows.Add((top, $"#{t} clase {cls} Nv.{top}{(mega ? " MEGA" : " ---")}"));
+        }
+
+        Console.WriteLine($"\n  IMPORTANTES ({rows.Count}), de menor a mayor nivel:");
+
+        foreach (var row in rows.OrderBy(r => r.Level).Where(r => r.Level is >= 28 and <= 48))
+        {
+            Console.WriteLine($"    {row.Text}");
+        }
+    }
+
+    Console.WriteLine($"  combates con mega: {withMega.Count}");
+
+
+    Console.WriteLine($"    los de nivel más bajo: {string.Join(", ",
+        withMega.OrderBy(w => int.Parse(w.Split("Nv.")[1])).Take(8))}");
+
+
     if (evolutions is not null && threshold > 0)
     {
         Console.WriteLine($"  de nivel {threshold} en adelante (6ª prueba): {checkedAbove} Pokémon, "
