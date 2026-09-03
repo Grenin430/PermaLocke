@@ -628,7 +628,7 @@ async Task TrainersAsync(ulong seed)
 
         Console.WriteLine($"\n  IMPORTANTES ({rows.Count}), de menor a mayor nivel:");
 
-        foreach (var row in rows.OrderBy(r => r.Level).Where(r => r.Level is >= 28 and <= 48))
+        foreach (var row in rows.OrderBy(r => r.Level).Where(r => r.Text.Contains("clase 100")))
         {
             Console.WriteLine($"    {row.Text}");
         }
