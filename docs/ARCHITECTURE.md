@@ -6358,3 +6358,95 @@ blanco sin decir por qué. Convertidas a PNG con el propio códec.
 
 Las imágenes son del juego, así que `islas/` va al `.gitignore` como `Data/sprites/` y
 `Data/mapa-islas/`. **Lo que sí se versiona es `Data/fotos.json`**, que es solo el emparejamiento.
+
+## 84. La ruleta rehecha, y un color que no podía significar nada (2026-09-04)
+
+Repaso visual de la pantalla del rol LUDÓPATA. Lo que la sostenía era un fallo de fondo: el color
+de cada cuña salía de `WedgeBrush(index)`, o sea de **la posición**, y los seis
+`RouletteSlotViewModel` se construían una vez en el constructor con su color ya puesto mientras la
+cara llegaba después, escribiendo `Text`. Así que la misma cara salía roja o azul según dónde
+cayera y **el color no podía significar nada ni queriendo**. Mirando la rueda no se sabía si te iba
+bien o mal: «mueren 3 Pokémon» y «3 tiradas de gacha» se veían igual de festivos.
+
+El comentario que defendía aquello decía que un verde y un rojo «chafarían la tensión media vuelta
+antes». La premisa no se sostiene y por eso se revoca por escrito: las seis caras **se desvelan una
+a una antes** de que la rueda arranque, y la lista de al lado ya las pintaba de verde o rojo. Lo
+que el color añade ya estaba en pantalla; lo que sigue sin saberse —y es toda la tensión— es en
+cuál para.
+
+Ahora son dos tonos por bando alternados por posición. La alternancia **no es una escala de
+gravedad**: decidir que «IV a cero» es peor que «menos 1 MT» sería un juicio inventado, y lo único
+que hace es que dos cuñas seguidas del mismo bando no se lean como una sola mancha.
+
+### Los iconos, y tres medidas nuevas
+
+`PokemonSpriteService` ya estaba inyectado en el ViewModel desde el §62 y solo dibujaba **una** Poké
+Ball. Cada cara declara ahora su dibujo en `Data/roulette.json`, con dos campos porque son dos
+cosas distintas: `icono` es un id de objeto y `iconoEspecie` un id de especie. Las dos caras de
+muerte llevan **Shedinja (292)**, que no es decoración: es literalmente en lo que `DeathTransform`
+convierte a un caído.
+
+Tres iconos hubo que medirlos, con la disciplina del §45 —renderizar el vecindario y reconocer algo
+inconfundible—:
+
+| objeto | icono | lo que lo ancla |
+|---|---|---|
+| 328 MT01 | 309 | el icono **308 es un colmillo blanco curvado**, o sea el Colmillo Agudo (327), y el 309 ya es un disco; el 310 es otro disco de distinto color, que es la tirada de veinte tipos empezando |
+| 795 Chapa Plateada | 649 | **649 plateada, 650 dorada, 651 una pulsera azul oscuro**, en ese orden, que son exactamente los objetos 795, 796 y 797 |
+| 796 Chapa Dorada | 650 | ídem |
+
+Una sola cosa redonda podría ser cualquier cosa; tres seguidas en ese orden no. Y **solo se reclama
+la primera MT**: las cien comparten veinte discos, así que no hay correspondencia id→icono para las
+demás e inventarla dibujaría el disco de otro tipo. La ruleta nunca dice *cuál* MT.
+
+El guardia de esto es un test, no el código: `ItemIconIndex.TryGet` contesta `false` para un objeto
+que nadie ha mirado y la pantalla lo convierte en «sin dibujo», que es lo correcto **y es
+invisible**. `RouletteWheelIconTests` cruza el fichero que se reparte contra la tabla que se
+reparte, así que un id equivocado falla ahí y no en una cuña en blanco a mitad de partida.
+
+### Lo demás
+
+- **La cuña dice tres cosas**: dibujo, cifra grande y nombre corto. `cifra` se escribe a mano y no
+  se deduce de `cantidad`, porque tres objetos distintos a tres de cada son **nueve** objetos.
+- **La lista de dieciséis baja a una tira** de 2×8 debajo. Ocupaba 330 px a la derecha para decir
+  algo que se lee de un vistazo: cuáles de todas están en juego.
+- **El final ocurre en la rueda**: la ganadora se queda encendida, las otras cinco se apagan y la
+  tarjeta sale sobre el disco. Va abajo a propósito, porque la cuña ganadora acaba **siempre**
+  arriba, debajo de la marca, así que no puede taparla nunca.
+- **El panel se tiñe** del bando de la cuña que pasa por la marca, y solo a partir del primer golpe:
+  durante el barrido pasa una cuña cada cincuenta milisegundos y aquello sería un parpadeo. Son dos
+  capas con su color puesto a las que se anima la **opacidad**; animar el color de un `GradientStop`
+  pide un Freezable vivo, que es una trampa que esta pantalla ya pagó una vez.
+- **`WheelEnding`**, cinco perfiles de frenada con la misma forma y la misma norma que `ReelEnding`
+  del §31: ninguno puede correlacionar con lo que salió. Antes eran doce segundos de un solo
+  `PowerEase` idénticos en cada tirada. Un desplazamiento de cuña es «el ángulo de reposo menos k
+  por sesenta», así que uno **negativo** manda la rueda una cuña más allá del ganador y la obliga a
+  volver, que es la que de verdad engaña. Los tramos se encadenan en vez de ser un storyboard con
+  fotogramas clave porque un tramo puede ir **hacia atrás** y cada uno quiere su propia curva.
+- **El eje**: ya no gira —media vuelta por minuto no se lee como movimiento y sí se nota como un
+  parpadeo— y ya no se ve borroso. El icono del cartucho mide **dieciocho** píxeles de lado, así que
+  estirarlo a setenta y seis con interpolación suave era pedirle cuatro veces más de lo que tiene.
+  Cinco aumentos exactos y vecino más próximo.
+
+### Lo que solo se vio abriendo la ventana
+
+La rueda pasó de 460 a 700 contando el ancho, que es lo que la limitaba antes con el panel lateral.
+Con el panel fuera **la limita el alto**, y a 700 **no cabía**: el aro salía cortado por arriba y por
+abajo y la marca no se veía en absoluto. Nada de eso se nota leyendo el XAML.
+
+Va dentro de un `Viewbox` con `StretchDirection="DownOnly"`: se dibuja siempre a 700 —las cuñas son
+geometría en píxeles y estirarlas las descuadraría con las etiquetas, que se sitúan por
+coordenadas— y se encoge hasta caber. En una ventana de 1560×980 se ve a unos **545**, no a 700; en
+una más alta crece hasta el tamaño de diseño. Los dibujos no se emborronan al encogerse porque
+`NearestNeighbor` se hereda por el árbol visual y no interpola nunca. La tarjeta de resultado va
+**fuera** del Viewbox: un párrafo no se encoge igual de bien que un dibujo.
+
+### Lo que NO está comprobado
+
+Todo lo estático está visto en la aplicación real: el tamaño, el aro, la marca, el eje nítido y la
+tira de dieciséis con sus dieciséis dibujos —que es la misma llamada `Sprite(face)` que usan las
+cuñas, así que prueba que los iconos resuelven—. **La rueda desvelada y la tirada entera no**:
+verlas exige girar de verdad, y girar escribe en la partida y puede matar tres Pokémon. El jugador
+debe cero tiradas, así que GIRAR está apagado. Que la cuña desvelada quepa está comprobado por
+aritmética y no por ojo: el contenido mide unos 113 px de los 132 de su caja, y su radio va de 148 a
+280 con el eje en 75 y el borde en 325.

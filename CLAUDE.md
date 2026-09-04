@@ -959,6 +959,39 @@ nada** (es una trampa latente, no un fallo activo: `randomizeAbilities` está en
 **`maxMove` 729**, que ese sí estaba vivo con `randomizeLearnsets` en `true`, porque 32 de los 192
 movimientos nuevos piden una rutina de combate que solo existiría en el `code.bin` del mod.
 
+**La ruleta, rehecha (2026-09-04).** Repaso visual de la pantalla del LUDÓPATA, y lo que la sostenía
+era un fallo de fondo: el color de la cuña salía de `WedgeBrush(index)`, o sea de **la posición**,
+así que la misma cara salía roja o azul según dónde cayera y **el color no podía significar nada ni
+queriendo**. Mirando la rueda no sabías si te iba bien o mal. Ahora verde paga y rojo cuesta, con
+dos tonos por bando alternados —que no es una escala de gravedad, que sería un juicio inventado,
+sino lo justo para que dos cuñas seguidas no se lean como una mancha—. El comentario que defendía
+los seis colores del arcoíris decía que un verde y un rojo «chafarían la tensión»; la premisa no se
+sostiene y por eso se revoca por escrito: **las seis caras se desvelan una a una antes de que la
+rueda arranque**, o sea que el color no cuenta nada que no estuviera ya en pantalla.
+
+Cada cuña lleva ahora **dibujo, cifra grande y nombre corto**, declarados en `Data/roulette.json`.
+Los dibujos salen del cartucho del propio jugador por un camino que ya estaba enchufado y solo
+pintaba una Poké Ball. Tres iconos hubo que **medirlos** con la disciplina del §45: MT01 es el icono
+309 —anclado en que el 308 es el Colmillo Agudo y el 310 otro disco—, y las Chapas Plateada y Dorada
+son 649 y 650, anclados por tres seguidos y en orden con la Pulsera Z. **Solo se reclama la primera
+MT**: las cien comparten veinte discos y las demás no tienen correspondencia. Las dos caras de
+muerte llevan **Shedinja**, que no es decoración sino en lo que el juego convierte a un caído.
+
+Y lo demás: la lista de dieciséis baja a una **tira** y le devuelve a la rueda un tercio de la
+pantalla; el final ocurre **en la rueda** —la ganadora encendida, las otras cinco apagadas, la
+tarjeta encima—; el panel **se tiñe** del bando de la cuña que pasa por la marca, y solo a partir del
+primer golpe, porque durante el barrido pasa una cada cincuenta milisegundos; hay **cinco perfiles
+de frenada** con la misma norma que los del gacha —ninguno correlaciona con lo que salió—, uno de
+ellos con la rueda pasándose una cuña y volviendo; y el eje **ya no gira ni se ve borroso**: el icono
+mide dieciocho píxeles y se estiraba a setenta y seis con interpolación suave.
+
+Lo que solo se vio abriendo la ventana: antes la limitaba el ancho y ahora **la limita el alto**, y a
+700 **no cabía** —aro cortado por arriba y por abajo, marca invisible—. Va en un `Viewbox` que la
+dibuja siempre a 700 y la encoge hasta caber: en la ventana del jugador se ve a unos 545. Ojo con lo
+**no comprobado**: lo estático está visto en la aplicación real, pero **la rueda desvelada y la
+tirada entera no**, porque verlas exige girar de verdad y girar escribe en la partida. Ver §84.
+
+
 **Siguiente.** Probar en partida real los combates importantes, los iniciales y las tiendas.
 
 Y decidir entre los cinco el trueque del combate por link, que ya está medido: **o estadísticas
@@ -988,6 +1021,7 @@ Lo que NO está resuelto todavía y no debe darse por hecho (detalle en `docs/AR
 | Detectar pruebas, pegatinas y alto mando | **HECHO Y VISTO EN LA APP** — los 21 logros se cuentan solos y no queda un botón de marcar a mano. Las doce pruebas por su cristal Z, con la correspondencia sacada del storytext del cartucho. Ver `ARCHITECTURE.md` §43 |
 | Tiradas gratis y wonder trades por prueba | **HECHO Y VISTO EN LA APP** — crédito ganado de los logros y gastado del historial, con la marca `gratis`; los wonder trades pasan a estar limitados. Ver `ARCHITECTURE.md` §63 |
 | Ruleta del rol LUDÓPATA | **HECHA Y VISTA EN LA APP** — 16 caras, seis en la rueda, tiradas que se deben y se recomputan; escribe equipo, mochila y cajas por el fichero de partida. **Dos tiradas verificadas en la partida real.** Ver `ARCHITECTURE.md` §62 |
+| Pantalla de la ruleta, rehecha | **HECHA; LO ESTÁTICO VISTO EN LA APP** — el color de la cuña dice si te conviene, dibujos del cartucho, rueda grande en `Viewbox`, final en la propia rueda, tinte del panel y cinco frenadas. **La rueda desvelada y la tirada entera están SIN VER**: exigen girar de verdad y girar escribe en la partida. Ver `ARCHITECTURE.md` §84 |
 | Roles | **HECHOS Y VERIFICADOS CONTRA LA ROM** — se eligen lo primero, multiplican los puntos, suben el nivel de todo lo que combate contra ti (entrenadores, Dominantes, Necrozma y legendarios) y añaden el Pokémon extra en 35 clases de combate importante. Falta probarlo jugando. Ver `ARCHITECTURE.md` §46, §47 y §48 |
 | Sincronización | **HECHA Y VISTA EN LA APP** — clasificación por carpeta compartida, sin servidor ni cuentas. Cada uno publica un resumen y lee los de los demás. **No es una verificación y la pantalla lo dice.** Falta probarla con la carpeta sincronizando de verdad entre dos máquinas. Ver `ARCHITECTURE.md` §79 |
 | Mod de expansión de gen 8 y 9 | **IMPLEMENTADO Y VERIFICADO CONTRA LOS FICHEROS, SIN JUGAR** — randomiza encima del mod, 1025 especies, sprites, nombres en español oficial e instalación de la capa entera. La Ruta 1 da Dreepy, Meltan, Snom y Tarountula. **Nadie ha arrancado el juego con esto**: sin comprobar que instale, que el `code.bin` del mod arranque, que el texto generado no cuelgue, ni el combate por link. Ver `docs/MOD-EXPANSION.md` |

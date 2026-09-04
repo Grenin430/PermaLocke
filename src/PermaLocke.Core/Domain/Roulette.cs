@@ -47,6 +47,21 @@ public enum RouletteEffect
 /// — signed —, distinct items for the healing ones, TMs for the TM ones.
 /// </param>
 /// <param name="Each">How many of each item. Only the healing faces use it.</param>
+/// <param name="Short">
+/// What the wedge says, in two or three words. <see cref="Name"/> is a sentence and a wedge is not
+/// a place for a sentence; when it is missing the wedge falls back to the name rather than to
+/// nothing.
+/// </param>
+/// <param name="Figure">
+/// The number the wedge shows big — «+200», «×3», «31». Written out rather than derived from
+/// <see cref="Amount"/> because the same amount reads differently on different faces: three
+/// distinct healing items at three of each is nine objects, not three.
+/// </param>
+/// <param name="ItemIcon">
+/// Item whose cartridge icon stands for this face, or zero. Only ids whose icon has actually been
+/// measured draw anything, so a wrong number is a blank wedge and never the wrong picture.
+/// </param>
+/// <param name="SpeciesIcon">Species whose sprite stands for this face, or zero.</param>
 public sealed record RouletteFace(
     string Id,
     string Name,
@@ -55,9 +70,16 @@ public sealed record RouletteFace(
     RouletteEffect Effect,
     int Amount = 0,
     int Each = 1,
-    IReadOnlyList<string>? Banners = null)
+    IReadOnlyList<string>? Banners = null,
+    string Short = "",
+    string Figure = "",
+    int ItemIcon = 0,
+    int SpeciesIcon = 0)
 {
     public IReadOnlyList<string> BannerIds { get; } = Banners ?? [];
+
+    /// <summary>What to write on the wedge: the short form when there is one, else the name.</summary>
+    public string Label => string.IsNullOrWhiteSpace(Short) ? Name : Short;
 }
 
 /// <summary>Everything the wheel is made of, read from configuration rather than compiled in.</summary>

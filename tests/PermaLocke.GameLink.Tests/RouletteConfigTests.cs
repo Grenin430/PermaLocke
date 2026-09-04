@@ -111,6 +111,50 @@ public sealed class RouletteConfigTests
         Assert.Equal("alto-mando-otra-vez", catalog.RematchAchievement);
     }
 
+    /// <summary>
+    /// Every face carries what the wedge needs to draw itself.
+    /// </summary>
+    /// <remarks>
+    /// The wedge shows a short label, a figure and a picture. All three fall back quietly when
+    /// they are missing — the label to the long name, the figure and the picture to nothing — so a
+    /// face added without them looks like a face that works and reads like a blank. Here it fails.
+    /// </remarks>
+    [Fact]
+    public void Every_face_says_what_to_put_on_its_wedge()
+    {
+        var catalog = Shipped();
+
+        Assert.All(catalog.Faces, face =>
+        {
+            Assert.False(string.IsNullOrWhiteSpace(face.Short), $"«{face.Id}» no tiene corto");
+            Assert.False(string.IsNullOrWhiteSpace(face.Figure), $"«{face.Id}» no tiene cifra");
+            Assert.True(face.ItemIcon > 0 || face.SpeciesIcon > 0, $"«{face.Id}» no tiene icono");
+        });
+    }
+
+    /// <summary>The short label really is short, or it will not fit on a wedge.</summary>
+    [Fact]
+    public void The_short_label_fits_a_wedge()
+    {
+        Assert.All(Shipped().Faces, face => Assert.InRange(face.Label.Length, 1, 16));
+    }
+
+    /// <summary>
+    /// The two death faces are drawn as Shedinja, which is not a decoration.
+    /// </summary>
+    /// <remarks>
+    /// It is what the game literally turns a fallen Pokémon into, so the wedge shows the thing
+    /// that is about to happen. If the mark ever changes species, this is what says so.
+    /// </remarks>
+    [Fact]
+    public void Death_is_drawn_as_what_death_actually_writes()
+    {
+        var deaths = Shipped().Faces.Where(f => f.Effect == RouletteEffect.Muerte).ToList();
+
+        Assert.Equal(2, deaths.Count);
+        Assert.All(deaths, face => Assert.Equal(292, face.SpeciesIcon));
+    }
+
     /// <summary>A missing file leaves an empty wheel, not a half-invented one.</summary>
     [Fact]
     public void A_missing_file_gives_no_faces()

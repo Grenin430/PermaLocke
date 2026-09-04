@@ -49,6 +49,13 @@ public static class ItemIconIndex
         [287] = 268, // Panuelo Elegido
         [297] = 278, // Gafas Elegidas
 
+        // La PRIMERA de las cien MT, que es la unica que hace falta: las cien comparten veinte
+        // discos y la ruleta solo quiere decir «una MT», no cual. Sigue en la zona de -19 y esta
+        // anclada por el objeto de delante: el icono 308 es un colmillo blanco curvado, o sea el
+        // Colmillo Agudo (327), y el 309 ya es un disco. Corrobora que el 310 es otro disco de
+        // distinto color, que es la tirada de veinte tipos empezando.
+        [328] = 309, // MT01
+
         // Zona de -127: despues de las cien MT, que gastan solo veinte iconos.
         [538] = 411, // Mineral Evolutivo
         [540] = 413, // Casco Dentado
@@ -101,6 +108,14 @@ public static class ItemIconIndex
         [766] = 620, // Megabrazalete, un aparato negro y rojo de muneca
 
         [767] = 621, [768] = 622, [769] = 623, [770] = 624,
+
+        // Las dos Chapas, que son los objetos de los IV y por eso las quiere la ruleta. El desfase
+        // sigue siendo -146, el mismo del bloque de arriba. Ancladas mirando TRES seguidas y en
+        // orden: 649 es una chapa plateada, 650 una dorada y 651 una pulsera azul oscuro, que son
+        // exactamente los objetos 795, 796 y 797 -Chapa Plateada, Chapa Dorada y Pulsera Z-. Una
+        // sola de las tres se podria confundir con cualquier cosa redonda; las tres en ese orden no.
+        [795] = 649, // Chapa Plateada
+        [796] = 650, // Chapa Dorada
     };
 
     /// <summary>Iconos que el contenedor del cartucho trae. Más significa que hay un mod.</summary>

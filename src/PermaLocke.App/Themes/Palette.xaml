@@ -242,21 +242,58 @@
     <Color x:Key="SheenColor">#33FFFFFF</Color>
 
     <!-- ================================================================ LA RULETA -->
-    <!-- Las seis cunas. Aqui y no en el ViewModel, que estaban escritas como cadenas y convertidas
-         con BrushConverter: colores fuera del tema y ademas en la capa que no deberia saber de
-         colores. Seis tonos que se distinguen de un vistazo y NO dicen nada de la cara que llevan:
-         un verde para lo bueno y un rojo para lo malo chafaria la tension media vuelta antes. -->
-    <SolidColorBrush x:Key="Wedge0" Color="#FFE0553F" />
-    <SolidColorBrush x:Key="Wedge1" Color="#FFE8A13A" />
-    <SolidColorBrush x:Key="Wedge2" Color="#FF57B45F" />
-    <SolidColorBrush x:Key="Wedge3" Color="#FF2FA5C0" />
-    <SolidColorBrush x:Key="Wedge4" Color="#FF6E63C6" />
-    <SolidColorBrush x:Key="Wedge5" Color="#FFC74E93" />
+    <!-- Las cunas dicen si te conviene, que es lo unico que un jugador quiere saber mirando una
+         ruleta. Antes eran seis tonos de arcoiris elegidos por POSICION -Wedge0..Wedge5-, o sea
+         que la misma cara salia roja o azul segun donde cayera y el color no podia significar nada
+         ni queriendo.
 
-    <!-- El aro y las juntas entre cunas: lo que convierte un dibujo plano en un objeto. -->
+         El comentario que defendia aquello decia que un verde y un rojo «chafarian la tension
+         media vuelta antes». La premisa no se sostiene: las seis caras se DESVELAN una a una antes
+         de que la rueda arranque, y la lista de al lado ya las pinta de verde o rojo. Lo que el
+         color anade ya estaba en pantalla; lo que sigue sin saberse -y es toda la tension- es en
+         cual para.
+
+         Dos tonos por bando, alternados por posicion. No es una escala de gravedad -eso seria un
+         juicio inventado sobre que cara es peor- sino lo justo para que dos cunas seguidas del
+         mismo bando no se lean como una sola. -->
+    <Color x:Key="WedgeGoodColor">#FF3E8F57</Color>
+    <Color x:Key="WedgeGoodAltColor">#FF2E7345</Color>
+    <Color x:Key="WedgeBadColor">#FFB8433A</Color>
+    <Color x:Key="WedgeBadAltColor">#FF93332C</Color>
+
+    <!-- Antes de desvelarse. Del color del panel, no de un gris cualquiera: una cuna sin desvelar
+         tiene que leerse como un hueco de la propia rueda. -->
+    <Color x:Key="WedgeHiddenColor">#FF1E1833</Color>
+
+    <SolidColorBrush x:Key="WedgeGoodBrush" Color="{StaticResource WedgeGoodColor}" />
+    <SolidColorBrush x:Key="WedgeGoodAltBrush" Color="{StaticResource WedgeGoodAltColor}" />
+    <SolidColorBrush x:Key="WedgeBadBrush" Color="{StaticResource WedgeBadColor}" />
+    <SolidColorBrush x:Key="WedgeBadAltBrush" Color="{StaticResource WedgeBadAltColor}" />
+    <SolidColorBrush x:Key="WedgeHiddenBrush" Color="{StaticResource WedgeHiddenColor}" />
+
+    <!-- El tinte que coge el panel mientras frena, segun la cuna que pasa por la marca. Muy velado
+         a proposito: es un ambiente, y a mas alfa deja de ser luz y pasa a ser un filtro de color
+         encima de todo. -->
+    <Color x:Key="WedgeGoodGlowColor">#4D3E8F57</Color>
+    <Color x:Key="WedgeBadGlowColor">#4DB8433A</Color>
+
+    <!-- El aro y las juntas entre cunas: lo que convierte un dibujo plano en un objeto. El aro va
+         en degradado y no en plano para que tenga canto: claro arriba, oscuro abajo, que es como
+         cae la luz en el resto de la aplicacion. -->
     <SolidColorBrush x:Key="WheelRimBrush" Color="#FF14161B" />
     <SolidColorBrush x:Key="WheelEdgeBrush" Color="#FFFFFFFF" Opacity="0.22" />
     <SolidColorBrush x:Key="WheelSeamBrush" Color="#FF0E1014" Opacity="0.55" />
+
+    <LinearGradientBrush x:Key="WheelBezelBrush" StartPoint="0.5,0" EndPoint="0.5,1">
+        <GradientStop Color="#FF4A4256" Offset="0" />
+        <GradientStop Color="#FF231F2E" Offset="0.42" />
+        <GradientStop Color="#FF15121D" Offset="0.72" />
+        <GradientStop Color="#FF322C42" Offset="1" />
+    </LinearGradientBrush>
+
+    <!-- El hueco donde se apoya la rueda: mas oscuro que el panel, para que el aro se vea metido
+         y no pegado encima. -->
+    <SolidColorBrush x:Key="WheelWellBrush" Color="#FF0B0912" />
 
     <SolidColorBrush x:Key="ZoneCaughtBrush" Color="{StaticResource ZoneCaughtColor}" />
     <SolidColorBrush x:Key="ZoneCaughtLightBrush" Color="{StaticResource ZoneCaughtLightColor}" />

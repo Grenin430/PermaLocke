@@ -121,7 +121,13 @@ public sealed class JsonRouletteCatalog : IRouletteCatalog
             effect,
             entry.Amount ?? 0,
             Math.Max(1, entry.Each ?? 1),
-            entry.Banners);
+            entry.Banners,
+            entry.Short ?? string.Empty,
+            entry.Figure ?? string.Empty,
+            // Un id negativo se descarta aqui en vez de llegar a la pantalla: lo que pide un
+            // dibujo solo tiene que saber que cero es «no hay».
+            Math.Max(0, entry.ItemIcon ?? 0),
+            Math.Max(0, entry.SpeciesIcon ?? 0));
     }
 
     private static List<int> Resolve(IReadOnlyList<string>? names, IAbilityLookup abilities,
@@ -169,5 +175,9 @@ public sealed class JsonRouletteCatalog : IRouletteCatalog
         [property: JsonPropertyName("efecto")] string? Effect,
         [property: JsonPropertyName("cantidad")] int? Amount,
         [property: JsonPropertyName("cada")] int? Each,
-        [property: JsonPropertyName("banners")] IReadOnlyList<string>? Banners);
+        [property: JsonPropertyName("banners")] IReadOnlyList<string>? Banners,
+        [property: JsonPropertyName("corto")] string? Short,
+        [property: JsonPropertyName("cifra")] string? Figure,
+        [property: JsonPropertyName("icono")] int? ItemIcon,
+        [property: JsonPropertyName("iconoEspecie")] int? SpeciesIcon);
 }

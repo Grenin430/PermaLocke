@@ -8,214 +8,338 @@
         <conv:NegateConverter x:Key="Negate" />
     </UserControl.Resources>
 
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="14" />
-            <ColumnDefinition Width="330" />
-        </Grid.ColumnDefinitions>
+    <Border Style="{StaticResource Inset}" Padding="20,16" ClipToBounds="True">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
 
-        <!-- LA RUEDA -->
-        <Border Grid.Column="0" Style="{StaticResource Inset}" Padding="18,16">
-            <DockPanel>
-                <DockPanel DockPanel.Dock="Top">
-                    <Border DockPanel.Dock="Right" Style="{StaticResource Chip}"
-                            Background="{StaticResource WarningDeepBrush}"
-                            BorderBrush="{StaticResource WarningBrush}">
-                        <TextBlock Style="{StaticResource ChipText}"
-                                   Foreground="{StaticResource WarningBrush}">
-                            <Run Text="DEBES" />
-                            <Run Text="{Binding Owed, Mode=OneWay}" FontWeight="Bold" />
-                        </TextBlock>
-                    </Border>
-                    <TextBlock Text="LA RULETA" Style="{StaticResource StatLabel}" VerticalAlignment="Center" />
-                </DockPanel>
+            <!-- EL AMBIENTE. Dos capas de luz, una verde y otra roja, apagadas las dos. Mientras la
+                 rueda frena se enciende la del bando de la cuna que va pasando por la marca, asi
+                 que el panel entero late verde, rojo, verde, rojo cada vez mas despacio; al parar
+                 se queda el color del ganador.
 
-                <TextBlock DockPanel.Dock="Bottom" Text="{Binding Status}" Style="{StaticResource Body}"
-                           FontSize="12" TextWrapping="Wrap" Margin="0,12,0,0" />
+                 Son dos capas con su color ya puesto y se les anima la OPACIDAD. Animar el color
+                 de un GradientStop pide un Freezable vivo, y esa trampa ya nos costo un fallo que
+                 solo aparecia a mitad de tirada: una capa por bando no la tiene. -->
+            <Rectangle x:Name="GlowGood" Grid.RowSpan="5" Opacity="0" IsHitTestVisible="False">
+                <Rectangle.Fill>
+                    <RadialGradientBrush GradientOrigin="0.5,0.45" Center="0.5,0.45"
+                                         RadiusX="0.72" RadiusY="0.72">
+                        <GradientStop Color="{StaticResource WedgeGoodGlowColor}" Offset="0" />
+                        <GradientStop Color="#00000000" Offset="1" />
+                    </RadialGradientBrush>
+                </Rectangle.Fill>
+            </Rectangle>
 
-                <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,14,0,0"
-                            HorizontalAlignment="Center">
-                    <Button Content="GIRAR" Style="{StaticResource PrimaryButton}"
-                            Command="{Binding SpinCommand}" MinWidth="180" Padding="20,12" FontSize="14" />
-                    <Button Content="ACTUALIZAR" Style="{StaticResource GhostButton}"
-                            Command="{Binding RefreshCommand}" Padding="16,12" FontSize="11.5"
-                            Margin="10,0,0,0" />
-                </StackPanel>
+            <Rectangle x:Name="GlowBad" Grid.RowSpan="5" Opacity="0" IsHitTestVisible="False">
+                <Rectangle.Fill>
+                    <RadialGradientBrush GradientOrigin="0.5,0.45" Center="0.5,0.45"
+                                         RadiusX="0.72" RadiusY="0.72">
+                        <GradientStop Color="{StaticResource WedgeBadGlowColor}" Offset="0" />
+                        <GradientStop Color="#00000000" Offset="1" />
+                    </RadialGradientBrush>
+                </Rectangle.Fill>
+            </Rectangle>
 
-                <!-- La rueda vive en un Grid de tamaño fijo: las cuñas son geometría en píxeles y
-                     estirarlas las descuadraría con las etiquetas, que se sitúan por coordenadas. -->
-                <Grid Width="460" Height="488" VerticalAlignment="Center" HorizontalAlignment="Center">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="28" />
-                        <RowDefinition Height="460" />
-                    </Grid.RowDefinitions>
+            <!-- CABECERA -->
+            <DockPanel Grid.Row="0">
+                <Border DockPanel.Dock="Right" Style="{StaticResource Chip}"
+                        Background="{StaticResource WarningDeepBrush}"
+                        BorderBrush="{StaticResource WarningBrush}">
+                    <TextBlock Style="{StaticResource ChipText}"
+                               Foreground="{StaticResource WarningBrush}">
+                        <Run Text="DEBES" />
+                        <Run Text="{Binding Owed, Mode=OneWay}" FontWeight="Bold" />
+                    </TextBlock>
+                </Border>
+                <TextBlock Text="LA RULETA" Style="{StaticResource StatLabel}" VerticalAlignment="Center" />
+            </DockPanel>
 
-                    <!-- La marca. Apunta a la cuña que gana, y por eso la rueda gira hasta ponerla
-                         justo debajo. -->
-                    <Path Grid.Row="0" Data="M 0,0 L 24,0 L 12,26 Z" HorizontalAlignment="Center"
-                          Fill="{StaticResource AccentBrightBrush}"
-                          Stroke="{StaticResource BackgroundBrush}" StrokeThickness="2"
-                          RenderTransformOrigin="0.5,0">
-                        <!-- La marca golpea cada vez que pasa una cuna, como el diente de una
-                             ruleta de verdad. El giro cuelga de arriba y no del centro, que es
-                             donde estaria el eje si esto fuera una pieza. -->
-                        <Path.RenderTransform>
-                            <RotateTransform x:Name="MarkerKick" Angle="0" />
-                        </Path.RenderTransform>
-                    </Path>
+        <Grid Grid.Row="1">
+            <!-- LA RUEDA. Se dibuja SIEMPRE a 700, porque las cunas son geometria en pixeles y
+                 estirarlas las descuadraria con las etiquetas, que se situan por coordenadas; el
+                 Viewbox coge ese dibujo ya hecho y lo encoge hasta que cabe.
 
-                    <Grid Grid.Row="1" Width="460" Height="460">
-                        <!-- El aro exterior, con su sombra. Es lo que convierte el dibujo plano en
-                             un objeto apoyado: antes la rueda flotaba sobre el panel. -->
-                        <Ellipse Width="458" Height="458" Fill="{StaticResource WheelRimBrush}"
-                                 Stroke="{StaticResource WheelEdgeBrush}" StrokeThickness="2">
-                            <Ellipse.Effect>
-                                <DropShadowEffect BlurRadius="30" ShadowDepth="4" Direction="270"
-                                                  Opacity="0.6" Color="Black" />
-                            </Ellipse.Effect>
-                        </Ellipse>
+                 Hace falta porque a 700 NO cabia: el aro salia cortado por arriba y por abajo y la
+                 marca no se veia en absoluto, que es de las cosas que no se notan leyendo el XAML
+                 y se ven en cuanto se abre la ventana. Con «DownOnly» nunca se agranda, asi que en
+                 una ventana holgada se ve el tamano de diseno y en una estrecha se ve entera y mas
+                 pequena, que es infinitamente mejor que verse cortada.
 
-                        <Ellipse Width="430" Height="430" Fill="{StaticResource SurfaceBrush}" />
+                 Los dibujos de dentro no se emborronan al encogerse: van a vecino mas proximo, que
+                 se hereda por el arbol visual y no interpola nunca. -->
+            <Viewbox Stretch="Uniform" StretchDirection="DownOnly" VerticalAlignment="Center">
+            <Grid Width="700" HorizontalAlignment="Center">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="40" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-                        <Grid x:Name="Wheel" Width="460" Height="460" RenderTransformOrigin="0.5,0.5">
-                            <Grid.RenderTransform>
-                                <RotateTransform x:Name="WheelSpin" Angle="0" />
-                            </Grid.RenderTransform>
+                <!-- La marca. Apunta a la cuna que gana, y por eso la rueda gira hasta ponerla
+                     justo debajo. Va FUERA del aplastado, para que se quede afilada, y con el
+                     margen negativo justo para que la punta entre en el aro. -->
+                <Path Grid.Row="0" Data="M 0,0 L 34,0 L 17,34 Z" HorizontalAlignment="Center"
+                      VerticalAlignment="Bottom" Panel.ZIndex="5" Margin="0,0,0,-7"
+                      Fill="{StaticResource AccentBrightBrush}"
+                      Stroke="{StaticResource BackgroundBrush}" StrokeThickness="2"
+                      RenderTransformOrigin="0.5,0">
+                    <!-- La marca golpea cada vez que pasa una cuna, como el diente de una ruleta
+                         de verdad. El giro cuelga de arriba y no del centro, que es donde estaria
+                         el eje si esto fuera una pieza. -->
+                    <Path.RenderTransform>
+                        <RotateTransform x:Name="MarkerKick" Angle="0" />
+                    </Path.RenderTransform>
+                    <Path.Effect>
+                        <DropShadowEffect BlurRadius="14" ShadowDepth="0" Opacity="0.85"
+                                          Color="{StaticResource AccentColor}" />
+                    </Path.Effect>
+                </Path>
 
-                            <ItemsControl x:Name="Labels" ItemsSource="{Binding Slots}">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <Canvas Width="460" Height="460" />
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Path Data="{Binding Wedge}" Fill="{Binding Colour}"
-                                              Stroke="{StaticResource WheelSeamBrush}" StrokeThickness="1.5">
-                                            <Path.Style>
-                                                <Style TargetType="Path">
-                                                    <Setter Property="Opacity" Value="0.42" />
+                <!-- EL APLASTADO. Un 6% de alto menos, para que la rueda se lea apoyada y no como
+                     un grafico de tarta. Es LayoutTransform y no RenderTransform a proposito: solo
+                     el primero cuenta para la maquetacion, asi que la fila mide lo que se ve y no
+                     deja cuarenta pixeles de hueco debajo.
+
+                     Seis por ciento es poco a proposito: mas que esto y las etiquetas de arriba y
+                     de abajo empiezan a leerse chafadas, que es justo lo que la idea NO quiere. -->
+                <Grid Grid.Row="1" x:Name="Stage" Width="700" Height="700">
+                    <Grid.LayoutTransform>
+                        <ScaleTransform ScaleY="0.94" />
+                    </Grid.LayoutTransform>
+
+                    <!-- El hueco donde se apoya, mas oscuro que el panel. -->
+                    <Ellipse Width="700" Height="700" Fill="{StaticResource WheelWellBrush}">
+                        <Ellipse.Effect>
+                            <DropShadowEffect BlurRadius="44" ShadowDepth="10" Direction="270"
+                                              Opacity="0.75" Color="Black" />
+                        </Ellipse.Effect>
+                    </Ellipse>
+
+                    <!-- El canto. Degradado de arriba abajo, que es como cae la luz en el resto de
+                         la aplicacion, y por eso el aro se lee como un aro y no como un borde. -->
+                    <Ellipse Width="690" Height="690" Fill="{StaticResource WheelBezelBrush}"
+                             Stroke="{StaticResource WheelEdgeBrush}" StrokeThickness="1.5" />
+
+                    <Ellipse Width="662" Height="662" Fill="{StaticResource WheelRimBrush}" />
+                    <Ellipse Width="652" Height="652" Fill="{StaticResource SurfaceBrush}" />
+
+                    <Grid x:Name="Wheel" Width="700" Height="700" RenderTransformOrigin="0.5,0.5">
+                        <Grid.RenderTransform>
+                            <RotateTransform x:Name="WheelSpin" Angle="0" />
+                        </Grid.RenderTransform>
+
+                        <ItemsControl x:Name="Labels" ItemsSource="{Binding Slots}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <Canvas Width="700" Height="700" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Path Data="{Binding Wedge}" Fill="{Binding Colour}"
+                                          Stroke="{StaticResource WheelSeamBrush}" StrokeThickness="1.5">
+                                        <Path.Style>
+                                            <Style TargetType="Path">
+                                                <Setter Property="Opacity" Value="1" />
+                                                <Style.Triggers>
+                                                    <!-- Las cinco que no ganan se apagan, asi que
+                                                         el final ocurre EN la rueda y no en una
+                                                         tarjeta que esta en otro sitio. -->
+                                                    <DataTrigger Binding="{Binding Dimmed}" Value="True">
+                                                        <Setter Property="Opacity" Value="0.3" />
+                                                    </DataTrigger>
+
+                                                    <!-- La cuna que gana. IsWinner se calculaba y
+                                                         no lo usaba NADIE: tras veintiun segundos
+                                                         de espectaculo la rueda paraba sin senalar
+                                                         nada. -->
+                                                    <DataTrigger Binding="{Binding IsWinner}" Value="True">
+                                                        <Setter Property="Stroke"
+                                                                Value="{StaticResource OnAccentBrush}" />
+                                                        <Setter Property="StrokeThickness" Value="5" />
+                                                        <DataTrigger.EnterActions>
+                                                            <BeginStoryboard>
+                                                                <Storyboard>
+                                                                    <DoubleAnimation
+                                                                        Storyboard.TargetProperty="Opacity"
+                                                                        From="0.25" To="1"
+                                                                        Duration="0:0:0.28"
+                                                                        AutoReverse="True"
+                                                                        RepeatBehavior="3x"
+                                                                        FillBehavior="Stop" />
+                                                                </Storyboard>
+                                                            </BeginStoryboard>
+                                                        </DataTrigger.EnterActions>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Path.Style>
+                                    </Path>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- Las etiquetas van en su propio Canvas por encima de las cunas: una
+                             cuna es un Path y no puede llevar contenido dentro. -->
+                        <ItemsControl ItemsSource="{Binding Slots}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <Canvas Width="700" Height="700" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemContainerStyle>
+                                <Style TargetType="ContentPresenter">
+                                    <Setter Property="Canvas.Left" Value="{Binding LabelX}" />
+                                    <Setter Property="Canvas.Top" Value="{Binding LabelY}" />
+                                </Style>
+                            </ItemsControl.ItemContainerStyle>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <!-- Se contra-gira el angulo de la rueda, asi que la etiqueta
+                                         se queda derecha toda la vuelta. Girando con ella, la de
+                                         abajo llegaba boca abajo y media vuelta de cada giro no se
+                                         podia leer. -->
+                                    <Grid Width="168" Height="132" Margin="-84,-66,0,0"
+                                          RenderTransformOrigin="0.5,0.5">
+                                        <Grid.RenderTransform>
+                                            <RotateTransform Angle="{Binding Angle,
+                                                ElementName=WheelSpin,
+                                                Converter={StaticResource Negate}}" />
+                                        </Grid.RenderTransform>
+
+                                        <Grid.Style>
+                                            <Style TargetType="Grid">
+                                                <Setter Property="Opacity" Value="1" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Dimmed}" Value="True">
+                                                        <Setter Property="Opacity" Value="0.35" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Grid.Style>
+
+                                        <!-- Sin desvelar: solo la interrogacion, grande. La
+                                             visibilidad va SOLO en el estilo. Puesta ademas como
+                                             atributo, el valor local gana al disparador y la cuna
+                                             no cambiaria nunca. -->
+                                        <TextBlock Text="?" FontFamily="{StaticResource DisplayFont}"
+                                                   FontSize="48" TextAlignment="Center"
+                                                   Foreground="{StaticResource TextFaintBrush}"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Visible" />
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding Revealed}" Value="True">
-                                                            <Setter Property="Opacity" Value="1" />
-                                                        </DataTrigger>
-
-                                                        <!-- La cuna que gana. IsWinner se calculaba
-                                                             y no lo usaba NADIE: tras veintiun
-                                                             segundos de espectaculo la rueda paraba
-                                                             sin senalar nada, y el resultado solo
-                                                             salia en la tarjeta de al lado. -->
-                                                        <DataTrigger Binding="{Binding IsWinner}" Value="True">
-                                                            <Setter Property="Stroke"
-                                                                    Value="{StaticResource OnAccentBrush}" />
-                                                            <Setter Property="StrokeThickness" Value="4" />
-                                                            <DataTrigger.EnterActions>
-                                                                <BeginStoryboard>
-                                                                    <Storyboard>
-                                                                        <DoubleAnimation
-                                                                            Storyboard.TargetProperty="Opacity"
-                                                                            From="0.25" To="1"
-                                                                            Duration="0:0:0.28"
-                                                                            AutoReverse="True"
-                                                                            RepeatBehavior="3x"
-                                                                            FillBehavior="Stop" />
-                                                                    </Storyboard>
-                                                                </BeginStoryboard>
-                                                            </DataTrigger.EnterActions>
+                                                            <Setter Property="Visibility" Value="Collapsed" />
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
-                                            </Path.Style>
-                                        </Path>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
+                                            </TextBlock.Style>
+                                        </TextBlock>
 
-                            <!-- Las etiquetas van en su propio Canvas por encima de las cuñas: una
-                                 cuña es un Path y no puede llevar contenido dentro. -->
-                            <ItemsControl ItemsSource="{Binding Slots}">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <Canvas Width="460" Height="460" />
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemContainerStyle>
-                                    <Style TargetType="ContentPresenter">
-                                        <Setter Property="Canvas.Left" Value="{Binding LabelX}" />
-                                        <Setter Property="Canvas.Top" Value="{Binding LabelY}" />
-                                    </Style>
-                                </ItemsControl.ItemContainerStyle>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <!-- Se contra-gira el angulo de la rueda, asi que la
-                                             etiqueta se queda derecha toda la vuelta. Girando con
-                                             ella, la de abajo llegaba boca abajo y media vuelta de
-                                             cada giro no se podia leer. -->
-                                        <Grid Width="128" Height="46" Margin="-64,-23,0,0"
-                                              RenderTransformOrigin="0.5,0.5">
-                                            <Grid.RenderTransform>
-                                                <RotateTransform Angle="{Binding Angle,
-                                                    ElementName=WheelSpin,
-                                                    Converter={StaticResource Negate}}" />
-                                            </Grid.RenderTransform>
-                                            <TextBlock Text="{Binding Text}" TextAlignment="Center"
-                                                       TextWrapping="Wrap" MaxHeight="44"
-                                                       FontFamily="{StaticResource UiFont}"
-                                                       FontSize="12.5" FontWeight="Bold"
-                                                       Foreground="{StaticResource OnAccentBrush}"
-                                                       VerticalAlignment="Center" />
-                                        </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </Grid>
+                                        <!-- Desvelada: dibujo, cifra y nombre corto. El dibujo sale
+                                             del cartucho del propio jugador; la cifra es lo que se
+                                             lee de reojo y por eso manda en tamano. -->
+                                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <StackPanel.Style>
+                                                <Style TargetType="StackPanel">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Revealed}" Value="True">
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </StackPanel.Style>
 
-                        <!-- Sombreado: un poco de luz arriba y sombra abajo, para que la rueda
-                             tenga bulto en vez de ser un circulo de colores planos. -->
-                        <Ellipse Width="430" Height="430" IsHitTestVisible="False">
-                            <Ellipse.Fill>
-                                <RadialGradientBrush GradientOrigin="0.35,0.25" Center="0.5,0.5"
-                                                     RadiusX="0.75" RadiusY="0.75">
-                                    <GradientStop Color="#26FFFFFF" Offset="0" />
-                                    <GradientStop Color="#00000000" Offset="0.55" />
-                                    <GradientStop Color="#59000000" Offset="1" />
-                                </RadialGradientBrush>
-                            </Ellipse.Fill>
-                        </Ellipse>
+                                            <Image Source="{Binding Icon}" Stretch="Uniform"
+                                                   MaxHeight="44" MaxWidth="58" Margin="0,0,0,3"
+                                                   HorizontalAlignment="Center"
+                                                   RenderOptions.BitmapScalingMode="NearestNeighbor">
+                                                <Image.LayoutTransform>
+                                                    <ScaleTransform ScaleX="2" ScaleY="2" />
+                                                </Image.LayoutTransform>
+                                            </Image>
 
-                        <!-- La onda al parar, disparada desde el code-behind. -->
-                        <Ellipse x:Name="Landing" Width="200" Height="200" Opacity="0"
-                                 IsHitTestVisible="False" Fill="Transparent" StrokeThickness="4"
-                                 Stroke="{StaticResource OnAccentBrush}"
-                                 RenderTransformOrigin="0.5,0.5">
-                            <Ellipse.RenderTransform>
-                                <ScaleTransform x:Name="LandingScale" ScaleX="1" ScaleY="1" />
-                            </Ellipse.RenderTransform>
-                        </Ellipse>
+                                            <TextBlock Text="{Binding Figure}"
+                                                       FontFamily="{StaticResource DisplayFont}"
+                                                       FontSize="27" TextAlignment="Center"
+                                                       Foreground="White" HorizontalAlignment="Center" />
 
-                        <!-- El eje: la Poké Ball del propio cartucho, que contragira despacio. -->
-                        <Ellipse Width="112" Height="112" Fill="{StaticResource BackgroundBrush}"
-                                 Stroke="{StaticResource BorderStrongBrush}" StrokeThickness="2"
-                                 HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        <Image x:Name="Hub" Source="{Binding Hub}" Width="76" Height="76"
-                               HorizontalAlignment="Center" VerticalAlignment="Center"
-                               RenderTransformOrigin="0.5,0.5">
-                            <Image.RenderTransform>
-                                <RotateTransform x:Name="HubSpin" Angle="0" />
-                            </Image.RenderTransform>
-                        </Image>
+                                            <TextBlock Text="{Binding Label}" TextAlignment="Center"
+                                                       TextWrapping="Wrap" MaxWidth="152"
+                                                       FontFamily="{StaticResource DisplayFontLight}"
+                                                       FontSize="12.5" Opacity="0.92"
+                                                       Foreground="White" HorizontalAlignment="Center" />
+                                        </StackPanel>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                     </Grid>
-                </Grid>
-            </DockPanel>
-        </Border>
 
-        <!-- LO QUE HA SALIDO, Y LO QUE PUEDE SALIR -->
-        <Border Grid.Column="2" Style="{StaticResource Inset}" Padding="16,14">
-            <DockPanel>
-                <Border DockPanel.Dock="Top" Padding="14,12" Margin="0,0,0,12"
-                        CornerRadius="{StaticResource RadiusMedium}" BorderThickness="1"
+                    <!-- Sombreado: un poco de luz arriba y sombra abajo, para que la rueda tenga
+                         bulto en vez de ser un circulo de colores planos. -->
+                    <Ellipse Width="652" Height="652" IsHitTestVisible="False">
+                        <Ellipse.Fill>
+                            <RadialGradientBrush GradientOrigin="0.35,0.22" Center="0.5,0.5"
+                                                 RadiusX="0.78" RadiusY="0.78">
+                                <GradientStop Color="#2EFFFFFF" Offset="0" />
+                                <GradientStop Color="#00000000" Offset="0.52" />
+                                <GradientStop Color="#66000000" Offset="1" />
+                            </RadialGradientBrush>
+                        </Ellipse.Fill>
+                    </Ellipse>
+
+                    <!-- La onda al parar, disparada desde el code-behind. -->
+                    <Ellipse x:Name="Landing" Width="300" Height="300" Opacity="0"
+                             IsHitTestVisible="False" Fill="Transparent" StrokeThickness="5"
+                             Stroke="{StaticResource OnAccentBrush}"
+                             RenderTransformOrigin="0.5,0.5">
+                        <Ellipse.RenderTransform>
+                            <ScaleTransform x:Name="LandingScale" ScaleX="1" ScaleY="1" />
+                        </Ellipse.RenderTransform>
+                    </Ellipse>
+
+                    <!-- EL EJE. La Poke Ball del propio cartucho. Ya no gira: media vuelta por
+                         minuto no llega a leerse como movimiento y si se nota como un parpadeo. Y
+                         ya no se ve borrosa: el icono del cartucho mide DIECIOCHO pixeles de lado,
+                         asi que estirarlo a setenta y seis con interpolacion suave era pedirle
+                         cuatro veces mas de lo que tiene. Ahora va a cinco aumentos EXACTOS y a
+                         vecino mas proximo, como el resto de la aplicacion: nitido, con sus
+                         pixeles, que es lo que es. -->
+                    <Ellipse Width="150" Height="150" Fill="{StaticResource BackgroundBrush}"
+                             Stroke="{StaticResource BorderStrongBrush}" StrokeThickness="2"
+                             HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    <Image x:Name="Hub" Source="{Binding Hub}" Stretch="None"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                           RenderOptions.BitmapScalingMode="NearestNeighbor">
+                        <Image.LayoutTransform>
+                            <ScaleTransform ScaleX="5" ScaleY="5" />
+                        </Image.LayoutTransform>
+                    </Image>
+                </Grid>
+            </Grid>
+            </Viewbox>
+
+                <!-- LO QUE HA SALIDO, encima de la rueda y no al lado. Va abajo a proposito: la
+                     cuna ganadora acaba SIEMPRE arriba, debajo de la marca, asi que la tarjeta no
+                     puede taparla nunca. Y va FUERA del Viewbox: dentro, su texto encogeria con la
+                     rueda, y un parrafo no se encoge igual de bien que un dibujo. -->
+                <Border VerticalAlignment="Bottom" HorizontalAlignment="Center"
+                        MaxWidth="520" Margin="0,0,0,30" Padding="18,14"
+                        CornerRadius="{StaticResource RadiusLarge}" BorderThickness="1"
                         Visibility="{Binding HasResult, Converter={StaticResource BoolToVisibility}}">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="28" ShadowDepth="6" Direction="270"
+                                          Opacity="0.75" Color="Black" />
+                    </Border.Effect>
                     <Border.Style>
                         <Style TargetType="Border">
                             <Setter Property="Background" Value="{StaticResource DangerDeepBrush}" />
@@ -230,9 +354,10 @@
                     </Border.Style>
 
                     <StackPanel>
-                        <TextBlock Text="{Binding ResultName}" Style="{StaticResource CardTitle}" />
+                        <TextBlock Text="{Binding ResultName}" Style="{StaticResource CardTitle}"
+                                   TextAlignment="Center" />
                         <TextBlock Text="{Binding ResultDetail}" Style="{StaticResource Muted}"
-                                   TextWrapping="Wrap" Margin="0,4,0,0" />
+                                   TextWrapping="Wrap" TextAlignment="Center" Margin="0,4,0,0" />
 
                         <ItemsControl ItemsSource="{Binding Lines}" Margin="0,9,0,0">
                             <ItemsControl.ItemTemplate>
@@ -244,75 +369,94 @@
                         </ItemsControl>
                     </StackPanel>
                 </Border>
+            </Grid>
 
-                <TextBlock DockPanel.Dock="Top" Text="LO QUE PUEDE SALIR"
-                           Style="{StaticResource StatLabel}" Margin="0,0,0,8" />
+            <!-- LOS BOTONES -->
+            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,14,0,0"
+                        HorizontalAlignment="Center">
+                <Button Content="GIRAR" Style="{StaticResource PrimaryButton}"
+                        Command="{Binding SpinCommand}" MinWidth="200" Padding="22,13" FontSize="14" />
+                <Button Content="ACTUALIZAR" Style="{StaticResource GhostButton}"
+                        Command="{Binding RefreshCommand}" Padding="16,13" FontSize="11.5"
+                        Margin="10,0,0,0" />
+            </StackPanel>
 
-                <TextBlock DockPanel.Dock="Bottom" Style="{StaticResource Faint}" Margin="0,10,0,0"
-                           Text="La rueda enseña seis de las dieciséis, sorteadas entre todas juntas: pueden salirte seis buenas o seis malas. La tirada se calcula con la seed de la run y su número, así que se puede recomputar y comprobar después." />
+            <!-- LAS DIECISEIS, en una tira. Antes eran una lista de 330 pixeles a la derecha que
+                 le quitaba a la rueda casi un tercio de la pantalla para decir algo que se lee de
+                 un vistazo: cuales de todas estan en juego. Las que no salieron van apagadas. -->
+            <ItemsControl Grid.Row="3" ItemsSource="{Binding Pool}" Margin="0,16,0,0"
+                          HorizontalAlignment="Center">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Rows="2" Columns="8" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Width="112" Margin="3" Padding="6,7"
+                                CornerRadius="{StaticResource RadiusMedium}"
+                                ToolTip="{Binding Detail}">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+                                    <Setter Property="BorderThickness" Value="1" />
+                                    <Setter Property="BorderBrush" Value="Transparent" />
+                                    <Setter Property="Opacity" Value="0.38" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding OnTheWheel}" Value="True">
+                                            <Setter Property="Opacity" Value="1" />
+                                            <Setter Property="Background"
+                                                    Value="{StaticResource SurfaceHighBrush}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Won}" Value="True">
+                                            <Setter Property="BorderBrush"
+                                                    Value="{StaticResource AccentBrightBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
 
-                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                    <ItemsControl ItemsSource="{Binding Pool}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border Padding="10,7" Margin="0,0,0,5"
-                                        CornerRadius="{StaticResource RadiusSmall}"
-                                        Background="{StaticResource SurfaceBrush}">
+                            <DockPanel>
+                                <!-- La barrita del bando, que es lo que hace la tira legible de
+                                     lejos: verde paga, rojo cuesta. -->
+                                <Border DockPanel.Dock="Left" Width="3" Margin="0,0,7,0"
+                                        CornerRadius="2">
                                     <Border.Style>
                                         <Style TargetType="Border">
-                                            <!-- Las que no estÃ¡n en esta rueda se apagan: de las
-                                                 diecisÃ©is solo seis se juegan, y la lista no lo
-                                                 decÃ­a por ninguna parte. -->
-                                            <Setter Property="BorderThickness" Value="0" />
-                                            <Setter Property="BorderBrush" Value="{StaticResource DangerBrush}" />
-                                            <Setter Property="Opacity" Value="0.45" />
+                                            <Setter Property="Background"
+                                                    Value="{StaticResource DangerBrush}" />
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding Good}" Value="True">
-                                                    <Setter Property="BorderBrush"
-                                                            Value="{StaticResource SuccessBrush}" />
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding OnTheWheel}" Value="True">
-                                                    <Setter Property="Opacity" Value="1" />
                                                     <Setter Property="Background"
-                                                            Value="{StaticResource SurfaceHighBrush}" />
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding Won}" Value="True">
-                                                    <Setter Property="BorderThickness" Value="1.5" />
+                                                            Value="{StaticResource SuccessBrush}" />
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </Border.Style>
-
-                                    <DockPanel>
-                                        <Border DockPanel.Dock="Left" Width="4" Margin="0,0,9,0"
-                                                CornerRadius="2">
-                                            <Border.Style>
-                                                <Style TargetType="Border">
-                                                    <Setter Property="Background"
-                                                            Value="{StaticResource DangerBrush}" />
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding Good}" Value="True">
-                                                            <Setter Property="Background"
-                                                                    Value="{StaticResource SuccessBrush}" />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Border.Style>
-                                        </Border>
-
-                                        <StackPanel>
-                                            <TextBlock Text="{Binding Name}" Style="{StaticResource Body}"
-                                                       FontSize="12" FontWeight="Bold" />
-                                            <TextBlock Text="{Binding Detail}" Style="{StaticResource Faint}"
-                                                       TextWrapping="Wrap" Margin="0,2,0,0" />
-                                        </StackPanel>
-                                    </DockPanel>
                                 </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </ScrollViewer>
-            </DockPanel>
-        </Border>
-    </Grid>
+
+                                <Image DockPanel.Dock="Left" Source="{Binding Icon}" Stretch="Uniform"
+                                       MaxHeight="22" MaxWidth="26" Margin="0,0,6,0"
+                                       VerticalAlignment="Center"
+                                       RenderOptions.BitmapScalingMode="NearestNeighbor" />
+
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Figure}"
+                                               FontFamily="{StaticResource DisplayFont}"
+                                               FontSize="13" Foreground="{StaticResource TextBrush}" />
+                                    <TextBlock Text="{Binding Label}" TextWrapping="Wrap"
+                                               FontFamily="{StaticResource DisplayFontLight}"
+                                               FontSize="9.5"
+                                               Foreground="{StaticResource TextFaintBrush}" />
+                                </StackPanel>
+                            </DockPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <TextBlock Grid.Row="4" Text="{Binding Status}" Style="{StaticResource Body}"
+                       FontSize="12" TextWrapping="Wrap" TextAlignment="Center" Margin="0,12,0,0" />
+        </Grid>
+    </Border>
 </UserControl>

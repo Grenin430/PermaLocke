@@ -17,14 +17,16 @@ namespace PermaLocke.App.ViewModels;
 /// by hand six times is six chances to get one wrong. The label starts as a question mark: what
 /// each wedge holds is revealed one at a time before the wheel turns.
 /// </remarks>
-public sealed partial class RouletteSlotViewModel(int index, Geometry wedge, Brush colour) : ObservableObject
+public sealed partial class RouletteSlotViewModel(int index, Geometry wedge) : ObservableObject
 {
     /// <summary>Where the wheel sits, in pixels. Everything else is derived from it.</summary>
     /// <remarks>
-    /// It has to fit the narrowest window on offer -- 1180 minus the 216 of the sidebar and the 330
-    /// of the side panel- so this is about as big as it goes without the wheel meeting the panel.
+    /// It used to be 460 because the screen gave 330 of its width to a list of the sixteen faces.
+    /// That list is now a strip underneath, so the wheel gets the column to itself: 1180 of window
+    /// minus the 216 of the sidebar leaves 964, and 700 sits inside that with room for the panel's
+    /// own padding at the narrowest window on offer.
     /// </remarks>
-    public const double Size = 460;
+    public const double Size = 700;
 
     /// <summary>The wedges, and the ring the labels sit on. Fractions of the size and not their
     /// own numbers: three constants that have to agree are two chances to make them disagree.</summary>
@@ -36,15 +38,39 @@ public sealed partial class RouletteSlotViewModel(int index, Geometry wedge, Bru
 
     public Geometry Wedge { get; } = wedge;
 
-    public Brush Colour { get; } = colour;
-
     /// <summary>Middle of the wedge, where its label goes.</summary>
     public double LabelX { get; } = (Size / 2) + (LabelRadius * Math.Cos(Middle(index)));
 
     public double LabelY { get; } = (Size / 2) + (LabelRadius * Math.Sin(Middle(index)));
 
+    /// <summary>
+    /// What this wedge is painted, which now depends on the FACE and not on where it sits.
+    /// </summary>
+    /// <remarks>
+    /// It used to arrive in the constructor from a table of six rainbow colours indexed by
+    /// position, so a face came out red or blue depending on where it landed and the colour could
+    /// not carry meaning even in principle. Now green means it pays and red means it costs, which
+    /// is the only thing anybody wants to know looking at a wheel — and it is not a spoiler,
+    /// because the six faces are turned over one by one before it starts to move.
+    /// </remarks>
     [ObservableProperty]
-    private string _text = "?";
+    private Brush _colour = Hidden;
+
+    /// <summary>What the wedge says, in two or three words.</summary>
+    [ObservableProperty]
+    private string _label = "?";
+
+    /// <summary>The number it shows big, or empty.</summary>
+    [ObservableProperty]
+    private string _figure = string.Empty;
+
+    /// <summary>The face's picture out of the cartridge, or null when there is none.</summary>
+    [ObservableProperty]
+    private System.Windows.Media.Imaging.BitmapSource? _icon;
+
+    /// <summary>Which half of the pool this wedge holds. Only meaningful once revealed.</summary>
+    [ObservableProperty]
+    private bool _good;
 
     [ObservableProperty]
     private bool _revealed;
@@ -52,6 +78,55 @@ public sealed partial class RouletteSlotViewModel(int index, Geometry wedge, Bru
     /// <summary>True only for the wedge the wheel stopped on.</summary>
     [ObservableProperty]
     private bool _isWinner;
+
+    /// <summary>True for the five that did not win, so the winner is the only thing lit.</summary>
+    [ObservableProperty]
+    private bool _dimmed;
+
+    private static Brush Hidden => Themed("WedgeHiddenBrush");
+
+    /// <summary>
+    /// A brush from the theme, or grey.
+    /// </summary>
+    /// <remarks>
+    /// Grey rather than a guessed colour on purpose: a wheel of grey wedges is obviously missing
+    /// its theme, while six invented colours look deliberate.
+    /// </remarks>
+    private static Brush Themed(string key) =>
+        Application.Current?.TryFindResource(key) as Brush ?? Brushes.Gray;
+
+    /// <summary>Turns this wedge over: what it holds, what it is worth and what it looks like.</summary>
+    public void Reveal(string label, string figure, bool good,
+        System.Windows.Media.Imaging.BitmapSource? icon)
+    {
+        Label = label;
+        Figure = figure;
+        Good = good;
+        Icon = icon;
+
+        // Dos tonos por bando, alternados por posicion. No dice nada de la cara -- eso seria una
+        // escala de gravedad inventada -- y solo existe para que dos cunas seguidas del mismo
+        // bando no se lean como una sola mancha.
+        var alternate = Index % 2 == 1;
+
+        Colour = Themed(good
+            ? alternate ? "WedgeGoodAltBrush" : "WedgeGoodBrush"
+            : alternate ? "WedgeBadAltBrush" : "WedgeBadBrush");
+
+        Revealed = true;
+    }
+
+    /// <summary>Back to a question mark, for the next spin.</summary>
+    public void Hide()
+    {
+        Label = "?";
+        Figure = string.Empty;
+        Icon = null;
+        Colour = Hidden;
+        Revealed = false;
+        IsWinner = false;
+        Dimmed = false;
+    }
 
     /// <summary>Radians of the middle of wedge <paramref name="index"/>, with zero at twelve.</summary>
     private static double Middle(int index) => ((index * 60) + 30 - 90) * Math.PI / 180;
@@ -98,6 +173,15 @@ public sealed partial class RouletteFaceViewModel(RouletteFace face) : Observabl
 
     public bool Good { get; } = face.Good;
 
+    /// <summary>The short form, for the strip: the long name does not fit a chip.</summary>
+    public string Label { get; } = face.Label;
+
+    public string Figure { get; } = face.Figure;
+
+    /// <summary>Its picture out of the cartridge, filled in when the screen opens.</summary>
+    [ObservableProperty]
+    private System.Windows.Media.Imaging.BitmapSource? _icon;
+
     /// <summary>True while this face is one of the six drawn for the wheel on screen.</summary>
     [ObservableProperty]
     private bool _onTheWheel;
@@ -109,8 +193,10 @@ public sealed partial class RouletteFaceViewModel(RouletteFace face) : Observabl
 
 /// <param name="Turns">How many whole turns before it settles, so the stop is not instant.</param>
 /// <param name="FinalAngle">Where the wheel ends up, with the winning wedge under the marker.</param>
+/// <param name="Ending">How it comes to a stop. Drawn from its own stream, never from the result.</param>
 /// <param name="Stopped">Called when the wheel has really stopped, which is what starts the result.</param>
-public sealed record SpinTheWheel(int Turns, double FinalAngle, TimeSpan Duration, Action Stopped);
+public sealed record SpinTheWheel(int Turns, double FinalAngle, TimeSpan Duration,
+    Views.WheelEnding Ending, Action Stopped);
 
 /// <summary>
 /// The LUDÓPATA wheel.
@@ -129,22 +215,6 @@ public sealed record SpinTheWheel(int Turns, double FinalAngle, TimeSpan Duratio
 /// </remarks>
 public sealed partial class RouletteViewModel : SectionViewModel
 {
-    /// <summary>
-    /// One brush per wedge, taken from the theme.
-    /// </summary>
-    /// <remarks>
-    /// They used to be six hex strings right here, converted with a BrushConverter -- colours
-    /// outside the theme, in the layer that has the least business knowing about colours. The
-    /// fallback is grey rather than a guessed palette: a wheel with six grey wedges is obviously
-    /// missing its theme, while six invented colours look deliberate.
-    /// </remarks>
-    private static Brush WedgeBrush(int index)
-    {
-        var found = Application.Current?.TryFindResource($"Wedge{index}") as Brush;
-
-        return found ?? Brushes.Gray;
-    }
-
     private readonly RouletteService _roulette;
     private readonly IRunContext _runContext;
     private readonly PokemonSpriteService _sprites;
@@ -161,10 +231,23 @@ public sealed partial class RouletteViewModel : SectionViewModel
 
         for (var index = 0; index < RouletteService.FacesOnTheWheel; index++)
         {
-            Slots.Add(new RouletteSlotViewModel(index, RouletteSlotViewModel.Slice(index),
-                WedgeBrush(index)));
+            Slots.Add(new RouletteSlotViewModel(index, RouletteSlotViewModel.Slice(index)));
         }
     }
+
+    /// <summary>
+    /// The picture that stands for a face, out of the player's own cartridge.
+    /// </summary>
+    /// <remarks>
+    /// Null when the face names no picture, or names an item whose icon nobody has measured. That
+    /// is on purpose and it is why <c>ItemIconIndex</c> refuses to guess: a wedge with no drawing
+    /// is obvious, a wedge with the wrong drawing is not. What keeps the shipped file honest is a
+    /// test, not this method.
+    /// </remarks>
+    private System.Windows.Media.Imaging.BitmapSource? Sprite(RouletteFace face) =>
+        face.SpeciesIcon > 0 ? _sprites.Get(face.SpeciesIcon)
+        : face.ItemIcon > 0 ? _sprites.GetItem(face.ItemIcon)
+        : null;
 
     /// <summary>Raised when the wheel should turn. The view animates; this owns the plan.</summary>
     /// <summary>Cuanto gira y cuanto dura. Doce segundos y once vueltas: la gracia esta en el
@@ -236,7 +319,7 @@ public sealed partial class RouletteViewModel : SectionViewModel
         Pool.Clear();
         foreach (var face in _roulette.Faces)
         {
-            Pool.Add(new RouletteFaceViewModel(face));
+            Pool.Add(new RouletteFaceViewModel(face) { Icon = Sprite(face) });
         }
 
         await RefreshAsync();
@@ -347,8 +430,9 @@ public sealed partial class RouletteViewModel : SectionViewModel
     {
         for (var index = 0; index < Slots.Count && index < wheel.Faces.Count; index++)
         {
-            Slots[index].Text = wheel.Faces[index].Name;
-            Slots[index].Revealed = true;
+            var face = wheel.Faces[index];
+
+            Slots[index].Reveal(face.Label, face.Figure, face.Good, Sprite(face));
             RevealRequested?.Invoke(this, index);
 
             // La lista de las diecisÃ©is marca la que se acaba de desvelar, al mismo tiempo que la
@@ -369,8 +453,9 @@ public sealed partial class RouletteViewModel : SectionViewModel
         var target = RestingAngle(wheel.WinningIndex);
 
         var stopped = new TaskCompletionSource();
+
         SpinRequested?.Invoke(this, new SpinTheWheel(Turns, target, SpinTime,
-            () => stopped.TrySetResult()));
+            Views.WheelEnding.For(wheel.Seed, wheel.Number), () => stopped.TrySetResult()));
 
         // Se espera a que pare de verdad, no a que pase el tiempo. La red de seguridad existe por
         // si la vista nunca llegó a arrancar: una pantalla que no se cuelga.
@@ -378,7 +463,14 @@ public sealed partial class RouletteViewModel : SectionViewModel
         // de esto haria que la pantalla se diera por vencida antes de que la rueda parase.
         await Task.WhenAny(stopped.Task, Task.Delay(SpinTime + TimeSpan.FromSeconds(3)));
 
-        Slots[wheel.WinningIndex].IsWinner = true;
+        // El ganador se queda encendido y los otros cinco se apagan. Antes la rueda paraba con las
+        // seis igual de vivas y el premio salia en el panel de al lado, asi que el final ocurria
+        // en otro sitio distinto de donde estabas mirando.
+        foreach (var slot in Slots)
+        {
+            slot.IsWinner = slot.Index == wheel.WinningIndex;
+            slot.Dimmed = !slot.IsWinner;
+        }
 
         foreach (var entry in Pool.Where(entry => entry.Id == wheel.Winner.Id))
         {
@@ -402,9 +494,7 @@ public sealed partial class RouletteViewModel : SectionViewModel
     {
         foreach (var slot in Slots)
         {
-            slot.Text = "?";
-            slot.Revealed = false;
-            slot.IsWinner = false;
+            slot.Hide();
         }
 
         foreach (var entry in Pool)
