@@ -1486,9 +1486,22 @@ if (Index("--write-probe") is { } wpIndex)
 
 if (Index("--write-hp") is { } hpIndex)
 {
-    // Proves that WriteMemory actually changes the game, not just that the server accepts it.
-    // Current HP is the safest visible target: it lives in the party stats tail, outside the
-    // checksummed block, so nothing has to be recomputed, and the menu shows it immediately.
+    // Proves that WriteMemory changes MEMORY. Current HP is the safest target: it lives in the
+    // party stats tail, outside the checksummed block, so nothing has to be recomputed.
+    //
+    // MEDIDO EL 2026-09-04, y la respuesta es la contraria de la que este comentario daba por
+    // hecha: el menu del juego NO lo enseña. Con el equipo en 0x330128E4 se escribio 7 en el
+    // Gyarados del hueco 0 -un solo byte, offset 0xF0-, se releyo 7/131, aguanto quince segundos
+    // sin que el juego lo pisara, y la pantalla del equipo seguia marcando 131/131 con la barra
+    // llena. O sea que los PS que el juego PINTA no salen de esta copia.
+    //
+    // Encaja con el §53: la copia autoritativa es la de salto 0x1E4 y guarda las estadisticas de
+    // combate en otro sitio. Lo que si obedece esta copia es el bloque cifrado -especie, mote,
+    // nivel-, que es justo lo que el marcador de muerte escribe y por eso ese si se ve.
+    //
+    // Consecuencia practica: NO se puede dejar a un Pokemon clavado a 0 PS por aqui. Haria falta
+    // localizar donde guarda los PS actuales la estructura de 0x1E4, que es una investigacion del
+    // tamaño del §22 y no un ajuste.
     var partyStart = ParseAddress(args[hpIndex + 1]);
     var slot = int.Parse(args[hpIndex + 2]);
     var wanted = int.Parse(args[hpIndex + 3]);

@@ -6821,3 +6821,59 @@ Convertirlos solo, al cerrar el juego. Sería cómodo y encajaría con el preced
 premio pasó a entregarse sin pulsar nada. Pero aquel **añade** Super Balls y esto **destruye un
 Pokémon** en el fichero de partida, de forma permanente. Un botón que el jugador pulsa cuando quiere
 es la respuesta correcta para eso; lo que estaba mal era que nadie le dijera que existe.
+
+## 90. Los PS no se pueden clavar a cero: medido contra el juego (2026-09-04)
+
+El jugador preguntó si se puede dejar al Pokémon **tal como está** —sin convertirlo en Shedinja— y
+que se quede muerto para siempre: que aunque lo curen en el Centro siga en rojo. La respuesta es
+**no por la vía obvia**, y ahora está medido en vez de supuesto.
+
+### La prueba
+
+Con la partida cargada y el equipo en `0x330128E4`:
+
+| paso | resultado |
+|---|---|
+| leer el hueco 0 | Gyarados **131/131** |
+| escribir 7 PS | **un solo byte**, offset `0xF0` |
+| releer | Gyarados **7/131** |
+| esperar quince segundos con el juego corriendo | sigue en **7/131**: el juego no lo pisa |
+| abrir el menú del equipo | **131/131**, barra verde llena |
+
+O sea: la escritura entra, se queda, y **el juego no la mira**. Los PS que pinta la pantalla no
+salen de esa copia.
+
+Encaja exactamente con el §53. La copia autoritativa es la de salto `0x1E4` y guarda las
+estadísticas de combate en otro sitio; lo que sí obedece la copia de `0x104` es el **bloque
+cifrado** —especie, mote, nivel—, que es justo lo que escribe el marcador de muerte, y por eso ese
+sí se ve en pantalla y el Shedinja aparece.
+
+El comentario de `--write-hp` decía «ahora abre el menú del juego y comprueba si lo refleja». Se
+programó, nadie fue a mirar, y el que fue a mirar lo escribió: ahora la respuesta está en el código.
+
+### Lo que haría falta
+
+Localizar dónde guarda los PS actuales la estructura de `0x1E4`. Es una investigación de las del
+§22 —barrer, anclar, verificar en pantalla—, no un ajuste. Y una vez encontrada, lo que se
+construiría encima es un **vigilante**, no un candado: la app volvería a poner el 0 cada vez que
+viera vivo a un muerto, con las limitaciones de siempre —solo con la aplicación abierta y Azahar
+respondiendo, y con una ventana de un segundo tras cada curación—.
+
+### Y un hallazgo que no se buscaba: la copia va por detrás
+
+En la misma lectura, el equipo en memoria decía **Tinkaton nivel 40** y la pantalla del juego decía
+**42**. Los otros tres coincidían. No es el cap —está en 54, no toca nada a nivel 42—, así que la
+copia de `0x104` que PermaLocke lee **puede ir por detrás del juego**.
+
+Importa porque de esa copia salen la detección de muertes y la lectura de niveles del cap. No se
+sabe todavía cuándo se refresca —la muerte del Latias sí se detectó en vivo, así que no es solo al
+guardar—, y hasta saberlo no conviene sacar conclusiones. Queda anotado como lo que es: una
+discrepancia medida, sin explicación.
+
+### Lo que sigue siendo verdad
+
+La marca de Shedinja **ya es muerte permanente**: `shuffleBaseStats` está en `false`, así que
+Shedinja conserva su **1 PS máximo** del cartucho, y con nivel 1 y sin movimientos lo único que
+puede hacer es Forcejeo, cuyo retroceso lo mata. Y la especie está sobrescrita, así que no vuelve a
+ser lo que era. Lo que falló en la partida del jugador no fue eso, fue el §89: la marca vivía en la
+memoria y el juego se cerró sin guardar.

@@ -1016,6 +1016,25 @@ Ojo con lo **no comprobado**: lo estático está visto en la aplicación real, p
 y la tirada entera no**, porque verlas exige girar de verdad y girar escribe en la partida. Ver §84.
 
 
+**Los PS no se pueden clavar a cero (2026-09-04).** El jugador pregunto si se puede dejar al Pokemon
+TAL COMO ESTA y que siga muerto en rojo aunque lo curen. **Medido contra el juego, y la respuesta es
+no por la via obvia**: con el equipo en `0x330128E4` se escribieron 7 PS en el Gyarados del hueco 0
+-un solo byte, offset `0xF0`-, se releyo 7 de 131, aguanto quince segundos sin que el juego lo
+pisara, y el menu del equipo seguia marcando **131 de 131 con la barra llena**. La escritura entra,
+se queda, y el juego no la mira.
+
+Encaja con el §53: la copia autoritativa es la de salto `0x1E4` y guarda las estadisticas de combate
+en otro sitio. Lo que si obedece la copia de `0x104` es el **bloque cifrado** -especie, mote, nivel-,
+que es justo lo que escribe el marcador de muerte y por eso ese si se ve. Para clavar los PS haria
+falta localizar donde los guarda la estructura de `0x1E4`, que es una investigacion del tamaño del
+§22. El comentario de `--write-hp` decia «ahora abre el menu y comprueba si lo refleja»; se programo,
+nadie fue a mirar, y ahora la respuesta esta escrita en el codigo con sus numeros.
+
+Y un hallazgo que no se buscaba: en la misma lectura la memoria decia **Tinkaton nivel 40** y la
+pantalla **42**, con los otros tres coincidiendo. No es el cap, que esta en 54. O sea que la copia
+que PermaLocke lee **puede ir por detras del juego**, y de ella salen la deteccion de muertes y los
+niveles del cap. Sin explicacion todavia, anotado como discrepancia medida y no como teoria. Ver §90.
+
 **El Shedinja que se deshizo (2026-09-04).** Al jugador se le murio un Latias, PermaLocke lo convirtio
 en Shedinja, y al volver a entrar tenia otra vez un Latias debilitado. **Ni el registro ni la
 escritura fallaron**: la muerte esta en el historial con su penalizacion, y el log ensena cinco copias
