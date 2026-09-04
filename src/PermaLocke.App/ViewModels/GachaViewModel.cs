@@ -696,8 +696,17 @@ public sealed partial class GachaViewModel : SectionViewModel
     [RelayCommand]
     private void ShowPool(PortalViewModel? portal)
     {
-        if (portal is null || IsRolling)
+        if (IsRolling)
         {
+            return;
+        }
+
+        // Sin portal significa CERRAR, y es lo que manda el botón de la propia lista. Antes esto
+        // caía en la misma guarda que «no hay portal» y salía sin hacer nada: el botón existía,
+        // se pulsaba, se veía pulsarse, y no cerraba.
+        if (portal is null)
+        {
+            ShowingPool = false;
             return;
         }
 
