@@ -46,6 +46,11 @@ public partial class GachaView : UserControl
 
     private Storyboard? _far;
 
+    private Storyboard? _vortex;
+
+    /// <summary>The tier's colour washed over the tunnel. Built in code so it is never frozen.</summary>
+    private RadialGradientBrush? _wash;
+
     /// <summary>Steps the field back down to its resting speed instead of dropping it.</summary>
     private DispatcherTimer? _settle;
 
@@ -98,6 +103,7 @@ public partial class GachaView : UserControl
             case nameof(GachaViewModel.DisplayedTier) when !string.IsNullOrEmpty(_model.DisplayedTier):
                 Dispatcher.BeginInvoke(() =>
                 {
+                    TierReaction(_model.DisplayedTier);
                     FlashOnce(0.36, TimeSpan.FromSeconds(0.5));
                     KickMarker();
                     Shake(5, 0.3);
@@ -155,7 +161,24 @@ public partial class GachaView : UserControl
             RepeatBehavior = RepeatBehavior.Forever,
         };
 
-        ((RotateTransform)Vortex.RenderTransform).BeginAnimation(RotateTransform.AngleProperty, turn);
+        Storyboard.SetTarget(turn, VortexSpin);
+        Storyboard.SetTargetProperty(turn, new PropertyPath(RotateTransform.AngleProperty));
+
+        _vortex = new Storyboard();
+        _vortex.Children.Add(turn);
+        _vortex.Begin(this, HandoffBehavior.SnapshotAndReplace, isControllable: true);
+
+        // El lavado del tier: un degradado radial creado AQUI, para que no venga congelado.
+        _wash = new RadialGradientBrush
+        {
+            GradientOrigin = new Point(0.5, 0.5),
+            Center = new Point(0.5, 0.5),
+            RadiusX = 0.75,
+            RadiusY = 0.75,
+        };
+        _wash.GradientStops.Add(new GradientStop(Colors.Transparent, 0));
+        _wash.GradientStops.Add(new GradientStop(Colors.Transparent, 1));
+        TierWash.Fill = _wash;
     }
 
     private Storyboard Tunnel(FrameworkElement layer, double seconds, double to, double peak)
@@ -187,7 +210,91 @@ public partial class GachaView : UserControl
         return board;
     }
 
+    /// <summary>
+    /// The background answers the tier ladder: the vortex winds up and the tunnel takes its colour.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The escalation used to happen entirely in front of the background — flash, marker, shake —
+    /// while the vortex turned at the same lazy speed whatever was coming. Tying it in costs
+    /// nothing and means a tier five <b>looks</b> different from a tier one before the reel stops,
+    /// which is the tease doing its job with the whole panel instead of a corner of it.
+    /// </para>
+    /// <para>
+    /// It reads the step from the portals, which are already ordered by tier, rather than from a
+    /// second table that could disagree with them. A tier the portals do not know leaves the
+    /// background alone instead of guessing a step.
+    /// </para>
+    /// </remarks>
+    private void TierReaction(string tierId)
+    {
+        if (_model is null)
+        {
+            return;
+        }
+
+        var step = _model.Portals.ToList().FindIndex(p =>
+            string.Equals(p.TierId, tierId, StringComparison.OrdinalIgnoreCase));
+
+        if (step < 0)
+        {
+            return;
+        }
+
+        // Del 1 al 5. El uno casi no se nota y el cinco se nota mucho: es la asimetria que hace
+        // que noventa tiradas normales no pesen.
+        var rung = step + 1;
+
+        _vortex?.SetSpeedRatio(this, 1 + (rung * 1.6));
+
+        var open = new DoubleAnimation(1 + (rung * 0.045), new Duration(TimeSpan.FromSeconds(0.7)))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
+        };
+
+        VortexScale.BeginAnimation(ScaleTransform.ScaleXProperty, open);
+        VortexScale.BeginAnimation(ScaleTransform.ScaleYProperty, open);
+
+        Vortex.BeginAnimation(OpacityProperty,
+            new DoubleAnimation(0.16 + (rung * 0.045), new Duration(TimeSpan.FromSeconds(0.7))));
+
+        if (_wash is null
+            || TryFindResource(_model.Portals[step].BrushKey) is not SolidColorBrush tint)
+        {
+            return;
+        }
+
+        _wash.GradientStops[0].Color = tint.Color;
+        _wash.GradientStops[1].Color = Color.FromArgb(0, tint.Color.R, tint.Color.G, tint.Color.B);
+
+        TierWash.BeginAnimation(OpacityProperty,
+            new DoubleAnimation(0.05 + (rung * 0.035), new Duration(TimeSpan.FromSeconds(0.6))));
+    }
+
+    /// <summary>Puts the background back to its resting state after a spin.</summary>
+    private void CalmBackground()
+    {
+        _vortex?.SetSpeedRatio(this, 1);
+
+        var shut = new DoubleAnimation(1, new Duration(TimeSpan.FromSeconds(2.2)))
+        {
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
+        };
+
+        VortexScale.BeginAnimation(ScaleTransform.ScaleXProperty, shut);
+        VortexScale.BeginAnimation(ScaleTransform.ScaleYProperty, shut);
+        Vortex.BeginAnimation(OpacityProperty, new DoubleAnimation(0.16, new Duration(TimeSpan.FromSeconds(2.2))));
+
+        // El lavado se queda un rato con el color del tier que salio, y se va despues: apagarlo a
+        // la vez que para la rueda le quitaria el unico eco que deja el resultado en el fondo.
+        TierWash.BeginAnimation(OpacityProperty, new DoubleAnimation(0, new Duration(TimeSpan.FromSeconds(3.5)))
+        {
+            BeginTime = TimeSpan.FromSeconds(1.6),
+        });
+    }
+
     /// <summary>How fast the field is travelling. One is standing still and watching.</summary>
+
     private void Field(double ratio)
     {
         _near?.SetSpeedRatio(this, ratio);
@@ -374,6 +481,7 @@ public partial class GachaView : UserControl
     private void Land(SpinRequest request)
     {
         SettleField();
+        CalmBackground();
         request.Stopped();
 
         FlashOnce(0.75, TimeSpan.FromSeconds(1.2));

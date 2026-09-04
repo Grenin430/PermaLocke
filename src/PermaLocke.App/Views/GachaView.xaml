@@ -265,7 +265,13 @@
                         </RadialGradientBrush>
                     </Grid.Background>
 
-                    <!-- EL TÚNEL. Las estrellas salen del centro y crecen hacia fuera, en vez de
+                    <!-- El color del tier, lavado sobre el fondo. El pincel se crea en el
+                         code-behind y no aquí: WPF congela los que vienen de XAML compartido y un
+                         pincel congelado no se puede animar. -->
+                    <Rectangle x:Name="TierWash" Opacity="0" IsHitTestVisible="False" />
+
+                    <!-- EL TÚNEL.
+ Las estrellas salen del centro y crecen hacia fuera, en vez de
                          deslizarse de lado como antes: el deslizamiento lateral se lee como papel
                          pintado pasando por detrás, y el ultraespacio es un sitio al que ENTRAS.
                          Es el mismo mosaico y el mismo coste; lo que cambia es qué se anima.
@@ -296,7 +302,10 @@
                           IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5"
                           HorizontalAlignment="Center" VerticalAlignment="Center">
                         <Grid.RenderTransform>
-                            <RotateTransform Angle="0" />
+                            <TransformGroup>
+                                <ScaleTransform x:Name="VortexScale" ScaleX="1" ScaleY="1" />
+                                <RotateTransform x:Name="VortexSpin" Angle="0" />
+                            </TransformGroup>
                         </Grid.RenderTransform>
 
                         <Ellipse Width="520" Height="520" StrokeThickness="1.5"
