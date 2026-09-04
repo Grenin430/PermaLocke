@@ -137,6 +137,19 @@ public sealed partial class GachaViewModel : SectionViewModel
     private readonly ISpeciesLookup _species;
     private readonly ILogger<GachaViewModel> _logger;
 
+    /// <summary>
+    /// The view reporting that its animation broke.
+    /// </summary>
+    /// <remarks>
+    /// The pull is already decided, written to the save and recorded by the time a single frame
+    /// plays, so this is only ever a note in the log: the player still gets their Pokémon. It
+    /// exists because the view starts the spin from a dispatcher callback, outside the await, so
+    /// nothing the view model wraps in a try can see it — it went all the way up to the
+    /// application's handler and told the player something had gone wrong when nothing had.
+    /// </remarks>
+    public void AnimationFailed(Exception ex) =>
+        _logger.LogError(ex, "Falló la animación del gacha; la tirada sí es válida");
+
     public GachaViewModel(GachaService gacha, IRunContext runContext, IPointsService points,
         IPokemonDelivery delivery, PokemonIdentityService identity, CreditService credits,
         PokemonSpriteService sprites, IEventStore events, ISpeciesLookup species,

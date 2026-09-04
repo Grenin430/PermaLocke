@@ -1016,6 +1016,22 @@ Ojo con lo **no comprobado**: lo estático está visto en la aplicación real, p
 y la tirada entera no**, porque verlas exige girar de verdad y girar escribe en la partida. Ver §84.
 
 
+**El gacha reventaba en CADA tirada (2026-09-04).** Dos tiradas, dos «error inesperado», y lo
+primero que dice el log es que no se perdio nada: Roserade y Salamence entregados y registrados.
+`ReelEnding` obliga a que el ultimo tiempo del cierre sea 1,00 -el carrete acaba en el ganador-, asi
+que el ultimo clic cae en el 1,00 de la tirada y pedia su rebote en el **1,006**; `KeyTime.FromPercent`
+lanza por encima de 1. Fallaba desde que se anadieron los cinco cierres, no dos veces. Ahora la linea
+de tiempo de los golpes dura un 6% mas que la tirada y las fracciones se reescalan a ella -ese ultimo
+rebote ES el golpe del aterrizaje-, y ademas se recorta a [0,1], asi que la excepcion es imposible
+aunque alguien escriba un cierre raro.
+
+Lo que de verdad costo fue que **la excepcion se escapaba**. La tirada esta escrita en la partida
+antes de animar un fotograma, asi que una animacion rota deberia costar la animacion y nada mas -la
+leccion del §84 en la ruleta-. El gacha no la tenia porque arranca el giro desde un
+`Dispatcher.BeginInvoke`, o sea FUERA del await, donde ningun try del ViewModel la ve: subia al
+manejador de la aplicacion, enseñaba un error por algo que habia funcionado, y dejaba al ViewModel
+esperando OCHO SEGUNDOS a su red de seguridad. Ver §87.
+
 **La rueda paraba y luego cambiaba de opinion (2026-09-04).** Primera tirada de verdad con la
 pantalla nueva: «se ha parado en el medio de IV AL MAXIMO y ha pasado por la cara a la siguiente;
 quiero que en el que pare, paro». Es la idea 8 del §84 haciendo lo que se le pidio: `WheelEnding`

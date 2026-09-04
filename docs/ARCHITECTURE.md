@@ -6655,3 +6655,53 @@ El giro entero sigue sin verse desde este lado: girar consume una tirada y escri
 el jugador debe cero. Lo que sí se puede afirmar es la geometría, que es donde estaba el problema —
 20° de rebote máximo contra 30° de media cuña—, y que un perfil que se pase de ahí no llega a
 animarse.
+
+## 87. El gacha reventaba en cada tirada, y el Pokémon llegaba igual (2026-09-04)
+
+El jugador tiró dos veces al gacha y las dos le salió «ha habido un error inesperado». Lo primero
+que dice el log es que **no se perdió nada**: Roserade a la caja 1 y Salamence a la caja 2, los dos
+escritos en la partida y registrados. Lo que reventó fue el espectáculo.
+
+```
+System.ArgumentOutOfRangeException: '1,006' no es un valor Percent válido para KeyTime.
+   at PermaLocke.App.Views.GachaView.StartClickFeedback(...)
+```
+
+### Un fotograma clave fuera del final
+
+`ReelEnding` describe el cierre como una lista de tiempos, y su constructor estático **exige** que
+el último sea `1.00`: el carrete tiene que acabar en el ganador (§31). `Clicks` son esos tiempos
+menos el primero, así que **el último clic cae siempre en el 1,00 de la tirada**. Y cada clic pide
+tres fotogramas: uno justo antes, el golpe en `+0,006` y la vuelta en `+0,03`.
+
+Para el último eso es el 1,006 y el 1,03, y `KeyTime.FromPercent` lanza por encima de 1. O sea que
+**fallaba en todas las tiradas desde que se añadieron los cinco cierres**, no en dos.
+
+La cola de la línea de tiempo lo arregla: dura un 6% más que la tirada y las fracciones se
+reescalan a ella, así que 1,03 cae en 0,972. No es un parche de conveniencia — ese último rebote es
+el golpe del **aterrizaje**, y el aterrizaje ocurre justo cuando el carrete ya ha parado. Además
+`OnTail` recorta a [0, 1], de modo que la excepción es ahora estructuralmente imposible aunque
+alguien escriba un cierre raro: la cola hace que se vea bien, el recorte hace que no pueda reventar.
+
+### Lo que de verdad costó: la excepción se escapaba
+
+La tirada se decide, se escribe y se registra **antes** de animar un solo fotograma. Una animación
+rota tendría que costar la animación y nada más — es exactamente la lección que la ruleta aprendió
+en el §84, envolviendo su `PlayAsync` en un try propio porque una excepción en el primer desvelado
+dejó al jugador sin saber qué le había tocado.
+
+El gacha no la tenía, y por una razón que conviene entender: la vista arranca el giro desde un
+`Dispatcher.BeginInvoke`, o sea **fuera del await**, así que ningún try del ViewModel puede verla.
+Subía hasta el manejador de la aplicación, le enseñaba al jugador un error por algo que había
+funcionado, y de paso dejaba al ViewModel esperando a que el carrete parase hasta que saltaba su
+red de seguridad **ocho segundos después** — se ve en el log, entre la excepción y la entrega.
+
+Ahora el `BeginInvoke` lleva su propio try: registra por `GachaViewModel.AnimationFailed` y llama a
+`request.Stopped()`, así que el resultado sale en el acto.
+
+### Lo que no está comprobado
+
+El giro arreglado no se ha visto: tirar consume una tirada y escribe un Pokémon en la partida del
+jugador. Lo que sí es demostrable es la aritmética, que es donde estaba el fallo — el clic más
+tardío que `ReelEnding` puede producir es 1,00 por su propio constructor estático, el desplazamiento
+mayor es +0,03, y 1,03 entre 1,06 da 0,972.

@@ -30,6 +30,21 @@ public partial class GachaView : UserControl
     private const double CellWidth = 72;
 
     /// <summary>
+    /// How much longer than the spin the click timeline runs, so the last click has room to bounce.
+    /// </summary>
+    /// <remarks>
+    /// Every ending finishes on the winner, so its last click is at 1.00 of the spin and the
+    /// bounce that follows it would land past the end of the timeline. Six per cent of a twelve
+    /// second spin is about seven hundred milliseconds, which is more than the thirty thousandths
+    /// the bounce needs and short enough that nobody sees the reel waiting.
+    /// </remarks>
+    private const double ClickTail = 1.06;
+
+    /// <summary>A fraction of the spin, expressed on the slightly longer click timeline.</summary>
+    private static KeyTime OnTail(double fraction) =>
+        KeyTime.FromPercent(Math.Clamp(fraction / ClickTail, 0, 1));
+
+    /// <summary>
     /// Where the reel stops dead and then advances one cell at a time, as a fraction of the spin.
     /// </summary>
     /// <remarks>
@@ -127,7 +142,29 @@ public partial class GachaView : UserControl
     {
         // La colección acaba de cambiar: hay que dejar que el ItemsControl construya sus celdas
         // antes de medir nada, o el visor todavía mide cero.
-        Dispatcher.BeginInvoke(() => StartSpin(request), System.Windows.Threading.DispatcherPriority.Loaded);
+        Dispatcher.BeginInvoke(
+            () =>
+            {
+                // Lo de debajo YA HA PASADO: el Pokémon está escrito en la partida y la tirada
+                // registrada antes de que se anime un solo fotograma. Así que una animación rota
+                // puede costar la animación y nada más.
+                //
+                // Esto no estaba, y se noto: un KeyTime fuera de rango subia hasta el manejador de
+                // la aplicacion, le enseñaba al jugador «ha habido un error inesperado» por algo
+                // que habia salido bien, y ademas dejaba al ViewModel esperando a que la rueda
+                // parase hasta que saltaba su red de seguridad OCHO SEGUNDOS despues. La misma
+                // leccion que ya se aprendio en la ruleta, en la pantalla de al lado.
+                try
+                {
+                    StartSpin(request);
+                }
+                catch (Exception ex)
+                {
+                    (DataContext as GachaViewModel)?.AnimationFailed(ex);
+                    request.Stopped();
+                }
+            },
+            System.Windows.Threading.DispatcherPriority.Loaded);
     }
 
     /// <summary>
@@ -424,23 +461,33 @@ public partial class GachaView : UserControl
     /// </remarks>
     private void StartClickFeedback(TimeSpan duration, double[] clicks)
     {
-        var kick = new DoubleAnimationUsingKeyFrames { Duration = duration };
-        var jolt = new DoubleAnimationUsingKeyFrames { Duration = duration };
+        // Esta linea de tiempo dura un pelin MAS que la tirada, y las fracciones se reescalan a
+        // ella. Sin esa cola, el ultimo clic -- que cae exactamente en el 1,00 de la tirada, porque
+        // todo cierre acaba en el ganador -- pedia su rebote en el 1,006, y KeyTime.FromPercent
+        // LANZA por encima de 1. Reventaba en CADA tirada: el Pokemon se entregaba igual, pero al
+        // jugador le salia «ha habido un error inesperado» por algo que habia funcionado.
+        //
+        // La cola no es un parche: ese ultimo rebote es el golpe del aterrizaje, y el aterrizaje
+        // ocurre justo cuando la rueda ya ha parado.
+        var span = TimeSpan.FromMilliseconds(duration.TotalMilliseconds * ClickTail);
+
+        var kick = new DoubleAnimationUsingKeyFrames { Duration = span };
+        var jolt = new DoubleAnimationUsingKeyFrames { Duration = span };
         kick.KeyFrames.Add(new LinearDoubleKeyFrame(1, KeyTime.FromPercent(0)));
         jolt.KeyFrames.Add(new LinearDoubleKeyFrame(0, KeyTime.FromPercent(0)));
 
         foreach (var click in clicks)
         {
-            kick.KeyFrames.Add(new LinearDoubleKeyFrame(1, KeyTime.FromPercent(click - 0.004)));
-            kick.KeyFrames.Add(new LinearDoubleKeyFrame(1.18, KeyTime.FromPercent(click + 0.006)));
-            kick.KeyFrames.Add(new EasingDoubleKeyFrame(1, KeyTime.FromPercent(click + 0.03))
+            kick.KeyFrames.Add(new LinearDoubleKeyFrame(1, OnTail(click - 0.004)));
+            kick.KeyFrames.Add(new LinearDoubleKeyFrame(1.18, OnTail(click + 0.006)));
+            kick.KeyFrames.Add(new EasingDoubleKeyFrame(1, OnTail(click + 0.03))
             {
                 EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
             });
 
-            jolt.KeyFrames.Add(new LinearDoubleKeyFrame(0, KeyTime.FromPercent(click - 0.004)));
-            jolt.KeyFrames.Add(new LinearDoubleKeyFrame(3.5, KeyTime.FromPercent(click + 0.006)));
-            jolt.KeyFrames.Add(new EasingDoubleKeyFrame(0, KeyTime.FromPercent(click + 0.03))
+            jolt.KeyFrames.Add(new LinearDoubleKeyFrame(0, OnTail(click - 0.004)));
+            jolt.KeyFrames.Add(new LinearDoubleKeyFrame(3.5, OnTail(click + 0.006)));
+            jolt.KeyFrames.Add(new EasingDoubleKeyFrame(0, OnTail(click + 0.03))
             {
                 EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
             });
