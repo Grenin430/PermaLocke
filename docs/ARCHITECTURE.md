@@ -6520,3 +6520,80 @@ cada lado.
 
 Y una trampa de las de siempre, que cayó otra vez: **un comentario XML no admite `--`**. Está
 escrito en `CLAUDE.md` desde el §74 y aun así costó una compilación.
+
+## 85. La sexta prueba comparaba dos unidades distintas (2026-09-04)
+
+El jugador: «te dije que después de completar la sexta prueba TODOS los entrenadores saquen Pokémon
+en su última etapa; estoy peleando contra un random del Team Skull y me ha sacado **un Larvitar**».
+Tenía razón, y el fallo eran cinco niveles de nada.
+
+### El corte estaba en la unidad equivocada
+
+La regla no puede consultar por dónde vas —el mod se genera una vez, antes de empezar—, así que usa
+lo único que la tabla de entrenadores lleva y que sigue el avance de la historia: **el nivel que el
+cartucho le dio a cada equipo**. Eso está bien, y el comentario del fichero lo decía: *«se compara
+contra el nivel del CARTUCHO y nunca contra el que sube el rol»*.
+
+Y acto seguido el número era **34**, que salió de `Data/levelcaps.json`. Pero un cap **ya va subido
+un 20%** (§48): es el nivel del jefe más el porcentaje de la competición. Así que el corte estaba
+comparando un nivel subido contra niveles sin subir, cinco por encima de donde tocaba.
+
+Medido, no deducido. El recluta es el **entrenador 473**, clase 28, con un Larvitar a **nivel 33 de
+cartucho**; el corte estaba en 34. Y el número bueno sale de la tabla de estáticos, donde los ocho
+Dominantes miden **12, 20, 22, 24, 29, 33, 35 y 49**: el de la sexta prueba es **Vikavolt, 29**.
+Multiplicados por 1,2 esos ocho caen sobre los caps de la tabla, que es la comprobación cruzada que
+nadie había hecho — y que ahora es un test.
+
+Un Larvitar a 33 está **entre la sexta prueba y la séptima**, o sea exactamente donde el jugador
+dijo que estaba.
+
+### Y un segundo agujero en la misma regla
+
+`ExtraPokemonRandomizer` **no aplicaba la regla en absoluto**. Se escribió como «copiar el último
+del equipo y cambiarle la especie» y ahí no había ninguna regla que aplicar, así que el Pokémon
+extra que el rol añade a los 106 combates importantes podía ser una primera etapa después de la
+sexta prueba. El jugador pidió «TODOS los entrenadores, TODOS» y ese también es uno.
+
+La trampa al arreglarlo: este módulo corre **después** del randomizador de entrenadores, que ya ha
+subido los niveles por el rol. Comparar el nivel que hay en el fichero contra un corte de cartucho
+habría metido aquí entrenadores cinco niveles por debajo del corte — el mismo error, del otro lado.
+Se lee el nivel del **cartucho** del último Pokémon que el entrenador ya tenía, que es de quien se
+copia la entrada.
+
+### La comprobación tenía el agujero en el mismo sitio
+
+`RomTool trainers` relee lo generado y cuenta cuántos Pokémon por encima del corte se han quedado
+sin evolucionar. Pero empezaba con `if (before.Length != after.Length) continue;`, así que **los 106
+equipos que crecieron quedaban fuera de todas sus comprobaciones**, incluida esa. O sea que la única
+herramienta que podía haber cazado el segundo fallo estaba ciega justo donde estaba.
+
+Ahora un equipo que crece se comprueba igual; los huecos que ya existían se comparan uno a uno con
+el cartucho y el añadido hereda el nivel de historia del último que había. La cuenta pasa de **474 a
+809** Pokémon vigilados.
+
+De paso, el renglón `NIVELES movidos: N (debe ser 0)` dejó de ser verdad el día que los roles
+empezaron a subir niveles: generado con rol se mueven todos. Un contador que se lee como una alarma
+cuando lo normal es que salte enseña a ignorarlo, así que dice lo que significa.
+
+### Verificado releyendo, no por el informe
+
+Generado con la seed real de la run y el rol LUDÓPATA:
+
+- **809 Pokémon** de nivel de cartucho 29 en adelante, **0 sin evolucionar del todo**.
+- **0 entrenadores** llevan un Larvitar en todo el juego.
+- El entrenador 473 pasa de **Larvitar** a **Tyranitar**, que es literalmente lo que el jugador dijo
+  que debería salir.
+
+Y dos herramientas nuevas, porque «me ha salido un X, de dónde sale» se ha preguntado ya tres veces
+—la clase 222 de Tilo, el Nihilego del Paraíso y ahora esto— y las tres se contestaron a mano:
+`RomTool quien-lleva <especie> [ruta]` y `RomTool entrenador <id> [ruta]`, que leen el trpoke de un
+mod **generado o instalado** y enseñan el equipo con su nivel de cartucho al lado.
+
+### Lo que cuesta aplicarlo
+
+Hay que **volver a randomizar y reinstalar**. Cambiar el corte no desplaza el sorteo —`FinalOf` es
+determinista y se aplica **después** de elegir la especie, así que no consume azar—, de modo que por
+sí solo daría el mismo mundo con más entrenadores evolucionados. Pero el mod instalado es del 3 de
+septiembre a las 06:26 y **le faltan las ocho clases importantes** que se añadieron a las 06:36
+(§84 bis, medido en esta misma sesión), así que reinstalar arrastra también ese cambio, que **sí**
+reordena qué mega y qué Pokémon extra lleva cada combate importante.

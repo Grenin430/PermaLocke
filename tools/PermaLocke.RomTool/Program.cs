@@ -157,6 +157,12 @@ switch (command)
     case "importantes":
         await ImportantesAsync();
         break;
+    case "quien-lleva":
+        await QuienLlevaAsync(int.Parse(args[1]), args.Length > 2 ? args[2] : null);
+        break;
+    case "entrenador":
+        await QuienLlevaAsync(0, args.Length > 2 ? args[2] : null, int.Parse(args[1]));
+        break;
     case "megas-cuenta":
         await MegasCuentaAsync();
         break;
@@ -504,22 +510,43 @@ async Task TrainersAsync(ulong seed)
     {
         var before = vanilla[t];
         var after = modded[t];
-        if (before.Length != after.Length) { sizeChanged++; continue; }
 
-        for (var s = 0; s < TrainerPokemonTable.Count(after); s++)
+        var wasSlots = TrainerPokemonTable.Count(before);
+        var nowSlots = TrainerPokemonTable.Count(after);
+
+        // Un equipo que CRECE es lo normal cuando el rol añade un Pokemon (§47). Antes esto era un
+        // «continue» y se saltaba el equipo entero, asi que los 106 combates importantes quedaban
+        // FUERA de todas las comprobaciones de abajo -- incluida la de la sexta prueba, que es
+        // justo donde estaba el segundo agujero de la regla: el añadido no evolucionaba y nada lo
+        // decia. Encoger si sigue siendo imposible.
+        if (nowSlots < wasSlots) { sizeChanged++; continue; }
+
+        for (var s = 0; s < nowSlots; s++)
         {
             total++;
-            if (TrainerPokemonTable.GetLevel(before, s) != TrainerPokemonTable.GetLevel(after, s)) levelsMoved++;
-            if (TrainerPokemonTable.GetItem(before, s) != TrainerPokemonTable.GetItem(after, s)) itemsLost++;
-            if (TrainerPokemonTable.GetSpecies(before, s) != TrainerPokemonTable.GetSpecies(after, s)) replaced++;
+
+            // Los huecos que YA EXISTIAN en el cartucho se pueden comparar uno a uno; el añadido
+            // no tiene con que compararse.
+            if (s < wasSlots)
+            {
+                if (TrainerPokemonTable.GetLevel(before, s) != TrainerPokemonTable.GetLevel(after, s)) levelsMoved++;
+                if (TrainerPokemonTable.GetItem(before, s) != TrainerPokemonTable.GetItem(after, s)) itemsLost++;
+                if (TrainerPokemonTable.GetSpecies(before, s) != TrainerPokemonTable.GetSpecies(after, s)) replaced++;
+            }
+
             if (banned.Contains(TrainerPokemonTable.GetSpecies(after, s))) offenders++;
 
             var level = TrainerPokemonTable.GetLevel(after, s);
             if (level > highest) { highest = level; highestTrainer = t; }
 
-            // Contra el nivel del CARTUCHO, que es el mismo criterio con el que se genero.
-            if (evolutions is not null && threshold > 0
-                && TrainerPokemonTable.GetLevel(before, s) >= threshold)
+            // Contra el nivel del CARTUCHO, que es el mismo criterio con el que se genero. Un
+            // hueco AÑADIDO no tiene nivel propio en el cartucho: hereda el del ultimo que el
+            // entrenador ya llevaba, que es de quien se copio.
+            var story = wasSlots == 0
+                ? -1
+                : TrainerPokemonTable.GetLevel(before, Math.Min(s, wasSlots - 1));
+
+            if (evolutions is not null && threshold > 0 && story >= threshold)
             {
                 checkedAbove++;
                 var species = TrainerPokemonTable.GetSpecies(after, s);
@@ -609,7 +636,11 @@ async Task TrainersAsync(ulong seed)
     Console.WriteLine($"  {total} Pokémon, {replaced} con especie nueva");
 
     Console.WriteLine($"  equipos que cambiaron de tamaño: {sizeChanged}   (debe ser 0)");
-    Console.WriteLine($"  NIVELES movidos: {levelsMoved}   (debe ser 0: de ahí salen los caps)");
+    // Este renglon decia «debe ser 0» y dejo de ser verdad el dia que los roles empezaron a subir
+    // los niveles: generado con un rol, se mueven TODOS. Un contador que se lee como una alarma
+    // cuando lo normal es que no lo sea acaba enseñando a ignorarlo.
+    Console.WriteLine($"  NIVELES movidos: {levelsMoved}   "
+                      + "(con rol se mueven todos; 0 solo si se generó sin rol)");
     Console.WriteLine($"  objetos alterados: {itemsLost}   (debe ser 0)");
     Console.WriteLine($"  especies prohibidas: {offenders}   (debe ser 0)");
     Console.WriteLine($"  nivel más alto del juego: {highest} (entrenador {highestTrainer})");
@@ -1389,6 +1420,104 @@ void ItemIcons(int fromIcon, int toIcon)
 
 // Los combates importantes del cartucho con el nivel de su equipo, para poder elegir un corte
 // -«de la 7a prueba en adelante»- con un numero medido y no a ojo.
+// Quien lleva una especie concreta, con su clase, su nivel y su equipo entero. Existe porque la
+// pregunta «me ha salido un X, de donde sale» se ha hecho ya tres veces -la clase 222 de Tilo, el
+// Nihilego del Paraiso, y ahora un Larvitar de un recluta- y las tres se contestaron a mano.
+//
+// Sin ruta mira el cartucho; con ruta lee el trpoke de un mod GENERADO O INSTALADO, que es lo que
+// hace falta casi siempre: lo que el jugador se encuentra es lo que hay instalado, no lo que
+// diria el codigo de hoy.
+async Task QuienLlevaAsync(int species, string? trpokePath, int onlyTrainer = -1)
+{
+    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work, baseLayer: baseLayer);
+    var names = workspace.Config.GetText(TextName.SpeciesNames);
+    var classNames = workspace.Config.GetText(TextName.TrainerClasses);
+    var trainerNames = workspace.Config.GetText(TextName.TrainerNames);
+    var options = RandomizerOptionsLoader.Load(Path.Combine(root, "Data", "randomizer.json"));
+
+    var trpoke = trpokePath is not null && File.Exists(trpokePath)
+        ? trpokePath
+        : workspace.PathOf(GameFiles.TrainerPokemon);
+
+    // La tabla de entrenadores tiene que venir del MISMO sitio que el trpoke: el modulo del
+    // Pokemon extra cambia las cuentas y cruzarlas descuadra todas las clases (§47).
+    var trdata = trpoke == workspace.PathOf(GameFiles.TrainerPokemon)
+        ? workspace.PathOf(GameFiles.TrainerData)
+        : Path.Combine(Path.GetDirectoryName(trpoke)!, "6");
+
+    Console.WriteLine($"trpoke: {trpoke}");
+    Console.WriteLine(onlyTrainer >= 0
+        ? $"entrenador {onlyTrainer}"
+        : $"buscando: {(species < names.Length ? names[species] : "?")} ({species})");
+
+    // El cartucho, para poder decir a que nivel puso el juego a este entrenador: es ESE nivel, y
+    // no el ya subido por el rol, el que decide la regla de la sexta prueba.
+    var vanilla = new GARC.LazyGARC(
+        await File.ReadAllBytesAsync(workspace.PathOf(GameFiles.TrainerPokemon)));
+    var parties = new GARC.LazyGARC(await File.ReadAllBytesAsync(trpoke));
+
+    using var trainers = new GarcPatcher(trdata);
+    var found = 0;
+
+    for (var trainer = 0; trainer < Math.Min(trainers.FileCount, parties.FileCount); trainer++)
+    {
+        var entry = trainers.Read(trainer);
+        if (entry.Length < 0x14)
+        {
+            continue;
+        }
+
+        var party = parties[trainer];
+        var count = TrainerPokemonTable.Count(party);
+
+        // Por id de entrenador, o por especie: la misma impresion sirve para las dos preguntas y
+        // se hacen las dos igual de a menudo.
+        var wanted = onlyTrainer >= 0
+            ? trainer == onlyTrainer
+            : count > 0 && Enumerable.Range(0, count)
+                .Any(s => TrainerPokemonTable.GetSpecies(party, s) == species);
+
+        if (count == 0 || !wanted)
+        {
+            continue;
+        }
+
+        found++;
+        var trainerClass = BitConverter.ToUInt16(entry, ExtraPokemonRandomizer.ClassOffset);
+        var team = new List<string>();
+
+        for (var slot = 0; slot < count; slot++)
+        {
+            var id = TrainerPokemonTable.GetSpecies(party, slot);
+            var name = id < names.Length ? names[id] : $"?{id}";
+            var level = TrainerPokemonTable.GetLevel(party, slot);
+
+            // El nivel del cartucho en el mismo hueco, cuando el equipo no ha cambiado de tamano.
+            var before = trainer < vanilla.FileCount ? vanilla[trainer] : [];
+            var story = slot < TrainerPokemonTable.Count(before)
+                ? TrainerPokemonTable.GetLevel(before, slot)
+                : -1;
+
+            team.Add($"{name} Nv{level}"
+                + (story >= 0 ? $" (cartucho {story}{(story >= options.FullyEvolvedFromLevel ? "" : " POR DEBAJO")})" : ""));
+        }
+
+        Console.WriteLine();
+        Console.WriteLine($"  entrenador {trainer}  clase {trainerClass} "
+                          + $"«{(trainerClass < classNames.Length ? classNames[trainerClass] : "?")}» "
+                          + $"{(trainer < trainerNames.Length ? trainerNames[trainer] : "?")}");
+
+        foreach (var member in team)
+        {
+            Console.WriteLine($"      {member}");
+        }
+    }
+
+    Console.WriteLine();
+    Console.WriteLine($"{found} encontrado(s). El corte de la sexta prueba esta en nivel de "
+                      + $"cartucho {options.FullyEvolvedFromLevel}.");
+}
+
 async Task ImportantesAsync()
 {
     using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work, baseLayer: baseLayer);

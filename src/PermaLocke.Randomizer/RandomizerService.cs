@@ -152,6 +152,9 @@ public sealed class RandomizerService(RandomizerOptions options)
             {
                 steps.Add(new RandomizerStep("Pokémon extra del rol",
                     $"{extra.Added} añadidos en {extra.Battles} combates importantes"
+                    + (extra.Evolved > 0
+                        ? $", {extra.Evolved} evolucionados del todo (6ª prueba en adelante)"
+                        : string.Empty)
                     + (extra.NoRoom > 0 ? $"; {extra.NoRoom} ya iban con seis y se quedaron igual" : string.Empty)));
             }
         }

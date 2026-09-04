@@ -1016,6 +1016,30 @@ Ojo con lo **no comprobado**: lo estático está visto en la aplicación real, p
 y la tirada entera no**, porque verlas exige girar de verdad y girar escribe en la partida. Ver §84.
 
 
+**La sexta prueba comparaba dos unidades distintas (2026-09-04).** El jugador peleó contra un
+recluta del Team Skull y le salió **un Larvitar**, con la regla de «de la sexta prueba en adelante,
+todos evolucionados del todo» encendida. El corte estaba en **34**, copiado de `levelcaps.json`,
+pero **un cap ya va subido un 20%** (§48) y esto compara contra el nivel del **cartucho**: cinco
+niveles de más. El número bueno sale de la tabla de estáticos, donde los ocho Dominantes miden 12,
+20, 22, 24, **29**, 33, 35 y 49 — el de la sexta es Vikavolt a **29**, y multiplicar esos ocho por
+1,2 da los caps, que es la comprobación cruzada que nadie había hecho y ahora es un test. El
+recluta era el entrenador **473** con el Larvitar a nivel 33 de cartucho, o sea entre la sexta
+prueba y la séptima.
+
+Y **el mismo requisito tenía un segundo agujero**: `ExtraPokemonRandomizer` no aplicaba la regla en
+absoluto, así que el Pokémon extra del rol podía ser una primera etapa en cualquiera de los 106
+combates importantes. Al arreglarlo, la trampa es que ese módulo corre **después** de que el rol
+haya subido los niveles, así que hay que leer el nivel del cartucho del último que el entrenador ya
+tenía — comparar el del fichero habría metido el mismo error del otro lado.
+
+**Y la comprobación estaba ciega justo ahí**: `RomTool trainers` empezaba con `if (before.Length !=
+after.Length) continue;`, o sea que los 106 equipos que crecen quedaban fuera de todas sus
+comprobaciones. Pasa de vigilar 474 Pokémon a **809**. Verificado releyendo lo generado con la seed
+real: **809 de nivel 29 en adelante, 0 sin evolucionar**, cero Larvitar en todo el juego, y el
+entrenador 473 pasa de Larvitar a **Tyranitar**. Hay dos herramientas nuevas para no volver a
+contestar a mano: `RomTool quien-lleva <especie>` y `RomTool entrenador <id>`, las dos sobre un mod
+generado **o instalado**. Ver §85.
+
 **Siguiente.** Probar en partida real los combates importantes, los iniciales y las tiendas.
 
 Y decidir entre los cinco el trueque del combate por link, que ya está medido: **o estadísticas
@@ -1099,6 +1123,10 @@ dotnet run --project tools/PermaLocke.RomTool -- randomize 20260818 --install
 # EV de la partida real; --probar demuestra la escritura SOBRE UNA COPIA
 dotnet run --project tools/PermaLocke.Probe -- --ev
 dotnet run --project tools/PermaLocke.Probe -- --ev --probar
+
+# quien lleva una especie, o que lleva un entrenador, en un mod GENERADO O INSTALADO
+dotnet run --project tools/PermaLocke.RomTool -- quien-lleva 246 "ruta/al/mod/romfs/a/1/0/7"
+dotnet run --project tools/PermaLocke.RomTool -- entrenador 473 "ruta/al/mod/romfs/a/1/0/7"
 
 # id de un objeto por su nombre, para no teclearlo de memoria
 dotnet run --project tools/PermaLocke.Probe -- --objeto-find "Amuleto Iris"

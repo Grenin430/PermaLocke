@@ -8,7 +8,8 @@ namespace PermaLocke.Randomizer.Modules;
 /// <param name="Battles">Important battles that got at least one more Pokémon.</param>
 /// <param name="Added">Pokémon added in total.</param>
 /// <param name="NoRoom">Battles left alone because the party was already full.</param>
-public sealed record ExtraPokemonResult(int Battles, int Added, int NoRoom);
+/// <param name="Evolved">Added Pokémon pushed to their final form by the sixth trial rule.</param>
+public sealed record ExtraPokemonResult(int Battles, int Added, int NoRoom, int Evolved = 0);
 
 /// <summary>
 /// Gives the important battles the extra Pokémon the role asks for.
@@ -57,6 +58,23 @@ public sealed class ExtraPokemonRandomizer(RomWorkspace workspace, RandomizerOpt
 
         var parties = new GARC.LazyGARC(await File.ReadAllBytesAsync(partyPath, ct));
         var untouchable = options.ProtectedSpecies.ToHashSet();
+
+        // La regla de la sexta prueba vale TAMBIEN para el que se añade: es un Pokemon del equipo
+        // de ese entrenador como los demas, y el jugador la pidio para todos. Se le paso la
+        // primera vez porque este modulo se escribio como «copiar el ultimo y cambiarle la
+        // especie» y ahi no habia ninguna regla que aplicar.
+        var evolutions = options.FullyEvolvedFromLevel > 0
+            ? EvolutionTable.Read(mod.Stage(GameFiles.Evolution))
+            : null;
+
+        // El nivel del CARTUCHO, que es el que dice por donde va la historia. No sirve el que hay
+        // en el fichero: para cuando este modulo corre, el randomizador de entrenadores ya lo ha
+        // subido un 20-27% por el rol, asi que compararlo con el corte metería aqui entrenadores
+        // que estan cinco niveles por debajo de el.
+        var vanilla = new GARC.LazyGARC(await File.ReadAllBytesAsync(
+            workspace.PathOf(GameFiles.TrainerPokemon), ct));
+
+        var evolved = 0;
 
         // Los mismos suelos por clase que usa el randomizador de entrenadores, construidos con la
         // misma funcion: dos definiciones de «el Alto Mando va desde 500» acabarian discrepando.
@@ -124,7 +142,24 @@ public sealed class ExtraPokemonRandomizer(RomWorkspace workspace, RandomizerOpt
                         // del rol entraba en la liga sacado del saco entero: se veia un Volbeat de
                         // 430 al lado de cinco de 500 para arriba.
                         var here = floors.TryGetValue(trainerClass, out var floor) ? floor : pool;
-                        TrainerPokemonTable.SetSpecies(grown, slot, here.Pick(random, original));
+                        var species = here.Pick(random, original);
+
+                        // De la sexta prueba en adelante, evolucionado del todo. Se mira el nivel
+                        // del cartucho del ULTIMO que ya tenia el entrenador, que es de quien se
+                        // copia esta entrada.
+                        if (evolutions is not null && StoryLevel(vanilla, trainer, count) is var story
+                            && story >= options.FullyEvolvedFromLevel)
+                        {
+                            var last = evolutions.FinalOf(species);
+
+                            if (last != species)
+                            {
+                                species = last;
+                                evolved++;
+                            }
+                        }
+
+                        TrainerPokemonTable.SetSpecies(grown, slot, species);
                     }
 
                     // Los movimientos del copiado no son de esta especie, y el nivel se hereda a
@@ -149,7 +184,30 @@ public sealed class ExtraPokemonRandomizer(RomWorkspace workspace, RandomizerOpt
         await File.WriteAllBytesAsync(partyPath, parties.Save(), ct);
 
         await VerifyAsync(dataPath, partyPath, counts, ct);
-        return new ExtraPokemonResult(battles, added, noRoom);
+        return new ExtraPokemonResult(battles, added, noRoom, evolved);
+    }
+
+    /// <summary>
+    /// The cartridge level of the last Pokémon this trainer really had.
+    /// </summary>
+    /// <remarks>
+    /// The added entry is a copy of that one and inherits its level, so this is the level that
+    /// says where in the story the trainer appears. It comes from the <b>vanilla</b> file because
+    /// by the time this module runs the trainer randomiser has already raised every level by the
+    /// role's percentage, and comparing a raised level against a cartridge threshold is exactly
+    /// the mistake that let a level 33 Team Skull grunt keep a Larvitar.
+    /// </remarks>
+    private static int StoryLevel(GARC.LazyGARC vanilla, int trainer, int count)
+    {
+        if (trainer >= vanilla.FileCount)
+        {
+            return -1;
+        }
+
+        var before = vanilla[trainer];
+        var slots = TrainerPokemonTable.Count(before);
+
+        return slots == 0 ? -1 : TrainerPokemonTable.GetLevel(before, Math.Min(count, slots) - 1);
     }
 
     /// <summary>
