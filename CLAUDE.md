@@ -1030,10 +1030,26 @@ falta localizar donde los guarda la estructura de `0x1E4`, que es una investigac
 §22. El comentario de `--write-hp` decia «ahora abre el menu y comprueba si lo refleja»; se programo,
 nadie fue a mirar, y ahora la respuesta esta escrita en el codigo con sus numeros.
 
-Y un hallazgo que no se buscaba: en la misma lectura la memoria decia **Tinkaton nivel 40** y la
-pantalla **42**, con los otros tres coincidiendo. No es el cap, que esta en 54. O sea que la copia
-que PermaLocke lee **puede ir por detras del juego**, y de ella salen la deteccion de muertes y los
-niveles del cap. Sin explicacion todavia, anotado como discrepancia medida y no como teoria. Ver §90.
+Se busco tambien DONDE estan los PS, ya con la estructura autoritativa localizada, y **no se han
+encontrado**: no aparecen en sus 484 bytes -ni en la cola, que no va cifrada-, y barriendo heap y
+linear enteros no hay **ningun cuarteto** de los cuatro valores del equipo a paso constante. O estan
+en otra forma, o el juego los **deriva** al dibujar, como ya observo el §53 del nivel. La via que
+queda es `--scan` y `--refine` cambiando los PS dentro del juego, que necesita al jugador. Ver §92.
+
+**Dos diagnosticos falsos, y los dos eran la sonda (2026-09-04).** Por el camino apunte como
+problemas de la aplicacion que «el barrido no encuentra el equipo» y que «Tinkaton va dos niveles por
+detras del juego». **Las dos eran de la sonda**, y por la misma causa: `WorldLimits` es estado GLOBAL
+que arranca en 807, la aplicacion lo sube al arrancar leyendo la tabla del mod, y **la sonda no lo
+hacia**. Con 807, el localizador rechazaba al Ursaluna (901) del hueco 1 y se quedaba sin confirmar
+ninguna estructura; y sin las curvas del mod, un nivel derivado de la experiencia caia a la tabla de
+PKHeX -que acaba en la 807- y daba 40 para Tinkaton. Medido con las tres cifras juntas: `exp=68225,
+Nv(exp)=42, Nv(pkhex)=40, Nv(0xEC)=42`. **La aplicacion leia bien las dos cosas.**
+
+La sonda llama ahora a `InstalledWorld.ApplyQuietly` antes de leer un byte, con el fichero
+**enlazado** desde la aplicacion en vez de copiado, y `--peek` enseña los tres niveles para que una
+discrepancia se vea en vez de elegir uno. Es el §65 con otro traje: **una herramienta de diagnostico
+puede estar peor calibrada que el codigo que diagnostica**, y cuando lo esta no falla, contesta con
+seguridad. Ver §91.
 
 **El Shedinja que se deshizo (2026-09-04).** Al jugador se le murio un Latias, PermaLocke lo convirtio
 en Shedinja, y al volver a entrar tenia otra vez un Latias debilitado. **Ni el registro ni la

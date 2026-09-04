@@ -31,6 +31,24 @@ using PermaLocke.GameLink.Rpc;
 
 Console.OutputEncoding = System.Text.Encoding.UTF8;
 
+// LO PRIMERO DE TODO, antes de leer un solo byte: qué mundo va a leer Azahar.
+//
+// WorldLimits es estado global y arranca con el techo del cartucho, 807. Con el mod de expansión
+// puesto, el equipo del jugador lleva Pokémon por encima de ese número, y TODOS los lectores en
+// vivo los tiran como basura del heap. La aplicación llama a esto al arrancar; la sonda no lo
+// hacía, y el resultado fueron dos diagnósticos falsos el mismo día:
+//
+//   «--equipo no encuentra ninguna copia del equipo» — el barrido exige un segundo Pokémon válido
+//   a la distancia del salto, y el segundo del equipo era un Ursaluna (901). Rechazado por el
+//   techo, no hay salto, no hay copia. Mientras tanto la aplicación leía el equipo sin problema.
+//
+//   «Tinkaton va dos niveles por detrás del juego» — el nivel sale de la experiencia y la curva es
+//   una propiedad de la especie. Sin la tabla del mod, PKHeX cae a Medium Fast y da un número
+//   equivocado con toda confianza. Es exactamente el fallo que GameLevels existe para evitar.
+//
+// Una herramienta de diagnóstico que miente sobre el estado del juego es peor que no tenerla.
+PermaLocke.App.Services.InstalledWorld.ApplyQuietly(AppContext.BaseDirectory);
+
 // Calibración de banderas: no necesita emulador, solo la partida guardada.
 if (args.Length >= 1 && args[0] == "--flags")
 {
@@ -554,9 +572,18 @@ if (Index("--peek") is { } peekIndex)
 
         var pokemon = new PKHeX.Core.PK7(bytes);
 
+        // Los TRES niveles, porque no son el mismo numero y confundirlos ya ha costado un
+        // diagnostico falso. «exp» es el que sale de la experiencia con la curva del MUNDO
+        // INSTALADO -que es lo que hace GameLevels y lo que usa la aplicacion-; «pkhex» es el que
+        // saldria con la tabla de PKHeX, que para una especie del mod cae a Medium Fast y da un
+        // numero equivocado con toda confianza; y «0xEC» es Stat_Level, el campo que el juego
+        // PINTA. Los tres deberian coincidir, y cuando no lo hacen eso es la noticia.
         Console.WriteLine("  0x" + target.ToString("X8")
                           + "  #" + pokemon.Species
-                          + "  Nv." + pokemon.CurrentLevel
+                          + "  exp=" + pokemon.EXP
+                          + "  Nv(exp)=" + PermaLocke.GameLink.Data.GameLevels.Of(pokemon)
+                          + "  Nv(pkhex)=" + pokemon.CurrentLevel
+                          + "  Nv(0xEC)=" + pokemon.Stat_Level
                           + "  checksum=" + (pokemon.ChecksumValid ? "ok" : "NO")
                           + (pokemon.IsShiny ? "  SHINY" : string.Empty));
     }

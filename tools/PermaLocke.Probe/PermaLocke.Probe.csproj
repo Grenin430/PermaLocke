@@ -5,6 +5,23 @@
     <ProjectReference Include="..\..\src\PermaLocke.Data\PermaLocke.Data.csproj" />
     <ProjectReference Include="..\..\src\PermaLocke.Rules\PermaLocke.Rules.csproj" />
     <ProjectReference Include="..\..\src\PermaLocke.Infrastructure\PermaLocke.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\PermaLocke.Randomizer\PermaLocke.Randomizer.csproj" />
+  </ItemGroup>
+
+  <!--
+    WorldLimits es estado GLOBAL, y todo punto de entrada que lea memoria en vivo tiene que
+    inicializarlo o sus lectores tiran como basura cualquier Pokemon del mod. La sonda no lo hacia,
+    y costo dos diagnosticos falsos: «el barrido no encuentra el equipo» y «Tinkaton va dos niveles
+    por detras». Los dos eran la sonda, no la aplicacion.
+
+    El fichero se ENLAZA en vez de copiarse: dos implementaciones de «como de grande es el mundo»
+    acabarian discrepando, que es exactamente lo que este arreglo repara. Y se enlaza en vez de
+    mudarse porque solo un punto de entrada puede juntar GameLink y Randomizer: la regla de
+    dependencias de CLAUDE.md prohibe que dos hermanos se referencien, y este cargador necesita
+    WorldLimits de uno y PersonalEntry7 del otro.
+  -->
+  <ItemGroup>
+    <Compile Include="..\..\src\PermaLocke.App\Services\InstalledWorld.cs" Link="InstalledWorld.cs" />
   </ItemGroup>
 
   <PropertyGroup>

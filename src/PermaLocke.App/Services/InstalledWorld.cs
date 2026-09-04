@@ -1,5 +1,6 @@
 using System.IO;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using PermaLocke.GameLink;
 using PermaLocke.GameLink.Data;
 using PermaLocke.Randomizer.Modules;
@@ -33,6 +34,22 @@ public sealed class InstalledWorld(AzaharInstallation azahar, ILogger<InstalledW
     private static string PersonalPath(string modDirectory) =>
         Path.Combine(modDirectory, "romfs",
             GameFiles.Personal.Replace('/', Path.DirectorySeparatorChar));
+
+    /// <summary>
+    /// The same thing, for an entry point that has no dependency injection.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="WorldLimits"/> is global state, so <b>every</b> entry point that reads the game
+    /// live has to do this or its readers throw away the mod's Pokémon as heap rubbish. The probe
+    /// was not doing it, and it produced two confident wrong diagnoses in one sitting — a party it
+    /// could not find, and a level two off — while the application next to it read both correctly.
+    /// Hence a door that needs nothing but a folder.
+    /// </remarks>
+    public static void ApplyQuietly(string appDirectory) =>
+        new InstalledWorld(
+                new AzaharInstallation(NullLogger<AzaharInstallation>.Instance),
+                NullLogger<InstalledWorld>.Instance)
+            .Apply(appDirectory);
 
     /// <summary>
     /// Applies the installed world's species ceiling. Called once at startup, before the game link.

@@ -6859,16 +6859,23 @@ construiría encima es un **vigilante**, no un candado: la app volvería a poner
 viera vivo a un muerto, con las limitaciones de siempre —solo con la aplicación abierta y Azahar
 respondiendo, y con una ventana de un segundo tras cada curación—.
 
-### Y un hallazgo que no se buscaba: la copia va por detrás
+### Un hallazgo que no se buscaba, y que resultó ser mío
 
-En la misma lectura, el equipo en memoria decía **Tinkaton nivel 40** y la pantalla del juego decía
-**42**. Los otros tres coincidían. No es el cap —está en 54, no toca nada a nivel 42—, así que la
-copia de `0x104` que PermaLocke lee **puede ir por detrás del juego**.
+En la misma lectura, el equipo en memoria decía **Tinkaton nivel 40** y la pantalla decía **42**.
+Escribí aquí que la copia de `0x104` «puede ir por detrás del juego» y que de ella salen la
+detección de muertes y los niveles del cap. **Eso era falso, y lo falso era la herramienta.**
 
-Importa porque de esa copia salen la detección de muertes y la lectura de niveles del cap. No se
-sabe todavía cuándo se refresca —la muerte del Latias sí se detectó en vivo, así que no es solo al
-guardar—, y hasta saberlo no conviene sacar conclusiones. Queda anotado como lo que es: una
-discrepancia medida, sin explicación.
+`--peek` imprimía `pokemon.CurrentLevel`, que es el nivel **según PKHeX**. Un nivel no es un campo:
+se deriva de la experiencia con la curva de la especie, y la tabla de PKHeX se acaba en la 807, así
+que para Tinkaton (959) caía a Medium Fast y daba 40 con toda confianza. La aplicación no usa eso:
+usa `GameLevels.Of`, que lee la curva del **mundo instalado**. Medido con las tres cifras juntas:
+
+```
+#959 Tinkaton  exp=68225  Nv(exp)=42  Nv(pkhex)=40  Nv(0xEC)=42
+```
+
+Cuarenta y dos por la curva del mod, cuarenta y dos en `Stat_Level`, cuarenta y dos en pantalla.
+No hay copia retrasada y no había nada que arreglar en la aplicación.
 
 ### Lo que sigue siendo verdad
 
@@ -6877,3 +6884,94 @@ Shedinja conserva su **1 PS máximo** del cartucho, y con nivel 1 y sin movimien
 puede hacer es Forcejeo, cuyo retroceso lo mata. Y la especie está sobrescrita, así que no vuelve a
 ser lo que era. Lo que falló en la partida del jugador no fue eso, fue el §89: la marca vivía en la
 memoria y el juego se cerró sin guardar.
+
+## 91. Dos diagnósticos falsos, y los dos eran la sonda (2026-09-04)
+
+Buscando dónde guarda el juego los PS aparecieron dos cosas raras que apunté como problemas de la
+aplicación. **Las dos eran de la sonda**, y las dos por la misma causa.
+
+`WorldLimits` es estado **global** y arranca con el techo del cartucho, 807. La aplicación lo sube
+al arrancar leyendo la tabla del mod instalado —`InstalledWorld.Apply`—, y con eso los lectores en
+vivo aceptan las 1025 especies y `GameLevels` usa las curvas de experiencia del mod. **La sonda no
+llamaba a nada de eso**, así que corría con 807 y con las curvas de PKHeX.
+
+De ahí salieron:
+
+**«El barrido no encuentra el equipo».** El localizador necesita un segundo Pokémon válido a la
+distancia del salto para confirmar una estructura, y el segundo del equipo era un **Ursaluna (901)**.
+Rechazado por el techo, no hay salto, no hay copia. Mientras tanto la aplicación leía el equipo sin
+inmutarse, y eso mismo debería haberme hecho sospechar antes de la herramienta y no del código.
+
+**«Tinkaton va dos niveles por detrás».** Un nivel no es un campo: se deriva de la experiencia con
+la curva de la especie, y la tabla de PKHeX se acaba en la 807. Para Tinkaton (959) caía a Medium
+Fast y daba 40. Con las tres cifras juntas:
+
+```
+#959 Tinkaton  exp=68225  Nv(exp)=42  Nv(pkhex)=40  Nv(0xEC)=42
+```
+
+Es exactamente el fallo que `GameLevels` existe para evitar (§53), reaparecido en la única puerta
+que no lo usaba.
+
+### El arreglo
+
+La sonda llama ahora a `InstalledWorld.ApplyQuietly` **antes de leer un solo byte**, y el fichero se
+**enlaza** desde la aplicación en vez de copiarse: dos implementaciones de «cómo de grande es el
+mundo» acabarían discrepando, que es justo lo que esto repara. Se enlaza y no se muda porque solo un
+punto de entrada puede juntar GameLink y Randomizer —la regla de dependencias no deja que dos
+hermanos se referencien— y este cargador necesita `WorldLimits` de uno y `PersonalEntry7` del otro.
+
+Y `--peek` enseña ahora **los tres** números: el de la experiencia con la curva del mundo, el que
+daría PKHeX, y `Stat_Level`. Cuando no coinciden, esa es la noticia.
+
+Con eso, el mismo barrido que no encontraba nada encuentra **las dos estructuras**, incluida la
+autoritativa de salto `0x1E4` en `0x33F80744`, que es lo que hacía falta para seguir con los PS.
+
+### La lección, otra vez
+
+Es el §65 con otro traje: **una herramienta de diagnóstico puede estar peor calibrada que el código
+que diagnostica**, y cuando lo está no falla — contesta con seguridad. Lo que tendría que haberme
+puesto en guardia estaba delante: la aplicación, al lado, leía bien lo que la sonda no encontraba.
+
+## 92. Dónde NO están los PS del equipo (2026-09-04)
+
+Con la estructura autoritativa por fin localizada —`0x33F80744`, salto `0x1E4`— se pudo buscar en
+serio dónde guarda el juego los puntos de vida. **No se ha encontrado**, y lo que sí hay son tres
+negativas medidas que acotan bastante el terreno.
+
+El equipo del momento, con sus PS a tope: Gyarados **131**, Ursaluna **161**, Tinkaton **123**,
+Houndoom **115**. Cuatro valores distintos, que es lo que hace falsificable cualquier candidato.
+
+**1. Escribir `Stat_HPCurrent` en la copia de `0x104` no se ve.** Escritos 7 PS en el Gyarados —un
+solo byte, offset `0xF0`—, releídos, y aguantan quince segundos sin que el juego los pise. La
+pantalla del equipo seguía marcando 131/131 con la barra llena (§90).
+
+**2. La estructura autoritativa no contiene ninguno de los cuatro valores.** Volcados los 484 bytes
+de cada hueco y buscados los cuatro números como enteros de 16 bits: **cero apariciones**, ni
+siquiera en la cola, que es la parte que no va cifrada. Comprobado además que el volcado se está
+leyendo bien, porque el bloque sale cifrado como debe: el campo de especie da 64001 en vez de 130.
+
+**3. No hay ninguna tabla con los cuatro a paso constante.** Barrida la memoria legible entera —heap
+`0x08000000-0x10000000` y linear `0x30000000-0x40000000`— buscando cada valor por separado: 1269,
+840, 2567 y 2264 candidatos. Cruzándolos, **ni un solo cuarteto** con los cuatro a la misma
+distancia, con pasos de hasta 64 KB. Si los PS del equipo vivieran en un array de estructuras, ahí
+tendría que haber salido.
+
+### Qué queda
+
+Dos posibilidades, y no se puede elegir entre ellas sin más medidas:
+
+- **Están, pero no así**: en 32 bits, en un byte, cifrados, o en una región que este barrido no
+  cubre.
+- **No están**: el §53 ya observó que el nivel y las estadísticas de combate son campos
+  **derivados** que el juego recalcula al entrar en combate. Si el menú también los recalcula al
+  dibujarse, no hay ningún PS que clavar — habría que tocar lo que los deriva, o sea nivel, IV, EV o
+  estadísticas base, y eso ya no es «dejar al Pokémon tal como está».
+
+La vía que falta es la clásica y necesita al jugador: `Probe --scan 131`, **cambiar los PS dentro
+del juego** —un golpe, una poción—, y `Probe --refine <nuevo>`. Los 1269 candidatos colapsan a un
+puñado en dos pasadas. Es una sesión corta pero no es automática, porque el valor tiene que moverlo
+el juego.
+
+Hasta entonces, la respuesta a «dejar al Pokémon muerto sin convertirlo en Shedinja» sigue siendo
+**no**, y ahora se sabe bastante mejor por qué.
