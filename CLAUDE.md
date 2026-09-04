@@ -1016,6 +1016,22 @@ Ojo con lo **no comprobado**: lo estático está visto en la aplicación real, p
 y la tirada entera no**, porque verlas exige girar de verdad y girar escribe en la partida. Ver §84.
 
 
+**El Shedinja que se deshizo (2026-09-04).** Al jugador se le murio un Latias, PermaLocke lo convirtio
+en Shedinja, y al volver a entrar tenia otra vez un Latias debilitado. **Ni el registro ni la
+escritura fallaron**: la muerte esta en el historial con su penalizacion, y el log ensena cinco copias
+escritas y RELEIDAS una a una. Lo que pasa es que quince segundos despues el jugador cerro el juego,
+y **esa marca vive en la memoria del emulador**: sobrevive solo si se guarda dentro del juego. Es la
+frontera de siempre del §66 -memoria viva contra fichero de partida-, y lo que faltaba era decirla EN
+EL MOMENTO en que se escribe.
+
+Ahora `GameLinkMonitor` lanza `DeathMarked` y HOME lo enseña por el mismo canal que los premios
+automaticos: «esta solo en la memoria: guarda dentro del juego, o escribelo en la partida desde
+MANTENIMIENTO». La herramienta ya existia -CONVERTIR A LOS CAIDOS EN SHEDINJA, que escribe la partida
+y es permanente- y su propio texto ya lo explicaba; lo que no habia era ningun camino desde la muerte
+hasta ese boton. Medido en la partida real: **sin marcar 2, ya son Shedinja 5**. Y NO se hace solo al
+cerrar el juego a proposito: el precedente del §68 anade Super Balls, esto **destruye un Pokemon** en
+el fichero y de forma permanente. Ver §89.
+
 **Volcanion con el dibujo de Hoopa (2026-09-04).** Un wonder trade devolvio Volcanion y la tarjeta lo
 enseno como **Hoopa Desatado**. La tabla de especie a icono del §30 bis se construyo a mano porque el
 cartucho no la publica, y en un sitio se identificaron cruzados: el tramo real es 1001 Diancie, 1002

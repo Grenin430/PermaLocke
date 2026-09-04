@@ -6757,3 +6757,67 @@ Que del wonder trade salga un Volcanion es correcto: `Data/wondertrade.json` lle
 `permitirLegendarios: true`, y la banda ya limita sola —hay que entregar algo de 600 para sacar uno,
 y el jugador entregó una Primarina de 530 con un +13%—. Si la competición lo prefiere, ese
 interruptor los quita del todo sin tocar código.
+
+## 89. El Shedinja que se deshizo, y por qué no es un fallo de escritura (2026-09-04)
+
+Al jugador se le murió un Latias, PermaLocke lo convirtió en Shedinja, y al volver a entrar tenía
+otra vez un Latias debilitado.
+
+Lo primero, lo que **sí** funcionó, porque conviene separarlo: la muerte está en el historial —
+«04/09 20:41 Latias ha caído a 0 PS» y su penalización de −25— y ahí seguirá pase lo que pase. La
+run es el registro autoritativo y no perdió nada.
+
+Y la escritura tampoco falló. El log:
+
+```
+20:41:52 Muerte detectada: Latias
+20:41:52 0x3254EE60: muerte, 26 bytes escritos y releídos
+20:41:52 0x330128E4: muerte, 26 bytes escritos y releídos
+20:41:52 0x3002E558: muerte, 25 bytes escritos y releídos
+20:41:52 0x3002F0FC: muerte, 25 bytes escritos y releídos
+20:41:52 0x33F80744: muerte, 25 bytes escritos y releídos
+20:41:52 Latias transformado en el juego (hueco 0, 5 copias releídas)
+```
+
+Cinco copias escritas y **releídas una a una**. El Shedinja estuvo ahí.
+
+### Lo que pasó de verdad
+
+Quince segundos después:
+
+```
+20:42:07 Sin conexión con el juego: Azahar responde pero la partida todavía no está cargada.
+```
+
+El jugador cerró el juego. **Esa marca vive en la memoria del emulador**, no en el fichero de
+partida, así que sobrevive solo si se guarda dentro del juego. Al cerrar sin guardar, la RAM se va
+y la partida sigue teniendo el Latias que tenía.
+
+No es un fallo de código: es la frontera de siempre entre las dos puertas —memoria viva contra
+fichero de partida— que la aplicación marca en cada pantalla desde el §66. Lo que faltaba es que
+alguien la dijera **en el momento en que importa**, que es justo cuando la marca se escribe.
+
+### Lo que se ha hecho
+
+`GameLinkMonitor` lanza ahora `DeathMarked` al conseguir la transformación, y HOME lo enseña por el
+mismo canal verde que los premios automáticos del §68:
+
+> «Latias marcado como caído en el juego. Está solo en la memoria: guarda dentro del juego para que
+> quede, o escríbelo en la partida desde MANTENIMIENTO.»
+
+Nada más. La herramienta que lo arregla ya existía —MANTENIMIENTO → **CONVERTIR A LOS CAÍDOS EN
+SHEDINJA**, que escribe la partida y es permanente— y su propio texto ya explicaba esto mismo; lo
+que no había era ningún camino desde la muerte hasta ese botón.
+
+### Medido en la partida del jugador
+
+Pulsando «MIRAR CUÁNTOS HAY», que no escribe nada: **sin marcar 2, ya son Shedinja 5, no están en la
+partida 0**. O sea que de las siete muertes de la run, cinco ya están selladas y dos siguen enteras,
+una de ellas el Latias.
+
+### Lo que NO se ha hecho, y por qué
+
+Convertirlos solo, al cerrar el juego. Sería cómodo y encajaría con el precedente del §68, donde un
+premio pasó a entregarse sin pulsar nada. Pero aquel **añade** Super Balls y esto **destruye un
+Pokémon** en el fichero de partida, de forma permanente. Un botón que el jugador pulsa cuando quiere
+es la respuesta correcta para eso; lo que estaba mal era que nadie le dijera que existe.

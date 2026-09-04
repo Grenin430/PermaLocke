@@ -97,6 +97,15 @@ public sealed partial class HomeViewModel : SectionViewModel
             return Task.CompletedTask;
         });
 
+        // Una muerte marcada en el juego tiene que decir que está en la MEMORIA. Se perdió una:
+        // el Shedinja se escribió y se releyó en cinco copias, el jugador cerró el juego quince
+        // segundos después sin guardar, y al volver tenía otra vez su Latias debilitado.
+        gameLink.DeathMarked += (_, notice) => _ = _ui.InvokeAsync(() =>
+        {
+            AutoNotice = notice;
+            return Task.CompletedTask;
+        });
+
         gameLink.TeamWiped += (_, penalty) => _ = _ui.InvokeAsync(() =>
         {
             AutoNotice = $"Equipo caído. {penalty.Points} puntos"

@@ -84,6 +84,19 @@ public sealed class GameLinkMonitor(
     /// </remarks>
     public event EventHandler? RunDataChanged;
 
+    /// <summary>
+    /// Raised when a fallen Pokémon has been turned into a Shedinja inside the running game.
+    /// </summary>
+    /// <remarks>
+    /// It carries a message rather than the Pokémon because what matters is the warning attached
+    /// to it: that mark is written into <b>memory</b>, and memory is not the save. The death itself
+    /// is safe — it went into the run's event chain before this was even attempted — but the
+    /// Shedinja disappears if the player closes the game without saving, and then the Pokémon is
+    /// back, fainted, looking as if nothing had happened. That is exactly what happened once, and
+    /// nothing on screen had said it could.
+    /// </remarks>
+    public event EventHandler<string>? DeathMarked;
+
     public void Start()
     {
         _loop ??= Task.Run(RunAsync);
@@ -576,6 +589,14 @@ public sealed class GameLinkMonitor(
 
             logger.LogInformation("{Pokemon} transformado en el juego (hueco {Slot}, {Applied} copias releídas)",
                 dead.SpeciesName, member.Slot, applied);
+
+            // Y se dice lo que esa marca NO es: permanente. La muerte ya está en el historial pase
+            // lo que pase, pero el Shedinja vive en la memoria del emulador hasta que el jugador
+            // guarde dentro del juego.
+            DeathMarked?.Invoke(this,
+                $"{dead.Nickname ?? dead.SpeciesName} marcado como caído en el juego. Está solo en "
+                + "la memoria: guarda dentro del juego para que quede, o escríbelo en la partida "
+                + "desde MANTENIMIENTO.");
         }
 
         catch (Exception ex)
