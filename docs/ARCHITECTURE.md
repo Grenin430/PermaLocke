@@ -7026,3 +7026,82 @@ un Tinkaton por confundir el hueco: el equipo se había reordenado entre dos lec
 ya no era quien yo creía. Se restauró a 123 en el acto, las cinco estructuras siguen leyéndose con
 sus especies y sus PID correctos, y el juego se ve normal. Pero la regla existía y me la salté con
 un comando de diagnóstico, que es justo donde es más fácil saltársela.
+
+## 94. Cómo lo hace BxnnyLocke: desde DENTRO del emulador (2026-09-04)
+
+El jugador insistió: en la referencia la muerte permanente «va perfectamente». Se volvió a mirar, y
+la conclusión anterior —«BxnnyLocke no toca la memoria del emulador»— **era falsa**. No la toca
+desde su aplicación: la toca desde **su propio Azahar parcheado**.
+
+Todo lo de abajo sale de leer las cadenas de sus binarios, que es análisis de arquitectura y de
+formatos, lo que la regla del repositorio permite. **No se copia su código.**
+
+### La prueba
+
+Su `azahar.exe` está compilado desde `X:\BxnnyLocke\AzaharEdit\` y lleva **dos módulos que el
+Azahar original no tiene**:
+
+**`poke_export.cpp`**, que es donde vive la muerte permanente:
+
+```
+poke_export: OnBattleStarted()
+poke_export: OnBattleEnded()
+poke_export: OnBattleEnded convirtiendo slots muertos en Shedinja: {}, {}, {}, {}, {}, {}
+poke_export: PID {} anadido a la watchlist de Shedinja
+poke_export: PID {} ya es Shedinja en slot {}, check {}/{}
+poke_export: FALLBACK - PID {} convertido, check {}/{}
+poke_export: FALLBACK - PID {} sigue pendiente
+poke_export: el juego reescribio
+poke_export: Error desencriptando Battle Stats
+poke_export: Escribiendo en memoria levelCapAdjustment
+```
+
+**`poke_capture.cpp`**, que es la otra mitad:
+
+```
+poke_capture: MAPA ACTUAL: {}
+poke_capture: loadVisitedRoutes / saveVisitedRoutes
+poke_capture: RUTA YA VISITADA
+poke_capture: POKEMON YA CAPTURADO (LINEA EVOLUTIVA)
+poke_capture: RemovePokeBalls() / RestorePokeBalls()
+```
+
+Y en `Emulador/user/rtp/p/shd.pk7` hay un **Shedinja ya preparado** que el emulador inyecta tal
+cual, con conversión manual como respaldo.
+
+### Qué hacen, dicho en una línea
+
+Enganchan **el final del combate** dentro del emulador, convierten ahí mismo los huecos caídos, y
+apuntan el PID en una **lista de vigilancia**: siguen comprobando cada uno, detectan cuándo **el
+juego reescribió** el hueco, y lo vuelven a convertir. Además saben descifrar y volver a cifrar el
+bloque de **Battle Stats**, que es justo la estructura que desde fuera no se ha podido tocar (§92).
+
+### Por qué lo nuestro no puede
+
+PermaLocke es una aplicación **externa** que pregunta por el RPC una vez por segundo. Con eso:
+
+- no hay ningún momento «fin del combate»: se mira cuando toca, no cuando pasa;
+- no se ve la estructura de combate, solo copias del equipo, y la que manda no se deja escribir
+  (§90, §92, §93);
+- y cuando el juego reescribe un hueco, no hay nada que lo detecte ni que reintente.
+
+Que sea la misma idea —convertir en Shedinja— con el mismo resultado en pantalla escondía que el
+sitio desde donde se hace lo cambia todo.
+
+### Lo que abre
+
+PermaLocke **ya tiene su propio fork** de Azahar (`Emulator/`, de `github.com/Grenin430/azahar`, con
+el parche de búsqueda nativa del §22). O sea que este camino está abierto, y es el mismo. Lo que
+haría falta es un módulo propio en ese fork: enganchar el fin de combate, mantener una lista de PID
+y reaplicar cuando el juego pise el hueco.
+
+Y de paso resolvería, por la misma puerta, tres cosas que desde fuera están muertas o apagadas:
+
+| problema | estado hoy | desde dentro |
+|---|---|---|
+| zona actual del jugador | **muerta** desde el §55 | `MAPA ACTUAL` lo sabe |
+| regla de las Poké Balls | implementada y **apagada** (§24) | `RemovePokeBalls` funciona |
+| muerte permanente | se pierde si no guardas (§89) | enganchada al fin del combate |
+
+No es una tarde de trabajo: es compilar y mantener un fork del emulador. Pero es la respuesta
+honesta a «cómo lo hacen ellos», y es que **no lo hacen desde fuera**.
