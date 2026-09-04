@@ -987,9 +987,24 @@ mide dieciocho píxeles y se estiraba a setenta y seis con interpolación suave.
 
 Lo que solo se vio abriendo la ventana: antes la limitaba el ancho y ahora **la limita el alto**, y a
 700 **no cabía** —aro cortado por arriba y por abajo, marca invisible—. Va en un `Viewbox` que la
-dibuja siempre a 700 y la encoge hasta caber: en la ventana del jugador se ve a unos 545. Ojo con lo
-**no comprobado**: lo estático está visto en la aplicación real, pero **la rueda desvelada y la
-tirada entera no**, porque verlas exige girar de verdad y girar escribe en la partida. Ver §84.
+dibuja siempre al tamaño de diseño y la encoge hasta caber.
+
+**Y el marco, de ruleta de feria (mismo día).** El jugador pasó una foto de una ruleta de premios y
+zanjó la duda en una frase: «el relleno no lo cambies, cambia los contornos y el color de ellos». Así
+que las cuñas siguen diciendo verde/rojo y lo que se rehizo es el marco: **aro dorado con veinte
+bombillas**, juntas doradas y más gruesas, **flecha roja** y buje dorado. Las bombillas se generan en
+código y no se escriben a mano —veinte círculos sobre una circunferencia son veinte ocasiones de
+teclear mal una coordenada— y son **veinte porque seis no divide a veinte**, así que ninguna cae
+sobre una junta. El escenario pasa de 700 a 740 y **la rueda sigue midiendo 700**: la banda dorada se
+gana por fuera, sin tocar la geometría de las cuñas.
+
+Lo que cuesta, medido sobre la captura y no estimado: el objeto entero pasa de 545 a **553 px** pero
+el disco de color, que es lo que se lee, de 506 a **486**, un 4% menos. Un marco de feria es sobre
+todo marco. **El pie de la foto no está**: no es un contorno, es un objeto nuevo, y se comería otros
+45 px del mismo presupuesto de alto.
+
+Ojo con lo **no comprobado**: lo estático está visto en la aplicación real, pero **la rueda desvelada
+y la tirada entera no**, porque verlas exige girar de verdad y girar escribe en la partida. Ver §84.
 
 
 **Siguiente.** Probar en partida real los combates importantes, los iniciales y las tiendas.

@@ -36,6 +36,7 @@ public partial class RouletteView : UserControl
     public RouletteView()
     {
         InitializeComponent();
+        BuildBulbs();
         DataContextChanged += OnDataContextChanged;
         Unloaded += (_, _) =>
         {
@@ -43,6 +44,81 @@ public partial class RouletteView : UserControl
             StopWatching();
         };
     }
+
+    /// <summary>How many lamps go round the rim.</summary>
+    /// <remarks>
+    /// Twenty and not eighteen so they are evenly spaced without ever lining up with a seam: six
+    /// wedges do not divide twenty, so no lamp sits exactly on a join. The lamps are on the frame
+    /// and the frame does not turn, so this is only about how it looks standing still.
+    /// </remarks>
+    private const int Bulbs = 20;
+
+    /// <summary>
+    /// The lamps around the gold band.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Built here rather than written into the XAML for the same reason the wedges are computed
+    /// and not drawn by hand: twenty circles on a circumference is twenty chances to mistype a
+    /// coordinate, and one lamp four pixels out of line is exactly the sort of thing that is
+    /// obvious on screen and invisible in the markup.
+    /// </para>
+    /// <para>
+    /// Each lamp is a radial gradient and not a flat circle with a glow effect: twenty
+    /// <see cref="System.Windows.Media.Effects.DropShadowEffect"/> instances would be twenty
+    /// render passes every frame of a twelve second spin, and the wheel behind them is already
+    /// animating. The brushes are shared and frozen, so the whole ring is one brush and twenty
+    /// shapes.
+    /// </para>
+    /// </remarks>
+    private void BuildBulbs()
+    {
+        // El radio es el centro de la banda dorada: 740 por fuera y 666 el labio interior, o sea
+        // que la banda va de 333 a 370 y su centro cae en 351.
+        const double stage = 740, ring = 351, size = 21;
+
+        var glass = new RadialGradientBrush(
+            (Color)ColorConverter.ConvertFromString("#FFFFFFFF"),
+            TryColour("WheelBulbColor", Colors.Cornsilk))
+        {
+            GradientOrigin = new Point(0.35, 0.3),
+            Center = new Point(0.5, 0.5),
+            RadiusX = 0.6,
+            RadiusY = 0.6
+        };
+
+        var rim = new SolidColorBrush(TryColour("WheelGoldDeepColor", Colors.DarkGoldenrod));
+
+        glass.Freeze();
+        rim.Freeze();
+
+        for (var i = 0; i < Bulbs; i++)
+        {
+            var radians = ((i * 360.0 / Bulbs) - 90) * Math.PI / 180;
+
+            var lamp = new System.Windows.Shapes.Ellipse
+            {
+                Width = size,
+                Height = size,
+                Fill = glass,
+                Stroke = rim,
+                StrokeThickness = 1.5
+            };
+
+            Canvas.SetLeft(lamp, (stage / 2) + (ring * Math.Cos(radians)) - (size / 2));
+            Canvas.SetTop(lamp, (stage / 2) + (ring * Math.Sin(radians)) - (size / 2));
+
+            Lamps.Children.Add(lamp);
+        }
+    }
+
+    /// <summary>A colour from the theme, or a stand-in.</summary>
+    /// <remarks>
+    /// Same rule as the wedges: a fallback that is obviously not the theme rather than a guessed
+    /// palette that looks deliberate.
+    /// </remarks>
+    private static Color TryColour(string key, Color fallback) =>
+        Application.Current?.TryFindResource(key) is Color found ? found : fallback;
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
     {

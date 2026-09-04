@@ -6450,3 +6450,43 @@ verlas exige girar de verdad, y girar escribe en la partida y puede matar tres P
 debe cero tiradas, así que GIRAR está apagado. Que la cuña desvelada quepa está comprobado por
 aritmética y no por ojo: el contenido mide unos 113 px de los 132 de su caja, y su radio va de 148 a
 280 con el eje en 75 y el borde en 325.
+
+### El marco clásico, y qué cuesta (mismo día)
+
+El jugador pasó una foto de una ruleta de premios de feria —aro dorado con bombillas, cuñas
+pastel, buje ornamentado, flecha roja y pie— y una instrucción que zanjaba la única duda que
+tenía: **«el relleno no lo cambies, cambia los contornos y el color de ellos»**. O sea que el verde
+y el rojo de las cuñas se quedan diciendo lo que dicen, y lo que se rehace es el marco.
+
+Lo que entró: **aro dorado** con degradado de cuatro paradas —reflejo, metal, sombra y un rebote
+al filo, que es como se ve un aro de latón y no un anillo pintado—, **veinte bombillas**, **juntas
+doradas** de 3 px entre cuñas en vez de las casi negras de 1,5, **flecha roja** con filo dorado, y
+un **buje dorado** alrededor de la Poké Ball. El ganador y la onda de aterrizaje pasan a oro claro,
+que es lo único que se lee encima de un verde y de un rojo.
+
+Las bombillas **se generan en el code-behind**, por el mismo motivo que las cuñas se calculan en
+vez de dibujarse a mano: veinte círculos sobre una circunferencia son veinte ocasiones de teclear
+mal una coordenada, y una lámpara cuatro píxeles fuera de sitio es de las cosas que cantan en
+pantalla y no se ven en el XAML. Son veinte y no dieciocho **porque seis no divide a veinte**, así
+que ninguna cae justo sobre una junta. Cada una es un degradado radial y no un círculo plano con
+efecto de brillo: veinte `DropShadowEffect` serían veinte pasadas de render por fotograma durante
+doce segundos de giro, con la rueda ya animándose detrás.
+
+**El escenario pasa de 700 a 740 y la rueda sigue midiendo 700.** Esos veinte píxeles por lado son
+la banda dorada, así que el aro se gana **por fuera** y no quitándole sitio a la geometría de las
+cuñas, que no se toca: el disco sigue siendo de 650 dentro de una caja de 700 y las etiquetas
+siguen cayendo donde caían.
+
+**Lo que sí cuesta, medido y no estimado.** El `Viewbox` escala para que quepa el alto, y el
+escenario ha crecido, así que la escala baja. Sobre la ventana real del jugador —1560×980—, contado
+sobre la captura: el objeto entero pasa de **545 a 553 px** de ancho, pero el disco de color, que es
+lo que se lee, pasa de **506 a 486**, un 4% menos. Es inherente: un marco de feria es sobre todo
+marco.
+
+Si algún día molesta, la altura está ahí para recuperarla — la tira de dieciséis ocupa 110 px
+debajo y a los lados de la rueda sobran casi 400 a cada lado, así que en dos columnas de ocho el
+disco pasaría de 570. No se ha hecho porque no se pidió.
+
+**El pie no se ha puesto.** Sale en la foto, pero un pie no es un contorno: es un objeto nuevo, y
+además comería otros 45 px de alto del mismo presupuesto. Queda dicho aquí para que la próxima vez
+la decisión no haya que volver a tomarla a ciegas.

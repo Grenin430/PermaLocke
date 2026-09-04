@@ -61,32 +61,33 @@
             </DockPanel>
 
         <Grid Grid.Row="1">
-            <!-- LA RUEDA. Se dibuja SIEMPRE a 700, porque las cunas son geometria en pixeles y
-                 estirarlas las descuadraria con las etiquetas, que se situan por coordenadas; el
-                 Viewbox coge ese dibujo ya hecho y lo encoge hasta que cabe.
+            <!-- LA RUEDA. Se dibuja SIEMPRE al tamano de diseno, porque las cunas son geometria en
+                 pixeles y estirarlas las descuadraria con las etiquetas, que se situan por
+                 coordenadas; el Viewbox coge ese dibujo ya hecho y lo encoge hasta que cabe.
 
-                 Hace falta porque a 700 NO cabia: el aro salia cortado por arriba y por abajo y la
-                 marca no se veia en absoluto, que es de las cosas que no se notan leyendo el XAML
-                 y se ven en cuanto se abre la ventana. Con «DownOnly» nunca se agranda, asi que en
-                 una ventana holgada se ve el tamano de diseno y en una estrecha se ve entera y mas
-                 pequena, que es infinitamente mejor que verse cortada.
+                 Hace falta porque a tamano completo NO cabia: el aro salia cortado por arriba y
+                 por abajo y la marca no se veia en absoluto, que es de las cosas que no se notan
+                 leyendo el XAML y se ven en cuanto se abre la ventana. Con «DownOnly» nunca se
+                 agranda, asi que en una ventana holgada se ve el tamano de diseno y en una
+                 estrecha se ve entera y mas pequena, que es infinitamente mejor que cortada.
 
                  Los dibujos de dentro no se emborronan al encogerse: van a vecino mas proximo, que
                  se hereda por el arbol visual y no interpola nunca. -->
             <Viewbox Stretch="Uniform" StretchDirection="DownOnly" VerticalAlignment="Center">
-            <Grid Width="700" HorizontalAlignment="Center">
+            <Grid Width="740" HorizontalAlignment="Center">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="40" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <!-- La marca. Apunta a la cuna que gana, y por eso la rueda gira hasta ponerla
-                     justo debajo. Va FUERA del aplastado, para que se quede afilada, y con el
-                     margen negativo justo para que la punta entre en el aro. -->
-                <Path Grid.Row="0" Data="M 0,0 L 34,0 L 17,34 Z" HorizontalAlignment="Center"
-                      VerticalAlignment="Bottom" Panel.ZIndex="5" Margin="0,0,0,-7"
-                      Fill="{StaticResource AccentBrightBrush}"
-                      Stroke="{StaticResource BackgroundBrush}" StrokeThickness="2"
+                <!-- LA FLECHA, roja y con filo dorado, como la de cualquier ruleta de premios.
+                     Apunta a la cuna que gana, y por eso la rueda gira hasta ponerla justo debajo.
+                     Va FUERA del aplastado, para que se quede afilada, y entra en la banda dorada
+                     lo justo para que se lea apoyada en el aro y no flotando encima. -->
+                <Path Grid.Row="0" Data="M 0,0 L 38,0 L 19,42 Z" HorizontalAlignment="Center"
+                      VerticalAlignment="Bottom" Panel.ZIndex="5" Margin="0,0,0,-18"
+                      Fill="{StaticResource WheelPointerBrush}"
+                      Stroke="{StaticResource WheelGoldLightBrush}" StrokeThickness="2.5"
                       RenderTransformOrigin="0.5,0">
                     <!-- La marca golpea cada vez que pasa una cuna, como el diente de una ruleta
                          de verdad. El giro cuelga de arriba y no del centro, que es donde estaria
@@ -95,8 +96,8 @@
                         <RotateTransform x:Name="MarkerKick" Angle="0" />
                     </Path.RenderTransform>
                     <Path.Effect>
-                        <DropShadowEffect BlurRadius="14" ShadowDepth="0" Opacity="0.85"
-                                          Color="{StaticResource AccentColor}" />
+                        <DropShadowEffect BlurRadius="14" ShadowDepth="3" Direction="270"
+                                          Opacity="0.85" Color="Black" />
                     </Path.Effect>
                 </Path>
 
@@ -107,25 +108,35 @@
 
                      Seis por ciento es poco a proposito: mas que esto y las etiquetas de arriba y
                      de abajo empiezan a leerse chafadas, que es justo lo que la idea NO quiere. -->
-                <Grid Grid.Row="1" x:Name="Stage" Width="700" Height="700">
+                <!-- EL ESCENARIO mide 740 y la rueda 700: esos veinte pixeles de mas por cada
+                     lado son la BANDA DORADA donde van las bombillas. La geometria de las cunas
+                     no se toca -sigue siendo un disco de 650 dentro de una caja de 700-, asi que
+                     el aro se ha ganado por fuera y no quitandole sitio al relleno. -->
+                <Grid Grid.Row="1" x:Name="Stage" Width="740" Height="740">
                     <Grid.LayoutTransform>
                         <ScaleTransform ScaleY="0.94" />
                     </Grid.LayoutTransform>
 
-                    <!-- El hueco donde se apoya, mas oscuro que el panel. -->
-                    <Ellipse Width="700" Height="700" Fill="{StaticResource WheelWellBrush}">
+                    <!-- EL ARO. Degradado de cuatro paradas: reflejo, metal, sombra y un rebote al
+                         filo, que es como se ve un aro de laton y no un anillo pintado. -->
+                    <Ellipse Width="740" Height="740" Fill="{StaticResource WheelBezelBrush}"
+                             Stroke="{StaticResource WheelGoldDeepBrush}" StrokeThickness="2">
                         <Ellipse.Effect>
-                            <DropShadowEffect BlurRadius="44" ShadowDepth="10" Direction="270"
-                                              Opacity="0.75" Color="Black" />
+                            <DropShadowEffect BlurRadius="46" ShadowDepth="10" Direction="270"
+                                              Opacity="0.8" Color="Black" />
                         </Ellipse.Effect>
                     </Ellipse>
 
-                    <!-- El canto. Degradado de arriba abajo, que es como cae la luz en el resto de
-                         la aplicacion, y por eso el aro se lee como un aro y no como un borde. -->
-                    <Ellipse Width="690" Height="690" Fill="{StaticResource WheelBezelBrush}"
-                             Stroke="{StaticResource WheelEdgeBrush}" StrokeThickness="1.5" />
+                    <!-- LAS BOMBILLAS. Se generan en el code-behind y no se escriben aqui: son
+                         veinte circulos sobre una circunferencia, o sea veinte oportunidades de
+                         teclear mal un numero, que es el mismo motivo por el que las cunas se
+                         calculan en vez de dibujarse a mano. -->
+                    <Canvas x:Name="Lamps" Width="740" Height="740" IsHitTestVisible="False" />
 
-                    <Ellipse Width="662" Height="662" Fill="{StaticResource WheelRimBrush}" />
+                    <!-- El labio interior. Oscuro y estrecho: sin el, el amarillo del aro toca el
+                         verde y el rojo de las cunas y los tres colores se ensucian. -->
+                    <Ellipse Width="666" Height="666" Fill="{StaticResource WheelGoldDeepBrush}" />
+                    <Ellipse Width="658" Height="658" Fill="{StaticResource WheelRimBrush}" />
                     <Ellipse Width="652" Height="652" Fill="{StaticResource SurfaceBrush}" />
 
                     <Grid x:Name="Wheel" Width="700" Height="700" RenderTransformOrigin="0.5,0.5">
@@ -142,7 +153,7 @@
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Path Data="{Binding Wedge}" Fill="{Binding Colour}"
-                                          Stroke="{StaticResource WheelSeamBrush}" StrokeThickness="1.5">
+                                          Stroke="{StaticResource WheelSeamBrush}" StrokeThickness="3">
                                         <Path.Style>
                                             <Style TargetType="Path">
                                                 <Setter Property="Opacity" Value="1" />
@@ -160,8 +171,8 @@
                                                          nada. -->
                                                     <DataTrigger Binding="{Binding IsWinner}" Value="True">
                                                         <Setter Property="Stroke"
-                                                                Value="{StaticResource OnAccentBrush}" />
-                                                        <Setter Property="StrokeThickness" Value="5" />
+                                                                Value="{StaticResource WheelGoldLightBrush}" />
+                                                        <Setter Property="StrokeThickness" Value="6" />
                                                         <DataTrigger.EnterActions>
                                                             <BeginStoryboard>
                                                                 <Storyboard>
@@ -300,7 +311,7 @@
                     <!-- La onda al parar, disparada desde el code-behind. -->
                     <Ellipse x:Name="Landing" Width="300" Height="300" Opacity="0"
                              IsHitTestVisible="False" Fill="Transparent" StrokeThickness="5"
-                             Stroke="{StaticResource OnAccentBrush}"
+                             Stroke="{StaticResource WheelGoldLightBrush}"
                              RenderTransformOrigin="0.5,0.5">
                         <Ellipse.RenderTransform>
                             <ScaleTransform x:Name="LandingScale" ScaleX="1" ScaleY="1" />
@@ -314,8 +325,16 @@
                          cuatro veces mas de lo que tiene. Ahora va a cinco aumentos EXACTOS y a
                          vecino mas proximo, como el resto de la aplicacion: nitido, con sus
                          pixeles, que es lo que es. -->
-                    <Ellipse Width="150" Height="150" Fill="{StaticResource BackgroundBrush}"
-                             Stroke="{StaticResource BorderStrongBrush}" StrokeThickness="2"
+                    <Ellipse Width="176" Height="176" Fill="{StaticResource WheelHubBrush}"
+                             Stroke="{StaticResource WheelGoldDeepBrush}" StrokeThickness="2.5"
+                             HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Ellipse.Effect>
+                            <DropShadowEffect BlurRadius="20" ShadowDepth="4" Direction="270"
+                                              Opacity="0.65" Color="Black" />
+                        </Ellipse.Effect>
+                    </Ellipse>
+                    <Ellipse Width="140" Height="140" Stroke="{StaticResource WheelGoldLightBrush}"
+                             StrokeThickness="1.5" Fill="{StaticResource BackgroundBrush}"
                              HorizontalAlignment="Center" VerticalAlignment="Center" />
                     <Image x:Name="Hub" Source="{Binding Hub}" Stretch="None"
                            HorizontalAlignment="Center" VerticalAlignment="Center"

@@ -277,23 +277,61 @@
     <Color x:Key="WedgeGoodGlowColor">#4D3E8F57</Color>
     <Color x:Key="WedgeBadGlowColor">#4DB8433A</Color>
 
-    <!-- El aro y las juntas entre cunas: lo que convierte un dibujo plano en un objeto. El aro va
-         en degradado y no en plano para que tenga canto: claro arriba, oscuro abajo, que es como
-         cae la luz en el resto de la aplicacion. -->
-    <SolidColorBrush x:Key="WheelRimBrush" Color="#FF14161B" />
-    <SolidColorBrush x:Key="WheelEdgeBrush" Color="#FFFFFFFF" Opacity="0.22" />
-    <SolidColorBrush x:Key="WheelSeamBrush" Color="#FF0E1014" Opacity="0.55" />
+    <!-- EL MARCO, que es lo unico que se parece a una ruleta de feria: aro dorado con bombillas,
+         juntas doradas entre cunas, flecha roja y buje dorado. El RELLENO de las cunas no lo toca
+         nada de esto y sigue siendo el verde y el rojo que dicen si te conviene.
 
+         El oro va en tres tonos porque un dorado de un solo color se lee como mostaza: el claro
+         hace de reflejo, el medio es el metal y el profundo hace de sombra y de linea. -->
+    <Color x:Key="WheelGoldColor">#FFD8A83C</Color>
+    <Color x:Key="WheelGoldLightColor">#FFF7E6AB</Color>
+    <Color x:Key="WheelGoldDeepColor">#FF7A5512</Color>
+
+    <!-- Las bombillas del aro. Blanco calido y no blanco puro: al lado del oro, un blanco de
+         verdad se lee como un agujero. -->
+    <Color x:Key="WheelBulbColor">#FFFFF7DE</Color>
+
+    <!-- La flecha. Roja, como la de cualquier ruleta de premios. -->
+    <Color x:Key="WheelPointerColor">#FFD93B2B</Color>
+
+    <SolidColorBrush x:Key="WheelGoldBrush" Color="{StaticResource WheelGoldColor}" />
+    <SolidColorBrush x:Key="WheelGoldLightBrush" Color="{StaticResource WheelGoldLightColor}" />
+    <SolidColorBrush x:Key="WheelGoldDeepBrush" Color="{StaticResource WheelGoldDeepColor}" />
+    <SolidColorBrush x:Key="WheelBulbBrush" Color="{StaticResource WheelBulbColor}" />
+
+    <!-- La junta entre dos cunas. Dorada y mas gruesa que la de antes, que era casi negra: es lo
+         que hace que las cunas se lean como piezas metidas en un aro y no como un grafico de
+         tarta pintado de una vez. -->
+    <SolidColorBrush x:Key="WheelSeamBrush" Color="{StaticResource WheelGoldDeepColor}" Opacity="0.9" />
+    <SolidColorBrush x:Key="WheelEdgeBrush" Color="{StaticResource WheelGoldDeepColor}" />
+
+    <!-- El canto. Cuatro paradas y no dos: el reflejo alto, el metal, la sombra de abajo y un
+         rebote al filo, que es como se ve un aro de metal y no un anillo pintado. -->
     <LinearGradientBrush x:Key="WheelBezelBrush" StartPoint="0.5,0" EndPoint="0.5,1">
-        <GradientStop Color="#FF4A4256" Offset="0" />
-        <GradientStop Color="#FF231F2E" Offset="0.42" />
-        <GradientStop Color="#FF15121D" Offset="0.72" />
-        <GradientStop Color="#FF322C42" Offset="1" />
+        <GradientStop Color="{StaticResource WheelGoldLightColor}" Offset="0" />
+        <GradientStop Color="{StaticResource WheelGoldColor}" Offset="0.34" />
+        <GradientStop Color="{StaticResource WheelGoldDeepColor}" Offset="0.74" />
+        <GradientStop Color="#FFB98A28" Offset="1" />
     </LinearGradientBrush>
 
-    <!-- El hueco donde se apoya la rueda: mas oscuro que el panel, para que el aro se vea metido
-         y no pegado encima. -->
-    <SolidColorBrush x:Key="WheelWellBrush" Color="#FF0B0912" />
+    <!-- El buje. Radial y no lineal: es una pieza redonda vista de frente, con la luz en el mismo
+         sitio que la del resto de la rueda. -->
+    <RadialGradientBrush x:Key="WheelHubBrush" GradientOrigin="0.35,0.28" Center="0.5,0.5"
+                         RadiusX="0.75" RadiusY="0.75">
+        <GradientStop Color="{StaticResource WheelGoldLightColor}" Offset="0" />
+        <GradientStop Color="{StaticResource WheelGoldColor}" Offset="0.5" />
+        <GradientStop Color="{StaticResource WheelGoldDeepColor}" Offset="1" />
+    </RadialGradientBrush>
+
+    <LinearGradientBrush x:Key="WheelPointerBrush" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#FFEE6152" Offset="0" />
+        <GradientStop Color="{StaticResource WheelPointerColor}" Offset="0.55" />
+        <GradientStop Color="#FF98241A" Offset="1" />
+    </LinearGradientBrush>
+
+    <!-- El aro interior, entre el oro y las cunas. Oscuro y estrecho: sin el, el amarillo del aro
+         toca el verde y el rojo de las cunas y los dos colores se ensucian. -->
+    <SolidColorBrush x:Key="WheelRimBrush" Color="#FF130F1F" />
 
     <SolidColorBrush x:Key="ZoneCaughtBrush" Color="{StaticResource ZoneCaughtColor}" />
     <SolidColorBrush x:Key="ZoneCaughtLightBrush" Color="{StaticResource ZoneCaughtLightColor}" />
