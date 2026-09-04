@@ -1016,6 +1016,22 @@ Ojo con lo **no comprobado**: lo estático está visto en la aplicación real, p
 y la tirada entera no**, porque verlas exige girar de verdad y girar escribe en la partida. Ver §84.
 
 
+**La rueda paraba y luego cambiaba de opinion (2026-09-04).** Primera tirada de verdad con la
+pantalla nueva: «se ha parado en el medio de IV AL MAXIMO y ha pasado por la cara a la siguiente;
+quiero que en el que pare, paro». Es la idea 8 del §84 haciendo lo que se le pidio: `WheelEnding`
+era una lista de **paradas** y la rueda se plantaba dos o tres cunas antes del ganador para entrar
+de una en una. Lo que costaba no se vio hasta verla girar. Y el motivo va mas alla del gusto: **el
+resultado ya esta escrito en la partida antes de que la rueda arranque**, asi que una rueda que se
+detiene sobre una respuesta y luego la cambia no crea tension, ensena algo que no ha pasado.
+
+La variedad **no se pierde, se muda**: de donde para a como frena. Cinco perfiles con potencia de
+frenado, vueltas de mas y rebote distintos, todos de un solo barrido monotono hasta el ganador. El
+numero que lo sostiene: media cuna son **30 grados** -ahi llega la vecina bajo la marca- y el rebote
+esta acotado a **20**, con el perfil mas movido en 14. El constructor estatico lanza si alguien
+escribe uno que se pase. De rebote, el tinte del panel ya no depende de una bandera de tramo sino de
+**cuanto se mueve la rueda por fotograma**, que es mejor: entra cuando va despacio de verdad. Ver
+§86.
+
 **La sexta prueba comparaba dos unidades distintas (2026-09-04).** El jugador peleó contra un
 recluta del Team Skull y le salió **un Larvitar**, con la regla de «de la sexta prueba en adelante,
 todos evolucionados del todo» encendida. El corte estaba en **34**, copiado de `levelcaps.json`,
@@ -1069,7 +1085,7 @@ Lo que NO está resuelto todavía y no debe darse por hecho (detalle en `docs/AR
 | Detectar pruebas, pegatinas y alto mando | **HECHO Y VISTO EN LA APP** — los 21 logros se cuentan solos y no queda un botón de marcar a mano. Las doce pruebas por su cristal Z, con la correspondencia sacada del storytext del cartucho. Ver `ARCHITECTURE.md` §43 |
 | Tiradas gratis y wonder trades por prueba | **HECHO Y VISTO EN LA APP** — crédito ganado de los logros y gastado del historial, con la marca `gratis`; los wonder trades pasan a estar limitados. Ver `ARCHITECTURE.md` §63 |
 | Ruleta del rol LUDÓPATA | **HECHA Y VISTA EN LA APP** — 16 caras, seis en la rueda, tiradas que se deben y se recomputan; escribe equipo, mochila y cajas por el fichero de partida. **Dos tiradas verificadas en la partida real.** Ver `ARCHITECTURE.md` §62 |
-| Pantalla de la ruleta, rehecha | **HECHA; LO ESTÁTICO VISTO EN LA APP** — el color de la cuña dice si te conviene, dibujos del cartucho, rueda grande en `Viewbox`, final en la propia rueda, tinte del panel y cinco frenadas. **La rueda desvelada y la tirada entera están SIN VER**: exigen girar de verdad y girar escribe en la partida. Ver `ARCHITECTURE.md` §84 |
+| Pantalla de la ruleta, rehecha | **HECHA; LO ESTÁTICO VISTO EN LA APP** — el color de la cuña dice si te conviene, dibujos del cartucho, rueda grande y redonda con marco de feria, final en la propia rueda y tinte del panel. La frenada por tramos se **revocó** tras verla girar: paraba sobre una cara y luego cambiaba, y ahora es un solo barrido. **La tirada entera sigue SIN VERSE desde el desarrollo**: exige girar de verdad y girar escribe en la partida. Ver `ARCHITECTURE.md` §84 y §86 |
 | Roles | **HECHOS Y VERIFICADOS CONTRA LA ROM** — se eligen lo primero, multiplican los puntos, suben el nivel de todo lo que combate contra ti (entrenadores, Dominantes, Necrozma y legendarios) y añaden el Pokémon extra en 35 clases de combate importante. Falta probarlo jugando. Ver `ARCHITECTURE.md` §46, §47 y §48 |
 | Sincronización | **HECHA Y VISTA EN LA APP** — clasificación por carpeta compartida, sin servidor ni cuentas. Cada uno publica un resumen y lee los de los demás. **No es una verificación y la pantalla lo dice.** Falta probarla con la carpeta sincronizando de verdad entre dos máquinas. Ver `ARCHITECTURE.md` §79 |
 | Mod de expansión de gen 8 y 9 | **IMPLEMENTADO Y VERIFICADO CONTRA LOS FICHEROS, SIN JUGAR** — randomiza encima del mod, 1025 especies, sprites, nombres en español oficial e instalación de la capa entera. La Ruta 1 da Dreepy, Meltan, Snom y Tarountula. **Nadie ha arrancado el juego con esto**: sin comprobar que instale, que el `code.bin` del mod arranque, que el texto generado no cuelgue, ni el combate por link. Ver `docs/MOD-EXPANSION.md` |

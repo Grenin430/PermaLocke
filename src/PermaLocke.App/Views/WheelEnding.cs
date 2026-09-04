@@ -1,62 +1,76 @@
 namespace PermaLocke.App.Views;
 
 /// <summary>
-/// One way the wheel can come to a stop: where it plants, and when each notch lands.
+/// One way the wheel can come to a stop: how hard it brakes, how far it travels, and how much it
+/// settles back at the very end.
 /// </summary>
-/// <param name="Stops">
-/// Wedge offsets from the winner, in the order they are reached. A positive number is a wedge
-/// short of the winner; a <b>negative</b> one is past it, which is how a genuine false finish is
-/// written. The last is always zero.
+/// <param name="Power">
+/// Exponent of the deceleration. Higher brakes earlier and crawls longer, which is where the
+/// interest is — seeing the wedges arrive one at a time and being able to read them.
 /// </param>
-/// <param name="At">When each stop happens, as a fraction of the whole spin.</param>
-/// <param name="Overshoot">Whether the final notch goes a touch past and springs back.</param>
+/// <param name="ExtraTurns">Whole turns added to the base sweep, so the distance is not always the same.</param>
+/// <param name="Bounce">
+/// Degrees the wheel carries past the winner before settling back onto it, or zero. <b>Always less
+/// than half a wedge</b>, so the marker never leaves the winning wedge: see <see cref="MaxBounce"/>.
+/// </param>
 /// <remarks>
-/// The same idea as the gacha's <see cref="ReelEnding"/>, and for the same reason: one easing used
-/// every time is an easing anybody learns. The difference is what a wedge offset means here. The
-/// wheel is turned by an angle and each wedge is sixty degrees, so an offset of <c>k</c> is the
-/// resting angle minus <c>k</c> times sixty — which for a positive <c>k</c> is short of the
-/// winner and keeps the wheel moving forwards, and for a negative one is past it, so the wheel has
-/// to come back. Coming back is not a cheat: a real wheel that overshoots gets pulled back by the
-/// pawl.
+/// <para>
+/// This used to be a list of <b>stops</b>: the wheel planted itself two or three wedges short of
+/// the winner and then advanced a wedge at a time, with a profile that even went one wedge <i>past</i>
+/// and came back. It was built to keep the ending from being learnable, and it worked, but the
+/// first real spin showed what it costs: the wheel came to rest in the middle of «IV AL MÁXIMO»,
+/// sat there long enough to read it, and then moved on to the next wedge. The player's verdict was
+/// «en el que pare, paró», and they are right — a wheel that stops on an answer and then changes
+/// it is not building tension, it is lying about the result, and the result was already written to
+/// the save before the wheel started turning.
+/// </para>
+/// <para>
+/// So the variety moved from <i>where</i> it stops to <i>how</i> it brakes. Every profile is a
+/// single monotone sweep onto the winner: the wedge under the marker is never anything but the
+/// winner once the wheel is slow enough to read. The only motion after the sweep is the settle,
+/// and that is bounded so tightly it cannot show a neighbour.
+/// </para>
 /// </remarks>
-public sealed record WheelEnding(string Name, int[] Stops, double[] At, bool Overshoot)
+public sealed record WheelEnding(string Name, double Power, int ExtraTurns, double Bounce)
 {
     /// <summary>How many degrees one wedge is. Six of them make the wheel.</summary>
     public const double WedgeDegrees = 60;
 
     /// <summary>
+    /// The most the wheel may carry past the winner.
+    /// </summary>
+    /// <remarks>
+    /// Half a wedge is thirty degrees, which is the exact point where the neighbour arrives under
+    /// the marker. Twenty leaves ten degrees of daylight, so a settle reads as weight and never as
+    /// a second answer. This is the number the whole file exists to respect.
+    /// </remarks>
+    public const double MaxBounce = 20;
+
+    /// <summary>
     /// Every closing this screen knows.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// There used to be none of this: twelve seconds of a single <c>PowerEase</c> to the answer,
-    /// identical on every spin. It reads well once and then it reads like a progress bar.
-    /// </para>
-    /// <para>
-    /// The rule they all obey is the gacha's: <b>none of them may correlate with what came out.</b>
-    /// The plant distance, the number of notches and the bounce are all things a player would
-    /// learn to read, so which one plays is drawn from its own stream — not from the face, not
-    /// from whether it is a good one, not from the duration. Any of these can precede any result.
-    /// </para>
+    /// The rule they all obey, unchanged from the gacha's <see cref="ReelEnding"/>: <b>none of them
+    /// may correlate with what came out.</b> The brake, the distance and the settle are all things
+    /// a player would learn to read, so which one plays is drawn from its own stream — not from the
+    /// face, not from whether it is a good one. Any of these can precede any result.
     /// </remarks>
     public static readonly WheelEnding[] All =
     [
-        // Se planta a tres cunas, tres golpes y el ultimo se pasa y vuelve.
-        new("tres golpes", [3, 2, 1, 0], [0.70, 0.83, 0.92, 1.00], Overshoot: true),
+        // La de siempre: frena pronto y se arrastra, con un asentamiento corto al final.
+        new("larga", Power: 5, ExtraTurns: 0, Bounce: 8),
 
-        // Dos tirones largos y una entrada limpia: parece que se queda corta y no se queda.
-        new("dos largos", [2, 1, 0], [0.68, 0.86, 1.00], Overshoot: false),
+        // Frena mas tarde y de golpe. Se lee menos por el camino y llega antes.
+        new("seca", Power: 3, ExtraTurns: 1, Bounce: 0),
 
-        // Cuatro cortos que se van muriendo. Llega antes y se arrastra mas.
-        new("cuatro cortos", [4, 3, 2, 1, 0], [0.62, 0.75, 0.85, 0.93, 1.00], Overshoot: false),
+        // La mas larga de todas, arrastrandose casi hasta pararse.
+        new("agonica", Power: 7, ExtraTurns: 0, Bounce: 5),
 
-        // Casi sin golpes: un arrastre larguisimo hasta la cuna de al lado y un solo empujon.
-        new("arrastre", [1, 0], [0.76, 1.00], Overshoot: true),
+        // Da una vuelta de mas y se planta con un rebote claro.
+        new("vuelta de mas", Power: 4, ExtraTurns: 2, Bounce: 14),
 
-        // La que de verdad engana: se va UNA CUNA MAS ALLA del ganador, se queda ahi el tiempo
-        // justo para leerla, y la rueda retrocede. Es la unica que ensena otra cara bajo la marca
-        // antes de dar la buena, y por eso mismo no puede depender del resultado.
-        new("se pasa y vuelve", [3, 1, -1, 0], [0.66, 0.80, 0.91, 1.00], Overshoot: false),
+        // Sin rebote y con freno medio: entra limpia, como si alguien la parase con la mano.
+        new("limpia", Power: 6, ExtraTurns: 1, Bounce: 0),
     ];
 
     /// <summary>
@@ -76,63 +90,35 @@ public sealed record WheelEnding(string Name, int[] Stops, double[] At, bool Ove
     /// Checks every profile the moment the class is first used.
     /// </summary>
     /// <remarks>
-    /// A profile whose last stop is not the winner parks the wheel on the <b>wrong wedge</b>, and
-    /// the screen would still announce the right face — the result was decided, written to the
-    /// save and recorded long before the animation. That is a lie the player would see and nothing
-    /// would report, which already happened once on this screen for a different reason. So a
-    /// malformed profile stops the screen instead of playing wrong.
+    /// The one that matters is the bounce. A profile allowed to carry the wheel half a wedge past
+    /// the winner would park a <b>different face</b> under the marker while the card announced the
+    /// right one — the result was decided, written to the save and recorded long before the
+    /// animation — and nothing would report it. That is the exact lie this screen was just told to
+    /// stop telling, so a malformed profile stops the screen instead of playing wrong.
     /// </remarks>
     static WheelEnding()
     {
         foreach (var ending in All)
         {
-            if (ending.Stops.Length != ending.At.Length || ending.Stops.Length < 2)
+            if (ending.Bounce < 0 || ending.Bounce > MaxBounce)
             {
                 throw new InvalidOperationException(
-                    $"El cierre «{ending.Name}» tiene {ending.Stops.Length} paradas y "
-                    + $"{ending.At.Length} tiempos.");
+                    $"El cierre «{ending.Name}» se pasa {ending.Bounce}° del ganador y el máximo "
+                    + $"es {MaxBounce}°: a partir de {WedgeDegrees / 2}° la marca ya está sobre "
+                    + "otra cuña.");
             }
 
-            if (ending.Stops[^1] != 0)
+            if (ending.Power < 1 || ending.Power > 12)
             {
                 throw new InvalidOperationException(
-                    $"El cierre «{ending.Name}» acaba en la cuña {ending.Stops[^1]} y no en el "
-                    + "ganador: la rueda pararía en una cara distinta de la que se anuncia.");
+                    $"El cierre «{ending.Name}» frena con potencia {ending.Power}.");
             }
 
-            if (ending.Stops[0] <= 0)
+            if (ending.ExtraTurns < 0 || ending.ExtraTurns > 4)
             {
                 throw new InvalidOperationException(
-                    $"El cierre «{ending.Name}» se planta en {ending.Stops[0]}, que no está antes "
-                    + "del ganador: la rueda tendría que retroceder nada más frenar.");
-            }
-
-            if (Math.Abs(ending.At[^1] - 1) > 0.0001)
-            {
-                throw new InvalidOperationException(
-                    $"El cierre «{ending.Name}» acaba en el {ending.At[^1]:P0} de la tirada.");
-            }
-
-            for (var i = 1; i < ending.At.Length; i++)
-            {
-                if (ending.At[i] <= ending.At[i - 1])
-                {
-                    throw new InvalidOperationException(
-                        $"El cierre «{ending.Name}» tiene los tiempos desordenados en la parada {i}.");
-                }
+                    $"El cierre «{ending.Name}» añade {ending.ExtraTurns} vueltas.");
             }
         }
     }
-
-    /// <summary>
-    /// Where the wheel has to be at each stop, given where it finally rests.
-    /// </summary>
-    /// <param name="resting">The absolute angle that puts the winning wedge under the marker.</param>
-    public IEnumerable<double> Angles(double resting) =>
-        Stops.Select(stop => resting - (stop * WedgeDegrees));
-
-    /// <summary>How long each leg lasts, in order, out of a whole spin of <paramref name="total"/>.</summary>
-    public IEnumerable<TimeSpan> Legs(TimeSpan total) =>
-        At.Select((at, i) => TimeSpan.FromMilliseconds(
-            (at - (i == 0 ? 0 : At[i - 1])) * total.TotalMilliseconds));
 }

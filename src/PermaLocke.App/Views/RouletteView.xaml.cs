@@ -23,15 +23,21 @@ public partial class RouletteView : UserControl
 
     private bool _watching;
 
+    /// <summary>Where the wheel was last frame, to know how fast it is actually going.</summary>
+    private double _lastAngle = double.NaN;
+
     /// <summary>
-    /// True once the long sweep is over and the wheel is going notch by notch.
+    /// Degrees per frame below which the panel starts taking the colour of the passing wedge.
     /// </summary>
     /// <remarks>
-    /// The panel only takes the colour of the passing wedge from here on. During the sweep a wedge
-    /// goes by every fifty milliseconds, so tinting there would be a strobe and would also queue an
-    /// opacity animation per frame for nothing.
+    /// Four degrees a frame is a wedge every quarter of a second, which is about as fast as a
+    /// colour change can arrive and still read as one. Faster than that it would be a strobe, and
+    /// it would queue an opacity animation per frame for nothing.
     /// </remarks>
-    private bool _settling;
+    private const double SlowEnough = 4;
+
+    /// <summary>How long the wheel takes to settle back onto the winner after carrying past it.</summary>
+    private static readonly TimeSpan SettleTime = TimeSpan.FromMilliseconds(420);
 
     public RouletteView()
     {
@@ -213,86 +219,97 @@ public partial class RouletteView : UserControl
     }
 
     /// <summary>
-    /// Starts the spin: one long sweep and then the profile's notches, one wedge at a time.
+    /// Starts the spin: one sweep onto the winner, and nothing after it but the settle.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// It lands on a POSITION and does not travel a distance, which is the whole point. It used to
     /// be handed the whole sweep — eleven turns minus an offset — and added it to wherever the
     /// wheel happened to be, so the first spin of a session looked perfect and every one after it
     /// carried the previous spin's error.
+    /// </para>
+    /// <para>
+    /// One sweep and not the staged notches it had before. Those planted the wheel two or three
+    /// wedges short and walked it in, which read as the wheel stopping on one face and then
+    /// changing its mind — «se ha parado en el medio de IV AL MÁXIMO y ha pasado a la siguiente».
+    /// Where it stops, it stopped: from the moment the wheel is slow enough to read, the wedge
+    /// under the marker is the winner.
+    /// </para>
     /// </remarks>
     private void OnSpinRequested(object? sender, SpinTheWheel request)
     {
+        var ending = request.Ending;
         var from = Wrap(WheelSpin.Angle);
-        var resting = from + (360 * request.Turns) + Wrap(request.FinalAngle - from);
 
-        var angles = request.Ending.Angles(resting).ToArray();
-        var legs = request.Ending.Legs(request.Duration).ToArray();
+        var resting = from + (360 * (request.Turns + ending.ExtraTurns))
+                      + Wrap(request.FinalAngle - from);
 
-        _settling = false;
-        Douse();
-        StartWatching();
-        RunLeg(0, from, angles, legs, request);
-    }
+        // El barrido va un pelin MAS ALLA del ganador cuando el perfil lleva rebote, y ese pelin
+        // esta acotado a menos de media cuña, asi que la marca no se sale de la ganadora ni en el
+        // punto mas lejano. Sin rebote, va exactamente al ganador y ahi se queda.
+        var target = resting + ending.Bounce;
 
-    /// <summary>
-    /// One leg of the ending, which then starts the next.
-    /// </summary>
-    /// <remarks>
-    /// Chained rather than written as one storyboard with keyframes because a leg can go
-    /// <b>backwards</b> — the false finish overshoots the winner by a whole wedge and the wheel is
-    /// pulled back — and each leg wants its own easing.
-    /// </remarks>
-    private void RunLeg(int index, double from, double[] angles, TimeSpan[] legs, SpinTheWheel request)
-    {
-        var to = angles[index];
-        var last = index == angles.Length - 1;
+        var sweep = ending.Bounce > 0
+            ? request.Duration - SettleTime
+            : request.Duration;
 
         var animation = new DoubleAnimation
         {
             From = from,
-            To = to,
-            Duration = legs[index],
-            EasingFunction = EaseFor(index, last, request.Ending.Overshoot)
+            To = target,
+            Duration = sweep,
+            EasingFunction = new PowerEase { Power = ending.Power, EasingMode = EasingMode.EaseOut }
         };
 
         animation.Completed += (_, _) =>
         {
-            // Se quita la animación y se deja el ángulo puesto a mano: un tramo que arrancara de
-            // una propiedad todavía animada partiría de un valor que está a punto de cambiar.
+            // Se quita la animación y se deja el ángulo puesto a mano: lo que venga después
+            // partiría si no de una propiedad que todavía está animada.
             WheelSpin.BeginAnimation(RotateTransform.AngleProperty, null);
-            WheelSpin.Angle = to;
+            WheelSpin.Angle = target;
 
-            if (last)
+            if (ending.Bounce > 0)
             {
-                StopWatching();
-                Land(to);
-                request.Stopped();
-                return;
+                Settle(resting, request);
             }
-
-            // A partir del primer golpe la rueda ya va cuña a cuña, que es cuando el ambiente
-            // puede seguirla sin convertirse en un parpadeo.
-            _settling = true;
-            RunLeg(index + 1, to, angles, legs, request);
+            else
+            {
+                Finish(resting, request);
+            }
         };
 
+        Douse();
+        StartWatching();
         WheelSpin.BeginAnimation(RotateTransform.AngleProperty, animation);
     }
 
-    /// <summary>How each leg decelerates.</summary>
-    /// <remarks>
-    /// The long sweep gets a fifth power: it brakes early and then crawls, which is where the
-    /// interest is — seeing the wedges go past one at a time and being able to read them. The last
-    /// notch of an overshooting profile uses a <see cref="BackEase"/>, which goes a touch past the
-    /// mark and settles back on its own; that is a real wheel bouncing off the pawl and it costs
-    /// nothing to write.
-    /// </remarks>
-    private static IEasingFunction EaseFor(int index, bool last, bool overshoot) =>
-        index == 0 ? new PowerEase { Power = 5, EasingMode = EasingMode.EaseOut }
-        : last && overshoot ? new BackEase { Amplitude = 0.22, EasingMode = EasingMode.EaseOut }
-        : last ? new QuarticEase { EasingMode = EasingMode.EaseOut }
-        : new CubicEase { EasingMode = EasingMode.EaseOut };
+    /// <summary>The last few degrees back onto the winner, like a wheel dropping into its notch.</summary>
+    private void Settle(double resting, SpinTheWheel request)
+    {
+        var back = new DoubleAnimation
+        {
+            From = WheelSpin.Angle,
+            To = resting,
+            Duration = SettleTime,
+            EasingFunction = new SineEase { EasingMode = EasingMode.EaseOut }
+        };
+
+        back.Completed += (_, _) =>
+        {
+            WheelSpin.BeginAnimation(RotateTransform.AngleProperty, null);
+            WheelSpin.Angle = resting;
+            Finish(resting, request);
+        };
+
+        WheelSpin.BeginAnimation(RotateTransform.AngleProperty, back);
+    }
+
+    private void Finish(double resting, SpinTheWheel request)
+    {
+        StopWatching();
+        Land(resting);
+        request.Stopped();
+    }
 
     /// <summary>An angle brought into [0, 360). C#'s remainder keeps the sign of the dividend, so
     /// a plain % leaves negatives negative and the sweep short by a turn.</summary>
@@ -312,6 +329,7 @@ public partial class RouletteView : UserControl
         }
 
         _lastWedge = -1;
+        _lastAngle = double.NaN;
         _watching = true;
         CompositionTarget.Rendering += OnFrame;
     }
@@ -327,7 +345,15 @@ public partial class RouletteView : UserControl
 
     private void OnFrame(object? sender, EventArgs e)
     {
-        var wedge = Under(WheelSpin.Angle);
+        var angle = WheelSpin.Angle;
+        var wedge = Under(angle);
+
+        // Cuanto se ha movido desde el fotograma anterior, que es la velocidad de verdad. Antes
+        // esto era una bandera que se encendia al acabar el primer tramo; sin tramos hay que
+        // preguntarselo a la rueda, y de paso sale mejor: el ambiente entra cuando la rueda va
+        // despacio, y no cuando a un perfil le tocaba decir que iba despacio.
+        var moved = double.IsNaN(_lastAngle) ? double.MaxValue : Math.Abs(angle - _lastAngle);
+        _lastAngle = angle;
 
         if (wedge == _lastWedge)
         {
@@ -341,7 +367,7 @@ public partial class RouletteView : UserControl
 
         _lastWedge = wedge;
 
-        if (_settling)
+        if (moved <= SlowEnough)
         {
             Tint(wedge, 0.55);
         }
@@ -421,8 +447,6 @@ public partial class RouletteView : UserControl
     /// </remarks>
     private void Land(double settled)
     {
-        _settling = false;
-
         // El color del ganador entra de golpe y se queda a media fuerza. A tope se quedaría un
         // filtro de color encima de toda la pantalla mientras se lee la tarjeta.
         Tint(Under(settled), 1);

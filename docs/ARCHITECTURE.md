@@ -6597,3 +6597,61 @@ sí solo daría el mismo mundo con más entrenadores evolucionados. Pero el mod 
 septiembre a las 06:26 y **le faltan las ocho clases importantes** que se añadieron a las 06:36
 (§84 bis, medido en esta misma sesión), así que reinstalar arrastra también ese cambio, que **sí**
 reordena qué mega y qué Pokémon extra lleva cada combate importante.
+
+## 86. La rueda paraba y luego cambiaba de opinión (2026-09-04)
+
+Primera tirada de verdad con la pantalla nueva, y el jugador: «se ha parado en el medio de IV AL
+MÁXIMO y ha pasado por la cara a la siguiente; quiero que en el que pare, paró».
+
+Es la idea 8 del §84 haciendo exactamente lo que se le pidió. `WheelEnding` era una lista de
+**paradas**: la rueda se plantaba dos o tres cuñas antes del ganador y entraba de una en una, y uno
+de los cinco perfiles llegaba a pasarse una cuña entera y volver. Se hizo para que el final no se
+aprendiera, y para eso funciona. Lo que costaba no se vio hasta verlo girar: la rueda **se para**
+sobre una cara, se queda ahí el tiempo justo para leerla, y luego se mueve.
+
+El jugador tiene razón y el motivo va más allá del gusto. **El resultado ya está decidido, escrito
+en la partida y registrado antes de que la rueda empiece a girar** — es la norma de esta pantalla
+desde el §62. Una rueda que se detiene sobre una respuesta y después la cambia no está creando
+tensión: está enseñando algo que no ha pasado. Es de la misma familia que el §65, donde la
+comprobación estaba peor pensada que el código.
+
+### La variedad se muda de sitio
+
+No se pierde: pasa de **dónde para** a **cómo frena**. Cada perfil es ahora un solo barrido
+monótono hasta el ganador, con tres cosas que cambian —la potencia del frenado, las vueltas de más
+y cuánto se asienta al final— y ninguna de ellas puede enseñar otra cara:
+
+| perfil | potencia | vueltas de más | rebote |
+|---|---|---|---|
+| larga | 5 | 0 | 8° |
+| seca | 3 | +1 | 0° |
+| agónica | 7 | 0 | 5° |
+| vuelta de más | 4 | +2 | 14° |
+| limpia | 6 | +1 | 0° |
+
+Sigue en pie la norma del §31: **ninguno correlaciona con lo que salió**, porque se sortea de su
+propia corriente.
+
+### El número que lo sostiene
+
+Media cuña son **30°**: ahí es exactamente donde la vecina llega bajo la marca. El rebote está
+acotado a **20°** por `MaxBounce`, y el perfil más movido usa 14°, o sea que quedan 16° de margen.
+Un rebote dentro de ese límite se lee como el peso de la rueda cayendo en su muesca; uno por encima
+aparcaría **otra cara** bajo la marca mientras la tarjeta anuncia la correcta, y nada lo diría. Por
+eso el constructor estático **lanza** en vez de dejar jugar un perfil mal escrito: es el mismo
+guardia que ya tenía, apuntando ahora a lo que de verdad puede mentir.
+
+### De rebote, el ambiente mejora
+
+El tinte del panel se encendía con una bandera que se ponía al acabar el primer tramo. Sin tramos
+no hay bandera, así que ahora se le pregunta a la rueda: se mide **cuánto se ha movido desde el
+fotograma anterior** y el color entra por debajo de 4° por fotograma, que es una cuña cada cuarto de
+segundo. Sale mejor que antes — el ambiente aparece cuando la rueda va despacio de verdad, y no
+cuando a un perfil le tocaba decir que iba despacio.
+
+### Lo que NO está comprobado
+
+El giro entero sigue sin verse desde este lado: girar consume una tirada y escribe en la partida, y
+el jugador debe cero. Lo que sí se puede afirmar es la geometría, que es donde estaba el problema —
+20° de rebote máximo contra 30° de media cuña—, y que un perfil que se pase de ahí no llega a
+animarse.
