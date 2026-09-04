@@ -6975,3 +6975,54 @@ el juego.
 
 Hasta entonces, la respuesta a «dejar al Pokémon muerto sin convertirlo en Shedinja» sigue siendo
 **no**, y ahora se sabe bastante mejor por qué.
+
+## 93. Los PS se pueden LEER pero no clavar (2026-09-04)
+
+El jugador dio lo que faltaba: un salvaje dejó a su Houndoom en **82** y una poción lo subió a
+**102**, con máximo 115. Un valor que se mueve es lo único que permite refinar un barrido.
+
+### Lo que se encontró
+
+**La copia de `0x330128E4` sí lleva los PS de verdad, y el juego la mantiene al día.** Leída
+después del cambio: **Houndoom 102/115**, exacto. Ninguna de las otras cuatro estructuras da un
+número con sentido ahí —62905/24981, 4433/20887, 1333/20887—, así que de las cinco copias del
+equipo **solo esa tiene una cola de estadísticas de combate poblada**.
+
+Eso resuelve la mitad útil del problema: **PermaLocke puede leer los PS con fiabilidad**, y eso
+abre la puerta a detectar una muerte por PS a cero en vez de por desaparición.
+
+### Lo que sigue sin encontrarse
+
+**Escribir ahí no manda.** Ya medido en el §90, y ahora se entiende mejor: esa copia es un espejo
+que el juego refresca. El 7 que se escribió aguantó quince segundos porque no pasó nada; en cuanto
+el juego tocó el equipo, lo pisó con el valor bueno.
+
+**Y la fuente no está donde debería.** Tres negativas:
+
+- Los cuatro máximos no aparecen en los 484 bytes de la estructura autoritativa (§92).
+- No hay ningún cuarteto de los cuatro a paso constante en heap ni en linear.
+- Buscando la pareja adyacente **(102, 115)** —actual y máximo, que es una firma mucho más rara que
+  un número suelto— salen **cinco** sitios, y en ninguno de ellos aparecen los otros tres miembros
+  a una distancia coherente.
+
+**Y el refinado clásico da cero.** De las 2264 direcciones que valían 115 cuando Houndoom estaba
+lleno, **ninguna** vale 102 ahora. O sea que la dirección donde vive ese dato **no es estable**.
+
+Lo corrobora algo que se vio de paso: entre una lectura y otra el equipo **se reordenó** —Houndoom
+pasó a ir primero— y el localizador pasó de encontrar **2 estructuras a encontrar 5**, con
+`0x33F80744` conservando el orden viejo. Esas estructuras se crean, se mueven y se quedan rancias.
+
+### Dónde queda
+
+Un vigilante que reponga el cero necesita **escribir**, y para escribir hace falta una dirección
+que siga siendo la buena un segundo después. Hoy no la hay. Que se pueda leer no es poco, pero no
+es lo que el jugador pedía.
+
+### Un error propio, dicho
+
+Buscando en qué hueco estaba Houndoom escribí PS en tres estructuras **cuya cola no está
+identificada**, que es exactamente lo que el §53 prohíbe después del Ledyba. También escribí 102 en
+un Tinkaton por confundir el hueco: el equipo se había reordenado entre dos lecturas y el índice 3
+ya no era quien yo creía. Se restauró a 123 en el acto, las cinco estructuras siguen leyéndose con
+sus especies y sus PID correctos, y el juego se ve normal. Pero la regla existía y me la salté con
+un comando de diagnóstico, que es justo donde es más fácil saltársela.
