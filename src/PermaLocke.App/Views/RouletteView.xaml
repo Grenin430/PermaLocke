@@ -82,8 +82,8 @@
 
                 <!-- LA FLECHA, roja y con filo dorado, como la de cualquier ruleta de premios.
                      Apunta a la cuna que gana, y por eso la rueda gira hasta ponerla justo debajo.
-                     Va FUERA del aplastado, para que se quede afilada, y entra en la banda dorada
-                     lo justo para que se lea apoyada en el aro y no flotando encima. -->
+                     Entra en la banda dorada lo justo para que se lea apoyada en el aro y no
+                     flotando encima. -->
                 <Path Grid.Row="0" Data="M 0,0 L 38,0 L 19,42 Z" HorizontalAlignment="Center"
                       VerticalAlignment="Bottom" Panel.ZIndex="5" Margin="0,0,0,-18"
                       Fill="{StaticResource WheelPointerBrush}"
@@ -101,21 +101,18 @@
                     </Path.Effect>
                 </Path>
 
-                <!-- EL APLASTADO. Un 6% de alto menos, para que la rueda se lea apoyada y no como
-                     un grafico de tarta. Es LayoutTransform y no RenderTransform a proposito: solo
-                     el primero cuenta para la maquetacion, asi que la fila mide lo que se ve y no
-                     deja cuarenta pixeles de hueco debajo.
-
-                     Seis por ciento es poco a proposito: mas que esto y las etiquetas de arriba y
-                     de abajo empiezan a leerse chafadas, que es justo lo que la idea NO quiere. -->
                 <!-- EL ESCENARIO mide 740 y la rueda 700: esos veinte pixeles de mas por cada
                      lado son la BANDA DORADA donde van las bombillas. La geometria de las cunas
                      no se toca -sigue siendo un disco de 650 dentro de una caja de 700-, asi que
-                     el aro se ha ganado por fuera y no quitandole sitio al relleno. -->
+                     el aro se ha ganado por fuera y no quitandole sitio al relleno.
+
+                     AQUI HABIA UN APLASTADO del 6% de alto, para que la rueda se leyera apoyada y
+                     no como un grafico de tarta. Se quita: con el aro dorado y su sombra el bulto
+                     ya lo da el metal, y lo unico que aportaba el aplastado era que la rueda no
+                     fuese redonda. El jugador lo vio a la primera y tenia razon: una ruleta de
+                     feria es un circulo. Cuesta tamano, porque el escenario pasa a medir 740 de
+                     alto en vez de 696 y el Viewbox reparte lo que hay. -->
                 <Grid Grid.Row="1" x:Name="Stage" Width="740" Height="740">
-                    <Grid.LayoutTransform>
-                        <ScaleTransform ScaleY="0.94" />
-                    </Grid.LayoutTransform>
 
                     <!-- EL ARO. Degradado de cuatro paradas: reflejo, metal, sombra y un rebote al
                          filo, que es como se ve un aro de laton y no un anillo pintado. -->

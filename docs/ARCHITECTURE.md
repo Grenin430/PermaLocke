@@ -6490,3 +6490,33 @@ disco pasaría de 570. No se ha hecho porque no se pidió.
 **El pie no se ha puesto.** Sale en la foto, pero un pie no es un contorno: es un objeto nuevo, y
 además comería otros 45 px de alto del mismo presupuesto. Queda dicho aquí para que la próxima vez
 la decisión no haya que volver a tomarla a ciegas.
+
+### Y el aplastado fuera (mismo día)
+
+El jugador: «la ruleta está un poco más horizontada, no es simétrica como tal, está levemente
+aplastada». Tenía razón, y era mío: el `ScaleY` de 0,94 de la idea 5, puesto para que la rueda se
+leyera **apoyada** y no como un gráfico de tarta.
+
+Funcionaba mientras el aro era un anillo gris plano. Con el aro dorado, su degradado de cuatro
+paradas y su sombra, **el bulto ya lo da el metal**, así que lo único que seguía aportando el
+aplastado era que la rueda no fuese redonda. Y una ruleta de feria es un círculo. Fuera.
+
+Medido sobre las dos capturas, comparando el radio horizontal con el vertical del aro:
+
+| | V/H | diámetro exterior | disco de color |
+|---|---|---|---|
+| con aplastado | 0,976 | 553 px | 486 px |
+| sin aplastado | **1,008** | 522 px | **458 px** |
+
+Redonda dentro del error de medida. Y **cuesta un 6%**, porque el escenario pasa a necesitar 740 px
+de alto en vez de 696 y el `Viewbox` reparte lo que hay.
+
+Sumando las dos vueltas del día, el disco de color ha ido de **506 → 486 → 458**: el aro dorado se
+llevó 20 px y la redondez otros 28. Sigue por encima de los 428 que medía antes de todo esto, pero
+la dirección es la contraria de la que pidió la idea 4, así que queda dicho con números en vez de
+callado. La palanca para recuperarlo sigue siendo la misma y sigue sin usarse porque nadie la ha
+pedido: la tira de dieciséis ocupa 110 px de alto y a los lados de la rueda sobran casi 400 px a
+cada lado.
+
+Y una trampa de las de siempre, que cayó otra vez: **un comentario XML no admite `--`**. Está
+escrito en `CLAUDE.md` desde el §74 y aun así costó una compilación.

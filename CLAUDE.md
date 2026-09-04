@@ -998,10 +998,19 @@ teclear mal una coordenada— y son **veinte porque seis no divide a veinte**, a
 sobre una junta. El escenario pasa de 700 a 740 y **la rueda sigue midiendo 700**: la banda dorada se
 gana por fuera, sin tocar la geometría de las cuñas.
 
-Lo que cuesta, medido sobre la captura y no estimado: el objeto entero pasa de 545 a **553 px** pero
-el disco de color, que es lo que se lee, de 506 a **486**, un 4% menos. Un marco de feria es sobre
-todo marco. **El pie de la foto no está**: no es un contorno, es un objeto nuevo, y se comería otros
-45 px del mismo presupuesto de alto.
+**Y fuera el aplastado.** El jugador vio que la rueda «no es simétrica, está levemente aplastada» y
+tenía razón: era el `ScaleY` de 0,94 de la idea 5, puesto para que se leyera apoyada. Con el aro
+dorado y su sombra **el bulto ya lo da el metal**, así que lo único que seguía aportando era que la
+rueda no fuese redonda. Medido comparando radio vertical y horizontal del aro: pasa de **V/H 0,976 a
+1,008**, redonda dentro del error.
+
+Lo que cuesta todo esto, medido sobre las capturas y no estimado: el disco de color va de **506 →
+486 → 458 px** — el aro dorado se llevó 20 y la redondez otros 28, porque el escenario necesita 740
+de alto en vez de 696 y el `Viewbox` reparte lo que hay. Sigue por encima de los 428 de antes del
+rediseño, pero es la dirección contraria a la que pidió la idea 4, así que va dicho con números. La
+palanca para recuperarlo está sin usar porque nadie la ha pedido: la tira de dieciséis ocupa 110 px
+de alto y a los lados sobran casi 400 a cada lado. **El pie de la foto no está**: no es un contorno,
+es un objeto nuevo, y se comería otros 45 px del mismo presupuesto.
 
 Ojo con lo **no comprobado**: lo estático está visto en la aplicación real, pero **la rueda desvelada
 y la tirada entera no**, porque verlas exige girar de verdad y girar escribe en la partida. Ver §84.
