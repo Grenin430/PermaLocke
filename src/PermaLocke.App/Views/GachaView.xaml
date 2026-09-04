@@ -64,7 +64,20 @@
              tier cambia la animación sin tocar el XAML. Cada plantilla tiene su propio ámbito de
              nombres, que es lo que permite animar sus hijos por nombre (ARCHITECTURE.md §29). -->
         <DataTemplate x:Key="PortalTemplate">
+            <!-- El portal se pulsa para ver quién puede salir de ese tier. Botón sin cromo: el
+                 dibujo del portal ya es el control, y meterle un marco lo convertiría en otra
+                 cosa. -->
+            <Button Background="Transparent" BorderThickness="0" Padding="0" Cursor="Hand"
+                    Command="{Binding DataContext.ShowPoolCommand,
+                        RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    CommandParameter="{Binding}">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <ContentPresenter />
+                    </ControlTemplate>
+                </Button.Template>
             <StackPanel Margin="12,0" VerticalAlignment="Center">
+
                 <Grid Width="52" Height="52">
                     <Ellipse x:Name="Glow" Opacity="0" RenderTransformOrigin="0.5,0.5">
                         <Ellipse.Fill>
@@ -106,6 +119,7 @@
                 <TextBlock Text="{Binding Range}" Style="{StaticResource Mono}"
                            FontSize="9" HorizontalAlignment="Center" Opacity="0.35" />
             </StackPanel>
+            </Button>
 
             <DataTemplate.Triggers>
                 <EventTrigger RoutedEvent="Loaded">
@@ -650,12 +664,71 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- LO QUE YA HA SALIDO. Llena los cuatrocientos y pico pixeles que la
+                    <!-- EL BOTE. Ocupa el hueco central, que es el sitio: el jugador mira ahí
+                         mientras decide, y hasta ahora ahí no había más que fondo. Se abre desde
+                         un portal y se cierra con el mismo, así que no roba sitio a la ruleta. -->
+                    <Border Grid.Row="4" Margin="10,4,10,10" Padding="12,10"
+                            CornerRadius="{StaticResource RadiusMedium}"
+                            Background="{StaticResource SunkenBrush}" BorderThickness="1"
+                            BorderBrush="{Binding PoolBrushKey, Converter={StaticResource ResourceKey}}"
+                            Visibility="{Binding ShowingPool, Converter={StaticResource BoolToVisibility}}">
+                        <DockPanel>
+                            <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                                <Button DockPanel.Dock="Right" Content="CERRAR"
+                                        Style="{StaticResource GhostButton}" Padding="10,4" FontSize="10"
+                                        Command="{Binding ShowPoolCommand}" CommandParameter="{x:Null}" />
+                                <TextBlock Text="{Binding PoolTitle}" Style="{StaticResource Mono}"
+                                           FontSize="11" VerticalAlignment="Center"
+                                           Foreground="{Binding PoolBrushKey,
+                                               Converter={StaticResource ResourceKey}}" />
+                            </DockPanel>
+
+                            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                          HorizontalScrollBarVisibility="Disabled">
+                                <ItemsControl ItemsSource="{Binding Pool}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Orientation="Horizontal" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Width="82" Margin="3" Padding="4,5"
+                                                    CornerRadius="{StaticResource RadiusSmall}"
+                                                    Background="{StaticResource SurfaceBrush}">
+                                                <StackPanel>
+                                                    <Image Source="{Binding Sprite}" Width="40" Height="40"
+                                                           RenderOptions.BitmapScalingMode="NearestNeighbor" />
+                                                    <TextBlock Text="{Binding Name}" Style="{StaticResource Faint}"
+                                                               FontSize="9.5" TextAlignment="Center"
+                                                               TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock Style="{StaticResource Mono}" FontSize="9"
+                                                               TextAlignment="Center" Opacity="0.55"
+                                                               Text="{Binding Total}" />
+                                                    <!-- Los legendarios se dicen: «quiénes están en
+                                                         el Tier 5» es en realidad una pregunta
+                                                         sobre ellos. -->
+                                                    <TextBlock Text="LEGENDARIO" Style="{StaticResource Mono}"
+                                                               FontSize="7.5" TextAlignment="Center"
+                                                               Foreground="{StaticResource AccentBrush}"
+                                                               Visibility="{Binding Legendary,
+                                                                   Converter={StaticResource BoolToVisibility}}" />
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </DockPanel>
+                    </Border>
+
+                    <!-- LO QUE YA HA SALIDO.
+ Llena los cuatrocientos y pico pixeles que la
                          pantalla tenia en negro, y de paso contesta la pregunta que un gacha
                          siempre levanta y esta no contestaba: que llevas. Cada uno con el borde
                          de su tier, asi que la racha se lee de un vistazo. -->
                     <StackPanel Grid.Row="4" VerticalAlignment="Bottom" Margin="0,0,0,16"
-                                Visibility="{Binding HasHistory, Converter={StaticResource BoolToVisibility}}">
+                                Visibility="{Binding ShowHistory, Converter={StaticResource BoolToVisibility}}">
                         <TextBlock Text="LO QUE HA SALIDO" Style="{StaticResource Mono}" FontSize="9"
                                    HorizontalAlignment="Center" Opacity="0.35" Margin="0,0,0,6" />
 

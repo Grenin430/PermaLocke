@@ -68,6 +68,25 @@ public sealed class GachaHistoryViewModel(string speciesName, string brushKey,
     public System.Windows.Media.Imaging.BitmapSource? Sprite { get; } = sprite;
 }
 
+/// <summary>One Pokémon that a tier can produce, as the pool list shows it.</summary>
+/// <remarks>
+/// The screen used to say «60 % Tier 3» and stop there: you knew the odds of a band and not who
+/// was in it. The list is not a second opinion about the tiers either — it comes from the same
+/// <see cref="GachaService.PoolOf"/> the roll itself draws from, so what it shows is what can
+/// actually come out, not a rule written twice.
+/// </remarks>
+public sealed class PoolEntryViewModel(SpeciesStats species,
+    System.Windows.Media.Imaging.BitmapSource? sprite)
+{
+    public string Name { get; } = species.Name;
+
+    public int Total { get; } = species.BaseStatTotal;
+
+    public bool Legendary { get; } = species.Legendary;
+
+    public System.Windows.Media.Imaging.BitmapSource? Sprite { get; } = sprite;
+}
+
 /// <summary>One banner as the screen shows it, with its odds spelled out.</summary>
 public sealed partial class BannerViewModel(GachaBanner banner, string odds) : ObservableObject
 {
@@ -166,6 +185,30 @@ public sealed partial class GachaViewModel : SectionViewModel
 
     /// <summary>One portal per tier, in order of price. Built from the catalogue, not from XAML.</summary>
     public ObservableCollection<PortalViewModel> Portals { get; } = [];
+
+    /// <summary>Who can come out of the tier being inspected.</summary>
+    public ObservableCollection<PoolEntryViewModel> Pool { get; } = [];
+
+    [ObservableProperty]
+    private bool _showingPool;
+
+    /// <summary>The strip of past rolls, which shares its row with the pool list.</summary>
+    /// <remarks>
+    /// One of the two has to give way: both live in the row that takes the leftover height, and
+    /// with the pool open the strip was being drawn straight over it. The pool is what the player
+    /// just asked for, so the strip is the one that waits.
+    /// </remarks>
+    public bool ShowHistory => HasHistory && !ShowingPool;
+
+    partial void OnShowingPoolChanged(bool value) => OnPropertyChanged(nameof(ShowHistory));
+
+    partial void OnHasHistoryChanged(bool value) => OnPropertyChanged(nameof(ShowHistory));
+
+    [ObservableProperty]
+    private string _poolTitle = string.Empty;
+
+    [ObservableProperty]
+    private string _poolBrushKey = "AccentBrush";
 
     /// <summary>The last few rolls, newest first. Not persisted: it is what this sitting has seen.</summary>
     public ObservableCollection<GachaHistoryViewModel> History { get; } = [];
@@ -361,6 +404,7 @@ public sealed partial class GachaViewModel : SectionViewModel
         }
 
         IsRolling = true;
+        ShowingPool = false;
         HasResult = false;
         // Se apaga todo antes de tirar. Si no, dos tiradas seguidas del mismo tier no cambiarían
         // la propiedad y el portal no volvería a abrirse.
@@ -633,7 +677,62 @@ public sealed partial class GachaViewModel : SectionViewModel
         }
     }
 
+    /// <summary>
+    /// Shows who a tier can produce, or closes the list if it was already that tier's.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The pool is asked of <see cref="GachaService.PoolOf"/>, the same call the roll uses, rather
+    /// than re-deriving the bands here from the tier ceilings. Two places computing who belongs to
+    /// a tier is two places that can disagree, and the one that would be wrong is the one the
+    /// player reads before deciding to spend.
+    /// </para>
+    /// <para>
+    /// Both halves are asked for: a tier holds ordinary species and legendaries, and only the top
+    /// one has any of the latter. Legendaries come first and are marked, because «who is in Tier
+    /// 5» is really a question about them.
+    /// </para>
+    /// </remarks>
+    [RelayCommand]
+    private void ShowPool(PortalViewModel? portal)
+    {
+        if (portal is null || IsRolling)
+        {
+            return;
+        }
+
+        // Pulsar el mismo portal otra vez lo cierra: es un desplegable, no una pantalla nueva.
+        if (ShowingPool && PoolTitle.StartsWith(portal.Name, StringComparison.Ordinal))
+        {
+            ShowingPool = false;
+            return;
+        }
+
+        var tier = _gacha.Tiers.FirstOrDefault(t =>
+            string.Equals(t.Id, portal.TierId, StringComparison.OrdinalIgnoreCase));
+
+        if (tier is null)
+        {
+            return;
+        }
+
+        Pool.Clear();
+
+        foreach (var species in _gacha.PoolOf(tier, legendary: true)
+            .Concat(_gacha.PoolOf(tier, legendary: false))
+            .OrderByDescending(s => s.Legendary)
+            .ThenByDescending(s => s.BaseStatTotal))
+        {
+            Pool.Add(new PoolEntryViewModel(species, _sprites.Get(species.Id)));
+        }
+
+        PoolBrushKey = portal.BrushKey;
+        PoolTitle = $"{portal.Name} · {Pool.Count} Pokémon · {portal.Range}";
+        ShowingPool = true;
+    }
+
     /// <summary>Adds a roll to the strip under the reel, and lights the tier it landed on.</summary>
+
     /// <remarks>
     /// Newest first and capped, because the point is the last handful and an unbounded list would
     /// quietly become a memory leak on a screen somebody leaves open all evening.
