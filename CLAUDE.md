@@ -1016,6 +1016,21 @@ Ojo con lo **no comprobado**: lo estático está visto en la aplicación real, p
 y la tirada entera no**, porque verlas exige girar de verdad y girar escribe en la partida. Ver §84.
 
 
+**Volcanion con el dibujo de Hoopa (2026-09-04).** Un wonder trade devolvio Volcanion y la tarjeta lo
+enseno como **Hoopa Desatado**. La tabla de especie a icono del §30 bis se construyo a mano porque el
+cartucho no la publica, y en un sitio se identificaron cruzados: el tramo real es 1001 Diancie, 1002
+Mega Diancie, **1003 Volcanion**, 1004 Hoopa, 1005 Hoopa Desatado -o sea que Volcanion va DELANTE de
+Hoopa, al reves que en la Pokedex- y la tabla tenia 720 en 1003 y 721 en 1005.
+
+Lo importante es **por que no lo cazo el guardia**: la comprobacion del bloque exige 158 especies,
+iconos distintos y todos en rango, y **un cruce pasa las tres**. Detecta que falte o sobre alguien, no
+que dos esten intercambiados, y por construccion no puede. Lo unico que lo encuentra es mirar, asi
+que se miro el bloque ENTERO: diez hojas de contacto con el icono de cada especie y su nombre debajo,
+leidas las **158 de 158**. Esta pareja es el unico error. La tabla queda auditada de punta a punta.
+
+Y no es un fallo que del wonder trade salga un legendario: `permitirLegendarios` esta en true y la
+banda ya limita sola -hay que entregar algo de 600 para sacar uno-. Ver §88.
+
 **El gacha reventaba en CADA tirada (2026-09-04).** Dos tiradas, dos «error inesperado», y lo
 primero que dice el log es que no se perdio nada: Roserade y Salamence entregados y registrados.
 `ReelEnding` obliga a que el ultimo tiempo del cierre sea 1,00 -el carrete acaba en el ganador-, asi

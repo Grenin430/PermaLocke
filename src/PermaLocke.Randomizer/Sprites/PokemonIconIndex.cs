@@ -197,7 +197,10 @@ public static class PokemonIconIndex
         [710] = 950,   [711] = 951,   [712] = 966,      // Pumpkaboo Gourgeist Bergmite
         [713] = 967,   [714] = 925,   [715] = 981,      // Avalugg Noibat Noivern
         [716] = 988,   [717] = 990,   [718] = 991,      // Xerneas Yveltal Zygarde
-        [719] = 1001,  [720] = 1003,  [721] = 1005,     // Diancie Hoopa Volcanion
+        // Volcanion va DELANTE de Hoopa en el contenedor, al reves que en la Pokedex. El tramo es
+        // 1001 Diancie, 1002 Mega-Diancie, 1003 VOLCANION, 1004 Hoopa, 1005 Hoopa Desatado. Estaba
+        // al reves y se veia: un Volcanion de wonder trade salia con el dibujo de Hoopa Desatado.
+        [719] = 1001,  [720] = 1004,  [721] = 1003,     // Diancie Hoopa Volcanion
         [722] = 1090,  [723] = 1091,  [724] = 1093,     // Rowlet Dartrix Decidueye
         [725] = 1094,  [726] = 1095,  [727] = 1096,     // Litten Torracat Incineroar
         [728] = 1097,  [729] = 1098,  [730] = 1099,     // Popplio Brionne Primarina

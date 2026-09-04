@@ -49,10 +49,41 @@ public class PokemonIconIndexTests
     [InlineData(671, 920)]  // Florges
     [InlineData(700, 987)]  // Sylveon
     [InlineData(778, 1028)] // Mimikyu
+    [InlineData(719, 1001)] // Diancie, y 1002 es su mega
+    [InlineData(721, 1003)] // Volcanion, que va DELANTE de Hoopa en el contenedor
+    [InlineData(720, 1004)] // Hoopa, y 1005 es Hoopa Desatado
     public void Icons_verified_by_eye_stay_where_they_were_seen(int species, int icon)
     {
         var table = BuildWithRealCartridgeCounts();
         Assert.Equal(icon, table[species]);
+    }
+
+    /// <summary>
+    /// Volcanion comes <b>before</b> Hoopa in the container, the other way round from the Pokédex.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The stretch is 1001 Diancie, 1002 Mega Diancie, 1003 Volcanion, 1004 Hoopa, 1005 Hoopa
+    /// Unbound. The table had the last two swapped and it showed: a Volcanion out of a wonder
+    /// trade came up drawn as Hoopa Unbound.
+    /// </para>
+    /// <para>
+    /// The arithmetic guard below cannot catch this and never could — swapping two entries keeps
+    /// the count, the distinctness and the range all perfectly valid. The only thing that finds it
+    /// is looking, so after this one turned up the whole second block was rendered species by
+    /// species with its name underneath and read: <b>158 of 158</b>, and this pair was the only
+    /// mistake in it.
+    /// </para>
+    /// </remarks>
+    [Fact]
+    public void Volcanion_and_Hoopa_are_not_swapped()
+    {
+        var table = BuildWithRealCartridgeCounts();
+
+        Assert.Equal(1003, table[721]);
+        Assert.Equal(1004, table[720]);
+        Assert.True(table[721] < table[720],
+            "Volcanion va antes que Hoopa en el contenedor, aunque su número nacional sea mayor.");
     }
 
     [Fact]

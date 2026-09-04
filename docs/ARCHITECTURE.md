@@ -6705,3 +6705,55 @@ El giro arreglado no se ha visto: tirar consume una tirada y escribe un Pokémon
 jugador. Lo que sí es demostrable es la aritmética, que es donde estaba el fallo — el clic más
 tardío que `ReelEnding` puede producir es 1,00 por su propio constructor estático, el desplazamiento
 mayor es +0,03, y 1,03 entre 1,06 da 0,972.
+
+## 88. Volcanion con el dibujo de Hoopa (2026-09-04)
+
+El jugador hizo un wonder trade, le salió Volcanion, y la tarjeta lo enseñó con el sprite de **Hoopa
+Desatado**.
+
+La tabla de especie → icono se construyó a mano mirando el contenedor tramo a tramo (§30 y §30 bis),
+porque el cartucho no la publica. El segundo bloque —las 158 especies de la 650 a la 807— no sigue
+el orden nacional, así que cada una hubo que identificarla. Y en un sitio se identificaron cruzadas.
+
+El tramo real es:
+
+| icono | quién es |
+|---|---|
+| 1001 | Diancie |
+| 1002 | Mega Diancie |
+| 1003 | **Volcanion** |
+| 1004 | Hoopa |
+| 1005 | Hoopa Desatado |
+
+O sea que **Volcanion va delante de Hoopa**, al revés que en la Pokédex, y la tabla tenía
+`[720] = 1003` y `[721] = 1005`. Cada uno enseñaba el dibujo del otro; lo que salió en pantalla fue
+el 1005, que es Hoopa Desatado.
+
+### Por qué no lo cazó el guardia que ya existía
+
+`The_second_block_covers_the_rest_and_uses_up_its_icons_exactly` comprueba que las 158 especies
+estén, que cada una apunte a un icono propio y que todos caigan dentro del bloque. **Un cruce pasa
+las tres**: la cuenta sigue siendo 158, siguen siendo distintos y siguen estando en rango. Ese
+guardia detecta que falte o sobre alguien, no que dos estén intercambiados, y por construcción no
+puede.
+
+Lo único que lo encuentra es mirar. Así que se miró **el bloque entero**: se generaron diez hojas de
+contacto con el icono que la tabla asigna a cada especie y su nombre debajo, y se leyeron las
+**158 de 158**. Esta pareja es el único error que hay. La tabla queda auditada de punta a punta, que
+es más de lo que se podía decir hasta hoy.
+
+### Nota sobre el script de auditoría
+
+Dos trampas de PowerShell costaron tres intentos, y las dos son de las que no dan error:
+
+- **`$s` y `$S` son la misma variable.** El bucle `for($s=0; ...)` machacaba la ruta de los sprites,
+  así que `Test-Path` daba falso para los 158 y las hojas salían con los nombres y sin dibujos.
+- **`[int]` redondea, no trunca.** `[int](5/8)` es 1, así que la fila de cada celda salía mal y las
+  imágenes se pisaban unas a otras.
+
+### Lo que no es un fallo
+
+Que del wonder trade salga un Volcanion es correcto: `Data/wondertrade.json` lleva
+`permitirLegendarios: true`, y la banda ya limita sola —hay que entregar algo de 600 para sacar uno,
+y el jugador entregó una Primarina de 530 con un +13%—. Si la competición lo prefiere, ese
+interruptor los quita del todo sin tocar código.
