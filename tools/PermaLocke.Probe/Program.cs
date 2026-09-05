@@ -578,8 +578,12 @@ if (Index("--peek") is { } peekIndex)
         // saldria con la tabla de PKHeX, que para una especie del mod cae a Medium Fast y da un
         // numero equivocado con toda confianza; y «0xEC» es Stat_Level, el campo que el juego
         // PINTA. Los tres deberian coincidir, y cuando no lo hacen eso es la noticia.
+        // Los PS van AQUI y no en un volcado en crudo: el bloque de equipo se guarda cifrado
+        // entero, cola incluida, asi que mirar el offset 0xF0 con --dump devuelve basura. Se
+        // intento, dio ceros, y el unico camino honesto de leerlos sin escribir es este.
         Console.WriteLine("  0x" + target.ToString("X8")
                           + "  #" + pokemon.Species
+                          + "  PS=" + pokemon.Stat_HPCurrent + "/" + pokemon.Stat_HPMax
                           + "  exp=" + pokemon.EXP
                           + "  Nv(exp)=" + PermaLocke.GameLink.Data.GameLevels.Of(pokemon)
                           + "  Nv(pkhex)=" + pokemon.CurrentLevel

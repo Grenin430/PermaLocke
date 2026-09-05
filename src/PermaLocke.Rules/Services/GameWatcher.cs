@@ -82,6 +82,23 @@ public sealed class GameWatcher(IPokemonRepository pokemon, IEventStore events, 
     /// Who decided it. <see cref="EventSource.AutoDetect"/> when the watcher saw the Pokémon at
     /// zero HP, <see cref="EventSource.Player"/> when a person marked it by hand.
     /// </param>
+    /// <summary>
+    /// The PID of everything this run counts as fallen.
+    /// </summary>
+    /// <remarks>
+    /// By PID and not by "it looks like the marker": a Shedinja called MUERTO is what a death is
+    /// turned <b>into</b>, and the run has held a real one that was never a death at all (§59).
+    /// The history is the authority on who died; the game only says where they are now.
+    /// </remarks>
+    public async Task<IReadOnlySet<uint>> FallenPidsAsync(Guid runId, CancellationToken ct = default)
+    {
+        var all = await pokemon.GetAllAsync(runId, ct).ConfigureAwait(false);
+
+        return all.Where(entry => entry.Status == PokemonStatus.Dead && entry.Pid is not null)
+            .Select(entry => entry.Pid!.Value)
+            .ToHashSet();
+    }
+
     /// <param name="detection">
     /// How it was known, written into the event. It matters because the two are not equally
     /// trustworthy and the historial has to say which one this was.

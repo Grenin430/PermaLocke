@@ -185,6 +185,12 @@ public sealed class GameLinkMonitor(
             changed = true;
         }
 
+        // Los caídos que ya estaban en el equipo antes de arrancar. La lista del emulador vive en
+        // su memoria y se vacía al reiniciar cualquiera de los dos programas, así que sin esto el
+        // vigilante solo sabía de los muertos de la sesión en curso: bastaba cerrar y abrir para
+        // quedarse con el Shedinja puesto y nadie mirándolo.
+        await AdoptFallenAsync(run, snapshot);
+
         // DESPUÉS de las muertes, nunca antes. Si el equipo se ha mudado de sitio lo registrado
         // apunta a donde ya no está, así que hay que rehacerlo — pero es una comodidad, y ponerla
         // por delante hizo que una excepción suya se llevara por delante la detección de muertes
@@ -576,6 +582,58 @@ public sealed class GameLinkMonitor(
 
     /// <summary>What the party structures looked like when the list was last sent.</summary>
     private string _watchSignature = string.Empty;
+
+    /// <summary>Whose fallen list has already been asked for, so it is asked once per run.</summary>
+    private Guid _adoptedFor;
+
+    /// <summary>
+    /// Picks up the fallen that were already in the party before this session started.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Asked <b>once per run</b> and only while connected: it is a database query, and the answer
+    /// does not change on its own — a new death adds itself to the list as it happens.
+    /// </para>
+    /// <para>
+    /// Who is fallen comes from the run's own history, matched by PID, and never from «that one
+    /// looks like the marker». A Shedinja called MUERTO is what a death is turned into, and this
+    /// run has held a real one that was never a death (§59): reading the game to decide who died
+    /// would have adopted it and kept propping it up for ever.
+    /// </para>
+    /// </remarks>
+    private async Task AdoptFallenAsync(Run run, GameSnapshot snapshot)
+    {
+        if (_adoptedFor == run.Id || !snapshot.Connected || snapshot.Party.Count == 0)
+        {
+            return;
+        }
+
+        try
+        {
+            var fallen = await watcher.FallenPidsAsync(run.Id, _stopping.Token);
+            var here = snapshot.Party.Where(m => fallen.Contains(m.Pid)).ToList();
+
+            _adoptedFor = run.Id;
+
+            if (here.Count == 0)
+            {
+                return;
+            }
+
+            foreach (var member in here)
+            {
+                _watched.Add(member.Pid);
+            }
+
+            _watchSignature = string.Empty;
+            logger.LogInformation("{Count} caído(s) ya en el equipo: se vuelven a vigilar", here.Count);
+        }
+        catch (Exception ex)
+        {
+            // Sin reintento inmediato ni marca de hecho: se vuelve a probar en la vuelta siguiente.
+            logger.LogWarning(ex, "No se ha podido mirar qué caídos siguen en el equipo");
+        }
+    }
 
     /// <summary>
     /// Rebuilds the emulator's list when, and only when, the party has moved.
