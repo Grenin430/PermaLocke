@@ -569,6 +569,9 @@ public sealed class GameLinkMonitor(
     /// </remarks>
     private readonly HashSet<uint> _watched = [];
 
+    /// <summary>True once it has been said that this emulator cannot watch anything.</summary>
+    private bool _warnedNoWatch;
+
     /// <summary>What the party structures looked like when the list was last sent.</summary>
     private string _watchSignature = string.Empty;
 
@@ -609,11 +612,29 @@ public sealed class GameLinkMonitor(
     /// </remarks>
     private void RefreshWatchList(GameSnapshot snapshot)
     {
-        if (_watched.Count == 0 || !writer.ClearWatchList())
+        if (_watched.Count == 0)
         {
             return;
         }
 
+        if (!writer.ClearWatchList())
+        {
+            // Y se dice UNA vez. Esto se escribió devolviendo aquí en silencio, y costó la primera
+            // prueba: el jugador mató un Pokémon, guardó, y no había ni una línea en ningún log
+            // que dijera que la vigilancia no se había llegado a pedir. Un emulador sin el parche
+            // es el caso normal, pero normal no es lo mismo que invisible.
+            if (!_warnedNoWatch)
+            {
+                _warnedNoWatch = true;
+                logger.LogWarning(
+                    "El emulador no acepta la lista de vigilancia: la marca de muerte se escribe "
+                    + "una vez y el juego puede deshacerla. Hace falta el fork con el parche 2.");
+            }
+
+            return;
+        }
+
+        _warnedNoWatch = false;
         var registered = 0;
 
         foreach (var member in snapshot.Party.Where(m => _watched.Contains(m.Pid)))

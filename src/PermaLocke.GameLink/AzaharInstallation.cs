@@ -70,6 +70,7 @@ public sealed class AzaharInstallation(ILogger<AzaharInstallation> logger)
             // "this is the default" would let the emulator write the value back to false.
             var changed = SetValue(lines, "enable_rpc_server", "true", "[Debugging]");
             changed |= SetValue(lines, @"enable_rpc_server\default", "false", "[Debugging]");
+            changed |= LetTheRpcServerSpeak(lines);
 
             if (changed)
             {
@@ -84,6 +85,42 @@ public sealed class AzaharInstallation(ILogger<AzaharInstallation> logger)
             logger.LogError(ex, "No se pudo activar el servidor RPC en {Path}", configPath);
             return false;
         }
+    }
+
+    /// <summary>
+    /// Raises the RPC server's logging so what it does can be read.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Azahar ships <c>log_filter=*:Info RPC_Server:Error …</c>, which silences everything the RPC
+    /// server says short of a failure. That is a sensible default for a server nobody watches — and
+    /// it makes the fork's block watcher completely invisible, including the one line that proves
+    /// it is doing its job.
+    /// </para>
+    /// <para>
+    /// Only that one word is changed, and only when it is <c>Error</c>. Whatever else the player
+    /// has in their filter is left exactly as it was, and a filter that has already been raised is
+    /// not touched again.
+    /// </para>
+    /// </remarks>
+    private static bool LetTheRpcServerSpeak(List<string> lines)
+    {
+        var at = lines.FindIndex(l => l.TrimStart().StartsWith("log_filter=", StringComparison.Ordinal));
+
+        if (at < 0)
+        {
+            return false; // sin filtro escrito, el emulador usa el suyo y ya deja hablar a todos
+        }
+
+        var updated = lines[at].Replace("RPC_Server:Error", "RPC_Server:Info", StringComparison.Ordinal);
+
+        if (updated == lines[at])
+        {
+            return false;
+        }
+
+        lines[at] = updated;
+        return true;
     }
 
     /// <summary>
