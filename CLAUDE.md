@@ -1186,6 +1186,35 @@ entrenador 473 pasa de Larvitar a **Tyranitar**. Hay dos herramientas nuevas par
 contestar a mano: `RomTool quien-lleva <especie>` y `RomTool entrenador <id>`, las dos sobre un mod
 generado **o instalado**. Ver §85.
 
+**El Huevo Malo, y un comentario que avisaba de su propio fallo (2026-09-05).** El jugador guardó y
+su Shedinja salió como un huevo. No era un huevo: era un **Huevo Malo**, que es lo que el juego
+dibuja cuando una entrada no cuadra con su firma de control, y **ningún campo lo anuncia**. Un huevo
+de verdad es la bandera `IsEgg`, que vive en el **bit 30** del entero que guarda los seis IV — de
+ahí que una escritura torcida en los IV pueda incubar un Pokémon sin tocar nada más. `Probe --huevo`
+pone los dos lados juntos para no volver a confundirlos.
+
+En memoria estaba perfecto; en la partida, de los cuatro bloques de un PK7 **el del mote y los
+movimientos era exactamente lo escrito** y los de especie y encuentro eran basura, y **las dos
+basuras compartían tramos largos**. Eso no es escribir en el sitio equivocado: es texto en claro
+donde debería ir cifrado.
+
+Dos fallos, los dos en `Watch` y los dos míos del §96. **PKHeX descifra el array que se le da, en el
+sitio**, así que la comprobación de identidad que añadí convertía los bytes que después se le
+entregaban al emulador en su versión descifrada: el emulador estuvo estampando texto en claro sobre
+un hueco cifrado **cinco veces por segundo**, y al guardar el juego leyó ese hueco a medio
+reescribir. Lo humillante es que **el comentario de esa misma función avisaba del peligro exacto**;
+un comentario que describe un riesgo no lo impide, lo impide el código. Y segundo, se registraban
+**260 bytes** cuando el Pokémon acaba en el 232: lo que sigue lo actualiza el juego sin parar, así
+que el guardia veía diferencia siempre. El §53 ya lo prohibía para las escrituras y el guardia
+también tiene que obedecerlo.
+
+`WatchBlockTests` levanta un emulador falso que apunta lo que se le registra, **verificado que falla
+con el código viejo** en sus dos mitades. Y una partida ya rota se arregla con `Probe --huevo
+--arreglar <captura>`, que reconstruye desde la captura previa a la escritura — un Huevo Malo no se
+repara en su sitio porque dentro no hay nada legible. Ahí la identidad va por la **constante de
+encriptación** y no por el PID, única excepción a la regla del §96 y por un motivo medido: el PID
+está dentro del bloque roto, y esos cuatro bytes del principio van en claro. Ver §97.
+
 **Siguiente.** Probar en partida real los combates importantes, los iniciales y las tiendas.
 
 Y decidir entre los cinco el trueque del combate por link, que ya está medido: **o estadísticas
@@ -1223,7 +1252,7 @@ Lo que NO está resuelto todavía y no debe darse por hecho (detalle en `docs/AR
 | Copia de seguridad de la run | **HECHA** — al arrancar, diez copias rotativas. Antes había 319 copias de la partida y cero de la run. Ver `ARCHITECTURE.md` §76 |
 | Mantenimiento desde la aplicación | **HECHO Y VISTO EN LA APP** — auditoría, reparar PID, cerrar entregados y corregir etapas, sin terminal. Ver `ARCHITECTURE.md` §77 |
 | Estadísticas | **HECHA Y VISTA EN LA APP** — libro de puntos, curva de saldo, colección y récords, todo proyectado sobre la cadena de eventos. Ver `ARCHITECTURE.md` §78 |
-| Fork de Azahar: la muerte se reaplica sola | **EN `master` Y VERIFICADO** — `WatchBlock`, un tipo de paquete nuevo: el emulador repone la marca cinco veces por segundo desde su propio hilo. Medido: `FA` → `66` → **`FA`**, con su línea en el log. Lo que falta por ver es que sea EL JUEGO quien la deshaga. Ver `ARCHITECTURE.md` §95 y `docs/fork/02-muerte-permanente.md` |
+| Fork de Azahar: la muerte se reaplica sola | **EN `master`; EL CLIENTE, CORREGIDO Y SIN PROBAR EN EL JUEGO** — el emulador repone la marca cinco veces por segundo y eso está medido (`FA` → `66` → **`FA`**). Lo que estaba mal era lo que se le mandaba: bytes **descifrados** y **260** en vez de 232, y eso corrompió una partida real (§97). Arreglado y con pruebas que fallan con el código viejo, pero **nadie lo ha visto funcionar contra el juego desde el arreglo**. Ver `ARCHITECTURE.md` §95, §96, §97 |
 | `PermaLocke.Admin` | **SIGUE SIENDO EL ANDAMIO DE VISUAL STUDIO** — 66 líneas, `Title="MainWindow"` y un `Grid` vacío. O se construye o se borra |
 | API concreta de pk3DS.Core | **VERIFICADA** contra la ROM real — ver `ARCHITECTURE.md` §19 |
 
@@ -1293,6 +1322,14 @@ dotnet run --project tools/PermaLocke.Probe -- --etapas 0
 # cada cara de la ruleta contra una COPIA; la partida no se toca nunca
 dotnet run --project tools/PermaLocke.Probe -- --ruleta
 dotnet run --project tools/PermaLocke.Probe -- --ruleta --probar
+
+# un hueco que el juego dibuja como huevo: dice si es un huevo o un Huevo Malo
+dotnet run --project tools/PermaLocke.Probe -- --huevo
+dotnet run --project tools/PermaLocke.Probe -- --huevo-copias
+dotnet run --project tools/PermaLocke.Probe -- --huevo-diff "Saves/backup/<captura>.bin" 1
+# reconstruye el hueco desde la captura previa; --probar lo hace SOBRE UNA COPIA
+dotnet run --project tools/PermaLocke.Probe -- --huevo --arreglar "Saves/backup/<captura>.bin" --probar
+dotnet run --project tools/PermaLocke.Probe -- --huevo --arreglar "Saves/backup/<captura>.bin"
 
 # entregados en un wonder trade y contados todavía como vivos
 dotnet run --project tools/PermaLocke.Probe -- --intercambiados

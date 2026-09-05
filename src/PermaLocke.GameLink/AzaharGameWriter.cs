@@ -227,6 +227,17 @@ public sealed class AzaharGameWriter(
     /// The tag is the first four bytes, the encryption constant, which is the one field of a party
     /// entry that is <b>not</b> encrypted and identifies whoever lives there.
     /// </para>
+    /// <para>
+    /// ONLY THE ENCRYPTED BLOCK IS GUARDED, and this is the whole reason the guard is safe. What
+    /// follows it is the party tail, which in the authoritative structures belongs to something the
+    /// game updates continuously — so guarding 260 bytes meant the emulator saw a difference at all
+    /// times and rewrote the entry five times a second, for ever. It corrupted a real save: the
+    /// game read the slot mid-rewrite while serialising it and stored an entry whose halves came
+    /// from two different moments, which the game then drew as a Bad Egg. Rule §53 already said not
+    /// to write past the encrypted block in structures whose tail is not identified; the guard has
+    /// to obey it too. Everything the death marker changes — species, nickname, moves, level —
+    /// lives inside this block, and the checksum vouches for it.
+    /// </para>
     /// </remarks>
     public bool Watch(uint slotAddress, uint expectedPid)
     {
@@ -235,12 +246,19 @@ public sealed class AzaharGameWriter(
             return false;
         }
 
+        // PK7 DESCIFRA EL ARRAY QUE SE LE DA, EN EL SITIO. Sin esta copia, el bloque que se
+        // registra abajo ya no es el que se leyó: es su versión descifrada, o sea unos bytes que
+        // en el juego no aparecen nunca. El emulador los estampaba sobre el hueco cinco veces por
+        // segundo, y de ahí salió un Huevo Malo en la partida de verdad. El comentario de arriba
+        // ya avisaba de este peligro exacto; la comprobación de identidad lo reintrodujo al
+        // añadir este PK7. La copia es de una línea y es lo único que lo impide.
+        var pokemon = new PK7((byte[])bytes.Clone());
+
         // LA IDENTIDAD POR DELANTE, y aquí faltaba. El que llama recorre las estructuras usando el
         // MISMO número de hueco en todas, y las estructuras guardan el equipo en órdenes
         // distintos: se vio en la partida real registrando cinco direcciones de las que cuatro
         // llevaban a otro Pokémon. Congelar el bloque de uno vivo es bastante peor que no vigilar
         // al muerto, porque el emulador se lo repone cada doscientos milisegundos.
-        var pokemon = new PK7(bytes);
 
         if (!pokemon.ChecksumValid || pokemon.PID != expectedPid)
         {
@@ -252,7 +270,7 @@ public sealed class AzaharGameWriter(
 
         var tag = System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(bytes);
 
-        return client.WatchBlock(slotAddress, tag, bytes);
+        return client.WatchBlock(slotAddress, tag, bytes.AsSpan(0, StoredSize).ToArray());
     }
 
     /// <summary>Puts back exactly what was there, from the newest backup of that address.</summary>

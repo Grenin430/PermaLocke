@@ -7248,3 +7248,98 @@ Tres veces el mismo error en una noche —dar por buena una **posición** en vez
 **identidad**—, y las tres con el dato correcto ya medido y escrito. La regla no es «acuérdate»: es
 que ninguna función que escriba en la partida debería aceptar una dirección sin un PID al lado.
 `ApplyDeath` y `Watch` ya lo exigen; `--write-hp` no, y por eso costó un Gyarados a 999.
+
+## 97. El Huevo Malo: PKHeX descifra el array que se le da (2026-09-05)
+
+El jugador guardó la partida y su Shedinja **apareció como un huevo**. No era un huevo: era un
+**Huevo Malo**, que es lo que el juego dibuja cuando una entrada de Pokémon no cuadra con su propia
+firma de control. Ningún campo lo anuncia — no hay una bandera de «esto está roto», solo un
+checksum que no da.
+
+Distinguir las dos cosas era el primer trabajo, porque los arreglos son opuestos: un huevo de
+verdad es la **bandera `IsEgg`**, que vive en el **bit 30** del entero de 32 bits que guarda los
+seis IV, así que una escritura torcida en los IV puede incubar un Pokémon sin que nada más cambie.
+Para eso está `Probe --huevo`, que pone los dos lados juntos.
+
+### La medida
+
+En **memoria** el Shedinja estaba perfecto: `#292 «MUERTO»`, firma correcta, PID `8EC2769F`. En la
+**partida guardada**, el mismo hueco:
+
+```
+hueco 1: #13740 «MUERTO»
+    EC=DE5EBE08  orden de bloques=16
+    huevo=no  mote=sí
+    checksum guardado=CEA8 → NO CUADRA (Huevo Malo)
+    exp=2458524448  Nv(exp)=100  Stat_Level=226
+    IV=27/5/19/28/8/21
+    PS=2895/18021  PID=00AAA024
+```
+
+`Probe --huevo-diff` compara esa entrada con la captura que PermaLocke guarda antes de cada
+escritura, descifrando los dos lados. De los cuatro bloques de 56 bytes que forman un PK7:
+
+| Bloque | Estado |
+|---|---|
+| A — especie, PID, experiencia | **basura** |
+| B — mote, movimientos, IV | exactamente lo que se escribió |
+| C — entrenador original | intacto |
+| D — encuentro, entrenador | **basura** |
+
+Y la basura de A y de D **compartía tramos largos** — la misma secuencia de quince bytes aparecía
+en los dos, a 168 bytes de distancia, que son tres bloques justos y el mismo desplazamiento dentro
+de cada uno. Eso no es una escritura equivocada: es texto en claro donde debería haber texto
+cifrado, descifrado encima por quien lo lee.
+
+### Los dos fallos, los dos en `AzaharGameWriter.Watch`
+
+**Uno: PKHeX descifra el array que se le da, en el sitio.** La comprobación de identidad añadida en
+el §96 hacía `new PK7(bytes)` sobre el mismo array que después se le entregaba al emulador. A
+partir de esa línea, `bytes` ya no era lo que el juego tiene: era su versión **descifrada**. El
+emulador estuvo estampando texto en claro sobre un hueco cifrado **cinco veces por segundo**, el
+juego lo reponía, y vuelta a empezar — que es lo que sale en su log:
+
+```
+1474.16  The game rewrote 0x33F80744; marker restored
+1475.57  The game rewrote 0x330128E4; marker restored
+1477.57  The game rewrote 0x33F80744; marker restored
+1478.57  The game rewrote 0x33F80744; marker restored
+```
+
+Al guardar, el juego leyó ese hueco en mitad de la reescritura y serializó una entrada con mitades
+de dos momentos distintos. Lo humillante es que **el comentario de esa misma función avisaba de
+este peligro exacto** — «pasarlos por PKHeX registraría un bloque que no existe en el juego, y el
+emulador reescribiría el hueco con basura cinco veces por segundo»— y el §96 lo provocó al añadir
+el `PK7`. Cuesta una copia de una línea. Un comentario que describe un peligro no lo impide; lo
+impide el código.
+
+**Dos: se registraban 260 bytes.** Solo los 232 primeros son el Pokémon. Lo que sigue es la cola de
+equipo, que en las estructuras autoritativas pertenece a algo que el juego actualiza sin parar, así
+que el guardia veía diferencia **siempre**. El §53 ya había prohibido escribir más allá del bloque
+cifrado en las estructuras cuya cola no está identificada; el guardia también tiene que obedecerlo.
+Todo lo que la marca de muerte toca —especie, mote, movimientos, nivel— vive dentro de esos 232, y
+el checksum responde por ellos.
+
+### La prueba
+
+`WatchBlockTests` levanta un emulador falso que **apunta lo que se le registra**, y comprueba las
+dos mitades. Verificado que falla con el código viejo, que es lo único que hace que una prueba
+signifique algo: `Expected 232, Actual 260`, y el contenido distinto a partir del byte 8 — el
+primero que va cifrado.
+
+### El arreglo de una partida ya rota
+
+Un Huevo Malo **no se repara en su sitio**: todo lo que hay dentro se lee como ruido, así que no
+hay nada que corregir. Lo que lo hace posible es que PermaLocke captura los bytes exactos del hueco
+antes de cada escritura, así que el Pokémon que había está en disco, íntegro. `Probe --huevo
+--arreglar <captura>` le vuelve a aplicar el `DeathMark` de siempre y lo mete en el hueco.
+
+La identidad va por la **constante de encriptación** y no por el PID, y es la única excepción del
+proyecto a la regla del §96. No es un descuido: el PID vive dentro del bloque roto y se lee como
+ruido; los cuatro bytes del principio van en claro y sobreviven a lo que le pase al resto. Son lo
+único de un Huevo Malo que sigue significando algo. Y se niega a tocar un hueco cuya firma esté
+bien, porque un arreglo que también puede pisar a un Pokémon sano no es un arreglo.
+
+Con `--probar` va sobre una copia, y se comprobaron las dos cosas antes de tocar la partida: que
+reconstruye (`#292 «MUERTO» Nv 1 PID 8EC2769F firma OK`) y que **una captura de otro Pokémon la
+frena** (`las constantes de encriptación no coinciden. No se escribe`).

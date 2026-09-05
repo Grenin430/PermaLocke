@@ -67,6 +67,27 @@ if (args.Length >= 1 && args[0] == "--nombres")
     return PermaLocke.Probe.NameProbe.Run(args.Contains("--arreglar"));
 }
 
+// Huevo: las copias de entradas de equipo que PermaLocke guarda antes de escribir.
+if (args.Length >= 1 && args[0] == "--huevo-copias")
+{
+    return PermaLocke.Probe.EggBackups.Run(args.Length >= 2 ? args[1] : "Saves/backup");
+}
+
+// Huevo: comparar la partida con una copia previa a una escritura.
+if (args.Length >= 2 && args[0] == "--huevo-diff")
+{
+    return PermaLocke.Probe.EggCompare.Run(args[1], args.Length >= 3 ? int.Parse(args[2]) - 1 : 0);
+}
+
+// Huevo: distingue un huevo de verdad de un Huevo Malo. Solo lee la partida.
+if (args.Length >= 1 && args[0] == "--huevo")
+{
+    return args.Contains("--arreglar")
+        ? PermaLocke.Probe.EggProbe.Repair(args[Array.IndexOf(args, "--arreglar") + 1], 0,
+            args.Contains("--probar"))
+        : PermaLocke.Probe.EggProbe.Run();
+}
+
 // EV: leer no exige nada, y la prueba de escritura va sobre una copia, nunca sobre la partida.
 if (args.Length >= 1 && args[0] == "--ev")
 {
@@ -589,6 +610,15 @@ if (Index("--peek") is { } peekIndex)
                           + "  Nv(pkhex)=" + pokemon.CurrentLevel
                           + "  Nv(0xEC)=" + pokemon.Stat_Level
                           + "  checksum=" + (pokemon.ChecksumValid ? "ok" : "NO")
+                          // IsEgg no es un campo suyo: es el BIT 30 del entero de 32 bits que
+                          // guarda los seis IV, con el 31 para IsNicknamed. Por eso una escritura
+                          // torcida en los IV puede convertir a un Pokemon en un huevo sin que
+                          // nada mas cambie, y por eso hay que poder verlo de un vistazo.
+                          + "  IV=" + string.Join('/', pokemon.IV_HP, pokemon.IV_ATK, pokemon.IV_DEF,
+                              pokemon.IV_SPA, pokemon.IV_SPD, pokemon.IV_SPE)
+                          + (pokemon.IsEgg ? "  HUEVO" : string.Empty)
+                          + (pokemon.IsNicknamed ? "  mote" : string.Empty)
+                          + "  «" + pokemon.Nickname + "»"
                           + (pokemon.IsShiny ? "  SHINY" : string.Empty));
     }
 
