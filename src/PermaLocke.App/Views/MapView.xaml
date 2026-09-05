@@ -40,6 +40,16 @@
                             </Grid.RenderTransform>
                             <!-- La onda: sale del marcador al pulsarlo y se va. Vive debajo de
                                  todo y con Opacity 0, asi que fuera de su medio segundo no existe. -->
+<!-- El latido de una zona donde murio alguien. Vive debajo de todo y con
+                                 Opacity 0, asi que en las otras tres zonas no existe. -->
+                            <Ellipse x:Name="Toll" Stroke="{TemplateBinding Background}"
+                                     StrokeThickness="2" Fill="Transparent" Opacity="0"
+                                     RenderTransformOrigin="0.5,0.5">
+                                <Ellipse.RenderTransform>
+                                    <ScaleTransform x:Name="TollScale" ScaleX="1" ScaleY="1" />
+                                </Ellipse.RenderTransform>
+                            </Ellipse>
+
                             <Ellipse x:Name="Wave" Stroke="{TemplateBinding Background}"
                                      StrokeThickness="3" Fill="Transparent" Opacity="0"
                                      RenderTransformOrigin="0.5,0.5">
@@ -58,18 +68,44 @@
                                 </Ellipse.Effect>
                             </Ellipse>
 
-                            <TextBlock x:Name="Number" Text="{TemplateBinding Content}"
+                            <!-- La cifra NO se ve en el mapa: es un indice dentro de la isla, no un
+                                 dato, y sobre el dibujo la zona ya la identifica su sitio. Sigue en
+                                 la plantilla porque el tablero de respaldo -el que sale si faltan
+                                 las imagenes- comparte este estilo, y alli es lo UNICO que
+                                 distingue una casilla de otra. Se pide con Tag, que es la unica
+                                 forma de que un estilo derivado encienda una pieza de la plantilla
+                                 sin duplicarla entera.
+                                 Binding y NO TemplateBinding: Content es un int y Text es string, y
+                                 un TemplateBinding no convierte tipos. No falla, no avisa, no
+                                 pinta, y por eso esta cifra no se habia visto nunca. -->
+                            <TextBlock x:Name="Number" Visibility="Collapsed"
+                                       Text="{Binding Content, RelativeSource={RelativeSource TemplatedParent}}"
                                        HorizontalAlignment="Center" VerticalAlignment="Center"
-                                       Foreground="{TemplateBinding Foreground}"
+                                       Foreground="{StaticResource TextBrush}"
                                        FontFamily="{TemplateBinding FontFamily}"
                                        FontSize="{TemplateBinding FontSize}" />
 
-                            <!-- El tachado de las muertas. Se lee antes que el color y ahorra ir a
-                                 la leyenda: es el unico de estos adornos que ademas informa. -->
+                            <!-- Los tres estados, dibujados. Trazo y no silueta porque a doce
+                                 pixeles una figura rellena se convierte en una mancha, y estos
+                                 tres tienen que distinguirse entre si de un vistazo. -->
+                            <Path x:Name="Tick" Stroke="{TemplateBinding Foreground}"
+                                  StrokeThickness="2.4" StrokeStartLineCap="Round"
+                                  StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                                  Visibility="Collapsed" Data="M 7,13.5 L 11,17.5 L 19,8.5" />
+
+                            <!-- El aspa de las muertas. Se lee antes que el color y ahorra ir a la
+                                 leyenda: es el unico de estos adornos que ademas informa. -->
                             <Path x:Name="Cross" Stroke="{TemplateBinding Foreground}"
-                                  StrokeThickness="2.2" StrokeStartLineCap="Round"
+                                  StrokeThickness="2.4" StrokeStartLineCap="Round"
                                   StrokeEndLineCap="Round" Visibility="Collapsed"
-                                  Data="M 6,20 L 20,6" />
+                                  Data="M 8,8 L 18,18 M 18,8 L 8,18" />
+
+                            <!-- La huida: una flecha que sale, hacia fuera del circulo. -->
+                            <Path x:Name="Away" Stroke="{TemplateBinding Foreground}"
+                                  StrokeThickness="2.2" StrokeStartLineCap="Round"
+                                  StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                                  Visibility="Collapsed"
+                                  Data="M 8,18 L 17,9 M 17,9 L 11.5,9 M 17,9 L 17,14.5" />
                         </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
@@ -100,10 +136,15 @@
                                 </Trigger.ExitActions>
                             </Trigger>
 
-                            <!-- Marcada: el numero deja de importar y baja de tono, con lo que los
-                                 huecos que quedan cantan mas. -->
+                            <!-- El tablero de respaldo pide su cifra. Va antes que el disparador de
+                                 marcada, para que ahi tambien la pierda en cuanto tiene dibujo: dos
+                                 cosas encima del mismo circulo no se leen ni una. -->
+                            <Trigger Property="Tag" Value="numerada">
+                                <Setter TargetName="Number" Property="Visibility" Value="Visible" />
+                            </Trigger>
+
                             <DataTrigger Binding="{Binding IsMarked}" Value="True">
-                                <Setter TargetName="Number" Property="Opacity" Value="0.7" />
+                                <Setter TargetName="Number" Property="Visibility" Value="Collapsed" />
                             </DataTrigger>
 
                             <!-- Atenuada porque la leyenda esta senalando otro estado. -->
@@ -111,14 +152,42 @@
                                 <Setter Property="Opacity" Value="0.18" />
                             </DataTrigger>
 
+                            <DataTrigger Binding="{Binding State}" Value="Caught">
+                                <Setter TargetName="Tick" Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+
+                            <!-- La muerte pesa: aro mas grueso y un latido lento que sale del
+                                 marcador. Es el unico estado que no se puede deshacer jugando, y
+                                 «donde perdi gente» es la pregunta que un mapa asi tiene que
+                                 contestar desde lejos. Solo late mientras la zona esta en ese
+                                 estado: el disparador lo enciende y lo apaga. -->
                             <DataTrigger Binding="{Binding State}" Value="Died">
                                 <Setter TargetName="Cross" Property="Visibility" Value="Visible" />
-                                <Setter TargetName="Number" Property="Opacity" Value="0.45" />
+                                <Setter TargetName="Pin" Property="StrokeThickness" Value="3" />
+                                <DataTrigger.EnterActions>
+                                    <BeginStoryboard x:Name="Knell">
+                                        <Storyboard RepeatBehavior="Forever">
+                                            <DoubleAnimation Storyboard.TargetName="TollScale"
+                                                             Storyboard.TargetProperty="ScaleX"
+                                                             From="1" To="2.1" Duration="0:0:2.2" />
+                                            <DoubleAnimation Storyboard.TargetName="TollScale"
+                                                             Storyboard.TargetProperty="ScaleY"
+                                                             From="1" To="2.1" Duration="0:0:2.2" />
+                                            <DoubleAnimation Storyboard.TargetName="Toll"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             From="0.5" To="0" Duration="0:0:2.2" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </DataTrigger.EnterActions>
+                                <DataTrigger.ExitActions>
+                                    <StopStoryboard BeginStoryboardName="Knell" />
+                                </DataTrigger.ExitActions>
                             </DataTrigger>
 
                             <!-- La huida con el anillo roto: algo que se escapo. -->
                             <DataTrigger Binding="{Binding State}" Value="Fled">
                                 <Setter TargetName="Pin" Property="StrokeDashArray" Value="2.2 1.6" />
+                                <Setter TargetName="Away" Property="Visibility" Value="Visible" />
                             </DataTrigger>
 
                             <!-- Un rebote al pulsar. Es el gesto que mas se repite en toda la
@@ -172,8 +241,44 @@
             </Style.Triggers>
         </Style>
 
+        <!-- Una celda por zona para la barra de la run entera. Fija de ancho, asi que los cuatro
+             grupos salen proporcionales solos sin que nadie calcule una anchura. -->
+        <Style x:Key="RunCell" TargetType="Border">
+            <Setter Property="Width" Value="9" />
+            <Setter Property="Height" Value="7" />
+            <Setter Property="Margin" Value="0,0,2,0" />
+            <Setter Property="CornerRadius" Value="2" />
+            <Setter Property="Background" Value="{StaticResource SunkenBrush}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding State}" Value="Caught">
+                    <Setter Property="Background" Value="{StaticResource ZoneCaughtBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding State}" Value="Died">
+                    <Setter Property="Background" Value="{StaticResource ZoneDiedBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding State}" Value="Fled">
+                    <Setter Property="Background" Value="{StaticResource ZoneFledBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- El grupo de una isla dentro de esa barra, subrayado si es la que estas viendo. -->
+        <Style x:Key="RunCellGroup" TargetType="Border">
+            <Setter Property="Margin" Value="0,0,12,0" />
+            <Setter Property="Padding" Value="0,0,0,4" />
+            <Setter Property="BorderThickness" Value="0,0,0,2" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                    <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
         <!-- El mismo marcador para el tablero de respaldo, cuadrado y sin mapa debajo. -->
         <Style x:Key="BoardMarker" TargetType="Button" BasedOn="{StaticResource ZoneMarker}">
+            <!-- Sin mapa debajo no hay sitio que identifique la zona, asi que aqui la cifra si. -->
+            <Setter Property="Tag" Value="numerada" />
             <Setter Property="Margin" Value="0,0,5,5" />
             <Setter Property="Background" Value="{StaticResource SunkenBrush}" />
             <Setter Property="BorderBrush" Value="{StaticResource BorderStrongBrush}" />
@@ -348,7 +453,7 @@
         <Border Style="{StaticResource Inset}" Padding="16,14">
             <DockPanel>
 
-                <DockPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+                <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
                     <Button DockPanel.Dock="Right" Content="RELEER" Style="{StaticResource GhostButton}"
                             Command="{Binding RefreshCommand}" Padding="14,8" FontSize="11.5"
                             VerticalAlignment="Top" />
@@ -367,6 +472,41 @@
                         </StackPanel>
                     </StackPanel>
                 </DockPanel>
+
+                <!-- LA RUN ENTERA, una celda por zona y un grupo por isla. Sustituye a la cifra
+                     suelta: «17 de 61» hay que leerlo, y esto se ve. Y dice mas que un progreso,
+                     porque cada celda lleva su estado, asi que de un vistazo estan las cuatro
+                     islas, lo gastado, y donde se torcio. El subrayado marca la que estas viendo.
+                     Va en un Viewbox que solo encoge: con la ventana estrecha se ajusta, y con
+                     sitio de sobra no se estira hasta deformarse. -->
+                <Viewbox DockPanel.Dock="Top" Stretch="Uniform" StretchDirection="DownOnly"
+                         HorizontalAlignment="Left" Margin="0,0,0,14">
+                    <ItemsControl ItemsSource="{Binding Islands}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Style="{StaticResource RunCellGroup}">
+                                    <ItemsControl ItemsSource="{Binding Zones}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel Orientation="Horizontal" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Style="{StaticResource RunCell}" />
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Viewbox>
 
                 <TextBlock DockPanel.Dock="Top" Style="{StaticResource Faint}" TextWrapping="Wrap"
                            Visibility="{Binding HasMap, Converter={StaticResource InverseBoolToVisibility}}"
@@ -406,6 +546,38 @@
                                                       Opacity="0.55" Color="Black" />
                                 </Image.Effect>
                             </Image>
+
+                            <!-- EL MAR RESPIRA. Una banda de luz cruzando el mapa cada diecisiete
+                                 segundos. Va sobre el dibujo entero y no solo sobre el agua porque
+                                 el agua es parte del PNG y no hay nada que recortar; a este alfa,
+                                 sobre tierra no se aprecia y sobre el azul se lee como luz.
+                                 Anima la TRANSFORMACION DEL PINCEL y no un efecto: mover un
+                                 degradado es barato, y recalcular una sombra en cada fotograma
+                                 sobre una imagen de este tamano no lo es. -->
+                            <Rectangle IsHitTestVisible="False">
+                                <Rectangle.Fill>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                        <GradientStop Color="Transparent" Offset="0.32" />
+                                        <GradientStop Color="{StaticResource TideColor}" Offset="0.5" />
+                                        <GradientStop Color="Transparent" Offset="0.68" />
+                                        <LinearGradientBrush.Transform>
+                                            <TranslateTransform x:Name="Tide" X="-1100" />
+                                        </LinearGradientBrush.Transform>
+                                    </LinearGradientBrush>
+                                </Rectangle.Fill>
+                                <Rectangle.Triggers>
+                                    <EventTrigger RoutedEvent="Rectangle.Loaded">
+                                        <BeginStoryboard>
+                                            <Storyboard RepeatBehavior="Forever">
+                                                <DoubleAnimation Storyboard.TargetName="Tide"
+                                                                 Storyboard.TargetProperty="X"
+                                                                 From="-1100" To="1100"
+                                                                 Duration="0:0:17" />
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </EventTrigger>
+                                </Rectangle.Triggers>
+                            </Rectangle>
 
                             <!-- La capa de marcadores. El clic para colocar lo recoge el
                                  code-behind, que es lo unico que sabe donde se ha pinchado. -->
@@ -564,7 +736,16 @@
                 <!-- LEYENDA. El mapa es lo unico que hay que mirar, asi que el panel solo explica
                      que significa cada color y no pide nada. -->
                 <StackPanel>
-                    <TextBlock Text="LEYENDA" Style="{StaticResource StatLabel}" Margin="0,0,0,4" />
+                    <!-- El rotulo dice de QUE isla son las cifras. Antes ponia solo LEYENDA y los
+                         cuatro numeros eran del total de Alola, asi que se leian como si fueran de
+                         la isla que tenias delante. El total tiene ya su sitio propio, que es la
+                         barra de debajo de la cabecera. -->
+                    <DockPanel Margin="0,0,0,4">
+                        <TextBlock DockPanel.Dock="Right" Style="{StaticResource Faint}"
+                                   VerticalAlignment="Center"
+                                   Text="{Binding SelectedIsland.Name}" />
+                        <TextBlock Text="EN ESTA ISLA" Style="{StaticResource StatLabel}" />
+                    </DockPanel>
                     <TextBlock Style="{StaticResource Faint}" TextWrapping="Wrap" Margin="0,0,0,12"
                                Text="Pincha una zona para marcar lo que pasó. Cada clic pasa al siguiente, y el cuarto la deja sin marcar." />
 
@@ -607,7 +788,7 @@
                             <Border DockPanel.Dock="Left" Style="{StaticResource LegendDot}"
                                     Background="{StaticResource ZoneFreeBrush}" />
                             <TextBlock DockPanel.Dock="Right" Style="{StaticResource LegendCount}"
-                                       svc:Rolling.To="{Binding FreeCount}" />
+                                       svc:Rolling.To="{Binding SelectedIsland.FreeCount}" />
                             <TextBlock Style="{StaticResource LegendText}" Text="Sin marcar" />
                         </DockPanel>
 
@@ -616,7 +797,7 @@
                             <Border DockPanel.Dock="Left" Style="{StaticResource LegendDot}"
                                     Background="{StaticResource ZoneCaughtBrush}" />
                             <TextBlock DockPanel.Dock="Right" Style="{StaticResource LegendCount}"
-                                       svc:Rolling.To="{Binding CaughtCount}" />
+                                       svc:Rolling.To="{Binding SelectedIsland.CaughtCount}" />
                             <TextBlock Style="{StaticResource LegendText}" Text="Atrapado en esta zona" />
                         </DockPanel>
 
@@ -625,7 +806,7 @@
                             <Border DockPanel.Dock="Left" Style="{StaticResource LegendDot}"
                                     Background="{StaticResource ZoneDiedBrush}" />
                             <TextBlock DockPanel.Dock="Right" Style="{StaticResource LegendCount}"
-                                       svc:Rolling.To="{Binding DiedCount}" />
+                                       svc:Rolling.To="{Binding SelectedIsland.DiedCount}" />
                             <TextBlock Style="{StaticResource LegendText}" Text="Primer pokémon matado" />
                         </DockPanel>
 
@@ -634,7 +815,7 @@
                             <Border DockPanel.Dock="Left" Style="{StaticResource LegendDot}"
                                     Background="{StaticResource ZoneFledBrush}" />
                             <TextBlock DockPanel.Dock="Right" Style="{StaticResource LegendCount}"
-                                       svc:Rolling.To="{Binding FledCount}" />
+                                       svc:Rolling.To="{Binding SelectedIsland.FledCount}" />
                             <TextBlock Style="{StaticResource LegendText}" Text="Primer encuentro: huida" />
                         </DockPanel>
                     </ItemsControl>

@@ -237,6 +237,11 @@
     <!-- El halo bajo la isla. Azul palido, del color del mar que la rodea en el propio dibujo. -->
     <Color x:Key="IslandHaloColor">#FF7FD8FF</Color>
 
+    <!-- La luz que cruza el mar del mapa, muy lenta. Azul palido y no blanco: el unico sitio
+         donde se ve de verdad es el agua, y ahi tiene que parecer luz sobre el agua y no una
+         franja pasando por encima. Subirle el alfa la convierte en lo segundo. -->
+    <Color x:Key="TideColor">#1AAEE6FF</Color>
+
     <!-- El brillo que recorre el boton de la isla elegida. Violeta y no blanco: era el ultimo
          blanco puro que quedaba en la aplicacion -#33FFFFFF- y con el resto de la pantalla teñida
          se leia como una pieza de otro sitio. Tiene que ser el ACENTO y no un gris claro, porque

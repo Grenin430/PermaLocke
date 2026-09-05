@@ -91,6 +91,26 @@ public sealed partial class IslandViewModel(string name, IReadOnlyList<MapZoneVi
     [ObservableProperty]
     private bool _isSelected;
 
+    /// <summary>
+    /// What happened on this island, one figure per state.
+    /// </summary>
+    /// <remarks>
+    /// Per island and not for the whole run, because the panel they are shown in is about the
+    /// island you are looking at and the four figures were being read as if they were. The total
+    /// has its own place now: the bar under the header, which is the whole run at once.
+    /// </remarks>
+    [ObservableProperty]
+    private int _caughtCount;
+
+    [ObservableProperty]
+    private int _diedCount;
+
+    [ObservableProperty]
+    private int _fledCount;
+
+    [ObservableProperty]
+    private int _freeCount;
+
     /// <summary>Every zone on it accounted for, which is the thing worth seeing from the sidebar.</summary>
     public bool IsComplete => Count > 0 && SpentCount >= Count;
 
@@ -323,6 +343,7 @@ public sealed partial class MapViewModel : SectionViewModel
             foreach (var island in Islands)
             {
                 var here = 0;
+                int hereCaught = 0, hereDied = 0, hereFled = 0, hereFree = 0;
 
                 foreach (var zone in island.Zones)
                 {
@@ -330,10 +351,10 @@ public sealed partial class MapViewModel : SectionViewModel
 
                     switch (zone.Outcome)
                     {
-                        case ZoneOutcome.Caught: caught++; break;
-                        case ZoneOutcome.Died: died++; break;
-                        case ZoneOutcome.Fled: fled++; break;
-                        default: free++; break;
+                        case ZoneOutcome.Caught: caught++; hereCaught++; break;
+                        case ZoneOutcome.Died: died++; hereDied++; break;
+                        case ZoneOutcome.Fled: fled++; hereFled++; break;
+                        default: free++; hereFree++; break;
                     }
 
                     if (zone.IsMarked)
@@ -343,6 +364,10 @@ public sealed partial class MapViewModel : SectionViewModel
                 }
 
                 island.SpentCount = here;
+                island.CaughtCount = hereCaught;
+                island.DiedCount = hereDied;
+                island.FledCount = hereFled;
+                island.FreeCount = hereFree;
                 count += here;
             }
 
