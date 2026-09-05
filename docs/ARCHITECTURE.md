@@ -7175,3 +7175,76 @@ tropezando con esa diferencia.
 La lista cubre las muertes marcadas **durante esta sesión de la aplicación**, que es el caso que
 estaba fallando. Y sigue siendo memoria: cerrar el juego sin guardar la pierde igual, como la de la
 referencia. Lo permanente de verdad sigue siendo MANTENIMIENTO, que escribe la partida.
+
+## 96. La lista de vigilancia, y dos veces el mismo error mío (2026-09-05)
+
+El §95 dejó el parche funcionando y verificado. Ponerlo a trabajar en una partida de verdad destapó
+tres cosas, **ninguna del parche y las tres del lado de PermaLocke**.
+
+### Una comodidad no puede tumbar la detección de muertes
+
+El jugador salió del juego al menú del emulador. Ahí el RPC deja de contestar un instante,
+`ClearWatchList` lanzó `AzaharRpcException`, y como `EnsureWatchList` estaba **al principio** de
+`InspectAsync` se llevó por delante el ciclo entero: la muerte que ocurrió después **no se
+registró**.
+
+Tres arreglos, la misma lección: va **después** de las muertes, va **envuelto**, y **la firma se
+guarda solo si el refresco salió bien** — se guardaba antes de intentarlo, así que un intento
+fallido quedaba anotado como hecho y la lista se quedaba vieja hasta que el equipo se moviera otra
+vez.
+
+### La lista se perdía al reiniciar
+
+Vive en la memoria del emulador y PermaLocke solo la mandaba **en el momento** de una muerte, así
+que bastaba cerrar y abrir cualquiera de los dos para quedarse con el Shedinja puesto y nadie
+mirándolo. Medido: emulador reiniciado a las 03:15, aplicación a las 03:20, y el registro del
+emulador sin una sola entrada mientras el Shedinja seguía en el hueco 0.
+
+Ahora, al conectar, se adoptan los caídos que ya estén en el equipo. **Quién está muerto lo dice el
+historial, por PID**, y no «ese parece un Shedinja MUERTO»: esta run ha tenido uno real que nunca
+fue una muerte (§59), y leer el juego para decidirlo lo habría adoptado y apuntalado para siempre.
+
+### Y el error que hice dos veces en la misma noche
+
+`RefreshWatchList` daba por hecho que el muerto ocupa **el mismo número de hueco en todas las
+estructuras**. No lo ocupa —guardan el equipo en órdenes distintos y una llega a quedarse con un
+orden viejo—, y eso estaba medido en el §93, unas horas antes.
+
+Se vio en las etiquetas del propio log del emulador:
+
+```
+WatchBlock: 0x3254EE60 tag DE5EBE08     ← otro Pokémon
+WatchBlock: 0x330128E4 tag 14EFCBBA     ← el Shedinja
+WatchBlock: 0x3002E558 tag DE5EBE08     ← otro
+WatchBlock: 0x3002F0FC tag DE5EBE08     ← otro
+WatchBlock: 0x33F80744 tag DE5EBE08     ← otro
+```
+
+Cuatro de cinco apuntaban a otro sitio. Es **la regla que yo mismo puse en el emulador** —comprobar
+la identidad antes de escribir— olvidada al elegir qué direcciones mandarle: el guardia comprobaba
+bien, y yo le daba mal la lista.
+
+Ahora se **busca** el PID hueco por hueco en cada estructura, y además `Watch` lee el bloque y no
+manda nada si el PID no coincide. Dos guardias en vez de uno. Después del arreglo, la lista queda en
+**una sola entrada**, la del Shedinja, que es lo correcto: las demás estructuras ya eran escombros.
+
+### No hubo daño, y el motivo importa
+
+El emulador **no repuso nada en toda esa sesión**: cero `marker restored`. Aquellas tres direcciones
+ya no tenían el equipo sino memoria reutilizada —especie 464, PS 2895/18024, nivel 227—, así que la
+etiqueta no cuadraba y las dejó en paz.
+
+**La comprobación de identidad del lado del emulador tapó un fallo del lado del cliente.** Se
+escribió pensando en un equipo que se reordena, y acabó protegiendo de algo bastante peor. Cuando
+una guarda sirve para más de lo que se le pidió, conviene anotarlo: es la razón por la que se ponen.
+
+### La otra vez, la misma noche
+
+Midiendo los PS del §92 escribí 102 en un **Tinkaton** creyendo que era el Houndoom, porque el
+equipo se había reordenado entre dos lecturas y el índice 3 ya no era quien yo creía. Y después
+escribí 999 PS en un Gyarados por usar la herramienta que escribe para leer.
+
+Tres veces el mismo error en una noche —dar por buena una **posición** en vez de comprobar la
+**identidad**—, y las tres con el dato correcto ya medido y escrito. La regla no es «acuérdate»: es
+que ninguna función que escriba en la partida debería aceptar una dirección sin un PID al lado.
+`ApplyDeath` y `Watch` ya lo exigen; `--write-hp` no, y por eso costó un Gyarados a 999.

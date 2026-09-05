@@ -1016,6 +1016,29 @@ Ojo con lo **no comprobado**: lo estático está visto en la aplicación real, p
 y la tirada entera no**, porque verlas exige girar de verdad y girar escribe en la partida. Ver §84.
 
 
+**La lista de vigilancia, y tres fallos mios en una noche (2026-09-05).** Poner el parche a trabajar
+en una partida de verdad destapo tres cosas, **ninguna del parche**. Una: `EnsureWatchList` estaba al
+PRINCIPIO del ciclo, lanzo cuando el jugador salio al menu del emulador -ahi el RPC deja de contestar
+un instante- y **se llevo por delante la deteccion de muertes**; una comodidad no puede tumbar el
+trabajo, asi que va detras, envuelta, y la firma se guarda solo si el refresco salio bien. Dos: la
+lista se perdia al reiniciar cualquiera de los dos programas, asi que ahora **se adoptan al conectar**
+los caidos que ya esten en el equipo, por PID del historial y nunca por «ese parece un Shedinja
+MUERTO» -esta run tuvo uno real que nunca fue una muerte (§59)-.
+
+Y tres, el que importa: `RefreshWatchList` daba por hecho que el muerto ocupa **el mismo hueco en
+todas las estructuras**, y no lo ocupa -medido unas horas antes en el §93-. Se mandaron cinco
+direcciones y **cuatro llevaban a otro Pokemon**, cosa que canta en las etiquetas del log del
+emulador. Es la regla que yo mismo puse EN el emulador, olvidada al elegir que direcciones mandarle:
+el guardia comprobaba bien y yo le daba mal la lista. Ahora se busca el PID hueco por hueco y `Watch`
+no manda nada si no coincide.
+
+**No hubo daño, y el motivo importa**: el emulador no repuso nada -cero `marker restored`- porque
+aquellas direcciones ya eran escombros y la etiqueta no cuadraba. **La comprobacion de identidad del
+lado del emulador tapo un fallo del lado del cliente.** Tres veces la misma noche di por buena una
+POSICION en vez de comprobar la IDENTIDAD -tambien escribiendo 102 PS en un Tinkaton y 999 en un
+Gyarados-, y las tres con el dato correcto ya medido. La regla que sale de ahi: ninguna funcion que
+escriba en la partida deberia aceptar una direccion sin un PID al lado. Ver §96.
+
 **El emulador mantiene la marca de muerte (2026-09-05).** Parche 2 del fork, **en `master` y
 verificado**. Un tipo de paquete nuevo, `WatchBlock`: PermaLocke le da al emulador una direccion,
 una etiqueta y el bloque que debe haber ahi, y el emulador lo repone **cinco veces por segundo**
