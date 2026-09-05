@@ -228,10 +228,25 @@ public sealed class AzaharGameWriter(
     /// entry that is <b>not</b> encrypted and identifies whoever lives there.
     /// </para>
     /// </remarks>
-    public bool Watch(uint slotAddress)
+    public bool Watch(uint slotAddress, uint expectedPid)
     {
         if (!client.TryReadMemory(slotAddress, PartySize, out var bytes) || bytes.Length < PartySize)
         {
+            return false;
+        }
+
+        // LA IDENTIDAD POR DELANTE, y aquí faltaba. El que llama recorre las estructuras usando el
+        // MISMO número de hueco en todas, y las estructuras guardan el equipo en órdenes
+        // distintos: se vio en la partida real registrando cinco direcciones de las que cuatro
+        // llevaban a otro Pokémon. Congelar el bloque de uno vivo es bastante peor que no vigilar
+        // al muerto, porque el emulador se lo repone cada doscientos milisegundos.
+        var pokemon = new PK7(bytes);
+
+        if (!pokemon.ChecksumValid || pokemon.PID != expectedPid)
+        {
+            logger.LogDebug("0x{Address:X8}: ahí no está el PID {Wanted:X8}; no se vigila",
+                slotAddress, expectedPid);
+
             return false;
         }
 

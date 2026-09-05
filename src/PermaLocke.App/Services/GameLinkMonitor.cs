@@ -568,6 +568,9 @@ public sealed class GameLinkMonitor(
     /// party has not been located yet, or the PID is not in it, nothing is written: a wrong
     /// slot would destroy a living Pokémon.
     /// </remarks>
+    /// <summary>Most Pokemon a party can hold, which is how far a slot search goes.</summary>
+    private const int PartySlots = 6;
+
     /// <summary>PID marked dead in the game during this session of PermaLocke.</summary>
     /// <remarks>
     /// Only this session, and that is the honest scope. It covers the case that was failing — the
@@ -721,13 +724,22 @@ public sealed class GameLinkMonitor(
         _warnedNoWatch = false;
         var registered = 0;
 
-        foreach (var member in snapshot.Party.Where(m => _watched.Contains(m.Pid)))
+        // Se BUSCA el PID en cada estructura en vez de dar por hecho que ocupa el mismo hueco en
+        // todas. No lo ocupa: guardan el equipo en órdenes distintos, y una de ellas llega a
+        // quedarse con un orden viejo. Dándolo por hecho se registraron cinco direcciones de las
+        // que cuatro llevaban a un Pokémon VIVO, y el emulador le habría estado congelando el
+        // bloque cinco veces por segundo.
+        foreach (var pid in _watched)
         {
             foreach (var layout in provider.AllLayouts)
             {
-                if (writer.Watch(layout.SlotAddress(member.Slot)))
+                for (var slot = 0; slot < PartySlots; slot++)
                 {
-                    registered++;
+                    if (writer.Watch(layout.SlotAddress(slot), pid))
+                    {
+                        registered++;
+                        break;
+                    }
                 }
             }
         }
