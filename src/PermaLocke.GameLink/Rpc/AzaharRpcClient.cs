@@ -13,7 +13,12 @@ public enum RpcRequestType
     SetGetProcess = 4,
 
     /// <summary>Only in PermaLocke's Azahar fork. The official build rejects it.</summary>
-    SearchMemory = 5
+    SearchMemory = 5,
+
+    /// <summary>
+    /// Also only in the fork: a list of blocks the game is not allowed to change back.
+    /// </summary>
+    WatchBlock = 6
 }
 
 /// <param name="ProcessId">Emulated process handle, as Azahar numbers them.</param>
@@ -320,6 +325,66 @@ public sealed class AzaharRpcClient : IDisposable
             hits[i] = BinaryPrimitives.ReadUInt32LittleEndian(reply.AsSpan(4 + (i * 4)));
         }
         return hits;
+    }
+
+    /// <summary>Longest block the fork will keep watch over.</summary>
+    /// <remarks>A party entry is 260 bytes, so this is not a limit anybody is going to reach.</remarks>
+    public const int MaxWatchBlock = 1024 - (sizeof(uint) * 4);
+
+    /// <summary>
+    /// Empties the emulator's watch list.
+    /// </summary>
+    /// <remarks>
+    /// The list is always replaced whole rather than added to. A list that only grew would keep
+    /// restoring the marker of a Pokémon that is not dead any more because the run was corrected,
+    /// and it would keep pointing at addresses the party has since moved away from.
+    /// </remarks>
+    public bool ClearWatchList() => Watch(0, 0, 0, []);
+
+    /// <summary>
+    /// Asks the emulator to keep <paramref name="block"/> at <paramref name="address"/>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The emulator compares five times a second and rewrites when the game has undone it. That is
+    /// the whole point: PermaLocke writes the death marker once and stops looking, and the game
+    /// puts the slot back when it feels like it.
+    /// </para>
+    /// <para>
+    /// <paramref name="tag"/> is the four plain bytes at the start of the block — the encryption
+    /// constant, which identifies whoever lives in that slot. The emulator refuses to write when it
+    /// stops matching, so a party that reorders costs a missed rewrite and never a clobbered
+    /// neighbour.
+    /// </para>
+    /// </remarks>
+    /// <returns>False when the emulator refused it, or is not the fork.</returns>
+    public bool WatchBlock(uint address, uint tag, ReadOnlySpan<byte> block)
+    {
+        if (block.Length == 0 || block.Length > MaxWatchBlock)
+        {
+            throw new ArgumentException(
+                $"El bloque debe medir entre 1 y {MaxWatchBlock} bytes.", nameof(block));
+        }
+
+        return Watch(1, address, tag, block);
+    }
+
+    private bool Watch(uint mode, uint address, uint tag, ReadOnlySpan<byte> block)
+    {
+        var payload = new byte[(sizeof(uint) * 4) + block.Length];
+        BinaryPrimitives.WriteUInt32LittleEndian(payload, mode);
+        BinaryPrimitives.WriteUInt32LittleEndian(payload.AsSpan(4), (uint)block.Length);
+        BinaryPrimitives.WriteUInt32LittleEndian(payload.AsSpan(8), address);
+        BinaryPrimitives.WriteUInt32LittleEndian(payload.AsSpan(12), tag);
+        block.CopyTo(payload.AsSpan(16));
+
+        var reply = Send(RpcRequestType.WatchBlock, payload);
+
+        // El Azahar oficial contesta VACÍO a un tipo de paquete que no conoce, así que una respuesta
+        // corta es «este emulador no sabe hacer esto» y no un fallo. El que llama lo trata como el
+        // caso normal: se sigue igual que hasta ahora.
+        return reply.Length >= sizeof(uint)
+               && BinaryPrimitives.ReadUInt32LittleEndian(reply) == 1;
     }
 
     /// <summary>True when the emulator answers the search request, i.e. it is the fork.</summary>

@@ -166,6 +166,12 @@ public sealed class GameLinkMonitor(
         var findings = await watcher.InspectAsync(run.Id, snapshot, _stopping.Token);
         var changed = false;
 
+        // Si el equipo se ha mudado de sitio, lo registrado apunta a donde ya no está. Se rehace
+        // la lista SOLO cuando cambia la firma de las estructuras, no en cada vuelta: reenviarla
+        // cada segundo serían diez paquetes por segundo compitiendo con el sondeo por el mismo
+        // socket, que es la clase de ráfaga que ya tumbó el enlace una vez (§54).
+        EnsureWatchList(snapshot);
+
         // Antes que las muertes: el vigilante empareja por PID contra lo registrado, asi que un
         // Pokemon sin registrar es invisible y no puede morirse. Registrando primero, uno que
         // aparece ya caido se cuenta en el mismo ciclo en vez de no contarse nunca. Solo se vuelve
@@ -554,6 +560,77 @@ public sealed class GameLinkMonitor(
     /// party has not been located yet, or the PID is not in it, nothing is written: a wrong
     /// slot would destroy a living Pokémon.
     /// </remarks>
+    /// <summary>PID marked dead in the game during this session of PermaLocke.</summary>
+    /// <remarks>
+    /// Only this session, and that is the honest scope. It covers the case that was failing — the
+    /// marker written and the game undoing it minutes later — and it does not pretend to cover a
+    /// death from a previous run of the application, which is already a Shedinja in the save or is
+    /// not, and is MANTENIMIENTO's job either way.
+    /// </remarks>
+    private readonly HashSet<uint> _watched = [];
+
+    /// <summary>What the party structures looked like when the list was last sent.</summary>
+    private string _watchSignature = string.Empty;
+
+    /// <summary>Rebuilds the emulator's list when, and only when, the party has moved.</summary>
+    private void EnsureWatchList(GameSnapshot snapshot)
+    {
+        if (_watched.Count == 0)
+        {
+            return;
+        }
+
+        var signature = string.Join(',', provider.AllLayouts.Select(l => l.Address))
+                        + '|' + string.Join(',', snapshot.Party.Select(m => $"{m.Pid:X8}:{m.Slot}"));
+
+        if (signature == _watchSignature)
+        {
+            return;
+        }
+
+        _watchSignature = signature;
+        RefreshWatchList(snapshot);
+    }
+
+    /// <summary>
+    /// Hands the emulator the whole list again: every watched Pokémon, in every copy of the party.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Whole and not incremental. The addresses belong to structures that move — the locator has
+    /// been seen going from two of them to five inside one session — so an entry added weeks ago
+    /// would be pointing somewhere the party no longer is. Clearing first means a stale address
+    /// costs a missed rewrite, never a write into the wrong place.
+    /// </para>
+    /// <para>
+    /// Silent when the emulator is the official Azahar: it answers empty to a packet type it does
+    /// not know, and that is the ordinary case, not a failure.
+    /// </para>
+    /// </remarks>
+    private void RefreshWatchList(GameSnapshot snapshot)
+    {
+        if (_watched.Count == 0 || !writer.ClearWatchList())
+        {
+            return;
+        }
+
+        var registered = 0;
+
+        foreach (var member in snapshot.Party.Where(m => _watched.Contains(m.Pid)))
+        {
+            foreach (var layout in provider.AllLayouts)
+            {
+                if (writer.Watch(layout.SlotAddress(member.Slot)))
+                {
+                    registered++;
+                }
+            }
+        }
+
+        logger.LogInformation("El emulador vigila {Count} huecos de {Dead} caído(s)",
+            registered, _watched.Count);
+    }
+
     private void ApplyDeathInGame(GameSnapshot snapshot, PokemonEntry dead)
     {
         if (provider.AllLayouts.Count == 0 || dead.Pid is not { } pid)
@@ -589,6 +666,13 @@ public sealed class GameLinkMonitor(
 
             logger.LogInformation("{Pokemon} transformado en el juego (hueco {Slot}, {Applied} copias releídas)",
                 dead.SpeciesName, member.Slot, applied);
+
+            // Y se le pide al emulador que la mantenga. Sin esto la marca se escribe una vez y el
+            // juego la deshace en cuanto vuelve a tocar el equipo, que es lo que se midió en el
+            // §90: siete PS aguantaron quince segundos y desaparecieron.
+            _watched.Add(pid);
+            _watchSignature = string.Empty;   // obliga a rehacerla en la vuelta siguiente
+            RefreshWatchList(snapshot);
 
             // Y se dice lo que esa marca NO es: permanente. La muerte ya está en el historial pase
             // lo que pase, pero el Shedinja vive en la memoria del emulador hasta que el jugador

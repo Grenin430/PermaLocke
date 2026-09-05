@@ -210,6 +210,36 @@ public sealed class AzaharGameWriter(
     public PK7? Read(uint slotAddress) =>
         client.TryReadMemory(slotAddress, PartySize, out var bytes) ? new PK7(bytes) : null;
 
+    /// <summary>Empties the emulator's watch list. False when the emulator is not the fork.</summary>
+    public bool ClearWatchList() => client.ClearWatchList();
+
+    /// <summary>
+    /// Hands the emulator the bytes it must keep at this slot, whatever the game does later.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The bytes are read back <b>raw</b> and sent as they lie in memory, still encrypted. Going
+    /// through <see cref="PK7"/> would decrypt them, and what got registered would be a block that
+    /// never appears in the game — so the emulator would rewrite the slot with garbage five times a
+    /// second, which is a far worse failure than not watching it at all.
+    /// </para>
+    /// <para>
+    /// The tag is the first four bytes, the encryption constant, which is the one field of a party
+    /// entry that is <b>not</b> encrypted and identifies whoever lives there.
+    /// </para>
+    /// </remarks>
+    public bool Watch(uint slotAddress)
+    {
+        if (!client.TryReadMemory(slotAddress, PartySize, out var bytes) || bytes.Length < PartySize)
+        {
+            return false;
+        }
+
+        var tag = System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(bytes);
+
+        return client.WatchBlock(slotAddress, tag, bytes);
+    }
+
     /// <summary>Puts back exactly what was there, from the newest backup of that address.</summary>
     public bool Restore(uint address)
     {
