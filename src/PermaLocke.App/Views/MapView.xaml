@@ -198,6 +198,15 @@
              La ultima en verde, el mismo verde que «atrapado», porque es la suma de lo que hay
              en el mapa y no un color nuevo que aprenderse. -->
         <Style x:Key="IslandTab" TargetType="Button" BasedOn="{StaticResource GhostButton}">
+            <!-- EL FONDO Y EL BORDE, DICHOS AQUI. Esta plantilla los pinta con TemplateBinding, y
+                 ni GhostButton ni PrimaryButton fijan nunca esas PROPIEDADES: las escriben a pelo
+                 dentro de sus propias plantillas. Heredar de ellos no trae nada, asi que el boton
+                 se quedaba con el fondo por defecto de un Button de Windows -gris claro- y las
+                 tres islas sin elegir salian como cajas blancas en una pantalla violeta. Los
+                 disparadores de abajo ya los pisan para la elegida y la completada, que es
+                 justo por lo que no se noto: la que miras siempre esta bien. -->
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
             <Setter Property="Padding" Value="10,7" />
             <Setter Property="FontSize" Value="11.5" />
             <Setter Property="Margin" Value="0,0,5,5" />
@@ -255,8 +264,12 @@
                         </Grid>
 
                         <ControlTemplate.Triggers>
+<!-- Sobre un fondo transparente, bajar la opacidad no se ve: el aviso de que el
+                                 boton responde tiene que ser el mismo relleno que usa cualquier otro
+                                 boton fantasma de la aplicacion. -->
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Body" Property="Opacity" Value="0.85" />
+                                <Setter TargetName="Body" Property="Background" Value="{StaticResource SurfaceHighBrush}" />
+                                <Setter TargetName="Body" Property="BorderBrush" Value="{StaticResource BorderStrongBrush}" />
                             </Trigger>
 
                             <DataTrigger Binding="{Binding IsSelected}" Value="True">

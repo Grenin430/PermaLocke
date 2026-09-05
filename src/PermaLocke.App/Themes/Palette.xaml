@@ -237,9 +237,13 @@
     <!-- El halo bajo la isla. Azul palido, del color del mar que la rodea en el propio dibujo. -->
     <Color x:Key="IslandHaloColor">#FF7FD8FF</Color>
 
-    <!-- El brillo que recorre el boton de la isla elegida. Blanco muy velado: mas que esto deja
-         de leerse como un reflejo y pasa a leerse como una franja. -->
-    <Color x:Key="SheenColor">#33FFFFFF</Color>
+    <!-- El brillo que recorre el boton de la isla elegida. Violeta y no blanco: era el ultimo
+         blanco puro que quedaba en la aplicacion -#33FFFFFF- y con el resto de la pantalla teñida
+         se leia como una pieza de otro sitio. Tiene que ser el ACENTO y no un gris claro, porque
+         lo que ese brillo señala es cual es la isla elegida, o sea la regla del §74: si algo lleva
+         el color de acento, o es dinero o es lo que estas usando.
+         Algo mas velado que esto deja de leerse como un reflejo y pasa a leerse como una franja. -->
+    <Color x:Key="SheenColor">#4DB07BF0</Color>
 
     <!-- ================================================================ LA RULETA -->
     <!-- Las cunas dicen si te conviene, que es lo unico que un jugador quiere saber mirando una
