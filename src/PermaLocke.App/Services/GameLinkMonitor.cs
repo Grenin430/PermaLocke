@@ -166,12 +166,6 @@ public sealed class GameLinkMonitor(
         var findings = await watcher.InspectAsync(run.Id, snapshot, _stopping.Token);
         var changed = false;
 
-        // Si el equipo se ha mudado de sitio, lo registrado apunta a donde ya no está. Se rehace
-        // la lista SOLO cuando cambia la firma de las estructuras, no en cada vuelta: reenviarla
-        // cada segundo serían diez paquetes por segundo compitiendo con el sondeo por el mismo
-        // socket, que es la clase de ráfaga que ya tumbó el enlace una vez (§54).
-        EnsureWatchList(snapshot);
-
         // Antes que las muertes: el vigilante empareja por PID contra lo registrado, asi que un
         // Pokemon sin registrar es invisible y no puede morirse. Registrando primero, uno que
         // aparece ya caido se cuenta en el mismo ciclo en vez de no contarse nunca. Solo se vuelve
@@ -190,6 +184,14 @@ public sealed class GameLinkMonitor(
             ApplyDeathInGame(snapshot, dead);
             changed = true;
         }
+
+        // DESPUÉS de las muertes, nunca antes. Si el equipo se ha mudado de sitio lo registrado
+        // apunta a donde ya no está, así que hay que rehacerlo — pero es una comodidad, y ponerla
+        // por delante hizo que una excepción suya se llevara por delante la detección de muertes
+        // entera. Se rehace solo cuando cambia la firma de las estructuras: reenviarla cada
+        // segundo serían diez paquetes por segundo peleándose con el sondeo por el mismo socket,
+        // que es la clase de ráfaga que ya tumbó el enlace una vez (§54).
+        EnsureWatchList(snapshot);
 
         if (findings.NewMembers.Count > 0)
         {
@@ -575,10 +577,27 @@ public sealed class GameLinkMonitor(
     /// <summary>What the party structures looked like when the list was last sent.</summary>
     private string _watchSignature = string.Empty;
 
-    /// <summary>Rebuilds the emulator's list when, and only when, the party has moved.</summary>
+    /// <summary>
+    /// Rebuilds the emulator's list when, and only when, the party has moved.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Everything in here is <b>swallowed</b>, and that is the point. Keeping a marker propped up
+    /// is a nicety; noticing that a Pokémon died is the job. This threw an
+    /// <c>AzaharRpcException</c> the first time the player stepped out of the game to the emulator
+    /// menu — the RPC stops answering for a moment there — and because it ran at the top of the
+    /// cycle it took the whole inspection down with it, death detection included. A convenience
+    /// that can disable the main feature is not a convenience.
+    /// </para>
+    /// <para>
+    /// And the signature is written only when the refresh actually went through. Writing it first
+    /// meant a failed attempt was remembered as done, so the list stayed stale until the party
+    /// happened to move again.
+    /// </para>
+    /// </remarks>
     private void EnsureWatchList(GameSnapshot snapshot)
     {
-        if (_watched.Count == 0)
+        if (_watched.Count == 0 || !snapshot.Connected)
         {
             return;
         }
@@ -591,8 +610,15 @@ public sealed class GameLinkMonitor(
             return;
         }
 
-        _watchSignature = signature;
-        RefreshWatchList(snapshot);
+        try
+        {
+            RefreshWatchList(snapshot);
+            _watchSignature = signature;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "No se ha podido actualizar la lista de vigilancia; se reintenta");
+        }
     }
 
     /// <summary>
@@ -691,9 +717,12 @@ public sealed class GameLinkMonitor(
             // Y se le pide al emulador que la mantenga. Sin esto la marca se escribe una vez y el
             // juego la deshace en cuanto vuelve a tocar el equipo, que es lo que se midió en el
             // §90: siete PS aguantaron quince segundos y desaparecieron.
+            // Solo se apunta. Quien manda la lista es EnsureWatchList, unas líneas más abajo en el
+            // mismo ciclo, que va envuelto: pedirla desde aquí metía una llamada que puede fallar
+            // en medio del camino de la muerte, y si fallaba el jugador se quedaba además sin el
+            // aviso de que la marca vive en la memoria.
             _watched.Add(pid);
-            _watchSignature = string.Empty;   // obliga a rehacerla en la vuelta siguiente
-            RefreshWatchList(snapshot);
+            _watchSignature = string.Empty;
 
             // Y se dice lo que esa marca NO es: permanente. La muerte ya está en el historial pase
             // lo que pase, pero el Shedinja vive en la memoria del emulador hasta que el jugador
