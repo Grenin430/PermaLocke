@@ -7105,3 +7105,73 @@ Y de paso resolvería, por la misma puerta, tres cosas que desde fuera están mu
 
 No es una tarde de trabajo: es compilar y mantener un fork del emulador. Pero es la respuesta
 honesta a «cómo lo hacen ellos», y es que **no lo hacen desde fuera**.
+
+## 95. El emulador mantiene la marca de muerte (2026-09-05)
+
+El §94 estableció que la referencia no hace nada de esto desde su aplicación: lo hace desde su
+Azahar parcheado, con una lista de vigilancia y reintentos. PermaLocke ya tenía su propio fork
+—`github.com/Grenin430/azahar`, con los parches de `NEW_LINEAR_HEAP` y `SearchMemory`—, así que el
+camino estaba abierto. Este es el parche 2, y **está en `master` y verificado**.
+
+### Lo que hace
+
+Un tipo de paquete nuevo, `WatchBlock` (6). PermaLocke le entrega al emulador una dirección, cuatro
+bytes de etiqueta y el bloque que debe haber ahí; el emulador compara **cinco veces por segundo**
+desde un hilo propio y lo repone cuando alguien lo ha deshecho.
+
+El emulador se queda **tonto a propósito**: no cifra, no calcula checksums y no sabe qué es un
+Shedinja. PermaLocke le da los bytes ya hechos, que son los mismos que hoy escribe de todas formas.
+La etiqueta es la **constante de encriptación**, el único campo de una entrada de equipo que va en
+claro, y si deja de coincidir el emulador **no toca nada**: es la disciplina del §53 —la identidad
+por delante— y aquí importa porque el equipo se reordena, cosa que se vio pasar en mitad de una
+sesión mientras se medía el §92.
+
+Detalle del lado de PermaLocke que no es menor: los bytes se leen **en crudo** y se mandan tal como
+están en memoria, **cifrados**. Pasarlos por `PK7` los descifraría, y lo registrado sería un bloque
+que no aparece nunca en el juego — o sea que el emulador reescribiría el hueco con basura cinco
+veces por segundo, que es bastante peor que no vigilar nada.
+
+### Verificado, con números
+
+| paso | prueba |
+|---|---|
+| el emulador es el del parche | `Azahar Version: 87ed55b` |
+| el hilo arranca | `Block watcher started.` |
+| PermaLocke manda la lista | `El emulador vigila 5 huecos de 1 caído(s)` |
+| el emulador la acepta | `WatchBlock: 0x… tag 14EFCBBA, 260 bytes`, cinco veces |
+| repone lo deshecho | byte `FA` → escrito `66` → releído **`FA`** |
+
+Y lo dijo: `EnforceOnce:320: The game rewrote 0x330128E4; marker restored`.
+
+**Lo que esa prueba no demuestra:** quien deshizo el bloque fue una escritura a mano, no el juego.
+Para el vigilante es la misma operación, pero el caso concreto de «el juego lo reescribe al salir de
+un combate» sigue sin observarse.
+
+### Las dos cosas que hicieron fracasar la primera prueba
+
+Ninguna era el parche, y las dos merecen quedar escritas porque son de las que se repiten:
+
+**El binario que se instala no es el que se abre.** Se puso el build nuevo en `Emulator/` y el
+jugador abre el emulador desde `Nuevo_azahar/`. Lo delató la versión del propio log —`cf46ecc`, el
+build de agosto—, y la fecha de último acceso del fichero señalaba a la otra carpeta. Comprobar la
+versión que el emulador imprime es más barato que suponer cuál se ha arrancado.
+
+**Un log filtrado no es un log vacío.** Azahar trae `log_filter=*:Info RPC_Server:Error`, de modo
+que el servidor RPC solo escribe cuando falla. Toda la verificación se apoyaba en una línea
+informativa que ese filtro tira. `EnsureRpcEnabled` sube ahora esa palabra a `Info` —solo esa, el
+resto del filtro del jugador se respeta—. Un plan de comprobación que depende de un mensaje hay que
+comprobarlo también a él.
+
+### Y el fallo propio
+
+`RefreshWatchList` volvía **en silencio** cuando el emulador no aceptaba la lista. El jugador mató
+un Pokémon, guardó, y no había una sola línea en ningún registro diciendo que la vigilancia ni
+siquiera se había pedido. Ahora lo dice una vez, y dice qué falta. Un emulador sin el parche es el
+caso normal — pero normal no es lo mismo que invisible, y este proyecto lleva ochenta secciones
+tropezando con esa diferencia.
+
+### Alcance
+
+La lista cubre las muertes marcadas **durante esta sesión de la aplicación**, que es el caso que
+estaba fallando. Y sigue siendo memoria: cerrar el juego sin guardar la pierde igual, como la de la
+referencia. Lo permanente de verdad sigue siendo MANTENIMIENTO, que escribe la partida.

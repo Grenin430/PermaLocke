@@ -1,8 +1,7 @@
 # Parche 2 para el fork de Azahar — la muerte se reaplica sola
 
-**Estado: escrito contra el código real del fork (commit `cf46ecc`), SIN COMPILAR NI PROBAR.**
-Yo no puedo compilar C++ aquí. Lo verificas tú, igual que hiciste con `NEW_LINEAR_HEAP` y con
-`SearchMemory`.
+**Estado: EN `master` DEL FORK Y VERIFICADO CONTRA EL JUEGO.** Commit `87ed55b`, compilado en
+GitHub Actions y probado el 2026-09-05. Los números de la prueba están al final del documento.
 
 Repositorio: `github.com/Grenin430/azahar`. Ficheros que toca, los tres de siempre:
 `src/core/rpc/packet.h` y `src/core/rpc/rpc_server.{h,cpp}`.
@@ -138,9 +137,10 @@ de ese método cambia.**
 En el constructor, detrás del que ya hay:
 
 ```cpp
-    enforce_thread =
-        std::jthread([this](std::stop_token stop_token) { EnforceLoop(stop_token); });
+    enforce_thread = std::jthread([this](std::stop_token stop_token) { EnforceLoop(stop_token); });
 ```
+
+En una sola línea: partida en dos, el trabajo `citra-format` de su CI la rechaza.
 
 ### 3.3 El manejador
 
@@ -150,15 +150,22 @@ En el constructor, detrás del que ya hay:
 // que ya no está muerto porque la run se corrigió.
 void RPCServer::HandleWatchBlock(Packet& packet, u32 mode, u32 block_size) {
     const auto data = packet.GetPacketData();
+
+    // Cuántos bytes LLEGARON de verdad. GetPacketData() devuelve el búfer entero de 1024 sea lo
+    // que sea lo que el emisor metió, así que medir contra él aceptaría un paquete cortado y
+    // copiaría lo que hubiera quedado en el búfer: un bloque hecho de bytes rancios, escrito en el
+    // juego cinco veces por segundo, sin nada que lo dijera. Se vio al implementarlo, no al
+    // diseñarlo.
+    const u32 received = packet.GetPacketDataSize();
     bool ok = false;
 
     if (mode == 0) {
         std::scoped_lock lock{watch_mutex};
         watches.clear();
         ok = true;
-        LOG_INFO(RPC_Server, "WatchBlock: lista vaciada");
+        LOG_INFO(RPC_Server, "WatchBlock: list cleared");
     } else if (mode == 1 && block_size > 0 && block_size <= MAX_WATCH_BLOCK &&
-               data.size() >= (sizeof(u32) * 4) + block_size) {
+               received >= (sizeof(u32) * 4) + block_size) {
         Watch watch;
         std::memcpy(&watch.address, data.data() + sizeof(u32) * 2, sizeof(u32));
         std::memcpy(&watch.tag, data.data() + sizeof(u32) * 3, sizeof(u32));
@@ -301,3 +308,56 @@ escritura venía de una petición explícita. Las tres cosas que lo acotan:
 - y la lista está limitada a doce entradas y se vacía entera cada vez que se actualiza.
 
 Aun así, es la parte que hay que mirar con lupa al revisarlo.
+
+## Lo que salió al probarlo de verdad (2026-09-05)
+
+La primera prueba **no demostró nada**, y por dos motivos que no eran el parche:
+
+- El jugador abre el emulador desde `Nuevo_azahar\`, no desde `Emulator\`. Se instaló el build nuevo
+  en el segundo y arrancó el viejo. Lo delató la propia versión del log: `Azahar Version: cf46ecc`.
+- Y Azahar trae `log_filter=*:Info RPC_Server:Error`, o sea que **el servidor RPC solo escribe si
+  falla**. La línea que esta prueba busca es informativa, así que habría sido invisible aunque todo
+  hubiera funcionado. `EnsureRpcEnabled` sube ahora esa palabra a `Info`.
+
+Con las dos cosas puestas, la cadena entera:
+
+| paso | lo que lo prueba |
+|---|---|
+| el emulador es el del parche | `Azahar Version: 87ed55b \| permalocke-watch-block-87ed55b` |
+| el hilo arranca | `Block watcher started.` |
+| PermaLocke manda la lista | `El emulador vigila 5 huecos de 1 caído(s)` |
+| el emulador la acepta | `WatchBlock: 0x… tag 14EFCBBA, 260 bytes`, cinco veces |
+| **repone lo que se deshaga** | ver abajo |
+
+La reposición se midió cambiando un byte a mano en un hueco vigilado, `0x33012914`, dentro del
+bloque del Roserade muerto:
+
+```
+original   FA
+escrito    66
+releído    FA          ← repuesto
+```
+
+Y el emulador lo dijo:
+
+```
+RPC_Server <Info> EnforceOnce:320: The game rewrote 0x330128E4; marker restored
+```
+
+Las cinco entradas llevan la misma etiqueta, `14EFCBBA`, que es la constante de encriptación del
+Roserade: está vigilando a **ese** Pokémon en las cinco copias del equipo, que es lo que se
+diseñó.
+
+### Lo que esa prueba NO demuestra, dicho
+
+Quien deshizo el bloque fui yo escribiendo un byte, **no el juego**. Para el vigilante es la misma
+operación —alguien cambia el bloque, él lo repone— pero el caso concreto de «el juego lo reescribe
+al salir de un combate» sigue sin verse. Cuando salga esa misma línea sin que nadie la haya
+provocado, quedará cerrado.
+
+### Y un fallo propio que la prueba destapó
+
+`RefreshWatchList` volvía **en silencio** cuando el emulador no aceptaba la lista. El jugador mató
+un Pokémon, guardó, y no había una sola línea en ningún registro diciendo que la vigilancia ni
+siquiera se había pedido. Ahora lo dice una vez, con lo que hace falta para arreglarlo. Un emulador
+sin el parche es el caso normal — pero normal no es lo mismo que invisible.

@@ -1016,6 +1016,31 @@ Ojo con lo **no comprobado**: lo estático está visto en la aplicación real, p
 y la tirada entera no**, porque verlas exige girar de verdad y girar escribe en la partida. Ver §84.
 
 
+**El emulador mantiene la marca de muerte (2026-09-05).** Parche 2 del fork, **en `master` y
+verificado**. Un tipo de paquete nuevo, `WatchBlock`: PermaLocke le da al emulador una direccion,
+una etiqueta y el bloque que debe haber ahi, y el emulador lo repone **cinco veces por segundo**
+desde un hilo propio. El emulador se queda **tonto a proposito** -no cifra, no calcula checksums, no
+sabe que es un Shedinja-; los bytes se le dan hechos y se mandan **en crudo, cifrados**, porque
+pasarlos por PKHeX registraria un bloque que no existe en el juego y el emulador reescribiria el
+hueco con basura. La etiqueta es la constante de encriptacion, y si deja de coincidir **no se toca
+nada**: la identidad por delante del §53.
+
+Verificado con numeros: `Azahar Version: 87ed55b`, `Block watcher started.`, «El emulador vigila 5
+huecos», cinco `WatchBlock` aceptados, y un byte cambiado a mano (`FA` → `66` → **`FA`**) con su
+`The game rewrote 0x330128E4; marker restored`. Lo que NO demuestra: quien deshizo el bloque fui yo,
+no el juego.
+
+**Las dos cosas que hicieron fracasar la primera prueba, ninguna del parche.** El binario que se
+instala no es el que se abre —se puso en `Emulator/` y el jugador abre desde `Nuevo_azahar/`, y lo
+delato la version del log-. Y **un log filtrado no es un log vacio**: Azahar trae
+`RPC_Server:Error`, asi que la linea informativa en la que se apoyaba toda la comprobacion era
+invisible. Un plan de verificacion que depende de un mensaje hay que comprobarlo tambien a el.
+
+Y el fallo propio: `RefreshWatchList` volvia **en silencio** cuando el emulador no aceptaba la
+lista. Ya lo dice. Alcance: cubre las muertes de **esta sesion** de la aplicacion, y sigue siendo
+memoria -cerrar sin guardar la pierde, como la de la referencia-. Ver §95 y
+`docs/fork/02-muerte-permanente.md`.
+
 **Los PS no se pueden clavar a cero (2026-09-04).** El jugador pregunto si se puede dejar al Pokemon
 TAL COMO ESTA y que siga muerto en rojo aunque lo curen. **Medido contra el juego, y la respuesta es
 no por la via obvia**: con el equipo en `0x330128E4` se escribieron 7 PS en el Gyarados del hueco 0
@@ -1175,6 +1200,7 @@ Lo que NO está resuelto todavía y no debe darse por hecho (detalle en `docs/AR
 | Copia de seguridad de la run | **HECHA** — al arrancar, diez copias rotativas. Antes había 319 copias de la partida y cero de la run. Ver `ARCHITECTURE.md` §76 |
 | Mantenimiento desde la aplicación | **HECHO Y VISTO EN LA APP** — auditoría, reparar PID, cerrar entregados y corregir etapas, sin terminal. Ver `ARCHITECTURE.md` §77 |
 | Estadísticas | **HECHA Y VISTA EN LA APP** — libro de puntos, curva de saldo, colección y récords, todo proyectado sobre la cadena de eventos. Ver `ARCHITECTURE.md` §78 |
+| Fork de Azahar: la muerte se reaplica sola | **EN `master` Y VERIFICADO** — `WatchBlock`, un tipo de paquete nuevo: el emulador repone la marca cinco veces por segundo desde su propio hilo. Medido: `FA` → `66` → **`FA`**, con su línea en el log. Lo que falta por ver es que sea EL JUEGO quien la deshaga. Ver `ARCHITECTURE.md` §95 y `docs/fork/02-muerte-permanente.md` |
 | `PermaLocke.Admin` | **SIGUE SIENDO EL ANDAMIO DE VISUAL STUDIO** — 66 líneas, `Title="MainWindow"` y un `Grid` vacío. O se construye o se borra |
 | API concreta de pk3DS.Core | **VERIFICADA** contra la ROM real — ver `ARCHITECTURE.md` §19 |
 
