@@ -58,3 +58,6 @@ obj/
 # Las fotos de cada zona que el jugador reunio para el mapa. Son imagenes del juego,
 # igual que Data/sprites/ y Data/mapa-islas/: no se versionan.
 /islas/
+
+# Copia del emulador anterior, por si un build nuevo sale malo. Binarios: no se versionan.
+/Emulator-anterior/
