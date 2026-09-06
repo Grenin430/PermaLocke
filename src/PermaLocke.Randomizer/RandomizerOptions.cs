@@ -289,6 +289,29 @@ public sealed record RandomizerOptions
     public bool RandomizeLearnsets { get; init; } = true;
 
     /// <summary>
+    /// How much of a learnset is forced to be a move that really hurts, as a percentage.
+    /// </summary>
+    /// <remarks>
+    /// Universal Pokémon Randomizer's own figure, and it is not decoration: without it a
+    /// randomized Pokémon spends its whole level curve learning stat drops and screens. The move
+    /// learnt last at level one is forced on top of this, so a freshly caught Pokémon can always
+    /// attack.
+    /// </remarks>
+    public int LearnsetGoodDamagingPercent { get; init; } = 30;
+
+    /// <summary>Bias the moves towards the Pokémon's own types.</summary>
+    /// <remarks>
+    /// Off by default, which is what the reference does unless you ask for it: it is a separate
+    /// mode there, not part of plain randomization. On, the odds are twenty per cent for each of a
+    /// dual type and forty for a single one, with the rest left open.
+    /// </remarks>
+    public bool LearnsetPreferSameType { get; init; }
+
+    /// <summary>Base power a move needs before it counts as a real attack.</summary>
+    /// <remarks>Fifty, which is the reference's floor. Reached with accuracy, or doubled without.</remarks>
+    public int LearnsetDamagingFloor { get; init; } = 50;
+
+    /// <summary>
     /// What a special mart that does not sell TMs is stocked with, in every slot. Poké Ball (4)
     /// by default: a Nuzlocke needs balls far more than it needs X Items.
     /// </summary>

@@ -220,6 +220,19 @@ public sealed class PokemonDataRandomizer(RomWorkspace workspace, RandomizerOpti
                 "son los movimientos Z. Antes que repartirlos, no se randomizan los aprendizajes.");
         }
 
+        var planner = new LearnsetPlanner(Facts(teachable), new LearnsetRules(
+            options.LearnsetGoodDamagingPercent,
+            options.LearnsetPreferSameType,
+            options.LearnsetDamagingFloor,
+            MoveCatalog.DetectPerfectAccuracy(
+                [.. workspace.Config.Moves.Select(move => move.Accuracy)],
+                workspace.Config.GetText(TextName.MoveNames))));
+
+        // Los tipos y las estadisticas se leen del fichero YA generado, no del cartucho: si esta
+        // randomizacion ha cambiado los tipos, el sesgo tiene que seguir a los tipos que el
+        // jugador va a ver, no a los que el Pokemon tenia antes.
+        var personal = ReadPackedPersonal(mod);
+
         var path = mod.Stage(GameFiles.Learnset);
         using var patcher = new GarcPatcher(path);
         var changed = 0;
@@ -234,10 +247,20 @@ public sealed class PokemonDataRandomizer(RomWorkspace workspace, RandomizerOpti
                 continue;
             }
 
-            for (var pair = 0; pair < pairs; pair++)
+            var at = species * PersonalEntry7.Size;
+            var known = personal is not null && at + PersonalEntry7.Size <= personal.Length;
+
+            var moves = planner.Plan(
+                pairs,
+                LastLevelOne(entry, pairs),
+                known ? PersonalEntry7.GetTypes(personal!, at) : (0, 0),
+                known ? PersonalEntry7.GetStat(personal!, at, AttackStat) : 0,
+                known ? PersonalEntry7.GetStat(personal!, at, SpecialAttackStat) : 0,
+                random);
+
+            for (var pair = 0; pair < pairs && pair < moves.Count; pair++)
             {
-                var move = teachable[random.Next(0, teachable.Count)];
-                BitConverter.GetBytes((ushort)move).CopyTo(entry, pair * 4);
+                BitConverter.GetBytes((ushort)moves[pair]).CopyTo(entry, pair * 4);
                 changed++;
             }
 
@@ -245,6 +268,75 @@ public sealed class PokemonDataRandomizer(RomWorkspace workspace, RandomizerOpti
         }
 
         return changed;
+    }
+
+    /// <summary>Index of the base Attack and Special Attack inside a personal entry.</summary>
+    /// <remarks>
+    /// Gen 6 and 7 order the six as HP, Attack, Defence, Speed, Special Attack, Special Defence,
+    /// which is <b>not</b> the order they are shown in. Getting these two the wrong way round would
+    /// hand every physical attacker special moves and would never fail.
+    /// </remarks>
+    private const int AttackStat = 1;
+    private const int SpecialAttackStat = 4;
+
+    /// <summary>The last slot learnt at level one, or -1 when it learns nothing there.</summary>
+    /// <remarks>
+    /// That slot is the one that gets the guaranteed attack, following the reference. An entry
+    /// stores each move as (move, level), so the level is the halfword after the move.
+    /// </remarks>
+    private static int LastLevelOne(byte[] entry, int pairs)
+    {
+        var last = -1;
+
+        for (var pair = 0; pair < pairs; pair++)
+        {
+            if (BitConverter.ToUInt16(entry, (pair * 4) + 2) <= 1)
+            {
+                last = pair;
+            }
+        }
+
+        return last;
+    }
+
+    /// <summary>The packed personal table as this generation left it, or null if it cannot be read.</summary>
+    private static byte[]? ReadPackedPersonal(LayeredFsMod mod)
+    {
+        try
+        {
+            using var patcher = new GarcPatcher(mod.Stage(GameFiles.Personal));
+
+            return patcher.Read(patcher.FileCount - 1);
+        }
+        catch (Exception)
+        {
+            // Sin la tabla se sigue: lo que se pierde es el sesgo de tipo y el reparto fisico o
+            // especial, no las reglas que importan -- sin repetidos y un ataque al nivel 1-.
+            return null;
+        }
+    }
+
+    /// <summary>What the planner needs to know about each move it may hand out.</summary>
+    private IReadOnlyList<MoveFacts> Facts(IReadOnlyList<int> teachable)
+    {
+        var moves = workspace.Config.Moves;
+        var names = workspace.Config.GetText(TextName.MoveNames);
+
+        var (physical, _) = MoveCatalog.DetectCategories(
+            [.. moves.Select(move => move.Category)], names);
+
+        return
+        [
+            .. teachable
+                .Where(id => id < moves.Length)
+                .Select(id => new MoveFacts(
+                    id,
+                    moves[id].Type,
+                    moves[id].Power,
+                    moves[id].Accuracy,
+                    Math.Max(1, moves[id].HitMax),
+                    moves[id].Power == 0 ? null : moves[id].Category == physical))
+        ];
     }
 
     /// <summary>

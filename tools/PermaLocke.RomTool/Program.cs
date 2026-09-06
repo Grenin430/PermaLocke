@@ -154,10 +154,19 @@ switch (command)
     case "liga":
         await LigaAsync(args.Length > 1 ? ulong.Parse(args[1]) : 20260902);
         break;
+    case "parchear-tiendas":
+        await ParchearTiendasAsync(args[1], args.Contains("--escribir"));
+        break;
     case "parchear-megas":
         await ParchearMegasAsync(args[1],
             args.Skip(2).Where(a => int.TryParse(a, out _)).Select(int.Parse).ToArray(),
             args.Contains("--escribir"));
+        break;
+    case "movimientos":
+        await MovimientosAsync(args.Length > 1 ? args[1] : null);
+        break;
+    case "aprendizajes":
+        await AprendizajesAsync(args[1]);
         break;
     case "clases":
         await ClasesAsync();
@@ -855,7 +864,11 @@ async Task ShopsAsync()
 
     foreach (var shop in shops)
     {
-        var contents = Enumerable.Range(0, shop.Count).Select(s => items[ShopTable.GetItem(cro, shop, s)]);
+        // Con el id delante del nombre: la lista de regularMartReplaced va por id, y ponerlos de
+        // memoria es exactamente el error del §45 -un id que cae en otro objeto no falla nunca-.
+        var contents = Enumerable.Range(0, shop.Count)
+            .Select(s => ShopTable.GetItem(cro, shop, s))
+            .Select(id => $"{id} {items[id]}");
         var kind = shop.Index < ShopTable.RegularMartCount ? "normal"
             : ShopTable.SellsTechnicalMachines(cro, shop) ? "MT" : "especial";
         Console.WriteLine($"  {shop.Index,2} [{kind,-8}] @0x{shop.Offset:X} x{shop.Count,2}: {string.Join(", ", contents)}");
@@ -1562,6 +1575,99 @@ async Task QuienLlevaAsync(int species, string? trpokePath, int onlyTrainer = -1
 /// table says, which is the check §47 earned.
 /// </para>
 /// </remarks>
+/// <summary>
+/// Applies <c>regularMartReplaced</c> to the Pokémon Centre counters of a mod already installed.
+/// </summary>
+/// <remarks>
+/// Same reason as the mega patch: the list decides how the <b>next</b> randomization goes, and
+/// re-randomizing mid-run would hand the player a different world. This reads the very same
+/// configuration, so what it writes now is what the next generation would write.
+///
+/// It is a straight swap of one item id for another inside <c>Shop.cro</c> — two bytes per slot,
+/// nothing changes size — and it is idempotent, because an id already replaced is no longer in the
+/// list to match. Names are checked against the cartridge's own item table before anything is
+/// written: an id that lands on a different item would stock the shop with something else and would
+/// never fail, which is the §52 rule.
+/// </remarks>
+async Task ParchearTiendasAsync(string croPath, bool write)
+{
+    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work, baseLayer: baseLayer);
+    var options = RandomizerOptionsLoader.Load(Path.Combine(root, "Data", "randomizer.json"));
+    var items = workspace.Config.GetText(TextName.ItemNames);
+
+    if (options.RegularMartReplaced.Count == 0)
+    {
+        Console.WriteLine("regularMartReplaced esta vacia: no hay nada que cambiar.");
+        return;
+    }
+
+    // El nombre contra la tabla del cartucho ANTES de tocar nada. Un id que caiga en otro objeto
+    // surtiria la tienda con otra cosa y no fallaria nunca (§52).
+    foreach (var entry in options.RegularMartReplaced.Append(options.RegularMartReplacement))
+    {
+        var real = entry.Id < items.Length ? items[entry.Id] : "?";
+
+        if (!string.Equals(real, entry.Name, StringComparison.Ordinal))
+        {
+            Console.WriteLine($"El objeto {entry.Id} es «{real}» y la configuracion dice «{entry.Name}».");
+            Console.WriteLine("No se toca ninguna tienda.");
+            return;
+        }
+    }
+
+    var replaced = options.RegularMartReplaced.Select(e => e.Id).ToHashSet();
+    var cro = await File.ReadAllBytesAsync(croPath);
+    var shops = ShopTable.Read(cro);
+    var changed = 0;
+
+    foreach (var shop in shops.Where(s => s.Index < ShopTable.RegularMartCount))
+    {
+        var before = Enumerable.Range(0, shop.Count).Select(s => ShopTable.GetItem(cro, shop, s)).ToList();
+        var hits = before.Count(replaced.Contains);
+
+        Console.WriteLine($"  tienda {shop.Index}: {hits} de {shop.Count} objetos se cambian");
+
+        for (var slot = 0; slot < shop.Count; slot++)
+        {
+            if (replaced.Contains(before[slot]))
+            {
+                ShopTable.SetItem(cro, shop, slot, options.RegularMartReplacement.Id);
+                changed++;
+            }
+        }
+    }
+
+    if (!write)
+    {
+        Console.WriteLine();
+        Console.WriteLine($"Ensayo: {changed} huecos. Con --escribir se escribe, con copia previa.");
+        return;
+    }
+
+    var copy = Path.Combine(root, "Randomized", "copias-mod",
+        $"Shop.cro.antes-de-tiendas-{DateTime.Now:yyyyMMdd-HHmmss}");
+
+    Directory.CreateDirectory(Path.GetDirectoryName(copy)!);
+    File.Copy(croPath, copy);
+    await File.WriteAllBytesAsync(croPath, cro);
+
+    // Y se relee, que es lo unico que convierte «escrito» en «hecho» (§19).
+    var back = ShopTable.Read(await File.ReadAllBytesAsync(croPath));
+    var left = 0;
+
+    foreach (var shop in back.Where(s => s.Index < ShopTable.RegularMartCount))
+    {
+        left += Enumerable.Range(0, shop.Count)
+            .Count(s => replaced.Contains(ShopTable.GetItem(cro, shop, s)));
+    }
+
+    Console.WriteLine();
+    Console.WriteLine($"Copia previa: {copy}");
+    Console.WriteLine(left == 0
+        ? $"{changed} huecos cambiados y releidos: no queda ni una cura en las tiendas normales."
+        : $"Quedan {left} curas despues de escribir. Restaura la copia.");
+}
+
 async Task ParchearMegasAsync(string modRomfs, int[] wanted, bool write)
 {
     using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work, baseLayer: baseLayer);
@@ -1686,6 +1792,101 @@ async Task ParchearMegasAsync(string modRomfs, int[] wanted, bool write)
     Console.WriteLine(wrong == 0
         ? $"{touched.Count} combates con mega, releidos y confirmados."
         : $"{wrong} de {touched.Count} no cuadran al releer. Restaura la copia .antes-de-megas.");
+}
+
+/// <summary>
+/// Re-reads a generated learnset table and checks the three rules that matter hold in it.
+/// </summary>
+/// <remarks>
+/// The tests pin the rules against a made-up catalogue; this is the other half, because the tests
+/// cannot tell whether the rules were wired to the real table at all. Counts repeats, Pokémon whose
+/// last level-one move cannot attack, and the share of moves that really hurt.
+/// </remarks>
+/// <summary>Los nombres de movimiento tal y como los trae el mundo que se va a randomizar.</summary>
+/// <remarks>Para anclar contra ellos en vez de escribir un nombre de memoria y que no exista.</remarks>
+async Task MovimientosAsync(string? filter)
+{
+    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work, baseLayer: baseLayer);
+    var names = workspace.Config.GetText(TextName.MoveNames);
+    var moves = workspace.Config.Moves;
+
+    for (var id = 0; id < names.Length; id++)
+    {
+        if (filter is not null && !names[id].Contains(filter, StringComparison.OrdinalIgnoreCase))
+        {
+            continue;
+        }
+
+        var m = id < moves.Length ? moves[id] : null;
+
+        Console.WriteLine(m is null
+            ? $"  {id,4}  {names[id]}"
+            : $"  {id,4}  {names[id],-22} tipo {m.Type,2}  cat {m.Category}  pot {m.Power,3}  prec {m.Accuracy,3}");
+    }
+}
+
+async Task AprendizajesAsync(string learnsetPath)
+{
+    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work, baseLayer: baseLayer);
+    var options = RandomizerOptionsLoader.Load(Path.Combine(root, "Data", "randomizer.json"));
+    var moves = workspace.Config.Moves;
+    var names = workspace.Config.GetText(TextName.MoveNames);
+
+    var perfect = MoveCatalog.DetectPerfectAccuracy([.. moves.Select(m => m.Accuracy)], names);
+    var floor = options.LearnsetDamagingFloor;
+
+    bool Hurts(int id) => id > 0 && id < moves.Length
+        && new MoveFacts(id, moves[id].Type, moves[id].Power, moves[id].Accuracy,
+            Math.Max(1, moves[id].HitMax), null).IsGoodDamaging(floor, perfect);
+
+    using var patcher = new GarcPatcher(learnsetPath);
+    int species = 0, repeats = 0, defenceless = 0, slots = 0, hurting = 0, noLevelOne = 0;
+
+    for (var index = 0; index < patcher.FileCount; index++)
+    {
+        var entry = patcher.Read(index);
+        var pairs = (entry.Length / 4) - 1;
+
+        if (pairs <= 0)
+        {
+            continue;
+        }
+
+        species++;
+        var learnt = new List<int>();
+        var last = -1;
+
+        for (var pair = 0; pair < pairs; pair++)
+        {
+            learnt.Add(BitConverter.ToUInt16(entry, pair * 4));
+
+            if (BitConverter.ToUInt16(entry, (pair * 4) + 2) <= 1)
+            {
+                last = pair;
+            }
+        }
+
+        slots += learnt.Count;
+        hurting += learnt.Count(Hurts);
+        repeats += learnt.Count - learnt.Distinct().Count();
+
+        if (last < 0)
+        {
+            noLevelOne++;
+        }
+        else if (!Hurts(learnt[last]))
+        {
+            defenceless++;
+        }
+    }
+
+    Console.WriteLine();
+    Console.WriteLine($"{species} aprendizajes, {slots} huecos");
+    Console.WriteLine($"  movimientos repetidos dentro de un aprendizaje: {repeats}   (debe ser 0)");
+    Console.WriteLine($"  sin con que atacar al nivel 1: {defenceless}   (debe ser 0)");
+    Console.WriteLine($"  no aprenden nada al nivel 1: {noLevelOne}   (esos no se pueden garantizar)");
+    Console.WriteLine($"  huecos que de verdad hacen daño: {hurting} de {slots}"
+                      + $" ({100.0 * hurting / Math.Max(1, slots):F0}%, pedido {options.LearnsetGoodDamagingPercent}% minimo)");
 }
 
 async Task ClasesAsync()

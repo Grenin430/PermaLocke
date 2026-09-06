@@ -20,6 +20,11 @@
   "_randomizeEvolutions": "FALSE a peticion del usuario: si te toca un Rowlet salvaje, quieres acabar con un Decidueye. Las lineas evolutivas se quedan como el cartucho; todo lo demas sigue randomizado.",
   "randomizeEvolutions": false,
   "randomizeLearnsets": true,
+
+  "_learnsets": "Las reglas del sorteo, tomadas de Universal Pokemon Randomizer porque un sorteo uniforme -que es lo que habia- da aprendizajes injugables. Medido sobre el mundo instalado del jugador: 263 movimientos repetidos dentro de un mismo aprendizaje y 698 especies de 1329 SIN NADA CON QUE ATACAR al nivel 1, o sea que mas de la mitad de lo que capturas no puede hacer daño. Con las reglas: 0 y 0. Dos de ellas no se configuran porque no son un gusto sino una condicion para que el juego funcione -no repetir un movimiento, y garantizar un ataque en el ultimo hueco de nivel 1-. Lo que si se elige es cuanto del resto tiene que hacer daño y si los movimientos tiran hacia el tipo del Pokemon.",
+  "learnsetGoodDamagingPercent": 30,
+  "learnsetPreferSameType": false,
+  "learnsetDamagingFloor": 50,
   "_specialMarts": "Solo los mostradores especiales de los centros Pokémon; los ocho inventarios normales se dejan intactos. Las tiendas de MT se randomizan por otras MT; las demás se surten del objeto de abajo en todos sus huecos.",
   "specialMarts": true,
   "_specialMartOrder": "Por que mostradores especiales se empieza a surtir, por indice. La lista de objetos de evolucion se derrama de uno al siguiente segun se llenan, asi que esto decide cuanto tiene que andar el jugador para completarla. En orden de indice se empezaba por el 8, que es Konikoni, ya bien entrada la region, y hacian falta tres mostradores. Los indices se MIDEN jugando, porque el cartucho no dice que mostrador es de que pueblo: 10 es el Centro Pokemon de Ciudad Hauoli (8 huecos) y 11 el de la Ruta 2 (12). Veinte huecos para dieciocho objetos, o sea la lista entera en los dos primeros mostradores del juego. Un indice que no exista se ignora, y lo que no se nombre sigue yendo en orden.",
@@ -64,8 +69,21 @@
   "megaTrainerMinimumLevel": 1,
 
   "_regularMartReplaced": "Los objetos que las tiendas NORMALES -las ocho de los Centros Pokemon, las que crecen segun superas pruebas- dejan de vender, y por que se cambian. Son los seis curativos de estado, ids 17 a 22 seguidos en la tabla del cartucho, y pasan a ser Poke Balls. El resto de esas tiendas se queda como esta. El nombre viaja con el id y se comprueba contra la tabla de objetos del cartucho ANTES de escribir: un id que caiga en otro objeto surtiria la tienda con otra cosa y no fallaria nunca, asi que un desajuste lanza y no se toca ninguna tienda (§52). Deja la lista vacia para que las tiendas normales no se toquen.",
-  "_regularMartReplacedApagado": "Vacia a peticion del jugador el 2026-09-02: las tiendas normales se quedan EXACTAMENTE como el cartucho las trae. Para volver a cambiar los seis curativos de estado por Poke Balls, devuelve a la lista los ids 17 a 22.",
-  "regularMartReplaced": [],
+  "_regularMartReplacedHistoria": "Se vacio a peticion del jugador el 2026-09-02 y se volvio a llenar el 2026-09-06, mas ancha, cuando se topo con un Centro Pokemon que le vendia de todo: ahora son los DOCE curativos y no los seis de estado. Los ids se leyeron de la tienda del mundo instalado con `RomTool shops --gen`, que los imprime junto al nombre, y salen seguidos del 17 al 28 -- que ese bloque cierre sin huecos es la comprobacion de que no se ha colado nada por teclear un id de memoria (§45). Ojo con el 23 Restaurar Todo: no esta en la tienda que el jugador describio -la 6- pero si en la 7, y cae justo dentro del rango que pidio, asi que entra. Vaciar la lista devuelve las tiendas normales a como las trae el cartucho.",
+  "regularMartReplaced": [
+    { "id": 17, "name": "Poción" },
+    { "id": 26, "name": "Superpoción" },
+    { "id": 25, "name": "Hiperpoción" },
+    { "id": 24, "name": "Poción Máxima" },
+    { "id": 23, "name": "Restaurar Todo" },
+    { "id": 28, "name": "Revivir" },
+    { "id": 18, "name": "Antídoto" },
+    { "id": 22, "name": "Antiparalizador" },
+    { "id": 21, "name": "Despertar" },
+    { "id": 19, "name": "Antiquemar" },
+    { "id": 20, "name": "Antihielo" },
+    { "id": 27, "name": "Cura Total" }
+  ],
   "regularMartReplacement": { "id": 4, "name": "Poké Ball" },
 
   "_specialMartItems": "Objetos que se ponen a la venta en las tiendas ESPECIALES que no son de MT, en orden de indice y pasando a la siguiente cuando una se llena. Son los objetos de evolucion que anade el mod de gen 8 y 9: sin ellos, Ceruledge, Alcremie, Urshifu, Gholdengo y compania no pueden evolucionar, porque el mod no los coloca en ninguna Poke Ball del suelo. Van en INGLES porque es como el mod los nombra y el indice de PKHeX no cuadra en ese tramo -ver docs/MOD-EXPANSION.md §6 bis-. El nombre se comprueba contra la tabla del cartucho ANTES de escribir: si no cuadra, no se toca ninguna tienda (§52). Deja la lista vacia para que las especiales vuelvan a surtirse de nonMachineMartItem.",

@@ -7721,3 +7721,66 @@ va sembrada con el id del entrenador, así que repetir el comando no reparte meg
 Aplicado a los ocho combates de las tres clases, con copia previa y **relectura confirmando especie
 y forma**. La copia se guarda **fuera** del mod, en `Randomized/copias-mod/`: dejarla dentro
 significaría meter un fichero que no es del juego en una carpeta que LayeredFS mapea entera.
+
+---
+
+## §101 · Los aprendizajes, con las reglas de Universal Pokémon Randomizer (2026-09-06)
+
+El jugador pidió comparar cómo randomiza la referencia los movimientos que se aprenden por nivel y
+hacer lo que ella hace y aquí no. Lo que había era un sorteo **uniforme con reemplazo**: para cada
+hueco, un movimiento al azar del catálogo enseñable, conservando los niveles. Nada más.
+
+Lo que eso produce, **medido sobre el mundo que el jugador tiene instalado**:
+
+| | antes | con las reglas |
+|---|---|---|
+| movimientos repetidos dentro de un aprendizaje | **263** | **0** |
+| especies sin nada con que atacar al nivel 1 | **698 de 1329** | **0** |
+| huecos que de verdad hacen daño | 48 % | 66 % |
+
+Ese 698 es el número que justifica el trabajo entero: **más de la mitad de lo que capturas no puede
+hacer daño el día que lo capturas**. En un Nuzlocke eso no es una molestia, es el encuentro tirado.
+
+### Qué se ha traído, y qué no
+
+**Sin repetir** dentro de un aprendizaje, y **un ataque garantizado en el último hueco de nivel 1**.
+Ninguna de las dos es configurable, porque no son un gusto: son la diferencia entre un Pokémon con
+cuatro movimientos y uno con uno.
+
+**Una cuota de ataques de verdad**, por defecto el 30 % de la referencia, con «de verdad» definido
+como ella lo define: potencia × golpes ≥ 100, o ≥ 50 con precisión de 90 o mejor. Un movimiento
+flojo pero fiable cuenta y uno fuerte pero errático no.
+
+**Físico o especial según el Ataque contra el Ataque Especial** del propio Pokémon, así que a un
+bruto le tocan movimientos físicos. Y **sesgo de tipo opcional**, apagado por defecto porque en la
+referencia es un modo aparte y no parte del sorteo normal.
+
+Lo que **no** se ha traído: sus listas de movimientos prohibidos. Los Z ya estaban fuera por el §41
+—PP = 1, medido, que sobrevive a un mod que añada movimientos—, y de las suyas la mayor parte cae
+sola: los de KO fulminante y los de daño fijo tienen potencia 0, así que la regla de «buen ataque»
+los deja fuera del saco de daño por sí misma. Aquí conviene una **corrección a lo que se dijo al
+comparar**: la referencia no los prohíbe del todo, solo los saca del saco de ataques; siguen
+pudiendo salir como movimiento normal, igual que aquí.
+
+### Dos anclajes, porque suponer no vale
+
+La categoría de un movimiento es **un byte** y nada dice qué valor es físico. Suponerlo pondría a
+todos los atacantes físicos con movimientos especiales y **no fallaría nunca** — el §45 con otro
+traje. Se ancla en dos movimientos que nadie discute, buscados **por su nombre** en el texto del
+propio cartucho, y si los dos declaran la misma categoría, lanza.
+
+Y la **precisión perfecta** no es 100: el juego escribe un valor propio. Se lee de Rapidez, que es
+lo que hace la referencia, en vez de escribir 101 a mano.
+
+Los dos anclajes se ganaron el sueldo el primer día: el ancla especial estaba escrita como «Ascua» y
+el movimiento se llama **«Ascuas»**. La generación se paró en seco en vez de repartir un mundo con
+la categoría al revés. Un error de tecleo que, sin el ancla, habría salido como «los aprendizajes
+quedan un poco raros» y nadie lo habría atado a esto nunca.
+
+### Cómo se comprueba
+
+Siete pruebas fijan las reglas contra un catálogo inventado —incluidos los casos incómodos: un
+Pokémon con más huecos que movimientos hay, y uno que no aprende nada al nivel 1—, y
+`RomTool aprendizajes <a/0/1/3>` relee un mundo ya generado y cuenta las tres cifras de la tabla de
+arriba. Las pruebas dicen que las reglas son correctas; el comando dice que están enchufadas, que
+es otra cosa y hace falta igual.
