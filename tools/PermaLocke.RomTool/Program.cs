@@ -154,6 +154,14 @@ switch (command)
     case "liga":
         await LigaAsync(args.Length > 1 ? ulong.Parse(args[1]) : 20260902);
         break;
+    case "parchear-megas":
+        await ParchearMegasAsync(args[1],
+            args.Skip(2).Where(a => int.TryParse(a, out _)).Select(int.Parse).ToArray(),
+            args.Contains("--escribir"));
+        break;
+    case "clases":
+        await ClasesAsync();
+        break;
     case "importantes":
         await ImportantesAsync();
         break;
@@ -1516,6 +1524,265 @@ async Task QuienLlevaAsync(int species, string? trpokePath, int onlyTrainer = -1
     Console.WriteLine();
     Console.WriteLine($"{found} encontrado(s). El corte de la sexta prueba esta en nivel de "
                       + $"cartucho {options.FullyEvolvedFromLevel}.");
+}
+
+/// <summary>
+/// Lists the trainer classes that are NOT counted as important, so a missing one can be seen.
+/// </summary>
+/// <remarks>
+/// This exists because the same failure has now happened three times: the player fights somebody
+/// with a name, no mega and no extra Pokémon show up, and the class turns out to be missing from
+/// <c>clasesImportantes</c>. First it was 222, then eight more found in a review, and then class
+/// <b>78</b> — Francine, who also appears as class 79, which <em>was</em> in the list. A character
+/// with two class ids is exactly what a review done by reading names misses.
+///
+/// So the review stops being something somebody remembers to do. What gives a boss away is cheap
+/// to compute and hard to argue with: <b>few trainers in the class</b> and <b>a big party</b>.
+/// Filler classes have dozens of trainers with two or three Pokémon.
+/// </remarks>
+/// <summary>
+/// Gives a mega to the important battles of some classes, inside a mod that is already installed.
+/// </summary>
+/// <remarks>
+/// <para>
+/// For when a class turns out to have been missing from <c>clasesImportantes</c> after the world
+/// was already generated. Fixing the list only changes the <b>next</b> randomization, and
+/// re-randomizing mid-run would hand the player a different world, so this patches just those
+/// battles where they are.
+/// </para>
+/// <para>
+/// A mega is a <b>form</b> of its species, not a species of its own, so this is two bytes in place
+/// and the subfile does not change size. That is the whole reason it can be done here at all: the
+/// extra Pokémon of the same feature <em>adds</em> a party member, which means repacking a GARC,
+/// and repacking is the operation that has cost this project the most. It is not done here.
+/// </para>
+/// <para>
+/// Idempotent: a party that already carries a form above zero is left alone, so running it twice
+/// costs nothing. And it refuses to touch a trainer whose party does not measure what its own
+/// table says, which is the check §47 earned.
+/// </para>
+/// </remarks>
+async Task ParchearMegasAsync(string modRomfs, int[] wanted, bool write)
+{
+    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work, baseLayer: baseLayer);
+    var options = RandomizerOptionsLoader.Load(Path.Combine(root, "Data", "randomizer.json"));
+
+    var forms = MegaTrainerRandomizer.ReadForms(workspace.PathOf(GameFiles.MegaEvolution));
+    var candidates = MegaTrainerRandomizer.Candidates(forms, options, workspace.MaxSpecies);
+
+    var classNames = workspace.Config.GetText(TextName.TrainerClasses);
+    var trainerNames = workspace.Config.GetText(TextName.TrainerNames);
+
+    var dataPath = Path.Combine(modRomfs, "a", "1", "0", "6");
+    var partyPath = Path.Combine(modRomfs, "a", "1", "0", "7");
+
+    Console.WriteLine($"{candidates.Length} especies con mega. Clases: {string.Join(", ", wanted)}");
+    Console.WriteLine();
+
+    var classes = wanted.ToHashSet();
+    var touched = new List<(int Trainer, int Species, int Form)>();
+
+    // La copia va ANTES de abrir el fichero, porque GarcPatcher escribe en el sitio segun se le
+    // pide: cuando se cierra ya no hay nada que copiar que sea el original.
+    if (write)
+    {
+        var copy = partyPath + $".antes-de-megas-{DateTime.Now:yyyyMMdd-HHmmss}";
+
+        File.Copy(partyPath, copy);
+        Console.WriteLine($"Copia previa: {copy}");
+        Console.WriteLine();
+    }
+
+    using (var trainers = new GarcPatcher(dataPath))
+    using (var parties = new GarcPatcher(partyPath))
+    {
+        for (var trainer = 0; trainer < trainers.FileCount && trainer < parties.FileCount; trainer++)
+        {
+            var entry = trainers.Read(trainer);
+
+            if (entry.Length < 0x14)
+            {
+                continue;
+            }
+
+            var trainerClass = BitConverter.ToUInt16(entry, ExtraPokemonRandomizer.ClassOffset);
+            var count = (int)entry[ExtraPokemonRandomizer.CountOffset];
+
+            if (!classes.Contains(trainerClass) || count == 0)
+            {
+                continue;
+            }
+
+            var party = parties.Read(trainer);
+
+            // La comprobacion del §47: si el equipo no mide lo que su tabla dice, aqui no se
+            // escribe nada. Un desajuste significa que se esta leyendo otra cosa.
+            if (party.Length != count * TrainerPokemonTable.EntrySize)
+            {
+                Console.WriteLine($"  entrenador {trainer,4}: el equipo mide {party.Length} y la tabla"
+                                  + $" dice {count * TrainerPokemonTable.EntrySize}. NO SE TOCA.");
+                continue;
+            }
+
+            if (Enumerable.Range(0, count).Any(i => TrainerPokemonTable.GetForm(party, i) > 0))
+            {
+                Console.WriteLine($"  entrenador {trainer,4}: ya lleva una forma. Se deja.");
+                continue;
+            }
+
+            // Sembrado con el id del entrenador: la misma tirada da lo mismo, asi que repetir el
+            // comando no reparte megas distintas y lo escrito se puede volver a calcular.
+            var pick = new Random(unchecked(20260906 * 31 + trainer));
+            var species = candidates[pick.Next(candidates.Length)];
+            var form = forms[species][pick.Next(forms[species].Count)];
+
+            // Al ultimo del equipo, que es el mas fuerte en las tablas del cartucho.
+            var slot = count - 1;
+            var was = TrainerPokemonTable.GetSpecies(party, slot);
+
+            var who = trainer < trainerNames.Length ? trainerNames[trainer] : "?";
+            var name = trainerClass < classNames.Length ? classNames[trainerClass] : "?";
+
+            Console.WriteLine($"  entrenador {trainer,4}  {name} {who}: hueco {slot}, "
+                              + $"especie {was} -> {species} forma {form}");
+
+            if (!write)
+            {
+                continue;
+            }
+
+            TrainerPokemonTable.SetSpecies(party, slot, species, form);
+            TrainerPokemonTable.ClearMoves(party, slot);
+            parties.Write(trainer, party);
+            touched.Add((trainer, species, form));
+        }
+    }
+
+    if (!write)
+    {
+        Console.WriteLine();
+        Console.WriteLine("Ensayo. Con --escribir se escribe en el mod, con copia previa del fichero.");
+        return;
+    }
+
+    // Y se relee, que es lo unico que convierte «escrito» en «hecho» (§19).
+    using var back = new GarcPatcher(partyPath);
+    var wrong = 0;
+
+    foreach (var (trainer, species, form) in touched)
+    {
+        var party = back.Read(trainer);
+        var slot = TrainerPokemonTable.Count(party) - 1;
+
+        if (TrainerPokemonTable.GetSpecies(party, slot) != species
+            || TrainerPokemonTable.GetForm(party, slot) != form)
+        {
+            Console.WriteLine($"  entrenador {trainer}: al releer no esta la mega. MAL.");
+            wrong++;
+        }
+    }
+
+    Console.WriteLine();
+    Console.WriteLine(wrong == 0
+        ? $"{touched.Count} combates con mega, releidos y confirmados."
+        : $"{wrong} de {touched.Count} no cuadran al releer. Restaura la copia .antes-de-megas.");
+}
+
+async Task ClasesAsync()
+{
+    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work, baseLayer: baseLayer);
+    var roles = PermaLocke.Data.JsonRoleCatalog.Load(Path.Combine(root, "Data", "roles.json"));
+    var classes = roles.ImportantTrainerClasses.ToHashSet();
+    var classNames = workspace.Config.GetText(TextName.TrainerClasses);
+    var trainerNames = workspace.Config.GetText(TextName.TrainerNames);
+
+    var trdata = args.Length > 1 && File.Exists(args[1])
+        ? args[1]
+        : workspace.PathOf(GameFiles.TrainerData);
+
+    using var trainers = new GarcPatcher(trdata);
+    var seen = new Dictionary<int, (int Trainers, int Biggest, List<string> Names)>();
+
+    for (var trainer = 0; trainer < trainers.FileCount; trainer++)
+    {
+        var entry = trainers.Read(trainer);
+
+        if (entry.Length < 0x14)
+        {
+            continue;
+        }
+
+        var trainerClass = BitConverter.ToUInt16(entry, ExtraPokemonRandomizer.ClassOffset);
+        var count = (int)entry[ExtraPokemonRandomizer.CountOffset];
+
+        if (count == 0)
+        {
+            continue;
+        }
+
+        if (!seen.TryGetValue(trainerClass, out var row))
+        {
+            row = (0, 0, []);
+        }
+
+        row.Names.Add(trainer < trainerNames.Length ? trainerNames[trainer] : "?");
+        seen[trainerClass] = (row.Trainers + 1, Math.Max(row.Biggest, count), row.Names);
+    }
+
+    // Los nombres que YA cuentan como importantes. Un personaje repartido en varias clases es
+    // como se cuela uno: Francine sale en la 79, que estaba, y en la 78, que no; Fabio en la 71 y
+    // en la 72; Tilo en la 101, la 102 y la 221. Buscar por nombre lo caza y contar Pokemon no.
+    var covered = seen
+        .Where(pair => classes.Contains(pair.Key))
+        .SelectMany(pair => pair.Value.Names)
+        // Los nombres en blanco los escribe el juego como puntos y los sin traducir como [~ n]:
+        // los dos salen en clases de relleno y emparejarian cualquier cosa con cualquier cosa.
+        .Where(name => name.Length > 0 && !name.StartsWith('[') && name.Any(char.IsLetter))
+        .ToHashSet(StringComparer.Ordinal);
+
+    Console.WriteLine($"{seen.Count} clases con entrenadores. {classes.Count} cuentan como importantes.");
+    Console.WriteLine();
+
+    var repeated = seen
+        .Where(pair => !classes.Contains(pair.Key) && pair.Value.Names.Any(covered.Contains))
+        .OrderBy(pair => pair.Key)
+        .ToList();
+
+    Console.WriteLine(repeated.Count == 0
+        ? "MISMO PERSONAJE EN OTRA CLASE: ninguno. La lista esta completa por ese lado."
+        : "MISMO PERSONAJE EN OTRA CLASE -- estos casi seguro faltan:");
+
+    foreach (var (id, row) in repeated)
+    {
+        var name = id < classNames.Length ? classNames[id] : "?";
+        // TODOS los nombres de la clase, no solo el que coincide: si los otros ocho son relleno,
+        // meter la clase entera asciende a ocho entrenadores que nadie ha mirado.
+        var who = string.Join(", ", row.Names.Distinct().Take(10));
+
+        Console.WriteLine($"  clase {id,3}  {name,-22} {row.Trainers,3} entrenadores   {who}");
+    }
+
+    Console.WriteLine();
+    Console.WriteLine("CLASES QUE NO ESTAN EN LA LISTA, las mas sospechosas primero:");
+    Console.WriteLine("(pocos entrenadores y equipo grande = personaje con nombre)");
+    Console.WriteLine();
+
+    var missing = seen
+        .Where(pair => !classes.Contains(pair.Key))
+        .OrderByDescending(pair => pair.Value.Biggest)
+        .ThenBy(pair => pair.Value.Trainers)
+        .ToList();
+
+    foreach (var (id, row) in missing.Where(pair => pair.Value.Biggest >= 3 || pair.Value.Trainers <= 6))
+    {
+        var name = id < classNames.Length ? classNames[id] : "?";
+        var who = string.Join(", ", row.Names.Distinct().Take(6));
+
+        Console.WriteLine($"  clase {id,3}  {name,-22} {row.Trainers,3} entrenadores, "
+                          + $"hasta {row.Biggest} Pokemon   {who}");
+    }
+
+    return;
 }
 
 async Task ImportantesAsync()

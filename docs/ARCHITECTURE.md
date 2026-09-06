@@ -7672,3 +7672,52 @@ Nada las distingue por su forma, así que **ninguna se elige**: se pregunta a to
 a hueco, y a la que tenga PS se los quita. Escribir un cero donde ya hay un cero no cuesta nada;
 dejarse la buena sí. Es el §96 otra vez —la identidad por delante, nunca la posición— aplicado donde
 faltaba, que era en de dónde se leía y no en dónde se escribía.
+
+---
+
+## §100 · La clase que faltaba, por tercera vez (2026-09-06)
+
+El jugador peleó contra Francine —Plumeria— a nivel 46 con un Emboar y un Stunfisk, y no le salió
+mega ni Pokémon extra. Es el entrenador 238, **clase 78 «Comandante Skull»**, y esa clase no estaba
+en `clasesImportantes`. La **79**, que también es Francine, sí.
+
+Y ahí está lo que importa, porque es la tercera vez con la misma forma. Antes fue la clase 222, y
+después una revisión que añadió ocho más. Las dos revisiones se hicieron **leyendo nombres a mano**,
+y por eso ninguna cazó esto: quien busca «Francine», la encuentra en la 79 y sigue. **Un personaje
+con nombre repartido en varias clases** es invisible a una revisión por nombres.
+
+Así que la revisión deja de depender de que alguien se acuerde. `RomTool clases <a/1/0/6>` lista las
+clases que no están, ordenadas por lo que delata a un jefe —pocos entrenadores y equipo grande—, y
+sobre todo cruza los **nombres de los entrenadores** contra los de las clases que ya cuentan. Esa
+segunda comprobación saca la familia entera de un tirón:
+
+```
+clase  30  Entrenador          Tilo       (la 101 y la 102 estan)
+clase  72  Director Æther      Fabio      (la 71 esta)
+clase  78  Comandante Skull    Francine   (la 79 esta)
+clase 221  Entrenador          Tilo
+```
+
+Añadidas 72, 78 y 221. La **30** se deja fuera: nueve entrenadores de los que ocho tienen el nombre
+sin traducir y uno es Tilo, así que puede ser el rival de las primeras escenas o puede ser relleno,
+y sin medirlo no se mete. Y el filtro de nombres ignora los que son solo puntos o `[~ n]`, porque
+emparejaban clases de relleno con clases de relleno: sin eso salían cuatro falsos positivos.
+
+### Arreglar la lista no arregla el mundo ya generado
+
+`roles.json` decide cómo se randomiza **la próxima vez**. El mundo del jugador ya estaba hecho, y
+volver a randomizar a mitad de run le cambiaría el mapa entero. Así que `RomTool parchear-megas
+<romfs> <clases...> [--escribir]` parchea esos combates **donde están**, en el mod instalado.
+
+Se puede porque una mega es una **forma** de su especie y no una especie aparte: dos bytes en su
+sitio, el subfichero no cambia de tamaño. El Pokémon extra de esa misma tanda **no** entra, y no es
+pereza: añade un miembro al equipo, lo que obliga a reempaquetar el GARC, y reempaquetar es la
+operación que más caro ha salido aquí (§19, §47). Eso se queda para la siguiente randomización.
+
+Es idempotente —un equipo que ya lleva una forma se deja— y se niega a tocar un entrenador cuyo
+equipo no mida lo que su propia tabla declara, que es la comprobación que el §47 se ganó. La tirada
+va sembrada con el id del entrenador, así que repetir el comando no reparte megas distintas.
+
+Aplicado a los ocho combates de las tres clases, con copia previa y **relectura confirmando especie
+y forma**. La copia se guarda **fuera** del mod, en `Randomized/copias-mod/`: dejarla dentro
+significaría meter un fichero que no es del juego en una carpeta que LayeredFS mapea entera.
