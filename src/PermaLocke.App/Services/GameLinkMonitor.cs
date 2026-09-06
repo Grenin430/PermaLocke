@@ -28,6 +28,7 @@ public sealed class GameLinkMonitor(
     BallControlService ballControl,
     EncounterService encounters,
     RewardService rewards,
+    MaintenanceService maintenance,
     IEventStore events,
     IClock clock,
     ILogger<GameLinkMonitor> logger) : IDisposable
@@ -85,17 +86,24 @@ public sealed class GameLinkMonitor(
     public event EventHandler? RunDataChanged;
 
     /// <summary>
-    /// Raised when a fallen Pokémon has been turned into a Shedinja inside the running game.
+    /// Raised when the run's dead have been left at zero HP in the <b>saved game</b>.
     /// </summary>
     /// <remarks>
-    /// It carries a message rather than the Pokémon because what matters is the warning attached
-    /// to it: that mark is written into <b>memory</b>, and memory is not the save. The death itself
-    /// is safe — it went into the run's event chain before this was even attempted — but the
-    /// Shedinja disappears if the player closes the game without saving, and then the Pokémon is
-    /// back, fainted, looking as if nothing had happened. That is exactly what happened once, and
-    /// nothing on screen had said it could.
+    /// It carries a message because the timing is the part worth saying: this happens when the game
+    /// is closed, not when somebody falls, and there is no way around that. The mark lives in the
+    /// save file, the save file can only be written with the emulator shut, and §98 measured that
+    /// writing it into memory instead never reaches the game — 120 HP written into the party
+    /// mirror and the screen still saying 128.
     /// </remarks>
     public event EventHandler<string>? DeathMarked;
+
+    /// <summary>A Pokémon of the run has just been recorded as fallen. The name it was known by.</summary>
+    /// <remarks>
+    /// Separate from <see cref="DeathMarked"/>, which is about the marker written into the game.
+    /// This one is the death itself, and it is the one worth shouting: the marker may fail -the
+    /// emulator may not be ours, the party may have moved- and the death is recorded either way.
+    /// </remarks>
+    public event EventHandler<string>? PokemonDied;
 
     public void Start()
     {
@@ -125,6 +133,13 @@ public sealed class GameLinkMonitor(
                     {
                         logger.LogInformation("Sin conexión con el juego: {Problem}", snapshot.Problem);
                     }
+                }
+
+                // El juego se ha cerrado: es el único momento en que se puede escribir la partida,
+                // y por tanto el único en que la marca de muerte se puede poner.
+                if (Latest?.Connected == true && !snapshot.Connected)
+                {
+                    await MarkFallenAsync();
                 }
 
                 Latest = snapshot;
@@ -179,29 +194,29 @@ public sealed class GameLinkMonitor(
 
         foreach (var dead in findings.Fainted)
         {
-            logger.LogWarning("Muerte detectada: {Pokemon}", dead.Nickname ?? dead.SpeciesName);
+            var name = dead.Nickname ?? dead.SpeciesName;
+
+            logger.LogWarning("Muerte detectada: {Pokemon}", name);
             await watcher.RecordDeathAsync(dead, run.PlayerName, ct: _stopping.Token);
-            ApplyDeathInGame(snapshot, dead);
+            Announce(() => PokemonDied?.Invoke(this, name));
             changed = true;
         }
 
-        // Los caídos que ya estaban en el equipo antes de arrancar. La lista del emulador vive en
-        // su memoria y se vacía al reiniciar cualquiera de los dos programas, así que sin esto el
-        // vigilante solo sabía de los muertos de la sesión en curso: bastaba cerrar y abrir para
-        // quedarse con el Shedinja puesto y nadie mirándolo.
-        await AdoptFallenAsync(run, snapshot);
+        // Aquí no se escribe nada en el juego, y ese es el cambio. La marca vivía en memoria: la
+        // aplicación convertía al caído en un Shedinja y le pedía al emulador que lo mantuviera. Ya
+        // no. El §98 midió que los PS escritos en memoria no llegan al juego, y el jugador no
+        // quería el Shedinja, así que la marca es «sin PS» y va en el FICHERO de partida, que sí
+        // manda —comprobado contra la pantalla— y que solo se puede escribir con el juego cerrado.
+        // Lo hace MarkFallenAsync cuando se pierde el enlace.
 
-        // DESPUÉS de las muertes, nunca antes. Si el equipo se ha mudado de sitio lo registrado
-        // apunta a donde ya no está, así que hay que rehacerlo — pero es una comodidad, y ponerla
-        // por delante hizo que una excepción suya se llevara por delante la detección de muertes
-        // entera. Se rehace solo cuando cambia la firma de las estructuras: reenviarla cada
-        // segundo serían diez paquetes por segundo peleándose con el sondeo por el mismo socket,
-        // que es la clase de ráfaga que ya tumbó el enlace una vez (§54).
-        EnsureWatchList(snapshot);
+        // Y en vivo, cada vuelta: un caído al que le devuelven los PS vuelve al suelo en menos de
+        // un segundo. Esto no se podía hacer hasta el §99, porque hasta entonces PermaLocke solo
+        // sabía escribir en el espejo y el juego no lo lee.
+        await KeepFallenDownAsync(run, snapshot);
 
         if (findings.NewMembers.Count > 0)
         {
-            UnregisteredDetected?.Invoke(this, findings.NewMembers);
+            Announce(() => UnregisteredDetected?.Invoke(this, findings.NewMembers));
         }
 
         changed |= await CheckWipeAsync(run, snapshot);
@@ -213,7 +228,7 @@ public sealed class GameLinkMonitor(
         // porque el juego se movio, no porque el reloj haya dado otra vuelta.
         if (changed)
         {
-            RunDataChanged?.Invoke(this, EventArgs.Empty);
+            Announce(() => RunDataChanged?.Invoke(this, EventArgs.Empty));
         }
     }
 
@@ -302,7 +317,7 @@ public sealed class GameLinkMonitor(
         logger.LogWarning("Equipo caído. Penalización: {Points} puntos{Capped}. Saldo: {Balance}",
             result.Points, result.Capped ? " (tope alcanzado)" : string.Empty, result.NewBalance);
 
-        TeamWiped?.Invoke(this, result);
+        Announce(() => TeamWiped?.Invoke(this, result));
         return true;
     }
 
@@ -441,8 +456,7 @@ public sealed class GameLinkMonitor(
             // varias estructuras y no todas se leen igual, así que sin esta comprobación una copia
             // desalineada se corrige igual y lo que se corrige es el de al lado.
             var results = provider.AllLayouts
-                .Select(layout => writer.EnforceLevelCap(layout.SlotAddress(member.Slot), cap, member.Pid,
-                    layout.Stride == PartyLayoutLocator.CopyStride))
+                .Select(layout => writer.EnforceLevelCap(layout.SlotAddress(member.Slot), cap, member.Pid))
                 .ToList();
 
             var applied = results.Count(r => r.Applied);
@@ -544,7 +558,7 @@ public sealed class GameLinkMonitor(
                 {
                     handed = true;
                     logger.LogInformation("Premio automático entregado: {Message}", given.Message);
-                    RewardGiven?.Invoke(this, given);
+                    Announce(() => RewardGiven?.Invoke(this, given));
                 }
                 else
                 {
@@ -571,42 +585,85 @@ public sealed class GameLinkMonitor(
     /// <summary>Most Pokemon a party can hold, which is how far a slot search goes.</summary>
     private const int PartySlots = 6;
 
-    /// <summary>PID marked dead in the game during this session of PermaLocke.</summary>
+    /// <summary>
+    /// Raises an event without letting a listener's failure take the inspection down with it.
+    /// </summary>
     /// <remarks>
-    /// Only this session, and that is the honest scope. It covers the case that was failing — the
-    /// marker written and the game undoing it minutes later — and it does not pretend to cover a
-    /// death from a previous run of the application, which is already a Shedinja in the save or is
-    /// not, and is MANTENIMIENTO's job either way.
+    /// The third time this lesson is paid for, and this time it cost a Pokémon: a notice read the
+    /// main window's state from <b>this</b> thread, WPF threw, and the exception climbed all the
+    /// way out of the inspection — so the death was recorded and charged, and then the rest of the
+    /// cycle never ran because it was already gone.
+    /// <para>
+    /// Whoever listens is a spectator. The work is registering the death and charging for it;
+    /// telling somebody about it is a courtesy, and a courtesy that throws must cost the courtesy
+    /// and nothing else.
+    /// </para>
     /// </remarks>
-    private readonly HashSet<uint> _watched = [];
-
-    /// <summary>True once it has been said that this emulator cannot watch anything.</summary>
-    private bool _warnedNoWatch;
-
-    /// <summary>What the party structures looked like when the list was last sent.</summary>
-    private string _watchSignature = string.Empty;
-
-    /// <summary>Whose fallen list has already been asked for, so it is asked once per run.</summary>
-    private Guid _adoptedFor;
+    private void Announce(Action raise)
+    {
+        try
+        {
+            raise();
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Un oyente falló al recibir un aviso del vigilante");
+        }
+    }
 
     /// <summary>
-    /// Picks up the fallen that were already in the party before this session started.
+    /// Leaves the run's dead at zero HP in the save, now that the game has let go of it.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Asked <b>once per run</b> and only while connected: it is a database query, and the answer
-    /// does not change on its own — a new death adds itself to the list as it happens.
+    /// The whole death marker, and it can only happen here. What used to run at the moment of death
+    /// wrote into the running game's memory, and §98 measured that the game never reads it back —
+    /// so the file is the only door, and the file can only be written with the emulator shut.
     /// </para>
     /// <para>
-    /// Who is fallen comes from the run's own history, matched by PID, and never from «that one
-    /// looks like the marker». A Shedinja called MUERTO is what a death is turned into, and this
-    /// run has held a real one that was never a death (§59): reading the game to decide who died
-    /// would have adopted it and kept propping it up for ever.
+    /// It goes through the same service as the button in MANTENIMIENTO rather than repeating it:
+    /// copy first, write, re-read, and one already down is skipped, so a session that killed nobody
+    /// costs a read and nothing else. If the emulator is still holding the save it does nothing and
+    /// the next disconnection tries again — never a write into a file another program owns.
     /// </para>
     /// </remarks>
-    private async Task AdoptFallenAsync(Run run, GameSnapshot snapshot)
+    /// <summary>
+    /// Puts back to zero any Pokémon the run says is dead and the game has healed.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This is what makes «dead» mean dead while you play, and it only became possible once §99
+    /// found where the game keeps HP: <c>0x158</c> into the entries of the authoritative structure.
+    /// Everything PermaLocke wrote before that went into the save-block mirror, which the game
+    /// fills and never reads — measured three times, and it is why the marker had to be a Shedinja.
+    /// </para>
+    /// <para>
+    /// Every poll rather than only when the party changes: a Pokémon Centre heals without the
+    /// roster moving at all, so a pass keyed on it would never notice.
+    /// </para>
+    /// <para>
+    /// It reads the HP from every authoritative copy instead of trusting the snapshot's, and that
+    /// is not caution, it is a measurement. There are <b>three</b> structures at that stride and
+    /// they disagree: read in the same second, one said the Gyarados was at 128, another at 103 and
+    /// the third at 131 — two photographs and the live one. The application had cached the stalest
+    /// from a previous session and revalidated it «without sweeping», so the first version of this
+    /// pass looked at a healed Pokémon, read zero, and concluded there was nothing to do. Nothing
+    /// tells the three apart by shape, so none of them gets to be trusted: every copy is asked, by
+    /// PID, and whichever still has HP is put down.
+    /// </para>
+    /// <para>
+    /// It is <b>not</b> handed to the emulator's block watcher, and that is a decision and not an
+    /// oversight. The watcher takes the first four bytes of what it guards as the identity, and at
+    /// <c>0x158</c> those are the status condition, not the encryption constant; guarding from the
+    /// start of the entry instead would mean holding the bytes between <c>0xE8</c> and <c>0x158</c>
+    /// as well, which nobody has identified and the game moves on its own. That is exactly what
+    /// corrupted a real save into a Bad Egg in §97. Once a second from here cannot corrupt
+    /// anything.
+    /// </para>
+    /// </remarks>
+    private async Task KeepFallenDownAsync(Run run, GameSnapshot snapshot)
     {
-        if (_adoptedFor == run.Id || !snapshot.Connected || snapshot.Party.Count == 0)
+        if (!snapshot.Connected || snapshot.Party.Count == 0 || provider.AllLayouts.Count == 0)
         {
             return;
         }
@@ -616,196 +673,82 @@ public sealed class GameLinkMonitor(
             var fallen = await watcher.FallenPidsAsync(run.Id, _stopping.Token);
             var here = snapshot.Party.Where(m => fallen.Contains(m.Pid)).ToList();
 
-            _adoptedFor = run.Id;
-
-            if (here.Count == 0)
-            {
-                return;
-            }
-
             foreach (var member in here)
             {
-                _watched.Add(member.Pid);
-            }
+                var name = string.IsNullOrWhiteSpace(member.Nickname) ? member.SpeciesName : member.Nickname;
+                var applied = 0;
 
-            _watchSignature = string.Empty;
-            logger.LogInformation("{Count} caído(s) ya en el equipo: se vuelven a vigilar", here.Count);
-        }
-        catch (Exception ex)
-        {
-            // Sin reintento inmediato ni marca de hecho: se vuelve a probar en la vuelta siguiente.
-            logger.LogWarning(ex, "No se ha podido mirar qué caídos siguen en el equipo");
-        }
-    }
-
-    /// <summary>
-    /// Rebuilds the emulator's list when, and only when, the party has moved.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Everything in here is <b>swallowed</b>, and that is the point. Keeping a marker propped up
-    /// is a nicety; noticing that a Pokémon died is the job. This threw an
-    /// <c>AzaharRpcException</c> the first time the player stepped out of the game to the emulator
-    /// menu — the RPC stops answering for a moment there — and because it ran at the top of the
-    /// cycle it took the whole inspection down with it, death detection included. A convenience
-    /// that can disable the main feature is not a convenience.
-    /// </para>
-    /// <para>
-    /// And the signature is written only when the refresh actually went through. Writing it first
-    /// meant a failed attempt was remembered as done, so the list stayed stale until the party
-    /// happened to move again.
-    /// </para>
-    /// </remarks>
-    private void EnsureWatchList(GameSnapshot snapshot)
-    {
-        if (_watched.Count == 0 || !snapshot.Connected)
-        {
-            return;
-        }
-
-        var signature = string.Join(',', provider.AllLayouts.Select(l => l.Address))
-                        + '|' + string.Join(',', snapshot.Party.Select(m => $"{m.Pid:X8}:{m.Slot}"));
-
-        if (signature == _watchSignature)
-        {
-            return;
-        }
-
-        try
-        {
-            RefreshWatchList(snapshot);
-            _watchSignature = signature;
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "No se ha podido actualizar la lista de vigilancia; se reintenta");
-        }
-    }
-
-    /// <summary>
-    /// Hands the emulator the whole list again: every watched Pokémon, in every copy of the party.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Whole and not incremental. The addresses belong to structures that move — the locator has
-    /// been seen going from two of them to five inside one session — so an entry added weeks ago
-    /// would be pointing somewhere the party no longer is. Clearing first means a stale address
-    /// costs a missed rewrite, never a write into the wrong place.
-    /// </para>
-    /// <para>
-    /// Silent when the emulator is the official Azahar: it answers empty to a packet type it does
-    /// not know, and that is the ordinary case, not a failure.
-    /// </para>
-    /// </remarks>
-    private void RefreshWatchList(GameSnapshot snapshot)
-    {
-        if (_watched.Count == 0)
-        {
-            return;
-        }
-
-        if (!writer.ClearWatchList())
-        {
-            // Y se dice UNA vez. Esto se escribió devolviendo aquí en silencio, y costó la primera
-            // prueba: el jugador mató un Pokémon, guardó, y no había ni una línea en ningún log
-            // que dijera que la vigilancia no se había llegado a pedir. Un emulador sin el parche
-            // es el caso normal, pero normal no es lo mismo que invisible.
-            if (!_warnedNoWatch)
-            {
-                _warnedNoWatch = true;
-                logger.LogWarning(
-                    "El emulador no acepta la lista de vigilancia: la marca de muerte se escribe "
-                    + "una vez y el juego puede deshacerla. Hace falta el fork con el parche 2.");
-            }
-
-            return;
-        }
-
-        _warnedNoWatch = false;
-        var registered = 0;
-
-        // Se BUSCA el PID en cada estructura en vez de dar por hecho que ocupa el mismo hueco en
-        // todas. No lo ocupa: guardan el equipo en órdenes distintos, y una de ellas llega a
-        // quedarse con un orden viejo. Dándolo por hecho se registraron cinco direcciones de las
-        // que cuatro llevaban a un Pokémon VIVO, y el emulador le habría estado congelando el
-        // bloque cinco veces por segundo.
-        foreach (var pid in _watched)
-        {
-            foreach (var layout in provider.AllLayouts)
-            {
-                for (var slot = 0; slot < PartySlots; slot++)
+                foreach (var layout in provider.AllLayouts
+                             .Where(l => l.Stride == PartyLayoutLocator.AuthoritativeStride))
                 {
-                    if (writer.Watch(layout.SlotAddress(slot), pid))
+                    // El PID por delante y en CADA copia, no el número de hueco: las estructuras
+                    // guardan el equipo en órdenes distintos y escribir por posición manda la
+                    // corrección al Pokémon de al lado (§96).
+                    for (var slot = 0; slot < PartySlots; slot++)
                     {
-                        registered++;
-                        break;
+                        var at = layout.SlotAddress(slot);
+
+                        if (writer.ReadAuthoritative(at) is { ChecksumValid: true } found
+                            && found.PID == member.Pid
+                            && found.Stat_HPCurrent > 0
+                            && writer.SetLiveHp(at, 0, member.Pid).Applied)
+                        {
+                            applied++;
+                        }
                     }
                 }
+
+                if (applied == 0)
+                {
+                    continue;
+                }
+
+                logger.LogWarning("{Pokemon} está caído y le habían devuelto los PS: al suelo otra vez"
+                                  + " ({Copias} copias)", name, applied);
+
+                Announce(() => DeathMarked?.Invoke(this, $"{name} está caído: se le quitan los PS otra vez."));
             }
         }
-
-        logger.LogInformation("El emulador vigila {Count} huecos de {Dead} caído(s)",
-            registered, _watched.Count);
+        catch (Exception ex)
+        {
+            // Sin reintento inmediato: la vuelta siguiente lo mira otra vez, y el historial de la
+            // run ya tiene la muerte pase lo que pase.
+            logger.LogWarning(ex, "No se ha podido comprobar si algún caído ha recuperado PS");
+        }
     }
 
-    private void ApplyDeathInGame(GameSnapshot snapshot, PokemonEntry dead)
+    private async Task MarkFallenAsync()
     {
-        if (provider.AllLayouts.Count == 0 || dead.Pid is not { } pid)
+        if (runContext.Current is null)
         {
-            return;
-        }
-
-        var member = snapshot.Party.FirstOrDefault(m => m.Pid == pid);
-
-        if (member is null)
-        {
-            logger.LogWarning("No encuentro en el equipo el PID {Pid} para transformarlo", pid);
             return;
         }
 
         try
         {
-            // Written into every copy: the one the game reads is among them, and the rest are
-            // refreshed from it anyway, so hitting all of them is both safe and sufficient.
-            var results = provider.AllLayouts
-                .Select(layout => writer.ApplyDeath(layout.SlotAddress(member.Slot), new DeathTransform(), pid,
-                    layout.Stride == PartyLayoutLocator.CopyStride))
-                .ToList();
+            var report = await maintenance.EnforceDeathsAsync(_stopping.Token);
 
-            var applied = results.Count(r => r.Applied);
-
-            if (applied == 0)
+            if (report.Marked == 0)
             {
-                logger.LogWarning("No se pudo transformar a {Pokemon} en el juego: {Rejected} copias "
-                                  + "rechazaron la escritura", dead.SpeciesName, results.Count(r => r.Rejected));
                 return;
             }
 
-            logger.LogInformation("{Pokemon} transformado en el juego (hueco {Slot}, {Applied} copias releídas)",
-                dead.SpeciesName, member.Slot, applied);
+            logger.LogInformation("{Count} caído(s) a 0 PS en la partida al cerrar el juego",
+                report.Marked);
 
-            // Y se le pide al emulador que la mantenga. Sin esto la marca se escribe una vez y el
-            // juego la deshace en cuanto vuelve a tocar el equipo, que es lo que se midió en el
-            // §90: siete PS aguantaron quince segundos y desaparecieron.
-            // Solo se apunta. Quien manda la lista es EnsureWatchList, unas líneas más abajo en el
-            // mismo ciclo, que va envuelto: pedirla desde aquí metía una llamada que puede fallar
-            // en medio del camino de la muerte, y si fallaba el jugador se quedaba además sin el
-            // aviso de que la marca vive en la memoria.
-            _watched.Add(pid);
-            _watchSignature = string.Empty;
+            Announce(() => DeathMarked?.Invoke(this,
+                $"{report.Marked} caído(s) se han quedado a 0 PS en la partida. Se verá al cargar."
+                + (report.Boxed > 0
+                    ? $" {report.Boxed} está(n) en una caja y ahí no se puede marcar."
+                    : string.Empty)));
 
-            // Y se dice lo que esa marca NO es: permanente. La muerte ya está en el historial pase
-            // lo que pase, pero el Shedinja vive en la memoria del emulador hasta que el jugador
-            // guarde dentro del juego.
-            DeathMarked?.Invoke(this,
-                $"{dead.Nickname ?? dead.SpeciesName} marcado como caído en el juego. Está solo en "
-                + "la memoria: guarda dentro del juego para que quede, o escríbelo en la partida "
-                + "desde MANTENIMIENTO.");
+            Announce(() => RunDataChanged?.Invoke(this, EventArgs.Empty));
         }
-
         catch (Exception ex)
         {
-            logger.LogError(ex, "No se pudo transformar a {Pokemon} en el juego", dead.SpeciesName);
+            // Sin reintento inmediato: la proxima vez que se cierre el juego se vuelve a intentar,
+            // y el historial de la run ya tiene la muerte pase lo que pase.
+            logger.LogWarning(ex, "No se ha podido dejar a los caídos a 0 PS en la partida");
         }
     }
 

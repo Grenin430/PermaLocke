@@ -41,6 +41,22 @@ public sealed partial class SyncViewModel : SectionViewModel
 
     public ObservableCollection<StandingRow> Rows { get; } = [];
 
+    /// <summary>
+    /// The top three, in the order a podium is drawn: second, first, third.
+    /// </summary>
+    /// <remarks>
+    /// A podium and not three more rows of a table, because this is the screen of a competition
+    /// between five friends and the only thing anybody opens it for is to see who is winning. The
+    /// order is the drawing order, not the ranking: the tallest block goes in the middle.
+    /// </remarks>
+    public ObservableCollection<StandingRow> Podium { get; } = [];
+
+    /// <summary>From fourth place down, as a plain table.</summary>
+    public ObservableCollection<StandingRow> Rest { get; } = [];
+
+    [ObservableProperty]
+    private bool _hasPodium;
+
     /// <summary>Files in the folder that could not be read, said by name.</summary>
     public ObservableCollection<string> Broken { get; } = [];
 
@@ -89,6 +105,26 @@ public sealed partial class SyncViewModel : SectionViewModel
         foreach (var row in standings.Rows)
         {
             Rows.Add(row);
+        }
+
+        Podium.Clear();
+        Rest.Clear();
+
+        // Segundo, primero, tercero. Con menos de tres no hay podio: dos bloques y un hueco se
+        // leerian como que falta alguien, y lo que falta es gente que publique.
+        var top = standings.Rows.Take(3).ToList();
+        HasPodium = top.Count == 3;
+
+        if (HasPodium)
+        {
+            Podium.Add(top[1]);
+            Podium.Add(top[0]);
+            Podium.Add(top[2]);
+        }
+
+        foreach (var row in standings.Rows.Skip(HasPodium ? 3 : 0))
+        {
+            Rest.Add(row);
         }
 
         Broken.Clear();

@@ -6,8 +6,61 @@
         <!-- Una fila de la clasificacion. El puesto en grande a la izquierda, los puntos a la
              derecha, y en medio quien es y como le va. La tuya se marca con la barra de acento:
              en una tabla de cinco, encontrarte a ti mismo tiene que ser instantaneo. -->
+        <!-- UN BLOQUE DEL PODIO. La altura la decide el puesto, y por eso va en disparadores y no
+             en el dato: la posicion ya la trae la clasificacion, y duplicarla como «altura» seria
+             dos verdades que pueden discrepar. El tuyo se tiñe entero, que en una pantalla que
+             existe para compararse es lo primero que buscas. -->
+        <DataTemplate x:Key="PodiumTemplate">
+            <StackPanel VerticalAlignment="Bottom" Margin="6,0">
+                <TextBlock Text="{Binding Snapshot.PlayerName}" Style="{StaticResource CardTitle}"
+                           TextAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,0,3" />
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,8">
+                    <Path Style="{StaticResource IconSmall}" Data="{StaticResource IconPoints}"
+                          Fill="{StaticResource AccentBrush}" VerticalAlignment="Center"
+                          Margin="0,0,6,0" />
+                    <TextBlock Text="{Binding Snapshot.Points}" Style="{StaticResource Numeric}"
+                               Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center" />
+                </StackPanel>
+
+                <Border x:Name="Block" CornerRadius="6,6,0,0" BorderThickness="1,1,1,0"
+                        Background="{StaticResource SurfaceAltBrush}"
+                        BorderBrush="{StaticResource BorderStrongBrush}" Height="86">
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Position}" Style="{StaticResource Display}"
+                                   Foreground="{StaticResource TextFaintBrush}"
+                                   TextAlignment="Center" x:Name="Rank" />
+                        <TextBlock Style="{StaticResource Faint}" TextAlignment="Center"
+                                   Margin="0,2,0,0">
+                            <Run Text="{Binding Snapshot.StagesCleared, Mode=OneWay}" />
+                            <Run Text="etapas ·" />
+                            <Run Text="{Binding Snapshot.Dead, Mode=OneWay}" />
+                            <Run Text="caídos" />
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding Position}" Value="1">
+                    <Setter TargetName="Block" Property="Height" Value="136" />
+                    <Setter TargetName="Block" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                    <Setter TargetName="Rank" Property="Foreground" Value="{StaticResource AccentBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Position}" Value="2">
+                    <Setter TargetName="Block" Property="Height" Value="108" />
+                </DataTrigger>
+
+                <!-- El tuyo. Se tiñe el bloque entero y no solo un filo: es lo que vienes a mirar. -->
+                <DataTrigger Binding="{Binding IsMine}" Value="True">
+                    <Setter TargetName="Block" Property="Background" Value="{StaticResource AccentDeepBrush}" />
+                    <Setter TargetName="Block" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
         <DataTemplate x:Key="StandingTemplate">
-            <Border Style="{StaticResource Row}" Padding="0,10">
+            <Border x:Name="RowBox" Style="{StaticResource Row}" Padding="0,10">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="3" />
@@ -79,6 +132,14 @@
                                VerticalAlignment="Center" TextAlignment="Right" />
                 </Grid>
             </Border>
+
+            <DataTemplate.Triggers>
+                <!-- La tuya, teñida entera. Tres pixeles de filo al borde de la fila no se ven en
+                     una lista, y esta pantalla existe para compararte con los demas. -->
+                <DataTrigger Binding="{Binding IsMine}" Value="True">
+                    <Setter TargetName="RowBox" Property="Background" Value="{StaticResource AccentDeepBrush}" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
         </DataTemplate>
     </UserControl.Resources>
 
@@ -143,7 +204,22 @@
 
                     <TextBlock Text="{Binding Message}" Style="{StaticResource Faint}" Margin="0,6,0,0" />
 
-                    <ItemsControl ItemsSource="{Binding Rows}" Margin="0,8,0,0"
+                    <!-- EL PODIO. Solo con tres o mas publicados; con menos, la tabla sola. -->
+                    <Border Style="{StaticResource Inset}" Margin="0,12,0,4" Padding="18,16,18,0"
+                            Visibility="{Binding HasPodium, Converter={StaticResource BoolToVisibility}}">
+                        <ItemsControl ItemsSource="{Binding Podium}"
+                                      ItemTemplate="{StaticResource PodiumTemplate}"
+                                      HorizontalAlignment="Center">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Rows="1" Columns="3" Width="560"
+                                                 VerticalAlignment="Bottom" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                        </ItemsControl>
+                    </Border>
+
+                    <ItemsControl ItemsSource="{Binding Rest}" Margin="0,8,0,0"
                                   ItemTemplate="{StaticResource StandingTemplate}" />
                 </StackPanel>
             </Border>

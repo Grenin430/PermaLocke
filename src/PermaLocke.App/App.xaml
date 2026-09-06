@@ -1,4 +1,8 @@
-﻿<Application x:Class="PermaLocke.App.App"
+﻿<!-- Se apaga cuando se cierra la ventana principal, y NO cuando se cierra la ultima. Los avisos
+     y la pestaña del borde son ventanas de verdad aunque esten ocultas, y WPF las cuenta: con el
+     modo por defecto, cerrar PermaLocke dejaba el proceso vivo para siempre. -->
+<Application x:Class="PermaLocke.App.App"
+             ShutdownMode="OnMainWindowClose"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Application.Resources>

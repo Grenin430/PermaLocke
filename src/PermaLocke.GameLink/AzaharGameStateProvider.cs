@@ -246,15 +246,24 @@ public sealed class AzaharGameStateProvider(
             : $"El entrenador del juego es «{_gameTrainer}» y la run está a nombre de «{TrainerName}».";
 
     /// <summary>
-    /// Picks the copy worth reading from. They differ in what they carry: some only have
-    /// coherent battle stats for the first slot, so the one that yields the most members wins.
+    /// Picks the copy worth reading from: the one the game itself reads, when it can be read.
     /// </summary>
+    /// <remarks>
+    /// The tie-break used to prefer the save-block mirror, and that was not a choice so much as
+    /// the only thing that worked — the authoritative structure keeps its battle stats at
+    /// <c>0x158</c> and nothing here knew that, so it never yielded a single member. Now that it
+    /// does, it wins, and it has to: the mirror is a photograph the game refreshes when it saves,
+    /// so reading HP from it meant a Pokémon could faint and go on looking healthy until the
+    /// player saved. Most members still wins first, because a copy that only holds the lead is
+    /// worse than a complete one whatever else it is. §99.
+    /// </remarks>
     private PartyLayout? Choose(Pk7Reader reader, IReadOnlyList<PartyLayout> candidates) =>
         candidates
             .Select(layout => (Layout: layout, Party: ReadParty(reader, layout)))
             .Where(candidate => candidate.Party.Count > 0)
             .OrderByDescending(candidate => candidate.Party.Count)
-            .ThenBy(candidate => candidate.Layout.Stride == PartyLayoutLocator.CopyStride ? 0 : 1)
+            .ThenBy(candidate =>
+                candidate.Layout.Stride == PartyLayoutLocator.AuthoritativeStride ? 0 : 1)
             .Select(candidate => candidate.Layout)
             .FirstOrDefault();
 
@@ -305,13 +314,26 @@ public sealed class AzaharGameStateProvider(
         }
     }
 
+    /// <summary>
+    /// Reads a whole party, asking each structure for its stats where that structure keeps them.
+    /// </summary>
+    /// <remarks>
+    /// The offset is not cosmetic. Reading 260 contiguous bytes only ever succeeded on the mirror,
+    /// so that is the copy every snapshot came from — and the mirror is a photograph the game
+    /// refreshes when it saves. A Pokémon that fainted read as healthy until the player saved,
+    /// which is exactly the kind of silence that makes a watcher look like it is working. §99.
+    /// </remarks>
     private List<LivePartyMember> ReadParty(Pk7Reader reader, PartyLayout layout)
     {
         var party = new List<LivePartyMember>();
 
+        var statsOffset = layout.Stride == PartyLayoutLocator.AuthoritativeStride
+            ? PartyLayoutLocator.AuthoritativeStatsOffset
+            : (uint?)null;
+
         for (var slot = 0; slot < 6; slot++)
         {
-            var member = reader.TryRead(layout.SlotAddress(slot));
+            var member = reader.TryRead(layout.SlotAddress(slot), statsOffset);
 
             // An empty slot ends the party; every slot after it is empty too.
             if (member is null)

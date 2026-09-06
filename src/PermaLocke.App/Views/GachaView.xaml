@@ -424,6 +424,7 @@
                             <Canvas IsHitTestVisible="False">
                                 <ItemsControl x:Name="ReelStrip" ItemsSource="{Binding Reel}"
                                               ItemTemplate="{StaticResource ReelCellTemplate}"
+                                              SizeChanged="OnStripSized"
                                               Canvas.Left="0" Canvas.Top="0">
                                     <ItemsControl.RenderTransform>
                                         <TranslateTransform X="0" />
@@ -841,8 +842,34 @@
                             </DockPanel>
                             <TextBlock Text="{Binding Description}" Style="{StaticResource Muted}"
                                        FontSize="12" Margin="0,8,0,0" />
-                            <TextBlock Text="{Binding Odds}" Style="{StaticResource Mono}" FontSize="10.5"
-                                       Foreground="{StaticResource TextFaintBrush}" Margin="0,8,0,0" />
+                            <!-- LA FORMA DEL BANNER, en los colores de los tiers. Los porcentajes
+                                 escritos siguen viviendo en los portales de arriba -el portal ES el
+                                 tier y es lo que se enciende al caer una tirada-; lo que habia aqui
+                                 eran las mismas tres cifras repetidas en el mismo idioma. Una barra
+                                 no repite: dice de un vistazo cual reparte mas de lo bueno, que es
+                                 lo que se compara al elegir. Las cifras siguen ahi, en el rotulo.
+                                 Viewbox con Stretch Fill: los tramos suman cien unidades y el
+                                 Viewbox las estira al ancho que haya, sin que nadie mida nada. -->
+                            <Border Margin="0,10,0,0" CornerRadius="3" ClipToBounds="True"
+                                    ToolTip="{Binding Odds}">
+                                <Viewbox Stretch="Fill" Height="7">
+                                    <ItemsControl ItemsSource="{Binding Slices}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel Orientation="Horizontal" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Rectangle Width="{Binding Width}" Height="7"
+                                                           Fill="{Binding BrushKey,
+                                                               Converter={StaticResource ResourceKey}}"
+                                                           ToolTip="{Binding Label}" />
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Viewbox>
+                            </Border>
                         </StackPanel>
                     </DataTemplate>
                 </ListBox.ItemTemplate>

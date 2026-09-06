@@ -175,6 +175,18 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _pointsText = "—";
 
+    /// <summary>The same figure as a number, for the counter that rolls up to it.</summary>
+    /// <remarks>
+    /// Separate from <see cref="PointsText"/> and not a parse of it, because the text is allowed to
+    /// be an em dash and a counter cannot count to one. With no run the number is hidden and the
+    /// dash takes its place.
+    /// </remarks>
+    [ObservableProperty]
+    private int _pointsValue;
+
+    [ObservableProperty]
+    private bool _hasPoints;
+
     /// <summary>Loads the section that is selected at startup.</summary>
     public Task InitialiseAsync() => ActivateAsync(SelectedSection);
 
@@ -202,6 +214,8 @@ public sealed partial class MainViewModel : ObservableObject
         if (e.PropertyName is nameof(HomeViewModel.PointsBalance) or nameof(HomeViewModel.HasRun))
         {
             PointsText = _home.HasRun ? _home.PointsBalance.ToString() : "—";
+            PointsValue = _home.HasRun ? _home.PointsBalance : 0;
+            HasPoints = _home.HasRun;
         }
 
         if (e.PropertyName is nameof(HomeViewModel.RoleName) or nameof(HomeViewModel.HasRun))

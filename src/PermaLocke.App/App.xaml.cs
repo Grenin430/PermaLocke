@@ -43,6 +43,13 @@ public partial class App : Application
         collection.AddPermaLockeRules(Path.Combine(paths.Data, "rules.json"));
         collection.AddPermaLockeGameLink(paths.SaveBackups);
 
+        // EL ALMACEN DE EVENTOS, ENVUELTO para que avise cuando la run cambia. Se hace aqui y
+        // despues de registrarlo porque la envoltura es cosa de la aplicacion que dibuja los
+        // numeros, no del almacen: sin esto, comprar algo cambiaba el saldo en la base de datos y
+        // la cifra de la cabecera se quedaba igual hasta cambiar de seccion.
+        collection.AddSingleton<RunActivity>();
+        Decorate(collection);
+
         // Gacha: los banners y la tabla de especies son configuración; sin ellas la sección lo
         // dice en pantalla en vez de tirar con datos inventados.
         collection.AddSingleton<IGachaCatalog>(_ =>
@@ -65,6 +72,16 @@ public partial class App : Application
         collection.AddSingleton<IAppDialogs, AppDialogs>();
         collection.AddSingleton<IUiDispatcher, WpfUiDispatcher>();
         collection.AddSingleton<GameLinkMonitor>();
+
+        // LOS AVISOS ENCIMA DEL JUEGO. Su propia ventana, para que salgan con PermaLocke
+        // minimizado, que es como se juega. PlayNotifications solo se suscribe: hay que pedirlo
+        // una vez para que exista, y eso se hace al arrancar el vigilante.
+        collection.AddSingleton<Notifier>();
+        collection.AddSingleton<PlayNotifications>();
+
+        // Y la pestaña del borde, que es la misma ventana flotante SIN la bandera que deja pasar
+        // los clics: esta existe para que se pulse.
+        collection.AddSingleton<EdgeTab>();
         collection.AddSingleton<PokemonSpriteService>();
         collection.AddTransient<CreateRunViewModel>();
         collection.AddTransient<RegisterCaptureViewModel>();
@@ -171,6 +188,10 @@ public partial class App : Application
 
         // Started last: it polls the emulator, and there is no point doing that before the
         // run it belongs to has been loaded.
+        // Antes de arrancar el vigilante, para no perderse lo que pase en su primer ciclo.
+        _services.GetRequiredService<PlayNotifications>();
+        _services.GetRequiredService<EdgeTab>().Attach(window);
+
         _services.GetRequiredService<GameLinkMonitor>().Start();
     }
 
@@ -179,4 +200,23 @@ public partial class App : Application
         _services?.Dispose();
         base.OnExit(e);
     }
+    /// <summary>
+    /// Replaces the registered <see cref="IEventStore"/> with one that announces what it stores.
+    /// </summary>
+    /// <remarks>
+    /// Written by hand because the container has no decoration of its own and pulling in a package
+    /// for six lines would be worse. It takes the descriptor that is already there and builds the
+    /// inner store from it, so whoever registered it stays the one who decides how it is made.
+    /// </remarks>
+    private static void Decorate(IServiceCollection collection)
+    {
+        var registered = collection.Last(service => service.ServiceType == typeof(IEventStore));
+
+        collection.Remove(registered);
+
+        collection.AddSingleton<IEventStore>(provider => new WatchedEventStore(
+            (IEventStore)registered.ImplementationFactory!(provider),
+            provider.GetRequiredService<RunActivity>()));
+    }
+
 }

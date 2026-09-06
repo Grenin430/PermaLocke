@@ -51,9 +51,21 @@ public sealed class AppDialogs(IServiceProvider services) : IAppDialogs
     public bool ShowChangeRole() =>
         Show(new ChangeRoleWindow(services.GetRequiredService<ChangeRoleViewModel>()));
 
-    public bool Confirm(string title, string message) =>
-        MessageBox.Show(Application.Current.MainWindow, message, title,
-            MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) == MessageBoxResult.Yes;
+    public bool Confirm(string title, string message)
+    {
+        // La ventana puede no estar todavia, y MessageBox.Show con un dueño nulo LANZA. Sin este
+        // respaldo, una confirmacion antes de que la ventana exista se pierde en silencio dentro
+        // del comando asincrono, que se traga la excepcion.
+        var owner = Application.Current?.MainWindow;
+
+        var answer = owner is null
+            ? MessageBox.Show(message, title, MessageBoxButton.YesNo, MessageBoxImage.Warning,
+                MessageBoxResult.No)
+            : MessageBox.Show(owner, message, title, MessageBoxButton.YesNo,
+                MessageBoxImage.Warning, MessageBoxResult.No);
+
+        return answer == MessageBoxResult.Yes;
+    }
 
     private static bool Show(Window window)
     {

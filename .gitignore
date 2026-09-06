@@ -61,3 +61,12 @@ obj/
 
 # Copia del emulador anterior, por si un build nuevo sale malo. Binarios: no se versionan.
 /Emulator-anterior/
+
+# Copias del emulador de antes de cada parche del fork. Son binarios y pesan cien megas cada una:
+# se guardan para poder volver atras en un minuto, no para versionarlas.
+/Emulator-antes-parche3/
+/Nuevo_azahar-anterior/
+/Nuevo_azahar-antes-parche3/
+
+# La posicion de la pestaña lateral, que es de esta maquina y de nadie mas.
+/Config/pestana.json

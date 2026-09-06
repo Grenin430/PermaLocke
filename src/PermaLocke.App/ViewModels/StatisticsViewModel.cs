@@ -72,8 +72,28 @@ public sealed partial class StatisticsViewModel : SectionViewModel
     [ObservableProperty]
     private PointCollection _curve = [];
 
+    /// <summary>The same curve closed against the floor, so the area under it can be painted.</summary>
+    /// <remarks>
+    /// A line on its own is a thin scratch across a wide panel. The area gives the curve a body and
+    /// a direction, and costs nothing: it is the same points plus the two bottom corners.
+    /// </remarks>
+    [ObservableProperty]
+    private PointCollection _curveFill = [];
+
     [ObservableProperty]
     private bool _hasCurve;
+
+    /// <summary>Where a balance of zero sits, measured from the TOP, or null if it is off the chart.</summary>
+    /// <remarks>
+    /// From the top because that is what a Grid row needs. The curve is drawn stretched, so the
+    /// panel top is the highest balance and the bottom the lowest; a row of this height puts the
+    /// line exactly where the curve crosses zero.
+    /// </remarks>
+    [ObservableProperty]
+    private double _zeroAbove;
+
+    [ObservableProperty]
+    private bool _hasZero;
 
     public override Task ActivateAsync() => RefreshAsync();
 
@@ -97,7 +117,11 @@ public sealed partial class StatisticsViewModel : SectionViewModel
             Fill(Records, report.Records);
 
             Curve = ToPolyline(report.Curve);
+            CurveFill = Close(Curve);
             HasCurve = Curve.Count > 1;
+
+            HasZero = HasCurve && report.CurveZero is not null;
+            ZeroAbove = 1 - (report.CurveZero ?? 0);
         }
         catch (Exception ex)
         {
@@ -113,6 +137,19 @@ public sealed partial class StatisticsViewModel : SectionViewModel
         {
             target.Add(item);
         }
+    }
+
+    /// <summary>The curve closed down to the floor, so it can be filled.</summary>
+    private static PointCollection Close(PointCollection curve)
+    {
+        if (curve.Count < 2)
+        {
+            return [];
+        }
+
+        var closed = new PointCollection(curve) { new Point(100, 40), new Point(0, 40) };
+
+        return closed;
     }
 
     private static PointCollection ToPolyline(IReadOnlyList<double> values)

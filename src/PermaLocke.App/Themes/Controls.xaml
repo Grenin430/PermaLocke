@@ -8,6 +8,10 @@
     <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
     <conv:ResourceKeyConverter x:Key="ResourceKey" />
     <conv:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility" />
+
+    <!-- Sube al tema porque ya lo usan dos pantallas: es la unica forma de dimensionar por
+         proporcion en WPF sin saber antes el ancho, y eso hace falta en mas de un sitio. -->
+    <conv:FractionToStarConverter x:Key="FractionToStar" />
     <conv:DisplayNameConverter x:Key="DisplayName" />
 
     <!--
@@ -272,12 +276,12 @@
                 <ControlTemplate TargetType="ListBoxItem">
                     <Grid x:Name="Root" Background="Transparent" Height="38">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="3" />
+                            <ColumnDefinition Width="4" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
 
                         <Border x:Name="Bar" Grid.Column="0" Background="Transparent"
-                                CornerRadius="0,2,2,0" Margin="0,7" />
+                                CornerRadius="0,3,3,0" Margin="0,6" />
 
                         <Border x:Name="Fill" Grid.Column="1" Background="Transparent"
                                 CornerRadius="{StaticResource RadiusMedium}" Margin="6,1,10,1">
@@ -735,7 +739,55 @@
         </Setter>
     </Style>
 
+    <!-- ============================================================ BARRA DE TITULO -->
+
+    <!-- Los botones de la ventana. Anchos y sin borde, como los de Windows, porque el gesto de
+         cerrar se hace a ciegas contra la esquina y un boton pequeño ahi es una trampa. -->
+    <Style x:Key="CaptionButton" TargetType="Button">
+        <Setter Property="Width" Value="44" />
+        <Setter Property="Height" Value="37" />
+        <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Chrome" Background="Transparent">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Background"
+                                    Value="{StaticResource SurfaceHighBrush}" />
+                            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Cerrar se pone rojo, que es lo que todo el mundo espera de ese sitio. -->
+    <Style x:Key="CaptionButtonClose" TargetType="Button" BasedOn="{StaticResource CaptionButton}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Chrome" Background="Transparent">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Chrome" Property="Background"
+                                    Value="{StaticResource DangerBrush}" />
+                            <Setter Property="Foreground" Value="White" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- ============================================================ SCROLLBARS -->
+
 
     <!-- Invisible page-up/page-down areas: the track is the whole bar, only the thumb is drawn. -->
     <Style x:Key="ScrollPageButton" TargetType="RepeatButton">

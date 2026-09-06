@@ -29,6 +29,11 @@ public sealed record TeamRow(
 /// <param name="State">Already in Spanish: the domain enum never reaches the screen.</param>
 public sealed record IslandRow(string Name, string State);
 
+/// <param name="Detail">Level and where it fell, on one line.</param>
+/// <param name="Sprite">The cartridge icon, drawn washed out. Null when the sprites are not out.</param>
+public sealed record FallenRow(string Name, string Detail,
+    System.Windows.Media.Imaging.BitmapSource? Sprite = null);
+
 /// <summary>
 /// The run dashboard. With no run it shows an explicit empty state and the button to create
 /// one; it never displays zeroed-out statistics as if a run existed.
@@ -61,6 +66,7 @@ public sealed partial class HomeViewModel : SectionViewModel
         RunService runs,
         SaveEraser eraser,
         PokemonSpriteService sprites,
+        RunActivity activity,
         ILogger<HomeViewModel> logger) : base("HOME", "Estado de la run, equipo en vivo y últimos movimientos")
     {
         _runContext = runContext;
@@ -97,9 +103,11 @@ public sealed partial class HomeViewModel : SectionViewModel
             return Task.CompletedTask;
         });
 
-        // Una muerte marcada en el juego tiene que decir que está en la MEMORIA. Se perdió una:
-        // el Shedinja se escribió y se releyó en cinco copias, el jugador cerró el juego quince
-        // segundos después sin guardar, y al volver tenía otra vez su Latias debilitado.
+        // La marca de muerte se pone al CERRAR el emulador, que es el único momento en que se
+        // puede escribir la partida, así que hay que decirlo cuando pasa: el jugador ya no está
+        // mirando el juego y si no se le dice no se entera de que se ha hecho. Antes esto avisaba
+        // de lo contrario -que la marca vivía en memoria y se perdía sin guardar-, y ese aviso
+        // existía porque se perdió una así.
         gameLink.DeathMarked += (_, notice) => _ = _ui.InvokeAsync(() =>
         {
             AutoNotice = notice;
@@ -117,6 +125,13 @@ public sealed partial class HomeViewModel : SectionViewModel
         // cobrada bien, y HOME seguía enseñando el saldo viejo hasta que el jugador salía de la
         // sección y volvía a entrar: el trabajo hecho y sin verse, que se lee igual que no hecho.
         gameLink.RunDataChanged += (_, _) => _ = SafeRefreshAsync();
+
+        // Y CUALQUIER COSA QUE ESCRIBA EN LA CADENA. Comprar en la tienda, tirar del gacha o
+        // cobrar un logro cambian el saldo, y hasta ahora la cifra de la cabecera -que sale de
+        // aqui- no se enteraba hasta que cambiabas de seccion. Todo lo que mueve un punto escribe
+        // un evento, asi que escuchar la cadena los cubre a todos, incluidos los que se añadan
+        // despues sin acordarse de avisar.
+        activity.Appended += (_, _) => _ = SafeRefreshAsync();
 
         // Fired from whatever thread finished loading the run, so the refresh has to be
         // marshalled to the UI thread before it touches the bound collections.
@@ -203,6 +218,20 @@ public sealed partial class HomeViewModel : SectionViewModel
 
     /// <summary>Live party read from the running game, empty when there is no link.</summary>
     public ObservableCollection<TeamRow> LiveTeam { get; } = [];
+
+    /// <summary>
+    /// Everyone the run has lost, newest first.
+    /// </summary>
+    /// <remarks>
+    /// It fills the left column, which was half a screen of nothing, and it deliberately is NOT the
+    /// live team: that strip already exists above and needs the emulator open. This comes out of the
+    /// run's own database, so it is there with the game closed — and in a Nuzlocke the list of who
+    /// is gone is the other half of the story, not a footnote.
+    /// </remarks>
+    public ObservableCollection<FallenRow> Fallen { get; } = [];
+
+    [ObservableProperty]
+    private bool _hasFallen;
 
     [ObservableProperty]
     private string _gameLinkStatus = "Buscando el juego...";
@@ -450,6 +479,8 @@ public sealed partial class HomeViewModel : SectionViewModel
         {
             RunName = GameName = SeedLabel = PlayerName = RoleName = string.Empty;
             PointsBalance = AliveCount = DeadCount = EncounterCount = 0;
+            Fallen.Clear();
+            HasFallen = false;
             Islands = [];
             IntegrityStatus = string.Empty;
             return;
@@ -481,6 +512,27 @@ public sealed partial class HomeViewModel : SectionViewModel
         AliveCount = team.Count(p => p.Status == PokemonStatus.Alive);
         DeadCount = team.Count(p => p.Status == PokemonStatus.Dead);
         EncounterCount = team.Count;
+
+        Fallen.Clear();
+
+        foreach (var dead in team
+                     .Where(p => p.Status == PokemonStatus.Dead)
+                     .OrderByDescending(p => p.DiedAt ?? p.ObtainedAt))
+        {
+            // Nivel y fecha, y NO la zona: LocationId es el identificador normalizado -«bahia-kalae»-
+            // y en pantalla se leia como lo que es, un dato interno. Ponerlo bonito quitando guiones
+            // perderia los acentos, o sea que enseñaria un nombre que no es el de la zona; el nombre
+            // de verdad esta en zones.json y traerlo aqui es otra cosa, no un retoque visual.
+            var when = dead.DiedAt?.LocalDateTime.ToString("dd/MM");
+
+            Fallen.Add(new FallenRow(
+                string.IsNullOrWhiteSpace(dead.Nickname) ? dead.SpeciesName : dead.Nickname,
+                string.Join(" · ", new[] { $"Nv. {dead.Level}", when }
+                    .Where(part => !string.IsNullOrWhiteSpace(part))),
+                _sprites.Get(dead.Species)));
+        }
+
+        HasFallen = Fallen.Count > 0;
 
         foreach (var row in await _events.GetLatestAsync(run.Id, 15))
         {

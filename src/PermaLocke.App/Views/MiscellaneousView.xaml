@@ -77,24 +77,107 @@
                                                           RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                 CommandParameter="{Binding}" />
 
-                                        <Border DockPanel.Dock="Right" Style="{StaticResource Chip}"
-                                                VerticalAlignment="Center" Margin="14,0,0,0">
-                                            <TextBlock Text="{Binding Progress}" Style="{StaticResource ChipText}" />
-                                        </Border>
+                                        <!-- CUANTO FALTA, en barra. «8/12» dentro de una cajita es
+                                             una cifra que hay que descifrar; una barra ES lo que
+                                             falta. La cifra se queda encima, que sigue haciendo
+                                             falta para saber de cuanto va la cosa. -->
+                                        <StackPanel DockPanel.Dock="Right" Width="104"
+                                                    VerticalAlignment="Center" Margin="14,0,0,0">
+                                            <TextBlock Text="{Binding Progress}" Style="{StaticResource Mono}"
+                                                       FontSize="11.5" TextAlignment="Center"
+                                                       Foreground="{StaticResource TextMutedBrush}"
+                                                       Margin="0,0,0,5" />
+                                            <ProgressBar Minimum="0" Maximum="1" Height="8"
+                                                         Value="{Binding Share, Mode=OneWay}">
+                                                <ProgressBar.Style>
+                                                    <Style TargetType="ProgressBar"
+                                                           BasedOn="{StaticResource {x:Type ProgressBar}}">
+                                                        <Setter Property="Foreground"
+                                                                Value="{StaticResource AccentBrush}" />
+                                                        <Style.Triggers>
+                                                            <!-- Ganado o ya recogido: en verde, que es
+                                                                 lo que dice el resto de la aplicacion
+                                                                 cuando algo esta hecho. -->
+                                                            <DataTrigger Binding="{Binding CanClaim}" Value="True">
+                                                                <Setter Property="Foreground"
+                                                                        Value="{StaticResource SuccessBrush}" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Claimed}" Value="True">
+                                                                <Setter Property="Foreground"
+                                                                        Value="{StaticResource SuccessBrush}" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </ProgressBar.Style>
+                                            </ProgressBar>
+                                        </StackPanel>
 
                                         <StackPanel>
                                             <TextBlock Text="{Binding Name}" Style="{StaticResource CardTitle}" />
                                             <TextBlock Text="{Binding Description}" Style="{StaticResource Muted}"
                                                        TextWrapping="Wrap" Margin="0,4,0,0" />
-                                            <TextBlock Text="{Binding Detail}" Style="{StaticResource Mono}"
-                                                       FontSize="11.5" Margin="0,7,0,0"
-                                                       Foreground="{StaticResource AccentBrush}" />
+
+                                            <!-- LO QUE DA, dibujado. Los iconos salen de la ROM del
+                                                 propio jugador, los mismos que usa la tienda. -->
+                                            <ItemsControl ItemsSource="{Binding Gives}" Margin="0,9,0,0">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <StackPanel Orientation="Horizontal" />
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Border Style="{StaticResource Inset}" Padding="8,4"
+                                                                Margin="0,0,8,0">
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <Image Source="{Binding Icon}" Width="26" Height="26"
+                                                                       RenderOptions.BitmapScalingMode="NearestNeighbor"
+                                                                       VerticalAlignment="Center"
+                                                                       Margin="0,0,7,0" />
+                                                                <TextBlock Style="{StaticResource Mono}" FontSize="11.5"
+                                                                           VerticalAlignment="Center"
+                                                                           Foreground="{StaticResource AccentBrush}">
+                                                                    <Run Text="{Binding Amount, Mode=OneWay}" />
+                                                                    <Run Text="{Binding Name, Mode=OneWay}" />
+                                                                </TextBlock>
+                                                            </StackPanel>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
                                         </StackPanel>
                                     </DockPanel>
                                 </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <!-- ================================================== LOS AVISOS
+                 Encima del juego y con PermaLocke minimizado, que es como se juega: todo lo que la
+                 aplicacion hace sola solo se veia en HOME, o sea detras del emulador. -->
+            <Border Style="{StaticResource Inset}" Padding="18,16" Margin="0,14,0,0">
+                <StackPanel>
+                    <TextBlock Text="AVISOS ENCIMA DEL JUEGO" Style="{StaticResource StatLabel}" />
+
+                    <TextBlock Style="{StaticResource Body}" Margin="0,9,0,0" TextWrapping="Wrap"
+                               Text="Cuando PermaLocke registra una muerte, cobra una penalización o te entrega un premio, lo dice en una esquina de la ventana de Azahar. No te quita el foco y no se puede pulsar, así que no te saca del combate ni se come un turno." />
+
+                    <Border Style="{StaticResource Divider}" Margin="0,15" />
+
+                    <DockPanel>
+                        <Button DockPanel.Dock="Right" Content="VER UN AVISO"
+                                Style="{StaticResource GhostButton}" Padding="16,9"
+                                Command="{Binding TestNotificationCommand}" />
+
+                        <StackPanel>
+                            <CheckBox IsChecked="{Binding NotificationsOn}"
+                                      Content="Avisarme mientras juego" />
+                            <CheckBox IsChecked="{Binding StepAside}" Margin="0,10,0,0"
+                                      Content="Apartarme sola cuando abra el emulador" />
+                        </StackPanel>
+                    </DockPanel>
                 </StackPanel>
             </Border>
 

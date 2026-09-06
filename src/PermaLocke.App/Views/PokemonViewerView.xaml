@@ -31,6 +31,16 @@
                                 <Setter TargetName="Hole" Property="Opacity" Value="0.4" />
                                 <Setter TargetName="Hole" Property="Cursor" Value="Arrow" />
                             </DataTrigger>
+                            <!-- Caido: la loseta se tine. Por PID contra la run, no por el aspecto
+                                 del Pokemon. Va ANTES que el raton y la seleccion para que esas dos
+                                 sigan mandando cuando lo tocas. -->
+                            <DataTrigger Binding="{Binding IsDead}" Value="True">
+                                <Setter TargetName="Hole" Property="Background"
+                                        Value="{StaticResource DangerDeepBrush}" />
+                                <Setter TargetName="Hole" Property="BorderBrush"
+                                        Value="{StaticResource DangerBrush}" />
+                            </DataTrigger>
+
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="Hole" Property="Background"
                                         Value="{StaticResource SurfaceHighBrush}" />
@@ -54,7 +64,27 @@
             <Grid Height="60">
                 <Image Source="{Binding Sprite}" Width="52" Height="52" Stretch="Uniform"
                        RenderOptions.BitmapScalingMode="NearestNeighbor"
-                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                       HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <!-- Un caído se ve apagado, igual que en el memorial de HOME. -->
+                    <Image.Style>
+                        <Style TargetType="Image">
+                            <Setter Property="Opacity" Value="1" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsDead}" Value="True">
+                                    <Setter Property="Opacity" Value="0.4" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Image.Style>
+                </Image>
+
+                <!-- El destello del variocolor, arriba a la derecha. Treinta losetas iguales no
+                     decian ni cual es raro ni cual ya no esta; el dato estaba leido y sin pintar. -->
+                <Path Data="M 6,0 L 7.6,4.4 L 12,6 L 7.6,7.6 L 6,12 L 4.4,7.6 L 0,6 L 4.4,4.4 Z"
+                      Fill="{StaticResource AccentBrush}"
+                      HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,4,4,0"
+                      Visibility="{Binding IsShiny, Converter={StaticResource BoolToVisibility}}" />
+
                 <!-- Hay Pokémon pero no icono: se dice, no se disimula. -->
                 <TextBlock Text="{Binding Fallback}" FontSize="20"
                            Foreground="{StaticResource TextFaintBrush}"
@@ -265,7 +295,11 @@
                     </Grid>
                 </Border>
 
-                <!-- Seis columnas por cinco filas: el PC del juego, tal cual. -->
+                <!-- Seis columnas por cinco filas: el PC del juego, tal cual.
+                     Pegada ARRIBA, y probado que centrarla es peor: el aire queda repartido, si,
+                     pero la rejilla se despega de su cabecera y las dos dejan de leerse como una
+                     sola cosa. El hueco de debajo es el precio de que una caja mida cinco filas y
+                     el panel sea mas alto; taparlo con algo que no aporte seria peor. -->
                 <ListBox Grid.Row="1" ItemsSource="{Binding Slots}" SelectedItem="{Binding SelectedSlot}"
                          Background="Transparent" BorderThickness="0"
                          ItemContainerStyle="{StaticResource SlotStyle}"
@@ -337,9 +371,11 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Sin selección: un hueco explicado, no un panel en blanco. -->
-                <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center"
-                            MaxWidth="240">
+                <!-- Sin selección: el resumen de la partida, no un hueco explicado. Este panel es
+                     un tercio de la pantalla y estaba vacío hasta que pinchabas algo; son cuentas
+                     de lo que ya está leído, así que no cuestan nada y contestan lo que uno se
+                     pregunta ANTES de pinchar. -->
+                <StackPanel Grid.Row="1" VerticalAlignment="Top" Margin="0,4,6,0">
                     <StackPanel.Style>
                         <Style TargetType="StackPanel">
                             <Setter Property="Visibility" Value="Visible" />
@@ -351,15 +387,26 @@
                         </Style>
                     </StackPanel.Style>
 
-                    <Border Width="44" Height="44" CornerRadius="8" HorizontalAlignment="Center"
-                            Background="{StaticResource BackgroundBrush}"
-                            BorderBrush="{StaticResource BorderStrongBrush}" BorderThickness="1">
-                        <Ellipse Width="14" Height="14" Stroke="{StaticResource TextFaintBrush}"
-                                 StrokeThickness="2"
-                                 HorizontalAlignment="Center" VerticalAlignment="Center" />
-                    </Border>
+                    <TextBlock Text="LA PARTIDA" Style="{StaticResource StatLabel}" />
 
-                    <TextBlock Style="{StaticResource Muted}" TextAlignment="Center" Margin="0,14,0,0"
+                    <ItemsControl ItemsSource="{Binding Overview}" Margin="0,10,0,0">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Style="{StaticResource Row}" Padding="0,8">
+                                    <DockPanel>
+                                        <TextBlock DockPanel.Dock="Right" Text="{Binding Value}"
+                                                   Style="{StaticResource Numeric}"
+                                                   VerticalAlignment="Center" Margin="12,0,0,0"
+                                                   TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="{Binding Label}" Style="{StaticResource Body}"
+                                                   VerticalAlignment="Center" />
+                                    </DockPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <TextBlock Style="{StaticResource Faint}" TextWrapping="Wrap" Margin="0,16,0,0"
                                Text="Pincha un Pokémon de la caja para ver su ficha." />
                 </StackPanel>
 

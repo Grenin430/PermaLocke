@@ -10,6 +10,19 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Tambien como recurso, para que la ventana pueda ponerselo en su barra de titulo. -->
+    <Resource Include="Assets\PermaLocke.ico" />
+
+    <!--
+      Y el mismo dibujo como PNG grande, que es lo que se pinta DENTRO de la aplicacion. Un .ico
+      guarda nueve tamaños y WPF se queda con el primer fotograma -el de 16 pixeles-, asi que la
+      Poke Ball de la pestaña se veia estirada y con los pixeles contables. Escalar 256 hacia abajo
+      sale liso a cualquier tamaño.
+    -->
+    <Resource Include="Assets\PermaLocke.png" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.11" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.11" />
@@ -21,6 +34,11 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+
+    <!-- La Poke Ball es DIBUJADA POR NOSOTROS, geometrica, en nuestros colores. No sale del
+         cartucho: los sprites de Nintendo se extraen de la ROM de cada jugador y no se reparten,
+         y un icono de aplicacion va dentro del ejecutable. -->
+    <ApplicationIcon>Assets\PermaLocke.ico</ApplicationIcon>
   </PropertyGroup>
 
 

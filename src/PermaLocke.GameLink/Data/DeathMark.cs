@@ -1,39 +1,52 @@
 using PKHeX.Core;
+using PermaLocke.Core.Abstractions;
 
 namespace PermaLocke.GameLink.Data;
 
 /// <summary>
-/// Turns a Pokémon in the save into the run's marker for a dead one.
+/// Marks a Pokémon in the save as one of the run's dead: no HP left, and nothing else changed.
 /// </summary>
 /// <remarks>
 /// <para>
-/// One implementation, used by everything that kills: the roulette's own face and the enforcement
-/// that catches deaths the watcher could not write. Two copies of "what happens to a corpse" would
-/// drift, and the one that drifted would be whichever nobody looked at.
+/// One implementation, used by everything that kills — the roulette's own face and the enforcement
+/// that writes the run's dead into the save. Two copies of "what happens to a corpse" would drift,
+/// and the one that drifted would be whichever nobody looked at.
 /// </para>
 /// <para>
-/// The <b>PID and the encryption constant are left alone</b>, and that is the whole reason this
-/// works: they are what the run matches by (§56), so a transformed Pokémon is still recognisably
-/// the same entry. Change them and the marker becomes an orphan nobody can tie to anything.
+/// It used to turn the Pokémon into a Shedinja called MUERTO. The player asked for that to go: a
+/// Shedinja destroys the Pokémon and cannot be undone, and a run is more legible when the dead are
+/// still recognisably themselves. So the mark is now the absence of HP, which is already what the
+/// game means by fainted — species, nickname, moves, level, ribbons and stats all stay.
+/// </para>
+/// <para>
+/// <b>It only works in the party</b>, and that is not a detail to leave implied. A boxed Pokémon
+/// does not carry battle stats at all (§32): writing zero into one changes nothing the game reads,
+/// and it comes out of the box at full health. So <see cref="WorksIn"/> exists and callers have to
+/// ask, because a marker that silently does nothing is worse than no marker.
+/// </para>
+/// <para>
+/// The <b>PID and the encryption constant are left alone</b>, which is what makes this usable at
+/// all: they are what the run matches by (§56), so a marked Pokémon is still the same entry.
 /// </para>
 /// </remarks>
 public static class DeathMark
 {
-    /// <summary>Shedinja, which is what the run uses as a headstone.</summary>
-    public const int Species = 292;
+    /// <summary>Whether the mark means anything where this Pokémon is stored.</summary>
+    /// <param name="box">
+    /// <see cref="BoxedPokemon.PartyBox"/> for the party, or a box number. Only the party keeps the
+    /// battle stats the mark is written into.
+    /// </param>
+    public static bool WorksIn(int box) => box == BoxedPokemon.PartyBox;
 
-    /// <summary>Written as the nickname so the player sees it in the box without opening it.</summary>
-    public const string Nickname = "MUERTO";
+    /// <summary>True when this Pokémon is already on the floor.</summary>
+    public static bool IsMarked(PK7 pokemon)
+    {
+        ArgumentNullException.ThrowIfNull(pokemon);
 
-    /// <summary>True when this Pokémon has already been marked.</summary>
-    /// <remarks>
-    /// Both halves are required. A real Shedinja is a legitimate Pokémon somebody may have caught,
-    /// and a nickname alone proves nothing; together they are the shape only this code writes.
-    /// </remarks>
-    public static bool IsMarked(PK7 pokemon) =>
-        pokemon.Species == Species && pokemon.Nickname == Nickname;
+        return pokemon.Stat_HPCurrent == 0;
+    }
 
-    /// <summary>Applies the mark. Does nothing to an already marked Pokémon.</summary>
+    /// <summary>Applies the mark. Does nothing to one already down.</summary>
     public static void Apply(PK7 pokemon)
     {
         if (IsMarked(pokemon))
@@ -41,22 +54,15 @@ public static class DeathMark
             return;
         }
 
-        pokemon.Species = Species;
-        pokemon.Form = 0;
-        pokemon.Ability = 0;
-        pokemon.CurrentLevel = 1;
+        pokemon.Stat_HPCurrent = 0;
 
-        pokemon.Move1 = pokemon.Move2 = pokemon.Move3 = pokemon.Move4 = 0;
-        pokemon.Move1_PP = pokemon.Move2_PP = pokemon.Move3_PP = pokemon.Move4_PP = 0;
-        pokemon.Move1_PPUps = pokemon.Move2_PPUps = pokemon.Move3_PPUps = pokemon.Move4_PPUps = 0;
-
-        pokemon.Nickname = Nickname;
-        pokemon.IsNicknamed = true;
+        // El estado se va con los PS porque eso es desmayarse: uno en el suelo no está además
+        // envenenado, y dejarlo sería dejar la partida en un estado que el juego no escribe nunca.
+        pokemon.Status_Condition = 0;
 
         // Las estadísticas de combate NO se recalculan aquí a propósito: PKHeX las calcularía con
         // SU tabla de estadísticas base y la ROM lleva las barajadas, así que escribiría números
-        // falsos — medido en el §51, donde un Kommo-o pasó de 168 PS a 151. El juego las pone al
-        // día solo en cuanto el Pokémon entra en combate.
+        // falsos — medido en el §51, donde un Kommo-o pasó de 168 PS a 151.
         pokemon.RefreshChecksum();
     }
 }

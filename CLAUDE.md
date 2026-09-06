@@ -1215,6 +1215,85 @@ repara en su sitio porque dentro no hay nada legible. Ahí la identidad va por l
 encriptación** y no por el PID, única excepción a la regla del §96 y por un motivo medido: el PID
 está dentro del bloque roto, y esos cuatro bytes del principio van en claro. Ver §97.
 
+**Los PS del equipo no se pueden clavar desde fuera, y ya está medido (2026-09-06).** El jugador
+quería que un muerto se quedara **siendo él** a cero PS en vez de volverse Shedinja. La respuesta es
+que no, y lo decide **una sola medida** que el §93 no tomó: se escribieron **120** PS por el camino
+correcto —descifrar, cambiar, cifrar, releer— y con el menú del equipo abierto la pantalla decía
+**128** mientras la memoria **seguía en 120**. O sea que `0x330128E4` es un espejo de **una sola
+dirección**: el juego escribe ahí y **nunca lee**. El §93 acertó por el motivo equivocado —escribió
+un byte en claro sobre un campo cifrado— y yo corregí el motivo y me quedé con su conclusión al
+revés sin comprobarla.
+
+Lo demás quedó excluido con su medida, no por descarte: los PS no aparecen en claro como valor que
+los siga, ni como daño recibido, ni desalineados, ni como tabla del equipo a paso constante hasta
+8192, ni como bloque de seis valores en 64 bytes —tampoco **con el menú abierto y los números en
+pantalla**—, ni a ningún offset de las entradas, ni en crudo ni **descifradas**. Y buscando por la
+constante de encriptación solo hay **tres** copias de cada Pokémon: el espejo, la de salto `0x1E4`
+—cuya cola son cabeceras del asignador— y un **objeto de gráficos** que empieza por la constante y
+sigue con once punteros a *shaders*. Ninguna es un almacén vivo.
+
+Por qué no podía encontrarse: las estadísticas de un PK7 de equipo van **cifradas** con el resto, así
+que 118 en pantalla es `EF A6` en memoria; y lo que el juego usa **no vive lo suficiente** —si
+descifra al Pokémon en una pila para dibujar la barra y lo tira, una pasada de 30 s sobre 400 MB no
+lo pilla nunca—. Lo único en claro es la barra de vida, que es pintura: guarda actual, máximo, el
+valor **anterior** y los porcentajes, o sea la interpolación de la animación.
+
+**Y el Shedinja se ha ido (§98 ter).** La marca de muerte es ahora quedarse sin PS, y como `DeathMark` era
+ya la única definición de «qué le pasa a un cadáver», cambiarla ahí la cambió en la ruleta y en el
+escritor a la vez. Se marca **sola al cerrar el emulador**, que es el único momento en que se puede
+escribir la partida. Solo vale en el **equipo**: en una caja un Pokémon no lleva estadísticas de
+combate, así que los de caja se cuentan y se dicen en vez de saltarse en silencio. Y se fue con él
+toda su maquinaria -el vigilante `WatchBlock`, la lista, `DeathTransform`, `ApplyDeath`-, que existía
+para sostenerlo en memoria y encima es el código que corrompió una partida en el §97.
+
+**La otra puerta está abierta (§98 bis).** El juego no lee el espejo de
+memoria, pero **sí lee los PS del fichero de partida al cargar**: se escribieron **55** PS al
+Tinkaton con el juego cerrado y al cargar el menú decía 55. `SaveFainter` deja a los caídos a **0 PS
+siendo ellos** —misma especie, mote, movimientos y nivel—, por PID y por nada más, con copia previa
+y relectura del fichero, y hay botón en MANTENIMIENTO en dos pasos. No es irreversible, que es la
+diferencia con el Shedinja y está dicho en la tarjeta: un Centro Pokémon revive a un caído sin PS y
+no hay forma de impedirlo desde fuera. Es «muerto entre sesiones». **La muerte automática sigue
+usando el Shedinja** a propósito: es lo que se ve en el momento, y ya se cambió una vez esa noche
+sin verificar y hubo que revertirlo.
+
+Ojo con lo que **no** era prueba: se propuso esta vía apoyándose en que el Mudsdale muerto está a
+`0/13` en la partida, y eso no demuestra nada porque ese Mudsdale se murió de verdad y el cero lo
+puso el juego. Plausible no es medido.
+
+Lo que sí queda: **`PartyStats.AreHere`**, que decide **midiendo** si la cola de una entrada son las
+estadísticas. Antes se preguntaba el salto, y eso es un proxy: las **dos** estructuras de salto
+`0x104` leyeron en el mismo segundo `118/131` y `42649/10902`, así que el cap de nivel y la marca de
+muerte llevaban tiempo escribiendo en bytes que nadie ha identificado. El ancla es que un Pokémon de
+equipo **lleva el nivel dos veces** y donde la cola es buena coinciden. Ver §98.
+
+**Y hay un Huevo Malo en la partida guardada, sin reparar a petición del jugador (2026-09-06).**
+Hueco 3 del equipo, especie 13740, checksum que no cuadra: es del §97 y lleva ahí desde el día
+anterior. Se reparó **un** hueco aquel día y este no, porque `--huevo --arreglar` tenía el hueco
+**fijo en el primero**; ya se elige con `--hueco`. Está **solo en el fichero**, no en la partida en
+curso. Hay copia buena y el ensayo sobre una copia reconstruye bien
+(`#292 «MUERTO» Nv 1 PID 8EC2769F`). Ojo: una especie tan fuera de rango es buena candidata a
+colgar el juego, y esa noche se colgó al huir de un combate con `pc = 00000000`.
+
+**Y encontrado: los PS viven en `0x1E4 + 0x158` (§99).** El parche 3 del fork lo cazó. Al guardar, el
+juego hace dos memcpy -232 bytes del Pokemon desde `[r4+8]` y **28 de estadisticas desde `[r4+4]`**-
+y el origen de la segunda es ese offset. Verificado contra la pantalla: 77 escritos ahi, 77 en el
+menu. Eso cierra el §53, que llevaba meses diciendo «las guarda en otro sitio» sin decir donde, y
+destapa un fallo de fondo: **el monitor leia los PS del espejo, que va con retraso**, asi que un
+Pokemon podia caer y seguir leyendose sano hasta que guardaras. Ya se lee la estructura buena, y
+`KeepFallenDownAsync` devuelve al suelo a los caidos **una vez por segundo**. Ver §99 y §99 bis.
+
+**Y el parche 3 del fork, que es lo que lo hizo posible (§98 quater).** El jugador quiere que un muerto lo esté todo el
+rato, y desde fuera no se puede: el espejo del equipo no se lee ni abriendo el menú ni entrando y
+saliendo de un combate -medido con 40 PS escritos a un Ursaluna de 161: 161 antes y 161 después-. La
+vía es que el emulador diga QUIÉN escribe los PS en ese espejo, porque esa instrucción sabe de dónde
+vienen. **El parche está en `master` del fork y compila** (`ace262e`), y el cliente hecho y probado
+contra un servidor falso (`Probe --escrituras`). No hizo falta pelearse con el JIT como preveía la
+especificación: Azahar **ya trae puntos de observación de memoria** para su depurador, y
+`RegisterWatchpoint` anula el puntero de la página, con lo que la escritura vuelve sola al camino
+lento -comprobado además que el JIT usa el array de punteros y no hay fastmem-. **Nadie lo ha
+ejecutado contra el juego todavía**, y puede acabar diciendo que no se puede si el juego descifra en
+una pila y la tira. Ver `docs/fork/03-donde-vive-el-ps.md`.
+
 **Siguiente.** Probar en partida real los combates importantes, los iniciales y las tiendas.
 
 Y decidir entre los cinco el trueque del combate por link, que ya está medido: **o estadísticas
@@ -1229,7 +1308,8 @@ Lo que NO está resuelto todavía y no debe darse por hecho (detalle en `docs/AR
 | Poke Paste | **HECHO Y VISTO EN LA APP** — exporta **el equipo** en formato `pokepast.es`, en inglés. Solo exporta. Ver `ARCHITECTURE.md` §57 |
 | Sprites de los cristales Z | **RESUELTO** — tallados del ALYT `a/1/5/5`, que los nombra `item_807..824`. Cuál es cuál va **por color** y así está dicho. Los de Dominsignia **no existen** en el cartucho. Ver `ARCHITECTURE.md` §61 |
 | Randomización vía LayeredFS | **RESUELTA Y VERIFICADA** en el juego — salvajes y textos |
-| Escritura en el juego (Shedinja, cap, objetos) | **RESUELTA Y VERIFICADA** — exige el fork propio de Azahar |
+| Escritura en el juego (cap de nivel, objetos) | **RESUELTA Y VERIFICADA** — exige el fork propio de Azahar |
+| Marca de muerte: 0 PS siendo él | **RESUELTA EN VIVO Y VERIFICADA** — el juego lee los PS de la estructura de salto `0x1E4` en el offset **`0x158`**, hallado con el parche 3 del fork y comprobado contra la pantalla (77 escritos, 77 en el menú). PermaLocke los escribe ahí y devuelve al suelo a los caídos una vez por segundo. Antes solo sabía escribir en el espejo, que el juego rellena y nunca lee. Ver `ARCHITECTURE.md` §98, §99 y §99 bis |
 | Mochila del juego (leer, poner cantidad, añadir lo que no llevas) | **RESUELTA Y VERIFICADA** en el juego — ver `ARCHITECTURE.md` §22 |
 | Zona actual del jugador (regla de las Poké Balls) | **RESUELTA Y VERIFICADA** — es el área de `encdata`, leída anclando a la mochila; ver `ARCHITECTURE.md` §23 |
 | Regla de las Poké Balls (impedir la captura, no solo registrarla) | **IMPLEMENTADA Y APAGADA** — cableada y con tests, sin probar en el juego; ver `ARCHITECTURE.md` §24 |
@@ -1252,7 +1332,6 @@ Lo que NO está resuelto todavía y no debe darse por hecho (detalle en `docs/AR
 | Copia de seguridad de la run | **HECHA** — al arrancar, diez copias rotativas. Antes había 319 copias de la partida y cero de la run. Ver `ARCHITECTURE.md` §76 |
 | Mantenimiento desde la aplicación | **HECHO Y VISTO EN LA APP** — auditoría, reparar PID, cerrar entregados y corregir etapas, sin terminal. Ver `ARCHITECTURE.md` §77 |
 | Estadísticas | **HECHA Y VISTA EN LA APP** — libro de puntos, curva de saldo, colección y récords, todo proyectado sobre la cadena de eventos. Ver `ARCHITECTURE.md` §78 |
-| Fork de Azahar: la muerte se reaplica sola | **EN `master`; EL CLIENTE, CORREGIDO Y SIN PROBAR EN EL JUEGO** — el emulador repone la marca cinco veces por segundo y eso está medido (`FA` → `66` → **`FA`**). Lo que estaba mal era lo que se le mandaba: bytes **descifrados** y **260** en vez de 232, y eso corrompió una partida real (§97). Arreglado y con pruebas que fallan con el código viejo, pero **nadie lo ha visto funcionar contra el juego desde el arreglo**. Ver `ARCHITECTURE.md` §95, §96, §97 |
 | `PermaLocke.Admin` | **SIGUE SIENDO EL ANDAMIO DE VISUAL STUDIO** — 66 líneas, `Title="MainWindow"` y un `Grid` vacío. O se construye o se borra |
 | API concreta de pk3DS.Core | **VERIFICADA** contra la ROM real — ver `ARCHITECTURE.md` §19 |
 

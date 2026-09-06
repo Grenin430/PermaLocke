@@ -1,3 +1,4 @@
+using PermaLocke.App.Services;
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -9,12 +10,26 @@ using PermaLocke.GameLink;
 
 namespace PermaLocke.App.ViewModels;
 
-/// <summary>One of the competition's one-off prizes, as the screen shows it.</summary>
+/// <summary>One thing a prize hands over, with the drawing the cartridge has for it.</summary>
+/// <remarks>
+/// The icon and not just the words. The application already pulls the 769 item icons out of the
+/// player.s own ROM for the shop, and the prizes were describing themselves in text next to a
+/// screen full of those same drawings.
+/// </remarks>
+public sealed record RewardGiftViewModel(int Amount, string Name,
+    System.Windows.Media.Imaging.BitmapSource? Icon);
+
+/// <summary>One of the competition.s one-off prizes, as the screen shows it.</summary>
 /// <param name="Detail">What it hands over, spelled out, so nobody has to press to find out.</param>
+/// <param name="Share">0 to 1, for the bar. A «8/12» in a small chip is a figure to decode; a bar
+/// is how far you are, which is what the question actually was.</param>
 public sealed record RewardRowViewModel(
     string Id, string Name, string Description, string Detail,
-    string Progress, bool CanClaim, bool Claimed, bool Automatic = false)
+    string Progress, bool CanClaim, bool Claimed, bool Automatic = false,
+    double Share = 0, IReadOnlyList<RewardGiftViewModel>? Gifts = null)
 {
+    public IReadOnlyList<RewardGiftViewModel> Gives { get; } = Gifts ?? [];
+
     /// <summary>
     /// What the button says.
     /// </summary>
@@ -53,10 +68,14 @@ public sealed partial class MiscellaneousViewModel : SectionViewModel
     private readonly IEventStore _events;
     private readonly IClock _clock;
     private readonly RewardService _rewards;
+    private readonly PokemonSpriteService _sprites;
+    private readonly Notifier _notifier;
+    private readonly EdgeTab _tab;
     private readonly ILogger<MiscellaneousViewModel> _logger;
 
     public MiscellaneousViewModel(BagService bag, IItemDelivery delivery, IItemLookup items,
         IRunContext runContext, IEventStore events, IClock clock, RewardService rewards,
+        PokemonSpriteService sprites, Notifier notifier, EdgeTab tab,
         ILogger<MiscellaneousViewModel> logger)
         : base("MISCELÁNEA", "Herramientas sueltas y diagnóstico del enlace con el juego")
     {
@@ -67,7 +86,12 @@ public sealed partial class MiscellaneousViewModel : SectionViewModel
         _events = events;
         _clock = clock;
         _rewards = rewards;
+        _sprites = sprites;
+        _notifier = notifier;
+        _tab = tab;
         _logger = logger;
+        _notificationsOn = notifier.Enabled;
+        _stepAside = tab.StepAside;
     }
 
     /// <summary>The competition's one-off prizes, with how far off each one is.</summary>
@@ -112,7 +136,10 @@ public sealed partial class MiscellaneousViewModel : SectionViewModel
                     status.Progress,
                     status.CanClaim,
                     status.Claimed,
-                    status.Reward.Automatic));
+                    status.Reward.Automatic,
+                    status.Required <= 0 ? 1 : Math.Clamp((double)status.Unlocked / status.Required, 0, 1),
+                    [.. status.Reward.Items.Select(item =>
+                        new RewardGiftViewModel(item.Amount, item.Name, _sprites.GetItem(item.Id)))]));
             }
         }
         catch (Exception ex)
@@ -387,4 +414,39 @@ public sealed partial class MiscellaneousViewModel : SectionViewModel
         GrantShinyCharmCommand.NotifyCanExecuteChanged();
         ClaimRewardCommand.NotifyCanExecuteChanged();
     }
+    /// <summary>
+    /// Whether the notices appear on top of the game.
+    /// </summary>
+    /// <remarks>
+    /// There is a switch because a notice you cannot turn off is not a notice, it is an
+    /// interruption. It is not remembered between runs of the application on purpose: it is a
+    /// «ahora no» and not a setting, and the price of forgetting it is that PermaLocke starts up
+    /// saying things, which is what it is for.
+    /// </remarks>
+    [ObservableProperty]
+    private bool _notificationsOn;
+
+    partial void OnNotificationsOnChanged(bool value) => _notifier.Enabled = value;
+
+
+    /// <summary>
+    /// Whether PermaLocke minimises itself the moment the emulator appears.
+    /// </summary>
+    /// <remarks>
+    /// It saves the one click Windows charges for: with the application behind the emulator, the
+    /// first click on its taskbar button brings it to the front and only the second minimises it.
+    /// Getting out of the way on its own means never needing that click.
+    /// </remarks>
+    [ObservableProperty]
+    private bool _stepAside;
+
+    partial void OnStepAsideChanged(bool value) => _tab.StepAside = value;
+
+    /// <summary>Shows one, so the player can see where they land before something real happens.</summary>
+    [RelayCommand]
+    private void TestNotification() => _notifier.Say(
+        "Así se ven los avisos",
+        "Salen encima del juego con PermaLocke minimizado, no te quitan el foco y no se pueden pulsar.",
+        ToastTone.Good);
+
 }

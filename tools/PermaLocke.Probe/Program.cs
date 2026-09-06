@@ -73,6 +73,65 @@ if (args.Length >= 1 && args[0] == "--huevo-copias")
     return PermaLocke.Probe.EggBackups.Run(args.Length >= 2 ? args[1] : "Saves/backup");
 }
 
+
+// Quien escribe en un rango de memoria. Necesita el parche 3 del fork.
+if (args.Length >= 1 && args[0] == "--escrituras")
+{
+    if (args.Contains("--leer"))
+    {
+        return PermaLocke.Probe.WriteWatchProbe.Read();
+    }
+
+    if (args.Length < 2)
+    {
+        Console.WriteLine("Uso: --escrituras <direccion> [tamano]   ·   --escrituras --leer");
+        Console.WriteLine("     --escrituras <direccion> 0          deja de vigilar");
+        return 1;
+    }
+
+    var watched = uint.Parse(args[1].Replace("0x", string.Empty, StringComparison.OrdinalIgnoreCase),
+        NumberStyles.HexNumber);
+
+    return PermaLocke.Probe.WriteWatchProbe.Watch(watched,
+        args.Length >= 3 ? uint.Parse(args[2]) : 2u);
+}
+
+// Los PS: dentro de las entradas ya DESCIFRADAS, a cualquier offset.
+if (args.Length >= 2 && args[0] == "--ps-cola")
+{
+    return PermaLocke.Probe.HpProbe.Tail(int.Parse(args[1]));
+}
+
+// Los PS: todas las copias de cada Pokemon, halladas por su constante de encriptacion.
+if (args.Length >= 1 && args[0] == "--ps-copias")
+{
+    return PermaLocke.Probe.HpProbe.Copies();
+}
+
+// Los PS: el bloque de estadisticas de UN Pokemon, sin exigir paso entre ellos.
+if (args.Length >= 1 && args[0] == "--ps-bloque")
+{
+    return PermaLocke.Probe.HpProbe.Block(args.Length >= 2 ? int.Parse(args[1]) : 64);
+}
+
+// Los PS: buscar la tabla del equipo por su forma, no el valor por su cara.
+if (args.Length >= 1 && args[0] == "--ps-tabla")
+{
+    return PermaLocke.Probe.HpProbe.Table(args.Length >= 2 ? int.Parse(args[1]) : 1024);
+}
+
+// Los PS: escribir uno concreto en un hueco, para poder mirar la pantalla.
+if (args.Length >= 3 && args[0] == "--ps-escribir")
+{
+    return PermaLocke.Probe.HpProbe.Write(int.Parse(args[1]) - 1, int.Parse(args[2]));
+}
+
+// Los PS: donde los guarda el juego de verdad.
+if (args.Length >= 3 && args[0] == "--ps")
+{
+    return PermaLocke.Probe.HpProbe.Run(int.Parse(args[1]), int.Parse(args[2]), args.Contains("--reiniciar"));
+}
+
 // Huevo: comparar la partida con una copia previa a una escritura.
 if (args.Length >= 2 && args[0] == "--huevo-diff")
 {
@@ -82,8 +141,15 @@ if (args.Length >= 2 && args[0] == "--huevo-diff")
 // Huevo: distingue un huevo de verdad de un Huevo Malo. Solo lee la partida.
 if (args.Length >= 1 && args[0] == "--huevo")
 {
+    // El hueco iba fijo en el primero, porque ahi estaba el Huevo Malo del §97. El siguiente
+    // aparecio en el tercero, asi que se elige: una herramienta de reparacion que solo sabe
+    // arreglar el sitio donde paso la primera vez no sirve la segunda.
+    var brokenSlot = args.Contains("--hueco")
+        ? int.Parse(args[Array.IndexOf(args, "--hueco") + 1]) - 1
+        : 0;
+
     return args.Contains("--arreglar")
-        ? PermaLocke.Probe.EggProbe.Repair(args[Array.IndexOf(args, "--arreglar") + 1], 0,
+        ? PermaLocke.Probe.EggProbe.Repair(args[Array.IndexOf(args, "--arreglar") + 1], brokenSlot,
             args.Contains("--probar"))
         : PermaLocke.Probe.EggProbe.Run();
 }
@@ -1672,12 +1738,18 @@ if (Index("--party") is { } partyIndex)
     var partyAddress = ParseAddress(args[partyIndex + 1]);
     var reader = new Pk7Reader(client);
 
-    Console.WriteLine($"Equipo desde 0x{partyAddress:X8} (huecos de 0x{Pk7Reader.PartySize:X} bytes):\n");
+    // --vivo lee la estructura que el juego mira de verdad, cuyas estadisticas estan en 0x158 y
+    // cuyas entradas van cada 0x1E4. Sin esto solo se sabia leer el espejo, que va con retraso.
+    var live = args.Contains("--vivo");
+    var partyStride = live ? PartyLayoutLocator.AuthoritativeStride : (uint)Pk7Reader.PartySize;
+    var partyStats = live ? PartyLayoutLocator.AuthoritativeStatsOffset : (uint?)null;
+
+    Console.WriteLine($"Equipo desde 0x{partyAddress:X8} (huecos de 0x{partyStride:X} bytes):\n");
 
     for (var slot = 0; slot < 6; slot++)
     {
-        var slotAddress = (uint)(partyAddress + slot * Pk7Reader.PartySize);
-        var member = reader.TryRead(slotAddress);
+        var slotAddress = (uint)(partyAddress + (slot * partyStride));
+        var member = reader.TryRead(slotAddress, partyStats);
 
         Console.WriteLine(member is null
             ? $"  {slot}: 0x{slotAddress:X8}  vacío o ilegible"
@@ -1735,7 +1807,14 @@ uint ParseAddress(string value) =>
 List<MemoryRegion> ReadableRegions()
 {
     Console.WriteLine("Mapeando regiones legibles...");
-    var regions = MemorySearch.DefaultRegions.SelectMany(search.MapReadableRanges).ToList();
+
+    // La imagen del proceso -codigo, .data y .bss- no esta en DefaultRegions porque todo lo que se
+    // ha localizado hasta hoy vivia en el monton o en linear. Para un barrido a ciegas eso es una
+    // suposicion, no un limite: si el valor que se busca es una global, esta aqui y en ningun otro
+    // sitio. Se anade solo en la sonda, que es donde se busca lo que todavia no se sabe donde esta.
+    MemoryRegion[] wider = [..MemorySearch.DefaultRegions, new MemoryRegion(0x00100000, 0x01000000, "imagen")];
+
+    var regions = wider.SelectMany(search.MapReadableRanges).ToList();
 
     foreach (var region in regions)
     {

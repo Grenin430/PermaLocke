@@ -35,13 +35,42 @@ public sealed class Pk7Reader(AzaharRpcClient client)
     /// </summary>
     public const int SpeciesOffset = 0x08;
 
-    /// <summary>Reads and parses one slot, or null when the bytes are not a plausible Pokémon.</summary>
-    public LivePokemon? TryRead(uint address)
+    /// <summary>Size of the encrypted block, which is where the two layouts stop agreeing.</summary>
+    public static int StoredSize { get; } = new PK7().SIZE_STORED;
+
+    /// <summary>
+    /// Reads and parses one slot, or null when the bytes are not a plausible Pokémon.
+    /// </summary>
+    /// <param name="statsOffset">
+    /// Where this structure keeps the 28 bytes of battle stats. Null means straight after the
+    /// encrypted block, which is where a PK7 puts them and where the save-block mirror has them;
+    /// the structure the game actually reads keeps them at
+    /// <see cref="PartyLayoutLocator.AuthoritativeStatsOffset"/> instead.
+    /// </param>
+    /// <remarks>
+    /// The parameter exists because reading 260 contiguous bytes only ever worked for the mirror,
+    /// and the mirror is <b>stale</b>: the game fills it when it saves and not before, so a
+    /// Pokémon that faints reads as healthy until the player saves. Every death the watcher was
+    /// supposed to catch live was being read from a photograph (§99).
+    /// </remarks>
+    public LivePokemon? TryRead(uint address, uint? statsOffset = null)
     {
-        if (!client.TryReadMemory(address, PartySize, out var data))
+        if (!client.TryReadMemory(address, StoredSize, out var stored))
         {
             return null;
         }
+
+        var tail = statsOffset ?? (uint)StoredSize;
+
+        if (!client.TryReadMemory(address + tail, PartySize - StoredSize, out var stats))
+        {
+            return null;
+        }
+
+        var data = new byte[PartySize];
+
+        stored.CopyTo(data, 0);
+        stats.CopyTo(data, StoredSize);
 
         var pokemon = new PK7(data);
 

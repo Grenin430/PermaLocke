@@ -6,34 +6,43 @@ using PKHeX.Core;
 
 namespace PermaLocke.GameLink;
 
-/// <param name="Alive">Registros caídos que siguen sin marcar en la partida.</param>
-/// <param name="AlreadyMarked">Caídos que ya son Shedinja.</param>
+/// <param name="Alive">Registros caídos que siguen en pie en el equipo de la partida.</param>
+/// <param name="AlreadyMarked">Caídos del equipo que ya están a 0 PS.</param>
 /// <param name="Missing">Caídos que no están en la partida: intercambiados, liberados o soltados.</param>
-/// <param name="Marked">Cuántos se han transformado en esta pasada. Cero al solo inspeccionar.</param>
+/// <param name="Boxed">
+/// Caídos que están en una caja. No se pueden marcar y se dicen aparte: un Pokémon en caja no lleva
+/// estadísticas de combate, así que escribirle cero no cambiaría nada que el juego lea.
+/// </param>
+/// <param name="Marked">Cuántos se han tumbado en esta pasada. Cero al solo inspeccionar.</param>
 /// <param name="Message">Una línea para la pantalla.</param>
 public sealed record DeathEnforcementReport(
-    int Alive, int AlreadyMarked, int Missing, int Marked, string Message);
+    int Alive, int AlreadyMarked, int Missing, int Boxed, int Marked, string Message);
 
 /// <summary>
-/// Makes the run's dead <b>permanently</b> dead inside the save file.
+/// Leaves the run's dead at zero HP inside the save file, as themselves.
 /// </summary>
 /// <remarks>
 /// <para>
-/// The watcher already writes the marker into the running game the moment it sees a Pokémon at
-/// zero HP, but that is a write into <em>memory</em>: it survives only if the player saves
-/// afterwards, and it never happens at all for a death the watcher could not see — the application
-/// closed, the link down, or the game healing the party before the next read, which is what a Totem
-/// trial does.
+/// This is the only thing that marks a death now. It used to be a backstop behind a marker the
+/// application wrote into the running game, and that marker is gone: the player asked for the
+/// Shedinja to go, and §98 measured that HP written into memory never reaches the game anyway —
+/// 120 written into the party mirror, the screen still saying 128. The save is the door that works,
+/// and it was checked against the screen: 55 HP written into the file came up as 55 on load.
 /// </para>
 /// <para>
-/// This closes all of those. It works on the save file, so the game has to be shut, and what it
-/// writes is on disk for good. It is <b>idempotent</b>: a Pokémon already marked is skipped, so
-/// running it twice costs nothing and running it after every session is the sane habit.
+/// So the game has to be shut, which means marking happens when a session ends rather than at the
+/// moment somebody falls. It is <b>idempotent</b>: one already down is skipped, so running it twice
+/// costs nothing.
 /// </para>
 /// <para>
-/// Matching is by <b>PID</b>, never by species or nickname. A dead Pokémon has usually already been
-/// transformed into something else, and a run holds several Shedinja called MUERTO — matching by
-/// what it looks like would hit the wrong one.
+/// <b>Only the party can be marked</b>, and the ones in boxes are counted and named rather than
+/// quietly skipped. A boxed Pokémon carries no battle stats (§32), so a zero written there changes
+/// nothing and it would come out at full health — a marker that pretends to work is worse than an
+/// absent one.
+/// </para>
+/// <para>
+/// Matching is by <b>PID</b>, never by species or nickname. This run holds a real Shedinja called
+/// MUERTO that was never a death (§59), which is exactly what matching on appearance would hit.
 /// </para>
 /// </remarks>
 public sealed class SaveDeathEnforcer(
@@ -56,14 +65,24 @@ public sealed class SaveDeathEnforcer(
 
         if (wanted.Count == 0)
         {
-            return new DeathEnforcementReport(0, 0, 0, 0,
+            return new DeathEnforcementReport(0, 0, 0, 0, 0,
                 "No hay ningún caído con PID que marcar.");
         }
 
         if (save.Find() is not { } path)
         {
-            return new DeathEnforcementReport(0, 0, 0, 0,
+            return new DeathEnforcementReport(0, 0, 0, 0, 0,
                 "No encuentro la partida. ¿Has jugado alguna vez con este Azahar?");
+        }
+
+        // Con el juego abierto no se escribe, y la comprobación va AQUÍ y no en quien llama: desde
+        // que esto se hace solo al cerrar el emulador, el que llama es un temporizador y no una
+        // persona leyendo un aviso. El emulador reescribiría el fichero al guardar y se perdería.
+        if (write && save.IsGameLoaded())
+        {
+            return new DeathEnforcementReport(0, 0, 0, 0, 0,
+                "El juego está abierto en el emulador. Guarda y cierra Azahar: mientras esté "
+                + "cargado, el emulador reescribiría la partida.");
         }
 
         if (!SaveUtil.TryGetSaveFile(path, out var loaded) || loaded is not SAV7USUM file)
@@ -81,32 +100,28 @@ public sealed class SaveDeathEnforcer(
             }
         }
 
-        var alreadyMarked = found.Count(f => DeathMark.IsMarked(f.Pokemon));
-        var pending = found.Where(f => !DeathMark.IsMarked(f.Pokemon)).ToList();
+        // Los de caja se cuentan y se dicen, no se marcan: ahí un cero no significa nada.
+        var boxed = found.Count(f => !DeathMark.WorksIn(f.Box));
+        var inParty = found.Where(f => DeathMark.WorksIn(f.Box)).ToList();
+
+        var alreadyMarked = inParty.Count(f => DeathMark.IsMarked(f.Pokemon));
+        var pending = inParty.Where(f => !DeathMark.IsMarked(f.Pokemon)).ToList();
         var missing = wanted.Count - found.Count;
 
         if (!write || pending.Count == 0)
         {
-            return new DeathEnforcementReport(pending.Count, alreadyMarked, missing, 0,
+            return new DeathEnforcementReport(pending.Count, alreadyMarked, missing, boxed, 0,
                 pending.Count == 0
-                    ? $"Nada que hacer: los {alreadyMarked} caídos que están en la partida ya son Shedinja."
-                    : $"{pending.Count} caído(s) siguen enteros en la partida y se pueden marcar.");
+                    ? $"Nada que hacer: los {alreadyMarked} caídos del equipo ya están a 0 PS."
+                    : $"{pending.Count} caído(s) siguen en pie en el equipo y se pueden tumbar.");
         }
 
         Backup(path);
 
-        foreach (var (pokemon, box, slot) in pending)
+        foreach (var (pokemon, _, slot) in pending)
         {
             DeathMark.Apply(pokemon);
-
-            if (box == BoxedPokemon.PartyBox)
-            {
-                file.SetPartySlotAtIndex(pokemon, slot, PokemonBuilder.InPlace);
-            }
-            else
-            {
-                file.SetBoxSlotAtIndex(pokemon, box, slot, PokemonBuilder.InPlace);
-            }
+            file.SetPartySlotAtIndex(pokemon, slot, PokemonBuilder.InPlace);
         }
 
         File.WriteAllBytes(path, file.Write().ToArray());
@@ -117,20 +132,24 @@ public sealed class SaveDeathEnforcer(
             throw new InvalidDataException("La partida dejó de leerse tras escribirla.");
         }
 
+        // Solo el equipo, que es lo único que se ha escrito: contar las cajas aquí haría fallar
+        // una escritura correcta por algo que nunca se intentó.
         var still = Everything(back)
-            .Count(e => wanted.Contains(e.Pokemon.PID) && !DeathMark.IsMarked(e.Pokemon));
+            .Count(e => wanted.Contains(e.Pokemon.PID)
+                        && DeathMark.WorksIn(e.Box)
+                        && !DeathMark.IsMarked(e.Pokemon));
 
         if (still > 0)
         {
             throw new InvalidDataException(
-                $"{still} caído(s) siguen sin marcar después de escribir. La copia previa está en "
+                $"{still} caído(s) siguen en pie después de escribir. La copia previa está en "
                 + backupFolder + ".");
         }
 
-        logger.LogInformation("{Count} caídos marcados como Shedinja en la partida", pending.Count);
+        logger.LogInformation("{Count} caídos a 0 PS en la partida", pending.Count);
 
-        return new DeathEnforcementReport(0, alreadyMarked + pending.Count, missing, pending.Count,
-            $"{pending.Count} marcado(s) como Shedinja. Es permanente: está escrito en la partida.");
+        return new DeathEnforcementReport(0, alreadyMarked + pending.Count, missing, boxed, pending.Count,
+            $"{pending.Count} caído(s) a 0 PS en la partida. Se verá al cargar el juego.");
     }
 
     /// <summary>Party and every box, so a dead Pokémon is found wherever it was left.</summary>

@@ -26,13 +26,6 @@ public readonly record struct MemoryWriteResult(int Written, int Verified)
     public bool Rejected => Written > 0 && Verified < Written;
 }
 
-/// <param name="Nickname">Shown in the game, so the player sees the Pokémon is gone.</param>
-public sealed record DeathTransform(
-    int Species = 292,
-    string Nickname = "MUERTO",
-    int Level = 1,
-    int Ability = 0,
-    bool ClearMoves = true);
 
 /// <summary>
 /// Writes into the running game.
@@ -57,40 +50,201 @@ public sealed class AzaharGameWriter(
     /// <summary>The encrypted block, whose layout the checksum vouches for wherever it appears.</summary>
     private static readonly int StoredSize = new PK7().SIZE_STORED;
 
-    /// <summary>Turns a Pokémon into the run's death marker.</summary>
-    /// <param name="expectedPid">
-    /// The Pokémon that must be in that slot. The same guard as the level cap and for the same
-    /// reason: the party lives in several structures, not all of them read alike, and writing into
-    /// the wrong slot destroys a Pokémon that is still alive.
-    /// </param>
-    public MemoryWriteResult ApplyDeath(uint slotAddress, DeathTransform transform, uint expectedPid,
-        bool partyStatsAreHere = true)
+
+    /// <summary>
+    /// Sets a party Pokémon's current HP in memory. <b>The game does not read it back.</b>
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This exists to be measured against the screen, and nothing in the application calls it. §98
+    /// wrote <b>120</b> here — correctly, through the encryption, read back as 120 — and with the
+    /// party menu open the game went on saying <b>128</b>, and memory still said 120 afterwards.
+    /// The party entry it writes into is a mirror the game fills and never consults. The death
+    /// marker lives in the save file instead; see <c>SaveDeathEnforcer</c>.
+    /// </para>
+    /// <para>
+    /// §93 had reached the same conclusion by a broken route — a plaintext byte into an encrypted
+    /// field — so this goes through <see cref="Modify"/>, which decrypts, changes the field,
+    /// re-encrypts and reads back. That was worth building: it turned "we think it cannot" into a
+    /// measurement, and the measurement is what closed the question.
+    /// </para>
+    /// <para>
+    /// It refuses any slot whose tail is not really the party stats, measured and not assumed. HP
+    /// at <c>0xF0</c> means HP only where the structure is identified; elsewhere it is somebody
+    /// else's bytes, which is how a cap once evolved a Ledyba.
+    /// </para>
+    /// </remarks>
+    /// <param name="expectedPid">The Pokémon that must be in that slot, or nothing is written.</param>
+    public MemoryWriteResult SetHp(uint slotAddress, int hp, uint expectedPid)
     {
         if (Read(slotAddress) is not { ChecksumValid: true } slot || slot.PID != expectedPid)
         {
-            logger.LogDebug("0x{Address:X8}: ahí no está el PID {Wanted:X8}; no se transforma",
+            logger.LogDebug("0x{Address:X8}: ahí no está el PID {Wanted:X8}; no se toca",
                 slotAddress, expectedPid);
 
             return MemoryWriteResult.Nothing;
         }
 
-        return Modify(slotAddress, "muerte", pokemon =>
+        if (!Data.PartyStats.AreHere(slot))
         {
-            pokemon.Species = (ushort)transform.Species;
-            pokemon.Form = 0;
-            pokemon.Ability = transform.Ability;
-            Data.GameLevels.Set(pokemon, transform.Level);
+            logger.LogDebug("0x{Address:X8}: la cola de esta copia no son las estadísticas; no se toca",
+                slotAddress);
 
-            if (transform.ClearMoves)
+            return MemoryWriteResult.Nothing;
+        }
+
+        if (hp < 0 || hp > slot.Stat_HPMax)
+        {
+            logger.LogWarning("0x{Address:X8}: {Hp} PS no cabe en un máximo de {Max}",
+                slotAddress, hp, slot.Stat_HPMax);
+
+            return MemoryWriteResult.Nothing;
+        }
+
+        if (slot.Stat_HPCurrent == hp)
+        {
+            return MemoryWriteResult.Nothing;
+        }
+
+        var result = Modify(slotAddress, $"PS a {hp}", pokemon => pokemon.Stat_HPCurrent = hp);
+
+        if (!result.Applied)
+        {
+            return result;
+        }
+
+        // Y la comprobación que importa no es que los bytes estén, sino que el Pokémon los tenga.
+        // Releída y descifrada, que es como el juego la mira.
+        var after = Read(slotAddress);
+
+        if (after is null || after.Stat_HPCurrent != hp)
+        {
+            logger.LogWarning("0x{Address:X8}: la escritura se aceptó pero los PS son {Found}, no {Hp}",
+                slotAddress, after is null ? "ilegibles" : after.Stat_HPCurrent.ToString(), hp);
+
+            return MemoryWriteResult.Nothing;
+        }
+
+        logger.LogInformation("0x{Address:X8}: PS {Hp} de {Max} confirmado", slotAddress, hp, after.Stat_HPMax);
+
+        return result;
+    }
+
+    /// <summary>
+    /// Reads an entry of the structure the game actually reads, whose stats are not where a PK7
+    /// puts them.
+    /// </summary>
+    /// <remarks>
+    /// It is a party <see cref="PK7"/> in two pieces: the 232 byte block at the start and the 28
+    /// bytes of battle stats at <see cref="PartyLayoutLocator.AuthoritativeStatsOffset"/>. Put back
+    /// together they decrypt as one, and that was checked by hand before any of this was written:
+    /// those 28 bytes are <b>byte for byte</b> what the mirror carries at <c>0xF0</c>, so the
+    /// keystream is the same and PKHeX needs no help.
+    /// </remarks>
+    public PK7? ReadAuthoritative(uint entryAddress)
+    {
+        if (!client.TryReadMemory(entryAddress, StoredSize, out var stored)
+            || !client.TryReadMemory(entryAddress + Data.PartyLayoutLocator.AuthoritativeStatsOffset,
+                PartySize - StoredSize, out var stats))
+        {
+            return null;
+        }
+
+        var whole = new byte[PartySize];
+
+        stored.CopyTo(whole, 0);
+        stats.CopyTo(whole, StoredSize);
+
+        return new PK7(whole);
+    }
+
+    /// <summary>
+    /// Sets the current HP where the game reads it, and reads it back to prove it landed.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This is the one that reaches the screen. <see cref="SetHp"/> writes into the mirror, which
+    /// the game fills and never consults — measured three times in §98 — and this writes into the
+    /// authoritative structure, which was verified the other way round: 77 written here and the
+    /// party menu said 77.
+    /// </para>
+    /// <para>
+    /// Only the 28 byte tail is written, and only the bytes that differ. Nothing outside it is
+    /// touched, which matters more here than usual: between <c>0xE8</c> and <c>0x158</c> lie bytes
+    /// nobody has identified and the game moves on its own, and §97 is what writing over those
+    /// costs.
+    /// </para>
+    /// </remarks>
+    public MemoryWriteResult SetLiveHp(uint entryAddress, int hp, uint expectedPid)
+    {
+        var statsAt = entryAddress + Data.PartyLayoutLocator.AuthoritativeStatsOffset;
+
+        if (ReadAuthoritative(entryAddress) is not { ChecksumValid: true } pokemon
+            || pokemon.PID != expectedPid)
+        {
+            logger.LogDebug("0x{Address:X8}: ahí no está el PID {Wanted:X8}; no se toca",
+                entryAddress, expectedPid);
+
+            return MemoryWriteResult.Nothing;
+        }
+
+        // La cola tiene que leerse como estadísticas de verdad antes de escribir en ella: es la
+        // misma exigencia del §53, solo que ahora se hace donde de verdad están.
+        if (!Data.PartyStats.AreHere(pokemon))
+        {
+            logger.LogDebug("0x{Address:X8}: la cola de 0x158 no cuadra como estadísticas", entryAddress);
+            return MemoryWriteResult.Nothing;
+        }
+
+        if (hp < 0 || hp > pokemon.Stat_HPMax || pokemon.Stat_HPCurrent == hp)
+        {
+            return MemoryWriteResult.Nothing;
+        }
+
+        if (!client.TryReadMemory(statsAt, PartySize - StoredSize, out var before))
+        {
+            return MemoryWriteResult.Nothing;
+        }
+
+        pokemon.Stat_HPCurrent = hp;
+
+        var encrypted = new byte[PartySize];
+        pokemon.WriteEncryptedDataParty(encrypted);
+
+        Backup(statsAt, before, $"PS a {hp}");
+
+        var touched = new List<int>();
+
+        for (var i = 0; i < before.Length; i++)
+        {
+            if (encrypted[StoredSize + i] != before[i])
             {
-                pokemon.Move1 = pokemon.Move2 = pokemon.Move3 = pokemon.Move4 = 0;
-                pokemon.Move1_PP = pokemon.Move2_PP = pokemon.Move3_PP = pokemon.Move4_PP = 0;
-                pokemon.Move1_PPUps = pokemon.Move2_PPUps = pokemon.Move3_PPUps = pokemon.Move4_PPUps = 0;
+                client.WriteMemory((uint)(statsAt + i), [encrypted[StoredSize + i]]);
+                touched.Add(i);
             }
+        }
 
-            pokemon.Nickname = transform.Nickname;
-            pokemon.IsNicknamed = true;
-        }, partyStatsAreHere ? null : StoredSize);
+        if (touched.Count == 0)
+        {
+            return MemoryWriteResult.Nothing;
+        }
+
+        // Y lo que decide no es que los bytes esten, sino que el Pokemon tenga esos PS al releerlo
+        // descifrado, que es como el juego lo mira.
+        var after = ReadAuthoritative(entryAddress);
+
+        if (after is null || after.Stat_HPCurrent != hp)
+        {
+            logger.LogWarning("0x{Address:X8}: escrito pero los PS son {Found}, no {Hp}",
+                entryAddress, after is null ? "ilegibles" : after.Stat_HPCurrent.ToString(), hp);
+
+            return new MemoryWriteResult(touched.Count, 0);
+        }
+
+        logger.LogInformation("0x{Address:X8}: PS {Hp} de {Max} en la copia que el juego lee",
+            entryAddress, hp, after.Stat_HPMax);
+
+        return new MemoryWriteResult(touched.Count, touched.Count);
     }
 
     /// <summary>
@@ -123,12 +277,14 @@ public sealed class AzaharGameWriter(
     /// <param name="expectedPid">
     /// The Pokémon that must be in that slot: it is written only if it is really there.
     /// </param>
-    /// <param name="partyStatsAreHere">
-    /// True only for the structure whose entries are laid out as party Pokémon. False keeps the
-    /// write inside the encrypted block, so nothing is put into bytes whose meaning is unknown.
-    /// </param>
-    public MemoryWriteResult EnforceLevelCap(uint slotAddress, int cap, uint expectedPid,
-        bool partyStatsAreHere = true)
+    /// <remarks>
+    /// How far the write may reach is no longer asked of the caller. It used to be passed in as
+    /// «this is the party stride», and the stride turned out not to be the fact: two structures
+    /// with the same <c>0x104</c> stride read 118/131 and 42649/10902 for the same Gyarados on the
+    /// same second. <see cref="PartyStats.AreHere"/> decides it from the entry itself now, so the
+    /// answer cannot drift from what is actually in the slot.
+    /// </remarks>
+    public MemoryWriteResult EnforceLevelCap(uint slotAddress, int cap, uint expectedPid)
     {
         var current = Read(slotAddress);
 
@@ -144,7 +300,7 @@ public sealed class AzaharGameWriter(
 
         var result = Modify(slotAddress, $"cap de nivel {cap}",
             pokemon => Data.GameLevels.Set(pokemon, cap),
-            partyStatsAreHere ? null : StoredSize);
+            Data.PartyStats.AreHere(current) ? null : StoredSize);
 
         if (!result.Applied)
         {
@@ -210,68 +366,6 @@ public sealed class AzaharGameWriter(
     public PK7? Read(uint slotAddress) =>
         client.TryReadMemory(slotAddress, PartySize, out var bytes) ? new PK7(bytes) : null;
 
-    /// <summary>Empties the emulator's watch list. False when the emulator is not the fork.</summary>
-    public bool ClearWatchList() => client.ClearWatchList();
-
-    /// <summary>
-    /// Hands the emulator the bytes it must keep at this slot, whatever the game does later.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// The bytes are read back <b>raw</b> and sent as they lie in memory, still encrypted. Going
-    /// through <see cref="PK7"/> would decrypt them, and what got registered would be a block that
-    /// never appears in the game — so the emulator would rewrite the slot with garbage five times a
-    /// second, which is a far worse failure than not watching it at all.
-    /// </para>
-    /// <para>
-    /// The tag is the first four bytes, the encryption constant, which is the one field of a party
-    /// entry that is <b>not</b> encrypted and identifies whoever lives there.
-    /// </para>
-    /// <para>
-    /// ONLY THE ENCRYPTED BLOCK IS GUARDED, and this is the whole reason the guard is safe. What
-    /// follows it is the party tail, which in the authoritative structures belongs to something the
-    /// game updates continuously — so guarding 260 bytes meant the emulator saw a difference at all
-    /// times and rewrote the entry five times a second, for ever. It corrupted a real save: the
-    /// game read the slot mid-rewrite while serialising it and stored an entry whose halves came
-    /// from two different moments, which the game then drew as a Bad Egg. Rule §53 already said not
-    /// to write past the encrypted block in structures whose tail is not identified; the guard has
-    /// to obey it too. Everything the death marker changes — species, nickname, moves, level —
-    /// lives inside this block, and the checksum vouches for it.
-    /// </para>
-    /// </remarks>
-    public bool Watch(uint slotAddress, uint expectedPid)
-    {
-        if (!client.TryReadMemory(slotAddress, PartySize, out var bytes) || bytes.Length < PartySize)
-        {
-            return false;
-        }
-
-        // PK7 DESCIFRA EL ARRAY QUE SE LE DA, EN EL SITIO. Sin esta copia, el bloque que se
-        // registra abajo ya no es el que se leyó: es su versión descifrada, o sea unos bytes que
-        // en el juego no aparecen nunca. El emulador los estampaba sobre el hueco cinco veces por
-        // segundo, y de ahí salió un Huevo Malo en la partida de verdad. El comentario de arriba
-        // ya avisaba de este peligro exacto; la comprobación de identidad lo reintrodujo al
-        // añadir este PK7. La copia es de una línea y es lo único que lo impide.
-        var pokemon = new PK7((byte[])bytes.Clone());
-
-        // LA IDENTIDAD POR DELANTE, y aquí faltaba. El que llama recorre las estructuras usando el
-        // MISMO número de hueco en todas, y las estructuras guardan el equipo en órdenes
-        // distintos: se vio en la partida real registrando cinco direcciones de las que cuatro
-        // llevaban a otro Pokémon. Congelar el bloque de uno vivo es bastante peor que no vigilar
-        // al muerto, porque el emulador se lo repone cada doscientos milisegundos.
-
-        if (!pokemon.ChecksumValid || pokemon.PID != expectedPid)
-        {
-            logger.LogDebug("0x{Address:X8}: ahí no está el PID {Wanted:X8}; no se vigila",
-                slotAddress, expectedPid);
-
-            return false;
-        }
-
-        var tag = System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(bytes);
-
-        return client.WatchBlock(slotAddress, tag, bytes.AsSpan(0, StoredSize).ToArray());
-    }
 
     /// <summary>Puts back exactly what was there, from the newest backup of that address.</summary>
     public bool Restore(uint address)

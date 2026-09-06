@@ -226,17 +226,18 @@ public sealed class MaintenanceService(
                + "La penalización se ha cobrado y queda en el historial como marca del jugador.";
     }
 
-    /// <summary>Counts the dead that are still whole in the save, writing nothing.</summary>
+    /// <summary>Counts the dead still standing in the save's party, writing nothing.</summary>
     public async Task<DeathEnforcementReport> InspectDeathsAsync(CancellationToken ct = default) =>
         NewDeathEnforcer().Inspect(await RegisteredAsync(ct).ConfigureAwait(false));
 
     /// <summary>
-    /// Turns every dead Pokémon of the run into a Shedinja inside the save, for good.
+    /// Leaves every dead Pokémon of the run at zero HP in the save, as themselves.
     /// </summary>
     /// <remarks>
-    /// The watcher writes the marker into the running game, but that is memory: it survives only if
-    /// the player saves, and it never happens for a death the watcher could not see. This writes the
-    /// save itself, so it is permanent, and it is idempotent — one already marked is skipped.
+    /// The whole death marker. The monitor calls it on its own when the emulator closes, which is
+    /// the only moment the save can be written, and the button in MANTENIMIENTO is for when that
+    /// did not happen — the application was shut, or the write failed. It is idempotent, so both
+    /// paths can run over each other without doing anything twice.
     /// </remarks>
     public async Task<DeathEnforcementReport> EnforceDeathsAsync(CancellationToken ct = default) =>
         NewDeathEnforcer().Apply(await RegisteredAsync(ct).ConfigureAwait(false));

@@ -16,10 +16,42 @@ public enum RpcRequestType
     SearchMemory = 5,
 
     /// <summary>
-    /// Also only in the fork: a list of blocks the game is not allowed to change back.
+    /// Del fork: mantener un bloque en su sitio cinco veces por segundo. NADA lo envía ya.
     /// </summary>
-    WatchBlock = 6
+    /// <remarks>
+    /// Se construyó para sostener el Shedinja en memoria y esa marca ya no existe: la muerte se
+    /// escribe en el fichero de partida (§98 bis). El número se queda documentado porque el
+    /// emulador sigue entendiéndolo, y el cliente que lo usaba está en el historial.
+    /// </remarks>
+    WatchBlock = 6,
+
+    /// <summary>
+    /// Del parche 3: apuntar quién escribe en un rango de memoria. Todavía no existe en el fork.
+    /// </summary>
+    /// <remarks>
+    /// La última vía para averiguar de dónde saca el juego los PS. Todo lo que se puede preguntar
+    /// desde fuera está agotado y medido en el §98: el espejo del equipo el juego lo rellena y no
+    /// lo lee nunca —ni al abrir el menú ni al montar un combate— y los valores no están en claro
+    /// en 400 MB. Pero el juego <b>escribe</b> los PS buenos en ese espejo, así que la instrucción
+    /// que lo hace sabe de dónde vienen. Ver <c>docs/fork/03-donde-vive-el-ps.md</c>.
+    /// </remarks>
+    WatchWrites = 7,
+
+    /// <summary>Del parche 3: recoger lo apuntado y vaciar el registro.</summary>
+    ReadWriteLog = 8
 }
+
+/// <summary>
+/// Una escritura que el emulador vio, con el estado de la CPU en ese instante.
+/// </summary>
+/// <param name="Pc">La instrucción que la hizo.</param>
+/// <param name="Registers">Los dieciséis registros ARM. Cualquiera puede apuntar al origen.</param>
+/// <remarks>
+/// Los registros vienen enteros y sin interpretar a propósito: quien busca el origen prueba los
+/// dieciséis como dirección y se queda con el que lleve a un Pokémon legible. Elegir uno dentro del
+/// emulador sería adivinar, y adivinar con seguridad es exactamente como se pierde una noche.
+/// </remarks>
+public sealed record MemoryWrite(uint Pc, uint Address, uint Size, uint Value, uint[] Registers);
 
 /// <param name="ProcessId">Emulated process handle, as Azahar numbers them.</param>
 /// <param name="TitleId">3DS title id, e.g. 0x00040000001B5100 for Ultra Moon (EUR).</param>
@@ -327,64 +359,88 @@ public sealed class AzaharRpcClient : IDisposable
         return hits;
     }
 
-    /// <summary>Longest block the fork will keep watch over.</summary>
-    /// <remarks>A party entry is 260 bytes, so this is not a limit anybody is going to reach.</remarks>
-    public const int MaxWatchBlock = 1024 - (sizeof(uint) * 4);
+    /// <summary>How many 32 bit registers an entry of the write log carries.</summary>
+    public const int WriteLogRegisters = 16;
+
+    /// <summary>Bytes one entry of the write log takes on the wire.</summary>
+    public const int WriteLogEntrySize = (sizeof(uint) * 4) + (sizeof(uint) * WriteLogRegisters);
 
     /// <summary>
-    /// Empties the emulator's watch list.
+    /// Asks the emulator to note down whoever writes inside a range. Size zero stops watching.
     /// </summary>
+    /// <returns>False when the emulator is not the fork, or refused the range.</returns>
     /// <remarks>
-    /// The list is always replaced whole rather than added to. A list that only grew would keep
-    /// restoring the marker of a Pokémon that is not dead any more because the run was corrected,
-    /// and it would keep pointing at addresses the party has since moved away from.
+    /// Keep the range small. It is watched by taking those pages off the fast path, so a wide one
+    /// slows the whole emulator down and buries the answer in writes nobody asked about.
     /// </remarks>
-    public bool ClearWatchList() => Watch(0, 0, 0, []);
-
-    /// <summary>
-    /// Asks the emulator to keep <paramref name="block"/> at <paramref name="address"/>.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// The emulator compares five times a second and rewrites when the game has undone it. That is
-    /// the whole point: PermaLocke writes the death marker once and stops looking, and the game
-    /// puts the slot back when it feels like it.
-    /// </para>
-    /// <para>
-    /// <paramref name="tag"/> is the four plain bytes at the start of the block — the encryption
-    /// constant, which identifies whoever lives in that slot. The emulator refuses to write when it
-    /// stops matching, so a party that reorders costs a missed rewrite and never a clobbered
-    /// neighbour.
-    /// </para>
-    /// </remarks>
-    /// <returns>False when the emulator refused it, or is not the fork.</returns>
-    public bool WatchBlock(uint address, uint tag, ReadOnlySpan<byte> block)
+    public bool WatchWrites(uint address, uint size)
     {
-        if (block.Length == 0 || block.Length > MaxWatchBlock)
-        {
-            throw new ArgumentException(
-                $"El bloque debe medir entre 1 y {MaxWatchBlock} bytes.", nameof(block));
-        }
+        var payload = new byte[sizeof(uint) * 2];
 
-        return Watch(1, address, tag, block);
+        BinaryPrimitives.WriteUInt32LittleEndian(payload, address);
+        BinaryPrimitives.WriteUInt32LittleEndian(payload.AsSpan(4), size);
+
+        var reply = Send(RpcRequestType.WatchWrites, payload);
+
+        return reply.Length >= sizeof(uint) && BinaryPrimitives.ReadUInt32LittleEndian(reply) == 1;
     }
 
-    private bool Watch(uint mode, uint address, uint tag, ReadOnlySpan<byte> block)
+    /// <summary>
+    /// Collects what the emulator noted down and empties its log.
+    /// </summary>
+    /// <param name="remaining">
+    /// Entries still waiting after this batch. It is answered explicitly rather than left to be
+    /// inferred from a full page, because a reply that silently drops the rest is how a truncated
+    /// search got read as a measurement and cost a night (§98).
+    /// </param>
+    public IReadOnlyList<MemoryWrite> ReadWriteLog(out int remaining)
     {
-        var payload = new byte[(sizeof(uint) * 4) + block.Length];
-        BinaryPrimitives.WriteUInt32LittleEndian(payload, mode);
-        BinaryPrimitives.WriteUInt32LittleEndian(payload.AsSpan(4), (uint)block.Length);
-        BinaryPrimitives.WriteUInt32LittleEndian(payload.AsSpan(8), address);
-        BinaryPrimitives.WriteUInt32LittleEndian(payload.AsSpan(12), tag);
-        block.CopyTo(payload.AsSpan(16));
+        // Ocho bytes aunque no lleve argumentos: el servidor rechaza cualquier paquete con menos,
+        // porque todos los tipos leen dos u32 de cabecera. Mandar cero lo tiraba en la puerta.
+        var reply = Send(RpcRequestType.ReadWriteLog, new byte[sizeof(uint) * 2]);
 
-        var reply = Send(RpcRequestType.WatchBlock, payload);
+        remaining = 0;
 
-        // El Azahar oficial contesta VACÍO a un tipo de paquete que no conoce, así que una respuesta
-        // corta es «este emulador no sabe hacer esto» y no un fallo. El que llama lo trata como el
-        // caso normal: se sigue igual que hasta ahora.
-        return reply.Length >= sizeof(uint)
-               && BinaryPrimitives.ReadUInt32LittleEndian(reply) == 1;
+        if (reply.Length < sizeof(uint) * 2)
+        {
+            return [];
+        }
+
+        var count = (int)BinaryPrimitives.ReadUInt32LittleEndian(reply);
+
+        remaining = (int)BinaryPrimitives.ReadUInt32LittleEndian(reply.AsSpan(4));
+
+        var writes = new List<MemoryWrite>(count);
+
+        for (var i = 0; i < count; i++)
+        {
+            var at = (sizeof(uint) * 2) + (i * WriteLogEntrySize);
+
+            if (at + WriteLogEntrySize > reply.Length)
+            {
+                // El emulador dijo más de las que mandó. Se devuelven las enteras y se deja dicho
+                // que faltan, en vez de inventar una entrada a medias.
+                remaining += count - i;
+                break;
+            }
+
+            var registers = new uint[WriteLogRegisters];
+
+            for (var r = 0; r < WriteLogRegisters; r++)
+            {
+                registers[r] = BinaryPrimitives.ReadUInt32LittleEndian(
+                    reply.AsSpan(at + (sizeof(uint) * 4) + (r * sizeof(uint))));
+            }
+
+            writes.Add(new MemoryWrite(
+                BinaryPrimitives.ReadUInt32LittleEndian(reply.AsSpan(at)),
+                BinaryPrimitives.ReadUInt32LittleEndian(reply.AsSpan(at + 4)),
+                BinaryPrimitives.ReadUInt32LittleEndian(reply.AsSpan(at + 8)),
+                BinaryPrimitives.ReadUInt32LittleEndian(reply.AsSpan(at + 12)),
+                registers));
+        }
+
+        return writes;
     }
 
     /// <summary>True when the emulator answers the search request, i.e. it is the fork.</summary>

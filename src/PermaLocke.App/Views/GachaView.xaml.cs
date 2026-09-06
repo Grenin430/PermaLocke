@@ -359,9 +359,51 @@ public partial class GachaView : UserControl
         _settle.Start();
     }
 
-    private void StartSpin(SpinRequest request)
+    /// <summary>Whether the strip is already doing something, idle drift included.</summary>
+    private bool _reelMoving;
 
+    /// <summary>
+    /// Before the first pull the strip drifts, very slowly, from one end to the other.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// It goes and comes back rather than looping: a seamless loop needs the strip duplicated, and
+    /// at this speed a change of direction every couple of minutes is not something anybody sees.
+    /// </para>
+    /// <para>
+    /// Once only, and never again after a pull: when a roll lands, the strip is parked ON the
+    /// winner. Drifting away from it afterwards would take the result off the screen.
+    /// </para>
+    /// </remarks>
+    private void OnStripSized(object sender, SizeChangedEventArgs e)
     {
+        if (_reelMoving || ReelStrip.ActualWidth <= ReelViewport.ActualWidth)
+        {
+            return;
+        }
+
+        _reelMoving = true;
+
+        var travel = ReelStrip.ActualWidth - ReelViewport.ActualWidth;
+        var shift = new TranslateTransform();
+        ReelStrip.RenderTransform = shift;
+
+        shift.BeginAnimation(TranslateTransform.XProperty, new DoubleAnimation
+        {
+            From = 0,
+            To = -travel,
+            // Mas rapido de lo que estaba: a travel/14 pasaba un Pokemon cada tres segundos y
+            // parecia parado. Sigue siendo un vaiven de fondo, no un carrete girando.
+            Duration = TimeSpan.FromSeconds(Math.Max(14, travel / 45)),
+            AutoReverse = true,
+            RepeatBehavior = RepeatBehavior.Forever
+        });
+    }
+
+    private void StartSpin(SpinRequest request)
+    {
+        _reelMoving = true;
+
         var viewport = ReelViewport.ActualWidth;
         if (viewport <= 0)
         {

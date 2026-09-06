@@ -7343,3 +7343,332 @@ bien, porque un arreglo que también puede pisar a un Pokémon sano no es un arr
 Con `--probar` va sobre una copia, y se comprobaron las dos cosas antes de tocar la partida: que
 reconstruye (`#292 «MUERTO» Nv 1 PID 8EC2769F firma OK`) y que **una captura de otro Pokémon la
 frena** (`las constantes de encriptación no coinciden. No se escribe`).
+
+---
+
+## §98 · Los PS del equipo: dónde NO están, medido siete veces (2026-09-06)
+
+El jugador pidió lo que el §92 había dejado a medias: dejar a un Pokémon muerto **siendo él**, a
+cero PS, en vez de convertirlo en Shedinja. La respuesta, después de una noche de medidas, es que
+**no se puede desde fuera**, y esta sección existe para que nadie vuelva a empezar de cero.
+
+### Lo que decide, y es una sola medida
+
+El espejo de `0x330128E4` **sigue los PS con precisión perfecta**: se leyó 118, luego 128, luego
+120, siempre lo que marcaba la pantalla. Eso invita a pensar que es el almacén. No lo es.
+
+Se le escribió **120** por el camino correcto —descifrar, cambiar el campo, volver a cifrar,
+releer— con el Gyarados a 128 de 131. Y entonces las tres medidas juntas:
+
+| Medida | Valor |
+|---|---|
+| memoria justo después de escribir | **120** |
+| pantalla, con el menú del equipo abierto | **128** |
+| memoria **después** de abrir el menú | **120** |
+
+La tercera es la que contesta, y es la que el §93 no tomó. El juego **ni lee de ahí ni lo
+corrige**: `0x330128E4` es un espejo de **una sola dirección**, un buffer de guardado. El §93
+concluyó bien por el motivo equivocado —escribió un byte en claro sobre un campo cifrado— y yo
+corregí el motivo y me quedé con la conclusión contraria sin comprobarla. Lo que había que
+comprobar era la pantalla.
+
+### Todo lo demás, excluido con su medida
+
+Con los valores reales del equipo, no inferidos:
+
+| Hipótesis | Cómo se midió | Resultado |
+|---|---|---|
+| u16 en claro que siga a los PS | barrido de 400 MB, dos avistamientos cruzados | solo la barra de vida |
+| daño recibido (`max - actual`) | misma pasada, valor derivado | nada |
+| valor desalineado, o de un byte | barrido a paso 1 | nada |
+| tabla del equipo a paso constante | los cinco en orden de hueco, paso hasta 8192 | nada |
+| los seis valores de uno, juntos | ventana de 64 bytes, con los valores reales | nada |
+| lo mismo **con el menú abierto** | idéntico, dibujándose en pantalla | nada |
+| cualquier offset de las entradas | en crudo y **descifradas**, los seis a la vez | nada |
+| otra copia del Pokémon | por su constante de encriptación, en toda la memoria | **solo 3** |
+
+Las tres copias son: el espejo, la estructura de salto `0x1E4` —cuya cola son cabeceras del
+asignador, marcas `DU` y `RF`— y un **objeto de gráficos** en `0x3048xxxx`, que empieza por la
+constante y sigue con once punteros a texturas y *shaders*. Ninguna es un almacén vivo.
+
+### Por qué ninguna búsqueda podía encontrarlo
+
+Dos cosas, y las dos son estructurales:
+
+Las estadísticas de un PK7 de equipo van **cifradas** igual que el resto — PKHeX cifra la cola en
+una segunda pasada con la misma semilla—, así que en pantalla 118 y en memoria `EF A6`. Un barrido
+por el número no puede verlas por muy ancho que sea.
+
+Y lo que el juego usa **no vive lo suficiente**. Si descifra al Pokémon en una pila para dibujar la
+barra y lo tira, una pasada que tarda 30 s en recorrer 400 MB no lo va a pillar nunca, y si lo
+pillase la dirección no valdría para el fotograma siguiente. Encaja con todos los negativos, con
+que las estructuras aparezcan y desaparezcan entre pasadas —cinco un minuto y dos al siguiente— y
+con que lo único en claro sea la barra de vida, que es pintura: `0x30020634` guarda actual y máximo
+como u32, el valor **anterior**, y los porcentajes `118/131*100 = 90,08` y `108/131*100 = 82,44`
+con un `100.0` al lado. Eso es la interpolación de la barra al animarse, no un almacén.
+
+### La vía que queda
+
+No es buscar más: es **preguntárselo al emulador**. El fork ya intercepta memoria, así que un
+punto de observación de **lectura** sobre el espejo diría en una frase si el juego lo lee alguna
+vez, y otro sobre el origen de la barra daría la cadena entera. Es trabajo del tamaño del §95, no
+un ajuste.
+
+Mientras tanto **el Shedinja se queda**, porque es lo que se sabe que se ve. Se llegó a cambiar la
+muerte automática por «dejarlo a cero PS» y se revirtió el mismo día, en cuanto la pantalla dijo
+que no. Un marcador que no se ve es peor que uno feo.
+
+### Lo que sí queda hecho
+
+`PartyStats.AreHere` decide **midiendo** si la cola de una entrada son de verdad las estadísticas.
+Antes se preguntaba el salto —`0x104` significaba «aquí están»— y eso es un proxy, no el hecho: las
+**dos** estructuras de salto `0x104` leyeron, en el mismo segundo, `118/131` y `42649/10902`. O sea
+que el cap de nivel y la marca de muerte llevaban tiempo escribiendo más allá del bloque cifrado en
+bytes que nadie ha identificado, que es justo lo que el §53 prohíbe desde que un «por si acaso»
+evolucionó un Ledyba. El ancla es que un Pokémon de equipo **lleva el nivel dos veces** —como
+experiencia dentro del bloque cifrado, avalada por el checksum, y como `Stat_Level` en la cola— y
+donde la cola es buena coinciden; con los seis valores en rango, la casualidad tendría que darse
+siete veces a la vez. Seis pruebas, ancladas a esos números reales.
+
+Y `AzaharGameWriter.SetHp` / `Faint`, que escriben los PS bien aunque el juego no los mire, más
+`Probe --ps`, `--ps-tabla`, `--ps-bloque`, `--ps-copias`, `--ps-cola` y `--ps-escribir`.
+
+### Tres errores míos de esa noche, porque los tres se repiten solos
+
+**Construí la aguja con basura.** El primer barrido buscó un Gyarados de «42649 de 10902», leídos de
+una copia que no guarda estadísticas. Cero aciertos, y ese cero no significaba nada. Es el §53 otra
+vez: un campo solo vale donde la estructura está identificada.
+
+**Usé una herramienta justo para lo que su propio comentario prohíbe.** `SearchMemory` devuelve como
+mucho **255 aciertos por llamada** y lo dice en su resumen: «nunca para demostrar que algo no está».
+Las cifras lo gritaban —510 y luego 765, dos y tres veces 255 clavados— y las leí como medidas.
+Nada de lo de aquí la usa: el barrido lee la memoria y compara de este lado.
+
+**Y comparé el hueco cero contra todo.** La primera criba solo miraba el primer hueco de cada
+estructura, así que habría dicho «no está» de un Pokémon sentado en cualquier otro sitio. La
+ausencia de evidencia no vale nada cuando la búsqueda no podía encontrarlo.
+
+Y uno de bulto: pasé horas viendo «huecos 0, 1, 3, 4, 5» en un equipo de cinco sin preguntarme por
+qué faltaba el 2. Era un **Huevo Malo** del §97 que la partida guardada arrastraba desde el día
+anterior, y todas mis herramientas lo daban por «hueco vacío» porque PKHeX no lo puede leer. De ahí
+que `--huevo --arreglar` gane `--hueco`: iba fijo en el primero, que es donde pasó la primera vez, y
+una herramienta de reparación que solo sabe arreglar el sitio del estreno no sirve la segunda.
+
+### §98 bis · La otra puerta sí está abierta: el fichero de partida
+
+Cerrada la memoria, quedaba una vía sin probar, y funciona. **Medido**: con el juego cerrado se
+escribieron **55** PS al Tinkaton en el fichero de partida, se releyó el fichero (55 de 123), el
+jugador cargó y el menú del equipo decía **55**. El juego lee los PS del **fichero** al cargar,
+aunque no lea nunca el espejo de memoria.
+
+Ojo con lo que **no** era prueba: se propuso esta vía apoyándose en que el Mudsdale muerto del
+jugador está a `0/13` en la partida. No demuestra nada — ese Mudsdale se murió de verdad, así que
+ese cero lo puso el juego. Plausible no es medido, y esa distinción es la moraleja de todo el §98.
+
+`SaveFainter` deja a los caídos de la run a **0 PS siendo ellos**: no toca especie, mote,
+movimientos ni nivel. Por PID y por nada más — nunca «este parece un marcador», que esta run tuvo un
+Shedinja llamado MUERTO que jamás fue una muerte (§59). El estado se va con los PS, porque un
+Pokémon en el suelo no está además envenenado, y dejarlo sería dejar la partida en un estado que el
+juego no produce nunca. Copia previa, `InPlace` por lo que costó el §42, y **relectura del fichero**
+comprobando que ninguno sigue en pie antes de dar nada por bueno.
+
+En MANTENIMIENTO, en dos pasos como el resto: mirar cuántos, y solo entonces se enciende el botón
+que escribe. Convive con CONVERTIR A LOS CAÍDOS EN SHEDINJA y la pantalla dice en qué se
+diferencian, que es lo único que hay que elegir: **el Shedinja no se puede deshacer y esto sí**. Un
+Centro Pokémon revive a un caído sin PS, y no hay forma de impedirlo desde fuera —para eso haría
+falta reponerlo en memoria, que es justo lo que el §98 midió que no llega—. Así que esto es «muerto
+entre sesiones», y así está dicho en la tarjeta.
+
+Lo que **sigue sin hacerse**, a propósito: la muerte automática **no** ha pasado a usar esto. La
+marca del vigilante sigue siendo el Shedinja en memoria, porque es lo que se ve en el momento; esto
+se pasa al terminar la sesión, con el juego cerrado. Cambiar lo automático es otra decisión y no se
+toma de madrugada, el mismo día en que ya se cambió una vez sin verificar y hubo que revertirlo.
+
+Prueba y herramienta: cinco pruebas unitarias sobre un save construido en memoria, y
+`Probe --tumbar [--probar] [--pid <hex>] [--ps <n>]`. El ensayo va sobre una **copia** en el
+temporal y no abre la partida para escribir; `--pid` solo vale en ensayo, para demostrar el viaje
+completo por el fichero cuando los caídos de la run no están en el equipo —que era el caso ese día,
+12 caídos y ninguno en pie—. Y `--ps` **rechaza el cero** a propósito: escribir un 0 para comprobar
+haría que el vigilante lo leyera como una muerte y cobrase 25 puntos por algo que no ha pasado. Una
+comprobación que le cuesta puntos al jugador no es una comprobación.
+
+### §98 ter · Fuera el Shedinja
+
+El jugador lo zanjó en una frase: «quita todo lo del shedinja, quiero olvidarme de esa mecánica».
+Así que la marca de muerte deja de ser un Pokémon distinto y pasa a ser **quedarse sin PS**.
+
+No fue borrar código, fue **cambiar una definición**. `DeathMark` era ya la única implementación de
+«qué le pasa a un cadáver» —lo decía su propio comentario, y por eso lo usaban tanto la ruleta como
+el escritor de partida—, así que cambiarla ahí las cambió todas a la vez. `Apply` pone los PS a cero
+y limpia el estado; `IsMarked` pregunta por los PS. Un solo sitio, y ninguna de las dos rutas pudo
+quedarse atrás.
+
+**Lo que se perdió al cambiar, dicho porque es real:** el Shedinja se podía marcar en cualquier
+sitio y esto **solo vale en el equipo**. Un Pokémon en caja no lleva estadísticas de combate (§32),
+así que escribirle un cero no cambia nada que el juego lea y saldría entero. De ahí `WorksIn`, que
+el escritor tiene que preguntar: los de caja se **cuentan y se dicen** en vez de saltarse en
+silencio, porque una marca que aparenta funcionar es peor que no tener ninguna. Sale en la tarjeta,
+en el diálogo de confirmación y en una prueba.
+
+**Y se hace sola al cerrar el emulador**, que es el único momento en que se puede escribir la
+partida. La marca vivía en memoria y se ponía en el instante de morir; ahora vive en el fichero, y
+el fichero solo se deja escribir con el juego cerrado, así que el monitor la pone en la transición
+de conectado a desconectado. El botón de MANTENIMIENTO se queda para cuando eso no ocurrió —la
+aplicación estaba cerrada, o la escritura falló—, y como es idempotente los dos caminos pueden
+pisarse sin hacer nada dos veces. La comprobación de «¿está el juego abierto?» se movió **dentro**
+del escritor: desde que quien llama es un temporizador y no una persona leyendo un aviso, dejarla en
+el que llama era dejarla sin poner.
+
+**Y se fue con él toda su maquinaria.** El vigilante del emulador —`WatchBlock`, la lista, el
+`Watch` del escritor y sus pruebas— existía para sostener el Shedinja en memoria cinco veces por
+segundo. Sin marca en memoria no tiene usuario, y encima es el código que corrompió una partida en
+el §97, así que quedarse con él apagado era guardar un arma cargada. El parche sigue en el fork y
+documentado en §95-97; el número de paquete se queda en el enum con una nota de que nadie lo manda.
+De paso se van `DeathTransform` y `ApplyDeath`, y `AzaharGameWriter.SetHp` se queda **solo como
+sonda**, con su resumen diciendo que el juego no lo lee — que es lo que costó averiguar.
+
+Con esto el ciclo del monitor pierde tres pasos —marcar, adoptar caídos, refrescar la lista— y unas
+340 líneas. Ninguno hacía falta: los tres estaban al servicio de una marca que el juego nunca miró.
+
+### §98 quater · Y el espejo no se lee ni montando un combate
+
+El jugador pidió lo que tiene sentido: que un muerto esté muerto **todo el rato**, dé igual cuántas
+veces lo reviva un PNJ, comprobado al cerrar un menú o al entrar y salir de combate. Su instinto
+apuntaba a una hipótesis que quedaba sin comprobar: que el juego se cargue el equipo al arrancar y
+solo vuelva a leer el espejo en momentos concretos —y los momentos que él nombró son exactamente los
+candidatos—.
+
+Se midió. Se escribieron **40** PS a un Ursaluna de 161, se entró en un combate salvaje y se huyó:
+**161 antes y 161 después**. El espejo no se lee ni siquiera cuando el juego reconstruye el equipo.
+
+De paso, una lección sobre cómo se elige un sujeto de prueba: la primera pasada se hizo sobre el
+Mudsdale, que **ya estaba a 0 PS**. El jugador lo cazó en una frase —«da igual que pasara que al
+salir seguiria con 0»—, y tenía razón: escribir un cero sobre algo que ya vale cero no puede
+distinguir ninguna hipótesis de ninguna otra. La prueba necesitaba un número raro en un Pokémon
+sano, y además uno que **no combatiera**, porque si pelea recibe daño de verdad y el número deja de
+significar nada.
+
+Con eso se agota lo preguntable desde fuera, y el diagnóstico pasa al emulador: el **parche 3**,
+escrito en `docs/fork/03-donde-vive-el-ps.md`. La idea es que el juego **escribe** los PS buenos en
+ese espejo, así que hay una instrucción suya que los copia desde donde de verdad viven; si el
+emulador entrega el PC y los dieciséis registros de esa escritura, PermaLocke prueba cada registro
+como dirección y se queda con el que lea como un Pokémon con los PS correctos. Mecánico, sin
+desensamblar a mano y sin elegir a ojo.
+
+El lado del cliente ya está hecho y probado contra un servidor falso: `WatchWrites`, `ReadWriteLog`
+y `Probe --escrituras`, que **distingue** «el juego no ha tocado esos bytes» de «el enganche no ve
+las escrituras porque el JIT las hace por su cuenta» — dos causas con el mismo síntoma, y confundir
+un tope de herramienta con una medida es justo lo que costó una noche en el §98. Las pruebas del
+registro incluyen una respuesta que dice llevar más entradas de las que manda, y exigen que las
+enteras se devuelvan y el resto se cuente como pendiente en vez de inventarse.
+
+**Nada del parche está aplicado ni compilado**, y tiene una suposición grande dicha en su documento:
+el JIT de Azahar escribe memoria sin pasar por `MemorySystem`, así que el enganche depende de marcar
+el rango con `RasterizerMarkRegionCached` —el mecanismo que Citra ya usa para la GPU— y, si no
+basta, de desactivar el JIT mientras se diagnostica. Y puede terminar diciendo que **no se puede**:
+si el juego descifra al Pokémon en una pila, lo usa y la tira, no hay dirección que clavar. Eso
+también sería una respuesta, y hoy no la tenemos.
+
+---
+
+## §99 · Dónde vive el PS de verdad: `0x1E4 + 0x158` (2026-09-06)
+
+**Encontrado y verificado contra la pantalla.** Se escribió **77** en esa posición y el menú del
+equipo dijo 77. La estructura de salto `0x1E4` guarda las estadísticas de combate en el offset
+**`0x158`** de cada entrada, cifradas, y **esa es la que el juego lee**.
+
+### Cómo se llegó
+
+Toda la noche del §98 fue negativa porque se buscaba desde fuera. Lo que la cerró fue el parche 3
+del fork: un punto de observación de escritura sobre los dos bytes de los PS en el espejo. Al
+**guardar la partida**, el emulador anotó:
+
+```
+pc 0x00322FAC  escribio 4 bytes en 0x330129D4  valor 0x2A15A6FE
+r0=330129CC  r1=33F808AC  r4=CEC1641C  r6=330128E4  r7=330129CC  r12=2A15A6FE
+```
+
+Y el código en esa dirección, desensamblado, es una rutina de dos copias:
+
+```
+cmp r6, #0 · ldr r1, [r4, #8]  · mov r2, #232 · mov r0, r6 · bl memcpy
+cmp r7, #0 · ldr r1, [r4, #4]  · mov r2, #28  · mov r0, r7 · bl memcpy
+```
+
+**232 y 28**: el bloque del Pokémon y la cola de estadísticas de un PK7 de equipo, exactamente. La
+segunda copia es la que disparó el aviso, así que su origen —`r1`, ya avanzado por el `memcpy`— era
+`0x33F808AC`, y los bytes escritos aparecían en `0x33F808A4`. Restando el desplazamiento dentro de
+la copia, el bloque empieza en `0x33F8089C`, que es `0x33F80744 + 0x158`.
+
+### Lo que esto corrige
+
+El §53 dijo que la copia autoritativa «guarda las estadísticas de combate en otro sitio» y ahí se
+quedó, sin decir dónde, durante meses. Y `PartyStats.AreHere` la rechazaba **por eso mismo**:
+buscaba en `0xF0`, que es donde las pone un PK7, y ahí no están. La comprobación no estaba mal,
+estaba incompleta — y su consecuencia fue que todo lo que escribía PermaLocke se limitaba al espejo,
+que es justamente el sitio que no se lee.
+
+También corrige lo que yo repetí toda la noche: que el espejo «sigue los PS clavados». No los sigue.
+Es una **foto que se rellena al guardar**, y entre guardado y guardado se queda vieja — medido: la
+pantalla decía 103 y el espejo seguía en 128. Coincidía las tres primeras veces por casualidad de
+cuándo miré.
+
+### Cómo se escribe ahí
+
+Las estadísticas están cifradas con la misma tirada que la cola de un PK7, y se comprobó por
+partida doble: los bytes de `0x1E4 + 0x158` y los del espejo en `+0xF0` son **idénticos**. Así que
+no hace falta reimplementar el cifrado: se lee el bloque de 232 bytes de `+0` y los 28 de `+0x158`,
+se juntan en un PK7 de equipo de 260, PKHeX lo descifra, se cambia el campo, se vuelve a cifrar y
+se escriben los últimos 28 bytes en `+0x158`.
+
+Para la comprobación de esta noche se hizo aún más simple, derivando la clave de un solo hueco:
+texto en claro 103 contra cifrado `A6FE` da `0xA699`, y con eso 77 se escribe como `A6D4`. Sirve
+para una prueba; para el código va la vía de PKHeX, que no depende de conocer el valor de antes.
+
+### Lo que queda por decidir
+
+Clavarlo con el vigilante del emulador (§95) tiene un problema de identidad: `WatchBlock` toma
+como etiqueta los **cuatro primeros bytes del bloque**, y en `+0x158` eso es el estado alterado
+cifrado, no la constante de encriptación. Vigilar desde `+0` para que la etiqueta sea la constante
+obligaría a guardar también los bytes entre `0xE8` y `0x158`, que nadie ha identificado y que el
+juego toca — y guardar bytes que cambian solos es exactamente lo que corrompió una partida en el
+§97. Así que o el parche 4 separa la dirección de la etiqueta, o lo repone PermaLocke desde su
+sondeo de 1 Hz, que no necesita tocar el emulador y no puede corromper nada.
+
+### §99 bis · Y con eso, muerto es muerto mientras juegas
+
+Encontrada la dirección, lo que faltaba era barato. `AzaharGameWriter.SetLiveHp` escribe los PS
+donde el juego los lee: junta los 232 bytes de `+0` con los 28 de `+0x158`, deja que PKHeX lo
+descifre, cambia el campo, vuelve a cifrar y escribe **solo la cola y solo los bytes que difieren**
+—nada entre `0xE8` y `0x158`, que es territorio sin identificar y lo que se toca ahí cuesta un Huevo
+Malo (§97)—. Copia previa, PID por delante y relectura descifrada antes de dar nada por bueno.
+
+`GameLinkMonitor.KeepFallenDownAsync` corre **en cada vuelta**, una vez por segundo, y devuelve al
+suelo a cualquier caído de la run que tenga PS. Cada vuelta y no solo cuando cambia el equipo,
+porque curar en un Centro Pokémon no mueve la plantilla; y no cuesta nada cuando no hay trabajo,
+porque el HP ya viene en la instantánea.
+
+**No se le da al vigilante del emulador**, y es una decisión. `WatchBlock` toma los cuatro primeros
+bytes del bloque como identidad, y en `+0x158` eso es el estado alterado, no la constante de
+encriptación. Vigilar desde el principio de la entrada obligaría a guardar también los bytes que el
+juego mueve por su cuenta, que es literalmente lo que corrompió una partida. Una vez por segundo
+desde la aplicación no puede corromper nada, y para lo que se pide —que a un muerto no lo revivan—
+sobra.
+
+Lo que sigue siendo verdad y conviene no olvidar: esto vive **mientras la aplicación esté abierta**.
+Con ella cerrada, el juego cura y nadie lo deshace hasta la próxima vez. Y la marca en el fichero de
+partida (§98 bis) sigue haciendo falta para que aguante entre sesiones.
+
+**Verificado en la partida real (2026-09-06):** el jugador curó al Mudsdale en un Centro Pokémon y
+volvió al suelo solo, con su aviso en HOME. Muerto es muerto mientras juegas.
+
+Y costó una corrección por el camino que vale más que el propio cableado: **hay tres estructuras de
+salto `0x1E4` y no dicen lo mismo**. Leídas en el mismo segundo, una daba el Gyarados a 128, otra a
+103 y la tercera a 131 — dos fotos viejas y la viva. La aplicación tenía guardada la más rancia de
+una sesión anterior y la revalidó «sin barrer», así que la primera versión de esta pasada miró a un
+Pokémon recién curado, leyó cero y decidió que no había nada que hacer.
+
+Nada las distingue por su forma, así que **ninguna se elige**: se pregunta a todas, por PID y hueco
+a hueco, y a la que tenga PS se los quita. Escribir un cero donde ya hay un cero no cuesta nada;
+dejarse la buena sí. Es el §96 otra vez —la identidad por delante, nunca la posición— aplicado donde
+faltaba, que era en de dónde se leía y no en dónde se escribía.

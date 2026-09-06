@@ -23,10 +23,11 @@ namespace PermaLocke.GameLink;
 /// only written once at the end.
 /// </para>
 /// <para>
-/// Death is the same mark the rest of PermaLocke uses: the Pokémon becomes a Shedinja called
-/// MUERTO with no moves. It destroys what was there, which is what the face means, so the lines it
-/// reports name exactly who died — §59's lesson, learned from a test write nobody could identify
-/// afterwards.
+/// Death is the same mark the rest of PermaLocke uses: the Pokémon is left at zero HP, still
+/// itself. The lines it reports name exactly who died anyway — §59.s lesson, learned from a test
+/// write nobody could identify afterwards — and now they are the only record that it was the wheel
+/// and not a battle, because the Pokémon no longer looks any different from one the game knocked
+/// out.
 /// </para>
 /// </remarks>
 public sealed class SaveRouletteWorld(
@@ -363,7 +364,7 @@ public sealed class SaveRouletteWorld(
                     pokemon.Ability == action.Abilities[i],
                 RouletteEffect.IvPerfectos => IvsAre(pokemon, 31),
                 RouletteEffect.IvCero => IvsAre(pokemon, 0),
-                RouletteEffect.Muerte => IsDeathMarker(pokemon),
+                RouletteEffect.Muerte => DeathMark.IsMarked(pokemon),
                 _ => true
             };
 
@@ -379,17 +380,6 @@ public sealed class SaveRouletteWorld(
     private static bool IvsAre(PK7 pokemon, int value) =>
         pokemon.IV_HP == value && pokemon.IV_ATK == value && pokemon.IV_DEF == value
         && pokemon.IV_SPA == value && pokemon.IV_SPD == value && pokemon.IV_SPE == value;
-
-    private static bool IsDeathMarker(PK7 pokemon)
-    {
-        var death = new DeathTransform();
-        return pokemon.Species == death.Species
-               && pokemon.CurrentLevel == death.Level
-               && pokemon.Ability == death.Ability
-               && pokemon.Nickname == death.Nickname
-               && pokemon.Move1 == 0 && pokemon.Move2 == 0
-               && pokemon.Move3 == 0 && pokemon.Move4 == 0;
-    }
 
     /// <summary>How many of one item the save really carries, zero when it has no entry.</summary>
     private static int Count(SAV7USUM game, int itemId)

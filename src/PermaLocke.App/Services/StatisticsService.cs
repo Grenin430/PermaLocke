@@ -3,21 +3,44 @@ using PermaLocke.Core.Domain;
 
 namespace PermaLocke.App.Services;
 
+/// <summary>
+/// Whether a figure is something good, something bad, or neither.
+/// </summary>
+/// <remarks>
+/// It lives with the data and not in the view because the view cannot tell: «Penalización» and
+/// «Puntos ganados» are both just a label and a number, and until now both were drawn in the same
+/// accent violet — four panels where the bars only said lengths. The rule the rest of the
+/// application already follows is that a colour has to mean something, and the only place that
+/// knows what a line means is whoever built it.
+///
+/// <see cref="Neutral"/> is not a cop-out: where a Pokémon came from is neither good nor bad, and
+/// painting it green or red would invent a judgement that nobody made.
+/// </remarks>
+public enum StatTone
+{
+    Neutral,
+    Good,
+    Bad
+}
+
 /// <param name="Label">Already in Spanish: the enum never reaches the screen.</param>
 /// <param name="Total">Net points this line is responsible for.</param>
 /// <param name="Count">How many events made it up.</param>
 /// <param name="Share">0 to 1 against the biggest line, for the bar the view draws.</param>
-public sealed record LedgerLine(string Label, int Total, int Count, double Share);
+public sealed record LedgerLine(string Label, int Total, int Count, double Share,
+    StatTone Tone = StatTone.Neutral);
 
 /// <param name="Label">What the tally counts.</param>
 /// <param name="Count">How many.</param>
 /// <param name="Share">0 to 1 against the biggest tally in its group.</param>
-public sealed record Tally(string Label, int Count, double Share);
+public sealed record Tally(string Label, int Count, double Share,
+    StatTone Tone = StatTone.Neutral);
 
 /// <param name="Label">What the record is.</param>
 /// <param name="Value">The answer, preformatted.</param>
 /// <param name="Detail">Where it came from, or empty.</param>
-public sealed record RecordLine(string Label, string Value, string Detail = "");
+public sealed record RecordLine(string Label, string Value, string Detail = "",
+    StatTone Tone = StatTone.Neutral);
 
 /// <param name="Earned">Everything the run has ever gained.</param>
 /// <param name="Spent">Everything it has ever lost or spent, as a positive number.</param>
@@ -30,6 +53,7 @@ public sealed record StatisticsReport(
     IReadOnlyList<LedgerLine> Income,
     IReadOnlyList<LedgerLine> Outgoings,
     IReadOnlyList<double> Curve,
+    double? CurveZero,
     IReadOnlyList<Tally> Origins,
     IReadOnlyList<Tally> Fates,
     IReadOnlyList<RecordLine> Records);
@@ -67,7 +91,7 @@ public sealed class StatisticsService(
     {
         if (runContext.Current is not { } run)
         {
-            return new StatisticsReport(false, 0, 0, 0, [], [], [], [], [], []);
+            return new StatisticsReport(false, 0, 0, 0, [], [], [], null, [], [], []);
         }
 
         var history = (await events.GetAllAsync(run.Id, ct))
@@ -78,6 +102,8 @@ public sealed class StatisticsService(
 
         var moved = history.Where(e => e.PointsDelta != 0).ToList();
 
+        var curve = Curve(moved);
+
         var earned = moved.Where(e => e.PointsDelta > 0).Sum(e => e.PointsDelta);
         var spent = -moved.Where(e => e.PointsDelta < 0).Sum(e => e.PointsDelta);
 
@@ -86,16 +112,17 @@ public sealed class StatisticsService(
             Balance: moved.Sum(e => e.PointsDelta),
             Earned: earned,
             Spent: spent,
-            Income: Ledger(moved.Where(e => e.PointsDelta > 0)),
-            Outgoings: Ledger(moved.Where(e => e.PointsDelta < 0)),
-            Curve: Curve(moved),
-            Origins: Group(team.Select(p => DisplayNames.Of(p.Origin))),
-            Fates: Group(team.Select(p => DisplayNames.Of(p.Status))),
+            Income: Ledger(moved.Where(e => e.PointsDelta > 0), StatTone.Good),
+            Outgoings: Ledger(moved.Where(e => e.PointsDelta < 0), StatTone.Bad),
+            Curve: curve.Points,
+            CurveZero: curve.Zero,
+            Origins: Group(team.Select(p => (DisplayNames.Of(p.Origin), StatTone.Neutral))),
+            Fates: Group(team.Select(p => (DisplayNames.Of(p.Status), Of(p.Status)))),
             Records: Records(history, team, run));
     }
 
     /// <summary>Groups the movements by what caused them, biggest first.</summary>
-    private static IReadOnlyList<LedgerLine> Ledger(IEnumerable<GameEvent> moved)
+    private static IReadOnlyList<LedgerLine> Ledger(IEnumerable<GameEvent> moved, StatTone tone)
     {
         var groups = moved
             .GroupBy(e => e.Type)
@@ -112,7 +139,7 @@ public sealed class StatisticsService(
 
         return groups
             .Select(g => new LedgerLine(g.Label, g.Total, g.Count,
-                biggest == 0 ? 0 : (double)g.Total / biggest))
+                biggest == 0 ? 0 : (double)g.Total / biggest, tone))
             .ToList();
     }
 
@@ -125,11 +152,12 @@ public sealed class StatisticsService(
     /// whether you can afford it — so the curve is scaled between its own minimum and maximum. A
     /// curve anchored at zero would draw a run that went negative as if it had flatlined.
     /// </remarks>
-    private static IReadOnlyList<double> Curve(IReadOnlyList<GameEvent> moved)
+    /// <returns>The samples, and where a balance of zero falls in them, if it falls inside.</returns>
+    private static (IReadOnlyList<double> Points, double? Zero) Curve(IReadOnlyList<GameEvent> moved)
     {
         if (moved.Count < 2)
         {
-            return [];
+            return ([], null);
         }
 
         var running = new List<double>(moved.Count);
@@ -147,26 +175,44 @@ public sealed class StatisticsService(
 
         var step = Math.Max(1, running.Count / CurvePoints);
 
-        return running
+        var points = running
             .Where((_, i) => i % step == 0 || i == running.Count - 1)
             .Select(v => span == 0 ? 0.5 : (v - low) / span)
             .ToList();
+
+        // Donde cae el cero. La curva se escala entre su propio minimo y su maximo -y tiene que
+        // ser asi, porque el saldo puede quedarse en negativo-, y el precio de eso es que mirando
+        // el dibujo no se sabe si estas por encima o por debajo de cero. Esta es esa referencia, y
+        // vale null cuando la run entera se mantuvo de un solo lado.
+        var zero = span > 0 && low <= 0 && high >= 0 ? -low / span : (double?)null;
+
+        return (points, zero);
     }
 
-    private static IReadOnlyList<Tally> Group(IEnumerable<string> labels)
+    /// <param name="items">Each one already carries whether it is a good thing or a bad one.</param>
+    private static IReadOnlyList<Tally> Group(IEnumerable<(string Label, StatTone Tone)> items)
     {
-        var groups = labels
-            .GroupBy(l => l)
-            .Select(g => new { Label = g.Key, Count = g.Count() })
+        var groups = items
+            .GroupBy(i => i.Label)
+            .Select(g => new { Label = g.Key, Count = g.Count(), Tone = g.First().Tone })
             .OrderByDescending(g => g.Count)
             .ToList();
 
         var biggest = groups.Count > 0 ? groups.Max(g => g.Count) : 0;
 
         return groups
-            .Select(g => new Tally(g.Label, g.Count, biggest == 0 ? 0 : (double)g.Count / biggest))
+            .Select(g => new Tally(g.Label, g.Count,
+                biggest == 0 ? 0 : (double)g.Count / biggest, g.Tone))
             .ToList();
     }
+
+    /// <summary>What a fate means for the run. Released counts as bad: it is gone either way.</summary>
+    private static StatTone Of(PokemonStatus status) => status switch
+    {
+        PokemonStatus.Alive => StatTone.Good,
+        PokemonStatus.Dead => StatTone.Bad,
+        _ => StatTone.Neutral
+    };
 
     /// <summary>
     /// The handful of figures a player would actually tell somebody about.
@@ -189,18 +235,21 @@ public sealed class StatisticsService(
         var best = history.MaxBy(e => e.PointsDelta);
         if (best is { PointsDelta: > 0 })
         {
-            lines.Add(new RecordLine("Mayor ganancia", $"+{best.PointsDelta}", best.Description));
+            lines.Add(new RecordLine("Mayor ganancia", $"+{best.PointsDelta}", best.Description,
+                StatTone.Good));
         }
 
         var worst = history.MinBy(e => e.PointsDelta);
         if (worst is { PointsDelta: < 0 })
         {
-            lines.Add(new RecordLine("Mayor pérdida", worst.PointsDelta.ToString(), worst.Description));
+            lines.Add(new RecordLine("Mayor pérdida", worst.PointsDelta.ToString(), worst.Description,
+                StatTone.Bad));
         }
 
         lines.Add(new RecordLine("Racha sin bajas",
             $"{LongestCleanRun(history)} eventos",
-            "Contado en eventos y no en días: PermaLocke solo ve lo que pasa con la aplicación abierta."));
+            "Contado en eventos y no en días: PermaLocke solo ve lo que pasa con la aplicación abierta.",
+            StatTone.Good));
 
         var days = history
             .GroupBy(e => e.Timestamp.LocalDateTime.Date)

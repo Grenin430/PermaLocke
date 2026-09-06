@@ -237,6 +237,10 @@
     <!-- El halo bajo la isla. Azul palido, del color del mar que la rodea en el propio dibujo. -->
     <Color x:Key="IslandHaloColor">#FF7FD8FF</Color>
 
+    <!-- El area bajo la curva del saldo. El acento muy velado: la que dice el dato es la linea,
+         y el relleno solo esta para darle cuerpo y direccion. -->
+    <Color x:Key="CurveFillColor">#4DB07BF0</Color>
+
     <!-- La luz que cruza el mar del mapa, muy lenta. Azul palido y no blanco: el unico sitio
          donde se ve de verdad es el agua, y ahi tiene que parecer luz sobre el agua y no una
          franja pasando por encima. Subirle el alfa la convierte en lo segundo. -->

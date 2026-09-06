@@ -289,31 +289,34 @@
                  partida, así que es definitivo, y es idempotente. -->
             <Border Style="{StaticResource Inset}" Margin="0,12,0,0">
                 <StackPanel>
-                    <TextBlock Text="CONVERTIR A LOS CAÍDOS EN SHEDINJA" Style="{StaticResource PanelHeading}" />
+                    <TextBlock Text="DEJAR A LOS CAÍDOS SIN PS" Style="{StaticResource PanelHeading}" />
 
                     <TextBlock Style="{StaticResource Body}" Margin="0,9,0,0" TextWrapping="Wrap"
-                               Text="Todo Pokémon que la run cuenta como caído pasa a ser un Shedinja llamado MUERTO, nivel 1 y sin movimientos. Se escribe en la PARTIDA, así que es permanente y hace falta Azahar cerrado." />
+                               Text="Todo Pokémon que la run cuenta como caído se queda a 0 PS SIENDO ÉL: misma especie, mismo mote, mismos movimientos, mismo nivel. Al cargar el juego sale debilitado. Se escribe en la PARTIDA, así que hace falta Azahar cerrado." />
 
                     <TextBlock Style="{StaticResource Faint}" Margin="0,8,0,0" TextWrapping="Wrap"
-                               Text="Se puede repetir sin miedo: uno que ya esté marcado se salta. Lo suyo es pasarlo al terminar cada sesión, porque la transformación que hace la aplicación mientras juegas vive en memoria y se pierde si no guardas." />
+                               Text="Normalmente no hace falta pulsarlo: la aplicación lo hace sola en cuanto cierras el emulador. Está aquí por si esa vez falló o por si la aplicación estaba cerrada. Se puede repetir sin miedo: uno que ya esté sin PS se salta." />
+
+                    <TextBlock Style="{StaticResource Faint}" Margin="0,8,0,0" TextWrapping="Wrap"
+                               Text="Solo funciona con los del EQUIPO. Un Pokémon guardado en una caja no lleva estadísticas de combate, así que ahí un cero no significaría nada y saldría entero: los que estén en caja se cuentan aparte y no se tocan." />
 
                     <Border Style="{StaticResource Well}" Margin="0,12,0,0" Padding="14,10">
-                        <TextBlock Text="{Binding ShedinjaSummary}" Style="{StaticResource Mono}" />
+                        <TextBlock Text="{Binding DeathMarkSummary}" Style="{StaticResource Mono}" />
                     </Border>
 
                     <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
                         <Button Content="MIRAR CUÁNTOS HAY" Style="{StaticResource GhostButton}"
                                 Command="{Binding InspectDeathsCommand}" MinWidth="200" />
-                        <Button Content="CONVERTIRLOS" Style="{StaticResource PrimaryButton}"
+                        <Button Content="DEJARLOS SIN PS" Style="{StaticResource PrimaryButton}"
                                 Command="{Binding EnforceDeathsCommand}" MinWidth="170"
                                 Margin="10,0,0,0" />
                     </StackPanel>
 
-                    <TextBlock Text="{Binding ShedinjaStatus}" Margin="0,12,0,0" TextWrapping="Wrap">
+                    <TextBlock Text="{Binding DeathMarkStatus}" Margin="0,12,0,0" TextWrapping="Wrap">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock" BasedOn="{StaticResource Body}">
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding ShedinjaStatus}" Value="">
+                                    <DataTrigger Binding="{Binding DeathMarkStatus}" Value="">
                                         <Setter Property="Visibility" Value="Collapsed" />
                                     </DataTrigger>
                                 </Style.Triggers>

@@ -15,7 +15,8 @@ namespace PermaLocke.App.ViewModels;
 /// Empty holes are view models too. The PC of the game has thirty of them whether they are full
 /// or not, and drawing only the occupied ones would turn a box into a ragged list.
 /// </remarks>
-public sealed partial class BoxSlotViewModel(BoxedPokemon? pokemon, BitmapSource? sprite) : ObservableObject
+public sealed partial class BoxSlotViewModel(BoxedPokemon? pokemon, BitmapSource? sprite,
+    bool isDead = false) : ObservableObject
 {
     public BoxedPokemon? Pokemon { get; } = pokemon;
 
@@ -23,11 +24,24 @@ public sealed partial class BoxSlotViewModel(BoxedPokemon? pokemon, BitmapSource
 
     public bool IsEmpty => Pokemon is null;
 
+    /// <summary>The run counts this one as fallen.</summary>
+    /// <remarks>
+    /// By PID against the run and never by «parece un Shedinja llamado MUERTO»: the marker is what
+    /// a death is turned INTO, and this run has held a real Shedinja that was never a death (§59).
+    /// A tile is only a picture, but a picture that guesses is still a picture that lies.
+    /// </remarks>
+    public bool IsDead { get; } = isDead;
+
+    public bool IsShiny => Pokemon?.IsShiny == true;
+
     public bool HasSprite => Sprite is not null;
 
     /// <summary>Shown when there is a Pokémon but no icon for it, so the hole is never silent.</summary>
     public string Fallback => Pokemon is null ? string.Empty : "?";
 }
+
+/// <param name="Value">Preformatted: the view only prints it.</param>
+public sealed record OverviewRow(string Label, string Value);
 
 /// <summary>A box as the selector lists it, or the party.</summary>
 public sealed record BoxTabViewModel(int Number, string Name, int Count, int Slots, bool IsParty)
@@ -141,7 +155,11 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
     private readonly PokemonSpriteService _sprites;
     private readonly EvTrainingService _training;
     private readonly IRunContext _runContext;
+    private readonly IPokemonRepository _registered;
     private readonly ILogger<PokemonViewerViewModel> _logger;
+
+    /// <summary>PID of everything the run has lost, so a tile can say so.</summary>
+    private HashSet<uint> _fallen = [];
 
     private static readonly string[] StatNames =
         ["PS", "Ataque", "Defensa", "At. Esp.", "Def. Esp.", "Velocidad"];
@@ -153,12 +171,13 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
 
     public PokemonViewerViewModel(IBoxReader boxes, PokemonSpriteService sprites,
         WonderTradeViewModel trade, EvTrainingService training, IRunContext runContext,
-        ILogger<PokemonViewerViewModel> logger) : base("VISOR POKÉMON", "El equipo y las 32 cajas de la partida, con EV editables")
+        IPokemonRepository registered, ILogger<PokemonViewerViewModel> logger) : base("VISOR POKÉMON", "El equipo y las 32 cajas de la partida, con EV editables")
     {
         _boxes = boxes;
         _sprites = sprites;
         _training = training;
         _runContext = runContext;
+        _registered = registered;
         _logger = logger;
         Trade = trade;
 
@@ -169,6 +188,16 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
 
     /// <summary>The wonder trade, which picks its victim from the box on this screen.</summary>
     public WonderTradeViewModel Trade { get; }
+
+    /// <summary>
+    /// What the save holds, in five figures, for the panel that had nothing in it.
+    /// </summary>
+    /// <remarks>
+    /// The card panel is a third of the screen and it was empty until you clicked something. These
+    /// are counts of what is already loaded, so they cost nothing and answer the question you have
+    /// before you click anything: cuanto llevas y cuanto has perdido.
+    /// </remarks>
+    public ObservableCollection<OverviewRow> Overview { get; } = [];
 
     /// <summary>Every box of the PC, in the order the game numbers them.</summary>
     public ObservableCollection<BoxTabViewModel> Boxes { get; } = [];
@@ -273,6 +302,15 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
 
             _snapshot = await _boxes.ReadAsync();
 
+            // Quien ha caido, de la run y por PID. Si no hay run, nadie: el visor lee la partida
+            // y la partida no sabe nada de muertes.
+            _fallen = _runContext.Current is { } current
+                ? (await _registered.GetAllAsync(current.Id))
+                    .Where(p => p.Status == PokemonStatus.Dead && p.Pid is not null)
+                    .Select(p => p.Pid!.Value)
+                    .ToHashSet()
+                : [];
+
             Problem = _snapshot.Problem ?? string.Empty;
             Notice = _snapshot.Notice ?? string.Empty;
             IsAvailable = _snapshot.Available;
@@ -283,6 +321,7 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
             if (!_snapshot.Available)
             {
                 Slots.Clear();
+                Overview.Clear();
                 Summary = string.Empty;
                 return;
             }
@@ -297,6 +336,17 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
 
             var party = _snapshot.Party?.Count ?? 0;
             Summary = $"{party} en el equipo · {_snapshot.Stored} en el PC de {_snapshot.TrainerName}";
+
+            var everyone = _snapshot.Boxes.SelectMany(b => b.Pokemon).ToList();
+
+            Overview.Clear();
+            Overview.Add(new OverviewRow("En la partida", _snapshot.Total.ToString()));
+            Overview.Add(new OverviewRow("En el equipo", party.ToString()));
+            Overview.Add(new OverviewRow("En el PC", _snapshot.Stored.ToString()));
+            Overview.Add(new OverviewRow("Caídos de la run",
+                everyone.Count(p => _fallen.Contains(p.Pid)).ToString()));
+            Overview.Add(new OverviewRow("Variocolor", everyone.Count(p => p.IsShiny).ToString()));
+            Overview.Add(new OverviewRow("Entrenador", _snapshot.TrainerName));
 
             // La primera caja con algo dentro: abrir en una vacía teniendo Pokémon en la
             // siguiente hace pensar que no se ha leído nada.
@@ -382,7 +432,8 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
         for (var slot = 0; slot < contents.Slots; slot++)
         {
             var pokemon = contents.Pokemon.FirstOrDefault(p => p.Slot == slot);
-            Slots.Add(new BoxSlotViewModel(pokemon, pokemon is null ? null : SpriteFor(pokemon)));
+            Slots.Add(new BoxSlotViewModel(pokemon, pokemon is null ? null : SpriteFor(pokemon),
+                pokemon is not null && _fallen.Contains(pokemon.Pid)));
         }
     }
 
@@ -399,7 +450,8 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
         for (var slot = 0; slot < party.Slots; slot++)
         {
             var member = party.Pokemon.FirstOrDefault(p => p.Slot == slot);
-            Party.Add(new BoxSlotViewModel(member, member is null ? null : SpriteFor(member)));
+            Party.Add(new BoxSlotViewModel(member, member is null ? null : SpriteFor(member),
+                member is not null && _fallen.Contains(member.Pid)));
         }
     }
 

@@ -9,7 +9,7 @@
 
         <!-- Una tarjeta de logro: medalla, texto, progreso, puntos y botón. -->
         <DataTemplate x:Key="AchievementTemplate">
-            <Border Margin="5" Padding="14">
+            <Border Margin="4" Padding="12">
                 <Border.Style>
                     <Style TargetType="Border">
                         <Setter Property="Background" Value="{StaticResource PanelBrush}" />
@@ -22,9 +22,11 @@
                                 <Setter Property="BorderBrush" Value="{StaticResource SuccessBrush}" />
                                 <Setter Property="Background" Value="{StaticResource SuccessDeepBrush}" />
                             </DataTrigger>
-                            <!-- Cobrado: se apaga, ya no pide nada. -->
+                            <!-- Cobrado: se apaga por COLOR y no por opacidad. Un 0,45 sobre toda la
+                                 tarjeta emborronaba tambien el cristal, el verde del COBRADO y los
+                                 puntos, y dejaba doce tarjetas en niebla. Quien dice el estado es el
+                                 cristal -en color si esta ganado, en gris si no- y el fondo. -->
                             <DataTrigger Binding="{Binding Claimed}" Value="True">
-                                <Setter Property="Opacity" Value="0.45" />
                                 <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
                                 <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
                             </DataTrigger>
@@ -34,7 +36,7 @@
 
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="52" />
+                        <ColumnDefinition Width="64" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
@@ -42,10 +44,15 @@
                          prueba- y, si no, el rombo con la inicial, que es lo que había antes. Se
                          conserva el respaldo a propósito: sin ROM no hay iconos, y una tarjeta
                          vacía sería peor que una dibujada. -->
-                    <Grid Grid.Column="0" VerticalAlignment="Top" Width="46" Height="46"
+                    <Grid Grid.Column="0" VerticalAlignment="Top" Width="58" Height="58"
                           HorizontalAlignment="Left">
+                        <!-- Un disco detras. El cristal es lo mejor que tiene esta pantalla -sale
+                             del cartucho del propio jugador- y varios son palidos o casi blancos:
+                             sin nada debajo se deshacen contra el fondo de la tarjeta. -->
+                        <Ellipse Fill="{StaticResource SunkenBrush}"
+                                 Stroke="{StaticResource BorderBrush}" StrokeThickness="1" />
                         <Grid Visibility="{Binding HasIcon, Converter={StaticResource InverseBoolToVisibility}}">
-                            <Path Data="M 23,2 L 44,23 L 23,44 L 2,23 Z" StrokeThickness="2"
+                            <Path Data="M 29,7 L 50,28 L 29,49 L 8,28 Z" StrokeThickness="2"
                                   Stroke="{StaticResource BorderStrongBrush}"
                                   Fill="{Binding Medal}" />
                             <TextBlock Text="{Binding Initial}"
@@ -54,7 +61,7 @@
                                        HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Grid>
 
-                        <Image Source="{Binding Icon}" Width="44" Height="44"
+                        <Image Source="{Binding Icon}" Width="46" Height="46"
                                RenderOptions.BitmapScalingMode="NearestNeighbor"
                                Visibility="{Binding HasIcon, Converter={StaticResource BoolToVisibility}}">
                             <!-- Un logro por cobrar se ve apagado, que es lo que decía el color de
@@ -74,7 +81,7 @@
 
                     <StackPanel Grid.Column="1" Margin="10,0,0,0">
                         <TextBlock Text="{Binding Description}" Style="{StaticResource Body}"
-                                   FontSize="12.5" MinHeight="50" VerticalAlignment="Top" />
+                                   FontSize="12.5" MinHeight="34" VerticalAlignment="Top" />
 
                         <!-- Quién cuenta este número. Un logro que se cuenta solo y uno que se
                              marca a mano no valen lo mismo, así que la tarjeta lo dice. -->

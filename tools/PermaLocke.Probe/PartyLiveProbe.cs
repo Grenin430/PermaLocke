@@ -98,8 +98,7 @@ public static class PartyLiveProbe
                     continue;
                 }
 
-                var result = writer.EnforceLevelCap(address, wanted, pokemon.PID,
-                    layout.Stride == PartyLayoutLocator.CopyStride);
+                var result = writer.EnforceLevelCap(address, wanted, pokemon.PID);
                 var name = pokemon.Species < names.Length ? names[pokemon.Species] : "?";
 
                 Console.WriteLine($"   0x{address:X8} {name,-12} nivel {pokemon.CurrentLevel,3} -> "

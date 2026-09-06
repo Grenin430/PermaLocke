@@ -126,9 +126,12 @@ public sealed class SaveRouletteWorldTests
 
         var after = (PK7)game.GetPartySlotAtIndex(1);
 
-        Assert.Equal(292, after.Species);
-        Assert.Equal("MUERTO", after.Nickname);
-        Assert.Equal(0, after.Move1 + after.Move2 + after.Move3 + after.Move4);
+        // La marca ya no es un Shedinja: es quedarse sin PS, siendo él. La rueda mata igual, pero
+        // lo que deja es el Pokémon debilitado y no otro Pokémon distinto.
+        Assert.Equal(0, after.Stat_HPCurrent);
+        Assert.True(PermaLocke.GameLink.Data.DeathMark.IsMarked(after));
+        Assert.Equal(victim.Species, after.Species);
+        Assert.Equal(was, after.Nickname);
         Assert.True(after.ChecksumValid);
         Assert.Contains(was, Assert.Single(lines));
     }

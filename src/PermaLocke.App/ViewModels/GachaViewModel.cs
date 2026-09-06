@@ -88,8 +88,24 @@ public sealed class PoolEntryViewModel(SpeciesStats species,
 }
 
 /// <summary>One banner as the screen shows it, with its odds spelled out.</summary>
-public sealed partial class BannerViewModel(GachaBanner banner, string odds) : ObservableObject
+/// <param name="BrushKey">Palette key of the tier, the same one the portal uses.</param>
+/// <param name="Width">In hundredths of the bar, so the view can stretch it without knowing its width.</param>
+public sealed record OddsSlice(string BrushKey, double Width, string Label);
+
+public sealed partial class BannerViewModel(GachaBanner banner, string odds,
+    IReadOnlyList<OddsSlice> slices) : ObservableObject
 {
+    /// <summary>
+    /// The same odds as a bar, in the colours of the tiers.
+    /// </summary>
+    /// <remarks>
+    /// The portals up top are still where the odds are WRITTEN -that decision stands, the portal is
+    /// the tier and lights up when a roll lands on it-. What the card had was the same three
+    /// figures repeated in the same language, six feet below. A bar is not a repetition: says the
+    /// SHAPE of the banner at a glance, which is what you are comparing when you pick one.
+    /// </remarks>
+    public IReadOnlyList<OddsSlice> Slices { get; } = slices;
+
     public GachaBanner Banner { get; } = banner;
 
     public string Name => Banner.Name;
@@ -323,7 +339,12 @@ public sealed partial class GachaViewModel : SectionViewModel
 
         foreach (var banner in _gacha.Banners)
         {
-            Banners.Add(new BannerViewModel(banner, DescribeOdds(banner)));
+            Banners.Add(new BannerViewModel(banner, DescribeOdds(banner), SlicesOf(banner)));
+        }
+
+        if (Reel.Count == 0)
+        {
+            BuildIdleReel();
         }
 
         if (Portals.Count == 0)
@@ -564,6 +585,26 @@ public sealed partial class GachaViewModel : SectionViewModel
     /// Builds the strip: silhouettes picked at random, with the Pokémon that came out sitting at
     /// the position the view will stop on.
     /// </summary>
+    /// <summary>
+    /// Fills the strip with silhouettes before anybody has pulled.
+    /// </summary>
+    /// <remarks>
+    /// The reel used to be an empty black band taking the best spot on the screen until the first
+    /// pull. Filled and drifting very slowly, the machine looks like a machine that is on.
+    /// No winner in it: nothing has been decided, and a highlighted cell would say otherwise.
+    /// </remarks>
+    private void BuildIdleReel()
+    {
+        Reel.Clear();
+
+        var random = new Random();
+
+        for (var i = 0; i < ReelLength; i++)
+        {
+            Reel.Add(new ReelCellViewModel(_sprites.GetRandom(random), false));
+        }
+    }
+
     private void BuildReel(GachaPull pull)
     {
         Reel.Clear();
@@ -786,6 +827,37 @@ public sealed partial class GachaViewModel : SectionViewModel
         return string.Join("   ·   ", banner.TierChances
             .OrderByDescending(chance => chance.Value)
             .Select(chance => $"{chance.Value:P0} {Pretty(chance.Key)}"));
+    }
+
+    /// <summary>The odds as coloured segments adding up to a hundred, in tier order.</summary>
+    /// <remarks>
+    /// In tier order and not by size, because the bar is read against the OTHER banners: with the
+    /// segments always in the same order, «este tiene mas de lo bueno» se ve sin leer nada.
+    /// </remarks>
+    private IReadOnlyList<OddsSlice> SlicesOf(GachaBanner banner)
+    {
+        var total = banner.TotalWeight;
+
+        if (total <= 0)
+        {
+            return [];
+        }
+
+        var slices = new List<OddsSlice>();
+        var position = 1;
+
+        foreach (var tier in _gacha.Tiers)
+        {
+            if (banner.TierChances.TryGetValue(tier.Id, out var chance) && chance > 0)
+            {
+                slices.Add(new OddsSlice($"Tier{position}Brush", chance / total * 100,
+                    $"{chance / total:P0} {Pretty(tier.Id)}"));
+            }
+
+            position++;
+        }
+
+        return slices;
     }
 
     private static string Pretty(string tierId) =>

@@ -46,11 +46,81 @@
         </Style>
 
         <!-- Una tarjeta: el icono del cartucho sobre un halo, el nombre, lo que llevas y el precio. -->
+        <!-- LA TARJETA ENTERA ES EL BOTON. Antes cada objeto llevaba un boton violeta macizo con
+             el precio dentro, o sea DIECIOCHO barras de acento en pantalla: el acento significa
+             valor o accion, y puesto en todas partes no significa nada. Ahora el precio es lo que
+             es -un precio, texto con el rombo de puntos al lado- y lo que se pulsa es el objeto.
+
+             Y se LEVANTA al pasar por encima. La transformacion va dentro de la plantilla, que es
+             lo unico que le da una propia a cada tarjeta: puesta en un Setter, WPF la congela y la
+             comparten todas, asi que se moverian las dieciocho a la vez. -->
+        <Style x:Key="ShopCard" TargetType="Button">
+            <Setter Property="Margin" Value="4" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Card" Padding="{StaticResource PadPanel}"
+                                CornerRadius="{StaticResource RadiusMedium}" BorderThickness="1"
+                                Background="{StaticResource SurfaceAltBrush}"
+                                BorderBrush="{StaticResource BorderSubtleBrush}">
+                            <Border.RenderTransform>
+                                <TranslateTransform x:Name="Lift" />
+                            </Border.RenderTransform>
+                            <ContentPresenter />
+                        </Border>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Card" Property="BorderBrush"
+                                        Value="{StaticResource AccentBrush}" />
+                                <Setter TargetName="Card" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect Color="{StaticResource AccentColor}"
+                                                          BlurRadius="18" ShadowDepth="0" Opacity="0.45" />
+                                    </Setter.Value>
+                                </Setter>
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Lift"
+                                                             Storyboard.TargetProperty="Y"
+                                                             To="-3" Duration="0:0:0.12">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <CubicEase EasingMode="EaseOut" />
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="Lift"
+                                                             Storyboard.TargetProperty="Y"
+                                                             To="0" Duration="0:0:0.14" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+
+                            <!-- Sin saldo, la tarjeta entera se apaga y deja de pulsarse. -->
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Card" Property="Opacity" Value="0.45" />
+                                <Setter Property="Cursor" Value="Arrow" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <DataTemplate x:Key="ShopItemTemplate">
-            <Border x:Name="Card" Margin="4" Padding="{StaticResource PadPanel}"
-                    CornerRadius="{StaticResource RadiusMedium}" BorderThickness="1"
-                    Background="{StaticResource SurfaceAltBrush}"
-                    BorderBrush="{StaticResource BorderSubtleBrush}">
+            <Button Style="{StaticResource ShopCard}" IsEnabled="{Binding Affordable}"
+                    Command="{Binding DataContext.BuyCommand,
+                              RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    CommandParameter="{Binding}">
 
                 <StackPanel>
                     <!-- EL ICONO. Un halo detrás para que el pixel art no flote sobre el fondo,
@@ -102,30 +172,19 @@
                         </Border.Style>
                     </Border>
 
-                    <Button Content="{Binding PriceText}" Style="{StaticResource PriceButton}"
-                            IsEnabled="{Binding Affordable}"
-                            Command="{Binding DataContext.BuyCommand,
-                                      RelativeSource={RelativeSource AncestorType=UserControl}}"
-                            CommandParameter="{Binding}" />
+                    <!-- El precio, como precio. El rombo es el simbolo del recurso en toda la
+                         aplicacion, asi que aqui dice «esto cuesta» sin escribir la palabra. -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
+                                Margin="0,2,0,2">
+                        <Path Style="{StaticResource IconSmall}" Data="{StaticResource IconPoints}"
+                              Fill="{StaticResource AccentBrush}" VerticalAlignment="Center"
+                              Margin="0,0,7,0" />
+                        <TextBlock Text="{Binding PriceText}" Style="{StaticResource Numeric}"
+                                   Foreground="{StaticResource AccentBrush}"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
                 </StackPanel>
-            </Border>
-
-            <DataTemplate.Triggers>
-                <!-- Al pasar por encima la tarjeta se enciende: se ve qué se va a comprar. -->
-                <Trigger SourceName="Card" Property="IsMouseOver" Value="True">
-                    <Setter TargetName="Card" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
-                    <Setter TargetName="Card" Property="Effect">
-                        <Setter.Value>
-                            <DropShadowEffect Color="{StaticResource AccentColor}" BlurRadius="18"
-                                              ShadowDepth="0" Opacity="0.45" />
-                        </Setter.Value>
-                    </Setter>
-                </Trigger>
-                <!-- Sin saldo, la tarjeta entera se apaga. -->
-                <DataTrigger Binding="{Binding Affordable}" Value="False">
-                    <Setter TargetName="Card" Property="Opacity" Value="0.45" />
-                </DataTrigger>
-            </DataTemplate.Triggers>
+            </Button>
         </DataTemplate>
     </UserControl.Resources>
 
@@ -230,10 +289,36 @@
             <!-- El buscador, en los DOS mostradores. Con noventa y tres megapiedras, dar con
                  Dragoninite pasando la rueda es una faena; el de combate tiene dieciocho y no lo
                  necesita, pero una caja que aparece y desaparece es peor que una que siempre esta
-                 en el mismo sitio. -->
-            <TextBox Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}"
-                     Width="200" Margin="16,0,0,0" VerticalAlignment="Center"
-                     ToolTip="Escribe parte del nombre. No hacen falta tildes." />
+                 en el mismo sitio.
+
+                 Con lupa y con texto de ayuda dentro, y no por adorno: una caja vacia al lado de
+                 dos pestanas con nombre se leia como una TERCERA pestana rota. WPF no trae texto de
+                 ayuda en TextBox, asi que va detras y se esconde en cuanto escribes. -->
+            <Grid Width="230" Margin="16,0,0,0" VerticalAlignment="Center">
+                <TextBox Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}"
+                         Padding="32,7,10,7"
+                         ToolTip="Escribe parte del nombre. No hacen falta tildes." />
+
+                <Path Data="M 4.6,9.2 A 4.6,4.6 0 1 1 4.6,0 A 4.6,4.6 0 1 1 4.6,9.2 Z M 8.2,8.2 L 11.6,11.6"
+                      Stroke="{StaticResource TextFaintBrush}" StrokeThickness="1.4"
+                      StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                      HorizontalAlignment="Left" VerticalAlignment="Center"
+                      Margin="11,0,0,0" IsHitTestVisible="False" />
+
+                <TextBlock Text="Buscar objeto…" IsHitTestVisible="False" VerticalAlignment="Center"
+                           Margin="33,0,0,0" Foreground="{StaticResource TextFaintBrush}">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource Body}">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Search}" Value="">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </Grid>
 
             <Button Content="✕" Command="{Binding ClearSearchCommand}" Padding="12,7"
                     Margin="6,0,0,0" ToolTip="Quitar el filtro">

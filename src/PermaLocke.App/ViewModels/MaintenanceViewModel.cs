@@ -447,17 +447,17 @@ public sealed partial class MaintenanceViewModel : SectionViewModel
         }
     }
 
-    // ================================================== HACER PERMANENTE LA MUERTE
+    // ================================================== LA MARCA DE MUERTE
 
     [ObservableProperty]
-    private string _shedinjaSummary = string.Empty;
+    private string _deathMarkSummary = string.Empty;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(EnforceDeathsCommand))]
     private bool _hasDeathsToMark;
 
     [ObservableProperty]
-    private string _shedinjaStatus = string.Empty;
+    private string _deathMarkStatus = string.Empty;
 
     private bool CanEnforceDeaths => !IsBusy && HasDeathsToMark;
 
@@ -470,14 +470,15 @@ public sealed partial class MaintenanceViewModel : SectionViewModel
         {
             var report = await _maintenance.InspectDeathsAsync();
             HasDeathsToMark = report.Alive > 0;
-            ShedinjaSummary = $"Sin marcar: {report.Alive}   ·   Ya son Shedinja: {report.AlreadyMarked}"
+            DeathMarkSummary = $"En pie: {report.Alive}   ·   Ya sin PS: {report.AlreadyMarked}"
+                              + $"   ·   En una caja: {report.Boxed}"
                               + $"   ·   No están en la partida: {report.Missing}";
-            ShedinjaStatus = report.Message;
+            DeathMarkStatus = report.Message;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Falló mirar los caídos sin marcar");
-            ShedinjaStatus = "No se ha podido mirar. El detalle está en la carpeta Logs.";
+            DeathMarkStatus = "No se ha podido mirar. El detalle está en la carpeta Logs.";
         }
         finally
         {
@@ -489,10 +490,12 @@ public sealed partial class MaintenanceViewModel : SectionViewModel
     private async Task EnforceDeathsAsync()
     {
         if (!_dialogs.Confirm(
-                "Convertir a los caídos en Shedinja",
+                "Dejar a los caídos sin PS",
                 "Se escribe en tu PARTIDA, así que Azahar tiene que estar cerrado.\n\n"
-                + "Cada Pokémon caído pasa a ser un Shedinja llamado MUERTO, de nivel 1 y sin "
-                + "movimientos. Es PERMANENTE: queda escrito en la partida, no en memoria.\n\n"
+                + "Cada Pokémon caído se queda a 0 PS SIENDO ÉL: misma especie, mismo mote, mismos "
+                + "movimientos, mismo nivel. Al cargar el juego sale debilitado.\n\n"
+                + "Solo funciona con los que están en el EQUIPO. Uno guardado en una caja no lleva "
+                + "PS, así que ahí no se puede marcar, y se te dice cuántos son.\n\n"
                 + "Se hace una copia de la partida antes de tocar nada.\n\n¿Seguir?"))
         {
             return;
@@ -503,17 +506,18 @@ public sealed partial class MaintenanceViewModel : SectionViewModel
         try
         {
             var report = await _maintenance.EnforceDeathsAsync();
-            ShedinjaStatus = report.Message;
+            DeathMarkStatus = report.Message;
             await InspectDeathsAsync();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Falló marcar a los caídos como Shedinja");
-            ShedinjaStatus = "No se ha podido. ¿Está Azahar cerrado? El detalle está en Logs.";
+            _logger.LogError(ex, "Falló dejar a los caídos sin PS");
+            DeathMarkStatus = "No se ha podido. ¿Está Azahar cerrado? El detalle está en Logs.";
         }
         finally
         {
             IsBusy = false;
         }
     }
+
 }

@@ -3,13 +3,30 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:PermaLocke.App.ViewModels"
         xmlns:views="clr-namespace:PermaLocke.App.Views"
+        xmlns:svc="clr-namespace:PermaLocke.App.Services"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         Title="PermaLocke"
+        Icon="Assets/PermaLocke.ico"
         ResizeMode="CanMinimize"
+        WindowStyle="None"
         Background="{StaticResource AppBackgroundBrush}"
         FontFamily="{StaticResource UiFont}"
         UseLayoutRounding="True"
         TextOptions.TextFormattingMode="Ideal"
         WindowStartupLocation="CenterScreen">
+
+    <!-- BARRA DE TITULO PROPIA. Era lo ultimo de la pantalla sin tematizar: una costura gris de
+         Windows encima de una aplicacion entera en violeta.
+
+         WindowChrome y no una ventana sin marco a pelo: asi el arrastre, el ajuste a los bordes y
+         el menu del sistema los sigue haciendo Windows -son suyos y funcionan mejor que cualquier
+         imitacion-, y lo unico que ponemos nosotros es el dibujo. CaptionHeight es la franja que
+         Windows trata como barra de titulo; los botones se sacan de ahi con IsHitTestVisibleInChrome
+         o no se podrian pulsar. -->
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="38" GlassFrameThickness="0" CornerRadius="0"
+                      ResizeBorderThickness="0" UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
 
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
@@ -62,7 +79,52 @@
         </DataTemplate>
     </Window.Resources>
 
-    <Grid>
+    <!-- El contenido entero, con su propia transformacion: es lo que se despliega al volver desde
+         la pestaña. Se anima ESTO y no la ventana porque Window.Opacity solo funciona con
+         AllowsTransparency, y esta ventana no la lleva ni le hace falta. -->
+    <Grid x:Name="Shell" RenderTransformOrigin="0.5,0.5">
+        <Grid.RenderTransform>
+            <ScaleTransform x:Name="ShellScale" ScaleX="1" ScaleY="1" />
+        </Grid.RenderTransform>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="38" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- =============================================== LA BARRA DE TITULO -->
+        <Border Grid.Row="0" Background="{StaticResource SidebarBrush}"
+                BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+            <DockPanel>
+                <!-- Minimizar y cerrar. Fuera de la franja de arrastre a proposito: dentro,
+                     Windows se queda el clic y el boton no llega a enterarse. -->
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
+                            shell:WindowChrome.IsHitTestVisibleInChrome="True">
+                    <Button Style="{StaticResource CaptionButton}" Click="OnMinimise"
+                            ToolTip="Minimizar">
+                        <Path Data="M 0,0 L 11,0" Stroke="{Binding Foreground,
+                                  RelativeSource={RelativeSource AncestorType=Button}}"
+                              StrokeThickness="1.3" />
+                    </Button>
+                    <Button Style="{StaticResource CaptionButtonClose}" Click="OnClose"
+                            ToolTip="Cerrar">
+                        <Path Data="M 0,0 L 10,10 M 10,0 L 0,10" Stroke="{Binding Foreground,
+                                  RelativeSource={RelativeSource AncestorType=Button}}"
+                              StrokeThickness="1.3" StrokeStartLineCap="Round"
+                              StrokeEndLineCap="Round" />
+                    </Button>
+                </StackPanel>
+
+                <!-- Tambien el PNG, por lo mismo. -->
+                <Image Source="Assets/PermaLocke.png" Width="18" Height="18"
+                       Margin="12,0,9,0" VerticalAlignment="Center"
+                       RenderOptions.BitmapScalingMode="HighQuality" />
+
+                <TextBlock Text="PermaLocke" Style="{StaticResource Faint}"
+                           VerticalAlignment="Center" />
+            </DockPanel>
+        </Border>
+
+        <Grid Grid.Row="1">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="216" />
             <ColumnDefinition Width="*" />
@@ -110,9 +172,23 @@
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal">
-                                <Path Style="{StaticResource IconNav}"
-                                      Data="{Binding IconKey, Converter={StaticResource ResourceKey}}"
-                                      Margin="0,0,11,0" />
+                                <!-- El icono se tine cuando la seccion es la activa. La barra de
+                                     acento ya estaba, pero mide tres pixeles al borde de la ventana
+                                     y sola no se ve; con el icono en violeta, donde estas se lee sin
+                                     buscarlo. -->
+                                <Path Data="{Binding IconKey, Converter={StaticResource ResourceKey}}"
+                                      Margin="0,0,11,0">
+                                    <Path.Style>
+                                        <Style TargetType="Path" BasedOn="{StaticResource IconNav}">
+                                            <Style.Triggers>
+                                                <DataTrigger Value="True" Binding="{Binding IsSelected,
+                                                    RelativeSource={RelativeSource AncestorType=ListBoxItem}}">
+                                                    <Setter Property="Fill" Value="{StaticResource AccentBrush}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Path.Style>
+                                </Path>
                                 <TextBlock Text="{Binding Title}" VerticalAlignment="Center" />
                             </StackPanel>
                         </DataTemplate>
@@ -221,25 +297,62 @@
                               Margin="0,0,8,0" />
 
                         <StackPanel VerticalAlignment="Center">
+                            <!-- La cifra RUEDA hasta su nuevo valor y da un destello del color de
+                                 lo que ha pasado. Gastar trescientos puntos y que el numero cambie
+                                 sin mas es tirar la mitad de la gracia de gastarlos. El mecanismo
+                                 es el mismo que usa el mapa. -->
+                            <TextBlock x:Name="PointsNumber" Style="{StaticResource StatValue}"
+                                       Foreground="{StaticResource AccentBrush}"
+                                       svc:Rolling.To="{Binding PointsValue}"
+                                       LineHeight="24" LineStackingStrategy="BlockLineHeight"
+                                       Visibility="{Binding HasPoints,
+                                           Converter={StaticResource BoolToVisibility}}" />
+
+                            <!-- Sin run, la raya. Un contador no puede contar hasta un guion. -->
                             <TextBlock Text="{Binding PointsText}" Style="{StaticResource StatValue}"
                                        Foreground="{StaticResource AccentBrush}"
-                                       LineHeight="24" LineStackingStrategy="BlockLineHeight" />
+                                       LineHeight="24" LineStackingStrategy="BlockLineHeight"
+                                       Visibility="{Binding HasPoints,
+                                           Converter={StaticResource InverseBoolToVisibility}}" />
                             <TextBlock Text="PUNTOS" Style="{StaticResource StatLabel}"
                                        Foreground="{StaticResource AccentDimBrush}" />
                         </StackPanel>
                     </StackPanel>
+
+                    <!-- EL ICONO DE LA SECCION, delante del titulo. Se probo como marca de agua
+                         -en grande y casi borrado detras del texto- y NO funciona: la cabecera mide
+                         poco mas de treinta pixeles, asi que un dibujo de ochenta y seis sale
+                         recortado por arriba y por abajo y lo que se ve es una losa gris, no una
+                         marca. Visto en tres pantallas antes de cambiarlo. Delante y a su tamaño
+                         hace lo mismo -darle cara propia a cada pantalla- y no depende de la forma
+                         que tenga cada icono. -->
+                    <Path Data="{Binding SelectedSection.IconKey, Converter={StaticResource ResourceKey}}"
+                          Fill="{StaticResource AccentDimBrush}" Stretch="Uniform"
+                          Width="21" Height="21" VerticalAlignment="Center"
+                          Margin="1,0,13,0" IsHitTestVisible="False" />
 
                     <TextBlock Text="{Binding SelectedSection.Title}" Style="{StaticResource SectionTitle}"
                                VerticalAlignment="Center" />
                 </DockPanel>
             </Border>
 
+            <!-- La regla de debajo del titulo arranca en acento y luego se apaga. Un detalle de
+                 dos pixeles, pero es lo que convierte una linea divisoria en una cabecera. -->
+            <Rectangle Grid.Row="0" Width="58" Height="2" VerticalAlignment="Bottom"
+                       HorizontalAlignment="Left" Margin="4,0,0,-1" RadiusX="1" RadiusY="1"
+                       Fill="{StaticResource AccentBrush}" IsHitTestVisible="False" />
+
             <!-- El contenido se apoya en el lienzo, sin marco propio: la pantalla ya esta acotada
                  por la barra lateral y por la cabecera. Un tercer recuadro alrededor no acota
                  nada mas, solo mete otro borde. -->
             <Border Grid.Row="2" Background="Transparent" Padding="4,0">
-                <ContentControl Content="{Binding SelectedSection}" />
+                <ContentControl x:Name="SectionHost" Content="{Binding SelectedSection}">
+                    <ContentControl.RenderTransform>
+                        <TranslateTransform x:Name="SectionSlide" />
+                    </ContentControl.RenderTransform>
+                </ContentControl>
             </Border>
+        </Grid>
         </Grid>
     </Grid>
 </Window>

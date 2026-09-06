@@ -6,8 +6,6 @@
 
     <UserControl.Resources>
 
-        <conv:FractionToStarConverter x:Key="FractionToStar" />
-
 
         <!-- Un marcador de zona. Los tres estados los decide el ViewModel en State, para no
              repartir la misma decisión entre tres disparadores copiados en cada sitio. -->

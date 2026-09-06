@@ -376,6 +376,59 @@
                                     </Style>
                                 </TextBlock.Style>
                             </TextBlock>
+
+                    <!-- ==================================== LOS CAÍDOS
+                         Esta columna era media pantalla de nada. Y NO es el equipo en vivo, que ya
+                         está arriba y necesita el emulador abierto: esto sale de la base de datos
+                         de la run, así que está con el juego cerrado. En un Nuzlocke la lista de
+                         quién ya no está es la otra mitad de la historia.
+
+                         Con tope de alto y su propio desplazamiento: una run larga tiene decenas de
+                         bajas y sin tope empujaría la página entera. -->
+                    <Border Style="{StaticResource Inset}" Margin="0,16,0,0" Padding="14,12"
+                            Visibility="{Binding HasFallen, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel>
+                            <DockPanel>
+                                <TextBlock DockPanel.Dock="Right" Text="{Binding DeadCount}"
+                                           Style="{StaticResource Numeric}"
+                                           Foreground="{StaticResource DangerBrush}"
+                                           VerticalAlignment="Center" />
+                                <TextBlock Text="CAÍDOS" Style="{StaticResource StatLabel}"
+                                           VerticalAlignment="Center" />
+                            </DockPanel>
+
+                            <ScrollViewer MaxHeight="420" Margin="0,8,0,0"
+                                          VerticalScrollBarVisibility="Auto"
+                                          HorizontalScrollBarVisibility="Disabled">
+                                <ItemsControl ItemsSource="{Binding Fallen}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Style="{StaticResource Row}" Padding="0,5">
+                                                <DockPanel>
+                                                    <!-- El icono, apagado. Es el mismo del cartucho
+                                                         que usa el equipo de arriba; medio velado
+                                                         basta para que se lea «este ya no está» sin
+                                                         inventar un dibujo aparte. -->
+                                                    <Image DockPanel.Dock="Left" Source="{Binding Sprite}"
+                                                           Width="34" Height="34" Opacity="0.45"
+                                                           RenderOptions.BitmapScalingMode="NearestNeighbor"
+                                                           VerticalAlignment="Center" Margin="0,0,10,0" />
+                                                    <StackPanel VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding Name}"
+                                                                   Style="{StaticResource Body}"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock Text="{Binding Detail}"
+                                                                   Style="{StaticResource Faint}"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                    </StackPanel>
+                                                </DockPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
 
                 <!-- Derecha: el historial de la run. -->
@@ -541,9 +594,27 @@
                         </TextBlock.Style>
                     </TextBlock>
 
-                    <!-- Si no hay enlace, el cap no vigila. Decirlo aquí es barato y evita creerse
+                    <!-- Separadas de verdad. Son DOS estados, no una frase: el de la cadena es
+                         permanente y el del enlace es un aviso, y pegados uno detras de otro se
+                         leian como un renglon corrido. -->
+                    <Border Width="1" Margin="14,1" Background="{StaticResource BorderBrush}" />
+
+                    <Ellipse Width="6" Height="6" VerticalAlignment="Center" Margin="0,0,8,0">
+                        <Ellipse.Style>
+                            <Style TargetType="Ellipse">
+                                <Setter Property="Fill" Value="{StaticResource WarningBrush}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding GameLinkConnected}" Value="True">
+                                        <Setter Property="Fill" Value="{StaticResource SuccessBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Ellipse.Style>
+                    </Ellipse>
+
+                    <!-- Si no hay enlace, el cap no vigila. Decirlo aqui es barato y evita creerse
                          protegido mientras nadie mira. -->
-                    <TextBlock Text="{Binding GameLinkStatus}" FontSize="11" Margin="14,0,0,0"
+                    <TextBlock Text="{Binding GameLinkStatus}" FontSize="11"
                                VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock" BasedOn="{StaticResource Mono}">

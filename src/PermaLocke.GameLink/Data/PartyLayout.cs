@@ -27,6 +27,19 @@ public sealed class PartyLayoutLocator(AzaharRpcClient client)
     /// <summary>Stride of the structure the game reads from. Determined against the real game.</summary>
     public const uint AuthoritativeStride = 0x1E4;
 
+    /// <summary>
+    /// Where the authoritative structure keeps the twenty eight bytes of battle stats.
+    /// </summary>
+    /// <remarks>
+    /// §53 said this copy kept its stats «somewhere else» and stopped there, and for months that
+    /// meant PermaLocke only ever wrote into the mirror — which is the one copy the game does not
+    /// read. Found on 2026-09-06 by asking the emulator who writes the HP into the mirror: at save
+    /// time the game runs two memcpys, 232 bytes of Pokémon from <c>[r4+8]</c> and <b>28 bytes of
+    /// stats</b> from <c>[r4+4]</c>, and the second source was this offset. Verified against the
+    /// screen: 77 written here, the party menu said 77. See §99.
+    /// </remarks>
+    public const uint AuthoritativeStatsOffset = 0x158;
+
     /// <summary>Stride of the save-resident copies.</summary>
     public const uint CopyStride = 0x104;
 

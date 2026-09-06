@@ -3,6 +3,45 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <UserControl.Resources>
+        <!-- LA BARRA DICE SI ES BUENO O MALO. Antes «Puntos ganados» y «Penalización» eran la misma
+             barra violeta, o sea que el color no podia significar nada ni queriendo y las barras
+             solo decian longitudes. El tono lo trae el dato, que es el unico que sabe lo que
+             significa; violeta es el neutro, para lo que de verdad no es ni bueno ni malo.
+             BasedOn explicito: un estilo con clave NO hereda del implicito, y sin eso se pierde la
+             plantilla del tema y vuelve la barra de Windows. -->
+        <Style x:Key="ToneBar" TargetType="ProgressBar"
+               BasedOn="{StaticResource {x:Type ProgressBar}}">
+            <!-- Nueve y no cinco: a cinco se leia como un subrayado y no como una barra. -->
+            <Setter Property="Height" Value="9" />
+            <Setter Property="Minimum" Value="0" />
+            <Setter Property="Maximum" Value="1" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="12,0" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Tone}" Value="Good">
+                    <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Tone}" Value="Bad">
+                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- La cifra de un record, del color de lo que significa. -->
+        <Style x:Key="ToneValue" TargetType="TextBlock" BasedOn="{StaticResource CardTitle}">
+            <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="12,0,0,0" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Tone}" Value="Good">
+                    <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Tone}" Value="Bad">
+                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
         <!-- Una linea del libro: concepto, barra, total y cuantas veces. La barra es proporcional
              al mayor de su grupo, no al saldo, porque lo que se compara aqui es una fuente contra
              otra y no cada una contra el total. -->
@@ -19,8 +58,7 @@
                     <TextBlock Grid.Column="0" Text="{Binding Label}" Style="{StaticResource Body}"
                                VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
 
-                    <ProgressBar Grid.Column="1" Height="5" Margin="12,0"
-                                 Minimum="0" Maximum="1" VerticalAlignment="Center"
+                    <ProgressBar Grid.Column="1" Style="{StaticResource ToneBar}"
                                  Value="{Binding Share, Mode=OneWay}" />
 
                     <TextBlock Grid.Column="2" Text="{Binding Total}" Style="{StaticResource Numeric}"
@@ -45,8 +83,7 @@
                     <TextBlock Grid.Column="0" Text="{Binding Label}" Style="{StaticResource Body}"
                                VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
 
-                    <ProgressBar Grid.Column="1" Height="5" Margin="12,0"
-                                 Minimum="0" Maximum="1" VerticalAlignment="Center"
+                    <ProgressBar Grid.Column="1" Style="{StaticResource ToneBar}"
                                  Value="{Binding Share, Mode=OneWay}" />
 
                     <TextBlock Grid.Column="2" Text="{Binding Count}" Style="{StaticResource Numeric}"
@@ -60,9 +97,7 @@
                 <StackPanel>
                     <DockPanel>
                         <TextBlock DockPanel.Dock="Right" Text="{Binding Value}"
-                                   Style="{StaticResource CardTitle}"
-                                   Foreground="{StaticResource AccentBrush}"
-                                   VerticalAlignment="Center" Margin="12,0,0,0" />
+                                   Style="{StaticResource ToneValue}" />
                         <TextBlock Text="{Binding Label}" Style="{StaticResource Body}"
                                    VerticalAlignment="Center" />
                     </DockPanel>
@@ -123,16 +158,50 @@
                             </StackPanel>
                         </StackPanel>
 
-                        <Border Height="64" Margin="0,16,0,0"
-                                Visibility="{Binding HasCurve, Converter={StaticResource BoolToVisibility}}">
+                        <!-- LA CURVA. Tres capas: la referencia del cero detras, el area que le da
+                             cuerpo, y encima la linea. Las tres se dibujan con Stretch="Fill" sobre
+                             la MISMA caja de 100x40 -la curva esta normalizada, asi que toca los dos
+                             extremos por construccion-, y por eso encajan sin que nadie calcule
+                             pixeles. -->
+                        <Grid Height="78" Margin="0,16,0,0"
+                              Visibility="{Binding HasCurve, Converter={StaticResource BoolToVisibility}}">
+
+                            <!-- Donde estaria el cero. La curva se escala entre su propio minimo y
+                                 su maximo porque el saldo PUEDE quedarse en negativo, y el precio de
+                                 eso es que mirandola no sabes de que lado estas. Si la run no cruzo
+                                 el cero, esta linea no existe en vez de mentir pegada a un borde. -->
+                            <Grid Visibility="{Binding HasZero, Converter={StaticResource BoolToVisibility}}">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="{Binding ZeroAbove,
+                                        Converter={StaticResource FractionToStar}}" />
+                                    <RowDefinition Height="{Binding ZeroAbove,
+                                        Converter={StaticResource FractionToStar}, ConverterParameter=resto}" />
+                                </Grid.RowDefinitions>
+                                <Border Grid.Row="1" VerticalAlignment="Top" BorderThickness="0,1,0,0"
+                                        BorderBrush="{StaticResource BorderStrongBrush}" />
+                            </Grid>
+
+                            <Polygon Points="{Binding CurveFill}" Stretch="Fill">
+                                <Polygon.Fill>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                        <GradientStop Color="{StaticResource CurveFillColor}" Offset="0" />
+                                        <GradientStop Color="Transparent" Offset="1" />
+                                    </LinearGradientBrush>
+                                </Polygon.Fill>
+                            </Polygon>
+
                             <Polyline Points="{Binding Curve}" Stretch="Fill"
-                                      Stroke="{StaticResource AccentBrush}" StrokeThickness="1.6"
+                                      Stroke="{StaticResource AccentBrush}" StrokeThickness="1.8"
                                       StrokeLineJoin="Round" />
-                        </Border>
+                        </Grid>
 
                         <TextBlock Text="El saldo evento a evento, de la primera anotación a la última."
                                    Style="{StaticResource Faint}" Margin="0,6,0,0"
                                    Visibility="{Binding HasCurve, Converter={StaticResource BoolToVisibility}}" />
+
+                        <TextBlock Text="La linea gris es el cero." Style="{StaticResource Faint}"
+                                   Margin="0,2,0,0"
+                                   Visibility="{Binding HasZero, Converter={StaticResource BoolToVisibility}}" />
                     </StackPanel>
                 </Border>
 

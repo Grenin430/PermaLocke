@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Logging;
 using PermaLocke.App.Services;
 using PermaLocke.Core.Abstractions;
 using PermaLocke.Core.Domain;
@@ -47,13 +48,18 @@ public sealed partial class ShopViewModel : SectionViewModel
     private readonly ShopService _shop;
     private readonly IRunContext _runs;
     private readonly PokemonSpriteService _sprites;
+    private readonly IAppDialogs _dialogs;
+    private readonly ILogger<ShopViewModel> _logger;
 
-    public ShopViewModel(ShopService shop, IRunContext runs, PokemonSpriteService sprites)
+    public ShopViewModel(ShopService shop, IRunContext runs, PokemonSpriteService sprites,
+        IAppDialogs dialogs, ILogger<ShopViewModel> logger)
         : base("TIENDA", "Objetos a cambio de puntos, entregados a la mochila del juego")
     {
         _shop = shop;
         _runs = runs;
         _sprites = sprites;
+        _dialogs = dialogs;
+        _logger = logger;
     }
 
     /// <summary>Everything on sale, both counters. What the bag is asked about in one go.</summary>
@@ -235,6 +241,23 @@ public sealed partial class ShopViewModel : SectionViewModel
     private async Task BuyAsync(ShopItemViewModel? card)
     {
         if (card is null || Busy || _runs.Current is not { } run)
+        {
+            return;
+        }
+
+        // SE PREGUNTA ANTES. La tarjeta entera es el boton, que es lo que quita las dieciocho
+        // barras violetas de la pantalla, pero tambien hace que un clic de mas cueste puntos: lo
+        // que se pulsa paso de un boton pequeño a un objeto grande. Y una compra no se deshace
+        // -el objeto se escribe en la mochila del juego-, asi que aqui se pregunta.
+        var confirmed = _dialogs.Confirm("Comprar",
+            $"¿Comprar {card.Name} por {card.Price} puntos?"
+            + $"{Environment.NewLine}{Environment.NewLine}"
+            + $"Tienes {Balance} puntos. El objeto se escribirá en la mochila de tu partida.");
+
+        _logger.LogInformation("Tienda: {Item} por {Price} puntos, {Answer}",
+            card.Name, card.Price, confirmed ? "confirmado" : "cancelado");
+
+        if (!confirmed)
         {
             return;
         }
