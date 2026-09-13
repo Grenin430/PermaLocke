@@ -56,7 +56,16 @@ public sealed class InstalledWorld(AzaharInstallation azahar, ILogger<InstalledW
     /// </summary>
     public void Apply(string appDirectory)
     {
-        var (species, growth) = Read(appDirectory);
+        var (species, growth, bases) = Read(appDirectory);
+
+        if (bases is not null)
+        {
+            // En el orden de la FICHA, no en el de la tabla: quien las use no tiene por que
+            // acordarse de que el cartucho pone la Velocidad la cuarta.
+            WorldLimits.BaseStats = bases;
+            logger.LogInformation(
+                "Mundo instalado: estadisticas base leidas para {Count} especies", (bases.Length / 6) - 1);
+        }
 
         if (growth is not null)
         {
@@ -86,7 +95,7 @@ public sealed class InstalledWorld(AzaharInstallation azahar, ILogger<InstalledW
             species.Value);
     }
 
-    private (int? Species, byte[]? Growth) Read(string appDirectory)
+    private (int? Species, byte[]? Growth, byte[]? Bases) Read(string appDirectory)
     {
         try
         {
@@ -96,21 +105,23 @@ public sealed class InstalledWorld(AzaharInstallation azahar, ILogger<InstalledW
 
             if (!File.Exists(path))
             {
-                return (null, null);
+                return (null, null, null);
             }
 
             using var personal = new GarcPatcher(path);
             var packed = personal.Read(personal.FileCount - 1);
             var count = PersonalEntry7.SpeciesCount(packed);
 
-            return (count, PersonalEntry7.GrowthRates(packed, count));
+            return (count, PersonalEntry7.GrowthRates(packed, count),
+                PersonalEntry7.BaseStatsInScreenOrder(packed, count));
         }
         catch (Exception ex)
         {
             // Nunca impide arrancar: un techo que no se ha podido leer se queda en el del cartucho,
             // que es el lado que no afloja ningún filtro.
             logger.LogWarning(ex, "No se pudo leer cuántas especies tiene el mundo instalado");
-            return (null, null);
+            return (null, null, null);
         }
     }
+
 }

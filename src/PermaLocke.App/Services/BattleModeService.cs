@@ -194,16 +194,12 @@ public sealed class BattleModeService(
             if (toBattle)
             {
                 // Los ficheros del mod ENCIMA de los randomizados: deshace lo nuestro sin tocar
-                // los 2,5 GB de modelos, que son idénticos y el salto por fecha y tamaño evita.
-                await Task.Run(() => ModInstaller.CopyTree(baseRomfs, Path.Combine(mod, "romfs"),
-                    skipUnchanged: true), ct);
-
-                var exefs = Path.Combine(paths.Expansion, "exefs");
-
-                if (Directory.Exists(exefs))
-                {
-                    await Task.Run(() => ModInstaller.CopyTree(exefs, Path.Combine(mod, "exefs")), ct);
-                }
+                // los 2,5 GB de modelos, que son idénticos y el salto por fecha y tamaño evita. Por
+                // el instalador, que guarda copia del mundo antes de pisarlo: volver de aquí
+                // reinstala la carpeta generada, y si esa carpeta se ha regenerado entretanto, la
+                // copia es el único sitio donde sigue existiendo el mundo.
+                await Task.Run(() => ModInstaller.SwitchToBase(mod, baseRomfs,
+                    Path.Combine(paths.Expansion, "exefs")), ct);
 
                 await File.WriteAllTextAsync(marker,
                     "El mundo randomizado está apartado para poder combatir. "

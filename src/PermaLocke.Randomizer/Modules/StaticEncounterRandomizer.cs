@@ -55,12 +55,21 @@ public sealed class StaticEncounterRandomizer(RomWorkspace workspace, Randomizer
                 ct.ThrowIfCancellationRequested();
                 var payload = patcher.Read(layout.Subfile);
 
-                var claimed = layout == StaticEncounterTable.Statics
+                var isStatics = layout == StaticEncounterTable.Statics;
+
+                // Las independientes se BUSCAN antes de que nada escriba -despues del sorteo la fila
+                // del Necrozma ya es otra especie- y se APLICAN despues, sin tocar la corriente.
+                var independent = isStatics ? LocateIndependent(payload, layout) : [];
+
+                var claimed = isStatics
                     ? ApplyOverrides(payload, layout, random, pool, ref replaced)
                     : [];
 
                 Randomize(payload, layout, random, pool, untouchable, 0, ref replaced, ref kept,
                     claimed);
+
+                ApplyIndependent(payload, layout, independent, random, pool);
+
                 raised += Raise(payload, layout);
                 patcher.Write(layout.Subfile, payload);
             }
@@ -70,98 +79,157 @@ public sealed class StaticEncounterRandomizer(RomWorkspace workspace, Randomizer
         return new StaticEncounterResult(replaced, kept, starters, raised, starterPool.Count);
     }
 
-    /// <summary>
-    /// Applies the per-encounter rules, and returns the entries they claimed.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// It runs <b>before</b> the ordinary draw and hands back what it touched, so nothing gets
-    /// rolled twice: an entry that was made a mega and then re-rolled would end up an ordinary
-    /// species with a form index left over from somebody else, which is the sort of thing that
-    /// draws a Pokémon with no model.
-    /// </para>
-    /// <para>
-    /// An override that matches nothing <b>throws</b>. It is aimed at a species and a form the
-    /// cartridge is supposed to have; if it is not there, either the table moved or somebody typed
-    /// it wrong, and both of those are worth stopping for. Writing a world where the rule silently
-    /// did nothing is how you find out six hours into a run.
-    /// </para>
-    /// </remarks>
     /// <summary>What each override rule matched, for the report.</summary>
     public List<string> Touched { get; } = [];
 
+    /// <summary>
+    /// Applies the rules that run <b>before</b> the ordinary draw, and returns the entries they claimed.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// It hands back what it touched so nothing gets rolled twice: an entry that was made a mega and
+    /// then re-rolled would end up an ordinary species with a form index left over from somebody
+    /// else, which is the sort of thing that draws a Pokémon with no model.
+    /// </para>
+    /// <para>
+    /// These rules share the ordinary draw's stream, and that is exactly why a rule added here moves
+    /// the whole table: see <see cref="StaticOverride.IndependentDraw"/>. The ones marked independent
+    /// are skipped here and applied by <see cref="ApplyIndependent"/> once the draw is done.
+    /// </para>
+    /// </remarks>
     private HashSet<int> ApplyOverrides(byte[] payload, EncounterEntryLayout layout,
-
         IRandomSource random, SpeciesPool pool, ref int replaced)
     {
         var claimed = new HashSet<int>();
 
-        if (options.StaticOverrides.Count == 0)
+        foreach (var rule in options.StaticOverrides.Where(rule => !rule.IndependentDraw))
         {
-            return claimed;
-        }
-
-        var megaForms = MegaTrainerRandomizer.ReadForms(workspace.PathOf(GameFiles.MegaEvolution));
-        var megas = MegaTrainerRandomizer.Candidates(megaForms, options, workspace.MaxSpecies);
-        var count = StaticEncounterTable.Count(payload, layout);
-
-        foreach (var rule in options.StaticOverrides)
-        {
-            var hits = Enumerable.Range(0, count)
-                .Where(i => StaticEncounterTable.GetSpecies(payload, layout, i) == rule.Species
-                            && StaticEncounterTable.GetForm(payload, layout, i) == rule.Form
-                            && (rule.Level is not { } wanted
-                                || StaticEncounterTable.GetLevel(payload, layout, i) == wanted))
-                .ToArray();
-
-            if (hits.Length == 0)
+            foreach (var index in Hits(payload, layout, rule))
             {
-                throw new InvalidDataException(
-                    $"No hay ningún estático con la especie {rule.Species} la forma {rule.Form} y el nivel {rule.Level} "
-                    + $"({rule.Note}). O la tabla ha cambiado o el número está mal, y en los dos "
-                    + "casos escribir un mundo donde la regla no hizo nada es peor que parar.");
-            }
-
-            // Cuantas entradas toca cada regla. Una especie puede salir varias veces en la tabla
-            // -- los ultraentes aparecen en la historia y otra vez en el ultraespacio -- y la regla
-            // las coge TODAS. Decirlo es la diferencia entre saber lo que se ha hecho y suponerlo.
-            Touched.Add(rule.Note + ": " + hits.Length + " ("
-                + string.Join(", ", hits.Select(i => "Nv."
-                    + StaticEncounterTable.GetLevel(payload, layout, i))) + ")");
-
-
-            foreach (var index in hits)
-            {
-                if (rule.Rule == StaticOverrideRule.Mega)
-                {
-                    if (megas.Length == 0)
-                    {
-                        throw new InvalidDataException(
-                            "No queda ninguna mega elegible: todas están en bannedSpecies.");
-                    }
-
-                    var species = megas[random.Next(megas.Length)];
-                    var forms = megaForms[species];
-                    var form = forms[random.Next(forms.Count)];
-
-                    StaticEncounterTable.SetSpecies(payload, layout, index, species, form);
-                }
-                else
-                {
-                    // Forma 0 y nada mas, que es lo que hace que nunca salga una mega por aqui.
-                    var strong = pool.Where(s => pool.BaseStatTotal(s) >= rule.MinimumBaseStatTotal,
-                        $"un total base de {rule.MinimumBaseStatTotal} o mas");
-
-                    StaticEncounterTable.SetSpecies(payload, layout, index,
-                        strong.Pick(random, rule.Species));
-                }
-
+                Pick(payload, layout, index, rule, random, pool);
                 claimed.Add(index);
                 replaced++;
             }
         }
 
         return claimed;
+    }
+
+    /// <summary>
+    /// Finds, on the cartridge's own table, the entries each independent rule is aimed at.
+    /// </summary>
+    /// <remarks>
+    /// It has to run <b>before</b> anything writes: the rule is found by the species and form the
+    /// cartridge has there, and once the ordinary draw has been through, the Necrozma at row 159 is a
+    /// Swampert and the rule would match nothing.
+    /// </remarks>
+    private List<(StaticOverride Rule, int[] Hits)> LocateIndependent(byte[] payload,
+        EncounterEntryLayout layout) =>
+        [.. options.StaticOverrides
+            .Where(rule => rule.IndependentDraw)
+            .Select(rule => (rule, Hits(payload, layout, rule)))];
+
+    /// <summary>
+    /// Applies the independent rules on top of the finished draw, each entry from a stream of its own.
+    /// </summary>
+    /// <remarks>
+    /// The ordinary draw has already rolled these entries like any other — spending exactly the
+    /// tiradas it spent before the rule existed — and this only overwrites the result. The stream is
+    /// derived from the row, not taken from the shared one, and deriving does not advance the parent.
+    /// So the rest of the world comes out byte for byte the same, which is the point.
+    /// </remarks>
+    private void ApplyIndependent(byte[] payload, EncounterEntryLayout layout,
+        List<(StaticOverride Rule, int[] Hits)> located, IRandomSource random, SpeciesPool pool)
+    {
+        foreach (var (rule, hits) in located)
+        {
+            foreach (var index in hits)
+            {
+                Pick(payload, layout, index, rule, random.Derive($"static-override-{index}"), pool);
+            }
+        }
+    }
+
+    /// <summary>The entries a rule names, by the species, form and level the cartridge has there.</summary>
+    /// <remarks>
+    /// An override that matches nothing <b>throws</b>. It is aimed at a species and a form the
+    /// cartridge is supposed to have; if it is not there, either the table moved or somebody typed
+    /// it wrong, and both of those are worth stopping for. Writing a world where the rule silently
+    /// did nothing is how you find out six hours into a run.
+    /// </remarks>
+    private int[] Hits(byte[] payload, EncounterEntryLayout layout, StaticOverride rule)
+    {
+        var count = StaticEncounterTable.Count(payload, layout);
+
+        var hits = Enumerable.Range(0, count)
+            .Where(i => StaticEncounterTable.GetSpecies(payload, layout, i) == rule.Species
+                        && StaticEncounterTable.GetForm(payload, layout, i) == rule.Form
+                        && (rule.Level is not { } wanted
+                            || StaticEncounterTable.GetLevel(payload, layout, i) == wanted))
+            .ToArray();
+
+        if (hits.Length == 0)
+        {
+            throw new InvalidDataException(
+                $"No hay ningún estático con la especie {rule.Species} la forma {rule.Form} y el nivel {rule.Level} "
+                + $"({rule.Note}). O la tabla ha cambiado o el número está mal, y en los dos "
+                + "casos escribir un mundo donde la regla no hizo nada es peor que parar.");
+        }
+
+        // Cuantas entradas toca cada regla. Una especie puede salir varias veces en la tabla
+        // -- los ultraentes aparecen en la historia y otra vez en el ultraespacio -- y la regla
+        // las coge TODAS. Decirlo es la diferencia entre saber lo que se ha hecho y suponerlo.
+        Touched.Add(rule.Note + ": " + hits.Length + " ("
+            + string.Join(", ", hits.Select(i => "Nv."
+                + StaticEncounterTable.GetLevel(payload, layout, i))) + ")");
+
+        return hits;
+    }
+
+    private (int[] Species, IReadOnlyDictionary<int, IReadOnlyList<int>> Forms)? _megas;
+
+    /// <summary>The megas this world declares, read once and only if some rule wants one.</summary>
+    private (int[] Species, IReadOnlyDictionary<int, IReadOnlyList<int>> Forms) Megas()
+    {
+        if (_megas is { } known)
+        {
+            return known;
+        }
+
+        var forms = MegaTrainerRandomizer.ReadForms(workspace.PathOf(GameFiles.MegaEvolution));
+        var species = MegaTrainerRandomizer.Candidates(forms, options, workspace.MaxSpecies);
+
+        _megas = (species, forms);
+        return _megas.Value;
+    }
+
+    /// <summary>What a rule puts in one entry.</summary>
+    private void Pick(byte[] payload, EncounterEntryLayout layout, int index, StaticOverride rule,
+        IRandomSource random, SpeciesPool pool)
+    {
+        if (rule.Rule == StaticOverrideRule.Mega)
+        {
+            var (megas, megaForms) = Megas();
+
+            if (megas.Length == 0)
+            {
+                throw new InvalidDataException(
+                    "No queda ninguna mega elegible: todas están en bannedSpecies.");
+            }
+
+            var species = megas[random.Next(megas.Length)];
+            var forms = megaForms[species];
+            var form = forms[random.Next(forms.Count)];
+
+            StaticEncounterTable.SetSpecies(payload, layout, index, species, form);
+            return;
+        }
+
+        // Forma 0 y nada mas, que es lo que hace que nunca salga una mega por aqui.
+        var strong = pool.Where(s => pool.BaseStatTotal(s) >= rule.MinimumBaseStatTotal,
+            $"un total base de {rule.MinimumBaseStatTotal} o mas");
+
+        StaticEncounterTable.SetSpecies(payload, layout, index, strong.Pick(random, rule.Species));
     }
 
     /// <summary>

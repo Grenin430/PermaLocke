@@ -88,6 +88,28 @@ public abstract partial class SectionViewModel : ObservableObject
     /// <summary>Called every time the section becomes visible, so it can refresh itself.</summary>
     public virtual Task ActivateAsync() => Task.CompletedTask;
 
+    /// <summary>
+    /// Called when the section is left, so that coming back to it opens it as it opens.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// What this closes is what is <b>open</b> or <b>primed</b>: a panel unfolded over the screen,
+    /// a two-step button already armed, a confirmation waiting to be pressed. Leaving the gacha
+    /// with a tier's list unfolded and finding it still unfolded ten minutes later reads as the
+    /// screen having failed to close it, not as the screen having remembered.
+    /// </para>
+    /// <para>
+    /// It deliberately does <b>not</b> mean "throw everything away". Where a section is holding
+    /// something the player made -- an edit not yet saved, work in flight -- it says so and keeps
+    /// it: dropping that on a tab change would be a silent state change, which is the one thing
+    /// this project does not do. Each section decides, because only the section knows which of its
+    /// state is a panel and which is somebody's work.
+    /// </para>
+    /// </remarks>
+    public virtual void ResetState()
+    {
+    }
+
     public override string ToString() => Title;
 }
 

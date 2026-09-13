@@ -1,0 +1,121 @@
+<Window x:Class="PermaLocke.App.Views.DeathWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="PermaLocke"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        ShowInTaskbar="False" ShowActivated="False" Topmost="True" ResizeMode="NoResize"
+        Focusable="False" IsHitTestVisible="False"
+        Width="800" Height="600">
+
+    <!-- La pantalla de muerte, encima del emulador. No recibe ni ratón ni teclado ni foco -eso lo
+         hace el code-behind con los estilos de ventana-, así que el juego sigue debajo.
+
+         El juego se congela en el fotograma y se queda sin color; lo único rojo es la sangre y el
+         nombre. Nada de esto es un recurso ajeno: la sangre son formas generadas en código y el
+         sprite sale del cartucho del jugador. -->
+    <Grid x:Name="Root" Opacity="0">
+
+        <!-- EL FOTOGRAMA CONGELADO. El de color es idéntico a lo que hay debajo, así que aparecer no
+             se nota; el gris entra encima y le quita el color. -->
+        <Image x:Name="FrozenColour" Stretch="Fill" />
+        <Image x:Name="FrozenGrey" Stretch="Fill" Opacity="0" />
+        <Rectangle x:Name="Dim" Fill="#FF050407" Opacity="0" />
+
+        <!-- El golpe: toda la pantalla se tiñe de rojo un instante. -->
+        <Rectangle x:Name="Hurt" Fill="#FF8A0A10" Opacity="0" />
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="14*" />
+                <RowDefinition Height="72*" />
+                <RowDefinition Height="14*" />
+            </Grid.RowDefinitions>
+
+            <!-- LAS FRANJAS: entran desde los bordes y se quedan mientras dure la escena. -->
+            <Rectangle x:Name="TopBar" Grid.Row="0" Fill="#FF0B0A0E" RenderTransformOrigin="0.5,0">
+                <Rectangle.RenderTransform>
+                    <ScaleTransform ScaleX="1" ScaleY="0" />
+                </Rectangle.RenderTransform>
+            </Rectangle>
+
+            <Rectangle x:Name="BottomBar" Grid.Row="2" Fill="#FF0B0A0E" RenderTransformOrigin="0.5,1">
+                <Rectangle.RenderTransform>
+                    <ScaleTransform ScaleX="1" ScaleY="0" />
+                </Rectangle.RenderTransform>
+            </Rectangle>
+
+            <!-- EL CENTRO, en tres capas: detrás la banda y el Pokémon, en medio la sangre, delante el
+                 nombre. Recortado a su fila, para que nada se meta en las franjas. -->
+            <Grid x:Name="Middle" Grid.Row="1" ClipToBounds="True">
+
+                <Viewbox Stretch="Uniform">
+                    <Grid Width="1000" Height="560">
+
+                        <!-- La banda oscura del nombre, más ancha que la pantalla: sus bordes nunca se ven. -->
+                        <Rectangle x:Name="Band" Height="190" VerticalAlignment="Top" Margin="-3000,268,-3000,0"
+                                   Opacity="0">
+                            <Rectangle.Fill>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                    <GradientStop Offset="0" Color="#00000000" />
+                                    <GradientStop Offset="0.3" Color="#D8000000" />
+                                    <GradientStop Offset="0.7" Color="#D8000000" />
+                                    <GradientStop Offset="1" Color="#00000000" />
+                                </LinearGradientBrush>
+                            </Rectangle.Fill>
+                        </Rectangle>
+
+                        <!-- EL POKÉMON, a 7 unidades por píxel siempre -el icono más grande del cartucho
+                             mide 40×30-, en posiciones múltiplo de 7: así sus píxeles caen en la misma
+                             rejilla que la sangre. Se hunde por debajo de su suelo, que es el borde de
+                             abajo de SpriteStage. -->
+                        <Grid x:Name="SpriteStage" Width="280" Height="210" VerticalAlignment="Top"
+                              HorizontalAlignment="Left" Margin="357,35,0,0" ClipToBounds="True">
+                            <Grid x:Name="Sprite" HorizontalAlignment="Left" VerticalAlignment="Top">
+                                <Grid.RenderTransform>
+                                    <TranslateTransform X="0" Y="0" />
+                                </Grid.RenderTransform>
+
+                                <Image x:Name="ColourSprite" Stretch="Fill"
+                                       RenderOptions.BitmapScalingMode="NearestNeighbor" />
+                                <Image x:Name="FlashSprite" Stretch="Fill" Opacity="0"
+                                       RenderOptions.BitmapScalingMode="NearestNeighbor" />
+                            </Grid>
+                        </Grid>
+                    </Grid>
+                </Viewbox>
+
+                <!-- LA SANGRE: un mapa de bits pequeño, una celda por píxel del Pokémon, ampliado sin
+                     suavizar. Tamaño y posición los pone el code-behind al abrir la escena. -->
+                <Image x:Name="BloodLayer" HorizontalAlignment="Left" VerticalAlignment="Top" Stretch="Fill"
+                       RenderOptions.BitmapScalingMode="NearestNeighbor" />
+
+                <Viewbox Stretch="Uniform">
+                    <Grid Width="1000" Height="560">
+
+                        <!-- EL NOMBRE, a lo Souls: rojo, con serifa, espaciado, entra despacio y crece un
+                             poco. Encoge solo si un mote muy ancho no cabe. -->
+                        <Viewbox x:Name="Headline" VerticalAlignment="Top" HorizontalAlignment="Center"
+                                 Margin="0,318,0,0" MaxWidth="960" Stretch="Uniform" StretchDirection="DownOnly"
+                                 RenderTransformOrigin="0.5,0.5" Opacity="0">
+                            <Viewbox.RenderTransform>
+                                <ScaleTransform ScaleX="1" ScaleY="1" />
+                            </Viewbox.RenderTransform>
+                            <TextBlock x:Name="HeadlineText" FontSize="66" TextWrapping="NoWrap"
+                                       FontFamily="Palatino Linotype, Book Antiqua, Georgia, Times New Roman"
+                                       Foreground="#FFA3151B">
+                                <TextBlock.Effect>
+                                    <DropShadowEffect Color="#FF000000" BlurRadius="14" ShadowDepth="0" Opacity="0.9" />
+                                </TextBlock.Effect>
+                            </TextBlock>
+                        </Viewbox>
+
+                        <TextBlock x:Name="PointsText" VerticalAlignment="Top" HorizontalAlignment="Center"
+                                   Margin="0,414,0,0" FontSize="22" Opacity="0"
+                                   FontFamily="Palatino Linotype, Book Antiqua, Georgia, Times New Roman"
+                                   Foreground="#FFA59A96" />
+                    </Grid>
+                </Viewbox>
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>

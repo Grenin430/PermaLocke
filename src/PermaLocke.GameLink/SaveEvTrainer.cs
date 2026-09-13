@@ -20,17 +20,22 @@ namespace PermaLocke.GameLink;
 /// six values landed. Nothing is reported as trained that has not been seen on disk afterwards.
 /// </para>
 /// <para>
-/// <b>Only the EVs are touched. The battle stats a party member carries are left exactly as the
-/// game wrote them</b>, and this was measured rather than assumed. Recomputing them looked like
-/// the tidy thing to do — the party stores its stats, unlike a box — but PKHeX works a stat out
-/// from its own table of base stats, and this run is played on a randomized ROM with
-/// <c>shuffleBaseStats</c> on, so that table is not the cartridge's. Tried on a copy of the real
-/// partida, a Kommo-o with 168 HP came back with 151: a visible, wrong change to somebody's
-/// Pokémon.
+/// A party member also gets its <b>stored battle stats</b> put back in step, because it carries
+/// them — unlike one in a box, which has none and is worked out on the way out. This used to be
+/// left alone, and the reason was sound: PKHeX works a stat out from its own table of base stats,
+/// this run is played with <c>shuffleBaseStats</c> on, and tried that way a Kommo-o with 168 PS
+/// came back with 151. What was <em>not</em> sound was the sentence that followed it — «leaving
+/// them alone costs nothing, the stat catches up when the game next recalculates». It does for a
+/// Pokémon gaining EVs in battle. It does not here: nothing about writing a save makes the game
+/// recalculate, so the stat waits for a level up, and <b>at the level cap there is no level up</b>.
+/// The player trained six Pokémon at the cap and saw nothing change, which is exactly what that
+/// sentence predicted if you read it carefully enough.
 /// </para>
 /// <para>
-/// Leaving them alone costs nothing. The stat catches up when the game next recalculates it, which
-/// is exactly what happens to a Pokémon that gains EVs in battle before it levels up.
+/// The fix is not to trust PKHeX's table but to read the installed world's own
+/// (<see cref="WorldLimits.BaseStats"/>). When that table is not available the stats are still left
+/// alone and <b>the message says so</b>, which is the part that was missing before: silence read as
+/// success.
 /// </para>
 /// </remarks>
 public sealed class SaveEvTrainer(PlayerSave save, string backupFolder, ILogger<SaveEvTrainer> logger)
@@ -140,11 +145,20 @@ public sealed class SaveEvTrainer(PlayerSave save, string backupFolder, ILogger<
         }
 
         Write(pokemon, change.Evs);
+
+        var recomputed = change.Box == BoxedPokemon.PartyBox && Restat(pokemon);
+
         pokemon.RefreshChecksum();
         Store(game, pokemon, change.Box, change.Slot);
 
         return new DeliveryResult(DeliveryOutcome.Delivered,
-            $"EV de {change.Name} guardados en {change.Where}.",
+            $"EV de {change.Name} guardados en {change.Where}."
+            + (change.Box != BoxedPokemon.PartyBox
+                ? " Está en una caja, así que sus estadísticas se calculan al sacarlo."
+                : recomputed
+                    ? " Estadísticas puestas al día."
+                    : " Sus estadísticas NO se han podido poner al día: este mundo no publica su"
+                      + " tabla de estadísticas base. Se verán al subir de nivel."),
             change.Box + 1, change.Slot + 1);
     }
 
@@ -171,6 +185,60 @@ public sealed class SaveEvTrainer(PlayerSave save, string backupFolder, ILogger<
         }
 
         game.SetBoxSlotAtIndex(pokemon, box, slot, PokemonBuilder.InPlace);
+    }
+
+    /// <summary>Shedinja, whose PS the game forces to one whatever the formula says.</summary>
+    private const int Shedinja = 292;
+
+    /// <summary>
+    /// Puts a party member's stored battle stats back in step with its effort values.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Returns false, and touches nothing, when the installed world has not published its base
+    /// stats. That is the §51 rule kept rather than dropped: this run has <c>shuffleBaseStats</c>
+    /// on, so a stat worked out from PKHeX's table is not an approximation but a wrong number
+    /// written into somebody's Pokémon — 168 PS came back as 151 the day that was tried. What
+    /// changed is that the world's own table is now readable (<see cref="WorldLimits.BaseStats"/>),
+    /// so the honest answer is usually available instead of never.
+    /// </para>
+    /// <para>
+    /// The current PS are the delicate part. They follow the maximum up by the same amount, which
+    /// is what the game does on a level up — but <b>a Pokémon at zero stays at zero</b>. In this
+    /// project zero PS is what a death IS (§98), so healing one here would quietly undo a death
+    /// through a screen that has nothing to do with dying.
+    /// </para>
+    /// </remarks>
+    private static bool Restat(PK7 pokemon)
+    {
+        if (WorldLimits.BaseStatsOf(pokemon.Species) is not { } bases)
+        {
+            return false;
+        }
+
+        var stats = StatCalculator.Compute(
+            bases,
+            [pokemon.IV_HP, pokemon.IV_ATK, pokemon.IV_DEF, pokemon.IV_SPA, pokemon.IV_SPD, pokemon.IV_SPE],
+            [pokemon.EV_HP, pokemon.EV_ATK, pokemon.EV_DEF, pokemon.EV_SPA, pokemon.EV_SPD, pokemon.EV_SPE],
+            pokemon.Stat_Level,
+            (int)pokemon.Nature,
+            pokemon.Species == Shedinja);
+
+        var gained = stats[0] - pokemon.Stat_HPMax;
+
+        pokemon.Stat_HPMax = stats[0];
+        pokemon.Stat_ATK = stats[1];
+        pokemon.Stat_DEF = stats[2];
+        pokemon.Stat_SPA = stats[3];
+        pokemon.Stat_SPD = stats[4];
+        pokemon.Stat_SPE = stats[5];
+
+        if (pokemon.Stat_HPCurrent > 0)
+        {
+            pokemon.Stat_HPCurrent = Math.Clamp(pokemon.Stat_HPCurrent + gained, 1, stats[0]);
+        }
+
+        return true;
     }
 
     private static void Write(PK7 pokemon, IReadOnlyList<int> evs)

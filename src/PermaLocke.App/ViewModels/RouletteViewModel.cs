@@ -220,6 +220,56 @@ public sealed partial class RouletteViewModel : SectionViewModel
     private readonly PokemonSpriteService _sprites;
     private readonly ILogger<RouletteViewModel> _logger;
 
+    /// <summary>How long the card naming the result stays over the wheel.</summary>
+    /// <remarks>
+    /// It sits on top of the wheel, so leaving it there hides the thing the player came to look
+    /// at. Eight seconds is enough to read three lines twice and short enough not to have to
+    /// dismiss it. What it covered — the lines saying what actually changed — stays on screen: the
+    /// card is the announcement, not the record.
+    /// </remarks>
+    private static readonly TimeSpan ResultShown = TimeSpan.FromSeconds(8);
+
+    /// <summary>Cancels the countdown of the previous result when a new spin starts.</summary>
+    private CancellationTokenSource? _hidingResult;
+
+    /// <summary>
+    /// Takes the result card away on its own after <see cref="ResultShown"/>.
+    /// </summary>
+    /// <remarks>
+    /// Started rather than awaited, so the command finishes and the buttons come back at once
+    /// instead of eight seconds later. It runs on the UI thread throughout — the continuation of a
+    /// <c>Task.Delay</c> started here comes back to it — and a cancelled countdown is the normal
+    /// way this ends, not a failure.
+    /// </remarks>
+    private void HideResultLater()
+    {
+        _hidingResult?.Cancel();
+        _hidingResult?.Dispose();
+        _hidingResult = new CancellationTokenSource();
+
+        var token = _hidingResult.Token;
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(ResultShown, token);
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+
+            await App.Current.Dispatcher.InvokeAsync(() =>
+            {
+                if (!token.IsCancellationRequested)
+                {
+                    HasResult = false;
+                }
+            });
+        });
+    }
+
     public RouletteViewModel(RouletteService roulette, IRunContext runContext,
         PokemonSpriteService sprites, ILogger<RouletteViewModel> logger)
         : base("RULETA", "Lo que la ruleta diga, va")
@@ -362,6 +412,10 @@ public sealed partial class RouletteViewModel : SectionViewModel
         }
 
         IsSpinning = true;
+
+        // La cuenta atrás del resultado anterior se cancela aquí: si no, la de la tirada pasada
+        // vencería a mitad de esta y borraría una tarjeta que se acaba de poner.
+        _hidingResult?.Cancel();
         HasResult = false;
         Lines.Clear();
         Reset();
@@ -402,6 +456,7 @@ public sealed partial class RouletteViewModel : SectionViewModel
             }
 
             HasResult = true;
+            HideResultLater();
             Owed = result.Owed;
             Status = result.Owed > 0
                 ? $"Te quedan {result.Owed} tirada{(result.Owed == 1 ? string.Empty : "s")}."

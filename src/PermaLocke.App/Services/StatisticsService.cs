@@ -281,9 +281,16 @@ public sealed class StatisticsService(
         var longest = 0;
         var current = 0;
 
+        // Una muerte revocada no fue una muerte: no corta la racha. Se mira por el id que la
+        // revocación guarda, que es lo único que no confunde dos muertes del mismo Pokémon.
+        var revoked = history
+            .Where(e => e.Type == GameEventType.DeathRevoked && e.Data.ContainsKey("muerte"))
+            .Select(e => e.Data["muerte"])
+            .ToHashSet();
+
         foreach (var e in history)
         {
-            if (e.Type == GameEventType.PokemonDied)
+            if (e.Type == GameEventType.PokemonDied && !revoked.Contains(e.Id.ToString()))
             {
                 current = 0;
                 continue;

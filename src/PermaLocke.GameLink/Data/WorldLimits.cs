@@ -80,4 +80,39 @@ public static class WorldLimits
     /// </remarks>
     public static byte? GrowthOf(int species) =>
         species > 0 && species < GrowthRates.Count ? GrowthRates[species] : null;
+
+    /// <summary>
+    /// Base stats per species, six per species, straight out of the installed game's own table.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Empty by default, and an empty table means <b>do not compute a stat at all</b> rather than
+    /// «ask PKHeX». That is the whole point: this run is played with <c>shuffleBaseStats</c> on, so
+    /// PKHeX's numbers are not this cartridge's and a stat worked out from them is not an
+    /// approximation, it is a visibly wrong number written into somebody's Pokémon — measured once
+    /// at 168 PS coming back as 151 (§51).
+    /// </para>
+    /// <para>
+    /// In the summary screen's order — PS, Ataque, Defensa, At. Esp., Def. Esp., Velocidad — so
+    /// that callers never have to remember that the cartridge's table puts Velocidad fourth.
+    /// </para>
+    /// </remarks>
+    public static IReadOnlyList<byte> BaseStats { get; set; } = [];
+
+    /// <summary>
+    /// The six base stats of a species, or null when this world has not published its table.
+    /// </summary>
+    /// <remarks>
+    /// Null and not a guess, for the reason above: the caller has to know it cannot work a stat out
+    /// and leave the stat alone, which is what the EV writer did for everyone before this existed.
+    /// </remarks>
+    public static IReadOnlyList<byte>? BaseStatsOf(int species)
+    {
+        const int PerSpecies = 6;
+        var at = species * PerSpecies;
+
+        return species > 0 && at + PerSpecies <= BaseStats.Count
+            ? [.. Enumerable.Range(at, PerSpecies).Select(i => BaseStats[i])]
+            : null;
+    }
 }

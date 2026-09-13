@@ -393,16 +393,28 @@ public sealed partial class MapViewModel : SectionViewModel
     /// mis-click cost three clicks instead of a trip somewhere else to undo it.
     /// </remarks>
     [RelayCommand]
-    public async Task ClickZoneAsync(MapZoneViewModel? zone)
+    public Task ClickZoneAsync(MapZoneViewModel? zone) =>
+        SetOutcomeAsync(zone, zone is null ? ZoneOutcome.Free : ZoneOutcomeService.Next(zone.Outcome));
+
+    /// <summary>
+    /// Right-clicking a marker takes it straight back to «sin marcar».
+    /// </summary>
+    /// <remarks>
+    /// The cycle above is what the map is driven with, and it is fine while a mis-click is one
+    /// state out. Undoing a marker put on the wrong zone meant going all the way round, so the
+    /// gesture everybody already tries — right click to clear — does it in one.
+    /// </remarks>
+    [RelayCommand]
+    public Task ClearZoneAsync(MapZoneViewModel? zone) => SetOutcomeAsync(zone, ZoneOutcome.Free);
+
+    private async Task SetOutcomeAsync(MapZoneViewModel? zone, ZoneOutcome next)
     {
         var run = _runContext.Current;
 
-        if (zone is null || run is null)
+        if (zone is null || run is null || zone.Outcome == next)
         {
             return;
         }
-
-        var next = ZoneOutcomeService.Next(zone.Outcome);
 
         try
         {

@@ -363,28 +363,42 @@ public partial class GachaView : UserControl
     private bool _reelMoving;
 
     /// <summary>
-    /// Before the first pull the strip drifts, very slowly, from one end to the other.
+    /// Before the first pull the strip drifts, very slowly, and always to the left.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// It goes and comes back rather than looping: a seamless loop needs the strip duplicated, and
-    /// at this speed a change of direction every couple of minutes is not something anybody sees.
+    /// It used to go and come back, because a seamless loop needs the strip to repeat and the
+    /// comment here said a change of direction every couple of minutes is not something anybody
+    /// sees. Somebody saw it, and it reads as a fault rather than as a flourish: a machine of this
+    /// kind turns one way. So the strip now repeats its head at its tail
+    /// (<see cref="GachaViewModel.IdleLoopCells"/>) and the drift snaps back to the origin onto
+    /// identical cells, which is invisible.
     /// </para>
     /// <para>
     /// Once only, and never again after a pull: when a roll lands, the strip is parked ON the
-    /// winner. Drifting away from it afterwards would take the result off the screen.
+    /// winner. Drifting away from it afterwards would take the result off the screen — which is
+    /// also why a reel built for a roll declares no loop and is left alone here.
     /// </para>
     /// </remarks>
     private void OnStripSized(object sender, SizeChangedEventArgs e)
     {
-        if (_reelMoving || ReelStrip.ActualWidth <= ReelViewport.ActualWidth)
+        if (_reelMoving || _model is null || _model.IdleLoopCells <= 0)
+        {
+            return;
+        }
+
+        var travel = _model.IdleLoopCells * CellWidth;
+
+        // Lo que sobra por detrás de una vuelta es lo que tapa el salto. Si no llega a cubrir el
+        // visor -una ventana absurdamente ancha- se vería el corte, así que no se mueve: quieta es
+        // peor que girando, pero mejor que dando un tirón cada tres minutos.
+        if (ReelStrip.ActualWidth - travel < ReelViewport.ActualWidth)
         {
             return;
         }
 
         _reelMoving = true;
 
-        var travel = ReelStrip.ActualWidth - ReelViewport.ActualWidth;
         var shift = new TranslateTransform();
         ReelStrip.RenderTransform = shift;
 
@@ -393,9 +407,8 @@ public partial class GachaView : UserControl
             From = 0,
             To = -travel,
             // Mas rapido de lo que estaba: a travel/14 pasaba un Pokemon cada tres segundos y
-            // parecia parado. Sigue siendo un vaiven de fondo, no un carrete girando.
+            // parecia parado. Sigue siendo un desplazamiento de fondo, no un carrete girando.
             Duration = TimeSpan.FromSeconds(Math.Max(14, travel / 45)),
-            AutoReverse = true,
             RepeatBehavior = RepeatBehavior.Forever
         });
     }

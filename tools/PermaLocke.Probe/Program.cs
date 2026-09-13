@@ -28,6 +28,7 @@ using PermaLocke.GameLink.Rpc;
 //   Probe --ruleta [--probar]   every face of the wheel against a COPY of the partida
 //   Probe --tiradas [n] "motivo"  roulette ledger; with a number, grants spins through the service
 //   Probe --intercambiados      Pokemon handed over in a wonder trade that the run still counts alive
+//   Probe --combate buscar|filtrar|vigilar   where the party HP lives DURING a battle, at the move menu
 
 Console.OutputEncoding = System.Text.Encoding.UTF8;
 
@@ -75,6 +76,19 @@ if (args.Length >= 1 && args[0] == "--huevo-copias")
 
 
 // Quien escribe en un rango de memoria. Necesita el parche 3 del fork.
+// Saca de la memoria la copia de trabajo de la partida a un fichero aparte. Solo lee.
+if (args.Length >= 1 && args[0] == "--rescate")
+{
+    return PermaLocke.Probe.RescueProbe.Run();
+}
+
+// Los PS durante un combate: graba mientras se juega. Solo lee.
+if (args.Length >= 1 && args[0] == "--combate")
+{
+    return PermaLocke.Probe.BattleHpProbe.Run(args.Length >= 2 ? args[1] : string.Empty,
+        args.Length >= 3 && int.TryParse(args[2], out var segundos) ? segundos : 180);
+}
+
 if (args.Length >= 1 && args[0] == "--escrituras")
 {
     if (args.Contains("--leer"))

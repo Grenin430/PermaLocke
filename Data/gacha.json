@@ -6,6 +6,23 @@
 
   "comentarioNivel": "Todos los tiers entregan a nivel 1: el gacha da el Pokémon, subirlo es cosa del jugador y del cap de nivel de la run.",
 
+  "comentarioEtapas": "El gacha reparte LINEAS EVOLUTIVAS, no especies sueltas: el tier lo decide el total base de la FORMA FINAL de la linea, asi que el tier 5 son las familias que acaban en 600 -Dratini, Larvitar, Bagon, Beldum, Gible, Deino, Goomy y Jangmo-o- y lo que te dan al principio de la partida es la primera etapa. Que etapa toca lo decide esta tabla contra las ETAPAS SUPERADAS de la run, la misma cifra de la que sale el cap de nivel. Lo que no es 'segunda' ni 'final' es la PRIMERA, asi que una fila de ceros significa siempre la forma base y un fichero roto degrada al principio del juego en vez de a un Garchomp gratis. Se aplica la fila mas alta que no pase de las etapas superadas, asi que solo hacen falta filas donde la cosa cambia. Los numeros son los de la competicion, medidos de la referencia (docs/ARCHITECTURE.md §104).",
+  "etapaPorProgreso": [
+    { "etapas": 0,  "segunda": 0,  "final": 0 },
+    { "etapas": 1,  "segunda": 3,  "final": 0 },
+    { "etapas": 2,  "segunda": 6,  "final": 0 },
+    { "etapas": 3,  "segunda": 9,  "final": 1 },
+    { "etapas": 4,  "segunda": 12, "final": 4 },
+    { "etapas": 5,  "segunda": 20, "final": 9 },
+    { "etapas": 6,  "segunda": 23, "final": 10 },
+    { "etapas": 7,  "segunda": 26, "final": 11 },
+    { "etapas": 8,  "segunda": 29, "final": 12 },
+    { "etapas": 9,  "segunda": 32, "final": 13 },
+    { "etapas": 10, "segunda": 35, "final": 14 },
+    { "etapas": 11, "segunda": 38, "final": 15 },
+    { "etapas": 12, "segunda": 45, "final": 20 }
+  ],
+
   "tiers": [
     {
       "id": "tier1",
@@ -50,7 +67,7 @@
     {
       "id": "tier5",
       "name": "Tier 5",
-      "comment": "40% legendario. El 60% restante son los nueve pseudolegendarios de más de 590: Dragonite, Tyranitar, Slaking, Salamence, Metagross, Garchomp, Hydreigon, Goodra y Kommo-o.",
+      "comment": "40% legendario, y ENTRE TODOS los del juego: el saco de legendarios ya no se limita a los de mas de 590, asi que las aves, los perros, los Tapu, los regis o Type: Null tambien pueden salir. Antes solo podian tocar los de mas de 590 y el resto era imposible sin que nada lo dijera. El 60% restante son los nueve pseudolegendarios de mas de 590: Dragonite, Tyranitar, Slaking, Salamence, Metagross, Garchomp, Hydreigon, Goodra y Kommo-o. Es el UNICO sitio del que sale un legendario, y el tier 5 solo lo tira el banner BUENO.",
       "maxBaseStatTotal": 9999,
       "legendaryChance": 0.40,
       "minLevel": 1,
@@ -65,21 +82,24 @@
       "id": "pocho",
       "name": "POCHO",
       "description": "Barato y sin sorpresas. Sobre todo Tier 2.",
-      "cost": 75,
+      "_costeReal": 75,
+      "cost": 0,
       "chances": { "tier1": 0.15, "tier2": 0.60, "tier3": 0.25 }
     },
     {
       "id": "decente",
       "name": "DECENTE",
       "description": "El término medio. Sobre todo Tier 3.",
-      "cost": 200,
+      "_costeReal": 200,
+      "cost": 0,
       "chances": { "tier2": 0.15, "tier3": 0.60, "tier4": 0.25 }
     },
     {
       "id": "bueno",
       "name": "BUENO",
       "description": "Caro, y el único que puede dar legendarios.",
-      "cost": 300,
+      "_costeReal": 300,
+      "cost": 0,
       "chances": { "tier3": 0.15, "tier4": 0.60, "tier5": 0.25 }
     }
   ]

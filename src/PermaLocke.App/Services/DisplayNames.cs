@@ -59,6 +59,7 @@ public static class DisplayNames
         [GameEventType.BattleModeChanged] = "Modo combate",
         [GameEventType.ZoneConfirmed] = "Zona gastada",
         [GameEventType.ZoneCleared] = "Zona liberada",
+        [GameEventType.DeathRevoked] = "Muerte revocada",
         [GameEventType.ZoneOutcomeSet] = "Zona marcada"
     };
 

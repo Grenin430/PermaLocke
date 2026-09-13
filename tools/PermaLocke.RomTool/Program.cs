@@ -57,7 +57,12 @@ switch (command)
         await PokemonAsync(args.Length > 1 ? ulong.Parse(args[1]) : 20260818);
         break;
     case "trainers":
-        await TrainersAsync(args.Length > 1 ? ulong.Parse(args[1]) : 20260818);
+        // Una seed mira lo GENERADO; una ruta a un a/1/0/7 mira lo que sea, el mod INSTALADO
+        // incluido, que es el unico que alguien esta jugando de verdad. Mismo criterio que
+        // «quien-lleva» y «entrenador» del §85.
+        await TrainersAsync(
+            args.Length > 1 && ulong.TryParse(args[1], out var trainerSeed) ? trainerSeed : 20260818,
+            args.Length > 1 && !ulong.TryParse(args[1], out _) ? args[1] : null);
         break;
     case "estaticos-crudo":
         await EstaticosCrudoAsync([.. args.Skip(1).Select(int.Parse)]);
@@ -328,28 +333,22 @@ async Task RandomizeAsync(ulong seed)
 
     var target = LayeredFsMod.DirectoryFor(Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Azahar"));
-    var romfs = Path.Combine(target, "romfs");
+    // Por el MISMO instalador que la aplicacion, no por una copia a mano. Aqui habia una tercera
+    // implementacion de «que ficheros ganan», y se dejaba el exefs GENERADO: copiaba el code.bin del
+    // mod base y no el que lleva la tabla de MT y la de tutores barajadas. Dos instalaciones hechas
+    // desde aqui dejaron al jugador con las MT y los tutores del mod en vez de los de su mundo, y
+    // nada fallo: el informe de la generacion seguia diciendo «100 de las 100 MT enseñan otro
+    // movimiento». El instalador ademas guarda copia de lo que va a pisar.
+    var sw = Stopwatch.StartNew();
 
-    if (baseLayer is not null)
-    {
-        Console.WriteLine($"\nCopiando el mod base entero a {romfs} (son varios GB)...");
-        var sw = Stopwatch.StartNew();
-        var copied = ModInstaller.CopyTree(baseLayer, romfs, skipUnchanged: true);
-        Console.WriteLine($"  {copied} ficheros en {sw.Elapsed.TotalSeconds:F0} s");
+    var copy = ModInstaller.Install(mod, target, baseLayer,
+        baseLayer is null ? null : Path.Combine(root, "Expansion", "exefs"),
+        message => Console.WriteLine("  " + message));
 
-        var exefs = Path.Combine(root, "Expansion", "exefs");
-
-        if (Directory.Exists(exefs))
-        {
-            // Fuera de romfs, a su lado. El mod parchea code.bin y sin él los Pokémon nuevos no
-            // existen para el motor por muchos datos que tengan.
-            ModInstaller.CopyTree(exefs, Path.Combine(target, "exefs"), skipUnchanged: true);
-            Console.WriteLine("  exefs/code.bin copiado");
-        }
-    }
-
-    ModInstaller.CopyTree(Path.Combine(mod, "romfs"), romfs);
-    Console.WriteLine($"Instalado en {target}. Cierra Azahar del todo antes de abrirlo.");
+    Console.WriteLine(copy is null
+        ? "  No habia nada instalado que se fuera a perder, asi que no hace falta copia."
+        : $"  Copia del mundo que habia: {copy}");
+    Console.WriteLine($"Instalado en {target} en {sw.Elapsed.TotalSeconds:F0} s. Cierra Azahar del todo antes de abrirlo.");
 }
 
 
@@ -490,18 +489,20 @@ async Task StaticsAsync(ulong seed)
     }
 }
 
-async Task TrainersAsync(ulong seed)
+async Task TrainersAsync(ulong seed, string? path = null)
 {
     using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work, baseLayer: baseLayer);
     var names = workspace.Config.GetText(TextName.SpeciesNames);
     var options = RandomizerOptionsLoader.Load(Path.Combine(root, "Data", "randomizer.json"));
     var banned = options.BannedSpecies.ToHashSet();
 
-    var generatedPath = Path.Combine(root, "Randomized", $"seed-{seed}", "romfs",
+    var generatedPath = path ?? Path.Combine(root, "Randomized", $"seed-{seed}", "romfs",
         GameFiles.TrainerPokemon.Replace('/', Path.DirectorySeparatorChar));
     if (!File.Exists(generatedPath))
     {
-        Console.WriteLine($"No existe {generatedPath}. Ejecuta antes: randomize {seed}");
+        Console.WriteLine(path is null
+            ? $"No existe {generatedPath}. Ejecuta antes: randomize {seed}"
+            : $"No existe {generatedPath}.");
         return;
     }
 
@@ -509,7 +510,7 @@ async Task TrainersAsync(ulong seed)
     var modded = new GARC.LazyGARC(await File.ReadAllBytesAsync(generatedPath));
     Console.WriteLine($"\nentrenadores: vanilla {vanilla.FileCount}, generado {modded.FileCount}");
 
-    int levelsMoved = 0, sizeChanged = 0, offenders = 0, replaced = 0, total = 0, itemsLost = 0;
+    int levelsMoved = 0, sizeChanged = 0, offenders = 0, replaced = 0, total = 0, itemsLost = 0, evsChanged = 0;
     var highest = 0;
     var highestTrainer = -1;
 
@@ -549,6 +550,14 @@ async Task TrainersAsync(ulong seed)
                 if (TrainerPokemonTable.GetLevel(before, s) != TrainerPokemonTable.GetLevel(after, s)) levelsMoved++;
                 if (TrainerPokemonTable.GetItem(before, s) != TrainerPokemonTable.GetItem(after, s)) itemsLost++;
                 if (TrainerPokemonTable.GetSpecies(before, s) != TrainerPokemonTable.GetSpecies(after, s)) replaced++;
+
+                // Los EV del enemigo son los del cartucho y se quedan como estan. Nada los escribe,
+                // asi que esto tiene que dar cero siempre: es la diferencia entre decir que no se
+                // tocan y haberlo mirado.
+                if (!TrainerPokemonTable.GetEvs(before, s).SequenceEqual(TrainerPokemonTable.GetEvs(after, s)))
+                {
+                    evsChanged++;
+                }
             }
 
             if (banned.Contains(TrainerPokemonTable.GetSpecies(after, s))) offenders++;
@@ -571,6 +580,15 @@ async Task TrainersAsync(ulong seed)
                 if (species > 0 && evolutions.FinalOf(species) != species)
                 {
                     unevolved++;
+
+                    // Dichos por su nombre y no solo contados: «3 sin evolucionar» no se puede
+                    // comprobar en el juego y «el 473 lleva un Larvitar» si.
+                    if (unevolved <= 20)
+                    {
+                        Console.WriteLine($"    SIN EVOLUCIONAR  entrenador {t,3} hueco {s}"
+                                          + $"{(s >= wasSlots ? " AÑADIDO" : "        ")}  "
+                                          + $"{SpeciesName(names, species)} (nivel de cartucho {story})");
+                    }
                 }
             }
         }
@@ -659,6 +677,7 @@ async Task TrainersAsync(ulong seed)
     Console.WriteLine($"  NIVELES movidos: {levelsMoved}   "
                       + "(con rol se mueven todos; 0 solo si se generó sin rol)");
     Console.WriteLine($"  objetos alterados: {itemsLost}   (debe ser 0)");
+    Console.WriteLine($"  EV alterados: {evsChanged}   (debe ser 0: el entrenamiento del enemigo es el del cartucho)");
     Console.WriteLine($"  especies prohibidas: {offenders}   (debe ser 0)");
     Console.WriteLine($"  nivel más alto del juego: {highest} (entrenador {highestTrainer})");
 
@@ -1001,6 +1020,10 @@ async Task SpeciesAsync()
     var histogram = new Dictionary<string, int>();
     var legendaries = 0;
 
+    // Los ids que de verdad han entrado en la lista. Las familias se recortan contra esto para no
+    // nombrar a nadie que la aplicacion no conozca.
+    var known = new HashSet<int>();
+
     for (ushort id = 1; id < count; id++)
     {
         var raw = personal.Files[id];
@@ -1032,6 +1055,7 @@ async Task SpeciesAsync()
             .ToArray();
 
         entries.Add(new { id, name = speciesNames[id], baseStatTotal = total, legendary = special, abilities });
+        known.Add(id);
 
         if (special)
         {
@@ -1043,6 +1067,51 @@ async Task SpeciesAsync()
         histogram[bucket] = histogram.GetValueOrDefault(bucket) + 1;
     }
 
+    // LAS FAMILIAS. El gacha reparte lineas evolutivas y no especies sueltas, asi que necesita
+    // saber quien evoluciona en quien; y tiene que salir de aqui, porque la aplicacion no lleva
+    // ROM. Se leen del mundo que se este mirando -- el mod de expansion incluido --, no de una
+    // lista escrita a mano que envejeceria.
+    var evolutions = EvolutionTable.Read(workspace.PathOf(GameFiles.Evolution));
+
+    // Se descarta la familia entera si su PRIMERA etapa no sobrevive al recorte, y ese caso existe:
+    // las formas de Alola tienen linea propia -- Rattata de Alola evoluciona a Raticate de Alola --
+    // y su base es una entrada de FORMA, con indice por encima de las especies. Quedarse solo con
+    // lo conocido dejaba una familia cuya unica etapa era Raticate, asi que el gacha entregaba un
+    // Arcanine o un Golem como si fuera una primera etapa. Medido: 24 especies en dos familias.
+    var lines = evolutions.Lines()
+        .Where(line => line[0].Any(known.Contains))
+        .Select(line => line.Select(stage => stage.Where(id => known.Contains(id)).ToArray())
+            .Where(stage => stage.Length > 0)
+            .ToArray())
+        .Where(line => line.Length > 0)
+        .ToList();
+
+    // Y se comprueba, porque un descarte mal puesto no falla: reparte de mas y calla.
+    var twice = lines.SelectMany(line => line.SelectMany(stage => stage))
+        .GroupBy(id => id)
+        .Where(group => group.Count() > 1)
+        .ToList();
+
+    if (twice.Count > 0)
+    {
+        Console.WriteLine($"  AVISO: {twice.Count} especies en mas de una familia, o sea repartidas "
+            + $"desde dos sitios: {string.Join(", ", twice.Take(20).Select(g => g.Key))}");
+    }
+
+    // Una especie que no cae en ninguna familia no puede salir del gacha, y desapareceria sin
+    // decir nada. Las hay: las que SOLO evolucionan de una forma regional -- Obstagoon de
+    // Zigzagoon de Galar, Sirfetch'd, Basculegion... --, cuya familia se acaba de descartar por lo
+    // de arriba. Se les da familia PROPIA de una etapa, que es lo que son para el gacha: algo que
+    // no se alcanza subiendo desde ninguna base que el gacha reparta, igual que un Paradoja o un
+    // Farfetch'd. Dejarlas fuera seria peor que el fallo que se acaba de arreglar.
+    var inALine = lines.SelectMany(line => line.SelectMany(stage => stage)).ToHashSet();
+    var orphans = known.Where(id => !inALine.Contains(id)).ToList();
+
+    foreach (var id in orphans)
+    {
+        lines.Add([[id]]);
+    }
+
     var path = Path.Combine(root, "Data", "species.json");
     await File.WriteAllTextAsync(path, System.Text.Json.JsonSerializer.Serialize(
         new
@@ -1052,9 +1121,21 @@ async Task SpeciesAsync()
             // SIN filtrar: la posición en esta lista ES el id de la habilidad en el cartucho, y
             // quitar los huecos vacíos desplazaría todos los ids a partir del primero.
             abilities = abilityNames,
-            species = entries
+            species = entries,
+            lines
         },
         new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+
+    Console.WriteLine($"{lines.Count} familias evolutivas, "
+        + $"{lines.Count(l => l.Length == 3)} de tres etapas, "
+        + $"{lines.Count(l => l.Length == 2)} de dos, "
+        + $"{lines.Count(l => l.Length == 1)} sin evolucion");
+
+    if (orphans.Count > 0)
+    {
+        Console.WriteLine($"  {orphans.Count} especies sin familia propia, con familia de una etapa: "
+            + $"{string.Join(", ", orphans.Take(20))}");
+    }
 
     Console.WriteLine($"{entries.Count} especies escritas en {path}, {legendaries} especiales\n");
     Console.WriteLine("Reparto por los rangos del gacha:");

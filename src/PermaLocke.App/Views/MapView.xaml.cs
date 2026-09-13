@@ -226,4 +226,21 @@ public partial class MapView : UserControl
     }
 
     private void OnLegendLeave(object sender, MouseEventArgs e) => _map?.Highlight(null);
+
+    /// <summary>Right-clicking a marker clears it instead of moving it on.</summary>
+    /// <remarks>
+    /// Routing only: the left click goes through <c>ClickZoneCommand</c> from XAML and this goes
+    /// through <c>ClearZoneCommand</c>, and both decide nothing here. It is a handler and not a
+    /// <c>MouseBinding</c> because an <c>InputBinding</c> is not in the visual tree and does not
+    /// inherit the <c>DataContext</c>: the marker would arrive as null and every right click would
+    /// clear nothing, quietly.
+    /// </remarks>
+    private void OnZoneRightClicked(object sender, MouseButtonEventArgs e)
+    {
+        if (_map is not null && sender is FrameworkElement { DataContext: MapZoneViewModel zone })
+        {
+            _map.ClearZoneCommand.Execute(zone);
+            e.Handled = true;
+        }
+    }
 }

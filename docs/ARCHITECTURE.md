@@ -7784,3 +7784,999 @@ Pokémon con más huecos que movimientos hay, y uno que no aprende nada al nivel
 `RomTool aprendizajes <a/0/1/3>` relee un mundo ya generado y cuenta las tres cifras de la tabla de
 arriba. Las pruebas dicen que las reglas son correctas; el comando dice que están enchufadas, que
 es otra cosa y hace falta igual.
+
+---
+
+## §102 · Cinco arreglos de pantalla, y una medida que no hizo falta arreglar (2026-09-07)
+
+Cinco cosas que el jugador fue apuntando mirando la aplicación. Cuatro son de presentación; la
+quinta resultó ser una pregunta, y la respuesta se midió en vez de prometerse.
+
+### Los legendarios ya no dependían de la banda
+
+La petición era «mueve todos los legendarios al banner BUENO y que el tier 5 tenga un 20% de ser
+legendario entre todos los que hay». La primera mitad ya se cumplía —los tiers 1 a 4 tienen
+`legendaryChance` a cero y solo BUENO tira el tier 5—, así que lo que la frase pedía de verdad era
+la segunda: **el saco de legendarios se recortaba por banda como cualquier otro**, o sea a los de
+más de 590. Eso dejaba fuera a las aves, los perros, los Tapu, los regis y Type: Null, que **no
+podían salir nunca** sin que nada lo dijera. `GachaService.PoolOf(tier, legendary: true)` devuelve
+ahora todos, y la probabilidad baja de 0,40 a **0,20**.
+
+Lo que hay que cuidar al ampliar así un saco es el respaldo: la salida de emergencia para un saco
+vacío ahora **solo va de legendario a normal**, nunca al revés. Al revés, un tier sin especies
+propias podría dar un legendario en un banner que no los reparte.
+
+Y la prueba que se cayó tenía razón en lo que protegía y no en cómo lo medía: comprobaba que el
+saco de legendarios estuviera **vacío** en los tiers baratos, que es justo lo que se ha cambiado.
+Lo que importa es que un banner barato no pueda dar un legendario, y eso lo sostienen dos hechos
+distintos —su `legendaryChance` es cero y su saco ordinario excluye la bandera—, así que eso es lo
+que fija ahora, más un segundo test con un legendario de 580 en la tabla que **falla si alguien
+vuelve a recortar el saco por banda**.
+
+### La cinta del gacha giraba en los dos sentidos
+
+Era `AutoReverse = true`, y el comentario que lo defendía decía que un cambio de sentido cada dos
+minutos no lo ve nadie. Lo vio el jugador, y además se lee como una avería: una máquina de estas
+gira para un lado. Un bucle sin costura necesita que la tira **repita**, así que la tira de reposo
+repite sus 48 primeras casillas al final y la vuelta al origen cae sobre celdas idénticas.
+
+Repetir la tira **entera** habría valido igual y cuesta el doble de celdas que construir, que es
+tiempo al abrir la pantalla. Y el largo del bucle lo **declara** el ViewModel
+(`GachaViewModel.IdleLoopCells`) en vez de medirlo la vista sobre el ancho de la tira: una tira
+construida para una tirada no es un bucle, y contesta 0.
+
+### Clic derecho en el mapa
+
+Un marcador ciclaba sin marcar → atrapado → muerto → huida, y deshacer una marca puesta por error
+costaba dar la vuelta entera. El clic derecho lo devuelve a **sin marcar** de una. Va por
+`ClearZoneCommand`, el mismo camino de escritura que el clic izquierdo, así que deja su evento
+igual que todo lo demás; y no se escribe nada si ya estaba sin marcar.
+
+Va por manejador y no por `MouseBinding` **por una trampa de WPF**: un `InputBinding` no está en el
+árbol visual y **no hereda el `DataContext`**, así que el `CommandParameter` habría llegado en
+`null` y cada clic derecho no habría limpiado nada, en silencio. Y está **dicho en la leyenda**,
+porque un gesto que no se anuncia no existe.
+
+### Cambiar de pestaña cierra lo que dejaste abierto
+
+`SectionViewModel.ResetState()`, llamada sobre la sección que se **abandona**. Lo que cierra es lo
+que está **abierto** o **armado**; lo que no toca es el trabajo de alguien:
+
+| Sección | Qué cierra | Qué respeta |
+|---|---|---|
+| GACHA | la lista de especies de un tier | la tarjeta del resultado: es lo que salió |
+| TIENDA | vuelve a la pestaña COMBATE | — |
+| MANTENIMIENTO | los dos contadores de «mirar», que desarman los botones que escriben | no toca nada mientras está trabajando |
+| VISOR | la ficha abierta | **no cierra nada si hay EV editados sin guardar** |
+
+Ese último es el que importa: tirar una edición a medias porque se pulsó otra pestaña sería un
+cambio de estado silencioso, que es la regla 4. El resto de secciones heredan un `ResetState` vacío
+a propósito — cada una sabe cuál de su estado es un panel y cuál es de alguien.
+
+### Los EV de los enemigos: ya estaban como el cartucho, y ahora está medido
+
+La petición era dejarlos por defecto. **Nada del randomizador los escribía**, pero eso es una
+afirmación sobre el código y lo que interesa es el mundo que se está jugando, así que se midió: en
+el trpoke7 los EV son los bytes **0x02-0x07** —anclado en `TrainerPoke7` de pk3DS, donde 0x00 es
+género y habilidad, 0x01 la naturaleza y 0x08 los IV empaquetados—, y `RomTool trainers` los
+compara ahora contra la vanilla uno a uno. **0 de 653 entrenadores** en el mod generado y **0 de
+653 en el instalado**. Hay además un test que pasa cada escritor de la tabla por una entrada y
+exige que los seis bytes no se muevan, porque «no los escribe nadie» es cierto hasta que deja de
+serlo y un enemigo entrenado a 252 en Velocidad no se nota jugando.
+
+De paso, `trainers` acepta ahora **una ruta** además de una seed, como `quien-lleva` y `entrenador`
+del §85, o sea que puede repasar el mod **instalado** y no solo lo recién generado. Y con eso salió
+algo que no se buscaba: el mod instalado lleva **tres Pokémon sin evolucionar** por encima del
+corte de la sexta prueba —Tangela nivel 60, Aipom 67 y Quaxwell 63—, y los tres son **AÑADIDOS**,
+o sea el Pokémon extra del rol. Es exactamente el segundo agujero del §85, y el mundo instalado se
+generó antes de aquel arreglo: lo generado hoy da 0. Queda dicho y no tocado, porque cambiarlo es
+reinstalar el mod y eso es del jugador.
+
+
+---
+
+## §103 · El gacha: el fallo que metí ayer, un buscador y la tabla de la competición (2026-09-07)
+
+### Los legendarios salían en los cinco tiers, y era mío
+
+El §102 amplió el saco de legendarios para que dejara de recortarse por banda. Lo que no miró es
+que **la lista de «quién puede salir» pregunta por tier**, así que `PoolOf(tier, legendary: true)`
+le devolvía **todos los legendarios a los cinco**. El jugador abría el Tier 1 y veía a Mewtwo.
+
+Ninguna tirada repartió uno de más —la probabilidad de los tiers 1 a 4 es cero y eso no se tocó—,
+o sea que el fallo era de **lo que la pantalla decía**, que en un gacha es casi peor: la lista
+existe justamente para que el jugador sepa qué compra. La condición que faltaba no es «si es el
+tier 5» sino **«si este tier reparte legendarios»**, `LegendaryChance > 0`, que es el mismo hecho
+dicho donde no hay que acordarse de mantenerlo. Y la probabilidad vuelve a **0,40**.
+
+La forma del error merece quedar escrita porque es de las que no fallan: se amplió un saco mirando
+**quién lo consume para tirar** y no **quién lo consume para enseñarlo**. Los dos llamaban a la
+misma función, y solo uno de los dos pasaba por la probabilidad.
+
+Dos pruebas nuevas, y la segunda es la que importa: una fija que el saco de legendarios de un tier
+que no los reparte está **vacío**, y otra mira el **fichero que se reparte** y exige que haya
+exactamente **un tier** con probabilidad por encima de cero y **un solo banner** cuyas
+probabilidades lo alcancen. «Los legendarios solo salen del BUENO» se apoyaba en esos dos hechos y
+ninguno estaba escrito en ningún sitio: bastaba editar un porcentaje de `Data/gacha.json` para
+repartirlos por el banner barato sin que nada se quejara.
+
+### La lista, en condiciones
+
+Ocupaba el hueco de abajo y el Tier 5 salía en dos filas con barra de desplazamiento. Ahora **cubre
+también el carrete y la tarjeta del resultado** —con la lista abierta no se está tirando, así que
+ese sitio no lo usa nadie— y lleva **buscador**, con la misma forma que el de la tienda: una
+segunda colección rellenada a mano en vez de un `ICollectionView`, que tocado fuera del hilo de UI
+tumba la ventana (§62). Se ignoran mayúsculas **y acentos**, por la misma razón que allí: con el
+mod de expansión la lista mezcla el español del cartucho con el inglés del mod.
+
+La cuenta se dice al lado (`163 de 240` mientras se filtra, `240 Pokémon` cuando no), y abrir otro
+tier **borra el filtro**: encontrarse un tier ya recortado por lo que se buscó en el anterior se
+leería como que ese tier tiene cuatro Pokémon.
+
+Y por sexta vez, la trampa del §74: `Style` puesto **como atributo y como `<TextBlock.Style>`** es
+error de compilación. Van seis.
+
+### Lo que da cada prueba
+
+Catorce filas en dos columnas bajo los banners, sacadas de `Data/grants.json` y no escritas en el
+XAML, con las tiradas en el color del tier que ese banner reparte más —el mismo que ya usan la
+barra de la tarjeta y los portales, para que POCHO sea del mismo color en los tres sitios—.
+
+Lo conseguido va marcado con un punto y lo que falta, apagado. Se marca y **no se quita**, porque
+la pregunta que la tabla contesta es «¿gasto puntos ahora o espero a la prueba que viene?», y para
+eso hacen falta las que faltan tanto como las que ya pagaron. Qué está conseguido sale de
+`CreditService.ReachedAsync`, **no de que la pantalla pregunte a los logros por su cuenta**:
+`EarnedAsync` los suma y pierde de cuál vino cada tirada, que está bien para un total y no sirve
+para una lista, y dos sitios decidiendo qué cuenta como conseguido acabarían discrepando.
+
+Detalle que solo se ve pensando en la ventana pequeña: la fila es `Auto`, así que sin tope la tabla
+**empuja el botón de TIRAR fuera de la pantalla**. Va con `MaxHeight` y barra: que la tabla se
+desplace es un incordio, que no se vea el botón de tirar es una pantalla rota.
+
+**No está visto en la aplicación**: se comprobó que compila, que las 831 pruebas pasan y que las
+veinte claves `StaticResource` que usa existen en el tema, que es lo que se puede comprobar sin
+abrirla.
+
+
+---
+
+## §104 · Cómo reparte el gacha de la referencia, medido (2026-09-07)
+
+El jugador preguntó si en BxnnyLocke salen **primeras evoluciones** —si un tier 5 puede dar Gible,
+Dratini o Axew tomando como criterio el total base de la **forma final**—. Se ha medido, y la
+respuesta es **sí, y es la regla central de su gacha**.
+
+Nada de esto se copia. Se leen sus **recursos de datos** y se traza **qué llama** su código, que es
+lo que la norma de `Locke/` permite: interoperar y aprender. Ni una línea suya entra aquí.
+
+### Los pools son líneas evolutivas, no Pokémon
+
+Seis recursos embebidos, `gachaPools.pool_1.txt` … `pool_6.txt`. Cada renglón es una **línea
+completa**, por etapas, y una etapa puede tener varias ramas:
+
+```
+[[147], [148], [149]]                  Dratini  -> Dragonair -> Dragonite
+[[265], [266, 268], [267, 269]]        Wurmple  -> Silcoon/Cascoon -> Beautifly/Dustox
+[[83]]                                 Farfetch'd, que no evoluciona
+```
+
+Cruzados con nuestro `Data/species.json`, el criterio de reparto salta a la vista, y es el de la
+**forma final**:
+
+| pool | líneas | total base de la FORMA FINAL | total base de la PRIMERA |
+|---|---|---|---|
+| 1 | 17 | 175-400 | 175-380 |
+| 2 | 178 | 236-490 | 180-490 |
+| 3 | 97 | 494-525 | 198-517 |
+| 4 | 45 | 528-567 | 200-535 |
+| 5 | 8 | **600 clavado** | **300 clavado** |
+| 6 | 51 | 540-600, los 51 legendarios | 420-600 |
+
+El pool 5 son **exactamente los ocho pseudolegendarios**: Dratini, Larvitar, Bagon, Beldum, Gible,
+Deino, Goomy y Jangmo-o. Axew **no** está ahí sino en el 4, porque su línea acaba en Haxorus (540)
+y no en 600 — o sea que la intuición del jugador era correcta en la forma y se pasaba por una
+especie.
+
+### Qué etapa te entrega: depende de por dónde vas
+
+Trazando `selectPokemonID`, el orden es: coger la pool del tier filtrada por rol, elegir **una
+línea** al azar, y después elegir **la etapa** con un dado de 100 contra dos porcentajes que salen
+de un `switch` sobre **cuántas medallas Z llevas**. La etapa se recorta con `Math.Min(etapa,
+etapas - 1)`, así que una línea de dos formas nunca se sale de su rango y Farfetch'd siempre es
+Farfetch'd. Dentro de la etapa, si hay ramas, se sortea entre ellas.
+
+| Medallas Z | 1ª forma | 2ª forma | forma final |
+|---|---|---|---|
+| 0 | **100 %** | 0 % | 0 % |
+| 1 | 97 % | 3 % | 0 % |
+| 2 | 94 % | 6 % | 0 % |
+| 3 | 90 % | 9 % | 1 % |
+| 4 | 84 % | 12 % | 4 % |
+| 5 | 71 % | 20 % | 9 % |
+| 6 | 67 % | 23 % | 10 % |
+| 7 | 63 % | 26 % | 11 % |
+| 8 | 59 % | 29 % | 12 % |
+| 9 | 55 % | 32 % | 13 % |
+| 10 | 51 % | 35 % | 14 % |
+| 11 | 47 % | 38 % | 15 % |
+| 12 | 35 % | 45 % | 20 % |
+
+O sea: al principio de la partida el gacha da **siempre** la primera forma, y lo que el tier te
+promete es **en qué se va a convertir**. Un tier 5 recién empezado es un Gible, no un Garchomp. Con
+las doce pruebas hechas, un tier 5 es Garchomp una de cada cinco veces.
+
+### En qué se diferencia del nuestro
+
+El nuestro gradúa por el total base de **la especie que entrega**, no de su línea, y entrega esa
+especie y ya está. Consecuencias, dichas sin juicio porque son dos diseños distintos y el segundo
+es el que el jugador eligió:
+
+- Nuestro tier 5 da un Pokémon de 600 **hecho**; el suyo da la semilla de uno.
+- Nuestro tier 1 da cosas que **nunca** van a servir —lo que sale de 400 se queda en 400—; el suyo
+  reparte líneas que acaban en 400, así que su tier bajo también da algo que crece.
+- El suyo escala con el avance de la partida; el nuestro no mira por dónde vas.
+- El suyo necesita una tabla de líneas evolutivas mantenida a mano; el nuestro sale de un rango y
+  por eso sigue valiendo con la ROM randomizada y con el mod de expansión de 1025 especies.
+
+Ese último punto es el que habría que resolver si se quisiera copiar la idea: nosotros **ya
+tenemos** la tabla de evoluciones del cartucho leída (`EvolutionTable`, §69), así que se podría
+graduar por `FinalOf(especie)` sin mantener ninguna lista. **No se ha hecho nada de esto**: la
+pregunta era qué hacen ellos.
+
+
+---
+
+## §105 · El gacha reparte líneas evolutivas (2026-09-07)
+
+A petición del jugador —«hazlo igual que BxnnyLocke, me parece que está más balanceado»—, el motor
+del gacha pasa a hacer lo que el §104 midió: **el tier es la banda del total base de la FORMA FINAL
+de una línea, y lo que te entregan es una de sus etapas, según por dónde vayas**.
+
+### Lo que cambia
+
+Antes: el tier era la banda de la especie entregada. El tier 1 daba cosas de 400 que se quedaban en
+400 para siempre, y el tier 5 daba un 600 hecho. Ahora el **tier 5 son doce familias**:
+
+```
+Dratini 300 -> Dragonair 420 -> Dragonite 600      Gible 300 -> Gabite 410 -> Garchomp 600
+Larvitar 300 -> Pupitar 410 -> Tyranitar 600       Deino 300 -> Zweilous 420 -> Hydreigon 600
+Slakoth 280 -> Vigoroth 440 -> Slaking 670         Goomy 300 -> Sliggoo 452 -> Goodra 600
+Bagon 300 -> Shelgon 420 -> Salamence 600          Jangmo-o 300 -> Hakamo-o 420 -> Kommo-o 600
+Beldum 300 -> Metang 420 -> Metagross 600          Duraludon 535 -> Archaludon 600
+Dreepy 270 -> Drakloak 410 -> Dragapult 600        Frigibax 320 -> Arctibax 423 -> Baxcalibur 600
+```
+
+Y la etapa la decide `etapaPorProgreso` en `Data/gacha.json`, contra las **etapas superadas** de la
+run — la misma cifra de la que sale el cap de nivel (§49), y no una segunda idea de progreso que
+pudiera discrepar—. Con 0 etapas es **siempre** la primera forma; con las doce, 35 / 45 / 20.
+
+### Las tres decisiones que no eran obvias
+
+**El progreso viaja en el evento.** Es el único dato de una tirada que no sale de la seed, así que
+sin él la tirada dejaría de poder recomputarse en cuanto la run superara otra prueba: misma seed,
+mismo número, otro Pokémon, y una auditoría llamaría mentira a una tirada honrada. `RollAsync`
+**exige** el número en vez de tener un valor por defecto de 0, porque un llamante que se lo dejara
+repartiría primeras formas para siempre sin que nada pareciera roto.
+
+**Se clava a la última etapa que la familia tenga**, no se salta. Sin eso, las familias cortas
+rechazarían su parte de las tiradas tardías y lo raro de cada tier caería solo en las líneas
+largas. Farfetch'd siempre es Farfetch'd.
+
+**Los dos dados se tiran siempre**, aunque la familia tenga una sola etapa: si el segundo dado
+dependiera de con qué línea tocó, cambiar la tabla de familias movería el resultado de todas las
+tiradas siguientes.
+
+### El fallo que la medición encontró, y el que salió de arreglarlo
+
+Las líneas salen de `EvolutionTable.Lines()`, leído del cartucho por `RomTool species` — o del mod
+de expansión, si está—. Al comprobar contra los ficheros reales aparecieron **24 especies en dos
+familias**: las formas de Alola tienen línea propia —Rattata de Alola evoluciona a Raticate de
+Alola— y su base es una entrada de **forma**, con índice por encima de las especies. Quedarse solo
+con los ids conocidos dejaba una familia cuya única etapa era **Raticate**, así que el gacha
+entregaba Arcanines y Golems hechos como si fueran primeras etapas, desde un tier barato, sin que
+nada fallara.
+
+Descartar esas familias destapó lo contrario: **diez especies sin familia ninguna** —Obstagoon,
+Sirfetch'd, Basculegion, Clodsire y compañía, que solo evolucionan de una forma regional— y una
+especie sin familia **no puede salir del gacha**. Se les da familia propia de una etapa, que es lo
+que son para el gacha: algo a lo que no se llega subiendo desde ninguna base, igual que un Paradoja
+o un Ditto. Las dos mitades están fijadas con un test **sobre el fichero que se reparte**, no sobre
+un fixture: ninguna especie en dos familias, ninguna en cero.
+
+### Verificado contra los datos reales
+
+553 familias, 114 de tres etapas. Con 0 etapas superadas, **971 de 971** tiradas de tier 5 son
+primera etapa. Con 12, salen 58,9 / 29,9 / 11,2 en vez de 35 / 45 / 20, y **eso es correcto**: el
+40 % de las tiradas de tier 5 son legendarias, casi todas de una sola etapa, así que se clavan en
+la primera. `0,4·100 + 0,6·35 = 61`, y se midió 58,9. Las tres cifras cuadran con esa cuenta.
+
+Diez tiradas seguidas de BUENO con la misma seed, cambiando solo el progreso:
+
+```
+ 0 etapas: Growlithe(350), Ferromole(590), ..., Applin(260), Ferropúas(570)
+12 etapas: Arcanine(555),  Ferromole(590), ..., Flapple(485), Ferropúas(570)
+```
+
+Los Paradoja no se mueven porque no evolucionan; Growlithe y Applin sí.
+
+### En la pantalla
+
+La lista de «quién puede salir» enseña **familias enteras**, con flecha entre etapas, ordenadas por
+dónde acaban. Buscar «Garchomp» encuentra la familia aunque lo que te vayan a dar sea el Gible. La
+banda del portal lleva ahora una flecha delante —`→ 600+`— porque es en lo que ACABA la línea y no
+lo que te dan, y al pie va la otra mitad de la mecánica, que si no es invisible: «Con 3 etapas
+superadas: 90% primera forma · 9% segunda · 1% forma final».
+
+**Nada de esto se ha visto girando**: compila, pasan las 847 pruebas y el motor está verificado
+contra los ficheros reales, pero la pantalla no se ha abierto.
+
+
+---
+
+## §106 · Una muerte que no se contó: la lectura se iba al espejo (2026-09-07)
+
+El jugador siguió jugando y avisó de que a un Pokémon **se lo mataron, PermaLocke no lo detectó y
+pudo curarlo**. El log del día lo confirma por omisión: **cero muertes registradas**, y sí una línea
+de `KeepFallenDownAsync` devolviendo al suelo a un Ursaluna que ya constaba caído.
+
+### El defecto
+
+`AzaharGameStateProvider.Choose` decidía de qué estructura leer el equipo así:
+
+```
+.OrderByDescending(candidate.Party.Count)                    // primero: cuántos se leen
+.ThenBy(esAutoritativa ? 0 : 1)                              // después: cuál es la buena
+```
+
+La cuenta era la clave **principal** y la autoridad un desempate, y eso está al revés. El espejo de
+salto `0x104` es preparación del bloque de partida: el juego lo escribe y **nunca lo lee**, así que
+sus PS van con retraso (§98, §99). Con esa ordenación, cualquier vuelta en la que la estructura
+autoritativa tuviera **un solo hueco** que el lector no aceptara —una estadística de combate fuera
+de rango un instante basta— entregaba la lectura entera al espejo, donde un Pokémon recién caído
+seguía enseñando sus PS de antes. El vigilante decide la muerte con `CurrentHp == 0`, así que no
+veía nada.
+
+Que las lecturas son inestables está **medido en el log del propio jugador**, en las líneas del
+escritor del cap: «corregido y releído en 1 copias», «2 copias», «3», «4», minuto a minuto.
+
+La regla pasa a ser **autoridad primero, cuenta después**, y sale de `Choose` a
+`PartyLayoutLocator.Preferred`, que es una función pura y por tanto se puede fijar con pruebas sin
+juego delante. El coste de preferir la verdad es leer **menos** huecos en esas vueltas, que es la
+forma correcta de equivocarse: un hueco no leído es un hueco no juzgado, y un hueco leído de una
+copia con retraso es una respuesta equivocada dicha con seguridad.
+
+### Y lo que ese arreglo ponía en riesgo
+
+Leer el equipo incompleto más a menudo tiene una víctima: `CheckWipeAsync` cobra **−100** cuando
+«nadie está en pie», y su única guarda era que el equipo no estuviera vacío. Una lectura corta que
+pillara un hueco caído habría cobrado un equipo caído que no ocurrió.
+
+Ahora hace falta ver «nadie en pie» **tres vueltas seguidas** —tres segundos— antes de cobrar. Un
+equipo caído de verdad no es un instante: te manda al Centro Pokémon y sigue caído hasta que curas,
+así que esperar no puede perderse ninguno.
+
+Ese camino **no tenía ni una prueba**, o sea que las 93 de `Rules` en verde no decían nada de él y
+podría haberlo roto entero en silencio. Ahora tiene seis, incluida la que exige que una lectura
+corta de caídos no cueste cien puntos, y está comprobado que **tres de ellas fallan** con la guarda
+puesta a 1.
+
+### Lo que NO está demostrado
+
+Que esto sea lo que le pasó a ese Pokémon. Es un defecto real que produce exactamente ese síntoma,
+pero el enlace estuvo caído casi toda la sesión —conectado de 13:10 a 13:26 y de 13:28 a 13:48, y
+antes «Azahar no responde» desde las 11:06—, así que la muerte pudo caer sencillamente fuera de esa
+ventana. Las dos causas dan el mismo resultado y no hay forma de distinguirlas a posteriori: los PS
+ya están curados. **Nada de esto se ha visto en el juego todavía**, porque Azahar estaba cerrado.
+
+
+---
+
+## §107 · La Unidad Ultra pasa a combate importante, y lo que cuesta regenerar (2026-09-10)
+
+El jugador se topó con un combate de **un solo Pokémon** —un Terapagos a nivel 56— y preguntó si
+estaba bien. Lo estaba: entrenador **498, clase 192 «Unidad Ultra», Miria**, que en la capa base
+lleva **un Poipole a nivel 47** y nada más. Las dos cuentas cuadran —47 × 1,2 = 56, y Poipole 420 →
+Terapagos 450, los dos Ultraente/legendario—, así que el randomizador no le había quitado nada.
+
+Aun así pidió meterlo en los importantes, y así queda: **192 y 193** —Miria y Darius— entran en
+`clasesImportantes`. Es el primer caso en que esa lista crece por **decisión de diseño** y no por
+tapar un fallo, y conviene que esté dicho, porque su firma medida es la de relleno: cuatro
+entrenadores por clase y **un Pokémon como mucho**, justo lo contrario del criterio —pocas
+apariciones, equipos grandes— con el que se cazaron las demás. Van las dos y no solo la de Miria
+porque son el mismo grupo de la historia.
+
+### Lo que cambia de verdad, medido contra el mundo instalado
+
+Regenerado con **la misma seed** del mundo que se juega (`17037260821123107863`) y el mismo rol
+—que hay que pasárselo: sin `--rol`, `RomTool randomize` genera un mundo **sin subir niveles y sin
+Pokémon extra**, y ahí Miria sigue con uno a nivel 47—, de los nueve ficheros del mod solo cambian
+**dos**:
+
+| fichero | |
+|---|---|
+| `a/0/8/3` encuentros salvajes | **idéntico** |
+| `a/0/1/3` aprendizajes, `a/0/1/4` evoluciones, `a/0/1/7` datos, `a/0/1/9`, `Shop.cro`, `a/1/5/9` | **idénticos** |
+| `a/1/0/6` y `a/1/0/7` entrenadores | distintos |
+
+Que los salvajes no se muevan es lo que decide si esto se puede instalar a media partida: las zonas
+del Nuzlocke siguen dando lo mismo.
+
+Dentro de los entrenadores, de 653: **620 idénticos**, **8 que solo crecen** —los cuatro de Miria y
+los cuatro de Darius, exactamente— y **25 con una especie distinta en un hueco que ya existía**. Eso
+último es el §27 otra vez: añadir dos clases consume tiradas de más y **desplaza la corriente** de
+todo lo que viene después, empezando justo en el 499. Repartidos por nivel, 24 de los 25 están entre
+**61 y 84** —contenido por delante de un jugador que va por 56— y solo el 630, de nivel 35, queda
+por detrás.
+
+De rebote, regenerar **arregla los tres sin evolucionar del §102**: el mundo instalado tenía Tangela
+a 60, Aipom a 67 y Quaxwell a 63, los tres como Pokémon añadido, y el regenerado da **817 de nivel
+29 en adelante, 0 sin evolucionar**.
+
+**Verificado releyendo lo generado**, no el informe: `entrenador 498` pasa de un Terapagos a
+Terapagos Nv56 **más un Malamar Nv56**. Y `RomTool clases` ya no lista la 192 ni la 193 entre las
+que faltan, que es la comprobación que el §100 dejó montada precisamente para esto.
+
+**Instalado el mismo dia**, con el jugador viendo antes las 25 tiradas desplazadas. Verificado sobre
+lo INSTALADO y no sobre lo generado: los nueve ficheros coinciden con lo que salio del randomizador,
+Miria lleva Terapagos Nv56 y Malamar Nv56, y el repaso da 0 objetos alterados, 0 EV alterados, 0
+especies prohibidas y 817 de nivel 29 en adelante con 0 sin evolucionar. El mundo anterior **NO** queda guardado: esto se escribió
+creyendo que sí, y es falso -ver la corrección al final del §109-.
+
+Un cabo suelto que conviene tener presente: se regenero desde `RomTool` y no desde la aplicacion, asi
+que **no hay evento `RomRandomized`** de este mundo. El historial sigue diciendo que el ultimo mundo
+es el anterior. No cambia nada jugable -- la configuracion de `shuffleBaseStats` y
+`randomizeAbilities` no se ha tocado, que es lo unico que el §80 lee de ese evento --, pero si se
+quiere que el historial lo refleje, el camino es regenerar desde la seccion RANDOMIZADOR con la
+misma seed y el mismo rol: da los mismos bytes y ademas deja el evento.
+
+
+---
+
+## §108 · Poner EV y que no cambie nada: faltaba la otra mitad (2026-09-10)
+
+El jugador entrenó EV desde la aplicación, entró al juego y **las estadísticas seguían iguales**.
+Tenía razón, y lo que fallaba no era la escritura —los EV llegaban— sino lo que el §51 decidió no
+hacer con ellos.
+
+### El razonamiento viejo era bueno; la frase que lo cerraba, no
+
+`SaveEvTrainer` escribía los seis bytes de EV y **no tocaba las estadísticas guardadas**, con este
+motivo, que sigue siendo correcto: un Pokémon de equipo **almacena** sus estadísticas —uno de caja
+no, se calculan al sacarlo—, y recalcularlas con PKHeX da números falsos, porque PKHeX usa **su**
+tabla de estadísticas base y esta run se juega con `shuffleBaseStats`. Medido en su día: un Kommo-o
+de 168 PS volvía con 151.
+
+Lo que no se sostenía era la frase siguiente: «dejarlas quietas no cuesta nada, la estadística se
+pone al día cuando el juego recalcule». Eso es verdad de un Pokémon que gana EV **combatiendo**.
+Aquí no: escribir el fichero de partida no hace que el juego recalcule nada, así que la estadística
+espera a una subida de nivel — y **con el cap de nivel puesto no hay subida de nivel**. El equipo
+estaba clavado en 59 con el cap en 59, o sea que no se habrían puesto al día nunca. El comentario
+predecía el fallo si se leía con cuidado.
+
+### El arreglo: las bases del mundo instalado, no las de PKHeX
+
+`InstalledWorld` ya leía la tabla `personal` del mod instalado para las curvas de experiencia (§91),
+así que las bases estaban a un paso. Van a `WorldLimits.BaseStats`, y `StatCalculator` calcula las
+seis. Si el mundo **no** publica su tabla, no se toca nada y **el mensaje lo dice**: eso es lo que
+faltaba antes, porque el silencio se leía como éxito.
+
+Dos cuidados que no son adorno. Los PS actuales siguen al máximo hacia arriba, como hace el juego al
+subir de nivel, **pero un Pokémon a cero se queda a cero**: en este proyecto cero PS *es* la muerte
+(§98), y curarlo desde la pantalla de EV sería deshacer una muerte por la puerta de atrás. Y
+Shedinja lleva siempre 1 PS porque el juego lo fuerza por especie; sin esa excepción, entrenarlo
+habría escrito un Shedinja de setenta PS.
+
+### El orden, dos veces, y quién cazó la segunda
+
+La tabla `personal` guarda **PS, Ataque, Defensa, VELOCIDAD, At. Esp., Def. Esp.**, no el orden de
+la ficha. Comparar sin reordenar hace que PS y Ataque cuadren y las otras tres no, que se lee
+exactamente como un fallo que no existe — pasó al diagnosticar, y por poco da el diagnóstico al
+revés.
+
+Y la **naturaleza usa ese mismo orden interno**: `sube = naturaleza / 5`, `baja = naturaleza % 5`
+sobre Ataque, Defensa, Velocidad, At. Esp., Def. Esp. Eso entró mal y **los tests pasaron**, porque
+el que había usaba Huraña —sube Ataque, baja Defensa—, y esos dos caen en el mismo sitio en los dos
+órdenes. Lo cazó comprobar la calculadora contra **los seis Pokémon de la partida real**, cuyas
+estadísticas las calculó el juego y por tanto son correctas por definición: **25 de 36**, y los once
+fallos eran todos At. Esp., Def. Esp. o Velocidad, en los cinco Pokémon de naturaleza no neutra.
+Corregido el mapeo: **36 de 36**, seis especies y cinco naturalezas, con las bases barajadas. Hay
+ahora un test con la naturaleza 20, donde los dos órdenes discrepan, y está comprobado que **falla**
+con el mapeo viejo.
+
+Es el §65 otra vez y en su mejor versión: la verificación de un cálculo no puede ser el mismo
+cálculo. El oráculo bueno estaba delante —una partida llena de números que el juego ya había
+resuelto— y es lo único que separó «los tests pasan» de «está bien».
+
+### Lo que no hace falta reparar
+
+Los seis del equipo **ya están cuadrados**: sus estadísticas actuales coinciden con sus EV, porque
+en algún momento subieron de nivel y el juego recalculó. O sea que el fallo costó tiempo y confusión,
+no números malos en la partida.
+
+### Verificado de punta a punta, sobre una copia
+
+No solo la calculadora: el camino real de escritura contra una COPIA de la partida real, con la de
+verdad comprobada por hash antes y después y sin moverse. A un Salamence se le dio la vuelta al
+reparto -de 252 en Ataque y Velocidad a 252 en At. Esp. y Def. Esp.- y las seis estadísticas se
+movieron exactamente donde tenían que moverse:
+
+```
+Atk     197 -> 163    -34      AtEsp   153 -> 190    +37
+Def     118 -> 118      0      DefEsp  128 -> 169    +41
+PS      199 -> 199      0      Vel     178 -> 141    -37
+```
+
+La Defensa pasó de 5 EV a 6 y no se movió, que es correcto: los EV cuentan de cuatro en cuatro. Y
+los PS actuales se quedaron en 199/199.
+
+**Lo que sigue sin verse es la pantalla**: el arreglo está probado por debajo, pero nadie ha pulsado
+el botón de la aplicación con él dentro.
+
+
+---
+
+## §109 · La fusión con Lunala, y una regla que no mueve el mundo (2026-09-13)
+
+El jugador llegó al combate de Necrozma **Alas del Alba** —la fusión con Lunala, la escena en torno a
+la que gira Ultra Luna— y le salió un **Swampert a nivel 60**. No era un fallo: la fila 159 de la
+tabla de estáticos (Necrozma forma 2, nivel 50 de cartucho) estaba **a propósito** en sorteo normal.
+El comentario de `staticOverrides` lo decía —«las formas 1 y 2 son los combates de la historia y se
+quedan con el sorteo normal»— pero no apuntaba por qué. Solo Ultra Necrozma, la fila 160, tenía regla
+de mega, y en el mundo instalado es un **Mega Salamence a nivel 72**, como debe. Se añaden reglas de
+mega para las formas 1 y 2.
+
+### Añadirla como las demás habría sorteado otra vez el mundo entero
+
+Regenerado con la seed y el rol de la run, y comparado fila a fila con el mundo instalado:
+**249 de 252 estáticos y los 7 intercambios cambiaban**, Dominantes y legendarios todavía por delante
+del jugador incluidos. Por arreglar dos filas.
+
+La causa estaba en cómo se aplican: las reglas corren **antes** del sorteo normal y con **su misma
+corriente aleatoria**. Cada mega gasta dos tiradas —especie y forma— y además saca su fila del
+sorteo, que por tanto también gasta menos. Todo lo que viene detrás se corre unos puestos, y se ve en
+la comparación: la misma lista de especies desplazada filas abajo. Es el §27 otra vez.
+
+### `independentDraw`
+
+Una regla con `"independentDraw": true` se **busca** en la tabla del cartucho antes de que nada
+escriba —después del sorteo, la fila 159 ya es otra especie y no casaría—, deja que el sorteo normal
+pase por su fila **gastando exactamente lo que gastaba**, y **se aplica después**, con una corriente
+derivada de la fila (`static-override-<fila>`). Derivar no avanza la corriente madre —sale de la
+semilla, no del estado—, así que el resto del mundo sale **idéntico byte a byte**. Medido con las dos
+fusiones marcadas así: **2 de 252 estáticos, 0 regalos, 0 intercambios**, y los otros ocho ficheros
+del mod iguales. La fila 159 pasa a **Mega Ampharos a nivel 60**; la 158, la escena de Ultra Sol, a
+Mega Charizard X, que en Ultra Luna no se ve nunca.
+
+No es lo que hacen por defecto las reglas, y a propósito: las cuatro que ya había generaron mundos que
+se están jugando, y cambiarles la forma de sortear los volvería a sortear igual. Las reglas nuevas
+sobre un mundo instalado lo quieren encendido.
+
+### Dos tropiezos del día, dichos
+
+Una **comilla dentro de un comentario** dejó el fichero entero ilegible, y la comparación que siguió
+salió «igual de mal que antes» porque comparaba la salida **de la generación anterior**: el
+randomizador había reventado y la carpeta no se había tocado. Se borra la salida antes de regenerar,
+y hay test que carga el fichero que se reparte. Es el §65 con otro disfraz: una comparación que no
+comprueba que lo comparado sea nuevo puede contestar con toda seguridad sobre algo viejo.
+
+**No está instalado**: Azahar estaba abierto. Y ojo con lo que vale ya: es un combate de la historia
+que se juega una vez, así que solo sirve si el jugador **aún no lo ha guardado superado**.
+
+
+### Instalado, y una corrección que afecta a la red de seguridad
+
+Instalado con Azahar cerrado **y el jugador sin haber guardado** el combate. Verificado sobre lo
+instalado: los nueve ficheros coinciden byte a byte con la generación medida antes, que difería del
+mundo que se jugaba **solo en las filas 158 y 159**. La fila 159 es Mega Ampharos.
+
+Y al comprobarlo salió algo que el §107 afirmó mal: **reinstalar NO guarda el mundo anterior**.
+`ModInstaller.Install` copia encima fichero a fichero y no aparta nada. Lo que sí se aparta es la
+**salida del randomizador** (`Randomized/…` → `permalocke-mod-anterior` en la raíz del repositorio,
+vía `LayeredFsMod.KeepAside`), que es otra cosa. La carpeta `Azahar\load\permalocke-mod-anterior` es
+del **21 de agosto**, de un instalador anterior al de la capa base: la promesa del §42 dejó de
+cumplirse cuando se reescribió la instalación para el mod de expansión, y nadie lo notó porque nunca
+hubo que volver atrás. El §107 la repitió sin mirar la fecha. Esta vez no costó nada —la generación
+previa sí estaba apartada y es idéntica a lo instalado—, pero la próxima reinstalación sin comparar
+antes no tendría forma de deshacerse.
+
+
+---
+
+## §110 · Instalar ya no destruye el mundo anterior, y el `code.bin` que se quedaba atrás (2026-09-13)
+
+### Un solo instalador, con copia
+
+`ModInstaller.Install` y el nuevo `ModInstaller.SwitchToBase` —el cambio al modo combate— **copian
+aparte, antes de escribir nada, todo lo que van a pisar y nadie podría reconstruir**, y releen la
+copia byte a byte. Si la copia no se puede hacer o no se lee igual, **no se instala nada**: la regla
+de `SaveEraser` (§67), sin copia no se destruye.
+
+Qué cuenta como «se perdería»: el fichero existe, lo que acaba ahí es distinto —por hash en lo
+randomizado, que es pequeño y cuyas fechas siempre se mueven; por longitud y fecha en la capa base,
+donde hashear 2,5 GB no enseña nada—, y **no es igual que la copia del propio mod base**, que sigue en
+`Expansion/`. Esto último no es por ahorrar sitio: sin ello, volver del modo combate gastaría una de
+las tres copias en guardar el mod sin randomizar y echaría fuera un mundo de verdad. Reinstalar el
+mismo mundo tampoco hace copia, por lo mismo.
+
+Van a `Azahar\load\permalocke-copias\<fecha>`, **al lado** de `mods` y no dentro —ahí lo que se llame
+como un title id es un mod que el emulador cargaría—, con un `LEEME.txt` que dice cómo volver y qué
+ficheros hay. Se guardan **tres**, y lo viejo se borra solo cuando la copia nueva ya está comprobada.
+
+La carpeta `load\permalocke-mod-anterior` del 21 de agosto **no se ha tocado**: es de un mundo viejo,
+es del jugador y no hay motivo para borrarla sin preguntar.
+
+Nueve pruebas, y está comprobado que **cinco fallan** con la copia desactivada.
+
+### Tres instaladores, y el tercero se dejaba el ejecutable
+
+`ModInstaller` existía precisamente porque hubo dos copias de «qué ficheros ganan» y su comentario
+avisaba de que acabarían discrepando. Había una **tercera**, a mano, en `RomTool randomize --install`,
+y discrepaba: ponía la capa base y el `romfs` generado pero **no el `exefs` generado**. Ese `code.bin`
+es el del mod con la tabla de MT y la de tutores barajadas, así que las dos instalaciones hechas desde
+ahí (§107 y §109) dejaron el juego del jugador con **las MT y los tutores del mod de expansión** en vez
+de los de su mundo. Medido: instalado `cd9c45…`, igual que `Expansion/exefs/code.bin`; generado
+`17e4d4…`. Nada falló y el informe de la generación seguía diciendo «100 de las 100 MT enseñan otro
+movimiento».
+
+Por qué no se vio al verificar: las comparaciones de esos dos días recorrían **la carpeta `romfs`** de
+lo generado contra lo instalado, fichero a fichero, y el `code.bin` vive en `exefs`. Una comprobación
+exhaustiva de la mitad de la instalación. `RomTool` pasa ahora por `ModInstaller.Install`, y hay una
+prueba que exige que el `code.bin` generado gane al del mod base.
+
+
+**Reparado el mismo día**, con Azahar y la aplicación cerrados y a condición del jugador de que no
+cambiara qué MT puede aprender cada Pokémon. Esa compatibilidad son los bits de `a/0/1/7`, no el
+`code.bin`, y se comprobó antes y después: hash de los 37 ficheros instalados, y **cambia exactamente
+uno**, `exefs/code.bin`, de `cd9c45…` (el del mod) a `17e4d4…` (el generado). `a/0/1/7` sigue en
+`206eb106…`. No hizo copia, y es correcto: lo que había en `exefs` era idéntico al mod base, que sigue
+en `Expansion/`, y el resto era igual que lo que se iba a escribir.
+
+
+---
+
+## §111 · Ferropaladín contra la fusión, y un diagnóstico equivocado sobre Okidogi (2026-09-13)
+
+El jugador perdió a Ferropaladín contra Necrozma Alas del Alba y la app no lo vio. En el mismo
+mensaje contó que Okidogi, en su equipo, figuraba como «muerto de antes».
+
+### Lo de Okidogi era una muerte real, y lo diagnostiqué al revés
+
+Las copias de partida daban Okidogi a **191/191** a las 21:31:39 del día 10, antes de abrir el juego,
+y la muerte se registró a las 21:39:46. Un segundo después la app tuvo que barrer la memoria entera,
+encontró 34 copias del equipo y en una de ellas Okidogi estaba a 191. De ahí saqué que la muerte había
+salido de **una sola lectura con la partida a medio cargar**, se lo dije al jugador como hecho medido,
+añadí una regla de **tres lecturas seguidas** y un botón para revocar la muerte.
+
+Era falso. **La app llevaba conectada desde las 21:31:51**, ocho minutos antes, y el jugador confirmó
+que a Okidogi lo mataron en un combate y lo dejó en el equipo. Esa conexión no la vi porque miré el
+log con `head -30`, que cortó justo antes. El 191 posterior era una **copia atrasada** de la memoria,
+no la verdad —la misma clase de copia que el §106 ya había cazado enseñando PS viejos—.
+
+Y la regla nueva era dañina por eso mismo: con tres lecturas seguidas, esa copia atrasada a 191 habría
+**reiniciado la cuenta** y la muerte real podría no haberse registrado nunca. Una lectura atrasada que
+enseña vivo a un muerto está medida; una que enseñe muerto a un vivo, no. **Se ha quitado**, con sus
+pruebas, y el vigilante vuelve a registrar con una lectura a cero.
+
+Es el §55 dos veces en un mismo día: una medida parcial —aquí, una ventana de log recortada— sosteniendo
+una regla que gobierna todas las muertes. Y la verificación que la habría cazado estaba a una línea: buscar
+un «Conectado» *antes* de la muerte en vez de dar por hecho que no lo había.
+
+### Lo que sí queda
+
+**MARCAR COMO CAÍDO no funcionaba**: su desplegable solo se rellenaba después de marcar uno, cosa
+imposible con la lista vacía. Las listas se cargan ahora al abrir la pantalla. Es la herramienta para
+Ferropaladín: el combate acabó a las 00:29:34, la hora a la que el juego curó al equipo —y le devolvió
+los PS a Okidogi, que la app volvió a tirar al suelo, como debe—, y ningún sondeo alcanzó a ver el cero.
+Ese caso sigue sin solución automática.
+
+**DESHACER UNA MUERTE** (`DeathRevoked`, al final del enum porque el tipo se guarda como número) se
+queda, pero con su motivo real: deshacer una marca a mano sobre el Pokémon equivocado, que cobra puntos
+y lo deja a 0 PS y no tenía vuelta atrás. La muerte se queda en el historial, la revocación se añade al
+lado con su id, y se devuelve exactamente lo que se cobró. Cuatro pruebas.
+
+
+---
+
+## §112 · Fuera el recuadro verde de HOME (2026-09-13)
+
+El §68 puso en HOME, en verde, «lo último que la app ha hecho sola»: premio entregado, caídos marcados
+al cerrar el emulador y equipo caído. Desde que existen los avisos flotantes (`PlayNotifications`)
+esas tres cosas se decían dos veces, y la de HOME además se quedaba puesta hasta el siguiente aviso,
+contando algo de hace una hora como si acabara de pasar. A petición del jugador se quita el recuadro
+y su propiedad; no se pierde nada, porque los cuatro eventos —muerte, caídos marcados, equipo caído y
+premio— siguen saliendo como aviso. El recuadro rojo de problemas se queda: eso no es algo que haya
+pasado sino algo que está mal ahora.
+
+---
+
+## §113 · «X HA MUERTO», encima del juego (2026-09-13)
+
+A petición del jugador, una muerte ya no es solo un aviso de esquina. **El juego se congela en el
+fotograma y se queda en gris**, entran dos franjas negras y del borde de la de arriba **bajan hilos de
+sangre**. Lo único con color es el Pokémon: da un golpe —tres destellos en blanco con su temblor y la
+pantalla teñida de rojo un instante— y **le sale sangre de su propio cuerpo**, que cae y se queda
+donde toca el suelo; se sostiene un momento y **se hunde por debajo de su suelo** en ese charco, que
+es como se debilita un Pokémon en los juegos. Debajo entra **«MOTE HA MUERTO»** —o la especie si no
+tiene mote— **a lo Souls**: rojo, con serifa, espaciado, sobre una banda oscura, apareciendo despacio
+y creciendo un poco mientras se lee. Debajo, pequeño y en gris, lo que ha costado. **Sin nivel.**
+
+**La sangre es pixel art, en la rejilla del Pokémon** (`PixelBlood`). La primera versión de la sangre
+eran elipses suaves, gotas repartidas y chorreones con la punta redonda, y el jugador la descartó por
+genérica: es la sangre de plantilla, y además chocaba con lo único auténtico de la pantalla, un sprite
+de píxeles del cartucho. Ahora el sprite se dibuja siempre a **7 unidades por píxel** —el icono más
+grande del cartucho mide 40×30, medido sobre los 1508— en posiciones múltiplo de 7, y la sangre es un
+mapa de bits de **una celda por píxel del Pokémon** puesto encima de esa misma rejilla y ampliado sin
+suavizar: tres rojos y un brillo, sin degradados. Y con comportamiento en vez de adorno: las gotas
+**salen de los píxeles opacos del sprite**, vuelan con gravedad y una celda de estela, se estiran
+cayendo rápido, **se quedan donde tocan el suelo**; el charco crece en tres filas con el borde
+irregular y algún bulto, y al hundirse el Pokémon salta sangre por los lados. El temblor mueve una
+celda y el hundimiento baja celda a celda, para que sprite y sangre no se desalineen nunca. Los hilos
+de arriba bajan a trompicones —se paran, arrancan, les cuesta más cuanto más largos— y **sueltan gotas**
+que caen. Al irse la tarjeta, su sangre **se deshace celda a celda**, cada una en su momento fijo; la de
+los hilos es de la escena y se queda. Se simula en `CompositionTarget.Rendering` con el reloj de la
+ventana, el mismo que marca los tiempos del golpe y del hundimiento. Nada es un recurso ajeno y su azar
+no decide nada.
+
+La letra es Palatino Linotype, que trae Windows, con Book Antiqua y Georgia detrás; el espaciado se hace
+con espacios finos, porque el texto de WPF no tiene propiedad para eso.
+
+**Una tarjeta por muerte, en orden.** Las muertes se leen casi siempre al acabar el combate, todas
+juntas, y un «han muerto tres» se comería justo lo que la pantalla quiere dar. La escena se abre
+**una vez**, las muertes pasan por ella una detrás de otra con su nombre y su sprite, y si el equipo
+entero cae va «EQUIPO CAÍDO» al final (el monitor anuncia las muertes antes que el equipo caído).
+
+**Tres versiones el mismo día.** La primera se descartó por parecer genérica: lápida con «R.I.P.»,
+viñeta roja, título grande con brillo rojo y todo centrado. La segunda sacó todo del propio juego —el
+fotograma, el sprite, el desmayo— y escribía el nombre letra a letra en la franja de abajo, con los
+puntos en violeta. Gustó, y el jugador pidió dos retoques que son la tercera: sangre, y el nombre a lo
+Souls en rojo debajo del sprite. Los puntos pasan a gris porque el violeta al lado del rojo desentona.
+
+Piezas:
+
+- `DeathCeremony` recibe `DeathNotice(Name, Species, Penalty)` y hace la cola: abre la escena, pasa
+  las tarjetas y la cierra; una muerte que llega mientras se cierra la vuelve a abrir. No decide ni
+  registra nada: se entera de muertes **ya escritas**, y si falla cuesta la animación y nada más.
+- `DeathWindow` es una ventana transparente, siempre encima y **intocable**
+  (`WS_EX_TRANSPARENT | NOACTIVATE | TOOLWINDOW`, puesto antes del primer `Show`): no se lleva el foco
+  ni los clics. Se coloca sobre el **área cliente de Azahar** y la sigue cada 100 ms; sin Azahar,
+  sobre PermaLocke; sin ninguna de las dos, sobre el área de trabajo.
+- **Con la app escondida en la pestaña del borde también sale**, y está medido: con Azahar abierto
+  PermaLocke se minimiza sola, y vigilando el estado de sus ventanas cada 100 ms durante un ensayo
+  entero la principal sigue minimizada antes, durante y después. La escena no depende de la ventana
+  principal.
+- El fotograma es `OverlayWindows.Capture`: una copia GDI de lo que hay en pantalla en ese sitio,
+  tomada **antes** de enseñarse y solo en memoria. Sin `CAPTUREBLT`, a propósito: esa bandera es la
+  que mete las ventanas por capas en la copia, y así un aviso que esté en pantalla no se queda
+  congelado dentro de la foto. Como es lo que hay debajo, aparecer no se nota. Si no se puede leer,
+  un velo oscuro hace de fondo.
+- El nombre sale del equipo **vivo** (el mote puede haber cambiado desde el registro), y los puntos de
+  lo que **cobró de verdad** `RecordDeathAsync`, que ahora devuelve el `PenaltyResult`. De paso el
+  aviso de esquina deja de decir «−25 puntos» escrito a mano, que era falso para el CAGONETA.
+- Las muertes marcadas a mano en MANTENIMIENTO también tienen tarjeta (`MaintenanceService.MarkedDead`).
+
+**Alcance:** al escribirse esto salía al acabar el combate, que es cuando PermaLocke veía la muerte. Desde
+el §114 bis sale **en el momento en que la barra de vida se vacía**, porque la muerte se lee de las tablas
+del combate; al acabar solo sale si el combate no se pudo leer.
+
+**Ensayo:** `PermaLocke.App.exe --ensayar-muerte` reproduce las tarjetas de las **tres últimas
+muertes ya registradas**, con lo que costó cada una leído de su propio evento de penalización, sin
+escribir nada. Existe porque la animación solo se ve cuando algo muere.
+
+Tres trampas de WPF, las tres vistas **solo en capturas del ensayo** y ninguna con error ni log:
+
+1. **Animar un `Transform` con `Storyboard.SetTarget` directo no se aplicaba**: el título se quedaba
+   a escala 1,35 —mayúsculas de 86 px donde tocaban 64— y se salía de la pantalla. Se apunta siempre
+   al elemento con la ruta `(UIElement.RenderTransform).(ScaleTransform.ScaleX)`.
+2. **`Storyboard.Remove` no actúa en el momento**: se aplica en el siguiente fotograma. Retirando la
+   tarjeta anterior antes de empezar la siguiente, **solo se veía la primera muerte**: la retirada
+   llegaba cuando ya había arrancado la segunda y le quitaba también sus animaciones. Su reloj corría
+   y la escena se cerraba a su hora, pero no se movía nada. Ahora **nada se retira**: cada propiedad
+   es una pista que empieza en el instante cero con su valor de salida (`Track`), y sustituye a la
+   anterior en ese mismo instante. Eso cierra también la trampa de siempre de las animaciones con
+   retraso, que enseñan el valor base hasta su turno.
+3. `TaskCompletionSource` corre sus continuaciones **dentro** del `Completed` del storyboard; va con
+   `RunContinuationsAsynchronously` para que la siguiente tarjeta no arranque ahí dentro.
+4. **La duración de un storyboard corta a sus hijos.** Los chorreones de la primera sangre iban en la
+   animación de apertura, de 700 ms, y empezaban a bajar después: el primer ensayo con sangre no tenía
+   ni uno. La sangre de ahora no usa storyboards: es una simulación por fotograma.
+
+Un `Viewbox` `DownOnly` encoge un mote muy ancho a una línea en vez de partirlo en dos frases.
+
+---
+
+## §114 · Los PS durante el combate: dónde viven, medido en un combate real (2026-09-13)
+
+Una muerte solo se veía al acabar el combate porque la estructura del equipo que el juego lee fuera de
+combate (§99, `0x1E4 + 0x158`) **no se toca durante el combate**: medido, Ferrocuello siguió en 176
+mientras la pantalla decía 174, y pasó a 177/179 en el segundo en que terminó el anterior. El combate
+lleva su propia copia, y esa es la que necesita una muerte en tiempo real.
+
+### Primero, lo que costó: un emulador congelado y progreso sin guardar
+
+La primera grabadora buscaba cada cuatro segundos en `0x08000000-0x0A000000` y `0x30000000-0x34000000`.
+**Del montón solo existen los primeros 4 MB**: de `0x08425000` a `0x0A000000` no hay nada, el emulador
+apunta un error por cada página que no existe, y el log llegó a su tope de 100 MB en minutos. Además
+el emulador **no emula mientras busca**. A la segunda tanda Azahar se quedó congelado —medido: dos
+lecturas de un búfer que cambiaba varias veces por segundo daban lo mismo— y el jugador perdió unos
+diez minutos sin guardar. Su último guardado, de la 01:06, quedó intacto.
+
+Se intentó rescatar ese progreso de la RAM (`Probe --rescate`, que solo lee y escribe aparte): la
+partida no vive en memoria como un bloque contiguo sino en trozos, y recomponer un fichero de ahí no
+se hizo, porque un trozo mal puesto estropearía la partida entera por diez minutos de juego.
+
+**La regla que sale:** una búsqueda contra el emulador del jugador es una pausa del juego. Solo en
+memoria que existe —el mapa se leyó del propio log del congelamiento, sin volver a sondear—, y solo
+cuando el juego está parado esperando: **el menú de ataques espera todo lo que haga falta**.
+
+### Cómo se encontró
+
+`Probe --combate buscar | filtrar | vigilar`, en el menú de ataques:
+
+1. **buscar**: los PS y el máximo de cada Pokémon del equipo juntos, en ocho disposiciones. 48
+   búsquedas en **0,7 s**, 567 candidatos, **cero** errores nuevos en el log del emulador.
+2. Un golpe: 176 → 174. **filtrar** leyó cada candidato una vez: **2** bajaron con su máximo intacto.
+3. Los bytes de alrededor daban la forma, y buscando esa forma salieron todos los bloques.
+
+### Lo que hay
+
+Un **bloque de 800 bytes por Pokémon** (`0x320`), con la cabecera de reserva de Nintendo delante —`44 55`,
+«DU», bloque en uso, y el tamaño— y los datos empezando por `E7 FF FF FF 20 00 00 00`:
+
+| Offset | Qué | Ejemplo (Ferrocuello) |
+|---|---|---|
+| `+0x20` | puntero a su estructura de equipo de salto `0x1E4` | `0x3002E518` |
+| `+0x28` | experiencia, 32 bits | `0x00040412` |
+| `+0x2C` | especie | 993 |
+| `+0x2E` | PS máximo | 179 |
+| `+0x30` | **PS actual** | 174 |
+| `+0x39` | **identificador en el combate**: 0-5 tu equipo en su orden, 12 el salvaje | `00` |
+
+Los bloques forman una **tabla indexada por ese identificador**, a `0x330` uno de otro: el del salvaje
+está exactamente 12 posiciones después del primero. Van **los seis del equipo, muertos incluidos** —
+Flamariete, Ferropaladín y Okidogi a 0—, y **no se reordenan al cambiar de Pokémon**: Salamence recibió
+su golpe en su bloque de siempre.
+
+**Hay dos tablas**, y no son iguales:
+
+| | Tabla B (`0x30009730` en este combate) | Tabla A (`0x30002748`) |
+|---|---|---|
+| Al recibir un golpe | cambia **en el acto** | cambia hasta **3 s después**, con valores intermedios (199 → 197 → 173) |
+| Al acabar el combate | **se libera**: su memoria se llena de otra cosa | **se queda**, con los PS finales |
+
+B es la del cálculo y A la de la pantalla: A baja con la barra de vida. Para la ceremonia importa A —
+llega a 0 cuando la barra llega a 0—, y para saber que se está en combate importa B, que solo existe
+durante él. Fuera de combate la búsqueda de la cabecera devuelve **solo la tabla A**, sin rival.
+
+### Lo que falta por medir antes de dar esto por bueno
+
+- Si las direcciones **se repiten** de un combate a otro. El diseño no debería depender de ello: la
+  búsqueda de la cabecera es una sola llamada y cuesta milisegundos.
+- Combates contra **entrenadores**, **dobles** y **SOS** (más identificadores en la tabla).
+- Una muerte de verdad. No se va a provocar: el mismo mecanismo se puede comprobar con el **rival**,
+  cuyo bloque llegó a 0 al vencerlo.
+
+### Lo que no se debe hacer con esto
+
+- **Fiarse de la tabla A fuera de combate.** Se queda con los PS de la última pelea; un Pokémon curado
+  después en un Centro seguiría a 0 ahí y sería una muerte falsa. Una muerte en combate exige que la
+  tabla B exista.
+- **Buscar en bucle.** Es exactamente lo que congeló el emulador.
+
+### §114 bis · La muerte en el momento, implementada y vista contra el juego
+
+`PermaLocke.GameLink/Battle`:
+
+- **`BattleLayout.Parse`** lee un bloque desde su cabecera y **rechaza** todo lo que no sea un bloque de
+  combate vivo con un Pokémon: cabecera «DU» con su tamaño, los ocho bytes de salida, puntero, especie y
+  máximo distintos de cero, y PS que no pasen del máximo. Los bloques se liberan al acabar el combate y su
+  memoria se reutiliza enseguida, así que esto no es celo: medido, la tabla del cálculo acababa llena de
+  números como 35027 y 12042.
+- **`BattleFaintTracker`** decide la caída sin tocar la memoria: hay combate si **dos tablas tienen rival**,
+  y un Pokémon cae cuando **las dos lo dan a cero después de haberlo visto en pie**. La tabla que se queda
+  tras el combate no tiene rival, y la ausencia de rival es lo que impide que un Pokémon curado después
+  en un Centro se lea como muerto.
+- **`BattleTableReader`** es el único que habla con el emulador, con las reglas del congelamiento en el
+  código: fuera de combate, **una búsqueda de un megabyte cada 3 s**; toda la memoria lineal, solo si ese
+  megabyte no tiene ni un bloque y como mucho **una vez por minuto**; dentro de un combate, **ninguna
+  búsqueda**, solo relecturas de los bloques conocidos.
+
+`GameLinkMonitor` tiene un **segundo bucle**, a 4 lecturas por segundo en combate y a una fuera. Si la caída
+es de una posición 0-5 **y la especie cuadra con ese hueco del equipo**, registra la muerte y lanza la
+ceremonia en el acto; si no cuadra, no registra nada y lo deja para la comprobación del equipo, porque
+equivocarse de muerto es peor que verlo tarde. Las dos vías pasan por **la misma puerta**: cada una vuelve
+a mirar si el Pokémon sigue vivo en la run antes de cobrar, así que al terminar el combate la comprobación
+del equipo encuentra el cero y no hace nada. Mientras dura un combate tampoco se devuelve al suelo a nadie
+en la estructura del equipo: los bloques del combate apuntan a esas estructuras y el juego ya copia el cero
+al terminar. Los rivales solo se apuntan en el log, «Rival debilitado en combate».
+
+**Verificado sin que muriera nadie**, con `Probe --combate detector`, que ejecuta el mismo lector y la misma
+decisión sin registrar nada. Dos combates salvajes ganados:
+
+| | Shuppet | Pumpkaboo |
+|---|---|---|
+| Combate localizado, sin ayuda | 14:38:15.050 | 14:38:29.662 |
+| Tabla del cálculo a 0 | 14:38:18.196 | 14:38:30.443 |
+| **Caída detectada** (las dos a 0) | **14:38:18.461** | **14:38:30.965** |
+| Tablas soltadas | 14:38:20.565 | 14:38:33.827 |
+
+Las dos veces en `0x30002748` y `0x30009730`. Los tres caídos de la run estaban a cero desde la primera
+lectura y no se tomaron por muertes. Cero errores nuevos en el log del emulador.
+
+**Lo que sigue sin verse**, dicho claro: la muerte de un Pokémon del jugador —la decisión es la misma que
+con el rival y la especie se comprueba, pero no se ha provocado ninguna—, y los combates contra
+entrenadores, dobles y SOS. Si alguno pone las tablas en otro sitio, el lector las encuentra en la búsqueda
+amplia, a costa de hasta un minuto de retraso; y si no las encuentra, la muerte se sigue viendo al acabar
+el combate como antes.
+
+### §114 ter · La animación saltaba con la barra bajando, y el segundo congelamiento
+
+**Lo que se vio.** La primera muerte real con la detección puesta fue un Leavanny de 12 PS. El vídeo del
+jugador, fotograma a fotograma: la barra bajó 12 → 11 → 9 → 6 → 4 → 2 en unas tres décimas, y la escena
+de muerte congeló la imagen con **5/12**. La detección llegó tarde para el cálculo del juego y **pronto para
+la barra**.
+
+**Por qué.** Se midió con pantalla y memoria en el mismo reloj (`Probe --combate barra`, que lee las dos
+tablas y captura la ventana de Azahar con marca de tiempo): la tabla del cálculo cambia **al elegir el
+ataque**, y la otra **cuando aparece «¡X ha usado Y!»**, antes de la animación del ataque. La barra baja
+después de esa animación, que dura distinto con cada movimiento. El §114 llamó a esa tabla «la de la
+pantalla» por su retraso; su retraso es el del mensaje, no el de la barra, y la escena salta con ese
+mensaje. Ninguna espera fija lo arregla.
+
+**El segundo congelamiento.** Para encontrar el valor animado de la barra se lanzó una búsqueda de 137
+formas sobre los 64 MB de la memoria lineal, con el combate en el menú. El juego **se paró en el segundo
+876,5 del emulador, en mitad de la ráfaga** —su última llamada al sistema, un `nwm::UDS` que hacía cada
+0,4 s, es de ese instante— y no volvió; el jugador perdió lo que no había guardado. La memoria ya no era
+inexistente: con 48 búsquedas seguidas aguantó dos veces, con 137 no. **Lo que lo tumba es buscar mucho
+seguido mientras el juego corre**, así que:
+
+- No se lanzan más ráfagas de búsquedas grandes contra la partida del jugador.
+- `BattleTableReader` pierde la búsqueda de 64 MB «una vez por minuto si no hay nada»: se queda con la de
+  un megabyte cada 3 s, que es 64 veces menor y lleva toda una tarde de juego sin un problema. Un combate
+  que ponga las tablas fuera de ese megabyte ve sus muertes al terminar.
+
+### §114 quater · La escena salta cuando la barra llega a cero, mirando la barra
+
+Elegido por el jugador entre tres caminos (mirar la barra, una espera fija, buscar la barra en memoria
+despacio), porque es el único exacto que **no pide nada al emulador**.
+
+- **`HpBar`** (GameLink, sin WPF) lee una fila de la barra a partir de sus píxeles: celda **con color**
+  —verde, amarillo o rojo saturados— o **hueco** —el gris neutro (67,67,64)—. Si entre los dos no llenan
+  la fila, la barra **no se ve**; si se ve y no queda color, está **vacía**. Colores y posición medidos en
+  fotogramas del vídeo del jugador: la barra propia va de x 5 a 89 en las filas 218-220 de la pantalla de
+  400×240, y la del rival de x 287 a 370 en las 21-23.
+- **`HpBar.ZeroWatch`** decide el momento: vacía **justo después de haberla visto con color**, dos lecturas
+  seguidas. Sale de una medida: quieto en el menú y sin que nadie recibiera un golpe, la caja se ocultó y
+  volvió como siete segundos de gris; una barra que llega a cero lo hace a la vista, nunca apareciendo ya
+  vacía.
+- **`HpBarWatcher`** (App) captura con GDI esa franja de la pantalla cada 15 ms y espera como mucho 6 s; si
+  no ve la barra —ventana tapada, otra disposición de pantallas— la escena sale igual, tarde en vez de no
+  salir. La imagen se toma de la **superficie donde Qt dibuja el juego**, una ventana hija de clase
+  `Qt…QWindowOwnDC…`, y no del área cliente: Windows cuenta la barra de menú de Azahar dentro del cliente, y
+  medido en la ventana del jugador la pantalla de arriba empezaba en y 56 con el cliente en 23. Con el área
+  cliente, la primera prueba leyó «oculta» con la barra delante.
+- `GameLinkMonitor` espera a la barra entre la caída que dicen las tablas y el registro de la muerte.
+
+**Verificado contra el juego con la barra del rival** (`Probe --combate ver-barra`, que solo mira la
+pantalla): un Goomy bajó 19 → 15 → 10 → 4 en rojo, la barra apareció vacía a los 40 780 ms y la regla dio el
+cero a los **40 815 ms**, en el fotograma siguiente. Durante el combate las cajas se ocultaron y
+reaparecieron decenas de veces con las animaciones, y ninguna de esas veces disparó nada.
+
+**Sin ver todavía:** una muerte del jugador con esto puesto, y combates dobles, donde hay dos cajas propias
+y solo se mira la primera; si cae el Pokémon de la segunda, la escena sale a los 6 s.
+
+**Corrección tras la primera muerte con esto puesto (Maushold).** La escena salió unos 3 s tarde, y el log
+dijo por qué: «barra vista pero sin llegar a cero en 6 s», o sea el plan de respaldo. La regla pedía dos
+lecturas vacías pegadas a una con color, y cada lectura localizaba otra vez el proceso de Azahar y su
+superficie de dibujo, de 8 a 11 ms medidos, más la captura y la pausa. Dos cambios:
+
+- La ventana se localiza al empezar y cada medio segundo, no en cada lectura.
+- `HpBarReading` lleva **cuánto color** tiene la barra, y `ZeroWatch` acepta un vacío **en una sola lectura**
+  si antes vio la barra **en rojo, a lo sumo un 30 %**, aunque haya un instante oculto por medio (hasta
+  600 ms). El caso falso del menú sigue fuera, porque allí la barra estaba **llena** antes de ocultarse.
+
+Y si vuelve a salir por tiempo, el log guarda **la secuencia de lecturas** con sus milisegundos, para que la
+próxima vez se sepa qué vio en lugar de suponerlo.
+
+**Verificado con una muerte del jugador (2026-09-13, 15:53:41).** Empoleon cayó en combate; el log dice
+«barra a cero vista a los 478 ms» —el cero en pantalla, no el plan de respaldo— y la muerte se registró dos
+milisegundos después. El jugador lo confirmó mirando: la escena salió justo a tiempo.

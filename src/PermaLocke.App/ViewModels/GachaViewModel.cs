@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
@@ -75,16 +76,38 @@ public sealed class GachaHistoryViewModel(string speciesName, string brushKey,
 /// <see cref="GachaService.PoolOf"/> the roll itself draws from, so what it shows is what can
 /// actually come out, not a rule written twice.
 /// </remarks>
-public sealed class PoolEntryViewModel(SpeciesStats species,
-    System.Windows.Media.Imaging.BitmapSource? sprite)
+public sealed class PoolStageViewModel(SpeciesStats species,
+    System.Windows.Media.Imaging.BitmapSource? sprite, bool arrow)
 {
     public string Name { get; } = species.Name;
 
     public int Total { get; } = species.BaseStatTotal;
 
-    public bool Legendary { get; } = species.Legendary;
-
     public System.Windows.Media.Imaging.BitmapSource? Sprite { get; } = sprite;
+
+    /// <summary>True for every rung but the first, which is where the arrow goes.</summary>
+    public bool Arrow { get; } = arrow;
+}
+
+/// <summary>
+/// One evolution family a tier can produce, as the pool list shows it.
+/// </summary>
+/// <remarks>
+/// A family and not a species, because that is what the tier is a band of: the rarity is decided
+/// by where the line ENDS, and what a roll hands over is one of its rungs. Showing a flat list of
+/// species would say «a Tier 5 can give you a Gible» and leave out the half that makes it a Tier 5.
+/// </remarks>
+public sealed class PoolEntryViewModel(IReadOnlyList<PoolStageViewModel> stages, bool legendary)
+{
+    public IReadOnlyList<PoolStageViewModel> Stages { get; } = stages;
+
+    public bool Legendary { get; } = legendary;
+
+    /// <summary>Where the family ends, which is the number the tier is graded on.</summary>
+    public int Total { get; } = stages.Count > 0 ? stages[^1].Total : 0;
+
+    /// <summary>Matched against the search box — any rung, because any rung can come out.</summary>
+    public IEnumerable<string> Names => Stages.Select(stage => stage.Name);
 }
 
 /// <summary>One banner as the screen shows it, with its odds spelled out.</summary>
@@ -133,6 +156,43 @@ public sealed partial class BannerViewModel(GachaBanner banner, string odds,
     }
 }
 
+/// <summary>One roll a milestone pays, on one banner.</summary>
+/// <remarks>
+/// A row of its own so the banner keeps its own colour on the table. The tier's brush and not an
+/// invented one: the portals above already say POCHO in that colour, and giving the same banner
+/// two colours on the same screen would be worse than giving it none.
+/// </remarks>
+public sealed record GrantRollViewModel(string Banner, int Count, string BrushKey)
+{
+    public string Text => $"{Banner} ×{Count}";
+}
+
+/// <summary>
+/// What one milestone of the competition hands over: free rolls and wonder trades.
+/// </summary>
+/// <remarks>
+/// Read from <c>Data/grants.json</c> and not written into XAML, so changing the competition's
+/// table changes the screen. Whether it has been <b>reached</b> comes from the achievements, which
+/// the cartridge proves on its own -- so this is a list of what is coming, with what has already
+/// been paid marked, and not a checklist anybody ticks.
+/// </remarks>
+public sealed class GrantViewModel(string name, IReadOnlyList<GrantRollViewModel> rolls,
+    int wonderTrades, bool reached)
+{
+    public string Name { get; } = name;
+
+    public IReadOnlyList<GrantRollViewModel> Rolls { get; } = rolls;
+
+    public int WonderTrades { get; } = wonderTrades;
+
+    public string WonderTradeText => WonderTrades == 1 ? "1 INTERCAMBIO" : $"{WonderTrades} INTERCAMBIOS";
+
+    public bool HasWonderTrades => WonderTrades > 0;
+
+    /// <summary>True once the milestone has been reached, which is when it has already paid.</summary>
+    public bool Reached { get; } = reached;
+}
+
 /// <summary>
 /// The gacha screen.
 /// </summary>
@@ -148,6 +208,15 @@ public sealed partial class GachaViewModel : SectionViewModel
     private readonly IPokemonDelivery _delivery;
     private readonly PokemonIdentityService _identity;
     private readonly CreditService _credits;
+
+    /// <summary>
+    /// How far the run has got, which decides how far up an evolution family a roll reaches.
+    /// </summary>
+    /// <remarks>
+    /// The same number the level cap is deduced from, on purpose. A second measure of progress
+    /// living only in the gacha would be one more thing able to disagree with the rest of the run.
+    /// </remarks>
+    private readonly PermaLocke.Rules.Services.ProgressService _progress;
     private readonly PokemonSpriteService _sprites;
     private readonly IEventStore _events;
     private readonly ISpeciesLookup _species;
@@ -169,7 +238,7 @@ public sealed partial class GachaViewModel : SectionViewModel
     public GachaViewModel(GachaService gacha, IRunContext runContext, IPointsService points,
         IPokemonDelivery delivery, PokemonIdentityService identity, CreditService credits,
         PokemonSpriteService sprites, IEventStore events, ISpeciesLookup species,
-        ILogger<GachaViewModel> logger)
+        PermaLocke.Rules.Services.ProgressService progress, ILogger<GachaViewModel> logger)
         : base("GACHA", "Gasta puntos y llévate un Pokémon al PC de la partida")
     {
         _gacha = gacha;
@@ -181,6 +250,7 @@ public sealed partial class GachaViewModel : SectionViewModel
         _events = events;
         _species = species;
         _sprites = sprites;
+        _progress = progress;
         _logger = logger;
     }
 
@@ -192,6 +262,17 @@ public sealed partial class GachaViewModel : SectionViewModel
 
     /// <summary>Where the winner sits: near the end, so the reel travels a long way first.</summary>
     private const int ReelWinnerIndex = 108;
+
+    /// <summary>
+    /// Cells repeated after the idle strip so it can loop leftwards without a visible jump.
+    /// </summary>
+    /// <remarks>
+    /// Enough of them to cover the viewport at 72 px a cell — about 3.400 px, which is wider than
+    /// the panel is ever going to be. They are the same first cells again, so when the drift has
+    /// travelled one whole strip and snaps back, what is on screen is identical either side of the
+    /// snap. Duplicating the WHOLE strip would work too and costs twice the cells to build.
+    /// </remarks>
+    private const int IdleTailLength = 48;
 
     /// <summary>
     /// How long a spin lasts, by tier. The cheapest resolves quickly; the rarest takes its time.
@@ -212,24 +293,165 @@ public sealed partial class GachaViewModel : SectionViewModel
     /// <summary>The spinning reel, rebuilt on every roll.</summary>
     public ObservableCollection<ReelCellViewModel> Reel { get; } = [];
 
+    /// <summary>
+    /// Cells in one turn of the idle loop, or 0 when the strip is not a loop.
+    /// </summary>
+    /// <remarks>
+    /// The view drifts the strip by exactly this many cells and starts over, which only looks
+    /// continuous because <see cref="BuildIdleReel"/> repeated the head at the tail. It is said out
+    /// loud rather than measured off the strip's width so the two halves cannot drift apart: a
+    /// reel built for a roll is not a loop, and says 0.
+    /// </remarks>
+    public int IdleLoopCells { get; private set; }
+
+    /// <summary>
+    /// Leaving the gacha folds the tier list back up, and nothing else.
+    /// </summary>
+    /// <remarks>
+    /// The result card stays: it is what the last pull <em>was</em>, and the Pokémon is already in
+    /// the box whether the card is on screen or not. What was wrong was going to the shop with a
+    /// tier's list unfolded and finding it still unfolded on the way back.
+    /// </remarks>
+    public override void ResetState()
+    {
+        ShowingPool = false;
+        ShowingGrants = false;
+    }
+
     /// <summary>One portal per tier, in order of price. Built from the catalogue, not from XAML.</summary>
     public ObservableCollection<PortalViewModel> Portals { get; } = [];
 
-    /// <summary>Who can come out of the tier being inspected.</summary>
+    /// <summary>What each milestone of the competition pays, in the order the competition lists it.</summary>
+    public ObservableCollection<GrantViewModel> Grants { get; } = [];
+
+    [ObservableProperty]
+    private bool _hasGrants;
+
+    [ObservableProperty]
+    private string _grantsSummary = string.Empty;
+
+    /// <summary>Who can come out of the tier being inspected. The whole band, unfiltered.</summary>
     public ObservableCollection<PoolEntryViewModel> Pool { get; } = [];
+
+    /// <summary>
+    /// The part of it the search box leaves standing, which is what the screen is bound to.
+    /// </summary>
+    /// <remarks>
+    /// Refilled rather than filtered through an <c>ICollectionView</c>, same as the shop: the list
+    /// is bound straight to this, and a CollectionView touched from anywhere but the UI thread
+    /// takes the window down (§62).
+    /// </remarks>
+    public ObservableCollection<PoolEntryViewModel> VisiblePool { get; } = [];
+
+    /// <summary>
+    /// What has been typed into the pool's search box.
+    /// </summary>
+    /// <remarks>
+    /// The top tier lists a couple of hundred species, so «is Tyranitar in here» was a question
+    /// answered by scrolling. Accents are ignored for the same reason as the shop's: with the
+    /// expansion mod the list mixes the cartridge's Spanish with the mod's English, and somebody
+    /// typing "farfetchd" is not making a mistake.
+    /// </remarks>
+    [ObservableProperty]
+    private string _poolSearch = string.Empty;
+
+    partial void OnPoolSearchChanged(string value) => FilterPool();
+
+    [RelayCommand]
+    private void ClearPoolSearch() => PoolSearch = string.Empty;
+
+    /// <summary>True when the box has something in it and nothing matches.</summary>
+    public bool PoolNothingFound => PoolSearch.Trim().Length > 0 && VisiblePool.Count == 0;
+
+    /// <summary>
+    /// Which rung of a family a roll lands on right now, written out.
+    /// </summary>
+    /// <remarks>
+    /// Without this the list would show three-stage families and say nothing about which one you
+    /// actually get, which is the half of the mechanic a player cannot see. It is read from the
+    /// same table the roll uses, at the run's real progress.
+    /// </remarks>
+    [ObservableProperty]
+    private string _stageOdds = string.Empty;
+
+    /// <summary>How many of the band are on screen, said only while the search is narrowing it.</summary>
+    public string PoolCount => PoolSearch.Trim().Length > 0
+        ? $"{VisiblePool.Count} de {Pool.Count}"
+        : $"{Pool.Count} familias";
+
+    private void FilterPool()
+    {
+        var needle = PoolSearch.Trim();
+
+        VisiblePool.Clear();
+
+        // Cualquier etapa vale: buscar «Garchomp» tiene que encontrar la familia aunque lo que te
+        // vayan a dar sea el Gible.
+        foreach (var entry in Pool.Where(e => needle.Length == 0
+            || e.Names.Any(name => CultureInfo.InvariantCulture.CompareInfo.IndexOf(
+                name, needle, CompareOptions.IgnoreCase | CompareOptions.IgnoreNonSpace) >= 0)))
+        {
+            VisiblePool.Add(entry);
+        }
+
+        OnPropertyChanged(nameof(PoolNothingFound));
+        OnPropertyChanged(nameof(PoolCount));
+    }
 
     [ObservableProperty]
     private bool _showingPool;
 
-    /// <summary>The strip of past rolls, which shares its row with the pool list.</summary>
+    /// <summary>
+    /// True while the table of what each milestone pays is open over the stage.
+    /// </summary>
     /// <remarks>
-    /// One of the two has to give way: both live in the row that takes the leftover height, and
-    /// with the pool open the strip was being drawn straight over it. The pool is what the player
-    /// just asked for, so the strip is the one that waits.
+    /// It used to sit under the banners taking a fifth of the screen for a table nobody reads
+    /// twice. Behind a button it can be as big as it deserves when it is open and cost nothing
+    /// when it is not, which is the same deal the pool list gets.
     /// </remarks>
-    public bool ShowHistory => HasHistory && !ShowingPool;
+    [ObservableProperty]
+    private bool _showingGrants;
 
-    partial void OnShowingPoolChanged(bool value) => OnPropertyChanged(nameof(ShowHistory));
+    /// <summary>The strip of past rolls, which shares its room with the two panels.</summary>
+    /// <remarks>
+    /// One has to give way: they all live over the stage, and with a panel open the strip was
+    /// being drawn straight over it. What the player just asked for wins, so the strip waits.
+    /// </remarks>
+    public bool ShowHistory => HasHistory && !ShowingPool && !ShowingGrants;
+
+    partial void OnShowingPoolChanged(bool value)
+    {
+        // Los dos ocupan el mismo sitio, asi que abrir uno cierra el otro. Sin esto se dibujan
+        // encima y lo que se lee es la mezcla de los dos.
+        if (value)
+        {
+            ShowingGrants = false;
+        }
+
+        OnPropertyChanged(nameof(ShowHistory));
+    }
+
+    partial void OnShowingGrantsChanged(bool value)
+    {
+        if (value)
+        {
+            ShowingPool = false;
+        }
+
+        OnPropertyChanged(nameof(ShowHistory));
+    }
+
+    /// <summary>Opens the milestone table, or closes it if it is the one already open.</summary>
+    [RelayCommand]
+    private void ToggleGrants()
+    {
+        if (IsRolling)
+        {
+            return;
+        }
+
+        ShowingGrants = !ShowingGrants;
+    }
 
     partial void OnHasHistoryChanged(bool value) => OnPropertyChanged(nameof(ShowHistory));
 
@@ -359,9 +581,12 @@ public sealed partial class GachaViewModel : SectionViewModel
 
                 Portals.Add(new PortalViewModel(tier, position++)
                 {
+                    // La banda es del TOTAL DE LA FORMA FINAL de la linea, no del Pokemon que
+                    // te dan: por eso lleva la flecha delante. Sin ella el tier 5 diria «600+»
+                    // mientras entrega un Gible de 300 y pareceria un fallo.
                     Range = last
-                        ? $"{floor + 1}+"
-                        : floor == 0 ? $"≤{tier.MaxBaseStatTotal}" : $"{floor + 1}-{tier.MaxBaseStatTotal}"
+                        ? $"→ {floor + 1}+"
+                        : floor == 0 ? $"→ ≤{tier.MaxBaseStatTotal}" : $"→ {floor + 1}-{tier.MaxBaseStatTotal}"
                 });
 
                 floor = tier.MaxBaseStatTotal;
@@ -375,6 +600,14 @@ public sealed partial class GachaViewModel : SectionViewModel
         {
             Balance = await _points.GetBalanceAsync(run.Id);
             await RefreshCreditsAsync(run);
+            await RefreshGrantsAsync(run);
+
+            var cleared = await _progress.ClearedAsync(run);
+            var odds = _gacha.OddsAt(cleared);
+
+            StageOdds = $"Con {cleared} etapa{(cleared == 1 ? string.Empty : "s")} superada"
+                        + $"{(cleared == 1 ? string.Empty : "s")}: {odds.First}% primera forma · "
+                        + $"{odds.Second}% segunda · {odds.Final}% forma final";
         }
 
         // Los iconos salen de la ROM del propio jugador la primera vez. Si no se puede, la
@@ -439,6 +672,7 @@ public sealed partial class GachaViewModel : SectionViewModel
 
         IsRolling = true;
         ShowingPool = false;
+        ShowingGrants = false;
         HasResult = false;
         // Se apaga todo antes de tirar. Si no, dos tiradas seguidas del mismo tier no cambiarían
         // la propiedad y el portal no volvería a abrirse.
@@ -454,7 +688,12 @@ public sealed partial class GachaViewModel : SectionViewModel
             // Si hay credito, la tirada es gratis y el evento queda marcado como tal: el credito
             // disponible es lo ganado menos lo marcado, asi que no hay contador que llevar.
             var free = selected.Free > 0;
-            var result = await _gacha.RollAsync(run, selected.Banner.Id, free);
+
+            // Las etapas superadas deciden hasta donde de la linea evolutiva llega la tirada, y
+            // viajan en el evento: sin ellas la tirada dejaria de poder recomputarse en cuanto la
+            // run superara otra prueba.
+            var cleared = await _progress.ClearedAsync(run);
+            var result = await _gacha.RollAsync(run, selected.Banner.Id, cleared, free);
 
             Balance = result.Balance;
 
@@ -598,16 +837,26 @@ public sealed partial class GachaViewModel : SectionViewModel
         Reel.Clear();
 
         var random = new Random();
+        var sprites = Enumerable.Range(0, ReelLength).Select(_ => _sprites.GetRandom(random)).ToArray();
 
-        for (var i = 0; i < ReelLength; i++)
+        foreach (var sprite in sprites)
         {
-            Reel.Add(new ReelCellViewModel(_sprites.GetRandom(random), false));
+            Reel.Add(new ReelCellViewModel(sprite, false));
         }
+
+        // Y otra vez el principio, para que la vuelta al origen caiga sobre lo mismo que había.
+        foreach (var sprite in sprites.Take(IdleTailLength))
+        {
+            Reel.Add(new ReelCellViewModel(sprite, false));
+        }
+
+        IdleLoopCells = ReelLength;
     }
 
     private void BuildReel(GachaPull pull)
     {
         Reel.Clear();
+        IdleLoopCells = 0;
 
         // La seed de la tirada también siembra la tira, para que la misma tirada se vea igual al
         // recomputarla. Es decoración, pero decoración reproducible.
@@ -781,16 +1030,51 @@ public sealed partial class GachaViewModel : SectionViewModel
 
         Pool.Clear();
 
-        foreach (var species in _gacha.PoolOf(tier, legendary: true)
-            .Concat(_gacha.PoolOf(tier, legendary: false))
-            .OrderByDescending(s => s.Legendary)
-            .ThenByDescending(s => s.BaseStatTotal))
+        foreach (var line in _gacha.LinesOf(tier, legendary: true)
+            .Select(l => (Line: l, Legendary: true))
+            .Concat(_gacha.LinesOf(tier, legendary: false).Select(l => (Line: l, Legendary: false))))
         {
-            Pool.Add(new PoolEntryViewModel(species, _sprites.Get(species.Id)));
+            var stages = new List<PoolStageViewModel>();
+
+            foreach (var stage in line.Line.Stages)
+            {
+                foreach (var id in stage)
+                {
+                    if (_gacha.StatsOf(id) is { } stats)
+                    {
+                        stages.Add(new PoolStageViewModel(stats, _sprites.Get(id),
+                            arrow: stages.Count > 0));
+                    }
+                }
+            }
+
+            if (stages.Count > 0)
+            {
+                Pool.Add(new PoolEntryViewModel(stages, line.Legendary));
+            }
         }
 
+        // Las que más lejos llegan arriba: la pregunta que se hace mirando esta lista es «qué es lo
+        // mejor que puede tocarme aquí».
+        var ordered = Pool
+            .OrderByDescending(e => e.Legendary)
+            .ThenByDescending(e => e.Total)
+            .ToList();
+
+        Pool.Clear();
+
+        foreach (var entry in ordered)
+        {
+            Pool.Add(entry);
+        }
+
+        // Se abre sin filtro. Abrir un tier y encontrarlo ya recortado por lo que se buscó en otro
+        // se leería como que ese tier tiene cuatro Pokémon.
+        PoolSearch = string.Empty;
+        FilterPool();
+
         PoolBrushKey = portal.BrushKey;
-        PoolTitle = $"{portal.Name} · {Pool.Count} Pokémon · {portal.Range}";
+        PoolTitle = $"{portal.Name} · {portal.Range}";
         ShowingPool = true;
     }
 
@@ -864,4 +1148,84 @@ public sealed partial class GachaViewModel : SectionViewModel
         tierId.StartsWith("tier", StringComparison.OrdinalIgnoreCase)
             ? "Tier " + tierId[4..]
             : tierId;
+
+    /// <summary>
+    /// The colour a banner is drawn in: the one of the tier it mostly hands out.
+    /// </summary>
+    /// <remarks>
+    /// The same rule the bar under each card already uses, so POCHO is the same colour in both
+    /// places. A banner with no odds at all gets the accent rather than nothing: an invisible chip
+    /// would look like a missing row.
+    /// </remarks>
+    private string BrushOf(string bannerId)
+    {
+        var banner = _gacha.Banners.FirstOrDefault(b =>
+            string.Equals(b.Id, bannerId, StringComparison.OrdinalIgnoreCase));
+
+        if (banner is null)
+        {
+            return "AccentBrush";
+        }
+
+        var position = 1;
+        var best = 0.0;
+        var key = "AccentBrush";
+
+        foreach (var tier in _gacha.Tiers)
+        {
+            if (banner.TierChances.TryGetValue(tier.Id, out var chance) && chance > best)
+            {
+                best = chance;
+                key = $"Tier{position}Brush";
+            }
+
+            position++;
+        }
+
+        return key;
+    }
+
+    /// <summary>
+    /// Fills the table of what each milestone of the competition pays.
+    /// </summary>
+    /// <remarks>
+    /// Every milestone is listed, reached or not, because the point of the table is deciding
+    /// whether to spend points now or wait for the trial that is about to pay. The ones already
+    /// reached are marked and not removed, for the same reason.
+    /// </remarks>
+    private async Task RefreshGrantsAsync(Run run)
+    {
+        try
+        {
+            var reached = await _credits.ReachedAsync(run.Id);
+
+            Grants.Clear();
+
+            foreach (var milestone in _credits.Milestones)
+            {
+                var rolls = milestone.Rolls
+                    .Where(entry => entry.Value > 0)
+                    .Select(entry => new GrantRollViewModel(
+                        NameOfBanner(entry.Key), entry.Value, BrushOf(entry.Key)))
+                    .ToList();
+
+                Grants.Add(new GrantViewModel(milestone.Name, rolls, milestone.WonderTrades,
+                    reached.Contains(milestone.Achievement)));
+            }
+
+            HasGrants = Grants.Count > 0;
+            GrantsSummary = $"{Grants.Count(g => g.Reached)} de {Grants.Count} conseguidos";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Fallo al leer lo que dan las pruebas");
+            HasGrants = false;
+        }
+    }
+
+    /// <summary>The banner's name as the catalogue writes it, falling back to its id.</summary>
+    private string NameOfBanner(string bannerId) =>
+        _gacha.Banners.FirstOrDefault(b =>
+            string.Equals(b.Id, bannerId, StringComparison.OrdinalIgnoreCase))?.Name
+        ?? bannerId.ToUpperInvariant();
 }

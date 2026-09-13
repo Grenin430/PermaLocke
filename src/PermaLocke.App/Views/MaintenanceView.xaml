@@ -283,6 +283,59 @@
                 </StackPanel>
             </Border>
 
+            <!-- ================================================== DESHACER UNA MUERTE
+                 La otra mitad de lo de arriba: una marca a mano sobre el Pokémon equivocado cobra
+                 puntos y lo deja a 0 PS, y no había vuelta atrás sin tocar la base de datos. La
+                 muerte no se borra del historial: se añade al lado que fue un error. -->
+            <Border Style="{StaticResource Inset}" Margin="0,12,0,0">
+                <StackPanel>
+                    <TextBlock Text="DESHACER UNA MUERTE" Style="{StaticResource PanelHeading}" />
+
+                    <TextBlock Style="{StaticResource Body}" Margin="0,9,0,0" TextWrapping="Wrap"
+                               Text="Para cuando la aplicación da por muerto a un Pokémon que no lo está. Vuelve a contar como vivo, se devuelven los puntos que costó su muerte y la aplicación deja de quitarle los PS." />
+
+                    <TextBlock Style="{StaticResource Faint}" Margin="0,8,0,0" TextWrapping="Wrap"
+                               Text="La muerte no se borra: el historial guarda que se registró y, al lado, que fue un error, con tu motivo. En la partida sigue a 0 PS hasta que lo cures." />
+
+                    <ComboBox ItemsSource="{Binding FallenPokemon}"
+                              SelectedItem="{Binding SelectedFallen}"
+                              Margin="0,14,0,0" Width="420" HorizontalAlignment="Left">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock>
+                                    <Run Text="{Binding SpeciesName, Mode=OneWay}" />
+                                    <Run Text=" · Nv." />
+                                    <Run Text="{Binding Level, Mode=OneWay}" />
+                                    <Run Text=" · caído el " />
+                                    <Run Text="{Binding DiedAt, Mode=OneWay, StringFormat='dd/MM HH:mm'}" />
+                                </TextBlock>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+
+                    <TextBox Text="{Binding RevokeReason, UpdateSourceTrigger=PropertyChanged}"
+                             Margin="0,10,0,0" Width="420" HorizontalAlignment="Left"
+                             Tag="Por qué no era una muerte (queda escrito en el historial)" />
+
+                    <Button Content="DESHACER LA MUERTE" Style="{StaticResource PrimaryButton}"
+                            Command="{Binding RevokeDeathCommand}" MinWidth="220"
+                            HorizontalAlignment="Left" Margin="0,12,0,0" />
+
+                    <TextBlock Text="{Binding RevokeStatus}"
+                               Margin="0,12,0,0" TextWrapping="Wrap">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource Body}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding RevokeStatus}" Value="">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
             <!-- ================================================== HACER PERMANENTE LA MUERTE
                  Lo del vigilante es una escritura en MEMORIA: sobrevive solo si el jugador guarda
                  después, y no ocurre siquiera cuando la muerte no se llegó a ver. Esto escribe la

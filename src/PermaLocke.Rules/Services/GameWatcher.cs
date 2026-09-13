@@ -44,6 +44,20 @@ public sealed class GameWatcher(IPokemonRepository pokemon, IEventStore events, 
     /// </remarks>
     private bool _partyWasStanding = true;
 
+    /// <summary>How many looks in a row have found nobody standing.</summary>
+    private int _nobodyStandingPolls;
+
+    /// <summary>Consecutive looks needed before a wipe is charged. See <see cref="CheckWipeAsync"/>.</summary>
+    private const int PollsBeforeCallingItAWipe = 3;
+
+    // Una muerte se registra con UNA lectura a cero, y a proposito. Hubo un dia en que se exigieron
+    // tres seguidas, por un diagnostico equivocado: se creyo que una muerte de Okidogi era una
+    // lectura tomada con la partida a medio cargar, y no lo era -la aplicacion llevaba ocho minutos
+    // conectada y el jugador confirmo que lo mataron en un combate-. Peor: justo despues de esa
+    // muerte real, una copia atrasada de la memoria leyo a Okidogi a 191, y con tres lecturas
+    // seguidas esa copia habria reiniciado la cuenta y la muerte de verdad podria no registrarse
+    // nunca. Una lectura atrasada que ENSEÑA VIVO a un muerto esta medida; una que enseñe muerto a
+    // un vivo, no. Ver docs/ARCHITECTURE.md §111.
     public async Task<WatcherFindings> InspectAsync(Guid runId, GameSnapshot snapshot,
         CancellationToken ct = default)
     {
@@ -103,11 +117,12 @@ public sealed class GameWatcher(IPokemonRepository pokemon, IEventStore events, 
     /// How it was known, written into the event. It matters because the two are not equally
     /// trustworthy and the historial has to say which one this was.
     /// </param>
-    public async Task RecordDeathAsync(PokemonEntry entry, string actor,
+    /// <returns>What the death was charged, so whoever tells the player says the real number.</returns>
+    public async Task<PenaltyResult> RecordDeathAsync(PokemonEntry entry, string actor,
         EventSource source = EventSource.AutoDetect, string detection = "memoria del juego",
         CancellationToken ct = default)
     {
-        await penalties.ChargeDeathAsync(entry.RunId, actor, entry, ct).ConfigureAwait(false);
+        var charged = await penalties.ChargeDeathAsync(entry.RunId, actor, entry, ct).ConfigureAwait(false);
 
         var died = await events.AppendAsync(new GameEvent
         {
@@ -135,6 +150,105 @@ public sealed class GameWatcher(IPokemonRepository pokemon, IEventStore events, 
             Status = PokemonStatus.Dead,
             DiedAt = died.Timestamp
         }, ct).ConfigureAwait(false);
+
+        return charged;
+    }
+
+    /// <summary>
+    /// Undoes a death that should not have been recorded: alive again, penalty paid back.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// An addition to the chain and not an edit of it, like <see cref="GameEventType.ZoneCleared"/>:
+    /// the <see cref="GameEventType.PokemonDied"/> stays, and a
+    /// <see cref="GameEventType.DeathRevoked"/> carrying its id says it was wrong, who said so and
+    /// why. The refund is exactly what that death was charged, read from its own penalty event, and
+    /// not the price in the configuration today — a role or a rule changed since would otherwise
+    /// pay back a different amount than was taken.
+    /// </para>
+    /// <para>
+    /// It refuses rather than guesses: a Pokémon that is not dead, a death with nothing recorded
+    /// behind it, or one already revoked. And it is a player's decision by construction — the
+    /// source is <see cref="EventSource.Player"/> — because the only thing that knows a death was
+    /// false is somebody who was there.
+    /// </para>
+    /// </remarks>
+    /// <returns>Null when done; otherwise why nothing was done.</returns>
+    public async Task<string?> RevokeDeathAsync(PokemonEntry entry, string actor, string reason,
+        CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+
+        var name = entry.Nickname ?? entry.SpeciesName;
+
+        if (entry.Status != PokemonStatus.Dead)
+        {
+            return $"{name} no figura como caído, así que no hay muerte que revocar.";
+        }
+
+        var history = await events.GetAllAsync(entry.RunId, ct).ConfigureAwait(false);
+
+        var death = history.LastOrDefault(e => e.Type == GameEventType.PokemonDied && e.PokemonId == entry.Id);
+
+        if (death is null)
+        {
+            return $"{name} figura como caído pero el historial no tiene su muerte. No se revoca a ciegas.";
+        }
+
+        var deathId = death.Id.ToString();
+
+        if (history.Any(e => e.Type == GameEventType.DeathRevoked
+                             && e.Data.TryGetValue("muerte", out var revoked) && revoked == deathId))
+        {
+            return $"La muerte de {name} ya está revocada.";
+        }
+
+        // La penalizacion se escribe justo antes que la muerte, asi que es la ultima de «muerte»
+        // de este Pokemon que no va detras de ella.
+        var penalty = history.LastOrDefault(e => e.Type == GameEventType.PointsPenalty
+                                                 && e.PokemonId == entry.Id
+                                                 && e.Reason == "muerte"
+                                                 && e.Timestamp <= death.Timestamp);
+
+        var refund = penalty is null ? 0 : Math.Max(0, -penalty.PointsDelta);
+        var why = string.IsNullOrWhiteSpace(reason) ? "sin motivo anotado" : reason.Trim();
+
+        var data = new Dictionary<string, string>
+        {
+            ["muerte"] = deathId,
+            ["especie"] = entry.Species.ToString(),
+            ["devuelto"] = refund.ToString()
+        };
+
+        if (penalty is not null)
+        {
+            data["penalizacion"] = penalty.Id.ToString();
+        }
+
+        await events.AppendAsync(new GameEvent
+        {
+            Id = Guid.NewGuid(),
+            RunId = entry.RunId,
+            Timestamp = clock.Now,
+            Type = GameEventType.DeathRevoked,
+            Source = EventSource.Player,
+            Actor = actor,
+            Description = refund > 0
+                ? $"Muerte de {name} revocada: vuelve a estar vivo y se devuelven {refund} puntos."
+                : $"Muerte de {name} revocada: vuelve a estar vivo.",
+            PokemonId = entry.Id,
+            PointsDelta = refund,
+            Reason = why,
+            Data = data
+        }, ct).ConfigureAwait(false);
+
+        await pokemon.SaveAsync(entry with
+        {
+            Status = PokemonStatus.Alive,
+            DiedAt = null
+        }, ct).ConfigureAwait(false);
+
+        return null;
     }
 
     /// <summary>
@@ -160,6 +274,7 @@ public sealed class GameWatcher(IPokemonRepository pokemon, IEventStore events, 
         if (standing)
         {
             _partyWasStanding = true;
+            _nobodyStandingPolls = 0;
             return null;
         }
 
@@ -169,7 +284,19 @@ public sealed class GameWatcher(IPokemonRepository pokemon, IEventStore events, 
             return null;
         }
 
+        // Y no se cobra a la primera. «Nadie en pie» también es lo que parece una lectura
+        // INCOMPLETA en la que lo poco que se leyó estaba caído, y eso ocurre: el proveedor
+        // prefiere la estructura autoritativa aunque lea menos huecos que el espejo, que es lo
+        // correcto para decidir muertes y deja lecturas cortas de vez en cuando. Un equipo caído
+        // de verdad no es un instante -- te manda al Centro Pokémon y sigue caído hasta que curas
+        // --, así que exigirlo tres vueltas seguidas cuesta tres segundos y quita el falso -100.
+        if (++_nobodyStandingPolls < PollsBeforeCallingItAWipe)
+        {
+            return null;
+        }
+
         _partyWasStanding = false;
+        _nobodyStandingPolls = 0;
 
         var fallen = snapshot.Party
             .Select(member => string.IsNullOrWhiteSpace(member.Nickname) ? member.SpeciesName : member.Nickname)

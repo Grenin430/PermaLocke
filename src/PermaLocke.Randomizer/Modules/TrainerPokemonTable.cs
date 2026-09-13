@@ -13,12 +13,29 @@ public static class TrainerPokemonTable
     /// <summary>Bytes per Pokémon. Fixed in gen 7, unlike the variable entries of gen 6.</summary>
     public const int EntrySize = 0x20;
 
+    /// <summary>
+    /// The six EVs, in the order PS, Ataque, Defensa, At. Esp., Def. Esp., Velocidad.
+    /// </summary>
+    /// <remarks>
+    /// Nothing here writes them, and there is a <see cref="GetEvs"/> and no setter on purpose: the
+    /// enemy's training is the cartridge's, and the verification pass reads these to say so with a
+    /// number instead of with a promise. The layout is pk3DS's <c>TrainerPoke7</c>, where 0x00 is
+    /// gender and ability, 0x01 the nature, 0x02-0x07 the EVs and 0x08 the packed IVs.
+    /// </remarks>
+    private const int EvOffset = 0x02;
+
+    /// <summary>Stats a Pokémon has, which is how many EV bytes each entry carries.</summary>
+    public const int EvCount = 6;
+
     private const int LevelOffset = 0x0E;
     private const int SpeciesOffset = 0x10;
     private const int FormOffset = 0x12;
     private const int ItemOffset = 0x14;
     private const int MovesOffset = 0x18;
     private const int MoveCount = 4;
+
+    public static ReadOnlySpan<byte> GetEvs(byte[] party, int index) =>
+        party.AsSpan((index * EntrySize) + EvOffset, EvCount);
 
     /// <summary>
     /// How many Pokémon the party holds. One subfile in the cartridge is six bytes long and

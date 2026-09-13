@@ -257,15 +257,13 @@ public sealed class AzaharGameStateProvider(
     /// player saved. Most members still wins first, because a copy that only holds the lead is
     /// worse than a complete one whatever else it is. §99.
     /// </remarks>
+    /// <summary>
+    /// Picks the structure to read the party from. The rule lives in
+    /// <see cref="PartyLayoutLocator.Preferred"/>, where it can be tested without a game.
+    /// </summary>
     private PartyLayout? Choose(Pk7Reader reader, IReadOnlyList<PartyLayout> candidates) =>
-        candidates
-            .Select(layout => (Layout: layout, Party: ReadParty(reader, layout)))
-            .Where(candidate => candidate.Party.Count > 0)
-            .OrderByDescending(candidate => candidate.Party.Count)
-            .ThenBy(candidate =>
-                candidate.Layout.Stride == PartyLayoutLocator.AuthoritativeStride ? 0 : 1)
-            .Select(candidate => candidate.Layout)
-            .FirstOrDefault();
+        PartyLayoutLocator.Preferred(
+            candidates.Select(layout => (Layout: layout, Read: ReadParty(reader, layout).Count)));
 
     /// <summary>Layouts found last session, if any. Never used without revalidating them.</summary>
     private IReadOnlyList<PartyLayout> ReadRemembered()

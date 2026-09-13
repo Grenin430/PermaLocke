@@ -41,6 +41,15 @@ public partial class App : Application
         collection.AddPermaLockeData(paths.Saves);
         collection.AddPermaLockeCore();
         collection.AddPermaLockeRules(Path.Combine(paths.Data, "rules.json"));
+        // ANTES de GameLink, que registra el suyo con TryAdd: asi una MT dice que movimiento
+        // ensena en ESTE mundo en vez de solo su numero, que con las maquinas randomizadas no
+        // significa nada. Va aqui porque necesita leer el code.bin del mod instalado, y eso es
+        // cosa de la aplicacion: GameLink no conoce al randomizador.
+        collection.AddSingleton<IItemLookup>(sp => new Services.MachineItemLookup(
+            new PermaLocke.GameLink.Data.PkhexItemLookup(),
+            sp.GetRequiredService<AzaharInstallation>(),
+            sp.GetRequiredService<ILoggerFactory>().CreateLogger<Services.MachineItemLookup>()));
+
         collection.AddPermaLockeGameLink(paths.SaveBackups);
 
         // EL ALMACEN DE EVENTOS, ENVUELTO para que avise cuando la run cambia. Se hace aqui y
@@ -78,6 +87,7 @@ public partial class App : Application
         // una vez para que exista, y eso se hace al arrancar el vigilante.
         collection.AddSingleton<Notifier>();
         collection.AddSingleton<PlayNotifications>();
+        collection.AddSingleton<DeathCeremony>();
 
         // Y la pestaña del borde, que es la misma ventana flotante SIN la bandera que deja pasar
         // los clics: esta existe para que se pulse.
@@ -193,6 +203,41 @@ public partial class App : Application
         _services.GetRequiredService<EdgeTab>().Attach(window);
 
         _services.GetRequiredService<GameLinkMonitor>().Start();
+
+        if (e.Args.Contains("--ensayar-muerte", StringComparer.OrdinalIgnoreCase))
+        {
+            await RehearseDeathsAsync(logger);
+        }
+    }
+
+    /// <summary>
+    /// Replays the ceremony of the last three deaths already in the run, recording nothing.
+    /// </summary>
+    /// <remarks>
+    /// The animation can only be seen when something dies, and killing a Pokémon to look at a
+    /// storyboard is not an option. These are deaths that DID happen, shown again, with what each
+    /// one cost read from its own penalty event: nothing is recorded and nothing is charged.
+    /// </remarks>
+    private async Task RehearseDeathsAsync(ILogger logger)
+    {
+        var fallen = await _services!.GetRequiredService<MaintenanceService>().FallenAsync();
+        var ceremony = _services!.GetRequiredService<DeathCeremony>();
+        var run = _services!.GetRequiredService<IRunContext>().Current;
+        var history = run is null
+            ? []
+            : await _services!.GetRequiredService<IEventStore>().GetAllAsync(run.Id);
+
+        logger.LogInformation("Ensayo de la animación de muerte con {Count} caídos ya registrados; no se escribe nada",
+            Math.Min(3, fallen.Count));
+
+        foreach (var entry in fallen.Take(3))
+        {
+            var cost = -history
+                .Where(e => e.Type == GameEventType.PointsPenalty && e.PokemonId == entry.Id)
+                .Sum(e => e.PointsDelta);
+
+            ceremony.Mourn(new DeathNotice(entry.Nickname ?? entry.SpeciesName, entry.Species, Math.Max(0, cost)));
+        }
     }
 
     protected override void OnExit(ExitEventArgs e)

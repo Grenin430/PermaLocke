@@ -230,6 +230,26 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
     /// <summary>The six stats of whatever is selected.</summary>
     public ObservableCollection<StatRowViewModel> Stats { get; } = [];
 
+    /// <summary>
+    /// Leaving the viewer closes the open detail -- unless it is holding an unsaved edit.
+    /// </summary>
+    /// <remarks>
+    /// The detail card is a panel and closes like the rest. EVs typed in and not yet written are
+    /// not a panel, they are somebody's work, and dropping them because a tab was pressed would be
+    /// a silent state change. So when there is an edit in flight the card stays exactly as it was,
+    /// with GUARDAR still lit, and the player is the one who decides between saving and DESHACER.
+    /// </remarks>
+    public override void ResetState()
+    {
+        if (EvsChanged || IsTraining)
+        {
+            return;
+        }
+
+        SelectedSlot = null;
+        SelectedPartySlot = null;
+    }
+
     [ObservableProperty]
     private BoxTabViewModel? _selectedBox;
 

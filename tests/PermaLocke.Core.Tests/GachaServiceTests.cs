@@ -16,6 +16,10 @@ public sealed class GachaServiceTests
         public IReadOnlyList<GachaTier> Tiers => tiers;
 
         public IReadOnlyList<GachaBanner> Banners => banners;
+
+        /// <summary>Sólo dos filas: el principio y el final. Es lo que hace falta para probar.</summary>
+        public IReadOnlyList<StageOdds> StageOdds { get; init; } =
+            [new StageOdds(0, 0, 0), new StageOdds(12, 45, 20)];
     }
 
     private sealed class Species(IReadOnlyList<SpeciesStats> all) : ISpeciesStatsCatalog
@@ -25,6 +29,8 @@ public sealed class GachaServiceTests
         public IReadOnlyList<string> Natures { get; } = [.. Enumerable.Range(0, 25).Select(n => $"Naturaleza {n}")];
 
         public IReadOnlyList<string> Abilities { get; init; } = ["Levitación", "Impostor", "Presión"];
+
+        public IReadOnlyList<EvolutionLine> Lines { get; init; } = [];
     }
 
     /// <summary>The five bands the run defines, by base stat total.</summary>
@@ -49,7 +55,17 @@ public sealed class GachaServiceTests
         new(7, "Muy bueno A", 560, false, ["Habilidad A", "Habilidad B"]),
         new(8, "Muy bueno B", 590, false, ["Habilidad A", "Habilidad B"]),
         new(9, "Pseudo", 600, false, ["Habilidad A", "Habilidad B"]),
-        new(10, "Legendario", 680, true, ["Habilidad A", "Habilidad B"])
+
+        // Las dos primeras etapas del pseudolegendario. Existen para que el tier 5 pueda entregar
+        // un 210: la banda habla de en qué acaba la línea, no de lo que te dan.
+        new(12, "Pseudo bebé", 210, false, ["Habilidad A", "Habilidad B"]),
+        new(13, "Pseudo medio", 330, false, ["Habilidad A", "Habilidad B"]),
+        new(10, "Legendario", 680, true, ["Habilidad A", "Habilidad B"]),
+
+        // Un legendario POR DEBAJO del techo del tier 4. Está aquí porque era imposible que
+        // saliera: el saco de legendarios se recortaba por banda igual que los demás, así que las
+        // aves, los perros, los Tapu, los regis o Type: Null no podían tocar nunca, y nada lo decía.
+        new(11, "Legendario flojo", 580, true, ["Habilidad A", "Habilidad B"])
     ];
 
     private static GachaBanner Pocho() =>
@@ -60,45 +76,245 @@ public sealed class GachaServiceTests
         new("bueno", "BUENO", string.Empty, 300,
             new Dictionary<string, double> { ["tier3"] = 0.15, ["tier4"] = 0.60, ["tier5"] = 0.25 });
 
-    private static GachaService Build() =>
-        new(new Catalog(Tiers(), [Pocho(), Bueno()]), new Species(SpeciesTable()),
+    /// <summary>
+    /// The families, which is what a tier is really a band of.
+    /// </summary>
+    /// <remarks>
+    /// Shaped like the cartridge's: a three-stage line ending in each band, a shorter one beside
+    /// it, and one that does not evolve at all. The tier of a family is decided by the total of its
+    /// LAST rung, so «Flojo A 300» sits in tier 1 through what it becomes and not through what it
+    /// is. Ids match <see cref="SpeciesTable"/>.
+    /// </remarks>
+    private static EvolutionLine[] Families() =>
+    [
+        new([[1], [2]]),            // 300 -> 400, acaba en tier 1
+        new([[3], [4]]),            // 450 -> 490, acaba en tier 2
+        new([[5], [6]]),            // 500 -> 535, acaba en tier 3
+        new([[7], [8]]),            // 560 -> 590, acaba en tier 4
+        new([[12], [13], [9]]),     // 210 -> 330 -> 600: la forma del pseudolegendario
+        new([[10]]),                // el legendario de 680, que no evoluciona
+        new([[11]])                 // y el legendario flojo de 580
+    ];
+
+    private static GachaService Build(IReadOnlyList<StageOdds>? odds = null) =>
+        new(new Catalog(Tiers(), [Pocho(), Bueno()])
+            {
+                StageOdds = odds ?? [new StageOdds(0, 0, 0), new StageOdds(12, 45, 20)]
+            },
+            new Species(SpeciesTable()) { Lines = Families() },
             null!, null!, null!, null!);
 
-    /// <summary>Every species falls in exactly one band, and the bands do not overlap.</summary>
+    /// <summary>
+    /// A tier is a band of <b>endings</b>: every family in it finishes inside the band.
+    /// </summary>
+    /// <remarks>
+    /// The lower bound is the previous tier's ceiling, so a family belongs to exactly one tier —
+    /// the same guarantee the old species-by-species version gave, moved up a level.
+    /// </remarks>
     [Theory]
-    [InlineData("tier1", 300, 400)]
-    [InlineData("tier2", 450, 490)]
-    [InlineData("tier3", 500, 535)]
-    [InlineData("tier4", 560, 590)]
-    public void Each_tier_draws_only_from_its_own_band(string tierId, int low, int high)
+    [InlineData("tier1", 0, 400)]
+    [InlineData("tier2", 400, 490)]
+    [InlineData("tier3", 490, 535)]
+    [InlineData("tier4", 535, 590)]
+    [InlineData("tier5", 590, 9999)]
+    public void A_tier_holds_the_families_that_END_inside_its_band(string tierId, int floor, int roof)
     {
         var service = Build();
         var tier = Tiers().Single(t => t.Id == tierId);
+        var table = SpeciesTable().ToDictionary(s => s.Id);
 
-        var pool = service.PoolOf(tier, legendary: false);
+        var lines = service.LinesOf(tier, legendary: false);
 
-        Assert.Equal(2, pool.Count);
-        Assert.Contains(pool, s => s.BaseStatTotal == low);
-        Assert.Contains(pool, s => s.BaseStatTotal == high);
+        Assert.NotEmpty(lines);
+
+        foreach (var line in lines)
+        {
+            var end = line.Stages[^1].Max(id => table[id].BaseStatTotal);
+            Assert.InRange(end, floor + 1, roof);
+        }
     }
 
     /// <summary>
-    /// Legendaries are kept out of the cheap tiers: their chance there is zero, and the pool is
-    /// split by that flag, so no legendary can turn up in a hundred-point banner.
+    /// What a tier hands over is graded by where the family ends, not by what is handed over.
     /// </summary>
+    /// <remarks>
+    /// This is the whole point of the change, so it is pinned with the awkward case: the top tier
+    /// can produce a 210 — the first rung of the family that reaches 600 — and that is correct.
+    /// Under the old rule a 210 was a tier one and the top tier only ever gave finished Pokémon.
+    /// </remarks>
     [Fact]
-    public void Only_the_top_tier_holds_legendaries()
+    public void The_top_tier_can_hand_over_the_weakest_species_in_the_game()
+    {
+        var service = Build();
+        var top = Tiers().Single(t => t.Id == "tier5");
+
+        var pool = service.PoolOf(top, legendary: false);
+
+        Assert.Contains(pool, s => s.BaseStatTotal == 210);
+        Assert.Contains(pool, s => s.BaseStatTotal == 600);
+    }
+
+    /// <summary>
+    /// A legendary can only come out of the top tier, whatever its base stat total is.
+    /// </summary>
+    /// <remarks>
+    /// What keeps them out of the cheap banners is the <b>flag</b>, not the band: the ordinary pool
+    /// of every tier -- the top one included -- excludes legendaries outright, and only the top
+    /// tier carries a non-zero <c>legendaryChance</c>. That is what this pins, and it is what makes
+    /// it safe for the legendary pool to ignore the bands entirely.
+    /// </remarks>
+    [Fact]
+    public void A_legendary_can_only_come_out_of_the_top_tier()
     {
         var service = Build();
 
         foreach (var tier in Tiers().Where(t => t.Id != "tier5"))
         {
+            Assert.Equal(0.0, tier.LegendaryChance);
+            Assert.DoesNotContain(service.PoolOf(tier, legendary: false), s => s.Legendary);
+
+            // Y su saco de legendarios está vacío, que es lo que la lista de «quién puede salir»
+            // lee: un tier que no los reparte no debe nombrarlos.
             Assert.Empty(service.PoolOf(tier, legendary: true));
         }
 
         var top = Tiers().Single(t => t.Id == "tier5");
-        Assert.Single(service.PoolOf(top, legendary: true));
-        Assert.Single(service.PoolOf(top, legendary: false));
+        Assert.DoesNotContain(service.PoolOf(top, legendary: false), s => s.Legendary);
+    }
+
+    /// <summary>
+    /// The top tier draws from <b>every</b> legendary, not only the ones above its floor.
+    /// </summary>
+    /// <remarks>
+    /// The legendary pool used to be cut by band like any other, which quietly made every legendary
+    /// under 590 unobtainable. Nothing announced it: the roll worked, it just could never land on
+    /// them.
+    /// </remarks>
+    [Fact]
+    public void The_top_tier_draws_from_every_legendary_in_the_game()
+    {
+        var service = Build();
+        var top = Tiers().Single(t => t.Id == "tier5");
+
+        var pool = service.PoolOf(top, legendary: true);
+
+        Assert.Equal(2, pool.Count);
+        Assert.All(pool, s => Assert.True(s.Legendary));
+        Assert.Contains(pool, s => s.BaseStatTotal == 680);
+        Assert.Contains(pool, s => s.BaseStatTotal == 580);
+    }
+
+    /// <summary>
+    /// With nothing cleared, every roll is the first rung of its family.
+    /// </summary>
+    /// <remarks>
+    /// The start of a run is the case the table's zeroes describe, and it is also what a missing or
+    /// broken table falls back to — so this is testing the safe default as much as the rule.
+    /// </remarks>
+    [Fact]
+    public void At_the_start_of_the_run_only_first_stages_come_out()
+    {
+        var service = Build();
+        var firsts = Families().Select(line => line.Stages[0][0]).ToHashSet();
+
+        for (var n = 0; n < 400; n++)
+        {
+            var pull = service.Preview(Bueno(), 20260907, n, cleared: 0);
+
+            Assert.NotNull(pull);
+            Assert.Contains(pull.Species, firsts);
+        }
+    }
+
+    /// <summary>
+    /// Once the run is far enough along, the later rungs turn up at the configured rate.
+    /// </summary>
+    /// <remarks>
+    /// Only the three-stage family can show a third rung, so this counts within it. The margin is
+    /// wide because the point is that the table is being read at all, not that a thousand rolls
+    /// land on the nose.
+    /// </remarks>
+    [Fact]
+    public void Further_along_the_run_the_later_stages_appear()
+    {
+        var service = Build();
+
+        int first = 0, second = 0, final = 0;
+
+        for (var n = 0; n < 4000; n++)
+        {
+            var pull = service.Preview(Bueno(), 20260907, n, cleared: 12)!;
+
+            if (pull.Species == 12) { first++; }
+            if (pull.Species == 13) { second++; }
+            if (pull.Species == 9) { final++; }
+        }
+
+        var inFamily = first + second + final;
+        Assert.True(inFamily > 200, $"la familia de tres etapas salió {inFamily} veces");
+
+        Assert.InRange(second / (double)inFamily, 0.35, 0.55);
+        Assert.InRange(final / (double)inFamily, 0.12, 0.28);
+        Assert.InRange(first / (double)inFamily, 0.25, 0.45);
+    }
+
+    /// <summary>
+    /// A family shorter than the rung asked for gives its last one, not nothing.
+    /// </summary>
+    /// <remarks>
+    /// Without the clamp the short families would quietly refuse their share of the late rolls, and
+    /// the rarest outcome of every tier would land only on the longest lines. Farfetch'd is always
+    /// Farfetch'd.
+    /// </remarks>
+    [Fact]
+    public void A_family_with_no_third_rung_gives_its_last_one()
+    {
+        var service = Build();
+        var top = Tiers().Single(t => t.Id == "tier5");
+
+        var single = service.LinesOf(top, legendary: true)[0];
+
+        Assert.Equal(single.Stages[^1], single.StageAt(2));
+        Assert.Equal(single.Stages[^1], single.StageAt(9));
+    }
+
+    /// <summary>
+    /// The same seed and number give the same Pokémon only for the same progress.
+    /// </summary>
+    /// <remarks>
+    /// Which is why the event carries the stages cleared: without it, clearing a trial would make
+    /// every past roll recompute into something else and an audit would call an honest roll a lie.
+    /// </remarks>
+    [Fact]
+    public void A_roll_is_reproducible_for_the_progress_it_was_made_at()
+    {
+        var service = Build();
+
+        Assert.Equal(service.Preview(Bueno(), 20260907, 3, cleared: 0),
+            service.Preview(Bueno(), 20260907, 3, cleared: 0));
+
+        Assert.Equal(service.Preview(Bueno(), 20260907, 3, cleared: 12),
+            service.Preview(Bueno(), 20260907, 3, cleared: 12));
+    }
+
+    /// <summary>The odds table applies the highest row at or below the progress.</summary>
+    [Fact]
+    public void The_odds_are_the_last_row_the_run_has_reached()
+    {
+        var service = Build([new StageOdds(0, 0, 0), new StageOdds(4, 12, 4), new StageOdds(9, 32, 13)]);
+
+        Assert.Equal(0, service.OddsAt(3).Second);
+        Assert.Equal(12, service.OddsAt(4).Second);
+        Assert.Equal(12, service.OddsAt(8).Second);
+        Assert.Equal(32, service.OddsAt(9).Second);
+
+        // Y una run mas adelantada que la ultima fila se queda en la ultima fila.
+        Assert.Equal(32, service.OddsAt(40).Second);
+
+        // Lo que no es segunda ni final es la primera, que es lo que hace que una tabla vacia
+        // signifique «siempre la forma base» en vez de un fallo.
+        Assert.Equal(55, service.OddsAt(9).First);
+        Assert.Equal(100, service.OddsAt(0).First);
     }
 
     /// <summary>The same run seed and roll number must give the same Pokémon, always.</summary>
@@ -204,7 +420,8 @@ public sealed class GachaServiceTests
         }
 
         var service = new GachaService(new Catalog(Tiers(), [Pocho()]),
-            new Species(SpeciesTable()) { Abilities = names }, null!, null!, null!, null!);
+            new Species(SpeciesTable()) { Abilities = names, Lines = Families() },
+            null!, null!, null!, null!);
 
         for (var number = 0; number < 200; number++)
         {
@@ -236,10 +453,11 @@ public sealed class GachaServiceTests
         var free = new GachaBanner("gratis", "GRATIS", string.Empty, 0,
             new Dictionary<string, double> { ["tier1"] = 1.0 });
 
-        var service = new GachaService(new Catalog(Tiers(), [free]), new Species(SpeciesTable()),
+        var service = new GachaService(new Catalog(Tiers(), [free]),
+            new Species(SpeciesTable()) { Lines = Families() },
             new ZeroPoints(), events, new NoRepository(), new FixedClock());
 
-        var result = await service.RollAsync(SampleRun(), "gratis");
+        var result = await service.RollAsync(SampleRun(), "gratis", cleared: 0);
 
         Assert.True(result.Success);
         Assert.NotNull(result.Pull);

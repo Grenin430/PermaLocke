@@ -3,6 +3,7 @@ using PermaLocke.Core.Abstractions;
 using PermaLocke.Core.Domain;
 using PermaLocke.Core.Services;
 using PermaLocke.GameLink;
+using PermaLocke.GameLink.Battle;
 using PermaLocke.GameLink.Data;
 using PermaLocke.Rules;
 using PermaLocke.Rules.Services;
@@ -31,6 +32,7 @@ public sealed class GameLinkMonitor(
     MaintenanceService maintenance,
     IEventStore events,
     IClock clock,
+    BattleTableReader battleTables,
     ILogger<GameLinkMonitor> logger) : IDisposable
 {
     /// <summary>
@@ -58,6 +60,20 @@ public sealed class GameLinkMonitor(
 
     private readonly CancellationTokenSource _stopping = new();
     private Task? _loop;
+    private Task? _battleLoop;
+
+    /// <summary>Who is standing and who has fallen in the battle in progress, reading by reading.</summary>
+    private readonly BattleFaintTracker _faints = new();
+
+    /// <summary>
+    /// One death recorded at a time, whoever sees it first.
+    /// </summary>
+    /// <remarks>
+    /// Two paths see deaths now: the battle loop, the moment the bar empties, and the party check,
+    /// when the battle ends and the party structure gets its zero. They must not both charge the same
+    /// one, so each looks the Pokémon up as alive again inside this gate before recording anything.
+    /// </remarks>
+    private readonly SemaphoreSlim _deathGate = new(1, 1);
     private DateTimeOffset _lastRewardCheck = DateTimeOffset.MinValue;
 
     /// <summary>Latest snapshot, or null before the first read completes.</summary>
@@ -97,17 +113,18 @@ public sealed class GameLinkMonitor(
     /// </remarks>
     public event EventHandler<string>? DeathMarked;
 
-    /// <summary>A Pokémon of the run has just been recorded as fallen. The name it was known by.</summary>
+    /// <summary>A Pokémon of the run has just been recorded as fallen: who, at what level, and what it cost.</summary>
     /// <remarks>
     /// Separate from <see cref="DeathMarked"/>, which is about the marker written into the game.
     /// This one is the death itself, and it is the one worth shouting: the marker may fail -the
     /// emulator may not be ours, the party may have moved- and the death is recorded either way.
     /// </remarks>
-    public event EventHandler<string>? PokemonDied;
+    public event EventHandler<DeathNotice>? PokemonDied;
 
     public void Start()
     {
         _loop ??= Task.Run(RunAsync);
+        _battleLoop ??= Task.Run(RunBattleAsync);
     }
 
     private async Task RunAsync()
@@ -194,12 +211,16 @@ public sealed class GameLinkMonitor(
 
         foreach (var dead in findings.Fainted)
         {
-            var name = dead.Nickname ?? dead.SpeciesName;
+            // Normalmente el combate ya la ha registrado en el momento, y esto no hace nada: queda
+            // para lo que el combate no ve -la app abierta a mitad de un combate, un combate cuyas
+            // tablas no se encontraron- y para las muertes fuera de combate.
+            if (dead.Pid is not { } pid)
+            {
+                continue;
+            }
 
-            logger.LogWarning("Muerte detectada: {Pokemon}", name);
-            await watcher.RecordDeathAsync(dead, run.PlayerName, ct: _stopping.Token);
-            Announce(() => PokemonDied?.Invoke(this, name));
-            changed = true;
+            var live = snapshot.Party.FirstOrDefault(member => member.Pid == pid);
+            changed |= await RecordDeathOnceAsync(run, pid, live, "memoria del juego");
         }
 
         // Aquí no se escribe nada en el juego, y ese es el cambio. La marca vivía en memoria: la
@@ -229,6 +250,136 @@ public sealed class GameLinkMonitor(
         if (changed)
         {
             Announce(() => RunDataChanged?.Invoke(this, EventArgs.Empty));
+        }
+    }
+
+    /// <summary>
+    /// Watches the battle in progress and records a death the moment the HP bar empties.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A second loop, because a second a reading is too coarse for a moment the player is looking at:
+    /// four readings a second during a battle. Outside one it only looks for a battle every few
+    /// seconds, with the limits <see cref="BattleTableReader"/> explains — the research that found
+    /// these tables froze the emulator by searching in a loop (§114).
+    /// </para>
+    /// <para>
+    /// It also closes the case §111 left open: a story battle that heals the party before handing
+    /// control back hid its deaths from the party check, and the battle tables see the zero first.
+    /// </para>
+    /// </remarks>
+    private async Task RunBattleAsync()
+    {
+        while (!_stopping.IsCancellationRequested)
+        {
+            try
+            {
+                if (Latest is { Connected: true } snapshot && runContext.Current is { } run)
+                {
+                    var tables = battleTables.Read(clock.Now);
+
+                    foreach (var faint in _faints.Observe(tables))
+                    {
+                        await OnBattleFaintAsync(run, snapshot, faint);
+                    }
+                }
+                else
+                {
+                    _faints.Observe([]);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+            catch (Exception ex)
+            {
+                // Una lectura rota de combate cuesta la detección en el momento, nada más: la
+                // muerte la sigue viendo la comprobación del equipo al acabar el combate.
+                logger.LogWarning(ex, "Fallo al leer el combate en curso");
+            }
+
+            try
+            {
+                await Task.Delay(_faints.InBattle ? TimeSpan.FromMilliseconds(250) : TimeSpan.FromSeconds(1),
+                    _stopping.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+        }
+    }
+
+    private async Task OnBattleFaintAsync(Run run, GameSnapshot snapshot, BattleFaint faint)
+    {
+        if (!faint.IsPlayers)
+        {
+            // Los rivales no son de la run. Se apuntan porque son la manera de comprobar que la
+            // detección funciona sin que se muera nadie del jugador.
+            logger.LogInformation("Rival debilitado en combate: especie {Species} (posición {Id})",
+                faint.Species, faint.BattleId);
+            return;
+        }
+
+        // La posición en el combate es el hueco del equipo, y la estructura del equipo no se mueve
+        // hasta que acaba: se comprueba la especie igualmente, porque confundir a quién se ha muerto
+        // es peor que no verlo -la comprobación del equipo lo verá al terminar-.
+        var member = snapshot.Party.FirstOrDefault(m => m.Slot == faint.BattleId);
+
+        if (member is null || member.Species != faint.Species)
+        {
+            logger.LogWarning("Caída en combate en la posición {Id} (especie {Species}) que no cuadra con el equipo: "
+                              + "no se registra en el momento", faint.BattleId, faint.Species);
+            return;
+        }
+
+        // Las tablas lo saben antes de que se vea: la segunda cambia con el mensaje «¡X ha usado Y!»,
+        // antes de la animación del ataque y de la barra. La escena tiene que saltar cuando la barra
+        // llega a cero, así que se espera a verla -o como mucho unos segundos- (§114 ter).
+        var bar = await HpBarWatcher.WaitUntilEmptyAsync(_stopping.Token);
+        logger.LogInformation("Caída en combate de la posición {Id}: {Bar}", faint.BattleId, bar);
+
+        if (await RecordDeathOnceAsync(run, member.Pid, member, "combate, en el momento"))
+        {
+            Announce(() => RunDataChanged?.Invoke(this, EventArgs.Empty));
+        }
+    }
+
+    /// <summary>
+    /// Records a death unless it is already recorded, and announces it.
+    /// </summary>
+    /// <returns>Whether it recorded something.</returns>
+    private async Task<bool> RecordDeathOnceAsync(Run run, uint pid, LivePartyMember? live, string detection)
+    {
+        await _deathGate.WaitAsync(_stopping.Token);
+
+        try
+        {
+            // Vivo en la run AHORA, dentro de la puerta: si el combate ya la registró, aquí no está.
+            var entry = (await maintenance.AliveAsync(_stopping.Token)).FirstOrDefault(p => p.Pid == pid);
+
+            if (entry is null)
+            {
+                return false;
+            }
+
+            // El nombre y el nivel de AHORA, leídos del juego, y no los de cuando se registró: un
+            // Pokémon capturado a nivel 5 que cae a nivel 59 no murió a nivel 5, y el mote puede
+            // habérselo puesto después.
+            var name = !string.IsNullOrWhiteSpace(live?.Nickname) ? live.Nickname
+                : entry.Nickname ?? entry.SpeciesName;
+
+            logger.LogWarning("Muerte detectada ({Detection}): {Pokemon}", detection, name);
+            var charged = await watcher.RecordDeathAsync(entry, run.PlayerName, detection: detection, ct: _stopping.Token);
+
+            var notice = new DeathNotice(name, live?.Species ?? entry.Species, charged.Points);
+            Announce(() => PokemonDied?.Invoke(this, notice));
+            return true;
+        }
+        finally
+        {
+            _deathGate.Release();
         }
     }
 
@@ -664,6 +815,14 @@ public sealed class GameLinkMonitor(
     private async Task KeepFallenDownAsync(Run run, GameSnapshot snapshot)
     {
         if (!snapshot.Connected || snapshot.Party.Count == 0 || provider.AllLayouts.Count == 0)
+        {
+            return;
+        }
+
+        // Durante un combate no: sus bloques apuntan a estas mismas estructuras, un caído en combate
+        // tiene aquí todavía los PS de antes de empezar, y el juego le copia el cero al terminar. No
+        // hay nada que corregir y sí algo que el combate está usando.
+        if (_faints.InBattle)
         {
             return;
         }

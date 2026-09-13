@@ -98,6 +98,41 @@ public class TrainerPokemonTableTests
         }
     }
 
+    /// <summary>
+    /// The enemy's EVs are the cartridge's, and every writer here leaves them where they are.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Measured on the mod installed in the player's game: 0 of 653 trainers had an EV byte that
+    /// differed from vanilla, which is what <c>RomTool trainers</c> reports. This is the same
+    /// statement made where a future writer would trip over it, because "nothing writes them" is
+    /// only true until something does, and an enemy quietly trained to 252 in Speed is not
+    /// something anybody would notice in a battle.
+    /// </para>
+    /// <para>
+    /// It puts each writer through the entry rather than asserting on a constant: an offset that
+    /// agrees with itself proves nothing.
+    /// </para>
+    /// </remarks>
+    [Fact]
+    public void Nothing_here_writes_the_evs()
+    {
+        var party = MakeParty(2);
+        var before = TrainerPokemonTable.GetEvs(party, 0).ToArray();
+
+        TrainerPokemonTable.SetSpecies(party, 0, 700);
+        TrainerPokemonTable.SetSpecies(party, 0, 245, 1);
+        TrainerPokemonTable.SetLevel(party, 0, 74);
+        TrainerPokemonTable.ClearMoves(party, 0);
+
+        Assert.Equal(before, TrainerPokemonTable.GetEvs(party, 0).ToArray());
+
+        // Y son seis, uno por estadística, en su sitio: si el tramo se moviera, lo de arriba
+        // seguiría pasando mirando los bytes equivocados.
+        Assert.Equal(TrainerPokemonTable.EvCount, before.Length);
+        Assert.Equal(party.AsSpan(0x02, 6).ToArray(), before);
+    }
+
     [Fact]
     public void Writing_one_entry_leaves_its_neighbours_alone()
     {

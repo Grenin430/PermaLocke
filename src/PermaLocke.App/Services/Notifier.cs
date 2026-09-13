@@ -135,7 +135,7 @@ public sealed class Notifier(IUiDispatcher ui, ILogger<Notifier> logger)
         if (!_window.IsVisible)
         {
             _window.Show();
-            MakeUntouchable(_window);
+            OverlayWindows.MakeUntouchable(_window);
         }
 
         // Topmost se vuelve a pedir cada vez: otra ventana que se pone delante puede desbancarla,
@@ -143,31 +143,4 @@ public sealed class Notifier(IUiDispatcher ui, ILogger<Notifier> logger)
         _window.Topmost = false;
         _window.Topmost = true;
     }
-
-    /// <summary>Makes the window ignore the mouse and never steal the focus.</summary>
-    private static void MakeUntouchable(Window window)
-    {
-        var handle = new WindowInteropHelper(window).Handle;
-
-        if (handle == IntPtr.Zero)
-        {
-            return;
-        }
-
-        var style = GetWindowLong(handle, GwlExStyle);
-
-        SetWindowLong(handle, GwlExStyle, style | WsExTransparent | WsExNoActivate | WsExToolWindow);
-    }
-
-    private const int GwlExStyle = -20;
-    private const int WsExTransparent = 0x20;
-    private const int WsExNoActivate = 0x8000000;
-    private const int WsExToolWindow = 0x80;
-
-    [DllImport("user32.dll")]
-    private static extern int GetWindowLong(IntPtr window, int index);
-
-    [DllImport("user32.dll")]
-    private static extern int SetWindowLong(IntPtr window, int index, int value);
-
 }

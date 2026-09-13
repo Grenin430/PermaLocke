@@ -198,6 +198,56 @@ public sealed class EvolutionTable
     /// would recurse until the stack ran out.
     /// </para>
     /// </remarks>
+    /// <summary>
+    /// Every family in the game, as ordered stages of alternatives.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// One entry per species nothing evolves into, and inside it a list per stage: stage 0 is the
+    /// base, stage 1 everything it becomes, stage 2 everything those become. A stage holds several
+    /// species when the family branches — Wurmple gives <c>[[265], [266, 268], [267, 269]]</c> and
+    /// Eevee's second stage holds all eight — and that shape is the point: the gacha picks the
+    /// family first and the stage second, so it needs to know which species are the same rung.
+    /// </para>
+    /// <para>
+    /// Breadth first and by <b>arrival</b>, not by walking each branch to the end: a species that
+    /// two different stages could reach belongs on the first rung that reaches it, or it would be
+    /// handed out twice from the same family. Already-seen species are dropped for the same reason,
+    /// which is also what stops a randomized table's loop from running forever.
+    /// </para>
+    /// </remarks>
+    public IReadOnlyList<IReadOnlyList<int[]>> Lines()
+    {
+        var lines = new List<IReadOnlyList<int[]>>();
+
+        for (var species = 1; species < _into.Length; species++)
+        {
+            if (!IsBase(species))
+            {
+                continue;
+            }
+
+            var stages = new List<int[]>();
+            var seen = new HashSet<int> { species };
+            var current = new[] { species };
+
+            while (current.Length > 0)
+            {
+                stages.Add(current);
+
+                current = [.. current
+                    .SelectMany(id => _into[id])
+                    .Distinct()
+                    .Where(seen.Add)
+                    .Order()];
+            }
+
+            lines.Add(stages);
+        }
+
+        return lines;
+    }
+
     public int FinalOf(int species)
     {
         if (species <= 0 || species >= _into.Length)

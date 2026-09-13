@@ -54,9 +54,29 @@ public sealed class CreditService(
             trades += milestone.WonderTrades;
         }
 
-        await AddGrantedRollsAsync(run.Id, rolls, ct).ConfigureAwait(false);
+        trades += await AddGrantedRollsAsync(run.Id, rolls, ct).ConfigureAwait(false);
 
         return new RunCredits(rolls, trades);
+    }
+
+    /// <summary>
+    /// Which milestones the run has already reached, for a screen that lists every one of them.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="EarnedAsync"/> answers <em>how much</em> and deliberately loses <em>from what</em>
+    /// on the way: it adds the milestones up. A table saying what each prueba pays needs the other
+    /// half, and it has to come from here rather than from the screen asking the achievements
+    /// itself — two places deciding what counts as reached would eventually disagree, and the one
+    /// that would be wrong is the one the player reads.
+    /// </remarks>
+    public async Task<IReadOnlySet<string>> ReachedAsync(Guid runId, CancellationToken ct = default)
+    {
+        var progress = await achievements.GetProgressAsync(runId, ct).ConfigureAwait(false);
+
+        return progress
+            .Where(p => p.Unlocked)
+            .Select(p => p.Achievement.Id)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
     }
 
     /// <summary>What has already been used, straight from the history.</summary>
@@ -116,12 +136,28 @@ public sealed class CreditService(
     /// One entry per banner named, so a source that grants two of the same writes it twice.
     /// </para>
     /// </remarks>
-    private async Task AddGrantedRollsAsync(Guid runId, Dictionary<string, int> rolls, CancellationToken ct)
+    /// <returns>Wonder trades granted by hand, which are counted the same way.</returns>
+    /// <remarks>
+    /// Wonder trades needed this too and did not have it. Without it the only way to hand somebody
+    /// a trade was to switch <c>limitarWonderTrades</c> off — which does not grant one trade, it
+    /// removes the rule for everybody and for ever, and there is a test whose whole job is to catch
+    /// that being left off. A grant is a grant: it says how many, who and why, and it shows up in
+    /// the audit next to everything else granted by hand.
+    /// </remarks>
+    private async Task<int> AddGrantedRollsAsync(Guid runId, Dictionary<string, int> rolls,
+        CancellationToken ct)
     {
         var history = await events.GetAllAsync(runId, ct).ConfigureAwait(false);
+        var trades = 0;
 
         foreach (var e in history)
         {
+            if (e.Data.TryGetValue("creditoIntercambio", out var given)
+                && int.TryParse(given, out var count) && count > 0)
+            {
+                trades += count;
+            }
+
             if (!e.Data.TryGetValue("credito", out var granted) || granted.Length == 0)
             {
                 continue;
@@ -133,5 +169,7 @@ public sealed class CreditService(
                 rolls[banner] = rolls.GetValueOrDefault(banner) + 1;
             }
         }
+
+        return trades;
     }
 }

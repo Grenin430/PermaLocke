@@ -216,11 +216,15 @@ public sealed class RouletteServiceTests
         public IReadOnlyList<GachaTier> Tiers => [];
 
         public IReadOnlyList<GachaBanner> Banners => [];
+
+        public IReadOnlyList<StageOdds> StageOdds => [];
     }
 
     private sealed class NoSpecies : ISpeciesStatsCatalog
     {
         public IReadOnlyList<SpeciesStats> All => [];
+
+        public IReadOnlyList<EvolutionLine> Lines => [];
 
         public IReadOnlyList<string> Natures => [];
 

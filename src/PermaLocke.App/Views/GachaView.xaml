@@ -668,7 +668,12 @@
                     <!-- EL BOTE. Ocupa el hueco central, que es el sitio: el jugador mira ahí
                          mientras decide, y hasta ahora ahí no había más que fondo. Se abre desde
                          un portal y se cierra con el mismo, así que no roba sitio a la ruleta. -->
-                    <Border Grid.Row="4" Margin="10,4,10,10" Padding="12,10"
+                    <!-- Ocupa el ESCENARIO ENTERO, portales incluidos: con la lista abierta no se
+                         está tirando, así que ahí no hay nada que tapar que haga falta. Empezó en
+                         el hueco de abajo, donde el Tier 5 salía en una tira de dos filas, y
+                         cubriendo el carrete tampoco llegaba. Un catálogo de doscientas especies
+                         necesita una página, no un cajón. -->
+                    <Border Grid.Row="0" Grid.RowSpan="5" Margin="10,10,10,10" Padding="16,14"
                             CornerRadius="{StaticResource RadiusMedium}"
                             Background="{StaticResource SunkenBrush}" BorderThickness="1"
                             BorderBrush="{Binding PoolBrushKey, Converter={StaticResource ResourceKey}}"
@@ -684,9 +689,62 @@
                                                Converter={StaticResource ResourceKey}}" />
                             </DockPanel>
 
+                            <!-- EL BUSCADOR. El Tier 5 lista un par de cientos de especies, asi
+                                 que «esta Tyranitar aqui» se contestaba desplazandose. -->
+                            <Grid DockPanel.Dock="Top" Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <TextBox Grid.Column="0" Padding="8,5"
+                                         Text="{Binding PoolSearch, UpdateSourceTrigger=PropertyChanged,
+                                             Delay=120}" />
+                                <!-- La pista va DENTRO de la caja y detras del texto, que es donde
+                                     se busca: una etiqueta al lado gasta ancho para siempre a
+                                     cambio de decir algo que solo hace falta la primera vez. -->
+                                <TextBlock Grid.Column="0" Text="Buscar un Pokémon…" Margin="10,0,0,0"
+                                           IsHitTestVisible="False" VerticalAlignment="Center"
+                                           FontSize="11">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock" BasedOn="{StaticResource Faint}">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding PoolSearch}" Value="">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+
+                                <Button Grid.Column="1" Content="✕" Margin="6,0,0,0" Padding="9,4"
+                                        Style="{StaticResource GhostButton}" FontSize="10"
+                                        Command="{Binding ClearPoolSearchCommand}"
+                                        ToolTip="Borrar la búsqueda" />
+
+                                <TextBlock Grid.Column="2" Style="{StaticResource Mono}" FontSize="10.5"
+                                           VerticalAlignment="Center" Margin="10,0,2,0" Opacity="0.55"
+                                           Text="{Binding PoolCount}" />
+                            </Grid>
+
+                            <!-- La otra mitad de la mecánica: la lista enseña familias enteras y
+                                 esto dice qué etapa de ellas te toca AHORA. Sale de la misma tabla
+                                 que la tirada, con el progreso real de la run. -->
+                            <TextBlock DockPanel.Dock="Bottom" Style="{StaticResource Mono}"
+                                       FontSize="10.5" Opacity="0.55" Margin="0,10,0,0"
+                                       TextWrapping="Wrap" Text="{Binding StageOdds}" />
+
+                            <TextBlock DockPanel.Dock="Top" Style="{StaticResource Faint}"
+                                       Margin="2,4,0,0" FontSize="11"
+                                       Text="Ninguna familia de este tier se llama así."
+                                       Visibility="{Binding PoolNothingFound,
+                                           Converter={StaticResource BoolToVisibility}}" />
+
                             <ScrollViewer VerticalScrollBarVisibility="Auto"
                                           HorizontalScrollBarVisibility="Disabled">
-                                <ItemsControl ItemsSource="{Binding Pool}">
+                                <ItemsControl ItemsSource="{Binding VisiblePool}">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
                                             <WrapPanel Orientation="Horizontal" />
@@ -694,28 +752,193 @@
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Border Width="82" Margin="3" Padding="4,5"
+                                            <!-- LA FAMILIA ENTERA, no un Pokémon. El tier es la
+                                                 banda del FINAL de la línea y lo que te dan es una
+                                                 de sus etapas, así que una lista plana de especies
+                                                 diría «un Tier 5 te puede dar un Gible» y se
+                                                 callaría la mitad que lo hace un Tier 5. -->
+                                            <Border x:Name="Cell" Margin="4" Padding="10,8"
                                                     CornerRadius="{StaticResource RadiusSmall}"
-                                                    Background="{StaticResource SurfaceBrush}">
+                                                    Background="{StaticResource SurfaceBrush}"
+                                                    BorderThickness="1" BorderBrush="Transparent">
                                                 <StackPanel>
-                                                    <Image Source="{Binding Sprite}" Width="40" Height="40"
-                                                           RenderOptions.BitmapScalingMode="NearestNeighbor" />
-                                                    <TextBlock Text="{Binding Name}" Style="{StaticResource Faint}"
-                                                               FontSize="9.5" TextAlignment="Center"
-                                                               TextTrimming="CharacterEllipsis" />
-                                                    <TextBlock Style="{StaticResource Mono}" FontSize="9"
-                                                               TextAlignment="Center" Opacity="0.55"
-                                                               Text="{Binding Total}" />
+                                                    <ItemsControl ItemsSource="{Binding Stages}"
+                                                                  HorizontalAlignment="Center">
+                                                        <ItemsControl.ItemsPanel>
+                                                            <ItemsPanelTemplate>
+                                                                <StackPanel Orientation="Horizontal" />
+                                                            </ItemsPanelTemplate>
+                                                        </ItemsControl.ItemsPanel>
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <StackPanel Orientation="Horizontal"
+                                                                            VerticalAlignment="Center">
+                                                                    <TextBlock Text="›" FontSize="20" Opacity="0.3"
+                                                                               VerticalAlignment="Center"
+                                                                               Margin="2,0,2,14"
+                                                                               Visibility="{Binding Arrow,
+                                                                                   Converter={StaticResource BoolToVisibility}}" />
+                                                                    <StackPanel Width="86">
+                                                                        <Image Source="{Binding Sprite}"
+                                                                               Width="64" Height="64"
+                                                                               RenderOptions.BitmapScalingMode="NearestNeighbor" />
+                                                                        <TextBlock Text="{Binding Name}"
+                                                                                   Style="{StaticResource Body}"
+                                                                                   FontSize="11" TextAlignment="Center"
+                                                                                   TextTrimming="CharacterEllipsis" />
+                                                                        <TextBlock Style="{StaticResource Mono}"
+                                                                                   FontSize="9.5" TextAlignment="Center"
+                                                                                   Opacity="0.45"
+                                                                                   Text="{Binding Total}" />
+                                                                    </StackPanel>
+                                                                </StackPanel>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+
                                                     <!-- Los legendarios se dicen: «quiénes están en
                                                          el Tier 5» es en realidad una pregunta
                                                          sobre ellos. -->
-                                                    <TextBlock Text="LEGENDARIO" Style="{StaticResource Mono}"
-                                                               FontSize="7.5" TextAlignment="Center"
-                                                               Foreground="{StaticResource AccentBrush}"
-                                                               Visibility="{Binding Legendary,
-                                                                   Converter={StaticResource BoolToVisibility}}" />
+                                                    <Border Margin="0,5,0,0" Padding="5,1" CornerRadius="3"
+                                                            HorizontalAlignment="Center"
+                                                            Background="{StaticResource AccentDeepBrush}"
+                                                            Visibility="{Binding Legendary,
+                                                                Converter={StaticResource BoolToVisibility}}">
+                                                        <TextBlock Text="LEGENDARIO" Style="{StaticResource Mono}"
+                                                                   FontSize="8"
+                                                                   Foreground="{StaticResource AccentBrightBrush}" />
+                                                    </Border>
                                                 </StackPanel>
                                             </Border>
+                                            <DataTemplate.Triggers>
+                                                <Trigger SourceName="Cell" Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="Cell" Property="Background"
+                                                            Value="{StaticResource SurfaceHighBrush}" />
+                                                    <Setter TargetName="Cell" Property="BorderBrush"
+                                                            Value="{StaticResource BorderStrongBrush}" />
+                                                </Trigger>
+                                            </DataTemplate.Triggers>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </DockPanel>
+                    </Border>
+
+                    <!-- LO QUE DA CADA PRUEBA.
+                         Sale de Data/grants.json, no está escrito aquí: cambiar la tabla de la
+                         competición cambia esta pantalla. Lo conseguido se MARCA y no se quita,
+                         porque la pregunta que contesta es «¿gasto puntos ahora o espero a la
+                         prueba que viene?», y para eso hacen falta las que faltan tanto como las
+                         que ya pagaron.
+
+                         Detrás de un botón y no en una fila propia: catorce filas que se leen una
+                         vez no valen un quinto de la pantalla para siempre. Comparte sitio con la
+                         lista del tier, así que abrir una cierra la otra. -->
+                    <Border Grid.Row="0" Grid.RowSpan="5" Margin="10,10,10,10" Padding="16,14"
+                            CornerRadius="{StaticResource RadiusMedium}"
+                            Background="{StaticResource SunkenBrush}" BorderThickness="1"
+                            BorderBrush="{StaticResource AccentDimBrush}"
+                            Visibility="{Binding ShowingGrants, Converter={StaticResource BoolToVisibility}}">
+                        <DockPanel>
+                            <DockPanel DockPanel.Dock="Top" Margin="0,0,0,4">
+                                <Button DockPanel.Dock="Right" Content="CERRAR"
+                                        Style="{StaticResource GhostButton}" Padding="10,4" FontSize="10"
+                                        Command="{Binding ToggleGrantsCommand}" />
+                                <TextBlock Text="LO QUE DA CADA PRUEBA" Style="{StaticResource Mono}"
+                                           FontSize="11" VerticalAlignment="Center"
+                                           Foreground="{StaticResource AccentBrush}" />
+                            </DockPanel>
+
+                            <TextBlock DockPanel.Dock="Top" Style="{StaticResource Faint}" FontSize="11"
+                                       Margin="0,0,0,12" TextWrapping="Wrap"
+                                       Text="Las tiradas y los intercambios se cobran solos al superar la prueba: salen de los logros, que el cartucho demuestra. Aquí solo se miran." />
+
+                            <TextBlock DockPanel.Dock="Bottom" Style="{StaticResource Mono}" FontSize="10.5"
+                                       Opacity="0.5" Margin="0,10,0,0"
+                                       Text="{Binding GrantsSummary}" />
+
+                            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                          HorizontalScrollBarVisibility="Disabled">
+                                <ItemsControl ItemsSource="{Binding Grants}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <UniformGrid Columns="2" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <!-- La fila entera se apaga si el hito no está
+                                                 conseguido. Es la única diferencia entre las dos
+                                                 mitades de la tabla, y basta: un icono de candado
+                                                 en catorce filas es ruido. -->
+                                            <Border x:Name="Row" Margin="3,2" Padding="11,8"
+                                                    CornerRadius="{StaticResource RadiusSmall}"
+                                                    Background="{StaticResource SurfaceBrush}">
+                                                <DockPanel>
+                                                    <!-- Relleno cuando ya se consiguió, hueco
+                                                         cuando falta. -->
+                                                    <Ellipse x:Name="Dot" DockPanel.Dock="Left"
+                                                             Width="8" Height="8" Margin="0,0,10,0"
+                                                             VerticalAlignment="Center"
+                                                             Fill="Transparent" StrokeThickness="1"
+                                                             Stroke="{StaticResource TextFaintBrush}" />
+
+                                                    <StackPanel DockPanel.Dock="Right"
+                                                                Orientation="Horizontal"
+                                                                VerticalAlignment="Center">
+                                                        <ItemsControl ItemsSource="{Binding Rolls}">
+                                                            <ItemsControl.ItemsPanel>
+                                                                <ItemsPanelTemplate>
+                                                                    <StackPanel Orientation="Horizontal" />
+                                                                </ItemsPanelTemplate>
+                                                            </ItemsControl.ItemsPanel>
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <Border Margin="4,0,0,0" Padding="8,3"
+                                                                            CornerRadius="3"
+                                                                            Background="{StaticResource BackgroundBrush}"
+                                                                            BorderThickness="1"
+                                                                            BorderBrush="{Binding BrushKey,
+                                                                                Converter={StaticResource ResourceKey}}">
+                                                                        <TextBlock Text="{Binding Text}"
+                                                                                   Style="{StaticResource Mono}"
+                                                                                   FontSize="10"
+                                                                                   Foreground="{Binding BrushKey,
+                                                                                       Converter={StaticResource ResourceKey}}" />
+                                                                    </Border>
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+
+                                                        <Border Margin="4,0,0,0" Padding="8,3" CornerRadius="3"
+                                                                Background="{StaticResource BackgroundBrush}"
+                                                                BorderThickness="1"
+                                                                BorderBrush="{StaticResource BorderStrongBrush}"
+                                                                Visibility="{Binding HasWonderTrades,
+                                                                    Converter={StaticResource BoolToVisibility}}">
+                                                            <TextBlock Text="{Binding WonderTradeText}"
+                                                                       Style="{StaticResource Mono}" FontSize="10"
+                                                                       Opacity="0.7" />
+                                                        </Border>
+                                                    </StackPanel>
+
+                                                    <TextBlock Text="{Binding Name}" Style="{StaticResource Body}"
+                                                               FontSize="12.5" VerticalAlignment="Center"
+                                                               TextTrimming="CharacterEllipsis" />
+                                                </DockPanel>
+                                            </Border>
+                                            <DataTemplate.Triggers>
+                                                <DataTrigger Binding="{Binding Reached}" Value="True">
+                                                    <Setter TargetName="Dot" Property="Fill"
+                                                            Value="{StaticResource SuccessBrush}" />
+                                                    <Setter TargetName="Dot" Property="Stroke"
+                                                            Value="{StaticResource SuccessBrush}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Reached}" Value="False">
+                                                    <Setter TargetName="Row" Property="Opacity" Value="0.45" />
+                                                </DataTrigger>
+                                            </DataTemplate.Triggers>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
@@ -897,6 +1120,14 @@
                              A MANO en el XAML: editar Data/gacha.json las dejaba mintiendo. Ahora
                              cada rango va bajo su portal, calculado de los propios tiers. -->
 
+                        <!-- La tabla de lo que paga cada prueba, a un clic. Vivía siempre abierta
+                             bajo los banners: catorce filas que se leen una vez no valen un
+                             quinto de la pantalla para siempre. -->
+                        <Button DockPanel.Dock="Right" Content="LO QUE DA CADA PRUEBA"
+                                Style="{StaticResource GhostButton}" Padding="14,8" FontSize="11"
+                                VerticalAlignment="Center"
+                                Command="{Binding ToggleGrantsCommand}" />
+
                         <Border Style="{StaticResource Chip}" HorizontalAlignment="Left" Margin="14,0,0,0"
                                 Padding="12,5"
                                 Background="{StaticResource BackgroundBrush}"
@@ -921,6 +1152,7 @@
                     </TextBlock>
                 </StackPanel>
             </Border>
+
 
     </Grid>
 </UserControl>

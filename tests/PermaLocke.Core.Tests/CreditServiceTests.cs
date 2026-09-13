@@ -163,6 +163,32 @@ public sealed class CreditServiceTests
         Assert.Equal(2, earned.WonderTrades);
     }
 
+    /// <summary>
+    /// The table of what each milestone pays needs to know <b>which</b> have been reached.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="CreditService.EarnedAsync"/> adds them up and loses that on the way, which is
+    /// right for a total and useless for a list. Same source, so the screen listing the trials and
+    /// the counter paying for them cannot end up disagreeing about what counts as reached.
+    /// </remarks>
+    [Fact]
+    public async Task It_says_which_milestones_have_been_reached()
+    {
+        var (service, _) = Build(new Records(807, 813));
+
+        var reached = await service.ReachedAsync(TheRun().Id);
+
+        Assert.Contains("prueba-01", reached);
+        Assert.Contains("prueba-02", reached);
+        Assert.DoesNotContain("prueba-03", reached);
+
+        // Y cuadra con lo que se cobró: dos pruebas a dos tiradas de pocho son las cuatro de
+        // arriba. Si una de las dos cuentas se moviera sola, esto lo diría.
+        var earned = await service.EarnedAsync(TheRun());
+        Assert.Equal(2, reached.Count(id => id.StartsWith("prueba-", StringComparison.Ordinal)));
+        Assert.Equal(4, earned.RollsOn("pocho"));
+    }
+
     /// <summary>The eighth pays on two banners at once, and the league pays four trades.</summary>
     [Fact]
     public async Task Milestones_add_up_across_banners()

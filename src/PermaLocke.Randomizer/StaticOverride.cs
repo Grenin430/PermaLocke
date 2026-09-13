@@ -17,6 +17,24 @@ public enum StaticOverrideRule
 /// <param name="Level">
 /// The cartridge level of the entry, when species and form are not enough to tell them apart.
 /// </param>
+/// <param name="IndependentDraw">
+/// <para>
+/// When true, the rule is applied <b>after</b> the ordinary draw and from a stream of its own, so
+/// adding it changes the entries it names and nothing else.
+/// </para>
+/// <para>
+/// The rules that are false run <em>before</em> the draw, on the same stream, and take their entries
+/// out of it: each one that is added spends tiradas the rest of the table would have used and
+/// removes entries from the draw, and every encounter after it moves. Measured on the world a player
+/// was in the middle of: adding the two Necrozma fusions that way changed <b>249 of 252 statics and
+/// all 7 trades</b> — Totems and legendaries still ahead of him included — to fix two. Hence this.
+/// </para>
+/// <para>
+/// It is not the default because the rules already in <c>Data/randomizer.json</c> generated worlds
+/// people are playing; switching them over would re-roll those worlds just the same. New rules on a
+/// world already installed want it on.
+/// </para>
+/// </param>
 /// <remarks>
 /// Nihilego is why this exists: it sits in the static table <b>four times</b>, at levels 27, 55, 55
 /// and 60, and the table says nothing about where any of them is. The one the player means — the
@@ -30,4 +48,5 @@ public sealed record StaticOverride(
     StaticOverrideRule Rule,
     int MinimumBaseStatTotal = 0,
     string Note = "",
-    int? Level = null);
+    int? Level = null,
+    bool IndependentDraw = false);

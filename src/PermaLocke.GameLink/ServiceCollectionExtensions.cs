@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using PermaLocke.Core.Abstractions;
+using PermaLocke.GameLink.Battle;
 using PermaLocke.GameLink.Data;
 using PermaLocke.GameLink.Rpc;
 
@@ -21,6 +22,7 @@ public static class ServiceCollectionExtensions
         services.TryAddSingleton<IItemLookup>(_ => new PkhexItemLookup(language));
         services.TryAddSingleton<ITypeLookup>(_ => new PkhexTypeLookup(language));
         services.TryAddSingleton<AzaharRpcClient>();
+        services.TryAddSingleton<BattleTableReader>();
         services.TryAddSingleton(sp => new BagService(
             sp.GetRequiredService<AzaharRpcClient>(),
             sp.GetRequiredService<AzaharGameWriter>(),

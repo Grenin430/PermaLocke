@@ -58,6 +58,34 @@ public sealed class PartyLayoutLocator(AzaharRpcClient client)
     /// earliest address of each run makes every write land where it was aimed.
     /// </para>
     /// </remarks>
+    /// <summary>
+    /// Which structure to believe when more than one reads: the authoritative one, always.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The count is the <b>tie-break</b> and not the first question, and getting that the wrong way
+    /// round cost a death. The mirror at <see cref="CopyStride"/> is staging for the save block:
+    /// the game writes it and never reads it, so its HP lags (§98, §99). Sorting by "whichever
+    /// reads most members" meant that any poll where the authoritative structure had one slot the
+    /// reader would not accept — a battle stat momentarily out of range is enough — handed the
+    /// whole read over to the mirror, where a Pokémon that had just fainted still showed its old
+    /// HP. The watcher decides death on <c>CurrentHp == 0</c>, so it saw nothing.
+    /// </para>
+    /// <para>
+    /// The cost of preferring authority is reading <em>fewer</em> party members on such a poll,
+    /// which is the right way to be wrong: a slot not read is a slot not judged, while a slot read
+    /// from a stale copy is a wrong answer stated confidently.
+    /// </para>
+    /// </remarks>
+    /// <param name="candidates">Each layout with how many party members it managed to read.</param>
+    public static PartyLayout? Preferred(IEnumerable<(PartyLayout Layout, int Read)> candidates) =>
+        candidates
+            .Where(candidate => candidate.Read > 0)
+            .OrderBy(candidate => candidate.Layout.Stride == AuthoritativeStride ? 0 : 1)
+            .ThenByDescending(candidate => candidate.Read)
+            .Select(candidate => candidate.Layout)
+            .FirstOrDefault();
+
     public static IReadOnlyList<PartyLayout> Distinct(IReadOnlyList<PartyLayout> layouts)
     {
         const int PartySlots = 6;

@@ -22,6 +22,62 @@ public interface ISpeciesStatsCatalog
 
     /// <summary>Every ability the cartridge names. The gacha draws from all of them.</summary>
     IReadOnlyList<string> Abilities { get; }
+
+    /// <summary>Every evolution family, which is what the gacha actually hands out.</summary>
+    IReadOnlyList<EvolutionLine> Lines { get; }
+}
+
+/// <summary>
+/// One evolution family: ordered stages, each holding the species on that rung.
+/// </summary>
+/// <remarks>
+/// <para>
+/// The gacha rolls a <b>family</b> and then a <b>stage</b>, so the rarity of a tier is about where
+/// the line ENDS and what you are handed is usually its beginning. A tier five is a Gible, and what
+/// tier five promises is Garchomp.
+/// </para>
+/// <para>
+/// A stage holds more than one species when the family branches — Wurmple's second rung is Silcoon
+/// and Cascoon, Eevee's is all eight — and the roll picks between them. Read from the cartridge by
+/// <c>RomTool species</c>, never a hand-kept list.
+/// </para>
+/// </remarks>
+public sealed record EvolutionLine(IReadOnlyList<IReadOnlyList<int>> Stages)
+{
+    /// <summary>The rung a roll lands on, with anything past the end clamped to the last.</summary>
+    /// <remarks>
+    /// Clamping and not skipping: a two-stage family asked for its third rung gives its second,
+    /// and Farfetch'd is always Farfetch'd. Without it the short families would simply refuse a
+    /// share of the rolls, and the rarest outcome of a tier would land on the longest lines.
+    /// </remarks>
+    public IReadOnlyList<int> StageAt(int stage) =>
+        Stages[Math.Clamp(stage, 0, Stages.Count - 1)];
+
+    /// <summary>Everything this family can ever be, in one list.</summary>
+    public IEnumerable<int> AllSpecies => Stages.SelectMany(stage => stage);
+}
+
+/// <summary>
+/// How likely each rung of a family is, at one point of the run.
+/// </summary>
+/// <remarks>
+/// <para>
+/// What is left over after <paramref name="Second"/> and <paramref name="Final"/> is the chance of
+/// the <b>first</b> stage, so a row of zeroes means "always the base form". That is deliberate:
+/// the safe reading of a missing or broken table is the start of the game, not a free Garchomp.
+/// </para>
+/// <para>
+/// Keyed by stages cleared, which is the run's own measure of how far along it is — the same
+/// number the level cap is deduced from (§49) rather than a second notion of progress that could
+/// disagree with it.
+/// </para>
+/// </remarks>
+/// <param name="Cleared">Stages cleared at or above which this row applies.</param>
+/// <param name="Second">Percentage chance of the second rung.</param>
+/// <param name="Final">Percentage chance of the last rung.</param>
+public sealed record StageOdds(int Cleared, int Second, int Final)
+{
+    public int First => Math.Max(0, 100 - Second - Final);
 }
 
 /// <summary>
@@ -144,4 +200,14 @@ public interface IGachaCatalog
     IReadOnlyList<GachaTier> Tiers { get; }
 
     IReadOnlyList<GachaBanner> Banners { get; }
+
+    /// <summary>
+    /// Which rung of a family a roll lands on, by how far the run has got.
+    /// </summary>
+    /// <remarks>
+    /// Empty means the first stage always, which is what a run that has cleared nothing gets
+    /// anyway — so a missing table degrades into the start of the game rather than into a
+    /// jackpot.
+    /// </remarks>
+    IReadOnlyList<StageOdds> StageOdds { get; }
 }

@@ -162,6 +162,9 @@ public sealed class MaintenanceService(
     private SavePidRepair NewPidRepair() =>
         new(save, paths.SaveBackups, loggers.CreateLogger<SavePidRepair>());
 
+    /// <summary>A death marked by hand has just been recorded.</summary>
+    public event EventHandler<DeathNotice>? MarkedDead;
+
     /// <summary>Everything the run still counts as standing, newest first.</summary>
     public async Task<IReadOnlyList<PokemonEntry>> AliveAsync(CancellationToken ct = default)
     {
@@ -173,6 +176,57 @@ public sealed class MaintenanceService(
         var all = await pokemon.GetAllAsync(run.Id, ct).ConfigureAwait(false);
 
         return [.. all.Where(p => p.Status == PokemonStatus.Alive).OrderByDescending(p => p.ObtainedAt)];
+    }
+
+    /// <summary>Everything the run counts as fallen, most recent death first.</summary>
+    public async Task<IReadOnlyList<PokemonEntry>> FallenAsync(CancellationToken ct = default)
+    {
+        if (runContext.Current is not { } run)
+        {
+            return [];
+        }
+
+        var all = await pokemon.GetAllAsync(run.Id, ct).ConfigureAwait(false);
+
+        return [.. all.Where(p => p.Status == PokemonStatus.Dead).OrderByDescending(p => p.DiedAt)];
+    }
+
+    /// <summary>
+    /// Undoes a death PermaLocke should not have recorded.
+    /// </summary>
+    /// <remarks>
+    /// The other half of <see cref="MarkDeadAsync"/>: a death marked by hand on the wrong Pokémon
+    /// takes points and holds it at zero, and there was no way back short of editing the database.
+    /// The history keeps the death and adds the revocation beside it
+    /// (<see cref="GameWatcher.RevokeDeathAsync"/>); nothing is edited.
+    /// </remarks>
+    public async Task<string> RevokeDeathAsync(Guid pokemonId, string why, CancellationToken ct = default)
+    {
+        if (runContext.Current is not { } run)
+        {
+            return "No hay ninguna run cargada.";
+        }
+
+        var entry = (await pokemon.GetAllAsync(run.Id, ct).ConfigureAwait(false))
+            .FirstOrDefault(p => p.Id == pokemonId);
+
+        if (entry is null)
+        {
+            return "Ese Pokémon ya no está en la run.";
+        }
+
+        var name = entry.Nickname ?? entry.SpeciesName;
+        var refused = await watcher.RevokeDeathAsync(entry, run.PlayerName, why, ct).ConfigureAwait(false);
+
+        if (refused is not null)
+        {
+            return refused;
+        }
+
+        logger.LogInformation("Muerte revocada a mano: {Pokemon} ({Motivo})", name, why);
+
+        return $"{name} vuelve a estar vivo y se le han devuelto los puntos. En la partida sigue a 0 PS: "
+               + "llévalo a un Centro Pokémon y ya no se lo volverán a quitar.";
     }
 
     /// <summary>
@@ -216,11 +270,23 @@ public sealed class MaintenanceService(
 
         var reason = string.IsNullOrWhiteSpace(why) ? "sin motivo anotado" : why.Trim();
 
-        await watcher.RecordDeathAsync(entry, run.PlayerName, EventSource.Player,
+        var charged = await watcher.RecordDeathAsync(entry, run.PlayerName, EventSource.Player,
             $"a mano: {reason}", ct).ConfigureAwait(false);
 
         logger.LogInformation("Muerte marcada a mano: {Pokemon} ({Motivo})",
             entry.Nickname ?? entry.SpeciesName, reason);
+
+        // Una muerte marcada a mano también tiene su momento: son justo las que la app no llegó a
+        // ver, y quedarse sin la pantalla por eso sería castigar dos veces al mismo Pokémon.
+        try
+        {
+            MarkedDead?.Invoke(this, new DeathNotice(entry.Nickname ?? entry.SpeciesName, entry.Species,
+                charged.Points));
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Un oyente falló al recibir una muerte marcada a mano");
+        }
 
         return $"{entry.Nickname ?? entry.SpeciesName} marcado como caído. "
                + "La penalización se ha cobrado y queda en el historial como marca del jugador.";

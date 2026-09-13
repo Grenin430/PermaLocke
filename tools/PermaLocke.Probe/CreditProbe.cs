@@ -82,6 +82,12 @@ public static class CreditProbe
             ? "Concedida a mano desde la sonda."
             : reason.Trim();
 
+        // «intercambio N» concede wonder trades en vez de una tirada de gacha. Existe para no
+        // tener que apagar limitarWonderTrades, que no concede uno: quita la regla para siempre.
+        var trades = banner.StartsWith("intercambio", StringComparison.OrdinalIgnoreCase)
+            ? Math.Max(1, int.TryParse(banner.AsSpan("intercambio".Length).Trim(), out var n) ? n : 1)
+            : 0;
+
         await events.AppendAsync(new GameEvent
         {
             Id = Guid.NewGuid(),
@@ -90,17 +96,27 @@ public static class CreditProbe
             Type = GameEventType.AdminAdjustment,
             Source = EventSource.Admin,
             Actor = run.PlayerName,
-            Description = $"Tirada de gacha concedida a mano en {banner}.",
+            Description = trades > 0
+                ? $"{trades} wonder trade(s) concedidos a mano."
+                : $"Tirada de gacha concedida a mano en {banner}.",
             Reason = why,
-            Data = new Dictionary<string, string>
-            {
-                ["credito"] = banner,
-                ["concedidoAMano"] = bool.TrueString
-            }
+            Data = trades > 0
+                ? new Dictionary<string, string>
+                {
+                    ["creditoIntercambio"] = trades.ToString(),
+                    ["concedidoAMano"] = bool.TrueString
+                }
+                : new Dictionary<string, string>
+                {
+                    ["credito"] = banner,
+                    ["concedidoAMano"] = bool.TrueString
+                }
         });
 
         Console.WriteLine();
-        Console.WriteLine($"Concedida 1 tirada en {banner}. Motivo: {why}");
+        Console.WriteLine(trades > 0
+            ? $"Concedidos {trades} wonder trade(s). Motivo: {why}"
+            : $"Concedida 1 tirada en {banner}. Motivo: {why}");
         Console.WriteLine();
 
         await ShowAsync(credits, run);

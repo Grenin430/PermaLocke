@@ -124,6 +124,68 @@ public static class PersonalEntry7
         return rates;
     }
 
+    /// <summary>
+    /// The six base stats of every species, six bytes each, indexed by species id.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// In the table's own order — <b>PS, Ataque, Defensa, VELOCIDAD, At. Esp., Def. Esp.</b> — and
+    /// not the order a summary screen shows. That trap is worth the warning: comparing against the
+    /// screen's order makes HP and Attack agree and the other three disagree, which reads exactly
+    /// like a real bug and is not one. <see cref="StatOrder"/> maps one to the other.
+    /// </para>
+    /// <para>
+    /// They have to come from the installed world and not from PKHeX for the same reason as the
+    /// growth curves, only worse: this run is played with <c>shuffleBaseStats</c> on, so PKHeX's
+    /// table is not this cartridge's for <em>any</em> species, not just the ones the expansion
+    /// added. Index 0 is padding so the array can be indexed by species id directly.
+    /// </para>
+    /// </remarks>
+    public static byte[] BaseStats(byte[] packed, int speciesCount)
+    {
+        var stats = new byte[(speciesCount + 1) * StatOffsets.Length];
+
+        for (var species = 1; species <= speciesCount; species++)
+        {
+            for (var stat = 0; stat < StatOffsets.Length; stat++)
+            {
+                stats[(species * StatOffsets.Length) + stat] = packed[(species * Size) + StatOffsets[stat]];
+            }
+        }
+
+        return stats;
+    }
+
+    /// <summary>
+    /// Where each stat of a summary screen sits in the table: PS, Atk, Def, At.Esp, Def.Esp, Vel.
+    /// </summary>
+    public static readonly int[] StatOrder = [0, 1, 2, 4, 5, 3];
+
+    /// <summary>
+    /// The base stats already in the summary screen's order, which is the one PermaLocke speaks.
+    /// </summary>
+    /// <remarks>
+    /// One function and not two steps at every call site, because the reordering is exactly the
+    /// kind of thing that gets done in one place and forgotten in another — and forgetting it does
+    /// not throw, it swaps Velocidad with At. Esp. and hands out numbers that look like stats.
+    /// </remarks>
+    public static byte[] BaseStatsInScreenOrder(byte[] packed, int speciesCount)
+    {
+        var table = BaseStats(packed, speciesCount);
+        var moved = new byte[table.Length];
+
+        for (var species = 1; species <= speciesCount; species++)
+        {
+            for (var stat = 0; stat < StatOrder.Length; stat++)
+            {
+                moved[(species * StatOrder.Length) + stat] =
+                    table[(species * StatOrder.Length) + StatOrder[stat]];
+            }
+        }
+
+        return moved;
+    }
+
     public static int SpeciesCount(byte[] packed)
     {
         var rows = packed.Length / Size;

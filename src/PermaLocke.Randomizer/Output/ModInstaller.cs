@@ -72,6 +72,13 @@ public static class ModInstaller
         return from.Length == to.Length && from.LastWriteTimeUtc == to.LastWriteTimeUtc;
     }
 
+    /// <summary>How many copies of an overwritten world are kept, oldest dropped first.</summary>
+    /// <remarks>
+    /// Three and not ten like the run's backups (§76): a world is about 460 MB of randomized files,
+    /// and what a copy is for is undoing the <em>last</em> install, or the one before it.
+    /// </remarks>
+    public const int BackupsKept = 3;
+
     /// <summary>
     /// Installs a generated mod, laying the base layer down first when there is one.
     /// </summary>
@@ -84,19 +91,62 @@ public static class ModInstaller
     /// concerned however complete their data is.
     /// </param>
     /// <param name="onProgress">Told what is happening, since the base layer takes minutes.</param>
-    public static void Install(string generated, string modDirectory, string? baseLayerRomfs,
-        string? baseLayerExefs, Action<string>? onProgress = null)
+    /// <param name="backupRoot">Where copies go; by default beside the emulator's <c>mods</c> folder.</param>
+    /// <returns>The copy made of what was about to be overwritten, or null when nothing was.</returns>
+    /// <remarks>
+    /// <para>
+    /// <b>Before writing anything, whatever this is about to overwrite and cannot be rebuilt is
+    /// copied aside</b>, and the copy is read back. A world somebody is playing is the one thing an
+    /// install destroys, and for a while it destroyed it for good: the docs said the previous mod
+    /// was kept in <c>load\permalocke-mod-anterior</c>, and that folder was from three weeks earlier —
+    /// the promise had stopped being true when installing was rewritten for the base layer, and it
+    /// was repeated to a player as reassurance before anybody checked the date on the folder.
+    /// </para>
+    /// <para>
+    /// If the copy cannot be made or does not read back the same, <b>nothing is installed</b>. That
+    /// is the rule <c>SaveEraser</c> follows (§67): without a copy it does not destroy.
+    /// </para>
+    /// </remarks>
+    public static string? Install(string generated, string modDirectory, string? baseLayerRomfs,
+        string? baseLayerExefs, Action<string>? onProgress = null, string? backupRoot = null)
     {
         var romfs = Path.Combine(modDirectory, "romfs");
+        var exefs = Path.Combine(modDirectory, "exefs");
+        var hasBase = baseLayerRomfs is not null && Directory.Exists(baseLayerRomfs);
+        var hasBaseExefs = hasBase && baseLayerExefs is not null && Directory.Exists(baseLayerExefs);
+        var ours = Path.Combine(generated, "exefs");
 
-        if (baseLayerRomfs is not null && Directory.Exists(baseLayerRomfs))
+        var writes = new List<Write>();
+
+        if (hasBase)
+        {
+            writes.AddRange(Writes(baseLayerRomfs!, romfs, fromBase: true));
+
+            if (hasBaseExefs)
+            {
+                writes.AddRange(Writes(baseLayerExefs!, exefs, fromBase: true));
+            }
+        }
+
+        writes.AddRange(Writes(Path.Combine(generated, "romfs"), romfs, fromBase: false));
+
+        if (Directory.Exists(ours))
+        {
+            writes.AddRange(Writes(ours, exefs, fromBase: false));
+        }
+
+        var kept = KeepWhatWouldBeLost(writes, modDirectory,
+            hasBase ? baseLayerRomfs : null, hasBaseExefs ? baseLayerExefs : null,
+            backupRoot, onProgress);
+
+        if (hasBase)
         {
             onProgress?.Invoke("Copiando el mod base... (son varios GB, la primera vez tarda)");
-            CopyTree(baseLayerRomfs, romfs, skipUnchanged: true);
+            CopyTree(baseLayerRomfs!, romfs, skipUnchanged: true);
 
-            if (baseLayerExefs is not null && Directory.Exists(baseLayerExefs))
+            if (hasBaseExefs)
             {
-                CopyTree(baseLayerExefs, Path.Combine(modDirectory, "exefs"), skipUnchanged: true);
+                CopyTree(baseLayerExefs!, exefs, skipUnchanged: true);
             }
         }
 
@@ -106,11 +156,219 @@ public static class ModInstaller
         // Y el exefs generado ENCIMA del de la capa base, si lo hay: es el mismo code.bin del mod
         // con la tabla de MT barajada. Va despues por la misma razon que el romfs, y si no existe
         // no pasa nada, porque entonces el bueno es el que ya se copio.
-        var ours = Path.Combine(generated, "exefs");
-
         if (Directory.Exists(ours))
         {
-            CopyTree(ours, Path.Combine(modDirectory, "exefs"));
+            CopyTree(ours, exefs);
         }
+
+        return kept;
+    }
+
+    /// <summary>
+    /// Puts the base mod back over an installed world — the battle mode's swap — keeping a copy first.
+    /// </summary>
+    /// <remarks>
+    /// It is the other way a world gets overwritten, so it takes the same copy. Returning from the
+    /// swap reinstalls the generated folder, and if that folder has since been regenerated or deleted,
+    /// the copy is the only place the world still exists.
+    /// </remarks>
+    public static string? SwitchToBase(string modDirectory, string baseLayerRomfs, string? baseLayerExefs,
+        Action<string>? onProgress = null, string? backupRoot = null)
+    {
+        var romfs = Path.Combine(modDirectory, "romfs");
+        var exefs = Path.Combine(modDirectory, "exefs");
+        var hasExefs = baseLayerExefs is not null && Directory.Exists(baseLayerExefs);
+
+        var writes = new List<Write>(Writes(baseLayerRomfs, romfs, fromBase: true));
+
+        if (hasExefs)
+        {
+            writes.AddRange(Writes(baseLayerExefs!, exefs, fromBase: true));
+        }
+
+        var kept = KeepWhatWouldBeLost(writes, modDirectory, baseLayerRomfs,
+            hasExefs ? baseLayerExefs : null, backupRoot, onProgress);
+
+        CopyTree(baseLayerRomfs, romfs, skipUnchanged: true);
+
+        if (hasExefs)
+        {
+            CopyTree(baseLayerExefs!, exefs);
+        }
+
+        return kept;
+    }
+
+    /// <summary>One file an operation is going to write.</summary>
+    private sealed record Write(string Source, string Target, bool FromBase);
+
+    private static IEnumerable<Write> Writes(string source, string destination, bool fromBase) =>
+        Directory.Exists(source)
+            ? Directory.EnumerateFiles(source, "*", SearchOption.AllDirectories)
+                .Select(file => new Write(file, Path.Combine(destination, Path.GetRelativePath(source, file)), fromBase))
+            : throw new DirectoryNotFoundException($"No existe {source}.");
+
+    /// <summary>
+    /// Copies aside every installed file the operation would change and nobody could rebuild.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Would change</b>: the file exists and what ends up there is different. The last writer
+    /// decides — a randomized file wins over the base mod's — and "different" is a hash for the
+    /// randomized files, which are small and whose timestamps always move, and length plus time for
+    /// the base layer, where hashing 2,5 GB to learn nothing is what <see cref="IsAlreadyThere"/>
+    /// exists to avoid.
+    /// </para>
+    /// <para>
+    /// <b>Nobody could rebuild</b>: a file identical to the base mod's own copy is not kept, because
+    /// the base mod is still sitting in <c>Expansion/</c>. That is not a size optimisation, it is what
+    /// keeps the three copies meaningful — coming back from the battle mode would otherwise spend a
+    /// slot on a copy of the unrandomized mod and push out a real world.
+    /// </para>
+    /// </remarks>
+    private static string? KeepWhatWouldBeLost(IReadOnlyList<Write> writes, string modDirectory,
+        string? baseLayerRomfs, string? baseLayerExefs, string? backupRoot, Action<string>? onProgress)
+    {
+        var last = new Dictionary<string, Write>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var write in writes)
+        {
+            // Un fichero randomizado manda sobre el del mod base; el del mod base no pisa uno ya
+            // decidido como randomizado.
+            if (!last.TryGetValue(write.Target, out var earlier) || earlier.FromBase || !write.FromBase)
+            {
+                last[write.Target] = write;
+            }
+        }
+
+        var lost = last.Values
+            .Where(write => File.Exists(write.Target))
+            .Where(write => write.FromBase
+                ? !IsAlreadyThere(write.Source, write.Target)
+                : !SameBytes(write.Source, write.Target))
+            .Where(write => !IsBaseLayerCopy(write.Target, modDirectory, baseLayerRomfs, baseLayerExefs))
+            .Select(write => write.Target)
+            .ToList();
+
+        if (lost.Count == 0)
+        {
+            return null;
+        }
+
+        var shelf = backupRoot ?? DefaultBackupRoot(modDirectory);
+        var stamp = DateTime.Now.ToString("yyyyMMdd-HHmmss");
+        var copy = Path.Combine(shelf, stamp);
+
+        // Dos instalaciones en el mismo segundo no se pisan: la segunda lleva sufijo. Sin esto la copia
+        // chocaria con la anterior y, como no se sobrescribe una copia, no se instalaria nada.
+        for (var n = 2; Directory.Exists(copy); n++)
+        {
+            copy = Path.Combine(shelf, stamp + "-" + n);
+        }
+
+        onProgress?.Invoke($"Guardando copia del mundo instalado ({lost.Count} ficheros) en {copy}...");
+
+        try
+        {
+            foreach (var file in lost)
+            {
+                var target = Path.Combine(copy, Path.GetRelativePath(modDirectory, file));
+                Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+                File.Copy(file, target, overwrite: false);
+
+                if (!SameBytes(file, target))
+                {
+                    throw new IOException($"La copia de {file} no se lee igual que el original.");
+                }
+            }
+
+            File.WriteAllText(Path.Combine(copy, "LEEME.txt"),
+                $"Copia del mundo instalado, hecha el {DateTime.Now:yyyy-MM-dd HH:mm:ss} justo antes de "
+                + "sobrescribirlo.\r\n\r\nPara volver a él: con Azahar CERRADO, copia las carpetas romfs y "
+                + "exefs de aquí encima de\r\n" + modDirectory + "\r\n\r\nSolo están los ficheros que se "
+                + "iban a perder: lo que es igual que el mod base no se guarda, porque sigue en Expansion.\r\n\r\n"
+                + string.Join("\r\n", lost.Select(file => Path.GetRelativePath(modDirectory, file))));
+        }
+        catch (Exception ex)
+        {
+            throw new IOException(
+                "No se ha podido guardar copia del mundo instalado, así que NO se ha instalado nada: "
+                + "sin copia no se sobrescribe un mundo que alguien está jugando. " + ex.Message, ex);
+        }
+
+        // Solo se borra lo viejo cuando la copia nueva ya está comprobada.
+        foreach (var old in Directory.GetDirectories(shelf)
+                     .OrderByDescending(Path.GetFileName, StringComparer.Ordinal)
+                     .Skip(BackupsKept))
+        {
+            Directory.Delete(old, recursive: true);
+        }
+
+        return copy;
+    }
+
+    /// <summary>
+    /// Beside the emulator's <c>mods</c> folder, where Azahar does not look for mods.
+    /// </summary>
+    /// <remarks>
+    /// Not inside <c>mods</c>: anything in there with a title id for a name is a mod the emulator
+    /// would load. For a folder that is not inside a <c>mods</c> folder at all, next to it.
+    /// </remarks>
+    private static string DefaultBackupRoot(string modDirectory)
+    {
+        var parent = Directory.GetParent(Path.GetFullPath(modDirectory));
+
+        return parent is { Name: var name, Parent: { } load }
+               && string.Equals(name, "mods", StringComparison.OrdinalIgnoreCase)
+            ? Path.Combine(load.FullName, "permalocke-copias")
+            : Path.GetFullPath(modDirectory).TrimEnd(Path.DirectorySeparatorChar) + "-copias";
+    }
+
+    /// <summary>True when the installed file is still exactly the base mod's own copy.</summary>
+    private static bool IsBaseLayerCopy(string installed, string modDirectory, string? baseRomfs, string? baseExefs)
+    {
+        var relative = Path.GetRelativePath(modDirectory, installed);
+        var parts = relative.Split(Path.DirectorySeparatorChar, 2);
+
+        if (parts.Length < 2)
+        {
+            return false;
+        }
+
+        var origin = parts[0].ToLowerInvariant() switch
+        {
+            "romfs" => baseRomfs,
+            "exefs" => baseExefs,
+            _ => null
+        };
+
+        if (origin is null)
+        {
+            return false;
+        }
+
+        // Sin esta comprobacion, un fichero que el mod base no trae -Shop.cro, por ejemplo- hace que
+        // IsAlreadyThere pida la longitud de algo que no existe, y eso lanza.
+        var baseFile = Path.Combine(origin, parts[1]);
+
+        return File.Exists(baseFile) && IsAlreadyThere(baseFile, installed);
+    }
+
+    /// <summary>Same length and same bytes.</summary>
+    private static bool SameBytes(string a, string b)
+    {
+        var first = new FileInfo(a);
+        var second = new FileInfo(b);
+
+        if (!first.Exists || !second.Exists || first.Length != second.Length)
+        {
+            return false;
+        }
+
+        using var sha = System.Security.Cryptography.SHA256.Create();
+        using var one = File.OpenRead(a);
+        using var two = File.OpenRead(b);
+
+        return sha.ComputeHash(one).AsSpan().SequenceEqual(sha.ComputeHash(two));
     }
 }

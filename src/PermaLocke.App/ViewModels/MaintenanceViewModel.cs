@@ -109,6 +109,8 @@ public sealed partial class MaintenanceViewModel : SectionViewModel
     [NotifyCanExecuteChangedFor(nameof(AuditCommand))]
     [NotifyCanExecuteChangedFor(nameof(InspectPidsCommand))]
     [NotifyCanExecuteChangedFor(nameof(RepairPidsCommand))]
+    [NotifyCanExecuteChangedFor(nameof(MarkDeadCommand))]
+    [NotifyCanExecuteChangedFor(nameof(RevokeDeathCommand))]
     private bool _isBusy;
 
     private bool CanWork => !IsBusy && _runContext.Current is not null;
@@ -119,6 +121,41 @@ public sealed partial class MaintenanceViewModel : SectionViewModel
     {
         await AuditAsync();
         await LoadStagesAsync();
+
+        // Las dos listas de muertes se cargan al ABRIR. La de vivos solo se rellenaba después de
+        // marcar uno, y con la lista vacía no se podía marcar ninguno: MARCAR COMO CAÍDO llevaba
+        // tiempo siendo un desplegable vacío con un botón apagado debajo.
+        await LoadAliveAsync();
+        await LoadFallenAsync();
+    }
+
+    /// <summary>
+    /// Leaving maintenance disarms the buttons that write.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Every tool here is two steps -- look first, and only then does the button that writes light
+    /// up -- and the point of the first step is that it is a measurement of <em>now</em>. A count
+    /// taken before a trip round the rest of the application is not that any more, and a primed
+    /// destructive button surviving the trip is the version of this that costs somebody a Pokémon.
+    /// So both go back to «nobody has looked», which is what &lt; 0 means here.
+    /// </para>
+    /// <para>
+    /// Not while it is working: interrupting a write to tidy the screen would leave the count and
+    /// what was actually written saying different things.
+    /// </para>
+    /// </remarks>
+    public override void ResetState()
+    {
+        if (IsBusy)
+        {
+            return;
+        }
+
+        PidsToWrite = -1;
+        PidStatus = string.Empty;
+        TradedToClose = -1;
+        TradedStatus = string.Empty;
     }
 
     [RelayCommand(CanExecute = nameof(CanWork))]
@@ -434,12 +471,94 @@ public sealed partial class MaintenanceViewModel : SectionViewModel
             DeathReason = string.Empty;
             SelectedAlive = null;
             await LoadAliveAsync();
+            await LoadFallenAsync();
             await AuditAsync();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Falló marcar una muerte a mano");
             DeathStatus = "No se ha podido marcar. El detalle está en la carpeta Logs.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    // ================================================== DESHACER UNA MUERTE
+
+    /// <summary>Los que la run cuenta como caídos, para poder señalar uno que no lo está.</summary>
+    public ObservableCollection<PokemonEntry> FallenPokemon { get; } = [];
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(RevokeDeathCommand))]
+    private PokemonEntry? _selectedFallen;
+
+    /// <summary>Por qué no era una muerte. Va al evento, igual que el motivo de marcar una.</summary>
+    [ObservableProperty]
+    private string _revokeReason = string.Empty;
+
+    [ObservableProperty]
+    private string _revokeStatus = string.Empty;
+
+    private bool CanRevokeDeath => !IsBusy && SelectedFallen is not null;
+
+    private async Task LoadFallenAsync()
+    {
+        var fallen = await _maintenance.FallenAsync();
+
+        FallenPokemon.Clear();
+
+        foreach (var entry in fallen)
+        {
+            FallenPokemon.Add(entry);
+        }
+    }
+
+    /// <summary>
+    /// Brings back one the run counts as dead and should not.
+    /// </summary>
+    /// <remarks>
+    /// Asks first and says what happens to the points and to the save, because it is the one button
+    /// here that <b>gives points back</b> and the one that makes the app stop holding a Pokémon at
+    /// zero. It does not heal it in the game: that is still the player's to do.
+    /// </remarks>
+    [RelayCommand(CanExecute = nameof(CanRevokeDeath))]
+    private async Task RevokeDeathAsync()
+    {
+        if (SelectedFallen is not { } entry)
+        {
+            return;
+        }
+
+        var name = entry.Nickname ?? entry.SpeciesName;
+
+        if (!_dialogs.Confirm(
+                "Deshacer una muerte",
+                $"{name} vuelve a contar como vivo y se devuelven los puntos que costó su muerte.\n\n"
+                + "La muerte NO se borra del historial: se añade al lado que fue un error, con tu "
+                + "motivo y tu nombre.\n\n"
+                + "En la partida sigue a 0 PS. Tendrás que curarlo tú, y a partir de ahí la "
+                + "aplicación ya no se los quitará.\n\n¿Seguro?"))
+        {
+            return;
+        }
+
+        IsBusy = true;
+
+        try
+        {
+            RevokeStatus = await _maintenance.RevokeDeathAsync(entry.Id, RevokeReason);
+            RevokeReason = string.Empty;
+            SelectedFallen = null;
+            await LoadAliveAsync();
+            await LoadFallenAsync();
+            await AuditAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Falló deshacer una muerte");
+            RevokeStatus = "No se ha podido deshacer. El detalle está en la carpeta Logs.";
         }
         finally
         {

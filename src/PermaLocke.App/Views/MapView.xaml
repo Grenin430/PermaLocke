@@ -612,6 +612,7 @@
                                                     Command="{Binding DataContext.ClickZoneCommand,
                                                         RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                     CommandParameter="{Binding}"
+                                                    MouseRightButtonUp="OnZoneRightClicked"
                                                     ToolTipService.InitialShowDelay="350"
                                                     ToolTipService.ShowDuration="30000">
                                                 <Button.ToolTip>
@@ -683,7 +684,8 @@
                                                             Style="{StaticResource BoardMarker}"
                                                             Command="{Binding DataContext.ClickZoneCommand,
                                                                 RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                            CommandParameter="{Binding}">
+                                                            CommandParameter="{Binding}"
+                                                            MouseRightButtonUp="OnZoneRightClicked">
                                                         <Button.ToolTip>
                                                             <ToolTip>
                                                                 <StackPanel MaxWidth="260">
@@ -819,6 +821,10 @@
                     </ItemsControl>
                     <TextBlock Style="{StaticResource Faint}" TextWrapping="Wrap" Margin="0,8,0,0"
                                Text="Pasa el ratón por un marcador para ver de qué zona es." />
+                    <!-- Dicho aqui porque un gesto que no se anuncia no existe: el clic derecho
+                         estaba y nadie lo iba a encontrar. -->
+                    <TextBlock Style="{StaticResource Faint}" TextWrapping="Wrap" Margin="0,4,0,0"
+                               Text="Clic izquierdo para pasar al siguiente estado, clic derecho para dejarlo sin marcar." />
                 </StackPanel>
             </DockPanel>
         </Border>

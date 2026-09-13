@@ -79,6 +79,9 @@ public sealed partial class ShopViewModel : SectionViewModel
     [NotifyPropertyChangedFor(nameof(MegaTab))]
     private bool _showingMegaStones;
 
+    /// <summary>Leaving the shop puts it back on the tab it opens with.</summary>
+    public override void ResetState() => ShowingMegaStones = false;
+
     /// <summary>Counts on the tabs, so nobody has to open one to find out it is empty.</summary>
     public string BattleTab => $"COMBATE ({Items.Count(i => !IsMega(i))})";
 

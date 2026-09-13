@@ -254,6 +254,92 @@ public sealed class GrantConfigTests
         }
     }
 
+    /// <summary>
+    /// One tier hands out legendaries and one banner can reach it.
+    /// </summary>
+    /// <remarks>
+    /// «Los legendarios solo salen del BUENO» is held up by two separate facts in the shipped file
+    /// -- one tier with a chance above zero, and one banner whose odds reach that tier -- and
+    /// neither is written down anywhere as a rule. Editing a percentage in
+    /// <c>Data/gacha.json</c> could quietly hand legendaries to the cheap banner, and the roll
+    /// would look perfectly normal. Here it fails.
+    /// </remarks>
+    [Fact]
+    public void Only_the_top_tier_of_the_shipped_gacha_pays_legendaries()
+    {
+        var catalog = JsonGachaCatalog.Load(Path.Combine(Root(), "Data", "gacha.json"));
+
+        var paying = catalog.Tiers.Where(t => t.LegendaryChance > 0).ToList();
+        Assert.Single(paying);
+        Assert.Equal(catalog.Tiers.Max(t => t.MaxBaseStatTotal), paying[0].MaxBaseStatTotal);
+
+        var reaching = catalog.Banners
+            .Where(b => b.TierChances.TryGetValue(paying[0].Id, out var chance) && chance > 0)
+            .ToList();
+
+        Assert.Single(reaching);
+        Assert.Equal("bueno", reaching[0].Id, ignoreCase: true);
+    }
+
+    /// <summary>
+    /// No species is in two evolution families, and every one of them is in one.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Both halves cost something real, and both were broken while this was being built. Alolan
+    /// forms have families of their own — Alolan Rattata evolves into Alolan Raticate — whose base
+    /// is a <b>form</b> entry with an index above every species. Keeping only the known ids left a
+    /// family whose sole rung was Raticate, so <b>24 species</b> were being handed out as if they
+    /// were first stages: the gacha gave finished Arcanines and Golems out of a cheap tier and
+    /// nothing looked wrong.
+    /// </para>
+    /// <para>
+    /// Discarding those families then left <b>ten</b> species in none at all — Obstagoon,
+    /// Sirfetch'd, Basculegion and the rest, which only evolve from a regional form — and a species
+    /// in no family simply cannot come out. They get a one-rung family of their own, and that is
+    /// what the second half of this checks.
+    /// </para>
+    /// </remarks>
+    [Fact]
+    public void Every_species_is_in_exactly_one_evolution_family()
+    {
+        var species = JsonSpeciesStatsCatalog.Load(Path.Combine(Root(), "Data", "species.json"));
+
+        Assert.NotEmpty(species.All);
+        Assert.NotEmpty(species.Lines);
+
+        var counted = species.Lines
+            .SelectMany(line => line.AllSpecies)
+            .GroupBy(id => id)
+            .ToDictionary(group => group.Key, group => group.Count());
+
+        var twice = counted.Where(entry => entry.Value > 1).Select(entry => entry.Key).ToList();
+        Assert.True(twice.Count == 0, $"repartidas desde dos familias: {string.Join(", ", twice)}");
+
+        var missing = species.All.Where(s => !counted.ContainsKey(s.Id)).Select(s => s.Id).ToList();
+        Assert.True(missing.Count == 0, $"sin familia y por tanto imposibles: {string.Join(", ", missing)}");
+    }
+
+    /// <summary>
+    /// The odds table starts at «always the first stage» and never promises more than everything.
+    /// </summary>
+    [Fact]
+    public void The_stage_table_starts_at_the_beginning_of_the_game()
+    {
+        var gacha = JsonGachaCatalog.Load(Path.Combine(Root(), "Data", "gacha.json"));
+
+        Assert.NotEmpty(gacha.StageOdds);
+
+        var start = gacha.StageOdds[0];
+        Assert.Equal(0, start.Cleared);
+        Assert.Equal(100, start.First);
+
+        foreach (var row in gacha.StageOdds)
+        {
+            Assert.InRange(row.Second + row.Final, 0, 100);
+        }
+    }
+
     [Fact]
     public void Wonder_trades_are_limited()
     {

@@ -23,6 +23,10 @@ public sealed class WonderTradeServiceTests
             [.. Enumerable.Range(0, 25).Select(n => $"Naturaleza {n}")];
 
         public IReadOnlyList<string> Abilities { get; } = ["", "Levitación", "Impostor", "Presión"];
+
+        /// <summary>Una familia por especie: el wonder trade no reparte lineas, reparte especies.</summary>
+        public IReadOnlyList<EvolutionLine> Lines =>
+            [.. all.Select(s => new EvolutionLine([new[] { s.Id }]))];
     }
 
     private sealed class Types : ITypeLookup
@@ -183,6 +187,34 @@ public sealed class WonderTradeServiceTests
             Assert.Equal(min, offer.MinBaseStatTotal);
             Assert.Equal(max, offer.MaxBaseStatTotal);
         }
+    }
+
+    /// <summary>
+    /// The ability is drawn from the whole game, not from the species' own list.
+    /// </summary>
+    /// <remarks>
+    /// Every species in this fixture declares exactly one ability, «Levitación», so the old
+    /// behaviour — draw from what the species has — could only ever produce that one. It is the
+    /// same shape as what the player hit in the real run: a Victini with Victory Star, a Togekiss
+    /// with Serene Grace, a Heracross with its own hidden ability. With abilities left alone in the
+    /// ROM, every trade handed back exactly what that Pokémon already is, which is the opposite of
+    /// what a wonder trade is for.
+    /// </remarks>
+    [Fact]
+    public void The_ability_is_drawn_from_the_whole_game_and_not_from_the_species()
+    {
+        var service = Build();
+        var gift = new WonderTradeGift(31, "Especie 31", 24, 0, 0);
+
+        var seen = Enumerable.Range(0, 200)
+            .Select(number => service.Preview(gift, 20260821, number))
+            .Where(offer => offer is not null)
+            .Select(offer => offer!.Ability)
+            .Distinct()
+            .ToList();
+
+        Assert.Contains("Impostor", seen);
+        Assert.Contains("Presión", seen);
     }
 
     /// <summary>

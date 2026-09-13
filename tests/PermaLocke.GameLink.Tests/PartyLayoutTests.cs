@@ -82,4 +82,70 @@ public class PartyLayoutTests
     {
         Assert.Empty(PartyLayoutLocator.Distinct([]));
     }
+
+    private static PartyLayout Authoritative(uint address) =>
+        new(address, PartyLayoutLocator.AuthoritativeStride, "Grenin");
+
+    private static PartyLayout Mirror(uint address) =>
+        new(address, PartyLayoutLocator.CopyStride, "Grenin");
+
+    /// <summary>
+    /// The authoritative structure wins even when the mirror reads more of the party.
+    /// </summary>
+    /// <remarks>
+    /// This is the case that cost a death. The mirror's HP lags — the game writes it and never
+    /// reads it (§98, §99) — so on a poll where the authoritative structure had one slot the
+    /// reader would not accept, the whole read fell back to the mirror and a Pokémon that had just
+    /// fainted still showed its old HP. The watcher decides on <c>CurrentHp == 0</c> and saw
+    /// nothing; the player healed it.
+    /// </remarks>
+    [Fact]
+    public void The_authoritative_structure_beats_a_mirror_that_reads_more()
+    {
+        var chosen = PartyLayoutLocator.Preferred(
+        [
+            (Mirror(0x2000), 6),
+            (Authoritative(0x1000), 5)
+        ]);
+
+        Assert.Equal(0x1000u, chosen!.Address);
+    }
+
+    /// <summary>Among structures of the same kind, the one that reads most of the party wins.</summary>
+    [Fact]
+    public void Between_two_of_the_same_kind_the_fuller_read_wins()
+    {
+        var chosen = PartyLayoutLocator.Preferred(
+        [
+            (Authoritative(0x1000), 4),
+            (Authoritative(0x3000), 6)
+        ]);
+
+        Assert.Equal(0x3000u, chosen!.Address);
+    }
+
+    /// <summary>
+    /// A mirror is still better than nothing: it is only rejected when there is a truthful one.
+    /// </summary>
+    [Fact]
+    public void A_mirror_is_used_when_it_is_all_there_is()
+    {
+        var chosen = PartyLayoutLocator.Preferred([(Mirror(0x2000), 6)]);
+
+        Assert.Equal(0x2000u, chosen!.Address);
+    }
+
+    /// <summary>A structure that read nobody is not a candidate, whatever its kind.</summary>
+    [Fact]
+    public void A_structure_that_read_nobody_is_not_a_candidate()
+    {
+        var chosen = PartyLayoutLocator.Preferred(
+        [
+            (Authoritative(0x1000), 0),
+            (Mirror(0x2000), 3)
+        ]);
+
+        Assert.Equal(0x2000u, chosen!.Address);
+        Assert.Null(PartyLayoutLocator.Preferred([(Authoritative(0x1000), 0)]));
+    }
 }

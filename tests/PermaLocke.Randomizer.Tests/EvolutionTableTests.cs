@@ -145,4 +145,107 @@ public sealed class EvolutionTableTests
         Assert.False(table.IsBase(2));
         Assert.False(table.HasTwoEvolutionsAhead(2));
     }
+
+    /// <summary>A straight family comes out as one rung per stage.</summary>
+    [Fact]
+    public void A_line_is_its_stages_in_order()
+    {
+        var line = Family(3, (1, 2), (2, 3)).Lines().Single();
+
+        Assert.Equal(3, line.Count);
+        Assert.Equal([1], line[0]);
+        Assert.Equal([2], line[1]);
+        Assert.Equal([3], line[2]);
+    }
+
+    /// <summary>
+    /// A branch puts its alternatives on the same rung, which is what the gacha picks between.
+    /// </summary>
+    /// <remarks>
+    /// Wurmple's shape: one base, two second stages, two third ones. Written as
+    /// <c>[[1], [2, 3], [4, 5]]</c>, which is the whole reason the stages are lists.
+    /// </remarks>
+    [Fact]
+    public void A_branching_family_keeps_its_alternatives_on_one_rung()
+    {
+        var line = Family(5, (1, 2), (1, 3), (2, 4), (3, 5)).Lines().Single();
+
+        Assert.Equal(3, line.Count);
+        Assert.Equal([1], line[0]);
+        Assert.Equal([2, 3], line[1]);
+        Assert.Equal([4, 5], line[2]);
+    }
+
+    /// <summary>
+    /// Branches of different lengths keep the family as deep as its deepest one.
+    /// </summary>
+    /// <remarks>
+    /// The one that stops early simply has nothing on the last rung, so a roll that asks for the
+    /// third stage of this family can only land on the branch that has one.
+    /// </remarks>
+    [Fact]
+    public void An_uneven_branch_leaves_the_short_side_behind()
+    {
+        var line = Family(4, (1, 2), (1, 3), (2, 4)).Lines().Single();
+
+        Assert.Equal(3, line.Count);
+        Assert.Equal([2, 3], line[1]);
+        Assert.Equal([4], line[2]);
+    }
+
+    /// <summary>
+    /// A species two rungs could reach belongs to the first, not to both.
+    /// </summary>
+    /// <remarks>
+    /// Otherwise the same family would hand it out from two different stages, and «which stage did
+    /// I get» would stop being a straight answer. The vanilla cartridge has no such family; a
+    /// randomized evolution table can build one.
+    /// </remarks>
+    [Fact]
+    public void A_species_two_rungs_could_reach_sits_on_the_first()
+    {
+        var line = Family(3, (1, 2), (1, 3), (2, 3)).Lines().Single();
+
+        Assert.Equal(2, line.Count);
+        Assert.Equal([2, 3], line[1]);
+    }
+
+    /// <summary>A loop below the base ends the family instead of spinning forever.</summary>
+    [Fact]
+    public void A_loop_ends_the_line_instead_of_running_forever()
+    {
+        var line = Family(3, (1, 2), (2, 3), (3, 2)).Lines().Single();
+
+        Assert.Equal(3, line.Count);
+        Assert.Equal([3], line[2]);
+    }
+
+    /// <summary>
+    /// A family that is nothing but a loop has no base, so it produces no line at all.
+    /// </summary>
+    /// <remarks>
+    /// Said out loud because of what it costs: species in no family cannot come out of the gacha,
+    /// and they would go missing without a word. The cartridge has no such loop and
+    /// <c>randomizeEvolutions</c> is false, so this cannot happen today — which is exactly why
+    /// <c>RomTool species</c> counts the species left out of every family and refuses to be
+    /// silent about it, instead of this being trusted to stay true.
+    /// </remarks>
+    [Fact]
+    public void A_family_that_is_only_a_loop_produces_nothing()
+    {
+        Assert.Empty(Family(3, (1, 2), (2, 3), (3, 1)).Lines());
+    }
+
+    /// <summary>Every species belongs to exactly one family, and none is left out.</summary>
+    [Fact]
+    public void The_families_between_them_hold_every_species_once()
+    {
+        var lines = Family(6, (1, 2), (2, 3), (4, 5)).Lines();
+
+        var all = lines.SelectMany(line => line.SelectMany(stage => stage)).ToList();
+
+        Assert.Equal(6, all.Count);
+        Assert.Equal(6, all.Distinct().Count());
+        Assert.Contains(6, all);
+    }
 }

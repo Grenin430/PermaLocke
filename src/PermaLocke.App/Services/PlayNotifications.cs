@@ -17,15 +17,31 @@ namespace PermaLocke.App.Services;
 /// Nothing here decides anything. Every one of these events is raised <b>after</b> the thing was
 /// written and verified, so a notice can never claim something that did not happen.
 /// </para>
+/// <para>
+/// A death gets both: the <see cref="DeathCeremony"/> over the game, which is the moment, and the
+/// corner notice, which stays in the list of notices once the moment has gone.
+/// </para>
 /// </remarks>
 public sealed class PlayNotifications
 {
-    public PlayNotifications(GameLinkMonitor monitor, Notifier notifier, PokemonSpriteService sprites)
+    public PlayNotifications(GameLinkMonitor monitor, MaintenanceService maintenance, Notifier notifier,
+        DeathCeremony ceremony, PokemonSpriteService sprites)
     {
-        monitor.PokemonDied += (_, name) => notifier.Say(
-            $"{name} ha caído",
-            "Registrado en la run. −25 puntos.",
-            ToastTone.Bad);
+        monitor.PokemonDied += (_, fallen) =>
+        {
+            ceremony.Mourn(fallen);
+
+            // Lo que costó DE VERDAD. Ponía «−25 puntos» escrito a mano, que es mentira para el
+            // CAGONETA -no pierde puntos- y para cualquier rol que multiplique las pérdidas.
+            notifier.Say(
+                $"{fallen.Name} ha caído",
+                fallen.Penalty > 0 ? $"Registrado en la run. −{fallen.Penalty} puntos." : "Registrado en la run.",
+                ToastTone.Bad);
+        };
+
+        // Las marcadas a mano en MANTENIMIENTO son justo las que la app no llegó a ver: tienen su
+        // momento igual. Sin aviso de esquina, porque quien las marca acaba de pulsar el botón.
+        maintenance.MarkedDead += (_, fallen) => ceremony.Mourn(fallen);
 
         // Esto salta al CERRAR el emulador, que es cuando la marca se puede escribir en la partida.
         // Llega con el juego ya cerrado y por tanto sin nada tapando la pantalla, que es justo
@@ -35,10 +51,16 @@ public sealed class PlayNotifications
             notice,
             ToastTone.Bad);
 
-        monitor.TeamWiped += (_, penalty) => notifier.Say(
-            "Equipo caído",
-            $"{penalty.Points} puntos.",
-            ToastTone.Bad);
+        monitor.TeamWiped += (_, penalty) =>
+        {
+            // Detrás de las muertes que lo formaron, que ya están en la cola.
+            ceremony.TeamFell(penalty.Points);
+
+            notifier.Say(
+                "Equipo caído",
+                $"{penalty.Points} puntos.",
+                ToastTone.Bad);
+        };
 
         monitor.RewardGiven += (_, given) => notifier.Say(
             "Premio entregado",

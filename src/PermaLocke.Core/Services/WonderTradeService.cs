@@ -230,40 +230,41 @@ public sealed class WonderTradeService(
 
         var chosen = pool[source.Next(pool.Count)];
 
-        // La habilidad sale de las que la especie declara, no de todas las del juego: esto es un
-        // intercambio, no un gacha, y lo que llega tiene que poder existir.
+        // La habilidad se sortea entre TODAS las del juego, igual que en el gacha.
         //
-        // Con el mod de expansión hay especies cuya habilidad es de novena generación, y el campo
-        // del cartucho es un byte: escribir la 293 guarda la 37. Así que si la sorteada no cabe se
-        // recorre la propia lista de la especie hasta la primera que sí, sin sacar otro número del
-        // sorteo -- gastar una tirada más desplazaría todo lo que viene detrás y las entregas
-        // anteriores dejarían de recomputarse igual.
-        var abilities = chosen.Abilities.Count > 0 ? chosen.Abilities : [];
-        var abilityIndex = abilities.Count > 0 ? source.Next(abilities.Count) : -1;
-        var abilityName = abilityIndex >= 0 ? abilities[abilityIndex] : string.Empty;
-        var known = speciesStats.Abilities;
-        var abilityId = known.ToList().IndexOf(abilityName);
+        // Antes salía de las que la especie declara, con el argumento de que un intercambio no es
+        // un gacha y lo que llega tiene que poder existir. El jugador lo tumbó jugando, y tenía
+        // razón: en un randomlocke con `randomizeAbilities` apagado en la ROM -- y está apagado a
+        // propósito, porque encenderlo desincroniza los combates por link (§80) -- las habilidades
+        // son las del cartucho en todas partes, así que un Victini llegaba con Tinovictoria y un
+        // Togekiss con Afortunado. Cada intercambio devolvía exactamente lo que ese Pokémon es.
+        // Ser legal no era una virtud aquí, era la ausencia de lo que se venía a buscar.
+        //
+        // Que el juego respeta la habilidad escrita y no la recalcula por el número de ranura está
+        // medido sin querer: llegó un Heracross con Autoestima, que es su habilidad OCULTA, y el
+        // constructor escribe siempre ranura 1. Si el juego recalculara, habría salido Enjambre.
+        //
+        // Se descarta lo que el juego no puede guardar en vez de recortar el sorteo, por lo mismo
+        // que el gacha: con el mod de expansión la lista llega a 319 y el campo es un byte, así que
+        // la 293 se guarda como la 37 y en la caja sale otra cosa.
+        var abilities = speciesStats.Abilities;
+        var abilityId = 0;
 
-        for (var step = 1; step <= abilities.Count && abilityId > IAbilityLookup.LastUsableAbility; step++)
+        for (var attempt = 0; attempt < 12 && abilities.Count > 1; attempt++)
         {
-            var fallback = abilities[(abilityIndex + step) % abilities.Count];
-            var id = known.ToList().IndexOf(fallback);
+            var candidate = source.Next(1, abilities.Count);
 
-            if (id > 0 && id <= IAbilityLookup.LastUsableAbility)
+            if (candidate <= IAbilityLookup.LastUsableAbility
+                && !string.IsNullOrWhiteSpace(abilities[candidate]) && abilities[candidate] != "-")
             {
-                abilityName = fallback;
-                abilityId = id;
+                abilityId = candidate;
+                break;
             }
         }
 
-        // Una especie cuyas habilidades son TODAS posteriores a este juego -- Great Tusk, Iron
-        // Treads, Glastrier -- se queda sin ninguna, que es lo que ya pasaba con un nombre que no
-        // resolvía. Mejor sin habilidad que con otra distinta de la que la pantalla anunció.
-        if (abilityId > IAbilityLookup.LastUsableAbility)
-        {
-            abilityId = 0;
-            abilityName = string.Empty;
-        }
+        var abilityName = abilityId > 0 && abilityId < abilities.Count
+            ? abilities[abilityId]
+            : string.Empty;
 
         var ivs = new int[6];
         for (var stat = 0; stat < ivs.Length; stat++)

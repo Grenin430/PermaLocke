@@ -278,5 +278,30 @@ public enum GameEventType
     /// same as an earned one, and nothing here pretends it is.
     /// </para>
     /// </remarks>
-    RouletteGranted
+    RouletteGranted,
+
+    /// <summary>
+    /// A death that PermaLocke recorded and should not have: the Pokémon is alive again and the
+    /// penalty is paid back.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The same shape as <see cref="ZoneCleared"/>: the chain cannot lose an event, so undoing one is
+    /// an addition. The <see cref="PokemonDied"/> stays in the history — it did get recorded — and
+    /// this says, with a reason and a person, that it was wrong. It carries the id of the death it
+    /// revokes, so a death cannot be revoked twice and anything that counts deaths can leave it out.
+    /// </para>
+    /// <para>
+    /// The case it is for is a death marked by hand on the wrong Pokémon: MARCAR COMO CAÍDO takes
+    /// points and holds the Pokémon at zero, and until this existed a slip there could only be undone
+    /// by editing the database underneath the chain. It was built while chasing a death believed to
+    /// be a misreading of the game; that death turned out to be real (§111), which is worth saying
+    /// here so nobody reads this as proof that the watcher invents deaths.
+    /// </para>
+    /// <para>
+    /// Appended at the end on purpose: the type is stored as a number, and a new value anywhere else
+    /// would turn every event after it into something else.
+    /// </para>
+    /// </remarks>
+    DeathRevoked
 }

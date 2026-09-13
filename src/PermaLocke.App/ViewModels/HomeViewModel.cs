@@ -95,31 +95,12 @@ public sealed partial class HomeViewModel : SectionViewModel
             return Task.CompletedTask;
         });
 
-        // Un premio que llega solo tiene que decirlo: lo contrario es que aparezcan diez Super
-        // Balls en la mochila y nadie sepa de dónde han salido.
-        gameLink.RewardGiven += (_, given) => _ = _ui.InvokeAsync(() =>
-        {
-            AutoNotice = given.Message;
-            return Task.CompletedTask;
-        });
-
-        // La marca de muerte se pone al CERRAR el emulador, que es el único momento en que se
-        // puede escribir la partida, así que hay que decirlo cuando pasa: el jugador ya no está
-        // mirando el juego y si no se le dice no se entera de que se ha hecho. Antes esto avisaba
-        // de lo contrario -que la marca vivía en memoria y se perdía sin guardar-, y ese aviso
-        // existía porque se perdió una así.
-        gameLink.DeathMarked += (_, notice) => _ = _ui.InvokeAsync(() =>
-        {
-            AutoNotice = notice;
-            return Task.CompletedTask;
-        });
-
-        gameLink.TeamWiped += (_, penalty) => _ = _ui.InvokeAsync(() =>
-        {
-            AutoNotice = $"Equipo caído. {penalty.Points} puntos"
-                         + (penalty.Capped ? " (tope alcanzado)." : ".");
-            return Task.CompletedTask;
-        });
+        // Lo que la app hace sola -premio entregado, caídos marcados al cerrar el emulador, equipo
+        // caído- ya NO se dice aquí en un recuadro verde. Lo dicen los avisos flotantes
+        // (PlayNotifications), que salen encima del juego en el momento en que pasa, que es cuando
+        // se leen. Tenerlo en los dos sitios era decir lo mismo dos veces, y el de HOME además se
+        // quedaba puesto hasta el siguiente aviso, contando algo de hace una hora como si fuera
+        // nuevo.
 
         // Lo que la app hace sola tiene que verse sola. Sin esto una muerte quedaba registrada y
         // cobrada bien, y HOME seguía enseñando el saldo viejo hasta que el jugador salía de la
@@ -154,13 +135,6 @@ public sealed partial class HomeViewModel : SectionViewModel
     /// <summary>What EMPEZAR DE CERO did, or why it refused. Empty the rest of the time.</summary>
     [ObservableProperty]
     private string _startOverStatus = string.Empty;
-
-    /// <summary>The last thing PermaLocke did on its own, so nothing happens behind the player.</summary>
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasAutoNotice))]
-    private string _autoNotice = string.Empty;
-
-    public bool HasAutoNotice => AutoNotice.Length > 0;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ChangeRoleCommand))]

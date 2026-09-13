@@ -190,6 +190,32 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>Loads the section that is selected at startup.</summary>
     public Task InitialiseAsync() => ActivateAsync(SelectedSection);
 
+    /// <summary>
+    /// The section being left closes whatever it had open before the new one comes up.
+    /// </summary>
+    /// <remarks>
+    /// On the way out and not on the way in, because a section that failed to close itself would
+    /// otherwise be seen mid-flight by whoever is coming back to it. A screen that throws while
+    /// tidying up must not stop the navigation either -- the player pressed a tab, and they get
+    /// that tab.
+    /// </remarks>
+    partial void OnSelectedSectionChanged(SectionViewModel? oldValue, SectionViewModel newValue)
+    {
+        if (oldValue is null)
+        {
+            return;
+        }
+
+        try
+        {
+            oldValue.ResetState();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Fallo al cerrar la sección {Section}", oldValue.Title);
+        }
+    }
+
     partial void OnSelectedSectionChanged(SectionViewModel value)
     {
         _logger.LogInformation("Navegación a la sección {Section}", value.Title);

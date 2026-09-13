@@ -37,7 +37,9 @@ public sealed class MachineRandomizer(RandomizerOptions options)
     /// signature no longer matches. Randomizing them would be worse than pointless: Surf and Fly
     /// are how the player crosses the map, and a game that cannot be crossed is not a harder game.
     /// </remarks>
-    private static readonly int[] Hidden = [15, 19, 57, 70, 127, 249, 291];
+    /// <summary>Los siete movimientos MO, que marcan donde acaba la tabla de MT.</summary>
+    /// <remarks>Publico porque quien quiera LEER la tabla necesita el mismo ancla que quien la escribe.</remarks>
+    public static readonly int[] Hidden = [15, 19, 57, 70, 127, 249, 291];
 
     public async Task<MachineResult> ApplyAsync(IRandomSource random, LayeredFsMod mod,
         string? baseLayerExefs, CancellationToken ct = default)
