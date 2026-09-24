@@ -81,6 +81,11 @@
       "x": 0.6875800256081946,
       "y": 0.7356902356902357
     },
+    "colina-del-recuerdo": {
+      "isla": "Akala",
+      "x": 0.3,
+      "y": 0.82
+    },
     "colina-saltagua": {
       "isla": "Akala",
       "x": 0.38414634146341464,
@@ -307,8 +312,8 @@
     "castillo-team-rocket",
     "ciudad-hauoli-puerto",
     "ciudad-kantai",
+    "ciudad-konikoni",
     "ciudad-malie",
-    "colina-del-recuerdo",
     "colina-saltagua-sala-del-dominante",
     "cueva-sotobosque-sala-del-dominante",
     "estadio-royale",

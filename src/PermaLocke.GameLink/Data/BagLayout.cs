@@ -190,6 +190,18 @@ public sealed class BagLayout
         return contents;
     }
 
+    /// <summary>
+    /// The mega stones the gen 8-9 expansion adds (Legends Z-A), which PKHeX does not know: Ultra Moon never had them.
+    /// </summary>
+    /// <remarks>
+    /// Without them no pocket accepted the id and the shop could not deliver them (2026-09-24: a friend found it with
+    /// the released build). They go in the item pocket, like every cartridge mega stone. The ids are the ones of
+    /// Data/shop.json that PKHeX rejects: 505-520 are ids the expansion reuses, 961 and 995-1023 are new.
+    /// </remarks>
+    // Una propiedad y no un campo: UltraSunMoon se construye antes de que un campo de más abajo esté inicializado.
+    private static ushort[] ExpansionMegaStones =>
+        [.. Enumerable.Range(505, 16).Append(961).Concat(Enumerable.Range(995, 29)).Select(id => (ushort)id)];
+
     private static BagLayout Build()
     {
         var bag = new PlayerBag7USUM(new SAV7USUM());
@@ -229,8 +241,14 @@ public sealed class BagLayout
                     + "PKHeX ha cambiado el formato y BagLayout debe revisarse.");
             }
 
-            pockets.Add(new BagPocket(pouch.Type, offset, pouch.Items.Length, pouch.MaxCount,
-                pouch.GetAllItems().ToArray()));
+            IEnumerable<ushort> legal = pouch.GetAllItems().ToArray();
+
+            if (pouch.Type == InventoryType.Items)
+            {
+                legal = legal.Concat(ExpansionMegaStones);
+            }
+
+            pockets.Add(new BagPocket(pouch.Type, offset, pouch.Items.Length, pouch.MaxCount, legal));
         }
 
         pockets.Sort((left, right) => left.Offset.CompareTo(right.Offset));

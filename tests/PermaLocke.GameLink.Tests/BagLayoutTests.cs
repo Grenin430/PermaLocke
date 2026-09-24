@@ -60,6 +60,10 @@ public sealed class BagLayoutTests
     [InlineData(BagService.ShinyCharmItemId, InventoryType.KeyItems)]
     [InlineData(BagService.HeartScaleItemId, InventoryType.Items)]
     [InlineData(328, InventoryType.TMHMs)]
+    [InlineData(671, InventoryType.Items)]   // Pinsirita, del cartucho
+    [InlineData(514, InventoryType.Items)]   // Lucarionite Z, de la expansión (id reusado)
+    [InlineData(961, InventoryType.Items)]   // megapiedra nueva de la expansión
+    [InlineData(1017, InventoryType.Items)]  // Hawluchanita, de la expansión
     public void An_item_is_routed_to_its_own_pocket(int itemId, InventoryType expected)
     {
         Assert.Equal(expected, Layout.PocketFor(itemId)?.Type);
@@ -110,7 +114,7 @@ public sealed class BagLayoutTests
     public void An_item_no_pocket_accepts_has_nowhere_to_go()
     {
         Assert.Null(Layout.PocketFor(0));
-        Assert.Null(Layout.PocketFor(BagEntry.MaxItemId));
+        // 1023 (BagEntry.MaxItemId) ya no vale aquí: la expansión lo usa para una megapiedra.
     }
 
     /// <summary>
