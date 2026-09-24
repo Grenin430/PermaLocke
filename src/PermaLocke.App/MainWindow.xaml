@@ -306,7 +306,7 @@
         <Grid Grid.Column="1" Margin="22,20,22,20">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="16" />
+                <RowDefinition Height="Auto" MinHeight="16" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
@@ -314,48 +314,6 @@
                  desde cualquier pantalla. -->
             <Border Grid.Row="0" x:Name="Header" Background="Transparent" Padding="4,0,4,14">
                 <DockPanel>
-                    <!-- Si esta pantalla necesita el juego abierto, cerrado o le da igual: lo único que decide si
-                         pulsar algo aquí va a funcionar. Apagado por defecto; verde y rojo solo para lo comprobado. -->
-                    <Grid DockPanel.Dock="Right" Margin="18,0,0,0" VerticalAlignment="Center"
-                          Visibility="{Binding ShowsNeed, Converter={StaticResource BoolToVisibility}}">
-                        <views:PixelPanel HasShadow="False">
-                            <views:PixelPanel.Style>
-                                <Style TargetType="views:PixelPanel">
-                                    <Setter Property="Fill" Value="{StaticResource PxFaceLift}" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding NeedState}" Value="ok">
-                                            <Setter Property="Fill" Value="{StaticResource PxGoodDeep}" />
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding NeedState}" Value="problem">
-                                            <Setter Property="Fill" Value="{StaticResource PxBadDeep}" />
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding NeedState}" Value="closed">
-                                            <Setter Property="Fill" Value="{StaticResource PxWarnDeep}" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </views:PixelPanel.Style>
-                        </views:PixelPanel>
-                        <pixel:PixelText Text="{Binding NeedLabel}" Scale="2" Tight="True" Margin="11,8,11,8">
-                            <pixel:PixelText.Style>
-                                <Style TargetType="pixel:PixelText">
-                                    <Setter Property="Colour" Value="{StaticResource PxTextDim}" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding NeedState}" Value="ok">
-                                            <Setter Property="Colour" Value="{StaticResource PxGood}" />
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding NeedState}" Value="problem">
-                                            <Setter Property="Colour" Value="{StaticResource PxBad}" />
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding NeedState}" Value="closed">
-                                            <Setter Property="Colour" Value="{StaticResource PxWarn}" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </pixel:PixelText.Style>
-                        </pixel:PixelText>
-                    </Grid>
-
                     <!-- ==================================== LOS PUNTOS
                          La moneda del sistema, como un contador de recurso en un juego: el rombo, la cifra que rueda
                          hasta su valor nuevo y da un destello verde o rojo, y el rótulo pequeño debajo. -->
@@ -491,6 +449,52 @@
             <pixel:PixelRule Grid.Row="0" VerticalAlignment="Bottom" AccentCells="20" Margin="4,0,4,0" />
 
             <!-- El contenido se apoya en el suelo, sin marco propio. -->
+                <!-- EL JUEGO, ABIERTO O CERRADO: una franja a todo lo ancho encima de cada sección, con qué pide y por qué (2026-09-24:
+                     antes era una etiqueta pequeña en la cabecera y no se veía). Ámbar lo pedido, verde y rojo solo lo comprobado. -->
+                <Grid Grid.Row="1" Margin="4,0,4,14"
+                      Visibility="{Binding ShowsNeed, Converter={StaticResource BoolToVisibility}}">
+                    <views:PixelPanel HasShadow="False">
+                        <views:PixelPanel.Style>
+                            <Style TargetType="views:PixelPanel">
+                                <Setter Property="Fill" Value="{StaticResource PxFaceLift}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding NeedState}" Value="ok">
+                                        <Setter Property="Fill" Value="{StaticResource PxGoodDeep}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding NeedState}" Value="problem">
+                                        <Setter Property="Fill" Value="{StaticResource PxBadDeep}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding NeedState}" Value="closed">
+                                        <Setter Property="Fill" Value="{StaticResource PxWarnDeep}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </views:PixelPanel.Style>
+                    </views:PixelPanel>
+                    <DockPanel Margin="16,12,16,12">
+                    <pixel:PixelText DockPanel.Dock="Left" Text="{Binding NeedLabel}" Scale="3" Tight="True" VerticalAlignment="Center"
+                                     Shadow="{StaticResource PxShadow}" Margin="0,0,18,0">
+                        <pixel:PixelText.Style>
+                            <Style TargetType="pixel:PixelText">
+                                <Setter Property="Colour" Value="{StaticResource PxTextDim}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding NeedState}" Value="ok">
+                                        <Setter Property="Colour" Value="{StaticResource PxGood}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding NeedState}" Value="problem">
+                                        <Setter Property="Colour" Value="{StaticResource PxBad}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding NeedState}" Value="closed">
+                                        <Setter Property="Colour" Value="{StaticResource PxWarn}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </pixel:PixelText.Style>
+                    </pixel:PixelText>
+                        <pixel:PixelText Text="{Binding NeedHint}" Scale="2" Wrap="True" VerticalAlignment="Center"
+                                         Colour="{StaticResource PxText}" />
+                    </DockPanel>
+                </Grid>
             <Border Grid.Row="2" Background="Transparent" Padding="4,0">
                 <ContentControl x:Name="SectionHost" Content="{Binding SelectedSection}">
                     <ContentControl.RenderTransform>

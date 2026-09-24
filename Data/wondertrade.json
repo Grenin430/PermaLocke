@@ -2,15 +2,15 @@
   "version": 1,
   "comment": "Wonder trade. Lo que vuelve tiene un TOTAL de estadísticas base parecido al que se entrega, así que el intercambio es una apuesta sobre QUÉ Pokémon toca, no una manera de mejorarlo. La banda sale de aquí y no del código: es el único número que decide si esto es un juego o una lavandería.",
 
-  "comentarioBanda": "porDebajo 0.08 y porEncima 0.20 son el -8% / +20% pedidos. Asimétrico a propósito: puede volver algo mejor, pero no mucho peor. Los totales se leen de Data/species.json, generado desde la ROM, así que la banda sigue valiendo con la ROM randomizada.",
+  "comentarioBanda": "±9% desde el 2026-09-24, a petición del jugador, como el wonder trade de la referencia (BxnnyLocke usa ±9% sobre el total más un 1%). Antes era -8% / +20%. Los totales se leen de Data/species.json, generado desde la ROM, así que la banda sigue valiendo con la ROM randomizada.",
 
   "comentarioPorQueSubioA20": "Con +10% los 23 intercambios reales de la run dieron 14 peores, 6 iguales y 3 mejores: media -2,1%. No era un fallo del sorteo, es la forma del cartucho. Por tramos de total base hay 171 especies entre 450 y 499, 128 entre 500 y 549, pero solo 36 entre 550 y 599, 31 entre 600 y 649, 18 entre 650 y 699 y UNA entre 700 y 749. Entregando un 600, la banda 552-660 tenia 67 especies: 35 por debajo, 31 clavadas en 600 -ahi se amontonan los pseudolegendarios- y una sola por encima. Con +20% la banda pasa a 552-720 y quedan 85: 35 por debajo, 31 iguales y 19 por encima, con media esperada +1,2% en vez de -2,1%. Aviso: de 680 para arriba esto no cambia nada, porque por encima de 720 el juego no tiene nada.",
 
   "comentarioNivel": "El Pokémon recibido conserva el NIVEL del entregado. No es configurable a propósito: si no, bastaría con entregar un nivel 1 del gacha para sacar un nivel 50.",
 
   "banda": {
-    "porDebajo": 0.08,
-    "porEncima": 0.20
+    "porDebajo": 0.09,
+    "porEncima": 0.09
   },
 
   "permitirLegendarios": true,

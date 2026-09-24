@@ -69,6 +69,7 @@ public sealed partial class MainViewModel : ObservableObject
                 {
                     OnPropertyChanged(nameof(NeedLabel));
                     OnPropertyChanged(nameof(NeedState));
+                    OnPropertyChanged(nameof(NeedHint));
                     OnPropertyChanged(nameof(ShowsNeed));
                     OnPropertyChanged(nameof(ShowsPlayButton));
                 }
@@ -170,6 +171,7 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(NeedLabel))]
     [NotifyPropertyChangedFor(nameof(NeedState))]
+    [NotifyPropertyChangedFor(nameof(NeedHint))]
     [NotifyPropertyChangedFor(nameof(ShowsNeed))]
     [NotifyPropertyChangedFor(nameof(ShowsPlayButton))]
     private SectionViewModel _selectedSection;
@@ -178,6 +180,7 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(NeedLabel))]
     [NotifyPropertyChangedFor(nameof(NeedState))]
+    [NotifyPropertyChangedFor(nameof(NeedHint))]
     private bool _gameConnected;
 
     public bool ShowsNeed => SelectedSection.ShowsNeed;
@@ -219,6 +222,22 @@ public sealed partial class MainViewModel : ObservableObject
     /// that case keeps the plain "this is what is needed" amber instead of a green that would be a
     /// guess. Green and red are for what was measured.
     /// </remarks>
+    /// <summary>
+    /// The sentence under the badge, so that nobody has to guess what «JUEGO CERRADO» asks of them (2026-09-24: the
+    /// player wanted it impossible to miss in every section).
+    /// </summary>
+    public string NeedHint => SelectedSection.Needs switch
+    {
+        GameNeed.Running => GameConnected
+            ? "Azahar está abierto y conectado: esta sección funciona."
+            : "Abre el juego: esta sección solo funciona con Azahar abierto y la partida cargada.",
+        GameNeed.Closed => GameConnected
+            ? "Cierra el juego: esta sección solo funciona con Azahar cerrado. Guarda antes de cerrarlo."
+            : "Esta sección solo funciona con el juego cerrado. Guarda en el juego antes de cerrarlo.",
+        GameNeed.Either => "Da igual si el juego está abierto o cerrado: se usa lo último que guardaste en el juego.",
+        _ => string.Empty
+    };
+
     public string NeedState => SelectedSection.Needs switch
     {
         GameNeed.Running => GameConnected ? "ok" : "problem",
