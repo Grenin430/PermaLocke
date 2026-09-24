@@ -6,6 +6,12 @@ revisado: 2026-09-24
 
 La última sesión va arriba. Antes del 2026-09-23 solo hay un resumen por fechas sacado de `CLAUDE.md` y de `ARCHITECTURE.md`: el detalle está en el § citado ([[Índice de ARCHITECTURE]]). **Cada sesión nueva añade su entrada aquí.**
 
+## 2026-09-24 — torneo: entrar con Discord (fase 1)
+- Plan acordado: Supabase (proyecto `rnqpjvkonxjhrjsdvlpm`) con login de Discord; fase 1 solo identidad, fase 2 subir `RunSnapshot` + historial con RLS, fase 3 clasificación y auditoría en Admin con `SnapshotAudit`. La GPL impide impedir copias: el login es para el torneo, no contra la copia.
+- `Data/torneo.json` (URL + clave anon, pública por diseño). `App/Services/DiscordLogin.cs`: OAuth PKCE, navegador + `HttpListener` en `127.0.0.1:47281/callback`, sesión en `Config/discord.json` cifrada con DPAPI. Panel TORNEO en CONFIGURACIÓN. Sin probar contra el servidor.
+- Secretos que NO van al repo ni al chat: Client Secret de Discord, contraseña de la BD, `service_role`.
+- Puerta al abrir (`LoginWindow` + `LoginViewModel`, en `App.OnStartup` antes de `MainWindow`): solo ENTRAR CON DISCORD; sin cuenta de la whitelist o sin conexión, no abre. Whitelist en Supabase: tabla `whitelist(discord_id)` con RLS sin políticas y función `permitido()` (`tools/supabase/01-whitelist.sql`), que la app llama con el token del jugador. Rechazado: enseña su ID de Discord para dárselo al organizador.
+
 ## 2026-09-24 — plugins y MISCELÁNEA sin mochila
 - Instalados por el usuario los plugins **ponytail** (código mínimo) y **caveman** (respuestas cortas en el chat); ambos activos.
 - MISCELÁNEA: quitada la ventana «MOCHILA DEL JUEGO» (`ReadBagCommand`, `BagContents`, `BagAddress`, `PocketName`). `BagService` sigue: DARSE OBJETOS usa `CapacityFor`. Premios ya no releen la mochila al entregar.

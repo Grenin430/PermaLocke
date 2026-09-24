@@ -1,0 +1,27 @@
+<Window x:Class="PermaLocke.App.Views.LoginWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:pixel="clr-namespace:PermaLocke.App.Views.Pixel"
+        Title="PermaLocke"
+        Icon="../Assets/PermaLocke.ico"
+        Height="420" Width="620" ResizeMode="CanMinimize"
+        WindowStartupLocation="CenterScreen"
+        UseLayoutRounding="True" SnapsToDevicePixels="True"
+        Background="{StaticResource PxBaseBrush}">
+
+    <!-- La puerta: solo ENTRAR CON DISCORD. Cerrar la ventana cierra PermaLocke. -->
+    <Grid>
+        <pixel:PixelBackdrop Base="{StaticResource PxBase}" />
+
+        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="30">
+            <pixel:PixelText Text="PERMALOCKE" Scale="6" Tight="True" HorizontalAlignment="Center"
+                             Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
+
+            <Button Content="ENTRAR CON DISCORD" Style="{StaticResource PxButton}" Command="{Binding SignInCommand}"
+                    HorizontalAlignment="Center" MinWidth="280" Margin="0,40,0,0" />
+
+            <pixel:PixelText Text="{Binding Status}" Scale="2" Wrap="True" TextAlignment="Center" MaxWidth="520"
+                             HorizontalAlignment="Center" Margin="0,24,0,0" Colour="{StaticResource PxTextDim}" />
+        </StackPanel>
+    </Grid>
+</Window>

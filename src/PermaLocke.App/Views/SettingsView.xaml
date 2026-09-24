@@ -40,6 +40,24 @@
                 </ItemsControl>
             </pixel:PixelWindow>
 
+            <!-- ================================================== TORNEO: entrar con Discord (fase 1, solo identidad) -->
+            <pixel:PixelWindow Title="TORNEO" Icon="IconTrophy" Margin="0,12,0,0">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal"
+                                Visibility="{Binding IsSignedIn, Converter={StaticResource BoolToVisibility}}">
+                        <Image Source="{Binding DiscordAvatar, TargetNullValue={x:Null}}" Width="48" Height="48" Margin="0,0,12,0" />
+                        <pixel:PixelText Text="{Binding DiscordName}" Scale="3" Tight="True" VerticalAlignment="Center"
+                                         Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
+                        <Button Content="SALIR" Style="{StaticResource PxSubtleButton}" Command="{Binding SignOutCommand}"
+                                VerticalAlignment="Center" Margin="18,0,0,0" />
+                    </StackPanel>
+                    <Button Content="ENTRAR CON DISCORD" Style="{StaticResource PxButton}" Command="{Binding SignInCommand}"
+                            HorizontalAlignment="Left" Visibility="{Binding IsSignedIn, Converter={StaticResource InverseBoolToVisibility}}" />
+                    <pixel:PixelText Style="{StaticResource Explain}" Margin="0,10,0,0"
+                                     Text="Solo para el torneo. Se abre el navegador y Discord te pregunta; PermaLocke no ve tu contraseña. De momento no se envía nada de la partida." />
+                </StackPanel>
+            </pixel:PixelWindow>
+
             <!-- ================================================== MIENTRAS JUEGAS -->
             <pixel:PixelWindow Title="MIENTRAS JUEGAS" Icon="IconPlay" Margin="0,12,0,0">
                 <StackPanel>

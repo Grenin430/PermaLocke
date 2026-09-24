@@ -234,6 +234,8 @@ public partial class App : Application
         collection.AddSingleton<CemeteryViewModel>();
         collection.AddSingleton<MaintenanceService>();
         collection.AddSingleton<AppSettings>();
+        collection.AddSingleton<DiscordLogin>();
+        collection.AddTransient<LoginViewModel>();
         collection.AddSingleton<SettingsViewModel>();
         collection.AddSingleton<MainViewModel>();
 
@@ -281,6 +283,23 @@ public partial class App : Application
         }
 
         sky.Start();
+
+        // LA PUERTA DEL TORNEO: sin una cuenta de Discord de la whitelist no se abre nada. Mientras se enseña, la
+        // aplicación no se cierra al cerrar una ventana: la de entrar sería la "principal" y se llevaría todo.
+        var login = _services.GetRequiredService<LoginViewModel>();
+
+        if (!await login.TryKeptSessionAsync())
+        {
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
+            if (new Views.LoginWindow(login).ShowDialog() != true)
+            {
+                Shutdown();
+                return;
+            }
+
+            ShutdownMode = ShutdownMode.OnMainWindowClose;
+        }
 
         var main = _services.GetRequiredService<MainViewModel>();
         var window = new MainWindow { DataContext = main };
