@@ -463,6 +463,7 @@ public partial class App : Application
     {
         // Antes de soltar los servicios: los amigos ven «desconectado» ahora y no dentro de tres minutos.
         _services?.GetService<CommunityService>()?.SignOff();
+        _services?.GetService<TournamentUpload>()?.Flush();
         _services?.Dispose();
         base.OnExit(e);
     }

@@ -22,6 +22,7 @@ La última sesión va arriba. Antes del 2026-09-23 solo hay un resumen por fecha
 - Regalos por el servidor (`08-regalos.sql`): tabla `regalos(id, para, regalo jsonb)`; el jugador ve los suyos y los de todos, solo el organizador manda y retira. `GiftInbox` (app, ya también en la distribución local) y `GiftDesk` (Admin) usan `DiscordLogin`; recogido = evento `AdminGiftClaimed` en el historial subido. Admin sin carpeta compartida: JUGADORES sale de `clasificacion`.
 - Fallo de regalos arreglado: «A todos» venía marcado por defecto y elegir a alguien no lo quitaba, así que llegaba a todos. Ahora empieza sin marcar, la lista JUGADORES es de selección múltiple (clic marca/desmarca) y elegir a alguien quita «A todos»; se manda un regalo por destinatario. La app del organizador filtra por `para` = todos o su `user_id` (el organizador ve todos por RLS). `DiscordAccount.UserId` nuevo.
 - Admin: quitado dar objetos en los regalos (a petición). Quedan puntos, tiradas y wonder trades. Acceso directo `EscritorioPermaLocke Admin.lnk` al `binRelease` del repo: recompilar Admin en Release tras cambiarlo.
+- Menos tráfico para 20 jugadores: amigos y logros cada 60 s (antes 15); la run sube cada 5 min como mucho (antes 1) y al cerrar (`TournamentUpload.Flush` en `App.OnExit`, no con `--sin-juego`). Pendiente si hace falta: logros en tabla aparte en vez de sacarlos del historial en cada consulta.
 
 ## 2026-09-24 — plugins y MISCELÁNEA sin mochila
 - Instalados por el usuario los plugins **ponytail** (código mínimo) y **caveman** (respuestas cortas en el chat); ambos activos.

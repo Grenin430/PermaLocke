@@ -38,7 +38,9 @@ public sealed record ClaimedAchievement(string PlayerName, PresenceState State, 
 /// </remarks>
 public sealed class CommunityService : INotifyPropertyChanged
 {
-    private static readonly TimeSpan RefreshEvery = TimeSpan.FromSeconds(15);
+    // Cada minuto: con 20 jugadores, cada 15 s acercaba el tráfico al límite del plan gratuito. Abrir o cerrar el
+    // juego se sigue diciendo en el momento.
+    private static readonly TimeSpan RefreshEvery = TimeSpan.FromSeconds(60);
     private const int FeedLength = 30;
 
     private static readonly JsonSerializerOptions Json = new() { PropertyNameCaseInsensitive = true };

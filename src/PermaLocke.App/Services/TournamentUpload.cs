@@ -16,7 +16,7 @@ namespace PermaLocke.App.Services;
 /// account on the whitelist can write (<c>tools/supabase/02-runs.sql</c>).
 /// </para>
 /// <para>
-/// When: once at start, then whenever an event has been stored, at most once a minute. Nothing is sent while the run
+/// When: once at start, then whenever an event has been stored, at most every five minutes, and on closing. Nothing is sent while the run
 /// has not changed. A failed upload is logged and tried again on the next change; playing never waits for it.
 /// </para>
 /// </remarks>
@@ -26,7 +26,8 @@ public sealed class TournamentUpload(
     RunActivity activity,
     ILogger<TournamentUpload> logger)
 {
-    private static readonly TimeSpan Every = TimeSpan.FromMinutes(1);
+    // Cada 5 minutos como mucho, y al cerrar: cada subida reescribe el historial entero en el servidor.
+    private static readonly TimeSpan Every = TimeSpan.FromMinutes(5);
 
     // Los tipos de evento como texto ("AchievementUnlocked"), para que el servidor los lea sin saber el orden del enum.
     private static readonly JsonSerializerOptions Options = new()
@@ -37,11 +38,31 @@ public sealed class TournamentUpload(
 
     private volatile bool _dirty = true;
     private string _sentHead = string.Empty;
+    private bool _started;
 
     public void Start()
     {
+        _started = true;
         activity.Appended += (_, _) => _dirty = true;
         _ = LoopAsync();
+    }
+
+    /// <summary>On closing: sends what changed since the last upload, waiting a few seconds at most.</summary>
+    public void Flush()
+    {
+        if (!_started || !_dirty)
+        {
+            return;
+        }
+
+        try
+        {
+            Task.Run(UploadAsync).Wait(TimeSpan.FromSeconds(5));
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "No se pudo subir la run al cerrar");
+        }
     }
 
     private async Task LoopAsync()
