@@ -123,7 +123,7 @@
          la vista, y la máquina se queda con lo que sobre. -->
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="*" MinHeight="300" />
+            <RowDefinition Height="*" MinHeight="200" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>

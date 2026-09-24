@@ -36,7 +36,8 @@ public sealed class CapsuleMachine : ContentControl
         new PropertyMetadata(null, (d, e) => ((CapsuleMachine)d).OnShelfChanged((IReadOnlyList<CapsuleShelfItem>?)e.NewValue)));
 
     /// <summary>Screen pixels per cell, the same as the room, the beach and the notices.</summary>
-    private const int Cell = 3;
+    /// <summary>Screen pixels per cell: 3, or 2 when the machine would not fit whole at 3 (like the roulette).</summary>
+    private int _cell = 3;
 
     private readonly Image _image = new() { Stretch = Stretch.Fill };
     private readonly ScaleTransform _zoom = new(1, 1);
@@ -160,16 +161,19 @@ public sealed class CapsuleMachine : ContentControl
     private void Reshape()
     {
         var dpi = VisualTreeHelper.GetDpi(this);
-        var columns = (int)Math.Ceiling(ActualWidth * dpi.DpiScaleX / Cell);
-        var rows = (int)Math.Ceiling(ActualHeight * dpi.DpiScaleY / Cell);
+        // A 3 la máquina pide 166 filas; en una pantalla baja (portátil con escalado, 2026-09-24) no cabían y se
+        // cortaba la cúpula por arriba. Entonces se pinta a 2: más pequeña, entera y en píxeles enteros.
+        _cell = Math.Ceiling(ActualHeight * dpi.DpiScaleY / 3) >= CapsuleMachineScene.DesignRows ? 3 : 2;
+        var columns = (int)Math.Ceiling(ActualWidth * dpi.DpiScaleX / _cell);
+        var rows = (int)Math.Ceiling(ActualHeight * dpi.DpiScaleY / _cell);
 
         if (columns < 40 || rows < 40)
         {
             return;
         }
 
-        _zoom.ScaleX = Cell / dpi.DpiScaleX;
-        _zoom.ScaleY = Cell / dpi.DpiScaleY;
+        _zoom.ScaleX = _cell / dpi.DpiScaleX;
+        _zoom.ScaleY = _cell / dpi.DpiScaleY;
 
         if (_scene is { } scene && scene.Width == Math.Max(CapsuleMachineScene.DesignWidth, columns)
             && scene.Height == Math.Max(CapsuleMachineScene.DesignRows, rows))
@@ -182,7 +186,7 @@ public sealed class CapsuleMachine : ContentControl
         _image.Source = _scene.Bitmap;
         _image.Width = _scene.Width;
         _image.Height = _scene.Height;
-        _image.Margin = new Thickness(Math.Min(0, (columns - _scene.Width) / 2.0 * Cell / dpi.DpiScaleX), 0, 0, 0);
+        _image.Margin = new Thickness(Math.Min(0, (columns - _scene.Width) / 2.0 * _cell / dpi.DpiScaleX), 0, 0, 0);
         Paint();
     }
 

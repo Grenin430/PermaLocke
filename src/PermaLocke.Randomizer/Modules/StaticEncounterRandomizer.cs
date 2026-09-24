@@ -332,11 +332,12 @@ public sealed class StaticEncounterRandomizer(RomWorkspace workspace, Randomizer
     }
 
 
-    /// <summary>How many Totems <see cref="EvolveTotems"/> moved to their final evolution.</summary>
+    /// <summary>How many Totems and allies <see cref="EvolveTotems"/> moved to their final evolution.</summary>
     public int Evolved { get; private set; }
 
     /// <summary>
-    /// From the sixth trial on, a Totem is a final evolution, like every trainer (2026-09-24, at the player's request).
+    /// From the sixth trial on, a Totem and the allies it calls are final evolutions, like every trainer (2026-09-24, at
+    /// the player's request).
     /// </summary>
     /// <remarks>
     /// The same cut as the trainers, <see cref="RandomizerOptions.FullyEvolvedFromLevel"/>, against the <b>cartridge</b>
@@ -352,28 +353,57 @@ public sealed class StaticEncounterRandomizer(RomWorkspace workspace, Randomizer
         }
 
         var evolutions = EvolutionTable.Read(mod.Stage(GameFiles.Evolution));
+        var count = StaticEncounterTable.Count(payload, layout);
         var moved = 0;
 
-        for (var i = 0; i < StaticEncounterTable.Count(payload, layout); i++)
+        for (var i = 0; i < count; i++)
         {
-            if (!StaticEncounterTable.IsTotem(payload, layout, i)
-                || StaticEncounterTable.GetLevel(payload, layout, i) < options.FullyEvolvedFromLevel)
+            var level = StaticEncounterTable.GetLevel(payload, layout, i);
+
+            if (!StaticEncounterTable.IsTotem(payload, layout, i) || level < options.FullyEvolvedFromLevel)
             {
                 continue;
             }
 
-            var species = StaticEncounterTable.GetSpecies(payload, layout, i);
-            var last = evolutions.FinalOf(species);
+            moved += Evolve(i, "Dominante");
 
-            if (species > 0 && last != species)
+            // Los que llama, que van en las filas de justo detrás: seguidas, de tipo corriente (0) y con un nivel entre
+            // diez por debajo del Dominante y el suyo. Medido en el mundo generado: detrás de cada Dominante van de 4 a 8
+            // y luego vienen estáticos sueltos de otro nivel (un Calyrex a 28 detrás de un Dominante a 60), que se quedan.
+            for (var ally = i + 1; ally < count; ally++)
             {
-                StaticEncounterTable.SetSpecies(payload, layout, i, last, 0);
-                Touched.Add($"Dominante a su evolución final: {species} -> {last}");
-                moved++;
+                var allyLevel = StaticEncounterTable.GetLevel(payload, layout, ally);
+
+                if (StaticEncounterTable.IsTotem(payload, layout, ally)
+                    || payload[(ally * layout.Stride) + StaticEncounterTable.KindOffset] != 0
+                    || allyLevel > level || allyLevel < level - 10)
+                {
+                    break;
+                }
+
+                if (allyLevel >= options.FullyEvolvedFromLevel)
+                {
+                    moved += Evolve(ally, "Aliado de Dominante");
+                }
             }
         }
 
         return moved;
+
+        int Evolve(int index, string what)
+        {
+            var species = StaticEncounterTable.GetSpecies(payload, layout, index);
+            var last = evolutions.FinalOf(species);
+
+            if (species <= 0 || last == species)
+            {
+                return 0;
+            }
+
+            StaticEncounterTable.SetSpecies(payload, layout, index, last, 0);
+            Touched.Add($"{what} a su evolución final: {species} -> {last}");
+            return 1;
+        }
     }
     /// <summary>
     /// Raises the levels of a table by whatever the role asks for, and says how many moved.
