@@ -43,15 +43,25 @@ public sealed class MemorySearch(AzaharRpcClient client)
     /// ranges the emulator will answer reads for.
     /// </summary>
     /// <remarks>
-    /// Everything located so far sits inside these 96 MB: the party copies between 0x3002E258
-    /// and 0x33F7FA44, the bag block at 0x33011934, the wild Pokémon copies around 0x3254F4AC
-    /// and the battle flags at 0x330D6CA8. The emulator answers reads across the whole of
-    /// 0x30000000-0x40000000, so sweeping that instead costs four times as long for memory
+    /// <para>
+    /// Everything located so far sits inside these 64 MB of linear heap: the party copies between
+    /// 0x3002E258 and 0x33F7FA44, the bag block at 0x33011934, the wild Pokémon copies around
+    /// 0x3254F4AC and the battle flags at 0x330D6CA8. The emulator answers reads across the whole
+    /// of 0x30000000-0x40000000, so sweeping that instead costs four times as long for memory
     /// that has never held anything.
+    /// </para>
+    /// <para>
+    /// <b>The application heap at 0x08000000 was here too, and it is out since 2026-09-21</b>, because
+    /// searching it crashed the emulator. Opening the game, the party key search of §152 ran while the
+    /// game was still playing its intro, when most of that heap is not mapped yet: 28,871 «unmapped
+    /// ReadBlock» lines from 0x08420000 to 0x09AB4000 in a third of a second, and Azahar died on the
+    /// last of them. Reading memory that does not exist had frozen it before (§114 ter). And it bought
+    /// nothing: in every log of every run, the heap's only hit was on 2026-08-18, a «party» of one
+    /// Pokémon whose trainer name was noise, and a Rare Candy false positive at 0x081D55B0 (§22).
+    /// </para>
     /// </remarks>
     public static IReadOnlyList<MemoryRegion> LiveStateRegions { get; } =
     [
-        new(0x08000000, 0x0A000000, "heap"),
         new(0x30000000, 0x34000000, "linear")
     ];
 

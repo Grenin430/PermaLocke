@@ -3490,9 +3490,11 @@ a un cagoneta— ni negarse a cobrar una muerte, que dejaría el historial minti
 ### Lo que el rol le hace al cartucho
 
 Los niveles de los entrenadores suben por rol, **parcheando un byte en su sitio** (`0x0E` de cada
-entrada de `trpoke`), que es lo único que la norma del §19 permite. El redondeo es hacia arriba a
-propósito: los primeros entrenadores son de nivel 5, y redondear hacia abajo dejaría el +20% en
-nada durante toda la primera isla.
+entrada de `trpoke`), que es lo único que la norma del §19 permite. El nivel se redondea **al entero
+más cercano**, las mitades hacia arriba, y no se trunca: truncando, un nivel 4 subido un 20% (4,8) se
+quedaría en 4, y en la primera isla el +20% apenas se notaría. **No es un redondeo hacia arriba**,
+como decía este párrafo hasta el 2026-09-21: 12 × 1,2 = 14,4 da 14, y 14 es el cap de la 1ª prueba en
+`Data/levelcaps.json`; hacia arriba saldría 15 y la tabla dejaría de cuadrar.
 
 El nivel lo sube **también a las especies protegidas**. Un Cosmog al nivel del cartucho en un juego
 donde todo lo demás va un 20% por encima sería un regalo, no una protección.
@@ -8545,10 +8547,9 @@ Piezas:
   entero la principal sigue minimizada antes, durante y después. La escena no depende de la ventana
   principal.
 - El fotograma es `OverlayWindows.Capture`: una copia GDI de lo que hay en pantalla en ese sitio,
-  tomada **antes** de enseñarse y solo en memoria. Sin `CAPTUREBLT`, a propósito: esa bandera es la
-  que mete las ventanas por capas en la copia, y así un aviso que esté en pantalla no se queda
-  congelado dentro de la foto. Como es lo que hay debajo, aparecer no se nota. Si no se puede leer,
-  un velo oscuro hace de fondo.
+  tomada **antes** de enseñarse y solo en memoria. Como es lo que hay debajo, aparecer no se nota. Si
+  no se puede leer, un velo oscuro hace de fondo. *(Aquí decía que sin `CAPTUREBLT` las ventanas por capas
+  quedaban fuera de la copia. **Es falso**, y lo desmintió la primera killcam real: ver §115.)*
 - El nombre sale del equipo **vivo** (el mote puede haber cambiado desde el registro), y los puntos de
   lo que **cobró de verdad** `RecordDeathAsync`, que ahora devuelve el `PenaltyResult`. De paso el
   aviso de esquina deja de decir «−25 puntos» escrito a mano, que era falso para el CAGONETA.
@@ -8780,3 +8781,3037 @@ próxima vez se sepa qué vio en lugar de suponerlo.
 **Verificado con una muerte del jugador (2026-09-13, 15:53:41).** Empoleon cayó en combate; el log dice
 «barra a cero vista a los 478 ms» —el cero en pantalla, no el plan de respaldo— y la muerte se registró dos
 milisegundos después. El jugador lo confirmó mirando: la escena salió justo a tiempo.
+
+## §115 · CEMENTERIO y killcam (2026-09-13)
+
+Una sección con **una tumba por cada caído** y, al elegir una, su historia: ante quién cayó, cuándo, de
+dónde venía, lo que costó, cómo se supo y, si la hay, **la repetición de su muerte**. Nada de lo que enseña es
+dato nuevo: la caída es el `PokemonDied`, el coste la suma de sus `PointsPenalty` tal como se cobraron, los
+rivales lo que las tablas de combate tenían en ese momento (`rivales` en el evento, §114 bis) y la
+repetición el fichero que escribió la killcam. Una muerte de antes de que existiera todo eso **lo dice** en
+vez de rellenar el hueco.
+
+**La escena** (`CemeteryScene`) es pixel art por lo mismo que la sangre del §113, y cada celda cae en un
+número **entero** de píxeles de pantalla: el tamaño de la rejilla sigue al panel, descontando el escalado de
+Windows. La primera versión estiraba 480 celdas a lo que midiera el panel —1,85 veces en la ventana del
+jugador— y eso dibuja unas celdas de dos píxeles y otras de uno; la trama se vuelve moaré. **El tamaño de la
+tumba dice cuánto aguantó**: cruz de madera menos de un día, piedra menos de cuatro, lápida menos de diez,
+obelisco a partir de ahí, dicho en la propia escena. Tierra removida si cayó en el último día y un destello
+si era variocolor, también de la run. La niebla, los fuegos fatuos, las estrellas y el vaivén de los
+fantasmas no significan nada y no pretenden hacerlo. El elegido sube y recupera su color.
+
+**La killcam** (`KillcamRecorder`) guarda la pantalla de arriba a 20 fps, a su tamaño nativo de 400×240,
+**solo mientras hay combate** y solo los últimos 7 s. Al ver la barra a cero se marca el instante y se guarda
+de −4,5 s a +1,3 s en `Saves/killcam/<run>/<pokémon>.killcam` (fotogramas JPEG con su tiempo respecto a la
+caída, así que un hueco es una pausa y no un desplazamiento). No pide nada al emulador: después de dos
+congelamientos buscando en su memoria (§114 ter), ese es el requisito. El reproductor va a velocidad real o
+a cámara lenta, salta a cualquier punto de la barra, avanza fotograma a fotograma, marca en rojo el cero, y
+**se amplía** a toda la sección.
+
+Tres cosas que salieron probándola y que conviene no repetir:
+
+1. **Copiar la pantalla copia lo que haya delante.** El primer ensayo guardó 93 fotogramas perfectos de
+   *Grounded 2*, que estaba a pantalla completa encima de Azahar. `GameWindow.Shows` pregunta a nueve puntos
+   de la zona qué ventana hay (`WindowFromPoint`), y si alguno no es Azahar el fotograma no existe; la espera
+   de la barra del §114 quater usa lo mismo y lo cuenta como oculta. Verificado en los dos sentidos: con
+   Azahar a la vista, 93 fotogramas del Centro Pokémon; con una ventana casi invisible delante, cero, y el log
+   la nombra.
+2. **Sin `CAPTUREBLT` las ventanas por capas NO quedan fuera.** El §113 y `OverlayWindows` lo daban por
+   hecho. La primera killcam real (Exploud ante Duskull) lo desmintió: hasta **+597 ms** es el juego, y
+   desde **+646 ms** baja la franja negra de la escena de PermaLocke, luego el gris y el sprite. Con el
+   escritorio compuesto, la copia es lo que se ve. La escena avisa ahora a la killcam al taparlo
+   (`CoverBegins`/`CoverEnds`) y no se guarda nada mientras está; el clip acaba en el último fotograma del
+   juego. Ocultar la escena de toda captura era el otro camino, y la habría ocultado también a quien retransmita
+   la partida. La killcam de Exploud se recortó a mano a sus 84 fotogramas buenos.
+3. **Las ventanas transparentes al ratón no contestan a `WindowFromPoint`**, medido con una ventana así
+   encima de Azahar: el punto seguía diciendo `azahar`. Por eso los avisos y la escena no hacen perder
+   fotogramas, y por eso mismo **no** sirven para saber si salen en la copia.
+
+**Sin ver todavía:** una muerte con los tres arreglos puestos a la vez.
+
+## §116 · El cielo de Alola (2026-09-13)
+
+Detrás de la cabecera de cada sección hay una **franja en pixel art con el mar y el cielo de Alola a la hora que
+es en el juego**, y al pie de la barra lateral una ventanita con lo mismo y «ALOLA · Día · 10:01». Solo
+presentación: no decide ni registra nada.
+
+**De dónde sale la hora, sin tocar la memoria del juego** (`GameLink/Clock/AlolaClock`):
+
+- Con `init_clock=0`, Azahar arranca el reloj de la consola en la **hora local** del ordenador. Leído en su
+  código (`core/hle/kernel/shared_page.cpp`): toma el reloj UTC, suma una hora si hay horario de verano y resta
+  una época construida con `mktime`, que es local. Luego suma `init_time_offset`, **en segundos**, con una
+  aritmética rara para los negativos que se copia tal cual (hay test).
+- Ultra Luna va **12 horas cambiada** respecto al reloj de la consola. Todo lo que PermaLocke lee es Ultra Luna
+  (title id `00040000001B5100`), y la partida del jugador lo confirma: `SAV7USUM.Version = UM`. La ventana de
+  Azahar pone «Pokémon Ultra Sun», pero es solo su etiqueta.
+- La configuración es la del Azahar **que está abierto**, localizado con la regla del propio emulador (carpeta
+  `user` junto al ejecutable, o `%APPDATA%\Azahar`): el jugador no abre el que trae PermaLocke (§95). Se
+  mira cada 20 s.
+- Con la hora **fija** (`init_clock=1`) no se puede saber cuánto lleva la partida en marcha, así que no se
+  inventa: la franja no se dibuja y la barra lo dice.
+
+Los tramos del día son los de la séptima generación —mañana 6:00-9:59, día 10:00-16:59, atardecer
+17:00-17:59, noche 18:00-5:59— y **no están medidos contra el juego**; los colores del tinte y de la ventanita
+son dibujo, no el cielo real del juego. Verificado: con las 22:01 locales la barra dijo **10:01 · Día**.
+
+**Tres versiones, y la que queda es la tercera.** La primera teñía el suelo de la ventana, tan poco que no se
+notaba. La segunda pintó la ventana entera con degradados suaves, un resplandor que cruzaba la pantalla, una
+franja de horizonte difuminada y estrellas repartidas por la interfaz, con las barras translúcidas para verlo
+detrás. **El jugador dijo que parecía hecha por una IA, y lo parecía**: es exactamente el aspecto de un fondo
+generado. Se tiró entera. Lo que sí había funcionado aquí era lo contrario —la sangre y el cementerio,
+dibujados celda a celda (§113, §115)—, y la franja es eso:
+
+- **Contenida**: detrás de la cabecera, acabando justo en su raya (`MainWindow` iguala su alto al de la
+  cabecera). El resto de la aplicación tiene el suelo de siempre y las barras vuelven a ser opacas.
+- **Píxeles enteros**, dos por celda descontando el escalado de Windows, pocos colores planos con trama
+  ordenada, y el cielo oscurecido un tercio porque encima van el título, los puntos y los distintivos.
+- **Formas escritas a mano**: las cuatro islas con su silueta columna a columna —Melemele, Akala con el cráter
+  de Wela, que de noche tiene lava; Ula'ula subiendo al monte Lanakila, con nieve; Poni con sus
+  acantilados—, y las nubes y los pájaros como pequeños sprites escritos en texto dentro del código.
+- **Se mueve a saltos**, cuatro veces por segundo: nubes que avanzan de celda en celda, pájaros que baten las
+  alas un paso sí y otro no, rayos del sol que alternan, estrellas fijas que se apagan un instante. Nada se
+  desvanece suavemente.
+- El sol y la luna recorren el arco **solo hasta el 79 % del ancho**: al principio el sol se ponía detrás de
+  «PUNTOS» y se comía la palabra. Las islas van en el tramo central por lo mismo.
+
+**La ventanita** (`AlolaWindow`) es de la misma familia, 86×48 celdas a dos píxeles, animada a seis fotogramas
+por segundo porque está en pantalla cientos de horas. Las dos toman los colores de `AlolaPalette`, así que no
+pueden discrepar sobre qué hora es. **Solo aparece si cabe**: en NORMAL (760 de alto) la lista de
+secciones ya ocupa casi toda la barra, y `MainWindow` mide la lista antes de enseñarla para no ponerle una barra
+de desplazamiento a la navegación.
+
+Una primera versión escondía la puesta de sol detrás de la palmera: el sol sale por el borde izquierdo y se pone
+por el derecho, así que las islas van en el tramo central. `--hora-alola HH:mm` fuerza una hora para mirar el
+cielo sin esperar, y no toca nada más.
+
+**Límites dichos:** pausar el emulador retrasa el reloj de la consola respecto al del ordenador (avanza con el
+tiempo emulado), y con el escalado de Windows al 125 % las celdas de la ventanita no caen en píxeles enteros.
+
+## §117 · La regla de primer encuentro, por fin con zona (2026-09-14)
+
+El jugador la retomó porque en la competición va a haber gente que apenas conoce. Lo que decidió:
+
+- **En las rutas del MAPA** —las 61 que colocó a mano— el **primer combate salvaje gasta la ruta**, pase lo
+  que pase en él: huir, debilitarlo o capturarlo.
+- En una ruta gastada **no hay Poké Balls**.
+- **Duplicados**: si ya tienes su **línea evolutiva** (por la Pokédex capturada de la partida o por la run),
+  no salen Poké Balls **y la ruta sigue libre**.
+- **Un variocolor se puede atrapar siempre.**
+
+La maquinaria de quitar y devolver Poké Balls existía desde el §24; lo que faltaba desde el §55 era **saber
+dónde está el jugador**. Todo lo que sigue se midió contra la partida del jugador con él moviéndose.
+
+### Dónde está el jugador: los registros de posición
+
+**La partida guardada como verdad.** El bloque `Situation` de la partida trae el **mundo** en +0 (lo que PKHeX
+llama `M`), el **mapa** en +2 y la posición en +8, +0xC y +0x10. Con la partida recién guardada y el jugador
+quieto, una búsqueda de esos 12 bytes exactos dio **dos copias que solo cambian al guardar**: volando a la Ruta 2
+no se movieron. Una búsqueda de la X sola por los 64 MB de la zona lineal dio la pista buena: justo delante de
+las coordenadas vivas estaban `00 00 07 00`, **mundo 0, mapa 7 = Ruta 2**.
+
+**El registro**, 0x24 bytes: `u16 mundo, u16 mapa, f32 X, Y, Z, f32 qx, qy, qz, qw, FFFFFFFF`. Hay varios: uno
+sigue cada paso y otros guardan por dónde se entró al mapa, y **todos cambian de mapa en el mismo instante**.
+Comprobado contra el cartucho (`RomTool mapas`) en doce sitios, con el mundo que el cartucho da a cada mapa:
+
+| Recorrido del jugador | Leído | Cartucho |
+|---|---|---|
+| Ruta 2 → cementerio → Ruta 2 → Hauoli | 0/7, 15/28, 0/7, 0/13 | Ruta 2, Cementerio de Hauoli, Ruta 2, Ciudad Hauoli (Zona Comercial) |
+| Vuelos | 227/304, 0/6, 123/187, 208/283, 117/171 | Paraíso Æther, Ruta 3, Pico Hokulani, Altar de la Luna, Ruta 16 |
+| Centro Pokémon de la Ruta 16 | 194/261 | lugar: Ruta 16 |
+
+**Por qué se valida así** (`FieldRecord.Parse`): durante un vuelo los registros leen «mundo 600, mapa 12288» y
+ceros; durante un combate, «mundo 35, mapa 89», que es un mapa real **de otro mundo** (Pueblo Ohana es del 58).
+Exigir que el mapa pertenezca a ese mundo según el cartucho descarta todo eso. Además: posición distinta de cero
+(un registro muerto lee ceros, y mapa 0 mundo 0 es la Ruta 1), X, Y y Z no iguales (la búsqueda por forma trae
+decenas de vectores 1, 1, 1), rotación de longitud 1 y `FFFFFFFF` detrás. **Hacen falta dos copias de acuerdo**:
+dos de las cuatro del primer día murieron en el primer vuelo, y la lección del §55 es no creerse una sola.
+
+**Cómo se encuentran sin quemar direcciones** (`FieldZoneReader`): con la **posición guardada** —justo después
+de cargar, los registros tienen exactamente mundo, mapa y posición de la partida: tras reiniciar el emulador dio
+cinco en 14 ms— y con la **firma del aterrizaje** —la rotación identidad y `FFFFFFFF`, que es lo que queda al
+llegar a un mapa: 68 coincidencias en 67 ms—. Las direcciones sobrevivieron al reinicio, pero no se usan como
+fijas. Una búsqueda de cada al conectar, y otra solo si nada valida durante 20 s y han pasado 2 minutos.
+
+`Data/mapas.json` lo genera `RomTool mapas --escribir`: 380 mapas con su mundo y el id de zona normalizado del
+**nombre de PKHeX para su `ParentMap`**, que casa con el del cartucho en los 380 y es el mismo id que usan la run
+y el MAPA. Las 61 rutas del MAPA tienen mapa; ninguna se queda fuera.
+
+### Si un combate es salvaje: los contadores del juego
+
+El identificador 12 de las tablas de combate **no distingue salvaje de entrenador**: un Gastrodon de entrenador
+salió en el 12. Los **récords de la ficha de entrenador** sí, y están en memoria con el formato de la partida (100
+de 32 bits y 100 de 16): búsqueda de los diez primeros de la partida, **una coincidencia**, a 0x68114 de la
+mochila. El récord **4, combates salvajes, sube al empezar el combate**, antes de que aparezcan las tablas, **y
+cuenta aunque huyas** (Boldore huido, Sewaddle debilitado, Aipom capturado). El 6 son capturas y el 46 huidas,
+y con ellos se sabe al acabar cómo terminó, para marcarlo en el MAPA. El 127, variocolor encontrados, es la
+cláusula shiny: **su posición está calculada, no medida**, y se valida aparte para que un error no se lleve los
+demás (`BattleCounterReader`).
+
+**Quitar Poké Balls dentro del combate funciona**: con 14 Super Ball puestas a 0 en mitad de un combate, la
+mochila del combate enseñaba 0. Al devolverlas vuelven **al final del bolsillo**, no a su hueco.
+
+### Cómo queda
+
+- `EncounterPolicy`: la decisión, pura y con tests. Toda duda (zona desconocida, sitio que no es ruta, especie
+  que no se llega a leer en 8 s) acaba con el jugador conservando sus Poké Balls.
+- `BallControlService`: retira y devuelve con evento `BallsWithheld`/`BallsReturned` con el motivo; gasta la ruta
+  con `ZoneEncounterSpent` (**nuevo, al final del enum**); y marca el resultado en el MAPA con `ZoneOutcomeSet`
+  firmado como `AutoDetect`. **Marcar una ruta como libre en el MAPA no deshace un combate detectado.**
+- La mochila **suma**: `Withhold` añade a lo debido y `GiveBack` devuelve encima de lo que lleves. Antes
+  sobrescribía, y unas Poké Balls compradas mientras las otras estaban retiradas se habrían perdido.
+- `EncounterGuard` (App): en el bucle de combate, dos veces por segundo fuera y cuatro dentro. Al subir el
+  contador pide las tablas al momento (`BattleTableReader.SearchSoon`) y, mientras no sabe qué salvaje es, retira.
+  Con zona desconocida fuera de combate deja la mochila como estaba 60 s antes de devolver.
+- Las líneas evolutivas salen del `a/0/1/4` del mundo instalado (`WorldEvolutionLines`). Avisos en pantalla con
+  el motivo.
+- Retirado lo muerto del §23: `ZoneLocator`, `ZoneService`, `ZoneTable` y `Probe --zona`.
+
+**Sin ver todavía:** la regla entera en una partida —esto está compilado y con tests, y cada pieza medida por
+separado, pero no se ha jugado con ella encendida—; un variocolor real; combates dobles y SOS; y cuánto tarda
+de verdad en retirar al empezar un combate con un duplicado.
+
+## §118 · El MAPA se marca solo (2026-09-14)
+
+Petición del jugador, antes de probar los variocolor: que el MAPA **no se pueda marcar a mano**, que lo marque la
+aplicación leyendo la zona, **para que no se hagan trampas**. Tiene sentido por algo más que la desconfianza: desde
+el §117 la regla de las Poké Balls **lee** el mapa —una ruta marcada cuenta como gastada—, así que un mapa que
+cualquiera pincha era un árbitro que cualquiera mueve.
+
+**Lo que marca**, y es lo mismo que ya decidía la regla: el **primer combate salvaje de una ruta libre** del MAPA.
+Al empezar se gasta la ruta (`ZoneEncounterSpent`) y al acabar se marca cómo terminó (`ZoneOutcomeSet`, firmado
+`AutoDetect`, con la especie). Un duplicado no gasta la ruta y no la marca; un variocolor, según
+`shinyClause.consumesEncounter`. Cómo terminó sale de `EncounterPolicy.Ending`, pura y con tests:
+
+| Leído | Marca |
+|---|---|
+| El récord 6 (capturas) subió | atrapado |
+| El récord 46 (huidas) subió | huida |
+| Las tablas vieron al salvaje a cero | muerto |
+| Nada de lo anterior | huida, diciendo en el evento que no se contó nada |
+
+La última fila es una decisión: el salvaje se teletransportó o fue expulsado, o el jugador perdió, o las tablas no
+vieron el K.O. Dejarla sin marcar tendría el mapa diciendo «sin marcar» de una ruta que la regla ya trata como
+gastada, **y ya nadie puede marcarla a mano**. Las cuatro gastan la ruta por igual, así que equivocarse cuesta la
+etiqueta, y el motivo queda escrito tal cual.
+
+**Independiente de la regla de las Poké Balls.** `EncounterGuard` salía en la primera línea si `ballControl` estaba
+apagada, y con ella se iba el mapa. Ahora sigue combates y marca siempre, y solo retirar y devolver Poké Balls mira
+el interruptor: un mapa que solo se rellena mientras otra opción está encendida es un mapa que deja de ser un registro
+sin avisar.
+
+**Dos huecos que se cierran al pasar a ser la única vía:**
+
+- **Zona desconocida al empezar** (al conectar, antes de la primera búsqueda; o si el lector falla). Antes el combate
+  se perdía para el mapa. Ahora se lee la zona **al acabar**, porque un combate no te mueve de sitio… salvo perderlo,
+  que te lleva al último Centro Pokémon, y **hay Centros en las rutas**. Por eso, si hubo una baja propia, la zona de
+  después solo vale si es la última que se leyó antes de empezar. Y si resulta ser una ruta ya gastada con una captura
+  dentro, se avisa y se deja en el log: no se pudieron retirar las Poké Balls a tiempo.
+- **Algo sin leer al acabar** (la zona o los contadores, mientras se recarga el campo). Se reintenta en cada vuelta
+  hasta 15 s; pasado eso, o si empieza otro combate —cuyos contadores ya se mezclan con los de este—, **se deja sin
+  marcar y se dice** con un aviso, en vez de adivinar. Un combate cuyas tablas nunca aparecieron se da por acabado a
+  los 3 minutos como mucho, para que un lector de zona roto no ciegue todos los siguientes.
+
+**Las marcas a mano que ya había.** La run del jugador tiene **418 clics**, que dejan **18 zonas marcadas**, y 0
+detectadas (medido sobre una copia de la base de datos). Se quedan: eran suyas y las marcó comprobándolo. Pero
+`ZoneOutcomeService` las distingue (`ZoneMark.ByPlayer`), la carta de la zona dice «marcada a mano, de cuando el
+mapa se pinchaba», y **una marca a mano nunca pisa ni borra una detectada**, venga de la historia vieja o de una
+versión anterior de la aplicación; al revés sí: lo detectado sustituye a lo pinchado. `SetAsync` ya no tiene
+`source` por defecto, para que nadie vuelva a escribir como jugador sin decirlo.
+
+**La pantalla**: los marcadores siguen siendo `Button` por la plantilla y la carta del ratón, pero sin comando, sin
+foco y sin cursor de mano, y sin la onda al pulsar, que prometían un clic que no hace nada. La carta enseña contra qué
+Pokémon fue y cuándo se marcó. El mapa se refresca solo con `RunDataChanged`, porque ahora cambia mientras juegas.
+
+### La primera prueba: «no se sabe dónde fue»
+
+El jugador huyó de un Haunter en los **Jardines de Ula-Ula** y salió el aviso de zona desconocida. El log lo cuenta
+entero: conectado a las 02:08:29, la búsqueda encontró **un registro** (`0x33F6E448`), el combate empezó 20 s
+después, y hasta las 02:09:15 no hubo zona. **Con una copia no se decide nada** —hacen falta dos— y **con una copia ya
+encontrada no se volvía a buscar en 2 minutos**. Leyendo solo 36 bytes de las tres direcciones medidas el día anterior,
+las tres estaban vivas y decían Jardines de Ula-Ula: las copias estaban, lo que fallaba era encontrarlas.
+
+El motivo es de las dos firmas de búsqueda, que **solo casan en dos momentos**: la posición guardada, justo al cargar
+y antes de moverse, y la rotación identidad, justo al aterrizar. Un jugador que conecta PermaLocke después de dar
+unos pasos no está en ninguno: sus registros miraban de lado, `(0, −0,707, 0, 0,707)`.
+
+Dos arreglos, los dos en `FieldZoneReader`:
+
+- **Las direcciones de la última sesión se prueban antes de buscar**, como ya hacen el equipo y la mochila, en
+  `Saves/backup/registros-de-posicion.txt`. No se confía en ellas por eso: se leen y validan como cualquier otra, y
+  solo valen mientras dos coinciden. Se guardan solo cuando una búsqueda acaba en zona.
+- **Si la búsqueda no da dos de acuerdo, una búsqueda más de «hermanas»** (`FieldRecord.SiblingPattern`): el mundo y
+  el mapa delante, `FFFFFFFF` al final y **todo lo de en medio comodín**. El mapa lo dice la copia que sí se encontró,
+  o la partida guardada si no hay ninguna. Medida contra el juego en el mismo sitio: **6 candidatos en 16 ms, los 6
+  válidos**. Ocho bytes fijos es poco a propósito y todo pasa por `Parse`; para un mapa con todos los bytes a cero
+  (Ruta 1) los candidatos pueden llenar la respuesta y dejar registros fuera.
+
+Con eso la búsqueda al conectar pasa de cuatro a cinco como mucho, siempre sueltas y con los 2 minutos de separación.
+
+### La segunda prueba: «siempre va un mapa por detrás», y el shiny que no se veía
+
+Con el parche de todo variocolor puesto, el jugador contó dos cosas: al pasar a una ruta PermaLocke le detectaba la
+anterior, y al salirle un shiny no le devolvía las Poké Balls.
+
+**El mapa anterior.** Al conectar, la búsqueda de hermanas del mapa 83 (Ruta 7) dio **dos** registros:
+`0x33F6E448` y `0x33F6E490`. Leyendo siete a la vez con el jugador en la Ruta 2, **seis decían Ruta 2 con la misma
+posición al decimal y `0x33F6E490` decía Ciudad Hauoli** en otra posición: **ese registro guarda el mapa anterior**.
+Justo después de cargar coincidía con los vivos, y por eso la búsqueda lo cogió. Con la regla de «todos de acuerdo»,
+tras cada cambio de mapa esos dos discrepaban, la zona salía desconocida y el combate se asignaba a la **última zona
+confirmada**, que aún tenía menos de 60 s: la del mapa que se acababa de dejar. Un Dewpider quedó apuntado en Ciudad Hauoli
+(Zona Comercial), con la ruta gastada y marcada como huida; **está sin confirmar dónde fue de verdad**.
+
+Tres arreglos:
+- `FieldRecord.Resolve` pasa a **mayoría estricta con al menos dos**: el registro atrasado pierde la votación en vez
+  de vetarla, y un empate sigue siendo «no se sabe».
+- `FieldZoneReader`: si hay lecturas válidas sin mayoría, **busca otra vez a los 20 s** en vez de a los 2 minutos,
+  y busca las hermanas de **cada mapa que se ve**, hasta dos. Y una búsqueda que no encuentra nada **ya no vacía la
+  lista**: tras el combate del Dewpider se buscó con el campo recargándose, salieron 0 y se quedó sin zona.
+- `EncounterGuard`: un combate solo se asigna a una zona confirmada **hace 5 s o menos**, en vez de 60. La zona se
+  confirma dos veces por segundo mientras se lee; si lleva más sin leerse, la del combate se lee al acabar.
+
+**El shiny, en dos intentos.** La posición calculada del récord 127 **es la buena**: en memoria valía 4, en la
+partida guardada 0, y desde que se guardó hubo exactamente cuatro combates salvajes, todos variocolor. El primer
+arreglo supuso que subía en la misma lectura que el récord 4 y comparó con la lectura de antes del combate. **Era
+falso**, y lo dijo la línea de log que se añadió para comprobarlo: el siguiente combate, contra un Wooloo variocolor en
+una ruta gastada, empezó con «variocolor 5 -> 5», y leído a mano en pleno combate el récord seguía en 5. **El juego
+cuenta el variocolor más tarde**, demasiado tarde para devolver las Poké Balls. Supuse una causa a partir de un
+síntoma y la escribí como medida; la medida la trajo el log.
+
+Lo que sí sirve es **el propio salvaje** (`BattlePokemon`): leyendo alrededor del puntero del bloque del rival, en las
+**dos** tablas del combate hay un PK7 cifrado con firma válida y la especie del bloque en **puntero + 0x40**, con PID
+`7D64F0DE`, nivel 8 y el TID y SID del jugador, que el salvaje ya lleva; `IsShiny` dice que sí y cuadra con el PID
+contra la ficha del jugador. `EncounterGuard` lo lee en cuanto aparece el bloque y usa su brillo; el récord 127 se queda
+de segunda señal. El test usa los 296 bytes leídos de ese combate. **Medido con un solo combate salvaje**: sin ver en
+combates dobles, SOS ni contra entrenadores.
+
+**Y la huida no contada.** El Ditto de la Ruta 7 se marcó como huida por la regla de «nada contado»: se leyeron los
+contadores **11 ms** después de irse las tablas y el juego aún no había apuntado la huida, que sí apuntó. Ahora, si no
+hay nada contado, se esperan hasta **4 s** antes de decidir. La etiqueta salió bien por casualidad; con una captura
+habría salido mal.
+El combate del Haunter **no se ha marcado** y no se marca a posteriori: ese evento diría que PermaLocke lo vio, y no
+lo vio.
+
+**Sin ver todavía:** una marca automática en una partida real, el caso de la zona leída al acabar, y cualquier
+combate doble o SOS.
+
+## §119 · Fuera del MAPA no se captura (2026-09-14)
+
+El jugador entró en el **Túnel del Volcán**, que dejó fuera del MAPA a propósito, y el aviso le dijo que como no era
+ruta le **devolvía** las Poké Balls. Era lo que decía el §117 —toda duda a favor del jugador, y «no es ruta» contaba
+como duda—, y no es lo que quiere: **si una zona no aparece en el MAPA, no hay opción de capturar en ningún momento.**
+Las zonas que no se pusieron no son zonas olvidadas, son zonas descartadas.
+
+**La regla** (`EncounterPolicy.Decide`, con tests): fuera del mapa se retiran las Poké Balls andando y en combate, y
+un combate ahí no gasta ni marca nada. Dos excepciones:
+
+- **Un variocolor**, que se puede atrapar siempre, como se decidió en el §117. Queda dicho aquí por si no era eso.
+- **Las capturas estáticas permitidas**: el Necrozma del Monte Lanakila y los cuatro Tapus en sus ruinas. Se pueden
+  atrapar siempre —fuera del mapa, y también con la ruta gastada, porque **el Monte Lanakila sí es ruta del MAPA**— y
+  no gastan nada.
+
+La única duda que sigue a favor del jugador es **no saber dónde está**: retirar las Poké Balls con una lectura que
+no se tiene sería retirarlas en todos los sitios donde falle el lector de zona.
+
+**Cómo se reconoce una captura permitida.** No por la zona sola: el Monte Lanakila tiene salvajes normales, y abrir el
+monte entero dejaría capturar en una ruta gastada. Es **zona + la especie del rival**, y esa especie es la de **tu
+mundo**, no la del cartucho: el randomizador la cambia. Así que `rules.json` las describe por lo que el cartucho tiene
+—especie, forma y nivel— y `WorldAllowedStatics` busca esa fila en la tabla de estáticos del cartucho
+(`StaticEncounterTable.RowsOf`) y lee la misma fila del mod instalado, que se parchea en su sitio. Especie, forma,
+nivel y zona salen de **la tabla de encuentros legales de PKHeX para Ultra Luna**, no de memoria:
+
+| Captura | Cartucho | Fila | En el mundo del jugador |
+|---|---|---|---|
+| Necrozma del Monte Lanakila | Necrozma f0, Nv 65 | 161 | **Wo-Chien**, forma normal |
+| Tapu Koko, Ruinas de la Guerra | Tapu Koko, Nv 60 | 129 y 135 | Bellibolt y Roserade |
+| Tapu Lele, Ruinas de la Vida | Tapu Lele, Nv 60 | 130 | Flamariete |
+| Tapu Bulu, Ruinas de la Cosecha | Tapu Bulu, Nv 60 | 131 | Wo-Chien |
+| Tapu Fini, Ruinas del Tránsito | Tapu Fini, Nv 60 | 132 | Ursaluna |
+
+**El jugador pidió comprobar que el Necrozma no fuera una mega al azar**, y no lo es: lleva la regla `Strong` de
+`randomizer.json` —un Pokémon en forma normal con total base de 550 o más— y es un Wo-Chien. Las megas al azar son
+las otras tres entradas de Necrozma, que son **combates de jefe**: la fusión con Solgaleo (Charizard mega), la fusión
+con Lunala (Ampharos mega) y Ultra Necrozma (Salamence mega). Esas no están en la lista y no se pueden atrapar. La
+tabla tiene además un **Necrozma de forma 0 a nivel 75** (fila 99) que PKHeX no reconoce como encuentro de Ultra Luna;
+por eso la entrada lleva el nivel.
+
+**Dos Tapu Koko idénticos.** Las filas 129 y 135 solo se diferencian en el byte 0x07 (1 y 2), y nada medido dice cuál
+es el de las ruinas. `RowsOf` devuelve las dos y se permiten las dos especies. No cuesta nada: las Ruinas de la Guerra
+están en `sinEncuentros`, ahí no hay salvajes. Y dentro de una zona con captura permitida, un combate cuya especie no
+llega a leerse se resuelve a favor del jugador, porque puede ser ella.
+
+Verificado por la misma cadena que la aplicación, **sacando la tabla de la ROM** (la capa `Expansion/` no la trae) y
+leyendo el mod instalado: 252 filas en los dos lados y las cinco capturas resueltas como en la tabla. Si algo no se
+resuelve —ROM ausente, tablas de distinto tamaño, una fila que no aparece— **no se permite nada** y queda en el log.
+
+De rebote se ve que `bannedSpecies` solo cubre las especies 1-807, así que **Wo-Chien, un legendario de gen 9, sale
+en los estáticos**. No se toca aquí; es una decisión del randomizador.
+
+**No se sabe si un combate estático sube el récord 4** de combates salvajes, que es con lo que PermaLocke ve empezar
+un combate. Para no depender de eso, `EncounterGuard` pregunta también a las **tablas del combate**: si enseñan como
+rival una especie permitida en la última zona leída, devuelve las Poké Balls aunque el contador no se haya movido. No
+abre nada: en un combate contra entrenador no se puede lanzar una Poké Ball.
+
+**Sin ver todavía:** nada de esto en una partida, ni cuál de las dos vías salta con el primer Tapu o con el Necrozma.
+
+### Para probar la cláusula shiny: todo variocolor
+
+El jugador confirmó que un variocolor se captura siempre y pidió **forzar la probabilidad al 100 %** para probarlo. No
+se escribe un truco de memoria: el sitio sale del editor de probabilidad de **pk3DS** (`ShinyRate.cs`, GPLv3), que
+para séptima generación cambia un byte, de `0A` (BEQ) a `EA` (B), al final de la comprobación de shiny. En el
+`code.bin` del mod instalado el patrón aparece **una sola vez**, el byte está en `0x2205CF` con `0A`, y la rutina de
+tiradas de PID que pk3DS también localiza está justo detrás, en `0x220668`, sin tocar.
+
+Va como **`exefs/code.ips` del mod**, que Azahar aplica al arrancar el juego **después** de cargar el `code.bin` del
+mod (leído en su código: `ApplyCodePatch` desde `AppLoader_NCCH::LoadExec`). Ni el `code.bin` ni la ROM se tocan, y
+quitarlo es borrar un fichero. `Probe --shiny-siempre` lo pone y `--shiny-siempre quitar` lo quita; los dos se niegan
+con Azahar abierto, y quitar solo borra un parche cuyos bytes son exactamente los suyos. Reinstalar el mod también lo
+retira, porque la carpeta vieja se mueve entera. **Es una prueba, no una opción de la competición**: todo lo que el
+juego genere mientras esté puesto se queda variocolor para siempre.
+
+La prueba sirve además para lo que sigue sin medir desde el §117: **la posición del récord 127**, variocolor
+encontrados, que está calculada. Si no es esa, PermaLocke no ve el shiny y lo trata como un salvaje normal. (Salió
+buena, pero no sirve para esto: el juego lo cuenta tarde. El brillo se lee del propio salvaje; ver §118.)
+
+## §120 · Los avisos, en pixel art (2026-09-14)
+
+El jugador pidió un rediseño de las notificaciones «realmente guapo, con sprites, y que no parezca hecho por IA». Lo
+que había era justo lo que él llama IA: una tarjeta redondeada con franja de color, **sombra difuminada** y un
+deslizamiento suave. Lo que sí aprobó antes fue lo dibujado celda a celda —el cementerio (§115) y la franja de Alola
+(§116)—, así que los avisos pasan a ese idioma.
+
+**Las piezas** (`Views/ToastPixels.cs`), todas pintadas en celdas enteras de pantalla y escaladas sin interpolar:
+- `ToastFrame`: la caja, con contorno de una celda, relieve de una celda —luz arriba y a la izquierda, surco abajo y a
+  la derecha—, esquinas recortadas y **sombra dura**: un bloque negro semitransparente desplazado dos celdas. Con
+  `IsTab`, la pestaña de color del tipo de aviso, abierta por abajo y metida en la caja para que salga de ella.
+- `ToastPlate`: la placa del sprite. Un pozo oscuro con suelo de **trama ordenada** en el color del aviso, el sprite
+  del cartucho a un píxel por celda, y la marca de su tipo **escrita a mano como texto**: estrella de variocolor en dos
+  fotogramas, señal de prohibido, flecha, cruz, exclamación. Sin sprite, una lápida o una señal de peligro dibujadas
+  igual. El sprite **salta una celda cada medio segundo en dos fotogramas**, que es como mueve los iconos el menú de
+  equipo de los juegos: la única animación que no se ha inventado. Un caído no salta y sale en gris.
+- `ToastCountdown`: doce segmentos que se apagan de uno en uno durante los seis segundos del aviso.
+- La entrada es a saltos, tres pasos en 150 ms, no un deslizamiento.
+
+**El tamaño de la celda se decidió mirando**, no de antemano: se renderizó la ventana de verdad con los sprites del
+cartucho sobre fondo oscuro y sobre verde de hierba. A 2 píxeles por celda el contorno se leía como un borde fino y los
+sprites salían pequeños encima del juego; a **3** se lee como pixel art. A otras escalas de pantalla la celda sigue
+siendo un número entero de píxeles.
+
+**Qué dice cada aviso** (`ToastKind`), con pestaña y color de lo que ya significaba algo en la aplicación: VARIOCOLOR
+en el oro de la ruleta, POKÉ BALLS en rojo si se retiran y verde si vuelven, PRIMER ENCUENTRO en el violeta de
+PermaLocke, CAPTURA PERMITIDA en azul, BAJA y EQUIPO CAÍDO en rojo, PREMIO en verde, ATENCIÓN en naranja.
+`EncounterGuard` ya no avisa con dos textos sueltos: manda el tipo y la especie, y `PlayNotifications` pone el sprite
+—el Pokémon del combate, el caído, la Poké Ball, el objeto del premio—. De paso, **un combate nuevo daba dos avisos**:
+«Poké Balls devueltas» tras la retirada silenciosa mientras se lee el Pokémon, y «Primer encuentro». Ahora devolver lo
+que se quitó en silencio es silencioso también, salvo que lo devuelto sea la noticia: un variocolor o una captura
+permitida, que tienen su propio aviso.
+
+**Visto** en renders de la ventana real con `ToastWindow`, `Toast` y los sprites extraídos, sin abrir la aplicación ni
+tocar el juego. **Sin ver** encima de Azahar durante una partida; el botón PROBAR AVISO de MISCELÁNEA saca ahora cuatro
+de tipos distintos, marcados como prueba.
+
+## §121 · El wonder trade, por cable (2026-09-14)
+
+El jugador pidió rehacer la animación del intercambio para que fuera bonita y no pareciera de IA, **manteniendo la
+revelación de generación, tipos y total base**. La anterior era exactamente lo que él llama IA: fondo de degradado
+radial, rayos de luz girando, destellos blancos difuminados, una onda expansiva, el color del tipo entrando como
+degradado y todo con curvas de aceleración elásticas.
+
+**La idea es un homenaje al intercambio por cable de las primeras generaciones**: dos pedestales unidos por un cable, y
+las bolas viajando por él. `TradeStage` la dibuja celda a celda, como el cementerio, la franja de Alola y los avisos:
+
+1. Tu Pokémon en tu pedestal, dando saltos como en el menú de equipo; en el otro, un «?» que flota.
+2. Parpadea tres veces en silueta blanca, suelta un anillo de polvo y queda la Poké Ball del cartucho.
+3. Las dos bolas recorren el cable en arco y **se cruzan en lo alto** con un chispazo. El cable se enciende detrás de
+   cada una en tres escalones. El suelo es una rejilla en perspectiva cuyas líneas avanzan mientras viajan.
+4. La que llega aterriza en tu pedestal con dos botes y **se sacude tres veces**, una celda a cada lado. Solo entonces
+   se avisa al ViewModel.
+5. Generación, tipos y total base, en el orden de siempre y decididos por el ViewModel, salen en cajas de pixel art
+   (`PixelPanel`) con sombra dura en el texto; los tipos en su color. Aparecen como un sello: dos saltos de tamaño.
+6. Al abrirse: un «pop» blanco, ocho rayos sólidos y **el color del tipo inunda la escena con trama ordenada** —las
+   celdas se encienden umbral a umbral de una matriz de Bayer—, que es la forma de fundir sin fundido. Sale el Pokémon
+   parpadeando en silueta, con estrella si es variocolor, y su ficha en una caja con un botón de píxeles.
+
+**Todo se mueve a saltos por construcción**: las bolas siguen una parábola redondeada a celdas, así que saltan de celda
+en celda solas, y el repintado va a treinta pasos por segundo.
+
+**Lo que salió de mirar los renders**, no de antemano: el cielo tramado de arriba abajo se leía como un semitono, así
+que pasó a **bandas lisas con la trama solo en la costura**; la rejilla junto al horizonte era un borrón de puntos y esa
+franja va lisa; los rayos a trazos parecían puntos sueltos y ahora son sólidos; y a un píxel por celda un icono pequeño
+como el de Wooloo parecía una cuenta sobre el pedestal, así que **los Pokémon van a doble tamaño** —cada píxel del icono
+son dos por dos celdas, sin suavizar— y las bolas a uno. La nube al entrar en la bola quedaba tapada por la bola.
+
+`TradeStage.FrozenAt` fija el reloj a un instante: es lo que permite renderizar cualquier momento sin hacer un
+intercambio. **La lógica no se ha tocado**: el intercambio se decide, se escribe en la partida y se registra antes del
+primer fotograma, y el ViewModel sigue diciendo cuándo sale cada cosa.
+
+### Lo que dijo el jugador tras varios intercambios de verdad
+
+**Los de generación 8 y 9 salían como generación 7 y con tipos «?».** Dos fallos con la misma forma, la del §-mod de
+expansión entero: una tabla que acaba en 807. `Generations` terminaba en la 807, así que todo lo de después era de la
+séptima; ahora acaba en **809, 905 y 1025** (Meltan y Melmetal son de la séptima en la dex nacional, que es el orden del
+mod). Y `PkhexTypeLookup` leía la tabla de PKHeX de Ultra Sol/Ultra Luna, que también acaba en la 807. Los tipos salen
+ahora de **la tabla de especies del mundo instalado** (`PersonalEntry7.Types` → `WorldLimits.Types`), igual que ya salían
+de ahí las curvas de experiencia y las estadísticas base, con PKHeX de respaldo sin mod. Comprobado contra el mod
+instalado, que declara 1025 especies: Charizard Fuego/Volador, Grookey Planta, Corviknight Volador/Acero, Dragapult
+Dragón/Fantasma, Sprigatito Planta, Pecharunt Veneno/Fantasma. Los intercambios ya hechos tienen en su evento la
+generación con la que se hicieron; eso no se reescribe.
+
+De paso, `InstalledWorld` abría esa tabla del mod **con permiso de escritura** para leerla, porque usaba el constructor
+de `GarcPatcher`, que existe para parchear. Existía `GarcPatcher.ReadOnly` justo para mirar un mod instalado —la carpeta
+es del emulador— y ahora se usa.
+
+**Las bolas no giraban, se reflejaban de lado a lado.** Ahora giran **a cuartos de vuelta**, que es la única forma de
+girar un sprite de píxeles sin redibujarlo: cada píxel cae en una celda. Un cuarto cada cuatro celdas de recorrido, en
+sentidos opuestos para la que va y la que vuelve.
+
+**Y más cosas en el fondo**, todas en el mismo idioma: una **luna** con el lado en sombra tramado y cráteres puestos a
+mano; **veinte estrellas en sitios fijos**, no repartidas al azar, cada una con su fase y parpadeando a saltos; **nubes**
+escritas como texto que avanzan una celda cada medio segundo; e **islas** en el horizonte con el perfil en alturas por
+columna, como las de la franja de Alola. Islas y nubes van a dos celdas por dato: a una, en el render eran granos. La
+inundación del color del tipo también las tiñe.
+
+**Sin ver todavía** con un intercambio de verdad después de estos cambios.
+
+### Solo con Pokémon vivos
+
+Regla que el jugador añadió al final: **un Pokémon muerto no se puede entregar en un wonder trade.** Sin ella una muerte
+dejaba de ser una pérdida: se entrega el cadáver y vuelve algo vivo de la misma fuerza.
+
+Quién está muerto lo dice **la run, por PID**, que es como se registra cada muerte (§56); la partida no puede decirlo,
+porque un Pokémon en caja no guarda PS. `WonderTradeGift` lleva ahora el PID y `WonderTradeService.TradeAsync` se niega
+**antes de sortear, guardar o registrar nada**, así que ninguna otra pantalla ni herramienta puede saltárselo. La
+pantalla lo avisa además en cuanto se elige al caído y apaga CONFIRMAR, pero eso es cortesía: la regla está en el
+servicio. Un PID a cero no identifica a nadie y no bloquea; desde el §56 todos los de la partida tienen uno real. Tres
+tests: el caído se rechaza sin escribir nada, el vivo se intercambia como siempre, y el PID a cero no bloquea.
+
+---
+
+## §122 · Entrenadores más difíciles, sin cambiar quiénes son (2026-09-14)
+
+El jugador pidió «más dificultad a la IA del juego» y antes de tocar nada se midió qué trae el cartucho, porque
+«subirla» no significa nada sin saber desde dónde. Resumen para cualquiera en `subida_de_dificultad_explicada.txt`.
+
+### Lo que se midió
+
+**La IA es un byte**, `trdata[0x0C]`, con los bits que expone pk3DS (PR #412): Básica 0x01, Fuerte 0x02, Experta
+0x04, Dobles 0x08, Sin derrota 0x10, Battle Royal 0x20, Cambiar de Pokémon 0x40, Usar objetos 0x80. Qué hacen por dentro
+Fuerte y Experta **no está documentado para gen 7**. Lo medido es el reparto: de 653 entrenadores, **166 (25 %)** llevan
+los tres niveles, 245 solo la Básica, **0x40 no lo lleva nadie** —el código tiene `AiPokeChangeJudge` y
+`p_PokeChangeEnable`, y en foros cuentan que activarlo en entrenadores normales no hace nada; no se ha probado— y 0x80
+lo llevan 60, que son justo los que tienen objetos de entrenador (Restaurar Todo, Defensa X...). Las parejas de
+combate doble llevan 0x08, los nueve del primer combate con Hau 0x10 y los de la Battle Royal 0x20, así que el
+significado de los bits cuadra con dónde aparecen.
+
+**PermaLocke no tocaba nada de esto**: el mod instalado y el cartucho coinciden en IA, IV y EV salvo por las copias del
+Pokémon extra del rol.
+
+Por tramos de historia —nivel más alto del equipo en el cartucho contra el nivel del jefe de cada prueba, que es su cap
+entre 1,2 (§48)—: hasta la 1ª prueba el 87 % solo tiene la IA Básica y el **85 % lleva los IV a 0**; de la 2ª a la 10ª
+los IV rondan 15-22, con 15 como valor más repetido; la IA completa no pasa del 50 % hasta la 11ª, y **nadie lleva 31 en
+todo**, el máximo que usa el juego es 30. Naturalezas: 79 % Seria. Habilidad oculta: 27 de 1139. Objeto equipado: 10 %,
+sobre todo cristales Z.
+
+Y un fallo de fondo que nadie había visto: **los EV, la naturaleza y el objeto sobreviven al cambio de especie**. Un
+reparto de Ataque y Velocidad pensado para el Pokémon del cartucho le caía a un atacante especial y no le servía de
+nada.
+
+### Radical Red, para comparar
+
+Radical Red y Run & Bun están construidos sobre las **descompilaciones** de Rojo Fuego y Esmeralda, así que su IA es
+código editable: puntúa cada movimiento con un cálculo de daño, conoce el equipo del jugador y cambia de Pokémon con
+reglas. Para los juegos de 3DS no existe nada parecido —la IA de Ultra Luna es la clase `btl::BattleAi` del `code.bin`
+más scripts sin herramientas—, así que igualar eso no es un ajuste sino ingeniería inversa de meses. Lo que sí se puede
+hacer es lo que el cartucho ya expone como datos.
+
+### Lo que se decidió y cómo está hecho
+
+Módulo propio, `TrainerDifficultyRandomizer`, configurado en el bloque `trainerDifficulty` de `Data/randomizer.json`:
+
+- **IA**: `ai | 0x07` en los 653. Es un OR y no una asignación, así que Dobles, Sin derrota, Battle Royal y Usar objetos
+  se conservan. 487 entrenadores ganan algún bit.
+- **IV**: cada Pokémon sortea un porcentaje entre 10 y 20 y cada IV sube eso de sí mismo, redondeando hacia arriba como
+  los niveles del rol y con tope 31. **Un IV a 0 sigue a 0**; es lo que significa «un 10-20 % de lo que tienen» y está
+  escrito en el código para que nadie lo tome por un fallo.
+- **EV**: la misma cantidad que llevaba, repartida para la especie y forma que acabaron en el hueco: 252 a su mejor
+  ataque, 252 a Velocidad si su base llega a 80 o a PS si no, y lo que sobre a la siguiente. Una mega lee su propia fila
+  de la tabla, como `PersonalInfo.FormeIndex` de pk3DS. Quien no llevaba EV sigue sin llevar.
+- **Objetos**: se reparten hasta que el 25 % de todos los Pokémon de entrenador lleve uno; lo que ya llevaban se
+  respeta. Salen de una lista común más Cinta Fuerte o Gafas Especiales según ataque, **sin objetos Elegidos ni Chaleco
+  Asalto**, que bloquean movimientos con una IA que nadie ha medido así. El nombre de cada objeto se comprueba contra la
+  tabla del cartucho antes de escribir (§52).
+- **Movimientos, habilidades, naturalezas y rol**: sin tocar, a petición del jugador.
+
+**El orden de los EV se midió antes de escribir el reparto**, en vez de fiarse del comentario de la estructura: entre los
+252 del cartucho, el byte 1 cae en especies de 103 de Ataque base medio, el 3 en 101 de Ataque Especial y el 5 en 90 de
+Velocidad. Es PS, Ataque, Defensa, At. Esp., Def. Esp., Velocidad. Equivocarse ahí no falla, reparte la Velocidad a quien
+debía llevar Ataque Especial.
+
+**Va después** de entrenadores, extra del rol, datos de Pokémon y megas, porque un reparto solo significa algo para la
+especie final con las estadísticas que el juego va a usar; y con **sal propia** (`trainer-difficulty`) y una corriente
+derivada por palanca, para que encenderlo no mueva las especies de nadie ni cambiar el porcentaje de objetos mueva los IV
+(§27). Todo son campos de tamaño fijo parcheados en su sitio, sin reempaquetar. La comprobación relee los dos ficheros y
+exige que especie, forma, nivel, movimientos, sexo, habilidad y naturaleza salgan **byte a byte** iguales, los EV con el
+mismo total y nada por encima de 252, ningún IV más bajo, las banderas de encima de los IV intactas, ningún objeto previo
+perdido y exactamente los Pokémon con objeto que tocaba.
+
+### Verificado contra la ROM
+
+Generado con la seed y el rol de la run real (LUDÓPATA) sobre la capa de expansión, en una carpeta temporal:
+
+- **Sin la dificultad, `a/1/0/6` y `a/1/0/7` salen idénticos byte a byte al mod instalado**, o sea que la generación
+  reproduce el mundo que se está jugando.
+- **Con ella**, en `a/1/0/6` solo cambia el offset 0x0C (487 entrenadores) y en `a/1/0/7` solo los offsets 0x02-0x0B
+  (EV e IV) y 0x14-0x15 (objeto).
+- IA completa 25 % → **100 %**; IV medio 19,2 → **21,0**; Pokémon con EV 649 → 649; con objeto 151 (12,0 %) → **316
+  (25,1 %)**. Ejemplos del reparto: Luxray, base Ataque 120 y Velocidad 70, pasa de At. Esp.+Velocidad a PS+Ataque; un
+  atacante especial con Velocidad 85 pasa de Ataque+At. Esp. a At. Esp.+Velocidad.
+
+La primera generación de verdad **falló**, y por el módulo: la comprobación releía `a/1/0/7` con el escritor todavía
+abierto y Windows no la dejaba abrirlo. Ahora el fichero se cierra antes de verificar.
+
+**Instalado el mismo día** con `RomTool randomize <seed> --rol ludopata --install` y Azahar cerrado. Antes de instalar se
+generó aparte y se comparó fichero a fichero con lo instalado: **8 de 10 idénticos**, y los dos distintos eran `a/1/0/6` y
+`a/1/0/7`, o sea que el resto del mundo no se movió. El instalador guardó esos dos en
+`load/permalocke-copias/20260914-153303` antes de pisarlos, y después los diez instalados salen idénticos a los
+generados. El `code.ips` de la prueba del variocolor (§119) sigue en `exefs`: instalar copia encima y no borra lo que no
+trae. El primer intento se cortó **antes de instalar nada**, en `LayeredFsMod.Clear`, que no pudo borrar la carpeta
+generada un momento antes —algo la tenía abierta—; el segundo pasó entero.
+
+**Sin jugar todavía.** Lo que no se sabe es cuánto más difícil se nota la IA Fuerte+Experta en un entrenador de ruta; eso
+solo lo dice jugarlo.
+
+---
+
+## §123 · Un jugador, una carpeta, y un resumen que se puede comprobar (2026-09-14)
+
+Paso 3 de la lista del jugador: «un sistema de usuarios o que cada uno tenga su carpeta». Se preguntó lo único que
+decidía el diseño —si varios juegan en el mismo PC— y la respuesta fue que **cada uno juega en su PC**. Entonces el
+usuario ya es la instalación: lo que faltaba era una **identidad que sobreviva** y **orden en la carpeta compartida**.
+
+### Lo que había
+
+La aplicación no sabía quién era nadie. El «jugador» era el texto escrito en cada run, así que dos Ash eran la misma
+fila, y quien empezaba de cero dejaba su run vieja en la clasificación para siempre junto a la nueva. La carpeta
+compartida era un fichero suelto por **run**, en la raíz, y el §79 publicaba solo el resumen, «sin verificar y sin
+forma de verificarlo».
+
+### Lo que hay ahora
+
+- **Perfil**: `Config/jugador.json` con un id fijo y un nombre. En `Config/` y no en `Saves/`, porque EMPEZAR DE CERO
+  borra la run y la partida y el que vuelve a empezar sigue siendo la misma persona. Se crea con el nombre que el
+  jugador ya puso en su run, así que nadie tiene que presentarse otra vez. El nombre se cambia en COMPETICIÓN sin
+  romper nada: todo va por el id. Cambiar el nombre no escribe evento, porque no mueve ni un punto ni un Pokémon.
+- **La run tiene dueño**: `Run.PlayerId`. Las nuevas nacen con él; las de antes se **vinculan una vez al arrancar**,
+  con su evento `PlayerLinked` (regla 4). Una run que ya tiene otro dueño **no se toma nunca** —es lo que pasaría
+  copiando la carpeta `Saves` de un amigo—, y COMPETICIÓN la enseña pero se niega a publicarla con tu nombre.
+- **La carpeta compartida**, con cada aplicación escribiendo **solo dentro de la suya**, que es lo que evita que Drive
+  fabrique copias en conflicto:
+  ```
+  Competición/
+    reglas/                      las oficiales; solo las toca el admin
+    jugadores/
+      Grenin-6f91040e/           nombre legible + los 8 primeros del id
+        perfil.json
+        run-activa.json          el resumen de la run que se está jugando
+        historial.json           la cadena de eventos entera de esa run
+  ```
+  Un jugador es **una fila**: empezar de cero sustituye `run-activa.json`. Renombrarse renombra la carpeta, encontrada
+  por el id. Los ficheros sueltos del formato anterior **se siguen leyendo** —marcados SIN HISTORIAL— y al publicar se
+  borra el suelto de la propia run, y solo ese.
+
+### El resumen se comprueba contra el historial
+
+El §79 decía que publicar la cadena entera era «mandar el diario para que lean la última página». Con una carpeta por
+jugador el diario sirve para algo: **comprobar la última página**. `SnapshotAudit` exige que la cadena publicada
+verifique con `EventHasher` —el mismo cálculo que la base de datos, sacado a `EventChain` para no tener dos—, que el
+número de eventos y el hash del último sean los del resumen, y que **los puntos sean la suma de los deltas**, que es
+exactamente como los calcula `PointsService`. Los recuentos de Pokémon no están en la cadena y no se reclaman.
+
+Y un caso que una cadena sola **no puede** cazar: una copia vieja es perfectamente coherente. Lo que la delata es
+haber visto antes la run más avanzada, así que cada aplicación guarda en `Config/competicion-vista.json` lo más lejos
+que ha visto cada run y avisa si una publicación **retrocede** o si lo ya visto **ha cambiado**. En la máquina de cada
+uno y nunca en la carpeta compartida: una marca que el vigilado pudiera editar sería una marca que podría mover. La marca
+solo avanza con resúmenes que cuadran, para que una copia restaurada siga marcada en vez de convertirse en lo normal.
+
+Cuatro marcas: **CUADRA**, **NO CUADRA**, **HA RETROCEDIDO** y **SIN HISTORIAL**. Lo que no cuadra **va detrás** de lo
+que se puede fiar, con sus propios números: la primera prueba en la aplicación puso primeros 900 puntos inventados,
+porque se ordenaba por lo que cada uno dice de sí mismo.
+
+**Qué no es**, dicho también en la pantalla: un antitrampas. Una cadena de hashes no es una firma (§9); quien rehaga un
+historial entero con herramientas publica uno que cuadra. Lo que sí caza es editar un número, volver a una copia y
+borrar una muerte.
+
+### Las reglas oficiales
+
+El admin deja ficheros en `reglas/` y cada aplicación los compara con su `Data/`. **Solo una lista fija**
+—logros, gacha, créditos, caps, penalizaciones, premios, ruleta, reglas, tienda, wonder trade, y `randomizer.json` y
+`roles.json` marcados como «hay que regenerar el mod»—; lo que sale del cartucho de cada uno (`species.json`,
+`mapas.json`) no se reparte nunca. Cada fichero oficial se **carga con el mismo cargador que usa la aplicación al
+arrancar** antes de ofrecerlo, porque un fichero con una errata copiado a cinco máquinas impediría arrancar a las
+cinco. Si uno no carga no se adopta **ninguno**: medio juego de reglas es peor que cualquiera de los dos enteros. Los
+ficheros propios se copian a `Saves/backup/reglas-<fecha>/` antes de pisarlos, y se deja `RulesAdopted` en la run con
+el hash de cada fichero antes y después. Se aplican **al reiniciar**: los catálogos son singletons construidos al
+arranque, y cambiarlos debajo del vigilante de combates no merece lo que arriesga.
+
+### Verificado
+
+- 37 tests nuevos: perfil y vinculación —incluida la run ajena que no se toca—, la comprobación en cada forma de
+  tocar los ficheros, la estructura de carpetas, el formato viejo y la adopción de reglas. El más importante escribe
+  eventos **reales en SQLite** con desfase horario, semilla, Pokémon y diccionario, los publica como JSON, los relee y
+  exige que cuadren: si el fichero perdiera un tic de una fecha, todo jugador honrado saldría como tramposo.
+- En la aplicación, **en una copia aislada fuera del repositorio** y con una carpeta compartida falsa: la run sin dueño
+  se vincula al arrancar, PUBLICAR escribe en `jugadores/Grenin-…` y sale CUADRA, un amigo con los puntos editados sale
+  NO CUADRA y detrás, uno que volvió a una copia sale HA RETROCEDIDO, el formato viejo sale SIN HISTORIAL, y adoptar
+  reglas copió `shop.json` guardando el anterior y dejó `PlayerLinked` y `RulesAdopted` en una cadena que sigue
+  verificando.
+- **Sin probar con dos PCs sincronizando de verdad** por Drive o Dropbox. Tu run real no se ha tocado: se vinculará la
+  próxima vez que abras PermaLocke.
+
+---
+
+## §124 · COMPETICIÓN decía «no puede combatir» a quien sí podía (2026-09-14)
+
+Al publicar la run real por primera vez, el aviso de combates dijo «Grenin no puede: su mundo baraja estadísticas base o
+randomiza habilidades». Era la regla del §80, y **COMBATES la dejó obsoleta**: esa sección aparta el mundo randomizado y
+pone el juego base mientras dura el combate, así que las opciones del randomizador de cada uno ya no importan. El aviso
+no se enteró de que existía.
+
+Lo que sí tiene que coincidir es el **juego base**: el mod de las generaciones 8 y 9 en un lado y el cartucho en el otro
+son juegos distintos y se desincronizan igual que dos randomizaciones. La instantánea gana `WorldSpecies`, sacado del
+`maxSpecies` del último `RomRandomized` —1025 con el mod, 807 sin él—, opcional como `BattleReady` para que las
+versiones viejas sigan leyendo. `LinkBattleAdvice` (en Core, con 5 tests) sustituye al resumen que vivía en
+`SyncService`: explica cómo combatir desde COMBATES, avisa por nombre si hay juegos base distintos, dice aparte a quién no
+se le conoce el dato, y con un solo jugador no enseña «COMPATIBLES», porque no hay con quién. Visto en la aplicación real
+y republicado: la ficha de Drive lleva `worldSpecies: 1025`.
+
+---
+
+## §125 · JUGAR: la aplicación como lanzador (2026-09-14)
+
+El jugador pidió que PermaLocke fuese un lanzador «rollo juego de Steam»: abrir y cerrar el emulador desde la app, que
+todo girase alrededor de ella, y que no pareciera hecho por una IA. JUGAR es ahora **la primera sección y la de
+arranque**, y cada pantalla lleva en la cabecera un botón pequeño que dice JUGAR o `EN JUEGO · 00:12:03` y lleva a ella.
+
+### Qué emulador, y por qué es la parte delicada
+
+Azahar se vuelve **portátil** cuando hay una carpeta `user` junto a su ejecutable, y entonces guarda allí la partida.
+PermaLocke decide dónde leer con `AzaharInstallation.Locate`: el emulador que viaja con la app es portátil; cualquier
+otro se lee de `AppData\Roaming\Azahar`. Arrancar un Azahar portátil encontrado por ahí **abriría otra partida** mientras
+todas las pantallas leen la de siempre. `AzaharExecutable.Choose` lo impide: el del reparto si lo hay; si no, solo
+ejecutables **no** portátiles, primero el que el jugador eligiera a mano y luego el más nuevo. En este repositorio hay tres
+—el Azahar oficial de agosto y dos copias idénticas del fork del 6 de septiembre— y gana el fork, que es el único que
+escribe en el juego. Medido: arranca `Nuevo_azahar\azahar.exe "ROM\Pokemon Ultra Moon (Europe)….3ds"`.
+
+### Abrir, vigilar y cerrar
+
+- **Abrir** es pasarle la ROM a Azahar como argumento, que es como su propio código arranca un juego desde la línea de
+  órdenes. El mod se carga solo por LayeredFS. Antes, con el emulador cerrado, se asegura el servidor RPC y se apaga
+  la pregunta «Would you like to exit now?» (`confirmClose`), porque la hace el lanzador.
+- **Vigilar** es mirar una vez por segundo si existe un proceso `azahar`, **lo haya abierto quien lo haya abierto**: un
+  lanzador que solo conoce a su hijo diría «listo para jugar» encima de un juego abierto a mano.
+- **Cerrar** es pedirle a su ventana que se cierre, que es el apagado limpio: Azahar detiene la emulación y guarda sus
+  ajustes. Verificado en su log: `Received end packet`, audio detenido, proceso limpiado, **en 1,3 s**. Si a los 12 s sigue
+  abierto aparece **FORZAR CIERRE**, que mata el proceso y es otro botón con su propia pregunta, nunca algo que se haga
+  solo. Ninguno de los dos guarda la partida, y la pregunta lo dice.
+
+La pregunta va **dentro de la barra de jugar** y no en una ventana de Windows: el primer intento usaba el cuadro gris del
+sistema, y en medio del lanzador en píxeles se leía como otro programa. Probado entero: CERRAR JUEGO pregunta y el juego
+sigue abierto, SEGUIR JUGANDO no lo cierra, SÍ, CERRAR lo cierra.
+
+### El tiempo jugado
+
+`Saves/<run>/sesiones.json`, una sesión por arranque del emulador **identificada por la hora de inicio del propio proceso**:
+cerrar y abrir PermaLocke con el juego en marcha sigue la misma sesión en vez de contar dos. Se apunta cada 30 s y al
+cerrar. **No es un evento**: no mueve puntos, Pokémon ni reglas (regla 4), y un latido cada medio minuto enterraría la
+cadena. Va en la carpeta de la run, así que EMPEZAR DE CERO se lo lleva con ella. Las cuatro sesiones de las pruebas de
+hoy se borraron: eran mías, no del jugador.
+
+### La portada
+
+No hay arte del juego que sea nuestro para enseñar, así que la portada se hace con lo que sí es del jugador: **su
+equipo, leído de su partida y dibujado con los iconos de su cartucho** (§28), en una playa de Alola a la hora del juego
+(`LauncherStage`, con la paleta del §116). Cada Pokémon salta a su ritmo, dos celdas, a cuatro pasos por segundo; con el
+juego abierto se quedan quietos, que es el único cambio que hace la portada. El primer cielo tramaba cada fila y a tres
+píxeles por celda se leía como un trame de periódico —lo mismo que el jugador señaló en el wonder trade (§121)—: ahora son
+bandas lisas con la costura tramada, el mar son franjas con rayas de espuma sueltas, la arena lisa con granos contados, el
+sol va por la mitad derecha para no salir detrás del título y la palmera a dos celdas por punto.
+
+Debajo, la barra de una biblioteca de juegos: el botón en caja de píxeles (violeta JUGAR, rojo CERRAR JUEGO), el estado con
+el reloj de la sesión, TIEMPO JUGADO, ÚLTIMA VEZ y LOGROS. Y dos paneles: ANTES DE JUGAR —emulador, ROM, mundo instalado
+o modo combate, run cargada; lo que falta bloquea el botón y lo que conviene mirar avisa— y LO ÚLTIMO QUE HA PASADO.
+
+### Un fallo de la tanda anterior que salió aquí
+
+LO ÚLTIMO enseñó **dos** «Run vinculada al jugador» a las 18:04. El arranque y la pantalla de COMPETICIÓN vincularon la
+misma run en el mismo segundo (§123). `PlayerProfileService` serializa ahora vincular y crear el perfil con un cerrojo y
+**relee la run dentro de él**; hay un test que lanza cinco vinculaciones a la vez y exige un solo evento. El evento de
+sobra se queda en la cadena, porque no existe forma de quitar uno.
+
+Tests: elección de emulador (5), el ajuste de cierre sin tocar nada más del fichero, tiempo jugado (6) y la carrera. 1077.
+
+## §126 · JUGAR como una biblioteca de Steam: amigos y actividad (2026-09-14)
+
+El jugador pasó una captura de la página de un juego en Steam y pidió que JUGAR fuese igual: fuera ANTES DE JUGAR y LO
+ÚLTIMO QUE HA PASADO, y en su sitio **a la derecha la lista de amigos** con todos los jugadores de la competición —verde
+jugando, azul en la app, gris desconectado— y **a la izquierda los logros que va reclamando cada uno**.
+
+### No hay servidor, así que la presencia es un fichero con fecha
+
+Lo mismo que la clasificación (§79, §123): cada aplicación escribe `jugadores/<nombre>-<id>/presencia.json` en la carpeta
+compartida y lee los de los demás. `CommunityService` lo escribe **cada 45 s**, **en el momento** en que el juego se abre o
+se cierra, y «desconectado» al cerrar la aplicación. Una aplicación que se cuelga o se queda sin luz no escribe nada, así
+que lo que decide es la **edad** del fichero: pasados **3 minutos** cuenta como desconectado aunque diga «jugando»
+(`Presence.StateOf`). Son cuatro latidos de margen porque Drive tarda en llevar un fichero, y un minuto arriba o abajo es
+lo normal. **No es tiempo real y no lo finge**: un amigo que abre el juego tarda lo que tarde Drive en salir en verde.
+
+Verde, azul y gris son exactamente los de Steam (`#90BA3C`, `#57CBDE`, `#898989`), en el nombre, la línea de debajo y el
+marco del avatar; desconectado además apaga el dibujo. El avatar es **el primero del equipo** que el jugador tenía al
+publicar (`RunSnapshot.AvatarSpecies`, campo nuevo que un lector viejo ignora, así que el formato sigue en 1), dibujado
+con el icono de caja del cartucho al doble y recortado por el marco: a tamaño natural se quedaba en una mancha.
+
+### La actividad sale de los historiales, así que se publica sola
+
+Un logro reclamado es un evento `AchievementUnlocked` con su `logro`, y eso ya viaja en `historial.json` (§123). Pero un
+historial que solo se publica cuando alguien se acuerda de pulsar un botón no es una actividad: la aplicación **vuelve a
+publicar sola** cuando la cadena ha crecido, como mucho cada 90 s, con la misma publicación, relectura y comprobación que el
+botón. Los historiales se releen solo si su fichero cambió, porque son lo único grande de la carpeta y la lista se
+refresca cada 15 s. Lo propio sale de la base de datos local, que va por delante de lo publicado y está **aunque no se haya
+publicado nunca** —el primer intento lo sacaba de la carpeta y en una carpeta sin tu perfil tus logros no salían—.
+
+La actividad va agrupada por día como la de Steam («14 DE SEPTIEMBRE»), con «<nombre> ha conseguido un logro» y la tarjeta
+del logro con su dibujo (§61), su descripción y sus puntos, y los 30 más recientes de todos. A la derecha, debajo de los
+amigos, el panel LOGROS: «Has desbloqueado 10/21 (48 %)», la barra y los últimos reclamados. La barra de jugar pasa a los
+rótulos de Steam —ÚLTIMA SESIÓN, TIEMPO DE JUEGO, LOGROS con su barra— y debajo van los enlaces a LOGROS, ESTADÍSTICAS,
+COMPETICIÓN, CEMENTERIO y VISOR POKÉMON, más ELEGIR EMULADOR. Lo que hacía ANTES DE JUGAR queda en **una línea**: lo que
+bloquea en rojo y lo que conviene mirar en ámbar.
+
+### Qué escribe quién
+
+Una copia abierta con `--sin-juego` **lee** amigos y actividad pero no escribe presencia ni publica: la aplicación de
+verdad ya lo está haciendo con la misma run. La presencia se escribe en la carpeta del jugador; el perfil a su lado solo
+si cambió, porque cada fichero escrito es un fichero que Drive vuelve a subir.
+
+### Verificado, y lo que no
+
+Visto en una copia aislada con una carpeta compartida de prueba de cuatro amigos, cada uno en un estado: Misty en verde
+«Jugando a Ultra Luna · 25 min», Brock en azul «En la app», Lillie gris «Desconectado · hace 2 h» y Kiawe sin presencia.
+Y la caducidad se vio sola: la segunda captura se hizo más de tres minutos después de escribir los ficheros y los cuatro
+salieron grises. Por el camino apareció una carrera: la primera lectura de la carpeta llega antes de que la pantalla haya
+cargado los sprites, y los avatares salían con la inicial; ahora espera a los sprites.
+
+**Sin probar con dos ordenadores de verdad**, que es donde se verá cuánto tarda Drive en llevar un cambio.
+
+Tests: presencia —desconocido, fresco, caducado, el margen de latidos, lo que dice cada estado— y la carpeta: escribir y
+releer, reescribir en la misma carpeta, carpeta sin perfil y presencia ilegible (10). 1087.
+
+## §127 · Fuera las explicaciones: textos para el jugador (2026-09-14)
+
+El jugador pidió quitar de la aplicación todas las «descripciones de IA»: la app está casi terminada y lo que se ve
+tiene que hablarle a quien juega, no a quien la programó. Repaso **solo de textos**; ni una regla ni un servicio cambian
+de comportamiento.
+
+Criterio aplicado en las 24 pantallas, sus ViewModels y los servicios cuyos mensajes llegan a la pantalla (GameLink,
+Core, Rules):
+
+- **Fuera** los párrafos que explicaban cómo funciona algo por dentro o por qué se decidió así: PID, hash, eventos,
+  cadena, memoria, fork, RPC, rutas de carpetas (`Data/…`, `Saves/backup`, `load/…`), «escrito y releído», «la copia
+  está en…», «está medido, no supuesto», y todos los «porque…».
+- **Se queda** como mucho una frase corta cuando evita un error: «Cierra Azahar antes», «Necesita Azahar abierto»,
+  «Se recogen una sola vez».
+- «El detalle está en la carpeta Logs» desaparece de los ~35 mensajes de error; el detalle sigue en el log.
+- Las confirmaciones pasan de cinco párrafos a una línea y la pregunta.
+- COMBATES pierde el bloque «POR QUÉ HACE FALTA» y COMPETICIÓN el de «QUÉ FIABILIDAD TIENE ESTO»; los pasos para pelear
+  se quedan, más cortos.
+- MANTENIMIENTO renombra lo técnico: REPARAR LOS PID → POKÉMON SIN RECONOCER, CERRAR LOS ENTREGADOS → POKÉMON
+  INTERCAMBIADOS, ETAPAS Y TOPE DE NIVEL → PRUEBAS Y NIVEL MÁXIMO; la auditoría deja de enseñar «Detectables por el
+  vigilante» y «Eventos en el historial».
+- MISCELÁNEA ya no enseña la dirección de memoria de la mochila ni el hueco de cada objeto.
+- «cap» pasa a «nivel máximo» en lo que se ve.
+
+Lo que **no** se ha tocado: las descripciones de los eventos ya guardados (son historial encadenado y no se reescribe),
+los comentarios del código y los mensajes de log. Siete tests comprobaban frases antiguas y se han ajustado a las nuevas
+sin perder lo que comprobaban. 1087 tests.
+
+**Sin ver en pantalla**: las vistas compilan y los tests pasan, pero no se capturaron porque el jugador estaba usando el
+ordenador.
+
+## §128 · El visor Pokémon, con aspecto de PC del juego (2026-09-15)
+
+El jugador pidió una mejora visual del visor «con decoraciones y cosas, pero que no parezca IA». Solo presentación: los
+datos, la escritura de EV y el wonder trade no cambian.
+
+- **Fondos de caja** (`BoxWallpaper`): como las cajas del juego, cada una tiene su fondo. Doce, dibujados aquí celda a
+  celda y no sacados del cartucho —bosque, ciudad, desierto, sabana, rocas, volcán, nieve, cueva, playa, fondo marino,
+  cielo y noche—, más uno de Poké Balls para el equipo. Cada uno es un suelo liso y un motivo de pocas celdas escrito como
+  texto, repetido en filas al tresbolillo, en cuatro colores apagados para que los iconos sigan siendo lo más vivo. La
+  caja 13 vuelve a empezar por el bosque. Sin degradados; la playa junta arena y mar con dos filas de trama y nada más.
+  Nieve y cielo se apagaron tras verlos: se comían los huecos.
+- **Huecos hundidos**: `PixelPanel` gana `IsSunken` (el relieve se da la vuelta) y respeta el alfa del color, así que el
+  fondo asoma por los huecos vacíos. Caído en rojo con una cruz de celdas; variocolor con un destello dorado de celdas.
+- **Cursor** (`PixelCursor`): cuatro esquinas doradas que respiran una celda hacia dentro y hacia fuera, a saltos, como el
+  cursor del PC. Solo corre el temporizador mientras se ve.
+- **Iconos a escala entera**: los iconos del cartucho miden entre 19 y 30 píxeles; se dibujan ×2 en los huecos y ×3 en la
+  ficha. A un tamaño que no es múltiplo, los píxeles salían desiguales.
+- **Placa de caja** con flechas de celdas; **fila de Poké Balls** del cartucho encima del equipo (llena, vacía o tachada).
+- **Ficha**: el retrato de pie sobre el fondo de su caja con una sombra escalonada, la ball en la que se capturó (icono del
+  cartucho, balls 1-16: `BoxedPokemon.Ball`, nuevo), el nivel en su placa, el sexo en azul o rosa, placas de sección, barras
+  de IV y EV en celdas (`PixelBar`) y los movimientos en cuatro placas de dos en dos. `Subtitle` pasa a ser solo la especie
+  cuando hay mote, porque el nivel ya tiene placa. Fuera el PID del pie y el emoji del variocolor.
+
+**Visto en renders de la vista real** con la partida del jugador, leída y nada más, dibujados fuera de pantalla para no
+robarle el foco. En esos renders se marcaron como caídos dos Pokémon a propósito, para ver la cruz. Sin ver todavía en la
+aplicación abierta.
+
+## §129 · El admin manda regalos, y la app los recoge (2026-09-17)
+
+El jugador quería «una app para tener el control de todo» como admin: dar cosas por ganar un combate, arreglar líos.
+Lo primero de eso es esto: **regalos**.
+
+### Por qué un regalo es una petición y no un cambio
+
+La run de cada jugador vive en **su** PC, encadenada evento a evento. Nada de fuera puede escribir en ella, así que el
+admin no da puntos: **deja un fichero** en la carpeta compartida y la aplicación del jugador lo aplica y lo registra.
+Eso es lo único honesto que se puede hacer sin servidor, y de paso es lo que hace que el regalo quede en el historial
+diciendo **de quién** viene y **por qué**.
+
+No es un sistema de permisos: cualquiera con acceso a la carpeta puede escribir un regalo. Entre cinco amigos ese es el
+trato, y fingir lo contrario sería el antitrampas de mentira que la regla 3 prohíbe.
+
+### Cómo viaja
+
+- `admin/regalos/<id>.json` en la carpeta compartida, **un fichero por regalo** (`GiftStore`). Una lista única sería un
+  fichero que dos programas se pisan mientras Drive sincroniza; ficheros sueltos no chocan, y uno a medio sincronizar es
+  **un** regalo que no carga en vez de todos.
+- Lleva a quién (un id de jugador o `todos`), de quién, el motivo —obligatorio—, puntos, objetos, tiradas por banner y
+  wonder trades.
+- **Ahí no se apunta si se recogió.** Eso vive en el historial del jugador, que es el único sitio que puede decirlo: el
+  admin lo lee de lo que cada uno publica, y quien recogió algo y aún no ha publicado sale como pendiente.
+
+### Recogerlo
+
+`GiftService.ClaimAsync` en el lado del jugador, con el orden de la tienda y los premios (§45, §60): **primero la
+mochila, después el registro**. Un regalo con objetos y el juego cerrado **no empieza**, así que no queda a medias; una
+entrega parcial sí cuenta como recogido, porque deberle una Hiperpoción a alguien es mejor que un botón que se puede
+repulsar para duplicar lo ya dado. Los puntos van por `PointsService.AdjustAsync`, y las tiradas y los wonder trades se
+escriben en los campos `credito` y `creditoIntercambio` que `CreditService` ya cuenta desde el §63: **no hubo que
+enseñarle nada de regalos para que paguen**. «Una vez» es que exista su `AdminGiftClaimed`, por id.
+
+### La bandeja
+
+Un **regalo en la cabecera** con el número encima, en todas las pantallas, tal como lo pidió el jugador; al pulsarlo se
+abre la lista con lo que trae, el motivo y RECOGER. Nada se aplica solo. Empezó como `Popup` y **se cambió a una capa de
+la ventana** tras verlo: el popup se colocaba en la esquina contraria pese a su `PlacementTarget`, y además un menú del
+sistema no se dibuja con el pixel art del resto.
+
+### La app del admin
+
+`PermaLocke.Admin` deja de ser el andamio de Visual Studio: lee la carpeta compartida, lista a los jugadores con sus
+puntos, sus caídos, cuándo publicaron y si sus números **cuadran con su propio historial**, y escribe regalos. Comparte
+`Config/` y `Data/` con PermaLocke en esta máquina, así que sabe dónde está la carpeta compartida sin que se le diga dos
+veces — para eso `SharedFolderSettings` pasa a `PermaLocke.Data` y `SyncService` lo usa, en vez de que cada programa
+lea el mismo ajuste a su manera. **No abre la base de datos de ninguna run.**
+
+### Lo que costó
+
+`GiftService` pedía `PointsService` **por su clase** y en el contenedor solo está `IPointsService`: la aplicación
+arrancaba y moría en el primer arranque de la copia de pruebas. Lo cazó abrirla, no el compilador.
+
+Y dos trampas ya conocidas volvieron a morder al verificar: `PrintWindow` **devuelve el dibujo anterior** con la ventana
+fuera de pantalla (§74), así que tres capturas seguidas enseñaron una cabecera sin regalo que sí estaba; y una captura
+de pantalla copia **lo que haya delante**, así que una salió con el navegador del jugador y se borró.
+
+**Verificado** en una copia aislada con una carpeta compartida de prueba: dos regalos escritos a mano en la carpeta
+aparecen con su contador, su motivo y el aviso de «Necesita Azahar abierto» en el que lleva objetos. **Sin ver todavía**:
+la ventana del admin dibujada (el jugador estaba usando el ordenador) y una recogida de verdad contra una partida.
+
+Tests: el regalo —para quién es, qué dice que trae, vacío—, recoger —puntos, objetos, dos veces, con el juego cerrado,
+créditos— y la carpeta —ida y vuelta, orden, fichero roto, retirar— (15). 1102.
+
+## §130 · ENTRENAR EV, su propia sección (2026-09-18)
+
+El editor de EV vivía en la ficha del visor: seis casillas debajo de la tabla de estadísticas, en una tarjeta que va del
+Pokémon y no de entrenarlo. A petición del jugador pasa a **una sección propia, justo debajo del VISOR**, y el visor se
+queda con lo que es: valor e IV, y un botón **ENTRENAR EV** que abre la sección con ese Pokémon ya en el banco.
+
+**Las reglas no se movieron ni cambiaron.** 252 por estadística se recorta, 510 en total solo se comprueba —se puede
+pasar mientras repartes y GUARDAR se apaga—, y la escritura sigue siendo `EvTrainingService` → `SaveEvTrainer`: juego
+cerrado, PID por delante, copia previa, relectura, y el evento `EvsTrained` **después** de escribir.
+
+### La pantalla
+
+A la izquierda, a quién: el equipo al doble exacto sobre su fondo, y debajo una caja del PC con sus treinta huecos al
+tamaño del cartucho, como en el PC del juego (el icono sobre el fondo, el agujero solo al pasar por encima). A la
+derecha, el banco: retrato al triple, la **naturaleza con lo que sube y lo que baja**, el hexágono de EV, seis filas
+—`−`/`+` de cuatro en cuatro, que es un punto a nivel 100, MÁX y 0— y el presupuesto de 510 en celdas.
+
+El hexágono es el de la ficha del juego —PS arriba y en el sentido de las agujas Ataque, Defensa, Velocidad, Def. Esp.
+y At. Esp.— y **se rasteriza celda a celda** (`EvHexagon`): cada celda se decide por si su centro cae dentro, el borde
+son las celdas con un vecino fuera y los radios son de Bresenham. Un polígono suavizado en medio de una pantalla hecha de
+celdas es lo que delata algo generado. Con una edición en curso, lo guardado se dibuja **como contorno encima** de lo
+que hay en pantalla, así que la diferencia se ve sin leer un número.
+
+### Lo que aporta: qué te da
+
+Cada fila dice la estadística de hoy y **la que quedaría**. La cuenta es `IStatForecast` → `WorldStatForecast`, con la
+**misma fórmula y la misma tabla** del mundo instalado que `SaveEvTrainer` usa al recalcular: lo que la pantalla promete
+es lo que se escribe. Contesta `null` —y la fila no enseña nada— sin tabla, para un huevo, y para una **forma que no es
+la primera**, porque `WorldLimits.BaseStatsOf` va solo por especie y un Marowak de Alola no tiene las bases de Marowak.
+A nivel bajo el número a menudo no se mueve (252 EV a nivel 1 no dan nada): es el juego, y la pantalla lo enseña tal cual.
+
+`BoxedPokemon` gana `Nature` (el número, no solo el nombre) para decir qué mueve. Ojo con los nombres: **«Tímida» es la
+neutra** (Bashful, 18); la que sube Velocidad y baja Ataque es **«Miedosa»** (10).
+
+### Dos cosas que salieron al mirarla, no al escribirla
+
+**Un nivel que no es el de las estadísticas.** Con +8 EV en PS la primera versión prometía `179 ▸ 195` a un Ferrocuello.
+Ocho EV no dan dieciséis puntos: los 179 guardados son los de **nivel 59** y la previsión usaba el que sale de la
+experiencia, **64**. Medido en la partida real: es el único de los seis del equipo con los dos niveles distintos. El
+escritor recalcula con el nivel guardado junto a las estadísticas (`Stat_Level`), así que la pantalla prometía un número
+y en la partida se habría escrito otro. `BoxedPokemon.StatLevel` lo trae del equipo, `LevelForStats` elige, y la placa
+de nivel de esta sección enseña **el nivel de los números que hay debajo**. Por qué la experiencia de ese Ferrocuello va
+por delante de su nivel guardado **no está averiguado**.
+
+**Un Huevo Malo que se podía «entrenar».** La caja 2 tiene una entrada que no cuadra con su firma —«MUERTO», nivel 100,
+sin dibujo, 829 EV—, de la familia del §97. Guardar EV ahí la haría pasar por PKHeX, que la devolvería **con una firma
+válida**: eso no la repara, deja basura con una especie fuera de rango como Pokémon de verdad, que es lo que puede colgar
+el juego. El editor del visor tenía el mismo agujero. `BoxedPokemon.IsIntact` sale de `ChecksumValid` **antes** de
+recalcular nada, y `EvTrainingService` **se niega** a escribir una entrada dañada, sea cual sea la pantalla. Aquí se
+enseña con su «?» y la frase «Está dañado en la partida: no se toca».
+
+**Pendiente, apuntado aparte:** `SaveEvTrainer.Restat` recalcula las estadísticas del equipo con las bases de la especie
+**sin mirar la forma**, así que a una forma regional le escribiría las de la normal. La previsión ya no promete nada en
+ese caso; el escritor sigue haciéndolo. **Arreglado el mismo día en el §131.**
+
+**Verificado** con la vista y el ViewModel reales sobre la partida del jugador leída en solo lectura, con un escritor de
+mentira que se niega, a los tamaños NORMAL y GRANDE: vacío, equipo, editando, pasado de 510, guardar rechazado, dañado y
+de caja. Y la aplicación de verdad arranca con `--sin-juego`, la sección sale en la barra lateral y se abre sin un error
+en el log. **Sin ver todavía**: un guardado de verdad desde esta pantalla.
+
+Tests: la previsión —sin tabla, fórmula, tabla del mundo, huevo, forma, naturaleza desconocida, qué marca la naturaleza,
+nivel guardado— (9) y el servicio que no escribe una entrada dañada (1). 1112.
+
+## §131 · Las formas regionales, con sus propias estadísticas (2026-09-18)
+
+Al guardar EV, `SaveEvTrainer.Restat` recalcula las estadísticas del equipo con las bases del mundo instalado, y las
+buscaba **solo por especie**: `WorldLimits.BaseStats` se llenaba con las filas de las especies y nada más. A un Raichu
+de Alola le habría escrito las estadísticas de un Raichu —cinco de seis bases distintas—, y el juego no las recalcula
+hasta que sube de nivel, así que con un cap de nivel en vigor se habrían quedado mal. **En la partida del jugador no hay
+hoy ningún Pokémon con forma alternativa**, así que no llegó a escribir nada.
+
+### Una sola regla
+
+La tabla de especies del juego pone primero todas las especies y detrás las formas, y cada especie dice en qué fila
+empiezan las suyas (`FormStatsIndex`, 0x1C) y cuántas tiene (`FormCount`, 0x20). La regla del juego —la de pk3DS—: una
+forma lee **su propia fila** solo si la especie la declara; cualquier otra forma lee **la de la especie**, que es lo que
+hacen las que solo cambian de dibujo.
+
+Esa regla ya estaba escrita **dentro** del módulo de dificultad de entrenadores. Pasa a `PersonalEntry7.RowOf` y el
+módulo la usa desde ahí, porque dos copias de «qué fila» acabarían discrepando la primera vez que alguien arreglase una.
+`GameLink` no puede verla —no depende del randomizador—, así que la regla se aplica **al cargar el mundo** y lo que
+llega es el dato: `PersonalEntry7.FormBaseStatsInScreenOrder` saca las formas con fila propia y `InstalledWorld` las
+deja en `WorldLimits.FormBaseStats`. `BaseStatsOf(especie, forma)` mira ahí primero y si no, la fila de la especie, que
+por la misma regla **no es un hueco sino la respuesta**. El escritor y la previsión de ENTRENAR EV preguntan por especie
+y forma, y la previsión deja de callarse con las formas.
+
+### Medido contra el mundo instalado
+
+`1025` especies y **304 formas con fila propia**. Doce anclas con sus bases de la serie: Raichu, Meowth, Ninetales,
+Exeggutor y Lycanroc en sus formas normales, de Alola, nocturna y crepuscular, y **el Meowth de Galar, que trae el mod de
+gen 8-9**. Las doce cuadran, y no solo como conjunto —que es lo que sobreviviría a `shuffleBaseStats`— sino **valor a
+valor**, porque este mundo no las baraja.
+
+La prueba del escritor **falla con el código de antes** (quitado el arreglo, `The_ev_writer_recomputes_an_alolan_raichu…`
+en rojo) y pasa con el nuevo.
+
+Tests: la regla de filas y la tabla de formas (4), el mundo por especie y forma, el escritor con un Raichu de Alola y con
+uno normal, y la previsión (4). 1120.
+
+## §132 · Habilidades de nueve bits: el randomizador repartía habilidades que no existen (2026-09-18)
+
+Salió mirando la actualización 1.4 del mod de gen 8-9. La incidencia #1 del mod decía que las habilidades nuevas
+«salen con nombre y no hacen nada» después de randomizar, y el §5 de `MOD-EXPANSION.md` lo había tomado como
+prueba de que no funcionan, con una explicación estructural: el campo de habilidad es un byte, el mod llenó los 22
+huecos que quedaban hasta el 255 y ahí se acabó el sitio. **Las dos cosas estaban mal.**
+
+### Lo medido
+
+Comparando byte a byte entradas que deberían llevar habilidades de la 256 en adelante contra una del cartucho: el
+**último byte de la entrada (0x53)**, que en el cartucho vale cero en **sus 976 filas**, lleva **un bit por hueco**
+que suma 256. Great Tusk es `25/25/25` con `0b111` → 281 Protosynthesis; Kingambit `128/37/46` con `0b010` → el
+segundo hueco es 293 Supreme Overlord; Koraidon 288 Orichalcum Pulse. El propio `code_map.csv` del mod lo confirma
+con sus palabras: «NINTH ABILITY BIT — restore the ninth bit for the first Ability slot in a personal record», y sube
+el tope de nombres a 320. Con los nueve bits el mod usa **79 habilidades nuevas en 104 entradas**, no 22 en 43.
+
+Y **nuestro randomizador era la incidencia #1**. `PersonalEntry7.SetAbility` escribía solo el byte y dejaba el bit,
+así que «la habilidad 50» salía como la 306 o como una que no existe. Medido en el mundo instalado (generado el 14 de
+septiembre con `randomizeAbilities` en `true`): **240 huecos rotos en 104 Pokémon, 184 apuntando más allá de la 319**
+—Koraidon con la 434, la 393 y la 355—, cinco a nombres vacíos y el resto a habilidades de la 9.ª generación al azar.
+Todas las paradoja, los tesoros funestos, Koraidon, Miraidon y varias megas. Qué hace el juego con una habilidad que
+no existe no está medido; en el mejor caso nada.
+
+### El arreglo
+
+- `GetAbility` y `SetAbility` leen y escriben los **nueve bits**; una habilidad de hasta 255 **apaga** el bit, así
+  que nada de lo que el mod había puesto sobrevive en un valor nuevo. Fuera de 0–511 lanza.
+- **La regla del hueco vacío miraba el byte**: la 256 (Neutralizing Gas, byte 0 más el bit) pasaba por hueco vacío y
+  ni se randomizaba ni gastaba tirada. Ahora se randomiza, pero de **su propia fuente** (`abilities-256`): si gastara
+  de la de siempre desplazaría las habilidades de las 250 filas de formas que vienen detrás, en un mundo que ya se
+  está jugando. Es la regla del §27 —una fuente por aspecto— aplicada al caso que el lector viejo no veía.
+- `RomTool species` lee también los nueve bits.
+- El texto de `maxAbility` deja de decir que las nuevas «no funcionan»: siguen fuera, en 233, porque **nadie las ha
+  visto funcionar en un combate**, que es otra cosa. Y el `code_map` enseña un bloque de combate que «ejecuta el
+  conjunto completo de habilidades añadidas por su número real de 16 bits», con código propio para una treintena.
+
+### Cómo se comprobó
+
+- Ocho pruebas nuevas (leer y escribir el bit, un bit por hueco, el tope, que randomizar no deje ninguno, que los
+  bits **no cambien qué habilidades salen**, y que el hueco de la 256 no mueva a los demás). **Cinco fallan con el
+  escritor viejo**.
+- **Ensayo con la semilla real** (`PERMA-107863`, rol LUDÓPATA) en una carpeta temporal: de los diez ficheros del
+  mundo, **nueve salen idénticos** al instalado y el único distinto es `a/0/1/7`. Dentro, cambian **104 filas**,
+  solo en el byte **0x53**, y **una** además en un hueco (la 1077: 256 → 195). Ninguna habilidad queda por encima de
+  255. El instalado es byte a byte el generado el día 14.
+
+### Lo que falta, dicho
+
+**No está aplicado al mundo instalado.** El paso que sustituye solo la tabla —con copia de la vieja, de la generada y
+de la base de datos, relectura, y un evento `RomRandomized` de origen `System` que copia los datos del anterior para
+que COMPETICIÓN siga leyendo lo mismo— lo **bloqueó el sistema de permisos** de la sesión como escritura difícil de
+deshacer. Se eligió ese camino y no GENERAR + INSTALAR porque reinstalar entero **aparta la carpeta del mod**, y en
+ella está el `code.ips` de prueba de «todo sale variocolor» que el jugador quiere quitar él más adelante.
+
+**Y un fallo aparte que salió al comparar**: el módulo de compatibilidad de MT escribe **solo la tabla empaquetada**,
+no las filas sueltas, contra lo que dice este mismo documento en el §20. En el mundo instalado discrepan 1329 de 1330
+filas, solo en 0x28–0x34. Que el mod 1.4 haya cambiado seis habilidades **solo en las filas sueltas** es un indicio de
+que el juego lee esas, y entonces **las MT randomizadas nunca llegaron al juego**. Sin medir; apuntado como tarea.
+
+Tests: 1128.
+
+## §133 · La 1.4 del mod de gen 8-9, instalada (2026-09-18)
+
+A petición del jugador. `Expansion/` pasa de la copia del 1 de septiembre a la **1.4** (13 de septiembre), y el mundo de
+la run se regenera encima con la misma semilla y se instala por el camino de la app, GENERAR e INSTALAR.
+
+### Qué se hizo
+
+- **`Expansion/`**: copia previa de todo lo que se iba a sustituir en `Saves/backup/expansion-antes-1.4-<fecha>/`
+  (44 MB), los ficheros de la 1.4 encima —comprobados uno a uno— y **el fichero de modelos de 2,5 GB conservado**,
+  porque el zip no lo trae. Se quitan `banner.bin` e `icon.bin`, que el propio mod pide borrar (hacían que Ultra Luna se
+  anunciase como Ultra Sol).
+- **El texto en español**: el `a/0/3/6` que había en `Expansion/` **lo había escrito `RomTool traducir`** el 2 de
+  septiembre sobre el inglés del mod. La 1.4 trae el suyo con los nombres oficiales (218 de 218 especies, los 159
+  movimientos reales), así que se sustituye y `traducir` deja de hacer falta con esta versión.
+- **Nombres de objeto de la configuración**: `randomizer.json` (18 objetos de evolución de las tiendas especiales) y
+  `shop.json` (30 megapiedras) los tenían en inglés, porque el mod no traía otro. El guardia de `ShopRandomizer` —el
+  nombre se comprueba contra el juego antes de tocar una tienda— **paró la primera generación**: «Galarica Cuff» ahora se
+  llama «Brazal Galanuez». Se pasaron al español comprobando que cada id seguía siendo el mismo objeto por su nombre
+  inglés en la 1.4; cuatro que la 1.4 retocó en inglés (Scroll of Darkness, Leader's Crest y las dos tazas) se revisaron
+  a mano.
+
+### Qué se comprobó
+
+- **Ensayo antes de instalar**, con la semilla real y el rol LUDÓPATA: de los diez ficheros del mundo, **nueve salen
+  idénticos** a los de la run y el décimo es el `code.bin`, que cambia porque cambia su base. **Nuestros parches caen en
+  los mismos 70 tramos con los mismos 263 bytes** sobre el `code.bin` viejo y sobre el de la 1.4. O sea: encuentros,
+  entrenadores, tiendas, aprendizajes y habilidades, iguales; lo nuevo es lo que trae el mod.
+- **Después de instalar, fichero a fichero**: los diez nuestros son los generados, todos los de la 1.4 están, la tabla de
+  especies es la arreglada del §132 y el fichero de modelos está entero.
+- El parche de prueba de «todo sale variocolor» (`code.ips`, que el jugador quitará él) **cambia un byte en 0x2205CF**, y
+  el código de alrededor es idéntico en los dos `code.bin`: sigue haciendo lo mismo.
+
+### Lo que salió por el camino
+
+- **El instalador copia encima y no quita lo que ya no viene.** `ModInstaller.Install` guarda una copia de lo que va a
+  sustituir, pero un fichero que la nueva base ya no trae **se queda**: el `banner.bin` y el `icon.bin` viejos seguían en
+  `exefs` después de instalar, y se apartaron a mano a la copia de seguridad. Con un cambio de versión del mod eso puede
+  dejar ficheros de la versión vieja mezclados con la nueva sin que nadie lo vea.
+- El arreglo del §132 lo aplicó el jugador con el paso preparado, y **ese paso no llegó a apuntar su evento**: el
+  programa no inicializaba SQLite y falló justo ahí, después de sustituir y verificar las tablas. No quedó nada a medias
+  en la base de datos, y el evento `RomRandomized` de esta regeneración (15:09) ya recoge el mundo arreglado.
+
+**Sin jugar todavía** con la 1.4: que arranque, que el texto no cuelgue y que las habilidades y movimientos nuevos hagan
+lo que dicen en un combate.
+
+## §134 · Pokémon de prueba del mod, y dos lecturas que PKHeX hacía con la tabla de la 807 (2026-09-18)
+
+El jugador pidió Pokémon con habilidades y movimientos nuevos para probarlos en combate, porque con todo randomizado
+podía tardar en salirle uno. En realidad **no le saldría nunca**: `maxAbility` 233 y `maxMove` 729 dejan fuera todo lo
+nuevo. Hacerlo destapó dos cosas que PKHeX no sabe del mod y que PermaLocke había dado por buenas.
+
+### La habilidad de un Pokémon también lleva noveno bit
+
+El §132 encontró el noveno bit en la tabla de especies. **El Pokémon guardado tiene el suyo**, y está en el bloque que el
+mod añade al `code.bin` (`0x4B9C10`, 108 bytes, filas «NINTH ABILITY BIT» de su `code_map.csv`), desensamblado:
+
+- al guardar: `strb r4,[r0,#0xC]` (el byte bajo) y luego `bic`/`orrne r1,#0x10` sobre `[r0,#0xD]`;
+- al cargar: `ldrb r4,[r0,#0xC]`, y si `[r0,#0xD] & 0x10`, `orr r4,#0x100`.
+
+`r0` apunta al bloque A del PK7, que empieza en 0x08: son **0x14 y 0x15**. En 0x15 los tres bits bajos son el hueco de
+habilidad (1, 2 o 4), así que el bit 4 estaba libre. PKHeX lee y escribe solo 0x14. `PokemonAbility` lee y escribe los
+dos, y lo usan el constructor de Pokémon, la ruleta (escribir y comprobar) y el visor. **Sin esto, la ruleta habría
+dado a un Pokémon con habilidad nueva la habilidad elegida más 256**, y el visor le habría puesto otro nombre: Cambio
+Heroico (278) se lee como Imán (22).
+
+### El nivel de los Pokémon de gen 8-9 se escribía con la curva equivocada
+
+`GameLevels` existe porque PKHeX da crecimiento Medio a todo lo que pasa de la 807, pero **solo lo usaban
+el cap y el lector en vivo**. El constructor ponía `CurrentLevel`, o sea la experiencia de ese nivel en la curva de
+PKHeX: un Dragapult (lento) pedido a nivel 40 llegaba al **37**, y la comprobación de la entrega lo releía con la misma
+curva equivocada, así que pasaba. Afectaba al **wonder trade** con especies del mod, que promete «al mismo nivel», y al
+gacha si alguna vez reparte especies del mod. El visor tenía el mismo fallo al leer: es lo que explica el **Ferrocuello
+«de nivel 64»** del §130, que es de nivel 59 en su curva lenta (el `Stat_Level` guardado ya decía 59). Ahora el
+constructor escribe con `GameLevels.Set`, y el visor, las dos comprobaciones de entrega y los textos de la ruleta leen
+con `GameLevels.Of`.
+
+### `Probe --dar-mod`
+
+`--dar-mod <especie> <nivel> <habilidad> <m1,m2,m3,m4> [--forma n] [--objeto id] [--naturaleza n] [--probar]`. Lo que
+`--dar-pokemon` no hace con una especie del mod: nivel en la curva del mundo instalado, habilidad con su noveno bit y
+**los PP de cada movimiento sacados del `a/0/1/1` instalado**, porque PKHeX no conoce nada por encima de la 742 y daría
+cero; un movimiento sin PP (los 32 huecos vacíos del mod) se rechaza. Nombres del texto español instalado. Azahar
+cerrado **por proceso** y no solo por RPC (un emulador sin servidor RPC contestaría «cerrado» con el juego cargado),
+copia de la partida, relectura campo a campo, y solo entonces se registra: entrada de la run con **origen AdminGrant y
+PID**, para que el vigilante lo reconozca en el equipo, y un `PokemonDelivered` del admin con qué es y para qué. Sin
+registrar, la primera vez que entrase en el equipo se registraría solo como una captura, y no lo es.
+
+Consecuencias que van con el registro: **cuentan como de la run**, así que si caen restan puntos como cualquiera, y la
+cláusula de duplicados bloquea después su línea evolutiva, igual que con lo que da el gacha.
+
+### Lo que se metió en la partida real
+
+Cuatro, a nivel 60 (cap en vigor 66), en la caja 2, huecos 7 a 10, cada uno con copia previa en `Saves/backup/`:
+
+| Pokémon | Habilidad | Movimientos | Qué mirar |
+|---|---|---|---|
+| Palafin | Cambio Heroico (278) | Puño Jet, Envite Acuático, Viraje, **Plancha Corporal** | salir con Viraje y volver: se transforma |
+| Gholdengo | Cuerpo Áureo (283) | Fiebre Dorada, Metaláser, Poltergeist, Tajo Taquión | los movimientos de estado del rival fallan |
+| Colmilargo | Paleosíntesis (281), con Energía Potenciadora | Arremetida, Pirueta Helada, Cólera Ardiente, **Giro Mortífero** | se activa al salir, con su mensaje |
+| Cinderace | Líbero (236) | Balón Ígneo, **Cambio de Cancha**, Patada Hacha, Brinco | cambia de tipo antes de cada ataque |
+
+En negrita, tres de los **32 con rutina de combate nueva** del mod: son los que más pueden fallar. El resto reutiliza
+una rutina del cartucho. Releídos por el lector del visor: habilidad, nivel y movimientos salen bien.
+
+**Queda por arreglar:** el visor nombra los objetos con la lista de PKHeX, y a partir del 960 el mod los numera a su
+manera. La Energía Potenciadora (960) sale como «Caramelo Vigor», y las megapiedras del mod también saldrían con otro
+nombre. Es solo el nombre en pantalla; en el juego se llama bien.
+
+## §135 · Los muertos se curaban: la lista de direcciones del equipo tenía ocho días (2026-09-18)
+
+El jugador: «los Pokémon que mueren se pueden curar, no vuelven a estar muertos». Y el registro lo confirma: a las
+18:00:31 muere Bouffalant (detectado en el combate, en el momento), a las 18:03:19 vuelve a caer alguien en la primera
+posición sin muerte nueva —el mismo Bouffalant, ya curado— y **`KeepFallenDownAsync` no escribió ni una vez en toda la
+sesión**, sin una línea en el registro.
+
+La causa está en cómo se conecta. Para no barrer 96 MB en cada arranque, `AzaharGameStateProvider` guarda las
+direcciones del equipo en `Saves/backup/equipo.txt` después de cada barrido y la sesión siguiente las **revalida sin
+barrer**. Ese fichero era del **10 de septiembre**, y desde entonces se aceptaba siempre, porque la revalidación solo
+pedía que **alguna** de las recordadas leyera el equipo, y el espejo (`0x330128E4`, salto `0x104`) está en el mismo
+sitio en todas las sesiones. La estructura que el juego lee de verdad (salto `0x1E4`, §99) **no**: se reserva donde
+toca cada vez. Así que la app:
+
+- leía el equipo **del espejo**, cuyos PS van con retraso: el caso exacto que el §99 quería evitar;
+- y mandaba a los caídos a 0 PS en direcciones de hace ocho días, donde ya no estaban. Como allí no había su PID,
+  no escribía nada y no lo decía.
+
+El síntoma estaba en la propia línea del registro: «Equipo en 0x330128E4, el de la última vez, revalidado sin
+barrer». `PartyLayoutLocator.Preferred` elige la estructura del juego siempre que lea a alguien, así que **acabar en el
+espejo** significa que ninguna de las recordadas de salto `0x1E4` tiene ya el equipo.
+
+**Arreglo:**
+
+- `PartyLayoutLocator.NeedsLocatingAgain`: si lo elegido de lo recordado es el espejo, se conecta ya con él —para no
+  dejar de vigilar— y **en la lectura siguiente se barre** (unos 5 s) y se guarda la lista nueva.
+- `KeepFallenDownAsync` distingue «está y ya tiene 0 PS» de «no está en ninguna copia que lea el juego». Lo segundo se
+  dice en el registro, una vez por Pokémon, y pide otro barrido. Callarse es lo que escondió esto ocho días.
+
+**Sin comprobar en el juego todavía**: la app estaba abierta y bloqueaba sus ficheros. Hay que cerrarla, compilar, y
+meter en el equipo a un caído con la app y el juego abiertos: tiene que bajar a 0 PS en un segundo y dejar en el
+registro «al suelo otra vez». Bouffalant sirve: está muerto en la run y guardado en la caja 8.
+
+## §136 · Los ataques y habilidades del mod entran en el randomizado (2026-09-18)
+
+Después de probar en combate los cuatro Pokémon del §134 —cuatro habilidades nuevas y doce ataques nuevos, tres de
+ellos de los 32 con rutina de combate propia del mod—, el jugador pidió meterlos todos en el randomizado de su mundo, a
+mitad de run, sabiendo que cambian las habilidades y los aprendizajes de cada especie.
+
+### El tope que no se veía
+
+Poner `maxAbility` y `maxMove` a cero **no habría hecho nada**. `PokemonDataRandomizer` calculaba el techo como
+`Math.Min(configuración, workspace.Config.Info.MaxAbilityID)`, y `GameInfo` de pk3DS trae **233 habilidades y 728
+movimientos clavados**, los del cartucho, sin mirar los ficheros. Es la misma trampa del 807 de las especies: la
+configuración decía una cosa, el mundo otra, y nada fallaba. Ahora el techo sale del juego que se randomiza: la longitud
+de su lista de nombres de habilidad (320 en el mod) y de su tabla de movimientos (921).
+
+La primera prueba en seco salió **idéntica** al mundo instalado, y no por el código: la herramienta de ensayo usaba las
+DLL compiladas de RomTool, que estaban viejas. Recompilada, cambian exactamente los dos ficheros que tienen que cambiar.
+
+### Qué se reparte y qué no
+
+- **Habilidades**: `AbilityTable.Assignable` saca de 1 al techo las que tienen nombre (los huecos «-», 301-304 y
+  317-318, no existen) y quita `bannedAbilities`: **las del mod atadas a las formas de un Pokémon** —Tragamisil, Cara de
+  Hielo, Mutapetito, Cambio Heroico, Comandar y las tres Tera—, cuyo código está escrito para ese Pokémon y en otro
+  podría intentar cambiarlo a una forma que no tiene; y la 319, que tiene nombre pero **ninguna especie del mod usa**. Las
+  del cartucho con formas no se tocan: el juego original las ignora en otro Pokémon.
+- **Ataques**: todo lo que tenga PP de 2 para arriba. Los 32 huecos del mod (Let's Go y Dinamax) tienen 0 y los Z tienen
+  1, así que `MoveTable.Teachable` ya los dejaba fuera.
+- **El sorteo no se ha movido**: se tira un índice dentro de la lista. Con la lista entera 1..máx es la misma tirada que
+  el `Next(1, máx + 1)` de antes —hay test que lo comprueba mil veces—, así que un mundo sin exclusiones, el cartucho por
+  ejemplo, sale igual que antes.
+
+### Medido en seco, con la semilla y el rol reales
+
+- De los diez ficheros del mundo cambian **dos**: `a/0/1/7` (habilidades) y `a/0/1/3` (aprendizajes). Salvajes,
+  entrenadores, tiendas, estáticos, evoluciones, objetos y `code.bin`, **idénticos** al instalado.
+- `a/0/1/7`: 1329 filas, **ni un byte cambiado fuera de las habilidades**; 946 huecos con habilidad nueva, 71 habilidades
+  nuevas distintas, cero huecos sin nombre y cero prohibidas. La mayor que sale es la 316, Crin de Fuego.
+- `a/0/1/3`: mismas longitudes, **ni un nivel cambiado**; de 21286 movimientos, 4746 son nuevos (22 %), 159 distintos,
+  y ninguno con 0 o 1 PP.
+- Las filas sueltas de `a/0/1/7` siguen sin cuadrar con la tabla empaquetada **en los bytes de las MT** (0x28-0x34), igual
+  que en el mundo instalado: es el fallo ya apuntado, no de este cambio.
+
+**Queda por ver jugando** lo que no se puede medir en un fichero: que las 71 habilidades y los 159 ataques hagan lo que
+dicen. Solo se han visto cuatro y doce.
+
+## §137 · El gacha y el wonder trade también reparten las habilidades del mod (2026-09-18)
+
+Los dos sortean la habilidad entre **todas** las del juego, no las de la especie, y los dos descartaban todo lo que
+pasara de la 233 (`IAbilityLookup.LastUsableAbility`), con la misma premisa falsa que el randomizador: que la habilidad
+de un Pokémon cabe en un byte y que las del mod «tienen nombre y no hacen nada». El Ursaluna que se anunció con General
+Supremo (293) y llegó con Potencia (37) era el constructor escribiendo solo el byte; desde el §134 escribe el noveno bit.
+
+- **La lista de nombres estaba vieja.** `Data/species.json` era de antes de la 1.4: la mezcla de PKHeX e inglés de
+  `RomTool traducir`. La 301-304 decían «Evocarrecuerdos (…)», que en el mod son **huecos**, y la 311-316 venían en
+  inglés. Quitar el tope sin rehacerla habría repartido habilidades que no existen. Regenerada con `RomTool species`
+  sobre la 1.4: **solo cambian los nombres de habilidad (15) y las habilidades propias de 74 especies**; totales, nombres,
+  legendarios y las 553 familias salen idénticos, así que los niveles del gacha no se mueven.
+- **Un sorteo, no dos.** El bucle vivía copiado en `GachaService` y `WonderTradeService`; ahora es `AbilityDraw`, con
+  la misma forma (hasta doce intentos, se tira y se descarta en vez de estrechar), así que una tirada que ya caía en
+  una habilidad válida sale igual —hay test— y solo se mueven las que caían por encima de la 233.
+- **Las excluidas son las del randomizador.** `JsonSpeciesStatsCatalog` recibe `bannedAbilities` de
+  `Data/randomizer.json` al arrancar la app: una sola lista de «qué no se puede dar».
+- La ruleta **no cambia**: sus caras nombran habilidades concretas del cartucho y las resuelve contra PKHeX hasta la 233.
+
+Medido con los ficheros reales, 5000 sorteos: el 23 % sale con habilidad del mod, salen las **71** posibles, y ninguna
+es un hueco ni una excluida. Afecta solo a lo que se tire a partir de ahora; lo ya entregado no cambia.
+
+## §138 · Las formas regionales, por fin en el randomizado (2026-09-18)
+
+El jugador, con razón: «es un random, tiene que poder salir cualquier Pokémon». **Nunca había salido una forma regional.**
+Todos los módulos escribían forma 0: `EncounterTable7.SetSpecies` la pone a cero por defecto, `TrainerPokemonTable` y
+`StaticEncounterTable` la limpian a propósito —«un índice de forma válido para la especie vieja no lo es para la
+nueva»—, y el constructor del gacha y del wonder trade también. Comprobado en la partida: de 123 Pokémon, **ninguno**
+tenía forma distinta de 0 salvo el Huevo Malo.
+
+### Qué formas
+
+Medido contra el mod: **59 formas con nombre de región** (PKHeX, contexto de gen 9) y **las 59 con los tipos oficiales**
+en su fila de la tabla del mod, o sea que el mod las numera como los juegos. Fuera la gorra «Alola» de Pikachu, que es un
+disfraz, y el modo Daruma de Darmanitan de Galar, que solo existe en combate. Quedan **57 formas en 54 especies**: 18 de
+Alola, 19 de Galar, 16 de Hisui y 4 de Paldea (las tres razas de Tauros y Wooper). La lista va en `regionalForms` de
+`Data/randomizer.json`, porque el randomizador no usa PKHeX; al generar se queda solo con las que **el mundo cargado
+declara** (`RegionalForms.From` contra el número de formas de la especie), así que el cartucho sin mod coge solo las de
+Alola.
+
+### Cómo se decide
+
+**Después de la especie y con su propio sorteo** (`random.Derive("forms")` en cada módulo): la especie de cada hueco
+sale **exactamente** la misma, tirada a tirada, y lo único que cambia es que algunos salen en forma regional. Cada forma
+es tan probable como la normal —un Meowth es de Kanto, de Alola o de Galar un tercio de las veces—, y una especie sin
+formas regionales no gasta tirada. Las llamadas SOS copian especie **y forma** de su hueco base. Afecta a salvajes,
+entrenadores, el Pokémon extra del rol, estáticos, regalos, intercambios e iniciales; no a las reglas especiales de
+estáticos ni a las megas de jefe, que ya ponen su forma a propósito.
+
+### Medido en el mundo de la run, e instalado
+
+De los diez ficheros cambian **tres**: salvajes, entrenadores y estáticos. Dentro:
+
+- **Salvajes**: 45.848 huecos, **ninguna especie distinta**, 1.214 en forma regional, cero formas no válidas y ningún otro
+  bit del hueco tocado.
+- **Entrenadores**: 1.261 Pokémon, ninguna especie distinta, 35 en forma regional.
+- **Regalos**: un Arcanine de Hisui. **Estáticos**: 8 (Sandslash y Ninetales de Alola, Slowbro y Corsola de Galar,
+  Samurott de Hisui...). **Intercambios**: ninguno.
+
+Instalado desde la app (GENERAR e INSTALAR, evento `RomRandomized`), fichero a fichero igual que el ensayo.
+
+### Lo que falta
+
+- **El gacha y el wonder trade** siguen dando la forma normal: les falta sortear la forma, llevarla hasta el constructor
+  y enseñar tipos por forma.
+- **Los dibujos**: toda la app pinta el icono **de la especie**, así que un Vulpix de Alola sale con el dibujo del normal
+  en HOME, el visor o el cementerio. Los iconos de las formas de Alola están en el cartucho y la tabla del §30 sabe dónde
+  (van antes que el normal); los de Galar, Hisui y Paldea están entre los que añade el mod y **no se han medido**.
+- Sin jugar: que el juego saque bien en combate las formas que añade el mod.
+
+## §139 · Formas regionales en el gacha y el wonder trade, y un dibujo por forma (2026-09-18)
+
+Lo que faltaba del §138.
+
+### Los dibujos, sacados del propio mod
+
+Toda la app pintaba el icono **de la especie**. Para los de Alola la respuesta ya estaba en el §30: el icono de Alola va
+**justo delante** del normal (`NormalFormOffsets` lo salta), así que la forma 1 es un icono atrás; Dugtrio y Muk tienen
+dos de Alola idénticos y uno atrás sigue siendo uno de ellos. Para los de Galar, Hisui y Paldea **no se ha mirado ni un
+dibujo para decidir**: el mod sustituye la búsqueda de iconos del juego (`0x20C88C` de su `code.bin`, fila «POKEMON
+ICONS» de su `code_map.csv`) y, desensamblada, construye la clave `especie | forma << 11`
+(`orr r3, r0, r4, lsl #11`), recorre una tabla de medias palabras en `0x5BDBE2` hasta un cero y devuelve
+`1153 + 0xDB` más la posición de la clave. Esa tabla son **136 claves** en orden de especie, justo los 136 iconos que
+el mod añade tras sus especies (1372-1507). Están copiadas en `PokemonIconIndex.ExpansionFormKeys`, y los 39 de Galar,
+Hisui y Paldea que el randomizador reparte **se comprobaron después a ojo** en una hoja de contactos: todos son su forma.
+Solo se usan si el contenedor tiene exactamente 1372 + 136 iconos, que es la 1.4; con otro, cada forma pinta su especie
+en vez de arriesgarse a pintar a otro Pokémon (el riesgo del §45).
+
+`PokemonSpriteService.Get(especie, forma)`, y lo usan el visor, ENTRENAR EV, HOME, JUGAR, el gacha y el wonder trade.
+El equipo en vivo (`LivePartyMember`, `LivePokemon`) lleva ya la forma.
+
+### El gacha y el wonder trade
+
+- `Data/species.json` lleva ahora, por especie, sus formas regionales con el nombre de PKHeX en español («Alola»,
+  «Galar», «Paldea Combatiente»...): las de `regionalForms` que el mundo declara. `RomTool species` lo regenera; solo se
+  añaden las formas, lo demás sale idéntico.
+- `FormDraw`: la normal o cualquiera de sus formas, **todas igual de probables**, desde una fuente **derivada** de la de
+  la tirada. Derivar no la avanza, así que especie, nivel, IV, naturaleza, habilidad y brillo salen **exactamente como
+  antes** —hay test que lo compara en 200 tiradas— y solo la forma es nueva.
+- La tirada y el intercambio llevan `Form` y `FormName`, y se enseñan como «Vulpix de Alola». La forma llega al
+  constructor, se escribe en la partida y **se comprueba al releer**. Los eventos guardan `forma`.
+- El wonder trade anuncia los **tipos de la forma**: `PersonalEntry7.FormTypes` los lee de las filas de forma del mundo
+  instalado y `WorldLimits.TypesOf(especie, forma)` los da; un Meowth de Galar sale de Acero, no Normal.
+
+### Lo que no lleva forma todavía
+
+- El **cementerio**: el registro de la run (`PokemonEntry`) no guarda la forma, así que una tumba de un Vulpix de Alola
+  pinta el normal. Hace falta una columna nueva en la base de datos.
+- **POKE PASTE** exporta el nombre de la especie sin el sufijo de forma («Vulpix-Alola»), así que la web la dibuja normal.
+- La lista de «quién puede salir» del gacha enseña especies, no formas.
+
+## §140 · La forma también en el cementerio, POKE PASTE y la lista del gacha (2026-09-19)
+
+Lo que el §139 dejó dicho como pendiente.
+
+- **La run guarda la forma.** `PokemonEntry.Form` y una columna `form` en la tabla `pokemon`. Es **la primera migración
+  de esa tabla**: se pregunta a la tabla qué columnas tiene (`PRAGMA table_info`) en vez de llevar un número de versión,
+  así que repetirla o abrir una base ya creada con la columna no hace nada. Las filas viejas quedan en 0, que es lo que
+  eran: hasta el §138 no salió ninguna forma regional. Probada sobre **una copia de la base de datos real** antes de que
+  la app la abriera: 145 Pokémon y 1147 eventos antes y después, con la columna añadida. La guardan el gacha, el wonder
+  trade, el registro automático de capturas (que la lee del equipo en vivo), la ventana de captura a mano (solo si la
+  especie sigue siendo la detectada) y `Probe --dar-mod`.
+- **Cementerio y escena de muerte**: la tumba, el aviso y la escena «HA MUERTO» pintan el dibujo de la forma.
+- **POKE PASTE**: `BoxedPokemon.FormName` lleva el nombre que Showdown pone tras la especie, sacado de
+  `ShowdownParsing.GetStringFromForm` en contexto de **gen 9** —el de gen 7 no conoce las de Galar ni las de Hisui—, y el
+  formateador escribe «Vulpix-Alola», «Meowth-Galar», «Tauros-Paldea-Combat». Sin eso la web dibuja la forma normal.
+- **La lista de «quién puede salir» del gacha**: cada forma va **al lado de su especie y sin flecha**, porque no es en
+  lo que evoluciona sino otra manera de salir esa misma etapa (la tirada elige especie y luego forma). Se busca por
+  forma: escribir «Alola» deja las familias que la tienen. Vista en la app con el Tier 3: Exeggutor, Vulpix, Ninetales,
+  Grimer, Muk, Geodude, Graveler y Golem de Alola, cada uno con su dibujo.
+
+### §135, verificado en el juego (2026-09-19)
+
+Del registro de la sesión del jugador: a las 01:39:18 la conexión por las direcciones recordadas acaba en el espejo
+(`0x330128E4`), la app lo dice y **barre**; a las 01:39:24 —5,5 s después— tiene la estructura del juego en
+`0x33F807C4` (salto `0x1E4`, 10 copias). A las 01:40:30 y otra vez a las 01:40:50, «Bouffalant está caído y le habían
+devuelto los PS: al suelo otra vez». El jugador lo confirma mirando la pantalla.
+
+## §141 · Las MT solo se escribían en una de las dos copias de la tabla de especies (2026-09-19)
+
+`a/0/1/7` guarda la tabla de especies **dos veces**: una copia suelta por especie y forma (subficheros 0 a 1328) y la
+tabla entera al final. El módulo de datos escribe su fila en las dos (§27); **el de compatibilidad de MT solo en la
+entera**. En el mundo instalado del jugador, con su equipo guardado, las dos copias discrepan en **94 de las 100 MT**
+para alguien del equipo. Cuál lee el juego no está medido; la pista es que la 1.4 del mod cambió seis habilidades
+(Empoleon, Gallade, cuatro megas) **solo en las sueltas**, cosa que su autor habría notado si el juego leyera la
+entera.
+
+**Arreglo**: el módulo escribe las MT también en cada copia suelta, y al releer exige que cada una coincida con su fila de
+la tabla entera. Ensayado con la semilla y el rol reales: de los diez ficheros solo cambia `a/0/1/7`; la tabla entera
+**no cambia ni un byte**, y las 1329 copias sueltas cambian **solo** en los bytes de las MT (0x28-0x34). Las dos copias
+quedan idénticas.
+
+**La prueba para saber cuál lee el juego**, con el mundo instalado todavía sin arreglar: la MT43 (Velo Sagrado). Según la
+tabla entera la aprenden Bouffalant, Cinderace, Gholdengo, Slaking y Salamence; según las sueltas, ninguno.
+
+**Medido (2026-09-19): el juego lee la tabla ENTERA.** El jugador abrió la MT43 con ese equipo y la pueden aprender
+**todos menos Colmilargo**, exactamente lo que dice la tabla entera; según las sueltas no podía ninguno. O sea que las MT
+del mundo del jugador **siempre estuvieron randomizadas** y la pista de arriba era falsa: los seis cambios de habilidad
+que la 1.4 hizo solo en las sueltas **tampoco funcionan en el propio mod**, que es un fallo suyo y no nuestro. El arreglo
+se queda —las dos copias iguales no cuestan nada y cualquier herramienta que lea las sueltas verá lo mismo que el
+juego—, pero **no hacía falta reinstalar** el mundo: entra en la próxima generación. Anclaje que vale para todo lo que lea
+esta tabla en adelante: **la autoridad es el último subfichero de `a/0/1/7`**, que es la que ya leían `InstalledWorld`, el
+visor y la dificultad de los entrenadores.
+
+## §142 · El recuerda-movimientos, dentro de la aplicación, como el de Añil (2026-09-19)
+
+**La petición.** La recuerda-movimientos de Ultra Luna es la señora del Centro Pokémon del Monte Lanakila, a las puertas
+de la liga: un juego entero de distancia. El jugador preguntó si se podía «mover» al principio; si no, diseñarla en la
+app, y en ese caso **como la de Pokémon Añil en formato randomlocke**, porque en un randomlocke lo que se aprende depende
+de la evolución y del nivel.
+
+**Mover a la señora: no, de forma fiable.** Una persona del mundo y lo que hace al hablarle viven en los ficheros de
+zona y en sus scripts (AMX comprimido), que en este proyecto nadie ha identificado: pk3DS no trae editor de mundo para la
+séptima generación y aquí no hay ni una medida de ese formato. Sería una investigación del tamaño del §22, con la pega
+añadida de que un script mal escrito **cuelga el juego**. Y aunque se pudiera, la del juego cobra una Escama Corazón por
+movimiento. Así que se hace en la app, que además no depende de si el juego sabría manejar los movimientos del mod.
+
+**Cómo funciona el de Añil.** Mirado en el seguimiento de la competición de Añil (`SukenFuyumi/anil-super-randomlocke`,
+`companion/extract.js` y `jugador.html`): enseña los movimientos **iniciales** —los que el Pokémon traía al obtenerlo,
+un campo que el juego guarda por Pokémon— «siempre disponibles», y los **de su aprendizaje randomizado por nivel**, de su
+especie y forma **actuales**, con los de evolución aparte. Es la regla de Pokémon Essentials: nivel ≤ el suyo, más los
+de «primeros movimientos». La idea de fondo, que es la que pedía el jugador: al evolucionar, la lista pasa a ser **la de
+la nueva especie** —en un randomlocke cada especie tiene su aprendizaje, así que una familia no comparte movimientos—, y
+lo que sabía de antes solo se recupera si estaba entre los iniciales.
+
+**La regla aquí** (`MoveReminder`, en Core, sin nada más que la regla):
+1. **Los que sabía al llegar.** Dos fuentes: lo que PermaLocke apuntó al registrarlo —desde hoy el evento de captura
+   guarda `movimientos`— y los cuatro huecos «para volver a aprender» que el propio juego guarda en cada Pokémon (huevo,
+   regalo). Es la misma idea que los `first_moves` de Añil, puesta por el juego.
+2. **Al evolucionar**: las entradas de **nivel 0** de su aprendizaje. Medido en el mundo instalado: 342 filas las
+   tienen, y son las de especies evolucionadas (Venusaur, Charizard, Metapod, Butterfree…).
+3. **Por nivel**: su aprendizaje hasta **su nivel incluido**.
+Fuera lo que ya sabe; un movimiento que llega por dos caminos sale una vez, por el que dice a qué nivel; y nada con 0 PP
+(los huecos vacíos del mod), que el juego no deja elegir.
+
+**De dónde salen los aprendizajes.** Del **mundo instalado** (`a/0/1/3`, una entrada por fila de la tabla de especies,
+pares movimiento-nivel cerrados por `0xFFFF`), con `WorldMoveTables` leyéndolo al arrancar y `WorldMoves` publicándolo,
+igual que `WorldLimits`. Medido: 1330 aprendizajes para 1330 filas. Las formas con fila propia leen la suya por la regla
+de `PersonalEntry7.RowOf`. Los datos del movimiento (tipo, clase, potencia, precisión, PP) salen de `a/0/1/1` y los
+nombres del texto español del mundo (fichero 118); la clase y el «no falla nunca» se anclan en Placaje, Ascuas y Rapidez
+como en el randomizador. Sin mundo instalado se pregunta a PKHeX, que es el cartucho, y la pantalla dice de cuál sale.
+
+**La escritura** (`SaveMoveTeacher`), con las guardas de los EV: juego cerrado, el hueco comprobado **por PID**, el
+movimiento del hueco comprobado **tal como la pantalla lo vio** —si el jugador cambió movimientos en el juego entre medias,
+no se le olvida uno que no eligió—, copia de la partida entera y relectura. El movimiento entra con sus PP del mundo y sin
+los Más PP del que sustituye, como en el juego. **El servicio vuelve a calcular la lista él mismo**, así que la pantalla no
+puede escribir nada que la regla no permita. Primero se escribe y después se registra el evento `MoveRemembered`, con el
+movimiento, el olvidado y por qué se podía. Un **caído no aprende nada**, igual que el wonder trade no acepta uno; un
+Huevo Malo ni se toca (§97). **No cuesta nada**, como los EV: es editar un Pokémon propio, y un precio sería una regla que
+la competición no ha acordado.
+
+**Lo que salió de paso: lo que entrega la app aprendía los movimientos del cartucho.** `PokemonBuilder` pedía a PKHeX los
+movimientos sugeridos, que son los del **cartucho**: todo lo del gacha, el wonder trade y la ruleta llegaba sabiendo cosas
+que su especie no aprende en el mundo randomizado, y uno de gen 8-9 no llegaba sabiendo nada (la tabla de PKHeX acaba en la
+807). Ahora aprende lo que haría el juego con uno salvaje —los cuatro últimos de su aprendizaje del mundo hasta su nivel—,
+con los PP del mundo, y esos cuatro quedan también como «para volver a aprender», que es lo que el recuerda-movimientos
+ofrece siempre.
+
+**Verificado.** Contra el mundo instalado y la partida real con `Probe --recordar`: a Salamence (Nv 59) le ofrece su
+movimiento de evolución y los veinte de su especie hasta el 59; a Cinderace, Colmilargo y Gholdengo sus aprendizajes del
+mod con nombres españoles. `Probe --recordar --probar` escribe **sobre una copia** (Bouffalant, Viento Carámbano en el
+hueco 4), la relee con la firma bien, y la partida real tiene la misma huella antes y después. La pantalla está vista
+con la partida real: con un Pokémon vivo, y con uno caído, que sale atenuado y con RECORDAR apagado. **Sin probar
+todavía:** recordar de verdad desde la pantalla y ver el movimiento en el juego.
+
+## §143 · ENTRENAR EV y MOVIMIENTOS, con el aspecto de la bolsa de Ultra Luna (2026-09-19)
+
+**La petición.** Las dos pantallas «cansan la vista»: mucho morado oscuro, texto pequeño y apagado, iconos de caja
+diminutos. El jugador pidió innovar, a poder ser con el estilo de **la bolsa del juego**, y que los Pokémon de la caja
+se vieran más grandes. Es **solo presentación**: ni un servicio, ni una regla, ni un enlace cambian.
+
+**La referencia, mirada y no copiada.** La bolsa de Sol/Luna y Ultra Sol/Ultra Luna (capturas de Bulbapedia): fondo
+naranja a cuadros finos, el equipo en tarjetas verdes a la izquierda, los objetos en **cápsulas** claras con borde
+oscuro y los extremos redondeados, una **flecha roja** que señala la elegida, pestañas de bolsillo, una franja de
+**cuero con costura** para los botones y, arriba, la pantalla de la bolsa por dentro: marco turquesa con **cremallera**
+y un amanecer de amarillo a naranja donde va el nombre del objeto y su descripción. No se usa ni un dibujo del juego:
+todo se pinta en celdas (`Views/BagPixels.cs`) con colores planos.
+
+**Cómo encaja con la regla visual del proyecto** (sin aspecto de IA, §116): donde el juego usa degradado, aquí hay
+**franjas planas unidas por una trama ordenada** (Bayer 2×2); los extremos redondos de las cápsulas son **un círculo
+rasterizado fila a fila**, en escalones; la sombra es un bloque desplazado una celda, y el texto blanco lleva sombra
+dura sin difuminar. La flecha roja se mueve **a saltos**, dos fotogramas.
+
+**Las piezas.**
+- `BagChecker`, `BagCapsule` (píldora o tarjeta con `Radius`, luz arriba, labio abajo, sombra y estado pulsado),
+  `BagScreen` (marco con cremallera y amanecer), `BagArrow` y `BagLeather`, en `Views/BagPixels.cs`.
+- `Themes/Bag.xaml`: colores, textos, botones en cápsula, tarjetas del equipo, filas de la bolsa y una barra de
+  desplazamiento de cuero y turquesa. **Lo mezclan solo estas dos pantallas**: el resto de la app sigue con su tema.
+- `Views/BagPocketPanel`: la mitad izquierda, compartida. El equipo en tarjetas verdes (rojizas si están caídas,
+  amarillas si es la elegida) y **la caja como un bolsillo de la bolsa**: una fila por Pokémon, **con su icono al
+  doble** asomando por encima de la cápsula, nombre y nivel. Los huecos vacíos no se dibujan, como en la bolsa.
+
+**ENTRENAR EV**: la ficha con cremallera lleva el retrato al cuádruple sobre un disco, nombre, sitio, nivel,
+naturaleza con lo que sube y baja y el hexágono (que gana `Plate` y `Guide` para ir en turquesa oscuro con los EV en
+amarillo). Debajo, las seis estadísticas en cápsulas —amarilla la que tiene cambios sin guardar—, el total de 510 y los
+botones en la franja de cuero.
+
+**MOVIMIENTOS**: los cuatro que sabe son **los botones de combate del juego, del color de su tipo**, con el cursor de
+esquinas en el que va a olvidar; lo que puede recordar es una lista de la bolsa con la flecha roja, su placa de tipo en
+color y la razón («EVO», «INICIO», «Nv 12») en una cápsula turquesa. La explicación de la lista va dentro de la ficha,
+como la descripción del objeto en la bolsa.
+
+**Visto** con la partida real (solo lectura, `--sin-juego`) en el tamaño MUY GRANDE y en el NORMAL (1180×760, el más
+pequeño que ofrece la app), con un Pokémon vivo, con uno caído y con un reparto de EV a medias sin guardar. Para ver el
+NORMAL sin tocar el tamaño que eligió el jugador hay un argumento de ensayo, `--tamano normal|grande|enorme`, que abre
+a ese tamaño **sin guardarlo**. Las dos columnas son elásticas (la izquierda entre 290 y 370) para que a 1180 no se
+corten las filas.
+
+## §144 · MOVIMIENTOS: los iconos oficiales de categoría, las cifras a la vista y la lista seguida (2026-09-19)
+
+**La petición.** En MOVIMIENTOS, que se vean mejor el tipo, la potencia, la precisión y la categoría, con **los iconos
+oficiales** —el rojo y el azul de siempre— y **«-----» para los de estado**; y la lista **toda seguida**, sin
+apartados por evolución, nivel ni nada.
+
+**Los iconos están en el cartucho, y se sacan de él.** Listando el nombre de cada imagen de cada pantalla (ALYT) del
+RomFS salió `a/0/6/6`, que nombra `waza_icon_all.bflim`. Volcadas sus imágenes, una de 64×64 en RGBA8888 lleva **los
+tres iconos apilados, 41×18 cada uno**: estado (gris), físico (naranja con la estrella) y especial (azul con los anillos).
+`MoveCategoryIconReader` la talla con el mismo método que los cristales Z (§61, ahora compartido en `AlytCarver`) y
+**nombra cada banda por su color y no por su orden**, que es lo que enseñó el §61: gris es estado, rojo físico y azul
+especial, y una lámina que no traiga exactamente uno de cada se rechaza. Pruebas con una lámina fabricada, sin ROM. Como
+todo sprite, **PermaLocke no reparte ninguno**: se sacan de la ROM del jugador la primera vez y se guardan en
+`Data/sprites/categorias`, que no se versiona.
+
+De paso, la lista de nombres enseña que en esas pantallas hay un `type_icon_00_normal.bflim`: **uno** solo, el del tipo
+Normal. No cambia lo que dijo el §34: el juego no trae una placa por tipo, la compone.
+
+**La pantalla.**
+- La lista de lo que puede recordar va **seguida**, en el orden de la regla (lo que sabía al llegar, lo de evolución y
+  lo de nivel), y cada fila lleva a la izquierda por qué se puede («ORIGEN», «EVO», «INICIO», «Nv 12»). Se fueron los
+  apartados y la propiedad `Group` que los sostenía.
+- Cada fila, en dos líneas: la razón y el nombre, grande; debajo **la placa de tipo** (más grande que antes) y **la
+  categoría con el icono oficial al doble**, o una cajita con «-----» si es de estado. A la derecha, **tres cajitas
+  blancas con POTENCIA, PRECISIÓN y PP**, la cifra grande. Donde el juego no pone número —potencia de un movimiento de
+  estado, precisión de uno que no falla, los de potencia variable— sale «---», como en su propia ficha.
+- Los cuatro que sabe llevan lo mismo sobre el color de su tipo: nombre, icono de categoría con el tipo, y las tres
+  cifras con su rótulo. Van **cuatro en fila en la ventana grande y 2×2 en las pequeñas** (`WidthToColumnsConverter`),
+  porque a 1180 cuatro en fila dejaban cien píxeles por tarjeta.
+- La columna derecha se desplaza **entera** —ficha, los cuatro y la lista— y la franja con RECORDAR queda siempre
+  abajo. Las listas no tienen barra propia, para que la rueda del ratón no se atasque encima de ellas.
+
+**Visto** con la partida real (solo lectura) en MUY GRANDE y en NORMAL, con Salamence y con Cinderace, y los iconos
+comprobados a zoom: nítidos, a píxel entero. Sin cambios de comportamiento: la regla y la escritura son las del §142.
+
+**Y las estadísticas del Pokémon en la ficha (mismo día).** El jugador pidió verlas también aquí, que es donde se decide
+entre un físico y un especial. Son **las mismas que en ENTRENAR EV**: las del equipo, las que guarda la partida; las de
+caja, calculadas con las bases del mundo instalado (`IStatForecast`), y marcadas con «≈» solo si esas bases no se pueden
+leer. El nombre de cada una va del color de la naturaleza —rojo la que sube, azul la que baja—. Van **al lado del
+nombre** en la ventana grande y **debajo** en las estrechas (`WidthSwitchConverter` cambia su fila y su columna), porque a
+1180 dejaban el nombre en «Sala…». La nota de dónde salen los aprendizajes baja junto a PUEDE RECORDAR para dejarles sitio.
+Visto con Salamence, Cinderace y un Natu de la caja, en los dos tamaños.
+
+**Y un fallo al RECORDAR (mismo día): se cerraba la ficha.** El jugador enseñó un movimiento a Gholdengo y la pantalla lo
+soltó. Después de escribir, la pantalla relee la partida para enseñar los movimientos nuevos, y para volver a elegir al
+Pokémon pasaba por el mismo camino que un clic; ese camino **se niega mientras se está escribiendo** —para que nadie cambie
+de Pokémon a mitad de una escritura— y la relectura ocurre justo antes de dar la escritura por acabada, así que se negaba
+y dejaba la ficha vacía. Ahora la relectura vuelve a poner el marco a mano, sin pasar por el clic, y elige al Pokémon con
+el registro recién leído. Y al ser el mismo Pokémon, **sus listas no se vacían antes de llenarse**: se sustituyen de una
+vez, así que la columna no se encoge y el desplazamiento se queda donde estaba. Comprobado con RELEER LA PARTIDA, que
+sigue el mismo camino: Salamence sigue abierto y la lista en el mismo punto (60 % antes y después).
+
+**Y qué hace cada movimiento (mismo día).** El jugador pidió ver la descripción del ataque que está eligiendo. Sale del
+**texto del propio juego**: el fichero 117 del texto en español (`a/0/3/6`), junto al 118 de los nombres, leído del mundo
+instalado como el resto (`WorldMoveTables`, `WorldMoves.MoveDescriptions`), así que los movimientos del mod de gen 8-9
+traen la suya. El juego parte las líneas para que quepan en su pantalla, y aquí se leen **como un solo párrafo**
+(`WorldMoveTables.Flatten`, con prueba). Se enseña en dos sitios: **debajo de la fila elegida** de lo que puede recordar,
+en una cápsula blanca como la línea de abajo de la bolsa, y **debajo de los cuatro que sabe** la del que se va a olvidar,
+con su nombre delante, para no olvidar a ciegas. Los demás no la enseñan: con nueve filas abiertas la lista sería un
+muro de texto. Sin mundo instalado no hay descripción —PKHeX no lleva ninguna— y la cápsula no sale. Visto con Gholdengo
+(Metaláser y Dracoflechas) en MUY GRANDE y en NORMAL.
+
+Trampa de WPF de paso: **un `ContentPresenter` toma su contenido como contexto de datos**, así que un enlace puesto en el
+propio `ContentPresenter` —aquí su visibilidad, `SelectedKnown.HasDescription`— se resuelve contra el contenido y no
+contra la pantalla, falla en silencio y cae en su valor de reserva. La cápsula de lo que se olvida no salía por eso; va
+dentro de un `Grid`, que sí hereda el contexto.
+
+## §145 · Los objetos de evolución clásicos, cada lista en su tienda (2026-09-19)
+
+**La petición.** Tres listas de objetos de evolución clásicos, a **30.000** cada uno, en tres sitios que eligió el
+jugador: las once piedras en el Centro Pokémon de la **Ruta 8**, los doce objetos de intercambio en el de la **Ruta 2** y
+seis sueltos (Mejora, Escama Bella, Dulce de Nata, Piedra Eterna, Baya Tamate, Saquito Fragante) en **Ciudad
+Konikoni**, donde el Centro Pokémon no tiene mostrador especial y va en la tienda donde se pusieron primero los de gen
+8-9. Y los de gen 8-9 que coincidieran con uno de esos sitios, a la tienda especial siguiente.
+
+**Qué mostrador es cada sitio.** El cartucho no lo dice, y hasta hoy había tres medidos jugando: 8 Konikoni, 10 Hauoli,
+11 Ruta 2. El editor de tiendas de pk3DS para Ultra Sol y Ultra Luna (`MartEditor7UU.cs`) **etiqueta los veinte**, y
+acierta en los tres medidos —«Konikoni City [Incenses]», «Hau'oli City [X Items]», «Route 2 [Misc]»—, así que se toman
+sus etiquetas para el resto: **14 «Route 8 [Misc]», 24 «Route 3 [X Items]», 15 «Paniola Town [Poké Balls]»**. Una
+comprobación que no depende de pk3DS: el 14 tiene **11 huecos**, justo las 11 piedras, y el 11 tiene **12**, justo los
+12 de la Ruta 2. Esos tres índices nuevos **no se han visto jugando** y así va dicho.
+
+**Cómo.** `specialMartShelves` en `randomizer.json`: una lista propia por mostrador (`MartShelf`), con su sitio y su
+precio. Un mostrador con lista **no entra** en el reparto de `specialMartItems`, así que la lista que se derrama pasa al
+siguiente en vez de pisarse. Es más estricta que `specialMartOrder` a propósito: un orden es una preferencia, pero una
+lista que no se puede colocar son objetos que nadie puede comprar, así que un mostrador que no existe, uno de MT, una
+lista más larga que el mostrador o un objeto en dos listas **paran las tiendas antes de escribir un byte**
+(`ShopRandomizer.ValidateShelves`). Lo del objeto repetido no es manía: el precio es un campo **del objeto** y no de la
+tienda, y un objeto en dos listas con dos precios acabaría costando el último que se escribiera. Cada id se comprueba
+contra la tabla del cartucho antes de escribir (§52): «Escama de Dragón» en el juego es **«Escama Dragón»**, y se puso
+con el nombre del juego. Las tiendas de MT sortean igual que antes: una lista propia no gasta números aleatorios.
+
+**Dónde acaban los de gen 8-9.** Estaban en Hauoli (8) y Ruta 2 (10 más dos Poké Balls). Los de Hauoli se quedan; los
+diez de la Ruta 2 pasan a la **Ruta 3** (8 huecos) y los dos que no caben a **Pueblo Paniola** (3), con
+`specialMartOrder` a `[10, 24, 15]`. Siguen a 50.000.
+
+**Verificado contra los ficheros e instalado.** Generado con la seed y el rol de la run y comparado fichero a fichero con
+el mundo instalado: las tiendas normales y las de MT, **idénticas**; en la tabla de objetos cambian **exactamente 29
+entradas, dos bytes cada una** (el precio); y la tabla de especies cambia solo en las copias sueltas, por el §141 —la
+entera, que es la que lee el juego, sale igual—. Instalado desde la propia aplicación (GENERAR e INSTALAR, que deja su
+`RomRandomized`), y lo instalado coincide byte a byte con lo comprobado. **Sin ver todavía dentro del juego.** Para el
+jugador hay un resumen en `Tiendas especiales.txt` en su escritorio. 15 pruebas nuevas (`SpecialMartShelfTests`).
+
+Ojo con una consecuencia del precio: al ser del objeto, **venderlos da 15.000**, y eso incluye lo que se encuentra por el
+suelo y las Bayas Tamate, que se pueden recoger. Es la misma decisión que ya se tomó con los de gen 8-9.
+
+**Corrección del mismo día: el 24 no es la Ruta 3.** El jugador lo miró: en la Ruta 3 **no hay Centro Pokémon**, así
+que la etiqueta «Route 3 [X Items]» de pk3DS está mal y el 24 **no se sabe dónde está**. Es la primera etiqueta de pk3DS
+que falla; las demás que se han mirado (8, 10, 11, 14, 15) cuadran. El 24 vuelve a las Poké Balls y los ocho que tenía
+van al siguiente mostrador especial que sí existe: **Pueblo Paniola (15)**, que el jugador dio por bueno, y el
+**Supermercado Ultraganga** de la Avenida Royal, el mostrador de la izquierda (21, 5 huecos) y el del centro (22, 7).
+Esos dos son etiquetas de pk3DS con un respaldo propio: el 23, a su lado, vende en el cartucho **Estatuillas Raras**, y
+eso solo lo vende ese supermercado. `specialMartOrder` pasa a `[10, 15, 21, 22]`. Sin ver jugando.
+
+**Y la Moneda de Gimmighoul, a 30.** Gholdengo pide **999**, así que a 50.000 cada una la evolución no se podía comprar
+nunca. `MartItem` gana un `price` propio que manda sobre el de su lista (cero es «el de la lista», nunca «gratis»), y
+pasa por la misma comprobación antes de escribir: múltiplo de 10 y como mucho 655.350. Releído del fichero generado:
+la moneda a 30, el resto de gen 8-9 a 50.000 y los clásicos a 30.000. Instalado otra vez desde la app y comparado byte a
+byte.
+
+## §146 · La escena de los iniciales nombra a los de verdad (2026-09-19)
+
+**La petición.** Que al elegir inicial el cuadro de texto diga el Pokémon randomizado y no Rowlet, Litten o Popplio. No
+contradice el §66, donde el jugador pidió que la **aplicación** no enseñara los iniciales antes de tiempo: esto es el
+propio juego diciendo qué hay en la Poké Ball en el momento de elegirla, como en un juego sin randomizar.
+
+**Dónde está.** En el **texto de historia** en español, `a/0/4/6` (pk3DS lo llama `storytext`, 040), que el mod de gen
+8-9 no trae, así que sale del cartucho. Buscando los tres nombres salen **21 líneas en tres ficheros**: el 38 (Kukui los
+presenta), el 39 (descripción, confirmación y nombre sueltos) y el 51 (el menú, la confirmación y «te está mirando
+fijamente»). Los nombres van escritos tal cual. La confirmación usa una variable, `[VAR 0101(0001)]`, y se sustituye por
+el nombre escrito, que es correcto valga lo que valga la variable. Las líneas compartidas («¡Has elegido a [VAR
+0101(0000)]!») no se tocan: no dicen qué inicial es. Tampoco los gritos («¡Rooow!»), que son del Pokémon en pantalla, y
+no está comprobado si el juego enseña el modelo del cartucho o el randomizado. Los textos de la personalidad
+(«te pareces a Rowlet») hablan de la especie en general y se dejan.
+
+**Qué dice ahora.** El nombre y **todos** los tipos de la especie que hay en la tabla de regalos del mundo final,
+con la forma regional si la tiene: «Ese es Quaxly, un Pokémon de tipo Agua», «¿Te decantas por Machop, el Pokémon de tipo
+Lucha?». Las tres descripciones hablaban de Rowlet volando y Popplio haciendo globos, así que se sustituyen enteras por
+«¡Quaxly es un Pokémon de tipo Agua!». Una línea que pasaría de 44 letras se parte antes de «un Pokémon»; las del juego
+llegan a 48. **El menú no está medido**: nadie sabe lo ancho que es, así que con dos tipos se abrevia a «Bulbasaur,
+Planta/Veneno».
+
+**Cómo se escribe, y por qué no con pk3DS.** pk3DS reconstruye un fichero de texto, pero no igual: medido sobre este
+texto, cuenta el relleno dentro de la longitud de cada línea, pone a cero el campo que sigue —el cartucho lo tiene a 4
+en algunas líneas, sin que se sepa para qué— y recorta espacios. **1005 de los 1124 ficheros** salen distintos y **cuatro
+pierden caracteres**. Así que `GameTextPatch` codifica con pk3DS solo las líneas nuevas, les deja su campo, calcula la
+longitud como el cartucho (hasta el terminador, saltando las variables, porque una variable puede llevar un cero), y copia
+el resto cifrado tal cual. Sin cambios, la salida es la entrada byte a byte.
+
+**Guardias.** Cada fichero tiene que dar exactamente las líneas medidas (3, 9 y 9); si no, **no se escribe nada**. Y
+antes de escribir se relee: los tres ficheros tienen que decir lo que se quería y los otros **1121 tienen que ser byte a
+byte los del cartucho**. Las dos guardias saltaron en el desarrollo, y las dos con razón. La primera porque la
+configuración de la ROM escribe la variable por su nombre, `[VAR PKNAME(0001)]`, y no por su número. La segunda porque
+pk3DS **lee** el salto de línea del juego como dos letras, `\n`, y las reglas buscaban un salto de verdad. Al escribir da
+igual, los dos son la palabra 0x000A, pero al leer no: las tres descripciones no se reconocían y habrían dicho «¡Jangmo-o
+es capaz de volar…». La relectura compara texto y lo paró. De paso salió un fallo de orden: el texto se guardaba en la
+carpeta del mod **antes** de releerlo. Ahora se relee primero.
+
+**Interruptor:** `starterText` en `randomizer.json`, encendido. Es el **último** paso del randomizador, para nombrar los
+iniciales que quedan y con los tipos del mundo final, y no gasta números aleatorios, así que el resto del mundo sale
+igual. 17 pruebas (`StarterTextTests`).
+
+**Verificado contra los ficheros e instalado, sin ver en el juego.** Con la seed de la run anterior se comprobó fichero a
+fichero contra lo instalado: todo igual salvo `a/0/4/6`, que es nuevo, con 3 ficheros de texto distintos de 1124. Al
+instalar por la app se vio que el jugador **había empezado de cero a las 18:10** (run nueva, rol EXPERTO) y que Azahar
+seguía con el mundo de la run borrada. No había partida guardada, así que se instaló el de la run nueva, que es lo que
+tocaba antes de jugar. Releído: Quaxly, Froakie y Machop (912, 656 y 66 en la tabla de regalos), y el texto lo dice en
+las 21 líneas.
+
+## §147 · Las Poké Balls de la run anterior aparecieron en la partida nueva (2026-09-19)
+
+**Lo que vio el jugador.** Empezó de cero (18:10: run y partida borradas), cogió al inicial y en la Ruta 1 tenía en la
+mochila **doce tipos de ball de la partida anterior**, entre ellas una **Master Ball**. Y cuatro segundos después le llegó
+el premio «Refuerzo de Poké Balls» (10 Super Balls y una tirada gratis), que espera a que lleves alguna Poké Ball: la que
+llevaba era una de las heredadas.
+
+**La causa.** La regla de primer encuentro quita las balls en una ruta gastada y las devuelve al salir, y lo que debe lo
+apunta en `Saves/backup/objetos-retirados.txt` **antes** de tocar la mochila, para que un cierre a medias no se las coma.
+Ese fichero **no decía de qué run era**. «Empezar de cero» borra la run y la partida, pero no ese fichero, así que la
+partida nueva conectó en la Ruta 1, la regla dijo «la ruta conserva su encuentro, devuelve», y devolvió lo que se le
+debía a la run anterior. Consta en el historial de la run nueva como `BallsReturned` con los doce tipos (1 Master Ball,
+13 Super, 3 Poké, 11 Buceo, 10 Nido, 1 Turno, 6 Lujo, 11 Ocaso, 1 Sana, 9 Veloz, 1 Peso y 3 Ente) y el `RewardClaimed`
+justo detrás.
+
+**El arreglo.** Lo que se debe **pertenece a la run que lo quitó**. `WithheldLedger` escribe `run=<id>` en la primera
+línea y solo contesta a esa run. `IItemWithholder` pide la run en `Owed`, `Withhold` y `GiveBack`, y `BallControlService`
+se la da. Un fichero de otra run —o uno anterior a esta línea, que no sabe de quién es— **no le debe nada a nadie**. Y no
+se tira: la primera vez que la run actual escribe, se aparta con fecha a `objetos-retirados-de-otra-run-<fecha>.txt`, por
+si resultara que sí se debía. Pruebas: cinco del registro sobre ficheros temporales y una de la regla con dos runs. La
+prueba de «devolver encima de lo cogido mientras tanto» usaba **una run distinta en cada llamada** y pasaba porque el
+registro no las distinguía; ahora usa una sola, que era lo que quería comprobar.
+
+**Lo que no arregla.** Una partida nueva empezada **dentro del juego** sin pasar por «empezar de cero» sigue siendo la
+misma run para PermaLocke. Distinguirla exigiría atar el registro también al entrenador de la partida (su identificador),
+y eso no está hecho.
+
+## §148 · Cinco copias para los amigos, dentro de la carpeta de la competición (2026-09-19)
+
+A petición del jugador, cinco carpetas `2` a `6` en `G:\Mi unidad\PermaLocke Competición`, cada una con la salida de
+`tools\publicar.ps1` (exe autocontenido, `Data\`, `Emulator\`, las fotos de zona y `LICENSE`) **sin los tres LEEME**
+—el jugador lo explica él— y con `Config\sync.json` a `".."`. Se repasó antes de copiar que el emulador no llevara una
+carpeta `user\` ni nada del jugador.
+
+**Por qué `..`.** La carpeta compartida se guardaba como ruta absoluta, y en el PC de cada amigo la unidad y la ruta de
+su Drive son otras. `SharedFolderSettings.Read` resuelve ahora una ruta **relativa contra la carpeta de la aplicación**,
+no contra el directorio de arranque, que depende de cómo se abra un acceso directo. Así cada copia encuentra la
+competición subiendo una carpeta. Tres pruebas. **Consecuencia:** cada amigo necesita acceso a la carpeta de la
+competición entera, no solo a la suya.
+
+**Lo que no va, como en cualquier reparto:** la ROM (cada uno la suya en `ROM\`) y el mod de gen 8-9 (`Expansion\`).
+Sin el mod, su mundo se randomiza sobre el cartucho, con 807 especies.
+
+**Visto:** una copia idéntica metida en una carpeta de competición de prueba, fuera del Drive, arranca con otro
+directorio de trabajo, toma su propia carpeta como raíz y su propio Azahar portátil, sin errores ni avisos. Las cinco
+del Drive no se han abierto, para no crearles un perfil de jugador que no es suyo.
+
+**Y el mod de gen 8-9, una sola copia para los cinco (mismo día).** El jugador pidió que las copias llevaran el mod
+«como lo suyo», dejando a mano solo la ROM. La ROM no trae gen 8-9, eso es del mod. Y **no cabe**: el Drive del jugador
+tiene 15 GB con **893 MB libres**, y el mod ocupa 2,4 GB, casi todo el fichero de modelos `a/0/9/4`. Cinco copias serían
+12 GB. Así que `AppPaths` usa ahora la `Expansion` de la carpeta de encima cuando la suya no tiene `romfs`: una copia del
+mod junto a las carpetas `2` a `6` sirve a todas. Se mira el `romfs` y no la carpeta, porque cada copia crea al arrancar
+una `Expansion` vacía, y esa no puede tapar la compartida. Cuatro pruebas. **Sin aplicar todavía en el Drive:** hace falta
+espacio para el mod y para cambiar el `.exe` de las cinco copias, que siguen siendo las de antes, sin este cambio.
+
+**Aplicado el mismo día, con una copia por carpeta.** El jugador amplió su Drive a 100 GB y pidió el mod en cada
+carpeta, como el suyo. Copiada su `Expansion` entera (2.463 MB) a `2` a `6`, y comprobado con la suma de todos los
+ficheros: las cinco idénticas a la suya. Va con el `README.txt` del propio mod, que no es una explicación de PermaLocke:
+es su licencia (**CC BY-NC-ND 4.0**), que deja compartirlo sin ánimo de lucro **conservando los créditos y el enlace
+oficial**, y quitarlo lo incumpliría. Solo la ROM queda a mano. La vuelta a la `Expansion` de la carpeta de encima sigue
+en el código, pero con una copia por carpeta no hace falta, y las cinco llevan todavía el `.exe` de antes de ese cambio.
+
+## §149 · Las rutas cuentan desde la primera Poké Ball (2026-09-19)
+
+El jugador, en una partida de prueba, gastó la Ruta 1 cruzando la hierba que la historia obliga a cruzar antes de que
+nadie le dé una Poké Ball. Ahora un combate salvaje **no gasta la ruta ni marca el MAPA** mientras la run no haya
+tenido ninguna ball. `BallControlService.HasHadBallsAsync` mira la mochila, y la primera vez que ve una ball (llevada, o
+retenida por esta run) escribe **`FirstPokeBallSeen`**. Desde ahí cuenta siempre, aunque luego se tiren todas: la
+mochila se vacía, pero haberlas tenido no se deshace. Si la mochila no se puede leer, contesta que sí, o sea, la regla
+de siempre, en vez de dejar rutas libres por una lectura fallida. `EncounterGuard` lo pregunta antes de gastar y antes
+de marcar. Una prueba. **La Ruta 1 de la partida de prueba se queda gastada**, como pidió el jugador. Aplicado a su app
+y a las cuatro carpetas que quedan en el Drive, ya con nombre (Guille, Juan, Juanega y Tosi). Sin jugar todavía.
+
+## §150 · Capturas y muertes, también desde la primera Poké Ball (2026-09-19)
+
+Mismo interruptor que el §149: hasta que la run tiene su primera Poké Ball (`FirstPokeBallSeen`), `GameLinkMonitor` no
+registra capturas ni muertes del equipo, y `RecordDeathOnceAsync` tampoco cuenta las del combate. Aplicado a la app del
+jugador y a las cinco carpetas del Drive. Sin prueba propia ni visto en el juego, por falta de tiempo esa noche.
+
+## §151 · Revisión entera del mundo instalado, y lo que salió (2026-09-21)
+
+El jugador pidió dejar de descubrir fallos de uno en uno: antes de hacer la carpeta de los amigos, comparar **todo** lo
+que el randomizador cambia contra el juego sin tocar. Se hizo sobre el mundo instalado (rol EXPERTO), módulo a módulo,
+con una herramienta de un solo uso que lee la capa base (cartucho + mod de gen 8-9) y el mod instalado.
+
+**Lo que está como debe:** datos de Pokémon (estadísticas y tipos sin mover, habilidades asignables, filas sueltas
+iguales a la entera, §141); estáticos al +27% del rol y regalos intactos; entrenadores (137 combates importantes con el
+extra del rol recortado a seis, megas desde la 6ª prueba, y la dificultad del §122: **0** objetos del cartucho
+sustituidos, 143 añadidos, 25,1% con objeto, **0** EV con otro total, **0** por encima de 252, **0** IV que bajen);
+iniciales y las 21 líneas de su escena, sin un Rowlet/Litten/Popplio suelto; salvajes (45.848 huecos, ninguno fuera
+de rango ni prohibido, formas regionales válidas, **todos** dentro del ±15% de fuerza); objetos del suelo (los mismos
+538 del cartucho barajados, las 45 MT siguen siendo MT, ningún cristal Z en el saco); tiendas (las tres listas del
+§145 en su mostrador, el derrame en el orden de `specialMartOrder`, precios leídos de la tabla de objetos iguales a
+los pedidos, curativos fuera de las ocho normales); y en `code.bin`, las mismas 100 MT y 67 tutores reordenados y
+**ni un byte** cambiado fuera de esas dos tablas.
+
+**Legendarios de gen 8-9 en la hierba.** `bannedSpecies` se escribió antes del mod y acaba en el 807: salían Meltan en
+105 huecos, Kubfu en 60, Terapagos en 41, Calyrex en 38, y así hasta 22 especies. El gacha ya los trataba como
+legendarios —`Data/species.json` marca exactamente esos 26 por encima del 807—, así que era un olvido. El jugador pidió
+fuera de salvajes **todos** los legendarios y el resto como estaba, así que es una lista aparte, `wildBannedSpecies`,
+que estrecha solo el saco de salvajes (`WildEncounterRandomizer.PoolFor`); entrenadores y estáticos pueden seguir
+llevándolos. Con la lista vacía el saco es el mismo objeto, así que un mundo generado sin ella sale idéntico. Un test
+falla si algún legendario de `species.json` no está en una de las dos listas, comprobado quitando la lista. Ojo con lo
+que eso deja: un estático que en el cartucho era un Pokémon normal (Leavanny, Comfey) puede salir legendario.
+
+**Seis evoluciones imposibles.** Las del mod que piden saber un movimiento no estaban en `MoveLevels`, y con
+`randomizeLearnsets` quedaban sin forma de conseguirse. Cinco siguen la regla de las nueve del cartucho —el nivel al
+que la preevolución aprende el movimiento en la capa base, leído de `a/0/1/3`—: Annihilape 35, Farigiraf 32, Wyrdeer
+21, Grapploct 35 y Overqwil 28 (fila de forma 1100, Qwilfish de Hisui). Dipplin aprende Bramido Dragón solo a nivel 1,
+como Piloswine y Poipole, y el jugador lo puso al 45 como ellos. La lista completa para jugadores está en
+`EVOLUCIONES CAMBIADAS.txt`, generada pasando la tabla sin randomizar por el propio `ImpossibleEvolutionFixer`.
+
+Verificado generando un mundo con otra semilla: **ningún** legendario de gen 8-9 en salvajes, siguen en entrenadores
+y estáticos, y «no queda ninguna que exija otro jugador» con **15** por movimiento pasadas a nivel. **El mundo
+instalado no cambia hasta que se vuelva a generar**, y regenerar cambia todas las rutas.
+
+**Cosas menores:**
+- `RomTool trainers` decía «objetos alterados … (debe ser 0)» y «EV alterados … (debe ser 0)», y daba cientos con un
+  mundo correcto, porque el §122 los cambia a propósito. Ahora mide sus promesas: objetos del cartucho cambiados o
+  quitados, EV con otro total y EV por encima de 252.
+- `GarcPatcher.ReadOnly` y `ReadAllReadOnly` devuelven los bytes **tal como están guardados**; `LazyGARC`
+  descomprime LZ11 sin avisar y ellos no. Sobre `a/0/8/3` la revisión encontró cero huecos salvajes y nada falló.
+  Ningún llamador de hoy lee un contenedor comprimido; queda escrito en el código.
+- El §46 decía que el nivel del rol se redondea **hacia arriba**, y el código redondea al más cercano. Manda el
+  código: 12 × 1,2 = 14,4 da 14, que es el cap de la 1ª prueba; hacia arriba saldría 15.
+
+## §152 · Afueras de Hauoli en cada combate de la Ruta 1, y el cierre al poner el nombre (2026-09-21)
+
+Dos cosas que el jugador vio empezando partida nueva, y las dos salieron del registro de la app y del de Azahar sin
+tocar su partida.
+
+**Todos los combates de la Ruta 1 caían en «Ruta 1 (Afueras de Hauoli)».** El juego apunta en el propio Pokémon
+dónde se encontró, y el Vulpix decía «Ruta 1»; la app decía Afueras. El diagnóstico que dejó el §151 en el lector
+—cada registro con su mapa y su posición cuando no se ponen de acuerdo— lo contó: memoria llena de transformaciones en
+**(1, 0, 0)** con la rotación identidad y `FFFFFFFF` detrás, que pasaban todos los filtros del §117 y, como sus cuatro
+primeros bytes son cero, se leían como **mundo 0, mapa 0**: Afueras de Hauoli. Salen a montones de la búsqueda de
+hermanas del mapa 0, cuyo patrón son cuatro ceros. Fuera de combate se perdían entre los buenos, pero **al empezar un
+combate los registros reales pasan al mapa del combate** y dejan de validar (§117), y durante esos segundos solo
+votaban ellos: el combate se colocaba en las afueras. **45** veces en los registros, siempre exactamente (1, 0, 0).
+`FieldRecord.Parse` rechaza ya una posición dentro del cubo unidad del origen; la posición real más pequeña registrada
+es (2000, 3.94, 6299), en Senda Mahalo. Es la misma familia que los (1, 1, 1) que el §117 ya descartaba.
+
+Y quitada la basura quedaba un empate de verdad. El §117 midió que todos los registros cambian de mapa a la vez, y eso
+vale **al cruzar una puerta o volar**; andando por un borde sin pantalla de carga no: de las afueras a la Ruta 1,
+`0x33F6E4C8` cambiaba de posición en cada lectura y pasó al mapa 3, y `0x33F6E510` se quedó en el mapa 0 y en un punto
+fijo, por donde se entró. Uno contra uno, `Resolve` no decide nada, y una ruta así no se marcaría nunca. Ahora
+desempata **el registro que se mueve**: el que ha cambiado de posición al menos dos veces en los últimos 5 s, y solo si
+todos los que se mueven están en el mismo mapa. Dos veces porque el de la entrada también cambia, una vez, al entrar.
+Un combate salvaje empieza andando por la hierba, que es justo cuando esto se cumple; parado no decide nada, y una
+lectura sola nunca basta, que es la lección del §55. El registro lo dice: «Zona: … — por el registro que se mueve».
+
+**El cierre de Azahar mientras escribía su nombre.** El registro del emulador se corta a media línea a los 21,8 s,
+dentro de la ráfaga de lecturas del barrido completo del equipo, que la app había lanzado a los 19 s: la cuarta vez con
+esa firma. Y no había nada que encontrar, porque en la pantalla del nombre no existe ningún equipo. La espera doblada
+del §151 no ayuda al **primer** barrido. Ahora, antes de barrer, `AzaharGameStateProvider` pregunta dos cosas:
+
+- **¿Hay partida guardada?** Sin ella el juego nunca se ha guardado: es la intro, o un equipo que la regla de
+  encuentros tampoco puede usar todavía (§117). No se barre, y HOME dice «Guarda la partida dentro del juego».
+- **¿Están en memoria los Pokémon de esa partida?** Los cuatro primeros bytes de un PK7 guardado son su constante de
+  encriptación, en claro, seguidos de un cero: la búsqueda del fork los encuentra en **una** petición por región,
+  donde un barrido son unas cien mil. En la pantalla de título o cargando no están, y no se barre. Se pregunta como
+  mucho cada 20 s.
+
+Con un Azahar que no es el fork la búsqueda contesta vacía siempre, lo que se leería como «no está» para siempre; ahí
+la comprobación se aparta y se barre como antes. Un barrido pedido porque la estructura se movió (§135) no pregunta:
+el equipo se acaba de leer.
+
+**De paso**, MANTENIMIENTO lanzaba «Falló la auditoría de la run» cada vez que se borraba o creaba una run: el aviso de
+run cambiada llega desde el hilo que la cambió y la auditoría rellenaba una lista de la pantalla desde allí. Ahora pasa
+por el hilo de la ventana, como ya hacían HOME, CEMENTERIO y COMPETICIÓN. ESTADÍSTICAS tenía el mismo fallo sin
+estrenar y queda igual.
+
+**Ojo con el registro del emulador del jugador**: tiene `RPC_Server:Info` y `Service.FS:Trace`, así que apunta cada
+petición de la app —doscientas mil líneas por barrido— y llegó a rotar a los 100 MB. Se dejó así en alguna prueba. No
+se ha tocado porque es la configuración de su emulador; la carpeta de los amigos lleva una configuración nueva sin
+ese filtro.
+
+**Sin ver todavía en el juego**: ni el desempate andando por la Ruta 1 ni el primer arranque sin barrido. Todo con
+pruebas que fallan sin el arreglo, comprobado quitándolo.
+
+### Y dos cosas que salieron preparando la carpeta de los amigos (mismo día)
+
+**Con solo el inicial no se encontraba el equipo, y sin equipo no funcionaba nada.** El barrido confirma un equipo
+encontrando un **segundo** Pokémon a un salto de distancia (`DetectStride`), así que quien lleva solo su inicial no
+existe para él. En el PC del desarrollador nunca se vio porque la dirección de la última vez se revalida sin barrer;
+en una instalación nueva no hay dirección de la última vez, y todo lo demás cuelga de tener equipo: la regla del
+primer encuentro, los avisos, la ruta. Es la explicación más probable de «no salían las notis» en la carpeta anterior.
+
+Ahora la comprobación de arriba **ya no pregunta, localiza**: `PartyLayoutLocator.LocateByKeys` busca las constantes
+de encriptación de la partida guardada, vuelve atrás desde cada coincidencia mientras la entrada anterior siga siendo
+un Pokémon —así da igual qué miembro se encontró— y **mide** qué salto tiene cada inicio, porque con un solo Pokémon no
+hay segunda entrada que lo diga: busca las estadísticas donde las guarda cada estructura (detrás del bloque en las
+copias, en 0x158 en la que lee el juego) y acepta solo donde `PartyStats.AreHere` lo confirma. Una vista con el salto
+equivocado lee su cola de otra cosa y no pasa. Con partida guardada **no hay barrido**: el equipo sale en unas pocas
+búsquedas. El barrido queda para un Azahar que no es el fork y para cuando la estructura que lee el juego se ha movido
+y la partida guardada no la alcanza (§135). Probado con Pokémon de verdad en la memoria de un emulador falso: un inicial
+solo en la estructura del juego, una coincidencia en el tercer hueco que vuelve al primero, y una instalación nueva que
+se conecta sin un solo barrido.
+
+**El mundo instalado se leía una vez, al arrancar.** Un amigo crea la run, genera e instala con la aplicación abierta, y
+se quedaba en las 807 especies del cartucho hasta reiniciar: un inicial de gen 8-9 no era una especie que los lectores
+conocieran. Reinstalar tenía la versión suave: los aprendizajes del mundo anterior en MOVIMIENTOS y sus capturas
+estáticas permitidas en la regla de las balls. Ahora RANDOMIZADOR relee el mundo al instalar y al quitar
+(`InstalledWorld.Apply`, y `Forget` en `WorldAllowedStatics` y `WorldEvolutionLines`).
+
+## §153 · La primera partida en la carpeta de prueba: balls perdidas, la escuela sin ruta y un combate de otra run (2026-09-21)
+
+El jugador jugó en `PermaLocke prueba` con la versión del §152 y contó tres cosas: en su casa le «devolvieron» las
+Poké Balls y en realidad se las quitaron, en la hierba de Afueras de Hauoli no contaba nada, y en la Escuela de
+Entrenadores dejaron de salir avisos y no le daban las balls. Salió todo del registro de esa carpeta. Lo bueno primero:
+el equipo se encontró **por la partida guardada, sin barrer**, y la Ruta 1 se marcó bien la primera vez.
+
+**Las balls se perdían, y era mío (el arreglo de la deuda doble del mismo día).** `DebtWasUndoneByAReload` decía «la
+mochila tiene lo mismo que la partida guardada, luego ha recargado» — y con **cero y cero** eso no demuestra nada: es
+justo la mochila recién retirada cuando las balls se recogieron después del último guardado. Así, en la casa (una zona
+libre) devolvió las Super Balls pero **perdonó** la deuda de las diez Poké Balls, y en la hierba de Afueras retiró las
+Super Balls para el primer encuentro y al ver que era un Bonsly las **perdonó** en vez de devolverlas: sin balls no se
+pudo capturar y el mapa marcó huida. El mismo aviso («la retirada anterior nunca llegó a guardarse») está en el
+registro de la partida principal esa mañana. Una recarga solo se ve cuando **trae balls de vuelta**, así que ahora hace
+falta que la mochila tenga alguna. El único caso que eso acierta peor —recargar una partida de antes de recibir las
+balls y que la historia las vuelva a dar— regala diez; perderlas para siempre para la partida.
+
+**En la Escuela no había ruta con todos los registros de acuerdo.** Seis registros del mapa de la escuela (mundo 27,
+mapa 46) y seis del de fuera (mundo 0, mapa 0), los doce de «Ruta 1 (Afueras de Hauoli)». `FieldRecord.Resolve` pedía
+mayoría **de mapa**, seis contra seis no decide, y la ruta quedaba sin identificar. Las reglas trabajan **por zona**, así
+que sin mayoría de mapa se busca mayoría de zona, con la misma exigencia: dos como poco y más de la mitad. Lo mismo pasa
+dentro de la casa del jugador, que son dos mapas de la misma zona.
+
+**Un combate de la run anterior terminó en la nueva.** Azahar se cerró a mitad de un combate, se empezó de cero, y cuatro
+minutos después `EncounterGuard` acabó aquel combate en la run nueva y avisó de «Mapa sin marcar». No marcó nada porque
+justo no se leían los contadores; si se hubieran leído, habría marcado una ruta de la run nueva con un combate de la
+vieja. Además la cuenta de combates de la partida vieja seguía de referencia, y una partida nueva empieza de cero: hasta
+superarla no se veía empezar ningún combate. Ahora se tira todo al cambiar de run, y también cuando el contador de
+combates salvajes **baja**, que jugando no pasa nunca: es que se ha recargado o se ha abierto otra partida. **Sin prueba
+automática**: `EncounterGuard` depende de cuatro piezas concretas que hablan con el emulador y montarle un banco de
+pruebas es un trabajo aparte.
+
+Las otras dos, con pruebas que fallan sin el arreglo, comprobado quitándolo. La partida de prueba del jugador **no se
+toca**: las balls perdonadas no vuelven solas porque la deuda ya se borró, así que lo limpio es empezar de cero en esa
+carpeta.
+
+**Y los puntos del MAPA contra el lector (mismo día).** Cruzados `Data/marcadores.json`, `Data/mapas.json` y los
+encuentros del cartucho (`encdata` con `zonedata` y `worlddata`): **los 61 marcadores tienen al menos un mapa** que el
+lector traduce a su id, y **ninguna zona con encuentros se queda sin clasificar** —o es un marcador o está en
+`sinEncuentros`—. El jugador confirmó que el MAPA es la lista de la competición tal cual, así que lo que el cartucho
+tiene fuera de él (Colina del Recuerdo, Prado de Poni, Túnel del Volcán, Pueblo Ohana, los árboles de bayas del Huerto y
+de la Playa de Ula-Ula, Ruinas de la Cosecha) se queda **sin capturas a propósito**. Tres marcadores caen donde el
+cartucho no tiene ningún salvaje —Ciudad Konikoni, Cueva Sotobosque (Sala del Dominante) y Playa de Poni— y nunca se
+rellenarán; dicho, sin cambiar nada.
+
+## §154 · El cap de nivel bajaba la experiencia y dejaba el nivel de la pantalla (2026-09-21)
+
+El jugador: «antes, si subía uno a 15 con cap 14, volvía atrás, abría el menú y estaba a 14; eso dejó de ir». El registro
+de la carpeta de prueba lo tenía dicho: «Froakie estaba a nivel 15, cap 14. Corregido y releído en 1 copias», con
+**4 bytes** escritos. La escritura entraba, se releía, y en el menú seguía a 15.
+
+La causa es de orden: `EnforceLevelCap` se escribió antes de que el §99 encontrase dónde guarda el juego las
+estadísticas de la estructura que lee, **28 bytes en `0x1E4 + 0x158`**, y esa cola es donde vive el **nivel que enseña
+el menú** (`Stat_Level`). El cap leía la entrada contigua, veía que la cola no eran estadísticas —en esa estructura no lo
+son— y con buen criterio (§53) solo tocaba el bloque cifrado: bajaba la **experiencia**. Releía la experiencia, veía 14 y
+lo daba por hecho. El aviso de HOME ya lo delataba: «entra y sal de un combate para verlo».
+
+Ahora, si esa entrada es la estructura que lee el juego —medido **antes** de escribir con `PartyStats.AreHere` sobre
+`ReadAuthoritative`, porque después el nivel de la cola ya no coincide con el de la experiencia—, además de la
+experiencia se escribe la cola de `0x158`: `Stat_Level` al cap y las seis estadísticas **recalculadas** con
+`StatCalculator.Restat`, el mismo código que usa ENTRENAR EV, sacado de `SaveEvTrainer` sin cambiar una línea de su
+lógica. Bajar solo el número habría dejado un nivel 14 con las estadísticas de nivel 34 a quien se pase del cap con
+caramelos. Los PS actuales bajan lo mismo que el máximo y **un caído se queda a cero** (§98). Sin tabla de estadísticas
+del mundo instalado no hay número honrado: baja el nivel, las estadísticas se quedan y el registro lo dice. Se escriben
+solo los bytes que cambian, con copia previa, y se relee como lo lee el juego antes de darlo por bueno. Las copias con la
+cola contigua (el espejo) reciben lo mismo por coherencia, aunque el juego no las lea.
+
+Cinco pruebas con un Froakie de verdad, cifrado, en la memoria de un emulador falso que acepta escrituras: el nivel y
+las estadísticas de nivel 14, caramelos hasta 34 sin quedarse sus estadísticas, un caído a cero, otro Pokémon en el
+hueco intacto y sin tabla del mundo solo el nivel. **Cuatro fallan con el código de antes**, comprobado. Y como
+`WorldLimits` es global, las ocho clases de pruebas que lo tocan pasan a una colección sin paralelismo.
+
+**Sin ver en el juego todavía.** Lo que se sabe del juego es que esa cola es la que lee el menú (77 PS escritos ahí, 77
+en pantalla, §99); que el nivel también se lea de ahí es lo que hay que ver.
+
+## §155 · Lo que sale del gacha va al equipo si cabe (2026-09-21)
+
+Pedido por el jugador: «si tiras de gacha y el equipo no está completo, que se añada al equipo». `SaveBoxDelivery`
+—la única entrega que usa `IPokemonDelivery`, y solo la usa el gacha, así que el wonder trade y la ruleta no cambian—
+mira primero el equipo de la partida guardada: con menos de seis, el Pokémon entra en el primer hueco libre; con seis,
+al PC como siempre. Mismas garantías que el PC: juego cerrado, copia de la partida antes de tocarla y relectura del
+fichero, ahora comprobando especie, forma, nivel, PID y que llegue a plena salud.
+
+Lo único que un Pokémon de equipo lleva y uno de caja no son las **estadísticas de combate**, y ahí está la trampa: un
+Pokémon en caja no las guarda, así que `PokemonBuilder` podía dejar las que calcula PKHeX con **su** tabla; en el equipo
+se ven, y esa tabla está mal para todo lo que añadió el mod (§51). Se recalculan con `StatCalculator.Restat`, el mismo
+código de ENTRENAR EV y del cap (§154), con las estadísticas base del mundo instalado, y los PS al máximo. **Sin tabla
+del mundo no hay estadísticas honradas y va al PC**, como antes. El resultado dice «caja 0» para el equipo —las cajas se
+cuentan desde el 1— y el evento `PokemonDelivered` lo escribe como «en el equipo, hueco N».
+
+Cuatro pruebas con partidas de verdad hechas con PKHeX y una tabla del mundo **distinta de la de PKHeX a propósito**,
+para cazar que PKHeX recalculase las suyas por detrás al meterlo en el equipo (no lo hace): con hueco entra en el equipo
+con las estadísticas del mundo y a plena salud, con seis va al PC, sin tabla va al PC, y se copia la partida antes. La
+primera falla con el código de antes, comprobado. **Sin ver en el juego todavía.**
+
+## §156 · Abrir la bolsa te devolvía a la ruta de antes (2026-09-21)
+
+Visto jugando en la carpeta de prueba, dos veces en media hora. En la Escuela de Entrenadores, recién recibidas las
+Poké Balls, abrir la bolsa las quitaba «porque Ruta 1 (Afueras de Hauoli) ya gastó su encuentro» y cerrarla las
+devolvía. Lo mismo en Ciudad Hauoli: capturado en la Zona Comercial y de vuelta en el Paseo Marítimo, que aún conservaba
+su encuentro, abrir la bolsa decía Zona Comercial. No costaba nada —con la bolsa abierta no hay combate—, pero es la
+misma avería que puede situar mal un combate, así que se ha mirado entera.
+
+El log de esos momentos lo cuenta. El juego guarda, junto a los registros que siguen al jugador, otros de **dónde
+estuvo**: el mapa del que viene (`0x33F6E510`, ya conocido del §152), el sitio donde empezó el último combate y copias
+viejas de otras veces —un trío de la escuela seguía diciendo la escuela minutos después de salir—. En minoría no hacen
+daño, porque manda la mayoría (§118). Pero **abrir la bolsa apaga los que siguen al jugador** mientras está abierta, y los
+que quedan votan solos: en el Paseo Marítimo, cuatro de la Zona Comercial contra ninguno. Es la forma del §152 —allí
+votaban unas transformaciones basura al empezar un combate— con registros que sí son de verdad, solo que viejos.
+
+La regla nueva está en `FieldZoneReader.Believable`: **una zona se deja cuando los registros que la decían cambian de
+opinión, no cuando se callan.** Para pasar a otro sitio, entre los que ahora lo dicen tiene que haber o uno que dijo el
+sitio actual mientras era el actual —los que siguen al jugador, que cambian de mapa con él en una puerta, en un vuelo o
+al cruzar un borde— o uno que esté andando (dos movimientos en cinco segundos, el criterio del §152). Uno que ya decía
+el otro sitio antes y no se ha movido desde entonces es lo que el jugador dejó atrás. Solo para un cambio de **sitio**:
+dos mapas del mismo sitio cambian libremente, porque ninguna regla los distingue. Y solo **mantiene** una zona, nunca
+se la inventa: sin mayoría la respuesta sigue siendo «no lo sé».
+
+Mientras se mantiene una zona se busca con la cadencia de cuando no hay acuerdo (cada 20 s), por si el registro que
+sigue al jugador no estuviera entre los que se leen, y el log lo dice una vez con todos los registros. De paso protege
+también el arranque de un combate: al empezar, los registros vivos pasan al mapa del combate y dejan de valer, y los
+viejos podían mover la zona confirmada a otro sitio justo en el segundo en que se sitúa el combate.
+
+El coste, dicho: si la zona adoptada fuese la equivocada —por ejemplo, al conectar PermaLocke con la bolsa ya abierta—
+salir de ella exige que el jugador dé un par de pasos, cuando antes bastaba la mayoría. Un combate salvaje empieza
+siempre andando, así que no puede situarse mal por eso.
+
+Tres pruebas con los registros en la memoria de un emulador falso: la bolsa abierta en el Paseo (con 30 s de bolsa y
+búsqueda incluida) no mueve la zona; una puerta se sigue en el acto y la bolsa detrás de ella no; y registros que nunca
+dijeron el sitio actual se llevan al jugador en cuanto uno anda. **Las tres fallan con el código de antes**, comprobado.
+**Sin ver en el juego todavía.**
+
+## §157 · Megas solo después de la sexta prueba (2026-09-21)
+
+El jugador llegó a Liam, el primer combate importante, en Ciudad Hauoli, y le salió una mega. No era un fallo:
+`megaTrainerMinimumLevel` estaba en **1**, «todos los combates importantes», porque así se había pedido. Lo que pide
+ahora es lo contrario: **ninguna mega antes de la sexta prueba**, que es donde el que juega también las desbloquea, y
+de ahí en adelante sí.
+
+En este proyecto la sexta prueba es la **Gran Prueba de la Kahuna Mayla** (`prueba-06` de `achievements.json`), un
+combate de nivel **28** de cartucho, y el cap de esa etapa es **34**, que es ese 28 subido el 20% de la edición base. «Más
+nivel que el cap de la sexta» es por tanto **29 de cartucho**: 29 subido un 20% da 35. El umbral se queda en niveles del
+cartucho y no de pantalla a propósito, porque así las megas salen en los **mismos combates con cualquier rol**: con
+EXPERTO (+27%) la propia Mayla se ve a 36, que ya pasaría de 34 comparando en pantalla. Es la trampa del §85 al revés, y
+la prueba nueva `MegaFloorTests` ata el umbral al cap con la misma cuenta que usa el randomizador, además de fijar que el
+combate de Mayla no la lleva. Las dos fallan con el 1 de antes.
+
+Medido con `RomTool importantes`, que ahora marca con el umbral del JSON (antes llevaba un 33 escrito a mano y decía
+MEGA donde el randomizador no la ponía) y acepta `--rol` para un mod generado: sobre la capa base quedan fuera Tilo a
+25, Francine a 27 y Mayla a 28, y los primeros con mega son Olano a 29 y Tilo a 30. Generado con la semilla 20260921 y
+el rol NORMAL: **87 combates con mega y 50 sin ella**, y releyendo el fichero la única forma especial por debajo del
+nivel 35 es un Sandshrew de Alola a nivel 6, que es forma regional. Generado también con el umbral viejo y comparado:
+cambia **solo** `a/1/0/7`, en 137 entrenadores, y **solo en el hueco de la mega**; ningún otro Pokémon cambia un byte,
+porque las megas salen de su propia corriente aleatoria. Así que reinstalar el mundo de una run empezada no mueve nada
+más.
+
+**Los estáticos no se tocan**: el Nihilego del Paraíso Æther (Nv 27) sigue siendo mega por su regla de
+`staticOverrides`, y es a propósito: el jugador lo quiere así, como única mega antes de la sexta prueba. **Vale al
+regenerar e instalar el mundo**; el que está instalado no cambia solo.
+
+## §158 · Los ataques, ordenados de flojo a fuerte (2026-09-21)
+
+El jugador: «casi todos, si no prácticamente todos los ataques que tengo o que me atacan son de mínimo 80 de potencia,
+me parece un descontrol». Medido, y tenía razón. Sobre el mundo instalado, contando los cuatro últimos movimientos que un
+Pokémon aprende hasta cada nivel —que es lo que llevan un salvaje y un entrenador, porque `trainerMovesFromLearnset`
+deja que el juego se los dé—: a nivel 5, **el 59 % de los ataques eran de 80 o más y 89 de cada 100 Pokémon llevaban
+alguno**, contra un 5 % y un 8 en el cartucho, y **igual en todos los niveles** hasta el 30. La mediana de potencia era 80
+a nivel 1 y a nivel 50.
+
+No es un fallo de código sino de diseño. El sorteo del §101 copió de Universal Pokémon Randomizer la cuota de ataques
+de verdad, sin repetidos y el ataque garantizado a nivel 1, y cada hueco sale **del catálogo entero sin mirar su nivel**.
+En ese catálogo la mitad de los ataques con daño son de 80 o más. De UPR no se copió la otra mitad: su opción
+«reordenar los ataques de daño». Lo mismo hace pk3DS por defecto (`OrderByPower` en su `LearnsetRandomizer`, con un
+primer movimiento flojo), y midiendo el mundo de la referencia (BxnnyLocke, solo lectura, con su propia tabla de
+movimientos porque también la cambia) sale exactamente esa forma: 12 % a nivel 5, 29 % a nivel 15, 65 % a nivel 30.
+
+Se hicieron las dos maneras y se midieron con la semilla 20260921, y el jugador eligió:
+
+- **Ordenar por potencia** (`learnsetReorderByPower`, **la elegida**): el sorteo de siempre, y después los ataques de cada
+  aprendizaje se ordenan de más flojo a más fuerte en los huecos que ya eran de ataque; los de estado no se mueven, y el
+  hueco del ataque garantizado de nivel 1 sigue siendo de ataque (el más flojo). **15 % a nivel 5, 32 % a nivel 15, 72 %
+  a nivel 30**, casi la referencia.
+- **La curva del cartucho** (`learnsetPowerTolerance` por encima de 0, apagada): cada ataque se cambia por otro de
+  potencia parecida al que el cartucho tenía en ese hueco, y uno de estado por otro de estado. 5 %, 7 % y 26 %, calcado al
+  juego. Se queda hecha y probada por si se quiere más suave.
+
+Para comparar dos ataques se usa la potencia por los golpes, con los de dos a cinco golpes contados como tres
+(`MoveFacts.Strength`): contar cinco pondría Recurrente al lado de Hiperrayo. Y `MoveFacts` distingue ya los de daño fijo
+—Sísmico, Tinieblas, los de fulminar—, que tienen potencia 0 pero no son de estado.
+
+Comprobado: generando la misma semilla con la opción y sin ella, **solo cambia `a/0/1/3`**, porque los aprendizajes
+tienen su propia corriente aleatoria. Seis pruebas nuevas en `LearnsetPlannerTests`: ordenados de flojo a fuerte, los de
+estado en su sitio y el mismo conjunto, el garantizado de nivel 1 sigue siendo ataque, y las dos de la curva. La de
+ordenar falla sin la ordenación. **Vale al regenerar e instalar el mundo**, y cambia lo que aprenden todos, también los
+Pokémon de los entrenadores.
+
+## §159 · Dos cierres de Azahar en tres minutos, y dos PermaLocke a la vez (2026-09-21)
+
+Tras reinstalar el mundo, el emulador se cerró **al entrar** y otra vez **a los tres minutos, moviéndose por el juego**.
+Los dos logs del emulador (`Emulator/user/log`, el `.old` y el actual) y el de PermaLocke cuentan tres cosas distintas.
+
+**El primero, con un solo PermaLocke, fue un fallo mío del §152.** Con el juego todavía en el vídeo de inicio (el log
+está cargando el CRO `MovieLib`), el equipo leído en `0x330128E4` era el espejo, y `LocateByKeys` buscó las claves de
+la partida guardada por `MemorySearch.LiveStateRegions`, que incluía el heap de aplicación `0x08000000-0x0A000000`. En
+el arranque esa memoria **no está mapeada**: 28.871 líneas «unmapped ReadBlock» de `0x08420000` a `0x09AB4000` en un
+tercio de segundo, con bloques de 65.541 bytes (64 KB más los cinco del patrón de seis), y Azahar murió en la última.
+Leer memoria inexistente ya lo había congelado (§114 ter). Y esa zona **no aportaba nada**: en todos los logs de todas
+las runs su único acierto fue el 2026-08-18, un «equipo» de un Pokémon con el nombre de entrenador hecho de símbolos,
+más el falso positivo de caramelos en `0x081D55B0` del §22. `LiveStateRegions` queda en el heap lineal, que es donde
+está todo lo localizado: equipos, mochila, contadores, tablas de combate. Afecta también a los dos barridos (el del
+equipo y el de la mochila), que pasan de 96 a 64 MB.
+
+**El segundo fue al cambiar de mapa.** Saliendo de un edificio de Ciudad Hauoli, el emulador descarga y vuelve a cargar
+`FieldEffectCommon` (177,38 s y 177,62 s), y **70 ms después** PermaLocke lanzó tres búsquedas de 64 MB y una ráfaga de
+lecturas para comprobar los candidatos; el log se corta en mitad de la ráfaga. Un cambio de mapa es justo cuando los
+registros de posición no se ponen de acuerdo, así que era justo cuando el lector buscaba: mientras el juego reordenaba
+la memoria. Ahora `FieldZoneReader` solo busca si la duda **dura 5 segundos** (`SettleBeforeSearch`): un cambio de mapa
+se aclara solo en uno o dos, cuando los registros nuevos coinciden, y lo que dura más ya es un registro viejo o perdido,
+que es para lo que está buscar. La primera búsqueda al conectar no espera, porque sin ella no hay nada que leer.
+
+**Y había dos PermaLocke abiertos**, del mismo ejecutable, desde las 20:41:33: todo sale dos veces en el log —dos
+«Conectado al juego», dos «Combate salvaje», dos escrituras en la mochila—, y a las 20:44:14 uno situó el mismo combate
+en «Ruta 2, ya gastada» y el otro en «Playa Big Wave». Cada búsqueda iba doble contra el mismo emulador. Ahora la
+aplicación toma un mutex `Local\PermaLocke.App` al arrancar, antes de tocar la base de datos, y una segunda avisa y se
+cierra; `--sin-juego`, la copia de solo lectura para mirar pantallas, queda exenta. En la run quedaron dos pares de
+eventos duplicados (el primer encuentro de la Cueva Costera y su resultado): mismo sitio, mismo resultado y 0 puntos,
+así que ninguna proyección cambia, y la cadena **sigue entera** —comprobado sobre una copia de la base de datos con
+`VerifyChainAsync`—, porque cada escritura lee el último hash dentro de su transacción y SQLite las puso en fila.
+
+Tres pruebas nuevas, y las tres fallan con el código de antes: la búsqueda por la partida guardada no sale del heap
+lineal (el emulador falso apunta cada rango buscado), un cambio de mapa no se busca en sus primeros segundos, y uno que
+se aclara solo no se busca nunca.
+
+## §160 · Los combates de una prueba no son el encuentro de la ruta (2026-09-21)
+
+El jugador, en la Cueva Sotobosque: la prueba de Liam obliga a vencer a tres salvajes en las madrigueras y después al
+Dominante, y **el juego no deja lanzar ni una Poké Ball** hasta tener el cristal Z. PermaLocke tomó el primer combate de
+las madrigueras por el encuentro de la zona: gastó «Cueva Sotobosque (Sala de la Prueba)» y la marcó «debilitado» en el
+MAPA (log de la carpeta de prueba, 23:18:51 y 23:19:07) sin que el jugador hubiera podido capturar nada.
+
+La regla nueva, en `ballControl.trialZones` de `Data/rules.json` y `TrialZoneService`: en una zona de prueba, **mientras
+el cristal Z de su prueba no esté en la mochila**, un combate salvaje **no gasta la ruta ni marca el MAPA, salvo que acabe
+en captura**. La captura cuenta siempre, para que la prueba no sirva de captura de regalo. El gasto se deja para el final
+del combate (`WildBattle.Trial`), que es cuando se sabe si hubo captura. El cristal no se escribe otra vez: sale del logro
+de la prueba en `achievements.json`, el mismo ancla con el que se cuenta la prueba (§40, §43). Una mochila que no se lee
+responde «no se sabe» (§68), y entonces el combate cuenta como siempre.
+
+**Qué zonas, y por qué solo esas.** Las dos salas de la Cueva Sotobosque (madrigueras y Dominante) y la sala del
+Dominante de la Colina Saltagua: salas que existen para la prueba, donde antes de superarla no hay nada que atrapar, así
+que la regla no abre ninguna puerta. Las demás pruebas o no cuentan (la sala del Dominante de Wela y el observatorio de
+Hokulani están en `sinEncuentros`) o pelean a su Dominante **dentro de una ruta normal**: Jungla Umbría, el Súper
+Ultraganga abandonado y el Cañón de Poni. Ahí la misma regla dejaría descartar encuentros antes de la prueba huyendo, y
+además **no está medido** si un combate contra un Dominante sube el contador de combates salvajes (§119). El del jugador
+en la Cueva Sotobosque lo va a medir: si el log dice «Combate de prueba en Cueva Sotobosque (Sala del Dominante)», sí lo
+sube, y esas tres zonas necesitan una regla por especie (reconocer al Dominante por la fila que el mundo instalado puso
+en su tabla de estáticos, como `allowedStatics`), no por zona.
+
+La zona ya gastada de la run del jugador **no se toca desde aquí**: se libera en MANTENIMIENTO → LIBERAR LA ZONA, que
+añade su `ZoneCleared` y no borra nada (§67). Cinco pruebas en `TrialZoneTests`, incluida una que carga los ficheros
+reales y exige que cada zona exista en `mapas.json` y que cada logro tenga un cristal Z de tipo. **El paso del vigilante
+de encuentros no tiene banco de pruebas** —nunca lo ha tenido— y queda sin ver en el juego.
+
+**Y el mismo día, la sala del Dominante sale del MAPA.** El jugador: «dejé marcado en el mapa la sala del dominante,
+cuando ahí no hay para atrapar». `cueva-sotobosque-sala-del-dominante` pasa de los marcadores a `sinEncuentros` de
+`Data/marcadores.json`, y con eso deja de ser ruta: ahí no se gasta nada nunca, y su entrada en `trialZones` sobraba y
+se quita. La Sala de la Prueba que el combate de las madrigueras había gastado en la run de la carpeta de prueba se
+liberó **a petición del jugador**, por el mismo camino que MANTENIMIENTO → LIBERAR LA ZONA
+(`ZoneOutcomeService.ClearAsync`): un `ZoneCleared` añadido, nada borrado, con copia previa de la base de datos.
+
+## §161 · Te curaban y te cobraban otro equipo caído (2026-09-21)
+
+El jugador: «cuando se mueren todos los pokémon cuenta el wipeo, pero cuando te lleva a curarlos, la app te los mata
+otra vez, que es lo que tiene que hacer, pero te vuelve a contar otro wipeo más». En la run de la carpeta de prueba:
+seis muertes y **dos `TeamWiped` a 23:50:25 y 23:50:31**, seis segundos entre uno y otro, −200 cada uno con el rol
+EXPERTO.
+
+`GameWatcher.CheckWipeAsync` cobra en el **flanco**: cuando el equipo pasa de tener a alguien en pie a no tener a nadie
+(§36). «En pie» eran los PS y nada más. Tras un equipo caído el juego lleva al Centro Pokémon y **cura a todos**;
+PermaLocke devuelve al suelo a los caídos una vez por segundo (§99 bis), como tiene que hacer, y ese ir y volver era un
+flanco nuevo. Ahora **en pie es con PS y vivo en la run**: un Pokémon que el historial da por muerto (`FallenPidsAsync`,
+por PID) no se levanta porque el juego le dé PS. El historial dice quién ha muerto; los PS solo dicen dónde está ahora.
+
+Y la misma avería por el otro lado: el estado del flanco vivía solo en memoria y **arrancaba en «había alguien en
+pie»**, así que abrir PermaLocke después de perder, con todos a cero, lo cobraba otra vez a las tres lecturas. El
+comentario del campo decía lo contrario de lo que hacía. Ahora arranca, por run, del historial: si el último equipo caído
+es más nuevo que la última muerte, nadie ha caído desde entonces y sigue siendo aquel desastre. Las muertes de un equipo
+caído se apuntan antes que él (`GameLinkMonitor` las mira primero), así que siempre va detrás de las suyas.
+
+Para lo ya cobrado hay una corrección nueva, `WipeRevoked`, con la forma de `DeathRevoked`: el `TeamWiped` se queda, el
+evento nuevo dice que era erróneo, quién y por qué, **devuelve exactamente lo que ese equipo caído quitó** y lo descuenta
+de los cuatro que cuentan (`PenaltyService.RevokeWipeAsync` y `CountWipesAsync`). Se niega con un id que no es un
+equipo caído de la run o con uno ya revocado. Va al final del enum porque el tipo se guarda como número. No tiene botón
+todavía: el único caso es el de la carpeta de prueba.
+
+Cinco pruebas nuevas en `TeamWipeTests`: curado en el Centro y devuelto al suelo no es otro equipo caído, abrir la app
+después de uno tampoco, alguien vivo que cae después sí lo es, y revocar devuelve los puntos, deja de contar y no se
+repite. Las dos primeras fallan con el código de antes; la tercera pasa con los dos, que es lo que tiene que hacer.
+
+## §162 · Los ataques fulminantes, fuera para todos (2026-09-22)
+
+A petición del jugador: «que banees tanto para aprender como los ataques enemigos los ataques fulminantes, como fisura,
+que absolutamente nadie lo pueda usar». Son cuatro, y los ids se comprobaron contra los nombres del propio cartucho:
+**Guillotina 12, Perforador 32, Fisura 90 y Frío Polar 329**. Van en `bannedMoves` de `Data/randomizer.json`.
+
+Antes de tocar nada se midió por dónde puede llegar un ataque, en la capa base y en el mundo instalado de la carpeta de
+prueba: **65 en aprendizajes por nivel** (en 64 Pokémon), **16 en movimientos huevo**, ninguno en MT, tutores,
+entrenadores ni estáticos. La capa base tenía 2 en ataques fijos de entrenadores, que el randomizador ya limpiaba al
+cambiar la especie. Los salvajes y los entrenadores sin ataques propios sacan los suyos del aprendizaje, así que las
+listas de aprendizaje son casi todo. Ojo con una medida que salió mal a la primera: los ataques de un entrenador están en
+`0x18` de su entrada, no en `0x20`, que es donde empieza la siguiente; con el offset malo el recuento daba 0 por el
+motivo equivocado.
+
+**En el mundo que se genera**, `BannedMoveScrubber`, el penúltimo paso del randomizador, con sal propia y **cambiando solo
+los huecos que tenían uno**: meterlos fuera del sorteo habría vuelto a sortear todos los aprendizajes del juego para
+cambiar 65 huecos. Un hueco de aprendizaje recibe un movimiento de estado que no tuviera ya, porque un fulminante tiene
+potencia 0 y ocupa un hueco que la ordenación por potencia (§158) no mueve; un movimiento huevo, cualquier otro; a un
+entrenador o estático que nombre uno se le vacían los cuatro, para que el juego le dé los de su aprendizaje, ya limpio.
+Todo se relee al final y el paso lanza si sobrevive uno. Verificado con la semilla 20260921 y el rol NORMAL: 57 en
+aprendizajes y 16 en huevos, **cero** después en todas partes. Comparado contra la misma semilla sin la lista, solo
+cambian `a/0/1/3`, en esos 57 huecos y **ningún nivel**, y entra `a/0/1/2`, que antes no se tocaba.
+
+**En lo que la app enseña o construye por su cuenta** —el recuerda-movimientos, el gacha y el wonder trade—, la misma lista
+se publica al arrancar en `WorldMoves.Banned` (desde el mismo `randomizer.json`, para que las dos no discrepen):
+`WorldMoves.LevelUpOf` la deja fuera, lo que sugiere PKHeX sin mundo instalado también, y el recuerda-movimientos no la
+ofrece ni como «lo que sabía al llegar» (`IMoveCatalog.IsBanned`). Así tampoco sale de un mundo generado antes de esto.
+
+Revisada la partida de la carpeta de prueba: **ninguno de sus Pokémon sabía ya uno**. Pruebas: seis del paso del
+randomizador (solo cambian los huecos prohibidos y sus niveles quedan, un aprendizaje limpio queda byte a byte, huevos,
+entrenadores, estáticos y la lista que se reparte), una de `WorldMoves` y una del recuerda-movimientos, que falla sin el
+filtro. **Vale al regenerar e instalar el mundo**; lo de la app, en cuanto se abre la versión nueva.
+
+## §163 · Los objetos del suelo, al azar como en la referencia (2026-09-22)
+
+A petición del jugador, tras comparar cómo se randomizan las Poké Balls del suelo en PermaLocke, en el Universal Pokémon
+Randomizer y en la carpeta Locke: «¿podrías dejarlo como la carpeta de Locke?». Hasta hoy PermaLocke **barajaba** lo
+que el cartucho ya ponía: las mismas 493 cosas en cada partida, en otros sitios. La referencia **sortea cada sitio**.
+
+Lo que hace la referencia se midió en su mundo instalado antes de escribir nada (solo lectura): 493 sitios normales y
+45 dorados, los mismos que el cartucho; en los normales objetos generales, bayas, medicinas, megapiedras, Poké Balls,
+cartas y abonos, y **nunca** un objeto clave, un cristal Z ni una MT; ninguna Master Ball; **ningún objeto más de dos
+veces** (177 una vez y 158 dos); y en los dorados MT sacadas de las cien, 39 una vez y 3 dos.
+
+Esa clase de objetos es **exactamente** los bolsillos 0, 1 y 3 del cartucho —general, medicinas y bayas—, que la tabla de
+objetos `a/0/1/9` guarda en los bits 7-10 del u16 de 0x08. La correspondencia se comprobó contra las listas de bolsillo
+de PKHeX, las 716, sin un desacuerdo. Y se comprobó que el saco sale igual que el de la referencia: con el cartucho son
+534 objetos, **los 335 distintos que la referencia puso están todos dentro**, y deja fuera 199, que es lo que da un
+sorteo uniforme con tope (la prueba lo exige: de 320 a 350 distintos en 50 semillas). Quedan fuera las 38 entradas sin
+usar que el cartucho llama «(?)».
+
+`fieldItemsMode` en `Data/randomizer.json`: **`Random`** sortea así, y **`Shuffle`** es lo de antes. Si el fichero no lo
+dice, `Shuffle`, para que una configuración vieja no cambie de mundo sin avisar. `fieldItemsMaxRepeats` es el tope (2) y
+`fieldItemsBanned` la lista de fuera (la Master Ball, 1). En los dos modos una MT se cambia solo por otra MT y un objeto
+normal por otro objeto normal, y los montones de bayas cuentan como normales, como ya pasaba y como hace la referencia.
+El modo aleatorio saca cada saco de su propia fuente derivada y `Shuffle` no cambia ni una llamada: **medido**, con
+`Shuffle` la misma semilla da los once ficheros byte a byte iguales que antes de este cambio.
+
+**Con el mod de gen 8-9 el saco pasa de 534 a 597**: entran sus 63 objetos, casi todos objetos de evolución (confites,
+teteras, manzanas, manuscritos, armaduras...) y las 29 megapiedras de Leyendas Z-A. Por eso sale alguna megapiedra más
+que en la referencia: 77 de 493 con la semilla de prueba, contra 46. Entran también cuatro cuyo efecto en este motor nadie
+ha medido —Energía Potenciadora, Cristal Teracristal, Espada y Escudo Oxidados—; en el peor caso son un objeto que no hace
+nada, como las cartas y los abonos que también pone la referencia. Si molestan, van a `fieldItemsBanned`.
+
+Verificado con la semilla 20260921 y el rol NORMAL contra la misma generación en modo `Shuffle`: de los once ficheros del
+mod **solo cambia `a/0/8/3`**, y dentro de él **cero bytes fuera de los huecos de objeto** —los encuentros salvajes quedan
+idénticos—. Resultado: 493 normales con 356 distintos, 219 una vez y 137 dos; 45 dorados, todos MT, 37 distintas; ninguna
+Master Ball, ningún objeto clave, cristal Z ni «(?)». Nueve pruebas en `FieldItemRandomTests`. **Vale al regenerar e
+instalar el mundo.**
+
+## §164 · El registro que anda gana a la mayoría quieta (2026-09-22)
+
+El jugador: «en un par de rutas empieza a contar la ruta y me devuelven las Poké Balls al entrar en un Pokémon salvaje y
+huir». El log de la carpeta de prueba tiene los dos casos, con la misma forma:
+
+- 15:05, un combate contado en «Ruta 1 (Afueras de Hauoli)», ya gastada. Al acabar, la zona pasa a «Ruta 1 (Escuela
+  Entrenadores)» y se devuelven las balls; el siguiente combate ya cuenta como primer encuentro de la Escuela.
+- 15:42, un Zigzagoon contado en «Ciudad Hauoli (Zona Comercial)», ya gastada. Medio segundo después de acabar, la zona
+  pasa a «Ruta 2» y se devuelven las balls; el siguiente combate, el Cascoon, se lleva el primer encuentro de la Ruta 2.
+
+O sea que el primer combate de la ruta nueva se contó en la de detrás, sin balls, y la zona no se enteraba del cambio
+hasta que un combate terminaba. En los dos, un borde **sin puerta**, y entre el cambio y el combate ni un aviso de
+desacuerdo ni de zona mantenida: la mayoría de los registros seguía diciendo el sitio anterior.
+
+Por qué: el juego guarda **copias de la posición que solo refresca a ratos** —en una puerta, al empezar o acabar un
+combate—. En el mismo log se ven: a las 14:47:07 `0x303B7534` y `0x33F68F40` son basura, y a las 14:47:27 tienen la
+posición exacta de `0x33F6E4C8`, el registro que sigue al jugador. Y la misma tarde hay un trío congelado desde mucho
+antes, `0x32DE3898`, `0x32DE3948` y `0x32DE3978`, que dice «Senda Mahalo (Puente Colgante)» en (2000, 3.94, 6304) sesión
+tras sesión. Al cruzar un borde sin puerta, el que sigue al jugador cambia de mapa y anda; las copias se quedan detrás,
+quietas, y le ganan la votación. Hasta que el combate las pone al día, que es justo cuando se devolvían las balls.
+
+El lector decidía **primero por mayoría** y solo miraba al que anda para deshacer un empate (§118). Ahora, si hay un
+registro andando —el mismo listón de antes: dos movimientos en cinco segundos, y todos los que andan en un mismo mapa— y
+está en **otro mapa que la mayoría**, manda el que anda. Parado no cambia nada: decide la mayoría, y la histéresis del
+§156 mantiene la zona nueva cuando se deja de andar, porque las copias quietas ni la decían ni se mueven. La bolsa del
+§156 sigue igual: al abrirla, los que siguen al jugador se apagan y no anda nadie.
+
+Lo que **no está medido** es que en esos dos bordes hubiera un registro andando en el mapa nuevo: el log solo apunta los
+registros cuando no se ponen de acuerdo, y aquí había mayoría. Es la explicación que encaja con todo lo que sí consta,
+pero es una explicación. Por eso, cuando el que anda le lleva la contraria a una mayoría, el log **apunta ahora todos los
+registros**, para confirmarlo o desmentirlo la próxima vez. Si no hubiera ninguno andando, este arreglo no bastaría y
+habría que buscar al que sigue al jugador.
+
+Dos pruebas nuevas en `EncounterRecoveryTests`: tres copias quietas en el mapa de detrás y uno que anda en el nuevo
+—falla con el código de antes, se queda en el de detrás—, que parado no se lo lleven de vuelta, búsqueda incluida, y que
+uno que anda en el mismo mapa que la mayoría no cambia nada.
+
+## §165 · El suelo naranja no es una barra de PS (2026-09-22)
+
+El jugador: «un par de Pokémon que me han matado con veneno o con la trampa de rocas, la detección de muerte ha tardado
+en salir». En el log de esa tarde hay seis caídas y **dos tardaron**: Tranquill a las 18:50 y Raboot a las 18:51, las dos
+con «barra vista pero sin llegar a cero en 6 s», o sea el tope entero de `HpBarWatcher`. Las otras cuatro vieron la barra
+a cero entre 97 y 400 ms. Contadas todas las caídas registradas hasta hoy, cuarenta y nueve, la peor tardó **1889 ms**.
+
+Las killcams de esas dos lo enseñan: en los 4,5 s grabados **no sale ni el Pokémon ni su caja de PS**, solo el rival y el
+entrenador, porque ya había caído y el juego esperaba a que el jugador eligiera el siguiente. Lo que el vigilante leía
+como «barra al 97 %» era el **suelo naranja** del ring de Pueblo Iki, medido en esos fotogramas a **(170,110,65)** justo
+en las filas de la barra. El filtro de relleno pedía «cálido y saturado» —máximo de rojo y verde por encima de 150, azul
+por debajo de 110—, y el suelo lo cumple.
+
+Dos arreglos, los dos medidos contra los fotogramas reales:
+
+**El relleno son los tres colores de la barra**, verde (148,254,48), amarillo (253,201,43) y rojo (251,0,20), con 60 de
+margen por canal para lo que difumine el escalado del emulador. Pasado el lector nuevo por las killcams: en la muerte
+normal ve 28 fotogramas con la barra al 6 % y luego **vacía**, y en las dos que tardaron **Hidden en los 96**, o sea que
+el suelo ya no cuela.
+
+**Y no se espera a una caja que no está.** Dos reglas nuevas en `ZeroWatch`: una caja **vacía** sin haber visto color
+antes cuenta como la caída tras tres lecturas seguidas —la barra ya había bajado cuando llegó el aviso, que es lo que
+pasa con el veneno y con las trampas de entrada, y este vigilante solo corre sobre una caída que las dos tablas ya dan
+por buena—; y si la caja **no aparece** en 2,5 s se deja de esperar, que es el 1889 ms peor medido con margen. El tope de
+6 s se queda para lo de siempre: una animación larga tapando una barra que sí está.
+
+Por qué llega tarde el aviso en estos casos no está medido: la caída se da cuando las dos tablas llegan a cero y la
+segunda sigue a la barra (§114), así que con el veneno y la trampa de rocas esa segunda tabla tiene que actualizarse
+después de la escena, no durante. Lo que se arregla aquí es la espera, no la detección. Siete pruebas nuevas en
+`HpBarTests`, con los colores del suelo medidos.
+
+## §166 · Que cada Pokémon aprenda lo suyo (2026-09-22)
+
+El jugador: «no sé si ha sido casualidad, pero mis Pokémon aprenden casi lo mismo todos por nivel». No era casualidad, y
+lo que notaba no era repetición —dos especies al azar comparten el 2,5 % de su lista, menos que el 6,3 % del cartucho—,
+sino **falta de identidad**. Medido sobre los tres mundos:
+
+| | del tipo del propio Pokémon | tipos distintos por Pokémon |
+|---|---|---|
+| Cartucho | 48,7 % | 4,8 |
+| Referencia (Locke) | 28,0 % | 9,2 |
+| Mundo del jugador | **9,6 %** | **9,8** |
+
+Un 9,6 % es lo que sale del puro azar: cada Pokémon aprendía un poco de los dieciocho tipos, así que ninguno tenía tipo
+propio y todos se jugaban igual. El sesgo ya estaba implementado —`learnsetPreferSameType`, la regla del Universal
+Pokémon Randomizer— y estaba **apagado**; encendido da el 46 %, casi el cartucho. El jugador eligió el punto de la
+referencia, así que el interruptor pasa a ser un porcentaje, `learnsetSameTypePercent`, con el nombre viejo leyéndose
+todavía como 40. En 20 sale **27,9 % y 9,2 tipos por Pokémon**, que es la referencia clavada.
+
+De la potencia se preguntó también, y ahí la respuesta fue que **ya está como la referencia**: 52/76/102 de media por
+tramo de nivel contra 53/71/95, y la diferencia la explica el mod de gen 8-9, que añade 192 ataques y son fuertes. Se
+midió además la otra vía, `learnsetPowerTolerance`, que ata cada hueco a la potencia que el cartucho tenía ahí: **no
+reproduce esa curva, la aplana** —con 1,0 sale 55/60/67 y con 2,5 sale 67/68/70, porque una banda ancha sobre un ataque
+flojo solo puede subir y sobre uno fuerte solo puede bajar—. Queda en 0.
+
+Verificado generando con la semilla 20260921: de los once ficheros del mod **solo cambia `a/0/1/3`**. Dos pruebas nuevas,
+una que mide el reparto por tipos con tres porcentajes y otra que fija lo que pide la competición. **Vale al regenerar e
+instalar el mundo**, y solo para lo que se aprenda a partir de ahí.
+
+## §167 · Un log que se ahogaba en sí mismo (2026-09-22)
+
+Un amigo del jugador contó cierres y que no le funcionaban los avisos «ni nada», con la carpeta `PermaLocke para
+amigos` de la noche del 21. **Corrección**: la primera versión de este apartado decía que había recibido la carpeta
+`PermaLocke prueba`, con la run, el perfil y la partida del jugador. **Era falso**: lo supuse sin preguntarlo, y el
+jugador lo desmintió. La causa probable apareció después y está en el §168.
+
+**Para medir un caso concreto ya existe el recogedor**: `RECOGER DIAGNOSTICO.cmd`, en la raíz del reparto, junta los tres
+últimos logs de la app y de Azahar, los cierres de Windows de tres días con el módulo que falló, el hardware, la
+configuración y las huellas de los ejecutables, **sin ROM ni partidas**, en un zip que no manda a ningún sitio.
+
+**Y el log de la app estaba ahogado.** De las 14.120 líneas del log del día, **8.672 (el 61 %) eran la misma**:
+«Azahar propio encontrado en…», escrita hasta 3,6 veces por segundo porque `AzaharInstallation.Locate` se pregunta en
+cada lectura de la partida y en cada vuelta del modo combate. Detrás, 715 «Récords leídos» cada veinte segundos con los
+mismos números. Un informe que llegue así tiene lo que importa enterrado. Ahora las dos líneas se escriben **cuando
+cambian**: la búsqueda del emulador se sigue haciendo en cada llamada —es un `File.Exists`, y un emulador que aparece a
+media sesión tiene que verse—, solo que no se repite en el log. Una prueba nueva, que cuenta las líneas y exige una sola
+para cinco llamadas iguales y otra cuando aparece el emulador propio.
+
+## §168 · Que funcione en cualquier PC sin probar amigo por amigo (2026-09-22)
+
+El jugador: un amigo, con la carpeta `PermaLocke para amigos` de la noche del 21, tenía cierres y «no le funcionaba
+nada de las notis ni nada». Y la condición: «no acabamos nunca si tengo que estar amigo por amigo probando; hay que
+hacer que el producto funcione en todo tipo de ordenadores». O sea que la respuesta no puede ser pedirle pruebas a
+cada uno, sino buscar lo que cambia de un PC a otro y, lo que no se pueda prever, recogerlo solo.
+
+**Lo que cambia de un PC a otro, y estaba roto: el Visual C++ del emulador.** `azahar.exe` importa `MSVCP140.dll`,
+`MSVCP140_ATOMIC_WAIT.dll`, `VCRUNTIME140.dll` y `VCRUNTIME140_1.dll`, y Qt y FFmpeg añaden `MSVCP140_1` y `_2`; la
+carpeta no llevaba ninguna, así que cada PC ponía la suya. `azahar.exe` está enlazado con las herramientas **14.51**
+(se compila en GitHub Actions con el Visual Studio más nuevo), y lo enlazado con la 14.40 o posterior se cierra con un
+`msvcp140.dll` anterior la primera vez que bloquea un cerrojo: fallo documentado por Microsoft, que no avisa al
+arrancar sino a media partida. Sin `msvcp140_atomic_wait.dll` directamente no arranca. El PC del jugador tiene el
+14.51 y **nunca lo vio**. En el del amigo **no está comprobado** —no hay informe suyo—, pero con un runtime de antes
+de 2024, lo normal en un PC al que solo se lo instalaron juegos viejos, es exactamente lo que pasa. Y con Azahar
+caído no funciona nada de PermaLocke, avisos incluidos.
+
+Arreglo: `publicar.ps1` pone las seis DLL **al lado de `azahar.exe`**, sacadas del `System32` del PC que publica,
+exigiendo firma de Microsoft y una versión no menor que la del compilador de **cada** binario de la carpeta (hoy sale
+14.51), y el reparto no se da por bueno si falta alguna. Windows busca primero en la carpeta del programa y ninguna es
+KnownDLL, y está **medido**: arrancado desde una copia con las DLL al lado, las seis se cargan desde esa carpeta y no
+desde `System32`. Microsoft permite distribuirlas así. Con eso el runtime de cada PC deja de importar.
+
+**Lo que no se puede prever, se recoge solo.** Cuando Azahar se cierra y **no** lo ha cerrado PermaLocke, el lanzador
+lee su código de salida y, si es de fallo, escribe al momento `Diagnosticos\cierre-azahar-<fecha>.zip` y avisa al
+jugador de dónde está y de que se lo pase a quien le dio PermaLocke. Dentro: el código con lo que significa
+(`0xC0000005` acceso a memoria, `0xC0000135` falta una DLL, `0xC0000139` DLL demasiado antigua…), la duración de la
+sesión, el Visual C++ que usó el emulador y si llegaba, Windows, procesador, memoria, tarjeta gráfica, si la carpeta
+está en OneDrive y el espacio libre; las últimas 400 líneas de los dos logs; y **las últimas 128 peticiones de
+PermaLocke al emulador**, con dirección, tamaño, si respondió y cuánto tardó, porque los dos cierres de Azahar que se
+explicaron alguna vez (§159) se explicaron por lo que PermaLocke estaba leyendo en ese momento, y aquello salió en el
+log por suerte. Sin ROM, sin partidas y sin run, y no se manda a ningún sitio.
+
+Tres piezas: `ProcessExitWatch` sujeta el proceso de Azahar con el permiso mínimo mientras vive —el lanzador lo busca
+por nombre, porque puede abrirse a mano, y un proceso encontrado así no deja código de salida si nadie lo tenía
+abierto—; `RpcTrace` anota cada petición dentro del cerrojo que ya tenía el cliente; y `EmulatorCrashReport` escribe.
+Cerrarlo el jugador (0), cerrarlo PermaLocke y matarlo desde fuera (1, `0xC000013A`) no cuentan como caída.
+**Verificado de punta a punta** con la app publicada en una carpeta aparte y un `azahar.exe` falso que termina con
+`0xC0000005`: la app vio la sesión, leyó el código, escribió el zip y lanzó el aviso.
+
+**Y JUGAR avisa antes de empezar** de lo que el PC puede estropear: el Visual C++ que va a cargar el emulador si no
+llega (para repartos anteriores o un Azahar elegido a mano), una carpeta dentro de OneDrive —que bloquea los ficheros
+mientras los sube—, una carpeta donde no se puede escribir y menos de 2 GB libres. Van delante de «instala tu mundo»,
+porque JUGAR enseña solo el primer aviso y un emulador que se va a caer importa más.
+
+Diecisiete pruebas nuevas en `EmulatorCrashTests`, una de ellas con un proceso de verdad que termina con
+`0xC0000005`. Cazaron un fallo mío: leer el final del log contaba el último salto de línea como una línea y se comía
+una de verdad.
+
+Lo que queda **sin cubrir**, dicho: si PermaLocke carga el emulador con sus lecturas en un PC lento, esto no lo
+arregla, pero el primer informe que llegue lo dirá, con las peticiones de ese momento y lo que tardaron.
+
+## §169 · El cuarto del entrenador, en la portada de JUGAR (2026-09-22)
+
+El jugador pidió algo en pixel art que impresionara, «como el cementerio y los avisos», y eligió de cuatro ideas el
+cuarto del entrenador, pero no como sección nueva sino de fondo de una que ya hubiera. Se probó primero en HOME, en el
+sitio de la tira de contadores, con una imagen de prueba hecha con los datos reales de su run; al verla decidió que
+iba mejor **en JUGAR, en lugar de la playa**, y que HOME tendría otro rediseño más adelante. La playa
+(`LauncherStage`) se borró a petición del jugador; está en el historial de git.
+
+Cada objeto dice algo verdadero de la run:
+
+- La **vitrina** tiene doce huecos, uno por prueba y en su orden. Las pruebas son los logros que se desbloquean con un
+  cristal Z (`ZCrystalIndex`), sin sus nombres escritos en el código. Una prueba superada pone su cristal a color,
+  sacado del cartucho del jugador; una pendiente, **la silueta de ese mismo cristal**, así que el hueco ya dice cuál
+  espera.
+- La **estantería-memorial** tiene una figurita de piedra por cada caído de la run, hecha con su propio sprite a media
+  escala y pasada a tres tonos de piedra con contorno, y una placa con la cuenta.
+- La **tele** pone un fotograma de la killcam más reciente, un instante antes de la caída, reducido a 44×21 celdas con
+  seis niveles por canal y líneas de tubo. Sin killcam, nieve.
+- En la **alfombra** saltan los vivos del equipo (los de la partida que no están caídos en la run, por PID); mientras
+  el juego está abierto se quedan quietos, como en la playa.
+- El **póster** es el tope de nivel en vigor, el **corcho** tiene los huecos de la colección de Dominsignias con una
+  pegatina en cada una conseguida, el **monitor** del escritorio un punto por Pokémon en el PC, y la **ventana** es
+  Alola a la hora del juego, con los colores de la cabecera. Al ganar la liga aparece un trofeo encima de la tele.
+
+Técnica, la misma del resto (§116, §120): cada celda es un píxel de un bitmap que se escala en múltiplos exactos (tres
+píxeles de pantalla por celda, sea cual sea el DPI), colores planos de la paleta violeta de la aplicación, trama
+ordenada en vez de degradados, y formas escritas a mano. `TrainerRoomScene` pinta y `TrainerRoom` lo pone en pantalla a
+cuatro pasos por segundo. Está diseñado a 430×72 celdas y centrado: un panel más ancho da más pared a los lados y uno
+más alto, más pared arriba, con el suelo siempre abajo.
+
+Lo que costó verlo en la aplicación y no en la prueba: la **barra de JUGAR se monta 22 píxeles** sobre la portada. La
+playa lo aguantaba porque debajo solo había arena; en el cuarto se comía la alfombra y los pies del equipo. La escena
+recibe cuántas filas quedan tapadas y se sube esas filas, con la tarima siguiendo por debajo, y la portada pasa de 300
+a 320 píxeles para que el cartel de «POKÉMON ULTRA LUNA» no tape la ventana.
+
+Y de la primera imagen de prueba salieron cinco correcciones antes de enseñarla: los cristales miden 29×23 y metidos en
+9×9 eran un punto, así que la vitrina se ensanchó para dibujarlos a media escala; las siluetas se perdían entre los
+reflejos del cristal; la tele tramada era un borrón; el número del póster se salía, y en el corcho «5/25» se leía
+«5725», así que se quitó el texto y se dibujan los veinticinco huecos. Seis pruebas en `TrainerRoomTests`.
+
+## §170 · El gacha vuelve a su sitio, y su historial es de una run (2026-09-22)
+
+Dos cosas que pidió el jugador, las dos de la pantalla del gacha.
+
+**El resultado se va solo.** La ficha del Pokémon y la tira parada sobre el ganador se quedaban puestas hasta cerrar la
+aplicación: el view model es un singleton y nadie las quitaba. `ResetState` lo decía a propósito («la ficha se queda,
+es lo que fue la última tirada»), y el jugador pidió lo contrario, con razón: volver al gacha tiene que encontrar la
+máquina esperando. Ahora el escenario vuelve al reposo **a los 8 segundos** (`ResultShownFor`, contados desde que la
+entrega termina) o **al cambiar de pestaña**: sin ficha, portales apagados, marcador en el color de reposo y la tira de
+espera otra vez a la deriva. No se pierde nada: el Pokémon está en el juego y en la tira de LO QUE HA SALIDO. Dos
+matices. La **línea de estado** de abajo se queda con el temporizador, porque dice adónde ha ido el Pokémon y no está
+en el escenario; y al cambiar de pestaña también se queda **si es un aviso** («en la run sí está, en el juego todavía
+no»), que es lo único que no se puede borrar sin que alguien lo haya leído. Irse con la rueda girando no corta la
+tirada, que ya está escrita: vuelve al reposo en cuanto aterriza, salvo que el jugador haya vuelto antes.
+
+La vista tenía la otra mitad: la deriva de la tira se arrancaba **una sola vez**, al primer tamaño, y tras una tirada
+nunca más. El view model avisa con `ReturnedToIdle` cuando rehace la tira de espera y la vista suelta la de la tirada,
+arranca la deriva y la funde en medio segundo, porque las celdas bajo el marcador cambian todas a la vez.
+
+**El historial es de una run.** LO QUE HA SALIDO sobrevivía a «empezar de cero»: se siembra del historial de la run al
+abrir la pantalla, pero solo si está vacía, y como el view model vive lo que la aplicación, la run nueva heredaba las
+tiradas de la borrada. Ahora recuerda de qué run es la tira y, si la cargada es otra, la vacía, limpia el escenario y
+vuelve a leerla.
+
+Verificado con tiradas de verdad en una copia aislada fuera del repositorio (su propio emulador portátil y su propia
+partida, precios a cero y un hito de prueba con tiradas gratis solo en sus JSON): la ficha sale a los 8,0 s de pulsar
+y se va 7,9 s después; al ir a TIENDA con la ficha puesta y volver, ya no está; y tras EMPEZAR DE CERO la tira queda
+vacía. La misma prueba con el ejecutable anterior deja la tira puesta, así que es el arreglo lo que la vacía.
+
+## §171 · El gacha es una máquina de cápsulas (2026-09-22)
+
+El jugador pidió rehacer el gacha, visual y en animación, con las probabilidades intactas, y eligió la máquina de
+cápsulas entre las propuestas, «en pixel art, que es lo que mejor se te da». Sustituye a la ruleta de iconos del §31 y
+a su fondo de ultraespacio, que eran degradados, desenfoques y resplandores, justo lo que se tiró del cielo (§116).
+
+**La escena** (`CapsuleMachineScene`) se dibuja celda a celda como el cuarto del §169: tres píxeles de pantalla por
+celda, colores planos, trama en vez de degradados y nada de desenfoque. Diseñada a 430×166 celdas con el suelo abajo;
+un panel más alto da más pared encima y la tira de neón va pegada al techo de verdad, porque a media pared partía la
+escena en dos.
+
+- **La máquina** va a la izquierda, pintada del color del tier que más da su banner (el mismo que la barra de su
+  tarjeta): POCHO verde, DECENTE azul y BUENO rosa con remates dorados y bombillas en la tapa. El cartel dice el
+  nombre del banner y la placa de la moneda, su precio.
+- **La cúpula enseña las probabilidades**: lleva las balls del banner en su proporción real, por resto mayor
+  (`DomeMix`), y ninguna de un tier que el banner no da. POCHO son Poké, Super y Ultra Balls 15/60/25; BUENO, Ultra,
+  Gloria y Master Balls. Al cambiar de banner la cúpula se vuelve a llenar delante del jugador.
+- **Una ball por tier**: Poké, Super, Ultra, Gloria (la de los regalos de evento) y Master. No coinciden con el color
+  de cada tier y no se ha forzado: una Master Ball se entiende sin leyenda. Por eso los portales de arriba llevan el
+  dibujo de su ball, hecho con las mismas celdas (`BallIcon`), y se mudan arriba a la derecha, sobre la alfombrilla.
+- **La estantería** de la izquierda sustituye a la tira de LO QUE HA SALIDO, con el rótulo ÚLTIMAS TIRADAS que eligió el
+  jugador: las ocho últimas tiradas en figuritas, cada una sobre una peana del color de su tier. El letrero de neón de la derecha tapa la pared que la ficha usa luego.
+
+**La tirada**, igual de larga para cualquier tier (`CapsuleTimeline`, 9,95 s hasta el Pokémon a color). La ruleta
+vieja duraba más cuanto más raro el resultado, y eso lo contaba antes de tiempo:
+
+1. Cae una moneda y la manivela da cuatro cuartos de vuelta, con un golpe de la máquina en cada clac.
+2. Las balls se revuelven y una baja por el agujero.
+3. Sale por la trampilla, bota hacia el jugador creciendo y rueda hasta la alfombrilla.
+4. Se sacude tres veces como en una captura. Al final de un meneo puede **subir de ball**, con fogonazo y aro de
+   chispas, y a veces brilla sin subir.
+5. Parpadea el botón, se abre la tapa, sale un haz de luz y rayos del color del tier (dorados de más si es legendario),
+   y el Pokémon aparece en silueta blanca, crece al doble y pasa a color. Si es variocolor, estrellas.
+6. A los 8 s (§170) la ball vuela a la estantería y la figurita nueva cae en su hueco.
+
+La subida es el engaño de siempre contado con Poké Balls: la ball cae como **la más barata que tiene el banner**, no
+como una Poké Ball, porque en la cúpula de BUENO no hay ninguna, y sube como mucho dos veces (`CapsulePlay.StepsFor`).
+En qué meneos sube sale de la semilla de la tirada y nunca del tier.
+
+**Quién lleva el reloj.** El view model publica `CurrentPlay` con el instante en que cayó la moneda, y la escena se
+dibuja en cada fotograma a partir de cuánto hace de eso. No hay animación a la que esperar ni red de seguridad: el view
+model sigue los mismos tiempos para encender los portales y sacar la ficha, y volver al gacha a mitad de tirada
+encuentra la ball donde debe estar. Un fallo al dibujar se apunta una vez en el log y deja la escena quieta; no toca la
+tirada, que ya está escrita (§87).
+
+Verificado con tiradas reales en la copia aislada del §170, con capturas de la app de cada fase: reposo, rodando,
+Pokémon a la vista con la ficha y el portal encendido, la figurita en la estantería y el cambio a DECENTE. La ruleta vieja se ha borrado entera, `ReelEnding` y `GachaReelViewModel` incluidos, a petición del jugador; queda en
+el historial de git. Diez
+pruebas en `CapsuleMachineTests`, entre ellas dibujar cada fotograma de una tirada de cada tier. La tirada de un
+legendario, con la Master Ball, solo se ha visto en la escena suelta, no en la app.
+
+## §172 · Un solo zip para compartir, y el Escritorio fuera de las instrucciones (2026-09-22)
+
+A un amigo le salió en JUGAR el aviso del §168 «Está dentro de OneDrive». Había bajado de Google Drive la carpeta
+compartida y la había dejado en el Escritorio, que Windows 11 sincroniza con OneDrive en muchos PC. El aviso era
+verdad, y parte de la culpa era nuestra: el `EMPIEZA AQUI.txt` recomendaba extraer la carpeta «por ejemplo en
+Escritorio o Juegos». Ahora dice `C:\Juegos`, explica cómo («Extraer todo» y escribir la ruta) y por qué el Escritorio
+y Documentos no: OneDrive bloquea los ficheros mientras los sube y los 2,7 GB llenan la mitad de su versión gratis.
+
+Y se reparte **un fichero y no una carpeta**, porque Drive parte en varios zips cualquier carpeta de más de 2 GB, y
+quien extrae solo uno se queda sin la mitad de los ficheros. `tools/empaquetar.ps1` hace el zip con una carpeta
+`PermaLocke` dentro, de modo que «Extraer todo» en `C:\Juegos` deja `C:\Juegos\PermaLocke`. `publicar.ps1` lo llama
+al terminar y deja `<destino>.zip` al lado de la carpeta; con `-SinZip` no lo hace.
+
+La protección que importa es que **no empaqueta una carpeta que alguien haya abierto**: exige que cada fichero tenga
+el tamaño y la huella que `publicar.ps1` apuntó en `Soporte\contenido.json`, ni uno de más ni uno de menos. Abrir la
+app crea `Saves`, `Logs` y `Config\jugador.json`, y un zip hecho de ahí le daría a un amigo la run y la partida de
+otro. Probado con una carpeta en miniatura a la que se le coló una base de datos: se niega diciendo qué sobra y no deja
+zip. Además escribe a un `.parcial` y lo renombra solo si al releerlo cuadran los 164 ficheros con sus tamaños.
+Nunca sobrescribe un zip. El de hoy pesa 2,2 GB y tarda unos dos minutos.
+
+## §173 · Los cierres del amigo eran del emulador, y ya están arreglados (2026-09-23)
+
+A un amigo se le cerraba Azahar muy pronto, varias veces. Llegaron dos informes automáticos del §168 y el
+diagnóstico del `RECOGER DIAGNOSTICO.cmd`, y señalaban lo mismo desde tres sitios:
+
+- **La petición en curso.** En los dos cierres, la última petición de PermaLocke era un `SearchMemory` de
+  **64 MB** sobre el heap lineal, sin respuesta.
+- **El registro de Windows.** Ponía el acceso inválido **siempre en el mismo punto**, `azahar.exe + 0x781693`, en
+  tres días y tres carpetas distintas.
+- **El log de Azahar.** El otro cierre era una aserción del propio emulador en la caché de la GPU
+  (`DownloadFillSurface`).
+
+No era su PC: el Visual C++ era el bueno (§168), dibujaba con su RTX 4060, y OneDrive no tenía que ver, aunque el
+aviso de §172 también era verdad.
+
+La causa estaba en **nuestro fork**. El servidor RPC atiende en su propio hilo y leía con `ReadBlock`, que vuelca
+cualquier página que tenga la GPU en caché, y volcar llama al renderizador. Con OpenGL el contexto solo vive en el
+hilo de emulación, así que hacerlo desde el RPC choca con el dibujado. Una lectura pequeña casi nunca cae en una
+página de la GPU; un barrido de 64 MB de los lectores de zona, equipo y combate, casi siempre.
+
+El arreglo es el parche 4 del fork (`docs/fork/04-leer-sin-volcar.md`, commit `0dfe782`, 31 líneas): las lecturas
+del RPC usan la variante de `ReadBlockImpl` sin volcado, que ya existía y nadie usaba.
+
+**Verificado antes y después, con condiciones iguales.** La copia aislada va en una ruta corta, porque en el
+scratchpad la SD emulada pasaba de 260 caracteres y el juego no llegaba a cargar. Lleva el mod, la partida de
+prueba y una prueba que entra en la partida sola y busca 64 MB sin parar.
+
+- **Emulador viejo:** se cayó en **6 de 6** intentos, con las **dos firmas exactas del amigo** (el
+  `0xC0000005` a cuatro bytes de su dirección y la misma aserción en la misma línea) y tres congelamientos a
+  0 FPS.
+- **Control:** sin ninguna petición RPC, el emulador viejo carga y corre a 160 FPS.
+- **Emulador parcheado:** **0 de 4**, 3600 búsquedas por intento, 160 FPS todo el rato.
+
+**Confirmado el 2026-09-24 por el jugador: a su amigo ya no se le cierra Azahar** con el emulador parcheado.
+
+De paso, dos lecciones que valen para cualquier prueba así:
+
+- Un detector de congelamiento que lee memoria puede fallar justo por el cambio que se está probando. El de trozos
+  del heap dio falsos positivos con el parche, y la barra de estado de Azahar, leída por UI Automation, no.
+- Una prueba a medio corregir hay que recompilarla. Dos intentos se perdieron porque el detector desactivado
+  seguía dentro del binario.
+
+La carpeta de amigos y su zip llevan ya el emulador nuevo.
+
+## §174 · El wonder trade es una cabina en la sala del gacha (2026-09-23)
+
+Después de la máquina de cápsulas (§171), el jugador pidió lo mismo para el wonder trade: pixel art, «lo más detallado
+posible». Sustituye al cable de enlace del §121, cuyas tres pistas eran cajas de WPF encima del dibujo. Ahora las dice
+la pantalla de la propia cabina, con sus píxeles, y se quedan ahí al lado de la ficha.
+
+**Una sala para las dos máquinas.** La pared, el neón del techo, el foco y el suelo pasan a `PixelScene.PaintRoom`,
+junto con los materiales comunes: cromo, cristal, placas y bombillas. Medido que el gacha sale **idéntico píxel a
+píxel** en sus 27 fotogramas de referencia antes y después de mudarlo.
+
+**La escena** (`TradeMachineScene`, 430×166 celdas, anclada al suelo como el gacha):
+
+- **La cabina** va en el centro, en azul con remates de cromo. Encima lleva un cartel con bombillas que dice
+  INTERCAMBIO / PRODIGIOSO en dos tonos, y en lo alto una baliza.
+- **La pantalla** es de fósforo verde agua con líneas de barrido y un reflejo en la esquina.
+- **Debajo de la pantalla**, dos rejillas de altavoz, dos pilotos con flecha (sube y baja) y el emblema.
+- **Dos tubos neumáticos de cristal** suben hasta el techo de verdad. Por el cristal se ve la pared teñida, llevan
+  aros y abrazaderas de cromo, una tira de LED por fuera y un brillo delante que pasa también por encima de la ball.
+- **Una estación con trampilla** al pie de cada tubo. La puerta corredera lleva la flecha de su sentido.
+- **Dos plataformas redondas** con anillo de luz, unidas a su estación por un cable de enlace en el suelo, el guiño al
+  §121.
+- **Un neón** en la pared izquierda: dos flechas persiguiéndose alrededor de un globo.
+
+**El intercambio**, igual de largo para cualquier resultado (`TradeTimeline`, 11,35 s hasta el Pokémon a color):
+
+1. El Pokémon entregado espera en la plataforma de la izquierda. Sale su ball, abierta, y un rayo rojo lo pasa a
+   silueta roja, que encoge hasta entrar. La ball se cierra con fogonazo, aro de chispas y un meneo de captura.
+2. Da dos botes hasta la trampilla, que se abre. La trampilla se la traga con una bocanada de aire, y la ball sube por
+   el tubo acelerando, con estela y el cristal encendido a su paso. Los LED persiguen hacia arriba.
+3. La pantalla pone ENVIANDO con su barra. Después, BUSCANDO con un globo de alambre que gira y señales que se
+   encienden, mientras la baliza gira en ámbar. Con ¡CONECTADO! destella, la baliza y los LED se ponen verdes y hay
+   un ping grande.
+4. RECIBIENDO: la otra ball baja por el tubo derecho frenando y sale por la trampilla. Cae al suelo y rueda hacia el
+   jugador creciendo, con dos botes, se pasa un poco y vuelve a la plataforma.
+5. La pantalla dice **GENERACIÓN N**, luego **los tipos** en placas de su color, y luego **el total**, que cuenta
+   desde el del Pokémon entregado hasta el nuevo. La diferencia sale en verde si es mejor, en rojo si es peor y sin
+   color si es igual. Es el orden del §33. Cada línea entra con un bloque blanco, y la ball da un respingo con cada
+   una.
+6. Parpadea el botón y se abre: la sala se oscurece (lo que da luz sigue encendido), sale el haz y rayos del color de
+   su primer tipo, que llegan más lejos cuanto mayor es el total y llevan oro si es legendario. El Pokémon sale en
+   silueta, crece al doble y pasa a color. El anillo de la plataforma toma el color de su tipo, y si es variocolor
+   salen estrellas.
+
+Entonces aparece la ficha a la izquierda, sobre la plataforma de envío, que ya está vacía. Lleva el nombre, variocolor
+o legendario, los tipos, el nivel y la naturaleza, la habilidad, los IV y el total con su diferencia.
+
+**La ball es la suya.** El Pokémon entregado entra en la ball en la que vive. Si es Poké, Super, Ultra, Master o
+Gloria, la dibuja la escena (`BallFor`). Si es cualquier otra de las dieciséis que se extraen (§28), sale con el icono
+del cartucho, sin hacerla pasar por una Poké Ball; una ball de más allá del 16 sale como Poké Ball. El que llega viene
+en Poké Ball porque es la que escribe `PokemonBuilder`.
+
+**Quién lleva el reloj**, igual que en el gacha: el view model publica `CurrentPlay` (`TradePlay`) con el instante de
+la confirmación, y la escena se dibuja cada fotograma a partir de cuánto hace. Ya no hay eventos entre vista y view
+model ni red de seguridad de ocho segundos. El intercambio sigue escrito, releído y apuntado antes del primer
+fotograma, y un fallo al dibujar se apunta en el log sin tocarlo.
+
+**Verificado:**
+
+- Un wonder trade real en la copia aislada del §170, con capturas de la app en cada fase: Slugma sale y entra
+  Rookidee, generación 8, VOLADOR, 245 y −2 % en rojo, y la ficha con LISTO.
+- El Rookidee no apareció en la plataforma de esa copia porque su carpeta `Expansion` está vacía y solo tiene los 1154
+  iconos del cartucho. La de prueba tiene los 1508 (1025 especies), y el mismo Rookidee se dibuja bien con los sprites
+  del repositorio.
+- Siete pruebas en `TradeMachineTests`, entre ellas dibujar cada fotograma de cuatro intercambios en tres tamaños, el
+  color de la diferencia y que una ball que la escena no dibuja salga como el icono.
+
+`TradeStage.cs`, la escena del §121, se ha borrado a petición del jugador. No estaba en git (nunca se había hecho commit de ella), así que no queda copia; lo que hacía está descrito en el §121.
+
+La carpeta de amigos, su zip (`.dist/amigos-20260923-040605.zip`) y la carpeta de prueba llevan ya la cabina, con el mismo ejecutable.
+
+## §175 · La ruleta del LUDÓPATA es una rueda de feria en la sala recreativa (2026-09-23)
+
+Tercera escena en píxeles después de la máquina de cápsulas (§171) y la cabina del intercambio (§174), a petición del
+jugador: «del mismo estilo, igual de bien detallado, y añade más cosas». La rueda WPF del §84 —cuñas vectoriales,
+degradados, sombras difuminadas, un `Viewbox` para que cupiera— pasa a dibujarse celda a celda en `RouletteMachineScene`,
+en la misma sala que las otras dos (`PixelScene.PaintRoom`).
+
+**Lo que no cambia**, porque ya se decidió y se revocó por escrito:
+
+- Verde paga y rojo cuesta, con dos tonos por bando alternados (§84).
+- Las seis caras se destapan una a una antes de que la rueda se mueva, con tiempo de leerlas (1,5 s cada una).
+- Un solo barrido hasta la ganadora con uno de los cinco perfiles de `WheelEnding`, sacados de su propia semilla y
+  nunca del resultado. El rebote nunca pasa de 20° (§86).
+- La ganadora encendida y las otras cinco apagadas.
+- La ficha del resultado, que se va a los ocho segundos.
+
+**Lo que hay ahora en la escena:**
+
+- **La rueda**: aro de oro con veinte bombillas y seis clavijas de cromo, una en cada junta; cuñas con luz fija de
+  arriba a la izquierda, juntas de oro y el buje con la Poké Ball, que ya gira con la rueda.
+- **Las bombillas** persiguen despacio mientras espera, se despiertan de una en una al tirar de la palanca,
+  parpadean mientras se destapan las caras, corren durante el giro, toman el color de la cuña que pasa bajo la
+  flecha cuando la rueda ya va despacio y destellan al parar.
+- **La flecha** es una lengüeta roja colgada de un soporte dorado, y **las clavijas la empujan** al pasar: se dobla
+  hacia la derecha y vuelve de golpe un poco hacia la izquierda, calculado del ángulo de la rueda (`Deflection`) y no
+  de un temporizador. Sustituye al golpe de marcador del §84.
+- **Las caras**: la interrogación dorada encoge antes de destaparse, la cuña da un fogonazo blanco, el color entra de
+  dentro afuera y la cara salta con chispas: dibujo del cartucho, cifra grande y nombre, en dos líneas si no cabe.
+  Siguen derechas mientras la rueda gira, como en el §84.
+- **El tablero de premios y castigos** de la pared izquierda: las dieciséis caras, las que pagan arriba y las que
+  cuestan abajo, con una bombilla que se enciende cuando esa cara sale en la rueda y un marco dorado que parpadea en
+  la ganadora. Sustituye a la tira de dieciséis de debajo de la rueda.
+- **El marcador DEBES** de la pared derecha, en cifras de segmentos rojos con las apagadas debajo, y **las fichas**:
+  una por tirada debida, en dos montones sobre una mesita. Más de dieciséis se dicen con un número; no se inventan
+  pilas.
+- **La tirada empieza pagando**: una ficha sale del montón girando en el aire y entra de canto en la ranura de la
+  caja de la palanca, el marcador baja uno, y la palanca baja y vuelve.
+- **El giro** va precedido de un tirón hacia atrás de 10° y, mientras la rueda va despacio, un halo alrededor
+  tramado del color de la cuña bajo la flecha.
+- **Al parar**, la rueda se mece 2,5° (menos de media cuña) y sale un aro de oro desde el buje. Si la cara paga, cae
+  confeti y saltan monedas; si cuesta, el neón del techo parpadea en rojo y los bordes de la sala se tiñen de rojo.
+- **Un neón** con dos dados y la palabra LUDÓPATA.
+- **Letras pequeñas**: `PixelScene` gana una fuente de 3×5 con acentos y Ñ, porque en una cuña no cabe la grande.
+
+**Quién lleva el reloj**, igual que en las otras dos escenas: el view model publica `CurrentPlay` (`RoulettePlay`) con
+el instante de la tirada, y la escena se dibuja cada fotograma a partir de cuánto hace. El ángulo es una función pura
+del tiempo (`RouletteTimeline.AngleAt`), así que salir de la pantalla a mitad de giro y volver la encuentra donde debe
+estar. Se van los eventos `SpinRequested` y `RevealRequested`, las cuñas vectoriales (`RouletteSlotViewModel`) y la red
+de seguridad de 15 s. La tirada sigue decidida, escrita en la partida y apuntada antes del primer fotograma (§87).
+
+La celda es de tres píxeles como en todo lo demás, salvo que el panel no tenga alto para la rueda entera. Entonces
+pasa a dos, siempre un número entero, porque un mapa de bits escalado se emborrona.
+
+**Verificado:**
+
+- Dos tiradas reales en la copia aislada del §170, pasada a LUDÓPATA con `RunService.ChangeRoleAsync` y con tres
+  tiradas concedidas por `RouletteService.GrantAsync`, los dos con su evento y su motivo. Salieron «+1 MT» (confeti,
+  MT95 entregada) y «Habilidad mala» (alarma roja, tres Pokémon con su habilidad nueva), con capturas de la app en cada
+  fase.
+- Trece pruebas en `RouletteMachineTests`, entre ellas:
+  - la rueda para en la ganadora con los cinco perfiles, las seis ganadoras y nueve ángulos de partida, y se queda
+    ahí;
+  - nunca va hacia atrás durante el barrido ni se pasa más de 20°;
+  - en el último medio segundo la cuña bajo la flecha es la ganadora;
+  - ningún fotograma falla, en tres tamaños.
+
+## §176 · Muestra del estilo en píxeles: el marco, la barra lateral y HOME (2026-09-23)
+
+**Estado: MUESTRA, pendiente de que el jugador decida si se rehace toda la aplicación así.** Solo presentación: ni
+una regla, ni un servicio, ni un punto cambian. Lo único nuevo que se lee es la lista de etapas del tope de nivel, y
+sale de la misma cuenta que decide el tope.
+
+Las otras escenas (§169, §171, §174, §175) están dibujadas en celdas y el resto de la aplicación seguía en vectores
+con Bahnschrift. Se propusieron dos caminos, un marco en píxeles o todo en píxeles, y se eligió probar uno intermedio:
+**piezas en píxeles para todo lo que se toca y escenas enteras solo para los momentos grandes**, con una fuente propia
+legible. La muestra cubre lo que se ve siempre: el marco de la ventana, la barra de título, la barra lateral, la
+cabecera de cada sección y HOME entero.
+
+**El kit, en `Views/Pixel/`:**
+
+- **`PixelFont`**: fuente propia de mayúsculas de siete celdas, minúsculas con descendentes, acentos, Ñ, ª, º, §,
+  «», flechas y ♀♂, proporcional y con cifras tabulares. No es un TTF a propósito: WPF suaviza una fuente de píxeles a
+  cualquier tamaño que no sea el suyo exacto, y al 125 % es a todos. Lo que no está en la tabla sale como una caja
+  hueca, que se ve que falta, y no como otra letra.
+- **`PixelText`**: el texto de esa fuente como elemento de verdad (mide, ajusta línea, recorta con «…», se enlaza),
+  con la celda redondeada a píxeles enteros según el DPI.
+- **`PixelIcons` / `PixelIcon`**: un icono de 12×12 en color por sección, con las mismas claves que los vectoriales
+  (`IconHome`, `IconGacha`…); apagado si no es la sección en pantalla y dando saltitos si lo es.
+- **`PixelSprite`**: un dibujo del cartucho a píxeles enteros. Una `Image` con escala 2 al 125 % son 2,5 píxeles por
+  píxel y sale una columna de cada dos más ancha. Hace silueta, contorno de una celda, «piedra» para los caídos (como
+  las figuritas del §169) y recorte de lo vacío, todo cocinado en un mapa de bits porque `OpacityMask` con
+  `ImageBrush` no pinta (§31).
+- **`PixelRule`** (surco), **`PixelBackdrop`** (fondo con una trama tenue) y `Themes/Pixel.xaml`: botones, botón
+  sutil, botón de peligro, botones de la barra de título, elemento del menú y barra de desplazamiento.
+
+**HOME:** la franja de estado ganó el **recorrido**: las doce pruebas, la liga y el rematch, cada una con el dibujo que
+declara su logro en `Data/achievements.json` (el cristal Z de cada prueba, la Master Ball y la Gloria Ball), en color
+las superadas, en silueta las que faltan y la que toca encendida y saltando, con el tope de cada etapa debajo. Sale de
+`LevelCapTable` y de `ProgressService.ClearedAsync`, la misma cuenta que pone el tope, así que no pueden discrepar. El
+equipo en vivo va a ×3 con contorno, en piedra si está debilitado y con la estrella dorada si es variocolor. Los caídos
+van en piedra y con su forma.
+
+**Verificado:** en la app real sobre la copia aislada del §170 (arranque, HOME, RULETA), y el equipo en vivo, que solo
+sale con Azahar abierto, con un arnés que pinta `HomeView` con datos de ejemplo. Cinco pruebas en `PixelUiTests`: que
+cada glifo es un rectángulo que cabe en la línea, que el texto que se escribe de verdad no tiene ninguna letra sin
+dibujo, que ajustar línea nunca se pasa del ancho, que cada icono es de 12×12 con colores conocidos, y que **cada
+sección tiene su icono** (sin él se cae al punto sin fallar). `HomeViewTests` se adapta a la vista nueva.
+
+Si la muestra no convence, se vuelve atrás restaurando `MainWindow.xaml(.cs)`, `HomeView.xaml`, `App.xaml`,
+`Services/Rolling.cs` y `HomeViewTests.cs`; los ficheros de `Views/Pixel/` y `Themes/Pixel.xaml` solo se quitan si el
+jugador lo confirma.
+
+### §176 bis · Más pulido, y el VISOR en píxeles (2026-09-23)
+
+El jugador dio por buena la muestra y pidió dos cosas: **mucho más pulido**, y el **visor Pokémon**, que «se ve algo pobre».
+
+**El kit gana tres piezas**, que notan todas las pantallas que lo usen:
+
+- **`PixelWindow`**: un bloque de pantalla como una ventana del menú de un juego. La placa gana una **banda de título**
+  (`PixelPanel.HeaderHeight`) con su icono y su nombre, una línea de tinta debajo, el acento que arranca y sitio a la
+  derecha para una cifra o un botón. HOME pasa a usarla en EQUIPO EN VIVO, PARTIDA, CAÍDOS y ÚLTIMAS ACCIONES.
+- **Pestañas** (`PxTabControl`), como las páginas de la pantalla de datos del juego.
+- **Pulsar un botón es hundirlo**: la placa baja sobre su propia sombra y el texto con ella, en vez de moverse con la
+  sombra detrás.
+
+Y detalles: cada pantalla dice en la cabecera **qué es** (el subtítulo que la sección ya llevaba), con sombra dura
+porque de día el cielo de Alola es claro; el historial lleva **el icono de lo que pasó** en cada línea
+(`Services/EventIcons.cs`, con el mismo criterio que `DisplayNames`: lo que no tiene icono sale con el punto); la fuente
+gana ◀ ▲ ▼; hay dos iconos nuevos (estrella de variocolor y cruz de caído); y «RoleChanged» ya sale como «Cambio de rol».
+
+**El visor** es ahora el PC del juego, con los mismos datos y órdenes de antes:
+
+- **El equipo** como el menú del equipo: una placa por Pokémon con su icono, nombre, nivel y sexo; roja y en piedra si
+  la run lo cuenta como caído; y en la banda una ball del cartucho por hueco.
+- **La caja** con su fondo, los treinta huecos más grandes y el cursor de esquinas. Debajo, **las 32 cajas en
+  miniatura** con una barrita de lo llenas que están, para saltar a cualquiera de un clic.
+- **La ficha**, con retrato al cuádruple sobre el fondo de su caja, **sus tipos en placas del color de cada tipo**, y
+  tres páginas: **DATOS** (con lo que la naturaleza sube y baja), **ESTADÍSTICAS** (el nombre en rojo si la naturaleza
+  la sube y en azul si la baja, como en el juego) y **ATAQUES**, cada uno en su placa del color de su tipo con categoría,
+  potencia, precisión y PP.
+
+Lo nuevo que se enseña sale de fuentes que ya existían: los tipos de `ITypeLookup`, los ataques del mismo catálogo que
+MOVIMIENTOS (`IMoveCatalog`, del mundo instalado) y el efecto de la naturaleza de `IStatForecast`, el mismo que ENTRENAR
+EV. Nada nuevo se escribe en la partida.
+
+**Verificado** en la app real sobre la copia aislada del §170: visor sin nada elegido, con un Pokémon del equipo, con
+uno de una caja y las tres páginas; HOME otra vez. Y **una prueba nueva carga el visor con los recursos reales del
+tema**, para que un recurso mal escrito falle en los tests y no al abrir la pantalla (van en la misma prueba que HOME
+porque WPF solo admite una `Application` por proceso). Los tests de HOME se adaptaron: el aviso de encuentro vive ahora
+dentro de una ventana que sin enlace con el juego está plegada.
+
+### §176 ter · Todas las pantallas en píxeles, y fuera ESTADÍSTICAS (2026-09-23)
+
+El jugador aprobó la dirección y pidió **convertir el resto** y **quitar ESTADÍSTICAS**, que le parecía inútil.
+
+**ESTADÍSTICAS sale del menú**: fuera de `MainViewModel.Sections`, de su plantilla en `MainWindow.xaml`, de su registro
+en el contenedor y del enlace de JUGAR. Sus ficheros (`StatisticsView.xaml(.cs)`, `StatisticsViewModel.cs`,
+`StatisticsService.cs`) siguen en el disco sin que nada los use, **pendientes de que el jugador confirme borrarlos**.
+Nada de lo que contaba se pierde: la cadena de eventos de la que salía es la misma.
+
+**Convertidas las catorce secciones que quedaban**: JUGAR, RANDOMIZADOR, GACHA, TIENDA, LOGROS, MAPA, ENTRENAR EV,
+MOVIMIENTOS, POKE PASTE, CEMENTERIO, COMBATES, RULETA, MISCELÁNEA y MANTENIMIENTO. Solo presentación: mismos enlaces,
+mismas órdenes, ni una regla tocada. Lo único añadido a un ViewModel es la fracción de la barra de un logro
+(`AchievementRowViewModel.Share`), porque la barra en celdas toma una fracción y no un rango.
+
+**El kit gana tres piezas más**: un campo de texto (`PxTextBox`, en monoespaciada dentro de un pozo, con su texto de
+ayuda sacado de `Tag`), una casilla (`PxCheckBox`) y un desplegable (`PxComboBox`). Lo que se escribe no puede ir en la
+fuente propia porque hay que poder poner el cursor entre dos letras. Y tres iconos: la marca blanca, la cruz roja y la
+flecha de huida, que son las chinchetas del MAPA.
+
+Decisiones que conviene saber:
+
+- **El MAPA** conserva el dibujo de cada isla, que es el del cartucho, pero pierde el halo difuminado y el brillo en
+  degradado que lo cruzaban: son justo lo que este estilo no hace. Las chinchetas pasan a placas de celdas con su icono.
+- **ENTRENAR EV y MOVIMIENTOS** conservan el aspecto de la bolsa del §143 (naranja, cápsulas, cuero) y cambian solo la
+  letra. Los botones de la bolsa pintan su texto con una plantilla para `string` en `Bag.xaml`, y no metiéndolo en cada
+  botón, para que los que llevan un dibujo en vez de texto lo sigan pintando.
+- **GACHA**: los portales de tier salen de la escena y van a la barra de abajo, junto al botón de TIRAR. Encima de la
+  escena tapaban el letrero de neón, porque al compactar los banners la escena mide distinto y el neón sube.
+- **La cabecera**: el título y el marcador de puntos van sobre una placa translúcida. Con el cielo de Alola de día el
+  sol salía justo detrás del subtítulo y no se leía ni con sombra.
+
+**Sin convertir todavía**, y dicho para que no se dé por hecho: las ventanas de diálogo (crear run, cambiar de rol,
+registrar captura), la tarjeta de resultado del wonder trade, los controles del reproductor de la killcam y los nombres
+bajo las tumbas del cementerio, que dibuja la escena con otra letra. La sección COMPETICIÓN no sale en la distribución
+local y tampoco está convertida.
+
+**Verificado** en la app real, sobre la copia aislada del §170, sección por sección y con un Pokémon elegido en
+ENTRENAR EV y MOVIMIENTOS. Y la prueba de carga de `HomeViewTests` construye y mide ahora **las catorce** con los
+recursos reales del tema, para que un recurso mal escrito falle en los tests y no al abrir la pantalla.
+
+### §176 quater · ENTRENAR EV y MOVIMIENTOS sin bolsa, los diálogos, y los tipos del elegido (2026-09-23)
+
+El jugador confirmó **borrar ESTADÍSTICAS** (ya no quedan sus cuatro ficheros) y pidió que **ENTRENAR EV y
+MOVIMIENTOS dejen el naranja de la bolsa** del §143 y lleven el diseño general, que **enseñen los tipos** del Pokémon
+elegido y que se conviertan también los diálogos.
+
+**Las dos pantallas, con el mismo esqueleto que el VISOR**: a la izquierda `PokemonPickerPanel`, un panel propio que
+comparten las dos -equipo en tarjetas de dos en dos con el cursor del juego, cajas con ◀ ▶ y la lista de la caja en un
+pozo, RELEER LA PARTIDA abajo-; a la derecha ventanas `PixelWindow` (FICHA, EV; FICHA, SABE AHORA, PUEDE RECORDAR). En
+ENTRENAR EV las filas son placas con barra en celdas, los `−`/`+`/MÁX/0 son botones del kit y el hexágono pasa a los
+colores del tema. En MOVIMIENTOS los cuatro que sabe siguen siendo **del color de su tipo**, como en combate, y un hueco
+libre sale hundido. Solo presentación: mismos enlaces y órdenes.
+
+**Los tipos del elegido**: `TypeBadges.For` es ahora la única forma de convertir un Pokémon en sus placas de tipo, la del
+visor incluida, con la forma regional contada (`ITypeLookup`). Los dos ViewModels la exponen como `SelectedTypes`.
+
+**Los diálogos en píxeles**: crear run, cambiar de rol y registrar captura. El rol se elige con `PxRadioCard` (la tarjeta
+entera es el botón, con el cursor alrededor de la elegida) y el selector de especie con **`PxEditableComboBox`**, que es
+un estilo aparte porque un `ComboBox` editable sin `PART_EditableTextBox` deja de aceptar texto en silencio (§50). Y
+además la tarjeta del wonder trade, los controles de la killcam (con `PxToggleButton` para CÁMARA LENTA; envuelven en vez
+de cortarse en la columna estrecha del cementerio) y los nombres bajo las tumbas, que ahora son letra de píxeles a una
+celda por punto y salen nítidos al ampliarse la escena. La letra de los campos de texto sube de 13 a 15.
+
+**Borrada con confirmación del jugador**: la bolsa (`Themes/Bag.xaml`, `BagPocketPanel.xaml(.cs)` y
+`BagPixels.cs`). `ZeroToVisibleConverter` salió de `BagPocketPanel.xaml.cs` a `Converters/` para poder borrarlo entero.
+Sigue sin convertir COMPETICIÓN, que no sale en la distribución local.
+
+**Verificado**: las dos pantallas con un Pokémon elegido y el cementerio con su killcam, en la app real sobre la copia
+aislada del §170, que ya tiene la capa de gen 8-9 (con la carpeta vacía faltaban los dibujos de Raboot, Finizen,
+Rookidee y demás; en la carpeta del jugador están los 1025). Los diálogos, en `HomeViewTests`: se construyen sin su
+ViewModel con datos de muestra y se miden, y con `PERMALOCKE_SNAP_DIR` se guardan en PNG para mirarlos. 1521 pruebas.
+
+## §177 · Limpieza pedida por el jugador, y dos fallos del kit pixel que rompían botones y casillas (2026-09-24)
+
+Quitado a petición del jugador:
+- **CEMENTERIO**: el bloque ANTE QUIÉN, CUÁNDO, DE DÓNDE VENÍA y CÓMO SE SUPO. En él salía «#822», un nombre de gen 8-9
+  sin resolver, y ya no se enseña. `CemeteryViewModel` sigue calculando esos textos, pero nadie los pinta.
+- **COMBATES**: el botón COMPROBAR.
+- **MISCELÁNEA**: +10 ESCAMAS CORAZÓN, porque el recuerda-movimientos va dentro de la app (§142). Los ajustes de avisos
+  pasan a CONFIGURACIÓN.
+- **HOME**: sin CAÍDOS, sin ÚLTIMAS ACCIONES y sin CAMBIAR el rol, que ahora solo se ve como distintivo. En su lugar
+  hay IR A: accesos a ocho secciones por su título, con `HomeViewModel.GoCommand`, `NavigateRequested` y
+  `MainViewModel`. `ChangeRoleWindow` y `ChangeRoleViewModel` siguen en el código sin ninguna entrada.
+- **MANTENIMIENTO**, borrada (`MaintenanceViewModel` y `MaintenanceView`). La sustituye **CONFIGURACIÓN**
+  (`SettingsViewModel`, `SettingsView`), con:
+  - tamaño de ventana;
+  - avisos encima del juego;
+  - escena de muerte (`DeathCeremony.Enabled`);
+  - grabar killcams (`KillcamRecorder.Enabled`);
+  - minimizar al abrir el juego;
+  - VER UN AVISO;
+  - abrir las carpetas.
+
+  Se guarda en `Config/ajustes.json` con `AppSettings`, que se carga al arrancar. Antes los avisos y el minimizar se
+  olvidaban al cerrar. Son preferencias y no generan eventos. `MaintenanceService` se queda porque lo usa el
+  vigilante. Las reparaciones siguen en `tools/PermaLocke.Probe`.
+- **GACHA**: la escalera de probabilidades pasa a una fila propia a todo el ancho, con cinco columnas iguales. Cada
+  una lleva nombre, % grande (o NO SALE), la banda de total base escrita «HASTA 400 / 401-490 / 591 O MÁS» y el texto
+  «pulsa para ver quién sale». Antes la última se cortaba y la banda salía como «→ 0400», porque la letra pixel no
+  tiene «≤» ni «→».
+
+**Dos fallos de fondo del kit, que explican «JUGAR no va» y «las pestañas del visor no van»**:
+1. `PixelPanel` y `PixelText` son `IsHitTestVisible = false`. Una plantilla cuya raíz no tiene `Background` **no
+   recibe ni un clic**. Estaban así:
+   - el botón JUGAR (`LauncherView`, `PlayButton`);
+   - las pestañas (`PxTabItem`);
+   - los portales del gacha;
+   - las chinchetas del MAPA;
+   - el regalo y el JUGAR de la cabecera (`MainWindow`);
+   - los huecos de `PxTextBox` y `PxEditableComboBox`.
+
+   Todos llevan ahora `Background="Transparent"` y se pueden pulsar en toda su superficie. **Regla: toda plantilla
+   interactiva hecha con piezas pixel necesita fondo transparente en la raíz.**
+2. `PixelPanel` no pinta nada por debajo de 6×5 celdas (18×15 px a escala 1). La marca de `PxCheckBox` medía 15 px, así
+   que **ninguna casilla enseñaba nunca que estaba marcada**. Ahora es un `Border` liso. El punto de LO QUE DA CADA
+   PRUEBA pasa de 15 a 18 px.
+
+Verificado en la copia aislada: capturas de HOME, GACHA, CEMENTERIO y CONFIGURACIÓN, y 1521 pruebas. Los clics no se
+pueden probar con UI Automation, porque `Invoke` se salta el hit-test: la causa está confirmada leyendo el código y
+falta verlo con el ratón.
+
+## §178 · HOME sin IR A, el GACHA con la máquina a la vista, y textos sin relleno (2026-09-24)
+
+- **HOME**: fuera IR A. Queda PARTIDA sola, a todo el ancho y ajustada a su contenido.
+- **GACHA**:
+  - La escena de la máquina se queda con el alto. Los banners pierden la línea de descripción y la barra de abajo es
+    una fila: TIRAR, las cinco probabilidades a lo ancho y, a la derecha, los puntos y PREMIOS POR PRUEBA. Con eso la
+    escena se ve entera, con el suelo y la alfombrilla, que antes quedaban cortados.
+  - El bote («quién puede salir») es un panel grande sobre la mitad izquierda, de arriba abajo. Tapa la estantería
+    y la máquina, que al mirarlo no hacen falta, y deja a la vista la alfombrilla con la ball y su ficha.
+  - Las celdas de probabilidad llevan ball, % (o NO SALE) y banda «0-400 / 401-490 / 591+»; el nombre del tier va en
+    la etiqueta emergente. Los botones de los portales tienen `AutomationProperties.Name` para poder probarlos.
+- **VISOR**: las estadísticas de un Pokémon en caja salen de `IStatForecast` con la tabla del mundo instalado, las
+  mismas que MOVIMIENTOS. Fuera el aviso amarillo de «pueden no coincidir».
+- **Textos de premio**:
+  - La ruleta ya no escribe «MT32 Tajo Aéreo: 0 → 1» sino el nombre del objeto, «×N» si son varios o «Pierdes X»
+    (`SaveRouletteWorld`).
+  - Las fichas del gacha y del wonder trade ya no enseñan «Nv. · naturaleza» ni «IV total»: queda la habilidad.
+- **Probe `--credito`** acepta `PERMALOCKE_ROOT` para apuntar a otra instalación. Con eso se dieron al jugador 5
+  tiradas por banner en `PermaLocke prueba`, cada una como su propio `AdminAdjustment` con motivo. Pocho recibió 7
+  porque estaba en −2: tenía 7 tiradas gratis gastadas contra 5 ganadas.
+
+## §179 · La Colina Saltagua y la Jungla Umbría, cerradas hasta tener su cristal Z (2026-09-24)
+
+A petición del jugador, dos pruebas más se tratan como la primera (§160), y con una regla más dura: **hasta que el
+cristal Z de la prueba esté en la mochila, en esa zona no hay Poké Balls** (salvo un variocolor) y un combate no
+gasta la ruta. Con el cristal, la zona es una ruta normal.
+- **Prueba 3, Colina Saltagua**: `trialZones` pasa de la sala del Dominante a `colina-saltagua` (logro `prueba-03`,
+  Aquastal Z 809). La **Colina Saltagua (Sala del Dominante)** sale del MAPA: va a `sinEncuentros` de
+  `marcadores.json` porque ahí no se atrapa nunca.
+- **Prueba 5, Jungla Umbría**: `jungla-umbria` con `prueba-05` (Herbastal Z 811). El §160 la había dejado fuera a
+  propósito, porque la regla antigua permitía descartar encuentros antes de la prueba; con las balls retiradas ese
+  riesgo desaparece.
+- En el código: `EncounterSituation.PendingTrial`. `EncounterPolicy` retira las balls y no gasta la ruta, tanto
+  andando como en combate, con el mensaje «primero supera la prueba (…)». `EncounterGuard` lo pasa desde
+  `TrialZoneService.PendingAsync`, que mira el cristal en la mochila viva, en las dos decisiones. La Cueva Sotobosque
+  (prueba 1) recibe la misma regla: allí el juego ya no dejaba lanzar Poké Balls.
+- Prueba: `EncounterPolicyTests.A_trial_zone_before_its_crystal_has_no_balls_and_spends_nothing`. Se copiaron
+  `rules.json` y `marcadores.json` a la carpeta de prueba, comprobando antes que solo diferían en estos cambios.
+
+**Sin jugar todavía.** Falta ver cómo lee el juego la zona dentro de la Jungla Umbría durante la prueba.

@@ -2,57 +2,82 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:views="clr-namespace:PermaLocke.App.Views"
+             xmlns:pixel="clr-namespace:PermaLocke.App.Views.Pixel"
              xmlns:conv="clr-namespace:PermaLocke.App.Converters">
 
+    <!--
+        EL VISOR EN PÍXELES (§176): el PC del juego. A la izquierda el equipo como el menú del equipo, en el centro la
+        caja con su fondo y debajo las 32 cajas en miniatura con lo llenas que están, y a la derecha la ficha como la
+        pantalla de datos: retrato, tipos, naturaleza con lo que sube y baja, estadísticas con sus IV y los cuatro
+        ataques del color de su tipo. Mismos datos y mismas órdenes que antes; nada se escribe desde aquí salvo el
+        wonder trade, que sigue siendo su propio servicio.
+    -->
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
         <conv:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility" />
 
-        <!-- Un hueco del PC. Los vacíos también se dibujan: la caja del juego tiene treinta
-             agujeros estén llenos o no, y pintar solo los ocupados la convertiría en una lista. -->
+        <Style TargetType="ScrollBar" BasedOn="{StaticResource PxScrollBar}" />
+
+        <Style x:Key="PxLabel" TargetType="pixel:PixelText">
+            <Setter Property="Scale" Value="2" />
+            <Setter Property="Tight" Value="True" />
+            <Setter Property="Colour" Value="{StaticResource PxTextFaint}" />
+        </Style>
+
+        <Style x:Key="PxValue" TargetType="pixel:PixelText">
+            <Setter Property="Scale" Value="2" />
+            <Setter Property="Tight" Value="True" />
+            <Setter Property="Trim" Value="True" />
+            <Setter Property="Colour" Value="{StaticResource PxText}" />
+        </Style>
+
+        <Style x:Key="BareList" TargetType="ListBox">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+            <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Disabled" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBox">
+                        <ItemsPresenter />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Un hueco del PC: un agujero hundido en el fondo de la caja, los vacíos también. Caído: rojo. Elegido: el
+             cursor de esquinas del juego. -->
         <Style x:Key="SlotStyle" TargetType="ListBoxItem">
-            <Setter Property="Margin" Value="2" />
+            <Setter Property="Margin" Value="3" />
             <Setter Property="Padding" Value="0" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="VerticalContentAlignment" Value="Stretch" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ListBoxItem">
-                        <Border x:Name="Hole" CornerRadius="6" BorderThickness="1"
-                                Background="{StaticResource BackgroundBrush}"
-                                BorderBrush="{StaticResource BorderBrush}">
+                        <Grid Background="Transparent">
+                            <views:PixelPanel x:Name="Hole" IsSunken="True" HasShadow="False" Fill="#C80D0A16" />
                             <ContentPresenter />
-                        </Border>
+                            <views:PixelCursor x:Name="Cursor" Margin="-3" Visibility="Collapsed"
+                                               Colour="{StaticResource PxGold}" />
+                        </Grid>
                         <ControlTemplate.Triggers>
-                            <!-- Un hueco vacío se nota que está vacío: ni borde ni fondo, solo el
-                                 agujero. Un PC medio lleno tiene que leerse de un vistazo. -->
                             <DataTrigger Binding="{Binding IsEmpty}" Value="True">
-                                <Setter TargetName="Hole" Property="Opacity" Value="0.4" />
-                                <Setter TargetName="Hole" Property="Cursor" Value="Arrow" />
+                                <Setter TargetName="Hole" Property="Fill" Value="#880D0A16" />
+                                <Setter Property="Cursor" Value="Arrow" />
                             </DataTrigger>
-                            <!-- Caido: la loseta se tine. Por PID contra la run, no por el aspecto
-                                 del Pokemon. Va ANTES que el raton y la seleccion para que esas dos
-                                 sigan mandando cuando lo tocas. -->
                             <DataTrigger Binding="{Binding IsDead}" Value="True">
-                                <Setter TargetName="Hole" Property="Background"
-                                        Value="{StaticResource DangerDeepBrush}" />
-                                <Setter TargetName="Hole" Property="BorderBrush"
-                                        Value="{StaticResource DangerBrush}" />
+                                <Setter TargetName="Hole" Property="Fill" Value="#D8421A20" />
                             </DataTrigger>
-
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Hole" Property="Background"
-                                        Value="{StaticResource SurfaceHighBrush}" />
-                                <Setter TargetName="Hole" Property="BorderBrush"
-                                        Value="{StaticResource AccentDimBrush}" />
+                                <Setter TargetName="Hole" Property="Fill" Value="#E02C2446" />
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="Hole" Property="BorderBrush"
-                                        Value="{StaticResource AccentBrush}" />
-                                <Setter TargetName="Hole" Property="BorderThickness" Value="2" />
-                                <Setter TargetName="Hole" Property="Background"
-                                        Value="{StaticResource AccentDeepBrush}" />
+                                <Setter TargetName="Hole" Property="Fill" Value="#F03A2766" />
+                                <Setter TargetName="Cursor" Property="Visibility" Value="Visible" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -60,322 +85,403 @@
             </Setter>
         </Style>
 
+        <!-- El icono al doble y en píxeles enteros, en piedra si ha caído, con sus marcas en las esquinas. -->
         <DataTemplate x:Key="SlotTemplate">
-            <Grid Height="60">
-                <Image Source="{Binding Sprite}" Width="52" Height="52" Stretch="Uniform"
-                       RenderOptions.BitmapScalingMode="NearestNeighbor"
-                       HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <!-- Un caído se ve apagado, igual que en el memorial de HOME. -->
-                    <Image.Style>
-                        <Style TargetType="Image">
-                            <Setter Property="Opacity" Value="1" />
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsDead}" Value="True">
-                                    <Setter Property="Opacity" Value="0.4" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Image.Style>
-                </Image>
+            <Grid Height="70">
+                <pixel:PixelSprite Source="{Binding Sprite}" Scale="2" TrimEmpty="True" Outline="{StaticResource PxShadow}"
+                                   Stone="{Binding IsDead}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Bob="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" />
 
-                <!-- El destello del variocolor, arriba a la derecha. Treinta losetas iguales no
-                     decian ni cual es raro ni cual ya no esta; el dato estaba leido y sin pintar. -->
-                <Path Data="M 6,0 L 7.6,4.4 L 12,6 L 7.6,7.6 L 6,12 L 4.4,7.6 L 0,6 L 4.4,4.4 Z"
-                      Fill="{StaticResource AccentBrush}"
-                      HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,4,4,0"
-                      Visibility="{Binding IsShiny, Converter={StaticResource BoolToVisibility}}" />
+                <pixel:PixelIcon Icon="IconCross" Scale="1" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                                 Margin="6,0,0,4" Visibility="{Binding IsDead, Converter={StaticResource BoolToVisibility}}" />
+                <pixel:PixelIcon Icon="IconStar" Scale="1" HorizontalAlignment="Right" VerticalAlignment="Top"
+                                 Margin="0,5,6,0" Visibility="{Binding IsShiny, Converter={StaticResource BoolToVisibility}}" />
 
-                <!-- Hay Pokémon pero no icono: se dice, no se disimula. -->
-                <TextBlock Text="{Binding Fallback}" FontSize="20"
-                           Foreground="{StaticResource TextFaintBrush}"
-                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                <pixel:PixelText Text="{Binding Fallback}" Scale="3" Tight="True" Colour="{StaticResource PxTextFaint}"
+                                 HorizontalAlignment="Center" VerticalAlignment="Center" />
             </Grid>
         </DataTemplate>
 
-        <!-- Caja del EV: pequeña, centrada y de tres dígitos, porque 252 es lo más que cabe.
-             Se recorta sola al escribir, así que un 300 se convierte en 252 delante del jugador
-             en vez de aceptarse y fallar luego al guardar. -->
-        <Style x:Key="EvBox" TargetType="TextBox" BasedOn="{StaticResource Field}">
-            <Setter Property="Width" Value="44" />
-            <Setter Property="MaxLength" Value="3" />
-            <Setter Property="Padding" Value="4,4" />
-            <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="TextAlignment" Value="Center" />
-            <Setter Property="VerticalAlignment" Value="Center" />
-            <Style.Triggers>
-                <!-- Lo que todavía no está en la partida se marca, para que "guardar" no sea
-                     un botón que uno pulsa por si acaso. -->
-                <DataTrigger Binding="{Binding IsDirty}" Value="True">
-                    <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
-                    <Setter Property="FontWeight" Value="Bold" />
-                </DataTrigger>
-            </Style.Triggers>
+        <!-- Una fila del equipo, como el menú del equipo del juego: su placa, el icono, el nombre, el nivel y el
+             símbolo de sexo. Elegida: la placa se enciende y sale la flecha. -->
+        <Style x:Key="PartyRowStyle" TargetType="ListBoxItem">
+            <Setter Property="Margin" Value="0,0,0,6" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Grid Background="Transparent" Height="60">
+                            <views:PixelPanel x:Name="Plate" Fill="{StaticResource PxFaceHigh}" HasShadow="False" />
+                            <pixel:PixelText x:Name="Arrow" Text="▶" Scale="2" Tight="True" Visibility="Hidden"
+                                             Colour="{StaticResource PxGold}" VerticalAlignment="Center" Margin="-4,0,0,0" />
+                            <ContentPresenter Margin="12,0,10,0" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <DataTrigger Binding="{Binding IsEmpty}" Value="True">
+                                <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxWell}" />
+                                <Setter TargetName="Plate" Property="IsSunken" Value="True" />
+                                <Setter Property="Cursor" Value="Arrow" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsDead}" Value="True">
+                                <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxBadDeep}" />
+                            </DataTrigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxFaceLift}" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxAccentDeep}" />
+                                <Setter TargetName="Arrow" Property="Visibility" Value="Visible" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
-        <!-- Una fila de la tabla: la estadística, de qué está hecha, y lo único que se puede
-             mover. La barra de arriba mide el IV, de 0 a 31, que es lo que de verdad distingue a
-             dos Pokémon de la misma especie y nivel; la de abajo, el EV de 0 a 252. -->
-        <DataTemplate x:Key="StatTemplate">
-            <Grid Margin="0,4">
+        <DataTemplate x:Key="PartyRowTemplate">
+            <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="64" />
-                    <ColumnDefinition Width="32" />
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="24" />
-                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Grid.Column="0" Text="{Binding Name}" Style="{StaticResource Muted}"
-                           FontSize="12" VerticalAlignment="Center" />
-                <TextBlock Grid.Column="1" Text="{Binding Value}" Style="{StaticResource Mono}"
-                           FontWeight="Bold" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                <pixel:PixelSprite Grid.Column="0" Source="{Binding Sprite}" Scale="2" TrimEmpty="True"
+                                   Outline="{StaticResource PxShadow}" Stone="{Binding IsDead}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Bob="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" />
 
-                <!-- Las dos barras, una encima de otra: IV arriba, EV abajo. -->
-                <StackPanel Grid.Column="2" Margin="9,0" VerticalAlignment="Center">
-                    <ProgressBar Height="5" Minimum="0" Maximum="31"
-                                 Value="{Binding Iv, Mode=OneWay}">
-                        <ProgressBar.Style>
-                            <Style TargetType="ProgressBar" BasedOn="{StaticResource {x:Type ProgressBar}}">
-                                <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="6,0,0,0">
+                    <pixel:PixelText Text="{Binding Pokemon.DisplayName}" Style="{StaticResource PxValue}"
+                                     Shadow="{StaticResource PxShadow}" />
+                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                        <pixel:PixelText Text="Nv." Style="{StaticResource PxLabel}" />
+                        <pixel:PixelText Text="{Binding Pokemon.Level}" Scale="2" Tight="True" Margin="4,0,0,0"
+                                         Colour="{StaticResource PxTextDim}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
+                    <pixel:PixelText Text="{Binding Pokemon.GenderMark}" Scale="2" Tight="True" HorizontalAlignment="Right">
+                        <pixel:PixelText.Style>
+                            <Style TargetType="pixel:PixelText">
+                                <Setter Property="Colour" Value="{StaticResource PxTextDim}" />
                                 <Style.Triggers>
-                                    <!-- Un 31 se ve de un vistazo sin tener que leer el número. -->
-                                    <DataTrigger Binding="{Binding Iv}" Value="31">
-                                        <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                    <DataTrigger Binding="{Binding Pokemon.GenderMark}" Value="♂">
+                                        <Setter Property="Colour" Value="#FF7AB0FF" />
                                     </DataTrigger>
-                                    <DataTrigger Binding="{Binding Iv}" Value="0">
-                                        <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                                    <DataTrigger Binding="{Binding Pokemon.GenderMark}" Value="♀">
+                                        <Setter Property="Colour" Value="#FFFF8AB0" />
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
-                        </ProgressBar.Style>
-                    </ProgressBar>
-
-                    <ProgressBar Height="5" Minimum="0" Maximum="1" Margin="0,3,0,0"
-                                 Value="{Binding Fill, Mode=OneWay}">
-                        <ProgressBar.Style>
-                            <Style TargetType="ProgressBar" BasedOn="{StaticResource {x:Type ProgressBar}}">
-                                <Setter Property="Foreground" Value="{StaticResource TextFaintBrush}" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsDirty}" Value="True">
-                                        <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </ProgressBar.Style>
-                    </ProgressBar>
+                        </pixel:PixelText.Style>
+                    </pixel:PixelText>
+                    <pixel:PixelIcon Icon="IconStar" Scale="1" HorizontalAlignment="Right" Margin="0,5,0,0"
+                                     Visibility="{Binding IsShiny, Converter={StaticResource BoolToVisibility}}" />
+                    <pixel:PixelIcon Icon="IconCross" Scale="1" HorizontalAlignment="Right" Margin="0,5,0,0"
+                                     Visibility="{Binding IsDead, Converter={StaticResource BoolToVisibility}}" />
                 </StackPanel>
 
-                <TextBlock Grid.Column="3" Text="{Binding Iv}" Style="{StaticResource Mono}"
-                           FontSize="12" HorizontalAlignment="Right" VerticalAlignment="Center" />
-
-                <TextBox Grid.Column="4" Style="{StaticResource EvBox}" Margin="8,0,0,0"
-                         IsEnabled="{Binding DataContext.CanEditEvs,
-                                     RelativeSource={RelativeSource AncestorType=UserControl}}"
-                         Text="{Binding Ev, UpdateSourceTrigger=PropertyChanged,
-                                ValidatesOnExceptions=True}" />
-
-                <!-- Máximo y vaciar, uno al lado del otro: mover 252 puntos de una estadística a
-                     otra son dos gestos, y con los dos botones a mano son dos clics. -->
-                <StackPanel Grid.Column="5" Orientation="Horizontal" Margin="4,0,0,0">
-                    <Button Content="MÁX" Style="{StaticResource GhostButton}"
-                            Padding="6,4" FontSize="9.5"
-                            ToolTip="Pone 252 en esta estadística. Si te pasas de 510, el panel te lo dice y no te deja guardar hasta que quites de otra."
-                            IsEnabled="{Binding DataContext.CanEditEvs,
-                                        RelativeSource={RelativeSource AncestorType=UserControl}}"
-                            Command="{Binding DataContext.MaxEvCommand,
-                                      RelativeSource={RelativeSource AncestorType=UserControl}}"
-                            CommandParameter="{Binding}" />
-
-                    <Button Content="0" Style="{StaticResource GhostButton}"
-                            Padding="7,4" FontSize="9.5" Margin="3,0,0,0"
-                            ToolTip="Vacía esta estadística y libera sus EV para las demás."
-                            IsEnabled="{Binding DataContext.CanEditEvs,
-                                        RelativeSource={RelativeSource AncestorType=UserControl}}"
-                            Command="{Binding DataContext.ClearEvCommand,
-                                      RelativeSource={RelativeSource AncestorType=UserControl}}"
-                            CommandParameter="{Binding}" />
-                </StackPanel>
+                <pixel:PixelText Grid.ColumnSpan="3" Text="HUECO LIBRE" Style="{StaticResource PxLabel}"
+                                 HorizontalAlignment="Center" VerticalAlignment="Center"
+                                 Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVisibility}}" />
             </Grid>
         </DataTemplate>
 
-        <!-- Etiqueta de una fila de la ficha. -->
-        <Style x:Key="FieldLabel" TargetType="TextBlock" BasedOn="{StaticResource Muted}">
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="Foreground" Value="{StaticResource TextFaintBrush}" />
-            <Setter Property="Margin" Value="0,0,0,3" />
+        <!-- Una caja del selector: su número y una barrita de lo llena que está. La de la pantalla, encendida. -->
+        <Style x:Key="BoxTileStyle" TargetType="ListBoxItem">
+            <Setter Property="Margin" Value="2" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="ToolTip" Value="{Binding Label}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Grid Background="Transparent" Height="42">
+                            <views:PixelPanel x:Name="Plate" Fill="{StaticResource PxWell}" IsSunken="True" HasShadow="False" />
+                            <pixel:PixelText x:Name="Number" Text="{Binding Number}" Scale="2" Tight="True"
+                                             Colour="{StaticResource PxTextDim}" HorizontalAlignment="Center"
+                                             VerticalAlignment="Top" Margin="0,3,0,0" />
+                            <views:PixelBar Height="9" Margin="6,0,6,4" VerticalAlignment="Bottom"
+                                            Value="{Binding Share, Mode=OneWay}" Fill="{StaticResource PxAccent}"
+                                            Track="{StaticResource PxInk}" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <DataTrigger Binding="{Binding IsEmpty}" Value="True">
+                                <Setter TargetName="Number" Property="Colour" Value="{StaticResource PxTextFaint}" />
+                            </DataTrigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxFaceLift}" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxAccentDeep}" />
+                                <Setter TargetName="Plate" Property="IsSunken" Value="False" />
+                                <Setter TargetName="Number" Property="Colour" Value="{StaticResource PxText}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
-        <Style x:Key="FieldValue" TargetType="TextBlock" BasedOn="{StaticResource Body}">
-            <Setter Property="FontSize" Value="12.5" />
-            <Setter Property="Margin" Value="10,0,0,3" />
-        </Style>
+        <!-- Una fila de estadísticas: el nombre del color de la naturaleza (rojo sube, azul baja, como en el juego),
+             el valor, sus IV en 31 celdas y el número. -->
+        <DataTemplate x:Key="StatTemplate">
+            <Grid Margin="0,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="112" />
+                    <ColumnDefinition Width="44" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="30" />
+                </Grid.ColumnDefinitions>
+
+                <pixel:PixelText Grid.Column="0" Text="{Binding Name}" Scale="2" Tight="True" VerticalAlignment="Center">
+                    <pixel:PixelText.Style>
+                        <Style TargetType="pixel:PixelText">
+                            <Setter Property="Colour" Value="{StaticResource PxTextDim}" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding NatureState}" Value="up">
+                                    <Setter Property="Colour" Value="#FFFF8A6A" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding NatureState}" Value="down">
+                                    <Setter Property="Colour" Value="#FF7AB0FF" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </pixel:PixelText.Style>
+                </pixel:PixelText>
+                <pixel:PixelText Grid.Column="1" Text="{Binding Value}" Scale="2" Tight="True" TextAlignment="Right"
+                                 HorizontalAlignment="Right" VerticalAlignment="Center" Colour="{StaticResource PxText}" />
+
+                <views:PixelBar Grid.Column="2" Height="15" Margin="12,0,10,0" VerticalAlignment="Center"
+                                Value="{Binding IvShare, Mode=OneWay}">
+                    <views:PixelBar.Style>
+                        <Style TargetType="views:PixelBar">
+                            <Setter Property="Fill" Value="{StaticResource PxAccent}" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Iv}" Value="31">
+                                    <Setter Property="Fill" Value="{StaticResource PxGood}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Iv}" Value="0">
+                                    <Setter Property="Fill" Value="{StaticResource PxBad}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </views:PixelBar.Style>
+                </views:PixelBar>
+
+                <pixel:PixelText Grid.Column="3" Text="{Binding Iv}" Scale="2" Tight="True" HorizontalAlignment="Right"
+                                 VerticalAlignment="Center" Colour="{StaticResource PxTextDim}" />
+            </Grid>
+        </DataTemplate>
+
+        <!-- Un ataque en su placa del color de su tipo, como en combate: nombre, y debajo tipo, categoría y potencia. -->
+        <DataTemplate x:Key="MoveTemplate">
+            <Grid Margin="0,0,0,8" Height="60">
+                <views:PixelPanel Fill="{Binding TypeColour}" HasShadow="False" />
+                <views:PixelPanel Fill="#48000000" HasShadow="False" Margin="3,30,3,3" />
+                <Grid Margin="12,8,12,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="22" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <pixel:PixelText Grid.Row="0" Text="{Binding Name}" Scale="2" Tight="True" Trim="True"
+                                     Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
+                    <pixel:PixelText Grid.Row="0" Text="{Binding TypeName}" Scale="2" Tight="True" HorizontalAlignment="Right"
+                                     Colour="#E6FFFFFF" Shadow="#80000000" />
+
+                    <DockPanel Grid.Row="1" VerticalAlignment="Center" Margin="0,2,0,0"
+                               Visibility="{Binding IsEmpty, Converter={StaticResource InverseBoolToVisibility}}">
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                            <pixel:PixelText Text="POT" Scale="2" Tight="True" Colour="#B4FFFFFF" />
+                            <pixel:PixelText Text="{Binding Power}" Scale="2" Tight="True" Margin="5,0,14,0" Colour="{StaticResource PxText}" />
+                            <pixel:PixelText Text="PREC" Scale="2" Tight="True" Colour="#B4FFFFFF" />
+                            <pixel:PixelText Text="{Binding Accuracy}" Scale="2" Tight="True" Margin="5,0,14,0" Colour="{StaticResource PxText}" />
+                            <pixel:PixelText Text="PP" Scale="2" Tight="True" Colour="#B4FFFFFF" />
+                            <pixel:PixelText Text="{Binding PP}" Scale="2" Tight="True" Margin="5,0,0,0" Colour="{StaticResource PxText}" />
+                        </StackPanel>
+                        <pixel:PixelSprite DockPanel.Dock="Left" Source="{Binding CategoryIcon}" Scale="1"
+                                           VerticalAlignment="Center" Margin="0,0,6,0" />
+                        <pixel:PixelText Text="{Binding CategoryText}" Scale="2" Tight="True" Colour="#E6FFFFFF"
+                                         VerticalAlignment="Center" />
+                    </DockPanel>
+                </Grid>
+            </Grid>
+        </DataTemplate>
     </UserControl.Resources>
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="292" />
             <ColumnDefinition Width="12" />
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="12" />
-            <ColumnDefinition Width="400" />
+            <ColumnDefinition Width="430" />
         </Grid.ColumnDefinitions>
 
-        <!-- =============================================== EL EQUIPO
-             Siempre a la vista y aparte del PC, porque es con lo que se está jugando: tener que
-             pasar cajas para ver si alguien viene tocado es un paso de más. -->
-        <Border Grid.Column="0" Style="{StaticResource Inset}" Padding="14">
-            <DockPanel>
-                <TextBlock DockPanel.Dock="Top" Text="EQUIPO" Style="{StaticResource StatLabel}"
-                           Margin="0,0,0,10" />
+        <!-- =============================================== EL EQUIPO -->
+        <pixel:PixelWindow Grid.Column="0" Title="EQUIPO" Icon="IconGacha" Padding="14,12,20,18">
+            <pixel:PixelWindow.HeaderContent>
+                <!-- Una Poké Ball del cartucho por hueco, como la fila de balls del combate: llena, gris o tachada. -->
+                <ItemsControl ItemsSource="{Binding Party}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="2,0,0,0">
+                                <pixel:PixelSprite Scale="1" Source="{Binding DataContext.PartyBallSprite,
+                                                   RelativeSource={RelativeSource AncestorType=UserControl}}">
+                                    <pixel:PixelSprite.Style>
+                                        <Style TargetType="pixel:PixelSprite">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsEmpty}" Value="True">
+                                                    <Setter Property="Silhouette" Value="{StaticResource PxFaceLift}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsDead}" Value="True">
+                                                    <Setter Property="Stone" Value="True" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </pixel:PixelSprite.Style>
+                                </pixel:PixelSprite>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </pixel:PixelWindow.HeaderContent>
 
-                <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
-                    <Button Content="RELEER LA PARTIDA" Style="{StaticResource PrimaryButton}"
-                            Command="{Binding LoadCommand}" Padding="12,8" FontSize="11.5"
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Bottom" Margin="0,10,0,0">
+                    <Button Content="RELEER LA PARTIDA" Style="{StaticResource PxButton}" Command="{Binding LoadCommand}"
                             HorizontalAlignment="Stretch" />
-                    <Button Content="WONDER TRADE" Style="{StaticResource GhostButton}"
-                            Command="{Binding Trade.ArmCommand}" Padding="12,8" FontSize="11.5"
-                            HorizontalAlignment="Stretch" Margin="0,6,0,0" />
-                    <TextBlock Style="{StaticResource Faint}" Margin="0,8,0,0" MaxWidth="150"
-                               Text="{Binding Summary}" />
+                    <Button Content="WONDER TRADE" Style="{StaticResource PxSubtleButton}"
+                            Command="{Binding Trade.ArmCommand}" HorizontalAlignment="Stretch" Margin="0,8,0,0" />
+                    <pixel:PixelText Text="{Binding Summary}" Scale="2" Wrap="True" Margin="2,10,0,0"
+                                     Colour="{StaticResource PxTextFaint}" />
                 </StackPanel>
 
                 <ListBox ItemsSource="{Binding Party}" SelectedItem="{Binding SelectedPartySlot}"
-                         Background="Transparent" BorderThickness="0"
-                         ItemContainerStyle="{StaticResource SlotStyle}"
-                         ItemTemplate="{StaticResource SlotTemplate}"
-                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                         VerticalAlignment="Top">
-                    <ListBox.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <UniformGrid Columns="2" />
-                        </ItemsPanelTemplate>
-                    </ListBox.ItemsPanel>
-                </ListBox>
+                         Style="{StaticResource BareList}" VerticalAlignment="Top"
+                         ItemContainerStyle="{StaticResource PartyRowStyle}"
+                         ItemTemplate="{StaticResource PartyRowTemplate}" />
             </DockPanel>
-        </Border>
+        </pixel:PixelWindow>
 
         <!-- =============================================== EL PC -->
-        <Border Grid.Column="2" Style="{StaticResource Inset}" Padding="16,14">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
+        <pixel:PixelWindow Grid.Column="2" Title="CAJAS DEL PC" Icon="IconGrid" Padding="14,12,20,18">
+            <pixel:PixelWindow.HeaderContent>
+                <pixel:PixelText Text="{Binding SelectedBox.Occupancy}" Scale="2" Tight="True"
+                                 Colour="{StaticResource PxTextDim}" />
+            </pixel:PixelWindow.HeaderContent>
 
-                <!-- Cabecera de caja: se pasa de una a otra como en el juego, y da la vuelta. -->
-                <Border Grid.Row="0" Margin="0,0,0,12" Padding="8,6"
-                        Background="{StaticResource BackgroundBrush}"
-                        BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
-                        CornerRadius="{StaticResource RadiusMedium}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
+            <DockPanel>
+                <!-- La placa de la caja, como en el PC del juego: se pasa de una a otra y da la vuelta. -->
+                <Grid DockPanel.Dock="Top" Height="54" Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
 
-                        <Button Grid.Column="0" Content="‹" Command="{Binding PreviousBoxCommand}"
-                                Style="{StaticResource GhostButton}" MinWidth="40" Padding="0,4"
-                                FontSize="17" />
+                    <Button Grid.Column="0" Content="◀" Style="{StaticResource PxSubtleButton}" Padding="14,8,20,13"
+                            Command="{Binding PreviousBoxCommand}" VerticalAlignment="Center"
+                            AutomationProperties.Name="Caja anterior" />
 
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Style="{StaticResource CardTitle}" HorizontalAlignment="Center"
-                                       Text="{Binding SelectedBox.Name}" />
-                            <TextBlock Style="{StaticResource Mono}" FontSize="11"
-                                       Foreground="{StaticResource TextFaintBrush}"
-                                       HorizontalAlignment="Center"
-                                       Text="{Binding SelectedBox.Occupancy}" />
-                        </StackPanel>
-
-                        <Button Grid.Column="2" Content="›" Command="{Binding NextBoxCommand}"
-                                Style="{StaticResource GhostButton}" MinWidth="40" Padding="0,4"
-                                FontSize="17" />
+                    <Grid Grid.Column="1" Margin="8,0">
+                        <views:PixelPanel Fill="{StaticResource PxAccentDeep}" />
+                        <pixel:PixelText Text="{Binding SelectedBox.Name}" Scale="3" Tight="True" Trim="True"
+                                         Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}"
+                                         HorizontalAlignment="Center" VerticalAlignment="Center" Margin="12,0,18,6" />
                     </Grid>
-                </Border>
 
-                <!-- Seis columnas por cinco filas: el PC del juego, tal cual.
-                     Pegada ARRIBA, y probado que centrarla es peor: el aire queda repartido, si,
-                     pero la rejilla se despega de su cabecera y las dos dejan de leerse como una
-                     sola cosa. El hueco de debajo es el precio de que una caja mida cinco filas y
-                     el panel sea mas alto; taparlo con algo que no aporte seria peor. -->
-                <ListBox Grid.Row="1" ItemsSource="{Binding Slots}" SelectedItem="{Binding SelectedSlot}"
-                         Background="Transparent" BorderThickness="0"
-                         ItemContainerStyle="{StaticResource SlotStyle}"
-                         ItemTemplate="{StaticResource SlotTemplate}"
-                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                         VerticalAlignment="Top">
-                    <ListBox.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <UniformGrid Columns="6" />
-                        </ItemsPanelTemplate>
-                    </ListBox.ItemsPanel>
-                </ListBox>
+                    <Button Grid.Column="2" Content="▶" Style="{StaticResource PxSubtleButton}" Padding="14,8,20,13"
+                            Command="{Binding NextBoxCommand}" VerticalAlignment="Center"
+                            AutomationProperties.Name="Caja siguiente" />
+                </Grid>
 
-            </Grid>
-        </Border>
+                <!-- Las 32 cajas en miniatura: un vistazo a dónde hay Pokémon, y un clic para ir. -->
+                <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
+                    <pixel:PixelText Text="TODAS LAS CAJAS" Style="{StaticResource PxLabel}" Margin="2,0,0,6" />
+                    <ListBox ItemsSource="{Binding Boxes}" SelectedItem="{Binding SelectedBox}"
+                             Style="{StaticResource BareList}" ItemContainerStyle="{StaticResource BoxTileStyle}">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="8" />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                    </ListBox>
+                </StackPanel>
+
+                <!-- Seis por cinco sobre el fondo de la caja. -->
+                <Grid VerticalAlignment="Top">
+                    <views:PixelPanel Fill="{StaticResource PxInk}" HasShadow="False" />
+                    <views:BoxWallpaper Theme="{Binding BoxTheme}" Margin="3" />
+                    <ListBox ItemsSource="{Binding Slots}" SelectedItem="{Binding SelectedSlot}"
+                             Style="{StaticResource BareList}" Margin="11"
+                             ItemContainerStyle="{StaticResource SlotStyle}"
+                             ItemTemplate="{StaticResource SlotTemplate}">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="6" />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                    </ListBox>
+                </Grid>
+            </DockPanel>
+        </pixel:PixelWindow>
 
         <!-- =============================================== LA FICHA -->
-        <Border Grid.Column="4" Style="{StaticResource Inset}" Padding="16,14">
+        <pixel:PixelWindow Grid.Column="4" Title="FICHA" Icon="IconDocument" Padding="16,12,20,18">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <!-- EL INTERCAMBIO. Dice qué se va a entregar y qué banda va a volver antes
-                     de tocar nada: esto es lo único de PermaLocke que destruye algo. -->
-                <Border Grid.Row="0" Margin="0,0,0,14" Padding="14"
-                        CornerRadius="{StaticResource RadiusMedium}" BorderThickness="1"
-                        Background="{StaticResource DangerDeepBrush}"
-                        BorderBrush="{StaticResource DangerBrush}"
-                        Visibility="{Binding Trade.IsArmed, Converter={StaticResource BoolToVisibility}}">
-                    <StackPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <Ellipse Width="6" Height="6" Fill="{StaticResource DangerBrush}"
-                                     VerticalAlignment="Center" Margin="0,0,8,0" />
-                            <TextBlock Style="{StaticResource StatLabel}" Text="WONDER TRADE"
-                                       Foreground="{StaticResource DangerBrush}"
-                                       VerticalAlignment="Center" />
+                <!-- EL INTERCAMBIO. Dice qué se va a entregar antes de tocar nada. -->
+                <Grid Grid.Row="0" Margin="0,0,0,14"
+                      Visibility="{Binding Trade.IsArmed, Converter={StaticResource BoolToVisibility}}">
+                    <views:PixelPanel Fill="#FF2E1418" />
+                    <StackPanel Margin="16,12,22,20">
+                        <DockPanel>
+                            <Grid DockPanel.Dock="Right" Visibility="{Binding Trade.IsLimited, Converter={StaticResource BoolToVisibility}}">
+                                <views:PixelPanel Fill="{StaticResource PxFaceLift}" HasShadow="False" />
+                                <StackPanel Orientation="Horizontal" Margin="9,6,9,7">
+                                    <pixel:PixelText Text="QUEDAN" Style="{StaticResource PxLabel}" Colour="{StaticResource PxTextDim}" />
+                                    <pixel:PixelText Text="{Binding Trade.Left}" Scale="2" Tight="True" Margin="6,0,0,0"
+                                                     Colour="{StaticResource PxText}" />
+                                </StackPanel>
+                            </Grid>
+                            <pixel:PixelText Text="WONDER TRADE" Scale="2" Tight="True" VerticalAlignment="Center"
+                                             Colour="{StaticResource PxBad}" Shadow="{StaticResource PxShadow}" />
+                        </DockPanel>
 
-                            <!-- Cuantos quedan. Los dan las pruebas, y sin ninguno el intercambio
-                                 no deja: es lo que hace que la recompensa signifique algo. -->
-                            <Border Style="{StaticResource Chip}" Margin="10,0,0,0"
-                                    VerticalAlignment="Center"
-                                    Visibility="{Binding Trade.IsLimited, Converter={StaticResource BoolToVisibility}}">
-                                <TextBlock Style="{StaticResource ChipText}">
-                                    <Run Text="QUEDAN" />
-                                    <Run Text="{Binding Trade.Left, Mode=OneWay}" FontWeight="Bold" />
-                                </TextBlock>
-                            </Border>
-                        </StackPanel>
-
-                        <TextBlock Style="{StaticResource Body}" FontSize="12" Margin="0,8,0,0"
-                                   Text="{Binding Trade.Instruction}" />
-
-                        <TextBlock Style="{StaticResource Body}" FontSize="12" Margin="0,6,0,0"
-                                   Foreground="{StaticResource DangerBrush}"
-                                   Text="{Binding Trade.Problem}" />
+                        <pixel:PixelText Text="{Binding Trade.Instruction}" Scale="2" Wrap="True" Margin="0,10,0,0"
+                                         Colour="{StaticResource PxText}" />
+                        <pixel:PixelText Text="{Binding Trade.Problem}" Scale="2" Wrap="True" Margin="0,6,0,0"
+                                         Colour="{StaticResource PxBad}" />
 
                         <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                            <Button Content="INTERCAMBIAR" Style="{StaticResource DangerButton}"
-                                    Command="{Binding Trade.ConfirmCommand}" MinWidth="140" Padding="14,8" />
-                            <Button Content="CANCELAR" Style="{StaticResource GhostButton}"
-                                    Command="{Binding Trade.CancelCommand}" MinWidth="105" Padding="14,8"
-                                    Margin="8,0,0,0" />
+                            <Button Content="INTERCAMBIAR" Style="{StaticResource PxDangerButton}"
+                                    Command="{Binding Trade.ConfirmCommand}" />
+                            <Button Content="CANCELAR" Style="{StaticResource PxSubtleButton}"
+                                    Command="{Binding Trade.CancelCommand}" Margin="8,0,0,0" />
                         </StackPanel>
 
-                        <TextBlock Style="{StaticResource Faint}" Margin="0,10,0,0"
-                                   Text="El que entregues desaparece de la caja y su sitio lo ocupa el que llegue, que vendrá al mismo nivel. Se copia la partida entera antes de tocarla y se relee después para comprobarlo. Exige el juego cerrado." />
+                        <pixel:PixelText Text="El que entregues se va y llega otro al mismo nivel. Cierra Azahar antes."
+                                         Scale="2" Wrap="True" Margin="0,10,0,0" Colour="{StaticResource PxTextFaint}" />
                     </StackPanel>
-                </Border>
+                </Grid>
 
-                <!-- Sin selección: el resumen de la partida, no un hueco explicado. Este panel es
-                     un tercio de la pantalla y estaba vacío hasta que pinchabas algo; son cuentas
-                     de lo que ya está leído, así que no cuestan nada y contestan lo que uno se
-                     pregunta ANTES de pinchar. -->
-                <StackPanel Grid.Row="1" VerticalAlignment="Top" Margin="0,4,6,0">
+                <!-- Sin selección: el resumen de la partida, como una hoja de datos. -->
+                <StackPanel Grid.Row="1" VerticalAlignment="Top">
                     <StackPanel.Style>
                         <Style TargetType="StackPanel">
                             <Setter Property="Visibility" Value="Visible" />
@@ -387,279 +493,212 @@
                         </Style>
                     </StackPanel.Style>
 
-                    <TextBlock Text="LA PARTIDA" Style="{StaticResource StatLabel}" />
+                    <pixel:PixelText Text="LA PARTIDA" Style="{StaticResource PxLabel}" Margin="2,2,0,8" />
 
-                    <ItemsControl ItemsSource="{Binding Overview}" Margin="0,10,0,0">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border Style="{StaticResource Row}" Padding="0,8">
-                                    <DockPanel>
-                                        <TextBlock DockPanel.Dock="Right" Text="{Binding Value}"
-                                                   Style="{StaticResource Numeric}"
-                                                   VerticalAlignment="Center" Margin="12,0,0,0"
-                                                   TextTrimming="CharacterEllipsis" />
-                                        <TextBlock Text="{Binding Label}" Style="{StaticResource Body}"
-                                                   VerticalAlignment="Center" />
+                    <Grid>
+                        <views:PixelPanel Fill="{StaticResource PxWell}" IsSunken="True" HasShadow="False" />
+                        <ItemsControl ItemsSource="{Binding Overview}" Margin="14,8,14,10">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <DockPanel Margin="0,7">
+                                        <pixel:PixelText DockPanel.Dock="Right" Text="{Binding Value}" Scale="2" Tight="True"
+                                                         Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
+                                        <pixel:PixelText Text="{Binding Label}" Style="{StaticResource PxLabel}"
+                                                         Colour="{StaticResource PxTextDim}" />
                                     </DockPanel>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Grid>
 
-                    <TextBlock Style="{StaticResource Faint}" TextWrapping="Wrap" Margin="0,16,0,0"
-                               Text="Pincha un Pokémon de la caja para ver su ficha." />
+                    <StackPanel Orientation="Horizontal" Margin="2,16,0,0">
+                        <pixel:PixelText Text="▶" Scale="2" Tight="True" Colour="{StaticResource PxGold}" />
+                        <pixel:PixelText Text="Pincha un Pokémon para ver su ficha." Scale="2" Tight="True" Margin="8,0,0,0"
+                                         Colour="{StaticResource PxTextDim}" />
+                    </StackPanel>
                 </StackPanel>
 
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
-                              HorizontalScrollBarVisibility="Disabled"
-                              Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibility}}">
-                    <StackPanel Margin="0,0,6,0">
-                        <Grid>
+                <DockPanel Grid.Row="1" Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibility}}">
+                        <Grid DockPanel.Dock="Top">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
 
-                            <Border Grid.Column="0" Width="80" Height="80"
-                                    CornerRadius="{StaticResource RadiusMedium}"
-                                    Background="{StaticResource BackgroundBrush}"
-                                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
-                                    VerticalAlignment="Top">
-                                <Image Source="{Binding SelectedSprite}" Width="68" Height="68"
-                                       Stretch="Uniform" RenderOptions.BitmapScalingMode="NearestNeighbor" />
-                            </Border>
+                            <!-- EL RETRATO: el Pokémon al cuádruple, de pie sobre el fondo de su caja, con su ball. -->
+                            <Grid Grid.Column="0" Width="150" Height="140" VerticalAlignment="Top">
+                                <views:PixelPanel Fill="{StaticResource PxInk}" HasShadow="False" />
+                                <views:BoxWallpaper Theme="{Binding SelectedTheme}" FloorAt="0.8" Margin="3" />
+                                <pixel:PixelSprite Source="{Binding SelectedSprite}" Scale="4" TrimEmpty="True" Bob="True"
+                                                   Outline="{StaticResource PxShadow}" Stone="{Binding IsSelectedDead}"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,18" />
+                                <pixel:PixelSprite Source="{Binding SelectedBallSprite}" Scale="1" Outline="{StaticResource PxShadow}"
+                                                   HorizontalAlignment="Left" VerticalAlignment="Top" Margin="8,8,0,0"
+                                                   Visibility="{Binding HasSelectedBall, Converter={StaticResource BoolToVisibility}}" />
+                                <pixel:PixelIcon Icon="IconStar" Scale="2" Bob="True" HorizontalAlignment="Right"
+                                                 VerticalAlignment="Top" Margin="0,8,8,0"
+                                                 Visibility="{Binding Selected.IsShiny, Converter={StaticResource BoolToVisibility}}" />
+                            </Grid>
 
-                            <StackPanel Grid.Column="1" Margin="12,2,0,0">
-                                <TextBlock Style="{StaticResource CardTitle}" FontSize="19">
-                                    <Run Text="{Binding Selected.DisplayName, Mode=OneWay}" /><Run
-                                        Text="{Binding Selected.GenderMark, Mode=OneWay}"
-                                        FontFamily="Segoe UI Symbol" />
-                                </TextBlock>
-                                <TextBlock Style="{StaticResource Muted}" FontSize="12" Margin="0,2,0,0"
-                                           Text="{Binding Selected.Subtitle}" />
+                            <StackPanel Grid.Column="1" Margin="16,2,0,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <pixel:PixelText Text="{Binding Selected.DisplayName}" Scale="3" Tight="True" Trim="True"
+                                                     MaxWidth="200" Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
+                                    <pixel:PixelText Text="{Binding Selected.GenderMark}" Scale="3" Tight="True" Margin="8,0,0,0">
+                                        <pixel:PixelText.Style>
+                                            <Style TargetType="pixel:PixelText">
+                                                <Setter Property="Colour" Value="{StaticResource PxTextDim}" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Selected.GenderMark}" Value="♂">
+                                                        <Setter Property="Colour" Value="#FF7AB0FF" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Selected.GenderMark}" Value="♀">
+                                                        <Setter Property="Colour" Value="#FFFF8AB0" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </pixel:PixelText.Style>
+                                    </pixel:PixelText>
+                                </StackPanel>
 
-                                <WrapPanel Margin="0,7,0,0">
-                                    <!-- Estar en el equipo cambia lo que se puede hacer con él:
-                                         los EV sí, el wonder trade no, porque ese escribe en las
-                                         cajas y el equipo es otro almacén de la partida. -->
-                                    <Border Style="{StaticResource Chip}" Margin="0,0,6,0"
-                                            Background="{StaticResource SuccessDeepBrush}"
-                                            BorderBrush="{StaticResource SuccessBrush}"
-                                            Visibility="{Binding Selected.IsInParty,
-                                                         Converter={StaticResource BoolToVisibility}}">
-                                        <TextBlock Text="EN EL EQUIPO" Style="{StaticResource ChipText}"
-                                                   Foreground="{StaticResource SuccessBrush}" />
-                                    </Border>
+                                <pixel:PixelText Text="{Binding Selected.Subtitle}" Scale="2" Tight="True" Margin="0,4,0,0"
+                                                 Colour="{StaticResource PxTextDim}" />
 
-                                    <Border Style="{StaticResource Chip}"
-                                            Background="{StaticResource AccentDeepBrush}"
-                                            BorderBrush="{StaticResource AccentBrush}"
-                                            Visibility="{Binding Selected.IsShiny,
-                                                         Converter={StaticResource BoolToVisibility}}">
-                                        <TextBlock Text="✨ VARIOCOLOR" Style="{StaticResource ChipText}"
-                                                   Foreground="{StaticResource AccentBrightBrush}" />
-                                    </Border>
+                                <!-- El nivel en su placa y los tipos en las suyas, del color de cada tipo. -->
+                                <WrapPanel Margin="0,8,0,0">
+                                    <Grid Margin="0,0,6,6">
+                                        <views:PixelPanel Fill="{StaticResource PxFaceLift}" HasShadow="False" />
+                                        <StackPanel Orientation="Horizontal" Margin="9,6,10,7">
+                                            <pixel:PixelText Text="Nv." Scale="2" Tight="True" Colour="{StaticResource PxTextDim}" />
+                                            <pixel:PixelText Text="{Binding Selected.Level}" Scale="2" Tight="True" Margin="4,0,0,0"
+                                                             Colour="{StaticResource PxText}" />
+                                        </StackPanel>
+                                    </Grid>
+                                    <ItemsControl ItemsSource="{Binding SelectedTypes}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel Orientation="Horizontal" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Margin="0,0,6,6">
+                                                    <views:PixelPanel Fill="{Binding Colour}" HasShadow="False" />
+                                                    <pixel:PixelText Text="{Binding Name}" Scale="2" Tight="True" Margin="9,6,10,7"
+                                                                     Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </WrapPanel>
+
+                                <WrapPanel>
+                                    <Grid Margin="0,0,6,6" Visibility="{Binding Selected.IsInParty, Converter={StaticResource BoolToVisibility}}">
+                                        <views:PixelPanel Fill="{StaticResource PxGoodDeep}" HasShadow="False" />
+                                        <pixel:PixelText Text="EN EL EQUIPO" Scale="2" Tight="True" Margin="9,6,10,7"
+                                                         Colour="{StaticResource PxGood}" />
+                                    </Grid>
+                                    <Grid Margin="0,0,6,6" Visibility="{Binding IsSelectedDead, Converter={StaticResource BoolToVisibility}}">
+                                        <views:PixelPanel Fill="{StaticResource PxBadDeep}" HasShadow="False" />
+                                        <pixel:PixelText Text="CAÍDO" Scale="2" Tight="True" Margin="9,6,10,7"
+                                                         Colour="{StaticResource PxBad}" />
+                                    </Grid>
                                 </WrapPanel>
                             </StackPanel>
                         </Grid>
 
-                        <Border Style="{StaticResource Divider}" Margin="0,14" />
+                    <!-- LAS PÁGINAS, como la pantalla de datos del juego: cada una cabe entera, sin desplazarse. -->
+                    <TabControl Style="{StaticResource PxTabControl}" Margin="0,14,0,0">
+                        <TabItem Header="DATOS">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="140" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
 
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="82" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
+                                <pixel:PixelText Grid.Row="0" Text="NATURALEZA" Style="{StaticResource PxLabel}" Margin="0,4" />
+                                <pixel:PixelText Grid.Row="0" Grid.Column="1" Text="{Binding Selected.NatureName}"
+                                                 Style="{StaticResource PxValue}" Margin="0,4" />
+                                <pixel:PixelText Grid.Row="1" Grid.Column="1" Text="{Binding NatureEffect}" Scale="2" Tight="True"
+                                                 Colour="{StaticResource PxTextDim}" Margin="0,0,0,6" />
 
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Naturaleza" Style="{StaticResource FieldLabel}" />
-                            <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}"
-                                       Text="{Binding Selected.NatureName}" />
+                                <pixel:PixelText Grid.Row="2" Text="HABILIDAD" Style="{StaticResource PxLabel}" Margin="0,4" />
+                                <pixel:PixelText Grid.Row="2" Grid.Column="1" Text="{Binding Selected.AbilityName}"
+                                                 Style="{StaticResource PxValue}" Margin="0,4" />
 
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Habilidad" Style="{StaticResource FieldLabel}" />
-                            <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource FieldValue}"
-                                       Text="{Binding Selected.AbilityName}" />
+                                <pixel:PixelText Grid.Row="3" Text="OBJETO" Style="{StaticResource PxLabel}" Margin="0,4" />
+                                <pixel:PixelText Grid.Row="3" Grid.Column="1" Text="{Binding Selected.HeldItemName}"
+                                                 Style="{StaticResource PxValue}" Margin="0,4" />
 
-                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Objeto" Style="{StaticResource FieldLabel}" />
-                            <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource FieldValue}"
-                                       Text="{Binding Selected.HeldItemName}" />
+                                <pixel:PixelText Grid.Row="4" Text="BALL" Style="{StaticResource PxLabel}" Margin="0,4" />
+                                <pixel:PixelText Grid.Row="4" Grid.Column="1" Text="{Binding Selected.BallName}"
+                                                 Style="{StaticResource PxValue}" Margin="0,4" />
 
-                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Ball" Style="{StaticResource FieldLabel}" />
-                            <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource FieldValue}"
-                                       Text="{Binding Selected.BallName}" />
+                                <pixel:PixelText Grid.Row="5" Text="ENTRENADOR" Style="{StaticResource PxLabel}" Margin="0,4" />
+                                <pixel:PixelText Grid.Row="5" Grid.Column="1" Text="{Binding Selected.TrainerName}"
+                                                 Style="{StaticResource PxValue}" Margin="0,4" />
 
-                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Entrenador" Style="{StaticResource FieldLabel}" />
-                            <TextBlock Grid.Row="4" Grid.Column="1" Style="{StaticResource FieldValue}"
-                                       Text="{Binding Selected.TrainerName}" />
+                                <pixel:PixelText Grid.Row="6" Text="ENCUENTRO" Style="{StaticResource PxLabel}" Margin="0,4" />
+                                <StackPanel Grid.Row="6" Grid.Column="1" Orientation="Horizontal" Margin="0,4">
+                                    <pixel:PixelText Text="{Binding Selected.MetLocationName}" Style="{StaticResource PxValue}"
+                                                     MaxWidth="180" />
+                                    <pixel:PixelText Text="· Nv." Scale="2" Tight="True" Margin="6,0,4,0"
+                                                     Colour="{StaticResource PxTextDim}" />
+                                    <pixel:PixelText Text="{Binding Selected.MetLevel}" Scale="2" Tight="True"
+                                                     Colour="{StaticResource PxText}" />
+                                </StackPanel>
+                            </Grid>
+                        </TabItem>
 
-                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Encuentro" Style="{StaticResource FieldLabel}" />
-                            <TextBlock Grid.Row="5" Grid.Column="1" Style="{StaticResource FieldValue}">
-                                <Run Text="{Binding Selected.MetLocationName, Mode=OneWay}" />
-                                <Run Text=" · Nv." /><Run Text="{Binding Selected.MetLevel, Mode=OneWay}" />
-                            </TextBlock>
-                        </Grid>
-
-                        <Border Style="{StaticResource Divider}" Margin="0,14" />
-
-                        <DockPanel Margin="0,0,0,6">
-                            <TextBlock DockPanel.Dock="Right" Style="{StaticResource Mono}" FontSize="11"
-                                       Foreground="{StaticResource TextFaintBrush}"
-                                       Text="{Binding Selected.IvTotal, StringFormat='IV total {0} de 186'}" />
-                            <TextBlock Style="{StaticResource StatLabel}" Text="ESTADÍSTICA · IV · EV" />
+                        <TabItem Header="ESTADÍSTICAS">
+                            <StackPanel>
+                        <DockPanel Margin="0,0,0,8">
+                            <Button DockPanel.Dock="Right" Content="ENTRENAR EV" Style="{StaticResource PxSubtleButton}"
+                                    Padding="12,6,18,11" Command="{Binding TrainCommand}" VerticalAlignment="Center" />
+                            <StackPanel VerticalAlignment="Center">
+                                <pixel:PixelText Text="ESTADÍSTICAS" Scale="2" Tight="True" Colour="{StaticResource PxText}"
+                                                 Shadow="{StaticResource PxShadow}" />
+                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                    <pixel:PixelText Text="IV TOTALES" Style="{StaticResource PxLabel}" />
+                                    <pixel:PixelText Text="{Binding Selected.IvTotal}" Scale="2" Tight="True" Margin="6,0,0,0"
+                                                     Colour="{StaticResource PxTextDim}" />
+                                    <pixel:PixelText Text="/ 186" Style="{StaticResource PxLabel}" Margin="4,0,0,0" />
+                                </StackPanel>
+                            </StackPanel>
                         </DockPanel>
 
                         <ItemsControl ItemsSource="{Binding Stats}" ItemTemplate="{StaticResource StatTemplate}" />
 
-                        <!-- Una caja no guarda las estadísticas de combate, así que hay que
-                             calcularlas, y el cálculo usa las bases del cartucho sin randomizar.
-                             Se dice en vez de dar el número por bueno: medido sobre una copia de
-                             la partida real, un Kommo-o con 168 PS se recalculaba en 151. -->
-                        <TextBlock Style="{StaticResource Faint}" Margin="0,8,0,0"
-                                   Visibility="{Binding Selected.StatsAreComputed,
-                                                Converter={StaticResource BoolToVisibility}}"
-                                   Text="La columna de la izquierda está calculada: una caja no guarda las estadísticas de combate. Como tu ROM lleva las bases barajadas, puede no coincidir con lo que verás en el juego. Los del equipo sí son los números que guardó el juego." />
-
-                        <!-- ================================== EL REPARTO DE EV
-                             Los dos techos no son una regla de PermaLocke, son el formato: el juego
-                             no reparte más de 252 en una estadística ni más de 510 en total, y
-                             pasarse deja un Pokémon que el cartucho considera ilegal. -->
-                        <Border Style="{StaticResource Inset}" Padding="12,10" Margin="0,12,0,0"
-                                Visibility="{Binding CanEditEvs, Converter={StaticResource BoolToVisibility}}">
-                            <StackPanel>
-                                <DockPanel>
-                                    <TextBlock DockPanel.Dock="Right" Style="{StaticResource Mono}" FontSize="11">
-                                        <Run Text="{Binding EvTotal, Mode=OneWay}" FontWeight="Bold">
-                                            <Run.Style>
-                                                <Style TargetType="Run">
-                                                    <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding EvOverBudget}" Value="True">
-                                                            <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Run.Style>
-                                        </Run><Run Text=" / 510" Foreground="{StaticResource TextFaintBrush}" />
-                                    </TextBlock>
-                                    <TextBlock Style="{StaticResource StatLabel}" Text="REPARTO DE EV" />
-                                </DockPanel>
-
-                                <ProgressBar Height="6" Minimum="0" Maximum="1" Margin="0,8,0,0"
-                                             Value="{Binding EvFill, Mode=OneWay}">
-                                    <ProgressBar.Style>
-                                        <Style TargetType="ProgressBar" BasedOn="{StaticResource {x:Type ProgressBar}}">
-                                            <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding EvOverBudget}" Value="True">
-                                                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </ProgressBar.Style>
-                                </ProgressBar>
-
-                                <!-- Repartir es libre: puedes poner 252 en Velocidad teniendo ya
-                                     504 repartidos y quitar de PS después, en el orden que te dé
-                                     la gana. Lo único que no se puede es guardarlo así. -->
-                                <TextBlock Style="{StaticResource Faint}" Margin="0,6,0,0"
-                                           Visibility="{Binding EvOverBudget,
-                                                        Converter={StaticResource InverseBoolToVisibility}}"
-                                           Text="{Binding EvRemaining, StringFormat='Quedan {0} EV por repartir. Máximo 252 en cada una y 510 entre las seis: son los topes del propio juego. Puedes pasarte mientras repartes y quitar de otra después.'}" />
-
-                                <Border Margin="0,8,0,0" Padding="10,7"
-                                        CornerRadius="{StaticResource RadiusSmall}"
-                                        Background="{StaticResource DangerDeepBrush}"
-                                        BorderBrush="{StaticResource DangerBrush}" BorderThickness="1"
-                                        Visibility="{Binding EvOverBudget,
-                                                     Converter={StaticResource BoolToVisibility}}">
-                                    <TextBlock Style="{StaticResource Body}" FontSize="11.5"
-                                               Foreground="{StaticResource DangerBrush}"
-                                               Text="{Binding EvOver, StringFormat='Te pasas por {0} EV. Quita de otra estadística y podrás guardar; el juego no admite más de 510 entre las seis.'}" />
-                                </Border>
-
-                                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                                    <Button Content="GUARDAR EN LA PARTIDA"
-                                            Style="{StaticResource PrimaryButton}"
-                                            Padding="12,7" FontSize="11"
-                                            Command="{Binding SaveEvsCommand}" />
-                                    <Button Content="DESHACER" Style="{StaticResource GhostButton}"
-                                            Padding="12,7" FontSize="11" Margin="6,0,0,0"
-                                            Command="{Binding RevertEvsCommand}" />
-                                    <Button Content="A CERO" Style="{StaticResource GhostButton}"
-                                            Padding="12,7" FontSize="11" Margin="6,0,0,0"
-                                            Command="{Binding ClearAllEvsCommand}" />
-                                </StackPanel>
-
-                                <TextBlock Style="{StaticResource Faint}" Margin="0,8,0,0"
-                                           Text="Escribir exige el juego cerrado. Se copia la partida entera antes de tocarla, se relee después para comprobarlo, y el cambio queda en el historial de la run." />
-
-                                <!-- Lo que pasó de verdad al escribir, en verde o en rojo. Nunca
-                                     se da por buena una escritura que no se ha vuelto a leer. -->
-                                <Border Margin="0,10,0,0" Padding="10,7"
-                                        CornerRadius="{StaticResource RadiusSmall}">
-                                    <Border.Style>
-                                        <Style TargetType="Border">
-                                            <Setter Property="Visibility" Value="Visible" />
-                                            <Setter Property="Background" Value="{StaticResource SuccessDeepBrush}" />
-                                            <Setter Property="BorderBrush" Value="{StaticResource SuccessBrush}" />
-                                            <Setter Property="BorderThickness" Value="1" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding TrainStatus}" Value="">
-                                                    <Setter Property="Visibility" Value="Collapsed" />
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding TrainFailed}" Value="True">
-                                                    <Setter Property="Background" Value="{StaticResource DangerDeepBrush}" />
-                                                    <Setter Property="BorderBrush" Value="{StaticResource DangerBrush}" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Border.Style>
-                                    <TextBlock Text="{Binding TrainStatus}" Style="{StaticResource Body}"
-                                               FontSize="11.5" />
-                                </Border>
                             </StackPanel>
-                        </Border>
+                        </TabItem>
 
-                        <Border Style="{StaticResource Divider}" Margin="0,14" />
-
-                        <TextBlock Style="{StaticResource StatLabel}" Text="MOVIMIENTOS" Margin="0,0,0,6" />
-                        <ItemsControl ItemsSource="{Binding Selected.Moves}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Background="{StaticResource BackgroundBrush}"
-                                            BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
-                                            CornerRadius="{StaticResource RadiusSmall}"
-                                            Padding="9,5" Margin="0,0,0,4">
-                                        <TextBlock Style="{StaticResource Body}" FontSize="12"
-                                                   Text="{Binding}" />
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-
-                        <TextBlock Style="{StaticResource Mono}" FontSize="10" Margin="0,14,0,0"
-                                   Foreground="{StaticResource TextFaintBrush}"
-                                   Text="{Binding Selected.Pid, StringFormat='PID {0:X8}'}" />
-                    </StackPanel>
-                </ScrollViewer>
+                        <TabItem Header="ATAQUES">
+                            <ItemsControl ItemsSource="{Binding SelectedMoves}" ItemTemplate="{StaticResource MoveTemplate}" />
+                        </TabItem>
+                    </TabControl>
+                </DockPanel>
             </Grid>
-        </Border>
+        </pixel:PixelWindow>
 
         <!-- Problemas y avisos, encima de todo, porque son lo primero que hay que leer. -->
-        <Border Grid.Column="0" Grid.ColumnSpan="5" VerticalAlignment="Top" Margin="12"
-                Background="{StaticResource SurfaceHighBrush}"
-                CornerRadius="{StaticResource RadiusMedium}" Padding="16,13"
-                BorderThickness="1" BorderBrush="{StaticResource AccentBrush}"
-                Visibility="{Binding HasMessage, Converter={StaticResource BoolToVisibility}}">
-            <TextBlock Style="{StaticResource Body}" FontSize="12" Text="{Binding Message}" />
-        </Border>
+        <Grid Grid.Column="0" Grid.ColumnSpan="5" VerticalAlignment="Top" Margin="12,46,12,0"
+              Visibility="{Binding HasMessage, Converter={StaticResource BoolToVisibility}}">
+            <views:PixelPanel Fill="{StaticResource PxWarnDeep}" />
+            <StackPanel Orientation="Horizontal" Margin="16,10,22,16">
+                <pixel:PixelText Text="!" Scale="3" Tight="True" Colour="{StaticResource PxWarn}" VerticalAlignment="Center" />
+                <pixel:PixelText Text="{Binding Message}" Scale="2" Wrap="True" Margin="12,0,0,0" MaxWidth="1100"
+                                 Colour="{StaticResource PxText}" VerticalAlignment="Center" />
+            </StackPanel>
+        </Grid>
 
         <!-- LA ANIMACIÓN, encima de todo. Solo aparece con el intercambio en marcha. -->
         <views:WonderTradeOverlay Grid.Column="0" Grid.ColumnSpan="5" DataContext="{Binding Trade}"

@@ -1,0 +1,75 @@
+---
+tipo: mapa-codigo
+proyecto: PermaLocke.Core
+generado: 2026-09-24
+---
+# PermaLocke.Core — mapa de ficheros
+
+Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Core/`). Tipos en negrita. Vuelve a [[00 - Inicio]] · [[Arquitectura]].
+
+- `Abstractions/IAbilityLookup.cs` — **IAbilityLookup** — Resolves ability names to the ids the cartridge stores, and back. 
+- `Abstractions/IBallPorts.cs` — **FieldZone, IZoneProvider, BattleCounters, IBattleCounters, IOwnedSpecies, IItemWithholder** — The map the player is on, as the game numbers it, and the zone of the run it belongs to. 
+- `Abstractions/IBoxReader.cs` — **BoxedPokemon, BoxContents, BoxSnapshot, IBoxReader** — One Pokémon as it sits in a box of the player's PC, with everything already resolved to text. 
+- `Abstractions/IEvTrainer.cs` — **EvChange, IEvTrainer** — One Pokémon's EVs, rewritten in the slot it already occupies. 
+- `Abstractions/IGameRecords.cs` — **GameRecordSnapshot, IGameRecords** — True when the bag holds this item. Only meaningful for what the game never takes back.
+- `Abstractions/IGameStateProvider.cs` — **GameLinkCapabilities, LivePartyMember, GameSnapshot, IGameStateProvider** — What a game link is actually able to tell us. The UI must consult this and disable what is unavailable with a clear message, rather than showing empty panels.
+- `Abstractions/IGameUnlocks.cs` — **UnlockResult, IGameUnlocks** — Switches on something the saved game keeps as a flag of its own, rather than as an item. 
+- `Abstractions/IItemDelivery.cs` — **ItemDeliveryResult, IItemDelivery** — Puts an item into the player's bag. 
+- `Abstractions/IItemLookup.cs` — **IItemLookup** — Resolves the item ids the game stores into names players recognise. 
+- `Abstractions/ILocationLookup.cs` — **ILocationLookup** — Resolves the zone identifiers the game stores into names players recognise. 
+- `Abstractions/IMoveCatalog.cs` — **LevelUpMove, MoveSheet, IMoveCatalog** — One entry of a level-up learnset: the move and the level it is learnt at.
+- `Abstractions/IMoveTeacher.cs` — **MoveChange, IMoveTeacher** — One move taught to a Pokémon that is already the player's, in the slot it already occupies. 
+- `Abstractions/IPokemonDelivery.cs` — **DeliveryOutcome, DeliveryResult, IPokemonDelivery, IPokemonSwap** — Written into the party or a box of the save and read back to confirm it.
+- `Abstractions/IRandomSource.cs` — **IRandomSource** — Deterministic randomness. The same seed must yield the same sequence on every machine and every build, because a run's randomization and its gacha rolls have to be reproducible and auditable. That ...
+- `Abstractions/ISpeciesLookup.cs` — **SpeciesInfo, ISpeciesLookup** — Resolves species numbers to names and back. A port so the domain never depends on where the Pokédex comes from; today it is PKHeX.Core, later it could be the randomized ROM. 
+- `Abstractions/IStatForecast.cs` — **IStatForecast** — What a Pokémon's six stats would be with a given set of EVs, worked out the way the game does. 
+- `Abstractions/ITypeLookup.cs` — **TypePair, ITypeLookup** — The one or two types of a species. 
+- `Abstractions/Ports.cs` — **IClock, IEventStore, IntegrityReport, IPokemonRepository, IRunRepository, IPlayerProfileStore, IPointsService, PointsResult, IRunContext** — Time source. Injected so tests are deterministic.
+- `Domain/Achievement.cs` — **Achievement, AchievementProgress, IAchievementCatalog** — An item id whose picture stands for this achievement on screen. 
+- `Domain/AdminGift.cs` — **GiftItem, AdminGift** — Something the admin sends a player through the shared folder: points, items, free rolls or wonder trades (§129). 
+- `Domain/Credits.cs` — **MilestoneGrant, RunCredits, ICreditCatalog** — Free gacha rolls and wonder trades a milestone hands over. 
+- `Domain/Enums.cs` — **GameVersion, EncounterType, ZoneOutcome, PokemonStatus, PokemonOrigin, IslandState, EventSource, GameEventType** — Supported games. PermaLocke targets Ultra Moon first.
+- `Domain/EvSpread.cs` — **EvSpread** — The six effort values of one Pokémon. 
+- `Domain/Gacha.cs` — **SpeciesStats, SpeciesForm, ISpeciesStatsCatalog, EvolutionLine, StageOdds, GachaTier, GachaBanner, GachaPull, GachaRollResult, IGachaCatalog** — The regional forms, never null.
+- `Domain/GameEvent.cs` — **GameEvent** — An immutable, append-only record of something that happened in a run. The points balance is a projection over these; no code may change state without one. 
+- `Domain/MapTable.cs` — **MapInfo, MapTable** — One map of the game, as the cartridge describes it.
+- `Domain/Penalties.cs` — **PenaltyRules, IPenaltyCatalog, PenaltyResult** — What losing costs. 
+- `Domain/PlaySession.cs` — **PlaySession, IPlaytimeStore** — One stretch of the emulator being open while a run was loaded.
+- `Domain/PlayerPresence.cs` — **PresenceState, PlayerPresence** — What a player is doing, as a friends list says it.
+- `Domain/PlayerProfile.cs` — **PlayerProfile, RunHistory** — Who plays on this machine, as the competition knows them. 
+- `Domain/PokemonEntry.cs` — **PokemonEntry** — A Pokémon that belongs to a run, however it got there.
+- `Domain/Reward.cs` — **RewardItem, IRewardCatalog, RewardOutcome, RewardResult, RewardStatus** — Something the competition hands over once, for reaching a milestone. 
+- `Domain/Role.cs` — **Role, IRoleCatalog** — One way of playing the competition: how points move, and how hard the cartridge is made. 
+- `Domain/Roulette.cs` — **RouletteEffect, RouletteFace, IRouletteCatalog, RouletteWheel, RoulettePokemon, RouletteWorld, RouletteItemChange, RouletteAction, RouletteApplyResult, IRouletteWorldPort, RouletteOutcome, RouletteSpinResult** — What a face of the wheel does when it wins.
+- `Domain/Run.cs` — **Island, Run** — An island of the Alola tour and how far the player has got in it.
+- `Domain/RunSnapshot.cs` — **RunSnapshot** — What one player's application publishes about their run so the others can see it. 
+- `Domain/Shop.cs` — **ShopItem, IShopCatalog, PurchaseOutcome, PurchaseResult** — One thing the shop sells.
+- `Domain/WonderTrade.cs` — **WonderTradeWindow, IWonderTradeCatalog, WonderTradeGift, WonderTradeOffer, WonderTradeResult, Generations** — How wide the band of acceptable trades is, as a fraction of what the player handed over. 
+- `ServiceCollectionExtensions.cs` — **ServiceCollectionExtensions** — Domain services shared by PermaLocke.App and PermaLocke.Admin. Neither application implements business logic of its own; both resolve these. 
+- `Services/AbilityDraw.cs` — **AbilityDraw** — The ability the gacha and the wonder trade hand out: any the game names, bar the banned ones. 
+- `Services/AchievementService.cs` — **AchievementService** — Counts what the run has done and hands out the points for it. 
+- `Services/CreditService.cs` — **CreditService** — The free gacha rolls and wonder trades a run has, and how many are left. 
+- `Services/EvTrainingService.cs` — **EvTrainingService** — Rewrites the EVs of a Pokémon the player already owns, and leaves a record of it. 
+- `Services/EventChain.cs` — **EventChain** — Walks a run's events and checks that each one is sealed against the one before.
+- `Services/EventHasher.cs` — **EventHasher** — Chains events by hash so that an edited or deleted entry becomes detectable. See docs/ARCHITECTURE.md §9 for the honest limits of what this protects against: it catches casual tampering, not someo...
+- `Services/FormDraw.cs` — **FormDraw** — The regional form the gacha and the wonder trade hand a species out in. 
+- `Services/GachaService.cs` — **GachaService** — Spends points on a banner and produces a Pokémon. 
+- `Services/GiftService.cs` — **GiftResult, GiftService** — Collecting the gifts the admin left in the shared folder (§129). 
+- `Services/LinkBattleAdvice.cs` — **LinkBattleNote, LinkBattleAdvice** — Whether the published players can link-battle each other, said once for the whole group. 
+- `Services/MoveReminder.cs` — **RememberedFrom, RememberableMove, MoveReminder** — Why a move is on the reminder's list.
+- `Services/MoveReminderService.cs` — **MoveReminderOptions, MoveReminderService** — What the reminder has for one Pokémon.
+- `Services/PenaltyService.cs` — **PenaltyService** — Takes points away when the competition says losing costs. 
+- `Services/PlayerProfileService.cs` — **RunOwnership, PlayerProfileService** — Whose the loaded run is, from this machine's point of view.
+- `Services/PointsService.cs` — **PointsService** — The balance is a projection over the event log, never a stored number. There is no way to change points without leaving an event behind, which is the whole point of the design. 
+- `Services/PokePasteFormatter.cs` — **PokePasteFormatter** — Writes Pokémon in the text format pokepast.es and Pokémon Showdown read. 
+- `Services/PokemonIdentityService.cs` — **PokemonIdentityService** — Ties a Pokémon the run granted to the one that now exists in the player's game. 
+- `Services/RewardService.cs` — **RewardService** — Hands over the one-off prizes of the competition, once each. 
+- `Services/RouletteService.cs` — **RouletteService** — The wheel of the LUDÓPATA role: what it owes, what it shows, and what it does. 
+- `Services/RunContext.cs` — **RunContext** — 
+- `Services/RunRoles.cs` — **IRunRoles, RoleAdjusted** — The role a given run is being played with.
+- `Services/RunService.cs` — **CreateRunRequest, RunDeletion, RunService** — Creates and loads runs. Creation is the only place a seed is decided.
+- `Services/SeededRandomSource.cs` — **SeededRandomSource** — SplitMix64. Chosen because it is a handful of lines, has no hidden state, and is specified exactly, so "same seed, same result" survives a change of runtime or machine. 
+- `Services/ShopService.cs` — **ShopService** — Sells the competition's items for run points and puts them in the player's bag. 
+- `Services/SnapshotAudit.cs` — **AuditVerdict, AuditResult, SeenMark, SnapshotAudit** — No history was published with the snapshot, so there is nothing to check it against.
+- `Services/TradedAwayReconciler.cs` — **TradedAwayCandidate, TradedAwayReport, TradedAwayReconciler** — Closes the records of Pokémon handed over in a wonder trade that the run still counts as alive. 
+- `Services/WonderTradeService.cs` — **WonderTradeService** — Trades a Pokémon away for another of comparable strength. 

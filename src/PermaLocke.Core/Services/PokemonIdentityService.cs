@@ -50,8 +50,9 @@ public sealed class PokemonIdentityService(IPokemonRepository pokemon, IEventSto
             Type = GameEventType.PokemonDelivered,
             Source = EventSource.System,
             Actor = run.PlayerName,
+            // Caja 0 es el equipo: las cajas se cuentan desde el 1.
             Description = $"{entry.Nickname ?? entry.SpeciesName} está en la partida: "
-                          + $"caja {box}, hueco {slot}.",
+                          + (box == 0 ? $"en el equipo, hueco {slot}." : $"caja {box}, hueco {slot}."),
             PokemonId = entry.Id,
             Data = new Dictionary<string, string>
             {

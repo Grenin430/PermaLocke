@@ -35,18 +35,21 @@ public sealed class StaticEncounterRandomizer(RomWorkspace workspace, Randomizer
 
         var starterPool = StarterPool(pool);
 
+        // La forma regional, de su propia fuente: la especie de cada fila sale igual que antes (§138).
+        var forms = random.Derive("forms");
+
         using (var patcher = new GarcPatcher(path))
         {
             var gifts = patcher.Read(StaticEncounterTable.Gifts.Subfile);
 
-            RandomizeStarters(gifts, random, starterPool, untouchable, ref replaced, ref kept);
+            RandomizeStarters(gifts, random, forms, starterPool, untouchable, ref replaced, ref kept);
             starters =
             [
                 .. Enumerable.Range(0, StaticEncounterTable.StarterCount)
                     .Select(i => names[StaticEncounterTable.GetSpecies(gifts, StaticEncounterTable.Gifts, i)]),
             ];
 
-            Randomize(gifts, StaticEncounterTable.Gifts, random, pool, untouchable,
+            Randomize(gifts, StaticEncounterTable.Gifts, random, forms, pool, untouchable,
                 StaticEncounterTable.StarterCount, ref replaced, ref kept);
             patcher.Write(StaticEncounterTable.Gifts.Subfile, gifts);
 
@@ -65,7 +68,7 @@ public sealed class StaticEncounterRandomizer(RomWorkspace workspace, Randomizer
                     ? ApplyOverrides(payload, layout, random, pool, ref replaced)
                     : [];
 
-                Randomize(payload, layout, random, pool, untouchable, 0, ref replaced, ref kept,
+                Randomize(payload, layout, random, forms, pool, untouchable, 0, ref replaced, ref kept,
                     claimed);
 
                 ApplyIndependent(payload, layout, independent, random, pool);
@@ -264,7 +267,7 @@ public sealed class StaticEncounterRandomizer(RomWorkspace workspace, Randomizer
     /// The three starters are rolled together, so the player is not offered the same species
     /// three times.
     /// </summary>
-    private void RandomizeStarters(byte[] gifts, IRandomSource random, SpeciesPool pool,
+    private void RandomizeStarters(byte[] gifts, IRandomSource random, IRandomSource forms, SpeciesPool pool,
         HashSet<int> untouchable, ref int replaced, ref int kept)
     {
         var chosen = new HashSet<int>();
@@ -287,12 +290,12 @@ public sealed class StaticEncounterRandomizer(RomWorkspace workspace, Randomizer
                 }
             }
 
-            StaticEncounterTable.SetSpecies(gifts, StaticEncounterTable.Gifts, i, pick);
+            StaticEncounterTable.SetSpecies(gifts, StaticEncounterTable.Gifts, i, pick, pool.Forms.Pick(forms, pick));
             replaced++;
         }
     }
 
-    private static void Randomize(byte[] payload, EncounterEntryLayout layout, IRandomSource random,
+    private static void Randomize(byte[] payload, EncounterEntryLayout layout, IRandomSource random, IRandomSource forms,
         SpeciesPool pool, HashSet<int> untouchable, int from, ref int replaced, ref int kept,
         HashSet<int>? claimed = null)
     {
@@ -317,7 +320,8 @@ public sealed class StaticEncounterRandomizer(RomWorkspace workspace, Randomizer
                 continue;
             }
 
-            StaticEncounterTable.SetSpecies(payload, layout, i, pool.Pick(random, original));
+            var species = pool.Pick(random, original);
+            StaticEncounterTable.SetSpecies(payload, layout, i, species, pool.Forms.Pick(forms, species));
             replaced++;
         }
     }

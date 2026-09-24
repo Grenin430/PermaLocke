@@ -31,7 +31,8 @@ public interface IWonderTradeCatalog
 
 /// <summary>What the player is handing over.</summary>
 /// <param name="Box">Zero-based box it sits in, so the swap knows where to put the new one.</param>
-public sealed record WonderTradeGift(int Species, string Name, int Level, int Box, int Slot);
+/// <param name="Pid">Who it is, which is how the run knows whether it is alive. Zero when unknown.</param>
+public sealed record WonderTradeGift(int Species, string Name, int Level, int Box, int Slot, uint Pid = 0);
 
 /// <summary>
 /// What a wonder trade produced, with everything needed to recompute it from scratch.
@@ -68,9 +69,14 @@ public sealed record WonderTradeOffer(
     int MinBaseStatTotal,
     int MaxBaseStatTotal,
     ulong Seed,
-    int Number)
+    int Number,
+    int Form = 0,
+    string FormName = "")
 {
     public int IvTotal => Ivs.Sum();
+
+    /// <summary>The name to show: «Meowth de Galar» for a regional form, the species otherwise.</summary>
+    public string DisplayName => string.IsNullOrEmpty(FormName) ? Name : $"{Name} de {FormName}";
 
     /// <summary>How the received total compares with what went in, as a percentage.</summary>
     public int Difference => GivenBaseStatTotal == 0
@@ -87,10 +93,10 @@ public sealed record WonderTradeOffer(
     public bool Equals(WonderTradeOffer? other) =>
         other is not null
         && (GivenSpecies, Species, BaseStatTotal, Generation, Legendary, Level, IsShiny,
-                Nature, AbilityId, Seed, Number)
+                Nature, AbilityId, Seed, Number, Form)
            == (other.GivenSpecies, other.Species, other.BaseStatTotal, other.Generation,
                 other.Legendary, other.Level, other.IsShiny, other.Nature, other.AbilityId,
-                other.Seed, other.Number)
+                other.Seed, other.Number, other.Form)
         && Ivs.SequenceEqual(other.Ivs);
 
     public override int GetHashCode()
@@ -98,6 +104,7 @@ public sealed record WonderTradeOffer(
         var hash = new HashCode();
         hash.Add(GivenSpecies);
         hash.Add(Species);
+        hash.Add(Form);
         hash.Add(Level);
         hash.Add(IsShiny);
         hash.Add(Nature);
@@ -128,7 +135,12 @@ public sealed record WonderTradeResult(
 public static class Generations
 {
     /// <summary>Last species of each generation, in order.</summary>
-    private static readonly int[] Ends = [151, 251, 386, 493, 649, 721, 807];
+    /// <remarks>
+    /// It stopped at 807, the cartridge's last, so with the gen 8-9 expansion every new Pokémon from a wonder trade read
+    /// as generation 7. The mod numbers its species in national dex order, and the national dex puts Meltan and
+    /// Melmetal (808 and 809) in the seventh generation, 810-905 in the eighth and 906-1025 in the ninth.
+    /// </remarks>
+    private static readonly int[] Ends = [151, 251, 386, 493, 649, 721, 809, 905, 1025];
 
     public static int Of(int species)
     {

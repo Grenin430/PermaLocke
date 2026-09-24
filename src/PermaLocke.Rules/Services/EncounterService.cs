@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text;
 using PermaLocke.Core.Abstractions;
 using PermaLocke.Core.Domain;
+using PermaLocke.Core.Services;
 
 namespace PermaLocke.Rules.Services;
 
@@ -15,7 +16,9 @@ public sealed record RegisterCaptureRequest(
     int Level = 0,
     string? Nickname = null,
     bool Force = false,
-    uint? Pid = null);
+    uint? Pid = null,
+    int Form = 0,
+    IReadOnlyList<int>? Moves = null);
 
 /// <param name="Registered">False when a rule blocked the capture and it was not forced.</param>
 public sealed record RegisterCaptureResult(
@@ -90,6 +93,7 @@ public sealed class EncounterService(
             LocationId = locationId,
             ObtainedAt = clock.Now,
             Pid = request.Pid,
+            Form = request.Form,
             ObtainedByRuleException = evaluation.IsException,
             ConsumedZoneEncounter = ConsumesZone(request, evaluation, context)
         };
@@ -245,14 +249,26 @@ public sealed class EncounterService(
         }, ct);
     }
 
-    private static Dictionary<string, string> Describe(RegisterCaptureRequest request, PokemonEntry entry) => new()
+    private static Dictionary<string, string> Describe(RegisterCaptureRequest request, PokemonEntry entry)
     {
-        ["especie"] = request.Species.ToString(),
-        ["tipoEncuentro"] = request.EncounterType.ToString(),
-        ["shiny"] = request.IsShiny ? "sí" : "no",
-        ["nivel"] = request.Level.ToString(),
-        ["consumeZona"] = entry.ConsumedZoneEncounter ? "sí" : "no"
-    };
+        var data = new Dictionary<string, string>
+        {
+            ["especie"] = request.Species.ToString(),
+            ["tipoEncuentro"] = request.EncounterType.ToString(),
+            ["shiny"] = request.IsShiny ? "sí" : "no",
+            ["nivel"] = request.Level.ToString(),
+            ["consumeZona"] = entry.ConsumedZoneEncounter ? "sí" : "no"
+        };
+
+        // Lo que sabía al llegar, que es lo que el recuerda-movimientos ofrece siempre, como en Añil (§142).
+        // Solo si se leyó: una lista vacía diría «no sabía nada», que no es lo mismo que «no se sabe».
+        if (request.Moves is { } moves && moves.Any(move => move > 0))
+        {
+            data[MoveReminderService.FirstMovesKey] = MoveReminder.FormatList(moves);
+        }
+
+        return data;
+    }
 
     private static PokemonOrigin OriginFor(EncounterType type) => type switch
     {

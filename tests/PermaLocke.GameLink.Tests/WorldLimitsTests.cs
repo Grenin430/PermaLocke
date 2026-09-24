@@ -10,6 +10,7 @@ namespace PermaLocke.GameLink.Tests;
 /// raised would make every other test in the assembly accept species the cartridge cannot hold,
 /// and they would pass for the wrong reason.
 /// </remarks>
+[Collection("WorldLimits")]
 public sealed class WorldLimitsTests : IDisposable
 {
     public void Dispose() => WorldLimits.MaxSpecies = WorldLimits.CartridgeMaxSpecies;

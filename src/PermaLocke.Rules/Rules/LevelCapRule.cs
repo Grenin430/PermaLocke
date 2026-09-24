@@ -29,7 +29,7 @@ public sealed class LevelCapRule : IRule
             RuleId = Id,
             Outcome = RuleOutcome.Blocked,
             Title = "CAP DE NIVEL SUPERADO",
-            Message = $"{check.SpeciesName} está a nivel {check.Level} y el cap actual es {cap}.",
+            Message = $"{check.SpeciesName} está a nivel {check.Level} y el nivel máximo es {cap}.",
             Details = new Dictionary<string, string>
             {
                 ["Pokémon"] = check.SpeciesName,

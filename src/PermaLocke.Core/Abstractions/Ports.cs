@@ -70,6 +70,15 @@ public interface IRunRepository
     Task<bool> DeleteAsync(Guid runId, CancellationToken ct = default);
 }
 
+/// <summary>This machine's player. One file per installation, because each player has their own PC.</summary>
+public interface IPlayerProfileStore
+{
+    /// <summary>Null when nobody has been set up on this machine yet.</summary>
+    Task<PlayerProfile?> LoadAsync(CancellationToken ct = default);
+
+    Task SaveAsync(PlayerProfile profile, CancellationToken ct = default);
+}
+
 /// <summary>
 /// The only way points may change. Every operation writes an event; there is no setter
 /// for the balance anywhere in the codebase.

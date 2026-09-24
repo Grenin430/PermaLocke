@@ -298,9 +298,24 @@ public sealed class AzaharGameWriter(
             return MemoryWriteResult.Nothing;
         }
 
+        // ¿Es la copia que lee el juego, con las estadísticas en 0x158 (§99)? Se mide ANTES de bajar la experiencia:
+        // después, el nivel de la cola ya no coincide con el de la experiencia y AreHere diría que no.
+        var live = ReadAuthoritative(slotAddress);
+        var statsAtLiveOffset = live is { ChecksumValid: true } && live.PID == expectedPid && Data.PartyStats.AreHere(live);
+        var statsContiguous = Data.PartyStats.AreHere(current);
+
         var result = Modify(slotAddress, $"cap de nivel {cap}",
-            pokemon => Data.GameLevels.Set(pokemon, cap),
-            Data.PartyStats.AreHere(current) ? null : StoredSize);
+            pokemon =>
+            {
+                Data.GameLevels.Set(pokemon, cap);
+
+                // Donde la cola son estadísticas de verdad, que acompañen al nivel.
+                if (statsContiguous)
+                {
+                    Data.StatCalculator.Restat(pokemon);
+                }
+            },
+            statsContiguous ? null : StoredSize);
 
         if (!result.Applied)
         {
@@ -320,7 +335,92 @@ public sealed class AzaharGameWriter(
             return new MemoryWriteResult(result.Written, 0);
         }
 
-        return result;
+        if (!statsAtLiveOffset)
+        {
+            return result;
+        }
+
+        var tail = CapLiveStats(slotAddress, cap);
+
+        return new MemoryWriteResult(result.Written + tail.Written, result.Verified + tail.Verified);
+    }
+
+    /// <summary>
+    /// Brings the level the game shows, and the stats that go with it, down to the cap in the structure it reads.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Found on 2026-09-21: the cap had stopped working on screen. The log said «corregido y releído» and the party menu
+    /// still said 15 with a cap of 14. The cap was written before §99 found where the game keeps the battle stats of
+    /// the structure it reads — 28 bytes at <c>0x158</c> — so it only ever lowered the <b>experience</b>, inside the
+    /// encrypted block, and the <b>level the menu shows</b> lives in that tail. The app read the experience back, saw
+    /// 14, and called it done.
+    /// </para>
+    /// <para>
+    /// The level alone would not do: twenty rare candies and a cap would leave a level 14 with level 34 stats. So the
+    /// stats are worked out again with <see cref="Data.StatCalculator.Restat"/>, the same code ENTRENAR EV writes with,
+    /// from the installed world's base stats. With no world table there is no honest number, so the level is written
+    /// and the stats are left as they were, and the log says so. The current PS follow the maximum down, and a Pokémon at
+    /// zero stays at zero: in this project that is a death (§98).
+    /// </para>
+    /// <para>
+    /// Only the tail is written, and only the bytes that differ, the same way the death mark writes it; and it is read
+    /// back as the game reads it before anything is called done.
+    /// </para>
+    /// </remarks>
+    private MemoryWriteResult CapLiveStats(uint entryAddress, int cap)
+    {
+        var statsAt = entryAddress + Data.PartyLayoutLocator.AuthoritativeStatsOffset;
+
+        if (ReadAuthoritative(entryAddress) is not { ChecksumValid: true } pokemon
+            || !client.TryReadMemory(statsAt, PartySize - StoredSize, out var before))
+        {
+            return MemoryWriteResult.Nothing;
+        }
+
+        pokemon.Stat_Level = (byte)cap;
+
+        if (!Data.StatCalculator.Restat(pokemon))
+        {
+            logger.LogWarning("0x{Address:X8}: sin estadísticas base del mundo instalado; se baja el nivel y las "
+                              + "estadísticas se quedan como estaban", entryAddress);
+        }
+
+        var encrypted = new byte[PartySize];
+        pokemon.WriteEncryptedDataParty(encrypted);
+
+        Backup(statsAt, before, $"cap de nivel {cap} (estadísticas)");
+
+        var touched = 0;
+
+        for (var i = 0; i < before.Length; i++)
+        {
+            if (encrypted[StoredSize + i] != before[i])
+            {
+                client.WriteMemory((uint)(statsAt + i), [encrypted[StoredSize + i]]);
+                touched++;
+            }
+        }
+
+        if (touched == 0)
+        {
+            return MemoryWriteResult.Nothing;
+        }
+
+        var after = ReadAuthoritative(entryAddress);
+
+        if (after is null || after.Stat_Level != cap || !Data.PartyStats.AreHere(after))
+        {
+            logger.LogWarning("0x{Address:X8}: escritas las estadísticas del cap pero el nivel que enseña el juego es {Level}",
+                entryAddress, after is null ? "ilegible" : after.Stat_Level.ToString());
+
+            return new MemoryWriteResult(touched, 0);
+        }
+
+        logger.LogInformation("0x{Address:X8}: nivel {Level} y estadísticas recalculadas en la copia que el juego lee "
+                              + "(PS {Hp}/{Max})", entryAddress, cap, after.Stat_HPCurrent, after.Stat_HPMax);
+
+        return new MemoryWriteResult(touched, touched);
     }
 
     /// <summary>

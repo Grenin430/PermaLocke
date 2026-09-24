@@ -21,6 +21,15 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+
+    <!-- La misma Poke Ball que la app del jugador con el rojo pasado al violeta del tema, para
+         que en el escritorio y en la barra de tareas se vea que es de la familia y cual es cual. -->
+    <ApplicationIcon>Assets\PermaLocke.Admin.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Tambien como recurso, para que la ventana pueda ponerselo en su barra de titulo. -->
+    <Resource Include="Assets\PermaLocke.Admin.ico" />
+  </ItemGroup>
 
 </Project>

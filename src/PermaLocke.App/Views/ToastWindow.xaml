@@ -1,6 +1,7 @@
 <Window x:Class="PermaLocke.App.Views.ToastWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:PermaLocke.App.Views"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
@@ -10,58 +11,62 @@
         IsHitTestVisible="False"
         Topmost="True"
         SizeToContent="Manual"
-        ResizeMode="NoResize">
+        ResizeMode="NoResize"
+        UseLayoutRounding="True">
 
     <!-- LOS AVISOS, encima del juego. Abajo a la derecha y apilados hacia arriba, que es donde
          nadie esta mirando mientras juega y donde todo el mundo espera encontrarlos.
 
+         Pixel art, como el cementerio y la franja de Alola: la caja, la pestaña, la placa del
+         sprite y la cuenta atras se dibujan celda a celda en ToastPixels.cs. Aqui solo se
+         colocan, y el texto va con fuente de verdad porque tiene que leerse de un vistazo.
+
          La ventana entera es transparente y no recibe raton: lo que se ve son las tarjetas. -->
-    <ItemsControl ItemsSource="{Binding Showing}" VerticalAlignment="Bottom"
-                  HorizontalAlignment="Right" Margin="0,0,0,0">
+    <Viewbox Stretch="Uniform" StretchDirection="DownOnly" VerticalAlignment="Bottom" HorizontalAlignment="Right">
+    <ItemsControl ItemsSource="{Binding Showing}" Width="440">
         <ItemsControl.ItemTemplate>
             <DataTemplate>
-                <Border Margin="0,8,0,0" CornerRadius="10" Padding="0"
-                        Background="{StaticResource PanelBrush}"
-                        BorderBrush="{StaticResource BorderStrongBrush}" BorderThickness="1">
-                    <Border.Effect>
-                        <DropShadowEffect BlurRadius="22" ShadowDepth="3" Direction="270"
-                                          Opacity="0.55" Color="Black" />
-                    </Border.Effect>
+                <Grid Width="440" Margin="0,8,0,0" HorizontalAlignment="Right">
+                    <!-- Entra a saltos desde la derecha, tres pasos: se abre como un cuadro de texto
+                         de consola, no se desliza como una notificacion de sistema. -->
+                    <Grid.RenderTransform>
+                        <TranslateTransform x:Name="Slide" X="36" />
+                    </Grid.RenderTransform>
 
-                    <!-- Entra deslizandose desde la derecha. Es lo unico que la distingue de algo
-                         que ya estaba ahi. -->
-                    <Border.RenderTransform>
-                        <TranslateTransform x:Name="Slide" X="40" />
-                    </Border.RenderTransform>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
 
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="4" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
+                    <!-- LA CAJA -->
+                    <Grid Grid.Row="1">
+                        <views:ToastFrame Kind="{Binding Kind}" />
 
-                        <!-- La franja de color dice de que va el aviso sin leerlo. -->
-                        <Border x:Name="Band" Grid.Column="0" CornerRadius="10,0,0,10"
-                                Background="{StaticResource AccentBrush}" />
+                        <!-- El margen derecho y el de abajo dejan sitio a la sombra, que son dos celdas. -->
+                        <Grid Margin="15,17,21,17">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
 
-                        <DockPanel Grid.Column="1" Margin="14,12,16,12">
-                            <Image DockPanel.Dock="Left" Source="{Binding Icon}"
-                                   Width="34" Height="34" Margin="0,0,12,0"
-                                   VerticalAlignment="Top"
-                                   RenderOptions.BitmapScalingMode="NearestNeighbor"
-                                   Visibility="{Binding HasIcon,
-                                       Converter={StaticResource BoolToVisibility}}" />
+                            <views:ToastPlate Kind="{Binding Kind}" Sprite="{Binding Sprite}"
+                                              VerticalAlignment="Top" />
 
-                            <StackPanel MaxWidth="290">
-                                <TextBlock Text="{Binding Title}" Style="{StaticResource CardTitle}"
-                                           TextWrapping="Wrap" />
-                                <TextBlock Text="{Binding Message}" TextWrapping="Wrap"
-                                           Margin="0,3,0,0">
+                            <StackPanel Grid.Column="1" Margin="14,0,4,0" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Title}" TextWrapping="Wrap"
+                                           FontFamily="{StaticResource DisplayFont}" FontSize="15.5"
+                                           FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" />
+                                <TextBlock Text="{Binding Message}" TextWrapping="Wrap" Margin="0,4,0,0"
+                                           FontSize="12.5" LineHeight="17"
+                                           Foreground="{StaticResource TextMutedBrush}">
                                     <TextBlock.Style>
-                                        <Style TargetType="TextBlock" BasedOn="{StaticResource Muted}">
-                                            <Setter Property="Visibility" Value="Visible" />
+                                        <Style TargetType="TextBlock">
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding Message}" Value="">
+                                                <DataTrigger Binding="{Binding HasMessage}" Value="False">
                                                     <Setter Property="Visibility" Value="Collapsed" />
                                                 </DataTrigger>
                                             </Style.Triggers>
@@ -69,32 +74,35 @@
                                     </TextBlock.Style>
                                 </TextBlock>
                             </StackPanel>
-                        </DockPanel>
+
+                            <!-- Lo que le queda en pantalla. Doce segmentos que se apagan de uno en uno. -->
+                            <views:ToastCountdown Grid.Row="1" Grid.ColumnSpan="2" Margin="0,10,0,0"
+                                                  Kind="{Binding Kind}" Shown="{Binding Shown}"
+                                                  Linger="{Binding Linger}" />
+                        </Grid>
                     </Grid>
-                </Border>
+
+                    <!-- LA PESTAÑA. Se mete seis unidades en la caja -contorno y relieve- y va por
+                         encima, asi que sale de ella en vez de estar apoyada. -->
+                    <Grid Grid.Row="0" HorizontalAlignment="Left" Margin="15,0,0,-6" Panel.ZIndex="1">
+                        <views:ToastFrame Kind="{Binding Kind}" IsTab="True" />
+                        <TextBlock Text="{Binding Label}" Margin="11,6,18,8"
+                                   FontFamily="{StaticResource DisplayFont}" FontSize="11"
+                                   FontWeight="Bold" Foreground="#FF09070E" />
+                    </Grid>
+                </Grid>
 
                 <DataTemplate.Triggers>
-                    <DataTrigger Binding="{Binding Tone}" Value="Good">
-                        <Setter TargetName="Band" Property="Background"
-                                Value="{StaticResource SuccessBrush}" />
-                    </DataTrigger>
-                    <DataTrigger Binding="{Binding Tone}" Value="Bad">
-                        <Setter TargetName="Band" Property="Background"
-                                Value="{StaticResource DangerBrush}" />
-                    </DataTrigger>
-
                     <EventTrigger RoutedEvent="FrameworkElement.Loaded">
                         <BeginStoryboard>
                             <Storyboard>
-                                <DoubleAnimation Storyboard.TargetName="Slide"
-                                                 Storyboard.TargetProperty="X"
-                                                 From="40" To="0" Duration="0:0:0.22">
-                                    <DoubleAnimation.EasingFunction>
-                                        <CubicEase EasingMode="EaseOut" />
-                                    </DoubleAnimation.EasingFunction>
-                                </DoubleAnimation>
-                                <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                                                 From="0" To="1" Duration="0:0:0.22" />
+                                <DoubleAnimationUsingKeyFrames Storyboard.TargetName="Slide"
+                                                               Storyboard.TargetProperty="X">
+                                    <DiscreteDoubleKeyFrame KeyTime="0:0:0" Value="36" />
+                                    <DiscreteDoubleKeyFrame KeyTime="0:0:0.05" Value="22" />
+                                    <DiscreteDoubleKeyFrame KeyTime="0:0:0.10" Value="8" />
+                                    <DiscreteDoubleKeyFrame KeyTime="0:0:0.15" Value="0" />
+                                </DoubleAnimationUsingKeyFrames>
                             </Storyboard>
                         </BeginStoryboard>
                     </EventTrigger>
@@ -102,4 +110,6 @@
             </DataTemplate>
         </ItemsControl.ItemTemplate>
     </ItemsControl>
+    </Viewbox>
 </Window>
+

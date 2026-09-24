@@ -107,7 +107,7 @@ public sealed partial class PokePasteViewModel : SectionViewModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Fallo al preparar el Poke Paste");
-            Status = "No se ha podido leer la partida. El detalle está en la carpeta Logs.";
+            Status = "No se ha podido leer la partida.";
         }
         finally
         {

@@ -41,6 +41,15 @@ public sealed class EvTrainingService(IEvTrainer trainer, IEventStore events, IC
         ArgumentNullException.ThrowIfNull(target);
         ArgumentNullException.ThrowIfNull(wanted);
 
+        // Una entrada que no cuadra con su firma no se escribe nunca (§97): PKHeX la devolvería con
+        // una firma válida y lo que quedaría en la partida no es un Pokémon reparado, es basura que el
+        // juego ya no dibuja como Huevo Malo.
+        if (!target.IsIntact)
+        {
+            return new DeliveryResult(DeliveryOutcome.Failed,
+                $"{target.DisplayName} está dañado en la partida y no se toca.");
+        }
+
         var before = EvSpread.Of(target.Evs);
 
         // El tope de 510 se comprueba aquí y no se recorta al escribirlo, porque recortarlo
@@ -49,14 +58,13 @@ public sealed class EvTrainingService(IEvTrainer trainer, IEventStore events, IC
         if (!wanted.IsLegal)
         {
             return new DeliveryResult(DeliveryOutcome.Failed,
-                $"Te pasas por {wanted.Over} EV: {wanted.Total} de {EvSpread.TotalMax}. "
-                + "Quita de alguna estadística antes de guardar. No se ha tocado la partida.");
+                $"Te pasas por {wanted.Over} EV. El máximo es {EvSpread.TotalMax}.");
         }
 
         if (before.Equals(wanted))
         {
             return new DeliveryResult(DeliveryOutcome.Failed,
-                $"Los EV de {target.DisplayName} ya son esos. No se ha tocado la partida.");
+                $"Los EV de {target.DisplayName} ya son esos.");
         }
 
         var change = new EvChange(target.Box, target.Slot, target.Pid, target.DisplayName, wanted.Values);

@@ -2,8 +2,19 @@ namespace PermaLocke.Core.Domain;
 
 /// <param name="BaseStatTotal">Sum of the six base stats, read from the cartridge.</param>
 /// <param name="Legendary">Legendary, sub-legendary, mythical or Ultra Beast.</param>
+/// <param name="Forms">
+/// The regional forms it may come out in from the gacha or a wonder trade, besides its ordinary one
+/// (§139). Empty for most species.
+/// </param>
 public sealed record SpeciesStats(int Id, string Name, int BaseStatTotal, bool Legendary,
-    IReadOnlyList<string> Abilities);
+    IReadOnlyList<string> Abilities, IReadOnlyList<SpeciesForm>? Forms = null)
+{
+    /// <summary>The regional forms, never null.</summary>
+    public IReadOnlyList<SpeciesForm> RegionalForms => Forms ?? [];
+}
+
+/// <summary>A regional form of a species: its index and how the game names it («Alola», «Galar»...).</summary>
+public sealed record SpeciesForm(int Form, string Name);
 
 /// <summary>
 /// Base stats of every species, which is what the gacha sorts its tiers by.
@@ -22,6 +33,13 @@ public interface ISpeciesStatsCatalog
 
     /// <summary>Every ability the cartridge names. The gacha draws from all of them.</summary>
     IReadOnlyList<string> Abilities { get; }
+
+    /// <summary>Ability ids the gacha and the wonder trade never deal.</summary>
+    /// <remarks>
+    /// The expansion mod's abilities tied to one Pokémon's forms: their code is written for that
+    /// Pokémon. The same list the randomizer keeps out of the world (§136).
+    /// </remarks>
+    IReadOnlyCollection<int> BannedAbilities => [];
 
     /// <summary>Every evolution family, which is what the gacha actually hands out.</summary>
     IReadOnlyList<EvolutionLine> Lines { get; }
@@ -139,10 +157,15 @@ public sealed record GachaPull(
     int AbilityId,
     string Ability,
     ulong Seed,
-    int Number)
+    int Number,
+    int Form = 0,
+    string FormName = "")
 {
     /// <summary>Sum of the six IVs, which is the number players actually compare.</summary>
     public int IvTotal => Ivs.Sum();
+
+    /// <summary>The name to show: «Vulpix de Alola» for a regional form, the species otherwise.</summary>
+    public string DisplayName => string.IsNullOrEmpty(FormName) ? SpeciesName : $"{SpeciesName} de {FormName}";
 
     /// <summary>
     /// Two pulls are equal when they describe the same Pokémon.
@@ -154,9 +177,10 @@ public sealed record GachaPull(
     public bool Equals(GachaPull? other) =>
         other is not null
         && (BannerId, TierId, Species, SpeciesName, Legendary, BaseStatTotal, Level, IsShiny,
-                Nature, AbilityId, Seed, Number)
+                Nature, AbilityId, Seed, Number, Form)
            == (other.BannerId, other.TierId, other.Species, other.SpeciesName, other.Legendary,
-                other.BaseStatTotal, other.Level, other.IsShiny, other.Nature, other.AbilityId, other.Seed, other.Number)
+                other.BaseStatTotal, other.Level, other.IsShiny, other.Nature, other.AbilityId, other.Seed, other.Number,
+                other.Form)
         && Ivs.SequenceEqual(other.Ivs);
 
     public override int GetHashCode()
@@ -165,6 +189,7 @@ public sealed record GachaPull(
         hash.Add(BannerId);
         hash.Add(TierId);
         hash.Add(Species);
+        hash.Add(Form);
         hash.Add(Level);
         hash.Add(IsShiny);
         hash.Add(Nature);

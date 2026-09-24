@@ -17,7 +17,7 @@ namespace PermaLocke.Randomizer.Tests;
 public class LearnsetPlannerTests
 {
     private static readonly LearnsetRules Rules = new(
-        GoodDamagingPercent: 30, PreferSameType: false, DamagingFloor: 50, PerfectAccuracy: 101);
+        GoodDamagingPercent: 30, SameTypePercent: 0, DamagingFloor: 50, PerfectAccuracy: 101);
 
     /// <summary>A catalogue with both kinds, so the filters have somewhere to go.</summary>
     private static List<MoveFacts> Catalogue(int attacks = 40, int status = 40)
@@ -139,6 +139,180 @@ public class LearnsetPlannerTests
         var forced = catalogue.Single(move => move.Id == moves[0]);
 
         Assert.True(forced.Physical);
+    }
+
+    /// <summary>Attacks of every strength from 10 to 150, and status moves, so power can be told apart.</summary>
+    private static List<MoveFacts> Graded()
+    {
+        var moves = new List<MoveFacts>();
+
+        for (var i = 0; i < 60; i++)
+        {
+            moves.Add(new MoveFacts(3000 + i, i % 18, Power: 10 + (i % 15) * 10, Accuracy: 100, Hits: 1,
+                Physical: i % 2 == 0));
+        }
+
+        for (var i = 0; i < 30; i++)
+        {
+            moves.Add(new MoveFacts(4000 + i, i % 18, Power: 0, Accuracy: 100, Hits: 1, Physical: null));
+        }
+
+        return moves;
+    }
+
+    /// <summary>
+    /// Chosen by the player on 2026-09-21, after noticing nearly every move was 80 or more from level 5 on: the
+    /// attacks go weakest first, as Universal Pokémon Randomizer's «reorder damaging moves» and pk3DS do.
+    /// </summary>
+    [Fact]
+    public void Reordered_attacks_go_from_weakest_to_strongest()
+    {
+        var catalogue = Graded();
+        var facts = catalogue.ToDictionary(move => move.Id);
+        var rules = Rules with { ReorderByPower = true };
+
+        for (var seed = 0; seed < 30; seed++)
+        {
+            var moves = Planner(catalogue, rules).Plan(slots: 18, lastLevelOne: 1, (10, 4), 100, 60,
+                new SeededRandomSource((ulong)seed));
+
+            var strengths = moves.Select(id => facts[id]).Where(move => move.Physical is not null)
+                .Select(move => move.Strength).ToList();
+
+            Assert.Equal(strengths.Order(), strengths);
+            Assert.Equal(moves.Count, moves.Distinct().Count());
+            Assert.NotNull(facts[moves[1]].Physical);   // el garantizado de nivel 1 sigue siendo un ataque
+        }
+    }
+
+    /// <summary>Reordering only moves attacks among the slots that held attacks: the status moves stay put.</summary>
+    [Fact]
+    public void Reordering_leaves_the_status_moves_where_they_were()
+    {
+        var catalogue = Graded();
+        var facts = catalogue.ToDictionary(move => move.Id);
+
+        var plain = Planner(catalogue).Plan(18, 1, (10, 4), 100, 60, new SeededRandomSource(9));
+        var sorted = Planner(catalogue, Rules with { ReorderByPower = true }).Plan(18, 1, (10, 4), 100, 60,
+            new SeededRandomSource(9));
+
+        for (var slot = 0; slot < plain.Count; slot++)
+        {
+            if (facts[plain[slot]].Physical is null)
+            {
+                Assert.Equal(plain[slot], sorted[slot]);
+            }
+        }
+
+        Assert.Equal(plain.Order(), sorted.Order());
+    }
+
+    /// <summary>
+    /// The other way, off but kept: each slot gets a move like the cartridge's there — an attack near its strength, a
+    /// status move for a status move.
+    /// </summary>
+    [Fact]
+    public void Along_the_curve_each_slot_follows_the_cartridge_s_move()
+    {
+        var catalogue = Graded();
+        var facts = catalogue.ToDictionary(move => move.Id);
+        var rules = Rules with { PowerTolerance = 0.25 };
+        MoveFacts[] original =
+        [
+            new(1, 0, 40, 100, 1, true), new(2, 0, 0, 100, 1, null), new(3, 0, 60, 100, 1, false),
+            new(4, 0, 0, 100, 1, null), new(5, 0, 90, 100, 1, true), new(6, 0, 120, 100, 1, false)
+        ];
+
+        for (var seed = 0; seed < 30; seed++)
+        {
+            var moves = Planner(catalogue, rules).Plan(original.Length, lastLevelOne: 0, (10, 4), 100, 60,
+                new SeededRandomSource((ulong)seed), original);
+
+            for (var slot = 0; slot < original.Length; slot++)
+            {
+                var was = original[slot];
+                var now = facts[moves[slot]];
+
+                if (was.Physical is null)
+                {
+                    Assert.Null(now.Physical);
+                }
+                else
+                {
+                    Assert.InRange(now.Strength, was.Strength - Math.Max(10, was.Strength / 4),
+                        was.Strength + Math.Max(10, was.Strength / 4));
+                }
+            }
+
+            Assert.Equal(moves.Count, moves.Distinct().Count());
+        }
+    }
+
+    /// <summary>Along the curve too, a status move in the last level one slot becomes an attack.</summary>
+    [Fact]
+    public void Along_the_curve_the_level_one_slot_is_still_an_attack()
+    {
+        var catalogue = Graded();
+        var facts = catalogue.ToDictionary(move => move.Id);
+        MoveFacts[] original = [new(1, 0, 0, 100, 1, null), new(2, 0, 0, 100, 1, null), new(3, 0, 80, 100, 1, true)];
+
+        var moves = Planner(catalogue, Rules with { PowerTolerance = 0.25 }).Plan(3, lastLevelOne: 1, (10, 4), 100, 60,
+            new SeededRandomSource(4), original);
+
+        Assert.Null(facts[moves[0]].Physical);
+        Assert.NotNull(facts[moves[1]].Physical);
+    }
+
+    /// <summary>
+    /// How much of a learnset lands in the Pokémon's own types, with a catalogue spread evenly over the eighteen.
+    /// </summary>
+    private static double OwnTypeShare(int percent)
+    {
+        var catalogue = Catalogue(attacks: 180, status: 180);
+        var facts = catalogue.ToDictionary(move => move.Id);
+        var planner = Planner(catalogue, Rules with { SameTypePercent = percent });
+        int own = 0, total = 0;
+
+        for (var species = 0; species < 200; species++)
+        {
+            var types = (species % 18, (species * 7) % 18);
+
+            foreach (var move in planner.Plan(12, lastLevelOne: 1, types, 100, 60, new SeededRandomSource((ulong)species)))
+            {
+                total++;
+                if (facts[move].Type == types.Item1 || facts[move].Type == types.Item2) own++;
+            }
+        }
+
+        return own / (double)total;
+    }
+
+    /// <summary>
+    /// Asked for on 2026-09-22: «my Pokémon all learn nearly the same thing». They did — every learnset was drawn from
+    /// all eighteen types, so none of them had a type of its own. The share asked for is the share of the draws, and
+    /// what comes out is more, because the open draws land on its types too (§166).
+    /// </summary>
+    [Fact]
+    public void The_share_of_moves_in_the_pokemons_own_types_follows_the_setting()
+    {
+        var none = OwnTypeShare(0);
+        var some = OwnTypeShare(20);
+        var lots = OwnTypeShare(40);
+
+        Assert.InRange(none, 0.05, 0.16);
+        Assert.InRange(some, none + 0.08, none + 0.25);
+        Assert.True(lots > some + 0.08, $"{lots:P0} no es bastante más que {some:P0}");
+    }
+
+    /// <summary>The competition asks for the reference's share, and the old boolean still means forty.</summary>
+    [Fact]
+    public void The_configuration_asks_for_the_share_of_the_reference()
+    {
+        var options = RandomizerOptionsLoader.Load(Path.Combine(MegaFloorTests.Root(), "Data", "randomizer.json"));
+
+        Assert.Equal(20, options.EffectiveSameTypePercent());
+        Assert.Equal(40, new RandomizerOptions { LearnsetPreferSameType = true }.EffectiveSameTypePercent());
+        Assert.Equal(0, new RandomizerOptions().EffectiveSameTypePercent());
     }
 
     /// <summary>

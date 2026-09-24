@@ -34,13 +34,20 @@ public sealed partial class RandomizerViewModel : SectionViewModel
     private readonly AppPaths _paths;
     private readonly IRunRoles _roles;
     private readonly IRoleCatalog _roleCatalog;
+    private readonly InstalledWorld _installedWorld;
+    private readonly WorldAllowedStatics _allowedStatics;
+    private readonly WorldEvolutionLines _evolutionLines;
     private readonly ILogger<RandomizerViewModel> _logger;
 
     public RandomizerViewModel(IRunContext runContext, IEventStore events, IClock clock,
         IAppDialogs dialogs, AzaharInstallation azahar, AppPaths paths, IRunRoles roles,
-        IRoleCatalog roleCatalog, ILogger<RandomizerViewModel> logger)
-        : base("RANDOMIZADOR", "Genera la capa del mod desde tu ROM, sin tocar el original")
+        IRoleCatalog roleCatalog, InstalledWorld installedWorld, WorldAllowedStatics allowedStatics,
+        WorldEvolutionLines evolutionLines, ILogger<RandomizerViewModel> logger)
+        : base("RANDOMIZADOR", "Crea e instala tu mundo")
     {
+        _installedWorld = installedWorld;
+        _allowedStatics = allowedStatics;
+        _evolutionLines = evolutionLines;
         _runContext = runContext;
         _events = events;
         _clock = clock;
@@ -124,22 +131,22 @@ public sealed partial class RandomizerViewModel : SectionViewModel
         var rom = RomInspector.ScanFolder(_paths.Rom).FirstOrDefault(r => r.IsSupported);
         RomPath = rom?.Path;
         RomText = rom is null
-            ? $"No hay ninguna ROM compatible y desencriptada en {_paths.Rom}"
-            : $"{rom.FileName}  ·  {rom.Game}  ·  TitleID {rom.TitleId}";
+            ? "No se encuentra tu ROM de Ultra Luna."
+            : rom.FileName;
 
         // Prefiere el emulador que PermaLocke trae consigo, y de paso le enciende el RPC: es el
         // ajuste que el jugador solo puede cambiar con la emulación parada.
         Azahar = _azahar.Locate(AppContext.BaseDirectory);
         _azahar.EnsureRpcEnabled(Azahar);
         AzaharText = Azahar.IsPortable
-            ? $"Emulador propio, ya configurado: {Azahar.UserDirectory}"
-            : $"Azahar instalado: {Azahar.UserDirectory}";
+            ? "Azahar listo."
+            : "Azahar listo.";
 
         var expansion = Path.Combine(_paths.Expansion, "romfs");
         BaseLayer = Directory.Exists(expansion) ? expansion : null;
         ExpansionText = BaseLayer is null
-            ? $"Sin mod base: se randomiza sobre el cartucho. Para usar uno, deja su romfs en {_paths.Expansion}"
-            : $"Mod base detectado en {_paths.Expansion}. Se randomiza ENCIMA de él, no del cartucho.";
+            ? "Juego original."
+            : "Con las generaciones 8 y 9.";
 
         IsGenerated = Directory.Exists(Path.Combine(OutputDirectory, "romfs"));
         IsInstalled = Azahar is not null && Directory.Exists(Path.Combine(ModDirectory, "romfs"));
@@ -162,7 +169,7 @@ public sealed partial class RandomizerViewModel : SectionViewModel
 
         IsBusy = true;
         NotifyCommands();
-        Status = "Generando. La ROM no se toca: se lee y se escribe aparte.";
+        Status = "Generando...";
 
         try
         {
@@ -185,12 +192,7 @@ public sealed partial class RandomizerViewModel : SectionViewModel
             var report = await new RandomizerService(options)
                 .RandomizeAsync(RomPath, work, OutputDirectory, run.Seed, BaseLayer);
 
-            Status = $"Listo en {report.Elapsed.TotalSeconds:F1} s · "
-                     + $"{report.Files.Count} ficheros · {report.TotalBytes / 1024.0 / 1024.0:F0} MB"
-                     + $" · {report.MaxSpecies} especies"
-                     + (report.BaseLayerFiles is { Count: > 0 } b
-                         ? $" · {b.Count} ficheros del mod base"
-                         : string.Empty);
+            Status = "Mundo generado. Ya puedes instalarlo.";
 
             await _events.AppendAsync(new GameEvent
             {
@@ -236,7 +238,7 @@ public sealed partial class RandomizerViewModel : SectionViewModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Falló la randomización");
-            Status = "La randomización ha fallado. El detalle está en la carpeta Logs.";
+            Status = "La randomización ha fallado.";
         }
         finally
         {
@@ -254,16 +256,9 @@ public sealed partial class RandomizerViewModel : SectionViewModel
         }
 
         if (!_dialogs.Confirm(
-                "Instalar la randomización en Azahar",
-                "Esto cambia el mundo del juego: encuentros, entrenadores, tiendas y objetos.\n\n"
-                + "Si ya tienes una partida empezada, se verá afectada. Lo normal es instalarlo "
-                + "antes de empezar.\n\n"
-                + (BaseLayer is null
-                    ? string.Empty
-                    : "Hay un mod base, así que también se copia entero: son varios GB y la primera "
-                      + "vez tarda unos minutos. Las siguientes veces solo se copia lo que ha "
-                      + "cambiado.\n\n")
-                + "¿Instalar?"))
+                "Instalar tu mundo",
+                "Cambia los encuentros, entrenadores, tiendas y objetos del juego. "
+                + "Lo normal es instalarlo antes de empezar a jugar.\n\n¿Instalar?"))
         {
             return;
         }
@@ -285,13 +280,14 @@ public sealed partial class RandomizerViewModel : SectionViewModel
                 Path.Combine(_paths.Expansion, "exefs"),
                 message => Status = message));
 
-            Status = "Instalado. Cierra Azahar del todo y vuelve a abrirlo: los mods se leen al cargar el juego.";
+            Status = "Instalado. Si Azahar estaba abierto, ciérralo y vuelve a abrirlo.";
             _logger.LogInformation("Randomización instalada en {Destination}", destination);
+            ReloadWorld();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Falló la instalación de la randomización");
-            Status = "No se ha podido instalar. El detalle está en la carpeta Logs.";
+            Status = "No se ha podido instalar.";
         }
         finally
         {
@@ -309,9 +305,8 @@ public sealed partial class RandomizerViewModel : SectionViewModel
         }
 
         if (!_dialogs.Confirm(
-                "Quitar la randomización",
-                "El juego volverá a ser el original. La randomización generada se conserva y "
-                + "puedes volver a instalarla.\n\n¿Quitar?"))
+                "Quitar tu mundo",
+                "El juego volverá a ser el original. Podrás volver a instalar tu mundo.\n\n¿Quitar?"))
         {
             return;
         }
@@ -322,12 +317,13 @@ public sealed partial class RandomizerViewModel : SectionViewModel
             {
                 Directory.Delete(ModDirectory, recursive: true);
             }
-            Status = "Quitada. Al reiniciar Azahar el juego vuelve a ser el original.";
+            Status = "Quitado.";
+            ReloadWorld();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "No se pudo quitar la randomización");
-            Status = "No se ha podido quitar. El detalle está en la carpeta Logs.";
+            Status = "No se ha podido quitar.";
         }
         finally
         {
@@ -335,6 +331,31 @@ public sealed partial class RandomizerViewModel : SectionViewModel
         }
     }
 
+
+    /// <summary>
+    /// Reads the world just installed or removed, instead of the one there was when the app started.
+    /// </summary>
+    /// <remarks>
+    /// Found getting the friends' folder ready on 2026-09-21. The installed world was read once, at startup, and a
+    /// fresh copy has no world then: create the run, generate, install, all with the app open, and it stayed on the
+    /// cartridge's 807 species until restarted, so a gen 8-9 starter in the party was not a species the live readers
+    /// knew and the party was never found. Reinstalling had the milder version of the same thing: the previous world's
+    /// learnsets in MOVIMIENTOS and its allowed statics in the ball rule. Never throws: a world that cannot be read now
+    /// is read at the next start, as before.
+    /// </remarks>
+    private void ReloadWorld()
+    {
+        try
+        {
+            _installedWorld.Apply(AppContext.BaseDirectory);
+            _allowedStatics.Forget();
+            _evolutionLines.Forget();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "No se pudo releer el mundo instalado; se leerá al reiniciar PermaLocke");
+        }
+    }
 
     private void NotifyCommands()
     {

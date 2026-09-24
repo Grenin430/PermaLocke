@@ -53,6 +53,10 @@ public sealed class RandomizerService(RandomizerOptions options)
 
         public const string MachineFlags = "machine-compatibility";
         public const string FieldItems = "field-items";
+
+        // Sal propia y modulo aparte, no dentro del de entrenadores: con la corriente de ese
+        // modulo, encender la dificultad cambiaria las especies de todos los equipos (§27, §122).
+        public const string TrainerDifficulty = "trainer-difficulty";
     }
 
     public async Task<RandomizationReport> RandomizeAsync(string romPath, string workDirectory,
@@ -82,7 +86,8 @@ public sealed class RandomizerService(RandomizerOptions options)
             if (options.WildEncounters)
             {
                 var random = new SeededRandomSource(seed).Derive(Salts.Wild);
-                var result = new WildEncounterRandomizer(options).Apply(random, pool, garc, ct);
+                var wildPool = WildEncounterRandomizer.PoolFor(pool, options);
+                var result = new WildEncounterRandomizer(options).Apply(random, wildPool, garc, ct);
                 steps.Add(new RandomizerStep("Encuentros salvajes",
                     $"{result.SlotsChanged} huecos en {result.AreasChanged} zonas"));
             }
@@ -90,9 +95,12 @@ public sealed class RandomizerService(RandomizerOptions options)
             if (options.FieldItems)
             {
                 var random = new SeededRandomSource(seed).Derive(Salts.FieldItems);
-                var result = new FieldItemRandomizer(workspace).Apply(random, garc, ct);
+                var result = new FieldItemRandomizer(workspace, options).Apply(random, garc, ct);
+                var how = options.FieldItemsMode == FieldItemsMode.Random
+                    ? $"al azar, como mucho {options.FieldItemsMaxRepeats} de cada uno"
+                    : "barajados entre sí";
                 steps.Add(new RandomizerStep("Objetos del suelo",
-                    $"{result.RegularItems} objetos y {result.TechnicalMachines} MT doradas en {result.Zones} zonas"));
+                    $"{result.RegularItems} objetos y {result.TechnicalMachines} MT doradas en {result.Zones} zonas, {how}"));
             }
 
             var packed = await Task.Run(garc.Save, ct);
@@ -183,6 +191,21 @@ public sealed class RandomizerService(RandomizerOptions options)
                 + $"del nivel {options.MegaTrainerMinimumLevel} del cartucho"));
         }
 
+        // Despues de todo lo que decide QUE Pokemon lleva cada entrenador -especie, el extra del
+        // rol y las megas- y de los datos de Pokemon: un reparto de EV solo significa algo para la
+        // especie y la forma que acaban en el hueco, con las estadisticas que el juego va a usar.
+        if (options.TrainerDifficulty.Enabled)
+        {
+            var random = new SeededRandomSource(seed).Derive(Salts.TrainerDifficulty);
+            var result = await new TrainerDifficultyRandomizer(workspace, options.TrainerDifficulty)
+                .ApplyAsync(random, mod, ct);
+
+            steps.Add(new RandomizerStep("Dificultad de los entrenadores",
+                $"{result.SmarterTrainers} entrenadores con más IA; de {result.Pokemon} Pokémon, "
+                + $"{result.IvsRaised} con IV subidos, {result.EvsDealt} con EV repartidos para su especie "
+                + $"y {result.ItemsGiven} objetos equipados nuevos (ya llevaban {result.HoldingBefore})"));
+        }
+
         // Después de los datos de Pokémon a propósito: ese módulo puede cambiar a QUIÉN evoluciona
         // cada uno, y esto arregla CÓMO. Al revés, una evolución recién redirigida se quedaría con
         // su método de intercambio intacto.
@@ -206,6 +229,9 @@ public sealed class RandomizerService(RandomizerOptions options)
                 + $"{result.RestockedShops} surtidas, {result.Slots} huecos"
                 + (result.SpecialItems > 0
                     ? $"; {result.SpecialItems} objetos de evolución del mod a la venta"
+                    : string.Empty)
+                + (result.ShelfItems > 0
+                    ? $"; {result.ShelfItems} objetos en {options.SpecialMartShelves.Count} tiendas con lista propia"
                     : string.Empty)
                 + (result.MedicineSlots > 0
                     ? $"; {result.MedicineSlots} curativos de las tiendas normales pasados a Poké Ball"
@@ -262,6 +288,29 @@ public sealed class RandomizerService(RandomizerOptions options)
                 + $"{result.Learnable} MT aprendibles en total, antes {result.Before}"));
         }
 
+
+        // Despues de todo lo que escribe movimientos -aprendizajes, entrenadores, megas, estaticos-, con su propia sal y
+        // cambiando solo los huecos que tenian uno: el resto del mundo sale igual con la misma semilla (§162).
+        if (options.BannedMoves.Count > 0)
+        {
+            var result = await new BannedMoveScrubber(workspace, options)
+                .ApplyAsync(new SeededRandomSource(seed).Derive("banned-moves"), mod, ct);
+
+            steps.Add(new RandomizerStep("Movimientos prohibidos",
+                result.Total == 0
+                    ? "Ninguno en este mundo"
+                    : $"{result.LevelUp} en aprendizajes por nivel, {result.Egg} en movimientos huevo, "
+                      + $"{result.Trainers} entrenadores y {result.Statics} estáticos con los suyos devueltos al juego"));
+        }
+
+        // El ULTIMO: el texto tiene que nombrar los iniciales que quedan y con los tipos del mundo final.
+        if (options.StarterText
+            && await new StarterTextRandomizer(workspace).ApplyAsync(mod, ct) is { } starterText)
+        {
+            steps.Add(new RandomizerStep("Texto de los iniciales",
+                $"Kukui presenta a {string.Join(", ", starterText.Starters)} "
+                + $"({starterText.Lines} líneas del texto de historia)"));
+        }
 
         // Un módulo pedido y no implementado se dice, no se ignora. Callarlo dejaría al jugador
         // creyendo que su partida está randomizada de una forma en la que no lo está.

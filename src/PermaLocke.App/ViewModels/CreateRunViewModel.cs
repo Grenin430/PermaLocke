@@ -15,13 +15,15 @@ namespace PermaLocke.App.ViewModels;
 public sealed partial class CreateRunViewModel : ObservableObject
 {
     private readonly RunService _runs;
+    private readonly PlayerProfileService _profiles;
     private readonly AppPaths _paths;
     private readonly ILogger<CreateRunViewModel> _logger;
 
-    public CreateRunViewModel(RunService runs, AppPaths paths, IRoleCatalog roles,
-        ILogger<CreateRunViewModel> logger)
+    public CreateRunViewModel(RunService runs, PlayerProfileService profiles, AppPaths paths,
+        IRoleCatalog roles, ILogger<CreateRunViewModel> logger)
     {
         _runs = runs;
+        _profiles = profiles;
         _paths = paths;
         _logger = logger;
 
@@ -33,10 +35,30 @@ public sealed partial class CreateRunViewModel : ObservableObject
         // Sin roles no se crea nada. Arrancar a todo el mundo con reglas inventadas sería peor
         // que no arrancar, porque la competición no se enteraría hasta el recuento final.
         RoleProblem = Roles.Count == 0
-            ? "No hay roles configurados: falta Data/roles.json o está vacío. Sin rol no se puede crear una run."
+            ? "No se han podido cargar los roles."
             : string.Empty;
 
         DetectRom();
+        _ = PrefillPlayerAsync();
+    }
+
+    /// <summary>
+    /// Offers the name this machine's player already has, so a new run goes out under the same
+    /// person instead of whatever gets typed this time (§123).
+    /// </summary>
+    private async Task PrefillPlayerAsync()
+    {
+        try
+        {
+            if (PlayerName.Length == 0 && await _profiles.CurrentAsync() is { } profile)
+            {
+                PlayerName = profile.Name;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "No se ha podido leer el perfil del jugador");
+        }
     }
 
     /// <summary>The roles on offer, in the order the catalogue lists them.</summary>
@@ -89,12 +111,16 @@ public sealed partial class CreateRunViewModel : ObservableObject
     {
         try
         {
+            // El perfil antes que la run: la run nace ya con dueño y no hace falta vincularla luego.
+            var profile = await _profiles.EnsureAsync(PlayerName.Trim());
+
             var run = await _runs.CreateAsync(new CreateRunRequest(
                 RunName.Trim(),
                 PlayerName.Trim(),
                 RoleId.Trim(),
                 GameVersion.UltraMoon,
-                TitleId: _rom?.TitleId));
+                TitleId: _rom?.TitleId,
+                PlayerId: profile.Id));
 
             _logger.LogInformation("Run creada: {Name} ({Seed}) para {Player}",
                 run.Name, run.SeedLabel, run.PlayerName);
@@ -104,7 +130,7 @@ public sealed partial class CreateRunViewModel : ObservableObject
         catch (Exception ex)
         {
             _logger.LogError(ex, "No se pudo crear la run");
-            ErrorMessage = "No se pudo crear la run. Revisa la carpeta Logs para el detalle.";
+            ErrorMessage = "No se pudo crear la run.";
         }
     }
 
@@ -120,7 +146,7 @@ public sealed partial class CreateRunViewModel : ObservableObject
 
         if (found.Count == 0)
         {
-            RomStatus = $"No se ha encontrado ninguna ROM en:\n{_paths.Rom}";
+            RomStatus = "No se encuentra tu ROM. Ponla en la carpeta ROM.";
             RomIsValid = false;
             return;
         }
@@ -129,20 +155,20 @@ public sealed partial class CreateRunViewModel : ObservableObject
 
         if (_rom.Game is null)
         {
-            RomStatus = $"«{_rom.FileName}» no es Pokémon Ultra Luna.\nCódigo de producto: {_rom.ProductCode}";
+            RomStatus = $"«{_rom.FileName}» no es Pokémon Ultra Luna.";
             RomIsValid = false;
             return;
         }
 
         if (!_rom.IsDecrypted)
         {
-            RomStatus = $"«{_rom.FileName}» está encriptada.\nAzahar necesita un volcado desencriptado.";
+            RomStatus = $"«{_rom.FileName}» no sirve: tiene que estar desencriptada.";
             RomIsValid = false;
             return;
         }
 
         RomStatus =
-            $"Pokémon Ultra Luna detectada\n{_rom.FileName}\nTitle ID: {_rom.TitleId}   ·   desencriptada";
+            $"Pokémon Ultra Luna · {_rom.FileName}";
         RomIsValid = true;
         _logger.LogInformation("ROM válida detectada: {File} ({TitleId})", _rom.FileName, _rom.TitleId);
     }

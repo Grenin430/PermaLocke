@@ -18,6 +18,85 @@ public class HpBarTests
     /// <summary>The grass behind the box.</summary>
     private static readonly (byte R, byte G, byte B) Grass = (3, 22, 32);
 
+    /// <summary>
+    /// The orange floor of the Iki Town battle ring, measured along the bar's own rows on the killcam of a death by
+    /// poison on 2026-09-22, when the box had already gone (§165).
+    /// </summary>
+    private static readonly (byte R, byte G, byte B) Floor = (170, 110, 65);
+
+    /// <summary>The brightest cell of that same floor.</summary>
+    private static readonly (byte R, byte G, byte B) BrightFloor = (186, 125, 85);
+
+    /// <summary>
+    /// With no box on screen the floor showed through where the bar goes, and read as a bar at 97 % of colour: two
+    /// deaths waited the whole six seconds for a bar that was not there. The floor is warm and saturated, which was
+    /// all the old test asked for; the bar's colours are its own three.
+    /// </summary>
+    [Fact]
+    public void The_floor_where_the_box_is_not_is_never_a_bar()
+    {
+        Assert.Equal(HpBarState.Hidden, HpBar.Classify(Row((Floor, 85))));
+        Assert.Equal(HpBarState.Hidden, HpBar.Classify(Row((BrightFloor, 85))));
+        Assert.Equal(HpBarState.Hidden, HpBar.Classify(Row((Floor, 60), (BrightFloor, 25))));
+    }
+
+    /// <summary>
+    /// A bar seen through the emulator's scaling is not pixel-exact, and still has to read as colour.
+    /// </summary>
+    [Theory]
+    [InlineData(120, 230, 70)]
+    [InlineData(240, 190, 60)]
+    [InlineData(230, 30, 40)]
+    public void A_bar_a_little_off_its_measured_colour_is_still_a_bar(byte r, byte g, byte b) =>
+        Assert.Equal(HpBarState.Filled, HpBar.Classify(Row(((r, g, b), 85))));
+
+    /// <summary>
+    /// Poison and Stealth Rock, measured on 2026-09-22: the tables only give the fall once the game has already shown
+    /// it, so the watch starts with the bar at zero and no colour ever comes. An empty box is then the fall itself.
+    /// </summary>
+    [Fact]
+    public void An_empty_box_with_no_colour_before_it_is_a_fall()
+    {
+        var watch = new HpBar.ZeroWatch();
+
+        Assert.False(watch.Observe(Hidden, 0));
+        Assert.False(watch.Observe(Empty, 689));
+        Assert.False(watch.Observe(Empty, 699));
+        Assert.True(watch.Observe(Empty, 709));
+    }
+
+    /// <summary>And a single empty reading among hidden ones is not: that is a frame, not a bar at zero.</summary>
+    [Fact]
+    public void One_empty_reading_between_hidden_ones_is_not_a_fall()
+    {
+        var watch = new HpBar.ZeroWatch();
+
+        Assert.False(watch.Observe(Empty, 100));
+        Assert.False(watch.Observe(Hidden, 110));
+        Assert.False(watch.Observe(Empty, 120));
+        Assert.False(watch.Observe(Hidden, 130));
+    }
+
+    /// <summary>
+    /// With the box never on screen there is nothing to wait for: in the fifty falls measured the bar was seen at zero
+    /// within 1889 ms at the worst, so a box that has not appeared by then is one that already went.
+    /// </summary>
+    [Fact]
+    public void A_box_that_never_appears_is_not_waited_for_the_whole_six_seconds()
+    {
+        var watch = new HpBar.ZeroWatch();
+
+        watch.Observe(Hidden, 0);
+        Assert.False(watch.GiveUpWithoutBox(1_900));
+        Assert.True(watch.GiveUpWithoutBox(HpBar.ZeroWatch.NoBoxLimit));
+
+        // Pero una barra que sí se ha visto se espera hasta el final: es una animación larga tapándola.
+        var seen = new HpBar.ZeroWatch();
+        seen.Observe(Colour(0.5), 0);
+        seen.Observe(Hidden, 100);
+        Assert.False(seen.GiveUpWithoutBox(5_000));
+    }
+
     [Fact]
     public void A_full_bar_is_filled() =>
         Assert.Equal(HpBarState.Filled, HpBar.Classify(Row((Green, 85))));

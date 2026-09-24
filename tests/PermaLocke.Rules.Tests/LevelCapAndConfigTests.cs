@@ -129,8 +129,16 @@ public sealed class RulesConfigurationTests
 
         Assert.Equal(RuleMode.Block, configuration.For(RuleIds.FirstEncounter).Mode);
         Assert.False(configuration.For(RuleIds.ShinyClause).ConsumesEncounter);
-        Assert.True(configuration.For(RuleIds.DupesClause).IgnoreEvolutionaryLine);
+        // Los duplicados cuentan por línea evolutiva desde el §117: tener un Frogadier cierra Froakie y Greninja.
+        Assert.False(configuration.For(RuleIds.DupesClause).IgnoreEvolutionaryLine);
         Assert.False(configuration.For(RuleIds.SpeciesClause).Enabled);
+
+        // §119: el Necrozma del Lanakila es el de nivel 65, y los cuatro Tapus en sus ruinas.
+        Assert.Equal(5, configuration.BallControl.AllowedStatics.Count);
+        Assert.Contains(new AllowedStatic("Necrozma del Monte Lanakila", "monte-lanakila", 800, 0, 65),
+            configuration.BallControl.AllowedStatics);
+        Assert.Equal([785, 786, 787, 788, 800],
+            configuration.BallControl.AllowedStatics.Select(entry => entry.Species).Order());
         Assert.Equal(
             [EncounterType.Wild, EncounterType.Fishing, EncounterType.Sos],
             configuration.EncounterTypesThatConsumeZone);

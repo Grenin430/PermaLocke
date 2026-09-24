@@ -67,6 +67,12 @@ public sealed class ImpossibleEvolutionFixer(RandomizerOptions options)
     /// Keyed by species <em>and</em> target on purpose: an entry that does not point where this
     /// table expects is left alone rather than handed a level that belongs to something else. All
     /// nine were read out of the cartridge before being written down here.
+    /// <para>
+    /// The expansion adds six more, and five of them follow the same rule. The sixth, Dipplin to
+    /// Hydrapple, learns its move only at level 1, the same situation as Piloswine and Poipole, whose
+    /// levels came from the referenced list and not from the learnset. There is no list for it, so the
+    /// player decided: 45, like those two.
+    /// </para>
     /// </remarks>
     private static readonly Dictionary<(int Species, int Target), int> MoveLevels = new()
     {
@@ -79,6 +85,19 @@ public sealed class ImpossibleEvolutionFixer(RandomizerOptions options)
         [(439, 122)] = 15, // Mime Jr.  -> Mr. Mime,   esperaba Mimetico
         [(762, 763)] = 29, // Steenee   -> Tsareena,   esperaba Pisoton
         [(803, 804)] = 45, // Poipole   -> Naganadel,  esperaba Pulso Dragon
+
+        // Las del mod de gen 8-9, con la misma regla: el nivel al que la especie aprende ese
+        // movimiento en la capa base sin randomizar. Faltaban y se quedaron imposibles en el mundo
+        // instalado: se vieron en la revision del 2026-09-21, que leyo estos niveles de a/0/1/3.
+        [(57, 979)] = 35,   // Primeape  -> Annihilape, esperaba Puño Furia
+        [(203, 981)] = 32,  // Girafarig -> Farigiraf,  esperaba Láser Doble
+        [(234, 899)] = 21,  // Stantler  -> Wyrdeer,    esperaba Asalto Barrera
+        [(852, 853)] = 35,  // Clobbopus -> Grapploct,  esperaba Mofa
+        [(1100, 904)] = 28, // Qwilfish de Hisui (fila de forma 1100) -> Overqwil, esperaba Mil Púas Tóxicas
+
+        // Este no sale de la tabla: Dipplin aprende Bramido Dragón solo a nivel 1, igual que
+        // Piloswine y Poipole, y como ellos va al 45. Lo decidió el jugador el 2026-09-21.
+        [(1011, 1019)] = 45, // Dipplin -> Hydrapple, esperaba Bramido Dragón
     };
 
     public async Task<EvolutionFixResult> ApplyAsync(LayeredFsMod mod, CancellationToken ct = default)

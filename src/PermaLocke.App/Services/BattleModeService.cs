@@ -166,14 +166,14 @@ public sealed class BattleModeService(
     {
         if (ModFolder is not { } mod || BaseRomfs is not { } baseRomfs)
         {
-            return new BattleModeResult(false, "No encuentro la carpeta de mods de Azahar.");
+            return new BattleModeResult(false, "No se encuentra Azahar.");
         }
 
-        if (System.Diagnostics.Process.GetProcessesByName("azahar").Length > 0)
+        // Distinto de false: si no se puede saber, se da por abierto. El motivo, en SwapAsync.
+        if (EmulatorProcess.IsRunning() != false)
         {
             return new BattleModeResult(false,
-                "Azahar está abierto. Ciérralo del todo antes: el juego lee los mods al arrancar, "
-                + "así que un cambio con él abierto no serviría de nada.");
+                "Cierra Azahar antes.");
         }
 
         if (!Directory.Exists(Path.Combine(mod, "romfs")))
@@ -186,7 +186,7 @@ public sealed class BattleModeService(
         if (!toBattle && Generated is not { } gen)
         {
             return new BattleModeResult(false,
-                "No hay ninguna run cargada, así que no sé qué mundo devolver.");
+                "No hay ninguna run cargada.");
         }
 
         try
@@ -217,22 +217,20 @@ public sealed class BattleModeService(
             if (File.Exists(marker) != toBattle)
             {
                 return new BattleModeResult(false,
-                    "El cambio no ha quedado como debía. Mira la carpeta load de Azahar antes de "
-                    + "volver a jugar.");
+                    "No se ha podido cambiar. Vuelve a intentarlo antes de jugar.");
             }
 
             await RecordAsync(toBattle, ct);
 
             return new BattleModeResult(true, toBattle
-                ? "Listo. Tu juego es ahora el mod SIN randomizar, así que los Pokémon de octava y "
-                  + "novena siguen existiendo. Todos tenéis que llevar la misma versión del mod."
-                : "Tu mundo ha vuelto. Los encuentros y los entrenadores son otra vez los tuyos.");
+                ? "Listo. Abre Azahar y a pelear."
+                : "Tu mundo está de vuelta.");
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Falló el cambio de modo combate con mod base");
             return new BattleModeResult(false,
-                "No se ha podido cambiar. El detalle está en la carpeta Logs.");
+                "No se ha podido cambiar.");
         }
     }
     private async Task<BattleModeResult> SwapAsync(string? from, string? to, bool toBattle,
@@ -240,7 +238,7 @@ public sealed class BattleModeService(
     {
         if (from is null || to is null)
         {
-            return new BattleModeResult(false, "No encuentro la carpeta de mods de Azahar.");
+            return new BattleModeResult(false, "No se encuentra Azahar.");
         }
 
         // Los mods se leen al cargar el juego, asi que cambiarlos con el emulador en marcha no
@@ -249,11 +247,14 @@ public sealed class BattleModeService(
         //
         // Se mira el PROCESO y no el RPC a proposito: el caso peligroso es justo Azahar abierto
         // con el servidor apagado, que por RPC se leeria como "no esta".
-        if (System.Diagnostics.Process.GetProcessesByName("azahar").Length > 0)
+        //
+        // Y por lo mismo se exige un "no" rotundo: un proceso que no deja leer su estado se cuenta
+        // como abierto. Equivocarse hacia "cerrado" mueve los ficheros del mundo por debajo de un
+        // emulador en marcha, que es de lo poco aqui que no tiene vuelta atras.
+        if (EmulatorProcess.IsRunning() != false)
         {
             return new BattleModeResult(false,
-                "Azahar está abierto. Ciérralo del todo antes: el juego lee los mods al arrancar, "
-                + "así que un cambio con él abierto no serviría de nada.");
+                "Cierra Azahar antes.");
         }
 
         if (!Directory.Exists(Path.Combine(from, "romfs")))
@@ -277,8 +278,7 @@ public sealed class BattleModeService(
             if (!Directory.Exists(Path.Combine(to, "romfs")) || Directory.Exists(Path.Combine(from, "romfs")))
             {
                 return new BattleModeResult(false,
-                    "El cambio no ha quedado como debía. Mira la carpeta load de Azahar antes de "
-                    + "volver a jugar.");
+                    "No se ha podido cambiar. Vuelve a intentarlo antes de jugar.");
             }
 
             await RecordAsync(toBattle, ct);
@@ -286,14 +286,14 @@ public sealed class BattleModeService(
             logger.LogInformation("Modo combate: {Mode}", toBattle ? "preparado" : "restaurado");
 
             return new BattleModeResult(true, toBattle
-                ? "Listo. Tu juego es ahora el original, igual que el de los demás. Abre Azahar y a pelear."
-                : "Tu mundo está de vuelta. Abre Azahar y sigue donde lo dejaste.");
+                ? "Listo. Abre Azahar y a pelear."
+                : "Tu mundo está de vuelta.");
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Falló el cambio de modo combate");
             return new BattleModeResult(false,
-                "No se ha podido cambiar. El detalle está en la carpeta Logs.");
+                "No se ha podido cambiar.");
         }
     }
 

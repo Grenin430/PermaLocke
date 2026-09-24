@@ -175,4 +175,37 @@ public sealed class AzaharRpcClientTests : IDisposable
         Assert.Contains("intentos", problem.Message);
         Assert.False(client.TryPing(out _));
     }
+    [Fact]
+    public async Task A_stream_of_stale_replies_cannot_extend_the_request_deadline()
+    {
+        var token = _stopping.Token;
+        _serving = Task.Run(async () =>
+        {
+            var request = await _server.ReceiveAsync(token);
+            var id = BinaryPrimitives.ReadUInt32LittleEndian(request.Buffer.AsSpan(4));
+            var type = BinaryPrimitives.ReadUInt32LittleEndian(request.Buffer.AsSpan(8));
+            var reply = Reply(id + 1, type);
+            var sending = System.Diagnostics.Stopwatch.StartNew();
+            try
+            {
+                while (sending.Elapsed < TimeSpan.FromSeconds(2))
+                {
+                    await _server.SendAsync(reply, request.RemoteEndPoint, token);
+                    await Task.Delay(5, token);
+                }
+            }
+            catch (OperationCanceledException) { }
+        });
+
+        using var client = Client(timeout: 80);
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+        var problem = await Task.Run(() =>
+            Assert.Throws<AzaharRpcException>(() => client.ReadMemory(0x30000000, 4)));
+        Assert.True(problem.NoReply);
+        Assert.True(client.Discarded > 0);
+        Assert.True(clock.Elapsed < TimeSpan.FromSeconds(1), $"Stale replies held the client for {clock.Elapsed}.");
+        Assert.Equal(80, client.TimeoutMilliseconds);
+        _stopping.Cancel();
+        await _serving;
+    }
 }

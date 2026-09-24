@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -103,7 +104,7 @@ public sealed class AzaharRpcClient : IDisposable
 
     private readonly UdpClient _socket;
     private readonly IPEndPoint _endpoint;
-    private readonly Random _requestIds = new();
+    private int _nextRequestId = Random.Shared.Next();
 
     /// <summary>One request at a time: the socket is shared by every screen and the poller.</summary>
     private readonly Lock _gate = new();
@@ -113,6 +114,9 @@ public sealed class AzaharRpcClient : IDisposable
 
     /// <summary>Late replies thrown away. Each one is a desynchronisation that did not happen.</summary>
     public int Discarded { get; private set; }
+
+    /// <summary>The last requests, for the report written when the emulator goes down (§168).</summary>
+    public RpcTrace Trace { get; } = new();
 
     public AzaharRpcClient(string host = "127.0.0.1", int port = DefaultPort, int timeoutMilliseconds = 1500)
     {
@@ -278,11 +282,14 @@ public sealed class AzaharRpcClient : IDisposable
     /// <summary>Shorter timeout while scanning: unmapped pages must fail fast, not stall.</summary>
     public int TimeoutMilliseconds
     {
-        get => _socket.Client.ReceiveTimeout;
+        get { lock (_gate) return _socket.Client.ReceiveTimeout; }
         set
         {
-            _socket.Client.ReceiveTimeout = value;
-            _socket.Client.SendTimeout = value;
+            lock (_gate)
+            {
+                _socket.Client.ReceiveTimeout = value;
+                _socket.Client.SendTimeout = value;
+            }
         }
     }
 
@@ -481,7 +488,7 @@ public sealed class AzaharRpcClient : IDisposable
     /// </remarks>
     private byte[] Send(RpcRequestType type, byte[] payload)
     {
-        var requestId = (uint)_requestIds.Next(int.MinValue, int.MaxValue);
+        var requestId = unchecked((uint)Interlocked.Increment(ref _nextRequestId));
 
         var request = new byte[HeaderSize + payload.Length];
         BinaryPrimitives.WriteUInt32LittleEndian(request, ProtocolVersion);
@@ -493,23 +500,35 @@ public sealed class AzaharRpcClient : IDisposable
         lock (_gate)
         {
             Exception? last = null;
+            var clock = Stopwatch.StartNew();
 
-            for (var attempt = 1; attempt <= Attempts; attempt++)
+            try
             {
-                try
+                for (var attempt = 1; attempt <= Attempts; attempt++)
                 {
-                    _socket.Send(request, request.Length, _endpoint);
-                    return Receive(requestId, type);
-                }
-                catch (SocketException ex)
-                {
-                    // Se perdió el datagrama, o el emulador estaba ocupado. Se vuelve a pedir con
-                    // el MISMO id, así que si la respuesta anterior llega tarde todavía sirve.
-                    last = ex;
-                    Retries++;
+                    try
+                    {
+                        _socket.Send(request, request.Length, _endpoint);
+                        var reply = Receive(requestId, type);
+                        Trace.Record(type, payload, answered: true, clock.Elapsed.TotalMilliseconds);
+                        return reply;
+                    }
+                    catch (SocketException ex)
+                    {
+                        // Se perdió el datagrama, o el emulador estaba ocupado. Se vuelve a pedir con
+                        // el MISMO id, así que si la respuesta anterior llega tarde todavía sirve.
+                        last = ex;
+                        Retries++;
+                    }
                 }
             }
+            catch
+            {
+                Trace.Record(type, payload, answered: false, clock.Elapsed.TotalMilliseconds);
+                throw;
+            }
 
+            Trace.Record(type, payload, answered: false, clock.Elapsed.TotalMilliseconds);
             throw new AzaharRpcException(
                 $"Sin respuesta de {_endpoint} tras {Attempts} intentos: {last?.Message}", noReply: true);
         }
@@ -518,10 +537,26 @@ public sealed class AzaharRpcClient : IDisposable
     /// <summary>Waits for the reply with this id, throwing away anything older that is queued.</summary>
     private byte[] Receive(uint requestId, RpcRequestType type)
     {
+        var clock = Stopwatch.StartNew();
+        var timeout = _socket.Client.ReceiveTimeout;
         while (true)
         {
+            // A stream of stale replies must not restart the timeout and hold every caller forever.
+            if (timeout > 0)
+            {
+                var remaining = timeout - clock.Elapsed.TotalMilliseconds;
+                if (remaining <= 0 || !_socket.Client.Poll(
+                        (int)Math.Min(int.MaxValue, Math.Ceiling(remaining * 1000)), SelectMode.SelectRead))
+                    throw new SocketException((int)SocketError.TimedOut);
+            }
+
             IPEndPoint? from = null;
             var reply = _socket.Receive(ref from);
+            if (!Equals(from, _endpoint))
+            {
+                Discarded++;
+                continue;
+            }
 
             if (reply.Length < HeaderSize)
             {

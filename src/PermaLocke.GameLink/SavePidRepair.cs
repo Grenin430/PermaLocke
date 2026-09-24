@@ -58,14 +58,13 @@ public sealed class SavePidRepair(PlayerSave save, string backupFolder, ILogger<
         if (path is null)
         {
             return new PidRepairReport(0, 0, [], false,
-                "No se encuentra la partida de Ultra Luna. ¿Has jugado y guardado alguna vez con este emulador?");
+                "No se encuentra tu partida de Ultra Luna.");
         }
 
         if (write && save.IsGameLoaded())
         {
             return new PidRepairReport(0, 0, [], false,
-                "El juego está abierto en el emulador. Guarda la partida y cierra Azahar: mientras "
-                + "esté cargado, el emulador reescribiría el save y la reparación se perdería.");
+                "El juego está abierto. Guarda y cierra Azahar.");
         }
 
         return RepairIn(path, write);
@@ -82,7 +81,7 @@ public sealed class SavePidRepair(PlayerSave save, string backupFolder, ILogger<
             if (!SaveUtil.TryGetSaveFile(path, out var loaded) || loaded is not SAV7USUM game)
             {
                 return new PidRepairReport(0, 0, [], false,
-                    $"El fichero de partida no se ha podido leer como Ultra Luna: {path}");
+                    "No se ha podido leer tu partida.");
             }
 
             var (total, given) = Apply(game);
@@ -90,13 +89,13 @@ public sealed class SavePidRepair(PlayerSave save, string backupFolder, ILogger<
             if (given.Count == 0)
             {
                 return new PidRepairReport(total, 0, [], false,
-                    $"Los {total} Pokémon de la partida ya tienen PID. No hay nada que reparar.");
+                    "No hay nada que arreglar.");
             }
 
             if (!write)
             {
                 return new PidRepairReport(total, given.Count, given, false,
-                    $"{given.Count} de {total} Pokémon no tienen PID. Nada escrito todavía.");
+                    $"Hay {given.Count} Pokémon por arreglar.");
             }
 
             Backup(path);
@@ -108,22 +107,20 @@ public sealed class SavePidRepair(PlayerSave save, string backupFolder, ILogger<
             if (left != 0 || repeated != 0)
             {
                 return new PidRepairReport(total, given.Count, given, true,
-                    $"Se escribió la partida pero al releerla quedan {left} sin PID y {repeated} "
-                    + $"repetidos. La copia de seguridad está en {backupFolder}.");
+                    "No se ha podido arreglar del todo. Vuelve a intentarlo.");
             }
 
             logger.LogInformation("PID repartidos: {Count} de {Total} Pokémon", given.Count, total);
 
             return new PidRepairReport(total, given.Count, given, true,
-                $"{given.Count} Pokémon reciben un PID propio, y al releer la partida no queda "
-                + "ninguno a cero ni repetido.");
+                $"{given.Count} Pokémon arreglados.");
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Falló la reparación de PID de {Path}", path);
 
             return new PidRepairReport(0, 0, [], false,
-                "No se pudo reparar la partida. El detalle está en la carpeta Logs.");
+                "No se pudo reparar la partida.");
         }
     }
 

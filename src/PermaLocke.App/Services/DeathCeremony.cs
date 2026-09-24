@@ -8,7 +8,7 @@ namespace PermaLocke.App.Services;
 /// <summary>A Pokémon that has just died, as the ceremony needs it.</summary>
 /// <param name="Name">Its nickname if it has one, its species otherwise.</param>
 /// <param name="Penalty">What its death actually cost, which is zero for a role that loses nothing.</param>
-public sealed record DeathNotice(string Name, int Species, int Penalty);
+public sealed record DeathNotice(string Name, int Species, int Penalty, int Form = 0);
 
 /// <summary>One death of the ceremony, already resolved to what is drawn.</summary>
 /// <param name="Flash">The sprite as a white silhouette, for the hit it takes before it faints.</param>
@@ -37,7 +37,8 @@ public sealed record DeathCard(string Title, string Points, BitmapSource? Sprite
 /// a failure in it costs the animation and nothing else.
 /// </para>
 /// </remarks>
-public sealed class DeathCeremony(IUiDispatcher ui, PokemonSpriteService sprites, ILogger<DeathCeremony> logger)
+public sealed class DeathCeremony(IUiDispatcher ui, PokemonSpriteService sprites, KillcamRecorder killcam,
+    ILogger<DeathCeremony> logger)
 {
     /// <summary>Cards waiting their turn. Only touched on the UI thread.</summary>
     private readonly Queue<DeathCard> _waiting = new();
@@ -46,13 +47,21 @@ public sealed class DeathCeremony(IUiDispatcher ui, PokemonSpriteService sprites
     private DeathWindow? _window;
 
     /// <summary>Plays one death. Safe to call from any thread.</summary>
+    /// <summary>Off in CONFIGURACIÓN: the death is recorded all the same, only the scene is not shown.</summary>
+    public bool Enabled { get; set; } = true;
+
     public void Mourn(DeathNotice notice)
     {
         ArgumentNullException.ThrowIfNull(notice);
 
+        if (!Enabled)
+        {
+            return;
+        }
+
         try
         {
-            var sprite = sprites.Get(notice.Species);
+            var sprite = sprites.Get(notice.Species, notice.Form);
 
             Enqueue(new DeathCard(
                 $"{notice.Name.ToUpperInvariant()} HA MUERTO",
@@ -68,8 +77,13 @@ public sealed class DeathCeremony(IUiDispatcher ui, PokemonSpriteService sprites
     }
 
     /// <summary>The last card of a wipe, after the deaths that made it.</summary>
-    public void TeamFell(int penalty) =>
-        Enqueue(new DeathCard("EQUIPO CAÍDO", Points(penalty), null, null, IsWipe: true));
+    public void TeamFell(int penalty)
+    {
+        if (Enabled)
+        {
+            Enqueue(new DeathCard("EQUIPO CAÍDO", Points(penalty), null, null, IsWipe: true));
+        }
+    }
 
     private static string Points(int penalty) => penalty > 0 ? $"−{penalty} PUNTOS" : string.Empty;
 
@@ -91,6 +105,9 @@ public sealed class DeathCeremony(IUiDispatcher ui, PokemonSpriteService sprites
     private async Task PlayAllAsync()
     {
         _playing = true;
+
+        // La escena tapa el juego y la killcam copia la pantalla: mientras esté, no se graba nada.
+        killcam.CoverBegins();
 
         try
         {
@@ -116,6 +133,7 @@ public sealed class DeathCeremony(IUiDispatcher ui, PokemonSpriteService sprites
         {
             _playing = false;
             _window?.Hide();
+            killcam.CoverEnds();
         }
     }
 

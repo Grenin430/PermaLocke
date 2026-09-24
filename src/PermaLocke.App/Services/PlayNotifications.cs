@@ -1,4 +1,6 @@
+using System.Windows.Media.Imaging;
 using PermaLocke.Core.Domain;
+using PermaLocke.Rules.Services;
 
 namespace PermaLocke.App.Services;
 
@@ -21,12 +23,25 @@ namespace PermaLocke.App.Services;
 /// A death gets both: the <see cref="DeathCeremony"/> over the game, which is the moment, and the
 /// corner notice, which stays in the list of notices once the moment has gone.
 /// </para>
+/// <para>
+/// Every notice carries a sprite from the player's own cartridge when there is one to carry: the Pokémon of the
+/// battle, the fallen one, the Poké Ball that was taken or given back, the item of a prize.
+/// </para>
 /// </remarks>
 public sealed class PlayNotifications
 {
     public PlayNotifications(GameLinkMonitor monitor, MaintenanceService maintenance, Notifier notifier,
-        DeathCeremony ceremony, PokemonSpriteService sprites)
+        DeathCeremony ceremony, PokemonSpriteService sprites, EncounterGuard encounters, BallControlService balls)
     {
+        balls.FirstBallDetected += (_, _) => notifier.Say(
+            ToastKind.Info, "¡Primeras Poké Balls!",
+            "Tu PermaLocke empieza: desde ahora cuentan las capturas y las muertes.",
+            sprites.GetBall());
+
+        // Que te quiten las Poké Balls sin decirte por qué se lee como un fallo del juego (§117).
+        encounters.Said += (_, notice) => notifier.Say(notice.Kind, notice.Title, notice.Message,
+            SpriteFor(notice, sprites));
+
         monitor.PokemonDied += (_, fallen) =>
         {
             ceremony.Mourn(fallen);
@@ -34,9 +49,10 @@ public sealed class PlayNotifications
             // Lo que costó DE VERDAD. Ponía «−25 puntos» escrito a mano, que es mentira para el
             // CAGONETA -no pierde puntos- y para cualquier rol que multiplique las pérdidas.
             notifier.Say(
+                ToastKind.Death,
                 $"{fallen.Name} ha caído",
-                fallen.Penalty > 0 ? $"Registrado en la run. −{fallen.Penalty} puntos." : "Registrado en la run.",
-                ToastTone.Bad);
+                fallen.Penalty > 0 ? $"−{fallen.Penalty} puntos." : string.Empty,
+                sprites.Get(fallen.Species, fallen.Form));
         };
 
         // Las marcadas a mano en MANTENIMIENTO son justo las que la app no llegó a ver: tienen su
@@ -46,31 +62,37 @@ public sealed class PlayNotifications
         // Esto salta al CERRAR el emulador, que es cuando la marca se puede escribir en la partida.
         // Llega con el juego ya cerrado y por tanto sin nada tapando la pantalla, que es justo
         // cuando un aviso se lee: es lo único que dice que se ha hecho.
-        monitor.DeathMarked += (_, notice) => notifier.Say(
-            "Caídos marcados en la partida",
-            notice,
-            ToastTone.Bad);
+        monitor.DeathMarked += (_, notice) => notifier.Say(ToastKind.TeamWipe, "Caídos", notice);
 
         monitor.TeamWiped += (_, penalty) =>
         {
             // Detrás de las muertes que lo formaron, que ya están en la cola.
             ceremony.TeamFell(penalty.Points);
 
-            notifier.Say(
-                "Equipo caído",
-                $"{penalty.Points} puntos.",
-                ToastTone.Bad);
+            notifier.Say(ToastKind.TeamWipe, "Equipo caído", $"{penalty.Points} puntos.");
         };
 
         monitor.RewardGiven += (_, given) => notifier.Say(
+            ToastKind.Reward,
             "Premio entregado",
             given.Message,
-            ToastTone.Good,
             First(given, sprites));
     }
 
+    /// <summary>
+    /// The Pokémon of the battle when it is known; otherwise, for the balls, the Poké Ball itself.
+    /// </summary>
+    private static BitmapSource? SpriteFor(EncounterNotice notice, PokemonSpriteService sprites)
+    {
+        if (notice.Species is { } species && sprites.Get(species) is { } pokemon)
+        {
+            return pokemon;
+        }
+
+        return notice.Kind is ToastKind.BallsTaken or ToastKind.BallsBack ? sprites.GetBall() : null;
+    }
+
     /// <summary>The icon of the first item of a prize, when the prize hands over items at all.</summary>
-    private static System.Windows.Media.Imaging.BitmapSource? First(RewardResult given,
-        PokemonSpriteService sprites) =>
+    private static BitmapSource? First(RewardResult given, PokemonSpriteService sprites) =>
         given.Reward?.Items is { Count: > 0 } items ? sprites.GetItem(items[0].Id) : null;
 }

@@ -115,30 +115,7 @@ public sealed class SqliteEventStore : IEventStore, IDisposable
     public async Task<IntegrityReport> VerifyChainAsync(Guid runId, CancellationToken ct = default)
     {
         var all = await GetAllAsync(runId, ct).ConfigureAwait(false);
-
-        var expectedPrevious = string.Empty;
-        var checkedCount = 0;
-
-        foreach (var storedEvent in all)
-        {
-            checkedCount++;
-
-            if (storedEvent.PreviousHash != expectedPrevious)
-            {
-                return new IntegrityReport(false, checkedCount, storedEvent.Id,
-                    "El encadenado se rompe: falta un evento anterior o fue alterado.");
-            }
-
-            if (EventHasher.Compute(storedEvent, expectedPrevious) != storedEvent.Hash)
-            {
-                return new IntegrityReport(false, checkedCount, storedEvent.Id,
-                    "El contenido del evento no coincide con su hash: fue modificado.");
-            }
-
-            expectedPrevious = storedEvent.Hash;
-        }
-
-        return new IntegrityReport(true, checkedCount, null, null);
+        return EventChain.Verify(all);
     }
 
     public void Dispose() => _writeGate.Dispose();

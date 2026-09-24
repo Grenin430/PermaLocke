@@ -106,6 +106,25 @@ public sealed class EvTrainingServiceTests
         Assert.Empty(log.Appended);
     }
 
+    /// <summary>
+    /// A Huevo Malo is never written back (§97): through PKHeX it would come out with a valid
+    /// checksum and whatever species its broken bytes say, which the game may hang on.
+    /// </summary>
+    [Fact]
+    public async Task A_damaged_entry_is_never_written()
+    {
+        var trainer = new Trainer();
+        var (service, log, run) = Build(trainer);
+
+        var result = await service.TrainAsync(run, Pokemon(0, 0, 0, 0, 0, 0) with { IsIntact = false },
+            EvSpread.Of([4, 0, 0, 0, 0, 0]));
+
+        Assert.False(result.Delivered);
+        Assert.Contains("dañado", result.Message);
+        Assert.Empty(trainer.Applied);
+        Assert.Empty(log.Appended);
+    }
+
     [Fact]
     public async Task Exactly_510_is_written()
     {

@@ -38,7 +38,7 @@ public sealed class DupesClauseRule : IRule
             Outcome = RuleOutcome.Blocked,
             Title = "DUPES CLAUSE",
             Message = $"{duplicate.SpeciesName} ya ha sido obtenido. "
-                      + "Este encuentro puede ignorarse según las reglas actuales.",
+                      + "Este encuentro se puede ignorar.",
             Details = new Dictionary<string, string>
             {
                 ["Encuentro"] = capture.SpeciesName,

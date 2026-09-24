@@ -31,6 +31,8 @@ public sealed class GachaServiceTests
         public IReadOnlyList<string> Abilities { get; init; } = ["Levitación", "Impostor", "Presión"];
 
         public IReadOnlyList<EvolutionLine> Lines { get; init; } = [];
+
+        public IReadOnlyCollection<int> BannedAbilities { get; init; } = [];
     }
 
     /// <summary>The five bands the run defines, by base stat total.</summary>
@@ -396,41 +398,82 @@ public sealed class GachaServiceTests
     }
 
     /// <summary>
-    /// Nothing above <see cref="IAbilityLookup.LastUsableAbility"/> is ever handed out.
+    /// The expansion mod's abilities are dealt; its holes and the banned ones never are.
     /// </summary>
     /// <remarks>
-    /// The bug this fixes wrote a <b>valid</b> number, which is why nothing caught it. With the
-    /// expansion mod the ability list runs to 319 and a gen 7 Pokémon stores its ability in one
-    /// byte, so 293 — «General Supremo» — was written and read back as 37, «Potencia». The screen
-    /// announced one ability and the box held another, and both looked perfectly normal.
-    /// <para>
-    /// Two hundred pulls over a table that is mostly out of range: if the ceiling were dropped,
-    /// this fails within a handful of them.
-    /// </para>
+    /// Until §136 this test demanded the opposite — nothing above 233 — on the belief that a gen 7
+    /// Pokémon keeps its ability in one byte, so 293 «General Supremo» came out as 37 «Potencia».
+    /// That was the builder writing only the byte; the mod keeps a ninth bit (§134) and the builder
+    /// now writes it. What still must never come out is an id with no name — the mod leaves 301-304
+    /// and 317-318 as «-» — or one of the form abilities the randomizer also keeps out.
     /// </remarks>
     [Fact]
-    public void No_pull_carries_an_ability_this_game_cannot_hold()
+    public void The_mods_abilities_are_dealt_but_never_a_hole_or_a_banned_one()
     {
-        // Una lista como la del mod: válidas hasta la 233 y basura de generaciones posteriores
-        // por encima, incluida la 293 que es la que se daba la vuelta.
+        // Una lista como la del mod 1.4: nombres hasta la 319, con sus huecos.
+        int[] holes = [301, 302, 303, 304, 317, 318];
         var names = new List<string> { "-" };
         for (var id = 1; id < 320; id++)
         {
-            names.Add(id <= IAbilityLookup.LastUsableAbility ? $"Habilidad {id}" : $"Posterior {id}");
+            names.Add(holes.Contains(id) ? "-" : $"Habilidad {id}");
         }
 
+        int[] banned = [278, 279];
         var service = new GachaService(new Catalog(Tiers(), [Pocho()]),
-            new Species(SpeciesTable()) { Abilities = names, Lines = Families() },
+            new Species(SpeciesTable()) { Abilities = names, Lines = Families(), BannedAbilities = banned },
             null!, null!, null!, null!);
 
-        for (var number = 0; number < 200; number++)
+        var fromTheMod = 0;
+
+        for (var number = 0; number < 400; number++)
         {
             var pull = service.Preview(Pocho(), 1, number);
 
             Assert.NotNull(pull);
-            Assert.InRange(pull.AbilityId, 0, IAbilityLookup.LastUsableAbility);
-            Assert.DoesNotContain("Posterior", pull.Ability);
+            Assert.DoesNotContain(pull.AbilityId, holes);
+            Assert.DoesNotContain(pull.AbilityId, banned);
+            Assert.Equal(names[pull.AbilityId], pull.Ability);
+
+            if (pull.AbilityId > 233)
+            {
+                fromTheMod++;
+            }
         }
+
+        // Una de cada cuatro, más o menos: si volviera el tope de la 233, esto sería cero.
+        Assert.True(fromTheMod > 50, $"solo {fromTheMod} de 400 con habilidad del mod");
+    }
+
+    /// <summary>
+    /// Regional forms change the form and nothing else: every other number of every pull is what it
+    /// was before they existed (§139).
+    /// </summary>
+    [Fact]
+    public void A_regional_form_changes_nothing_else_in_the_pull()
+    {
+        var plain = new GachaService(new Catalog(Tiers(), [Pocho()]),
+            new Species(SpeciesTable()) { Lines = Families() }, null!, null!, null!, null!);
+        var withForms = new GachaService(new Catalog(Tiers(), [Pocho()]),
+            new Species([.. SpeciesTable().Select(s => s with { Forms = [new SpeciesForm(1, "Alola")] })])
+            { Lines = Families() }, null!, null!, null!, null!);
+
+        var regional = 0;
+
+        for (var number = 0; number < 200; number++)
+        {
+            var before = plain.Preview(Pocho(), 1, number)!;
+            var after = withForms.Preview(Pocho(), 1, number)!;
+
+            Assert.Equal(before, after with { Form = 0, FormName = "" });
+
+            if (after.Form == 1)
+            {
+                regional++;
+                Assert.EndsWith(" de Alola", after.DisplayName);
+            }
+        }
+
+        Assert.InRange(regional, 60, 140);
     }
 
     [Fact]

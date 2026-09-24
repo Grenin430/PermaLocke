@@ -1,25 +1,64 @@
 using Microsoft.Extensions.Logging;
 using System.Collections.ObjectModel;
-using System.Runtime.InteropServices;
-using System.Windows;
-using System.Windows.Interop;
 using System.Windows.Media.Imaging;
 using PermaLocke.App.Views;
 
 namespace PermaLocke.App.Services;
 
-/// <summary>Whether the news is good, bad or neither. Decides the colour of the strip.</summary>
-public enum ToastTone
+/// <summary>What a notice is about. Decides its tab, its colour and the mark drawn on its sprite.</summary>
+public enum ToastKind
 {
-    Neutral,
-    Good,
-    Bad
+    /// <summary>PermaLocke saying something about itself.</summary>
+    Info,
+
+    /// <summary>The Poké Balls were taken away.</summary>
+    BallsTaken,
+
+    /// <summary>The Poké Balls were given back.</summary>
+    BallsBack,
+
+    /// <summary>A route's first wild battle.</summary>
+    FirstEncounter,
+
+    /// <summary>A shiny, which can always be caught.</summary>
+    Shiny,
+
+    /// <summary>One of the static captures the competition allows.</summary>
+    AllowedCapture,
+
+    /// <summary>A Pokémon died.</summary>
+    Death,
+
+    /// <summary>The whole team fell, or the fallen were marked in the save.</summary>
+    TeamWipe,
+
+    /// <summary>A prize was handed over.</summary>
+    Reward,
+
+    /// <summary>Something PermaLocke could not do and the player should know.</summary>
+    Warning
 }
 
 /// <summary>One thing worth saying while somebody is playing.</summary>
-public sealed record Toast(string Title, string Message, ToastTone Tone, BitmapSource? Icon = null)
+/// <param name="Sprite">From the player's cartridge: the Pokémon, the ball or the item it is about. Null draws a mark alone.</param>
+/// <param name="Shown">When it appeared, for the segments that count down its time on screen.</param>
+public sealed record Toast(ToastKind Kind, string Title, string Message, BitmapSource? Sprite, DateTime Shown, TimeSpan Linger)
 {
-    public bool HasIcon => Icon is not null;
+    /// <summary>The word on its tab.</summary>
+    public string Label => Kind switch
+    {
+        ToastKind.BallsTaken or ToastKind.BallsBack => "POKÉ BALLS",
+        ToastKind.FirstEncounter => "PRIMER ENCUENTRO",
+        ToastKind.Shiny => "VARIOCOLOR",
+        ToastKind.AllowedCapture => "CAPTURA PERMITIDA",
+        ToastKind.Death => "BAJA",
+        ToastKind.TeamWipe => "EQUIPO CAÍDO",
+        ToastKind.Reward => "PREMIO",
+        ToastKind.Warning => "ATENCIÓN",
+        _ => "PERMALOCKE"
+    };
+
+    public bool HasMessage => !string.IsNullOrWhiteSpace(Message);
 }
 
 /// <summary>
@@ -27,26 +66,25 @@ public sealed record Toast(string Title, string Message, ToastTone Tone, BitmapS
 /// </summary>
 /// <remarks>
 /// <para>
-/// Everything the application does on its own — registering a death, handing over a prize, applying
-/// the level cap — was only visible on HOME. While you play, PermaLocke is behind the emulator, so
-/// in practice none of it was visible <b>at the moment it happened</b>, which is the only moment it
-/// matters.
+/// Everything the application does on its own — registering a death, handing over a prize, taking the Poké Balls
+/// away — was only visible on HOME. While you play, PermaLocke is behind the emulator, so in practice none of it was
+/// visible <b>at the moment it happened</b>, which is the only moment it matters.
 /// </para>
 /// <para>
-/// The notice is its own window, not part of the main one: a minimised window draws nothing, and
-/// this has to appear while the main one is minimised. It sits over Azahar when Azahar is there,
-/// and in the corner of the screen when it is not.
+/// The notice is its own window, not part of the main one: a minimised window draws nothing, and this has to appear
+/// while the main one is minimised. It sits over Azahar when Azahar is there, and in the corner of the screen when
+/// it is not.
 /// </para>
 /// <para>
-/// <b>It never takes the focus and never eats a click.</b> Both are deliberate and both are a flag
-/// on the window: a notice that steals the focus takes you out of the game mid-battle, and one that
-/// swallows a click eats a turn. <c>WS_EX_NOACTIVATE</c> and <c>WS_EX_TRANSPARENT</c>.
+/// <b>It never takes the focus and never eats a click.</b> Both are deliberate and both are a flag on the window: a
+/// notice that steals the focus takes you out of the game mid-battle, and one that swallows a click eats a turn.
+/// <c>WS_EX_NOACTIVATE</c> and <c>WS_EX_TRANSPARENT</c>.
 /// </para>
 /// </remarks>
 public sealed class Notifier(IUiDispatcher ui, ILogger<Notifier> logger)
 {
-    /// <summary>How long a notice stays before it fades.</summary>
-    private static readonly TimeSpan Linger = TimeSpan.FromSeconds(6);
+    /// <summary>How long a notice stays before it goes.</summary>
+    public static readonly TimeSpan Linger = TimeSpan.FromSeconds(6);
 
     /// <summary>At most this many at once; older ones go first.</summary>
     private const int AtMost = 4;
@@ -62,17 +100,20 @@ public sealed class Notifier(IUiDispatcher ui, ILogger<Notifier> logger)
     /// <summary>Something has just been said. The tab uses it to light its dot.</summary>
     public event EventHandler? Said;
 
-    public void Say(string title, string message, ToastTone tone = ToastTone.Neutral,
-        BitmapSource? icon = null)
+    public void Say(ToastKind kind, string title, string message, BitmapSource? sprite = null) =>
+        _ = SayAsync(kind, title, message, sprite);
+
+    // Observe the UI task here: a failed window must never interrupt game monitoring or disappear silently.
+    internal async Task SayAsync(ToastKind kind, string title, string message, BitmapSource? sprite = null)
     {
-        if (!Enabled || string.IsNullOrWhiteSpace(title))
+        if (string.IsNullOrWhiteSpace(title)) return;
+        if (!Enabled)
         {
+            logger.LogInformation("Aviso omitido: notificaciones desactivadas ({Kind})", kind);
             return;
         }
 
-        // NADA DE LO DE AQUI PUEDE SALIR HACIA FUERA. Esto lo llama el vigilante desde su hilo
-        // en mitad de registrar una muerte: un aviso que falla tiene que costar el aviso y nada
-        // mas. Ya paso una vez -una excepcion de aqui se llevo por delante todo el ciclo del monitor-.
+        logger.LogInformation("Aviso solicitado: {Kind} — {Title}", kind, title);
         try
         {
             Said?.Invoke(this, EventArgs.Empty);
@@ -82,65 +123,82 @@ public sealed class Notifier(IUiDispatcher ui, ILogger<Notifier> logger)
             logger.LogError(ex, "Fallo al anunciar un aviso");
         }
 
-        _ = ui.InvokeAsync(() =>
+        try
         {
-            var toast = new Toast(title, message, tone, icon);
-
-            Showing.Add(toast);
-
-            while (Showing.Count > AtMost)
+            await ui.InvokeAsync(() =>
             {
-                Showing.RemoveAt(0);
-            }
+                if (!Enabled) return Task.CompletedTask;
+                var toast = new Toast(kind, title, message, sprite, DateTime.UtcNow, Linger);
+                Showing.Add(toast);
+                while (Showing.Count > AtMost) Showing.RemoveAt(0);
 
-            Open();
-
-            // Se retira sola. Un temporizador por aviso y no una cola: dos noticias a la vez son
-            // dos noticias, y hacer esperar a la segunda es esconderla.
-            var timer = new System.Windows.Threading.DispatcherTimer { Interval = Linger };
-
-            timer.Tick += (_, _) =>
-            {
-                timer.Stop();
-                Showing.Remove(toast);
-
-                if (Showing.Count == 0)
+                try
                 {
-                    _window?.Hide();
+                    Open();
                 }
-            };
+                catch
+                {
+                    Showing.Remove(toast);
+                    throw;
+                }
 
-            timer.Start();
-
-            return Task.CompletedTask;
-        });
+                var timer = new System.Windows.Threading.DispatcherTimer { Interval = Linger };
+                timer.Tick += (_, _) =>
+                {
+                    timer.Stop();
+                    Showing.Remove(toast);
+                    if (Showing.Count == 0) _window?.Hide();
+                };
+                timer.Start();
+                return Task.CompletedTask;
+            });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "No se pudo mostrar el aviso {Kind} — {Title}", kind, title);
+        }
     }
 
-    /// <summary>Puts the window where the player is looking, which is the game and not us.</summary>
+    /// <summary>Anchors in native screen pixels; WPF's Left/Top are not screen pixels at higher scaling.</summary>
     private void Open()
     {
         if (_window is null)
         {
-            _window = new ToastWindow { DataContext = this };
+            _window = new ToastWindow { DataContext = this, Width = 470, Height = 760 };
             _window.Closed += (_, _) => _window = null;
-        }
-
-        var target = GameWindow.Area();
-
-        _window.Width = 380;
-        _window.Height = 300;
-        _window.Left = target.Right - _window.Width - 24;
-        _window.Top = target.Bottom - _window.Height - 24;
-
-        if (!_window.IsVisible)
-        {
-            _window.Show();
             OverlayWindows.MakeUntouchable(_window);
         }
 
-        // Topmost se vuelve a pedir cada vez: otra ventana que se pone delante puede desbancarla,
-        // y un aviso que sale detras del juego es un aviso que no existe.
-        _window.Topmost = false;
-        _window.Topmost = true;
+        var game = GameWindow.Handle();
+        var anchor = game;
+        if (anchor == IntPtr.Zero && System.Windows.Application.Current?.MainWindow is { } main)
+            anchor = new System.Windows.Interop.WindowInteropHelper(main).Handle;
+        var work = GameWindow.WorkArea(anchor);
+        var target = GameWindow.ClientBox(game) ?? work;
+
+        if (!_window.IsVisible) _window.Show();
+
+        var dpi = System.Windows.Media.VisualTreeHelper.GetDpi(_window);
+        var box = ToastPlacement.Calculate(target, work, dpi.DpiScaleX, dpi.DpiScaleY);
+        Place(box);
+
+        // Moving between monitors can change WPF's DPI. Recalculate once using the destination scale.
+        var destinationDpi = System.Windows.Media.VisualTreeHelper.GetDpi(_window);
+        if (destinationDpi.DpiScaleX != dpi.DpiScaleX || destinationDpi.DpiScaleY != dpi.DpiScaleY)
+        {
+            dpi = destinationDpi;
+            box = ToastPlacement.Calculate(target, work, dpi.DpiScaleX, dpi.DpiScaleY);
+            Place(box);
+        }
+
+        logger.LogInformation(
+            "Ventana de avisos mostrada: {Box}; escala {ScaleX}x{ScaleY}; monitor {Work}; juego {Game}",
+            box, dpi.DpiScaleX, dpi.DpiScaleY, work, game != IntPtr.Zero);
+    }
+
+    private void Place((int Left, int Top, int Width, int Height) box)
+    {
+        if (!OverlayWindows.PlaceOver(_window!, box))
+            throw new System.ComponentModel.Win32Exception(System.Runtime.InteropServices.Marshal.GetLastWin32Error());
     }
 }

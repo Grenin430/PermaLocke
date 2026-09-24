@@ -34,8 +34,7 @@ public sealed class SaveGameUnlocks(PlayerSave save, string backupFolder,
     {
         if (save.IsGameLoaded())
         {
-            reason = "El juego está cargado en Azahar. Guarda dentro del juego, ciérralo del todo "
-                     + "y vuelve a intentarlo.";
+            reason = "El juego está abierto. Guarda y cierra Azahar.";
             return false;
         }
 
@@ -78,7 +77,7 @@ public sealed class SaveGameUnlocks(PlayerSave save, string backupFolder,
             if (!SaveUtil.TryGetSaveFile(path, out var loaded) || loaded is not SAV7USUM game)
             {
                 return new UnlockResult(false,
-                    "El fichero de partida no se ha podido leer como Ultra Luna.");
+                    "No se ha podido leer tu partida.");
             }
 
             Backup(path);
@@ -98,21 +97,20 @@ public sealed class SaveGameUnlocks(PlayerSave save, string backupFolder,
                 || !Applied(written, keys))
             {
                 return new UnlockResult(false,
-                    "Se escribió la partida pero al releerla el desbloqueo no estaba. "
-                    + "La copia de seguridad está en Saves/backup.");
+                    "No se ha podido guardar el cambio. Vuelve a intentarlo.");
             }
 
             logger.LogWarning("Desbloqueado en la partida: {Keys}", string.Join(", ", keys));
 
             return new UnlockResult(true,
-                "Megaevolución desbloqueada en la partida. Escrito y releído.");
+                "Megaevolución desbloqueada.");
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Falló el desbloqueo de {Keys}", string.Join(", ", keys));
 
             return new UnlockResult(false,
-                "No se pudo escribir en la partida. El detalle está en la carpeta Logs.");
+                "No se pudo escribir en la partida.");
         }
     }
 

@@ -38,6 +38,43 @@ public static class TrainerPokemonTable
         party.AsSpan((index * EntrySize) + EvOffset, EvCount);
 
     /// <summary>
+    /// Writes the six EVs, in the same order as <see cref="GetEvs"/>.
+    /// </summary>
+    /// <remarks>
+    /// Added for the difficulty module, which deals a spread again for the species the trainer module
+    /// put there (§122). The order was measured before this was written rather than taken from the
+    /// layout comment: among the cartridge's 252s, byte 1 sits on species averaging 103 base Attack,
+    /// byte 3 on 101 Special Attack and byte 5 on 90 Speed.
+    /// </remarks>
+    public static void SetEvs(byte[] party, int index, ReadOnlySpan<byte> evs) =>
+        evs[..EvCount].CopyTo(party.AsSpan((index * EntrySize) + EvOffset, EvCount));
+
+    /// <summary>The packed IV field: six five-bit values from bit 0, and two flag bits above them.</summary>
+    private const int IvOffset = 0x08;
+
+    private const int IvBits = 5;
+
+    /// <summary>One of the six IVs, by its position in the packed field.</summary>
+    public static int GetIv(byte[] party, int index, int stat) =>
+        (int)((BitConverter.ToUInt32(party, (index * EntrySize) + IvOffset) >> (stat * IvBits)) & 0x1F);
+
+    /// <summary>
+    /// Writes one IV and nothing else: the two bits above the sixth IV are flags (pk3DS reads bit 30
+    /// as shiny) and are carried through untouched.
+    /// </summary>
+    public static void SetIv(byte[] party, int index, int stat, int value)
+    {
+        var at = (index * EntrySize) + IvOffset;
+        var packed = BitConverter.ToUInt32(party, at);
+        var mask = 0x1Fu << (stat * IvBits);
+        packed = (packed & ~mask) | ((uint)Math.Clamp(value, 0, 31) << (stat * IvBits));
+        BitConverter.GetBytes(packed).CopyTo(party, at);
+    }
+
+    public static void SetItem(byte[] party, int index, int item) =>
+        BitConverter.GetBytes((ushort)item).CopyTo(party, (index * EntrySize) + ItemOffset);
+
+    /// <summary>
     /// How many Pokémon the party holds. One subfile in the cartridge is six bytes long and
     /// therefore holds none; truncating rather than throwing is deliberate.
     /// </summary>
@@ -64,6 +101,13 @@ public static class TrainerPokemonTable
 
     public static int GetItem(byte[] party, int index) =>
         BitConverter.ToUInt16(party, (index * EntrySize) + ItemOffset);
+
+    /// <summary>The four move slots, zeros included.</summary>
+    public static int[] GetMoves(byte[] party, int index)
+    {
+        var at = (index * EntrySize) + MovesOffset;
+        return [.. Enumerable.Range(0, MoveCount).Select(move => (int)BitConverter.ToUInt16(party, at + (move * 2)))];
+    }
 
     /// <summary>True when the entry names its own moves instead of leaving them to the game.</summary>
     public static bool HasExplicitMoves(byte[] party, int index)

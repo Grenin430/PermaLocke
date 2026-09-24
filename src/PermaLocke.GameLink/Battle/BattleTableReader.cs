@@ -35,6 +35,28 @@ public sealed class BattleTableReader(AzaharRpcClient client, ILogger<BattleTabl
 
     private IReadOnlyList<(uint Origin, int[] Ids)> _known = [];
     private DateTimeOffset _lastSearch = DateTimeOffset.MinValue;
+    private int _failedReadings;
+
+    /// <summary>
+    /// Lets the next <see cref="Read"/> search at once instead of waiting its turn.
+    /// </summary>
+    /// <remarks>
+    /// For when the game has just said a wild battle started (its counter went up, §117): the ball rule needs
+    /// the species within a second, and waiting up to <see cref="SearchEvery"/> could let a duplicate be caught.
+    /// It is still one search of one megabyte, triggered by a battle, never a loop.
+    /// </remarks>
+    public void SearchSoon() => _lastSearch = DateTimeOffset.MinValue;
+
+    /// <summary>The whole Pokémon behind a block, or null when it cannot be read or is not that Pokémon.</summary>
+    /// <remarks>One read of 296 bytes from the block's own pointer. See <see cref="BattlePokemon"/>.</remarks>
+    public PKHeX.Core.PK7? ReadPokemon(BattleBlock block)
+    {
+        ArgumentNullException.ThrowIfNull(block);
+
+        return client.TryReadMemory(block.Pointer, BattlePokemon.ReadLength, out var bytes)
+            ? BattlePokemon.Parse(bytes, block.Species)
+            : null;
+    }
 
     /// <summary>
     /// The battle tables as they are now. Empty when there is no battle, or when it is not time to
@@ -46,11 +68,13 @@ public sealed class BattleTableReader(AzaharRpcClient client, ILogger<BattleTabl
         {
             if (ReadKnown() is { } tables)
             {
+                _failedReadings = 0;
                 return tables;
             }
 
-            logger.LogInformation("Las tablas del combate ya no están: se ha acabado el combate");
+            logger.LogInformation("Las tablas del combate han dejado de validar; se vuelve a comprobar el combate");
             _known = [];
+            _failedReadings = 0;
         }
 
         if (now - _lastSearch < SearchEvery)
@@ -124,8 +148,17 @@ public sealed class BattleTableReader(AzaharRpcClient client, ILogger<BattleTabl
             {
                 var header = probe.HeaderOf(id);
 
-                if (!client.TryReadMemory(header, BattleLayout.ReadLength, out var bytes)
-                    || BattleLayout.Parse(header, bytes) is not { } block
+                if (!client.TryReadMemory(header, BattleLayout.ReadLength, out var bytes))
+                {
+                    // A missing reply is not a battle ending. The monitor skips failed polls, preserving
+                    // the faint tracker, encounter and recording until another reading can validate them.
+                    // Repeated failures do release the address so relocation remains possible.
+                    if (++_failedReadings < 3)
+                        throw new AzaharRpcException($"Lectura de combate interrumpida en 0x{header:X8}; se conserva el seguimiento para reintentar.");
+                    return null;
+                }
+
+                if (BattleLayout.Parse(header, bytes) is not { } block
                     || block.BattleId != id)
                 {
                     return null;

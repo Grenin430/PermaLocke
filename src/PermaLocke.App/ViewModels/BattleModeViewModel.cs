@@ -22,7 +22,7 @@ public sealed partial class BattleModeViewModel : SectionViewModel
 
     public BattleModeViewModel(BattleModeService battle, IAppDialogs dialogs,
         ILogger<BattleModeViewModel> logger)
-        : base("COMBATES", "Dejar el juego listo para pelear con tus amigos, y devolverlo después")
+        : base("COMBATES", "Pelear con tus amigos")
     {
         _battle = battle;
         _dialogs = dialogs;
@@ -60,17 +60,12 @@ public sealed partial class BattleModeViewModel : SectionViewModel
     public string Explanation => State switch
     {
         BattleModeState.Playing =>
-            "Todo normal. Cuando quedéis para pelear, pulsa el botón: se guarda tu mundo y el juego "
-            + "vuelve a ser el original, igual que el de los demás.",
+            "Cuando quedéis para pelear, pulsa el botón.",
 
         BattleModeState.InBattle =>
-            "Tu juego es ahora el original: los Pokémon salvajes, los entrenadores y las tiendas son "
-            + "los de siempre, no los tuyos. Tus Pokémon siguen todos ahí, pero con las estadísticas "
-            + "y las habilidades normales.\n\n"
-            + "Cuando terminéis de pelear, devuelve tu mundo. No juegues así: los encuentros no "
-            + "serían los de tu run.",
+            "Cuando terminéis de pelear, devuelve tu mundo. No sigas tu run así.",
 
-        _ => "Genera e instala una randomización en el RANDOMIZADOR y este botón podrá apartarla."
+        _ => "Primero instala tu mundo desde el RANDOMIZADOR."
     };
 
     [ObservableProperty]
@@ -99,11 +94,7 @@ public sealed partial class BattleModeViewModel : SectionViewModel
     {
         if (!_dialogs.Confirm(
                 "Preparar para combatir",
-                "Se guarda tu mundo randomizado y el juego vuelve a ser el original.\n\n"
-                + "Tus Pokémon y tu partida NO se tocan: siguen exactamente igual. Lo único que "
-                + "cambia mientras tanto es que tienen las estadísticas y las habilidades "
-                + "normales, que es lo que hace posible el combate.\n\n"
-                + "Acuérdate de devolverlo al terminar.\n\n¿Preparar?"))
+                "Tu partida no se toca. Acuérdate de devolver tu mundo al terminar.\n\n¿Preparar?"))
         {
             return;
         }
@@ -127,7 +118,7 @@ public sealed partial class BattleModeViewModel : SectionViewModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Falló el cambio de modo combate");
-            Status = "No se ha podido cambiar. El detalle está en la carpeta Logs.";
+            Status = "No se ha podido cambiar.";
         }
         finally
         {

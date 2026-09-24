@@ -11,22 +11,17 @@ namespace PermaLocke.Core.Abstractions;
 public interface IAbilityLookup
 {
     /// <summary>
-    /// The highest ability id anything may hand to this game: 233, «Fuerza Cerebral».
+    /// The cartridge's last ability: 233, «Fuerza Cerebral». Only the roulette still stops here.
     /// </summary>
     /// <remarks>
-    /// Two separate ceilings that happen to meet here, and it takes both to explain it. A gen 7
-    /// Pokémon stores its ability in <b>one byte</b>, so anything from 256 up wraps round in
-    /// silence: «General Supremo» is 293, and 293 minus 256 is 37, which is «Potencia». That is
-    /// not a display bug, it is a different ability, and it happened — a gacha Ursaluna was
-    /// announced with one and turned up in the box with the other. And the expansion mod fills
-    /// 234-255 with abilities that <b>have a name and do nothing</b>, which is worse than an
-    /// error because it looks like it worked.
-    /// <para>
-    /// So 233 is the last one that both fits and runs, and it is the same number the randomizer
-    /// caps at. It is a constant rather than configuration on purpose: it is not a knob to tune,
-    /// it is the shape of the cartridge, and a file that could set it to 320 would put the bug
-    /// straight back.
-    /// </para>
+    /// It used to be the ceiling for everything that hands out an ability, on two premises that
+    /// were both measured wrong. That a gen 7 Pokémon keeps its ability in one byte: the Ursaluna
+    /// that was announced with «General Supremo» (293) and arrived with «Potencia» (37) was the
+    /// builder writing only the byte, and the expansion mod keeps a ninth bit in 0x15 (§134). And
+    /// that the mod's new abilities have a name and do nothing: that was a randomizer dropping the
+    /// ninth bit (§132). The gacha and the wonder trade deal the new ones since §136. The roulette
+    /// names its abilities and resolves them against PKHeX's gen 7 table, which is why it keeps
+    /// this ceiling.
     /// </remarks>
     public const int LastUsableAbility = 233;
 

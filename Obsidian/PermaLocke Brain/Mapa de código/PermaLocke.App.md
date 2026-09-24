@@ -1,0 +1,149 @@
+---
+tipo: mapa-codigo
+proyecto: PermaLocke.App
+generado: 2026-09-24
+---
+# PermaLocke.App — mapa de ficheros
+
+Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.App/`). Tipos en negrita. Vuelve a [[00 - Inicio]] · [[Arquitectura]].
+
+- `App.xaml.cs` — **App** — Held for the life of the process: while it exists, another PermaLocke does not start.
+- `AssemblyInfo.cs` — 
+- `Converters/BallIconConverter.cs` — **BallIconConverter** — Turns a tier's palette key (Tier3Brush) into the picture of its ball — Poké, Super, Ultra, Gloria or Master — drawn with the same cells as the capsule machine. 
+- `Converters/DisplayNameConverter.cs` — **DisplayNameConverter** — Shows a domain enum by its Spanish label instead of its name. 
+- `Converters/FractionToStarConverter.cs` — **FractionToStarConverter** — Turns 0..1 into a star `ridLength`, for a bar that fills part of a row. 
+- `Converters/InverseBoolToVisibilityConverter.cs` — **InverseBoolToVisibilityConverter** — Shows an element while a flag is false, which is what WPF's own converter cannot do. 
+- `Converters/NegateConverter.cs` — **NegateConverter** — Flips the sign of a number, which is how something inside a rotating thing stays upright. 
+- `Converters/ResourceKeyConverter.cs` — **ResourceKeyConverter** — Turns a resource key into the resource itself, so a view model can name a palette entry without referencing WPF brushes. 
+- `Converters/WidthSwitchConverter.cs` — **WidthSwitchConverter** — One number or another depending on a width: ConverterParameter="umbral;ancho;estrecho". 
+- `Converters/WidthToColumnsConverter.cs` — **WidthToColumnsConverter** — How many columns fit in a width: four when there is room for them, two when there is not. 
+- `Converters/ZeroToVisibleConverter.cs` — **ZeroToVisibleConverter** — Visible when the number is zero: «this box is empty», which a list of nothing does not say by itself.
+- `MainWindow.xaml.cs` — **MainWindow** — The shell window. Holds no logic beyond making its own frame match the theme and fit the screen. 
+- `Services/AlolaSky.cs` — **AlolaSky** — The hour in the player's Alola, for the sky behind the application. 
+- `Services/AppDialogs.cs` — **IAppDialogs** — Lets view models ask for a window without knowing that WPF exists, keeping window handling out of the view models and the view models testable. 
+- `Services/AppSettings.cs` — **AppSettingsData** — What the player chose in CONFIGURACIÓN, as it is written to disk.
+- `Services/BattleModeService.cs` — **BattleModeState, BattleModeResult, BattleModeService** — Where the world is right now.
+- `Services/CemeteryService.cs` — **Grave, CemeteryService** — One of the run's fallen, with what the run knows about how it went.
+- `Services/CommunityService.cs` — **FriendStatus, ClaimedAchievement, CommunityService** — The launcher's friends list and activity: everyone's presence and the achievements they claim, through the shared folder (§126). 
+- `Services/DarkFrame.cs` — **DarkFrame** — Asks the desktop window manager for a dark title bar. 
+- `Services/DeathCeremony.cs` — **DeathNotice, DeathCard, DeathCeremony** — A Pokémon that has just died, as the ceremony needs it.
+- `Services/DisplayNames.cs` — **DisplayNames** — Spanish labels for the enums the interface shows. 
+- `Services/EdgeTab.cs` — **EdgeTab** — The tab that brings PermaLocke back while you are playing. 
+- `Services/EmulatorCrashReport.cs` — **EmulatorCrashReport, Machine** — Writes, the moment Azahar falls over, everything needed to know why: so nobody has to reproduce it on the player's computer, and the player only has to pass on one file. 
+- `Services/EmulatorLauncher.cs` — **EmulatorState, CheckLevel, LaunchCheck, LauncherSettings, EmulatorLauncher** — Where the game is, from the launcher's point of view.
+- `Services/EmulatorProcess.cs` — **EmulatorProcess** — Whether the emulator is really running.
+- `Services/EncounterGuard.cs` — **EncounterNotice, EncounterGuard** — Something the guard wants the player to hear, and the Pokémon it is about when there is one.
+- `Services/EventIcons.cs` — **EventIcons** — The pixel icon of each kind of event, for the history lists drawn in the pixel style (§176). 
+- `Services/GameLinkMonitor.cs` — **GameLinkMonitor** — Polls the running game and publishes what it sees. One poller for the whole application, so every screen shows the same snapshot and the emulator is asked once per cycle. 
+- `Services/GameWindow.cs` — **GameWindow** — Where the emulator is, and which screen it is on. 
+- `Services/GiftInbox.cs` — **GiftInbox** — The gifts waiting for this player in the shared folder, and collecting them (§129). 
+- `Services/HpBarWatcher.cs` — **HpBarWatcher** — Waits, looking at the emulator's window, for the player's HP bar to reach zero. 
+- `Services/IKillcamRecorder.cs` — **IKillcamRecorder** — Recording operations used by the game monitor.
+- `Services/InstalledWorld.cs` — **InstalledWorld** — Reads how big the world Azahar will actually load is, and tells the live readers. 
+- `Services/IslandMapService.cs` — **IslandMapService** — The four island maps, taken from the player's own cartridge the first time they are needed. 
+- `Services/KillcamClip.cs` — **KillcamFrame, KillcamClip** — One frame of a killcam: when it was taken, relative to the moment the bar reached zero.
+- `Services/KillcamFrameBuffer.cs` — **KillcamFrameBuffer** — A bounded ring that reuses pixel arrays; snapshots own their pixels.
+- `Services/KillcamRecorder.cs` — **KillcamRecorder** — Keeps the last seconds of the battle on screen, so a death can be saved with what led to it. 
+- `Services/MachineItemLookup.cs` — **MachineItemLookup** — Item names, with a TM saying which move it teaches in the world being played. 
+- `Services/MaintenanceService.cs` — **AuditRow, AuditReport, MaintenanceService, MarkedZone, WithheldItem, StageReadout** — The checks and repairs that until now only existed as Probe commands in a terminal. 
+- `Services/Notifier.cs` — **ToastKind, Notifier** — What a notice is about. Decides its tab, its colour and the mark drawn on its sprite.
+- `Services/OfficialRulesService.cs` — **RulesStatus, OfficialRulesService** — The official rules the admin leaves in the competition folder, and adopting them on this machine. 
+- `Services/OverlayWindows.cs` — **OverlayWindows** — What every window drawn on top of the game has to do so the game keeps being playable. 
+- `Services/PlayNotifications.cs` — **PlayNotifications** — Turns what the watcher does on its own into notices on top of the game. 
+- `Services/PokemonSpriteService.cs` — **PokemonSpriteService** — The Pokémon icons, taken from the player's own cartridge. 
+- `Services/ProcessExitWatch.cs` — **ProcessExitWatch** — Holds on to a process PermaLocke did not start, so that once it is gone its exit code can still be read. 
+- `Services/Rolling.cs` — **Rolling** — Makes a number arrive by counting up to itself instead of appearing. 
+- `Services/RunActivity.cs` — **RunActivity, WatchedEventStore** — Says out loud that the run's history has just grown. 
+- `Services/SyncService.cs` — **StandingRow, PlayerStatus, Standings, SyncSettings, SyncService** — The chip on the row: short, and never a word that promises more than was checked.
+- `Services/ToastPlacement.cs` — **ToastPlacement** — Positions the notice stack in screen pixels, keeping it inside the selected monitor.
+- `Services/TypePalette.cs` — **TypePalette** — The colours the series has used for the types since forever, by the game's type number. 
+- `Services/UiDispatcher.cs` — **IUiDispatcher, WpfUiDispatcher** — Runs work on the UI thread. View models need this because domain services complete their awaits on thread pool threads, and touching a bound ObservableCollection from there throws. 
+- `Services/VisualCppRuntime.cs` — **VisualCppStatus, VisualCppRuntime** — The runtime the emulator will load: its own when it has one, Windows's otherwise.
+- `Services/WindowSizeService.cs` — **WindowSize, WindowSizeService** — How big the window opens, chosen by the player and remembered. 
+- `Services/WorldAllowedStatics.cs` — **WorldAllowedStatics** — The static captures the competition allows (§119), as the species they are in the world the player is playing. 
+- `Services/WorldEvolutionLines.cs` — **WorldEvolutionLines** — Evolutionary families, read from the world the player is actually playing. 
+- `Services/ZonePhotoService.cs` — **ZonePhotoService** — The picture of each zone, shown on the card that appears when hovering a marker. 
+- `ViewModels/AchievementsViewModel.cs` — **AchievementRowViewModel, AchievementsViewModel** — One achievement as the list shows it.
+- `ViewModels/BattleModeViewModel.cs` — **BattleModeViewModel** — Setting the randomized world aside to link-battle, and putting it back. 
+- `ViewModels/CapsulePlay.cs` — **CapsulePlay** — One pull, as the capsule machine plays it: the balls it climbs through, who comes out, and when the coin dropped. 
+- `ViewModels/CemeteryViewModel.cs` — **CemeteryViewModel, GraveViewModel** — The run's fallen, one grave each, and the story of the one picked: how it arrived, what it fell to and, when there is one, the replay of its death. 
+- `ViewModels/ChangeRoleViewModel.cs` — **ChangeRoleViewModel** — Moves a run from one role to another, on purpose and on the record. 
+- `ViewModels/CreateRunViewModel.cs` — **CreateRunViewModel, RoleChoiceViewModel** — Run creation. Detects the vanilla ROM in ROM/ and refuses to continue unless it is a decrypted Ultra Moon dump, because everything downstream assumes exactly that. 
+- `ViewModels/EvTrainingViewModel.cs` — **EvRowViewModel, EvTrainingViewModel** — One stat on the training bench: what it is now, the EVs being given to it, and what it would become. 
+- `ViewModels/GachaViewModel.cs` — **PortalViewModel, GachaHistoryViewModel, PoolStageViewModel, PoolEntryViewModel, OddsSlice, BannerViewModel, GrantRollViewModel, GrantViewModel, GachaViewModel** — One portal of the ultra-space animation: a tier, its colour and whether it is the one that just opened. 
+- `ViewModels/GiftInboxViewModel.cs` — **GiftRowViewModel, GiftInboxViewModel** — One gift as the inbox draws it.
+- `ViewModels/HomeViewModel.cs` — **EventRow, TeamRow, IslandRow, FallenRow, StageMark, HomeViewModel** — One stop of the island tour on HOME's track: a trial, the league or the rematch.
+- `ViewModels/LauncherViewModel.cs` — **FriendItem, ActivityItem, ActivityDay, LauncherViewModel** — A friend in the list, ready to draw.
+- `ViewModels/MainViewModel.cs` — **MainViewModel** — Shell view model: owns the sidebar, the current section and the run summary strip.
+- `ViewModels/MapViewModel.cs` — **MapZoneViewModel, IslandViewModel, MapViewModel** — One zone on the map, and what the player marked happened there.
+- `ViewModels/MiscellaneousViewModel.cs` — **RewardGiftViewModel, RewardRowViewModel, MiscellaneousViewModel** — One thing a prize hands over, with the drawing the cartridge has for it.
+- `ViewModels/MoveReminderViewModel.cs` — **MoveCardViewModel, MoveStatViewModel, MoveReminderViewModel** — One move as the reminder draws it: a known one in its slot, or one it can remember.
+- `ViewModels/PokePasteViewModel.cs` — **PasteSourceViewModel, PokePasteViewModel** — What can be exported. Today only the party, which is what a paste is for.
+- `ViewModels/PokemonViewerViewModel.cs` — **BoxSlotViewModel, OverviewRow, ViewerTypeBadge, BoxTabViewModel, StatRowViewModel, PokemonViewerViewModel** — One hole of the PC: a Pokémon and its icon, or nothing at all.
+- `ViewModels/RandomizerViewModel.cs` — **RandomizerViewModel** — Generates the LayeredFS mod for the current run and, as a separate and explicit step, installs it into Azahar. Generating and installing are deliberately two buttons. Installing replaces the world ...
+- `ViewModels/RegisterCaptureViewModel.cs` — **DetailRow, RegisterCaptureViewModel** — Registers a capture. Evaluates the rules live as the form is filled in, so the player sees the verdict before committing, and never silently bypasses a rule: forcing a blocked capture is an explici...
+- `ViewModels/RoulettePlay.cs` — **RoulettePlayWedge** — One of the six wedges of a spin, with its picture out of the cartridge.
+- `ViewModels/RouletteViewModel.cs` — **RouletteViewModel** — The LUDÓPATA wheel. 
+- `ViewModels/SectionViewModel.cs` — **GameNeed, SectionViewModel, PendingSectionViewModel** — Whether a section needs Azahar running, needs it shut, or does not care. 
+- `ViewModels/SettingsViewModel.cs` — **SettingsViewModel** — CONFIGURACIÓN: the window size, the notices over the game, the death scene, the killcam and the folders. 
+- `ViewModels/ShopViewModel.cs` — **ShopItemViewModel, ShopViewModel** — One card in the shop grid.
+- `ViewModels/SyncViewModel.cs` — **SyncViewModel** — The standings, publishing this run into them, who this machine's player is, and the official rules. 
+- `ViewModels/TradePlay.cs` — **TradePlay** — One wonder trade, as the cabin plays it: who goes and in which ball, who comes, what the screen will say, and when it was confirmed. 
+- `ViewModels/TypeBadges.cs` — **TypeBadges** — The one or two type plates of a Pokémon, for every screen that shows whom you picked: the viewer, ENTRENAR EV and MOVIMIENTOS (§176). 
+- `ViewModels/WonderTradeViewModel.cs` — **TypeBadgeViewModel, WonderTradeViewModel** — One type of the received Pokémon, with the colour the games have always used.
+- `Views/AchievementsView.xaml.cs` — **AchievementsView** — The achievements screen. All the work is in the view model.
+- `Views/AlolaBanner.cs` — **AlolaBanner** — The strip behind every section's header: the sea and the sky over Alola at the game's hour, in pixels. 
+- `Views/AlolaPalette.cs` — **AlolaPalette** — The colours of the Alola sky by hour, shared by the sidebar's window and the header's banner so the two never disagree about what time it is. 
+- `Views/AlolaWindow.cs` — **AlolaWindow** — A small pixel-art view of the sea at the hour of the player's Alola: the sky's colours, the sun or the moon on its arc, stars at night, and an island with a palm tree. 
+- `Views/BattleModeView.xaml.cs` — **BattleModeView** — 
+- `Views/BoxWallpaper.cs` — **BoxWallpaper** — The wallpaper behind a box of the PC: a flat ground with a small motif repeated in staggered rows, drawn cell by cell like the rest of PermaLocke's pixel art. 
+- `Views/CapsuleMachine.cs` — **CapsuleMachine** — The gacha's stage: the capsule machine (`apsuleMachineScene`) on screen, in whole cells. 
+- `Views/CapsuleMachineScene.cs` — **CapsuleBanner, CapsuleRoll, CapsuleShelfItem, CapsuleSceneState, CapsuleTimeline, CapsuleMachineScene** — What the machine is loaded with: the banner chosen under it.
+- `Views/CemeteryCanvas.cs` — **CemeteryCanvas** — Shows `emeteryScene` at a whole number of screen pixels per cell, puts the names under the monuments and turns a click on a grave into the pick command. 
+- `Views/CemeteryScene.cs` — **CemeteryScene** — The cemetery, painted cell by cell: night, hills, a fence, fog, and one grave per fallen Pokémon with its ghost above it. 
+- `Views/CemeteryView.xaml.cs` — **CemeteryView** — 
+- `Views/ChangeRoleWindow.xaml.cs` — **ChangeRoleWindow** — 
+- `Views/CreateRunWindow.xaml.cs` — **CreateRunWindow** — 
+- `Views/DeathWindow.xaml.cs` — **DeathWindow** — Draws the death ceremony over the emulator: opens the scene, plays each death, closes it. 
+- `Views/EdgeTabWindow.xaml.cs` — **EdgeTabWindow** — The little tab that stays on the edge of the screen while PermaLocke is out of the way. 
+- `Views/EvHexagon.cs` — **EvHexagon** — The effort hexagon of the summary screen, drawn cell by cell: PS at the top and then Ataque, Defensa, Velocidad, Def. Esp. and At. Esp. going round clockwise, which is the order the handheld games ...
+- `Views/EvTrainingView.xaml.cs` — **EvTrainingView** — 
+- `Views/GachaView.xaml.cs` — **GachaView** — The gacha screen. The only code here feeds the capsule machine. 
+- `Views/HomeView.xaml.cs` — **HomeView** — 
+- `Views/KillcamPlayer.cs` — **KillcamPlayer** — Plays a killcam: the frames at their own times, at real speed or slowed down, looping, with a mark on the timeline where the bar reached zero. 
+- `Views/LauncherView.xaml.cs` — **LauncherView** — 
+- `Views/MapView.xaml.cs` — **MapView** — The island whose entrance has already played, so it does not play twice.
+- `Views/MiscellaneousView.xaml.cs` — **MiscellaneousView** — 
+- `Views/MoveReminderView.xaml.cs` — **MoveReminderView** — 
+- `Views/PendingView.xaml.cs` — **PendingView** — 
+- `Views/Pixel/PixelBackdrop.cs` — **PixelBackdrop** — The floor the screens sit on: a flat violet with a faint lattice of lighter cells, like the patterned backgrounds of a handheld's menus. Faint on purpose — it is texture, not decoration, and it s...
+- `Views/Pixel/PixelFont.cs` — **PixelFont** — The application's own pixel font: capitals seven cells tall, lower case with descenders, accents and the Ñ, proportional widths and tabular digits. 
+- `Views/Pixel/PixelIcon.cs` — **PixelIcon** — One of the `ixelIcons`, in whole screen pixels. Dimmed when it is not the one that matters, and bobbing up and down when it is, the way the Pokémon of the party menu do. 
+- `Views/Pixel/PixelIcons.cs` — **PixelIcons** — The sections' icons as pixel art: twelve by twelve cells, in colour, drawn by hand. 
+- `Views/Pixel/PixelRule.cs` — **PixelRule** — A groove in cells: a dark line and a lit one under it, the way the frames of a handheld menu are cut. Optionally starts in the accent colour for a few cells, which is what turns a divider into a he...
+- `Views/Pixel/PixelSprite.cs` — **PixelSprite** — A sprite out of the cartridge drawn the way the scenes draw theirs: every pixel a whole number of screen pixels, optionally as a silhouette, with a one-cell outline, and bobbing like the party menu. 
+- `Views/Pixel/PixelText.cs` — **PixelText** — Text in the application's pixel font (`ixelFont`), every cell a whole number of screen pixels. 
+- `Views/Pixel/PixelWindow.cs` — **PixelWindow** — A window of a game's menu: a `ixelPanel` with a title band, its icon and its name, and whatever the panel holds underneath. What HOME, the viewer and every screen after them put their blocks in (§...
+- `Views/PixelBar.cs` — **PixelBar, PixelCursor** — A bar in cells, like the health bars of the handheld games: an ink outline with square ends, a dark track, and the fill with a lighter top row. It fills in whole cells, so a value never shows as a ...
+- `Views/PixelBlood.cs` — **PixelBlood** — The blood of the death ceremony, simulated on the Pokémon's own pixel grid and drawn into a small bitmap that is shown scaled up with no smoothing. 
+- `Views/PixelPanel.cs` — **PixelPanel** — A box drawn cell by cell in any colour: one-cell outline, one-cell bevel lit on top, notched corners and a hard shadow. The same box as the notices (`oastFrame`), for places whose colour is data �...
+- `Views/PixelScene.cs` — **PixelScene, CapsuleBall** — What the full pixel-art scenes share: a canvas of cells anchored to the floor, a font, the Poké Balls, and the Pokémon coming out of one with its light. 
+- `Views/PokePasteView.xaml.cs` — **PokePasteView** — 
+- `Views/PokemonPickerPanel.xaml.cs` — **PokemonPickerPanel** — 
+- `Views/PokemonViewerView.xaml.cs` — **PokemonViewerView** — The PC of the player's game. All the work is in the view model.
+- `Views/RandomizerView.xaml.cs` — **RandomizerView** — 
+- `Views/RegisterCaptureWindow.xaml.cs` — **RegisterCaptureWindow** — 
+- `Views/RouletteMachine.cs` — **RouletteMachine** — The LUDÓPATA wheel on screen: `ouletteMachineScene` in whole cells. 
+- `Views/RouletteMachineScene.cs` — **RouletteWedge, RouletteBoardItem, RouletteShow, RouletteSceneState, RouletteTimeline, RouletteMachineScene** — One of the six wedges as the wheel shows it once it is turned over.
+- `Views/RouletteView.xaml.cs` — **RouletteView** — The LUDÓPATA wheel: the wheel of fortune in the arcade room, and the card of what came out once it has landed. 
+- `Views/SettingsView.xaml.cs` — **SettingsView** — 
+- `Views/ShopView.xaml.cs` — **ShopView** — The shop screen. All the work is in the view model.
+- `Views/SyncView.xaml.cs` — **SyncView** — 
+- `Views/ToastPixels.cs` — **ToastPixels, ToastFrame, ToastPlate, ToastCountdown, ToastMarks** — What the pieces of a notice share: the size of a cell, the colours of each kind, and drawing in cells. 
+- `Views/ToastWindow.xaml.cs` — **ToastWindow** — The window the notices live in. It has no logic: where it goes and what it says is `ervices.Notifier`'s job. 
+- `Views/TradeMachine.cs` — **TradeMachine** — The wonder trade's stage: the trade cabin (`radeMachineScene`) on screen, in whole cells. 
+- `Views/TradeMachineScene.cs` — **TradeType, TradeShow, TradeTimeline, TradeMachineScene** — One type of what arrives, as the cabin's screen shows it: its name and the colour the games give it.
+- `Views/TrainerRoom.cs` — **TrainerRoom** — JUGAR's cover: the trainer's room (`rainerRoomScene`) on screen, in whole cells. 
+- `Views/TrainerRoomScene.cs` — **RoomSprite, RoomCrystal, TrainerRoomState, TrainerRoomScene** — A picture from the cartridge, as the room draws it: BGRA, one icon pixel per cell.
+- `Views/WheelEnding.cs` — **WheelEnding** — One way the wheel can come to a stop: how hard it brakes, how far it travels, and how much it settles back at the very end. 
+- `Views/WonderTradeOverlay.xaml.cs` — **WonderTradeOverlay** — The wonder trade as it plays: the trade cabin in the arcade room, and the card of what arrived once it is out. 

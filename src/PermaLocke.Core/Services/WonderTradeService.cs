@@ -77,10 +77,15 @@ public sealed class WonderTradeService(
     public async Task<WonderTradeResult> TradeAsync(Run run, WonderTradeGift gift, bool free = false,
         CancellationToken ct = default)
     {
+        if (await IsFallenAsync(run.Id, gift.Pid, ct).ConfigureAwait(false))
+        {
+            return new WonderTradeResult(false, Error: FallenMessage(gift.Name));
+        }
+
         if (BaseStatTotalOf(gift.Species) == 0)
         {
             return new WonderTradeResult(false,
-                Error: $"No sé cuánto vale {gift.Name} en estadísticas base. ¿Está generado Data/species.json?");
+                Error: $"{gift.Name} no se puede intercambiar.");
         }
 
         var number = await CountTradesAsync(run.Id, ct).ConfigureAwait(false);
@@ -89,8 +94,7 @@ public sealed class WonderTradeService(
         {
             var (min, max) = catalog.Window.Band(BaseStatTotalOf(gift.Species));
             return new WonderTradeResult(false,
-                Error: $"Ninguna especie cae entre {min} y {max} de total base, así que no hay nada "
-                       + $"que ofrecer por {gift.Name}.");
+                Error: $"No hay nada que ofrecer por {gift.Name}.");
         }
 
         var entry = new PokemonEntry
@@ -98,7 +102,7 @@ public sealed class WonderTradeService(
             Id = Guid.NewGuid(),
             RunId = run.Id,
             Species = offer.Species,
-            SpeciesName = offer.Name,
+            SpeciesName = offer.DisplayName,
             Level = offer.Level,
             IsShiny = offer.IsShiny,
             Origin = PokemonOrigin.WonderTrade,
@@ -106,7 +110,8 @@ public sealed class WonderTradeService(
             ObtainedAt = clock.Now,
 
             // Un intercambio no gasta el encuentro de ninguna zona: no viene de ninguna.
-            ConsumedZoneEncounter = false
+            ConsumedZoneEncounter = false,
+            Form = offer.Form
         };
 
         await pokemon.SaveAsync(entry, ct).ConfigureAwait(false);
@@ -114,6 +119,35 @@ public sealed class WonderTradeService(
 
         return new WonderTradeResult(true, offer, entry);
     }
+
+    /// <summary>
+    /// Whether the run has this Pokémon down as dead. A wonder trade only takes the living.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A competition rule the player added on 2026-09-14: a fallen Pokémon cannot be traded away. Otherwise a death
+    /// would stop being a loss — hand the corpse over and something alive, of the same strength, comes back.
+    /// </para>
+    /// <para>
+    /// The run is the authority, by PID, which is how every death is recorded (§56): the save cannot say it, because a
+    /// Pokémon in a box carries no HP at all. Here and not only on the screen, so no other caller can trade one.
+    /// A PID of zero identifies nobody and blocks nothing; since §56 every Pokémon of the save has a real one.
+    /// </para>
+    /// </remarks>
+    public async Task<bool> IsFallenAsync(Guid runId, uint pid, CancellationToken ct = default)
+    {
+        if (pid == 0)
+        {
+            return false;
+        }
+
+        var all = await pokemon.GetAllAsync(runId, ct).ConfigureAwait(false);
+        return all.Any(p => p.Pid == pid && p.Status == PokemonStatus.Dead);
+    }
+
+    /// <summary>What the player is told when they pick a fallen Pokémon.</summary>
+    public static string FallenMessage(string name) =>
+        $"{name} está muerto.";
 
     /// <summary>
     /// Marks the Pokémon that was handed over as gone, once the trade has really been written.
@@ -188,7 +222,7 @@ public sealed class WonderTradeService(
             Source = EventSource.Player,
             Actor = run.PlayerName,
             Description = $"Wonder trade: {offer.GivenName} ({offer.GivenBaseStatTotal}) "
-                          + $"por {offer.Name} ({offer.BaseStatTotal})"
+                          + $"por {offer.DisplayName} ({offer.BaseStatTotal})"
                           + (offer.Legendary ? " legendario" : string.Empty)
                           + (offer.IsShiny ? " shiny" : string.Empty),
             PokemonId = entry.Id,
@@ -201,6 +235,7 @@ public sealed class WonderTradeService(
                 ["entregadoNombre"] = offer.GivenName,
                 ["entregadoTotal"] = offer.GivenBaseStatTotal.ToString(),
                 ["recibido"] = offer.Species.ToString(),
+                ["forma"] = offer.Form.ToString(),
                 ["recibidoTotal"] = offer.BaseStatTotal.ToString(),
                 ["banda"] = $"{offer.MinBaseStatTotal}-{offer.MaxBaseStatTotal}",
                 ["generacion"] = offer.Generation.ToString(),
@@ -244,23 +279,10 @@ public sealed class WonderTradeService(
         // medido sin querer: llegó un Heracross con Autoestima, que es su habilidad OCULTA, y el
         // constructor escribe siempre ranura 1. Si el juego recalculara, habría salido Enjambre.
         //
-        // Se descarta lo que el juego no puede guardar en vez de recortar el sorteo, por lo mismo
-        // que el gacha: con el mod de expansión la lista llega a 319 y el campo es un byte, así que
-        // la 293 se guarda como la 37 y en la caja sale otra cosa.
+        // Las del mod de gen 8-9 entran desde el §136, con las mismas excepciones que el gacha:
+        // qué se puede repartir lo decide AbilityDraw, compartido para que no discrepen.
         var abilities = speciesStats.Abilities;
-        var abilityId = 0;
-
-        for (var attempt = 0; attempt < 12 && abilities.Count > 1; attempt++)
-        {
-            var candidate = source.Next(1, abilities.Count);
-
-            if (candidate <= IAbilityLookup.LastUsableAbility
-                && !string.IsNullOrWhiteSpace(abilities[candidate]) && abilities[candidate] != "-")
-            {
-                abilityId = candidate;
-                break;
-            }
-        }
+        var abilityId = AbilityDraw.Roll(source, abilities, speciesStats.BannedAbilities);
 
         var abilityName = abilityId > 0 && abilityId < abilities.Count
             ? abilities[abilityId]
@@ -279,6 +301,10 @@ public sealed class WonderTradeService(
         // y tiene que seguir siéndolo.
         var shiny = source.Chance(0.01);
 
+        // La forma regional, de una fuente derivada: el resto del intercambio sale igual que antes, y
+        // los tipos que se anuncian son los de esa forma (§139).
+        var (form, formName) = FormDraw.Roll(source, chosen);
+
         return new WonderTradeOffer(
             gift.Species,
             gift.Name,
@@ -287,7 +313,7 @@ public sealed class WonderTradeService(
             chosen.Name,
             chosen.BaseStatTotal,
             Generations.Of(chosen.Id),
-            types.GetTypes(chosen.Id),
+            types.GetTypes(chosen.Id, form),
             chosen.Legendary,
             gift.Level,
             shiny,
@@ -299,6 +325,8 @@ public sealed class WonderTradeService(
             min,
             max,
             source.Seed,
-            number);
+            number,
+            form,
+            formName);
     }
 }

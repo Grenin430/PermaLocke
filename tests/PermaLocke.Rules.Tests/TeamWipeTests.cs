@@ -187,6 +187,156 @@ public sealed class TeamWipeTests
         Assert.Equal(2, log.Appended.Count(e => e.Type == GameEventType.TeamWiped));
     }
 
+    /// <summary>The run's Pokémon, alive or dead, that a test can change as it goes.</summary>
+    private sealed class Roster : IPokemonRepository
+    {
+        public List<PokemonEntry> Entries { get; } = [];
+
+        public Task SaveAsync(PokemonEntry entry, CancellationToken ct = default) => Task.CompletedTask;
+
+        public Task<IReadOnlyList<PokemonEntry>> GetAllAsync(Guid runId, CancellationToken ct = default) =>
+            Task.FromResult<IReadOnlyList<PokemonEntry>>([.. Entries]);
+
+        public Task<PokemonEntry?> GetAsync(Guid id, CancellationToken ct = default) =>
+            Task.FromResult<PokemonEntry?>(null);
+
+        public Task<int> DeleteRunAsync(Guid runId, CancellationToken ct = default) =>
+            throw new NotSupportedException();
+
+        public void Add(int slot, PokemonStatus status) => Entries.Add(new PokemonEntry
+        {
+            Id = Guid.NewGuid(),
+            RunId = Run,
+            Species = 25,
+            SpeciesName = "Pikachu",
+            Origin = PokemonOrigin.Capture,
+            EncounterType = EncounterType.Wild,
+            Status = status,
+            Pid = (uint)(0xA000 + slot)
+        });
+
+        public void KillAll()
+        {
+            for (var i = 0; i < Entries.Count; i++) Entries[i] = Entries[i] with { Status = PokemonStatus.Dead };
+        }
+    }
+
+    private static (GameWatcher Watcher, Events Log, Roster Roster) BuildWithRoster()
+    {
+        var events = new Events();
+        var clock = new Clock();
+        var roster = new Roster();
+        var penalties = new PenaltyService(new Penalties(), events, clock, new NoRole());
+
+        return (new GameWatcher(roster, events, clock, penalties), events, roster);
+    }
+
+    /// <summary>What a run looks like once a wipe has been recorded: the deaths first, the wipe after them.</summary>
+    private static void AlreadyWiped(Events log, Roster roster, int members)
+    {
+        var at = new Clock().Now;
+
+        for (var slot = 0; slot < members; slot++)
+        {
+            roster.Add(slot, PokemonStatus.Dead);
+            log.Appended.Add(new GameEvent
+            {
+                Id = Guid.NewGuid(), RunId = Run, Timestamp = at.AddMinutes(-10), Type = GameEventType.PokemonDied,
+                Source = EventSource.AutoDetect, Actor = "Grenin", Description = "cayó"
+            });
+        }
+
+        log.Appended.Add(new GameEvent
+        {
+            Id = Guid.NewGuid(), RunId = Run, Timestamp = at.AddMinutes(-9), Type = GameEventType.TeamWiped,
+            Source = EventSource.AutoDetect, Actor = "Grenin", Description = "equipo caído"
+        });
+    }
+
+    /// <summary>
+    /// Found playing on 2026-09-21: after a wipe the game takes the player to a Pokémon Centre and heals everybody,
+    /// PermaLocke puts the fallen back down, and that was charged as a second wipe — −100 every time they were healed.
+    /// </summary>
+    [Fact]
+    public async Task Healed_at_the_centre_and_put_back_down_is_not_a_second_wipe()
+    {
+        var (watcher, log, roster) = BuildWithRoster();
+        for (var slot = 0; slot < 3; slot++) roster.Add(slot, PokemonStatus.Alive);
+
+        await watcher.CheckWipeAsync(Run, "Grenin", Party(30, 30, 30));
+        for (var poll = 0; poll < 3; poll++) await watcher.CheckWipeAsync(Run, "Grenin", Party(0, 0, 0));
+        Assert.Single(log.Appended, e => e.Type == GameEventType.TeamWiped);
+
+        // Las muertes quedan apuntadas, el Centro Pokémon los cura y PermaLocke los devuelve a cero.
+        roster.KillAll();
+        await watcher.CheckWipeAsync(Run, "Grenin", Party(50, 50, 50));
+        for (var poll = 0; poll < 5; poll++) await watcher.CheckWipeAsync(Run, "Grenin", Party(0, 0, 0));
+
+        Assert.Single(log.Appended, e => e.Type == GameEventType.TeamWiped);
+    }
+
+    /// <summary>Opening PermaLocke again after a wipe finds the same party down: it is the same wipe.</summary>
+    [Fact]
+    public async Task Opening_the_app_after_a_wipe_does_not_charge_it_again()
+    {
+        var (watcher, log, roster) = BuildWithRoster();
+        AlreadyWiped(log, roster, members: 3);
+
+        for (var poll = 0; poll < 5; poll++) await watcher.CheckWipeAsync(Run, "Grenin", Party(0, 0, 0));
+
+        Assert.Single(log.Appended, e => e.Type == GameEventType.TeamWiped);
+    }
+
+    /// <summary>And a Pokémon that is alive in the run, standing and then falling, is a new wipe as it always was.</summary>
+    [Fact]
+    public async Task Someone_alive_falling_after_a_wipe_is_a_new_wipe()
+    {
+        var (watcher, log, roster) = BuildWithRoster();
+        AlreadyWiped(log, roster, members: 3);
+        roster.Add(3, PokemonStatus.Alive);
+
+        await watcher.CheckWipeAsync(Run, "Grenin", Party(0, 0, 0, 30));
+        for (var poll = 0; poll < 3; poll++) await watcher.CheckWipeAsync(Run, "Grenin", Party(0, 0, 0, 0));
+
+        Assert.Equal(2, log.Appended.Count(e => e.Type == GameEventType.TeamWiped));
+    }
+
+    /// <summary>
+    /// A wipe charged by mistake is taken back: its points come back and it stops counting towards the four, so the
+    /// next real one is charged as the one it is.
+    /// </summary>
+    [Fact]
+    public async Task A_revoked_wipe_pays_back_and_stops_counting()
+    {
+        var (watcher, log) = Build();
+        var penalties = new PenaltyService(new Penalties(), log, new Clock(), new NoRole());
+
+        for (var poll = 0; poll < 3; poll++) await watcher.CheckWipeAsync(Run, "Grenin", Party(0, 0, 0));
+        var wipe = Assert.Single(log.Appended, e => e.Type == GameEventType.TeamWiped);
+
+        Assert.Null(await penalties.RevokeWipeAsync(Run, wipe.Id, "Grenin", "segundo equipo caído al curar"));
+
+        var revoked = Assert.Single(log.Appended, e => e.Type == GameEventType.WipeRevoked);
+        Assert.Equal(100, revoked.PointsDelta);
+        Assert.Equal(0, log.Appended.Sum(e => e.PointsDelta));
+        Assert.Equal(0, await penalties.CountWipesAsync(Run));
+
+        // Y no se devuelve dos veces.
+        Assert.NotNull(await penalties.RevokeWipeAsync(Run, wipe.Id, "Grenin", "otra vez"));
+        Assert.Single(log.Appended, e => e.Type == GameEventType.WipeRevoked);
+    }
+
+    /// <summary>Only a wipe of this run can be taken back.</summary>
+    [Fact]
+    public async Task Something_that_is_not_a_wipe_is_not_revoked()
+    {
+        var (_, log) = Build();
+        var penalties = new PenaltyService(new Penalties(), log, new Clock(), new NoRole());
+
+        Assert.NotNull(await penalties.RevokeWipeAsync(Run, Guid.NewGuid(), "Grenin", "no existe"));
+        Assert.Empty(log.Appended);
+    }
+
     /// <summary>Nothing is decided without a reading: no link and no party are «no se sabe».</summary>
     [Fact]
     public async Task Without_a_reading_nothing_is_decided()

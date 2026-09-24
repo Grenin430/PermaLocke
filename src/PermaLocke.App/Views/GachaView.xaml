@@ -1,194 +1,112 @@
 <UserControl x:Class="PermaLocke.App.Views.GachaView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:conv="clr-namespace:PermaLocke.App.Converters">
+             xmlns:conv="clr-namespace:PermaLocke.App.Converters"
+             xmlns:views="clr-namespace:PermaLocke.App.Views"
+             xmlns:pixel="clr-namespace:PermaLocke.App.Views.Pixel">
 
+    <!-- EL GACHA EN PÍXELES (§176). La máquina de cápsulas ya lo era (§171); ahora también lo que va encima y debajo:
+         los portales de tier, la ficha de lo que ha salido, la lista de quién puede salir, lo que da cada prueba, los
+         banners y el botón de tirar. Mismas órdenes que antes. -->
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
         <conv:ResourceKeyConverter x:Key="ResourceKey" />
+        <conv:BallIconConverter x:Key="BallIcon" />
 
-        <!-- Campo de estrellas: un mosaico que se repite y se desplaza. Sale más barato y más
-             corto que sembrar elipses a mano, y no hay ningún asset de por medio. -->
-        <DrawingBrush x:Key="StarfieldNear" TileMode="Tile" Viewport="0,0,180,130"
-                      ViewportUnits="Absolute" Stretch="None">
-            <DrawingBrush.Drawing>
-                <GeometryDrawing Brush="{StaticResource TextBrush}">
-                    <GeometryDrawing.Geometry>
-                        <GeometryGroup>
-                            <EllipseGeometry Center="18,22"  RadiusX="1.4" RadiusY="1.4" />
-                            <EllipseGeometry Center="96,14"  RadiusX="1"   RadiusY="1" />
-                            <EllipseGeometry Center="142,74" RadiusX="1.6" RadiusY="1.6" />
-                            <EllipseGeometry Center="54,102" RadiusX="1.1" RadiusY="1.1" />
-                            <EllipseGeometry Center="120,56" RadiusX="0.9" RadiusY="0.9" />
-                        </GeometryGroup>
-                    </GeometryDrawing.Geometry>
-                </GeometryDrawing>
-            </DrawingBrush.Drawing>
-        </DrawingBrush>
+        <Style TargetType="ScrollBar" BasedOn="{StaticResource PxScrollBar}" />
 
-        <DrawingBrush x:Key="StarfieldFar" TileMode="Tile" Viewport="0,0,110,86"
-                      ViewportUnits="Absolute" Stretch="None">
-            <DrawingBrush.Drawing>
-                <GeometryDrawing Brush="{StaticResource TextBrush}">
-                    <GeometryDrawing.Geometry>
-                        <GeometryGroup>
-                            <EllipseGeometry Center="12,58" RadiusX="0.8" RadiusY="0.8" />
-                            <EllipseGeometry Center="70,26" RadiusX="0.7" RadiusY="0.7" />
-                            <EllipseGeometry Center="94,70" RadiusX="0.8" RadiusY="0.8" />
-                        </GeometryGroup>
-                    </GeometryDrawing.Geometry>
-                </GeometryDrawing>
-            </DrawingBrush.Drawing>
-        </DrawingBrush>
-
-        <!-- Rayas de velocidad. Solo se encienden durante el crucero de la ruleta y se apagan al
-             frenar, así que la pantalla dice a qué velocidad va sin necesidad de leer nada. -->
-        <DrawingBrush x:Key="Hyperstreaks" TileMode="Tile" Viewport="0,0,320,124"
-                      ViewportUnits="Absolute" Stretch="None">
-            <DrawingBrush.Drawing>
-                <GeometryDrawing Brush="{StaticResource TextBrush}">
-                    <GeometryDrawing.Geometry>
-                        <GeometryGroup>
-                            <RectangleGeometry Rect="0,16,96,1" />
-                            <RectangleGeometry Rect="146,40,62,1" />
-                            <RectangleGeometry Rect="40,68,124,1" />
-                            <RectangleGeometry Rect="212,94,74,1" />
-                            <RectangleGeometry Rect="256,24,52,1" />
-                        </GeometryGroup>
-                    </GeometryDrawing.Geometry>
-                </GeometryDrawing>
-            </DrawingBrush.Drawing>
-        </DrawingBrush>
-
-        <!-- La escalera de rareza: un portal por tier de Data/gacha.json. Añadir o quitar un
-             tier cambia la animación sin tocar el XAML. Cada plantilla tiene su propio ámbito de
-             nombres, que es lo que permite animar sus hijos por nombre (ARCHITECTURE.md §29). -->
+        <!-- La escalera de rareza: un portal por tier de Data/gacha.json, con la ball en la que sale ese tier en la
+             máquina. Se enciende el de la ball que hay en la alfombrilla, y se pulsa para ver quién puede salir. -->
         <DataTemplate x:Key="PortalTemplate">
-            <!-- El portal se pulsa para ver quién puede salir de ese tier. Botón sin cromo: el
-                 dibujo del portal ya es el control, y meterle un marco lo convertiría en otra
-                 cosa. -->
-            <Button Background="Transparent" BorderThickness="0" Padding="0" Cursor="Hand"
-                    Command="{Binding DataContext.ShowPoolCommand,
-                        RelativeSource={RelativeSource AncestorType=UserControl}}"
+            <Button Background="Transparent" BorderThickness="0" Padding="0" Cursor="Hand" AutomationProperties.Name="{Binding Name}"
+                    Command="{Binding DataContext.ShowPoolCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                     CommandParameter="{Binding}">
                 <Button.Template>
                     <ControlTemplate TargetType="Button">
                         <ContentPresenter />
                     </ControlTemplate>
                 </Button.Template>
-            <StackPanel Margin="12,0" VerticalAlignment="Center">
-
-                <Grid Width="52" Height="52">
-                    <Ellipse x:Name="Glow" Opacity="0" RenderTransformOrigin="0.5,0.5">
-                        <Ellipse.Fill>
-                            <RadialGradientBrush>
-                                <GradientStop Offset="0"
-                                              Color="{Binding BrushKey, Converter={StaticResource ResourceKey},
-                                                              ConverterParameter=color, FallbackValue=White}" />
-                                <GradientStop Offset="1" Color="#00000000" />
-                            </RadialGradientBrush>
-                        </Ellipse.Fill>
-                        <Ellipse.RenderTransform>
-                            <ScaleTransform ScaleX="0.5" ScaleY="0.5" />
-                        </Ellipse.RenderTransform>
-                    </Ellipse>
-
-                    <Ellipse x:Name="Pulse" Width="48" Height="48" StrokeThickness="1" Opacity="0.18"
-                             Stroke="{Binding BrushKey, Converter={StaticResource ResourceKey}}" />
-
-                    <Ellipse x:Name="Ring" Width="36" Height="36" StrokeThickness="2.5" Opacity="0.4"
-                             Stroke="{Binding BrushKey, Converter={StaticResource ResourceKey}}"
-                             RenderTransformOrigin="0.5,0.5">
-                        <Ellipse.RenderTransform>
-                            <ScaleTransform ScaleX="1" ScaleY="1" />
-                        </Ellipse.RenderTransform>
-                    </Ellipse>
+                <Grid Margin="0,0,6,0" ToolTip="{Binding Name}" Background="Transparent">
+                    <views:PixelPanel x:Name="Plate" Fill="{StaticResource PxWell}" IsSunken="True" HasShadow="False" />
+                    <StackPanel Margin="8,6,10,8" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <Image x:Name="Ball" Width="24" Height="24" Opacity="0.85" Margin="0,0,6,0" VerticalAlignment="Center"
+                                   Source="{Binding BrushKey, Converter={StaticResource BallIcon}}"
+                                   RenderOptions.BitmapScalingMode="NearestNeighbor" RenderTransformOrigin="0.5,0.5">
+                                <Image.RenderTransform>
+                                    <ScaleTransform ScaleX="1" ScaleY="1" />
+                                </Image.RenderTransform>
+                            </Image>
+                            <pixel:PixelText x:Name="ChanceText" Text="{Binding Chance}" Scale="2" Tight="True" VerticalAlignment="Center"
+                                             Shadow="{StaticResource PxShadow}"
+                                             Colour="{Binding BrushKey, Converter={StaticResource ResourceKey}, ConverterParameter=color}" />
+                            <pixel:PixelText x:Name="NoChance" Text="NO SALE" Scale="2" Tight="True"
+                                             Colour="{StaticResource PxTextFaint}" Visibility="Collapsed" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <pixel:PixelText x:Name="Label" Text="{Binding Range}" Scale="2" Tight="True" Margin="0,6,0,0"
+                                         Colour="{StaticResource PxTextDim}" />
+                    </StackPanel>
                 </Grid>
-
-                <TextBlock x:Name="Label" Text="{Binding Name}" Style="{StaticResource Mono}"
-                           FontSize="9" HorizontalAlignment="Center" Opacity="0.3" Margin="0,2,0,0" />
-
-                <!-- La probabilidad en el banner elegido y la banda de estadisticas base. Estaban
-                     repartidas entre la tarjeta del banner y cinco chapas al pie de la pantalla, en
-                     tres idiomas visuales distintos; aqui van sobre la cosa que YA es el tier. -->
-                <TextBlock x:Name="Chance" Text="{Binding Chance}" Style="{StaticResource Mono}"
-                           FontSize="11" FontWeight="Bold" HorizontalAlignment="Center"
-                           Foreground="{Binding BrushKey, Converter={StaticResource ResourceKey}}"
-                           Opacity="0.85" />
-
-                <TextBlock Text="{Binding Range}" Style="{StaticResource Mono}"
-                           FontSize="9" HorizontalAlignment="Center" Opacity="0.35" />
-            </StackPanel>
             </Button>
 
             <DataTemplate.Triggers>
-                <EventTrigger RoutedEvent="Loaded">
-                    <BeginStoryboard>
-                        <Storyboard>
-                            <DoubleAnimation Storyboard.TargetName="Pulse" Storyboard.TargetProperty="Opacity"
-                                             From="0.10" To="0.30" Duration="0:0:2.2"
-                                             AutoReverse="True" RepeatBehavior="Forever" />
-                        </Storyboard>
-                    </BeginStoryboard>
-                </EventTrigger>
-
-                <!-- Se queda encendido donde cayo la ultima tirada, hasta la siguiente. Es lo que
-                     une la animacion con la escalera de rareza: de un vistazo, en que peldaño. -->
-                <DataTrigger Binding="{Binding IsLanded}" Value="True">
-                    <Setter TargetName="Ring" Property="Opacity" Value="1" />
-                    <Setter TargetName="Ring" Property="StrokeThickness" Value="3.5" />
-                    <Setter TargetName="Label" Property="Opacity" Value="0.9" />
-                    <Setter TargetName="Glow" Property="Opacity" Value="0.30" />
+                <!-- Un tier que este banner no da: sin ball, para que «NO SALE» quepa en GRANDE. -->
+                <DataTrigger Binding="{Binding Chance}" Value="">
+                    <Setter TargetName="Ball" Property="Visibility" Value="Collapsed" />
+                    <Setter TargetName="ChanceText" Property="Visibility" Value="Collapsed" />
+                    <Setter TargetName="NoChance" Property="Visibility" Value="Visible" />
                 </DataTrigger>
 
+                <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Button}}" Value="True">
+                    <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxFaceLift}" />
+                </DataTrigger>
+
+                <!-- Se queda encendido donde cayó la última tirada. -->
+                <DataTrigger Binding="{Binding IsLanded}" Value="True">
+                    <Setter TargetName="Ball" Property="Opacity" Value="1" />
+                    <Setter TargetName="Label" Property="Opacity" Value="1" />
+                    <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxAccentDeep}" />
+                </DataTrigger>
+
+                <!-- La ball de la alfombrilla: salta cuando la de verdad cambia. -->
                 <DataTrigger Binding="{Binding IsActive}" Value="True">
                     <DataTrigger.EnterActions>
                         <BeginStoryboard>
                             <Storyboard>
-                                <DoubleAnimation Storyboard.TargetName="Ring" Storyboard.TargetProperty="Opacity"
-                                                 To="1" Duration="0:0:0.35" />
-                                <DoubleAnimation Storyboard.TargetName="Ring"
-                                                 Storyboard.TargetProperty="StrokeThickness"
-                                                 To="6" Duration="0:0:0.35" />
-                                <DoubleAnimation Storyboard.TargetName="Ring"
+                                <DoubleAnimation Storyboard.TargetName="Ball" Storyboard.TargetProperty="Opacity"
+                                                 To="1" Duration="0:0:0.1" />
+                                <DoubleAnimation Storyboard.TargetName="Ball"
                                                  Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
-                                                 To="1.2" Duration="0:0:1.2" AutoReverse="True"
-                                                 RepeatBehavior="Forever" />
-                                <DoubleAnimation Storyboard.TargetName="Ring"
+                                                 From="1.45" To="1.2" Duration="0:0:0.45">
+                                    <DoubleAnimation.EasingFunction>
+                                        <BackEase EasingMode="EaseOut" Amplitude="0.8" />
+                                    </DoubleAnimation.EasingFunction>
+                                </DoubleAnimation>
+                                <DoubleAnimation Storyboard.TargetName="Ball"
                                                  Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
-                                                 To="1.2" Duration="0:0:1.2" AutoReverse="True"
-                                                 RepeatBehavior="Forever" />
-                                <DoubleAnimation Storyboard.TargetName="Glow" Storyboard.TargetProperty="Opacity"
-                                                 From="0.85" To="0.25" Duration="0:0:0.9" />
-                                <DoubleAnimation Storyboard.TargetName="Glow"
-                                                 Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
-                                                 From="0.4" To="1.5" Duration="0:0:0.6" />
-                                <DoubleAnimation Storyboard.TargetName="Glow"
-                                                 Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
-                                                 From="0.4" To="1.5" Duration="0:0:0.6" />
+                                                 From="1.45" To="1.2" Duration="0:0:0.45">
+                                    <DoubleAnimation.EasingFunction>
+                                        <BackEase EasingMode="EaseOut" Amplitude="0.8" />
+                                    </DoubleAnimation.EasingFunction>
+                                </DoubleAnimation>
                                 <DoubleAnimation Storyboard.TargetName="Label" Storyboard.TargetProperty="Opacity"
-                                                 To="0.9" Duration="0:0:0.3" />
+                                                 To="1" Duration="0:0:0.2" />
                             </Storyboard>
                         </BeginStoryboard>
                     </DataTrigger.EnterActions>
                     <DataTrigger.ExitActions>
                         <BeginStoryboard>
                             <Storyboard>
-                                <DoubleAnimation Storyboard.TargetName="Ring" Storyboard.TargetProperty="Opacity"
-                                                 To="0.4" Duration="0:0:0.3" />
-                                <DoubleAnimation Storyboard.TargetName="Ring"
-                                                 Storyboard.TargetProperty="StrokeThickness"
-                                                 To="2.5" Duration="0:0:0.3" />
-                                <DoubleAnimation Storyboard.TargetName="Ring"
+                                <DoubleAnimation Storyboard.TargetName="Ball"
                                                  Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
-                                                 To="1" Duration="0:0:0.3" />
-                                <DoubleAnimation Storyboard.TargetName="Ring"
+                                                 To="1" Duration="0:0:0.25" />
+                                <DoubleAnimation Storyboard.TargetName="Ball"
                                                  Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
-                                                 To="1" Duration="0:0:0.3" />
-                                <DoubleAnimation Storyboard.TargetName="Glow" Storyboard.TargetProperty="Opacity"
-                                                 To="0" Duration="0:0:0.3" />
+                                                 To="1" Duration="0:0:0.25" />
+                                <DoubleAnimation Storyboard.TargetName="Ball" Storyboard.TargetProperty="Opacity"
+                                                 Duration="0:0:0.25" />
                                 <DoubleAnimation Storyboard.TargetName="Label" Storyboard.TargetProperty="Opacity"
-                                                 To="0.3" Duration="0:0:0.3" />
+                                                 Duration="0:0:0.25" />
                             </Storyboard>
                         </BeginStoryboard>
                     </DataTrigger.ExitActions>
@@ -196,70 +114,13 @@
             </DataTemplate.Triggers>
         </DataTemplate>
 
-        <!-- Una celda de la ruleta. Todo pasa volando a color: no son candidatos, y la pantalla
-             lo dice por escrito, porque la tirada ya estaba decidida antes de girar. -->
-        <DataTemplate x:Key="ReelCellTemplate">
-            <Grid Width="72" Height="104">
-                <Image x:Name="Sprite" Source="{Binding Sprite}" Width="56" Height="56"
-                       VerticalAlignment="Center" RenderOptions.BitmapScalingMode="NearestNeighbor"
-                       Stretch="Uniform" RenderTransformOrigin="0.5,0.5">
-                    <Image.RenderTransform>
-                        <ScaleTransform ScaleX="1" ScaleY="1" />
-                    </Image.RenderTransform>
-                </Image>
-
-                <!-- Especies cuyo icono no se sabe localizar todavía: se dice, no se inventa. -->
-                <TextBlock x:Name="Unknown" Text="?" FontSize="34" FontWeight="Bold" Opacity="0"
-                           HorizontalAlignment="Center" VerticalAlignment="Center"
-                           Foreground="{StaticResource TextBrush}" />
-            </Grid>
-
-            <DataTemplate.Triggers>
-                <DataTrigger Binding="{Binding HasSprite}" Value="False">
-                    <Setter TargetName="Unknown" Property="Opacity" Value="0.55" />
-                </DataTrigger>
-
-                <!-- El que ha tocado: crece y se queda. -->
-                <DataTrigger Binding="{Binding IsRevealed}" Value="True">
-                    <DataTrigger.EnterActions>
-                        <BeginStoryboard>
-                            <Storyboard>
-                                <DoubleAnimation Storyboard.TargetName="Sprite"
-                                                 Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
-                                                 To="1.3" Duration="0:0:0.5">
-                                    <DoubleAnimation.EasingFunction>
-                                        <BackEase EasingMode="EaseOut" Amplitude="0.6" />
-                                    </DoubleAnimation.EasingFunction>
-                                </DoubleAnimation>
-                                <DoubleAnimation Storyboard.TargetName="Sprite"
-                                                 Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
-                                                 To="1.3" Duration="0:0:0.5">
-                                    <DoubleAnimation.EasingFunction>
-                                        <BackEase EasingMode="EaseOut" Amplitude="0.6" />
-                                    </DoubleAnimation.EasingFunction>
-                                </DoubleAnimation>
-                            </Storyboard>
-                        </BeginStoryboard>
-                    </DataTrigger.EnterActions>
-                </DataTrigger>
-
-                <!-- Los demás siguen a color, solo bajan la voz. -->
-                <DataTrigger Binding="{Binding IsDimmed}" Value="True">
-                    <DataTrigger.EnterActions>
-                        <BeginStoryboard>
-                            <Storyboard>
-                                <DoubleAnimation Storyboard.TargetName="Sprite" Storyboard.TargetProperty="Opacity"
-                                                 To="0.42" Duration="0:0:0.4" />
-                            </Storyboard>
-                        </BeginStoryboard>
-                    </DataTrigger.EnterActions>
-                </DataTrigger>
-            </DataTemplate.Triggers>
-        </DataTemplate>
+        <Style x:Key="SmallButton" TargetType="Button" BasedOn="{StaticResource PxSubtleButton}">
+            <Setter Property="Padding" Value="10,5,16,10" />
+        </Style>
     </UserControl.Resources>
 
-    <!-- Rejilla, no una pila con barra de desplazamiento: el botón de TIRAR y los banners tienen
-         que estar siempre a la vista, y el escenario del ultraespacio se queda con lo que sobre. -->
+    <!-- Rejilla, no una pila con barra de desplazamiento: el botón de TIRAR y los banners tienen que estar siempre a
+         la vista, y la máquina se queda con lo que sobre. -->
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*" MinHeight="300" />
@@ -267,117 +128,15 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-            <Border Grid.Row="0" Style="{StaticResource Inset}" Padding="0" ClipToBounds="True">
-                <!-- Dos capas: el fondo va aparte del contenido a propósito. Metido en el mismo
-                     Grid de filas, un rectángulo con RowSpan infla las filas Auto y descoloca
-                     todo lo demás. -->
-                <Grid MinHeight="300">
-                    <Grid.Background>
-                        <RadialGradientBrush GradientOrigin="0.5,0.5" Center="0.5,0.5" RadiusX="0.9" RadiusY="0.9">
-                            <GradientStop Color="{StaticResource SurfaceAltColor}" Offset="0" />
-                            <GradientStop Color="{StaticResource BackgroundColor}" Offset="1" />
-                        </RadialGradientBrush>
-                    </Grid.Background>
+        <Grid Grid.Row="0">
+            <views:PixelPanel Fill="{StaticResource PxInk}" />
+            <Border Margin="3,3,9,9" ClipToBounds="True">
+                <!-- LA MÁQUINA DE CÁPSULAS (§171). Lo que se pulsa va encima: los portales, la ficha, el bote y la
+                     tabla de premios. -->
+                <Grid MinHeight="300" Background="{StaticResource SunkenBrush}">
+                    <views:CapsuleMachine x:Name="Machine" Play="{Binding CurrentPlay}" />
 
-                    <!-- El color del tier, lavado sobre el fondo. El pincel se crea en el
-                         code-behind y no aquí: WPF congela los que vienen de XAML compartido y un
-                         pincel congelado no se puede animar. -->
-                    <Rectangle x:Name="TierWash" Opacity="0" IsHitTestVisible="False" />
-
-                    <!-- EL TÚNEL.
- Las estrellas salen del centro y crecen hacia fuera, en vez de
-                         deslizarse de lado como antes: el deslizamiento lateral se lee como papel
-                         pintado pasando por detrás, y el ultraespacio es un sitio al que ENTRAS.
-                         Es el mismo mosaico y el mismo coste; lo que cambia es qué se anima.
-
-                         Dos capas desfasadas media vuelta, que es lo que evita el latido: con una
-                         sola, cada vez que reinicia el ciclo el campo parpadea entero. El
-                         code-behind las acelera durante el giro por su SpeedRatio, así que no hace
-                         falta reiniciar nada y no dan tirones. -->
-                    <Rectangle x:Name="StarsNear" Fill="{StaticResource StarfieldNear}" Opacity="0"
-                               IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5">
-                        <Rectangle.RenderTransform>
-                            <ScaleTransform ScaleX="1" ScaleY="1" />
-                        </Rectangle.RenderTransform>
-                    </Rectangle>
-
-                    <Rectangle x:Name="StarsFar" Fill="{StaticResource StarfieldFar}" Opacity="0"
-                               IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5">
-                        <Rectangle.RenderTransform>
-                            <ScaleTransform ScaleX="1" ScaleY="1" />
-                        </Rectangle.RenderTransform>
-                    </Rectangle>
-
-                    <!-- EL VÓRTICE, detrás de todo. Sin él el panel es un campo uniforme y la
-                         ruleta flota encima sin estar en ninguna parte; con él hay un fondo del
-                         que la tirada sale. Gira muy despacio y va muy apagado a propósito: es
-                         escenografía, no un elemento que compita con el visor. -->
-                    <Grid x:Name="Vortex" Width="520" Height="520" Opacity="0.16"
-                          IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5"
-                          HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <Grid.RenderTransform>
-                            <TransformGroup>
-                                <ScaleTransform x:Name="VortexScale" ScaleX="1" ScaleY="1" />
-                                <RotateTransform x:Name="VortexSpin" Angle="0" />
-                            </TransformGroup>
-                        </Grid.RenderTransform>
-
-                        <Ellipse Width="520" Height="520" StrokeThickness="1.5"
-                                 Stroke="{StaticResource AccentBrush}" Opacity="0.30" />
-                        <Ellipse Width="400" Height="400" StrokeThickness="1.5"
-                                 Stroke="{StaticResource AccentBrush}" Opacity="0.45" />
-                        <Ellipse Width="280" Height="280" StrokeThickness="2"
-                                 Stroke="{StaticResource AccentBrightBrush}" Opacity="0.55" />
-                        <Ellipse Width="160" Height="160" StrokeThickness="2"
-                                 Stroke="{StaticResource AccentBrightBrush}" Opacity="0.75" />
-
-                        <!-- Cuatro radios: son los que hacen que el giro se vea. Con aros solos,
-                             un círculo girando es un círculo quieto. -->
-                        <Path Stroke="{StaticResource AccentBrush}" StrokeThickness="1" Opacity="0.35"
-                              Data="M 260,0 L 260,520 M 0,260 L 520,260 M 84,84 L 436,436 M 436,84 L 84,436" />
-                    </Grid>
-
-                    <!-- Rayas de velocidad
-. Corren siempre, pero con opacidad 0: el code-behind
-                         solo las enciende mientras la rueda va lanzada. -->
-                    <Rectangle x:Name="Streaks" Fill="{StaticResource Hyperstreaks}" Opacity="0"
-                               Width="1400" HorizontalAlignment="Left" IsHitTestVisible="False">
-                        <Rectangle.RenderTransform>
-                            <TranslateTransform X="0" />
-                        </Rectangle.RenderTransform>
-                        <Rectangle.Triggers>
-                            <EventTrigger RoutedEvent="Loaded">
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation
-                                            Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
-                                            From="0" To="-320" Duration="0:0:0.5" RepeatBehavior="Forever" />
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </EventTrigger>
-                        </Rectangle.Triggers>
-                    </Rectangle>
-
-                    <!-- Fogonazo del color del tier. Lo dispara el code-behind: en cada subida
-                         del engaño y otra vez al parar la rueda. -->
-                    <Rectangle x:Name="Flash" Opacity="0" IsHitTestVisible="False">
-                        <Rectangle.Fill>
-                            <RadialGradientBrush GradientOrigin="0.5,0.5" Center="0.5,0.5" RadiusX="0.75" RadiusY="0.95">
-                                <GradientStop Offset="0"
-                                              Color="{Binding LastTierBrushKey, Converter={StaticResource ResourceKey},
-                                                              ConverterParameter=color, FallbackValue=White}" />
-                                <GradientStop Offset="1" Color="#00000000" />
-                            </RadialGradientBrush>
-                        </Rectangle.Fill>
-                    </Rectangle>
-
-                    <!-- Todo el contenido va sobre este Grid porque el code-behind lo sacude: al
-                         subir un tier y al parar la rueda. Sacudir el fondo también movería las
-                         estrellas, que es justo lo que da la sensación de que están quietas. -->
                     <Grid x:Name="Stage">
-                        <Grid.RenderTransform>
-                            <TranslateTransform x:Name="StageShake" X="0" Y="0" />
-                        </Grid.RenderTransform>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
@@ -386,773 +145,458 @@
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
 
-                    <ItemsControl Grid.Row="1" ItemsSource="{Binding Portals}"
-                                  ItemTemplate="{StaticResource PortalTemplate}"
-                                  HorizontalAlignment="Center" Margin="0,14,0,8">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <StackPanel Orientation="Horizontal" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                    </ItemsControl>
 
-                    <!-- LA RULETA. El desplazamiento, el frenado y el desenfoque los monta el
-                         code-behind, que es el único que sabe el ancho real del visor.
-                         El acercamiento y el tirón de cada clic van en este envoltorio, no en el
-                         visor, para que la onda y el destello los acompañen sin recortarse. -->
-                    <!-- Altura fijada a la del visor a propósito. La fila es Auto, así que sin
-                         esto la ráfaga de 300 px la infla hasta 300 y la fila del resultado se
-                         queda sin sitio: la ficha desaparece sin que nada falle ni se registre.
-                         Con la altura puesta, la ráfaga sigue dibujándose fuera —este Grid no
-                         recorta— y solo la recorta el panel, que es lo que se quiere. -->
-                    <Grid x:Name="ReelStage" Grid.Row="2" Height="104" RenderTransformOrigin="0.5,0.5">
-                        <Grid.RenderTransform>
-                            <TransformGroup>
-                                <ScaleTransform x:Name="ReelZoom" ScaleX="1" ScaleY="1" />
-                                <TranslateTransform x:Name="ReelJolt" X="0" Y="0" />
-                            </TransformGroup>
-                        </Grid.RenderTransform>
+                        <!-- LA FICHA, en la pared de la derecha, con el color de su tier arriba. -->
+                        <Grid Grid.Row="2" Grid.RowSpan="3" HorizontalAlignment="Right" VerticalAlignment="Center"
+                              Width="286" Margin="0,0,20,0" RenderTransformOrigin="0.5,0.5"
+                              Visibility="{Binding HasResult, Converter={StaticResource BoolToVisibility}}">
+                            <Grid.RenderTransform>
+                                <ScaleTransform ScaleX="1" ScaleY="1" />
+                            </Grid.RenderTransform>
+                            <Grid.Style>
+                                <Style TargetType="Grid">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasResult}" Value="True">
+                                            <DataTrigger.EnterActions>
+                                                <BeginStoryboard>
+                                                    <Storyboard>
+                                                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                         From="0" To="1" Duration="0:0:0.3" />
+                                                        <DoubleAnimation
+                                                            Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                                                            From="0.86" To="1" Duration="0:0:0.35">
+                                                            <DoubleAnimation.EasingFunction>
+                                                                <BackEase EasingMode="EaseOut" Amplitude="0.5" />
+                                                            </DoubleAnimation.EasingFunction>
+                                                        </DoubleAnimation>
+                                                        <DoubleAnimation
+                                                            Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                                            From="0.86" To="1" Duration="0:0:0.35">
+                                                            <DoubleAnimation.EasingFunction>
+                                                                <BackEase EasingMode="EaseOut" Amplitude="0.5" />
+                                                            </DoubleAnimation.EasingFunction>
+                                                        </DoubleAnimation>
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </DataTrigger.EnterActions>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Grid.Style>
 
-                    <Border x:Name="ReelViewport" Height="104" Margin="14,0" CornerRadius="3"
-                            ClipToBounds="True" Background="{StaticResource SunkenBrush}" BorderThickness="1"
-                            BorderBrush="{StaticResource SurfaceAltBrush}">
-                        <Grid>
-                            <!-- Dentro de un Canvas a propósito: en un Grid, WPF le recorta el
-                                 ancho al del visor, y entonces la tira entera se sale de vista en
-                                 cuanto se desplaza. El Canvas mide a sus hijos con espacio
-                                 infinito, que es lo que una tira de 46 celdas necesita. -->
-                            <Canvas IsHitTestVisible="False">
-                                <ItemsControl x:Name="ReelStrip" ItemsSource="{Binding Reel}"
-                                              ItemTemplate="{StaticResource ReelCellTemplate}"
-                                              SizeChanged="OnStripSized"
-                                              Canvas.Left="0" Canvas.Top="0">
-                                    <ItemsControl.RenderTransform>
-                                        <TranslateTransform X="0" />
-                                    </ItemsControl.RenderTransform>
+                            <views:PixelPanel Fill="#FF16112A" HeaderHeight="15"
+                                              HeaderFill="{Binding LastTierBrushKey, Converter={StaticResource ResourceKey}, ConverterParameter=color}" />
+
+                            <StackPanel Margin="18,24,24,22">
+                                <pixel:PixelText Text="{Binding LastTierName}" Scale="2" Tight="True"
+                                                 Colour="{Binding LastTierBrushKey, Converter={StaticResource ResourceKey}, ConverterParameter=color}" />
+                                <pixel:PixelText Text="{Binding LastPull.DisplayName}" Scale="3" Wrap="True" Margin="0,6,0,0"
+                                                 Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
+                                <!-- La marca de shiny o legendario late tres veces al aparecer. -->
+                                <pixel:PixelText Text="{Binding LastBadge}" Scale="2" Tight="True" Margin="0,5,0,0"
+                                                 Colour="{StaticResource PxGold}">
+                                    <pixel:PixelText.Style>
+                                        <Style TargetType="pixel:PixelText">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HasBadge}" Value="True">
+                                                    <DataTrigger.EnterActions>
+                                                        <BeginStoryboard>
+                                                            <Storyboard>
+                                                                <DoubleAnimation BeginTime="0:0:0.3" From="0.25" To="1"
+                                                                                 Duration="0:0:0.45" AutoReverse="True"
+                                                                                 RepeatBehavior="3x"
+                                                                                 Storyboard.TargetProperty="Opacity" />
+                                                            </Storyboard>
+                                                        </BeginStoryboard>
+                                                    </DataTrigger.EnterActions>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </pixel:PixelText.Style>
+                                </pixel:PixelText>
+                                <pixel:PixelText Text="{Binding LastPull.Ability}" Scale="2" Wrap="True" Margin="0,10,0,0"
+                                                 Colour="{StaticResource PxText}" />
+                            </StackPanel>
+                        </Grid>
+
+
+                        <!-- LO QUE DA CADA PRUEBA, de Data/grants.json. Lo conseguido se marca y no se quita. -->
+                        <Grid Grid.Row="0" Grid.RowSpan="5" Margin="10"
+                              Visibility="{Binding ShowingGrants, Converter={StaticResource BoolToVisibility}}">
+                            <views:PixelPanel Fill="#F2100C1C" HeaderHeight="36" HeaderFill="{StaticResource PxFaceHigh}"
+                                              HeaderAccent="{StaticResource PxAccent}" />
+                            <DockPanel Margin="14,4,20,18">
+                                <DockPanel DockPanel.Dock="Top" Height="34" Margin="0,0,0,10">
+                                    <Button DockPanel.Dock="Right" Content="CERRAR" Style="{StaticResource SmallButton}"
+                                            VerticalAlignment="Center" Margin="0,4,0,0" Command="{Binding ToggleGrantsCommand}" />
+                                    <pixel:PixelIcon Icon="IconTrophy" Scale="2" VerticalAlignment="Center" Margin="0,0,9,0" />
+                                    <pixel:PixelText Text="LO QUE DA CADA PRUEBA" Scale="2" Tight="True" VerticalAlignment="Center"
+                                                     Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
+                                </DockPanel>
+
+                                <pixel:PixelText DockPanel.Dock="Top" Text="Se consiguen solos al superar cada prueba." Scale="2"
+                                                 Tight="True" Margin="0,0,0,12" Colour="{StaticResource PxTextDim}" />
+
+                                <pixel:PixelText DockPanel.Dock="Bottom" Text="{Binding GrantsSummary}" Scale="2" Wrap="True"
+                                                 Margin="0,10,0,0" Colour="{StaticResource PxTextDim}" />
+
+                                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                    <ItemsControl ItemsSource="{Binding Grants}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <UniformGrid Columns="2" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid x:Name="Row" Margin="0,0,8,6">
+                                                    <views:PixelPanel Fill="{StaticResource PxFace}" HasShadow="False" />
+                                                    <DockPanel Margin="11,7,11,8">
+                                                        <!-- Encendida cuando ya se consiguió, apagada cuando falta. -->
+                                                        <views:PixelPanel x:Name="Dot" DockPanel.Dock="Left" Width="18" Height="18"
+                                                                          Margin="0,0,10,0" VerticalAlignment="Center"
+                                                                          Fill="{StaticResource PxWell}" IsSunken="True" HasShadow="False" />
+
+                                                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                                                            <ItemsControl ItemsSource="{Binding Rolls}">
+                                                                <ItemsControl.ItemsPanel>
+                                                                    <ItemsPanelTemplate>
+                                                                        <StackPanel Orientation="Horizontal" />
+                                                                    </ItemsPanelTemplate>
+                                                                </ItemsControl.ItemsPanel>
+                                                                <ItemsControl.ItemTemplate>
+                                                                    <DataTemplate>
+                                                                        <Grid Margin="4,0,0,0">
+                                                                            <views:PixelPanel Fill="{StaticResource PxWell}" HasShadow="False" />
+                                                                            <pixel:PixelText Text="{Binding Text}" Scale="2" Tight="True" Margin="7,4,8,5"
+                                                                                             Colour="{Binding BrushKey, Converter={StaticResource ResourceKey}, ConverterParameter=color}" />
+                                                                        </Grid>
+                                                                    </DataTemplate>
+                                                                </ItemsControl.ItemTemplate>
+                                                            </ItemsControl>
+
+                                                            <Grid Margin="4,0,0,0"
+                                                                  Visibility="{Binding HasWonderTrades, Converter={StaticResource BoolToVisibility}}">
+                                                                <views:PixelPanel Fill="{StaticResource PxWell}" HasShadow="False" />
+                                                                <pixel:PixelText Text="{Binding WonderTradeText}" Scale="2" Tight="True"
+                                                                                 Margin="7,4,8,5" Colour="{StaticResource PxTextDim}" />
+                                                            </Grid>
+                                                        </StackPanel>
+
+                                                        <pixel:PixelText Text="{Binding Name}" Scale="2" Tight="True" Trim="True"
+                                                                         VerticalAlignment="Center" Colour="{StaticResource PxText}" />
+                                                    </DockPanel>
+                                                </Grid>
+                                                <DataTemplate.Triggers>
+                                                    <DataTrigger Binding="{Binding Reached}" Value="True">
+                                                        <Setter TargetName="Dot" Property="Fill" Value="{StaticResource PxGood}" />
+                                                        <Setter TargetName="Dot" Property="IsSunken" Value="False" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Reached}" Value="False">
+                                                        <Setter TargetName="Row" Property="Opacity" Value="0.5" />
+                                                    </DataTrigger>
+                                                </DataTemplate.Triggers>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                            </DockPanel>
+                        </Grid>
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- BANNERS. La selección va al view model; la lista no decide nada. -->
+        <ListBox Grid.Row="1" ItemsSource="{Binding Banners}" SelectedItem="{Binding SelectedBanner}"
+                 Background="Transparent" BorderThickness="0" Margin="0,10,0,0"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <ListBox.Template>
+                <ControlTemplate TargetType="ListBox">
+                    <ItemsPresenter />
+                </ControlTemplate>
+            </ListBox.Template>
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <UniformGrid Columns="3" />
+                </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+            <ListBox.ItemContainerStyle>
+                <Style TargetType="ListBoxItem">
+                    <Setter Property="Margin" Value="0,0,10,0" />
+                    <Setter Property="Cursor" Value="Hand" />
+                    <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ListBoxItem">
+                                <Grid Background="Transparent">
+                                    <views:PixelPanel x:Name="Card" Fill="{StaticResource PxFace}" />
+                                    <pixel:PixelText x:Name="Arrow" Text="▶" Scale="2" Tight="True" Visibility="Hidden"
+                                                     Colour="{StaticResource PxGold}" VerticalAlignment="Top" Margin="-6,16,0,0" />
+                                    <ContentPresenter Margin="14,8,20,13" />
+                                </Grid>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Card" Property="Fill" Value="{StaticResource PxFaceHigh}" />
+                                    </Trigger>
+                                    <!-- El banner elegido se enciende entero: es el que va a cobrar al pulsar TIRAR. -->
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter TargetName="Card" Property="Fill" Value="{StaticResource PxAccentDeep}" />
+                                        <Setter TargetName="Arrow" Property="Visibility" Value="Visible" />
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </ListBox.ItemContainerStyle>
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel>
+                        <DockPanel>
+                            <!-- La chapa dice lo que cuesta, y con tiradas gratis lo dice en verde. -->
+                            <Grid DockPanel.Dock="Right">
+                                <views:PixelPanel HasShadow="False">
+                                    <views:PixelPanel.Style>
+                                        <Style TargetType="views:PixelPanel">
+                                            <Setter Property="Fill" Value="{StaticResource PxWell}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HasFree}" Value="True">
+                                                    <Setter Property="Fill" Value="{StaticResource PxGoodDeep}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </views:PixelPanel.Style>
+                                </views:PixelPanel>
+                                <pixel:PixelText Text="{Binding Cost}" Scale="2" Tight="True" Margin="8,5,9,6">
+                                    <pixel:PixelText.Style>
+                                        <Style TargetType="pixel:PixelText">
+                                            <Setter Property="Colour" Value="{StaticResource PxAccentLight}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HasFree}" Value="True">
+                                                    <Setter Property="Colour" Value="{StaticResource PxGood}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </pixel:PixelText.Style>
+                                </pixel:PixelText>
+                            </Grid>
+                            <pixel:PixelText Text="{Binding Name}" Scale="3" Tight="True" VerticalAlignment="Center"
+                                             Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
+                        </DockPanel>
+                        <!-- LA FORMA DEL BANNER, en los colores de los tiers, en su ranura hundida. Los tramos suman
+                             cien unidades y el Viewbox los estira al ancho que haya. -->
+                        <Grid Margin="0,8,0,0" ToolTip="{Binding Odds}">
+                            <views:PixelPanel Fill="{StaticResource PxInk}" HasShadow="False" />
+                            <Viewbox Stretch="Fill" Height="9" Margin="3">
+                                <ItemsControl ItemsSource="{Binding Slices}">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
                                             <StackPanel Orientation="Horizontal" />
                                         </ItemsPanelTemplate>
                                     </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Rectangle Width="{Binding Width}" Height="9" ToolTip="{Binding Label}"
+                                                       Fill="{Binding BrushKey, Converter={StaticResource ResourceKey}}" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
                                 </ItemsControl>
-                            </Canvas>
-
-                            <!-- Los bordes se funden con el fondo, para que las siluetas entren
-                                 y salgan en vez de aparecer cortadas. -->
-                            <Rectangle IsHitTestVisible="False">
-                                <Rectangle.Fill>
-                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                        <GradientStop Color="{StaticResource BackgroundColor}" Offset="0" />
-                                        <GradientStop Color="#00000000" Offset="0.22" />
-                                        <GradientStop Color="#00000000" Offset="0.78" />
-                                        <GradientStop Color="{StaticResource BackgroundColor}" Offset="1" />
-                                    </LinearGradientBrush>
-                                </Rectangle.Fill>
-                            </Rectangle>
-
-                            <!-- El marcador: enmarca la celda que va a quedarse, y lleva el color
-                                 del tier que la pantalla está enseñando en cada momento. -->
-                            <Grid x:Name="Marker" Width="76" HorizontalAlignment="Center"
-                                  IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5">
-                                <Grid.RenderTransform>
-                                    <ScaleTransform ScaleX="1" ScaleY="1" />
-                                </Grid.RenderTransform>
-                                <!-- Solo el contorno: cualquier relleno aquí taparía el icono, que
-                                     es justo lo que se ha venido a ver. -->
-                                <Rectangle Stroke="{Binding LastTierBrushKey, Converter={StaticResource ResourceKey}}"
-                                           StrokeThickness="2" RadiusX="3" RadiusY="3" Opacity="0.9" />
-                                <Path Data="M 0,0 L 12,0 L 6,8 Z" VerticalAlignment="Top" HorizontalAlignment="Center"
-                                      Margin="0,-1,0,0"
-                                      Fill="{Binding LastTierBrushKey, Converter={StaticResource ResourceKey}}" />
-                                <Path Data="M 0,8 L 12,8 L 6,0 Z" VerticalAlignment="Bottom" HorizontalAlignment="Center"
-                                      Margin="0,0,0,-1"
-                                      Fill="{Binding LastTierBrushKey, Converter={StaticResource ResourceKey}}" />
-                            </Grid>
+                            </Viewbox>
                         </Grid>
-                    </Border>
-
-                    <!-- La onda de choque. Fuera del visor a propósito: dentro la recortaría el
-                         ClipToBounds que la ruleta necesita. -->
-                    <Ellipse x:Name="Shockwave" Width="150" Height="150" Opacity="0"
-                             IsHitTestVisible="False" StrokeThickness="4"
-                             HorizontalAlignment="Center" VerticalAlignment="Center"
-                             RenderTransformOrigin="0.5,0.5"
-                             Stroke="{Binding LastTierBrushKey, Converter={StaticResource ResourceKey}}">
-                        <Ellipse.RenderTransform>
-                            <ScaleTransform x:Name="ShockwaveScale" ScaleX="0.2" ScaleY="0.2" />
-                        </Ellipse.RenderTransform>
-                    </Ellipse>
-
-                    <!-- El destello del premio: ocho rayos y un aro de luz alrededor de la casilla
-                         que ha tocado. El centro va hueco a propósito —los rayos arrancan más
-                         afuera que la celda— porque lo que se ha venido a ver es el Pokémon, y una
-                         estrella maciza encima lo tapaba. Como el marcador está centrado, esto
-                         también. -->
-                    <Grid x:Name="Burst" Width="300" Height="300" Opacity="0" IsHitTestVisible="False"
-                          HorizontalAlignment="Center" VerticalAlignment="Center"
-                          RenderTransformOrigin="0.5,0.5">
-                        <Grid.RenderTransform>
-                            <TransformGroup>
-                                <RotateTransform x:Name="BurstSpin" Angle="0" />
-                                <ScaleTransform x:Name="BurstScale" ScaleX="0.55" ScaleY="0.55" />
-                            </TransformGroup>
-                        </Grid.RenderTransform>
-
-                        <Ellipse Width="300" Height="300" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <Ellipse.Fill>
-                                <RadialGradientBrush>
-                                    <GradientStop Offset="0" Color="#00000000" />
-                                    <GradientStop Offset="0.34" Color="#00000000" />
-                                    <GradientStop Offset="0.55"
-                                                  Color="{Binding LastTierBrushKey, Converter={StaticResource ResourceKey},
-                                                                  ConverterParameter=color, FallbackValue=White}" />
-                                    <GradientStop Offset="1" Color="#00000000" />
-                                </RadialGradientBrush>
-                            </Ellipse.Fill>
-                        </Ellipse>
-
-                        <Path HorizontalAlignment="Center" VerticalAlignment="Center"
-                              Fill="{Binding LastTierBrushKey, Converter={StaticResource ResourceKey}}"
-                              Data="M -5,-58 L 5,-58 L 0,-124 Z
-                                    M 5,58 L -5,58 L 0,124 Z
-                                    M 58,-5 L 58,5 L 124,0 Z
-                                    M -58,5 L -58,-5 L -124,0 Z
-                                    M 37,-45 L 45,-37 L 88,-88 Z
-                                    M 45,37 L 37,45 L 88,88 Z
-                                    M -37,45 L -45,37 L -88,88 Z
-                                    M -45,-37 L -37,-45 L -88,-88 Z" />
-                    </Grid>
-                    </Grid>
-
-                    <!-- Resultado. Entra con su propia animación; los datos ya estaban decididos
-                         y guardados antes de que la rueda empezase a girar. -->
-                    <Border Grid.Row="3" VerticalAlignment="Top" HorizontalAlignment="Center"
-                            Background="{StaticResource SurfaceBrush}" CornerRadius="6"
-                            Padding="20,8" Margin="0,6,0,8" BorderThickness="1"
-                            RenderTransformOrigin="0.5,0.5"
-                            BorderBrush="{Binding LastTierBrushKey, Converter={StaticResource ResourceKey}}"
-                            Visibility="{Binding HasResult, Converter={StaticResource BoolToVisibility}}">
-                        <Border.RenderTransform>
-                            <ScaleTransform ScaleX="1" ScaleY="1" />
-                        </Border.RenderTransform>
-                        <Border.Style>
-                            <Style TargetType="Border">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding HasResult}" Value="True">
-                                        <DataTrigger.EnterActions>
-                                            <BeginStoryboard>
-                                                <Storyboard>
-                                                    <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                                                                     From="0" To="1" Duration="0:0:0.4" />
-                                                    <DoubleAnimation
-                                                        Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
-                                                        From="0.88" To="1" Duration="0:0:0.4" />
-                                                    <DoubleAnimation
-                                                        Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
-                                                        From="0.88" To="1" Duration="0:0:0.4" />
-                                                </Storyboard>
-                                            </BeginStoryboard>
-                                        </DataTrigger.EnterActions>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Border.Style>
-
-                        <!-- CON icono, y es una correccion. Antes no lo llevaba «porque ya lo
-                             enseña la ruleta», y eso vale mientras la ruleta gira: parada, la
-                             casilla ganadora mide 56 px dentro de una banda de 104 y compite con
-                             las de al lado. La ficha es donde se mira al final, asi que es donde
-                             el Pokemon tiene que verse. -->
-                        <StackPanel Orientation="Horizontal">
-                            <Image Source="{Binding LastSprite}" Width="64" Height="64"
-                                   Margin="0,0,14,0" VerticalAlignment="Center"
-                                   RenderOptions.BitmapScalingMode="NearestNeighbor" />
-                            <StackPanel VerticalAlignment="Center">
-                            <TextBlock Style="{StaticResource Mono}" HorizontalAlignment="Center" FontSize="10"
-                                       Opacity="0.75" Text="{Binding LastTierName}"
-                                       Foreground="{Binding LastTierBrushKey, Converter={StaticResource ResourceKey}}" />
-                            <!-- El nombre entra con su propio golpe y un pelín más tarde que la
-                                 ficha, para que sean dos impactos y no uno. -->
-                            <TextBlock HorizontalAlignment="Center" FontSize="21" Margin="0,1,0,0"
-                                       Text="{Binding LastPull.SpeciesName}" RenderTransformOrigin="0.5,0.5">
-                                <TextBlock.RenderTransform>
-                                    <ScaleTransform ScaleX="1" ScaleY="1" />
-                                </TextBlock.RenderTransform>
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock" BasedOn="{StaticResource PanelHeading}">
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding HasResult}" Value="True">
-                                                <DataTrigger.EnterActions>
-                                                    <BeginStoryboard>
-                                                        <Storyboard>
-                                                            <DoubleAnimation BeginTime="0:0:0.12" From="1.5" To="1"
-                                                                Duration="0:0:0.55"
-                                                                Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)">
-                                                                <DoubleAnimation.EasingFunction>
-                                                                    <BackEase EasingMode="EaseOut" Amplitude="0.7" />
-                                                                </DoubleAnimation.EasingFunction>
-                                                            </DoubleAnimation>
-                                                            <DoubleAnimation BeginTime="0:0:0.12" From="1.5" To="1"
-                                                                Duration="0:0:0.55"
-                                                                Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)">
-                                                                <DoubleAnimation.EasingFunction>
-                                                                    <BackEase EasingMode="EaseOut" Amplitude="0.7" />
-                                                                </DoubleAnimation.EasingFunction>
-                                                            </DoubleAnimation>
-                                                        </Storyboard>
-                                                    </BeginStoryboard>
-                                                </DataTrigger.EnterActions>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                            <!-- La marca de shiny o legendario late tres veces al aparecer. Solo
-                                 se pone cuando de verdad lo es, así que el ruido está ganado. -->
-                            <TextBlock HorizontalAlignment="Center" FontSize="10" Margin="0,1,0,0"
-                                       Text="{Binding LastBadge}" Foreground="{StaticResource AccentBrush}"
-                                       RenderTransformOrigin="0.5,0.5">
-                                <TextBlock.RenderTransform>
-                                    <ScaleTransform ScaleX="1" ScaleY="1" />
-                                </TextBlock.RenderTransform>
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock" BasedOn="{StaticResource Mono}">
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding LastBadge}" Value="">
-                                                <Setter Property="Visibility" Value="Collapsed" />
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding HasBadge}" Value="True">
-                                                <DataTrigger.EnterActions>
-                                                    <BeginStoryboard>
-                                                        <Storyboard>
-                                                            <DoubleAnimation BeginTime="0:0:0.3" From="2.2" To="1"
-                                                                Duration="0:0:0.6"
-                                                                Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)">
-                                                                <DoubleAnimation.EasingFunction>
-                                                                    <BackEase EasingMode="EaseOut" Amplitude="0.9" />
-                                                                </DoubleAnimation.EasingFunction>
-                                                            </DoubleAnimation>
-                                                            <DoubleAnimation BeginTime="0:0:0.3" From="2.2" To="1"
-                                                                Duration="0:0:0.6"
-                                                                Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)">
-                                                                <DoubleAnimation.EasingFunction>
-                                                                    <BackEase EasingMode="EaseOut" Amplitude="0.9" />
-                                                                </DoubleAnimation.EasingFunction>
-                                                            </DoubleAnimation>
-                                                            <DoubleAnimation BeginTime="0:0:0.3" From="0.25" To="1"
-                                                                Duration="0:0:0.45" AutoReverse="True"
-                                                                RepeatBehavior="3x"
-                                                                Storyboard.TargetProperty="Opacity" />
-                                                        </Storyboard>
-                                                    </BeginStoryboard>
-                                                </DataTrigger.EnterActions>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                            <TextBlock Style="{StaticResource Body}" HorizontalAlignment="Center" Margin="0,3,0,0">
-                                <Run Text="Nv." /><Run Text="{Binding LastPull.Level, Mode=OneWay}" />
-                                <Run Text=" · " />
-                                <Run Text="{Binding LastPull.NatureName, Mode=OneWay}" />
-                                <Run Text=" · " />
-                                <Run Text="{Binding LastPull.Ability, Mode=OneWay}" />
-                            </TextBlock>
-                            <TextBlock Style="{StaticResource Mono}" HorizontalAlignment="Center" Margin="0,2,0,0"
-                                       FontSize="11"
-                                       Text="{Binding LastPull.IvTotal, StringFormat='IV total {0} de 186'}" />
-                            </StackPanel>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- EL BOTE. Ocupa el hueco central, que es el sitio: el jugador mira ahí
-                         mientras decide, y hasta ahora ahí no había más que fondo. Se abre desde
-                         un portal y se cierra con el mismo, así que no roba sitio a la ruleta. -->
-                    <!-- Ocupa el ESCENARIO ENTERO, portales incluidos: con la lista abierta no se
-                         está tirando, así que ahí no hay nada que tapar que haga falta. Empezó en
-                         el hueco de abajo, donde el Tier 5 salía en una tira de dos filas, y
-                         cubriendo el carrete tampoco llegaba. Un catálogo de doscientas especies
-                         necesita una página, no un cajón. -->
-                    <Border Grid.Row="0" Grid.RowSpan="5" Margin="10,10,10,10" Padding="16,14"
-                            CornerRadius="{StaticResource RadiusMedium}"
-                            Background="{StaticResource SunkenBrush}" BorderThickness="1"
-                            BorderBrush="{Binding PoolBrushKey, Converter={StaticResource ResourceKey}}"
-                            Visibility="{Binding ShowingPool, Converter={StaticResource BoolToVisibility}}">
-                        <DockPanel>
-                            <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
-                                <Button DockPanel.Dock="Right" Content="CERRAR"
-                                        Style="{StaticResource GhostButton}" Padding="10,4" FontSize="10"
-                                        Command="{Binding ShowPoolCommand}" CommandParameter="{x:Null}" />
-                                <TextBlock Text="{Binding PoolTitle}" Style="{StaticResource Mono}"
-                                           FontSize="11" VerticalAlignment="Center"
-                                           Foreground="{Binding PoolBrushKey,
-                                               Converter={StaticResource ResourceKey}}" />
-                            </DockPanel>
-
-                            <!-- EL BUSCADOR. El Tier 5 lista un par de cientos de especies, asi
-                                 que «esta Tyranitar aqui» se contestaba desplazandose. -->
-                            <Grid DockPanel.Dock="Top" Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-
-                                <TextBox Grid.Column="0" Padding="8,5"
-                                         Text="{Binding PoolSearch, UpdateSourceTrigger=PropertyChanged,
-                                             Delay=120}" />
-                                <!-- La pista va DENTRO de la caja y detras del texto, que es donde
-                                     se busca: una etiqueta al lado gasta ancho para siempre a
-                                     cambio de decir algo que solo hace falta la primera vez. -->
-                                <TextBlock Grid.Column="0" Text="Buscar un Pokémon…" Margin="10,0,0,0"
-                                           IsHitTestVisible="False" VerticalAlignment="Center"
-                                           FontSize="11">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock" BasedOn="{StaticResource Faint}">
-                                            <Setter Property="Visibility" Value="Collapsed" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding PoolSearch}" Value="">
-                                                    <Setter Property="Visibility" Value="Visible" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
-
-                                <Button Grid.Column="1" Content="✕" Margin="6,0,0,0" Padding="9,4"
-                                        Style="{StaticResource GhostButton}" FontSize="10"
-                                        Command="{Binding ClearPoolSearchCommand}"
-                                        ToolTip="Borrar la búsqueda" />
-
-                                <TextBlock Grid.Column="2" Style="{StaticResource Mono}" FontSize="10.5"
-                                           VerticalAlignment="Center" Margin="10,0,2,0" Opacity="0.55"
-                                           Text="{Binding PoolCount}" />
-                            </Grid>
-
-                            <!-- La otra mitad de la mecánica: la lista enseña familias enteras y
-                                 esto dice qué etapa de ellas te toca AHORA. Sale de la misma tabla
-                                 que la tirada, con el progreso real de la run. -->
-                            <TextBlock DockPanel.Dock="Bottom" Style="{StaticResource Mono}"
-                                       FontSize="10.5" Opacity="0.55" Margin="0,10,0,0"
-                                       TextWrapping="Wrap" Text="{Binding StageOdds}" />
-
-                            <TextBlock DockPanel.Dock="Top" Style="{StaticResource Faint}"
-                                       Margin="2,4,0,0" FontSize="11"
-                                       Text="Ninguna familia de este tier se llama así."
-                                       Visibility="{Binding PoolNothingFound,
-                                           Converter={StaticResource BoolToVisibility}}" />
-
-                            <ScrollViewer VerticalScrollBarVisibility="Auto"
-                                          HorizontalScrollBarVisibility="Disabled">
-                                <ItemsControl ItemsSource="{Binding VisiblePool}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <WrapPanel Orientation="Horizontal" />
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <!-- LA FAMILIA ENTERA, no un Pokémon. El tier es la
-                                                 banda del FINAL de la línea y lo que te dan es una
-                                                 de sus etapas, así que una lista plana de especies
-                                                 diría «un Tier 5 te puede dar un Gible» y se
-                                                 callaría la mitad que lo hace un Tier 5. -->
-                                            <Border x:Name="Cell" Margin="4" Padding="10,8"
-                                                    CornerRadius="{StaticResource RadiusSmall}"
-                                                    Background="{StaticResource SurfaceBrush}"
-                                                    BorderThickness="1" BorderBrush="Transparent">
-                                                <StackPanel>
-                                                    <ItemsControl ItemsSource="{Binding Stages}"
-                                                                  HorizontalAlignment="Center">
-                                                        <ItemsControl.ItemsPanel>
-                                                            <ItemsPanelTemplate>
-                                                                <StackPanel Orientation="Horizontal" />
-                                                            </ItemsPanelTemplate>
-                                                        </ItemsControl.ItemsPanel>
-                                                        <ItemsControl.ItemTemplate>
-                                                            <DataTemplate>
-                                                                <StackPanel Orientation="Horizontal"
-                                                                            VerticalAlignment="Center">
-                                                                    <TextBlock Text="›" FontSize="20" Opacity="0.3"
-                                                                               VerticalAlignment="Center"
-                                                                               Margin="2,0,2,14"
-                                                                               Visibility="{Binding Arrow,
-                                                                                   Converter={StaticResource BoolToVisibility}}" />
-                                                                    <StackPanel Width="86">
-                                                                        <Image Source="{Binding Sprite}"
-                                                                               Width="64" Height="64"
-                                                                               RenderOptions.BitmapScalingMode="NearestNeighbor" />
-                                                                        <TextBlock Text="{Binding Name}"
-                                                                                   Style="{StaticResource Body}"
-                                                                                   FontSize="11" TextAlignment="Center"
-                                                                                   TextTrimming="CharacterEllipsis" />
-                                                                        <TextBlock Style="{StaticResource Mono}"
-                                                                                   FontSize="9.5" TextAlignment="Center"
-                                                                                   Opacity="0.45"
-                                                                                   Text="{Binding Total}" />
-                                                                    </StackPanel>
-                                                                </StackPanel>
-                                                            </DataTemplate>
-                                                        </ItemsControl.ItemTemplate>
-                                                    </ItemsControl>
-
-                                                    <!-- Los legendarios se dicen: «quiénes están en
-                                                         el Tier 5» es en realidad una pregunta
-                                                         sobre ellos. -->
-                                                    <Border Margin="0,5,0,0" Padding="5,1" CornerRadius="3"
-                                                            HorizontalAlignment="Center"
-                                                            Background="{StaticResource AccentDeepBrush}"
-                                                            Visibility="{Binding Legendary,
-                                                                Converter={StaticResource BoolToVisibility}}">
-                                                        <TextBlock Text="LEGENDARIO" Style="{StaticResource Mono}"
-                                                                   FontSize="8"
-                                                                   Foreground="{StaticResource AccentBrightBrush}" />
-                                                    </Border>
-                                                </StackPanel>
-                                            </Border>
-                                            <DataTemplate.Triggers>
-                                                <Trigger SourceName="Cell" Property="IsMouseOver" Value="True">
-                                                    <Setter TargetName="Cell" Property="Background"
-                                                            Value="{StaticResource SurfaceHighBrush}" />
-                                                    <Setter TargetName="Cell" Property="BorderBrush"
-                                                            Value="{StaticResource BorderStrongBrush}" />
-                                                </Trigger>
-                                            </DataTemplate.Triggers>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </ScrollViewer>
-                        </DockPanel>
-                    </Border>
-
-                    <!-- LO QUE DA CADA PRUEBA.
-                         Sale de Data/grants.json, no está escrito aquí: cambiar la tabla de la
-                         competición cambia esta pantalla. Lo conseguido se MARCA y no se quita,
-                         porque la pregunta que contesta es «¿gasto puntos ahora o espero a la
-                         prueba que viene?», y para eso hacen falta las que faltan tanto como las
-                         que ya pagaron.
-
-                         Detrás de un botón y no en una fila propia: catorce filas que se leen una
-                         vez no valen un quinto de la pantalla para siempre. Comparte sitio con la
-                         lista del tier, así que abrir una cierra la otra. -->
-                    <Border Grid.Row="0" Grid.RowSpan="5" Margin="10,10,10,10" Padding="16,14"
-                            CornerRadius="{StaticResource RadiusMedium}"
-                            Background="{StaticResource SunkenBrush}" BorderThickness="1"
-                            BorderBrush="{StaticResource AccentDimBrush}"
-                            Visibility="{Binding ShowingGrants, Converter={StaticResource BoolToVisibility}}">
-                        <DockPanel>
-                            <DockPanel DockPanel.Dock="Top" Margin="0,0,0,4">
-                                <Button DockPanel.Dock="Right" Content="CERRAR"
-                                        Style="{StaticResource GhostButton}" Padding="10,4" FontSize="10"
-                                        Command="{Binding ToggleGrantsCommand}" />
-                                <TextBlock Text="LO QUE DA CADA PRUEBA" Style="{StaticResource Mono}"
-                                           FontSize="11" VerticalAlignment="Center"
-                                           Foreground="{StaticResource AccentBrush}" />
-                            </DockPanel>
-
-                            <TextBlock DockPanel.Dock="Top" Style="{StaticResource Faint}" FontSize="11"
-                                       Margin="0,0,0,12" TextWrapping="Wrap"
-                                       Text="Las tiradas y los intercambios se cobran solos al superar la prueba: salen de los logros, que el cartucho demuestra. Aquí solo se miran." />
-
-                            <TextBlock DockPanel.Dock="Bottom" Style="{StaticResource Mono}" FontSize="10.5"
-                                       Opacity="0.5" Margin="0,10,0,0"
-                                       Text="{Binding GrantsSummary}" />
-
-                            <ScrollViewer VerticalScrollBarVisibility="Auto"
-                                          HorizontalScrollBarVisibility="Disabled">
-                                <ItemsControl ItemsSource="{Binding Grants}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <UniformGrid Columns="2" />
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <!-- La fila entera se apaga si el hito no está
-                                                 conseguido. Es la única diferencia entre las dos
-                                                 mitades de la tabla, y basta: un icono de candado
-                                                 en catorce filas es ruido. -->
-                                            <Border x:Name="Row" Margin="3,2" Padding="11,8"
-                                                    CornerRadius="{StaticResource RadiusSmall}"
-                                                    Background="{StaticResource SurfaceBrush}">
-                                                <DockPanel>
-                                                    <!-- Relleno cuando ya se consiguió, hueco
-                                                         cuando falta. -->
-                                                    <Ellipse x:Name="Dot" DockPanel.Dock="Left"
-                                                             Width="8" Height="8" Margin="0,0,10,0"
-                                                             VerticalAlignment="Center"
-                                                             Fill="Transparent" StrokeThickness="1"
-                                                             Stroke="{StaticResource TextFaintBrush}" />
-
-                                                    <StackPanel DockPanel.Dock="Right"
-                                                                Orientation="Horizontal"
-                                                                VerticalAlignment="Center">
-                                                        <ItemsControl ItemsSource="{Binding Rolls}">
-                                                            <ItemsControl.ItemsPanel>
-                                                                <ItemsPanelTemplate>
-                                                                    <StackPanel Orientation="Horizontal" />
-                                                                </ItemsPanelTemplate>
-                                                            </ItemsControl.ItemsPanel>
-                                                            <ItemsControl.ItemTemplate>
-                                                                <DataTemplate>
-                                                                    <Border Margin="4,0,0,0" Padding="8,3"
-                                                                            CornerRadius="3"
-                                                                            Background="{StaticResource BackgroundBrush}"
-                                                                            BorderThickness="1"
-                                                                            BorderBrush="{Binding BrushKey,
-                                                                                Converter={StaticResource ResourceKey}}">
-                                                                        <TextBlock Text="{Binding Text}"
-                                                                                   Style="{StaticResource Mono}"
-                                                                                   FontSize="10"
-                                                                                   Foreground="{Binding BrushKey,
-                                                                                       Converter={StaticResource ResourceKey}}" />
-                                                                    </Border>
-                                                                </DataTemplate>
-                                                            </ItemsControl.ItemTemplate>
-                                                        </ItemsControl>
-
-                                                        <Border Margin="4,0,0,0" Padding="8,3" CornerRadius="3"
-                                                                Background="{StaticResource BackgroundBrush}"
-                                                                BorderThickness="1"
-                                                                BorderBrush="{StaticResource BorderStrongBrush}"
-                                                                Visibility="{Binding HasWonderTrades,
-                                                                    Converter={StaticResource BoolToVisibility}}">
-                                                            <TextBlock Text="{Binding WonderTradeText}"
-                                                                       Style="{StaticResource Mono}" FontSize="10"
-                                                                       Opacity="0.7" />
-                                                        </Border>
-                                                    </StackPanel>
-
-                                                    <TextBlock Text="{Binding Name}" Style="{StaticResource Body}"
-                                                               FontSize="12.5" VerticalAlignment="Center"
-                                                               TextTrimming="CharacterEllipsis" />
-                                                </DockPanel>
-                                            </Border>
-                                            <DataTemplate.Triggers>
-                                                <DataTrigger Binding="{Binding Reached}" Value="True">
-                                                    <Setter TargetName="Dot" Property="Fill"
-                                                            Value="{StaticResource SuccessBrush}" />
-                                                    <Setter TargetName="Dot" Property="Stroke"
-                                                            Value="{StaticResource SuccessBrush}" />
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding Reached}" Value="False">
-                                                    <Setter TargetName="Row" Property="Opacity" Value="0.45" />
-                                                </DataTrigger>
-                                            </DataTemplate.Triggers>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </ScrollViewer>
-                        </DockPanel>
-                    </Border>
-
-                    <!-- LO QUE YA HA SALIDO.
- Llena los cuatrocientos y pico pixeles que la
-                         pantalla tenia en negro, y de paso contesta la pregunta que un gacha
-                         siempre levanta y esta no contestaba: que llevas. Cada uno con el borde
-                         de su tier, asi que la racha se lee de un vistazo. -->
-                    <StackPanel Grid.Row="4" VerticalAlignment="Bottom" Margin="0,0,0,16"
-                                Visibility="{Binding ShowHistory, Converter={StaticResource BoolToVisibility}}">
-                        <TextBlock Text="LO QUE HA SALIDO" Style="{StaticResource Mono}" FontSize="9"
-                                   HorizontalAlignment="Center" Opacity="0.35" Margin="0,0,0,6" />
-
-                        <ItemsControl ItemsSource="{Binding History}" HorizontalAlignment="Center">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <StackPanel Orientation="Horizontal" />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Width="46" Height="46" Margin="3,0" CornerRadius="4"
-                                            BorderThickness="1.5"
-                                            Background="{StaticResource SunkenBrush}"
-                                            ToolTip="{Binding SpeciesName}"
-                                            BorderBrush="{Binding BrushKey,
-                                                Converter={StaticResource ResourceKey}}">
-                                        <Image Source="{Binding Sprite}" Width="38" Height="38"
-                                               RenderOptions.BitmapScalingMode="NearestNeighbor" />
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
                     </StackPanel>
-                    </Grid>
-                </Grid>
-            </Border>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
 
-            <!-- BANNERS. La selección va al view model; la lista no decide nada. -->
-            <ListBox Grid.Row="1" ItemsSource="{Binding Banners}" SelectedItem="{Binding SelectedBanner}"
-                     Background="Transparent" BorderThickness="0" Margin="-4,12,-4,0"
-                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                <ListBox.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <UniformGrid Columns="3" />
-                    </ItemsPanelTemplate>
-                </ListBox.ItemsPanel>
-                <ListBox.ItemContainerStyle>
-                    <Style TargetType="ListBoxItem">
-                        <Setter Property="Margin" Value="4" />
-                        <Setter Property="Padding" Value="0" />
-                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="ListBoxItem">
-                                    <Border x:Name="Card" Background="{StaticResource PanelBrush}"
-                                            CornerRadius="8" BorderThickness="1" Padding="14,12"
-                                            BorderBrush="{StaticResource BorderStrongBrush}">
-                                        <ContentPresenter />
-                                    </Border>
-                                    <ControlTemplate.Triggers>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter TargetName="Card" Property="Background"
-                                                    Value="{StaticResource SurfaceHighBrush}" />
-                                            <Setter TargetName="Card" Property="BorderBrush"
-                                                    Value="{StaticResource AccentDimBrush}" />
-                                        </Trigger>
-                                        <!-- El banner elegido se enciende entero: es el que va a
-                                             cobrar cuando se pulse TIRAR, y eso hay que verlo. -->
-                                        <Trigger Property="IsSelected" Value="True">
-                                            <Setter TargetName="Card" Property="BorderBrush"
-                                                    Value="{StaticResource AccentBrush}" />
-                                            <Setter TargetName="Card" Property="Background"
-                                                    Value="{StaticResource AccentDeepBrush}" />
-                                            <!-- Y con grosor, que el tono solo no se veia: en la
-                                                 captura el elegido y los otros dos se distinguian
-                                                 por un gris de diferencia. -->
-                                            <Setter TargetName="Card" Property="BorderThickness" Value="2" />
-                                        </Trigger>
-                                    </ControlTemplate.Triggers>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                    </Style>
-                </ListBox.ItemContainerStyle>
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <StackPanel>
-                            <DockPanel>
-                                <!-- La chapa dice lo que cuesta, y cuando hay tiradas gratis dice
-                                     eso y se pone verde: es el aviso de que ese banner no cobra. -->
-                                <Border DockPanel.Dock="Right">
-                                    <Border.Style>
-                                        <Style TargetType="Border" BasedOn="{StaticResource Chip}">
-                                            <Setter Property="Background" Value="{StaticResource BackgroundBrush}" />
-                                            <Setter Property="BorderBrush" Value="{StaticResource AccentDimBrush}" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding HasFree}" Value="True">
-                                                    <Setter Property="Background" Value="{StaticResource SuccessDeepBrush}" />
-                                                    <Setter Property="BorderBrush" Value="{StaticResource SuccessBrush}" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Border.Style>
-                                    <TextBlock Text="{Binding Cost}">
-                                        <TextBlock.Style>
-                                            <Style TargetType="TextBlock" BasedOn="{StaticResource ChipText}">
-                                                <Setter Property="Foreground" Value="{StaticResource AccentBrightBrush}" />
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding HasFree}" Value="True">
-                                                        <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
-                                </Border>
-                                <TextBlock Text="{Binding Name}" Style="{StaticResource PanelHeading}"
-                                           Margin="0" VerticalAlignment="Center" />
-                            </DockPanel>
-                            <TextBlock Text="{Binding Description}" Style="{StaticResource Muted}"
-                                       FontSize="12" Margin="0,8,0,0" />
-                            <!-- LA FORMA DEL BANNER, en los colores de los tiers. Los porcentajes
-                                 escritos siguen viviendo en los portales de arriba -el portal ES el
-                                 tier y es lo que se enciende al caer una tirada-; lo que habia aqui
-                                 eran las mismas tres cifras repetidas en el mismo idioma. Una barra
-                                 no repite: dice de un vistazo cual reparte mas de lo bueno, que es
-                                 lo que se compara al elegir. Las cifras siguen ahi, en el rotulo.
-                                 Viewbox con Stretch Fill: los tramos suman cien unidades y el
-                                 Viewbox las estira al ancho que haya, sin que nadie mida nada. -->
-                            <Border Margin="0,10,0,0" CornerRadius="3" ClipToBounds="True"
-                                    ToolTip="{Binding Odds}">
-                                <Viewbox Stretch="Fill" Height="7">
-                                    <ItemsControl ItemsSource="{Binding Slices}">
-                                        <ItemsControl.ItemsPanel>
-                                            <ItemsPanelTemplate>
-                                                <StackPanel Orientation="Horizontal" />
-                                            </ItemsPanelTemplate>
-                                        </ItemsControl.ItemsPanel>
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <Rectangle Width="{Binding Width}" Height="7"
-                                                           Fill="{Binding BrushKey,
-                                                               Converter={StaticResource ResourceKey}}"
-                                                           ToolTip="{Binding Label}" />
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </Viewbox>
-                            </Border>
-                        </StackPanel>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
+        <!-- LA BARRA DE ABAJO, en una sola fila (2026-09-24): TIRAR, las probabilidades del banner elegido a lo ancho y,
+             a la derecha, los puntos y lo que da cada prueba. Así la máquina se queda con el alto. -->
+        <Grid Grid.Row="2" Margin="0,10,0,0">
+            <views:PixelPanel Fill="{StaticResource PxFace}" />
+            <StackPanel Margin="12,10,18,15">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
 
-            <Border Grid.Row="2" Style="{StaticResource Inset}" Padding="14,12" Margin="0,12,0,0">
-                <StackPanel>
-                    <DockPanel>
-                        <!-- El precio va EN el boton. Antes ponia «TIRAR» y al lado una chapa con
-                             los puntos, que es el SALDO y no lo que cuesta: para saber que te iban
-                             a cobrar habia que mirar a otro sitio, la insignia del banner elegido,
-                             y cual estaba elegido se distinguia por un fondo un tono mas claro. -->
-                        <Button DockPanel.Dock="Left" Command="{Binding RollCommand}"
-                                Style="{StaticResource PrimaryButton}"
-                                MinWidth="200" Padding="18,9">
-                            <StackPanel>
-                                <TextBlock Text="{Binding RollLabel}" FontSize="14" FontWeight="Bold"
-                                           HorizontalAlignment="Center" />
-                                <TextBlock Text="{Binding RollCost}" FontSize="10.5" Opacity="0.8"
-                                           HorizontalAlignment="Center" Margin="0,1,0,0" />
+                    <Button Grid.Column="0" VerticalAlignment="Center" Command="{Binding RollCommand}" Cursor="Hand" MinWidth="200">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Grid x:Name="Body" Background="Transparent">
+                                    <views:PixelPanel x:Name="Plate" Fill="{StaticResource PxAccent}" />
+                                    <StackPanel x:Name="Face" Margin="18,8,24,13" HorizontalAlignment="Center">
+                                        <pixel:PixelText x:Name="Label" Text="{Binding RollLabel}" Scale="3" Tight="True"
+                                                         HorizontalAlignment="Center" Colour="{StaticResource PxInk}" />
+                                        <pixel:PixelText x:Name="Cost" Text="{Binding RollCost}" Scale="2" Tight="True"
+                                                         HorizontalAlignment="Center" Margin="0,4,0,0" Colour="{StaticResource PxAccentDeep}" />
+                                    </StackPanel>
+                                </Grid>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxAccentLight}" />
+                                    </Trigger>
+                                    <Trigger Property="IsPressed" Value="True">
+                                        <Setter TargetName="Plate" Property="HasShadow" Value="False" />
+                                        <Setter TargetName="Plate" Property="Margin" Value="6,6,0,0" />
+                                        <Setter TargetName="Face" Property="RenderTransform">
+                                            <Setter.Value>
+                                                <TranslateTransform X="6" Y="6" />
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Trigger>
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxFaceLift}" />
+                                        <Setter TargetName="Label" Property="Colour" Value="{StaticResource PxTextFaint}" />
+                                        <Setter TargetName="Cost" Property="Colour" Value="{StaticResource PxTextFaint}" />
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+
+                    <!-- LA ESCALERA DE RAREZA: cada tier con su ball, su probabilidad en este banner y la banda del total
+                         base de la evolución final. Se pulsa para ver quién puede salir. -->
+                    <ItemsControl Grid.Column="1" ItemsSource="{Binding Portals}" ItemTemplate="{StaticResource PortalTemplate}"
+                                  Margin="12,0,4,0" VerticalAlignment="Center">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Rows="1" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                    </ItemsControl>
+
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="6,0,0,0">
+                        <Grid HorizontalAlignment="Stretch">
+                            <views:PixelPanel Fill="{StaticResource PxWell}" IsSunken="True" HasShadow="False" />
+                            <StackPanel Orientation="Horizontal" Margin="10,7,12,8" HorizontalAlignment="Center">
+                                <pixel:PixelIcon Icon="IconPoints" Scale="1" VerticalAlignment="Center" Margin="0,0,7,0" />
+                                <pixel:PixelText Text="{Binding Balance, StringFormat='{}{0} puntos'}" Scale="2" Tight="True"
+                                                 VerticalAlignment="Center" Colour="{StaticResource PxAccentLight}" />
                             </StackPanel>
-                        </Button>
+                        </Grid>
+                        <Button Content="PREMIOS POR PRUEBA" Style="{StaticResource SmallButton}" Margin="0,8,0,0"
+                                HorizontalAlignment="Stretch" Command="{Binding ToggleGrantsCommand}" />
+                    </StackPanel>
+                </Grid>
 
-                        <!-- Las cinco chapas de tier vivian aqui, con «T1 · ≤400» y compañia escritos
-                             A MANO en el XAML: editar Data/gacha.json las dejaba mintiendo. Ahora
-                             cada rango va bajo su portal, calculado de los propios tiers. -->
+                <pixel:PixelText Text="{Binding Status}" Scale="2" Wrap="True" Margin="0,8,0,0"
+                                 Colour="{StaticResource PxText}" />
+            </StackPanel>
+        </Grid>
 
-                        <!-- La tabla de lo que paga cada prueba, a un clic. Vivía siempre abierta
-                             bajo los banners: catorce filas que se leen una vez no valen un
-                             quinto de la pantalla para siempre. -->
-                        <Button DockPanel.Dock="Right" Content="LO QUE DA CADA PRUEBA"
-                                Style="{StaticResource GhostButton}" Padding="14,8" FontSize="11"
-                                VerticalAlignment="Center"
-                                Command="{Binding ToggleGrantsCommand}" />
-
-                        <Border Style="{StaticResource Chip}" HorizontalAlignment="Left" Margin="14,0,0,0"
-                                Padding="12,5"
-                                Background="{StaticResource BackgroundBrush}"
-                                BorderBrush="{StaticResource AccentDimBrush}">
-                            <TextBlock Style="{StaticResource ChipText}" FontSize="12"
-                                       Foreground="{StaticResource AccentBrush}"
-                                       Text="{Binding Balance, StringFormat='{}{0} puntos'}" />
-                        </Border>
-                    </DockPanel>
-
-                    <TextBlock Text="{Binding Status}" FontSize="12" Margin="0,12,0,0">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock" BasedOn="{StaticResource Body}">
-                                <Setter Property="Visibility" Value="Visible" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Status}" Value="">
-                                        <Setter Property="Visibility" Value="Collapsed" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
-                </StackPanel>
-            </Border>
-
-
+        <Grid Grid.Row="0" Grid.RowSpan="3" Visibility="{Binding ShowingPool, Converter={StaticResource BoolToVisibility}}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="0.52*" />
+                <ColumnDefinition Width="0.48*" />
+            </Grid.ColumnDefinitions>
+                    <!-- EL BOTE: quién puede salir de un tier, por familias. A la izquierda y de arriba abajo, encima de la
+                         estantería y la máquina, dejando a la vista la alfombrilla con la ball y su ficha (2026-09-24). -->
+                    <Grid Grid.Column="0" Margin="0,0,0,0">
+                                <views:PixelPanel Fill="#F2100C1C" HeaderHeight="36" HeaderFill="{StaticResource PxFaceHigh}"
+                                                  HeaderAccent="{Binding PoolBrushKey, Converter={StaticResource ResourceKey}, ConverterParameter=color}" />
+                                <DockPanel Margin="14,4,20,18">
+                                    <DockPanel DockPanel.Dock="Top" Height="34" Margin="0,0,0,12">
+                                        <Button DockPanel.Dock="Right" Content="CERRAR" Style="{StaticResource SmallButton}"
+                                                VerticalAlignment="Center" Margin="0,4,0,0"
+                                                Command="{Binding ShowPoolCommand}" CommandParameter="{x:Null}" />
+                                        <pixel:PixelText Text="{Binding PoolTitle}" Scale="2" Tight="True" VerticalAlignment="Center"
+                                                         Shadow="{StaticResource PxShadow}"
+                                                         Colour="{Binding PoolBrushKey, Converter={StaticResource ResourceKey}, ConverterParameter=color}" />
+                                    </DockPanel>
+            
+                                    <!-- EL BUSCADOR. -->
+                                    <Grid DockPanel.Dock="Top" Margin="0,0,0,10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+            
+                                        <TextBox Grid.Column="0" Style="{StaticResource PxTextBox}" Padding="12,8"
+                                                 Tag="Buscar un Pokémon…"
+                                                 Text="{Binding PoolSearch, UpdateSourceTrigger=PropertyChanged, Delay=120}" />
+                                        <Button Grid.Column="1" Content="×" Margin="8,0,0,0" Style="{StaticResource SmallButton}"
+                                                Command="{Binding ClearPoolSearchCommand}" ToolTip="Borrar la búsqueda" />
+                                        <pixel:PixelText Grid.Column="2" Text="{Binding PoolCount}" Scale="2" Tight="True"
+                                                         VerticalAlignment="Center" Margin="12,0,2,0" Colour="{StaticResource PxTextDim}" />
+                                    </Grid>
+            
+                                    <!-- Qué etapa de cada familia te toca AHORA. -->
+                                    <pixel:PixelText DockPanel.Dock="Bottom" Text="{Binding StageOdds}" Scale="2" Wrap="True"
+                                                     Margin="0,10,0,0" Colour="{StaticResource PxTextDim}" />
+            
+                                    <pixel:PixelText DockPanel.Dock="Top" Text="Ninguna familia de este tier se llama así."
+                                                     Scale="2" Tight="True" Margin="2,4,0,0" Colour="{StaticResource PxTextFaint}"
+                                                     Visibility="{Binding PoolNothingFound, Converter={StaticResource BoolToVisibility}}" />
+            
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                        <ItemsControl ItemsSource="{Binding VisiblePool}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <WrapPanel Orientation="Horizontal" />
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <!-- LA FAMILIA ENTERA, no un Pokémon: el tier es la banda del FINAL de
+                                                         la línea y lo que te dan es una de sus etapas. -->
+                                                    <Grid x:Name="Cell" Margin="0,0,8,8" Background="Transparent">
+                                                        <views:PixelPanel x:Name="CellPlate" Fill="{StaticResource PxFace}" HasShadow="False" />
+                                                        <StackPanel Margin="10,8,10,10">
+                                                            <ItemsControl ItemsSource="{Binding Stages}" HorizontalAlignment="Center">
+                                                                <ItemsControl.ItemsPanel>
+                                                                    <ItemsPanelTemplate>
+                                                                        <StackPanel Orientation="Horizontal" />
+                                                                    </ItemsPanelTemplate>
+                                                                </ItemsControl.ItemsPanel>
+                                                                <ItemsControl.ItemTemplate>
+                                                                    <DataTemplate>
+                                                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                                            <pixel:PixelText Text="▶" Scale="2" Tight="True"
+                                                                                             VerticalAlignment="Center" Margin="2,0,2,16"
+                                                                                             Colour="{StaticResource PxTextFaint}"
+                                                                                             Visibility="{Binding Arrow, Converter={StaticResource BoolToVisibility}}" />
+                                                                            <StackPanel Width="90">
+                                                                                <Grid Height="52">
+                                                                                    <pixel:PixelSprite Source="{Binding Sprite}" Scale="2" TrimEmpty="True"
+                                                                                                       Outline="{StaticResource PxShadow}"
+                                                                                                       HorizontalAlignment="Center" VerticalAlignment="Bottom" />
+                                                                                </Grid>
+                                                                                <pixel:PixelText Text="{Binding Name}" Scale="2" Tight="True" Trim="True"
+                                                                                                 HorizontalAlignment="Center" Margin="0,4,0,0"
+                                                                                                 Colour="{StaticResource PxText}" />
+                                                                                <pixel:PixelText Text="{Binding Total}" Scale="2" Tight="True"
+                                                                                                 HorizontalAlignment="Center" Margin="0,3,0,0"
+                                                                                                 Colour="{StaticResource PxTextFaint}" />
+                                                                            </StackPanel>
+                                                                        </StackPanel>
+                                                                    </DataTemplate>
+                                                                </ItemsControl.ItemTemplate>
+                                                            </ItemsControl>
+            
+                                                            <!-- Los legendarios se dicen. -->
+                                                            <Grid HorizontalAlignment="Center" Margin="0,6,0,0"
+                                                                  Visibility="{Binding Legendary, Converter={StaticResource BoolToVisibility}}">
+                                                                <views:PixelPanel Fill="{StaticResource PxAccentDeep}" HasShadow="False" />
+                                                                <pixel:PixelText Text="LEGENDARIO" Scale="2" Tight="True" Margin="7,4,8,5"
+                                                                                 Colour="{StaticResource PxAccentLight}" />
+                                                            </Grid>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                    <DataTemplate.Triggers>
+                                                        <Trigger SourceName="Cell" Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="CellPlate" Property="Fill" Value="{StaticResource PxFaceLift}" />
+                                                        </Trigger>
+                                                    </DataTemplate.Triggers>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </ScrollViewer>
+                                </DockPanel>
+                            </Grid>
+        </Grid>
     </Grid>
 </UserControl>

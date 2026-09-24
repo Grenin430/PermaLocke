@@ -118,7 +118,7 @@ public sealed class AchievementService(IAchievementCatalog catalog, IPointsServi
         if (found.Achievement.IsAutomatic)
         {
             return new PointsResult(false, balance,
-                $"«{found.Achievement.Name}» lo cuenta PermaLocke solo; no se marca a mano.");
+                $"«{found.Achievement.Name}» se cuenta solo.");
         }
 
         if (found.Unlocked)

@@ -1,0 +1,189 @@
+---
+tipo: indice
+generado: 2026-09-24
+---
+# Índice de docs/ARCHITECTURE.md
+
+11.7k líneas: NO leerlo entero. Buscar la sección con `grep -n '^## §N\|^## N\.' docs/ARCHITECTURE.md` y leer solo ese tramo. Números de línea a 2026-09-24 (se desplazan). Vuelve a [[00 - Inicio]].
+
+- L11 · 1. Contexto
+- L32 · 2. Qué se aprendió de BxnnyLocke
+- L66 · 3. Decisiones técnicas
+- L105 · 4. Módulos
+- L148 · 5. Dominio, eventos y puntos
+- L186 · 6. GameLink — la parte difícil
+- L352 · 7. Rule Engine
+- L403 · 8. Randomización
+- L437 · 9. Persistencia, sincronización e integridad
+- L490 · 10. Subsistemas de juego
+- L519 · 11. Riesgos
+- L533 · 12. Fases
+- L556 · 13. La zona de captura
+- L584 · 14. Requisito: impedir la captura, no solo registrarla
+- L611 · 15. Escritura: qué se puede y qué no
+- L684 · 16. El fork funciona; la dirección no es la buena
+- L876 · 17. Implementación en la app
+- L906 · 18. Cap de nivel y mochila en la app
+- L937 · 19. Randomizador: estrategia validada en el juego
+- L1077 · 20. Randomizador: qué está implementado
+- L1335 · 21. El randomizador en la app
+- L1383 · 22. La mochila, localizada por su estructura
+- L1537 · 23. La zona actual, resuelta
+- L1706 · 24. La regla de las Poké Balls, implementada
+- L1787 · 25. El emulador viaja con la app
+- L1834 · 26. Fase 4: el gacha
+- L1981 · 27. Dos fallos que solo aparecieron apagando módulos
+- L2044 · 28. Sprites de Pokémon: se pueden sacar de la ROM
+- L2154 · 29. La animación del gacha, rehecha
+- L2218 · 30. La tabla especie → icono, construida a mano
+- L2272 · 30 bis. El segundo bloque, identificado entero
+- L2350 · 31. La ruleta del gacha
+- L2481 · 32. El visor Pokémon: el PC de la partida
+- L2550 · 33. Wonder trade
+- L2628 · 34. Iconos de objeto y de tipo: qué hay en el cartucho y qué no
+- L2707 · 35. El intercambio no se veía: un record que compara por valor
+- L2754 · 36. Logros y penalizaciones
+- L2822 · 37. La lista de logros de la competición
+- L2872 · 38. Que lo cuente el juego
+- L2927 · 39. Las banderas de evento: medirlas, no adivinarlas
+- L2985 · 40. La primera prueba se ancla en el premio, no en la bandera
+- L3079 · 41. Nombres que faltaban y movimientos Z repartidos
+- L3141 · 42. Renombrar no es capturar, y las Dominsignias las cuenta el juego
+- L3212 · 43. Los 21 logros se cuentan solos: el cartucho dice qué prueba da qué cristal
+- L3283 · 44. El wonder trade devolvía peor: no era el sorteo, era el cartucho
+- L3339 · 45. La tienda, y el índice de iconos de objeto que el §34 se dejó a medias
+- L3451 · 46. Los roles
+- L3517 · 47. El Pokémon extra, y el cap que no se toca
+- L3594 · 48. Los Dominantes también suben, y la tabla de caps se explica sola
+- L3707 · 49. El cap de nivel, por fin en marcha
+- L3752 · 50. La interfaz, rehecha entera
+- L3865 · 51. El equipo en el visor, y los EV editables
+- L3979 · 52. Darse objetos: dos botones y ninguna cifra que teclear
+- L4025 · 53. El cap de nivel no se aplicaba, y el escritor no lo sabía
+- L4207 · 54. Por qué el enlace se moría a media sesión
+- L4255 · 55. La regla de las Poké Balls no actuaba porque nunca supo dónde estabas
+- L4359 · 56. Ninguna muerte se había contado nunca, y el motivo era un cero
+- L4474 · 57. POKE PASTE
+- L4491 · 58. Fuera los dos botones de HOME, y el contador manual a cero
+- L4534 · 59. El que se va también cuenta, y el «muerto» que no lo es
+- L4608 · 60. Premios de una sola vez
+- L4655 · 61. Los cristales Z, sacados del cartucho por fin
+- L4745 · 62. El rol LUDÓPATA y su ruleta
+- L4866 · 63. Tiradas gratis y wonder trades: crédito, no regalos sueltos
+- L4925 · 64. Cambiar de rol, y cuadrar la run con la partida
+- L4975 · 65. Las dieciséis caras, contra una copia de la partida real
+- L5025 · 66. Diez Super Balls, los iniciales, y empezar de cero
+- L5136 · 67. Empezar de cero borra de verdad
+- L5218 · 68. Nada de esto contaba porque nadie había pulsado un botón
+- L5346 · 69. Los iniciales, primera etapa de una línea de tres
+- L5405 · 70. Las evoluciones que a solas no existen
+- L5524 · 71. Poké Balls en el mostrador, y el equipo entra al wonder trade
+- L5564 · 72. Megaevolución temprana: no era el objeto, era un campo con nombre
+- L5624 · 73. Los jefes con mega: es una forma, no una especie
+- L5691 · 74. La interfaz vuelve a hacerse, esta vez con identidad
+- L5776 · 75. La carpeta que se le pasa a otro jugador
+- L5804 · 76. La run no se copiaba nunca
+- L5834 · 77. El mantenimiento sale de la terminal
+- L5878 · 78. ESTADÍSTICAS: la cadena de eventos, leída del revés
+- L5912 · 79. COMPETICIÓN: la clasificación, por una carpeta compartida
+- L5953 · 80. El combate por link entre los jugadores
+- L6049 · 81. El mapa de Alola, y la regla que nunca se había ejecutado
+- L6159 · 82. El mapa del cartucho: lo que hay y lo que no
+- L6242 · 83. El mapa de verdad: arte del cartucho y marcadores puestos a mano
+- L6364 · 84. La ruleta rehecha, y un color que no podía significar nada
+- L6526 · 85. La sexta prueba comparaba dos unidades distintas
+- L6603 · 86. La rueda paraba y luego cambiaba de opinión
+- L6661 · 87. El gacha reventaba en cada tirada, y el Pokémon llegaba igual
+- L6711 · 88. Volcanion con el dibujo de Hoopa
+- L6763 · 89. El Shedinja que se deshizo, y por qué no es un fallo de escritura
+- L6827 · 90. Los PS no se pueden clavar a cero: medido contra el juego
+- L6890 · 91. Dos diagnósticos falsos, y los dos eran la sonda
+- L6938 · 92. Dónde NO están los PS del equipo
+- L6981 · 93. Los PS se pueden LEER pero no clavar
+- L7032 · 94. Cómo lo hace BxnnyLocke: desde DENTRO del emulador
+- L7111 · 95. El emulador mantiene la marca de muerte
+- L7181 · 96. La lista de vigilancia, y dos veces el mismo error mío
+- L7254 · 97. El Huevo Malo: PKHeX descifra el array que se le da
+- L7351 · 98 · Los PS del equipo: dónde NO están, medido siete veces
+- L7576 · 99 · Dónde vive el PS de verdad: `0x1E4 + 0x158`
+- L7680 · 100 · La clase que faltaba, por tercera vez
+- L7729 · 101 · Los aprendizajes, con las reglas de Universal Pokémon Randomizer
+- L7792 · 102 · Cinco arreglos de pantalla, y una medida que no hizo falta arreglar
+- L7880 · 103 · El gacha: el fallo que metí ayer, un buscador y la tabla de la competición
+- L7945 · 104 · Cómo reparte el gacha de la referencia, medido
+- L8031 · 105 · El gacha reparte líneas evolutivas
+- L8118 · 106 · Una muerte que no se contó: la lectura se iba al espejo
+- L8176 · 107 · La Unidad Ultra pasa a combate importante, y lo que cuesta regenerar
+- L8237 · 108 · Poner EV y que no cambie nada: faltaba la otra mitad
+- L8320 · 109 · La fusión con Lunala, y una regla que no mueve el mundo
+- L8387 · 110 · Instalar ya no destruye el mundo anterior, y el `code.bin` que se quedaba atrás
+- L8439 · 111 · Ferropaladín contra la fusión, y un diagnóstico equivocado sobre Okidogi
+- L8482 · 112 · Fuera el recuadro verde de HOME
+- L8494 · 113 · «X HA MUERTO», encima del juego
+- L8588 · 114 · Los PS durante el combate: dónde viven, medido en un combate real
+- L8785 · 115 · CEMENTERIO y killcam
+- L8832 · 116 · El cielo de Alola
+- L8890 · 117 · La regla de primer encuentro, por fin con zona
+- L8973 · 118 · El MAPA se marca solo
+- L9097 · 119 · Fuera del MAPA no se captura
+- L9175 · 120 · Los avisos, en pixel art
+- L9212 · 121 · El wonder trade, por cable
+- L9289 · 122 · Entrenadores más difíciles, sin cambiar quiénes son
+- L9385 · 123 · Un jugador, una carpeta, y un resumen que se puede comprobar
+- L9472 · 124 · COMPETICIÓN decía «no puede combatir» a quien sí podía
+- L9489 · 125 · JUGAR: la aplicación como lanzador
+- L9552 · 126 · JUGAR como una biblioteca de Steam: amigos y actividad
+- L9607 · 127 · Fuera las explicaciones: textos para el jugador
+- L9638 · 128 · El visor Pokémon, con aspecto de PC del juego
+- L9665 · 129 · El admin manda regalos, y la app los recoge
+- L9730 · 130 · ENTRENAR EV, su propia sección
+- L9793 · 131 · Las formas regionales, con sus propias estadísticas
+- L9829 · 132 · Habilidades de nueve bits: el randomizador repartía habilidades que no existen
+- L9890 · 133 · La 1.4 del mod de gen 8-9, instalada
+- L9935 · 134 · Pokémon de prueba del mod, y dos lecturas que PKHeX hacía con la tabla de la 807
+- L9998 · 135 · Los muertos se curaban: la lista de direcciones del equipo tenía ocho días
+- L10031 · 136 · Los ataques y habilidades del mod entran en el randomizado
+- L10075 · 137 · El gacha y el wonder trade también reparten las habilidades del mod
+- L10097 · 138 · Las formas regionales, por fin en el randomizado
+- L10145 · 139 · Formas regionales en el gacha y el wonder trade, y un dibujo por forma
+- L10186 · 140 · La forma también en el cementerio, POKE PASTE y la lista del gacha
+- L10213 · 141 · Las MT solo se escribían en una de las dos copias de la tabla de especies
+- L10239 · 142 · El recuerda-movimientos, dentro de la aplicación, como el de Añil
+- L10300 · 143 · ENTRENAR EV y MOVIMIENTOS, con el aspecto de la bolsa de Ultra Luna
+- L10343 · 144 · MOVIMIENTOS: los iconos oficiales de categoría, las cifras a la vista y la lista seguida
+- L10410 · 145 · Los objetos de evolución clásicos, cada lista en su tienda
+- L10463 · 146 · La escena de los iniciales nombra a los de verdad
+- L10512 · 147 · Las Poké Balls de la run anterior aparecieron en la partida nueva
+- L10539 · 148 · Cinco copias para los amigos, dentro de la carpeta de la competición
+- L10574 · 149 · Las rutas cuentan desde la primera Poké Ball
+- L10585 · 150 · Capturas y muertes, también desde la primera Poké Ball
+- L10591 · 151 · Revisión entera del mundo instalado, y lo que salió
+- L10638 · 152 · Afueras de Hauoli en cada combate de la Ruta 1, y el cierre al poner el nombre
+- L10717 · 153 · La primera partida en la carpeta de prueba: balls perdidas, la escuela sin ruta y un combate de otra run
+- L10762 · 154 · El cap de nivel bajaba la experiencia y dejaba el nivel de la pantalla
+- L10792 · 155 · Lo que sale del gacha va al equipo si cabe
+- L10812 · 156 · Abrir la bolsa te devolvía a la ruta de antes
+- L10849 · 157 · Megas solo después de la sexta prueba
+- L10877 · 158 · Los ataques, ordenados de flojo a fuerte
+- L10913 · 159 · Dos cierres de Azahar en tres minutos, y dos PermaLocke a la vez
+- L10950 · 160 · Los combates de una prueba no son el encuentro de la ruta
+- L10986 · 161 · Te curaban y te cobraban otro equipo caído
+- L11015 · 162 · Los ataques fulminantes, fuera para todos
+- L11048 · 163 · Los objetos del suelo, al azar como en la referencia
+- L11085 · 164 · El registro que anda gana a la mayoría quieta
+- L11122 · 165 · El suelo naranja no es una barra de PS
+- L11153 · 166 · Que cada Pokémon aprenda lo suyo
+- L11181 · 167 · Un log que se ahogaba en sí mismo
+- L11200 · 168 · Que funcione en cualquier PC sin probar amigo por amigo
+- L11252 · 169 · El cuarto del entrenador, en la portada de JUGAR
+- L11292 · 170 · El gacha vuelve a su sitio, y su historial es de una run
+- L11321 · 171 · El gacha es una máquina de cápsulas
+- L11372 · 172 · Un solo zip para compartir, y el Escritorio fuera de las instrucciones
+- L11392 · 173 · Los cierres del amigo eran del emulador, y ya están arreglados
+- L11436 · 174 · El wonder trade es una cabina en la sala del gacha
+- L11506 · 175 · La ruleta del LUDÓPATA es una rueda de feria en la sala recreativa
+- L11572 · 176 · Muestra del estilo en píxeles: el marco, la barra lateral y HOME
+
+Subsecciones §176: bis (visor), ter (todas las pantallas, fuera ESTADÍSTICAS), quater (EV/MOVIMIENTOS sin bolsa, diálogos).
+
+Otros docs: `docs/DISTRIBUCION-LOCAL.md` (reparto local, informes del amigo, revisiones r2/r3; ver [[Incidencias del PC del amigo]]), `docs/MOD-EXPANSION.md` (mod gen 8-9), `docs/fork/` (parches del fork de Azahar).

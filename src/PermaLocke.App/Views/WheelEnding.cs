@@ -50,7 +50,7 @@ public sealed record WheelEnding(string Name, double Power, int ExtraTurns, doub
     /// Every closing this screen knows.
     /// </summary>
     /// <remarks>
-    /// The rule they all obey, unchanged from the gacha's <see cref="ReelEnding"/>: <b>none of them
+    /// The rule they all obey, the same the gacha's old reel obeyed: <b>none of them
     /// may correlate with what came out.</b> The brake, the distance and the settle are all things
     /// a player would learn to read, so which one plays is drawn from its own stream — not from the
     /// face, not from whether it is a good one. Any of these can precede any result.

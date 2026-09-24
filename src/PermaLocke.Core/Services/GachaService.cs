@@ -225,7 +225,7 @@ public sealed class GachaService(
         if (banner.TotalWeight <= 0)
         {
             return new GachaRollResult(false, balance,
-                Error: $"El banner «{banner.Name}» no tiene rarezas configuradas.");
+                Error: $"«{banner.Name}» no está disponible.");
         }
 
         if (!free && balance < banner.Cost)
@@ -242,8 +242,7 @@ public sealed class GachaService(
         if (Preview(banner, run.Seed, number, cleared) is not { } pull)
         {
             return new GachaRollResult(false, balance,
-                Error: $"El banner «{banner.Name}» no tiene ninguna especie que ofrecer. "
-                       + "¿Está generado Data/species.json?");
+                Error: $"«{banner.Name}» no está disponible.");
         }
 
         // Un banner gratuito no genera gasto: cobrar cero no es cobrar, y PointsService rechaza
@@ -265,7 +264,7 @@ public sealed class GachaService(
             Id = Guid.NewGuid(),
             RunId = run.Id,
             Species = pull.Species,
-            SpeciesName = pull.SpeciesName,
+            SpeciesName = pull.DisplayName,
             Level = pull.Level,
             IsShiny = pull.IsShiny,
             Origin = PokemonOrigin.Gacha,
@@ -273,7 +272,8 @@ public sealed class GachaService(
             ObtainedAt = clock.Now,
 
             // Una tirada no gasta el encuentro de ninguna zona: no viene de ninguna.
-            ConsumedZoneEncounter = false
+            ConsumedZoneEncounter = false,
+            Form = pull.Form
         };
 
         await pokemon.SaveAsync(entry, ct).ConfigureAwait(false);
@@ -292,7 +292,7 @@ public sealed class GachaService(
             Type = GameEventType.GachaRoll,
             Source = EventSource.Player,
             Actor = run.PlayerName,
-            Description = $"Gacha «{banner.Name}»: {pull.SpeciesName} Nv.{pull.Level}"
+            Description = $"Gacha «{banner.Name}»: {pull.DisplayName} Nv.{pull.Level}"
                           + (pull.Legendary ? " (legendario)" : string.Empty)
                           + (pull.IsShiny ? " shiny" : string.Empty),
             PokemonId = entry.Id,
@@ -313,6 +313,7 @@ public sealed class GachaService(
                 // otro Pokemon. Es el unico dato de una tirada que no sale de la seed.
                 ["etapas"] = cleared.ToString(),
                 ["especie"] = pull.Species.ToString(),
+                ["forma"] = pull.Form.ToString(),
                 ["total"] = pull.BaseStatTotal.ToString(),
                 ["legendario"] = pull.Legendary.ToString(),
                 ["nivel"] = pull.Level.ToString(),
@@ -367,36 +368,19 @@ public sealed class GachaService(
             ? source.Next(tier.MinLevel, tier.MaxLevel + 1)
             : tier.MinLevel;
 
-        // Habilidad al azar de entre TODAS las del juego, no solo las de la especie: es un
-        // gacha, y que un Magikarp salga con Levitación es parte de la gracia. La posición en
-        // la lista es el id que el juego usa, así que se sortea sobre ella y se descartan los
-        // huecos sin nombre en vez de compactarla, que desplazaría todos los ids.
-        //
-        // Y se descarta igual lo que el juego no puede guardar. Con el mod de expansión la lista
-        // llega a 319 y el campo es un byte, así que una habilidad de la 256 en adelante se daba
-        // la vuelta al escribirla: salía «General Supremo» (293) y en la caja aparecía «Potencia»
-        // (37). Se descarta en vez de recortarse el sorteo porque así el número de tiradas que
-        // cambian es el mínimo: las que ya sacaban una habilidad válida se recomputan igual que
-        // siempre, y solo cambian las que estaban rotas.
+        // Habilidad al azar de entre TODAS las del juego, las del mod de gen 8-9 incluidas desde el
+        // §136: antes se tiraba todo lo que pasara de la 233 creyendo que el campo era un byte, y
+        // el mod guarda un noveno bit (§134). Qué se puede repartir lo decide AbilityDraw.
         var abilities = speciesStats.Abilities;
-        var abilityId = 0;
-
-        for (var attempt = 0; attempt < 12 && abilities.Count > 1; attempt++)
-        {
-            var candidate = source.Next(1, abilities.Count);
-
-            if (candidate <= IAbilityLookup.LastUsableAbility
-                && !string.IsNullOrWhiteSpace(abilities[candidate]) && abilities[candidate] != "-")
-            {
-                abilityId = candidate;
-                break;
-            }
-        }
+        var abilityId = AbilityDraw.Roll(source, abilities, speciesStats.BannedAbilities);
 
         var ability = abilityId > 0 && abilityId < abilities.Count ? abilities[abilityId] : string.Empty;
 
         var nature = source.Next(25);
         var natures = speciesStats.Natures;
+
+        // La forma regional, de una fuente derivada: el resto de la tirada sale igual que antes (§139).
+        var (form, formName) = FormDraw.Roll(source, chosen);
 
         return new GachaPull(
             banner.Id,
@@ -413,7 +397,9 @@ public sealed class GachaService(
             abilityId,
             ability,
             source.Seed,
-            number);
+            number,
+            form,
+            formName);
     }
 
     /// <summary>

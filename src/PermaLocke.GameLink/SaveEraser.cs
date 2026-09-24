@@ -50,7 +50,7 @@ public sealed class SaveEraser(PlayerSave save, string backupRoot, IClock clock,
         if (save.IsGameLoaded())
         {
             return new SaveErasure(false, [], string.Empty,
-                "El juego está cargado en Azahar. Guarda, cierra el emulador del todo y vuelve.");
+                "El juego está abierto. Guarda y cierra Azahar.");
         }
 
         var main = save.Find();
@@ -133,15 +133,14 @@ public sealed class SaveEraser(PlayerSave save, string backupRoot, IClock clock,
         if (left)
         {
             return new SaveErasure(false, deleted, destination,
-                "Parte de la partida sigue ahí. Cierra Azahar del todo y vuelve a intentarlo. "
-                + $"La copia está en {destination}.");
+                "No se ha podido borrar toda la partida. Cierra Azahar y vuelve a intentarlo.");
         }
 
         logger.LogWarning("Partida borrada: {What}. Copia en {Backup}",
             string.Join(", ", deleted), destination);
 
         return new SaveErasure(true, deleted, destination,
-            $"Partida borrada. La copia está en {destination}.");
+            "Partida borrada.");
     }
 
     /// <summary>Deletes one thing, noting it only if it went. A failure is logged, never guessed at.</summary>

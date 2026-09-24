@@ -25,6 +25,9 @@ public interface ITypeLookup
 {
     TypePair GetTypes(int species);
 
+    /// <summary>The types of a species in a given form. Its species' unless the form has its own.</summary>
+    TypePair GetTypes(int species, int form) => GetTypes(species);
+
     /// <summary>Name of a type id, or a readable fallback when it is unknown.</summary>
     string GetName(int type);
 }

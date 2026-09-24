@@ -75,6 +75,19 @@ if (args.Length >= 1 && args[0] == "--huevo-copias")
 }
 
 
+// Dónde guarda el juego el mapa y la posición mientras se juega, tomando la última partida guardada como
+// verdad. Sin argumento enseña lo guardado; «buscar» hace UNA búsqueda; «vigilar» solo lee. Ver §117.
+if (args.Length >= 1 && args[0] == "--situacion")
+{
+    return PermaLocke.Probe.SituationProbe.Run(args.Length >= 2 ? args[1] : string.Empty, args.Skip(2).ToArray());
+}
+
+// Prueba: todo lo que genera el juego sale variocolor, con un code.ips junto al code.bin del mod. «quitar» lo borra.
+if (args.Length >= 1 && args[0] == "--shiny-siempre")
+{
+    return PermaLocke.Probe.ShinyProbe.Run(args.Length >= 2 ? args[1] : string.Empty);
+}
+
 // Quien escribe en un rango de memoria. Necesita el parche 3 del fork.
 // Saca de la memoria la copia de trabajo de la partida a un fichero aparte. Solo lee.
 if (args.Length >= 1 && args[0] == "--rescate")
@@ -174,6 +187,12 @@ if (args.Length >= 1 && args[0] == "--ev")
     return PermaLocke.Probe.EvProbe.Run(args.Contains("--probar"));
 }
 
+// El recuerda-movimientos (§142): lo que ofrece a cada uno del equipo; --probar escribe SOBRE UNA COPIA.
+if (args.Length >= 1 && args[0] == "--recordar")
+{
+    return await PermaLocke.Probe.MoveReminderProbe.RunAsync(args.Contains("--probar"));
+}
+
 // Entregados en un wonder trade y contados como vivos.
 if (args.Length >= 1 && args[0] == "--intercambiados")
 {
@@ -234,13 +253,12 @@ if (args.Length >= 2 && args[0] == "--rol")
     return await PermaLocke.Probe.RoleProbe.ChangeAsync(args[1]);
 }
 
-// Las cuatro copias del campo de zona, y por qué se creen o no. Con --vigilar, en bucle: se anda
-// por el juego y va diciendo cada valor que toma el campo, que es como se recalibra el ancla.
+// El ancla de zona del §23 murió (§55) y se retiró con su sonda. La zona se lee ahora de los
+// registros de posición del §117: --situacion.
 if (args.Length >= 1 && args[0] == "--zona")
 {
-    return args.Contains("--vigilar")
-        ? PermaLocke.Probe.ZoneProbe.Watch()
-        : PermaLocke.Probe.ZoneProbe.Run();
+    Console.WriteLine("Retirado: el ancla de zona del §23 está muerta. Usa  --situacion  (§117).");
+    return 1;
 }
 
 // El equipo vivo en todas sus copias, con los dos niveles al lado. Con --cap, además escribe.
@@ -275,6 +293,14 @@ if (args.Length >= 1 && args[0] == "--candy")
 if (args.Length >= 3 && args[0] == "--dar-pokemon")
 {
     return PermaLocke.Probe.GivePokemonProbe.Run(int.Parse(args[1]), int.Parse(args[2]));
+}
+
+// Un Pokemon con habilidad y movimientos del mod de gen 8-9, para probarlos en combate:
+// --dar-mod <especie> <nivel> <habilidad> <m1,m2,m3,m4> [--forma n] [--objeto id] [--naturaleza n]
+// [--probar]. Exige Azahar cerrado, copia la partida, relee y lo registra en la run (§134).
+if (args.Length >= 1 && args[0] == "--dar-mod")
+{
+    return await PermaLocke.Probe.ExpansionGiftProbe.RunAsync(args);
 }
 
 // Que sabe PKHeX del desbloqueo de megaevolucion en la partida. Solo mira, no escribe.
@@ -984,46 +1010,6 @@ if (Index("--zone") is { } zoneIndex)
         }
 
         return buffer;
-    }
-
-    if (step == "now")
-    {
-        // El camino de verdad: la mochila como ancla y la zona a un delta fijo, con las cuatro
-        // copias teniendo que coincidir. Sin barrer nada.
-        var backupFolder = Path.Combine(AppContext.BaseDirectory, "backup");
-        var gameWriter = new PermaLocke.GameLink.AzaharGameWriter(client, backupFolder,
-            Microsoft.Extensions.Logging.Abstractions.NullLogger<PermaLocke.GameLink.AzaharGameWriter>.Instance);
-        var bagService = new PermaLocke.GameLink.BagService(client, gameWriter,
-            Path.Combine(backupFolder, "objetos-retirados.txt"),
-            Path.Combine(backupFolder, "mochila.txt"),
-            Microsoft.Extensions.Logging.Abstractions.NullLogger<PermaLocke.GameLink.BagService>.Instance);
-
-        var timer = System.Diagnostics.Stopwatch.StartNew();
-        var zoneService = new PermaLocke.GameLink.ZoneService(bagService, client,
-            Microsoft.Extensions.Logging.Abstractions.NullLogger<PermaLocke.GameLink.ZoneService>.Instance);
-        var currentArea = zoneService.CurrentArea();
-
-        Console.WriteLine(bagService.Block is { } anchor
-            ? $"mochila (ancla) en 0x{anchor.BaseAddress:X8}"
-            : "no se ha encontrado la mochila");
-
-        Console.WriteLine(currentArea is null
-            ? "\nzona: NO SE PUEDE AFIRMAR (las copias no concuerdan o la memoria está en blanco)"
-            : $"\nzona: área {currentArea} de {ZoneLocator.UltraSunMoonAreaCount}, en {timer.ElapsedMilliseconds} ms");
-
-        if (bagService.Block is { } b)
-        {
-            Console.WriteLine("\ncopias leídas:");
-            foreach (var delta in ZoneLocator.CopyOffsets)
-            {
-                var at = b.BaseAddress + delta;
-                Console.WriteLine(client.TryReadMemory(at, 2, out var raw)
-                    ? $"  0x{at:X8} (mochila+0x{delta:X})  = {BitConverter.ToUInt16(raw)}"
-                    : $"  0x{at:X8} ilegible");
-            }
-        }
-
-        return 0;
     }
 
     var now = ReadRegion();

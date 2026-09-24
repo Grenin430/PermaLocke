@@ -19,12 +19,17 @@ public sealed class AzaharGameStateProvider(
     ISpeciesLookup species,
     ILocationLookup locations,
     string knownLayoutPath,
-    ILogger<AzaharGameStateProvider> logger) : IGameStateProvider
+    ILogger<AzaharGameStateProvider> logger,
+    IPartyLayoutLocator? locator = null,
+    TimeProvider? timeProvider = null,
+    Func<IReadOnlyList<uint>?>? savedPartyKeys = null) : IGameStateProvider
 {
     /// <summary>Ultra Moon (Europe). PermaLocke targets this title only.</summary>
     public const ulong UltraMoonTitleId = 0x00040000001B5100;
 
     private PartyLayout? _layout;
+    private readonly IPartyLayoutLocator _locator = locator ?? new PartyLayoutLocator(client);
+    private readonly TimeProvider _time = timeProvider ?? TimeProvider.System;
 
     /// <summary>Cuántas lecturas seguidas se esperan antes de barrer los 96 MB.</summary>
     /// <remarks>
@@ -44,6 +49,138 @@ public sealed class AzaharGameStateProvider(
     private DateTimeOffset _lastSweep = DateTimeOffset.MinValue;
 
     private static readonly TimeSpan SweepCooldown = TimeSpan.FromSeconds(30);
+
+    /// <summary>
+    /// How long to wait after a sweep that found nothing, doubling each time up to
+    /// <see cref="MaxSweepCooldown"/>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A sweep is the most dangerous thing PermaLocke does to the emulator, and the evidence is no longer
+    /// circumstantial. Azahar crashed five times between the 19th and the 21st of September 2026, all of them
+    /// access violations; the three at <c>azahar.exe+0x781693</c> each happened <b>three to six seconds after a
+    /// full sweep</b>, and the emulator's own log for one of them ends mid-word inside an unbroken run of
+    /// <c>ReadMemory</c> requests, eighteen microseconds apart, at emulator time 18.4 s — with the game still
+    /// loading. The other two crashed with PermaLocke not even running, so the emulator has faults of its own; this
+    /// is about not adding to them.
+    /// </para>
+    /// <para>
+    /// A fixed cooldown did not stop it. While the save is not in memory the party cannot be found, so the sweep
+    /// fails, so it runs again: 226 sweeps in one day, and 22 in a row at one point. Doubling turns that into a
+    /// handful. The one thing it must not do is make a real reconnection slow, so <b>any</b> success resets it —
+    /// the sweep that works, and the ordinary read that starts working on its own once the game finishes loading.
+    /// </para>
+    /// </remarks>
+    private static readonly TimeSpan MaxSweepCooldown = TimeSpan.FromMinutes(4);
+
+    /// <summary>Consecutive sweeps that found nothing.</summary>
+    private int _fruitlessSweeps;
+
+    /// <summary>How long to wait before sweeping again, after however many have come up empty.</summary>
+    private TimeSpan SweepWait
+    {
+        get
+        {
+            var wait = SweepCooldown * Math.Pow(2, Math.Min(_fruitlessSweeps, 8));
+
+            return wait > MaxSweepCooldown ? MaxSweepCooldown : wait;
+        }
+    }
+
+    /// <summary>A sweep found nothing, so the next one waits twice as long.</summary>
+    private void SweepCameUpEmpty()
+    {
+        _fruitlessSweeps++;
+
+        logger.LogInformation(
+            "El barrido no ha encontrado el equipo ({Veces} seguido(s)); el siguiente no será hasta dentro de {Espera:0} s",
+            _fruitlessSweeps, SweepWait.TotalSeconds);
+    }
+
+    /// <summary>How often the cheap check for the party may run while it is not in memory.</summary>
+    private static readonly TimeSpan PresenceCheckEvery = TimeSpan.FromSeconds(20);
+
+    private DateTimeOffset _lastPresenceCheck = DateTimeOffset.MinValue;
+
+    /// <summary>Why the party cannot be in memory yet, from the last check; null when it may be.</summary>
+    private string? _absentBecause;
+
+    /// <summary>
+    /// The party found from the save, or why it cannot be found yet. Null reason and no layouts: the emulator cannot
+    /// search, so the sweep is the only way, as it always was.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The fourth crash in two days, on 2026-09-21, is what started this. The player began a new game, and while they
+    /// typed their name the provider ran its first full sweep: the emulator's log stops mid-line at 21.8 s inside the
+    /// burst of reads, the fourth time with the same signature. There was nothing to find — on the name screen no party
+    /// exists — and the sweep could not have found a starter on its own anyway (see
+    /// <see cref="PartyLayoutLocator.LocateByKeys"/>), which on a fresh install is every player's first half hour.
+    /// </para>
+    /// <para>
+    /// So the save is asked first. Without one the game has never been saved: it is the intro, or a party the
+    /// encounter rules cannot use yet either, and the player is asked to save. With one, its Pokémon are looked for
+    /// by their encryption constants, a handful of requests where a sweep is a hundred thousand. On the title screen or
+    /// while loading they are not in memory, and nothing is swept.
+    /// </para>
+    /// <para>
+    /// An emulator that is not the fork answers every search empty, which would read as «not there» forever; then this
+    /// stands aside and the sweep runs as before.
+    /// </para>
+    /// </remarks>
+    private (IReadOnlyList<PartyLayout> Found, string? Why) LocateFromSave(Pk7Reader reader)
+    {
+        if (savedPartyKeys?.Invoke() is not { Count: > 0 } keys)
+        {
+            return ([], "Guarda la partida dentro del juego y PermaLocke encontrará tu equipo.");
+        }
+
+        try
+        {
+            if (!client.SupportsSearch())
+            {
+                return ([], null);
+            }
+
+            client.AttachTo(UltraMoonTitleId);
+
+            // Solo lo que se deja leer como equipo: son las estructuras en las que luego se escribe.
+            var found = _locator.LocateByKeys([.. keys])
+                .Where(layout => ReadParty(reader, layout).Count > 0)
+                .ToList();
+
+            return found.Count > 0
+                ? (found, null)
+                : ([], "Tu equipo todavía no está cargado en el juego. Carga tu partida.");
+        }
+        catch (AzaharRpcException)
+        {
+            // Si ni una búsqueda contesta, un barrido de cien mil peticiones no es buena idea.
+            return ([], "Esperando a que el juego responda.");
+        }
+    }
+
+    /// <summary>Takes a located party as the one to read and write, however it was found.</summary>
+    private GameSnapshot Adopt(Pk7Reader reader, IReadOnlyList<PartyLayout> located, PartyLayout readable,
+        DateTimeOffset now, string how)
+    {
+        _layout = readable;
+        _notReadyPolls = 0;
+        _fruitlessSweeps = 0;
+        _absentBecause = null;
+        _allLayouts = PartyLayoutLocator.Distinct(located);
+        _gameTrainer = readable.TrainerName;
+
+        // Como con lo recordado: si lo que mejor se lee es el espejo, la estructura que lee el juego falta y se busca.
+        _sweepNext = PartyLayoutLocator.NeedsLocatingAgain(readable);
+        Remember(located);
+
+        logger.LogInformation(
+            "Equipo localizado {How} en 0x{Address:X8} (salto 0x{Stride:X}), {Copies} copias, entrenador «{Trainer}»",
+            how, readable.Address, readable.Stride, located.Count, _gameTrainer);
+
+        return new GameSnapshot(true, null, ReadParty(reader, readable), now, TrainerNotice());
+    }
 
     /// <summary>Fallos seguidos antes de dar por perdido el equipo ya localizado.</summary>
     /// <remarks>
@@ -94,7 +231,7 @@ public sealed class AzaharGameStateProvider(
     /// </remarks>
     public void SweepAgain()
     {
-        if (DateTimeOffset.Now - _lastSweep >= SweepCooldown)
+        if (_time.GetUtcNow() - _lastSweep >= SweepWait)
         {
             _sweepNext = true;
         }
@@ -105,7 +242,7 @@ public sealed class AzaharGameStateProvider(
 
     private GameSnapshot Read(CancellationToken ct)
     {
-        var now = DateTimeOffset.Now;
+        var now = _time.GetUtcNow();
 
         // Engancharse cuesta TRES viajes de ida y vuelta -listar procesos, fijar el proceso y
         // comprobar cuál quedó fijado-, y antes se hacía en cada lectura. Con el equipo eso son
@@ -141,13 +278,14 @@ public sealed class AzaharGameStateProvider(
         _failures = 0;
 
         var reader = new Pk7Reader(client);
+        var sweepDue = _sweepNext && now - _lastSweep >= SweepWait;
 
         // El atajo de la dirección cacheada tiene que respetar el barrido pedido, y no lo hacía.
         // Salía por aquí antes de mirar _sweepNext, o sea que SweepAgain() no se consultaba nunca
         // mientras la dirección de siempre siguiera leyendo -- que es siempre. El cap pidió barrer
         // en cada corrección y no barrió ni una vez: «corregido y releído en 1 copias», con cinco
         // estructuras del equipo en memoria.
-        if (!_sweepNext && _layout is { } cached
+        if (!sweepDue && _layout is { } cached
             && ReadParty(reader, cached) is { Count: > 0 } cachedParty)
         {
             return new GameSnapshot(true, null, cachedParty, now, TrainerNotice());
@@ -159,7 +297,7 @@ public sealed class AzaharGameStateProvider(
         // un equipo coherente de este entrenador antes de usarse.
         var remembered = _remembered = ReadRemembered();
 
-        if (!_sweepNext && remembered is { Count: > 0 } && Choose(reader, remembered) is { } fromDisk)
+        if (!sweepDue && remembered is { Count: > 0 } && Choose(reader, remembered) is { } fromDisk)
         {
             // TODAS las recordadas, no solo las que se dejan leer.
             //
@@ -176,10 +314,29 @@ public sealed class AzaharGameStateProvider(
             _allLayouts = PartyLayoutLocator.Distinct(remembered);
             _layout = fromDisk;
             _notReadyPolls = 0;
+
+            // El equipo se lee: la partida está cargada. Lo que hiciera fallar a los barridos de antes
+            // ya no pasa, así que la espera vuelve a su mínimo y una reconexión de verdad no se retrasa.
+            _fruitlessSweeps = 0;
             _gameTrainer = fromDisk.TrainerName;
 
-            logger.LogInformation("Equipo en 0x{Address:X8}, el de la última vez, revalidado sin barrer",
-                fromDisk.Address);
+            // Si de lo recordado solo lee el espejo, la estructura que lee el juego se ha movido: el
+            // espejo está siempre en el mismo sitio y ella no. Se conecta ya con el espejo, para no
+            // dejar de vigilar, y en la lectura siguiente se barre y se guarda la lista nueva. Sin
+            // esto la lista del 10 de septiembre se aceptó durante ocho días (§135).
+            if (PartyLayoutLocator.NeedsLocatingAgain(fromDisk))
+            {
+                _sweepNext = true;
+
+                logger.LogInformation(
+                    "Equipo en 0x{Address:X8}, el de la última vez, pero es el espejo: la copia que lee el"
+                    + " juego ya no está donde estaba y se busca de nuevo", fromDisk.Address);
+            }
+            else
+            {
+                logger.LogInformation("Equipo en 0x{Address:X8}, el de la última vez, revalidado sin barrer",
+                    fromDisk.Address);
+            }
 
             return new GameSnapshot(true, null, ReadParty(reader, fromDisk), now, TrainerNotice());
         }
@@ -193,7 +350,8 @@ public sealed class AzaharGameStateProvider(
         // minutos y nueve segundos, DURANTE LOS CUALES NO SE VIGILA NADA. En ese hueco murió un
         // Pokémon en una prueba y no se contó. Esperar unos segundos cuesta segundos; barrer
         // cuando no hacía falta cuesta diez minutos a ciegas.
-        if (!_sweepNext && _remembered.Count > 0 && ++_notReadyPolls < PollsBeforeSweeping)
+        // A fresh installation has no saved addresses either. Give the game time to load there too.
+        if (!_sweepNext && ++_notReadyPolls < PollsBeforeSweeping)
         {
             // Y se suelta el enganche: si el equipo ha dejado de leerse puede ser que el juego se
             // haya cerrado y abierto, y entonces el proceso fijado ya no es el bueno. Reengancharse
@@ -201,29 +359,84 @@ public sealed class AzaharGameStateProvider(
             _attached = false;
 
             return GameSnapshot.Disconnected(
-                "Azahar responde pero la partida todavía no está cargada. "
-                + "Entra en ella y en unos segundos se engancha solo.", now);
+                "Carga tu partida en Azahar.", now);
+        }
+
+        // Por la partida guardada antes que barrer (§152): unas pocas búsquedas en vez de cien mil lecturas, y
+        // encuentra también a quien solo lleva su inicial. Cuesta poco, así que no espera a la pausa entre barridos.
+        if (savedPartyKeys is not null && now - _lastPresenceCheck >= PresenceCheckEvery)
+        {
+            _lastPresenceCheck = now;
+            var (fromSave, why) = LocateFromSave(reader);
+
+            if (fromSave.Count > 0 && Choose(reader, fromSave) is { } chosen)
+            {
+                return Adopt(reader, fromSave, chosen, now, "por la partida guardada, sin barrer");
+            }
+
+            if (why is not null && why != _absentBecause)
+            {
+                logger.LogInformation("No se barre la memoria: {Motivo}", why);
+            }
+
+            _absentBecause = why;
+        }
+
+        // Failed searches used to bypass the cooldown and scan 96 MB again every six seconds.
+        if (now - _lastSweep < SweepWait)
+        {
+            _attached = false;
+            return GameSnapshot.Disconnected("Esperando a que el equipo esté disponible.", now);
+        }
+
+        // Nada que encontrar, nada que barrer. Un barrido pedido porque la estructura se ha movido sí va: el equipo
+        // se acaba de leer, así que está, y la partida guardada no ha sabido llegar a la copia que falta.
+        if (!_sweepNext && savedPartyKeys is not null && _absentBecause is { } absent)
+        {
+            _attached = false;
+            return GameSnapshot.Disconnected(absent, now);
         }
 
         logger.LogInformation("Localizando el equipo en memoria (barrido completo)...");
-
-        var located = new PartyLayoutLocator(client).LocateAll(TrainerName, ct);
-        var readable = Choose(reader, located);
-
-        if (readable is null)
-
-
+        _lastSweep = _time.GetUtcNow();
+        _sweepNext = false;
+        IReadOnlyList<PartyLayout> located;
+        try
         {
+            // Reattach immediately before the expensive search, including after emulator restarts.
+            client.AttachTo(UltraMoonTitleId);
+            located = _locator.LocateAll(TrainerName, ct);
+        }
+        catch (AzaharRpcException ex)
+        {
+            _attached = false;
             _layout = null;
+            _allLayouts = [];
+            SweepCameUpEmpty();
+            return GameSnapshot.Disconnected(Explain(ex), now);
+        }
+        finally
+        {
+            // Count unsuccessful and interrupted attempts too, from when they finish.
+            _lastSweep = _time.GetUtcNow();
+        }
+
+        var readable = Choose(reader, located);
+        if (readable is null)
+        {
+            _attached = false;
+            _layout = null;
+            _allLayouts = [];
+            SweepCameUpEmpty();
             return GameSnapshot.Disconnected(
-                "El juego responde, pero no encuentro el equipo en memoria. "
-                + "¿Has empezado la partida y tienes algún Pokémon?", now);
+                "Todavía no se ve tu equipo. Carga la partida.", now);
         }
 
         _layout = readable;
         _notReadyPolls = 0;
+        _fruitlessSweeps = 0;
         _sweepNext = false;
-        _lastSweep = DateTimeOffset.Now;
+        _lastSweep = _time.GetUtcNow();
         _allLayouts = PartyLayoutLocator.Distinct(located);
         _gameTrainer = readable.TrainerName;
         Remember(located);
@@ -351,7 +564,9 @@ public sealed class AzaharGameStateProvider(
                 member.Pid,
                 member.MetLocation,
                 locations.GetName(member.MetLocation),
-                member.TrainerName));
+                member.TrainerName,
+                member.Form,
+                member.Moves));
         }
 
         return party;
@@ -370,7 +585,6 @@ public sealed class AzaharGameStateProvider(
     private static string Explain(Exception ex) => ex switch
     {
         AzaharRpcException { NoReply: false } => ex.Message,
-        _ => "Azahar no responde. Ábrelo, carga la ROM y activa "
-             + "Configuración → Depuración → Activar servidor RPC."
+        _ => "Azahar no está abierto."
     };
 }

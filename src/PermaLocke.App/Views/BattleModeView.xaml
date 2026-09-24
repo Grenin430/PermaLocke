@@ -1,6 +1,29 @@
 <UserControl x:Class="PermaLocke.App.Views.BattleModeView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:PermaLocke.App.Views"
+             xmlns:pixel="clr-namespace:PermaLocke.App.Views.Pixel">
+
+    <UserControl.Resources>
+        <Style TargetType="ScrollBar" BasedOn="{StaticResource PxScrollBar}" />
+
+        <!-- El número de un paso, en su placa. -->
+        <Style x:Key="StepNumber" TargetType="pixel:PixelText">
+            <Setter Property="Scale" Value="2" />
+            <Setter Property="Tight" Value="True" />
+            <Setter Property="Colour" Value="{StaticResource PxInk}" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="0,0,0,2" />
+        </Style>
+
+        <Style x:Key="StepText" TargetType="pixel:PixelText">
+            <Setter Property="Scale" Value="2" />
+            <Setter Property="Wrap" Value="True" />
+            <Setter Property="Colour" Value="{StaticResource PxText}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+    </UserControl.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel Margin="0,0,10,0">
@@ -10,148 +33,105 @@
                  OLVIDARSE de que la tienes puesta: jugar media hora sobre el cartucho sin darte
                  cuenta, extranado de que los salvajes sean los de siempre.
 
-                 Por eso el estado no dice solo COMO esta, dice QUE HACER AHORA. -->
-            <Border Padding="{StaticResource PadPanelWide}"
-                    CornerRadius="{StaticResource RadiusLarge}" BorderThickness="1">
-                <Border.Style>
-                    <Style TargetType="Border">
-                        <Setter Property="Background" Value="{StaticResource SurfaceAltBrush}" />
-                        <Setter Property="BorderBrush" Value="{StaticResource BorderSubtleBrush}" />
+                 Por eso el estado no dice solo COMO esta, dice QUE HACER AHORA. Con el mundo guardado, la ventana entera
+                 se vuelve ámbar. -->
+            <pixel:PixelWindow Title="COMBATE LINK" Icon="IconSwords">
+                <pixel:PixelWindow.Style>
+                    <Style TargetType="pixel:PixelWindow" BasedOn="{StaticResource {x:Type pixel:PixelWindow}}">
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding IsInBattle}" Value="True">
-                                <Setter Property="Background" Value="{StaticResource WarningDeepBrush}" />
-                                <Setter Property="BorderBrush" Value="{StaticResource WarningBrush}" />
+                                <Setter Property="Fill" Value="{StaticResource PxWarnDeep}" />
+                                <Setter Property="HeaderFill" Value="#FF5C4012" />
+                                <Setter Property="HeaderAccent" Value="{StaticResource PxWarn}" />
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
-                </Border.Style>
+                </pixel:PixelWindow.Style>
+
+                <pixel:PixelWindow.HeaderContent>
+                    <Grid Visibility="{Binding IsInBattle, Converter={StaticResource BoolToVisibility}}">
+                        <views:PixelPanel Fill="{StaticResource PxWarn}" HasShadow="False" />
+                        <pixel:PixelText Text="MUNDO GUARDADO" Scale="2" Tight="True" Margin="9,5,10,6"
+                                         Colour="{StaticResource PxInk}" />
+                    </Grid>
+                </pixel:PixelWindow.HeaderContent>
 
                 <StackPanel>
-                    <DockPanel>
-                        <Border DockPanel.Dock="Right"
-                                Visibility="{Binding IsInBattle, Converter={StaticResource BoolToVisibility}}">
-                            <Border.Style>
-                                <Style TargetType="Border" BasedOn="{StaticResource ChipWarning}">
-                                    <Setter Property="Background" Value="{StaticResource WarningBrush}" />
-                                </Style>
-                            </Border.Style>
-                            <TextBlock Text="MUNDO GUARDADO" Style="{StaticResource ChipText}"
-                                       Foreground="{StaticResource OnAccentBrush}" />
-                        </Border>
-
-                        <TextBlock Text="{Binding Headline}"
-                                   FontSize="{StaticResource FontSizeSection}"
-                                   VerticalAlignment="Center" TextWrapping="Wrap">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock" BasedOn="{StaticResource SectionTitle}">
-                                    <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsInBattle}" Value="True">
-                                            <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-                    </DockPanel>
-
-                    <TextBlock Text="{Binding Explanation}" Style="{StaticResource Body}"
-                               Margin="0,10,0,0" />
-
-                    <Border Style="{StaticResource Divider}" Margin="0,16" />
-
-                    <StackPanel Orientation="Horizontal">
-                        <Button Content="PREPARAR PARA COMBATIR"
-                                Style="{StaticResource PrimaryButton}"
-                                Command="{Binding PrepareCommand}" MinWidth="230"
-                                Visibility="{Binding IsInBattle, Converter={StaticResource InverseBoolToVisibility}}" />
-
-                        <Button Content="DEVOLVER MI MUNDO"
-                                Style="{StaticResource PrimaryButton}"
-                                Command="{Binding RestoreCommand}" MinWidth="200"
-                                Visibility="{Binding IsInBattle, Converter={StaticResource BoolToVisibility}}" />
-
-                        <Button Content="COMPROBAR" Style="{StaticResource GhostButton}"
-                                Command="{Binding RefreshCommand}" MinWidth="130"
-                                Margin="10,0,0,0" />
-                    </StackPanel>
-
-                    <TextBlock Text="{Binding Status}" Margin="0,14,0,0">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock" BasedOn="{StaticResource Body}">
-                                <Setter Property="Visibility" Value="Visible" />
+                    <pixel:PixelText Text="{Binding Headline}" Scale="3" Wrap="True" Shadow="{StaticResource PxShadow}">
+                        <pixel:PixelText.Style>
+                            <Style TargetType="pixel:PixelText">
+                                <Setter Property="Colour" Value="{StaticResource PxText}" />
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Status}" Value="">
-                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    <DataTrigger Binding="{Binding IsInBattle}" Value="True">
+                                        <Setter Property="Colour" Value="{StaticResource PxWarn}" />
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
+                        </pixel:PixelText.Style>
+                    </pixel:PixelText>
+
+                    <pixel:PixelText Text="{Binding Explanation}" Scale="2" Wrap="True" Margin="0,10,0,0"
+                                     Colour="{StaticResource PxTextDim}" />
+
+                    <pixel:PixelRule Margin="0,16,0,14" />
+
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="PREPARAR PARA COMBATIR" Style="{StaticResource PxButton}"
+                                Command="{Binding PrepareCommand}"
+                                Visibility="{Binding IsInBattle, Converter={StaticResource InverseBoolToVisibility}}" />
+                        <Button Content="DEVOLVER MI MUNDO" Style="{StaticResource PxButton}"
+                                Command="{Binding RestoreCommand}"
+                                Visibility="{Binding IsInBattle, Converter={StaticResource BoolToVisibility}}" />
+                    </StackPanel>
+
+                    <pixel:PixelText Text="{Binding Status}" Scale="2" Wrap="True" Margin="0,14,0,0"
+                                     Colour="{StaticResource PxText}" />
                 </StackPanel>
-            </Border>
+            </pixel:PixelWindow>
 
             <!-- ================================================== CÓMO SE HACE -->
-            <Border Style="{StaticResource Inset}" Margin="0,12,0,0">
-                <StackPanel>
-                    <TextBlock Text="CÓMO SE PELEA" Style="{StaticResource PanelHeading}" />
+            <pixel:PixelWindow Title="CÓMO SE PELEA" Icon="IconDocument" Margin="0,12,0,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="46" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
 
-                    <Grid Margin="0,12,0,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="1." Style="{StaticResource CardTitle}"
-                                   Foreground="{StaticResource AccentBrush}" Margin="0,0,12,0" VerticalAlignment="Top" />
-                        <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource Body}" Margin="0,0,0,10"
-                                   Text="Guarda dentro del juego y cierra Azahar del todo. Los mods se leen al arrancar, así que con el emulador abierto esto no serviría de nada." />
-
-                        <TextBlock Grid.Row="1" Grid.Column="0" Text="2." Style="{StaticResource CardTitle}"
-                                   Foreground="{StaticResource AccentBrush}" Margin="0,0,12,0" VerticalAlignment="Top" />
-                        <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource Body}" Margin="0,0,0,10"
-                                   Text="Pulsa PREPARAR PARA COMBATIR. Lo tenéis que hacer TODOS los que vayáis a pelear." />
-
-                        <TextBlock Grid.Row="2" Grid.Column="0" Text="3." Style="{StaticResource CardTitle}"
-                                   Foreground="{StaticResource AccentBrush}" Margin="0,0,12,0" VerticalAlignment="Top" />
-                        <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource Body}" Margin="0,0,0,10"
-                                   Text="Abrid Azahar y a pelear: Multijugador para conectaros, y dentro del juego X → Plaza Festival → Combate → Combate Link." />
-
-                        <TextBlock Grid.Row="3" Grid.Column="0" Text="4." Style="{StaticResource CardTitle}"
-                                   Foreground="{StaticResource AccentBrush}" Margin="0,0,12,0" VerticalAlignment="Top" />
-                        <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource Body}"
-                                   Text="Al terminar, cerrad Azahar y pulsad DEVOLVER MI MUNDO. Todo vuelve a estar como estaba." />
+                    <Grid Grid.Row="0" Width="33" Height="33" HorizontalAlignment="Left" Margin="0,0,0,10">
+                        <views:PixelPanel Fill="{StaticResource PxGold}" HasShadow="False" />
+                        <pixel:PixelText Text="1" Style="{StaticResource StepNumber}" />
                     </Grid>
-                </StackPanel>
-            </Border>
+                    <pixel:PixelText Grid.Row="0" Grid.Column="1" Style="{StaticResource StepText}" Margin="0,0,0,10"
+                                     Text="Guarda dentro del juego y cierra Azahar." />
 
-            <!-- ================================================== POR QUÉ HACE FALTA -->
-            <Border Style="{StaticResource Inset}" Margin="0,12,0,0">
-                <StackPanel>
-                    <TextBlock Text="POR QUÉ HACE FALTA" Style="{StaticResource PanelHeading}" />
+                    <Grid Grid.Row="1" Width="33" Height="33" HorizontalAlignment="Left" Margin="0,0,0,10">
+                        <views:PixelPanel Fill="{StaticResource PxGold}" HasShadow="False" />
+                        <pixel:PixelText Text="2" Style="{StaticResource StepNumber}" />
+                    </Grid>
+                    <pixel:PixelText Grid.Row="1" Grid.Column="1" Style="{StaticResource StepText}" Margin="0,0,0,10"
+                                     Text="Pulsa PREPARAR PARA COMBATIR. Tenéis que hacerlo todos." />
 
-                    <TextBlock Style="{StaticResource Body}" Margin="0,9,0,0"
-                               Text="Cuando peleáis, las dos consolas van calculando el combate cada una por su lado y solo se mandan las órdenes. Si un Pokémon tiene fuerzas distintas en tu juego y en el de tu amigo, cada uno calcula una cosa y el combate se rompe a mitad." />
+                    <Grid Grid.Row="2" Width="33" Height="33" HorizontalAlignment="Left" Margin="0,0,0,10">
+                        <views:PixelPanel Fill="{StaticResource PxGold}" HasShadow="False" />
+                        <pixel:PixelText Text="3" Style="{StaticResource StepNumber}" />
+                    </Grid>
+                    <pixel:PixelText Grid.Row="2" Grid.Column="1" Style="{StaticResource StepText}" Margin="0,0,0,10"
+                                     Text="Abrid Azahar, conectaos en Multijugador y en el juego id a X → Plaza Festival → Combate → Combate Link." />
 
-                    <TextBlock Style="{StaticResource Body}" Margin="0,8,0,0"
-                               Text="Con el mundo apartado, los cinco jugáis el juego original durante el combate, así que todos calculáis igual. Después cada uno recupera el suyo." />
-
-                    <TextBlock Style="{StaticResource Faint}" Margin="0,8,0,0"
-                               Text="Está medido, no supuesto: con las estadísticas barajadas y las habilidades al azar el combate se desincroniza; con el juego original, no. La alternativa a esto es apagar esas dos opciones para siempre, y entonces no hace falta apartar nada — pero se pierde esa parte del caos." />
-
-                    <Border Style="{StaticResource Divider}" Margin="0,14" />
-
-                    <TextBlock Style="{StaticResource Faint}"
-                               Text="Tu mundo no se borra: se guarda en la carpeta load de Azahar y vuelve tal cual. Tu partida no se toca en ningún momento, ni al apartarlo ni al devolverlo." />
-                </StackPanel>
-            </Border>
-
+                    <Grid Grid.Row="3" Width="33" Height="33" HorizontalAlignment="Left">
+                        <views:PixelPanel Fill="{StaticResource PxGold}" HasShadow="False" />
+                        <pixel:PixelText Text="4" Style="{StaticResource StepNumber}" />
+                    </Grid>
+                    <pixel:PixelText Grid.Row="3" Grid.Column="1" Style="{StaticResource StepText}"
+                                     Text="Al terminar, cerrad Azahar y pulsad DEVOLVER MI MUNDO." />
+                </Grid>
+            </pixel:PixelWindow>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

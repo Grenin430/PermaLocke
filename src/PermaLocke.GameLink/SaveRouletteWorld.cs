@@ -42,16 +42,13 @@ public sealed class SaveRouletteWorld(
     {
         if (save.IsGameLoaded())
         {
-            reason = "El juego está abierto en el emulador. Guarda la partida y cierra Azahar: "
-                     + "la ruleta escribe en el save, y mientras esté cargado el emulador lo "
-                     + "reescribiría por encima.";
+            reason = "El juego está abierto. Guarda y cierra Azahar.";
             return false;
         }
 
         if (save.Find() is null)
         {
-            reason = "No se encuentra la partida de Ultra Luna. ¿Has jugado y guardado alguna vez "
-                     + "con este emulador?";
+            reason = "No se encuentra tu partida de Ultra Luna.";
             return false;
         }
 
@@ -96,7 +93,7 @@ public sealed class SaveRouletteWorld(
                 string.IsNullOrWhiteSpace(pokemon.Nickname)
                     ? species.GetName(pokemon.Species)
                     : pokemon.Nickname,
-                pokemon.CurrentLevel));
+                GameLevels.Of(pokemon)));
         }
 
         var tms = Pouch(game, InventoryType.TMHMs);
@@ -136,7 +133,7 @@ public sealed class SaveRouletteWorld(
             if (!SaveUtil.TryGetSaveFile(path, out var loaded) || loaded is not SAV7USUM game)
             {
                 return RouletteApplyResult.Nothing(
-                    $"El fichero de partida no se ha podido leer como Ultra Luna: {path}");
+                    "No se ha podido leer tu partida.");
             }
 
             var lines = ApplyTo(game, action);
@@ -162,8 +159,7 @@ public sealed class SaveRouletteWorld(
             if (!Verify(path, action, itemCounts))
             {
                 return new RouletteApplyResult(false,
-                    "Se escribió la partida pero al releerla no estaba lo que la ruleta hizo. "
-                    + $"La copia de seguridad está en {backupFolder}.", []);
+                    "No se ha podido guardar el cambio. Vuelve a intentarlo.", []);
             }
 
             logger.LogInformation("Ruleta {Effect}: {Lines}", action.Effect, string.Join(" | ", lines));
@@ -173,7 +169,7 @@ public sealed class SaveRouletteWorld(
         catch (Exception ex)
         {
             logger.LogError(ex, "Falló la ruleta al escribir la partida");
-            return RouletteApplyResult.Nothing("No se pudo escribir en la partida. El detalle está en Logs.");
+            return RouletteApplyResult.Nothing("No se pudo escribir en la partida.");
         }
     }
 
@@ -225,7 +221,10 @@ public sealed class SaveRouletteWorld(
             case RouletteEffect.HabilidadMala:
             {
                 var ability = action.Abilities[index];
-                pokemon.Ability = ability;
+
+                // Con el noveno bit: escribir solo el byte dejaría el bit de una habilidad nueva y
+                // la cara daría la habilidad elegida más 256 (§134).
+                PokemonAbility.Set(pokemon, ability);
 
                 // El hueco de habilidad tiene que ser uno de los tres que el juego admite; el
                 // primero vale siempre y evita que la ficha enseñe un hueco imposible.
@@ -246,7 +245,7 @@ public sealed class SaveRouletteWorld(
             {
                 // Se dice quién era ANTES de borrarlo. Una prueba destructiva que no deja escrito
                 // qué destruyó deja un Pokémon que nadie puede identificar después (§59).
-                var who = $"{Name(pokemon)} (Nv.{pokemon.CurrentLevel}, {species.GetName(pokemon.Species)})";
+                var who = $"{Name(pokemon)} (Nv.{GameLevels.Of(pokemon)}, {species.GetName(pokemon.Species)})";
 
                 // La MISMA marca que usa el resto de la run. Una segunda copia de "qué le pasa a
                 // un muerto" acabaría discrepando de esta.
@@ -315,7 +314,9 @@ public sealed class SaveRouletteWorld(
 
         return after == before
             ? $"{name}: sin cambios ({before})."
-            : $"{name}: {before} → {after}.";
+            : after > before
+                ? (after - before > 1 ? $"{name} x{after - before}" : name)
+                : (before - after > 1 ? $"Pierdes {name} x{before - after}" : $"Pierdes {name}");
     }
 
     private static void SetIvs(PK7 pokemon, int value)
@@ -361,7 +362,7 @@ public sealed class SaveRouletteWorld(
             var ok = action.Effect switch
             {
                 RouletteEffect.HabilidadBuena or RouletteEffect.HabilidadMala =>
-                    pokemon.Ability == action.Abilities[i],
+                    PokemonAbility.Of(pokemon) == action.Abilities[i],
                 RouletteEffect.IvPerfectos => IvsAre(pokemon, 31),
                 RouletteEffect.IvCero => IvsAre(pokemon, 0),
                 RouletteEffect.Muerte => DeathMark.IsMarked(pokemon),

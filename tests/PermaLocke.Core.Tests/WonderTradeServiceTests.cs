@@ -314,6 +314,11 @@ public sealed class WonderTradeServiceTests
     [InlineData(650, 6)]
     [InlineData(722, 7)]
     [InlineData(807, 7)]
+    [InlineData(809, 7)]
+    [InlineData(810, 8)]
+    [InlineData(905, 8)]
+    [InlineData(906, 9)]
+    [InlineData(1025, 9)]
     public void Generations_are_the_national_dex_blocks(int species, int generation) =>
         Assert.Equal(generation, Generations.Of(species));
 
@@ -370,6 +375,49 @@ public sealed class WonderTradeServiceTests
         Assert.Null(await trades.MarkGivenAsTradedAsync(SampleRun(), 0xDEADBEEF, "Kommo-o"));
         Assert.Equal(PokemonStatus.Alive, repository.Entries.Single().Status);
         Assert.Empty(events.Appended);
+    }
+
+    /// <summary>
+    /// A fallen Pokémon cannot be traded away: otherwise a death stops being a loss, because the corpse comes back as
+    /// something alive of the same strength. Refused before anything is drawn, saved or recorded.
+    /// </summary>
+    [Fact]
+    public async Task A_dead_pokemon_cannot_be_traded()
+    {
+        var repository = new Repository(Living(0xAABBCCDD) with { Status = PokemonStatus.Dead });
+        var events = new Events();
+        var trades = Build(events: events, repository: repository);
+
+        var result = await trades.TradeAsync(SampleRun(), new WonderTradeGift(31, "Especie 31", 24, 0, 0, 0xAABBCCDD));
+
+        Assert.False(result.Success);
+        Assert.Contains("muerto", result.Error);
+        Assert.Empty(events.Appended);
+        Assert.Single(repository.Entries);
+        Assert.True(await trades.IsFallenAsync(SampleRun().Id, 0xAABBCCDD));
+    }
+
+    [Fact]
+    public async Task A_living_pokemon_trades_as_before()
+    {
+        var repository = new Repository(Living(0xAABBCCDD));
+        var trades = Build(repository: repository);
+
+        var result = await trades.TradeAsync(SampleRun(), new WonderTradeGift(31, "Especie 31", 24, 0, 0, 0xAABBCCDD));
+
+        Assert.True(result.Success);
+        Assert.False(await trades.IsFallenAsync(SampleRun().Id, 0xAABBCCDD));
+    }
+
+    /// <summary>Zero identifies nobody, so it cannot say the Pokémon is dead either.</summary>
+    [Fact]
+    public async Task A_pid_of_zero_blocks_nothing()
+    {
+        var repository = new Repository(Living(0) with { Pid = 0, Status = PokemonStatus.Dead });
+        var trades = Build(repository: repository);
+
+        Assert.False(await trades.IsFallenAsync(SampleRun().Id, 0));
+        Assert.True((await trades.TradeAsync(SampleRun(), new WonderTradeGift(31, "Especie 31", 24, 0, 0))).Success);
     }
 
     /// <summary>Marking the same one twice would write a second departure for one Pokémon.</summary>

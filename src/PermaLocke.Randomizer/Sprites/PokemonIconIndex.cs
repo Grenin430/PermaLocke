@@ -1,6 +1,7 @@
 using PermaLocke.Randomizer.Modules;
 using PermaLocke.Randomizer.Rom;
 using pk3DS.Core;
+using pk3DS.Core.Structures.PersonalInfo;
 
 namespace PermaLocke.Randomizer.Sprites;
 
@@ -344,8 +345,18 @@ public static class PokemonIconIndex
         // Lanzar era lo correcto: la comprobación existe justamente para eso, y sin ella cada
         // especie a partir de Venusaur habría dibujado la de al lado. Lo que estaba mal era la
         // pregunta.
-        using var cartridge = await RomWorkspace.ExtractAsync(romPath, scratchDirectory, ct: ct);
-        return Build(cartridge.Config, MaxSpeciesOf(baseLayer));
+        // Icons only need form counts. Loading the randomizer workspace copied hundreds of MB
+        // of encounters, trainers and text on every application start just to read one byte per species.
+        return await Task.Run(() =>
+        {
+            ct.ThrowIfCancellationRequested();
+            Directory.CreateDirectory(scratchDirectory);
+            var personal = Path.Combine(scratchDirectory, "icon-personal.garc");
+            if (!new RomFsReader(romPath).ExtractTo(GameFiles.Personal, personal))
+                throw new InvalidDataException("La ROM no contiene la tabla de especies.");
+            var rows = GarcPatcher.ReadAllReadOnly(personal);
+            return Build(species => new PersonalInfoSM(rows[species]).FormeCount, MaxSpeciesOf(baseLayer));
+        }, ct);
     }
 
     /// <summary>
@@ -367,7 +378,83 @@ public static class PokemonIconIndex
             return LastSpecies;
         }
 
-        using var patcher = new GarcPatcher(personal);
-        return PersonalEntry7.SpeciesCount(patcher.Read(patcher.FileCount - 1));
+        return PersonalEntry7.SpeciesCount(GarcPatcher.ReadOnly(personal, GarcPatcher.CountReadOnly(personal) - 1));
+    }
+
+    /// <summary>
+    /// The expansion mod's form icons, as its own lookup finds them: key <c>species | form &lt;&lt; 11</c>,
+    /// icon <see cref="FormBlockStart"/> plus the key's position.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Not read off the pictures: disassembled from the lookup the 1.4 of the mod puts in
+    /// <c>code.bin</c> at <c>0x20C88C</c> (its <c>code_map.csv</c>, «POKEMON ICONS»). It builds
+    /// <c>orr r3, r0, r4, lsl #11</c> — species with the form eleven bits up —, walks a table of
+    /// halfwords at <c>0x5BDBE2</c> until a zero, and answers <c>1153 + 0xDB</c> plus the position of
+    /// the match. These are that table's 136 keys, in its order («compact icon data», 0x4BDB50). The
+    /// 39 Galarian, Hisuian and Paldean forms the randomizer hands out were then checked by eye on a
+    /// contact sheet, every one the right picture (§139).
+    /// </para>
+    /// <para>
+    /// Used only when the container holds exactly <see cref="FormBlockStart"/> + 136 icons, which is
+    /// the 1.4. A different version of the mod could lay them out differently, and a form icon one
+    /// slot off draws another Pokémon without anything failing — the §45 hazard — so then no form
+    /// gets its own icon and every form falls back to its species' picture.
+    /// </para>
+    /// </remarks>
+    private static readonly int[] ExpansionFormKeys =
+    [
+        16409, 4122, 6170, 2084, 4148, 2106, 2107, 2119, 2125, 2126, 2127, 4176, 2131, 2148, 2149, 2158,
+        2169, 2170, 2176, 4224, 6272, 2192, 2193, 2194, 2197, 2202, 2205, 2208, 2242, 2247, 2259, 2263,
+        2270, 2275, 2311, 2312, 2406, 4455, 2446, 4541, 4544, 2526, 2531, 2532, 2533, 2539, 2548, 2551,
+        2578, 2593, 2597, 4646, 2602, 4651, 6699, 2608, 2610, 2618, 2619, 2652, 2657, 2666, 2671, 2676,
+        2700, 2703, 6802, 2716, 12958, 4774, 6822, 2735, 2737, 2739, 2749, 2753, 2754, 2761, 10958, 2772,
+        2788, 2816, 2828, 4897, 6945, 2855, 2893, 4941, 2897, 2902, 2903, 2917, 4965, 7013, 9061, 11109,
+        13157, 15205, 17253, 2918, 2923, 2924, 2925, 2936, 2937, 2938, 2940, 2941, 2946, 4994, 2949, 2950,
+        2953, 2964, 2973, 2979, 5027, 7075, 3000, 3012, 3018, 3026, 5074, 7122, 9170, 11218, 3030, 3046,
+        3047, 3060, 3061, 3065, 5113, 7161, 3072, 5120
+    ];
+
+    /// <summary>The first form icon of the expansion: after the 1154 of the cartridge and its 218 species.</summary>
+    public const int FormBlockStart = 1372;
+
+    /// <summary>
+    /// The icon of every form that has one of its own, keyed by species and form.
+    /// </summary>
+    /// <remarks>
+    /// Two sources. The cartridge's Alolan forms sit <b>right before</b> the ordinary icon of their
+    /// species — that is what <see cref="NormalFormOffsets"/> steps over —, so form 1 is one icon
+    /// back; Dugtrio and Muk have two identical Alolan icons and one back is still one of them. And
+    /// the expansion's forms, from <see cref="ExpansionFormKeys"/>, when the container is the one
+    /// those keys describe. A form missing here is drawn with its species' picture.
+    /// </remarks>
+    /// <param name="speciesIcons">What <see cref="Build(Func{int, int}, int)"/> returned.</param>
+    /// <param name="containerIcons">How many icons the loaded container holds.</param>
+    public static IReadOnlyDictionary<(int Species, int Form), int> FormIcons(
+        IReadOnlyDictionary<int, int> speciesIcons, int containerIcons)
+    {
+        ArgumentNullException.ThrowIfNull(speciesIcons);
+
+        var forms = new Dictionary<(int Species, int Form), int>();
+
+        foreach (var species in NormalFormOffsets.Keys)
+        {
+            if (speciesIcons.TryGetValue(species, out var normal))
+            {
+                forms[(species, 1)] = normal - 1;
+            }
+        }
+
+        if (containerIcons != FormBlockStart + ExpansionFormKeys.Length)
+        {
+            return forms;
+        }
+
+        for (var i = 0; i < ExpansionFormKeys.Length; i++)
+        {
+            forms[(ExpansionFormKeys[i] & 0x7FF, ExpansionFormKeys[i] >> 11)] = FormBlockStart + i;
+        }
+
+        return forms;
     }
 }

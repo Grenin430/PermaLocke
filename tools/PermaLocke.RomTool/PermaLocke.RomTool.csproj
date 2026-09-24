@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\PermaLocke.Randomizer\PermaLocke.Randomizer.csproj" />
     <ProjectReference Include="..\..\src\PermaLocke.Core\PermaLocke.Core.csproj" />
+    <ProjectReference Include="..\..\src\PermaLocke.Rules\PermaLocke.Rules.csproj" />
     <ProjectReference Include="..\..\src\PermaLocke.Data\PermaLocke.Data.csproj" />
     <ProjectReference Include="..\..\third_party\pk3DS.Core\pk3DS.Core.csproj" />
     <PackageReference Include="PKHeX.Core" Version="26.7.7" />

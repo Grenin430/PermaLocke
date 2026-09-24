@@ -10,7 +10,8 @@ public sealed record NewPokemon(
     int Nature,
     int AbilityId,
     IReadOnlyList<int> Ivs,
-    bool IsShiny);
+    bool IsShiny,
+    int Form = 0);
 
 /// <summary>
 /// Builds a PK7 for the player's own game.
@@ -57,10 +58,11 @@ public static class PokemonBuilder
         var pokemon = new PK7
         {
             Species = (ushort)spec.Species,
-            Form = 0,
-            CurrentLevel = (byte)spec.Level,
+
+            // La forma regional que salió en la tirada (§139); 0 es la normal.
+            Form = (byte)spec.Form,
+
             Nature = (Nature)spec.Nature,
-            Ability = spec.AbilityId,
 
             // El hueco de habilidad tiene que ser uno de los tres que la especie declara; el 0
             // vale siempre y evita que el juego muestre un hueco imposible.
@@ -87,11 +89,19 @@ public static class PokemonBuilder
         pokemon.IV_SPA = spec.Ivs[4];
         pokemon.IV_SPD = spec.Ivs[5];
 
+        // Con la curva del juego que se juega. PKHeX pone crecimiento Medio a todo lo que pasa de
+        // la 807, así que un Dragapult pedido a nivel 40 llegaba al 37 (§134).
+        GameLevels.Set(pokemon, spec.Level);
+
+        // Con el noveno bit, después del hueco: el hueco vive en los bits bajos del mismo byte.
+        PokemonAbility.Set(pokemon, spec.AbilityId);
+
         GiveItAnIdentity(pokemon, spec.IsShiny);
 
         NameIt(pokemon);
         SetMovesFor(pokemon);
         pokemon.HealPP();
+        SetWorldPP(pokemon);
         pokemon.ResetPartyStats();
         pokemon.RefreshChecksum();
 
@@ -169,15 +179,77 @@ public static class PokemonBuilder
     /// </remarks>
     private static void SetMovesFor(PK7 pokemon)
     {
+        // Del mundo instalado antes que de PKHeX (§142). Los aprendizajes están randomizados, así que lo que PKHeX
+        // sugiere es lo que la especie aprende en el CARTUCHO: un Pokémon del gacha llegaba sabiendo cosas que su
+        // especie no aprende en el juego que se juega, y uno de gen 8-9 no llegaba sabiendo nada, porque la tabla
+        // de PKHeX acaba en la 807. Se hace lo que hace el juego con uno salvaje: los últimos cuatro aprendidos.
+        if (WorldMoves.MovesAt(pokemon.Species, pokemon.Form, GameLevels.Of(pokemon)) is { } world
+            && world.Any(move => move > 0))
+        {
+            pokemon.Move1 = (ushort)world[0];
+            pokemon.Move2 = (ushort)world[1];
+            pokemon.Move3 = (ushort)world[2];
+            pokemon.Move4 = (ushort)world[3];
+
+            // Y los mismos como «para volver a aprender», que es lo que el juego guarda de un regalo: así el
+            // recuerda-movimientos -el de la app y el del juego- los ofrece siempre, como las «iniciales» de Añil.
+            pokemon.RelearnMove1 = (ushort)world[0];
+            pokemon.RelearnMove2 = (ushort)world[1];
+            pokemon.RelearnMove3 = (ushort)world[2];
+            pokemon.RelearnMove4 = (ushort)world[3];
+            return;
+        }
+
         try
         {
             Span<ushort> moves = stackalloc ushort[4];
             new LegalityAnalysis(pokemon).GetSuggestedCurrentMoves(moves);
-            pokemon.SetMoves(moves);
+
+            // Lo que sugiere PKHeX sale del cartucho, que sí tiene los prohibidos (§162). Se quitan y se juntan los que
+            // quedan delante: el juego nunca deja un hueco en medio.
+            Span<ushort> allowed = stackalloc ushort[4];
+            var kept = 0;
+            foreach (var move in moves)
+            {
+                if (move > 0 && !WorldMoves.Banned.Contains(move)) allowed[kept++] = move;
+            }
+
+            pokemon.SetMoves(allowed);
         }
         catch (Exception)
         {
             // Sin movimientos, pero entregado.
+        }
+    }
+
+    /// <summary>
+    /// Puts each move's PP as the installed world has them, over PKHeX's.
+    /// </summary>
+    /// <remarks>
+    /// PKHeX's table ends with the cartridge's moves and gives anything past it zero PP — a move the game will not
+    /// let the player pick, so the Pokémon struggles. Only moves the world knows are touched; without a world the
+    /// cartridge's PP are the right ones anyway.
+    /// </remarks>
+    private static void SetWorldPP(PK7 pokemon)
+    {
+        if (WorldMoves.MoveOf(pokemon.Move1) is { PP: > 0 } first)
+        {
+            pokemon.Move1_PP = first.PP;
+        }
+
+        if (WorldMoves.MoveOf(pokemon.Move2) is { PP: > 0 } second)
+        {
+            pokemon.Move2_PP = second.PP;
+        }
+
+        if (WorldMoves.MoveOf(pokemon.Move3) is { PP: > 0 } third)
+        {
+            pokemon.Move3_PP = third.PP;
+        }
+
+        if (WorldMoves.MoveOf(pokemon.Move4) is { PP: > 0 } fourth)
+        {
+            pokemon.Move4_PP = fourth.PP;
         }
     }
 }

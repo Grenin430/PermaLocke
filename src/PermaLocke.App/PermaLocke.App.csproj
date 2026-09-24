@@ -1,4 +1,7 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <InternalsVisibleTo Include="PermaLocke.App.Tests" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\PermaLocke.Core\PermaLocke.Core.csproj" />
@@ -54,7 +57,7 @@
     Ver Emulator\LEEME.md, que sí se reparte, con la procedencia y la licencia del fork.
   -->
   <ItemGroup>
-    <EmulatorFiles Include="$(MSBuildThisFileDirectory)..\..\Emulator\**\*" />
+    <EmulatorFiles Include="$(MSBuildThisFileDirectory)..\..\Emulator\**\*" Exclude="$(MSBuildThisFileDirectory)..\..\Emulator\user\**\*;$(MSBuildThisFileDirectory)..\..\Emulator\log\**\*;$(MSBuildThisFileDirectory)..\..\Emulator\*.log;$(MSBuildThisFileDirectory)..\..\Emulator\*.dmp" />
     <None Include="@(EmulatorFiles)"
           Link="Emulator\%(RecursiveDir)%(Filename)%(Extension)"
           CopyToOutputDirectory="Never"

@@ -1,228 +1,137 @@
 <UserControl x:Class="PermaLocke.App.Views.MiscellaneousView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:PermaLocke.App.Views"
+             xmlns:pixel="clr-namespace:PermaLocke.App.Views.Pixel">
 
+    <!-- MISCELÁNEA EN PÍXELES (§176). Mismas órdenes que antes, en ventanas: los premios y las
+         herramientas de pruebas. -->
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+
+        <Style TargetType="ScrollBar" BasedOn="{StaticResource PxScrollBar}" />
+
+        <Style x:Key="Explain" TargetType="pixel:PixelText">
+            <Setter Property="Scale" Value="2" />
+            <Setter Property="Wrap" Value="True" />
+            <Setter Property="Colour" Value="{StaticResource PxTextDim}" />
+        </Style>
     </UserControl.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel Margin="0,0,10,0">
 
-            <Border Style="{StaticResource Inset}" Padding="18,16">
-                <StackPanel>
-                    <TextBlock Text="MOCHILA DEL JUEGO" Style="{StaticResource StatLabel}" />
-                    <TextBlock Style="{StaticResource Body}" Margin="0,7,0,0"
-                               Text="PermaLocke localiza la mochila por su estructura: el juego guarda los siete bolsillos seguidos y, justo detrás, una tabla de punteros a cada uno. Solo se acepta como mochila lo que cumple esa condición, así que no hay falsos positivos." />
-
-                    <Button Content="LEER LA MOCHILA" Style="{StaticResource PrimaryButton}"
-                            Command="{Binding ReadBagCommand}" HorizontalAlignment="Left"
-                            MinWidth="210" Padding="16,9" Margin="0,14,0,0" />
-
-                    <Border Margin="0,14,0,0" Padding="14,11"
-                            Background="{StaticResource BackgroundBrush}"
-                            BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
-                            CornerRadius="{StaticResource RadiusMedium}">
-                        <Border.Style>
-                            <Style TargetType="Border">
-                                <Setter Property="Visibility" Value="Visible" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding BagAddress}" Value="">
-                                        <Setter Property="Visibility" Value="Collapsed" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Border.Style>
-                        <StackPanel>
-                            <TextBlock Text="{Binding BagAddress}" Style="{StaticResource Mono}"
-                                       FontSize="12" Foreground="{StaticResource AccentBrush}" />
-
-                            <ItemsControl ItemsSource="{Binding BagContents}" Margin="0,8,0,0">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <TextBlock Text="{Binding}" Style="{StaticResource Mono}"
-                                                   FontSize="11.5"
-                                                   Foreground="{StaticResource TextMutedBrush}"
-                                                   Margin="0,1" />
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
-            </Border>
-
             <!-- Los premios de la competición. No son herramientas de pruebas y por eso van en su
                  propio panel: se ganan, se dan una vez, y lo que hace que «una vez» sea verdad es
                  el evento que queda en el historial, no este botón. -->
-            <Border Style="{StaticResource Inset}" Padding="18,16" Margin="0,14,0,0"
-                    Visibility="{Binding HasRewards, Converter={StaticResource BoolToVisibility}}">
+            <pixel:PixelWindow Title="PREMIOS DE LA COMPETICIÓN" Icon="IconTrophy" Margin="0,0,0,12"
+                               Visibility="{Binding HasRewards, Converter={StaticResource BoolToVisibility}}">
                 <StackPanel>
-                    <TextBlock Text="PREMIOS DE LA COMPETICIÓN" Style="{StaticResource StatLabel}" />
+                    <pixel:PixelText Style="{StaticResource Explain}" Text="Se recogen una sola vez. Necesita Azahar abierto." />
 
-                    <TextBlock Style="{StaticResource Body}" Margin="0,9,0,0"
-                               Text="Se recogen una sola vez, y solo cuando están ganados. Lo que decide si lo están son los logros, que los cuenta el propio juego. Para recogerlo Azahar tiene que estar abierto con la partida cargada." />
-
-                    <ItemsControl ItemsSource="{Binding Rewards}" Margin="0,14,0,0">
+                    <ItemsControl ItemsSource="{Binding Rewards}" Margin="0,12,0,0">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border Style="{StaticResource Card}" Padding="16,14" Margin="0,0,0,8">
-                                    <DockPanel>
+                                <Grid Margin="0,0,0,10">
+                                    <views:PixelPanel Fill="{StaticResource PxFaceHigh}" />
+                                    <DockPanel Margin="16,12,22,18">
                                         <Button DockPanel.Dock="Right" Content="{Binding Action}"
-                                                Style="{StaticResource PrimaryButton}"
-                                                Padding="18,10" MinWidth="150" Margin="14,0,0,0"
-                                                VerticalAlignment="Center"
-                                                IsEnabled="{Binding CanClaim}"
+                                                Style="{StaticResource PxButton}" MinWidth="150" Margin="14,0,0,0"
+                                                VerticalAlignment="Center" IsEnabled="{Binding CanClaim}"
                                                 Command="{Binding DataContext.ClaimRewardCommand,
                                                           RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                 CommandParameter="{Binding}" />
 
-                                        <!-- CUANTO FALTA, en barra. «8/12» dentro de una cajita es
-                                             una cifra que hay que descifrar; una barra ES lo que
-                                             falta. La cifra se queda encima, que sigue haciendo
-                                             falta para saber de cuanto va la cosa. -->
-                                        <StackPanel DockPanel.Dock="Right" Width="104"
-                                                    VerticalAlignment="Center" Margin="14,0,0,0">
-                                            <TextBlock Text="{Binding Progress}" Style="{StaticResource Mono}"
-                                                       FontSize="11.5" TextAlignment="Center"
-                                                       Foreground="{StaticResource TextMutedBrush}"
-                                                       Margin="0,0,0,5" />
-                                            <ProgressBar Minimum="0" Maximum="1" Height="8"
-                                                         Value="{Binding Share, Mode=OneWay}">
-                                                <ProgressBar.Style>
-                                                    <Style TargetType="ProgressBar"
-                                                           BasedOn="{StaticResource {x:Type ProgressBar}}">
-                                                        <Setter Property="Foreground"
-                                                                Value="{StaticResource AccentBrush}" />
+                                        <!-- CUANTO FALTA, en barra, con la cifra encima. -->
+                                        <StackPanel DockPanel.Dock="Right" Width="110" VerticalAlignment="Center" Margin="14,0,0,0">
+                                            <pixel:PixelText Text="{Binding Progress}" Scale="2" Tight="True"
+                                                             HorizontalAlignment="Center" Margin="0,0,0,6"
+                                                             Colour="{StaticResource PxTextDim}" />
+                                            <views:PixelBar Height="15" Value="{Binding Share, Mode=OneWay}">
+                                                <views:PixelBar.Style>
+                                                    <Style TargetType="views:PixelBar">
+                                                        <Setter Property="Fill" Value="{StaticResource PxAccent}" />
                                                         <Style.Triggers>
-                                                            <!-- Ganado o ya recogido: en verde, que es
-                                                                 lo que dice el resto de la aplicacion
-                                                                 cuando algo esta hecho. -->
                                                             <DataTrigger Binding="{Binding CanClaim}" Value="True">
-                                                                <Setter Property="Foreground"
-                                                                        Value="{StaticResource SuccessBrush}" />
+                                                                <Setter Property="Fill" Value="{StaticResource PxGood}" />
                                                             </DataTrigger>
                                                             <DataTrigger Binding="{Binding Claimed}" Value="True">
-                                                                <Setter Property="Foreground"
-                                                                        Value="{StaticResource SuccessBrush}" />
+                                                                <Setter Property="Fill" Value="{StaticResource PxGood}" />
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
-                                                </ProgressBar.Style>
-                                            </ProgressBar>
+                                                </views:PixelBar.Style>
+                                            </views:PixelBar>
                                         </StackPanel>
 
                                         <StackPanel>
-                                            <TextBlock Text="{Binding Name}" Style="{StaticResource CardTitle}" />
-                                            <TextBlock Text="{Binding Description}" Style="{StaticResource Muted}"
-                                                       TextWrapping="Wrap" Margin="0,4,0,0" />
+                                            <pixel:PixelText Text="{Binding Name}" Scale="2" Tight="True"
+                                                             Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
+                                            <pixel:PixelText Text="{Binding Description}" Style="{StaticResource Explain}"
+                                                             Margin="0,5,0,0" />
 
-                                            <!-- LO QUE DA, dibujado. Los iconos salen de la ROM del
-                                                 propio jugador, los mismos que usa la tienda. -->
-                                            <ItemsControl ItemsSource="{Binding Gives}" Margin="0,9,0,0">
+                                            <!-- LO QUE DA, dibujado. Los iconos salen de la ROM del propio jugador. -->
+                                            <ItemsControl ItemsSource="{Binding Gives}" Margin="0,10,0,0">
                                                 <ItemsControl.ItemsPanel>
                                                     <ItemsPanelTemplate>
-                                                        <StackPanel Orientation="Horizontal" />
+                                                        <WrapPanel />
                                                     </ItemsPanelTemplate>
                                                 </ItemsControl.ItemsPanel>
                                                 <ItemsControl.ItemTemplate>
                                                     <DataTemplate>
-                                                        <Border Style="{StaticResource Inset}" Padding="8,4"
-                                                                Margin="0,0,8,0">
-                                                            <StackPanel Orientation="Horizontal">
-                                                                <Image Source="{Binding Icon}" Width="26" Height="26"
-                                                                       RenderOptions.BitmapScalingMode="NearestNeighbor"
-                                                                       VerticalAlignment="Center"
-                                                                       Margin="0,0,7,0" />
-                                                                <TextBlock Style="{StaticResource Mono}" FontSize="11.5"
-                                                                           VerticalAlignment="Center"
-                                                                           Foreground="{StaticResource AccentBrush}">
-                                                                    <Run Text="{Binding Amount, Mode=OneWay}" />
-                                                                    <Run Text="{Binding Name, Mode=OneWay}" />
-                                                                </TextBlock>
+                                                        <Grid Margin="0,0,8,6">
+                                                            <views:PixelPanel Fill="{StaticResource PxWell}" IsSunken="True"
+                                                                              HasShadow="False" />
+                                                            <StackPanel Orientation="Horizontal" Margin="8,5,11,5">
+                                                                <pixel:PixelSprite Source="{Binding Icon}" Scale="1" TrimEmpty="True"
+                                                                                   VerticalAlignment="Center" Margin="0,0,8,0" />
+                                                                <pixel:PixelText Text="{Binding Amount}" Scale="2" Tight="True"
+                                                                                 VerticalAlignment="Center"
+                                                                                 Colour="{StaticResource PxAccentLight}" />
+                                                                <pixel:PixelText Text="{Binding Name}" Scale="2" Tight="True"
+                                                                                 VerticalAlignment="Center" Margin="6,0,0,0"
+                                                                                 Colour="{StaticResource PxText}" />
                                                             </StackPanel>
-                                                        </Border>
+                                                        </Grid>
                                                     </DataTemplate>
                                                 </ItemsControl.ItemTemplate>
                                             </ItemsControl>
                                         </StackPanel>
                                     </DockPanel>
-                                </Border>
+                                </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </StackPanel>
-            </Border>
+            </pixel:PixelWindow>
 
-            <!-- ================================================== LOS AVISOS
-                 Encima del juego y con PermaLocke minimizado, que es como se juega: todo lo que la
-                 aplicacion hace sola solo se veia en HOME, o sea detras del emulador. -->
-            <Border Style="{StaticResource Inset}" Padding="18,16" Margin="0,14,0,0">
+            <pixel:PixelWindow Title="DARSE OBJETOS" Icon="IconTools">
+                <pixel:PixelWindow.HeaderContent>
+                    <Grid>
+                        <views:PixelPanel Fill="{StaticResource PxWarnDeep}" HasShadow="False" />
+                        <pixel:PixelText Text="HERRAMIENTAS DE PRUEBAS" Scale="2" Tight="True" Margin="9,5,10,6"
+                                         Colour="{StaticResource PxWarn}" />
+                    </Grid>
+                </pixel:PixelWindow.HeaderContent>
+
                 <StackPanel>
-                    <TextBlock Text="AVISOS ENCIMA DEL JUEGO" Style="{StaticResource StatLabel}" />
+                    <pixel:PixelText Style="{StaticResource Explain}"
+                                     Text="Se suman a lo que ya llevas. Necesita Azahar abierto." />
 
-                    <TextBlock Style="{StaticResource Body}" Margin="0,9,0,0" TextWrapping="Wrap"
-                               Text="Cuando PermaLocke registra una muerte, cobra una penalización o te entrega un premio, lo dice en una esquina de la ventana de Azahar. No te quita el foco y no se puede pulsar, así que no te saca del combate ni se come un turno." />
+                    <pixel:PixelRule Margin="0,14,0,14" />
 
-                    <Border Style="{StaticResource Divider}" Margin="0,15" />
-
-                    <DockPanel>
-                        <Button DockPanel.Dock="Right" Content="VER UN AVISO"
-                                Style="{StaticResource GhostButton}" Padding="16,9"
-                                Command="{Binding TestNotificationCommand}" />
-
-                        <StackPanel>
-                            <CheckBox IsChecked="{Binding NotificationsOn}"
-                                      Content="Avisarme mientras juego" />
-                            <CheckBox IsChecked="{Binding StepAside}" Margin="0,10,0,0"
-                                      Content="Apartarme sola cuando abra el emulador" />
-                        </StackPanel>
-                    </DockPanel>
+                    <WrapPanel>
+                        <Button Content="+10 CARAMELOS RAROS" Style="{StaticResource PxButton}"
+                                Command="{Binding GrantCandiesCommand}" ToolTip="Diez más cada vez." Margin="0,0,10,6" />
+                        <Button Content="AMULETO IRIS" Style="{StaticResource PxButton}"
+                                Command="{Binding GrantShinyCharmCommand}" ToolTip="Solo se puede llevar uno." Margin="0,0,10,6" />
+                    </WrapPanel>
                 </StackPanel>
-            </Border>
+            </pixel:PixelWindow>
 
-            <Border Style="{StaticResource Inset}" Padding="18,16" Margin="0,14,0,0">
-                <StackPanel>
-                    <DockPanel>
-                        <Border DockPanel.Dock="Right" Style="{StaticResource Chip}"
-                                Background="{StaticResource WarningDeepBrush}"
-                                BorderBrush="{StaticResource WarningBrush}">
-                            <TextBlock Text="HERRAMIENTAS DE PRUEBAS" Style="{StaticResource ChipText}"
-                                       Foreground="{StaticResource WarningBrush}" />
-                        </Border>
-                        <TextBlock Text="DARSE OBJETOS" Style="{StaticResource StatLabel}"
-                                   VerticalAlignment="Center" />
-                    </DockPanel>
-
-                    <TextBlock Style="{StaticResource Body}" Margin="0,9,0,0"
-                               Text="Cada pulsación añade a lo que ya llevas, no lo reemplaza. Después de escribir se vuelve a leer la mochila del juego, y solo se da por buena si ha cambiado de verdad." />
-
-                    <Border Style="{StaticResource Divider}" Margin="0,15" />
-
-                    <StackPanel Orientation="Horizontal">
-                        <Button Content="+10 CARAMELOS RAROS" Style="{StaticResource PrimaryButton}"
-                                Command="{Binding GrantCandiesCommand}" MinWidth="210" Padding="16,10"
-                                ToolTip="Diez más cada vez que lo pulses. El bolsillo de medicinas admite 999 como mucho." />
-
-                        <Button Content="AMULETO IRIS" Style="{StaticResource PrimaryButton}"
-                                Command="{Binding GrantShinyCharmCommand}" MinWidth="170" Padding="16,10"
-                                Margin="10,0,0,0"
-                                ToolTip="Objeto clave: la mochila solo admite uno, así que pulsarlo dos veces no da dos." />
-
-                        <Button Content="+10 ESCAMAS CORAZÓN" Style="{StaticResource PrimaryButton}"
-                                Command="{Binding GrantHeartScalesCommand}" MinWidth="215" Padding="16,10"
-                                Margin="10,0,0,0"
-                                ToolTip="Diez más cada vez que lo pulses. Sirven para que el recordador de movimientos te devuelva uno, a una escama por movimiento." />
-                    </StackPanel>
-                </StackPanel>
-            </Border>
-
-            <Border Padding="14,10" Margin="0,14,0,0"
-                    Background="{StaticResource SurfaceBrush}"
-                    BorderBrush="{StaticResource AccentDimBrush}" BorderThickness="1"
-                    CornerRadius="{StaticResource RadiusMedium}">
-                <Border.Style>
-                    <Style TargetType="Border">
+            <Grid Margin="0,12,0,0">
+                <Grid.Style>
+                    <Style TargetType="Grid">
                         <Setter Property="Visibility" Value="Visible" />
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding Status}" Value="">
@@ -230,13 +139,11 @@
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
-                </Border.Style>
-                <TextBlock Text="{Binding Status}" Style="{StaticResource Body}" FontSize="12" />
-            </Border>
-
-            <TextBlock Style="{StaticResource Faint}" Margin="2,14,0,0"
-                       Text="Escribir exige el fork propio de Azahar: el oficial acepta la escritura y no la aplica, y eso se detecta releyendo. Cada escritura guarda antes una copia de los bytes en Saves/backup y queda registrada como evento auditable de la run." />
-
+                </Grid.Style>
+                <views:PixelPanel Fill="{StaticResource PxAccentDeep}" />
+                <pixel:PixelText Text="{Binding Status}" Scale="2" Wrap="True" Margin="16,10,22,16"
+                                 Colour="{StaticResource PxText}" />
+            </Grid>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

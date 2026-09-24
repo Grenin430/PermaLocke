@@ -36,6 +36,9 @@ public sealed partial class AchievementRowViewModel(
 
     public int Count => Progress.Shown;
 
+    /// <summary>How far along, 0 to 1, for the pixel bar, which takes a fraction and not a range.</summary>
+    public double Share => Target <= 0 ? 0 : Math.Clamp((double)Count / Target, 0, 1);
+
     public bool CanClaim => Progress.CanClaim;
 
     public bool Claimed => Progress.Claimed;
@@ -168,7 +171,7 @@ public sealed partial class AchievementsViewModel : SectionViewModel
 
             Summary = $"{claimed} de {progress.Count} cobrados"
                       + (ready > 0 ? $" · {ready} listos para cobrar" : string.Empty)
-                      + (manual > 0 ? $" · {manual} se marcan a mano" : string.Empty);
+                      ;
 
             // De dónde vienen los números del juego, y desde cuándo. Sin esto, un contador
             // parado parece roto cuando lo que pasa es que el jugador no ha guardado.
@@ -176,22 +179,19 @@ public sealed partial class AchievementsViewModel : SectionViewModel
             {
                 { Available: false } bad => bad.Problem ?? "No se han podido leer los contadores del juego.",
                 { Notice: { Length: > 0 } notice } => notice,
-                { Available: true } => "Los contadores del juego se leen de la partida guardada.",
+                { Available: true } => "Se actualiza cuando guardas en el juego.",
                 _ => string.Empty
             };
 
             var rules = _penalties.Rules;
-            PenaltyText = $"Cada muerte cuesta {rules.PerDeath} puntos. Que caiga el equipo entero "
-                          + $"cuesta {rules.PerWipe} más, hasta {rules.MaxWipes} veces "
-                          + $"({rules.MaxWipeCost} como mucho). Llevas {Wipes}. "
-                          + "Los puntos pueden quedarse en negativo.";
+            PenaltyText = $"Cada muerte: −{rules.PerDeath} puntos. Equipo entero caído: −{rules.PerWipe} más (hasta {rules.MaxWipes} veces). Llevas {Wipes}.";
 
             Status = string.Empty;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Fallo al leer los logros");
-            Status = "No se han podido leer los logros. El detalle está en la carpeta Logs.";
+            Status = "No se han podido leer los logros.";
         }
         finally
         {

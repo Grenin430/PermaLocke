@@ -3,6 +3,42 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <UserControl.Resources>
+        <!-- LA MARCA DE COMPROBACION de cada jugador: si sus numeros salen de su historial. Pequeña y
+             con fondo teñido, como el resto de distintivos: un semaforo grande diria mas de lo que
+             se ha comprobado. -->
+        <DataTemplate x:Key="AuditChip">
+            <Border ToolTip="{Binding Audit.Detail}">
+                <Border.Style>
+                    <Style TargetType="Border" BasedOn="{StaticResource Chip}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding AuditState}" Value="ok">
+                                <Setter Property="Background" Value="{StaticResource SuccessDeepBrush}" />
+                                <Setter Property="BorderBrush" Value="{StaticResource SuccessBrush}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding AuditState}" Value="bad">
+                                <Setter Property="Background" Value="{StaticResource DangerDeepBrush}" />
+                                <Setter Property="BorderBrush" Value="{StaticResource DangerBrush}" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <TextBlock Text="{Binding AuditLabel}">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource ChipText}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding AuditState}" Value="ok">
+                                    <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding AuditState}" Value="bad">
+                                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </Border>
+        </DataTemplate>
+
         <!-- Una fila de la clasificacion. El puesto en grande a la izquierda, los puntos a la
              derecha, y en medio quien es y como le va. La tuya se marca con la barra de acento:
              en una tabla de cinco, encontrarte a ti mismo tiene que ser instantaneo. -->
@@ -15,13 +51,18 @@
                 <TextBlock Text="{Binding Snapshot.PlayerName}" Style="{StaticResource CardTitle}"
                            TextAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,0,3" />
 
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,8">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,6">
                     <Path Style="{StaticResource IconSmall}" Data="{StaticResource IconPoints}"
                           Fill="{StaticResource AccentBrush}" VerticalAlignment="Center"
                           Margin="0,0,6,0" />
                     <TextBlock Text="{Binding Snapshot.Points}" Style="{StaticResource Numeric}"
                                Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center" />
                 </StackPanel>
+
+                <!-- Encima del bloque y no dentro: el bloque tiene alto fijo por puesto, y dentro se
+                     cortaba en el tercero. -->
+                <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource AuditChip}"
+                                  HorizontalAlignment="Center" Margin="0,0,0,8" />
 
                 <Border x:Name="Block" CornerRadius="6,6,0,0" BorderThickness="1,1,1,0"
                         Background="{StaticResource SurfaceAltBrush}"
@@ -88,8 +129,12 @@
                                VerticalAlignment="Center" TextAlignment="Center" />
 
                     <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="10,0">
-                        <TextBlock Text="{Binding Snapshot.PlayerName}" Style="{StaticResource CardTitle}"
-                                   TextTrimming="CharacterEllipsis" />
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Snapshot.PlayerName}" Style="{StaticResource CardTitle}"
+                                       TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                            <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource AuditChip}"
+                                              Margin="10,0,0,0" VerticalAlignment="Center" />
+                        </StackPanel>
                         <TextBlock Style="{StaticResource Faint}" TextTrimming="CharacterEllipsis">
                             <Run Text="{Binding Snapshot.RunName, Mode=OneWay}" />
                             <Run Text="·" />
@@ -150,12 +195,50 @@
                  Todo el transporte es una carpeta compartida. Ni servidor, ni cuentas, ni
                  protocolo: para cinco amigos, una carpeta que ya se sincroniza sola hace el
                  trabajo, y es lo unico que funciona sin que nadie hospede nada. -->
+            <!-- ================================================== TU PERFIL
+                 Cada uno juega en su PC, asi que el jugador es esta instalacion. El id es lo que
+                 todo usa por dentro; el nombre se puede cambiar sin romper nada. -->
             <Border Style="{StaticResource Inset}">
+                <StackPanel>
+                    <DockPanel>
+                        <Border DockPanel.Dock="Right" Style="{StaticResource Chip}"
+                                ToolTip="Tu código de jugador.">
+                            <TextBlock Style="{StaticResource ChipText}">
+                                <Run Text="ID" />
+                                <Run Text="{Binding PlayerId, Mode=OneWay}" />
+                            </TextBlock>
+                        </Border>
+                        <TextBlock Text="TU PERFIL" Style="{StaticResource PanelHeading}" VerticalAlignment="Center" />
+                    </DockPanel>
+
+                    <DockPanel Margin="0,12,0,0">
+                        <Button DockPanel.Dock="Right" Content="GUARDAR" Style="{StaticResource GhostButton}"
+                                Command="{Binding SaveNameCommand}" MinWidth="120" Margin="10,0,0,0" />
+                        <TextBox Text="{Binding PlayerName, UpdateSourceTrigger=PropertyChanged}" MaxLength="24" />
+                    </DockPanel>
+
+                    <TextBlock Text="{Binding NameStatus}" Style="{StaticResource Faint}" Margin="0,6,0,0" />
+
+                    <TextBlock Text="{Binding OwnershipNote}" Margin="0,6,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource Body}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding RunIsForeign}" Value="True">
+                                        <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Inset}" Margin="0,12,0,0">
                 <StackPanel>
                     <TextBlock Text="CARPETA COMPARTIDA" Style="{StaticResource PanelHeading}" />
 
                     <TextBlock Style="{StaticResource Body}" Margin="0,8,0,0"
-                               Text="Elegid entre todos una carpeta que se sincronice sola —Drive, Dropbox, OneDrive o una de red— y apuntad ahí las cinco aplicaciones. Cada una escribe un único fichero con el resumen de su run y lee los de las demás. No hace falta servidor ni cuentas." />
+                               Text="La carpeta de Drive que compartís todos." />
 
                     <Border Style="{StaticResource Well}" Margin="0,12,0,0" Padding="14,10">
                         <TextBlock Text="{Binding Folder}"
@@ -235,11 +318,11 @@
                  juego lee DURANTE el combate, cada maquina calcula un daño distinto y se separan
                  en el primer turno.
 
-                 De todo lo que PermaLocke randomiza, solo DOS opciones tocan esos datos. El resto
-                 -salvajes, entrenadores, iniciales, objetos del suelo, tiendas, el Pokemon extra,
-                 las megas de los jefes- puede ser distinto en cada uno sin ningun problema.
-
-                 Este aviso existe para que nadie descubra al mes que no puede pelear con nadie. -->
+                 Desde COMBATES eso ya no depende del mundo de cada uno: aparta la randomizacion y
+                 pone el juego base mientras dura el combate. Lo que sigue teniendo que coincidir es
+                 ese juego base (con o sin las generaciones 8 y 9), y eso es lo que dice el aviso
+                 (§124). Antes decia «no puede» mirando las opciones del randomizador, y era falso
+                 para quien usa COMBATES. -->
             <Border Style="{StaticResource Inset}" Margin="0,12,0,0"
                     Visibility="{Binding HasBattleNote, Converter={StaticResource BoolToVisibility}}">
                 <StackPanel>
@@ -248,6 +331,10 @@
                             <Border.Style>
                                 <Style TargetType="Border" BasedOn="{StaticResource ChipSuccess}">
                                     <Style.Triggers>
+                                        <!-- Sin nadie con quien combatir no hay nada compatible que anunciar. -->
+                                        <DataTrigger Binding="{Binding BattleState}" Value="none">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
                                         <DataTrigger Binding="{Binding BattleState}" Value="warn">
                                             <Setter Property="Background" Value="{StaticResource WarningDeepBrush}" />
                                             <Setter Property="BorderBrush" Value="{StaticResource WarningBrush}" />
@@ -276,12 +363,6 @@
 
                     <TextBlock Text="{Binding BattleNote}" Style="{StaticResource Body}"
                                Margin="0,9,0,0" />
-
-                    <TextBlock Style="{StaticResource Faint}" Margin="0,6,0,0"
-                               Text="Podéis combatir por link con cada uno su propio mundo. Lo único que tiene que coincidir son shuffleBaseStats y randomizeAbilities de Data\randomizer.json, apagadas en todos: son las dos únicas que cambian datos que el juego consulta durante el combate. Salvajes, entrenadores, iniciales, objetos del suelo, tiendas y las megas de los jefes pueden ser distintos sin problema." />
-
-                    <TextBlock Style="{StaticResource Faint}" Margin="0,6,0,0"
-                               Text="El dato sale de la última randomización que se generó, no de cómo esté el fichero ahora: quien lo edite y no regenere sigue jugando el mundo viejo, y es ese el que decide si puede combatir." />
                 </StackPanel>
             </Border>
 
@@ -289,22 +370,66 @@
                  Hay que decirlo, y decirlo aqui. La regla 3 del proyecto prohibe un anti-trampas
                  de mentira, asi que no hay ninguno fingiendo estar. Lo que si se puede ofrecer sin
                  un servidor que nadie va a montar es que un retroceso se VEA. -->
+            <!-- ================================================== LAS REGLAS OFICIALES
+                 Lo que el admin deja en reglas/. Cada fichero se carga con el mismo cargador que usa
+                 la aplicacion antes de ofrecerlo, y los tuyos se copian aparte antes de pisarlos. -->
             <Border Style="{StaticResource Inset}" Margin="0,12,0,0">
                 <StackPanel>
                     <DockPanel>
-                        <Border DockPanel.Dock="Right" Style="{StaticResource ChipWarning}">
-                            <TextBlock Text="SIN VERIFICAR" Style="{StaticResource ChipText}"
-                                       Foreground="{StaticResource WarningBrush}" />
-                        </Border>
-                        <TextBlock Text="QUÉ FIABILIDAD TIENE ESTO" Style="{StaticResource PanelHeading}"
+                        <Button DockPanel.Dock="Right" Content="ADOPTAR REGLAS" Style="{StaticResource PrimaryButton}"
+                                Command="{Binding AdoptRulesCommand}" MinWidth="160" />
+                        <TextBlock Text="REGLAS OFICIALES" Style="{StaticResource PanelHeading}"
                                    VerticalAlignment="Center" />
                     </DockPanel>
 
-                    <TextBlock Style="{StaticResource Body}" Margin="0,9,0,0"
-                               Text="Lo que ves es lo que la aplicación de cada uno ha dicho de sí misma. Son ficheros en una carpeta que cualquiera puede abrir y editar, así que esto no es una comprobación y no puede serlo sin un servidor que nadie va a montar. PermaLocke no finge lo contrario." />
+                    <TextBlock Text="{Binding RulesMessage}" Style="{StaticResource Body}" Margin="0,9,0,0" />
 
-                    <TextBlock Style="{StaticResource Faint}" Margin="0,6,0,0"
-                               Text="Lo que sí se guarda de cada run es el número de eventos y el hash del último, que no demuestran que un número sea cierto pero hacen comparables dos instantáneas de la misma run: un contador que baja significa que se restauró una copia, y un hash que cambia sin que el contador se mueva significa que se reescribió el historial. Eso ya lo podéis mirar entre vosotros." />
+                    <ItemsControl ItemsSource="{Binding RuleFiles}" Margin="0,8,0,0"
+                                  Visibility="{Binding HasRuleFiles, Converter={StaticResource BoolToVisibility}}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <DockPanel Margin="0,3">
+                                    <TextBlock DockPanel.Dock="Right" TextAlignment="Right" Margin="12,0,0,0">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock" BasedOn="{StaticResource Faint}">
+                                                <Setter Property="Text" Value="igual" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding State}" Value="Different">
+                                                        <Setter Property="Text" Value="distinto" />
+                                                        <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding State}" Value="New">
+                                                        <Setter Property="Text" Value="no lo tienes" />
+                                                        <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding State}" Value="Unreadable">
+                                                        <Setter Property="Text" Value="no se puede cargar" />
+                                                        <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    <TextBlock DockPanel.Dock="Right" Margin="12,0,0,0">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock" BasedOn="{StaticResource Faint}">
+                                                <Setter Property="Text" Value="al reiniciar" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Kind}" Value="NeedsRegeneration">
+                                                        <Setter Property="Text" Value="hay que regenerar el mod" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    <TextBlock Text="{Binding Name}" Style="{StaticResource Mono}"
+                                               ToolTip="{Binding Detail}" />
+                                </DockPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <TextBlock Text="{Binding RulesStatus}" Style="{StaticResource Body}" Margin="0,8,0,0" />
                 </StackPanel>
             </Border>
 
@@ -313,7 +438,7 @@
             <Border Style="{StaticResource Inset}" Margin="0,12,0,0"
                     Visibility="{Binding HasBroken, Converter={StaticResource BoolToVisibility}}">
                 <StackPanel>
-                    <TextBlock Text="FICHEROS QUE NO SE ENTIENDEN" Style="{StaticResource PanelHeading}"
+                    <TextBlock Text="JUGADORES QUE NO SE PUEDEN LEER" Style="{StaticResource PanelHeading}"
                                Foreground="{StaticResource DangerBrush}" />
                     <ItemsControl ItemsSource="{Binding Broken}" Margin="0,8,0,0">
                         <ItemsControl.ItemTemplate>

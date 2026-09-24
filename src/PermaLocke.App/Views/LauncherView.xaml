@@ -1,0 +1,424 @@
+<UserControl x:Class="PermaLocke.App.Views.LauncherView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:PermaLocke.App.Views"
+             xmlns:pixel="clr-namespace:PermaLocke.App.Views.Pixel">
+
+    <!-- JUGAR EN PÍXELES (§176). El cuarto del entrenador ya lo era (§169); ahora también el rótulo, la barra de jugar,
+         los enlaces, la actividad, los amigos y los logros. Mismas órdenes que antes. -->
+    <UserControl.Resources>
+        <Style TargetType="ScrollBar" BasedOn="{StaticResource PxScrollBar}" />
+
+        <!-- EL BOTÓN GRANDE. Una placa del color que le da el estado: violeta para jugar, rojo para cerrar. El color
+             normal va en Background y el de encima del ratón en BorderBrush, para que un solo molde sirva a todos.
+             Pulsarlo es hundirlo sobre su sombra. -->
+        <Style x:Key="PlayButton" TargetType="Button">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="MinWidth" Value="240" />
+            <Setter Property="Height" Value="74" />
+            <Setter Property="Background" Value="#FFB07BF0" />
+            <Setter Property="BorderBrush" Value="#FFD2ADFF" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid x:Name="Body" Background="Transparent">
+                            <views:PixelPanel x:Name="Plate"
+                                              Fill="{Binding Background.Color, RelativeSource={RelativeSource TemplatedParent}}" />
+                            <ContentPresenter x:Name="Face" Margin="30,6,36,12" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Plate" Property="Fill"
+                                        Value="{Binding BorderBrush.Color, RelativeSource={RelativeSource TemplatedParent}}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Plate" Property="HasShadow" Value="False" />
+                                <Setter TargetName="Plate" Property="Margin" Value="6,6,0,0" />
+                                <Setter TargetName="Face" Property="RenderTransform">
+                                    <Setter.Value>
+                                        <TranslateTransform X="6" Y="6" />
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Plate" Property="Fill" Value="#FF3A3350" />
+                                <Setter Property="Cursor" Value="Arrow" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- UN ENLACE de la fila de debajo de la barra: el ▶ de menú aparece al pasar por encima. -->
+        <Style x:Key="NavLink" TargetType="Button">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Margin" Value="0,0,24,0" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <StackPanel Orientation="Horizontal" Background="Transparent">
+                            <pixel:PixelText x:Name="Cursor" Text="▶" Scale="2" Tight="True" Visibility="Hidden"
+                                             Colour="{StaticResource PxGold}" Margin="0,0,6,0" VerticalAlignment="Center" />
+                            <pixel:PixelText x:Name="Label" Text="{Binding Content, RelativeSource={RelativeSource TemplatedParent}}"
+                                             Scale="2" Tight="True" Colour="{StaticResource PxTextDim}" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Label" Property="Colour" Value="{StaticResource PxText}" />
+                                <Setter TargetName="Cursor" Property="Visibility" Value="Visible" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- LOS TRES COLORES DE UNA LISTA DE AMIGOS: verde jugando, azul en la app, gris desconectado. -->
+        <Style x:Key="StateText" TargetType="pixel:PixelText">
+            <Setter Property="Scale" Value="2" />
+            <Setter Property="Tight" Value="True" />
+            <Setter Property="Trim" Value="True" />
+            <Setter Property="Colour" Value="#FF898989" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding State}" Value="Playing">
+                    <Setter Property="Colour" Value="#FF90BA3C" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding State}" Value="InApp">
+                    <Setter Property="Colour" Value="#FF57CBDE" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- El marco del avatar, del color del estado. Desconectado además apaga el dibujo. -->
+        <Style x:Key="StateFrame" TargetType="views:PixelPanel">
+            <Setter Property="HasShadow" Value="False" />
+            <Setter Property="Fill" Value="#FF5C5C5C" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding State}" Value="Playing">
+                    <Setter Property="Fill" Value="#FF90BA3C" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding State}" Value="InApp">
+                    <Setter Property="Fill" Value="#FF57CBDE" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- EL AVATAR: el primero del equipo que publicó, o la inicial si todavía no hay equipo. -->
+        <DataTemplate x:Key="AvatarTemplate">
+            <Grid Width="58" Height="58">
+                <views:PixelPanel Style="{StaticResource StateFrame}" />
+                <views:PixelPanel Fill="#FF0B0916" HasShadow="False" IsSunken="True" Margin="6" />
+                <pixel:PixelSprite Source="{Binding Avatar}" Scale="1" TrimEmpty="True" HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   Visibility="{Binding HasAvatar, Converter={StaticResource BoolToVisibility}}" />
+                <pixel:PixelText Text="{Binding Initial}" Style="{StaticResource StateText}" Scale="3"
+                                 HorizontalAlignment="Center" VerticalAlignment="Center"
+                                 Visibility="{Binding HasAvatar, Converter={StaticResource InverseBoolToVisibility}}" />
+            </Grid>
+        </DataTemplate>
+
+        <!-- UN AMIGO de la lista. -->
+        <DataTemplate x:Key="FriendTemplate">
+            <DockPanel Margin="0,0,0,12">
+                <ContentPresenter DockPanel.Dock="Left" Content="{Binding}" ContentTemplate="{StaticResource AvatarTemplate}"
+                                  Margin="0,0,12,0" />
+                <StackPanel VerticalAlignment="Center">
+                    <pixel:PixelText Text="{Binding Name}" Style="{StaticResource StateText}" Shadow="{StaticResource PxShadow}" />
+                    <pixel:PixelText Text="{Binding Detail}" Style="{StaticResource StateText}" Margin="0,5,0,0" />
+                </StackPanel>
+            </DockPanel>
+        </DataTemplate>
+
+        <!-- UN LOGRO RECLAMADO: quién, cuándo, y la tarjeta del logro con su dibujo. -->
+        <DataTemplate x:Key="ActivityTemplate">
+            <StackPanel Margin="0,0,0,18">
+                <DockPanel>
+                    <ContentPresenter DockPanel.Dock="Left" Content="{Binding}" ContentTemplate="{StaticResource AvatarTemplate}"
+                                      Margin="0,0,12,0" />
+                    <pixel:PixelText DockPanel.Dock="Right" Text="{Binding Time}" Scale="2" Tight="True"
+                                     VerticalAlignment="Center" Margin="12,0,0,0" Colour="{StaticResource PxTextFaint}" />
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <pixel:PixelText Text="{Binding PlayerName}" Style="{StaticResource StateText}"
+                                         Shadow="{StaticResource PxShadow}" />
+                        <pixel:PixelText Text="{Binding Verb}" Scale="2" Tight="True" Trim="True" Margin="6,0,0,0"
+                                         Colour="{StaticResource PxTextDim}" />
+                    </StackPanel>
+                </DockPanel>
+
+                <Grid Margin="70,8,0,0">
+                    <views:PixelPanel Fill="{StaticResource PxFaceHigh}" HasShadow="False" />
+                    <DockPanel Margin="12,10,18,14">
+                        <Grid DockPanel.Dock="Left" Width="64" Height="64" Margin="0,0,14,0" VerticalAlignment="Top">
+                            <views:PixelPanel Fill="{StaticResource PxWell}" IsSunken="True" HasShadow="False" />
+                            <pixel:PixelSprite Source="{Binding Icon}" Scale="1" TrimEmpty="True" Outline="{StaticResource PxShadow}"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                                               Visibility="{Binding HasIcon, Converter={StaticResource BoolToVisibility}}" />
+                        </Grid>
+                        <pixel:PixelText DockPanel.Dock="Right" Text="{Binding PointsText}" Scale="3" Tight="True"
+                                         VerticalAlignment="Center" Margin="16,0,0,0" Colour="{StaticResource PxGold}"
+                                         Shadow="{StaticResource PxShadow}" />
+                        <StackPanel VerticalAlignment="Center">
+                            <pixel:PixelText Text="{Binding Name}" Scale="2" Wrap="True" Colour="{StaticResource PxText}"
+                                             Shadow="{StaticResource PxShadow}" />
+                            <pixel:PixelText Text="{Binding Description}" Scale="2" Wrap="True" Margin="0,5,0,0"
+                                             Colour="{StaticResource PxTextDim}"
+                                             Visibility="{Binding HasDescription, Converter={StaticResource BoolToVisibility}}" />
+                        </StackPanel>
+                    </DockPanel>
+                </Grid>
+            </StackPanel>
+        </DataTemplate>
+
+        <Style x:Key="StatLabel" TargetType="pixel:PixelText">
+            <Setter Property="Scale" Value="2" />
+            <Setter Property="Tight" Value="True" />
+            <Setter Property="Colour" Value="{StaticResource PxTextFaint}" />
+        </Style>
+
+        <Style x:Key="StatValue" TargetType="pixel:PixelText">
+            <Setter Property="Scale" Value="3" />
+            <Setter Property="Tight" Value="True" />
+            <Setter Property="Trim" Value="True" />
+            <Setter Property="Margin" Value="0,6,12,0" />
+            <Setter Property="Colour" Value="{StaticResource PxText}" />
+            <Setter Property="Shadow" Value="{StaticResource PxShadow}" />
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="0,0,10,0">
+
+            <!-- ================================================== LA PORTADA
+                 El cuarto del entrenador, que se va llenando con la run (TrainerRoomScene.cs, §169). -->
+            <Grid Height="320" ClipToBounds="True">
+                <views:TrainerRoom Hour="{Binding Sky.Hour}" State="{Binding Room}" CoveredBottom="22"
+                                   IsPlaying="{Binding Launcher.IsRunning}" />
+
+                <Grid HorizontalAlignment="Left" VerticalAlignment="Top" Margin="18,18,0,0">
+                    <views:PixelPanel Fill="#FF140F24" />
+                    <StackPanel Margin="18,12,26,18">
+                        <pixel:PixelText Text="POKÉMON ULTRA LUNA" Scale="4" Colour="#FFEDE6FF" Shadow="{StaticResource PxShadow}" />
+                        <pixel:PixelText Text="{Binding RunLine}" Scale="2" Tight="True" Margin="1,4,0,0" Colour="#FFB9A8E0" />
+                    </StackPanel>
+                </Grid>
+            </Grid>
+
+            <!-- ================================================== LA BARRA DE JUGAR -->
+            <Grid Margin="0,-22,0,0">
+                <views:PixelPanel Fill="#FF110D1D" />
+                <DockPanel Margin="20,14,26,20">
+                    <Grid DockPanel.Dock="Left" VerticalAlignment="Center">
+                        <Button Style="{StaticResource PlayButton}" Command="{Binding PlayCommand}"
+                                Visibility="{Binding ShowPlay, Converter={StaticResource BoolToVisibility}}">
+                            <StackPanel Orientation="Horizontal">
+                                <pixel:PixelText Text="▶" Scale="4" Tight="True" Colour="{StaticResource PxInk}"
+                                                 VerticalAlignment="Center" Margin="0,0,14,0" />
+                                <pixel:PixelText Text="JUGAR" Scale="4" Tight="True" Colour="{StaticResource PxInk}"
+                                                 VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button Style="{StaticResource PlayButton}" IsEnabled="False"
+                                Visibility="{Binding ShowBusy, Converter={StaticResource BoolToVisibility}}">
+                            <pixel:PixelText Text="{Binding BusyText}" Scale="3" Tight="True" Colour="#FF8A82A6" />
+                        </Button>
+
+                        <Button Style="{StaticResource PlayButton}" Command="{Binding CloseCommand}"
+                                Background="#FFE0664E" BorderBrush="#FFF08A72"
+                                Visibility="{Binding ShowClose, Converter={StaticResource BoolToVisibility}}">
+                            <StackPanel Orientation="Horizontal">
+                                <views:PixelPanel Width="21" Height="21" Fill="{StaticResource PxInk}" HasShadow="False"
+                                                  VerticalAlignment="Center" Margin="0,0,14,0" />
+                                <pixel:PixelText Text="CERRAR JUEGO" Scale="3" Tight="True" Colour="{StaticResource PxInk}"
+                                                 VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button Style="{StaticResource PlayButton}" Command="{Binding ForceCommand}"
+                                Background="#FFB23A34" BorderBrush="#FFD04E46"
+                                Visibility="{Binding ShowForce, Converter={StaticResource BoolToVisibility}}">
+                            <pixel:PixelText Text="FORZAR CIERRE" Scale="3" Tight="True" Colour="#FFFFF0EC" />
+                        </Button>
+                    </Grid>
+
+                    <!-- LA PREGUNTA, en la barra y no en una ventana de Windows: ocupa el sitio de los números mientras
+                         dura. -->
+                    <DockPanel Margin="30,0,0,0" VerticalAlignment="Center" DockPanel.Dock="Right"
+                               Visibility="{Binding IsAsking, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="18,0,0,0">
+                            <Button Content="{Binding AskYes}" Command="{Binding AnswerCommand}" Style="{StaticResource PxDangerButton}"
+                                    AutomationProperties.Name="{Binding AskYes}" MinWidth="150" />
+                            <Button Content="SEGUIR JUGANDO" Command="{Binding DismissCommand}" Style="{StaticResource PxSubtleButton}"
+                                    Margin="10,0,0,0" MinWidth="150" AutomationProperties.Name="SEGUIR JUGANDO" />
+                        </StackPanel>
+                        <pixel:PixelText Text="{Binding AskText}" Scale="2" Wrap="True" VerticalAlignment="Center"
+                                         Colour="{StaticResource PxText}" />
+                    </DockPanel>
+
+                    <UniformGrid Rows="1" Margin="30,0,0,0" VerticalAlignment="Center"
+                                 Visibility="{Binding IsAsking, Converter={StaticResource InverseBoolToVisibility}}">
+                        <StackPanel>
+                            <pixel:PixelText Text="ÚLTIMA SESIÓN" Style="{StaticResource StatLabel}" />
+                            <pixel:PixelText Text="{Binding LastSessionText}" Style="{StaticResource StatValue}" />
+                        </StackPanel>
+                        <StackPanel>
+                            <pixel:PixelText Text="TIEMPO DE JUEGO" Style="{StaticResource StatLabel}" />
+                            <pixel:PixelText Text="{Binding TotalPlayed}" Style="{StaticResource StatValue}" />
+                        </StackPanel>
+                        <StackPanel>
+                            <pixel:PixelText Text="LOGROS" Style="{StaticResource StatLabel}" />
+                            <DockPanel Margin="0,6,0,0">
+                                <pixel:PixelText DockPanel.Dock="Left" Text="{Binding AchievementsText}" Scale="3" Tight="True"
+                                                 VerticalAlignment="Center" Margin="0,0,12,0" Colour="{StaticResource PxText}"
+                                                 Shadow="{StaticResource PxShadow}" />
+                                <views:PixelBar Height="15" Width="150" HorizontalAlignment="Left" VerticalAlignment="Center"
+                                                Value="{Binding AchievementsShare, Mode=OneWay}" Fill="{StaticResource PxAccent}" />
+                            </DockPanel>
+                        </StackPanel>
+                    </UniformGrid>
+                </DockPanel>
+            </Grid>
+
+            <pixel:PixelText Text="{Binding Problem}" Scale="2" Wrap="True" Margin="4,12,0,0" Colour="{StaticResource PxBad}" />
+
+            <!-- Lo que falta para jugar, o lo que conviene saber antes, en una línea. -->
+            <pixel:PixelText Text="{Binding Notice}" Scale="2" Wrap="True" Margin="4,10,0,0">
+                <pixel:PixelText.Style>
+                    <Style TargetType="pixel:PixelText">
+                        <Setter Property="Colour" Value="{StaticResource PxWarn}" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding NoticeBlocks}" Value="True">
+                                <Setter Property="Colour" Value="{StaticResource PxBad}" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </pixel:PixelText.Style>
+            </pixel:PixelText>
+
+            <!-- ================================================== LOS ENLACES -->
+            <DockPanel Margin="6,14,4,0">
+                <Button DockPanel.Dock="Right" Content="ELEGIR EMULADOR" Style="{StaticResource NavLink}" Margin="0"
+                        Command="{Binding ChooseEmulatorCommand}" />
+                <StackPanel Orientation="Horizontal">
+                    <Button Content="LOGROS" Style="{StaticResource NavLink}" Command="{Binding GoCommand}" CommandParameter="LOGROS" />
+                    <Button Content="COMPETICIÓN" Style="{StaticResource NavLink}" Command="{Binding GoCommand}" CommandParameter="COMPETICIÓN"
+                            Visibility="{Binding ShowCommunity, Converter={StaticResource BoolToVisibility}}" />
+                    <Button Content="CEMENTERIO" Style="{StaticResource NavLink}" Command="{Binding GoCommand}" CommandParameter="CEMENTERIO" />
+                    <Button Content="VISOR POKÉMON" Style="{StaticResource NavLink}" Command="{Binding GoCommand}" CommandParameter="VISOR POKÉMON" />
+                </StackPanel>
+            </DockPanel>
+
+            <!-- ================================================== ACTIVIDAD Y AMIGOS -->
+            <Grid Margin="0,16,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition>
+                        <ColumnDefinition.Style>
+                            <Style TargetType="ColumnDefinition">
+                                <Setter Property="Width" Value="2*" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ShowCommunity}" Value="False"><Setter Property="Width" Value="0" /></DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ColumnDefinition.Style>
+                    </ColumnDefinition>
+                    <ColumnDefinition>
+                        <ColumnDefinition.Style>
+                            <Style TargetType="ColumnDefinition">
+                                <Setter Property="Width" Value="16" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ShowCommunity}" Value="False"><Setter Property="Width" Value="0" /></DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ColumnDefinition.Style>
+                    </ColumnDefinition>
+                    <ColumnDefinition Width="*" MinWidth="260" />
+                </Grid.ColumnDefinitions>
+
+                <!-- A LA IZQUIERDA: los logros que va reclamando cada uno, agrupados por día. -->
+                <pixel:PixelWindow Grid.Column="0" VerticalAlignment="Top" Title="ACTIVIDAD" Icon="IconChart"
+                                   Visibility="{Binding ShowCommunity, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel>
+                        <pixel:PixelText Text="Todavía nadie ha reclamado un logro." Scale="2" Tight="True"
+                                         Colour="{StaticResource PxTextFaint}"
+                                         Visibility="{Binding HasActivity, Converter={StaticResource InverseBoolToVisibility}}" />
+
+                        <ItemsControl ItemsSource="{Binding Activity}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Margin="0,0,0,6">
+                                        <DockPanel Margin="0,0,0,14">
+                                            <pixel:PixelText DockPanel.Dock="Left" Text="{Binding Heading}" Scale="2" Tight="True"
+                                                             VerticalAlignment="Center" Margin="0,0,12,0" Colour="#FFB9A8E0" />
+                                            <pixel:PixelRule VerticalAlignment="Center" />
+                                        </DockPanel>
+                                        <ItemsControl ItemsSource="{Binding Items}" ItemTemplate="{StaticResource ActivityTemplate}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </pixel:PixelWindow>
+
+                <!-- A LA DERECHA: la lista de amigos y tus logros. -->
+                <StackPanel Grid.Column="2" VerticalAlignment="Top">
+                    <pixel:PixelWindow Title="{Binding FriendsHeading}" Icon="IconPeople"
+                                       Visibility="{Binding ShowCommunity, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel>
+                            <pixel:PixelText Text="{Binding CommunityNote}" Scale="2" Wrap="True" Margin="0,0,0,8"
+                                             Colour="{StaticResource PxTextFaint}"
+                                             Visibility="{Binding HasFriends, Converter={StaticResource InverseBoolToVisibility}}" />
+                            <ItemsControl ItemsSource="{Binding Friends}" ItemTemplate="{StaticResource FriendTemplate}" />
+                        </StackPanel>
+                    </pixel:PixelWindow>
+
+                    <pixel:PixelWindow Title="LOGROS" Icon="IconTrophy" Margin="0,12,0,0">
+                        <StackPanel>
+                            <DockPanel>
+                                <Button DockPanel.Dock="Right" Content="VER TODOS" Style="{StaticResource NavLink}" Margin="0"
+                                        Command="{Binding GoCommand}" CommandParameter="LOGROS" />
+                                <pixel:PixelText Text="{Binding AchievementsLine}" Scale="2" Wrap="True"
+                                                 Colour="{StaticResource PxText}" />
+                            </DockPanel>
+                            <views:PixelBar Height="15" Margin="0,10,0,14" Value="{Binding AchievementsShare, Mode=OneWay}"
+                                            Fill="{StaticResource PxAccent}" />
+                            <WrapPanel>
+                                <ItemsControl ItemsSource="{Binding ClaimedIcons}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Width="48" Height="48" Margin="0,0,6,6">
+                                                <views:PixelPanel Fill="{StaticResource PxWell}" IsSunken="True" HasShadow="False" />
+                                                <pixel:PixelSprite Source="{Binding}" Scale="1" TrimEmpty="True"
+                                                                   Outline="{StaticResource PxShadow}"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <Grid Width="48" Height="48" Margin="0,0,6,6">
+                                    <Grid.Style>
+                                        <Style TargetType="Grid">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding MoreClaimed}" Value="">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Grid.Style>
+                                    <views:PixelPanel Fill="{StaticResource PxWell}" IsSunken="True" HasShadow="False" />
+                                    <pixel:PixelText Text="{Binding MoreClaimed}" Scale="2" Tight="True"
+                                                     HorizontalAlignment="Center" VerticalAlignment="Center" Colour="#FFB9A8E0" />
+                                </Grid>
+                            </WrapPanel>
+                        </StackPanel>
+                    </pixel:PixelWindow>
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

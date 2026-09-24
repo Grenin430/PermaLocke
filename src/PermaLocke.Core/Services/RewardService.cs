@@ -137,7 +137,7 @@ public sealed class RewardService(
         if ((await ClaimedAsync(run.Id, ct).ConfigureAwait(false)).Contains(reward.Id))
         {
             return new RewardResult(RewardOutcome.AlreadyClaimed, reward, [], [],
-                $"«{reward.Name}» ya está recogido. Es de una sola vez.");
+                $"«{reward.Name}» ya está recogido.");
         }
 
         var unlocked = await UnlockedAsync(run, ct).ConfigureAwait(false);
@@ -158,8 +158,7 @@ public sealed class RewardService(
         if (reward.Items.FirstOrDefault(item => !Matches(item)) is { } wrong)
         {
             return new RewardResult(RewardOutcome.NotDelivered, reward, [], [],
-                $"No se entrega nada: PermaLocke esperaba que el objeto {wrong.Id} fuese "
-                + $"«{wrong.Name}» y la tabla del juego dice «{items.GetName(wrong.Id)}».");
+                $"{wrong.Name} no se puede entregar.");
         }
 
         // Los desbloqueos van primero y son todo o nada: escriben el fichero de partida, así que
@@ -219,17 +218,16 @@ public sealed class RewardService(
             ? string.Empty
             : $" Y {reward.Credits.Count} "
               + (reward.Credits.Count == 1 ? "tirada gratis" : "tiradas gratis")
-              + $" en {string.Join(", ", reward.Credits.Distinct())}, en la pantalla del gacha.";
+              + $" en {string.Join(", ", reward.Credits.Distinct())}, en el GACHA.";
 
         return delivered.Count == reward.Items.Count
             ? new RewardResult(RewardOutcome.Delivered, reward, [], delivered,
                 (delivered.Count == 0
                     ? $"«{reward.Name}» recogido."
-                    : $"{what} en la mochila. Escrito y releído. «{reward.Name}» queda recogido.")
+                    : $"{what} en tu mochila.")
                 + unlockNote + rolls)
             : new RewardResult(RewardOutcome.PartlyDelivered, reward, [], delivered,
-                $"Solo ha llegado parte: {what}. No llegó {string.Join("; ", failed)}. "
-                + "El premio queda recogido igualmente para que el botón no lo dé dos veces.");
+                $"Solo ha llegado una parte: {what}. Falta {string.Join(", ", failed.Select(f => f.Split(':')[0]))}.");
     }
 
     /// <summary>Ids of the achievements the run has already unlocked.</summary>

@@ -11,6 +11,15 @@ public sealed record PartyLayout(uint Address, uint Stride, string TrainerName)
     public uint SlotAddress(int slot) => (uint)(Address + slot * Stride);
 }
 
+public interface IPartyLayoutLocator
+{
+    IReadOnlyList<PartyLayout> LocateAll(string? preferredTrainer, CancellationToken ct = default);
+
+    /// <summary>
+    /// Every copy of the party, found from the encryption constants of the saved party. Empty when none is in memory.
+    /// </summary>
+    IReadOnlyList<PartyLayout> LocateByKeys(IReadOnlyCollection<uint> keys, CancellationToken ct = default) => [];
+}
 /// <summary>
 /// Locates the party the game actually reads from, as opposed to the copies it keeps in sync.
 /// </summary>
@@ -22,7 +31,8 @@ public sealed record PartyLayout(uint Address, uint Stride, string TrainerName)
 /// prefers the wider stride but still returns a narrower match rather than nothing — a copy is
 /// good enough for reading, and callers that intend to write check <see cref="PartyLayout"/>.
 /// </remarks>
-public sealed class PartyLayoutLocator(AzaharRpcClient client)
+
+public sealed class PartyLayoutLocator(AzaharRpcClient client) : IPartyLayoutLocator
 {
     /// <summary>Stride of the structure the game reads from. Determined against the real game.</summary>
     public const uint AuthoritativeStride = 0x1E4;
@@ -86,6 +96,32 @@ public sealed class PartyLayoutLocator(AzaharRpcClient client)
             .Select(candidate => candidate.Layout)
             .FirstOrDefault();
 
+    /// <summary>
+    /// True when the copy chosen from last session's addresses is only a mirror, so the structure
+    /// the game reads has moved and the whole list has to be located again.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <see cref="Preferred"/> takes the authoritative structure whenever it reads anybody, so
+    /// ending up with a mirror means none of the remembered authoritative addresses holds the
+    /// party any more. The mirror sits at the same address every session; the authoritative
+    /// structure does not.
+    /// </para>
+    /// <para>
+    /// Measured on 2026-09-18 (§135): the remembered list was eight days old, every session since
+    /// had connected through it «without sweeping», and it kept being accepted because the mirror
+    /// read fine. The party was read from the mirror, whose HP lags, and the pass that puts the
+    /// fallen back at zero HP wrote to addresses where they no longer were — a Bouffalant died,
+    /// was healed and fought again, and nothing was logged.
+    /// </para>
+    /// </remarks>
+    public static bool NeedsLocatingAgain(PartyLayout chosen)
+    {
+        ArgumentNullException.ThrowIfNull(chosen);
+
+        return chosen.Stride != AuthoritativeStride;
+    }
+
     public static IReadOnlyList<PartyLayout> Distinct(IReadOnlyList<PartyLayout> layouts)
     {
         const int PartySlots = 6;
@@ -110,6 +146,115 @@ public sealed class PartyLayoutLocator(AzaharRpcClient client)
 
     private static readonly int StoredSize = new PK7().SIZE_STORED;
 
+    private static readonly int PartySize = new PK7().SIZE_PARTY;
+
+    /// <summary>
+    /// Every copy of the party, found by the encryption constants of the saved party instead of a sweep.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Two faults of the sweep, found getting the friends' folder ready on 2026-09-21, and both go away here. It
+    /// confirms a party by finding a <b>second</b> Pokémon one stride further, so a player with only their starter is
+    /// never found — and on a fresh install there is no address from last time to fall back on, so nothing at all
+    /// runs until a second Pokémon is caught: not the first-encounter rule, not a notice, not the route. And it is
+    /// about a hundred thousand reads, the burst that four crashes of Azahar ended inside.
+    /// </para>
+    /// <para>
+    /// A stored PK7 begins with its encryption constant in the clear and a zero sanity word, so the fork's search
+    /// finds every copy of a saved Pokémon in one request per region. From each hit the entries before it are walked
+    /// back while they still hold a Pokémon, which finds the first slot whichever member was hit. Which stride a
+    /// start really has is <b>measured</b>, not assumed: with one Pokémon there is no second entry to tell them
+    /// apart, so the stats are looked for where each structure keeps them — right after the stored block for the
+    /// copies, at 0x158 for the one the game reads — and accepted only where <see cref="PartyStats.AreHere"/> says so:
+    /// the level the tail holds is the level the experience gives. A view of the other structure with the wrong stride
+    /// reads its tail from something else and fails that.
+    /// </para>
+    /// </remarks>
+    public IReadOnlyList<PartyLayout> LocateByKeys(IReadOnlyCollection<uint> keys, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(keys);
+
+        var known = keys.Where(key => key != 0).ToHashSet();
+
+        if (known.Count == 0)
+        {
+            return [];
+        }
+
+        var pattern = new byte[6];
+        var mask = Enumerable.Repeat((byte)0xFF, pattern.Length).ToArray();
+        var starts = new HashSet<(uint Address, uint Stride)>();
+
+        foreach (var key in known)
+        {
+            System.Buffers.Binary.BinaryPrimitives.WriteUInt32LittleEndian(pattern, key);
+
+            foreach (var region in MemorySearch.LiveStateRegions)
+            {
+                ct.ThrowIfCancellationRequested();
+
+                foreach (var hit in client.SearchMemory(region.Start, region.Size, pattern, mask))
+                {
+                    foreach (var stride in (uint[])[AuthoritativeStride, CopyStride])
+                    {
+                        starts.Add((FirstSlot(hit, stride), stride));
+                    }
+                }
+            }
+        }
+
+        var layouts = new List<PartyLayout>();
+
+        foreach (var (address, stride) in starts.OrderBy(start => start.Address))
+        {
+            var statsOffset = stride == AuthoritativeStride ? AuthoritativeStatsOffset : (uint)StoredSize;
+
+            if (Entry(address, statsOffset) is { } first && PartyStats.AreHere(first))
+            {
+                layouts.Add(new PartyLayout(address, stride, first.OriginalTrainerName));
+            }
+        }
+
+        return layouts;
+    }
+
+    /// <summary>Walks back from a hit while the entries before it still hold a Pokémon: the party's first slot.</summary>
+    private uint FirstSlot(uint hit, uint stride)
+    {
+        var first = hit;
+
+        for (var back = 0; back < 5 && first >= stride; back++)
+        {
+            var previous = first - stride;
+
+            if (!client.TryReadMemory(previous, StoredSize, out var bytes) || bytes.Length < StoredSize
+                || !LooksLikeHeader(bytes, 0) || Parse(bytes, 0) is null)
+            {
+                break;
+            }
+
+            first = previous;
+        }
+
+        return first;
+    }
+
+    /// <summary>The stored block and the stats this structure keeps at <paramref name="statsOffset"/>, as one PK7.</summary>
+    private PK7? Entry(uint address, uint statsOffset)
+    {
+        if (!client.TryReadMemory(address, StoredSize, out var stored) || stored.Length < StoredSize
+            || !client.TryReadMemory(address + statsOffset, PartySize - StoredSize, out var stats)
+            || stats.Length < PartySize - StoredSize)
+        {
+            return null;
+        }
+
+        var data = new byte[PartySize];
+        stored.CopyTo(data, 0);
+        stats.CopyTo(data, StoredSize);
+        return new PK7(data);
+    }
+
     /// <summary>
     /// Every copy of the party found in memory. The game keeps several and only one of them is
     /// the one it reads; they cannot be told apart by their contents or their stride, since
@@ -119,14 +264,17 @@ public sealed class PartyLayoutLocator(AzaharRpcClient client)
     public IReadOnlyList<PartyLayout> LocateAll(string? preferredTrainer, CancellationToken ct = default)
     {
         var candidates = new List<PartyLayout>();
+        var selectedProcess = client.GetProcess();
+        if (selectedProcess == uint.MaxValue)
+            throw new AzaharRpcException("No hay un proceso seleccionado para buscar el equipo.");
 
         // Acotado a donde el juego guarda su estado vivo, no a todo lo que el emulador contesta.
         // Barrer 0x30000000-0x40000000 entero son 384 MB y unas 100.000 peticiones, y eso llegó a
         // tumbar el emulador durante el arranque de la app. El equipo y todas sus copias caen
-        // dentro de estos 96 MB: de 0x3002E258 a 0x33F7FA44.
+        // dentro de estos 64 MB: de 0x3002E258 a 0x33F7FA44 (el heap de 0x08000000 salió el 2026-09-21, ver LiveStateRegions).
         foreach (var region in MemorySearch.LiveStateRegions)
         {
-            var buffer = ReadRegion(region, ct);
+            var buffer = ReadRegion(region, selectedProcess, ct);
 
             for (var offset = 0; offset + StoredSize <= buffer.Length; offset += 4)
             {
@@ -207,7 +355,7 @@ public sealed class PartyLayoutLocator(AzaharRpcClient client)
         return null;
     }
 
-    private byte[] ReadRegion(MemoryRegion region, CancellationToken ct)
+    private byte[] ReadRegion(MemoryRegion region, uint selectedProcess, CancellationToken ct)
     {
         var buffer = new byte[region.Size];
         var requests = 0;
@@ -216,6 +364,11 @@ public sealed class PartyLayoutLocator(AzaharRpcClient client)
         {
             ct.ThrowIfCancellationRequested();
 
+            // An emulator restart resets selection but still answers reads with zeroes.
+            // Stop within 64 KB instead of issuing the rest of a 96 MB sweep to that new session.
+            if (offset % 0x10000 == 0 && client.GetProcess() != selectedProcess)
+                throw new AzaharRpcException("El proceso del juego cambió durante la búsqueda del equipo.");
+
             var chunk = (int)Math.Min(0x1000, region.Size - offset);
 
             if (client.TryReadMemory(region.Start + offset, chunk, out var data))
@@ -223,9 +376,9 @@ public sealed class PartyLayoutLocator(AzaharRpcClient client)
                 data.CopyTo(buffer.AsSpan((int)offset));
             }
 
-            if (++requests % 256 == 0)
+            if (++requests % 64 == 0)
             {
-                Thread.Sleep(1);
+                if (ct.WaitHandle.WaitOne(5)) ct.ThrowIfCancellationRequested();
             }
         }
 

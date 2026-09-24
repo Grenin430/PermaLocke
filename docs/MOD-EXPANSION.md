@@ -45,7 +45,7 @@ Medido abriendo cada GARC del mod y su equivalente del cartucho con `GarcPatcher
 | Tabla de megas (`a/0/1/5`) | 976 | 1330 | +354 |
 | **Iconos de caja (`a/0/6/2`)** | 1154 | 1508 | **+354** |
 | Movimientos (`a/0/1/1`) | 729 | 921 | **+192** |
-| Habilidades distintas usadas | 233 | 255 | **+22** |
+| Habilidades distintas usadas | 233 | 312 | **+79** (no 22: tienen noveno bit, ver §5) |
 | Especies con megaevolución | 45 | 93 | **+48** |
 | Objetos (`a/0/1/9`) | 960 | 1024 | +64 |
 | Iconos de objeto (`a/0/6/1`) | 769 | 849 | +80 |
@@ -93,6 +93,22 @@ Dragonite que se ve en los vídeos.
 ---
 
 ## 5. Las habilidades: el mod se quedó sin sitio, y está medido
+
+> **CORREGIDO el 2026-09-18 (ARCHITECTURE §132). Lo de abajo está MAL y se deja como historia.**
+>
+> El campo de habilidad **no es un byte**: el mod guarda un **noveno bit por hueco** en el último
+> byte de cada entrada de especie (0x53: bit 0 para el primer hueco, 1 para el segundo, 2 para el
+> tercero), y parchea el juego para leerlo («NINTH ABILITY BIT» en su propio `code_map.csv`). En el
+> cartucho ese byte vale cero en sus 976 entradas. Con eso el mod usa **79 habilidades nuevas**
+> (234–316), en **104 entradas**, no 22 en 43: Great Tusk es 25 + 256 = 281 Protosynthesis, Koraidon
+> 32 + 256 = 288 Orichalcum Pulse.
+>
+> Y el issue #1 **no demuestra que no funcionen**: es exactamente lo que produce un randomizador que
+> escribe solo el byte y deja el bit, que es lo que hacía el nuestro. El `code_map` enseña un bloque
+> de combate que «ejecuta el conjunto completo de habilidades añadidas por su número real de 16
+> bits», con código propio para Neutralizing Gas, Protosynthesis/Quark Drive, Good as Gold,
+> Commander, Pastel Veil, Well-Baked Body, Earth Eater… Que cada una funcione en un combate **sigue
+> sin verse**, pero ya no hay ninguna medida que diga que no.
 
 Esto explica de forma **estructural** el fallo que la comunidad reporta.
 
@@ -348,3 +364,44 @@ prueba más que se puede hacer sobre otra copia el día que haga falta.
 - Habilidades: los tres bytes de `PersonalEntry7.AbilityOffsets` sobre la copia empaquetada, que es
   el último subfichero.
 - Nombres de especie: `GameInfo.GetStrings("es").specieslist` de PKHeX.Core.
+- **Habilidades, corregido (§132)**: los tres bytes más el noveno bit de cada hueco en el 0x53.
+  `PersonalEntry7.GetAbility` ya lo lee así.
+
+---
+
+## 11. La versión 1.4 (2026-09-13), medida el 2026-09-18
+
+Descargada de la *release* v1.4 del GitHub (`UltraMoonExpansion_NoModelFile.zip`, 53,2 MB, sha256
+`3ba34c85…c338`, comprobado) junto con el `code_map.csv` de GameBanana (md5 `4613d7dc…7ba7`). Lo que
+tenía `Expansion/` era del 1 de septiembre. **Instalada ese mismo día** (ARCHITECTURE §133).
+
+**Lo que dice el registro de cambios**: sprites de otra fuente, animaciones para todos los
+movimientos nuevos, todos los idiomas salvo chino, nombres de objeto rehechos, gritos arreglados,
+retratos del Centro Pokémon, habilidades de Champions, arreglo de megas y formas que volvían a la
+forma 0, índice de movimientos ampliado (Metrónomo, Anulación…) y texturas.
+
+**Lo que dice la medida:**
+
+- **Movimientos (`a/0/1/1`)**: de los 921, cambia **un byte**: Proliferación pasa de «10 golpes» a
+  «1 golpe» en los datos (el bloque de combate lleva sus golpes). Rutinas, tipos, potencias y quién los
+  aprende, idénticos. **Las animaciones no están en los datos**: el `code_map` dice que el código le
+  asigna a cada movimiento nuevo «una animación compatible del juego». El `a/0/8/7` que cita la nota
+  de GameBanana **no viene en el zip**; lo nuevo es `a/0/8/8`.
+- **De los 192 movimientos nuevos**: 32 son **entradas vacías** (los trece de compañero de Let's Go,
+  Maxibarrera y los dieciocho maximovimientos), 128 **reutilizan una rutina del cartucho** y 32 piden
+  una **rutina nueva** (421–478). El `code_map` enseña código propio para varios de esos 32 —Jaw Lock,
+  Burning Jealousy, Dire Claw, Rage Fist, Syrup Bomb, Hard Press, Eerie Spell, las tres *Storm*,
+  Gigaton Hammer, Blood Moon, No Retreat, Snipe Shot…—, pero **ninguno se ha visto en un combate**.
+- **Habilidades (`a/0/1/7`)**: la tabla empaquetada es **idéntica** a la del 1 de septiembre. Lo que
+  cambia son **seis filas sueltas**: Empoleon (oculta → Competitive), Gallade (2.º hueco → Sharpness) y
+  cuatro formas (Sharpness, Levitate, **Aura Guard** —la 319, nueva en el texto— y Tough Claws). Que el
+  mod edite solo las filas sueltas es un indicio de que **el juego lee esas y no la empaquetada**, sin
+  medir todavía. Ojo: el módulo de datos de PermaLocke copia la empaquetada sobre las sueltas, así que
+  sobre la 1.4 **se comería esos seis cambios**.
+- **Texto en español (`a/0/3/6`)**: especies nuevas **218 de 218** con su nombre oficial; movimientos
+  **159 de 159** reales oficiales (los 32 vacíos salen con «-»); habilidades nuevas en español
+  (Mutapetito, Paleosíntesis, Carga Cuark, Latido Oricalco, General Supremo, Aura Protectora…);
+  objetos como el cartucho. `RomTool traducir` dejaría de hacer falta.
+- **Iconos (`a/0/6/2`)**: 1508 igual que antes, los 1154 del cartucho byte a byte iguales y los 354
+  nuevos **redibujados en su mismo sitio** —mirado en una hoja de contacto: Meltan, Melmetal,
+  Grookey… en los mismos índices—. La tabla de iconos del §30 bis y de este documento sigue valiendo.

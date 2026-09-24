@@ -32,9 +32,8 @@ public sealed class WindowSizeService(AppPaths paths, ILogger<WindowSizeService>
     /// </summary>
     public static readonly IReadOnlyList<WindowSize> Sizes =
     [
-        new("normal", "NORMAL", 1180, 760, "1180 × 760. El mapa se reduce para caber."),
-        new("grande", "GRANDE", 1360, 860, "1360 × 860. La isla más ancha cabe a tamaño natural."),
-        new("enorme", "MUY GRANDE", 1560, 980, "1560 × 980. Todo más grande, para pantallas amplias.")
+        new("grande", "GRANDE", 1360, 860, "1360 × 860"),
+        new("enorme", "MUY GRANDE", 1560, 980, "1560 × 980")
     ];
 
     public static WindowSize Default => Sizes[0];

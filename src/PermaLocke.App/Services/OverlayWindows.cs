@@ -36,11 +36,11 @@ public static class OverlayWindows
     /// (<see cref="GameWindow.ClientBox"/>) and WPF's properties are in its own units: the two only
     /// agree at 100% display scaling.
     /// </remarks>
-    public static void PlaceOver(Window window, (int Left, int Top, int Width, int Height) box)
+    public static bool PlaceOver(Window window, (int Left, int Top, int Width, int Height) box)
     {
         var handle = new WindowInteropHelper(window).EnsureHandle();
 
-        SetWindowPos(handle, TopMost, box.Left, box.Top, box.Width, box.Height,
+        return SetWindowPos(handle, TopMost, box.Left, box.Top, box.Width, box.Height,
             NoActivate | ShowWindow);
     }
 
@@ -54,9 +54,10 @@ public static class OverlayWindows
     /// of colour. Kept in memory only: nothing is written anywhere.
     /// </para>
     /// <para>
-    /// Plain <c>SRCCOPY</c> <b>without</b> <c>CAPTUREBLT</c>, on purpose: that flag is what adds
-    /// layered windows to the copy, and every window PermaLocke draws on top of the game is layered.
-    /// Without it a notice that happens to be on screen does not end up frozen inside the picture.
+    /// Plain <c>SRCCOPY</c> without <c>CAPTUREBLT</c>. This said once that leaving the flag out kept
+    /// PermaLocke's layered windows out of the copy, and it does not: with the desktop composited, the copy
+    /// is what is on the screen, and the first real killcam recorded the ceremony itself (§115). It works
+    /// here for another reason — the copy is taken before the ceremony's window is shown.
     /// </para>
     /// </remarks>
     public static BitmapSource? Capture((int Left, int Top, int Width, int Height) box)
@@ -160,7 +161,7 @@ public static class OverlayWindows
     [DllImport("user32.dll")]
     private static extern int SetWindowLong(IntPtr window, int index, int value);
 
-    [DllImport("user32.dll")]
+    [DllImport("user32.dll", SetLastError = true)]
     private static extern bool SetWindowPos(IntPtr window, IntPtr after, int x, int y, int width,
         int height, uint flags);
 }

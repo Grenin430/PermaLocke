@@ -156,6 +156,6 @@ public sealed class RunBackupTests : IDisposable
         var result = new RunBackup(_root).Run(DateTimeOffset.Parse("2026-08-28T10:00:00Z"));
 
         Assert.Null(result.File);
-        Assert.Contains("Logs", result.Message);
+        Assert.Contains("No se ha podido copiar", result.Message);
     }
 }

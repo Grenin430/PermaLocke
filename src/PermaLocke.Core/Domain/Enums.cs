@@ -244,7 +244,7 @@ public enum GameEventType
     ZoneConfirmed,
 
     /// <summary>
-    /// What happened at a zone.s one encounter, said by the player on the map.
+    /// What happened at a zone.s one encounter, as the map shows it.
     /// </summary>
     /// <remarks>
     /// It replaces pinning a capture to a zone, and it says more than that could. A Nuzlocke zone
@@ -252,6 +252,11 @@ public enum GameEventType
     /// Pokémon to pin: a first encounter that fled leaves nothing behind, and neither does one that
     /// died before a ball was thrown. The old shape could not express either, so those zones sat
     /// looking free.
+    /// <para>
+    /// Written by PermaLocke as <see cref="EventSource.AutoDetect"/> when a route's first wild battle
+    /// ends. The ones with <see cref="EventSource.Player"/> are from when the map was clicked, before
+    /// §118; they still count, and never override a detected one.
+    /// </para>
     /// </remarks>
     ZoneOutcomeSet,
 
@@ -303,5 +308,75 @@ public enum GameEventType
     /// would turn every event after it into something else.
     /// </para>
     /// </remarks>
-    DeathRevoked
+    DeathRevoked,
+
+    /// <summary>
+    /// The first wild battle in a route started, so the route's single encounter is spent.
+    /// </summary>
+    /// <remarks>
+    /// Detected, not claimed: the game's own wild battle counter went up while the player stood in a route
+    /// of the map screen that had not spent its encounter. Written at the <b>start</b> of the battle, not at
+    /// the end, because that is when the rule says the encounter is used — fleeing, fainting it or catching
+    /// it all spend it. How the battle ended is written afterwards as a <see cref="ZoneOutcomeSet"/>. A
+    /// duplicate does not spend the route and does not produce one of these (§117).
+    /// </remarks>
+    ZoneEncounterSpent,
+
+    /// <summary>
+    /// A run that existed before player profiles was tied to this machine's player (§123).
+    /// </summary>
+    /// <remarks>
+    /// Once per run and only for runs with no owner: a run that already belongs to somebody is never
+    /// reassigned, because that would let one player publish another's run as their own.
+    /// </remarks>
+    PlayerLinked,
+
+    /// <summary>
+    /// The official rules from the competition folder replaced this machine's configuration.
+    /// </summary>
+    /// <remarks>
+    /// Carries each file with the hash it had before and after, so which prices and which
+    /// achievements a run was played under is in its own history and not only in a folder (§123).
+    /// </remarks>
+    RulesAdopted,
+
+    /// <summary>
+    /// The player collected a gift the admin left in the shared folder (§129).
+    /// </summary>
+    /// <remarks>
+    /// One of these per gift, carrying its id, and that is what makes a gift collectable exactly once: the
+    /// check is «is there already an event for this id», the same way a one-off prize is one-off (§60). The
+    /// admin cannot write here — only the player's own application can — so the event says who sent it and why.
+    /// </remarks>
+    AdminGiftClaimed,
+
+    /// <summary>
+    /// The move reminder taught a Pokémon a move it could remember, over the one it forgot (§142).
+    /// </summary>
+    /// <remarks>
+    /// Its own type for the reason <see cref="EvsTrained"/> has one: it edits the partida outside anything the game
+    /// did, and the log has to say so by name. Carries the move, the one it replaced and why it was allowed.
+    /// </remarks>
+    MoveRemembered,
+
+    /// <summary>
+    /// The first time PermaLocke saw a Poké Ball in the player's bag in this run (§149).
+    /// </summary>
+    /// <remarks>
+    /// Routes start counting from here: before the first ball the story walks you through tall grass, and a
+    /// battle you could not have caught anything in does not spend the route. An event and not a check of the
+    /// bag because the bag empties — a player who has thrown every ball has still had them.
+    /// </remarks>
+    FirstPokeBallSeen,
+
+    /// <summary>
+    /// A <see cref="TeamWiped"/> that should not have been charged, paid back and taken off the count of wipes (§161).
+    /// </summary>
+    /// <remarks>
+    /// The same shape as <see cref="DeathRevoked"/>: the wipe stays in the chain and this says it was wrong, who said
+    /// so and why, and refunds exactly what that wipe took. Written for the second wipe the watcher charged on
+    /// 2026-09-21 when the Pokémon Centre healed a fallen party and PermaLocke put it back down. Appended at the end
+    /// because the type is stored as a number.
+    /// </remarks>
+    WipeRevoked
 }

@@ -18,16 +18,22 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly PermaLocke.App.Services.IUiDispatcher _ui;
     private readonly ILogger<MainViewModel> _logger;
 
-    public MainViewModel(HomeViewModel home, RandomizerViewModel randomizer,
+    public MainViewModel(LauncherViewModel launcher, HomeViewModel home, RandomizerViewModel randomizer,
         MiscellaneousViewModel miscellaneous, GachaViewModel gacha, PokemonViewerViewModel viewer,
-        AchievementsViewModel achievements, ShopViewModel shop, PokePasteViewModel pokePaste,
+        EvTrainingViewModel evTraining, MoveReminderViewModel moveReminder, AchievementsViewModel achievements,
+        ShopViewModel shop, PokePasteViewModel pokePaste,
         MapViewModel map,
-        RouletteViewModel roulette, RouletteService wheel, MaintenanceViewModel maintenance,
-        StatisticsViewModel statistics, SyncViewModel sync, BattleModeViewModel battle,
+        RouletteViewModel roulette, RouletteService wheel, SettingsViewModel settings,
+        CemeteryViewModel cemetery, SyncViewModel sync, BattleModeViewModel battle,
+        GiftInboxViewModel gifts,
         PermaLocke.App.Services.GameLinkMonitor gameLink,
         PermaLocke.App.Services.IUiDispatcher ui,
-        IRunContext runContext, ILogger<MainViewModel> logger)
+        PermaLocke.App.Services.AlolaSky sky,
+        IRunContext runContext, ILogger<MainViewModel> logger, PermaLocke.Infrastructure.AppPaths paths)
     {
+        Sky = sky;
+        Launcher = launcher;
+        Gifts = gifts;
         _home = home;
         _roulette = roulette;
         _wheel = wheel;
@@ -46,6 +52,7 @@ public sealed partial class MainViewModel : ObservableObject
 
         Sections =
         [
+            launcher,
             home,
             randomizer,
             gacha,
@@ -53,15 +60,38 @@ public sealed partial class MainViewModel : ObservableObject
             achievements,
             map,
             viewer,
+            evTraining,
+            moveReminder,
             pokePaste,
-            statistics,
+            cemetery,
             sync,
             battle,
             miscellaneous,
-            maintenance
+            settings
         ];
 
+        if (paths.LocalOnly)
+        {
+            Sections.Remove(sync);
+        }
+
         _selectedSection = Sections[0];
+
+        // Los enlaces de debajo de la barra de JUGAR llevan a otras secciones por su título.
+        launcher.NavigateRequested += title =>
+        {
+            if (Sections.FirstOrDefault(s => s.Title == title) is { } section)
+            {
+                SelectedSection = section;
+            }
+        };
+
+        // ENTRENAR EV desde la ficha del visor: el banco se abre ya con ese Pokémon.
+        viewer.TrainRequested += pokemon =>
+        {
+            evTraining.Focus(pokemon);
+            SelectedSection = evTraining;
+        };
 
         // The balance is computed by HOME when it refreshes; mirroring it here avoids
         // querying the event store twice for the same number.
@@ -119,10 +149,20 @@ public sealed partial class MainViewModel : ObservableObject
 
     public ObservableCollection<SectionViewModel> Sections { get; }
 
+    /// <summary>JUGAR, whose small button also sits in every page's header (§125).</summary>
+    public LauncherViewModel Launcher { get; }
+
+    /// <summary>The gift in the header: what the admin has left for this player (§129).</summary>
+    public GiftInboxViewModel Gifts { get; }
+
+    /// <summary>The hour in the player's Alola, for the floor and the sidebar's window.</summary>
+    public PermaLocke.App.Services.AlolaSky Sky { get; }
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(NeedLabel))]
     [NotifyPropertyChangedFor(nameof(NeedState))]
     [NotifyPropertyChangedFor(nameof(ShowsNeed))]
+    [NotifyPropertyChangedFor(nameof(ShowsPlayButton))]
     private SectionViewModel _selectedSection;
 
     /// <summary>Whether the emulator is answering right now.</summary>
@@ -132,6 +172,12 @@ public sealed partial class MainViewModel : ObservableObject
     private bool _gameConnected;
 
     public bool ShowsNeed => SelectedSection.ShowsNeed;
+
+    /// <summary>The header's play button is for every page but JUGAR itself, which has the big one.</summary>
+    public bool ShowsPlayButton => !ReferenceEquals(SelectedSection, Launcher);
+
+    [CommunityToolkit.Mvvm.Input.RelayCommand]
+    private void OpenLauncher() => SelectedSection = Launcher;
 
     /// <summary>
     /// The badge, which says whether the section's requirement is <b>met</b> and not merely what it

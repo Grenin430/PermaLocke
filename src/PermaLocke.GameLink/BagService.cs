@@ -56,7 +56,8 @@ public sealed class BagService(
     AzaharGameWriter writer,
     string statePath,
     string knownAddressPath,
-    ILogger<BagService> logger) : IItemWithholder
+    ILogger<BagService> logger,
+    Field.SavedGameCache? saved = null) : IItemWithholder
 {
     /// <summary>Poké Ball, confirmed against the PKHeX item table.</summary>
     public const int PokeBallItemId = 4;
@@ -250,8 +251,15 @@ public sealed class BagService(
         return new BagWriteResult(BagWriteOutcome.Ok, itemId, previous, wanted, address);
     }
 
-    /// <summary>Takes an item away from the player, remembering how many were taken.</summary>
-    public BagWriteResult Withhold(int itemId, CancellationToken ct = default)
+    /// <summary>
+    /// Takes away everything the player carries of an item, adding it to what is already owed.
+    /// </summary>
+    /// <remarks>
+    /// Adding and not replacing: balls bought or picked up while the rest were withheld are taken too, and
+    /// the first batch is still owed. Replacing is what the first version did, and it would have lost the
+    /// first batch the second time round.
+    /// </remarks>
+    public BagWriteResult Withhold(Guid run, int itemId, CancellationToken ct = default)
     {
         var carried = CountOf(itemId, ct);
 
@@ -260,83 +268,191 @@ public sealed class BagService(
             return new BagWriteResult(BagWriteOutcome.NothingToDo, itemId, 0, 0, 0);
         }
 
+        var owedBefore = ReloadUndidTheDebt(run, itemId, carried) ? 0 : Owed(run, itemId);
+
         // Se apunta ANTES de tocar nada: si la app muere entre ambas cosas, lo peor que pasa
         // es que se devuelvan objetos que nunca se llegaron a quitar.
-        Remember(itemId, carried);
+        _ledger.Remember(run, itemId, owedBefore + carried);
 
         var result = SetCount(itemId, 0, ct);
 
-        if (!result.Succeeded)
+        if (result.Outcome != BagWriteOutcome.Ok)
         {
-            Remember(itemId, 0);
+            _ledger.Remember(run, itemId, owedBefore);
         }
 
         return result;
     }
 
-    /// <summary>Gives back exactly what was withheld, if anything was.</summary>
-    public BagWriteResult GiveBack(int itemId, CancellationToken ct = default)
+    /// <summary>
+    /// Gives back what is owed on top of what the player carries now.
+    /// </summary>
+    /// <remarks>
+    /// On top: the first version wrote the owed amount as the new count, so five balls picked up while the
+    /// rest were withheld vanished the moment the rest came back. What does not fit in the pocket stays owed
+    /// instead of being dropped.
+    /// </remarks>
+    public BagWriteResult GiveBack(Guid run, int itemId, CancellationToken ct = default)
     {
-        var owed = Owed(itemId);
+        var owed = Owed(run, itemId);
 
         if (owed <= 0)
         {
             return new BagWriteResult(BagWriteOutcome.NothingToDo, itemId, 0, 0, 0);
         }
 
-        var result = SetCount(itemId, owed, ct);
+        var current = CountOf(itemId, ct);
 
-        if (result.Succeeded)
+        // El juego ya se las ha devuelto él solo al recargar, y devolverlas otra vez las duplicaría. No es un
+        // caso raro: es lo que pasa cada vez que alguien cierra el emulador sin guardar con la ruta gastada.
+        if (ReloadUndidTheDebt(run, itemId, current))
         {
-            Remember(itemId, 0);
+            _ledger.Remember(run, itemId, 0);
+
+            return new BagWriteResult(BagWriteOutcome.NothingToDo, itemId, current, current, 0);
+        }
+
+        var result = SetCount(itemId, current + owed, ct);
+
+        if (result.Outcome == BagWriteOutcome.Ok)
+        {
+            _ledger.Remember(run, itemId, Math.Max(0, owed - (result.Applied - current)));
         }
 
         return result;
     }
 
-    /// <summary>How much of an item is currently being withheld.</summary>
-    public int Owed(int itemId)
+    /// <inheritdoc />
+    public IReadOnlyDictionary<int, int> CarriedAll(IReadOnlyCollection<int> itemIds)
     {
-        if (!File.Exists(statePath))
+        if (Locate() is not { } block)
         {
-            return 0;
+            return new Dictionary<int, int>();
         }
 
-        foreach (var line in File.ReadAllLines(statePath))
-        {
-            var parts = line.Split('=');
+        var slots = _locator.ReadContents(block);
 
-            if (parts.Length == 2 && int.TryParse(parts[0], out var id) && id == itemId
-                && int.TryParse(parts[1], out var amount))
-            {
-                return amount;
-            }
-        }
-
-        return 0;
+        return itemIds.Distinct().ToDictionary(
+            id => id,
+            id => slots.Where(slot => slot.Entry.ItemId == id).Sum(slot => slot.Entry.Count));
     }
 
+    /// <summary>How much of an item <paramref name="run"/> has withheld and owes back.</summary>
+    public int Owed(Guid run, int itemId) => _ledger.Owed(run, itemId);
 
     /// <inheritdoc />
     public int Carried(int itemId) => CountOf(itemId);
 
     /// <inheritdoc />
-    bool IItemWithholder.Withhold(int itemId) => Withhold(itemId).Succeeded;
+    bool IItemWithholder.Withhold(Guid run, int itemId) => Withhold(run, itemId).Outcome == BagWriteOutcome.Ok;
 
     /// <inheritdoc />
-    bool IItemWithholder.GiveBack(int itemId) => GiveBack(itemId).Succeeded;
-    private void Remember(int itemId, int amount)
-    {
-        var lines = File.Exists(statePath)
-            ? File.ReadAllLines(statePath).Where(l => !l.StartsWith($"{itemId}=")).ToList()
-            : [];
+    bool IItemWithholder.GiveBack(Guid run, int itemId) => GiveBack(run, itemId).Outcome == BagWriteOutcome.Ok;
 
-        if (amount > 0)
+    /// <summary>
+    /// Whether the debt already on the books was undone by the player reloading, and so must not be added to.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Balls are taken out of the <b>live</b> bag. If the player reloads before saving, the game puts them back on
+    /// its own — and the app, seeing a full bag in a spent route, takes them again. <see cref="Withhold"/> adds
+    /// (§147, and rightly: balls bought while the rest were away are not lost), so the same ten get counted twice.
+    /// </para>
+    /// <para>
+    /// Measured on 2026-09-21: taken at 02:50:49 and again at 02:51:44 with the game reloaded in between, and the
+    /// ledger ended up owing <b>20 Poké Ball and 20 Super Ball</b> to a player who had only ever had ten of each.
+    /// The saved game, written at 02:50:44, still had all twenty.
+    /// </para>
+    /// <para>
+    /// Two questions, and both have to say yes, because either alone is wrong:
+    /// </para>
+    /// <list type="number">
+    /// <item>
+    /// <b>Was the debt written after the last save?</b> If the save is newer, the withholding is in it: the balls
+    /// really are gone and really are owed.
+    /// </item>
+    /// <item>
+    /// <b>Is the bag holding exactly what the save holds?</b> That is what a reload leaves behind. Without this,
+    /// a player who simply found more balls in the same session would have the first batch written off — the save
+    /// is older there too.
+    /// </item>
+    /// </list>
+    /// <para>
+    /// It corrects itself either way: if a reload happens later, the next withholding sees the bag match the save
+    /// and settles the books then. And with no readable save it answers no, which is today's behaviour.
+    /// </para>
+    /// </remarks>
+    private bool ReloadUndidTheDebt(Guid run, int itemId, int carried)
+    {
+        if (saved is null)
         {
-            lines.Add($"{itemId}={amount}");
+            return false;
         }
 
-        Directory.CreateDirectory(Path.GetDirectoryName(statePath)!);
-        File.WriteAllLines(statePath, lines);
+        var game = saved.Load();
+
+        var inTheSave = game?.Save.Inventory.Pouches
+            .SelectMany(pouch => pouch.Items)
+            .Where(item => item.Index == itemId)
+            .Sum(item => item.Count);
+
+        var undone = DebtWasUndoneByAReload(
+            _ledger.Owed(run, itemId),
+            _ledger.WrittenAt(run),
+            game is null ? null : new DateTimeOffset(game.Value.WrittenAt, TimeSpan.Zero),
+            carried,
+            inTheSave);
+
+        if (undone)
+        {
+            logger.LogWarning(
+                "El objeto {Objeto} vuelve a estar en la mochila y la partida guardada tiene los mismos {Cantidad}: "
+                + "la retirada anterior nunca llegó a guardarse, así que no se suma a lo que ya se debía",
+                itemId, carried);
+        }
+
+        return undone;
     }
+
+    /// <summary>The decision on its own, so it can be checked without a save or an emulator.</summary>
+    /// <param name="owed">What the ledger already says is owed of this item.</param>
+    /// <param name="debtWrittenAt">When that was written down, or null when it is not known.</param>
+    /// <param name="saveWrittenAt">When the player last saved, or null when the save cannot be read.</param>
+    /// <param name="carried">What the live bag holds now.</param>
+    /// <param name="inTheSave">What the saved game holds, or null when it cannot be read.</param>
+    /// <remarks>
+    /// <b>The bag has to hold some.</b> A reload is only visible when it brings the balls back. With the bag at zero and
+    /// the save at zero the two «match» and prove nothing — and that is exactly the bag right after a withholding, when
+    /// the balls were picked up after the last save. Found in the friends' test folder on 2026-09-21: the rule withheld
+    /// ten Poké Balls in a spent route, the player walked into the next route, and instead of giving them back it
+    /// wrote the debt off as «undone by a reload». The same line is in the player's own log that morning. Losing balls
+    /// stops a game; the one case this now gets wrong — a reload to a save from before the balls were given, whose
+    /// story then gives them again — only hands over ten more.
+    /// </remarks>
+    internal static bool DebtWasUndoneByAReload(int owed, DateTimeOffset? debtWrittenAt,
+        DateTimeOffset? saveWrittenAt, int carried, int? inTheSave) =>
+        owed > 0
+        && carried > 0
+        && debtWrittenAt is { } wroteDebt
+        && saveWrittenAt is { } wroteSave
+        && wroteDebt > wroteSave
+        && inTheSave == carried;
+
+    /// <inheritdoc />
+    /// <remarks>The bag is not touched: the whole point is that what is owed never left the saved game.</remarks>
+    public int Forget(Guid run, int itemId)
+    {
+        var owed = Owed(run, itemId);
+
+        if (owed > 0)
+        {
+            _ledger.Remember(run, itemId, 0);
+            logger.LogWarning("Se da por saldado lo retenido de {Objeto}: {Cantidad}", itemId, owed);
+        }
+
+        return owed;
+    }
+
+    /// <summary>What is owed, and to which run (§147).</summary>
+    private readonly WithheldLedger _ledger = new(statePath, logger);
 }

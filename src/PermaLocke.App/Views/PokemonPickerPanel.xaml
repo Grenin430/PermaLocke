@@ -1,0 +1,202 @@
+<!-- El panel para elegir Pokémon de ENTRENAR EV y MOVIMIENTOS (§176): el equipo en placas, y debajo la caja con su
+     rótulo para pasar de una a otra y una fila por Pokémon. Con el estilo en píxeles del resto de la aplicación; sustituye
+     al bolsillo naranja de la bolsa (§143). Se enlaza por nombre con el ViewModel de la sección: Party, Slots,
+     SelectedBox y sus órdenes, los mismos que antes. -->
+<UserControl x:Class="PermaLocke.App.Views.PokemonPickerPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:PermaLocke.App.Views"
+             xmlns:conv="clr-namespace:PermaLocke.App.Converters"
+             xmlns:pixel="clr-namespace:PermaLocke.App.Views.Pixel">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+        <conv:ZeroToVisibleConverter x:Key="ZeroToVisible" />
+
+        <Style TargetType="ScrollBar" BasedOn="{StaticResource PxScrollBar}" />
+
+        <!-- Una placa del equipo: icono, nombre y nivel. Elegida, encendida; caída, roja y en piedra. -->
+        <Style x:Key="PartyCard" TargetType="ListBoxItem">
+            <Setter Property="Margin" Value="0,0,6,6" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Grid Background="Transparent" Height="54">
+                            <views:PixelPanel x:Name="Plate" Fill="{StaticResource PxFaceHigh}" HasShadow="False" />
+                            <ContentPresenter Margin="4,0,8,0" />
+                            <views:PixelCursor x:Name="Cursor" Margin="-3" Visibility="Collapsed" Colour="{StaticResource PxGold}" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <DataTrigger Binding="{Binding IsEmpty}" Value="True">
+                                <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxWell}" />
+                                <Setter TargetName="Plate" Property="IsSunken" Value="True" />
+                                <Setter Property="Cursor" Value="Arrow" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsDead}" Value="True">
+                                <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxBadDeep}" />
+                            </DataTrigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxFaceLift}" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxAccentDeep}" />
+                                <Setter TargetName="Cursor" Property="Visibility" Value="Visible" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <DataTemplate x:Key="PartyTemplate">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="52" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <pixel:PixelSprite Source="{Binding Sprite}" Scale="2" TrimEmpty="True" Outline="{StaticResource PxShadow}"
+                                   Stone="{Binding IsDead}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="4,0,0,0">
+                    <pixel:PixelText Text="{Binding Pokemon.DisplayName}" Scale="2" Tight="True" Trim="True"
+                                     Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
+                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                        <pixel:PixelText Text="Nv." Scale="2" Tight="True" Colour="{StaticResource PxTextFaint}" />
+                        <pixel:PixelText Text="{Binding Pokemon.LevelForStats}" Scale="2" Tight="True" Margin="4,0,0,0"
+                                         Colour="{StaticResource PxTextDim}" />
+                    </StackPanel>
+                </StackPanel>
+                <pixel:PixelText Grid.ColumnSpan="2" Text="HUECO LIBRE" Scale="2" Tight="True" HorizontalAlignment="Center"
+                                 VerticalAlignment="Center" Colour="{StaticResource PxTextFaint}"
+                                 Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVisibility}}" />
+            </Grid>
+        </DataTemplate>
+
+        <!-- Una fila de la caja: solo los que hay, con la flecha de menú cuando es la elegida. -->
+        <Style x:Key="BoxRow" TargetType="ListBoxItem">
+            <Setter Property="Margin" Value="0,0,0,5" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Grid Background="Transparent">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="18" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <pixel:PixelText x:Name="Arrow" Text="▶" Scale="2" Tight="True" Visibility="Hidden"
+                                             Colour="{StaticResource PxGold}" VerticalAlignment="Center" />
+                            <views:PixelPanel x:Name="Plate" Grid.Column="1" Fill="{StaticResource PxFace}" HasShadow="False" />
+                            <ContentPresenter Grid.Column="1" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <DataTrigger Binding="{Binding IsDead}" Value="True">
+                                <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxBadDeep}" />
+                            </DataTrigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxFaceLift}" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxAccentDeep}" />
+                                <Setter TargetName="Arrow" Property="Visibility" Value="Visible" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsEmpty}" Value="True">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <DataTemplate x:Key="BoxRowTemplate">
+            <Grid Height="42">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="56" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <pixel:PixelSprite Source="{Binding Sprite}" Scale="2" TrimEmpty="True" Outline="{StaticResource PxShadow}"
+                                   Stone="{Binding IsDead}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                <pixel:PixelText Grid.Column="1" Text="{Binding Pokemon.DisplayName}" Scale="2" Tight="True" Trim="True"
+                                 VerticalAlignment="Center" Colour="{StaticResource PxText}" />
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,12,0">
+                    <pixel:PixelText Text="Nv." Scale="2" Tight="True" Colour="{StaticResource PxTextFaint}" />
+                    <pixel:PixelText Text="{Binding Pokemon.LevelForStats}" Scale="2" Tight="True" Margin="4,0,0,0"
+                                     Colour="{StaticResource PxTextDim}" />
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
+
+        <Style x:Key="BareList" TargetType="ListBox">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+        </Style>
+    </UserControl.Resources>
+
+    <pixel:PixelWindow Title="TU EQUIPO Y TUS CAJAS" Icon="IconGacha" Padding="14,12,20,18">
+        <DockPanel>
+            <pixel:PixelText DockPanel.Dock="Top" Text="EQUIPO" Scale="2" Tight="True" Margin="2,0,0,8"
+                             Colour="{StaticResource PxTextFaint}" />
+
+            <ListBox DockPanel.Dock="Top" ItemsSource="{Binding Party}" SelectedItem="{Binding SelectedPartySlot}"
+                     Style="{StaticResource BareList}" Margin="0,0,-6,0"
+                     ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                     ItemContainerStyle="{StaticResource PartyCard}" ItemTemplate="{StaticResource PartyTemplate}">
+                <ListBox.Template>
+                    <ControlTemplate TargetType="ListBox">
+                        <ItemsPresenter />
+                    </ControlTemplate>
+                </ListBox.Template>
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Columns="2" />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+            </ListBox>
+
+            <!-- La placa de la caja: se pasa de una a otra y da la vuelta. -->
+            <Grid DockPanel.Dock="Top" Height="48" Margin="0,8,0,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Content="◀" Style="{StaticResource PxSubtleButton}" Padding="12,7,18,12"
+                        Command="{Binding PreviousBoxCommand}" VerticalAlignment="Center" AutomationProperties.Name="Caja anterior" />
+                <Grid Grid.Column="1" Margin="6,0">
+                    <views:PixelPanel Fill="{StaticResource PxAccentDeep}" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,6,6">
+                        <pixel:PixelText Text="{Binding SelectedBox.Name}" Scale="2" Tight="True" Colour="{StaticResource PxText}"
+                                         Shadow="{StaticResource PxShadow}" />
+                        <pixel:PixelText Text="{Binding SelectedBox.Occupancy}" Scale="2" Tight="True" Margin="10,0,0,0"
+                                         Colour="{StaticResource PxAccentLight}" />
+                    </StackPanel>
+                </Grid>
+                <Button Grid.Column="2" Content="▶" Style="{StaticResource PxSubtleButton}" Padding="12,7,18,12"
+                        Command="{Binding NextBoxCommand}" VerticalAlignment="Center" AutomationProperties.Name="Caja siguiente" />
+            </Grid>
+
+            <Button DockPanel.Dock="Bottom" Content="RELEER LA PARTIDA" Style="{StaticResource PxSubtleButton}"
+                    Command="{Binding LoadCommand}" Margin="0,10,0,0" HorizontalAlignment="Stretch" />
+
+            <Grid>
+                <views:PixelPanel Fill="{StaticResource PxWell}" IsSunken="True" HasShadow="False" />
+                <pixel:PixelText Text="Esta caja está vacía." Scale="2" Tight="True" Margin="16,14,0,0"
+                                 Colour="{StaticResource PxTextFaint}"
+                                 Visibility="{Binding SelectedBox.Count, Converter={StaticResource ZeroToVisible}}" />
+                <ListBox ItemsSource="{Binding Slots}" SelectedItem="{Binding SelectedSlot}" Style="{StaticResource BareList}"
+                         Margin="4,8,6,6" ScrollViewer.VerticalScrollBarVisibility="Auto"
+                         ItemContainerStyle="{StaticResource BoxRow}" ItemTemplate="{StaticResource BoxRowTemplate}" />
+            </Grid>
+        </DockPanel>
+    </pixel:PixelWindow>
+</UserControl>

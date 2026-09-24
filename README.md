@@ -41,3 +41,8 @@ dotnet publish src/PermaLocke.App -c Release -r win-x64 --self-contained true
 ```
 
 Requiere el SDK de .NET 10.
+
+## Distribución local para amigos
+
+La preparación actual se describe en [docs/DISTRIBUCION-LOCAL.md](docs/DISTRIBUCION-LOCAL.md). Cada jugador usa su propia carpeta local, sin Drive. Ejecuta tools/publicar.ps1 para crear un paquete nuevo con .NET y expansión incluidos.
+

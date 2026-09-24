@@ -51,6 +51,12 @@ public sealed partial class RegisterCaptureViewModel : ObservableObject
 
     private uint? _pid;
 
+    /// <summary>The form of the detected Pokémon, and which species it belongs to (§140).</summary>
+    private (int Species, int Form) _detectedForm;
+
+    /// <summary>What the detected Pokémon knew, so the move reminder can offer it later (§142).</summary>
+    private IReadOnlyList<int>? _detectedMoves;
+
     /// <summary>
     /// Fills the form from a Pokémon detected in the running game, zone included: every
     /// Pokémon records where it was met, which is the value the encounter rules need and is
@@ -65,6 +71,8 @@ public sealed partial class RegisterCaptureViewModel : ObservableObject
             ? string.Empty
             : member.Nickname;
         _pid = member.Pid;
+        _detectedForm = (member.Species, member.Form);
+        _detectedMoves = member.Moves;
         LocationName = member.MetLocationName;
     }
 
@@ -141,7 +149,7 @@ public sealed partial class RegisterCaptureViewModel : ObservableObject
         catch (Exception ex)
         {
             _logger.LogError(ex, "Fallo al registrar la captura");
-            ErrorMessage = "No se pudo registrar la captura. Revisa la carpeta Logs.";
+            ErrorMessage = "No se pudo registrar la captura.";
         }
     }
 
@@ -156,7 +164,14 @@ public sealed partial class RegisterCaptureViewModel : ObservableObject
         Level,
         Nickname,
         force,
-        _pid);
+        _pid,
+
+        // La forma solo si la especie sigue siendo la detectada: si alguien la cambia a mano, la forma
+        // de otra especie no significa nada.
+        _detectedForm.Species == SelectedSpecies.Number ? _detectedForm.Form : 0,
+
+        // Lo que sabía, con la misma condición: son los movimientos del Pokémon detectado, no de otro.
+        _detectedForm.Species == SelectedSpecies.Number ? _detectedMoves : null);
 
     private async Task PreviewAsync()
     {

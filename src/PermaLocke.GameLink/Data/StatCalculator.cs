@@ -126,4 +126,65 @@ public static class StatCalculator
 
         return stats;
     }
+
+    /// <summary>Shedinja, whose PS the game forces to one whatever the formula says.</summary>
+    private const int Shedinja = 292;
+
+    /// <summary>
+    /// Puts a party member's stored battle stats back in step with its level and effort values.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Moved here from <see cref="SaveEvTrainer"/> on 2026-09-21 so the level cap uses the very same code: a Pokémon
+    /// brought down from 15 to 14 has to lose its level-15 stats too, or twenty rare candies and a cap make a level 14
+    /// with level 34 stats.
+    /// </para>
+    /// <para>
+    /// Returns false, and touches nothing, when the installed world has not published its base stats. That is the
+    /// §51 rule kept rather than dropped: with <c>shuffleBaseStats</c> on, a stat worked out from PKHeX's table is not an
+    /// approximation but a wrong number written into somebody's Pokémon — 168 PS came back as 151 the day that was
+    /// tried. The world's own table is readable now (<see cref="WorldLimits.BaseStats"/>), so the honest answer is
+    /// usually available instead of never.
+    /// </para>
+    /// <para>
+    /// The current PS are the delicate part. They follow the maximum by the same amount, which is what the game does on
+    /// a level up — but <b>a Pokémon at zero stays at zero</b>. In this project zero PS is what a death IS (§98), so
+    /// healing one here would quietly undo a death through a screen that has nothing to do with dying.
+    /// </para>
+    /// </remarks>
+    public static bool Restat(PKHeX.Core.PK7 pokemon)
+    {
+        ArgumentNullException.ThrowIfNull(pokemon);
+
+        // Por especie Y forma: un Raichu de Alola no está hecho como un Raichu, y con solo la especie se
+        // le escribían las estadísticas del normal (§131).
+        if (WorldLimits.BaseStatsOf(pokemon.Species, pokemon.Form) is not { } bases)
+        {
+            return false;
+        }
+
+        var stats = Compute(
+            bases,
+            [pokemon.IV_HP, pokemon.IV_ATK, pokemon.IV_DEF, pokemon.IV_SPA, pokemon.IV_SPD, pokemon.IV_SPE],
+            [pokemon.EV_HP, pokemon.EV_ATK, pokemon.EV_DEF, pokemon.EV_SPA, pokemon.EV_SPD, pokemon.EV_SPE],
+            pokemon.Stat_Level,
+            (int)pokemon.Nature,
+            pokemon.Species == Shedinja);
+
+        var gained = stats[0] - pokemon.Stat_HPMax;
+
+        pokemon.Stat_HPMax = stats[0];
+        pokemon.Stat_ATK = stats[1];
+        pokemon.Stat_DEF = stats[2];
+        pokemon.Stat_SPA = stats[3];
+        pokemon.Stat_SPD = stats[4];
+        pokemon.Stat_SPE = stats[5];
+
+        if (pokemon.Stat_HPCurrent > 0)
+        {
+            pokemon.Stat_HPCurrent = Math.Clamp(pokemon.Stat_HPCurrent + gained, 1, stats[0]);
+        }
+
+        return true;
+    }
 }

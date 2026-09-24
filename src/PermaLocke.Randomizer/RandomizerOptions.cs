@@ -15,13 +15,44 @@ public enum SpeciesPickMode
     OneToOne,
 }
 
+/// <summary>How the items lying on the ground are randomized (§163).</summary>
+public enum FieldItemsMode
+{
+    /// <summary>
+    /// What the cartridge placed, shuffled among the same spots: TMs among TMs, the rest among the rest. Universal Pokémon
+    /// Randomizer's «shuffle». Nothing appears that the game did not already put on the ground.
+    /// </summary>
+    Shuffle,
+
+    /// <summary>
+    /// Every spot drawn at random, no item more than a few times: any general item, medicine or berry in the ordinary
+    /// balls and berry piles, any TM in the gold ones. What the reference competition's world does.
+    /// </summary>
+    Random,
+}
+
 /// <param name="Id">The cartridge's own item id, which is what gets written into the shop.</param>
 /// <param name="Name">
 /// What that id is called, checked against the cartridge's item table before anything is written.
 /// An id that lands on the wrong item stocks the wrong thing and never fails, so the name is not
 /// documentation here: it is the guard (§52).
 /// </param>
-public sealed record MartItem(int Id, string Name);
+/// <param name="Price">
+/// What this one item costs, when it must differ from the rest of its list; zero takes the list's
+/// price. Exists for the Gimmighoul Coin: Gholdengo needs 999 of them, so at the list's 50000 the
+/// evolution could never be bought (§145).
+/// </param>
+public sealed record MartItem(int Id, string Name, int Price = 0);
+
+/// <summary>A special counter given a fixed list of its own, at its own price.</summary>
+/// <param name="Shop">
+/// The inventory's index inside <c>Shop.cro</c>. The cartridge does not say which counter belongs to
+/// which town, so this comes from measuring in the game or from pk3DS's labels (§145).
+/// </param>
+/// <param name="Place">Where the player finds it, in words. Only for people: nothing reads it.</param>
+/// <param name="Price">What each item costs, everywhere: the price lives in the item table. Zero leaves it.</param>
+/// <param name="Items">What it sells, in shelf order. Slots left over get the filler item.</param>
+public sealed record MartShelf(int Shop, string Place, int Price, IReadOnlyList<MartItem> Items);
 
 /// <summary>
 /// What to randomize and how. Lives in <c>Data/randomizer.json</c>, never in the code, so the
@@ -37,6 +68,16 @@ public sealed record RandomizerOptions
     /// in the same GARC as the wild encounters.
     /// </summary>
     public bool FieldItems { get; init; } = true;
+
+    /// <summary>How the field items are randomized: shuffled among themselves, or drawn at random (§163).</summary>
+    /// <remarks>Shuffle by default, so a world generated from a file that does not say keeps coming out the same.</remarks>
+    public FieldItemsMode FieldItemsMode { get; init; } = FieldItemsMode.Shuffle;
+
+    /// <summary>Items the random draw never places on the ground. Only for <see cref="FieldItemsMode.Random"/>.</summary>
+    public IReadOnlyList<int> FieldItemsBanned { get; init; } = [];
+
+    /// <summary>How many times the random draw may place the same item. Only for <see cref="FieldItemsMode.Random"/>.</summary>
+    public int FieldItemsMaxRepeats { get; init; } = 2;
 
     /// <summary>Starters, the eleven fossils, gifts, statics and totems.</summary>
     public bool StaticEncounters { get; init; } = true;
@@ -85,6 +126,12 @@ public sealed record RandomizerOptions
     public bool StartersWithTwoEvolutions { get; init; } = true;
 
     /// <summary>
+    /// Make the starter scene's text name the Pokémon the gift entries now hold, instead of Rowlet,
+    /// Litten and Popplio. Off unless the file asks for it. See <see cref="Modules.StarterTextRandomizer"/>.
+    /// </summary>
+    public bool StarterText { get; init; }
+
+    /// <summary>
     /// Rewrite the evolutions a solo player can never reach: trades, and moves once the learnsets
     /// are randomized.
     /// </summary>
@@ -115,11 +162,12 @@ public sealed record RandomizerOptions
     /// <remarks>
     /// The ROM is randomized once, before the run starts, so it cannot know the player has cleared
     /// six trials. What it can do is look at how strong the battle is, which is the same thing seen
-    /// from the other side. 33 is the seventh trial: its cap is 40 and §48 measured that a cap is
-    /// its boss raised a fifth. Measured against the cartridge, that lets 62 of the 96 important
-    /// battles through.
+    /// from the other side. 29 is the first level past the sixth trial, as the player asked on
+    /// 2026-09-21: that trial is Olivia's grand trial, a level 28 battle whose cap is 34, and §48
+    /// measured that a cap is its boss raised a fifth. Cartridge levels, not screen levels, so every
+    /// role gets its megas in the same battles.
     /// </remarks>
-    public int MegaTrainerMinimumLevel { get; init; } = 33;
+    public int MegaTrainerMinimumLevel { get; init; } = 29;
 
     /// <summary>
     /// Trainer classes whose Pokémon are drawn from a floor instead of from the whole pool.
@@ -217,6 +265,12 @@ public sealed record RandomizerOptions
     /// slots plus twelve is twenty, and there are eighteen items: the whole list fits in the two
     /// earliest counters in the game.
     /// </para>
+    /// <para>
+    /// Since §145 Route 2 sells a list of its own (<see cref="SpecialMartShelves"/>), and the rest of
+    /// the indices come from pk3DS's labels for Ultra Sun and Ultra Moon: 15 Paniola Town, 14 Route 8,
+    /// 21 to 23 the Thrifty Megamart. <b>Those labels are not all right</b>: 24 says Route 3, and the
+    /// player found no Pokémon Center there, so where 24 is remains unknown.
+    /// </para>
     /// </remarks>
     /// <summary>What every TM sold in a Pokémon Center counter costs. Zero leaves prices alone.</summary>
     /// <remarks>
@@ -251,6 +305,9 @@ public sealed record RandomizerOptions
     public int FullyEvolvedFromLevel { get; init; }
 
     public int EnemyLevelPercent { get; init; }
+
+    /// <summary>Smarter trainers with better Pokémon. See <see cref="TrainerDifficultyOptions"/>.</summary>
+    public TrainerDifficultyOptions TrainerDifficulty { get; init; } = new();
 
     /// <summary>Pokémon added to each important battle. Zero leaves the parties alone.</summary>
     /// <remarks>Also from the role. See <see cref="ImportantTrainerClasses"/> for what counts.</remarks>
@@ -299,17 +356,53 @@ public sealed record RandomizerOptions
     /// </remarks>
     public int LearnsetGoodDamagingPercent { get; init; } = 30;
 
-    /// <summary>Bias the moves towards the Pokémon's own types.</summary>
-    /// <remarks>
-    /// Off by default, which is what the reference does unless you ask for it: it is a separate
-    /// mode there, not part of plain randomization. On, the odds are twenty per cent for each of a
-    /// dual type and forty for a single one, with the rest left open.
-    /// </remarks>
+    /// <summary>Bias the moves towards the Pokémon's own types. The old name of <see cref="LearnsetSameTypePercent"/>.</summary>
+    /// <remarks>True is Universal Pokémon Randomizer's own figure, forty per cent, split between a dual type's two.</remarks>
     public bool LearnsetPreferSameType { get; init; }
+
+    /// <summary>
+    /// How often a move is drawn from the Pokémon's own types, as a percentage of its slots; the rest is drawn from
+    /// everything. Split between the two of a dual type.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// What comes out is more than what is asked for, because the open draws land on its types too: measured on the
+    /// whole game, 40 gives 46 % of the learnset in its own types and 20 gives 28 %. The cartridge itself is at 48,7 %
+    /// and the reference's world at 28 %.
+    /// </para>
+    /// <para>
+    /// Zero leaves it to chance, which is 9,6 %: every Pokémon learns a bit of all eighteen types and they all end up
+    /// playing the same, which is what the player reported on 2026-09-22 (§166).
+    /// </para>
+    /// </remarks>
+    public int LearnsetSameTypePercent { get; init; }
+
+    /// <summary>The percentage in force, with the old boolean still meaning Universal Pokémon Randomizer's forty.</summary>
+    public int EffectiveSameTypePercent() =>
+        LearnsetSameTypePercent > 0 ? Math.Clamp(LearnsetSameTypePercent, 0, 100) : LearnsetPreferSameType ? 40 : 0;
 
     /// <summary>Base power a move needs before it counts as a real attack.</summary>
     /// <remarks>Fifty, which is the reference's floor. Reached with accuracy, or doubled without.</remarks>
     public int LearnsetDamagingFloor { get; init; } = 50;
+
+    /// <summary>
+    /// Above zero, each learnt move is replaced by one like the cartridge's in that slot: an attack within this share of
+    /// its strength, a status move for a status move. Zero draws from the whole catalogue with the quota, as before.
+    /// </summary>
+    /// <remarks>See <see cref="Modules.LearnsetPlanner"/>: at level 5, 59% of the attacks were 80 or more (2026-09-21).</remarks>
+    public double LearnsetPowerTolerance { get; init; }
+
+    /// <summary>
+    /// Moves nobody may have: taken out of every level-up learnset, egg move list, trainer moveset and static moveset,
+    /// whether the rest is randomized or not (§162). The one-hit knockouts, at the player's request.
+    /// </summary>
+    public IReadOnlyList<int> BannedMoves { get; init; } = [];
+
+    /// <summary>
+    /// With the whole-catalogue draw, sorts the attacks of each learnset by strength, weakest first, into the slots that
+    /// already held attacks: Universal Pokémon Randomizer's «reorder damaging moves», and what pk3DS does by default.
+    /// </summary>
+    public bool LearnsetReorderByPower { get; init; }
 
     /// <summary>
     /// What a special mart that does not sell TMs is stocked with, in every slot. Poké Ball (4)
@@ -342,6 +435,26 @@ public sealed record RandomizerOptions
     public int SpecialMartItemPrice { get; init; }
 
     /// <summary>
+    /// Special counters that sell a list of their own instead of taking their turn in
+    /// <see cref="SpecialMartItems"/>. Empty leaves every counter to the spilling list.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Asked for on 2026-09-19: the classic evolution items, each list in the town the player chose
+    /// — the stones on Route 8, the trade items on Route 2, the rest in a Konikoni shop. A counter
+    /// named here is skipped by the spilling list, so the gen 8-9 items move on to the next one
+    /// instead of being overwritten.
+    /// </para>
+    /// <para>
+    /// Stricter than <see cref="SpecialMartOrder"/> on purpose. An order is a preference and an
+    /// index that does not exist is ignored; a shelf that cannot be placed means items nobody can
+    /// buy, so a missing counter, a TM counter, a list longer than the counter or an item listed
+    /// twice stops the shops before a byte is written.
+    /// </para>
+    /// </remarks>
+    public IReadOnlyList<MartShelf> SpecialMartShelves { get; init; } = [];
+
+    /// <summary>
     /// Species left exactly as the cartridge has them, wherever they appear. Cosmog is here by
     /// default: the story hands it over and later requires it to become Solgaleo or Lunala, and
     /// whether the game survives having it replaced has not been tested.
@@ -350,6 +463,34 @@ public sealed record RandomizerOptions
 
     /// <summary>Species that may never be handed out. Legendaries and mythicals, typically.</summary>
     public IReadOnlyList<int> BannedSpecies { get; init; } = [];
+
+    /// <summary>
+    /// Species kept out of the <b>wild</b> only; trainers, statics and gifts may still use them.
+    /// </summary>
+    /// <remarks>
+    /// Added on 2026-09-21 for the legendaries and mythicals of gen 8 and 9. <see cref="BannedSpecies"/>
+    /// was written before the expansion and stops at 807, so the installed world had Meltan in 105
+    /// grass slots, Kubfu in 60 and Calyrex in 38. The player asked for every legendary out of the
+    /// wild and for the rest of the game to stay as it was, which is why this is a second list and not
+    /// more ids in the first: that one narrows every module at once.
+    /// </remarks>
+    public IReadOnlyList<int> WildBannedSpecies { get; init; } = [];
+
+    /// <summary>
+    /// Regional forms a randomized Pokémon may come out in: Alola, Galar, Hisui and Paldea. Empty
+    /// means every Pokémon comes out in its ordinary form, which is how it was until §138.
+    /// </summary>
+    public IReadOnlyList<Modules.RegionalFormEntry> RegionalForms { get; init; } = [];
+
+    /// <summary>Abilities never dealt to a species, whatever <see cref="MaxAbility"/> says.</summary>
+    /// <remarks>
+    /// For the expansion mod's abilities that belong to one Pokémon's forms — Cambio Heroico,
+    /// Comandar, Cara de Hielo, Mutapetito, Tragamisil and the Tera ones. They are code in the mod's
+    /// executable written for that Pokémon, and on another it could try to change it into a form it
+    /// does not have. The cartridge's own form abilities are left out of this on purpose: the
+    /// original game handles them on any species, by doing nothing. §136.
+    /// </remarks>
+    public IReadOnlyList<int> BannedAbilities { get; init; } = [];
 
     /// <summary>
     /// A deliberate ceiling on which species may be handed out. <b>Zero means no ceiling</b> and the
@@ -374,15 +515,21 @@ public sealed record RandomizerOptions
     /// Highest ability id the randomizer may hand out. Zero means whatever the game declares.
     /// </summary>
     /// <remarks>
-    /// This exists because of a measured failure, not a hypothetical one. The ability field of the
-    /// personal table is <b>one byte</b>, so a game can address at most 255 abilities; the cartridge
-    /// uses 233 and the gen 8-9 expansion fills the rest, hitting the ceiling exactly. The
-    /// twenty-two it added do not work: the mod's own issue tracker reports that a Pokémon given
-    /// one shows the name in the summary and nothing happens in battle.
     /// <para>
-    /// So on that mod this is set to 233, and the point is that the failure it avoids is the kind
-    /// PermaLocke exists to refuse — the ability is not missing, it is <em>displayed and inert</em>.
-    /// See <c>docs/MOD-EXPANSION.md</c> §5.
+    /// On the gen 8-9 expansion this is set to 233, the cartridge's own abilities, and what it keeps out are the
+    /// 79 the mod adds (234 to 316). The first reading of why was <b>wrong</b>: it took the ability field for one
+    /// byte, full at 255, and the mod's issue #1 —abilities «displayed and inert» after randomizing— for proof
+    /// that the new ones do nothing. The mod keeps a <b>ninth bit</b> per slot in the entry's last byte
+    /// (<see cref="Modules.PersonalEntry7.AbilityHighBitsOffset"/>), and issue #1 is what a randomizer that writes
+    /// only the byte produces, this one included until §132: a bit left behind turns ability 50 into 306, or into
+    /// one that does not exist.
+    /// </para>
+    /// <para>
+    /// So the cap came to rest on «nobody has seen them work», and on 2026-09-18 the player saw four of them work
+    /// in battle (§134) and asked for all of them: it is back at zero. «What the game declares» now really is the
+    /// game's — the length of its ability names — and not pk3DS's constant of 233, which had been capping the mod
+    /// whatever this said (§136). The ones tied to a single Pokémon's forms stay out through
+    /// <see cref="BannedAbilities"/>.
     /// </para>
     /// </remarks>
     public int MaxAbility { get; init; }
@@ -395,12 +542,13 @@ public sealed record RandomizerOptions
     /// Highest move id a randomized learnset may hand out. Zero means whatever the game declares.
     /// </summary>
     /// <remarks>
-    /// The companion to <see cref="MaxAbility"/>, and a softer case. Of the expansion's 192 new
-    /// moves, 160 reuse a battle routine the engine already has and 32 ask for one the cartridge
-    /// never uses — those 32 rely on the mod's patched <c>code.bin</c>, which nobody here has
-    /// disassembled. Setting this to the cartridge's move count keeps learnsets to what is known to
-    /// work; leaving it at zero trusts the mod. Which of the two is right is the player's call, so
-    /// it is a number in the configuration and not a decision baked into the code.
+    /// The companion to <see cref="MaxAbility"/>. Of the expansion's 192 new ids, 32 are empty —
+    /// the Let's Go and Max moves, with zero PP, which <see cref="Modules.MoveTable.Teachable"/>
+    /// already leaves out —, 128 reuse a battle routine the cartridge has and 32 ask for one only
+    /// the mod's <c>code.bin</c> has. Setting this to the cartridge's count keeps learnsets to what
+    /// is known to work; zero trusts the mod, which is where the player put it on 2026-09-18 after
+    /// seeing three of those 32 work in battle (§134). As with abilities, «what the game declares»
+    /// is the length of its own move table, not pk3DS's constant (§136).
     /// </remarks>
     public int MaxMove { get; init; }
 

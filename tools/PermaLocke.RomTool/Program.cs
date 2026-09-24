@@ -147,6 +147,9 @@ switch (command)
     case "mundos":
         await MundosAsync();
         break;
+    case "mapas":
+        await MapasAsync(args.Skip(1).Where(a => a != "--escribir").Select(int.Parse).ToArray(), args.Contains("--escribir"));
+        break;
     case "dump":
         await DumpAsync(args.Length > 1 ? ulong.Parse(args[1]) : 20260818, args.Length > 2 ? args[2] : "Ruta 1");
         break;
@@ -510,7 +513,7 @@ async Task TrainersAsync(ulong seed, string? path = null)
     var modded = new GARC.LazyGARC(await File.ReadAllBytesAsync(generatedPath));
     Console.WriteLine($"\nentrenadores: vanilla {vanilla.FileCount}, generado {modded.FileCount}");
 
-    int levelsMoved = 0, sizeChanged = 0, offenders = 0, replaced = 0, total = 0, itemsLost = 0, evsChanged = 0;
+    int levelsMoved = 0, sizeChanged = 0, offenders = 0, replaced = 0, total = 0, itemsLost = 0, itemsAdded = 0, evsChanged = 0, evTotalChanged = 0, evOverCap = 0;
     var highest = 0;
     var highestTrainer = -1;
 
@@ -548,16 +551,23 @@ async Task TrainersAsync(ulong seed, string? path = null)
             if (s < wasSlots)
             {
                 if (TrainerPokemonTable.GetLevel(before, s) != TrainerPokemonTable.GetLevel(after, s)) levelsMoved++;
-                if (TrainerPokemonTable.GetItem(before, s) != TrainerPokemonTable.GetItem(after, s)) itemsLost++;
+                // La dificultad del §122 AÑADE objetos donde no habia y deja los que habia. Lo que
+                // no puede pasar es que un objeto del cartucho se cambie por otro o desaparezca.
+                var itemBefore = TrainerPokemonTable.GetItem(before, s);
+                var itemAfter = TrainerPokemonTable.GetItem(after, s);
+                if (itemBefore != 0 && itemAfter != itemBefore) itemsLost++;
+                if (itemBefore == 0 && itemAfter != 0) itemsAdded++;
                 if (TrainerPokemonTable.GetSpecies(before, s) != TrainerPokemonTable.GetSpecies(after, s)) replaced++;
 
-                // Los EV del enemigo son los del cartucho y se quedan como estan. Nada los escribe,
-                // asi que esto tiene que dar cero siempre: es la diferencia entre decir que no se
-                // tocan y haberlo mirado.
-                if (!TrainerPokemonTable.GetEvs(before, s).SequenceEqual(TrainerPokemonTable.GetEvs(after, s)))
-                {
-                    evsChanged++;
-                }
+                // Los EV SI se escriben desde el §122: se reparten otra vez para la especie nueva,
+                // con la MISMA cantidad. Lo que se comprueba es esa promesa -mismo total y ninguno
+                // por encima de 252-, no que no se muevan. Antes este contador decia «debe ser 0»
+                // y daba cientos con un mundo correcto, que es como se aprende a ignorar una alarma.
+                var evBefore = TrainerPokemonTable.GetEvs(before, s).ToArray();
+                var evAfter = TrainerPokemonTable.GetEvs(after, s).ToArray();
+                if (!evBefore.SequenceEqual(evAfter)) evsChanged++;
+                if (evBefore.Sum(v => (int)v) != evAfter.Sum(v => (int)v)) evTotalChanged++;
+                if (evAfter.Any(v => v > 252)) evOverCap++;
             }
 
             if (banned.Contains(TrainerPokemonTable.GetSpecies(after, s))) offenders++;
@@ -601,13 +611,14 @@ async Task TrainersAsync(ulong seed, string? path = null)
     // personaje con nombre deja firma: aparece POCAS veces y con equipos GRANDES. Un entrenador
     // de relleno aparece decenas de veces y lleva uno o dos Pokemon.
     var classNames = workspace.Config.GetText(TextName.TrainerClasses);
-    var keyClasses = new HashSet<int>
-    {
-        31, 49, 50, 51, 141, 164, 38, 43, 44, 45, 46, 48, 142, 153,
-        80, 107, 110, 191, 70, 103, 100, 194, 76, 140, 219, 71, 220, 185, 165,
-        198, 199, 200, 201, 202, 206, 222,
-        83, 84, 86, 101, 102, 79, 81, 143,
-    };
+
+    // La lista sale de Data/roles.json y NO se copia aquí. Estaba copiada, dos veces, y las dos
+    // copias se quedaron atrás: ésta tenía 43 clases y la de más abajo 35, mientras el fichero que
+    // gobierna la generación tenía 47. O sea que la herramienta que existe para repasar la lista
+    // repasaba OTRA lista, y decía «96 combates importantes» de un mundo que tiene más.
+    var keyClasses = PermaLocke.Data.JsonRoleCatalog
+        .Load(Path.Combine(root, "Data", "roles.json"))
+        .ImportantTrainerClasses;
 
     var classPath = Path.Combine(Path.GetDirectoryName(generatedPath)!, "..", "0", "6");
 
@@ -676,8 +687,11 @@ async Task TrainersAsync(ulong seed, string? path = null)
     // cuando lo normal es que no lo sea acaba enseñando a ignorarlo.
     Console.WriteLine($"  NIVELES movidos: {levelsMoved}   "
                       + "(con rol se mueven todos; 0 solo si se generó sin rol)");
-    Console.WriteLine($"  objetos alterados: {itemsLost}   (debe ser 0)");
-    Console.WriteLine($"  EV alterados: {evsChanged}   (debe ser 0: el entrenamiento del enemigo es el del cartucho)");
+    Console.WriteLine($"  objetos del cartucho cambiados o quitados: {itemsLost}   (debe ser 0)");
+    Console.WriteLine($"  objetos añadidos donde no había: {itemsAdded}   (los pone la dificultad, §122)");
+    Console.WriteLine($"  EV repartidos otra vez: {evsChanged}   (los reparte la dificultad, §122)");
+    Console.WriteLine($"  EV con otro total: {evTotalChanged}   (debe ser 0: se reparten, no se añaden)");
+    Console.WriteLine($"  EV por encima de 252: {evOverCap}   (debe ser 0)");
     Console.WriteLine($"  especies prohibidas: {offenders}   (debe ser 0)");
     Console.WriteLine($"  nivel más alto del juego: {highest} (entrenador {highestTrainer})");
 
@@ -736,14 +750,29 @@ async Task TrainersAsync(ulong seed, string? path = null)
     if (File.Exists(classFile))
     {
         var meta = new GARC.LazyGARC(await File.ReadAllBytesAsync(classFile));
-        var important = new HashSet<int>
+        var important = keyClasses;
+
+        // Una mega es una FORMA de su especie (§73), y desde el §138 también lo son las regionales:
+        // un Meowth de Galar tiene forma 1 y no es una mega. Contar «forma > 0» daba 154 megas en un
+        // mundo con 96 combates importantes, que es un número que no significa nada. La tabla del
+        // cartucho dice cuáles lo son de verdad.
+        var megaPath = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(generatedPath)!, "..", "..", "0", "1", "5"));
+        var megaForms = File.Exists(megaPath)
+            ? MegaTrainerRandomizer.ReadForms(megaPath)
+            : new Dictionary<int, IReadOnlyList<int>>();
+
+        bool IsMega(byte[] party, int slot)
         {
-            31, 49, 50, 51, 141, 164, 38, 43, 44, 45, 46, 48, 142, 153,
-            80, 107, 110, 191, 70, 103, 100, 194, 76, 140, 219, 71, 220, 185, 165,
-            198, 199, 200, 201, 202, 206,
-        };
+            var form = TrainerPokemonTable.GetForm(party, slot);
+
+            return form > 0
+                && megaForms.TryGetValue(TrainerPokemonTable.GetSpecies(party, slot), out var forms)
+                && forms.Contains(form);
+        }
 
         var rows = new List<(int Level, string Text)>();
+        var withoutMega = new List<string>();
+        var extras = new Dictionary<int, int>();
 
         for (var t = 0; t < Math.Min(meta.FileCount, modded.FileCount); t++)
         {
@@ -764,15 +793,54 @@ async Task TrainersAsync(ulong seed, string? path = null)
             }
 
             var top = Enumerable.Range(0, slots).Max(s => TrainerPokemonTable.GetLevel(party, s));
-            var mega = Enumerable.Range(0, slots).Any(s => TrainerPokemonTable.GetForm(party, s) > 0);
+            var mega = Enumerable.Range(0, slots).Any(s => IsMega(party, s));
+
+            // El nivel del CARTUCHO, que es el que sitúa el combate en la historia: el que hay en el
+            // fichero ya lleva el porcentaje del rol encima (§85).
+            var was = vanilla[t];
+            var wasSlots = TrainerPokemonTable.Count(was);
+            var story = wasSlots > 0
+                ? Enumerable.Range(0, wasSlots).Max(s => TrainerPokemonTable.GetLevel(was, s))
+                : top;
+
+            // Por tamaño del cartucho, no solo por el extra: «+1 en 42 combates» no dice nada por sí
+            // solo, porque seis es el techo del motor de combate y a quien ya iba con cinco solo le
+            // cabe uno (§47). Lo que hay que poder ver es si alguno se quedó corto SIN tocar el techo.
+            extras[wasSlots * 10 + slots] = extras.GetValueOrDefault(wasSlots * 10 + slots) + 1;
+
+            // La sexta prueba es el Dominante Vikavolt, nivel 29 de cartucho (§85). Es ahí donde el
+            // jugador puede megaevolucionar (§72), así que es ahí donde importa que el rival pueda.
+            if (!mega && story >= 29)
+            {
+                withoutMega.Add($"#{t} clase {cls} Nv.{top} (cartucho {story})");
+            }
+
             rows.Add((top, $"#{t} clase {cls} Nv.{top}{(mega ? " MEGA" : " ---")}"));
         }
 
         Console.WriteLine($"\n  IMPORTANTES ({rows.Count}), de menor a mayor nivel:");
 
-        foreach (var row in rows.OrderBy(r => r.Level).Where(r => r.Text.Contains("clase 100")))
+        foreach (var row in rows.OrderBy(r => r.Level))
         {
             Console.WriteLine($"    {row.Text}");
+        }
+
+        Console.WriteLine("\n  TAMAÑO DE LOS EQUIPOS IMPORTANTES (cartucho -> ahora):");
+
+        foreach (var pair in extras.OrderBy(p => p.Key))
+        {
+            var was = pair.Key / 10;
+            var now = pair.Key % 10;
+            var why = now == 6 && now - was < 2 ? "  (tope de seis)" : string.Empty;
+
+            Console.WriteLine($"    {was} -> {now}  ({now - was:+0;-0;0}): {pair.Value} combate(s){why}");
+        }
+
+        Console.WriteLine($"\n  DE LA 6ª PRUEBA EN ADELANTE SIN MEGA: {withoutMega.Count}   (debe ser 0)");
+
+        foreach (var one in withoutMega.Take(20))
+        {
+            Console.WriteLine($"    {one}");
         }
     }
 
@@ -1009,6 +1077,11 @@ async Task ZonesAsync()
 async Task SpeciesAsync()
 {
     using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work, baseLayer: baseLayer);
+
+    // Las formas regionales que el gacha y el wonder trade pueden dar: las de la configuracion que
+    // ESTE mundo declara, con el nombre que les da PKHeX en español (§139).
+    var regional = RandomizerOptionsLoader.Load(Path.Combine(root, "Data", "randomizer.json")).RegionalForms;
+    var spanish = PKHeX.Core.GameInfo.GetStrings("es");
     var speciesNames = workspace.Config.GetText(TextName.SpeciesNames);
     var abilityNames = workspace.Config.GetText(TextName.AbilityNames);
     var natureNames = workspace.Config.GetText(TextName.Natures);
@@ -1047,14 +1120,26 @@ async Task SpeciesAsync()
 
         // Las tres habilidades de la especie, ya resueltas a nombre para que la app no
         // necesite ni la ROM ni PKHeX para enseñarlas.
-        var abilities = PersonalEntry7.AbilityOffsets
-            .Select(offset => (int)raw[offset])
+        // Con sus nueve bits: la expansión guarda el noveno en el último byte (§132).
+        var abilities = Enumerable.Range(0, PersonalEntry7.AbilityOffsets.Length)
+            .Select(slot => PersonalEntry7.GetAbility(raw, 0, slot))
             .Where(ability => ability > 0 && ability < abilityNames.Length)
             .Select(ability => abilityNames[ability])
             .Distinct()
             .ToArray();
 
-        entries.Add(new { id, name = speciesNames[id], baseStatTotal = total, legendary = special, abilities });
+        var declared = PersonalEntry7.GetFormCount(raw, 0);
+        var formNames = PKHeX.Core.FormConverter.GetFormList(id, spanish.Types, spanish.forms,
+            PKHeX.Core.GameInfo.GenderSymbolASCII, PKHeX.Core.EntityContext.Gen9);
+        var forms = regional.Where(entry => entry.Species == id)
+            .SelectMany(entry => entry.Forms)
+            .Where(form => form > 0 && form < declared)
+            .Distinct()
+            .Order()
+            .Select(form => new { form, name = form < formNames.Length ? formNames[form] : form.ToString() })
+            .ToArray();
+
+        entries.Add(new { id, name = speciesNames[id], baseStatTotal = total, legendary = special, abilities, forms });
         known.Add(id);
 
         if (special)
@@ -2134,14 +2219,23 @@ async Task ImportantesAsync()
         rows.Add((trainer, trainerClass, count, max));
     }
 
-    Console.WriteLine($"COMBATES IMPORTANTES: {rows.Count} (clases: {classes.Count})");
+    // El corte de verdad, el del JSON: con el 33 escrito aqui la lista decia MEGA donde el randomizador no la ponia.
+    // Sin ruta los niveles son del cartucho y se comparan tal cual; en un mod generado ya van subidos.
+    // Con --rol, el porcentaje con el que se genero ese mod; sin el, el del fichero de opciones.
+    var megaOptions = RandomizerOptionsLoader.Load(Path.Combine(root, "Data", "randomizer.json"));
+    var megaRole = args.SkipWhile(a => a != "--rol").Skip(1).FirstOrDefault() is { } roleId ? roles.Find(roleId) : null;
+    var megaFloor = trpoke == workspace.PathOf(GameFiles.TrainerPokemon)
+        ? megaOptions.MegaTrainerMinimumLevel
+        : TrainerRandomizer.Raise(megaOptions.MegaTrainerMinimumLevel, megaRole?.EnemyLevelPercent ?? megaOptions.EnemyLevelPercent);
+
+    Console.WriteLine($"COMBATES IMPORTANTES: {rows.Count} (clases: {classes.Count}); mega desde el nivel {megaFloor}");
     Console.WriteLine();
 
     foreach (var row in rows.OrderBy(r => r.Max).ThenBy(r => r.Id))
     {
         var name = row.Class < classNames.Length ? classNames[row.Class] : "?";
         var who = row.Id < trainerNames.Length ? trainerNames[row.Id] : "?";
-        var mark = row.Max >= 33 ? "MEGA" : "    ";
+        var mark = megaOptions.MegaTrainers && row.Max >= megaFloor ? "MEGA" : "    ";
 
         Console.WriteLine($"  {mark} {name,-20} {who,-14} nivel {row.Max,3}, {row.Count} Pokemon "
                           + $"(entrenador {row.Id})");
@@ -2310,6 +2404,83 @@ async Task TranslateAsync(bool write)
 // pero su tabla si es publica.
 static int TextIndex(TextName name) =>
     TextReference.GameText_USUM.First(r => r.Name == name).Index;
+
+// Qué sitio es cada número de mapa de zonedata: el que guarda la partida en Situation.M. Para cada
+// mapa, su ParentMap -índice de la lista de lugares-, el nombre del cartucho, el de PKHeX para ese
+// mismo índice y el id normalizado con el que la run y el MAPA nombran la zona. Comprueba de paso que
+// los dos nombres coinciden salvo el paréntesis de PKHeX, que es lo que hace de ParentMap el puente.
+async Task MapasAsync(int[] only, bool write)
+{
+    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work, baseLayer: baseLayer);
+    var locations = workspace.Config.GetText(TextName.metlist_000000);
+    var zoneGarc = workspace.Config.GetlzGARCData("zonedata");
+    var worldGarc = workspace.Config.GetlzGARCData("worlddata");
+    var worlds = worldGarc.Files.Select(f => pk3DS.Core.CTR.Mini.UnpackMini(f, "WD")[0]).ToArray();
+    var zones = pk3DS.Core.Structures.ZoneData7.GetZoneData7Array(zoneGarc.Files[0], zoneGarc.Files[1], locations, worlds);
+    var strings = PKHeX.Core.GameInfo.GetStrings("es");
+
+    var mismatches = 0;
+    Console.WriteLine($"{zones.Length} mapas en zonedata");
+
+    foreach (var zone in zones)
+    {
+        var pkhex = strings.GetLocationName(false, (ushort)zone.ParentMap, 7, 7, PKHeX.Core.GameVersion.UM);
+        var cut = pkhex.IndexOf(" (", StringComparison.Ordinal);
+        var same = (cut < 0 ? pkhex : pkhex[..cut]) == zone.LocationName;
+
+        if (!same)
+        {
+            mismatches++;
+        }
+
+        if (only.Length == 0 || only.Contains(zone.Index))
+        {
+            Console.WriteLine($"  mapa {zone.Index,3}  mundo {zone.WorldIndex,3}  área {zone.AreaIndex,3}  lugar {zone.ParentMap,3}  "
+                              + $"«{zone.LocationName}» / PKHeX «{pkhex}» -> {PermaLocke.Rules.Services.EncounterService.NormaliseLocationId(pkhex)}"
+                              + (same ? string.Empty : "   <- NO CASAN"));
+        }
+    }
+
+    Console.WriteLine($"Mapas cuyo nombre del cartucho no casa con el de PKHeX: {mismatches}");
+
+    if (!write)
+    {
+        return;
+    }
+
+    // Un mapa sin nombre de lugar no es un sitio al que se pueda gastar un encuentro: no va.
+    var entries = zones
+        .Select(zone => (Zone: zone, Name: strings.GetLocationName(false, (ushort)zone.ParentMap, 7, 7, PKHeX.Core.GameVersion.UM)))
+        .Where(pair => !string.IsNullOrWhiteSpace(pair.Name) && pair.Name.Any(char.IsLetter))
+        .Select(pair => new
+        {
+            mapa = pair.Zone.Index,
+            mundo = pair.Zone.WorldIndex,
+            zona = PermaLocke.Rules.Services.EncounterService.NormaliseLocationId(pair.Name),
+            nombre = pair.Name
+        })
+        .ToArray();
+
+    var document = new
+    {
+        comentario = "Generado por: PermaLocke.RomTool mapas --escribir. No editar a mano.",
+        fuente = "a/0/7/7 (zonedata, ParentMap) + a/0/9/1 (worlddata) + nombres de lugar de PKHeX",
+        como = "El juego guarda en memoria el mundo y el mapa en que está el jugador. mapa es el índice de "
+            + "zonedata; mundo, el que el cartucho le asigna, y sirve para descartar lecturas basura; zona es "
+            + "el id normalizado del lugar, el mismo que usan la run y el MAPA. Comprobado contra el juego en "
+            + "doce sitios (§117).",
+        mapas = entries
+    };
+
+    var path = Path.Combine(root, "Data", "mapas.json");
+    await File.WriteAllTextAsync(path, System.Text.Json.JsonSerializer.Serialize(document, new System.Text.Json.JsonSerializerOptions
+    {
+        WriteIndented = true,
+        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+    }));
+
+    Console.WriteLine($"{entries.Length} mapas escritos en {path}");
+}
 
 // Qué zonas cubre cada mundo. En Alola un "mundo" de zonedata es una isla, y esto es lo que lo
 // demuestra: sale del cartucho -campo WorldIndex de ZoneData7- en vez de escribirse de memoria.

@@ -4,7 +4,7 @@ namespace PermaLocke.Core.Abstractions;
 
 public enum DeliveryOutcome
 {
-    /// <summary>Written into a box of the save and read back to confirm it.</summary>
+    /// <summary>Written into the party or a box of the save and read back to confirm it.</summary>
     Delivered,
 
     /// <summary>The game is loaded in the emulator. Writing now would be overwritten on save.</summary>
@@ -28,7 +28,7 @@ public enum DeliveryOutcome
     Failed
 }
 
-/// <param name="Box">One-based box number, for telling the player where to look.</param>
+/// <param name="Box">One-based box number, for telling the player where to look; 0 is the party.</param>
 /// <param name="Pid">
 /// The personality value the delivered Pokémon ended up with, or zero when nothing was written.
 /// </param>

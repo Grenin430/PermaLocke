@@ -6,7 +6,6 @@ using Microsoft.Extensions.Logging;
 using PermaLocke.App.Services;
 using PermaLocke.Core.Abstractions;
 using PermaLocke.Core.Domain;
-using PermaLocke.Core.Services;
 
 namespace PermaLocke.App.ViewModels;
 
@@ -43,101 +42,45 @@ public sealed partial class BoxSlotViewModel(BoxedPokemon? pokemon, BitmapSource
 /// <param name="Value">Preformatted: the view only prints it.</param>
 public sealed record OverviewRow(string Label, string Value);
 
+/// <summary>A type of the selected Pokémon, as a coloured plate.</summary>
+public sealed record ViewerTypeBadge(string Name, System.Windows.Media.Color Colour);
+
 /// <summary>A box as the selector lists it, or the party.</summary>
 public sealed record BoxTabViewModel(int Number, string Name, int Count, int Slots, bool IsParty)
 {
     public string Label => IsParty ? Name : $"{Number}. {Name}";
 
+    /// <summary>How full the box is, 0 to 1, for the little gauge of the box selector.</summary>
+    public double Share => Slots == 0 ? 0 : (double)Count / Slots;
+
+    public bool IsEmpty => Count == 0;
+
     public string Occupancy => $"{Count}/{Slots}";
 }
 
 /// <summary>
-/// One row of the stat table: what the game shows, what it is made of, and the one part of it
-/// the player is allowed to move.
+/// One row of the viewer's stat table: what the game shows and the IV under it.
 /// </summary>
 /// <remarks>
-/// <para>
-/// The EV is the only editable field in the whole viewer, so it is the only thing here that is
-/// not a plain record. It reports every change to the owner, because the six rows share one
-/// budget of 510 and each of them needs to know when a sibling has spent some of it.
-/// </para>
-/// <para>
-/// The stat column keeps showing what the save holds. It is not recomputed as the EV moves:
-/// working out a stat needs the species base values, which PermaLocke reads from the cartridge and
-/// does not keep per stat, and guessing it from the current number would put an invented figure on
-/// screen. It updates when the change is written and the partida re-read, which is also when it
-/// becomes true.
-/// </para>
+/// Read only. The EVs moved to their own section, ENTRENAR EV, which has the room to show what a change would do;
+/// here they would be one more number in a card that is about the Pokémon, not about training it.
 /// </remarks>
-public sealed partial class StatRowViewModel : ObservableObject
+public sealed class StatRowViewModel(int index, string name, int value, int iv, int natureEffect = 0)
 {
-    private readonly Action<int, int>? _changed;
+    /// <summary>"up", "down" or "none": the nature's mark on this stat, coloured as the summary screen colours it.</summary>
+    public string NatureState { get; } = natureEffect > 0 ? "up" : natureEffect < 0 ? "down" : "none";
 
-    public StatRowViewModel(int index, string name, int value, int iv, int ev,
-        Action<int, int>? changed = null)
-    {
-        Index = index;
-        Name = name;
-        Value = value;
-        Iv = iv;
-        _ev = ev;
-        _changed = changed;
-    }
+    public int Index { get; } = index;
 
-    public int Index { get; }
-
-    public string Name { get; }
+    public string Name { get; } = name;
 
     /// <summary>The stat as the save holds it.</summary>
-    public int Value { get; }
+    public int Value { get; } = value;
 
-    public int Iv { get; }
+    public int Iv { get; } = iv;
 
-    [ObservableProperty]
-    private int _ev;
-
-    /// <summary>True while this row holds EVs that are not yet in the partida.</summary>
-    [ObservableProperty]
-    private bool _isDirty;
-
-    /// <summary>Set while the owner is the one writing, so its own write does not echo back.</summary>
-    private bool _quiet;
-
-    partial void OnEvChanged(int value)
-    {
-        OnPropertyChanged(nameof(Fill));
-
-        if (!_quiet)
-        {
-            _changed?.Invoke(Index, value);
-        }
-    }
-
-    /// <summary>Fraction of the per-stat maximum, for the bar the row draws.</summary>
-    public double Fill => (double)Ev / EvSpread.PerStatMax;
-
-    /// <summary>
-    /// Sets the value without telling the owner, for when the owner is the one setting it.
-    /// </summary>
-    /// <remarks>
-    /// The six rows share one budget, so moving one makes the owner rewrite all six. Without this,
-    /// that rewrite would come straight back as six more edits.
-    /// </remarks>
-    public void Silently(int ev, bool dirty)
-    {
-        _quiet = true;
-
-        try
-        {
-            Ev = ev;
-        }
-        finally
-        {
-            _quiet = false;
-        }
-
-        IsDirty = dirty;
-    }
+    /// <summary>The IV as a fraction of 31, for its bar.</summary>
+    public double IvShare => Iv / 31d;
 }
 
 /// <summary>
@@ -153,9 +96,11 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
 {
     private readonly IBoxReader _boxes;
     private readonly PokemonSpriteService _sprites;
-    private readonly EvTrainingService _training;
     private readonly IRunContext _runContext;
     private readonly IPokemonRepository _registered;
+    private readonly ITypeLookup _types;
+    private readonly IMoveCatalog _moves;
+    private readonly IStatForecast _forecast;
     private readonly ILogger<PokemonViewerViewModel> _logger;
 
     /// <summary>PID of everything the run has lost, so a tile can say so.</summary>
@@ -166,18 +111,18 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
 
     private BoxSnapshot? _snapshot;
 
-    /// <summary>What the save holds for the selected Pokémon, to compare edits against.</summary>
-    private EvSpread _savedEvs = EvSpread.Empty;
-
     public PokemonViewerViewModel(IBoxReader boxes, PokemonSpriteService sprites,
-        WonderTradeViewModel trade, EvTrainingService training, IRunContext runContext,
-        IPokemonRepository registered, ILogger<PokemonViewerViewModel> logger) : base("VISOR POKÉMON", "El equipo y las 32 cajas de la partida, con EV editables")
+        WonderTradeViewModel trade, IRunContext runContext,
+        IPokemonRepository registered, ITypeLookup types, IMoveCatalog moves, IStatForecast forecast,
+        ILogger<PokemonViewerViewModel> logger) : base("VISOR POKÉMON", "El equipo y las 32 cajas de la partida")
     {
         _boxes = boxes;
         _sprites = sprites;
-        _training = training;
         _runContext = runContext;
         _registered = registered;
+        _types = types;
+        _moves = moves;
+        _forecast = forecast;
         _logger = logger;
         Trade = trade;
 
@@ -230,24 +175,48 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
     /// <summary>The six stats of whatever is selected.</summary>
     public ObservableCollection<StatRowViewModel> Stats { get; } = [];
 
+    /// <summary>One or two types of whatever is selected, from the installed world through <see cref="ITypeLookup"/>.</summary>
+    public ObservableCollection<ViewerTypeBadge> SelectedTypes { get; } = [];
+
     /// <summary>
-    /// Leaving the viewer closes the open detail -- unless it is holding an unsaved edit.
+    /// The four moves of whatever is selected, as the move reminder draws them: type colour, category and power.
     /// </summary>
-    /// <remarks>
-    /// The detail card is a panel and closes like the rest. EVs typed in and not yet written are
-    /// not a panel, they are somebody's work, and dropping them because a tab was pressed would be
-    /// a silent state change. So when there is an edit in flight the card stays exactly as it was,
-    /// with GUARDAR still lit, and the player is the one who decides between saving and DESHACER.
-    /// </remarks>
+    /// <remarks>Described by the same catalogue as MOVIMIENTOS, so a move shows the same numbers on both screens.</remarks>
+    public ObservableCollection<MoveCardViewModel> SelectedMoves { get; } = [];
+
+    /// <summary>What the nature raises and lowers, «▲ At. Esp. ▼ Ataque», or «neutra».</summary>
+    [ObservableProperty]
+    private string _natureEffect = string.Empty;
+
+    /// <summary>The run counts the selected Pokémon as fallen, by PID.</summary>
+    [ObservableProperty]
+    private bool _isSelectedDead;
+
+    /// <summary>Leaving the viewer closes the open detail: it is a panel, and there is nothing to edit in it.</summary>
     public override void ResetState()
     {
-        if (EvsChanged || IsTraining)
-        {
-            return;
-        }
-
         SelectedSlot = null;
         SelectedPartySlot = null;
+    }
+
+    /// <summary>
+    /// The card's ENTRENAR EV button: asks the shell to open the training section on this Pokémon.
+    /// </summary>
+    /// <remarks>
+    /// An event and not a reference to the other section, so the viewer does not need to know how the shell
+    /// navigates; the shell already does the same for JUGAR's links.
+    /// </remarks>
+    public event Action<BoxedPokemon>? TrainRequested;
+
+    private bool CanTrain() => Selected is { IsEgg: false, IsIntact: true };
+
+    [RelayCommand(CanExecute = nameof(CanTrain))]
+    private void Train()
+    {
+        if (Selected is { IsEgg: false, IsIntact: true } pokemon)
+        {
+            TrainRequested?.Invoke(pokemon);
+        }
     }
 
     [ObservableProperty]
@@ -258,6 +227,7 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
 
     /// <summary>The Pokémon whose detail is on screen, or null when nothing is selected.</summary>
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(TrainCommand))]
     private BoxedPokemon? _selected;
 
     [ObservableProperty]
@@ -319,6 +289,7 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
             // Los iconos salen de la ROM del propio jugador. Si no se puede, la pantalla sigue
             // funcionando: enseña las cajas sin dibujos.
             await _sprites.PrepareAsync();
+            OnPropertyChanged(nameof(PartyBallSprite));
 
             _snapshot = await _boxes.ReadAsync();
 
@@ -384,7 +355,7 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Fallo al leer las cajas del PC");
-            Problem = "No se han podido leer las cajas. El detalle está en la carpeta Logs.";
+            Problem = "No se han podido leer las cajas.";
             IsAvailable = false;
         }
         finally
@@ -411,7 +382,29 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
         SelectedBox = Boxes[(index + direction + Boxes.Count) % Boxes.Count];
     }
 
-    partial void OnSelectedBoxChanged(BoxTabViewModel? value) => ShowBox(value);
+    partial void OnSelectedBoxChanged(BoxTabViewModel? value)
+    {
+        OnPropertyChanged(nameof(BoxTheme));
+        ShowBox(value);
+    }
+
+    /// <summary>The wallpaper of the box on screen, by its number.</summary>
+    public int BoxTheme => SelectedBox?.Number ?? 1;
+
+    /// <summary>The wallpaper behind the selected Pokémon: its box's, or the party's.</summary>
+    public int SelectedTheme => Selected is { IsInParty: true } || Selected is null
+        ? Views.BoxWallpaper.PartyTheme
+        : Selected.Box + 1;
+
+    /// <summary>The ball the selected Pokémon was caught in, when the cartridge has its icon.</summary>
+    public BitmapSource? SelectedBallSprite => Selected is { Ball: > 0 and <= 16 } pokemon
+        ? _sprites.GetBall(pokemon.Ball)
+        : null;
+
+    public bool HasSelectedBall => SelectedBallSprite is not null;
+
+    /// <summary>An ordinary Poké Ball, one per party hole, for the row above the party.</summary>
+    public BitmapSource? PartyBallSprite => _sprites.GetBall();
 
     /// <summary>
     /// Fills the thirty holes with whatever the last reading says is in that box.
@@ -514,7 +507,9 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
         Selected = pokemon;
         HasSelection = pokemon is not null;
         SelectedSprite = pokemon is null ? null : SpriteFor(pokemon);
-        TrainStatus = string.Empty;
+        OnPropertyChanged(nameof(SelectedTheme));
+        OnPropertyChanged(nameof(SelectedBallSprite));
+        OnPropertyChanged(nameof(HasSelectedBall));
 
         // Con el intercambio armado, elegir es elegir a quién se entrega, esté en una caja o en el
         // equipo: el escritor sabe distinguir los dos almacenes. Un huevo no, porque lo que hay
@@ -522,210 +517,51 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
         Trade.Choose(pokemon is { IsEgg: false } ? pokemon : null);
 
         Stats.Clear();
-        _savedEvs = EvSpread.Empty;
-        Evs = EvSpread.Empty;
+        SelectedTypes.Clear();
+        SelectedMoves.Clear();
+        NatureEffect = string.Empty;
+        IsSelectedDead = pokemon is not null && _fallen.Contains(pokemon.Pid);
 
         if (pokemon is null)
         {
-            RefreshEvTotals();
             return;
         }
 
-        // Un huevo no entrena: el juego no le reparte EV y lo que hay dentro no se conoce.
-        CanEditEvs = !pokemon.IsEgg;
+        // Las mismas cifras que MOVIMIENTOS: en caja se calculan con la tabla del mundo instalado (IStatForecast), no
+        // con la de PKHeX, que con las estadísticas barajadas da otros números (2026-09-24).
+        var computed = pokemon.IsEgg || pokemon.IsInParty ? null : _forecast.With(pokemon, pokemon.Evs);
 
-        _savedEvs = EvSpread.Of(pokemon.Evs);
-        Evs = _savedEvs;
+        string? raised = null;
+        string? lowered = null;
 
         for (var index = 0; index < StatNames.Length; index++)
         {
-            Stats.Add(new StatRowViewModel(
-                index,
-                StatNames[index],
-                pokemon.Stats[index],
-                pokemon.Ivs[index],
-                _savedEvs[index],
-                EvEdited));
+            var effect = pokemon.IsEgg ? 0 : _forecast.NatureEffect(pokemon, index);
+            if (effect > 0) raised = StatNames[index];
+            if (effect < 0) lowered = StatNames[index];
+            Stats.Add(new StatRowViewModel(index, StatNames[index], computed?[index] ?? pokemon.Stats[index], pokemon.Ivs[index], effect));
         }
 
-        RefreshEvTotals();
-    }
+        NatureEffect = raised is null || lowered is null ? "neutra" : $"▲ {raised}  ▼ {lowered}";
 
-    // ============================================================ EV EDITOR
-
-    /// <summary>The spread on screen, which is the saved one until the player moves something.</summary>
-    private EvSpread Evs { get; set; } = EvSpread.Empty;
-
-    /// <summary>False for an egg, which the game never trains.</summary>
-    [ObservableProperty]
-    private bool _canEditEvs;
-
-    [ObservableProperty]
-    private int _evTotal;
-
-    [ObservableProperty]
-    private int _evRemaining;
-
-    /// <summary>How far past the 510 the reparto currently is, or zero.</summary>
-    [ObservableProperty]
-    private int _evOver;
-
-    /// <summary>True while the reparto is over 510 and could not be written.</summary>
-    [ObservableProperty]
-    private bool _evOverBudget;
-
-    /// <summary>Fraction of the 510 budget spent, for the bar over the editor.</summary>
-    [ObservableProperty]
-    private double _evFill;
-
-    /// <summary>True while the screen holds EVs that are not in the partida yet.</summary>
-    [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(RevertEvsCommand))]
-    private bool _evsChanged;
-
-    /// <summary>
-    /// Changed <b>and</b> legal. Over 510 the reparto is a work in progress, not something to
-    /// write: the button goes dead and the panel says by how much.
-    /// </summary>
-    [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(SaveEvsCommand))]
-    private bool _canSaveEvs;
-
-    /// <summary>What happened to the last attempt to write EVs. Empty when nothing has been tried.</summary>
-    [ObservableProperty]
-    private string _trainStatus = string.Empty;
-
-    [ObservableProperty]
-    private bool _trainFailed;
-
-    [ObservableProperty]
-    private bool _isTraining;
-
-    /// <summary>One row moved. Reapplies the whole spread, since the six share one budget.</summary>
-    private void EvEdited(int index, int value) => Apply(Evs.With(index, value));
-
-    /// <summary>Pushes a spread back into the six rows and recomputes the totals.</summary>
-    private void Apply(EvSpread spread)
-    {
-        Evs = spread;
-
-        foreach (var row in Stats)
-        {
-            row.Silently(spread[row.Index], spread[row.Index] != _savedEvs[row.Index]);
-        }
-
-        RefreshEvTotals();
-    }
-
-    private void RefreshEvTotals()
-    {
-        EvTotal = Evs.Total;
-        EvRemaining = Math.Max(0, Evs.Remaining);
-        EvOver = Evs.Over;
-        EvOverBudget = !Evs.IsLegal;
-
-        // La barra se llena y se queda llena: pasarse no la hace crecer, lo dice el color.
-        EvFill = Math.Min(1d, (double)Evs.Total / EvSpread.TotalMax);
-
-        EvsChanged = !Evs.Equals(_savedEvs);
-        CanSaveEvs = EvsChanged && Evs.IsLegal;
-    }
-
-    /// <summary>
-    /// Fills the stat to 252, even if that puts the reparto over 510.
-    /// </summary>
-    /// <remarks>
-    /// Going over is the point. Moving 252 points from PS to Velocidad is two edits, and refusing
-    /// the first one until the second has happened would force the player to work in an order
-    /// nobody would guess. The panel turns red, says by how much, and blocks the save instead.
-    /// </remarks>
-    [RelayCommand]
-    private void MaxEv(StatRowViewModel? row)
-    {
-        if (row is not null)
-        {
-            Apply(Evs.With(row.Index, EvSpread.PerStatMax));
-        }
-    }
-
-    [RelayCommand]
-    private void ClearEv(StatRowViewModel? row)
-    {
-        if (row is not null)
-        {
-            Apply(Evs.With(row.Index, 0));
-        }
-    }
-
-    [RelayCommand]
-    private void ClearAllEvs() => Apply(EvSpread.Empty);
-
-    /// <summary>Throws the edit away and puts back what the partida holds.</summary>
-    [RelayCommand(CanExecute = nameof(EvsChanged))]
-    private void RevertEvs()
-    {
-        Apply(_savedEvs);
-        TrainStatus = string.Empty;
-        TrainFailed = false;
-    }
-
-    /// <summary>
-    /// Writes the EVs on screen into the partida.
-    /// </summary>
-    /// <remarks>
-    /// Everything that can refuse does so before anything is opened: no run to record it against,
-    /// nothing selected, nothing changed, or the game still loaded in the emulator. What gets past
-    /// all four goes through the service, which writes first and records afterwards.
-    /// </remarks>
-    [RelayCommand(CanExecute = nameof(CanSaveEvs))]
-    private async Task SaveEvsAsync()
-    {
-        if (Selected is not { } target || IsTraining)
+        // Un huevo no enseña ni tipos ni ataques: el juego tampoco lo hace hasta que eclosiona.
+        if (pokemon.IsEgg)
         {
             return;
         }
 
-        if (_runContext.Current is not { } run)
+        foreach (var badge in TypeBadges.For(_types, pokemon))
         {
-            TrainFailed = true;
-            TrainStatus = "No hay ninguna run activa, así que no habría dónde registrar el cambio.";
-            return;
+            SelectedTypes.Add(badge);
         }
 
-        if (!_training.CanTrainNow(out var reason))
+        var moves = pokemon.MoveIds ?? [];
+        for (var slot = 0; slot < 4; slot++)
         {
-            TrainFailed = true;
-            TrainStatus = reason;
-            return;
-        }
-
-        IsTraining = true;
-
-        try
-        {
-            var result = await _training.TrainAsync(run, target, Evs);
-
-            TrainFailed = !result.Delivered;
-            TrainStatus = result.Message;
-
-            if (result.Delivered)
-            {
-                _logger.LogInformation("EV escritos para {Name}: {Evs}", target.DisplayName, Evs);
-
-                // La partida ha cambiado por debajo, y con ella las estadísticas que dependen de
-                // los EV. Releerla es lo único que hace que la columna de la izquierda sea cierta.
-                await LoadAsync();
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Fallo al escribir los EV de {Name}", target.DisplayName);
-            TrainFailed = true;
-            TrainStatus = "No se han podido escribir los EV. El detalle está en la carpeta Logs.";
-        }
-        finally
-        {
-            IsTraining = false;
+            var move = slot < moves.Count ? moves[slot] : 0;
+            var sheet = move == 0 ? null : _moves.Describe(move);
+            SelectedMoves.Add(MoveCardViewModel.Known(slot, move, sheet,
+                sheet is { Category: MoveSheet.Physical or MoveSheet.Special } ? _sprites.GetCategory(sheet.Category) : null));
         }
     }
 
@@ -734,5 +570,5 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
     /// player either, and showing the species would give away something the game hides.
     /// </summary>
     private BitmapSource? SpriteFor(BoxedPokemon pokemon) =>
-        pokemon.IsEgg ? _sprites.GetEgg() : _sprites.Get(pokemon.Species);
+        pokemon.IsEgg ? _sprites.GetEgg() : _sprites.Get(pokemon.Species, pokemon.Form);
 }

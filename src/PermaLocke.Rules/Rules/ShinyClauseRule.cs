@@ -47,7 +47,7 @@ public sealed class ShinyClauseRule : IRule
             Outcome = RuleOutcome.AllowedWithException,
             Title = "✨ SHINY DETECTADO",
             Message = $"{capture.SpeciesName} es shiny. La Shiny Clause permite registrarlo "
-                      + "aunque esta zona ya tenga un encuentro; el original sigue siendo válido.",
+                      + "aunque la zona ya tenga su encuentro.",
             Details = details,
             OverriddenRuleIds = [RuleIds.FirstEncounter, RuleIds.DupesClause, RuleIds.SpeciesClause]
         };

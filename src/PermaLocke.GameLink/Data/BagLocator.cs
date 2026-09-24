@@ -46,6 +46,9 @@ public sealed class BagLocator(AzaharRpcClient client, BagLayout? layout = null)
     /// </summary>
     public IReadOnlyList<BagBlock> LocateAll(CancellationToken ct = default)
     {
+        var selectedProcess = client.GetProcess();
+        if (selectedProcess == uint.MaxValue)
+            throw new AzaharRpcException("No hay un proceso seleccionado para buscar la mochila.");
         var found = new List<BagBlock>();
         var tableBytes = _layout.PointerTableBytes;
         var buffer = new byte[WindowSize + tableBytes];
@@ -58,8 +61,10 @@ public sealed class BagLocator(AzaharRpcClient client, BagLayout? layout = null)
                 ct.ThrowIfCancellationRequested();
 
                 // La ventana se lee con cola, porque la tabla puede quedar partida entre dos.
+                if (client.GetProcess() != selectedProcess)
+                    throw new AzaharRpcException("El proceso del juego cambió durante la búsqueda de la mochila.");
                 var length = (int)Math.Min(buffer.Length, region.Size - offset);
-                ReadWindow(region.Start + offset, buffer, length, ref requests);
+                ReadWindow(region.Start + offset, buffer, length, ref requests, ct);
 
                 for (var at = 0; at < WindowSize && at + tableBytes <= length; at += 4)
                 {
@@ -123,12 +128,13 @@ public sealed class BagLocator(AzaharRpcClient client, BagLayout? layout = null)
     /// Fills the window page by page. A page that cannot be read is left as zeros instead of
     /// losing the whole window, because unmapped pages are scattered all over the regions.
     /// </summary>
-    private void ReadWindow(uint address, byte[] buffer, int length, ref int requests)
+    private void ReadWindow(uint address, byte[] buffer, int length, ref int requests, CancellationToken ct)
     {
         Array.Clear(buffer, 0, length);
 
         for (var offset = 0; offset < length; offset += PageSize)
         {
+            ct.ThrowIfCancellationRequested();
             var size = Math.Min(PageSize, length - offset);
 
             if (client.TryReadMemory(address + (uint)offset, size, out var page))
@@ -139,9 +145,9 @@ public sealed class BagLocator(AzaharRpcClient client, BagLayout? layout = null)
             // Una ráfaga ininterrumpida de peticiones ha llegado a tumbar el emulador, y además
             // el servidor RPC escribe una línea de log por respuesta: un barrido deja unos 15 MB
             // en el log de Azahar. Se cede el hilo a menudo y se barre lo menos posible.
-            if (++requests % 512 == 0)
+            if (++requests % 64 == 0)
             {
-                Thread.Sleep(1);
+                if (ct.WaitHandle.WaitOne(5)) ct.ThrowIfCancellationRequested();
             }
         }
     }

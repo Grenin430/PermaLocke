@@ -22,7 +22,8 @@ public sealed partial class ShopItemViewModel(ShopItem item, BitmapSource? icon)
 
     public string PriceText => $"{Item.Price} pts.";
 
-    public BitmapSource? Icon { get; } = icon;
+    [ObservableProperty]
+    private BitmapSource? _icon = icon;
 
     /// <summary>Shown when the cartridge has no icon for it, so the card is never empty.</summary>
     public string Initial => string.IsNullOrEmpty(Name) ? "?" : Name[..1].ToUpperInvariant();
@@ -53,7 +54,7 @@ public sealed partial class ShopViewModel : SectionViewModel
 
     public ShopViewModel(ShopService shop, IRunContext runs, PokemonSpriteService sprites,
         IAppDialogs dialogs, ILogger<ShopViewModel> logger)
-        : base("TIENDA", "Objetos a cambio de puntos, entregados a la mochila del juego")
+        : base("TIENDA", "Objetos a cambio de puntos")
     {
         _shop = shop;
         _runs = runs;
@@ -175,6 +176,11 @@ public sealed partial class ShopViewModel : SectionViewModel
             Show(ShowingMegaStones);
         }
 
+        foreach (var card in Items.Where(card => card.Icon is null))
+        {
+            card.Icon = _sprites.GetItem(card.Item.Id);
+        }
+
         if (Items.Count == 0)
         {
             Problem = "No hay nada a la venta: falta Data/shop.json o está vacío.";
@@ -227,12 +233,11 @@ public sealed partial class ShopViewModel : SectionViewModel
 
             Problem = carried.Count > 0
                 ? string.Empty
-                : "El juego no está abierto, así que no se puede entregar nada. Abre Azahar con la "
-                  + "partida cargada y pulsa ACTUALIZAR.";
+                : "Abre Azahar con la partida cargada y pulsa ACTUALIZAR.";
         }
         catch (OperationCanceledException)
         {
-            Problem = "El juego ha tardado demasiado en contestar. Comprueba que Azahar está abierto.";
+            Problem = "Azahar no responde. Comprueba que está abierto.";
         }
         finally
         {
@@ -255,7 +260,7 @@ public sealed partial class ShopViewModel : SectionViewModel
         var confirmed = _dialogs.Confirm("Comprar",
             $"¿Comprar {card.Name} por {card.Price} puntos?"
             + $"{Environment.NewLine}{Environment.NewLine}"
-            + $"Tienes {Balance} puntos. El objeto se escribirá en la mochila de tu partida.");
+            + $"Tienes {Balance} puntos.");
 
         _logger.LogInformation("Tienda: {Item} por {Price} puntos, {Answer}",
             card.Name, card.Price, confirmed ? "confirmado" : "cancelado");
@@ -281,8 +286,7 @@ public sealed partial class ShopViewModel : SectionViewModel
         catch (OperationCanceledException)
         {
             Status = string.Empty;
-            Problem = "El juego ha tardado demasiado en contestar, así que no se ha comprado nada "
-                      + "ni se te ha quitado ningún punto.";
+            Problem = "Azahar no responde. No se ha comprado nada.";
         }
         finally
         {

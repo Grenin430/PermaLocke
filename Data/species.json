@@ -295,8 +295,8 @@
     "Mand\u00EDbula Drag\u00F3n",
     "Relincho Blanco",
     "Relincho Negro",
-    "Unidad Ecuestre (Glastrier)",
-    "Unidad Ecuestre (Spectrier)",
+    "Unidad Ecuestre",
+    "Unidad Ecuestre",
     "Olor Persistente",
     "Disemillar",
     "Termoconversi\u00F3n",
@@ -330,25 +330,25 @@
     "Poder F\u00FAngico",
     "Hospitalidad",
     "Ojo Mental",
-    "Evocarrecuerdos (Turquesa)",
-    "Evocarrecuerdos (Horno)",
-    "Evocarrecuerdos (Fuente)",
-    "Evocarrecuerdos (Cimiento)",
+    "-",
+    "-",
+    "-",
+    "-",
     "Cadena T\u00F3xica",
     "N\u00E9ctar Dulce",
     "Teracambio",
     "Teracaparaz\u00F3n",
     "Teraformaci\u00F3n 0",
     "T\u00EDtere T\u00F3xico",
-    "Piercing Drill",
-    "Dragonize",
-    "Mega Sol",
-    "Spicy Spray",
-    "Eelevate",
-    "Fire Mane",
-    "\u2014",
-    "\u2014",
-    "\u2014"
+    "Turbotaladro",
+    "Piel Dragontina",
+    "Megasolar",
+    "Salpicante",
+    "Impulso Anguila",
+    "Crin de Fuego",
+    "-",
+    "-",
+    "Aura Protectora"
   ],
   "species": [
     {
@@ -359,7 +359,8 @@
       "abilities": [
         "Espesura",
         "Clorofila"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 2,
@@ -369,7 +370,8 @@
       "abilities": [
         "Espesura",
         "Clorofila"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 3,
@@ -379,7 +381,8 @@
       "abilities": [
         "Espesura",
         "Clorofila"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 4,
@@ -389,7 +392,8 @@
       "abilities": [
         "Mar Llamas",
         "Poder Solar"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 5,
@@ -399,7 +403,8 @@
       "abilities": [
         "Mar Llamas",
         "Poder Solar"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 6,
@@ -409,7 +414,8 @@
       "abilities": [
         "Mar Llamas",
         "Poder Solar"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 7,
@@ -419,7 +425,8 @@
       "abilities": [
         "Torrente",
         "Cura Lluvia"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 8,
@@ -429,7 +436,8 @@
       "abilities": [
         "Torrente",
         "Cura Lluvia"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 9,
@@ -439,7 +447,8 @@
       "abilities": [
         "Torrente",
         "Cura Lluvia"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 10,
@@ -449,7 +458,8 @@
       "abilities": [
         "Polvo Escudo",
         "Fuga"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 11,
@@ -458,7 +468,8 @@
       "legendary": false,
       "abilities": [
         "Mudar"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 12,
@@ -468,7 +479,8 @@
       "abilities": [
         "Ojo Compuesto",
         "Cromolente"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 13,
@@ -478,7 +490,8 @@
       "abilities": [
         "Polvo Escudo",
         "Fuga"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 14,
@@ -487,7 +500,8 @@
       "legendary": false,
       "abilities": [
         "Mudar"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 15,
@@ -497,7 +511,8 @@
       "abilities": [
         "Enjambre",
         "Francotirador"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 16,
@@ -508,7 +523,8 @@
         "Vista Lince",
         "Tumbos",
         "Sacapecho"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 17,
@@ -519,7 +535,8 @@
         "Vista Lince",
         "Tumbos",
         "Sacapecho"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 18,
@@ -530,7 +547,8 @@
         "Vista Lince",
         "Tumbos",
         "Sacapecho"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 19,
@@ -541,6 +559,12 @@
         "Fuga",
         "Agallas",
         "Entusiasmo"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Alola"
+        }
       ]
     },
     {
@@ -552,6 +576,12 @@
         "Fuga",
         "Agallas",
         "Entusiasmo"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Alola"
+        }
       ]
     },
     {
@@ -562,7 +592,8 @@
       "abilities": [
         "Vista Lince",
         "Francotirador"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 22,
@@ -572,7 +603,8 @@
       "abilities": [
         "Vista Lince",
         "Francotirador"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 23,
@@ -583,7 +615,8 @@
         "Intimidaci\u00F3n",
         "Mudar",
         "Nerviosismo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 24,
@@ -594,7 +627,8 @@
         "Intimidaci\u00F3n",
         "Mudar",
         "Nerviosismo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 25,
@@ -604,7 +638,8 @@
       "abilities": [
         "Elec. Est\u00E1tica",
         "Pararrayos"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 26,
@@ -614,6 +649,12 @@
       "abilities": [
         "Elec. Est\u00E1tica",
         "Pararrayos"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Alola"
+        }
       ]
     },
     {
@@ -624,6 +665,12 @@
       "abilities": [
         "Velo Arena",
         "\u00CDmpetu Arena"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Alola"
+        }
       ]
     },
     {
@@ -634,6 +681,12 @@
       "abilities": [
         "Velo Arena",
         "\u00CDmpetu Arena"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Alola"
+        }
       ]
     },
     {
@@ -645,7 +698,8 @@
         "Punto T\u00F3xico",
         "Rivalidad",
         "Entusiasmo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 30,
@@ -656,7 +710,8 @@
         "Punto T\u00F3xico",
         "Rivalidad",
         "Entusiasmo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 31,
@@ -667,7 +722,8 @@
         "Punto T\u00F3xico",
         "Rivalidad",
         "Potencia Bruta"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 32,
@@ -678,7 +734,8 @@
         "Punto T\u00F3xico",
         "Rivalidad",
         "Entusiasmo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 33,
@@ -689,7 +746,8 @@
         "Punto T\u00F3xico",
         "Rivalidad",
         "Entusiasmo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 34,
@@ -700,7 +758,8 @@
         "Punto T\u00F3xico",
         "Rivalidad",
         "Potencia Bruta"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 35,
@@ -711,7 +770,8 @@
         "Gran Encanto",
         "Muro M\u00E1gico",
         "Compiescolta"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 36,
@@ -722,7 +782,8 @@
         "Gran Encanto",
         "Muro M\u00E1gico",
         "Ignorante"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 37,
@@ -732,6 +793,12 @@
       "abilities": [
         "Absorbe Fuego",
         "Sequ\u00EDa"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Alola"
+        }
       ]
     },
     {
@@ -742,6 +809,12 @@
       "abilities": [
         "Absorbe Fuego",
         "Sequ\u00EDa"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Alola"
+        }
       ]
     },
     {
@@ -753,7 +826,8 @@
         "Gran Encanto",
         "Tenacidad",
         "Compiescolta"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 40,
@@ -764,7 +838,8 @@
         "Gran Encanto",
         "Tenacidad",
         "Cacheo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 41,
@@ -774,7 +849,8 @@
       "abilities": [
         "Foco Interno",
         "Allanamiento"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 42,
@@ -784,7 +860,8 @@
       "abilities": [
         "Foco Interno",
         "Allanamiento"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 43,
@@ -794,7 +871,8 @@
       "abilities": [
         "Clorofila",
         "Fuga"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 44,
@@ -804,7 +882,8 @@
       "abilities": [
         "Clorofila",
         "Hedor"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 45,
@@ -814,7 +893,8 @@
       "abilities": [
         "Clorofila",
         "Efecto Espora"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 46,
@@ -825,7 +905,8 @@
         "Efecto Espora",
         "Piel Seca",
         "Humedad"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 47,
@@ -836,7 +917,8 @@
         "Efecto Espora",
         "Piel Seca",
         "Humedad"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 48,
@@ -847,7 +929,8 @@
         "Ojo Compuesto",
         "Cromolente",
         "Fuga"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 49,
@@ -858,7 +941,8 @@
         "Polvo Escudo",
         "Cromolente",
         "Piel Milagro"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 50,
@@ -869,6 +953,12 @@
         "Velo Arena",
         "Trampa Arena",
         "Poder Arena"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Alola"
+        }
       ]
     },
     {
@@ -880,6 +970,12 @@
         "Velo Arena",
         "Trampa Arena",
         "Poder Arena"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Alola"
+        }
       ]
     },
     {
@@ -891,6 +987,16 @@
         "Recogida",
         "Experto",
         "Nerviosismo"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Alola"
+        },
+        {
+          "form": 2,
+          "name": "Galar"
+        }
       ]
     },
     {
@@ -902,6 +1008,12 @@
         "Flexibilidad",
         "Experto",
         "Nerviosismo"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Alola"
+        }
       ]
     },
     {
@@ -913,7 +1025,8 @@
         "Humedad",
         "Aclimataci\u00F3n",
         "Nado R\u00E1pido"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 55,
@@ -924,7 +1037,8 @@
         "Humedad",
         "Aclimataci\u00F3n",
         "Nado R\u00E1pido"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 56,
@@ -935,7 +1049,8 @@
         "Esp\u00EDritu Vital",
         "Irascible",
         "Competitivo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 57,
@@ -946,7 +1061,8 @@
         "Esp\u00EDritu Vital",
         "Irascible",
         "Competitivo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 58,
@@ -957,6 +1073,12 @@
         "Intimidaci\u00F3n",
         "Absorbe Fuego",
         "Justiciero"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Hisui"
+        }
       ]
     },
     {
@@ -968,6 +1090,12 @@
         "Intimidaci\u00F3n",
         "Absorbe Fuego",
         "Justiciero"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Hisui"
+        }
       ]
     },
     {
@@ -979,7 +1107,8 @@
         "Absorbe Agua",
         "Humedad",
         "Nado R\u00E1pido"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 61,
@@ -990,7 +1119,8 @@
         "Absorbe Agua",
         "Humedad",
         "Nado R\u00E1pido"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 62,
@@ -1001,7 +1131,8 @@
         "Absorbe Agua",
         "Humedad",
         "Nado R\u00E1pido"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 63,
@@ -1012,7 +1143,8 @@
         "Sincron\u00EDa",
         "Foco Interno",
         "Muro M\u00E1gico"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 64,
@@ -1023,7 +1155,8 @@
         "Sincron\u00EDa",
         "Foco Interno",
         "Muro M\u00E1gico"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 65,
@@ -1034,7 +1167,8 @@
         "Sincron\u00EDa",
         "Foco Interno",
         "Muro M\u00E1gico"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 66,
@@ -1045,7 +1179,8 @@
         "Agallas",
         "Indefenso",
         "Impasible"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 67,
@@ -1056,7 +1191,8 @@
         "Agallas",
         "Indefenso",
         "Impasible"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 68,
@@ -1067,7 +1203,8 @@
         "Agallas",
         "Indefenso",
         "Impasible"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 69,
@@ -1077,7 +1214,8 @@
       "abilities": [
         "Clorofila",
         "Gula"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 70,
@@ -1087,7 +1225,8 @@
       "abilities": [
         "Clorofila",
         "Gula"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 71,
@@ -1097,7 +1236,8 @@
       "abilities": [
         "Clorofila",
         "Gula"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 72,
@@ -1108,7 +1248,8 @@
         "Cuerpo Puro",
         "Lodo L\u00EDquido",
         "Cura Lluvia"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 73,
@@ -1119,7 +1260,8 @@
         "Cuerpo Puro",
         "Lodo L\u00EDquido",
         "Cura Lluvia"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 74,
@@ -1130,6 +1272,12 @@
         "Cabeza Roca",
         "Robustez",
         "Velo Arena"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Alola"
+        }
       ]
     },
     {
@@ -1141,6 +1289,12 @@
         "Cabeza Roca",
         "Robustez",
         "Velo Arena"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Alola"
+        }
       ]
     },
     {
@@ -1152,6 +1306,12 @@
         "Cabeza Roca",
         "Robustez",
         "Velo Arena"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Alola"
+        }
       ]
     },
     {
@@ -1163,6 +1323,12 @@
         "Fuga",
         "Absorbe Fuego",
         "Cuerpo Llama"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Galar"
+        }
       ]
     },
     {
@@ -1174,6 +1340,12 @@
         "Fuga",
         "Absorbe Fuego",
         "Cuerpo Llama"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Galar"
+        }
       ]
     },
     {
@@ -1185,6 +1357,12 @@
         "Despiste",
         "Ritmo Propio",
         "Regeneraci\u00F3n"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Galar"
+        }
       ]
     },
     {
@@ -1196,6 +1374,12 @@
         "Despiste",
         "Ritmo Propio",
         "Regeneraci\u00F3n"
+      ],
+      "forms": [
+        {
+          "form": 2,
+          "name": "Galar"
+        }
       ]
     },
     {
@@ -1207,7 +1391,8 @@
         "Im\u00E1n",
         "Robustez",
         "C\u00E1lculo Final"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 82,
@@ -1218,7 +1403,8 @@
         "Im\u00E1n",
         "Robustez",
         "C\u00E1lculo Final"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 83,
@@ -1229,6 +1415,12 @@
         "Vista Lince",
         "Foco Interno",
         "Competitivo"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Galar"
+        }
       ]
     },
     {
@@ -1240,7 +1432,8 @@
         "Fuga",
         "Madrugar",
         "Tumbos"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 85,
@@ -1251,7 +1444,8 @@
         "Fuga",
         "Madrugar",
         "Tumbos"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 86,
@@ -1262,7 +1456,8 @@
         "Sebo",
         "Hidrataci\u00F3n",
         "G\u00E9lido"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 87,
@@ -1273,7 +1468,8 @@
         "Sebo",
         "Hidrataci\u00F3n",
         "G\u00E9lido"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 88,
@@ -1284,6 +1480,12 @@
         "Hedor",
         "Viscosidad",
         "Toque T\u00F3xico"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Alola"
+        }
       ]
     },
     {
@@ -1295,6 +1497,12 @@
         "Hedor",
         "Viscosidad",
         "Toque T\u00F3xico"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Alola"
+        }
       ]
     },
     {
@@ -1306,7 +1514,8 @@
         "Caparaz\u00F3n",
         "Encadenado",
         "Funda"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 91,
@@ -1317,7 +1526,8 @@
         "Caparaz\u00F3n",
         "Encadenado",
         "Funda"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 92,
@@ -1326,7 +1536,8 @@
       "legendary": false,
       "abilities": [
         "Levitaci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 93,
@@ -1335,7 +1546,8 @@
       "legendary": false,
       "abilities": [
         "Levitaci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 94,
@@ -1344,7 +1556,8 @@
       "legendary": false,
       "abilities": [
         "Cuerpo Maldito"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 95,
@@ -1355,7 +1568,8 @@
         "Cabeza Roca",
         "Robustez",
         "Armadura Fr\u00E1gil"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 96,
@@ -1366,7 +1580,8 @@
         "Insomnio",
         "Alerta",
         "Foco Interno"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 97,
@@ -1377,7 +1592,8 @@
         "Insomnio",
         "Alerta",
         "Foco Interno"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 98,
@@ -1388,7 +1604,8 @@
         "Corte Fuerte",
         "Caparaz\u00F3n",
         "Potencia Bruta"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 99,
@@ -1399,7 +1616,8 @@
         "Corte Fuerte",
         "Caparaz\u00F3n",
         "Potencia Bruta"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 100,
@@ -1410,6 +1628,12 @@
         "Insonorizar",
         "Elec. Est\u00E1tica",
         "Resquicio"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Hisui"
+        }
       ]
     },
     {
@@ -1421,6 +1645,12 @@
         "Insonorizar",
         "Elec. Est\u00E1tica",
         "Resquicio"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Hisui"
+        }
       ]
     },
     {
@@ -1431,7 +1661,8 @@
       "abilities": [
         "Clorofila",
         "Cosecha"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 103,
@@ -1441,6 +1672,12 @@
       "abilities": [
         "Clorofila",
         "Cosecha"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Alola"
+        }
       ]
     },
     {
@@ -1452,7 +1689,8 @@
         "Cabeza Roca",
         "Pararrayos",
         "Armadura Batalla"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 105,
@@ -1463,6 +1701,12 @@
         "Cabeza Roca",
         "Pararrayos",
         "Armadura Batalla"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Alola"
+        }
       ]
     },
     {
@@ -1474,7 +1718,8 @@
         "Flexibilidad",
         "Audaz",
         "Liviano"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 107,
@@ -1485,7 +1730,8 @@
         "Vista Lince",
         "Pu\u00F1o F\u00E9rreo",
         "Foco Interno"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 108,
@@ -1496,7 +1742,8 @@
         "Ritmo Propio",
         "Despiste",
         "Aclimataci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 109,
@@ -1505,7 +1752,8 @@
       "legendary": false,
       "abilities": [
         "Levitaci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 110,
@@ -1514,6 +1762,12 @@
       "legendary": false,
       "abilities": [
         "Levitaci\u00F3n"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Galar"
+        }
       ]
     },
     {
@@ -1525,7 +1779,8 @@
         "Pararrayos",
         "Cabeza Roca",
         "Audaz"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 112,
@@ -1536,7 +1791,8 @@
         "Pararrayos",
         "Cabeza Roca",
         "Audaz"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 113,
@@ -1547,7 +1803,8 @@
         "Cura Natural",
         "Dicha",
         "Alma Cura"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 114,
@@ -1558,7 +1815,8 @@
         "Clorofila",
         "Defensa Hoja",
         "Regeneraci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 115,
@@ -1569,7 +1827,8 @@
         "Madrugar",
         "Intr\u00E9pido",
         "Foco Interno"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 116,
@@ -1580,7 +1839,8 @@
         "Nado R\u00E1pido",
         "Francotirador",
         "Humedad"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 117,
@@ -1591,7 +1851,8 @@
         "Punto T\u00F3xico",
         "Francotirador",
         "Humedad"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 118,
@@ -1602,7 +1863,8 @@
         "Nado R\u00E1pido",
         "Velo Agua",
         "Pararrayos"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 119,
@@ -1613,7 +1875,8 @@
         "Nado R\u00E1pido",
         "Velo Agua",
         "Pararrayos"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 120,
@@ -1624,7 +1887,8 @@
         "Iluminaci\u00F3n",
         "Cura Natural",
         "C\u00E1lculo Final"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 121,
@@ -1635,7 +1899,8 @@
         "Iluminaci\u00F3n",
         "Cura Natural",
         "C\u00E1lculo Final"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 122,
@@ -1646,6 +1911,12 @@
         "Insonorizar",
         "Filtro",
         "Experto"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Galar"
+        }
       ]
     },
     {
@@ -1657,7 +1928,8 @@
         "Enjambre",
         "Experto",
         "Impasible"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 124,
@@ -1668,7 +1940,8 @@
         "Despiste",
         "Alerta",
         "Piel Seca"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 125,
@@ -1678,7 +1951,8 @@
       "abilities": [
         "Elec. Est\u00E1tica",
         "Esp\u00EDritu Vital"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 126,
@@ -1688,7 +1962,8 @@
       "abilities": [
         "Cuerpo Llama",
         "Esp\u00EDritu Vital"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 127,
@@ -1699,7 +1974,8 @@
         "Corte Fuerte",
         "Rompemoldes",
         "Autoestima"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 128,
@@ -1710,6 +1986,20 @@
         "Intimidaci\u00F3n",
         "Irascible",
         "Potencia Bruta"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Paldea Combatiente"
+        },
+        {
+          "form": 2,
+          "name": "Paldea Ardiente"
+        },
+        {
+          "form": 3,
+          "name": "Paldea Acu\u00E1tica"
+        }
       ]
     },
     {
@@ -1720,7 +2010,8 @@
       "abilities": [
         "Nado R\u00E1pido",
         "Cobard\u00EDa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 130,
@@ -1730,7 +2021,8 @@
       "abilities": [
         "Intimidaci\u00F3n",
         "Autoestima"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 131,
@@ -1741,7 +2033,8 @@
         "Absorbe Agua",
         "Caparaz\u00F3n",
         "Hidrataci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 132,
@@ -1751,7 +2044,8 @@
       "abilities": [
         "Flexibilidad",
         "Impostor"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 133,
@@ -1762,7 +2056,8 @@
         "Fuga",
         "Adaptable",
         "Anticipaci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 134,
@@ -1772,7 +2067,8 @@
       "abilities": [
         "Absorbe Agua",
         "Hidrataci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 135,
@@ -1782,7 +2078,8 @@
       "abilities": [
         "Absorbe Elec",
         "Pies R\u00E1pidos"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 136,
@@ -1792,7 +2089,8 @@
       "abilities": [
         "Absorbe Fuego",
         "Agallas"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 137,
@@ -1803,7 +2101,8 @@
         "Rastro",
         "Descarga",
         "C\u00E1lculo Final"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 138,
@@ -1814,7 +2113,8 @@
         "Nado R\u00E1pido",
         "Caparaz\u00F3n",
         "Armadura Fr\u00E1gil"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 139,
@@ -1825,7 +2125,8 @@
         "Nado R\u00E1pido",
         "Caparaz\u00F3n",
         "Armadura Fr\u00E1gil"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 140,
@@ -1836,7 +2137,8 @@
         "Nado R\u00E1pido",
         "Armadura Batalla",
         "Armadura Fr\u00E1gil"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 141,
@@ -1847,7 +2149,8 @@
         "Nado R\u00E1pido",
         "Armadura Batalla",
         "Armadura Fr\u00E1gil"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 142,
@@ -1858,7 +2161,8 @@
         "Cabeza Roca",
         "Presi\u00F3n",
         "Nerviosismo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 143,
@@ -1869,7 +2173,8 @@
         "Inmunidad",
         "Sebo",
         "Gula"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 144,
@@ -1879,6 +2184,12 @@
       "abilities": [
         "Presi\u00F3n",
         "Manto N\u00EDveo"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Galar"
+        }
       ]
     },
     {
@@ -1889,6 +2200,12 @@
       "abilities": [
         "Presi\u00F3n",
         "Elec. Est\u00E1tica"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Galar"
+        }
       ]
     },
     {
@@ -1899,6 +2216,12 @@
       "abilities": [
         "Presi\u00F3n",
         "Cuerpo Llama"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Galar"
+        }
       ]
     },
     {
@@ -1909,7 +2232,8 @@
       "abilities": [
         "Mudar",
         "Escama Especial"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 148,
@@ -1919,7 +2243,8 @@
       "abilities": [
         "Mudar",
         "Escama Especial"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 149,
@@ -1929,7 +2254,8 @@
       "abilities": [
         "Foco Interno",
         "Compensaci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 150,
@@ -1939,7 +2265,8 @@
       "abilities": [
         "Presi\u00F3n",
         "Nerviosismo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 151,
@@ -1948,7 +2275,8 @@
       "legendary": true,
       "abilities": [
         "Sincron\u00EDa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 152,
@@ -1958,7 +2286,8 @@
       "abilities": [
         "Espesura",
         "Defensa Hoja"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 153,
@@ -1968,7 +2297,8 @@
       "abilities": [
         "Espesura",
         "Defensa Hoja"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 154,
@@ -1978,7 +2308,8 @@
       "abilities": [
         "Espesura",
         "Defensa Hoja"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 155,
@@ -1988,7 +2319,8 @@
       "abilities": [
         "Mar Llamas",
         "Absorbe Fuego"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 156,
@@ -1998,7 +2330,8 @@
       "abilities": [
         "Mar Llamas",
         "Absorbe Fuego"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 157,
@@ -2008,6 +2341,12 @@
       "abilities": [
         "Mar Llamas",
         "Absorbe Fuego"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Hisui"
+        }
       ]
     },
     {
@@ -2018,7 +2357,8 @@
       "abilities": [
         "Torrente",
         "Potencia Bruta"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 159,
@@ -2028,7 +2368,8 @@
       "abilities": [
         "Torrente",
         "Potencia Bruta"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 160,
@@ -2038,7 +2379,8 @@
       "abilities": [
         "Torrente",
         "Potencia Bruta"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 161,
@@ -2049,7 +2391,8 @@
         "Fuga",
         "Vista Lince",
         "Cacheo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 162,
@@ -2060,7 +2403,8 @@
         "Fuga",
         "Vista Lince",
         "Cacheo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 163,
@@ -2071,7 +2415,8 @@
         "Insomnio",
         "Vista Lince",
         "Cromolente"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 164,
@@ -2082,7 +2427,8 @@
         "Insomnio",
         "Vista Lince",
         "Cromolente"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 165,
@@ -2093,7 +2439,8 @@
         "Enjambre",
         "Madrugar",
         "Cobard\u00EDa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 166,
@@ -2104,7 +2451,8 @@
         "Enjambre",
         "Madrugar",
         "Pu\u00F1o F\u00E9rreo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 167,
@@ -2115,7 +2463,8 @@
         "Enjambre",
         "Insomnio",
         "Francotirador"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 168,
@@ -2126,7 +2475,8 @@
         "Enjambre",
         "Insomnio",
         "Francotirador"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 169,
@@ -2136,7 +2486,8 @@
       "abilities": [
         "Foco Interno",
         "Allanamiento"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 170,
@@ -2147,7 +2498,8 @@
         "Absorbe Elec",
         "Iluminaci\u00F3n",
         "Absorbe Agua"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 171,
@@ -2158,7 +2510,8 @@
         "Absorbe Elec",
         "Iluminaci\u00F3n",
         "Absorbe Agua"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 172,
@@ -2168,7 +2521,8 @@
       "abilities": [
         "Elec. Est\u00E1tica",
         "Pararrayos"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 173,
@@ -2179,7 +2533,8 @@
         "Gran Encanto",
         "Muro M\u00E1gico",
         "Compiescolta"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 174,
@@ -2190,7 +2545,8 @@
         "Gran Encanto",
         "Tenacidad",
         "Compiescolta"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 175,
@@ -2201,7 +2557,8 @@
         "Entusiasmo",
         "Dicha",
         "Afortunado"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 176,
@@ -2212,7 +2569,8 @@
         "Entusiasmo",
         "Dicha",
         "Afortunado"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 177,
@@ -2223,7 +2581,8 @@
         "Sincron\u00EDa",
         "Madrugar",
         "Espejo M\u00E1gico"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 178,
@@ -2234,7 +2593,8 @@
         "Sincron\u00EDa",
         "Madrugar",
         "Espejo M\u00E1gico"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 179,
@@ -2244,7 +2604,8 @@
       "abilities": [
         "Elec. Est\u00E1tica",
         "M\u00E1s"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 180,
@@ -2254,7 +2615,8 @@
       "abilities": [
         "Elec. Est\u00E1tica",
         "M\u00E1s"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 181,
@@ -2264,7 +2626,8 @@
       "abilities": [
         "Elec. Est\u00E1tica",
         "M\u00E1s"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 182,
@@ -2274,7 +2637,8 @@
       "abilities": [
         "Clorofila",
         "Alma Cura"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 183,
@@ -2285,7 +2649,8 @@
         "Sebo",
         "Potencia",
         "Herb\u00EDvoro"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 184,
@@ -2296,7 +2661,8 @@
         "Sebo",
         "Potencia",
         "Herb\u00EDvoro"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 185,
@@ -2307,7 +2673,8 @@
         "Robustez",
         "Cabeza Roca",
         "Cobard\u00EDa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 186,
@@ -2318,7 +2685,8 @@
         "Absorbe Agua",
         "Humedad",
         "Llovizna"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 187,
@@ -2329,7 +2697,8 @@
         "Clorofila",
         "Defensa Hoja",
         "Allanamiento"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 188,
@@ -2340,7 +2709,8 @@
         "Clorofila",
         "Defensa Hoja",
         "Allanamiento"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 189,
@@ -2351,7 +2721,8 @@
         "Clorofila",
         "Defensa Hoja",
         "Allanamiento"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 190,
@@ -2362,7 +2733,8 @@
         "Fuga",
         "Recogida",
         "Encadenado"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 191,
@@ -2373,7 +2745,8 @@
         "Clorofila",
         "Poder Solar",
         "Madrugar"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 192,
@@ -2384,7 +2757,8 @@
         "Clorofila",
         "Poder Solar",
         "Madrugar"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 193,
@@ -2395,7 +2769,8 @@
         "Impulso",
         "Ojo Compuesto",
         "Cacheo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 194,
@@ -2406,6 +2781,12 @@
         "Humedad",
         "Absorbe Agua",
         "Ignorante"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Paldea"
+        }
       ]
     },
     {
@@ -2417,7 +2798,8 @@
         "Humedad",
         "Absorbe Agua",
         "Ignorante"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 196,
@@ -2427,7 +2809,8 @@
       "abilities": [
         "Sincron\u00EDa",
         "Espejo M\u00E1gico"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 197,
@@ -2437,7 +2820,8 @@
       "abilities": [
         "Sincron\u00EDa",
         "Foco Interno"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 198,
@@ -2448,7 +2832,8 @@
         "Insomnio",
         "Afortunado",
         "Bromista"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 199,
@@ -2459,6 +2844,12 @@
         "Despiste",
         "Ritmo Propio",
         "Regeneraci\u00F3n"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Galar"
+        }
       ]
     },
     {
@@ -2468,7 +2859,8 @@
       "legendary": false,
       "abilities": [
         "Levitaci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 201,
@@ -2477,7 +2869,8 @@
       "legendary": false,
       "abilities": [
         "Levitaci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 202,
@@ -2487,7 +2880,8 @@
       "abilities": [
         "Sombra Trampa",
         "Telepat\u00EDa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 203,
@@ -2498,7 +2892,8 @@
         "Foco Interno",
         "Madrugar",
         "Herb\u00EDvoro"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 204,
@@ -2508,7 +2903,8 @@
       "abilities": [
         "Robustez",
         "Funda"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 205,
@@ -2518,7 +2914,8 @@
       "abilities": [
         "Robustez",
         "Funda"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 206,
@@ -2529,7 +2926,8 @@
         "Dicha",
         "Fuga",
         "Cobard\u00EDa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 207,
@@ -2540,7 +2938,8 @@
         "Corte Fuerte",
         "Velo Arena",
         "Inmunidad"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 208,
@@ -2551,7 +2950,8 @@
         "Cabeza Roca",
         "Robustez",
         "Potencia Bruta"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 209,
@@ -2562,7 +2962,8 @@
         "Intimidaci\u00F3n",
         "Fuga",
         "Cobard\u00EDa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 210,
@@ -2573,7 +2974,8 @@
         "Intimidaci\u00F3n",
         "Pies R\u00E1pidos",
         "Cobard\u00EDa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 211,
@@ -2584,6 +2986,12 @@
         "Punto T\u00F3xico",
         "Nado R\u00E1pido",
         "Intimidaci\u00F3n"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Hisui"
+        }
       ]
     },
     {
@@ -2595,7 +3003,8 @@
         "Enjambre",
         "Experto",
         "Metal Liviano"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 213,
@@ -2606,7 +3015,8 @@
         "Robustez",
         "Gula",
         "Respond\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 214,
@@ -2617,7 +3027,8 @@
         "Enjambre",
         "Agallas",
         "Autoestima"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 215,
@@ -2628,6 +3039,12 @@
         "Foco Interno",
         "Vista Lince",
         "Hurto"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Hisui"
+        }
       ]
     },
     {
@@ -2639,7 +3056,8 @@
         "Recogida",
         "Pies R\u00E1pidos",
         "Recogemiel"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 217,
@@ -2650,7 +3068,8 @@
         "Agallas",
         "Pies R\u00E1pidos",
         "Nerviosismo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 218,
@@ -2661,7 +3080,8 @@
         "Escudo Magma",
         "Cuerpo Llama",
         "Armadura Fr\u00E1gil"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 219,
@@ -2672,7 +3092,8 @@
         "Escudo Magma",
         "Cuerpo Llama",
         "Armadura Fr\u00E1gil"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 220,
@@ -2683,7 +3104,8 @@
         "Despiste",
         "Manto N\u00EDveo",
         "Sebo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 221,
@@ -2694,7 +3116,8 @@
         "Despiste",
         "Manto N\u00EDveo",
         "Sebo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 222,
@@ -2705,6 +3128,12 @@
         "Entusiasmo",
         "Cura Natural",
         "Regeneraci\u00F3n"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Galar"
+        }
       ]
     },
     {
@@ -2716,7 +3145,8 @@
         "Entusiasmo",
         "Francotirador",
         "Veleta"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 224,
@@ -2727,7 +3157,8 @@
         "Ventosas",
         "Francotirador",
         "Veleta"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 225,
@@ -2738,7 +3169,8 @@
         "Esp\u00EDritu Vital",
         "Entusiasmo",
         "Insomnio"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 226,
@@ -2749,7 +3181,8 @@
         "Nado R\u00E1pido",
         "Absorbe Agua",
         "Velo Agua"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 227,
@@ -2760,7 +3193,8 @@
         "Vista Lince",
         "Robustez",
         "Armadura Fr\u00E1gil"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 228,
@@ -2771,7 +3205,8 @@
         "Madrugar",
         "Absorbe Fuego",
         "Nerviosismo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 229,
@@ -2782,7 +3217,8 @@
         "Madrugar",
         "Absorbe Fuego",
         "Nerviosismo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 230,
@@ -2793,7 +3229,8 @@
         "Nado R\u00E1pido",
         "Francotirador",
         "Humedad"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 231,
@@ -2803,7 +3240,8 @@
       "abilities": [
         "Recogida",
         "Velo Arena"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 232,
@@ -2813,7 +3251,8 @@
       "abilities": [
         "Robustez",
         "Velo Arena"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 233,
@@ -2824,7 +3263,8 @@
         "Rastro",
         "Descarga",
         "C\u00E1lculo Final"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 234,
@@ -2835,7 +3275,8 @@
         "Intimidaci\u00F3n",
         "Cacheo",
         "Herb\u00EDvoro"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 235,
@@ -2846,7 +3287,8 @@
         "Ritmo Propio",
         "Experto",
         "Veleta"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 236,
@@ -2857,7 +3299,8 @@
         "Agallas",
         "Impasible",
         "Esp\u00EDritu Vital"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 237,
@@ -2868,7 +3311,8 @@
         "Intimidaci\u00F3n",
         "Experto",
         "Impasible"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 238,
@@ -2879,7 +3323,8 @@
         "Despiste",
         "Alerta",
         "Hidrataci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 239,
@@ -2889,7 +3334,8 @@
       "abilities": [
         "Elec. Est\u00E1tica",
         "Esp\u00EDritu Vital"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 240,
@@ -2899,7 +3345,8 @@
       "abilities": [
         "Cuerpo Llama",
         "Esp\u00EDritu Vital"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 241,
@@ -2910,7 +3357,8 @@
         "Sebo",
         "Intr\u00E9pido",
         "Herb\u00EDvoro"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 242,
@@ -2921,7 +3369,8 @@
         "Cura Natural",
         "Dicha",
         "Alma Cura"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 243,
@@ -2931,7 +3380,8 @@
       "abilities": [
         "Presi\u00F3n",
         "Foco Interno"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 244,
@@ -2941,7 +3391,8 @@
       "abilities": [
         "Presi\u00F3n",
         "Foco Interno"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 245,
@@ -2951,7 +3402,8 @@
       "abilities": [
         "Presi\u00F3n",
         "Foco Interno"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 246,
@@ -2961,7 +3413,8 @@
       "abilities": [
         "Agallas",
         "Velo Arena"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 247,
@@ -2970,7 +3423,8 @@
       "legendary": false,
       "abilities": [
         "Mudar"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 248,
@@ -2980,7 +3434,8 @@
       "abilities": [
         "Chorro Arena",
         "Nerviosismo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 249,
@@ -2990,7 +3445,8 @@
       "abilities": [
         "Presi\u00F3n",
         "Compensaci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 250,
@@ -3000,7 +3456,8 @@
       "abilities": [
         "Presi\u00F3n",
         "Regeneraci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 251,
@@ -3009,7 +3466,8 @@
       "legendary": true,
       "abilities": [
         "Cura Natural"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 252,
@@ -3019,7 +3477,8 @@
       "abilities": [
         "Espesura",
         "Liviano"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 253,
@@ -3029,7 +3488,8 @@
       "abilities": [
         "Espesura",
         "Liviano"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 254,
@@ -3039,7 +3499,8 @@
       "abilities": [
         "Espesura",
         "Liviano"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 255,
@@ -3049,7 +3510,8 @@
       "abilities": [
         "Mar Llamas",
         "Impulso"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 256,
@@ -3059,7 +3521,8 @@
       "abilities": [
         "Mar Llamas",
         "Impulso"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 257,
@@ -3069,7 +3532,8 @@
       "abilities": [
         "Mar Llamas",
         "Impulso"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 258,
@@ -3079,7 +3543,8 @@
       "abilities": [
         "Torrente",
         "Humedad"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 259,
@@ -3089,7 +3554,8 @@
       "abilities": [
         "Torrente",
         "Humedad"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 260,
@@ -3099,7 +3565,8 @@
       "abilities": [
         "Torrente",
         "Humedad"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 261,
@@ -3110,7 +3577,8 @@
         "Fuga",
         "Pies R\u00E1pidos",
         "Cobard\u00EDa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 262,
@@ -3121,7 +3589,8 @@
         "Intimidaci\u00F3n",
         "Pies R\u00E1pidos",
         "Autoestima"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 263,
@@ -3132,6 +3601,12 @@
         "Recogida",
         "Gula",
         "Pies R\u00E1pidos"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Galar"
+        }
       ]
     },
     {
@@ -3143,6 +3618,12 @@
         "Recogida",
         "Gula",
         "Pies R\u00E1pidos"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Galar"
+        }
       ]
     },
     {
@@ -3153,7 +3634,8 @@
       "abilities": [
         "Polvo Escudo",
         "Fuga"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 266,
@@ -3162,7 +3644,8 @@
       "legendary": false,
       "abilities": [
         "Mudar"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 267,
@@ -3172,7 +3655,8 @@
       "abilities": [
         "Enjambre",
         "Rivalidad"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 268,
@@ -3181,7 +3665,8 @@
       "legendary": false,
       "abilities": [
         "Mudar"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 269,
@@ -3191,7 +3676,8 @@
       "abilities": [
         "Polvo Escudo",
         "Ojo Compuesto"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 270,
@@ -3202,7 +3688,8 @@
         "Nado R\u00E1pido",
         "Cura Lluvia",
         "Ritmo Propio"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 271,
@@ -3213,7 +3700,8 @@
         "Nado R\u00E1pido",
         "Cura Lluvia",
         "Ritmo Propio"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 272,
@@ -3224,7 +3712,8 @@
         "Nado R\u00E1pido",
         "Cura Lluvia",
         "Ritmo Propio"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 273,
@@ -3235,7 +3724,8 @@
         "Clorofila",
         "Madrugar",
         "Hurto"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 274,
@@ -3246,7 +3736,8 @@
         "Clorofila",
         "Madrugar",
         "Hurto"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 275,
@@ -3257,7 +3748,8 @@
         "Clorofila",
         "Madrugar",
         "Hurto"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 276,
@@ -3267,7 +3759,8 @@
       "abilities": [
         "Agallas",
         "Intr\u00E9pido"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 277,
@@ -3277,7 +3770,8 @@
       "abilities": [
         "Agallas",
         "Intr\u00E9pido"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 278,
@@ -3288,7 +3782,8 @@
         "Vista Lince",
         "Hidrataci\u00F3n",
         "Cura Lluvia"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 279,
@@ -3299,7 +3794,8 @@
         "Vista Lince",
         "Llovizna",
         "Cura Lluvia"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 280,
@@ -3310,7 +3806,8 @@
         "Sincron\u00EDa",
         "Rastro",
         "Telepat\u00EDa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 281,
@@ -3321,7 +3818,8 @@
         "Sincron\u00EDa",
         "Rastro",
         "Telepat\u00EDa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 282,
@@ -3332,7 +3830,8 @@
         "Sincron\u00EDa",
         "Rastro",
         "Telepat\u00EDa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 283,
@@ -3342,7 +3841,8 @@
       "abilities": [
         "Nado R\u00E1pido",
         "Cura Lluvia"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 284,
@@ -3352,7 +3852,8 @@
       "abilities": [
         "Intimidaci\u00F3n",
         "Nerviosismo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 285,
@@ -3363,7 +3864,8 @@
         "Efecto Espora",
         "Ant\u00EDdoto",
         "Pies R\u00E1pidos"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 286,
@@ -3374,7 +3876,8 @@
         "Efecto Espora",
         "Ant\u00EDdoto",
         "Experto"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 287,
@@ -3383,7 +3886,8 @@
       "legendary": false,
       "abilities": [
         "Ausente"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 288,
@@ -3392,7 +3896,8 @@
       "legendary": false,
       "abilities": [
         "Esp\u00EDritu Vital"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 289,
@@ -3401,7 +3906,8 @@
       "legendary": false,
       "abilities": [
         "Ausente"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 290,
@@ -3411,7 +3917,8 @@
       "abilities": [
         "Ojo Compuesto",
         "Fuga"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 291,
@@ -3421,7 +3928,8 @@
       "abilities": [
         "Impulso",
         "Allanamiento"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 292,
@@ -3430,7 +3938,8 @@
       "legendary": false,
       "abilities": [
         "Superguarda"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 293,
@@ -3440,7 +3949,8 @@
       "abilities": [
         "Insonorizar",
         "Cobard\u00EDa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 294,
@@ -3450,7 +3960,8 @@
       "abilities": [
         "Insonorizar",
         "Intr\u00E9pido"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 295,
@@ -3460,7 +3971,8 @@
       "abilities": [
         "Insonorizar",
         "Intr\u00E9pido"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 296,
@@ -3471,7 +3983,8 @@
         "Sebo",
         "Agallas",
         "Potencia Bruta"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 297,
@@ -3482,7 +3995,8 @@
         "Sebo",
         "Agallas",
         "Potencia Bruta"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 298,
@@ -3493,7 +4007,8 @@
         "Sebo",
         "Potencia",
         "Herb\u00EDvoro"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 299,
@@ -3504,7 +4019,8 @@
         "Robustez",
         "Im\u00E1n",
         "Poder Arena"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 300,
@@ -3515,7 +4031,8 @@
         "Gran Encanto",
         "Normalidad",
         "Piel Milagro"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 301,
@@ -3526,7 +4043,8 @@
         "Gran Encanto",
         "Normalidad",
         "Piel Milagro"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 302,
@@ -3537,7 +4055,8 @@
         "Vista Lince",
         "Rezagado",
         "Bromista"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 303,
@@ -3548,7 +4067,8 @@
         "Corte Fuerte",
         "Intimidaci\u00F3n",
         "Potencia Bruta"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 304,
@@ -3559,7 +4079,8 @@
         "Robustez",
         "Cabeza Roca",
         "Metal Pesado"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 305,
@@ -3570,7 +4091,8 @@
         "Robustez",
         "Cabeza Roca",
         "Metal Pesado"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 306,
@@ -3581,7 +4103,8 @@
         "Robustez",
         "Cabeza Roca",
         "Metal Pesado"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 307,
@@ -3591,7 +4114,8 @@
       "abilities": [
         "Energ\u00EDa Pura",
         "Telepat\u00EDa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 308,
@@ -3601,7 +4125,8 @@
       "abilities": [
         "Energ\u00EDa Pura",
         "Telepat\u00EDa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 309,
@@ -3612,7 +4137,8 @@
         "Elec. Est\u00E1tica",
         "Pararrayos",
         "Menos"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 310,
@@ -3623,7 +4149,8 @@
         "Elec. Est\u00E1tica",
         "Pararrayos",
         "Menos"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 311,
@@ -3633,7 +4160,8 @@
       "abilities": [
         "M\u00E1s",
         "Pararrayos"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 312,
@@ -3643,7 +4171,8 @@
       "abilities": [
         "Menos",
         "Absorbe Elec"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 313,
@@ -3654,7 +4183,8 @@
         "Iluminaci\u00F3n",
         "Enjambre",
         "Bromista"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 314,
@@ -3665,7 +4195,8 @@
         "Despiste",
         "Cromolente",
         "Bromista"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 315,
@@ -3676,7 +4207,8 @@
         "Cura Natural",
         "Punto T\u00F3xico",
         "Defensa Hoja"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 316,
@@ -3687,7 +4219,8 @@
         "Lodo L\u00EDquido",
         "Viscosidad",
         "Gula"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 317,
@@ -3698,7 +4231,8 @@
         "Lodo L\u00EDquido",
         "Viscosidad",
         "Gula"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 318,
@@ -3708,7 +4242,8 @@
       "abilities": [
         "Piel Tosca",
         "Impulso"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 319,
@@ -3718,7 +4253,8 @@
       "abilities": [
         "Piel Tosca",
         "Impulso"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 320,
@@ -3729,7 +4265,8 @@
         "Velo Agua",
         "Despiste",
         "Presi\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 321,
@@ -3740,7 +4277,8 @@
         "Velo Agua",
         "Despiste",
         "Presi\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 322,
@@ -3751,7 +4289,8 @@
         "Despiste",
         "Simple",
         "Ritmo Propio"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 323,
@@ -3762,7 +4301,8 @@
         "Escudo Magma",
         "Roca S\u00F3lida",
         "Irascible"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 324,
@@ -3773,7 +4313,8 @@
         "Humo Blanco",
         "Sequ\u00EDa",
         "Caparaz\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 325,
@@ -3784,7 +4325,8 @@
         "Sebo",
         "Ritmo Propio",
         "Gula"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 326,
@@ -3795,7 +4337,8 @@
         "Sebo",
         "Ritmo Propio",
         "Gula"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 327,
@@ -3806,7 +4349,8 @@
         "Ritmo Propio",
         "Tumbos",
         "Respond\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 328,
@@ -3817,7 +4361,8 @@
         "Corte Fuerte",
         "Trampa Arena",
         "Potencia Bruta"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 329,
@@ -3826,7 +4371,8 @@
       "legendary": false,
       "abilities": [
         "Levitaci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 330,
@@ -3835,7 +4381,8 @@
       "legendary": false,
       "abilities": [
         "Levitaci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 331,
@@ -3845,7 +4392,8 @@
       "abilities": [
         "Velo Arena",
         "Absorbe Agua"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 332,
@@ -3855,7 +4403,8 @@
       "abilities": [
         "Velo Arena",
         "Absorbe Agua"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 333,
@@ -3865,7 +4414,8 @@
       "abilities": [
         "Cura Natural",
         "Aclimataci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 334,
@@ -3875,7 +4425,8 @@
       "abilities": [
         "Cura Natural",
         "Aclimataci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 335,
@@ -3885,7 +4436,8 @@
       "abilities": [
         "Inmunidad",
         "\u00CDmpetu T\u00F3xico"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 336,
@@ -3895,7 +4447,8 @@
       "abilities": [
         "Mudar",
         "Allanamiento"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 337,
@@ -3904,7 +4457,8 @@
       "legendary": false,
       "abilities": [
         "Levitaci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 338,
@@ -3913,7 +4467,8 @@
       "legendary": false,
       "abilities": [
         "Levitaci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 339,
@@ -3924,7 +4479,8 @@
         "Despiste",
         "Anticipaci\u00F3n",
         "Hidrataci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 340,
@@ -3935,7 +4491,8 @@
         "Despiste",
         "Anticipaci\u00F3n",
         "Hidrataci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 341,
@@ -3946,7 +4503,8 @@
         "Corte Fuerte",
         "Caparaz\u00F3n",
         "Adaptable"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 342,
@@ -3957,7 +4515,8 @@
         "Corte Fuerte",
         "Caparaz\u00F3n",
         "Adaptable"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 343,
@@ -3966,7 +4525,8 @@
       "legendary": false,
       "abilities": [
         "Levitaci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 344,
@@ -3975,7 +4535,8 @@
       "legendary": false,
       "abilities": [
         "Levitaci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 345,
@@ -3985,7 +4546,8 @@
       "abilities": [
         "Ventosas",
         "Colector"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 346,
@@ -3995,7 +4557,8 @@
       "abilities": [
         "Ventosas",
         "Colector"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 347,
@@ -4005,7 +4568,8 @@
       "abilities": [
         "Armadura Batalla",
         "Nado R\u00E1pido"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 348,
@@ -4015,7 +4579,8 @@
       "abilities": [
         "Armadura Batalla",
         "Nado R\u00E1pido"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 349,
@@ -4026,7 +4591,8 @@
         "Nado R\u00E1pido",
         "Despiste",
         "Adaptable"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 350,
@@ -4037,7 +4603,8 @@
         "Escama Especial",
         "Tenacidad",
         "Gran Encanto"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 351,
@@ -4046,7 +4613,8 @@
       "legendary": false,
       "abilities": [
         "Predicci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 352,
@@ -4056,7 +4624,8 @@
       "abilities": [
         "Cambio Color",
         "Mutatipo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 353,
@@ -4067,7 +4636,8 @@
         "Insomnio",
         "Cacheo",
         "Cuerpo Maldito"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 354,
@@ -4078,7 +4648,8 @@
         "Insomnio",
         "Cacheo",
         "Cuerpo Maldito"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 355,
@@ -4088,7 +4659,8 @@
       "abilities": [
         "Levitaci\u00F3n",
         "Cacheo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 356,
@@ -4098,7 +4670,8 @@
       "abilities": [
         "Presi\u00F3n",
         "Cacheo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 357,
@@ -4109,7 +4682,8 @@
         "Clorofila",
         "Poder Solar",
         "Cosecha"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 358,
@@ -4118,7 +4692,8 @@
       "legendary": false,
       "abilities": [
         "Levitaci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 359,
@@ -4129,7 +4704,8 @@
         "Presi\u00F3n",
         "Afortunado",
         "Justiciero"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 360,
@@ -4139,7 +4715,8 @@
       "abilities": [
         "Sombra Trampa",
         "Telepat\u00EDa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 361,
@@ -4150,7 +4727,8 @@
         "Foco Interno",
         "G\u00E9lido",
         "Veleta"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 362,
@@ -4161,7 +4739,8 @@
         "Foco Interno",
         "G\u00E9lido",
         "Veleta"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 363,
@@ -4172,7 +4751,8 @@
         "Sebo",
         "G\u00E9lido",
         "Despiste"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 364,
@@ -4183,7 +4763,8 @@
         "Sebo",
         "G\u00E9lido",
         "Despiste"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 365,
@@ -4194,7 +4775,8 @@
         "Sebo",
         "G\u00E9lido",
         "Despiste"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 366,
@@ -4204,7 +4786,8 @@
       "abilities": [
         "Caparaz\u00F3n",
         "Cobard\u00EDa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 367,
@@ -4214,7 +4797,8 @@
       "abilities": [
         "Nado R\u00E1pido",
         "Velo Agua"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 368,
@@ -4224,7 +4808,8 @@
       "abilities": [
         "Nado R\u00E1pido",
         "Hidrataci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 369,
@@ -4235,7 +4820,8 @@
         "Nado R\u00E1pido",
         "Cabeza Roca",
         "Robustez"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 370,
@@ -4245,7 +4831,8 @@
       "abilities": [
         "Nado R\u00E1pido",
         "Hidrataci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 371,
@@ -4255,7 +4842,8 @@
       "abilities": [
         "Cabeza Roca",
         "Potencia Bruta"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 372,
@@ -4265,7 +4853,8 @@
       "abilities": [
         "Cabeza Roca",
         "Funda"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 373,
@@ -4275,7 +4864,8 @@
       "abilities": [
         "Intimidaci\u00F3n",
         "Autoestima"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 374,
@@ -4285,7 +4875,8 @@
       "abilities": [
         "Cuerpo Puro",
         "Metal Liviano"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 375,
@@ -4295,7 +4886,8 @@
       "abilities": [
         "Cuerpo Puro",
         "Metal Liviano"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 376,
@@ -4305,7 +4897,8 @@
       "abilities": [
         "Cuerpo Puro",
         "Metal Liviano"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 377,
@@ -4315,7 +4908,8 @@
       "abilities": [
         "Cuerpo Puro",
         "Robustez"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 378,
@@ -4325,7 +4919,8 @@
       "abilities": [
         "Cuerpo Puro",
         "G\u00E9lido"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 379,
@@ -4335,7 +4930,8 @@
       "abilities": [
         "Cuerpo Puro",
         "Metal Liviano"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 380,
@@ -4344,7 +4940,8 @@
       "legendary": true,
       "abilities": [
         "Levitaci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 381,
@@ -4353,7 +4950,8 @@
       "legendary": true,
       "abilities": [
         "Levitaci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 382,
@@ -4362,7 +4960,8 @@
       "legendary": true,
       "abilities": [
         "Llovizna"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 383,
@@ -4371,7 +4970,8 @@
       "legendary": true,
       "abilities": [
         "Sequ\u00EDa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 384,
@@ -4380,7 +4980,8 @@
       "legendary": true,
       "abilities": [
         "Bucle Aire"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 385,
@@ -4389,7 +4990,8 @@
       "legendary": true,
       "abilities": [
         "Dicha"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 386,
@@ -4398,7 +5000,8 @@
       "legendary": true,
       "abilities": [
         "Presi\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 387,
@@ -4408,7 +5011,8 @@
       "abilities": [
         "Espesura",
         "Caparaz\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 388,
@@ -4418,7 +5022,8 @@
       "abilities": [
         "Espesura",
         "Caparaz\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 389,
@@ -4428,7 +5033,8 @@
       "abilities": [
         "Espesura",
         "Caparaz\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 390,
@@ -4438,7 +5044,8 @@
       "abilities": [
         "Mar Llamas",
         "Pu\u00F1o F\u00E9rreo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 391,
@@ -4448,7 +5055,8 @@
       "abilities": [
         "Mar Llamas",
         "Pu\u00F1o F\u00E9rreo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 392,
@@ -4458,7 +5066,8 @@
       "abilities": [
         "Mar Llamas",
         "Pu\u00F1o F\u00E9rreo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 393,
@@ -4468,7 +5077,8 @@
       "abilities": [
         "Torrente",
         "Competitivo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 394,
@@ -4478,7 +5088,8 @@
       "abilities": [
         "Torrente",
         "Competitivo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 395,
@@ -4487,8 +5098,9 @@
       "legendary": false,
       "abilities": [
         "Torrente",
-        "Competitivo"
-      ]
+        "Tenacidad"
+      ],
+      "forms": []
     },
     {
       "id": 396,
@@ -4498,7 +5110,8 @@
       "abilities": [
         "Vista Lince",
         "Audaz"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 397,
@@ -4508,7 +5121,8 @@
       "abilities": [
         "Intimidaci\u00F3n",
         "Audaz"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 398,
@@ -4518,7 +5132,8 @@
       "abilities": [
         "Intimidaci\u00F3n",
         "Audaz"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 399,
@@ -4529,7 +5144,8 @@
         "Simple",
         "Ignorante",
         "Veleta"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 400,
@@ -4540,7 +5156,8 @@
         "Simple",
         "Ignorante",
         "Veleta"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 401,
@@ -4550,7 +5167,8 @@
       "abilities": [
         "Mudar",
         "Fuga"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 402,
@@ -4560,7 +5178,8 @@
       "abilities": [
         "Enjambre",
         "Experto"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 403,
@@ -4571,7 +5190,8 @@
         "Rivalidad",
         "Intimidaci\u00F3n",
         "Agallas"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 404,
@@ -4582,7 +5202,8 @@
         "Rivalidad",
         "Intimidaci\u00F3n",
         "Agallas"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 405,
@@ -4593,7 +5214,8 @@
         "Rivalidad",
         "Intimidaci\u00F3n",
         "Agallas"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 406,
@@ -4604,7 +5226,8 @@
         "Cura Natural",
         "Punto T\u00F3xico",
         "Defensa Hoja"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 407,
@@ -4615,7 +5238,8 @@
         "Cura Natural",
         "Punto T\u00F3xico",
         "Experto"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 408,
@@ -4625,7 +5249,8 @@
       "abilities": [
         "Rompemoldes",
         "Potencia Bruta"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 409,
@@ -4635,7 +5260,8 @@
       "abilities": [
         "Rompemoldes",
         "Potencia Bruta"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 410,
@@ -4645,7 +5271,8 @@
       "abilities": [
         "Robustez",
         "Insonorizar"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 411,
@@ -4655,7 +5282,8 @@
       "abilities": [
         "Robustez",
         "Insonorizar"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 412,
@@ -4665,7 +5293,8 @@
       "abilities": [
         "Mudar",
         "Funda"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 413,
@@ -4675,7 +5304,8 @@
       "abilities": [
         "Anticipaci\u00F3n",
         "Funda"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 414,
@@ -4685,7 +5315,8 @@
       "abilities": [
         "Enjambre",
         "Cromolente"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 415,
@@ -4695,7 +5326,8 @@
       "abilities": [
         "Recogemiel",
         "Entusiasmo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 416,
@@ -4705,7 +5337,8 @@
       "abilities": [
         "Presi\u00F3n",
         "Nerviosismo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 417,
@@ -4716,7 +5349,8 @@
         "Fuga",
         "Recogida",
         "Absorbe Elec"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 418,
@@ -4726,7 +5360,8 @@
       "abilities": [
         "Nado R\u00E1pido",
         "Velo Agua"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 419,
@@ -4736,7 +5371,8 @@
       "abilities": [
         "Nado R\u00E1pido",
         "Velo Agua"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 420,
@@ -4745,7 +5381,8 @@
       "legendary": false,
       "abilities": [
         "Clorofila"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 421,
@@ -4754,7 +5391,8 @@
       "legendary": false,
       "abilities": [
         "Don Floral"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 422,
@@ -4765,7 +5403,8 @@
         "Viscosidad",
         "Colector",
         "Poder Arena"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 423,
@@ -4776,7 +5415,8 @@
         "Viscosidad",
         "Colector",
         "Poder Arena"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 424,
@@ -4787,7 +5427,8 @@
         "Experto",
         "Recogida",
         "Encadenado"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 425,
@@ -4798,7 +5439,8 @@
         "Resquicio",
         "Liviano",
         "\u00CDmpetu Ardiente"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 426,
@@ -4809,7 +5451,8 @@
         "Resquicio",
         "Liviano",
         "\u00CDmpetu Ardiente"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 427,
@@ -4820,7 +5463,8 @@
         "Fuga",
         "Zoquete",
         "Flexibilidad"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 428,
@@ -4831,7 +5475,8 @@
         "Gran Encanto",
         "Zoquete",
         "Flexibilidad"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 429,
@@ -4840,7 +5485,8 @@
       "legendary": false,
       "abilities": [
         "Levitaci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 430,
@@ -4851,7 +5497,8 @@
         "Insomnio",
         "Afortunado",
         "Autoestima"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 431,
@@ -4862,7 +5509,8 @@
         "Flexibilidad",
         "Ritmo Propio",
         "Vista Lince"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 432,
@@ -4873,7 +5521,8 @@
         "Sebo",
         "Ritmo Propio",
         "Competitivo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 433,
@@ -4882,7 +5531,8 @@
       "legendary": false,
       "abilities": [
         "Levitaci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 434,
@@ -4893,7 +5543,8 @@
         "Hedor",
         "Resquicio",
         "Vista Lince"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 435,
@@ -4904,7 +5555,8 @@
         "Hedor",
         "Resquicio",
         "Vista Lince"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 436,
@@ -4915,7 +5567,8 @@
         "Levitaci\u00F3n",
         "Ign\u00EDfugo",
         "Metal Pesado"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 437,
@@ -4926,7 +5579,8 @@
         "Levitaci\u00F3n",
         "Ign\u00EDfugo",
         "Metal Pesado"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 438,
@@ -4937,7 +5591,8 @@
         "Robustez",
         "Cabeza Roca",
         "Cobard\u00EDa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 439,
@@ -4948,7 +5603,8 @@
         "Insonorizar",
         "Filtro",
         "Experto"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 440,
@@ -4959,7 +5615,8 @@
         "Cura Natural",
         "Dicha",
         "Compiescolta"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 441,
@@ -4970,7 +5627,8 @@
         "Vista Lince",
         "Tumbos",
         "Sacapecho"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 442,
@@ -4980,7 +5638,8 @@
       "abilities": [
         "Presi\u00F3n",
         "Allanamiento"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 443,
@@ -4990,7 +5649,8 @@
       "abilities": [
         "Velo Arena",
         "Piel Tosca"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 444,
@@ -5000,7 +5660,8 @@
       "abilities": [
         "Velo Arena",
         "Piel Tosca"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 445,
@@ -5010,7 +5671,8 @@
       "abilities": [
         "Velo Arena",
         "Piel Tosca"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 446,
@@ -5021,7 +5683,8 @@
         "Recogida",
         "Sebo",
         "Gula"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 447,
@@ -5032,7 +5695,8 @@
         "Impasible",
         "Foco Interno",
         "Bromista"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 448,
@@ -5043,7 +5707,8 @@
         "Impasible",
         "Foco Interno",
         "Justiciero"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 449,
@@ -5053,7 +5718,8 @@
       "abilities": [
         "Chorro Arena",
         "Poder Arena"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 450,
@@ -5063,7 +5729,8 @@
       "abilities": [
         "Chorro Arena",
         "Poder Arena"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 451,
@@ -5074,7 +5741,8 @@
         "Armadura Batalla",
         "Francotirador",
         "Vista Lince"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 452,
@@ -5085,7 +5753,8 @@
         "Armadura Batalla",
         "Francotirador",
         "Vista Lince"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 453,
@@ -5096,7 +5765,8 @@
         "Anticipaci\u00F3n",
         "Piel Seca",
         "Toque T\u00F3xico"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 454,
@@ -5107,7 +5777,8 @@
         "Anticipaci\u00F3n",
         "Piel Seca",
         "Toque T\u00F3xico"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 455,
@@ -5116,7 +5787,8 @@
       "legendary": false,
       "abilities": [
         "Levitaci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 456,
@@ -5127,7 +5799,8 @@
         "Nado R\u00E1pido",
         "Colector",
         "Velo Agua"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 457,
@@ -5138,7 +5811,8 @@
         "Nado R\u00E1pido",
         "Colector",
         "Velo Agua"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 458,
@@ -5149,7 +5823,8 @@
         "Nado R\u00E1pido",
         "Absorbe Agua",
         "Velo Agua"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 459,
@@ -5159,7 +5834,8 @@
       "abilities": [
         "Nevada",
         "Insonorizar"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 460,
@@ -5169,7 +5845,8 @@
       "abilities": [
         "Nevada",
         "Insonorizar"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 461,
@@ -5179,7 +5856,8 @@
       "abilities": [
         "Presi\u00F3n",
         "Hurto"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 462,
@@ -5190,7 +5868,8 @@
         "Im\u00E1n",
         "Robustez",
         "C\u00E1lculo Final"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 463,
@@ -5201,7 +5880,8 @@
         "Ritmo Propio",
         "Despiste",
         "Aclimataci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 464,
@@ -5212,7 +5892,8 @@
         "Pararrayos",
         "Roca S\u00F3lida",
         "Audaz"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 465,
@@ -5223,7 +5904,8 @@
         "Clorofila",
         "Defensa Hoja",
         "Regeneraci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 466,
@@ -5233,7 +5915,8 @@
       "abilities": [
         "Electromotor",
         "Esp\u00EDritu Vital"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 467,
@@ -5243,7 +5926,8 @@
       "abilities": [
         "Cuerpo Llama",
         "Esp\u00EDritu Vital"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 468,
@@ -5254,7 +5938,8 @@
         "Entusiasmo",
         "Dicha",
         "Afortunado"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 469,
@@ -5265,7 +5950,8 @@
         "Impulso",
         "Cromolente",
         "Cacheo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 470,
@@ -5275,7 +5961,8 @@
       "abilities": [
         "Defensa Hoja",
         "Clorofila"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 471,
@@ -5285,7 +5972,8 @@
       "abilities": [
         "Manto N\u00EDveo",
         "G\u00E9lido"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 472,
@@ -5296,7 +5984,8 @@
         "Corte Fuerte",
         "Velo Arena",
         "Ant\u00EDdoto"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 473,
@@ -5307,7 +5996,8 @@
         "Despiste",
         "Manto N\u00EDveo",
         "Sebo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 474,
@@ -5318,7 +6008,8 @@
         "Adaptable",
         "Descarga",
         "C\u00E1lculo Final"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 475,
@@ -5327,8 +6018,10 @@
       "legendary": false,
       "abilities": [
         "Impasible",
+        "Cortante",
         "Justiciero"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 476,
@@ -5339,7 +6032,8 @@
         "Robustez",
         "Im\u00E1n",
         "Poder Arena"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 477,
@@ -5349,7 +6043,8 @@
       "abilities": [
         "Presi\u00F3n",
         "Cacheo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 478,
@@ -5359,7 +6054,8 @@
       "abilities": [
         "Manto N\u00EDveo",
         "Cuerpo Maldito"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 479,
@@ -5368,7 +6064,8 @@
       "legendary": false,
       "abilities": [
         "Levitaci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 480,
@@ -5377,7 +6074,8 @@
       "legendary": true,
       "abilities": [
         "Levitaci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 481,
@@ -5386,7 +6084,8 @@
       "legendary": true,
       "abilities": [
         "Levitaci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 482,
@@ -5395,7 +6094,8 @@
       "legendary": true,
       "abilities": [
         "Levitaci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 483,
@@ -5405,7 +6105,8 @@
       "abilities": [
         "Presi\u00F3n",
         "Telepat\u00EDa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 484,
@@ -5415,7 +6116,8 @@
       "abilities": [
         "Presi\u00F3n",
         "Telepat\u00EDa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 485,
@@ -5425,7 +6127,8 @@
       "abilities": [
         "Absorbe Fuego",
         "Cuerpo Llama"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 486,
@@ -5434,7 +6137,8 @@
       "legendary": true,
       "abilities": [
         "Inicio Lento"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 487,
@@ -5444,7 +6148,8 @@
       "abilities": [
         "Presi\u00F3n",
         "Telepat\u00EDa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 488,
@@ -5453,7 +6158,8 @@
       "legendary": true,
       "abilities": [
         "Levitaci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 489,
@@ -5462,7 +6168,8 @@
       "legendary": true,
       "abilities": [
         "Hidrataci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 490,
@@ -5471,7 +6178,8 @@
       "legendary": true,
       "abilities": [
         "Hidrataci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 491,
@@ -5480,7 +6188,8 @@
       "legendary": true,
       "abilities": [
         "Mal Sue\u00F1o"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 492,
@@ -5489,7 +6198,8 @@
       "legendary": true,
       "abilities": [
         "Cura Natural"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 493,
@@ -5498,7 +6208,8 @@
       "legendary": true,
       "abilities": [
         "Multitipo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 494,
@@ -5507,7 +6218,8 @@
       "legendary": true,
       "abilities": [
         "Tinovictoria"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 495,
@@ -5517,7 +6229,8 @@
       "abilities": [
         "Espesura",
         "Respond\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 496,
@@ -5527,7 +6240,8 @@
       "abilities": [
         "Espesura",
         "Respond\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 497,
@@ -5537,7 +6251,8 @@
       "abilities": [
         "Espesura",
         "Respond\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 498,
@@ -5547,7 +6262,8 @@
       "abilities": [
         "Mar Llamas",
         "Sebo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 499,
@@ -5557,7 +6273,8 @@
       "abilities": [
         "Mar Llamas",
         "Sebo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 500,
@@ -5567,7 +6284,8 @@
       "abilities": [
         "Mar Llamas",
         "Audaz"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 501,
@@ -5577,7 +6295,8 @@
       "abilities": [
         "Torrente",
         "Caparaz\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 502,
@@ -5587,7 +6306,8 @@
       "abilities": [
         "Torrente",
         "Caparaz\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 503,
@@ -5597,6 +6317,12 @@
       "abilities": [
         "Torrente",
         "Caparaz\u00F3n"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Hisui"
+        }
       ]
     },
     {
@@ -5608,7 +6334,8 @@
         "Fuga",
         "Vista Lince",
         "C\u00E1lculo Final"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 505,
@@ -5619,7 +6346,8 @@
         "Iluminaci\u00F3n",
         "Vista Lince",
         "C\u00E1lculo Final"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 506,
@@ -5630,7 +6358,8 @@
         "Esp\u00EDritu Vital",
         "Recogida",
         "Fuga"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 507,
@@ -5641,7 +6370,8 @@
         "Intimidaci\u00F3n",
         "\u00CDmpetu Arena",
         "Intr\u00E9pido"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 508,
@@ -5652,7 +6382,8 @@
         "Intimidaci\u00F3n",
         "\u00CDmpetu Arena",
         "Intr\u00E9pido"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 509,
@@ -5663,7 +6394,8 @@
         "Flexibilidad",
         "Liviano",
         "Bromista"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 510,
@@ -5674,7 +6406,8 @@
         "Flexibilidad",
         "Liviano",
         "Bromista"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 511,
@@ -5684,7 +6417,8 @@
       "abilities": [
         "Gula",
         "Espesura"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 512,
@@ -5694,7 +6428,8 @@
       "abilities": [
         "Gula",
         "Espesura"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 513,
@@ -5704,7 +6439,8 @@
       "abilities": [
         "Gula",
         "Mar Llamas"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 514,
@@ -5714,7 +6450,8 @@
       "abilities": [
         "Gula",
         "Mar Llamas"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 515,
@@ -5724,7 +6461,8 @@
       "abilities": [
         "Gula",
         "Torrente"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 516,
@@ -5734,7 +6472,8 @@
       "abilities": [
         "Gula",
         "Torrente"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 517,
@@ -5745,7 +6484,8 @@
         "Alerta",
         "Sincron\u00EDa",
         "Telepat\u00EDa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 518,
@@ -5756,7 +6496,8 @@
         "Alerta",
         "Sincron\u00EDa",
         "Telepat\u00EDa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 519,
@@ -5767,7 +6508,8 @@
         "Sacapecho",
         "Afortunado",
         "Rivalidad"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 520,
@@ -5778,7 +6520,8 @@
         "Sacapecho",
         "Afortunado",
         "Rivalidad"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 521,
@@ -5789,7 +6532,8 @@
         "Sacapecho",
         "Afortunado",
         "Rivalidad"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 522,
@@ -5800,7 +6544,8 @@
         "Pararrayos",
         "Electromotor",
         "Herb\u00EDvoro"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 523,
@@ -5811,7 +6556,8 @@
         "Pararrayos",
         "Electromotor",
         "Herb\u00EDvoro"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 524,
@@ -5822,7 +6568,8 @@
         "Robustez",
         "Armadura Fr\u00E1gil",
         "Poder Arena"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 525,
@@ -5833,7 +6580,8 @@
         "Robustez",
         "Armadura Fr\u00E1gil",
         "Poder Arena"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 526,
@@ -5844,7 +6592,8 @@
         "Robustez",
         "Chorro Arena",
         "Poder Arena"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 527,
@@ -5855,7 +6604,8 @@
         "Ignorante",
         "Zoquete",
         "Simple"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 528,
@@ -5866,7 +6616,8 @@
         "Ignorante",
         "Zoquete",
         "Simple"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 529,
@@ -5877,7 +6628,8 @@
         "\u00CDmpetu Arena",
         "Poder Arena",
         "Rompemoldes"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 530,
@@ -5888,7 +6640,8 @@
         "\u00CDmpetu Arena",
         "Poder Arena",
         "Rompemoldes"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 531,
@@ -5899,7 +6652,8 @@
         "Alma Cura",
         "Regeneraci\u00F3n",
         "Zoquete"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 532,
@@ -5910,7 +6664,8 @@
         "Agallas",
         "Potencia Bruta",
         "Pu\u00F1o F\u00E9rreo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 533,
@@ -5921,7 +6676,8 @@
         "Agallas",
         "Potencia Bruta",
         "Pu\u00F1o F\u00E9rreo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 534,
@@ -5932,7 +6688,8 @@
         "Agallas",
         "Potencia Bruta",
         "Pu\u00F1o F\u00E9rreo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 535,
@@ -5943,7 +6700,8 @@
         "Nado R\u00E1pido",
         "Hidrataci\u00F3n",
         "Absorbe Agua"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 536,
@@ -5954,7 +6712,8 @@
         "Nado R\u00E1pido",
         "Hidrataci\u00F3n",
         "Absorbe Agua"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 537,
@@ -5965,7 +6724,8 @@
         "Nado R\u00E1pido",
         "Toque T\u00F3xico",
         "Absorbe Agua"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 538,
@@ -5976,7 +6736,8 @@
         "Agallas",
         "Foco Interno",
         "Rompemoldes"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 539,
@@ -5987,7 +6748,8 @@
         "Robustez",
         "Foco Interno",
         "Rompemoldes"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 540,
@@ -5998,7 +6760,8 @@
         "Enjambre",
         "Clorofila",
         "Funda"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 541,
@@ -6009,7 +6772,8 @@
         "Defensa Hoja",
         "Clorofila",
         "Funda"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 542,
@@ -6020,7 +6784,8 @@
         "Enjambre",
         "Clorofila",
         "Funda"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 543,
@@ -6031,7 +6796,8 @@
         "Punto T\u00F3xico",
         "Enjambre",
         "Impulso"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 544,
@@ -6042,7 +6808,8 @@
         "Punto T\u00F3xico",
         "Enjambre",
         "Impulso"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 545,
@@ -6053,7 +6820,8 @@
         "Punto T\u00F3xico",
         "Enjambre",
         "Impulso"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 546,
@@ -6064,7 +6832,8 @@
         "Bromista",
         "Allanamiento",
         "Clorofila"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 547,
@@ -6075,7 +6844,8 @@
         "Bromista",
         "Allanamiento",
         "Clorofila"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 548,
@@ -6086,7 +6856,8 @@
         "Clorofila",
         "Ritmo Propio",
         "Defensa Hoja"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 549,
@@ -6097,6 +6868,12 @@
         "Clorofila",
         "Ritmo Propio",
         "Defensa Hoja"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Hisui"
+        }
       ]
     },
     {
@@ -6108,7 +6885,8 @@
         "Audaz",
         "Adaptable",
         "Rompemoldes"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 551,
@@ -6119,7 +6897,8 @@
         "Intimidaci\u00F3n",
         "Autoestima",
         "Irascible"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 552,
@@ -6130,7 +6909,8 @@
         "Intimidaci\u00F3n",
         "Autoestima",
         "Irascible"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 553,
@@ -6141,7 +6921,8 @@
         "Intimidaci\u00F3n",
         "Autoestima",
         "Irascible"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 554,
@@ -6151,6 +6932,12 @@
       "abilities": [
         "Entusiasmo",
         "Foco Interno"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Galar"
+        }
       ]
     },
     {
@@ -6161,6 +6948,12 @@
       "abilities": [
         "Potencia Bruta",
         "Modo Daruma"
+      ],
+      "forms": [
+        {
+          "form": 2,
+          "name": "Galar"
+        }
       ]
     },
     {
@@ -6172,7 +6965,8 @@
         "Absorbe Agua",
         "Clorofila",
         "Colector"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 557,
@@ -6183,7 +6977,8 @@
         "Robustez",
         "Caparaz\u00F3n",
         "Armadura Fr\u00E1gil"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 558,
@@ -6194,7 +6989,8 @@
         "Robustez",
         "Caparaz\u00F3n",
         "Armadura Fr\u00E1gil"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 559,
@@ -6205,7 +7001,8 @@
         "Mudar",
         "Autoestima",
         "Intimidaci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 560,
@@ -6216,7 +7013,8 @@
         "Mudar",
         "Autoestima",
         "Intimidaci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 561,
@@ -6227,7 +7025,8 @@
         "Piel Milagro",
         "Muro M\u00E1gico",
         "Cromolente"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 562,
@@ -6236,6 +7035,12 @@
       "legendary": false,
       "abilities": [
         "Momia"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Galar"
+        }
       ]
     },
     {
@@ -6245,7 +7050,8 @@
       "legendary": false,
       "abilities": [
         "Momia"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 564,
@@ -6256,7 +7062,8 @@
         "Roca S\u00F3lida",
         "Robustez",
         "Nado R\u00E1pido"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 565,
@@ -6267,7 +7074,8 @@
         "Roca S\u00F3lida",
         "Robustez",
         "Nado R\u00E1pido"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 566,
@@ -6276,7 +7084,8 @@
       "legendary": false,
       "abilities": [
         "Flaqueza"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 567,
@@ -6285,7 +7094,8 @@
       "legendary": false,
       "abilities": [
         "Flaqueza"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 568,
@@ -6296,7 +7106,8 @@
         "Hedor",
         "Viscosidad",
         "Resquicio"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 569,
@@ -6307,7 +7118,8 @@
         "Hedor",
         "Armadura Fr\u00E1gil",
         "Resquicio"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 570,
@@ -6316,6 +7128,12 @@
       "legendary": false,
       "abilities": [
         "Ilusi\u00F3n"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Hisui"
+        }
       ]
     },
     {
@@ -6325,6 +7143,12 @@
       "legendary": false,
       "abilities": [
         "Ilusi\u00F3n"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Hisui"
+        }
       ]
     },
     {
@@ -6336,7 +7160,8 @@
         "Gran Encanto",
         "Experto",
         "Encadenado"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 573,
@@ -6347,7 +7172,8 @@
         "Gran Encanto",
         "Experto",
         "Encadenado"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 574,
@@ -6358,7 +7184,8 @@
         "Cacheo",
         "Tenacidad",
         "Sombra Trampa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 575,
@@ -6369,7 +7196,8 @@
         "Cacheo",
         "Tenacidad",
         "Sombra Trampa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 576,
@@ -6380,7 +7208,8 @@
         "Cacheo",
         "Tenacidad",
         "Sombra Trampa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 577,
@@ -6391,7 +7220,8 @@
         "Funda",
         "Muro M\u00E1gico",
         "Regeneraci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 578,
@@ -6402,7 +7232,8 @@
         "Funda",
         "Muro M\u00E1gico",
         "Regeneraci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 579,
@@ -6413,7 +7244,8 @@
         "Funda",
         "Muro M\u00E1gico",
         "Regeneraci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 580,
@@ -6424,7 +7256,8 @@
         "Vista Lince",
         "Sacapecho",
         "Hidrataci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 581,
@@ -6435,7 +7268,8 @@
         "Vista Lince",
         "Sacapecho",
         "Hidrataci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 582,
@@ -6446,7 +7280,8 @@
         "G\u00E9lido",
         "Manto N\u00EDveo",
         "Armadura Fr\u00E1gil"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 583,
@@ -6457,7 +7292,8 @@
         "G\u00E9lido",
         "Manto N\u00EDveo",
         "Armadura Fr\u00E1gil"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 584,
@@ -6468,7 +7304,8 @@
         "G\u00E9lido",
         "Nevada",
         "Armadura Fr\u00E1gil"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 585,
@@ -6479,7 +7316,8 @@
         "Clorofila",
         "Herb\u00EDvoro",
         "Dicha"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 586,
@@ -6490,7 +7328,8 @@
         "Clorofila",
         "Herb\u00EDvoro",
         "Dicha"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 587,
@@ -6500,7 +7339,8 @@
       "abilities": [
         "Elec. Est\u00E1tica",
         "Electromotor"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 588,
@@ -6511,7 +7351,8 @@
         "Enjambre",
         "Mudar",
         "Indefenso"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 589,
@@ -6522,7 +7363,8 @@
         "Enjambre",
         "Caparaz\u00F3n",
         "Funda"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 590,
@@ -6532,7 +7374,8 @@
       "abilities": [
         "Efecto Espora",
         "Regeneraci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 591,
@@ -6542,7 +7385,8 @@
       "abilities": [
         "Efecto Espora",
         "Regeneraci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 592,
@@ -6553,7 +7397,8 @@
         "Absorbe Agua",
         "Cuerpo Maldito",
         "Humedad"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 593,
@@ -6564,7 +7409,8 @@
         "Absorbe Agua",
         "Cuerpo Maldito",
         "Humedad"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 594,
@@ -6575,7 +7421,8 @@
         "Alma Cura",
         "Hidrataci\u00F3n",
         "Regeneraci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 595,
@@ -6586,7 +7433,8 @@
         "Ojo Compuesto",
         "Nerviosismo",
         "Enjambre"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 596,
@@ -6597,7 +7445,8 @@
         "Ojo Compuesto",
         "Nerviosismo",
         "Enjambre"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 597,
@@ -6606,7 +7455,8 @@
       "legendary": false,
       "abilities": [
         "Punta Acero"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 598,
@@ -6616,7 +7466,8 @@
       "abilities": [
         "Punta Acero",
         "Anticipaci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 599,
@@ -6627,7 +7478,8 @@
         "M\u00E1s",
         "Menos",
         "Cuerpo Puro"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 600,
@@ -6638,7 +7490,8 @@
         "M\u00E1s",
         "Menos",
         "Cuerpo Puro"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 601,
@@ -6649,7 +7502,8 @@
         "M\u00E1s",
         "Menos",
         "Cuerpo Puro"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 602,
@@ -6658,7 +7512,8 @@
       "legendary": false,
       "abilities": [
         "Levitaci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 603,
@@ -6667,7 +7522,8 @@
       "legendary": false,
       "abilities": [
         "Levitaci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 604,
@@ -6676,7 +7532,8 @@
       "legendary": false,
       "abilities": [
         "Levitaci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 605,
@@ -6687,7 +7544,8 @@
         "Telepat\u00EDa",
         "Sincron\u00EDa",
         "C\u00E1lculo Final"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 606,
@@ -6698,7 +7556,8 @@
         "Telepat\u00EDa",
         "Sincron\u00EDa",
         "C\u00E1lculo Final"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 607,
@@ -6709,7 +7568,8 @@
         "Absorbe Fuego",
         "Cuerpo Llama",
         "Allanamiento"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 608,
@@ -6720,7 +7580,8 @@
         "Absorbe Fuego",
         "Cuerpo Llama",
         "Allanamiento"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 609,
@@ -6731,7 +7592,8 @@
         "Absorbe Fuego",
         "Cuerpo Llama",
         "Allanamiento"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 610,
@@ -6742,7 +7604,8 @@
         "Rivalidad",
         "Rompemoldes",
         "Nerviosismo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 611,
@@ -6753,7 +7616,8 @@
         "Rivalidad",
         "Rompemoldes",
         "Nerviosismo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 612,
@@ -6764,7 +7628,8 @@
         "Rivalidad",
         "Rompemoldes",
         "Nerviosismo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 613,
@@ -6775,7 +7640,8 @@
         "Manto N\u00EDveo",
         "Quitanieves",
         "Cobard\u00EDa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 614,
@@ -6786,7 +7652,8 @@
         "Manto N\u00EDveo",
         "Quitanieves",
         "Nado R\u00E1pido"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 615,
@@ -6795,7 +7662,8 @@
       "legendary": false,
       "abilities": [
         "Levitaci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 616,
@@ -6806,7 +7674,8 @@
         "Hidrataci\u00F3n",
         "Caparaz\u00F3n",
         "Funda"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 617,
@@ -6817,7 +7686,8 @@
         "Hidrataci\u00F3n",
         "Viscosidad",
         "Liviano"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 618,
@@ -6828,6 +7698,12 @@
         "Elec. Est\u00E1tica",
         "Flexibilidad",
         "Velo Arena"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Galar"
+        }
       ]
     },
     {
@@ -6839,7 +7715,8 @@
         "Foco Interno",
         "Regeneraci\u00F3n",
         "Audaz"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 620,
@@ -6850,7 +7727,8 @@
         "Foco Interno",
         "Regeneraci\u00F3n",
         "Audaz"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 621,
@@ -6861,7 +7739,8 @@
         "Piel Tosca",
         "Potencia Bruta",
         "Rompemoldes"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 622,
@@ -6872,7 +7751,8 @@
         "Pu\u00F1o F\u00E9rreo",
         "Zoquete",
         "Indefenso"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 623,
@@ -6883,7 +7763,8 @@
         "Pu\u00F1o F\u00E9rreo",
         "Zoquete",
         "Indefenso"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 624,
@@ -6894,7 +7775,8 @@
         "Competitivo",
         "Foco Interno",
         "Presi\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 625,
@@ -6905,7 +7787,8 @@
         "Competitivo",
         "Foco Interno",
         "Presi\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 626,
@@ -6916,7 +7799,8 @@
         "Audaz",
         "Herb\u00EDvoro",
         "Insonorizar"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 627,
@@ -6927,7 +7811,8 @@
         "Vista Lince",
         "Potencia Bruta",
         "Entusiasmo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 628,
@@ -6938,6 +7823,12 @@
         "Vista Lince",
         "Potencia Bruta",
         "Competitivo"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Hisui"
+        }
       ]
     },
     {
@@ -6949,7 +7840,8 @@
         "Sacapecho",
         "Funda",
         "Armadura Fr\u00E1gil"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 630,
@@ -6960,7 +7852,8 @@
         "Sacapecho",
         "Funda",
         "Armadura Fr\u00E1gil"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 631,
@@ -6971,7 +7864,8 @@
         "Gula",
         "Absorbe Fuego",
         "Humo Blanco"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 632,
@@ -6982,7 +7876,8 @@
         "Enjambre",
         "Entusiasmo",
         "Ausente"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 633,
@@ -6991,7 +7886,8 @@
       "legendary": false,
       "abilities": [
         "Entusiasmo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 634,
@@ -7000,7 +7896,8 @@
       "legendary": false,
       "abilities": [
         "Entusiasmo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 635,
@@ -7009,7 +7906,8 @@
       "legendary": false,
       "abilities": [
         "Levitaci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 636,
@@ -7019,7 +7917,8 @@
       "abilities": [
         "Cuerpo Llama",
         "Enjambre"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 637,
@@ -7029,7 +7928,8 @@
       "abilities": [
         "Cuerpo Llama",
         "Enjambre"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 638,
@@ -7038,7 +7938,8 @@
       "legendary": true,
       "abilities": [
         "Justiciero"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 639,
@@ -7047,7 +7948,8 @@
       "legendary": true,
       "abilities": [
         "Justiciero"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 640,
@@ -7056,7 +7958,8 @@
       "legendary": true,
       "abilities": [
         "Justiciero"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 641,
@@ -7066,7 +7969,8 @@
       "abilities": [
         "Bromista",
         "Competitivo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 642,
@@ -7076,7 +7980,8 @@
       "abilities": [
         "Bromista",
         "Competitivo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 643,
@@ -7085,7 +7990,8 @@
       "legendary": true,
       "abilities": [
         "Turbollama"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 644,
@@ -7094,7 +8000,8 @@
       "legendary": true,
       "abilities": [
         "Terravoltaje"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 645,
@@ -7104,7 +8011,8 @@
       "abilities": [
         "Poder Arena",
         "Potencia Bruta"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 646,
@@ -7113,7 +8021,8 @@
       "legendary": true,
       "abilities": [
         "Presi\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 647,
@@ -7122,7 +8031,8 @@
       "legendary": true,
       "abilities": [
         "Justiciero"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 648,
@@ -7131,7 +8041,8 @@
       "legendary": true,
       "abilities": [
         "Dicha"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 649,
@@ -7140,7 +8051,8 @@
       "legendary": true,
       "abilities": [
         "Descarga"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 650,
@@ -7150,7 +8062,8 @@
       "abilities": [
         "Espesura",
         "Antibalas"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 651,
@@ -7160,7 +8073,8 @@
       "abilities": [
         "Espesura",
         "Antibalas"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 652,
@@ -7170,7 +8084,8 @@
       "abilities": [
         "Espesura",
         "Antibalas"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 653,
@@ -7180,7 +8095,8 @@
       "abilities": [
         "Mar Llamas",
         "Prestidigitador"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 654,
@@ -7190,7 +8106,8 @@
       "abilities": [
         "Mar Llamas",
         "Prestidigitador"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 655,
@@ -7200,7 +8117,8 @@
       "abilities": [
         "Mar Llamas",
         "Prestidigitador"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 656,
@@ -7210,7 +8128,8 @@
       "abilities": [
         "Torrente",
         "Mutatipo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 657,
@@ -7220,7 +8139,8 @@
       "abilities": [
         "Torrente",
         "Mutatipo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 658,
@@ -7230,7 +8150,8 @@
       "abilities": [
         "Torrente",
         "Mutatipo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 659,
@@ -7241,7 +8162,8 @@
         "Recogida",
         "Carrillo",
         "Potencia"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 660,
@@ -7252,7 +8174,8 @@
         "Recogida",
         "Carrillo",
         "Potencia"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 661,
@@ -7262,7 +8185,8 @@
       "abilities": [
         "Sacapecho",
         "Alas Vendaval"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 662,
@@ -7272,7 +8196,8 @@
       "abilities": [
         "Cuerpo Llama",
         "Alas Vendaval"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 663,
@@ -7282,7 +8207,8 @@
       "abilities": [
         "Cuerpo Llama",
         "Alas Vendaval"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 664,
@@ -7293,7 +8219,8 @@
         "Polvo Escudo",
         "Ojo Compuesto",
         "Compiescolta"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 665,
@@ -7303,7 +8230,8 @@
       "abilities": [
         "Mudar",
         "Compiescolta"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 666,
@@ -7314,7 +8242,8 @@
         "Polvo Escudo",
         "Ojo Compuesto",
         "Compiescolta"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 667,
@@ -7325,7 +8254,8 @@
         "Rivalidad",
         "Nerviosismo",
         "Autoestima"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 668,
@@ -7336,7 +8266,8 @@
         "Rivalidad",
         "Nerviosismo",
         "Autoestima"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 669,
@@ -7346,7 +8277,8 @@
       "abilities": [
         "Velo Flor",
         "Simbiosis"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 670,
@@ -7356,7 +8288,8 @@
       "abilities": [
         "Velo Flor",
         "Simbiosis"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 671,
@@ -7366,7 +8299,8 @@
       "abilities": [
         "Velo Flor",
         "Simbiosis"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 672,
@@ -7376,7 +8310,8 @@
       "abilities": [
         "Herb\u00EDvoro",
         "Manto Frondoso"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 673,
@@ -7386,7 +8321,8 @@
       "abilities": [
         "Herb\u00EDvoro",
         "Manto Frondoso"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 674,
@@ -7397,7 +8333,8 @@
         "Pu\u00F1o F\u00E9rreo",
         "Rompemoldes",
         "Intr\u00E9pido"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 675,
@@ -7408,7 +8345,8 @@
         "Pu\u00F1o F\u00E9rreo",
         "Rompemoldes",
         "Intr\u00E9pido"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 676,
@@ -7417,7 +8355,8 @@
       "legendary": false,
       "abilities": [
         "Pelaje Recio"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 677,
@@ -7428,7 +8367,8 @@
         "Vista Lince",
         "Allanamiento",
         "Ritmo Propio"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 678,
@@ -7439,7 +8379,8 @@
         "Vista Lince",
         "Allanamiento",
         "Bromista"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 679,
@@ -7448,7 +8389,8 @@
       "legendary": false,
       "abilities": [
         "Indefenso"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 680,
@@ -7457,7 +8399,8 @@
       "legendary": false,
       "abilities": [
         "Indefenso"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 681,
@@ -7466,7 +8409,8 @@
       "legendary": false,
       "abilities": [
         "Cambio T\u00E1ctico"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 682,
@@ -7476,7 +8420,8 @@
       "abilities": [
         "Alma Cura",
         "Velo Aroma"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 683,
@@ -7486,7 +8431,8 @@
       "abilities": [
         "Alma Cura",
         "Velo Aroma"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 684,
@@ -7496,7 +8442,8 @@
       "abilities": [
         "Velo Dulce",
         "Liviano"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 685,
@@ -7506,7 +8453,8 @@
       "abilities": [
         "Velo Dulce",
         "Liviano"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 686,
@@ -7517,7 +8465,8 @@
         "Respond\u00F3n",
         "Ventosas",
         "Allanamiento"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 687,
@@ -7528,7 +8477,8 @@
         "Respond\u00F3n",
         "Ventosas",
         "Allanamiento"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 688,
@@ -7539,7 +8489,8 @@
         "Garra Dura",
         "Francotirador",
         "Hurto"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 689,
@@ -7550,7 +8501,8 @@
         "Garra Dura",
         "Francotirador",
         "Hurto"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 690,
@@ -7561,7 +8513,8 @@
         "Punto T\u00F3xico",
         "Toque T\u00F3xico",
         "Adaptable"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 691,
@@ -7572,7 +8525,8 @@
         "Punto T\u00F3xico",
         "Toque T\u00F3xico",
         "Adaptable"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 692,
@@ -7581,7 +8535,8 @@
       "legendary": false,
       "abilities": [
         "Megadisparador"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 693,
@@ -7590,7 +8545,8 @@
       "legendary": false,
       "abilities": [
         "Megadisparador"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 694,
@@ -7601,7 +8557,8 @@
         "Piel Seca",
         "Velo Arena",
         "Poder Solar"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 695,
@@ -7612,7 +8569,8 @@
         "Piel Seca",
         "Velo Arena",
         "Poder Solar"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 696,
@@ -7622,7 +8580,8 @@
       "abilities": [
         "Mand\u00EDbula Fuerte",
         "Robustez"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 697,
@@ -7632,7 +8591,8 @@
       "abilities": [
         "Mand\u00EDbula Fuerte",
         "Cabeza Roca"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 698,
@@ -7642,7 +8602,8 @@
       "abilities": [
         "Piel Helada",
         "Nevada"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 699,
@@ -7652,7 +8613,8 @@
       "abilities": [
         "Piel Helada",
         "Nevada"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 700,
@@ -7662,7 +8624,8 @@
       "abilities": [
         "Gran Encanto",
         "Piel Fe\u00E9rica"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 701,
@@ -7673,7 +8636,8 @@
         "Flexibilidad",
         "Liviano",
         "Rompemoldes"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 702,
@@ -7684,7 +8648,8 @@
         "Carrillo",
         "Recogida",
         "M\u00E1s"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 703,
@@ -7694,7 +8659,8 @@
       "abilities": [
         "Cuerpo Puro",
         "Robustez"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 704,
@@ -7705,7 +8671,8 @@
         "Herb\u00EDvoro",
         "Hidrataci\u00F3n",
         "Baba"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 705,
@@ -7716,6 +8683,12 @@
         "Herb\u00EDvoro",
         "Hidrataci\u00F3n",
         "Baba"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Hisui"
+        }
       ]
     },
     {
@@ -7727,6 +8700,12 @@
         "Herb\u00EDvoro",
         "Hidrataci\u00F3n",
         "Baba"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Hisui"
+        }
       ]
     },
     {
@@ -7737,7 +8716,8 @@
       "abilities": [
         "Bromista",
         "Prestidigitador"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 708,
@@ -7748,7 +8728,8 @@
         "Cura Natural",
         "Cacheo",
         "Cosecha"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 709,
@@ -7759,7 +8740,8 @@
         "Cura Natural",
         "Cacheo",
         "Cosecha"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 710,
@@ -7770,7 +8752,8 @@
         "Recogida",
         "Cacheo",
         "Insomnio"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 711,
@@ -7781,7 +8764,8 @@
         "Recogida",
         "Cacheo",
         "Insomnio"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 712,
@@ -7792,7 +8776,8 @@
         "Ritmo Propio",
         "G\u00E9lido",
         "Robustez"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 713,
@@ -7803,6 +8788,12 @@
         "Ritmo Propio",
         "G\u00E9lido",
         "Robustez"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Hisui"
+        }
       ]
     },
     {
@@ -7814,7 +8805,8 @@
         "Cacheo",
         "Allanamiento",
         "Telepat\u00EDa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 715,
@@ -7825,7 +8817,8 @@
         "Cacheo",
         "Allanamiento",
         "Telepat\u00EDa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 716,
@@ -7834,7 +8827,8 @@
       "legendary": true,
       "abilities": [
         "Aura Fe\u00E9rica"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 717,
@@ -7843,7 +8837,8 @@
       "legendary": true,
       "abilities": [
         "Aura Oscura"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 718,
@@ -7852,7 +8847,8 @@
       "legendary": true,
       "abilities": [
         "Rompeaura"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 719,
@@ -7861,7 +8857,8 @@
       "legendary": true,
       "abilities": [
         "Cuerpo Puro"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 720,
@@ -7870,7 +8867,8 @@
       "legendary": true,
       "abilities": [
         "Prestidigitador"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 721,
@@ -7879,7 +8877,8 @@
       "legendary": true,
       "abilities": [
         "Absorbe Agua"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 722,
@@ -7889,7 +8888,8 @@
       "abilities": [
         "Espesura",
         "Remoto"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 723,
@@ -7899,7 +8899,8 @@
       "abilities": [
         "Espesura",
         "Remoto"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 724,
@@ -7909,6 +8910,12 @@
       "abilities": [
         "Espesura",
         "Remoto"
+      ],
+      "forms": [
+        {
+          "form": 1,
+          "name": "Hisui"
+        }
       ]
     },
     {
@@ -7919,7 +8926,8 @@
       "abilities": [
         "Mar Llamas",
         "Intimidaci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 726,
@@ -7929,7 +8937,8 @@
       "abilities": [
         "Mar Llamas",
         "Intimidaci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 727,
@@ -7939,7 +8948,8 @@
       "abilities": [
         "Mar Llamas",
         "Intimidaci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 728,
@@ -7949,7 +8959,8 @@
       "abilities": [
         "Torrente",
         "Voz Fluida"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 729,
@@ -7959,7 +8970,8 @@
       "abilities": [
         "Torrente",
         "Voz Fluida"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 730,
@@ -7969,7 +8981,8 @@
       "abilities": [
         "Torrente",
         "Voz Fluida"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 731,
@@ -7980,7 +8993,8 @@
         "Vista Lince",
         "Encadenado",
         "Recogida"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 732,
@@ -7991,7 +9005,8 @@
         "Vista Lince",
         "Encadenado",
         "Recogida"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 733,
@@ -8002,7 +9017,8 @@
         "Vista Lince",
         "Encadenado",
         "Potencia Bruta"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 734,
@@ -8013,7 +9029,8 @@
         "Vigilante",
         "Mand\u00EDbula Fuerte",
         "Adaptable"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 735,
@@ -8024,7 +9041,8 @@
         "Vigilante",
         "Mand\u00EDbula Fuerte",
         "Adaptable"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 736,
@@ -8033,7 +9051,8 @@
       "legendary": false,
       "abilities": [
         "Enjambre"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 737,
@@ -8042,7 +9061,8 @@
       "legendary": false,
       "abilities": [
         "Bater\u00EDa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 738,
@@ -8051,7 +9071,8 @@
       "legendary": false,
       "abilities": [
         "Levitaci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 739,
@@ -8062,7 +9083,8 @@
         "Corte Fuerte",
         "Pu\u00F1o F\u00E9rreo",
         "Irascible"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 740,
@@ -8073,7 +9095,8 @@
         "Corte Fuerte",
         "Pu\u00F1o F\u00E9rreo",
         "Irascible"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 741,
@@ -8082,7 +9105,8 @@
       "legendary": false,
       "abilities": [
         "Pareja de Baile"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 742,
@@ -8093,7 +9117,8 @@
         "Recogemiel",
         "Polvo Escudo",
         "Velo Dulce"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 743,
@@ -8104,7 +9129,8 @@
         "Recogemiel",
         "Polvo Escudo",
         "Velo Dulce"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 744,
@@ -8115,7 +9141,8 @@
         "Vista Lince",
         "Esp\u00EDritu Vital",
         "Impasible"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 745,
@@ -8126,7 +9153,8 @@
         "Vista Lince",
         "\u00CDmpetu Arena",
         "Impasible"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 746,
@@ -8135,7 +9163,8 @@
       "legendary": false,
       "abilities": [
         "Banco"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 747,
@@ -8146,7 +9175,8 @@
         "Ensa\u00F1amiento",
         "Flexibilidad",
         "Regeneraci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 748,
@@ -8157,7 +9187,8 @@
         "Ensa\u00F1amiento",
         "Flexibilidad",
         "Regeneraci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 749,
@@ -8168,7 +9199,8 @@
         "Ritmo Propio",
         "Firmeza",
         "Foco Interno"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 750,
@@ -8179,7 +9211,8 @@
         "Ritmo Propio",
         "Firmeza",
         "Foco Interno"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 751,
@@ -8189,7 +9222,8 @@
       "abilities": [
         "Pompa",
         "Absorbe Agua"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 752,
@@ -8199,7 +9233,8 @@
       "abilities": [
         "Pompa",
         "Absorbe Agua"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 753,
@@ -8209,7 +9244,8 @@
       "abilities": [
         "Defensa Hoja",
         "Respond\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 754,
@@ -8219,7 +9255,8 @@
       "abilities": [
         "Defensa Hoja",
         "Respond\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 755,
@@ -8230,7 +9267,8 @@
         "Iluminaci\u00F3n",
         "Efecto Espora",
         "Cura Lluvia"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 756,
@@ -8241,7 +9279,8 @@
         "Iluminaci\u00F3n",
         "Efecto Espora",
         "Cura Lluvia"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 757,
@@ -8251,7 +9290,8 @@
       "abilities": [
         "Corrosi\u00F3n",
         "Despiste"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 758,
@@ -8261,7 +9301,8 @@
       "abilities": [
         "Corrosi\u00F3n",
         "Despiste"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 759,
@@ -8272,7 +9313,8 @@
         "Peluche",
         "Zoquete",
         "Gran Encanto"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 760,
@@ -8283,7 +9325,8 @@
         "Peluche",
         "Zoquete",
         "Nerviosismo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 761,
@@ -8294,7 +9337,8 @@
         "Defensa Hoja",
         "Despiste",
         "Velo Dulce"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 762,
@@ -8305,7 +9349,8 @@
         "Defensa Hoja",
         "Despiste",
         "Velo Dulce"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 763,
@@ -8316,7 +9361,8 @@
         "Defensa Hoja",
         "Regia Presencia",
         "Velo Dulce"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 764,
@@ -8327,7 +9373,8 @@
         "Velo Flor",
         "Primer Auxilio",
         "Cura Natural"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 765,
@@ -8338,7 +9385,8 @@
         "Foco Interno",
         "Telepat\u00EDa",
         "Simbiosis"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 766,
@@ -8348,7 +9396,8 @@
       "abilities": [
         "Receptor",
         "Competitivo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 767,
@@ -8357,7 +9406,8 @@
       "legendary": false,
       "abilities": [
         "Huida"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 768,
@@ -8366,7 +9416,8 @@
       "legendary": false,
       "abilities": [
         "Retirada"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 769,
@@ -8376,7 +9427,8 @@
       "abilities": [
         "Hidrorrefuerzo",
         "Velo Arena"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 770,
@@ -8386,7 +9438,8 @@
       "abilities": [
         "Hidrorrefuerzo",
         "Velo Arena"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 771,
@@ -8396,7 +9449,8 @@
       "abilities": [
         "Rev\u00E9s",
         "Ignorante"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 772,
@@ -8405,7 +9459,8 @@
       "legendary": true,
       "abilities": [
         "Armadura Batalla"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 773,
@@ -8414,7 +9469,8 @@
       "legendary": true,
       "abilities": [
         "Sistema Alfa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 774,
@@ -8423,7 +9479,8 @@
       "legendary": false,
       "abilities": [
         "Escudo Limitado"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 775,
@@ -8432,7 +9489,8 @@
       "legendary": false,
       "abilities": [
         "Letargo Perenne"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 776,
@@ -8441,7 +9499,8 @@
       "legendary": false,
       "abilities": [
         "Caparaz\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 777,
@@ -8452,7 +9511,8 @@
         "Punta Acero",
         "Pararrayos",
         "Robustez"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 778,
@@ -8461,7 +9521,8 @@
       "legendary": false,
       "abilities": [
         "Disfraz"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 779,
@@ -8472,7 +9533,8 @@
         "Cuerpo V\u00EDvido",
         "Mand\u00EDbula Fuerte",
         "Piel Milagro"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 780,
@@ -8483,7 +9545,8 @@
         "C\u00F3lera",
         "Herb\u00EDvoro",
         "Aclimataci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 781,
@@ -8492,7 +9555,8 @@
       "legendary": false,
       "abilities": [
         "Acero Templado"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 782,
@@ -8503,7 +9567,8 @@
         "Antibalas",
         "Insonorizar",
         "Funda"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 783,
@@ -8514,7 +9579,8 @@
         "Antibalas",
         "Insonorizar",
         "Funda"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 784,
@@ -8525,7 +9591,8 @@
         "Antibalas",
         "Insonorizar",
         "Funda"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 785,
@@ -8535,7 +9602,8 @@
       "abilities": [
         "Electrog\u00E9nesis",
         "Telepat\u00EDa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 786,
@@ -8545,7 +9613,8 @@
       "abilities": [
         "Psicog\u00E9nesis",
         "Telepat\u00EDa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 787,
@@ -8555,7 +9624,8 @@
       "abilities": [
         "Herbog\u00E9nesis",
         "Telepat\u00EDa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 788,
@@ -8565,7 +9635,8 @@
       "abilities": [
         "Nebulog\u00E9nesis",
         "Telepat\u00EDa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 789,
@@ -8574,7 +9645,8 @@
       "legendary": true,
       "abilities": [
         "Ignorante"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 790,
@@ -8583,7 +9655,8 @@
       "legendary": true,
       "abilities": [
         "Robustez"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 791,
@@ -8592,7 +9665,8 @@
       "legendary": true,
       "abilities": [
         "Guardia Met\u00E1lica"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 792,
@@ -8601,7 +9675,8 @@
       "legendary": true,
       "abilities": [
         "Guardia Espectro"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 793,
@@ -8610,7 +9685,8 @@
       "legendary": true,
       "abilities": [
         "Ultraimpulso"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 794,
@@ -8619,7 +9695,8 @@
       "legendary": true,
       "abilities": [
         "Ultraimpulso"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 795,
@@ -8628,7 +9705,8 @@
       "legendary": true,
       "abilities": [
         "Ultraimpulso"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 796,
@@ -8637,7 +9715,8 @@
       "legendary": true,
       "abilities": [
         "Ultraimpulso"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 797,
@@ -8646,7 +9725,8 @@
       "legendary": true,
       "abilities": [
         "Ultraimpulso"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 798,
@@ -8655,7 +9735,8 @@
       "legendary": true,
       "abilities": [
         "Ultraimpulso"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 799,
@@ -8664,7 +9745,8 @@
       "legendary": true,
       "abilities": [
         "Ultraimpulso"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 800,
@@ -8673,7 +9755,8 @@
       "legendary": true,
       "abilities": [
         "Armadura Prisma"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 801,
@@ -8682,7 +9765,8 @@
       "legendary": true,
       "abilities": [
         "Cor\u00E1nima"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 802,
@@ -8691,7 +9775,8 @@
       "legendary": true,
       "abilities": [
         "Experto"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 803,
@@ -8700,7 +9785,8 @@
       "legendary": true,
       "abilities": [
         "Ultraimpulso"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 804,
@@ -8709,7 +9795,8 @@
       "legendary": true,
       "abilities": [
         "Ultraimpulso"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 805,
@@ -8718,7 +9805,8 @@
       "legendary": true,
       "abilities": [
         "Ultraimpulso"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 806,
@@ -8727,7 +9815,8 @@
       "legendary": true,
       "abilities": [
         "Ultraimpulso"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 807,
@@ -8736,7 +9825,8 @@
       "legendary": true,
       "abilities": [
         "Absorbe Elec"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 808,
@@ -8745,7 +9835,8 @@
       "legendary": true,
       "abilities": [
         "Im\u00E1n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 809,
@@ -8754,7 +9845,8 @@
       "legendary": true,
       "abilities": [
         "Pu\u00F1o F\u00E9rreo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 810,
@@ -8764,7 +9856,8 @@
       "abilities": [
         "Espesura",
         "Herbog\u00E9nesis"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 811,
@@ -8774,7 +9867,8 @@
       "abilities": [
         "Espesura",
         "Herbog\u00E9nesis"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 812,
@@ -8784,7 +9878,8 @@
       "abilities": [
         "Espesura",
         "Herbog\u00E9nesis"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 813,
@@ -8794,7 +9889,8 @@
       "abilities": [
         "Mar Llamas",
         "L\u00EDbero"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 814,
@@ -8804,7 +9900,8 @@
       "abilities": [
         "Mar Llamas",
         "L\u00EDbero"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 815,
@@ -8814,7 +9911,8 @@
       "abilities": [
         "Mar Llamas",
         "L\u00EDbero"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 816,
@@ -8824,7 +9922,8 @@
       "abilities": [
         "Torrente",
         "Francotirador"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 817,
@@ -8834,7 +9933,8 @@
       "abilities": [
         "Torrente",
         "Francotirador"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 818,
@@ -8844,7 +9944,8 @@
       "abilities": [
         "Torrente",
         "Francotirador"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 819,
@@ -8854,7 +9955,8 @@
       "abilities": [
         "Carrillo",
         "Gula"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 820,
@@ -8864,7 +9966,8 @@
       "abilities": [
         "Carrillo",
         "Gula"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 821,
@@ -8875,7 +9978,8 @@
         "Vista Lince",
         "Nerviosismo",
         "Sacapecho"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 822,
@@ -8886,7 +9990,8 @@
         "Vista Lince",
         "Nerviosismo",
         "Sacapecho"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 823,
@@ -8897,7 +10002,8 @@
         "Presi\u00F3n",
         "Nerviosismo",
         "Coraza Reflejo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 824,
@@ -8908,7 +10014,8 @@
         "Enjambre",
         "Ojo Compuesto",
         "Telepat\u00EDa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 825,
@@ -8919,7 +10026,8 @@
         "Enjambre",
         "Ojo Compuesto",
         "Telepat\u00EDa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 826,
@@ -8930,7 +10038,8 @@
         "Enjambre",
         "Cacheo",
         "Telepat\u00EDa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 827,
@@ -8941,7 +10050,8 @@
         "Fuga",
         "Liviano",
         "Vigilante"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 828,
@@ -8952,7 +10062,8 @@
         "Fuga",
         "Liviano",
         "Vigilante"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 829,
@@ -8963,7 +10074,8 @@
         "Pelusa",
         "Regeneraci\u00F3n",
         "Efecto Espora"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 830,
@@ -8974,7 +10086,8 @@
         "Pelusa",
         "Regeneraci\u00F3n",
         "Efecto Espora"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 831,
@@ -8985,7 +10098,8 @@
         "Peluche",
         "Fuga",
         "Antibalas"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 832,
@@ -8996,7 +10110,8 @@
         "Peluche",
         "Impasible",
         "Antibalas"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 833,
@@ -9007,7 +10122,8 @@
         "Mand\u00EDbula Fuerte",
         "Caparaz\u00F3n",
         "Nado R\u00E1pido"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 834,
@@ -9018,7 +10134,8 @@
         "Mand\u00EDbula Fuerte",
         "Caparaz\u00F3n",
         "Nado R\u00E1pido"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 835,
@@ -9028,7 +10145,8 @@
       "abilities": [
         "Recogebolas",
         "Cobard\u00EDa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 836,
@@ -9038,7 +10156,8 @@
       "abilities": [
         "Mand\u00EDbula Fuerte",
         "Tenacidad"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 837,
@@ -9049,7 +10168,8 @@
         "Combustible",
         "Ign\u00EDfugo",
         "Absorbe Fuego"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 838,
@@ -9060,7 +10180,8 @@
         "Combustible",
         "Cuerpo Llama",
         "Absorbe Fuego"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 839,
@@ -9071,7 +10192,8 @@
         "Combustible",
         "Cuerpo Llama",
         "Absorbe Fuego"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 840,
@@ -9082,7 +10204,8 @@
         "Maduraci\u00F3n",
         "Gula",
         "Antibalas"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 841,
@@ -9093,7 +10216,8 @@
         "Maduraci\u00F3n",
         "Gula",
         "Entusiasmo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 842,
@@ -9104,7 +10228,8 @@
         "Maduraci\u00F3n",
         "Gula",
         "Sebo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 843,
@@ -9115,7 +10240,8 @@
         "Expulsarena",
         "Mudar",
         "Velo Arena"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 844,
@@ -9126,7 +10252,8 @@
         "Expulsarena",
         "Mudar",
         "Velo Arena"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 845,
@@ -9135,7 +10262,8 @@
       "legendary": false,
       "abilities": [
         "Tragamisil"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 846,
@@ -9145,7 +10273,8 @@
       "abilities": [
         "Nado R\u00E1pido",
         "H\u00E9lice Caudal"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 847,
@@ -9155,7 +10284,8 @@
       "abilities": [
         "Nado R\u00E1pido",
         "H\u00E9lice Caudal"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 848,
@@ -9166,7 +10296,8 @@
         "Cobard\u00EDa",
         "Elec. Est\u00E1tica",
         "Zoquete"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 849,
@@ -9177,7 +10308,8 @@
         "Punk Rock",
         "M\u00E1s",
         "Experto"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 850,
@@ -9188,7 +10320,8 @@
         "Absorbe Fuego",
         "Humo Blanco",
         "Cuerpo Llama"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 851,
@@ -9199,7 +10332,8 @@
         "Absorbe Fuego",
         "Humo Blanco",
         "Cuerpo Llama"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 852,
@@ -9209,7 +10343,8 @@
       "abilities": [
         "Flexibilidad",
         "Experto"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 853,
@@ -9219,7 +10354,8 @@
       "abilities": [
         "Flexibilidad",
         "Experto"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 854,
@@ -9229,7 +10365,8 @@
       "abilities": [
         "Armadura Fr\u00E1gil",
         "Cuerpo Maldito"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 855,
@@ -9239,7 +10376,8 @@
       "abilities": [
         "Armadura Fr\u00E1gil",
         "Cuerpo Maldito"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 856,
@@ -9250,7 +10388,8 @@
         "Alma Cura",
         "Anticipaci\u00F3n",
         "Espejo M\u00E1gico"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 857,
@@ -9261,7 +10400,8 @@
         "Alma Cura",
         "Anticipaci\u00F3n",
         "Espejo M\u00E1gico"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 858,
@@ -9272,7 +10412,8 @@
         "Alma Cura",
         "Anticipaci\u00F3n",
         "Espejo M\u00E1gico"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 859,
@@ -9283,7 +10424,8 @@
         "Bromista",
         "Cacheo",
         "Hurto"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 860,
@@ -9294,7 +10436,8 @@
         "Bromista",
         "Cacheo",
         "Hurto"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 861,
@@ -9305,7 +10448,8 @@
         "Bromista",
         "Cacheo",
         "Hurto"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 862,
@@ -9316,7 +10460,8 @@
         "Audaz",
         "Agallas",
         "Competitivo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 863,
@@ -9327,7 +10472,8 @@
         "Armadura Batalla",
         "Garra Dura",
         "Alma Acerada"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 864,
@@ -9337,7 +10483,8 @@
       "abilities": [
         "Armadura Fr\u00E1gil",
         "Cuerpo Mortal"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 865,
@@ -9347,7 +10494,8 @@
       "abilities": [
         "Impasible",
         "Intr\u00E9pido"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 866,
@@ -9358,7 +10506,8 @@
         "Tumbos",
         "Antibarrera",
         "G\u00E9lido"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 867,
@@ -9367,7 +10516,8 @@
       "legendary": false,
       "abilities": [
         "Alma Errante"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 868,
@@ -9377,7 +10527,8 @@
       "abilities": [
         "Velo Dulce",
         "Velo Aroma"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 869,
@@ -9387,7 +10538,8 @@
       "abilities": [
         "Velo Dulce",
         "Velo Aroma"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 870,
@@ -9397,7 +10549,8 @@
       "abilities": [
         "Armadura Batalla",
         "Competitivo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 871,
@@ -9407,7 +10560,8 @@
       "abilities": [
         "Pararrayos",
         "Electrog\u00E9nesis"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 872,
@@ -9417,7 +10571,8 @@
       "abilities": [
         "Polvo Escudo",
         "Escama de Hielo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 873,
@@ -9427,7 +10582,8 @@
       "abilities": [
         "Polvo Escudo",
         "Escama de Hielo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 874,
@@ -9436,7 +10592,8 @@
       "legendary": false,
       "abilities": [
         "Fuente Energ\u00EDa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 875,
@@ -9445,7 +10602,8 @@
       "legendary": false,
       "abilities": [
         "Cara de Hielo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 876,
@@ -9456,7 +10614,8 @@
         "Foco Interno",
         "Sincron\u00EDa",
         "Psicog\u00E9nesis"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 877,
@@ -9464,8 +10623,9 @@
       "baseStatTotal": 436,
       "legendary": false,
       "abilities": [
-        "Llovizna"
-      ]
+        "Mutapetito"
+      ],
+      "forms": []
     },
     {
       "id": 878,
@@ -9475,7 +10635,8 @@
       "abilities": [
         "Potencia Bruta",
         "Metal Pesado"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 879,
@@ -9485,7 +10646,8 @@
       "abilities": [
         "Potencia Bruta",
         "Metal Pesado"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 880,
@@ -9496,7 +10658,8 @@
         "Absorbe Elec",
         "Entusiasmo",
         "\u00CDmpetu Arena"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 881,
@@ -9507,7 +10670,8 @@
         "Absorbe Elec",
         "Elec. Est\u00E1tica",
         "Quitanieves"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 882,
@@ -9518,7 +10682,8 @@
         "Absorbe Agua",
         "Mand\u00EDbula Fuerte",
         "\u00CDmpetu Arena"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 883,
@@ -9529,7 +10694,8 @@
         "Absorbe Agua",
         "G\u00E9lido",
         "Quitanieves"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 884,
@@ -9540,7 +10706,8 @@
         "Metal Liviano",
         "Metal Pesado",
         "Ac\u00E9rrimo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 885,
@@ -9551,7 +10718,8 @@
         "Cuerpo Puro",
         "Allanamiento",
         "Cuerpo Maldito"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 886,
@@ -9562,7 +10730,8 @@
         "Cuerpo Puro",
         "Allanamiento",
         "Cuerpo Maldito"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 887,
@@ -9573,7 +10742,8 @@
         "Cuerpo Puro",
         "Allanamiento",
         "Cuerpo Maldito"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 888,
@@ -9582,7 +10752,8 @@
       "legendary": true,
       "abilities": [
         "Espada Ind\u00F3mita"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 889,
@@ -9591,7 +10762,8 @@
       "legendary": true,
       "abilities": [
         "Escudo Recio"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 890,
@@ -9600,7 +10772,8 @@
       "legendary": true,
       "abilities": [
         "Presi\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 891,
@@ -9609,7 +10782,8 @@
       "legendary": true,
       "abilities": [
         "Foco Interno"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 892,
@@ -9617,8 +10791,9 @@
       "baseStatTotal": 550,
       "legendary": true,
       "abilities": [
-        "Armadura Batalla"
-      ]
+        "Pu\u00F1o Invisible"
+      ],
+      "forms": []
     },
     {
       "id": 893,
@@ -9627,7 +10802,8 @@
       "legendary": true,
       "abilities": [
         "Defensa Hoja"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 894,
@@ -9635,8 +10811,9 @@
       "baseStatTotal": 580,
       "legendary": true,
       "abilities": [
-        "Humedad"
-      ]
+        "Transistor"
+      ],
+      "forms": []
     },
     {
       "id": 895,
@@ -9644,8 +10821,9 @@
       "baseStatTotal": 580,
       "legendary": true,
       "abilities": [
-        "Flexibilidad"
-      ]
+        "Mand\u00EDbula Drag\u00F3n"
+      ],
+      "forms": []
     },
     {
       "id": 896,
@@ -9653,8 +10831,9 @@
       "baseStatTotal": 580,
       "legendary": true,
       "abilities": [
-        "Velo Arena"
-      ]
+        "Relincho Blanco"
+      ],
+      "forms": []
     },
     {
       "id": 897,
@@ -9662,8 +10841,9 @@
       "baseStatTotal": 580,
       "legendary": true,
       "abilities": [
-        "Elec. Est\u00E1tica"
-      ]
+        "Relincho Negro"
+      ],
+      "forms": []
     },
     {
       "id": 898,
@@ -9672,7 +10852,8 @@
       "legendary": true,
       "abilities": [
         "Nerviosismo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 899,
@@ -9683,7 +10864,8 @@
         "Intimidaci\u00F3n",
         "Cacheo",
         "Herb\u00EDvoro"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 900,
@@ -9693,8 +10875,9 @@
       "abilities": [
         "Enjambre",
         "Potencia Bruta",
-        "Rastro"
-      ]
+        "Cortante"
+      ],
+      "forms": []
     },
     {
       "id": 901,
@@ -9705,7 +10888,8 @@
         "Agallas",
         "Antibalas",
         "Nerviosismo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 902,
@@ -9716,7 +10900,8 @@
         "Nado R\u00E1pido",
         "Adaptable",
         "Rompemoldes"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 903,
@@ -9727,7 +10912,8 @@
         "Presi\u00F3n",
         "Liviano",
         "Toque T\u00F3xico"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 904,
@@ -9738,7 +10924,8 @@
         "Punto T\u00F3xico",
         "Nado R\u00E1pido",
         "Intimidaci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 905,
@@ -9748,7 +10935,8 @@
       "abilities": [
         "Gran Encanto",
         "Respond\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 906,
@@ -9758,7 +10946,8 @@
       "abilities": [
         "Espesura",
         "Mutatipo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 907,
@@ -9768,7 +10957,8 @@
       "abilities": [
         "Espesura",
         "Mutatipo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 908,
@@ -9778,7 +10968,8 @@
       "abilities": [
         "Espesura",
         "Mutatipo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 909,
@@ -9788,7 +10979,8 @@
       "abilities": [
         "Mar Llamas",
         "Ignorante"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 910,
@@ -9798,7 +10990,8 @@
       "abilities": [
         "Mar Llamas",
         "Ignorante"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 911,
@@ -9808,7 +11001,8 @@
       "abilities": [
         "Mar Llamas",
         "Ignorante"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 912,
@@ -9818,7 +11012,8 @@
       "abilities": [
         "Torrente",
         "Autoestima"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 913,
@@ -9828,7 +11023,8 @@
       "abilities": [
         "Torrente",
         "Autoestima"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 914,
@@ -9838,7 +11034,8 @@
       "abilities": [
         "Torrente",
         "Autoestima"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 915,
@@ -9849,7 +11046,8 @@
         "Velo Aroma",
         "Gula",
         "Sebo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 916,
@@ -9857,10 +11055,11 @@
       "baseStatTotal": 489,
       "legendary": false,
       "abilities": [
-        "Despiste",
+        "Olor Persistente",
         "Gula",
         "Sebo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 917,
@@ -9870,7 +11069,8 @@
       "abilities": [
         "Insomnio",
         "Vigilante"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 918,
@@ -9880,7 +11080,8 @@
       "abilities": [
         "Insomnio",
         "Vigilante"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 919,
@@ -9890,7 +11091,8 @@
       "abilities": [
         "Enjambre",
         "Cromolente"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 920,
@@ -9900,7 +11102,8 @@
       "abilities": [
         "Enjambre",
         "Cromolente"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 921,
@@ -9911,7 +11114,8 @@
         "Elec. Est\u00E1tica",
         "Cura Natural",
         "Pu\u00F1o F\u00E9rreo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 922,
@@ -9922,7 +11126,8 @@
         "Absorbe Elec",
         "Cura Natural",
         "Pu\u00F1o F\u00E9rreo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 923,
@@ -9933,7 +11138,8 @@
         "Absorbe Elec",
         "Cura Natural",
         "Pu\u00F1o F\u00E9rreo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 924,
@@ -9944,7 +11150,8 @@
         "Fuga",
         "Recogida",
         "Ritmo Propio"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 925,
@@ -9955,7 +11162,8 @@
         "Compiescolta",
         "Carrillo",
         "Experto"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 926,
@@ -9965,7 +11173,8 @@
       "abilities": [
         "Ritmo Propio",
         "Zoquete"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 927,
@@ -9973,9 +11182,10 @@
       "baseStatTotal": 477,
       "legendary": false,
       "abilities": [
-        "Inmunidad",
+        "Cuerpo Horneado",
         "Velo Aroma"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 928,
@@ -9985,7 +11195,8 @@
       "abilities": [
         "Madrugar",
         "Cosecha"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 929,
@@ -9995,7 +11206,8 @@
       "abilities": [
         "Madrugar",
         "Cosecha"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 930,
@@ -10003,9 +11215,10 @@
       "baseStatTotal": 510,
       "legendary": false,
       "abilities": [
-        "Aclimataci\u00F3n",
+        "Disemillar",
         "Cosecha"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 931,
@@ -10016,7 +11229,8 @@
         "Intimidaci\u00F3n",
         "Entusiasmo",
         "Agallas"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 932,
@@ -10024,10 +11238,11 @@
       "baseStatTotal": 280,
       "legendary": false,
       "abilities": [
-        "Cambio Color",
+        "Sal Purificadora",
         "Robustez",
         "Cuerpo Puro"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 933,
@@ -10035,10 +11250,11 @@
       "baseStatTotal": 355,
       "legendary": false,
       "abilities": [
-        "Cambio Color",
+        "Sal Purificadora",
         "Robustez",
         "Cuerpo Puro"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 934,
@@ -10046,10 +11262,11 @@
       "baseStatTotal": 500,
       "legendary": false,
       "abilities": [
-        "Cambio Color",
+        "Sal Purificadora",
         "Robustez",
         "Cuerpo Puro"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 935,
@@ -10059,7 +11276,8 @@
       "abilities": [
         "Absorbe Fuego",
         "Cuerpo Llama"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 936,
@@ -10069,7 +11287,8 @@
       "abilities": [
         "Absorbe Fuego",
         "Armadura Fr\u00E1gil"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 937,
@@ -10079,7 +11298,8 @@
       "abilities": [
         "Absorbe Fuego",
         "Armadura Fr\u00E1gil"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 938,
@@ -10090,7 +11310,8 @@
         "Ritmo Propio",
         "Elec. Est\u00E1tica",
         "Humedad"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 939,
@@ -10098,10 +11319,11 @@
       "baseStatTotal": 495,
       "legendary": false,
       "abilities": [
-        "Piel Tosca",
+        "Dinamo",
         "Elec. Est\u00E1tica",
         "Humedad"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 940,
@@ -10109,10 +11331,11 @@
       "baseStatTotal": 280,
       "legendary": false,
       "abilities": [
-        "Ventosas",
+        "Energ\u00EDa E\u00F3lica",
         "Absorbe Elec",
         "Tenacidad"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 941,
@@ -10120,10 +11343,11 @@
       "baseStatTotal": 490,
       "legendary": false,
       "abilities": [
-        "Ventosas",
+        "Energ\u00EDa E\u00F3lica",
         "Absorbe Elec",
         "Tenacidad"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 942,
@@ -10134,7 +11358,8 @@
         "Intimidaci\u00F3n",
         "Fuga",
         "Vigilante"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 943,
@@ -10143,9 +11368,10 @@
       "legendary": false,
       "abilities": [
         "Intimidaci\u00F3n",
-        "Polvo Escudo",
+        "Perro Guardi\u00E1n",
         "Vigilante"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 944,
@@ -10156,7 +11382,8 @@
         "Liviano",
         "Hurto",
         "Bromista"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 945,
@@ -10167,7 +11394,8 @@
         "Liviano",
         "Toque T\u00F3xico",
         "Bromista"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 946,
@@ -10175,9 +11403,10 @@
       "baseStatTotal": 275,
       "legendary": false,
       "abilities": [
-        "Absorbe Fuego",
+        "Surcavientos",
         "Allanamiento"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 947,
@@ -10185,9 +11414,10 @@
       "baseStatTotal": 480,
       "legendary": false,
       "abilities": [
-        "Absorbe Fuego",
+        "Surcavientos",
         "Allanamiento"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 948,
@@ -10195,8 +11425,9 @@
       "baseStatTotal": 335,
       "legendary": false,
       "abilities": [
-        "Im\u00E1n"
-      ]
+        "Poder F\u00FAngico"
+      ],
+      "forms": []
     },
     {
       "id": 949,
@@ -10204,8 +11435,9 @@
       "baseStatTotal": 515,
       "legendary": false,
       "abilities": [
-        "Im\u00E1n"
-      ]
+        "Poder F\u00FAngico"
+      ],
+      "forms": []
     },
     {
       "id": 950,
@@ -10213,10 +11445,11 @@
       "baseStatTotal": 450,
       "legendary": false,
       "abilities": [
-        "Insomnio",
+        "Coraza Ira",
         "Caparaz\u00F3n",
         "Regeneraci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 951,
@@ -10227,7 +11460,8 @@
         "Clorofila",
         "Insomnio",
         "Zoquete"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 952,
@@ -10238,7 +11472,8 @@
         "Clorofila",
         "Insomnio",
         "Veleta"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 953,
@@ -10248,7 +11483,8 @@
       "abilities": [
         "Ojo Compuesto",
         "Mudar"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 954,
@@ -10258,7 +11494,8 @@
       "abilities": [
         "Sincron\u00EDa",
         "Telepat\u00EDa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 955,
@@ -10269,7 +11506,8 @@
         "Anticipaci\u00F3n",
         "Cacheo",
         "Impulso"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 956,
@@ -10277,10 +11515,11 @@
       "baseStatTotal": 481,
       "legendary": false,
       "abilities": [
-        "Clorofila",
+        "Oportunista",
         "Cacheo",
         "Impulso"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 957,
@@ -10291,7 +11530,8 @@
         "Rompemoldes",
         "Ritmo Propio",
         "Hurto"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 958,
@@ -10302,7 +11542,8 @@
         "Rompemoldes",
         "Ritmo Propio",
         "Hurto"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 959,
@@ -10313,7 +11554,8 @@
         "Rompemoldes",
         "Ritmo Propio",
         "Hurto"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 960,
@@ -10324,7 +11566,8 @@
         "Baba",
         "Cobard\u00EDa",
         "Velo Arena"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 961,
@@ -10335,7 +11578,8 @@
         "Baba",
         "Cobard\u00EDa",
         "Velo Arena"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 962,
@@ -10345,8 +11589,9 @@
       "abilities": [
         "Sacapecho",
         "Vista Lince",
-        "Ritmo Propio"
-      ]
+        "Transportarrocas"
+      ],
+      "forms": []
     },
     {
       "id": 963,
@@ -10355,7 +11600,8 @@
       "legendary": false,
       "abilities": [
         "Velo Agua"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 964,
@@ -10363,8 +11609,9 @@
       "baseStatTotal": 457,
       "legendary": false,
       "abilities": [
-        "Intimidaci\u00F3n"
-      ]
+        "Cambio Heroico"
+      ],
+      "forms": []
     },
     {
       "id": 965,
@@ -10374,7 +11621,8 @@
       "abilities": [
         "Funda",
         "Inicio Lento"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 966,
@@ -10384,7 +11632,8 @@
       "abilities": [
         "Funda",
         "Filtro"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 967,
@@ -10394,7 +11643,8 @@
       "abilities": [
         "Mudar",
         "Regeneraci\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 968,
@@ -10402,9 +11652,10 @@
       "baseStatTotal": 480,
       "legendary": false,
       "abilities": [
-        "Velo Agua",
+        "Geofagia",
         "Velo Arena"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 969,
@@ -10412,9 +11663,10 @@
       "baseStatTotal": 350,
       "legendary": false,
       "abilities": [
-        "Foco Interno",
+        "Capa T\u00F3xica",
         "Corrosi\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 970,
@@ -10422,9 +11674,10 @@
       "baseStatTotal": 525,
       "legendary": false,
       "abilities": [
-        "Foco Interno",
+        "Capa T\u00F3xica",
         "Corrosi\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 971,
@@ -10434,7 +11687,8 @@
       "abilities": [
         "Recogida",
         "Peluche"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 972,
@@ -10444,7 +11698,8 @@
       "abilities": [
         "\u00CDmpetu Arena",
         "Peluche"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 973,
@@ -10454,8 +11709,9 @@
       "abilities": [
         "Intr\u00E9pido",
         "Tumbos",
-        "Punto T\u00F3xico"
-      ]
+        "Un\u00EDsono"
+      ],
+      "forms": []
     },
     {
       "id": 974,
@@ -10466,7 +11722,8 @@
         "Sebo",
         "Manto N\u00EDveo",
         "Potencia Bruta"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 975,
@@ -10477,7 +11734,8 @@
         "Sebo",
         "Quitanieves",
         "Potencia Bruta"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 976,
@@ -10486,8 +11744,9 @@
       "legendary": false,
       "abilities": [
         "Rompemoldes",
-        "Rastro"
-      ]
+        "Cortante"
+      ],
+      "forms": []
     },
     {
       "id": 977,
@@ -10498,7 +11757,8 @@
         "Ignorante",
         "Despiste",
         "Velo Agua"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 978,
@@ -10506,9 +11766,10 @@
       "baseStatTotal": 475,
       "legendary": false,
       "abilities": [
-        "Sombra Trampa",
+        "Comandar",
         "Colector"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 979,
@@ -10519,7 +11780,8 @@
         "Esp\u00EDritu Vital",
         "Foco Interno",
         "Competitivo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 980,
@@ -10530,7 +11792,8 @@
         "Punto T\u00F3xico",
         "Absorbe Agua",
         "Ignorante"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 981,
@@ -10538,10 +11801,11 @@
       "baseStatTotal": 520,
       "legendary": false,
       "abilities": [
-        "Iluminaci\u00F3n",
-        "Escudo Magma",
+        "Rumia",
+        "Cola Armadura",
         "Herb\u00EDvoro"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 982,
@@ -10552,7 +11816,8 @@
         "Dicha",
         "Fuga",
         "Cobard\u00EDa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 983,
@@ -10561,9 +11826,10 @@
       "legendary": false,
       "abilities": [
         "Competitivo",
-        "Potencia",
+        "General Supremo",
         "Presi\u00F3n"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 984,
@@ -10571,8 +11837,9 @@
       "baseStatTotal": 570,
       "legendary": false,
       "abilities": [
-        "Superguarda"
-      ]
+        "Paleos\u00EDntesis"
+      ],
+      "forms": []
     },
     {
       "id": 985,
@@ -10580,8 +11847,9 @@
       "baseStatTotal": 570,
       "legendary": false,
       "abilities": [
-        "Superguarda"
-      ]
+        "Paleos\u00EDntesis"
+      ],
+      "forms": []
     },
     {
       "id": 986,
@@ -10589,8 +11857,9 @@
       "baseStatTotal": 570,
       "legendary": false,
       "abilities": [
-        "Superguarda"
-      ]
+        "Paleos\u00EDntesis"
+      ],
+      "forms": []
     },
     {
       "id": 987,
@@ -10598,8 +11867,9 @@
       "baseStatTotal": 570,
       "legendary": false,
       "abilities": [
-        "Superguarda"
-      ]
+        "Paleos\u00EDntesis"
+      ],
+      "forms": []
     },
     {
       "id": 988,
@@ -10607,8 +11877,9 @@
       "baseStatTotal": 570,
       "legendary": false,
       "abilities": [
-        "Superguarda"
-      ]
+        "Paleos\u00EDntesis"
+      ],
+      "forms": []
     },
     {
       "id": 989,
@@ -10616,8 +11887,9 @@
       "baseStatTotal": 570,
       "legendary": false,
       "abilities": [
-        "Superguarda"
-      ]
+        "Paleos\u00EDntesis"
+      ],
+      "forms": []
     },
     {
       "id": 990,
@@ -10625,8 +11897,9 @@
       "baseStatTotal": 570,
       "legendary": false,
       "abilities": [
-        "Levitaci\u00F3n"
-      ]
+        "Carga Cuark"
+      ],
+      "forms": []
     },
     {
       "id": 991,
@@ -10634,8 +11907,9 @@
       "baseStatTotal": 570,
       "legendary": false,
       "abilities": [
-        "Levitaci\u00F3n"
-      ]
+        "Carga Cuark"
+      ],
+      "forms": []
     },
     {
       "id": 992,
@@ -10643,8 +11917,9 @@
       "baseStatTotal": 570,
       "legendary": false,
       "abilities": [
-        "Levitaci\u00F3n"
-      ]
+        "Carga Cuark"
+      ],
+      "forms": []
     },
     {
       "id": 993,
@@ -10652,8 +11927,9 @@
       "baseStatTotal": 570,
       "legendary": false,
       "abilities": [
-        "Levitaci\u00F3n"
-      ]
+        "Carga Cuark"
+      ],
+      "forms": []
     },
     {
       "id": 994,
@@ -10661,8 +11937,9 @@
       "baseStatTotal": 570,
       "legendary": false,
       "abilities": [
-        "Levitaci\u00F3n"
-      ]
+        "Carga Cuark"
+      ],
+      "forms": []
     },
     {
       "id": 995,
@@ -10670,8 +11947,9 @@
       "baseStatTotal": 570,
       "legendary": false,
       "abilities": [
-        "Levitaci\u00F3n"
-      ]
+        "Carga Cuark"
+      ],
+      "forms": []
     },
     {
       "id": 996,
@@ -10679,9 +11957,10 @@
       "baseStatTotal": 320,
       "legendary": false,
       "abilities": [
-        "Ojo Compuesto",
+        "Termoconversi\u00F3n",
         "G\u00E9lido"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 997,
@@ -10689,9 +11968,10 @@
       "baseStatTotal": 423,
       "legendary": false,
       "abilities": [
-        "Ojo Compuesto",
+        "Termoconversi\u00F3n",
         "G\u00E9lido"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 998,
@@ -10699,9 +11979,10 @@
       "baseStatTotal": 600,
       "legendary": false,
       "abilities": [
-        "Ojo Compuesto",
+        "Termoconversi\u00F3n",
         "G\u00E9lido"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 999,
@@ -10710,7 +11991,8 @@
       "legendary": false,
       "abilities": [
         "Cobard\u00EDa"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 1000,
@@ -10718,8 +12000,9 @@
       "baseStatTotal": 550,
       "legendary": false,
       "abilities": [
-        "Efecto Espora"
-      ]
+        "Cuerpo \u00C1ureo"
+      ],
+      "forms": []
     },
     {
       "id": 1001,
@@ -10727,8 +12010,9 @@
       "baseStatTotal": 570,
       "legendary": true,
       "abilities": [
-        "Cura Natural"
-      ]
+        "Tablilla Debacle"
+      ],
+      "forms": []
     },
     {
       "id": 1002,
@@ -10736,8 +12020,9 @@
       "baseStatTotal": 570,
       "legendary": true,
       "abilities": [
-        "Cuerpo Puro"
-      ]
+        "Espada Debacle"
+      ],
+      "forms": []
     },
     {
       "id": 1003,
@@ -10745,8 +12030,9 @@
       "baseStatTotal": 570,
       "legendary": true,
       "abilities": [
-        "Sincron\u00EDa"
-      ]
+        "Caldero Debacle"
+      ],
+      "forms": []
     },
     {
       "id": 1004,
@@ -10754,8 +12040,9 @@
       "baseStatTotal": 570,
       "legendary": true,
       "abilities": [
-        "Pararrayos"
-      ]
+        "Abalorio Debacle"
+      ],
+      "forms": []
     },
     {
       "id": 1005,
@@ -10763,8 +12050,9 @@
       "baseStatTotal": 590,
       "legendary": false,
       "abilities": [
-        "Superguarda"
-      ]
+        "Paleos\u00EDntesis"
+      ],
+      "forms": []
     },
     {
       "id": 1006,
@@ -10772,8 +12060,9 @@
       "baseStatTotal": 590,
       "legendary": false,
       "abilities": [
-        "Levitaci\u00F3n"
-      ]
+        "Carga Cuark"
+      ],
+      "forms": []
     },
     {
       "id": 1007,
@@ -10781,8 +12070,9 @@
       "baseStatTotal": 670,
       "legendary": true,
       "abilities": [
-        "Dicha"
-      ]
+        "Latido Oricalco"
+      ],
+      "forms": []
     },
     {
       "id": 1008,
@@ -10790,8 +12080,9 @@
       "baseStatTotal": 670,
       "legendary": true,
       "abilities": [
-        "Nado R\u00E1pido"
-      ]
+        "Motor Hadr\u00F3nico"
+      ],
+      "forms": []
     },
     {
       "id": 1009,
@@ -10799,8 +12090,9 @@
       "baseStatTotal": 590,
       "legendary": false,
       "abilities": [
-        "Superguarda"
-      ]
+        "Paleos\u00EDntesis"
+      ],
+      "forms": []
     },
     {
       "id": 1010,
@@ -10808,8 +12100,9 @@
       "baseStatTotal": 590,
       "legendary": false,
       "abilities": [
-        "Levitaci\u00F3n"
-      ]
+        "Carga Cuark"
+      ],
+      "forms": []
     },
     {
       "id": 1011,
@@ -10817,10 +12110,11 @@
       "baseStatTotal": 485,
       "legendary": false,
       "abilities": [
-        "Fuga",
+        "N\u00E9ctar Dulce",
         "Gula",
         "Viscosidad"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 1012,
@@ -10828,9 +12122,10 @@
       "baseStatTotal": 308,
       "legendary": false,
       "abilities": [
-        "Insonorizar",
+        "Hospitalidad",
         "Ign\u00EDfugo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 1013,
@@ -10838,9 +12133,10 @@
       "baseStatTotal": 508,
       "legendary": false,
       "abilities": [
-        "Insonorizar",
+        "Hospitalidad",
         "Ign\u00EDfugo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 1014,
@@ -10848,9 +12144,10 @@
       "baseStatTotal": 555,
       "legendary": true,
       "abilities": [
-        "Cuerpo Llama",
-        "Polvo Escudo"
-      ]
+        "Cadena T\u00F3xica",
+        "Perro Guardi\u00E1n"
+      ],
+      "forms": []
     },
     {
       "id": 1015,
@@ -10858,9 +12155,10 @@
       "baseStatTotal": 555,
       "legendary": true,
       "abilities": [
-        "Cuerpo Llama",
+        "Cadena T\u00F3xica",
         "Cacheo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 1016,
@@ -10868,9 +12166,10 @@
       "baseStatTotal": 555,
       "legendary": true,
       "abilities": [
-        "Cuerpo Llama",
+        "Cadena T\u00F3xica",
         "Experto"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 1017,
@@ -10879,7 +12178,8 @@
       "legendary": true,
       "abilities": [
         "Competitivo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 1018,
@@ -10890,7 +12190,8 @@
         "Firmeza",
         "Robustez",
         "Ac\u00E9rrimo"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 1019,
@@ -10898,10 +12199,11 @@
       "baseStatTotal": 540,
       "legendary": false,
       "abilities": [
-        "Fuga",
+        "N\u00E9ctar Dulce",
         "Regeneraci\u00F3n",
         "Viscosidad"
-      ]
+      ],
+      "forms": []
     },
     {
       "id": 1020,
@@ -10909,8 +12211,9 @@
       "baseStatTotal": 590,
       "legendary": false,
       "abilities": [
-        "Superguarda"
-      ]
+        "Paleos\u00EDntesis"
+      ],
+      "forms": []
     },
     {
       "id": 1021,
@@ -10918,8 +12221,9 @@
       "baseStatTotal": 590,
       "legendary": false,
       "abilities": [
-        "Superguarda"
-      ]
+        "Paleos\u00EDntesis"
+      ],
+      "forms": []
     },
     {
       "id": 1022,
@@ -10927,8 +12231,9 @@
       "baseStatTotal": 590,
       "legendary": false,
       "abilities": [
-        "Levitaci\u00F3n"
-      ]
+        "Carga Cuark"
+      ],
+      "forms": []
     },
     {
       "id": 1023,
@@ -10936,8 +12241,9 @@
       "baseStatTotal": 590,
       "legendary": false,
       "abilities": [
-        "Levitaci\u00F3n"
-      ]
+        "Carga Cuark"
+      ],
+      "forms": []
     },
     {
       "id": 1024,
@@ -10945,8 +12251,9 @@
       "baseStatTotal": 450,
       "legendary": true,
       "abilities": [
-        "Vista Lince"
-      ]
+        "Teracambio"
+      ],
+      "forms": []
     },
     {
       "id": 1025,
@@ -10954,8 +12261,9 @@
       "baseStatTotal": 600,
       "legendary": true,
       "abilities": [
-        "Ausente"
-      ]
+        "T\u00EDtere T\u00F3xico"
+      ],
+      "forms": []
     }
   ],
   "lines": [

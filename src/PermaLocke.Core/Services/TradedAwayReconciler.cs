@@ -86,8 +86,8 @@ public sealed class TradedAwayReconciler(
 
             if (candidates.Count != count)
             {
-                disputed.Add($"Especie {species}: el historial dice {count} entregado(s) y sin PID "
-                             + $"hay {candidates.Count}. No se toca ninguno.");
+                disputed.Add($"{candidates.FirstOrDefault()?.SpeciesName ?? $"Especie {species}"}: "
+                             + "no se puede saber cuál fue, así que no se toca.");
                 continue;
             }
 
@@ -103,9 +103,8 @@ public sealed class TradedAwayReconciler(
             return new TradedAwayReport(handedOver.Values.Sum(),
                 gone.Values.Sum(l => l.Count), found, disputed, false,
                 found.Count == 0
-                    ? "No hay ninguno que cerrar: la run ya cuadra con el historial."
-                    : $"{found.Count} se pueden cerrar como entregados"
-                      + (disputed.Count > 0 ? $"; {disputed.Count} en disputa, que no se tocan." : "."));
+                    ? "No hay nada que arreglar."
+                    : $"Hay {found.Count} Pokémon intercambiados por quitar.");
         }
 
         foreach (var entry in matched)
@@ -140,8 +139,7 @@ public sealed class TradedAwayReconciler(
         return new TradedAwayReport(handedOver.Values.Sum(), gone.Values.Sum(l => l.Count),
             found, disputed, stillOpen == 0,
             stillOpen == 0
-                ? $"Cerrados {found.Count}. En pie quedan "
-                  + $"{after.Count(p => p.Status == PokemonStatus.Alive)} de {after.Count}."
-                : $"OJO: {stillOpen} no se han guardado. Nada se da por hecho sin releerlo.");
+                ? $"{found.Count} Pokémon quitados de tus vivos."
+                : $"No se han podido guardar {stillOpen}. Vuelve a intentarlo.");
     }
 }

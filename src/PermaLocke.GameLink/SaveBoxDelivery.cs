@@ -7,7 +7,7 @@ using PermaLocke.GameLink.Data;
 namespace PermaLocke.GameLink;
 
 /// <summary>
-/// Delivers a Pokémon by writing it into a box of the player's save file.
+/// Delivers a Pokémon by writing it into the player's save file: into the party when it has room, into a box otherwise.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -23,7 +23,7 @@ namespace PermaLocke.GameLink;
 /// </para>
 /// <para>
 /// Every write backs the whole save up first, with a timestamp, and reads the file back
-/// afterwards to confirm the Pokémon is really in the box. Nothing is reported as delivered
+/// afterwards to confirm the Pokémon is really in the party or the box. Nothing is reported as delivered
 /// that has not been verified on disk.
 /// </para>
 /// </remarks>
@@ -43,15 +43,13 @@ public sealed class SaveBoxDelivery(
     {
         if (IsGameLoaded())
         {
-            reason = "El juego está abierto en el emulador. Guarda la partida y cierra Azahar: "
-                     + "mientras esté cargado, el emulador reescribiría el save y el Pokémon se perdería.";
+            reason = "El juego está abierto. Guarda y cierra Azahar.";
             return false;
         }
 
         if (FindSave() is null)
         {
-            reason = "No se encuentra la partida de Ultra Luna. ¿Has jugado y guardado alguna vez "
-                     + "con este emulador?";
+            reason = "No se encuentra tu partida de Ultra Luna.";
             return false;
         }
 
@@ -86,7 +84,17 @@ public sealed class SaveBoxDelivery(
             if (!SaveUtil.TryGetSaveFile(path, out var loaded) || loaded is not SAV7USUM save)
             {
                 return new DeliveryResult(DeliveryOutcome.SaveUnreadable,
-                    $"El fichero de partida no se ha podido leer como Ultra Luna: {path}");
+                    "No se ha podido leer tu partida.");
+            }
+
+            var pokemon = PokemonBuilder.Build(
+                new NewPokemon(pull.Species, pull.Level, pull.Nature, pull.AbilityId, pull.Ivs, pull.IsShiny, pull.Form),
+                save);
+
+            // Con hueco libre en el equipo, al equipo (pedido por el jugador el 2026-09-21); si no, al PC.
+            if (save.PartyCount < PartySlots && ReadyForParty(pokemon))
+            {
+                return DeliverToParty(path, save, pokemon, pull);
             }
 
             var (box, slot) = FindFreeSlot(save);
@@ -99,9 +107,6 @@ public sealed class SaveBoxDelivery(
 
             Backup(path);
 
-            var pokemon = PokemonBuilder.Build(
-                new NewPokemon(pull.Species, pull.Level, pull.Nature, pull.AbilityId, pull.Ivs, pull.IsShiny),
-                save);
             save.SetBoxSlotAtIndex(pokemon, box, slot, PokemonBuilder.Handover);
             File.WriteAllBytes(path, save.Write().ToArray());
 
@@ -109,15 +114,14 @@ public sealed class SaveBoxDelivery(
             if (!Verify(path, box, slot, pull))
             {
                 return new DeliveryResult(DeliveryOutcome.Failed,
-                    "Se escribió la partida pero al releerla el Pokémon no estaba. "
-                    + "La copia de seguridad está en Saves/backup.");
+                    "No se ha podido guardar el cambio. Vuelve a intentarlo.");
             }
 
             logger.LogInformation("{Species} entregado en la caja {Box}, hueco {Slot} de {Path}",
                 pull.SpeciesName, box + 1, slot + 1, path);
 
             return new DeliveryResult(DeliveryOutcome.Delivered,
-                $"{pull.SpeciesName} está en la caja {box + 1}, hueco {slot + 1}.", box + 1, slot + 1,
+                $"{pull.DisplayName} está en la caja {box + 1}, hueco {slot + 1}.", box + 1, slot + 1,
                 pokemon.PID);
         }
         catch (Exception ex)
@@ -125,8 +129,72 @@ public sealed class SaveBoxDelivery(
             logger.LogError(ex, "Falló la entrega de {Species} en la partida", pull.SpeciesName);
 
             return new DeliveryResult(DeliveryOutcome.Failed,
-                "No se pudo escribir en la partida. El detalle está en la carpeta Logs.");
+                "No se pudo escribir en la partida.");
         }
+    }
+
+    /// <summary>Most Pokémon a party holds.</summary>
+    private const int PartySlots = 6;
+
+    /// <summary>
+    /// Gives a freshly built Pokémon what a party member carries and a boxed one does not: its level and stats.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A Pokémon in a box stores no battle stats, so <see cref="PokemonBuilder"/> can leave PKHeX's guess in them; one in
+    /// the party shows them straight away, and PKHeX works them out from <b>its</b> table, which is wrong for every
+    /// species the expansion added and, with <c>shuffleBaseStats</c>, for all of them (§51). So they are worked out
+    /// again with <see cref="StatCalculator.Restat"/>, the code ENTRENAR EV and the level cap write with, from the
+    /// installed world's base stats, and it arrives at full health.
+    /// </para>
+    /// <para>
+    /// With no world table there is no honest number, and it goes to the PC as it always did rather than into the party
+    /// with made-up stats.
+    /// </para>
+    /// </remarks>
+    private bool ReadyForParty(PK7 pokemon)
+    {
+        pokemon.Stat_Level = (byte)GameLevels.Of(pokemon);
+
+        if (!StatCalculator.Restat(pokemon))
+        {
+            logger.LogInformation("Sin estadísticas base del mundo instalado para {Species}: va al PC", pokemon.Species);
+            return false;
+        }
+
+        pokemon.Stat_HPCurrent = pokemon.Stat_HPMax;
+        pokemon.Status_Condition = 0;
+        pokemon.RefreshChecksum();
+        return true;
+    }
+
+    /// <summary>Writes the Pokémon into the first free party slot, and reads the file back to prove it.</summary>
+    private DeliveryResult DeliverToParty(string path, SAV7USUM save, PK7 pokemon, GachaPull pull)
+    {
+        var index = save.PartyCount;
+
+        Backup(path);
+
+        save.SetPartySlotAtIndex(pokemon, index, PokemonBuilder.Handover);
+        File.WriteAllBytes(path, save.Write().ToArray());
+
+        // Se relee del disco, igual que en el PC: especie, forma, nivel y PID en ese hueco, y listo para combatir.
+        if (!SaveUtil.TryGetSaveFile(path, out var loaded) || loaded is not SAV7USUM reread
+            || reread.PartyCount <= index
+            || reread.GetPartySlotAtIndex(index) is not PK7 found
+            || found.Species != pull.Species || found.Form != pull.Form || GameLevels.Of(found) != pull.Level
+            || found.PID != pokemon.PID || found.Stat_HPMax <= 0 || found.Stat_HPCurrent != found.Stat_HPMax)
+        {
+            return new DeliveryResult(DeliveryOutcome.Failed,
+                "No se ha podido guardar el cambio. Vuelve a intentarlo.");
+        }
+
+        logger.LogInformation("{Species} entregado en el equipo, hueco {Slot}, de {Path}",
+            pull.SpeciesName, index + 1, path);
+
+        // Caja 0 es «el equipo»: las cajas se cuentan desde el 1.
+        return new DeliveryResult(DeliveryOutcome.Delivered,
+            $"{pull.DisplayName} se ha unido a tu equipo.", 0, index + 1, pokemon.PID);
     }
 
     private static (int Box, int Slot) FindFreeSlot(SAV7USUM save)
@@ -153,7 +221,7 @@ public sealed class SaveBoxDelivery(
         }
 
         var written = save.GetBoxSlotAtIndex(box, slot);
-        return written is { } found && found.Species == pull.Species && found.CurrentLevel == pull.Level;
+        return written is { } found && found.Species == pull.Species && found.Form == pull.Form && GameLevels.Of(found) == pull.Level;
     }
 
     /// <summary>

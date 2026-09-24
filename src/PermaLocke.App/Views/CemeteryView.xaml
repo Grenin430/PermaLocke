@@ -1,0 +1,201 @@
+<UserControl x:Class="PermaLocke.App.Views.CemeteryView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:PermaLocke.App.Views"
+             xmlns:pixel="clr-namespace:PermaLocke.App.Views.Pixel">
+
+    <!-- EL CEMENTERIO EN PÍXELES (§176). La escena ya lo era; ahora también su marco, la lápida del elegido y la sala
+         de la killcam. Mismos datos y órdenes que antes. -->
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="Visible" />
+
+        <Style TargetType="ScrollBar" BasedOn="{StaticResource PxScrollBar}" />
+
+        <Style x:Key="FactLabel" TargetType="pixel:PixelText">
+            <Setter Property="Scale" Value="2" />
+            <Setter Property="Tight" Value="True" />
+            <Setter Property="Colour" Value="{StaticResource PxTextFaint}" />
+            <Setter Property="Margin" Value="0,14,0,5" />
+        </Style>
+
+        <Style x:Key="FactText" TargetType="pixel:PixelText">
+            <Setter Property="Scale" Value="2" />
+            <Setter Property="Wrap" Value="True" />
+            <Setter Property="Colour" Value="{StaticResource PxText}" />
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="12" />
+            <ColumnDefinition Width="400" />
+        </Grid.ColumnDefinitions>
+
+        <!-- LA ESCENA, en un marco de tinta. Negro detrás, del mismo tono que lo alto del cielo. -->
+        <Grid Grid.Column="0">
+            <views:PixelPanel Fill="#FF06050A" />
+            <Grid Margin="3,3,9,9" ClipToBounds="True">
+                <views:CemeteryCanvas Graves="{Binding PageGraves}" PickCommand="{Binding PickCommand}" />
+
+                <!-- Vacío: se dice, no se dibuja un cementerio de mentira. -->
+                <pixel:PixelText Text="Aún no ha caído nadie en esta run." Scale="2" Tight="True"
+                                 Colour="{StaticResource PxTextDim}"
+                                 Visibility="{Binding IsEmpty, Converter={StaticResource Visible}}"
+                                 HorizontalAlignment="Center" VerticalAlignment="Center" />
+
+                <Grid HorizontalAlignment="Left" VerticalAlignment="Top" Margin="12,10" IsHitTestVisible="False">
+                    <views:PixelPanel Fill="#E0120E20" HasShadow="False" />
+                    <StackPanel Orientation="Horizontal" Margin="9,6,11,7">
+                        <pixel:PixelIcon Icon="IconGrave" Scale="2" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <pixel:PixelText Text="{Binding CountText}" Scale="2" Tight="True" VerticalAlignment="Center"
+                                         Colour="{StaticResource PxText}" />
+                    </StackPanel>
+                </Grid>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="10"
+                            Visibility="{Binding HasPages, Converter={StaticResource Visible}}">
+                    <Button Content="◀" Command="{Binding PreviousPageCommand}" Style="{StaticResource PxSubtleButton}"
+                            Padding="12,6,18,11" />
+                    <Grid Margin="6,0" VerticalAlignment="Top">
+                        <views:PixelPanel Fill="#E0120E20" HasShadow="False" />
+                        <pixel:PixelText Text="{Binding PageText}" Scale="2" Tight="True" Margin="9,9,10,9"
+                                         Colour="{StaticResource PxText}" />
+                    </Grid>
+                    <Button Content="▶" Command="{Binding NextPageCommand}" Style="{StaticResource PxSubtleButton}"
+                            Padding="12,6,18,11" />
+                </StackPanel>
+            </Grid>
+        </Grid>
+
+        <!-- LA LÁPIDA del elegido: quién era, cuánto aguantó y qué costó, su killcam y su historia. -->
+        <pixel:PixelWindow Grid.Column="2" Title="EN MEMORIA DE" Icon="IconGrave"
+                           Visibility="{Binding HasSelection, Converter={StaticResource Visible}}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel DataContext="{Binding Selected}" Margin="0,0,8,0">
+
+                    <!-- Quién era: su sprite a color, que en la escena solo tiene el elegido. -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Grid Width="104" Height="84">
+                            <views:PixelPanel Fill="#FF06050A" IsSunken="True" HasShadow="False" />
+                            <pixel:PixelSprite Source="{Binding Sprite}" Scale="2" TrimEmpty="True"
+                                               Outline="{StaticResource PxShadow}" Bob="True"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
+                            <pixel:PixelText Text="{Binding Name}" Scale="3" Tight="True" Trim="True"
+                                             Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
+                            <pixel:PixelText Text="{Binding SpeciesLine}" Scale="2" Tight="True" Trim="True" Margin="0,5,0,0"
+                                             Colour="{StaticResource PxTextDim}" />
+                            <Grid HorizontalAlignment="Left" Margin="0,7,0,0"
+                                  Visibility="{Binding IsShiny, Converter={StaticResource Visible}}">
+                                <views:PixelPanel Fill="{StaticResource PxWarnDeep}" HasShadow="False" />
+                                <StackPanel Orientation="Horizontal" Margin="8,5,10,6">
+                                    <pixel:PixelIcon Icon="IconStar" Scale="1" VerticalAlignment="Center" Margin="0,0,6,0" />
+                                    <pixel:PixelText Text="VARIOCOLOR" Scale="2" Tight="True" Colour="{StaticResource PxWarn}" />
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Las dos cifras de su historia. -->
+                    <Grid Margin="0,16,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Grid>
+                            <views:PixelPanel Fill="{StaticResource PxWell}" IsSunken="True" HasShadow="False" />
+                            <StackPanel Margin="14,10,14,12">
+                                <pixel:PixelText Text="AGUANTÓ" Scale="2" Tight="True" Colour="{StaticResource PxTextFaint}" />
+                                <pixel:PixelText Text="{Binding LastedShort}" Scale="3" Tight="True" Margin="0,6,0,0"
+                                                 Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <Grid Grid.Column="2">
+                            <views:PixelPanel Fill="{StaticResource PxWell}" IsSunken="True" HasShadow="False" />
+                            <StackPanel Margin="14,10,14,12">
+                                <pixel:PixelText Text="COSTÓ" Scale="2" Tight="True" Colour="{StaticResource PxTextFaint}" />
+                                <pixel:PixelText Text="{Binding PenaltyShort}" Scale="3" Tight="True" Margin="0,6,0,0"
+                                                 Colour="{StaticResource PxBad}" Shadow="{StaticResource PxShadow}" />
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+
+                    <pixel:PixelText Text="KILLCAM" Style="{StaticResource FactLabel}" Margin="0,18,0,8" />
+                    <views:KillcamPlayer Source="{Binding KillcamPath}"
+                                         ExpandCommand="{Binding DataContext.OpenTheaterCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                         Suspended="{Binding DataContext.IsTheaterOpen, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                         Visibility="{Binding HasKillcam, Converter={StaticResource Visible}}" />
+                    <Grid>
+                        <Grid.Style>
+                            <Style TargetType="Grid">
+                                <Setter Property="Visibility" Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasKillcam}" Value="True">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Grid.Style>
+                        <views:PixelPanel Fill="{StaticResource PxWell}" IsSunken="True" HasShadow="False" />
+                        <pixel:PixelText Text="{Binding NoKillcamText}" Scale="2" Wrap="True" TextAlignment="Center"
+                                         Colour="{StaticResource PxTextDim}" Margin="14,22" />
+                    </Grid>
+
+                </StackPanel>
+            </ScrollViewer>
+        </pixel:PixelWindow>
+
+        <!-- LA SALA: la killcam en grande, encima de todo. Esc, CERRAR o un clic fuera del vídeo la cierran. -->
+        <Grid x:Name="Theater" Grid.ColumnSpan="3"
+              Visibility="{Binding IsTheaterOpen, Converter={StaticResource Visible}}">
+            <Grid.InputBindings>
+                <KeyBinding Key="Escape" Command="{Binding CloseTheaterCommand}" />
+            </Grid.InputBindings>
+
+            <Border Background="#F2050409">
+                <Border.InputBindings>
+                    <MouseBinding Gesture="LeftClick" Command="{Binding CloseTheaterCommand}" />
+                </Border.InputBindings>
+            </Border>
+
+            <DockPanel Margin="32,22,32,24">
+                <DockPanel DockPanel.Dock="Top" Margin="0,0,0,16" DataContext="{Binding Selected}">
+                    <Button DockPanel.Dock="Right" Content="CERRAR" VerticalAlignment="Top"
+                            Style="{StaticResource PxSubtleButton}"
+                            Command="{Binding DataContext.CloseTheaterCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+
+                    <pixel:PixelSprite DockPanel.Dock="Left" Source="{Binding Sprite}" Scale="2" TrimEmpty="True"
+                                       Outline="{StaticResource PxShadow}" VerticalAlignment="Center" Margin="0,0,16,0" />
+
+                    <StackPanel VerticalAlignment="Center">
+                        <pixel:PixelText Text="KILLCAM" Scale="2" Tight="True" Colour="{StaticResource PxBad}" />
+                        <pixel:PixelText Text="{Binding Name}" Scale="4" Tight="True" Margin="0,6,0,0"
+                                         Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
+                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                            <pixel:PixelText Text="{Binding FellToText}" Scale="2" Tight="True" Colour="{StaticResource PxTextDim}" />
+                            <pixel:PixelText Text="·" Scale="2" Tight="True" Margin="6,0" Colour="{StaticResource PxTextDim}" />
+                            <pixel:PixelText Text="{Binding DiedText}" Scale="2" Tight="True" Colour="{StaticResource PxTextDim}" />
+                        </StackPanel>
+                    </StackPanel>
+                </DockPanel>
+
+                <pixel:PixelText DockPanel.Dock="Bottom" Margin="0,12,0,0" HorizontalAlignment="Center" Scale="2" Tight="True"
+                                 Colour="{StaticResource PxTextFaint}"
+                                 Text="Espacio: pausa · ← →: fotograma a fotograma · Esc: cerrar" />
+
+                <views:KillcamPlayer x:Name="TheaterPlayer" Source="{Binding TheaterKillcamPath}" />
+            </DockPanel>
+        </Grid>
+    </Grid>
+</UserControl>

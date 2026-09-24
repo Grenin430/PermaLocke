@@ -83,7 +83,7 @@
       "name": "POCHO",
       "description": "Barato y sin sorpresas. Sobre todo Tier 2.",
       "_costeReal": 75,
-      "cost": 0,
+      "cost": 75,
       "chances": { "tier1": 0.15, "tier2": 0.60, "tier3": 0.25 }
     },
     {
@@ -91,7 +91,7 @@
       "name": "DECENTE",
       "description": "El término medio. Sobre todo Tier 3.",
       "_costeReal": 200,
-      "cost": 0,
+      "cost": 200,
       "chances": { "tier2": 0.15, "tier3": 0.60, "tier4": 0.25 }
     },
     {
@@ -99,7 +99,7 @@
       "name": "BUENO",
       "description": "Caro, y el único que puede dar legendarios.",
       "_costeReal": 300,
-      "cost": 0,
+      "cost": 300,
       "chances": { "tier3": 0.15, "tier4": 0.60, "tier5": 0.25 }
     }
   ]

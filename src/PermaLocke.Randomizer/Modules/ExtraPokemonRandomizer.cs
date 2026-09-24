@@ -39,6 +39,25 @@ public sealed class ExtraPokemonRandomizer(RomWorkspace workspace, RandomizerOpt
     /// <summary>Most Pokémon a trainer can carry.</summary>
     public const int MaxParty = 6;
 
+    /// <summary>
+    /// How many Pokémon the role actually adds to a team of this size.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// What the role asks for, capped by what fits: six is the engine's limit — the team count is a byte the game
+    /// reads as the size, and a seventh member does not exist in battle (§47) — so a boss that already brings five
+    /// can only take one, and one that brings six takes none.
+    /// </para>
+    /// <para>
+    /// Pulled out as its own function because it is what «vanilla + 1, and + 2 for EXPERTO» actually means, and
+    /// because the answer is not the same for every battle. Measured on the installed world of 2026-09-21, rol
+    /// EXPERTO, over its 137 important battles: 38 went 1→3, 7 went 2→4, 24 went 3→5, 11 went 4→6, <b>42 went
+    /// 5→6</b> and <b>15 stayed at 6</b>. The last two groups are this cap and not a module that fell short.
+    /// </para>
+    /// </remarks>
+    public static int ExtraFor(int teamSize, int wanted) =>
+        teamSize >= MaxParty ? 0 : Math.Min(wanted, MaxParty - teamSize);
+
     /// <summary>Where the party size lives inside a 0x14 byte trainer entry.</summary>
     public const int CountOffset = 0x03;
 
@@ -52,6 +71,9 @@ public sealed class ExtraPokemonRandomizer(RomWorkspace workspace, RandomizerOpt
         {
             return new ExtraPokemonResult(0, 0, 0);
         }
+
+        // La forma regional, de su propia fuente: la especie sale igual que antes (§138).
+        var forms = random.Derive("forms");
 
         var dataPath = mod.Stage(GameFiles.TrainerData);
         var partyPath = mod.Stage(GameFiles.TrainerPokemon);
@@ -113,8 +135,7 @@ public sealed class ExtraPokemonRandomizer(RomWorkspace workspace, RandomizerOpt
                     continue;
                 }
 
-                var room = MaxParty - count;
-                var extra = Math.Min(options.ExtraTrainerPokemon, room);
+                var extra = ExtraFor(count, options.ExtraTrainerPokemon);
                 var party = parties[trainer];
 
                 // La cuenta que manda es la de la tabla de entrenadores. Si el equipo no mide lo
@@ -159,7 +180,7 @@ public sealed class ExtraPokemonRandomizer(RomWorkspace workspace, RandomizerOpt
                             }
                         }
 
-                        TrainerPokemonTable.SetSpecies(grown, slot, species);
+                        TrainerPokemonTable.SetSpecies(grown, slot, species, here.Forms.Pick(forms, species));
                     }
 
                     // Los movimientos del copiado no son de esta especie, y el nivel se hereda a

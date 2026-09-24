@@ -1,5 +1,5 @@
 {
-  "_firstEncounter": "APAGADA a peticion del jugador el 2026-09-02. El mapa dejo de ser un arbitro y paso a ser un tablero: se marca a mano lo que paso en cada zona -atrapado, muerto, huida- y eso no alimenta ninguna regla. Con nada que gaste zonas, esta regla no tendria con que comparar, y dejarla encendida y muda es exactamente el fallo del §81. Ponla en true si vuelve a haber una fuente de zonas gastadas.",
+  "_firstEncounter": "Esta es la regla VIEJA, la que juzgaba una captura al registrarla; sigue apagada. La regla de primer encuentro que funciona es ballControl, mas abajo (§117). Y el MAPA ya no se marca a mano: lo marca PermaLocke leyendo la zona del juego y como acaba el primer combate salvaje de cada ruta, con ballControl encendida o apagada (§118).",
   "version": 1,
   "comment": "Configuración de reglas y economía de puntos. Ningún valor de esta lista vive en el código.",
 
@@ -23,7 +23,7 @@
   "rules": {
     "firstEncounter": { "enabled": false, "mode": "Block" },
     "shinyClause":    { "enabled": true, "mode": "WarnOnly", "consumesEncounter": false },
-    "dupesClause":    { "enabled": true, "mode": "WarnOnly", "ignoreEvolutionaryLine": true },
+    "dupesClause":    { "enabled": true, "mode": "WarnOnly", "ignoreEvolutionaryLine": false },
     "speciesClause":  { "enabled": false, "mode": "Disabled" },
     "giftPokemon":    { "enabled": true, "mode": "WarnOnly", "consumesEncounter": false },
     "staticPokemon":  { "enabled": true, "mode": "WarnOnly", "consumesEncounter": false },
@@ -33,10 +33,27 @@
   "encounterTypesThatConsumeZone": [ "Wild", "Fishing", "Sos" ],
 
   "ballControl": {
-    "comment": "Retira las Poké Balls mientras la zona ya haya gastado su encuentro, y las devuelve al salir. Los ids salen de la lista de objetos del cartucho: nombre acabado en 'Ball' en inglés y en español, que es lo que deja fuera la Bola de Humo, la Luminosa y la Férrea, que son objetos equipables.",
-    "apagadaPorque": "2026-08-22: el campo de zona del §23 ya no dice dónde está el jugador. Medido estando en la Ruta 2, las dos copias buenas leen 32, que no es la Ruta 2 ni como área de encdata (32 = Pueblo Lilii) ni como id de mapa (32 = Ruinas de la Guerra). Retirar Poké Balls con una zona equivocada es peor que no retirarlas, así que la regla queda apagada hasta recalibrar el ancla con Probe --zona --vigilar.",
-    "enabled": false,
-    "itemIds": [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 492, 493, 494, 495, 496, 497, 498, 499, 576, 851 ]
+    "comment": "Regla de primer encuentro (§117). En las rutas del MAPA: el primer combate salvaje gasta la ruta pase lo que pase; en una ruta gastada no hay Poké Balls; un duplicado (ya tienes su línea evolutiva, por la Pokédex o por la run) no se puede atrapar y no gasta la ruta; un variocolor se puede atrapar siempre. Los ids salen de la lista de objetos del cartucho: nombre acabado en 'Ball' en inglés y en español, que es lo que deja fuera la Bola de Humo, la Luminosa y la Férrea, que son objetos equipables.",
+    "encendidaDeNuevo": "2026-09-14: la zona se lee ahora de los registros de posición del juego (mundo y mapa, validados contra Data/mapas.json y con dos copias de acuerdo), medidos en doce sitios y tras reiniciar el emulador. El ancla del §23 que la apagó en 2026-08-22 está retirada.",
+    "enabled": true,
+    "itemIds": [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 492, 493, 494, 495, 496, 497, 498, 499, 576, 851 ],
+
+    "_fueraDelMapa": "2026-09-14 (§119): donde NO hay marcador en el MAPA no hay Poké Balls nunca, ni andando ni en combate. Las zonas que no se pusieron se dejaron fuera a proposito -el Tunel del Volcan, los pueblos-. Excepciones: un variocolor, y las capturas de allowedStatics.",
+    "_allowedStatics": "Capturas estaticas permitidas: se pueden atrapar SIEMPRE, dentro o fuera del mapa, gastada la ruta o no, y no gastan nada. Se describen por lo que el CARTUCHO tiene -especie, forma y nivel-, porque el randomizador cambia la especie y la lista tiene que valer para todos los mundos; al arrancar se lee del mod instalado en que se convirtio esa fila. Especie, forma, nivel y zona salen de la tabla de encuentros legales de PKHeX para Ultra Luna, no de memoria. El Necrozma del Lanakila es el de NIVEL 65: la tabla tiene otro de forma 0 a nivel 75 que PKHeX no reconoce como encuentro de Ultra Luna. Los jefes -Necrozma fusionado y Ultra Necrozma, megas al azar- no estan y no se pueden atrapar.",
+    "allowedStatics": [
+      { "note": "Necrozma del Monte Lanakila", "zone": "monte-lanakila", "species": 800, "form": 0, "level": 65 },
+      { "note": "Tapu Koko", "zone": "ruinas-de-la-guerra", "species": 785, "form": 0, "level": 60 },
+      { "note": "Tapu Lele", "zone": "ruinas-de-la-vida", "species": 786, "form": 0, "level": 60 },
+      { "note": "Tapu Bulu", "zone": "ruinas-de-la-cosecha", "species": 787, "form": 0, "level": 60 },
+      { "note": "Tapu Fini", "zone": "ruinas-del-transito", "species": 788, "form": 0, "level": 60 }
+    ],
+
+    "_trialZones": "2026-09-21 (§160): CAMBIADO el 2026-09-24 (§179): hasta tener el cristal Z de su prueba, en estas zonas NO HAY POKE BALLS (salvo un variocolor) y un combate no gasta la ruta; con el cristal ya se captura normal. Pedido por el jugador para la Colina Saltagua (prueba 3, la zona entera; su Sala del Dominante sale del MAPA) y la Jungla Umbria (prueba 5). Lo que sigue es la nota original: zonas donde, HASTA SUPERAR SU PRUEBA, los combates salvajes son de la prueba y el juego no deja lanzar Poke Balls, asi que no son el encuentro de nadie. Hasta que el cristal Z de ese logro este en la mochila, un combate salvaje ahi no gasta la ruta ni marca el MAPA, SALVO QUE ACABE EN CAPTURA: una captura cuenta siempre, para que la prueba no sirva de captura de regalo. Lo encontro el jugador en la Cueva Sotobosque: los tres salvajes de las madrigueras gastaban la ruta antes de poder atrapar nada. Solo estan las salas que existen para la prueba, donde no hay nada que atrapar antes de superarla. La sala del Dominante de la Cueva Sotobosque ya no hace falta aqui: el jugador la saco del MAPA el mismo dia (esta en sinEncuentros de marcadores.json) porque ahi no se atrapa nada nunca, y una zona que no es ruta no se gasta. NO estan los Dominantes que se pelean dentro de una ruta normal -Jungla Umbria, Super Ultraganga abandonado, Canon de Poni-: ahi esta regla dejaria descartar encuentros antes de la prueba, y ademas no esta medido si un combate contra un Dominante sube el contador de combates salvajes (§119). El de la Cueva Sotobosque lo va a medir.",
+    "trialZones": [
+      { "note": "prueba de Liam, las madrigueras", "zone": "cueva-sotobosque-sala-de-la-prueba", "achievement": "prueba-01" },
+      { "note": "prueba de Nereida", "zone": "colina-saltagua", "achievement": "prueba-03" },
+      { "note": "prueba de Lulú", "zone": "jungla-umbria", "achievement": "prueba-05" }
+    ]
   },
 
   "death": {

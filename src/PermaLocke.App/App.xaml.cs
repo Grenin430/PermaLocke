@@ -20,9 +20,44 @@ public partial class App : Application
 {
     private ServiceProvider? _services;
 
+    /// <summary>Held for the life of the process: while it exists, another PermaLocke does not start.</summary>
+    private static Mutex? _onlyOne;
+
+    /// <summary>
+    /// One PermaLocke at a time, from any folder: there is one emulator to talk to, and two of them share it badly.
+    /// </summary>
+    /// <remarks>
+    /// Found on 2026-09-21 in the test folder's log, where every line from 20:41:33 came out twice: the player had
+    /// opened PermaLocke again with the first one still running. Both watched the same game and both wrote into it —
+    /// balls taken and given back twice over, the same battle placed in Ruta 2 by one and in Playa Big Wave by the
+    /// other, two searches of memory for every one — and the emulator went down three minutes later in the middle of
+    /// one of them. <c>--sin-juego</c> is exempt: it is the read-only copy made precisely to look at screens while the
+    /// real one runs, and it opens no link to the game.
+    /// </remarks>
+    private static bool AnotherIsRunning(StartupEventArgs e)
+    {
+        if (e.Args.Contains("--sin-juego", StringComparer.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        _onlyOne = new Mutex(initiallyOwned: true, @"Local\PermaLocke.App", out var createdNew);
+        return !createdNew;
+    }
+
     protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        // Lo primero de todo, antes de copiar la base de datos o de tocar nada.
+        if (AnotherIsRunning(e))
+        {
+            MessageBox.Show(
+                "PermaLocke ya está abierto. Usa esa ventana: dos a la vez vigilan y escriben en el mismo juego y se pisan.",
+                "PermaLocke", MessageBoxButton.OK, MessageBoxImage.Information);
+            Shutdown();
+            return;
+        }
 
         var paths = new AppPaths();
         paths.EnsureCreated();
@@ -34,7 +69,12 @@ public partial class App : Application
         //
         // No se espera a que falle nada ni se comprueba el resultado: Run() no lanza nunca, y un
         // arranque no se detiene porque una copia no haya salido. Lo que pasó queda en el log.
-        new RunBackup(paths.Saves).Run(DateTimeOffset.Now);
+        // Menos con --sin-juego: esa copia se abre justo cuando la aplicación de verdad está en marcha y
+        // tiene la base de datos abierta, que es el caso que la frase de arriba prohíbe.
+        if (!e.Args.Contains("--sin-juego", StringComparer.OrdinalIgnoreCase))
+        {
+            new RunBackup(paths.Saves).Run(DateTimeOffset.Now);
+        }
 
         var collection = new ServiceCollection();
         collection.AddPermaLockeInfrastructure(paths, "permalocke");
@@ -63,8 +103,12 @@ public partial class App : Application
         // dice en pantalla en vez de tirar con datos inventados.
         collection.AddSingleton<IGachaCatalog>(_ =>
             JsonGachaCatalog.Load(Path.Combine(paths.Data, "gacha.json")));
+        // Las habilidades que no se reparten salen de la MISMA lista que usa el randomizador: dos
+        // listas de «qué no se puede dar» acabarían discrepando (§136).
         collection.AddSingleton<ISpeciesStatsCatalog>(_ =>
-            JsonSpeciesStatsCatalog.Load(Path.Combine(paths.Data, "species.json")));
+            JsonSpeciesStatsCatalog.Load(Path.Combine(paths.Data, "species.json"),
+                [.. PermaLocke.Randomizer.RandomizerOptionsLoader
+                    .Load(Path.Combine(paths.Data, "randomizer.json")).BannedAbilities]));
         collection.AddSingleton<GachaService>();
         collection.AddSingleton<IWonderTradeCatalog>(_ =>
             JsonWonderTradeCatalog.Load(Path.Combine(paths.Data, "wondertrade.json")));
@@ -78,6 +122,16 @@ public partial class App : Application
 
         collection.AddSingleton<AzaharInstallation>();
         collection.AddSingleton<InstalledWorld>();
+
+        // LA REGLA DE PRIMER ENCUENTRO (§117). Los mapas del cartucho para saber dónde está el jugador, y las
+        // líneas evolutivas del mundo instalado para los duplicados: esta segunda sustituye a la vacía que
+        // registra Rules, porque es la última que se registra la que se sirve.
+        collection.AddSingleton(_ => JsonMapTable.Load(Path.Combine(paths.Data, "mapas.json")));
+        collection.AddSingleton<WorldEvolutionLines>();
+        collection.AddSingleton<PermaLocke.Rules.IEvolutionLineProvider>(sp => sp.GetRequiredService<WorldEvolutionLines>());
+        collection.AddSingleton<WorldAllowedStatics>();
+        collection.AddSingleton<PermaLocke.Rules.Services.TrialZoneService>();
+        collection.AddSingleton<EncounterGuard>();
         collection.AddSingleton<IAppDialogs, AppDialogs>();
         collection.AddSingleton<IUiDispatcher, WpfUiDispatcher>();
         collection.AddSingleton<GameLinkMonitor>();
@@ -88,6 +142,8 @@ public partial class App : Application
         collection.AddSingleton<Notifier>();
         collection.AddSingleton<PlayNotifications>();
         collection.AddSingleton<DeathCeremony>();
+        collection.AddSingleton<KillcamRecorder>();
+        collection.AddSingleton<IKillcamRecorder>(sp => sp.GetRequiredService<KillcamRecorder>());
 
         // Y la pestaña del borde, que es la misma ventana flotante SIN la bandera que deja pasar
         // los clics: esta existe para que se pulse.
@@ -116,6 +172,7 @@ public partial class App : Application
         collection.AddSingleton<IItemDelivery, BagItemDelivery>();
         collection.AddSingleton<ShopService>();
         collection.AddSingleton<EvTrainingService>();
+        collection.AddSingleton<MoveReminderService>();
         collection.AddSingleton<PokemonIdentityService>();
         collection.AddSingleton<IRewardCatalog>(_ =>
             JsonRewardCatalog.Load(Path.Combine(paths.Data, "rewards.json")));
@@ -136,6 +193,8 @@ public partial class App : Application
         collection.AddSingleton<RouletteViewModel>();
         collection.AddSingleton<ShopViewModel>();
         collection.AddSingleton<PokemonViewerViewModel>();
+        collection.AddSingleton<EvTrainingViewModel>();
+        collection.AddSingleton<MoveReminderViewModel>();
         collection.AddSingleton<PokePasteViewModel>();
         collection.AddSingleton<IslandMapService>();
         collection.AddSingleton<ZonePhotoService>();
@@ -144,14 +203,38 @@ public partial class App : Application
         collection.AddSingleton<MiscellaneousViewModel>();
         collection.AddSingleton<TradedAwayReconciler>();
         collection.AddSingleton<BattleModeService>();
+
+        // EL LANZADOR (§125): abrir, vigilar y cerrar el juego desde la aplicación, y el tiempo jugado por run.
+        collection.AddSingleton<IPlaytimeStore>(_ => new JsonPlaytimeStore(paths.Saves));
+        collection.AddSingleton<EmulatorCrashReport>();
+        collection.AddSingleton<EmulatorLauncher>();
+        collection.AddSingleton<LauncherViewModel>();
         collection.AddSingleton<BattleModeViewModel>();
         collection.AddSingleton<SnapshotStore>();
+
+        // EL JUGADOR DE ESTA MAQUINA (§123). En Config/ y no en Saves/: empezar de cero borra la run y
+        // la partida, pero quien vuelve a empezar sigue siendo el mismo jugador.
+        collection.AddSingleton<IPlayerProfileStore>(_ => new JsonPlayerProfileStore(paths.Config));
+        collection.AddSingleton(sp => new SeenMarksStore(paths.Config,
+            sp.GetRequiredService<ILogger<SeenMarksStore>>()));
         collection.AddSingleton<SyncService>();
+
+        // AMIGOS Y ACTIVIDAD de JUGAR (§126): presencia y logros reclamados de todos, por la misma carpeta.
+        collection.AddSingleton<CommunityService>();
+
+        // LA BANDEJA DE REGALOS (§129): lo que el admin deja en la carpeta compartida, y recogerlo aquí.
+        collection.AddSingleton<GiftStore>();
+        collection.AddSingleton<GiftService>();
+        collection.AddSingleton<GiftInbox>();
+        collection.AddSingleton<GiftInboxViewModel>();
+        collection.AddSingleton<OfficialRulesService>();
         collection.AddSingleton<SyncViewModel>();
-        collection.AddSingleton<StatisticsService>();
-        collection.AddSingleton<StatisticsViewModel>();
+        collection.AddSingleton<AlolaSky>();
+        collection.AddSingleton<CemeteryService>();
+        collection.AddSingleton<CemeteryViewModel>();
         collection.AddSingleton<MaintenanceService>();
-        collection.AddSingleton<MaintenanceViewModel>();
+        collection.AddSingleton<AppSettings>();
+        collection.AddSingleton<SettingsViewModel>();
         collection.AddSingleton<MainViewModel>();
 
         _services = collection.BuildServiceProvider();
@@ -163,7 +246,7 @@ public partial class App : Application
         {
             logger.LogError(args.Exception, "Excepción no controlada en la interfaz");
             MessageBox.Show(
-                "Ha ocurrido un error inesperado. El detalle técnico se ha escrito en la carpeta Logs.",
+                "Ha ocurrido un error inesperado.",
                 "PermaLocke", MessageBoxButton.OK, MessageBoxImage.Error);
             args.Handled = true;
         };
@@ -185,14 +268,51 @@ public partial class App : Application
         // mundo que Azahar va a cargar de verdad. Ver InstalledWorld.
         _services.GetRequiredService<InstalledWorld>().Apply(AppContext.BaseDirectory);
 
+        // Las preferencias de CONFIGURACIÓN, antes de que el vigilante pueda avisar o grabar nada.
+        _services.GetRequiredService<AppSettings>().Load();
+
+        // --hora-alola HH:mm: el cielo a una hora concreta, para verlo sin esperar a que llegue. No toca nada más.
+        var sky = _services.GetRequiredService<AlolaSky>();
+
+        if (Array.FindIndex(e.Args, arg => string.Equals(arg, "--hora-alola", StringComparison.OrdinalIgnoreCase)) is var hourAt
+            && hourAt >= 0 && hourAt + 1 < e.Args.Length && TimeOnly.TryParse(e.Args[hourAt + 1], out var rehearsed))
+        {
+            sky.Rehearsal = rehearsed;
+        }
+
+        sky.Start();
+
         var main = _services.GetRequiredService<MainViewModel>();
         var window = new MainWindow { DataContext = main };
-        window.Resize(_services.GetRequiredService<WindowSizeService>().Current);
+        // --tamano grande|enorme abre a ese tamaño SIN guardarlo, para ver una pantalla a otro tamaño sin
+        // cambiar el que eligió el jugador (§143). Como --hora-alola: un ensayo, no una preferencia.
+        var rehearsedSize = Array.FindIndex(e.Args, arg => string.Equals(arg, "--tamano", StringComparison.OrdinalIgnoreCase))
+            is var sizeAt and >= 0 && sizeAt + 1 < e.Args.Length
+                ? WindowSizeService.Sizes.FirstOrDefault(size => size.Key == e.Args[sizeAt + 1])
+                : null;
+
+        window.Resize(rehearsedSize ?? _services.GetRequiredService<WindowSizeService>().Current);
         MainWindow = window;
         window.Show();
 
         var run = await _services.GetRequiredService<RunService>().LoadMostRecentAsync();
         logger.LogInformation("Run cargada al inicio: {Run}", run?.Name ?? "ninguna");
+
+        // Una run de antes de los perfiles se vincula aqui, una vez y con su evento. Un fallo no
+        // detiene el arranque: sin perfil la aplicacion funciona igual, solo no puede publicar.
+        try
+        {
+            var ownership = await _services.GetRequiredService<PlayerProfileService>().LinkCurrentRunAsync();
+            logger.LogInformation("Run y jugador: {Ownership}", ownership);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "No se ha podido vincular la run al perfil del jugador");
+        }
+
+        // El lanzador mira si el juego está abierto una vez por segundo. Con la run ya cargada, para que la
+        // sesión que encuentre en marcha se apunte a la run que toca.
+        _services.GetRequiredService<EmulatorLauncher>().Start();
 
         await main.InitialiseAsync();
 
@@ -200,13 +320,91 @@ public partial class App : Application
         // run it belongs to has been loaded.
         // Antes de arrancar el vigilante, para no perderse lo que pase en su primer ciclo.
         _services.GetRequiredService<PlayNotifications>();
-        _services.GetRequiredService<EdgeTab>().Attach(window);
 
-        _services.GetRequiredService<GameLinkMonitor>().Start();
+        // --sin-juego: una copia para mirar pantallas SIN vigilante ni pestaña. Con la aplicación de
+        // verdad y el emulador abiertos, dos vigilantes verían la misma muerte y la cobrarían dos
+        // veces -cada uno tiene su propia puerta-, así que las pruebas visuales van siempre con esto.
+        var withoutGame = e.Args.Contains("--sin-juego", StringComparer.OrdinalIgnoreCase);
+
+        // Una copia para mirar pantallas lee a los amigos, pero no dice que está aquí ni publica la run.
+        if (!paths.LocalOnly)
+        {
+            _services.GetRequiredService<CommunityService>().Start(writes: !withoutGame);
+            _services.GetRequiredService<GiftInbox>().Start();
+        }
+
+        if (!withoutGame)
+        {
+            _services.GetRequiredService<EdgeTab>().Attach(window);
+            _services.GetRequiredService<GameLinkMonitor>().Start();
+
+            // Las líneas evolutivas se leen ya, en segundo plano: la primera vez puede tocar sacar el fichero de
+            // la ROM, y eso no debe caer en el segundo en que empieza un combate.
+            var evolutions = _services.GetRequiredService<WorldEvolutionLines>();
+            _ = Task.Run(evolutions.Warm);
+
+            // Y las capturas estáticas permitidas, por lo mismo: la tabla del cartucho puede tocar sacarla de la ROM.
+            var allowedStatics = _services.GetRequiredService<WorldAllowedStatics>();
+            _ = Task.Run(allowedStatics.Warm);
+        }
+
+        if (Array.FindIndex(e.Args, arg => string.Equals(arg, "--seccion", StringComparison.OrdinalIgnoreCase)) is var at
+            && at >= 0 && at + 1 < e.Args.Length
+            && main.Sections.FirstOrDefault(s => string.Equals(s.Title, e.Args[at + 1], StringComparison.OrdinalIgnoreCase)) is { } section)
+        {
+            main.SelectedSection = section;
+        }
 
         if (e.Args.Contains("--ensayar-muerte", StringComparer.OrdinalIgnoreCase))
         {
             await RehearseDeathsAsync(logger);
+        }
+
+        if (e.Args.Contains("--ensayar-killcam", StringComparer.OrdinalIgnoreCase))
+        {
+            await RehearseKillcamAsync(paths, logger);
+        }
+    }
+
+    /// <summary>
+    /// Records a few seconds of the emulator's top screen, writes them as a killcam outside the run and
+    /// reads them back, saving three frames as pictures to look at.
+    /// </summary>
+    /// <remarks>
+    /// The killcam only records during a battle and only saves on a death. This proves the capture, the
+    /// file and the reading without either: the clip goes to <c>Logs/</c>, never next to a Pokémon of
+    /// the run, because a replay attached to a death it does not show would be a false record.
+    /// </remarks>
+    private async Task RehearseKillcamAsync(AppPaths paths, ILogger logger)
+    {
+        var recorder = _services!.GetRequiredService<KillcamRecorder>();
+        var path = Path.Combine(paths.Logs, "killcam-ensayo.killcam");
+
+        // La captura lee la pantalla, no la ventana: la propia aplicación no puede estar delante.
+        MainWindow!.WindowState = WindowState.Minimized;
+
+        recorder.Recording = true;
+        await Task.Delay(TimeSpan.FromSeconds(5));
+
+        var written = await recorder.SaveAsync(path, recorder.Mark());
+        recorder.Recording = false;
+        MainWindow.WindowState = WindowState.Normal;
+
+        var frames = written is null ? [] : KillcamClip.Read(written);
+        logger.LogInformation("Ensayo de killcam: {Frames} fotogramas leídos de {Path}", frames.Count, path);
+
+        foreach (var (frame, name) in new[] { (0, "primero"), (frames.Count / 2, "medio"), (frames.Count - 1, "ultimo") })
+        {
+            if (frame < 0 || frame >= frames.Count)
+            {
+                continue;
+            }
+
+            var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
+            encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(frames[frame].Image));
+
+            await using var file = File.Create(Path.Combine(paths.Logs, $"killcam-ensayo-{name}.png"));
+            encoder.Save(file);
         }
     }
 
@@ -236,12 +434,14 @@ public partial class App : Application
                 .Where(e => e.Type == GameEventType.PointsPenalty && e.PokemonId == entry.Id)
                 .Sum(e => e.PointsDelta);
 
-            ceremony.Mourn(new DeathNotice(entry.Nickname ?? entry.SpeciesName, entry.Species, Math.Max(0, cost)));
+            ceremony.Mourn(new DeathNotice(entry.Nickname ?? entry.SpeciesName, entry.Species, Math.Max(0, cost), entry.Form));
         }
     }
 
     protected override void OnExit(ExitEventArgs e)
     {
+        // Antes de soltar los servicios: los amigos ven «desconectado» ahora y no dentro de tres minutos.
+        _services?.GetService<CommunityService>()?.SignOff();
         _services?.Dispose();
         base.OnExit(e);
     }

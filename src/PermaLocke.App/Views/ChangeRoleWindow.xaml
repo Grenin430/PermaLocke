@@ -1,105 +1,89 @@
 <Window x:Class="PermaLocke.App.Views.ChangeRoleWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:PermaLocke.App.Views"
+        xmlns:pixel="clr-namespace:PermaLocke.App.Views.Pixel"
         Title="PermaLocke — Cambiar de rol"
-        Height="660" Width="620"
-        MinHeight="460" MinWidth="520"
+        Height="700" Width="640"
+        MinHeight="480" MinWidth="540"
         WindowStartupLocation="CenterOwner"
-        FontFamily="{StaticResource UiFont}"
-        UseLayoutRounding="True"
-        Background="{StaticResource AppBackgroundBrush}">
+        UseLayoutRounding="True" SnapsToDevicePixels="True"
+        Background="{StaticResource PxBaseBrush}">
 
-    <Grid Margin="20,18,20,18">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
+    <Window.Resources>
+        <Style TargetType="ScrollBar" BasedOn="{StaticResource PxScrollBar}" />
+    </Window.Resources>
 
-        <StackPanel Grid.Row="0" Margin="0,0,0,14">
-            <TextBlock Text="CAMBIAR DE ROL" Style="{StaticResource SectionTitle}" FontSize="26" />
-            <TextBlock Text="{Binding CurrentText}" Style="{StaticResource Muted}"
-                       FontSize="12" Margin="0,2,0,0" />
-        </StackPanel>
+    <!-- En píxeles, como el resto de la aplicación (§176). -->
+    <Grid>
+        <pixel:PixelBackdrop Base="{StaticResource PxBase}" />
 
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
-                      HorizontalScrollBarVisibility="Disabled" Padding="0,0,8,0">
-            <StackPanel>
-                <!-- El aviso va ARRIBA y no en letra pequeña al final: es lo único de esta
-                     ventana que el jugador no puede deshacer con otro cambio de rol. -->
-                <Border Padding="14,12" Margin="0,0,0,16"
-                        CornerRadius="{StaticResource RadiusMedium}" BorderThickness="1"
-                        Background="{StaticResource WarningDeepBrush}"
-                        BorderBrush="{StaticResource WarningBrush}">
-                    <StackPanel>
-                        <TextBlock Text="LA ROM NO SE VUELVE A RANDOMIZAR"
-                                   Style="{StaticResource StatLabel}"
-                                   Foreground="{StaticResource WarningBrush}" />
-                        <TextBlock Style="{StaticResource Body}" FontSize="12" Margin="0,7,0,0"
-                                   TextWrapping="Wrap"
-                                   Text="Parte del rol se cuece en el cartucho: los niveles de los enemigos y los Pokémon extra de los combates importantes están escritos en el mod que ya tienes instalado, y ahí se quedan. Lo que cambia al momento son los puntos que ganas y pierdes, y las reglas de la aplicación. Si quieres el mundo del rol nuevo, hay que volver a randomizar e instalar desde el RANDOMIZADOR, y eso cambia la partida en la que estás jugando." />
-                    </StackPanel>
-                </Border>
+        <Grid Margin="18,16,18,18">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
 
-                <TextBlock Text="ROL NUEVO" Style="{StaticResource StatLabel}" Margin="0,0,0,6" />
-
-                <ItemsControl ItemsSource="{Binding Roles}" Margin="0,0,0,6">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Border Margin="0,0,0,8" Padding="14,12"
-                                    CornerRadius="{StaticResource RadiusMedium}" BorderThickness="1">
-                                <Border.Style>
-                                    <Style TargetType="Border">
-                                        <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
-                                        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                                <Setter Property="Background" Value="{StaticResource AccentDeepBrush}" />
-                                                <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Border.Style>
-
-                                <RadioButton GroupName="RolNuevo" IsChecked="{Binding IsSelected, Mode=TwoWay}"
-                                             VerticalContentAlignment="Top">
-                                    <RadioButton.Content>
-                                        <StackPanel Margin="4,0,0,0">
-                                            <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="14"
-                                                       Foreground="{StaticResource AccentBrightBrush}" />
-                                            <TextBlock Text="{Binding Description}" Style="{StaticResource Muted}"
-                                                       FontSize="11.5" Margin="0,3,0,0" />
-                                            <TextBlock Text="{Binding Effects}" Style="{StaticResource Body}"
-                                                       FontSize="11.5" Margin="0,4,0,0"
-                                                       Foreground="{StaticResource WarningBrush}" />
-                                        </StackPanel>
-                                    </RadioButton.Content>
-                                </RadioButton>
-                            </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-
-                <TextBlock Text="POR QUÉ" Style="{StaticResource StatLabel}" Margin="0,10,0,0" />
-                <TextBlock Style="{StaticResource Faint}" Margin="0,4,0,0" TextWrapping="Wrap"
-                           Text="Obligatorio, y queda escrito en el historial junto al cambio. Un rol que cambia sin explicación es una run cuyas reglas cambiaron y nadie sabe por qué." />
-                <TextBox Text="{Binding Reason, UpdateSourceTrigger=PropertyChanged}"
-                         Style="{StaticResource Field}" Margin="0,6,0,14"
-                         AcceptsReturn="True" TextWrapping="Wrap" MinHeight="60"
-                         VerticalContentAlignment="Top" />
-
-                <TextBlock Text="{Binding Problem}" Style="{StaticResource Body}" FontSize="12"
-                           Foreground="{StaticResource DangerBrush}" TextWrapping="Wrap" />
+            <StackPanel Grid.Row="0" Margin="2,0,0,14">
+                <pixel:PixelText Text="CAMBIAR DE ROL" Scale="4" Tight="True" Colour="{StaticResource PxText}"
+                                 Shadow="{StaticResource PxShadow}" />
+                <pixel:PixelText Text="{Binding CurrentText}" Scale="2" Tight="True" Margin="0,8,0,0"
+                                 Colour="{StaticResource PxTextDim}" />
             </StackPanel>
-        </ScrollViewer>
 
-        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right"
-                    Margin="0,16,0,0">
-            <Button Content="CANCELAR" Style="{StaticResource GhostButton}"
-                    Command="{Binding CancelCommand}" MinWidth="120" Padding="16,10" />
-            <Button Content="CAMBIAR EL ROL" Style="{StaticResource PrimaryButton}"
-                    Command="{Binding ConfirmCommand}" MinWidth="170" Padding="16,10"
-                    Margin="10,0,0,0" />
-        </StackPanel>
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Margin="0,0,8,0">
+                    <!-- El aviso va ARRIBA y no en letra pequeña al final: es lo único de esta ventana que el jugador
+                         no puede deshacer con otro cambio de rol. -->
+                    <Grid Margin="0,0,0,12">
+                        <views:PixelPanel Fill="{StaticResource PxWarnDeep}" />
+                        <StackPanel Margin="14,11,20,16">
+                            <pixel:PixelText Text="TU MUNDO NO CAMBIA" Scale="2" Tight="True" Colour="{StaticResource PxWarn}" />
+                            <pixel:PixelText Scale="2" Wrap="True" Margin="0,9,0,0" Colour="{StaticResource PxText}"
+                                             Text="Los puntos cambian al momento. Los enemigos siguen como están hasta que vuelvas a generar e instalar tu mundo." />
+                        </StackPanel>
+                    </Grid>
+
+                    <pixel:PixelWindow Title="ROL NUEVO" Icon="IconPeople">
+                        <ItemsControl ItemsSource="{Binding Roles}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <RadioButton GroupName="RolNuevo" IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                 Style="{StaticResource PxRadioCard}" Margin="0,0,0,8">
+                                        <StackPanel>
+                                            <pixel:PixelText Text="{Binding Name}" Scale="3" Tight="True"
+                                                             Colour="{StaticResource PxAccentLight}" Shadow="{StaticResource PxShadow}" />
+                                            <pixel:PixelText Text="{Binding Description}" Scale="2" Wrap="True" Margin="0,7,0,0"
+                                                             Colour="{StaticResource PxTextDim}" />
+                                            <pixel:PixelText Text="{Binding Effects}" Scale="2" Wrap="True" Margin="0,6,0,0"
+                                                             Colour="{StaticResource PxWarn}" />
+                                        </StackPanel>
+                                    </RadioButton>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </pixel:PixelWindow>
+
+                    <pixel:PixelWindow Title="POR QUÉ" Icon="IconDocument" Margin="0,12,0,0">
+                        <StackPanel>
+                            <pixel:PixelText Text="Obligatorio." Scale="2" Tight="True" Colour="{StaticResource PxTextFaint}"
+                                             Margin="2,0,0,8" />
+                            <TextBox Text="{Binding Reason, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource PxTextBox}"
+                                     AcceptsReturn="True" TextWrapping="Wrap" MinHeight="70" VerticalContentAlignment="Top" />
+                            <pixel:PixelText Text="{Binding Problem}" Scale="2" Wrap="True" Colour="{StaticResource PxBad}"
+                                             Margin="2,10,0,0" />
+                        </StackPanel>
+                    </pixel:PixelWindow>
+                </StackPanel>
+            </ScrollViewer>
+
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
+                <Button Content="CANCELAR" Style="{StaticResource PxSubtleButton}" Command="{Binding CancelCommand}" />
+                <Button Content="CAMBIAR EL ROL" Style="{StaticResource PxButton}" Command="{Binding ConfirmCommand}"
+                        Margin="10,0,0,0" />
+            </StackPanel>
+        </Grid>
     </Grid>
 </Window>

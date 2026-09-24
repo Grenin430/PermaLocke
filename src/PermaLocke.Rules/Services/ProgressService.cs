@@ -124,9 +124,9 @@ public sealed class ProgressService(
             // mientras esta línea dice 14, y las dos tienen razón.
             Description = delta > 0
                 ? $"{Etapas(delta)} superada{(delta == 1 ? string.Empty : "s")} a mano. "
-                  + $"Cap por marcas a mano: {stage?.Level.ToString() ?? "sin definir"} ({stage?.Name})."
+                  + $"Nivel máximo: {stage?.Level.ToString() ?? "sin límite"}."
                 : $"{Etapas(-delta)} revertida{(delta == -1 ? string.Empty : "s")}. "
-                  + $"Cap por marcas a mano: {stage?.Level.ToString() ?? "sin definir"} ({stage?.Name}).",
+                  + $"Nivel máximo: {stage?.Level.ToString() ?? "sin límite"}.",
             Data = new Dictionary<string, string>
             {
                 ["etapasSuperadas"] = cleared.ToString(),

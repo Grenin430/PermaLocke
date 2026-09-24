@@ -187,6 +187,26 @@ public class SaveBoxReaderTests : IDisposable
     private static BoxContents Box(BoxSnapshot snapshot, int number) =>
         snapshot.Boxes.Single(box => box.Number == number);
 
+    /// <summary>
+    /// The form name POKE PASTE writes after the species, for Galar too: the gen 7 form table has no
+    /// Galarian Meowth, so it has to be asked in the gen 9 context (§140).
+    /// </summary>
+    [Fact]
+    public void A_regional_form_reads_with_the_name_showdown_gives_it()
+    {
+        var game = new SAV7USUM { OT = "Grenin", TID16 = 1, SID16 = 2 };
+        game.SetBoxSlotAtIndex(new PK7 { Species = 52, Form = 2, CurrentLevel = 10 }, 0, 0, PokemonBuilder.InPlace);
+        game.SetBoxSlotAtIndex(new PK7 { Species = 37, Form = 1, CurrentLevel = 10 }, 0, 1, PokemonBuilder.InPlace);
+        game.SetBoxSlotAtIndex(new PK7 { Species = 37, CurrentLevel = 10 }, 0, 2, PokemonBuilder.InPlace);
+
+        var english = new SaveBoxReader(save: null!, new PkhexLocationLookup(), "en", NullLogger<SaveBoxReader>.Instance);
+        var box = english.ReadFrom(game).Boxes[1].Pokemon;
+
+        Assert.Equal("Galar", box[0].FormName);
+        Assert.Equal("Alola", box[1].FormName);
+        Assert.Equal(string.Empty, box[2].FormName);
+    }
+
     private static BoxSnapshot ReadBack(SAV7USUM save) => Reader().ReadFrom(save);
 
     private static SaveBoxReader Reader() =>

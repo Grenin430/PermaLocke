@@ -37,10 +37,11 @@ public sealed class GameWatcher(IPokemonRepository pokemon, IEventStore events, 
     /// takes to reach a Pokémon Centre, and the watcher looks once a second. Charging on the
     /// state would charge dozens of times for one wipe.
     ///
-    /// It starts true on purpose, so the first look after opening PermaLocke can only initialise
-    /// this and never charge. The cost of that: a wipe that happens with the app closed is not
-    /// charged as a wipe. The deaths that make it up are, because those are recorded from the run,
-    /// not from a flag in memory.
+    /// Where it starts is read from the run's history, per run (§161): true, unless the last wipe is
+    /// newer than the last death, in which case the party is still down from it and opening
+    /// PermaLocke again must not charge it twice. The cost of reading the edge: a wipe that happens
+    /// with the app closed is not charged as a wipe. The deaths that make it up are, because those
+    /// are recorded from the run, not from a flag in memory.
     /// </remarks>
     private bool _partyWasStanding = true;
 
@@ -118,11 +119,27 @@ public sealed class GameWatcher(IPokemonRepository pokemon, IEventStore events, 
     /// trustworthy and the historial has to say which one this was.
     /// </param>
     /// <returns>What the death was charged, so whoever tells the player says the real number.</returns>
+    /// <param name="details">
+    /// What else was seen at the moment, added to the event as it was: the rivals of the battle, for the
+    /// cemetery. Never a replacement for the fields this method writes itself.
+    /// </param>
     public async Task<PenaltyResult> RecordDeathAsync(PokemonEntry entry, string actor,
         EventSource source = EventSource.AutoDetect, string detection = "memoria del juego",
-        CancellationToken ct = default)
+        CancellationToken ct = default, IReadOnlyDictionary<string, string>? details = null)
     {
         var charged = await penalties.ChargeDeathAsync(entry.RunId, actor, entry, ct).ConfigureAwait(false);
+
+        var data = new Dictionary<string, string>
+        {
+            ["especie"] = entry.Species.ToString(),
+            ["nivel"] = entry.Level.ToString(),
+            ["deteccion"] = detection
+        };
+
+        foreach (var (key, value) in details ?? new Dictionary<string, string>())
+        {
+            data.TryAdd(key, value);
+        }
 
         var died = await events.AppendAsync(new GameEvent
         {
@@ -137,12 +154,7 @@ public sealed class GameWatcher(IPokemonRepository pokemon, IEventStore events, 
                 : $"{entry.Nickname ?? entry.SpeciesName} ha caído a 0 PS.",
             PokemonId = entry.Id,
             LocationId = entry.LocationId,
-            Data = new Dictionary<string, string>
-            {
-                ["especie"] = entry.Species.ToString(),
-                ["nivel"] = entry.Level.ToString(),
-                ["deteccion"] = detection
-            }
+            Data = data
         }, ct).ConfigureAwait(false);
 
         await pokemon.SaveAsync(entry with
@@ -183,7 +195,7 @@ public sealed class GameWatcher(IPokemonRepository pokemon, IEventStore events, 
 
         if (entry.Status != PokemonStatus.Dead)
         {
-            return $"{name} no figura como caído, así que no hay muerte que revocar.";
+            return $"{name} no está muerto.";
         }
 
         var history = await events.GetAllAsync(entry.RunId, ct).ConfigureAwait(false);
@@ -192,7 +204,7 @@ public sealed class GameWatcher(IPokemonRepository pokemon, IEventStore events, 
 
         if (death is null)
         {
-            return $"{name} figura como caído pero el historial no tiene su muerte. No se revoca a ciegas.";
+            return $"No se encuentra la muerte de {name}.";
         }
 
         var deathId = death.Id.ToString();
@@ -269,7 +281,20 @@ public sealed class GameWatcher(IPokemonRepository pokemon, IEventStore events, 
             return null;
         }
 
-        var standing = snapshot.Party.Any(member => !member.IsFainted);
+        // Al cambiar de run -o al abrir PermaLocke- no se sabe cómo estaba el equipo. Si desde el último equipo caído no
+        // ha muerto nadie, sigue siendo aquel desastre: si no, cerrar y abrir la app tras perder volvía a cobrarlo.
+        if (_stateRun != runId)
+        {
+            _stateRun = runId;
+            _nobodyStandingPolls = 0;
+            _partyWasStanding = !await StillDownFromLastWipeAsync(runId, ct).ConfigureAwait(false);
+        }
+
+        // En pie es con PS y vivo EN LA RUN (§161). Tras un equipo caído el juego lleva al Centro Pokémon y cura a todos;
+        // PermaLocke devuelve al suelo a los caídos (§99 bis), y ese ir y volver se leía como otro equipo caído: −100
+        // cada vez que te curaban. El historial dice quién ha muerto; los PS solo dicen dónde está ahora.
+        var fallenInRun = await FallenPidsAsync(runId, ct).ConfigureAwait(false);
+        var standing = snapshot.Party.Any(member => !member.IsFainted && !fallenInRun.Contains(member.Pid));
 
         if (standing)
         {
@@ -303,5 +328,25 @@ public sealed class GameWatcher(IPokemonRepository pokemon, IEventStore events, 
             .ToList();
 
         return await penalties.ChargeWipeAsync(runId, actor, fallen, ct).ConfigureAwait(false);
+    }
+
+    /// <summary>The run the wipe state belongs to; another run starts it again.</summary>
+    private Guid? _stateRun;
+
+    /// <summary>
+    /// The run's last wipe is newer than its last death: nobody has fallen since, so the party is still down from it.
+    /// </summary>
+    /// <remarks>
+    /// The deaths of a wipe are recorded before the wipe itself (<c>GameLinkMonitor</c> checks them first), so a wipe
+    /// always comes after the deaths that made it. A later death means somebody was standing again, and a new wipe can
+    /// happen; none means this is the same one.
+    /// </remarks>
+    private async Task<bool> StillDownFromLastWipeAsync(Guid runId, CancellationToken ct)
+    {
+        var history = await events.GetAllAsync(runId, ct).ConfigureAwait(false);
+        var lastWipe = history.Where(e => e.Type == GameEventType.TeamWiped).Select(e => (DateTimeOffset?)e.Timestamp).Max();
+        var lastDeath = history.Where(e => e.Type == GameEventType.PokemonDied).Select(e => (DateTimeOffset?)e.Timestamp).Max();
+
+        return lastWipe is { } wipe && (lastDeath is not { } death || wipe >= death);
     }
 }

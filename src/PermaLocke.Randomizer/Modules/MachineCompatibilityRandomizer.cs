@@ -98,9 +98,27 @@ public sealed class MachineCompatibilityRandomizer(RomWorkspace workspace, Rando
             }
 
             patcher.Write(index, table);
+
+            // Y en la copia suelta de cada fila. El fichero guarda la tabla dos veces —una por
+            // especie y forma, y la entera al final— y esto solo escribía la entera: 94 de las 100 MT
+            // decían cosas distintas en las dos copias para el equipo del jugador (§141). El módulo de
+            // datos ya copia sus filas a las dos; este era el único que no.
+            for (var row = 0; row < Math.Min(rows, index); row++)
+            {
+                var entry = patcher.Read(row);
+
+                if (entry.Length != PersonalEntry7.Size)
+                {
+                    continue;
+                }
+
+                MachineFlags.Write(entry, 0, MachineFlags.Read(table, row));
+                patcher.Write(row, entry);
+            }
         }
 
-        // Releido del fichero, que es lo unico que convierte «escrito» en «hecho».
+        // Releido del fichero, que es lo unico que convierte «escrito» en «hecho»: la tabla entera
+        // con lo que se escribió, y cada copia suelta igual que su fila de la tabla.
         using (var back = new GarcPatcher(path))
         {
             var written = back.Read(back.FileCount - 1);
@@ -115,6 +133,18 @@ public sealed class MachineCompatibilityRandomizer(RomWorkspace workspace, Rando
             {
                 throw new InvalidDataException(
                     $"La tabla de compatibilidad quedó con {total} MT aprendibles y se escribieron {learnable}.");
+            }
+
+            for (var row = 0; row < Math.Min(rows, back.FileCount - 1); row++)
+            {
+                var entry = back.Read(row);
+
+                if (entry.Length == PersonalEntry7.Size
+                    && !MachineFlags.Read(entry, 0).SequenceEqual(MachineFlags.Read(written, row)))
+                {
+                    throw new InvalidDataException(
+                        $"La copia suelta de la fila {row} no tiene las MT de la tabla entera.");
+                }
             }
         }
 

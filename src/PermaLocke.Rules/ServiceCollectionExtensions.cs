@@ -23,8 +23,6 @@ public static class ServiceCollectionExtensions
         services.AddSingleton(_ => RulesConfigurationLoader.Load(rulesJsonPath));
         services.AddSingleton(_ => LevelCapTable.Load(
             Path.Combine(Path.GetDirectoryName(rulesJsonPath)!, "levelcaps.json")));
-        services.AddSingleton(_ => ZoneTable.Load(
-            Path.Combine(Path.GetDirectoryName(rulesJsonPath)!, "zones.json")));
         services.AddSingleton<IEvolutionLineProvider, NullEvolutionLineProvider>();
         services.AddSingleton<Services.ProgressService>();
 
@@ -35,14 +33,15 @@ public static class ServiceCollectionExtensions
             var configuration = provider.GetRequiredService<RulesConfiguration>();
 
             return new Services.BallControlService(
-                provider.GetRequiredService<Core.Abstractions.IZoneProvider>(),
                 provider.GetRequiredService<Core.Abstractions.IItemWithholder>(),
-                provider.GetRequiredService<ZoneTable>(),
                 provider.GetRequiredService<Core.Abstractions.IEventStore>(),
+                provider.GetRequiredService<Core.Abstractions.IPokemonRepository>(),
+                provider.GetRequiredService<Services.ZoneOutcomeService>(),
                 provider.GetRequiredService<Core.Abstractions.IClock>())
             {
                 Enabled = configuration.BallControl.Enabled,
-                BallItemIds = configuration.BallControl.ItemIds
+                BallItemIds = configuration.BallControl.ItemIds,
+                ShinyConsumesEncounter = configuration.For(RuleIds.ShinyClause).ConsumesEncounter
             };
         });
 

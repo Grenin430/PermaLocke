@@ -157,6 +157,12 @@ public static class CreditProbe
 
     private static string Root()
     {
+        // PERMALOCKE_ROOT apunta la sonda a otra instalación (p. ej. la carpeta de prueba del jugador).
+        if (Environment.GetEnvironmentVariable("PERMALOCKE_ROOT") is { Length: > 0 } root)
+        {
+            return root;
+        }
+
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
 
         while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "PermaLocke.slnx")))

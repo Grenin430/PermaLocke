@@ -6,6 +6,7 @@ namespace PermaLocke.GameLink.Tests;
 /// <summary>
 /// What PermaLocke hands to the player's game, gacha and wonder trade alike.
 /// </summary>
+[Collection("WorldLimits")]
 public sealed class PokemonBuilderTests
 {
     private static NewPokemon Spec(int species = 25, int level = 20) =>
@@ -66,6 +67,51 @@ public sealed class PokemonBuilderTests
         Assert.Equal(save.TID16, pokemon.TID16);
         Assert.Equal(save.SID16, pokemon.SID16);
         Assert.Equal(33, pokemon.CurrentLevel);
+        Assert.True(pokemon.ChecksumValid);
+    }
+
+    /// <summary>
+    /// A Pokémon of the mod arrives at the level it was asked for, on its own curve.
+    /// </summary>
+    /// <remarks>
+    /// §134: the level went through PKHeX, whose gen 7 table stops at 807 and gives everything past
+    /// it Medium Fast. A Dragapult — Slow — asked for at level 40 got the experience for 40 on the
+    /// wrong curve and arrived at 37, and the delivery's own check read it back with the same wrong
+    /// curve, so it passed.
+    /// </remarks>
+    [Fact]
+    public void A_mod_species_arrives_at_the_level_asked_for()
+    {
+        const int Dragapult = 887;
+        const byte Slow = 5;
+
+        try
+        {
+            var rates = new byte[Dragapult + 1];
+            rates[Dragapult] = Slow;
+            WorldLimits.GrowthRates = rates;
+
+            var pokemon = PokemonBuilder.Build(Spec(species: Dragapult, level: 40), Save());
+
+            Assert.Equal(40, GameLevels.Of(pokemon));
+            Assert.Equal(Experience.GetEXP(40, Slow), pokemon.EXP);
+        }
+        finally
+        {
+            WorldLimits.GrowthRates = [];
+        }
+    }
+
+    /// <summary>An ability of the mod arrives whole, ninth bit included.</summary>
+    [Fact]
+    public void A_mod_ability_arrives_whole()
+    {
+        var spec = Spec(species: 25) with { AbilityId = 278 };
+
+        var pokemon = PokemonBuilder.Build(spec, Save());
+
+        Assert.Equal(278, PokemonAbility.Of(pokemon));
+        Assert.Equal(1, pokemon.AbilityNumber);
         Assert.True(pokemon.ChecksumValid);
     }
 }

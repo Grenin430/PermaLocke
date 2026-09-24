@@ -74,18 +74,18 @@ public sealed class SqlitePokemonRepository : IPokemonRepository
             INSERT INTO pokemon
                 (id, run_id, species, species_name, nickname, level, is_shiny, status, origin,
                  encounter_type, location_id, obtained_at, died_at, origin_event_id,
-                 by_exception, consumed_zone, pid)
+                 by_exception, consumed_zone, pid, form)
             VALUES
                 ($id, $run, $species, $name, $nick, $level, $shiny, $status, $origin,
                  $encounter, $location, $obtained, $died, $event,
-                 $exception, $consumed, $pid)
+                 $exception, $consumed, $pid, $form)
             ON CONFLICT(id) DO UPDATE SET
                 species = excluded.species, species_name = excluded.species_name,
                 nickname = excluded.nickname, level = excluded.level, is_shiny = excluded.is_shiny,
                 status = excluded.status, origin = excluded.origin,
                 encounter_type = excluded.encounter_type, location_id = excluded.location_id,
                 died_at = excluded.died_at, by_exception = excluded.by_exception,
-                consumed_zone = excluded.consumed_zone, pid = excluded.pid;
+                consumed_zone = excluded.consumed_zone, pid = excluded.pid, form = excluded.form;
             """;
 
         command.Parameters.AddWithValue("$id", pokemon.Id.ToString("N"));
@@ -106,6 +106,7 @@ public sealed class SqlitePokemonRepository : IPokemonRepository
         command.Parameters.AddWithValue("$exception", pokemon.ObtainedByRuleException ? 1 : 0);
         command.Parameters.AddWithValue("$consumed", pokemon.ConsumedZoneEncounter ? 1 : 0);
         command.Parameters.AddWithValue("$pid", (object?)pokemon.Pid ?? DBNull.Value);
+        command.Parameters.AddWithValue("$form", pokemon.Form);
 
         await command.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
     }
@@ -114,7 +115,7 @@ public sealed class SqlitePokemonRepository : IPokemonRepository
         """
         SELECT id, run_id, species, species_name, nickname, level, is_shiny, status, origin,
                encounter_type, location_id, obtained_at, died_at, origin_event_id,
-               by_exception, consumed_zone, pid
+               by_exception, consumed_zone, pid, form
         FROM pokemon
         """;
 
@@ -143,11 +144,45 @@ public sealed class SqlitePokemonRepository : IPokemonRepository
                 origin_event_id TEXT,
                 by_exception    INTEGER NOT NULL,
                 consumed_zone   INTEGER NOT NULL,
-                pid             INTEGER
+                pid             INTEGER,
+                form            INTEGER NOT NULL DEFAULT 0
             );
             CREATE INDEX IF NOT EXISTS idx_pokemon_run ON pokemon (run_id);
             """;
         command.ExecuteNonQuery();
+
+        AddFormColumn(connection);
+    }
+
+    /// <summary>
+    /// Adds the form column to a database made before it existed, which is every run started before
+    /// §140. Nothing else in it changes: the old rows get form 0, which is what they were — until
+    /// §138 nothing randomized ever came out in a regional form.
+    /// </summary>
+    /// <remarks>
+    /// The first migration this table has needed. It asks the table what it has rather than keeping a
+    /// version number, so running it twice, or on a database already created with the column, does
+    /// nothing. The run is copied at every start (§76), before anything opens it.
+    /// </remarks>
+    private static void AddFormColumn(SqliteConnection connection)
+    {
+        using var columns = connection.CreateCommand();
+        columns.CommandText = "PRAGMA table_info(pokemon);";
+
+        using (var reader = columns.ExecuteReader())
+        {
+            while (reader.Read())
+            {
+                if (string.Equals(reader.GetString(1), "form", StringComparison.OrdinalIgnoreCase))
+                {
+                    return;
+                }
+            }
+        }
+
+        using var alter = connection.CreateCommand();
+        alter.CommandText = "ALTER TABLE pokemon ADD COLUMN form INTEGER NOT NULL DEFAULT 0;";
+        alter.ExecuteNonQuery();
     }
 
     private static async Task<IReadOnlyList<PokemonEntry>> ReadAllAsync(SqliteCommand command, CancellationToken ct)
@@ -175,7 +210,8 @@ public sealed class SqlitePokemonRepository : IPokemonRepository
                 OriginEventId = reader.IsDBNull(13) ? null : Guid.ParseExact(reader.GetString(13), "N"),
                 ObtainedByRuleException = reader.GetInt32(14) == 1,
                 ConsumedZoneEncounter = reader.GetInt32(15) == 1,
-                Pid = reader.IsDBNull(16) ? null : (uint)reader.GetInt64(16)
+                Pid = reader.IsDBNull(16) ? null : (uint)reader.GetInt64(16),
+                Form = reader.GetInt32(17)
             });
         }
 

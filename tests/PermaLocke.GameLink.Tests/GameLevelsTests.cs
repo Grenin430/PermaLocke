@@ -12,6 +12,7 @@ namespace PermaLocke.GameLink.Tests;
 /// game's own <c>Stat_Level</c> field said 35. PermaLocke said 37, because PKHeX's gen 7 table
 /// stops at 807 and falls back to Medium Fast for everything the expansion mod adds.
 /// </remarks>
+[Collection("WorldLimits")]
 public sealed class GameLevelsTests : IDisposable
 {
     private const int Dragapult = 887;

@@ -17,8 +17,10 @@ namespace PermaLocke.App.Services;
 /// It only reads pixels, so it costs the emulator nothing. It assumes Azahar's default layout — top
 /// screen above the bottom one, both centred — which is what the player uses; with any other layout, or
 /// the window covered, the bar is never seen and the wait ends at <see cref="Limit"/>, so the ceremony is
-/// late rather than missing. The capture skips layered windows (no <c>CAPTUREBLT</c>), so PermaLocke's
-/// own notices on top of the game do not get in the way.
+/// late rather than missing. Covered is checked, not assumed: the screen copy would read whatever window is
+/// in front as if it were the game (<see cref="GameWindow.Shows"/>). PermaLocke's own windows are copied too
+/// — the first killcam proved it — but none is over the bar while this waits: the notices go in the bottom
+/// corner and the ceremony only opens once the bar has been seen at zero.
 /// </para>
 /// </remarks>
 public static class HpBarWatcher
@@ -33,7 +35,7 @@ public static class HpBarWatcher
     private const int NativeHeight = 480;
 
     /// <summary>Where the bar is on screen: the picture's origin and scale, refreshed now and then.</summary>
-    private readonly record struct Geometry(double OriginX, double OriginY, double Scale, int Left, int Top, int Width, int Height);
+    private readonly record struct Geometry(IntPtr Window, double OriginX, double OriginY, double Scale, int Left, int Top, int Width, int Height);
 
     /// <returns>What happened, in words for the log — with the readings, when the bar was not seen reaching zero.</returns>
     public static async Task<string> WaitUntilEmptyAsync(CancellationToken ct)
@@ -75,6 +77,13 @@ public static class HpBarWatcher
                 return $"barra a cero vista a los {ms:F0} ms";
             }
 
+            // Sin caja en pantalla no hay nada que esperar: la caída ya se ha visto y el juego se la ha llevado.
+            if (watch.GiveUpWithoutBox(ms))
+            {
+                return $"la caja de PS no ha aparecido en {ms:F0} ms: la caída ya estaba en pantalla "
+                       + $"({readings} lecturas: {string.Join(" · ", trace)})";
+            }
+
             await Task.Delay(10, ct);
         }
 
@@ -90,7 +99,9 @@ public static class HpBarWatcher
 
     private static Geometry? Locate()
     {
-        if (GameWindow.RenderBox(GameWindow.Handle()) is not { } box)
+        var window = GameWindow.Handle();
+
+        if (GameWindow.RenderBox(window) is not { } box)
         {
             return null;
         }
@@ -107,7 +118,7 @@ public static class HpBarWatcher
         var originX = box.Left + ((box.Width - (NativeWidth * scale)) / 2);
         var originY = box.Top + ((box.Height - (NativeHeight * scale)) / 2);
 
-        return new Geometry(originX, originY, scale,
+        return new Geometry(window, originX, originY, scale,
             (int)Math.Floor(originX + (HpBar.Left * scale)),
             (int)Math.Floor(originY + (HpBar.FirstRow * scale)),
             (int)Math.Ceiling((HpBar.Right - HpBar.Left + 1) * scale) + 1,
@@ -116,7 +127,10 @@ public static class HpBarWatcher
 
     private static HpBarReading Read(Geometry where)
     {
-        if (Grab(where.Left, where.Top, where.Width, where.Height) is not { } pixels)
+        // Con otra ventana delante se leería la barra de lo que sea que haya ahí: tapado cuenta como
+        // oculta, que es lo que nunca dispara la escena.
+        if (!GameWindow.Shows(where.Window, where.Left, where.Top, where.Width, where.Height)
+            || Grab(where.Left, where.Top, where.Width, where.Height) is not { } pixels)
         {
             return new HpBarReading(HpBarState.Hidden, 0);
         }

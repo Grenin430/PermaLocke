@@ -148,4 +148,26 @@ public class PartyLayoutTests
         Assert.Equal(0x2000u, chosen!.Address);
         Assert.Null(PartyLayoutLocator.Preferred([(Authoritative(0x1000), 0)]));
     }
+
+    /// <summary>
+    /// Connecting through last session's addresses and landing on the mirror means the structure
+    /// the game reads has moved: the list has to be located again.
+    /// </summary>
+    /// <remarks>
+    /// §135: an eight-day-old list kept being accepted because the mirror, which never moves, read
+    /// fine. The party was read from the lagging mirror and the fallen were «put down» at addresses
+    /// where they no longer were.
+    /// </remarks>
+    [Fact]
+    public void Landing_on_the_mirror_from_remembered_addresses_asks_for_a_sweep()
+    {
+        var chosen = PartyLayoutLocator.Preferred(
+        [
+            (Authoritative(0x1000), 0),
+            (Mirror(0x2000), 6)
+        ]);
+
+        Assert.True(PartyLayoutLocator.NeedsLocatingAgain(chosen!));
+        Assert.False(PartyLayoutLocator.NeedsLocatingAgain(Authoritative(0x1000)));
+    }
 }

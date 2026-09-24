@@ -66,8 +66,7 @@ public sealed class BagItemDelivery(
             return true;
         }
 
-        problem = "Azahar no responde. Ábrelo, carga la partida y activa Configuración → "
-                  + "Depuración → Activar servidor RPC.";
+        problem = "Azahar no responde. Ábrelo con la partida cargada.";
         return false;
     }
 
@@ -101,7 +100,7 @@ public sealed class BagItemDelivery(
             {
                 logger.LogWarning("Se escribió el objeto {Item} pero al releer sigue en {After}", itemId, after);
                 return new ItemDeliveryResult(false, after,
-                    "Se escribió en la mochila pero al releerla el objeto no está. No se ha cobrado nada.");
+                    "No se ha podido entregar el objeto. No se ha cobrado nada.");
             }
 
             logger.LogInformation("Entregado el objeto {Item}: de {Before} a {After}", itemId, before, after);
@@ -111,7 +110,7 @@ public sealed class BagItemDelivery(
         {
             logger.LogError(ex, "Falló la entrega del objeto {Item}", itemId);
             return ItemDeliveryResult.Failed(
-                "No se pudo escribir en la mochila. El detalle está en la carpeta Logs.");
+                "No se pudo escribir en la mochila.");
         }
     }
 
@@ -123,9 +122,9 @@ public sealed class BagItemDelivery(
         BagWriteOutcome.PocketFull =>
             "Ese bolsillo de la mochila está lleno. Haz sitio y vuelve a intentarlo.",
         BagWriteOutcome.UnknownPocket =>
-            "El juego no sabe en qué bolsillo va ese objeto, así que no se escribe nada.",
+            "Ese objeto no se puede entregar.",
         BagWriteOutcome.NotApplied =>
-            "El emulador no aceptó la escritura. ¿Está usando el fork propio de Azahar?",
+            "Azahar no ha aceptado el objeto. Usa el Azahar que viene con PermaLocke.",
         _ => "No se pudo entregar el objeto."
     };
 }

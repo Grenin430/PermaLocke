@@ -26,14 +26,17 @@ public sealed class GameLinkMonitor(
     AzaharGameWriter writer,
     ProgressService progress,
     LevelCapTable caps,
-    BallControlService ballControl,
+    EncounterGuard encounterGuard,
     EncounterService encounters,
     RewardService rewards,
     MaintenanceService maintenance,
     IEventStore events,
     IClock clock,
     BattleTableReader battleTables,
-    ILogger<GameLinkMonitor> logger) : IDisposable
+    IKillcamRecorder killcam,
+    PermaLocke.Infrastructure.AppPaths paths,
+    ILogger<GameLinkMonitor> logger,
+    PermaLocke.Rules.Services.BallControlService balls) : IDisposable
 {
     /// <summary>
     /// How often the game is polled.
@@ -65,6 +68,9 @@ public sealed class GameLinkMonitor(
     /// <summary>Who is standing and who has fallen in the battle in progress, reading by reading.</summary>
     private readonly BattleFaintTracker _faints = new();
 
+    /// <summary>Fallen party members no authoritative copy holds, already reported once.</summary>
+    private readonly HashSet<uint> _unreachableFallen = [];
+
     /// <summary>
     /// One death recorded at a time, whoever sees it first.
     /// </summary>
@@ -78,6 +84,8 @@ public sealed class GameLinkMonitor(
 
     /// <summary>Latest snapshot, or null before the first read completes.</summary>
     public GameSnapshot? Latest { get; private set; }
+    public string EncounterProblem => Latest?.Connected == true && runContext.Current is not null
+        ? encounterGuard.Problem ?? string.Empty : string.Empty;
 
     public event EventHandler<GameSnapshot>? SnapshotChanged;
 
@@ -190,7 +198,15 @@ public sealed class GameLinkMonitor(
     /// </summary>
     private async Task InspectAsync(GameSnapshot snapshot)
     {
-        if (runContext.Current is not { } run)
+        // No bag scans, rewards or writes until the provider has selected and validated the game.
+        if (!snapshot.Connected || runContext.Current is not { } run)
+        {
+            return;
+        }
+
+        // Hasta la primera Poke Ball no se registra ni se cuenta nada: ni capturas ni muertes (§150). La regla
+        // de las rutas ya espera a esa misma ball (§149), y las dos miran el mismo evento.
+        if (!await balls.HasHadBallsAsync(run, _stopping.Token))
         {
             return;
         }
@@ -220,7 +236,7 @@ public sealed class GameLinkMonitor(
             }
 
             var live = snapshot.Party.FirstOrDefault(member => member.Pid == pid);
-            changed |= await RecordDeathOnceAsync(run, pid, live, "memoria del juego");
+            changed |= await RecordDeathOnceAsync(run, pid, live, "memoria del juego") is not null;
         }
 
         // Aquí no se escribe nada en el juego, y ese es el cambio. La marca vivía en memoria: la
@@ -242,7 +258,6 @@ public sealed class GameLinkMonitor(
 
         changed |= await CheckWipeAsync(run, snapshot);
         await EnforceLevelCapAsync(run, snapshot);
-        await ApplyBallRuleAsync(run);
         changed |= await ClaimAutomaticRewardsAsync(run);
 
         // Una sola vez por ciclo, y solo si de verdad cambio algo: las pantallas se refrescan
@@ -277,15 +292,36 @@ public sealed class GameLinkMonitor(
                 if (Latest is { Connected: true } snapshot && runContext.Current is { } run)
                 {
                     var tables = battleTables.Read(clock.Now);
+                    var faints = _faints.Observe(tables);
 
-                    foreach (var faint in _faints.Observe(tables))
+                    // La killcam graba mientras dura el combate y solo entonces.
+                    killcam.Recording = _faints.InBattle;
+
+                    foreach (var faint in faints)
                     {
-                        await OnBattleFaintAsync(run, snapshot, faint);
+                        await OnBattleFaintAsync(run, snapshot, faint, tables);
+                    }
+
+                    // La regla de primer encuentro vive aquí y no en el ciclo de un segundo: el contador de
+                    // combates salvajes sube al empezar el combate, y un duplicado no puede tener Poké Balls
+                    // durante el segundo que tardaría el otro ciclo (§117).
+                    try
+                    {
+                        if (await encounterGuard.TickAsync(run, tables, faints, _faints.InBattle, _stopping.Token))
+                        {
+                            Announce(() => RunDataChanged?.Invoke(this, EventArgs.Empty));
+                        }
+                    }
+                    catch (Exception ex) when (ex is not OperationCanceledException)
+                    {
+                        // Una regla que falla no se lleva por delante la detección de muertes del mismo bucle.
+                        logger.LogWarning(ex, "Fallo en la regla de primer encuentro");
                     }
                 }
                 else
                 {
                     _faints.Observe([]);
+                    killcam.Recording = false;
                 }
             }
             catch (OperationCanceledException)
@@ -301,7 +337,8 @@ public sealed class GameLinkMonitor(
 
             try
             {
-                await Task.Delay(_faints.InBattle ? TimeSpan.FromMilliseconds(250) : TimeSpan.FromSeconds(1),
+                // Medio segundo fuera de combate y no uno: es lo que tarda en verse que ha empezado uno salvaje.
+                await Task.Delay(_faints.InBattle ? TimeSpan.FromMilliseconds(250) : TimeSpan.FromMilliseconds(500),
                     _stopping.Token);
             }
             catch (OperationCanceledException)
@@ -311,7 +348,8 @@ public sealed class GameLinkMonitor(
         }
     }
 
-    private async Task OnBattleFaintAsync(Run run, GameSnapshot snapshot, BattleFaint faint)
+    private async Task OnBattleFaintAsync(Run run, GameSnapshot snapshot, BattleFaint faint,
+        IReadOnlyList<BattleTable> tables)
     {
         if (!faint.IsPlayers)
         {
@@ -322,10 +360,12 @@ public sealed class GameLinkMonitor(
             return;
         }
 
-        // La posición en el combate es el hueco del equipo, y la estructura del equipo no se mueve
-        // hasta que acaba: se comprueba la especie igualmente, porque confundir a quién se ha muerto
-        // es peor que no verlo -la comprobación del equipo lo verá al terminar-.
-        var member = snapshot.Party.FirstOrDefault(m => m.Slot == faint.BattleId);
+        // The report of 20/09 showed a Wooloo at battle position 0 while the party's position 0
+        // held another species. Prefer the checksum-validated identity behind the battle blocks.
+        var copies = tables.Select(table => table.Block(faint.BattleId))
+            .OfType<BattleBlock>().Where(block => block.IsPlayers && block.Species == faint.Species)
+            .Select(battleTables.ReadPokemon);
+        var member = BattlePokemon.MatchPlayer(faint, snapshot.Party, copies);
 
         if (member is null || member.Species != faint.Species)
         {
@@ -333,16 +373,56 @@ public sealed class GameLinkMonitor(
                               + "no se registra en el momento", faint.BattleId, faint.Species);
             return;
         }
+        if (member.Slot != faint.BattleId)
+            logger.LogInformation("Caída identificada por PID {Pid:X8}: posición de combate {Battle}, hueco del equipo {Party}",
+                member.Pid, faint.BattleId, member.Slot);
 
         // Las tablas lo saben antes de que se vea: la segunda cambia con el mensaje «¡X ha usado Y!»,
         // antes de la animación del ataque y de la barra. La escena tiene que saltar cuando la barra
         // llega a cero, así que se espera a verla -o como mucho unos segundos- (§114 ter).
         var bar = await HpBarWatcher.WaitUntilEmptyAsync(_stopping.Token);
+        var mark = killcam.Mark();
         logger.LogInformation("Caída en combate de la posición {Id}: {Bar}", faint.BattleId, bar);
 
-        if (await RecordDeathOnceAsync(run, member.Pid, member, "combate, en el momento"))
+        if (await RecordDeathOnceAsync(run, member.Pid, member, "combate, en el momento", Rivals(tables), mark) is { } fallen)
         {
             Announce(() => RunDataChanged?.Invoke(this, EventArgs.Empty));
+
+        }
+    }
+
+    /// <summary>
+    /// The rivals of the battle a Pokémon fell in, for the cemetery: every opponent the tables hold,
+    /// in battle order, by species.
+    /// </summary>
+    /// <remarks>
+    /// All of them and not «the one that killed it», because which opponent is on the field is not
+    /// something the tables have been measured to say. In a wild battle there is only one, and that one
+    /// is the killer; against a trainer the cemetery says the battle was against this team, which is
+    /// true, instead of naming one of them, which would be a guess.
+    /// </remarks>
+    private static IReadOnlyDictionary<string, string> Rivals(IReadOnlyList<BattleTable> tables)
+    {
+        var rivals = tables.Count == 0
+            ? []
+            : tables[0].Blocks.Where(block => !block.IsPlayers).OrderBy(block => block.BattleId).Select(block => block.Species).ToList();
+
+        return rivals.Count == 0
+            ? new Dictionary<string, string>()
+            : new Dictionary<string, string> { ["rivales"] = string.Join(",", rivals) };
+    }
+
+    internal async Task SaveKillcamAsync(Guid runId, Guid pokemonId, double mark)
+    {
+        try
+        {
+            if (await killcam.SaveAsync(KillcamClip.PathFor(paths.Saves, runId, pokemonId), mark, _stopping.Token) is not null)
+                Announce(() => RunDataChanged?.Invoke(this, EventArgs.Empty));
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            // Sin killcam la muerte sigue registrada; solo le falta la repetición.
+            logger.LogWarning(ex, "No se ha podido guardar la killcam");
         }
     }
 
@@ -350,8 +430,15 @@ public sealed class GameLinkMonitor(
     /// Records a death unless it is already recorded, and announces it.
     /// </summary>
     /// <returns>Whether it recorded something.</returns>
-    private async Task<bool> RecordDeathOnceAsync(Run run, uint pid, LivePartyMember? live, string detection)
+    private async Task<PokemonEntry?> RecordDeathOnceAsync(Run run, uint pid, LivePartyMember? live, string detection,
+        IReadOnlyDictionary<string, string>? details = null, double? clipMark = null)
     {
+        // Antes de la primera Poke Ball una muerte no cuenta, tampoco la del combate (§150).
+        if (!await balls.HasHadBallsAsync(run, _stopping.Token))
+        {
+            return null;
+        }
+
         await _deathGate.WaitAsync(_stopping.Token);
 
         try
@@ -361,7 +448,7 @@ public sealed class GameLinkMonitor(
 
             if (entry is null)
             {
-                return false;
+                return null;
             }
 
             // El nombre y el nivel de AHORA, leídos del juego, y no los de cuando se registró: un
@@ -371,11 +458,16 @@ public sealed class GameLinkMonitor(
                 : entry.Nickname ?? entry.SpeciesName;
 
             logger.LogWarning("Muerte detectada ({Detection}): {Pokemon}", detection, name);
-            var charged = await watcher.RecordDeathAsync(entry, run.PlayerName, detection: detection, ct: _stopping.Token);
+            var mark = clipMark ?? killcam.Mark();
+            var charged = await watcher.RecordDeathAsync(entry, run.PlayerName, detection: detection, ct: _stopping.Token,
+                details: details);
 
-            var notice = new DeathNotice(name, live?.Species ?? entry.Species, charged.Points);
+            var notice = new DeathNotice(name, live?.Species ?? entry.Species, charged.Points, live?.Form ?? entry.Form);
+            // Both monitors can win the death gate. Whichever records it also saves the available
+            // recording, so the party fallback cannot silently skip a clip the battle loop captured.
+            _ = SaveKillcamAsync(run.Id, entry.Id, mark);
             Announce(() => PokemonDied?.Invoke(this, notice));
-            return true;
+            return entry;
         }
         finally
         {
@@ -423,7 +515,9 @@ public sealed class GameLinkMonitor(
                         member.Level,
                         string.IsNullOrWhiteSpace(member.Nickname) ? null : member.Nickname,
                         Force: false,
-                        Pid: member.Pid),
+                        Pid: member.Pid,
+                        Form: member.Form,
+                        Moves: member.Moves),
                     run.PlayerName, _stopping.Token, EventSource.AutoDetect);
 
                 if (result.Registered)
@@ -470,26 +564,6 @@ public sealed class GameLinkMonitor(
 
         Announce(() => TeamWiped?.Invoke(this, result));
         return true;
-    }
-
-    /// <summary>
-    /// Keeps the bag in line with the zone: no Poké Balls while the zone has spent its
-    /// encounter, and back again on leaving.
-    /// </summary>
-    /// <remarks>
-    /// Runs on every tick because it is cheap — the zone is 48 bytes read from a cached anchor —
-    /// and it only writes when the answer changes. Anything uncertain leaves the bag alone.
-    /// </remarks>
-    private async Task ApplyBallRuleAsync(Run run)
-    {
-        var spent = await encounters.GetSpentZonesAsync(run.Id, _stopping.Token);
-        var result = await ballControl.ApplyAsync(run, spent, _stopping.Token);
-
-        if (result.Acted)
-        {
-            logger.LogInformation("Regla de bolas en {Zone}: {Outcome}, {Count} objetos",
-                result.LocationName ?? "una zona sin identificar", result.Outcome, result.ItemsAffected);
-        }
     }
 
     /// <summary>
@@ -545,7 +619,7 @@ public sealed class GameLinkMonitor(
 
         if (provider.AllLayouts.Count == 0)
         {
-            CapProblem = "No sé dónde está el equipo en memoria, así que el cap de nivel no se está aplicando.";
+            CapProblem = "El nivel máximo no se está vigilando ahora mismo.";
             return;
         }
 
@@ -566,10 +640,8 @@ public sealed class GameLinkMonitor(
                 over.Select(m => $"{m.SpeciesName} (Nv.{m.Level})"));
 
             CapProblem = caps.CorrectInMemory
-                ? $"{who} pasa del cap, que es {cap}. Se le está bajando: entra en un combate y "
-                  + "sal, que el juego no repinta el nivel hasta que recarga el equipo."
-                : $"{who} pasa del cap de nivel, que es {cap}. Bájalo tú: PermaLocke está puesto "
-                  + "para avisar y no para corregir.";
+                ? $"{who} pasa del nivel máximo ({cap}). Se está corrigiendo: vuelve a abrir el menú para verlo."
+                : $"{who} pasa del nivel máximo ({cap}).";
         }
 
         if (!caps.CorrectInMemory)
@@ -616,10 +688,8 @@ public sealed class GameLinkMonitor(
             if (applied == 0)
             {
                 CapProblem = rejected > 0
-                    ? $"{member.SpeciesName} está a nivel {member.Level} y el cap es {cap}, pero el juego "
-                      + "no acepta la corrección. Hace falta el fork propio de Azahar."
-                    : $"{member.SpeciesName} está a nivel {member.Level} y el cap es {cap}, pero no "
-                      + "encuentro su hueco en la memoria del juego.";
+                    ? $"{member.SpeciesName} pasa del nivel máximo ({cap}) y no se ha podido corregir. Usa el Azahar que viene con PermaLocke."
+                    : $"{member.SpeciesName} pasa del nivel máximo ({cap}) y no se ha podido corregir.";
 
                 logger.LogWarning("{Pokemon} a nivel {Level} con cap {Cap}: {Rejected} copias rechazaron "
                                   + "la escritura y ninguna la aceptó", member.SpeciesName, member.Level,
@@ -648,9 +718,7 @@ public sealed class GameLinkMonitor(
 
             if (again)
             {
-                CapProblem = $"{member.SpeciesName} vuelve a estar por encima del cap. El juego lo "
-                             + $"está deshaciendo desde una copia que no conozco (tengo {applied} "
-                             + "de las que hay): se ha vuelto a aplicar y se está buscando el resto.";
+                CapProblem = $"{member.SpeciesName} vuelve a pasar del nivel máximo. Se está corrigiendo.";
             }
 
             logger.LogWarning(
@@ -836,6 +904,7 @@ public sealed class GameLinkMonitor(
             {
                 var name = string.IsNullOrWhiteSpace(member.Nickname) ? member.SpeciesName : member.Nickname;
                 var applied = 0;
+                var seen = false;
 
                 foreach (var layout in provider.AllLayouts
                              .Where(l => l.Stride == PartyLayoutLocator.AuthoritativeStride))
@@ -847,15 +916,37 @@ public sealed class GameLinkMonitor(
                     {
                         var at = layout.SlotAddress(slot);
 
-                        if (writer.ReadAuthoritative(at) is { ChecksumValid: true } found
-                            && found.PID == member.Pid
-                            && found.Stat_HPCurrent > 0
-                            && writer.SetLiveHp(at, 0, member.Pid).Applied)
+                        if (writer.ReadAuthoritative(at) is not { ChecksumValid: true } found
+                            || found.PID != member.Pid)
+                        {
+                            continue;
+                        }
+
+                        seen = true;
+
+                        if (found.Stat_HPCurrent > 0 && writer.SetLiveHp(at, 0, member.Pid).Applied)
                         {
                             applied++;
                         }
                     }
                 }
+
+                // Un caído que no está en ninguna copia de las que lee el juego no se puede tumbar, y
+                // hasta el §135 eso pasaba sin decir nada: la lista de direcciones era de otra sesión.
+                // Se dice una vez por Pokémon y se pide buscar el equipo de nuevo.
+                if (!seen)
+                {
+                    if (_unreachableFallen.Add(member.Pid))
+                    {
+                        logger.LogWarning("{Pokemon} está caído y no aparece en ninguna copia que lea el juego:"
+                                          + " se busca el equipo de nuevo", name);
+                        provider.SweepAgain();
+                    }
+
+                    continue;
+                }
+
+                _unreachableFallen.Remove(member.Pid);
 
                 if (applied == 0)
                 {
@@ -865,7 +956,7 @@ public sealed class GameLinkMonitor(
                 logger.LogWarning("{Pokemon} está caído y le habían devuelto los PS: al suelo otra vez"
                                   + " ({Copias} copias)", name, applied);
 
-                Announce(() => DeathMarked?.Invoke(this, $"{name} está caído: se le quitan los PS otra vez."));
+                Announce(() => DeathMarked?.Invoke(this, $"{name} sigue caído."));
             }
         }
         catch (Exception ex)
@@ -896,10 +987,7 @@ public sealed class GameLinkMonitor(
                 report.Marked);
 
             Announce(() => DeathMarked?.Invoke(this,
-                $"{report.Marked} caído(s) se han quedado a 0 PS en la partida. Se verá al cargar."
-                + (report.Boxed > 0
-                    ? $" {report.Boxed} está(n) en una caja y ahí no se puede marcar."
-                    : string.Empty)));
+                $"{report.Marked} caído(s) dejados a 0 PS."));
 
             Announce(() => RunDataChanged?.Invoke(this, EventArgs.Empty));
         }

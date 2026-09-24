@@ -1,0 +1,39 @@
+---
+tipo: pruebas
+revisado: 2026-09-24
+---
+# Pruebas
+
+- xUnit 2.9.3, en 5 proyectos. Lista completa con recuentos: [[Mapa de código/Tests]].
+- **Última ejecución completa conocida: 1521 correctas, 0 fallos**, el 2026-09-23 (`dotnet test --no-build`), con App 107, Core 404, GameLink 381, Randomizer 479 y Rules 150.
+- Las pruebas no demuestran el comportamiento en una partida real: casi todo lo de memoria se prueba con **servidores RPC simulados** y saves sintéticos.
+
+## Por área → ficheros clave
+| Área | Pruebas |
+|---|---|
+| RPC y robustez del enlace | `GameLink.Tests/AzaharRpcClientTests` (datagramas perdidos, respuestas tardías), `GameLinkRecoveryTests` (barridos, enfriamiento, sin partida guardada), `PartyFromSaveTests`, `PartyLocatorTests`, `PartyLayoutTests`, `PartyStatsTests` |
+| Zona y encuentros | `EncounterRecoveryTests` (26; revisiones r2 y r3: primer guardado, no buscar en combate, contadores, paginación de hermanos, `Nearby`, sin mayoría), `FieldRecordTests` (26), `BattleCounterReaderTests`, `Rules.Tests/EncounterPolicyTests` (24), `FirstEncounterRuleTests`, `BallControlServiceTests` (18), `TrialZoneTests`, `ZoneOutcomeTests`, `Core.Tests/ZoneMarkerTests` |
+| Combate y muertes | `BattleTableTests`, `BattlePokemonTests`, **`BattleIdentityTests`** (7: `MatchPlayer` por PID, contradicciones, especie repetida, sin PK7), `HpBarTests` (18), `DeathMarkTests`, `Rules.Tests/TeamWipeTests`, `DeathRevocationTests` |
+| Killcam y avisos | `App.Tests/KillcamBufferTests`, `KillcamNotificationTests`, `NotificationTests` (escalas y monitores de `Notifier`), `EmulatorCrashTests`, `EmulatorProcessTests` |
+| Sprites | `App.Tests/SpritePreparationTests`, `Randomizer.Tests/PokemonIconIndexTests`, `FormIconsTests`, `ExpansionItemIconTests` |
+| Cap de nivel | `LevelCapLiveTests`, `LevelCapWriteTests`, `Rules.Tests/LevelCap*` |
+| Escrituras en el save | `SaveEvTrainerTests`, `SaveMoveTeacherTests`, `SaveBoxSwapTests`, `SaveEraserTests`, `SavePidRepairTests`, `SaveNameRepairTests`, `SaveRouletteWorldTests`, `GachaPartyDeliveryTests`, `WithheldLedgerTests` |
+| Run, eventos y puntos | `Core.Tests/EventChainTests`, `SqliteEventStoreTests`, `PointsServiceTests`, `PenaltyServiceTests`, `RunBackupTests`, `RunServiceTests`, `RolePointsTests` |
+| Gacha, wonder trade, ruleta | `GachaServiceTests` (seed reproducible), `WonderTradeServiceTests`, `RouletteServiceTests` (25), `RouletteConfigTests` |
+| Distribución | `Core.Tests/LocalDistributionTests`, `ExpansionFolderTests`, `SharedFolderSettingsTests` |
+| Randomizador | 61 ficheros; el central es `ModInstallerTests` |
+| UI | `App.Tests/HomeViewTests` (ver abajo), `PixelUiTests`, `CapsuleMachineTests`, `TradeMachineTests`, `RouletteMachineTests`, `TrainerRoomTests` |
+
+## `HomeViewTests` (una sola prueba STA)
+- Solo cabe una `Application` por proceso, así que va todo en una prueba. Carga los temas Palette, Icons, Controls y Pixel.
+- Comprueba que el aviso de HOME se enseña y se oculta.
+- Comprueba los títulos del visor: EQUIPO, CAJAS DEL PC, FICHA.
+- Mide las 14 pantallas.
+- Construye los 3 diálogos sin ViewModel (`LoadDialog<T>`, datos de muestra con `Mutable()` y `ExpandoObject`).
+- `PERMALOCKE_SNAP_DIR=<dir>` guarda un PNG de cada diálogo.
+- **Si se añade una pantalla o un diálogo, se añade aquí**: un `StaticResource` mal escrito revienta en esta prueba y no al abrirlo.
+
+## Verificación que no es xUnit
+- Sondas `tools/PermaLocke.Probe` con `--probar`: escriben **sobre una copia** de la partida ([[Comandos]]).
+- Capturas de la app real en la copia aislada ([[UI y kit pixel]]).
+- Jugando, con el usuario: es lo que falta para casi todo lo marcado «sin jugar» en la tabla de `CLAUDE.md`.

@@ -36,7 +36,7 @@ public static class Rolling
 
     private static void OnToChanged(DependencyObject element, DependencyPropertyChangedEventArgs e)
     {
-        if (element is not TextBlock text)
+        if (element is not (TextBlock or Views.Pixel.PixelText) || element is not UIElement text)
         {
             return;
         }
@@ -63,10 +63,16 @@ public static class Rolling
 
     private static void OnCurrentChanged(DependencyObject element, DependencyPropertyChangedEventArgs e)
     {
+        var value = Math.Round((double)e.NewValue).ToString("0", CultureInfo.InvariantCulture);
+
+        // El contador de la cabecera en píxeles (§176) cuenta igual que el de letra normal.
         if (element is TextBlock text)
         {
-            text.Text = Math.Round((double)e.NewValue)
-                .ToString("0", CultureInfo.InvariantCulture);
+            text.Text = value;
+        }
+        else if (element is Views.Pixel.PixelText pixels)
+        {
+            pixels.Text = value;
         }
     }
 }

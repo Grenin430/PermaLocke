@@ -57,6 +57,29 @@ public static class StaticEncounterTable
         payload[(index * layout.Stride) + layout.FormOffset];
 
     /// <summary>
+    /// The entries holding this species, form and level: how an entry is found without trusting its row number.
+    /// </summary>
+    /// <remarks>
+    /// Can be more than one. Ultra Moon has two Tapu Koko of form 0 at level 60, rows 129 and 135, that differ only in
+    /// byte 0x07 (1 and 2) — nothing measured says which is the one in the ruins, so a caller that cannot tell has to
+    /// take both (§119).
+    /// </remarks>
+    public static IReadOnlyList<int> RowsOf(byte[] payload, EncounterEntryLayout layout, int species, int form, int level)
+    {
+        ArgumentNullException.ThrowIfNull(payload);
+
+        if (layout.LevelOffset is null)
+        {
+            throw new ArgumentException($"La tabla de {layout.Name} no lleva nivel.", nameof(layout));
+        }
+
+        return [.. Enumerable.Range(0, Count(payload, layout)).Where(row =>
+            GetSpecies(payload, layout, row) == species
+            && GetForm(payload, layout, row) == form
+            && GetLevel(payload, layout, row) == level)];
+    }
+
+    /// <summary>
     /// Writes the species and clears the form. A form index that was valid for the old species
     /// is not necessarily valid for the new one, and form 0 always is.
     /// </summary>

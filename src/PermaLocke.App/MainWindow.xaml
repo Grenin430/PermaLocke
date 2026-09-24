@@ -4,6 +4,7 @@
         xmlns:vm="clr-namespace:PermaLocke.App.ViewModels"
         xmlns:views="clr-namespace:PermaLocke.App.Views"
         xmlns:svc="clr-namespace:PermaLocke.App.Services"
+        xmlns:pixel="clr-namespace:PermaLocke.App.Views.Pixel"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         Title="PermaLocke"
         Icon="Assets/PermaLocke.ico"
@@ -24,13 +25,16 @@
          Windows trata como barra de titulo; los botones se sacan de ahi con IsHitTestVisibleInChrome
          o no se podrian pulsar. -->
     <WindowChrome.WindowChrome>
-        <WindowChrome CaptionHeight="38" GlassFrameThickness="0" CornerRadius="0"
+        <WindowChrome CaptionHeight="40" GlassFrameThickness="0" CornerRadius="0"
                       ResizeBorderThickness="0" UseAeroCaptionButtons="False" />
     </WindowChrome.WindowChrome>
 
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
 
+        <DataTemplate DataType="{x:Type vm:LauncherViewModel}">
+            <views:LauncherView />
+        </DataTemplate>
         <DataTemplate DataType="{x:Type vm:HomeViewModel}">
             <views:HomeView />
         </DataTemplate>
@@ -50,6 +54,12 @@
         <DataTemplate DataType="{x:Type vm:PokemonViewerViewModel}">
             <views:PokemonViewerView />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:EvTrainingViewModel}">
+            <views:EvTrainingView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:MoveReminderViewModel}">
+            <views:MoveReminderView />
+        </DataTemplate>
         <DataTemplate DataType="{x:Type vm:PokePasteViewModel}">
             <views:PokePasteView />
         </DataTemplate>
@@ -65,11 +75,11 @@
         <DataTemplate DataType="{x:Type vm:SyncViewModel}">
             <views:SyncView />
         </DataTemplate>
-        <DataTemplate DataType="{x:Type vm:StatisticsViewModel}">
-            <views:StatisticsView />
+        <DataTemplate DataType="{x:Type vm:CemeteryViewModel}">
+            <views:CemeteryView />
         </DataTemplate>
-        <DataTemplate DataType="{x:Type vm:MaintenanceViewModel}">
-            <views:MaintenanceView />
+        <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
+            <views:SettingsView />
         </DataTemplate>
         <DataTemplate DataType="{x:Type vm:MiscellaneousViewModel}">
             <views:MiscellaneousView />
@@ -87,116 +97,166 @@
             <ScaleTransform x:Name="ShellScale" ScaleX="1" ScaleY="1" />
         </Grid.RenderTransform>
         <Grid.RowDefinitions>
-            <RowDefinition Height="38" />
+            <RowDefinition Height="40" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- =============================================== LA BARRA DE TITULO -->
-        <Border Grid.Row="0" Background="{StaticResource SidebarBrush}"
-                BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+        <!-- =============================================== EL MARCO (§176)
+             La ventana entera es una placa de píxeles: contorno de tinta, bisel claro arriba y oscuro abajo, y las
+             esquinas mordidas. Todo lo demás va dentro, a dos celdas del borde, para no tapar el bisel. -->
+        <views:PixelPanel Grid.RowSpan="2" Fill="{StaticResource PxSidebar}" HasShadow="False" />
+
+        <!-- =============================================== LA BARRA DE TITULO
+             WindowChrome sigue haciendo el arrastre y el menú del sistema; lo único nuestro es el dibujo. -->
+        <Grid Grid.Row="0" Margin="6,6,6,0">
             <DockPanel>
                 <!-- Minimizar y cerrar. Fuera de la franja de arrastre a proposito: dentro,
                      Windows se queda el clic y el boton no llega a enterarse. -->
-                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center"
                             shell:WindowChrome.IsHitTestVisibleInChrome="True">
-                    <Button Style="{StaticResource CaptionButton}" Click="OnMinimise"
-                            ToolTip="Minimizar">
-                        <Path Data="M 0,0 L 11,0" Stroke="{Binding Foreground,
-                                  RelativeSource={RelativeSource AncestorType=Button}}"
-                              StrokeThickness="1.3" />
-                    </Button>
-                    <Button Style="{StaticResource CaptionButtonClose}" Click="OnClose"
-                            ToolTip="Cerrar">
-                        <Path Data="M 0,0 L 10,10 M 10,0 L 0,10" Stroke="{Binding Foreground,
-                                  RelativeSource={RelativeSource AncestorType=Button}}"
-                              StrokeThickness="1.3" StrokeStartLineCap="Round"
-                              StrokeEndLineCap="Round" />
-                    </Button>
+                    <Button Style="{StaticResource PxCaptionButton}" Content="-" Click="OnMinimise"
+                            ToolTip="Minimizar" AutomationProperties.Name="Minimizar" />
+                    <Button Style="{StaticResource PxCaptionClose}" Content="×" Click="OnClose"
+                            ToolTip="Cerrar" AutomationProperties.Name="Cerrar" />
                 </StackPanel>
 
-                <!-- Tambien el PNG, por lo mismo. -->
-                <Image Source="Assets/PermaLocke.png" Width="18" Height="18"
-                       Margin="12,0,9,0" VerticalAlignment="Center"
-                       RenderOptions.BitmapScalingMode="HighQuality" />
-
-                <TextBlock Text="PermaLocke" Style="{StaticResource Faint}"
-                           VerticalAlignment="Center" />
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0">
+                    <pixel:PixelIcon Icon="IconGacha" Scale="2" VerticalAlignment="Center" Margin="0,0,10,0" />
+                    <pixel:PixelText Text="PERMALOCKE" Scale="2" Tight="True" Colour="{StaticResource PxText}"
+                                     Shadow="{StaticResource PxShadow}" VerticalAlignment="Center" />
+                    <pixel:PixelText Text="· NUZLOCKE ULTRA LUNA" Scale="2" Tight="True" Margin="10,0,0,0"
+                                     Colour="{StaticResource PxTextFaint}" VerticalAlignment="Center" />
+                </StackPanel>
             </DockPanel>
-        </Border>
 
-        <Grid Grid.Row="1">
+            <pixel:PixelRule VerticalAlignment="Bottom" />
+        </Grid>
+
+        <Grid Grid.Row="1" Margin="6,0,6,6">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="216" />
+            <ColumnDefinition Width="236" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <!-- =============================================== SIDEBAR
-             Darker than the content and separated by a hairline rather than a gap: it should
-             read as the frame of the window, not as another panel floating next to the others. -->
-        <Border Grid.Column="0"
-                Background="{StaticResource SidebarBrush}"
-                BorderBrush="{StaticResource BorderBrush}"
-                BorderThickness="0,0,1,0">
-            <Grid>
+        <!-- =============================================== LA BARRA LATERAL
+             El menú de pausa de un juego: cada sección con su icono en color, la de la pantalla con la flecha, la
+             placa encendida y el icono saltando como los Pokémon del menú del equipo. -->
+        <Grid Grid.Column="0">
+            <pixel:PixelRule Orientation="Vertical" HorizontalAlignment="Right" />
+
+            <Grid x:Name="Sidebar" Margin="0,0,6,0">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <!-- Wordmark -->
-                <StackPanel Grid.Row="0" Margin="20,24,20,20">
-                    <StackPanel Orientation="Horizontal">
-                        <Rectangle Width="4" Height="22" RadiusX="2" RadiusY="2"
-                                   Fill="{StaticResource AccentBrush}" VerticalAlignment="Center" />
-                        <TextBlock Margin="9,0,0,0" VerticalAlignment="Center"
-                                   FontSize="19" FontWeight="Bold" FontStyle="Italic">
-                            <Run Text="PERMA" Foreground="{StaticResource TextBrush}" />
-                            <Run Text="LOCKE" Foreground="{StaticResource AccentBrush}" />
-                        </TextBlock>
+                <!-- La marca: la Poké Ball y el nombre en dos líneas y dos colores, con sombra dura. En una línea no
+                     cabe a este tamaño en los 236 de la barra, y a un tamaño menor deja de ser una marca. -->
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="18,18,12,18">
+                    <pixel:PixelIcon Icon="IconGacha" Scale="4" VerticalAlignment="Center" Margin="0,0,12,0" />
+                    <StackPanel VerticalAlignment="Center">
+                        <pixel:PixelText Text="PERMA" Scale="3" Tight="True" Colour="{StaticResource PxText}"
+                                         Shadow="{StaticResource PxShadow}" />
+                        <pixel:PixelText Text="LOCKE" Scale="3" Tight="True" Colour="{StaticResource PxAccent}"
+                                         Shadow="{StaticResource PxShadow}" Margin="0,2,0,0" />
                     </StackPanel>
-                    <TextBlock Text="Nuzlocke · Ultra Luna" Style="{StaticResource Faint}"
-                               Margin="13,3,0,0" />
                 </StackPanel>
 
                 <!-- Sections -->
-                <ListBox Grid.Row="1"
+                <ListBox Grid.Row="1" x:Name="NavList"
                          ItemsSource="{Binding Sections}"
                          SelectedItem="{Binding SelectedSection, Mode=TwoWay}"
-                         ItemContainerStyle="{StaticResource NavItem}"
+                         ItemContainerStyle="{StaticResource PxNavItem}"
                          Background="Transparent"
                          BorderThickness="0"
-                         Margin="0,0,10,0"
                          HorizontalContentAlignment="Stretch"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                    <ListBox.Resources>
+                        <Style TargetType="ScrollBar" BasedOn="{StaticResource PxScrollBar}" />
+                    </ListBox.Resources>
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal">
-                                <!-- El icono se tine cuando la seccion es la activa. La barra de
-                                     acento ya estaba, pero mide tres pixeles al borde de la ventana
-                                     y sola no se ve; con el icono en violeta, donde estas se lee sin
-                                     buscarlo. -->
-                                <Path Data="{Binding IconKey, Converter={StaticResource ResourceKey}}"
-                                      Margin="0,0,11,0">
-                                    <Path.Style>
-                                        <Style TargetType="Path" BasedOn="{StaticResource IconNav}">
+                                <pixel:PixelIcon Icon="{Binding IconKey}" Scale="2" Margin="0,0,9,0"
+                                                 VerticalAlignment="Center"
+                                                 Bob="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}">
+                                    <pixel:PixelIcon.Style>
+                                        <Style TargetType="pixel:PixelIcon">
+                                            <Setter Property="Dim" Value="True" />
                                             <Style.Triggers>
                                                 <DataTrigger Value="True" Binding="{Binding IsSelected,
                                                     RelativeSource={RelativeSource AncestorType=ListBoxItem}}">
-                                                    <Setter Property="Fill" Value="{StaticResource AccentBrush}" />
+                                                    <Setter Property="Dim" Value="False" />
+                                                </DataTrigger>
+                                                <DataTrigger Value="True" Binding="{Binding IsMouseOver,
+                                                    RelativeSource={RelativeSource AncestorType=ListBoxItem}}">
+                                                    <Setter Property="Dim" Value="False" />
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
-                                    </Path.Style>
-                                </Path>
-                                <TextBlock Text="{Binding Title}" VerticalAlignment="Center" />
+                                    </pixel:PixelIcon.Style>
+                                </pixel:PixelIcon>
+                                <pixel:PixelText Text="{Binding Title}" Scale="2" VerticalAlignment="Center"
+                                                 Margin="0,1,0,0">
+                                    <pixel:PixelText.Style>
+                                        <Style TargetType="pixel:PixelText">
+                                            <Setter Property="Colour" Value="{StaticResource PxTextDim}" />
+                                            <Setter Property="Shadow" Value="Transparent" />
+                                            <Style.Triggers>
+                                                <DataTrigger Value="True" Binding="{Binding IsMouseOver,
+                                                    RelativeSource={RelativeSource AncestorType=ListBoxItem}}">
+                                                    <Setter Property="Colour" Value="{StaticResource PxText}" />
+                                                </DataTrigger>
+                                                <DataTrigger Value="True" Binding="{Binding IsSelected,
+                                                    RelativeSource={RelativeSource AncestorType=ListBoxItem}}">
+                                                    <Setter Property="Colour" Value="{StaticResource PxText}" />
+                                                    <Setter Property="Shadow" Value="{StaticResource PxShadow}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </pixel:PixelText.Style>
+                                </pixel:PixelText>
                             </StackPanel>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
 
+                <!-- ALOLA, AHORA. Solo si cabe sin hacer que la lista de secciones necesite barra (lo decide
+                     MainWindow.xaml.cs). La ventanita ya era pixel art; ahora lo es también lo que dice. -->
+                <StackPanel Grid.Row="2" x:Name="AlolaCorner" Margin="16,0,16,16" DataContext="{Binding Sky}">
+                    <views:AlolaWindow Hour="{Binding Hour}" HorizontalAlignment="Left"
+                                       Visibility="{Binding IsKnown, Converter={StaticResource BoolToVisibility}}" />
+
+                    <DockPanel Margin="1,8,1,0" Visibility="{Binding IsKnown, Converter={StaticResource BoolToVisibility}}">
+                        <pixel:PixelText DockPanel.Dock="Right" Text="{Binding TimeText}" Scale="3" Tight="True"
+                                         Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}"
+                                         VerticalAlignment="Bottom" />
+                        <StackPanel>
+                            <pixel:PixelText Text="ALOLA" Scale="2" Tight="True" Colour="{StaticResource PxTextFaint}" />
+                            <pixel:PixelText Text="{Binding PeriodText}" Scale="2" Tight="True" Margin="0,2,0,0"
+                                             Colour="{StaticResource PxTextDim}" />
+                        </StackPanel>
+                    </DockPanel>
+
+                    <pixel:PixelText Text="Hora de Alola desconocida." Scale="2" Wrap="True"
+                                     Colour="{StaticResource PxTextFaint}"
+                                     Visibility="{Binding IsKnown, Converter={StaticResource InverseBoolToVisibility}}" />
+                </StackPanel>
             </Grid>
-        </Border>
+        </Grid>
+
+        <!-- =============================================== EL SUELO
+             Debajo de todas las pantallas: violeta con una celosía tenue de celdas, como los fondos de los menús de
+             una portátil. Textura, no decoración. -->
+        <pixel:PixelBackdrop Grid.Column="1" Base="{StaticResource PxBase}" />
+
+        <!-- =============================================== EL CIELO DE ALOLA
+             Una franja en píxeles detrás de la cabecera, hasta su raya: el mar y el cielo a la hora del
+             juego. Su alto lo iguala MainWindow.xaml.cs al de la cabecera, que cambia con la letra. -->
+        <views:AlolaBanner x:Name="AlolaStrip" Grid.Column="1" VerticalAlignment="Top" Height="72"
+                           Hour="{Binding Sky.Hour}"
+                           Visibility="{Binding Sky.IsKnown, Converter={StaticResource BoolToVisibility}}" />
 
         <!-- =============================================== CONTENT -->
         <Grid Grid.Column="1" Margin="22,20,22,20">
@@ -205,146 +265,188 @@
                 <RowDefinition Height="16" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
-            <!-- Cabecera. SIN CAJA: era un recuadro redondeado encima de otro recuadro
-                 redondeado, y dos marcos apilados no separan nada, solo apelmazan. Ahora es una
-                 barra sobre el lienzo, separada del contenido por una linea. Es la diferencia
-                 entre el armazon de la ventana y lo que hay dentro. -->
-            <Border Grid.Row="0" Background="Transparent" Padding="4,0,4,16"
-                    BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,0,0,1">
-                <!-- Solo el título. La línea de descripción se quitó a petición del jugador: en una
-                     aplicación que se usa a diario explica lo que ya se sabe y ocupa sitio.
-                     A la derecha sí va una cosa, porque no se sabe: si esta pantalla necesita el
-                     juego abierto, cerrado o le da igual. Es lo único que decide si pulsar algo
-                     aquí va a funcionar, y cambia de sección en sección. -->
+
+            <!-- La cabecera: el icono de la sección saltando, su nombre con sombra dura, y a la derecha lo que se ve
+                 desde cualquier pantalla. -->
+            <Border Grid.Row="0" x:Name="Header" Background="Transparent" Padding="4,0,4,14">
                 <DockPanel>
-                    <StackPanel DockPanel.Dock="Right" MaxWidth="290" Margin="20,0,0,0"
-                                VerticalAlignment="Center" HorizontalAlignment="Right"
-                                Visibility="{Binding ShowsNeed,
-                                             Converter={StaticResource BoolToVisibility}}">
-                        <Border HorizontalAlignment="Right" CornerRadius="9" Padding="10,4"
-                                BorderThickness="1">
-                            <Border.Style>
-                                <Style TargetType="Border">
-                                    <!-- Apagado por defecto: es la respuesta "no te preocupes", y
-                                         gritarla le quitaría fuerza a las que sí ahorran un fallo.
-                                         Verde y rojo solo para lo COMPROBADO: que el emulador
-                                         conteste, o que no conteste. -->
-                                    <Setter Property="Background" Value="{StaticResource SurfaceHighBrush}" />
-                                    <Setter Property="BorderBrush" Value="{StaticResource BorderStrongBrush}" />
+                    <!-- Si esta pantalla necesita el juego abierto, cerrado o le da igual: lo único que decide si
+                         pulsar algo aquí va a funcionar. Apagado por defecto; verde y rojo solo para lo comprobado. -->
+                    <Grid DockPanel.Dock="Right" Margin="18,0,0,0" VerticalAlignment="Center"
+                          Visibility="{Binding ShowsNeed, Converter={StaticResource BoolToVisibility}}">
+                        <views:PixelPanel HasShadow="False">
+                            <views:PixelPanel.Style>
+                                <Style TargetType="views:PixelPanel">
+                                    <Setter Property="Fill" Value="{StaticResource PxFaceLift}" />
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding NeedState}" Value="ok">
-                                            <Setter Property="Background" Value="{StaticResource SuccessDeepBrush}" />
-                                            <Setter Property="BorderBrush" Value="{StaticResource SuccessBrush}" />
+                                            <Setter Property="Fill" Value="{StaticResource PxGoodDeep}" />
                                         </DataTrigger>
                                         <DataTrigger Binding="{Binding NeedState}" Value="problem">
-                                            <Setter Property="Background" Value="{StaticResource DangerDeepBrush}" />
-                                            <Setter Property="BorderBrush" Value="{StaticResource DangerBrush}" />
+                                            <Setter Property="Fill" Value="{StaticResource PxBadDeep}" />
                                         </DataTrigger>
                                         <DataTrigger Binding="{Binding NeedState}" Value="closed">
-                                            <Setter Property="Background" Value="{StaticResource WarningDeepBrush}" />
-                                            <Setter Property="BorderBrush" Value="{StaticResource WarningBrush}" />
+                                            <Setter Property="Fill" Value="{StaticResource PxWarnDeep}" />
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
-                            </Border.Style>
+                            </views:PixelPanel.Style>
+                        </views:PixelPanel>
+                        <pixel:PixelText Text="{Binding NeedLabel}" Scale="2" Tight="True" Margin="11,8,11,8">
+                            <pixel:PixelText.Style>
+                                <Style TargetType="pixel:PixelText">
+                                    <Setter Property="Colour" Value="{StaticResource PxTextDim}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding NeedState}" Value="ok">
+                                            <Setter Property="Colour" Value="{StaticResource PxGood}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding NeedState}" Value="problem">
+                                            <Setter Property="Colour" Value="{StaticResource PxBad}" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding NeedState}" Value="closed">
+                                            <Setter Property="Colour" Value="{StaticResource PxWarn}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </pixel:PixelText.Style>
+                        </pixel:PixelText>
+                    </Grid>
 
-                            <TextBlock Text="{Binding NeedLabel}"
-                                       FontFamily="{StaticResource UiFont}" FontSize="10.5"
-                                       FontWeight="Bold">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding NeedState}" Value="ok">
-                                                <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding NeedState}" Value="problem">
-                                                <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding NeedState}" Value="closed">
-                                                <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                        </Border>
-                    </StackPanel>
                     <!-- ==================================== LOS PUNTOS
-                         La moneda del sistema, y por eso no van en una tarjeta con una estrella
-                         delante: van como va un contador de recurso en un juego, en la esquina
-                         de la barra superior, presentes en todas las pantallas y siempre en el
-                         mismo sitio.
-
-                         Tres piezas, y cada una hace algo:
-                           · el rombo de latón, que es el símbolo del recurso y lo hace reconocible
-                             de reojo sin leer la palabra;
-                           · la cifra, en Bahnschrift con cifras tabulares, para que al pasar de
-                             99 a 100 no se desplace nada de al lado;
-                           · el rótulo pequeño debajo, que solo hace falta la primera vez.
-
-                         El latón se usa aquí y en los botones de acción, y en ningún sitio más.
-                         Eso es lo que hace que este número se lea como dinero. -->
+                         La moneda del sistema, como un contador de recurso en un juego: el rombo, la cifra que rueda
+                         hasta su valor nuevo y da un destello verde o rojo, y el rótulo pequeño debajo. -->
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
-                                VerticalAlignment="Center" Margin="20,0,0,0">
-                        <Border Style="{StaticResource Chip}" VerticalAlignment="Center"
-                                Margin="0,0,14,0">
-                            <TextBlock Text="{Binding RoleText}" Style="{StaticResource ChipText}" />
-                        </Border>
+                                VerticalAlignment="Center" Margin="18,0,0,0">
+                        <Grid VerticalAlignment="Center" Margin="0,0,14,0">
+                            <views:PixelPanel Fill="{StaticResource PxFaceLift}" HasShadow="False" />
+                            <pixel:PixelText Text="{Binding RoleText}" Scale="2" Tight="True" Margin="11,8,11,8"
+                                             Colour="{StaticResource PxText}" />
+                        </Grid>
 
-                        <Path Style="{StaticResource Icon}" Data="{StaticResource IconPoints}"
-                              Fill="{StaticResource AccentBrush}" Width="13" Height="13"
-                              Margin="0,0,8,0" />
+                        <!-- El marcador en su placa translúcida, como el título: de día el cielo es claro. -->
+                        <Grid VerticalAlignment="Center">
+                        <views:PixelPanel Fill="#C8120E20" HasShadow="False" />
+                        <StackPanel Orientation="Horizontal" Margin="9,6,12,8">
+                        <pixel:PixelIcon Icon="IconPoints" Scale="2" VerticalAlignment="Center" Margin="0,0,8,0" />
 
                         <StackPanel VerticalAlignment="Center">
-                            <!-- La cifra RUEDA hasta su nuevo valor y da un destello del color de
-                                 lo que ha pasado. Gastar trescientos puntos y que el numero cambie
-                                 sin mas es tirar la mitad de la gracia de gastarlos. El mecanismo
-                                 es el mismo que usa el mapa. -->
-                            <TextBlock x:Name="PointsNumber" Style="{StaticResource StatValue}"
-                                       Foreground="{StaticResource AccentBrush}"
-                                       svc:Rolling.To="{Binding PointsValue}"
-                                       LineHeight="24" LineStackingStrategy="BlockLineHeight"
-                                       Visibility="{Binding HasPoints,
-                                           Converter={StaticResource BoolToVisibility}}" />
+                            <pixel:PixelText x:Name="PointsNumber" Scale="3" Tight="True"
+                                             Colour="{StaticResource PxAccent}" Shadow="{StaticResource PxShadow}"
+                                             svc:Rolling.To="{Binding PointsValue}"
+                                             Visibility="{Binding HasPoints, Converter={StaticResource BoolToVisibility}}" />
 
                             <!-- Sin run, la raya. Un contador no puede contar hasta un guion. -->
-                            <TextBlock Text="{Binding PointsText}" Style="{StaticResource StatValue}"
-                                       Foreground="{StaticResource AccentBrush}"
-                                       LineHeight="24" LineStackingStrategy="BlockLineHeight"
-                                       Visibility="{Binding HasPoints,
-                                           Converter={StaticResource InverseBoolToVisibility}}" />
-                            <TextBlock Text="PUNTOS" Style="{StaticResource StatLabel}"
-                                       Foreground="{StaticResource AccentDimBrush}" />
+                            <pixel:PixelText Text="{Binding PointsText}" Scale="3" Tight="True"
+                                             Colour="{StaticResource PxAccent}" Shadow="{StaticResource PxShadow}"
+                                             Visibility="{Binding HasPoints, Converter={StaticResource InverseBoolToVisibility}}" />
+                            <pixel:PixelText Text="PUNTOS" Scale="2" Tight="True" Margin="0,3,0,0"
+                                             Colour="{StaticResource PxTextDim}" Shadow="{StaticResource PxShadow}" />
                         </StackPanel>
+                        </StackPanel>
+                        </Grid>
                     </StackPanel>
 
-                    <!-- EL ICONO DE LA SECCION, delante del titulo. Se probo como marca de agua
-                         -en grande y casi borrado detras del texto- y NO funciona: la cabecera mide
-                         poco mas de treinta pixeles, asi que un dibujo de ochenta y seis sale
-                         recortado por arriba y por abajo y lo que se ve es una losa gris, no una
-                         marca. Visto en tres pantallas antes de cambiarlo. Delante y a su tamaño
-                         hace lo mismo -darle cara propia a cada pantalla- y no depende de la forma
-                         que tenga cada icono. -->
-                    <Path Data="{Binding SelectedSection.IconKey, Converter={StaticResource ResourceKey}}"
-                          Fill="{StaticResource AccentDimBrush}" Stretch="Uniform"
-                          Width="21" Height="21" VerticalAlignment="Center"
-                          Margin="1,0,13,0" IsHitTestVisible="False" />
+                    <!-- ==================================== LA BANDEJA DE REGALOS (§129) -->
+                    <Grid DockPanel.Dock="Right" Margin="18,0,0,0" VerticalAlignment="Center"
+                          Visibility="{Binding Gifts.HasGifts, Converter={StaticResource BoolToVisibility}}">
+                        <Button x:Name="GiftButton" Cursor="Hand" Command="{Binding Gifts.ToggleCommand}"
+                                AutomationProperties.Name="Regalos">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Grid x:Name="Body" Height="40" Width="46" Background="Transparent">
+                                        <views:PixelPanel x:Name="Plate" Fill="{StaticResource PxFaceLift}" />
+                                        <pixel:PixelIcon x:Name="Face" Icon="IconGift" Scale="2" HorizontalAlignment="Center"
+                                                         VerticalAlignment="Center" Margin="0,0,6,6" />
+                                    </Grid>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxAccentDeep}" />
+                                        </Trigger>
+                                        <Trigger Property="IsPressed" Value="True">
+                                            <Setter TargetName="Plate" Property="HasShadow" Value="False" />
+                                            <Setter TargetName="Plate" Property="Margin" Value="6,6,0,0" />
+                                            <Setter TargetName="Face" Property="RenderTransform">
+                                                <Setter.Value>
+                                                    <TranslateTransform X="6" Y="6" />
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
 
-                    <TextBlock Text="{Binding SelectedSection.Title}" Style="{StaticResource SectionTitle}"
-                               VerticalAlignment="Center" />
+                        <Grid HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-6,-8,0" IsHitTestVisible="False">
+                            <views:PixelPanel Fill="#FFB8433A" HasShadow="False" />
+                            <pixel:PixelText Text="{Binding Gifts.Count}" Scale="2" Tight="True" Margin="7,5,7,5"
+                                             Colour="{StaticResource PxText}" />
+                        </Grid>
+                    </Grid>
+
+                    <!-- JUGAR, EN PEQUEÑO (§125). En todas las pantallas menos en la del lanzador, que tiene el
+                         grande: dice si el juego está abierto y cuánto lleva, y lleva a JUGAR. -->
+                    <Button DockPanel.Dock="Right" Margin="18,0,0,0" VerticalAlignment="Center" Cursor="Hand"
+                            Command="{Binding OpenLauncherCommand}"
+                            Visibility="{Binding ShowsPlayButton, Converter={StaticResource BoolToVisibility}}">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Grid x:Name="Body" Background="Transparent">
+                                    <views:PixelPanel x:Name="Plate" Fill="{StaticResource PxAccent}" />
+                                    <StackPanel x:Name="Face" Orientation="Horizontal" Margin="15,9,21,14" VerticalAlignment="Center">
+                                        <pixel:PixelText x:Name="Glyph" Text="▶" Scale="2" Tight="True"
+                                                         Colour="{StaticResource PxInk}" VerticalAlignment="Center"
+                                                         Margin="0,0,8,0" />
+                                        <pixel:PixelText x:Name="Label" Text="{Binding Launcher.HeaderText}" Scale="2"
+                                                         Tight="True" Colour="{StaticResource PxInk}"
+                                                         VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Grid>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxAccentLight}" />
+                                    </Trigger>
+                                    <!-- En juego se vuelve verde oscuro con letra clara: no es una llamada a pulsar,
+                                         es un aviso de que está abierto. -->
+                                    <DataTrigger Binding="{Binding Launcher.IsRunning}" Value="True">
+                                        <Setter TargetName="Plate" Property="Fill" Value="#FF2E6B45" />
+                                        <Setter TargetName="Label" Property="Colour" Value="#FFE4FFEC" />
+                                        <Setter TargetName="Glyph" Property="Colour" Value="#FF8EF0AE" />
+                                    </DataTrigger>
+                                    <Trigger Property="IsPressed" Value="True">
+                                        <Setter TargetName="Plate" Property="HasShadow" Value="False" />
+                                        <Setter TargetName="Plate" Property="Margin" Value="6,6,0,0" />
+                                        <Setter TargetName="Face" Property="RenderTransform">
+                                            <Setter.Value>
+                                                <TranslateTransform X="6" Y="6" />
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+
+                    <!-- El icono de la sección, saltando, y su nombre, en una placa translúcida: de día el cielo de
+                         Alola es claro y el sol sale justo por detrás del título. -->
+                    <Grid HorizontalAlignment="Left" VerticalAlignment="Center">
+                        <views:PixelPanel Fill="#C8120E20" HasShadow="False" />
+                        <StackPanel Orientation="Horizontal" Margin="10,7,16,9">
+                            <pixel:PixelIcon Icon="{Binding SelectedSection.IconKey}" Scale="3" Bob="True"
+                                             VerticalAlignment="Center" Margin="0,0,12,0" />
+
+                            <StackPanel VerticalAlignment="Center">
+                                <pixel:PixelText Text="{Binding SelectedSection.Title}" Scale="3" Tight="True" Trim="True"
+                                                 Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Grid>
                 </DockPanel>
             </Border>
 
-            <!-- La regla de debajo del titulo arranca en acento y luego se apaga. Un detalle de
-                 dos pixeles, pero es lo que convierte una linea divisoria en una cabecera. -->
-            <Rectangle Grid.Row="0" Width="58" Height="2" VerticalAlignment="Bottom"
-                       HorizontalAlignment="Left" Margin="4,0,0,-1" RadiusX="1" RadiusY="1"
-                       Fill="{StaticResource AccentBrush}" IsHitTestVisible="False" />
+            <!-- La raya de debajo del título: un surco en celdas que arranca en violeta. -->
+            <pixel:PixelRule Grid.Row="0" VerticalAlignment="Bottom" AccentCells="20" Margin="4,0,4,0" />
 
-            <!-- El contenido se apoya en el lienzo, sin marco propio: la pantalla ya esta acotada
-                 por la barra lateral y por la cabecera. Un tercer recuadro alrededor no acota
-                 nada mas, solo mete otro borde. -->
+            <!-- El contenido se apoya en el suelo, sin marco propio. -->
             <Border Grid.Row="2" Background="Transparent" Padding="4,0">
                 <ContentControl x:Name="SectionHost" Content="{Binding SelectedSection}">
                     <ContentControl.RenderTransform>
@@ -353,6 +455,76 @@
                 </ContentControl>
             </Border>
         </Grid>
+        </Grid>
+
+        <!-- LA BANDEJA ABIERTA, una capa de la ventana y no un menú del sistema: así se dibuja con el mismo
+             pixel art que el resto y se queda pegada debajo del regalo. -->
+        <Grid Grid.Row="1" HorizontalAlignment="Right" VerticalAlignment="Top" Width="368" Margin="0,58,26,0"
+              Visibility="{Binding Gifts.IsOpen, Converter={StaticResource BoolToVisibility}}">
+                                <views:PixelPanel Fill="#FF191330" />
+                                <StackPanel Margin="18,12,22,18">
+                                    <DockPanel Margin="0,0,0,10">
+                                        <Button DockPanel.Dock="Right" Content="CERRAR" Style="{StaticResource SubtleButton}"
+                                                Padding="10,4" FontSize="10" Command="{Binding Gifts.CloseCommand}" />
+                                        <TextBlock Text="REGALOS" Style="{StaticResource StatLabel}" VerticalAlignment="Center" />
+                                    </DockPanel>
+
+                                    <ItemsControl ItemsSource="{Binding Gifts.Items}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Margin="0,0,0,8">
+                                                    <views:PixelPanel Fill="#FF241D3E" HasShadow="False" />
+                                                    <StackPanel Margin="14,10,16,14">
+                                                        <DockPanel>
+                                                            <TextBlock DockPanel.Dock="Right" Text="{Binding When}"
+                                                                       Style="{StaticResource Faint}" Margin="10,0,0,0" />
+                                                            <TextBlock Text="{Binding From}" Style="{StaticResource CardTitle}"
+                                                                       FontSize="13" TextTrimming="CharacterEllipsis" />
+                                                        </DockPanel>
+
+                                                        <TextBlock Text="{Binding What}" Style="{StaticResource Body}"
+                                                                   FontSize="13" Foreground="#FFE8C24A" Margin="0,4,0,0"
+                                                                   TextWrapping="Wrap" />
+
+                                                        <TextBlock Text="{Binding Reason}" Style="{StaticResource Faint}"
+                                                                   TextWrapping="Wrap" Margin="0,3,0,0" />
+
+                                                        <TextBlock Text="Necesita Azahar abierto." Style="{StaticResource Faint}"
+                                                                   Margin="0,3,0,0"
+                                                                   Visibility="{Binding NeedsTheGame,
+                                                                                Converter={StaticResource BoolToVisibility}}" />
+
+                                                        <Button Content="RECOGER" Style="{StaticResource PrimaryButton}"
+                                                                Padding="12,6" FontSize="11" Margin="0,9,0,0"
+                                                                HorizontalAlignment="Left"
+                                                                Command="{Binding DataContext.Gifts.ClaimCommand,
+                                                                          RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                CommandParameter="{Binding}"
+                                                                Visibility="{Binding IsCollected,
+                                                                             Converter={StaticResource InverseBoolToVisibility}}" />
+
+                                                        <TextBlock Text="RECOGIDO" Style="{StaticResource StatLabel}"
+                                                                   Foreground="{StaticResource SuccessBrush}" Margin="0,9,0,0"
+                                                                   Visibility="{Binding IsCollected,
+                                                                                Converter={StaticResource BoolToVisibility}}" />
+                                                    </StackPanel>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <TextBlock Text="{Binding Gifts.Status}" TextWrapping="Wrap" Margin="0,4,0,0" FontSize="12">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock" BasedOn="{StaticResource Body}">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Gifts.Status}" Value="">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </StackPanel>
         </Grid>
     </Grid>
 </Window>

@@ -47,14 +47,13 @@ public sealed class SaveNameRepair(PlayerSave save, string backupFolder, ILogger
         if (path is null)
         {
             return new NameRepairReport(0, 0, [], false,
-                "No se encuentra la partida de Ultra Luna. ¿Has jugado y guardado alguna vez con este emulador?");
+                "No se encuentra tu partida de Ultra Luna.");
         }
 
         if (write && save.IsGameLoaded())
         {
             return new NameRepairReport(0, 0, [], false,
-                "El juego está abierto en el emulador. Guarda la partida y cierra Azahar: mientras "
-                + "esté cargado, el emulador reescribiría el save y la reparación se perdería.");
+                "El juego está abierto. Guarda y cierra Azahar.");
         }
 
         return RepairIn(path, write);
@@ -71,7 +70,7 @@ public sealed class SaveNameRepair(PlayerSave save, string backupFolder, ILogger
             if (!SaveUtil.TryGetSaveFile(path, out var loaded) || loaded is not SAV7USUM game)
             {
                 return new NameRepairReport(0, 0, [], false,
-                    $"El fichero de partida no se ha podido leer como Ultra Luna: {path}");
+                    "No se ha podido leer tu partida.");
             }
 
             var (total, named) = Apply(game);
@@ -95,8 +94,7 @@ public sealed class SaveNameRepair(PlayerSave save, string backupFolder, ILogger
             if (left != 0)
             {
                 return new NameRepairReport(total, named.Count, named, true,
-                    $"Se escribió la partida pero al releerla siguen {left} sin nombre. "
-                    + $"La copia de seguridad está en {backupFolder}.");
+                    "No se ha podido guardar el cambio. Vuelve a intentarlo.");
             }
 
             logger.LogInformation("Nombres reparados: {Count} de {Total} Pokémon", named.Count, total);
@@ -109,7 +107,7 @@ public sealed class SaveNameRepair(PlayerSave save, string backupFolder, ILogger
             logger.LogError(ex, "Falló la reparación de nombres de {Path}", path);
 
             return new NameRepairReport(0, 0, [], false,
-                "No se pudo reparar la partida. El detalle está en la carpeta Logs.");
+                "No se pudo reparar la partida.");
         }
     }
 
@@ -209,7 +207,7 @@ public sealed class SaveNameRepair(PlayerSave save, string backupFolder, ILogger
     }
 
     private static string Label(IReadOnlyList<string> names, PK7 pokemon) =>
-        $"{(pokemon.Species < names.Count ? names[pokemon.Species] : pokemon.Species.ToString())} Nv.{pokemon.CurrentLevel}";
+        $"{(pokemon.Species < names.Count ? names[pokemon.Species] : pokemon.Species.ToString())} Nv.{Data.GameLevels.Of(pokemon)}";
 
     private static int CountNameless(string path)
     {

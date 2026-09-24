@@ -3,14 +3,23 @@ using PermaLocke.Core.Abstractions;
 namespace PermaLocke.Randomizer.Modules;
 
 /// <param name="GoodDamagingPercent">How much of a learnset is forced to be a real attack.</param>
-/// <param name="PreferSameType">Bias the picks towards the Pokémon's own types.</param>
+/// <param name="SameTypePercent">
+/// How often a pick is taken from the Pokémon's own types, as a percentage, split between the two of a dual type.
+/// Zero leaves every pick open.
+/// </param>
 /// <param name="DamagingFloor">Base power a move needs before it counts as an attack.</param>
 /// <param name="PerfectAccuracy">The value the game writes for a move that cannot miss.</param>
+/// <param name="PowerTolerance">
+/// How far, as a share of its strength, a replacement attack may land from the one the cartridge had in that slot. Zero
+/// turns it off and goes back to drawing from the whole catalogue with the quota of real attacks.
+/// </param>
 public sealed record LearnsetRules(
     int GoodDamagingPercent,
-    bool PreferSameType,
+    int SameTypePercent,
     int DamagingFloor,
-    int PerfectAccuracy);
+    int PerfectAccuracy,
+    double PowerTolerance = 0,
+    bool ReorderByPower = false);
 
 /// <summary>
 /// Chooses the moves of one Pokémon's level-up learnset.
@@ -51,6 +60,8 @@ public sealed class LearnsetPlanner(IReadOnlyList<MoveFacts> valid, LearnsetRule
     private readonly MoveFacts[] _damaging =
         [.. valid.Where(move => move.IsGoodDamaging(rules.DamagingFloor, rules.PerfectAccuracy))];
 
+    private readonly MoveFacts[] _attacks = [.. valid.Where(move => move.Physical is not null)];
+
     /// <param name="slots">How many moves this learnset holds. Levels are not touched.</param>
     /// <param name="lastLevelOne">
     /// Index of the last move learnt at level one, or -1 when it learns nothing there. That slot
@@ -58,14 +69,23 @@ public sealed class LearnsetPlanner(IReadOnlyList<MoveFacts> valid, LearnsetRule
     /// </param>
     /// <param name="types">The Pokémon's types, for the bias. A repeat means it has only one.</param>
     /// <param name="attack">Base Attack, against <paramref name="specialAttack"/>.</param>
+    /// <param name="original">
+    /// The move the cartridge has in each slot. With a <see cref="LearnsetRules.PowerTolerance"/> above zero, each slot
+    /// is filled after it: see <see cref="PlanAlongTheCurve"/>.
+    /// </param>
     public IReadOnlyList<int> Plan(int slots, int lastLevelOne, (int First, int Second) types,
-        int attack, int specialAttack, IRandomSource random)
+        int attack, int specialAttack, IRandomSource random, IReadOnlyList<MoveFacts>? original = null)
     {
         ArgumentNullException.ThrowIfNull(random);
 
         if (slots <= 0 || valid.Count == 0)
         {
             return [];
+        }
+
+        if (rules.PowerTolerance > 0 && original is not null && original.Count == slots)
+        {
+            return PlanAlongTheCurve(original, lastLevelOne, types, attack, specialAttack, random);
         }
 
         var chosen = new List<int>(slots);
@@ -103,7 +123,128 @@ public sealed class LearnsetPlanner(IReadOnlyList<MoveFacts> valid, LearnsetRule
             (chosen[at], chosen[lastLevelOne]) = (chosen[lastLevelOne], guaranteed);
         }
 
+        if (rules.ReorderByPower)
+        {
+            ReorderByPower(chosen);
+        }
+
         return chosen;
+    }
+
+    /// <summary>
+    /// The attacks, weakest first, into the slots that already held attacks; status moves stay where they are.
+    /// </summary>
+    /// <remarks>
+    /// Universal Pokémon Randomizer's «reorder damaging moves», and pk3DS's <c>ReorderMovesPower</c>. The slot of the
+    /// guaranteed attack at level one is one of those slots, so it still gets an attack: the weakest one, which is what
+    /// a level one move should be.
+    /// </remarks>
+    private void ReorderByPower(List<int> chosen)
+    {
+        var facts = valid.ToDictionary(move => move.Id);
+        var slots = Enumerable.Range(0, chosen.Count)
+            .Where(slot => facts.TryGetValue(chosen[slot], out var move) && move.Physical is not null)
+            .ToList();
+        var sorted = slots.Select(slot => facts[chosen[slot]]).OrderBy(move => move.Strength).ToList();
+
+        for (var i = 0; i < slots.Count; i++)
+        {
+            chosen[slots[i]] = sorted[i].Id;
+        }
+    }
+
+    /// <summary>
+    /// Fills each slot with a move like the one the cartridge has there: an attack of about the same strength, a status
+    /// move for a status move, a fixed-damage move for a fixed-damage one.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Found playing on 2026-09-21: «almost every move I have or that hits me is 80 power or more». Measured on the
+    /// installed world, the player was right. At level 5, 59% of the attacks a Pokémon carries were 80 or more and 89% of
+    /// Pokémon carried one, against 5% and 8% on the cartridge, and the same at every level up to 30. The draw above
+    /// takes every slot from the whole catalogue whatever its level, and half the catalogue's attacks are 80 or more.
+    /// Level 1 looked like level 50.
+    /// </para>
+    /// <para>
+    /// The references tackle it by reordering. pk3DS sorts the damaging moves by power and makes the first one a
+    /// weak one, and Universal Pokémon Randomizer has the same «reorder damaging moves» option that was never copied
+    /// here with the rest of its rules; that is <see cref="LearnsetRules.ReorderByPower"/>, and it is what the player
+    /// chose. This is the other way, kept and tested but off: it keeps the cartridge's own curve. Which move,
+    /// and of what type, is still random; how hard it hits at that level, and whether it is an attack at all, is what
+    /// the game designed. The status share stays the cartridge's too, which the quota had lowered to half.
+    /// </para>
+    /// <para>
+    /// The guaranteed attack at level one stays: a slot that was a status move there becomes an attack of about the
+    /// damaging floor. No repeats, as before. Nothing is shuffled afterwards, because shuffling is exactly what would
+    /// throw the curve away.
+    /// </para>
+    /// </remarks>
+    private IReadOnlyList<int> PlanAlongTheCurve(IReadOnlyList<MoveFacts> original, int lastLevelOne,
+        (int First, int Second) types, int attack, int specialAttack, IRandomSource random)
+    {
+        var chosen = new List<int>(original.Count);
+
+        for (var slot = 0; slot < original.Count; slot++)
+        {
+            var was = original[slot];
+            var hurts = was.Physical is not null;
+            IReadOnlyList<MoveFacts> pool;
+
+            if (hurts || slot == lastLevelOne)
+            {
+                pool = Near(hurts ? was.Strength : rules.DamagingFloor, chosen);
+
+                var wantsPhysical = random.NextDouble() < Ratio(attack, specialAttack);
+                var byCategory = pool.Where(move => move.Physical == wantsPhysical).ToList();
+
+                if (Free(byCategory, chosen))
+                {
+                    pool = byCategory;
+                }
+            }
+            else
+            {
+                var alike = valid.Where(move => move.Physical is null && move.FixedDamage == was.FixedDamage).ToList();
+                pool = Free(alike, chosen) ? alike : valid;
+            }
+
+            if (Wanted(types, random, rules.SameTypePercent) is { } type)
+            {
+                var themed = pool.Where(move => move.Type == type).ToList();
+
+                if (Free(themed, chosen))
+                {
+                    pool = themed;
+                }
+            }
+
+            chosen.Add(Pick(pool, chosen, random));
+        }
+
+        return chosen;
+    }
+
+    /// <summary>Least width of the band, so a 20-power slot is not held to moves of exactly 15 to 25.</summary>
+    private const int MinimumBand = 10;
+
+    /// <summary>
+    /// Attacks within the tolerance of <paramref name="strength"/>, the band doubling while it has nothing left to give.
+    /// </summary>
+    private IReadOnlyList<MoveFacts> Near(int strength, List<int> chosen)
+    {
+        var width = Math.Max(MinimumBand, strength * rules.PowerTolerance);
+
+        for (var widening = 0; widening < 4; widening++, width *= 2)
+        {
+            var near = _attacks.Where(move => Math.Abs(move.Strength - strength) <= width).ToList();
+
+            if (Free(near, chosen))
+            {
+                return near;
+            }
+        }
+
+        return Free(_attacks, chosen) ? _attacks : valid;
     }
 
     /// <summary>
@@ -124,7 +265,7 @@ public sealed class LearnsetPlanner(IReadOnlyList<MoveFacts> valid, LearnsetRule
             pool = _damaging;
         }
 
-        if (rules.PreferSameType && Wanted(types, random) is { } type)
+        if (Wanted(types, random, rules.SameTypePercent) is { } type)
         {
             var themed = pool.Where(move => move.Type == type).ToList();
 
@@ -154,23 +295,23 @@ public sealed class LearnsetPlanner(IReadOnlyList<MoveFacts> valid, LearnsetRule
         attack + specialAttack <= 0 ? 0.5 : (double)attack / (attack + specialAttack);
 
     /// <summary>Which type to lean towards, or null to leave it open. The reference's odds.</summary>
-    private static int? Wanted((int First, int Second) types, IRandomSource random)
+    private static int? Wanted((int First, int Second) types, IRandomSource random, int percent)
     {
-        var picked = random.NextDouble();
-        var dual = types.First != types.Second;
-
-        if (!dual)
+        if (percent <= 0)
         {
-            // Un solo tipo: 40% suyo, 60% libre.
-            return picked < 0.4 ? types.First : null;
+            return null;
         }
 
-        return picked switch
-        {
-            < 0.2 => types.First,
-            < 0.4 => types.Second,
-            _ => null
-        };
+        var share = Math.Min(percent, 100) / 100.0;
+        var picked = random.NextDouble();
+
+        // Un solo tipo se lleva la parte entera; dos, la mitad cada uno, que es como la reparte el Universal
+        // Pokémon Randomizer con su cuarenta por ciento.
+        return types.First == types.Second
+            ? picked < share ? types.First : null
+            : picked < share / 2 ? types.First
+            : picked < share ? types.Second
+            : null;
     }
 
     private static bool Free(IReadOnlyList<MoveFacts> pool, List<int> chosen) =>

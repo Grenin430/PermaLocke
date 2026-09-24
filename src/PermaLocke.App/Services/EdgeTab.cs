@@ -83,8 +83,93 @@ public sealed partial class EdgeTab : ObservableObject
         _main = main;
         main.StateChanged += (_, _) => Decide();
         _watch.Start();
+
+        _foregroundChanged = (_, _, window, _, _, _, _) => OnForeground(window);
+        _hook = SetWinEventHook(EventSystemForeground, EventSystemForeground, IntPtr.Zero, _foregroundChanged, 0, 0, WinEventOutOfContext);
+        main.Closed += (_, _) =>
+        {
+            if (_hook != IntPtr.Zero)
+            {
+                UnhookWinEvent(_hook);
+                _hook = IntPtr.Zero;
+            }
+        };
+
         Decide();
     }
+
+    /// <summary>
+    /// Kept in a field: Windows only holds a pointer to it, and a delegate the collector takes away leaves
+    /// Windows calling code that no longer exists.
+    /// </summary>
+    private WinEventProc? _foregroundChanged;
+    private IntPtr _hook;
+
+    /// <summary>
+    /// PermaLocke also steps aside when the emulator is brought in front of it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Asked for: with the application open and the emulator behind it, clicking the emulator buried the
+    /// application under the game without minimising it, so the tab never came and the way back was the
+    /// taskbar. For the player a window covered by the game and a minimised one are the same thing, so
+    /// they get the same tab.
+    /// </para>
+    /// <para>
+    /// Only when the two windows <b>overlap</b>. With the game on one monitor and PermaLocke on the other,
+    /// clicking the game hides nothing, and minimising there would take away a window somebody is looking
+    /// at.
+    /// </para>
+    /// <para>
+    /// On the foreground <b>changing to</b> the emulator, which Windows reports the moment it happens, and
+    /// not on the one-second look: so it happens once per click, and bringing PermaLocke back from the tab
+    /// is not undone a second later.
+    /// </para>
+    /// </remarks>
+    private void OnForeground(IntPtr window)
+    {
+        if (!StepAside || _main is not { WindowState: not WindowState.Minimized } main)
+        {
+            return;
+        }
+
+        var emulator = GameWindow.Handle();
+        var application = new WindowInteropHelper(main).Handle;
+
+        if (emulator == IntPtr.Zero || application == IntPtr.Zero || GetAncestor(window, RootWindow) != emulator
+            || !Overlap(application, emulator))
+        {
+            return;
+        }
+
+        main.WindowState = WindowState.Minimized;
+    }
+
+    /// <summary>
+    /// Whether one window has a real part of the other behind it, measured on what is drawn.
+    /// </summary>
+    /// <remarks>
+    /// The visible frame and not <c>GetWindowRect</c>: that box carries an invisible border of about eight
+    /// pixels a side, so two windows snapped side by side would "overlap" by sixteen.
+    /// </remarks>
+    private static bool Overlap(IntPtr first, IntPtr second)
+    {
+        const int Least = 48;
+
+        if (!VisibleFrame(first, out var a) || !VisibleFrame(second, out var b))
+        {
+            return false;
+        }
+
+        var width = Math.Min(a.Right, b.Right) - Math.Max(a.Left, b.Left);
+        var height = Math.Min(a.Bottom, b.Bottom) - Math.Max(a.Top, b.Top);
+
+        return width >= Least && height >= Least;
+    }
+
+    private static bool VisibleFrame(IntPtr window, out Frame frame) =>
+        DwmGetWindowAttribute(window, ExtendedFrameBounds, out frame, Marshal.SizeOf<Frame>()) == 0
+        || GetWindowRect(window, out frame);
 
     /// <summary>Shows the tab when it is worth showing, and hides it otherwise.</summary>
     private void Decide()
@@ -109,18 +194,12 @@ public sealed partial class EdgeTab : ObservableObject
         Open();
     }
 
-    private static bool EmulatorIsRunning()
-    {
-        foreach (var name in new[] { "azahar", "citra" })
-        {
-            if (System.Diagnostics.Process.GetProcessesByName(name).Length > 0)
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
+    /// <summary>Whether to treat the emulator as running, for the purpose of stepping aside.</summary>
+    /// <remarks>
+    /// Only a confirmed emulator counts: hiding the application is a visible thing to do, and doing
+    /// it on a doubt leaves someone looking for a window that walked off on its own.
+    /// </remarks>
+    private static bool EmulatorIsRunning() => EmulatorProcess.IsRunning() == true;
 
     private void Open()
     {
@@ -251,4 +330,34 @@ public sealed partial class EdgeTab : ObservableObject
 
     [DllImport("user32.dll")]
     private static extern int SetWindowLong(IntPtr window, int index, int value);
+
+    private delegate void WinEventProc(IntPtr hook, uint eventType, IntPtr window, int objectId, int childId,
+        uint thread, uint time);
+
+    private const uint EventSystemForeground = 0x0003;
+    private const uint WinEventOutOfContext = 0x0000;
+    private const uint RootWindow = 2;
+    private const int ExtendedFrameBounds = 9;
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct Frame
+    {
+        public int Left, Top, Right, Bottom;
+    }
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr SetWinEventHook(uint eventMin, uint eventMax, IntPtr module, WinEventProc callback,
+        uint process, uint thread, uint flags);
+
+    [DllImport("user32.dll")]
+    private static extern bool UnhookWinEvent(IntPtr hook);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetAncestor(IntPtr window, uint flags);
+
+    [DllImport("user32.dll")]
+    private static extern bool GetWindowRect(IntPtr window, out Frame frame);
+
+    [DllImport("dwmapi.dll")]
+    private static extern int DwmGetWindowAttribute(IntPtr window, int attribute, out Frame value, int size);
 }

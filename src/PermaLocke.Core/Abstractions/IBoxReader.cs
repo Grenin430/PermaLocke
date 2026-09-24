@@ -16,10 +16,39 @@ namespace PermaLocke.Core.Abstractions;
 /// It matters because the calculation uses PKHeX vanilla base stats, and a randomized ROM does not
 /// have vanilla base stats - so a computed number is an estimate, and the screen says so.
 /// </param>
+/// <param name="Ball">The ball it was caught in, as the game numbers them; balls 1 to 16 share that number with their item.</param>
 /// <param name="Ivs">Same order as <paramref name="Stats"/>.</param>
 /// <param name="Evs">Same order as <paramref name="Stats"/>.</param>
 /// <param name="IsPlayers">
 /// False when the original trainer is somebody else, which is what a traded Pokémon looks like.
+/// </param>
+/// <param name="Nature">
+/// The nature as the game numbers it, 0 to 24, or -1 when nobody read it. Next to
+/// <paramref name="NatureName"/> because a name says nothing about which stat it moves.
+/// </param>
+/// <param name="IsIntact">
+/// False when the entry in the save does not match its own checksum: what the game draws as a Huevo
+/// Malo (§97). Everything else in the record is then whatever the broken bytes happen to say, and
+/// anything that writes must leave it alone -- writing it back through PKHeX would give garbage a valid
+/// checksum, which is not a repair, it is a Pokémon with a species out of range that the game may hang on.
+/// </param>
+/// <param name="StatLevel">
+/// For a party member, the level stored next to its battle stats, which is the one they were worked out at
+/// and the one the EV writer recomputes them with. Zero when there is none, as in a box. It can differ from
+/// <paramref name="Level"/>, which comes from the experience: measured on the real partida, a Ferrocuello
+/// whose experience says 64 carries stats and level for 59.
+/// </param>
+/// <param name="FormName">
+/// The form as Pokémon Showdown writes it after the species — «Alola», «Galar», «Paldea-Combat» —, in the
+/// reader's language. Empty for the ordinary form. For POKE PASTE, whose site draws «Vulpix-Alola» as an
+/// Alolan one and «Vulpix» as the ordinary one (§140).
+/// </param>
+/// <param name="MoveIds">
+/// Its four move slots as ids, zero for an empty one, in the same order as <paramref name="Moves"/>. Null when
+/// whoever built the record did not read them; the move reminder needs ids, not names (§142).
+/// </param>
+/// <param name="RelearnMoveIds">
+/// The four moves the game keeps for it to relearn — egg moves, a gift's special moves —, zero for none.
 /// </param>
 public sealed record BoxedPokemon(
     int Box,
@@ -45,8 +74,18 @@ public sealed record BoxedPokemon(
     IReadOnlyList<int> Evs,
     int Friendship,
     uint Pid,
-    bool StatsAreComputed = false)
+    bool StatsAreComputed = false,
+    int Ball = 0,
+    int Nature = -1,
+    bool IsIntact = true,
+    int StatLevel = 0,
+    string FormName = "",
+    IReadOnlyList<int>? MoveIds = null,
+    IReadOnlyList<int>? RelearnMoveIds = null)
 {
+    /// <summary>The level a stat of this Pokémon is worked out at: the stored one in the party, the experience's otherwise.</summary>
+    public int LevelForStats => StatLevel > 0 ? StatLevel : Level;
+
     /// <summary>
     /// The value <see cref="Box"/> takes for a Pokémon travelling with the player instead of
     /// sleeping in the PC.
@@ -64,12 +103,10 @@ public sealed record BoxedPokemon(
     public string DisplayName => string.IsNullOrWhiteSpace(Nickname) ? SpeciesName : Nickname;
 
     /// <summary>
-    /// The line under the name. It only repeats the species when the name is a nickname, so an
-    /// unnamed Pokémon does not read as "Electivire" twice.
+    /// The line under the name: the species, only when the name is a nickname, so an unnamed Pokémon does
+    /// not read as "Electivire" twice. The level has its own plate on screen.
     /// </summary>
-    public string Subtitle => string.IsNullOrWhiteSpace(Nickname)
-        ? $"Nv. {Level}"
-        : $"{SpeciesName} · Nv. {Level}";
+    public string Subtitle => string.IsNullOrWhiteSpace(Nickname) ? string.Empty : SpeciesName;
 
     /// <summary>Sum of the six IVs, out of 186.</summary>
     public int IvTotal => Ivs.Sum();

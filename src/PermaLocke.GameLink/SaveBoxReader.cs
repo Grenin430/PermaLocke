@@ -34,7 +34,7 @@ public sealed class SaveBoxReader(PlayerSave save, ILocationLookup locations, st
         if (path is null)
         {
             return BoxSnapshot.Unavailable(
-                "No se encuentra la partida de Ultra Luna. ¿Has jugado y guardado alguna vez con este emulador?",
+                "No se encuentra tu partida de Ultra Luna.",
                 now);
         }
 
@@ -50,7 +50,7 @@ public sealed class SaveBoxReader(PlayerSave save, ILocationLookup locations, st
         {
             logger.LogError(ex, "No se pudieron leer las cajas de {Path}", path);
             return BoxSnapshot.Unavailable(
-                "No se ha podido leer la partida. El detalle está en la carpeta Logs.", now);
+                "No se ha podido leer la partida.", now);
         }
     }
 
@@ -65,7 +65,7 @@ public sealed class SaveBoxReader(PlayerSave save, ILocationLookup locations, st
         if (!SaveUtil.TryGetSaveFile(path, out var loaded) || loaded is not SAV7USUM game)
         {
             return BoxSnapshot.Unavailable(
-                $"El fichero de partida no se ha podido leer como Ultra Luna: {path}", now);
+                "No se ha podido leer tu partida.", now);
         }
 
         var snapshot = ReadFrom(game, notice, now);
@@ -153,6 +153,10 @@ public sealed class SaveBoxReader(PlayerSave save, ILocationLookup locations, st
         //
         // El equipo sí las lleva guardadas, y esas son las de verdad. Recalcularlas ahí sería
         // tirar lo que escribió el juego para poner un número peor.
+        // Antes de recalcular nada: ResetPartyStats toca la cola, no el bloque firmado, pero lo que se
+        // quiere saber es si la entrada TAL COMO ESTÁ EN LA PARTIDA cuadra con su firma (§97).
+        var intact = pokemon.ChecksumValid;
+
         if (!inParty)
         {
             pokemon.ResetPartyStats();
@@ -165,12 +169,14 @@ public sealed class SaveBoxReader(PlayerSave save, ILocationLookup locations, st
             Form: pokemon.Form,
             SpeciesName: Name(_strings.Species, pokemon.Species, $"#{pokemon.Species}"),
             Nickname: pokemon.IsNicknamed ? pokemon.Nickname : string.Empty,
-            Level: pokemon.CurrentLevel,
+            // Con la curva del mundo instalado: PKHeX acaba en la 807 y a las de gen 8-9 les pone
+            // crecimiento Medio, así que un Ferrocuello de nivel 59 salía de nivel 64 (§134).
+            Level: Data.GameLevels.Of(pokemon),
             IsShiny: pokemon.IsShiny,
             IsEgg: pokemon.IsEgg,
             GenderMark: GenderMarkFor(pokemon.Gender),
             NatureName: Name(_strings.Natures, (int)pokemon.Nature, "?"),
-            AbilityName: Name(_strings.Ability, pokemon.Ability, "?"),
+            AbilityName: Name(_strings.Ability, Data.PokemonAbility.Of(pokemon), "?"),
             HeldItemName: pokemon.HeldItem == 0 ? string.Empty : Name(_strings.Item, pokemon.HeldItem, "?"),
             BallName: Name(_strings.balllist, pokemon.Ball, "?"),
             TrainerName: pokemon.OriginalTrainerName,
@@ -185,7 +191,22 @@ public sealed class SaveBoxReader(PlayerSave save, ILocationLookup locations, st
                 pokemon.EV_SPA, pokemon.EV_SPD, pokemon.EV_SPE],
             Friendship: pokemon.OriginalTrainerFriendship,
             Pid: pokemon.PID,
-            StatsAreComputed: !inParty);
+            StatsAreComputed: !inParty,
+            Ball: pokemon.Ball,
+            Nature: (int)pokemon.Nature,
+            IsIntact: intact,
+            StatLevel: inParty ? pokemon.Stat_Level : 0,
+
+            // Contexto de gen 9 y no el del PK7: la tabla de formas de gen 7 no tiene las de Galar ni
+            // las de Hisui, y un Meowth de forma 2 se quedaría sin nombre (§140).
+            FormName: pokemon.Form > 0
+                ? ShowdownParsing.GetStringFromForm(pokemon.Form, _strings, pokemon.Species, EntityContext.Gen9)
+                : string.Empty,
+
+            // Los cuatro huecos tal cual, vacíos incluidos: el recuerda-movimientos escribe en un hueco
+            // concreto y tiene que saber qué hay en cada uno (§142).
+            MoveIds: [pokemon.Move1, pokemon.Move2, pokemon.Move3, pokemon.Move4],
+            RelearnMoveIds: [pokemon.RelearnMove1, pokemon.RelearnMove2, pokemon.RelearnMove3, pokemon.RelearnMove4]);
     }
 
     /// <summary>The Mars and Venus signs, built from their code points rather than typed.</summary>

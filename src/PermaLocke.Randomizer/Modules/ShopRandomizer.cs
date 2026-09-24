@@ -10,9 +10,17 @@ namespace PermaLocke.Randomizer.Modules;
 /// <param name="Slots">Individual shop slots rewritten.</param>
 /// <param name="MedicineSlots">Ordinary counter slots that stopped selling a status medicine.</param>
 /// <param name="SpecialItems">Objetos de evolucion del mod puestos a la venta.</param>
+/// <param name="ShelfItems">Objects sold from a counter's own fixed list (<see cref="MartShelf"/>).</param>
 public sealed record ShopResult(
     int TechnicalMachineShops, int RestockedShops, int Slots, int MedicineSlots = 0,
-    int SpecialItems = 0, int PricedMachines = 0);
+    int SpecialItems = 0, int PricedMachines = 0, int ShelfItems = 0);
+
+/// <summary>What stocking the special counters did, before anything is priced or saved.</summary>
+/// <param name="Stocked">How many of <see cref="RandomizerOptions.SpecialMartItems"/> found a slot.</param>
+/// <param name="Shelved">How many items went out from the counters' own lists.</param>
+/// <param name="MachinesOnSale">Every TM left on a shelf, which is what gets its price changed.</param>
+public sealed record SpecialStock(
+    int MachineShops, int RestockedShops, int Slots, int Stocked, int Shelved, IReadOnlySet<int> MachinesOnSale);
 
 /// <summary>
 /// Rewrites the mart inventories of the Pokémon Centers, inside <c>Shop.cro</c>.
@@ -36,31 +44,66 @@ public sealed class ShopRandomizer(RomWorkspace workspace, RandomizerOptions opt
         var cro = await File.ReadAllBytesAsync(path, ct);
         var shops = ShopTable.Read(cro);
 
-        var machineShops = 0;
-        var restocked = 0;
-        var slots = 0;
-
         // Se comprueban los nombres ANTES de tocar una sola tienda. Un id que haya caído en otro
         // objeto surtiría la tienda con otra cosa y no fallaría nunca (§52), y aquí es peor de lo
-        // normal: son los objetos con los que evolucionan los Pokémon del mod, así que vender el
+        // normal: son los objetos con los que evolucionan los Pokémon, así que vender el
         // equivocado deja una evolución sin forma de conseguirse y nadie sabría por qué.
         var wanted = options.SpecialMartItems;
         VerifyNames(wanted, itemNames);
+        VerifyNames([.. options.SpecialMartShelves.SelectMany(shelf => shelf.Items)], itemNames);
+        ValidateShelves(options, cro, shops);
 
-        var stocked = 0;
-        var priced = new HashSet<int>();
         var medicine = ReplaceMedicines(options, cro, shops, itemNames);
+        var stock = StockSpecials(options, cro, shops, random, machines);
 
-        // Por donde se empieza a surtir, y eso decide cuanto tiene que andar el jugador.
-        //
-        // En orden de indice se empieza por el 8, que es Konikoni -- ya bien entrada la region --
-        // y la lista se reparte entre tres mostradores. Con el orden puesto en el fichero se
-        // empieza por Hau'oli (8 huecos) y sigue por la Ruta 2 (12): veinte huecos para dieciocho
-        // objetos, o sea la lista entera en los dos primeros mostradores del juego.
-        //
-        // Los indices salen de MEDIRLOS en la partida, que es la unica via: el cartucho no dice
-        // que mostrador es de que pueblo. Un indice que no exista se ignora en vez de fallar: la
-        // lista es una preferencia, y lo que no se nombre sigue yendo en orden.
+        await File.WriteAllBytesAsync(path, cro, ct);
+        await VerifyAsync(path, machines, ct);
+
+        if (stock.Stocked < wanted.Count)
+        {
+            throw new InvalidDataException(
+                $"Solo cupieron {stock.Stocked} de los {wanted.Count} objetos en las tiendas especiales. "
+                + "Quita objetos de specialMartItems o el resto no se podrá comprar en ninguna parte.");
+        }
+
+        // Cada objeto a su precio propio si lo lleva, y si no al de su lista.
+        await PriceAsync(mod,
+            [
+                .. wanted.Select(item => (item.Id, item.Price > 0 ? item.Price : options.SpecialMartItemPrice)),
+                .. options.SpecialMartShelves.SelectMany(shelf =>
+                    shelf.Items.Select(item => (item.Id, item.Price > 0 ? item.Price : shelf.Price))),
+            ], ct);
+        await PriceMachinesAsync(mod, stock.MachinesOnSale, ct);
+        return new ShopResult(stock.MachineShops, stock.RestockedShops, stock.Slots, medicine, stock.Stocked,
+            options.MachineMartPrice > 0 ? stock.MachinesOnSale.Count : 0, stock.Shelved);
+    }
+
+    /// <summary>
+    /// Stocks every special counter: TMs where TMs were, a counter's own list where it has one, and
+    /// the spilling list of <see cref="RandomizerOptions.SpecialMartItems"/> through the rest.
+    /// </summary>
+    /// <remarks>
+    /// Static and without a cartridge so it can be tested on a made-up <c>Shop.cro</c>. It trusts
+    /// <see cref="ValidateShelves"/> to have run: a shelf naming a TM counter would be ignored here,
+    /// not refused.
+    /// </remarks>
+    public static SpecialStock StockSpecials(RandomizerOptions options, byte[] cro,
+        IReadOnlyList<ShopInventory> shops, IRandomSource random, int[] machines)
+    {
+        var wanted = options.SpecialMartItems;
+        var shelves = options.SpecialMartShelves.ToDictionary(shelf => shelf.Shop);
+        var machineShops = 0;
+        var restocked = 0;
+        var slots = 0;
+        var stocked = 0;
+        var shelved = 0;
+        var priced = new HashSet<int>();
+
+        // Por donde se empieza a surtir la lista que se derrama, y eso decide cuanto tiene que
+        // andar el jugador. Los indices salen de MEDIRLOS en la partida o de las etiquetas de pk3DS
+        // (§145): el cartucho no dice que mostrador es de que pueblo. Un indice que no exista se
+        // ignora en vez de fallar: la lista es una preferencia, y lo que no se nombre sigue yendo
+        // en orden. Los mostradores con lista propia se saltan: su sitio ya esta decidido.
         var preferred = options.SpecialMartOrder;
 
         var special = shops
@@ -74,10 +117,10 @@ public sealed class ShopRandomizer(RomWorkspace workspace, RandomizerOptions opt
 
         foreach (var shop in special)
         {
-            ct.ThrowIfCancellationRequested();
-
             if (ShopTable.SellsTechnicalMachines(cro, shop))
             {
+                // Las de MT gastan numeros aleatorios en su orden de siempre: un mostrador con lista
+                // propia no gasta ninguno, asi que ponerle una no mueve las MT de nadie.
                 FillWithMachines(cro, shop, random, machines);
                 machineShops++;
 
@@ -87,6 +130,18 @@ public sealed class ShopRandomizer(RomWorkspace workspace, RandomizerOptions opt
                 {
                     priced.Add(ShopTable.GetItem(cro, shop, slot));
                 }
+            }
+            else if (shelves.TryGetValue(shop.Index, out var shelf))
+            {
+                // Su lista, en orden, y lo que sobre de estanteria al articulo de relleno.
+                for (var slot = 0; slot < shop.Count; slot++)
+                {
+                    ShopTable.SetItem(cro, shop, slot,
+                        slot < shelf.Items.Count ? shelf.Items[slot].Id : options.NonMachineMartItem);
+                }
+
+                shelved += Math.Min(shelf.Items.Count, shop.Count);
+                restocked++;
             }
             else
             {
@@ -103,20 +158,81 @@ public sealed class ShopRandomizer(RomWorkspace workspace, RandomizerOptions opt
             slots += shop.Count;
         }
 
-        await File.WriteAllBytesAsync(path, cro, ct);
-        await VerifyAsync(path, machines, ct);
+        return new SpecialStock(machineShops, restocked, slots, stocked, shelved, priced);
+    }
 
-        if (stocked < wanted.Count)
+    /// <summary>
+    /// Refuses, before anything is written, any shelf that would leave an item unbuyable or priced
+    /// twice.
+    /// </summary>
+    /// <remarks>
+    /// Each item may appear once across the shelves and the spilling list: the price is a field of
+    /// the item, not of the shelf, so an item in two lists at two prices would end up costing
+    /// whichever was written last, and nobody would be told.
+    /// </remarks>
+    public static void ValidateShelves(RandomizerOptions options, byte[] cro, IReadOnlyList<ShopInventory> shops)
+    {
+        const int maxPrice = ushort.MaxValue * 10;
+        var seenShops = new HashSet<int>();
+        var seenItems = options.SpecialMartItems.Select(item => item.Id).ToHashSet();
+
+        // El precio propio de un objeto pasa por la misma puerta que el de su lista, y aqui, antes
+        // de escribir: un 35 se guardaria como 30 sin decir nada.
+        foreach (var item in options.SpecialMartItems.Concat(options.SpecialMartShelves.SelectMany(s => s.Items)))
         {
-            throw new InvalidDataException(
-                $"Solo cupieron {stocked} de los {wanted.Count} objetos en las tiendas especiales. "
-                + "Quita objetos de specialMartItems o el resto no se podrá comprar en ninguna parte.");
+            if (item.Price < 0 || item.Price % 10 != 0 || item.Price > maxPrice)
+            {
+                throw new InvalidDataException(
+                    $"El precio {item.Price} de «{item.Name}» no vale: múltiplo de 10 y como mucho {maxPrice}.");
+            }
         }
 
-        await PriceAsync(mod, wanted, ct);
-        await PriceMachinesAsync(mod, priced, ct);
-        return new ShopResult(machineShops, restocked, slots, medicine, stocked,
-            options.MachineMartPrice > 0 ? priced.Count : 0);
+        foreach (var shelf in options.SpecialMartShelves)
+        {
+            var shop = shops.FirstOrDefault(s => s.Index == shelf.Shop)
+                ?? throw new InvalidDataException(
+                    $"La tienda {shelf.Shop} ({shelf.Place}) no existe: hay {shops.Count}. No se toca ninguna.");
+
+            if (shop.Index < ShopTable.RegularMartCount)
+            {
+                throw new InvalidDataException(
+                    $"La tienda {shelf.Shop} ({shelf.Place}) es un mostrador normal, no uno especial.");
+            }
+
+            if (ShopTable.SellsTechnicalMachines(cro, shop))
+            {
+                throw new InvalidDataException(
+                    $"La tienda {shelf.Shop} ({shelf.Place}) es de MT: sus huecos los sortea el módulo de MT.");
+            }
+
+            if (!seenShops.Add(shelf.Shop))
+            {
+                throw new InvalidDataException($"La tienda {shelf.Shop} ({shelf.Place}) tiene dos listas.");
+            }
+
+            if (shelf.Items.Count == 0 || shelf.Items.Count > shop.Count)
+            {
+                throw new InvalidDataException(
+                    $"La tienda {shelf.Shop} ({shelf.Place}) tiene {shop.Count} huecos y la lista trae "
+                    + $"{shelf.Items.Count} objetos. Lo que no cabe no se podría comprar en ninguna parte.");
+            }
+
+            if (shelf.Price < 0 || shelf.Price % 10 != 0 || shelf.Price > maxPrice)
+            {
+                throw new InvalidDataException(
+                    $"El precio {shelf.Price} de {shelf.Place} no vale: múltiplo de 10 y como mucho {maxPrice}.");
+            }
+
+            foreach (var item in shelf.Items)
+            {
+                if (!seenItems.Add(item.Id))
+                {
+                    throw new InvalidDataException(
+                        $"«{item.Name}» ({item.Id}) está en dos listas de tiendas. El precio es del objeto "
+                        + "y no de la tienda, así que solo puede tener uno.");
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -145,32 +261,37 @@ public sealed class ShopRandomizer(RomWorkspace workspace, RandomizerOptions opt
     /// into some other number and the shop would quietly charge it, so both are refused rather than
     /// rounded.
     /// </remarks>
-    private async Task PriceAsync(LayeredFsMod mod, IReadOnlyList<MartItem> items,
+    private static async Task PriceAsync(LayeredFsMod mod, IReadOnlyList<(int Id, int Price)> prices,
         CancellationToken ct)
     {
         const int max = ushort.MaxValue * 10;
-        var price = options.SpecialMartItemPrice;
 
-        if (price <= 0 || items.Count == 0)
+        // Un precio de cero deja el objeto como este: es lo que significa en la configuracion.
+        var items = prices.Where(entry => entry.Price > 0).ToList();
+
+        if (items.Count == 0)
         {
             return;
         }
 
-        if (price % 10 != 0 || price > max)
+        foreach (var (_, price) in items)
         {
-            throw new ArgumentOutOfRangeException(nameof(options),
-                $"El precio {price} no vale: tiene que ser múltiplo de 10 y como mucho {max}.");
+            if (price % 10 != 0 || price > max)
+            {
+                throw new ArgumentOutOfRangeException(nameof(prices),
+                    $"El precio {price} no vale: tiene que ser múltiplo de 10 y como mucho {max}.");
+            }
         }
 
         var path = mod.Stage(GameFiles.Item);
 
         using (var patcher = new GarcPatcher(path))
         {
-            foreach (var item in items)
+            foreach (var (id, price) in items)
             {
-                var entry = patcher.Read(item.Id);
+                var entry = patcher.Read(id);
                 BitConverter.GetBytes((ushort)(price / 10)).CopyTo(entry, 0);
-                patcher.Write(item.Id, entry);
+                patcher.Write(id, entry);
             }
         }
 
@@ -178,14 +299,14 @@ public sealed class ShopRandomizer(RomWorkspace workspace, RandomizerOptions opt
         {
             using var back = new GarcPatcher(path);
 
-            foreach (var item in items)
+            foreach (var (id, price) in items)
             {
-                var written = BitConverter.ToUInt16(back.Read(item.Id), 0) * 10;
+                var written = BitConverter.ToUInt16(back.Read(id), 0) * 10;
 
                 if (written != price)
                 {
                     throw new InvalidDataException(
-                        $"El objeto {item.Id} quedó a {written} y se pedían {price}.");
+                        $"El objeto {id} quedó a {written} y se pedían {price}.");
                 }
             }
         }, ct);
@@ -353,9 +474,29 @@ public sealed class ShopRandomizer(RomWorkspace workspace, RandomizerOptions opt
         }
 
         var valid = machines.ToHashSet();
+        var shelves = options.SpecialMartShelves.ToDictionary(shelf => shelf.Shop);
+
         foreach (var shop in after.Where(s => s.Index >= ShopTable.RegularMartCount))
         {
             var wasMachineShop = ShopTable.SellsTechnicalMachines(vanilla, before[shop.Index]);
+
+            // Un mostrador con lista propia tiene que venderla tal cual, hueco por hueco.
+            if (shelves.TryGetValue(shop.Index, out var shelf))
+            {
+                for (var slot = 0; slot < shop.Count; slot++)
+                {
+                    var expected = slot < shelf.Items.Count ? shelf.Items[slot].Id : options.NonMachineMartItem;
+
+                    if (ShopTable.GetItem(patched, shop, slot) != expected)
+                    {
+                        throw new InvalidDataException(
+                            $"La tienda {shop.Index} ({shelf.Place}) no vende en el hueco {slot} lo que dice su lista.");
+                    }
+                }
+
+                continue;
+            }
+
             for (var slot = 0; slot < shop.Count; slot++)
             {
                 var item = ShopTable.GetItem(patched, shop, slot);

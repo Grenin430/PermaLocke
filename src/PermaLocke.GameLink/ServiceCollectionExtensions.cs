@@ -28,7 +28,8 @@ public static class ServiceCollectionExtensions
             sp.GetRequiredService<AzaharGameWriter>(),
             Path.Combine(backupFolder, "objetos-retirados.txt"),
             Path.Combine(backupFolder, "mochila.txt"),
-            sp.GetRequiredService<ILogger<BagService>>()));
+            sp.GetRequiredService<ILogger<BagService>>(),
+            sp.GetRequiredService<Field.SavedGameCache>()));
 
         services.TryAddSingleton(sp => new AzaharGameWriter(
             sp.GetRequiredService<AzaharRpcClient>(),
@@ -72,17 +73,47 @@ public static class ServiceCollectionExtensions
             backupFolder,
             sp.GetRequiredService<ILogger<SaveEvTrainer>>()));
         services.TryAddSingleton<IEvTrainer>(sp => sp.GetRequiredService<SaveEvTrainer>());
-        services.TryAddSingleton<ZoneService>();
-        services.TryAddSingleton<IZoneProvider>(sp => sp.GetRequiredService<ZoneService>());
+        // El recuerda-movimientos (§142): mismas guardas que los EV, y lo que se puede recordar sale del mundo
+        // instalado, no de las tablas del cartucho.
+        services.TryAddSingleton<SaveMoveTeacher>(sp => new SaveMoveTeacher(
+            sp.GetRequiredService<PlayerSave>(),
+            backupFolder,
+            sp.GetRequiredService<ILogger<SaveMoveTeacher>>()));
+        services.TryAddSingleton<IMoveTeacher>(sp => sp.GetRequiredService<SaveMoveTeacher>());
+        services.TryAddSingleton<IMoveCatalog>(_ => new WorldMoveCatalog(language));
+        services.TryAddSingleton<IStatForecast, WorldStatForecast>();
+        // La zona, los contadores del juego y la Pokédex (§117). FieldZoneReader necesita la MapTable, que
+        // registra quien sabe dónde está Data/mapas.json.
+        services.TryAddSingleton<Field.SavedGameCache>();
+        services.TryAddSingleton(sp => new Field.FieldZoneReader(
+            sp.GetRequiredService<AzaharRpcClient>(),
+            sp.GetRequiredService<Field.SavedGameCache>(),
+            sp.GetRequiredService<Core.Domain.MapTable>(),
+            Path.Combine(backupFolder, "registros-de-posicion.txt"),
+            sp.GetRequiredService<ILogger<Field.FieldZoneReader>>()));
+        services.TryAddSingleton<IZoneProvider>(sp => sp.GetRequiredService<Field.FieldZoneReader>());
+        services.TryAddSingleton<Field.BattleCounterReader>();
+        services.TryAddSingleton<IBattleCounters>(sp => sp.GetRequiredService<Field.BattleCounterReader>());
+        services.TryAddSingleton<IOwnedSpecies, Field.SaveDex>();
         services.TryAddSingleton<IItemWithholder>(sp => sp.GetRequiredService<BagService>());
         services.TryAddSingleton(sp => new AzaharGameStateProvider(
             sp.GetRequiredService<AzaharRpcClient>(),
             sp.GetRequiredService<ISpeciesLookup>(),
             sp.GetRequiredService<ILocationLookup>(),
             Path.Combine(backupFolder, "equipo.txt"),
-            sp.GetRequiredService<ILogger<AzaharGameStateProvider>>()));
+            sp.GetRequiredService<ILogger<AzaharGameStateProvider>>(),
+            savedPartyKeys: SavedPartyKeys(sp.GetRequiredService<Field.SavedGameCache>())));
         services.TryAddSingleton<IGameStateProvider>(sp => sp.GetRequiredService<AzaharGameStateProvider>());
 
         return services;
     }
+
+    /// <summary>
+    /// The encryption constants of the party in the last save, or null when there is no save: what tells the provider
+    /// whether a full sweep has anything to find.
+    /// </summary>
+    private static Func<IReadOnlyList<uint>?> SavedPartyKeys(Field.SavedGameCache saved) => () =>
+        saved.Load() is { } game
+            ? [.. game.Save.PartyData.Select(pokemon => pokemon.EncryptionConstant).Where(key => key != 0)]
+            : null;
 }

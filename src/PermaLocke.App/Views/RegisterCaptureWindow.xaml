@@ -3,167 +3,201 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:rules="clr-namespace:PermaLocke.Rules;assembly=PermaLocke.Rules"
         xmlns:conv="clr-namespace:PermaLocke.App.Converters"
+        xmlns:views="clr-namespace:PermaLocke.App.Views"
+        xmlns:pixel="clr-namespace:PermaLocke.App.Views.Pixel"
         Title="PermaLocke — Registrar captura"
-        Height="660" Width="640"
+        Height="760" Width="680"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner"
-        FontFamily="{StaticResource UiFont}"
-        UseLayoutRounding="True"
-        Background="{StaticResource AppBackgroundBrush}">
+        UseLayoutRounding="True" SnapsToDevicePixels="True"
+        Background="{StaticResource PxBaseBrush}">
 
     <Window.Resources>
         <conv:DisplayNameConverter x:Key="DisplayName" />
+        <Style TargetType="ScrollBar" BasedOn="{StaticResource PxScrollBar}" />
+        <Style x:Key="Label" TargetType="pixel:PixelText">
+            <Setter Property="Scale" Value="2" />
+            <Setter Property="Tight" Value="True" />
+            <Setter Property="Colour" Value="{StaticResource PxTextFaint}" />
+            <Setter Property="Margin" Value="2,0,0,7" />
+        </Style>
+        <DataTemplate x:Key="PlainItem">
+            <pixel:PixelText Text="{Binding}" Scale="2" Tight="True" Colour="{StaticResource PxText}" />
+        </DataTemplate>
     </Window.Resources>
 
-    <Grid Margin="20,18,20,18">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
+    <!-- En píxeles, como el resto de la aplicación (§176). -->
+    <Grid>
+        <pixel:PixelBackdrop Base="{StaticResource PxBase}" />
 
-        <StackPanel Grid.Row="0" Margin="0,0,0,16">
-            <TextBlock Text="REGISTRAR CAPTURA" Style="{StaticResource SectionTitle}" FontSize="24" />
-            <TextBlock Style="{StaticResource Muted}" FontSize="12" Margin="0,2,0,0"
-                       Text="Las reglas se evalúan mientras escribes; el veredicto de abajo es el que se guardará." />
-        </StackPanel>
+        <Grid Margin="18,16,18,18">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
 
-        <!-- Form -->
-        <Border Grid.Row="1" Style="{StaticResource Inset}" Padding="16,14" Margin="0,0,0,14">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="14" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
+            <StackPanel Grid.Row="0" Margin="2,0,0,14">
+                <pixel:PixelText Text="REGISTRAR CAPTURA" Scale="4" Tight="True" Colour="{StaticResource PxText}"
+                                 Shadow="{StaticResource PxShadow}" />
+                <pixel:PixelText Text="Abajo verás si la captura cumple las reglas." Scale="2" Tight="True" Margin="0,8,0,0"
+                                 Colour="{StaticResource PxTextDim}" />
+            </StackPanel>
 
-                <StackPanel Grid.Row="0" Grid.Column="0">
-                    <TextBlock Text="ESPECIE" Style="{StaticResource StatLabel}" Margin="0,0,0,5" />
-                    <ComboBox ItemsSource="{Binding Species}"
-                              SelectedItem="{Binding SelectedSpecies, Mode=TwoWay}"
-                              DisplayMemberPath="Name"
-                              IsEditable="True"
-                              IsTextSearchEnabled="True"
-                              TextSearch.TextPath="Name"
-                              MaxDropDownHeight="240" />
-                </StackPanel>
+            <!-- El formulario -->
+            <pixel:PixelWindow Grid.Row="1" Title="LA CAPTURA" Icon="IconGacha" Margin="0,0,0,12">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="14" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
 
-                <StackPanel Grid.Row="0" Grid.Column="2">
-                    <TextBlock Text="ZONA" Style="{StaticResource StatLabel}" Margin="0,0,0,5" />
-                    <ComboBox ItemsSource="{Binding KnownLocations}"
-                              Text="{Binding LocationName, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
-                              IsEditable="True" />
-                </StackPanel>
+                    <StackPanel Grid.Row="0" Grid.Column="0">
+                        <pixel:PixelText Text="ESPECIE" Style="{StaticResource Label}" />
+                        <ComboBox ItemsSource="{Binding Species}"
+                                  SelectedItem="{Binding SelectedSpecies, Mode=TwoWay}"
+                                  Style="{StaticResource PxEditableComboBox}"
+                                  IsTextSearchEnabled="True"
+                                  TextSearch.TextPath="Name"
+                                  MaxDropDownHeight="260">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <pixel:PixelText Text="{Binding Name}" Scale="2" Tight="True" Colour="{StaticResource PxText}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
 
-                <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,14,0,0">
-                    <TextBlock Text="TIPO DE ENCUENTRO" Style="{StaticResource StatLabel}" Margin="0,0,0,5" />
-                    <!-- El dominio está en inglés y el jugador lee español: la lista sigue siendo
-                         de enums, y solo la etiqueta pasa por el traductor. -->
-                    <ComboBox ItemsSource="{Binding EncounterTypes}"
-                              SelectedItem="{Binding EncounterType, Mode=TwoWay}">
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding Converter={StaticResource DisplayName}}" />
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
-                </StackPanel>
+                    <StackPanel Grid.Row="0" Grid.Column="2">
+                        <pixel:PixelText Text="ZONA" Style="{StaticResource Label}" />
+                        <ComboBox ItemsSource="{Binding KnownLocations}"
+                                  Text="{Binding LocationName, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                  Style="{StaticResource PxEditableComboBox}"
+                                  ItemTemplate="{StaticResource PlainItem}" MaxDropDownHeight="260" />
+                    </StackPanel>
 
-                <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,14,0,0">
-                    <TextBlock Text="NIVEL" Style="{StaticResource StatLabel}" Margin="0,0,0,5" />
-                    <TextBox Text="{Binding Level, Mode=TwoWay}" Style="{StaticResource Field}" />
-                </StackPanel>
+                    <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,14,0,0">
+                        <pixel:PixelText Text="TIPO DE ENCUENTRO" Style="{StaticResource Label}" />
+                        <!-- El dominio está en inglés y el jugador lee español: la lista sigue siendo de enums, y solo
+                             la etiqueta pasa por el traductor. -->
+                        <ComboBox ItemsSource="{Binding EncounterTypes}"
+                                  SelectedItem="{Binding EncounterType, Mode=TwoWay}"
+                                  Style="{StaticResource PxComboBox}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <pixel:PixelText Text="{Binding Converter={StaticResource DisplayName}}" Scale="2" Tight="True"
+                                                     Colour="{StaticResource PxText}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
 
-                <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,14,0,0">
-                    <TextBlock Text="MOTE (OPCIONAL)" Style="{StaticResource StatLabel}" Margin="0,0,0,5" />
-                    <TextBox Text="{Binding Nickname, Mode=TwoWay}" Style="{StaticResource Field}" />
-                </StackPanel>
+                    <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,14,0,0">
+                        <pixel:PixelText Text="NIVEL" Style="{StaticResource Label}" />
+                        <TextBox Text="{Binding Level, Mode=TwoWay}" Style="{StaticResource PxTextBox}" />
+                    </StackPanel>
 
-                <CheckBox Grid.Row="2" Grid.Column="2" Margin="0,14,0,0"
-                          Content="✨ Es variocolor"
-                          IsChecked="{Binding IsShiny, Mode=TwoWay}"
-                          VerticalAlignment="Bottom" Height="34" />
+                    <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,14,0,0">
+                        <pixel:PixelText Text="MOTE (OPCIONAL)" Style="{StaticResource Label}" />
+                        <TextBox Text="{Binding Nickname, Mode=TwoWay}" Style="{StaticResource PxTextBox}" />
+                    </StackPanel>
+
+                    <CheckBox Grid.Row="2" Grid.Column="2" Margin="2,14,0,10" VerticalAlignment="Bottom"
+                              Content="Es variocolor" Style="{StaticResource PxCheckBox}"
+                              IsChecked="{Binding IsShiny, Mode=TwoWay}" />
+                </Grid>
+            </pixel:PixelWindow>
+
+            <!-- El veredicto. El color lo pone el resultado de las reglas, así que la ventana dice si va a pasar
+                 antes de que se pulse nada. -->
+            <Grid Grid.Row="2">
+                <views:PixelPanel>
+                    <views:PixelPanel.Style>
+                        <Style TargetType="views:PixelPanel">
+                            <Setter Property="Fill" Value="{StaticResource PxFace}" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Outcome}" Value="{x:Static rules:RuleOutcome.Blocked}">
+                                    <Setter Property="Fill" Value="{StaticResource PxBadDeep}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Outcome}" Value="{x:Static rules:RuleOutcome.Warning}">
+                                    <Setter Property="Fill" Value="{StaticResource PxWarnDeep}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Outcome}" Value="{x:Static rules:RuleOutcome.AllowedWithException}">
+                                    <Setter Property="Fill" Value="{StaticResource PxGoodDeep}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </views:PixelPanel.Style>
+                </views:PixelPanel>
+
+                <DockPanel Margin="16,13,22,18">
+                    <pixel:PixelText DockPanel.Dock="Top" Text="{Binding VerdictTitle}" Scale="3" Tight="True"
+                                     Shadow="{StaticResource PxShadow}">
+                        <pixel:PixelText.Style>
+                            <Style TargetType="pixel:PixelText">
+                                <Setter Property="Colour" Value="{StaticResource PxAccentLight}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Outcome}" Value="{x:Static rules:RuleOutcome.Blocked}">
+                                        <Setter Property="Colour" Value="{StaticResource PxBad}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Outcome}" Value="{x:Static rules:RuleOutcome.Warning}">
+                                        <Setter Property="Colour" Value="{StaticResource PxWarn}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Outcome}" Value="{x:Static rules:RuleOutcome.AllowedWithException}">
+                                        <Setter Property="Colour" Value="{StaticResource PxGood}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </pixel:PixelText.Style>
+                    </pixel:PixelText>
+                    <pixel:PixelText DockPanel.Dock="Top" Text="{Binding VerdictMessage}" Scale="2" Wrap="True"
+                                     Colour="{StaticResource PxText}" Margin="0,8,0,12" />
+
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <ItemsControl ItemsSource="{Binding Details}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,3,8,3">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="190" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <pixel:PixelText Grid.Column="0" Text="{Binding Label}" Scale="2" Tight="True" Trim="True"
+                                                         Colour="{StaticResource PxAccent}" />
+                                        <pixel:PixelText Grid.Column="1" Text="{Binding Value}" Scale="2" Wrap="True"
+                                                         Colour="{StaticResource PxText}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </DockPanel>
             </Grid>
-        </Border>
 
-        <!-- Verdict. El borde lo pinta el resultado de las reglas, así que la ventana dice si va
-             a pasar antes de que se pulse nada. -->
-        <Border Grid.Row="2" BorderThickness="1.5" Padding="16"
-                CornerRadius="{StaticResource RadiusMedium}"
-                Background="{StaticResource SurfaceBrush}">
-            <Border.Style>
-                <Style TargetType="Border">
-                    <Setter Property="BorderBrush" Value="{StaticResource AccentDimBrush}" />
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding Outcome}" Value="{x:Static rules:RuleOutcome.Blocked}">
-                            <Setter Property="BorderBrush" Value="{StaticResource DangerBrush}" />
-                            <Setter Property="Background" Value="{StaticResource DangerDeepBrush}" />
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding Outcome}" Value="{x:Static rules:RuleOutcome.Warning}">
-                            <Setter Property="BorderBrush" Value="{StaticResource WarningBrush}" />
-                            <Setter Property="Background" Value="{StaticResource WarningDeepBrush}" />
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding Outcome}"
-                                     Value="{x:Static rules:RuleOutcome.AllowedWithException}">
-                            <Setter Property="BorderBrush" Value="{StaticResource SuccessBrush}" />
-                            <Setter Property="Background" Value="{StaticResource SuccessDeepBrush}" />
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </Border.Style>
+            <StackPanel Grid.Row="3" Margin="0,14,0,0">
+                <pixel:PixelText Text="{Binding ErrorMessage}" Scale="2" Wrap="True" Colour="{StaticResource PxBad}"
+                                 Margin="2,0,0,10">
+                    <pixel:PixelText.Style>
+                        <Style TargetType="pixel:PixelText">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ErrorMessage}" Value="">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </pixel:PixelText.Style>
+                </pixel:PixelText>
 
-            <DockPanel>
-                <TextBlock DockPanel.Dock="Top" Text="{Binding VerdictTitle}"
-                           Style="{StaticResource CardTitle}" FontSize="16" />
-                <TextBlock DockPanel.Dock="Top" Text="{Binding VerdictMessage}"
-                           Style="{StaticResource Muted}" FontSize="12.5" Margin="0,4,0,12" />
-
-                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                    <ItemsControl ItemsSource="{Binding Details}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Grid Margin="0,3">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="180" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="{Binding Label}"
-                                               Style="{StaticResource Mono}" FontSize="11.5"
-                                               Foreground="{StaticResource AccentBrush}" />
-                                    <TextBlock Grid.Column="1" Text="{Binding Value}"
-                                               Style="{StaticResource Body}" FontSize="12" />
-                                </Grid>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </ScrollViewer>
-            </DockPanel>
-        </Border>
-
-        <StackPanel Grid.Row="3" Margin="0,14,0,0">
-            <TextBlock Text="{Binding ErrorMessage}" FontSize="12"
-                       Foreground="{StaticResource DangerBrush}" Margin="0,0,0,10">
-                <TextBlock.Style>
-                    <Style TargetType="TextBlock" BasedOn="{StaticResource Body}">
-                        <Setter Property="Visibility" Value="Visible" />
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding ErrorMessage}" Value="">
-                                <Setter Property="Visibility" Value="Collapsed" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </TextBlock.Style>
-            </TextBlock>
-
-            <Button Content="{Binding RegisterLabel}" Command="{Binding RegisterCommand}"
-                    Style="{StaticResource PrimaryButton}" Padding="22,10"
-                    HorizontalAlignment="Right" />
-        </StackPanel>
+                <Button Content="{Binding RegisterLabel}" Command="{Binding RegisterCommand}"
+                        Style="{StaticResource PxButton}" HorizontalAlignment="Right" />
+            </StackPanel>
+        </Grid>
     </Grid>
 </Window>

@@ -25,12 +25,23 @@ public static class GameWindow
     {
         foreach (var name in new[] { "azahar", "citra" })
         {
-            foreach (var process in System.Diagnostics.Process.GetProcessesByName(name))
+            var processes = System.Diagnostics.Process.GetProcessesByName(name);
+            try
             {
-                if (process.MainWindowHandle != IntPtr.Zero)
+                foreach (var process in processes)
                 {
-                    return process.MainWindowHandle;
+                    try
+                    {
+                        var handle = process.MainWindowHandle;
+                        if (handle != IntPtr.Zero) return handle;
+                    }
+                    catch (InvalidOperationException) { } // Closed during the lookup.
+                    catch (System.ComponentModel.Win32Exception) { }
                 }
+            }
+            finally
+            {
+                foreach (var process in processes) process.Dispose();
             }
         }
 
@@ -70,6 +81,17 @@ public static class GameWindow
             ? new Rect(info.Work.Left, info.Work.Top,
                 info.Work.Right - info.Work.Left, info.Work.Bottom - info.Work.Top)
             : SystemParameters.WorkArea;
+    }
+
+    /// <summary>The window's monitor work area, always in screen pixels, including the fallback.</summary>
+    public static (int Left, int Top, int Width, int Height) WorkArea(IntPtr window)
+    {
+        var monitor = MonitorFromWindow(window, NearestMonitor);
+        var info = new MonitorInfo { Size = Marshal.SizeOf<MonitorInfo>() };
+        return monitor != IntPtr.Zero && GetMonitorInfo(monitor, ref info)
+            && info.Work.Right > info.Work.Left && info.Work.Bottom > info.Work.Top
+            ? (info.Work.Left, info.Work.Top, info.Work.Right - info.Work.Left, info.Work.Bottom - info.Work.Top)
+            : OverlayWindows.WorkArea();
     }
 
     /// <summary>
@@ -144,6 +166,129 @@ public static class GameWindow
 
         return found;
     }
+
+    /// <summary>
+    /// Where the 3DS top screen is drawn, as the corner in screen pixels and the size of one native
+    /// pixel, or null when the emulator's picture cannot be found.
+    /// </summary>
+    /// <remarks>
+    /// Azahar's default layout, which is the player's: 400×480 — the 400×240 top screen with the bottom
+    /// one under it — scaled to fit the picture and centred. Shared by everything that reads the game off
+    /// the screen, so the bar watcher and the killcam cannot disagree about where the game is.
+    /// </remarks>
+    public static (double Left, double Top, double Scale)? TopScreen() => TopScreen(Handle());
+
+    /// <inheritdoc cref="TopScreen()"/>
+    public static (double Left, double Top, double Scale)? TopScreen(IntPtr window)
+    {
+        if (RenderBox(window) is not { } box)
+        {
+            return null;
+        }
+
+        var scale = Math.Min(box.Width / 400.0, box.Height / 480.0);
+
+        return scale <= 0
+            ? null
+            : (box.Left + ((box.Width - (400 * scale)) / 2), box.Top + ((box.Height - (480 * scale)) / 2), scale);
+    }
+
+    /// <summary>
+    /// Whether what is on screen over a box, in screen pixels, really is the emulator: no other window in
+    /// front of it and none of it off the monitor.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The killcam and the bar watcher copy the screen, not the emulator, so whatever sits in front of
+    /// Azahar gets read as if it were the game. Found on the first killcam rehearsal: 93 frames recorded
+    /// and read back without a fault, and every one of them was another game running full screen over the
+    /// emulator. A replay like that next to a death would be a false record.
+    /// </para>
+    /// <para>
+    /// Nine points of the box — corners, edges and centre — are asked which window is there, and all nine
+    /// have to belong to the emulator. PermaLocke's overlays do not answer: they are layered and
+    /// click-through, so hit testing goes past them — measured with such a window over Azahar, the point
+    /// still answered <c>azahar</c>. That is not the same as the capture leaving them out, which it does
+    /// not: the death ceremony tells the killcam itself when it covers the game. A window that is not
+    /// click-through does answer, so the check errs towards losing a frame, never towards keeping a wrong
+    /// one.
+    /// </para>
+    /// </remarks>
+    public static bool Shows(IntPtr window, double left, double top, double width, double height) =>
+        FirstBlocked(window, left, top, width, height) is null;
+
+    /// <summary>
+    /// What is in front of the emulator over a box, in words for the log, or null when it is the emulator
+    /// that shows.
+    /// </summary>
+    public static string? Hiding(IntPtr window, double left, double top, double width, double height)
+    {
+        if (FirstBlocked(window, left, top, width, height) is not { } blocked)
+        {
+            return null;
+        }
+
+        if (blocked.Found == IntPtr.Zero)
+        {
+            return window == IntPtr.Zero ? "no hay ventana del emulador" : $"ninguna ventana en {blocked.Spot.X},{blocked.Spot.Y}";
+        }
+
+        var root = GetAncestor(blocked.Found, RootWindow);
+        GetWindowThreadProcessId(root, out var process);
+        var name = new System.Text.StringBuilder(128);
+        GetClassName(blocked.Found, name, name.Capacity);
+
+        string owner;
+
+        try
+        {
+            owner = System.Diagnostics.Process.GetProcessById((int)process).ProcessName;
+        }
+        catch (ArgumentException)
+        {
+            owner = $"proceso {process}";
+        }
+
+        return $"{owner} ({name}, raíz {root}, emulador {window}) en {blocked.Spot.X},{blocked.Spot.Y}";
+    }
+
+    private static (Spot Spot, IntPtr Found)? FirstBlocked(IntPtr window, double left, double top, double width, double height)
+    {
+        if (window == IntPtr.Zero || width <= 0 || height <= 0)
+        {
+            return (new Spot(), IntPtr.Zero);
+        }
+
+        foreach (var fy in Probes)
+        {
+            foreach (var fx in Probes)
+            {
+                var spot = new Spot { X = (int)Math.Floor(left + (width * fx)), Y = (int)Math.Floor(top + (height * fy)) };
+                var found = WindowFromPoint(spot);
+
+                if (found == IntPtr.Zero || GetAncestor(found, RootWindow) != window)
+                {
+                    return (spot, found);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    [DllImport("user32.dll")]
+    private static extern uint GetWindowThreadProcessId(IntPtr window, out uint process);
+
+    /// <summary>Where in the box to look: just inside each edge, and the middle.</summary>
+    private static readonly double[] Probes = [0.02, 0.5, 0.98];
+
+    private const uint RootWindow = 2;
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr WindowFromPoint(Spot point);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetAncestor(IntPtr window, uint flags);
 
     private delegate bool EnumChildProc(IntPtr child, IntPtr parameter);
 

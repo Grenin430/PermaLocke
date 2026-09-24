@@ -21,6 +21,9 @@ namespace PermaLocke.GameLink;
 /// </remarks>
 public sealed class SaveRecordReader(PlayerSave save, ILogger<SaveRecordReader> logger) : IGameRecords
 {
+    /// <summary>The last line written, so twenty seconds of the same numbers are written once.</summary>
+    private string? _lastRead;
+
     /// <summary>
     /// Records PermaLocke asks for. A short list on purpose: reading two hundred numbers nobody
     /// looks at would just be noise in the log.
@@ -52,7 +55,7 @@ public sealed class SaveRecordReader(PlayerSave save, ILogger<SaveRecordReader> 
         if (path is null)
         {
             return GameRecordSnapshot.Unavailable(
-                "No se encuentra la partida de Ultra Luna. ¿Has jugado y guardado alguna vez con este emulador?",
+                "No se encuentra tu partida de Ultra Luna.",
                 now);
         }
 
@@ -68,7 +71,7 @@ public sealed class SaveRecordReader(PlayerSave save, ILogger<SaveRecordReader> 
         {
             logger.LogError(ex, "No se pudieron leer los récords de {Path}", path);
             return GameRecordSnapshot.Unavailable(
-                "No se han podido leer los contadores de la partida. El detalle está en la carpeta Logs.", now);
+                "No se han podido leer los contadores de la partida.", now);
         }
     }
 
@@ -80,7 +83,7 @@ public sealed class SaveRecordReader(PlayerSave save, ILogger<SaveRecordReader> 
         if (!SaveUtil.TryGetSaveFile(path, out var loaded) || loaded is not SAV7USUM game)
         {
             return GameRecordSnapshot.Unavailable(
-                $"El fichero de partida no se ha podido leer como Ultra Luna: {path}", now);
+                "No se ha podido leer tu partida.", now);
         }
 
         var values = new Dictionary<int, int>(Wanted.Length);
@@ -109,10 +112,16 @@ public sealed class SaveRecordReader(PlayerSave save, ILogger<SaveRecordReader> 
             works[counter] = work.GetWork(counter);
         }
 
-        logger.LogInformation(
-            "Récords leídos: {Caught} capturas, {Balls} balls, {Fled} huidas, {Z} movimientos Z, {Items} objetos",
-            values.GetValueOrDefault(6), values.GetValueOrDefault(42),
-            values.GetValueOrDefault(46), values.GetValueOrDefault(41), items.Count);
+        // Se lee cada veinte segundos y casi siempre dice lo mismo: se apunta cuando cambia algo (§167).
+        var line = $"Récords leídos: {values.GetValueOrDefault(6)} capturas, {values.GetValueOrDefault(42)} balls, "
+                   + $"{values.GetValueOrDefault(46)} huidas, {values.GetValueOrDefault(41)} movimientos Z, "
+                   + $"{items.Count} objetos";
+
+        if (line != _lastRead)
+        {
+            _lastRead = line;
+            logger.LogInformation("{Records}", line);
+        }
 
         return new GameRecordSnapshot(true, null, notice, values, now, items, works);
     }

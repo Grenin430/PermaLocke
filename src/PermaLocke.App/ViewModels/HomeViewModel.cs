@@ -7,14 +7,17 @@ using PermaLocke.Core.Abstractions;
 using PermaLocke.Core.Domain;
 using PermaLocke.Core.Services;
 using PermaLocke.GameLink;
+using PermaLocke.Rules;
 using PermaLocke.Rules.Services;
 
 namespace PermaLocke.App.ViewModels;
 
 /// <param name="Timestamp">Local time, preformatted so the view needs no converter.</param>
 /// <param name="IsGain">Set so the row can be coloured without a converter or a value parse.</param>
+/// <param name="IconKey">The pixel icon of the kind of event (<see cref="EventIcons"/>).</param>
 public sealed record EventRow(
-    string Timestamp, string Type, string Description, string Points, bool IsGain, bool IsLoss);
+    string Timestamp, string Type, string Description, string Points, bool IsGain, bool IsLoss,
+    string IconKey = "IconDot");
 
 /// <param name="Hp">Preformatted as "25/25" for the view.</param>
 /// <param name="HpRatio">0 to 1, for the bar the view draws next to the number.</param>
@@ -34,6 +37,19 @@ public sealed record IslandRow(string Name, string State);
 public sealed record FallenRow(string Name, string Detail,
     System.Windows.Media.Imaging.BitmapSource? Sprite = null);
 
+/// <summary>One stop of the island tour on HOME's track: a trial, the league or the rematch.</summary>
+/// <param name="State">"cleared", "current" (the one about to be faced, whose cap is in force) or "ahead".</param>
+/// <param name="Icon">The picture its achievement declares — the trial's Z-Crystal — out of the player's cartridge.</param>
+public sealed record StageMark(string Name, string Level, string State,
+    System.Windows.Media.Imaging.BitmapSource? Icon = null)
+{
+    public bool IsCleared => State == "cleared";
+
+    public bool IsCurrent => State == "current";
+
+    public string Tip => $"{Name} · tope {Level}";
+}
+
 /// <summary>
 /// The run dashboard. With no run it shows an explicit empty state and the button to create
 /// one; it never displays zeroed-out statistics as if a run existed.
@@ -51,6 +67,8 @@ public sealed partial class HomeViewModel : SectionViewModel
     private readonly RunService _runs;
     private readonly SaveEraser _eraser;
     private readonly PokemonSpriteService _sprites;
+    private readonly LevelCapTable _caps;
+    private readonly IAchievementCatalog _achievements;
     private readonly ILogger<HomeViewModel> _logger;
 
     public HomeViewModel(
@@ -67,7 +85,9 @@ public sealed partial class HomeViewModel : SectionViewModel
         SaveEraser eraser,
         PokemonSpriteService sprites,
         RunActivity activity,
-        ILogger<HomeViewModel> logger) : base("HOME", "Estado de la run, equipo en vivo y últimos movimientos")
+        LevelCapTable caps,
+        IAchievementCatalog achievements,
+        ILogger<HomeViewModel> logger) : base("HOME", "Tu run y tu equipo")
     {
         _runContext = runContext;
         _events = events;
@@ -80,12 +100,15 @@ public sealed partial class HomeViewModel : SectionViewModel
         _runs = runs;
         _eraser = eraser;
         _sprites = sprites;
+        _caps = caps;
+        _achievements = achievements;
         _logger = logger;
 
         gameLink.SnapshotChanged += (_, snapshot) => _ = _ui.InvokeAsync(() =>
         {
             ApplySnapshot(snapshot);
             CapWarning = gameLink.CapProblem;
+            EncounterWarning = gameLink.EncounterProblem;
             return Task.CompletedTask;
         });
 
@@ -137,7 +160,6 @@ public sealed partial class HomeViewModel : SectionViewModel
     private string _startOverStatus = string.Empty;
 
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(ChangeRoleCommand))]
     [NotifyCanExecuteChangedFor(nameof(StartOverCommand))]
     private bool _hasRun;
 
@@ -207,6 +229,18 @@ public sealed partial class HomeViewModel : SectionViewModel
     [ObservableProperty]
     private bool _hasFallen;
 
+    /// <summary>
+    /// The island tour as a row of stops, lit up to where the run is.
+    /// </summary>
+    /// <remarks>
+    /// The same count that decides the level cap, so the two can never disagree: a stop is cleared when
+    /// <see cref="ProgressService.ClearedAsync"/> says so, and the one after it is the stage in force.
+    /// </remarks>
+    public ObservableCollection<StageMark> StageTrack { get; } = [];
+
+    [ObservableProperty]
+    private string _trialsText = string.Empty;
+
     [ObservableProperty]
     private string _gameLinkStatus = "Buscando el juego...";
 
@@ -226,6 +260,11 @@ public sealed partial class HomeViewModel : SectionViewModel
 
     public bool HasCapWarning => CapWarning.Length > 0;
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasEncounterWarning))]
+    private string _encounterWarning = string.Empty;
+    public bool HasEncounterWarning => EncounterWarning.Length > 0;
+
     public ObservableCollection<EventRow> RecentEvents { get; } = [];
 
     /// <summary>Shows exactly what the link can and cannot see, instead of an empty panel.</summary>
@@ -236,7 +275,7 @@ public sealed partial class HomeViewModel : SectionViewModel
 
         if (!snapshot.Connected)
         {
-            GameLinkStatus = snapshot.Problem ?? "Sin conexión con el juego.";
+            GameLinkStatus = snapshot.Problem ?? "Azahar no está abierto.";
             return;
         }
 
@@ -251,12 +290,12 @@ public sealed partial class HomeViewModel : SectionViewModel
                 Math.Clamp(ratio, 0d, 1d),
                 member.IsFainted ? "fainted" : ratio <= 0.2 ? "critical" : ratio <= 0.5 ? "low" : "ok",
                 member.IsShiny,
-                _sprites.Get(member.Species)));
+                _sprites.Get(member.Species, member.Form)));
         }
 
         GameLinkStatus = snapshot.Party.Count == 0
-            ? "Conectado, pero el equipo está vacío."
-            : $"En vivo · {snapshot.Party.Count} en el equipo · {snapshot.ReadAt:HH:mm:ss}";
+            ? "Tu equipo está vacío."
+            : "En directo";
 
         if (snapshot.Notice is { } notice)
         {
@@ -305,11 +344,10 @@ public sealed partial class HomeViewModel : SectionViewModel
         DetectionMessage = Detected.Count switch
         {
             0 => string.Empty,
-            1 => "Detectado y sin registrar: " + Detected[0].SpeciesName
+            1 => "Sin registrar: " + Detected[0].SpeciesName
                  + " Nv. " + Detected[0].Level + " · " + Detected[0].MetLocationName
-                 + (Detected[0].IsShiny ? " ✨" : string.Empty),
-            _ => $"{Detected.Count} Pokémon del equipo están sin registrar. "
-                 + $"El primero es {Detected[0].SpeciesName}."
+                 + (Detected[0].IsShiny ? " · variocolor" : string.Empty),
+            _ => $"{Detected.Count} Pokémon sin registrar."
         };
     }
 
@@ -381,14 +419,8 @@ public sealed partial class HomeViewModel : SectionViewModel
 
         if (!_dialogs.Confirm(
                 "Empezar de cero",
-                "Esto BORRA dos cosas, y no se pueden deshacer desde la aplicación:\n\n"
-                + $"· La run «{run.Name}»: sus puntos, sus Pokémon registrados y todo su historial.\n"
-                + "· Tu partida de Pokémon Ultra Luna. Se hace una copia antes, y al terminar se te "
-                + "dice dónde ha quedado.\n\n"
-                + "Lo que NO borra: la randomización instalada sigue puesta. La run nueva tendrá "
-                + "otra seed, así que si quieres otro mundo hay que generar e instalar otra vez "
-                + "desde RANDOMIZADOR.\n\n"
-                + "Azahar tiene que estar cerrado del todo.\n\n¿Seguir?"))
+                $"Se borrarán tu run «{run.Name}» y tu partida de Ultra Luna. No se puede deshacer.\n\n"
+                + "Azahar tiene que estar cerrado.\n\n¿Seguir?"))
         {
             return;
         }
@@ -415,8 +447,7 @@ public sealed partial class HomeViewModel : SectionViewModel
         _logger.LogWarning("Run {Name} borrada: {Events} eventos, {Pokemon} Pokémon. {Save}",
             deleted.Name, deleted.Events, deleted.Pokemon, erased.Message);
 
-        StartOverStatus = $"Borrado: {deleted.Events} eventos y {deleted.Pokemon} Pokémon de la run, "
-                          + $"y la partida. {erased.Message}";
+        StartOverStatus = "Run y partida borradas.";
 
         await RefreshAsync();
 
@@ -426,20 +457,25 @@ public sealed partial class HomeViewModel : SectionViewModel
         }
     }
 
-    /// <summary>
-    /// Opens the role migration.
-    /// </summary>
-    /// <remarks>
-    /// Not something a run should normally do -- the role is chosen once, before the ROM is
-    /// randomized -- but a role with no way in is a role nobody can play, and that is worse.
-    /// </remarks>
-    [RelayCommand(CanExecute = nameof(HasRun))]
-    private async Task ChangeRoleAsync()
+    private void BuildTrack(int cleared)
     {
-        if (_dialogs.ShowChangeRole())
+        StageTrack.Clear();
+
+        var stages = _caps.Stages.OrderBy(stage => stage.Order).ToList();
+        var byId = _achievements.All.ToDictionary(achievement => achievement.Id);
+
+        for (var i = 0; i < stages.Count; i++)
         {
-            await RefreshAsync();
+            var stage = stages[i];
+            var achievement = stage.Achievement is { } id && byId.TryGetValue(id, out var found) ? found : null;
+            var icon = (achievement?.Icon ?? achievement?.Item) is { } item ? _sprites.GetItem(item) : null;
+            var state = i < cleared ? "cleared" : i == cleared ? "current" : "ahead";
+            StageTrack.Add(new StageMark(stage.Name, stage.Level.ToString(), state, icon));
         }
+
+        // Las pruebas son las etapas que se ganan con un cristal Z; la liga y el rematch van aparte.
+        var trials = stages.Count(stage => stage.Name.EndsWith("prueba", StringComparison.OrdinalIgnoreCase));
+        TrialsText = trials == 0 ? string.Empty : $"{Math.Min(cleared, trials)} DE {trials} PRUEBAS";
     }
 
     private async Task RefreshAsync()
@@ -454,6 +490,8 @@ public sealed partial class HomeViewModel : SectionViewModel
             RunName = GameName = SeedLabel = PlayerName = RoleName = string.Empty;
             PointsBalance = AliveCount = DeadCount = EncounterCount = 0;
             Fallen.Clear();
+            StageTrack.Clear();
+            TrialsText = string.Empty;
             HasFallen = false;
             Islands = [];
             IntegrityStatus = string.Empty;
@@ -475,10 +513,12 @@ public sealed partial class HomeViewModel : SectionViewModel
         StageText = stage is null ? "sin definir" : stage.Name;
         LevelCapText = stage is null ? "—" : stage.Level.ToString();
         StageSourceText = cleared > run.ClearedStages
-            ? $"{cleared} etapas superadas, contadas por los logros."
+            ? $"{cleared} pruebas superadas."
             : cleared == 0
-                ? "Ninguna etapa superada todavía."
-                : $"{cleared} etapas superadas.";
+                ? "Ninguna prueba superada todavía."
+                : $"{cleared} pruebas superadas.";
+
+        BuildTrack(cleared);
 
         PointsBalance = await _points.GetBalanceAsync(run.Id);
 
@@ -503,7 +543,7 @@ public sealed partial class HomeViewModel : SectionViewModel
                 string.IsNullOrWhiteSpace(dead.Nickname) ? dead.SpeciesName : dead.Nickname,
                 string.Join(" · ", new[] { $"Nv. {dead.Level}", when }
                     .Where(part => !string.IsNullOrWhiteSpace(part))),
-                _sprites.Get(dead.Species)));
+                _sprites.Get(dead.Species, dead.Form)));
         }
 
         HasFallen = Fallen.Count > 0;
@@ -516,13 +556,14 @@ public sealed partial class HomeViewModel : SectionViewModel
                 row.Description,
                 row.PointsDelta == 0 ? string.Empty : row.PointsDelta.ToString("+#;-#;0"),
                 row.PointsDelta > 0,
-                row.PointsDelta < 0));
+                row.PointsDelta < 0,
+                EventIcons.Of(row.Type)));
         }
 
         var integrity = await _events.VerifyChainAsync(run.Id);
         IntegrityOk = integrity.IsValid;
         IntegrityStatus = integrity.IsValid
-            ? $"Historial íntegro · {integrity.CheckedEvents} eventos verificados"
-            : $"HISTORIAL ALTERADO · {integrity.Message}";
+            ? "Historial correcto"
+            : "HISTORIAL DAÑADO";
     }
 }

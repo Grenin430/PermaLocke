@@ -33,7 +33,7 @@ public sealed class PartyLocator(AzaharRpcClient client)
         // Acotado a donde el juego guarda su estado vivo, no a todo lo que el emulador contesta.
         // Barrer 0x30000000-0x40000000 entero son 384 MB y unas 100.000 peticiones, y eso llegó a
         // tumbar el emulador durante el arranque de la app. El equipo y todas sus copias caen
-        // dentro de estos 96 MB: de 0x3002E258 a 0x33F7FA44.
+        // dentro de estos 64 MB: de 0x3002E258 a 0x33F7FA44 (el heap de 0x08000000 salió el 2026-09-21, ver LiveStateRegions).
         foreach (var region in MemorySearch.LiveStateRegions)
         {
             var buffer = ReadRegion(region, ct);

@@ -31,15 +31,13 @@ public sealed class SaveBoxSwap(PlayerSave save, string backupFolder, ILogger<Sa
     {
         if (save.IsGameLoaded())
         {
-            reason = "El juego está abierto en el emulador. Guarda la partida y cierra Azahar: "
-                     + "mientras esté cargado, el emulador reescribiría el save y el intercambio se perdería.";
+            reason = "El juego está abierto. Guarda y cierra Azahar.";
             return false;
         }
 
         if (save.Find() is null)
         {
-            reason = "No se encuentra la partida de Ultra Luna. ¿Has jugado y guardado alguna vez "
-                     + "con este emulador?";
+            reason = "No se encuentra tu partida de Ultra Luna.";
             return false;
         }
 
@@ -73,7 +71,7 @@ public sealed class SaveBoxSwap(PlayerSave save, string backupFolder, ILogger<Sa
             if (!SaveUtil.TryGetSaveFile(path, out var loaded) || loaded is not SAV7USUM game)
             {
                 return new DeliveryResult(DeliveryOutcome.SaveUnreadable,
-                    $"El fichero de partida no se ha podido leer como Ultra Luna: {path}");
+                    "No se ha podido leer tu partida.");
             }
 
             // El equipo es otro almacén del save, no la caja -1. Se acepta, pero por su propia
@@ -89,7 +87,7 @@ public sealed class SaveBoxSwap(PlayerSave save, string backupFolder, ILogger<Sa
             {
                 return new DeliveryResult(DeliveryOutcome.SlotChanged,
                     $"En {Where(box, slot)} ya no está {offer.GivenName}. "
-                    + "La partida ha cambiado desde que se leyó: vuelve a leerla y repite el intercambio.");
+                    + "Tu partida ha cambiado. Vuelve a intentarlo.");
             }
 
             Backup(path);
@@ -100,8 +98,7 @@ public sealed class SaveBoxSwap(PlayerSave save, string backupFolder, ILogger<Sa
             if (!Verify(path, box, slot, offer))
             {
                 return new DeliveryResult(DeliveryOutcome.Failed,
-                    "Se escribió la partida pero al releerla el intercambio no estaba hecho. "
-                    + "La copia de seguridad está en Saves/backup.");
+                    "No se ha podido guardar el cambio. Vuelve a intentarlo.");
             }
 
             logger.LogInformation("Wonder trade: {Given} sale y entra {Received} en {Where}",
@@ -111,8 +108,7 @@ public sealed class SaveBoxSwap(PlayerSave save, string backupFolder, ILogger<Sa
             // calcula PKHeX con SU tabla de base, y la ROM las baraja (§51), así que el número que
             // enseñe hasta que el juego lo recalcule -curarse en un Centro basta- puede no cuadrar.
             var caveat = box == BoxedPokemon.PartyBox
-                ? " Sus estadísticas se ajustan solas la primera vez que el juego las recalcule; "
-                  + "cúralo en un Centro Pokémon si quieres verlas ya."
+                ? " Cúralo en un Centro Pokémon para ver sus estadísticas."
                 : string.Empty;
 
             return new DeliveryResult(DeliveryOutcome.Delivered,
@@ -124,7 +120,7 @@ public sealed class SaveBoxSwap(PlayerSave save, string backupFolder, ILogger<Sa
             logger.LogError(ex, "Falló el wonder trade de {Given} por {Received}", offer.GivenName, offer.Name);
 
             return new DeliveryResult(DeliveryOutcome.Failed,
-                "No se pudo escribir en la partida. El detalle está en la carpeta Logs.");
+                "No se pudo escribir en la partida.");
         }
     }
 
@@ -136,7 +132,7 @@ public sealed class SaveBoxSwap(PlayerSave save, string backupFolder, ILogger<Sa
         }
 
         var written = Read(game, box, slot);
-        return written is { } found && found.Species == offer.Species && found.CurrentLevel == offer.Level;
+        return written is { } found && found.Species == offer.Species && found.Form == offer.Form && Data.GameLevels.Of(found) == offer.Level;
     }
 
     /// <summary>
@@ -152,7 +148,7 @@ public sealed class SaveBoxSwap(PlayerSave save, string backupFolder, ILogger<Sa
     {
         var received = PokemonBuilder.Build(
             new NewPokemon(offer.Species, offer.Level, offer.Nature, offer.AbilityId, offer.Ivs,
-                offer.IsShiny),
+                offer.IsShiny, offer.Form),
             game);
 
         Store(game, received, box, slot);

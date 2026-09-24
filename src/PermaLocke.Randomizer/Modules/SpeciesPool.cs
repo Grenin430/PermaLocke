@@ -44,6 +44,12 @@ public sealed class SpeciesPool
     public int Count => _allowed.Length;
 
     /// <summary>
+    /// The regional forms a picked species may come out in. None unless the pool was read from a
+    /// game with <see cref="FromGame"/>: a pool built by hand, as the tests do, picks species only.
+    /// </summary>
+    public RegionalForms Forms { get; init; } = RegionalForms.None;
+
+    /// <summary>
     /// A narrower pool: the same species and the same picking rules, minus whatever fails the test.
     /// </summary>
     /// <remarks>
@@ -62,7 +68,7 @@ public sealed class SpeciesPool
             throw new ArgumentException($"Ninguna especie disponible cumple: {what}.", nameof(keep));
         }
 
-        return new SpeciesPool(kept, _baseStatTotals, _options);
+        return new SpeciesPool(kept, _baseStatTotals, _options) { Forms = Forms };
     }
 
     /// <summary>Reads the base stat totals out of the loaded personal table.</summary>
@@ -86,7 +92,12 @@ public sealed class SpeciesPool
             var entry = config.Personal[species];
             totals[species] = entry.HP + entry.ATK + entry.DEF + entry.SPA + entry.SPD + entry.SPE;
         }
-        return new SpeciesPool(totals, options);
+
+        // Las formas que ESTE mundo declara: el cartucho solo trae las de Alola (§138).
+        return new SpeciesPool(totals, options)
+        {
+            Forms = RegionalForms.From(options.RegionalForms, species => config.Personal[species].FormeCount)
+        };
     }
 
     /// <summary>Base stat total, used to keep replacements in the original's league.</summary>

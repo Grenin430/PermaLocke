@@ -66,13 +66,13 @@ public sealed class SaveDeathEnforcer(
         if (wanted.Count == 0)
         {
             return new DeathEnforcementReport(0, 0, 0, 0, 0,
-                "No hay ningún caído con PID que marcar.");
+                "No hay caídos que marcar.");
         }
 
         if (save.Find() is not { } path)
         {
             return new DeathEnforcementReport(0, 0, 0, 0, 0,
-                "No encuentro la partida. ¿Has jugado alguna vez con este Azahar?");
+                "No se encuentra tu partida de Ultra Luna.");
         }
 
         // Con el juego abierto no se escribe, y la comprobación va AQUÍ y no en quien llama: desde
@@ -81,8 +81,7 @@ public sealed class SaveDeathEnforcer(
         if (write && save.IsGameLoaded())
         {
             return new DeathEnforcementReport(0, 0, 0, 0, 0,
-                "El juego está abierto en el emulador. Guarda y cierra Azahar: mientras esté "
-                + "cargado, el emulador reescribiría la partida.");
+                "El juego está abierto. Guarda y cierra Azahar.");
         }
 
         if (!SaveUtil.TryGetSaveFile(path, out var loaded) || loaded is not SAV7USUM file)
@@ -112,8 +111,8 @@ public sealed class SaveDeathEnforcer(
         {
             return new DeathEnforcementReport(pending.Count, alreadyMarked, missing, boxed, 0,
                 pending.Count == 0
-                    ? $"Nada que hacer: los {alreadyMarked} caídos del equipo ya están a 0 PS."
-                    : $"{pending.Count} caído(s) siguen en pie en el equipo y se pueden tumbar.");
+                    ? "No hay nada que hacer."
+                    : $"Hay {pending.Count} caído(s) por dejar a 0 PS.");
         }
 
         Backup(path);
@@ -149,7 +148,7 @@ public sealed class SaveDeathEnforcer(
         logger.LogInformation("{Count} caídos a 0 PS en la partida", pending.Count);
 
         return new DeathEnforcementReport(0, alreadyMarked + pending.Count, missing, boxed, pending.Count,
-            $"{pending.Count} caído(s) a 0 PS en la partida. Se verá al cargar el juego.");
+            $"{pending.Count} caído(s) dejados a 0 PS.");
     }
 
     /// <summary>Party and every box, so a dead Pokémon is found wherever it was left.</summary>

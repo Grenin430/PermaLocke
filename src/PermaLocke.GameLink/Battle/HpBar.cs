@@ -112,6 +112,9 @@ public static class HpBar
     /// player's box does not stay on screen long at zero, and reading the window was slower than
     /// measured.</item>
     /// <item><b>Empty right after any colour</b>, held for two readings, counts too.</item>
+    /// <item><b>Empty with no colour seen at all</b> counts after <see cref="EmptiesWithoutColour"/> readings: the
+    /// bar had already reached zero when the fall arrived, which is what poison and entry hazards look like (§165).
+    /// This watch only ever runs on a fall both tables already agree on, so a box at zero is that fall.</item>
     /// <item><b>Empty after a full bar and a hidden stretch never counts.</b> Measured at the move menu with
     /// nobody hit: the box hid with the bar full and came back as seven seconds of grey.</item>
     /// </list>
@@ -124,14 +127,35 @@ public static class HpBar
         /// <summary>The longest hidden stretch allowed between that low colour and the empty reading.</summary>
         public const double MaxGap = 600;
 
+        /// <summary>Empty readings in a row that count as a fall when no colour has been seen at all.</summary>
+        public const int EmptiesWithoutColour = 3;
+
+        /// <summary>
+        /// How long to wait for a box that has not appeared at all before giving up on seeing the bar.
+        /// </summary>
+        /// <remarks>
+        /// In the fifty falls measured up to 2026-09-22 the bar was seen at zero within 1889 ms at the worst, because
+        /// the fall is given when the second table reaches zero, which is the bar itself finishing. A box that has not
+        /// shown by now is one that has already gone — which is what a death by poison or by an entry hazard looks
+        /// like — and there is nothing left to wait for (§165).
+        /// </remarks>
+        public const double NoBoxLimit = 2_500;
+
         private double? _lastColour;
         private double _lastColourAt;
         private bool _emptyRightAfterColour;
         private int _empties;
+        private bool _sawBox;
         private HpBarState _previous = HpBarState.Hidden;
 
         /// <summary>Whether the bar has been seen with colour at any point.</summary>
         public bool SawColour => _lastColour is not null;
+
+        /// <summary>Whether the box has been on screen at all, with colour or empty.</summary>
+        public bool SawBox => _sawBox;
+
+        /// <summary>Whether to stop waiting because the box has never been on screen. See <see cref="NoBoxLimit"/>.</summary>
+        public bool GiveUpWithoutBox(double ms) => !_sawBox && ms >= NoBoxLimit;
 
         /// <returns>Whether this reading completes a fall to zero.</returns>
         public bool Observe(HpBarReading reading, double ms)
@@ -145,6 +169,7 @@ public static class HpBar
                     _lastColour = reading.Fill;
                     _lastColourAt = ms;
                     _empties = 0;
+                    _sawBox = true;
                     return false;
 
                 case HpBarState.Hidden:
@@ -153,10 +178,7 @@ public static class HpBar
                     return false;
             }
 
-            if (_lastColour is not { } colour)
-            {
-                return false;
-            }
+            _sawBox = true;
 
             if (previous != HpBarState.Empty)
             {
@@ -165,6 +187,14 @@ public static class HpBar
             }
 
             _empties++;
+
+            if (_lastColour is not { } colour)
+            {
+                // La caja está a la vista y vacía sin haber visto color: la barra ya había llegado a cero antes de
+                // que las tablas dieran la caída, que es lo que pasa con el veneno y con las trampas de entrada
+                // (§165). Tres lecturas seguidas, para no fiarlo a un fotograma suelto.
+                return _empties >= EmptiesWithoutColour;
+            }
 
             if (colour <= LowFill && ms - _lastColourAt <= MaxGap)
             {
@@ -175,10 +205,35 @@ public static class HpBar
         }
     }
 
+    /// <summary>The bar's three colours, measured on frames of a real death.</summary>
+    private static readonly (int R, int G, int B)[] Fills = [(148, 254, 48), (253, 201, 43), (251, 0, 20)];
+
+    /// <summary>
+    /// How far a cell may be from one of those colours and still be the bar: enough for the emulator's scaling,
+    /// which blurs the edges of the bar but not its middle.
+    /// </summary>
+    private const int Tolerance = 60;
+
+    /// <summary>
+    /// A cell of colour: one of the bar's own three, and not any bright warm thing that happens to be there.
+    /// </summary>
+    /// <remarks>
+    /// Until 2026-09-22 this asked only for a saturated warm colour, and the orange floor of the Iki Town ring —
+    /// (170,110,65) along the bar's rows, measured on a killcam — passed it. Two deaths that day, by poison and by
+    /// Stealth Rock, are only given by the tables once the game has already shown the faint and taken the box away:
+    /// the watcher then read the floor as a bar at 97 % of colour and waited its whole six seconds (§165).
+    /// </remarks>
     private static bool IsFill(byte r, byte g, byte b)
     {
-        var high = Math.Max(r, g);
-        return high > 150 && b < 110 && high - b > 80;
+        foreach (var (fr, fg, fb) in Fills)
+        {
+            if (Math.Abs(r - fr) <= Tolerance && Math.Abs(g - fg) <= Tolerance && Math.Abs(b - fb) <= Tolerance)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static bool IsTrack(byte r, byte g, byte b) =>

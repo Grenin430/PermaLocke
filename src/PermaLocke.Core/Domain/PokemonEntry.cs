@@ -49,4 +49,7 @@ public sealed record PokemonEntry
 
     /// <summary>Personality value from the game, when the Pokémon came from a real save or memory read.</summary>
     public uint? Pid { get; init; }
+
+    /// <summary>The form it arrived in: zero for the ordinary one, 1 for an Alolan Vulpix. §140.</summary>
+    public int Form { get; init; }
 }

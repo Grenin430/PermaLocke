@@ -100,19 +100,67 @@ public static class WorldLimits
     public static IReadOnlyList<byte> BaseStats { get; set; } = [];
 
     /// <summary>
-    /// The six base stats of a species, or null when this world has not published its table.
+    /// The base stats of every alternate form that has a row of its own in the installed game's table, by species
+    /// and form, in the summary screen's order.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Only those forms: every other one reads its species' row, which is the game's own rule (the Randomizer's
+    /// <c>PersonalEntry7.RowOf</c>), so a form missing from here is not unknown, it is built like its species. An
+    /// Alolan Raichu is here; a Vivillon's wings are not.
+    /// </para>
+    /// <para>
+    /// It exists because <see cref="BaseStats"/> alone is indexed by species, and the EV writer recomputed a party
+    /// member's stats from it whatever its form: an Alolan form got its normal form's numbers written into the save.
+    /// </para>
+    /// </remarks>
+    public static IReadOnlyDictionary<(int Species, int Form), byte[]> FormBaseStats { get; set; } =
+        new Dictionary<(int Species, int Form), byte[]>();
+
+    /// <summary>
+    /// Both types of every species, two per species, from the installed game's own table. Empty means «ask PKHeX».
+    /// </summary>
+    /// <remarks>
+    /// PKHeX's gen 7 table stops at 807, so every Pokémon of the expansion came out of a wonder trade typed «?».
+    /// </remarks>
+    public static IReadOnlyList<byte> Types { get; set; } = [];
+
+    /// <summary>The two types of a species, or null when this world has not published its table.</summary>
+    public static (int First, int Second)? TypesOf(int species) =>
+        species > 0 && (species * 2) + 1 < Types.Count ? (Types[species * 2], Types[(species * 2) + 1]) : null;
+
+    /// <summary>The types of every alternate form with a row of its own. Empty means «its species'».</summary>
+    public static IReadOnlyDictionary<(int Species, int Form), (byte First, byte Second)> FormTypes { get; set; } =
+        new Dictionary<(int Species, int Form), (byte First, byte Second)>();
+
+    /// <summary>
+    /// The two types of a species in a given form: the form's own when it has a row, its species' otherwise.
+    /// </summary>
+    /// <remarks>An Alolan Vulpix is Ice; asked by species it would be Fire. §139.</remarks>
+    public static (int First, int Second)? TypesOf(int species, int form) =>
+        form > 0 && FormTypes.TryGetValue((species, form), out var own) ? (own.First, own.Second) : TypesOf(species);
+
+    /// <summary>
+    /// The six base stats of a species in a given form, or null when this world has not published its table.
     /// </summary>
     /// <remarks>
     /// Null and not a guess, for the reason above: the caller has to know it cannot work a stat out
     /// and leave the stat alone, which is what the EV writer did for everyone before this existed.
+    /// A form with a row of its own reads it from <see cref="FormBaseStats"/>; any other form is built like
+    /// its species, by the game's rule.
     /// </remarks>
-    public static IReadOnlyList<byte>? BaseStatsOf(int species)
+    public static IReadOnlyList<byte>? BaseStatsOf(int species, int form = 0)
     {
         const int PerSpecies = 6;
         var at = species * PerSpecies;
 
-        return species > 0 && at + PerSpecies <= BaseStats.Count
-            ? [.. Enumerable.Range(at, PerSpecies).Select(i => BaseStats[i])]
-            : null;
+        if (species <= 0 || at + PerSpecies > BaseStats.Count)
+        {
+            return null;
+        }
+
+        return form > 0 && FormBaseStats.TryGetValue((species, form), out var own)
+            ? own
+            : [.. Enumerable.Range(at, PerSpecies).Select(i => BaseStats[i])];
     }
 }

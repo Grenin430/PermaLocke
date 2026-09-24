@@ -103,11 +103,17 @@ public static class PokePasteFormatter
         var named = !string.IsNullOrWhiteSpace(pokemon.Nickname)
                     && !string.Equals(pokemon.Nickname, pokemon.SpeciesName, StringComparison.OrdinalIgnoreCase);
 
-        line.Append(named ? pokemon.Nickname : pokemon.SpeciesName);
+        // La forma va pegada a la especie con guion, como la escribe Showdown: «Vulpix-Alola». Sin
+        // ella el sitio dibuja y valida la forma normal (§140).
+        var species = string.IsNullOrEmpty(pokemon.FormName)
+            ? pokemon.SpeciesName
+            : $"{pokemon.SpeciesName}-{pokemon.FormName}";
+
+        line.Append(named ? pokemon.Nickname : species);
 
         if (named)
         {
-            line.Append(" (").Append(pokemon.SpeciesName).Append(')');
+            line.Append(" (").Append(species).Append(')');
         }
 
         if (Gender(pokemon.GenderMark) is { } gender)

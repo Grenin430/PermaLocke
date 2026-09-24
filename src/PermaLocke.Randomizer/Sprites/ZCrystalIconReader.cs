@@ -1,4 +1,3 @@
-using System.Text;
 using PermaLocke.Randomizer.Rom;
 using pk3DS.Core.CTR;
 
@@ -84,60 +83,10 @@ public sealed class ZCrystalIconReader
     }
 
     /// <summary>
-    /// Pulls every BFLIM out of an ALYT and keeps the ones shaped like a crystal.
+    /// Every image of the layout that is shaped like a crystal. The carving itself —footers, not the letters
+    /// <c>FLIM</c>— is <see cref="AlytCarver"/>, shared with the move-category icons (§144).
     /// </summary>
-    /// <remarks>
-    /// A BFLIM has no header — the pixels come first and a 0x28-byte footer last — so the way in
-    /// is to find the footers. <b>Looking for the four letters <c>FLIM</c> is not enough</b>: they
-    /// turn up inside the pixels of other images and each false hit shifts everything after it. A
-    /// real footer also carries the byte order mark, an <c>imag</c> block, and a declared file size
-    /// that has to equal its pixels plus the footer. All three are checked.
-    /// </remarks>
-    private static List<BflimTexture> Carve(byte[] layout)
-    {
-        var crystals = new List<BflimTexture>();
-
-        for (var at = 0; at + 0x28 <= layout.Length; at++)
-        {
-            if (layout[at] != 'F' || layout[at + 1] != 'L' || layout[at + 2] != 'I' || layout[at + 3] != 'M')
-            {
-                continue;
-            }
-
-            if (BitConverter.ToUInt16(layout, at + 4) != 0xFEFF
-                || Encoding.ASCII.GetString(layout, at + 0x14, 4) != "imag")
-            {
-                continue;
-            }
-
-            var declared = (int)BitConverter.ToUInt32(layout, at + 0x0C);
-            var pixels = (int)BitConverter.ToUInt32(layout, at + 0x24);
-
-            if (pixels <= 0 || pixels > at || declared != pixels + 0x28)
-            {
-                continue;
-            }
-
-            BflimTexture texture;
-            try
-            {
-                texture = BflimTexture.Decode(layout.AsSpan(at - pixels, pixels + 0x28));
-            }
-            catch (Exception)
-            {
-                // La misma pantalla lleva imágenes en formatos que PermaLocke no descodifica
-                // -máscaras L4, ETC1-, y ninguna de ellas es un cristal.
-                continue;
-            }
-
-            if (IsACrystal(texture))
-            {
-                crystals.Add(texture);
-            }
-        }
-
-        return crystals;
-    }
+    private static List<BflimTexture> Carve(byte[] layout) => [.. AlytCarver.Carve(layout).Where(IsACrystal)];
 
     private static bool IsACrystal(BflimTexture texture)
     {

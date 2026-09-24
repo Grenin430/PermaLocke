@@ -26,6 +26,12 @@ public sealed record Run
 
     public required string PlayerName { get; init; }
 
+    /// <summary>
+    /// The <see cref="PlayerProfile"/> this run belongs to. Null for runs created before profiles
+    /// existed; those are linked once, with an event, the first time the app sees them (§123).
+    /// </summary>
+    public Guid? PlayerId { get; init; }
+
     public DateTimeOffset CreatedAt { get; init; }
 
     public DateTimeOffset? CompletedAt { get; init; }

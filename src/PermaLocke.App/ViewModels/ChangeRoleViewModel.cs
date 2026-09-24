@@ -124,7 +124,7 @@ public sealed partial class ChangeRoleViewModel : ObservableObject
         catch (Exception ex)
         {
             _logger.LogError(ex, "Falló el cambio de rol a {Role}", RoleId);
-            Problem = "No se ha podido cambiar el rol. El detalle está en la carpeta Logs.";
+            Problem = "No se ha podido cambiar el rol.";
         }
         finally
         {

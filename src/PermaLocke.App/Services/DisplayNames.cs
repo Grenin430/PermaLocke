@@ -42,7 +42,7 @@ public static class DisplayNames
 
         [GameEventType.RuleViolation] = "Regla incumplida",
         [GameEventType.RuleException] = "Excepción de regla",
-        [GameEventType.LevelCapEnforced] = "Cap de nivel",
+        [GameEventType.LevelCapEnforced] = "Nivel máximo",
 
         [GameEventType.AdminAdjustment] = "Ajuste de administrador",
         [GameEventType.GameStateSynced] = "Sincronización",
@@ -56,11 +56,19 @@ public static class DisplayNames
         [GameEventType.RewardClaimed] = "Premio recogido",
         [GameEventType.RouletteSpun] = "Ruleta",
         [GameEventType.RouletteGranted] = "Tiradas concedidas",
+        [GameEventType.RoleChanged] = "Cambio de rol",
         [GameEventType.BattleModeChanged] = "Modo combate",
         [GameEventType.ZoneConfirmed] = "Zona gastada",
         [GameEventType.ZoneCleared] = "Zona liberada",
         [GameEventType.DeathRevoked] = "Muerte revocada",
-        [GameEventType.ZoneOutcomeSet] = "Zona marcada"
+        [GameEventType.WipeRevoked] = "Equipo caído revocado",
+        [GameEventType.ZoneOutcomeSet] = "Zona marcada",
+        [GameEventType.ZoneEncounterSpent] = "Encuentro gastado",
+        [GameEventType.FirstPokeBallSeen] = "Primera Poké Ball",
+        [GameEventType.PlayerLinked] = "Run vinculada al jugador",
+        [GameEventType.RulesAdopted] = "Reglas oficiales adoptadas",
+        [GameEventType.AdminGiftClaimed] = "Regalo recogido",
+        [GameEventType.MoveRemembered] = "Movimiento recordado"
     };
 
     private static readonly Dictionary<EncounterType, string> Encounters = new()

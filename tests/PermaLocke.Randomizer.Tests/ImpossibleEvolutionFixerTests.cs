@@ -162,6 +162,27 @@ public sealed class ImpossibleEvolutionFixerTests
     }
 
     /// <summary>
+    /// The expansion's move-taught evolutions, at the level each pre-evolution learns the move in the
+    /// unrandomized base layer. They were missing and stayed impossible in the installed world.
+    /// </summary>
+    [Theory]
+    [InlineData(57, 889, 979, 35)]    // Primeape -> Annihilape
+    [InlineData(203, 888, 981, 32)]   // Girafarig -> Farigiraf
+    [InlineData(234, 828, 899, 21)]   // Stantler -> Wyrdeer
+    [InlineData(852, 269, 853, 35)]   // Clobbopus -> Grapploct
+    [InlineData(1100, 839, 904, 28)]  // Qwilfish de Hisui -> Overqwil
+    [InlineData(1011, 913, 1019, 45)] // Dipplin -> Hydrapple: lo aprende a nivel 1, 45 como Piloswine y Poipole
+    public void The_expansion_move_evolutions_become_levels(int species, int move, int target, int level)
+    {
+        var block = Block((21, move, target, 0));
+
+        var result = Fixer().FixSpecies(block, species, NoPartners);
+
+        Assert.Equal(1, result.Moves);
+        Assert.Equal((4, 0, target, level), Slot(block, 0));
+    }
+
+    /// <summary>
     /// Without randomized learnsets it is left alone: the move is still learnable, so the
     /// evolution still works, and changing it would be a change nobody asked for.
     /// </summary>

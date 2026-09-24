@@ -70,3 +70,6 @@ obj/
 
 # La posicion de la pestaña lateral, que es de esta maquina y de nadie mas.
 /Config/pestana.json
+
+# Distribuciones locales y pruebas aisladas
+/.dist/

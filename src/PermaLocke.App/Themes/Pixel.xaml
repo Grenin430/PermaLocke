@@ -1,0 +1,629 @@
+<!--
+    EL ESTILO EN PÍXELES (§176). La muestra que pidió el jugador: el marco de la ventana, la barra lateral, la cabecera
+    y HOME dibujados en celdas, con la misma técnica que las escenas —la máquina de cápsulas, la cabina del intercambio,
+    la ruleta—. Todo lo que hay aquí lleva claves propias («Px…») y no pisa ninguna del tema, así que las demás
+    pantallas siguen como estaban hasta que se decida si se rehace todo.
+
+    Las reglas son las de siempre en este proyecto: celdas enteras, colores planos, sombra dura, nada de degradados ni
+    desenfoques. El texto va en la fuente propia (Views/Pixel/PixelFont.cs), que se dibuja en celdas como todo lo demás.
+-->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:views="clr-namespace:PermaLocke.App.Views"
+                    xmlns:pixel="clr-namespace:PermaLocke.App.Views.Pixel">
+
+    <!-- ==================================================================== COLORES -->
+    <Color x:Key="PxInk">#FF09070E</Color>
+    <Color x:Key="PxShadow">#FF05040A</Color>
+    <Color x:Key="PxSidebar">#FF0E0B18</Color>
+    <Color x:Key="PxBase">#FF120E20</Color>
+    <Color x:Key="PxFace">#FF18132C</Color>
+    <Color x:Key="PxFaceHigh">#FF211A3A</Color>
+    <Color x:Key="PxFaceLift">#FF2C2349</Color>
+    <Color x:Key="PxWell">#FF0C0916</Color>
+    <Color x:Key="PxAccent">#FFB07BF0</Color>
+    <Color x:Key="PxAccentLight">#FFD2ADFF</Color>
+    <Color x:Key="PxAccentDeep">#FF3A2766</Color>
+    <Color x:Key="PxText">#FFEEEAF8</Color>
+    <Color x:Key="PxTextDim">#FF9A94B4</Color>
+    <Color x:Key="PxTextFaint">#FF625C80</Color>
+    <Color x:Key="PxGood">#FF7CF096</Color>
+    <Color x:Key="PxGoodDeep">#FF1C4428</Color>
+    <Color x:Key="PxBad">#FFFF6A55</Color>
+    <Color x:Key="PxBadDeep">#FF4A1818</Color>
+    <Color x:Key="PxWarn">#FFFFC04A</Color>
+    <Color x:Key="PxWarnDeep">#FF4A3310</Color>
+    <Color x:Key="PxGold">#FFFFD24A</Color>
+
+    <SolidColorBrush x:Key="PxBaseBrush" Color="{StaticResource PxBase}" />
+    <SolidColorBrush x:Key="PxSidebarBrush" Color="{StaticResource PxSidebar}" />
+    <SolidColorBrush x:Key="PxInkBrush" Color="{StaticResource PxInk}" />
+    <SolidColorBrush x:Key="PxAccentDeepBrush" Color="{StaticResource PxAccentDeep}" />
+    <SolidColorBrush x:Key="PxAccentBrush" Color="{StaticResource PxAccent}" />
+
+
+    <!-- ==================================================================== LA VENTANA
+         Un bloque de pantalla como una ventana del menú de un juego: la placa, la banda del título con su icono y su
+         nombre, lo que se quiera a la derecha de la banda, y el contenido debajo. -->
+    <Style TargetType="pixel:PixelWindow">
+        <Setter Property="Padding" Value="18,12,22,20" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="pixel:PixelWindow">
+                    <Grid>
+                        <views:PixelPanel Fill="{TemplateBinding Fill}" HeaderFill="{TemplateBinding HeaderFill}"
+                                          HeaderAccent="{TemplateBinding HeaderAccent}"
+                                          IsSunken="{TemplateBinding IsSunken}"
+                                          HeaderHeight="{x:Static pixel:PixelWindow.BandHeight}" />
+                        <DockPanel>
+                            <DockPanel DockPanel.Dock="Top" Height="{x:Static pixel:PixelWindow.BandHeight}"
+                                       Margin="12,3,20,0">
+                                <ContentPresenter DockPanel.Dock="Right" Content="{TemplateBinding HeaderContent}"
+                                                  VerticalAlignment="Center" />
+                                <pixel:PixelIcon x:Name="Glyph" Icon="{TemplateBinding Icon}" Scale="2"
+                                                 VerticalAlignment="Center" Margin="0,0,9,0" />
+                                <pixel:PixelText Text="{TemplateBinding Title}" Scale="2" Tight="True" Trim="True"
+                                                 Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}"
+                                                 VerticalAlignment="Center" />
+                            </DockPanel>
+                            <ContentPresenter Margin="{TemplateBinding Padding}" />
+                        </DockPanel>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Icon" Value="{x:Null}">
+                            <Setter TargetName="Glyph" Property="Visibility" Value="Collapsed" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <!-- ==================================================================== BOTONES
+         Tres pesos, como en el tema: la acción, las demás y la destructiva. La placa es un PixelPanel con su sombra
+         dura, y pulsar es hundirse tres unidades hacia ella, sin escalas suaves. -->
+    <Style x:Key="PxButton" TargetType="Button">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Padding" Value="16,8,22,13" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid x:Name="Body" Background="Transparent">
+                        <views:PixelPanel x:Name="Plate" Fill="{StaticResource PxAccent}" />
+                        <pixel:PixelText x:Name="Label" Text="{Binding Content, RelativeSource={RelativeSource TemplatedParent}}"
+                                         Colour="{StaticResource PxInk}" Scale="2" Tight="True"
+                                         Margin="{TemplateBinding Padding}"
+                                         HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxAccentLight}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Plate" Property="HasShadow" Value="False" />
+                            <Setter TargetName="Plate" Property="Margin" Value="6,6,0,0" />
+                            <Setter TargetName="Label" Property="RenderTransform">
+                                <Setter.Value>
+                                    <TranslateTransform X="6" Y="6" />
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxFaceLift}" />
+                            <Setter TargetName="Label" Property="Colour" Value="{StaticResource PxTextFaint}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="PxSubtleButton" TargetType="Button" BasedOn="{StaticResource PxButton}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid x:Name="Body" Background="Transparent">
+                        <views:PixelPanel x:Name="Plate" Fill="{StaticResource PxFaceLift}" />
+                        <pixel:PixelText x:Name="Label" Text="{Binding Content, RelativeSource={RelativeSource TemplatedParent}}"
+                                         Colour="{StaticResource PxText}" Scale="2" Tight="True"
+                                         Margin="{TemplateBinding Padding}"
+                                         HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxAccentDeep}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Plate" Property="HasShadow" Value="False" />
+                            <Setter TargetName="Plate" Property="Margin" Value="6,6,0,0" />
+                            <Setter TargetName="Label" Property="RenderTransform">
+                                <Setter.Value>
+                                    <TranslateTransform X="6" Y="6" />
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Label" Property="Colour" Value="{StaticResource PxTextFaint}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Rojo por dentro y nunca relleno de rojo vivo: un botón rojo macizo pide que lo pulses, y este es el que no. -->
+    <Style x:Key="PxDangerButton" TargetType="Button" BasedOn="{StaticResource PxButton}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid x:Name="Body" Background="Transparent">
+                        <views:PixelPanel x:Name="Plate" Fill="{StaticResource PxBadDeep}" />
+                        <pixel:PixelText x:Name="Label" Text="{Binding Content, RelativeSource={RelativeSource TemplatedParent}}"
+                                         Colour="{StaticResource PxBad}" Scale="2" Tight="True"
+                                         Margin="{TemplateBinding Padding}"
+                                         HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Plate" Property="Fill" Value="#FF6A2222" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Plate" Property="HasShadow" Value="False" />
+                            <Setter TargetName="Plate" Property="Margin" Value="6,6,0,0" />
+                            <Setter TargetName="Label" Property="RenderTransform">
+                                <Setter.Value>
+                                    <TranslateTransform X="6" Y="6" />
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Label" Property="Colour" Value="{StaticResource PxTextFaint}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Los dos botones de la barra de título: placas pequeñas sin sombra; cerrar se pone roja al pasar por encima. -->
+    <Style x:Key="PxCaptionButton" TargetType="Button">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Width" Value="36" />
+        <Setter Property="Height" Value="27" />
+        <Setter Property="Margin" Value="0,0,4,0" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid x:Name="Body" Background="Transparent">
+                        <views:PixelPanel x:Name="Plate" Fill="{StaticResource PxFace}" HasShadow="False" />
+                        <pixel:PixelText x:Name="Label" Text="{Binding Content, RelativeSource={RelativeSource TemplatedParent}}"
+                                         Colour="{StaticResource PxTextDim}" Scale="2" Tight="True"
+                                         HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxFaceLift}" />
+                            <Setter TargetName="Label" Property="Colour" Value="{StaticResource PxText}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Body" Property="Margin" Value="0,2,0,-2" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="PxCaptionClose" TargetType="Button" BasedOn="{StaticResource PxCaptionButton}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid x:Name="Body" Background="Transparent">
+                        <views:PixelPanel x:Name="Plate" Fill="{StaticResource PxFace}" HasShadow="False" />
+                        <pixel:PixelText x:Name="Label" Text="{Binding Content, RelativeSource={RelativeSource TemplatedParent}}"
+                                         Colour="{StaticResource PxTextDim}" Scale="2" Tight="True"
+                                         HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Plate" Property="Fill" Value="#FFB8433A" />
+                            <Setter TargetName="Label" Property="Colour" Value="{StaticResource PxText}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Body" Property="Margin" Value="0,2,0,-2" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ==================================================================== EL MENÚ
+         Una fila del menú de pausa de un juego: la placa se enciende al pasar por encima, y la sección en pantalla
+         lleva además la flecha a la izquierda. El icono y el texto los pone la plantilla de datos de la ventana. -->
+    <Style x:Key="PxNavItem" TargetType="ListBoxItem">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                    <Grid x:Name="Root" Background="Transparent" Height="36" Margin="6,1,8,1">
+                        <views:PixelPanel x:Name="Plate" Fill="{StaticResource PxAccentDeep}" HasShadow="False"
+                                          Visibility="Collapsed" />
+                        <Grid Margin="5,0,6,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="13" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <pixel:PixelText x:Name="Cursor" Grid.Column="0" Text="▶" Scale="2" Tight="True"
+                                             Colour="{StaticResource PxText}" VerticalAlignment="Center"
+                                             Visibility="Hidden" />
+                            <ContentPresenter Grid.Column="1" VerticalAlignment="Center" />
+                        </Grid>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Plate" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxFaceHigh}" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Plate" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxAccentDeep}" />
+                            <Setter TargetName="Cursor" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+
+    <!-- ==================================================================== PESTAÑAS
+         Las páginas de la pantalla de datos de un juego: placas en fila encima de un pozo hundido, la de la página en
+         pantalla encendida y pegada al pozo. -->
+    <Style x:Key="PxTabItem" TargetType="TabItem">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TabItem">
+                    <Grid x:Name="Root" Margin="0,4,6,0" Background="Transparent">
+                        <views:PixelPanel x:Name="Plate" Fill="{StaticResource PxFaceHigh}" HasShadow="False" />
+                        <pixel:PixelText x:Name="Label" Text="{TemplateBinding Header}" Scale="2" Tight="True"
+                                         Colour="{StaticResource PxTextFaint}" Margin="12,8,12,9"
+                                         HorizontalAlignment="Center" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxFaceLift}" />
+                            <Setter TargetName="Label" Property="Colour" Value="{StaticResource PxTextDim}" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Root" Property="Margin" Value="0,0,6,0" />
+                            <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxAccentDeep}" />
+                            <Setter TargetName="Label" Property="Colour" Value="{StaticResource PxText}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="PxTabControl" TargetType="TabControl">
+        <Setter Property="ItemContainerStyle" Value="{StaticResource PxTabItem}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TabControl">
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" IsItemsHost="True" />
+                        <Grid Margin="0,4,0,0">
+                            <views:PixelPanel Fill="{StaticResource PxWell}" IsSunken="True" HasShadow="False" />
+                            <ContentPresenter ContentSource="SelectedContent" Margin="14,12,14,14" />
+                        </Grid>
+                    </DockPanel>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <!-- ==================================================================== BARRA DE DESPLAZAMIENTO
+         Una ranura hundida y una tablilla violeta. Sin flechas: se arrastra o se usa la rueda. -->
+    <Style x:Key="PxScrollBar" TargetType="ScrollBar">
+        <Setter Property="Width" Value="15" />
+        <Setter Property="MinWidth" Value="15" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ScrollBar">
+                    <Grid SnapsToDevicePixels="True">
+                        <Border Background="{StaticResource PxInkBrush}" />
+                        <Border Background="#FF0C0916" Margin="3" />
+                        <Track x:Name="PART_Track" IsDirectionReversed="True" Margin="3">
+                            <Track.Thumb>
+                                <Thumb>
+                                    <Thumb.Template>
+                                        <ControlTemplate TargetType="Thumb">
+                                            <Grid SnapsToDevicePixels="True">
+                                                <Border Background="{StaticResource PxAccentBrush}" />
+                                                <Border Background="{StaticResource PxAccentDeepBrush}" Margin="3,3,0,0" />
+                                            </Grid>
+                                        </ControlTemplate>
+                                    </Thumb.Template>
+                                </Thumb>
+                            </Track.Thumb>
+                        </Track>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ==================================================================== CAMPO DE TEXTO
+         Lo que se escribe no puede ir en la fuente propia -hay que poder poner el cursor entre dos letras-, así que va
+         en monoespaciada clara dentro de un pozo hundido, que es lo que en un juego es una casilla para escribir. -->
+    <Style x:Key="PxTextBox" TargetType="TextBox">
+        <Setter Property="Foreground" Value="#FFEEEAF8" />
+        <Setter Property="CaretBrush" Value="{StaticResource PxAccentBrush}" />
+        <Setter Property="SelectionBrush" Value="{StaticResource PxAccentBrush}" />
+        <Setter Property="FontFamily" Value="Consolas" />
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="Padding" Value="12,10" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Grid Background="Transparent">
+                        <views:PixelPanel x:Name="Well" Fill="{StaticResource PxWell}" IsSunken="True" HasShadow="False" />
+                        <pixel:PixelText x:Name="Hint" Text="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}"
+                                         Scale="2" Tight="True" Colour="{StaticResource PxTextFaint}" IsHitTestVisible="False"
+                                         Margin="{TemplateBinding Padding}" VerticalAlignment="Center" Visibility="Collapsed" />
+                        <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"
+                                      Focusable="False" Background="Transparent">
+                            <ScrollViewer.Resources>
+                                <Style TargetType="ScrollBar" BasedOn="{StaticResource PxScrollBar}" />
+                            </ScrollViewer.Resources>
+                        </ScrollViewer>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <!-- El texto de ayuda, en la casilla vacía: se va en cuanto escribes. -->
+                        <Trigger Property="Text" Value="">
+                            <Setter TargetName="Hint" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Well" Property="Fill" Value="#FF120D22" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ==================================================================== CASILLA
+         Un hueco hundido y, marcada, una placa violeta dentro: el interruptor de un menú de opciones. -->
+    <Style x:Key="PxCheckBox" TargetType="CheckBox">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CheckBox">
+                    <StackPanel Orientation="Horizontal" Background="Transparent">
+                        <Grid Width="27" Height="27" VerticalAlignment="Center">
+                            <views:PixelPanel x:Name="Hole" Fill="{StaticResource PxWell}" IsSunken="True" HasShadow="False" />
+                            <!-- Un recuadro liso y no un PixelPanel: a 15 px el panel no llega a sus 6 celdas mínimas y no pintaba nada. -->
+                            <Border x:Name="Mark" Background="{StaticResource PxAccentBrush}" Margin="8" Visibility="Hidden" />
+                        </Grid>
+                        <pixel:PixelText x:Name="Label" Text="{Binding Content, RelativeSource={RelativeSource TemplatedParent}}"
+                                         Scale="2" Tight="True" Colour="{StaticResource PxTextDim}"
+                                         VerticalAlignment="Center" Margin="12,0,0,0" />
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Mark" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="Label" Property="Colour" Value="{StaticResource PxText}" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Hole" Property="Fill" Value="{StaticResource PxFaceHigh}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Label" Property="Colour" Value="{StaticResource PxTextFaint}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ==================================================================== DESPLEGABLE
+         Una casilla hundida con su flecha y, al abrirla, una placa con las opciones: la de encima se enciende. Las
+         opciones las dibuja la plantilla de datos de cada pantalla. -->
+    <Style x:Key="PxComboBoxItem" TargetType="ComboBoxItem">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBoxItem">
+                    <Grid Background="Transparent" MinHeight="32">
+                        <views:PixelPanel x:Name="Plate" Fill="{StaticResource PxAccentDeep}" HasShadow="False" Visibility="Collapsed" />
+                        <ContentPresenter Margin="10,6,10,7" VerticalAlignment="Center" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="Plate" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Plate" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxFaceLift}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="PxComboBox" TargetType="ComboBox">
+        <Setter Property="ItemContainerStyle" Value="{StaticResource PxComboBoxItem}" />
+        <Setter Property="MinHeight" Value="42" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBox">
+                    <Grid>
+                        <ToggleButton Focusable="False" ClickMode="Press" Cursor="Hand"
+                                      IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                            <ToggleButton.Template>
+                                <ControlTemplate TargetType="ToggleButton">
+                                    <Grid Background="Transparent">
+                                        <views:PixelPanel x:Name="Well" Fill="{StaticResource PxWell}" IsSunken="True" HasShadow="False" />
+                                        <pixel:PixelText Text="▼" Scale="2" Tight="True" Colour="{StaticResource PxAccent}"
+                                                         HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,13,0" />
+                                    </Grid>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="Well" Property="Fill" Value="{StaticResource PxFaceHigh}" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </ToggleButton.Template>
+                        </ToggleButton>
+
+                        <ContentPresenter Content="{TemplateBinding SelectionBoxItem}"
+                                          ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                          Margin="13,8,40,8" VerticalAlignment="Center" IsHitTestVisible="False" />
+
+                        <Popup IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom" AllowsTransparency="True"
+                               Focusable="False" PopupAnimation="None">
+                            <Grid MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
+                                  MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                <views:PixelPanel Fill="{StaticResource PxFace}" />
+                                <ScrollViewer Margin="5,5,11,11" VerticalScrollBarVisibility="Auto">
+                                    <ScrollViewer.Resources>
+                                        <Style TargetType="ScrollBar" BasedOn="{StaticResource PxScrollBar}" />
+                                    </ScrollViewer.Resources>
+                                    <ItemsPresenter />
+                                </ScrollViewer>
+                            </Grid>
+                        </Popup>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- El desplegable en el que también se escribe (el selector de especie). Un ComboBox editable necesita su
+         PART_EditableTextBox o deja de aceptar texto en silencio (§50), así que es un estilo aparte. -->
+    <Style x:Key="PxEditableComboBox" TargetType="ComboBox" BasedOn="{StaticResource PxComboBox}">
+        <Setter Property="IsEditable" Value="True" />
+        <Setter Property="Foreground" Value="#FFEEEAF8" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBox">
+                    <Grid Background="Transparent">
+                        <views:PixelPanel x:Name="Well" Fill="{StaticResource PxWell}" IsSunken="True" HasShadow="False" />
+                        <TextBox x:Name="PART_EditableTextBox" Margin="12,0,40,0" VerticalAlignment="Center"
+                                 Background="Transparent" BorderThickness="0" Foreground="#FFEEEAF8"
+                                 CaretBrush="{StaticResource PxAccentBrush}" SelectionBrush="{StaticResource PxAccentBrush}"
+                                 FontFamily="Consolas" FontSize="15"
+                                 IsReadOnly="{Binding IsReadOnly, RelativeSource={RelativeSource TemplatedParent}}">
+                            <TextBox.Template>
+                                <ControlTemplate TargetType="TextBox">
+                                    <ScrollViewer x:Name="PART_ContentHost" Focusable="False" Background="Transparent" />
+                                </ControlTemplate>
+                            </TextBox.Template>
+                        </TextBox>
+                        <ToggleButton Focusable="False" ClickMode="Press" Cursor="Hand" Width="36" HorizontalAlignment="Right"
+                                      IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                            <ToggleButton.Template>
+                                <ControlTemplate TargetType="ToggleButton">
+                                    <Grid Background="Transparent">
+                                        <pixel:PixelText Text="▼" Scale="2" Tight="True" Colour="{StaticResource PxAccent}"
+                                                         HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,13,0" />
+                                    </Grid>
+                                </ControlTemplate>
+                            </ToggleButton.Template>
+                        </ToggleButton>
+
+                        <Popup x:Name="PART_Popup" IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom"
+                               AllowsTransparency="True" Focusable="False" PopupAnimation="None">
+                            <Grid MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
+                                  MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                <views:PixelPanel Fill="{StaticResource PxFace}" />
+                                <ScrollViewer Margin="5,5,11,11" VerticalScrollBarVisibility="Auto">
+                                    <ScrollViewer.Resources>
+                                        <Style TargetType="ScrollBar" BasedOn="{StaticResource PxScrollBar}" />
+                                    </ScrollViewer.Resources>
+                                    <ItemsPresenter />
+                                </ScrollViewer>
+                            </Grid>
+                        </Popup>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                            <Setter TargetName="Well" Property="Fill" Value="#FF120D22" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Una opción de las que se elige una sola (el rol): la tarjeta entera es el botón, con el cursor del juego
+         alrededor de la elegida. -->
+    <Style x:Key="PxRadioCard" TargetType="RadioButton">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <Grid Background="Transparent">
+                        <views:PixelPanel x:Name="Plate" Fill="{StaticResource PxFaceHigh}" />
+                        <ContentPresenter Margin="14,11,20,16" />
+                        <views:PixelCursor x:Name="Cursor" Margin="-4" Visibility="Collapsed" Colour="#FFFFF08A" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxFaceLift}" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxAccentDeep}" />
+                            <Setter TargetName="Cursor" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Un interruptor con cara de botón (CÁMARA LENTA en la killcam): encendido se queda en violeta. -->
+    <Style x:Key="PxToggleButton" TargetType="ToggleButton">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Padding" Value="16,8,22,13" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Grid x:Name="Body" Background="Transparent">
+                        <views:PixelPanel x:Name="Plate" Fill="{StaticResource PxFaceLift}" />
+                        <pixel:PixelText x:Name="Label" Text="{Binding Content, RelativeSource={RelativeSource TemplatedParent}}"
+                                         Colour="{StaticResource PxText}" Scale="2" Tight="True"
+                                         Margin="{TemplateBinding Padding}"
+                                         HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxAccentDeep}" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxAccent}" />
+                            <Setter TargetName="Label" Property="Colour" Value="{StaticResource PxInk}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Plate" Property="HasShadow" Value="False" />
+                            <Setter TargetName="Plate" Property="Margin" Value="6,6,0,0" />
+                            <Setter TargetName="Label" Property="RenderTransform">
+                                <Setter.Value>
+                                    <TranslateTransform X="6" Y="6" />
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>

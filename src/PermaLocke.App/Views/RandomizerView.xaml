@@ -1,12 +1,31 @@
 <UserControl x:Class="PermaLocke.App.Views.RandomizerView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:PermaLocke.App.Views"
+             xmlns:pixel="clr-namespace:PermaLocke.App.Views.Pixel">
+
+    <!-- EL RANDOMIZADOR EN PÍXELES (§176). Lo que tiene que estar antes de generar, el juego sobre el que se genera, y
+         los tres pasos como placas numeradas que se encienden cuando están hechos. Mismas órdenes que antes. -->
+    <UserControl.Resources>
+        <Style TargetType="ScrollBar" BasedOn="{StaticResource PxScrollBar}" />
+
+        <Style x:Key="PxLabel" TargetType="pixel:PixelText">
+            <Setter Property="Scale" Value="2" />
+            <Setter Property="Tight" Value="True" />
+            <Setter Property="Colour" Value="{StaticResource PxTextFaint}" />
+        </Style>
+
+        <!-- El número de un paso: placa apagada, o dorada si el paso ya está hecho. -->
+        <Style x:Key="StepPlate" TargetType="views:PixelPanel">
+            <Setter Property="Width" Value="42" />
+            <Setter Property="Height" Value="42" />
+            <Setter Property="HasShadow" Value="False" />
+            <Setter Property="Fill" Value="{StaticResource PxFaceLift}" />
+        </Style>
+    </UserControl.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel Margin="0,0,10,0">
-
-            <!-- What has to be in place before anything can be generated, as three cards rather
-                 than a list of labels: each one is either ready or it is not. -->
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -16,107 +35,132 @@
                     <ColumnDefinition Width="1.4*" />
                 </Grid.ColumnDefinitions>
 
-                <Border Grid.Column="0" Style="{StaticResource Inset}" Padding="16,13">
-                    <StackPanel>
-                        <TextBlock Text="SEED DE LA RUN" Style="{StaticResource StatLabel}" />
-                        <TextBlock Text="{Binding SeedLabel}" Style="{StaticResource Mono}"
-                                   FontSize="17" Foreground="{StaticResource AccentBrush}"
-                                   Margin="0,5,0,0" />
-                    </StackPanel>
-                </Border>
+                <pixel:PixelWindow Grid.Column="0" Title="SEED DE LA RUN" Icon="IconRandomizer">
+                    <pixel:PixelText Text="{Binding SeedLabel}" Scale="3" Tight="True" Trim="True" Margin="0,4,0,0"
+                                     Colour="{StaticResource PxAccentLight}" Shadow="{StaticResource PxShadow}" />
+                </pixel:PixelWindow>
 
-                <Border Grid.Column="2" Style="{StaticResource Inset}" Padding="16,13">
-                    <StackPanel>
-                        <TextBlock Text="ROM" Style="{StaticResource StatLabel}" />
-                        <TextBlock Text="{Binding RomText}" Style="{StaticResource Body}"
-                                   FontSize="12" Margin="0,5,0,0" />
-                    </StackPanel>
-                </Border>
+                <pixel:PixelWindow Grid.Column="2" Title="ROM" Icon="IconPlay">
+                    <pixel:PixelText Text="{Binding RomText}" Scale="2" Wrap="True" Colour="{StaticResource PxText}" />
+                </pixel:PixelWindow>
 
-                <Border Grid.Column="4" Style="{StaticResource Inset}" Padding="16,13">
-                    <StackPanel>
-                        <TextBlock Text="AZAHAR" Style="{StaticResource StatLabel}" />
-                        <TextBlock Text="{Binding AzaharText}" Style="{StaticResource Mono}"
-                                   FontSize="11.5" Margin="0,5,0,0" />
-                    </StackPanel>
-                </Border>
+                <pixel:PixelWindow Grid.Column="4" Title="AZAHAR" Icon="IconTools">
+                    <pixel:PixelText Text="{Binding AzaharText}" Scale="2" Wrap="True" Colour="{StaticResource PxText}" />
+                </pixel:PixelWindow>
             </Grid>
 
             <!-- ================================================== MOD BASE
                  Sale siempre, tengas mod o no. Un aviso que solo aparece cuando hay algo deja al
                  jugador sin forma de saber que el sitio existe, y esto decide sobre qué mundo se
                  randomiza: enterarse DESPUÉS de generar es enterarse tarde. -->
-            <Border Style="{StaticResource Inset}" Padding="16,13" Margin="0,12,0,0">
-                <StackPanel>
-                    <TextBlock Text="MOD BASE" Style="{StaticResource StatLabel}" />
-                    <TextBlock Text="{Binding ExpansionText}" Style="{StaticResource Body}"
-                               FontSize="12" Margin="0,5,0,0" TextWrapping="Wrap" />
-                </StackPanel>
-            </Border>
+            <pixel:PixelWindow Title="JUEGO BASE" Icon="IconGacha" Margin="0,12,0,0">
+                <pixel:PixelText Text="{Binding ExpansionText}" Scale="2" Wrap="True" Colour="{StaticResource PxText}" />
+            </pixel:PixelWindow>
 
             <!-- Generar e instalar son dos pasos a propósito: instalar cambia la partida. -->
-            <Border Style="{StaticResource Inset}" Padding="18,16" Margin="0,12,0,0">
+            <pixel:PixelWindow Title="CÓMO FUNCIONA" Icon="IconDocument" Margin="0,12,0,0">
                 <StackPanel>
-                    <TextBlock Text="CÓMO SE RANDOMIZA" Style="{StaticResource StatLabel}" />
-
-                    <Grid Margin="0,10,0,0">
+                    <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
 
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="1." Style="{StaticResource CardTitle}"
-                                   Foreground="{StaticResource AccentBrush}" Margin="0,0,10,0"
-                                   VerticalAlignment="Top" />
-                        <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource Body}" Margin="0,0,0,10"
-                                   Text="GENERAR. Lee tu ROM y escribe una copia randomizada en la carpeta Randomized, con la seed de la run. Tarda un rato y ocupa unos 460 MB. Tu ROM original no se toca nunca, ni aquí ni después." />
+                        <StackPanel Grid.Column="0">
+                            <!-- 1. GENERAR -->
+                            <DockPanel Margin="0,0,0,10">
+                                <Grid DockPanel.Dock="Left" Margin="0,0,14,0">
+                                    <views:PixelPanel>
+                                        <views:PixelPanel.Style>
+                                            <Style TargetType="views:PixelPanel" BasedOn="{StaticResource StepPlate}">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsGenerated}" Value="True">
+                                                        <Setter Property="Fill" Value="{StaticResource PxGold}" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </views:PixelPanel.Style>
+                                    </views:PixelPanel>
+                                    <pixel:PixelText Text="1" Scale="3" Tight="True" Colour="{StaticResource PxInk}"
+                                                     HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,3" />
+                                </Grid>
+                                <StackPanel VerticalAlignment="Center">
+                                    <pixel:PixelText Text="GENERAR" Scale="2" Tight="True" Colour="{StaticResource PxText}"
+                                                     Shadow="{StaticResource PxShadow}" />
+                                    <pixel:PixelText Text="Crea tu mundo randomizado. Tarda un rato." Scale="2" Tight="True"
+                                                     Margin="0,4,0,0" Colour="{StaticResource PxTextDim}" />
+                                </StackPanel>
+                            </DockPanel>
 
-                        <TextBlock Grid.Row="1" Grid.Column="0" Text="2." Style="{StaticResource CardTitle}"
-                                   Foreground="{StaticResource AccentBrush}" Margin="0,0,10,0"
-                                   VerticalAlignment="Top" />
-                        <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource Body}" Margin="0,0,0,10"
-                                   Text="INSTALAR EN AZAHAR. Copia lo generado a la carpeta de mods del emulador. El juego lo carga por encima de la ROM, así que a partir del siguiente arranque juegas la versión randomizada. Si ya había un mod instalado no se borra: se aparta a load/permalocke-mod-anterior." />
+                            <!-- 2. INSTALAR -->
+                            <DockPanel Margin="0,0,0,10">
+                                <Grid DockPanel.Dock="Left" Margin="0,0,14,0">
+                                    <views:PixelPanel>
+                                        <views:PixelPanel.Style>
+                                            <Style TargetType="views:PixelPanel" BasedOn="{StaticResource StepPlate}">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsInstalled}" Value="True">
+                                                        <Setter Property="Fill" Value="{StaticResource PxGold}" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </views:PixelPanel.Style>
+                                    </views:PixelPanel>
+                                    <pixel:PixelText Text="2" Scale="3" Tight="True" Colour="{StaticResource PxInk}"
+                                                     HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,3" />
+                                </Grid>
+                                <StackPanel VerticalAlignment="Center">
+                                    <pixel:PixelText Text="INSTALAR EN AZAHAR" Scale="2" Tight="True" Colour="{StaticResource PxText}"
+                                                     Shadow="{StaticResource PxShadow}" />
+                                    <pixel:PixelText Text="Lo pone en el juego." Scale="2" Tight="True" Margin="0,4,0,0"
+                                                     Colour="{StaticResource PxTextDim}" />
+                                </StackPanel>
+                            </DockPanel>
 
-                        <TextBlock Grid.Row="2" Grid.Column="0" Text="3." Style="{StaticResource CardTitle}"
-                                   Foreground="{StaticResource AccentBrush}" Margin="0,0,10,0"
-                                   VerticalAlignment="Top" />
-                        <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource Body}"
-                                   Text="QUITAR. Desinstala el mod y te deja jugando la ROM tal cual salió del cartucho. Lo generado sigue en Randomized, así que volver a instalarlo es inmediato y no hay que generar otra vez." />
+                            <!-- 3. QUITAR -->
+                            <DockPanel>
+                                <Grid DockPanel.Dock="Left" Margin="0,0,14,0">
+                                    <views:PixelPanel Style="{StaticResource StepPlate}" />
+                                    <pixel:PixelText Text="3" Scale="3" Tight="True" Colour="{StaticResource PxInk}"
+                                                     HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,3" />
+                                </Grid>
+                                <StackPanel VerticalAlignment="Center">
+                                    <pixel:PixelText Text="QUITAR" Scale="2" Tight="True" Colour="{StaticResource PxText}"
+                                                     Shadow="{StaticResource PxShadow}" />
+                                    <pixel:PixelText Text="Vuelve al juego original." Scale="2" Tight="True" Margin="0,4,0,0"
+                                                     Colour="{StaticResource PxTextDim}" />
+                                </StackPanel>
+                            </DockPanel>
+                        </StackPanel>
+
+                        <!-- El dado del randomizador, grande y saltando mientras trabaja. -->
+                        <pixel:PixelIcon Grid.Column="1" Icon="IconRandomizer" Scale="8" Bob="{Binding IsBusy}"
+                                         VerticalAlignment="Center" Margin="20,0,24,0" />
                     </Grid>
 
-                    <Border Style="{StaticResource Divider}" Margin="0,14" />
-
-                    <TextBlock Style="{StaticResource Faint}"
-                               Text="Se randomiza con la seed de la run, así que la misma seed da siempre exactamente el mismo mundo: se puede regenerar y comprobar. Qué se randomiza —salvajes, objetos del suelo, iniciales y fósiles, entrenadores, datos de Pokémon y tiendas— lo decide Data/randomizer.json, no esta pantalla. Cierra Azahar antes de instalar o quitar." />
-
-                    <Border Style="{StaticResource Divider}" Margin="0,15" />
+                    <pixel:PixelRule Margin="0,16,0,12" />
 
                     <StackPanel Orientation="Horizontal">
-                        <Button Content="GENERAR" Style="{StaticResource PrimaryButton}"
-                                Command="{Binding GenerateCommand}" MinWidth="140" Padding="16,10" />
-                        <Button Content="INSTALAR EN AZAHAR" Style="{StaticResource PrimaryButton}"
-                                Command="{Binding InstallCommand}" MinWidth="190" Padding="16,10"
-                                Margin="10,0,0,0" />
-                        <Button Content="QUITAR" Style="{StaticResource GhostButton}"
-                                Command="{Binding RemoveCommand}" MinWidth="110" Padding="16,10"
-                                Margin="10,0,0,0" />
+                        <pixel:PixelText Text="!" Scale="2" Tight="True" Colour="{StaticResource PxWarn}" />
+                        <pixel:PixelText Text="Cierra Azahar antes de instalar o quitar." Scale="2" Tight="True"
+                                         Margin="8,0,0,0" Colour="{StaticResource PxWarn}" />
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                        <Button Content="GENERAR" Style="{StaticResource PxButton}" Command="{Binding GenerateCommand}"
+                                MinWidth="150" />
+                        <Button Content="INSTALAR EN AZAHAR" Style="{StaticResource PxButton}"
+                                Command="{Binding InstallCommand}" Margin="10,0,0,0" />
+                        <Button Content="QUITAR" Style="{StaticResource PxSubtleButton}" Command="{Binding RemoveCommand}"
+                                MinWidth="120" Margin="10,0,0,0" />
                     </StackPanel>
                 </StackPanel>
-            </Border>
+            </pixel:PixelWindow>
 
-            <!-- Status. Hidden entirely when there is nothing to say, so the screen is not left
-                 with an empty line where a message used to be. -->
-            <Border Padding="14,10" Margin="0,12,0,0"
-                    Background="{StaticResource SurfaceBrush}"
-                    BorderBrush="{StaticResource AccentDimBrush}" BorderThickness="1"
-                    CornerRadius="{StaticResource RadiusMedium}">
-                <Border.Style>
-                    <Style TargetType="Border">
+            <!-- Lo que ha pasado. Se esconde entero cuando no hay nada que decir. -->
+            <Grid Margin="0,12,0,0">
+                <Grid.Style>
+                    <Style TargetType="Grid">
                         <Setter Property="Visibility" Value="Visible" />
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding Status}" Value="">
@@ -124,11 +168,11 @@
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
-                </Border.Style>
-                <TextBlock Text="{Binding Status}" Style="{StaticResource Body}" FontSize="12" />
-            </Border>
-
-
+                </Grid.Style>
+                <views:PixelPanel Fill="{StaticResource PxAccentDeep}" />
+                <pixel:PixelText Text="{Binding Status}" Scale="2" Wrap="True" Margin="16,10,22,16"
+                                 Colour="{StaticResource PxText}" />
+            </Grid>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

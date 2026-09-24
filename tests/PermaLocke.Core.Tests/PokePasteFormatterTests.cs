@@ -60,6 +60,24 @@ public class PokePasteFormatterTests
         Assert.StartsWith("Kommo-o (M)", PokePasteFormatter.Write(Make(nickname: "Kommo-o")));
     }
 
+    /// <summary>
+    /// A regional form goes after the species with a hyphen, as Showdown writes it, or the site draws
+    /// the ordinary one (§140).
+    /// </summary>
+    [Fact]
+    public void A_regional_form_is_written_the_way_showdown_reads_it()
+    {
+        var alolan = Make(species: "Vulpix") with { Form = 1, FormName = "Alola" };
+        var tauros = Make(species: "Tauros") with { Form = 1, FormName = "Paldea-Combat" };
+
+        Assert.StartsWith("Vulpix-Alola (M)", PokePasteFormatter.Write(alolan));
+        Assert.StartsWith("Nieve (Vulpix-Alola) (M)", PokePasteFormatter.Write(alolan with { Nickname = "Nieve" }));
+        Assert.StartsWith("Tauros-Paldea-Combat (M)", PokePasteFormatter.Write(tauros));
+
+        // Un mote igual que el nombre de la especie sigue sin ser un mote.
+        Assert.StartsWith("Vulpix-Alola (M)", PokePasteFormatter.Write(alolan with { Nickname = "Vulpix" }));
+    }
+
     /// <summary>A list of zeroes is not the same as saying nothing.</summary>
     [Fact]
     public void Leaves_out_what_the_format_assumes()

@@ -81,6 +81,29 @@ public sealed class SaveRouletteWorldTests
         Assert.NotEqual(22, ((PK7)game.GetPartySlotAtIndex(1)).Ability);
     }
 
+    /// <summary>
+    /// A face that hands an old ability to a Pokémon carrying one of the mod's gives exactly that
+    /// ability, not that ability plus 256.
+    /// </summary>
+    /// <remarks>
+    /// §134: the ninth bit lives in 0x15. Writing only the byte at 0x14 — what the face did — left
+    /// it behind, so Imán (22) on a Palafin with Cambio Heroico (278) would have come out as 278.
+    /// </remarks>
+    [Fact]
+    public void An_ability_face_clears_the_ninth_bit_of_a_new_ability()
+    {
+        var game = Save();
+        var palafin = (PK7)game.GetPartySlotAtIndex(0);
+        PokemonAbility.Set(palafin, 278);
+        palafin.RefreshChecksum();
+        game.SetPartySlotAtIndex(palafin, 0, PokemonBuilder.InPlace);
+
+        var action = new RouletteAction(RouletteEffect.HabilidadMala, [Target(game, 0)], [22], [], 0);
+        World().ApplyTo(game, action);
+
+        Assert.Equal(22, PokemonAbility.Of((PK7)game.GetPartySlotAtIndex(0)));
+    }
+
     [Fact]
     public void Perfect_ivs_are_all_six()
     {

@@ -163,8 +163,7 @@
     </LinearGradientBrush>
 
     <SolidColorBrush x:Key="PanelBrush" Color="{StaticResource SurfaceColor}" />
-    <SolidColorBrush x:Key="SidebarBrush" Color="{StaticResource SunkenColor}" />
-    <SolidColorBrush x:Key="HeaderBrush" Color="{StaticResource SurfaceColor}" />
+    <SolidColorBrush x:Key="SidebarBrush" Color="{StaticResource SunkenColor}" />    <SolidColorBrush x:Key="HeaderBrush" Color="{StaticResource SurfaceColor}" />
     <SolidColorBrush x:Key="AccentFillBrush" Color="{StaticResource AccentColor}" />
 
     <!--

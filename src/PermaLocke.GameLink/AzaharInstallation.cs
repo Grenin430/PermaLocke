@@ -26,6 +26,15 @@ public sealed class AzaharInstallation(ILogger<AzaharInstallation> logger)
 
     private const string ExecutableName = "azahar.exe";
 
+    /// <summary>What was said last, so the same answer is not written to the log again.</summary>
+    /// <remarks>
+    /// This is asked several times a second — every save read, every tick of the battle mode — and it used to write a
+    /// line each time: 8.672 of the 14.120 lines of a day's log, 61 % of it, all saying the same thing. A log that
+    /// drowns its own findings is worse than a quiet one, and this was in the way of reading a player's report (§167).
+    /// The look-up itself stays: it is one <c>File.Exists</c>, and an emulator that appears mid-session has to be seen.
+    /// </remarks>
+    private string? _said;
+
     /// <summary>
     /// Prefers the emulator PermaLocke ships, so the player never has to pick one, and falls
     /// back to whatever Azahar they already had installed.
@@ -38,14 +47,25 @@ public sealed class AzaharInstallation(ILogger<AzaharInstallation> logger)
         if (File.Exists(executable))
         {
             var portableUser = Path.Combine(bundled, UserFolderName);
-            logger.LogInformation("Azahar propio encontrado en {Path}", executable);
+            Say($"Azahar propio encontrado en {executable}");
             return new AzaharLocation(portableUser, executable, IsPortable: true);
         }
 
         var installed = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Azahar");
-        logger.LogInformation("Sin emulador propio; se usa el instalado en {Path}", installed);
+        Say($"Sin emulador propio; se usa el instalado en {installed}");
         return new AzaharLocation(installed, null, IsPortable: false);
+    }
+
+    private void Say(string what)
+    {
+        if (_said == what)
+        {
+            return;
+        }
+
+        _said = what;
+        logger.LogInformation("{What}", what);
     }
 
     /// <summary>
@@ -83,6 +103,50 @@ public sealed class AzaharInstallation(ILogger<AzaharInstallation> logger)
         catch (Exception ex)
         {
             logger.LogError(ex, "No se pudo activar el servidor RPC en {Path}", configPath);
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Stops Azahar asking «Would you like to exit now?» when its window is closed.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// For the launcher (§125). PermaLocke closes the game by asking its window to close, which is the
+    /// clean way — Azahar stops the emulation and saves its own settings — but with this on the
+    /// request ends in a dialog nobody is looking at and the game stays open. The launcher asks its
+    /// own question first, in Spanish and saying what is lost, so the emulator's second one is only
+    /// in the way.
+    /// </para>
+    /// <para>
+    /// Written with the emulator closed, like the RPC setting: Azahar saves its settings on exit, and
+    /// one running would put the old value back.
+    /// </para>
+    /// </remarks>
+    /// <returns>True when the file ends up with the confirmation off.</returns>
+    public bool DisableCloseConfirmation(AzaharLocation location)
+    {
+        var configPath = Path.Combine(location.UserDirectory, "config", "qt-config.ini");
+
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(configPath)!);
+
+            var lines = File.Exists(configPath) ? File.ReadAllLines(configPath).ToList() : [];
+            var changed = SetValue(lines, "confirmClose", "false", "[UI]");
+            changed |= SetValue(lines, @"confirmClose\default", "false", "[UI]");
+
+            if (changed)
+            {
+                File.WriteAllLines(configPath, lines);
+                logger.LogInformation("Confirmación de cierre de Azahar desactivada en {Path}", configPath);
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "No se pudo desactivar la confirmación de cierre en {Path}", configPath);
             return false;
         }
     }

@@ -15,7 +15,7 @@
                            HorizontalAlignment="Center" VerticalAlignment="Center" />
             </Border>
 
-            <TextBlock Text="SECCIÓN NO IMPLEMENTADA TODAVÍA"
+            <TextBlock Text="PRÓXIMAMENTE"
                        Style="{StaticResource PanelHeading}" FontSize="14"
                        HorizontalAlignment="Center" Margin="0,18,0,0" />
 
@@ -29,7 +29,7 @@
             <TextBlock Text="{Binding Plan}" Style="{StaticResource Body}" TextAlignment="Center" />
 
             <TextBlock Style="{StaticResource Faint}" TextAlignment="Center" Margin="0,18,0,0"
-                       Text="No hay nada que pulsar aquí: prefiero dejarlo vacío antes que poner botones que no hacen nada." />
+                       Text="Próximamente." />
         </StackPanel>
     </Border>
 </UserControl>

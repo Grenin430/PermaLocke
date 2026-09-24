@@ -8,9 +8,20 @@ namespace PermaLocke.Randomizer.Modules;
 /// <param name="Power">Base power. Zero for status moves and for the fixed-damage ones.</param>
 /// <param name="Accuracy">Hit chance. The game writes perfect accuracy as a value of its own.</param>
 /// <param name="Hits">Most times it can hit in a turn, so a multi-hit move counts for what it does.</param>
-/// <param name="Physical">True physical, false special, null for a status move.</param>
-public sealed record MoveFacts(int Id, int Type, int Power, int Accuracy, int Hits, bool? Physical)
+/// <param name="Physical">True physical, false special, null for a move with no base power.</param>
+/// <param name="FixedDamage">
+/// No base power, but it hurts: Seismic Toss, Night Shade, Super Fang, the one-hit knockouts. They are not status moves,
+/// and a slot that held one keeps one rather than turning into a stat drop, or the other way round.
+/// </param>
+public sealed record MoveFacts(int Id, int Type, int Power, int Accuracy, int Hits, bool? Physical,
+    bool FixedDamage = false)
 {
+    /// <summary>
+    /// What it hits for in a turn, to compare two attacks: the power, times the hits a multi-hit move lands. A move that
+    /// hits two to five times lands about three, so three it is; counting five would put Bullet Seed next to Hyper Beam.
+    /// </summary>
+    public int Strength => Power * (Hits >= 5 ? 3 : Math.Max(1, Hits));
+
     /// <summary>
     /// Whether this is worth handing out as an attack, by the reference randomizer's rule.
     /// </summary>

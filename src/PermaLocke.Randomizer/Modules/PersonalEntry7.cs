@@ -51,10 +51,46 @@ public static class PersonalEntry7
         return first == second;
     }
 
-    public static int GetAbility(byte[] entry, int at, int slot) => entry[at + AbilityOffsets[slot]];
+    /// <summary>
+    /// The ninth bit of each ability slot, one bit per slot (slot 0 is bit 0), in the entry's last byte.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The cartridge has no use for it —the byte is zero in all 976 of its entries, measured— but the gen 8-9
+    /// expansion needs abilities past 255 and a slot is one byte, so it keeps the ninth bit here and patches the
+    /// game to read it back («NINTH ABILITY BIT» in its own code map). Great Tusk is <c>25</c> with its three bits
+    /// on: 25 + 256 = 281, Protosynthesis.
+    /// </para>
+    /// <para>
+    /// Reading only the byte is not a small inaccuracy. A randomizer that writes the byte and leaves the bit
+    /// behind turns «ability 50» into ability 306, or into one past the end of the game's list: measured in the
+    /// installed world, 184 slots pointing at abilities that do not exist (§132).
+    /// </para>
+    /// </remarks>
+    public const int AbilityHighBitsOffset = 0x53;
 
-    public static void SetAbility(byte[] entry, int at, int slot, int ability) =>
+    /// <summary>The highest ability a slot can hold: eight bits of its own plus the ninth.</summary>
+    public const int MaxStorableAbility = 0x1FF;
+
+    /// <summary>The ability in a slot, all nine bits of it.</summary>
+    public static int GetAbility(byte[] entry, int at, int slot) =>
+        entry[at + AbilityOffsets[slot]] | (((entry[at + AbilityHighBitsOffset] >> slot) & 1) << 8);
+
+    /// <summary>
+    /// Writes an ability into a slot, byte and ninth bit together: an ability under 256 clears the bit, so nothing
+    /// the expansion had put there survives into the new value.
+    /// </summary>
+    public static void SetAbility(byte[] entry, int at, int slot, int ability)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(ability);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(ability, MaxStorableAbility);
+
         entry[at + AbilityOffsets[slot]] = (byte)ability;
+
+        var mask = 1 << slot;
+        var high = entry[at + AbilityHighBitsOffset];
+        entry[at + AbilityHighBitsOffset] = (byte)(ability > 0xFF ? high | mask : high & ~mask);
+    }
 
     /// <summary>
     /// Rearranges the six base stats without changing their total, so a species keeps the league
@@ -80,6 +116,73 @@ public static class PersonalEntry7
 
     public static int GetFormStatsIndex(byte[] entry, int at) =>
         BitConverter.ToUInt16(entry, at + FormStatsIndexOffset);
+
+    /// <summary>How many forms a species has, the first one included.</summary>
+    public const int FormCountOffset = 0x20;
+
+    public static int GetFormCount(byte[] entry, int at) => entry[at + FormCountOffset];
+
+    /// <summary>
+    /// The row a species and form read their data from, or null when the species is not in the table.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The game's rule, the one pk3DS's <c>PersonalInfo.FormeIndex</c> follows: a form reads its own row
+    /// —<c>FormStatsIndex + form − 1</c>— only when the species declares that it has one, which is a form
+    /// index other than zero and a form below its count. Anything else reads the species' row: forms that
+    /// are only a different picture (a Vivillon's wings) share it, and so does a form number the species
+    /// does not declare.
+    /// </para>
+    /// <para>
+    /// One place for it on purpose. Trainer difficulty and the EV writer both need a form's base stats, and
+    /// two copies of «which row» would drift the first time somebody fixed one of them.
+    /// </para>
+    /// </remarks>
+    public static int? RowOf(byte[] packed, int species, int form)
+    {
+        var rows = packed.Length / Size;
+
+        if (species <= 0 || species >= rows)
+        {
+            return null;
+        }
+
+        var at = species * Size;
+        var formsFrom = GetFormStatsIndex(packed, at);
+
+        return form > 0 && formsFrom > 0 && form < GetFormCount(packed, at) && formsFrom + form - 1 < rows
+            ? formsFrom + form - 1
+            : species;
+    }
+
+    /// <summary>
+    /// The base stats of every form that has a row of its own, in the summary screen's order, by species and form.
+    /// </summary>
+    /// <remarks>
+    /// Only the forms whose row is not their species': every other form reads the species' row by
+    /// <see cref="RowOf"/>, so leaving them out is the same rule and not a gap. An Alolan Raichu is here; a
+    /// Vivillon's wings are not.
+    /// </remarks>
+    public static Dictionary<(int Species, int Form), byte[]> FormBaseStatsInScreenOrder(byte[] packed,
+        int speciesCount)
+    {
+        var forms = new Dictionary<(int Species, int Form), byte[]>();
+
+        for (var species = 1; species <= speciesCount; species++)
+        {
+            var count = GetFormCount(packed, species * Size);
+
+            for (var form = 1; form < count; form++)
+            {
+                if (RowOf(packed, species, form) is { } row && row != species)
+                {
+                    forms[(species, form)] = [.. StatOrder.Select(stat => (byte)GetStat(packed, row * Size, stat))];
+                }
+            }
+        }
+
+        return forms;
+    }
 
     /// <summary>
     /// How many species the table describes, read from the table itself.
@@ -122,6 +225,53 @@ public static class PersonalEntry7
         }
 
         return rates;
+    }
+
+    /// <summary>The two types of every species, two bytes each, indexed by species id.</summary>
+    /// <remarks>
+    /// From the installed world and not from PKHeX because PKHeX's gen 7 table stops at 807: every species the
+    /// expansion adds came back as «?» in the wonder trade. Index 0 is padding.
+    /// </remarks>
+    public static byte[] Types(byte[] packed, int speciesCount)
+    {
+        var types = new byte[(speciesCount + 1) * 2];
+
+        for (var species = 1; species <= speciesCount; species++)
+        {
+            types[species * 2] = packed[(species * Size) + Type1Offset];
+            types[(species * 2) + 1] = packed[(species * Size) + Type2Offset];
+        }
+
+        return types;
+    }
+
+    /// <summary>
+    /// Both types of every alternate form with a row of its own, by species and form.
+    /// </summary>
+    /// <remarks>
+    /// The companion of <see cref="Types"/>, which is by species: an Alolan Vulpix is Ice and a
+    /// Kantonian one is Fire, and the wonder trade announced the latter for both. A form without a
+    /// row of its own has its species' types, by the game's rule in <see cref="RowOf"/>. §139.
+    /// </remarks>
+    public static Dictionary<(int Species, int Form), (byte First, byte Second)> FormTypes(byte[] packed,
+        int speciesCount)
+    {
+        var forms = new Dictionary<(int Species, int Form), (byte First, byte Second)>();
+
+        for (var species = 1; species <= speciesCount; species++)
+        {
+            var count = GetFormCount(packed, species * Size);
+
+            for (var form = 1; form < count; form++)
+            {
+                if (RowOf(packed, species, form) is { } row && row != species)
+                {
+                    forms[(species, form)] = (packed[(row * Size) + Type1Offset], packed[(row * Size) + Type2Offset]);
+                }
+            }
+        }
+
+        return forms;
     }
 
     /// <summary>

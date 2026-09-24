@@ -141,7 +141,7 @@ public static class ModInstaller
 
         if (hasBase)
         {
-            onProgress?.Invoke("Copiando el mod base... (son varios GB, la primera vez tarda)");
+            onProgress?.Invoke("Instalando... (la primera vez tarda unos minutos)");
             CopyTree(baseLayerRomfs!, romfs, skipUnchanged: true);
 
             if (hasBaseExefs)
@@ -150,7 +150,7 @@ public static class ModInstaller
             }
         }
 
-        onProgress?.Invoke("Copiando la randomización...");
+        onProgress?.Invoke("Instalando...");
         CopyTree(Path.Combine(generated, "romfs"), romfs);
 
         // Y el exefs generado ENCIMA del de la capa base, si lo hay: es el mismo code.bin del mod
@@ -266,7 +266,7 @@ public static class ModInstaller
             copy = Path.Combine(shelf, stamp + "-" + n);
         }
 
-        onProgress?.Invoke($"Guardando copia del mundo instalado ({lost.Count} ficheros) en {copy}...");
+        onProgress?.Invoke("Guardando una copia de tu mundo anterior...");
 
         try
         {

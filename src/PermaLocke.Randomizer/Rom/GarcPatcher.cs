@@ -55,6 +55,14 @@ public sealed class GarcPatcher : IDisposable
     /// normal constructor takes a read/write handle because patching needs one, and asking for
     /// write access to something you only intend to read is how a reader ends up truncating a
     /// file it was never meant to touch.
+    /// <para>
+    /// The bytes come back <b>as stored</b>. <c>LazyGARC</c> quietly decompresses an LZ11 subfile
+    /// (first byte 0x11) and this does not, so on a compressed container such as the encounter data
+    /// <c>a/0/8/3</c> every subfile reads as noise and nothing throws. Measured on 2026-09-21: an audit
+    /// of the wild tables read through here found zero encounter slots. Every caller today reads
+    /// uncompressed containers (species, statics, text, moves, learnsets); a new one on another
+    /// container has to check first, or use <c>LazyGARC</c>.
+    /// </para>
     /// </remarks>
     public static byte[] ReadOnly(string path, int index)
     {
@@ -71,6 +79,42 @@ public sealed class GarcPatcher : IDisposable
         stream.Position = garc.DataOffset + sub.Start;
         stream.ReadExactly(buffer, 0, buffer.Length);
         return buffer;
+    }
+
+    /// <summary>How many subfiles a container has, without opening it for writing.</summary>
+    public static int CountReadOnly(string path) => GARC.UnpackGARC(path).fato.EntryCount;
+
+    /// <summary>
+    /// Every subfile, read once and without write access. A subfile that does not exist comes back empty.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="ReadOnly"/> parses the whole header for each subfile it is asked for, which is fine for one and
+    /// quadratic for the 1300 learnsets of the expansion. Same caveat as <see cref="ReadOnly"/>: a compressed
+    /// subfile comes back compressed.
+    /// </remarks>
+    public static byte[][] ReadAllReadOnly(string path)
+    {
+        var garc = GARC.UnpackGARC(path);
+        var files = new byte[garc.fato.EntryCount][];
+
+        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+
+        for (var index = 0; index < files.Length; index++)
+        {
+            var sub = garc.fatb.Entries[index].SubEntries[0];
+
+            if (!sub.Exists)
+            {
+                files[index] = [];
+                continue;
+            }
+
+            files[index] = new byte[sub.End - sub.Start];
+            stream.Position = garc.DataOffset + sub.Start;
+            stream.ReadExactly(files[index], 0, files[index].Length);
+        }
+
+        return files;
     }
 
     public void Dispose() => _stream.Dispose();

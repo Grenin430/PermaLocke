@@ -83,7 +83,7 @@ public sealed class RunBackup(string savesRoot, ILogger<RunBackup>? logger = nul
             // Nunca impide arrancar. Ver el remark de la clase.
             logger?.LogError(ex, "No se ha podido copiar la run");
             return new RunBackupResult(null, 0,
-                "No se ha podido copiar la run. El detalle está en la carpeta Logs.");
+                "No se ha podido copiar la run.");
         }
     }
 

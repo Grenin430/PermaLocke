@@ -24,11 +24,31 @@ public sealed class WildEncounterRandomizer(RandomizerOptions options)
     private const int SubfilesPerArea = 11;
     private const int EncounterSubfile = 9;
 
+    /// <summary>
+    /// The pool the wild slots are drawn from: the game's, minus <see cref="RandomizerOptions.WildBannedSpecies"/>.
+    /// </summary>
+    /// <remarks>
+    /// Narrows only this module's pool, never the shared one: a trainer may still carry a gen 8-9
+    /// legendary and the grass may not. With the list empty it is the same pool, so a world generated
+    /// without the list comes out exactly as before.
+    /// </remarks>
+    public static SpeciesPool PoolFor(SpeciesPool pool, RandomizerOptions options)
+    {
+        var banned = options.WildBannedSpecies.ToHashSet();
+
+        return banned.Count == 0
+            ? pool
+            : pool.Where(species => !banned.Contains(species), "no prohibida en salvajes");
+    }
+
     public WildEncounterResult Apply(IRandomSource random, SpeciesPool pool,
         GARC.LazyGARC garc, CancellationToken ct = default)
     {
         var areas = garc.FileCount / SubfilesPerArea;
         var areasChanged = 0;
+
+        // La forma regional, de su propia fuente: la especie de cada hueco sale igual que antes (§138).
+        var forms = random.Derive("forms");
         var slotsChanged = 0;
 
         for (var area = 0; area < areas; area++)
@@ -42,7 +62,7 @@ public sealed class WildEncounterRandomizer(RandomizerOptions options)
                 continue; // area without encounter tables
             }
 
-            var changed = RandomizeArea(payload, random, pool);
+            var changed = RandomizeArea(payload, random, forms, pool);
             if (changed == 0)
             {
                 continue;
@@ -57,7 +77,7 @@ public sealed class WildEncounterRandomizer(RandomizerOptions options)
     }
 
     /// <summary>Rewrites every table of one area's encounter block, in place.</summary>
-    private int RandomizeArea(byte[] payload, IRandomSource random, SpeciesPool pool)
+    private int RandomizeArea(byte[] payload, IRandomSource random, IRandomSource forms, SpeciesPool pool)
     {
         var entries = BitConverter.ToUInt16(payload, 2);
         var changed = 0;
@@ -73,14 +93,14 @@ public sealed class WildEncounterRandomizer(RandomizerOptions options)
 
             foreach (var tableOffset in (int[])[EncounterTable7.DayTableOffset, EncounterTable7.NightTableOffset])
             {
-                changed += RandomizeTable(new EncounterTable7(payload, start + tableOffset), random, pool);
+                changed += RandomizeTable(new EncounterTable7(payload, start + tableOffset), random, forms, pool);
             }
         }
 
         return changed;
     }
 
-    private int RandomizeTable(EncounterTable7 table, IRandomSource random, SpeciesPool pool)
+    private int RandomizeTable(EncounterTable7 table, IRandomSource random, IRandomSource forms, SpeciesPool pool)
     {
         var offsets = EncounterTable7.SlotOffsets().ToArray();
         var baseSetLength = EncounterTable7.SlotsPerSet;
@@ -96,14 +116,17 @@ public sealed class WildEncounterRandomizer(RandomizerOptions options)
             }
 
             // Mirroring makes an SOS call bring whatever appeared in the matching base slot.
+            // La forma también: una llamada SOS de un Vulpix de Alola trae otro de Alola.
             if (options.MirrorSosSlots && i >= baseSetLength)
             {
-                table.SetSpecies(slotOffset, table.GetSpecies(offsets[i % baseSetLength]));
+                var mirrored = offsets[i % baseSetLength];
+                table.SetSpecies(slotOffset, table.GetSpecies(mirrored), table.GetForme(mirrored));
                 changed++;
                 continue;
             }
 
-            table.SetSpecies(slotOffset, pool.Pick(random, original));
+            var species = pool.Pick(random, original);
+            table.SetSpecies(slotOffset, species, pool.Forms.Pick(forms, species));
             changed++;
         }
 

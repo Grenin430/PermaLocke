@@ -16,6 +16,7 @@ public static class ServiceCollectionExtensions
         services.TryAddSingleton<IRunContext, RunContext>();
         services.TryAddSingleton<IPointsService, PointsService>();
         services.TryAddSingleton<RunService>();
+        services.TryAddSingleton<PlayerProfileService>();
         return services;
     }
 }

@@ -1,7 +1,9 @@
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Threading;
 using PermaLocke.App.Services;
 using PermaLocke.App.ViewModels;
 
@@ -17,14 +19,48 @@ public partial class MainWindow : Window
     /// <summary>What the counter said last time, to know whether the change was good or bad.</summary>
     private int _lastPoints;
 
-    /// <summary>The counter's own brush. A theme brush is frozen and shared: it cannot be animated.</summary>
-    private SolidColorBrush? _pointsBrush;
-
     public MainWindow()
     {
         InitializeComponent();
         DarkFrame.Apply(this);
         DataContextChanged += OnDataContextChanged;
+
+        Sidebar.SizeChanged += (_, _) => FitAlolaCorner();
+
+        // La franja de Alola acaba justo en la raya de la cabecera: los 20 de margen del contenido más lo que mida.
+        Header.SizeChanged += (_, _) => AlolaStrip.Height = Header.ActualHeight + 20;
+        ((INotifyCollectionChanged)NavList.Items).CollectionChanged +=
+            (_, _) => Dispatcher.BeginInvoke(FitAlolaCorner, DispatcherPriority.Loaded);
+    }
+
+    /// <summary>
+    /// Shows the Alola corner only when the list of sections still fits whole above it.
+    /// </summary>
+    /// <remarks>
+    /// Measured, not decided by window size: at NORMAL (760 tall) the list alone takes almost the whole
+    /// sidebar, and it grows by one when the run plays with the wheel. A corner that pushes a scroll bar
+    /// onto the navigation is a decoration in the way of the one thing the sidebar is for.
+    /// </remarks>
+    private void FitAlolaCorner()
+    {
+        if (Sidebar.ActualHeight <= 0)
+        {
+            return;
+        }
+
+        var width = Math.Max(1, Sidebar.ActualWidth);
+        NavList.Measure(new Size(width, double.PositiveInfinity));
+
+        var corner = AlolaCorner.Margin.Top + AlolaCorner.Margin.Bottom;
+
+        foreach (UIElement child in AlolaCorner.Children)
+        {
+            child.Measure(new Size(width, double.PositiveInfinity));
+            corner += child.DesiredSize.Height;
+        }
+
+        var room = Sidebar.ActualHeight - Sidebar.RowDefinitions[0].ActualHeight - NavList.DesiredSize.Height;
+        AlolaCorner.Visibility = room >= corner ? Visibility.Visible : Visibility.Collapsed;
     }
 
 
@@ -82,8 +118,6 @@ public partial class MainWindow : Window
         _shell.PropertyChanged += OnShellChanged;
         _lastPoints = _shell.PointsValue;
 
-        _pointsBrush = new SolidColorBrush((Color)FindResource("AccentColor"));
-        PointsNumber.Foreground = _pointsBrush;
     }
 
     private void OnShellChanged(object? sender, PropertyChangedEventArgs e)
@@ -132,17 +166,18 @@ public partial class MainWindow : Window
     /// <summary>Tints the points for a moment, green when they went up and red when they went down.</summary>
     private void FlashPoints(int change)
     {
-        if (change == 0 || _pointsBrush is null)
+        if (change == 0)
         {
             return;
         }
 
-        var flash = (Color)FindResource(change > 0 ? "SuccessColor" : "DangerColor");
+        var flash = (Color)FindResource(change > 0 ? "PxGood" : "PxBad");
 
-        _pointsBrush.BeginAnimation(SolidColorBrush.ColorProperty, new ColorAnimation
+        // La cifra es texto en píxeles (§176): se anima su color, que la vuelve a dibujar en cada paso.
+        PointsNumber.BeginAnimation(Views.Pixel.PixelText.ColourProperty, new ColorAnimation
         {
             From = flash,
-            To = (Color)FindResource("AccentColor"),
+            To = (Color)FindResource("PxAccent"),
             Duration = TimeSpan.FromMilliseconds(900),
             EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn }
         });

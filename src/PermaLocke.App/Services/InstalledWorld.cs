@@ -45,6 +45,25 @@ public sealed class InstalledWorld(AzaharInstallation azahar, ILogger<InstalledW
     /// could not find, and a level two off — while the application next to it read both correctly.
     /// Hence a door that needs nothing but a folder.
     /// </remarks>
+    /// <summary>
+    /// The moves nobody may learn or be handed (§162), for what the application teaches and builds on its own. From
+    /// the same <c>bannedMoves</c> the randomizer takes out of the world, so the two cannot disagree.
+    /// </summary>
+    private void ApplyBannedMoves(string appDirectory)
+    {
+        try
+        {
+            var banned = PermaLocke.Randomizer.RandomizerOptionsLoader
+                .Load(Path.Combine(appDirectory, "Data", "randomizer.json")).BannedMoves;
+            WorldMoves.Banned = banned.ToHashSet();
+            logger.LogInformation("Movimientos prohibidos: {Count} ({Ids})", banned.Count, string.Join(", ", banned));
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "No se pudo leer la lista de movimientos prohibidos de randomizer.json");
+        }
+    }
+
     public static void ApplyQuietly(string appDirectory) =>
         new InstalledWorld(
                 new AzaharInstallation(NullLogger<AzaharInstallation>.Instance),
@@ -56,7 +75,23 @@ public sealed class InstalledWorld(AzaharInstallation azahar, ILogger<InstalledW
     /// </summary>
     public void Apply(string appDirectory)
     {
-        var (species, growth, bases) = Read(appDirectory);
+        ApplyBannedMoves(appDirectory);
+        ApplyMoves(appDirectory);
+
+        var (species, growth, bases, types, forms, formTypes) = Read(appDirectory);
+
+        if (types is not null)
+        {
+            // Los tipos del juego que se juega: PKHeX acaba en la 807 y el wonder trade enseñaba «?» (§121).
+            WorldLimits.Types = types;
+            logger.LogInformation("Mundo instalado: tipos leidos para {Count} especies", (types.Length / 2) - 1);
+        }
+
+        if (formTypes is not null)
+        {
+            // Los de cada forma con fila propia: un Vulpix de Alola es de Hielo, no de Fuego (§139).
+            WorldLimits.FormTypes = formTypes;
+        }
 
         if (bases is not null)
         {
@@ -65,6 +100,14 @@ public sealed class InstalledWorld(AzaharInstallation azahar, ILogger<InstalledW
             WorldLimits.BaseStats = bases;
             logger.LogInformation(
                 "Mundo instalado: estadisticas base leidas para {Count} especies", (bases.Length / 6) - 1);
+        }
+
+        if (forms is not null)
+        {
+            // Las formas con fila propia: sin esto, a un Raichu de Alola se le recalculaban las estadísticas
+            // con las del Raichu normal al guardarle EV (§131).
+            WorldLimits.FormBaseStats = forms;
+            logger.LogInformation("Mundo instalado: {Count} formas con estadisticas propias", forms.Count);
         }
 
         if (growth is not null)
@@ -95,7 +138,97 @@ public sealed class InstalledWorld(AzaharInstallation azahar, ILogger<InstalledW
             species.Value);
     }
 
-    private (int? Species, byte[]? Growth, byte[]? Bases) Read(string appDirectory)
+    /// <summary>
+    /// Publishes what each Pokémon learns and what each move is, from the installed world (§142).
+    /// </summary>
+    /// <remarks>
+    /// The learnsets are randomized in this competition, so the cartridge's list — PKHeX's — is the wrong answer for
+    /// the move reminder and for anything the application builds. Each table is published only if the mod carries
+    /// it; one it does not carry is the cartridge's in the game too, and the readers fall back to PKHeX for it.
+    /// </remarks>
+    private void ApplyMoves(string appDirectory)
+    {
+        try
+        {
+            var location = azahar.Locate(appDirectory);
+            var modDirectory = AzaharInstallation.ModDirectory(location, LayeredFsMod.UltraMoonProgramId);
+            var romfs = Path.Combine(modDirectory, "romfs");
+
+            if (!Directory.Exists(romfs))
+            {
+                return;
+            }
+
+            var tables = WorldMoveTables.Read(romfs);
+
+            if (tables.Learnsets is { } learnsets)
+            {
+                WorldMoves.Learnsets = learnsets;
+                WorldMoves.FormRows = FormRows(PersonalPath(modDirectory));
+                logger.LogInformation("Mundo instalado: aprendizajes leidos para {Count} filas, {Forms} formas con los suyos",
+                    learnsets.Count, WorldMoves.FormRows.Count);
+            }
+
+            if (tables.Moves is { } moves)
+            {
+                WorldMoves.Moves =
+                    [.. moves.Select(move => new WorldMove(move.Type, move.Category, move.Power, move.Accuracy, move.PP))];
+                logger.LogInformation("Mundo instalado: {Count} movimientos leidos", moves.Count - 1);
+            }
+
+            if (tables.Names is { } names)
+            {
+                WorldMoves.MoveNames = names;
+            }
+
+            // Lo que hace cada movimiento, del texto del propio juego (§144): el recuerda-movimientos lo enseña.
+            if (tables.Descriptions is { } descriptions)
+            {
+                WorldMoves.MoveDescriptions = descriptions;
+            }
+        }
+        catch (Exception ex)
+        {
+            // Como el resto: no impide arrancar. Sin tablas del mundo se pregunta al cartucho, y el
+            // recuerda-movimientos dice de dónde saca la lista.
+            logger.LogWarning(ex, "No se pudieron leer los aprendizajes del mundo instalado");
+        }
+    }
+
+    /// <summary>
+    /// The learnset row of every form that has its own, by the game's rule (<see cref="PersonalEntry7.RowOf"/>).
+    /// </summary>
+    private static Dictionary<(int Species, int Form), int> FormRows(string personalPath)
+    {
+        var rows = new Dictionary<(int Species, int Form), int>();
+
+        if (!File.Exists(personalPath))
+        {
+            return rows;
+        }
+
+        var packed = GarcPatcher.ReadOnly(personalPath, GarcPatcher.CountReadOnly(personalPath) - 1);
+        var count = PersonalEntry7.SpeciesCount(packed);
+
+        for (var species = 1; species <= count; species++)
+        {
+            var formCount = PersonalEntry7.GetFormCount(packed, species * PersonalEntry7.Size);
+
+            for (var form = 1; form < formCount; form++)
+            {
+                if (PersonalEntry7.RowOf(packed, species, form) is { } row && row != species)
+                {
+                    rows[(species, form)] = row;
+                }
+            }
+        }
+
+        return rows;
+    }
+
+    private (int? Species, byte[]? Growth, byte[]? Bases, byte[]? Types,
+        Dictionary<(int Species, int Form), byte[]>? Forms,
+        Dictionary<(int Species, int Form), (byte First, byte Second)>? FormTypes) Read(string appDirectory)
     {
         try
         {
@@ -105,22 +238,23 @@ public sealed class InstalledWorld(AzaharInstallation azahar, ILogger<InstalledW
 
             if (!File.Exists(path))
             {
-                return (null, null, null);
+                return (null, null, null, null, null, null);
             }
 
-            using var personal = new GarcPatcher(path);
-            var packed = personal.Read(personal.FileCount - 1);
+            // De solo lectura: es la carpeta del emulador, y el constructor de GarcPatcher pide escritura para parchear.
+            var packed = GarcPatcher.ReadOnly(path, GarcPatcher.CountReadOnly(path) - 1);
             var count = PersonalEntry7.SpeciesCount(packed);
 
             return (count, PersonalEntry7.GrowthRates(packed, count),
-                PersonalEntry7.BaseStatsInScreenOrder(packed, count));
+                PersonalEntry7.BaseStatsInScreenOrder(packed, count), PersonalEntry7.Types(packed, count),
+                PersonalEntry7.FormBaseStatsInScreenOrder(packed, count), PersonalEntry7.FormTypes(packed, count));
         }
         catch (Exception ex)
         {
             // Nunca impide arrancar: un techo que no se ha podido leer se queda en el del cartucho,
             // que es el lado que no afloja ningún filtro.
             logger.LogWarning(ex, "No se pudo leer cuántas especies tiene el mundo instalado");
-            return (null, null, null);
+            return (null, null, null, null, null, null);
         }
     }
 

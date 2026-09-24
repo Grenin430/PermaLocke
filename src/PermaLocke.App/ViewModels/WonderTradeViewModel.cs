@@ -1,19 +1,16 @@
+using System.Diagnostics;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using PermaLocke.App.Services;
+using PermaLocke.App.Views;
 using PermaLocke.Core.Abstractions;
 using PermaLocke.Core.Domain;
 using PermaLocke.Core.Services;
 
 namespace PermaLocke.App.ViewModels;
-
-/// <summary>Asks the view to run the trade animation. The view owns the how; this owns the when.</summary>
-/// <param name="BallArrived">Called when the incoming ball has stopped, which starts the reveals.</param>
-/// <param name="Opened">Called to open the ball on the last reveal.</param>
-public sealed record TradeAnimation(Action BallArrived);
 
 /// <summary>One type of the received Pokémon, with the colour the games have always used.</summary>
 public sealed record TypeBadgeViewModel(string Name, Brush Colour);
@@ -42,14 +39,6 @@ public sealed partial class WonderTradeViewModel : ObservableObject
     private readonly PokemonSpriteService _sprites;
     private readonly ILogger<WonderTradeViewModel> _logger;
 
-    /// <summary>The colours the series has used for the types since forever.</summary>
-    private static readonly string[] TypeColours =
-    [
-        "#9FA19F", "#FF8000", "#81B9EF", "#9141CB", "#915121", "#AFA981", "#91A119", "#704170",
-        "#60A1B8", "#E62829", "#2980EF", "#3FA129", "#FAC000", "#EF4179", "#3DCEF3", "#5060E1",
-        "#624D4E", "#EF70EF", "#2E9AA0"
-    ];
-
     public WonderTradeViewModel(WonderTradeService trades, IPokemonSwap swap,
         PokemonIdentityService identity, CreditService credits, IRunContext runContext,
         PokemonSpriteService sprites, ILogger<WonderTradeViewModel> logger)
@@ -62,12 +51,6 @@ public sealed partial class WonderTradeViewModel : ObservableObject
         _sprites = sprites;
         _logger = logger;
     }
-
-    /// <summary>Raised when the reel of balls should run. The view animates; this waits.</summary>
-    public event EventHandler<TradeAnimation>? AnimationRequested;
-
-    /// <summary>Raised when the ball should burst open on the last reveal.</summary>
-    public event EventHandler? OpenRequested;
 
     /// <summary>Raised when the trade is over and the boxes on screen are out of date.</summary>
     public event EventHandler? Finished;
@@ -94,13 +77,13 @@ public sealed partial class WonderTradeViewModel : ObservableObject
     private BitmapSource? _receivedSprite;
 
     /// <summary>
-    /// The Poké Ball, out of the player's own cartridge. Null when the sprites are not there,
-    /// and then the animation runs without it rather than drawing a fake one.
+    /// The trade the cabin is playing, with the moment it was confirmed. The cabin draws itself from it; this only
+    /// waits for the Pokémon to be out before the card with its data comes up.
     /// </summary>
     [ObservableProperty]
-    private BitmapSource? _ballSprite;
+    private TradePlay? _currentPlay;
 
-    /// <summary>Colour of the received Pokémon's first type, which floods the reveal.</summary>
+    /// <summary>Colour of the received Pokémon's first type, for the strip on its card.</summary>
     [ObservableProperty]
     private Brush _typeColour = Brushes.Transparent;
 
@@ -150,17 +133,8 @@ public sealed partial class WonderTradeViewModel : ObservableObject
         }
     }
 
-    // Los tres avisos previos, en orden: tipo, generación y total. Cada uno se enciende por
-    // separado para que la vista los pueda animar uno a uno.
-    [ObservableProperty]
-    private bool _showTypes;
-
-    [ObservableProperty]
-    private bool _showGeneration;
-
-    [ObservableProperty]
-    private bool _showTotal;
-
+    // Las tres pistas de antes -generación, tipos y total- las dice ya la pantalla de la cabina (§174); esto solo
+    // enciende la ficha cuando el Pokémon ha salido.
     [ObservableProperty]
     private bool _showPokemon;
 
@@ -175,7 +149,48 @@ public sealed partial class WonderTradeViewModel : ObservableObject
         ? string.Empty
         : $"{(Offer.Difference >= 0 ? "+" : string.Empty)}{Offer.Difference} % sobre {Offer.GivenName}";
 
-    public bool CanConfirm => Given is not null && !IsPlaying && !IsWorking;
+    public bool CanConfirm => Given is not null && !GivenIsFallen && !IsPlaying && !IsWorking;
+
+    /// <summary>The picked Pokémon is dead in the run, and a wonder trade only takes the living.</summary>
+    [ObservableProperty]
+    private bool _givenIsFallen;
+
+    partial void OnGivenIsFallenChanged(bool value) => ConfirmCommand.NotifyCanExecuteChanged();
+
+    /// <summary>
+    /// Says it the moment a fallen Pokémon is picked, rather than after confirming. The service refuses it again on
+    /// its own, so this is the courtesy and not the rule.
+    /// </summary>
+    private async Task CheckFallenAsync(BoxedPokemon pokemon)
+    {
+        if (_runContext.Current is not { } run)
+        {
+            return;
+        }
+
+        try
+        {
+            var fallen = await _trades.IsFallenAsync(run.Id, pokemon.Pid);
+
+            // Si mientras tanto se ha elegido a otro, esta respuesta ya no es de nadie.
+            if (!ReferenceEquals(Given, pokemon))
+            {
+                return;
+            }
+
+            GivenIsFallen = fallen;
+
+            if (fallen)
+            {
+                BandText = string.Empty;
+                Problem = WonderTradeService.FallenMessage(pokemon.DisplayName);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Fallo al comprobar si {Name} está vivo", pokemon.DisplayName);
+        }
+    }
 
     /// <summary>Turns the trade on and off. Picking a Pokémon happens in the box behind it.</summary>
     [RelayCommand]
@@ -218,7 +233,8 @@ public sealed partial class WonderTradeViewModel : ObservableObject
         }
 
         Given = pokemon;
-        GivenSprite = pokemon is null ? null : _sprites.Get(pokemon.Species);
+        GivenIsFallen = false;
+        GivenSprite = pokemon is null ? null : _sprites.Get(pokemon.Species, pokemon.Form);
 
         if (pokemon is null)
         {
@@ -231,15 +247,16 @@ public sealed partial class WonderTradeViewModel : ObservableObject
         if (total == 0)
         {
             BandText = string.Empty;
-            Problem = $"No sé cuánto vale {pokemon.SpeciesName} en estadísticas base. "
-                      + "Genera Data/species.json con: RomTool species.";
+            Problem = $"{pokemon.SpeciesName} no se puede intercambiar.";
             return;
         }
 
         var (min, max) = _trades.Window.Band(total);
         Problem = string.Empty;
-        BandText = $"{pokemon.DisplayName} vale {total} de total base. "
-                   + $"Lo que vuelva valdrá entre {min} y {max}, y llegará a nivel {pokemon.Level}.";
+        BandText = $"Recibirás un Pokémon de nivel {pokemon.Level} con estadísticas totales entre {min} y {max}.";
+
+        // Lo último, para que el aviso de caído no lo borren las líneas de arriba si la respuesta llega en el acto.
+        _ = CheckFallenAsync(pokemon);
     }
 
     [RelayCommand(CanExecute = nameof(CanConfirm))]
@@ -266,12 +283,11 @@ public sealed partial class WonderTradeViewModel : ObservableObject
             // con limitarWonderTrades a false en Data/grants.json vuelven a ser libres.
             if (_credits.LimitsWonderTrades && Left <= 0)
             {
-                Problem = "No te quedan wonder trades. Los dan las pruebas: uno por cada una, "
-                          + "cuatro por la liga y cuatro por el rematch.";
+                Problem = "No te quedan wonder trades. Consigues más superando pruebas.";
                 return;
             }
 
-            var gift = new WonderTradeGift(given.Species, given.DisplayName, given.Level, given.Box, given.Slot);
+            var gift = new WonderTradeGift(given.Species, given.DisplayName, given.Level, given.Box, given.Slot, given.Pid);
             var result = await _trades.TradeAsync(run, gift, free: _credits.LimitsWonderTrades);
 
             if (!result.Success || result.Offer is not { } offer)
@@ -290,7 +306,7 @@ public sealed partial class WonderTradeViewModel : ObservableObject
                 return;
             }
 
-            _logger.LogInformation("Wonder trade hecho: {Given} por {Received}", given.DisplayName, offer.Name);
+            _logger.LogInformation("Wonder trade hecho: {Given} por {Received}", given.DisplayName, offer.DisplayName);
 
             // El que llega solo existe en el juego a partir de aquí, así que su PID se guarda
             // ahora. Sin él la run tendría un Pokémon suyo al que no sabría reconocer.
@@ -302,11 +318,10 @@ public sealed partial class WonderTradeViewModel : ObservableObject
 
             // Y el que se va deja de estar vivo. Se hace aquí y no dentro del intercambio porque
             // hasta que la partida no está escrita no se ha ido nadie.
-            await _trades.MarkGivenAsTradedAsync(run, given.Pid, offer.Name);
+            await _trades.MarkGivenAsTradedAsync(run, given.Pid, offer.DisplayName);
 
             Offer = offer;
-            ReceivedSprite = _sprites.Get(offer.Species);
-            BallSprite = _sprites.GetBall();
+            ReceivedSprite = _sprites.Get(offer.Species, offer.Form);
             Types = BuildTypes(offer);
             TypeColour = Types[0].Colour;
             OnPropertyChanged(nameof(Types));
@@ -314,12 +329,12 @@ public sealed partial class WonderTradeViewModel : ObservableObject
             OnPropertyChanged(nameof(TotalText));
             OnPropertyChanged(nameof(DifferenceText));
 
-            await PlayAsync();
+            await PlayAsync(given, offer);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Falló el wonder trade");
-            Problem = "Ha fallado el intercambio. El detalle está en la carpeta Logs.";
+            Problem = "Ha fallado el intercambio.";
         }
         finally
         {
@@ -330,40 +345,48 @@ public sealed partial class WonderTradeViewModel : ObservableObject
     }
 
     /// <summary>
-    /// The show: the balls cross, and then the three things the player is told before the
-    /// Pokémon itself — its type, its generation and what it is worth.
+    /// The show: the cabin sends one ball up and brings another down, and its screen tells the three things the player
+    /// learns before the Pokémon itself — its generation, its types and what it is worth. The cabin draws all of that
+    /// from <see cref="CurrentPlay"/>; this waits for the Pokémon to be out and then brings up its card.
     /// </summary>
-    private async Task PlayAsync()
+    private async Task PlayAsync(BoxedPokemon given, WonderTradeOffer offer)
     {
         IsPlaying = true;
-        ShowTypes = ShowGeneration = ShowTotal = ShowPokemon = false;
+        ShowPokemon = false;
 
-        var arrived = new TaskCompletionSource();
-        AnimationRequested?.Invoke(this, new TradeAnimation(() => arrived.TrySetResult()));
+        // El icono del cartucho solo hace falta para las balls que la cabina no dibuja. Se extraen las dieciséis
+        // primeras (§28); cualquier otra sale como Poké Ball.
+        var icon = TradeMachineScene.BallFor(given.Ball) is null && given.Ball is >= 1 and <= 16 ? _sprites.GetBall(given.Ball) : null;
 
-        // Se espera a que la bola pare de verdad, no a que pase el tiempo. La red de seguridad
-        // existe por si la vista nunca llegó a arrancar: una pantalla que no se cuelga.
-        await Task.WhenAny(arrived.Task, Task.Delay(TimeSpan.FromSeconds(8)));
+        var play = new TradePlay(
+            GivenSprite,
+            given.Ball,
+            icon,
+            ReceivedSprite,
+            offer.Generation,
+            [.. Types.Select(type => new TradeType(type.Name, ((SolidColorBrush)type.Colour).Color))],
+            offer.GivenBaseStatTotal,
+            offer.BaseStatTotal,
+            offer.Difference,
+            offer.IsShiny,
+            offer.Legendary,
+            unchecked((int)(offer.Seed ^ (ulong)offer.Number)),
+            Stopwatch.GetTimestamp());
 
-        // Generación primero y tipos después, a petición del jugador: la generación acota poco y
-        // los tipos acotan mucho, así que revelarlos en ese orden va cerrando el cerco.
-        ShowGeneration = true;
-        await Task.Delay(TimeSpan.FromSeconds(1.3));
+        CurrentPlay = play;
 
-        ShowTypes = true;
-        await Task.Delay(TimeSpan.FromSeconds(1.3));
-
-        ShowTotal = true;
-        await Task.Delay(TimeSpan.FromSeconds(1.6));
-
-        // Los tres avisos se apagan ANTES de que salga el Pokémon. Si se quedan, la ficha final
-        // cae encima de ellos y de la bola, y no hay quien lea nada.
-        ShowTypes = ShowGeneration = ShowTotal = false;
-        OpenRequested?.Invoke(this, EventArgs.Empty);
-        await Task.Delay(TimeSpan.FromSeconds(0.35));
+        var left = TradeTimeline.Revealed - play.Elapsed;
+        if (left > 0)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(left));
+        }
 
         ShowPokemon = true;
     }
+
+    /// <summary>The cabin could not draw; the trade is written and recorded all the same.</summary>
+    public void AnimationFailed(Exception ex) =>
+        _logger.LogError(ex, "Falló la animación del wonder trade; el intercambio sí es válido");
 
     /// <summary>Closes the result and tells the viewer its boxes are out of date.</summary>
     [RelayCommand]
@@ -378,11 +401,13 @@ public sealed partial class WonderTradeViewModel : ObservableObject
     private void Clear()
     {
         Given = null;
+        GivenIsFallen = false;
         GivenSprite = null;
         ReceivedSprite = null;
         Offer = null;
         BandText = string.Empty;
-        ShowTypes = ShowGeneration = ShowTotal = ShowPokemon = false;
+        ShowPokemon = false;
+        CurrentPlay = null;
     }
 
     private static List<TypeBadgeViewModel> BuildTypes(WonderTradeOffer offer)
@@ -399,9 +424,8 @@ public sealed partial class WonderTradeViewModel : ObservableObject
 
     private static TypeBadgeViewModel Badge(int type, string name)
     {
-        var hex = type >= 0 && type < TypeColours.Length ? TypeColours[type] : "#9FA19F";
-        var brush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(hex));
-        brush.Freeze();
+        // Un tipo que no se pudo leer sale con el color del Normal, como siempre ha salido aquí.
+        var brush = TypePalette.BrushOf(type < 0 ? 0 : type);
         return new TypeBadgeViewModel(name.ToUpperInvariant(), brush);
     }
 

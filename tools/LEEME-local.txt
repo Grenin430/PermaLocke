@@ -1,0 +1,64 @@
+PERMALOCKE - COPIA LOCAL
+======================
+
+1. Extrae TODA esta carpeta en un disco local, por ejemplo C:\Juegos
+   (clic derecho en el ZIP, "Extraer todo", y escribe C:\Juegos).
+   NO la pongas en el Escritorio ni en Documentos: en muchos PC los sincroniza OneDrive,
+   que bloquea los ficheros mientras los sube y te llena la nube. Si PermaLocke te avisa
+   de OneDrive en JUGAR, cierra todo y mueve la carpeta entera a C:\Juegos.
+   No abras el programa dentro del ZIP ni desde Drive/OneDrive.
+   Mueve siempre la carpeta entera: el ejecutable necesita las carpetas que lo acompanan.
+
+2. Pon tu ROM desencriptada de Pokemon Ultra Luna (.3ds o .cci) dentro de ROM.
+
+3. Abre PermaLocke.exe. Incluye .NET: no tienes que instalarlo.
+   En HOME, crea tu run con tu nombre y el rol que quieras.
+
+4. En RANDOMIZADOR, genera tu mundo y pulsa INSTALAR EN AZAHAR.
+   La expansion de generaciones 8 y 9 ya esta incluida. El emulador debe estar cerrado.
+   La primera preparacion tarda y necesita varios GB libres para generar e instalar el mundo.
+
+5. Ve a JUGAR y abre el juego. Deja PermaLocke abierto mientras juegas.
+   IMPORTANTE: en cuanto tengas tu primer Pokemon, guarda la partida dentro del juego.
+   Hasta la primera partida guardada PermaLocke no busca tu equipo, para no molestar
+   al emulador durante la intro. Si HOME te pide guardar, es eso.
+   Guarda dentro del juego antes de cerrarlo. Gacha, intercambios y otras operaciones
+   sobre el archivo de partida requieren el juego cerrado; la pantalla lo indica.
+
+Los Pokemon que evolucionan por intercambio o sabiendo un movimiento lo hacen de otra
+forma (por nivel, o con su objeto de dia). La lista esta en EVOLUCIONES CAMBIADAS.txt.
+
+Todo se guarda en TU carpeta. No necesitas Drive, cuenta compartida ni internet para jugar.
+Cada amigo empieza con su perfil, su partida y su semilla. No compartimos la clasificacion.
+
+SI EL JUEGO SE CIERRA O VA LENTO
+-------------------------------
+Azahar empieza a resolucion nativa (1x), con ajustes limpios para tu equipo.
+No subas la resolucion hasta haber probado que funciona bien.
+Si faltan DLL de Visual C++, ejecuta Soporte\Instalar Visual C++ x64.exe.
+Es el instalador firmado por Microsoft; no es .NET. Si no esta incluido, enlace oficial:
+https://learn.microsoft.com/cpp/windows/latest-supported-vc-redist
+
+Si el juego vuelve a cerrarse, ANTES de volver a abrirlo ejecuta
+RECOGER DIAGNOSTICO.cmd y manda el ZIP que deja en Diagnosticos.
+Incluye registros y datos de Windows, CPU, RAM y grafica; no incluye ROM ni partidas.
+No se envia nada automaticamente. Los registros pueden contener tu nombre y rutas locales.
+Con ese archivo se puede investigar la causa real; no todos los cierres son de la aplicacion.
+La expansion es un mod en desarrollo: conserva su README y sus creditos.
+
+Si faltan sprites, comprueba que la ROM esta en ROM y vuelve a entrar en la pantalla.
+Se extraen automaticamente de tu ROM. La primera carga tarda mas; despues se reutilizan.
+
+COPIAS DE SEGURIDAD
+------------------
+Tu progreso de PermaLocke esta en Saves y tu partida del juego en Emulator\user.
+Para conservar todo, copia la carpeta completa con ambos programas cerrados.
+No sustituyas tu carpeta por la copia vacia de un amigo: empezarias desde cero.
+
+PLATAFORMA Y LICENCIAS
+---------------------
+Esta distribucion es para Windows de 64 bits (x64). No es una version para Mac o movil.
+PermaLocke: GPLv3 (LICENSE). Fuente exacto en Soporte\Codigo fuente.zip.
+Fork de Azahar: https://github.com/Grenin430/azahar (Emulator\LEEME.md).
+Expansion: licencia, creditos y procedencia en Expansion\README.txt.
+La ROM no esta incluida; cada jugador aporta la suya.

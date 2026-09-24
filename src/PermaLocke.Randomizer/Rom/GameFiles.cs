@@ -44,12 +44,20 @@ public static class GameFiles
     /// <summary>Index of the species name list inside the game text GARC.</summary>
     public const int SpeciesNameFile = 60;
 
+    /// <summary>
+    /// The story text, one file per language: what people say in the cutscenes, the starter scene
+    /// among them (§146). pk3DS's <c>GARCReference_UM</c> calls it <c>storytext</c>, number 040.
+    /// </summary>
+    public static string StoryText(int language) => $"a/0/4/{language}";
+
     /// <summary>Every file the randomizer may need, so the workspace can extract in one pass.</summary>
+    /// <remarks>Only the Spanish story text: it is 3 MB per language, and the player plays in Spanish.</remarks>
     public static IReadOnlyList<string> All { get; } =
     [
         Move, EggMove, Learnset, Evolution, MegaEvolution, Personal, Item,
         ZoneData, EncounterDataUltraSun, EncounterDataUltraMoon, WorldData,
         TrainerClass, TrainerData, TrainerPokemon, EncounterStatic, Pickup, Shop,
         .. Enumerable.Range(0, 10).Select(GameText),
+        StoryText(RomWorkspace.SpanishLanguage),
     ];
 }

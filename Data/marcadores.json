@@ -86,11 +86,6 @@
       "x": 0.38414634146341464,
       "y": 0.31505102040816324
     },
-    "colina-saltagua-sala-del-dominante": {
-      "isla": "Akala",
-      "x": 0.34603658536585363,
-      "y": 0.30357142857142855
-    },
     "costa-de-poni": {
       "isla": "Poni",
       "x": 0.9190839694656489,
@@ -105,11 +100,6 @@
       "isla": "Melemele",
       "x": 0.3483477802551665,
       "y": 0.2008551433219089
-    },
-    "cueva-sotobosque-sala-del-dominante": {
-      "isla": "Melemele",
-      "x": 0.39685068325315614,
-      "y": 0.23853879607203046
     },
     "desierto-de-haina": {
       "isla": "Ula-Ula",
@@ -319,6 +309,8 @@
     "ciudad-kantai",
     "ciudad-malie",
     "colina-del-recuerdo",
+    "colina-saltagua-sala-del-dominante",
+    "cueva-sotobosque-sala-del-dominante",
     "estadio-royale",
     "gruta-de-la-llanura",
     "huerto-de-bayas",

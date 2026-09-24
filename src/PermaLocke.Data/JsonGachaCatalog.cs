@@ -86,13 +86,17 @@ public sealed class JsonGachaCatalog : IGachaCatalog
 public sealed class JsonSpeciesStatsCatalog : ISpeciesStatsCatalog
 {
     private JsonSpeciesStatsCatalog(IReadOnlyList<SpeciesStats> all, IReadOnlyList<string> natures,
-        IReadOnlyList<string> abilities, IReadOnlyList<EvolutionLine> lines)
+        IReadOnlyList<string> abilities, IReadOnlyList<EvolutionLine> lines,
+        IReadOnlyCollection<int>? bannedAbilities = null)
     {
         All = all;
         Natures = natures;
         Abilities = abilities;
         Lines = lines;
+        BannedAbilities = bannedAbilities ?? [];
     }
+
+    public IReadOnlyCollection<int> BannedAbilities { get; }
 
     public IReadOnlyList<SpeciesStats> All { get; }
 
@@ -104,7 +108,11 @@ public sealed class JsonSpeciesStatsCatalog : ISpeciesStatsCatalog
 
     public static JsonSpeciesStatsCatalog Empty { get; } = new([], [], [], []);
 
-    public static JsonSpeciesStatsCatalog Load(string path)
+    /// <param name="bannedAbilities">
+    /// Abilities never dealt, from the randomizer's <c>bannedAbilities</c> so there is one list and
+    /// not two that drift apart (§136).
+    /// </param>
+    public static JsonSpeciesStatsCatalog Load(string path, IReadOnlyCollection<int>? bannedAbilities = null)
     {
         if (!File.Exists(path))
         {
@@ -129,10 +137,11 @@ public sealed class JsonSpeciesStatsCatalog : ISpeciesStatsCatalog
 
         return new JsonSpeciesStatsCatalog(
             [.. species.Select(s => new SpeciesStats(s.Id, s.Name, s.BaseStatTotal, s.Legendary,
-                s.Abilities ?? []))],
+                s.Abilities ?? [], [.. (s.Forms ?? []).Select(f => new SpeciesForm(f.Form, f.Name))]))],
             file.Natures ?? [],
             file.Abilities ?? [],
-            lines);
+            lines,
+            bannedAbilities);
     }
 
     private sealed record SpeciesFile(
@@ -146,5 +155,10 @@ public sealed class JsonSpeciesStatsCatalog : ISpeciesStatsCatalog
         [property: JsonPropertyName("name")] string Name,
         [property: JsonPropertyName("baseStatTotal")] int BaseStatTotal,
         [property: JsonPropertyName("legendary")] bool Legendary,
-        [property: JsonPropertyName("abilities")] IReadOnlyList<string>? Abilities);
+        [property: JsonPropertyName("abilities")] IReadOnlyList<string>? Abilities,
+        [property: JsonPropertyName("forms")] IReadOnlyList<FormEntry>? Forms = null);
+
+    private sealed record FormEntry(
+        [property: JsonPropertyName("form")] int Form,
+        [property: JsonPropertyName("name")] string Name);
 }

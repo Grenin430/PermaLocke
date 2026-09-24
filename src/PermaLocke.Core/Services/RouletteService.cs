@@ -169,8 +169,7 @@ public sealed class RouletteService(
         if (owed <= 0)
         {
             return new RouletteSpinResult(RouletteOutcome.NothingOwed, null, [], 0,
-                "No debes ninguna tirada. La ruleta se gira después de cada prueba, tres veces "
-                + "por la liga y dos más por el rematch.");
+                "No debes ninguna tirada.");
         }
 
         if (!world.CanActNow(out var reason))
@@ -183,7 +182,7 @@ public sealed class RouletteService(
         if (Preview(run.Seed, number) is not { } wheel)
         {
             return new RouletteSpinResult(RouletteOutcome.Failed, null, [], owed,
-                "La ruleta no tiene ninguna cara configurada. ¿Está Data/roulette.json?");
+                "La ruleta no está disponible.");
         }
 
         var seen = await world.ReadAsync(ct).ConfigureAwait(false);
@@ -346,9 +345,8 @@ public sealed class RouletteService(
     /// <summary>What a gacha face leaves behind: credit, not a Pokémon.</summary>
     private static string Credited(RouletteFace face) =>
         face.BannerIds.Count == 1
-            ? $"Una tirada gratis en «{face.BannerIds[0]}». Gástala en la pantalla de GACHA."
-            : $"Tiradas gratis en {string.Join(", ", face.BannerIds.Select(b => $"«{b}»"))}. "
-              + "Gástalas en la pantalla de GACHA.";
+            ? $"Una tirada gratis en «{face.BannerIds[0]}», en el GACHA."
+            : $"Tiradas gratis en {string.Join(", ", face.BannerIds.Select(b => $"«{b}»"))}, en el GACHA.";
 
     /// <summary>
     /// Writes the deaths the wheel caused into the run itself.

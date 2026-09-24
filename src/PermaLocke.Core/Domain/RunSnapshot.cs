@@ -45,6 +45,12 @@ public sealed record RunSnapshot
 
     public required string PlayerName { get; init; }
 
+    /// <summary>
+    /// The player's profile id. Optional, like <see cref="BattleReady"/>, so older snapshots still
+    /// read; with it, one player is one row no matter how many runs they start (§123).
+    /// </summary>
+    public Guid? PlayerId { get; init; }
+
     public required string RunName { get; init; }
 
     /// <summary>The role as the catalogue names it, not its id: this is read by people.</summary>
@@ -93,6 +99,23 @@ public sealed record RunSnapshot
     /// </para>
     /// </remarks>
     public bool? BattleReady { get; init; }
+
+    /// <summary>
+    /// How many species the world was generated with: 1025 on the gen 8-9 expansion, 807 on the plain
+    /// cartridge. Null when not recorded.
+    /// </summary>
+    /// <remarks>
+    /// This is what decides link battles now (§124). COMBATES swaps every randomization out for the
+    /// base game, so <see cref="BattleReady"/> no longer matters when it is used; the base game still
+    /// has to be the same on both sides.
+    /// </remarks>
+    public int? WorldSpecies { get; init; }
+
+    /// <summary>
+    /// The species leading the player's party when this was published, as their picture in the friends list and
+    /// the activity (§126). Null when the save could not be read.
+    /// </summary>
+    public int? AvatarSpecies { get; init; }
 
     public DateTimeOffset RunCreatedAt { get; init; }
 

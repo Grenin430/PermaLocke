@@ -52,6 +52,23 @@ public sealed class EncounterServiceTests
         Assert.Equal("ruta-1", caught.LocationId);
     }
 
+    /// <summary>
+    /// What it knew when it arrived goes in the capture event, which is where the move reminder looks for Añil's
+    /// «iniciales» (§142). Without moves read, nothing is written: an empty list would claim it knew nothing.
+    /// </summary>
+    [Fact]
+    public async Task The_moves_it_arrived_with_go_in_its_capture_event()
+    {
+        var (service, events, _) = Build();
+
+        await service.RegisterAsync(RunId, Request() with { Moves = [33, 0, 45, 857] }, "javi");
+        await service.RegisterAsync(RunId, Request(19, "Rattata", "Ruta 2"), "javi");
+
+        var caught = events.All.Where(e => e.Type == GameEventType.PokemonCaught).ToList();
+        Assert.Equal("33,45,857", caught[0].Data[PermaLocke.Core.Services.MoveReminderService.FirstMovesKey]);
+        Assert.False(caught[1].Data.ContainsKey(PermaLocke.Core.Services.MoveReminderService.FirstMovesKey));
+    }
+
     [Fact]
     public async Task A_second_capture_in_the_same_zone_is_refused_and_stores_nothing()
     {

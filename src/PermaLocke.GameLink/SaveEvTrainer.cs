@@ -45,15 +45,13 @@ public sealed class SaveEvTrainer(PlayerSave save, string backupFolder, ILogger<
     {
         if (save.IsGameLoaded())
         {
-            reason = "El juego está abierto en el emulador. Guarda la partida y cierra Azahar: "
-                     + "mientras esté cargado, el emulador reescribiría el save y los EV se perderían.";
+            reason = "El juego está abierto. Guarda y cierra Azahar.";
             return false;
         }
 
         if (save.Find() is null)
         {
-            reason = "No se encuentra la partida de Ultra Luna. ¿Has jugado y guardado alguna vez "
-                     + "con este emulador?";
+            reason = "No se encuentra tu partida de Ultra Luna.";
             return false;
         }
 
@@ -86,7 +84,7 @@ public sealed class SaveEvTrainer(PlayerSave save, string backupFolder, ILogger<
             if (!SaveUtil.TryGetSaveFile(path, out var loaded) || loaded is not SAV7USUM game)
             {
                 return new DeliveryResult(DeliveryOutcome.SaveUnreadable,
-                    $"El fichero de partida no se ha podido leer como Ultra Luna: {path}");
+                    "No se ha podido leer tu partida.");
             }
 
             var applied = ApplyTo(game, change);
@@ -102,8 +100,7 @@ public sealed class SaveEvTrainer(PlayerSave save, string backupFolder, ILogger<
             if (!Verify(path, change))
             {
                 return new DeliveryResult(DeliveryOutcome.Failed,
-                    "Se escribió la partida pero al releerla los EV no eran los pedidos. "
-                    + "La copia de seguridad está en Saves/backup.");
+                    "No se ha podido guardar el cambio. Vuelve a intentarlo.");
             }
 
             logger.LogInformation("EV de {Name} ({Pid:X8}) en {Where}: {Evs}",
@@ -116,7 +113,7 @@ public sealed class SaveEvTrainer(PlayerSave save, string backupFolder, ILogger<
             logger.LogError(ex, "Fallaron los EV de {Name}", change.Name);
 
             return new DeliveryResult(DeliveryOutcome.Failed,
-                "No se pudo escribir en la partida. El detalle está en la carpeta Logs.");
+                "No se pudo escribir en la partida.");
         }
     }
 
@@ -133,32 +130,29 @@ public sealed class SaveEvTrainer(PlayerSave save, string backupFolder, ILogger<
         if (Read(game, change.Box, change.Slot) is not PK7 { Species: > 0 } pokemon)
         {
             return new DeliveryResult(DeliveryOutcome.SlotChanged,
-                $"En {change.Where} no hay ningún Pokémon. La partida ha cambiado desde que se leyó: "
-                + "vuelve a leerla e inténtalo otra vez.");
+                $"En {change.Where} no hay ningún Pokémon. Vuelve a intentarlo.");
         }
 
         if (pokemon.PID != change.Pid)
         {
             return new DeliveryResult(DeliveryOutcome.SlotChanged,
-                $"En {change.Where} ya no está {change.Name}. La partida ha cambiado desde que se leyó: "
-                + "vuelve a leerla e inténtalo otra vez.");
+                $"En {change.Where} ya no está {change.Name}. Vuelve a intentarlo.");
         }
 
         Write(pokemon, change.Evs);
 
-        var recomputed = change.Box == BoxedPokemon.PartyBox && Restat(pokemon);
+        var recomputed = change.Box == BoxedPokemon.PartyBox && StatCalculator.Restat(pokemon);
 
         pokemon.RefreshChecksum();
         Store(game, pokemon, change.Box, change.Slot);
 
         return new DeliveryResult(DeliveryOutcome.Delivered,
-            $"EV de {change.Name} guardados en {change.Where}."
+            $"EV de {change.Name} guardados."
             + (change.Box != BoxedPokemon.PartyBox
-                ? " Está en una caja, así que sus estadísticas se calculan al sacarlo."
+                ? string.Empty
                 : recomputed
-                    ? " Estadísticas puestas al día."
-                    : " Sus estadísticas NO se han podido poner al día: este mundo no publica su"
-                      + " tabla de estadísticas base. Se verán al subir de nivel."),
+                    ? string.Empty
+                    : " Sus estadísticas se actualizarán al subir de nivel."),
             change.Box + 1, change.Slot + 1);
     }
 
@@ -185,60 +179,6 @@ public sealed class SaveEvTrainer(PlayerSave save, string backupFolder, ILogger<
         }
 
         game.SetBoxSlotAtIndex(pokemon, box, slot, PokemonBuilder.InPlace);
-    }
-
-    /// <summary>Shedinja, whose PS the game forces to one whatever the formula says.</summary>
-    private const int Shedinja = 292;
-
-    /// <summary>
-    /// Puts a party member's stored battle stats back in step with its effort values.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Returns false, and touches nothing, when the installed world has not published its base
-    /// stats. That is the §51 rule kept rather than dropped: this run has <c>shuffleBaseStats</c>
-    /// on, so a stat worked out from PKHeX's table is not an approximation but a wrong number
-    /// written into somebody's Pokémon — 168 PS came back as 151 the day that was tried. What
-    /// changed is that the world's own table is now readable (<see cref="WorldLimits.BaseStats"/>),
-    /// so the honest answer is usually available instead of never.
-    /// </para>
-    /// <para>
-    /// The current PS are the delicate part. They follow the maximum up by the same amount, which
-    /// is what the game does on a level up — but <b>a Pokémon at zero stays at zero</b>. In this
-    /// project zero PS is what a death IS (§98), so healing one here would quietly undo a death
-    /// through a screen that has nothing to do with dying.
-    /// </para>
-    /// </remarks>
-    private static bool Restat(PK7 pokemon)
-    {
-        if (WorldLimits.BaseStatsOf(pokemon.Species) is not { } bases)
-        {
-            return false;
-        }
-
-        var stats = StatCalculator.Compute(
-            bases,
-            [pokemon.IV_HP, pokemon.IV_ATK, pokemon.IV_DEF, pokemon.IV_SPA, pokemon.IV_SPD, pokemon.IV_SPE],
-            [pokemon.EV_HP, pokemon.EV_ATK, pokemon.EV_DEF, pokemon.EV_SPA, pokemon.EV_SPD, pokemon.EV_SPE],
-            pokemon.Stat_Level,
-            (int)pokemon.Nature,
-            pokemon.Species == Shedinja);
-
-        var gained = stats[0] - pokemon.Stat_HPMax;
-
-        pokemon.Stat_HPMax = stats[0];
-        pokemon.Stat_ATK = stats[1];
-        pokemon.Stat_DEF = stats[2];
-        pokemon.Stat_SPA = stats[3];
-        pokemon.Stat_SPD = stats[4];
-        pokemon.Stat_SPE = stats[5];
-
-        if (pokemon.Stat_HPCurrent > 0)
-        {
-            pokemon.Stat_HPCurrent = Math.Clamp(pokemon.Stat_HPCurrent + gained, 1, stats[0]);
-        }
-
-        return true;
     }
 
     private static void Write(PK7 pokemon, IReadOnlyList<int> evs)

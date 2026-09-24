@@ -3,8 +3,14 @@
 
   "wildEncounters": true,
 
-  "_fieldItems": "Las Poké Balls tiradas por el mapa: las normales llevan objeto, las doradas MT. Las MT se cambian por otras MT; los objetos normales se barajan entre sí, para no introducir ningún id que el cartucho no colocara ya en alguna parte.",
+  "_fieldItems": "Las Poké Balls tiradas por el mapa: las normales llevan objeto, las doradas MT. Una MT se cambia siempre por otra MT y un objeto normal por otro objeto normal; los montones de bayas cuentan como objeto normal. Solo se tocan los sitios que el cartucho ya tiene.",
   "fieldItems": true,
+  "_fieldItemsMode": "Random = como el mundo de la carpeta Locke (§163): cada sitio se sortea entre TODOS los objetos de los bolsillos de objetos, medicinas y bayas del juego que se está randomizando -megapiedras, Poké Balls y los de gen 8-9 incluidos-, y cada MT dorada entre las cien MT. Nunca objetos clave ni cristales Z. Shuffle = lo de antes: se barajan entre sí los que el cartucho ya ponía, sin traer ninguno nuevo.",
+  "fieldItemsMode": "Random",
+  "_fieldItemsMaxRepeats": "En modo Random, cuántas veces como mucho sale el mismo objeto, y lo mismo para cada MT. La referencia: ninguno más de 2.",
+  "fieldItemsMaxRepeats": 2,
+  "_fieldItemsBanned": "En modo Random, objetos que no salen nunca en el suelo, por id. El 1 es la Master Ball: en un Nuzlocke es la captura asegurada del único encuentro de una ruta, y la referencia no puso ninguna. Para buscar un id: Probe --objeto-find \"nombre\".",
+  "fieldItemsBanned": [1],
   "staticEncounters": true,
   "trainers": true,
 
@@ -23,11 +29,20 @@
 
   "_learnsets": "Las reglas del sorteo, tomadas de Universal Pokemon Randomizer porque un sorteo uniforme -que es lo que habia- da aprendizajes injugables. Medido sobre el mundo instalado del jugador: 263 movimientos repetidos dentro de un mismo aprendizaje y 698 especies de 1329 SIN NADA CON QUE ATACAR al nivel 1, o sea que mas de la mitad de lo que capturas no puede hacer daño. Con las reglas: 0 y 0. Dos de ellas no se configuran porque no son un gusto sino una condicion para que el juego funcione -no repetir un movimiento, y garantizar un ataque en el ultimo hueco de nivel 1-. Lo que si se elige es cuanto del resto tiene que hacer daño y si los movimientos tiran hacia el tipo del Pokemon.",
   "learnsetGoodDamagingPercent": 30,
+  "_learnsetSameTypePercent": "Cuantas de las veces que se sortea un ataque sale de los tipos del propio Pokemon, en tanto por ciento, repartido entre los dos si tiene dos. Lo que sale es MAS que lo que se pide, porque los sorteos libres tambien caen en su tipo: medido sobre el juego entero, 20 da el 27,4% de la lista en su tipo y 40 da el 46%. El cartucho esta en 48,7% y el mundo de la referencia en 28%. En 0 es puro azar, o sea 9,6%: cada Pokemon aprende un poco de los dieciocho tipos y todos acaban jugando igual, que es lo que el jugador conto el 2026-09-22. Elegido por el jugador: como la referencia (§166).",
+  "learnsetSameTypePercent": 20,
+  "_learnsetPreferSameType": "El nombre viejo del de arriba; true significa 40. Se sigue leyendo para no romper una configuracion antigua.",
   "learnsetPreferSameType": false,
   "learnsetDamagingFloor": 50,
+  "_learnsetPowerTolerance": "En 0, que es lo elegido. Por encima de 0 es la otra manera, que existe y esta probada pero no se usa: cada ataque aprendido se cambia por otro al azar de potencia PARECIDA al que el cartucho tenia en ese hueco (0,25 = un 25% arriba o abajo, como poco 10 de potencia) y un movimiento de estado por otro de estado, o sea la curva exacta del juego. Medido con la semilla 20260921: a nivel 5 un 5% de ataques de 80 o mas, a nivel 30 un 26%, casi calcado al cartucho (5% y 23%).",
+  "learnsetPowerTolerance": 0,
+  "_learnsetReorderByPower": "ELEGIDO POR EL JUGADOR EL 2026-09-21. Ordena los ataques de cada aprendizaje de mas flojo a mas fuerte, en los huecos que ya eran de ataque; los de estado no se mueven. Es la opcion «reorder damaging moves» de Universal Pokemon Randomizer y lo que pk3DS hace por defecto, y la partida de referencia (BxnnyLocke) sale asi. Por que: el jugador noto que casi todo lo que llevaba o le atacaba era de 80 o mas, y era verdad: el sorteo toma cada ataque del catalogo entero sin mirar el nivel, y la mitad de los ataques del catalogo son de 80 o mas, asi que medido en el mundo instalado un 59% de los ataques que lleva un Pokemon eran de 80 o mas A CUALQUIER NIVEL, desde el 5, contra un 5% en el cartucho. Con esto, medido con la semilla 20260921: 15% a nivel 5, 32% a nivel 15 y 72% a nivel 30 (la referencia: 12%, 29% y 65%). Mas agresivo que el cartucho a proposito, que es lo que se eligio frente a la curva exacta de arriba.",
+  "learnsetReorderByPower": true,
+  "_bannedMoves": "Ataques que NADIE puede tener, a peticion del jugador el 2026-09-22 (§162): los cuatro fulminantes, Guillotina 12, Perforador 32, Fisura 90 y Frio Polar 329, ids comprobados contra los nombres del cartucho. Se quitan de TODO: aprendizajes por nivel (que es tambien lo que usan los salvajes y los entrenadores sin ataques propios), movimientos huevo, ataques fijos de entrenadores y de estaticos. Medido en el mundo instalado: 65 en aprendizajes, 16 en huevos, ninguno en MT, tutores, entrenadores ni estaticos (la capa base tenia 2 en entrenadores, que el randomizador ya limpiaba al cambiar la especie). Se cambia SOLO el hueco que tenia uno: en un aprendizaje, por un movimiento de estado que no tuviera ya, porque un fulminante tiene potencia 0 y ocupa un hueco que la ordenacion por potencia no mueve; en un huevo, por cualquier otro; a un entrenador o estatico se le vacian los cuatro para que el juego le de los de su aprendizaje, que ya esta limpio. Vale al REGENERAR E INSTALAR el mundo.",
+  "bannedMoves": [ 12, 32, 90, 329 ],
   "_specialMarts": "Solo los mostradores especiales de los centros Pokémon; los ocho inventarios normales se dejan intactos. Las tiendas de MT se randomizan por otras MT; las demás se surten del objeto de abajo en todos sus huecos.",
   "specialMarts": true,
-  "_specialMartOrder": "Por que mostradores especiales se empieza a surtir, por indice. La lista de objetos de evolucion se derrama de uno al siguiente segun se llenan, asi que esto decide cuanto tiene que andar el jugador para completarla. En orden de indice se empezaba por el 8, que es Konikoni, ya bien entrada la region, y hacian falta tres mostradores. Los indices se MIDEN jugando, porque el cartucho no dice que mostrador es de que pueblo: 10 es el Centro Pokemon de Ciudad Hauoli (8 huecos) y 11 el de la Ruta 2 (12). Veinte huecos para dieciocho objetos, o sea la lista entera en los dos primeros mostradores del juego. Un indice que no exista se ignora, y lo que no se nombre sigue yendo en orden.",
+  "_specialMartOrder": "Por que mostradores especiales se empieza a surtir, por indice. La lista de objetos de evolucion se derrama de uno al siguiente segun se llenan, asi que esto decide cuanto tiene que andar el jugador para completarla. En orden de indice se empezaba por el 8, que es Konikoni, ya bien entrada la region, y hacian falta tres mostradores. Los indices se MIDEN jugando, porque el cartucho no dice que mostrador es de que pueblo: 10 es el Centro Pokemon de Ciudad Hauoli (8 huecos) y 11 el de la Ruta 2 (12). Veinte huecos para dieciocho objetos, o sea la lista entera en los dos primeros mostradores del juego. Un indice que no exista se ignora, y lo que no se nombre sigue yendo en orden. CAMBIADO el 2026-09-19 (§145): la Ruta 2 pasa a vender los objetos de intercambio de specialMartShelves, asi que los diez de gen 8-9 que tenia van a los siguientes mostradores especiales del camino: Pueblo Paniola (15, 3 huecos) y el Supermercado Ultraganga de la Avenida Royal, el mostrador de la izquierda (21, 5) y el del centro (22, 7). CORREGIDO el mismo dia: primero se pusieron en el 24, que pk3DS etiqueta «Route 3 [X Items]», y el jugador dijo que en la Ruta 3 NO HAY Centro Pokemon. O sea que esa etiqueta esta mal y el 24 no se sabe donde esta: se deja con Poke Balls. Paniola lo dio por bueno el jugador; el 21 y el 22 son etiquetas de pk3DS respaldadas por el 23, que en el cartucho vende Estatuillas Raras, y eso solo lo vende el Supermercado Ultraganga. Sin ver jugando.",
   "_shuffleMachineCompatibility": "Baraja que MT puede aprender cada Pokemon. Se BARAJA y no se sortea: cada especie conserva CUANTAS puede aprender y solo cambian cuales, asi que un Magikarp sigue aprendiendo tan poco como antes y nadie se queda sin nada. Los bits estan en 0x28 de la entrada de personal, trece bytes con cuatro sobrantes, y se anclaron midiendo: Mew tiene exactamente 100 y Ditto ninguno. Ojo, es distinto de randomizeMachines, que cambia QUE ENSEÑA cada MT.",
   "shuffleMachineCompatibility": true,
 
@@ -37,7 +52,7 @@
   "_machineMartPrice": "Lo que cuesta cada MT en los mostradores de MT de los centros Pokemon. Es el precio del OBJETO, no del hueco, asi que vale alli donde esa MT se venda. Solo se retocan las que acaban en un mostrador: cambiar el precio de las cien tocaria tambien las que se encuentran por el suelo, y esas no se compran. Multiplo de 10 y como mucho 655350. Un 0 deja los precios del cartucho.",
   "machineMartPrice": 35000,
 
-  "specialMartOrder": [ 10, 11 ],
+  "specialMartOrder": [ 10, 15, 21, 22 ],
 
   "nonMachineMartItem": 4,
 
@@ -56,6 +71,9 @@
   "_startersWithTwoEvolutions": "Los tres iniciales tienen que ser la primera etapa de una linea de TRES: dos evoluciones por delante. Un inicial es lo que te acompana toda la partida, asi que no deberia ser algo que no evoluciona o que ya esta acabado. No es una lista de especies: sale de la tabla de evoluciones del propio cartucho, donde hay 94 que cumplen -medido con RomTool evoluciones-. Ojo: los iniciales se eligen ANTES de que el modulo de datos toque las lineas evolutivas, asi que con randomizeEvolutions en true la garantia es sobre las familias del cartucho.",
   "startersWithTwoEvolutions": true,
 
+  "_starterText": "Que la escena de los iniciales nombre a los que te van a dar de verdad, y no a Rowlet, Litten y Popplio. Pedido por el jugador el 2026-09-19. Son 21 lineas del texto de historia en español (a/0/4/6, ficheros 38, 39 y 51): la presentacion de Kukui, el menu de elegir, la confirmacion y «te esta mirando fijamente» cambian el nombre y el tipo; las tres descripciones -Rowlet vuela, Popplio hace globos- se sustituyen enteras porque serian falsas. Los gritos («¡Rooow!») se quedan tal cual: son del Pokémon que sale en pantalla, y no esta comprobado si el juego enseña el original o el randomizado. Si el texto no es exactamente el medido no se toca nada (§146). false deja la escena como la trae el cartucho.",
+  "starterText": true,
+
   "_fixImpossibleEvolutions": "Reescribe las evoluciones que a solas no se pueden alcanzar. Un Nuzlocke se juega solo, asi que una evolucion por intercambio es una evolucion que no existe: Kadabra, Machoke, Haunter y veintisiete mas se quedan a medias. Lo mismo con las nueve que esperan un movimiento concreto, porque con randomizeLearnsets en true ese movimiento puede no aprenderse nunca. Que se cambia y por que sale de la lista de Universal Pokemon Randomizer ZX para Sol/Luna/USUM, pero las entradas se buscan POR METODO y no por una lista de especies: el cartucho tiene cuatro que esa lista no enumera -las tres tallas de Calabruja y el Geodude de Alola-. Intercambio a secas pasa a subir de nivel; con objeto, a subir de nivel llevandolo puesto DE DIA -el juego solo tiene esa variante y la de noche-; y las dos que se intercambian entre si, a subir de nivel con la otra en el equipo. La unica excepcion es Slowking, que pasa a Piedra Agua porque Slowpoke ya evoluciona a Slowbro subiendo de nivel.",
   "fixImpossibleEvolutions": true,
 
@@ -65,8 +83,8 @@
   "_megaTrainers": "Da a los combates importantes TARDIOS un Pokemon que entra ya megaevolucionado. Una mega es una FORMA de su especie, no una especie aparte, asi que esto es un byte: especie + forma 1 -o 2 para las X/Y de Charizard y Mewtwo-. Por eso no depende de que la IA decida megaevolucionar, que es comportamiento que nadie ha medido. Lo que se pierde es el momento: no hay animacion, el Pokemon sale ya mega. SUSTITUYE a uno de los suyos, no anade: un jefe con cinco sigue teniendo cinco y uno de ellos es la mega. Como maximo uno por combate. Las especies salen de la tabla de megas del cartucho menos Rayquaza -su mega va por movimiento y no tiene piedra- y menos los legendarios de bannedSpecies: quedan 41.",
   "megaTrainers": true,
 
-  "_megaTrainerMinimumLevel": "Nivel del cartucho que un combate importante tiene que alcanzar para llevar mega. La ROM se randomiza UNA vez, antes de empezar, asi que no puede saber que el jugador lleva seis pruebas; lo que si puede es mirar como de fuerte es el combate, que es lo mismo visto del otro lado. Este numero es del CARTUCHO y se sube con la misma cuenta que los equipos, asi que lo que el jugador ve en pantalla es este numero por su porcentaje: EN 1: TODOS los combates importantes llevan mega, 96 de 96, que es lo que se pidio. Se llego aqui despues de dos rondas de mover el umbral a ciegas: Tilo tiene DIECISEIS combates -siete a Nv.6, tres a 24, tres a 30 y tres a 52- y cualquier suelo deja fuera unos y no otros, asi que el jugador veia mega o no segun con cual se topara. Medido con RomTool trainers, que lista los combates importantes con su nivel: van 30, 30, 30, 34 y luego 41, o sea que NO HAY NINGUNO A 35 -por eso bajar de 33 a 29 no cambiaba nada, 62 de 96 las dos veces-. Antes estaba en 33 -pensado para los combates tardios, la septima prueba en adelante- y dejaba fuera a Tilo y a todos los capitanes tempranos. El umbral se sube con la MISMA cuenta que subio los equipos, asi que se mueve igual que ellos.",
-  "megaTrainerMinimumLevel": 1,
+  "_megaTrainerMinimumLevel": "Nivel del CARTUCHO que un combate importante tiene que alcanzar para llevar mega. EN 29 DESDE EL 2026-09-21, A PETICION DEL JUGADOR: megas solo despues de la SEXTA PRUEBA, que es donde el que juega tambien las desbloquea. Se lo encontro en Liam, el primer combate importante, porque estaba en 1 (todos los combates importantes, lo que se habia pedido antes). La sexta prueba es la Gran Prueba de la Kahuna Mayla, un combate de nivel 28 de cartucho, y el cap de esa etapa es 34, que es ese 28 subido el 20% de la edicion base. 'Mas nivel que el cap de la sexta' es por tanto 29 de cartucho: 29 subido un 20% da 35. OJO con la trampa del Larvitar (§85): el cap de levelcaps.json YA va subido y esto se compara contra el cartucho, asi que aqui no va 34. Va en niveles del cartucho y no de pantalla a proposito: asi las megas salen en los MISMOS combates con cualquier rol (con EXPERTO la propia Mayla se ve a 36). Medido con RomTool importantes sobre la capa base: por debajo quedan Tilo a 25, Francine a 27 y la propia Mayla a 28; los primeros con mega son Olano a 29 y Tilo a 30, y detras todo lo demas, 86 combates. NO toca los estaticos: el Nihilego del Paraiso Aether (Nv 27) sigue siendo mega por su regla de staticOverrides, y es a proposito, el jugador lo quiere asi: es la unica mega antes de la sexta prueba. La mega sale de su propia corriente aleatoria, asi que con la misma semilla el resto del mundo sale igual. Vale al REGENERAR E INSTALAR el mundo.",
+  "megaTrainerMinimumLevel": 29,
 
   "_regularMartReplaced": "Los objetos que las tiendas NORMALES -las ocho de los Centros Pokemon, las que crecen segun superas pruebas- dejan de vender, y por que se cambian. Son los seis curativos de estado, ids 17 a 22 seguidos en la tabla del cartucho, y pasan a ser Poke Balls. El resto de esas tiendas se queda como esta. El nombre viaja con el id y se comprueba contra la tabla de objetos del cartucho ANTES de escribir: un id que caiga en otro objeto surtiria la tienda con otra cosa y no fallaria nunca, asi que un desajuste lanza y no se toca ninguna tienda (§52). Deja la lista vacia para que las tiendas normales no se toquen.",
   "_regularMartReplacedHistoria": "Se vacio a peticion del jugador el 2026-09-02 y se volvio a llenar el 2026-09-06, mas ancha, cuando se topo con un Centro Pokemon que le vendia de todo: ahora son los DOCE curativos y no los seis de estado. Los ids se leyeron de la tienda del mundo instalado con `RomTool shops --gen`, que los imprime junto al nombre, y salen seguidos del 17 al 28 -- que ese bloque cierre sin huecos es la comprobacion de que no se ha colado nada por teclear un id de memoria (§45). Ojo con el 23 Restaurar Todo: no esta en la tienda que el jugador describio -la 6- pero si en la 7, y cae justo dentro del rango que pidio, asi que entra. Vaciar la lista devuelve las tiendas normales a como las trae el cartucho.",
@@ -86,45 +104,187 @@
   ],
   "regularMartReplacement": { "id": 4, "name": "Poké Ball" },
 
-  "_specialMartItems": "Objetos que se ponen a la venta en las tiendas ESPECIALES que no son de MT, en orden de indice y pasando a la siguiente cuando una se llena. Son los objetos de evolucion que anade el mod de gen 8 y 9: sin ellos, Ceruledge, Alcremie, Urshifu, Gholdengo y compania no pueden evolucionar, porque el mod no los coloca en ninguna Poke Ball del suelo. Van en INGLES porque es como el mod los nombra y el indice de PKHeX no cuadra en ese tramo -ver docs/MOD-EXPANSION.md §6 bis-. El nombre se comprueba contra la tabla del cartucho ANTES de escribir: si no cuadra, no se toca ninguna tienda (§52). Deja la lista vacia para que las especiales vuelvan a surtirse de nonMachineMartItem.",
+  "_specialMartItems": "Objetos que se ponen a la venta en las tiendas ESPECIALES que no son de MT, en orden de indice y pasando a la siguiente cuando una se llena. Son los objetos de evolucion que anade el mod de gen 8 y 9: sin ellos, Ceruledge, Alcremie, Urshifu, Gholdengo y compania no pueden evolucionar, porque el mod no los coloca en ninguna Poke Ball del suelo. Van con el nombre ESPAÑOL OFICIAL que trae el mod desde su version 1.4; hasta entonces el mod solo tenia ingles y aqui iban en ingles. Se pasaron comprobando que cada id seguia siendo el mismo objeto -su nombre ingles en la 1.4 era el que habia aqui, salvo cuatro que la 1.4 retoco y se revisaron a mano: Scroll of Darkness, Leader's Crest, Unremarkable Teacup y Masterpiece Teacup- (docs/ARCHITECTURE.md §133). El nombre se comprueba contra la tabla del cartucho ANTES de escribir: si no cuadra, no se toca ninguna tienda (§52). Deja la lista vacia para que las especiales vuelvan a surtirse de nonMachineMartItem. Un objeto puede llevar su propio price, que manda sobre specialMartItemPrice: la Moneda de Gimmighoul va a 30 porque Gholdengo pide 999 y a 50000 no se podria comprar nunca (pedido por el jugador el 2026-09-19).",
   "specialMartItems": [
-    { "id": 971, "name": "Galarica Cuff" },
-    { "id": 972, "name": "Galarica Wreath" },
-    { "id": 973, "name": "Tart Apple" },
-    { "id": 974, "name": "Sweet Apple" },
-    { "id": 975, "name": "Cracked Pot" },
-    { "id": 976, "name": "Chipped Pot" },
-    { "id": 977, "name": "Strawberry Sweet" },
-    { "id": 984, "name": "Darkness Scroll" },
-    { "id": 985, "name": "Scroll of Waters" },
-    { "id": 986, "name": "Black Augurite" },
-    { "id": 987, "name": "Peat Block" },
-    { "id": 988, "name": "Auspicious Armor" },
-    { "id": 989, "name": "Malicious Armor" },
-    { "id": 990, "name": "Leader's Crest" },
-    { "id": 991, "name": "Syrupy Apple" },
-    { "id": 992, "name": "Unremarkable Cup" },
-    { "id": 993, "name": "Masterpiece Cup" },
-    { "id": 994, "name": "Gimmighoul Coin" }
+    { "id": 971, "name": "Brazal Galanuez" },
+    { "id": 972, "name": "Corona Galanuez" },
+    { "id": 973, "name": "Manzana Ácida" },
+    { "id": 974, "name": "Manzana Dulce" },
+    { "id": 975, "name": "Tetera Agrietada" },
+    { "id": 976, "name": "Tetera Rota" },
+    { "id": 977, "name": "Confite Fresa" },
+    { "id": 984, "name": "Manuscrito Sombras" },
+    { "id": 985, "name": "Manuscrito Aguas" },
+    { "id": 986, "name": "Mineral Negro" },
+    { "id": 987, "name": "Bloque de Turba" },
+    { "id": 988, "name": "Armadura Auspiciosa" },
+    { "id": 989, "name": "Armadura Maldita" },
+    { "id": 990, "name": "Distintivo de Líder" },
+    { "id": 991, "name": "Manzana Melosa" },
+    { "id": 992, "name": "Cuenco Mediocre" },
+    { "id": 993, "name": "Cuenco Exquisito" },
+    { "id": 994, "name": "Moneda de Gimmighoul", "price": 30 }
   ],
 
   "_specialMartItemPrice": "Lo que cuesta cada uno de specialMartItems. El precio vive en la tabla de objetos y NO en la tienda, asi que cambiarlo los encarece en todas partes, tambien al venderlos. El campo es un ushort que guarda el precio entre diez, o sea que el tope real son 655350 y tiene que ser multiplo de 10. Cero deja los precios como esten.",
   "specialMartItemPrice": 50000,
 
+  "_specialMartShelves": "Mostradores especiales con una lista PROPIA en vez de su turno en specialMartItems. Pedido por el jugador el 2026-09-19: los objetos de evolucion clasicos, cada lista en el sitio que eligio, a 30000 cada uno. shop es el indice del inventario en Shop.cro: 8 y 11 se midieron jugando, 14 es la etiqueta de pk3DS («Route 8 [Misc]»), que coincide con las tres medidas y tiene justo 11 huecos para las 11 piedras (§145). En Konikoni el Centro Pokemon no tiene mostrador especial: es la tienda donde se pusieron primero los objetos de gen 8-9, la de incienso, y lo que sobra de sus 9 huecos vuelve a nonMachineMartItem. El precio es del OBJETO y no de la tienda, asi que vale en todas partes, tambien al venderlo (a la mitad). Cada id se comprueba contra la tabla del cartucho antes de escribir, y un id repetido entre listas, una lista que no cabe o un mostrador de MT paran las tiendas sin escribir nada. Nota: el juego llama «Escama Dragón» a la Escama de Dragón.",
+  "specialMartShelves": [
+    {
+      "shop": 14,
+      "place": "Centro Pokémon de la Ruta 8",
+      "price": 30000,
+      "items": [
+        { "id": 80, "name": "Piedra Solar" },
+        { "id": 81, "name": "Piedra Lunar" },
+        { "id": 82, "name": "Piedra Fuego" },
+        { "id": 83, "name": "Piedra Trueno" },
+        { "id": 84, "name": "Piedra Agua" },
+        { "id": 85, "name": "Piedra Hoja" },
+        { "id": 108, "name": "Piedra Noche" },
+        { "id": 109, "name": "Piedra Alba" },
+        { "id": 110, "name": "Piedra Oval" },
+        { "id": 107, "name": "Piedra Día" },
+        { "id": 849, "name": "Piedra Hielo" }
+      ]
+    },
+    {
+      "shop": 11,
+      "place": "Centro Pokémon de la Ruta 2",
+      "price": 30000,
+      "items": [
+        { "id": 322, "name": "Electrizador" },
+        { "id": 323, "name": "Magmatizador" },
+        { "id": 321, "name": "Protector" },
+        { "id": 233, "name": "Revest. Metálico" },
+        { "id": 221, "name": "Roca del Rey" },
+        { "id": 325, "name": "Tela Terrible" },
+        { "id": 324, "name": "Disco Extraño" },
+        { "id": 235, "name": "Escama Dragón" },
+        { "id": 226, "name": "Diente Marino" },
+        { "id": 227, "name": "Escama Marina" },
+        { "id": 327, "name": "Colmillo Agudo" },
+        { "id": 326, "name": "Garra Afilada" }
+      ]
+    },
+    {
+      "shop": 8,
+      "place": "Ciudad Konikoni, tienda de incienso",
+      "price": 30000,
+      "items": [
+        { "id": 252, "name": "Mejora" },
+        { "id": 537, "name": "Escama Bella" },
+        { "id": 646, "name": "Dulce de Nata" },
+        { "id": 229, "name": "Piedra Eterna" },
+        { "id": 174, "name": "Baya Tamate" },
+        { "id": 647, "name": "Saquito Fragante" }
+      ]
+    }
+  ],
+
   "_trainerMovesFromLearnset": "Al cambiar la especie de un Pokémon de entrenador, deja sus movimientos a cero para que el juego le dé los suyos. 518 de los 1139 del cartucho ya vienen así, o sea que el juego lo soporta.",
   "trainerMovesFromLearnset": true,
 
-  "_protectedSpecies": "Especies que se dejan tal cual estén donde estén. Cosmog (789) por defecto: la historia lo entrega y luego exige que evolucione a Solgaleo o Lunala, y no está probado que el juego aguante que lo cambies.",
+  "_trainerDifficulty": "Entrenadores mas dificiles sin cambiar QUIEN son: el byte de IA, los IV, el reparto de EV y cuantos Pokemon llevan objeto. Pedido el 2026-09-14 tras medir el cartucho (ver subida_de_dificultad_explicada.txt y ARCHITECTURE §122). aiFlagsAdded 7 = Basica + Fuerte + Experta, que se SUMAN a lo que tuviera: un entrenador con mas bits (dobles, usar objetos...) los conserva. Antes solo 166 de 653 tenian los tres. IV: cada Pokemon sube sus IV entre un 10 y un 20% de lo que ya tiene, redondeando hacia arriba y con tope 31; un IV a 0 sigue a 0, porque el 20% de 0 es 0. EV: el mismo numero de EV que ya llevaba, repartido para la especie que le ha tocado -252 a su mejor ataque, luego 252 a Velocidad si su Velocidad base llega a evFastSpeed o a PS si no-; quien no llevaba EV sigue sin llevar. Objetos: se dan hasta que el heldItemPercent de todos los Pokemon de entrenador lleve uno (antes 10%); lo que ya llevaban -cristales Z, Restos- se respeta. El objeto se elige de heldItemsAny mas heldItemsPhysical o heldItemsSpecial segun ataque su mejor estadistica. Sin objetos Elegidos ni Chaleco Asalto a proposito: bloquean movimientos y la IA del juego no esta medida con eso. El nombre de cada objeto se comprueba contra el cartucho antes de escribir (§52). enabled false deja los entrenadores como los trae el cartucho.",
+  "trainerDifficulty": {
+    "enabled": true,
+    "aiFlagsAdded": 7,
+    "ivRaiseMinPercent": 10,
+    "ivRaiseMaxPercent": 20,
+    "recalculateEvs": true,
+    "evFastSpeed": 80,
+    "heldItemPercent": 25,
+    "heldItemsAny": [
+      { "id": 234, "name": "Restos" },
+      { "id": 158, "name": "Baya Zidra" },
+      { "id": 157, "name": "Baya Ziuela" },
+      { "id": 275, "name": "Banda Focus" },
+      { "id": 270, "name": "Vidasfera" },
+      { "id": 268, "name": "Cinta Experto" },
+      { "id": 540, "name": "Casco Dentado" },
+      { "id": 639, "name": "Seguro Debilidad" }
+    ],
+    "heldItemsPhysical": [
+      { "id": 266, "name": "Cinta Fuerte" }
+    ],
+    "heldItemsSpecial": [
+      { "id": 267, "name": "Gafas Especiales" }
+    ]
+  },
+
+  "_protectedSpecies":"Especies que se dejan tal cual estén donde estén. Cosmog (789) por defecto: la historia lo entrega y luego exige que evolucione a Solgaleo o Lunala, y no está probado que el juego aguante que lo cambies.",
   "protectedSpecies": [789],
 
   "_maxSpecies": "Techo de especies que se pueden repartir. CERO significa 'las que tenga el juego', que es lo normal: el cartucho da 807 y el mod de expansión de gen 8 y 9 da 1025, y en los dos casos sale bien sin tocar nada. Ponle un número solo si quieres un tope de verdad -jugar solo con la primera generación, por ejemplo-. Antes esto era un 807 fijo, y con el mod instalado habría hecho que los 354 Pokémon nuevos NO SALIERAN NUNCA sin que nada fallara.",
   "maxSpecies": 0,
 
-  "_maxAbility": "Techo de habilidades. CERO son todas las que declare el juego. En el cartucho da igual; con el mod de expansión hay que ponerlo en 233. El campo de habilidad es un byte, o sea tope 255: el cartucho usa 233 y el mod metió 22 más hasta llenarlo, y esas 22 NO FUNCIONAN -sale el nombre en la ficha y en combate no pasa nada-. Ver docs/MOD-EXPANSION.md §5.",
-  "maxAbility": 233,
+  "_maxAbility": "Techo de habilidades. CERO son todas las que tenga el juego, contadas en su propia lista de nombres. Con el mod de gen 8-9 son 319, y los huecos sin nombre (301-304, 317-318) no se reparten nunca. Estuvo en 233 porque nadie habia visto funcionar las nuevas; el 18/09/2026 el jugador las probo en combate y pidio meterlas. Ojo: hasta entonces daba igual lo que pusiera aqui, porque se aplicaba ademas un tope de pk3DS de 233 que ya no se usa. Ver docs/ARCHITECTURE.md §132 y §136.",
+  "maxAbility": 0,
 
-  "_maxMove": "Techo de movimientos en los aprendizajes. CERO son todos los que declare el juego. Puesto en 729 -los del cartucho- porque randomizeLearnsets esta en true: de los 192 que anade el mod, 32 piden una rutina de combate que el cartucho no usa y que solo existiria en su code.bin, sin comprobar por nadie. Repartir un movimiento que no hace lo que dice mata un Pokemon en un Nuzlocke. El precio es que tambien quedan fuera los otros 160, que si funcionan: distinguirlos exige comparar rutina a rutina contra el cartucho al generar, y eso esta sin hacer. Ver docs/MOD-EXPANSION.md §6.",
-  "maxMove": 729,
+  "_bannedAbilities": "Habilidades que no se reparten nunca. Son las del mod que van atadas a las formas de un Pokemon concreto: su codigo esta escrito para ese Pokemon, y en otro podria intentar cambiarlo a una forma que no tiene. 241 Tragamisil, 248 Cara de Hielo, 258 Mutapetito, 278 Cambio Heroico, 279 Comandar, 307 Teracambio, 308 Teracaparazon y 309 Teraformacion 0 (ademas no hay teracristalizacion). La 319 Aura Protectora tiene nombre pero ninguna especie del mod la usa, asi que nadie sabe si esta programada. Las del cartucho con formas (Multitipo, Cambio Tactico...) no hace falta quitarlas: el juego original las ignora en otro Pokemon. Esta MISMA lista la usan el gacha y el wonder trade, que sortean habilidad entre todas las del juego (§136).",
+  "bannedAbilities": [241, 248, 258, 278, 279, 307, 308, 309, 319],
+
+  "_regionalForms": "Formas regionales en las que puede salir un Pokemon randomizado: salvajes, entrenadores, el Pokemon extra del rol, estaticos, regalos e iniciales. Primero se elige la especie como siempre y despues, con un sorteo aparte, la forma: la normal o cualquiera de las de esta lista, todas igual de probables. Asi la especie de cada sitio no cambia. Medido contra el mod de gen 8-9: trae 59 formas con nombre de region y las 59 tienen los tipos oficiales. Fuera se quedan la gorra 'Alola' de Pikachu, que es un disfraz, y el modo Daruma de Darmanitan de Galar, que solo existe en combate. Una forma que el juego instalado no tenga se ignora sola: el cartucho sin mod solo trae las de Alola. Deja la lista vacia para que todo salga en su forma normal. Ver docs/ARCHITECTURE.md §138.",
+  "regionalForms": [
+    { "species": 19,  "forms": [1],       "note": "Rattata de Alola" },
+    { "species": 20,  "forms": [1],       "note": "Raticate de Alola" },
+    { "species": 26,  "forms": [1],       "note": "Raichu de Alola" },
+    { "species": 27,  "forms": [1],       "note": "Sandshrew de Alola" },
+    { "species": 28,  "forms": [1],       "note": "Sandslash de Alola" },
+    { "species": 37,  "forms": [1],       "note": "Vulpix de Alola" },
+    { "species": 38,  "forms": [1],       "note": "Ninetales de Alola" },
+    { "species": 50,  "forms": [1],       "note": "Diglett de Alola" },
+    { "species": 51,  "forms": [1],       "note": "Dugtrio de Alola" },
+    { "species": 52,  "forms": [1, 2],    "note": "Meowth de Alola y de Galar" },
+    { "species": 53,  "forms": [1],       "note": "Persian de Alola" },
+    { "species": 58,  "forms": [1],       "note": "Growlithe de Hisui" },
+    { "species": 59,  "forms": [1],       "note": "Arcanine de Hisui" },
+    { "species": 74,  "forms": [1],       "note": "Geodude de Alola" },
+    { "species": 75,  "forms": [1],       "note": "Graveler de Alola" },
+    { "species": 76,  "forms": [1],       "note": "Golem de Alola" },
+    { "species": 77,  "forms": [1],       "note": "Ponyta de Galar" },
+    { "species": 78,  "forms": [1],       "note": "Rapidash de Galar" },
+    { "species": 79,  "forms": [1],       "note": "Slowpoke de Galar" },
+    { "species": 80,  "forms": [2],       "note": "Slowbro de Galar (la forma 1 es la mega)" },
+    { "species": 83,  "forms": [1],       "note": "Farfetch'd de Galar" },
+    { "species": 88,  "forms": [1],       "note": "Grimer de Alola" },
+    { "species": 89,  "forms": [1],       "note": "Muk de Alola" },
+    { "species": 100, "forms": [1],       "note": "Voltorb de Hisui" },
+    { "species": 101, "forms": [1],       "note": "Electrode de Hisui" },
+    { "species": 103, "forms": [1],       "note": "Exeggutor de Alola" },
+    { "species": 105, "forms": [1],       "note": "Marowak de Alola" },
+    { "species": 110, "forms": [1],       "note": "Weezing de Galar" },
+    { "species": 122, "forms": [1],       "note": "Mr. Mime de Galar" },
+    { "species": 128, "forms": [1, 2, 3], "note": "Tauros de Paldea: combatiente, ardiente y acuatico" },
+    { "species": 144, "forms": [1],       "note": "Articuno de Galar (hoy no sale: esta en bannedSpecies)" },
+    { "species": 145, "forms": [1],       "note": "Zapdos de Galar (hoy no sale: esta en bannedSpecies)" },
+    { "species": 146, "forms": [1],       "note": "Moltres de Galar (hoy no sale: esta en bannedSpecies)" },
+    { "species": 157, "forms": [1],       "note": "Typhlosion de Hisui" },
+    { "species": 194, "forms": [1],       "note": "Wooper de Paldea" },
+    { "species": 199, "forms": [1],       "note": "Slowking de Galar" },
+    { "species": 211, "forms": [1],       "note": "Qwilfish de Hisui" },
+    { "species": 215, "forms": [1],       "note": "Sneasel de Hisui" },
+    { "species": 222, "forms": [1],       "note": "Corsola de Galar" },
+    { "species": 263, "forms": [1],       "note": "Zigzagoon de Galar" },
+    { "species": 264, "forms": [1],       "note": "Linoone de Galar" },
+    { "species": 503, "forms": [1],       "note": "Samurott de Hisui" },
+    { "species": 549, "forms": [1],       "note": "Lilligant de Hisui" },
+    { "species": 554, "forms": [1],       "note": "Darumaka de Galar" },
+    { "species": 555, "forms": [2],       "note": "Darmanitan de Galar (la 3 es su modo Daruma, solo en combate)" },
+    { "species": 562, "forms": [1],       "note": "Yamask de Galar" },
+    { "species": 570, "forms": [1],       "note": "Zorua de Hisui" },
+    { "species": 571, "forms": [1],       "note": "Zoroark de Hisui" },
+    { "species": 618, "forms": [1],       "note": "Stunfisk de Galar" },
+    { "species": 628, "forms": [1],       "note": "Braviary de Hisui" },
+    { "species": 705, "forms": [1],       "note": "Sliggoo de Hisui" },
+    { "species": 706, "forms": [1],       "note": "Goodra de Hisui" },
+    { "species": 713, "forms": [1],       "note": "Avalugg de Hisui" },
+    { "species": 724, "forms": [1],       "note": "Decidueye de Hisui" }
+  ],
+
+  "_maxMove": "Techo de movimientos en los aprendizajes. CERO son todos los que tenga el juego, contados en su propia tabla. Con el mod de gen 8-9 entran los 160 nuevos que existen de verdad: los 32 huecos vacios (los de Let's Go y los Dinamax) no tienen PP y no se reparten nunca, igual que los movimientos Z. Estuvo en 729 porque 32 de los nuevos usan un funcionamiento que solo tiene el code.bin del mod; el 18/09/2026 el jugador probo tres de ellos en combate y pidio meterlos todos. Ver docs/MOD-EXPANSION.md §6 y docs/ARCHITECTURE.md §136.",
+  "maxMove": 0,
 
   "_trainerMinimums": "Clases de entrenador cuyos Pokemon se sortean desde un suelo en vez de del saco entero. Es para la liga: el sorteo por fuerza parecida mantiene al reemplazo cerca de lo que reemplazo, que esta bien en todas partes menos al final, porque los equipos del Alto Mando en el cartucho no son uniformemente fuertes y medio combate final podia salir con cosas que nadie llevaria a uno. El NOMBRE viaja con el id y se comprueba contra el cartucho antes de escribir (§52): un id de memoria que caiga en otra clase haria mas dificil el combate equivocado y no fallaria nunca.",
   "trainerMinimums": [
@@ -157,5 +317,16 @@
     785, 786, 787, 788, 789, 790, 791, 792,
     793, 794, 795, 796, 797, 798, 799,
     800, 801, 802, 803, 804, 805, 806, 807
+  ],
+
+  "_wildBannedSpecies": "Especies que no salen en la HIERBA (encuentros salvajes), pero si pueden salir en entrenadores, estaticos y regalos. Son los 26 legendarios y singulares de gen 8 y 9 -los mismos que Data/species.json marca como legendarios por encima del 807-. Anadido el 2026-09-21: bannedSpecies se escribio antes del mod y se acaba en el 807, asi que en el mundo instalado salian Meltan en 105 huecos de hierba, Kubfu en 60, Terapagos en 41 y Calyrex en 38. El jugador pidio fuera de salvajes TODOS los legendarios y el resto del juego como estaba. Hay un test que falla si algun legendario de species.json no esta en esta lista ni en bannedSpecies.",
+  "wildBannedSpecies": [
+    808, 809,
+    888, 889, 890, 891, 892, 893, 894, 895, 896, 897, 898,
+    905,
+    1001, 1002, 1003, 1004,
+    1007, 1008,
+    1014, 1015, 1016, 1017,
+    1024, 1025
   ]
 }

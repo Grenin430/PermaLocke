@@ -14,7 +14,32 @@ namespace PermaLocke.App.Services;
 /// <param name="IsMine">True for this machine's own run, so the table can mark it.</param>
 /// <param name="Position">Place in the standings, 1 first. Ties share the number.</param>
 /// <param name="Age">How long ago it was published, in words.</param>
-public sealed record StandingRow(RunSnapshot Snapshot, bool IsMine, int Position, string Age);
+/// <param name="Audit">Whether the snapshot comes out of the history published beside it.</param>
+/// <param name="IsLegacy">Published with the old layout, loose in the root of the folder.</param>
+public sealed record StandingRow(RunSnapshot Snapshot, bool IsMine, int Position, string Age,
+    AuditResult Audit, bool IsLegacy = false)
+{
+    /// <summary>The chip on the row: short, and never a word that promises more than was checked.</summary>
+    public string AuditLabel => Audit.Verdict switch
+    {
+        AuditVerdict.Consistent => "CUADRA",
+        AuditVerdict.NoHistory => "SIN HISTORIAL",
+        AuditVerdict.Rewound => "HA RETROCEDIDO",
+        _ => "NO CUADRA"
+    };
+
+    /// <summary>"ok", "none" or "bad", for the chip's colour.</summary>
+    public string AuditState => Audit.Verdict switch
+    {
+        AuditVerdict.Consistent => "ok",
+        AuditVerdict.NoHistory => "none",
+        _ => "bad"
+    };
+}
+
+/// <param name="Profile">This machine's player, or null before one exists.</param>
+/// <param name="Ownership">Whose the loaded run is.</param>
+public sealed record PlayerStatus(PlayerProfile? Profile, RunOwnership Ownership);
 
 /// <param name="Rows">Everyone in the shared folder, best first.</param>
 /// <param name="Broken">Files that could not be read, by name and reason.</param>
@@ -43,22 +68,24 @@ public sealed record SyncSettings
 /// </para>
 /// <para>
 /// <b>What it is not.</b> Everything read here is a file written by somebody else's application,
-/// sitting in a folder they can open. It is not verified and it is not verifiable without a server
-/// nobody is going to run. Rule 3 of this project forbids a fake anti-cheat, so there is not one:
-/// what the screen says is "this is what their application reported", and the fingerprint exists
-/// so that a run being rewound or rewritten is at least <em>visible</em> to people who can then
-/// deal with it themselves.
+/// sitting in a folder they can open. Since §123 each player publishes their history beside their
+/// snapshot, so the snapshot can be <b>checked against it</b>: points, event count and last hash have
+/// to come out of a chain that verifies. That catches an edited number, a rewound run and a deleted
+/// death. It does not catch somebody rebuilding a whole history with tools, and the screen says so;
+/// rule 3 forbids calling this an anti-cheat.
 /// </para>
 /// </remarks>
 public sealed class SyncService(
     IRunContext runContext,
     IEventStore events,
     IPokemonRepository pokemon,
-    IPointsService points,
     ProgressService progress,
     AchievementService achievements,
     IRunRoles roles,
+    PlayerProfileService profiles,
     SnapshotStore store,
+    SeenMarksStore seenMarks,
+    IBoxReader boxes,
     AppPaths paths,
     ILogger<SyncService> logger)
 {
@@ -71,38 +98,36 @@ public sealed class SyncService(
         PropertyNameCaseInsensitive = true
     };
 
-    public string SharedFolder
-    {
-        get
-        {
-            try
-            {
-                return File.Exists(SettingsPath)
-                    ? JsonSerializer.Deserialize<SyncSettings>(File.ReadAllText(SettingsPath), Json)
-                        ?.SharedFolder ?? string.Empty
-                    : string.Empty;
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "No se ha podido leer la configuración de sincronización");
-                return string.Empty;
-            }
-        }
-    }
+    public string SharedFolder => paths.LocalOnly ? string.Empty : new SharedFolderSettings(paths.Config).Read();
 
     public void SetSharedFolder(string folder)
     {
-        Directory.CreateDirectory(paths.Config);
-        File.WriteAllText(SettingsPath,
-            JsonSerializer.Serialize(new SyncSettings { SharedFolder = folder }, Json));
-
+        new SharedFolderSettings(paths.Config).Write(folder);
         logger.LogInformation("Carpeta compartida: {Folder}", folder);
     }
 
+    /// <summary>This machine's player and whose the loaded run is, linking an unowned run on the way.</summary>
+    public async Task<PlayerStatus> PlayerAsync(CancellationToken ct = default)
+    {
+        var ownership = await profiles.LinkCurrentRunAsync(ct);
+        var profile = ownership == RunOwnership.NoRun
+            ? await profiles.CurrentAsync(ct)
+            : await profiles.EnsureAsync(runContext.Current?.PlayerName, ct);
+
+        return new PlayerStatus(profile, ownership);
+    }
+
     /// <summary>
-    /// Builds the summary of the loaded run. Reads only; publishing is a separate step.
+    /// Builds the summary of the loaded run and the history it comes from. Reads only; publishing is
+    /// a separate step.
     /// </summary>
-    public async Task<RunSnapshot?> BuildAsync(CancellationToken ct = default)
+    /// <remarks>
+    /// Both out of <b>one</b> read of the chain, and the points summed from it rather than asked of
+    /// the points service a moment later: an event landing in between would otherwise publish a
+    /// snapshot that does not match its own history, and the audit would call an honest run wrong.
+    /// </remarks>
+    public async Task<(RunSnapshot Snapshot, RunHistory History)?> BuildAsync(PlayerProfile profile,
+        CancellationToken ct = default)
     {
         if (runContext.Current is not { } run)
         {
@@ -113,14 +138,15 @@ public sealed class SyncService(
         var history = await events.GetAllAsync(run.Id, ct);
         var unlocked = (await achievements.GetProgressAsync(run.Id, ct)).Count(a => a.Unlocked);
 
-        return new RunSnapshot
+        var snapshot = new RunSnapshot
         {
             RunId = run.Id,
-            PlayerName = run.PlayerName,
+            PlayerName = profile.Name,
+            PlayerId = profile.Id,
             RunName = run.Name,
             RoleName = roles.Of(run.Id)?.Name ?? run.RoleId,
             SeedLabel = run.SeedLabel,
-            Points = await points.GetBalanceAsync(run.Id, ct),
+            Points = history.Sum(e => e.PointsDelta),
             Registered = team.Count,
             Alive = team.Count(p => p.Status == PokemonStatus.Alive),
             Dead = team.Count(p => p.Status == PokemonStatus.Dead),
@@ -132,9 +158,19 @@ public sealed class SyncService(
             EventCount = history.Count,
             ChainHead = history.Count > 0 ? history[^1].Hash : string.Empty,
             BattleReady = BattleReadyFrom(history),
+            WorldSpecies = WorldSpeciesFrom(history),
+            AvatarSpecies = await AvatarAsync(ct),
             RunCreatedAt = run.CreatedAt,
             PublishedAt = DateTimeOffset.Now
         };
+
+        return (snapshot, new RunHistory
+        {
+            RunId = run.Id,
+            PlayerId = profile.Id,
+            ExportedAt = snapshot.PublishedAt,
+            Events = history
+        });
     }
 
     /// <summary>
@@ -172,7 +208,34 @@ public sealed class SyncService(
         return !shuffled && !randomAbilities;
     }
 
-    /// <summary>Writes this run's summary into the shared folder.</summary>
+    /// <summary>The species leading the saved party, for the friends list. Decoration: null if the save will not read.</summary>
+    private async Task<int?> AvatarAsync(CancellationToken ct)
+    {
+        try
+        {
+            var snapshot = await boxes.ReadAsync(ct);
+            return snapshot.Boxes.FirstOrDefault(b => b.IsParty)?.Pokemon
+                .FirstOrDefault(p => !p.IsEgg && p.Species > 0)?.Species;
+        }
+        catch (Exception ex)
+        {
+            logger.LogDebug(ex, "Sin avatar: no se ha podido leer el equipo");
+            return null;
+        }
+    }
+
+    /// <summary>How many species the last generated world had, from its event. Null when not recorded.</summary>
+    private static int? WorldSpeciesFrom(IReadOnlyList<GameEvent> history) =>
+        history.LastOrDefault(e => e.Type == GameEventType.RomRandomized) is { } last
+        && last.Data.TryGetValue("maxSpecies", out var raw)
+        && int.TryParse(raw, out var species)
+        && species > 0
+            ? species
+            : null;
+
+    /// <summary>
+    /// Writes this player's run and its history into their own folder of the shared one.
+    /// </summary>
     public async Task<string> PublishAsync(CancellationToken ct = default)
     {
         var folder = SharedFolder;
@@ -182,134 +245,128 @@ public sealed class SyncService(
             return "Elige primero la carpeta compartida.";
         }
 
-        if (await BuildAsync(ct) is not { } snapshot)
+        var player = await PlayerAsync(ct);
+
+        // Una run que ya es de otro jugador no se publica como tuya. Pasa si alguien copia la
+        // carpeta Saves de un amigo: la run viaja con su dueño escrito dentro.
+        if (player.Ownership == RunOwnership.Foreign)
+        {
+            return "Esta run es de otro jugador.";
+        }
+
+        if (player.Profile is not { } profile || await BuildAsync(profile, ct) is not { } built)
         {
             return "No hay ninguna run que publicar.";
         }
 
-        store.Publish(folder, snapshot);
+        var written = store.PublishPlayer(folder, profile, built.Snapshot, built.History);
 
-        // Se relee: no se da por publicado lo que no se ha vuelto a ver en la carpeta.
-        var back = store.ReadAll(folder).FirstOrDefault(r => r.Snapshot?.RunId == snapshot.RunId);
+        if (store.RemoveLegacy(folder, built.Snapshot.RunId))
+        {
+            logger.LogInformation("Quitada la instantánea suelta de la run {Run}: ya vive en {Folder}",
+                built.Snapshot.RunId, written);
+        }
 
-        return back?.Snapshot is null
-            ? "Se ha escrito, pero al releer la carpeta no aparece. Comprueba que existe y que se puede escribir en ella."
-            : $"Publicado. Los demás verán {snapshot.Points} puntos y {snapshot.Alive} en pie "
-              + $"la próxima vez que abran su carpeta.";
+        // Se relee, y se pasa por la misma comprobacion que ven los demas: publicar algo que al
+        // leerlo no cuadra seria un fallo de PermaLocke, no del jugador, y hay que decirlo aqui.
+        var back = store.ReadAll(folder).FirstOrDefault(r => r.Snapshot?.RunId == built.Snapshot.RunId);
+
+        if (back?.Snapshot is null)
+        {
+            return "No se ha podido publicar. Comprueba la carpeta compartida.";
+        }
+
+        var audit = SnapshotAudit.Check(back.Snapshot, back.History);
+
+        return audit.Verdict == AuditVerdict.Consistent
+            ? "Publicado."
+            : $"Publicado, pero algo no cuadra: {audit.Detail}";
     }
 
-    /// <summary>Reads everyone's summaries and puts them in order.</summary>
-    public Standings Read()
+    /// <summary>Reads everyone's runs, checks each against its history and puts them in order.</summary>
+    public async Task<Standings> ReadAsync(CancellationToken ct = default)
     {
         var folder = SharedFolder;
 
         if (string.IsNullOrWhiteSpace(folder))
         {
             return new Standings([], [],
-                "Elige una carpeta compartida: la que uséis en Drive, Dropbox o en red.");
+                "Elige la carpeta compartida.");
         }
 
         if (!Directory.Exists(folder))
         {
             return new Standings([], [],
-                "La carpeta configurada no existe. ¿La has movido, o no se ha sincronizado todavía?");
+                "No se encuentra la carpeta compartida.");
         }
 
         var read = store.ReadAll(folder);
         var mine = runContext.Current?.Id;
+        var me = await profiles.CurrentAsync(ct);
 
-        var good = read
+        var marks = seenMarks.Load();
+
+        var audited = read
             .Where(r => r.Snapshot is not null)
-            .Select(r => r.Snapshot!)
-            .OrderByDescending(s => s.Points)
-            .ThenBy(s => s.Dead)
+            .Select(r =>
+            {
+                marks.TryGetValue(r.Snapshot!.RunId, out var seen);
+                var audit = SnapshotAudit.Check(r.Snapshot, r.History, seen);
+
+                if (SnapshotAudit.Advance(seen, r.Snapshot, audit) is { } advanced)
+                {
+                    marks[r.Snapshot.RunId] = advanced;
+                }
+
+                return (Read: r, Audit: audit);
+            })
+            // Lo que no cuadra va DETRAS de lo que se puede fiar, con sus propios numeros y su marca
+            // roja. Ordenar por los puntos que dice de si mismo le daria el podio a quien edito el
+            // fichero: medido en la primera prueba, 900 puntos inventados salian primeros.
+            .OrderBy(x => x.Audit.Verdict is AuditVerdict.Consistent or AuditVerdict.NoHistory ? 0 : 1)
+            .ThenByDescending(x => x.Read.Snapshot!.Points)
+            .ThenBy(x => x.Read.Snapshot!.Dead)
             .ToList();
 
+        var good = audited.Select(x => x.Read).ToList();
         var rows = new List<StandingRow>();
 
-        for (var i = 0; i < good.Count; i++)
+        for (var i = 0; i < audited.Count; i++)
         {
+            var (entry, audit) = audited[i];
+            var snapshot = entry.Snapshot!;
+
             // Empatados a puntos y a bajas comparten puesto: el orden entre ellos lo decide el
             // fichero, y dar el 3 y el 4 a dos runs idénticas seria inventar una diferencia.
-            var position = i > 0 && good[i].Points == good[i - 1].Points && good[i].Dead == good[i - 1].Dead
+            var position = i > 0 && snapshot.Points == rows[i - 1].Snapshot.Points
+                                 && snapshot.Dead == rows[i - 1].Snapshot.Dead
+                                 && audit.Verdict == rows[i - 1].Audit.Verdict
                 ? rows[i - 1].Position
                 : i + 1;
 
-            rows.Add(new StandingRow(good[i], good[i].RunId == mine, position, Age(good[i].PublishedAt)));
+            var isMine = snapshot.RunId == mine || (me is not null && snapshot.PlayerId == me.Id);
+
+            rows.Add(new StandingRow(snapshot, isMine, position, Age(snapshot.PublishedAt),
+                audit, entry.IsLegacy));
         }
+
+        seenMarks.Save(marks);
 
         var broken = read
             .Where(r => r.Snapshot is null)
             .Select(r => $"{r.File}: {r.Problem}")
+            .Concat(read.Where(r => r.HistoryProblem.Length > 0).Select(r => $"{r.File}: {r.HistoryProblem}"))
             .ToList();
 
-        var (note, state) = BattleSummary(good);
+        var snapshots = good.Select(r => r.Snapshot!).ToList();
+        var battle = LinkBattleAdvice.Summarize(snapshots);
 
         return new Standings(rows, broken,
-            good.Count == 0
-                ? "La carpeta está vacía. Publica la tuya y dile a los demás que hagan lo mismo."
-                : $"{good.Count} run(s) en la carpeta.",
-            note, state);
+            snapshots.Count == 0
+                ? "Todavía no ha publicado nadie."
+                : $"{snapshots.Count} jugador(es).",
+            battle.Note, battle.State);
     }
-
-    /// <summary>
-    /// Who can link-battle whom, in one line.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// This exists to catch a failure that would otherwise surface a month too late: somebody
-    /// randomizes with the shuffled stats left on, plays for weeks, and only finds out they cannot
-    /// battle anybody the day the group tries. The information was always there in each snapshot;
-    /// it just needed saying out loud.
-    /// </para>
-    /// <para>
-    /// The ones with no data are counted apart and never lumped in with the incompatible. A run
-    /// randomized before this was recorded is unknown, and calling it a problem would be a verdict
-    /// nobody measured.
-    /// </para>
-    /// </remarks>
-    private static (string Note, string State) BattleSummary(IReadOnlyList<RunSnapshot> good)
-    {
-        if (good.Count == 0)
-        {
-            return (string.Empty, "none");
-        }
-
-        var ready = good.Where(s => s.BattleReady == true).ToList();
-        var blocked = good.Where(s => s.BattleReady == false).ToList();
-        var unknown = good.Where(s => s.BattleReady is null).ToList();
-
-        var parts = new List<string>();
-
-        if (blocked.Count > 0)
-        {
-            parts.Add($"{Names(blocked)} no {(blocked.Count == 1 ? "puede" : "pueden")}: su mundo "
-                      + "baraja estadísticas base o randomiza habilidades, y eso hace que las dos "
-                      + "consolas calculen el combate distinto.");
-        }
-
-        if (unknown.Count > 0)
-        {
-            parts.Add($"De {Names(unknown)} no hay dato: "
-                      + (unknown.Count == 1 ? "randomizó" : "randomizaron")
-                      + " antes de que esto se guardara. Que "
-                      + (unknown.Count == 1 ? "vuelva" : "vuelvan")
-                      + " a generar y a publicar.");
-        }
-
-        var head = ready.Count switch
-        {
-            0 => "Nadie puede combatir por link ahora mismo.",
-            1 => "Solo una run está preparada para combatir por link, así que no hay contrincante.",
-            _ => $"{ready.Count} runs pueden combatir por link entre sí."
-        };
-
-        return (string.Join(" ", parts.Prepend(head)),
-            blocked.Count == 0 && unknown.Count == 0 && ready.Count > 1 ? "ok" : "warn");
-    }
-
-    private static string Names(IReadOnlyList<RunSnapshot> who) =>
-        string.Join(", ", who.Select(s => s.PlayerName));
 
     /// <summary>
     /// How stale a snapshot is, in words.

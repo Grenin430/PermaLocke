@@ -1,4 +1,7 @@
 using System.IO;
+using System.Collections.Concurrent;
+using System.Security.Cryptography;
+using System.Text;
 using System.Windows.Media.Imaging;
 using Microsoft.Extensions.Logging;
 using PermaLocke.Infrastructure;
@@ -25,7 +28,7 @@ namespace PermaLocke.App.Services;
 public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteService> logger)
 {
     /// <summary>Loaded icons, keyed by icon index rather than species: forms share a picture.</summary>
-    private readonly Dictionary<int, BitmapSource?> _cache = [];
+    private readonly ConcurrentDictionary<int, BitmapSource> _cache = new();
     private readonly SemaphoreSlim _gate = new(1, 1);
 
     private string? _romPath;
@@ -35,14 +38,17 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
     private int _itemIcons = ItemIconIndex.CartridgeIcons;
     private string _scratch = string.Empty;
     private IReadOnlyDictionary<int, int>? _index;
+    private IReadOnlyDictionary<(int Species, int Form), int> _formIndex =
+        new Dictionary<(int Species, int Form), int>();
     private bool _prepared;
-    private string SpriteDirectory => Path.Combine(paths.Data, "sprites");
+    private string _sourceKey = "pending";
+    private string SpriteDirectory => Path.Combine(paths.Data, "sprites", "v2", _sourceKey);
 
     /// <summary>The balls live apart so the Pokémon folder stays one file per icon index.</summary>
-    private string BallDirectory => Path.Combine(paths.Data, "sprites", "balls");
+    private string BallDirectory => Path.Combine(SpriteDirectory, "balls");
 
     /// <summary>Item icons, named by <b>item id</b> and not by icon index: the two are not the same.</summary>
-    private string ItemDirectory => Path.Combine(paths.Data, "sprites", "items");
+    private string ItemDirectory => Path.Combine(SpriteDirectory, "items");
 
     /// <summary>True when the icons are on disk and the index loaded.</summary>
     public bool IsAvailable => _prepared && _index is { Count: > 0 };
@@ -70,7 +76,6 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
             if (rom is null)
             {
                 logger.LogInformation("Sin sprites: no hay ROM compatible en {Folder}", paths.Rom);
-                _prepared = true;
                 return;
             }
 
@@ -84,8 +89,8 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
             // El temporal lleva el nombre del mundo: si compartiera nombre, instalar un mod dejaria
             // activo el contenedor del cartucho y las especies nuevas no dibujarian nada, sin que
             // nada fallara (§27).
-            var scratch = Path.Combine(Path.GetTempPath(),
-                baseLayer is null ? "permalocke-sprites" : "permalocke-sprites-mod");
+            _sourceKey = SourceKey(rom.Path, baseLayer);
+            var scratch = Path.Combine(SpriteDirectory, "source");
             _romPath = rom.Path;
             _scratch = scratch;
             _baseLayer = baseLayer;
@@ -95,7 +100,11 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
             // cuesta poco; y el guardia de antes -"si hay algun png, no extraigas"- habria dejado sin
             // dibujo a las 354 especies nuevas de quien instalara el mod DESPUES de haber jugado,
             // que es el caso normal y el que menos se prueba.
-            await Task.Run(() => Extract(rom.Path, scratch), ct);
+            var icons = await Task.Run(() => Extract(rom.Path, scratch), ct);
+
+            // Las formas con icono propio: las de Alola del cartucho y las del mod, estas solo si el
+            // contenedor es el que describen sus claves (§139). Si no, cada forma dibuja su especie.
+            _formIndex = PokemonIconIndex.FormIcons(_index, icons);
 
             if (!Directory.Exists(BallDirectory) || Directory.GetFiles(BallDirectory, "*.png").Length == 0)
             {
@@ -104,24 +113,44 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
 
             // Cuantos iconos de objeto hay decide si valen las reglas del mod. Se lee del propio
             // contenedor, no de si la carpeta existe: la carpeta puede estar y el fichero no.
-            _itemIcons = ItemIconReader.Open(rom.Path, scratch, baseLayer).Count;
+            _itemIcons = await Task.Run(() => ItemIconReader.Open(rom.Path, scratch, baseLayer).Count, ct);
 
             await Task.Run(() => ExtractItems(rom.Path, scratch), ct);
 
+            _cache.Clear();
             _prepared = true;
             logger.LogInformation("Sprites listos: {Count} especies con icono conocido", _index.Count);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            throw;
         }
         catch (Exception ex)
         {
             // Los sprites son decoración: que fallen no puede tumbar una pantalla.
             logger.LogWarning(ex, "No se han podido preparar los sprites; se seguirá sin ellos");
             _index = null;
-            _prepared = true;
+            _prepared = false;
         }
         finally
         {
             _gate.Release();
         }
+    }
+
+    /// <summary>Each installation and source revision gets its own extraction cache.</summary>
+    public static string SourceKey(string romPath, string? baseLayer)
+    {
+        static string Stamp(string file)
+        {
+            var info = new FileInfo(file);
+            return info.Exists ? $"{info.FullName}|{info.Length}|{info.LastWriteTimeUtc.Ticks}" : file + "|missing";
+        }
+        var sources = new List<string> { Stamp(romPath) };
+        if (baseLayer is not null)
+            foreach (var file in new[] { PokemonIconReader.IconGarcPath, "a/0/6/1", GameFiles.Personal })
+                sources.Add(Stamp(Path.Combine(baseLayer, file.Replace('/', Path.DirectorySeparatorChar))));
+        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(string.Join("\n", sources))))[..20];
     }
 
     /// <summary>
@@ -145,6 +174,18 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
         _index is not null && _index.TryGetValue(species, out var icon) ? Load(icon) : null;
 
     /// <summary>
+    /// The icon of a species in a given form: its own when it has one, its species' otherwise.
+    /// </summary>
+    /// <remarks>
+    /// Until §139 every picture in the app was the species', so an Alolan Vulpix was drawn as a
+    /// Kantonian one. A form with no icon of its own — a Vivillon's wings — still draws its species.
+    /// </remarks>
+    public BitmapSource? Get(int species, int form) =>
+        form > 0 && _index is not null && _formIndex.TryGetValue((species, form), out var icon)
+            ? Load(icon)
+            : Get(species);
+
+    /// <summary>
     /// The egg, which is the one icon of the container that needed no working out: it is the
     /// first one.
     /// </summary>
@@ -158,7 +199,7 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
         }
 
         var image = Read(Path.Combine(SpriteDirectory, $"{icon:0000}.png"));
-        _cache[icon] = image;
+        if (image is not null) _cache[icon] = image;
         return image;
     }
 
@@ -203,7 +244,7 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
         }
 
         var image = Read(Path.Combine(BallDirectory, $"{itemId:000}.png"));
-        _cache[key] = image;
+        if (image is not null) _cache[key] = image;
         return image;
     }
 
@@ -271,8 +312,83 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
         }
 
         var image = Read(file);
-        _cache[key] = image;
+        if (image is not null) _cache[key] = image;
         return image;
+    }
+
+    /// <summary>The official move-category icons, apart from the rest: three files, named by category.</summary>
+    private string CategoryDirectory => Path.Combine(SpriteDirectory, "categorias");
+
+    /// <summary>
+    /// The official icon of a move category (§144): the red-orange burst for physical, the blue rings for special,
+    /// the grey one for status. By the numbering of <c>MoveSheet</c>: 1 physical, 2 special, 0 status.
+    /// </summary>
+    /// <remarks>
+    /// Taken from the player's own cartridge the first time it is asked for, like every other sprite. Null when there
+    /// is no ROM or the sheet could not be read, and the screen then says the category in words.
+    /// </remarks>
+    public BitmapSource? GetCategory(int category)
+    {
+        var name = CategoryFile(category);
+
+        if (!_prepared || name is null)
+        {
+            return null;
+        }
+
+        var key = -200_000 - category;
+        if (_cache.TryGetValue(key, out var cached))
+        {
+            return cached;
+        }
+
+        var file = Path.Combine(CategoryDirectory, name);
+        if (!File.Exists(file))
+        {
+            ExtractCategories();
+        }
+
+        var image = Read(file);
+        if (image is not null) _cache[key] = image;
+        return image;
+    }
+
+    private static string? CategoryFile(int category) => category switch
+    {
+        0 => "estado.png",
+        1 => "fisico.png",
+        2 => "especial.png",
+        _ => null
+    };
+
+    private void ExtractCategories()
+    {
+        if (_romPath is null)
+        {
+            return;
+        }
+
+        try
+        {
+            Directory.CreateDirectory(CategoryDirectory);
+
+            foreach (var (category, icon) in MoveCategoryIconReader.Open(_romPath, _scratch))
+            {
+                var name = CategoryFile(category switch
+                {
+                    MoveCategoryIcon.Physical => 1,
+                    MoveCategoryIcon.Special => 2,
+                    _ => 0
+                })!;
+
+                File.WriteAllBytes(Path.Combine(CategoryDirectory, name),
+                    PngImage.Encode(icon.Pixels, icon.Width, icon.Height));
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "No se pudieron extraer los iconos de categoría de movimiento");
+        }
     }
 
     /// <summary>Pulls one item icon out of the cartridge, on demand.</summary>
@@ -331,7 +447,8 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
         logger.LogInformation("{Count} iconos de objeto extraídos a {Folder}", wanted.Count, ItemDirectory);
     }
 
-    private void Extract(string romPath, string scratch)
+    /// <returns>How many icons the container holds, which says which form icons exist.</returns>
+    private int Extract(string romPath, string scratch)
     {
         var reader = PokemonIconReader.Open(romPath, scratch, _baseLayer);
         Directory.CreateDirectory(SpriteDirectory);
@@ -349,5 +466,6 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
         }
 
         logger.LogInformation("{Count} iconos extraídos de la ROM a {Folder}", reader.Count, SpriteDirectory);
+        return reader.Count;
     }
 }

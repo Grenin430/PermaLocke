@@ -53,6 +53,10 @@ public sealed class MaintenanceService(
     GameWatcher watcher,
     PlayerSave save,
     AppPaths paths,
+    ZoneOutcomeService zones,
+    BallControlService balls,
+    IItemWithholder bag,
+    IItemLookup items,
     ILoggerFactory loggers,
     ILogger<MaintenanceService> logger)
 {
@@ -73,7 +77,6 @@ public sealed class MaintenanceService(
         }
 
         var team = await pokemon.GetAllAsync(run.Id);
-        var history = await events.GetAllAsync(run.Id);
         var balance = await points.GetBalanceAsync(run.Id);
         var integrity = await events.VerifyChainAsync(run.Id, ct);
 
@@ -91,40 +94,25 @@ public sealed class MaintenanceService(
             new("Caídos", dead.ToString(), "ok"),
             new("Entregados en wonder trade", tradedAway.ToString(), "ok"),
 
-            new("Detectables por el vigilante", withPid.ToString(),
-                withPid == team.Count ? "ok" : "warn",
-                "El vigilante empareja por PID y por nada más."),
-
-            new("SIN PID", withoutPid.ToString(),
+            new("Sin reconocer", withoutPid.ToString(),
                 withoutPid == 0 ? "ok" : "bad",
-                withoutPid == 0
-                    ? "Todos se pueden detectar."
-                    : "Estos no se pueden detectar muertos: pueden caer delante de la aplicación "
-                      + "y no se registra nada. Se arreglan aquí abajo."),
+                withoutPid == 0 ? string.Empty : "Arréglalo más abajo."),
 
-            new("Eventos en el historial", history.Count.ToString(), "ok"),
-
-            new("Cadena de eventos", integrity.IsValid ? "íntegra" : "ROTA",
+            new("Historial", integrity.IsValid ? "correcto" : "DAÑADO",
                 integrity.IsValid ? "ok" : "bad",
-                integrity.IsValid
-                    ? "Cada evento encadena con el anterior por hash."
-                    : "Los hashes no cuadran. Restaura una copia de la run."),
+                integrity.IsValid ? string.Empty : "Restaura una copia de la run."),
 
             new("Saldo de puntos", balance.ToString(), "ok"),
 
-            new("Copias de la run", CountBackups().ToString(),
-                CountBackups() > 0 ? "ok" : "warn",
-                CountBackups() > 0
-                    ? $"Se guarda una al arrancar y se conservan las {RunBackup.Keep} últimas."
-                    : "Todavía no hay ninguna. Se hace la próxima vez que abras la aplicación."),
+            new("Copias de seguridad", CountBackups().ToString(), CountBackups() > 0 ? "ok" : "warn"),
         };
 
         var problems = rows.Count(r => r.State == "bad");
 
         return new AuditReport(rows, problems == 0,
             problems == 0
-                ? "La run cuadra: nada que reparar."
-                : $"{problems} cosa(s) que arreglar. Están marcadas en rojo.");
+                ? "Todo correcto."
+                : $"{problems} cosa(s) que arreglar.");
     }
 
     private int CountBackups()
@@ -225,8 +213,7 @@ public sealed class MaintenanceService(
 
         logger.LogInformation("Muerte revocada a mano: {Pokemon} ({Motivo})", name, why);
 
-        return $"{name} vuelve a estar vivo y se le han devuelto los puntos. En la partida sigue a 0 PS: "
-               + "llévalo a un Centro Pokémon y ya no se lo volverán a quitar.";
+        return $"{name} vuelve a estar vivo y has recuperado los puntos. Cúralo en un Centro Pokémon.";
     }
 
     /// <summary>
@@ -265,7 +252,7 @@ public sealed class MaintenanceService(
         {
             // Cobrar dos veces por la misma muerte es peor que no cobrar: el saldo deja de
             // reconstruirse sumando el historial.
-            return $"{entry.Nickname ?? entry.SpeciesName} ya figura como {entry.Status}.";
+            return $"{entry.Nickname ?? entry.SpeciesName} ya no está vivo.";
         }
 
         var reason = string.IsNullOrWhiteSpace(why) ? "sin motivo anotado" : why.Trim();
@@ -281,15 +268,14 @@ public sealed class MaintenanceService(
         try
         {
             MarkedDead?.Invoke(this, new DeathNotice(entry.Nickname ?? entry.SpeciesName, entry.Species,
-                charged.Points));
+                charged.Points, entry.Form));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Un oyente falló al recibir una muerte marcada a mano");
         }
 
-        return $"{entry.Nickname ?? entry.SpeciesName} marcado como caído. "
-               + "La penalización se ha cobrado y queda en el historial como marca del jugador.";
+        return $"{entry.Nickname ?? entry.SpeciesName} marcado como caído.";
     }
 
     /// <summary>Counts the dead still standing in the save's party, writing nothing.</summary>
@@ -372,7 +358,7 @@ public sealed class MaintenanceService(
 
         if (wanted == run.ClearedStages)
         {
-            return $"Ya está en {wanted}. No hay nada que cambiar.";
+            return $"Ya está en {wanted}.";
         }
 
         await progress.AdvanceAsync(run, wanted - run.ClearedStages, run.PlayerName, ct);
@@ -384,10 +370,154 @@ public sealed class MaintenanceService(
         logger.LogInformation("Etapas a mano corregidas a {Wanted} (quedan en {Actual})",
             wanted, after?.ClearedStages);
 
-        return $"Etapas a mano: {run.ClearedStages} → {after?.ClearedStages}. "
-               + $"Tope en vigor: {readout.Cap?.ToString() ?? "sin definir"}.";
+        return $"Corregido. Nivel máximo: {readout.Cap?.ToString() ?? "sin límite"}.";
+    }
+
+    // ================================================== UNA ZONA MARCADA POR ERROR
+
+    /// <summary>Every zone the map currently has marked, newest first.</summary>
+    /// <remarks>
+    /// The name comes from the event that marked it, because a zone id is not something to show anybody: the one
+    /// this exists for reads <c>ruta-1-afueras-de-hauoli</c>.
+    /// </remarks>
+    public async Task<IReadOnlyList<MarkedZone>> MarkedZonesAsync(CancellationToken ct = default)
+    {
+        if (runContext.Current is not { } run)
+        {
+            return [];
+        }
+
+        var marks = await zones.GetMarksAsync(run.Id, ct).ConfigureAwait(false);
+        var names = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        foreach (var gameEvent in await events.GetAllAsync(run.Id, ct).ConfigureAwait(false))
+        {
+            if (gameEvent is { Type: GameEventType.ZoneOutcomeSet, LocationId: { } id }
+                && gameEvent.Data.GetValueOrDefault("zona") is { Length: > 0 } name)
+            {
+                names[id] = name;
+            }
+        }
+
+        return
+        [
+            .. marks
+                .Select(pair => new MarkedZone(pair.Key, names.GetValueOrDefault(pair.Key, pair.Key),
+                    ZoneOutcomeService.Label(pair.Value.Outcome), !pair.Value.ByPlayer, pair.Value.At))
+                .OrderByDescending(zone => zone.When)
+        ];
+    }
+
+    /// <summary>
+    /// Gives a zone back its encounter, for when PermaLocke put one in the wrong place.
+    /// </summary>
+    /// <remarks>
+    /// The route stops counting as spent and the mark comes off the map, both by adding one event and editing
+    /// nothing (§67). What it does <b>not</b> do is touch the bag: if balls are still owed for that run they come
+    /// back on their own once the guard sees the route free, and if they never left the saved game there is
+    /// <see cref="ForgetWithheldAsync"/>, which is a different decision and has its own button.
+    /// </remarks>
+    public async Task<string> FreeZoneAsync(string locationId, string why, CancellationToken ct = default)
+    {
+        if (runContext.Current is not { } run)
+        {
+            return "No hay ninguna run cargada.";
+        }
+
+        var zone = (await MarkedZonesAsync(ct).ConfigureAwait(false))
+            .FirstOrDefault(marked => string.Equals(marked.LocationId, locationId, StringComparison.Ordinal));
+
+        if (zone is null)
+        {
+            return "Esa zona ya no está marcada.";
+        }
+
+        await zones.ClearAsync(run.Id, locationId, zone.Name, run.PlayerName, why, ct).ConfigureAwait(false);
+
+        // Se relee: no se da por buena una corrección que no se ha vuelto a ver.
+        var still = (await MarkedZonesAsync(ct).ConfigureAwait(false))
+            .Any(marked => string.Equals(marked.LocationId, locationId, StringComparison.Ordinal));
+
+        if (still)
+        {
+            logger.LogError("Se liberó {Zona} y sigue marcada", zone.Name);
+            return "Se ha escrito la corrección y la zona sigue marcada.";
+        }
+
+        logger.LogInformation("Zona liberada a mano: {Zona} ({Motivo})", zone.Name, why);
+
+        return $"{zone.Name} vuelve a estar libre.";
+    }
+
+    // ================================================== LO RETENIDO QUE NO SE DEBE
+
+    /// <summary>What the ledger says this run took away and has not given back.</summary>
+    public IReadOnlyList<WithheldItem> Withheld()
+    {
+        if (runContext.Current is not { } run)
+        {
+            return [];
+        }
+
+        return
+        [
+            .. balls.BallItemIds
+                .Select(id => new WithheldItem(id, items.GetName(id), bag.Owed(run.Id, id)))
+                .Where(item => item.Amount > 0)
+                .OrderByDescending(item => item.Amount)
+        ];
+    }
+
+    /// <summary>
+    /// Writes off what is owed without giving anything back.
+    /// </summary>
+    /// <remarks>
+    /// Only right when the withholding never reached the saved game, which is the case it was written for: the
+    /// balls come out of the <b>live bag</b>, and a player who closed the emulator without saving still has them.
+    /// Giving them back then would hand over balls nobody ever took (§147, and the measurement in
+    /// <see cref="IItemWithholder.Forget"/>).
+    /// </remarks>
+    public string ForgetWithheld()
+    {
+        if (runContext.Current is not { } run)
+        {
+            return "No hay ninguna run cargada.";
+        }
+
+        var forgotten = Withheld()
+            .Select(item => (item.Name, Amount: bag.Forget(run.Id, item.ItemId)))
+            .Where(pair => pair.Amount > 0)
+            .ToList();
+
+        if (forgotten.Count == 0)
+        {
+            return "No había nada retenido.";
+        }
+
+        if (Withheld().Count > 0)
+        {
+            logger.LogError("Se dio por saldado lo retenido y el registro sigue debiendo algo");
+            return "Se ha escrito y el registro sigue debiendo algo.";
+        }
+
+        logger.LogInformation("Retenciones dadas por saldadas: {Detalle}",
+            string.Join(", ", forgotten.Select(pair => $"{pair.Name} x{pair.Amount}")));
+
+        return "Saldado: " + string.Join(", ", forgotten.Select(pair => $"{pair.Name} x{pair.Amount}")) + ".";
     }
 }
+
+/// <param name="LocationId">The zone id the run stores, which is not for showing.</param>
+/// <param name="Name">What the player reads.</param>
+/// <param name="Outcome">How it is marked, already in Spanish.</param>
+/// <param name="Detected">True when PermaLocke marked it; false for a click from before §118.</param>
+/// <param name="When">When it was marked.</param>
+public sealed record MarkedZone(string LocationId, string Name, string Outcome, bool Detected, DateTimeOffset When);
+
+/// <param name="ItemId">The cartridge's id.</param>
+/// <param name="Name">Its name in the game.</param>
+/// <param name="Amount">How many are owed.</param>
+public sealed record WithheldItem(int ItemId, string Name, int Amount);
 
 /// <param name="Manual">Stages somebody marked by hand.</param>
 /// <param name="Detected">Stages the achievements work out from the cartridge.</param>

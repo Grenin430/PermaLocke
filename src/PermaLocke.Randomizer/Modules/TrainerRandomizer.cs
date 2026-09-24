@@ -98,6 +98,9 @@ public sealed class TrainerRandomizer(RomWorkspace workspace, RandomizerOptions 
         LayeredFsMod mod, CancellationToken ct = default)
     {
         var floors = FloorPools(workspace, options, pool);
+
+        // La forma regional, de su propia fuente: la especie de cada hueco sale igual que antes (§138).
+        var forms = random.Derive("forms");
         var classes = floors.Count > 0 ? TrainerClasses(mod) : [];
 
         var path = mod.Stage(GameFiles.TrainerPokemon);
@@ -177,7 +180,7 @@ public sealed class TrainerRandomizer(RomWorkspace workspace, RandomizerOptions 
                         }
                     }
 
-                    TrainerPokemonTable.SetSpecies(party, slot, species);
+                    TrainerPokemonTable.SetSpecies(party, slot, species, here.Forms.Pick(forms, species));
                     replaced++;
                     changed = true;
 
@@ -204,11 +207,13 @@ public sealed class TrainerRandomizer(RomWorkspace workspace, RandomizerOptions 
     }
 
     /// <summary>
-    /// A cartridge level raised by a percentage, rounded away from zero and capped at 100.
+    /// A cartridge level raised by a percentage, rounded to the nearest level and capped at 100.
     /// </summary>
     /// <remarks>
-    /// Rounding away from zero matters at the bottom of the game: the first trainers are level 5,
-    /// and rounding down would leave +20% meaning nothing at all for the whole first island.
+    /// To the nearest, halves up — <c>MidpointRounding.AwayFromZero</c> only decides the halves, it
+    /// is not a ceiling. Rounding rather than truncating matters at the bottom of the game, where a
+    /// level 4 raised 20% is 4.8. And it is not a ceiling on purpose: 12 × 1.2 = 14.4 gives 14,
+    /// which is the first trial's cap in <c>Data/levelcaps.json</c>.
     /// </remarks>
     public static int Raise(int level, int percent) =>
         Math.Clamp((int)Math.Round(level * (1 + (percent / 100.0)), MidpointRounding.AwayFromZero), 1, 100);

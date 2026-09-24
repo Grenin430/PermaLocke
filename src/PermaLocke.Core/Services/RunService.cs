@@ -11,7 +11,8 @@ public sealed record CreateRunRequest(
     GameVersion Game,
     ulong? Seed = null,
     string? RomHash = null,
-    string? TitleId = null);
+    string? TitleId = null,
+    Guid? PlayerId = null);
 
 /// <param name="Events">How many events went with it.</param>
 /// <param name="Pokemon">How many registered Pokémon went with it.</param>
@@ -39,6 +40,7 @@ public sealed class RunService(IRunRepository runs, IEventStore events, IPokemon
             Id = Guid.NewGuid(),
             Name = request.Name,
             PlayerName = request.PlayerName,
+            PlayerId = request.PlayerId,
             RoleId = request.RoleId,
             Game = request.Game,
             Seed = seed,
@@ -70,7 +72,8 @@ public sealed class RunService(IRunRepository runs, IEventStore events, IPokemon
                 ["game"] = run.Game.ToString(),
                 ["role"] = run.RoleId,
                 ["titleId"] = run.TitleId ?? string.Empty,
-                ["romHash"] = run.RomHash ?? string.Empty
+                ["romHash"] = run.RomHash ?? string.Empty,
+                ["playerId"] = run.PlayerId?.ToString("N") ?? string.Empty
             }
         }, ct).ConfigureAwait(false);
 

@@ -1,167 +1,135 @@
 <UserControl x:Class="PermaLocke.App.Views.AchievementsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:conv="clr-namespace:PermaLocke.App.Converters">
+             xmlns:views="clr-namespace:PermaLocke.App.Views"
+             xmlns:pixel="clr-namespace:PermaLocke.App.Views.Pixel">
 
+    <!-- LOS LOGROS EN PÍXELES (§176). Una placa por logro con su medalla del cartucho en un hueco -en silueta mientras
+         no se ha ganado, en color cuando sí, saltando cuando se puede cobrar-, la barra de lo que falta y los puntos.
+         Mismas órdenes que antes. -->
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
-        <conv:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility" />
 
-        <!-- Una tarjeta de logro: medalla, texto, progreso, puntos y botón. -->
+        <Style TargetType="ScrollBar" BasedOn="{StaticResource PxScrollBar}" />
+
+        <Style x:Key="SmallButton" TargetType="Button" BasedOn="{StaticResource PxSubtleButton}">
+            <Setter Property="Padding" Value="10,5,16,10" />
+            <Setter Property="Margin" Value="0,0,6,0" />
+        </Style>
+
         <DataTemplate x:Key="AchievementTemplate">
-            <Border Margin="4" Padding="12">
-                <Border.Style>
-                    <Style TargetType="Border">
-                        <Setter Property="Background" Value="{StaticResource PanelBrush}" />
-                        <Setter Property="BorderBrush" Value="{StaticResource BorderStrongBrush}" />
-                        <Setter Property="BorderThickness" Value="1" />
-                        <Setter Property="CornerRadius" Value="{StaticResource RadiusMedium}" />
-                        <Style.Triggers>
-                            <!-- Listo para cobrar: se enciende, que es lo que hay que mirar. -->
-                            <DataTrigger Binding="{Binding CanClaim}" Value="True">
-                                <Setter Property="BorderBrush" Value="{StaticResource SuccessBrush}" />
-                                <Setter Property="Background" Value="{StaticResource SuccessDeepBrush}" />
-                            </DataTrigger>
-                            <!-- Cobrado: se apaga por COLOR y no por opacidad. Un 0,45 sobre toda la
-                                 tarjeta emborronaba tambien el cristal, el verde del COBRADO y los
-                                 puntos, y dejaba doce tarjetas en niebla. Quien dice el estado es el
-                                 cristal -en color si esta ganado, en gris si no- y el fondo. -->
-                            <DataTrigger Binding="{Binding Claimed}" Value="True">
-                                <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
-                                <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </Border.Style>
+            <Grid Margin="0,0,10,10">
+                <views:PixelPanel>
+                    <views:PixelPanel.Style>
+                        <Style TargetType="views:PixelPanel">
+                            <Setter Property="Fill" Value="{StaticResource PxFace}" />
+                            <Style.Triggers>
+                                <!-- Listo para cobrar: se enciende, que es lo que hay que mirar. -->
+                                <DataTrigger Binding="{Binding CanClaim}" Value="True">
+                                    <Setter Property="Fill" Value="{StaticResource PxGoodDeep}" />
+                                </DataTrigger>
+                                <!-- Cobrado: más oscuro, sin niebla por encima: quien dice el estado es la medalla. -->
+                                <DataTrigger Binding="{Binding Claimed}" Value="True">
+                                    <Setter Property="Fill" Value="#FF141024" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </views:PixelPanel.Style>
+                </views:PixelPanel>
 
-                <Grid>
+                <Grid Margin="12,12,18,18">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="64" />
+                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
-                    <!-- LA MEDALLA. El dibujo del cartucho cuando lo hay -su cristal Z para cada
-                         prueba- y, si no, el rombo con la inicial, que es lo que había antes. Se
-                         conserva el respaldo a propósito: sin ROM no hay iconos, y una tarjeta
-                         vacía sería peor que una dibujada. -->
-                    <Grid Grid.Column="0" VerticalAlignment="Top" Width="58" Height="58"
-                          HorizontalAlignment="Left">
-                        <!-- Un disco detras. El cristal es lo mejor que tiene esta pantalla -sale
-                             del cartucho del propio jugador- y varios son palidos o casi blancos:
-                             sin nada debajo se deshacen contra el fondo de la tarjeta. -->
-                        <Ellipse Fill="{StaticResource SunkenBrush}"
-                                 Stroke="{StaticResource BorderBrush}" StrokeThickness="1" />
-                        <Grid Visibility="{Binding HasIcon, Converter={StaticResource InverseBoolToVisibility}}">
-                            <Path Data="M 29,7 L 50,28 L 29,49 L 8,28 Z" StrokeThickness="2"
-                                  Stroke="{StaticResource BorderStrongBrush}"
-                                  Fill="{Binding Medal}" />
-                            <TextBlock Text="{Binding Initial}"
-                                       FontFamily="{StaticResource UiFont}" FontSize="15" FontWeight="Bold"
-                                       Foreground="{StaticResource OnAccentBrush}"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Grid>
-
-                        <Image Source="{Binding Icon}" Width="46" Height="46"
-                               RenderOptions.BitmapScalingMode="NearestNeighbor"
-                               Visibility="{Binding HasIcon, Converter={StaticResource BoolToVisibility}}">
-                            <!-- Un logro por cobrar se ve apagado, que es lo que decía el color de
-                                 la medalla y no se puede decir con el dibujo del cartucho. -->
-                            <Image.Style>
-                                <Style TargetType="Image">
-                                    <Setter Property="Opacity" Value="0.38" />
+                    <!-- LA MEDALLA, en su hueco. El dibujo del cartucho -el cristal Z de cada prueba-, y si no lo hay,
+                         la inicial. -->
+                    <Grid Grid.Column="0" Width="66" Height="66" VerticalAlignment="Top">
+                        <views:PixelPanel Fill="{StaticResource PxWell}" IsSunken="True" HasShadow="False" />
+                        <pixel:PixelText Text="{Binding Initial}" Scale="4" Tight="True" Colour="{StaticResource PxTextFaint}"
+                                         HorizontalAlignment="Center" VerticalAlignment="Center"
+                                         Visibility="{Binding HasIcon, Converter={StaticResource InverseBoolToVisibility}}" />
+                        <pixel:PixelSprite Source="{Binding Icon}" Scale="2" TrimEmpty="True" HorizontalAlignment="Center"
+                                           VerticalAlignment="Center" Bob="{Binding CanClaim}">
+                            <pixel:PixelSprite.Style>
+                                <Style TargetType="pixel:PixelSprite">
+                                    <Setter Property="Silhouette" Value="{StaticResource PxFaceLift}" />
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding Unlocked}" Value="True">
-                                            <Setter Property="Opacity" Value="1" />
+                                            <Setter Property="Silhouette" Value="Transparent" />
+                                            <Setter Property="Outline" Value="{StaticResource PxShadow}" />
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
-                            </Image.Style>
-                        </Image>
+                            </pixel:PixelSprite.Style>
+                        </pixel:PixelSprite>
                     </Grid>
 
-                    <StackPanel Grid.Column="1" Margin="10,0,0,0">
-                        <TextBlock Text="{Binding Description}" Style="{StaticResource Body}"
-                                   FontSize="12.5" MinHeight="34" VerticalAlignment="Top" />
+                    <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                        <DockPanel>
+                            <pixel:PixelText DockPanel.Dock="Right" Text="{Binding Reward}" Scale="2" Tight="True"
+                                             Colour="{StaticResource PxGold}" Shadow="{StaticResource PxShadow}" Margin="8,0,0,0" />
+                            <pixel:PixelText Text="{Binding Name}" Scale="2" Tight="True" Trim="True"
+                                             Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
+                        </DockPanel>
 
-                        <!-- Quién cuenta este número. Un logro que se cuenta solo y uno que se
-                             marca a mano no valen lo mismo, así que la tarjeta lo dice. -->
-                        <Border Style="{StaticResource Chip}" HorizontalAlignment="Left" Margin="0,4,0,0"
-                                Padding="7,2">
-                            <TextBlock Text="{Binding Source}" Style="{StaticResource ChipText}"
-                                       FontSize="9.5" />
-                        </Border>
+                        <pixel:PixelText Text="{Binding Description}" Scale="2" Wrap="True" Margin="0,6,0,0" MinHeight="40"
+                                         Colour="{StaticResource PxTextDim}" />
 
-                        <Grid Margin="0,9,0,0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
+                        <!-- Quién cuenta este número: el juego, PermaLocke o la mano. -->
+                        <Grid HorizontalAlignment="Left" Margin="0,4,0,0">
+                            <views:PixelPanel Fill="{StaticResource PxFaceLift}" HasShadow="False" />
+                            <pixel:PixelText Text="{Binding Source}" Scale="2" Tight="True" Margin="7,4,8,5"
+                                             Colour="{StaticResource PxTextDim}" />
+                        </Grid>
 
-                            <TextBlock Grid.Column="0" Text="{Binding Label}" Style="{StaticResource Mono}"
-                                       FontSize="11.5" VerticalAlignment="Center"
-                                       Foreground="{StaticResource TextMutedBrush}" />
-
-                            <ProgressBar Grid.Column="1" Height="6" Margin="9,0" VerticalAlignment="Center"
-                                         Minimum="0" Maximum="{Binding Target, Mode=OneWay}"
-                                         Value="{Binding Count, Mode=OneWay}">
-                                <ProgressBar.Style>
-                                    <Style TargetType="ProgressBar" BasedOn="{StaticResource {x:Type ProgressBar}}">
-                                        <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                        <DockPanel Margin="0,10,0,0">
+                            <pixel:PixelText DockPanel.Dock="Left" Text="{Binding Label}" Scale="2" Tight="True"
+                                             VerticalAlignment="Center" Margin="0,0,10,0" Colour="{StaticResource PxText}" />
+                            <views:PixelBar Height="15" VerticalAlignment="Center" Value="{Binding Share, Mode=OneWay}">
+                                <views:PixelBar.Style>
+                                    <Style TargetType="views:PixelBar">
+                                        <Setter Property="Fill" Value="{StaticResource PxAccent}" />
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding CanClaim}" Value="True">
-                                                <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                                <Setter Property="Fill" Value="{StaticResource PxGood}" />
                                             </DataTrigger>
                                             <DataTrigger Binding="{Binding Claimed}" Value="True">
-                                                <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                                <Setter Property="Fill" Value="{StaticResource PxGood}" />
                                             </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
-                                </ProgressBar.Style>
-                            </ProgressBar>
+                                </views:PixelBar.Style>
+                            </views:PixelBar>
+                        </DockPanel>
 
-                            <TextBlock Grid.Column="2" Text="{Binding Reward}" Style="{StaticResource Mono}"
-                                       FontSize="12" FontWeight="Bold" VerticalAlignment="Center"
-                                       Foreground="{StaticResource AccentBrush}" />
-                        </Grid>
-
-                        <!-- Los botones. "+1" y "COMPLETAR" solo salen en los logros que
-                             PermaLocke no sabe contar todavía; "COBRAR" cuando está al completo. -->
+                        <!-- Los botones. "+1" y "COMPLETAR" solo salen en los logros que PermaLocke no sabe contar
+                             todavía; "COBRAR" cuando está al completo. -->
                         <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                            <Button Content="+1" Style="{StaticResource GhostButton}" MinWidth="38"
-                                    Padding="8,4" FontSize="11" Margin="0,0,6,0"
-                                    Command="{Binding DataContext.MarkCommand,
-                                              RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            <Button Content="+1" Style="{StaticResource SmallButton}"
+                                    Command="{Binding DataContext.MarkCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                     CommandParameter="{Binding}"
                                     Visibility="{Binding CanMark, Converter={StaticResource BoolToVisibility}}" />
-
-                            <Button Content="COMPLETAR" Style="{StaticResource GhostButton}" MinWidth="86"
-                                    Padding="8,4" FontSize="11" Margin="0,0,6,0"
-                                    Command="{Binding DataContext.CompleteCommand,
-                                              RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            <Button Content="COMPLETAR" Style="{StaticResource SmallButton}"
+                                    Command="{Binding DataContext.CompleteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                     CommandParameter="{Binding}"
                                     Visibility="{Binding CanMark, Converter={StaticResource BoolToVisibility}}" />
-
-                            <Button Content="COBRAR" Style="{StaticResource PrimaryButton}" MinWidth="90"
-                                    Padding="8,4" FontSize="11"
-                                    Command="{Binding DataContext.ClaimCommand,
-                                              RelativeSource={RelativeSource AncestorType=UserControl}}"
+                            <Button Content="COBRAR" Style="{StaticResource PxButton}" Padding="12,5,18,10"
+                                    Command="{Binding DataContext.ClaimCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                     CommandParameter="{Binding}"
                                     Visibility="{Binding CanClaim, Converter={StaticResource BoolToVisibility}}" />
 
                             <StackPanel Orientation="Horizontal"
                                         Visibility="{Binding Claimed, Converter={StaticResource BoolToVisibility}}">
-                                <Path Data="M 0 4 L 3.5 7.5 L 10 1" Stroke="{StaticResource SuccessBrush}"
-                                      StrokeThickness="2" StrokeEndLineCap="Round" StrokeStartLineCap="Round"
-                                      VerticalAlignment="Center" Margin="0,0,7,0" />
-                                <TextBlock Text="COBRADO" Style="{StaticResource ChipText}"
-                                           Foreground="{StaticResource SuccessBrush}"
-                                           VerticalAlignment="Center" />
+                                <pixel:PixelIcon Icon="IconCheck" Scale="2" VerticalAlignment="Center" Margin="0,0,7,0" />
+                                <pixel:PixelText Text="COBRADO" Scale="2" Tight="True" VerticalAlignment="Center"
+                                                 Colour="{StaticResource PxGood}" />
                             </StackPanel>
                         </StackPanel>
                     </StackPanel>
                 </Grid>
-            </Border>
+            </Grid>
         </DataTemplate>
     </UserControl.Resources>
 
@@ -172,32 +140,14 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- LO QUE CUESTA PERDER, con el saldo al lado. -->
-        <Border Grid.Row="0" Style="{StaticResource Inset}" Padding="18,14" Margin="0,0,0,12">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-
-                <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                    <StackPanel Orientation="Horizontal">
-                        <Ellipse Width="6" Height="6" Fill="{StaticResource DangerBrush}"
-                                 VerticalAlignment="Center" Margin="0,0,8,0" />
-                        <TextBlock Text="PENALIZACIONES" Style="{StaticResource StatLabel}"
-                                   Foreground="{StaticResource DangerBrush}" VerticalAlignment="Center" />
-                    </StackPanel>
-                    <TextBlock Text="{Binding PenaltyText}" Style="{StaticResource Muted}"
-                               FontSize="12" Margin="0,7,18,0" />
-                </StackPanel>
-
-            </Grid>
-        </Border>
+        <!-- LO QUE CUESTA PERDER. -->
+        <pixel:PixelWindow Grid.Row="0" Title="PENALIZACIONES" Icon="IconGrave" Margin="0,0,0,12"
+                           HeaderAccent="{StaticResource PxBad}">
+            <pixel:PixelText Text="{Binding PenaltyText}" Scale="2" Wrap="True" Colour="{StaticResource PxTextDim}" />
+        </pixel:PixelWindow>
 
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-            <ItemsControl ItemsSource="{Binding Rows}" ItemTemplate="{StaticResource AchievementTemplate}"
-                          Margin="-5,0,5,0">
+            <ItemsControl ItemsSource="{Binding Rows}" ItemTemplate="{StaticResource AchievementTemplate}" Margin="0,0,6,0">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <UniformGrid Columns="3" />
@@ -206,35 +156,20 @@
             </ItemsControl>
         </ScrollViewer>
 
-        <StackPanel Grid.Row="2" Margin="0,12,0,0">
-            <Border Style="{StaticResource Inset}" Padding="14,11">
-                <StackPanel>
-                    <DockPanel>
-                        <Button DockPanel.Dock="Left" Content="ACTUALIZAR"
-                                Style="{StaticResource PrimaryButton}" MinWidth="140"
-                                Padding="16,8" Command="{Binding RefreshCommand}" />
-
-                        <TextBlock Style="{StaticResource Body}" VerticalAlignment="Center" Margin="14,0,0,0"
-                                   Text="{Binding Summary}" />
-                    </DockPanel>
-
-                    <TextBlock Text="{Binding RecordsText}" Style="{StaticResource Mono}" FontSize="11"
-                               Foreground="{StaticResource TextFaintBrush}" Margin="0,10,0,0" />
-
-                    <TextBlock Text="{Binding Status}" FontSize="12" Margin="0,10,0,0">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock" BasedOn="{StaticResource Body}">
-                                <Setter Property="Visibility" Value="Visible" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Status}" Value="">
-                                        <Setter Property="Visibility" Value="Collapsed" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
-                </StackPanel>
-            </Border>
-        </StackPanel>
+        <Grid Grid.Row="2" Margin="0,10,0,0">
+            <views:PixelPanel Fill="{StaticResource PxFace}" />
+            <StackPanel Margin="14,11,20,17">
+                <DockPanel>
+                    <Button DockPanel.Dock="Left" Content="ACTUALIZAR" Style="{StaticResource PxButton}"
+                            Command="{Binding RefreshCommand}" VerticalAlignment="Center" />
+                    <pixel:PixelText Text="{Binding Summary}" Scale="2" Wrap="True" VerticalAlignment="Center" Margin="14,0,0,0"
+                                     Colour="{StaticResource PxText}" />
+                </DockPanel>
+                <pixel:PixelText Text="{Binding RecordsText}" Scale="2" Wrap="True" Margin="0,10,0,0"
+                                 Colour="{StaticResource PxTextFaint}" />
+                <pixel:PixelText Text="{Binding Status}" Scale="2" Wrap="True" Margin="0,8,0,0"
+                                 Colour="{StaticResource PxGood}" />
+            </StackPanel>
+        </Grid>
     </Grid>
 </UserControl>

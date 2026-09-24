@@ -3,228 +3,282 @@ using PermaLocke.Core.Domain;
 
 namespace PermaLocke.Rules.Services;
 
-/// <summary>What the ball rule did, or why it did nothing.</summary>
-public enum BallControlOutcome
-{
-    /// <summary>The zone still has its encounter and the player keeps their balls.</summary>
-    ZoneAvailable,
-
-    /// <summary>The zone was spent, so the balls were taken away.</summary>
-    Withheld,
-
-    /// <summary>The zone changed to one that is free, so the balls came back.</summary>
-    Returned,
-
-    /// <summary>Nothing changed since the last check.</summary>
-    Unchanged,
-
-    /// <summary>The current zone could not be established. Nothing was touched.</summary>
-    ZoneUnknown,
-
-    /// <summary>The area covers more than one location, so it cannot be judged.</summary>
-    ZoneAmbiguous,
-
-    /// <summary>The rule is turned off in the configuration.</summary>
-    Disabled
-}
-
-/// <param name="LocationName">The zone the decision was taken on, when there was one.</param>
-public sealed record BallControlResult(
-    BallControlOutcome Outcome, int? Area, string? LocationName, int ItemsAffected)
-{
-    public bool Acted => Outcome is BallControlOutcome.Withheld or BallControlOutcome.Returned;
-}
-
 /// <summary>
-/// Takes the player's Poké Balls away while the zone they are standing in has already spent
-/// its encounter, and gives them back when they leave.
+/// Carries out what <see cref="EncounterPolicy"/> decides: takes the Poké Balls away or gives them back, and writes
+/// down every step.
 /// </summary>
 /// <remarks>
 /// <para>
-/// This is the rule the run always wanted (§14): not auditing a capture after the fact, but
-/// making it impossible. It needs three things that were each a separate problem — knowing the
-/// zone, translating it to the one the run records, and writing the bag — and it does none of
-/// them itself: it decides <em>when</em>, and the ports do the rest.
+/// It decides nothing and it reads nothing of the game; the watcher in the application does that and calls in.
+/// What this owns is the part that has to be right every time: which items, what the run says is spent, and the
+/// events. Every withholding and every return is a <see cref="GameEventType.BallsWithheld"/> or
+/// <see cref="GameEventType.BallsReturned"/> with the reason, and the first encounter of a route is a
+/// <see cref="GameEventType.ZoneEncounterSpent"/> — the player has the right to know why their bag emptied.
 /// </para>
 /// <para>
-/// Every path that is not certain does nothing at all. An unknown zone, an area covering two
-/// locations, a bag that cannot be found: all of them leave the player alone. Taking someone's
-/// balls away in the wrong zone is worse than not enforcing the rule.
+/// A bag that cannot be read is never written: an empty answer from <see cref="IItemWithholder.CarriedAll"/> means
+/// «unknown», and taking «unknown» for «nothing to take» would be harmless, but taking it for «something» would
+/// not.
 /// </para>
 /// </remarks>
 public sealed class BallControlService(
-    IZoneProvider zones,
     IItemWithholder bag,
-    ZoneTable table,
     IEventStore events,
+    IPokemonRepository pokemon,
+    ZoneOutcomeService outcomes,
     IClock clock)
 {
-    /// <summary>Item ids the rule takes away, in cartridge numbering.</summary>
-    /// <remarks>
-    /// Configuration, not code: it arrives from <c>Data/rules.json</c>. The default is empty on
-    /// purpose, so a missing configuration disables the rule instead of guessing which items to
-    /// confiscate.
-    /// </remarks>
+    /// <summary>Item ids of the balls, in cartridge numbering, from <c>Data/rules.json</c>.</summary>
+    /// <remarks>Empty by default on purpose, so a missing configuration turns the rule off instead of guessing.</remarks>
     public IReadOnlyList<int> BallItemIds { get; init; } = [];
 
     public bool Enabled { get; init; }
 
-    /// <summary>
-    /// How many consecutive unreadable ticks before the balls are handed back. A zone change
-    /// makes the copies disagree for an instant, and that alone should not trigger a return.
-    /// </summary>
-    private const int UnreadableTicksBeforeRelease = 2;
+    /// <summary>Whether a shiny encounter spends the route, from the shiny clause in <c>Data/rules.json</c>.</summary>
+    public bool ShinyConsumesEncounter { get; init; }
 
-    private string? _lastLocationId;
-    private int _unreadableTicks;
+    public bool IsActive => Enabled && BallItemIds.Count > 0;
 
     /// <summary>
-    /// Brings the bag in line with where the player is. Safe to call on every monitor tick:
-    /// it only writes when the answer changes.
+    /// The routes whose encounter is used: by a capture that spent it, by a first wild battle PermaLocke saw, or by
+    /// a mark on the map.
     /// </summary>
     /// <remarks>
-    /// Withholding and returning are deliberately not symmetric. Items are taken away only
-    /// while PermaLocke is sure the player stands in a spent zone, and given back as soon as it
-    /// stops being sure. That asymmetry came from a real run: leaving Route 1 crosses area 0,
-    /// which covers Route 1 and the Melemele Sea at once, and the first version simply did
-    /// nothing there — so the player was left with no Poké Balls and no explanation. Doubt now
-    /// always resolves in the player's favour, and the capture is still policed by the rule
-    /// that blocks its registration.
+    /// The map is marked by PermaLocke alone since §118, but runs from before carry marks the player clicked, and
+    /// those still count. A «libre» among them does not free a route PermaLocke saw spent: the spent event is read
+    /// here on its own, and the map's projection does not let a manual mark undo a detected one either.
     /// </remarks>
-    public async Task<BallControlResult> ApplyAsync(Run run, IReadOnlySet<string> usedZones,
-        CancellationToken ct = default)
+    public async Task<IReadOnlySet<string>> SpentZonesAsync(Guid runId, CancellationToken ct = default)
     {
-        if (!Enabled || BallItemIds.Count == 0)
+        // Cada señal con su hora, y se aplican en orden. Una corrección (§67: la cadena no se edita, se le añade)
+        // tiene que ganarle al gasto que corrige, y un encuentro posterior a la corrección tiene que volver a
+        // gastar la ruta. Contando cada fuente en su propio bucle, «gastada» dependía del orden de los bucles.
+        var signals = new List<(DateTimeOffset When, string Zone, bool Spent)>();
+
+        foreach (var entry in await pokemon.GetAllAsync(runId, ct).ConfigureAwait(false))
         {
-            return new BallControlResult(BallControlOutcome.Disabled, null, null, 0);
+            if (entry is { ConsumedZoneEncounter: true, LocationId: { } id })
+            {
+                signals.Add((entry.ObtainedAt, id, true));
+            }
         }
 
-        if (zones.CurrentArea() is not { } area)
+        foreach (var gameEvent in await events.GetAllAsync(runId, ct).ConfigureAwait(false))
         {
-            // Ilegible puede ser el instante de un cambio de mapa, así que se espera un poco.
-            return await UncertainAsync(run, null, null, BallControlOutcome.ZoneUnknown,
-                ++_unreadableTicks >= UnreadableTicksBeforeRelease, ct).ConfigureAwait(false);
+            if (gameEvent is { Type: GameEventType.ZoneEncounterSpent, LocationId: { } spentId })
+            {
+                signals.Add((gameEvent.Timestamp, spentId, true));
+            }
+            else if (gameEvent is { Type: GameEventType.ZoneCleared, LocationId: { } freedId })
+            {
+                signals.Add((gameEvent.Timestamp, freedId, false));
+            }
         }
 
-        _unreadableTicks = 0;
+        var spent = new HashSet<string>(StringComparer.Ordinal);
 
-        if (table.LocationNameFor(area) is not { } locationName)
+        foreach (var signal in signals.OrderBy(signal => signal.When))
         {
-            // Un área que cubre dos localizaciones es un estado estable, no una transición:
-            // no se va a aclarar esperando, así que se devuelve ya.
-            var ambiguous = table.IsAmbiguous(area);
-
-            return await UncertainAsync(run, area, null,
-                ambiguous ? BallControlOutcome.ZoneAmbiguous : BallControlOutcome.ZoneUnknown,
-                true, ct).ConfigureAwait(false);
+            if (signal.Spent)
+            {
+                spent.Add(signal.Zone);
+            }
+            else
+            {
+                spent.Remove(signal.Zone);
+            }
         }
 
-        var locationId = EncounterService.NormaliseLocationId(locationName);
-        var spent = usedZones.Contains(locationId);
-        var unchanged = _lastLocationId == locationId;
-        _lastLocationId = locationId;
-
-        var affected = spent
-            ? await WithholdAsync(run, area, locationName, ct).ConfigureAwait(false)
-            : await GiveBackAsync(run, area, locationName, ct).ConfigureAwait(false);
-
-        if (affected == 0)
+        // Una zona marcada en el MAPA está gastada por definición, y las liberadas ya no salen marcadas.
+        foreach (var zone in (await outcomes.GetAsync(runId, ct).ConfigureAwait(false)).Keys)
         {
-            return new BallControlResult(
-                unchanged ? BallControlOutcome.Unchanged
-                    : spent ? BallControlOutcome.Withheld : BallControlOutcome.ZoneAvailable,
-                area, locationName, 0);
+            spent.Add(zone);
         }
 
-        return new BallControlResult(
-            spent ? BallControlOutcome.Withheld : BallControlOutcome.Returned,
-            area, locationName, affected);
+        return spent;
     }
 
     /// <summary>
-    /// Handles the cases where the zone cannot be judged: gives back anything withheld, since
-    /// there is no longer any evidence the player is standing where it was taken.
+    /// Brings the bag in line with the decision.
     /// </summary>
-    private async Task<BallControlResult> UncertainAsync(Run run, int? area, string? locationName,
-        BallControlOutcome outcome, bool release, CancellationToken ct)
+    /// <returns>How many kinds of ball were taken or given back; zero when nothing changed or the bag is unreadable.</returns>
+    public async Task<int> ApplyAsync(Run run, EncounterDecision decision, FieldZone? zone, CancellationToken ct = default)
     {
-        _lastLocationId = null;
+        ArgumentNullException.ThrowIfNull(run);
+        ArgumentNullException.ThrowIfNull(decision);
 
-        if (!release)
-        {
-            return new BallControlResult(outcome, area, locationName, 0);
-        }
-
-        var given = await GiveBackAsync(run, area ?? -1, locationName ?? "una zona sin identificar", ct)
-            .ConfigureAwait(false);
-
-        return given > 0
-            ? new BallControlResult(BallControlOutcome.Returned, area, locationName, given)
-            : new BallControlResult(outcome, area, locationName, 0);
-    }
-    private async Task<int> WithholdAsync(Run run, int area, string locationName, CancellationToken ct)
-    {
-        var taken = new Dictionary<string, string>();
-
-        foreach (var itemId in BallItemIds)
-        {
-            var carried = bag.Carried(itemId);
-
-            if (carried > 0 && bag.Withhold(itemId))
-            {
-                taken[itemId.ToString()] = carried.ToString();
-            }
-        }
-
-        if (taken.Count == 0)
+        if (!IsActive)
         {
             return 0;
         }
 
-        await RecordAsync(run, GameEventType.BallsWithheld,
-            $"Poké Balls retiradas en {locationName}: la zona ya gastó su encuentro.",
-            area, locationName, taken, ct).ConfigureAwait(false);
+        var changed = new Dictionary<string, string>();
 
-        return taken.Count;
-    }
-
-    private async Task<int> GiveBackAsync(Run run, int area, string locationName, CancellationToken ct)
-    {
-        var returned = new Dictionary<string, string>();
-
-        foreach (var itemId in BallItemIds)
+        if (decision.Action == BallAction.Withhold)
         {
-            var owed = bag.Owed(itemId);
+            var carried = bag.CarriedAll(BallItemIds);
 
-            if (owed > 0 && bag.GiveBack(itemId))
+            foreach (var (item, count) in carried)
             {
-                returned[itemId.ToString()] = owed.ToString();
+                if (count > 0 && bag.Withhold(run.Id, item))
+                {
+                    changed[item.ToString()] = count.ToString();
+                }
+            }
+
+            if (changed.Count > 0)
+            {
+                await RecordAsync(run, GameEventType.BallsWithheld, $"Poké Balls retiradas. {decision.Reason}",
+                    zone, changed, ct).ConfigureAwait(false);
+            }
+        }
+        else
+        {
+            foreach (var item in BallItemIds)
+            {
+                var owed = bag.Owed(run.Id, item);
+
+                if (owed > 0 && bag.GiveBack(run.Id, item))
+                {
+                    changed[item.ToString()] = owed.ToString();
+                }
+            }
+
+            if (changed.Count > 0)
+            {
+                await RecordAsync(run, GameEventType.BallsReturned, $"Poké Balls devueltas. {decision.Reason}",
+                    zone, changed, ct).ConfigureAwait(false);
             }
         }
 
-        if (returned.Count == 0)
-        {
-            return 0;
-        }
-
-        await RecordAsync(run, GameEventType.BallsReturned,
-            $"Poké Balls devueltas en {locationName}.", area, locationName, returned, ct)
-            .ConfigureAwait(false);
-
-        return returned.Count;
+        return changed.Count;
     }
 
-    private Task RecordAsync(Run run, GameEventType type, string description, int area,
-        string locationName, IReadOnlyDictionary<string, string> items, CancellationToken ct)
+    /// <summary>Records that a route's single encounter was used by the first wild battle in it.</summary>
+    public Task SpendZoneAsync(Run run, FieldZone zone, int species, string speciesName, string reason,
+        CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(run);
+        ArgumentNullException.ThrowIfNull(zone);
+
+        return events.AppendAsync(new GameEvent
+        {
+            Id = Guid.NewGuid(),
+            RunId = run.Id,
+            Timestamp = clock.Now,
+            Type = GameEventType.ZoneEncounterSpent,
+            Source = EventSource.AutoDetect,
+            Actor = run.PlayerName,
+            Description = species > 0
+                ? $"Primer encuentro en {zone.LocationName}: {speciesName}."
+                : $"Primer encuentro en {zone.LocationName}.",
+            Reason = reason,
+            LocationId = zone.LocationId,
+            Data = new Dictionary<string, string>
+            {
+                ["zona"] = zone.LocationName,
+                ["mapa"] = zone.Map.ToString(),
+                ["especie"] = species > 0 ? species.ToString() : string.Empty
+            }
+        }, ct);
+    }
+
+    /// <summary>Runs known to have had a Poké Ball, so the history is read once per run and not every battle.</summary>
+    private readonly HashSet<Guid> _hadBalls = [];
+    private readonly SemaphoreSlim _firstBallGate = new(1, 1);
+
+    /// <summary>Raised once, after the run's first observed ball has been saved to its history.</summary>
+    public event EventHandler<Run>? FirstBallDetected;
+
+    /// <summary>
+    /// Whether this run has had a Poké Ball yet. Until it has, a wild battle spends no route and marks no map (§149).
+    /// </summary>
+    /// <remarks>
+    /// The story walks the player through tall grass before anyone hands them a ball, and a battle nothing could be
+    /// caught in is not the route's encounter. The first ball seen in the bag — carried, or owed back by this run —
+    /// is written down as <see cref="GameEventType.FirstPokeBallSeen"/>, and from then on it always counts, even with
+    /// every ball thrown. A bag that cannot be read answers true: the rule then behaves as it always did, rather than
+    /// letting routes go free on a failed read.
+    /// </remarks>
+    public async Task<bool> HasHadBallsAsync(Run run, CancellationToken ct = default)
+    {
+        bool hadBalls, newlySeen;
+        // Both monitoring loops can see the same first ball. Save and announce it only once.
+        await _firstBallGate.WaitAsync(ct).ConfigureAwait(false);
+        try
+        {
+            (hadBalls, newlySeen) = await DetectFirstBallAsync(run, ct).ConfigureAwait(false);
+        }
+        finally
+        {
+            _firstBallGate.Release();
+        }
+
+        if (newlySeen) FirstBallDetected?.Invoke(this, run);
+        return hadBalls;
+    }
+    private async Task<(bool HadBalls, bool NewlySeen)> DetectFirstBallAsync(Run run, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(run);
+
+        if (_hadBalls.Contains(run.Id))
+        {
+            return (true, false);
+        }
+
+        if ((await events.GetAllAsync(run.Id, ct).ConfigureAwait(false))
+            .Any(e => e.Type == GameEventType.FirstPokeBallSeen))
+        {
+            _hadBalls.Add(run.Id);
+            return (true, false);
+        }
+
+        var carried = bag.CarriedAll(BallItemIds);
+
+        if (carried.Count == 0)
+        {
+            return (true, false);
+        }
+
+        if (!carried.Values.Any(count => count > 0) && !BallItemIds.Any(id => bag.Owed(run.Id, id) > 0))
+        {
+            return (false, false);
+        }
+
+        await events.AppendAsync(new GameEvent
+        {
+            Id = Guid.NewGuid(),
+            RunId = run.Id,
+            Timestamp = clock.Now,
+            Type = GameEventType.FirstPokeBallSeen,
+            Source = EventSource.AutoDetect,
+            Actor = run.PlayerName,
+            Description = "Primera Poké Ball en la mochila: desde ahora cada ruta cuenta su primer encuentro.",
+            Data = carried.Where(pair => pair.Value > 0).ToDictionary(pair => pair.Key.ToString(), pair => pair.Value.ToString())
+        }, ct).ConfigureAwait(false);
+
+        _hadBalls.Add(run.Id);
+        return (true, true);
+    }
+
+    /// <summary>Marks on the map how the route's first encounter ended. The map has no other way to be marked (§118).</summary>
+    public Task RecordOutcomeAsync(Run run, FieldZone zone, ZoneOutcome outcome, string? speciesName, string how,
+        CancellationToken ct = default) =>
+        outcomes.SetAsync(run.Id, zone.LocationId, zone.LocationName, outcome, run.PlayerName, EventSource.AutoDetect,
+            speciesName, how, ct);
+
+    private Task RecordAsync(Run run, GameEventType type, string description, FieldZone? zone,
+        IReadOnlyDictionary<string, string> items, CancellationToken ct)
     {
         // Se copia en vez de añadir sobre el diccionario del llamador: al mutarlo, el recuento
-        // de objetos afectados pasó a incluir "area" y "zona" y el log decía tres donde había
-        // uno. Un contador que miente es exactamente lo que este proyecto no admite.
-        var data = new Dictionary<string, string>(items)
+        // de objetos afectados pasó a incluir "mapa" y "zona" y el log decía tres donde había uno.
+        var data = new Dictionary<string, string>(items);
+
+        if (zone is not null)
         {
-            ["area"] = area.ToString(),
-            ["zona"] = locationName
-        };
+            data["zona"] = zone.LocationName;
+            data["mapa"] = zone.Map.ToString();
+        }
 
         return events.AppendAsync(new GameEvent
         {
@@ -236,6 +290,7 @@ public sealed class BallControlService(
             Actor = run.PlayerName,
             Description = description,
             Reason = "Regla de primer encuentro por zona",
+            LocationId = zone?.LocationId,
             Data = data
         }, ct);
     }

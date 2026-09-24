@@ -287,7 +287,7 @@ public sealed class RewardServiceTests
         var result = await service.ClaimAsync(TheRun(), "doce-pruebas");
 
         Assert.Equal(RewardOutcome.NotDelivered, result.Outcome);
-        Assert.Contains("Hiperpoción", result.Message);
+        Assert.Contains("no se puede entregar", result.Message);
         Assert.Empty(bag.Given);
         Assert.DoesNotContain(log.Appended, e => e.Type == GameEventType.RewardClaimed);
     }

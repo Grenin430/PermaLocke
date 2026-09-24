@@ -94,7 +94,7 @@ public sealed class TradedAwayReconcilerTests
 
         Assert.Empty(report.Matched);
         Assert.Single(report.Disputed);
-        Assert.Contains("487", report.Disputed[0]);
+        Assert.Contains("no se toca", report.Disputed[0]);
         Assert.All(repository.Stored, p => Assert.Equal(PokemonStatus.Alive, p.Status));
     }
 
@@ -159,7 +159,7 @@ public sealed class TradedAwayReconcilerTests
 
         Assert.Empty(report.Matched);
         Assert.Empty(report.Disputed);
-        Assert.Contains("cuadra", report.Message);
+        Assert.Contains("nada que arreglar", report.Message);
     }
 
     private sealed class FakePokemonRepository(IEnumerable<PokemonEntry> seed) : IPokemonRepository

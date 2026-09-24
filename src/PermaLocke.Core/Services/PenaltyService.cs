@@ -22,11 +22,67 @@ public sealed class PenaltyService(IPenaltyCatalog catalog, IEventStore events, 
 {
     public PenaltyRules Rules => catalog.Rules;
 
-    /// <summary>How many wipes this run has already been charged for.</summary>
+    /// <summary>How many wipes this run has already been charged for, not counting the revoked ones.</summary>
     public async Task<int> CountWipesAsync(Guid runId, CancellationToken ct = default)
     {
         var all = await events.GetAllAsync(runId, ct).ConfigureAwait(false);
-        return all.Count(e => e.Type == GameEventType.TeamWiped);
+        return all.Count(e => e.Type == GameEventType.TeamWiped) - Revoked(all).Count;
+    }
+
+    /// <summary>The ids of the wipes a <see cref="GameEventType.WipeRevoked"/> has taken back.</summary>
+    private static HashSet<string> Revoked(IReadOnlyList<GameEvent> all) =>
+        [.. all.Where(e => e.Type == GameEventType.WipeRevoked && e.Data.ContainsKey("equipoCaido"))
+            .Select(e => e.Data["equipoCaido"])];
+
+    /// <summary>
+    /// Takes back a wipe that should not have been charged: the points it cost come back and it stops counting
+    /// towards the four (§161).
+    /// </summary>
+    /// <remarks>
+    /// An addition to the chain, like <see cref="GameEventType.DeathRevoked"/>: the <see cref="GameEventType.TeamWiped"/>
+    /// stays. The refund is what that wipe's own event took, not today's price. It refuses rather than guesses: an id
+    /// that is not a wipe of this run, or one already taken back.
+    /// </remarks>
+    /// <returns>Null when done; otherwise why nothing was done.</returns>
+    public async Task<string?> RevokeWipeAsync(Guid runId, Guid wipeId, string actor, string reason,
+        CancellationToken ct = default)
+    {
+        var all = await events.GetAllAsync(runId, ct).ConfigureAwait(false);
+
+        if (all.FirstOrDefault(e => e.Id == wipeId && e.Type == GameEventType.TeamWiped) is not { } wipe)
+        {
+            return "Ese evento no es un equipo caído de esta run.";
+        }
+
+        if (Revoked(all).Contains(wipeId.ToString()))
+        {
+            return "Ese equipo caído ya está revocado.";
+        }
+
+        var refund = Math.Max(0, -wipe.PointsDelta);
+        var why = string.IsNullOrWhiteSpace(reason) ? "sin motivo anotado" : reason.Trim();
+
+        await events.AppendAsync(new GameEvent
+        {
+            Id = Guid.NewGuid(),
+            RunId = runId,
+            Timestamp = clock.Now,
+            Type = GameEventType.WipeRevoked,
+            Source = EventSource.Player,
+            Actor = actor,
+            Description = refund > 0
+                ? $"Equipo caído revocado: no cuenta y se devuelven {refund} puntos."
+                : "Equipo caído revocado: no cuenta.",
+            PointsDelta = refund,
+            Reason = why,
+            Data = new Dictionary<string, string>
+            {
+                ["equipoCaido"] = wipeId.ToString(),
+                ["devuelto"] = refund.ToString()
+            }
+        }, ct).ConfigureAwait(false);
+
+        return null;
     }
 
     /// <summary>
@@ -97,8 +153,7 @@ public sealed class PenaltyService(IPenaltyCatalog catalog, IEventStore events, 
             Source = EventSource.AutoDetect,
             Actor = actor,
             Description = capped
-                ? $"Equipo caído ({already + 1}º). Sin penalización: ya se alcanzó el máximo de "
-                  + $"{catalog.Rules.MaxWipes}."
+                ? "Equipo caído. Sin penalización."
                 : $"−{cost} puntos: equipo caído ({already + 1} de {catalog.Rules.MaxWipes}).",
             PointsDelta = -cost,
             Reason = "equipo caído",

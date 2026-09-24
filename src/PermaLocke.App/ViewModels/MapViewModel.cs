@@ -46,17 +46,34 @@ public sealed partial class MapZoneViewModel(int number, string name, string isl
 
     public bool HasPhoto => Photo is not null;
 
-    /// <summary>What the player has marked happened here. Each click moves it on one.</summary>
+    /// <summary>How this zone's first encounter ended, as PermaLocke marked it.</summary>
     [ObservableProperty]
     private ZoneOutcome _outcome;
+
+    private ZoneMark? _mark;
 
     /// <summary>
     /// The outcome's own name, so the template picks a look without four triggers of its own.
     /// </summary>
     public string State => Outcome.ToString();
 
-    /// <summary>The line under the name when hovering.</summary>
-    public string Tooltip => ZoneOutcomeService.Label(Outcome);
+    /// <summary>The line under the name when hovering: what happened, against what, and who says so.</summary>
+    public string Tooltip => _mark switch
+    {
+        null => "Sin marcar.",
+        { ByPlayer: true } => $"{ZoneOutcomeService.Label(Outcome)}. Marcada a mano.",
+        { Species: { } species } mark =>
+            $"{ZoneOutcomeService.Label(Outcome)}: {species} · {mark.At.LocalDateTime:dd/MM HH:mm}",
+        var mark => $"{ZoneOutcomeService.Label(Outcome)} · {mark.At.LocalDateTime:dd/MM HH:mm}"
+    };
+
+    /// <summary>Puts what the run says about this zone on the marker.</summary>
+    public void Show(ZoneMark? mark)
+    {
+        _mark = mark;
+        Outcome = mark?.Outcome ?? ZoneOutcome.Free;
+        OnPropertyChanged(nameof(Tooltip));
+    }
 
     /// <summary>An unmarked zone is drawn hollow, so the map reads as what is left to do.</summary>
     public bool IsMarked => Outcome != ZoneOutcome.Free;
@@ -129,11 +146,11 @@ public sealed partial class IslandViewModel(string name, IReadOnlyList<MapZoneVi
 /// </summary>
 /// <remarks>
 /// <para>
-/// Clicking a marker walks it round four states — sin marcar, atrapado, muerto, huida — and that is
-/// all it does. It arbitrates nothing: no rule reads these marks and no points move, because the
-/// player asked for something to look at rather than a referee. The first-encounter rule is
-/// switched off in <c>Data/rules.json</c> for the same reason, rather than left enabled with
-/// nothing feeding it, which is exactly the §81 fault.
+/// <b>Read only.</b> The markers used to be clicked round four states — sin marcar, atrapado, muerto, huida — and
+/// since §118 nobody clicks them: PermaLocke reads the zone from the game, sees each route's first wild battle and
+/// marks how it ended (<see cref="Services.EncounterGuard"/>). With people the player barely knows in the
+/// competition, a board anyone can click was not a record, and the first-encounter rule reads these marks (§117).
+/// Marks clicked before stay in the run and the card says they were clicked.
 /// </para>
 /// <para>
 /// The island art comes out of the player's own cartridge. Where each marker goes does not: nothing
@@ -164,8 +181,9 @@ public sealed partial class MapViewModel : SectionViewModel
     private readonly ILogger<MapViewModel> _logger;
 
     public MapViewModel(ZoneOutcomeService outcomes, IRunContext runContext, JsonIslandMap map,
-        IslandMapService art, ZonePhotoService photos, AppPaths paths, ILogger<MapViewModel> logger)
-        : base("MAPA", "Las zonas de Alola: marca lo que pasó en cada una")
+        IslandMapService art, ZonePhotoService photos, AppPaths paths, GameLinkMonitor monitor, IUiDispatcher ui,
+        ILogger<MapViewModel> logger)
+        : base("MAPA", "Las zonas de Alola: se marcan solas con el primer encuentro de cada una")
     {
         _outcomes = outcomes;
         _runContext = runContext;
@@ -174,6 +192,9 @@ public sealed partial class MapViewModel : SectionViewModel
         _photos = photos;
         _logger = logger;
         _markers = JsonZoneMarkers.Load(Path.Combine(paths.Data, "marcadores.json"));
+
+        // Una marca nueva aparece con el mapa abierto: es la única forma que tiene de cambiar.
+        monitor.RunDataChanged += (_, _) => _ = ui.InvokeAsync(RefreshAsync);
     }
 
     public override string IconKey => "IconGrid";
@@ -336,7 +357,7 @@ public sealed partial class MapViewModel : SectionViewModel
 
         try
         {
-            var outcomes = await _outcomes.GetAsync(run.Id);
+            var marks = await _outcomes.GetMarksAsync(run.Id);
             var count = 0;
             int caught = 0, died = 0, fled = 0, free = 0;
 
@@ -347,7 +368,7 @@ public sealed partial class MapViewModel : SectionViewModel
 
                 foreach (var zone in island.Zones)
                 {
-                    zone.Outcome = outcomes.GetValueOrDefault(zone.ZoneId);
+                    zone.Show(marks.GetValueOrDefault(zone.ZoneId));
 
                     switch (zone.Outcome)
                     {
@@ -382,54 +403,6 @@ public sealed partial class MapViewModel : SectionViewModel
             _logger.LogError(ex, "No se pudo refrescar el mapa");
             Say("No se pudo leer la run.", bad: true);
         }
-    }
-
-    /// <summary>
-    /// Clicking a marker moves it on one: sin marcar, atrapado, muerto, huida, y vuelta a empezar.
-    /// </summary>
-    /// <remarks>
-    /// A cycle and not four buttons because the map has sixty-one markers and a menu on each would
-    /// bury the thing it is for. Going round rather than stopping at the last state is what makes a
-    /// mis-click cost three clicks instead of a trip somewhere else to undo it.
-    /// </remarks>
-    [RelayCommand]
-    public Task ClickZoneAsync(MapZoneViewModel? zone) =>
-        SetOutcomeAsync(zone, zone is null ? ZoneOutcome.Free : ZoneOutcomeService.Next(zone.Outcome));
-
-    /// <summary>
-    /// Right-clicking a marker takes it straight back to «sin marcar».
-    /// </summary>
-    /// <remarks>
-    /// The cycle above is what the map is driven with, and it is fine while a mis-click is one
-    /// state out. Undoing a marker put on the wrong zone meant going all the way round, so the
-    /// gesture everybody already tries — right click to clear — does it in one.
-    /// </remarks>
-    [RelayCommand]
-    public Task ClearZoneAsync(MapZoneViewModel? zone) => SetOutcomeAsync(zone, ZoneOutcome.Free);
-
-    private async Task SetOutcomeAsync(MapZoneViewModel? zone, ZoneOutcome next)
-    {
-        var run = _runContext.Current;
-
-        if (zone is null || run is null || zone.Outcome == next)
-        {
-            return;
-        }
-
-        try
-        {
-            await _outcomes.SetAsync(run.Id, zone.ZoneId, zone.Name, next, run.PlayerName);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "No se pudo marcar {Zone}", zone.Name);
-            Say($"No se pudo marcar {zone.Name}.", bad: true);
-            return;
-        }
-
-        zone.Outcome = next;
-        Say($"{zone.Name}: {ZoneOutcomeService.Label(next).ToLowerInvariant()}.", bad: false);
-        await RefreshAsync();
     }
 
     private void Say(string what, bool bad)

@@ -76,10 +76,14 @@ public sealed class GachaHistoryViewModel(string speciesName, string brushKey,
 /// <see cref="GachaService.PoolOf"/> the roll itself draws from, so what it shows is what can
 /// actually come out, not a rule written twice.
 /// </remarks>
+/// <param name="formName">
+/// A regional form of the species, drawn beside it and without an arrow: it is not what the species
+/// evolves into but another way the same rung can come out (§140).
+/// </param>
 public sealed class PoolStageViewModel(SpeciesStats species,
-    System.Windows.Media.Imaging.BitmapSource? sprite, bool arrow)
+    System.Windows.Media.Imaging.BitmapSource? sprite, bool arrow, string? formName = null)
 {
-    public string Name { get; } = species.Name;
+    public string Name { get; } = formName is null ? species.Name : $"{species.Name} de {formName}";
 
     public int Total { get; } = species.BaseStatTotal;
 
@@ -227,10 +231,10 @@ public sealed partial class GachaViewModel : SectionViewModel
     /// </summary>
     /// <remarks>
     /// The pull is already decided, written to the save and recorded by the time a single frame
-    /// plays, so this is only ever a note in the log: the player still gets their Pokémon. It
-    /// exists because the view starts the spin from a dispatcher callback, outside the await, so
-    /// nothing the view model wraps in a try can see it — it went all the way up to the
-    /// application's handler and told the player something had gone wrong when nothing had.
+    /// plays, so this is only ever a note in the log: the player still gets their Pokémon. The
+    /// capsule machine draws on the rendering loop, outside every await here, so a failure there
+    /// would otherwise reach the application's handler and tell the player something had gone
+    /// wrong when nothing had (the lesson of §87).
     /// </remarks>
     public void AnimationFailed(Exception ex) =>
         _logger.LogError(ex, "Falló la animación del gacha; la tirada sí es válida");
@@ -239,7 +243,7 @@ public sealed partial class GachaViewModel : SectionViewModel
         IPokemonDelivery delivery, PokemonIdentityService identity, CreditService credits,
         PokemonSpriteService sprites, IEventStore events, ISpeciesLookup species,
         PermaLocke.Rules.Services.ProgressService progress, ILogger<GachaViewModel> logger)
-        : base("GACHA", "Gasta puntos y llévate un Pokémon al PC de la partida")
+        : base("GACHA", "Gasta puntos y llévate un Pokémon: a tu equipo si cabe, si no al PC")
     {
         _gacha = gacha;
         _runContext = runContext;
@@ -254,68 +258,122 @@ public sealed partial class GachaViewModel : SectionViewModel
         _logger = logger;
     }
 
-    /// <summary>
-    /// Cells the reel carries. Long enough to keep a fast cruise going for seconds before the
-    /// brakes come on — a short strip would have to crawl to fill the same time.
-    /// </summary>
-    private const int ReelLength = 118;
-
-    /// <summary>Where the winner sits: near the end, so the reel travels a long way first.</summary>
-    private const int ReelWinnerIndex = 108;
-
-    /// <summary>
-    /// Cells repeated after the idle strip so it can loop leftwards without a visible jump.
-    /// </summary>
-    /// <remarks>
-    /// Enough of them to cover the viewport at 72 px a cell — about 3.400 px, which is wider than
-    /// the panel is ever going to be. They are the same first cells again, so when the drift has
-    /// travelled one whole strip and snaps back, what is on screen is identical either side of the
-    /// snap. Duplicating the WHOLE strip would work too and costs twice the cells to build.
-    /// </remarks>
-    private const int IdleTailLength = 48;
-
-    /// <summary>
-    /// How long a spin lasts, by tier. The cheapest resolves quickly; the rarest takes its time.
-    /// </summary>
-    /// <remarks>
-    /// The roll itself is instantaneous, so without this the animation would be over before it
-    /// started. The wait is presentation, not suspense theatre over a pending computation: the
-    /// Pokémon is already decided and stored when the reel starts turning.
-    /// </remarks>
-    private static TimeSpan SpinTimeFor(int tierIndex) =>
-        TimeSpan.FromSeconds(6.0 + (1.25 * Math.Clamp(tierIndex, 0, 4)));
-
-    /// <summary>Raised when the reel should spin. The view owns the animation; this owns the plan.</summary>
-    public event EventHandler<SpinRequest>? SpinRequested;
-
     public ObservableCollection<BannerViewModel> Banners { get; } = [];
 
-    /// <summary>The spinning reel, rebuilt on every roll.</summary>
-    public ObservableCollection<ReelCellViewModel> Reel { get; } = [];
-
     /// <summary>
-    /// Cells in one turn of the idle loop, or 0 when the strip is not a loop.
+    /// The pull the capsule machine is playing, or null while it waits.
     /// </summary>
     /// <remarks>
-    /// The view drifts the strip by exactly this many cells and starts over, which only looks
-    /// continuous because <see cref="BuildIdleReel"/> repeated the head at the tail. It is said out
-    /// loud rather than measured off the strip's width so the two halves cannot drift apart: a
-    /// reel built for a roll is not a loop, and says 0.
+    /// It replaces the reel (§171). The machine draws every frame from the moment in here, so the view keeps no clock
+    /// of its own and this view model never waits on an animation: the timeline is the same for every pull, and the
+    /// portals and the result card follow it from here.
     /// </remarks>
-    public int IdleLoopCells { get; private set; }
+    [ObservableProperty]
+    private CapsulePlay? _currentPlay;
 
     /// <summary>
-    /// Leaving the gacha folds the tier list back up, and nothing else.
+    /// How long the result stays on the stage before the screen goes back to how it was.
     /// </summary>
     /// <remarks>
-    /// The result card stays: it is what the last pull <em>was</em>, and the Pokémon is already in
-    /// the box whether the card is on screen or not. What was wrong was going to the shop with a
-    /// tier's list unfolded and finding it still unfolded on the way back.
+    /// Asked for by the player: the card and the reel parked on the winner used to stay until the
+    /// application was closed, so the machine never looked ready for the next pull. What came out
+    /// is not lost when they go: it is in the strip of past rolls, in the history and in the game.
+    /// </remarks>
+    private static readonly TimeSpan ResultShownFor = TimeSpan.FromSeconds(8);
+
+    /// <summary>Counts down <see cref="ResultShownFor"/>; cancelled by a new roll or an earlier reset.</summary>
+    private CancellationTokenSource? _resultTimer;
+
+    /// <summary>The player left while the reel was turning, so the result goes as soon as it lands.</summary>
+    private bool _idleWhenDone;
+
+    /// <summary>
+    /// True when <see cref="Status"/> says something went wrong, which is the one thing a reset
+    /// must not wipe: «en la run sí está, en el juego todavía no» has to be read.
+    /// </summary>
+    private bool _statusIsWarning;
+
+    /// <summary>The run the strip of past rolls belongs to.</summary>
+    private Guid? _historyRun;
+
+    /// <summary>
+    /// Leaving the gacha folds the panels and puts the stage back to how it was before the pull.
+    /// </summary>
+    /// <remarks>
+    /// The result card used to stay, on the grounds that it is what the last pull <em>was</em>.
+    /// The player asked for the opposite, and they are right that it reads better: coming back to
+    /// the gacha should find a machine waiting, not the last result frozen on it. Nothing is lost —
+    /// the Pokémon is in the game and in the strip of past rolls. A warning in the status line is
+    /// kept, because that one says something is still pending.
+    /// <para>
+    /// Leaving mid-spin does not cut the spin short: the pull is already decided and written, and
+    /// the roll finishes on its own. It just goes straight back to idle when it lands.
+    /// </para>
     /// </remarks>
     public override void ResetState()
     {
         ShowingPool = false;
         ShowingGrants = false;
+
+        if (IsRolling)
+        {
+            _idleWhenDone = true;
+            return;
+        }
+
+        ReturnToIdle(clearStatus: !_statusIsWarning);
+    }
+
+    /// <summary>
+    /// Takes the result off the stage: no card, no lit portal, and the reel drifting again.
+    /// </summary>
+    private void ReturnToIdle(bool clearStatus)
+    {
+        _resultTimer?.Cancel();
+        _resultTimer = null;
+        _idleWhenDone = false;
+
+        HasResult = false;
+        LastPull = null;
+        LastBadge = string.Empty;
+        LastSprite = null;
+        LastTier = string.Empty;
+        // Apaga el portal encendido y devuelve el marcador al color de reposo.
+        DisplayedTier = string.Empty;
+
+        foreach (var portal in Portals)
+        {
+            portal.IsLanded = false;
+        }
+
+        if (clearStatus)
+        {
+            Status = string.Empty;
+            _statusIsWarning = false;
+        }
+
+        // La máquina manda la ball a la estantería y se queda esperando la siguiente.
+        CurrentPlay = null;
+    }
+
+    /// <summary>Waits <see cref="ResultShownFor"/> and then clears the stage, unless something else did first.</summary>
+    private async Task ReturnToIdleLaterAsync(CancellationToken token)
+    {
+        try
+        {
+            await Task.Delay(ResultShownFor, token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        // La línea de estado se queda: dice adónde ha ido el Pokémon, y vive en la barra de abajo,
+        // no en el escenario.
+        if (!IsRolling && HasResult)
+        {
+            ReturnToIdle(clearStatus: false);
+        }
     }
 
     /// <summary>One portal per tier, in order of price. Built from the catalogue, not from XAML.</summary>
@@ -461,7 +519,7 @@ public sealed partial class GachaViewModel : SectionViewModel
     [ObservableProperty]
     private string _poolBrushKey = "AccentBrush";
 
-    /// <summary>The last few rolls, newest first. Not persisted: it is what this sitting has seen.</summary>
+    /// <summary>The last few rolls of the loaded run, newest first, read from its history.</summary>
     public ObservableCollection<GachaHistoryViewModel> History { get; } = [];
 
     /// <summary>How many fit under the reel without the strip wrapping or shrinking.</summary>
@@ -557,16 +615,14 @@ public sealed partial class GachaViewModel : SectionViewModel
 
     public override async Task ActivateAsync()
     {
+        // Ha vuelto antes de que parase la rueda: el resultado sí tiene quien lo mire.
+        _idleWhenDone = false;
+
         Banners.Clear();
 
         foreach (var banner in _gacha.Banners)
         {
             Banners.Add(new BannerViewModel(banner, DescribeOdds(banner), SlicesOf(banner)));
-        }
-
-        if (Reel.Count == 0)
-        {
-            BuildIdleReel();
         }
 
         if (Portals.Count == 0)
@@ -584,9 +640,10 @@ public sealed partial class GachaViewModel : SectionViewModel
                     // La banda es del TOTAL DE LA FORMA FINAL de la linea, no del Pokemon que
                     // te dan: por eso lleva la flecha delante. Sin ella el tier 5 diria «600+»
                     // mientras entrega un Gible de 300 y pareceria un fallo.
+                    // Sin «≤» ni «→»: la letra en píxeles no los tiene y salían como «0400» (2026-09-24).
                     Range = last
-                        ? $"→ {floor + 1}+"
-                        : floor == 0 ? $"→ ≤{tier.MaxBaseStatTotal}" : $"→ {floor + 1}-{tier.MaxBaseStatTotal}"
+                        ? $"{floor + 1}+"
+                        : floor == 0 ? $"0-{tier.MaxBaseStatTotal}" : $"{floor + 1}-{tier.MaxBaseStatTotal}"
                 });
 
                 floor = tier.MaxBaseStatTotal;
@@ -614,12 +671,25 @@ public sealed partial class GachaViewModel : SectionViewModel
         // pantalla funciona igual: enseña la ficha sin dibujo.
         await _sprites.PrepareAsync();
 
+        // El view model vive lo que la aplicación, así que la tira de tiradas sobrevivía a
+        // «empezar de cero» y la run nueva heredaba lo que le salió a la borrada. Es de una run:
+        // si la cargada es otra, se vacía y se vuelve a leer de su propio historial.
+        var runId = _runContext.Current?.Id;
+
+        if (runId != _historyRun && !IsRolling)
+        {
+            History.Clear();
+            HasHistory = false;
+            ReturnToIdle(clearStatus: true);
+            _historyRun = runId;
+        }
+
         await SeedHistoryAsync();
 
         _logger.LogInformation("Gacha: {Count} banners cargados, saldo {Balance}", Banners.Count, Balance);
 
         Status = Banners.Count == 0
-            ? "No hay banners configurados. Revisa Data/gacha.json y Data/species.json."
+            ? "El gacha no está disponible."
             : string.Empty;
 
         RollCommand.NotifyCanExecuteChanged();
@@ -670,6 +740,11 @@ public sealed partial class GachaViewModel : SectionViewModel
             return;
         }
 
+        _resultTimer?.Cancel();
+        _resultTimer = null;
+        _idleWhenDone = false;
+        _statusIsWarning = false;
+
         IsRolling = true;
         ShowingPool = false;
         ShowingGrants = false;
@@ -700,10 +775,11 @@ public sealed partial class GachaViewModel : SectionViewModel
             if (!result.Success || result.Pull is not { } pull)
             {
                 Status = result.Error ?? "La tirada no se ha podido completar.";
+                _statusIsWarning = true;
                 return;
             }
 
-            await SpinAsync(pull);
+            await SpinAsync(pull, selected);
 
             LastPull = pull;
             // La marca solo se pone cuando de verdad lo es: un shiny se enseña, uno que no lo es
@@ -715,15 +791,16 @@ public sealed partial class GachaViewModel : SectionViewModel
                 (false, true) => "LEGENDARIO",
                 _ => string.Empty,
             };
-            LastSprite = _sprites.Get(pull.Species);
+            LastSprite = _sprites.Get(pull.Species, pull.Form);
             HasResult = true;
 
             Remember(pull);
 
-            // El Pokémon va al PC del juego. Si no se puede ahora, se dice por qué en vez de
+            // El Pokémon va al equipo si tiene hueco, y si no al PC. Si no se puede ahora, se dice por qué en vez de
             // dejar creer que está en la partida: en la run sí está, en el juego todavía no.
             var delivered = await _delivery.DeliverAsync(pull, run);
             Status = delivered.Message;
+            _statusIsWarning = !delivered.Delivered;
 
             // El PID solo existe cuando el Pokémon se ha construido de verdad, así que se guarda
             // ahora: es lo único que permite reconocerlo luego en la memoria del juego y darlo por
@@ -741,12 +818,13 @@ public sealed partial class GachaViewModel : SectionViewModel
 
             _logger.LogInformation("Gacha {Banner}{Free}: {Species} Nv.{Level} ({Tier})",
                 selected.Banner.Id, free ? " (gratis)" : string.Empty,
-                pull.SpeciesName, pull.Level, pull.TierId);
+                pull.DisplayName, pull.Level, pull.TierId);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Falló la tirada de gacha");
-            Status = "Ha fallado. El detalle está en la carpeta Logs.";
+            Status = "Ha fallado.";
+            _statusIsWarning = true;
         }
         finally
         {
@@ -758,116 +836,70 @@ public sealed partial class GachaViewModel : SectionViewModel
             }
 
             RollCommand.NotifyCanExecuteChanged();
+
+            // Se ha ido a otra pestaña con la rueda girando: el resultado ya no tiene quién lo mire.
+            if (_idleWhenDone)
+            {
+                ReturnToIdle(clearStatus: !_statusIsWarning);
+            }
+            else if (HasResult)
+            {
+                _resultTimer = new CancellationTokenSource();
+                _ = ReturnToIdleLaterAsync(_resultTimer.Token);
+            }
         }
     }
 
     /// <summary>
-    /// Fills the reel and runs the spin: the wheel turns, the tier climbs, and it stops on the
-    /// Pokémon that had already come out.
+    /// Plays the pull on the capsule machine: the crank turns, a ball drops, climbs and opens on the Pokémon that had
+    /// already come out.
     /// </summary>
-    private async Task SpinAsync(GachaPull pull)
+    /// <remarks>
+    /// The machine draws itself from <see cref="CurrentPlay"/>; this only keeps the portals in step with the ball and
+    /// waits for the moment the Pokémon is out. The timeline is the same for every tier (see
+    /// <see cref="Views.CapsuleTimeline"/>), so there is no animation to wait on and no safety net to fall back to.
+    /// </remarks>
+    private async Task SpinAsync(GachaPull pull, BannerViewModel banner)
     {
-        BuildReel(pull);
-
         var tierIndex = Math.Max(0, Portals.ToList().FindIndex(p => p.TierId == pull.TierId));
-        var duration = SpinTimeFor(tierIndex);
 
-        var stopped = new TaskCompletionSource();
-        // El cierre se sortea con SU PROPIA semilla. Con uno solo, quien juegue mucho aprende
-        // donde va a parar tres clics antes de que pare; y si dependiera del tier, lo cantaria.
-        SpinRequested?.Invoke(this, new SpinRequest(ReelWinnerIndex, duration,
-            () => stopped.TrySetResult(), Views.ReelEnding.For(pull.Seed, pull.Number)));
+        // Cae como la ball más barata que tenga el banner, no la Poké Ball: en la cúpula de BUENO no hay ninguna.
+        var lowest = Portals
+            .Select((portal, index) => (portal, index))
+            .Where(p => banner.Banner.TierChances.TryGetValue(p.portal.TierId, out var chance) && chance > 0)
+            .Select(p => p.index)
+            .DefaultIfEmpty(tierIndex)
+            .Min();
 
-        // El engaño: se arranca encendido en el tier más barato y se sube. Los dos tiers de
-        // arriba suben en dos pasos, que es lo que hace que un legendario se note venir.
-        DisplayedTier = Portals.Count > 0 ? Portals[0].TierId : pull.TierId;
+        var steps = CapsulePlay.StepsFor(lowest, tierIndex);
 
-        var stepUp = tierIndex >= 3 ? TimeSpan.FromSeconds(duration.TotalSeconds * 0.55) : TimeSpan.Zero;
-        var reveal = TimeSpan.FromSeconds(duration.TotalSeconds * 0.80);
+        // La semilla de la tirada decide también en qué meneos sube la ball, así que la misma tirada se ve igual al
+        // recomputarla; y no depende del tier, que es lo que haría que se adivinara antes de tiempo.
+        var seed = unchecked((int)(pull.Seed ^ (ulong)pull.Number));
+        var play = new CapsulePlay(steps, _sprites.Get(pull.Species, pull.Form), pull.IsShiny, pull.Legendary, seed,
+            System.Diagnostics.Stopwatch.GetTimestamp());
 
-        if (stepUp > TimeSpan.Zero)
+        CurrentPlay = play;
+        DisplayedTier = Portals.Count > steps[0] ? Portals[steps[0]].TierId : pull.TierId;
+
+        var climbs = Views.CapsuleTimeline.UpgradeWobbles(steps.Count - 1, seed);
+
+        for (var i = 0; i < climbs.Length; i++)
         {
-            await Task.Delay(stepUp);
-            DisplayedTier = Portals[tierIndex - 2].TierId;
-            await Task.Delay(reveal - stepUp);
+            await WaitUntil(play, Views.CapsuleTimeline.UpgradeAt(climbs[i]));
+            DisplayedTier = Portals[steps[i + 1]].TierId;
         }
-        else
-        {
-            await Task.Delay(reveal);
-        }
+
+        await WaitUntil(play, Views.CapsuleTimeline.Revealed);
 
         DisplayedTier = pull.TierId;
         LastTier = pull.TierId;
-
-        // Se espera a que la rueda pare de verdad, no a que pase el tiempo. Los tres segundos de
-        // más son una red por si la vista no llegó a arrancar la animación —la pantalla no se
-        // queda colgada— y van holgados a propósito: si la red salta antes de que la rueda pare,
-        // el ganador se revela a medio camino y aparece fuera de su marco.
-        await Task.WhenAny(stopped.Task, Task.Delay(duration + TimeSpan.FromSeconds(3)));
-
-        // La rueda ya se ha parado: el ganador crece y los demás se apagan un poco, para que se
-        // lea cuál es sin quitarles el color.
-        foreach (var cell in Reel)
-        {
-            if (cell.IsWinner)
-            {
-                cell.IsRevealed = true;
-            }
-            else
-            {
-                cell.IsDimmed = true;
-            }
-        }
     }
 
-    /// <summary>
-    /// Builds the strip: silhouettes picked at random, with the Pokémon that came out sitting at
-    /// the position the view will stop on.
-    /// </summary>
-    /// <summary>
-    /// Fills the strip with silhouettes before anybody has pulled.
-    /// </summary>
-    /// <remarks>
-    /// The reel used to be an empty black band taking the best spot on the screen until the first
-    /// pull. Filled and drifting very slowly, the machine looks like a machine that is on.
-    /// No winner in it: nothing has been decided, and a highlighted cell would say otherwise.
-    /// </remarks>
-    private void BuildIdleReel()
+    private static Task WaitUntil(CapsulePlay play, double seconds)
     {
-        Reel.Clear();
-
-        var random = new Random();
-        var sprites = Enumerable.Range(0, ReelLength).Select(_ => _sprites.GetRandom(random)).ToArray();
-
-        foreach (var sprite in sprites)
-        {
-            Reel.Add(new ReelCellViewModel(sprite, false));
-        }
-
-        // Y otra vez el principio, para que la vuelta al origen caiga sobre lo mismo que había.
-        foreach (var sprite in sprites.Take(IdleTailLength))
-        {
-            Reel.Add(new ReelCellViewModel(sprite, false));
-        }
-
-        IdleLoopCells = ReelLength;
-    }
-
-    private void BuildReel(GachaPull pull)
-    {
-        Reel.Clear();
-        IdleLoopCells = 0;
-
-        // La seed de la tirada también siembra la tira, para que la misma tirada se vea igual al
-        // recomputarla. Es decoración, pero decoración reproducible.
-        var random = new Random(unchecked((int)(pull.Seed ^ (ulong)pull.Number)));
-
-        for (var i = 0; i < ReelLength; i++)
-        {
-            var winner = i == ReelWinnerIndex;
-            var sprite = winner ? _sprites.Get(pull.Species) : _sprites.GetRandom(random);
-            Reel.Add(new ReelCellViewModel(sprite, winner));
-        }
+        var left = seconds - play.Elapsed;
+        return left > 0 ? Task.Delay(TimeSpan.FromSeconds(left)) : Task.CompletedTask;
     }
 
     partial void OnSelectedBannerChanged(BannerViewModel? value)
@@ -1044,6 +1076,14 @@ public sealed partial class GachaViewModel : SectionViewModel
                     {
                         stages.Add(new PoolStageViewModel(stats, _sprites.Get(id),
                             arrow: stages.Count > 0));
+
+                        // Sus formas regionales, al lado y sin flecha: cada tirada sortea la forma de
+                        // la especie que sale, así que son otra manera de salir esa misma etapa.
+                        foreach (var form in stats.RegionalForms)
+                        {
+                            stages.Add(new PoolStageViewModel(stats, _sprites.Get(id, form.Form),
+                                arrow: false, formName: form.Name));
+                        }
                     }
                 }
             }
@@ -1094,8 +1134,8 @@ public sealed partial class GachaViewModel : SectionViewModel
             other.IsLanded = ReferenceEquals(other, portal);
         }
 
-        History.Insert(0, new GachaHistoryViewModel(pull.SpeciesName,
-            portal?.BrushKey ?? "AccentBrush", _sprites.Get(pull.Species)));
+        History.Insert(0, new GachaHistoryViewModel(pull.DisplayName,
+            portal?.BrushKey ?? "AccentBrush", _sprites.Get(pull.Species, pull.Form)));
 
         while (History.Count > HistoryKept)
         {

@@ -1,0 +1,2287 @@
+{
+  "comentario": "Generado por: PermaLocke.RomTool mapas --escribir. No editar a mano.",
+  "fuente": "a/0/7/7 (zonedata, ParentMap) + a/0/9/1 (worlddata) + nombres de lugar de PKHeX",
+  "como": "El juego guarda en memoria el mundo y el mapa en que está el jugador. mapa es el índice de zonedata; mundo, el que el cartucho le asigna, y sirve para descartar lecturas basura; zona es el id normalizado del lugar, el mismo que usan la run y el MAPA. Comprobado contra el juego en doce sitios (§117).",
+  "mapas": [
+    {
+      "mapa": 0,
+      "mundo": 0,
+      "zona": "ruta-1-afueras-de-hauoli",
+      "nombre": "Ruta 1 (Afueras de Hauoli)"
+    },
+    {
+      "mapa": 1,
+      "mundo": 4,
+      "zona": "ruta-1-afueras-de-hauoli",
+      "nombre": "Ruta 1 (Afueras de Hauoli)"
+    },
+    {
+      "mapa": 2,
+      "mundo": 5,
+      "zona": "ruta-1-afueras-de-hauoli",
+      "nombre": "Ruta 1 (Afueras de Hauoli)"
+    },
+    {
+      "mapa": 3,
+      "mundo": 0,
+      "zona": "ruta-1",
+      "nombre": "Ruta 1"
+    },
+    {
+      "mapa": 4,
+      "mundo": 3,
+      "zona": "ruta-1",
+      "nombre": "Ruta 1"
+    },
+    {
+      "mapa": 5,
+      "mundo": 4,
+      "zona": "ruta-1",
+      "nombre": "Ruta 1"
+    },
+    {
+      "mapa": 6,
+      "mundo": 0,
+      "zona": "ruta-3",
+      "nombre": "Ruta 3"
+    },
+    {
+      "mapa": 7,
+      "mundo": 0,
+      "zona": "ruta-2",
+      "nombre": "Ruta 2"
+    },
+    {
+      "mapa": 8,
+      "mundo": 0,
+      "zona": "bahia-kalae",
+      "nombre": "Bahía Kalae"
+    },
+    {
+      "mapa": 9,
+      "mundo": 0,
+      "zona": "mar-de-melemele",
+      "nombre": "Mar de Melemele"
+    },
+    {
+      "mapa": 10,
+      "mundo": 0,
+      "zona": "mar-de-melemele",
+      "nombre": "Mar de Melemele"
+    },
+    {
+      "mapa": 11,
+      "mundo": 0,
+      "zona": "playa-big-wave",
+      "nombre": "Playa Big Wave"
+    },
+    {
+      "mapa": 12,
+      "mundo": 0,
+      "zona": "ciudad-hauoli-paseo-maritimo",
+      "nombre": "Ciudad Hauoli (Paseo Marítimo)"
+    },
+    {
+      "mapa": 13,
+      "mundo": 0,
+      "zona": "ciudad-hauoli-zona-comercial",
+      "nombre": "Ciudad Hauoli (Zona Comercial)"
+    },
+    {
+      "mapa": 14,
+      "mundo": 0,
+      "zona": "ciudad-hauoli-puerto",
+      "nombre": "Ciudad Hauoli (Puerto)"
+    },
+    {
+      "mapa": 15,
+      "mundo": 2,
+      "zona": "ciudad-hauoli-puerto",
+      "nombre": "Ciudad Hauoli (Puerto)"
+    },
+    {
+      "mapa": 16,
+      "mundo": 0,
+      "zona": "pueblo-lilii",
+      "nombre": "Pueblo Lilii"
+    },
+    {
+      "mapa": 17,
+      "mundo": 1,
+      "zona": "pueblo-lilii",
+      "nombre": "Pueblo Lilii"
+    },
+    {
+      "mapa": 18,
+      "mundo": 2,
+      "zona": "pueblo-lilii",
+      "nombre": "Pueblo Lilii"
+    },
+    {
+      "mapa": 19,
+      "mundo": 6,
+      "zona": "senda-mahalo",
+      "nombre": "Senda Mahalo"
+    },
+    {
+      "mapa": 20,
+      "mundo": 7,
+      "zona": "senda-mahalo-puente-colgante",
+      "nombre": "Senda Mahalo (Puente Colgante)"
+    },
+    {
+      "mapa": 21,
+      "mundo": 8,
+      "zona": "senda-mahalo-puente-colgante",
+      "nombre": "Senda Mahalo (Puente Colgante)"
+    },
+    {
+      "mapa": 22,
+      "mundo": 9,
+      "zona": "ruinas-de-la-guerra",
+      "nombre": "Ruinas de la Guerra"
+    },
+    {
+      "mapa": 23,
+      "mundo": 10,
+      "zona": "ruinas-de-la-guerra",
+      "nombre": "Ruinas de la Guerra"
+    },
+    {
+      "mapa": 24,
+      "mundo": 11,
+      "zona": "ruinas-de-la-guerra",
+      "nombre": "Ruinas de la Guerra"
+    },
+    {
+      "mapa": 25,
+      "mundo": 12,
+      "zona": "ruinas-de-la-guerra",
+      "nombre": "Ruinas de la Guerra"
+    },
+    {
+      "mapa": 26,
+      "mundo": 13,
+      "zona": "colina-dequilate",
+      "nombre": "Colina Dequilate"
+    },
+    {
+      "mapa": 27,
+      "mundo": 14,
+      "zona": "colina-dequilate-caldera-remota",
+      "nombre": "Colina Dequilate (Caldera Remota)"
+    },
+    {
+      "mapa": 28,
+      "mundo": 15,
+      "zona": "cementerio-de-hauoli",
+      "nombre": "Cementerio de Hauoli"
+    },
+    {
+      "mapa": 29,
+      "mundo": 16,
+      "zona": "jardines-de-melemele",
+      "nombre": "Jardines de Melemele"
+    },
+    {
+      "mapa": 30,
+      "mundo": 17,
+      "zona": "gruta-unemar",
+      "nombre": "Gruta Unemar"
+    },
+    {
+      "mapa": 31,
+      "mundo": 18,
+      "zona": "huerto-de-bayas",
+      "nombre": "Huerto de Bayas"
+    },
+    {
+      "mapa": 32,
+      "mundo": 19,
+      "zona": "cueva-costera",
+      "nombre": "Cueva Costera"
+    },
+    {
+      "mapa": 33,
+      "mundo": 20,
+      "zona": "cueva-sotobosque-sala-de-la-prueba",
+      "nombre": "Cueva Sotobosque (Sala de la Prueba)"
+    },
+    {
+      "mapa": 34,
+      "mundo": 21,
+      "zona": "cueva-sotobosque-sala-del-dominante",
+      "nombre": "Cueva Sotobosque (Sala del Dominante)"
+    },
+    {
+      "mapa": 35,
+      "mundo": 22,
+      "zona": "ruta-1-afueras-de-hauoli",
+      "nombre": "Ruta 1 (Afueras de Hauoli)"
+    },
+    {
+      "mapa": 36,
+      "mundo": 22,
+      "zona": "ruta-1-afueras-de-hauoli",
+      "nombre": "Ruta 1 (Afueras de Hauoli)"
+    },
+    {
+      "mapa": 37,
+      "mundo": 22,
+      "zona": "ruta-1-afueras-de-hauoli",
+      "nombre": "Ruta 1 (Afueras de Hauoli)"
+    },
+    {
+      "mapa": 38,
+      "mundo": 22,
+      "zona": "ruta-1-afueras-de-hauoli",
+      "nombre": "Ruta 1 (Afueras de Hauoli)"
+    },
+    {
+      "mapa": 39,
+      "mundo": 23,
+      "zona": "pueblo-lilii",
+      "nombre": "Pueblo Lilii"
+    },
+    {
+      "mapa": 40,
+      "mundo": 23,
+      "zona": "pueblo-lilii",
+      "nombre": "Pueblo Lilii"
+    },
+    {
+      "mapa": 41,
+      "mundo": 23,
+      "zona": "pueblo-lilii",
+      "nombre": "Pueblo Lilii"
+    },
+    {
+      "mapa": 42,
+      "mundo": 23,
+      "zona": "pueblo-lilii",
+      "nombre": "Pueblo Lilii"
+    },
+    {
+      "mapa": 43,
+      "mundo": 24,
+      "zona": "pueblo-lilii",
+      "nombre": "Pueblo Lilii"
+    },
+    {
+      "mapa": 44,
+      "mundo": 25,
+      "zona": "pueblo-lilii",
+      "nombre": "Pueblo Lilii"
+    },
+    {
+      "mapa": 45,
+      "mundo": 26,
+      "zona": "pueblo-lilii",
+      "nombre": "Pueblo Lilii"
+    },
+    {
+      "mapa": 46,
+      "mundo": 27,
+      "zona": "ruta-1-afueras-de-hauoli",
+      "nombre": "Ruta 1 (Afueras de Hauoli)"
+    },
+    {
+      "mapa": 47,
+      "mundo": 28,
+      "zona": "ruta-1-afueras-de-hauoli",
+      "nombre": "Ruta 1 (Afueras de Hauoli)"
+    },
+    {
+      "mapa": 48,
+      "mundo": 29,
+      "zona": "ciudad-hauoli-zona-comercial",
+      "nombre": "Ciudad Hauoli (Zona Comercial)"
+    },
+    {
+      "mapa": 49,
+      "mundo": 30,
+      "zona": "ruta-2",
+      "nombre": "Ruta 2"
+    },
+    {
+      "mapa": 50,
+      "mundo": 30,
+      "zona": "ruta-2",
+      "nombre": "Ruta 2"
+    },
+    {
+      "mapa": 51,
+      "mundo": 31,
+      "zona": "ciudad-hauoli-zona-comercial",
+      "nombre": "Ciudad Hauoli (Zona Comercial)"
+    },
+    {
+      "mapa": 52,
+      "mundo": 31,
+      "zona": "ciudad-hauoli-zona-comercial",
+      "nombre": "Ciudad Hauoli (Zona Comercial)"
+    },
+    {
+      "mapa": 53,
+      "mundo": 31,
+      "zona": "ciudad-hauoli-zona-comercial",
+      "nombre": "Ciudad Hauoli (Zona Comercial)"
+    },
+    {
+      "mapa": 54,
+      "mundo": 32,
+      "zona": "huerto-de-bayas",
+      "nombre": "Huerto de Bayas"
+    },
+    {
+      "mapa": 55,
+      "mundo": 33,
+      "zona": "ruta-1-escuela-entrenadores",
+      "nombre": "Ruta 1 (Escuela Entrenadores)"
+    },
+    {
+      "mapa": 56,
+      "mundo": 34,
+      "zona": "ruta-1-escuela-entrenadores",
+      "nombre": "Ruta 1 (Escuela Entrenadores)"
+    },
+    {
+      "mapa": 57,
+      "mundo": 35,
+      "zona": "ruta-1-escuela-entrenadores",
+      "nombre": "Ruta 1 (Escuela Entrenadores)"
+    },
+    {
+      "mapa": 58,
+      "mundo": 36,
+      "zona": "ruta-1-escuela-entrenadores",
+      "nombre": "Ruta 1 (Escuela Entrenadores)"
+    },
+    {
+      "mapa": 59,
+      "mundo": 37,
+      "zona": "ruta-1-escuela-entrenadores",
+      "nombre": "Ruta 1 (Escuela Entrenadores)"
+    },
+    {
+      "mapa": 60,
+      "mundo": 38,
+      "zona": "ruta-1-escuela-entrenadores",
+      "nombre": "Ruta 1 (Escuela Entrenadores)"
+    },
+    {
+      "mapa": 61,
+      "mundo": 39,
+      "zona": "ruta-1-escuela-entrenadores",
+      "nombre": "Ruta 1 (Escuela Entrenadores)"
+    },
+    {
+      "mapa": 62,
+      "mundo": 40,
+      "zona": "ruta-1-escuela-entrenadores",
+      "nombre": "Ruta 1 (Escuela Entrenadores)"
+    },
+    {
+      "mapa": 63,
+      "mundo": 41,
+      "zona": "ciudad-hauoli-zona-comercial",
+      "nombre": "Ciudad Hauoli (Zona Comercial)"
+    },
+    {
+      "mapa": 64,
+      "mundo": 42,
+      "zona": "ciudad-hauoli-zona-comercial",
+      "nombre": "Ciudad Hauoli (Zona Comercial)"
+    },
+    {
+      "mapa": 65,
+      "mundo": 43,
+      "zona": "ciudad-hauoli-zona-comercial",
+      "nombre": "Ciudad Hauoli (Zona Comercial)"
+    },
+    {
+      "mapa": 66,
+      "mundo": 44,
+      "zona": "ciudad-hauoli-zona-comercial",
+      "nombre": "Ciudad Hauoli (Zona Comercial)"
+    },
+    {
+      "mapa": 67,
+      "mundo": 45,
+      "zona": "ciudad-hauoli-zona-comercial",
+      "nombre": "Ciudad Hauoli (Zona Comercial)"
+    },
+    {
+      "mapa": 68,
+      "mundo": 46,
+      "zona": "ciudad-hauoli-puerto",
+      "nombre": "Ciudad Hauoli (Puerto)"
+    },
+    {
+      "mapa": 69,
+      "mundo": 47,
+      "zona": "ciudad-hauoli-puerto",
+      "nombre": "Ciudad Hauoli (Puerto)"
+    },
+    {
+      "mapa": 70,
+      "mundo": 48,
+      "zona": "ciudad-hauoli-zona-comercial",
+      "nombre": "Ciudad Hauoli (Zona Comercial)"
+    },
+    {
+      "mapa": 71,
+      "mundo": 49,
+      "zona": "ciudad-hauoli-zona-comercial",
+      "nombre": "Ciudad Hauoli (Zona Comercial)"
+    },
+    {
+      "mapa": 72,
+      "mundo": 50,
+      "zona": "ruta-2",
+      "nombre": "Ruta 2"
+    },
+    {
+      "mapa": 73,
+      "mundo": 51,
+      "zona": "ruta-2",
+      "nombre": "Ruta 2"
+    },
+    {
+      "mapa": 74,
+      "mundo": 52,
+      "zona": "ciudad-hauoli-zona-comercial",
+      "nombre": "Ciudad Hauoli (Zona Comercial)"
+    },
+    {
+      "mapa": 75,
+      "mundo": 53,
+      "zona": "ciudad-hauoli-zona-comercial",
+      "nombre": "Ciudad Hauoli (Zona Comercial)"
+    },
+    {
+      "mapa": 76,
+      "mundo": 54,
+      "zona": "ciudad-hauoli-zona-comercial",
+      "nombre": "Ciudad Hauoli (Zona Comercial)"
+    },
+    {
+      "mapa": 77,
+      "mundo": 55,
+      "zona": "ruta-1-afueras-de-hauoli",
+      "nombre": "Ruta 1 (Afueras de Hauoli)"
+    },
+    {
+      "mapa": 78,
+      "mundo": 56,
+      "zona": "ciudad-hauoli-zona-comercial",
+      "nombre": "Ciudad Hauoli (Zona Comercial)"
+    },
+    {
+      "mapa": 79,
+      "mundo": 57,
+      "zona": "ruta-2",
+      "nombre": "Ruta 2"
+    },
+    {
+      "mapa": 80,
+      "mundo": 58,
+      "zona": "ruta-4",
+      "nombre": "Ruta 4"
+    },
+    {
+      "mapa": 81,
+      "mundo": 58,
+      "zona": "ruta-5",
+      "nombre": "Ruta 5"
+    },
+    {
+      "mapa": 82,
+      "mundo": 58,
+      "zona": "ruta-6",
+      "nombre": "Ruta 6"
+    },
+    {
+      "mapa": 83,
+      "mundo": 58,
+      "zona": "ruta-7",
+      "nombre": "Ruta 7"
+    },
+    {
+      "mapa": 84,
+      "mundo": 58,
+      "zona": "ruta-8",
+      "nombre": "Ruta 8"
+    },
+    {
+      "mapa": 85,
+      "mundo": 58,
+      "zona": "ruta-9",
+      "nombre": "Ruta 9"
+    },
+    {
+      "mapa": 86,
+      "mundo": 58,
+      "zona": "resort-hanohano",
+      "nombre": "Resort Hanohano"
+    },
+    {
+      "mapa": 87,
+      "mundo": 58,
+      "zona": "playa-de-hanohano",
+      "nombre": "Playa de Hanohano"
+    },
+    {
+      "mapa": 88,
+      "mundo": 58,
+      "zona": "playa-de-kantai",
+      "nombre": "Playa de Kantai"
+    },
+    {
+      "mapa": 89,
+      "mundo": 58,
+      "zona": "pueblo-ohana",
+      "nombre": "Pueblo Ohana"
+    },
+    {
+      "mapa": 90,
+      "mundo": 58,
+      "zona": "ciudad-kantai",
+      "nombre": "Ciudad Kantai"
+    },
+    {
+      "mapa": 91,
+      "mundo": 58,
+      "zona": "ciudad-konikoni",
+      "nombre": "Ciudad Konikoni"
+    },
+    {
+      "mapa": 92,
+      "mundo": 58,
+      "zona": "avenida-royale",
+      "nombre": "Avenida Royale"
+    },
+    {
+      "mapa": 93,
+      "mundo": 59,
+      "zona": "tunel-del-volcan",
+      "nombre": "Túnel del Volcán"
+    },
+    {
+      "mapa": 94,
+      "mundo": 60,
+      "zona": "ruinas-de-la-vida",
+      "nombre": "Ruinas de la Vida"
+    },
+    {
+      "mapa": 95,
+      "mundo": 61,
+      "zona": "ruinas-de-la-vida",
+      "nombre": "Ruinas de la Vida"
+    },
+    {
+      "mapa": 96,
+      "mundo": 62,
+      "zona": "ruinas-de-la-vida",
+      "nombre": "Ruinas de la Vida"
+    },
+    {
+      "mapa": 97,
+      "mundo": 63,
+      "zona": "colina-del-recuerdo",
+      "nombre": "Colina del Recuerdo"
+    },
+    {
+      "mapa": 98,
+      "mundo": 63,
+      "zona": "afueras-de-akala",
+      "nombre": "Afueras de Akala"
+    },
+    {
+      "mapa": 99,
+      "mundo": 64,
+      "zona": "tunel-diglett",
+      "nombre": "Túnel Diglett"
+    },
+    {
+      "mapa": 100,
+      "mundo": 65,
+      "zona": "area-volcanica-wela",
+      "nombre": "Área Volcánica Wela"
+    },
+    {
+      "mapa": 101,
+      "mundo": 66,
+      "zona": "area-volcanica-wela-sala-del-dominante",
+      "nombre": "Área Volcánica Wela (Sala del Dominante)"
+    },
+    {
+      "mapa": 102,
+      "mundo": 67,
+      "zona": "colina-saltagua",
+      "nombre": "Colina Saltagua"
+    },
+    {
+      "mapa": 103,
+      "mundo": 67,
+      "zona": "colina-saltagua",
+      "nombre": "Colina Saltagua"
+    },
+    {
+      "mapa": 104,
+      "mundo": 68,
+      "zona": "colina-saltagua-sala-del-dominante",
+      "nombre": "Colina Saltagua (Sala del Dominante)"
+    },
+    {
+      "mapa": 105,
+      "mundo": 69,
+      "zona": "jungla-umbria",
+      "nombre": "Jungla Umbría"
+    },
+    {
+      "mapa": 106,
+      "mundo": 70,
+      "zona": "jungla-umbria",
+      "nombre": "Jungla Umbría"
+    },
+    {
+      "mapa": 107,
+      "mundo": 71,
+      "zona": "jungla-umbria",
+      "nombre": "Jungla Umbría"
+    },
+    {
+      "mapa": 108,
+      "mundo": 72,
+      "zona": "jungla-umbria",
+      "nombre": "Jungla Umbría"
+    },
+    {
+      "mapa": 109,
+      "mundo": 73,
+      "zona": "jungla-umbria",
+      "nombre": "Jungla Umbría"
+    },
+    {
+      "mapa": 110,
+      "mundo": 74,
+      "zona": "pueblo-ohana",
+      "nombre": "Pueblo Ohana"
+    },
+    {
+      "mapa": 111,
+      "mundo": 74,
+      "zona": "pueblo-ohana",
+      "nombre": "Pueblo Ohana"
+    },
+    {
+      "mapa": 112,
+      "mundo": 74,
+      "zona": "pueblo-ohana",
+      "nombre": "Pueblo Ohana"
+    },
+    {
+      "mapa": 113,
+      "mundo": 74,
+      "zona": "pueblo-ohana",
+      "nombre": "Pueblo Ohana"
+    },
+    {
+      "mapa": 114,
+      "mundo": 75,
+      "zona": "ciudad-konikoni",
+      "nombre": "Ciudad Konikoni"
+    },
+    {
+      "mapa": 115,
+      "mundo": 75,
+      "zona": "ciudad-konikoni",
+      "nombre": "Ciudad Konikoni"
+    },
+    {
+      "mapa": 116,
+      "mundo": 76,
+      "zona": "ciudad-konikoni",
+      "nombre": "Ciudad Konikoni"
+    },
+    {
+      "mapa": 117,
+      "mundo": 76,
+      "zona": "ciudad-konikoni",
+      "nombre": "Ciudad Konikoni"
+    },
+    {
+      "mapa": 118,
+      "mundo": 76,
+      "zona": "ciudad-konikoni",
+      "nombre": "Ciudad Konikoni"
+    },
+    {
+      "mapa": 119,
+      "mundo": 76,
+      "zona": "ciudad-konikoni",
+      "nombre": "Ciudad Konikoni"
+    },
+    {
+      "mapa": 120,
+      "mundo": 77,
+      "zona": "ciudad-konikoni",
+      "nombre": "Ciudad Konikoni"
+    },
+    {
+      "mapa": 121,
+      "mundo": 77,
+      "zona": "ciudad-konikoni",
+      "nombre": "Ciudad Konikoni"
+    },
+    {
+      "mapa": 122,
+      "mundo": 77,
+      "zona": "ciudad-konikoni",
+      "nombre": "Ciudad Konikoni"
+    },
+    {
+      "mapa": 123,
+      "mundo": 78,
+      "zona": "ciudad-kantai",
+      "nombre": "Ciudad Kantai"
+    },
+    {
+      "mapa": 124,
+      "mundo": 79,
+      "zona": "ciudad-kantai",
+      "nombre": "Ciudad Kantai"
+    },
+    {
+      "mapa": 125,
+      "mundo": 80,
+      "zona": "ciudad-kantai",
+      "nombre": "Ciudad Kantai"
+    },
+    {
+      "mapa": 126,
+      "mundo": 81,
+      "zona": "ciudad-kantai",
+      "nombre": "Ciudad Kantai"
+    },
+    {
+      "mapa": 127,
+      "mundo": 82,
+      "zona": "ciudad-kantai",
+      "nombre": "Ciudad Kantai"
+    },
+    {
+      "mapa": 128,
+      "mundo": 83,
+      "zona": "ciudad-kantai",
+      "nombre": "Ciudad Kantai"
+    },
+    {
+      "mapa": 129,
+      "mundo": 84,
+      "zona": "ciudad-kantai",
+      "nombre": "Ciudad Kantai"
+    },
+    {
+      "mapa": 130,
+      "mundo": 85,
+      "zona": "ciudad-kantai",
+      "nombre": "Ciudad Kantai"
+    },
+    {
+      "mapa": 131,
+      "mundo": 86,
+      "zona": "ciudad-kantai",
+      "nombre": "Ciudad Kantai"
+    },
+    {
+      "mapa": 132,
+      "mundo": 86,
+      "zona": "ciudad-kantai",
+      "nombre": "Ciudad Kantai"
+    },
+    {
+      "mapa": 133,
+      "mundo": 86,
+      "zona": "ciudad-kantai",
+      "nombre": "Ciudad Kantai"
+    },
+    {
+      "mapa": 134,
+      "mundo": 87,
+      "zona": "ciudad-kantai",
+      "nombre": "Ciudad Kantai"
+    },
+    {
+      "mapa": 135,
+      "mundo": 88,
+      "zona": "ciudad-kantai",
+      "nombre": "Ciudad Kantai"
+    },
+    {
+      "mapa": 136,
+      "mundo": 89,
+      "zona": "ciudad-kantai",
+      "nombre": "Ciudad Kantai"
+    },
+    {
+      "mapa": 137,
+      "mundo": 90,
+      "zona": "ciudad-kantai",
+      "nombre": "Ciudad Kantai"
+    },
+    {
+      "mapa": 138,
+      "mundo": 91,
+      "zona": "ruta-8",
+      "nombre": "Ruta 8"
+    },
+    {
+      "mapa": 139,
+      "mundo": 92,
+      "zona": "resort-hanohano",
+      "nombre": "Resort Hanohano"
+    },
+    {
+      "mapa": 140,
+      "mundo": 93,
+      "zona": "avenida-royale",
+      "nombre": "Avenida Royale"
+    },
+    {
+      "mapa": 141,
+      "mundo": 94,
+      "zona": "ruta-8",
+      "nombre": "Ruta 8"
+    },
+    {
+      "mapa": 142,
+      "mundo": 95,
+      "zona": "ruta-8",
+      "nombre": "Ruta 8"
+    },
+    {
+      "mapa": 143,
+      "mundo": 96,
+      "zona": "avenida-royale",
+      "nombre": "Avenida Royale"
+    },
+    {
+      "mapa": 144,
+      "mundo": 97,
+      "zona": "ciudad-konikoni",
+      "nombre": "Ciudad Konikoni"
+    },
+    {
+      "mapa": 145,
+      "mundo": 98,
+      "zona": "ciudad-konikoni",
+      "nombre": "Ciudad Konikoni"
+    },
+    {
+      "mapa": 146,
+      "mundo": 99,
+      "zona": "ruta-9",
+      "nombre": "Ruta 9"
+    },
+    {
+      "mapa": 147,
+      "mundo": 100,
+      "zona": "estadio-royale",
+      "nombre": "Estadio Royale"
+    },
+    {
+      "mapa": 148,
+      "mundo": 101,
+      "zona": "ruta-8",
+      "nombre": "Ruta 8"
+    },
+    {
+      "mapa": 149,
+      "mundo": 102,
+      "zona": "rancho-ohana",
+      "nombre": "Rancho Ohana"
+    },
+    {
+      "mapa": 150,
+      "mundo": 103,
+      "zona": "rancho-ohana",
+      "nombre": "Rancho Ohana"
+    },
+    {
+      "mapa": 151,
+      "mundo": 104,
+      "zona": "rancho-ohana",
+      "nombre": "Rancho Ohana"
+    },
+    {
+      "mapa": 152,
+      "mundo": 105,
+      "zona": "ciudad-kantai",
+      "nombre": "Ciudad Kantai"
+    },
+    {
+      "mapa": 153,
+      "mundo": 106,
+      "zona": "ciudad-konikoni",
+      "nombre": "Ciudad Konikoni"
+    },
+    {
+      "mapa": 154,
+      "mundo": 107,
+      "zona": "ciudad-konikoni",
+      "nombre": "Ciudad Konikoni"
+    },
+    {
+      "mapa": 155,
+      "mundo": 108,
+      "zona": "avenida-royale",
+      "nombre": "Avenida Royale"
+    },
+    {
+      "mapa": 156,
+      "mundo": 109,
+      "zona": "ciudad-kantai",
+      "nombre": "Ciudad Kantai"
+    },
+    {
+      "mapa": 157,
+      "mundo": 110,
+      "zona": "valle-de-los-pikachu",
+      "nombre": "Valle de los Pikachu"
+    },
+    {
+      "mapa": 158,
+      "mundo": 111,
+      "zona": "ciudad-kantai",
+      "nombre": "Ciudad Kantai"
+    },
+    {
+      "mapa": 159,
+      "mundo": 112,
+      "zona": "avenida-royale",
+      "nombre": "Avenida Royale"
+    },
+    {
+      "mapa": 160,
+      "mundo": 113,
+      "zona": "ruta-8",
+      "nombre": "Ruta 8"
+    },
+    {
+      "mapa": 161,
+      "mundo": 114,
+      "zona": "ciudad-konikoni",
+      "nombre": "Ciudad Konikoni"
+    },
+    {
+      "mapa": 162,
+      "mundo": 115,
+      "zona": "pueblo-ohana",
+      "nombre": "Pueblo Ohana"
+    },
+    {
+      "mapa": 163,
+      "mundo": 116,
+      "zona": "ruta-5",
+      "nombre": "Ruta 5"
+    },
+    {
+      "mapa": 164,
+      "mundo": 117,
+      "zona": "ruta-10",
+      "nombre": "Ruta 10"
+    },
+    {
+      "mapa": 165,
+      "mundo": 117,
+      "zona": "ruta-11",
+      "nombre": "Ruta 11"
+    },
+    {
+      "mapa": 166,
+      "mundo": 117,
+      "zona": "playa-de-ula-ula",
+      "nombre": "Playa de Ula-Ula"
+    },
+    {
+      "mapa": 167,
+      "mundo": 117,
+      "zona": "ruta-13",
+      "nombre": "Ruta 13"
+    },
+    {
+      "mapa": 168,
+      "mundo": 117,
+      "zona": "aldea-tapu",
+      "nombre": "Aldea Tapu"
+    },
+    {
+      "mapa": 169,
+      "mundo": 117,
+      "zona": "ruta-14",
+      "nombre": "Ruta 14"
+    },
+    {
+      "mapa": 170,
+      "mundo": 117,
+      "zona": "ruta-15",
+      "nombre": "Ruta 15"
+    },
+    {
+      "mapa": 171,
+      "mundo": 117,
+      "zona": "ruta-16",
+      "nombre": "Ruta 16"
+    },
+    {
+      "mapa": 172,
+      "mundo": 117,
+      "zona": "ruta-17",
+      "nombre": "Ruta 17"
+    },
+    {
+      "mapa": 173,
+      "mundo": 117,
+      "zona": "ruta-12",
+      "nombre": "Ruta 12"
+    },
+    {
+      "mapa": 174,
+      "mundo": 117,
+      "zona": "ciudad-malie",
+      "nombre": "Ciudad Malíe"
+    },
+    {
+      "mapa": 175,
+      "mundo": 117,
+      "zona": "ciudad-malie-cabo-de-las-afueras",
+      "nombre": "Ciudad Malíe (Cabo de las Afueras)"
+    },
+    {
+      "mapa": 176,
+      "mundo": 118,
+      "zona": "pueblo-po",
+      "nombre": "Pueblo Po"
+    },
+    {
+      "mapa": 177,
+      "mundo": 119,
+      "zona": "desierto-de-haina",
+      "nombre": "Desierto de Haina"
+    },
+    {
+      "mapa": 178,
+      "mundo": 119,
+      "zona": "desierto-de-haina",
+      "nombre": "Desierto de Haina"
+    },
+    {
+      "mapa": 179,
+      "mundo": 119,
+      "zona": "desierto-de-haina",
+      "nombre": "Desierto de Haina"
+    },
+    {
+      "mapa": 180,
+      "mundo": 119,
+      "zona": "desierto-de-haina",
+      "nombre": "Desierto de Haina"
+    },
+    {
+      "mapa": 181,
+      "mundo": 120,
+      "zona": "desierto-de-haina",
+      "nombre": "Desierto de Haina"
+    },
+    {
+      "mapa": 182,
+      "mundo": 120,
+      "zona": "desierto-de-haina",
+      "nombre": "Desierto de Haina"
+    },
+    {
+      "mapa": 183,
+      "mundo": 120,
+      "zona": "desierto-de-haina",
+      "nombre": "Desierto de Haina"
+    },
+    {
+      "mapa": 184,
+      "mundo": 120,
+      "zona": "desierto-de-haina",
+      "nombre": "Desierto de Haina"
+    },
+    {
+      "mapa": 185,
+      "mundo": 121,
+      "zona": "jardines-de-ula-ula",
+      "nombre": "Jardines de Ula-Ula"
+    },
+    {
+      "mapa": 186,
+      "mundo": 122,
+      "zona": "parque-de-malie",
+      "nombre": "Parque de Malíe"
+    },
+    {
+      "mapa": 187,
+      "mundo": 123,
+      "zona": "pico-hokulani",
+      "nombre": "Pico Hokulani"
+    },
+    {
+      "mapa": 188,
+      "mundo": 124,
+      "zona": "monte-rubor",
+      "nombre": "Monte Rubor"
+    },
+    {
+      "mapa": 189,
+      "mundo": 125,
+      "zona": "ruinas-de-la-cosecha",
+      "nombre": "Ruinas de la Cosecha"
+    },
+    {
+      "mapa": 190,
+      "mundo": 126,
+      "zona": "ruinas-de-la-cosecha",
+      "nombre": "Ruinas de la Cosecha"
+    },
+    {
+      "mapa": 191,
+      "mundo": 127,
+      "zona": "ruinas-de-la-cosecha",
+      "nombre": "Ruinas de la Cosecha"
+    },
+    {
+      "mapa": 192,
+      "mundo": 128,
+      "zona": "lago-corosol",
+      "nombre": "Lago Corosol"
+    },
+    {
+      "mapa": 193,
+      "mundo": 129,
+      "zona": "lago-corosol",
+      "nombre": "Lago Corosol"
+    },
+    {
+      "mapa": 194,
+      "mundo": 130,
+      "zona": "lago-corosol",
+      "nombre": "Lago Corosol"
+    },
+    {
+      "mapa": 195,
+      "mundo": 131,
+      "zona": "lago-corosol",
+      "nombre": "Lago Corosol"
+    },
+    {
+      "mapa": 196,
+      "mundo": 132,
+      "zona": "lago-coroluna",
+      "nombre": "Lago Coroluna"
+    },
+    {
+      "mapa": 197,
+      "mundo": 133,
+      "zona": "lago-coroluna",
+      "nombre": "Lago Coroluna"
+    },
+    {
+      "mapa": 198,
+      "mundo": 134,
+      "zona": "lago-coroluna",
+      "nombre": "Lago Coroluna"
+    },
+    {
+      "mapa": 199,
+      "mundo": 135,
+      "zona": "lago-coroluna",
+      "nombre": "Lago Coroluna"
+    },
+    {
+      "mapa": 200,
+      "mundo": 136,
+      "zona": "monte-lanakila",
+      "nombre": "Monte Lanakila"
+    },
+    {
+      "mapa": 201,
+      "mundo": 137,
+      "zona": "monte-lanakila",
+      "nombre": "Monte Lanakila"
+    },
+    {
+      "mapa": 202,
+      "mundo": 138,
+      "zona": "monte-lanakila",
+      "nombre": "Monte Lanakila"
+    },
+    {
+      "mapa": 203,
+      "mundo": 139,
+      "zona": "monte-lanakila",
+      "nombre": "Monte Lanakila"
+    },
+    {
+      "mapa": 204,
+      "mundo": 140,
+      "zona": "monte-lanakila",
+      "nombre": "Monte Lanakila"
+    },
+    {
+      "mapa": 205,
+      "mundo": 141,
+      "zona": "monte-lanakila",
+      "nombre": "Monte Lanakila"
+    },
+    {
+      "mapa": 206,
+      "mundo": 142,
+      "zona": "monte-lanakila",
+      "nombre": "Monte Lanakila"
+    },
+    {
+      "mapa": 207,
+      "mundo": 143,
+      "zona": "monte-lanakila",
+      "nombre": "Monte Lanakila"
+    },
+    {
+      "mapa": 208,
+      "mundo": 144,
+      "zona": "mansion-misteriosa",
+      "nombre": "Mansión Misteriosa"
+    },
+    {
+      "mapa": 209,
+      "mundo": 145,
+      "zona": "mansion-misteriosa",
+      "nombre": "Mansión Misteriosa"
+    },
+    {
+      "mapa": 210,
+      "mundo": 146,
+      "zona": "mansion-misteriosa",
+      "nombre": "Mansión Misteriosa"
+    },
+    {
+      "mapa": 211,
+      "mundo": 147,
+      "zona": "mansion-misteriosa",
+      "nombre": "Mansión Misteriosa"
+    },
+    {
+      "mapa": 212,
+      "mundo": 148,
+      "zona": "mansion-misteriosa",
+      "nombre": "Mansión Misteriosa"
+    },
+    {
+      "mapa": 213,
+      "mundo": 149,
+      "zona": "mansion-misteriosa",
+      "nombre": "Mansión Misteriosa"
+    },
+    {
+      "mapa": 214,
+      "mundo": 150,
+      "zona": "mansion-misteriosa",
+      "nombre": "Mansión Misteriosa"
+    },
+    {
+      "mapa": 215,
+      "mundo": 151,
+      "zona": "mansion-misteriosa",
+      "nombre": "Mansión Misteriosa"
+    },
+    {
+      "mapa": 216,
+      "mundo": 152,
+      "zona": "mansion-misteriosa",
+      "nombre": "Mansión Misteriosa"
+    },
+    {
+      "mapa": 217,
+      "mundo": 153,
+      "zona": "mansion-misteriosa",
+      "nombre": "Mansión Misteriosa"
+    },
+    {
+      "mapa": 218,
+      "mundo": 154,
+      "zona": "mansion-misteriosa",
+      "nombre": "Mansión Misteriosa"
+    },
+    {
+      "mapa": 219,
+      "mundo": 155,
+      "zona": "mansion-misteriosa",
+      "nombre": "Mansión Misteriosa"
+    },
+    {
+      "mapa": 220,
+      "mundo": 156,
+      "zona": "super-ultraganga-local-abandonado",
+      "nombre": "Súper Ultraganga (Local Abandonado)"
+    },
+    {
+      "mapa": 221,
+      "mundo": 157,
+      "zona": "super-ultraganga-local-abandonado",
+      "nombre": "Súper Ultraganga (Local Abandonado)"
+    },
+    {
+      "mapa": 222,
+      "mundo": 158,
+      "zona": "super-ultraganga-local-abandonado",
+      "nombre": "Súper Ultraganga (Local Abandonado)"
+    },
+    {
+      "mapa": 223,
+      "mundo": 159,
+      "zona": "ciudad-malie",
+      "nombre": "Ciudad Malíe"
+    },
+    {
+      "mapa": 224,
+      "mundo": 160,
+      "zona": "ciudad-malie",
+      "nombre": "Ciudad Malíe"
+    },
+    {
+      "mapa": 225,
+      "mundo": 161,
+      "zona": "ciudad-malie",
+      "nombre": "Ciudad Malíe"
+    },
+    {
+      "mapa": 226,
+      "mundo": 162,
+      "zona": "ciudad-malie",
+      "nombre": "Ciudad Malíe"
+    },
+    {
+      "mapa": 227,
+      "mundo": 163,
+      "zona": "ciudad-malie",
+      "nombre": "Ciudad Malíe"
+    },
+    {
+      "mapa": 228,
+      "mundo": 163,
+      "zona": "ciudad-malie",
+      "nombre": "Ciudad Malíe"
+    },
+    {
+      "mapa": 229,
+      "mundo": 164,
+      "zona": "ciudad-malie",
+      "nombre": "Ciudad Malíe"
+    },
+    {
+      "mapa": 230,
+      "mundo": 165,
+      "zona": "ciudad-malie",
+      "nombre": "Ciudad Malíe"
+    },
+    {
+      "mapa": 231,
+      "mundo": 166,
+      "zona": "ciudad-malie",
+      "nombre": "Ciudad Malíe"
+    },
+    {
+      "mapa": 232,
+      "mundo": 167,
+      "zona": "ciudad-malie",
+      "nombre": "Ciudad Malíe"
+    },
+    {
+      "mapa": 233,
+      "mundo": 168,
+      "zona": "ciudad-malie",
+      "nombre": "Ciudad Malíe"
+    },
+    {
+      "mapa": 234,
+      "mundo": 169,
+      "zona": "ruta-15",
+      "nombre": "Ruta 15"
+    },
+    {
+      "mapa": 235,
+      "mundo": 169,
+      "zona": "ruta-15",
+      "nombre": "Ruta 15"
+    },
+    {
+      "mapa": 236,
+      "mundo": 169,
+      "zona": "ruta-15",
+      "nombre": "Ruta 15"
+    },
+    {
+      "mapa": 237,
+      "mundo": 170,
+      "zona": "ruta-13",
+      "nombre": "Ruta 13"
+    },
+    {
+      "mapa": 238,
+      "mundo": 171,
+      "zona": "ruta-13",
+      "nombre": "Ruta 13"
+    },
+    {
+      "mapa": 239,
+      "mundo": 172,
+      "zona": "ruta-17",
+      "nombre": "Ruta 17"
+    },
+    {
+      "mapa": 240,
+      "mundo": 173,
+      "zona": "ruta-16",
+      "nombre": "Ruta 16"
+    },
+    {
+      "mapa": 241,
+      "mundo": 174,
+      "zona": "ruta-16",
+      "nombre": "Ruta 16"
+    },
+    {
+      "mapa": 242,
+      "mundo": 175,
+      "zona": "observ-de-hokulani",
+      "nombre": "Observ. de Hokulani"
+    },
+    {
+      "mapa": 243,
+      "mundo": 176,
+      "zona": "observ-de-hokulani",
+      "nombre": "Observ. de Hokulani"
+    },
+    {
+      "mapa": 244,
+      "mundo": 177,
+      "zona": "observ-de-hokulani",
+      "nombre": "Observ. de Hokulani"
+    },
+    {
+      "mapa": 245,
+      "mundo": 178,
+      "zona": "observ-de-hokulani",
+      "nombre": "Observ. de Hokulani"
+    },
+    {
+      "mapa": 246,
+      "mundo": 179,
+      "zona": "monte-rubor",
+      "nombre": "Monte Rubor"
+    },
+    {
+      "mapa": 247,
+      "mundo": 180,
+      "zona": "ciudad-malie-cabo-de-las-afueras",
+      "nombre": "Ciudad Malíe (Cabo de las Afueras)"
+    },
+    {
+      "mapa": 248,
+      "mundo": 181,
+      "zona": "ruta-15",
+      "nombre": "Ruta 15"
+    },
+    {
+      "mapa": 249,
+      "mundo": 182,
+      "zona": "ruta-13",
+      "nombre": "Ruta 13"
+    },
+    {
+      "mapa": 250,
+      "mundo": 183,
+      "zona": "ruta-13",
+      "nombre": "Ruta 13"
+    },
+    {
+      "mapa": 251,
+      "mundo": 184,
+      "zona": "liga-pokemon",
+      "nombre": "Liga Pokémon"
+    },
+    {
+      "mapa": 252,
+      "mundo": 185,
+      "zona": "liga-pokemon",
+      "nombre": "Liga Pokémon"
+    },
+    {
+      "mapa": 253,
+      "mundo": 186,
+      "zona": "liga-pokemon",
+      "nombre": "Liga Pokémon"
+    },
+    {
+      "mapa": 254,
+      "mundo": 187,
+      "zona": "liga-pokemon",
+      "nombre": "Liga Pokémon"
+    },
+    {
+      "mapa": 255,
+      "mundo": 188,
+      "zona": "liga-pokemon",
+      "nombre": "Liga Pokémon"
+    },
+    {
+      "mapa": 256,
+      "mundo": 189,
+      "zona": "liga-pokemon",
+      "nombre": "Liga Pokémon"
+    },
+    {
+      "mapa": 257,
+      "mundo": 190,
+      "zona": "liga-pokemon",
+      "nombre": "Liga Pokémon"
+    },
+    {
+      "mapa": 258,
+      "mundo": 191,
+      "zona": "ciudad-malie",
+      "nombre": "Ciudad Malíe"
+    },
+    {
+      "mapa": 259,
+      "mundo": 192,
+      "zona": "aldea-tapu",
+      "nombre": "Aldea Tapu"
+    },
+    {
+      "mapa": 260,
+      "mundo": 193,
+      "zona": "pueblo-po",
+      "nombre": "Pueblo Po"
+    },
+    {
+      "mapa": 261,
+      "mundo": 194,
+      "zona": "ruta-16",
+      "nombre": "Ruta 16"
+    },
+    {
+      "mapa": 262,
+      "mundo": 195,
+      "zona": "monte-lanakila",
+      "nombre": "Monte Lanakila"
+    },
+    {
+      "mapa": 263,
+      "mundo": 196,
+      "zona": "pico-hokulani",
+      "nombre": "Pico Hokulani"
+    },
+    {
+      "mapa": 264,
+      "mundo": 197,
+      "zona": "prado-de-poni",
+      "nombre": "Prado de Poni"
+    },
+    {
+      "mapa": 265,
+      "mundo": 197,
+      "zona": "antiguo-paso-de-poni",
+      "nombre": "Antiguo Paso de Poni"
+    },
+    {
+      "mapa": 266,
+      "mundo": 197,
+      "zona": "arrecife-de-poni",
+      "nombre": "Arrecife de Poni"
+    },
+    {
+      "mapa": 267,
+      "mundo": 197,
+      "zona": "bosque-de-poni",
+      "nombre": "Bosque de Poni"
+    },
+    {
+      "mapa": 268,
+      "mundo": 197,
+      "zona": "llanura-de-poni",
+      "nombre": "Llanura de Poni"
+    },
+    {
+      "mapa": 269,
+      "mundo": 197,
+      "zona": "costa-de-poni",
+      "nombre": "Costa de Poni"
+    },
+    {
+      "mapa": 270,
+      "mundo": 197,
+      "zona": "pendiente-de-poni",
+      "nombre": "Pendiente de Poni"
+    },
+    {
+      "mapa": 271,
+      "mundo": 197,
+      "zona": "playa-de-poni",
+      "nombre": "Playa de Poni"
+    },
+    {
+      "mapa": 272,
+      "mundo": 197,
+      "zona": "aldea-marina",
+      "nombre": "Aldea Marina"
+    },
+    {
+      "mapa": 273,
+      "mundo": 198,
+      "zona": "jardines-de-poni",
+      "nombre": "Jardines de Poni"
+    },
+    {
+      "mapa": 274,
+      "mundo": 199,
+      "zona": "canon-de-poni",
+      "nombre": "Cañón de Poni"
+    },
+    {
+      "mapa": 275,
+      "mundo": 200,
+      "zona": "canon-de-poni",
+      "nombre": "Cañón de Poni"
+    },
+    {
+      "mapa": 276,
+      "mundo": 201,
+      "zona": "canon-de-poni",
+      "nombre": "Cañón de Poni"
+    },
+    {
+      "mapa": 277,
+      "mundo": 202,
+      "zona": "canon-de-poni",
+      "nombre": "Cañón de Poni"
+    },
+    {
+      "mapa": 278,
+      "mundo": 203,
+      "zona": "canon-de-poni",
+      "nombre": "Cañón de Poni"
+    },
+    {
+      "mapa": 279,
+      "mundo": 204,
+      "zona": "canon-de-poni",
+      "nombre": "Cañón de Poni"
+    },
+    {
+      "mapa": 280,
+      "mundo": 205,
+      "zona": "altar-del-sol",
+      "nombre": "Altar del Sol"
+    },
+    {
+      "mapa": 281,
+      "mundo": 206,
+      "zona": "altar-del-sol",
+      "nombre": "Altar del Sol"
+    },
+    {
+      "mapa": 282,
+      "mundo": 207,
+      "zona": "altar-de-la-luna",
+      "nombre": "Altar de la Luna"
+    },
+    {
+      "mapa": 283,
+      "mundo": 208,
+      "zona": "altar-de-la-luna",
+      "nombre": "Altar de la Luna"
+    },
+    {
+      "mapa": 284,
+      "mundo": 209,
+      "zona": "ruinas-del-transito",
+      "nombre": "Ruinas del Tránsito"
+    },
+    {
+      "mapa": 285,
+      "mundo": 210,
+      "zona": "ruinas-del-transito",
+      "nombre": "Ruinas del Tránsito"
+    },
+    {
+      "mapa": 286,
+      "mundo": 211,
+      "zona": "ruinas-del-transito",
+      "nombre": "Ruinas del Tránsito"
+    },
+    {
+      "mapa": 287,
+      "mundo": 212,
+      "zona": "gruta-desenlace",
+      "nombre": "Gruta Desenlace"
+    },
+    {
+      "mapa": 288,
+      "mundo": 213,
+      "zona": "gruta-desenlace",
+      "nombre": "Gruta Desenlace"
+    },
+    {
+      "mapa": 289,
+      "mundo": 214,
+      "zona": "gruta-desenlace",
+      "nombre": "Gruta Desenlace"
+    },
+    {
+      "mapa": 290,
+      "mundo": 215,
+      "zona": "isla-exeggutor",
+      "nombre": "Isla Exeggutor"
+    },
+    {
+      "mapa": 291,
+      "mundo": 216,
+      "zona": "gruta-de-la-llanura",
+      "nombre": "Gruta de la Llanura"
+    },
+    {
+      "mapa": 292,
+      "mundo": 217,
+      "zona": "aldea-marina",
+      "nombre": "Aldea Marina"
+    },
+    {
+      "mapa": 293,
+      "mundo": 218,
+      "zona": "aldea-marina",
+      "nombre": "Aldea Marina"
+    },
+    {
+      "mapa": 294,
+      "mundo": 218,
+      "zona": "aldea-marina",
+      "nombre": "Aldea Marina"
+    },
+    {
+      "mapa": 295,
+      "mundo": 219,
+      "zona": "aldea-marina",
+      "nombre": "Aldea Marina"
+    },
+    {
+      "mapa": 296,
+      "mundo": 220,
+      "zona": "aldea-marina",
+      "nombre": "Aldea Marina"
+    },
+    {
+      "mapa": 297,
+      "mundo": 221,
+      "zona": "antiguo-paso-de-poni",
+      "nombre": "Antiguo Paso de Poni"
+    },
+    {
+      "mapa": 298,
+      "mundo": 221,
+      "zona": "antiguo-paso-de-poni",
+      "nombre": "Antiguo Paso de Poni"
+    },
+    {
+      "mapa": 299,
+      "mundo": 222,
+      "zona": "aldea-marina",
+      "nombre": "Aldea Marina"
+    },
+    {
+      "mapa": 300,
+      "mundo": 223,
+      "zona": "arbol-de-combate",
+      "nombre": "Árbol de Combate"
+    },
+    {
+      "mapa": 301,
+      "mundo": 224,
+      "zona": "arbol-de-combate",
+      "nombre": "Árbol de Combate"
+    },
+    {
+      "mapa": 302,
+      "mundo": 225,
+      "zona": "arbol-de-combate",
+      "nombre": "Árbol de Combate"
+    },
+    {
+      "mapa": 303,
+      "mundo": 226,
+      "zona": "arbol-de-combate",
+      "nombre": "Árbol de Combate"
+    },
+    {
+      "mapa": 304,
+      "mundo": 227,
+      "zona": "paraiso-æther",
+      "nombre": "Paraíso Æther"
+    },
+    {
+      "mapa": 305,
+      "mundo": 228,
+      "zona": "paraiso-æther",
+      "nombre": "Paraíso Æther"
+    },
+    {
+      "mapa": 306,
+      "mundo": 229,
+      "zona": "paraiso-æther",
+      "nombre": "Paraíso Æther"
+    },
+    {
+      "mapa": 307,
+      "mundo": 230,
+      "zona": "paraiso-æther",
+      "nombre": "Paraíso Æther"
+    },
+    {
+      "mapa": 308,
+      "mundo": 231,
+      "zona": "paraiso-æther",
+      "nombre": "Paraíso Æther"
+    },
+    {
+      "mapa": 309,
+      "mundo": 232,
+      "zona": "paraiso-æther",
+      "nombre": "Paraíso Æther"
+    },
+    {
+      "mapa": 310,
+      "mundo": 233,
+      "zona": "paraiso-æther",
+      "nombre": "Paraíso Æther"
+    },
+    {
+      "mapa": 311,
+      "mundo": 234,
+      "zona": "paraiso-æther",
+      "nombre": "Paraíso Æther"
+    },
+    {
+      "mapa": 312,
+      "mundo": 235,
+      "zona": "paraiso-æther",
+      "nombre": "Paraíso Æther"
+    },
+    {
+      "mapa": 313,
+      "mundo": 236,
+      "zona": "paraiso-æther",
+      "nombre": "Paraíso Æther"
+    },
+    {
+      "mapa": 314,
+      "mundo": 237,
+      "zona": "paraiso-æther",
+      "nombre": "Paraíso Æther"
+    },
+    {
+      "mapa": 315,
+      "mundo": 238,
+      "zona": "paraiso-æther",
+      "nombre": "Paraíso Æther"
+    },
+    {
+      "mapa": 316,
+      "mundo": 239,
+      "zona": "paraiso-æther",
+      "nombre": "Paraíso Æther"
+    },
+    {
+      "mapa": 317,
+      "mundo": 240,
+      "zona": "paraiso-æther",
+      "nombre": "Paraíso Æther"
+    },
+    {
+      "mapa": 318,
+      "mundo": 241,
+      "zona": "ruta-1-afueras-de-hauoli",
+      "nombre": "Ruta 1 (Afueras de Hauoli)"
+    },
+    {
+      "mapa": 319,
+      "mundo": 242,
+      "zona": "ruta-1-afueras-de-hauoli",
+      "nombre": "Ruta 1 (Afueras de Hauoli)"
+    },
+    {
+      "mapa": 320,
+      "mundo": 243,
+      "zona": "ruta-1-afueras-de-hauoli",
+      "nombre": "Ruta 1 (Afueras de Hauoli)"
+    },
+    {
+      "mapa": 321,
+      "mundo": 244,
+      "zona": "ultraabismo",
+      "nombre": "Ultraabismo"
+    },
+    {
+      "mapa": 322,
+      "mundo": 245,
+      "zona": "ultropolis",
+      "nombre": "Ultrópolis"
+    },
+    {
+      "mapa": 323,
+      "mundo": 246,
+      "zona": "ultropolis",
+      "nombre": "Ultrópolis"
+    },
+    {
+      "mapa": 324,
+      "mundo": 247,
+      "zona": "torre-ultropolis",
+      "nombre": "Torre Ultrópolis"
+    },
+    {
+      "mapa": 325,
+      "mundo": 248,
+      "zona": "torre-ultropolis",
+      "nombre": "Torre Ultrópolis"
+    },
+    {
+      "mapa": 326,
+      "mundo": 249,
+      "zona": "ultragenerador",
+      "nombre": "Ultragenerador"
+    },
+    {
+      "mapa": 327,
+      "mundo": 250,
+      "zona": "ultravalle",
+      "nombre": "Ultravalle"
+    },
+    {
+      "mapa": 328,
+      "mundo": 251,
+      "zona": "ultradesierto",
+      "nombre": "Ultradesierto"
+    },
+    {
+      "mapa": 329,
+      "mundo": 252,
+      "zona": "ultrabosque",
+      "nombre": "Ultrabosque"
+    },
+    {
+      "mapa": 330,
+      "mundo": 253,
+      "zona": "ultrajungla",
+      "nombre": "Ultrajungla"
+    },
+    {
+      "mapa": 331,
+      "mundo": 254,
+      "zona": "ultraurbe",
+      "nombre": "Ultraurbe"
+    },
+    {
+      "mapa": 332,
+      "mundo": 255,
+      "zona": "ultraurbe",
+      "nombre": "Ultraurbe"
+    },
+    {
+      "mapa": 333,
+      "mundo": 256,
+      "zona": "ultraespacio-cero",
+      "nombre": "Ultraespacio Cero"
+    },
+    {
+      "mapa": 334,
+      "mundo": 257,
+      "zona": "ultraespacio-cero",
+      "nombre": "Ultraespacio Cero"
+    },
+    {
+      "mapa": 335,
+      "mundo": 258,
+      "zona": "ultraespacio-cero",
+      "nombre": "Ultraespacio Cero"
+    },
+    {
+      "mapa": 336,
+      "mundo": 259,
+      "zona": "ultraespacio-cero",
+      "nombre": "Ultraespacio Cero"
+    },
+    {
+      "mapa": 337,
+      "mundo": 260,
+      "zona": "paraiso-æther",
+      "nombre": "Paraíso Æther"
+    },
+    {
+      "mapa": 338,
+      "mundo": 261,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    },
+    {
+      "mapa": 339,
+      "mundo": 262,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    },
+    {
+      "mapa": 340,
+      "mundo": 263,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    },
+    {
+      "mapa": 341,
+      "mundo": 264,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    },
+    {
+      "mapa": 342,
+      "mundo": 265,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    },
+    {
+      "mapa": 343,
+      "mundo": 266,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    },
+    {
+      "mapa": 344,
+      "mundo": 267,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    },
+    {
+      "mapa": 345,
+      "mundo": 268,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    },
+    {
+      "mapa": 346,
+      "mundo": 269,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    },
+    {
+      "mapa": 347,
+      "mundo": 270,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    },
+    {
+      "mapa": 348,
+      "mundo": 271,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    },
+    {
+      "mapa": 349,
+      "mundo": 272,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    },
+    {
+      "mapa": 350,
+      "mundo": 273,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    },
+    {
+      "mapa": 351,
+      "mundo": 274,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    },
+    {
+      "mapa": 352,
+      "mundo": 275,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    },
+    {
+      "mapa": 353,
+      "mundo": 276,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    },
+    {
+      "mapa": 354,
+      "mundo": 277,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    },
+    {
+      "mapa": 355,
+      "mundo": 278,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    },
+    {
+      "mapa": 356,
+      "mundo": 279,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    },
+    {
+      "mapa": 357,
+      "mundo": 280,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    },
+    {
+      "mapa": 358,
+      "mundo": 281,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    },
+    {
+      "mapa": 359,
+      "mundo": 282,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    },
+    {
+      "mapa": 360,
+      "mundo": 283,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    },
+    {
+      "mapa": 361,
+      "mundo": 284,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    },
+    {
+      "mapa": 362,
+      "mundo": 285,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    },
+    {
+      "mapa": 363,
+      "mundo": 286,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    },
+    {
+      "mapa": 364,
+      "mundo": 287,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    },
+    {
+      "mapa": 365,
+      "mundo": 288,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    },
+    {
+      "mapa": 366,
+      "mundo": 289,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    },
+    {
+      "mapa": 367,
+      "mundo": 290,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    },
+    {
+      "mapa": 368,
+      "mundo": 291,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    },
+    {
+      "mapa": 369,
+      "mundo": 292,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    },
+    {
+      "mapa": 370,
+      "mundo": 293,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    },
+    {
+      "mapa": 371,
+      "mundo": 294,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    },
+    {
+      "mapa": 372,
+      "mundo": 295,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    },
+    {
+      "mapa": 373,
+      "mundo": 296,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    },
+    {
+      "mapa": 374,
+      "mundo": 297,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    },
+    {
+      "mapa": 375,
+      "mundo": 298,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    },
+    {
+      "mapa": 376,
+      "mundo": 299,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    },
+    {
+      "mapa": 377,
+      "mundo": 300,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    },
+    {
+      "mapa": 378,
+      "mundo": 301,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    },
+    {
+      "mapa": 379,
+      "mundo": 302,
+      "zona": "castillo-team-rocket",
+      "nombre": "Castillo Team Rocket"
+    }
+  ]
+}

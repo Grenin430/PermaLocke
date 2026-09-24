@@ -302,6 +302,15 @@ public static class BattleHpProbe
 
         Say($"Detector de combate {seconds} s. Solo anota. Registro: {logPath}");
 
+        // TID y SID del jugador, de la partida guardada: no cambian nunca.
+        var trainer = new PlayerSave(new AzaharInstallation(Microsoft.Extensions.Logging.Abstractions.NullLogger<AzaharInstallation>.Instance),
+                client, AppContext.BaseDirectory).Find() is { } savePath
+            && PKHeX.Core.SaveUtil.TryGetSaveFile(File.ReadAllBytes(savePath), out var sav) && sav is not null
+            ? (Tid: sav.TID16, Sid: sav.SID16)
+            : ((ushort Tid, ushort Sid)?)null;
+
+        Say(trainer is { } t ? $"TID {t.Tid} SID {t.Sid}" : "Sin TID/SID: no se dirá si es variocolor");
+
         while (DateTime.Now < deadline)
         {
             var tables = reader.Read(DateTimeOffset.Now);
@@ -312,9 +321,12 @@ public static class BattleHpProbe
                 Say($"CAÍDO {(faint.IsPlayers ? "DEL JUGADOR" : "rival")}: {names[faint.Species]} (posición {faint.BattleId})");
             }
 
+            // El identificador de cada uno y, de los rivales, su PID leído desde el puntero del bloque: es lo
+            // que hace falta para saber si el combate es salvaje o de entrenador, y si el salvaje es variocolor.
             var line = tracker.InBattle && tables.Count > 0
-                ? string.Join("  |  ", tables.Select(table => string.Join(" ", table.Blocks.Select(block =>
-                    $"{names[block.Species]} {block.CurrentHp}/{block.MaxHp}"))))
+                ? string.Join("  |  ", tables.Take(1).Select(table => string.Join("  ", table.Blocks.Select(block =>
+                    $"#{block.BattleId} {names[block.Species]} {block.CurrentHp}/{block.MaxHp}"
+                    + (block.BattleId >= 6 ? " " + Identity(client, block, trainer) : string.Empty)))))
                 : "fuera de combate";
 
             if (line != lastLine)
@@ -328,6 +340,28 @@ public static class BattleHpProbe
 
         Say($"Fin: {reads} vueltas en {clock.Elapsed.TotalSeconds:F0} s.");
         return 0;
+    }
+
+    /// <summary>What the block's pointer leads to: the Pokémon's own data, with its PID and whether it is shiny.</summary>
+    private static string Identity(AzaharRpcClient client, PermaLocke.GameLink.Battle.BattleBlock block, (ushort Tid, ushort Sid)? trainer)
+    {
+        if (!client.TryReadMemory(block.Pointer, 232, out var data))
+        {
+            return $"[puntero 0x{block.Pointer:X8} no se lee]";
+        }
+
+        var pokemon = new PKHeX.Core.PK7(data);
+
+        if (!pokemon.ChecksumValid)
+        {
+            return $"[puntero 0x{block.Pointer:X8}: no es un PK7]";
+        }
+
+        var shiny = trainer is { } t
+            ? ((t.Tid ^ t.Sid ^ (pokemon.PID >> 16) ^ (pokemon.PID & 0xFFFF)) < 16 ? "VARIOCOLOR" : "normal")
+            : "?";
+
+        return $"[esp {pokemon.Species} PID {pokemon.PID:X8} OT {pokemon.TID16}/{pokemon.SID16} {shiny}]";
     }
 
     private sealed class ConsoleLogger<T>(Action<string> say) : Microsoft.Extensions.Logging.ILogger<T>

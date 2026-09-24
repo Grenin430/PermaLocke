@@ -10,6 +10,7 @@
     <Project Path="src/PermaLocke.Rules/PermaLocke.Rules.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/PermaLocke.App.Tests/PermaLocke.App.Tests.csproj" />
     <Project Path="tests/PermaLocke.Core.Tests/PermaLocke.Core.Tests.csproj" />
     <Project Path="tests/PermaLocke.GameLink.Tests/PermaLocke.GameLink.Tests.csproj" />
     <Project Path="tests/PermaLocke.Randomizer.Tests/PermaLocke.Randomizer.Tests.csproj" />
