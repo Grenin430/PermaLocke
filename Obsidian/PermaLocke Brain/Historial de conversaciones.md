@@ -23,6 +23,8 @@ La última sesión va arriba. Antes del 2026-09-23 solo hay un resumen por fecha
 - Fallo de regalos arreglado: «A todos» venía marcado por defecto y elegir a alguien no lo quitaba, así que llegaba a todos. Ahora empieza sin marcar, la lista JUGADORES es de selección múltiple (clic marca/desmarca) y elegir a alguien quita «A todos»; se manda un regalo por destinatario. La app del organizador filtra por `para` = todos o su `user_id` (el organizador ve todos por RLS). `DiscordAccount.UserId` nuevo.
 - Admin: quitado dar objetos en los regalos (a petición). Quedan puntos, tiradas y wonder trades. Acceso directo `EscritorioPermaLocke Admin.lnk` al `binRelease` del repo: recompilar Admin en Release tras cambiarlo.
 - Menos tráfico para 20 jugadores: amigos y logros cada 60 s (antes 15); la run sube cada 5 min como mucho (antes 1) y al cerrar (`TournamentUpload.Flush` en `App.OnExit`, no con `--sin-juego`). Pendiente si hace falta: logros en tabla aparte en vez de sacarlos del historial en cada consulta.
+- `tools/desplegar.ps1 -Prueba|-Amigos`: el despliegue de siempre en un comando (se niega con PermaLocke o Azahar abiertos; nunca borra; si ya hay un «(anterior)» se para). Probado `-Prueba`; `-Amigos` sin ejecutar todavía.
+- `tools/desplegar.ps1 -Prueba|-Amigos`: el despliegue de siempre en un comando (se niega con PermaLocke o Azahar abiertos; nunca borra; si ya hay un «(anterior)» se para). Probado `-Prueba`; `-Amigos` sin ejecutar todavía.
 
 ## 2026-09-24 — plugins y MISCELÁNEA sin mochila
 - Instalados por el usuario los plugins **ponytail** (código mínimo) y **caveman** (respuestas cortas en el chat); ambos activos.

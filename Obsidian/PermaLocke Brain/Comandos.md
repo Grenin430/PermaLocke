@@ -17,6 +17,11 @@ PERMALOCKE_SNAP_DIR="<dir>" dotnet test tests/PermaLocke.App.Tests --filter Home
 
 ## Publicar y desplegar en la carpeta de prueba del usuario
 ```bash
+powershell -File tools/desplegar.ps1 -Prueba   # ✔ comprueba procesos, publica y copia el exe; avisa si Data difiere
+powershell -File tools/desplegar.ps1 -Amigos   # publicar.ps1 y la vieja pasa a "(anterior)"; no borra nada
+```
+A mano, lo mismo:
+```bash
 # ✔ exe único autocontenido para pruebas
 dotnet publish src/PermaLocke.App -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishTrimmed=false -p:DebugType=none -o <scratchpad>/pub-pixel
 ```
