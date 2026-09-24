@@ -1,16 +1,15 @@
 using System.ComponentModel;
-using System.IO;
 using System.Windows.Threading;
 using Microsoft.Extensions.Logging;
 using PermaLocke.Core.Abstractions;
 using PermaLocke.Core.Domain;
 using PermaLocke.Core.Services;
-using PermaLocke.Data;
+using System.Text.Json;
 
 namespace PermaLocke.App.Services;
 
 /// <summary>
-/// The gifts waiting for this player in the shared folder, and collecting them (§129).
+/// The gifts waiting for this player on the tournament server, and collecting them (§129; the shared folder is gone).
 /// </summary>
 /// <remarks>
 /// <para>
@@ -27,22 +26,23 @@ public sealed class GiftInbox : INotifyPropertyChanged
 {
     private static readonly TimeSpan LookEvery = TimeSpan.FromSeconds(20);
 
-    private readonly SyncService _sync;
-    private readonly GiftStore _store;
+    private static readonly JsonSerializerOptions Json = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        PropertyNameCaseInsensitive = true
+    };
+
+    private readonly DiscordLogin _discord;
     private readonly GiftService _gifts;
-    private readonly PlayerProfileService _profiles;
     private readonly IRunContext _runContext;
     private readonly ILogger<GiftInbox> _logger;
     private readonly DispatcherTimer _timer = new() { Interval = LookEvery };
     private bool _busy;
 
-    public GiftInbox(SyncService sync, GiftStore store, GiftService gifts, PlayerProfileService profiles,
-        IRunContext runContext, ILogger<GiftInbox> logger)
+    public GiftInbox(DiscordLogin discord, GiftService gifts, IRunContext runContext, ILogger<GiftInbox> logger)
     {
-        _sync = sync;
-        _store = store;
+        _discord = discord;
         _gifts = gifts;
-        _profiles = profiles;
         _runContext = runContext;
         _logger = logger;
 
@@ -76,18 +76,22 @@ public sealed class GiftInbox : INotifyPropertyChanged
 
         try
         {
-            var root = _sync.SharedFolder;
-            var profile = await _profiles.CurrentAsync();
+            // El servidor ya filtra: a cada jugador solo le llegan los suyos y los de todos (08-regalos.sql).
+            // El organizador ve todos los regalos (para retirarlos); como jugador solo cuentan los suyos y los de todos.
+            var me = _discord.Saved?.UserId ?? Guid.Empty;
 
-            if (string.IsNullOrWhiteSpace(root) || !Directory.Exists(root) || profile is null
-                || _runContext.Current is not { } run)
+            if (_runContext.Current is not { } run
+                || await _discord.GetAsync($"regalos?select=regalo&or=(para.eq.todos,para.eq.{me})&order=creado.desc") is not { } json)
             {
                 Set([], []);
                 return;
             }
 
-            var all = await Task.Run(() => _store.ReadAll(root));
-            var mine = all.Where(gift => gift.IsFor(profile.Id)).ToList();
+            var mine = (JsonSerializer.Deserialize<List<JsonElement>>(json, Json) ?? [])
+                .Select(row => row.GetProperty("regalo").Deserialize<AdminGift>(Json))
+                .Where(gift => gift is not null && gift.Id != Guid.Empty && gift.Schema <= AdminGift.CurrentSchema)
+                .Select(gift => gift!)
+                .ToList();
             var collected = await _gifts.CollectedAsync(run.Id);
 
             Set([.. mine.Where(gift => !collected.Contains(gift.Id))],
@@ -95,7 +99,7 @@ public sealed class GiftInbox : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Fallo leyendo los regalos de la carpeta compartida");
+            _logger.LogWarning(ex, "Fallo leyendo los regalos del servidor del torneo");
         }
         finally
         {

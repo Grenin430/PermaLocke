@@ -1,8 +1,9 @@
 <Window x:Class="PermaLocke.Admin.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:pixel="clr-namespace:PermaLocke.App.Views.Pixel"
         Title="PermaLocke Admin" Height="780" Width="1180" Icon="Assets/PermaLocke.Admin.ico"
-        Background="{StaticResource Canvas}" WindowStartupLocation="CenterScreen">
+        Background="{StaticResource PxBaseBrush}" WindowStartupLocation="CenterScreen">
     <Grid Margin="18">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -13,11 +14,10 @@
         <!-- ================================================== LA CARPETA -->
         <DockPanel Grid.Row="0" Margin="0,0,0,14">
             <Button DockPanel.Dock="Right" Content="ACTUALIZAR" Command="{Binding RefreshCommand}" Margin="8,0,0,0" />
-            <Button DockPanel.Dock="Right" Content="ELEGIR CARPETA" Command="{Binding ChooseFolderCommand}" />
             <Button DockPanel.Dock="Right" Content="AUDITORÍA DEL TORNEO" Click="OnAudit" Margin="0,0,8,0" />
             <StackPanel VerticalAlignment="Center">
-                <TextBlock Text="PERMALOCKE · ADMIN" FontFamily="{StaticResource Display}" FontSize="17" />
-                <TextBlock Text="{Binding SharedFolder}" Foreground="{StaticResource Faint}" FontSize="11.5"
+                <pixel:PixelText Text="PERMALOCKE ADMIN" Scale="3" Tight="True" Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
+                <TextBlock Text="Servidor del torneo" Foreground="{StaticResource Faint}" FontSize="11.5"
                            TextTrimming="CharacterEllipsis" Margin="0,2,0,0" />
             </StackPanel>
         </DockPanel>
@@ -30,7 +30,7 @@
             </Grid.ColumnDefinitions>
 
             <!-- ================================================== QUIÉN HAY -->
-            <Border Grid.Column="0" Background="{StaticResource Panel}" Padding="16,14">
+            <pixel:PixelWindow Grid.Column="0" Title="JUGADORES" Icon="IconPeople">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
@@ -38,9 +38,10 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0" Text="JUGADORES" Style="{StaticResource Heading}" />
+                    <Border Grid.Row="0" />
 
-                    <ListBox Grid.Row="1" ItemsSource="{Binding Players}" SelectedItem="{Binding To}"
+                    <ListBox x:Name="PlayerList" Grid.Row="1" ItemsSource="{Binding Players}" SelectionMode="Multiple"
+                             SelectionChanged="OnPlayersChosen"
                              MaxHeight="300" HorizontalContentAlignment="Stretch">
                         <ListBox.ItemContainerStyle>
                             <Style TargetType="ListBoxItem">
@@ -49,8 +50,8 @@
                                 <Setter Property="Template">
                                     <Setter.Value>
                                         <ControlTemplate TargetType="ListBoxItem">
-                                            <Border x:Name="Row" Background="{StaticResource PanelHigh}"
-                                                    BorderBrush="{StaticResource Line}" BorderThickness="1"
+                                            <Border x:Name="Row" Background="{StaticResource FaceHigh}"
+                                                    BorderBrush="{StaticResource Canvas}" BorderThickness="1"
                                                     Padding="12,9">
                                                 <ContentPresenter />
                                             </Border>
@@ -74,18 +75,17 @@
                                     </Grid.ColumnDefinitions>
 
                                     <StackPanel Grid.Column="0">
-                                        <TextBlock Text="{Binding Name}" FontFamily="{StaticResource Display}"
+                                        <TextBlock Text="{Binding Name}"
                                                    FontSize="15" />
                                         <TextBlock Foreground="{StaticResource Faint}" FontSize="11.5" Margin="0,2,0,0">
                                             <Run Text="{Binding Points, Mode=OneWay}" /><Run Text=" puntos · " /><Run
                                                 Text="{Binding Alive, Mode=OneWay}" /><Run Text=" en pie · " /><Run
-                                                Text="{Binding Dead, Mode=OneWay}" /><Run Text=" caídos · publicó " /><Run
-                                                Text="{Binding Ago, Mode=OneWay}" />
+                                                Text="{Binding Dead, Mode=OneWay}" /><Run Text=" caídos" />
                                         </TextBlock>
                                     </StackPanel>
 
                                     <TextBlock Grid.Column="1" Text="{Binding Verdict}" VerticalAlignment="Center"
-                                               FontFamily="{StaticResource Display}" FontSize="11">
+                                               FontSize="11">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="Foreground" Value="{StaticResource Bad}" />
@@ -104,12 +104,12 @@
 
                     <!-- ================================================== LO MANDADO -->
                     <DockPanel Grid.Row="2" Margin="0,16,0,0">
-                        <TextBlock DockPanel.Dock="Top" Text="REGALOS MANDADOS" Style="{StaticResource Heading}" />
+                        <pixel:PixelText DockPanel.Dock="Top" Text="REGALOS MANDADOS" Style="{StaticResource Heading}" />
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <ItemsControl ItemsSource="{Binding Sent}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border Background="{StaticResource PanelHigh}" BorderBrush="{StaticResource Line}"
+                                        <Border Background="{StaticResource FaceHigh}" BorderBrush="{StaticResource Canvas}"
                                                 BorderThickness="1" Padding="12,9" Margin="0,0,0,6">
                                             <DockPanel>
                                                 <Button DockPanel.Dock="Right" Content="RETIRAR" Padding="10,5"
@@ -135,31 +135,30 @@
                         </ScrollViewer>
                     </DockPanel>
                 </Grid>
-            </Border>
+            </pixel:PixelWindow>
 
             <!-- ================================================== EL REGALO -->
-            <Border Grid.Column="2" Background="{StaticResource Panel}" Padding="16,14">
+            <pixel:PixelWindow Grid.Column="2" Title="MANDAR UN REGALO" Icon="IconGift">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel>
-                        <TextBlock Text="MANDAR UN REGALO" Style="{StaticResource Heading}" />
 
                         <CheckBox Content="A todos" IsChecked="{Binding ToEverybody}" Margin="0,0,0,6" />
                         <TextBlock Foreground="{StaticResource Faint}" FontSize="11.5"
-                                   Text="Si lo quitas, va al jugador elegido en la lista de la izquierda." />
+                                   Text="O elige uno o varios jugadores en la lista de la izquierda (clic para marcar o desmarcar). Elegir a alguien quita «A todos»." TextWrapping="Wrap" />
 
-                        <TextBlock Text="MOTIVO" Style="{StaticResource Heading}" Margin="0,16,0,6" />
+                        <pixel:PixelText Text="MOTIVO" Style="{StaticResource Heading}" Margin="0,16,0,6" />
                         <TextBox Text="{Binding Reason, UpdateSourceTrigger=PropertyChanged}"
                                  TextWrapping="Wrap" MinHeight="46" AcceptsReturn="True" />
                         <TextBlock Foreground="{StaticResource Faint}" FontSize="11.5" Margin="0,4,0,0"
                                    Text="Lo lee el jugador, y queda en su historial." />
 
-                        <TextBlock Text="PUNTOS" Style="{StaticResource Heading}" Margin="0,16,0,6" />
+                        <pixel:PixelText Text="PUNTOS" Style="{StaticResource Heading}" Margin="0,16,0,6" />
                         <TextBox Text="{Binding Points, UpdateSourceTrigger=PropertyChanged}" Width="110"
                                  HorizontalAlignment="Left" />
                         <TextBlock Foreground="{StaticResource Faint}" FontSize="11.5" Margin="0,4,0,0"
                                    Text="En negativo también, para quitar." />
 
-                        <TextBlock Text="OBJETOS" Style="{StaticResource Heading}" Margin="0,16,0,6" />
+                        <pixel:PixelText Text="OBJETOS" Style="{StaticResource Heading}" Margin="0,16,0,6" />
                         <DockPanel>
                             <TextBox DockPanel.Dock="Left" Width="60" Margin="0,0,6,0"
                                      Text="{Binding Amount, UpdateSourceTrigger=PropertyChanged}" />
@@ -184,7 +183,7 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
 
-                        <TextBlock Text="TIRADAS DE GACHA" Style="{StaticResource Heading}" Margin="0,16,0,6" />
+                        <pixel:PixelText Text="TIRADAS DE GACHA" Style="{StaticResource Heading}" Margin="0,16,0,6" />
                         <ItemsControl ItemsSource="{Binding Banners}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
@@ -197,7 +196,7 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
 
-                        <TextBlock Text="WONDER TRADES" Style="{StaticResource Heading}" Margin="0,16,0,6" />
+                        <pixel:PixelText Text="WONDER TRADES" Style="{StaticResource Heading}" Margin="0,16,0,6" />
                         <TextBox Text="{Binding WonderTrades, UpdateSourceTrigger=PropertyChanged}" Width="60"
                                  HorizontalAlignment="Left" />
 
@@ -212,7 +211,7 @@
                                    Text="Los objetos los recoge el jugador con Azahar abierto. Lo demás, cuando abra PermaLocke." />
                     </StackPanel>
                 </ScrollViewer>
-            </Border>
+            </pixel:PixelWindow>
         </Grid>
 
         <TextBlock Grid.Row="2" Text="{Binding Status}" Foreground="{StaticResource Muted}" Margin="2,12,0,0" />

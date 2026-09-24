@@ -33,10 +33,6 @@ public partial class App : Application
 
         var collection = new ServiceCollection();
         collection.AddPermaLockeInfrastructure(paths, "permalocke-admin");
-        collection.AddSingleton<SnapshotStore>();
-        collection.AddSingleton<GiftStore>();
-        collection.AddSingleton(_ => new SharedFolderSettings(paths.Config));
-        collection.AddSingleton<IPlayerProfileStore>(_ => new JsonPlayerProfileStore(paths.Config));
         collection.AddSingleton<IItemLookup>(_ => new PkhexItemLookup());
         collection.AddSingleton<IGachaCatalog>(_ =>
             JsonGachaCatalog.Load(Path.Combine(paths.Data, "gacha.json")));

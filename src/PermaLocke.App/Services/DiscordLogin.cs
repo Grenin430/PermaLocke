@@ -13,7 +13,8 @@ using PermaLocke.Infrastructure;
 namespace PermaLocke.App.Services;
 
 /// <summary>Who is signed in, as the tournament server knows them.</summary>
-public sealed record DiscordAccount(string Name, string? AvatarUrl, string RefreshToken, string DiscordId = "", bool Allowed = false);
+public sealed record DiscordAccount(string Name, string? AvatarUrl, string RefreshToken, string DiscordId = "", bool Allowed = false,
+    Guid UserId = default);
 
 /// <summary>
 /// Signs the player in with Discord through the tournament's Supabase project (phase 1: identity only, nothing of the
@@ -132,6 +133,14 @@ public sealed class DiscordLogin(AppPaths paths, ILogger<DiscordLogin> logger)
     public Task<string?> GetAsync(string path, CancellationToken cancel = default) =>
         SendAsync(HttpMethod.Get, path, null, null, cancel);
 
+    /// <summary>Calls a function of the tournament's database as the signed-in player: its answer as JSON text, or null when nobody is signed in.</summary>
+    public Task<string?> CallAsync(string function, string json = "{}", CancellationToken cancel = default) =>
+        SendAsync(HttpMethod.Post, $"rpc/{function}", json, null, cancel);
+
+    /// <summary>Deletes rows through the tournament's REST API as the signed-in player; the server decides whether it may.</summary>
+    public Task<string?> DeleteAsync(string path, CancellationToken cancel = default) =>
+        SendAsync(HttpMethod.Delete, path, null, null, cancel);
+
     private async Task<string?> SendAsync(HttpMethod method, string path, string? json, string? prefer, CancellationToken cancel)
     {
         if (_access is null || DateTimeOffset.UtcNow >= _accessUntil)
@@ -209,7 +218,8 @@ public sealed class DiscordLogin(AppPaths paths, ILogger<DiscordLogin> logger)
             (string?)meta?["avatar_url"],
             (string?)token["refresh_token"] ?? throw new InvalidDataException("El servidor no ha devuelto sesión."),
             (string?)meta?["provider_id"] ?? "",
-            allowed);
+            allowed,
+            Guid.TryParse((string?)token["user"]?["id"], out var userId) ? userId : Guid.Empty);
 
         Directory.CreateDirectory(paths.Config);
         File.WriteAllBytes(SessionPath, ProtectedData.Protect(

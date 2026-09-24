@@ -350,10 +350,8 @@ public partial class App : Application
         // Amigos y actividad van por el servidor del torneo, también en la distribución local.
         _services.GetRequiredService<CommunityService>().Start(writes: !withoutGame);
 
-        if (!paths.LocalOnly)
-        {
-            _services.GetRequiredService<GiftInbox>().Start();
-        }
+        // Los regalos del organizador llegan por el servidor del torneo, también en la distribución local.
+        _services.GetRequiredService<GiftInbox>().Start();
 
         if (!withoutGame)
         {

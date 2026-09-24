@@ -1,25 +1,15 @@
-using System.IO;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
+using PermaLocke.App.Services;
 using PermaLocke.Core.Domain;
-using PermaLocke.Data;
 
 namespace PermaLocke.Admin.Services;
 
-/// <param name="Name">The player, as they call themselves.</param>
-/// <param name="Points">What their last published snapshot says.</param>
-/// <param name="PublishedAt">When they last published, or null if never.</param>
-/// <param name="Verdict">Whether their numbers add up against their own published history.</param>
-public sealed record PlayerLine(
-    Guid Id, string Name, int Points, int Alive, int Dead, DateTimeOffset? PublishedAt, string Verdict)
-{
-    public string Folder { get; init; } = string.Empty;
+/// <summary>A player of the tournament, as the organiser's list shows them.</summary>
+/// <param name="Id">Their account on the tournament server: what a gift is addressed to.</param>
+public sealed record PlayerLine(Guid Id, string Name, int Points, int Alive, int Dead, string Verdict = "");
 
-    public string Ago => PublishedAt is { } at ? Playtime.Ago(at, DateTimeOffset.Now) : "nunca";
-}
-
-/// <param name="Gift">What was sent.</param>
-/// <param name="Collected">Who has collected it, by name.</param>
-/// <param name="Waiting">Who has not, by name.</param>
 public sealed record SentGift(AdminGift Gift, IReadOnlyList<string> Collected, IReadOnlyList<string> Waiting)
 {
     public string State => Waiting.Count == 0
@@ -32,92 +22,71 @@ public sealed record SentGift(AdminGift Gift, IReadOnlyList<string> Collected, I
 }
 
 /// <summary>
-/// The admin's side of the shared folder: who is in it, and the gifts left for them (§129).
+/// The organiser's side of the gifts (§129), through the tournament server instead of the shared folder.
 /// </summary>
 /// <remarks>
-/// Reads and writes files and nothing else. Whether a gift was collected is <b>not</b> stored here: it is read from
-/// each player's own published history, which is the only place that can say it — their application is what applies a
-/// gift, and it says so in the run's own chain. A player who collected something and has not published yet reads as
-/// waiting, and that is the truth from here.
+/// A gift is a row of <c>regalos</c> (<c>tools/supabase/08-regalos.sql</c>): only an organiser can write or withdraw
+/// one, and each player's application reads only its own and those for everybody. Whether a player has collected it
+/// comes from their uploaded history (<c>AdminGiftClaimed</c>), never from a flag the player could set.
 /// </remarks>
-public sealed class GiftDesk(SnapshotStore snapshots, GiftStore gifts, ILogger<GiftDesk> logger)
+public sealed class GiftDesk(DiscordLogin discord, ILogger<GiftDesk> logger)
 {
-    public IReadOnlyList<PlayerLine> Players(string root)
+    private static readonly JsonSerializerOptions Json = new()
     {
-        if (string.IsNullOrWhiteSpace(root) || !Directory.Exists(root))
-        {
-            return [];
-        }
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        PropertyNameCaseInsensitive = true,
+        Converters = { new JsonStringEnumConverter() }
+    };
 
-        var lines = new List<PlayerLine>();
+    private sealed record PlayerRow(Guid User_id, string? Jugador, int? Puntos, int? Vivos, int? Caidos);
 
-        foreach (var player in snapshots.ReadPlayers(root))
-        {
-            var snapshot = player.Snapshot;
-            var history = snapshots.ReadHistory(player.HistoryPath);
+    private sealed record GiftRow(AdminGift Regalo);
 
-            var verdict = snapshot is null
-                ? "Sin publicar"
-                : history is null
-                    ? "Sin historial"
-                    : Core.Services.SnapshotAudit.Check(snapshot, history).Verdict switch
-                    {
-                        Core.Services.AuditVerdict.Consistent => "Cuadra",
-                        Core.Services.AuditVerdict.Rewound => "Ha retrocedido",
-                        Core.Services.AuditVerdict.NoHistory => "Sin historial",
-                        _ => "NO CUADRA"
-                    };
+    private sealed record HistoryRow(Guid User_id, RunHistory? History);
 
-            lines.Add(new PlayerLine(player.Profile.Id, player.Profile.Name,
-                snapshot?.Points ?? 0, snapshot?.Alive ?? 0, snapshot?.Dead ?? 0,
-                snapshot?.PublishedAt, verdict)
-            {
-                Folder = player.Folder
-            });
-        }
+    public async Task<IReadOnlyList<PlayerLine>> PlayersAsync()
+    {
+        var json = await discord.GetAsync("clasificacion?select=user_id,jugador,puntos,vivos,caidos")
+                   ?? throw new InvalidOperationException("Entra con Discord.");
 
-        return [.. lines.OrderBy(line => line.Name, StringComparer.CurrentCultureIgnoreCase)];
+        return [.. (JsonSerializer.Deserialize<List<PlayerRow>>(json, Json) ?? [])
+            .Select(p => new PlayerLine(p.User_id, p.Jugador ?? "Jugador", p.Puntos ?? 0, p.Vivos ?? 0, p.Caidos ?? 0))
+            .OrderBy(line => line.Name, StringComparer.CurrentCultureIgnoreCase)];
     }
 
-    /// <summary>Writes a gift into the folder.</summary>
-    public void Send(string root, AdminGift gift)
+    public async Task SendAsync(AdminGift gift)
     {
-        gifts.Write(root, gift);
+        await discord.PostAsync("regalos", JsonSerializer.Serialize(new { id = gift.Id, para = gift.To, regalo = gift }, Json));
         logger.LogInformation("Regalo enviado a {To}: {What}", gift.To, gift.Say());
     }
 
-    public bool Withdraw(string root, Guid id) => gifts.Remove(root, id);
+    public async Task WithdrawAsync(Guid id)
+    {
+        await discord.DeleteAsync($"regalos?id=eq.{id}");
+        logger.LogInformation("Regalo {Id} retirado", id);
+    }
 
-    /// <summary>Every gift sent, with who has collected it according to what each player has published.</summary>
-    public IReadOnlyList<SentGift> Sent(string root, IReadOnlyList<PlayerLine> players)
+    public async Task<IReadOnlyList<SentGift>> SentAsync(IReadOnlyList<PlayerLine> players)
     {
         ArgumentNullException.ThrowIfNull(players);
 
-        if (string.IsNullOrWhiteSpace(root) || !Directory.Exists(root))
+        var giftsJson = await discord.GetAsync("regalos?select=regalo&order=creado.desc");
+        var historiesJson = await discord.GetAsync("runs?select=user_id,history&activa=eq.true");
+
+        if (giftsJson is null || historiesJson is null)
         {
             return [];
         }
 
-        // Un historial por jugador, leído una vez: son el fichero grande de la carpeta.
-        var collected = new Dictionary<Guid, HashSet<Guid>>();
-
-        foreach (var player in snapshots.ReadPlayers(root))
-        {
-            var history = snapshots.ReadHistory(player.HistoryPath);
-
-            collected[player.Profile.Id] = history is null
-                ? []
-                : [.. history.Events
-                    .Where(e => e.Type == GameEventType.AdminGiftClaimed)
-                    .Select(e => e.Data.TryGetValue("regalo", out var id) && Guid.TryParse(id, out var gift)
-                        ? gift
-                        : Guid.Empty)
-                    .Where(id => id != Guid.Empty)];
-        }
+        var collected = (JsonSerializer.Deserialize<List<HistoryRow>>(historiesJson, Json) ?? [])
+            .ToDictionary(row => row.User_id, row => (row.History?.Events ?? [])
+                .Where(e => e.Type == GameEventType.AdminGiftClaimed)
+                .Select(e => e.Data.TryGetValue("regalo", out var id) && Guid.TryParse(id, out var gift) ? gift : Guid.Empty)
+                .ToHashSet());
 
         var sent = new List<SentGift>();
 
-        foreach (var gift in gifts.ReadAll(root))
+        foreach (var gift in (JsonSerializer.Deserialize<List<GiftRow>>(giftsJson, Json) ?? []).Select(row => row.Regalo))
         {
             var addressed = players.Where(player => gift.IsFor(player.Id)).ToList();
 
