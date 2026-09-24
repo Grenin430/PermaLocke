@@ -15,8 +15,9 @@
   "trainers": true,
 
   "_fullyEvolvedFromLevel": "De la SEXTA PRUEBA en adelante, todos los entrenadores llevan evoluciones finales, y eso incluye el Pokemon extra que los combates importantes reciben del rol. El mod se genera una vez, antes de la primera prueba, asi que no puede consultar por donde vas: lo unico que la tabla de entrenadores lleva y que sigue el avance de la historia es el nivel que el cartucho le dio a cada equipo. De ahi que el corte sea un nivel.",
+  "_fullyEvolvedA25": "Bajado de 29 a 25 el 2026-09-24 a peticion del jugador: los entrenadores normales que salen despues de la sexta prueba con Pokemon de nivel 25-28 de cartucho se quedaban sin evolucionar. El precio: tambien evolucionan algunos entrenadores de antes de la sexta, cuyos niveles se solapan. Vale al regenerar e instalar el mundo. Lo de abajo explica el 29 de antes.",
   "_fullyEvolvedPorQue29": "El 29 esta MEDIDO y no elegido: es el nivel de cartucho del Dominante de la sexta prueba -Vikavolt-, leido de la tabla de estaticos. Aqui hubo un fallo que costo un Larvitar en la partida real: estaba puesto en 34, que es lo que dice Data/levelcaps.json para esa etapa, PERO ESE 34 YA VA SUBIDO UN 20% -29 x 1,2 = 34,8-, y esto compara contra el nivel del CARTUCHO. O sea que el corte estaba cinco niveles por encima de donde tocaba y se colaban los entrenadores de entre la sexta y la septima prueba: un recluta del Team Skull con un Larvitar a nivel 33 de cartucho. La comprobacion que lo habria cazado antes es que los Dominantes de las ocho pruebas -12, 20, 22, 24, 29, 33, 35, 49- multiplicados por 1,2 dan exactamente los caps de la tabla.",
-  "fullyEvolvedFromLevel": 29,
+  "fullyEvolvedFromLevel": 25,
   "_pokemonData": "Cambia el juego mucho más que el resto: tipos, estadísticas, habilidades, evoluciones y aprendizajes. Se aplica el último, para que los demás módulos emparejen por las estadísticas del cartucho y no por unas ya randomizadas.",
   "pokemonData": true,
   "_randomizeTypes": "FALSE a peticion del usuario: los tipos se quedan como el cartucho. Un Latios sigue siendo Dragon/Psiquico.",

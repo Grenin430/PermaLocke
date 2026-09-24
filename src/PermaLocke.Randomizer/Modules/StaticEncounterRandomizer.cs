@@ -73,6 +73,11 @@ public sealed class StaticEncounterRandomizer(RomWorkspace workspace, Randomizer
 
                 ApplyIndependent(payload, layout, independent, random, pool);
 
+                if (isStatics)
+                {
+                    Evolved += EvolveTotems(payload, layout, mod);
+                }
+
                 raised += Raise(payload, layout);
                 patcher.Write(layout.Subfile, payload);
             }
@@ -326,6 +331,50 @@ public sealed class StaticEncounterRandomizer(RomWorkspace workspace, Randomizer
         }
     }
 
+
+    /// <summary>How many Totems <see cref="EvolveTotems"/> moved to their final evolution.</summary>
+    public int Evolved { get; private set; }
+
+    /// <summary>
+    /// From the sixth trial on, a Totem is a final evolution, like every trainer (2026-09-24, at the player's request).
+    /// </summary>
+    /// <remarks>
+    /// The same cut as the trainers, <see cref="RandomizerOptions.FullyEvolvedFromLevel"/>, against the <b>cartridge</b>
+    /// level, so it runs before <see cref="Raise"/>. Only the species changes, to the one the mod's own evolution table
+    /// ends in; the form goes to 0 and takes nothing from the random streams, so the rest of the world comes out the same
+    /// with the same seed. Before this, the Totems after the sixth trial were final only by luck.
+    /// </remarks>
+    private int EvolveTotems(byte[] payload, EncounterEntryLayout layout, LayeredFsMod mod)
+    {
+        if (options.FullyEvolvedFromLevel <= 0 || layout.LevelOffset is null)
+        {
+            return 0;
+        }
+
+        var evolutions = EvolutionTable.Read(mod.Stage(GameFiles.Evolution));
+        var moved = 0;
+
+        for (var i = 0; i < StaticEncounterTable.Count(payload, layout); i++)
+        {
+            if (!StaticEncounterTable.IsTotem(payload, layout, i)
+                || StaticEncounterTable.GetLevel(payload, layout, i) < options.FullyEvolvedFromLevel)
+            {
+                continue;
+            }
+
+            var species = StaticEncounterTable.GetSpecies(payload, layout, i);
+            var last = evolutions.FinalOf(species);
+
+            if (species > 0 && last != species)
+            {
+                StaticEncounterTable.SetSpecies(payload, layout, i, last, 0);
+                Touched.Add($"Dominante a su evolución final: {species} -> {last}");
+                moved++;
+            }
+        }
+
+        return moved;
+    }
     /// <summary>
     /// Raises the levels of a table by whatever the role asks for, and says how many moved.
     /// </summary>

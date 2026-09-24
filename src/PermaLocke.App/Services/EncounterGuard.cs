@@ -186,8 +186,9 @@ public sealed class EncounterGuard(
 
     /// <returns>True when the run changed, so the screens refresh.</returns>
     public async Task<bool> TickAsync(Run run, IReadOnlyList<BattleTable> tables, IReadOnlyList<BattleFaint> faints,
-        bool tablesSayBattle, CancellationToken ct)
+        bool tablesSayBattle, CancellationToken ct, IReadOnlyCollection<int>? party = null)
     {
+        _party = party ?? [];
         var now = clock.Now;
 
         // Lo que estuviera a medias es de la run de antes. Visto en la carpeta de prueba el 2026-09-21: Azahar se cerró
@@ -691,6 +692,13 @@ public sealed class EncounterGuard(
         return true;
     }
 
+    /// <summary>
+    /// What the team carries right now, from memory. A Pokémon the game gave away (the Totem Sticker reward, a gift) is
+    /// not a capture, so it is not in the run; and until the player saves, the Pokédex of the save does not know it either
+    /// (2026-09-24: a Zweilous from the stickers, then a wild Zweilous that kept its Poké Balls).
+    /// </summary>
+    private IReadOnlyCollection<int> _party = [];
+
     private async Task<bool> IsDuplicateAsync(Run run, int species, CancellationToken ct)
     {
         var owned = new HashSet<int>();
@@ -699,6 +707,8 @@ public sealed class EncounterGuard(
         {
             owned.UnionWith(caught);
         }
+
+        owned.UnionWith(_party);
 
         foreach (var entry in await pokemon.GetAllAsync(run.Id, ct))
         {

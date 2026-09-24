@@ -53,11 +53,14 @@ public sealed class FullyEvolvedThresholdTests
             .GetProperty("level").GetInt32();
     }
 
-    /// <summary>The measured level of the sixth trial's Totem, and not the cap of that stage.</summary>
+    /// <summary>
+    /// 25, four under the sixth Totem (Vikavolt, 29), chosen by the player on 2026-09-24 so the route trainers after
+    /// the sixth trial with 25-28 cartridge Pokémon evolve too. Some trainers before it evolve as well; that is the price.
+    /// </summary>
     [Fact]
-    public void The_threshold_is_the_sixth_totem_cartridge_level()
+    public void The_threshold_is_the_one_the_player_chose()
     {
-        Assert.Equal(29, Threshold());
+        Assert.Equal(25, Threshold());
     }
 
     /// <summary>
@@ -79,19 +82,10 @@ public sealed class FullyEvolvedThresholdTests
             + "va subido un 20% y esto se compara contra el nivel del cartucho.");
     }
 
-    /// <summary>
-    /// And raising it lands on that cap, give or take the rounding.
-    /// </summary>
-    /// <remarks>
-    /// Keeps the previous test from being satisfied by any small number at all. One level of slack
-    /// because the competition wrote the caps by hand and they are not all exactly the Totem times
-    /// 1.2 — this stage is one of the ones that is off by one, which is itself worth pinning.
-    /// </remarks>
+    /// <summary>It never goes above the sixth Totem (29), or trainers from the sixth trial on would be left out.</summary>
     [Fact]
-    public void Raising_the_threshold_lands_on_that_cap()
+    public void The_threshold_does_not_pass_the_sixth_totem()
     {
-        var raised = Modules.TrainerRandomizer.Raise(Threshold(), 20);
-
-        Assert.InRange(raised, SixthTrialCap() - 1, SixthTrialCap() + 1);
+        Assert.True(Threshold() <= 29);
     }
 }

@@ -115,7 +115,10 @@ public sealed class PixelText : FrameworkElement
         get
         {
             var dpi = VisualTreeHelper.GetDpi(this);
-            return Math.Max(Scale, (int)Math.Floor((Scale * dpi.DpiScaleX) + 0.5));
+            // Hacia abajo y no al más cercano (2026-09-24): con Windows al 125 % el 2,5 se iba a 3 y todo el texto
+            // salía un 20 % más ancho de lo diseñado, cortado en la barra y en las listas. Así nunca pasa de su
+            // tamaño: como mucho sale algo más pequeño, y sigue en píxeles enteros.
+            return Math.Max(Scale, (int)Math.Floor(Scale * dpi.DpiScaleX));
         }
     }
 

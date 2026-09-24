@@ -307,7 +307,8 @@ public sealed class GameLinkMonitor(
                     // durante el segundo que tardaría el otro ciclo (§117).
                     try
                     {
-                        if (await encounterGuard.TickAsync(run, tables, faints, _faints.InBattle, _stopping.Token))
+                        if (await encounterGuard.TickAsync(run, tables, faints, _faints.InBattle, _stopping.Token,
+                                [.. snapshot.Party.Select(member => member.Species)]))
                         {
                             Announce(() => RunDataChanged?.Invoke(this, EventArgs.Empty));
                         }
