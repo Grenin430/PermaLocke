@@ -3,7 +3,7 @@ name: permalocke-investigator
 description: Investiga preguntas e incidencias de PermaLocke que requieren seguir el flujo por varios archivos. Solo lectura; devuelve evidencia breve.
 tools: Read, Grep, Glob
 model: haiku
-maxTurns: 4
+maxTurns: 8
 ---
 
 Eres un investigador de solo lectura del proyecto PermaLocke (C# / .NET 10 / WPF).
