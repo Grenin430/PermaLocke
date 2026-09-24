@@ -158,31 +158,6 @@
                         <TextBlock Foreground="{StaticResource Faint}" FontSize="11.5" Margin="0,4,0,0"
                                    Text="En negativo también, para quitar." />
 
-                        <pixel:PixelText Text="OBJETOS" Style="{StaticResource Heading}" Margin="0,16,0,6" />
-                        <DockPanel>
-                            <TextBox DockPanel.Dock="Left" Width="60" Margin="0,0,6,0"
-                                     Text="{Binding Amount, UpdateSourceTrigger=PropertyChanged}" />
-                            <TextBox Text="{Binding ItemSearch, UpdateSourceTrigger=PropertyChanged}" />
-                        </DockPanel>
-                        <ListBox ItemsSource="{Binding Matches}" SelectedItem="{Binding Match}" MaxHeight="130"
-                                 Margin="0,6,0,0" DisplayMemberPath="Name" />
-                        <Button Content="AÑADIR OBJETO" Command="{Binding AddItemCommand}" HorizontalAlignment="Left"
-                                Margin="0,6,0,0" />
-
-                        <ItemsControl ItemsSource="{Binding Items}" Margin="0,8,0,0">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <DockPanel Margin="0,0,0,4">
-                                        <Button DockPanel.Dock="Right" Content="QUITAR" Padding="8,3" FontSize="11"
-                                                Command="{Binding DataContext.RemoveItemCommand,
-                                                          RelativeSource={RelativeSource AncestorType=Window}}"
-                                                CommandParameter="{Binding}" />
-                                        <TextBlock Text="{Binding Label}" VerticalAlignment="Center" />
-                                    </DockPanel>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-
                         <pixel:PixelText Text="TIRADAS DE GACHA" Style="{StaticResource Heading}" Margin="0,16,0,6" />
                         <ItemsControl ItemsSource="{Binding Banners}">
                             <ItemsControl.ItemTemplate>
@@ -208,7 +183,7 @@
 
                         <TextBlock Foreground="{StaticResource Faint}" FontSize="11.5" Margin="0,10,0,0"
                                    TextWrapping="Wrap"
-                                   Text="Los objetos los recoge el jugador con Azahar abierto. Lo demás, cuando abra PermaLocke." />
+                                   Text="El jugador lo recoge la próxima vez que abra PermaLocke." />
                     </StackPanel>
                 </ScrollViewer>
             </pixel:PixelWindow>

@@ -33,7 +33,6 @@ public partial class App : Application
 
         var collection = new ServiceCollection();
         collection.AddPermaLockeInfrastructure(paths, "permalocke-admin");
-        collection.AddSingleton<IItemLookup>(_ => new PkhexItemLookup());
         collection.AddSingleton<IGachaCatalog>(_ =>
             JsonGachaCatalog.Load(Path.Combine(paths.Data, "gacha.json")));
         collection.AddSingleton<GiftDesk>();

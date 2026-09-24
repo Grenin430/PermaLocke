@@ -11,12 +11,6 @@ using PermaLocke.Data;
 
 namespace PermaLocke.Admin.ViewModels;
 
-/// <summary>One item already added to the gift being written.</summary>
-public sealed record ChosenItem(int Id, string Name, int Amount)
-{
-    public string Label => Amount == 1 ? Name : $"{Amount} × {Name}";
-}
-
 /// <summary>A banner of the gacha with how many free rolls this gift gives on it.</summary>
 public sealed partial class BannerRow(string id, string name) : ObservableObject
 {
@@ -32,41 +26,35 @@ public sealed partial class BannerRow(string id, string name) : ObservableObject
 /// The admin's only screen: who is in the competition, and the gift being written for them (§129).
 /// </summary>
 /// <remarks>
-/// Everything it does is write a file in the shared folder. It cannot touch anybody's run — that is the player's own
-/// application, on the player's own machine — so what it shows about a gift is what the players themselves have
-/// published about it.
+/// Everything it does goes through the tournament server (<see cref="GiftDesk"/>). It cannot touch anybody's run:
+/// points, rolls and wonder trades are applied by the player's own application when they collect the gift. Items were
+/// removed on 2026-09-24 at the organiser's request.
 /// </remarks>
 public sealed partial class AdminViewModel : ObservableObject
 {
     private readonly GiftDesk _desk;
     private readonly DiscordLogin _discord;
-    private readonly IItemLookup _items;
     private readonly ILogger<AdminViewModel> _logger;
-
-    /// <summary>Every item of the game with its name, built once so the search box is instant.</summary>
-    private readonly List<ChosenItem> _catalogue = [];
 
     /// <summary>The tournament audit, in its own window.</summary>
     public AuditViewModel Audit { get; }
 
-    public AdminViewModel(GiftDesk desk, DiscordLogin discord, IItemLookup items, IGachaCatalog gacha, AuditViewModel audit, ILogger<AdminViewModel> logger)
+    public AdminViewModel(GiftDesk desk, DiscordLogin discord, IGachaCatalog gacha, AuditViewModel audit, ILogger<AdminViewModel> logger)
     {
         ArgumentNullException.ThrowIfNull(gacha);
 
         _desk = desk;
         Audit = audit;
         _discord = discord;
-        _items = items;
         _logger = logger;
 
         foreach (var banner in gacha.Banners)
         {
             Banners.Add(new BannerRow(banner.Id, banner.Name));
         }
-
     }
 
-    // ============================================================ LA CARPETA Y QUIÉN HAY
+    // ============================================================ QUIÉN HAY
 
     [ObservableProperty]
     private string _adminName = "Admin";
@@ -159,81 +147,10 @@ public sealed partial class AdminViewModel : ObservableObject
 
     public ObservableCollection<BannerRow> Banners { get; } = [];
 
-    public ObservableCollection<ChosenItem> Items { get; } = [];
-
-    [ObservableProperty]
-    private string _itemSearch = string.Empty;
-
-    public ObservableCollection<ChosenItem> Matches { get; } = [];
-
-    [ObservableProperty]
-    private ChosenItem? _match;
-
-    [ObservableProperty]
-    private int _amount = 1;
-
     /// <summary>A gift needs a reason and something inside it. Both, always.</summary>
     public bool CanSend => Reason.Trim().Length > 0
                            && (ToEverybody || Chosen.Count > 0)
-                           && (Points != 0 || Items.Count > 0 || WonderTrades > 0
-                               || Banners.Any(banner => banner.Rolls > 0));
-
-    partial void OnItemSearchChanged(string value) => Search(value);
-
-    private void Search(string text)
-    {
-        Matches.Clear();
-
-        if (text.Trim().Length < 2)
-        {
-            return;
-        }
-
-        // La tabla de objetos del juego, una vez: 960 nombres que no cambian mientras la app está abierta.
-        if (_catalogue.Count == 0)
-        {
-            for (var id = 1; id <= 960; id++)
-            {
-                var name = _items.GetName(id);
-
-                if (!string.IsNullOrWhiteSpace(name) && name != "???")
-                {
-                    _catalogue.Add(new ChosenItem(id, name, 1));
-                }
-            }
-        }
-
-        foreach (var item in _catalogue
-                     .Where(item => item.Name.Contains(text.Trim(), StringComparison.OrdinalIgnoreCase))
-                     .Take(25))
-        {
-            Matches.Add(item);
-        }
-    }
-
-    [RelayCommand]
-    private void AddItem()
-    {
-        if (Match is null || Amount <= 0)
-        {
-            return;
-        }
-
-        Items.Add(Match with { Amount = Amount });
-        OnPropertyChanged(nameof(CanSend));
-        ItemSearch = string.Empty;
-        Amount = 1;
-    }
-
-    [RelayCommand]
-    private void RemoveItem(ChosenItem? item)
-    {
-        if (item is not null)
-        {
-            Items.Remove(item);
-            OnPropertyChanged(nameof(CanSend));
-        }
-    }
+                           && (Points != 0 || WonderTrades > 0 || Banners.Any(banner => banner.Rolls > 0));
 
     [RelayCommand]
     private async Task SendAsync()
@@ -253,7 +170,6 @@ public sealed partial class AdminViewModel : ObservableObject
             Reason = Reason.Trim(),
             CreatedAt = DateTimeOffset.Now,
             Points = Points,
-            Items = [.. Items.Select(item => new GiftItem(item.Id, item.Name, item.Amount))],
             Rolls = Banners.Where(banner => banner.Rolls > 0)
                 .ToDictionary(banner => banner.Id, banner => banner.Rolls),
             WonderTrades = WonderTrades
@@ -283,9 +199,6 @@ public sealed partial class AdminViewModel : ObservableObject
         Points = 0;
         WonderTrades = 0;
         Reason = string.Empty;
-        Items.Clear();
-        ItemSearch = string.Empty;
-        Amount = 1;
 
         foreach (var banner in Banners)
         {
