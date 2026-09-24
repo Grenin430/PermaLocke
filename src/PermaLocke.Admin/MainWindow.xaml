@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:pixel="clr-namespace:PermaLocke.App.Views.Pixel"
-        Title="PermaLocke Admin" Height="780" Width="1180" Icon="Assets/PermaLocke.Admin.ico"
+        Title="PermaLocke Admin" Height="780" Width="1320" Icon="Assets/PermaLocke.Admin.ico"
         Background="{StaticResource PxBaseBrush}" WindowStartupLocation="CenterScreen">
     <Grid Margin="18">
         <Grid.RowDefinitions>
@@ -15,6 +15,8 @@
         <DockPanel Grid.Row="0" Margin="0,0,0,14">
             <Button DockPanel.Dock="Right" Content="ACTUALIZAR" Command="{Binding RefreshCommand}" Margin="8,0,0,0" />
             <Button DockPanel.Dock="Right" Content="AUDITORÍA DEL TORNEO" Click="OnAudit" Margin="0,0,8,0" />
+            <Button DockPanel.Dock="Right" Content="LISTA DEL TORNEO" Click="OnWhitelist" Margin="0,0,8,0" />
+            <Button DockPanel.Dock="Right" Content="ENTRAR CON DISCORD" Style="{StaticResource Primary}" Command="{Binding SignInCommand}" Margin="0,0,8,0" />
             <StackPanel VerticalAlignment="Center">
                 <pixel:PixelText Text="PERMALOCKE ADMIN" Scale="3" Tight="True" Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
                 <TextBlock Text="Servidor del torneo" Foreground="{StaticResource Faint}" FontSize="11.5"

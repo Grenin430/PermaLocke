@@ -1,0 +1,57 @@
+<Window x:Class="PermaLocke.Admin.WhitelistWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:pixel="clr-namespace:PermaLocke.App.Views.Pixel"
+        Title="PermaLocke Admin · Lista del torneo" Height="640" Width="760" Icon="Assets/PermaLocke.Admin.ico"
+        Background="{StaticResource PxBaseBrush}" WindowStartupLocation="CenterOwner">
+    <!-- LISTA DEL TORNEO: quién puede abrir PermaLocke. -->
+    <DockPanel Margin="18">
+        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,14">
+            <Button DockPanel.Dock="Right" Content="ACTUALIZAR" Command="{Binding RefreshCommand}" />
+            <StackPanel VerticalAlignment="Center">
+                <pixel:PixelText Text="LISTA DEL TORNEO" Scale="3" Tight="True" Colour="{StaticResource PxText}"
+                                 Shadow="{StaticResource PxShadow}" />
+                <TextBlock Text="{Binding Status}" Foreground="{StaticResource Faint}" FontSize="11.5" Margin="0,4,0,0" />
+            </StackPanel>
+        </DockPanel>
+
+        <pixel:PixelWindow DockPanel.Dock="Top" Title="AÑADIR" Icon="IconPeople" Margin="0,0,0,12">
+            <StackPanel>
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Content="AÑADIR" Style="{StaticResource Primary}" Command="{Binding AddCommand}"
+                            Margin="8,0,0,0" MinWidth="110" />
+                    <TextBox DockPanel.Dock="Left" Width="240" Margin="0,0,8,0"
+                             Text="{Binding NewId, UpdateSourceTrigger=PropertyChanged}" ToolTip="ID de Discord (17 a 20 cifras)" />
+                    <TextBox Text="{Binding NewName, UpdateSourceTrigger=PropertyChanged}" ToolTip="Nombre, solo para ti" />
+                </DockPanel>
+                <TextBlock Foreground="{StaticResource Faint}" FontSize="11.5" Margin="0,6,0,0" TextWrapping="Wrap"
+                           Text="A la izquierda su ID de Discord (el número que le sale en PermaLocke si no está en la lista), a la derecha un nombre para reconocerlo." />
+            </StackPanel>
+        </pixel:PixelWindow>
+
+        <pixel:PixelWindow Title="EN LA LISTA" Icon="IconCheck">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding People}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="{StaticResource FaceHigh}" Padding="12,8" Margin="0,0,0,6">
+                                <DockPanel>
+                                    <Button DockPanel.Dock="Right" Content="QUITAR" VerticalAlignment="Center" Margin="10,0,0,0"
+                                            Command="{Binding DataContext.RemoveCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding}" />
+                                    <StackPanel>
+                                        <pixel:PixelText Text="{Binding Name}" Scale="2" Tight="True" Colour="{StaticResource PxText}" />
+                                        <TextBlock Foreground="{StaticResource Faint}" FontSize="11.5" Margin="0,4,0,0">
+                                            <Run Text="{Binding Discord_id, Mode=OneWay}" /><Run Text=" · desde el " /><Run
+                                                Text="{Binding Since, Mode=OneWay}" />
+                                        </TextBlock>
+                                    </StackPanel>
+                                </DockPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </pixel:PixelWindow>
+    </DockPanel>
+</Window>

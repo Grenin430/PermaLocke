@@ -38,6 +38,7 @@ public partial class App : Application
         collection.AddSingleton<GiftDesk>();
         collection.AddSingleton<PermaLocke.App.Services.DiscordLogin>();
         collection.AddSingleton<AuditViewModel>();
+        collection.AddSingleton<WhitelistViewModel>();
         collection.AddSingleton<AdminViewModel>();
 
         _services = collection.BuildServiceProvider();

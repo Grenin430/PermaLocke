@@ -39,12 +39,17 @@ public sealed partial class AdminViewModel : ObservableObject
     /// <summary>The tournament audit, in its own window.</summary>
     public AuditViewModel Audit { get; }
 
-    public AdminViewModel(GiftDesk desk, DiscordLogin discord, IGachaCatalog gacha, AuditViewModel audit, ILogger<AdminViewModel> logger)
+    /// <summary>The tournament's whitelist, in its own window.</summary>
+    public WhitelistViewModel Whitelist { get; }
+
+    public AdminViewModel(GiftDesk desk, DiscordLogin discord, IGachaCatalog gacha, AuditViewModel audit,
+        WhitelistViewModel whitelist, ILogger<AdminViewModel> logger)
     {
         ArgumentNullException.ThrowIfNull(gacha);
 
         _desk = desk;
         Audit = audit;
+        Whitelist = whitelist;
         _discord = discord;
         _logger = logger;
 
@@ -103,12 +108,32 @@ public sealed partial class AdminViewModel : ObservableObject
         catch (Exception ex)
         {
             _logger.LogError(ex, "Falló la lectura del servidor del torneo");
-            Status = "No se ha podido leer el servidor. Entra con Discord desde AUDITORÍA DEL TORNEO.";
+            Status = "No se ha podido leer el servidor. Pulsa ENTRAR CON DISCORD.";
         }
         finally
         {
             IsBusy = false;
         }
+    }
+
+    /// <summary>Signs the organiser in with Discord, then reads everything again.</summary>
+    [RelayCommand]
+    private async Task SignInAsync()
+    {
+        Status = "Termina de entrar en el navegador...";
+
+        try
+        {
+            AdminName = (await _discord.SignInAsync()).Name;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Falló el inicio de sesión con Discord");
+            Status = "No se ha podido entrar con Discord.";
+            return;
+        }
+
+        await RefreshAsync();
     }
 
     // ============================================================ EL REGALO QUE SE ESTÁ ESCRIBIENDO

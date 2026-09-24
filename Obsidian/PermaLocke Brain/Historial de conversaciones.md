@@ -25,6 +25,7 @@ La última sesión va arriba. Antes del 2026-09-23 solo hay un resumen por fecha
 - Menos tráfico para 20 jugadores: amigos y logros cada 60 s (antes 15); la run sube cada 5 min como mucho (antes 1) y al cerrar (`TournamentUpload.Flush` en `App.OnExit`, no con `--sin-juego`). Pendiente si hace falta: logros en tabla aparte en vez de sacarlos del historial en cada consulta.
 - `tools/desplegar.ps1 -Prueba|-Amigos`: el despliegue de siempre en un comando (se niega con PermaLocke o Azahar abiertos; nunca borra; si ya hay un «(anterior)» se para). Probado `-Prueba`; `-Amigos` sin ejecutar todavía.
 - `publicar.ps1`: el zip de código fuente ya no lleva `src/PermaLocke.Admin` ni `tools/supabase` (Admin no se reparte). Carpeta de amigos republicada y **congelada como versión para repartir** (el usuario la da por definitiva y se la pasa a 1 amigo para probar); ahora se trabaja en Admin.
+- Admin: botón ENTRAR CON DISCORD en la ventana principal y ventana LISTA DEL TORNEO (`WhitelistWindow`/`WhitelistViewModel`): añadir (ID de 17-20 cifras) y quitar con confirmación. `09-whitelist-admin.sql`: solo el organizador ve y toca `whitelist`. Ventana principal a 1320 de ancho.
 - `tools/desplegar.ps1 -Prueba|-Amigos`: el despliegue de siempre en un comando (se niega con PermaLocke o Azahar abiertos; nunca borra; si ya hay un «(anterior)» se para). Probado `-Prueba`; `-Amigos` sin ejecutar todavía.
 
 ## 2026-09-24 — plugins y MISCELÁNEA sin mochila
