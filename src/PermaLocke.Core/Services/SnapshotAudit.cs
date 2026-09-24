@@ -143,4 +143,22 @@ public static class SnapshotAudit
             ? new SeenMark(snapshot.EventCount, snapshot.ChainHead)
             : seen;
     }
+
+    /// <summary>
+    /// The positions in a run's upload log, in arrival order, where it went backwards: fewer events than the upload
+    /// before (restored from a copy), or the same number with another chain head (history rewritten).
+    /// </summary>
+    public static IEnumerable<int> Rewinds(IReadOnlyList<SeenMark> uploads)
+    {
+        for (var i = 1; i < uploads.Count; i++)
+        {
+            var (before, now) = (uploads[i - 1], uploads[i]);
+
+            if (now.EventCount < before.EventCount
+                || (now.EventCount == before.EventCount && now.ChainHead != before.ChainHead))
+            {
+                yield return i;
+            }
+        }
+    }
 }

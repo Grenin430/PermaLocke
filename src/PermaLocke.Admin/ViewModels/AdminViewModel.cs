@@ -46,12 +46,16 @@ public sealed partial class AdminViewModel : ObservableObject
     /// <summary>Every item of the game with its name, built once so the search box is instant.</summary>
     private readonly List<ChosenItem> _catalogue = [];
 
+    /// <summary>The tournament audit, in its own window.</summary>
+    public AuditViewModel Audit { get; }
+
     public AdminViewModel(GiftDesk desk, SharedFolderSettings settings, IPlayerProfileStore profiles,
-        IItemLookup items, IGachaCatalog gacha, ILogger<AdminViewModel> logger)
+        IItemLookup items, IGachaCatalog gacha, AuditViewModel audit, ILogger<AdminViewModel> logger)
     {
         ArgumentNullException.ThrowIfNull(gacha);
 
         _desk = desk;
+        Audit = audit;
         _settings = settings;
         _profiles = profiles;
         _items = items;

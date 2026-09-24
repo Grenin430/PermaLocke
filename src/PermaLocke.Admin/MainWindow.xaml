@@ -14,6 +14,7 @@
         <DockPanel Grid.Row="0" Margin="0,0,0,14">
             <Button DockPanel.Dock="Right" Content="ACTUALIZAR" Command="{Binding RefreshCommand}" Margin="8,0,0,0" />
             <Button DockPanel.Dock="Right" Content="ELEGIR CARPETA" Command="{Binding ChooseFolderCommand}" />
+            <Button DockPanel.Dock="Right" Content="AUDITORÍA DEL TORNEO" Click="OnAudit" Margin="0,0,8,0" />
             <StackPanel VerticalAlignment="Center">
                 <TextBlock Text="PERMALOCKE · ADMIN" FontFamily="{StaticResource Display}" FontSize="17" />
                 <TextBlock Text="{Binding SharedFolder}" Foreground="{StaticResource Faint}" FontSize="11.5"

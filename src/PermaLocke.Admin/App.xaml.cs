@@ -41,6 +41,8 @@ public partial class App : Application
         collection.AddSingleton<IGachaCatalog>(_ =>
             JsonGachaCatalog.Load(Path.Combine(paths.Data, "gacha.json")));
         collection.AddSingleton<GiftDesk>();
+        collection.AddSingleton<PermaLocke.App.Services.DiscordLogin>();
+        collection.AddSingleton<AuditViewModel>();
         collection.AddSingleton<AdminViewModel>();
 
         _services = collection.BuildServiceProvider();

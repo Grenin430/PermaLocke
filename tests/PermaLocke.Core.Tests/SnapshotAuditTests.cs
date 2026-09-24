@@ -169,4 +169,35 @@ public sealed class SnapshotAuditTests
         Assert.Equal(seen, kept);
         Assert.Equal(advanced, notBack);
     }
+
+    /// <summary>
+    /// The tournament server keeps the JSON the application sends (camelCase, event types as text); read back the same
+    /// way, an honest run still checks out.
+    /// </summary>
+    [Fact]
+    public void A_run_read_back_from_the_server_still_checks_out()
+    {
+        var events = Chain(100, -25, 50);
+        var options = new System.Text.Json.JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true,
+            PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
+            Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
+        };
+
+        var snapshot = System.Text.Json.JsonSerializer.Deserialize<RunSnapshot>(
+            System.Text.Json.JsonSerializer.Serialize(SnapshotOf(events), options), options)!;
+        var history = System.Text.Json.JsonSerializer.Deserialize<RunHistory>(
+            System.Text.Json.JsonSerializer.Serialize(HistoryOf(events), options), options);
+
+        Assert.Equal(AuditVerdict.Consistent, SnapshotAudit.Check(snapshot, history).Verdict);
+    }
+
+    [Fact]
+    public void The_upload_log_shows_a_restored_and_a_rewritten_run()
+    {
+        var log = new List<SeenMark> { new(3, "a"), new(5, "b"), new(4, "c"), new(6, "d"), new(6, "e"), new(7, "f") };
+
+        Assert.Equal([2, 4], SnapshotAudit.Rewinds(log));
+    }
 }

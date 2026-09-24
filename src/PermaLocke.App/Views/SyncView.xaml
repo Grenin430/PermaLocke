@@ -4,7 +4,7 @@
              xmlns:views="clr-namespace:PermaLocke.App.Views"
              xmlns:pixel="clr-namespace:PermaLocke.App.Views.Pixel">
 
-    <!-- COMPETICIÓN (rehecha el 2026-09-24): el top del torneo por puntos, del servidor. Podio y lista. -->
+    <!-- COMPETICIÓN: el top del torneo por puntos y sus récords, del servidor. Cada cifra sale de la última run subida. -->
     <UserControl.Resources>
         <Style TargetType="ScrollBar" BasedOn="{StaticResource PxScrollBar}" />
 
@@ -12,12 +12,34 @@
         <Style x:Key="PlayerName" TargetType="pixel:PixelText">
             <Setter Property="Scale" Value="2" />
             <Setter Property="Tight" Value="True" />
+            <Setter Property="Trim" Value="True" />
             <Setter Property="Colour" Value="{StaticResource PxText}" />
             <Style.Triggers>
                 <DataTrigger Binding="{Binding IsMine}" Value="True">
                     <Setter Property="Colour" Value="{StaticResource PxGold}" />
                 </DataTrigger>
             </Style.Triggers>
+        </Style>
+
+        <!-- El marco de la foto, del color del estado, como en la lista de amigos de JUGAR. -->
+        <Style x:Key="StateFrame" TargetType="views:PixelPanel">
+            <Setter Property="HasShadow" Value="False" />
+            <Setter Property="Fill" Value="#FF5C5C5C" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding State}" Value="Playing">
+                    <Setter Property="Fill" Value="#FF90BA3C" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding State}" Value="InApp">
+                    <Setter Property="Fill" Value="#FF57CBDE" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="Small" TargetType="pixel:PixelText">
+            <Setter Property="Scale" Value="2" />
+            <Setter Property="Tight" Value="True" />
+            <Setter Property="Wrap" Value="True" />
+            <Setter Property="Colour" Value="{StaticResource PxTextDim}" />
         </Style>
     </UserControl.Resources>
 
@@ -29,6 +51,9 @@
                 </pixel:PixelWindow.HeaderContent>
 
                 <StackPanel>
+                    <pixel:PixelText Text="{Binding Summary}" Scale="2" Tight="True" HorizontalAlignment="Center"
+                                     Margin="0,0,0,16" Colour="{StaticResource PxTextDim}" />
+
                     <!-- EL PODIO: segundo, primero, tercero; el primero más alto. -->
                     <ItemsControl ItemsSource="{Binding Podium}" HorizontalAlignment="Center">
                         <ItemsControl.ItemsPanel>
@@ -38,14 +63,20 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <StackPanel Width="200" Margin="8,0" VerticalAlignment="Bottom">
-                                    <Image Source="{Binding Picture}" Width="80" Height="80" HorizontalAlignment="Center"
-                                           RenderOptions.BitmapScalingMode="NearestNeighbor" />
+                                <StackPanel Width="230" Margin="8,0" VerticalAlignment="Bottom">
+                                    <Grid Width="92" Height="92" HorizontalAlignment="Center">
+                                        <views:PixelPanel Style="{StaticResource StateFrame}" />
+                                        <Image Source="{Binding Picture}" Margin="6" RenderOptions.BitmapScalingMode="NearestNeighbor" />
+                                    </Grid>
                                     <pixel:PixelText Text="{Binding Player}" Style="{StaticResource PlayerName}"
-                                                     HorizontalAlignment="Center" Trim="True" Margin="0,6,0,0" />
+                                                     HorizontalAlignment="Center" Margin="0,8,0,0" />
                                     <pixel:PixelText Text="{Binding Points, StringFormat={}{0} puntos}" Scale="2" Tight="True"
-                                                     HorizontalAlignment="Center" Margin="0,6,0,8"
+                                                     HorizontalAlignment="Center" Margin="0,6,0,0"
                                                      Colour="{StaticResource PxAccentLight}" />
+                                    <pixel:PixelText Text="{Binding Line}" Style="{StaticResource Small}" TextAlignment="Center"
+                                                     HorizontalAlignment="Center" Margin="0,6,0,0" />
+                                    <pixel:PixelText Text="{Binding Team}" Style="{StaticResource Small}" TextAlignment="Center"
+                                                     HorizontalAlignment="Center" Margin="0,4,0,8" />
                                     <Grid x:Name="Block" Height="70">
                                         <views:PixelPanel Fill="{StaticResource PxFaceHigh}" />
                                         <pixel:PixelText Text="{Binding Position}" Scale="5" Tight="True"
@@ -74,13 +105,24 @@
                                     <DockPanel Margin="14,8,18,10">
                                         <pixel:PixelText DockPanel.Dock="Left" Text="{Binding Position}" Scale="3" Tight="True"
                                                          Width="50" VerticalAlignment="Center" Colour="{StaticResource PxTextDim}" />
-                                        <Image DockPanel.Dock="Left" Source="{Binding Picture}" Width="40" Height="40" Margin="0,0,12,0"
-                                               RenderOptions.BitmapScalingMode="NearestNeighbor" />
+                                        <Grid DockPanel.Dock="Left" Width="48" Height="48" Margin="0,0,12,0">
+                                            <views:PixelPanel Style="{StaticResource StateFrame}" />
+                                            <Image Source="{Binding Picture}" Margin="4" RenderOptions.BitmapScalingMode="NearestNeighbor" />
+                                        </Grid>
                                         <pixel:PixelText DockPanel.Dock="Right" Text="{Binding Points, StringFormat={}{0} puntos}"
                                                          Scale="2" Tight="True" VerticalAlignment="Center"
                                                          Colour="{StaticResource PxAccentLight}" />
-                                        <pixel:PixelText Text="{Binding Player}" Style="{StaticResource PlayerName}" Trim="True"
-                                                         VerticalAlignment="Center" />
+                                        <StackPanel VerticalAlignment="Center">
+                                            <pixel:PixelText Text="{Binding Player}" Style="{StaticResource PlayerName}" />
+                                            <pixel:PixelText Style="{StaticResource Small}" Margin="0,5,0,0">
+                                                <pixel:PixelText.Text>
+                                                    <MultiBinding StringFormat="{}{0} · {1}">
+                                                        <Binding Path="Line" />
+                                                        <Binding Path="Team" />
+                                                    </MultiBinding>
+                                                </pixel:PixelText.Text>
+                                            </pixel:PixelText>
+                                        </StackPanel>
                                     </DockPanel>
                                 </Grid>
                             </DataTemplate>
@@ -90,6 +132,41 @@
                     <pixel:PixelText Text="{Binding Status}" Scale="2" Wrap="True" Margin="0,10,0,0"
                                      Colour="{StaticResource PxTextDim}" />
                 </StackPanel>
+            </pixel:PixelWindow>
+
+            <!-- LOS RÉCORDS: quién tiene más de cada cosa. -->
+            <pixel:PixelWindow Title="RÉCORDS" Icon="IconStar" Margin="0,12,0,0">
+                <ItemsControl ItemsSource="{Binding Records}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Rows="1" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="0,0,10,0">
+                                <views:PixelPanel Fill="{StaticResource PxFaceHigh}" />
+                                <StackPanel Margin="12,12,16,16">
+                                    <StackPanel Orientation="Horizontal">
+                                        <pixel:PixelIcon Icon="{Binding Icon}" Scale="2" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                        <pixel:PixelText Text="{Binding Title}" Scale="2" Tight="True" VerticalAlignment="Center"
+                                                         Colour="{StaticResource PxGold}" />
+                                    </StackPanel>
+                                    <DockPanel Margin="0,12,0,0">
+                                        <Image DockPanel.Dock="Left" Source="{Binding Picture}" Width="40" Height="40" Margin="0,0,10,0"
+                                               RenderOptions.BitmapScalingMode="NearestNeighbor" />
+                                        <StackPanel VerticalAlignment="Center">
+                                            <pixel:PixelText Text="{Binding Player}" Scale="2" Tight="True" Trim="True"
+                                                             Colour="{StaticResource PxText}" />
+                                            <pixel:PixelText Text="{Binding Value}" Scale="2" Tight="True" Trim="True" Margin="0,5,0,0"
+                                                             Colour="{StaticResource PxAccentLight}" />
+                                        </StackPanel>
+                                    </DockPanel>
+                                </StackPanel>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
             </pixel:PixelWindow>
         </StackPanel>
     </ScrollViewer>

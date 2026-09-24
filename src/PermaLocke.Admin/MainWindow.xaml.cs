@@ -1,4 +1,5 @@
 using System.Windows;
+using PermaLocke.Admin.ViewModels;
 
 namespace PermaLocke.Admin;
 
@@ -6,4 +7,7 @@ namespace PermaLocke.Admin;
 public partial class MainWindow : Window
 {
     public MainWindow() => InitializeComponent();
+
+    private void OnAudit(object sender, RoutedEventArgs e) =>
+        new AuditWindow(((AdminViewModel)DataContext).Audit) { Owner = this }.Show();
 }

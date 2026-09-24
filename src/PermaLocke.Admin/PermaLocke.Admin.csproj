@@ -30,6 +30,8 @@
   <ItemGroup>
     <!-- Tambien como recurso, para que la ventana pueda ponerselo en su barra de titulo. -->
     <Resource Include="Assets\PermaLocke.Admin.ico" />
+    <!-- El mismo inicio de sesión que la app del jugador, sin duplicarlo: el organizador entra con su Discord. -->
+    <Compile Include="..\PermaLocke.App\Services\DiscordLogin.cs" Link="Services\DiscordLogin.cs" />
   </ItemGroup>
 
 </Project>

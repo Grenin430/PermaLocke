@@ -1,0 +1,43 @@
+<Window x:Class="PermaLocke.Admin.AuditWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="PermaLocke Admin · Auditoría del torneo" Height="640" Width="1180" Icon="Assets/PermaLocke.Admin.ico"
+        Background="{StaticResource Canvas}" WindowStartupLocation="CenterOwner">
+    <!-- AUDITORÍA DEL TORNEO: cada run subida, con su cadena comprobada y el registro de subidas del servidor. -->
+    <DockPanel Margin="18">
+        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,14">
+            <Button DockPanel.Dock="Right" Content="ACTUALIZAR" Command="{Binding RefreshCommand}" Margin="8,0,0,0" />
+            <Button DockPanel.Dock="Right" Content="ENTRAR CON DISCORD" Command="{Binding SignInCommand}" />
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="AUDITORÍA DEL TORNEO" FontFamily="{StaticResource Display}" FontSize="17" />
+                <TextBlock Text="{Binding Status}" Foreground="{StaticResource Faint}" FontSize="11.5" Margin="0,2,0,0" />
+            </StackPanel>
+        </DockPanel>
+
+        <TextBlock DockPanel.Dock="Bottom" TextWrapping="Wrap" Foreground="{StaticResource Faint}" FontSize="11.5" Margin="0,10,0,0"
+                   Text="CUADRA: los puntos y el número de eventos salen de su historial y la cadena verifica. Retrocesos: subidas en las que su run tenía menos eventos que antes (restaurada de una copia) o la misma cantidad con otra huella (reescrita). No es una prueba contra alguien que fabrique una cadena entera: es lo que hay que mirar." />
+
+        <DataGrid ItemsSource="{Binding Rows}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
+                  GridLinesVisibility="Horizontal" CanUserAddRows="False">
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Ok}" Value="False">
+                            <Setter Property="Background" Value="#33D9534F" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.RowStyle>
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Jugador" Binding="{Binding Player}" Width="150" />
+                <DataGridTextColumn Header="Puntos" Binding="{Binding Points}" Width="70" />
+                <DataGridTextColumn Header="Eventos" Binding="{Binding Events}" Width="70" />
+                <DataGridTextColumn Header="Historial" Binding="{Binding Verdict}" Width="110" />
+                <DataGridTextColumn Header="Subidas" Binding="{Binding Uploads}" Width="70" />
+                <DataGridTextColumn Header="Última" Binding="{Binding LastUpload}" Width="90" />
+                <DataGridTextColumn Header="Retrocesos" Binding="{Binding Rewinds}" Width="*" />
+                <DataGridTextColumn Header="Detalle" Binding="{Binding Detail}" Width="2*" />
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</Window>
