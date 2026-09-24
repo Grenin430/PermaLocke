@@ -8,8 +8,12 @@ using PermaLocke.App.Services;
 namespace PermaLocke.Admin.ViewModels;
 
 /// <summary>One Discord account allowed into the tournament.</summary>
-public sealed record Allowed(string Discord_id, string? Nombre, DateTimeOffset Alta)
+public sealed record Allowed(string Discord_id, string? Nombre, DateTimeOffset Alta, bool Suspendido = false)
 {
+    public string Toggle => Suspendido ? "REACTIVAR" : "SUSPENDER";
+
+    public string State => Suspendido ? "SUSPENDIDO" : string.Empty;
+
     public string Name => string.IsNullOrWhiteSpace(Nombre) ? "(sin nombre)" : Nombre;
 
     public string Since => Alta.LocalDateTime.ToString("dd/MM/yyyy");
@@ -50,7 +54,7 @@ public sealed partial class WhitelistViewModel(DiscordLogin discord, ILogger<Whi
     {
         try
         {
-            if (await discord.GetAsync("whitelist?select=discord_id,nombre,alta&order=alta.desc") is not { } json)
+            if (await discord.GetAsync("whitelist?select=discord_id,nombre,alta,suspendido&order=alta.desc") is not { } json)
             {
                 Status = "Entra con Discord (la cuenta del organizador).";
                 return;
@@ -91,6 +95,36 @@ public sealed partial class WhitelistViewModel(DiscordLogin discord, ILogger<Whi
         {
             logger.LogError(ex, "No se pudo añadir {Id} a la whitelist", id);
             Status = "No se ha podido añadir.";
+            return;
+        }
+
+        await RefreshAsync();
+    }
+
+    /// <summary>
+    /// Suspends somebody without taking them off the list, or lets them back in. A suspended player cannot open
+    /// PermaLocke or upload anything, and keeps everything they had (<c>10-control.sql</c>).
+    /// </summary>
+    [RelayCommand]
+    private async Task ToggleAsync(Allowed? person)
+    {
+        if (person is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await discord.PatchAsync($"whitelist?discord_id=eq.{Uri.EscapeDataString(person.Discord_id)}",
+                JsonSerializer.Serialize(new { suspendido = !person.Suspendido }));
+            logger.LogInformation("{Id} ({Name}) {What}", person.Discord_id, person.Name,
+                person.Suspendido ? "reactivado" : "suspendido");
+            Status = person.Suspendido ? $"{person.Name} puede volver a entrar." : $"{person.Name} queda suspendido.";
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "No se pudo cambiar la suspensión de {Id}", person.Discord_id);
+            Status = "No se ha podido cambiar. ¿Has ejecutado 10-control.sql?";
             return;
         }
 

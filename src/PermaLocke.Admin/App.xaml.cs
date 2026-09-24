@@ -39,6 +39,7 @@ public partial class App : Application
         collection.AddSingleton<PermaLocke.App.Services.DiscordLogin>();
         collection.AddSingleton<AuditViewModel>();
         collection.AddSingleton<WhitelistViewModel>();
+        collection.AddSingleton<AnnouncementsViewModel>();
         collection.AddSingleton<AdminViewModel>();
 
         _services = collection.BuildServiceProvider();

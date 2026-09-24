@@ -80,6 +80,6 @@ public sealed partial class LoginViewModel(DiscordLogin discord, ILogger<LoginVi
     private void Refuse(DiscordAccount account)
     {
         discord.SignOut();
-        Status = $"{account.Name}, tu cuenta no está en la lista del torneo. Pásale este número al organizador: {account.DiscordId}";
+        Status = $"{account.Name}, tu cuenta no tiene acceso al torneo (no está en la lista o está suspendida). Pásale este número al organizador: {account.DiscordId}";
     }
 }

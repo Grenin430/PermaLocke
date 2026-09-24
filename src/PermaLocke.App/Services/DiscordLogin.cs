@@ -141,6 +141,10 @@ public sealed class DiscordLogin(AppPaths paths, ILogger<DiscordLogin> logger)
     public Task<string?> DeleteAsync(string path, CancellationToken cancel = default) =>
         SendAsync(HttpMethod.Delete, path, null, null, cancel);
 
+    /// <summary>Changes rows through the tournament's REST API as the signed-in player; the server decides whether it may.</summary>
+    public Task<string?> PatchAsync(string path, string json, CancellationToken cancel = default) =>
+        SendAsync(HttpMethod.Patch, path, json, null, cancel);
+
     private async Task<string?> SendAsync(HttpMethod method, string path, string? json, string? prefer, CancellationToken cancel)
     {
         if (_access is null || DateTimeOffset.UtcNow >= _accessUntil)

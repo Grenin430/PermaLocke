@@ -153,6 +153,13 @@ public sealed partial class LauncherViewModel : SectionViewModel
     [ObservableProperty]
     private string _communityNote = string.Empty;
 
+    /// <summary>The organiser's latest announcement, shown at the top of the right column.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasAnnouncement))]
+    private string _announcement = string.Empty;
+
+    public bool HasAnnouncement => Announcement.Length > 0;
+
     [ObservableProperty]
     private string _problem = string.Empty;
 
@@ -350,6 +357,7 @@ public sealed partial class LauncherViewModel : SectionViewModel
         }
 
         CommunityNote = _community.Note;
+        Announcement = _community.Announcement;
         OnPropertyChanged(nameof(HasFriends));
         OnPropertyChanged(nameof(HasActivity));
     }

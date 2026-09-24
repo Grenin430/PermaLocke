@@ -36,11 +36,17 @@
                         <DataTemplate>
                             <Border Background="{StaticResource FaceHigh}" Padding="12,8" Margin="0,0,0,6">
                                 <DockPanel>
+                                    <Button DockPanel.Dock="Right" Content="{Binding Toggle}" VerticalAlignment="Center" Margin="10,0,0,0"
+                                            Command="{Binding DataContext.ToggleCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding}" />
                                     <Button DockPanel.Dock="Right" Content="QUITAR" VerticalAlignment="Center" Margin="10,0,0,0"
                                             Command="{Binding DataContext.RemoveCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                             CommandParameter="{Binding}" />
                                     <StackPanel>
-                                        <pixel:PixelText Text="{Binding Name}" Scale="2" Tight="True" Colour="{StaticResource PxText}" />
+                                        <StackPanel Orientation="Horizontal">
+                                            <pixel:PixelText Text="{Binding Name}" Scale="2" Tight="True" Colour="{StaticResource PxText}" />
+                                            <pixel:PixelText Text="{Binding State}" Scale="2" Tight="True" Margin="10,0,0,0" Colour="{StaticResource PxBad}" />
+                                        </StackPanel>
                                         <TextBlock Foreground="{StaticResource Faint}" FontSize="11.5" Margin="0,4,0,0">
                                             <Run Text="{Binding Discord_id, Mode=OneWay}" /><Run Text=" · desde el " /><Run
                                                 Text="{Binding Since, Mode=OneWay}" />

@@ -50,7 +50,9 @@ public sealed class CommunityService : INotifyPropertyChanged
     private readonly IRunContext _runContext;
     private readonly IEventStore _events;
     private readonly IAchievementCatalog _catalog;
+    private readonly Notifier _notifier;
     private readonly ILogger<CommunityService> _logger;
+    private long _lastAnnouncement = -1;
     private readonly DispatcherTimer _timer = new() { Interval = RefreshEvery };
 
     private bool _writes;
@@ -59,13 +61,14 @@ public sealed class CommunityService : INotifyPropertyChanged
     private DateTimeOffset _lastBeat = DateTimeOffset.MinValue;
 
     public CommunityService(DiscordLogin discord, EmulatorLauncher launcher, IRunContext runContext, IEventStore events,
-        IAchievementCatalog catalog, ILogger<CommunityService> logger)
+        IAchievementCatalog catalog, Notifier notifier, ILogger<CommunityService> logger)
     {
         _discord = discord;
         _launcher = launcher;
         _runContext = runContext;
         _events = events;
         _catalog = catalog;
+        _notifier = notifier;
         _logger = logger;
 
         _timer.Tick += (_, _) => _ = TickAsync();
@@ -88,6 +91,9 @@ public sealed class CommunityService : INotifyPropertyChanged
 
     /// <summary>Why there is nothing to show, or empty.</summary>
     public string Note { get; private set; } = string.Empty;
+
+    /// <summary>The organiser's latest announcement to every player, or empty (10-control.sql).</summary>
+    public string Announcement { get; private set; } = string.Empty;
 
     /// <param name="writes">
     /// False for a copy opened only to look at screens (<c>--sin-juego</c>): it reads, but it does not tell the others
@@ -186,6 +192,7 @@ public sealed class CommunityService : INotifyPropertyChanged
     private async Task ReadAsync()
     {
         var now = DateTimeOffset.Now;
+        await ReadAnnouncementAsync();
         var friendsJson = await _discord.GetAsync("amigos?select=*");
         var feedJson = await _discord.GetAsync("logros?select=*");
 
@@ -252,6 +259,30 @@ public sealed class CommunityService : INotifyPropertyChanged
 
         Set(friends, [.. feed.OrderByDescending(f => f.At).Take(FeedLength)],
             friends.Count == 0 ? "Todavía no hay nadie más." : string.Empty);
+    }
+
+    private sealed record AnnouncementRow(long Id, string Texto);
+
+    /// <summary>
+    /// The newest announcement, shown in JUGAR. A new one also comes up as a notice over the game, once: the first
+    /// read after starting only remembers which one is current, so reopening PermaLocke does not repeat it.
+    /// </summary>
+    private async Task ReadAnnouncementAsync()
+    {
+        if (await _discord.GetAsync("anuncios?select=id,texto&order=creado.desc&limit=1") is not { } json)
+        {
+            return;
+        }
+
+        var latest = (JsonSerializer.Deserialize<List<AnnouncementRow>>(json, Json) ?? []).FirstOrDefault();
+        Announcement = latest?.Texto ?? string.Empty;
+
+        if (latest is not null && _lastAnnouncement >= 0 && latest.Id != _lastAnnouncement)
+        {
+            _notifier.Say(ToastKind.Info, "Anuncio del torneo", latest.Texto);
+        }
+
+        _lastAnnouncement = latest?.Id ?? 0;
     }
 
     private void Set(IReadOnlyList<FriendStatus> friends, IReadOnlyList<ClaimedAchievement> feed, string note)

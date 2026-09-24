@@ -8,7 +8,15 @@ namespace PermaLocke.Admin.Services;
 
 /// <summary>A player of the tournament, as the organiser's list shows them.</summary>
 /// <param name="Id">Their account on the tournament server: what a gift is addressed to.</param>
-public sealed record PlayerLine(Guid Id, string Name, int Points, int Alive, int Dead, string Verdict = "");
+public sealed record PlayerLine(Guid Id, string Name, int Points, int Alive, int Dead, PresenceState State = PresenceState.Offline)
+{
+    public string Presence => State switch
+    {
+        PresenceState.Playing => "JUGANDO",
+        PresenceState.InApp => "EN LA APP",
+        _ => "DESCONECTADO"
+    };
+}
 
 public sealed record SentGift(AdminGift Gift, IReadOnlyList<string> Collected, IReadOnlyList<string> Waiting)
 {
@@ -38,7 +46,7 @@ public sealed class GiftDesk(DiscordLogin discord, ILogger<GiftDesk> logger)
         Converters = { new JsonStringEnumConverter() }
     };
 
-    private sealed record PlayerRow(Guid User_id, string? Jugador, int? Puntos, int? Vivos, int? Caidos);
+    private sealed record PlayerRow(Guid User_id, string? Jugador, int? Puntos, int? Vivos, int? Caidos, int? Estado);
 
     private sealed record GiftRow(AdminGift Regalo);
 
@@ -46,12 +54,14 @@ public sealed class GiftDesk(DiscordLogin discord, ILogger<GiftDesk> logger)
 
     public async Task<IReadOnlyList<PlayerLine>> PlayersAsync()
     {
-        var json = await discord.GetAsync("clasificacion?select=user_id,jugador,puntos,vivos,caidos")
+        var json = await discord.GetAsync("clasificacion?select=user_id,jugador,puntos,vivos,caidos,estado")
                    ?? throw new InvalidOperationException("Entra con Discord.");
 
         return [.. (JsonSerializer.Deserialize<List<PlayerRow>>(json, Json) ?? [])
-            .Select(p => new PlayerLine(p.User_id, p.Jugador ?? "Jugador", p.Puntos ?? 0, p.Vivos ?? 0, p.Caidos ?? 0))
-            .OrderBy(line => line.Name, StringComparer.CurrentCultureIgnoreCase)];
+            .Select(p => new PlayerLine(p.User_id, p.Jugador ?? "Jugador", p.Puntos ?? 0, p.Vivos ?? 0, p.Caidos ?? 0,
+                (PresenceState)(p.Estado ?? 0)))
+            .OrderByDescending(line => line.State)
+            .ThenBy(line => line.Name, StringComparer.CurrentCultureIgnoreCase)];
     }
 
     public async Task SendAsync(AdminGift gift)

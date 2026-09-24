@@ -364,6 +364,11 @@
 
                 <!-- A LA DERECHA: la lista de amigos y tus logros. -->
                 <StackPanel Grid.Column="2" VerticalAlignment="Top">
+                    <!-- EL ANUNCIO DEL ORGANIZADOR, el más reciente, encima de los amigos. -->
+                    <pixel:PixelWindow Title="ANUNCIO DEL TORNEO" Icon="IconStar" Margin="0,0,0,12"
+                                       Visibility="{Binding HasAnnouncement, Converter={StaticResource BoolToVisibility}}">
+                        <pixel:PixelText Text="{Binding Announcement}" Scale="2" Wrap="True" Colour="{StaticResource PxGold}" />
+                    </pixel:PixelWindow>
                     <pixel:PixelWindow Title="{Binding FriendsHeading}" Icon="IconPeople"
                                        Visibility="{Binding ShowCommunity, Converter={StaticResource BoolToVisibility}}">
                         <StackPanel>

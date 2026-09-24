@@ -42,14 +42,18 @@ public sealed partial class AdminViewModel : ObservableObject
     /// <summary>The tournament's whitelist, in its own window.</summary>
     public WhitelistViewModel Whitelist { get; }
 
+    /// <summary>The announcements to every player, in their own window.</summary>
+    public AnnouncementsViewModel Announcements { get; }
+
     public AdminViewModel(GiftDesk desk, DiscordLogin discord, IGachaCatalog gacha, AuditViewModel audit,
-        WhitelistViewModel whitelist, ILogger<AdminViewModel> logger)
+        WhitelistViewModel whitelist, AnnouncementsViewModel announcements, ILogger<AdminViewModel> logger)
     {
         ArgumentNullException.ThrowIfNull(gacha);
 
         _desk = desk;
         Audit = audit;
         Whitelist = whitelist;
+        Announcements = announcements;
         _discord = discord;
         _logger = logger;
 
@@ -78,6 +82,11 @@ public sealed partial class AdminViewModel : ObservableObject
     {
         AdminName = _discord.Saved?.Name ?? "Organizador";
         await RefreshAsync();
+
+        // Quién está conectado cambia solo: se relee cada minuto.
+        var timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMinutes(1) };
+        timer.Tick += (_, _) => _ = RefreshAsync();
+        timer.Start();
     }
 
     [RelayCommand]

@@ -13,8 +13,13 @@ namespace PermaLocke.Admin.ViewModels;
 /// <summary>One run of the tournament, checked.</summary>
 /// <param name="Verdict">What <see cref="SnapshotAudit"/> says of the last upload.</param>
 /// <param name="Rewinds">Uploads where the history went backwards or was rewritten, from the server's log.</param>
-public sealed record AuditRow(Guid UserId, string Player, int Points, int Events, string Verdict, string Detail, bool Ok,
-    int Uploads, string Rewinds, string LastUpload);
+public sealed record AuditRow(Guid RunId, bool Active, Guid UserId, string Player, int Points, int Events, string Verdict, string Detail, bool Ok,
+    int Uploads, string Rewinds, string LastUpload)
+{
+    public string Action => Active ? "REINICIAR" : "REACTIVAR";
+
+    public string Run => Active ? "ACTIVA" : "ARCHIVADA";
+}
 
 /// <summary>
 /// AUDITORÍA DEL TORNEO: every uploaded run, checked the same way the shared folder was (§123), plus the server's upload
@@ -46,12 +51,18 @@ public sealed partial class AuditViewModel(DiscordLogin discord, ILogger<AuditVi
     private string _status = string.Empty;
 
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(RefreshCommand), nameof(SignInCommand), nameof(ResetCommand))]
+    [NotifyCanExecuteChangedFor(nameof(RefreshCommand), nameof(SignInCommand), nameof(ActCommand))]
     private bool _busy;
 
     private bool CanAct => !Busy;
 
-    private sealed record RunRow(Guid Run_id, Guid User_id, JsonElement Snapshot, JsonElement History, DateTimeOffset Subida);
+    /// <summary>Also the runs archived by a reset, to compare somebody's old run with the new one.</summary>
+    [ObservableProperty]
+    private bool _showArchived;
+
+    partial void OnShowArchivedChanged(bool value) => _ = RefreshAsync();
+
+    private sealed record RunRow(Guid Run_id, Guid User_id, bool Activa, JsonElement Snapshot, JsonElement History, DateTimeOffset Subida);
 
     private sealed record UploadRow(Guid Run_id, int? Eventos, string? Huella, int? Puntos, DateTimeOffset Llegada);
 
@@ -87,7 +98,9 @@ public sealed partial class AuditViewModel(DiscordLogin discord, ILogger<AuditVi
 
         try
         {
-            var runsJson = await discord.GetAsync("runs?select=run_id,user_id,snapshot,history,subida&activa=eq.true");
+            var runsJson = await discord.GetAsync(ShowArchived
+                ? "runs?select=run_id,user_id,activa,snapshot,history,subida&order=subida.desc"
+                : "runs?select=run_id,user_id,activa,snapshot,history,subida&activa=eq.true");
             var uploadsJson = await discord.GetAsync("subidas?select=run_id,eventos,huella,puntos,llegada&order=llegada");
 
             if (runsJson is null || uploadsJson is null)
@@ -106,13 +119,13 @@ public sealed partial class AuditViewModel(DiscordLogin discord, ILogger<AuditVi
                 var result = SnapshotAudit.Check(snapshot, history);
                 var log = uploads[run.Run_id].ToList();
 
-                rows.Add(new AuditRow(run.User_id, snapshot.PlayerName, snapshot.Points, snapshot.EventCount,
+                rows.Add(new AuditRow(run.Run_id, run.Activa, run.User_id, snapshot.PlayerName, snapshot.Points, snapshot.EventCount,
                     Say(result.Verdict), result.Detail, result.Verdict == AuditVerdict.Consistent,
                     log.Count, Rewinds(log), run.Subida.LocalDateTime.ToString("dd/MM HH:mm")));
             }
 
             Rows.Clear();
-            foreach (var row in rows.OrderBy(r => r.Ok).ThenByDescending(r => r.Points)) Rows.Add(row);
+            foreach (var row in rows.OrderByDescending(r => r.Active).ThenBy(r => r.Ok).ThenByDescending(r => r.Points)) Rows.Add(row);
 
             Status = rows.Count == 0
                 ? "Todavía no ha subido nadie su run."
@@ -134,7 +147,6 @@ public sealed partial class AuditViewModel(DiscordLogin discord, ILogger<AuditVi
     /// Archives a player's run so they can start again from zero. Nothing is deleted: the run stays on the server for
     /// the audit, and the reset is logged. Only an organiser can do it (<c>reiniciar_run</c>, 07-una-run.sql).
     /// </summary>
-    [RelayCommand(CanExecute = nameof(CanAct))]
     private async Task ResetAsync(AuditRow? row)
     {
         if (row is null || System.Windows.MessageBox.Show(
@@ -160,6 +172,41 @@ public sealed partial class AuditViewModel(DiscordLogin discord, ILogger<AuditVi
 
         await RefreshAsync();
         Status = $"Run de {row.Player} reiniciada. Ya puede crear una nueva.";
+    }
+
+    /// <summary>The row's button: resets an active run, or brings an archived one back.</summary>
+    [RelayCommand(CanExecute = nameof(CanAct))]
+    private Task ActAsync(AuditRow? row) => row is { Active: false } ? ReactivateAsync(row) : ResetAsync(row);
+
+    /// <summary>
+    /// Undoes a reset: the archived run becomes the player's active run again. Refused by the server if they have
+    /// already started another one; reset that first (<c>reactivar_run</c>, 10-control.sql).
+    /// </summary>
+    private async Task ReactivateAsync(AuditRow row)
+    {
+        if (System.Windows.MessageBox.Show(
+                $"¿Reactivar esta run de {row.Player} ({row.Points} puntos, {row.Events} eventos)?\n\n" +
+                "Vuelve a contar en el torneo. Si ya tiene otra run activa, reiníciala antes.",
+                "Reactivar run", System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Question)
+            != System.Windows.MessageBoxResult.Yes)
+        {
+            return;
+        }
+
+        try
+        {
+            await discord.CallAsync("reactivar_run", JsonSerializer.Serialize(new { run = row.RunId }));
+            logger.LogInformation("Run {Run} de {Player} reactivada", row.RunId, row.Player);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "No se pudo reactivar la run {Run}", row.RunId);
+            Status = $"No se ha podido reactivar. Si {row.Player} ya tiene otra run activa, reiníciala antes.";
+            return;
+        }
+
+        await RefreshAsync();
+        Status = $"Run de {row.Player} reactivada.";
     }
     /// <summary>Uploads where the run went backwards (fewer events) or was rewritten (same count, other head).</summary>
     private static string Rewinds(List<UploadRow> log) =>
