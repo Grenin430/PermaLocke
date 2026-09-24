@@ -85,6 +85,8 @@ public sealed partial class RouletteViewModel : SectionViewModel
         PokemonSpriteService sprites, ILogger<RouletteViewModel> logger)
         : base("RULETA", "Lo que la ruleta diga, va")
     {
+        Fleeting.Fade(this, nameof(Status));
+
         _roulette = roulette;
         _runContext = runContext;
         _sprites = sprites;

@@ -64,6 +64,20 @@ public sealed class GiftServiceTests
         Assert.Equal("por ganar el combate", claim.Reason);
     }
 
+    /// <summary>A sanction takes the points and says in the history that it was an adjustment, not a gift.</summary>
+    [Fact]
+    public async Task An_adjustment_takes_points_and_is_recorded_as_one()
+    {
+        var (gifts, log, run, _) = Build();
+
+        var result = await gifts.ClaimAsync(run, Gift(points: -75) with { Adjustment = true });
+
+        Assert.True(result.Collected);
+        var all = await log.GetAllAsync(run.Id);
+        Assert.Equal(-75, all.Sum(e => e.PointsDelta));
+        Assert.StartsWith("Ajuste de Grenin", Assert.Single(all, e => e.Type == GameEventType.AdminGiftClaimed).Description);
+    }
+
     /// <summary>The whole point of «once»: the same gift twice is one gift.</summary>
     [Fact]
     public async Task The_same_gift_cannot_be_collected_twice()

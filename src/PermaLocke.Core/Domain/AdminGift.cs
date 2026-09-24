@@ -21,12 +21,16 @@ public sealed record GiftItem(int Id, string Name, int Amount);
 /// </remarks>
 public sealed record AdminGift
 {
-    public const int CurrentSchema = 1;
+    /// <summary>2 since point adjustments (2026-09-24). A plain gift is still written as 1, so older players still get it.</summary>
+    public const int CurrentSchema = 2;
+
+    /// <summary>The schema an adjustment is written with: an older player, who would let it wait forever, does not see it.</summary>
+    public const int AdjustmentSchema = 2;
 
     /// <summary>What <see cref="To"/> says when the gift is for everybody.</summary>
     public const string Everybody = "todos";
 
-    public int Schema { get; init; } = CurrentSchema;
+    public int Schema { get; init; } = 1;
 
     public required Guid Id { get; init; }
 
@@ -49,6 +53,12 @@ public sealed record AdminGift
     public IReadOnlyDictionary<string, int> Rolls { get; init; } = new Dictionary<string, int>();
 
     public int WonderTrades { get; init; }
+
+    /// <summary>
+    /// A points adjustment by the organiser (a sanction or a correction): the player's application applies it on its own,
+    /// without asking, because a penalty that has to be collected is one nobody collects. Only points.
+    /// </summary>
+    public bool Adjustment { get; init; }
 
     /// <summary>True when this gift is addressed to that player.</summary>
     public bool IsFor(Guid playerId) =>

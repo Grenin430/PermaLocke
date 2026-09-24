@@ -56,6 +56,8 @@ public sealed partial class ShopViewModel : SectionViewModel
         IAppDialogs dialogs, ILogger<ShopViewModel> logger)
         : base("TIENDA", "Objetos a cambio de puntos")
     {
+        Fleeting.Fade(this, nameof(Status), nameof(Problem));
+
         _shop = shop;
         _runs = runs;
         _sprites = sprites;

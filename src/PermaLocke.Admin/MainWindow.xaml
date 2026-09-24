@@ -17,6 +17,7 @@
             <Button DockPanel.Dock="Right" Content="AUDITORÍA DEL TORNEO" Click="OnAudit" Margin="0,0,8,0" />
             <Button DockPanel.Dock="Right" Content="LISTA DEL TORNEO" Click="OnWhitelist" Margin="0,0,8,0" />
             <Button DockPanel.Dock="Right" Content="ANUNCIOS" Click="OnAnnouncements" Margin="0,0,8,0" />
+            <Button DockPanel.Dock="Right" Content="CONSUMO" Click="OnUsage" Margin="0,0,8,0" />
             <Button DockPanel.Dock="Right" Content="ENTRAR CON DISCORD" Style="{StaticResource Primary}" Command="{Binding SignInCommand}" Margin="0,0,8,0"
                     Visibility="{Binding IsSignedOut, Converter={StaticResource BoolToVisibility}}" />
             <!-- La cuenta con la que estás dentro, con su foto de Discord. -->
@@ -201,6 +202,23 @@
                         <TextBlock Foreground="{StaticResource Faint}" FontSize="11.5" Margin="0,10,0,0"
                                    TextWrapping="Wrap"
                                    Text="El jugador lo recoge la próxima vez que abra PermaLocke." />
+
+                        <!-- AJUSTAR PUNTOS, aparte del regalo: no se recoge, la app del jugador lo aplica sola. -->
+                        <Border Background="{StaticResource FaceHigh}" Padding="12,10" Margin="0,22,0,0">
+                            <StackPanel>
+                                <pixel:PixelText Text="AJUSTAR PUNTOS" Style="{StaticResource Heading}" Margin="0,0,0,4" />
+                                <TextBlock Foreground="{StaticResource Faint}" FontSize="11.5" TextWrapping="Wrap" Margin="0,0,0,10"
+                                           Text="Para sanciones y correcciones. No es un regalo: el jugador no tiene que recoger nada, su PermaLocke lo aplica solo en unos segundos (o al abrirlo, si lo tiene cerrado)." />
+                                <DockPanel>
+                                    <TextBox DockPanel.Dock="Left" Text="{Binding AdjustPoints, UpdateSourceTrigger=PropertyChanged}" Width="90"
+                                             ToolTip="Puntos: en negativo para quitar" />
+                                    <TextBox Text="{Binding AdjustReason, UpdateSourceTrigger=PropertyChanged}" Margin="8,0,0,0"
+                                             ToolTip="Motivo: lo lee el jugador y queda en su historial" />
+                                </DockPanel>
+                                <Button Content="AJUSTAR YA" Style="{StaticResource Primary}" Command="{Binding AdjustCommand}"
+                                        IsEnabled="{Binding CanAdjust}" HorizontalAlignment="Left" Margin="0,8,0,0" MinWidth="120" />
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
                 </ScrollViewer>
             </pixel:PixelWindow>

@@ -46,6 +46,8 @@ public sealed partial class GiftInboxViewModel : ObservableObject
 
     public GiftInboxViewModel(GiftInbox inbox, IUiDispatcher ui)
     {
+        Fleeting.Fade(this, nameof(Status));
+
         _inbox = inbox;
         _ui = ui;
 

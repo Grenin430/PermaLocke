@@ -1,0 +1,73 @@
+<Window x:Class="PermaLocke.Admin.UsageWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:pixel="clr-namespace:PermaLocke.App.Views.Pixel"
+        xmlns:views="clr-namespace:PermaLocke.App.Views"
+        Title="PermaLocke Admin · Consumo" Height="640" Width="760" Icon="Assets/PermaLocke.Admin.ico"
+        Background="{StaticResource PxBaseBrush}" WindowStartupLocation="CenterOwner">
+    <!-- CONSUMO: lo que ocupa el torneo frente a los 500 MB del plan gratis de Supabase (11-consumo.sql). -->
+    <DockPanel Margin="18">
+        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,14">
+            <Button DockPanel.Dock="Right" Content="ACTUALIZAR" Command="{Binding RefreshCommand}" />
+            <StackPanel VerticalAlignment="Center">
+                <pixel:PixelText Text="CONSUMO" Scale="3" Tight="True" Colour="{StaticResource PxText}"
+                                 Shadow="{StaticResource PxShadow}" />
+                <TextBlock Text="{Binding Status}" Foreground="{StaticResource Faint}" FontSize="11.5" Margin="0,4,0,0"
+                           TextWrapping="Wrap" />
+            </StackPanel>
+        </DockPanel>
+
+        <pixel:PixelWindow DockPanel.Dock="Top" Title="BASE DE DATOS" Icon="IconChart" Margin="0,0,0,12">
+            <StackPanel>
+                <pixel:PixelText Text="{Binding Total}" Scale="2" Tight="True" Colour="{StaticResource PxGold}" />
+                <views:PixelBar Value="{Binding Share}" Height="18" Margin="0,10,0,0" />
+            </StackPanel>
+        </pixel:PixelWindow>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <pixel:PixelWindow Title="TABLAS" Icon="IconGrid">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding Tables}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <DockPanel Margin="0,0,0,6">
+                                    <TextBlock DockPanel.Dock="Right" Text="{Binding Size}" Foreground="{StaticResource Faint}" />
+                                    <TextBlock>
+                                        <Run Text="{Binding Nombre, Mode=OneWay}" /><Run Text=" · " Foreground="{StaticResource Faint}" /><Run
+                                            Text="{Binding Filas, Mode=OneWay}" Foreground="{StaticResource Faint}" /><Run
+                                            Text=" filas" Foreground="{StaticResource Faint}" />
+                                    </TextBlock>
+                                </DockPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </pixel:PixelWindow>
+
+            <pixel:PixelWindow Grid.Column="2" Title="RUNS" Icon="IconPeople">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding Runs}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <DockPanel Margin="0,0,0,6">
+                                    <TextBlock DockPanel.Dock="Right" Text="{Binding Size}" Foreground="{StaticResource Faint}" />
+                                    <TextBlock>
+                                        <Run Text="{Binding Label, Mode=OneWay}" /><Run Text=" · " Foreground="{StaticResource Faint}" /><Run
+                                            Text="{Binding Eventos, Mode=OneWay}" Foreground="{StaticResource Faint}" /><Run
+                                            Text=" eventos" Foreground="{StaticResource Faint}" />
+                                    </TextBlock>
+                                </DockPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </pixel:PixelWindow>
+        </Grid>
+    </DockPanel>
+</Window>

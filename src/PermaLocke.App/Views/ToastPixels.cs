@@ -39,7 +39,7 @@ internal static class ToastPixels
     /// </remarks>
     public static Color AccentOf(ToastKind kind) => kind switch
     {
-        ToastKind.Shiny => Rgb(0xD8, 0xA8, 0x3C),
+        ToastKind.Shiny or ToastKind.Gift => Rgb(0xD8, 0xA8, 0x3C),
         ToastKind.BallsTaken => Rgb(0xCF, 0x50, 0x44),
         ToastKind.BallsBack or ToastKind.Reward => Rgb(0x58, 0xA5, 0x6E),
         ToastKind.AllowedCapture => Rgb(0x5B, 0x8A, 0xC4),

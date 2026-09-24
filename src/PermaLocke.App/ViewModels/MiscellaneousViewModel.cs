@@ -75,6 +75,8 @@ public sealed partial class MiscellaneousViewModel : SectionViewModel
         ILogger<MiscellaneousViewModel> logger)
         : base("MISCELÁNEA", "Premios y herramientas de pruebas")
     {
+        Fleeting.Fade(this, nameof(Status));
+
         _bag = bag;
         _delivery = delivery;
         _items = items;

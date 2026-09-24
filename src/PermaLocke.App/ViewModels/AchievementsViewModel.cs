@@ -97,6 +97,8 @@ public sealed partial class AchievementsViewModel : SectionViewModel
         ILogger<AchievementsViewModel> logger)
         : base("LOGROS", "Los 21 de la competición, lo que llevas y lo que pagan")
     {
+        Fleeting.Fade(this, nameof(Status));
+
         _achievements = achievements;
         _penalties = penalties;
         _points = points;

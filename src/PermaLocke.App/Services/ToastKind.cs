@@ -30,6 +30,12 @@ public enum ToastKind
     /// <summary>A prize was handed over.</summary>
     Reward,
 
+    /// <summary>The organizer left a gift to collect.</summary>
+    Gift,
+
+    /// <summary>The organizer posted an announcement for the tournament.</summary>
+    Announcement,
+
     /// <summary>Something PermaLocke could not do and the player should know.</summary>
     Warning
 }

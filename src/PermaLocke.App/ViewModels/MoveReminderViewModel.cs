@@ -161,6 +161,8 @@ public sealed partial class MoveReminderViewModel : SectionViewModel
         ILogger<MoveReminderViewModel> logger)
         : base("MOVIMIENTOS", "El recuerda-movimientos: lo que tu Pokémon puede volver a aprender, como en Añil")
     {
+        Fleeting.Fade(this, nameof(Status));
+
         _boxes = boxes;
         _forecast = forecast;
         _sprites = sprites;

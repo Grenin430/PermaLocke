@@ -21,6 +21,8 @@ public sealed record Toast(ToastKind Kind, string Title, string Message, BitmapS
         ToastKind.TeamWipe => "EQUIPO CAÍDO",
         ToastKind.Reward => "PREMIO",
         ToastKind.Warning => "ATENCIÓN",
+        ToastKind.Gift => "REGALO",
+        ToastKind.Announcement => "ANUNCIO",
         _ => "PERMALOCKE"
     };
 

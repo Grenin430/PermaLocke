@@ -95,7 +95,7 @@ public sealed class GiftService(IEventStore events, IPointsService points, IItem
 
         if (gift.Points != 0)
         {
-            await points.AdjustAsync(run.Id, gift.Points, $"Regalo de {gift.From}: {gift.Reason}", gift.From, ct)
+            await points.AdjustAsync(run.Id, gift.Points, $"{(gift.Adjustment ? "Ajuste" : "Regalo")} de {gift.From}: {gift.Reason}", gift.From, ct)
                 .ConfigureAwait(false);
         }
 
@@ -157,7 +157,7 @@ public sealed class GiftService(IEventStore events, IPointsService points, IItem
             Type = GameEventType.AdminGiftClaimed,
             Source = EventSource.Admin,
             Actor = gift.From,
-            Description = $"Regalo de {gift.From}: {gift.Say()}.",
+            Description = $"{(gift.Adjustment ? "Ajuste" : "Regalo")} de {gift.From}: {gift.Say()}.",
             Reason = gift.Reason,
             Data = data
         }, ct).ConfigureAwait(false);

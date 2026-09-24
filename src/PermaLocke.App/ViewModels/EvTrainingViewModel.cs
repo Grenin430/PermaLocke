@@ -162,6 +162,8 @@ public sealed partial class EvTrainingViewModel : SectionViewModel
         IStatForecast forecast, IRunContext runContext, IPokemonRepository registered, ITypeLookup types,
         ILogger<EvTrainingViewModel> logger) : base("ENTRENAR EV", "Los EV de tu equipo y de tus cajas")
     {
+        Fleeting.Fade(this, nameof(TrainStatus));
+
         _boxes = boxes;
         _sprites = sprites;
         _training = training;

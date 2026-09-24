@@ -14,6 +14,9 @@ public partial class MainWindow : Window
     private void OnWhitelist(object sender, RoutedEventArgs e) =>
         new WhitelistWindow(((AdminViewModel)DataContext).Whitelist) { Owner = this }.Show();
 
+    private void OnUsage(object sender, RoutedEventArgs e) =>
+        new UsageWindow(((AdminViewModel)DataContext).Usage) { Owner = this }.Show();
+
     private void OnAnnouncements(object sender, RoutedEventArgs e) =>
         new AnnouncementsWindow(((AdminViewModel)DataContext).Announcements) { Owner = this }.Show();
 

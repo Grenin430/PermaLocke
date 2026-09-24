@@ -279,7 +279,7 @@ public sealed class CommunityService : INotifyPropertyChanged
 
         if (latest is not null && _lastAnnouncement >= 0 && latest.Id != _lastAnnouncement)
         {
-            _notifier.Say(ToastKind.Info, "Anuncio del torneo", latest.Texto);
+            _notifier.Say(ToastKind.Announcement, "Anuncio del torneo", latest.Texto);
         }
 
         _lastAnnouncement = latest?.Id ?? 0;

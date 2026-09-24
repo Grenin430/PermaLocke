@@ -37,6 +37,8 @@ public sealed partial class PokePasteViewModel : SectionViewModel
     public PokePasteViewModel(PlayerSave save, ILocationLookup locations,
         ILogger<PokePasteViewModel> logger) : base("POKE PASTE")
     {
+        Fleeting.Fade(this, nameof(Status));
+
         _logger = logger;
 
         _english = new SaveBoxReader(save, locations, "en", NullLogger<SaveBoxReader>.Instance);

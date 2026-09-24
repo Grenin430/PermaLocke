@@ -33,6 +33,8 @@ public sealed partial class SettingsViewModel : SectionViewModel
         ILogger<SettingsViewModel> logger)
         : base("CONFIGURACIÓN", "Ajustes de la aplicación")
     {
+        Fleeting.Fade(this, nameof(Status));
+
         _settings = settings;
         _windowSizes = windowSizes;
         _notifier = notifier;

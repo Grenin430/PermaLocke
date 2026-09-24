@@ -45,8 +45,10 @@ public sealed partial class AdminViewModel : ObservableObject
     /// <summary>The announcements to every player, in their own window.</summary>
     public AnnouncementsViewModel Announcements { get; }
 
+    public UsageViewModel Usage { get; }
+
     public AdminViewModel(GiftDesk desk, DiscordLogin discord, IGachaCatalog gacha, AuditViewModel audit,
-        WhitelistViewModel whitelist, AnnouncementsViewModel announcements, ILogger<AdminViewModel> logger)
+        WhitelistViewModel whitelist, AnnouncementsViewModel announcements, UsageViewModel usage, ILogger<AdminViewModel> logger)
     {
         ArgumentNullException.ThrowIfNull(gacha);
 
@@ -54,6 +56,7 @@ public sealed partial class AdminViewModel : ObservableObject
         Audit = audit;
         Whitelist = whitelist;
         Announcements = announcements;
+        Usage = usage;
         _discord = discord;
         _logger = logger;
 
@@ -189,6 +192,7 @@ public sealed partial class AdminViewModel : ObservableObject
         Chosen.Clear();
         foreach (var player in players) Chosen.Add(player);
         OnPropertyChanged(nameof(CanSend));
+        OnPropertyChanged(nameof(CanAdjust));
     }
 
     [ObservableProperty]
@@ -247,6 +251,63 @@ public sealed partial class AdminViewModel : ObservableObject
         }
     }
 
+
+    /// <summary>An adjustment is points and a reason, nothing else: the player cannot refuse it, so it carries no prizes.</summary>
+    public bool CanAdjust => AdjustReason.Trim().Length > 0 && Chosen.Count > 0 && AdjustPoints != 0;
+
+    /// <summary>The adjustment has its own fields, apart from the gift's, so one is never sent as the other.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanAdjust))]
+    private int _adjustPoints;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanAdjust))]
+    private string _adjustReason = string.Empty;
+
+    /// <summary>
+    /// Adds or takes points from the chosen players on the organiser's say, applied by their application without asking
+    /// (2026-09-24). It travels as a gift marked <see cref="AdminGift.Adjustment"/>, so it lands in their history with
+    /// the reason, like everything else.
+    /// </summary>
+    [RelayCommand]
+    private async Task AdjustAsync()
+    {
+        if (!CanAdjust || System.Windows.MessageBox.Show(
+                $"{AdjustPoints:+#;-#} puntos a {string.Join(", ", Chosen.Select(p => p.Name))}.\n\nMotivo: {AdjustReason.Trim()}\n\n"
+                + "Se aplica solo, sin que el jugador lo recoja, y queda en su historial.",
+                "Ajustar puntos", System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Warning)
+            != System.Windows.MessageBoxResult.Yes)
+        {
+            return;
+        }
+
+        var adjustments = Chosen.Select(player => new AdminGift
+        {
+            Schema = AdminGift.AdjustmentSchema,
+            Id = Guid.NewGuid(),
+            From = AdminName,
+            To = player.Id.ToString(),
+            Reason = AdjustReason.Trim(),
+            CreatedAt = DateTimeOffset.Now,
+            Points = AdjustPoints,
+            Adjustment = true
+        }).ToList();
+
+        try
+        {
+            foreach (var adjustment in adjustments) await _desk.SendAsync(adjustment);
+            Status = $"Ajuste para {string.Join(", ", Chosen.Select(p => p.Name))}: {adjustments[0].Say()}. Su PermaLocke lo aplica solo en unos segundos, o al abrirlo.";
+
+            AdjustPoints = 0;
+            AdjustReason = string.Empty;
+            await RefreshAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Falló mandar el ajuste");
+            Status = "No se ha podido mandar el ajuste.";
+        }
+    }
     [RelayCommand]
     private void Clear()
     {
@@ -260,6 +321,7 @@ public sealed partial class AdminViewModel : ObservableObject
         }
 
         OnPropertyChanged(nameof(CanSend));
+        OnPropertyChanged(nameof(CanAdjust));
     }
 
     /// <summary>Takes back a gift nobody has collected yet.</summary>

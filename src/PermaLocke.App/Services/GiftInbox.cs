@@ -36,15 +36,21 @@ public sealed class GiftInbox : INotifyPropertyChanged
     private readonly GiftService _gifts;
     private readonly IRunContext _runContext;
     private readonly ILogger<GiftInbox> _logger;
+    private readonly Notifier _notifier;
+
+    /// <summary>Gifts already announced over the game, so each one is said once per session.</summary>
+    private readonly HashSet<Guid> _told = [];
     private readonly DispatcherTimer _timer = new() { Interval = LookEvery };
     private bool _busy;
 
-    public GiftInbox(DiscordLogin discord, GiftService gifts, IRunContext runContext, ILogger<GiftInbox> logger)
+    public GiftInbox(DiscordLogin discord, GiftService gifts, IRunContext runContext, Notifier notifier,
+        ILogger<GiftInbox> logger)
     {
         _discord = discord;
         _gifts = gifts;
         _runContext = runContext;
         _logger = logger;
+        _notifier = notifier;
 
         _timer.Tick += (_, _) => _ = LookAsync();
         _runContext.CurrentChanged += (_, _) => _ = LookAsync();
@@ -92,9 +98,23 @@ public sealed class GiftInbox : INotifyPropertyChanged
                 .Where(gift => gift is not null && gift.Id != Guid.Empty && gift.Schema <= AdminGift.CurrentSchema)
                 .Select(gift => gift!)
                 .ToList();
-            var collected = await _gifts.CollectedAsync(run.Id);
+            var collected = (await _gifts.CollectedAsync(run.Id)).ToHashSet();
 
-            Set([.. mine.Where(gift => !collected.Contains(gift.Id))],
+            // Los ajustes del organizador no se recogen: se aplican solos, con su evento como cualquier regalo.
+            foreach (var adjustment in mine.Where(gift => gift.Adjustment && !collected.Contains(gift.Id)))
+            {
+                var applied = await _gifts.ClaimAsync(run, adjustment);
+
+                if (applied.Collected)
+                {
+                    collected.Add(adjustment.Id);
+                    _told.Add(adjustment.Id);
+                    _logger.LogInformation("Ajuste {Id} de {From} aplicado: {What}", adjustment.Id, adjustment.From, adjustment.Say());
+                    _notifier.Say(ToastKind.Warning, $"Ajuste de {adjustment.From}", $"{adjustment.Say()}. {adjustment.Reason}");
+                }
+            }
+
+            Set([.. mine.Where(gift => !gift.Adjustment && !collected.Contains(gift.Id))],
                 [.. mine.Where(gift => collected.Contains(gift.Id)).Take(6)]);
         }
         catch (Exception ex)
@@ -136,6 +156,13 @@ public sealed class GiftInbox : INotifyPropertyChanged
 
     private void Set(IReadOnlyList<AdminGift> pending, IReadOnlyList<AdminGift> collected)
     {
+        // Encima del juego también (2026-09-24): con la app minimizada, la bandeja no la ve nadie. Uno por regalo, y solo
+        // la primera vez que se ve en esta sesión; al arrancar avisa de los que ya estaban esperando.
+        foreach (var gift in pending.Where(gift => _told.Add(gift.Id)))
+        {
+            _notifier.Say(ToastKind.Gift, $"Regalo de {gift.From}", $"{gift.Say()}. Recógelo en PermaLocke, en el regalo de arriba.");
+        }
+
         Pending = pending;
         Collected = collected;
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(null));

@@ -245,6 +245,8 @@ public sealed partial class GachaViewModel : SectionViewModel
         PermaLocke.Rules.Services.ProgressService progress, ILogger<GachaViewModel> logger)
         : base("GACHA", "Gasta puntos y llévate un Pokémon: a tu equipo si cabe, si no al PC")
     {
+        Fleeting.Fade(this, nameof(Status));
+
         _gacha = gacha;
         _runContext = runContext;
         _points = points;

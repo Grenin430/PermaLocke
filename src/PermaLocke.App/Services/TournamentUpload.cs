@@ -16,7 +16,7 @@ namespace PermaLocke.App.Services;
 /// account on the whitelist can write (<c>tools/supabase/02-runs.sql</c>).
 /// </para>
 /// <para>
-/// When: once at start, then whenever an event has been stored, at most every five minutes, and on closing. Nothing is sent while the run
+/// When: once at start, then whenever an event has been stored, at most every two minutes, and on closing. Nothing is sent while the run
 /// has not changed. A failed upload is logged and tried again on the next change; playing never waits for it.
 /// </para>
 /// </remarks>
@@ -26,8 +26,8 @@ public sealed class TournamentUpload(
     RunActivity activity,
     ILogger<TournamentUpload> logger)
 {
-    // Cada 5 minutos como mucho, y al cerrar: cada subida reescribe el historial entero en el servidor.
-    private static readonly TimeSpan Every = TimeSpan.FromMinutes(5);
+    // Cada 2 minutos como mucho (antes 5; cambiado el 2026-09-24 a petición del organizador), y al cerrar: cada subida reescribe el historial entero en el servidor.
+    private static readonly TimeSpan Every = TimeSpan.FromMinutes(2);
 
     // Los tipos de evento como texto ("AchievementUnlocked"), para que el servidor los lea sin saber el orden del enum.
     private static readonly JsonSerializerOptions Options = new()
