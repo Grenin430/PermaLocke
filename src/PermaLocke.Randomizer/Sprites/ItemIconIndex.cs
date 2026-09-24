@@ -25,8 +25,8 @@ namespace PermaLocke.Randomizer.Sprites;
 /// </remarks>
 public static class ItemIconIndex
 {
-    /// <summary>Last item id whose icon really is <c>id - 1</c>. Verified up to the four Mulches.</summary>
-    public const int LastDirectItem = 100;
+    /// <summary>Last item id whose icon really is <c>id - 1</c>. Verified up to the Odd Keystone (2026-09-24: the evolution stones 107-110).</summary>
+    public const int LastDirectItem = 111;
 
     private static readonly Dictionary<int, int> Measured = new()
     {
@@ -34,9 +34,16 @@ public static class ItemIconIndex
         // el Caramelo Raro, el Trozo Estrella, la Escama Corazon y los cuatro Abonos.
 
         // Zona de -18: bayas y objetos equipados tempranos.
+        [174] = 156, // Baya Tamate
         [157] = 139, // Baya Ziuela
         [158] = 140, // Baya Zidra
         [214] = 196, // Hierba Blanca
+        [221] = 203, // Roca del Rey
+        [226] = 208, [227] = 209, // Diente y Escama Marina
+        [229] = 211, // Piedra Eterna
+        [233] = 215, // Revestimiento Metálico
+        [235] = 217, // Escama Dragón
+        [252] = 234, // Mejora
         [220] = 202, // Cinta Elegida
         [234] = 216, // Restos
 
@@ -54,15 +61,20 @@ public static class ItemIconIndex
         // anclada por el objeto de delante: el icono 308 es un colmillo blanco curvado, o sea el
         // Colmillo Agudo (327), y el 309 ya es un disco. Corrobora que el 310 es otro disco de
         // distinto color, que es la tirada de veinte tipos empezando.
+        [321] = 302, [322] = 303, [323] = 304, [324] = 305, // Protector, Electrizador, Magmatizador, Disco Extraño
+        [325] = 306, [326] = 307, [327] = 308, // Tela Terrible, Garra Afilada, Colmillo Agudo
+
         [328] = 309, // MT01
 
         // Zona de -127: despues de las cien MT, que gastan solo veinte iconos.
+        [537] = 410, // Escama Bella
         [538] = 411, // Mineral Evolutivo
         [540] = 413, // Casco Dentado
 
         // Zona de -135.
         [640] = 505, // Chaleco Asalto
         [645] = 510, // Capsula Habilidad
+        [646] = 511, [647] = 512, // Dulce de Nata, Saquito Fragante
         [650] = 515, // Gafa Protectora
 
         // Las treinta megapiedras de 656 a 685, seguidas, en los iconos 521 a 550. El desfase
@@ -116,6 +128,7 @@ public static class ItemIconIndex
         // sola de las tres se podria confundir con cualquier cosa redonda; las tres en ese orden no.
         [795] = 649, // Chapa Plateada
         [796] = 650, // Chapa Dorada
+        [849] = 698, // Piedra Hielo
     };
 
     /// <summary>Iconos que el contenedor del cartucho trae. Más significa que hay un mod.</summary>

@@ -1,6 +1,7 @@
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
@@ -31,6 +32,17 @@ public partial class MainWindow : Window
         Header.SizeChanged += (_, _) => AlolaStrip.Height = Header.ActualHeight + 20;
         ((INotifyCollectionChanged)NavList.Items).CollectionChanged +=
             (_, _) => Dispatcher.BeginInvoke(FitAlolaCorner, DispatcherPriority.Loaded);
+
+        // Un ListBox captura el ratón al pulsar y va seleccionando lo que pisa mientras el botón siga abajo: arrastrar
+        // por la barra cambiaba de sección sin soltar. Sin captura, solo cambia lo que se pulsa. Vale también para la
+        // lista de pestañas de EQUIPO y TORNEO, que avisa por aquí al ser hija.
+        NavList.AddHandler(Mouse.GotMouseCaptureEvent, new MouseEventHandler((_, e) =>
+        {
+            if (e.OriginalSource is System.Windows.Controls.ListBox list)
+            {
+                list.ReleaseMouseCapture();
+            }
+        }), handledEventsToo: true);
     }
 
     /// <summary>

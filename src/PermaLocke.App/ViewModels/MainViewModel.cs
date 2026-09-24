@@ -14,7 +14,8 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly HomeViewModel _home;
     private readonly RouletteViewModel _roulette;
     private readonly RouletteService _wheel;
-    private readonly MiscellaneousViewModel _miscellaneous;
+    private readonly GroupSectionViewModel _play;
+    private readonly GroupSectionViewModel _points;
     private readonly PermaLocke.App.Services.IUiDispatcher _ui;
     private readonly ILogger<MainViewModel> _logger;
 
@@ -25,7 +26,7 @@ public sealed partial class MainViewModel : ObservableObject
         MapViewModel map,
         RouletteViewModel roulette, RouletteService wheel, SettingsViewModel settings,
         CemeteryViewModel cemetery, SyncViewModel sync, BattleModeViewModel battle,
-        GiftInboxViewModel gifts,
+        GiftInboxViewModel gifts, InformationViewModel information,
         PermaLocke.App.Services.GameLinkMonitor gameLink,
         PermaLocke.App.Services.IUiDispatcher ui,
         PermaLocke.App.Services.AlolaSky sky,
@@ -37,7 +38,6 @@ public sealed partial class MainViewModel : ObservableObject
         _home = home;
         _roulette = roulette;
         _wheel = wheel;
-        _miscellaneous = miscellaneous;
         _ui = ui;
         _runContext = runContext;
         _logger = logger;
@@ -50,23 +50,41 @@ public sealed partial class MainViewModel : ObservableObject
             return Task.CompletedTask;
         });
 
+        // Grupos (2026-09-24): la barra tenía 17 secciones. Las que tratan de lo mismo cuelgan de una entrada.
+        var play = new GroupSectionViewModel("JUGAR", "IconPlay", logger, launcher, randomizer);
+        var points = new GroupSectionViewModel("PUNTOS", "IconPoints", logger, shop);
+        var team = new GroupSectionViewModel("EQUIPO", "IconGrid", logger, viewer, evTraining, moveReminder, pokePaste);
+        var tournament = new GroupSectionViewModel("TORNEO", "IconTrophy", logger, sync, achievements, battle, cemetery);
+        var info = new GroupSectionViewModel("INFORMACIÓN", "IconDocument", logger,
+            new InformationPageViewModel("EVOLUCIONES", false, information),
+            new InformationPageViewModel("TIENDAS", true, information),
+            miscellaneous);
+        _play = play;
+        _points = points;
+        foreach (var group in new[] { play, points, team, tournament, info })
+        {
+            group.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName == nameof(GroupSectionViewModel.SelectedPage) && ReferenceEquals(SelectedSection, group))
+                {
+                    OnPropertyChanged(nameof(NeedLabel));
+                    OnPropertyChanged(nameof(NeedState));
+                    OnPropertyChanged(nameof(ShowsNeed));
+                    OnPropertyChanged(nameof(ShowsPlayButton));
+                }
+            };
+        }
+
         Sections =
         [
-            launcher,
+            play,
             home,
-            randomizer,
             gacha,
-            shop,
-            achievements,
+            points,
             map,
-            viewer,
-            evTraining,
-            moveReminder,
-            pokePaste,
-            cemetery,
-            sync,
-            battle,
-            miscellaneous,
+            team,
+            tournament,
+            info,
             settings
         ];
 
@@ -75,17 +93,14 @@ public sealed partial class MainViewModel : ObservableObject
         // Los enlaces de debajo de la barra de JUGAR llevan a otras secciones por su título.
         launcher.NavigateRequested += title =>
         {
-            if (Sections.FirstOrDefault(s => s.Title == title) is { } section)
-            {
-                SelectedSection = section;
-            }
+            Navigate(title);
         };
 
         // ENTRENAR EV desde la ficha del visor: el banco se abre ya con ese Pokémon.
         viewer.TrainRequested += pokemon =>
         {
             evTraining.Focus(pokemon);
-            SelectedSection = evTraining;
+            Navigate(evTraining.Title);
         };
 
         // The balance is computed by HOME when it refreshes; mirroring it here avoids
@@ -118,7 +133,7 @@ public sealed partial class MainViewModel : ObservableObject
     private void UpdateRoulette()
     {
         var wanted = _runContext.Current is { } run && _wheel.PlaysWithTheWheel(run);
-        var there = Sections.Contains(_roulette);
+        var there = _points.Pages.Contains(_roulette);
 
         if (wanted == there)
         {
@@ -127,19 +142,18 @@ public sealed partial class MainViewModel : ObservableObject
 
         if (wanted)
         {
-            var at = Sections.IndexOf(_miscellaneous);
-            Sections.Insert(at < 0 ? Sections.Count : at, _roulette);
+            _points.Pages.Add(_roulette);
             return;
         }
 
-        // Si la sección que se va es la que está abierta, se vuelve a HOME: dejar seleccionada una
-        // sección que ya no está en la lista deja la pantalla en blanco.
-        if (ReferenceEquals(SelectedSection, _roulette))
+        // Si la página que se va es la que está abierta, PUNTOS vuelve a la TIENDA: dejar elegida una página que ya
+        // no está en la lista deja la pantalla en blanco.
+        if (ReferenceEquals(_points.SelectedPage, _roulette))
         {
-            SelectedSection = Sections[0];
+            _points.SelectedPage = _points.Pages[0];
         }
 
-        Sections.Remove(_roulette);
+        _points.Pages.Remove(_roulette);
     }
 
     public ObservableCollection<SectionViewModel> Sections { get; }
@@ -169,10 +183,14 @@ public sealed partial class MainViewModel : ObservableObject
     public bool ShowsNeed => SelectedSection.ShowsNeed;
 
     /// <summary>The header's play button is for every page but JUGAR itself, which has the big one.</summary>
-    public bool ShowsPlayButton => !ReferenceEquals(SelectedSection, Launcher);
+    public bool ShowsPlayButton => !(ReferenceEquals(SelectedSection, _play) && ReferenceEquals(_play.SelectedPage, Launcher));
 
     [CommunityToolkit.Mvvm.Input.RelayCommand]
-    private void OpenLauncher() => SelectedSection = Launcher;
+    private void OpenLauncher()
+    {
+        _play.SelectedPage = Launcher;
+        SelectedSection = _play;
+    }
 
     /// <summary>
     /// The badge, which says whether the section's requirement is <b>met</b> and not merely what it
@@ -227,6 +245,31 @@ public sealed partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private bool _hasPoints;
+
+    /// <summary>
+    /// Opens a section by its title, also when it hangs from a group. Pages first, so «JUGAR» opens the launcher page.
+    /// </summary>
+    public bool Navigate(string title)
+    {
+        foreach (var section in Sections)
+        {
+            if (section is GroupSectionViewModel group
+                && group.Pages.FirstOrDefault(p => string.Equals(p.Title, title, StringComparison.OrdinalIgnoreCase)) is { } page)
+            {
+                group.SelectedPage = page;
+                SelectedSection = group;
+                return true;
+            }
+
+            if (string.Equals(section.Title, title, StringComparison.OrdinalIgnoreCase))
+            {
+                SelectedSection = section;
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     /// <summary>Loads the section that is selected at startup.</summary>
     public Task InitialiseAsync() => ActivateAsync(SelectedSection);

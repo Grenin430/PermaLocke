@@ -1,0 +1,907 @@
+{
+  "_comentario": "Generado por RomTool «informacion» desde el juego con el mod de gen 8-9 y Data/randomizer.json. No se edita a mano.",
+  "evoluciones": [
+    {
+      "especie": 57,
+      "forma": 0,
+      "nombre": "Primeape",
+      "destino": 979,
+      "destinoForma": 0,
+      "destinoNombre": "Annihilape",
+      "como": "nivel",
+      "nivel": 35,
+      "objeto": 0,
+      "companero": 0,
+      "ahora": "al subir al nivel 35",
+      "antes": "al subir de nivel sabiendo Puño Furia"
+    },
+    {
+      "especie": 61,
+      "forma": 0,
+      "nombre": "Poliwhirl",
+      "destino": 186,
+      "destinoForma": 0,
+      "destinoNombre": "Politoed",
+      "como": "objetoDeDia",
+      "nivel": 0,
+      "objeto": 221,
+      "companero": 0,
+      "ahora": "subiendo de nivel de día llevando Roca del Rey",
+      "antes": "por intercambio llevando Roca del Rey"
+    },
+    {
+      "especie": 64,
+      "forma": 0,
+      "nombre": "Kadabra",
+      "destino": 65,
+      "destinoForma": 0,
+      "destinoNombre": "Alakazam",
+      "como": "nivel",
+      "nivel": 37,
+      "objeto": 0,
+      "companero": 0,
+      "ahora": "al subir al nivel 37",
+      "antes": "por intercambio"
+    },
+    {
+      "especie": 67,
+      "forma": 0,
+      "nombre": "Machoke",
+      "destino": 68,
+      "destinoForma": 0,
+      "destinoNombre": "Machamp",
+      "como": "nivel",
+      "nivel": 37,
+      "objeto": 0,
+      "companero": 0,
+      "ahora": "al subir al nivel 37",
+      "antes": "por intercambio"
+    },
+    {
+      "especie": 75,
+      "forma": 0,
+      "nombre": "Graveler",
+      "destino": 76,
+      "destinoForma": 0,
+      "destinoNombre": "Golem",
+      "como": "nivel",
+      "nivel": 37,
+      "objeto": 0,
+      "companero": 0,
+      "ahora": "al subir al nivel 37",
+      "antes": "por intercambio"
+    },
+    {
+      "especie": 79,
+      "forma": 0,
+      "nombre": "Slowpoke",
+      "destino": 199,
+      "destinoForma": 0,
+      "destinoNombre": "Slowking",
+      "como": "objeto",
+      "nivel": 0,
+      "objeto": 84,
+      "companero": 0,
+      "ahora": "usando Piedra Agua",
+      "antes": "por intercambio llevando Roca del Rey"
+    },
+    {
+      "especie": 93,
+      "forma": 0,
+      "nombre": "Haunter",
+      "destino": 94,
+      "destinoForma": 0,
+      "destinoNombre": "Gengar",
+      "como": "nivel",
+      "nivel": 37,
+      "objeto": 0,
+      "companero": 0,
+      "ahora": "al subir al nivel 37",
+      "antes": "por intercambio"
+    },
+    {
+      "especie": 95,
+      "forma": 0,
+      "nombre": "Onix",
+      "destino": 208,
+      "destinoForma": 0,
+      "destinoNombre": "Steelix",
+      "como": "objetoDeDia",
+      "nivel": 0,
+      "objeto": 233,
+      "companero": 0,
+      "ahora": "subiendo de nivel de día llevando Revest. Metálico",
+      "antes": "por intercambio llevando Revest. Metálico"
+    },
+    {
+      "especie": 108,
+      "forma": 0,
+      "nombre": "Lickitung",
+      "destino": 463,
+      "destinoForma": 0,
+      "destinoNombre": "Lickilicky",
+      "como": "nivel",
+      "nivel": 33,
+      "objeto": 0,
+      "companero": 0,
+      "ahora": "al subir al nivel 33",
+      "antes": "al subir de nivel sabiendo Desenrollar"
+    },
+    {
+      "especie": 112,
+      "forma": 0,
+      "nombre": "Rhydon",
+      "destino": 464,
+      "destinoForma": 0,
+      "destinoNombre": "Rhyperior",
+      "como": "objetoDeDia",
+      "nivel": 0,
+      "objeto": 321,
+      "companero": 0,
+      "ahora": "subiendo de nivel de día llevando Protector",
+      "antes": "por intercambio llevando Protector"
+    },
+    {
+      "especie": 114,
+      "forma": 0,
+      "nombre": "Tangela",
+      "destino": 465,
+      "destinoForma": 0,
+      "destinoNombre": "Tangrowth",
+      "como": "nivel",
+      "nivel": 38,
+      "objeto": 0,
+      "companero": 0,
+      "ahora": "al subir al nivel 38",
+      "antes": "al subir de nivel sabiendo Poder Pasado"
+    },
+    {
+      "especie": 117,
+      "forma": 0,
+      "nombre": "Seadra",
+      "destino": 230,
+      "destinoForma": 0,
+      "destinoNombre": "Kingdra",
+      "como": "objetoDeDia",
+      "nivel": 0,
+      "objeto": 235,
+      "companero": 0,
+      "ahora": "subiendo de nivel de día llevando Escama Dragón",
+      "antes": "por intercambio llevando Escama Dragón"
+    },
+    {
+      "especie": 123,
+      "forma": 0,
+      "nombre": "Scyther",
+      "destino": 212,
+      "destinoForma": 0,
+      "destinoNombre": "Scizor",
+      "como": "objetoDeDia",
+      "nivel": 0,
+      "objeto": 233,
+      "companero": 0,
+      "ahora": "subiendo de nivel de día llevando Revest. Metálico",
+      "antes": "por intercambio llevando Revest. Metálico"
+    },
+    {
+      "especie": 125,
+      "forma": 0,
+      "nombre": "Electabuzz",
+      "destino": 466,
+      "destinoForma": 0,
+      "destinoNombre": "Electivire",
+      "como": "objetoDeDia",
+      "nivel": 0,
+      "objeto": 322,
+      "companero": 0,
+      "ahora": "subiendo de nivel de día llevando Electrizador",
+      "antes": "por intercambio llevando Electrizador"
+    },
+    {
+      "especie": 126,
+      "forma": 0,
+      "nombre": "Magmar",
+      "destino": 467,
+      "destinoForma": 0,
+      "destinoNombre": "Magmortar",
+      "como": "objetoDeDia",
+      "nivel": 0,
+      "objeto": 323,
+      "companero": 0,
+      "ahora": "subiendo de nivel de día llevando Magmatizador",
+      "antes": "por intercambio llevando Magmatizador"
+    },
+    {
+      "especie": 137,
+      "forma": 0,
+      "nombre": "Porygon",
+      "destino": 233,
+      "destinoForma": 0,
+      "destinoNombre": "Porygon2",
+      "como": "objetoDeDia",
+      "nivel": 0,
+      "objeto": 252,
+      "companero": 0,
+      "ahora": "subiendo de nivel de día llevando Mejora",
+      "antes": "por intercambio llevando Mejora"
+    },
+    {
+      "especie": 190,
+      "forma": 0,
+      "nombre": "Aipom",
+      "destino": 424,
+      "destinoForma": 0,
+      "destinoNombre": "Ambipom",
+      "como": "nivel",
+      "nivel": 32,
+      "objeto": 0,
+      "companero": 0,
+      "ahora": "al subir al nivel 32",
+      "antes": "al subir de nivel sabiendo Doble Golpe"
+    },
+    {
+      "especie": 193,
+      "forma": 0,
+      "nombre": "Yanma",
+      "destino": 469,
+      "destinoForma": 0,
+      "destinoNombre": "Yanmega",
+      "como": "nivel",
+      "nivel": 33,
+      "objeto": 0,
+      "companero": 0,
+      "ahora": "al subir al nivel 33",
+      "antes": "al subir de nivel sabiendo Poder Pasado"
+    },
+    {
+      "especie": 203,
+      "forma": 0,
+      "nombre": "Girafarig",
+      "destino": 981,
+      "destinoForma": 0,
+      "destinoNombre": "Farigiraf",
+      "como": "nivel",
+      "nivel": 32,
+      "objeto": 0,
+      "companero": 0,
+      "ahora": "al subir al nivel 32",
+      "antes": "al subir de nivel sabiendo Láser Doble"
+    },
+    {
+      "especie": 221,
+      "forma": 0,
+      "nombre": "Piloswine",
+      "destino": 473,
+      "destinoForma": 0,
+      "destinoNombre": "Mamoswine",
+      "como": "nivel",
+      "nivel": 45,
+      "objeto": 0,
+      "companero": 0,
+      "ahora": "al subir al nivel 45",
+      "antes": "al subir de nivel sabiendo Poder Pasado"
+    },
+    {
+      "especie": 233,
+      "forma": 0,
+      "nombre": "Porygon2",
+      "destino": 474,
+      "destinoForma": 0,
+      "destinoNombre": "Porygon-Z",
+      "como": "objetoDeDia",
+      "nivel": 0,
+      "objeto": 324,
+      "companero": 0,
+      "ahora": "subiendo de nivel de día llevando Disco Extraño",
+      "antes": "por intercambio llevando Disco Extraño"
+    },
+    {
+      "especie": 234,
+      "forma": 0,
+      "nombre": "Stantler",
+      "destino": 899,
+      "destinoForma": 0,
+      "destinoNombre": "Wyrdeer",
+      "como": "nivel",
+      "nivel": 21,
+      "objeto": 0,
+      "companero": 0,
+      "ahora": "al subir al nivel 21",
+      "antes": "al subir de nivel sabiendo Asalto Barrera"
+    },
+    {
+      "especie": 349,
+      "forma": 0,
+      "nombre": "Feebas",
+      "destino": 350,
+      "destinoForma": 0,
+      "destinoNombre": "Milotic",
+      "como": "objetoDeDia",
+      "nivel": 0,
+      "objeto": 537,
+      "companero": 0,
+      "ahora": "subiendo de nivel de día llevando Escama Bella",
+      "antes": "por intercambio llevando Escama Bella"
+    },
+    {
+      "especie": 356,
+      "forma": 0,
+      "nombre": "Dusclops",
+      "destino": 477,
+      "destinoForma": 0,
+      "destinoNombre": "Dusknoir",
+      "como": "objetoDeDia",
+      "nivel": 0,
+      "objeto": 325,
+      "companero": 0,
+      "ahora": "subiendo de nivel de día llevando Tela Terrible",
+      "antes": "por intercambio llevando Tela Terrible"
+    },
+    {
+      "especie": 366,
+      "forma": 0,
+      "nombre": "Clamperl",
+      "destino": 367,
+      "destinoForma": 0,
+      "destinoNombre": "Huntail",
+      "como": "objetoDeDia",
+      "nivel": 0,
+      "objeto": 226,
+      "companero": 0,
+      "ahora": "subiendo de nivel de día llevando Diente Marino",
+      "antes": "por intercambio llevando Diente Marino"
+    },
+    {
+      "especie": 366,
+      "forma": 0,
+      "nombre": "Clamperl",
+      "destino": 368,
+      "destinoForma": 0,
+      "destinoNombre": "Gorebyss",
+      "como": "objetoDeDia",
+      "nivel": 0,
+      "objeto": 227,
+      "companero": 0,
+      "ahora": "subiendo de nivel de día llevando Escama Marina",
+      "antes": "por intercambio llevando Escama Marina"
+    },
+    {
+      "especie": 438,
+      "forma": 0,
+      "nombre": "Bonsly",
+      "destino": 185,
+      "destinoForma": 0,
+      "destinoNombre": "Sudowoodo",
+      "como": "nivel",
+      "nivel": 15,
+      "objeto": 0,
+      "companero": 0,
+      "ahora": "al subir al nivel 15",
+      "antes": "al subir de nivel sabiendo Mimético"
+    },
+    {
+      "especie": 439,
+      "forma": 0,
+      "nombre": "Mime Jr.",
+      "destino": 122,
+      "destinoForma": 0,
+      "destinoNombre": "Mr. Mime",
+      "como": "nivel",
+      "nivel": 15,
+      "objeto": 0,
+      "companero": 0,
+      "ahora": "al subir al nivel 15",
+      "antes": "al subir de nivel sabiendo Mimético"
+    },
+    {
+      "especie": 525,
+      "forma": 0,
+      "nombre": "Boldore",
+      "destino": 526,
+      "destinoForma": 0,
+      "destinoNombre": "Gigalith",
+      "como": "nivel",
+      "nivel": 37,
+      "objeto": 0,
+      "companero": 0,
+      "ahora": "al subir al nivel 37",
+      "antes": "por intercambio"
+    },
+    {
+      "especie": 533,
+      "forma": 0,
+      "nombre": "Gurdurr",
+      "destino": 534,
+      "destinoForma": 0,
+      "destinoNombre": "Conkeldurr",
+      "como": "nivel",
+      "nivel": 37,
+      "objeto": 0,
+      "companero": 0,
+      "ahora": "al subir al nivel 37",
+      "antes": "por intercambio"
+    },
+    {
+      "especie": 588,
+      "forma": 0,
+      "nombre": "Karrablast",
+      "destino": 589,
+      "destinoForma": 0,
+      "destinoNombre": "Escavalier",
+      "como": "compañero",
+      "nivel": 0,
+      "objeto": 0,
+      "companero": 616,
+      "ahora": "subiendo de nivel con Shelmet en el equipo",
+      "antes": "por intercambio con su pareja"
+    },
+    {
+      "especie": 616,
+      "forma": 0,
+      "nombre": "Shelmet",
+      "destino": 617,
+      "destinoForma": 0,
+      "destinoNombre": "Accelgor",
+      "como": "compañero",
+      "nivel": 0,
+      "objeto": 0,
+      "companero": 588,
+      "ahora": "subiendo de nivel con Karrablast en el equipo",
+      "antes": "por intercambio con su pareja"
+    },
+    {
+      "especie": 682,
+      "forma": 0,
+      "nombre": "Spritzee",
+      "destino": 683,
+      "destinoForma": 0,
+      "destinoNombre": "Aromatisse",
+      "como": "objetoDeDia",
+      "nivel": 0,
+      "objeto": 647,
+      "companero": 0,
+      "ahora": "subiendo de nivel de día llevando Saquito Fragante",
+      "antes": "por intercambio llevando Saquito Fragante"
+    },
+    {
+      "especie": 684,
+      "forma": 0,
+      "nombre": "Swirlix",
+      "destino": 685,
+      "destinoForma": 0,
+      "destinoNombre": "Slurpuff",
+      "como": "objetoDeDia",
+      "nivel": 0,
+      "objeto": 646,
+      "companero": 0,
+      "ahora": "subiendo de nivel de día llevando Dulce de Nata",
+      "antes": "por intercambio llevando Dulce de Nata"
+    },
+    {
+      "especie": 708,
+      "forma": 0,
+      "nombre": "Phantump",
+      "destino": 709,
+      "destinoForma": 0,
+      "destinoNombre": "Trevenant",
+      "como": "nivel",
+      "nivel": 37,
+      "objeto": 0,
+      "companero": 0,
+      "ahora": "al subir al nivel 37",
+      "antes": "por intercambio"
+    },
+    {
+      "especie": 710,
+      "forma": 0,
+      "nombre": "Pumpkaboo",
+      "destino": 711,
+      "destinoForma": 0,
+      "destinoNombre": "Gourgeist",
+      "como": "nivel",
+      "nivel": 37,
+      "objeto": 0,
+      "companero": 0,
+      "ahora": "al subir al nivel 37",
+      "antes": "por intercambio"
+    },
+    {
+      "especie": 762,
+      "forma": 0,
+      "nombre": "Steenee",
+      "destino": 763,
+      "destinoForma": 0,
+      "destinoNombre": "Tsareena",
+      "como": "nivel",
+      "nivel": 29,
+      "objeto": 0,
+      "companero": 0,
+      "ahora": "al subir al nivel 29",
+      "antes": "al subir de nivel sabiendo Pisotón"
+    },
+    {
+      "especie": 803,
+      "forma": 0,
+      "nombre": "Poipole",
+      "destino": 804,
+      "destinoForma": 0,
+      "destinoNombre": "Naganadel",
+      "como": "nivel",
+      "nivel": 45,
+      "objeto": 0,
+      "companero": 0,
+      "ahora": "al subir al nivel 45",
+      "antes": "al subir de nivel sabiendo Pulso Dragón"
+    },
+    {
+      "especie": 852,
+      "forma": 0,
+      "nombre": "Clobbopus",
+      "destino": 853,
+      "destinoForma": 0,
+      "destinoNombre": "Grapploct",
+      "como": "nivel",
+      "nivel": 35,
+      "objeto": 0,
+      "companero": 0,
+      "ahora": "al subir al nivel 35",
+      "antes": "al subir de nivel sabiendo Mofa"
+    },
+    {
+      "especie": 1011,
+      "forma": 0,
+      "nombre": "Dipplin",
+      "destino": 1019,
+      "destinoForma": 0,
+      "destinoNombre": "Hydrapple",
+      "como": "nivel",
+      "nivel": 45,
+      "objeto": 0,
+      "companero": 0,
+      "ahora": "al subir al nivel 45",
+      "antes": "al subir de nivel sabiendo Bramido Dragón"
+    },
+    {
+      "especie": 75,
+      "forma": 1,
+      "nombre": "Graveler de Alola",
+      "destino": 76,
+      "destinoForma": 1,
+      "destinoNombre": "Golem de Alola",
+      "como": "nivel",
+      "nivel": 37,
+      "objeto": 0,
+      "companero": 0,
+      "ahora": "al subir al nivel 37",
+      "antes": "por intercambio"
+    },
+    {
+      "especie": 211,
+      "forma": 1,
+      "nombre": "Qwilfish de Hisui",
+      "destino": 904,
+      "destinoForma": 0,
+      "destinoNombre": "Overqwil",
+      "como": "nivel",
+      "nivel": 28,
+      "objeto": 0,
+      "companero": 0,
+      "ahora": "al subir al nivel 28",
+      "antes": "al subir de nivel sabiendo Mil Púas Tóxicas"
+    },
+    {
+      "especie": 710,
+      "forma": 1,
+      "nombre": "Pumpkaboo (tamaño 2)",
+      "destino": 711,
+      "destinoForma": 0,
+      "destinoNombre": "Gourgeist",
+      "como": "nivel",
+      "nivel": 37,
+      "objeto": 0,
+      "companero": 0,
+      "ahora": "al subir al nivel 37",
+      "antes": "por intercambio"
+    },
+    {
+      "especie": 710,
+      "forma": 2,
+      "nombre": "Pumpkaboo (tamaño 3)",
+      "destino": 711,
+      "destinoForma": 0,
+      "destinoNombre": "Gourgeist",
+      "como": "nivel",
+      "nivel": 37,
+      "objeto": 0,
+      "companero": 0,
+      "ahora": "al subir al nivel 37",
+      "antes": "por intercambio"
+    },
+    {
+      "especie": 710,
+      "forma": 3,
+      "nombre": "Pumpkaboo (tamaño 4)",
+      "destino": 711,
+      "destinoForma": 0,
+      "destinoNombre": "Gourgeist",
+      "como": "nivel",
+      "nivel": 37,
+      "objeto": 0,
+      "companero": 0,
+      "ahora": "al subir al nivel 37",
+      "antes": "por intercambio"
+    }
+  ],
+  "tiendas": [
+    {
+      "lugar": "Centro Pokémon de la Ruta 8",
+      "objetos": [
+        {
+          "id": 80,
+          "nombre": "Piedra Solar",
+          "precio": 30000
+        },
+        {
+          "id": 81,
+          "nombre": "Piedra Lunar",
+          "precio": 30000
+        },
+        {
+          "id": 82,
+          "nombre": "Piedra Fuego",
+          "precio": 30000
+        },
+        {
+          "id": 83,
+          "nombre": "Piedra Trueno",
+          "precio": 30000
+        },
+        {
+          "id": 84,
+          "nombre": "Piedra Agua",
+          "precio": 30000
+        },
+        {
+          "id": 85,
+          "nombre": "Piedra Hoja",
+          "precio": 30000
+        },
+        {
+          "id": 108,
+          "nombre": "Piedra Noche",
+          "precio": 30000
+        },
+        {
+          "id": 109,
+          "nombre": "Piedra Alba",
+          "precio": 30000
+        },
+        {
+          "id": 110,
+          "nombre": "Piedra Oval",
+          "precio": 30000
+        },
+        {
+          "id": 107,
+          "nombre": "Piedra Día",
+          "precio": 30000
+        },
+        {
+          "id": 849,
+          "nombre": "Piedra Hielo",
+          "precio": 30000
+        }
+      ]
+    },
+    {
+      "lugar": "Centro Pokémon de la Ruta 2",
+      "objetos": [
+        {
+          "id": 322,
+          "nombre": "Electrizador",
+          "precio": 30000
+        },
+        {
+          "id": 323,
+          "nombre": "Magmatizador",
+          "precio": 30000
+        },
+        {
+          "id": 321,
+          "nombre": "Protector",
+          "precio": 30000
+        },
+        {
+          "id": 233,
+          "nombre": "Revest. Metálico",
+          "precio": 30000
+        },
+        {
+          "id": 221,
+          "nombre": "Roca del Rey",
+          "precio": 30000
+        },
+        {
+          "id": 325,
+          "nombre": "Tela Terrible",
+          "precio": 30000
+        },
+        {
+          "id": 324,
+          "nombre": "Disco Extraño",
+          "precio": 30000
+        },
+        {
+          "id": 235,
+          "nombre": "Escama Dragón",
+          "precio": 30000
+        },
+        {
+          "id": 226,
+          "nombre": "Diente Marino",
+          "precio": 30000
+        },
+        {
+          "id": 227,
+          "nombre": "Escama Marina",
+          "precio": 30000
+        },
+        {
+          "id": 327,
+          "nombre": "Colmillo Agudo",
+          "precio": 30000
+        },
+        {
+          "id": 326,
+          "nombre": "Garra Afilada",
+          "precio": 30000
+        }
+      ]
+    },
+    {
+      "lugar": "Ciudad Konikoni, tienda de incienso",
+      "objetos": [
+        {
+          "id": 252,
+          "nombre": "Mejora",
+          "precio": 30000
+        },
+        {
+          "id": 537,
+          "nombre": "Escama Bella",
+          "precio": 30000
+        },
+        {
+          "id": 646,
+          "nombre": "Dulce de Nata",
+          "precio": 30000
+        },
+        {
+          "id": 229,
+          "nombre": "Piedra Eterna",
+          "precio": 30000
+        },
+        {
+          "id": 174,
+          "nombre": "Baya Tamate",
+          "precio": 10
+        },
+        {
+          "id": 647,
+          "nombre": "Saquito Fragante",
+          "precio": 30000
+        }
+      ]
+    },
+    {
+      "lugar": "Ciudad Hauoli · Centro Pokémon",
+      "objetos": [
+        {
+          "id": 971,
+          "nombre": "Brazal Galanuez",
+          "precio": 50000
+        },
+        {
+          "id": 972,
+          "nombre": "Corona Galanuez",
+          "precio": 50000
+        },
+        {
+          "id": 973,
+          "nombre": "Manzana Ácida",
+          "precio": 50000
+        },
+        {
+          "id": 974,
+          "nombre": "Manzana Dulce",
+          "precio": 50000
+        },
+        {
+          "id": 975,
+          "nombre": "Tetera Agrietada",
+          "precio": 50000
+        },
+        {
+          "id": 976,
+          "nombre": "Tetera Rota",
+          "precio": 50000
+        },
+        {
+          "id": 977,
+          "nombre": "Confite Fresa",
+          "precio": 50000
+        },
+        {
+          "id": 984,
+          "nombre": "Manuscrito Sombras",
+          "precio": 50000
+        }
+      ]
+    },
+    {
+      "lugar": "Pueblo Paniola · mostrador especial",
+      "objetos": [
+        {
+          "id": 985,
+          "nombre": "Manuscrito Aguas",
+          "precio": 50000
+        },
+        {
+          "id": 986,
+          "nombre": "Mineral Negro",
+          "precio": 50000
+        },
+        {
+          "id": 987,
+          "nombre": "Bloque de Turba",
+          "precio": 50000
+        }
+      ]
+    },
+    {
+      "lugar": "Avenida Royal · Supermercado Ultraganga, mostrador de la izquierda",
+      "objetos": [
+        {
+          "id": 988,
+          "nombre": "Armadura Auspiciosa",
+          "precio": 50000
+        },
+        {
+          "id": 989,
+          "nombre": "Armadura Maldita",
+          "precio": 50000
+        },
+        {
+          "id": 990,
+          "nombre": "Distintivo de Líder",
+          "precio": 50000
+        },
+        {
+          "id": 991,
+          "nombre": "Manzana Melosa",
+          "precio": 50000
+        },
+        {
+          "id": 992,
+          "nombre": "Cuenco Mediocre",
+          "precio": 50000
+        }
+      ]
+    },
+    {
+      "lugar": "Avenida Royal · Supermercado Ultraganga, mostrador del centro",
+      "objetos": [
+        {
+          "id": 993,
+          "nombre": "Cuenco Exquisito",
+          "precio": 50000
+        },
+        {
+          "id": 994,
+          "nombre": "Moneda de Gimmighoul",
+          "precio": 30
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,117 @@
+<UserControl x:Class="PermaLocke.App.Views.InformationView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:PermaLocke.App.Views"
+             xmlns:pixel="clr-namespace:PermaLocke.App.Views.Pixel">
+
+    <!-- INFORMACIÓN (2026-09-24): las evoluciones que cambia PermaLocke y lo que venden los mostradores especiales del
+         juego, con sus sprites. Todo sale de Data/informacion.json, que se genera desde el cartucho. -->
+    <UserControl.Resources>
+        <Style TargetType="ScrollBar" BasedOn="{StaticResource PxScrollBar}" />
+    </UserControl.Resources>
+
+    <Grid>
+        <!-- Una sola vista para las dos páginas de INFORMACIÓN en la barra: Tag (bool) es true en la de tiendas. -->
+            <!-- ================================================== EVOLUCIONES -->
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                      Visibility="{Binding Tag, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource InverseBoolToVisibility}}">
+                    <StackPanel Margin="0,0,10,0">
+                        <TextBox Style="{StaticResource PxTextBox}" Padding="12,8" Margin="0,0,0,12" Tag="Buscar un Pokémon o un objeto…"
+                                 Text="{Binding EvolutionSearch, UpdateSourceTrigger=PropertyChanged, Delay=120}" />
+                        <ItemsControl ItemsSource="{Binding Evolutions}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <pixel:PixelWindow Title="{Binding Title}" Icon="IconChart" Margin="0,0,0,12">
+                                        <StackPanel>
+                                            <ItemsControl ItemsSource="{Binding Cards}">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <UniformGrid Columns="2" />
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Grid Margin="0,0,10,10">
+                                                            <views:PixelPanel Fill="{StaticResource PxWell}" IsSunken="True" HasShadow="False" />
+                                                            <StackPanel Margin="12,10,14,12">
+                                                                <!-- QUIÉN Y EN QUIÉN, con sus dibujos -->
+                                                                <StackPanel Orientation="Horizontal">
+                                                                    <pixel:PixelSprite Source="{Binding From}" Scale="2" TrimEmpty="True"
+                                                                                       VerticalAlignment="Center" Margin="0,0,6,0" />
+                                                                    <pixel:PixelText Text="{Binding FromName}" Scale="2" Tight="True"
+                                                                                     VerticalAlignment="Center" Colour="{StaticResource PxText}" />
+                                                                    <pixel:PixelIcon Icon="IconPlay" Scale="2" VerticalAlignment="Center" Margin="12,0" />
+                                                                    <pixel:PixelSprite Source="{Binding To}" Scale="2" TrimEmpty="True"
+                                                                                       VerticalAlignment="Center" Margin="0,0,6,0" />
+                                                                    <pixel:PixelText Text="{Binding ToName}" Scale="2" Tight="True"
+                                                                                     VerticalAlignment="Center" Colour="{StaticResource PxText}"
+                                                                                     Shadow="{StaticResource PxShadow}" />
+                                                                </StackPanel>
+                                                                <!-- CÓMO AHORA, con el objeto dibujado si lo pide -->
+                                                                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                                                    <Path Data="M0,6 L6,0 L12,6 L8,6 L8,14 L4,14 L4,6 Z" Fill="#FF7CF096" SnapsToDevicePixels="True"
+                                                                          VerticalAlignment="Center" Margin="0,0,8,0"
+                                                                          Visibility="{Binding LevelsUp, Converter={StaticResource BoolToVisibility}}" />
+                                                                    <pixel:PixelSprite Source="{Binding Item}" Scale="2" TrimEmpty="True" VerticalAlignment="Center"
+                                                                                       Margin="0,0,8,0"
+                                                                                       Visibility="{Binding HasItem, Converter={StaticResource BoolToVisibility}}" />
+                                                                    <pixel:PixelText Text="{Binding Now}" Scale="2" Wrap="True" MaxWidth="400"
+                                                                                     VerticalAlignment="Center" Colour="{StaticResource PxGold}" />
+                                                                </StackPanel>
+                                                            </StackPanel>
+                                                        </Grid>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </pixel:PixelWindow>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+
+            <!-- ================================================== TIENDAS DEL JUEGO -->
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                      Visibility="{Binding Tag, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisibility}}">
+                    <StackPanel Margin="0,0,10,0">
+                        <TextBox Style="{StaticResource PxTextBox}" Padding="12,8" Margin="0,0,0,12" Tag="Buscar un objeto o una tienda…"
+                                 Text="{Binding ShopSearch, UpdateSourceTrigger=PropertyChanged, Delay=120}" />
+                        <ItemsControl ItemsSource="{Binding Shops}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <pixel:PixelWindow Title="{Binding Place}" Icon="IconShop" Margin="0,0,0,12">
+                                        <ItemsControl ItemsSource="{Binding Items}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <WrapPanel />
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Grid Width="300" Margin="0,0,8,8">
+                                                        <views:PixelPanel Fill="{StaticResource PxWell}" IsSunken="True" HasShadow="False" />
+                                                        <DockPanel Margin="8,6,10,8">
+                                                            <pixel:PixelSprite DockPanel.Dock="Left" Source="{Binding Icon}" Scale="1" TrimEmpty="True"
+                                                                               VerticalAlignment="Center" Margin="0,0,8,0" />
+                                                            <StackPanel VerticalAlignment="Center">
+                                                                <pixel:PixelText Text="{Binding Name}" Scale="2" Tight="True" Trim="True"
+                                                                                 Colour="{StaticResource PxText}" />
+                                                                <pixel:PixelText Text="{Binding Price}" Scale="2" Tight="True" Margin="0,5,0,0"
+                                                                                 Colour="{StaticResource PxGold}" />
+                                                            </StackPanel>
+                                                        </DockPanel>
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </pixel:PixelWindow>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+
+        <pixel:PixelText Text="{Binding Status}" Scale="2" Wrap="True" VerticalAlignment="Bottom" Colour="{StaticResource PxBad}" />
+    </Grid>
+</UserControl>

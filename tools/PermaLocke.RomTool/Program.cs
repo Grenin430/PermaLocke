@@ -197,6 +197,9 @@ switch (command)
     case "evo-dump":
         EvoDump(args.Length > 1 ? args[1] : null);
         break;
+    case "informacion":
+        await InformacionAsync();
+        break;
     case "evoluciones":
         Evoluciones(args.Length > 1 ? args[1] : null);
         break;
@@ -4463,4 +4466,108 @@ static string LatestGenerated(string root)
         .FirstOrDefault();
 
     return newest ?? Path.Combine(randomized, "sin-generar", "romfs", "Shop.cro");
+}
+
+// INFORMACIÓN (2026-09-24): lo que la app enseña en su sección INFORMACIÓN, sacado del juego y no escrito a mano.
+// Las evoluciones: la tabla del cartucho (con el mod de gen 8-9) antes y después de pasar por el MISMO corrector que usa
+// el randomizador. Las tiendas del juego: los mostradores especiales de Data/randomizer.json.
+// Deja Data/informacion.json. Volver a ejecutarlo si cambia el corrector o las tiendas.
+async Task InformacionAsync()
+{
+    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work, baseLayer: baseLayer);
+    var speciesNames = workspace.Config.GetText(TextName.SpeciesNames);
+    var itemNames = workspace.Config.GetText(TextName.ItemNames);
+    var moveNames = workspace.Config.GetText(TextName.MoveNames);
+    var options = RandomizerOptionsLoader.Load(Path.Combine(root, "Data", "randomizer.json"));
+
+    // Fila de la tabla -> especie y forma: las formas con fila propia van al final, a partir de su FormStatsIndex.
+    var personal = new GARC.LazyGARC(await File.ReadAllBytesAsync(workspace.PathOf(GameFiles.Personal)));
+    var packed = personal[personal.FileCount - 1];
+    var rowOf = new Dictionary<int, (int Species, int Form)>();
+    for (var s = 1; s < packed.Length / PersonalEntry7.Size; s++)
+    {
+        var at = s * PersonalEntry7.Size;
+        rowOf.TryAdd(s, (s, 0));
+        var from = PersonalEntry7.GetFormStatsIndex(packed, at);
+        for (var form = 1; from > 0 && form < PersonalEntry7.GetFormCount(packed, at); form++) rowOf.TryAdd(from + form - 1, (s, form));
+    }
+
+    int[] alola = [19, 20, 26, 27, 28, 37, 38, 50, 51, 52, 53, 74, 75, 76, 88, 89, 103, 105];
+    string Name(int species, int form) =>
+        speciesNames[species] + (form == 0 ? "" : alola.Contains(species) ? " de Alola" : species == 211 ? " de Hisui"
+            : species == 710 ? $" (tamaño {form + 1})" : $" (forma {form})");
+
+    string Say(int method, int argument, int level) => method switch
+    {
+        4 => $"al subir al nivel {level}",
+        5 => "por intercambio",
+        6 => $"por intercambio llevando {itemNames[argument]}",
+        7 => "por intercambio con su pareja",
+        8 => $"usando {itemNames[argument]}",
+        19 => $"subiendo de nivel de día llevando {itemNames[argument]}",
+        21 => $"al subir de nivel sabiendo {moveNames[argument]}",
+        22 => $"subiendo de nivel con {speciesNames[argument]} en el equipo",
+        _ => $"método {method}"
+    };
+
+    var fixer = new ImpossibleEvolutionFixer(options);
+    var evolutions = new List<object>();
+    using (var patcher = new GarcPatcher(workspace.PathOf(GameFiles.Evolution)))
+    {
+        var partners = ImpossibleEvolutionFixer.Partners(patcher);
+        for (var row = 0; row < patcher.FileCount; row++)
+        {
+            var before = patcher.Read(row);
+            var after = (byte[])before.Clone();
+            if (fixer.FixSpecies(after, row, partners) is { Trades: 0, Moves: 0 } || !rowOf.TryGetValue(row, out var who)) continue;
+
+            for (var at = 0; at + 8 <= after.Length; at += 8)
+            {
+                if (after.AsSpan(at, 8).SequenceEqual(before.AsSpan(at, 8))) continue;
+                int U16(byte[] b, int o) => BitConverter.ToUInt16(b, o);
+                var target = U16(after, at + 4);
+                var targetForm = Math.Max(0, (int)(sbyte)after[at + 6]);
+                var method = U16(after, at);
+                var argument = U16(after, at + 2);
+                evolutions.Add(new
+                {
+                    especie = who.Species, forma = who.Form, nombre = Name(who.Species, who.Form),
+                    destino = target, destinoForma = targetForm, destinoNombre = Name(target, targetForm),
+                    como = method switch { 4 => "nivel", 8 => "objeto", 19 => "objetoDeDia", 22 => "compañero", _ => "otro" },
+                    nivel = method == 4 ? after[at + 7] : 0,
+                    objeto = method is 8 or 19 ? argument : 0,
+                    companero = method == 22 ? argument : 0,
+                    ahora = Say(method, argument, after[at + 7]),
+                    antes = Say(U16(before, at), U16(before, at + 2), before[at + 7])
+                });
+            }
+        }
+    }
+
+    // Los mostradores con lista propia, y la lista de gen 8-9 derramada por specialMartOrder. Los huecos y los sitios
+    // son los medidos jugando que documenta _specialMartOrder: 10 Hauoli (8), 15 Paniola (3), 21 y 22 Ultraganga (5 y 7).
+    (string Place, int Slots)[] spill = [("Ciudad Hauoli · Centro Pokémon", 8), ("Pueblo Paniola · mostrador especial", 3),
+        ("Avenida Royal · Supermercado Ultraganga, mostrador de la izquierda", 5),
+        ("Avenida Royal · Supermercado Ultraganga, mostrador del centro", 7)];
+    var shops = options.SpecialMartShelves.Select(shelf => new
+    {
+        lugar = shelf.Place,
+        objetos = shelf.Items.Select(i => new { id = i.Id, nombre = itemNames[i.Id], precio = i.Price > 0 ? i.Price : shelf.Price }).ToList()
+    }).ToList();
+    var queue = new Queue<MartItem>(options.SpecialMartItems);
+    foreach (var (place, slots) in spill)
+    {
+        var here = Enumerable.Range(0, Math.Min(slots, queue.Count)).Select(_ => queue.Dequeue())
+            .Select(i => new { id = i.Id, nombre = itemNames[i.Id], precio = i.Price > 0 ? i.Price : options.SpecialMartItemPrice }).ToList();
+        if (here.Count > 0) shops.Add(new { lugar = place, objetos = here });
+    }
+
+    var output = Path.Combine(root, "Data", "informacion.json");
+    await File.WriteAllTextAsync(output, System.Text.Json.JsonSerializer.Serialize(new
+    {
+        _comentario = "Generado por RomTool «informacion» desde el juego con el mod de gen 8-9 y Data/randomizer.json. No se edita a mano.",
+        evoluciones = evolutions,
+        tiendas = shops
+    }, new System.Text.Json.JsonSerializerOptions { WriteIndented = true, Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }));
+    Console.WriteLine($"{evolutions.Count} evoluciones y {shops.Count} tiendas en {output}");
 }

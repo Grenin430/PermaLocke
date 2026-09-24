@@ -224,6 +224,7 @@ public partial class App : Application
         collection.AddSingleton<GiftInbox>();
         collection.AddSingleton<GiftInboxViewModel>();
         collection.AddSingleton<SyncViewModel>();
+        collection.AddSingleton<InformationViewModel>();
         collection.AddSingleton<AlolaSky>();
         collection.AddSingleton<CemeteryService>();
         collection.AddSingleton<CemeteryViewModel>();
@@ -365,10 +366,9 @@ public partial class App : Application
         }
 
         if (Array.FindIndex(e.Args, arg => string.Equals(arg, "--seccion", StringComparison.OrdinalIgnoreCase)) is var at
-            && at >= 0 && at + 1 < e.Args.Length
-            && main.Sections.FirstOrDefault(s => string.Equals(s.Title, e.Args[at + 1], StringComparison.OrdinalIgnoreCase)) is { } section)
+            && at >= 0 && at + 1 < e.Args.Length)
         {
-            main.SelectedSection = section;
+            main.Navigate(e.Args[at + 1]);
         }
 
         if (e.Args.Contains("--ensayar-muerte", StringComparer.OrdinalIgnoreCase))

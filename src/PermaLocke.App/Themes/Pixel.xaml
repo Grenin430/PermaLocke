@@ -248,6 +248,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ListBoxItem">
+                    <StackPanel>
                     <Grid x:Name="Root" Background="Transparent" Height="36" Margin="6,1,8,1">
                         <views:PixelPanel x:Name="Plate" Fill="{StaticResource PxAccentDeep}" HasShadow="False"
                                           Visibility="Collapsed" />
@@ -262,8 +263,13 @@
                             <ContentPresenter Grid.Column="1" VerticalAlignment="Center" />
                         </Grid>
                     </Grid>
+                    <!-- Lo que cuelga de una entrada abierta: las pestañas de EQUIPO y TORNEO.
+                         La plantilla la pone quien usa este estilo (MainWindow); una sección suelta no tiene grupo. -->
+                    <ContentControl x:Name="Children" Content="{Binding AsGroup}" ContentTemplate="{DynamicResource NavChildrenTemplate}"
+                                    Focusable="False" Visibility="Collapsed" />
+                    </StackPanel>
                     <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
+                        <Trigger SourceName="Root" Property="IsMouseOver" Value="True">
                             <Setter TargetName="Plate" Property="Visibility" Value="Visible" />
                             <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxFaceHigh}" />
                         </Trigger>
@@ -271,6 +277,7 @@
                             <Setter TargetName="Plate" Property="Visibility" Value="Visible" />
                             <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxAccentDeep}" />
                             <Setter TargetName="Cursor" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="Children" Property="Visibility" Value="Visible" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

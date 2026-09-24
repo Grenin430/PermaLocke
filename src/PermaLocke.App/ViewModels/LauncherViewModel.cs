@@ -81,7 +81,7 @@ public sealed partial class LauncherViewModel : SectionViewModel
         IPlaytimeStore playtime, IBoxReader boxes, PokemonSpriteService sprites, AchievementService achievements,
         IRunRoles roles, IUiDispatcher ui, ILogger<LauncherViewModel> logger, PermaLocke.Infrastructure.AppPaths paths,
         IPokemonRepository pokemon, PermaLocke.Rules.Services.ProgressService progress)
-        : base("JUGAR")
+        : base("INICIO")
     {
         _pokemon = pokemon;
         _progress = progress;

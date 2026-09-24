@@ -56,6 +56,10 @@ PERMALOCKE_ROOT="C:\\Users\\javie\\Desktop\\PermaLocke prueba" dotnet run --no-b
 - Sin `PERMALOCKE_ROOT` actúa sobre la raíz del repo.
 - El disponible es lo ganado menos lo gastado, **y puede estar en negativo**: mirar la salida.
 
+```bash
+dotnet run --project tools/PermaLocke.RomTool -- informacion   # ✔ regenera Data/informacion.json (sección INFORMACIÓN)
+```
+
 ## Sondas y herramienta de ROM
 - La lista completa, con ejemplos, está en la sección «Comandos» de `CLAUDE.md`. Las más usadas:
   - `dotnet run --project tools/PermaLocke.Probe -- --run`: auditoría de puntos, muertes, cap y PID.

@@ -221,7 +221,7 @@ public sealed class ImpossibleEvolutionFixer(RandomizerOptions options)
     /// not obvious, so nothing is guessed and those entries are left alone — the verify step then
     /// counts them as still impossible instead of letting them pass quietly.
     /// </remarks>
-    private static Dictionary<int, int> Partners(GarcPatcher patcher)
+    public static Dictionary<int, int> Partners(GarcPatcher patcher)
     {
         var swappers = new List<int>();
 

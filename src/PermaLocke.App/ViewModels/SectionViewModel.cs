@@ -110,6 +110,12 @@ public abstract partial class SectionViewModel : ObservableObject
     {
     }
 
+    /// <summary>This entry as a group of tabs, or null. The sidebar hangs the tabs under it.</summary>
+    public GroupSectionViewModel? AsGroup => this as GroupSectionViewModel;
+
+    /// <summary>The big heading: the section, or the tab on screen when the section is a group.</summary>
+    public virtual string HeaderTitle => Title;
+
     public override string ToString() => Title;
 }
 
