@@ -104,7 +104,7 @@
             </Style.Triggers>
         </Style>
 
-        <!-- EL AVATAR: el primero del equipo que publicó, o la inicial si todavía no hay equipo. -->
+        <!-- EL AVATAR: la foto de Discord; si no hay, el primero del equipo; si tampoco, la inicial. -->
         <DataTemplate x:Key="AvatarTemplate">
             <Grid Width="58" Height="58">
                 <views:PixelPanel Style="{StaticResource StateFrame}" />
@@ -112,9 +112,11 @@
                 <pixel:PixelSprite Source="{Binding Avatar}" Scale="1" TrimEmpty="True" HorizontalAlignment="Center"
                                    VerticalAlignment="Center"
                                    Visibility="{Binding HasAvatar, Converter={StaticResource BoolToVisibility}}" />
+                <Image Source="{Binding Photo}" Margin="9" RenderOptions.BitmapScalingMode="HighQuality"
+                       Visibility="{Binding HasPhoto, Converter={StaticResource BoolToVisibility}}" />
                 <pixel:PixelText Text="{Binding Initial}" Style="{StaticResource StateText}" Scale="3"
                                  HorizontalAlignment="Center" VerticalAlignment="Center"
-                                 Visibility="{Binding HasAvatar, Converter={StaticResource InverseBoolToVisibility}}" />
+                                 Visibility="{Binding HasPicture, Converter={StaticResource InverseBoolToVisibility}}" />
             </Grid>
         </DataTemplate>
 

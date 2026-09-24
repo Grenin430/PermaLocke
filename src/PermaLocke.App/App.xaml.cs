@@ -235,6 +235,7 @@ public partial class App : Application
         collection.AddSingleton<MaintenanceService>();
         collection.AddSingleton<AppSettings>();
         collection.AddSingleton<DiscordLogin>();
+        collection.AddSingleton<TournamentUpload>();
         collection.AddTransient<LoginViewModel>();
         collection.AddSingleton<SettingsViewModel>();
         collection.AddSingleton<MainViewModel>();
@@ -346,15 +347,18 @@ public partial class App : Application
         var withoutGame = e.Args.Contains("--sin-juego", StringComparer.OrdinalIgnoreCase);
 
         // Una copia para mirar pantallas lee a los amigos, pero no dice que está aquí ni publica la run.
+        // Amigos y actividad van por el servidor del torneo, también en la distribución local.
+        _services.GetRequiredService<CommunityService>().Start(writes: !withoutGame);
+
         if (!paths.LocalOnly)
         {
-            _services.GetRequiredService<CommunityService>().Start(writes: !withoutGame);
             _services.GetRequiredService<GiftInbox>().Start();
         }
 
         if (!withoutGame)
         {
             _services.GetRequiredService<EdgeTab>().Attach(window);
+            _services.GetRequiredService<TournamentUpload>().Start();
             _services.GetRequiredService<GameLinkMonitor>().Start();
 
             // Las líneas evolutivas se leen ya, en segundo plano: la primera vez puede tocar sacar el fichero de

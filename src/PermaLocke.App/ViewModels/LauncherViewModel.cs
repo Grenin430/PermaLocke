@@ -15,20 +15,29 @@ using PermaLocke.Core.Services;
 namespace PermaLocke.App.ViewModels;
 
 /// <summary>A friend in the list, ready to draw.</summary>
-public sealed record FriendItem(string Name, PresenceState State, string Detail, BitmapSource? Avatar)
+public sealed record FriendItem(string Name, PresenceState State, string Detail, BitmapSource? Avatar, string? Photo = null)
 {
-    public bool HasAvatar => Avatar is not null;
+    /// <summary>The Pokémon, only when there is no Discord picture.</summary>
+    public bool HasAvatar => Avatar is not null && Photo is null;
+
+    public bool HasPhoto => Photo is not null;
+
+    public bool HasPicture => HasAvatar || HasPhoto;
 
     public string Initial => Name.Length > 0 ? Name[..1].ToUpperInvariant() : "?";
 }
 
 /// <summary>One claimed achievement in the activity.</summary>
 public sealed record ActivityItem(string PlayerName, PresenceState State, BitmapSource? Avatar,
-    string Name, string Description, BitmapSource? Icon, int Points, string Time)
+    string Name, string Description, BitmapSource? Icon, int Points, string Time, string? Photo = null)
 {
     public string Verb => " ha conseguido un logro";
 
-    public bool HasAvatar => Avatar is not null;
+    public bool HasAvatar => Avatar is not null && Photo is null;
+
+    public bool HasPhoto => Photo is not null;
+
+    public bool HasPicture => HasAvatar || HasPhoto;
 
     public bool HasIcon => Icon is not null;
 
@@ -78,7 +87,7 @@ public sealed partial class LauncherViewModel : SectionViewModel
         _progress = progress;
         _saves = paths.Saves;
         Launcher = launcher;
-        ShowCommunity = !paths.LocalOnly;
+        ShowCommunity = true;
         Sky = sky;
         _community = community;
         _runContext = runContext;
@@ -320,7 +329,7 @@ public sealed partial class LauncherViewModel : SectionViewModel
         foreach (var friend in _community.Friends)
         {
             Friends.Add(new FriendItem(friend.Name, friend.State, friend.Detail,
-                friend.Avatar is { } species ? _sprites.Get(species) : null));
+                friend.Avatar is { } species ? _sprites.Get(species) : null, friend.Photo));
         }
 
         var playing = _community.Friends.Count(f => f.State == PresenceState.Playing);
@@ -337,7 +346,7 @@ public sealed partial class LauncherViewModel : SectionViewModel
                     f.Avatar is { } species ? _sprites.Get(species) : f.IsMine ? _myAvatar : null,
                     f.Name, f.Description,
                     f.Icon is { } item ? _sprites.GetItem(item) : null,
-                    f.Points, f.At.LocalDateTime.ToString("HH:mm")))]));
+                    f.Points, f.At.LocalDateTime.ToString("HH:mm"), f.Photo))]));
         }
 
         CommunityNote = _community.Note;

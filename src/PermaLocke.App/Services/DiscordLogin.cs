@@ -38,6 +38,9 @@ public sealed class DiscordLogin(AppPaths paths, ILogger<DiscordLogin> logger)
 
     private sealed record ServerConfig(string Servidor, string ClavePublica, int Puerto);
 
+    private string? _access;
+    private DateTimeOffset _accessUntil;
+
     private string SessionPath => Path.Combine(paths.Config, "discord.json");
 
     private ServerConfig Config =>
@@ -118,9 +121,40 @@ public sealed class DiscordLogin(AppPaths paths, ILogger<DiscordLogin> logger)
         }
     }
 
+    /// <summary>
+    /// Sends JSON to the tournament's REST API as the signed-in player; the server's row-level security decides what
+    /// is accepted. Returns false when nobody is signed in.
+    /// </summary>
+    public async Task<bool> PostAsync(string path, string json, string? prefer = null, CancellationToken cancel = default) =>
+        await SendAsync(HttpMethod.Post, path, json, prefer, cancel) is not null;
+
+    /// <summary>Reads from the tournament's REST API as the signed-in player: JSON text, or null when nobody is signed in.</summary>
+    public Task<string?> GetAsync(string path, CancellationToken cancel = default) =>
+        SendAsync(HttpMethod.Get, path, null, null, cancel);
+
+    private async Task<string?> SendAsync(HttpMethod method, string path, string? json, string? prefer, CancellationToken cancel)
+    {
+        if (_access is null || DateTimeOffset.UtcNow >= _accessUntil)
+        {
+            if (await RefreshAsync() is null) return null;
+        }
+
+        var config = Config;
+        using var request = new HttpRequestMessage(method, $"{config.Servidor}/rest/v1/{path}");
+        if (json is not null) request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+        request.Headers.Add("apikey", config.ClavePublica);
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _access);
+        if (prefer is not null) request.Headers.Add("Prefer", prefer);
+
+        using var response = await Http.SendAsync(request, cancel);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadAsStringAsync(cancel);
+    }
+
     /// <summary>Forgets the session on this PC.</summary>
     public void SignOut()
     {
+        _access = null;
         if (File.Exists(SessionPath)) File.Delete(SessionPath);
     }
 
@@ -157,6 +191,8 @@ public sealed class DiscordLogin(AppPaths paths, ILogger<DiscordLogin> logger)
     {
         var meta = token["user"]?["user_metadata"];
         var access = (string?)token["access_token"] ?? throw new InvalidDataException("El servidor no ha devuelto sesión.");
+        _access = access;
+        _accessUntil = DateTimeOffset.UtcNow.AddSeconds(((int?)token["expires_in"] ?? 3600) - 60);
 
         using var request = new HttpRequestMessage(HttpMethod.Post, $"{config.Servidor}/rest/v1/rpc/permitido")
         {

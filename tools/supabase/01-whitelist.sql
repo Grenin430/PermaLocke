@@ -28,3 +28,6 @@ $$;
 
 revoke execute on function public.permitido() from public, anon;
 grant execute on function public.permitido() to authenticated;
+
+-- Sin sesión, ni siquiera se puede preguntar por la tabla.
+revoke all on public.whitelist from anon;

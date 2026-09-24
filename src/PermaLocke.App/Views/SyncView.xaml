@@ -1,455 +1,96 @@
 <UserControl x:Class="PermaLocke.App.Views.SyncView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:PermaLocke.App.Views"
+             xmlns:pixel="clr-namespace:PermaLocke.App.Views.Pixel">
 
+    <!-- COMPETICIÓN (rehecha el 2026-09-24): el top del torneo por puntos, del servidor. Podio y lista. -->
     <UserControl.Resources>
-        <!-- LA MARCA DE COMPROBACION de cada jugador: si sus numeros salen de su historial. Pequeña y
-             con fondo teñido, como el resto de distintivos: un semaforo grande diria mas de lo que
-             se ha comprobado. -->
-        <DataTemplate x:Key="AuditChip">
-            <Border ToolTip="{Binding Audit.Detail}">
-                <Border.Style>
-                    <Style TargetType="Border" BasedOn="{StaticResource Chip}">
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding AuditState}" Value="ok">
-                                <Setter Property="Background" Value="{StaticResource SuccessDeepBrush}" />
-                                <Setter Property="BorderBrush" Value="{StaticResource SuccessBrush}" />
-                            </DataTrigger>
-                            <DataTrigger Binding="{Binding AuditState}" Value="bad">
-                                <Setter Property="Background" Value="{StaticResource DangerDeepBrush}" />
-                                <Setter Property="BorderBrush" Value="{StaticResource DangerBrush}" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </Border.Style>
-                <TextBlock Text="{Binding AuditLabel}">
-                    <TextBlock.Style>
-                        <Style TargetType="TextBlock" BasedOn="{StaticResource ChipText}">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding AuditState}" Value="ok">
-                                    <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
-                                </DataTrigger>
-                                <DataTrigger Binding="{Binding AuditState}" Value="bad">
-                                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBlock.Style>
-                </TextBlock>
-            </Border>
-        </DataTemplate>
+        <Style TargetType="ScrollBar" BasedOn="{StaticResource PxScrollBar}" />
 
-        <!-- Una fila de la clasificacion. El puesto en grande a la izquierda, los puntos a la
-             derecha, y en medio quien es y como le va. La tuya se marca con la barra de acento:
-             en una tabla de cinco, encontrarte a ti mismo tiene que ser instantaneo. -->
-        <!-- UN BLOQUE DEL PODIO. La altura la decide el puesto, y por eso va en disparadores y no
-             en el dato: la posicion ya la trae la clasificacion, y duplicarla como «altura» seria
-             dos verdades que pueden discrepar. El tuyo se tiñe entero, que en una pantalla que
-             existe para compararse es lo primero que buscas. -->
-        <DataTemplate x:Key="PodiumTemplate">
-            <StackPanel VerticalAlignment="Bottom" Margin="6,0">
-                <TextBlock Text="{Binding Snapshot.PlayerName}" Style="{StaticResource CardTitle}"
-                           TextAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,0,3" />
-
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,6">
-                    <Path Style="{StaticResource IconSmall}" Data="{StaticResource IconPoints}"
-                          Fill="{StaticResource AccentBrush}" VerticalAlignment="Center"
-                          Margin="0,0,6,0" />
-                    <TextBlock Text="{Binding Snapshot.Points}" Style="{StaticResource Numeric}"
-                               Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center" />
-                </StackPanel>
-
-                <!-- Encima del bloque y no dentro: el bloque tiene alto fijo por puesto, y dentro se
-                     cortaba en el tercero. -->
-                <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource AuditChip}"
-                                  HorizontalAlignment="Center" Margin="0,0,0,8" />
-
-                <Border x:Name="Block" CornerRadius="6,6,0,0" BorderThickness="1,1,1,0"
-                        Background="{StaticResource SurfaceAltBrush}"
-                        BorderBrush="{StaticResource BorderStrongBrush}" Height="86">
-                    <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="{Binding Position}" Style="{StaticResource Display}"
-                                   Foreground="{StaticResource TextFaintBrush}"
-                                   TextAlignment="Center" x:Name="Rank" />
-                        <TextBlock Style="{StaticResource Faint}" TextAlignment="Center"
-                                   Margin="0,2,0,0">
-                            <Run Text="{Binding Snapshot.StagesCleared, Mode=OneWay}" />
-                            <Run Text="etapas ·" />
-                            <Run Text="{Binding Snapshot.Dead, Mode=OneWay}" />
-                            <Run Text="caídos" />
-                        </TextBlock>
-                    </StackPanel>
-                </Border>
-            </StackPanel>
-
-            <DataTemplate.Triggers>
-                <DataTrigger Binding="{Binding Position}" Value="1">
-                    <Setter TargetName="Block" Property="Height" Value="136" />
-                    <Setter TargetName="Block" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
-                    <Setter TargetName="Rank" Property="Foreground" Value="{StaticResource AccentBrush}" />
-                </DataTrigger>
-                <DataTrigger Binding="{Binding Position}" Value="2">
-                    <Setter TargetName="Block" Property="Height" Value="108" />
-                </DataTrigger>
-
-                <!-- El tuyo. Se tiñe el bloque entero y no solo un filo: es lo que vienes a mirar. -->
+        <!-- El nombre propio, en dorado. -->
+        <Style x:Key="PlayerName" TargetType="pixel:PixelText">
+            <Setter Property="Scale" Value="2" />
+            <Setter Property="Tight" Value="True" />
+            <Setter Property="Colour" Value="{StaticResource PxText}" />
+            <Style.Triggers>
                 <DataTrigger Binding="{Binding IsMine}" Value="True">
-                    <Setter TargetName="Block" Property="Background" Value="{StaticResource AccentDeepBrush}" />
-                    <Setter TargetName="Block" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                    <Setter Property="Colour" Value="{StaticResource PxGold}" />
                 </DataTrigger>
-            </DataTemplate.Triggers>
-        </DataTemplate>
-
-        <DataTemplate x:Key="StandingTemplate">
-            <Border x:Name="RowBox" Style="{StaticResource Row}" Padding="0,10">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="3" />
-                        <ColumnDefinition Width="44" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="86" />
-                    </Grid.ColumnDefinitions>
-
-                    <Border Grid.Column="0" CornerRadius="{StaticResource RadiusSmall}" Margin="0,2">
-                        <Border.Style>
-                            <Style TargetType="Border">
-                                <Setter Property="Background" Value="Transparent" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsMine}" Value="True">
-                                        <Setter Property="Background" Value="{StaticResource AccentBrush}" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Border.Style>
-                    </Border>
-
-                    <TextBlock Grid.Column="1" Text="{Binding Position}" Style="{StaticResource StatValue}"
-                               Foreground="{StaticResource TextFaintBrush}"
-                               VerticalAlignment="Center" TextAlignment="Center" />
-
-                    <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="10,0">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{Binding Snapshot.PlayerName}" Style="{StaticResource CardTitle}"
-                                       TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-                            <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource AuditChip}"
-                                              Margin="10,0,0,0" VerticalAlignment="Center" />
-                        </StackPanel>
-                        <TextBlock Style="{StaticResource Faint}" TextTrimming="CharacterEllipsis">
-                            <Run Text="{Binding Snapshot.RunName, Mode=OneWay}" />
-                            <Run Text="·" />
-                            <Run Text="{Binding Snapshot.RoleName, Mode=OneWay}" />
-                            <Run Text="·" />
-                            <Run Text="{Binding Age, Mode=OneWay}" />
-                        </TextBlock>
-                    </StackPanel>
-
-                    <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
-                        <StackPanel Margin="0,0,20,0">
-                            <TextBlock Text="EN PIE" Style="{StaticResource StatLabel}" TextAlignment="Right" />
-                            <TextBlock Text="{Binding Snapshot.Alive}" Style="{StaticResource Numeric}"
-                                       Foreground="{StaticResource SuccessBrush}" TextAlignment="Right" />
-                        </StackPanel>
-                        <StackPanel Margin="0,0,20,0">
-                            <TextBlock Text="CAÍDOS" Style="{StaticResource StatLabel}" TextAlignment="Right" />
-                            <TextBlock Text="{Binding Snapshot.Dead}" Style="{StaticResource Numeric}"
-                                       Foreground="{StaticResource DangerBrush}" TextAlignment="Right" />
-                        </StackPanel>
-                        <StackPanel Margin="0,0,20,0">
-                            <TextBlock Text="ETAPAS" Style="{StaticResource StatLabel}" TextAlignment="Right" />
-                            <TextBlock Text="{Binding Snapshot.StagesCleared}" Style="{StaticResource Numeric}"
-                                       TextAlignment="Right" />
-                        </StackPanel>
-                        <StackPanel>
-                            <TextBlock Text="LOGROS" Style="{StaticResource StatLabel}" TextAlignment="Right" />
-                            <TextBlock Style="{StaticResource Numeric}" TextAlignment="Right">
-                                <Run Text="{Binding Snapshot.AchievementsUnlocked, Mode=OneWay}" />
-                                <Run Text="/" Foreground="{StaticResource TextFaintBrush}" />
-                                <Run Text="{Binding Snapshot.AchievementsTotal, Mode=OneWay}"
-                                     Foreground="{StaticResource TextFaintBrush}" />
-                            </TextBlock>
-                        </StackPanel>
-                    </StackPanel>
-
-                    <TextBlock Grid.Column="4" Text="{Binding Snapshot.Points}"
-                               Style="{StaticResource StatValue}"
-                               Foreground="{StaticResource AccentBrush}"
-                               VerticalAlignment="Center" TextAlignment="Right" />
-                </Grid>
-            </Border>
-
-            <DataTemplate.Triggers>
-                <!-- La tuya, teñida entera. Tres pixeles de filo al borde de la fila no se ven en
-                     una lista, y esta pantalla existe para compararte con los demas. -->
-                <DataTrigger Binding="{Binding IsMine}" Value="True">
-                    <Setter TargetName="RowBox" Property="Background" Value="{StaticResource AccentDeepBrush}" />
-                </DataTrigger>
-            </DataTemplate.Triggers>
-        </DataTemplate>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel Margin="0,0,10,0">
+            <pixel:PixelWindow Title="TOP DEL TORNEO" Icon="IconTrophy">
+                <pixel:PixelWindow.HeaderContent>
+                    <Button Content="ACTUALIZAR" Style="{StaticResource PxSubtleButton}" Command="{Binding RefreshCommand}" />
+                </pixel:PixelWindow.HeaderContent>
 
-            <!-- ================================================== LA CARPETA
-                 Todo el transporte es una carpeta compartida. Ni servidor, ni cuentas, ni
-                 protocolo: para cinco amigos, una carpeta que ya se sincroniza sola hace el
-                 trabajo, y es lo unico que funciona sin que nadie hospede nada. -->
-            <!-- ================================================== TU PERFIL
-                 Cada uno juega en su PC, asi que el jugador es esta instalacion. El id es lo que
-                 todo usa por dentro; el nombre se puede cambiar sin romper nada. -->
-            <Border Style="{StaticResource Inset}">
                 <StackPanel>
-                    <DockPanel>
-                        <Border DockPanel.Dock="Right" Style="{StaticResource Chip}"
-                                ToolTip="Tu código de jugador.">
-                            <TextBlock Style="{StaticResource ChipText}">
-                                <Run Text="ID" />
-                                <Run Text="{Binding PlayerId, Mode=OneWay}" />
-                            </TextBlock>
-                        </Border>
-                        <TextBlock Text="TU PERFIL" Style="{StaticResource PanelHeading}" VerticalAlignment="Center" />
-                    </DockPanel>
-
-                    <DockPanel Margin="0,12,0,0">
-                        <Button DockPanel.Dock="Right" Content="GUARDAR" Style="{StaticResource GhostButton}"
-                                Command="{Binding SaveNameCommand}" MinWidth="120" Margin="10,0,0,0" />
-                        <TextBox Text="{Binding PlayerName, UpdateSourceTrigger=PropertyChanged}" MaxLength="24" />
-                    </DockPanel>
-
-                    <TextBlock Text="{Binding NameStatus}" Style="{StaticResource Faint}" Margin="0,6,0,0" />
-
-                    <TextBlock Text="{Binding OwnershipNote}" Margin="0,6,0,0">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock" BasedOn="{StaticResource Body}">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding RunIsForeign}" Value="True">
-                                        <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                    <!-- EL PODIO: segundo, primero, tercero; el primero más alto. -->
+                    <ItemsControl ItemsSource="{Binding Podium}" HorizontalAlignment="Center">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Width="200" Margin="8,0" VerticalAlignment="Bottom">
+                                    <Image Source="{Binding Picture}" Width="80" Height="80" HorizontalAlignment="Center"
+                                           RenderOptions.BitmapScalingMode="NearestNeighbor" />
+                                    <pixel:PixelText Text="{Binding Player}" Style="{StaticResource PlayerName}"
+                                                     HorizontalAlignment="Center" Trim="True" Margin="0,6,0,0" />
+                                    <pixel:PixelText Text="{Binding Points, StringFormat={}{0} puntos}" Scale="2" Tight="True"
+                                                     HorizontalAlignment="Center" Margin="0,6,0,8"
+                                                     Colour="{StaticResource PxAccentLight}" />
+                                    <Grid x:Name="Block" Height="70">
+                                        <views:PixelPanel Fill="{StaticResource PxFaceHigh}" />
+                                        <pixel:PixelText Text="{Binding Position}" Scale="5" Tight="True"
+                                                         HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                         Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
+                                    </Grid>
+                                </StackPanel>
+                                <DataTemplate.Triggers>
+                                    <DataTrigger Binding="{Binding Position}" Value="1">
+                                        <Setter TargetName="Block" Property="Height" Value="110" />
                                     </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
-                </StackPanel>
-            </Border>
-
-            <Border Style="{StaticResource Inset}" Margin="0,12,0,0">
-                <StackPanel>
-                    <TextBlock Text="CARPETA COMPARTIDA" Style="{StaticResource PanelHeading}" />
-
-                    <TextBlock Style="{StaticResource Body}" Margin="0,8,0,0"
-                               Text="La carpeta de Drive que compartís todos." />
-
-                    <Border Style="{StaticResource Well}" Margin="0,12,0,0" Padding="14,10">
-                        <TextBlock Text="{Binding Folder}"
-                                   TextTrimming="CharacterEllipsis">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock" BasedOn="{StaticResource Mono}">
-                                    <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding Folder}" Value="">
-                                            <Setter Property="Text" Value="Sin elegir." />
-                                            <Setter Property="Foreground" Value="{StaticResource TextFaintBrush}" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-                    </Border>
-
-                    <Border Style="{StaticResource Divider}" Margin="0,14" />
-
-                    <DockPanel>
-                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                            <Button Content="ELEGIR CARPETA" Style="{StaticResource GhostButton}"
-                                    Command="{Binding ChooseFolderCommand}" MinWidth="160" />
-                            <Button Content="PUBLICAR LA MÍA" Style="{StaticResource PrimaryButton}"
-                                    Command="{Binding PublishCommand}" MinWidth="170"
-                                    Margin="10,0,0,0" />
-                        </StackPanel>
-
-                        <TextBlock Text="{Binding PublishStatus}" Style="{StaticResource Body}"
-                                   VerticalAlignment="Center" Margin="0,0,12,0" />
-                    </DockPanel>
-                </StackPanel>
-            </Border>
-
-            <!-- ================================================== LA CLASIFICACIÓN -->
-            <Border Style="{StaticResource Well}" Margin="0,12,0,0">
-                <StackPanel>
-                    <DockPanel>
-                        <Button DockPanel.Dock="Right" Content="ACTUALIZAR"
-                                Style="{StaticResource SubtleButton}"
-                                Command="{Binding RefreshCommand}" MinWidth="120" />
-                        <TextBlock Text="CLASIFICACIÓN" Style="{StaticResource PanelHeading}"
-                                   VerticalAlignment="Center" />
-                    </DockPanel>
-
-                    <TextBlock Text="{Binding Message}" Style="{StaticResource Faint}" Margin="0,6,0,0" />
-
-                    <!-- EL PODIO. Solo con tres o mas publicados; con menos, la tabla sola. -->
-                    <Border Style="{StaticResource Inset}" Margin="0,12,0,4" Padding="18,16,18,0"
-                            Visibility="{Binding HasPodium, Converter={StaticResource BoolToVisibility}}">
-                        <ItemsControl ItemsSource="{Binding Podium}"
-                                      ItemTemplate="{StaticResource PodiumTemplate}"
-                                      HorizontalAlignment="Center">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <UniformGrid Rows="1" Columns="3" Width="560"
-                                                 VerticalAlignment="Bottom" />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                        </ItemsControl>
-                    </Border>
-
-                    <ItemsControl ItemsSource="{Binding Rest}" Margin="0,8,0,0"
-                                  ItemTemplate="{StaticResource StandingTemplate}" />
-                </StackPanel>
-            </Border>
-
-
-            <!-- ================================================== COMBATE POR LINK
-                 Verificado el 01/09/2026: dos Azahar en el mismo PC, combate completo de septima
-                 generacion por red local emulada. La via existe.
-
-                 Lo que puede romperla no es el emulador, es la randomizacion. Un combate por link
-                 es una simulacion en paso fijo: las dos consolas calculan lo mismo y solo se
-                 intercambian las ordenes. Si vuestros mundos no coinciden en los datos que el
-                 juego lee DURANTE el combate, cada maquina calcula un daño distinto y se separan
-                 en el primer turno.
-
-                 Desde COMBATES eso ya no depende del mundo de cada uno: aparta la randomizacion y
-                 pone el juego base mientras dura el combate. Lo que sigue teniendo que coincidir es
-                 ese juego base (con o sin las generaciones 8 y 9), y eso es lo que dice el aviso
-                 (§124). Antes decia «no puede» mirando las opciones del randomizador, y era falso
-                 para quien usa COMBATES. -->
-            <Border Style="{StaticResource Inset}" Margin="0,12,0,0"
-                    Visibility="{Binding HasBattleNote, Converter={StaticResource BoolToVisibility}}">
-                <StackPanel>
-                    <DockPanel>
-                        <Border DockPanel.Dock="Right">
-                            <Border.Style>
-                                <Style TargetType="Border" BasedOn="{StaticResource ChipSuccess}">
-                                    <Style.Triggers>
-                                        <!-- Sin nadie con quien combatir no hay nada compatible que anunciar. -->
-                                        <DataTrigger Binding="{Binding BattleState}" Value="none">
-                                            <Setter Property="Visibility" Value="Collapsed" />
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding BattleState}" Value="warn">
-                                            <Setter Property="Background" Value="{StaticResource WarningDeepBrush}" />
-                                            <Setter Property="BorderBrush" Value="{StaticResource WarningBrush}" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Border.Style>
-                            <TextBlock>
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock" BasedOn="{StaticResource ChipText}">
-                                        <Setter Property="Text" Value="COMPATIBLES" />
-                                        <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding BattleState}" Value="warn">
-                                                <Setter Property="Text" Value="REVISAR" />
-                                                <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                        </Border>
-                        <TextBlock Text="COMBATIR ENTRE VOSOTROS" Style="{StaticResource PanelHeading}"
-                                   VerticalAlignment="Center" />
-                    </DockPanel>
-
-                    <TextBlock Text="{Binding BattleNote}" Style="{StaticResource Body}"
-                               Margin="0,9,0,0" />
-                </StackPanel>
-            </Border>
-
-            <!-- ================================================== LO QUE ESTO NO ES
-                 Hay que decirlo, y decirlo aqui. La regla 3 del proyecto prohibe un anti-trampas
-                 de mentira, asi que no hay ninguno fingiendo estar. Lo que si se puede ofrecer sin
-                 un servidor que nadie va a montar es que un retroceso se VEA. -->
-            <!-- ================================================== LAS REGLAS OFICIALES
-                 Lo que el admin deja en reglas/. Cada fichero se carga con el mismo cargador que usa
-                 la aplicacion antes de ofrecerlo, y los tuyos se copian aparte antes de pisarlos. -->
-            <Border Style="{StaticResource Inset}" Margin="0,12,0,0">
-                <StackPanel>
-                    <DockPanel>
-                        <Button DockPanel.Dock="Right" Content="ADOPTAR REGLAS" Style="{StaticResource PrimaryButton}"
-                                Command="{Binding AdoptRulesCommand}" MinWidth="160" />
-                        <TextBlock Text="REGLAS OFICIALES" Style="{StaticResource PanelHeading}"
-                                   VerticalAlignment="Center" />
-                    </DockPanel>
-
-                    <TextBlock Text="{Binding RulesMessage}" Style="{StaticResource Body}" Margin="0,9,0,0" />
-
-                    <ItemsControl ItemsSource="{Binding RuleFiles}" Margin="0,8,0,0"
-                                  Visibility="{Binding HasRuleFiles, Converter={StaticResource BoolToVisibility}}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <DockPanel Margin="0,3">
-                                    <TextBlock DockPanel.Dock="Right" TextAlignment="Right" Margin="12,0,0,0">
-                                        <TextBlock.Style>
-                                            <Style TargetType="TextBlock" BasedOn="{StaticResource Faint}">
-                                                <Setter Property="Text" Value="igual" />
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding State}" Value="Different">
-                                                        <Setter Property="Text" Value="distinto" />
-                                                        <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
-                                                    </DataTrigger>
-                                                    <DataTrigger Binding="{Binding State}" Value="New">
-                                                        <Setter Property="Text" Value="no lo tienes" />
-                                                        <Setter Property="Foreground" Value="{StaticResource WarningBrush}" />
-                                                    </DataTrigger>
-                                                    <DataTrigger Binding="{Binding State}" Value="Unreadable">
-                                                        <Setter Property="Text" Value="no se puede cargar" />
-                                                        <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
-                                    <TextBlock DockPanel.Dock="Right" Margin="12,0,0,0">
-                                        <TextBlock.Style>
-                                            <Style TargetType="TextBlock" BasedOn="{StaticResource Faint}">
-                                                <Setter Property="Text" Value="al reiniciar" />
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding Kind}" Value="NeedsRegeneration">
-                                                        <Setter Property="Text" Value="hay que regenerar el mod" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
-                                    <TextBlock Text="{Binding Name}" Style="{StaticResource Mono}"
-                                               ToolTip="{Binding Detail}" />
-                                </DockPanel>
+                                    <DataTrigger Binding="{Binding Position}" Value="2">
+                                        <Setter TargetName="Block" Property="Height" Value="90" />
+                                    </DataTrigger>
+                                </DataTemplate.Triggers>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
 
-                    <TextBlock Text="{Binding RulesStatus}" Style="{StaticResource Body}" Margin="0,8,0,0" />
-                </StackPanel>
-            </Border>
-
-            <!-- Ficheros que no se han podido leer. Se dicen por nombre: uno roto no puede esconder
-                 a los demás, y quien lo tenga que arreglar necesita saber cuál es. -->
-            <Border Style="{StaticResource Inset}" Margin="0,12,0,0"
-                    Visibility="{Binding HasBroken, Converter={StaticResource BoolToVisibility}}">
-                <StackPanel>
-                    <TextBlock Text="JUGADORES QUE NO SE PUEDEN LEER" Style="{StaticResource PanelHeading}"
-                               Foreground="{StaticResource DangerBrush}" />
-                    <ItemsControl ItemsSource="{Binding Broken}" Margin="0,8,0,0">
+                    <!-- DEL CUARTO PARA ABAJO. -->
+                    <ItemsControl ItemsSource="{Binding Rest}" Margin="0,18,0,0">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding}" Style="{StaticResource Faint}" Margin="0,2" />
+                                <Grid Margin="0,0,0,8">
+                                    <views:PixelPanel Fill="{StaticResource PxWell}" IsSunken="True" HasShadow="False" />
+                                    <DockPanel Margin="14,8,18,10">
+                                        <pixel:PixelText DockPanel.Dock="Left" Text="{Binding Position}" Scale="3" Tight="True"
+                                                         Width="50" VerticalAlignment="Center" Colour="{StaticResource PxTextDim}" />
+                                        <Image DockPanel.Dock="Left" Source="{Binding Picture}" Width="40" Height="40" Margin="0,0,12,0"
+                                               RenderOptions.BitmapScalingMode="NearestNeighbor" />
+                                        <pixel:PixelText DockPanel.Dock="Right" Text="{Binding Points, StringFormat={}{0} puntos}"
+                                                         Scale="2" Tight="True" VerticalAlignment="Center"
+                                                         Colour="{StaticResource PxAccentLight}" />
+                                        <pixel:PixelText Text="{Binding Player}" Style="{StaticResource PlayerName}" Trim="True"
+                                                         VerticalAlignment="Center" />
+                                    </DockPanel>
+                                </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
-                </StackPanel>
-            </Border>
 
+                    <pixel:PixelText Text="{Binding Status}" Scale="2" Wrap="True" Margin="0,10,0,0"
+                                     Colour="{StaticResource PxTextDim}" />
+                </StackPanel>
+            </pixel:PixelWindow>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

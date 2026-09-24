@@ -70,11 +70,6 @@ public sealed partial class MainViewModel : ObservableObject
             settings
         ];
 
-        if (paths.LocalOnly)
-        {
-            Sections.Remove(sync);
-        }
-
         _selectedSection = Sections[0];
 
         // Los enlaces de debajo de la barra de JUGAR llevan a otras secciones por su título.
