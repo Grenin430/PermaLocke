@@ -1,0 +1,66 @@
+PERMALOCKE - ACTUALIZAR SIN PERDER TU PARTIDA
+=============================================
+
+Esto es para quien YA estaba jugando con una version anterior de PermaLocke.
+Vas a pasar tu partida a esta version nueva. Tu carpeta antigua NO se borra:
+si algo sale mal, sigues teniendola tal cual.
+
+ANTES DE EMPEZAR
+----------------
+- Pasale al organizador tu ID de Discord para que te meta en la lista del torneo.
+  (Discord > Ajustes > Avanzado > activa "Modo desarrollador";
+   despues clic derecho en tu nombre > "Copiar ID de usuario".)
+  Si no estas en la lista, PermaLocke no te dejara entrar y te enseñara ese mismo numero.
+- Necesitas internet para abrir PermaLocke a partir de ahora.
+
+PASO 1. Guarda y cierra todo
+----------------------------
+Dentro del juego, GUARDA la partida.
+Cierra el juego (Azahar) y cierra PermaLocke.
+
+PASO 2. Extrae la version nueva en OTRA carpeta
+-----------------------------------------------
+Extrae el ZIP nuevo en C:\Juegos, al lado de tu carpeta antigua, sin mezclarlas.
+Por ejemplo:
+    C:\Juegos\PermaLocke            <- la antigua (la tuya)
+    C:\Juegos\PermaLocke nueva      <- la que acabas de extraer
+(Si al extraer se llaman igual, renombra antes la antigua a "PermaLocke antigua".)
+
+PASO 3. Copia tus cosas de la antigua a la nueva
+------------------------------------------------
+Desde tu carpeta ANTIGUA, COPIA (no muevas) estas carpetas y pegalas
+en la NUEVA, en el mismo sitio. Si Windows pregunta, di "Reemplazar":
+
+    ROM                     tu ROM
+    Saves                   tu run de PermaLocke (puntos, muertes, capturas...)
+    Randomized              tu mundo generado
+    Config                  tu perfil y ajustes
+
+Y dentro de Emulator\user, copia SOLO estas carpetas
+(de ANTIGUA\Emulator\user a NUEVA\Emulator\user):
+
+    sdmc                    tu partida del juego
+    nand
+    load                    tu mundo instalado en el emulador
+    sysdata
+
+NO copies Emulator\user\config: la version nueva trae ajustes del emulador corregidos.
+Si alguna de esas carpetas no existe en la antigua, no pasa nada, sigue con la siguiente.
+
+PASO 4. Abre la nueva
+---------------------
+Abre PermaLocke.exe de la carpeta NUEVA.
+Te saldra ENTRAR CON DISCORD: pulsalo, acepta en el navegador y vuelve a PermaLocke.
+Deberias ver tu run como la dejaste: mismos puntos, mismo equipo.
+Abre el juego desde JUGAR y comprueba que carga tu partida.
+
+Cuando lleves un rato jugando sin problemas, puedes borrar la carpeta antigua.
+Hasta entonces, guardala.
+
+SI ALGO NO CUADRA
+-----------------
+- Sale "tu cuenta no esta en la lista del torneo": pasale al organizador el numero que aparece.
+- Sale "no hay conexion": revisa internet y vuelve a abrir.
+- El juego empieza de cero: no copiaste Emulator\user\sdmc. Cierra todo y repite el paso 3.
+- PermaLocke no tiene tu run: no copiaste Saves. Cierra todo y repite el paso 3.
+- Cualquier otra cosa: ejecuta RECOGER DIAGNOSTICO.cmd y manda el ZIP que deja en Diagnosticos.

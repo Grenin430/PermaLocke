@@ -31,6 +31,7 @@ Copy-Item -LiteralPath (Join-Path $raiz 'LICENSE') -Destination $Destino
 # Para jugadores: como evoluciona ahora lo que pedia intercambio o un movimiento (seccion 151 de la documentacion).
 Copy-Item -LiteralPath (Join-Path $raiz 'EVOLUCIONES CAMBIADAS.txt') -Destination $Destino
 Copy-Item -LiteralPath (Join-Path $raiz 'tools\LEEME-local.txt') -Destination (Join-Path $Destino 'EMPIEZA AQUI.txt')
+Copy-Item -LiteralPath (Join-Path $raiz 'tools\ACTUALIZAR-local.txt') -Destination (Join-Path $Destino 'ACTUALIZAR DESDE LA VERSION ANTERIOR.txt')
 foreach ($folder in @('ROM','Config','Soporte','Emulator\user\config')) {
     New-Item -ItemType Directory -Path (Join-Path $Destino $folder) -Force | Out-Null
 }

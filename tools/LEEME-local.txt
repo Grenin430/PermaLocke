@@ -28,8 +28,10 @@ PERMALOCKE - COPIA LOCAL
 Los Pokemon que evolucionan por intercambio o sabiendo un movimiento lo hacen de otra
 forma (por nivel, o con su objeto de dia). La lista esta en EVOLUCIONES CAMBIADAS.txt.
 
-Todo se guarda en TU carpeta. No necesitas Drive, cuenta compartida ni internet para jugar.
-Cada amigo empieza con su perfil, su partida y su semilla. No compartimos la clasificacion.
+Todo se guarda en TU carpeta. Cada amigo tiene su perfil, su partida y su semilla.
+Para abrir PermaLocke necesitas internet y entrar con Discord: solo entran las cuentas de la
+lista del torneo (pasale al organizador tu ID de Discord). Tus puntos suben solos a la
+clasificacion de COMPETICION, y en JUGAR ves a los demas y sus logros.
 
 SI EL JUEGO SE CIERRA O VA LENTO
 -------------------------------
