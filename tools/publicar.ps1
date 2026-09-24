@@ -101,7 +101,10 @@ $sourceZip = [IO.Compression.ZipFile]::Open((Join-Path $Destino 'Soporte\Codigo 
 try {
     $sources = @()
     foreach ($folder in @('src','tests','third_party','tools')) {
-        $sources += Get-ChildItem -LiteralPath (Join-Path $raiz $folder) -Recurse -File | Where-Object { $_.FullName -notmatch '[\\/](bin|obj|\.git)[\\/]' }
+        # Sin Admin ni los SQL del servidor: son solo del organizador y no se reparten, asi que la GPL no los pide.
+        $sources += Get-ChildItem -LiteralPath (Join-Path $raiz $folder) -Recurse -File | Where-Object {
+            $_.FullName -notmatch '[\\/](bin|obj|\.git)[\\/]' -and $_.FullName -notmatch '[\\/](PermaLocke\.Admin|supabase)[\\/]'
+        }
     }
     $sources += Get-ChildItem -LiteralPath (Join-Path $raiz 'Data') -Filter '*.json' -File
     $sources += @('README.md','LICENSE','PermaLocke.slnx','.gitignore','docs/DISTRIBUCION-LOCAL.md') | ForEach-Object { Get-Item -LiteralPath (Join-Path $raiz $_) }

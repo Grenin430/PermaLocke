@@ -24,6 +24,7 @@ La última sesión va arriba. Antes del 2026-09-23 solo hay un resumen por fecha
 - Admin: quitado dar objetos en los regalos (a petición). Quedan puntos, tiradas y wonder trades. Acceso directo `EscritorioPermaLocke Admin.lnk` al `binRelease` del repo: recompilar Admin en Release tras cambiarlo.
 - Menos tráfico para 20 jugadores: amigos y logros cada 60 s (antes 15); la run sube cada 5 min como mucho (antes 1) y al cerrar (`TournamentUpload.Flush` en `App.OnExit`, no con `--sin-juego`). Pendiente si hace falta: logros en tabla aparte en vez de sacarlos del historial en cada consulta.
 - `tools/desplegar.ps1 -Prueba|-Amigos`: el despliegue de siempre en un comando (se niega con PermaLocke o Azahar abiertos; nunca borra; si ya hay un «(anterior)» se para). Probado `-Prueba`; `-Amigos` sin ejecutar todavía.
+- `publicar.ps1`: el zip de código fuente ya no lleva `src/PermaLocke.Admin` ni `tools/supabase` (Admin no se reparte). Carpeta de amigos republicada y **congelada como versión para repartir** (el usuario la da por definitiva y se la pasa a 1 amigo para probar); ahora se trabaja en Admin.
 - `tools/desplegar.ps1 -Prueba|-Amigos`: el despliegue de siempre en un comando (se niega con PermaLocke o Azahar abiertos; nunca borra; si ya hay un «(anterior)» se para). Probado `-Prueba`; `-Amigos` sin ejecutar todavía.
 
 ## 2026-09-24 — plugins y MISCELÁNEA sin mochila
