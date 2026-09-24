@@ -9,7 +9,7 @@
         <DockPanel DockPanel.Dock="Top" Margin="0,0,0,14">
             <Button DockPanel.Dock="Right" Content="ACTUALIZAR" Command="{Binding RefreshCommand}" Margin="8,0,0,0" />
             <CheckBox DockPanel.Dock="Right" Content="Ver archivadas" IsChecked="{Binding ShowArchived}" VerticalAlignment="Center" Margin="12,0,12,0" />
-            <Button DockPanel.Dock="Right" Content="ENTRAR CON DISCORD" Style="{StaticResource Primary}" Command="{Binding SignInCommand}" />
+
             <StackPanel VerticalAlignment="Center">
                 <pixel:PixelText Text="AUDITORÍA DEL TORNEO" Scale="3" Tight="True" Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
                 <TextBlock Text="{Binding Status}" Foreground="{StaticResource Faint}" FontSize="11.5" Margin="0,2,0,0" />

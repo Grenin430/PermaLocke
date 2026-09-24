@@ -62,7 +62,7 @@ Ver también [[Flujos del vigilante]] · [[GameLink y memoria]] · [[UI y kit pi
 | Copias de la run | `Saves/backup/*.db` (10 rotativas) | `Data/RunBackup.cs` |
 | Direcciones recordadas | `Saves/backup/equipo.txt`, `registros-de-posicion.txt`, `mochila.txt`, `objetos-retirados.txt` (`WithheldLedger`, §147) | `GameLink/ServiceCollectionExtensions.cs` |
 | Copias de la partida antes de escribir | `Saves/backup/` | cada `Save*` de GameLink |
-| Perfil y preferencias | `Config/jugador.json`, `sync.json`, `ventana.json`, `pestana.json`, `competicion-vista.json`, **`ajustes.json`** (`AppSettings`, §177) | `JsonPlayerProfileStore`, `WindowSizeService`, `EdgeTab` |
+| Perfil y preferencias | `Config/jugador.json`, `discord.json` (sesión, DPAPI), `ventana.json`, `pestana.json`, `competicion-vista.json`, **`ajustes.json`** (`AppSettings`, §177) | `JsonPlayerProfileStore`, `WindowSizeService`, `EdgeTab` |
 | Log | `Logs/permalocke-AAAA-MM-DD.log` | `FileLoggerProvider` |
 | Sprites extraídos | `Data/sprites/v2/<sourceKey>/…` (`categorias/`, `items/`, `balls/`), fuera de git | `App/Services/PokemonSpriteService.cs` |
 | Partida del juego | `<Azahar user>/sdmc/Nintendo 3DS/…/00040000001B5100/data/…/main` | `GameLink/PlayerSave.cs` |

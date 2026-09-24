@@ -1,5 +1,4 @@
 using PermaLocke.Core.Domain;
-using PermaLocke.Data;
 
 namespace PermaLocke.Core.Tests;
 
@@ -7,20 +6,9 @@ namespace PermaLocke.Core.Tests;
 /// The friends list of JUGAR (§126): how a presence written on another machine is read, and that it travels
 /// through the shared folder next to the rest of the player's files.
 /// </summary>
-public sealed class PresenceTests : IDisposable
+public sealed class PresenceTests
 {
     private static readonly DateTimeOffset Now = new(2026, 9, 14, 21, 0, 0, TimeSpan.FromHours(2));
-
-    private readonly string _root = Path.Combine(Path.GetTempPath(), $"permalocke-presence-{Guid.NewGuid():N}");
-    private readonly SnapshotStore _store = new();
-
-    public void Dispose()
-    {
-        if (Directory.Exists(_root))
-        {
-            Directory.Delete(_root, recursive: true);
-        }
-    }
 
     private static PlayerPresence Written(PresenceState state, TimeSpan ago, TimeSpan? playing = null) => new()
     {
@@ -81,62 +69,5 @@ public sealed class PresenceTests : IDisposable
         Assert.Equal("Desconectado · hace 42 min", Presence.Say(Written(PresenceState.Offline, TimeSpan.FromMinutes(42)), Now));
         Assert.Equal("Desconectado · hace 5 h", Presence.Say(Written(PresenceState.Offline, TimeSpan.FromHours(5.5)), Now));
         Assert.Equal("Desconectado · hace 3 días", Presence.Say(Written(PresenceState.Offline, TimeSpan.FromDays(3)), Now));
-    }
-
-    [Fact]
-    public void A_presence_written_to_the_folder_reads_back_with_its_player()
-    {
-        var profile = new PlayerProfile { Id = Guid.NewGuid(), Name = "Grenin" };
-        var presence = new PlayerPresence
-        {
-            PlayerId = profile.Id,
-            Name = profile.Name,
-            State = PresenceState.Playing,
-            UpdatedAt = Now,
-            PlayingSince = Now.AddMinutes(-7)
-        };
-
-        _store.WritePresence(_root, profile, presence);
-
-        var read = Assert.Single(_store.ReadPlayers(_root));
-
-        Assert.Equal(profile.Id, read.Profile.Id);
-        Assert.Equal(presence, read.Presence);
-        Assert.Null(read.Snapshot);
-    }
-
-    /// <summary>The heartbeat rewrites the presence and must not leave a second folder for the same player.</summary>
-    [Fact]
-    public void Writing_again_updates_the_same_folder()
-    {
-        var profile = new PlayerProfile { Id = Guid.NewGuid(), Name = "Grenin" };
-
-        _store.WritePresence(_root, profile, new PlayerPresence { PlayerId = profile.Id, Name = profile.Name, State = PresenceState.InApp, UpdatedAt = Now });
-        _store.WritePresence(_root, profile, new PlayerPresence { PlayerId = profile.Id, Name = profile.Name, State = PresenceState.Offline, UpdatedAt = Now.AddMinutes(1) });
-
-        var read = Assert.Single(_store.ReadPlayers(_root));
-        Assert.Equal(PresenceState.Offline, read.Presence!.State);
-    }
-
-    [Fact]
-    public void A_folder_without_a_profile_is_not_a_player()
-    {
-        Directory.CreateDirectory(Path.Combine(CompetitionLayout.Players(_root), "basura"));
-
-        Assert.Empty(_store.ReadPlayers(_root));
-    }
-
-    [Fact]
-    public void An_unreadable_presence_reads_as_unknown_and_keeps_the_player()
-    {
-        var profile = new PlayerProfile { Id = Guid.NewGuid(), Name = "Grenin" };
-        _store.WritePresence(_root, profile, new PlayerPresence { PlayerId = profile.Id, Name = profile.Name, UpdatedAt = Now });
-
-        var folder = Assert.Single(_store.ReadPlayers(_root)).Folder;
-        File.WriteAllText(Path.Combine(folder, CompetitionLayout.PresenceFile), "{ esto no es json");
-
-        var read = Assert.Single(_store.ReadPlayers(_root));
-        Assert.Null(read.Presence);
-        Assert.Equal(PresenceState.Offline, Presence.StateOf(read.Presence, Now));
     }
 }

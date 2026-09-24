@@ -210,24 +210,19 @@ public partial class App : Application
         collection.AddSingleton<EmulatorLauncher>();
         collection.AddSingleton<LauncherViewModel>();
         collection.AddSingleton<BattleModeViewModel>();
-        collection.AddSingleton<SnapshotStore>();
 
         // EL JUGADOR DE ESTA MAQUINA (§123). En Config/ y no en Saves/: empezar de cero borra la run y
         // la partida, pero quien vuelve a empezar sigue siendo el mismo jugador.
         collection.AddSingleton<IPlayerProfileStore>(_ => new JsonPlayerProfileStore(paths.Config));
-        collection.AddSingleton(sp => new SeenMarksStore(paths.Config,
-            sp.GetRequiredService<ILogger<SeenMarksStore>>()));
         collection.AddSingleton<SyncService>();
 
-        // AMIGOS Y ACTIVIDAD de JUGAR (§126): presencia y logros reclamados de todos, por la misma carpeta.
+        // AMIGOS Y ACTIVIDAD de JUGAR (§126): presencia y logros de todos, por el servidor del torneo.
         collection.AddSingleton<CommunityService>();
 
-        // LA BANDEJA DE REGALOS (§129): lo que el admin deja en la carpeta compartida, y recogerlo aquí.
-        collection.AddSingleton<GiftStore>();
+        // LA BANDEJA DE REGALOS (§129): lo que el organizador manda por el servidor, y recogerlo aquí.
         collection.AddSingleton<GiftService>();
         collection.AddSingleton<GiftInbox>();
         collection.AddSingleton<GiftInboxViewModel>();
-        collection.AddSingleton<OfficialRulesService>();
         collection.AddSingleton<SyncViewModel>();
         collection.AddSingleton<AlolaSky>();
         collection.AddSingleton<CemeteryService>();

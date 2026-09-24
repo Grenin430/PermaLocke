@@ -459,72 +459,57 @@
 
         <!-- LA BANDEJA ABIERTA, una capa de la ventana y no un menú del sistema: así se dibuja con el mismo
              pixel art que el resto y se queda pegada debajo del regalo. -->
-        <Grid Grid.Row="1" HorizontalAlignment="Right" VerticalAlignment="Top" Width="368" Margin="0,58,26,0"
+        <Grid Grid.Row="1" HorizontalAlignment="Right" VerticalAlignment="Top" Width="400" Margin="0,58,26,0"
               Visibility="{Binding Gifts.IsOpen, Converter={StaticResource BoolToVisibility}}">
-                                <views:PixelPanel Fill="#FF191330" />
-                                <StackPanel Margin="18,12,22,18">
-                                    <DockPanel Margin="0,0,0,10">
-                                        <Button DockPanel.Dock="Right" Content="CERRAR" Style="{StaticResource SubtleButton}"
-                                                Padding="10,4" FontSize="10" Command="{Binding Gifts.CloseCommand}" />
-                                        <TextBlock Text="REGALOS" Style="{StaticResource StatLabel}" VerticalAlignment="Center" />
-                                    </DockPanel>
+            <pixel:PixelWindow Title="REGALOS" Icon="IconGift">
+                <pixel:PixelWindow.HeaderContent>
+                    <Button Content="CERRAR" Style="{StaticResource PxSubtleButton}" Command="{Binding Gifts.CloseCommand}" />
+                </pixel:PixelWindow.HeaderContent>
 
-                                    <ItemsControl ItemsSource="{Binding Gifts.Items}">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <Grid Margin="0,0,0,8">
-                                                    <views:PixelPanel Fill="#FF241D3E" HasShadow="False" />
-                                                    <StackPanel Margin="14,10,16,14">
-                                                        <DockPanel>
-                                                            <TextBlock DockPanel.Dock="Right" Text="{Binding When}"
-                                                                       Style="{StaticResource Faint}" Margin="10,0,0,0" />
-                                                            <TextBlock Text="{Binding From}" Style="{StaticResource CardTitle}"
-                                                                       FontSize="13" TextTrimming="CharacterEllipsis" />
-                                                        </DockPanel>
+                <StackPanel>
+                    <ItemsControl ItemsSource="{Binding Gifts.Items}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,0,0,8">
+                                    <views:PixelPanel Fill="{StaticResource PxWell}" IsSunken="True" HasShadow="False" />
+                                    <StackPanel Margin="14,10,16,14">
+                                        <DockPanel>
+                                            <pixel:PixelText DockPanel.Dock="Right" Text="{Binding When}" Scale="2" Tight="True"
+                                                             Margin="10,0,0,0" Colour="{StaticResource PxTextFaint}" />
+                                            <pixel:PixelText Text="{Binding From}" Scale="2" Tight="True" Trim="True"
+                                                             Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
+                                        </DockPanel>
 
-                                                        <TextBlock Text="{Binding What}" Style="{StaticResource Body}"
-                                                                   FontSize="13" Foreground="#FFE8C24A" Margin="0,4,0,0"
-                                                                   TextWrapping="Wrap" />
+                                        <pixel:PixelText Text="{Binding What}" Scale="2" Wrap="True" Margin="0,8,0,0"
+                                                         Colour="{StaticResource PxGold}" />
 
-                                                        <TextBlock Text="{Binding Reason}" Style="{StaticResource Faint}"
-                                                                   TextWrapping="Wrap" Margin="0,3,0,0" />
+                                        <pixel:PixelText Text="{Binding Reason}" Scale="2" Wrap="True" Margin="0,6,0,0"
+                                                         Colour="{StaticResource PxTextDim}" />
 
-                                                        <TextBlock Text="Necesita Azahar abierto." Style="{StaticResource Faint}"
-                                                                   Margin="0,3,0,0"
-                                                                   Visibility="{Binding NeedsTheGame,
-                                                                                Converter={StaticResource BoolToVisibility}}" />
+                                        <pixel:PixelText Text="Necesita Azahar abierto." Scale="2" Tight="True" Margin="0,6,0,0"
+                                                         Colour="{StaticResource PxTextFaint}"
+                                                         Visibility="{Binding NeedsTheGame, Converter={StaticResource BoolToVisibility}}" />
 
-                                                        <Button Content="RECOGER" Style="{StaticResource PrimaryButton}"
-                                                                Padding="12,6" FontSize="11" Margin="0,9,0,0"
-                                                                HorizontalAlignment="Left"
-                                                                Command="{Binding DataContext.Gifts.ClaimCommand,
-                                                                          RelativeSource={RelativeSource AncestorType=Window}}"
-                                                                CommandParameter="{Binding}"
-                                                                Visibility="{Binding IsCollected,
-                                                                             Converter={StaticResource InverseBoolToVisibility}}" />
+                                        <Button Content="RECOGER" Style="{StaticResource PxButton}" Margin="0,10,0,0"
+                                                HorizontalAlignment="Left"
+                                                Command="{Binding DataContext.Gifts.ClaimCommand,
+                                                          RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}"
+                                                Visibility="{Binding IsCollected, Converter={StaticResource InverseBoolToVisibility}}" />
 
-                                                        <TextBlock Text="RECOGIDO" Style="{StaticResource StatLabel}"
-                                                                   Foreground="{StaticResource SuccessBrush}" Margin="0,9,0,0"
-                                                                   Visibility="{Binding IsCollected,
-                                                                                Converter={StaticResource BoolToVisibility}}" />
-                                                    </StackPanel>
-                                                </Grid>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
+                                        <pixel:PixelText Text="RECOGIDO" Scale="2" Tight="True" Margin="0,10,0,0"
+                                                         Colour="{StaticResource PxGood}"
+                                                         Visibility="{Binding IsCollected, Converter={StaticResource BoolToVisibility}}" />
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
 
-                                    <TextBlock Text="{Binding Gifts.Status}" TextWrapping="Wrap" Margin="0,4,0,0" FontSize="12">
-                                        <TextBlock.Style>
-                                            <Style TargetType="TextBlock" BasedOn="{StaticResource Body}">
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding Gifts.Status}" Value="">
-                                                        <Setter Property="Visibility" Value="Collapsed" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
-                                </StackPanel>
+                    <pixel:PixelText Text="{Binding Gifts.Status}" Scale="2" Wrap="True" Margin="0,4,0,0"
+                                     Colour="{StaticResource PxText}" />
+                </StackPanel>
+            </pixel:PixelWindow>
         </Grid>
     </Grid>
 </Window>

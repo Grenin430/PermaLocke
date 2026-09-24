@@ -1,0 +1,104 @@
+TIENDAS ESPECIALES - PermaLocke
+Actualizado el 24/09/2026. Las tiendas del juego solo cambian en un mundo generado e instalado despues de esa fecha.
+
+====================================================
+OBJETOS DE EVOLUCIÓN CLÁSICOS - 30.000 cada uno
+====================================================
+
+RUTA 2 - Centro Pokémon (mostrador especial)
+  Electrizador
+  Magmatizador
+  Protector
+  Revest. Metálico
+  Roca del Rey
+  Tela Terrible
+  Disco Extraño
+  Escama Dragón
+  Diente Marino
+  Escama Marina
+  Colmillo Agudo
+  Garra Afilada
+
+RUTA 8 - Centro Pokémon (mostrador especial)
+  Piedra Solar
+  Piedra Lunar
+  Piedra Fuego
+  Piedra Trueno
+  Piedra Agua
+  Piedra Hoja
+  Piedra Noche
+  Piedra Alba
+  Piedra Oval
+  Piedra Día
+  Piedra Hielo
+
+CIUDAD KONIKONI - tienda de incienso
+(la misma tienda donde estuvieron al principio los objetos de gen 8 y 9)
+  Mejora
+  Escama Bella
+  Dulce de Nata
+  Piedra Eterna
+  Baya Tamate  -> 10 cada una (para las evoluciones por amistad; 10 es el precio minimo del juego)
+  Saquito Fragante
+  (y Poké Balls en los 3 huecos que sobran)
+  Todo 30.000 salvo la Baya Tamate.
+
+====================================================
+OBJETOS DE EVOLUCIÓN DE GEN 8 Y 9 - 50.000 cada uno
+====================================================
+
+CIUDAD HAUOLI - Centro Pokémon (mostrador especial)
+  Brazal Galanuez
+  Corona Galanuez
+  Manzana Ácida
+  Manzana Dulce
+  Tetera Agrietada
+  Tetera Rota
+  Confite Fresa
+  Manuscrito Sombras
+
+PUEBLO PANIOLA - mostrador especial
+  (antes estaban en la Ruta 2)
+  Manuscrito Aguas
+  Mineral Negro
+  Bloque de Turba
+
+AVENIDA ROYAL - Supermercado Ultraganga, mostrador de la izquierda
+  (antes estaban en la Ruta 2)
+  Armadura Auspiciosa
+  Armadura Maldita
+  Distintivo de Líder
+  Manzana Melosa
+  Cuenco Mediocre
+
+AVENIDA ROYAL - Supermercado Ultraganga, mostrador del centro
+  (antes estaban en la Ruta 2)
+  Cuenco Exquisito
+  Moneda de Gimmighoul  -> 30 cada una (Gholdengo pide 999)
+  (y Poké Balls en los 5 huecos que sobran)
+
+----------------------------------------------------
+Notas
+- El juego llama "Escama Dragón" a la Escama de Dragón.
+- Ruta 2, Ruta 8, Hauoli, Paniola y la tienda de Konikoni están
+  comprobadas. Los dos mostradores del Supermercado Ultraganga
+  salen de pk3DS; si no están donde dice, avisa.
+- El precio es del objeto, no de la tienda: venderlos da la mitad.
+
+====================================================
+TIENDA DE PERMALOCKE (seccion TIENDA de la app) - se paga con PUNTOS
+====================================================
+Se entrega en la mochila del juego: necesita Azahar abierto con la partida cargada.
+
+OBJETOS DE COMBATE
+  Cinta Eleccion - 75        Panuelo Eleccion - 75      Gafas Eleccion - 75
+  Mineral Evolutivo - 150    Banda Aguante - 150        Baya Zidra - 150
+  Baya Ziuela - 150          Vidasfera - 150            Toxisfera - 150
+  Chaleco Asalto - 150       Restos - 150               Gafa Protectora - 150
+  Casco Dentado - 150        Refleluz - 150             Hierba Blanca - 150
+  Hierba Unica - 150         Master Ball - 300          Capsula Habilidad - 400
+
+MEGAPIEDRAS - 300 cada una
+  Las 93 megapiedras del juego y del mod de gen 8 y 9 (la lista entera esta en la app).
+  La piedra sirve para UNA especie y solo en su forma final; hace falta la Piedra
+  Activadora en la mochila para megaevolucionar.

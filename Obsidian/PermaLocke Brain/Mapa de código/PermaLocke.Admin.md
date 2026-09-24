@@ -7,8 +7,14 @@ generado: 2026-09-24
 
 Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Admin/`). Tipos en negrita. Vuelve a [[00 - Inicio]] · [[Arquitectura]].
 
+- `AnnouncementsWindow.xaml.cs` — **AnnouncementsWindow** — The tournament's announcements. Everything it does lives in `nnouncementsViewModel`.
 - `App.xaml.cs` — **App** — The admin's tool: one window over the shared folder (§129). 
 - `AssemblyInfo.cs` — 
+- `AuditWindow.xaml.cs` — **AuditWindow** — The tournament audit. Everything it does lives in `uditViewModel`.
 - `MainWindow.xaml.cs` — **MainWindow** — The admin's window. Everything it does lives in its view model.
-- `Services/GiftDesk.cs` — **PlayerLine, SentGift, GiftDesk** — The admin's side of the shared folder: who is in it, and the gifts left for them (§129). 
-- `ViewModels/AdminViewModel.cs` — **ChosenItem, BannerRow, AdminViewModel** — One item already added to the gift being written.
+- `Services/GiftDesk.cs` — **PlayerLine, SentGift, GiftDesk** — A player of the tournament, as the organiser's list shows them.
+- `ViewModels/AdminViewModel.cs` — **BannerRow, AdminViewModel** — A banner of the gacha with how many free rolls this gift gives on it.
+- `ViewModels/AnnouncementsViewModel.cs` — **Announcement, AnnouncementsViewModel** — One announcement to every player.
+- `ViewModels/AuditViewModel.cs` — **AuditRow, AuditViewModel** — One run of the tournament, checked.
+- `ViewModels/WhitelistViewModel.cs` — **Allowed, WhitelistViewModel** — One Discord account allowed into the tournament.
+- `WhitelistWindow.xaml.cs` — **WhitelistWindow** — The tournament's whitelist. Everything it does lives in `hitelistViewModel`.

@@ -24,9 +24,10 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Services/AppSettings.cs` — **AppSettingsData** — What the player chose in CONFIGURACIÓN, as it is written to disk.
 - `Services/BattleModeService.cs` — **BattleModeState, BattleModeResult, BattleModeService** — Where the world is right now.
 - `Services/CemeteryService.cs` — **Grave, CemeteryService** — One of the run's fallen, with what the run knows about how it went.
-- `Services/CommunityService.cs` — **FriendStatus, ClaimedAchievement, CommunityService** — The launcher's friends list and activity: everyone's presence and the achievements they claim, through the shared folder (§126). 
+- `Services/CommunityService.cs` — **FriendStatus, ClaimedAchievement, CommunityService** — The launcher's friends list and activity: everyone's presence and the achievements they claim, through the tournament server (the shared folder of §126 is gone). 
 - `Services/DarkFrame.cs` — **DarkFrame** — Asks the desktop window manager for a dark title bar. 
 - `Services/DeathCeremony.cs` — **DeathNotice, DeathCard, DeathCeremony** — A Pokémon that has just died, as the ceremony needs it.
+- `Services/DiscordLogin.cs` — **DiscordAccount, DiscordLogin** — Who is signed in, as the tournament server knows them.
 - `Services/DisplayNames.cs` — **DisplayNames** — Spanish labels for the enums the interface shows. 
 - `Services/EdgeTab.cs` — **EdgeTab** — The tab that brings PermaLocke back while you are playing. 
 - `Services/EmulatorCrashReport.cs` — **EmulatorCrashReport, Machine** — Writes, the moment Azahar falls over, everything needed to know why: so nobody has to reproduce it on the player's computer, and the player only has to pass on one file. 
@@ -36,7 +37,7 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Services/EventIcons.cs` — **EventIcons** — The pixel icon of each kind of event, for the history lists drawn in the pixel style (§176). 
 - `Services/GameLinkMonitor.cs` — **GameLinkMonitor** — Polls the running game and publishes what it sees. One poller for the whole application, so every screen shows the same snapshot and the emulator is asked once per cycle. 
 - `Services/GameWindow.cs` — **GameWindow** — Where the emulator is, and which screen it is on. 
-- `Services/GiftInbox.cs` — **GiftInbox** — The gifts waiting for this player in the shared folder, and collecting them (§129). 
+- `Services/GiftInbox.cs` — **GiftInbox** — The gifts waiting for this player on the tournament server, and collecting them (§129; the shared folder is gone). 
 - `Services/HpBarWatcher.cs` — **HpBarWatcher** — Waits, looking at the emulator's window, for the player's HP bar to reach zero. 
 - `Services/IKillcamRecorder.cs` — **IKillcamRecorder** — Recording operations used by the game monitor.
 - `Services/InstalledWorld.cs` — **InstalledWorld** — Reads how big the world Azahar will actually load is, and tells the live readers. 
@@ -46,16 +47,17 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Services/KillcamRecorder.cs` — **KillcamRecorder** — Keeps the last seconds of the battle on screen, so a death can be saved with what led to it. 
 - `Services/MachineItemLookup.cs` — **MachineItemLookup** — Item names, with a TM saying which move it teaches in the world being played. 
 - `Services/MaintenanceService.cs` — **AuditRow, AuditReport, MaintenanceService, MarkedZone, WithheldItem, StageReadout** — The checks and repairs that until now only existed as Probe commands in a terminal. 
-- `Services/Notifier.cs` — **ToastKind, Notifier** — What a notice is about. Decides its tab, its colour and the mark drawn on its sprite.
-- `Services/OfficialRulesService.cs` — **RulesStatus, OfficialRulesService** — The official rules the admin leaves in the competition folder, and adopting them on this machine. 
+- `Services/Notifier.cs` — **Toast, Notifier** — One thing worth saying while somebody is playing.
 - `Services/OverlayWindows.cs` — **OverlayWindows** — What every window drawn on top of the game has to do so the game keeps being playable. 
 - `Services/PlayNotifications.cs` — **PlayNotifications** — Turns what the watcher does on its own into notices on top of the game. 
 - `Services/PokemonSpriteService.cs` — **PokemonSpriteService** — The Pokémon icons, taken from the player's own cartridge. 
 - `Services/ProcessExitWatch.cs` — **ProcessExitWatch** — Holds on to a process PermaLocke did not start, so that once it is gone its exit code can still be read. 
 - `Services/Rolling.cs` — **Rolling** — Makes a number arrive by counting up to itself instead of appearing. 
 - `Services/RunActivity.cs` — **RunActivity, WatchedEventStore** — Says out loud that the run's history has just grown. 
-- `Services/SyncService.cs` — **StandingRow, PlayerStatus, Standings, SyncSettings, SyncService** — The chip on the row: short, and never a word that promises more than was checked.
+- `Services/SyncService.cs` — **PlayerStatus, SyncService** — The summary of the loaded run and the history it comes from, for `ournamentUpload`. The shared folder it used to publish to is gone (2026-09-24): the tournament server replaced it. 
+- `Services/ToastKind.cs` — **ToastKind** — What a notice is about. Decides its tab, its colour and the mark drawn on its sprite.
 - `Services/ToastPlacement.cs` — **ToastPlacement** — Positions the notice stack in screen pixels, keeping it inside the selected monitor.
+- `Services/TournamentUpload.cs` — **TournamentUpload** — Sends the loaded run to the tournament server: the same summary and history the shared folder used to carry. 
 - `Services/TypePalette.cs` — **TypePalette** — The colours the series has used for the types since forever, by the game's type number. 
 - `Services/UiDispatcher.cs` — **IUiDispatcher, WpfUiDispatcher** — Runs work on the UI thread. View models need this because domain services complete their awaits on thread pool threads, and touching a bound ObservableCollection from there throws. 
 - `Services/VisualCppRuntime.cs` — **VisualCppStatus, VisualCppRuntime** — The runtime the emulator will load: its own when it has one, Windows's otherwise.
@@ -74,6 +76,7 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `ViewModels/GiftInboxViewModel.cs` — **GiftRowViewModel, GiftInboxViewModel** — One gift as the inbox draws it.
 - `ViewModels/HomeViewModel.cs` — **EventRow, TeamRow, IslandRow, FallenRow, StageMark, HomeViewModel** — One stop of the island tour on HOME's track: a trial, the league or the rematch.
 - `ViewModels/LauncherViewModel.cs` — **FriendItem, ActivityItem, ActivityDay, LauncherViewModel** — A friend in the list, ready to draw.
+- `ViewModels/LoginViewModel.cs` — **LoginViewModel** — The door before the application: ENTRAR CON DISCORD, and in only with an account on the tournament's whitelist. 
 - `ViewModels/MainViewModel.cs` — **MainViewModel** — Shell view model: owns the sidebar, the current section and the run summary strip.
 - `ViewModels/MapViewModel.cs` — **MapZoneViewModel, IslandViewModel, MapViewModel** — One zone on the map, and what the player marked happened there.
 - `ViewModels/MiscellaneousViewModel.cs` — **RewardGiftViewModel, RewardRowViewModel, MiscellaneousViewModel** — One thing a prize hands over, with the drawing the cartridge has for it.
@@ -87,7 +90,7 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `ViewModels/SectionViewModel.cs` — **GameNeed, SectionViewModel, PendingSectionViewModel** — Whether a section needs Azahar running, needs it shut, or does not care. 
 - `ViewModels/SettingsViewModel.cs` — **SettingsViewModel** — CONFIGURACIÓN: the window size, the notices over the game, the death scene, the killcam and the folders. 
 - `ViewModels/ShopViewModel.cs` — **ShopItemViewModel, ShopViewModel** — One card in the shop grid.
-- `ViewModels/SyncViewModel.cs` — **SyncViewModel** — The standings, publishing this run into them, who this machine's player is, and the official rules. 
+- `ViewModels/SyncViewModel.cs` — **TopRow, RecordCard, SyncViewModel** — One line of the tournament's top.
 - `ViewModels/TradePlay.cs` — **TradePlay** — One wonder trade, as the cabin plays it: who goes and in which ball, who comes, what the screen will say, and when it was confirmed. 
 - `ViewModels/TypeBadges.cs` — **TypeBadges** — The one or two type plates of a Pokémon, for every screen that shows whom you picked: the viewer, ENTRENAR EV and MOVIMIENTOS (§176). 
 - `ViewModels/WonderTradeViewModel.cs` — **TypeBadgeViewModel, WonderTradeViewModel** — One type of the received Pokémon, with the colour the games have always used.
@@ -112,6 +115,7 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Views/HomeView.xaml.cs` — **HomeView** — 
 - `Views/KillcamPlayer.cs` — **KillcamPlayer** — Plays a killcam: the frames at their own times, at real speed or slowed down, looping, with a mark on the timeline where the bar reached zero. 
 - `Views/LauncherView.xaml.cs` — **LauncherView** — 
+- `Views/LoginWindow.xaml.cs` — **LoginWindow** — 
 - `Views/MapView.xaml.cs` — **MapView** — The island whose entrance has already played, so it does not play twice.
 - `Views/MiscellaneousView.xaml.cs` — **MiscellaneousView** — 
 - `Views/MoveReminderView.xaml.cs` — **MoveReminderView** — 

@@ -80,7 +80,7 @@ public sealed partial class AdminViewModel : ObservableObject
 
     public async Task StartAsync()
     {
-        AdminName = _discord.Saved?.Name ?? "Organizador";
+        ShowAccount();
         await RefreshAsync();
 
         // Quién está conectado cambia solo: se relee cada minuto.
@@ -125,6 +125,34 @@ public sealed partial class AdminViewModel : ObservableObject
         }
     }
 
+    /// <summary>Who is signed in, for the header: their Discord name and picture, or nobody.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsSignedIn), nameof(IsSignedOut))]
+    private string? _photo;
+
+    public bool IsSignedIn => _discord.Saved is not null;
+
+    public bool IsSignedOut => !IsSignedIn;
+
+    private void ShowAccount()
+    {
+        AdminName = _discord.Saved?.Name ?? "Organizador";
+        Photo = _discord.Saved?.AvatarUrl;
+        OnPropertyChanged(nameof(IsSignedIn));
+        OnPropertyChanged(nameof(IsSignedOut));
+    }
+
+    /// <summary>Forgets the session on this PC; the next action asks to sign in again.</summary>
+    [RelayCommand]
+    private void SignOut()
+    {
+        _discord.SignOut();
+        ShowAccount();
+        Players.Clear();
+        Sent.Clear();
+        Status = "Sesión cerrada.";
+    }
+
     /// <summary>Signs the organiser in with Discord, then reads everything again.</summary>
     [RelayCommand]
     private async Task SignInAsync()
@@ -133,7 +161,8 @@ public sealed partial class AdminViewModel : ObservableObject
 
         try
         {
-            AdminName = (await _discord.SignInAsync()).Name;
+            await _discord.SignInAsync();
+            ShowAccount();
         }
         catch (Exception ex)
         {
@@ -147,23 +176,18 @@ public sealed partial class AdminViewModel : ObservableObject
 
     // ============================================================ EL REGALO QUE SE ESTÁ ESCRIBIENDO
 
-    /// <summary>The players the gift goes to; several at once. Empty with <see cref="ToEverybody"/> off sends nothing.</summary>
+    /// <summary>The players the gift goes to: one, several or all (SELECCIONAR TODOS). Each gets their own gift.</summary>
     /// <remarks>
-    /// «A todos» used to start ticked and choosing somebody did not untick it, so a gift meant for one player reached
-    /// everybody. Now it starts unticked, and choosing anybody unticks it.
+    /// There is no «a todos» any more (removed on 2026-09-24 at the organiser's request): it used to start ticked and
+    /// override the selection, so a gift meant for one player reached everybody.
     /// </remarks>
     public ObservableCollection<PlayerLine> Chosen { get; } = [];
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(CanSend))]
-    private bool _toEverybody;
 
     /// <summary>Called by the list when its selection changes.</summary>
     public void Choose(IEnumerable<PlayerLine> players)
     {
         Chosen.Clear();
         foreach (var player in players) Chosen.Add(player);
-        if (Chosen.Count > 0) ToEverybody = false;
         OnPropertyChanged(nameof(CanSend));
     }
 
@@ -183,7 +207,7 @@ public sealed partial class AdminViewModel : ObservableObject
 
     /// <summary>A gift needs a reason and something inside it. Both, always.</summary>
     public bool CanSend => Reason.Trim().Length > 0
-                           && (ToEverybody || Chosen.Count > 0)
+                           && Chosen.Count > 0
                            && (Points != 0 || WonderTrades > 0 || Banners.Any(banner => banner.Rolls > 0));
 
     [RelayCommand]
@@ -195,8 +219,7 @@ public sealed partial class AdminViewModel : ObservableObject
         }
 
         // Un regalo por destinatario: el servidor enseña a cada jugador solo los suyos.
-        List<string> to = ToEverybody ? [AdminGift.Everybody] : [.. Chosen.Select(player => player.Id.ToString())];
-        var gifts = to.Select(recipient => new AdminGift
+        var gifts = Chosen.Select(player => player.Id.ToString()).Select(recipient => new AdminGift
         {
             Id = Guid.NewGuid(),
             From = AdminName,
@@ -212,9 +235,7 @@ public sealed partial class AdminViewModel : ObservableObject
         try
         {
             foreach (var gift in gifts) await _desk.SendAsync(gift);
-            Status = ToEverybody
-                ? $"Mandado a todos: {gifts[0].Say()}."
-                : $"Mandado a {string.Join(", ", Chosen.Select(p => p.Name))}: {gifts[0].Say()}.";
+            Status = $"Mandado a {string.Join(", ", Chosen.Select(p => p.Name))}: {gifts[0].Say()}.";
 
             Clear();
             await RefreshAsync();
@@ -229,7 +250,6 @@ public sealed partial class AdminViewModel : ObservableObject
     [RelayCommand]
     private void Clear()
     {
-        ToEverybody = false;
         Points = 0;
         WonderTrades = 0;
         Reason = string.Empty;

@@ -17,6 +17,13 @@ public partial class MainWindow : Window
     private void OnAnnouncements(object sender, RoutedEventArgs e) =>
         new AnnouncementsWindow(((AdminViewModel)DataContext).Announcements) { Owner = this }.Show();
 
+    /// <summary>Marks every player, or none if they already were.</summary>
+    private void OnChooseAll(object sender, RoutedEventArgs e)
+    {
+        if (PlayerList.SelectedItems.Count == PlayerList.Items.Count) PlayerList.UnselectAll();
+        else PlayerList.SelectAll();
+    }
+
     private void OnPlayersChosen(object sender, System.Windows.Controls.SelectionChangedEventArgs e) =>
         ((AdminViewModel)DataContext).Choose(PlayerList.SelectedItems.Cast<Services.PlayerLine>());
 }

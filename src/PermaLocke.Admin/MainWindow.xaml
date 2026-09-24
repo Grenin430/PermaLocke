@@ -17,7 +17,18 @@
             <Button DockPanel.Dock="Right" Content="AUDITORÍA DEL TORNEO" Click="OnAudit" Margin="0,0,8,0" />
             <Button DockPanel.Dock="Right" Content="LISTA DEL TORNEO" Click="OnWhitelist" Margin="0,0,8,0" />
             <Button DockPanel.Dock="Right" Content="ANUNCIOS" Click="OnAnnouncements" Margin="0,0,8,0" />
-            <Button DockPanel.Dock="Right" Content="ENTRAR CON DISCORD" Style="{StaticResource Primary}" Command="{Binding SignInCommand}" Margin="0,0,8,0" />
+            <Button DockPanel.Dock="Right" Content="ENTRAR CON DISCORD" Style="{StaticResource Primary}" Command="{Binding SignInCommand}" Margin="0,0,8,0"
+                    Visibility="{Binding IsSignedOut, Converter={StaticResource BoolToVisibility}}" />
+            <!-- La cuenta con la que estás dentro, con su foto de Discord. -->
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="0,0,14,0" VerticalAlignment="Center"
+                        Visibility="{Binding IsSignedIn, Converter={StaticResource BoolToVisibility}}">
+                <Image Source="{Binding Photo, TargetNullValue={x:Null}}" Width="36" Height="36" Margin="0,0,8,0" />
+                <StackPanel VerticalAlignment="Center" Margin="0,0,10,0">
+                    <pixel:PixelText Text="{Binding AdminName}" Scale="2" Tight="True" Colour="{StaticResource PxGold}" />
+                    <TextBlock Text="organizador" Foreground="{StaticResource Faint}" FontSize="11" Margin="0,3,0,0" />
+                </StackPanel>
+                <Button Content="SALIR" Command="{Binding SignOutCommand}" VerticalAlignment="Center" />
+            </StackPanel>
             <StackPanel VerticalAlignment="Center">
                 <pixel:PixelText Text="PERMALOCKE ADMIN" Scale="3" Tight="True" Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
                 <TextBlock Text="Servidor del torneo" Foreground="{StaticResource Faint}" FontSize="11.5"
@@ -41,7 +52,11 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
-                    <Border Grid.Row="0" />
+                    <DockPanel Grid.Row="0" Margin="0,0,0,8">
+                        <Button DockPanel.Dock="Left" Content="SELECCIONAR TODOS" Click="OnChooseAll" />
+                        <TextBlock Text="Clic en un jugador para marcarlo o desmarcarlo." Foreground="{StaticResource Faint}"
+                                   FontSize="11.5" VerticalAlignment="Center" Margin="10,0,0,0" TextWrapping="Wrap" />
+                    </DockPanel>
 
                     <ListBox x:Name="PlayerList" Grid.Row="1" ItemsSource="{Binding Players}" SelectionMode="Multiple"
                              SelectionChanged="OnPlayersChosen"
@@ -148,11 +163,7 @@
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel>
 
-                        <CheckBox Content="A todos" IsChecked="{Binding ToEverybody}" Margin="0,0,0,6" />
-                        <TextBlock Foreground="{StaticResource Faint}" FontSize="11.5"
-                                   Text="O elige uno o varios jugadores en la lista de la izquierda (clic para marcar o desmarcar). Elegir a alguien quita «A todos»." TextWrapping="Wrap" />
-
-                        <pixel:PixelText Text="MOTIVO" Style="{StaticResource Heading}" Margin="0,16,0,6" />
+                        <pixel:PixelText Text="MOTIVO" Style="{StaticResource Heading}" Margin="0,0,0,6" />
                         <TextBox Text="{Binding Reason, UpdateSourceTrigger=PropertyChanged}"
                                  TextWrapping="Wrap" MinHeight="46" AcceptsReturn="True" />
                         <TextBlock Foreground="{StaticResource Faint}" FontSize="11.5" Margin="0,4,0,0"

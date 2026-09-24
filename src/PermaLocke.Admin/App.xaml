@@ -10,6 +10,7 @@
                 <ResourceDictionary Source="Themes/Pixel.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
+            <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
             <SolidColorBrush x:Key="Canvas" Color="#FF120E20" />
             <SolidColorBrush x:Key="Text" Color="{StaticResource PxText}" />
             <SolidColorBrush x:Key="Muted" Color="{StaticResource PxTextDim}" />

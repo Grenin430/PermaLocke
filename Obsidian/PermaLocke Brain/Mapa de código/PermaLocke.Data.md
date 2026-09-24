@@ -7,7 +7,6 @@ generado: 2026-09-24
 
 Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Data/`). Tipos en negrita. Vuelve a [[00 - Inicio]] · [[Arquitectura]].
 
-- `GiftStore.cs` — **GiftStore** — The admin's gifts inside the shared folder: one file each, written by the admin and read by everybody (§129). 
 - `JsonAchievementCatalog.cs` — **JsonAchievementCatalog** — Reads Data/achievements.json: what the run rewards and with how much.
 - `JsonCreditCatalog.cs` — **JsonCreditCatalog** — Reads Data/grants.json: what each milestone hands over in free rolls and trades.
 - `JsonGachaCatalog.cs` — **JsonGachaCatalog, JsonSpeciesStatsCatalog** — Reads Data/gacha.json: the banners, their cost and their odds.
@@ -24,11 +23,7 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Da
 - `JsonWonderTradeCatalog.cs` — **JsonWonderTradeCatalog** — Reads Data/wondertrade.json: how wide the band of an acceptable trade is.
 - `JsonZoneMarkers.cs` — **ZoneMarker, JsonZoneMarkers** — Where each zone's marker sits on its island, in Data/marcadores.json. 
 - `JsonZonePhotos.cs` — **JsonZonePhotos** — The picture of each zone, from Data/fotos.json. 
-- `OfficialRules.cs` — **RuleFileKind, RuleFileState, RuleFileStatus, AdoptedRule, RulesAdoption, OfficialRules** — When a rules file takes effect once it is adopted.
 - `RunBackup.cs` — **RunBackupResult** — Copies the run database before anything opens it, and keeps the last few copies. 
-- `SeenMarksStore.cs` — **SeenMarksStore** — How far this machine has seen each run of the competition, as Config/competicion-vista.json. 
 - `ServiceCollectionExtensions.cs` — **ServiceCollectionExtensions** — 
-- `SharedFolderSettings.cs` — **SharedFolderSettings** — The one place that knows where this machine's shared folder is written down (§129). 
-- `SnapshotStore.cs` — **SnapshotRead, PlayerFolderRead, CompetitionLayout, SnapshotStore** — Where each thing lives inside the competition's shared folder. 
 - `SqliteEventStore.cs` — **SqliteEventStore** — Append-only event log on SQLite. One database for every run, so PermaLocke.Admin can query across them. Inserts are serialized: the hash chain requires reading the tail and writing the new row as o...
 - `SqlitePokemonRepository.cs` — **SqlitePokemonRepository** — Pokémon of every run, in the same database as the event log. Unlike the log this table is mutable — a Pokémon dies, is released, changes level — but every mutation is paired with an event by ...

@@ -51,7 +51,7 @@ public sealed partial class AuditViewModel(DiscordLogin discord, ILogger<AuditVi
     private string _status = string.Empty;
 
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(RefreshCommand), nameof(SignInCommand), nameof(ActCommand))]
+    [NotifyCanExecuteChangedFor(nameof(RefreshCommand), nameof(ActCommand))]
     private bool _busy;
 
     private bool CanAct => !Busy;
@@ -65,30 +65,6 @@ public sealed partial class AuditViewModel(DiscordLogin discord, ILogger<AuditVi
     private sealed record RunRow(Guid Run_id, Guid User_id, bool Activa, JsonElement Snapshot, JsonElement History, DateTimeOffset Subida);
 
     private sealed record UploadRow(Guid Run_id, int? Eventos, string? Huella, int? Puntos, DateTimeOffset Llegada);
-
-    [RelayCommand(CanExecute = nameof(CanAct))]
-    private async Task SignInAsync()
-    {
-        Busy = true;
-        Status = "Termina de entrar en el navegador...";
-
-        try
-        {
-            var account = await discord.SignInAsync();
-            Status = $"Dentro como {account.Name}.";
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Falló el inicio de sesión con Discord");
-            Status = "No se ha podido entrar con Discord.";
-        }
-        finally
-        {
-            Busy = false;
-        }
-
-        await RefreshAsync();
-    }
 
     [RelayCommand(CanExecute = nameof(CanAct))]
     private async Task RefreshAsync()
@@ -105,7 +81,7 @@ public sealed partial class AuditViewModel(DiscordLogin discord, ILogger<AuditVi
 
             if (runsJson is null || uploadsJson is null)
             {
-                Status = "Entra con Discord (la cuenta del organizador).";
+                Status = "Entra con Discord en la ventana principal (la cuenta del organizador).";
                 return;
             }
 

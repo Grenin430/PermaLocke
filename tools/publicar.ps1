@@ -30,6 +30,7 @@ Copy-Item -LiteralPath (Join-Path $raiz 'Islas') -Destination $Destino -Recurse
 Copy-Item -LiteralPath (Join-Path $raiz 'LICENSE') -Destination $Destino
 # Para jugadores: como evoluciona ahora lo que pedia intercambio o un movimiento (seccion 151 de la documentacion).
 Copy-Item -LiteralPath (Join-Path $raiz 'EVOLUCIONES CAMBIADAS.txt') -Destination $Destino
+Copy-Item -LiteralPath (Join-Path $raiz 'Tiendas especiales.txt') -Destination (Join-Path $Destino 'TIENDAS.txt')
 Copy-Item -LiteralPath (Join-Path $raiz 'tools\LEEME-local.txt') -Destination (Join-Path $Destino 'EMPIEZA AQUI.txt')
 Copy-Item -LiteralPath (Join-Path $raiz 'tools\ACTUALIZAR-local.txt') -Destination (Join-Path $Destino 'ACTUALIZAR DESDE LA VERSION ANTERIOR.txt')
 foreach ($folder in @('ROM','Config','Soporte','Emulator\user\config')) {
@@ -113,7 +114,7 @@ try {
         [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($sourceZip, $file.FullName, $relative, [IO.Compression.CompressionLevel]::Optimal) | Out-Null
     }
 } finally { $sourceZip.Dispose() }
-$requiredFiles = @('PermaLocke.exe','PermaLocke.local','EVOLUCIONES CAMBIADAS.txt','Emulator\azahar.exe','Emulator\plugins\platforms\qwindows.dll','Expansion\exefs\code.bin','Expansion\romfs\a\0\9\4','Expansion\README.txt','Data\mapas.json','Data\marcadores.json','Data\fotos.json') + @($runtime | ForEach-Object { "Emulator\$_" })
+$requiredFiles = @('PermaLocke.exe','PermaLocke.local','EVOLUCIONES CAMBIADAS.txt','TIENDAS.txt','Emulator\azahar.exe','Emulator\plugins\platforms\qwindows.dll','Expansion\exefs\code.bin','Expansion\romfs\a\0\9\4','Expansion\README.txt','Data\mapas.json','Data\marcadores.json','Data\fotos.json') + @($runtime | ForEach-Object { "Emulator\$_" })
 foreach ($file in $requiredFiles) {
     if (-not (Test-Path -LiteralPath (Join-Path $Destino $file))) { throw "Falta en la distribucion: $file" }
 }
