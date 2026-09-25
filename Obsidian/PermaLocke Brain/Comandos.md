@@ -18,7 +18,7 @@ PERMALOCKE_SNAP_DIR="<dir>" dotnet test tests/PermaLocke.App.Tests --filter Home
 ## Publicar y desplegar en la carpeta de prueba del usuario
 ```bash
 powershell -File tools/desplegar.ps1 -Prueba   # ✔ comprueba procesos, publica y copia el exe; avisa si Data difiere
-powershell -File tools/desplegar.ps1 -Amigos   # publicar.ps1 y la vieja pasa a "(anterior)"; no borra nada
+powershell -File tools/desplegar.ps1 -Amigos   # ✔ 2026-09-25. publicar.ps1 y la vieja pasa a "(anterior)"; no borra nada
 ```
 A mano, lo mismo:
 ```bash
