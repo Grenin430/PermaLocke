@@ -189,6 +189,7 @@ generado: 2026-09-24
 - L11819 · 180 · Iconos variocolor desde renders de referencia
 - L11860 · 181 · El Pokémon que te sigue (plugin 3GX)
 - L11901 · 182 · Las pruebas se ven en LOGROS sin guardar
+- L11923 · 183 · Los fantasmas de los caídos entre jugadores
 
 Subsecciones §176: bis (visor), ter (todas las pantallas, fuera ESTADÍSTICAS), quater (EV/MOVIMIENTOS sin bolsa, diálogos).
 

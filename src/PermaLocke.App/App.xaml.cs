@@ -219,6 +219,9 @@ public partial class App : Application
         // AMIGOS Y ACTIVIDAD de JUGAR (§126): presencia y logros de todos, por el servidor del torneo.
         collection.AddSingleton<CommunityService>();
 
+        // Los fantasmas (§183): tus muertes a los demás, y las suyas encima de tu emulador.
+        collection.AddSingleton<GhostService>();
+
         // LA BANDEJA DE REGALOS (§129): lo que el organizador manda por el servidor, y recogerlo aquí.
         collection.AddSingleton<GiftService>();
         collection.AddSingleton<GiftInbox>();
@@ -345,6 +348,7 @@ public partial class App : Application
         // Una copia para mirar pantallas lee a los amigos, pero no dice que está aquí ni publica la run.
         // Amigos y actividad van por el servidor del torneo, también en la distribución local.
         _services.GetRequiredService<CommunityService>().Start(writes: !withoutGame);
+        _services.GetRequiredService<GhostService>().Start(writes: !withoutGame);
 
         // Los regalos del organizador llegan por el servidor del torneo, también en la distribución local.
         _services.GetRequiredService<GiftInbox>().Start();
@@ -374,6 +378,16 @@ public partial class App : Application
         if (e.Args.Contains("--ensayar-muerte", StringComparer.OrdinalIgnoreCase))
         {
             await RehearseDeathsAsync(logger);
+        }
+
+        if (e.Args.Contains("--ensayar-fantasma", StringComparer.OrdinalIgnoreCase))
+        {
+            // El fantasma de un amigo tal como lo vería él (§183), con el último caído de esta run.
+            if ((await _services!.GetRequiredService<MaintenanceService>().FallenAsync()).FirstOrDefault() is { } ghost)
+            {
+                await _services!.GetRequiredService<GhostService>().RehearseAsync("Ensayo",
+                    new DeathNotice(ghost.Nickname ?? ghost.SpeciesName, ghost.Species, 0, ghost.Form, ghost.IsShiny, ghost.Level));
+            }
         }
 
         if (e.Args.Contains("--ensayar-killcam", StringComparer.OrdinalIgnoreCase))

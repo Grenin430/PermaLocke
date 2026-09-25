@@ -67,6 +67,9 @@
                     <CheckBox Style="{StaticResource Check}" IsChecked="{Binding DeathScene}" Content="Escena de muerte" />
                     <pixel:PixelText Style="{StaticResource Explain}" Text="Al caer un Pokémon." />
 
+                    <CheckBox Style="{StaticResource Check}" IsChecked="{Binding Ghosts}" Content="Fantasmas" />
+                    <pixel:PixelText Style="{StaticResource Explain}" Text="Los caídos de tus amigos cruzan tu emulador, y el tuyo se va hacia ellos." />
+
                     <CheckBox Style="{StaticResource Check}" IsChecked="{Binding Killcam}" Content="Grabar killcams" />
                     <pixel:PixelText Style="{StaticResource Explain}" Text="Repetición de cada muerte en el CEMENTERIO." />
 

@@ -8,12 +8,13 @@ namespace PermaLocke.App.Services;
 /// <summary>A Pokémon that has just died, as the ceremony needs it.</summary>
 /// <param name="Name">Its nickname if it has one, its species otherwise.</param>
 /// <param name="Penalty">What its death actually cost, which is zero for a role that loses nothing.</param>
-public sealed record DeathNotice(string Name, int Species, int Penalty, int Form = 0, bool Shiny = false);
+public sealed record DeathNotice(string Name, int Species, int Penalty, int Form = 0, bool Shiny = false, int Level = 0);
 
 /// <summary>One death of the ceremony, already resolved to what is drawn.</summary>
 /// <param name="Flash">The sprite as a white silhouette, for the hit it takes before it faints.</param>
+/// <param name="Ghost">Its ghost, which leaves by the left once it has sunk (§183); null when ghosts are off.</param>
 public sealed record DeathCard(string Title, string Points, BitmapSource? Sprite, BitmapSource? Flash,
-    bool IsWipe);
+    bool IsWipe, BitmapSource? Ghost = null);
 
 /// <summary>
 /// The «X HA MUERTO» over the game, one death after another.
@@ -46,10 +47,13 @@ public sealed class DeathCeremony(IUiDispatcher ui, PokemonSpriteService sprites
     private bool _playing;
     private DeathWindow? _window;
 
-    /// <summary>Plays one death. Safe to call from any thread.</summary>
     /// <summary>Off in CONFIGURACIÓN: the death is recorded all the same, only the scene is not shown.</summary>
     public bool Enabled { get; set; } = true;
 
+    /// <summary>Off in CONFIGURACIÓN: the scene ends without the ghost leaving by the left (§183).</summary>
+    public bool Ghosts { get; set; } = true;
+
+    /// <summary>Plays one death. Safe to call from any thread.</summary>
     public void Mourn(DeathNotice notice)
     {
         ArgumentNullException.ThrowIfNull(notice);
@@ -68,7 +72,8 @@ public sealed class DeathCeremony(IUiDispatcher ui, PokemonSpriteService sprites
                 Points(notice.Penalty),
                 sprite,
                 sprite is null ? null : White(sprite),
-                IsWipe: false));
+                IsWipe: false,
+                Ghost: Ghosts ? GhostArt.Make(sprite) : null));
         }
         catch (Exception ex)
         {

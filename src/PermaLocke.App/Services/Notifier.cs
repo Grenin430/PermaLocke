@@ -23,6 +23,7 @@ public sealed record Toast(ToastKind Kind, string Title, string Message, BitmapS
         ToastKind.Warning => "ATENCIÓN",
         ToastKind.Gift => "REGALO",
         ToastKind.Announcement => "ANUNCIO",
+        ToastKind.Ghost => "FANTASMA",
         _ => "PERMALOCKE"
     };
 

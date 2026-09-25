@@ -81,6 +81,16 @@
                                        RenderOptions.BitmapScalingMode="NearestNeighbor" />
                             </Grid>
                         </Grid>
+
+                        <!-- EL FANTASMA (§183): sale de donde se hundió el Pokémon, sube y se va por la
+                             izquierda, camino de las pantallas de los demás. Fuera del escenario, que
+                             recorta: tiene que poder cruzar hasta el borde. -->
+                        <Image x:Name="GhostSprite" HorizontalAlignment="Left" VerticalAlignment="Top"
+                               Stretch="Fill" Opacity="0" RenderOptions.BitmapScalingMode="NearestNeighbor">
+                            <Image.RenderTransform>
+                                <TranslateTransform X="0" Y="0" />
+                            </Image.RenderTransform>
+                        </Image>
                     </Grid>
                 </Viewbox>
 

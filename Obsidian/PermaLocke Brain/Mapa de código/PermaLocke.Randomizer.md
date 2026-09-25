@@ -1,7 +1,7 @@
 ---
 tipo: mapa-codigo
 proyecto: PermaLocke.Randomizer
-generado: 2026-09-25
+generado: 2026-09-26
 ---
 # PermaLocke.Randomizer — mapa de ficheros
 

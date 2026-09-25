@@ -11919,3 +11919,45 @@ Pruebas en `AchievementServiceTests`:
 - una mochila viva sin el cristal no borra lo que tiene la partida.
 
 Sigue haciendo falta **reentrar en LOGROS** para ver el cambio si la pantalla ya estaba abierta.
+
+## §183 · Los fantasmas: cuando a alguien se le muere un Pokémon, lo ven los demás (2026-09-26)
+
+Idea del jugador. Cuando un Pokémon muere:
+- **en la pantalla de quien lo pierde**, la escena de muerte termina con su fantasma saliendo del charco, subiendo y
+  yéndose **por la izquierda**, como si pasara a las pantallas de los demás;
+- **en la de los demás**, y **solo si tienen Azahar abierto**, sale un aviso arriba a la izquierda («Juanega ha perdido
+  a Dragonite», nivel y zona). Cuando se va, el fantasma cruza el emulador de derecha a izquierda.
+
+Varios seguidos salen en cola, uno tras otro. Todo se apaga con una casilla, «Fantasmas», en CONFIGURACIÓN.
+
+**Cómo viaja.** Por el servidor del torneo, en una tabla nueva, `fantasmas` (`tools/supabase/12-fantasmas.sql`,
+**hay que ejecutarla en Supabase**):
+- cada jugador solo escribe los suyos (`jugador = auth.uid()`) y los de la lista leen todos;
+- la muerte se envía **al momento**, desde `PlayNotifications` sobre `GameLinkMonitor.PokemonDied`, no con la subida de
+  la run, que va cada 2 minutos;
+- los demás la piden cada **10 s**, y solo con el juego abierto.
+
+Al cerrar el juego se olvida el puntero, así que al volver a abrirlo no se repiten las muertes de toda la tarde. La tabla
+es solo la noticia: la muerte sigue siendo el `PokemonDied` de la run de quien la sufrió.
+
+**Piezas:**
+- `GhostService`: envía, lee, lleva la cola y reproduce.
+- `GhostWindow`: el aviso con el dibujo de siempre de los avisos, `ToastKind.Ghost` con pestaña celeste y sprite en
+  gris, y el cruce del fantasma.
+- `GhostArt`: el sprite del cartucho en azul pálido, con el contorno claro macizo y las líneas oscuras del icono macizas
+  para que se le reconozca.
+- `DeathWindow.AddGhost`: el fantasma en la escena propia, en la misma rejilla de celdas que el sprite y la sangre, que
+  se mueve de celda en celda.
+- `DeathNotice.Level`: nuevo, para decir el nivel.
+
+**Lo que se probó y cómo.** Con `--sin-juego --ensayar-fantasma`, nuevo, que enseña el fantasma de un amigo usando el
+último caído de la run y sin servidor, y con `--ensayar-muerte`. Capturas de pantalla durante la animación:
+- el aviso sale arriba a la izquierda;
+- el fantasma cruza;
+- en la escena propia sube del charco y sale por la izquierda antes de que se vaya el título.
+
+**Trampa medida:** la primera versión del fantasma usaba una trama de ajedrez para la transparencia. A 8 píxeles de
+pantalla por celda se leía como un tablero y no como un Pokémon, así que se pasó a una transparencia lisa.
+
+**Sin probar:** el viaje por el servidor entre dos PCs, porque la tabla no existía todavía. Si falta, los fallos se
+apuntan una vez y no cada 10 s (§167).

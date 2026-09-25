@@ -6,6 +6,12 @@ revisado: 2026-09-24
 
 La última sesión va arriba. Antes del 2026-09-23 solo hay un resumen por fechas sacado de `CLAUDE.md` y de `ARCHITECTURE.md`: el detalle está en el § citado ([[Índice de ARCHITECTURE]]). **Cada sesión nueva añade su entrada aquí.**
 
+## 2026-09-26 — los fantasmas (§183)
+- Idea del jugador tras rechazar dos tandas de ideas mías (quiere que se le propongan ideas, no que se haga nada sin pedirlo; «tarjeta de entrenador» y listas de mecánicas descartadas). Decisiones suyas: el fantasma sale por la IZQUIERDA; varios en cola; casilla en CONFIGURACIÓN.
+- `GhostService` (envía al momento, lee cada 10 s solo con Azahar abierto, cola), `GhostWindow` (aviso arriba a la izquierda + cruce derecha→izquierda), `GhostArt`, `DeathWindow.AddGhost`, `ToastKind.Ghost`, ajuste `Ghosts` (vive en `DeathCeremony.Ghosts` para no crear ciclo con `EmulatorLauncher`→`AppSettings`). Ensayo `--ensayar-fantasma`.
+- Tabla `tools/supabase/12-fantasmas.sql`: **la ejecuta el usuario en Supabase**; sin ella no viaja nada (fallo registrado una vez).
+- Visto en capturas de los ensayos. La trama de ajedrez se descartó (tablero a 8 px/celda). Sin probar entre dos PCs.
+
 ## 2026-09-25 — la 7ª prueba no salía en LOGROS (§182)
 - Reporte: superada la 7ª (Chris, Electrostal Z 810) y no sale. El jugador sospechó del seguidor: no era. PKHeX sobre copia del save: 810 presente; save guardado 23:31:29, leído 23:31:40.
 - Causa: los logros `item` solo miraban el fichero (`SaveRecordReader`); `TrialZoneService` mira la mochila viva. Arreglo: `AchievementService` recibe `IItemDelivery?` (opcional) y une fichero + mochila viva. +2 pruebas. 1501 pruebas. Desplegado en `PermaLocke prueba`. Carpeta de amigos rehecha con el arreglo; la anterior queda como `(anterior)`.

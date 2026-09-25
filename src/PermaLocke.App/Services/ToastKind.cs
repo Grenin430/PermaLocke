@@ -37,5 +37,8 @@ public enum ToastKind
     Announcement,
 
     /// <summary>Something PermaLocke could not do and the player should know.</summary>
-    Warning
+    Warning,
+
+    /// <summary>A friend lost a Pokémon: the notice before its ghost crosses the emulator (§183).</summary>
+    Ghost
 }

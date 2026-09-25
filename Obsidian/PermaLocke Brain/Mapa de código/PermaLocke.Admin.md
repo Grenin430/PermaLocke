@@ -1,7 +1,7 @@
 ---
 tipo: mapa-codigo
 proyecto: PermaLocke.Admin
-generado: 2026-09-25
+generado: 2026-09-26
 ---
 # PermaLocke.Admin — mapa de ficheros
 

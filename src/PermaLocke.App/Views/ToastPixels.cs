@@ -45,6 +45,7 @@ internal static class ToastPixels
         ToastKind.AllowedCapture => Rgb(0x5B, 0x8A, 0xC4),
         ToastKind.Death or ToastKind.TeamWipe => Rgb(0xB8, 0x43, 0x3A),
         ToastKind.Warning => Rgb(0xD9, 0x77, 0x2F),
+        ToastKind.Ghost => Rgb(0x9C, 0xC8, 0xE0),
         _ => Rgb(0xB0, 0x7B, 0xF0)
     };
 
@@ -368,7 +369,7 @@ public sealed class ToastPlate : FrameworkElement
 
         Well(canvas, accent);
 
-        var fallen = Kind is ToastKind.Death;
+        var fallen = Kind is ToastKind.Death or ToastKind.Ghost;
         var hop = !fallen && Kind is not ToastKind.TeamWipe && (_frame / 2) % 2 == 1 ? 1 : 0;
 
         if (Sprite is { } sprite && Pixels(sprite) is { } pixels)

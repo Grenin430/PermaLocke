@@ -11,7 +11,8 @@ public sealed record AppSettingsData(
     bool StepAside = true,
     bool DeathScene = true,
     bool Killcam = true,
-    bool Follower = true);
+    bool Follower = true,
+    bool Ghosts = true);
 
 /// <summary>
 /// The player's preferences, kept in <c>Config/ajustes.json</c> and pushed into the services that obey them.
@@ -77,6 +78,7 @@ public sealed class AppSettings(
         notifier.Enabled = Current.Notifications;
         tab.StepAside = Current.StepAside;
         ceremony.Enabled = Current.DeathScene;
+        ceremony.Ghosts = Current.Ghosts;
         killcam.Enabled = Current.Killcam;
     }
 }

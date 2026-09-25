@@ -179,6 +179,15 @@ public partial class DeathWindow : Window
             Add(story, Track(0, [.. sinking]), Sprite, MoveY);
         }
 
+        if (hasSprite && card.Ghost is { } ghost)
+        {
+            AddGhost(story, ghost, card.Sprite!, leaves);
+        }
+        else
+        {
+            Add(story, Track(0), GhostSprite, "Opacity");
+        }
+
         // EL NOMBRE, a lo Souls: la banda primero, el texto entra despacio y sigue creciendo un poco
         // mientras se lee. Y se va todo junto.
         Add(story, Track(0, new Step(named - 150, 800, 1), new Step(leaves, 500, 0)), Band, "Opacity");
@@ -188,6 +197,65 @@ public partial class DeathWindow : Window
         Add(story, Track(0, new Step(named + 1300, 600, 1), new Step(leaves, 500, 0)), PointsText, "Opacity");
 
         return Run(story, leaves + 650);
+    }
+
+    /// <summary>
+    /// The ghost (§183): it comes out where the Pokémon sank, rises, and drifts off by the left edge of the screen, on
+    /// its way to the others' screens.
+    /// </summary>
+    /// <remarks>
+    /// On the same grid as the sprite and the blood, and it moves only in whole cells, a step at a time: the pixel art
+    /// stays pixel art. It has to be gone before the title leaves, so its steps are sized from the real distance to
+    /// the left edge, which depends on how wide the emulator is.
+    /// </remarks>
+    private void AddGhost(Storyboard story, BitmapSource ghost, BitmapSource sprite, int leaves)
+    {
+        var width = Math.Min(sprite.PixelWidth, StageColumns);
+        var height = Math.Min(sprite.PixelHeight, StageRows);
+        var left = 357 + ((StageColumns - width) / 2 * Cell);
+        var top = 35 + ((StageRows - height) * Cell);
+
+        GhostSprite.Source = ghost;
+        GhostSprite.Width = width * Cell;
+        GhostSprite.Height = height * Cell;
+        GhostSprite.Margin = new Thickness(left, top, 0, 0);
+
+        // Hasta el borde izquierdo de la ventana, no del diseño: el centro de 1000 se escala y se centra.
+        var scale = Math.Min(Middle.ActualWidth / 1000, Middle.ActualHeight / 560);
+        var outside = scale > 0 ? (Middle.ActualWidth / scale - 1000) / 2 : 0;
+        var distance = left + outside + (width * Cell) + Cell;
+
+        const int appears = Sunk + 140, rise = 8, riseEvery = 90;
+        var drifts = appears + (rise * riseEvery) + 80;
+        var gone = leaves - 250;
+        const int stepEvery = 45;
+        var steps = Math.Max(1, (gone - drifts) / stepEvery);
+        var stride = Math.Max(Cell, (int)Math.Ceiling(distance / steps / Cell) * Cell);
+
+        Add(story, Track(0, new Step(appears, 0, 0.5), new Step(appears + 80, 0, 1), new Step(leaves, 0, 0)),
+            GhostSprite, "Opacity");
+
+        var up = new List<Step>();
+        for (var k = 1; k <= rise; k++)
+        {
+            up.Add(new Step(appears + (k * riseEvery), 0, -k * Cell));
+        }
+
+        // Flota: una celda arriba y abajo mientras se va.
+        for (var at = drifts; at < gone; at += 300)
+        {
+            up.Add(new Step(at, 0, -(rise + ((at - drifts) / 300 % 2)) * Cell));
+        }
+
+        Add(story, Track(0, [.. up]), GhostSprite, MoveY);
+
+        var away = new List<Step>();
+        for (var k = 1; k <= steps; k++)
+        {
+            away.Add(new Step(drifts + (k * stepEvery), 0, -k * stride));
+        }
+
+        Add(story, Track(0, [.. away]), GhostSprite, MoveX);
     }
 
     /// <summary>Takes the bars away and gives the game back.</summary>

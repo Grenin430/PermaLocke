@@ -1,7 +1,7 @@
 ---
 tipo: mapa-codigo
 proyecto: PermaLocke.App
-generado: 2026-09-25
+generado: 2026-09-26
 ---
 # PermaLocke.App — mapa de ficheros
 
@@ -37,6 +37,7 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Services/EventIcons.cs` — **EventIcons** — The pixel icon of each kind of event, for the history lists drawn in the pixel style (§176). 
 - `Services/GameLinkMonitor.cs` — **GameLinkMonitor** — Polls the running game and publishes what it sees. One poller for the whole application, so every screen shows the same snapshot and the emulator is asked once per cycle. 
 - `Services/GameWindow.cs` — **GameWindow** — Where the emulator is, and which screen it is on. 
+- `Services/GhostService.cs` — **GhostService** — The ghosts (§183): this player's deaths go to the tournament server at once, and the other players' come over this player's emulator as a notice and a ghost crossing the screen. 
 - `Services/GiftInbox.cs` — **GiftInbox** — The gifts waiting for this player on the tournament server, and collecting them (§129; the shared folder is gone). 
 - `Services/HpBarWatcher.cs` — **HpBarWatcher** — Waits, looking at the emulator's window, for the player's HP bar to reach zero. 
 - `Services/IKillcamRecorder.cs` — **IKillcamRecorder** — Recording operations used by the game monitor.
@@ -115,6 +116,8 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Views/EvHexagon.cs` — **EvHexagon** — The effort hexagon of the summary screen, drawn cell by cell: PS at the top and then Ataque, Defensa, Velocidad, Def. Esp. and At. Esp. going round clockwise, which is the order the handheld games ...
 - `Views/EvTrainingView.xaml.cs` — **EvTrainingView** — 
 - `Views/GachaView.xaml.cs` — **GachaView** — The gacha screen. The only code here feeds the capsule machine. 
+- `Views/GhostArt.cs` — **GhostArt** — A fallen Pokémon drawn as its ghost: the cartridge's own icon, pale and see-through, pixel by pixel (§183). 
+- `Views/GhostWindow.xaml.cs` — **GhostWindow** — A friend's fallen Pokémon over this player's emulator (§183): the notice at the top left, then its ghost crossing the screen from right to left. 
 - `Views/HomeView.xaml.cs` — **HomeView** — 
 - `Views/InformationView.xaml.cs` — **InformationView** — 
 - `Views/KillcamPlayer.cs` — **KillcamPlayer** — Plays a killcam: the frames at their own times, at real speed or slowed down, looping, with a mark on the timeline where the bar reached zero. 

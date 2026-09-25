@@ -1,6 +1,6 @@
 ---
 tipo: mapa-codigo
-generado: 2026-09-25
+generado: 2026-09-26
 ---
 # Pruebas — ficheros y número de [Fact]/[Theory]
 
@@ -22,7 +22,7 @@ Contado con grep, NO ejecutado. Detalle en [[Pruebas]].
 - `TrainerRoomTests.cs` (6)
 ## PermaLocke.Core.Tests
 - `AbilityDrawTests.cs` (4)
-- `AchievementServiceTests.cs` (13)
+- `AchievementServiceTests.cs` (15)
 - `CreditServiceTests.cs` (12)
 - `EvSpreadTests.cs` (11)
 - `EvTrainingServiceTests.cs` (7)

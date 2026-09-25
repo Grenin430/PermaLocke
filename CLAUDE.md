@@ -133,7 +133,8 @@ Trampas que ya costaron caro y hay que tener siempre presentes:
   instalado (`WorldLimits`, `InstalledWorld`). Las sondas deben llamar a `InstalledWorld.ApplyQuietly` (§91).
 - **Detectable no es detectado**: el vigilante empareja por PID contra lo registrado en la run (§56, §68).
 
-Último: **las pruebas salen en LOGROS sin guardar** (§182): miran también la mochila viva. Antes: **Pokémon que te sigue** (§181): plugin 3GX de otro autor en `Emulator/follower/`, instalado al pulsar JUGAR, con
+Último: **fantasmas** (§183): la muerte de un Pokémon viaja por el servidor y cruza como fantasma el emulador de los
+demás; tabla `12-fantasmas.sql`. Antes: **las pruebas salen en LOGROS sin guardar** (§182): miran también la mochila viva. Antes: **Pokémon que te sigue** (§181): plugin 3GX de otro autor en `Emulator/follower/`, instalado al pulsar JUGAR, con
 interruptor en CONFIGURACIÓN. Antes: **iconos variocolor** (§180). El cartucho no los tiene: `Data/variocolor.json` (generado por `RomTool variocolor`
 desde renders de Showdown) repinta el icono de la ROM del jugador. Aproximado; 1123 iconos con tabla, 6 sin referencia.
 

@@ -31,7 +31,8 @@ namespace PermaLocke.App.Services;
 public sealed class PlayNotifications
 {
     public PlayNotifications(GameLinkMonitor monitor, MaintenanceService maintenance, Notifier notifier,
-        DeathCeremony ceremony, PokemonSpriteService sprites, EncounterGuard encounters, BallControlService balls)
+        DeathCeremony ceremony, PokemonSpriteService sprites, EncounterGuard encounters, BallControlService balls,
+        GhostService ghosts)
     {
         balls.FirstBallDetected += (_, _) => notifier.Say(
             ToastKind.Info, "¡Primeras Poké Balls!",
@@ -45,6 +46,9 @@ public sealed class PlayNotifications
         monitor.PokemonDied += (_, fallen) =>
         {
             ceremony.Mourn(fallen);
+
+            // Al momento, a las pantallas de los demás (§183). Solo las vistas en directo, no las marcadas a mano.
+            ghosts.Send(fallen, "Jugador");
 
             // Lo que costó DE VERDAD. Ponía «−25 puntos» escrito a mano, que es mentira para el
             // CAGONETA -no pierde puntos- y para cualquier rol que multiplique las pérdidas.
