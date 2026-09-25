@@ -128,9 +128,25 @@
                             </views:PixelPanel>
                             <Rectangle x:Name="Hover" Fill="#1EFFFFFF" Margin="3,3,9,9" Visibility="Collapsed" />
                             <ContentPresenter Margin="14,10,18,15" />
+                            <!-- La que hace mega (Ascenso Draco en Rayquaza): borde multicolor, en franjas duras como el pixel art. -->
+                            <Border x:Name="Mega" BorderThickness="4" Margin="-2" Visibility="Collapsed" SnapsToDevicePixels="True">
+                                <Border.BorderBrush>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                        <GradientStop Color="#FFE04848" Offset="0" /><GradientStop Color="#FFE04848" Offset="0.166" />
+                                        <GradientStop Color="#FFF0983C" Offset="0.166" /><GradientStop Color="#FFF0983C" Offset="0.333" />
+                                        <GradientStop Color="#FFF0D848" Offset="0.333" /><GradientStop Color="#FFF0D848" Offset="0.5" />
+                                        <GradientStop Color="#FF58C060" Offset="0.5" /><GradientStop Color="#FF58C060" Offset="0.666" />
+                                        <GradientStop Color="#FF4890E0" Offset="0.666" /><GradientStop Color="#FF4890E0" Offset="0.833" />
+                                        <GradientStop Color="#FFA868E0" Offset="0.833" /><GradientStop Color="#FFA868E0" Offset="1" />
+                                    </LinearGradientBrush>
+                                </Border.BorderBrush>
+                            </Border>
                             <views:PixelCursor x:Name="Cursor" Margin="-4" Visibility="Collapsed" Colour="#FFFFF08A" />
                         </Grid>
                         <ControlTemplate.Triggers>
+                            <DataTrigger Binding="{Binding IsMega}" Value="True">
+                                <Setter TargetName="Mega" Property="Visibility" Value="Visible" />
+                            </DataTrigger>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="Hover" Property="Visibility" Value="Visible" />
                             </Trigger>
@@ -206,8 +222,24 @@
                             <views:PixelPanel x:Name="Plate" Fill="{StaticResource PxFaceHigh}" />
                             <ContentPresenter Margin="0,0,6,6" />
                             <views:PixelCursor x:Name="Cursor" Margin="-4" Visibility="Collapsed" Colour="#FFFFF08A" />
+                            <!-- La que hace mega (Ascenso Draco en Rayquaza): borde multicolor, en franjas duras como el pixel art. -->
+                            <Border x:Name="Mega" BorderThickness="4" Margin="-2" Visibility="Collapsed" SnapsToDevicePixels="True">
+                                <Border.BorderBrush>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                        <GradientStop Color="#FFE04848" Offset="0" /><GradientStop Color="#FFE04848" Offset="0.166" />
+                                        <GradientStop Color="#FFF0983C" Offset="0.166" /><GradientStop Color="#FFF0983C" Offset="0.333" />
+                                        <GradientStop Color="#FFF0D848" Offset="0.333" /><GradientStop Color="#FFF0D848" Offset="0.5" />
+                                        <GradientStop Color="#FF58C060" Offset="0.5" /><GradientStop Color="#FF58C060" Offset="0.666" />
+                                        <GradientStop Color="#FF4890E0" Offset="0.666" /><GradientStop Color="#FF4890E0" Offset="0.833" />
+                                        <GradientStop Color="#FFA868E0" Offset="0.833" /><GradientStop Color="#FFA868E0" Offset="1" />
+                                    </LinearGradientBrush>
+                                </Border.BorderBrush>
+                            </Border>
                         </Grid>
                         <ControlTemplate.Triggers>
+                            <DataTrigger Binding="{Binding IsMega}" Value="True">
+                                <Setter TargetName="Mega" Property="Visibility" Value="Visible" />
+                            </DataTrigger>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxFaceLift}" />
                             </Trigger>
@@ -466,7 +498,7 @@
                                              Margin="2,0,0,10" />
 
                             <pixel:PixelText Scale="2" Wrap="True" Margin="2,0,0,0" Colour="{StaticResource PxTextDim}"
-                                             Text="Ahora mismo no puede recordar nada: ya sabe todo lo que su especie aprende hasta su nivel."
+                                             Text="Nada que recordar."
                                              Visibility="{Binding HasOptions, Converter={StaticResource InverseBoolToVisibility}}" />
 
                             <ListBox ItemsSource="{Binding Options}" SelectedItem="{Binding SelectedOption}"

@@ -31,13 +31,14 @@ public sealed class MegaCandidateTests
         Assert.DoesNotContain(1315, MegaTrainerRandomizer.Candidates(Forms, options, 1025));
     }
 
+    /// <summary>Since 2026-09-25 a banned legendary can be a boss's mega too: the player wants every mega possible.</summary>
     [Fact]
-    public void Banned_legendaries_stay_banned()
+    public void Banned_legendaries_can_be_megas_too()
     {
         var options = new RandomizerOptions { BannedSpecies = [150] };
         var candidates = MegaTrainerRandomizer.Candidates(Forms, options, 1025);
 
-        Assert.DoesNotContain(150, candidates);
+        Assert.Contains(150, candidates);
         Assert.Contains(6, candidates);
         Assert.Contains(445, candidates);
     }

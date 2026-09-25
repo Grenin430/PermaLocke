@@ -38,7 +38,7 @@ public sealed record MoveReminderOptions(
 /// </para>
 /// </remarks>
 public sealed class MoveReminderService(IMoveCatalog catalog, IMoveTeacher teacher, IEventStore events,
-    IPokemonRepository pokemon, IClock clock)
+    IPokemonRepository pokemon, IClock clock, IShopCatalog? shops = null)
 {
     /// <summary>A Pokémon has four move slots.</summary>
     public const int MoveSlots = 4;
@@ -46,6 +46,10 @@ public sealed class MoveReminderService(IMoveCatalog catalog, IMoveTeacher teach
     public string Source => catalog.Source;
 
     public MoveSheet? Describe(int move) => catalog.Describe(move);
+
+    /// <summary>True when this move is what the shop sells as this species' mega (Ascenso Draco for Rayquaza).</summary>
+    public bool IsMegaMove(int species, int move) =>
+        shops?.Items.Any(item => item.IsUnlock && item.UnlockSpecies == species && item.UnlockMove == move) == true;
 
     /// <summary>True when a move could be written right now, and why not when it cannot.</summary>
     public bool CanTeachNow(out string reason) => teacher.CanTeachNow(out reason);
@@ -67,6 +71,20 @@ public sealed class MoveReminderService(IMoveCatalog catalog, IMoveTeacher teach
         var moves = MoveReminder.Options(learnset ?? [], target.LevelForStats, known, firstKnown)
             .Where(option => catalog.Describe(option.Move) is { PP: > 0 } && !catalog.IsBanned(option.Move))
             .ToList();
+
+        // Lo comprado en la tienda para su especie (Ascenso Draco para Rayquaza, 2026-09-25): gratis desde que se pagó,
+        // aunque lo olvide. Va aunque esté en la lista de prohibidos: se compró a propósito.
+        if (shops is not null)
+        {
+            var bought = await ShopService.UnlockedAsync(events, runId, ct).ConfigureAwait(false);
+
+            moves.AddRange(shops.Items
+                .Where(item => item.IsUnlock && item.UnlockSpecies == target.Species
+                               && bought.Contains((item.UnlockSpecies, item.UnlockMove))
+                               && !known.Contains(item.UnlockMove) && moves.All(option => option.Move != item.UnlockMove)
+                               && catalog.Describe(item.UnlockMove) is { PP: > 0 })
+                .Select(item => new RememberableMove(item.UnlockMove, RememberedFrom.Unlocked)));
+        }
 
         return new MoveReminderOptions(known, moves, target.LevelForStats, learnset is not null, recorded);
     }

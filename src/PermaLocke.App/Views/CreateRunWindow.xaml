@@ -46,7 +46,7 @@
                          ya empezada. -->
                     <pixel:PixelWindow Title="ROL" Icon="IconPeople">
                         <StackPanel>
-                            <pixel:PixelText Text="El rol decide la dificultad y cuánto valen tus puntos." Scale="2" Wrap="True"
+                            <pixel:PixelText Text="El rol decide la dificultad." Scale="2" Wrap="True"
                                              Colour="{StaticResource PxTextDim}" Margin="2,0,0,12" />
 
                             <ItemsControl ItemsSource="{Binding Roles}">

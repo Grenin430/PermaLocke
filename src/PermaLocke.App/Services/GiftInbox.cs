@@ -160,7 +160,7 @@ public sealed class GiftInbox : INotifyPropertyChanged
         // la primera vez que se ve en esta sesión; al arrancar avisa de los que ya estaban esperando.
         foreach (var gift in pending.Where(gift => _told.Add(gift.Id)))
         {
-            _notifier.Say(ToastKind.Gift, $"Regalo de {gift.From}", $"{gift.Say()}. Recógelo en PermaLocke, en el regalo de arriba.");
+            _notifier.Say(ToastKind.Gift, $"Regalo de {gift.From}", gift.Say());
         }
 
         Pending = pending;

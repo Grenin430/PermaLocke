@@ -96,6 +96,32 @@ public sealed class ShopServiceTests
     private static async Task GiveAsync(IPointsService points, Run run, int amount) =>
         await points.EarnAsync(run.Id, amount, "prueba", EventSource.Player, run.PlayerName);
 
+    /// <summary>Ascenso Draco: paid once, nothing in the bag, and the run remembers it for Rayquaza.</summary>
+    [Fact]
+    public async Task An_unlock_is_paid_once_and_needs_no_bag()
+    {
+        var bag = new Bag(works: false);
+        var log = new Events();
+        var clock = new FixedClock();
+        var points = new PointsService(log, clock);
+        var run = new Run
+        {
+            Id = Guid.NewGuid(), Name = "Prueba", Game = GameVersion.UltraMoon, SeedLabel = "1", Seed = 1,
+            RoleId = "player", PlayerName = "Grenin"
+        };
+        var draco = new ShopItem(90620, "Ascenso Draco (Rayquaza)", 600, ShopItem.MegaStones, 620, 384);
+        var shop = new ShopService(new Catalog(draco), points, bag, log, clock);
+        await GiveAsync(points, run, 1300);
+
+        Assert.True((await shop.BuyAsync(run, draco.Id)).Succeeded);
+        var again = await shop.BuyAsync(run, draco.Id);
+
+        Assert.False(again.Succeeded);
+        Assert.Equal(700, again.Balance);
+        Assert.Empty(bag.Given);
+        Assert.Contains((384, 620), await shop.UnlockedAsync(run.Id));
+    }
+
     [Fact]
     public async Task Buying_delivers_the_item_and_charges_the_price()
     {

@@ -27,7 +27,7 @@
             <pixel:PixelWindow Title="PREMIOS DE LA COMPETICIÓN" Icon="IconTrophy" Margin="0,0,0,12"
                                Visibility="{Binding HasRewards, Converter={StaticResource BoolToVisibility}}">
                 <StackPanel>
-                    <pixel:PixelText Style="{StaticResource Explain}" Text="Se recogen una sola vez. Necesita Azahar abierto." />
+                    <pixel:PixelText Style="{StaticResource Explain}" Text="Se recogen una vez." />
 
                     <ItemsControl ItemsSource="{Binding Rewards}" Margin="0,12,0,0">
                         <ItemsControl.ItemTemplate>
@@ -116,7 +116,7 @@
 
                 <StackPanel>
                     <pixel:PixelText Style="{StaticResource Explain}"
-                                     Text="Se suman a lo que ya llevas. Necesita Azahar abierto." />
+                                     Text="Se suman a lo que llevas." />
 
                     <pixel:PixelRule Margin="0,14,0,14" />
 

@@ -57,6 +57,11 @@ public sealed class ShopService(
                 $"{item.Name} cuesta {item.Price} y tienes {balance}. Te faltan {item.Price - balance}.");
         }
 
+        if (item.IsUnlock)
+        {
+            return await UnlockAsync(run, item, ct).ConfigureAwait(false);
+        }
+
         var given = await delivery.GiveAsync(item.Id, 1, ct).ConfigureAwait(false);
 
         if (!given.Delivered)
@@ -92,5 +97,69 @@ public sealed class ShopService(
 
         return new PurchaseResult(PurchaseOutcome.Delivered, item, spent.NewBalance, given.Carried,
             $"{item.Name} está en tu mochila. Llevas {given.Carried}.");
+    }
+
+    /// <summary>The key of a purchase's event that says which move it unlocked.</summary>
+    public const string UnlockKey = "desbloqueo";
+
+    /// <summary>The species that unlock is for.</summary>
+    public const string UnlockSpeciesKey = "especie";
+
+    /// <summary>
+    /// Every (species, move) this run has bought, from its own history: an unlock is paid once and lasts the run.
+    /// </summary>
+    public static async Task<IReadOnlySet<(int Species, int Move)>> UnlockedAsync(IEventStore events, Guid runId,
+        CancellationToken ct = default)
+    {
+        var history = await events.GetAllAsync(runId, ct).ConfigureAwait(false);
+
+        return history
+            .Where(e => e.Type == GameEventType.ShopPurchase
+                        && e.Data.TryGetValue(UnlockKey, out var move) && int.TryParse(move, out _)
+                        && e.Data.TryGetValue(UnlockSpeciesKey, out var species) && int.TryParse(species, out _))
+            .Select(e => (int.Parse(e.Data[UnlockSpeciesKey]), int.Parse(e.Data[UnlockKey])))
+            .ToHashSet();
+    }
+
+    /// <summary>The unlocks this run has bought.</summary>
+    public Task<IReadOnlySet<(int Species, int Move)>> UnlockedAsync(Guid runId, CancellationToken ct = default) =>
+        UnlockedAsync(events, runId, ct);
+
+    /// <summary>Buys an unlock: nothing goes into the bag, so it needs no game, and it is bought once.</summary>
+    private async Task<PurchaseResult> UnlockAsync(Run run, ShopItem item, CancellationToken ct)
+    {
+        var balance = await points.GetBalanceAsync(run.Id, ct).ConfigureAwait(false);
+
+        if ((await UnlockedAsync(events, run.Id, ct).ConfigureAwait(false)).Contains((item.UnlockSpecies, item.UnlockMove)))
+        {
+            return new PurchaseResult(PurchaseOutcome.NotDelivered, item, balance, 1,
+                $"{item.Name} ya está comprado: enséñalo gratis en EQUIPO › MOVIMIENTOS.");
+        }
+
+        await events.AppendAsync(new GameEvent
+        {
+            Id = Guid.NewGuid(),
+            RunId = run.Id,
+            Timestamp = clock.Now,
+            Type = GameEventType.ShopPurchase,
+            Source = EventSource.Player,
+            Actor = run.PlayerName,
+            Description = $"Tienda: {item.Name} por {item.Price} puntos.",
+            Data = new Dictionary<string, string>
+            {
+                ["objeto"] = item.Id.ToString(),
+                ["nombre"] = item.Name,
+                ["precio"] = item.Price.ToString(),
+                [UnlockKey] = item.UnlockMove.ToString(),
+                [UnlockSpeciesKey] = item.UnlockSpecies.ToString()
+            }
+        }, ct).ConfigureAwait(false);
+
+        var spent = await points
+            .SpendAsync(run.Id, item.Price, $"Tienda: {item.Name}.", EventSource.Player, run.PlayerName, ct)
+            .ConfigureAwait(false);
+
+        return new PurchaseResult(PurchaseOutcome.Delivered, item, spent.NewBalance, 1,
+            $"{item.Name} comprado: enséñalo en EQUIPO › MOVIMIENTOS, gratis siempre que quieras.");
     }
 }

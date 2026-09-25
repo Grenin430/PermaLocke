@@ -12,7 +12,10 @@ public enum RememberedFrom
     Evolution,
 
     /// <summary>Its species learns it at a level it has already reached.</summary>
-    Level
+    Level,
+
+    /// <summary>Bought once in the shop for this species (Ascenso Draco for Rayquaza), taught free from then on.</summary>
+    Unlocked
 }
 
 /// <summary>One move the reminder can teach.</summary>

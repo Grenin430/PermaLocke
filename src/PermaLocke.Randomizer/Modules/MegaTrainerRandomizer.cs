@@ -61,9 +61,9 @@ public sealed class MegaTrainerRandomizer(RomWorkspace workspace, RandomizerOpti
                 var form = BitConverter.ToUInt16(entry, at);
                 var stone = BitConverter.ToUInt16(entry, at + 4);
 
-                // Sin piedra no es una mega que se pueda tener: es el caso de Rayquaza, cuya mega
-                // va por un movimiento. Se deja fuera para no inventar una forma inalcanzable.
-                if (form > 0 && stone > 0 && !here.Contains(form))
+                // Rayquaza entra aunque no tenga piedra (su mega va por Ascenso Draco): a un jefe se le pone la forma
+                // directamente, sin piedra, igual que a los demás. Pedido por el jugador el 2026-09-25.
+                if (form > 0 && !here.Contains(form))
                 {
                     here.Add(form);
                 }
@@ -83,11 +83,8 @@ public sealed class MegaTrainerRandomizer(RomWorkspace workspace, RandomizerOpti
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Two filters, and both earn their place. Banned legendaries stay banned — the list says «this
-    /// is never handed out», and a Mega Mewtwo in a mid-game battle is exactly what it is for.
-    /// </para>
-    /// <para>
-    /// And the <b>species ceiling</b>, which is not paperwork: the mega table is not indexed by
+    /// Every species with a mega, banned legendaries included: until 2026-09-25 they were left out, and the player
+    /// never asked for that. One filter remains, the <b>species ceiling</b>, which is not paperwork: the mega table is not indexed by
     /// species alone. Measured on the expansion mod, it has <b>1330 entries for 1026 species</b>,
     /// because the rows above the species count are alternate forms. Eight of its keys name nothing
     /// at all. Written without this filter, a boss became «species 1315, form 4» — a Pokémon that
@@ -101,11 +98,10 @@ public sealed class MegaTrainerRandomizer(RomWorkspace workspace, RandomizerOpti
     public static int[] Candidates(IReadOnlyDictionary<int, IReadOnlyList<int>> forms,
         RandomizerOptions options, int gameMaxSpecies)
     {
-        var banned = options.BannedSpecies.ToHashSet();
-
+        // Los legendarios de bannedSpecies también (2026-09-25, a petición del jugador: «quiero que puedan salir de
+        // megas todos»). bannedSpecies sigue valiendo para el resto del sorteo; aquí solo manda el techo de especies.
         return [.. forms.Keys
-            .Where(species => species <= options.EffectiveMaxSpecies(gameMaxSpecies)
-                && !banned.Contains(species))
+            .Where(species => species <= options.EffectiveMaxSpecies(gameMaxSpecies))
             .Order()];
     }
 

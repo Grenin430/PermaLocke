@@ -20,7 +20,7 @@
                                  Colour="{StaticResource PxGood}" />
                 <StackPanel Orientation="Horizontal">
                     <pixel:PixelText Text="▶" Scale="2" Tight="True" Colour="{StaticResource PxGold}" />
-                    <pixel:PixelText Text="Tu equipo de la última vez que guardaste, listo para pegar en pokepast.es."
+                    <pixel:PixelText Text="Tu equipo guardado."
                                      Scale="2" Tight="True" Margin="8,0,0,0" Colour="{StaticResource PxTextDim}" />
                 </StackPanel>
             </StackPanel>

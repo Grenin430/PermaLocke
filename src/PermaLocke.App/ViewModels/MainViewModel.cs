@@ -15,7 +15,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly RouletteViewModel _roulette;
     private readonly RouletteService _wheel;
     private readonly GroupSectionViewModel _play;
-    private readonly GroupSectionViewModel _points;
+    private readonly SectionViewModel _gacha;
     private readonly PermaLocke.App.Services.IUiDispatcher _ui;
     private readonly ILogger<MainViewModel> _logger;
 
@@ -52,7 +52,6 @@ public sealed partial class MainViewModel : ObservableObject
 
         // Grupos (2026-09-24): la barra tenía 17 secciones. Las que tratan de lo mismo cuelgan de una entrada.
         var play = new GroupSectionViewModel("JUGAR", "IconPlay", logger, launcher, randomizer);
-        var points = new GroupSectionViewModel("PUNTOS", "IconPoints", logger, shop);
         var team = new GroupSectionViewModel("EQUIPO", "IconGrid", logger, viewer, evTraining, moveReminder, pokePaste);
         var tournament = new GroupSectionViewModel("TORNEO", "IconTrophy", logger, sync, achievements, battle, cemetery);
         var info = new GroupSectionViewModel("INFORMACIÓN", "IconDocument", logger,
@@ -60,8 +59,8 @@ public sealed partial class MainViewModel : ObservableObject
             new InformationPageViewModel("TIENDAS", true, information),
             miscellaneous);
         _play = play;
-        _points = points;
-        foreach (var group in new[] { play, points, team, tournament, info })
+        _gacha = gacha;
+        foreach (var group in new[] { play, team, tournament, info })
         {
             group.PropertyChanged += (_, e) =>
             {
@@ -81,7 +80,7 @@ public sealed partial class MainViewModel : ObservableObject
             play,
             home,
             gacha,
-            points,
+            shop,
             map,
             team,
             tournament,
@@ -134,27 +133,28 @@ public sealed partial class MainViewModel : ObservableObject
     private void UpdateRoulette()
     {
         var wanted = _runContext.Current is { } run && _wheel.PlaysWithTheWheel(run);
-        var there = _points.Pages.Contains(_roulette);
+        var there = Sections.Contains(_roulette);
 
         if (wanted == there)
         {
             return;
         }
 
+        // Justo debajo del GACHA (2026-09-25: el jugador la quería suelta, no dentro de la tienda).
         if (wanted)
         {
-            _points.Pages.Add(_roulette);
+            Sections.Insert(Sections.IndexOf(_gacha) + 1, _roulette);
             return;
         }
 
-        // Si la página que se va es la que está abierta, PUNTOS vuelve a la TIENDA: dejar elegida una página que ya
-        // no está en la lista deja la pantalla en blanco.
-        if (ReferenceEquals(_points.SelectedPage, _roulette))
+        // Si la sección que se va es la que está abierta, se vuelve a la primera: dejar seleccionada una sección que
+        // ya no está en la lista deja la pantalla en blanco.
+        if (ReferenceEquals(SelectedSection, _roulette))
         {
-            _points.SelectedPage = _points.Pages[0];
+            SelectedSection = Sections[0];
         }
 
-        _points.Pages.Remove(_roulette);
+        Sections.Remove(_roulette);
     }
 
     public ObservableCollection<SectionViewModel> Sections { get; }
@@ -229,12 +229,12 @@ public sealed partial class MainViewModel : ObservableObject
     public string NeedHint => SelectedSection.Needs switch
     {
         GameNeed.Running => GameConnected
-            ? "Azahar está abierto y conectado: esta sección funciona."
-            : "Abre el juego: esta sección solo funciona con Azahar abierto y la partida cargada.",
+            ? "Azahar conectado."
+            : "Abre Azahar con la partida cargada.",
         GameNeed.Closed => GameConnected
-            ? "Cierra el juego: esta sección solo funciona con Azahar cerrado. Guarda antes de cerrarlo."
-            : "Esta sección solo funciona con el juego cerrado. Guarda en el juego antes de cerrarlo.",
-        GameNeed.Either => "Da igual si el juego está abierto o cerrado: se usa lo último que guardaste en el juego.",
+            ? "Guarda y cierra Azahar."
+            : "Guarda en el juego antes de cerrarlo.",
+        GameNeed.Either => "Usa tu última partida guardada.",
         _ => string.Empty
     };
 

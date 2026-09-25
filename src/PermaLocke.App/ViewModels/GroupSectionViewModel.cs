@@ -25,7 +25,7 @@ public sealed partial class GroupSectionViewModel : SectionViewModel
         _selectedPage = pages[0];
     }
 
-    /// <summary>The tabs. It can change: PUNTOS only has RULETA while the run plays with the wheel.</summary>
+    /// <summary>The tabs.</summary>
     public System.Collections.ObjectModel.ObservableCollection<SectionViewModel> Pages { get; }
 
     [ObservableProperty]

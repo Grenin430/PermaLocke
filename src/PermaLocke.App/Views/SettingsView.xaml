@@ -54,7 +54,7 @@
                     <Button Content="ENTRAR CON DISCORD" Style="{StaticResource PxButton}" Command="{Binding SignInCommand}"
                             HorizontalAlignment="Left" Visibility="{Binding IsSignedIn, Converter={StaticResource InverseBoolToVisibility}}" />
                     <pixel:PixelText Style="{StaticResource Explain}" Margin="0,10,0,0"
-                                     Text="Solo para el torneo. Se abre el navegador y Discord te pregunta; PermaLocke no ve tu contraseña. De momento no se envía nada de la partida." />
+                                     Text="Solo para el torneo. PermaLocke no ve tu contraseña." />
                 </StackPanel>
             </pixel:PixelWindow>
 
@@ -62,13 +62,13 @@
             <pixel:PixelWindow Title="MIENTRAS JUEGAS" Icon="IconPlay" Margin="0,12,0,0">
                 <StackPanel>
                     <CheckBox Style="{StaticResource Check}" IsChecked="{Binding Notifications}" Content="Avisos encima del juego" />
-                    <pixel:PixelText Style="{StaticResource Explain}" Text="Muertes, puntos, premios y rutas, en una esquina de Azahar." />
+                    <pixel:PixelText Style="{StaticResource Explain}" Text="Avisos encima de Azahar." />
 
                     <CheckBox Style="{StaticResource Check}" IsChecked="{Binding DeathScene}" Content="Escena de muerte" />
-                    <pixel:PixelText Style="{StaticResource Explain}" Text="La pantalla que sale cuando cae un Pokémon. La muerte se cuenta igual." />
+                    <pixel:PixelText Style="{StaticResource Explain}" Text="Al caer un Pokémon." />
 
                     <CheckBox Style="{StaticResource Check}" IsChecked="{Binding Killcam}" Content="Grabar killcams" />
-                    <pixel:PixelText Style="{StaticResource Explain}" Text="Guarda los segundos alrededor de cada muerte para verlos en el CEMENTERIO." />
+                    <pixel:PixelText Style="{StaticResource Explain}" Text="Repetición de cada muerte en el CEMENTERIO." />
 
                     <CheckBox Style="{StaticResource Check}" IsChecked="{Binding StepAside}" Content="Minimizar PermaLocke al abrir el juego" />
                     <pixel:PixelText Style="{StaticResource Explain}" Text="Se aparta solo cuando se abre Azahar." />

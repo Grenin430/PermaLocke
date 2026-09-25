@@ -434,7 +434,7 @@
                                          Colour="{StaticResource PxTextDim}" VerticalAlignment="Center" />
                         <pixel:PixelText Text="EN ESTA ISLA" Scale="2" Tight="True" Colour="{StaticResource PxTextFaint}" />
                     </DockPanel>
-                    <pixel:PixelText Text="Las zonas se marcan solas con tu primer combate salvaje en cada una." Scale="2" Wrap="True"
+                    <pixel:PixelText Text="Se marcan con tu primer combate salvaje." Scale="2" Wrap="True"
                                      Margin="0,0,0,14" Colour="{StaticResource PxTextDim}" />
 
                     <DockPanel Style="{StaticResource LegendRow}" Tag="Free" MouseEnter="OnLegendEnter" MouseLeave="OnLegendLeave">
@@ -478,7 +478,7 @@
 
                     <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
                         <pixel:PixelText Text="▶" Scale="2" Tight="True" Colour="{StaticResource PxGold}" />
-                        <pixel:PixelText Text="Pasa el ratón por una chincheta para ver qué pasó." Scale="2" Wrap="True"
+                        <pixel:PixelText Text="Pasa el ratón por una chincheta." Scale="2" Wrap="True"
                                          Margin="8,0,0,0" Colour="{StaticResource PxTextDim}" MaxWidth="230" />
                     </StackPanel>
                 </StackPanel>

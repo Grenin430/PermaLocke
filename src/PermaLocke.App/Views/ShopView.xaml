@@ -110,7 +110,7 @@
         <!-- CABECERA: qué es y los avisos. El saldo vive en la cabecera de la ventana. -->
         <pixel:PixelWindow Grid.Row="0" Title="TIENDA DE LA COMPETICIÓN" Icon="IconShop" Margin="0,0,0,12">
             <StackPanel>
-                <pixel:PixelText Text="Lo que compres se escribe en la mochila de tu partida." Scale="2" Wrap="True"
+                <pixel:PixelText Text="Va a tu mochila." Scale="2" Wrap="True"
                                  Colour="{StaticResource PxTextDim}" />
                 <pixel:PixelText Text="{Binding Problem}" Scale="2" Wrap="True" Margin="0,8,0,0" Colour="{StaticResource PxWarn}" />
                 <pixel:PixelText Text="{Binding Status}" Scale="2" Wrap="True" Margin="0,8,0,0" Colour="{StaticResource PxGood}" />
@@ -169,7 +169,7 @@
             <!-- Lo que la pantalla no puede saber por ti: la piedra vale para UNA especie, y para la forma final. -->
             <pixel:PixelText Scale="2" Wrap="True" VerticalAlignment="Center" Margin="16,0,0,0"
                              Colour="{StaticResource PxTextFaint}"
-                             Text="Cada megapiedra sirve para un solo Pokémon en su última evolución. Necesitas la Piedra Activadora."
+                             Text="Necesitas la Piedra Activadora."
                              Visibility="{Binding ShowingMegaStones, Converter={StaticResource BoolToVisibility}}" />
         </DockPanel>
 
@@ -188,7 +188,7 @@
                     Command="{Binding RefreshCommand}" />
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
                 <pixel:PixelText Text="!" Scale="2" Tight="True" Colour="{StaticResource PxWarn}" />
-                <pixel:PixelText Text="Necesita Azahar abierto con la partida cargada." Scale="2" Tight="True"
+                <pixel:PixelText Text="Necesita Azahar abierto." Scale="2" Tight="True"
                                  Margin="8,0,0,0" Colour="{StaticResource PxTextDim}" />
             </StackPanel>
         </DockPanel>

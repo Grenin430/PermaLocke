@@ -170,7 +170,7 @@ public sealed partial class ShopViewModel : SectionViewModel
         {
             foreach (var item in _shop.Items)
             {
-                Items.Add(new ShopItemViewModel(item, _sprites.GetItem(item.Id)));
+                Items.Add(new ShopItemViewModel(item, IconOf(item)));
             }
 
             OnPropertyChanged(nameof(BattleTab));
@@ -180,7 +180,7 @@ public sealed partial class ShopViewModel : SectionViewModel
 
         foreach (var card in Items.Where(card => card.Icon is null))
         {
-            card.Icon = _sprites.GetItem(card.Item.Id);
+            card.Icon = IconOf(card.Item);
         }
 
         if (Items.Count == 0)
@@ -191,6 +191,10 @@ public sealed partial class ShopViewModel : SectionViewModel
 
         await RefreshAsync();
     }
+
+    /// <summary>An unlock has no item to draw: it shows the Pokémon it is for (Rayquaza for Ascenso Draco).</summary>
+    private BitmapSource? IconOf(ShopItem item) =>
+        item.IsUnlock ? _sprites.Get(item.UnlockSpecies, 0) : _sprites.GetItem(item.Id);
 
     /// <summary>
     /// Nothing that talks to the emulator is allowed to run longer than this.
@@ -226,11 +230,14 @@ public sealed partial class ShopViewModel : SectionViewModel
             // dieciocho localizaciones del bloque, y con el emulador cerrado, dieciocho fracasos
             // lentos seguidos: la pantalla se quedaba muerta al abrirla.
             using var cancel = new CancellationTokenSource(GameTimeout);
-            var carried = await _shop.CarriedAllAsync([.. Items.Select(i => i.Item.Id)], cancel.Token);
+            var carried = await _shop.CarriedAllAsync([.. Items.Where(i => !i.Item.IsUnlock).Select(i => i.Item.Id)], cancel.Token);
+            var unlocked = await _shop.UnlockedAsync(run.Id);
 
             foreach (var card in Items)
             {
-                card.Carried = carried.TryGetValue(card.Item.Id, out var count) ? $"llevas {count}" : string.Empty;
+                card.Carried = card.Item.IsUnlock
+                    ? unlocked.Contains((card.Item.UnlockSpecies, card.Item.UnlockMove)) ? "comprado" : string.Empty
+                    : carried.TryGetValue(card.Item.Id, out var count) ? $"llevas {count}" : string.Empty;
             }
 
             Problem = carried.Count > 0

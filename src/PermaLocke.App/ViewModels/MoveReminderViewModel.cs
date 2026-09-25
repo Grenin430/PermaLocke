@@ -17,9 +17,11 @@ public sealed partial class MoveCardViewModel : ObservableObject
     /// <summary>What the game writes where a number does not apply, as in its own summary screen.</summary>
     private const string None = "---";
 
-    private MoveCardViewModel(int slot, int move, MoveSheet? sheet, string badge, BitmapSource? categoryIcon)
+    private MoveCardViewModel(int slot, int move, MoveSheet? sheet, string badge, BitmapSource? categoryIcon,
+        bool isMega = false)
     {
         Slot = slot;
+        IsMega = isMega;
         Move = move;
         Badge = badge;
 
@@ -47,22 +49,28 @@ public sealed partial class MoveCardViewModel : ObservableObject
     }
 
     /// <summary>A slot of the four it knows; <paramref name="move"/> zero for an empty one.</summary>
-    public static MoveCardViewModel Known(int slot, int move, MoveSheet? sheet, BitmapSource? categoryIcon) =>
-        new(slot, move, sheet, $"{slot + 1}", categoryIcon);
+    public static MoveCardViewModel Known(int slot, int move, MoveSheet? sheet, BitmapSource? categoryIcon,
+        bool isMega = false) =>
+        new(slot, move, sheet, $"{slot + 1}", categoryIcon, isMega);
 
     /// <summary>One it can remember, labelled by why.</summary>
     public static MoveCardViewModel Option(RememberableMove option, MoveSheet? sheet, BitmapSource? categoryIcon) =>
         new(-1, option.Move, sheet,
             option.From switch
             {
+                RememberedFrom.Unlocked => "MEGA",
                 RememberedFrom.Evolution => "EVO",
                 RememberedFrom.Level when option.Level <= 1 => "INICIO",
                 RememberedFrom.Level => $"Nv {option.Level}",
                 _ => "ORIGEN"
             },
-            categoryIcon);
+            categoryIcon,
+            option.From == RememberedFrom.Unlocked);
 
     public int Slot { get; }
+
+    /// <summary>The move that makes it mega (Ascenso Draco on Rayquaza): drawn with a rainbow border.</summary>
+    public bool IsMega { get; }
 
     public int Move { get; }
 
@@ -645,7 +653,8 @@ public sealed partial class MoveReminderViewModel : SectionViewModel
             {
                 var move = options.Known[slot];
                 var sheet = move == 0 ? null : _reminder.Describe(move);
-                Known.Add(MoveCardViewModel.Known(slot, move, sheet, CategoryIconOf(sheet)));
+                Known.Add(MoveCardViewModel.Known(slot, move, sheet, CategoryIconOf(sheet),
+                    _reminder.IsMegaMove(pokemon.Species, move)));
             }
 
             // Todos seguidos, sin apartados: el orden ya dice de dónde viene cada uno, y la placa de al lado también.

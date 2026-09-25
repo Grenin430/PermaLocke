@@ -41,7 +41,7 @@
             <StackPanel Grid.Row="0" Margin="2,0,0,14">
                 <pixel:PixelText Text="REGISTRAR CAPTURA" Scale="4" Tight="True" Colour="{StaticResource PxText}"
                                  Shadow="{StaticResource PxShadow}" />
-                <pixel:PixelText Text="Abajo verás si la captura cumple las reglas." Scale="2" Tight="True" Margin="0,8,0,0"
+                <pixel:PixelText Text="Abajo verás si cumple las reglas." Scale="2" Tight="True" Margin="0,8,0,0"
                                  Colour="{StaticResource PxTextDim}" />
             </StackPanel>
 
