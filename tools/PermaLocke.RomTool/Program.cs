@@ -197,6 +197,9 @@ switch (command)
     case "evo-dump":
         EvoDump(args.Length > 1 ? args[1] : null);
         break;
+    case "iconos-nombres":
+        await IconosNombresAsync();
+        break;
     case "informacion":
         await InformacionAsync();
         break;
@@ -4631,4 +4634,17 @@ async Task InformacionAsync()
         tiendas = shops
     }, new System.Text.Json.JsonSerializerOptions { WriteIndented = true, Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }));
     Console.WriteLine($"{evolutions.Count} evoluciones y {shops.Count} tiendas en {output}");
+}
+
+// Especie, nombre e icono de cada Pokémon, para revisar a ojo que cada nombre lleva su dibujo (2026-09-25: Xurkitree
+// salía con el de Pheromosa). Escribe un CSV en la carpeta temporal; las hojas se montan aparte.
+async Task IconosNombresAsync()
+{
+    using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work, baseLayer: baseLayer);
+    var names = workspace.Config.GetText(TextName.SpeciesNames);
+    var index = await PokemonIconIndex.BuildAsync(RequireRom(), Path.Combine(Path.GetTempPath(), "permalocke-iconos"), baseLayer);
+    var output = Path.Combine(Path.GetTempPath(), "permalocke-iconos.csv");
+    await File.WriteAllLinesAsync(output, index.OrderBy(pair => pair.Key)
+        .Select(pair => $"{pair.Key};{(pair.Key < names.Length ? names[pair.Key] : "?")};{pair.Value}"));
+    Console.WriteLine($"{index.Count} especies en {output}");
 }

@@ -226,7 +226,7 @@ public static class PokemonIconIndex
         [785] = 1077,  [786] = 1078,  [787] = 1079,     // Tapu Koko Tapu Lele Tapu Bulu
         [788] = 1080,  [789] = 1131,  [790] = 1132,     // Tapu Fini Cosmog Cosmoem
         [791] = 1133,  [792] = 1134,  [793] = 1135,     // Solgaleo Lunala Nihilego
-        [794] = 1137,  [795] = 1138,  [796] = 1139,     // Buzzwole Pheromosa Xurkitree
+        [794] = 1137,  [795] = 1139,  [796] = 1138,     // Buzzwole Pheromosa Xurkitree (cruzados hasta el 2026-09-25)
         [797] = 1141,  [798] = 1140,  [799] = 1136,     // Celesteela Kartana Guzzlord
         [800] = 1124,  [801] = 1143,  [802] = 1144,     // Necrozma Magearna Marshadow
         [803] = 1150,  [804] = 1151,  [805] = 1146,     // Poipole Naganadel Stakataka
