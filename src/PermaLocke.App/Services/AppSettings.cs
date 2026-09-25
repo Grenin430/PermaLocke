@@ -10,7 +10,8 @@ public sealed record AppSettingsData(
     bool Notifications = true,
     bool StepAside = true,
     bool DeathScene = true,
-    bool Killcam = true);
+    bool Killcam = true,
+    bool Follower = true);
 
 /// <summary>
 /// The player's preferences, kept in <c>Config/ajustes.json</c> and pushed into the services that obey them.

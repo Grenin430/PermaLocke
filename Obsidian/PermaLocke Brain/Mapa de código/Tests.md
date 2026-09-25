@@ -59,7 +59,7 @@ Contado con grep, NO ejecutado. Detalle en [[Pruebas]].
 - `ZoneMarkerTests.cs` (13)
 ## PermaLocke.GameLink.Tests
 - `AlolaClockTests.cs` (7)
-- `AzaharInstallationTests.cs` (7)
+- `AzaharInstallationTests.cs` (10)
 - `AzaharRpcClientTests.cs` (6)
 - `BagLayoutTests.cs` (18)
 - `BattleCounterReaderTests.cs` (7)

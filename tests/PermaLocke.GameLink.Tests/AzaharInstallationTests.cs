@@ -146,4 +146,53 @@ public class AzaharInstallationTests : IDisposable
         Assert.Equal(Path.Combine(_root, "load", "mods", "00040000001B5100"),
             AzaharInstallation.ModDirectory(location, "00040000001B5100"));
     }
+
+    /// <summary>
+    /// With <c>plugin_loader\default=true</c> Azahar ignores <c>plugin_loader=true</c> and loads nothing: measured with
+    /// the follower plugin. Turning it on has to copy the plugin and write both keys.
+    /// </summary>
+    [Fact]
+    public void The_follower_is_installed_and_the_loader_really_turned_on()
+    {
+        var location = new AzaharLocation(_root, null, false);
+        var config = Path.Combine(_root, "config", "qt-config.ini");
+        Directory.CreateDirectory(Path.GetDirectoryName(config)!);
+        File.WriteAllLines(config, ["[System]", @"plugin_loader\default=true", "plugin_loader=false"]);
+        var plugin = Path.Combine(_root, "shipped.3gx");
+        File.WriteAllBytes(plugin, [1, 2, 3]);
+
+        Assert.True(_installation.SetFollower(location, plugin, on: true));
+
+        var lines = File.ReadAllLines(config);
+        Assert.Contains("plugin_loader=true", lines);
+        Assert.Contains(@"plugin_loader\default=false", lines);
+        Assert.Equal([1, 2, 3], File.ReadAllBytes(Path.Combine(_root, "sdmc", "luma", "plugins", "00040000001B5100",
+            AzaharInstallation.FollowerPluginName)));
+    }
+
+    /// <summary>Off switches the loader off and deletes nothing.</summary>
+    [Fact]
+    public void Turning_the_follower_off_keeps_the_file()
+    {
+        var location = new AzaharLocation(_root, null, false);
+        var plugin = Path.Combine(_root, "shipped.3gx");
+        Directory.CreateDirectory(_root);
+        File.WriteAllBytes(plugin, [1, 2, 3]);
+        _installation.SetFollower(location, plugin, on: true);
+
+        Assert.True(_installation.SetFollower(location, plugin, on: false));
+
+        Assert.Contains("plugin_loader=false", File.ReadAllLines(Path.Combine(_root, "config", "qt-config.ini")));
+        Assert.True(File.Exists(Path.Combine(_root, "sdmc", "luma", "plugins", "00040000001B5100", AzaharInstallation.FollowerPluginName)));
+    }
+
+    /// <summary>Without the shipped plugin the loader is not turned on: there would be nothing to load.</summary>
+    [Fact]
+    public void Without_the_plugin_the_loader_stays_as_it_was()
+    {
+        var location = new AzaharLocation(_root, null, false);
+
+        Assert.False(_installation.SetFollower(location, Path.Combine(_root, "missing.3gx"), on: true));
+        Assert.False(File.Exists(Path.Combine(_root, "config", "qt-config.ini")));
+    }
 }

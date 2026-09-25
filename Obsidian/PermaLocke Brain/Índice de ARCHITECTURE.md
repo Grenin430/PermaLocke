@@ -187,6 +187,7 @@ generado: 2026-09-24
 - L11778 · 178 · HOME sin IR A, GACHA con la máquina a la vista
 - L11799 · 179 · Colina Saltagua y Jungla Umbría cerradas hasta su cristal Z
 - L11819 · 180 · Iconos variocolor desde renders de referencia
+- L11860 · 181 · El Pokémon que te sigue (plugin 3GX)
 
 Subsecciones §176: bis (visor), ter (todas las pantallas, fuera ESTADÍSTICAS), quater (EV/MOVIMIENTOS sin bolsa, diálogos).
 

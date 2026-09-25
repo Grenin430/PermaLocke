@@ -151,6 +151,80 @@ public sealed class AzaharInstallation(ILogger<AzaharInstallation> logger)
         }
     }
 
+    /// <summary>File name of the follower plugin, as its author ships it.</summary>
+    public const string FollowerPluginName = "Gen7FieldFollower.3gx";
+
+    /// <summary>
+    /// Turns the follower Pokémon on or off: the 3GX plugin that makes the lead of the party walk behind the player.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// It is someone else's mod («Pokemon Follower Mod», by Aqua_, gamebanana.com/mods/694400, CC BY-NC-ND), shipped
+    /// unmodified in <c>Emulator/follower</c>. It runs inside the emulated console and touches only the model on the
+    /// map: not the party, not the battle, not the save. Tested with PermaLocke reading the party and the zone live,
+    /// and by the player with Pokémon of generations 8 and 9 and wild battles.
+    /// </para>
+    /// <para>
+    /// On: the plugin is copied to <c>sdmc/luma/plugins/&lt;title&gt;</c> when missing or different, and the loader is
+    /// switched on. Both <c>plugin_loader</c> and <c>plugin_loader\default</c> are written: with the second left at
+    /// true, Azahar ignores the value and loads nothing — measured. Off: only the loader goes off; the file stays, and
+    /// nothing is deleted. Written with the emulator closed, like the RPC setting.
+    /// </para>
+    /// </remarks>
+    /// <param name="plugin">The shipped plugin; when it is missing the loader is not switched on.</param>
+    /// <returns>True when the configuration ends up as asked.</returns>
+    public bool SetFollower(AzaharLocation location, string plugin, bool on, string titleId = "00040000001B5100")
+    {
+        var configPath = Path.Combine(location.UserDirectory, "config", "qt-config.ini");
+
+        try
+        {
+            if (on)
+            {
+                if (!File.Exists(plugin))
+                {
+                    logger.LogWarning("Sin Pokémon que te sigue: falta el plugin en {Path}", plugin);
+                    return false;
+                }
+
+                var folder = Path.Combine(location.UserDirectory, "sdmc", "luma", "plugins", titleId);
+                var target = Path.Combine(folder, FollowerPluginName);
+                Directory.CreateDirectory(folder);
+
+                if (!File.Exists(target) || !File.ReadAllBytes(target).AsSpan().SequenceEqual(File.ReadAllBytes(plugin)))
+                {
+                    File.Copy(plugin, target, overwrite: true);
+                    logger.LogInformation("Plugin del Pokémon que te sigue instalado en {Path}", target);
+                }
+
+                // Azahar carga un solo 3GX por juego: si hay otro, puede que se cargue ese y no este.
+                foreach (var other in Directory.GetFiles(folder, "*.3gx").Where(f => !f.EndsWith(FollowerPluginName, StringComparison.OrdinalIgnoreCase)))
+                {
+                    logger.LogWarning("Hay otro plugin 3GX junto al del Pokémon que te sigue: {Path}", other);
+                }
+            }
+
+            Directory.CreateDirectory(Path.GetDirectoryName(configPath)!);
+            var lines = File.Exists(configPath) ? File.ReadAllLines(configPath).ToList() : [];
+            var changed = SetValue(lines, "plugin_loader", on ? "true" : "false", "[System]");
+            changed |= SetValue(lines, @"plugin_loader\default", "false", "[System]");
+            changed |= SetValue(lines, "allow_plugin_loader", "true", "[System]");
+
+            if (changed)
+            {
+                File.WriteAllLines(configPath, lines);
+                logger.LogInformation("Pokémon que te sigue {State} en {Path}", on ? "activado" : "desactivado", configPath);
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "No se pudo cambiar el Pokémon que te sigue en {Path}", configPath);
+            return false;
+        }
+    }
+
     /// <summary>
     /// Raises the RPC server's logging so what it does can be read.
     /// </summary>

@@ -6,6 +6,13 @@ revisado: 2026-09-24
 
 La última sesión va arriba. Antes del 2026-09-23 solo hay un resumen por fechas sacado de `CLAUDE.md` y de `ARCHITECTURE.md`: el detalle está en el § citado ([[Índice de ARCHITECTURE]]). **Cada sesión nueva añade su entrada aquí.**
 
+## 2026-09-25 — Pokémon que te sigue (§181, integrado)
+- No viene en el mod de gen 8-9: es otro mod del mismo autor, «Pokemon Follower Mod (Includes SM)», gamebanana.com/mods/694400, CC BY-NC-ND. Plugin 3GX `Gen7FieldFollower.3gx` en `sdmc/luma/plugins/00040000001B5100/`, zip `ultra_moon_1e982.zip` (sha256 `827aa023…0485`). Menú con Start+Select.
+- Probado en copia aislada `%TEMP%plf` (emulador + partida copiados; `load` copiado entero): el Pokémon de cabeza (Dragonite) sale detrás del jugador; `Probe --equipo` lee las dos estructuras del equipo (espejo en `0x330128E4` como siempre); `FieldZoneReader` real da Ciudad Malíe con 3 registros, también andando. Partida real sin tocar.
+- **Trampas:** Azahar ignora `plugin_loader=true` si `plugin_loaderdefault=true` (hay que poner `default=false`, como con el RPC). La ruta del scratchpad pasa de 260 caracteres con la ruta de la partida: el emulador no la abre y la copia falla sin avisar; usar rutas cortas.
+- El jugador lo probó en la copia (gen 8-9 de cabeza, hierba, combates): sin fallos. Copia borrada con su permiso.
+- Integrado: `AzaharInstallation.SetFollower` (+3 pruebas), llamado en `EmulatorLauncher.Launch`; ajuste `Follower` en `AppSettingsData` y casilla en CONFIGURACIÓN; plugin en `Emulator/follower/` con `LEEME.txt` (créditos; solo el LEEME se versiona); `publicar.ps1` lo exige.
+
 ## 2026-09-25 — iconos variocolor (§180)
 - Pedido: sprites variocolor. El cartucho no los tiene. Por indicación del usuario, colores sacados de los renders de Showdown (`dex`/`dex-shiny`, y `home`/`home-shiny` si faltan o no cambian): comparando normal y variocolor píxel a píxel se sabe en qué se convierte cada color, y se aplica al icono de la ROM.
 - Afinado en prototipo (scratchpad) con Charizard, Pikachu, Gyarados, Gengar, Umbreon y Rayquaza: RGB aditivo → HSL → LCh con **mediana** de 16 vecinos y peso de luz 1,5 (el que separa cuerpo y llama de Charizard).

@@ -114,7 +114,7 @@ try {
         [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($sourceZip, $file.FullName, $relative, [IO.Compression.CompressionLevel]::Optimal) | Out-Null
     }
 } finally { $sourceZip.Dispose() }
-$requiredFiles = @('PermaLocke.exe','PermaLocke.local','EVOLUCIONES CAMBIADAS.txt','TIENDAS.txt','Emulator\azahar.exe','Emulator\plugins\platforms\qwindows.dll','Expansion\exefs\code.bin','Expansion\romfs\a\0\9\4','Expansion\README.txt','Data\mapas.json','Data\marcadores.json','Data\fotos.json') + @($runtime | ForEach-Object { "Emulator\$_" })
+$requiredFiles = @('PermaLocke.exe','PermaLocke.local','EVOLUCIONES CAMBIADAS.txt','TIENDAS.txt','Emulator\azahar.exe','Emulator\plugins\platforms\qwindows.dll','Emulator\follower\Gen7FieldFollower.3gx','Emulator\follower\LEEME.txt','Expansion\exefs\code.bin','Expansion\romfs\a\0\9\4','Expansion\README.txt','Data\mapas.json','Data\marcadores.json','Data\fotos.json') + @($runtime | ForEach-Object { "Emulator\$_" })
 foreach ($file in $requiredFiles) {
     if (-not (Test-Path -LiteralPath (Join-Path $Destino $file))) { throw "Falta en la distribucion: $file" }
 }

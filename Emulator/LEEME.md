@@ -58,3 +58,12 @@ primero en la carpeta del programa y ninguna es KnownDLL: medido, las seis se ca
 
 Microsoft permite distribuir estas DLL junto a la aplicación (despliegue local). No hacen falta en esta carpeta del
 repositorio: las pone el script al publicar.
+
+## `follower/` — el Pokémon que te sigue
+
+`follower/Gen7FieldFollower.3gx` es el plugin **Pokemon Follower Mod (Includes SM)** de Aqua_
+(https://gamebanana.com/mods/694400), sin modificar, bajo **CC BY-NC-ND 4.0**. No es parte del fork ni de
+PermaLocke: se reparte tal cual con sus créditos en `follower/LEEME.txt`. PermaLocke lo copia a
+`user/sdmc/luma/plugins/00040000001B5100/` y enciende el cargador de plugins al pulsar JUGAR, salvo que el
+jugador lo apague en CONFIGURACIÓN. Como el resto de binarios, no se versiona: se baja de esa página
+(`ultra_moon_1e982.zip`) y su sha256 está en el LEEME.txt. Ver `docs/ARCHITECTURE.md` §181.

@@ -11856,3 +11856,44 @@ tamaños distintos. `PngImageTests` cubre `Decode`, el decodificador PNG nuevo q
 servicio real con la ROM: Charizard negro, Gyarados rojo, y Armarouge devuelve su icono normal.
 
 **Sin ver dentro de la app con un variocolor de verdad.**
+
+## §181 · El Pokémon que te sigue: el plugin de otro autor, instalado al pulsar JUGAR (2026-09-25)
+
+El jugador creía que el mod de gen 8-9 traía un Pokémon que te acompaña andando. No lo trae. Es otro mod del mismo
+autor: **Pokemon Follower Mod (Includes SM)**, de Aqua_ (gamebanana.com/mods/694400), con licencia **CC BY-NC-ND 4.0**.
+El propio mod de gen 8-9 lo menciona en sus preguntas frecuentes, y dice que no garantiza compatibilidad total entre los dos.
+
+**Qué es.** Un plugin **3GX** (`Gen7FieldFollower.3gx`, 693 KB) que corre dentro de la consola emulada. Hace que el
+primero del equipo ande detrás del jugador y reaccione con A. Toca solo el modelo del mapa: ni el equipo, ni el combate, ni
+la partida. Se instala en `sdmc/luma/plugins/00040000001B5100/` y necesita el cargador de plugins del emulador. Nuestro
+fork lo tiene.
+
+**Probado antes de integrarlo**, en una copia aislada con emulador y partida copiados:
+- El Dragonite de cabeza sale detrás del jugador.
+- `Probe --equipo` sigue leyendo las dos estructuras del equipo, con el espejo en `0x330128E4` como siempre.
+- El `FieldZoneReader` real da Ciudad Malíe con 3 registros de posición, también andando.
+- El jugador probó en esa copia Pokémon de gen 8-9 de cabeza, hierba y combates, y todo fue bien.
+
+Por eso lo de «no garantiza compatibilidad» no se tradujo en nada visible.
+
+**Dos trampas medidas:**
+- **Azahar ignora `plugin_loader=true` si `plugin_loader\default` sigue a `true`.** El log dice
+  `System_PluginLoader: false` y no carga nada. Hay que escribir las dos claves, como con el RPC.
+- **Una ruta de más de 260 caracteres rompe la partida sin avisar.** La primera copia vivía en el scratchpad. La ruta de
+  la partida pasaba del límite: la copia no se hizo y el juego arrancaba como partida nueva. Las copias de prueba van en
+  rutas cortas.
+
+**Integración.**
+- `AzaharInstallation.SetFollower` copia el plugin si falta o es distinto y escribe las dos claves. Apagado solo apaga
+  el cargador: el fichero se queda y no se borra nada. Sin plugin en el reparto, no enciende nada.
+- `EmulatorLauncher.Launch` lo llama al pulsar JUGAR, con el emulador aún cerrado, junto al RPC y a la confirmación de
+  cierre.
+- CONFIGURACIÓN tiene «Pokémon que te sigue», encendido por defecto, en `Config/ajustes.json` (`Follower`).
+- El plugin viaja en `Emulator/follower/` con sus créditos en `LEEME.txt`, que es lo que pide la licencia. El binario no
+  se versiona, como el resto del emulador. `publicar.ps1` lo exige en el reparto.
+- Pruebas en `AzaharInstallationTests`: se instala y enciende de verdad las dos claves; apagar no borra; sin plugin no
+  toca la configuración.
+
+**Límites.**
+- Solo se aplica si el juego se abre desde JUGAR. Un Azahar abierto a mano se queda como lo dejó la última vez.
+- El cambio de forma con L+A del propio plugin puede colgar el juego, según su autor. No se puede desactivar desde fuera.

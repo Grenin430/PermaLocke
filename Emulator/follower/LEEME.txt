@@ -1,0 +1,15 @@
+Pokemon Follower Mod (Includes SM) — Gen VII Field Follower
+============================================================
+
+Plugin 3GX que hace que el primer Pokemon del equipo te siga por el mapa.
+PermaLocke lo instala en el emulador al pulsar JUGAR, y se apaga en CONFIGURACION
+(«Pokemon que te sigue»). Dentro del juego, Start+Select abre su menu de ajustes.
+
+Autor: Aqua_ (Gen VII Field Follower project)
+Pagina oficial: https://gamebanana.com/mods/694400
+Fichero: ultra_moon_1e982.zip, version del 2026-08-04, sin modificar.
+         Gen7FieldFollower.3gx, sha256 0345866bcd5cd696a9ea9f361714d09caf270a3c152fb25fc9a600a1b32e7f2f
+
+Licencia: Creative Commons Attribution-NonCommercial-NoDerivs 4.0
+          https://creativecommons.org/licenses/by-nc-nd/4.0/
+Se reparte tal cual, gratis y con estos creditos. No forma parte de PermaLocke.

@@ -50,6 +50,7 @@ public sealed partial class SettingsViewModel : SectionViewModel
         StepAside = current.StepAside;
         DeathScene = current.DeathScene;
         Killcam = current.Killcam;
+        Follower = current.Follower;
         _loading = false;
     }
 
@@ -77,10 +78,14 @@ public sealed partial class SettingsViewModel : SectionViewModel
     [ObservableProperty]
     private bool _killcam;
 
+    [ObservableProperty]
+    private bool _follower;
+
     partial void OnNotificationsChanged(bool value) => Save();
     partial void OnStepAsideChanged(bool value) => Save();
     partial void OnDeathSceneChanged(bool value) => Save();
     partial void OnKillcamChanged(bool value) => Save();
+    partial void OnFollowerChanged(bool value) => Save();
 
     private void Save()
     {
@@ -89,7 +94,7 @@ public sealed partial class SettingsViewModel : SectionViewModel
             return;
         }
 
-        _settings.Update(new AppSettingsData(Notifications, StepAside, DeathScene, Killcam));
+        _settings.Update(new AppSettingsData(Notifications, StepAside, DeathScene, Killcam, Follower));
         Status = "Guardado.";
     }
 

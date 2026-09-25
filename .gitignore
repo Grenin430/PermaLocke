@@ -35,6 +35,10 @@ obj/
 # licencia se distribuyen.
 /Emulator/*
 !/Emulator/LEEME.md
+# El plugin del Pokémon que te sigue es de otro autor (CC BY-NC-ND): solo se versionan sus créditos.
+!/Emulator/follower/
+/Emulator/follower/*
+!/Emulator/follower/LEEME.txt
 
 # Los sprites de Pokémon son de Nintendo. Se extraen de la ROM que cada jugador ya tiene
 # (PermaLocke.RomTool sprites) y nunca se versionan ni se redistribuyen, igual que la ROM.

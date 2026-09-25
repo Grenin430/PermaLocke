@@ -93,6 +93,7 @@ public sealed partial class EmulatorLauncher : ObservableObject
 
     private readonly AzaharInstallation _azahar;
     private readonly AppPaths _paths;
+    private readonly AppSettings _settings;
     private readonly IRunContext _runContext;
     private readonly IPlaytimeStore _playtime;
     private readonly BattleModeService _battle;
@@ -119,8 +120,9 @@ public sealed partial class EmulatorLauncher : ObservableObject
 
     public EmulatorLauncher(AzaharInstallation azahar, AppPaths paths, IRunContext runContext,
         IPlaytimeStore playtime, BattleModeService battle, EmulatorCrashReport crashes, Notifier notifier,
-        ILogger<EmulatorLauncher> logger)
+        AppSettings settings, ILogger<EmulatorLauncher> logger)
     {
+        _settings = settings;
         _crashes = crashes;
         _notifier = notifier;
         _azahar = azahar;
@@ -354,6 +356,8 @@ public sealed partial class EmulatorLauncher : ObservableObject
         // un Azahar abierto la reescribiría al salir.
         _azahar.EnsureRpcEnabled(location);
         _azahar.DisableCloseConfirmation(location);
+        _azahar.SetFollower(location, Path.Combine(_paths.Root, "Emulator", "follower", AzaharInstallation.FollowerPluginName),
+            _settings.Current.Follower);
 
         try
         {
