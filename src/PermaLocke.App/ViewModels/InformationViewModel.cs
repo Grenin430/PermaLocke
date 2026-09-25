@@ -63,7 +63,7 @@ public sealed partial class InformationViewModel(AppPaths paths, PokemonSpriteSe
     private IReadOnlyList<GameShop> _allShops = [];
 
     private sealed record Evolution(int Especie, int Forma, string Nombre, int Destino, int DestinoForma,
-        string DestinoNombre, string Como, int Objeto, string Ahora, string Antes);
+        string DestinoNombre, string Como, int Objeto, string Ahora, string Antes, bool SubeNivel);
 
     private sealed record ShopItem(int Id, string Nombre, int Precio);
 
@@ -75,8 +75,9 @@ public sealed partial class InformationViewModel(AppPaths paths, PokemonSpriteSe
     [
         ("nivel", "POR NIVEL"),
         ("objetoDeDia", "SUBIENDO DE NIVEL DE DÍA CON SU OBJETO"),
-        ("objeto", "CON UN OBJETO"),
-        ("compañero", "CON SU PAREJA EN EL EQUIPO")
+        ("objeto", "USANDO UN OBJETO"),
+        ("compañero", "CON SU PAREJA EN EL EQUIPO"),
+        ("otro", "OTRAS FORMAS")
     ];
 
     partial void OnEvolutionSearchChanged(string value) =>
@@ -115,7 +116,7 @@ public sealed partial class InformationViewModel(AppPaths paths, PokemonSpriteSe
                     .Select(e => new EvolutionCard(
                         sprites.Get(e.Especie, e.Forma), e.Nombre,
                         sprites.Get(e.Destino, e.DestinoForma), e.DestinoNombre,
-                        e.Ahora, e.Objeto > 0 ? sprites.GetItem(e.Objeto) : null, e.Como != "objeto"))]))
+                        e.Ahora, e.Objeto > 0 ? sprites.GetItem(e.Objeto) : null, e.SubeNivel))]))
                 .Where(g => g.Cards.Count > 0)];
 
             _allShops = [.. data.Tiendas.Select(s => new GameShop(s.Lugar,

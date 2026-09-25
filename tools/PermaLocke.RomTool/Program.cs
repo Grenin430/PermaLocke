@@ -4477,6 +4477,8 @@ async Task InformacionAsync()
     using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work, baseLayer: baseLayer);
     var speciesNames = workspace.Config.GetText(TextName.SpeciesNames);
     var itemNames = workspace.Config.GetText(TextName.ItemNames);
+    var typeNames = workspace.Config.GetText(TextName.Types);
+    string TypeName(int type) => type >= 0 && type < typeNames.Length ? typeNames[type] : "?";
     var moveNames = workspace.Config.GetText(TextName.MoveNames);
     var options = RandomizerOptionsLoader.Load(Path.Combine(root, "Data", "randomizer.json"));
 
@@ -4493,9 +4495,31 @@ async Task InformacionAsync()
     }
 
     int[] alola = [19, 20, 26, 27, 28, 37, 38, 50, 51, 52, 53, 74, 75, 76, 88, 89, 103, 105];
-    string Name(int species, int form) =>
-        speciesNames[species] + (form == 0 ? "" : alola.Contains(species) ? " de Alola" : species == 211 ? " de Hisui"
-            : species == 710 ? $" (tamaño {form + 1})" : $" (forma {form})");
+    int[] galar = [77, 78, 79, 80, 83, 110, 122, 144, 145, 146, 199, 222, 263, 264, 554, 555, 562, 618];
+    int[] hisui = [58, 59, 100, 101, 157, 211, 215, 503, 549, 570, 571, 628, 705, 706, 713, 724];
+    string Name(int species, int form) => speciesNames[species] + (form, species) switch
+    {
+        (0, _) => "",
+        (2, 52) => " de Galar",
+        (1, 128) or (1, 194) or (2, 128) or (3, 128) => " de Paldea",
+        (_, 710) => $" (tamaño {form + 1})",
+        (1, 745) => " nocturno",
+        (2, 745) => " crepuscular",
+        (1, 744) => " (propio)",
+        (1, 902) or (1, 916) => " hembra",
+        (2, 550) => " raya blanca",
+        (1, 982) => " de tres segmentos",
+        (1, 925) => " familia de tres",
+        (1, 849) => " grave",
+        (1, 892) => " estilo fluido",
+        (1, 855) or (1, 854) or (1, 1013) or (1, 1012) => " (genuino)",
+        (1, 999) => " andante",
+        (_, 670) => form switch { 1 => " amarilla", 2 => " naranja", 3 => " azul", _ => " blanca" },
+        _ when alola.Contains(species) => " de Alola",
+        _ when galar.Contains(species) => " de Galar",
+        _ when hisui.Contains(species) => " de Hisui",
+        _ => $" (forma {form})"
+    };
 
     string Say(int method, int argument, int level) => method switch
     {
@@ -4507,6 +4531,38 @@ async Task InformacionAsync()
         19 => $"subiendo de nivel de día llevando {itemNames[argument]}",
         21 => $"al subir de nivel sabiendo {moveNames[argument]}",
         22 => $"subiendo de nivel con {speciesNames[argument]} en el equipo",
+        1 => "al subir de nivel con mucha amistad",
+        2 => "al subir de nivel de día con mucha amistad",
+        3 => "al subir de nivel de noche con mucha amistad",
+        9 => $"al nivel {level} con más Ataque que Defensa",
+        10 => $"al nivel {level} con el mismo Ataque que Defensa",
+        11 => $"al nivel {level} con más Defensa que Ataque",
+        12 or 13 => $"al nivel {level}, según su personalidad",
+        14 => $"al nivel {level}",
+        15 => $"al nivel {level}, con hueco en el equipo y una Poké Ball",
+        16 => "al subir de nivel con mucha belleza",
+        17 => $"usando {itemNames[argument]} (macho)",
+        18 => $"usando {itemNames[argument]} (hembra)",
+        20 => $"subiendo de nivel de noche llevando {itemNames[argument]}",
+        23 => $"al nivel {level} (macho)",
+        24 => $"al nivel {level} (hembra)",
+        25 => "al subir de nivel en una zona magnética (Cañón de Poni o Planta Energética)",
+        26 => "al subir de nivel cerca de la Roca Musgo (Jungla Umbría)",
+        27 => "al subir de nivel cerca de la Roca Hielo (Monte Lanakila)",
+        28 => $"al nivel {level} con la consola boca abajo",
+        29 => $"al subir de nivel con mucho cariño sabiendo un movimiento de tipo {TypeName(argument)}",
+        30 => $"al nivel {level} con un Pokémon de tipo Siniestro en el equipo",
+        31 => $"al nivel {level} mientras llueve",
+        32 => $"al nivel {level} de día",
+        33 => $"al nivel {level} de noche",
+        34 => $"al nivel {level} (hembra)",
+        36 => $"al nivel {level}",
+        37 => $"al nivel {level} de día",
+        38 => $"al nivel {level} de noche",
+        39 => "al subir de nivel en el Monte Lanakila",
+        40 => $"al nivel {level} al atardecer",
+        41 => $"al nivel {level} en el Ultraespacio",
+        42 => $"usando {itemNames[argument]} en el Ultraespacio",
         _ => $"método {method}"
     };
 
@@ -4519,12 +4575,15 @@ async Task InformacionAsync()
         {
             var before = patcher.Read(row);
             var after = (byte[])before.Clone();
-            if (fixer.FixSpecies(after, row, partners) is { Trades: 0, Moves: 0 } || !rowOf.TryGetValue(row, out var who)) continue;
+            fixer.FixSpecies(after, row, partners);
+            if (!rowOf.TryGetValue(row, out var who)) continue;
 
+            // Las que cambia PermaLocke y, desde el 2026-09-25, todas las que no son «subir al nivel N» a secas: el
+            // jugador buscó cómo evoluciona Gimmighoul y no estaba, porque el juego no la toca.
             for (var at = 0; at + 8 <= after.Length; at += 8)
             {
-                if (after.AsSpan(at, 8).SequenceEqual(before.AsSpan(at, 8))) continue;
                 int U16(byte[] b, int o) => BitConverter.ToUInt16(b, o);
+                if (U16(after, at) == 0 || (U16(after, at) == 4 && after.AsSpan(at, 8).SequenceEqual(before.AsSpan(at, 8)))) continue;
                 var target = U16(after, at + 4);
                 var targetForm = Math.Max(0, (int)(sbyte)after[at + 6]);
                 var method = U16(after, at);
@@ -4533,9 +4592,11 @@ async Task InformacionAsync()
                 {
                     especie = who.Species, forma = who.Form, nombre = Name(who.Species, who.Form),
                     destino = target, destinoForma = targetForm, destinoNombre = Name(target, targetForm),
-                    como = method switch { 4 => "nivel", 8 => "objeto", 19 => "objetoDeDia", 22 => "compañero", _ => "otro" },
+                    como = method switch { 4 => "nivel", 8 or 17 or 18 or 42 => "objeto", 19 => "objetoDeDia", 22 => "compañero", _ => "otro" },
+                    cambiada = !after.AsSpan(at, 8).SequenceEqual(before.AsSpan(at, 8)),
+                    subeNivel = method is not (5 or 6 or 7 or 8 or 17 or 18 or 42),
                     nivel = method == 4 ? after[at + 7] : 0,
-                    objeto = method is 8 or 19 ? argument : 0,
+                    objeto = method is 8 or 17 or 18 or 19 or 20 or 42 ? argument : 0,
                     companero = method == 22 ? argument : 0,
                     ahora = Say(method, argument, after[at + 7]),
                     antes = Say(U16(before, at), U16(before, at + 2), before[at + 7])
