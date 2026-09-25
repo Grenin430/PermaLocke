@@ -70,7 +70,7 @@ public sealed class AchievementServiceTests
         new("dominsignias-25", "Dominsignias", "Encuentra 25.", null, "sin disparador", 25, 75, Work: 169),
     ];
 
-    private static (AchievementService Service, Events Log, Run Run) Build(IGameRecords? records = null)
+    private static (AchievementService Service, Events Log, Run Run) Build(IGameRecords? records = null, IItemDelivery? bag = null)
     {
         var log = new Events();
         var clock = new FixedClock();
@@ -87,7 +87,7 @@ public sealed class AchievementServiceTests
         };
 
         return (new AchievementService(new Catalog(Catalogue()), points, log, clock,
-            records ?? new Records(true, (46, 0)), new FixedRole(FixedRole.Normal)), log, run);
+            records ?? new Records(true, (46, 0)), new FixedRole(FixedRole.Normal), bag), log, run);
     }
 
     private static GameEvent Roll(Guid runId) => new()
@@ -237,6 +237,43 @@ public sealed class AchievementServiceTests
         Assert.True(trial.CanClaim);
         Assert.True(trial.Achievement.IsFromGame);
         Assert.False(trial.Achievement.IsManual);
+    }
+
+    /// <summary>The live bag, answering for the crystals it was asked about.</summary>
+    private sealed class LiveBag(params int[] carried) : IItemDelivery
+    {
+        public Task<ItemDeliveryResult> GiveAsync(int itemId, int amount = 1, CancellationToken ct = default) =>
+            throw new NotSupportedException();
+
+        public Task<int> CarriedAsync(int itemId, CancellationToken ct = default) =>
+            Task.FromResult(carried.Contains(itemId) ? 1 : 0);
+
+        public Task<IReadOnlyDictionary<int, int>> CarriedAllAsync(IReadOnlyList<int> itemIds, CancellationToken ct = default) =>
+            Task.FromResult<IReadOnlyDictionary<int, int>>(itemIds.ToDictionary(id => id, id => carried.Contains(id) ? 1 : 0));
+    }
+
+    /// <summary>
+    /// A trial passed and not saved yet: the crystal is only in the live bag. LOGROS used to read the save alone, so the
+    /// seventh trial stayed locked while the zone rule already treated it as passed.
+    /// </summary>
+    [Fact]
+    public async Task A_crystal_only_in_the_live_bag_unlocks_its_trial()
+    {
+        var (service, _, run) = Build(new Records(true) { Items = [] }, new LiveBag(807));
+
+        var trial = (await service.GetProgressAsync(run.Id)).Single(p => p.Achievement.Id == "prueba-01");
+
+        Assert.True(trial.Unlocked);
+        Assert.True(trial.CanClaim);
+    }
+
+    /// <summary>A live bag without the crystal does not take away what the save has: the game never takes it back.</summary>
+    [Fact]
+    public async Task A_live_bag_without_it_keeps_what_the_save_has()
+    {
+        var (service, _, run) = Build(new Records(true) { Items = [807] }, new LiveBag());
+
+        Assert.True((await service.GetProgressAsync(run.Id)).Single(p => p.Achievement.Id == "prueba-01").Unlocked);
     }
 
     /// <summary>Without the reward there is no progress, and no way to type one in either.</summary>

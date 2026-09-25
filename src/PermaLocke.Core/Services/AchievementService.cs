@@ -18,7 +18,7 @@ namespace PermaLocke.Core.Services;
 /// </para>
 /// </remarks>
 public sealed class AchievementService(IAchievementCatalog catalog, IPointsService points,
-    IEventStore events, IClock clock, IGameRecords records, IRunRoles roles)
+    IEventStore events, IClock clock, IGameRecords records, IRunRoles roles, IItemDelivery? bag = null)
 {
     public IReadOnlyList<Achievement> All => catalog.All;
 
@@ -35,6 +35,7 @@ public sealed class AchievementService(IAchievementCatalog catalog, IPointsServi
         // la pantalla dice por qué, en vez de fingir un progreso.
         var game = await records.ReadAsync(ct).ConfigureAwait(false);
         LastRecords = game;
+        var held = await HeldAsync(game, ct).ConfigureAwait(false);
 
         var counts = all
             .GroupBy(e => e.Type)
@@ -59,9 +60,40 @@ public sealed class AchievementService(IAchievementCatalog catalog, IPointsServi
         [
             .. catalog.All.Select(achievement => new AchievementProgress(
                 achievement,
-                CountFor(achievement, counts, marked, game),
+                CountFor(achievement, counts, marked, game, held),
                 claimed.Contains(achievement.Id)))
         ];
+    }
+
+    /// <summary>
+    /// The prize items the player has: the save file's, plus what the live bag says right now.
+    /// </summary>
+    /// <remarks>
+    /// Only the save counted before, so a trial passed and not yet saved stayed locked here while the zone rule, which
+    /// reads the live bag (§179), already treated it as passed. These items are given and never taken, so a union
+    /// cannot overcount. An empty answer from the bag means «not known» (§68) and adds nothing.
+    /// </remarks>
+    private async Task<IReadOnlySet<int>> HeldAsync(GameRecordSnapshot game, CancellationToken ct)
+    {
+        var held = new HashSet<int>(game.Available && game.Items is { } saved ? saved : []);
+        var wanted = catalog.All.Where(a => a.Item is not null).Select(a => a.Item!.Value).Distinct().ToList();
+
+        if (bag is null || wanted.Count == 0)
+        {
+            return held;
+        }
+
+        try
+        {
+            var live = await bag.CarriedAllAsync(wanted, ct).ConfigureAwait(false);
+            held.UnionWith(live.Where(pair => pair.Value > 0).Select(pair => pair.Key));
+        }
+        catch (Exception) when (!ct.IsCancellationRequested)
+        {
+            // La mochila viva es un extra: si falla, queda lo del fichero de partida.
+        }
+
+        return held;
     }
 
     /// <summary>
@@ -73,7 +105,7 @@ public sealed class AchievementService(IAchievementCatalog catalog, IPointsServi
     /// PermaLocke worked out on its own could only be a second opinion about the same fact.
     /// </remarks>
     private static int CountFor(Achievement achievement, IReadOnlyDictionary<GameEventType, int> counts,
-        IReadOnlyDictionary<string, int> marked, GameRecordSnapshot game)
+        IReadOnlyDictionary<string, int> marked, GameRecordSnapshot game, IReadOnlySet<int> held)
     {
         if (achievement.Record is { } record)
         {
@@ -83,7 +115,7 @@ public sealed class AchievementService(IAchievementCatalog catalog, IPointsServi
         // Un objeto que el juego entrega y nunca retira: está o no está, así que cuenta uno o cero.
         if (achievement.Item is { } item)
         {
-            return game.Available && game.Has(item) ? 1 : 0;
+            return held.Contains(item) ? 1 : 0;
         }
 
         // Un contador del propio juego que no sale en la ficha de entrenador, como las Dominsignias.

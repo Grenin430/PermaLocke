@@ -11897,3 +11897,25 @@ Por eso lo de «no garantiza compatibilidad» no se tradujo en nada visible.
 **Límites.**
 - Solo se aplica si el juego se abre desde JUGAR. Un Azahar abierto a mano se queda como lo dejó la última vez.
 - El cambio de forma con L+A del propio plugin puede colgar el juego, según su autor. No se puede desactivar desde fuera.
+
+## §182 · Las pruebas se ven en LOGROS sin guardar dentro del juego (2026-09-25)
+
+El jugador superó la séptima prueba y LOGROS no la enseñaba. Justo antes se había instalado el Pokémon que te sigue
+(§181), así que parecía cosa suya. **No lo era.** La partida guardada tenía el **Electrostal Z (810)**, leída con PKHeX
+sobre una copia, y el plugin no toca la partida.
+
+La causa venía de antes: los logros con `item` (las doce pruebas) **solo miraban el fichero de partida**
+(`SaveRecordReader`). Una prueba superada no contaba hasta **guardar dentro del juego** y volver a abrir LOGROS, que se
+relee al entrar y no mientras está abierta. Mientras tanto, la regla de la zona de prueba (§179) ya la daba por superada
+porque mira la **mochila viva**. Dos partes de la app contestaban distinto a la misma pregunta.
+
+Ahora `AchievementService` une lo del fichero con lo que dice la mochila viva (`IItemDelivery.CarriedAllAsync`, una sola
+consulta con los ids del catálogo). Es la misma forma que los premios del §68.
+- **La unión no puede contar de más**, porque estos objetos el juego los da y no los quita.
+- **Una mochila que no responde no quita nada**: queda lo del fichero.
+
+Pruebas en `AchievementServiceTests`:
+- un cristal solo en la mochila viva desbloquea su prueba;
+- una mochila viva sin el cristal no borra lo que tiene la partida.
+
+Sigue haciendo falta **reentrar en LOGROS** para ver el cambio si la pantalla ya estaba abierta.

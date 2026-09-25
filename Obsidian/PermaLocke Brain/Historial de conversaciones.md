@@ -6,6 +6,11 @@ revisado: 2026-09-24
 
 La última sesión va arriba. Antes del 2026-09-23 solo hay un resumen por fechas sacado de `CLAUDE.md` y de `ARCHITECTURE.md`: el detalle está en el § citado ([[Índice de ARCHITECTURE]]). **Cada sesión nueva añade su entrada aquí.**
 
+## 2026-09-25 — la 7ª prueba no salía en LOGROS (§182)
+- Reporte: superada la 7ª (Chris, Electrostal Z 810) y no sale. El jugador sospechó del seguidor: no era. PKHeX sobre copia del save: 810 presente; save guardado 23:31:29, leído 23:31:40.
+- Causa: los logros `item` solo miraban el fichero (`SaveRecordReader`); `TrialZoneService` mira la mochila viva. Arreglo: `AchievementService` recibe `IItemDelivery?` (opcional) y une fichero + mochila viva. +2 pruebas. 1501 pruebas. Desplegado en `PermaLocke prueba`.
+- La run de prueba tiene los logros 1-6 cobrados a mano (eventos AchievementUnlocked de 22/09 a 25/09). `Probe --run` con `PERMALOCKE_ROOT` enseñó OTRA run (50 eventos): no respeta esa variable; la real tiene 1562 eventos.
+
 ## 2026-09-25 — Pokémon que te sigue (§181, integrado)
 - No viene en el mod de gen 8-9: es otro mod del mismo autor, «Pokemon Follower Mod (Includes SM)», gamebanana.com/mods/694400, CC BY-NC-ND. Plugin 3GX `Gen7FieldFollower.3gx` en `sdmc/luma/plugins/00040000001B5100/`, zip `ultra_moon_1e982.zip` (sha256 `827aa023…0485`). Menú con Start+Select.
 - Probado en copia aislada `%TEMP%plf` (emulador + partida copiados; `load` copiado entero): el Pokémon de cabeza (Dragonite) sale detrás del jugador; `Probe --equipo` lee las dos estructuras del equipo (espejo en `0x330128E4` como siempre); `FieldZoneReader` real da Ciudad Malíe con 3 registros, también andando. Partida real sin tocar.
