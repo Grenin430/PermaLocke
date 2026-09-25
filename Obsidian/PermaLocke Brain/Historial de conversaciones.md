@@ -11,6 +11,7 @@ La última sesión va arriba. Antes del 2026-09-23 solo hay un resumen por fecha
 - `GhostService` (envía al momento, lee cada 10 s solo con Azahar abierto, cola), `GhostWindow` (aviso arriba a la izquierda + cruce derecha→izquierda), `GhostArt`, `DeathWindow.AddGhost`, `ToastKind.Ghost`, ajuste `Ghosts` (vive en `DeathCeremony.Ghosts` para no crear ciclo con `EmulatorLauncher`→`AppSettings`). Ensayo `--ensayar-fantasma`.
 - Tabla `tools/supabase/12-fantasmas.sql`: **la ejecuta el usuario en Supabase**; sin ella no viaja nada (fallo registrado una vez).
 - Visto en capturas de los ensayos. La trama de ajedrez se descartó (tablero a 8 px/celda). Sin probar entre dos PCs.
+- El usuario ejecutó `12-fantasmas.sql`: comprobado con la clave pública (401 «permission denied for table fantasmas», frente a 404 de una tabla inexistente). Carpeta de amigos rehecha con los fantasmas; la anterior queda como `(anterior)`.
 
 ## 2026-09-25 — la 7ª prueba no salía en LOGROS (§182)
 - Reporte: superada la 7ª (Chris, Electrostal Z 810) y no sale. El jugador sospechó del seguidor: no era. PKHeX sobre copia del save: 810 presente; save guardado 23:31:29, leído 23:31:40.
