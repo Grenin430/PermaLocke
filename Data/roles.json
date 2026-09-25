@@ -10,6 +10,7 @@
 
   "comentarioClases": "clasesImportantes son las CLASES DE ENTRENADOR que cuentan como combate importante, por id. Se sacaron mirando el cartucho, no de memoria: se listaron los 700 entrenadores con su clase, su nombre y el tamaño de su equipo. Ojo con esto, que es la trampa: la clase por NOMBRE no vale, porque Giovanni y los reclutas del Team Rainbow Rocket se llaman igual; lo que los separa es el id -206 el jefe, 208 y 209 la tropa-. Quitar o añadir una clase aquí cambia quién lleva Pokémon extra sin tocar código. Y ya no se revisa a mano: `RomTool clases <ruta al a/1/0/6>` lista las que faltan, y sobre todo cruza los NOMBRES de los entrenadores contra los de las clases que sí están. Esa es la regla que caza a esta familia entera, porque el fallo se repitió tres veces con la misma forma -un personaje con nombre repartido en VARIAS clases, y la revisión por nombres pilla una y se deja la otra-: Francine sale en la 79, que estaba, y en la 78, que no; Fabio en la 71 y en la 72; Tilo en la 101, la 102 y la 221. El jugador se topó con Francine a nivel 46 con Emboar y Stunfisk, sin mega y sin Pokémon extra, y de ahí salieron las tres. Queda fuera la clase 30, nueve entrenadores de los que ocho tienen el nombre sin traducir y uno es Tilo: puede ser el rival de las primeras escenas o puede ser relleno, y sin medirlo no se mete.",
 
+  "comentarioSina": "La 85 -Sina, la companera de Dexio, que desafia nada mas llegar a Akala en Ciudad Kantai- se anadio el 2026-09-25 A PETICION DEL JUGADOR, como la 192-193: decision de diseno, no un fallo. Dexio (84) ya estaba. La clase tiene dos entrenadores: Sina en Kantai y su otra aparicion (#411). Vale al REGENERAR E INSTALAR el mundo: es lo que le da el Pokemon extra y, pasado el corte, la mega.",
   "comentarioUnidadUltra": "La 192 y la 193 -«Unidad Ultra», Miria y Darius- se anadieron el 2026-09-10 A PETICION DEL JUGADOR, y son el primer caso en que esta lista crece por una decision de diseno y no por tapar un fallo. Conviene que quede dicho, porque su firma medida es la de RELLENO y no la de un jefe: cuatro entrenadores cada clase y UN Pokemon como mucho -`RomTool clases`-, que es justo lo contrario del criterio -pocas apariciones, equipos grandes- con el que se cazaron las demas. El jugador se topo con Miria: entrenador 498, un Terapagos a nivel 56, que en la capa base es un Poipole a nivel 47; nada le faltaba, simplemente ese combate es de uno en el cartucho. Van las DOS clases y no solo la de Miria porque son el mismo grupo de la historia, y dejar a uno como jefe y al otro como relleno no se sostiene. OJO con lo que cambia en el juego: eran combates de UN Pokemon, asi que pasan a dos -tres con el rol EXPERTO- y les entra megapiedra. Y no vale de nada hasta que se REGENERE Y REINSTALE el mod: esto decide como se genera la proxima vez, no lo que ya esta instalado.",
 
   "clasesImportantes": [
@@ -22,7 +23,7 @@
     165,
     198, 199, 200, 201, 202, 206,
     222,
-    83, 84, 86, 101, 102, 79, 81, 143,
+    83, 84, 85, 86, 101, 102, 79, 81, 143,
     78, 72, 221,
     192, 193
   ],
