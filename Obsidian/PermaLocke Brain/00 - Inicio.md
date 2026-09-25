@@ -1,6 +1,6 @@
 ---
 tipo: indice
-revisado: 2026-09-24
+revisado: 2026-09-25
 ---
 # PermaLocke Brain — memoria de trabajo de Claude
 

@@ -1,7 +1,7 @@
 ---
 tipo: mapa-codigo
 proyecto: PermaLocke.Rules
-generado: 2026-09-24
+generado: 2026-09-25
 ---
 # PermaLocke.Rules — mapa de ficheros
 

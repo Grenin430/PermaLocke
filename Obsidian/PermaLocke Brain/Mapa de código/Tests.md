@@ -1,6 +1,6 @@
 ---
 tipo: mapa-codigo
-generado: 2026-09-24
+generado: 2026-09-25
 ---
 # Pruebas — ficheros y número de [Fact]/[Theory]
 
@@ -24,13 +24,13 @@ Contado con grep, NO ejecutado. Detalle en [[Pruebas]].
 - `AbilityDrawTests.cs` (4)
 - `AchievementServiceTests.cs` (13)
 - `CreditServiceTests.cs` (12)
-- `EvSpreadTests.cs` (10)
+- `EvSpreadTests.cs` (11)
 - `EvTrainingServiceTests.cs` (7)
 - `EventChainTests.cs` (4)
 - `ExpansionFolderTests.cs` (4)
 - `FormDrawTests.cs` (3)
 - `GachaServiceTests.cs` (17)
-- `GiftServiceTests.cs` (10)
+- `GiftServiceTests.cs` (11)
 - `IslandMapTests.cs` (4)
 - `JsonRewardCatalogTests.cs` (7)
 - `JsonRoleCatalogTests.cs` (6)
@@ -51,7 +51,7 @@ Contado con grep, NO ejecutado. Detalle en [[Pruebas]].
 - `RouletteServiceTests.cs` (25)
 - `RunBackupTests.cs` (7)
 - `RunServiceTests.cs` (11)
-- `ShopServiceTests.cs` (5)
+- `ShopServiceTests.cs` (6)
 - `SnapshotAuditTests.cs` (12)
 - `SqliteEventStoreTests.cs` (3)
 - `TradedAwayReconcilerTests.cs` (6)

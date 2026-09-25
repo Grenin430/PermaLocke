@@ -1,7 +1,7 @@
 ---
 tipo: mapa-codigo
 proyecto: PermaLocke.Core
-generado: 2026-09-24
+generado: 2026-09-25
 ---
 # PermaLocke.Core — mapa de ficheros
 

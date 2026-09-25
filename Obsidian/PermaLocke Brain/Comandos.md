@@ -76,3 +76,12 @@ sh "Obsidian/PermaLocke Brain/_herramientas/regenerar-mapa.sh"   # ✔ desde la 
 ```
 - Reescribe `Mapa de código/*.md` y usa `_herramientas/mapa.awk`: por cada fichero, los tipos más la primera frase del `<summary>`.
 - Hacerlo tras añadir o borrar ficheros. Es barato: solo lee con grep y awk.
+
+## Añadidos 2026-09-25
+```bash
+powershell -ExecutionPolicy Bypass -File tools/desplegar.ps1 -Prueba   # ✔ sin Bypass lo bloquea la política de scripts
+dotnet run --project tools/PermaLocke.RomTool -- iconos-nombres        # ✔ CSV especie;nombre;icono en %TEMP% para revisar sprites
+dotnet run --project tools/PermaLocke.RomTool -- megas                 # ✔ ahora imprime el id de cada megapiedra
+dotnet run --project tools/PermaLocke.RomTool -- clases "<mod>/romfs/a/1/0/6"   # ✔ clase de un entrenador por nombre (Sina = 85)
+```
+- Captura de la app sin que tape otra ventana: `PrintWindow` sobre el `MainWindowHandle` (PowerShell con Add-Type), `--sin-juego --seccion "X" --tamano grande`; clics con `SetCursorPos` + `mouse_event`.

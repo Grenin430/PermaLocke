@@ -42,3 +42,9 @@ Errores ya cometidos en este proyecto, con el § donde se cuentan ([[Índice de 
 - Un log filtrado no es un log vacío: Azahar va con `RPC_Server:Error` (§95).
 - El binario instalado no siempre es el que se abre (`Emulator/` frente a `Nuevo_azahar/`, §95).
 - Dos PermaLocke a la vez escriben dos veces en el mismo juego. Ahora hay un mutex (§159).
+
+## Añadidas 2026-09-25
+- **No guardar ficheros del repo con `Get-Content | Set-Content` de PowerShell 5.1**: lee como ANSI y rompió todas las tildes de `MainWindow.xaml` (se restauró con git). Usar sed/Edit.
+- `perl -0pi -e 's|…|…|'` con `|` de delimitador y `||` o `\|\|` en el patrón o la sustitución: metió el bloque al principio de `Program.cs`. Para eso, Edit.
+- Escalado de Windows: una celda pixel que se redondea hacia arriba hace el texto más ancho que el diseño (125 % → +20 %). Siempre `Floor`.
+- «No está en INFORMACIÓN» no era un fallo del generador: solo listaba lo que cambia el fixer. Preguntar qué se espera ver antes de dar una lista por completa.

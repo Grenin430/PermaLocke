@@ -1,7 +1,7 @@
 ---
 tipo: mapa-codigo
 proyecto: PermaLocke.App
-generado: 2026-09-24
+generado: 2026-09-25
 ---
 # PermaLocke.App — mapa de ficheros
 
@@ -72,9 +72,12 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `ViewModels/ChangeRoleViewModel.cs` — **ChangeRoleViewModel** — Moves a run from one role to another, on purpose and on the record. 
 - `ViewModels/CreateRunViewModel.cs` — **CreateRunViewModel, RoleChoiceViewModel** — Run creation. Detects the vanilla ROM in ROM/ and refuses to continue unless it is a decrypted Ultra Moon dump, because everything downstream assumes exactly that. 
 - `ViewModels/EvTrainingViewModel.cs` — **EvRowViewModel, EvTrainingViewModel** — One stat on the training bench: what it is now, the EVs being given to it, and what it would become. 
+- `ViewModels/Fleeting.cs` — **Fleeting** — Makes a screen's messages go away on their own: five seconds on screen, then empty (2026-09-24, at the player's request: «el mensaje que sale al cambiar un ataque se queda ahí»). 
 - `ViewModels/GachaViewModel.cs` — **PortalViewModel, GachaHistoryViewModel, PoolStageViewModel, PoolEntryViewModel, OddsSlice, BannerViewModel, GrantRollViewModel, GrantViewModel, GachaViewModel** — One portal of the ultra-space animation: a tier, its colour and whether it is the one that just opened. 
 - `ViewModels/GiftInboxViewModel.cs` — **GiftRowViewModel, GiftInboxViewModel** — One gift as the inbox draws it.
+- `ViewModels/GroupSectionViewModel.cs` — **GroupSectionViewModel** — A sidebar entry that holds several sections as tabs, so the sidebar stays short. 
 - `ViewModels/HomeViewModel.cs` — **EventRow, TeamRow, IslandRow, FallenRow, StageMark, HomeViewModel** — One stop of the island tour on HOME's track: a trial, the league or the rematch.
+- `ViewModels/InformationViewModel.cs` — **EvolutionCard, EvolutionGroup, ShopItemCard, GameShop, InformationViewModel, InformationPageViewModel** — One changed evolution, ready to draw: who, into whom, and how now.
 - `ViewModels/LauncherViewModel.cs` — **FriendItem, ActivityItem, ActivityDay, LauncherViewModel** — A friend in the list, ready to draw.
 - `ViewModels/LoginViewModel.cs` — **LoginViewModel** — The door before the application: ENTRAR CON DISCORD, and in only with an account on the tournament's whitelist. 
 - `ViewModels/MainViewModel.cs` — **MainViewModel** — Shell view model: owns the sidebar, the current section and the run summary strip.
@@ -113,6 +116,7 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Views/EvTrainingView.xaml.cs` — **EvTrainingView** — 
 - `Views/GachaView.xaml.cs` — **GachaView** — The gacha screen. The only code here feeds the capsule machine. 
 - `Views/HomeView.xaml.cs` — **HomeView** — 
+- `Views/InformationView.xaml.cs` — **InformationView** — 
 - `Views/KillcamPlayer.cs` — **KillcamPlayer** — Plays a killcam: the frames at their own times, at real speed or slowed down, looping, with a mark on the timeline where the bar reached zero. 
 - `Views/LauncherView.xaml.cs` — **LauncherView** — 
 - `Views/LoginWindow.xaml.cs` — **LoginWindow** — 
