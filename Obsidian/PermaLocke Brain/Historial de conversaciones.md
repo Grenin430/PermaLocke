@@ -12,6 +12,7 @@ La última sesión va arriba. Antes del 2026-09-23 solo hay un resumen por fecha
 - **Trampas:** Azahar ignora `plugin_loader=true` si `plugin_loaderdefault=true` (hay que poner `default=false`, como con el RPC). La ruta del scratchpad pasa de 260 caracteres con la ruta de la partida: el emulador no la abre y la copia falla sin avisar; usar rutas cortas.
 - El jugador lo probó en la copia (gen 8-9 de cabeza, hierba, combates): sin fallos. Copia borrada con su permiso.
 - Integrado: `AzaharInstallation.SetFollower` (+3 pruebas), llamado en `EmulatorLauncher.Launch`; ajuste `Follower` en `AppSettingsData` y casilla en CONFIGURACIÓN; plugin en `Emulator/follower/` con `LEEME.txt` (créditos; solo el LEEME se versiona); `publicar.ps1` lo exige.
+- Commit `afa03fa`. Desplegado en `PermaLocke prueba`: exe nuevo y `Emulatorollower` copiado (sha256 `0345866b…`). Se instala en su emulador la primera vez que pulse JUGAR. Carpeta de amigos sin actualizar.
 
 ## 2026-09-25 — iconos variocolor (§180)
 - Pedido: sprites variocolor. El cartucho no los tiene. Por indicación del usuario, colores sacados de los renders de Showdown (`dex`/`dex-shiny`, y `home`/`home-shiny` si faltan o no cambian): comparando normal y variocolor píxel a píxel se sabe en qué se convierte cada color, y se aplica al icono de la ROM.
