@@ -83,6 +83,12 @@ public sealed class EvSpread : IEquatable<EvSpread>
     public bool IsLegal => Total <= TotalMax;
 
     /// <summary>
+    /// The most this stat can hold without going past 510: 252, or what is left of the budget when that is less.
+    /// With two stats at 252, a third gets 6 (2026-09-25: MÁX used to fill it to 252 and leave the spread over).
+    /// </summary>
+    public int RoomFor(int index) => Math.Clamp(_values[index] + Remaining, 0, PerStatMax);
+
+    /// <summary>
     /// The same spread with one stat changed, clamped to 0..252 and nothing else.
     /// </summary>
     /// <remarks>

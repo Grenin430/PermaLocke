@@ -15,7 +15,7 @@ namespace PermaLocke.App.Views.Pixel;
 public sealed class PixelWindow : ContentControl
 {
     /// <summary>The band's height in units: twelve cells at the usual three pixels.</summary>
-    public const double BandHeight = 36;
+    public const double BandHeight = 32;
 
     public static readonly DependencyProperty TitleProperty = DependencyProperty.Register(
         nameof(Title), typeof(string), typeof(PixelWindow), new PropertyMetadata(string.Empty));

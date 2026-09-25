@@ -46,7 +46,7 @@
          Un bloque de pantalla como una ventana del menú de un juego: la placa, la banda del título con su icono y su
          nombre, lo que se quiera a la derecha de la banda, y el contenido debajo. -->
     <Style TargetType="pixel:PixelWindow">
-        <Setter Property="Padding" Value="18,12,22,20" />
+        <Setter Property="Padding" Value="14,10,18,15" />
         <Setter Property="Focusable" Value="False" />
         <Setter Property="Template">
             <Setter.Value>
@@ -84,7 +84,7 @@
          dura, y pulsar es hundirse tres unidades hacia ella, sin escalas suaves. -->
     <Style x:Key="PxButton" TargetType="Button">
         <Setter Property="Cursor" Value="Hand" />
-        <Setter Property="Padding" Value="16,8,22,13" />
+        <Setter Property="Padding" Value="14,6,19,11" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
@@ -249,7 +249,7 @@
             <Setter.Value>
                 <ControlTemplate TargetType="ListBoxItem">
                     <StackPanel>
-                    <Grid x:Name="Root" Background="Transparent" Height="36" Margin="6,1,8,1">
+                    <Grid x:Name="Root" Background="Transparent" Height="31" Margin="6,1,8,1">
                         <views:PixelPanel x:Name="Plate" Fill="{StaticResource PxAccentDeep}" HasShadow="False"
                                           Visibility="Collapsed" />
                         <Grid Margin="5,0,6,0">

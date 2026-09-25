@@ -141,7 +141,7 @@
 
         <Grid Grid.Row="1" Margin="6,0,6,6">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="236" />
+            <ColumnDefinition Width="226" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
@@ -303,7 +303,7 @@
                            Visibility="{Binding Sky.IsKnown, Converter={StaticResource BoolToVisibility}}" />
 
         <!-- =============================================== CONTENT -->
-        <Grid Grid.Column="1" Margin="22,20,22,20">
+        <Grid Grid.Column="1" Margin="16,14,16,14">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" MinHeight="16" />

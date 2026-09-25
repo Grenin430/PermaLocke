@@ -39,7 +39,13 @@ public sealed partial class EvRowViewModel : ObservableObject
 
     public int Index { get; }
 
+    /// <summary>The colour of this stat in the summary screen of the games: PS red, Ataque orange, and so on.</summary>
+    public System.Windows.Media.Color Colour => Views.EvHexagon.StatColours[Index];
+
     public string Name { get; }
+
+    /// <summary>The short name the graph uses beside each corner.</summary>
+    public string Short => Index switch { 0 => "PS", 1 => "ATQ", 2 => "DEF", 3 => "AT.E", 4 => "DEF.E", _ => "VEL" };
 
     public int Iv { get; }
 
@@ -697,7 +703,7 @@ public sealed partial class EvTrainingViewModel : SectionViewModel
     {
         if (row is not null && CanEdit)
         {
-            Apply(_evs.With(row.Index, row.Ev + Step));
+            Apply(_evs.With(row.Index, Math.Min(row.Ev + Step, Math.Max(row.Ev, _evs.RoomFor(row.Index)))));
         }
     }
 
@@ -711,15 +717,15 @@ public sealed partial class EvTrainingViewModel : SectionViewModel
     }
 
     /// <summary>
-    /// Fills the stat to 252, even if that puts the reparto over 510: moving 252 points from one stat to another is
-    /// two edits, and refusing the first until the second has happened would force an order nobody would guess.
+    /// Fills the stat to 252, or to what is left of the 510 when that is less (2026-09-25, at the player's request):
+    /// with two stats full, the third gets 6 instead of pushing the reparto over.
     /// </summary>
     [RelayCommand]
     private void Max(EvRowViewModel? row)
     {
         if (row is not null && CanEdit)
         {
-            Apply(_evs.With(row.Index, EvSpread.PerStatMax));
+            Apply(_evs.With(row.Index, _evs.RoomFor(row.Index)));
         }
     }
 

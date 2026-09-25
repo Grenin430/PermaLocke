@@ -103,7 +103,7 @@
 
         <!-- ============================================ UNO DE LOS CUATRO QUE SABE -->
         <Style x:Key="KnownStyle" TargetType="ListBoxItem">
-            <Setter Property="Margin" Value="0,0,10,10" />
+            <Setter Property="Margin" Value="0,0,8,8" />
             <Setter Property="Padding" Value="0" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -111,23 +111,14 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ListBoxItem">
-                        <Grid Background="Transparent" MinHeight="118">
-                            <views:PixelPanel x:Name="Plate">
-                                <views:PixelPanel.Style>
-                                    <Style TargetType="views:PixelPanel">
-                                        <Setter Property="Fill" Value="{Binding TypeColour}" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsEmpty}" Value="True">
-                                                <Setter Property="Fill" Value="{StaticResource PxWell}" />
-                                                <Setter Property="IsSunken" Value="True" />
-                                                <Setter Property="HasShadow" Value="False" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </views:PixelPanel.Style>
-                            </views:PixelPanel>
-                            <Rectangle x:Name="Hover" Fill="#1EFFFFFF" Margin="3,3,9,9" Visibility="Collapsed" />
-                            <ContentPresenter Margin="14,10,18,15" />
+                        <!-- Rehecho el 2026-09-25, en la línea de ENTRENAR EV: placa oscura con la franja del color del tipo a
+                             la izquierda, en vez de la tarjeta entera pintada del tipo. -->
+                        <Grid Background="Transparent" MinHeight="92">
+                            <views:PixelPanel x:Name="Plate" Fill="{StaticResource PxFaceHigh}" />
+                            <Rectangle x:Name="Strip" Width="6" HorizontalAlignment="Left" Margin="7,7,0,13" Fill="{Binding TypeBrush}"
+                                       SnapsToDevicePixels="True" />
+                            <Rectangle x:Name="Hover" Fill="#14FFFFFF" Margin="3,3,9,9" Visibility="Collapsed" />
+                            <ContentPresenter Margin="22,9,16,13" />
                             <!-- La que hace mega (Ascenso Draco en Rayquaza): borde multicolor, en franjas duras como el pixel art. -->
                             <Border x:Name="Mega" BorderThickness="4" Margin="-2" Visibility="Collapsed" SnapsToDevicePixels="True">
                                 <Border.BorderBrush>
@@ -144,6 +135,12 @@
                             <views:PixelCursor x:Name="Cursor" Margin="-4" Visibility="Collapsed" Colour="#FFFFF08A" />
                         </Grid>
                         <ControlTemplate.Triggers>
+                            <DataTrigger Binding="{Binding IsEmpty}" Value="True">
+                                <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxWell}" />
+                                <Setter TargetName="Plate" Property="IsSunken" Value="True" />
+                                <Setter TargetName="Plate" Property="HasShadow" Value="False" />
+                                <Setter TargetName="Strip" Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
                             <DataTrigger Binding="{Binding IsMega}" Value="True">
                                 <Setter TargetName="Mega" Property="Visibility" Value="Visible" />
                             </DataTrigger>
@@ -151,6 +148,7 @@
                                 <Setter TargetName="Hover" Property="Visibility" Value="Visible" />
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxAccentDeep}" />
                                 <Setter TargetName="Cursor" Property="Visibility" Value="Visible" />
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -161,35 +159,30 @@
 
         <DataTemplate x:Key="KnownTemplate">
             <Grid>
-                <!-- Uno que sabe: el nombre, la categoría con el tipo, y las tres cifras, en blanco sobre su tipo. -->
+                <!-- Uno que sabe: el nombre, su tipo y categoría, y las tres cifras. -->
                 <StackPanel Visibility="{Binding IsEmpty, Converter={StaticResource InverseBoolToVisibility}}">
-                    <pixel:PixelText Text="{Binding Name}" Style="{StaticResource OnType}" Trim="True" />
+                    <pixel:PixelText Text="{Binding Name}" Scale="2" Tight="True" Trim="True" Colour="{StaticResource PxText}"
+                                     Shadow="{StaticResource PxShadow}" />
 
-                    <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                        <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource CategoryBox}" VerticalAlignment="Center" />
-                        <pixel:PixelText Text="{Binding TypeName}" Style="{StaticResource OnType}" Margin="10,0,0,0" Trim="True"
-                                         VerticalAlignment="Center" />
+                    <StackPanel Orientation="Horizontal" Margin="0,7,0,0">
+                        <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource TypePlate}" VerticalAlignment="Center" />
+                        <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource CategoryBox}" VerticalAlignment="Center"
+                                          Margin="6,0,0,0" />
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                        <StackPanel Margin="0,0,14,0">
-                            <pixel:PixelText Text="POT." Style="{StaticResource OnType}" Colour="#FFE8E0F8" />
-                            <pixel:PixelText Text="{Binding Power}" Style="{StaticResource OnType}" Margin="0,5,0,0" />
-                        </StackPanel>
-                        <StackPanel Margin="0,0,14,0">
-                            <pixel:PixelText Text="PREC." Style="{StaticResource OnType}" Colour="#FFE8E0F8" />
-                            <pixel:PixelText Text="{Binding Accuracy}" Style="{StaticResource OnType}" Margin="0,5,0,0" />
-                        </StackPanel>
-                        <StackPanel>
-                            <pixel:PixelText Text="PP" Style="{StaticResource OnType}" Colour="#FFE8E0F8" />
-                            <pixel:PixelText Text="{Binding PP}" Style="{StaticResource OnType}" Margin="0,5,0,0" />
-                        </StackPanel>
+                        <pixel:PixelText Text="POT" Scale="2" Tight="True" Colour="{StaticResource PxTextFaint}" />
+                        <pixel:PixelText Text="{Binding Power}" Scale="2" Tight="True" Margin="5,0,12,0" Colour="{StaticResource PxText}" />
+                        <pixel:PixelText Text="PREC" Scale="2" Tight="True" Colour="{StaticResource PxTextFaint}" />
+                        <pixel:PixelText Text="{Binding Accuracy}" Scale="2" Tight="True" Margin="5,0,12,0" Colour="{StaticResource PxText}" />
+                        <pixel:PixelText Text="PP" Scale="2" Tight="True" Colour="{StaticResource PxTextFaint}" />
+                        <pixel:PixelText Text="{Binding PP}" Scale="2" Tight="True" Margin="5,0,0,0" Colour="{StaticResource PxText}" />
                     </StackPanel>
                 </StackPanel>
 
                 <!-- Un hueco libre: hundido, y dice que ahí aprenderá. -->
                 <StackPanel VerticalAlignment="Center" Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVisibility}}">
-                    <pixel:PixelText Text="- libre -" Scale="3" Tight="True" Colour="{StaticResource PxTextFaint}" />
+                    <pixel:PixelText Text="- libre -" Scale="2" Tight="True" Colour="{StaticResource PxTextFaint}" />
                     <pixel:PixelText Text="aquí aprenderá" Scale="2" Tight="True" Colour="{StaticResource PxTextFaint}" Margin="0,6,0,0" />
                 </StackPanel>
             </Grid>
@@ -383,9 +376,9 @@
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
 
-                                <Grid Grid.Column="0" Grid.RowSpan="2" Width="150" Height="150" VerticalAlignment="Top">
+                                <Grid Grid.Column="0" Grid.RowSpan="2" Width="112" Height="112" VerticalAlignment="Top">
                                     <views:PixelPanel Fill="{StaticResource PxWell}" IsSunken="True" HasShadow="False" />
-                                    <pixel:PixelSprite Source="{Binding SelectedSprite}" Scale="4" TrimEmpty="True" Bob="True"
+                                    <pixel:PixelSprite Source="{Binding SelectedSprite}" Scale="3" TrimEmpty="True" Bob="True"
                                                        Outline="{StaticResource PxShadow}" Stone="{Binding IsFallen}"
                                                        HorizontalAlignment="Center" VerticalAlignment="Center" />
                                     <pixel:PixelIcon Icon="IconStar" Scale="2" Bob="True" HorizontalAlignment="Right"
@@ -438,9 +431,9 @@
 
                                 <!-- Sus seis estadísticas, para saber si le conviene un físico o un especial: al lado del
                                      nombre si cabe, y debajo en las ventanas estrechas. -->
-                                <StackPanel VerticalAlignment="Center" Width="252" HorizontalAlignment="Left"
-                                            Grid.Column="{Binding ActualWidth, ElementName=Ficha, Converter={StaticResource WidthSwitch}, ConverterParameter=720;2;1}"
-                                            Grid.Row="{Binding ActualWidth, ElementName=Ficha, Converter={StaticResource WidthSwitch}, ConverterParameter=720;0;1}"
+                                <StackPanel VerticalAlignment="Center" Width="276" HorizontalAlignment="Left"
+                                            Grid.Column="{Binding ActualWidth, ElementName=Ficha, Converter={StaticResource WidthSwitch}, ConverterParameter=560;2;1}"
+                                            Grid.Row="{Binding ActualWidth, ElementName=Ficha, Converter={StaticResource WidthSwitch}, ConverterParameter=560;0;1}"
                                             Margin="0,6,0,0">
                                     <pixel:PixelText Text="ESTADÍSTICAS" Style="{StaticResource Label}" Margin="2,0,0,7" />
                                     <ItemsControl ItemsSource="{Binding Stats}" ItemTemplate="{StaticResource StatCell}">
@@ -456,7 +449,7 @@
                     </pixel:PixelWindow>
 
                     <!-- ====================================== LOS CUATRO QUE SABE -->
-                    <pixel:PixelWindow Title="SABE AHORA · ELIGE CUÁL OLVIDA" Icon="IconSwords" Margin="0,12,0,0"
+                    <pixel:PixelWindow Title="SABE AHORA · ELIGE CUÁL OLVIDA" Icon="IconSwords" Margin="0,10,0,0"
                                        Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibility}}">
                         <StackPanel>
                             <ListBox ItemsSource="{Binding Known}" SelectedItem="{Binding SelectedKnown}"
@@ -491,7 +484,7 @@
                     </pixel:PixelWindow>
 
                     <!-- ====================================== LO QUE PUEDE RECORDAR, TODO SEGUIDO -->
-                    <pixel:PixelWindow Title="PUEDE RECORDAR" Icon="IconRefresh" Margin="0,12,0,0"
+                    <pixel:PixelWindow Title="PUEDE RECORDAR" Icon="IconRefresh" Margin="0,10,0,0"
                                        Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibility}}">
                         <StackPanel>
                             <pixel:PixelText Text="{Binding SourceNote}" Scale="2" Wrap="True" Colour="{StaticResource PxTextDim}"

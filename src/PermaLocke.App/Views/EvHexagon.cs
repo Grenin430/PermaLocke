@@ -48,6 +48,17 @@ public sealed class EvHexagon : FrameworkElement
 
     private static readonly Color Before = ToastPixels.Rgb(0xEA, 0xE7, 0xF2);
 
+    /// <summary>
+    /// The colour of each stat in HP/Atk/Def/SpA/SpD/Spe order, the ones the games use in their summary screen. The shape
+    /// takes the colour of the corner it leans to, and the rows of the screen use the same, so a stat reads the same
+    /// everywhere (2026-09-25: the one-colour hexagon looked poor).
+    /// </summary>
+    public static readonly Color[] StatColours =
+    [
+        ToastPixels.Rgb(0xFF, 0x5F, 0x5F), ToastPixels.Rgb(0xF5, 0xA2, 0x5C), ToastPixels.Rgb(0xF2, 0xD4, 0x4E),
+        ToastPixels.Rgb(0x6F, 0x9C, 0xF5), ToastPixels.Rgb(0x7F, 0xD0, 0x6A), ToastPixels.Rgb(0xF5, 0x7F, 0xB0)
+    ];
+
     /// <summary>The hexagon's own plate, under the shape. The bag screen (§143) paints it dark teal.</summary>
     public static readonly DependencyProperty PlateProperty = DependencyProperty.Register(
         nameof(Plate), typeof(Color), typeof(EvHexagon),
@@ -149,16 +160,45 @@ public sealed class EvHexagon : FrameworkElement
             Line(canvas, middle, Cell(corner), Guide);
         }
 
-        // Lo que hay en pantalla: relleno, con el borde algo más claro.
+        // Cada pico del color de su estadística, en el hueco de la placa, para que se sepa de quién es aunque esté a 0.
+        var outer = Shape(centre, radius - 1, [1, 1, 1, 1, 1, 1]);
+
+        for (var index = 0; index < Corners.Length; index++)
+        {
+            Dot(canvas, Cell(outer[index]), ToastPixels.Mix(StatColours[Corners[index]], Plate, 0.35));
+        }
+
+        // Lo que hay en pantalla: cada celda del color del pico hacia el que se inclina, algo más oscura hacia el
+        // centro, y el borde más claro. Pasado de 510, todo del color de «no se puede guardar».
         var colour = IsOver ? OverFill : Fill;
 
         if (Values is { Count: 6 } values && values.Any(value => value > 0))
         {
             var shape = Shape(centre, radius - 1, Shares(values));
             var filled = Mask(columns, rows, shape);
+            var edge = Edge(filled);
 
-            Paint(canvas, filled, colour);
-            Paint(canvas, Edge(filled), ToastPixels.Mix(colour, Colors.White, 0.35));
+            for (var y = 0; y < rows; y++)
+            {
+                for (var x = 0; x < columns; x++)
+                {
+                    if (!filled[x, y])
+                    {
+                        continue;
+                    }
+
+                    var here = IsOver ? OverFill : Blend(centre, radius, x + 0.5, y + 0.5);
+                    canvas.Put(x, y, edge[x, y] ? ToastPixels.Mix(here, Colors.White, 0.4) : here);
+                }
+            }
+
+            for (var index = 0; index < Corners.Length; index++)
+            {
+                if (values[Corners[index]] > 0)
+                {
+                    Dot(canvas, Cell(shape[index]), IsOver ? OverFill : ToastPixels.Mix(StatColours[Corners[index]], Colors.White, 0.5));
+                }
+            }
 
             // Algo que no es cero se ve, aunque la forma sea tan fina que no cubra el centro de ninguna celda.
             for (var index = 0; index < Corners.Length; index++)
@@ -181,6 +221,31 @@ public sealed class EvHexagon : FrameworkElement
         Paint(canvas, Edge(plate), ToastPixels.Ink);
 
         ToastPixels.Draw(drawingContext, this, canvas);
+    }
+
+    /// <summary>The colour of a cell: between the two corners it sits between, and darker nearer the middle.</summary>
+    private Color Blend(Point centre, double radius, double x, double y)
+    {
+        var degrees = Math.Atan2(y - centre.Y, x - centre.X) * 180 / Math.PI;
+        var along = (degrees + 90 + 360) % 360;
+        var sector = (int)(along / 60) % Corners.Length;
+        var t = (along - (sector * 60)) / 60;
+        var colour = ToastPixels.Mix(StatColours[Corners[sector]], StatColours[Corners[(sector + 1) % Corners.Length]], t);
+        var distance = Math.Sqrt(Math.Pow(x - centre.X, 2) + Math.Pow(y - centre.Y, 2)) / radius;
+
+        return ToastPixels.Mix(colour, Plate, Math.Clamp((1 - distance) * 0.45, 0, 0.45));
+    }
+
+    /// <summary>A small square, three cells across, for a corner.</summary>
+    private static void Dot(ToastPixels.Canvas canvas, (int X, int Y) at, Color colour)
+    {
+        for (var dy = -1; dy <= 1; dy++)
+        {
+            for (var dx = -1; dx <= 1; dx++)
+            {
+                canvas.Put(at.X + dx, at.Y + dy, colour);
+            }
+        }
     }
 
     private static double[] Shares(IReadOnlyList<int> values) =>

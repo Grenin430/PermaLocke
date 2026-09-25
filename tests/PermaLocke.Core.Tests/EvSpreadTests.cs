@@ -13,6 +13,17 @@ namespace PermaLocke.Core.Tests;
 /// </remarks>
 public class EvSpreadTests
 {
+    /// <summary>MÁX with two stats full gives the third what is left of 510, not 252.</summary>
+    [Fact]
+    public void Room_is_what_is_left_of_the_budget()
+    {
+        var spread = EvSpread.Of([252, 252, 0, 0, 0, 0]);
+
+        Assert.Equal(6, spread.RoomFor(2));
+        Assert.Equal(252, EvSpread.Of([0, 0, 0, 0, 0, 0]).RoomFor(0));
+        Assert.Equal(252, spread.RoomFor(0));
+    }
+
     [Fact]
     public void An_empty_spread_has_the_whole_budget_left()
     {
