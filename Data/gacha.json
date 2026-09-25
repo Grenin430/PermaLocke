@@ -32,7 +32,7 @@
       "minLevel": 1,
       "maxLevel": 1,
       "perfectIvs": 0,
-      "shinyChance": 0.01
+      "shinyChance": 0.10
     },
     {
       "id": "tier2",
@@ -42,7 +42,7 @@
       "minLevel": 1,
       "maxLevel": 1,
       "perfectIvs": 0,
-      "shinyChance": 0.01
+      "shinyChance": 0.10
     },
     {
       "id": "tier3",
@@ -52,7 +52,7 @@
       "minLevel": 1,
       "maxLevel": 1,
       "perfectIvs": 0,
-      "shinyChance": 0.02
+      "shinyChance": 0.10
     },
     {
       "id": "tier4",
@@ -62,7 +62,7 @@
       "minLevel": 1,
       "maxLevel": 1,
       "perfectIvs": 0,
-      "shinyChance": 0.03
+      "shinyChance": 0.10
     },
     {
       "id": "tier5",
@@ -73,7 +73,7 @@
       "minLevel": 1,
       "maxLevel": 1,
       "perfectIvs": 0,
-      "shinyChance": 0.05
+      "shinyChance": 0.10
     }
   ],
 
