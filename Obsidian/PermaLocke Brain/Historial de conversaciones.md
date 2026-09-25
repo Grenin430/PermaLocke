@@ -8,7 +8,7 @@ La última sesión va arriba. Antes del 2026-09-23 solo hay un resumen por fecha
 
 ## 2026-09-25 — la 7ª prueba no salía en LOGROS (§182)
 - Reporte: superada la 7ª (Chris, Electrostal Z 810) y no sale. El jugador sospechó del seguidor: no era. PKHeX sobre copia del save: 810 presente; save guardado 23:31:29, leído 23:31:40.
-- Causa: los logros `item` solo miraban el fichero (`SaveRecordReader`); `TrialZoneService` mira la mochila viva. Arreglo: `AchievementService` recibe `IItemDelivery?` (opcional) y une fichero + mochila viva. +2 pruebas. 1501 pruebas. Desplegado en `PermaLocke prueba`.
+- Causa: los logros `item` solo miraban el fichero (`SaveRecordReader`); `TrialZoneService` mira la mochila viva. Arreglo: `AchievementService` recibe `IItemDelivery?` (opcional) y une fichero + mochila viva. +2 pruebas. 1501 pruebas. Desplegado en `PermaLocke prueba`. Carpeta de amigos rehecha con el arreglo; la anterior queda como `(anterior)`.
 - La run de prueba tiene los logros 1-6 cobrados a mano (eventos AchievementUnlocked de 22/09 a 25/09). `Probe --run` con `PERMALOCKE_ROOT` enseñó OTRA run (50 eventos): no respeta esa variable; la real tiene 1562 eventos.
 
 ## 2026-09-25 — Pokémon que te sigue (§181, integrado)
