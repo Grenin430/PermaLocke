@@ -570,5 +570,5 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
     /// player either, and showing the species would give away something the game hides.
     /// </summary>
     private BitmapSource? SpriteFor(BoxedPokemon pokemon) =>
-        pokemon.IsEgg ? _sprites.GetEgg() : _sprites.Get(pokemon.Species, pokemon.Form);
+        pokemon.IsEgg ? _sprites.GetEgg() : _sprites.Get(pokemon.Species, pokemon.Form, pokemon.IsShiny);
 }

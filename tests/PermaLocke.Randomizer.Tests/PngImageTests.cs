@@ -60,6 +60,28 @@ public class PngImageTests
         Assert.Throws<ArgumentException>(() => PngImage.Encode(new byte[4], 8, 8));
     }
 
+    [Fact]
+    public void Decode_reads_back_what_Encode_wrote()
+    {
+        const int width = 5, height = 4;
+        var pixels = new byte[width * height * 4];
+        for (var i = 0; i < pixels.Length; i++)
+        {
+            pixels[i] = (byte)(i * 13);
+        }
+
+        var (rgba, w, h) = PngImage.Decode(PngImage.Encode(pixels, width, height));
+
+        Assert.Equal((width, height), (w, h));
+        Assert.Equal(pixels, rgba);
+    }
+
+    [Fact]
+    public void Decode_refuses_what_is_not_a_PNG()
+    {
+        Assert.Throws<InvalidDataException>(() => PngImage.Decode(new byte[32]));
+    }
+
     private static int ReadBigEndian(byte[] data, int offset) =>
         (data[offset] << 24) | (data[offset + 1] << 16) | (data[offset + 2] << 8) | data[offset + 3];
 

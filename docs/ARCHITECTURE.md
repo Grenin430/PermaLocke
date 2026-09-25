@@ -11815,3 +11815,44 @@ gasta la ruta. Con el cristal, la zona es una ruta normal.
   `rules.json` y `marcadores.json` a la carpeta de prueba, comprobando antes que solo diferían en estos cambios.
 
 **Sin jugar todavía.** Falta ver cómo lee el juego la zona dentro de la Jungla Umbría durante la prueba.
+
+## §180 · Iconos variocolor: colores medidos en renders de referencia y aplicados al icono del cartucho (2026-09-25)
+
+El cartucho **no tiene iconos variocolor**: `a/0/6/2` lleva un dibujo por forma, y el juego enseña los colores del
+variocolor solo en el modelo 3D. Ahora la app pinta en variocolor el icono de todo Pokémon que lo sea: VISOR, ENTRENAR EV,
+MOVIMIENTOS, HOME, JUGAR, GACHA, WONDER TRADE, CEMENTERIO, escena de muerte y aviso de caída.
+
+**De dónde salen los colores.** Pokémon Showdown publica renders `dex` y `dex-shiny` del mismo encuadre, píxel a píxel. Juntos
+dicen en qué color se convierte cada color del cuerpo. `ShinyPalette` (en `Randomizer/Sprites`, sin WPF) lleva ese cambio al
+icono:
+- empareja cada color del icono con los del render en LCh, dando más peso al tono que a la luz, porque el icono está iluminado
+  de otra manera;
+- aplica el cambio de forma relativa: gira el tono, escala el croma y desplaza la luz;
+- toma la **mediana** de los 16 vecinos, no la media. Con la media, el cuerpo y la llama de Charizard (mismo tono) se mezclaban
+  en un marrón que no es de ninguno de los dos.
+
+El peso de la luz, **1,5**, se eligió barriendo valores sobre Charizard: es el que separa cuerpo y llama.
+
+**Lo que se guarda es una tabla de colores, no un dibujo.** `RomTool variocolor` genera `Data/variocolor.json`: por índice de
+icono, `RRGGBB>RRGGBB` para cada color. `PokemonSpriteService.Get(especie, forma, variocolor)` repinta con esa tabla el icono
+de la ROM del propio jugador. No se reparte nada de Nintendo ni de Showdown. Vale para todos los jugadores porque los iconos
+son los mismos: cartucho más el mod 1.4.
+
+**Fuentes y parejas que no sirven**, todo medido:
+- `dex` no tiene casi nada de gen 9: su `dex-shiny` es una copia del normal. Se cae a `home`/`home-shiny` (renders de HOME).
+- 16 parejas de `dex` están **en otra pose** (Ogerpon, Naganadel, Poipole, Xerneas, Zeraora…). `ShinyPalette` exige un
+  solape de siluetas de 0,9. Medido en las 1246 parejas descargadas: esas 16 quedan por debajo de 0,84 y el resto en 0,92 o
+  más.
+- Resultado: **1123 iconos con tabla y 6 sin referencia usable** (Basculin raya blanca, Eiscue sin hielo, Maushold familia de
+  cuatro, Armarouge, Ceruledge y Terapagos astral). Esos seis se dibujan en sus colores normales. La lista va en
+  `sinReferencia` del JSON.
+
+**Es una aproximación y así se dice.** Un color del icono que el render no tiene toma el cambio del más cercano. Revisadas a
+ojo las 12 hojas (`%TEMP%/permalocke-variocolor`, con `leyenda.txt`): ningún icono roto ni sin contorno. Algunos pálidos, como
+Zygarde o Guzzlord, son correctos: sus variocolores son blancos de verdad.
+
+**Pruebas:** `ShinyPaletteTests` cubre un cambio que se lleva, lo que no cambia se queda, renders iguales, poses distintas y
+tamaños distintos. `PngImageTests` cubre `Decode`, el decodificador PNG nuevo que usa RomTool. Además se comprobó el
+servicio real con la ROM: Charizard negro, Gyarados rojo, y Armarouge devuelve su icono normal.
+
+**Sin ver dentro de la app con un variocolor de verdad.**

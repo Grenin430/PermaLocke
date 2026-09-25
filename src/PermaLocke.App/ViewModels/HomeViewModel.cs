@@ -290,7 +290,7 @@ public sealed partial class HomeViewModel : SectionViewModel
                 Math.Clamp(ratio, 0d, 1d),
                 member.IsFainted ? "fainted" : ratio <= 0.2 ? "critical" : ratio <= 0.5 ? "low" : "ok",
                 member.IsShiny,
-                _sprites.Get(member.Species, member.Form)));
+                _sprites.Get(member.Species, member.Form, member.IsShiny)));
         }
 
         GameLinkStatus = snapshot.Party.Count == 0
@@ -543,7 +543,7 @@ public sealed partial class HomeViewModel : SectionViewModel
                 string.IsNullOrWhiteSpace(dead.Nickname) ? dead.SpeciesName : dead.Nickname,
                 string.Join(" · ", new[] { $"Nv. {dead.Level}", when }
                     .Where(part => !string.IsNullOrWhiteSpace(part))),
-                _sprites.Get(dead.Species, dead.Form)));
+                _sprites.Get(dead.Species, dead.Form, dead.IsShiny)));
         }
 
         HasFallen = Fallen.Count > 0;

@@ -83,5 +83,6 @@ powershell -ExecutionPolicy Bypass -File tools/desplegar.ps1 -Prueba   # ✔ sin
 dotnet run --project tools/PermaLocke.RomTool -- iconos-nombres        # ✔ CSV especie;nombre;icono en %TEMP% para revisar sprites
 dotnet run --project tools/PermaLocke.RomTool -- megas                 # ✔ ahora imprime el id de cada megapiedra
 dotnet run --project tools/PermaLocke.RomTool -- clases "<mod>/romfs/a/1/0/6"   # ✔ clase de un entrenador por nombre (Sina = 85)
+dotnet run --project tools/PermaLocke.RomTool -- variocolor           # ✔ Data/variocolor.json + hojas de revisión (§180)
 ```
 - Captura de la app sin que tape otra ventana: `PrintWindow` sobre el `MainWindowHandle` (PowerShell con Add-Type), `--sin-juego --seccion "X" --tamano grande`; clics con `SetCursorPos` + `mouse_event`.

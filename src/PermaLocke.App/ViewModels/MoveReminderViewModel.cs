@@ -769,5 +769,5 @@ public sealed partial class MoveReminderViewModel : SectionViewModel
         sheet is { Category: MoveSheet.Physical or MoveSheet.Special } ? _sprites.GetCategory(sheet.Category) : null;
 
     private BitmapSource? SpriteFor(BoxedPokemon pokemon) =>
-        pokemon.IsEgg ? _sprites.GetEgg() : _sprites.Get(pokemon.Species, pokemon.Form);
+        pokemon.IsEgg ? _sprites.GetEgg() : _sprites.Get(pokemon.Species, pokemon.Form, pokemon.IsShiny);
 }

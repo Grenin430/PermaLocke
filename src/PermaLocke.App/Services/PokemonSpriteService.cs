@@ -180,10 +180,92 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
     /// Until §139 every picture in the app was the species', so an Alolan Vulpix was drawn as a
     /// Kantonian one. A form with no icon of its own — a Vivillon's wings — still draws its species.
     /// </remarks>
-    public BitmapSource? Get(int species, int form) =>
-        form > 0 && _index is not null && _formIndex.TryGetValue((species, form), out var icon)
-            ? Load(icon)
-            : Get(species);
+    public BitmapSource? Get(int species, int form) => IconOf(species, form) is { } icon ? Load(icon) : null;
+
+    /// <summary>
+    /// The icon of a species in a form, in its shiny colours when <paramref name="shiny"/> is set.
+    /// </summary>
+    /// <remarks>
+    /// The cartridge has no shiny icons. <c>Data/variocolor.json</c> carries, per icon, what each colour turns into
+    /// (<see cref="ShinyPalette"/>, measured against reference renders), and the player's own icon is repainted
+    /// with it. An icon without a table — six have no usable reference — is drawn in its normal colours: the shiny
+    /// is still said in words wherever the screen says it.
+    /// </remarks>
+    public BitmapSource? Get(int species, int form, bool shiny)
+    {
+        if (!shiny || IconOf(species, form) is not { } icon)
+        {
+            return Get(species, form);
+        }
+
+        if (_shinyCache.TryGetValue(icon, out var cached))
+        {
+            return cached;
+        }
+
+        var normal = Load(icon);
+        if (normal is null || !ShinyTables.Value.TryGetValue(icon, out var table))
+        {
+            return normal;
+        }
+
+        var source = new FormatConvertedBitmap(normal, System.Windows.Media.PixelFormats.Bgra32, null, 0);
+        var stride = source.PixelWidth * 4;
+        var pixels = new byte[stride * source.PixelHeight];
+        source.CopyPixels(pixels, stride, 0);
+
+        for (var p = 0; p < pixels.Length; p += 4)
+        {
+            if (pixels[p + 3] != 0 && table.TryGetValue((pixels[p + 2] << 16) | (pixels[p + 1] << 8) | pixels[p], out var colour))
+            {
+                pixels[p] = (byte)colour;
+                pixels[p + 1] = (byte)(colour >> 8);
+                pixels[p + 2] = (byte)(colour >> 16);
+            }
+        }
+
+        var shinyIcon = BitmapSource.Create(source.PixelWidth, source.PixelHeight, normal.DpiX, normal.DpiY,
+            System.Windows.Media.PixelFormats.Bgra32, null, pixels, stride);
+        shinyIcon.Freeze();
+        _shinyCache[icon] = shinyIcon;
+        return shinyIcon;
+    }
+
+    private int? IconOf(int species, int form) =>
+        _index is null ? null
+        : form > 0 && _formIndex.TryGetValue((species, form), out var formIcon) ? formIcon
+        : _index.TryGetValue(species, out var icon) ? icon
+        : null;
+
+    private readonly ConcurrentDictionary<int, BitmapSource> _shinyCache = new();
+
+    /// <summary>Colour tables of <c>Data/variocolor.json</c> by icon index, read once. Missing or broken: no tables.</summary>
+    private Lazy<IReadOnlyDictionary<int, Dictionary<int, int>>> ShinyTables => _shinyTables ??= new(ReadShinyTables);
+    private Lazy<IReadOnlyDictionary<int, Dictionary<int, int>>>? _shinyTables;
+
+    private IReadOnlyDictionary<int, Dictionary<int, int>> ReadShinyTables()
+    {
+        var file = Path.Combine(paths.Data, "variocolor.json");
+        var tables = new Dictionary<int, Dictionary<int, int>>();
+
+        try
+        {
+            using var json = System.Text.Json.JsonDocument.Parse(File.ReadAllBytes(file));
+            foreach (var entry in json.RootElement.GetProperty("iconos").EnumerateObject())
+            {
+                tables[int.Parse(entry.Name)] = entry.Value.GetString()!
+                    .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(pair => pair.Split('>'))
+                    .ToDictionary(pair => Convert.ToInt32(pair[0], 16), pair => Convert.ToInt32(pair[1], 16));
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Sin colores variocolor: no se pudo leer {File}", file);
+        }
+
+        return tables;
+    }
 
     /// <summary>
     /// The egg, which is the one icon of the container that needed no working out: it is the

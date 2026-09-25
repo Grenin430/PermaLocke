@@ -390,7 +390,7 @@ public sealed partial class LauncherViewModel : SectionViewModel
             var party = snapshot?.Party?.Pokemon ?? [];
 
             // Tu avatar en la actividad cuando todavía no has publicado: el mismo que verían los demás.
-            _myAvatar = party.FirstOrDefault(m => !m.IsEgg) is { } lead ? _sprites.Get(lead.Species, lead.Form) : null;
+            _myAvatar = party.FirstOrDefault(m => !m.IsEgg) is { } lead ? _sprites.Get(lead.Species, lead.Form, lead.IsShiny) : null;
 
             var entries = await _pokemon.GetAllAsync(run.Id);
             var dead = entries.Where(p => p.Status == PokemonStatus.Dead).ToList();
@@ -399,13 +399,13 @@ public sealed partial class LauncherViewModel : SectionViewModel
             // En la alfombra, los vivos del equipo; los caídos de la run van a la estantería aunque sigan en él.
             var team = party
                 .Where(member => !member.IsEgg && !deadPids.Contains(member.Pid))
-                .Select(member => Views.RoomSprite.From(_sprites.Get(member.Species, member.Form)))
+                .Select(member => Views.RoomSprite.From(_sprites.Get(member.Species, member.Form, member.IsShiny)))
                 .OfType<Views.RoomSprite>()
                 .ToList();
 
             var fallen = dead
                 .OrderByDescending(p => p.DiedAt ?? p.ObtainedAt)
-                .Select(p => Views.RoomSprite.From(_sprites.Get(p.Species, p.Form)))
+                .Select(p => Views.RoomSprite.From(_sprites.Get(p.Species, p.Form, p.IsShiny)))
                 .OfType<Views.RoomSprite>()
                 .Take(8)
                 .ToList();

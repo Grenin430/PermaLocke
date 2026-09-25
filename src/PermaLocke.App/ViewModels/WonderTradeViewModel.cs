@@ -234,7 +234,7 @@ public sealed partial class WonderTradeViewModel : ObservableObject
 
         Given = pokemon;
         GivenIsFallen = false;
-        GivenSprite = pokemon is null ? null : _sprites.Get(pokemon.Species, pokemon.Form);
+        GivenSprite = pokemon is null ? null : _sprites.Get(pokemon.Species, pokemon.Form, pokemon.IsShiny);
 
         if (pokemon is null)
         {
@@ -321,7 +321,7 @@ public sealed partial class WonderTradeViewModel : ObservableObject
             await _trades.MarkGivenAsTradedAsync(run, given.Pid, offer.DisplayName);
 
             Offer = offer;
-            ReceivedSprite = _sprites.Get(offer.Species, offer.Form);
+            ReceivedSprite = _sprites.Get(offer.Species, offer.Form, offer.IsShiny);
             Types = BuildTypes(offer);
             TypeColour = Types[0].Colour;
             OnPropertyChanged(nameof(Types));

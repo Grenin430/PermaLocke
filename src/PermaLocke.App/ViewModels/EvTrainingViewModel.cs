@@ -827,5 +827,5 @@ public sealed partial class EvTrainingViewModel : SectionViewModel
     /// An egg shows the egg icon, not the icon of what is inside: the game does not tell the player either.
     /// </summary>
     private BitmapSource? SpriteFor(BoxedPokemon pokemon) =>
-        pokemon.IsEgg ? _sprites.GetEgg() : _sprites.Get(pokemon.Species, pokemon.Form);
+        pokemon.IsEgg ? _sprites.GetEgg() : _sprites.Get(pokemon.Species, pokemon.Form, pokemon.IsShiny);
 }

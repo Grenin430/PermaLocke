@@ -268,7 +268,7 @@ public sealed class MaintenanceService(
         try
         {
             MarkedDead?.Invoke(this, new DeathNotice(entry.Nickname ?? entry.SpeciesName, entry.Species,
-                charged.Points, entry.Form));
+                charged.Points, entry.Form, entry.IsShiny));
         }
         catch (Exception ex)
         {

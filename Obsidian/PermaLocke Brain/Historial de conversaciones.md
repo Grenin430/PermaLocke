@@ -6,6 +6,13 @@ revisado: 2026-09-24
 
 La última sesión va arriba. Antes del 2026-09-23 solo hay un resumen por fechas sacado de `CLAUDE.md` y de `ARCHITECTURE.md`: el detalle está en el § citado ([[Índice de ARCHITECTURE]]). **Cada sesión nueva añade su entrada aquí.**
 
+## 2026-09-25 — iconos variocolor (§180)
+- Pedido: sprites variocolor. El cartucho no los tiene. Por indicación del usuario, colores sacados de los renders de Showdown (`dex`/`dex-shiny`, y `home`/`home-shiny` si faltan o no cambian): comparando normal y variocolor píxel a píxel se sabe en qué se convierte cada color, y se aplica al icono de la ROM.
+- Afinado en prototipo (scratchpad) con Charizard, Pikachu, Gyarados, Gengar, Umbreon y Rayquaza: RGB aditivo → HSL → LCh con **mediana** de 16 vecinos y peso de luz 1,5 (el que separa cuerpo y llama de Charizard).
+- `Randomizer/Sprites/ShinyPalette.cs` (cálculo, sin WPF) y `PngImage.Decode` (nuevo). `RomTool variocolor` → `Data/variocolor.json` (tabla de colores por índice de icono, no dibujos) y 12 hojas de revisión en `%TEMP%/permalocke-variocolor` con `leyenda.txt`. Descargas en `%TEMP%/permalocke-showdown`.
+- Medido: 16 de 1246 parejas de Showdown en otra pose (Ogerpon, Naganadel…), solape de siluetas < 0,84; el resto ≥ 0,92 → umbral 0,9. Resultado 1123 iconos con tabla, 6 sin referencia (Basculin blanca, Eiscue sin hielo, Maushold x4, Armarouge, Ceruledge, Terapagos astral).
+- App: `PokemonSpriteService.Get(especie, forma, variocolor)`; enganchado en VISOR, EV, MOVIMIENTOS, HOME, JUGAR, GACHA, WONDER TRADE, CEMENTERIO, escena de muerte y aviso de caída (`DeathNotice.Shiny` nuevo). 1496 pruebas. Comprobado el servicio real con la ROM. **Desplegado en `PermaLocke prueba`** (exe md5 `eb8e8da7…` + `Data/variocolor.json` copiado, era nuevo). Sin ver en la app con un variocolor real.
+
 ## 2026-09-24 — torneo: entrar con Discord (fase 1)
 - Plan acordado: Supabase (proyecto `rnqpjvkonxjhrjsdvlpm`) con login de Discord; fase 1 solo identidad, fase 2 subir `RunSnapshot` + historial con RLS, fase 3 clasificación y auditoría en Admin con `SnapshotAudit`. La GPL impide impedir copias: el login es para el torneo, no contra la copia.
 - `Data/torneo.json` (URL + clave anon, pública por diseño). `App/Services/DiscordLogin.cs`: OAuth PKCE, navegador + `HttpListener` en `127.0.0.1:47281/callback`, sesión en `Config/discord.json` cifrada con DPAPI. Panel TORNEO en CONFIGURACIÓN. Sin probar contra el servidor.

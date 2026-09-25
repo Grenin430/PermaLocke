@@ -183,6 +183,10 @@ generado: 2026-09-24
 - L11436 · 174 · El wonder trade es una cabina en la sala del gacha
 - L11506 · 175 · La ruleta del LUDÓPATA es una rueda de feria en la sala recreativa
 - L11572 · 176 · Muestra del estilo en píxeles: el marco, la barra lateral y HOME
+- L11729 · 177 · Limpieza pedida por el jugador y dos fallos del kit pixel
+- L11778 · 178 · HOME sin IR A, GACHA con la máquina a la vista
+- L11799 · 179 · Colina Saltagua y Jungla Umbría cerradas hasta su cristal Z
+- L11819 · 180 · Iconos variocolor desde renders de referencia
 
 Subsecciones §176: bis (visor), ter (todas las pantallas, fuera ESTADÍSTICAS), quater (EV/MOVIMIENTOS sin bolsa, diálogos).
 

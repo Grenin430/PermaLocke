@@ -197,6 +197,9 @@ switch (command)
     case "evo-dump":
         EvoDump(args.Length > 1 ? args[1] : null);
         break;
+    case "variocolor":
+        await VariocolorAsync();
+        break;
     case "iconos-nombres":
         await IconosNombresAsync();
         break;
@@ -4647,4 +4650,132 @@ async Task IconosNombresAsync()
     await File.WriteAllLinesAsync(output, index.OrderBy(pair => pair.Key)
         .Select(pair => $"{pair.Key};{(pair.Key < names.Length ? names[pair.Key] : "?")};{pair.Value}"));
     Console.WriteLine($"{index.Count} especies en {output}");
+}
+
+// La tabla de colores variocolor de cada icono (Data/variocolor.json). El cartucho no tiene iconos variocolor: se
+// sacan los colores de los renders de Pokémon Showdown (dex y dex-shiny, mismo encuadre píxel a píxel) y se aplican
+// al icono con ShinyPalette. Lo que se guarda es una tabla de colores, no un dibujo: el dibujo sigue saliendo de la
+// ROM de cada jugador. Deja además hojas de revisión en la carpeta temporal, porque un icono mal recoloreado no
+// falla, solo se ve feo. Las descargas se guardan en %TEMP%/permalocke-showdown para no repetirlas.
+async Task VariocolorAsync()
+{
+    var rom = RequireRom();
+    var scratch = Path.Combine(work, "iconos");
+    var reader = PokemonIconReader.Open(rom, scratch, baseLayer);
+    var index = await PokemonIconIndex.BuildAsync(rom, scratch, baseLayer);
+    var forms = PokemonIconIndex.FormIcons(index, reader.Count);
+
+    var strings = PKHeX.Core.GameInfo.GetStrings("en");
+    static string Id(string name) => new string(name.Replace("♀", "f").Replace("♂", "m")
+        .Normalize(System.Text.NormalizationForm.FormD)
+        .Where(char.IsAsciiLetterOrDigit).Select(char.ToLowerInvariant).ToArray());
+
+    // Cada icono con la especie y la forma que lo dibujan, y su nombre en Showdown.
+    var targets = index.Where(p => p.Key < strings.specieslist.Length)
+        .Select(p => (Icon: p.Value, Species: p.Key, Form: 0, Name: Id(strings.specieslist[p.Key])))
+        .ToList();
+    foreach (var ((species, form), icon) in forms)
+    {
+        var formNames = PKHeX.Core.FormConverter.GetFormList((ushort)species, strings.Types, strings.forms,
+            PKHeX.Core.GameInfo.GenderSymbolASCII, PKHeX.Core.EntityContext.Gen9);
+        if (form < formNames.Length && Id(formNames[form]) is { Length: > 0 } suffix)
+        {
+            targets.Add((icon, species, form, $"{Id(strings.specieslist[species])}-{suffix}"));
+        }
+    }
+
+    var cache = Path.Combine(Path.GetTempPath(), "permalocke-showdown");
+    using var http = new HttpClient();
+    http.DefaultRequestHeaders.UserAgent.ParseAdd("PermaLocke-RomTool/1.0");
+
+    async Task<byte[]?> Fetch(string folder, string name)
+    {
+        var file = Path.Combine(cache, folder, name + ".png");
+        if (File.Exists(file)) return await File.ReadAllBytesAsync(file);
+        if (File.Exists(file + ".404")) return null;
+        Directory.CreateDirectory(Path.GetDirectoryName(file)!);
+        using var response = await http.GetAsync($"https://play.pokemonshowdown.com/sprites/{folder}/{name}.png");
+        if (!response.IsSuccessStatusCode) { await File.WriteAllTextAsync(file + ".404", ((int)response.StatusCode).ToString()); return null; }
+        var bytes = await response.Content.ReadAsByteArrayAsync();
+        await File.WriteAllBytesAsync(file, bytes);
+        return bytes;
+    }
+
+    // El lector de iconos no es seguro entre hilos: se leen todos antes del bucle paralelo.
+    var pixels = targets.Select(t => t.Icon).Distinct().ToDictionary(i => i, i => reader.Read(i));
+    var tables = new System.Collections.Concurrent.ConcurrentDictionary<int, IReadOnlyDictionary<int, int>>();
+    var missing = new System.Collections.Concurrent.ConcurrentBag<string>();
+    await Parallel.ForEachAsync(targets.DistinctBy(t => t.Icon), new ParallelOptions { MaxDegreeOfParallelism = 4 }, async (t, _) =>
+    {
+        // Primero los renders de la dex; si faltan o el variocolor es una copia del normal (casi toda gen 9), los de HOME.
+        var why = "sin render";
+        foreach (var folder in new[] { "dex", "home" })
+        {
+            var normal = await Fetch(folder, t.Name);
+            var shiny = await Fetch(folder + "-shiny", t.Name);
+            if (normal is null || shiny is null) continue;
+
+            var n = PngImage.Decode(normal);
+            var s = PngImage.Decode(shiny);
+            if ((n.Width, n.Height) != (s.Width, s.Height)) { why = "tamaños distintos"; continue; }
+
+            if (ShinyPalette.Build(n.Rgba, s.Rgba, pixels[t.Icon].Pixels) is { } table)
+            {
+                tables[t.Icon] = table;
+                return;
+            }
+            why = "sin pareja utilizable (igual que el normal o en otra pose)";
+        }
+        missing.Add($"{t.Species}/{t.Form} {t.Name}: {why}");
+    });
+
+    var output = Path.Combine(root, "Data", "variocolor.json");
+    await File.WriteAllTextAsync(output, System.Text.Json.JsonSerializer.Serialize(new
+    {
+        _comentario = "Generado por RomTool «variocolor». Por icono del cartucho (a/0/6/2 con el mod): color normal > color variocolor, en hexadecimal RGB. Los colores salen de comparar los renders dex y dex-shiny de Pokémon Showdown; es una aproximación. No se edita a mano: los que salen mal se quitan en «descartados».",
+        iconos = tables.OrderBy(p => p.Key).ToDictionary(p => p.Key.ToString(),
+            p => string.Join(' ', p.Value.OrderBy(c => c.Key).Select(c => $"{c.Key:X6}>{c.Value:X6}"))),
+        sinReferencia = missing.OrderBy(m => int.Parse(m[..m.IndexOf('/')])).ToList()
+    }, new System.Text.Json.JsonSerializerOptions { WriteIndented = true, Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }));
+    Console.WriteLine($"{tables.Count} iconos con variocolor, {missing.Count} sin referencia, en {output}");
+
+    // Hojas de revisión: normal y variocolor lado a lado, a escala 2, 8 por fila y 12 filas por hoja.
+    var sheets = Path.Combine(Path.GetTempPath(), "permalocke-variocolor");
+    Directory.CreateDirectory(sheets);
+    var order = targets.DistinctBy(t => t.Icon).Where(t => tables.ContainsKey(t.Icon)).OrderBy(t => t.Species).ThenBy(t => t.Form).ToList();
+    const int perRow = 8, rows = 12, scale = 2, cell = 40 * 2 * scale + 8, height = 30 * scale + 6;
+    var legend = new List<string>();
+    for (var page = 0; page * perRow * rows < order.Count; page++)
+    {
+        var sheet = new byte[perRow * cell * rows * height * 4];
+        var width = perRow * cell;
+        for (var k = 0; k < perRow * rows && page * perRow * rows + k < order.Count; k++)
+        {
+            var t = order[page * perRow * rows + k];
+            legend.Add($"hoja {page:00} fila {k / perRow} col {k % perRow}: {t.Species}/{t.Form} {t.Name}");
+            var icon = pixels[t.Icon];
+            var recoloured = (byte[])icon.Pixels.Clone();
+            for (var p = 0; p < recoloured.Length; p += 4)
+            {
+                if (recoloured[p + 3] == 0) continue;
+                var c = tables[t.Icon][(recoloured[p] << 16) | (recoloured[p + 1] << 8) | recoloured[p + 2]];
+                recoloured[p] = (byte)(c >> 16); recoloured[p + 1] = (byte)(c >> 8); recoloured[p + 2] = (byte)c;
+            }
+            for (var half = 0; half < 2; half++)
+            {
+                var src = half == 0 ? icon.Pixels : recoloured;
+                for (var y = 0; y < Math.Min(icon.Height, 30) * scale; y++)
+                    for (var x = 0; x < icon.Width * scale; x++)
+                    {
+                        var s = ((y / scale) * icon.Width + x / scale) * 4;
+                        var dx = (k % perRow) * cell + half * icon.Width * scale + x;
+                        var dy = (k / perRow) * height + y;
+                        if (src[s + 3] != 0) src.AsSpan(s, 4).CopyTo(sheet.AsSpan((dy * width + dx) * 4));
+                    }
+            }
+        }
+        await File.WriteAllBytesAsync(Path.Combine(sheets, $"hoja-{page:00}.png"), PngImage.Encode(sheet, width, rows * height));
+    }
+    await File.WriteAllLinesAsync(Path.Combine(sheets, "leyenda.txt"), legend);
+    Console.WriteLine($"Hojas de revisión en {sheets}");
 }

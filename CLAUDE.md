@@ -133,6 +133,9 @@ Trampas que ya costaron caro y hay que tener siempre presentes:
   instalado (`WorldLimits`, `InstalledWorld`). Las sondas deben llamar a `InstalledWorld.ApplyQuietly` (§91).
 - **Detectable no es detectado**: el vigilante empareja por PID contra lo registrado en la run (§56, §68).
 
+Último: **iconos variocolor** (§180). El cartucho no los tiene: `Data/variocolor.json` (generado por `RomTool variocolor`
+desde renders de Showdown) repinta el icono de la ROM del jugador. Aproximado; 1123 iconos con tabla, 6 sin referencia.
+
 ---
 
 ## Comandos
@@ -158,6 +161,8 @@ dotnet run --project tools/PermaLocke.RomTool -- shops --gen
 dotnet run --project tools/PermaLocke.RomTool -- zones
 dotnet run --project tools/PermaLocke.RomTool -- species
 dotnet run --project tools/PermaLocke.RomTool -- sprites --sheets
+# colores variocolor de cada icono (Data/variocolor.json) desde renders de Showdown; hojas de revisión en %TEMP%/permalocke-variocolor
+dotnet run --project tools/PermaLocke.RomTool -- variocolor
 
 # los tres iniciales de un mod ya generado o instalado; sin carpeta mira todo Randomized/
 dotnet run --project tools/PermaLocke.RomTool -- iniciales

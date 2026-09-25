@@ -152,7 +152,7 @@ public sealed partial class CemeteryViewModel : SectionViewModel
 
             foreach (var grave in graves)
             {
-                Graves.Add(new GraveViewModel(grave, _sprites.Get(grave.Species, grave.Form)));
+                Graves.Add(new GraveViewModel(grave, _sprites.Get(grave.Species, grave.Form, grave.IsShiny)));
             }
 
             IsEmpty = Graves.Count == 0;

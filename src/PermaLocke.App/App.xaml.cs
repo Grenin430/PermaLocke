@@ -450,7 +450,7 @@ public partial class App : Application
                 .Where(e => e.Type == GameEventType.PointsPenalty && e.PokemonId == entry.Id)
                 .Sum(e => e.PointsDelta);
 
-            ceremony.Mourn(new DeathNotice(entry.Nickname ?? entry.SpeciesName, entry.Species, Math.Max(0, cost), entry.Form));
+            ceremony.Mourn(new DeathNotice(entry.Nickname ?? entry.SpeciesName, entry.Species, Math.Max(0, cost), entry.Form, entry.IsShiny));
         }
     }
 

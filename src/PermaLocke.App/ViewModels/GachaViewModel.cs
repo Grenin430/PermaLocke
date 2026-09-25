@@ -793,7 +793,7 @@ public sealed partial class GachaViewModel : SectionViewModel
                 (false, true) => "LEGENDARIO",
                 _ => string.Empty,
             };
-            LastSprite = _sprites.Get(pull.Species, pull.Form);
+            LastSprite = _sprites.Get(pull.Species, pull.Form, pull.IsShiny);
             HasResult = true;
 
             Remember(pull);
@@ -878,7 +878,7 @@ public sealed partial class GachaViewModel : SectionViewModel
         // La semilla de la tirada decide también en qué meneos sube la ball, así que la misma tirada se ve igual al
         // recomputarla; y no depende del tier, que es lo que haría que se adivinara antes de tiempo.
         var seed = unchecked((int)(pull.Seed ^ (ulong)pull.Number));
-        var play = new CapsulePlay(steps, _sprites.Get(pull.Species, pull.Form), pull.IsShiny, pull.Legendary, seed,
+        var play = new CapsulePlay(steps, _sprites.Get(pull.Species, pull.Form, pull.IsShiny), pull.IsShiny, pull.Legendary, seed,
             System.Diagnostics.Stopwatch.GetTimestamp());
 
         CurrentPlay = play;
@@ -1137,7 +1137,7 @@ public sealed partial class GachaViewModel : SectionViewModel
         }
 
         History.Insert(0, new GachaHistoryViewModel(pull.DisplayName,
-            portal?.BrushKey ?? "AccentBrush", _sprites.Get(pull.Species, pull.Form)));
+            portal?.BrushKey ?? "AccentBrush", _sprites.Get(pull.Species, pull.Form, pull.IsShiny)));
 
         while (History.Count > HistoryKept)
         {

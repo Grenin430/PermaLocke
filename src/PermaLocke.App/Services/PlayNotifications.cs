@@ -52,7 +52,7 @@ public sealed class PlayNotifications
                 ToastKind.Death,
                 $"{fallen.Name} ha caído",
                 fallen.Penalty > 0 ? $"−{fallen.Penalty} puntos." : string.Empty,
-                sprites.Get(fallen.Species, fallen.Form));
+                sprites.Get(fallen.Species, fallen.Form, fallen.Shiny));
         };
 
         // Las marcadas a mano en MANTENIMIENTO son justo las que la app no llegó a ver: tienen su

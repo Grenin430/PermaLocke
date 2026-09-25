@@ -62,6 +62,7 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ra
 - `Sprites/PngImage.cs` — **PngImage** — A minimal PNG encoder for RGBA8888 buffers. Written by hand on purpose: System.Drawing is Windows-only and WPF's imaging lives behind PresentationCore, and PermaLocke.Randomizer is not allowed to r...
 - `Sprites/PokemonIconIndex.cs` — **PokemonIconIndex** — Which icon of a/0/6/2 belongs to which species. 
 - `Sprites/PokemonIconReader.cs` — **PokemonIcon, PokemonIconReader** — One decoded box icon: straight RGBA8888, already cropped to what is drawn.
+- `Sprites/ShinyPalette.cs` — **ShinyPalette** — Works out how a box icon changes colour when its Pokémon is shiny, from a pair of reference renders. 
 - `Sprites/ZCrystalIconReader.cs` — **ZCrystalIconReader** — Reads the eighteen type Z-Crystals out of the player's own cartridge. 
 - `Sprites/ZCrystalIndex.cs` — **ZCrystalIndex** — Which of the eighteen carved Z-Crystals belongs to which item. 
 - `StaticOverride.cs` — **StaticOverrideRule** — What a static encounter is replaced by, when the ordinary draw is not what is wanted.
