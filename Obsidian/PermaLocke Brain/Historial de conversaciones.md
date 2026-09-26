@@ -6,6 +6,13 @@ revisado: 2026-09-24
 
 La última sesión va arriba. Antes del 2026-09-23 solo hay un resumen por fechas sacado de `CLAUDE.md` y de `ARCHITECTURE.md`: el detalle está en el § citado ([[Índice de ARCHITECTURE]]). **Cada sesión nueva añade su entrada aquí.**
 
+## 2026-09-26 — ÁLBUM premium (§187), desde la nube
+- Petición: hacerlo «muchísimo más impresionante», acabado premium, sin perder pixel art ni funciones, decidiendo yo. Dirección: «colección nocturna del ultraespacio» (carpeta de piel bajo lámpara, acabados de tirada real, carta en la mano tipo Balatro).
+- **Fallo encontrado:** con `GameNeed.Either` la franja «ABIERTO O CERRADO» dejaba el álbum a 1 px/celda en GRANDE. Ahora `None` + aviso pequeño en la barra + carpeta sin tapa si no cabe.
+- Hecho: `TcgFinish`/`TcgRegion` (holo, inversa, dorada, polícroma; `CellCanvas.Regions`), `Animate(..., light)`, `HandScene` (homografía por píxel, vuelo, muelle, vuelta, rayos, polvo, sombra real), `AlbumScene` reescrita (piel, pespunte, cantoneras, pestañas, cabeceras, emblema, lámpara, destello, página en perspectiva), `CardStage` y `AlbumStage` nuevos, `OpenTabCommand`, `TitleOf`.
+- Nuevo `tools/PermaLocke.PixelCheck` (fuera del slnx): las `AlbumTests` en Linux y PNG con `PERMALOCKE_PIXEL_DIR`. Sacados a ficheros puros: `SmallFont`, `TypeColours`, `RoomSprite` (partial), `AlbumPaging`.
+- Verificado: solución compilada sin avisos; Core 380, Rules 151, Randomizer 485, GameLink 389, PixelCheck 45. Sin ver en la app.
+
 ## 2026-09-26 — ÁLBUM de cartas TCG (§186), desde la nube
 - Idea del usuario a partir de los cromos: el visor como álbum de cartas TCG. Decisiones suyas: **sección nueva, solo ver** (sin wonder trade ni nada), **probar 3×3 y 4×4**, rareza = **tier del gacha** (y los que no salieron del gacha, por su BST/tier), caídos **arrugados o medio quemados**, «lo más detallado y pulido posible».
 - Hecho: `GachaService.TierOf/TierIndexOf` (+pruebas), `TcgCard`/`CellCanvas`, `TcgCardArt` (completa 70×96, pequeña 50×68, reverso ficha, dorso/huevo, holo animada, quemada con brasas), `AlbumScene` (fundas, anillas, vuelta de hoja), `AlbumStage`, `CardStage` (carta en grande que se da la vuelta), `AlbumView`, `AlbumViewModel` en EQUIPO tras VISOR. `AlbumTests`.

@@ -60,6 +60,7 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Services/ToastKind.cs` — **ToastKind** — What a notice is about. Decides its tab, its colour and the mark drawn on its sprite.
 - `Services/ToastPlacement.cs` — **ToastPlacement** — Positions the notice stack in screen pixels, keeping it inside the selected monitor.
 - `Services/TournamentUpload.cs` — **TournamentUpload** — Sends the loaded run to the tournament server: the same summary and history the shared folder used to carry. 
+- `Services/TypeColours.cs` — **TypeColours** — The colours the series has used for the types since forever, by the game's type number: the table itself, without the brushes of `ypePalette`. 
 - `Services/TypePalette.cs` — **TypePalette** — The colours the series has used for the types since forever, by the game's type number. 
 - `Services/UiDispatcher.cs` — **IUiDispatcher, WpfUiDispatcher** — Runs work on the UI thread. View models need this because domain services complete their awaits on thread pool threads, and touching a bound ObservableCollection from there throws. 
 - `Services/VisualCppRuntime.cs` — **VisualCppStatus, VisualCppRuntime** — The runtime the emulator will load: its own when it has one, Windows's otherwise.
@@ -68,7 +69,8 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Services/WorldEvolutionLines.cs` — **WorldEvolutionLines** — Evolutionary families, read from the world the player is actually playing. 
 - `Services/ZonePhotoService.cs` — **ZonePhotoService** — The picture of each zone, shown on the card that appears when hovering a marker. 
 - `ViewModels/AchievementsViewModel.cs` — **AchievementRowViewModel, AchievementsViewModel** — One achievement as the list shows it.
-- `ViewModels/AlbumViewModel.cs` — **AlbumBinder, AlbumSpreadPlace, AlbumPaging, AlbumViewModel** — A box of the PC, or the party, as a section of the album.
+- `ViewModels/AlbumPaging.cs` — **AlbumSpreadPlace, AlbumPaging** — Where each spread of the album starts: which binder, and its first page.
+- `ViewModels/AlbumViewModel.cs` — **AlbumBinder, AlbumViewModel** — A box of the PC, or the party, as a section of the album.
 - `ViewModels/BattleModeViewModel.cs` — **BattleModeViewModel** — Setting the randomized world aside to link-battle, and putting it back. 
 - `ViewModels/CapsulePlay.cs` — **CapsulePlay** — One pull, as the capsule machine plays it: the balls it climbs through, who comes out, and when the coin dropped. 
 - `ViewModels/CemeteryViewModel.cs` — **CemeteryViewModel, GraveViewModel** — The run's fallen, one grave each, and the story of the one picked: how it arrived, what it fell to and, when there is one, the replay of its death. 
@@ -101,9 +103,9 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `ViewModels/TypeBadges.cs` — **TypeBadges** — The one or two type plates of a Pokémon, for every screen that shows whom you picked: the viewer, ENTRENAR EV and MOVIMIENTOS (§176). 
 - `ViewModels/WonderTradeViewModel.cs` — **TypeBadgeViewModel, WonderTradeViewModel** — One type of the received Pokémon, with the colour the games have always used.
 - `Views/AchievementsView.xaml.cs` — **AchievementsView** — The achievements screen. All the work is in the view model.
-- `Views/AlbumScene.cs` — **AlbumPage, AlbumSpread, AlbumScene, AlbumTurn** — One page of the album: its pockets in reading order, a card or an empty one each.
-- `Views/AlbumStage.cs` — **AlbumStage** — The album on screen (§186): `lbumScene` in whole cells, the card under the mouse lifted, the wheel to turn pages and a click to take a card out. 
-- `Views/AlbumView.xaml.cs` — **AlbumView** — ÁLBUM (§186). All the work is in the view model; here only the focus, so the arrows turn pages, and the drawing failures handed to the log. 
+- `Views/AlbumScene.cs` — **AlbumPage, AlbumTab, AlbumSpread, AlbumTurn, AlbumScene** — One page of the album: its pockets in reading order, a card or an empty one each.
+- `Views/AlbumStage.cs` — **AlbumStage** — The album on screen (§186, §187): `lbumScene` in whole cells, the card under the mouse lifted, the tabs of its edge, the wheel to turn pages and a click to take a card out. 
+- `Views/AlbumView.xaml.cs` — **AlbumView** — ÁLBUM (§186, §187). All the work is in the view model; here only the focus, so the arrows turn pages, where a card leaves its pocket from, handed to the hand, and the drawing failures handed to ...
 - `Views/AlolaBanner.cs` — **AlolaBanner** — The strip behind every section's header: the sea and the sky over Alola at the game's hour, in pixels. 
 - `Views/AlolaPalette.cs` — **AlolaPalette** — The colours of the Alola sky by hour, shared by the sidebar's window and the header's banner so the two never disagree about what time it is. 
 - `Views/AlolaWindow.cs` — **AlolaWindow** — A small pixel-art view of the sea at the hour of the player's Alola: the sky's colours, the sun or the moon on its arc, stars at night, and an island with a palm tree. 
@@ -112,7 +114,7 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Views/BoxWallpaper.cs` — **BoxWallpaper** — The wallpaper behind a box of the PC: a flat ground with a small motif repeated in staggered rows, drawn cell by cell like the rest of PermaLocke's pixel art. 
 - `Views/CapsuleMachine.cs` — **CapsuleMachine** — The gacha's stage: the capsule machine (`apsuleMachineScene`) on screen, in whole cells. 
 - `Views/CapsuleMachineScene.cs` — **CapsuleBanner, CapsuleRoll, CapsuleShelfItem, CapsuleSceneState, CapsuleTimeline, CapsuleMachineScene** — What the machine is loaded with: the banner chosen under it.
-- `Views/CardStage.cs` — **CardStage** — One card out of the album and in the hand (§186): big, floating a little over its shadow, and turned over with a click to read its back. 
+- `Views/CardStage.cs` — **CardStage** — One card out of the album and in the hand (§186, §187): it flies out of its pocket spinning once, lands big with a burst if it is rare, leans towards the mouse so its foil catches the light, and ...
 - `Views/CemeteryCanvas.cs` — **CemeteryCanvas** — Shows `emeteryScene` at a whole number of screen pixels per cell, puts the names under the monuments and turns a click on a grave into the pick command. 
 - `Views/CemeteryScene.cs` — **CemeteryScene** — The cemetery, painted cell by cell: night, hills, a fence, fog, and one grave per fallen Pokémon with its ghost above it. 
 - `Views/CemeteryView.xaml.cs` — **CemeteryView** — 
@@ -125,6 +127,7 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Views/GachaView.xaml.cs` — **GachaView** — The gacha screen. The only code here feeds the capsule machine. 
 - `Views/GhostArt.cs` — **GhostArt** — A fallen Pokémon drawn as its ghost: the cartridge's own icon, pale and see-through, pixel by pixel (§183). 
 - `Views/GhostWindow.xaml.cs` — **GhostWindow** — A friend's fallen Pokémon over this player's emulator (§183): the notice at the top left, then its ghost crossing the screen from right to left. 
+- `Views/HandScene.cs` — **HandPose, HandScene** — Where the card in the hand is and how it is turned, for one frame.
 - `Views/HomeView.xaml.cs` — **HomeView** — 
 - `Views/InformationView.xaml.cs` — **InformationView** — 
 - `Views/KillcamPlayer.cs` — **KillcamPlayer** — Plays a killcam: the frames at their own times, at real speed or slowed down, looping, with a mark on the timeline where the bar reached zero. 
@@ -142,6 +145,7 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Views/Pixel/PixelSprite.cs` — **PixelSprite** — A sprite out of the cartridge drawn the way the scenes draw theirs: every pixel a whole number of screen pixels, optionally as a silhouette, with a one-cell outline, and bobbing like the party menu. 
 - `Views/Pixel/PixelText.cs` — **PixelText** — Text in the application's pixel font (`ixelFont`), every cell a whole number of screen pixels. 
 - `Views/Pixel/PixelWindow.cs` — **PixelWindow** — A window of a game's menu: a `ixelPanel` with a title band, its icon and its name, and whatever the panel holds underneath. What HOME, the viewer and every screen after them put their blocks in (§...
+- `Views/Pixel/SmallFont.cs` — **SmallFont** — The small pixel font: digits and capitals three cells wide and five tall, for labels where the big one does not fit — the scenes' plaques, the album's cards and tabs. 
 - `Views/PixelBar.cs` — **PixelBar, PixelCursor** — A bar in cells, like the health bars of the handheld games: an ink outline with square ends, a dark track, and the fill with a lighter top row. It fills in whole cells, so a value never shows as a ...
 - `Views/PixelBlood.cs` — **PixelBlood** — The blood of the death ceremony, simulated on the Pokémon's own pixel grid and drawn into a small bitmap that is shown scaled up with no smoothing. 
 - `Views/PixelPanel.cs` — **PixelPanel** — A box drawn cell by cell in any colour: one-cell outline, one-cell bevel lit on top, notched corners and a hard shadow. The same box as the notices (`oastFrame`), for places whose colour is data �...
@@ -151,6 +155,7 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Views/PokemonViewerView.xaml.cs` — **PokemonViewerView** — The PC of the player's game. All the work is in the view model.
 - `Views/RandomizerView.xaml.cs` — **RandomizerView** — 
 - `Views/RegisterCaptureWindow.xaml.cs` — **RegisterCaptureWindow** — 
+- `Views/RoomSprite.cs` — **RoomSprite** — A picture from the cartridge, as the scenes draw it: BGRA, one icon pixel per cell.
 - `Views/RouletteMachine.cs` — **RouletteMachine** — The LUDÓPATA wheel on screen: `ouletteMachineScene` in whole cells. 
 - `Views/RouletteMachineScene.cs` — **RouletteWedge, RouletteBoardItem, RouletteShow, RouletteSceneState, RouletteTimeline, RouletteMachineScene** — One of the six wedges as the wheel shows it once it is turned over.
 - `Views/RouletteView.xaml.cs` — **RouletteView** — The LUDÓPATA wheel: the wheel of fortune in the arcade room, and the card of what came out once it has landed. 
@@ -158,12 +163,12 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Views/ShopView.xaml.cs` — **ShopView** — The shop screen. All the work is in the view model.
 - `Views/SyncView.xaml.cs` — **SyncView** — 
 - `Views/TcgCard.cs` — **TcgMove, TcgCard, TcgLayout, CellCanvas** — One of the four moves printed on a card, as the installed world describes it.
-- `Views/TcgCardArt.cs` — **TcgRender, TcgCardArt** — A card drawn once, with what moves on it kept apart: the cells of foil a shiny's shine runs over, and the embers along a burnt edge. 
+- `Views/TcgCardArt.cs` — **TcgFinish, TcgRegion, TcgRender, TcgCardArt** — The finish of a card, as the print runs of the real game have them: the rarer, the more it shines (§187). 
 - `Views/ToastPixels.cs` — **ToastPixels, ToastFrame, ToastPlate, ToastCountdown, ToastMarks** — What the pieces of a notice share: the size of a cell, the colours of each kind, and drawing in cells. 
 - `Views/ToastWindow.xaml.cs` — **ToastWindow** — The window the notices live in. It has no logic: where it goes and what it says is `ervices.Notifier`'s job. 
 - `Views/TradeMachine.cs` — **TradeMachine** — The wonder trade's stage: the trade cabin (`radeMachineScene`) on screen, in whole cells. 
 - `Views/TradeMachineScene.cs` — **TradeType, TradeShow, TradeTimeline, TradeMachineScene** — One type of what arrives, as the cabin's screen shows it: its name and the colour the games give it.
 - `Views/TrainerRoom.cs` — **TrainerRoom** — JUGAR's cover: the trainer's room (`rainerRoomScene`) on screen, in whole cells. 
-- `Views/TrainerRoomScene.cs` — **RoomSprite, RoomCrystal, TrainerRoomState, TrainerRoomScene** — A picture from the cartridge, as the room draws it: BGRA, one icon pixel per cell.
+- `Views/TrainerRoomScene.cs` — **RoomSprite, RoomCrystal, TrainerRoomState, TrainerRoomScene** — A picture of the cartridge as cells, or null without one.
 - `Views/WheelEnding.cs` — **WheelEnding** — One way the wheel can come to a stop: how hard it brakes, how far it travels, and how much it settles back at the very end. 
 - `Views/WonderTradeOverlay.xaml.cs` — **WonderTradeOverlay** — The wonder trade as it plays: the trade cabin in the arcade room, and the card of what arrived once it is out. 

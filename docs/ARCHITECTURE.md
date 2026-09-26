@@ -12073,3 +12073,63 @@ corrigieron el «PS» encima de la placa de fase, la N, el reverso cortado y los
 **Sin probar:** la sección dentro de la app (WPF no corre en Linux), el ratón, el teclado y la animación en pantalla, y
 las cartas con los iconos reales del cartucho (en las imágenes de prueba había criaturas dibujadas a mano). Las pruebas de
 `AlbumTests` compilan pero se ejecutan en Windows.
+
+## §187 · ÁLBUM premium: carpeta de piel, acabados por rareza y la carta en la mano en 3D (2026-09-26)
+
+Petición del jugador: transformar el álbum (§186) en algo «muchísimo más impresionante», con acabado de producto y sin
+perder el pixel art ni ninguna función. Dirección elegida: **«colección nocturna del ultraespacio»** — una carpeta de
+coleccionista forrada de piel violeta bajo una lámpara de escritorio, cartas con los acabados de las tiradas de verdad, y
+una inspección de carta como la de Balatro.
+
+**Primero, un fallo de tamaño.** La sección pedía `GameNeed.Either`, y con él la app pinta la franja «ABIERTO O CERRADO»
+(unos 74 px). Con la cabecera y la barra, la doble página de 314 celdas no cabía a 2 px por celda en GRANDE y habría
+bajado a 1 px: diminuta. Ahora `Needs => None` (solo lee la partida) y el aviso de partida vieja va pequeño en la barra.
+La barra es más baja, y `AlbumStage` elige: carpeta vestida si cabe a los mismos píxeles por celda que la desnuda; si no,
+sin tapa ni pestañas. Prueba: ambas medidas caben en 540 × 320 celdas.
+
+**Las cartas** (`TcgCardArt`):
+- **Acabados por rareza** (`TcgFinish`), como el ★ de una carta real: ● y ◆ papel; ★ **holo** (el dibujo es una lámina con
+  estrellitas que titilan); ★ plata **holo inversa** (brilla el panel, con trama plateada, y el dibujo no); ★ oro borde
+  **dorado grabado en cruz** y dibujo holo; **variocolor** polícroma en toda la carta, borde incluido, con estrella junto
+  al nombre. Las caídas pierden el acabado en el fuego.
+- La lámina sabe dónde está: el lienzo apunta la **región** de cada celda (dibujo, panel, borde; `CellCanvas.Regions`) y
+  lo que se pinta encima —texto, figura— la borra solo. La luz nunca lava un nombre (probado).
+- La luz del acabado (`Animate`) recorre la carta con una pausa entre pasadas o **va a donde se le diga**: la carta en la
+  mano le pasa la inclinación. Bordes de la franja en tramado; brillo plateado, dorado o arcoíris según el acabado;
+  destellos en dorada y variocolor.
+- Detalle: panel más claro arriba fundido a tramado, borde con grano diagonal, nombre con sombra de relieve, energías con
+  sombra, tira NV/PS en su placa, filas de movimientos alternas; el dorso con banda del color del tipo y las estadísticas
+  en un pozo. Humo que sube de las brasas de las caídas.
+
+**La carpeta** (`AlbumScene`, reescrita):
+- Tapa de **piel** con grano y **pespunte**, **cantoneras doradas** remachadas, **pestañas índice** de colores en el canto
+  (EQ y el número de cada caja; la abierta sale más y se enciende; se pulsan para ir a esa caja, `OpenTabCommand`).
+- Cada página lleva **cabecera impresa** («CAJA 3 · NOMBRE») y su **número**; las fundas vacías, el **contorno de una Poké
+  Ball** como en las carpetas de verdad; anillas más gruesas; lomo hondo.
+- **Luz de lámpara** horneada en un mapa (más clara arriba a la izquierda, más oscura en las esquinas lejanas, a
+  tramado) sobre todo; cada siete segundos un **destello** cruza el plástico.
+- La carta bajo el ratón **se levanta** con su sombra en la página y la funda latiendo en violeta, por encima de la luz.
+- **La página gira en perspectiva**: la hoja rota sobre el lomo, su borde libre crece al acercarse, se oscurece al ponerse
+  de canto y echa sombra en la que destapa (0,62 s, inversa de la proyección por celda).
+
+**La carta en la mano** (`HandScene` puro + `CardStage`), a la resolución de la pantalla:
+- Proyección de un plano girado en 3D (homografía invertida por píxel): cada píxel toma el color de **una** celda, así que
+  los píxeles de la carta siguen cuadrados y nítidos y solo se inclinan con ella.
+- **Sale volando de su funda** (el `AlbumStage` dice dónde estaba, `CardOpening` → `FlyFrom`), en arco, girando una vuelta
+  entera y creciendo con rebote. **Se inclina hacia el ratón** con un muelle amortiguado (y se mece sola si no está
+  encima); la lámina y un **reflejo** siguen la inclinación. **Clic: media vuelta en 3D** con rebote para ver el dorso.
+- Alrededor: **rayos** lentos del color del acabado detrás de las raras, **motas de polvo** en la luz (ceniza y chispas
+  junto a una caída), **estallido** de destellos al aterrizar una rara, y su **sombra** en la mesa con la forma real (lo
+  quemado no hace sombra). Solo se copia a la pantalla el rectángulo que cambia.
+- Debajo, el título de la carta («DRAGONITE · RARA DORADA · DEL GACHA», `AlbumViewModel.TitleOf`) y cómo usarla.
+
+**Para comprobar sin Windows:** `tools/PermaLocke.PixelCheck` compila los ficheros puros del álbum tal cual (con un
+`Color` de sustituto) y ejecuta las mismas `AlbumTests`; con `PERMALOCKE_PIXEL_DIR` deja PNG del álbum, la página
+girando, los acabados y la carta en la mano. Para eso salieron de sus ficheros WPF, sin cambiar nada: la letra pequeña
+(`SmallFont`), la tabla de colores de tipo (`TypeColours`, de la que `TypePalette` hace sus pinceles), las celdas de
+`RoomSprite` y el paginado (`AlbumPaging`).
+
+**Verificado:** solución entera compilada en Linux sin avisos; Core 380, Rules 151, Randomizer 485, GameLink 389 y
+PixelCheck 45 correctas; imágenes de cada pieza revisadas (así se corrigieron la sombra de las caídas, el dorado que no se
+distinguía del amarillo, la cápsula encima de los PS y el reflejo en mitad de la carta). **Sin ver dentro de la app**: el
+ratón, los muelles, el vuelo y el tamaño real en GRANDE se comprueban en Windows.

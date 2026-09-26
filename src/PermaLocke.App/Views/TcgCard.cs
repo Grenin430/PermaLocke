@@ -62,8 +62,8 @@ public sealed record TcgCard(
     /// <summary>The first type, which paints the card; Normal when the world did not say.</summary>
     public int MainType => Types.Count > 0 && Types[0] >= 0 ? Types[0] : 0;
 
-    /// <summary>Whether anything on the card moves: the foil of a shiny, the embers of a fallen one.</summary>
-    public bool IsLive => Shiny && !Egg || Fallen;
+    /// <summary>Whether anything on the card moves: the foil of its finish, the embers of a fallen one.</summary>
+    public bool IsLive => !Egg && (Fallen || TcgCardArt.FinishOf(this) != TcgFinish.Plain);
 }
 
 /// <summary>Which of the two card designs: the full one of the 3×3 pages and the zoom, or the small one of 4×4.</summary>
@@ -95,9 +95,38 @@ public sealed class CellCanvas
 
     public byte[] Bgra { get; }
 
+    /// <summary>
+    /// When set, every cell painted records <see cref="Region"/> here: a card knows which of its cells are picture, panel
+    /// or border, and whatever is drawn on top — text, the figure — clears it without anyone having to say so.
+    /// </summary>
+    public TcgRegion[]? Regions { get; set; }
+
+    /// <summary>The part of the card being painted now, for <see cref="Regions"/>.</summary>
+    public TcgRegion Region { get; set; }
+
     public bool Inside(int x, int y) => x >= 0 && y >= 0 && x < Width && y < Height;
 
     public void Put(int x, int y, Color colour)
+    {
+        if (!Inside(x, y))
+        {
+            return;
+        }
+
+        var at = ((y * Width) + x) * 4;
+        Bgra[at] = colour.B;
+        Bgra[at + 1] = colour.G;
+        Bgra[at + 2] = colour.R;
+        Bgra[at + 3] = 255;
+
+        if (Regions is { } regions)
+        {
+            regions[(y * Width) + x] = Region;
+        }
+    }
+
+    /// <summary>Paints a cell keeping the region it had: for a finish laid over what is already there.</summary>
+    public void Tint(int x, int y, Color colour)
     {
         if (!Inside(x, y))
         {

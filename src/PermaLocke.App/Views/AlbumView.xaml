@@ -7,9 +7,10 @@
              Focusable="True" FocusVisualStyle="{x:Null}">
 
     <!--
-        EL ÁLBUM (§186): los Pokémon de la partida como cartas en una carpeta, caja a caja. Solo para mirar: aquí no se
-        escribe nada. Arriba se elige la caja y el tamaño de las cartas; la rueda o las flechas pasan página, y un clic
-        saca una carta para verla en grande y darle la vuelta.
+        EL ÁLBUM (§186, rehecho en §187): los Pokémon de la partida como cartas en una carpeta de piel, caja a caja. Solo
+        para mirar: aquí no se escribe nada. Arriba, una barra baja para dejar sitio a la carpeta: la caja, las páginas,
+        el tamaño de las cartas. Las pestañas del canto también cambian de caja; la rueda o las flechas pasan página, y un
+        clic saca la carta a la mano: sale volando, se inclina hacia el ratón y otro clic le da la vuelta.
     -->
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
@@ -30,7 +31,7 @@
         </Grid.RowDefinitions>
 
         <!-- ================================================== LA BARRA: caja, páginas, tamaño -->
-        <DockPanel Grid.Row="0" Margin="0,0,0,10" LastChildFill="False">
+        <DockPanel Grid.Row="0" Margin="0,0,0,8" LastChildFill="False">
             <Button DockPanel.Dock="Left" Content="◀" Style="{StaticResource PxSubtleButton}" Padding="14,8,20,13"
                     Command="{Binding PreviousSpreadCommand}" VerticalAlignment="Center"
                     AutomationProperties.Name="Páginas anteriores" />
@@ -59,6 +60,11 @@
                 <pixel:PixelText Text="{Binding PageLabel}" Scale="2" Tight="True" Colour="{StaticResource PxText}" />
                 <pixel:PixelText Text="{Binding Summary}" Scale="1" Tight="True" Margin="0,6,0,0"
                                  Colour="{StaticResource PxTextDim}" />
+                <!-- Lo que es cierto y no es un fallo (la partida guardada es más vieja que el juego abierto): pequeño,
+                     sin tapar la carpeta. -->
+                <pixel:PixelText Text="{Binding Notice}" Scale="1" Tight="True" Margin="0,4,0,0" MaxWidth="360" Trim="True"
+                                 Colour="{StaticResource PxWarn}"
+                                 Visibility="{Binding HasNotice, Converter={StaticResource BoolToVisibility}}" />
             </StackPanel>
 
             <Button DockPanel.Dock="Right" Content="RELEER" Style="{StaticResource PxSubtleButton}" Margin="8,0,0,0"
@@ -77,6 +83,7 @@
         <views:AlbumStage x:Name="Stage" Grid.Row="1"
                           Spread="{Binding Spread}"
                           OpenCommand="{Binding OpenCommand}"
+                          TabCommand="{Binding OpenTabCommand}"
                           NextCommand="{Binding NextSpreadCommand}"
                           PreviousCommand="{Binding PreviousSpreadCommand}" />
 
@@ -87,20 +94,20 @@
                          Colour="{StaticResource PxTextDim}" HorizontalAlignment="Center" VerticalAlignment="Center"
                          Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVisibility}}" />
 
-        <!-- Problemas y avisos, encima de todo, porque son lo primero que hay que leer. -->
-        <Grid Grid.Row="1" VerticalAlignment="Top" Margin="12,6,12,0"
-              Visibility="{Binding HasMessage, Converter={StaticResource BoolToVisibility}}">
+        <!-- Si la partida no se ha podido leer, se dice en grande donde iría la carpeta. -->
+        <Grid Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="12,0"
+              Visibility="{Binding HasProblem, Converter={StaticResource BoolToVisibility}}">
             <views:PixelPanel Fill="{StaticResource PxWarnDeep}" />
             <StackPanel Orientation="Horizontal" Margin="16,10,22,16">
                 <pixel:PixelText Text="!" Scale="3" Tight="True" Colour="{StaticResource PxWarn}" VerticalAlignment="Center" />
-                <pixel:PixelText Text="{Binding Message}" Scale="2" Wrap="True" Margin="12,0,0,0" MaxWidth="1000"
+                <pixel:PixelText Text="{Binding Problem}" Scale="2" Wrap="True" Margin="12,0,0,0" MaxWidth="900"
                                  Colour="{StaticResource PxText}" VerticalAlignment="Center" />
             </StackPanel>
         </Grid>
 
         <!-- ================================================== LA CARTA EN LA MANO
              Encima de todo. Pulsar fuera la devuelve a su funda; pulsar la carta le da la vuelta. -->
-        <Grid Grid.Row="0" Grid.RowSpan="2" Background="#E0090712"
+        <Grid Grid.Row="0" Grid.RowSpan="2" Background="#EC07050E"
               Visibility="{Binding IsInspecting, Converter={StaticResource BoolToVisibility}}">
             <Grid.InputBindings>
                 <MouseBinding MouseAction="LeftClick" Command="{Binding CloseCommand}" />
@@ -119,19 +126,27 @@
                     Margin="24,0,0,0" VerticalAlignment="Center" Command="{Binding PreviousCardCommand}"
                     AutomationProperties.Name="Carta anterior" />
 
-            <views:CardStage x:Name="Hand" Grid.Column="1" Margin="12,16,12,4" Card="{Binding Inspected}" />
+            <views:CardStage x:Name="Hand" Grid.Column="1" Margin="0,8,0,0" Card="{Binding Inspected}" />
 
             <Button Grid.Column="2" Content="▶" Style="{StaticResource PxSubtleButton}" Padding="14,8,20,13"
                     Margin="0,0,24,0" VerticalAlignment="Center" Command="{Binding NextCardCommand}"
                     AutomationProperties.Name="Carta siguiente" />
 
-            <DockPanel Grid.Row="1" Grid.ColumnSpan="3" Margin="24,0,24,18" LastChildFill="False">
-                <pixel:PixelText DockPanel.Dock="Left" Text="{Binding InspectedCaption}" Scale="2" Tight="True"
-                                 Colour="{StaticResource PxTextDim}" VerticalAlignment="Center" />
+            <DockPanel Grid.Row="1" Grid.ColumnSpan="3" Margin="24,0,24,16" LastChildFill="False">
+                <StackPanel DockPanel.Dock="Left" VerticalAlignment="Center">
+                    <pixel:PixelText Text="{Binding InspectedTitle}" Scale="2" Tight="True" Trim="True" MaxWidth="620"
+                                     Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
+                    <pixel:PixelText Text="{Binding InspectedCaption}" Scale="1" Tight="True" Margin="0,6,0,0"
+                                     Colour="{StaticResource PxTextDim}" />
+                </StackPanel>
                 <Button DockPanel.Dock="Right" Content="CERRAR" Style="{StaticResource PxButton}"
                         Command="{Binding CloseCommand}" VerticalAlignment="Center" />
-                <pixel:PixelText DockPanel.Dock="Right" Text="PULSA LA CARTA PARA DARLE LA VUELTA" Scale="2" Tight="True"
-                                 Colour="{StaticResource PxTextDim}" VerticalAlignment="Center" Margin="0,0,18,0" />
+                <StackPanel DockPanel.Dock="Right" Margin="0,0,18,0" VerticalAlignment="Center">
+                    <pixel:PixelText Text="MUEVE EL RATÓN SOBRE LA CARTA PARA INCLINARLA" Scale="1" Tight="True"
+                                     HorizontalAlignment="Right" Colour="{StaticResource PxTextDim}" />
+                    <pixel:PixelText Text="PULSA LA CARTA PARA DARLE LA VUELTA" Scale="1" Tight="True" Margin="0,6,0,0"
+                                     HorizontalAlignment="Right" Colour="{StaticResource PxTextDim}" />
+                </StackPanel>
             </DockPanel>
         </Grid>
     </Grid>

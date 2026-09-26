@@ -6,17 +6,56 @@ using static PermaLocke.App.Views.CellCanvas;
 namespace PermaLocke.App.Views;
 
 /// <summary>
-/// A card drawn once, with what moves on it kept apart: the cells of foil a shiny's shine runs over, and the embers along
-/// a burnt edge.
+/// The finish of a card, as the print runs of the real game have them: the rarer, the more it shines (§187).
 /// </summary>
-public sealed class TcgRender(CellCanvas canvas, bool[] foil, IReadOnlyList<(int X, int Y, double Phase)> embers)
+public enum TcgFinish
+{
+    /// <summary>Tiers 1 and 2, eggs and the fallen: printed paper.</summary>
+    Plain,
+
+    /// <summary>Tier 3 (★): the picture is holographic, a night of tiny stars that twinkle.</summary>
+    Holo,
+
+    /// <summary>Tier 4 (silver ★): reverse holo, the panel around the picture shines silver and the picture does not.</summary>
+    Reverse,
+
+    /// <summary>Tier 5 (gold ★): gold border with an engraved grain and a holographic picture.</summary>
+    Gold,
+
+    /// <summary>A shiny: the whole card is rainbow foil, border included, whatever its tier.</summary>
+    Polychrome
+}
+
+/// <summary>Where a cell of a card sits, for the finishes that shine only on one part of it.</summary>
+public enum TcgRegion : byte
+{
+    None,
+    Art,
+    Panel,
+    Rim
+}
+
+/// <summary>
+/// A card drawn once, with what moves on it kept apart: which part of the card each cell is, for the foil; the stars of
+/// a holographic picture; and the embers along a burnt edge.
+/// </summary>
+public sealed class TcgRender(CellCanvas canvas, TcgRegion[] regions, TcgFinish finish,
+    IReadOnlyList<(int X, int Y, double Phase)> embers, IReadOnlyList<(int X, int Y, double Phase)>? stars = null)
 {
     public CellCanvas Canvas { get; } = canvas;
 
-    /// <summary>Per cell, whether it is holographic foil.</summary>
-    public bool[] Foil { get; } = foil;
+    /// <summary>Per cell, the part of the card it belongs to; <see cref="TcgRegion.None"/> for the figure and the text.</summary>
+    public TcgRegion[] Regions { get; } = regions;
+
+    public TcgFinish Finish { get; } = finish;
 
     public IReadOnlyList<(int X, int Y, double Phase)> Embers { get; } = embers;
+
+    /// <summary>The twinkling stars of a holographic picture.</summary>
+    public IReadOnlyList<(int X, int Y, double Phase)> Stars { get; } = stars ?? [];
+
+    /// <summary>Whether anything on it moves: a finish that shines or embers that glow.</summary>
+    public bool IsLive => Finish != TcgFinish.Plain || Embers.Count > 0;
 }
 
 /// <summary>
@@ -59,6 +98,17 @@ public static class TcgCardArt
     private static readonly Color Rim = Rgb(0xF2, 0xCC, 0x3C);
     private static readonly Color RimDark = Rgb(0xB0, 0x82, 0x1C);
 
+    // El borde dorado del tier 5, grabado.
+    private static readonly Color GoldRimHi = Rgb(0xFF, 0xF8, 0xD8);
+    private static readonly Color GoldRim = Rgb(0xC8, 0x8A, 0x22);
+    private static readonly Color GoldRimLight = Rgb(0xFF, 0xE2, 0x8A);
+    private static readonly Color GoldRimDeep = Rgb(0x9A, 0x62, 0x14);
+    private static readonly Color GoldRimDark = Rgb(0x6E, 0x40, 0x0E);
+
+    private static readonly Color SilverHi = Rgb(0xF4, 0xF6, 0xFF);
+    private static readonly Color Smoke = Rgb(0x6A, 0x62, 0x70);
+    private static readonly Color SmokeLight = Rgb(0x9A, 0x94, 0xA0);
+
     private static readonly Color Up = Rgb(0xC8, 0x32, 0x32);
     private static readonly Color Down = Rgb(0x2E, 0x5E, 0xC8);
     private static readonly Color Gold = Rgb(0xFF, 0xD2, 0x3C);
@@ -93,40 +143,59 @@ public static class TcgCardArt
     public static TcgRender Render(TcgCard card, TcgLayout layout, bool back = false)
     {
         var (width, height) = back ? (FullWidth, FullHeight) : SizeOf(layout);
-        var canvas = new CellCanvas(width, height);
-        var foil = new bool[width * height];
+        var regions = new TcgRegion[width * height];
+        var canvas = new CellCanvas(width, height) { Regions = regions };
         List<(int, int, double)> embers = [];
+        List<(int, int, double)> stars = [];
 
         if (card.Egg)
         {
             DrawCardBack(canvas, true);
-            return new TcgRender(canvas, foil, embers);
+            return new TcgRender(canvas, regions, TcgFinish.Plain, embers);
         }
+
+        var finish = FinishOf(card);
 
         if (back)
         {
-            DrawSheet(canvas, card);
+            DrawSheet(canvas, card, finish);
         }
         else if (layout == TcgLayout.Full)
         {
-            DrawFull(canvas, foil, card);
+            DrawFull(canvas, card, finish);
         }
         else
         {
-            DrawMini(canvas, foil, card);
+            DrawMini(canvas, card, finish);
         }
 
         if (card.Fallen)
         {
             Ruin(canvas, card.Seed, embers, mirrored: back);
-            Array.Clear(foil);
-        }
-        else if (!card.Shiny)
-        {
-            Array.Clear(foil);
+            Array.Clear(regions);
+            return new TcgRender(canvas, regions, TcgFinish.Plain, embers);
         }
 
-        return new TcgRender(canvas, foil, embers);
+        Laminate(canvas, finish, card.Seed, stars);
+        return new TcgRender(canvas, regions, finish, embers, stars);
+    }
+
+    /// <summary>
+    /// The finish a card is printed with: a shiny is always polychrome; otherwise its rarity decides, like the ★ of a
+    /// real card. The fallen lose theirs with the fire, and an egg is face down.
+    /// </summary>
+    public static TcgFinish FinishOf(TcgCard card)
+    {
+        if (card.Egg || card.Fallen) return TcgFinish.Plain;
+        if (card.Shiny) return TcgFinish.Polychrome;
+
+        return card.Rarity switch
+        {
+            4 => TcgFinish.Gold,
+            3 => TcgFinish.Reverse,
+            2 => TcgFinish.Holo,
+            _ => TcgFinish.Plain
+        };
     }
 
     /// <summary>
@@ -137,60 +206,99 @@ public static class TcgCardArt
         var (width, height) = SizeOf(layout);
         var canvas = new CellCanvas(width, height);
         DrawCardBack(canvas, false);
-        return new TcgRender(canvas, new bool[width * height], []);
+        return new TcgRender(canvas, new TcgRegion[width * height], TcgFinish.Plain, []);
     }
 
     /// <summary>
     /// The moving part of a card at <paramref name="seconds"/>, drawn into <paramref name="target"/> where the card sits:
-    /// the shine sweeping over a shiny's foil, with its sparkles, and the embers of a fallen card flickering.
+    /// the light running over its foil — rainbow, silver or gold by its finish —, the twinkling stars of a holographic
+    /// picture, the sparkles of a shiny, and the embers and smoke of a fallen card.
     /// </summary>
-    public static void Animate(TcgRender render, CellCanvas target, int left, int top, double seconds, uint seed)
+    /// <param name="light">
+    /// Where the light crosses the card, 0 at its top-left corner to 1 at the bottom-right: the card in the hand passes
+    /// the tilt here, so the foil catches the light as it turns. Null lets it sweep by itself, with a pause between
+    /// passes, as on the page.
+    /// </param>
+    public static void Animate(TcgRender render, CellCanvas target, int left, int top, double seconds, uint seed, double? light = null)
     {
         var canvas = render.Canvas;
         var width = canvas.Width;
         var height = canvas.Height;
+        var finish = render.Finish;
 
-        if (render.Foil.Any(f => f))
+        if (finish != TcgFinish.Plain)
         {
-            // Una franja de arcoíris en diagonal que cruza la carta cada 2,6 s, a pasos de celda, a medio tono.
-            var span = width + height + 40;
-            var centre = (int)(seconds * 46 % span) - 20;
+            var span = width + (height * 0.8) + 32;
+            double centre;
+            if (light is { } l)
+            {
+                centre = (l * span) - 16;
+            }
+            else
+            {
+                // Una pasada cada 3,4 s: 2,4 s cruzando y un segundo de calma, para que no canse.
+                var cycle = seconds % 3.4 / 2.4;
+                centre = cycle <= 1 ? (cycle * span) - 16 : -999;
+            }
+
+            var reach = finish == TcgFinish.Polychrome ? 9.0 : 6.0;
 
             for (var y = 0; y < height; y++)
             {
                 for (var x = 0; x < width; x++)
                 {
-                    if (!render.Foil[(y * width) + x])
+                    var region = render.Regions[(y * width) + x];
+                    if (region == TcgRegion.None || !Shines(finish, region))
                     {
                         continue;
                     }
 
-                    var distance = x + y - centre;
-                    if (Math.Abs(distance) > 7 || !Dither(x, y, 0.5))
+                    var distance = x + (y * 0.8) - centre;
+                    var strength = 1 - (Math.Abs(distance) / reach);
+
+                    // Los bordes de la franja se deshacen en tramado: la luz no tiene un filo recto.
+                    if (strength <= 0 || !Dither(x, y, Math.Min(1, strength * 1.6)))
                     {
                         continue;
                     }
 
-                    var hue = Rainbow[Math.Clamp((distance + 7) / 2, 0, Rainbow.Length - 1)];
-                    target.Put(left + x, top + y, Mix(canvas.At(x, y), hue, 0.65));
+                    var (tint, amount) = Shine(finish, region, distance, reach);
+                    target.Put(left + x, top + y, Mix(canvas.At(x, y), tint, amount));
                 }
             }
 
-            // Tres destellos de cuatro puntas en sitios fijos de la lámina, cada uno a su ritmo.
-            for (var i = 0; i < 3; i++)
+            // Las estrellas del dibujo holográfico se encienden a su ritmo.
+            foreach (var (x, y, phase) in render.Stars)
             {
-                var (sx, sy) = FoilSpot(render, seed, i);
-                if (sx < 0)
+                var t = ((seconds * 0.55) + phase) % 1;
+                if (t < 0.08)
                 {
-                    continue;
+                    Sparkle(target, left + x, top + y, 1);
                 }
-
-                var phase = (seconds / 1.7) + (i * 0.37) + (Hash(i, 3, seed) * 0.5);
-                var t = phase - Math.Floor(phase);
-                var size = t < 0.12 ? 1 : t < 0.24 ? 2 : t < 0.34 ? 1 : 0;
-                if (size > 0)
+                else if (t < 0.2)
                 {
-                    Sparkle(target, left + sx, top + sy, size);
+                    target.Put(left + x, top + y, White);
+                }
+            }
+
+            // Un variocolor y un dorado sueltan destellos de cuatro puntas en sitios fijos de la lámina.
+            if (finish is TcgFinish.Polychrome or TcgFinish.Gold)
+            {
+                for (var i = 0; i < 3; i++)
+                {
+                    var (sx, sy) = FoilSpot(render, seed, i);
+                    if (sx < 0)
+                    {
+                        continue;
+                    }
+
+                    var phase = (seconds / 1.7) + (i * 0.37) + (Hash(i, 3, seed) * 0.5);
+                    var t = phase - Math.Floor(phase);
+                    var size = t < 0.1 ? 1 : t < 0.2 ? 2 : t < 0.3 ? 1 : 0;
+                    if (size > 0)
+                    {
+                        Sparkle(target, left + sx, top + sy, size);
+                    }
                 }
             }
         }
@@ -203,40 +311,163 @@ public static class TcgCardArt
                 target.Put(left + x, top + y, glow > 0.8 ? EmberHot : Ember);
             }
         }
+
+        // Humo: de tres brasas suben volutas que se deshacen, cada una a su tiempo.
+        for (var i = 0; i < Math.Min(3, render.Embers.Count); i++)
+        {
+            var (ex, ey, phase) = render.Embers[(int)(Hash(i, 5, seed) * render.Embers.Count)];
+            var t = ((seconds / 2.6) + phase + (i * 0.33)) % 1;
+            var rise = t * 16;
+            var sx = ex + (int)Math.Round(Math.Sin((t * 6) + phase) * 2);
+            var sy = ey - (int)rise;
+            var fade = 1 - t;
+
+            if (Dither(sx, sy, fade))
+            {
+                target.Put(left + sx, top + sy, t < 0.4 ? SmokeLight : Smoke);
+            }
+
+            if (t > 0.25 && Dither(sx + 1, sy, fade * 0.8))
+            {
+                target.Put(left + sx + 1, top + sy, Smoke);
+            }
+        }
+    }
+
+    /// <summary>Which parts of the card a finish makes shine.</summary>
+    private static bool Shines(TcgFinish finish, TcgRegion region) => finish switch
+    {
+        TcgFinish.Polychrome => true,
+        TcgFinish.Holo => region == TcgRegion.Art,
+        TcgFinish.Reverse => region == TcgRegion.Panel,
+        TcgFinish.Gold => region is TcgRegion.Rim or TcgRegion.Art,
+        _ => false
+    };
+
+    /// <summary>The colour the light takes on a part of the card, and how much of it.</summary>
+    private static (Color Tint, double Amount) Shine(TcgFinish finish, TcgRegion region, double distance, double reach)
+    {
+        var hue = Rainbow[Math.Clamp((int)((distance + reach) / (2 * reach) * Rainbow.Length), 0, Rainbow.Length - 1)];
+
+        return finish switch
+        {
+            TcgFinish.Polychrome => (hue, 0.58),
+            TcgFinish.Reverse => (SilverHi, 0.55),
+            TcgFinish.Gold when region == TcgRegion.Rim => (GoldRimHi, 0.75),
+            _ => (hue, 0.42)
+        };
+    }
+
+    /// <summary>
+    /// The still part of the foil, printed once: a holographic picture's field of tiny stars, the silver hatching of a
+    /// reverse holo, and the faint rainbow stripes all over a shiny.
+    /// </summary>
+    private static void Laminate(CellCanvas c, TcgFinish finish, uint seed, List<(int X, int Y, double Phase)> stars)
+    {
+        if (finish == TcgFinish.Plain || c.Regions is not { } regions)
+        {
+            return;
+        }
+
+        for (var y = 0; y < c.Height; y++)
+        {
+            for (var x = 0; x < c.Width; x++)
+            {
+                var region = regions[(y * c.Width) + x];
+                if (region == TcgRegion.None)
+                {
+                    continue;
+                }
+
+                var colour = c.At(x, y);
+
+                if (region == TcgRegion.Art && finish is TcgFinish.Holo or TcgFinish.Gold or TcgFinish.Polychrome)
+                {
+                    var h = Hash(x, y, seed + 41);
+                    if (h < 0.05)
+                    {
+                        c.Tint(x, y, Mix(colour, h < 0.02 ? White : Rainbow[(int)(h * 1000) % Rainbow.Length], 0.6));
+                        if (h < 0.018 && x % 3 == 1)
+                        {
+                            stars.Add((x, y, Hash(y, x, seed + 43)));
+                        }
+
+                        continue;
+                    }
+                }
+
+                if (region == TcgRegion.Panel && finish == TcgFinish.Reverse)
+                {
+                    if (((x * 3) + y) % 6 == 0 && Dither(x, y, 0.5))
+                    {
+                        c.Tint(x, y, Mix(colour, SilverHi, 0.35));
+                    }
+                    else if (Hash(x, y, seed + 47) < 0.025)
+                    {
+                        c.Tint(x, y, Mix(colour, White, 0.6));
+                    }
+
+                    continue;
+                }
+
+                if (finish == TcgFinish.Polychrome && ((x - y) % 9 + 9) % 9 == 0 && Dither(x, y, 0.5))
+                {
+                    c.Tint(x, y, Mix(colour, Rainbow[(((x + y) / 9) % Rainbow.Length + Rainbow.Length) % Rainbow.Length], 0.3));
+                }
+            }
+        }
     }
 
     // ====================================================================================================== FRONT
 
-    private static void DrawFull(CellCanvas c, bool[] foil, TcgCard card)
+    private static void DrawFull(CellCanvas c, TcgCard card, TcgFinish finish)
     {
-        var type = TypePalette.ColourOf(card.MainType);
+        var type = TypeColours.Of(card.MainType);
         var panel = Mix(type, White, 0.62);
 
-        Body(c, 3, panel, Mix(type, White, 0.5));
+        Body(c, 3, panel, Mix(type, White, 0.72), Mix(type, White, 0.5), finish == TcgFinish.Gold);
 
         // ARRIBA: la fase en su placa y, a la derecha, la energía de sus tipos.
         var stage = card.Stage.ToUpperInvariant();
         var plate = SmallWidth(stage) + 4;
         Plate(c, 5, 4, plate, 8, Mix(panel, White, 0.55), Mix(type, Black, 0.35));
         Small(c, stage, 7, 6, Ink);
-        EnergyRow(c, card.Types, FullWidth - 6, 4);
+        EnergyRow(c, card.Types, FullWidth - 6, 4, Mix(panel, Black, 0.3));
 
-        // EL NOMBRE, con la letra grande de la aplicación.
-        Font(c, PixelFont.Trim(card.Name, FullWidth - 12), 6, 11, Ink);
+        // EL NOMBRE, con la letra grande de la aplicación y su sombra, como impreso en relieve. Si es variocolor, su
+        // estrella detrás.
+        var name = PixelFont.Trim(card.Name, FullWidth - 12 - (card.Shiny ? 9 : 0));
+        Font(c, name, 7, 12, Mix(panel, Black, 0.22));
+        Font(c, name, 6, 11, Ink);
+        if (card.Shiny)
+        {
+            Outlined(c, ShinyStar, 6 + PixelFont.Measure(name) + 4, 15, Gold, GoldDark);
+        }
 
         // LA ILUSTRACIÓN.
-        ArtWindow(c, foil, card, 6, 24, FullWidth - 12, 34, type);
+        ArtWindow(c, card, 6, 24, FullWidth - 12, 34, type);
 
-        // LA TIRA: nivel, PS y rareza. Rótulo apagado y cifra, como el «PS 120» de las cartas.
-        var after = Labelled(c, "NV", card.Level.ToString(), 6, 60);
-        Labelled(c, "PS", card.Hp > 0 ? card.Hp.ToString() : "?", after + 5, 60);
-        RarityMarks(c, card, FullWidth - 7, 60);
+        // LA TIRA, en su placa bajo el dibujo: nivel, PS y rareza. Rótulo apagado y cifra, como el «PS 120».
+        Plate(c, 5, 59, FullWidth - 10, 7, Mix(panel, White, 0.4), Mix(type, Black, 0.2));
+        var after = Labelled(c, "NV", card.Level.ToString(), 7, 60, gap: 1);
+        Labelled(c, "PS", card.Hp > 0 ? card.Hp.ToString() : "?", after + 4, 60, gap: 1);
+        RarityMarks(c, card, FullWidth - 8, 60);
 
-        // LOS MOVIMIENTOS, como los ataques: su energía y su nombre, con una raya entre uno y otro.
-        for (var x = 6; x < FullWidth - 6; x += 2)
+        // LOS MOVIMIENTOS, como los ataques: su energía y su nombre, en filas alternas apenas sombreadas.
+        c.Region = TcgRegion.Panel;
+        foreach (var row in new[] { 1, 3 })
         {
-            c.Put(x, 66, Mix(type, Black, 0.25));
+            var top = 67 + (row * 6);
+            for (var yy = top; yy < top + 7 && yy < FullHeight - 4; yy++)
+            {
+                for (var xx = 5; xx < FullWidth - 5; xx++)
+                {
+                    c.Put(xx, yy, Mix(c.At(xx, yy), Black, 0.06));
+                }
+            }
         }
+
+        c.Region = TcgRegion.None;
 
         for (var i = 0; i < 4; i++)
         {
@@ -254,16 +485,22 @@ public static class TcgCardArt
         }
     }
 
-    private static void DrawMini(CellCanvas c, bool[] foil, TcgCard card)
+    private static void DrawMini(CellCanvas c, TcgCard card, TcgFinish finish)
     {
-        var type = TypePalette.ColourOf(card.MainType);
+        var type = TypeColours.Of(card.MainType);
         var panel = Mix(type, White, 0.62);
 
-        Body(c, 2, panel, Mix(type, White, 0.5));
+        Body(c, 2, panel, Mix(type, White, 0.72), Mix(type, White, 0.5), finish == TcgFinish.Gold);
 
-        Small(c, SmallTrim(card.Name, MiniWidth - 8), 4, 5, Ink);
+        var name = SmallTrim(card.Name, MiniWidth - 8 - (card.Shiny ? 7 : 0));
+        Small(c, name, 5, 6, Mix(panel, Black, 0.22));
+        Small(c, name, 4, 5, Ink);
+        if (card.Shiny)
+        {
+            Outlined(c, ShinyStar, 4 + SmallWidth(name) + 3, 5, Gold, GoldDark);
+        }
 
-        ArtWindow(c, foil, card, 4, 13, MiniWidth - 8, 34, type);
+        ArtWindow(c, card, 4, 13, MiniWidth - 8, 34, type);
 
         // Rótulo apagado y cifra, con una sola celda entre los dos: «NV 100» y «PS 255» caben juntos.
         Labelled(c, "NV", card.Level.ToString(), 4, 49, gap: 1);
@@ -273,17 +510,23 @@ public static class TcgCardArt
         // Abajo, la energía de sus tipos y la rareza.
         for (var i = 0; i < Math.Min(2, card.Types.Count); i++)
         {
-            Energy(c, card.Types[i], 4 + (i * 10), 55);
+            Energy(c, card.Types[i], 4 + (i * 10), 55, Mix(panel, Black, 0.3));
         }
 
         RarityMarks(c, card, MiniWidth - 6, 57);
     }
 
-    /// <summary>The rim, the outline with its rounded corners, and the panel with its texture.</summary>
-    private static void Body(CellCanvas c, int rim, Color panel, Color texture)
+    /// <summary>
+    /// The rim, the outline with its rounded corners, and the panel: lighter at the top, joined by dithering, with a
+    /// satin grain. The rim is the classic yellow with a fine diagonal grain, or gold and engraved for tier 5.
+    /// </summary>
+    private static void Body(CellCanvas c, int rim, Color panel, Color panelLight, Color texture, bool gold)
     {
         var w = c.Width;
         var h = c.Height;
+        var (hi, mid, grain, dark) = gold
+            ? (GoldRimHi, GoldRim, GoldRimLight, GoldRimDark)
+            : (RimHi, Rim, Mix(Rim, RimHi, 0.45), RimDark);
 
         for (var y = 0; y < h; y++)
         {
@@ -299,25 +542,41 @@ public static class TcgCardArt
 
                 if (d == 0 || (d == 1 && (x == 1 || x == w - 2) && (y == 1 || y == h - 2)))
                 {
+                    c.Region = TcgRegion.None;
                     c.Put(x, y, Outline);
                 }
                 else if (d < rim)
                 {
+                    c.Region = TcgRegion.Rim;
                     var lit = x == d || y == d;
-                    c.Put(x, y, d == 1 ? (lit ? RimHi : RimDark) : Rim);
+                    // El dorado va grabado en cruz, que es lo que lo hace metal y no pintura amarilla.
+                    var colour = d == 1 ? (lit ? hi : dark)
+                        : (x + y) % (gold ? 3 : 4) == 0 ? grain
+                        : gold && ((x - y) % 3 + 3) % 3 == 0 ? GoldRimDeep
+                        : mid;
+                    c.Put(x, y, colour);
                 }
                 else if (d == rim)
                 {
-                    c.Put(x, y, RimDark);
+                    c.Region = TcgRegion.Rim;
+                    c.Put(x, y, dark);
                 }
                 else
                 {
-                    // Una trama diagonal muy suave, como el papel satinado de una carta.
-                    c.Put(x, y, (x + y) % 5 == 0 && Dither(x, y, 0.5) ? texture : panel);
+                    // Más claro arriba, fundido a tramado; y un grano diagonal muy suave, como el papel satinado.
+                    c.Region = TcgRegion.Panel;
+                    var level = Math.Clamp(((double)y / h - 0.12) / 0.22, 0, 1);
+                    var paper = Dither(x, y, level) ? panel : panelLight;
+                    c.Put(x, y, (x + y) % 5 == 0 && Dither(x, y, 0.5) ? texture : paper);
                 }
             }
         }
+
+        c.Region = TcgRegion.None;
     }
+
+    /// <summary>The star after a shiny's name.</summary>
+    private static readonly string[] ShinyStar = ["..#..", ".###.", "#####", ".###.", "#...#"];
 
     /// <summary>A small plate with notched corners.</summary>
     private static void Plate(CellCanvas c, int x, int y, int width, int height, Color fill, Color edge)
@@ -339,7 +598,7 @@ public static class TcgCardArt
     // ====================================================================================================== PICTURE
 
     /// <summary>The framed picture: its type's scene behind, the Pokémon standing in it with its shadow.</summary>
-    private static void ArtWindow(CellCanvas c, bool[] foil, TcgCard card, int x, int y, int width, int height, Color type)
+    private static void ArtWindow(CellCanvas c, TcgCard card, int x, int y, int width, int height, Color type)
     {
         // El marco: una línea oscura y un filete dorado con relieve, como el de las cartas.
         for (var yy = 0; yy < height; yy++)
@@ -359,28 +618,13 @@ public static class TcgCardArt
         }
 
         var inner = (X: x + 2, Y: y + 2, W: width - 4, H: height - 4);
+        c.Region = TcgRegion.Art;
         Scene(c, card.MainType, inner.X, inner.Y, inner.W, inner.H, card.Seed);
-
-        if (card.Shiny)
-        {
-            for (var yy = inner.Y; yy < inner.Y + inner.H; yy++)
-            {
-                for (var xx = inner.X; xx < inner.X + inner.W; xx++)
-                {
-                    foil[(yy * c.Width) + xx] = true;
-
-                    // La lámina se nota quieta: rayas finas de colores en diagonal.
-                    if ((xx - yy) % 7 == 0 && Dither(xx, yy, 0.5))
-                    {
-                        c.Put(xx, yy, Mix(c.At(xx, yy), Rainbow[((xx + yy) / 7 % Rainbow.Length + Rainbow.Length) % Rainbow.Length], 0.45));
-                    }
-                }
-            }
-        }
+        c.Region = TcgRegion.None;
 
         if (card.Sprite is { } sprite)
         {
-            Figure(c, foil, sprite, inner.X, inner.Y, inner.W, inner.H, type);
+            Figure(c, sprite, inner.X, inner.Y, inner.W, inner.H, type);
         }
         else
         {
@@ -390,7 +634,7 @@ public static class TcgCardArt
     }
 
     /// <summary>The Pokémon, feet on the ground of the scene, outlined so it stands out, with a dithered shadow.</summary>
-    private static void Figure(CellCanvas c, bool[] foil, RoomSprite sprite, int x, int y, int width, int height, Color type)
+    private static void Figure(CellCanvas c, RoomSprite sprite, int x, int y, int width, int height, Color type)
     {
         int minX = sprite.Width, minY = sprite.Height, maxX = -1, maxY = -1;
         for (var sy = 0; sy < sprite.Height; sy++)
@@ -453,7 +697,6 @@ public static class TcgCardArt
                     if (Inside(px, py))
                     {
                         c.Put(px, py, edge);
-                        foil[(py * c.Width) + px] = false;
                     }
                 }
             }
@@ -469,7 +712,6 @@ public static class TcgCardArt
                 if (Inside(px, py))
                 {
                     c.Put(px, py, sprite.At(sx, sy));
-                    foil[(py * c.Width) + px] = false;
                 }
             }
         }
@@ -481,7 +723,7 @@ public static class TcgCardArt
     /// </summary>
     private static void Scene(CellCanvas c, int typeId, int x, int y, int width, int height, uint seed)
     {
-        var type = TypePalette.ColourOf(typeId);
+        var type = TypeColours.Of(typeId);
         var night = typeId is 7 or 16;
         var skyTop = night ? Mix(type, Black, 0.6) : Mix(type, White, 0.72);
         var skyLow = night ? Mix(type, Black, 0.3) : Mix(type, White, 0.45);
@@ -814,27 +1056,39 @@ public static class TcgCardArt
     };
 
     /// <summary>The energy of each type, right-aligned to <paramref name="right"/>; returns where the row starts.</summary>
-    private static int EnergyRow(CellCanvas c, IReadOnlyList<int> types, int right, int top)
+    private static int EnergyRow(CellCanvas c, IReadOnlyList<int> types, int right, int top, Color shadow)
     {
         var left = right + 1;
         for (var i = 0; i < Math.Min(2, types.Count); i++)
         {
             left -= 10;
-            Energy(c, types[i], left + 1, top);
+            Energy(c, types[i], left + 1, top, shadow);
         }
 
         return left + 1;
     }
 
     /// <summary>A round energy symbol, nine cells across, with its type's pictogram.</summary>
-    private static void Energy(CellCanvas c, int typeId, int x, int y)
+    private static void Energy(CellCanvas c, int typeId, int x, int y, Color? shadow = null)
     {
-        var fill = TypePalette.ColourOf(typeId);
+        var fill = TypeColours.Of(typeId);
         var edge = Mix(fill, Black, 0.55);
         var shine = Mix(fill, White, 0.5);
 
         bool In(int xx, int yy) => xx >= 0 && yy >= 0 && xx < 9 && yy < 9
                                    && ((xx - 4) * (xx - 4)) + ((yy - 4) * (yy - 4)) <= 20;
+
+        // Su sombra, una celda abajo a la derecha: la energía parece una ficha apoyada en la carta.
+        if (shadow is { } dark)
+        {
+            for (var yy = 0; yy < 9; yy++)
+            {
+                for (var xx = 0; xx < 9; xx++)
+                {
+                    if (In(xx, yy) && !In(xx + 1, yy + 1)) c.Put(x + xx + 1, y + yy + 1, dark);
+                }
+            }
+        }
 
         for (var yy = 0; yy < 9; yy++)
         {
@@ -861,7 +1115,7 @@ public static class TcgCardArt
     /// <summary>The small energy dot of a move, five cells across, in its type's colour.</summary>
     private static void EnergyDot(CellCanvas c, int typeId, int x, int y)
     {
-        var fill = typeId >= 0 ? TypePalette.ColourOf(typeId) : Mix(InkDim, White, 0.4);
+        var fill = typeId >= 0 ? TypeColours.Of(typeId) : Mix(InkDim, White, 0.4);
         var edge = Mix(fill, Black, 0.5);
         string[] shape = [".###.", "#+..#", "#...#", "#...#", ".###."];
 
@@ -970,7 +1224,7 @@ public static class TcgCardArt
         {
             var x = (int)(Hash(i, attempt, seed + 17) * width);
             var y = (int)(Hash(attempt, i, seed + 29) * height);
-            if (x > 1 && y > 1 && x < width - 2 && y < height - 2 && render.Foil[(y * width) + x])
+            if (x > 1 && y > 1 && x < width - 2 && y < height - 2 && render.Regions[(y * width) + x] != TcgRegion.None)
             {
                 return (x, y);
             }
@@ -982,20 +1236,26 @@ public static class TcgCardArt
     // ====================================================================================================== BACK
 
     /// <summary>The back of a card with the Pokémon's sheet: what the game's summary says, in print.</summary>
-    private static void DrawSheet(CellCanvas c, TcgCard card)
+    private static void DrawSheet(CellCanvas c, TcgCard card, TcgFinish finish)
     {
-        var type = TypePalette.ColourOf(card.MainType);
+        var type = TypeColours.Of(card.MainType);
         var paper = Mix(type, White, 0.82);
-        Body(c, 3, paper, Mix(type, White, 0.72));
+        Body(c, 3, paper, Mix(type, White, 0.88), Mix(type, White, 0.72), finish == TcgFinish.Gold);
 
-        // El nombre de la especie y, si cabe a su lado, su número de la Pokédex.
+        // El nombre de la especie en una banda de su tipo y, si cabe a su lado, su número de la Pokédex.
+        var band = Mix(type, White, 0.42);
+        Plate(c, 5, 4, FullWidth - 10, 14, band, Mix(type, Black, 0.35));
         var number = $"N.{card.Species}";
-        var title = PixelFont.Trim(card.SpeciesName, FullWidth - 12);
-        Font(c, title, 6, 5, Ink);
-        if (PixelFont.Measure(title) + 4 + SmallWidth(number) <= FullWidth - 12)
+        var title = PixelFont.Trim(card.SpeciesName, FullWidth - 14);
+        Font(c, title, 8, 5, Mix(band, Black, 0.25));
+        Font(c, title, 7, 4, Ink);
+        if (PixelFont.Measure(title) + 4 + SmallWidth(number) <= FullWidth - 14)
         {
-            Small(c, number, FullWidth - 6 - SmallWidth(number), 10, InkDim);
+            Small(c, number, FullWidth - 8 - SmallWidth(number), 9, Mix(band, Black, 0.55));
         }
+
+        // Las estadísticas en un pozo un poco más oscuro, como la tabla del dorso de una carta.
+        Plate(c, 5, 36, FullWidth - 10, 43, Mix(paper, Black, 0.05), Mix(paper, Black, 0.16));
 
         // Habilidad (marca roja, como en las cartas), naturaleza con lo que sube y baja, y objeto (marca azul).
         c.Rect(6, 19, 3, 5, Rgb(0xC8, 0x40, 0x2E));
@@ -1052,7 +1312,7 @@ public static class TcgCardArt
         if (card.Fallen)
         {
             // Una raya roja bajo el nombre: la ficha también dice que cayó.
-            c.Rect(6, 17, FullWidth - 12, 1, Up);
+            c.Rect(6, 18, FullWidth - 12, 1, Up);
         }
     }
 
@@ -1324,7 +1584,7 @@ public static class TcgCardArt
                 c.Rect(x, y - 1, 4, 1, colour);
             }
 
-            var glyph = ch is 'N' or 'Ñ' ? WideN : PixelScene.SmallGlyph(ch);
+            var glyph = ch is 'N' or 'Ñ' ? WideN : SmallFont.Glyph(ch);
             if (glyph is not null)
             {
                 for (var gy = 0; gy < 5; gy++)
@@ -1339,6 +1599,9 @@ public static class TcgCardArt
             x += GlyphWidth(ch) + 1;
         }
     }
+
+    /// <summary>The small font of the cards, for the album's headers and tabs.</summary>
+    internal static void SmallText(CellCanvas c, string text, int x, int y, Color colour) => Small(c, text, x, y, colour);
 
     /// <summary>Text in the small font cut to fit <paramref name="cells"/>, with a point where it was cut.</summary>
     public static string SmallTrim(string text, int cells)

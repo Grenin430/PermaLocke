@@ -5,8 +5,8 @@ using PermaLocke.App.Views;
 namespace PermaLocke.App.Tests;
 
 /// <summary>
-/// The album (§186): how the boxes are paged, how a card is drawn — fallen, shiny, an egg — and which pocket is under
-/// the mouse. Pure drawing, so no window is needed.
+/// The album (§186, §187): how the boxes are paged, how a card is drawn — its finish by rarity, fallen, shiny, an egg —,
+/// which pocket or tab is under the mouse, the page turning and the card in the hand. Pure drawing, no window needed.
 /// </summary>
 public sealed class AlbumTests
 {
@@ -146,7 +146,8 @@ public sealed class AlbumTests
 
         Assert.InRange(left, whole * 0.5, whole * 0.85);
         Assert.NotEmpty(render.Embers);
-        Assert.DoesNotContain(true, render.Foil);
+        Assert.Equal(TcgFinish.Plain, render.Finish);
+        Assert.All(render.Regions, region => Assert.Equal(TcgRegion.None, region));
     }
 
     /// <summary>The burn of the back is the front's seen from behind: the side it eats is the other one.</summary>
@@ -164,12 +165,13 @@ public sealed class AlbumTests
         Assert.True(back.IsSet(back.Width - 3, back.Height - 3));
     }
 
-    /// <summary>A shiny's picture is foil and its shine moves: two moments draw two different frames.</summary>
+    /// <summary>A shiny is polychrome foil all over and its shine moves: two moments draw two different frames.</summary>
     [Fact]
     public void A_shiny_shines_and_the_shine_moves()
     {
         var render = TcgCardArt.Render(Card(shiny: true), TcgLayout.Full);
-        Assert.Contains(true, render.Foil);
+        Assert.Equal(TcgFinish.Polychrome, render.Finish);
+        Assert.Contains(TcgRegion.Rim, render.Regions);
 
         var early = render.Canvas.Clone();
         var later = render.Canvas.Clone();
@@ -179,15 +181,95 @@ public sealed class AlbumTests
         Assert.NotEqual(early.Bgra, later.Bgra);
     }
 
-    /// <summary>A plain card has nothing that moves: no foil, no embers.</summary>
+    /// <summary>A common card has nothing that moves: no foil, no embers.</summary>
     [Fact]
-    public void A_plain_card_is_still()
+    public void A_common_card_is_still()
     {
-        var render = TcgCardArt.Render(Card(), TcgLayout.Full);
+        var render = TcgCardArt.Render(Card(rarity: 0), TcgLayout.Full);
 
-        Assert.DoesNotContain(true, render.Foil);
+        Assert.Equal(TcgFinish.Plain, render.Finish);
+        Assert.False(render.IsLive);
         Assert.Empty(render.Embers);
-        Assert.False(Card().IsLive);
+        Assert.False(Card(rarity: 0).IsLive);
+    }
+
+    /// <summary>
+    /// The finish follows the ★ of the card, like a real print run: ● and ◆ plain, ★ holo, silver ★ reverse holo, gold
+    /// ★ gold; a shiny is always polychrome, and the fallen lose their finish in the fire.
+    /// </summary>
+    [Theory]
+    [InlineData(0, false, false, TcgFinish.Plain)]
+    [InlineData(1, false, false, TcgFinish.Plain)]
+    [InlineData(2, false, false, TcgFinish.Holo)]
+    [InlineData(3, false, false, TcgFinish.Reverse)]
+    [InlineData(4, false, false, TcgFinish.Gold)]
+    [InlineData(-1, false, false, TcgFinish.Plain)]
+    [InlineData(0, true, false, TcgFinish.Polychrome)]
+    [InlineData(4, true, false, TcgFinish.Polychrome)]
+    [InlineData(4, false, true, TcgFinish.Plain)]
+    [InlineData(4, true, true, TcgFinish.Plain)]
+    public void The_finish_follows_the_rarity(int rarity, bool shiny, bool fallen, TcgFinish finish)
+    {
+        var card = Card(rarity: rarity, shiny: shiny, fallen: fallen);
+
+        Assert.Equal(finish, TcgCardArt.FinishOf(card));
+        Assert.Equal(finish, TcgCardArt.Render(card, TcgLayout.Full).Finish);
+    }
+
+    /// <summary>
+    /// A card knows which of its cells are picture, panel and border, and the text on it is none of them: the light of
+    /// a reverse holo never washes out a name.
+    /// </summary>
+    [Fact]
+    public void The_foil_never_covers_the_text()
+    {
+        var render = TcgCardArt.Render(Card(rarity: 3), TcgLayout.Full);
+        var ink = System.Windows.Media.Color.FromRgb(0x1C, 0x16, 0x26);
+        var canvas = render.Canvas;
+
+        Assert.Contains(TcgRegion.Art, render.Regions);
+        Assert.Contains(TcgRegion.Panel, render.Regions);
+        Assert.Contains(TcgRegion.Rim, render.Regions);
+
+        for (var y = 0; y < canvas.Height; y++)
+        {
+            for (var x = 0; x < canvas.Width; x++)
+            {
+                var colour = canvas.At(x, y);
+                if (colour.R == ink.R && colour.G == ink.G && colour.B == ink.B)
+                {
+                    Assert.Equal(TcgRegion.None, render.Regions[(y * canvas.Width) + x]);
+                }
+            }
+        }
+    }
+
+    /// <summary>A reverse holo's light passes over its panel only: two moments differ on the panel and never on the picture.</summary>
+    [Fact]
+    public void A_reverse_holo_shines_on_the_panel_and_not_on_the_picture()
+    {
+        var render = TcgCardArt.Render(Card(rarity: 3), TcgLayout.Full);
+        var width = render.Canvas.Width;
+        var changedPanel = false;
+
+        foreach (var light in new[] { 0.2, 0.5, 0.8 })
+        {
+            var frame = render.Canvas.Clone();
+            TcgCardArt.Animate(render, frame, 0, 0, 1.0, 7, light);
+
+            for (var i = 0; i < render.Regions.Length; i++)
+            {
+                var same = frame.Bgra.AsSpan(i * 4, 4).SequenceEqual(render.Canvas.Bgra.AsSpan(i * 4, 4));
+                if (render.Regions[i] == TcgRegion.Art)
+                {
+                    Assert.True(same, $"La luz del reverse holo tocó el dibujo en la celda {i % width},{i / width}.");
+                }
+
+                changedPanel |= !same && render.Regions[i] == TcgRegion.Panel;
+            }
+        }
+
+        Assert.True(changedPanel);
     }
 
     /// <summary>An egg is a card face down: the album's back, whatever the Pokémon inside.</summary>
@@ -224,22 +306,58 @@ public sealed class AlbumTests
 
     // ============================================================================================== SCENE
 
-    /// <summary>The first and last pockets of both pages are found where they are drawn; the spine is no pocket.</summary>
+    /// <summary>
+    /// The first and last pockets of both pages are found where they are drawn, with and without the cover; the spine,
+    /// the cover and the page header are no pocket.
+    /// </summary>
+    [Theory]
+    [InlineData(TcgLayout.Full, true)]
+    [InlineData(TcgLayout.Full, false)]
+    [InlineData(TcgLayout.Mini, true)]
+    [InlineData(TcgLayout.Mini, false)]
+    public void The_mouse_finds_the_pocket_under_it(TcgLayout layout, bool dressed)
+    {
+        var scene = new AlbumScene(layout, dressed);
+        var last = (scene.PocketsPerPage * 2) - 1;
+
+        foreach (var pocket in new[] { 0, scene.PocketsPerPage - 1, scene.PocketsPerPage, last })
+        {
+            var (x, y) = scene.PocketInScene(pocket);
+            Assert.Equal(pocket, scene.PocketAt(x + 3, y + 3));
+        }
+
+        Assert.Equal(-1, scene.PocketAt(scene.LeftPageX + scene.PageWidth + 5, scene.Height / 2));
+        Assert.Equal(-1, scene.PocketAt(-1, 0));
+        Assert.Equal(-1, scene.PocketAt(scene.LeftPageX + 2, scene.PageTop + 2));
+        Assert.Equal((scene.Width, scene.Height), AlbumScene.SizeOf(layout, dressed));
+    }
+
+    /// <summary>Each box's tab is found on the album's edge; without the cover there are no tabs.</summary>
+    [Fact]
+    public void The_mouse_finds_the_tabs_on_the_edge()
+    {
+        var dressed = new AlbumScene(TcgLayout.Full, dressed: true);
+        var bare = new AlbumScene(TcgLayout.Full, dressed: false);
+        var hits = Enumerable.Range(0, dressed.Height).Select(y => dressed.TabAt(dressed.Width - 3, y, 5)).Where(t => t >= 0).Distinct().ToList();
+
+        Assert.Equal([0, 1, 2, 3, 4], hits);
+        Assert.Equal(-1, dressed.TabAt(dressed.Width / 2, 20, 5));
+        Assert.Equal(-1, bare.TabAt(bare.Width - 3, 20, 5));
+    }
+
+    /// <summary>
+    /// The album fits GRANDE at two screen pixels per cell: without the band of the game on top, the section has about
+    /// 1080 × 640 pixels, and both sizes of card fit dressed in 540 × 320 cells.
+    /// </summary>
     [Theory]
     [InlineData(TcgLayout.Full)]
     [InlineData(TcgLayout.Mini)]
-    public void The_mouse_finds_the_pocket_under_it(TcgLayout layout)
+    public void The_album_fits_grande_at_two_pixels_per_cell(TcgLayout layout)
     {
-        var scene = new AlbumScene(layout);
-        var last = scene.PocketsPerPage - 1;
-        var (lx, ly) = scene.PocketOrigin(last);
+        var (width, height) = AlbumScene.SizeOf(layout, dressed: true);
 
-        Assert.Equal(0, scene.PocketAt(scene.PocketOrigin(0).X + 3, scene.PocketOrigin(0).Y + 3));
-        Assert.Equal(last, scene.PocketAt(lx + 3, ly + 3));
-        Assert.Equal(scene.PocketsPerPage, scene.PocketAt(scene.PageWidth + 12 + scene.PocketOrigin(0).X + 3, 10));
-        Assert.Equal(-1, scene.PocketAt(scene.PageWidth + 5, scene.Height / 2));
-        Assert.Equal(-1, scene.PocketAt(-1, 0));
-        Assert.Equal(-1, scene.PocketAt(1, 1));
+        Assert.True(width * 2 <= 1080, $"{width} celdas de ancho");
+        Assert.True(height * 2 <= 640, $"{height} celdas de alto");
     }
 
     /// <summary>
@@ -251,7 +369,7 @@ public sealed class AlbumTests
     [InlineData(TcgLayout.Mini)]
     public void A_spread_draws_at_any_moment_of_a_turn(TcgLayout layout)
     {
-        var scene = new AlbumScene(layout);
+        var scene = new AlbumScene(layout, dressed: false);
         TcgCard?[] Pockets(uint seed) =>
         [
             .. Enumerable.Range(0, scene.PocketsPerPage).Select(i => i % 4 == 3 ? null
@@ -272,5 +390,105 @@ public sealed class AlbumTests
 
         scene.Render(to, 0.3, hover: scene.PocketsPerPage + 1);
         Assert.Equal(scene.Width * scene.Height, Solid(scene.Canvas));
+    }
+
+    /// <summary>Dressed, with its tabs, every moment of a turn draws, both ways, and the pages are all painted.</summary>
+    [Fact]
+    public void A_dressed_album_draws_its_cover_and_tabs()
+    {
+        var scene = new AlbumScene(TcgLayout.Full, dressed: true);
+        AlbumTab[] tabs = [new("EQ", true), new("1", false), new("12", false)];
+        var from = new AlbumSpread(new AlbumPage([Card()], "EQUIPO", 1), new AlbumPage([], "", 2), TcgLayout.Full, 0, tabs, 0);
+        var to = new AlbumSpread(new AlbumPage([Card(seed: 3)], "CAJA 1 · CAMPO", 1), new AlbumPage([Card(seed: 4)], "", 2), TcgLayout.Full, 1, tabs, 1);
+
+        foreach (var progress in new[] { 0.0, 0.3, 0.5, 0.7, 1.0 })
+        {
+            scene.Render(to, 2, turn: new AlbumTurn(from, progress > 0.4, progress));
+        }
+
+        scene.Render(to, 7.4, hover: 0, hoverTab: 2);
+
+        for (var y = scene.PageTop; y < scene.PageTop + scene.PageHeight; y++)
+        {
+            for (var x = scene.LeftPageX; x < scene.RightPageX + scene.PageWidth; x++)
+            {
+                Assert.True(scene.Canvas.IsSet(x, y), $"Hueco en {x},{y}");
+            }
+        }
+    }
+
+    // ============================================================================================== HAND
+
+    private static (TcgRender Front, TcgRender Back) Faces(TcgCard card) =>
+        (TcgCardArt.Render(card, TcgLayout.Full), TcgCardArt.Render(card, TcgLayout.Full, back: true));
+
+    private static System.Windows.Media.Color At(HandScene scene, int x, int y)
+    {
+        var at = ((y * scene.Width) + x) * 4;
+        return System.Windows.Media.Color.FromArgb(scene.Pixels[at + 3], scene.Pixels[at + 2], scene.Pixels[at + 1], scene.Pixels[at]);
+    }
+
+    /// <summary>
+    /// Flat in the hand the card is drawn at whole pixels: the cell in its middle, far from the glare, is exactly its
+    /// colour; turned over, the middle is the back's.
+    /// </summary>
+    [Fact]
+    public void In_the_hand_the_card_shows_the_face_that_is_up()
+    {
+        var (front, back) = Faces(Card(rarity: 0));
+        var scene = new HandScene(600, 700);
+
+        scene.Render(front, back, new HandPose(0, 0, 0, 4, 300, 350, 0.3), 1, 7);
+        Assert.Equal(front.Canvas.At(35, 60), At(scene, 300 - 140 + (35 * 4) + 1, 350 - 192 + (60 * 4) + 1));
+
+        scene.Render(front, back, new HandPose(Math.PI, 0, 0, 4, 300, 350, 0.3), 1, 7);
+        var mirrored = TcgCardArt.FullWidth - 1 - 35;
+        Assert.Equal(back.Canvas.At(mirrored, 60), At(scene, 300 - 140 + (35 * 4) + 1, 350 - 192 + (60 * 4) + 1));
+    }
+
+    /// <summary>Edge on, half way through turning over, the card is a sliver of what it is flat.</summary>
+    [Fact]
+    public void Edge_on_the_card_is_a_sliver()
+    {
+        var (front, back) = Faces(Card(rarity: 0));
+        int Opaque(HandScene scene) => Enumerable.Range(0, scene.Width * scene.Height).Count(i => scene.Pixels[(i * 4) + 3] == 255);
+
+        var flat = new HandScene(600, 700);
+        flat.Render(front, back, new HandPose(0, 0, 0, 4, 300, 350, 0.3), 1, 7);
+        var edge = new HandScene(600, 700);
+        edge.Render(front, back, new HandPose(Math.PI / 2, 0, 0, 4, 300, 350, 0.3), 1, 7);
+
+        Assert.True(Opaque(edge) < Opaque(flat) / 10);
+    }
+
+    /// <summary>
+    /// Any pose draws without failing — tilted, turning, flying small, half off the screen — and the part to copy to
+    /// the screen stays inside it.
+    /// </summary>
+    [Fact]
+    public void Any_pose_draws_inside_the_screen()
+    {
+        var (front, back) = Faces(Card(shiny: true));
+        var (burnt, burntBack) = Faces(Card(fallen: true, seed: 5));
+        var scene = new HandScene(500, 600);
+        HandPose[] poses =
+        [
+            new(0.4, -0.3, 0, 4, 250, 300, 0.4),
+            new(2.1, 0.2, 0.1, 3, 250, 300, 0.6),
+            new(5.9, 0.1, 0.3, 1.2, 40, 560, 1),
+            new(0.2, 0.2, 0, 6, -100, 700, 0.3),
+            new(Math.PI, 0, 0, 4, 250, 300, 0.2)
+        ];
+
+        foreach (var pose in poses)
+        {
+            scene.Render(front, back, pose, 2.3, 11, arrival: 0.3);
+            scene.Render(burnt, burntBack, pose, 4.1, 5);
+            var (x, y, w, h) = scene.Dirty;
+            Assert.InRange(x, 0, scene.Width);
+            Assert.InRange(y, 0, scene.Height);
+            Assert.InRange(x + w, 0, scene.Width);
+            Assert.InRange(y + h, 0, scene.Height);
+        }
     }
 }

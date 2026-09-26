@@ -44,6 +44,8 @@ Errores ya cometidos en este proyecto, con el § donde se cuentan ([[Índice de 
 - Dos PermaLocke a la vez escriben dos veces en el mismo juego. Ahora hay un mutex (§159).
 
 ## Añadidas 2026-09-26
+- **Una sección con `Needs` distinto de `None` pierde ~74 px de alto** por la franja del juego: un dibujo a celdas enteras puede bajar de 2 a 1 px/celda. Medir el alto disponible antes de fijar el tamaño en celdas (§187).
+- **Dibujo pixel probado en Linux:** `tools/PermaLocke.PixelCheck` compila los ficheros puros con un `Color` de sustituto. Para que un dibujo nuevo entre ahí, no debe tocar más WPF que `Color` (usar `SmallFont`, `TypeColours`, `RoomSprite`, `CellCanvas`).
 - **Desde la nube sí se compila:** el SDK no se baja de builds.dotnet.microsoft.com (bloqueado), pero Ubuntu lo trae: `apt-get update` y `apt-get install -y dotnet-sdk-10.0`. WPF compila con `-p:EnableWindowsTargeting=true`; no se ejecuta. Para ver dibujos pixel, compilar los ficheros puros en una consola con un `Color` falso y escribir PNG.
 - La letra pequeña de 3×5 tiene una N que se lee D en palabras largas; en las cartas va una N de 4 celdas (`TcgCardArt.WideN`).
 - **Estado de Discord que no sale:** primero, Ajustes de Discord > Privacidad de la actividad > «Compartir tu actividad detectada». Apagado, Discord acepta el estado y no lo enseña; el log de PermaLocke no puede avisar.

@@ -133,7 +133,8 @@ Trampas que ya costaron caro y hay que tener siempre presentes:
   instalado (`WorldLimits`, `InstalledWorld`). Las sondas deben llamar a `InstalledWorld.ApplyQuietly` (§91).
 - **Detectable no es detectado**: el vigilante empareja por PID contra lo registrado en la run (§56, §68).
 
-Último: **ÁLBUM** (§186): las cajas como carpeta de cartas TCG pixel (3×3 o 4×4), rareza por tier del gacha, variocolor
+Último: **ÁLBUM premium** (§187): carpeta de piel con pestañas y luz, página que gira en perspectiva, acabados por
+rareza (holo, inversa, dorada, polícroma) y la carta en la mano en 3D (vuela, se inclina, se da la vuelta). Antes: **ÁLBUM** (§186): las cajas como carpeta de cartas TCG pixel (3×3 o 4×4), rareza por tier del gacha, variocolor
 holográfica, caídas arrugadas y medio quemadas; solo lectura. Antes: **«Jugando a PermaLocke» en Discord** (§185): tubería local de Discord, id en `discordApp` de `Data/torneo.json`;
 el estado propio de Azahar se apaga en su `qt-config.ini`. Antes: **lluvia de sangre** (§184): un wipe hace llover sangre 12 s en el emulador de quien lo sufre y de los
 demás; tabla `13-lluvias.sql`. Antes: **fantasmas** (§183): la muerte de un Pokémon viaja por el servidor y cruza como fantasma el emulador de los
@@ -241,6 +242,10 @@ dotnet run --project tools/PermaLocke.Probe -- --shiny-siempre quitar
 # copia la partida, relee y lo registra en la run como dado por el admin. --probar lo hace SOBRE UNA COPIA
 dotnet run --project tools/PermaLocke.Probe -- --dar-mod 964 60 278 857,834,812,776 --probar
 dotnet run --project tools/PermaLocke.Probe -- --dar-mod 984 60 281 838,861,915,866 --objeto 960
+
+# el dibujo del ÁLBUM sin Windows (también en la nube); con la variable deja PNG para mirarlos
+dotnet test tools/PermaLocke.PixelCheck
+PERMALOCKE_PIXEL_DIR=/ruta dotnet test tools/PermaLocke.PixelCheck
 
 # entregados en un wonder trade y contados todavía como vivos
 dotnet run --project tools/PermaLocke.Probe -- --intercambiados

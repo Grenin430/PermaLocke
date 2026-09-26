@@ -5,17 +5,10 @@ using static PermaLocke.App.Views.AlolaPalette;
 
 namespace PermaLocke.App.Views;
 
-/// <summary>A picture from the cartridge, as the room draws it: BGRA, one icon pixel per cell.</summary>
-public sealed record RoomSprite(byte[] Bgra, int Width, int Height)
+// Leer un RoomSprite de un bitmap de WPF; las celdas y el resto están en RoomSprite.cs.
+public sealed partial record RoomSprite
 {
-    public bool Solid(int x, int y) => x >= 0 && y >= 0 && x < Width && y < Height && Bgra[(((y * Width) + x) * 4) + 3] >= 128;
-
-    public Color At(int x, int y)
-    {
-        var at = ((y * Width) + x) * 4;
-        return Color.FromRgb(Bgra[at + 2], Bgra[at + 1], Bgra[at]);
-    }
-
+    /// <summary>A picture of the cartridge as cells, or null without one.</summary>
     public static RoomSprite? From(BitmapSource? sprite)
     {
         if (sprite is null) return null;

@@ -193,6 +193,7 @@ generado: 2026-09-24
 - L11965 · 184 · La lluvia de sangre de un wipe en todos los emuladores
 - L11999 · 185 · «Jugando a PermaLocke» en el estado de Discord
 - L12023 · 186 · ÁLBUM: cartas TCG pixel de la partida
+- L12077 · 187 · ÁLBUM premium: piel, acabados por rareza, carta en 3D
 
 Subsecciones §176: bis (visor), ter (todas las pantallas, fuera ESTADÍSTICAS), quater (EV/MOVIMIENTOS sin bolsa, diálogos).
 

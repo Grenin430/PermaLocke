@@ -18,53 +18,6 @@ public sealed record AlbumBinder(int Number, string Name, int Count, int Slots, 
     public override string ToString() => Label;
 }
 
-/// <summary>Where each spread of the album starts: which binder, and its first page.</summary>
-public readonly record struct AlbumSpreadPlace(int Binder, int Page);
-
-/// <summary>
-/// How the album is paged (§186): every binder starts on a new spread, and its pages come two by two.
-/// </summary>
-/// <remarks>
-/// A binder is as many pages as its slots need at <paramref name="perPage"/> pockets a page, rounded up to an even
-/// number so two boxes never share a spread. The pocket of a slot is its place in the box, gaps included: the album
-/// keeps the order of the PC. Pure, so it is tested without a screen.
-/// </remarks>
-public static class AlbumPaging
-{
-    public static int PagesOf(int slots, int perPage)
-    {
-        var pages = Math.Max(1, (int)Math.Ceiling(slots / (double)perPage));
-        return pages + (pages % 2);
-    }
-
-    public static IReadOnlyList<AlbumSpreadPlace> Spreads(IReadOnlyList<int> slotsPerBinder, int perPage)
-    {
-        var spreads = new List<AlbumSpreadPlace>();
-        for (var binder = 0; binder < slotsPerBinder.Count; binder++)
-        {
-            for (var page = 0; page < PagesOf(slotsPerBinder[binder], perPage); page += 2)
-            {
-                spreads.Add(new AlbumSpreadPlace(binder, page));
-            }
-        }
-
-        return spreads;
-    }
-
-    /// <summary>The pockets of one page: the cards of its slots, null where the slot is empty or past the binder.</summary>
-    public static TcgCard?[] Page(IReadOnlyList<TcgCard?> slots, int page, int perPage)
-    {
-        var pockets = new TcgCard?[perPage];
-        for (var i = 0; i < perPage; i++)
-        {
-            var slot = (page * perPage) + i;
-            pockets[i] = slot < slots.Count ? slots[slot] : null;
-        }
-
-        return pockets;
-    }
-}
-
 /// <summary>
 /// ÁLBUM (§186): the Pokémon of the save as trading cards in a binder, box by box. Only to look at: it writes nothing,
 /// and has no wonder trade or training of its own.
@@ -121,8 +74,12 @@ public sealed partial class AlbumViewModel : SectionViewModel
 
     public override string IconKey => "IconStar";
 
-    /// <summary>Only reads the save: open or closed, it shows the last thing saved.</summary>
-    public override GameNeed Needs => GameNeed.Either;
+    /// <summary>
+    /// Only reads the save, open or closed, so it asks nothing of the emulator: without the band on top, the album gets
+    /// the height it needs to stay at two screen pixels per cell in GRANDE (§187). When the game is open the save may be
+    /// older than what is on screen, and <see cref="Notice"/> says so in the bar.
+    /// </summary>
+    public override GameNeed Needs => GameNeed.None;
 
     /// <summary>The party and every box with something in it, in the album's order.</summary>
     public ObservableCollection<AlbumBinder> Binders { get; } = [];
@@ -162,6 +119,13 @@ public sealed partial class AlbumViewModel : SectionViewModel
     [ObservableProperty]
     private string _inspectedCaption = string.Empty;
 
+    /// <summary>«DRAGONITE · RARA DORADA · VARIOCOLOR»: what the card in the hand is, in words.</summary>
+    [ObservableProperty]
+    private string _inspectedTitle = string.Empty;
+
+    /// <summary>The name of each rarity, as the ★ of its card says it.</summary>
+    private static readonly string[] RarityNames = ["COMÚN", "POCO COMÚN", "RARA HOLO", "RARA HOLO INVERSA", "RARA DORADA"];
+
     [ObservableProperty]
     private string _summary = string.Empty;
 
@@ -185,6 +149,12 @@ public sealed partial class AlbumViewModel : SectionViewModel
 
     public bool HasMessage => Message.Length > 0;
 
+    /// <summary>A failure to read the save: said big, where the album would be.</summary>
+    public bool HasProblem => Problem.Length > 0;
+
+    /// <summary>Something true that is not a failure, such as the save being older than the game: said small in the bar.</summary>
+    public bool HasNotice => Problem.Length == 0 && Notice.Length > 0;
+
     partial void OnProblemChanged(string value) => MessageChanged();
 
     partial void OnNoticeChanged(string value) => MessageChanged();
@@ -193,6 +163,8 @@ public sealed partial class AlbumViewModel : SectionViewModel
     {
         OnPropertyChanged(nameof(Message));
         OnPropertyChanged(nameof(HasMessage));
+        OnPropertyChanged(nameof(HasProblem));
+        OnPropertyChanged(nameof(HasNotice));
     }
 
     public override Task ActivateAsync() => LoadAsync();
@@ -429,12 +401,18 @@ public sealed partial class AlbumViewModel : SectionViewModel
         _position = Math.Clamp(position, 0, _spreads.Count - 1);
         var place = _spreads[_position];
         var slots = _cards[place.Binder];
+        var binder = Binders[place.Binder];
+
+        // Las pestañas del canto: «EQ» para el equipo y el número de cada caja.
+        var tabs = Binders.Select(b => new AlbumTab(b.IsParty ? "EQ" : b.Number.ToString(), b.IsParty)).ToList();
 
         Spread = new AlbumSpread(
-            new AlbumPage(AlbumPaging.Page(slots, place.Page, PerPage)),
-            new AlbumPage(AlbumPaging.Page(slots, place.Page + 1, PerPage)),
+            new AlbumPage(AlbumPaging.Page(slots, place.Page, PerPage), binder.Label, place.Page + 1),
+            new AlbumPage(AlbumPaging.Page(slots, place.Page + 1, PerPage), string.Empty, place.Page + 2),
             Layout,
-            _position);
+            _position,
+            tabs,
+            place.Binder);
 
         var pages = AlbumPaging.PagesOf(Binders[place.Binder].Slots, PerPage);
         PageLabel = $"PÁGINAS {place.Page + 1}-{place.Page + 2} DE {pages}";
@@ -487,6 +465,16 @@ public sealed partial class AlbumViewModel : SectionViewModel
         GoTo(SpreadOf(place.Binder, slot / PerPage));
     }
 
+    /// <summary>A tab of the album's edge: opens that box at its first page.</summary>
+    [RelayCommand]
+    private void OpenTab(int index)
+    {
+        if (index >= 0 && index < Binders.Count)
+        {
+            GoTo(SpreadOf(index, 0));
+        }
+    }
+
     [RelayCommand]
     private void ShowBig() => BigCards = true;
 
@@ -513,6 +501,7 @@ public sealed partial class AlbumViewModel : SectionViewModel
     {
         Inspected = null;
         InspectedCaption = string.Empty;
+        InspectedTitle = string.Empty;
     }
 
     [RelayCommand]
@@ -553,7 +542,29 @@ public sealed partial class AlbumViewModel : SectionViewModel
 
     private void Show()
     {
-        Inspected = _inspecting[_inspectedIndex];
+        var card = _inspecting[_inspectedIndex];
+        Inspected = card;
         InspectedCaption = $"{_inspectedIndex + 1} DE {_inspecting.Count}";
+        InspectedTitle = TitleOf(card);
+    }
+
+    /// <summary>What a card is, in words: its name, its rarity and what else makes it special.</summary>
+    public static string TitleOf(TcgCard card)
+    {
+        if (card.Egg)
+        {
+            return "HUEVO";
+        }
+
+        var parts = new List<string> { card.Name.ToUpperInvariant() };
+        if (card.Rarity >= 0 && card.Rarity < RarityNames.Length)
+        {
+            parts.Add(RarityNames[card.Rarity]);
+        }
+
+        if (card.Shiny) parts.Add("VARIOCOLOR");
+        if (card.FromGacha) parts.Add("DEL GACHA");
+        if (card.Fallen) parts.Add("CAÍDO");
+        return string.Join(" · ", parts);
     }
 }

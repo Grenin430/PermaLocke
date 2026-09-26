@@ -8,18 +8,20 @@ using System.Windows.Media.Imaging;
 namespace PermaLocke.App.Views;
 
 /// <summary>
-/// The album on screen (§186): <see cref="AlbumScene"/> in whole cells, the card under the mouse lifted, the wheel to
-/// turn pages and a click to take a card out.
+/// The album on screen (§186, §187): <see cref="AlbumScene"/> in whole cells, the card under the mouse lifted, the tabs
+/// of its edge, the wheel to turn pages and a click to take a card out.
 /// </summary>
 /// <remarks>
 /// <para>
-/// Built like the capsule machine: as many screen pixels per cell as fit — two in GRANDE — whatever the DPI, and the
-/// picture placed on whole device pixels so nothing is blurred.
+/// As many screen pixels per cell as fit, and the picture placed on whole device pixels so nothing is blurred. The
+/// cover and its tabs are worn only when they fit at the same size: if dressing the album would drop it to fewer
+/// pixels per cell, it goes without, because the cards are what must stay big.
 /// </para>
 /// <para>
 /// It decides nothing: which spread is open is the view model's, and a new one arriving is what starts a page turning,
-/// forwards or backwards by its <see cref="AlbumSpread.Index"/>. A click only hands the card to
-/// <see cref="OpenCommand"/>.
+/// forwards or backwards by its <see cref="AlbumSpread.Index"/>. A click hands the card to <see cref="OpenCommand"/>,
+/// telling first where on screen it was (<see cref="CardOpening"/>) so the hand can take it from there; a tab goes to
+/// <see cref="TabCommand"/>.
 /// </para>
 /// </remarks>
 public sealed class AlbumStage : ContentControl
@@ -30,6 +32,9 @@ public sealed class AlbumStage : ContentControl
 
     public static readonly DependencyProperty OpenCommandProperty = DependencyProperty.Register(
         nameof(OpenCommand), typeof(ICommand), typeof(AlbumStage));
+
+    public static readonly DependencyProperty TabCommandProperty = DependencyProperty.Register(
+        nameof(TabCommand), typeof(ICommand), typeof(AlbumStage));
 
     public static readonly DependencyProperty NextCommandProperty = DependencyProperty.Register(
         nameof(NextCommand), typeof(ICommand), typeof(AlbumStage));
@@ -43,7 +48,9 @@ public sealed class AlbumStage : ContentControl
 
     private AlbumScene? _scene;
     private WriteableBitmap? _bitmap;
+    private int _cell = 1;
     private int _hover = -1;
+    private int _hoverTab = -1;
     private AlbumSpread? _turnFrom;
     private bool _turnForward;
     private double _turnStart;
@@ -68,6 +75,12 @@ public sealed class AlbumStage : ContentControl
     /// <summary>Raised once if drawing fails, so the screen can log it.</summary>
     public event Action<Exception>? RenderFailed;
 
+    /// <summary>
+    /// A card is being taken out: the card and where its pocket is, in this control's coordinates, so the hand can
+    /// make it fly from there. Raised just before <see cref="OpenCommand"/>.
+    /// </summary>
+    public event Action<TcgCard, Rect>? CardOpening;
+
     public AlbumSpread? Spread
     {
         get => (AlbumSpread?)GetValue(SpreadProperty);
@@ -79,6 +92,13 @@ public sealed class AlbumStage : ContentControl
     {
         get => (ICommand?)GetValue(OpenCommandProperty);
         set => SetValue(OpenCommandProperty, value);
+    }
+
+    /// <summary>Opens a box by its tab: called with the tab's index.</summary>
+    public ICommand? TabCommand
+    {
+        get => (ICommand?)GetValue(TabCommandProperty);
+        set => SetValue(TabCommandProperty, value);
     }
 
     public ICommand? NextCommand
@@ -104,6 +124,7 @@ public sealed class AlbumStage : ContentControl
     private void OnSpreadChanged(AlbumSpread? old, AlbumSpread? spread)
     {
         _hover = -1;
+        _hoverTab = -1;
 
         // Sin nada que enseñar no queda la imagen de antes: la pantalla dice por qué debajo.
         _image.Visibility = spread is null ? Visibility.Hidden : Visibility.Visible;
@@ -119,8 +140,7 @@ public sealed class AlbumStage : ContentControl
         {
             // Otro tamaño de carta, otro álbum: se monta de nuevo, sin girar la página.
             _turnFrom = null;
-            _scene = new AlbumScene(spread.Layout);
-            _bitmap = null;
+            _scene = null;
             Reshape();
         }
         else if (old is not null && old.Layout == spread.Layout && old.Index != spread.Index)
@@ -139,9 +159,13 @@ public sealed class AlbumStage : ContentControl
         _dirty = true;
     }
 
+    /// <summary>
+    /// Picks the album's size for the room there is: the dressed album if it fits at as many pixels per cell as the
+    /// bare one, the bare one otherwise.
+    /// </summary>
     private void Reshape()
     {
-        if (_scene is null || ActualWidth < 1 || ActualHeight < 1)
+        if (Spread is not { } spread || ActualWidth < 1 || ActualHeight < 1)
         {
             return;
         }
@@ -149,8 +173,25 @@ public sealed class AlbumStage : ContentControl
         var dpi = VisualTreeHelper.GetDpi(this);
         var deviceWidth = ActualWidth * dpi.DpiScaleX;
         var deviceHeight = ActualHeight * dpi.DpiScaleY;
-        var cell = Math.Max(1, (int)Math.Floor(Math.Min(deviceWidth / _scene.Width, deviceHeight / _scene.Height)));
 
+        int CellFor(bool dressed)
+        {
+            var (w, h) = AlbumScene.SizeOf(spread.Layout, dressed);
+            return (int)Math.Floor(Math.Min(deviceWidth / w, deviceHeight / h));
+        }
+
+        var dressedCell = CellFor(true);
+        var bareCell = CellFor(false);
+        var dressed = dressedCell >= Math.Max(1, bareCell);
+        var cell = Math.Max(1, dressed ? dressedCell : bareCell);
+
+        if (_scene is null || _scene.Layout != spread.Layout || _scene.Dressed != dressed)
+        {
+            _scene = new AlbumScene(spread.Layout, dressed);
+            _turnFrom = null;
+        }
+
+        _cell = cell;
         _zoom.ScaleX = cell / dpi.DpiScaleX;
         _zoom.ScaleY = cell / dpi.DpiScaleY;
 
@@ -186,9 +227,9 @@ public sealed class AlbumStage : ContentControl
 
         _lastStep = step;
 
-        // Se repinta si algo se mueve: una página girando, una carta brillando o ardiendo, o algo cambiado.
-        var live = Spread is { } spread && (spread.Left.Pockets.Any(c => c?.IsLive == true) || spread.Right.Pockets.Any(c => c?.IsLive == true));
-        if (_dirty || _turnFrom is not null || (live && step % 2 == 0))
+        // Una página girando, a 30 imágenes por segundo; lo demás que se mueve (acabados, brasas, el destello del
+        // plástico, la funda que late), a 15.
+        if (_dirty || _turnFrom is not null || step % 2 == 0)
         {
             Paint();
         }
@@ -219,7 +260,7 @@ public sealed class AlbumStage : ContentControl
                 }
             }
 
-            _scene.Render(spread, Now, turn is null ? _hover : -1, turn);
+            _scene.Render(spread, Now, turn is null ? _hover : -1, turn, _hoverTab);
             _bitmap.WritePixels(new Int32Rect(0, 0, _scene.Width, _scene.Height), _scene.Canvas.Bgra, _scene.Width * 4, 0);
             _dirty = false;
         }
@@ -247,20 +288,24 @@ public sealed class AlbumStage : ContentControl
     {
         base.OnMouseMove(e);
 
-        if (_scene is null || _turnFrom is not null)
+        if (_scene is null || _turnFrom is not null || Spread is not { } spread)
         {
             return;
         }
 
         // La imagen mide una celda por unidad antes de ampliarla: la posición sobre ella ya viene en celdas.
         var at = e.GetPosition(_image);
-        var pocket = _scene.PocketAt((int)Math.Floor(at.X), (int)Math.Floor(at.Y));
+        var x = (int)Math.Floor(at.X);
+        var y = (int)Math.Floor(at.Y);
+        var pocket = _scene.PocketAt(x, y);
         var hover = CardAt(pocket) is null ? -1 : pocket;
+        var tab = _scene.TabAt(x, y, spread.TabList.Count);
 
-        if (hover != _hover)
+        if (hover != _hover || tab != _hoverTab)
         {
             _hover = hover;
-            Cursor = hover >= 0 ? Cursors.Hand : null;
+            _hoverTab = tab;
+            Cursor = hover >= 0 || tab >= 0 ? Cursors.Hand : null;
             _dirty = true;
         }
     }
@@ -269,9 +314,10 @@ public sealed class AlbumStage : ContentControl
     {
         base.OnMouseLeave(e);
 
-        if (_hover >= 0)
+        if (_hover >= 0 || _hoverTab >= 0)
         {
             _hover = -1;
+            _hoverTab = -1;
             Cursor = null;
             _dirty = true;
         }
@@ -281,8 +327,29 @@ public sealed class AlbumStage : ContentControl
     {
         base.OnMouseLeftButtonUp(e);
 
-        if (_turnFrom is null && CardAt(_hover) is { } card && OpenCommand?.CanExecute(card) == true)
+        if (_turnFrom is not null || _scene is null)
         {
+            return;
+        }
+
+        if (_hoverTab >= 0 && TabCommand?.CanExecute(_hoverTab) == true)
+        {
+            TabCommand.Execute(_hoverTab);
+            e.Handled = true;
+            return;
+        }
+
+        if (CardAt(_hover) is { } card && OpenCommand?.CanExecute(card) == true)
+        {
+            // Dónde está su funda en pantalla, para que salga volando desde ahí.
+            var (px, py) = _scene.PocketInScene(_hover);
+            var dpi = VisualTreeHelper.GetDpi(this);
+            var origin = _image.TranslatePoint(new Point(0, 0), this);
+            var unit = _cell / dpi.DpiScaleX;
+            var rect = new Rect(origin.X + (px * unit), origin.Y + (py * _cell / dpi.DpiScaleY),
+                _scene.PocketWidth * unit, _scene.PocketHeight * _cell / dpi.DpiScaleY);
+
+            CardOpening?.Invoke(card, rect);
             OpenCommand.Execute(card);
             e.Handled = true;
         }
