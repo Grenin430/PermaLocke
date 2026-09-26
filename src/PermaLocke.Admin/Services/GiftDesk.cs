@@ -50,7 +50,7 @@ public sealed class GiftDesk(DiscordLogin discord, ILogger<GiftDesk> logger)
 
     private sealed record GiftRow(AdminGift Regalo);
 
-    private sealed record HistoryRow(Guid User_id, RunHistory? History);
+    private sealed record HistoryRow(Guid User_id, Guid Run_id, RunHistory? History);
 
     public async Task<IReadOnlyList<PlayerLine>> PlayersAsync()
     {
@@ -92,7 +92,7 @@ public sealed class GiftDesk(DiscordLogin discord, ILogger<GiftDesk> logger)
                    ?? throw new InvalidOperationException("Entra con Discord.");
 
         return (JsonSerializer.Deserialize<List<RunRow>>(json, Json) ?? []).FirstOrDefault() is { } row
-            ? (row.Snapshot, row.History, row.Subida)
+            ? (row.Snapshot, await ServerHistory.CompleteAsync(discord, row.History, row.Snapshot, Json), row.Subida)
             : null;
     }
 
@@ -107,15 +107,17 @@ public sealed class GiftDesk(DiscordLogin discord, ILogger<GiftDesk> logger)
         ArgumentNullException.ThrowIfNull(players);
 
         var giftsJson = await discord.GetAsync("regalos?select=regalo&order=creado.desc");
-        var historiesJson = await discord.GetAsync("runs?select=user_id,history&activa=eq.true");
+        var historiesJson = await discord.GetAsync("runs?select=user_id,run_id,history&activa=eq.true");
 
         if (giftsJson is null || historiesJson is null)
         {
             return [];
         }
 
+        // Las runs que suben evento a evento tienen sus recogidas en la tabla eventos (§194).
+        var claims = await ServerHistory.ClaimsAsync(discord, Json);
         var collected = (JsonSerializer.Deserialize<List<HistoryRow>>(historiesJson, Json) ?? [])
-            .ToDictionary(row => row.User_id, row => (row.History?.Events ?? [])
+            .ToDictionary(row => row.User_id, row => (row.History?.Events ?? []).Concat(claims[row.Run_id])
                 .Where(e => e.Type == GameEventType.AdminGiftClaimed)
                 .Select(e => e.Data.TryGetValue("regalo", out var id) && Guid.TryParse(id, out var gift) ? gift : Guid.Empty)
                 .ToHashSet());

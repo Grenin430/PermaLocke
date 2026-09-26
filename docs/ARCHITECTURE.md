@@ -12358,3 +12358,47 @@ todo viaja por el canal de regalos como una **orden** y la aplica la app del jug
 
 Pendiente del usuario: ejecutar `14-reglas.sql`. **Sin probar con el servidor ni jugando**; compila, arranca y pasan las
 pruebas (`AdminOrderTests`).
+
+---
+
+## §194 · Subir solo lo nuevo y LIMPIEZA en Admin (2026-09-26, plan del próximo torneo, paso 1)
+
+**Para qué:** el próximo torneo es de ~20 personas y el plan gratis de Supabase tiene 500 MB. Hasta ahora cada app
+sube su historial **entero** cada dos minutos (un `upsert` de `runs`): la fila se reemplaza, pero cada reemplazo de un
+JSON grande deja una copia muerta hasta el vacuum, y `subidas` gana una fila cada vez.
+
+**Servidor — `tools/supabase/15-eventos-y-limpieza.sql` (lo ejecuta el usuario).** Solo añade; lo que usan las apps que
+están jugando (runs, subidas, ultima_run, logros, amigos, clasificacion) queda igual.
+- Tabla `eventos` (`run_id`, `n`, `evento` jsonb, `llegada`): una fila por evento, que no se reescribe nunca. Leen los
+  de la lista y el organizador; nadie escribe directamente.
+- `subir_eventos(p_run, p_snapshot, p_desde, p_eventos)`: comprueba lista, dueño y que la run siga activa (una nueva la
+  crea como el insert de siempre, con el índice de una run activa por jugador). Añade los eventos **solo** si `p_desde`
+  es lo que ya tiene y el primero sigue la cadena (`previousHash` = hash del último guardado). Si no —copia restaurada,
+  cadena reescrita— no añade ni borra nada. Siempre actualiza el `snapshot`, así que el trigger de siempre sigue
+  anotando cada envío en `subidas` con su número y su huella: **la AUDITORÍA sigue viendo los retrocesos**. `runs.history`
+  de esas runs queda en un esqueleto con `"enEventos": true`. Una run que subía entera pasa sus eventos a la tabla la
+  primera vez, tal cual.
+- Vista nueva `logros_todos`: los logros de `runs.history` y de `eventos`, para la ACTIVIDAD de las apps nuevas.
+- `limpieza(p_ejecutar, p_historiales)`: solo organizador; cuenta (o borra) lo que nada vuelve a leer: fantasmas y
+  lluvias de más de un día (salvo la última de cada tabla), anuncios salvo el último, regalos a una persona de más de 7
+  días ya recogidos en su run activa (los de «todos» nunca), y en `subidas` todo menos la primera, la última y cada
+  retroceso con su anterior. Con `p_historiales`, además el historial de las runs **archivadas** (y sus `eventos`); el
+  resumen se queda. Nunca runs activas, lista, organizadores, reglas, reinicios ni presencia.
+
+**App.** `TournamentUpload` sube por `subir_eventos`: la primera vez pregunta con `p_desde = -1` cuántos tiene el
+servidor y luego manda lo que falta en tandas de 400. Si el servidor tiene más que el PC o no acepta la tanda, deja de
+añadir y solo manda el resumen (aviso en el log). Si el servidor no tiene la función (404, SQL sin ejecutar), sube
+entero como antes. `CommunityService` lee `logros_todos` y, sin ella, `logros`.
+
+**Admin.** `ServerHistory` completa el historial desde `eventos` cuando `runs.history` viene vacío pero el resumen dice
+que hay eventos (AUDITORÍA, ficha del jugador) y trae las recogidas de regalos de esas runs (`GiftDesk`). Botón
+**LIMPIEZA** en CONTROL (`CleanupWindow`/`CleanupViewModel`): cuenta con `limpieza(false)`, enseña qué y cuánto, y borra
+solo tras un sí; vaciar historiales archivados es una casilla aparte con segunda pregunta.
+
+**Probado de verdad** en un Postgres 16 local que imita a Supabase (`tools/supabase/pruebas/`: `supabase-falso.sql`,
+las pruebas del 15 y `probar.sh`): los SQL 01-15 aplican en orden; la run antigua pasa a eventos; una tanda que sigue
+la cadena entra, una que no sigue o una copia restaurada no, y quedan anotadas en `subidas`; `logros_todos` ve los
+logros de las dos maneras; otro jugador no puede subir a tu run ni limpiar ni escribir en `eventos`; la limpieza quita
+exactamente lo previsto (regalos, fantasmas, anuncios, subidas intermedias) y vacía solo las runs archivadas.
+Compilación entera sin avisos; Core 383, GameLink 391, Randomizer 485, Rules 151, PixelCheck 69. **Sin ver** contra el
+Supabase real ni en Windows: primero hay que ejecutar el 15.

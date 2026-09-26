@@ -58,6 +58,7 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ga
 - `SaveNameRepair.cs` — **NameRepairReport, SaveNameRepair** — Puts the species name back on the Pokémon PermaLocke delivered without one. 
 - `SavePidRepair.cs` — **PidAssignment, PidRepairReport, SavePidRepair** — Gives a personality value to the Pokémon PermaLocke delivered without one. 
 - `SaveRecordReader.cs` — **SaveRecordReader** — Reads the game's own record counters out of the save file. 
+- `SaveRenamer.cs` — **SaveRenamer** — Writes a nickname into the player's save, in the slot the Pokémon already occupies (2026-09-26). 
 - `SaveRouletteWorld.cs` — **SaveRouletteWorld** — Everything the LUDÓPATA wheel does to the player's game, against the save file. 
 - `ServiceCollectionExtensions.cs` — **ServiceCollectionExtensions** — The encryption constants of the party in the last save, or null when there is no save: what tells the provider whether a full sweep has anything to find. 
 - `WithheldLedger.cs` — **WithheldLedger** — What the first-encounter rule has taken out of the bag and owes back, and which run it owes it to. 

@@ -6,6 +6,10 @@ revisado: 2026-09-26
 
 La última sesión va arriba. Antes del 2026-09-23 solo hay un resumen por fechas sacado de `CLAUDE.md` y de `ARCHITECTURE.md`: el detalle está en el § citado ([[Índice de ARCHITECTURE]]). **Cada sesión nueva añade su entrada aquí.**
 
+## 2026-09-26 — plan del próximo torneo, desde la nube
+- El usuario pidió implementar [[Plan del próximo torneo]] en su orden, solo en el repo (torneo en marcha: nada de desplegar ni tocar `PermaLocke prueba`/amigos), servidor solo con SQL nuevos numerados que ejecuta él, nada de borrar datos sin preguntar, un commit por paso.
+- **Paso 1 (§194) hecho:** `15-eventos-y-limpieza.sql` (tabla `eventos`, `subir_eventos`, vista `logros_todos`, `limpieza`), `TournamentUpload` incremental con vuelta a la subida entera, `CommunityService` con `logros_todos`, Admin: `ServerHistory` y ventana LIMPIEZA. SQL probado en un Postgres local (`tools/supabase/pruebas/`). Pendiente: que el usuario ejecute el 15.
+
 ## 2026-09-26 — motes desde el VISOR, diez tandas de ideas y antitrampas de recarga
 - **Torneo en curso:** desde hoy solo se toca el repo; nada de `desplegar.ps1` ni copiar a `PermaLocke prueba` ([[Usuario y forma de trabajar]]).
 - **Mote desde VISOR › DATOS** (commit `4de0aa4`): `RenameService` (Core) + `IPokemonRenamer` → `SaveRenamer` (GameLink). Juego cerrado, copia `main-…-mote.sav`, PID, `PokemonBuilder.InPlace`, relectura; evento `PokemonRenamed`; vacío = nombre de especie; 12 letras. Probado en `SaveRenamerTests`; **sin probar en partida real**. Gimmighoul: «reuniendo 999 Monedas de Gimmighoul».

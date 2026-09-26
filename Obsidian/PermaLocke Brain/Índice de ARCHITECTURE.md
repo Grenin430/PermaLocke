@@ -200,6 +200,7 @@ generado: 2026-09-24
 - L12285 · 191 · La app avisa de que el organizador reinició la run
 - L12302 · 192 · Antitrampas de recarga: estados, cerrar PermaLocke, jugar fuera, abandono en combate (solo Admin)
 - L12332 · 193 · Admin ampliado: ficha, órdenes a la app, pausa del torneo, reglas oficiales por el servidor
+- L12364 · 194 · Subir solo lo nuevo (tabla eventos, subir_eventos) y LIMPIEZA en Admin
 
 Subsecciones §176: bis (visor), ter (todas las pantallas, fuera ESTADÍSTICAS), quater (EV/MOVIMIENTOS sin bolsa, diálogos).
 

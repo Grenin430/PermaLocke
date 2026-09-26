@@ -91,7 +91,7 @@ public sealed partial class AuditViewModel(DiscordLogin discord, ILogger<AuditVi
             foreach (var run in JsonSerializer.Deserialize<List<RunRow>>(runsJson, Json) ?? [])
             {
                 var snapshot = run.Snapshot.Deserialize<RunSnapshot>(Json)!;
-                var history = run.History.Deserialize<RunHistory>(Json);
+                var history = await Services.ServerHistory.CompleteAsync(discord, run.History.Deserialize<RunHistory>(Json), snapshot, Json);
                 var result = SnapshotAudit.Check(snapshot, history);
                 var log = uploads[run.Run_id].ToList();
 

@@ -1,3 +1,4 @@
+using System.Net.Http;
 using System.ComponentModel;
 using System.Text.Json;
 using System.Windows.Threading;
@@ -205,7 +206,7 @@ public sealed class CommunityService : INotifyPropertyChanged
         await ReadAnnouncementAsync();
         await ReadRunStateAsync();
         var friendsJson = await _discord.GetAsync("amigos?select=*");
-        var feedJson = await _discord.GetAsync("logros?select=*");
+        var feedJson = await ReadFeedAsync();
 
         if (friendsJson is null || feedJson is null)
         {
@@ -270,6 +271,30 @@ public sealed class CommunityService : INotifyPropertyChanged
 
         Set(friends, [.. feed.OrderByDescending(f => f.At).Take(FeedLength)],
             friends.Count == 0 ? "Todavía no hay nadie más." : string.Empty);
+    }
+
+    /// <summary>The server has no <c>logros_todos</c> (SQL 15 not run yet): the old view.</summary>
+    private bool _oldFeed;
+
+    /// <summary>
+    /// The achievements of everybody's run, from <c>logros_todos</c>, which also reads the runs uploaded event by event
+    /// (§194); <c>logros</c> only reads the whole histories of before.
+    /// </summary>
+    private async Task<string?> ReadFeedAsync()
+    {
+        if (!_oldFeed)
+        {
+            try
+            {
+                return await _discord.GetAsync("logros_todos?select=*");
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                _oldFeed = true;
+            }
+        }
+
+        return await _discord.GetAsync("logros?select=*");
     }
 
     private sealed record AnnouncementRow(long Id, string Texto);

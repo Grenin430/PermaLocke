@@ -33,6 +33,7 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Services/DisplayNames.cs` — **DisplayNames** — Spanish labels for the enums the interface shows. 
 - `Services/EdgeTab.cs` — **EdgeTab** — The tab that brings PermaLocke back while you are playing. 
 - `Services/EmulatorCrashReport.cs` — **EmulatorCrashReport, Machine** — Writes, the moment Azahar falls over, everything needed to know why: so nobody has to reproduce it on the player's computer, and the player only has to pass on one file. 
+- `Services/EmulatorJob.cs` — **EmulatorJob** — Ties the emulator to PermaLocke: when PermaLocke ends, however it ends, Windows ends the emulator too (2026-09-26). 
 - `Services/EmulatorLauncher.cs` — **EmulatorState, CheckLevel, LaunchCheck, LauncherSettings, EmulatorLauncher** — Where the game is, from the launcher's point of view.
 - `Services/EmulatorProcess.cs` — **EmulatorProcess** — Whether the emulator is really running.
 - `Services/EncounterGuard.cs` — **EncounterNotice, WildCatch, EncounterGuard** — Something the guard wants the player to hear, and the Pokémon it is about when there is one.
@@ -44,6 +45,7 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Services/HpBarWatcher.cs` — **HpBarWatcher** — Waits, looking at the emulator's window, for the player's HP bar to reach zero. 
 - `Services/IKillcamRecorder.cs` — **IKillcamRecorder** — Recording operations used by the game monitor.
 - `Services/InstalledWorld.cs` — **InstalledWorld** — Reads how big the world Azahar will actually load is, and tells the live readers. 
+- `Services/IntegrityGuard.cs` — **IntegrityGuard** — Stops the reload tricks of a locke and writes down, for the organiser only, the ones it cannot stop (2026-09-26). 
 - `Services/IslandMapService.cs` — **IslandMapService** — The four island maps, taken from the player's own cartridge the first time they are needed. 
 - `Services/KillcamClip.cs` — **KillcamFrame, KillcamClip** — One frame of a killcam: when it was taken, relative to the moment the bar reached zero.
 - `Services/KillcamFrameBuffer.cs` — **KillcamFrameBuffer** — A bounded ring that reuses pixel arrays; snapshots own their pixels.
@@ -51,11 +53,13 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Services/MachineItemLookup.cs` — **MachineItemLookup** — Item names, with a TM saying which move it teaches in the world being played. 
 - `Services/MaintenanceService.cs` — **AuditRow, AuditReport, MaintenanceService, MarkedZone, WithheldItem, StageReadout** — The checks and repairs that until now only existed as Probe commands in a terminal. 
 - `Services/Notifier.cs` — **Toast, Notifier** — One thing worth saying while somebody is playing.
+- `Services/OrderService.cs` — **OrderResult, OrderService** — Applies the organiser's orders to this player's run (2026-09-26), through the same services the player's own buttons use, and closes each one with an `ameEventType.AdminGiftClaimed` so it never run...
 - `Services/OverlayWindows.cs` — **OverlayWindows** — What every window drawn on top of the game has to do so the game keeps being playable. 
 - `Services/PlayNotifications.cs` — **PlayNotifications** — Turns what the watcher does on its own into notices on top of the game. 
 - `Services/PokemonSpriteService.cs` — **PokemonSpriteService** — The Pokémon icons, taken from the player's own cartridge. 
 - `Services/ProcessExitWatch.cs` — **ProcessExitWatch** — Holds on to a process PermaLocke did not start, so that once it is gone its exit code can still be read. 
 - `Services/Rolling.cs` — **Rolling** — Makes a number arrive by counting up to itself instead of appearing. 
+- `Services/RulesSync.cs` — **RulesSync** — Brings the organiser's official rules into this PermaLocke's Data/ (2026-09-26, 14-reglas.sql). 
 - `Services/RunActivity.cs` — **RunActivity, WatchedEventStore** — Says out loud that the run's history has just grown. 
 - `Services/SyncService.cs` — **PlayerStatus, SyncService** — The summary of the loaded run and the history it comes from, for `ournamentUpload`. The shared folder it used to publish to is gone (2026-09-24): the tournament server replaced it. 
 - `Services/TcgCardFactory.cs` — **TcgCardFactory** — A Pokémon as its TCG card: the same card in the ÁLBUM (§186) and flying into it when one is caught (§190). 
