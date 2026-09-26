@@ -10,6 +10,7 @@ La última sesión va arriba. Antes del 2026-09-23 solo hay un resumen por fecha
 - Cuarta tanda de ideas, ya sin tocar la jugabilidad (el usuario **no quiere ideas que alteren la jugabilidad**): estado en Discord, cromos, álbum de fotos automático, el viaje en el MAPA, biografía de cada Pokémon, resumen de sesión, sonido chiptune. Eligió solo el estado de Discord, y **solo** «Jugando a PermaLocke» con el icono, también con el emulador abierto.
 - `DiscordPresence` (tubería `discord-ipc-N`, sin NuGet), `AzaharInstallation.DisableDiscordPresence` (`enable_discord_presence=false` en `[UI]`), claves `discordApp`/`discordImagen` en `Data/torneo.json` (vacías: **el usuario tiene que poner el id de la aplicación de Discord** llamada PermaLocke, con su icono en el Developer Portal). Sin compilar ni ver.
 - Recordar: la carpeta de prueba y la de amigos tienen su propio `Data/torneo.json`: hay que copiarles las claves nuevas.
+- El usuario creó la aplicación de Discord «PermaLocke»: id `1552637220228169770`, ya en `discordApp`. Sin `discordImagen` (se usa el icono de la aplicación).
 
 ## 2026-09-26 — la lluvia de sangre (§184), desde la nube
 - Sesión en un **contenedor Linux en la nube** (rama `claude/relaxed-sagan-9amy20`): sin Azahar, sin el Escritorio del usuario y **sin .NET** (la red bloquea `builds.dotnet.microsoft.com`). Nada compilado ni visto: lo compila y prueba el usuario.
