@@ -145,6 +145,67 @@ public sealed class DiscordLogin(AppPaths paths, ILogger<DiscordLogin> logger)
     public Task<string?> PatchAsync(string path, string json, CancellationToken cancel = default) =>
         SendAsync(HttpMethod.Patch, path, json, null, cancel);
 
+    /// <summary>
+    /// Uploads a file to the tournament's Storage (§198) as the signed-in player; the bucket's policies decide whether it
+    /// may. Never replaces a file that is already there. False when nobody is signed in.
+    /// </summary>
+    public async Task<bool> UploadAsync(string bucket, string path, byte[] content, string contentType, CancellationToken cancel = default)
+    {
+        using var request = await StorageRequestAsync(HttpMethod.Post, $"object/{bucket}/{path}");
+        if (request is null) return false;
+        request.Content = new ByteArrayContent(content);
+        request.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
+        using var response = await Http.SendAsync(request, cancel);
+        response.EnsureSuccessStatusCode();
+        return true;
+    }
+
+    /// <summary>Downloads a file from the tournament's Storage; null when nobody is signed in.</summary>
+    public async Task<byte[]?> DownloadAsync(string bucket, string path, CancellationToken cancel = default)
+    {
+        using var request = await StorageRequestAsync(HttpMethod.Get, $"object/{bucket}/{path}");
+        if (request is null) return null;
+        using var response = await Http.SendAsync(request, cancel);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadAsByteArrayAsync(cancel);
+    }
+
+    /// <summary>The files under a folder of a bucket, newest first, as Storage lists them (JSON); null without a session.</summary>
+    public async Task<string?> ListAsync(string bucket, string folder, CancellationToken cancel = default)
+    {
+        using var request = await StorageRequestAsync(HttpMethod.Post, $"object/list/{bucket}");
+        if (request is null) return null;
+        request.Content = JsonContent.Create(new { prefix = folder, limit = 1000, sortBy = new { column = "created_at", order = "desc" } });
+        using var response = await Http.SendAsync(request, cancel);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadAsStringAsync(cancel);
+    }
+
+    /// <summary>Removes files from a bucket; the bucket's policies decide whether this player may.</summary>
+    public async Task<bool> RemoveAsync(string bucket, IReadOnlyList<string> paths, CancellationToken cancel = default)
+    {
+        using var request = await StorageRequestAsync(HttpMethod.Delete, $"object/{bucket}");
+        if (request is null) return false;
+        request.Content = JsonContent.Create(new { prefixes = paths });
+        using var response = await Http.SendAsync(request, cancel);
+        response.EnsureSuccessStatusCode();
+        return true;
+    }
+
+    private async Task<HttpRequestMessage?> StorageRequestAsync(HttpMethod method, string path)
+    {
+        if (_access is null || DateTimeOffset.UtcNow >= _accessUntil)
+        {
+            if (await RefreshAsync() is null) return null;
+        }
+
+        var config = Config;
+        var request = new HttpRequestMessage(method, $"{config.Servidor}/storage/v1/{path}");
+        request.Headers.Add("apikey", config.ClavePublica);
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _access);
+        return request;
+    }
+
     private async Task<string?> SendAsync(HttpMethod method, string path, string? json, string? prefer, CancellationToken cancel)
     {
         if (_access is null || DateTimeOffset.UtcNow >= _accessUntil)

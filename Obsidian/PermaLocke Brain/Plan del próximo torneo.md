@@ -40,6 +40,7 @@ Descartada de esa tanda: «apuntarse desde la app» (la 2 original). El usuario 
 - **Paso 2 — HECHO en el repo (§195), 2026-09-26.** Botón en HOME sin run; en el paso 4 irá también en la primera vez guiada. Quitarlo en la versión siguiente a la actualización automática.
 - **Paso 3 — HECHO en el repo (§196), 2026-09-26.** Para publicar: `tools/publicar-actualizacion.ps1 -Version x.y.z` y release `vx.y.z` con el zip. El repo tiene que ser público. La primera carpeta repartida del próximo torneo tiene que llevar ya este código (versión 1.0.0).
 - **Paso 4 — HECHO en el repo (§197), 2026-09-26.** PRIMEROS PASOS en JUGAR; el traspaso (§195) va dentro, en el paso de la run.
+- **Paso 5 — HECHO en el repo (§198), 2026-09-26.** Falta que el usuario ejecute `tools/supabase/16-copias.sql` (después del 15). Devolver una copia es a mano con el LEEME del zip.
 
 ## 1. Subir solo lo nuevo y limpiar
 - La app sube solo los eventos que el servidor no tiene todavía (p. ej., tabla `eventos` con una fila por evento, o

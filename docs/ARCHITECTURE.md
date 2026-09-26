@@ -12491,3 +12491,38 @@ fuera suyo, como este.
 
 **Sin probar en Windows** (es solo pantalla y botones que llaman a lo que ya había). Compilación entera sin avisos;
 Core 392, GameLink 397, Randomizer 485, Rules 151.
+
+---
+
+## §198 · Copias de seguridad en el servidor (2026-09-26, plan del próximo torneo, paso 5)
+
+**Para qué:** que un jugador que pierde el PC, la carpeta o la partida no pierda el torneo. Su app sube una copia a
+Supabase **Storage** (1 GB en el plan gratis), nunca a la base de datos (500 MB), y el organizador la descarga desde Admin.
+
+**Servidor** (`tools/supabase/16-copias.sql`, lo ejecuta el usuario, solo añade): bucket privado `copias` (25 MB por
+fichero, solo zip); cada jugador **sube solo a su carpeta** `<su id>/` (RLS con `auth.uid()` y `permitido()`) y lee
+solo la suya; **nadie puede cambiar ni borrar** salvo el organizador; el organizador lee todas. `copias_sobrantes(5)`
+(solo organizador) lista, por jugador, todas menos las 5 últimas con su tamaño. Probado en el Postgres local
+(`tools/supabase/pruebas/16-copias.sql`, con un Storage de mentira en `supabase-falso.sql`): otro jugador no sube en tu
+carpeta, un jugador no borra, y de 7 copias sobran las 2 más viejas.
+
+**Qué lleva el zip** (`PermaLocke.Data/ServerBackup`, solo lee): `Saves/permalocke.db` sacada con la **copia en caliente
+de SQLite** (`BackupDatabase`: coherente aunque la app esté escribiendo; copiar el fichero no lo sería), los `.json` de
+cada carpeta de run (`run.json`, tiempo jugado…), la partida `main` de Ultra Luna como `Partida/main` y un `LEEME.txt`
+con dónde va cada cosa. No lleva killcams, copias locales ni estados retirados: pesan y no son la run. Unos cientos de KB.
+
+**Cuándo** (`App/Services/ServerBackupService`): solo en una carpeta repartida (`PermaLocke.local`), con sesión de
+Discord y con run, nunca con `--sin-juego`. Dos minutos después de abrir y luego cada media hora mira si han pasado
+6 horas desde la última; si la partida y los ficheros de la run no han cambiado (huella: hash de `main` más tamaño y
+fecha de la base de datos y los json) no sube nada, para que un PC abierto días no empuje las copias buenas fuera de
+las 5 que se guardan. Estado en `Config/copia-servidor.json`. Sin el SQL 16 la subida falla, se apunta en el log y se
+reintenta; jugar nunca espera. Nombre: `copias/<id>/<yyyyMMdd-HHmmss UTC>.zip`, nunca se pisa.
+
+**Admin:** pestaña **COPIAS** en la ficha del jugador (lista por Storage, DESCARGAR a donde diga el organizador). Devolverla
+es a mano siguiendo el LEEME: Admin no escribe en el PC de nadie. **LIMPIEZA** cuenta también «Copias de seguridad» (las
+de `copias_sobrantes`) y, con el mismo sí, las retira por la API de Storage (`DELETE /storage/v1/object/copias`), porque
+Supabase no deja borrar ficheros con SQL. `DiscordLogin` gana `UploadAsync`, `DownloadAsync`, `ListAsync` y `RemoveAsync`.
+
+**Pruebas:** `ServerBackupTests` (Core.Tests): con la base de datos abierta, el zip lleva la run, la partida, la base de
+datos entera y coherente (se restaura y se lee) y nada de backup/ ni estados retirados. Compilación entera sin avisos;
+Core 393, GameLink 397, Randomizer 485, Rules 151, PixelCheck 69. **Sin probar** contra el Storage de verdad ni en Windows.

@@ -40,7 +40,7 @@
                                     <TextBlock>
                                         <Run Text="{Binding Name, Mode=OneWay}" /><Run Text=" · " Foreground="{StaticResource Faint}" /><Run
                                             Text="{Binding Rows, Mode=OneWay}" Foreground="{StaticResource Faint}" /><Run
-                                            Text=" filas" Foreground="{StaticResource Faint}" />
+                                            Text=" " /><Run Text="{Binding Unit, Mode=OneWay}" Foreground="{StaticResource Faint}" />
                                     </TextBlock>
                                     <TextBlock Text="{Binding Why}" Foreground="{StaticResource Faint}" FontSize="11.5" />
                                 </StackPanel>

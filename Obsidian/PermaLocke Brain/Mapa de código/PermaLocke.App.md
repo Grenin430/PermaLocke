@@ -61,6 +61,7 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Services/Rolling.cs` — **Rolling** — Makes a number arrive by counting up to itself instead of appearing. 
 - `Services/RulesSync.cs` — **RulesSync** — Brings the organiser's official rules into this PermaLocke's Data/ (2026-09-26, 14-reglas.sql). 
 - `Services/RunActivity.cs` — **RunActivity, WatchedEventStore** — Says out loud that the run's history has just grown. 
+- `Services/ServerBackupService.cs` — **ServerBackupService** — The copies on the server (§198, plan del próximo torneo, paso 5): every six hours the application is open, a zip with the run and the Ultra Moon save (`erverBackup`) goes to the tournament's Stor...
 - `Services/SyncService.cs` — **PlayerStatus, SyncService** — The summary of the loaded run and the history it comes from, for `ournamentUpload`. The shared folder it used to publish to is gone (2026-09-24): the tournament server replaced it. 
 - `Services/TcgCardFactory.cs` — **TcgCardFactory** — A Pokémon as its TCG card: the same card in the ÁLBUM (§186) and flying into it when one is caught (§190). 
 - `Services/ToastKind.cs` — **ToastKind** — What a notice is about. Decides its tab, its colour and the mark drawn on its sprite.

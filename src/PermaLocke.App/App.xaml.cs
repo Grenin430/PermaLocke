@@ -267,6 +267,7 @@ public partial class App : Application
         collection.AddSingleton<CatchCeremony>();
         collection.AddSingleton<TransferOffer>();
         collection.AddSingleton<UpdateService>();
+        collection.AddSingleton<ServerBackupService>();
         collection.AddSingleton<FirstRunGuide>();
         collection.AddSingleton<AlbumViewModel>();
         collection.AddSingleton<EvTrainingViewModel>();
@@ -485,6 +486,7 @@ public partial class App : Application
         {
             _services.GetRequiredService<EdgeTab>().Attach(window);
             _services.GetRequiredService<TournamentUpload>().Start();
+            _services.GetRequiredService<ServerBackupService>().Start();
             _services.GetRequiredService<GameLinkMonitor>().Start();
 
             // Las líneas evolutivas se leen ya, en segundo plano: la primera vez puede tocar sacar el fichero de

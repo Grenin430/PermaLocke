@@ -15,7 +15,7 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ad
 - `MainWindow.xaml.cs` — **MainWindow** — The admin's window. Everything it does lives in its view model.
 - `PlayerSheetWindow.xaml.cs` — **PlayerSheetWindow** — A player's sheet. Everything it does lives in `layerSheetViewModel`.
 - `RulesWindow.xaml.cs` — **RulesWindow** — The official rules. Everything it does lives in `ulesViewModel`.
-- `Services/GiftDesk.cs` — **PlayerLine, SentGift, GiftDesk** — A player of the tournament, as the organiser's list shows them.
+- `Services/GiftDesk.cs` — **PlayerLine, StoredFile, SentGift, GiftDesk** — A player of the tournament, as the organiser's list shows them.
 - `Services/ServerHistory.cs` — **ServerHistory** — A run's history as the server holds it, wherever that is (§194): inside runs.history for the apps that upload it whole, or one row per event in eventos for the ones that only upload what is new. 
 - `UsageWindow.xaml.cs` — **UsageWindow** — What the tournament takes on the server. Everything it does lives in `sageViewModel`.
 - `ViewModels/AdminViewModel.cs` — **BannerRow, AdminViewModel** — A banner of the gacha with how many free rolls this gift gives on it.

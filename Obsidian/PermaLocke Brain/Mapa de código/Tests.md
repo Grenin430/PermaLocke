@@ -56,6 +56,7 @@ Contado con grep, NO ejecutado. Detalle en [[Pruebas]].
 - `RouletteServiceTests.cs` (25)
 - `RunBackupTests.cs` (7)
 - `RunServiceTests.cs` (11)
+- `ServerBackupTests.cs` (1)
 - `ShopServiceTests.cs` (6)
 - `SnapshotAuditTests.cs` (12)
 - `SqliteEventStoreTests.cs` (3)

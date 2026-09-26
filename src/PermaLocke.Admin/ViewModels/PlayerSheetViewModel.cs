@@ -77,6 +77,9 @@ public sealed partial class PlayerSheetViewModel : ObservableObject
 
     public ObservableCollection<string> Achievements { get; } = [];
 
+    /// <summary>The copies of their run and save on the server (§198), newest first.</summary>
+    public ObservableCollection<StoredFile> Copies { get; } = [];
+
     public ObservableCollection<string> EventTypes { get; } = ["TODOS"];
 
     [ObservableProperty]
@@ -133,6 +136,8 @@ public sealed partial class PlayerSheetViewModel : ObservableObject
     [RelayCommand]
     public async Task LoadAsync()
     {
+        await LoadFilesAsync();
+
         try
         {
             if (await _desk.RunOfAsync(Player.Id) is not { } run)
@@ -202,6 +207,54 @@ public sealed partial class PlayerSheetViewModel : ObservableObject
         {
             _logger.LogError(ex, "No se pudo leer la run de {Player}", Player.Name);
             Summary = "No se ha podido leer su run del servidor.";
+        }
+    }
+
+    /// <summary>Their files in Storage. Never throws: without the bucket, the tab is just empty.</summary>
+    private async Task LoadFilesAsync()
+    {
+        Copies.Clear();
+        foreach (var file in await _desk.FilesAsync(GiftDesk.CopiesBucket, Player.Id)) Copies.Add(file);
+    }
+
+    /// <summary>
+    /// Saves one of their files where the organiser says. Only reads the server: giving a copy back to the player is
+    /// done by hand, following the LEEME inside it.
+    /// </summary>
+    [RelayCommand]
+    private async Task DownloadAsync(StoredFile? file)
+    {
+        if (file is null)
+        {
+            return;
+        }
+
+        var dialog = new Microsoft.Win32.SaveFileDialog
+        {
+            FileName = $"{Player.Name} {file.FileName}",
+            Filter = "Zip|*.zip",
+            Title = "Guardar la copia"
+        };
+        if (dialog.ShowDialog() != true)
+        {
+            return;
+        }
+
+        try
+        {
+            if (await _desk.DownloadAsync(file) is not { } bytes)
+            {
+                Status = "Entra con Discord.";
+                return;
+            }
+
+            await System.IO.File.WriteAllBytesAsync(dialog.FileName, bytes);
+            Status = $"Guardado en {dialog.FileName}.";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "No se pudo descargar {File}", file.Path);
+            Status = "No se ha podido descargar.";
         }
     }
 
