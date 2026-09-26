@@ -70,3 +70,41 @@ public sealed class DownloadMeter(long total)
         return new DownloadProgress(received, Total, speed, remaining);
     }
 }
+
+/// <summary>
+/// The copy loop of a download (§201, arreglado en §204): from the network stream to the file, telling how it goes at
+/// most every <c>every</c>. Here and not inside <c>UpdateService</c> so it runs in the tests: in 1.0.2 and 1.0.3 this loop
+/// started its «last shown» at <see cref="TimeSpan.MinValue"/>, and «elapsed − MinValue» overflowed on the first piece,
+/// so no update could ever be downloaded.
+/// </summary>
+public static class DownloadCopy
+{
+    /// <param name="elapsed">The time since the download started; a stopwatch in the app, a fake clock in the tests.</param>
+    /// <returns>The bytes copied.</returns>
+    public static async Task<long> CopyAsync(Stream from, Stream to, DownloadMeter meter, Action<DownloadProgress> report,
+        Func<TimeSpan> elapsed, TimeSpan every, CancellationToken cancel = default)
+    {
+        var buffer = new byte[128 * 1024];
+        long received = 0;
+        TimeSpan? shown = null;
+
+        report(meter.Sample(0, TimeSpan.Zero));
+
+        int read;
+        while ((read = await from.ReadAsync(buffer, cancel)) > 0)
+        {
+            await to.WriteAsync(buffer.AsMemory(0, read), cancel);
+            received += read;
+
+            var now = elapsed();
+            if (shown is not { } last || now - last >= every)
+            {
+                shown = now;
+                report(meter.Sample(received, now));
+            }
+        }
+
+        report(meter.Sample(received, elapsed()));
+        return received;
+    }
+}

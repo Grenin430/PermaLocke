@@ -43,7 +43,10 @@ Cómo llega una versión nueva a los jugadores desde el 2026-09-26. Detalle téc
 | 1.0.1 | release a mano | PERMALOCKE x.y.z en CONFIGURACIÓN (§200) |
 | 1.0.2 | Action (2.º intento) | ventana de descarga (§201) |
 | 1.0.3 | Action | franja ACTUALIZAR y aviso fijo sobre el juego (§202) |
-| 1.0.4 | PR #6, pendiente de aceptar | versiones de cuatro cifras (§203) |
+| 1.0.4 | PR #6, pendiente de aceptar | versiones de cuatro cifras (§203) y **arreglo de la descarga** (§204) |
+
+**1.0.2 y 1.0.3 no pueden actualizarse solas** (§204: la descarga se desbordaba en el primer trozo). Quien las tenga,
+una vez a mano: cerrar PermaLocke y cambiar `PermaLocke.exe` por el del zip de la 1.0.4.
 
 Siguiente arreglo pequeño: **1.0.4.1**. El usuario pasa por cada versión (la de antes todavía le enseña su propia forma de
 avisar: la 1.0.2 pregunta con sí o no; desde la 1.0.3, franja).
