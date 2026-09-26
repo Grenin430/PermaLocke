@@ -126,6 +126,29 @@
                 <ListBox ItemsSource="{Binding Achievements}" />
             </TabItem>
 
+            <TabItem Header="COPIAS">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top" TextWrapping="Wrap" Foreground="{StaticResource Faint}" FontSize="11.5" Margin="0,0,0,8"
+                               Text="Su app sube cada 6 horas, si algo ha cambiado, un zip con su run y su partida de Ultra Luna. Si pierde el PC o la carpeta, descarga la última y dentro va un LEEME con dónde va cada cosa. La LIMPIEZA deja las 5 últimas." />
+                    <DataGrid ItemsSource="{Binding Copies}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
+                              GridLinesVisibility="Horizontal" CanUserAddRows="False">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Cuándo" Binding="{Binding When}" Width="150" />
+                            <DataGridTextColumn Header="Tamaño" Binding="{Binding Size}" Width="90" />
+                            <DataGridTextColumn Header="Fichero" Binding="{Binding FileName}" Width="*" />
+                            <DataGridTemplateColumn Header="" Width="Auto">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="DESCARGAR" Margin="4,2" CommandParameter="{Binding}"
+                                                Command="{Binding DataContext.DownloadCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
+
             <TabItem Header="ACCIONES">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel Margin="4" MaxWidth="720" HorizontalAlignment="Left">

@@ -28,6 +28,12 @@ public interface IAppDialogs
     /// </summary>
     /// <returns>True only when the player explicitly accepted.</returns>
     bool Confirm(string title, string message);
+
+    /// <summary>Says something the player only has to read.</summary>
+    void Tell(string title, string message);
+
+    /// <summary>Lets the player pick a folder; null when they cancel.</summary>
+    string? PickFolder(string title);
 }
 
 public sealed class AppDialogs(IServiceProvider services) : IAppDialogs
@@ -65,6 +71,19 @@ public sealed class AppDialogs(IServiceProvider services) : IAppDialogs
                 MessageBoxImage.Warning, MessageBoxResult.No);
 
         return answer == MessageBoxResult.Yes;
+    }
+
+    public void Tell(string title, string message)
+    {
+        var owner = Application.Current?.MainWindow;
+        if (owner is null) MessageBox.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Information);
+        else MessageBox.Show(owner, message, title, MessageBoxButton.OK, MessageBoxImage.Information);
+    }
+
+    public string? PickFolder(string title)
+    {
+        var dialog = new Microsoft.Win32.OpenFolderDialog { Title = title };
+        return dialog.ShowDialog(Application.Current?.MainWindow) == true ? dialog.FolderName : null;
     }
 
     private static bool Show(Window window)

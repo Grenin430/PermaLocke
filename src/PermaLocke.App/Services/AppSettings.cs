@@ -13,7 +13,8 @@ public sealed record AppSettingsData(
     bool Killcam = true,
     bool Follower = true,
     bool Ghosts = true,
-    bool CatchCard = true);
+    bool CatchCard = true,
+    bool GuideHidden = false);
 
 /// <summary>
 /// The player's preferences, kept in <c>Config/ajustes.json</c> and pushed into the services that obey them.

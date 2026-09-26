@@ -46,6 +46,8 @@
                         <Button Content="AUDITORÍA" Click="OnAudit" Margin="0,0,6,0" />
                         <Button Content="LISTA" Click="OnWhitelist" Margin="0,0,6,0" />
                         <Button Content="CONSUMO" Click="OnUsage" Margin="0,0,6,0" />
+                        <Button Content="INFORMES" Click="OnReports" Margin="0,0,6,0" ToolTip="Los cierres de Azahar que han mandado las apps" />
+                        <Button Content="LIMPIEZA" Click="OnCleanup" Margin="0,0,6,0" />
                     </WrapPanel>
                 </DockPanel>
             </Border>

@@ -29,6 +29,9 @@ public sealed partial class SettingsViewModel : SectionViewModel
     private readonly ILogger<SettingsViewModel> _logger;
     private bool _loading;
 
+    /// <summary>The version running, to see at a glance whether an update (§196) went in.</summary>
+    public string VersionText { get; } = $"PERMALOCKE {UpdateService.Current.ToString(3)}";
+
     public SettingsViewModel(AppSettings settings, WindowSizeService windowSizes, Notifier notifier, AppPaths paths, PokemonSpriteService sprites, DiscordLogin discord,
         ILogger<SettingsViewModel> logger)
         : base("CONFIGURACIÓN", "Ajustes de la aplicación")
@@ -104,7 +107,11 @@ public sealed partial class SettingsViewModel : SectionViewModel
             return;
         }
 
-        _settings.Update(new AppSettingsData(Notifications, StepAside, DeathScene, Killcam, Follower, Ghosts, CatchCard));
+        _settings.Update(_settings.Current with
+        {
+            Notifications = Notifications, StepAside = StepAside, DeathScene = DeathScene, Killcam = Killcam,
+            Follower = Follower, Ghosts = Ghosts, CatchCard = CatchCard
+        });
         Status = "Guardado.";
     }
 

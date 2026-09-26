@@ -18,6 +18,17 @@ public sealed record PlayerLine(Guid Id, string Name, int Points, int Alive, int
     };
 }
 
+/// <summary>A file of a player in the tournament's Storage: a copy of their run (§198) or a crash report.</summary>
+/// <param name="Path">Its full name in the bucket, «&lt;id del jugador&gt;/&lt;fecha&gt;.zip».</param>
+public sealed record StoredFile(string Bucket, string Path, DateTimeOffset Created, long Bytes)
+{
+    public string When => Created.LocalDateTime.ToString("dd/MM/yyyy HH:mm");
+
+    public string Size => Bytes < 1024 * 1024 ? $"{Bytes / 1024.0:0} KB" : $"{Bytes / 1024.0 / 1024.0:0.0} MB";
+
+    public string FileName => System.IO.Path.GetFileName(Path);
+}
+
 public sealed record SentGift(AdminGift Gift, IReadOnlyList<string> Collected, IReadOnlyList<string> Waiting)
 {
     public string State => Waiting.Count == 0
@@ -50,7 +61,40 @@ public sealed class GiftDesk(DiscordLogin discord, ILogger<GiftDesk> logger)
 
     private sealed record GiftRow(AdminGift Regalo);
 
-    private sealed record HistoryRow(Guid User_id, RunHistory? History);
+    private sealed record HistoryRow(Guid User_id, Guid Run_id, RunHistory? History);
+
+    /// <summary>The bucket of the copies (16-copias.sql); the same name the player's ServerBackupService uploads to.</summary>
+    public const string CopiesBucket = "copias";
+
+    private sealed record ListedFile(string Name, string? Id, DateTimeOffset? Created_at, JsonElement? Metadata);
+
+    /// <summary>
+    /// A player's files in a Storage bucket, newest first. Empty when the bucket is not on the server yet (its SQL has not
+    /// been run): Storage answers that with an error, and nothing else here depends on it.
+    /// </summary>
+    public async Task<IReadOnlyList<StoredFile>> FilesAsync(string bucket, Guid player)
+    {
+        string? json;
+        try
+        {
+            json = await discord.ListAsync(bucket, player.ToString());
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "No se pudo listar {Bucket} de {Player}; ¿falta su SQL?", bucket, player);
+            return [];
+        }
+
+        return [.. (JsonSerializer.Deserialize<List<ListedFile>>(json ?? "[]", Json) ?? [])
+            .Where(file => file.Id is not null) // las carpetas vienen sin id
+            .Select(file => new StoredFile(bucket, $"{player}/{file.Name}", file.Created_at ?? DateTimeOffset.MinValue,
+                file.Metadata is { ValueKind: JsonValueKind.Object } meta && meta.TryGetProperty("size", out var size)
+                    && size.TryGetInt64(out var bytes) ? bytes : 0))
+            .OrderByDescending(file => file.Created)];
+    }
+
+    /// <summary>Downloads a file of Storage; null without a session.</summary>
+    public Task<byte[]?> DownloadAsync(StoredFile file) => discord.DownloadAsync(file.Bucket, file.Path);
 
     public async Task<IReadOnlyList<PlayerLine>> PlayersAsync()
     {
@@ -92,7 +136,7 @@ public sealed class GiftDesk(DiscordLogin discord, ILogger<GiftDesk> logger)
                    ?? throw new InvalidOperationException("Entra con Discord.");
 
         return (JsonSerializer.Deserialize<List<RunRow>>(json, Json) ?? []).FirstOrDefault() is { } row
-            ? (row.Snapshot, row.History, row.Subida)
+            ? (row.Snapshot, await ServerHistory.CompleteAsync(discord, row.History, row.Snapshot, Json), row.Subida)
             : null;
     }
 
@@ -107,15 +151,17 @@ public sealed class GiftDesk(DiscordLogin discord, ILogger<GiftDesk> logger)
         ArgumentNullException.ThrowIfNull(players);
 
         var giftsJson = await discord.GetAsync("regalos?select=regalo&order=creado.desc");
-        var historiesJson = await discord.GetAsync("runs?select=user_id,history&activa=eq.true");
+        var historiesJson = await discord.GetAsync("runs?select=user_id,run_id,history&activa=eq.true");
 
         if (giftsJson is null || historiesJson is null)
         {
             return [];
         }
 
+        // Las runs que suben evento a evento tienen sus recogidas en la tabla eventos (§194).
+        var claims = await ServerHistory.ClaimsAsync(discord, Json);
         var collected = (JsonSerializer.Deserialize<List<HistoryRow>>(historiesJson, Json) ?? [])
-            .ToDictionary(row => row.User_id, row => (row.History?.Events ?? [])
+            .ToDictionary(row => row.User_id, row => (row.History?.Events ?? []).Concat(claims[row.Run_id])
                 .Where(e => e.Type == GameEventType.AdminGiftClaimed)
                 .Select(e => e.Data.TryGetValue("regalo", out var id) && Guid.TryParse(id, out var gift) ? gift : Guid.Empty)
                 .ToHashSet());

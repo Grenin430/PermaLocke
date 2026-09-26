@@ -12358,3 +12358,212 @@ todo viaja por el canal de regalos como una **orden** y la aplica la app del jug
 
 Pendiente del usuario: ejecutar `14-reglas.sql`. **Sin probar con el servidor ni jugando**; compila, arranca y pasan las
 pruebas (`AdminOrderTests`).
+
+---
+
+## §194 · Subir solo lo nuevo y LIMPIEZA en Admin (2026-09-26, plan del próximo torneo, paso 1)
+
+**Para qué:** el próximo torneo es de ~20 personas y el plan gratis de Supabase tiene 500 MB. Hasta ahora cada app
+sube su historial **entero** cada dos minutos (un `upsert` de `runs`): la fila se reemplaza, pero cada reemplazo de un
+JSON grande deja una copia muerta hasta el vacuum, y `subidas` gana una fila cada vez.
+
+**Servidor — `tools/supabase/15-eventos-y-limpieza.sql` (lo ejecuta el usuario).** Solo añade; lo que usan las apps que
+están jugando (runs, subidas, ultima_run, logros, amigos, clasificacion) queda igual.
+- Tabla `eventos` (`run_id`, `n`, `evento` jsonb, `llegada`): una fila por evento, que no se reescribe nunca. Leen los
+  de la lista y el organizador; nadie escribe directamente.
+- `subir_eventos(p_run, p_snapshot, p_desde, p_eventos)`: comprueba lista, dueño y que la run siga activa (una nueva la
+  crea como el insert de siempre, con el índice de una run activa por jugador). Añade los eventos **solo** si `p_desde`
+  es lo que ya tiene y el primero sigue la cadena (`previousHash` = hash del último guardado). Si no —copia restaurada,
+  cadena reescrita— no añade ni borra nada. Siempre actualiza el `snapshot`, así que el trigger de siempre sigue
+  anotando cada envío en `subidas` con su número y su huella: **la AUDITORÍA sigue viendo los retrocesos**. `runs.history`
+  de esas runs queda en un esqueleto con `"enEventos": true`. Una run que subía entera pasa sus eventos a la tabla la
+  primera vez, tal cual.
+- Vista nueva `logros_todos`: los logros de `runs.history` y de `eventos`, para la ACTIVIDAD de las apps nuevas.
+- `limpieza(p_ejecutar, p_historiales)`: solo organizador; cuenta (o borra) lo que nada vuelve a leer: fantasmas y
+  lluvias de más de un día (salvo la última de cada tabla), anuncios salvo el último, regalos a una persona de más de 7
+  días ya recogidos en su run activa (los de «todos» nunca), y en `subidas` todo menos la primera, la última y cada
+  retroceso con su anterior. Con `p_historiales`, además el historial de las runs **archivadas** (y sus `eventos`); el
+  resumen se queda. Nunca runs activas, lista, organizadores, reglas, reinicios ni presencia.
+
+**App.** `TournamentUpload` sube por `subir_eventos`: la primera vez pregunta con `p_desde = -1` cuántos tiene el
+servidor y luego manda lo que falta en tandas de 400. Si el servidor tiene más que el PC o no acepta la tanda, deja de
+añadir y solo manda el resumen (aviso en el log). Si el servidor no tiene la función (404, SQL sin ejecutar), sube
+entero como antes. `CommunityService` lee `logros_todos` y, sin ella, `logros`.
+
+**Admin.** `ServerHistory` completa el historial desde `eventos` cuando `runs.history` viene vacío pero el resumen dice
+que hay eventos (AUDITORÍA, ficha del jugador) y trae las recogidas de regalos de esas runs (`GiftDesk`). Botón
+**LIMPIEZA** en CONTROL (`CleanupWindow`/`CleanupViewModel`): cuenta con `limpieza(false)`, enseña qué y cuánto, y borra
+solo tras un sí; vaciar historiales archivados es una casilla aparte con segunda pregunta.
+
+**Probado de verdad** en un Postgres 16 local que imita a Supabase (`tools/supabase/pruebas/`: `supabase-falso.sql`,
+las pruebas del 15 y `probar.sh`): los SQL 01-15 aplican en orden; la run antigua pasa a eventos; una tanda que sigue
+la cadena entra, una que no sigue o una copia restaurada no, y quedan anotadas en `subidas`; `logros_todos` ve los
+logros de las dos maneras; otro jugador no puede subir a tu run ni limpiar ni escribir en `eventos`; la limpieza quita
+exactamente lo previsto (regalos, fantasmas, anuncios, subidas intermedias) y vacía solo las runs archivadas.
+Compilación entera sin avisos; Core 383, GameLink 391, Randomizer 485, Rules 151, PixelCheck 69. **Sin ver** contra el
+Supabase real ni en Windows: primero hay que ejecutar el 15.
+
+---
+
+## §195 · Traer la partida de otra carpeta, una vez (2026-09-26, plan del próximo torneo, paso 2)
+
+**Para qué:** el próximo torneo se juega con una carpeta nueva de PermaLocke; quien ya jugaba (la carpeta de prueba, la
+de amigos) tiene que poder traerse su run y su partida sin copiar nada a mano. Se quita en la versión siguiente, cuando
+ya exista la actualización automática.
+
+**Qué trae** (`GameLink/FolderTransfer`): `Saves/` entera (run, sesiones, copias, killcams); del emulador de la carpeta
+vieja, la partida de Ultra Luna (la carpeta del título `…/title/00040000/001b5100`, buscada como `PlayerSave` porque las
+carpetas de en medio son identificadores de consola) y el mundo instalado (`load/mods/00040000001B5100`); de `Config/`,
+el jugador (`jugador.json`) y la sesión de Discord (`discord.json`); y la ROM solo si aquí no hay ninguna. No trae
+ajustes ni la configuración del emulador. Si las dos carpetas usan el mismo Azahar instalado, la partida no se mueve.
+
+**Guardas.** Copia, **nunca mueve ni borra** nada de la carpeta vieja. Lo que la nueva ya tuviera en cualquiera de esos
+sitios (la base de datos vacía de haberla abierto, la sesión con la que se entró) se **aparta** a
+`Apartado antes del traspaso <fecha>/` con la misma ruta, no se pisa: copiar una carpeta encima de otra mezclaría los
+ficheros de dos partidas. Se niega si la carpeta es esta misma, si en la vieja no hay run (`Saves/…/run.json`, como las
+encuentra `JsonRunRepository`) o si **aquí ya hay una run**. Con el emulador abierto no se ofrece. El PermaLocke viejo no
+puede estar abierto: solo corre uno a la vez (mutex).
+
+**Cuándo se copia.** Nunca con la base de datos abierta: el jugador pulsa **TRAER MI PARTIDA DE OTRA CARPETA** (HOME sin
+run; en el paso 4 también en la primera vez guiada), elige la carpeta, ve la lista y confirma (`TransferOffer`).
+PermaLocke deja `Config/traspaso-pendiente.json` y se reinicia con `--tras-traspaso` (espera a que la anterior suelte el
+mutex). Al arrancar, antes de la copia de seguridad de la base de datos y de que nada la abra, `FolderTransfer.RunPending`
+lo hace, borra el pendiente (es suyo) y deja el resultado en `Config/traspaso-hecho.json`, que al entrar se dice una vez
+y va al log.
+
+**Pruebas:** `FolderTransferTests` (GameLink, en ficheros de verdad): trae todo a su sitio, deja la vieja idéntica fichero a
+fichero y aparta lo que había, no pisa una run, rechaza la misma carpeta y una sin run, respeta la ROM ya puesta, y el
+pendiente se hace una sola vez. Compilación entera sin avisos; Core 383, GameLink 397, Randomizer 485, Rules 151.
+**Sin ver en Windows** (el selector de carpeta y el reinicio).
+
+---
+
+## §196 · Actualización automática con GitHub Releases (2026-09-26, plan del próximo torneo, paso 3)
+
+**Para qué:** con 20 personas no se puede repartir cada versión a mano. Las versiones van a **GitHub Releases** (0 bytes
+en Supabase); cada app mira al abrirse si hay una nueva y se actualiza sola, sin tocar nada del jugador.
+
+**El paquete** (`tools/publicar-actualizacion.ps1 -Version 1.1.0`): `PermaLocke.exe` publicado con esa versión
+(`-p:Version`) y `Data/*.json`, nada más, en `.dist/PermaLocke-actualizacion-1.1.0.zip`. Se sube a una release con la
+etiqueta `v1.1.0`; sus notas son lo que se le enseña al jugador. La distribución entera (2 GB con emulador y expansión)
+no cambia entre versiones y no cabría en un fichero de release. `publicar.ps1` acepta ahora `-Version` (1.0.0 por
+defecto) para que la carpeta repartida sepa de qué versión parte; la app lleva `<Version>1.0.0</Version>`.
+
+**En la app** (`UpdateService` + `Infrastructure/AppUpdate`, que es la parte pura): solo en una carpeta repartida
+(`PermaLocke.local`) y nunca con `--sin-juego`. Al abrir, pregunta a `api.github.com/repos/<actualizaciones>/releases/latest`
+(`actualizaciones` en `Data/torneo.json`: `Grenin430/PermaLocke`). Si la release es más nueva que la versión que corre,
+no es borrador ni prueba y trae `PermaLocke-actualizacion-*.zip`, lo ofrece con sus notas. Con el emulador abierto no:
+pide cerrarlo y volver a abrir. Con un sí: descarga a `Actualizacion/`, comprueba tamaño y **SHA-256** (el `digest` que da
+GitHub), y lo instala: renombra el programa a `.old` (Windows deja renombrar uno en marcha, no sobrescribirlo), pone el
+nuevo y copia los `Data/*.json` del paquete. **Nunca** toca `Saves/`, `Config/`, `ROM/`, `Emulator/`, `Randomized/` ni un
+Data que el paquete no traiga. **Las reglas oficiales** que el organizador publicó (`RulesSync`, §193) se respetan: los
+ficheros con regla en el servidor no se pisan, y si el servidor no contesta no se pisa ninguno de los de reglas. Luego se
+reinicia con `--tras-actualizar` (espera a que suelte el mutex), y al arrancar se quitan el `.old` y la descarga.
+
+**Requisito:** el repositorio tiene que ser **público** para que las apps lean las releases sin contraseña; si no, GitHub
+responde 404 y la app lo apunta en el log y sigue.
+
+**Pruebas:** `AppUpdateTests` (Core.Tests, en ficheros de verdad): solo cuenta una versión más nueva y publicada con su
+paquete; la descarga se comprueba por tamaño y hash; instalar cambia el programa y los Data del paquete, respeta la regla
+oficial, no toca Saves/Config/Emulator ni un Data que no viene; un paquete sin programa no cambia nada; la limpieza quita
+el `.old` y la descarga. Compilación entera sin avisos; Core 392, GameLink 397, Randomizer 485, Rules 151. **Sin probar**
+contra una release real ni en Windows (el script de PowerShell no se ha ejecutado: aquí no hay PowerShell).
+
+---
+
+## §197 · PRIMEROS PASOS: la primera vez guiada (2026-09-26, plan del próximo torneo, paso 4)
+
+**Para qué:** con 20 personas, que nadie tenga que leer el `EMPIEZA AQUI.txt` para saber qué le falta. En JUGAR, la
+pantalla en la que se aterriza, un panel **PRIMEROS PASOS** dice lo que queda antes de jugar, con el botón que lo hace.
+
+**Los pasos** (`ViewModels/FirstRunGuide`), cada uno tachado en cuanto es verdad, leído de lo real y nunca guardado:
+1. Entrar con Discord: la sesión está y la cuenta está en la lista.
+2. La ROM: una ROM de Ultra Luna reconocida en `ROM/` (`RomInspector.ScanFolder`). Botón ABRIR CARPETA ROM.
+3. El emulador: el `Emulator/azahar.exe` que viene con PermaLocke (si falta, dice que se vuelva a extraer la carpeta).
+4. La run: CREAR RUN, o **TRAER MI PARTIDA DE OTRA CARPETA** (§195) para quien ya jugaba en otra.
+5. El mundo: instalado en el emulador (`load/mods/00040000001B5100` con algo dentro). Botón IR AL RANDOMIZADOR.
+6. Jugar y guardar: hay partida guardada de Ultra Luna (`PlayerSave.Find`).
+
+Se refresca con JUGAR (y con COMPROBAR). Se va solo cuando está todo; OCULTAR lo esconde para siempre
+(`AppSettingsData.GuideHidden`, en `Config/ajustes.json`). De paso, CONFIGURACIÓN guarda ahora con
+`Current with { … }`: antes rehacía el registro entero y habría devuelto a su valor por defecto cualquier ajuste que no
+fuera suyo, como este.
+
+**Sin probar en Windows** (es solo pantalla y botones que llaman a lo que ya había). Compilación entera sin avisos;
+Core 392, GameLink 397, Randomizer 485, Rules 151.
+
+---
+
+## §198 · Copias de seguridad en el servidor (2026-09-26, plan del próximo torneo, paso 5)
+
+**Para qué:** que un jugador que pierde el PC, la carpeta o la partida no pierda el torneo. Su app sube una copia a
+Supabase **Storage** (1 GB en el plan gratis), nunca a la base de datos (500 MB), y el organizador la descarga desde Admin.
+
+**Servidor** (`tools/supabase/16-copias.sql`, lo ejecuta el usuario, solo añade): bucket privado `copias` (25 MB por
+fichero, solo zip); cada jugador **sube solo a su carpeta** `<su id>/` (RLS con `auth.uid()` y `permitido()`) y lee
+solo la suya; **nadie puede cambiar ni borrar** salvo el organizador; el organizador lee todas. `copias_sobrantes(5)`
+(solo organizador) lista, por jugador, todas menos las 5 últimas con su tamaño. Probado en el Postgres local
+(`tools/supabase/pruebas/16-copias.sql`, con un Storage de mentira en `supabase-falso.sql`): otro jugador no sube en tu
+carpeta, un jugador no borra, y de 7 copias sobran las 2 más viejas.
+
+**Qué lleva el zip** (`PermaLocke.Data/ServerBackup`, solo lee): `Saves/permalocke.db` sacada con la **copia en caliente
+de SQLite** (`BackupDatabase`: coherente aunque la app esté escribiendo; copiar el fichero no lo sería), los `.json` de
+cada carpeta de run (`run.json`, tiempo jugado…), la partida `main` de Ultra Luna como `Partida/main` y un `LEEME.txt`
+con dónde va cada cosa. No lleva killcams, copias locales ni estados retirados: pesan y no son la run. Unos cientos de KB.
+
+**Cuándo** (`App/Services/ServerBackupService`): solo en una carpeta repartida (`PermaLocke.local`), con sesión de
+Discord y con run, nunca con `--sin-juego`. Dos minutos después de abrir y luego cada media hora mira si han pasado
+6 horas desde la última; si la partida y los ficheros de la run no han cambiado (huella: hash de `main` más tamaño y
+fecha de la base de datos y los json) no sube nada, para que un PC abierto días no empuje las copias buenas fuera de
+las 5 que se guardan. Estado en `Config/copia-servidor.json`. Sin el SQL 16 la subida falla, se apunta en el log y se
+reintenta; jugar nunca espera. Nombre: `copias/<id>/<yyyyMMdd-HHmmss UTC>.zip`, nunca se pisa.
+
+**Admin:** pestaña **COPIAS** en la ficha del jugador (lista por Storage, DESCARGAR a donde diga el organizador). Devolverla
+es a mano siguiendo el LEEME: Admin no escribe en el PC de nadie. **LIMPIEZA** cuenta también «Copias de seguridad» (las
+de `copias_sobrantes`) y, con el mismo sí, las retira por la API de Storage (`DELETE /storage/v1/object/copias`), porque
+Supabase no deja borrar ficheros con SQL. `DiscordLogin` gana `UploadAsync`, `DownloadAsync`, `ListAsync` y `RemoveAsync`.
+
+**Pruebas:** `ServerBackupTests` (Core.Tests): con la base de datos abierta, el zip lleva la run, la partida, la base de
+datos entera y coherente (se restaura y se lee) y nada de backup/ ni estados retirados. Compilación entera sin avisos;
+Core 393, GameLink 397, Randomizer 485, Rules 151, PixelCheck 69. **Sin probar** contra el Storage de verdad ni en Windows.
+
+---
+
+## §199 · Informes de fallo directos a Admin (2026-09-26, plan del próximo torneo, paso 6)
+
+**Para qué:** con 20 personas no se puede ir amigo por amigo pidiendo el zip de `Diagnosticos\`. El informe que ya
+escribe `EmulatorCrashReport` cuando Azahar se cierra solo (§168: los dos logs, las últimas peticiones al emulador y el
+equipo; sin ROM, partida ni run) llega solo al organizador.
+
+**Servidor** (`tools/supabase/17-informes.sql`, lo ejecuta el usuario, solo añade): bucket privado `informes` (5 MB por
+fichero, solo zip). Cada jugador **sube solo a su carpeta** `<su id>/`; **solo el organizador** los lee y los retira (el
+jugador no ve ni los suyos: están en su `Diagnosticos\`). `informes_lista(200)` da los últimos de todos con de quién son;
+`informes_viejos(30)` los de más de 30 días. Ambas solo para el organizador. Probado en el Postgres local
+(`tools/supabase/pruebas/17-informes.sql`).
+
+**App:** `CrashReportUpload` sube el zip en cuanto `EmulatorLauncher` lo escribe, a `informes/<id>/<nombre>.zip`, y al
+abrir sube los que no pudieron ir (sin conexión, sin sesión o sin el SQL 17): `Infrastructure/CrashReportQueue` compara
+los `cierre-azahar-*.zip` de `Diagnosticos\` de los últimos 30 días con `Config/informes-subidos.json`. Nunca borra un
+informe del PC. El aviso y el `resumen.txt` dicen ahora que le llega al organizador si ha entrado con Discord.
+
+**Admin:** botón **INFORMES** (ventana con fecha, jugador, tamaño y DESCARGAR). **LIMPIEZA** cuenta «Informes de fallo»
+de más de 30 días y los retira por la API de Storage con el mismo sí que lo demás.
+
+**Pruebas:** `CrashReportQueueTests` (Core.Tests): cada informe nuevo va una vez, los de más de 30 días y lo que no es un
+informe no van, y marcarlo como enviado no toca el fichero. Compilación entera sin avisos; Core 395, GameLink 397,
+Randomizer 485, Rules 151, PixelCheck 69. **Sin probar** contra el Storage de verdad ni en Windows.
+
+---
+
+## §200 · PermaLocke 1.0.1: la versión a la vista y un solo sitio para ella (2026-09-26)
+
+**Para qué:** la primera release de verdad, para probar la actualización automática (§196) con el repo ya público.
+Tiene que notarse que ha entrado: CONFIGURACIÓN enseña al final **PERMALOCKE x.y.z** (`SettingsViewModel.VersionText`,
+de `UpdateService.Current`).
+
+**La versión, en un solo sitio:** `<Version>` del csproj de la App, ahora **1.0.1**. `tools/publicar.ps1` ya no tiene una
+versión fija por defecto (antes forzaba 1.0.0): sin `-Version` usa la del csproj, igual que `desplegar.ps1`. Con cada
+release se sube el csproj y se lanza `publicar-actualizacion.ps1 -Version` con el mismo número.
+
+Comprobado desde la nube: el repo responde como público en la API de GitHub (todavía sin releases) y
+`dotnet publish -r win-x64` del paquete sale bien (un exe de ~160 MB). **Sin probar** la actualización en Windows.

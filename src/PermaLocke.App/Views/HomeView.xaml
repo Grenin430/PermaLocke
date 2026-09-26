@@ -78,6 +78,10 @@
 
                 <Button Content="CREAR RUN" Command="{Binding CreateRunCommand}" Style="{StaticResource PxButton}"
                         HorizontalAlignment="Center" Margin="0,22,0,0" />
+
+                <!-- ¿Ya jugabas en otra carpeta de PermaLocke? Se trae entera, sin tocar la de antes (§195). -->
+                <Button Content="TRAER MI PARTIDA DE OTRA CARPETA" Command="{Binding BringFromFolderCommand}"
+                        Style="{StaticResource PxSubtleButton}" HorizontalAlignment="Center" Margin="0,12,0,0" />
             </StackPanel>
         </Grid>
 

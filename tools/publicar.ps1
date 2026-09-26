@@ -3,7 +3,10 @@ param(
     [string]$Destino = (Join-Path (Split-Path -Parent $PSScriptRoot) '.dist\PERMALOCKEEEE'),
     [string]$VisualCppInstaller,
     # Sin esto, al final se deja tambien un zip de la carpeta al lado, listo para compartir.
-    [switch]$SinZip
+    [switch]$SinZip,
+    # La version que llevara el programa (seccion 196). Sin ella, la del csproj de la app (<Version>), que es la que
+    # hay que subir con cada release para que la carpeta de amigos y la actualizacion digan lo mismo.
+    [string]$Version
 )
 $ErrorActionPreference = 'Stop'
 # [IO.Path]::GetRelativePath no existe en el PowerShell de Windows (5.1), que es el que trae todo Windows.
@@ -21,7 +24,7 @@ if ($VisualCppInstaller) {
     }
 }
 Write-Host "Publicando version local autocontenida en $Destino"
-dotnet publish (Join-Path $raiz 'src\PermaLocke.App') -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishTrimmed=false -p:DebugType=none -o $Destino --nologo -v quiet
+dotnet publish (Join-Path $raiz 'src\PermaLocke.App') -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishTrimmed=false -p:DebugType=none $(if ($Version) { "-p:Version=$Version" }) -o $Destino --nologo -v quiet
 if ($LASTEXITCODE -ne 0) { throw 'La publicacion ha fallado.' }
 Rename-Item -LiteralPath (Join-Path $Destino 'PermaLocke.App.exe') -NewName 'PermaLocke.exe'
 Set-Content -LiteralPath (Join-Path $Destino 'PermaLocke.local') -Value 'Distribucion local independiente. Mantener junto a PermaLocke.exe.' -Encoding utf8

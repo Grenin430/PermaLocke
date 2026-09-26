@@ -200,6 +200,13 @@ generado: 2026-09-24
 - L12285 · 191 · La app avisa de que el organizador reinició la run
 - L12302 · 192 · Antitrampas de recarga: estados, cerrar PermaLocke, jugar fuera, abandono en combate (solo Admin)
 - L12332 · 193 · Admin ampliado: ficha, órdenes a la app, pausa del torneo, reglas oficiales por el servidor
+- L12364 · 194 · Subir solo lo nuevo (tabla eventos, subir_eventos) y LIMPIEZA en Admin
+- L12408 · 195 · Traer la partida de otra carpeta (FolderTransfer, TransferOffer)
+- L12441 · 196 · Actualización automática con GitHub Releases (UpdateService, AppUpdate)
+- L12474 · 197 · PRIMEROS PASOS en JUGAR (FirstRunGuide)
+- L12497 · 198 · Copias de seguridad en Supabase Storage (paso 5)
+- L12532 · 199 · Informes de fallo directos a Admin (paso 6)
+- L12558 · 200 · PermaLocke 1.0.1: versión a la vista, un solo sitio para ella
 
 Subsecciones §176: bis (visor), ter (todas las pantallas, fuera ESTADÍSTICAS), quater (EV/MOVIMIENTOS sin bolsa, diálogos).
 

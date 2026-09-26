@@ -1,0 +1,54 @@
+<Window x:Class="PermaLocke.Admin.CleanupWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:pixel="clr-namespace:PermaLocke.App.Views.Pixel"
+        Title="PermaLocke Admin · Limpieza" Height="560" Width="700" Icon="Assets/PermaLocke.Admin.ico"
+        Background="{StaticResource PxBaseBrush}" WindowStartupLocation="CenterOwner">
+    <!-- LIMPIEZA (§194): lo que se puede quitar del servidor sin que nada lo eche de menos, contado antes de borrar
+         (limpieza() de 15-eventos-y-limpieza.sql). -->
+    <DockPanel Margin="18">
+        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,14">
+            <Button DockPanel.Dock="Right" Content="VOLVER A CONTAR" Command="{Binding RefreshCommand}" />
+            <StackPanel VerticalAlignment="Center">
+                <pixel:PixelText Text="LIMPIEZA" Scale="3" Tight="True" Colour="{StaticResource PxText}"
+                                 Shadow="{StaticResource PxShadow}" />
+                <TextBlock Text="{Binding Status}" Foreground="{StaticResource Faint}" FontSize="11.5" Margin="0,4,0,0"
+                           TextWrapping="Wrap" />
+            </StackPanel>
+        </DockPanel>
+
+        <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
+            <CheckBox IsChecked="{Binding Histories}" Margin="0,0,0,4"
+                      Content="Vaciar también el historial de las runs archivadas" />
+            <TextBlock Foreground="{StaticResource Faint}" FontSize="11.5" TextWrapping="Wrap" Margin="0,0,0,12"
+                       Text="Su resumen se queda, pero la auditoría de esas runs ya no podrá comprobar su cadena. Nunca se tocan las runs activas, la lista, los organizadores, las reglas ni los reinicios." />
+            <DockPanel>
+                <Button DockPanel.Dock="Right" Content="LIMPIAR" Style="{StaticResource Primary}" Command="{Binding CleanCommand}" />
+                <pixel:PixelText Text="{Binding Total}" Scale="2" Tight="True" Colour="{StaticResource PxGold}"
+                                 VerticalAlignment="Center" />
+            </DockPanel>
+        </StackPanel>
+
+        <pixel:PixelWindow Title="LO QUE SE QUITARÍA" Icon="IconGrid">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding Lines}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <DockPanel Margin="0,0,0,8">
+                                <TextBlock DockPanel.Dock="Right" Text="{Binding Size}" Foreground="{StaticResource Faint}" />
+                                <StackPanel>
+                                    <TextBlock>
+                                        <Run Text="{Binding Name, Mode=OneWay}" /><Run Text=" · " Foreground="{StaticResource Faint}" /><Run
+                                            Text="{Binding Rows, Mode=OneWay}" Foreground="{StaticResource Faint}" /><Run
+                                            Text=" " /><Run Text="{Binding Unit, Mode=OneWay}" Foreground="{StaticResource Faint}" />
+                                    </TextBlock>
+                                    <TextBlock Text="{Binding Why}" Foreground="{StaticResource Faint}" FontSize="11.5" />
+                                </StackPanel>
+                            </DockPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </pixel:PixelWindow>
+    </DockPanel>
+</Window>
