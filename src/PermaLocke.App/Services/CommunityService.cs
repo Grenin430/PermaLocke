@@ -95,6 +95,16 @@ public sealed class CommunityService : INotifyPropertyChanged
     /// <summary>The organiser's latest announcement to every player, or empty (10-control.sql).</summary>
     public string Announcement { get; private set; } = string.Empty;
 
+    /// <summary>
+    /// The organizer restarted this run from Admin: on the server it is archived, and here it still is until the player
+    /// starts over (HOME → EMPEZAR DE CERO). Nothing is deleted from here on its own: the save and the run are the
+    /// player's, and wiping them is their call.
+    /// </summary>
+    public bool RunRestarted { get; private set; }
+
+    /// <summary>The run whose restart was already told, so the notice comes up once.</summary>
+    private Guid? _restartTold;
+
     /// <param name="writes">
     /// False for a copy opened only to look at screens (<c>--sin-juego</c>): it reads, but it does not tell the others
     /// it is here.
@@ -193,6 +203,7 @@ public sealed class CommunityService : INotifyPropertyChanged
     {
         var now = DateTimeOffset.Now;
         await ReadAnnouncementAsync();
+        await ReadRunStateAsync();
         var friendsJson = await _discord.GetAsync("amigos?select=*");
         var feedJson = await _discord.GetAsync("logros?select=*");
 
@@ -262,6 +273,31 @@ public sealed class CommunityService : INotifyPropertyChanged
     }
 
     private sealed record AnnouncementRow(long Id, string Texto);
+
+    private sealed record RunStateRow(bool Activa);
+
+    /// <summary>
+    /// Whether this run is still the active one on the server. A run never uploaded is not restarted: there is no row.
+    /// </summary>
+    private async Task ReadRunStateAsync()
+    {
+        if (_runContext.Current is not { } run
+            || await _discord.GetAsync($"runs?run_id=eq.{run.Id}&select=activa") is not { } json)
+        {
+            RunRestarted = false;
+            return;
+        }
+
+        RunRestarted = (JsonSerializer.Deserialize<List<RunStateRow>>(json, Json) ?? []).FirstOrDefault() is { Activa: false };
+
+        if (RunRestarted && _restartTold != run.Id)
+        {
+            _restartTold = run.Id;
+            _logger.LogWarning("El organizador ha reiniciado la run {Run} en el servidor", run.Name);
+            _notifier.Say(ToastKind.Announcement, "Tu run se ha reiniciado",
+                "El organizador la ha reiniciado. Ve a HOME y pulsa EMPEZAR DE CERO.");
+        }
+    }
 
     /// <summary>
     /// The newest announcement, shown in JUGAR. A new one also comes up as a notice over the game, once: the first

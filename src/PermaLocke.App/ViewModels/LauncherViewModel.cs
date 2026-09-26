@@ -160,6 +160,10 @@ public sealed partial class LauncherViewModel : SectionViewModel
 
     public bool HasAnnouncement => Announcement.Length > 0;
 
+    /// <summary>The organizer restarted this run from Admin; the player still has to start over.</summary>
+    [ObservableProperty]
+    private bool _runRestarted;
+
     [ObservableProperty]
     private string _problem = string.Empty;
 
@@ -358,6 +362,7 @@ public sealed partial class LauncherViewModel : SectionViewModel
 
         CommunityNote = _community.Note;
         Announcement = _community.Announcement;
+        RunRestarted = _community.RunRestarted;
         OnPropertyChanged(nameof(HasFriends));
         OnPropertyChanged(nameof(HasActivity));
     }

@@ -197,6 +197,7 @@ generado: 2026-09-24
 - L12139 · 188 · ÁLBUM: la carta en la mano iba a trompicones (PixelColour)
 - L12180 · 189 · GACHA: más golpe, racha exprés y SALTAR
 - L12241 · 190 · Carta de cada captura volando al álbum encima del juego
+- L12285 · 191 · La app avisa de que el organizador reinició la run
 
 Subsecciones §176: bis (visor), ter (todas las pantallas, fuera ESTADÍSTICAS), quater (EV/MOVIMIENTOS sin bolsa, diálogos).
 

@@ -133,7 +133,8 @@ Trampas que ya costaron caro y hay que tener siempre presentes:
   instalado (`WorldLimits`, `InstalledWorld`). Las sondas deben llamar a `InstalledWorld.ApplyQuietly` (§91).
 - **Detectable no es detectado**: el vigilante empareja por PID contra lo registrado en la run (§56, §68).
 
-Último: **la carta de cada captura vuela al álbum** (§190): al contar el juego una captura salvaje (al acabar el
+Último: **la app avisa del reinicio desde Admin** (§191): reiniciar solo archiva en el servidor; el jugador pulsa HOME →
+EMPEZAR DE CERO. Antes: **la carta de cada captura vuela al álbum** (§190): al contar el juego una captura salvaje (al acabar el
 combate), una ball pixel donde está el entrenador suelta la carta real del Pokémon y entra en un álbum pequeño que
 llega y se va por la derecha; `--ensayar-captura`, ajuste «Carta al capturar». Antes: **GACHA con más golpe** (§189): racha exprés ×2,5 hasta abrirse, SALTAR (botón, máquina, ESPACIO), tensión,
 «¡SUBE!», fogonazo, confeti, monedas y sellos LEGENDARIO/VARIOCOLOR; nada antes de abrirse depende del tier. Antes: **la

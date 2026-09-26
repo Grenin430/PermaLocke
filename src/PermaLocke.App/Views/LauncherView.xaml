@@ -364,6 +364,13 @@
 
                 <!-- A LA DERECHA: la lista de amigos y tus logros. -->
                 <StackPanel Grid.Column="2" VerticalAlignment="Top">
+                    <!-- LA RUN REINICIADA DESDE ADMIN: en el servidor ya está archivada; aquí sigue hasta empezar de cero. -->
+                    <pixel:PixelWindow Title="TU RUN SE HA REINICIADO" Icon="IconRefresh" Margin="0,0,0,12"
+                                       Visibility="{Binding RunRestarted, Converter={StaticResource BoolToVisibility}}">
+                        <pixel:PixelText Scale="2" Wrap="True" Colour="{StaticResource PxBad}"
+                                         Text="El organizador la ha reiniciado. Ve a HOME y pulsa EMPEZAR DE CERO: borra esta run y la partida, y creas la nueva." />
+                    </pixel:PixelWindow>
+
                     <!-- EL ANUNCIO DEL ORGANIZADOR, el más reciente, encima de los amigos. -->
                     <pixel:PixelWindow Title="ANUNCIO DEL TORNEO" Icon="IconStar" Margin="0,0,0,12"
                                        Visibility="{Binding HasAnnouncement, Converter={StaticResource BoolToVisibility}}">

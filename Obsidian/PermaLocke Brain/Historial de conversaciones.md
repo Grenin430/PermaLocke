@@ -6,6 +6,9 @@ revisado: 2026-09-26
 
 La última sesión va arriba. Antes del 2026-09-23 solo hay un resumen por fechas sacado de `CLAUDE.md` y de `ARCHITECTURE.md`: el detalle está en el § citado ([[Índice de ARCHITECTURE]]). **Cada sesión nueva añade su entrada aquí.**
 
+## 2026-09-26 — reiniciar desde Admin no se veía en la app (§191), desde la nube
+- El usuario reinició las dos runs desde Admin para empezar ya de verdad y su app seguía igual. Es lo diseñado: `reiniciar_run` solo archiva en el servidor; en el PC hay que pulsar HOME → EMPEZAR DE CERO (borra run y partida, con copia). Faltaba que la app lo dijera: ahora lo detecta (`runs.activa`) y avisa en JUGAR y encima del juego.
+
 ## 2026-09-26 — la carta de cada captura vuela al álbum (§190), desde la nube
 - Sexta tanda de ideas, enfocada en «espectáculo encima del emulador» o «lucir la app» (la quinta, rechazada entera). Eligió «nueva carta al capturar», solo salvajes: álbum pequeño que entra por la derecha, la carta sale de la Poké Ball, se mete en el álbum y el álbum se va.
 - Hecho: `EncounterGuard.Caught` (récord de capturas, al acabar el combate), el salvaje leído entero y guardado, `SaveBoxReader.Describe(PK7)`, `TcgCardFactory` (sacada del álbum), `CatchScene` + `CatchWindow` + `CatchCeremony`, ajuste «Carta al capturar», `--ensayar-captura`. La ball es nuestra, donde está el entrenador, porque el juego cuenta la captura al acabar el combate.

@@ -12279,3 +12279,22 @@ juego; mostrándose, la carta ocupa su trozo; el último instante del vuelo cae 
 momentos sobre un campo de mentira.
 
 **Visto por el jugador (2026-09-26): «todo perfecto».**
+
+---
+
+## §191 · La app se entera de que el organizador ha reiniciado su run (2026-09-26)
+
+**Visto por el jugador:** reinició las dos runs desde Admin «para empezar ya definitivamente», entró en su app y no
+parecía reiniciada.
+
+**Por qué:** `reiniciar_run` (`07-una-run.sql`) solo **archiva** la run en el servidor (`activa = false`) y deja que el
+jugador cree otra. No toca el PC del jugador, ni debe: la run local y la partida de Azahar son suyas, y borrarlas es la
+única cosa destructiva de PermaLocke (HOME → EMPEZAR DE CERO, con dos confirmaciones y copia de la partida). Pero la
+app no se enteraba, así que nada decía que había que hacerlo.
+
+**Ahora:** `CommunityService.ReadRunStateAsync`, en cada lectura de amigos (60 s), pregunta `runs?run_id=eq.<run>` por
+`activa`. Si está archivada: `RunRestarted`, un aviso encima del juego una vez por run («Tu run se ha reiniciado… Ve a
+HOME y pulsa EMPEZAR DE CERO») y en JUGAR un panel rojo «TU RUN SE HA REINICIADO» encima del anuncio. Una run que nunca
+se subió no tiene fila y no cuenta como reiniciada. Nada se borra solo.
+
+**Sin ver en Windows.**
