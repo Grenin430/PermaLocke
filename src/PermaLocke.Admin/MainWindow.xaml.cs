@@ -30,6 +30,9 @@ public partial class MainWindow : Window
     private void OnUsage(object sender, RoutedEventArgs e) =>
         new UsageWindow(((AdminViewModel)DataContext).Usage) { Owner = this }.Show();
 
+    private void OnReports(object sender, RoutedEventArgs e) =>
+        new ReportsWindow(((AdminViewModel)DataContext).Reports) { Owner = this }.Show();
+
     private void OnCleanup(object sender, RoutedEventArgs e) =>
         new CleanupWindow(((AdminViewModel)DataContext).Cleanup) { Owner = this }.Show();
 

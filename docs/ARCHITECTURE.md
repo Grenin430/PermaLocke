@@ -12526,3 +12526,29 @@ Supabase no deja borrar ficheros con SQL. `DiscordLogin` gana `UploadAsync`, `Do
 **Pruebas:** `ServerBackupTests` (Core.Tests): con la base de datos abierta, el zip lleva la run, la partida, la base de
 datos entera y coherente (se restaura y se lee) y nada de backup/ ni estados retirados. Compilación entera sin avisos;
 Core 393, GameLink 397, Randomizer 485, Rules 151, PixelCheck 69. **Sin probar** contra el Storage de verdad ni en Windows.
+
+---
+
+## §199 · Informes de fallo directos a Admin (2026-09-26, plan del próximo torneo, paso 6)
+
+**Para qué:** con 20 personas no se puede ir amigo por amigo pidiendo el zip de `Diagnosticos\`. El informe que ya
+escribe `EmulatorCrashReport` cuando Azahar se cierra solo (§168: los dos logs, las últimas peticiones al emulador y el
+equipo; sin ROM, partida ni run) llega solo al organizador.
+
+**Servidor** (`tools/supabase/17-informes.sql`, lo ejecuta el usuario, solo añade): bucket privado `informes` (5 MB por
+fichero, solo zip). Cada jugador **sube solo a su carpeta** `<su id>/`; **solo el organizador** los lee y los retira (el
+jugador no ve ni los suyos: están en su `Diagnosticos\`). `informes_lista(200)` da los últimos de todos con de quién son;
+`informes_viejos(30)` los de más de 30 días. Ambas solo para el organizador. Probado en el Postgres local
+(`tools/supabase/pruebas/17-informes.sql`).
+
+**App:** `CrashReportUpload` sube el zip en cuanto `EmulatorLauncher` lo escribe, a `informes/<id>/<nombre>.zip`, y al
+abrir sube los que no pudieron ir (sin conexión, sin sesión o sin el SQL 17): `Infrastructure/CrashReportQueue` compara
+los `cierre-azahar-*.zip` de `Diagnosticos\` de los últimos 30 días con `Config/informes-subidos.json`. Nunca borra un
+informe del PC. El aviso y el `resumen.txt` dicen ahora que le llega al organizador si ha entrado con Discord.
+
+**Admin:** botón **INFORMES** (ventana con fecha, jugador, tamaño y DESCARGAR). **LIMPIEZA** cuenta «Informes de fallo»
+de más de 30 días y los retira por la API de Storage con el mismo sí que lo demás.
+
+**Pruebas:** `CrashReportQueueTests` (Core.Tests): cada informe nuevo va una vez, los de más de 30 días y lo que no es un
+informe no van, y marcarlo como enviado no toca el fichero. Compilación entera sin avisos; Core 395, GameLink 397,
+Randomizer 485, Rules 151, PixelCheck 69. **Sin probar** contra el Storage de verdad ni en Windows.

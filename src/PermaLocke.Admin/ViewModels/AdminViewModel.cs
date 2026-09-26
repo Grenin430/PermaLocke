@@ -50,6 +50,8 @@ public sealed partial class AdminViewModel : ObservableObject
     /// <summary>The server cleanup, in its own window (§194).</summary>
     public CleanupViewModel Cleanup { get; }
 
+    public ReportsViewModel Reports { get; }
+
     /// <summary>The official rules, in their own window (2026-09-26).</summary>
     public RulesViewModel Rules { get; }
 
@@ -59,7 +61,7 @@ public sealed partial class AdminViewModel : ObservableObject
     public AdminViewModel(GiftDesk desk, DiscordLogin discord, IGachaCatalog gacha, ISpeciesStatsCatalog species, IShopCatalog shop,
         AuditViewModel audit,
         WhitelistViewModel whitelist, AnnouncementsViewModel announcements, UsageViewModel usage, RulesViewModel rules,
-        CleanupViewModel cleanup, ILogger<AdminViewModel> logger)
+        CleanupViewModel cleanup, ReportsViewModel reports, ILogger<AdminViewModel> logger)
     {
         ArgumentNullException.ThrowIfNull(gacha);
 
@@ -70,6 +72,7 @@ public sealed partial class AdminViewModel : ObservableObject
         Usage = usage;
         Rules = rules;
         Cleanup = cleanup;
+        Reports = reports;
         _discord = discord;
         _logger = logger;
         _species = [.. species.All.Where(s => s.Id > 0).Select(s => new Pick(s.Id, s.Name))];

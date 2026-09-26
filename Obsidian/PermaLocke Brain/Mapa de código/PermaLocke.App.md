@@ -26,6 +26,7 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Services/CatchCeremony.cs` — **CatchCeremony** — A wild Pokémon caught becomes its card, and the card flies into the album over the game (§190). 
 - `Services/CemeteryService.cs` — **Grave, CemeteryService** — One of the run's fallen, with what the run knows about how it went.
 - `Services/CommunityService.cs` — **FriendStatus, ClaimedAchievement, CommunityService** — The launcher's friends list and activity: everyone's presence and the achievements they claim, through the tournament server (the shared folder of §126 is gone). 
+- `Services/CrashReportUpload.cs` — **CrashReportUpload** — Sends Azahar's crash reports (§168) straight to the organiser (§199, plan del próximo torneo, paso 6): to the tournament's Storage, informes/&lt;id del jugador&gt;/&lt;nombre&gt;.zip, which Admi...
 - `Services/DarkFrame.cs` — **DarkFrame** — Asks the desktop window manager for a dark title bar. 
 - `Services/DeathCeremony.cs` — **DeathNotice, DeathCard, DeathCeremony** — A Pokémon that has just died, as the ceremony needs it.
 - `Services/DiscordLogin.cs` — **DiscordAccount, DiscordLogin** — Who is signed in, as the tournament server knows them.

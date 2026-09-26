@@ -98,6 +98,7 @@ public sealed partial class EmulatorLauncher : ObservableObject
     private readonly IPlaytimeStore _playtime;
     private readonly BattleModeService _battle;
     private readonly EmulatorCrashReport _crashes;
+    private readonly CrashReportUpload _reports;
     private readonly Notifier _notifier;
     private readonly IntegrityGuard _integrity;
     private readonly OrderService _orders;
@@ -124,13 +125,14 @@ public sealed partial class EmulatorLauncher : ObservableObject
     private string? _crashNotice;
 
     public EmulatorLauncher(AzaharInstallation azahar, AppPaths paths, IRunContext runContext,
-        IPlaytimeStore playtime, BattleModeService battle, EmulatorCrashReport crashes, Notifier notifier,
-        AppSettings settings, IntegrityGuard integrity, OrderService orders, ILogger<EmulatorLauncher> logger)
+        IPlaytimeStore playtime, BattleModeService battle, EmulatorCrashReport crashes, CrashReportUpload reports,
+        Notifier notifier, AppSettings settings, IntegrityGuard integrity, OrderService orders, ILogger<EmulatorLauncher> logger)
     {
         _settings = settings;
         _integrity = integrity;
         _orders = orders;
         _crashes = crashes;
+        _reports = reports;
         _notifier = notifier;
         _azahar = azahar;
         _paths = paths;
@@ -655,7 +657,13 @@ public sealed partial class EmulatorLauncher : ObservableObject
         _notifier.Say(ToastKind.Warning, "Azahar se ha cerrado solo",
             zip is null
                 ? $"{char.ToUpper(meaning![0])}{meaning[1..]}. No se ha podido guardar el informe."
-                : $"Informe guardado en Diagnosticos\\{Path.GetFileName(zip)}. Pásaselo a quien te dio PermaLocke.");
+                : $"Informe guardado en Diagnosticos\\{Path.GetFileName(zip)}. Le llega al organizador automáticamente si has entrado con Discord.");
+
+        // Directo al organizador (§199); si no se puede ahora, en el próximo arranque.
+        if (zip is not null)
+        {
+            _ = _reports.SendPendingAsync();
+        }
     }
 
     /// <summary>True when the emulator is running, whoever opened it.</summary>

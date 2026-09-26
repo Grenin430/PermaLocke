@@ -30,7 +30,8 @@ public sealed record CleanupLine(string Name, string Why, long Rows, long Bytes,
 /// </para>
 /// <para>
 /// Storage too (§198): the files a function of the server lists as left over — the copies beyond each player's five
-/// latest (<c>copias_sobrantes</c>, 16-copias.sql) — are removed through the Storage API after the same yes, because
+/// latest (<c>copias_sobrantes</c>, 16-copias.sql) and the crash reports older than 30 days (<c>informes_viejos</c>,
+/// 17-informes.sql, §199) — are removed through the Storage API after the same yes, because
 /// Supabase does not let SQL delete files. A server without that function simply has none to show.
 /// </para>
 /// </remarks>
@@ -60,7 +61,9 @@ public sealed partial class CleanupViewModel(DiscordLogin discord, ILogger<Clean
     private static readonly (string Bucket, string Function, object Arguments, string Name, string Why)[] Buckets =
     [
         (GiftDesk.CopiesBucket, "copias_sobrantes", new { p_guardar = 5 }, "Copias de seguridad",
-            "de cada jugador, todas menos sus 5 últimas")
+            "de cada jugador, todas menos sus 5 últimas"),
+        (ReportsViewModel.CrashReportBucket, "informes_viejos", new { p_dias = 30 }, "Informes de fallo",
+            "de más de 30 días")
     ];
 
     /// <summary>The Storage files the last count found left over, by bucket: exactly what LIMPIAR removes.</summary>

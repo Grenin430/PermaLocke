@@ -205,6 +205,7 @@ generado: 2026-09-24
 - L12441 · 196 · Actualización automática con GitHub Releases (UpdateService, AppUpdate)
 - L12474 · 197 · PRIMEROS PASOS en JUGAR (FirstRunGuide)
 - L12497 · 198 · Copias de seguridad en Supabase Storage (paso 5)
+- L12532 · 199 · Informes de fallo directos a Admin (paso 6)
 
 Subsecciones §176: bis (visor), ter (todas las pantallas, fuera ESTADÍSTICAS), quater (EV/MOVIMIENTOS sin bolsa, diálogos).
 

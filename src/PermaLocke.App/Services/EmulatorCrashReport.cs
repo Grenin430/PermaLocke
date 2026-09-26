@@ -24,7 +24,8 @@ namespace PermaLocke.App.Services;
 /// <para>
 /// No ROM, no save and no run: the two logs, the last requests to the emulator, the exit code with what it means,
 /// and the computer — Windows, processor, memory, graphics card, the folder, and the Visual C++ runtime the emulator
-/// loaded. Written under <c>Diagnosticos\</c> and zipped, and sent nowhere.
+/// loaded. Written under <c>Diagnosticos\</c> and zipped. Since §199 the zip also goes to the organiser
+/// (<see cref="CrashReportUpload"/>), and nowhere else.
 /// </para>
 /// </remarks>
 public sealed class EmulatorCrashReport(AppPaths paths, AzaharInstallation azahar, AzaharRpcClient rpc,
@@ -98,7 +99,7 @@ public sealed class EmulatorCrashReport(AppPaths paths, AzaharInstallation azaha
         var runtime = VisualCppRuntime.Check(emulatorExecutable);
 
         text.AppendLine("INFORME DE PERMALOCKE: Azahar se ha cerrado sin que nadie lo cerrara");
-        text.AppendLine("No contiene ROM, partidas ni tu run. Pásaselo a quien te dio PermaLocke.");
+        text.AppendLine("No contiene ROM, partidas ni tu run. Si has entrado con Discord, le llega solo al organizador; si no, pásaselo a quien te dio PermaLocke.");
         text.AppendLine();
         text.AppendLine(CultureInfo.InvariantCulture, $"Fecha: {now:yyyy-MM-dd HH:mm:ss zzz}");
         text.AppendLine(CultureInfo.InvariantCulture, $"Código de salida: 0x{exitCode:X8} ({Meaning(exitCode)})");
