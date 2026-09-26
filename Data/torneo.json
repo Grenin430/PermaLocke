@@ -1,5 +1,7 @@
 {
   "servidor": "https://rnqpjvkonxjhrjsdvlpm.supabase.co",
   "clavePublica": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJucXBqdmtvbnhqaHJqc2R2bHBtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAyNDA5NTcsImV4cCI6MjEwNTgxNjk1N30.k-4NpMJzWL1s-w5-dIrbrUHcQLCeNATiqDGkG1t4Xjs",
-  "puerto": 47281
+  "puerto": 47281,
+  "discordApp": "",
+  "discordImagen": ""
 }

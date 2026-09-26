@@ -11995,3 +11995,25 @@ antes que leyera una fila de wipe en `fantasmas` enseñaría un fantasma vacío.
 **Sin probar:** escrito desde un contenedor sin .NET (la red no deja bajar el SDK): **ni compilado, ni ejecutadas las
 pruebas, ni visto**. Los umbrales de `BloodRainTests` se comprobaron con la misma simulación pasada a Python. Tampoco el
 viaje entre dos PCs.
+
+## §185 · «Jugando a PermaLocke» en Discord (2026-09-26)
+
+Petición del jugador: que en su perfil de Discord salga **solo** «Jugando a PermaLocke» con el icono de la app, siempre
+que PermaLocke esté abierto y **también con el emulador abierto**, por delante de él. Sin ruta, puntos ni equipo.
+
+- `App/Services/DiscordPresence.cs`: habla con el Discord del PC por su tubería local (`discord-ipc-0` a `9`), sin
+  librería nueva y sin pasar por el servidor del torneo. Saludo con el id de la aplicación, `SET_ACTIVITY` con una
+  actividad vacía (`instance: false`, y la imagen si se configura) y la tubería abierta mientras dure la app: al cerrar
+  PermaLocke, Discord quita el estado. Sin Discord abierto, o si se reinicia, reintenta cada 20 s; los fallos se apuntan
+  una vez (§167). Arranca en `App.OnStartup` (también con `--sin-juego`) y se para en `OnExit`.
+- **El texto lo pone Discord**: «Jugando a» + el nombre de la aplicación de Discord cuyo id va en `discordApp` de
+  `Data/torneo.json`. El nombre y el icono se ponen en el Discord Developer Portal, no en el código. `discordImagen`
+  (opcional) es el nombre de una imagen subida en Rich Presence > Art Assets, por si el icono de la aplicación no sale
+  solo. Sin `discordApp` no hace nada.
+- **Por delante del emulador:** Azahar puede poner su propio «Jugando a Azahar». `AzaharInstallation.DisableDiscordPresence`
+  escribe `enable_discord_presence=false` (y su `\default`) en `[UI]` de `qt-config.ini` al lanzar el juego, junto al
+  RPC y la confirmación de cierre. Prueba en `LauncherEmulatorTests`. Si además Discord detecta `azahar.exe` como juego
+  por su cuenta, eso se quita en Discord (Ajustes > Juegos registrados), no desde aquí.
+
+**Sin probar:** escrito en la nube sin .NET: ni compilado ni visto en Discord. No está medido si Discord acepta una
+actividad sin ningún campo de texto; si no la enseña, se le añade el tiempo de juego (`timestamps.start`).

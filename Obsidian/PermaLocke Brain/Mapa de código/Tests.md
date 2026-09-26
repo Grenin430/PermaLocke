@@ -75,7 +75,7 @@ Contado con grep, NO ejecutado. Detalle en [[Pruebas]].
 - `GameLevelsTests.cs` (3)
 - `GameLinkRecoveryTests.cs` (9)
 - `HpBarTests.cs` (18)
-- `LauncherEmulatorTests.cs` (6)
+- `LauncherEmulatorTests.cs` (7)
 - `LevelCapLiveTests.cs` (5)
 - `LevelCapWriteTests.cs` (4)
 - `PartyFromSaveTests.cs` (5)

@@ -356,6 +356,7 @@ public sealed partial class EmulatorLauncher : ObservableObject
         // un Azahar abierto la reescribiría al salir.
         _azahar.EnsureRpcEnabled(location);
         _azahar.DisableCloseConfirmation(location);
+        _azahar.DisableDiscordPresence(location);
         _azahar.SetFollower(location, Path.Combine(_paths.Root, "Emulator", "follower", AzaharInstallation.FollowerPluginName),
             _settings.Current.Follower);
 

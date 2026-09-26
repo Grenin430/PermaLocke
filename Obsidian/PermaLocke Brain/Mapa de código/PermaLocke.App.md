@@ -28,6 +28,7 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Services/DarkFrame.cs` — **DarkFrame** — Asks the desktop window manager for a dark title bar. 
 - `Services/DeathCeremony.cs` — **DeathNotice, DeathCard, DeathCeremony** — A Pokémon that has just died, as the ceremony needs it.
 - `Services/DiscordLogin.cs` — **DiscordAccount, DiscordLogin** — Who is signed in, as the tournament server knows them.
+- `Services/DiscordPresence.cs` — **DiscordPresence** — «Jugando a PermaLocke» in the player's Discord profile, with the app's icon, for as long as PermaLocke is open (§185). 
 - `Services/DisplayNames.cs` — **DisplayNames** — Spanish labels for the enums the interface shows. 
 - `Services/EdgeTab.cs` — **EdgeTab** — The tab that brings PermaLocke back while you are playing. 
 - `Services/EmulatorCrashReport.cs` — **EmulatorCrashReport, Machine** — Writes, the moment Azahar falls over, everything needed to know why: so nobody has to reproduce it on the player's computer, and the player only has to pass on one file. 
@@ -103,7 +104,7 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Views/AlolaPalette.cs` — **AlolaPalette** — The colours of the Alola sky by hour, shared by the sidebar's window and the header's banner so the two never disagree about what time it is. 
 - `Views/AlolaWindow.cs` — **AlolaWindow** — A small pixel-art view of the sea at the hour of the player's Alola: the sky's colours, the sun or the moon on its arc, stars at night, and an island with a palm tree. 
 - `Views/BattleModeView.xaml.cs` — **BattleModeView** — 
-- `Views/BloodRain.cs` — **BloodRain** — The blood rain of a team wipe (§184), cell by cell: red drops falling over the emulator for half a minute, splashing where they land and pooling at the bottom, then gone. 
+- `Views/BloodRain.cs` — **BloodRain** — The blood rain of a team wipe (§184), cell by cell: red drops falling over the emulator for twelve seconds, splashing where they land and pooling at the bottom, then gone. 
 - `Views/BoxWallpaper.cs` — **BoxWallpaper** — The wallpaper behind a box of the PC: a flat ground with a small motif repeated in staggered rows, drawn cell by cell like the rest of PermaLocke's pixel art. 
 - `Views/CapsuleMachine.cs` — **CapsuleMachine** — The gacha's stage: the capsule machine (`apsuleMachineScene`) on screen, in whole cells. 
 - `Views/CapsuleMachineScene.cs` — **CapsuleBanner, CapsuleRoll, CapsuleShelfItem, CapsuleSceneState, CapsuleTimeline, CapsuleMachineScene** — What the machine is loaded with: the banner chosen under it.

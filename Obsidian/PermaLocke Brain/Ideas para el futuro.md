@@ -44,3 +44,8 @@ fuertes contra los de delante; los primeros, flojos o de defensa). Mantiene el t
 - 2026-09-26, sin interés (sin rechazo explícito, no insistir): conquista de rutas, pactos con el diablo, gran final por
   link, retos semanales, casa de subastas, préstamos, Diario de Alola, Pokédex del torneo, Salón de la Fama.
 - Antes (§183): «tarjeta de entrenador» y listas de mecánicas.
+- 2026-09-26, cuarta tanda (sin tocar la jugabilidad): de ella solo se hizo el estado de Discord (§185), y solo el
+  nombre. Quedan sin decidir, no rechazadas: cromos de cada captura, álbum de fotos automático, «el viaje» en el MAPA,
+  biografía de cada Pokémon, resumen de sesión tipo Wrapped, sonido chiptune.
+- **Regla del usuario (2026-09-26): nada de ideas que alteren la jugabilidad.** Los objetos de Mario Kart la alteran;
+  siguen apuntados porque los pidió guardar.

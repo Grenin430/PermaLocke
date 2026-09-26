@@ -133,7 +133,8 @@ Trampas que ya costaron caro y hay que tener siempre presentes:
   instalado (`WorldLimits`, `InstalledWorld`). Las sondas deben llamar a `InstalledWorld.ApplyQuietly` (§91).
 - **Detectable no es detectado**: el vigilante empareja por PID contra lo registrado en la run (§56, §68).
 
-Último: **lluvia de sangre** (§184): un wipe hace llover sangre 12 s en el emulador de quien lo sufre y de los
+Último: **«Jugando a PermaLocke» en Discord** (§185): tubería local de Discord, id en `discordApp` de `Data/torneo.json`;
+el estado propio de Azahar se apaga en su `qt-config.ini`. Antes: **lluvia de sangre** (§184): un wipe hace llover sangre 12 s en el emulador de quien lo sufre y de los
 demás; tabla `13-lluvias.sql`. Antes: **fantasmas** (§183): la muerte de un Pokémon viaja por el servidor y cruza como fantasma el emulador de los
 demás; tabla `12-fantasmas.sql`. Antes: **las pruebas salen en LOGROS sin guardar** (§182): miran también la mochila viva. Antes: **Pokémon que te sigue** (§181): plugin 3GX de otro autor en `Emulator/follower/`, instalado al pulsar JUGAR, con
 interruptor en CONFIGURACIÓN. Antes: **iconos variocolor** (§180). El cartucho no los tiene: `Data/variocolor.json` (generado por `RomTool variocolor`

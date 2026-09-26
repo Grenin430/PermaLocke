@@ -222,6 +222,9 @@ public partial class App : Application
         // Los fantasmas (§183): tus muertes a los demás, y las suyas encima de tu emulador.
         collection.AddSingleton<GhostService>();
 
+        // «Jugando a PermaLocke» en el perfil de Discord mientras la app está abierta (§185).
+        collection.AddSingleton<DiscordPresence>();
+
         // LA BANDEJA DE REGALOS (§129): lo que el organizador manda por el servidor, y recogerlo aquí.
         collection.AddSingleton<GiftService>();
         collection.AddSingleton<GiftInbox>();
@@ -349,6 +352,7 @@ public partial class App : Application
         // Amigos y actividad van por el servidor del torneo, también en la distribución local.
         _services.GetRequiredService<CommunityService>().Start(writes: !withoutGame);
         _services.GetRequiredService<GhostService>().Start(writes: !withoutGame);
+        _services.GetRequiredService<DiscordPresence>().Start();
 
         // Los regalos del organizador llegan por el servidor del torneo, también en la distribución local.
         _services.GetRequiredService<GiftInbox>().Start();
@@ -479,6 +483,7 @@ public partial class App : Application
         // Antes de soltar los servicios: los amigos ven «desconectado» ahora y no dentro de tres minutos.
         _services?.GetService<CommunityService>()?.SignOff();
         _services?.GetService<TournamentUpload>()?.Flush();
+        _services?.GetService<DiscordPresence>()?.Stop();
         _services?.Dispose();
         base.OnExit(e);
     }

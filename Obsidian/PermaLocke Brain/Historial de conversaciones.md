@@ -6,6 +6,11 @@ revisado: 2026-09-24
 
 La última sesión va arriba. Antes del 2026-09-23 solo hay un resumen por fechas sacado de `CLAUDE.md` y de `ARCHITECTURE.md`: el detalle está en el § citado ([[Índice de ARCHITECTURE]]). **Cada sesión nueva añade su entrada aquí.**
 
+## 2026-09-26 — «Jugando a PermaLocke» en Discord (§185), desde la nube
+- Cuarta tanda de ideas, ya sin tocar la jugabilidad (el usuario **no quiere ideas que alteren la jugabilidad**): estado en Discord, cromos, álbum de fotos automático, el viaje en el MAPA, biografía de cada Pokémon, resumen de sesión, sonido chiptune. Eligió solo el estado de Discord, y **solo** «Jugando a PermaLocke» con el icono, también con el emulador abierto.
+- `DiscordPresence` (tubería `discord-ipc-N`, sin NuGet), `AzaharInstallation.DisableDiscordPresence` (`enable_discord_presence=false` en `[UI]`), claves `discordApp`/`discordImagen` en `Data/torneo.json` (vacías: **el usuario tiene que poner el id de la aplicación de Discord** llamada PermaLocke, con su icono en el Developer Portal). Sin compilar ni ver.
+- Recordar: la carpeta de prueba y la de amigos tienen su propio `Data/torneo.json`: hay que copiarles las claves nuevas.
+
 ## 2026-09-26 — la lluvia de sangre (§184), desde la nube
 - Sesión en un **contenedor Linux en la nube** (rama `claude/relaxed-sagan-9amy20`): sin Azahar, sin el Escritorio del usuario y **sin .NET** (la red bloquea `builds.dotnet.microsoft.com`). Nada compilado ni visto: lo compila y prueba el usuario.
 - Petición: al hacer wipe, lluvia roja «como sangre» ~30 s en todos los demás y en quien lo hace, como los fantasmas.

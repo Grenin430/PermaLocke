@@ -125,4 +125,39 @@ public sealed class LauncherEmulatorTests : IDisposable
         Assert.Contains("cpu_clock_percentage=100", lines);
         Assert.Equal(7, lines.Length);
     }
+
+    /// <summary>
+    /// Azahar's «Jugando a Azahar» goes off so PermaLocke's own Discord status is the one shown (§185), with its default
+    /// flag, and nothing else in the file moves.
+    /// </summary>
+    [Fact]
+    public void The_emulators_discord_status_goes_off_and_nothing_else_moves()
+    {
+        var user = Path.Combine(_root, "user");
+        var config = Path.Combine(user, "config", "qt-config.ini");
+        Directory.CreateDirectory(Path.GetDirectoryName(config)!);
+        File.WriteAllLines(config,
+        [
+            "[UI]",
+            @"enable_discord_presence\default=true",
+            "enable_discord_presence=true",
+            "confirmClose=false",
+            "[Core]",
+            "cpu_clock_percentage=100"
+        ]);
+
+        var installation = new AzaharInstallation(NullLogger<AzaharInstallation>.Instance);
+        Assert.True(installation.DisableDiscordPresence(new AzaharLocation(user, null, false)));
+
+        var lines = File.ReadAllLines(config);
+        Assert.Contains("enable_discord_presence=false", lines);
+        Assert.Contains(@"enable_discord_presence\default=false", lines);
+        Assert.Contains("confirmClose=false", lines);
+        Assert.Contains("cpu_clock_percentage=100", lines);
+        Assert.Equal(6, lines.Length);
+
+        // Otra vez no cambia nada.
+        Assert.True(installation.DisableDiscordPresence(new AzaharLocation(user, null, false)));
+        Assert.Equal(lines, File.ReadAllLines(config));
+    }
 }

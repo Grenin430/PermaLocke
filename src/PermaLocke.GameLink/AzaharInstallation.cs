@@ -151,6 +151,42 @@ public sealed class AzaharInstallation(ILogger<AzaharInstallation> logger)
         }
     }
 
+    /// <summary>
+    /// Stops Azahar putting «Jugando a Azahar» in the player's Discord profile, so PermaLocke's own
+    /// «Jugando a PermaLocke» is the one shown (§185).
+    /// </summary>
+    /// <remarks>
+    /// Written with the emulator closed, like the RPC setting, and with its <c>\default</c> flag, or Azahar would put its
+    /// default back. A build without Discord support ignores the setting.
+    /// </remarks>
+    /// <returns>True when the file ends up with the emulator's presence off.</returns>
+    public bool DisableDiscordPresence(AzaharLocation location)
+    {
+        var configPath = Path.Combine(location.UserDirectory, "config", "qt-config.ini");
+
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(configPath)!);
+
+            var lines = File.Exists(configPath) ? File.ReadAllLines(configPath).ToList() : [];
+            var changed = SetValue(lines, "enable_discord_presence", "false", "[UI]");
+            changed |= SetValue(lines, @"enable_discord_presence\default", "false", "[UI]");
+
+            if (changed)
+            {
+                File.WriteAllLines(configPath, lines);
+                logger.LogInformation("Estado de Discord de Azahar desactivado en {Path}", configPath);
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "No se pudo desactivar el estado de Discord de Azahar en {Path}", configPath);
+            return false;
+        }
+    }
+
     /// <summary>File name of the follower plugin, as its author ships it.</summary>
     public const string FollowerPluginName = "Gen7FieldFollower.3gx";
 
