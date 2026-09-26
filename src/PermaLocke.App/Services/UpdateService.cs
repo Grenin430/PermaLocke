@@ -115,7 +115,7 @@ public sealed partial class UpdateService(AppPaths paths, DiscordLogin discord, 
         try
         {
             using var request = new HttpRequestMessage(HttpMethod.Get, $"https://api.github.com/repos/{repository}/releases/latest");
-            request.Headers.UserAgent.ParseAdd($"PermaLocke/{Current.ToString(3)}");
+            request.Headers.UserAgent.ParseAdd($"PermaLocke/{AppUpdate.Display(Current)}");
             request.Headers.Accept.ParseAdd("application/vnd.github+json");
             using var cancel = new CancellationTokenSource(TimeSpan.FromSeconds(15));
             using var response = await Http.SendAsync(request, cancel.Token);
@@ -128,7 +128,7 @@ public sealed partial class UpdateService(AppPaths paths, DiscordLogin discord, 
 
             if (AppUpdate.Pick(await response.Content.ReadAsStringAsync(cancel.Token), Current) is not { } asset)
             {
-                logger.LogInformation("PermaLocke {Version} está al día", Current.ToString(3));
+                logger.LogInformation("PermaLocke {Version} está al día", AppUpdate.Display(Current));
                 return;
             }
 
@@ -254,28 +254,13 @@ public sealed partial class UpdateService(AppPaths paths, DiscordLogin discord, 
 
         var meter = new DownloadMeter(response.Content.Headers.ContentLength ?? asset.Size);
         var clock = Stopwatch.StartNew();
-        var shown = TimeSpan.MinValue;
-        var buffer = new byte[128 * 1024];
-        long received = 0;
 
         await using var download = await response.Content.ReadAsStreamAsync(cancel);
         await using var file = File.Create(package);
 
-        progress.Show(meter.Sample(0, TimeSpan.Zero));
-        int read;
-        while ((read = await download.ReadAsync(buffer, cancel)) > 0)
-        {
-            await file.WriteAsync(buffer.AsMemory(0, read), cancel);
-            received += read;
-
-            if (clock.Elapsed - shown >= TimeSpan.FromMilliseconds(100))
-            {
-                shown = clock.Elapsed;
-                progress.Show(meter.Sample(received, shown));
-            }
-        }
-
-        progress.Show(meter.Sample(received, clock.Elapsed));
+        // El bucle, en Infrastructure y probado (§204): el de la 1.0.2 y la 1.0.3 se desbordaba en el primer trozo.
+        await DownloadCopy.CopyAsync(download, file, meter, progress.Show, () => clock.Elapsed,
+            TimeSpan.FromMilliseconds(100), cancel);
     }
 
     /// <summary>A half-downloaded package is ours and useless: it goes.</summary>

@@ -31,9 +31,25 @@ public sealed class AppUpdateTests : IDisposable
     [InlineData("v1.2", "1.1.0", true)]
     [InlineData("v1.0.0", "1.2.0", false)]
     [InlineData("sin-version", "1.0.0", false)]
+    [InlineData("v1.0.4.1", "1.0.4.0", true)]
+    [InlineData("v1.0.4.1", "1.0.4", true)]
+    [InlineData("v1.0.4", "1.0.4.0", false)]
+    [InlineData("v1.0.4.1", "1.0.4.1", false)]
+    [InlineData("v1.0.5", "1.0.4.9", true)]
+    [InlineData("v1.0.4.9", "1.0.5.0", false)]
     public void Only_a_newer_version_counts(string tag, string current, bool newer)
     {
         Assert.Equal(newer, AppUpdate.IsNewer(tag, Version.Parse(current)));
+    }
+
+    [Theory]
+    [InlineData("1.0.4.0", "1.0.4")]
+    [InlineData("1.0.4", "1.0.4")]
+    [InlineData("1.0.4.1", "1.0.4.1")]
+    [InlineData("2.1", "2.1.0")]
+    public void Shows_the_fourth_number_only_when_it_is_not_zero(string version, string shown)
+    {
+        Assert.Equal(shown, AppUpdate.Display(Version.Parse(version)));
     }
 
     [Fact]

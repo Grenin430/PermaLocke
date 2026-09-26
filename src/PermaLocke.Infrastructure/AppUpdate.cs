@@ -39,7 +39,7 @@ public static class AppUpdate
     /// <summary>The folder, in the PermaLocke folder, where a package is downloaded and unpacked.</summary>
     public const string Staging = "Actualizacion";
 
-    /// <summary>The version in a tag: «v1.2.3» or «1.2.3»; null for anything else.</summary>
+    /// <summary>The version in a tag: «v1.2.3», «1.2.3» or, since §203, «1.2.3.4»; null for anything else.</summary>
     public static Version? VersionOf(string? tag)
     {
         var text = tag?.Trim().TrimStart('v', 'V');
@@ -77,7 +77,7 @@ public static class AppUpdate
             }
 
             return new UpdateAsset(
-                VersionOf(tag.GetString())!.ToString(3),
+                Display(VersionOf(tag.GetString())!),
                 name,
                 url.GetString() ?? string.Empty,
                 asset.TryGetProperty("size", out var size) && size.TryGetInt64(out var bytes) ? bytes : 0,
@@ -182,8 +182,19 @@ public static class AppUpdate
         }
     }
 
+    /// <summary>
+    /// A version as the player reads it: three numbers, and the fourth only when it is not zero (§203: «1.0.3.1» is a
+    /// small update over «1.0.3», which is the same as «1.0.3.0»).
+    /// </summary>
+    public static string Display(Version version)
+    {
+        var normal = Normalise(version);
+        return normal.Revision > 0 ? normal.ToString(4) : normal.ToString(3);
+    }
+
+    // Cuatro números siempre (§203): hasta la 1.0.3 se tiraba el cuarto y «1.0.3.1» salía igual que «1.0.3».
     private static Version Normalise(Version version) =>
-        new(version.Major, Math.Max(0, version.Minor), Math.Max(0, version.Build));
+        new(version.Major, Math.Max(0, version.Minor), Math.Max(0, version.Build), Math.Max(0, version.Revision));
 
     private static bool Bool(JsonElement element, string name) =>
         element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.True;

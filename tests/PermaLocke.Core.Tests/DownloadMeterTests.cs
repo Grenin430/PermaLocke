@@ -44,3 +44,44 @@ public sealed class DownloadMeterTests
         Assert.Equal("CALCULANDO", progress.Left);
     }
 }
+
+/// <summary>The download loop itself (§204): the 1.0.2 and 1.0.3 one overflowed on the first piece.</summary>
+public sealed class DownloadCopyTests
+{
+    [Fact]
+    public async Task Copies_everything_and_reports_with_a_real_clock()
+    {
+        var data = new byte[3 * 1024 * 1024 + 17];
+        new Random(7).NextBytes(data);
+        using var from = new MemoryStream(data);
+        using var to = new MemoryStream();
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+        var reports = new List<DownloadProgress>();
+
+        var copied = await DownloadCopy.CopyAsync(from, to, new DownloadMeter(data.Length), reports.Add,
+            () => clock.Elapsed, TimeSpan.FromMilliseconds(100));
+
+        Assert.Equal(data.Length, copied);
+        Assert.Equal(data, to.ToArray());
+        Assert.Equal(0, reports[0].Received);
+        Assert.Equal(1.0, reports[^1].Fraction);
+    }
+
+    [Fact]
+    public async Task Reports_at_most_every_interval()
+    {
+        var data = new byte[128 * 1024 * 10];
+        using var from = new MemoryStream(data);
+        using var to = new MemoryStream();
+        var tick = TimeSpan.Zero;
+        var reports = new List<DownloadProgress>();
+
+        // Cada trozo tarda 30 ms: con un aviso cada 100 ms, uno de cada cuatro trozos más o menos.
+        await DownloadCopy.CopyAsync(from, to, new DownloadMeter(data.Length), reports.Add,
+            () => tick += TimeSpan.FromMilliseconds(30), TimeSpan.FromMilliseconds(100));
+
+        // El de salida, el del primer trozo, los de cada 100 ms (a los 150, 270) y el final.
+        Assert.InRange(reports.Count, 4, 6);
+        Assert.Equal(data.Length, reports[^1].Received);
+    }
+}

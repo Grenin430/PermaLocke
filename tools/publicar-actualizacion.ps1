@@ -16,7 +16,7 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 
-if ($Version -notmatch '^\d+\.\d+\.\d+$') { throw 'La version va como 1.2.3.' }
+if ($Version -notmatch '^\d+\.\d+\.\d+(\.\d+)?$') { throw 'La version va como 1.2.3 o 1.2.3.4.' }
 
 $raiz = Split-Path -Parent $PSScriptRoot
 if (-not $Destino) { $Destino = Join-Path $raiz '.dist' }

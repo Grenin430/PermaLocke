@@ -42,6 +42,7 @@ Descartada de esa tanda: «apuntarse desde la app» (la 2 original). El usuario 
 - **Sin observar todavía**: copias en COPIAS de Admin con datos reales de los amigos, informes de fallo reales, LIMPIEZA
   ejecutada de verdad, la ventana de descarga.
 - **1.0.2 publicada por la Action e instalada por el usuario. 1.0.3 (§202)**: franja ACTUALIZAR y aviso fijo sobre el juego; se publica al aceptar su PR.
+- **1.0.3 publicada por la Action. 1.0.4 (§203):** versiones de cuatro números; la siguiente pequeña puede ser 1.0.4.1.
 - Pendiente para más adelante: quitar el botón de traspaso cuando todos estén en la versión nueva; el traspaso no trae
   la configuración de Azahar (controles), ofrecido al usuario.
 

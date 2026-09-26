@@ -12626,3 +12626,39 @@ tomado por la 1.0.2: es la **1.0.3**.
 
 **Sin probar** en Windows (franja, aviso fijo). Compilación entera sin avisos; Core 398, GameLink 397, Randomizer 485,
 Rules 151, PixelCheck 69.
+
+---
+
+## §203 · Versiones de cuatro números (2026-09-26, PermaLocke 1.0.4)
+
+**Para qué:** el usuario quiere arreglos pequeños como «1.0.3.1». Hasta la 1.0.3, `AppUpdate.Normalise` se quedaba con
+tres números y «1.0.3.1» era igual que «1.0.3»: nunca se habría ofrecido.
+
+**Cómo queda:** `Normalise` guarda los cuatro (los que faltan, a cero): 1.0.4.1 > 1.0.4 = 1.0.4.0, y 1.0.5 > 1.0.4.9.
+`AppUpdate.Display` enseña el cuarto solo si no es cero (CONFIGURACIÓN, logs, el agente de usuario, la franja y el aviso
+de §202). La Action acepta `<Version>` de tres o cuatro números, y `publicar-actualizacion.ps1` también.
+
+**Por qué esta es la 1.0.4 y no la 1.0.3.1:** la 1.0.3 ya estaba publicándose cuando se pidió, y una app 1.0.3 compara
+tres números: una 1.0.3.1 no le habría llegado nunca. Desde la 1.0.4, las siguientes pueden ser 1.0.4.1, 1.0.4.2…
+
+**Pruebas:** `AppUpdateTests` con versiones de cuatro números y `Display`. Core 408. Workflow y scripts pasados por el
+analizador de PowerShell; el paso de la versión, ejecutado con un csproj en 1.0.4.1.
+
+---
+
+## §204 · La descarga de la 1.0.2 y la 1.0.3 no funcionaba (2026-09-27, en la 1.0.4)
+
+**Qué pasó (observado por el usuario, con el log):** al aceptar la 1.0.3 desde la 1.0.2, la ventana de descarga se abría
+medio segundo y se cerraba; la app seguía abierta sin actualizar. El log: `OverflowException: TimeSpan overflowed` en
+`UpdateService.DownloadAsync`. El bucle de §201 guardaba «última vez que se repintó» como `TimeSpan.MinValue`, y
+`clock.Elapsed - TimeSpan.MinValue` se desborda en el **primer trozo**: ninguna descarga podía pasar de ahí. No se instalaba
+nada y no se rompía nada; `CheckAsync` se tragaba la excepción y la dejaba en el log como aviso.
+
+**Consecuencia:** la 1.0.2 y la 1.0.3 **no pueden actualizarse solas**. Quien las tenga actualiza una vez a mano:
+cerrar PermaLocke y cambiar `PermaLocke.exe` por el del zip de la release 1.0.4 (los `Data` no cambian desde la 1.0.2).
+Las 1.0.0 y 1.0.1 descargaban con `CopyToAsync`, sin este bucle: pasan directas a la última.
+
+**Arreglo:** el bucle sale a `Infrastructure/DownloadCopy.CopyAsync` (último repintado como `TimeSpan?` nulo) y se
+prueba de verdad: `DownloadCopyTests` copia 3 MB con un cronómetro real y comprueba el ritmo de avisos con un reloj
+falso. La lección: el camino de descarga de §201 no tenía ninguna prueba que lo ejecutara; la ventana y los números sí.
+Core 410.

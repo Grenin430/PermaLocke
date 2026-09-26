@@ -8,6 +8,7 @@ Usuario: Grenin430 (git). Escribe en español; se le responde en español. En el
 
 ## Reglas que ha dado (vigentes)
 - **TORNEO EN CURSO (desde el 2026-09-26): solo se cambia el repo `Permalocke definitivo`** (en `C:\Users\javie\Desktop\Permalocke definitivo`). Nada de `desplegar.ps1`, ni copiar `Data/` a `PermaLocke prueba` (ahí juega el usuario), ni tocar la carpeta de amigos, **salvo que él lo pida** (el mismo 26 pidió actualizar su carpeta y la de amigos y lo hizo él siguiendo instrucciones).
+- **Numeración (desde el 2026-09-26):** arreglos pequeños con cuarta cifra (1.0.4.1, 1.0.4.2…), cambios más grandes subiendo la tercera. Lo pidió él; la primera con cuatro cifras es la 1.0.4.x.
 - **Las versiones nuevas llegan por PR + Action** ([[Actualizaciones y publicación]]): Claude sube la versión y escribe las novedades; él acepta el PR y se publica sola. No quiere hacer el paquete ni la release a mano.
 - **«No hagas nada directamente, si estoy testeando para decirte errores y tú arreglarlos.»** Cuando está probando, arreglar lo que reporta y no emprender cosas por iniciativa propia.
 - **«Si hay que borrar cosas me lo dices y yo te lo confirmo.»** Todo borrado se pregunta antes y se hace solo tras un sí explícito.

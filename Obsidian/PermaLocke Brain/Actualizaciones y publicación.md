@@ -23,17 +23,33 @@ Cómo llega una versión nueva a los jugadores desde el 2026-09-26. Detalle téc
    CONFIGURACIÓN enseña **PERMALOCKE x.y.z** al final.
 5. **Desde la 1.0.3 (§202)** no pregunta: mira al abrir y cada 30 min; la versión esperando sale como **franja ámbar
    con ACTUALIZAR** encima de cada sección y, con el juego abierto, como **aviso fijo** sobre el emulador hasta que se
-   cierra. Versiones siempre de **tres cifras** (1.0.2.1 no sería más nueva que 1.0.2).
+   cierra. Hasta la 1.0.3, solo tres cifras. **Desde la 1.0.4 (§203), cuatro**: 1.0.4.1 > 1.0.4. Una app 1.0.3 o anterior no ve
+   el cuarto número: por eso la primera con cuatro cifras tiene que ser 1.0.4.x, no 1.0.3.x.
 
 ## Estado verificado
 - **1.0.1**: publicada a mano por el usuario (script + release en la web). **Observado**: se ofreció, entró y se vio
   PERMALOCKE 1.0.1 (captura del usuario, 2026-09-26). Prueba de extremo a extremo de §196.
 - **1.0.2** (ventana de descarga + Action): la Action falló la 1.ª vez por sintaxis de PowerShell (`"$t:"`), sin publicar
   nada; arreglo en PR #4. **Observado**: la Action la publicó y el usuario la instaló (2026-09-26).
-- **1.0.3** (franja y aviso fijo): pendiente de publicar y de ver en Windows.
+- **1.0.3** (franja y aviso fijo): publicada por la Action. La franja y el aviso fijo se verán por primera vez con la 1.0.4.
 - Repo **público** desde el 2026-09-26 (decisión del usuario tras explicarle que el código y el historial quedan
   copiables y que la GPL ya obliga a dar el código; revisado: sin ROM, `Locke/`, partidas ni secretos; la clave de
   Supabase del repo es la pública). Alternativa descartada: repo de código privado + repo público solo de releases.
+
+## Versiones publicadas
+| Versión | Cómo salió | Qué traía |
+|---|---|---|
+| 1.0.0 | carpeta de amigos (`desplegar.ps1 -Amigos`) | el plan del torneo (§194-§199), sin versión a la vista |
+| 1.0.1 | release a mano | PERMALOCKE x.y.z en CONFIGURACIÓN (§200) |
+| 1.0.2 | Action (2.º intento) | ventana de descarga (§201) |
+| 1.0.3 | Action | franja ACTUALIZAR y aviso fijo sobre el juego (§202) |
+| 1.0.4 | PR #6, pendiente de aceptar | versiones de cuatro cifras (§203) y **arreglo de la descarga** (§204) |
+
+**1.0.2 y 1.0.3 no pueden actualizarse solas** (§204: la descarga se desbordaba en el primer trozo). Quien las tenga,
+una vez a mano: cerrar PermaLocke y cambiar `PermaLocke.exe` por el del zip de la 1.0.4.
+
+Siguiente arreglo pequeño: **1.0.4.1**. El usuario pasa por cada versión (la de antes todavía le enseña su propia forma de
+avisar: la 1.0.2 pregunta con sí o no; desde la 1.0.3, franja).
 
 ## Para Claude, al tocar esto
 - Leer el registro de una Action desde la nube: MCP `actions_list` (runs) y `get_job_logs` con `failed_only`.
