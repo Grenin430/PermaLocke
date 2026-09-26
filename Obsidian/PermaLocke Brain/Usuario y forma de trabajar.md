@@ -7,7 +7,8 @@ revisado: 2026-09-24
 Usuario: Grenin430 (git). Escribe en español; se le responde en español. En el texto visible se usan pronombres neutros o no se usan. Participa en una competición de Nuzlocke entre amigos (la de la carpeta `Locke/`, que no es suya) y hace PermaLocke para él y sus amigos.
 
 ## Reglas que ha dado (vigentes)
-- **TORNEO EN CURSO (desde el 2026-09-26): solo se cambia el repo `Permalocke definitivo`.** Nada de `desplegar.ps1`, ni copiar `Data/` a `PermaLocke prueba` (ahí juega el usuario), ni tocar la carpeta de amigos. Lo que se haga es para el siguiente torneo, más grande. Hasta que diga que acabó.
+- **TORNEO EN CURSO (desde el 2026-09-26): solo se cambia el repo `Permalocke definitivo`** (en `C:\Users\javie\Desktop\Permalocke definitivo`). Nada de `desplegar.ps1`, ni copiar `Data/` a `PermaLocke prueba` (ahí juega el usuario), ni tocar la carpeta de amigos, **salvo que él lo pida** (el mismo 26 pidió actualizar su carpeta y la de amigos y lo hizo él siguiendo instrucciones).
+- **Las versiones nuevas llegan por PR + Action** ([[Actualizaciones y publicación]]): Claude sube la versión y escribe las novedades; él acepta el PR y se publica sola. No quiere hacer el paquete ni la release a mano.
 - **«No hagas nada directamente, si estoy testeando para decirte errores y tú arreglarlos.»** Cuando está probando, arreglar lo que reporta y no emprender cosas por iniciativa propia.
 - **«Si hay que borrar cosas me lo dices y yo te lo confirmo.»** Todo borrado se pregunta antes y se hace solo tras un sí explícito.
 - **«Aún no actualices la carpeta de amigos.»** `C:\Users\javie\Desktop\PermaLocke para amigos` no se toca hasta que lo diga.
@@ -29,6 +30,8 @@ Usuario: Grenin430 (git). Escribe en español; se le responde en español. En el
 - No quiere listas de ideas en texto: prefiere ver cosas hechas.
 - Quiere saber qué está verificado y qué no, sin adornos.
 - Se le dicen los números medidos, no estimaciones.
+- Quiere ver el progreso de lo que tarda (pidió barra, total, lo que va y la velocidad en la descarga de la actualización).
+- Hace él lo de Windows y Supabase (scripts, SQL, releases): necesita instrucciones paso a paso, con dónde se abre cada cosa (le costó dónde ejecutar `git pull`: en PowerShell abierto desde la barra de direcciones de la carpeta del repo).
 
 ## Cómo se ha trabajado (patrones que funcionaron)
 - Verificar en la app real con la copia aislada y `--sin-juego`, capturando con `secciones-e2e.ps1` y `visor-e2e.ps1` (ver [[UI y kit pixel]]).

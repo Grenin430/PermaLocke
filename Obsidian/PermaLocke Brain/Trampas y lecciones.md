@@ -43,6 +43,14 @@ Errores ya cometidos en este proyecto, con el § donde se cuentan ([[Índice de 
 - El binario instalado no siempre es el que se abre (`Emulator/` frente a `Nuevo_azahar/`, §95).
 - Dos PermaLocke a la vez escriben dos veces en el mismo juego. Ahora hay un mutex (§159).
 
+## Añadidas 2026-09-26 (plan del torneo, releases)
+- **Windows PowerShell 5.1: `$PSScriptRoot` está vacío en los valores por defecto de `param`.** Calcular rutas por defecto en el cuerpo del script.
+- **En cadenas de PowerShell, `"$var:"` es una variable con ámbito** y no compila: `"${var}:"`. Tumbó la 1.ª ejecución de la Action.
+- **Antes de subir un workflow o un `.ps1` desde la nube, parsearlo con `pwsh`** (`dotnet tool install --global PowerShell`); los `${{ }}` sustituidos por un valor.
+- **SQL Editor de Supabase**: ejecuta solo lo seleccionado; un trozo de una función da «unterminated dollar-quoted string». Avisa de «destructive operations» y «tabla sin RLS» por palabras dentro de funciones: falso positivo, **Run without RLS** (el otro botón añade un `alter table` que falla).
+- **Desde la nube no se llega a Supabase** (proxy 403) pero sí a `api.github.com`: lo del servidor se verifica con consultas que ejecuta el usuario.
+- **Releases de GitHub**: el zip va en «Attach binaries», no en la caja de las notas; el paquete de actualización pesa ~70-80 MB (el exe autocontenido ~160 MB sin comprimir); si pasa de 2 GB es el zip de amigos.
+
 ## Añadidas 2026-09-26
 - **Una sección con `Needs` distinto de `None` pierde ~74 px de alto** por la franja del juego: un dibujo a celdas enteras puede bajar de 2 a 1 px/celda. Medir el alto disponible antes de fijar el tamaño en celdas (§187).
 - **Nada que aparezca y desaparezca junto a una escena pixel puede ocupar sitio:** le quita alto, la escena cambia de píxeles por celda y «se aleja». La línea de estado del gacha hacía eso al salir el Pokémon; ahora va encima del suelo (§189).

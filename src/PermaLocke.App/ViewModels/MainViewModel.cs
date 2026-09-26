@@ -19,6 +19,9 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly PermaLocke.App.Services.IUiDispatcher _ui;
     private readonly ILogger<MainViewModel> _logger;
 
+    /// <summary>The bar at the top of every section while a new version waits (§202).</summary>
+    public UpdateBannerViewModel Update { get; }
+
     public MainViewModel(LauncherViewModel launcher, HomeViewModel home, RandomizerViewModel randomizer,
         MiscellaneousViewModel miscellaneous, GachaViewModel gacha, PokemonViewerViewModel viewer,
         EvTrainingViewModel evTraining, MoveReminderViewModel moveReminder, AchievementsViewModel achievements,
@@ -31,8 +34,10 @@ public sealed partial class MainViewModel : ObservableObject
         PermaLocke.App.Services.GameLinkMonitor gameLink,
         PermaLocke.App.Services.IUiDispatcher ui,
         PermaLocke.App.Services.AlolaSky sky,
-        IRunContext runContext, ILogger<MainViewModel> logger, PermaLocke.Infrastructure.AppPaths paths)
+        IRunContext runContext, ILogger<MainViewModel> logger, PermaLocke.Infrastructure.AppPaths paths,
+        UpdateBannerViewModel update)
     {
+        Update = update;
         Sky = sky;
         Launcher = launcher;
         Gifts = gifts;

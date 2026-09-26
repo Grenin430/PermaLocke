@@ -267,6 +267,7 @@ public partial class App : Application
         collection.AddSingleton<CatchCeremony>();
         collection.AddSingleton<TransferOffer>();
         collection.AddSingleton<UpdateService>();
+        collection.AddSingleton<UpdateBannerViewModel>();
         collection.AddSingleton<ServerBackupService>();
         collection.AddSingleton<CrashReportUpload>();
         collection.AddSingleton<FirstRunGuide>();
@@ -403,7 +404,7 @@ public partial class App : Application
         {
             var updates = _services.GetRequiredService<UpdateService>();
             updates.CleanUp();
-            _ = updates.CheckAsync();
+            updates.Start();
         }
 
         var run = await _services.GetRequiredService<RunService>().LoadMostRecentAsync();

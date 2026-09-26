@@ -30,6 +30,7 @@ revisado: 2026-09-25
 | Buscar un § de ARCHITECTURE sin leer 11.7k líneas | [[Índice de ARCHITECTURE]] |
 | Qué sigue sin saberse | [[Preguntas abiertas]] |
 | **Plan del próximo torneo (espacio, traspaso, actualización, copias, fallos)** | [[Plan del próximo torneo]] |
+| **Sacar una versión nueva: PR, Action, release, ventana de descarga** | [[Actualizaciones y publicación]] |
 | Ideas guardadas para más adelante y las ya rechazadas (mirar antes de proponer ideas) | [[Ideas para el futuro]] |
 | Ficheros por proyecto | [[Mapa de código/PermaLocke.App]] · [[Mapa de código/PermaLocke.GameLink]] · [[Mapa de código/PermaLocke.Core]] · [[Mapa de código/PermaLocke.Rules]] · [[Mapa de código/PermaLocke.Data]] · [[Mapa de código/PermaLocke.Randomizer]] · [[Mapa de código/PermaLocke.Infrastructure]] · [[Mapa de código/PermaLocke.Admin]] · [[Mapa de código/Tests]] |
 
@@ -42,3 +43,4 @@ revisado: 2026-09-25
 - Desde el 2026-09-24 todo va commiteado en `main` (en GitHub, `Grenin430/PermaLocke`), un commit por cambio con su §. Antes del 24 hubo meses sin commit: para esa época la historia la cuentan `CLAUDE.md`, `docs/` y [[Historial de conversaciones]].
 - A veces se trabaja desde la **nube** (contenedor Linux, rama `claude/...`): allí no hay Azahar ni el Escritorio, y puede no haber .NET. Lo hecho allí queda sin compilar hasta que el usuario lo baje.
 - Solo se hace commit cuando el usuario lo pide.
+- **Desde el 2026-09-26 el repo es público** y lo de la nube llega a `main` por PR que acepta el usuario. Un PR que sube `<Version>` **publica la actualización para todos** al aceptarse ([[Actualizaciones y publicación]]).

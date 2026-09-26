@@ -6,20 +6,43 @@ revisado: 2026-09-26
 
 La última sesión va arriba. Antes del 2026-09-23 solo hay un resumen por fechas sacado de `CLAUDE.md` y de `ARCHITECTURE.md`: el detalle está en el § citado ([[Índice de ARCHITECTURE]]). **Cada sesión nueva añade su entrada aquí.**
 
-## 2026-09-26 — plan del próximo torneo, desde la nube
-- El usuario pidió implementar [[Plan del próximo torneo]] en su orden, solo en el repo (torneo en marcha: nada de desplegar ni tocar `PermaLocke prueba`/amigos), servidor solo con SQL nuevos numerados que ejecuta él, nada de borrar datos sin preguntar, un commit por paso.
-- **Paso 1 (§194) hecho:** `15-eventos-y-limpieza.sql` (tabla `eventos`, `subir_eventos`, vista `logros_todos`, `limpieza`), `TournamentUpload` incremental con vuelta a la subida entera, `CommunityService` con `logros_todos`, Admin: `ServerHistory` y ventana LIMPIEZA. SQL probado en un Postgres local (`tools/supabase/pruebas/`). Pendiente: que el usuario ejecute el 15.
+## 2026-09-26 — plan del próximo torneo, desde la nube (y su puesta en marcha)
+**Pedido:** implementar [[Plan del próximo torneo]] en su orden, solo en el repo (torneo en marcha), servidor solo con SQL
+nuevos numerados que ejecuta él, nada de borrar datos sin preguntar, un commit por paso, cerebro y § al acabar cada uno.
 
-- **Paso 2 (§195) hecho:** `FolderTransfer` (GameLink, probado en ficheros) copia Saves, la partida, el mundo instalado, jugador y sesión, y la ROM si falta; aparta lo que hubiera, nunca toca la carpeta vieja; se hace al arrancar tras reiniciar (`--tras-traspaso`). Botón en HOME sin run (`TransferOffer`).
-- **Paso 3 (§196) hecho:** `Infrastructure/AppUpdate` (pura, probada) + `UpdateService` (al abrir, solo en carpeta repartida): release más nueva de `Grenin430/PermaLocke` (`actualizaciones` en `Data/torneo.json`), descarga comprobada por SHA-256, cambia el exe y los Data del paquete respetando las reglas oficiales, se reinicia. Paquete: `tools/publicar-actualizacion.ps1 -Version x.y.z`. Requiere repo público.
-- **Paso 4 (§197) hecho:** `FirstRunGuide` en JUGAR: Discord, ROM, emulador, run (o traer de otra carpeta), mundo y primera partida guardada, cada uno con su botón y tachado solo; OCULTAR lo guarda en `ajustes.json` (`GuideHidden`). CONFIGURACIÓN guarda con `Current with`.
-Paso 5 (§198): copias de seguridad en Storage. SQL `16-copias.sql` (bucket privado, cada uno su carpeta, solo el organizador borra), zip con copia en caliente de SQLite + partida + LEEME cada 6 h si cambió, pestaña COPIAS en la ficha de Admin y LIMPIEZA deja las 5 últimas.
-Paso 6 (§199): informes de fallo. SQL `17-informes.sql` (bucket privado, solo el organizador lee), la app sube el zip del cierre de Azahar al momento y los pendientes al abrir, ventana INFORMES en Admin y la LIMPIEZA quita los de más de 30 días. Con esto el plan está entero en el repo.
-- **Puesto en marcha (2026-09-26):** el usuario ejecutó los SQL 15, 16 y 17 (verificados con una consulta de 13 comprobaciones, todas `true`), desplegó solo `-Amigos`, descomprimió el zip en una carpeta nueva y trajo su partida desde `PermaLocke prueba` con TRAER MI PARTIDA: todo en orden. Después borró la vieja `PermaLocke prueba` y **renombró la nueva a `PermaLocke prueba`**: es la misma ruta de siempre (ahora con PermaLocke 1.0.0 y la partida traída), así que `desplegar.ps1 -Prueba` sigue valiendo.
+**Hecho en el repo (rama `claude/relaxed-sagan-9amy20`, commits `TORNEO paso N`):**
+- **Paso 1 (§194):** `15-eventos-y-limpieza.sql` (tabla `eventos`, `subir_eventos`, vista `logros_todos`, `limpieza`);
+  `TournamentUpload` sube solo lo nuevo y vuelve a la subida entera si falta la función; `CommunityService` lee
+  `logros_todos`; Admin: `ServerHistory` y ventana LIMPIEZA. SQL probados en un Postgres local que imita a Supabase
+  (`tools/supabase/pruebas/probar.sh`, cluster en `/var/tmp/permalocke-pg`, puerto 5433).
+- **Paso 2 (§195):** `FolderTransfer` (GameLink, probado) copia Saves, partida, mundo instalado, jugador, sesión y la ROM si
+  falta; aparta lo que hubiera; nunca toca la carpeta vieja; se hace al arrancar tras reiniciar (`--tras-traspaso`).
+- **Paso 3 (§196):** `Infrastructure/AppUpdate` + `UpdateService` (GitHub Releases, SHA-256, respeta reglas oficiales).
+- **Paso 4 (§197):** `FirstRunGuide`, PRIMEROS PASOS en JUGAR.
+- **Paso 5 (§198):** `16-copias.sql`; `Data/ServerBackup` (copia en caliente de SQLite + json de la run + partida + LEEME);
+  `ServerBackupService` cada 6 h si cambió; Admin: pestaña COPIAS; LIMPIEZA deja 5 por jugador.
+- **Paso 6 (§199):** `17-informes.sql`; `CrashReportUpload` + `Infrastructure/CrashReportQueue`; Admin: ventana INFORMES;
+  LIMPIEZA quita los de más de 30 días.
 
-PR [Grenin430/PermaLocke#1](https://github.com/Grenin430/PermaLocke/pull/1) abierto a main. Repo puesto público por el usuario (se le explicó que el código y el historial quedan copiables; revisado: sin ROM, Locke, partidas ni secretos). §200: versión 1.0.1 en el csproj, visible en CONFIGURACIÓN, `publicar.ps1` sin versión fija; para probar la primera release.
-- **1.0.1 publicada a mano y entró** (el usuario vio PERMALOCKE 1.0.1). PR 1 y 2 aceptados; arreglado `$PSScriptRoot` vacío en `param` de Windows PowerShell 5.1. **§201 (1.0.2):** ventana de descarga con barra, MB, velocidad y tiempo, y GitHub Action que publica sola la release al subir la versión en main (notas en `docs/novedades/`).
-- La primera ejecución de la Action falló por sintaxis de PowerShell en el workflow (`"$t:"`); nada publicado. Arreglado y verificado con `pwsh` instalado como herramienta de .NET (parsear cada `run` antes de subir un workflow).
+**Puesta en marcha con el usuario (mismo día):**
+- SQL: el aviso «destructive operations / _limpiar sin RLS» del SQL Editor es falso positivo (tabla temporal dentro de la
+  función): **Run without RLS**. El 15 falló una vez con «unterminated dollar-quoted string»: había ejecutado solo un
+  trozo (el editor ejecuta la selección). Entero, bien. 15, 16 y 17 verificados con una consulta de 13 comprobaciones,
+  todas `true`. Desde la nube **no se llega a Supabase** (proxy 403): las comprobaciones las ejecuta él.
+- Carpetas: desplegó solo `-Amigos`, descomprimió el zip en una carpeta nueva, usó TRAER MI PARTIDA desde
+  `PermaLocke prueba` (**observado: bien en Windows**), borró la vieja y renombró la nueva a `PermaLocke prueba`. Los
+  amigos ya tienen instrucciones para hacer lo mismo cuando puedan.
+- PR [Grenin430/PermaLocke#1](https://github.com/Grenin430/PermaLocke/pull/1) (plan entero) aceptado. **Repo puesto
+  público** (ver [[Actualizaciones y publicación]]).
+- **§200, 1.0.1:** versión visible en CONFIGURACIÓN y `<Version>` del csproj como única fuente. Al hacer el paquete,
+  `publicar-actualizacion.ps1` falló en Windows PowerShell 5.1 (`$PSScriptRoot` vacío en `param`); arreglado en PR #2.
+  Al subir el zip arrastró primero otro fichero (>2 GB, el de amigos) a la caja de las notas: el zip va en «Attach
+  binaries». **1.0.1 publicada a mano y entró** (captura: PERMALOCKE 1.0.1).
+- **§201, 1.0.2 (PR #3):** ventana de descarga (barra, MB, %, velocidad, tiempo, CANCELAR) pedida por el usuario, y
+  **GitHub Action** que publica sola la release al aceptar un PR que sube la versión (respuesta a «¿no se podría
+  automatizar y las lanzas tú?»). 1.ª ejecución falló por `"$t:"` en el workflow, nada publicado; arreglo en PR #4, que
+  además relanza la Action al cambiar el propio workflow. **En verde: la 1.0.2 se publicó sola y el usuario la instaló.**
+- **§202 (1.0.3):** la 1.0.2 salió por la Action y el usuario la instaló. Pidió «1.0.2.1» (se hizo 1.0.3: la comparación es de tres cifras) sin la pregunta de sí o no: franja ámbar con `IconWarning` y ACTUALIZAR en todas las secciones, aviso fijo sobre el juego mientras haya versión esperando, y comprobación cada 30 min.
 
 ## 2026-09-26 — motes desde el VISOR, diez tandas de ideas y antitrampas de recarga
 - **Torneo en curso:** desde hoy solo se toca el repo; nada de `desplegar.ps1` ni copiar a `PermaLocke prueba` ([[Usuario y forma de trabajar]]).

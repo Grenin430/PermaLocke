@@ -1,0 +1,45 @@
+---
+tipo: flujo
+revisado: 2026-09-26
+---
+# Actualizaciones y publicación (desde la 1.0.2)
+
+Cómo llega una versión nueva a los jugadores desde el 2026-09-26. Detalle técnico: §196 (actualización), §200 (versión),
+§201 (ventana y Action) en `docs/ARCHITECTURE.md`. Contexto: [[Plan del próximo torneo]] · [[Historial de conversaciones]].
+
+## El flujo (lo que hace cada uno)
+1. **Claude**, en la rama `claude/...`: el cambio + **subir `<Version>`** en `src/PermaLocke.App/PermaLocke.App.csproj`
+   (única fuente de la versión) + **`docs/novedades/<versión>.md`** (lo que lee el jugador al ofrecérsela; la app
+   enseña 600 caracteres). Compila, pruebas, § y cerebro, y abre un PR a `main`.
+2. **El usuario acepta el PR.** Ese es su visto bueno: nada llega a los amigos sin él.
+3. **La Action** `.github/workflows/publicar-actualizacion.yml` (Windows de GitHub, gratis por repo público): si no existe
+   la release `v<versión>`, pasa las pruebas (Core, Rules, GameLink, Randomizer), hace el paquete con
+   `tools/publicar-actualizacion.ps1` y crea la release con el zip y las notas. Se lanza al cambiar el csproj o el propio
+   workflow en main, o a mano (Actions > Publicar actualización > Run workflow). Nunca republica una versión existente.
+4. **Cada app**, al abrirse (solo carpeta repartida con `PermaLocke.local`, nunca con `--sin-juego`), pregunta a
+   `api.github.com/repos/Grenin430/PermaLocke/releases/latest` (`actualizaciones` en `Data/torneo.json`), la ofrece, y
+   con un sí abre la **ventana de descarga** (barra, MB, %, velocidad de los últimos 3 s, tiempo restante, CANCELAR solo
+   mientras descarga), comprueba SHA-256, instala (exe + `Data/*.json` salvo reglas oficiales) y se reinicia.
+   CONFIGURACIÓN enseña **PERMALOCKE x.y.z** al final.
+5. **Desde la 1.0.3 (§202)** no pregunta: mira al abrir y cada 30 min; la versión esperando sale como **franja ámbar
+   con ACTUALIZAR** encima de cada sección y, con el juego abierto, como **aviso fijo** sobre el emulador hasta que se
+   cierra. Versiones siempre de **tres cifras** (1.0.2.1 no sería más nueva que 1.0.2).
+
+## Estado verificado
+- **1.0.1**: publicada a mano por el usuario (script + release en la web). **Observado**: se ofreció, entró y se vio
+  PERMALOCKE 1.0.1 (captura del usuario, 2026-09-26). Prueba de extremo a extremo de §196.
+- **1.0.2** (ventana de descarga + Action): la Action falló la 1.ª vez por sintaxis de PowerShell (`"$t:"`), sin publicar
+  nada; arreglo en PR #4. **Observado**: la Action la publicó y el usuario la instaló (2026-09-26).
+- **1.0.3** (franja y aviso fijo): pendiente de publicar y de ver en Windows.
+- Repo **público** desde el 2026-09-26 (decisión del usuario tras explicarle que el código y el historial quedan
+  copiables y que la GPL ya obliga a dar el código; revisado: sin ROM, `Locke/`, partidas ni secretos; la clave de
+  Supabase del repo es la pública). Alternativa descartada: repo de código privado + repo público solo de releases.
+
+## Para Claude, al tocar esto
+- Leer el registro de una Action desde la nube: MCP `actions_list` (runs) y `get_job_logs` con `failed_only`.
+- **Antes de subir un workflow o un `.ps1`**, pasarlos por el analizador: `dotnet tool install --global PowerShell` y
+  `[System.Management.Automation.Language.Parser]::ParseFile` (los `${{ }}` sustituidos por un valor). Ver
+  [[Trampas y lecciones]].
+- La app en `LocalOnly` busca releases: una release publicada **llega a todos** los amigos que abran la app. Avisar al
+  usuario antes de cada PR que sube la versión.
+- El botón de traspaso (§195) se quitará cuando todos los amigos estén en la versión nueva; todavía no.
