@@ -112,6 +112,7 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `ViewModels/SyncViewModel.cs` — **TopRow, RecordCard, SyncViewModel** — One line of the tournament's top.
 - `ViewModels/TradePlay.cs` — **TradePlay** — One wonder trade, as the cabin plays it: who goes and in which ball, who comes, what the screen will say, and when it was confirmed. 
 - `ViewModels/TypeBadges.cs` — **TypeBadges** — The one or two type plates of a Pokémon, for every screen that shows whom you picked: the viewer, ENTRENAR EV and MOVIMIENTOS (§176). 
+- `ViewModels/UpdateProgressViewModel.cs` — **UpdateProgressViewModel** — The update window (§201): how the download is going, then checking, installing and restarting. Only shows what UpdateService tells it; the one thing it does is ask to cancel, while there is still ...
 - `ViewModels/WonderTradeViewModel.cs` — **TypeBadgeViewModel, WonderTradeViewModel** — One type of the received Pokémon, with the colour the games have always used.
 - `Views/AchievementsView.xaml.cs` — **AchievementsView** — The achievements screen. All the work is in the view model.
 - `Views/AlbumScene.cs` — **AlbumPage, AlbumTab, AlbumSpread, AlbumTurn, AlbumScene** — One page of the album: its pockets in reading order, a card or an empty one each.
@@ -184,5 +185,6 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Views/TradeMachineScene.cs` — **TradeType, TradeShow, TradeTimeline, TradeMachineScene** — One type of what arrives, as the cabin's screen shows it: its name and the colour the games give it.
 - `Views/TrainerRoom.cs` — **TrainerRoom** — JUGAR's cover: the trainer's room (`rainerRoomScene`) on screen, in whole cells. 
 - `Views/TrainerRoomScene.cs` — **RoomSprite, RoomCrystal, TrainerRoomState, TrainerRoomScene** — A picture of the cartridge as cells, or null without one.
+- `Views/UpdateWindow.xaml.cs` — **UpdateWindow** — The update window (§201). Closing it during the download cancels it; after that it waits.
 - `Views/WheelEnding.cs` — **WheelEnding** — One way the wheel can come to a stop: how hard it brakes, how far it travels, and how much it settles back at the very end. 
 - `Views/WonderTradeOverlay.xaml.cs` — **WonderTradeOverlay** — The wonder trade as it plays: the trade cabin in the arcade room, and the card of what arrived once it is out. 

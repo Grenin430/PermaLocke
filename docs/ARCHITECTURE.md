@@ -12567,3 +12567,30 @@ release se sube el csproj y se lanza `publicar-actualizacion.ps1 -Version` con e
 
 Comprobado desde la nube: el repo responde como público en la API de GitHub (todavía sin releases) y
 `dotnet publish -r win-x64` del paquete sale bien (un exe de ~160 MB). **Sin probar** la actualización en Windows.
+
+---
+
+## §201 · La ventana de la actualización y las releases solas (2026-09-26, PermaLocke 1.0.2)
+
+**Para qué:** dos cosas que pidió el usuario tras ver entrar la 1.0.1. Al aceptar una actualización no se veía nada
+hasta el reinicio; y cada release había que hacerla a mano.
+
+**La ventana** (`Views/UpdateWindow`, `ViewModels/UpdateProgressViewModel`): con la pinta de la puerta de Discord
+(`LoginWindow`): PERMALOCKE, «ACTUALIZANDO A LA x.y.z», un `PixelBar`, «34,2 / 71,5 MB» y el porcentaje, la velocidad
+(«5,3 MB/S») y lo que queda («QUEDAN 12 S»), y luego cada paso: COMPROBANDO LA DESCARGA, INSTALANDO, REINICIANDO.
+CANCELAR (o cerrar la ventana) solo mientras descarga: borra la descarga a medias y la app sigue como estaba; instalando
+ya no se deja parar. `UpdateService` descarga ahora por trozos de 128 KB y avisa unas diez veces por segundo; la
+comprobación y la instalación van en segundo plano para que la ventana no se congele. Se abre con
+`IAppDialogs.ShowUpdateProgress`.
+
+**Los números** (`Infrastructure/DownloadMeter`, `DownloadProgress`): la velocidad es la de los últimos 3 s, no la media
+de toda la descarga, así que sigue a la red; lo que queda sale de esa velocidad. `DownloadMeterTests` (Core.Tests).
+
+**Releases solas** (`.github/workflows/publicar-actualizacion.yml`): al llegar a main un cambio de `<Version>` del csproj
+de la App, si no existe la release `v<versión>`, en un Windows de GitHub pasa las pruebas (Core, Rules, GameLink,
+Randomizer), hace el paquete con `tools/publicar-actualizacion.ps1` y crea la release con el zip. Las notas salen de
+`docs/novedades/<versión>.md`. Nunca republica una versión existente. También a mano: Actions > Run workflow. El
+flujo queda: subir la versión y escribir sus novedades en el PR; aceptarlo publica. Esta misma entrega es la **1.0.2**.
+
+**Sin probar:** la ventana en Windows y la primera ejecución de la Action. Compilación entera sin avisos; Core 398,
+GameLink 397, Randomizer 485, Rules 151, PixelCheck 69.

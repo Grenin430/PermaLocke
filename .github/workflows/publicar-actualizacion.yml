@@ -1,0 +1,78 @@
+# Publica sola la actualización automática (§196, §201). Cuando llega a main un cambio de la versión de la app
+# (<Version> en src/PermaLocke.App/PermaLocke.App.csproj) y todavía no hay release con esa etiqueta: pasa las pruebas,
+# hace el paquete con tools/publicar-actualizacion.ps1 en Windows y crea la release v<versión> con ese zip. Las apps
+# repartidas la ven al abrirse. Las notas que lee el jugador salen de docs/novedades/<versión>.md.
+#
+# Nunca vuelve a publicar una versión que ya existe; para repetirla hay que borrar esa release a mano en GitHub.
+# También se puede lanzar a mano: Actions > Publicar actualización > Run workflow.
+name: Publicar actualización
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - src/PermaLocke.App/PermaLocke.App.csproj
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publicar-actualizacion
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    runs-on: windows-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Versión y si ya está publicada
+        id: version
+        shell: pwsh
+        run: |
+          $csproj = Get-Content -Raw src/PermaLocke.App/PermaLocke.App.csproj
+          if ($csproj -notmatch '<Version>(\d+\.\d+\.\d+)</Version>') { throw 'No encuentro <Version> en el csproj de la app.' }
+          $version = $Matches[1]
+          gh release view "v$version" *> $null
+          $existe = $LASTEXITCODE -eq 0
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "publicar=$(-not $existe)".ToLower() >> $env:GITHUB_OUTPUT
+          if ($existe) { Write-Host "v$version ya está publicada: no se hace nada." } else { Write-Host "Se publica v$version." }
+          exit 0
+
+      - uses: actions/setup-dotnet@v4
+        if: steps.version.outputs.publicar == 'true'
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Pruebas
+        if: steps.version.outputs.publicar == 'true'
+        shell: pwsh
+        run: |
+          foreach ($t in 'tests/PermaLocke.Core.Tests', 'tests/PermaLocke.Rules.Tests', 'tests/PermaLocke.GameLink.Tests', 'tests/PermaLocke.Randomizer.Tests') {
+            dotnet test $t -v q --nologo
+            if ($LASTEXITCODE -ne 0) { throw "Fallan las pruebas de $t: no se publica." }
+          }
+
+      - name: Paquete
+        if: steps.version.outputs.publicar == 'true'
+        shell: pwsh
+        run: |
+          powershell -ExecutionPolicy Bypass -File tools/publicar-actualizacion.ps1 -Version ${{ steps.version.outputs.version }} -Destino "$PWD\.dist"
+          if ($LASTEXITCODE -ne 0) { throw 'No se ha podido hacer el paquete.' }
+
+      - name: Release
+        if: steps.version.outputs.publicar == 'true'
+        shell: pwsh
+        run: |
+          $version = '${{ steps.version.outputs.version }}'
+          $notas = "docs/novedades/$version.md"
+          if (-not (Test-Path $notas)) {
+            $notas = Join-Path $env:RUNNER_TEMP 'notas.md'
+            Set-Content -Path $notas -Value "PermaLocke $version." -Encoding utf8
+          }
+          gh release create "v$version" ".dist/PermaLocke-actualizacion-$version.zip" --title "PermaLocke $version" --notes-file $notas --target $env:GITHUB_SHA --latest
+          if ($LASTEXITCODE -ne 0) { throw 'No se ha podido crear la release.' }

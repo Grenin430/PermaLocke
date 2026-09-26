@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Windows;
 using Microsoft.Extensions.Logging;
+using PermaLocke.App.ViewModels;
 using PermaLocke.Core.Domain;
 using PermaLocke.Infrastructure;
 
@@ -110,29 +111,97 @@ public sealed class UpdateService(AppPaths paths, DiscordLogin discord, Emulator
         Directory.CreateDirectory(folder);
         var package = Path.Combine(folder, asset.Name);
 
-        await using (var download = await Http.GetStreamAsync(asset.Url))
-        await using (var file = File.Create(package))
+        // La ventana de la descarga (§201): la barra, cuánto va, la velocidad y lo que queda; luego cada paso.
+        var progress = new UpdateProgressViewModel(asset.Version);
+        using (dialogs.ShowUpdateProgress(progress))
         {
-            await download.CopyToAsync(file);
-        }
+            try
+            {
+                await DownloadAsync(asset, package, progress);
+            }
+            catch (OperationCanceledException)
+            {
+                Discard(package);
+                logger.LogInformation("Actualización a {Version} cancelada por el jugador", asset.Version);
+                return;
+            }
+            catch (Exception ex) when (ex is HttpRequestException or IOException)
+            {
+                Discard(package);
+                logger.LogWarning(ex, "Falló la descarga de {Name}", asset.Name);
+                dialogs.Tell("Versión nueva", "No se ha podido descargar. Se intentará la próxima vez que abras PermaLocke.");
+                return;
+            }
 
-        if (!AppUpdate.Matches(package, asset))
-        {
-            logger.LogWarning("La descarga de {Name} no coincide con la de GitHub", asset.Name);
-            dialogs.Tell("Versión nueva", "La descarga ha llegado mal. Se intentará la próxima vez que abras PermaLocke.");
-            return;
-        }
+            progress.Step("COMPROBANDO LA DESCARGA");
+            if (!await Task.Run(() => AppUpdate.Matches(package, asset)))
+            {
+                logger.LogWarning("La descarga de {Name} no coincide con la de GitHub", asset.Name);
+                dialogs.Tell("Versión nueva", "La descarga ha llegado mal. Se intentará la próxima vez que abras PermaLocke.");
+                return;
+            }
 
-        var result = AppUpdate.Apply(package, paths.Root, Executable, await OfficialRulesAsync(), logger);
-        if (!result.Done)
-        {
-            dialogs.Tell("Versión nueva", "No se ha podido instalar:\n\n" + string.Join("\n", result.Log));
-            return;
+            progress.Step("INSTALANDO");
+            var keep = await OfficialRulesAsync();
+            var result = await Task.Run(() => AppUpdate.Apply(package, paths.Root, Executable, keep, logger));
+            if (!result.Done)
+            {
+                dialogs.Tell("Versión nueva", "No se ha podido instalar:\n\n" + string.Join("\n", result.Log));
+                return;
+            }
+
+            progress.Step("REINICIANDO");
         }
 
         logger.LogInformation("PermaLocke actualizado a {Version}; se reinicia", asset.Version);
         Process.Start(new ProcessStartInfo(Path.Combine(paths.Root, Executable), RestartArgument) { UseShellExecute = false });
         Application.Current.Shutdown();
+    }
+
+    /// <summary>Downloads the package a piece at a time, telling the window how it goes about ten times a second.</summary>
+    private static async Task DownloadAsync(UpdateAsset asset, string package, UpdateProgressViewModel progress)
+    {
+        var cancel = progress.Token;
+        using var response = await Http.GetAsync(asset.Url, HttpCompletionOption.ResponseHeadersRead, cancel);
+        response.EnsureSuccessStatusCode();
+
+        var meter = new DownloadMeter(response.Content.Headers.ContentLength ?? asset.Size);
+        var clock = Stopwatch.StartNew();
+        var shown = TimeSpan.MinValue;
+        var buffer = new byte[128 * 1024];
+        long received = 0;
+
+        await using var download = await response.Content.ReadAsStreamAsync(cancel);
+        await using var file = File.Create(package);
+
+        progress.Show(meter.Sample(0, TimeSpan.Zero));
+        int read;
+        while ((read = await download.ReadAsync(buffer, cancel)) > 0)
+        {
+            await file.WriteAsync(buffer.AsMemory(0, read), cancel);
+            received += read;
+
+            if (clock.Elapsed - shown >= TimeSpan.FromMilliseconds(100))
+            {
+                shown = clock.Elapsed;
+                progress.Show(meter.Sample(received, shown));
+            }
+        }
+
+        progress.Show(meter.Sample(received, clock.Elapsed));
+    }
+
+    /// <summary>A half-downloaded package is ours and useless: it goes.</summary>
+    private void Discard(string package)
+    {
+        try
+        {
+            if (File.Exists(package)) File.Delete(package);
+        }
+        catch (IOException ex)
+        {
+            logger.LogInformation(ex, "No se pudo quitar la descarga a medias; se quita en el próximo arranque");
+        }
     }
 
     /// <summary>The Data files the organiser has an official rule for; all the rule files if the server cannot say.</summary>
