@@ -196,6 +196,7 @@ generado: 2026-09-24
 - L12077 · 187 · ÁLBUM premium: piel, acabados por rareza, carta en 3D
 - L12139 · 188 · ÁLBUM: la carta en la mano iba a trompicones (PixelColour)
 - L12180 · 189 · GACHA: más golpe, racha exprés y SALTAR
+- L12241 · 190 · Carta de cada captura volando al álbum encima del juego
 
 Subsecciones §176: bis (visor), ter (todas las pantallas, fuera ESTADÍSTICAS), quater (EV/MOVIMIENTOS sin bolsa, diálogos).
 

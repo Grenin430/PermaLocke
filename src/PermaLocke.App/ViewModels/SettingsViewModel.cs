@@ -52,6 +52,7 @@ public sealed partial class SettingsViewModel : SectionViewModel
         Killcam = current.Killcam;
         Follower = current.Follower;
         Ghosts = current.Ghosts;
+        CatchCard = current.CatchCard;
         _loading = false;
     }
 
@@ -85,12 +86,16 @@ public sealed partial class SettingsViewModel : SectionViewModel
     [ObservableProperty]
     private bool _ghosts;
 
+    [ObservableProperty]
+    private bool _catchCard;
+
     partial void OnNotificationsChanged(bool value) => Save();
     partial void OnStepAsideChanged(bool value) => Save();
     partial void OnDeathSceneChanged(bool value) => Save();
     partial void OnKillcamChanged(bool value) => Save();
     partial void OnFollowerChanged(bool value) => Save();
     partial void OnGhostsChanged(bool value) => Save();
+    partial void OnCatchCardChanged(bool value) => Save();
 
     private void Save()
     {
@@ -99,7 +104,7 @@ public sealed partial class SettingsViewModel : SectionViewModel
             return;
         }
 
-        _settings.Update(new AppSettingsData(Notifications, StepAside, DeathScene, Killcam, Follower, Ghosts));
+        _settings.Update(new AppSettingsData(Notifications, StepAside, DeathScene, Killcam, Follower, Ghosts, CatchCard));
         Status = "Guardado.";
     }
 

@@ -12235,3 +12235,48 @@ fila de alto automático. Al aparecer le quitaba alto a la máquina, que en su p
 celda a no caber, y bajaba a 2 (`CapsuleMachine.Reshape`); a los 5 s `Fleeting` la borraba y volvía a 3. Ahora la línea
 va **encima del suelo de la sala**, abajo a la izquierda, sobre un panel (`HasStatus`), y no ocupa sitio: la máquina
 tiene siempre el mismo alto (y 8 px más que antes, los del margen de la línea vacía).
+
+---
+
+## §190 · La carta de cada captura vuela al álbum, encima del juego (2026-09-26)
+
+**Petición (jugador):** al atrapar un Pokémon salvaje, que por la derecha entre un álbum pequeño que se reconozca como
+álbum, que de la Poké Ball salga la carta del Pokémon, que con una animación se meta en el álbum y que el álbum se vaya
+por la derecha. De momento solo capturas salvajes.
+
+**Cuándo sale.** `EncounterGuard.Caught` avisa cuando el récord de capturas del juego (récord 6) sube respecto al
+empezar el combate salvaje. El juego lo cuenta **al terminar el combate** (medido en el §118: la huida y la captura se
+apuntan justo después de que se vayan las tablas), así que la animación sale al volver al campo, no sobre la ball del
+combate. Por eso la ball es **nuestra**: cae donde está el entrenador, en medio de la pantalla de arriba. La vigilancia
+va aparte de `_battle` (`_watched`, 20 s tras el combate): un combate que no gasta la ruta se suelta antes de que el
+juego cuente nada, y una captura variocolor o de estático permitido también tiene su carta.
+
+**La carta es de verdad.** El Pokémon salvaje se lee entero en el combate (`BattleTableReader.ReadPokemon`, ya se leía
+para saber si era variocolor; ahora siempre, una vez) y se guarda en el combate. `SaveBoxReader.Describe(PK7)` lo
+describe como uno del equipo, sobre una copia, y `TcgCardFactory` (sacada de `AlbumViewModel`, que ahora la usa) hace
+**la misma carta que luego tendrá el ÁLBUM**: nivel, movimientos, naturaleza, estadísticas y rareza reales. Si no se
+pudo leer, no sale nada: no se inventa una carta.
+
+**La animación** (`CatchScene`, pura, 3,95 s; `CatchWindow` encima de la pantalla de arriba de Azahar,
+`GameWindow.TopScreen`, sin ratón ni foco):
+1. El álbum entra por la derecha, cerrado: piel morada con grano y pespunte, anillas doradas en el lomo, cantoneras y
+   una Poké Ball en oro. Va a dos píxeles del juego por celda (~120×76 abierto): pequeño pero se lee como álbum.
+2. Una Poké Ball cae donde está el entrenador, bota, se menea dos veces y se abre con un fogonazo de rayos blancos.
+3. La carta sale de la ball dando vuelta y media y creciendo con rebote (la carta en la mano del §187, `HandScene`,
+   ahora con `surroundings: false`: sin sombra ni polvo), se deja ver meciéndose con los rayos de su rareza.
+4. El álbum se abre (la tapa gira sobre el lomo y cae al otro lado como hoja de fundas, casi todas con cartitas), la
+   carta vuela en arco encogiendo hasta la funda vacía del centro, entra, la funda brilla y el álbum da un saltito.
+5. Se cierra y se va por la derecha.
+
+Todo en píxeles del juego (`Pixel` = tamaño de un píxel del 3DS en el monitor), así que parece parte de él.
+
+**Ajuste:** «Carta al capturar» en CONFIGURACIÓN → MIENTRAS JUEGAS (`AppSettingsData.CatchCard`, encendido por defecto).
+**Ensayo:** `--ensayar-captura` enseña la carta del primero del equipo de la partida, sin juego (sin Azahar, en medio del
+escritorio). Mientras sale se avisa a la killcam (`CoverBegins/Ends`), aunque fuera de combate no graba.
+
+**Pruebas (PixelCheck):** cada momento dibuja dentro de la pantalla en tres tamaños y al final no queda nada encima del
+juego; mostrándose, la carta ocupa su trozo; el último instante del vuelo cae sobre la funda. `captura.png` con dieciséis
+momentos sobre un campo de mentira.
+
+**Sin ver dentro de la app ni con una captura real:** el momento exacto (debería ser al volver al campo), el sitio de la
+ball respecto al entrenador y el tamaño en la ventana del jugador se comprueban en Windows.

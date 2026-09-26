@@ -14,6 +14,10 @@ namespace PermaLocke.App.Services;
 /// <summary>Something the guard wants the player to hear, and the Pokémon it is about when there is one.</summary>
 public sealed record EncounterNotice(ToastKind Kind, string Title, string Message, int? Species);
 
+/// <summary>A wild Pokémon the game has just counted as caught (§190).</summary>
+/// <param name="Pokemon">The whole Pokémon as it was read in the battle; null if it could not be read.</param>
+public sealed record WildCatch(int Species, bool Shiny, PKHeX.Core.PK7? Pokemon);
+
 /// <summary>
 /// Watches the game's wild battles: marks the map with each route's first encounter, and keeps the Poké Balls where
 /// the competition's first-encounter rule says.
@@ -122,6 +126,21 @@ public sealed class EncounterGuard(
     /// <summary>Something the player should hear about: balls taken, given back, a route spent.</summary>
     public event EventHandler<EncounterNotice>? Said;
 
+    /// <summary>
+    /// A wild battle ended in a capture, as soon as the game's own record of captures says so (§190): the card flies
+    /// into the album over the game. Raised once per battle, after the battle, because that is when the game counts it.
+    /// </summary>
+    public event EventHandler<WildCatch>? Caught;
+
+    /// <summary>
+    /// The battle whose capture is still being watched for. Apart from <see cref="_battle"/>, which is let go as soon as
+    /// the map is marked — and a battle that spends nothing is let go before the game has counted anything.
+    /// </summary>
+    private WildBattle? _watched;
+
+    /// <summary>How long after a battle its capture may still be counted.</summary>
+    private static readonly TimeSpan CatchWatch = TimeSpan.FromSeconds(20);
+
     /// <summary>Whether the last thing done to the bag was a withholding nobody was told about.</summary>
     private bool _withheldQuietly;
 
@@ -166,6 +185,12 @@ public sealed class EncounterGuard(
 
         /// <summary>The whole wild Pokémon behind the block has been read, so its shininess is known.</summary>
         public bool PokemonRead { get; set; }
+
+        /// <summary>That Pokémon, for its card if it is caught (§190).</summary>
+        public PKHeX.Core.PK7? Wild { get; set; }
+
+        /// <summary>Its capture has been told already.</summary>
+        public bool CatchTold { get; set; }
         public bool TablesSeen { get; set; }
         public bool WildFainted { get; set; }
         public bool PlayerFainted { get; set; }
@@ -200,6 +225,7 @@ public sealed class EncounterGuard(
         {
             _runId = run.Id;
             _battle = null;
+            _watched = null;
             _last = null;
             _spent = null;
             _routes = null;
@@ -219,8 +245,11 @@ public sealed class EncounterGuard(
             }
 
             _battle = null;
+            _watched = null;
             _last = read;
         }
+
+        WatchCatch(read, now);
 
         var started = read is not null && _last is not null && read.WildBattles > _last.WildBattles;
 
@@ -257,6 +286,44 @@ public sealed class EncounterGuard(
         return await BattleTickAsync(run, read, tables, faints, tablesSayBattle, now, ct);
     }
 
+    /// <summary>
+    /// Tells <see cref="Caught"/> once the game's record of captures has gone up since the watched battle began, and
+    /// stops watching a while after it ended.
+    /// </summary>
+    private void WatchCatch(BattleCounters? read, DateTimeOffset now)
+    {
+        if (_watched is not { } battle)
+        {
+            return;
+        }
+
+        if (read is not null && !battle.CatchTold && read.Caught > battle.Start.Caught)
+        {
+            battle.CatchTold = true;
+            _watched = null;
+            var species = battle.Species ?? battle.Wild?.Species ?? 0;
+            logger.LogInformation("Captura contada: {Species}{Read}", species > 0 ? speciesNames.GetName(species) : "?",
+                battle.Wild is null ? " (sin leer el Pokémon)" : string.Empty);
+
+            try
+            {
+                Caught?.Invoke(this, new WildCatch(species, battle.Shiny, battle.Wild));
+            }
+            catch (Exception ex)
+            {
+                // Lo que se enseñe encima del juego no puede tumbar la detección.
+                logger.LogWarning(ex, "Falló el aviso de una captura");
+            }
+
+            return;
+        }
+
+        if (battle.EndedAt is { } ended && now - ended > CatchWatch)
+        {
+            _watched = null;
+        }
+    }
+
     private async Task StartBattleAsync(Run run, BattleCounters start, BattleCounters before, DateTimeOffset now,
         CancellationToken ct)
     {
@@ -277,6 +344,8 @@ public sealed class EncounterGuard(
             StartedAt = now,
             Trial = trial
         };
+
+        _watched = _battle;
 
         if (trial is not null)
         {
@@ -308,9 +377,10 @@ public sealed class EncounterGuard(
 
             // El brillo sale del propio salvaje: el récord de variocolor no sube al empezar el combate (§118). Se
             // pregunta hasta que se lee, porque el bloque puede aparecer antes que el Pokémon detrás de su puntero.
-            if (!battle.Shiny && !battle.PokemonRead && wild.Species > 0 && battleTables.ReadPokemon(wild) is { } pokemon)
+            if (!battle.PokemonRead && wild.Species > 0 && battleTables.ReadPokemon(wild) is { } pokemon)
             {
                 battle.PokemonRead = true;
+                battle.Wild = pokemon;
 
                 if (pokemon.IsShiny)
                 {

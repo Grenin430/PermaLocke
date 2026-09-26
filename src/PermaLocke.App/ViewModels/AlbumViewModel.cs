@@ -37,26 +37,22 @@ public sealed partial class AlbumViewModel : SectionViewModel
     private readonly IRunContext _runContext;
     private readonly IPokemonRepository _registered;
     private readonly IEventStore _events;
-    private readonly ITypeLookup _types;
-    private readonly IMoveCatalog _moves;
-    private readonly IStatForecast _forecast;
+    private readonly TcgCardFactory _cards;
     private readonly GachaService _gacha;
-    private readonly ISpeciesStatsCatalog _species;
     private readonly ILogger<AlbumViewModel> _logger;
 
     /// <summary>The cards of each binder by slot, in the order of <see cref="Binders"/>.</summary>
-    private readonly List<TcgCard?[]> _cards = [];
+    private readonly List<TcgCard?[]> _pockets = [];
 
     private IReadOnlyList<AlbumSpreadPlace> _spreads = [];
     private int _position;
-    private Dictionary<int, int>? _stages;
     private List<TcgCard> _inspecting = [];
     private int _inspectedIndex;
     private bool _moving;
 
     public AlbumViewModel(IBoxReader boxes, PokemonSpriteService sprites, IRunContext runContext,
-        IPokemonRepository registered, IEventStore events, ITypeLookup types, IMoveCatalog moves, IStatForecast forecast,
-        GachaService gacha, ISpeciesStatsCatalog species, ILogger<AlbumViewModel> logger)
+        IPokemonRepository registered, IEventStore events, TcgCardFactory cards, GachaService gacha,
+        ILogger<AlbumViewModel> logger)
         : base("ÁLBUM", "Tus Pokémon como cartas")
     {
         _boxes = boxes;
@@ -64,11 +60,8 @@ public sealed partial class AlbumViewModel : SectionViewModel
         _runContext = runContext;
         _registered = registered;
         _events = events;
-        _types = types;
-        _moves = moves;
-        _forecast = forecast;
+        _cards = cards;
         _gacha = gacha;
-        _species = species;
         _logger = logger;
     }
 
@@ -196,7 +189,7 @@ public sealed partial class AlbumViewModel : SectionViewModel
 
             _moving = true;
             Binders.Clear();
-            _cards.Clear();
+            _pockets.Clear();
             Inspected = null;
 
             if (!snapshot.Available)
@@ -223,13 +216,13 @@ public sealed partial class AlbumViewModel : SectionViewModel
                     slots[pokemon.Slot] = Card(pokemon, fallen, pulled);
                 }
 
-                _cards.Add(slots);
+                _pockets.Add(slots);
             }
 
             IsAvailable = true;
             OnPropertyChanged(nameof(IsEmpty));
 
-            var all = _cards.SelectMany(slots => slots).OfType<TcgCard>().ToList();
+            var all = _pockets.SelectMany(slots => slots).OfType<TcgCard>().ToList();
             var shiny = all.Count(card => card.Shiny);
             var burnt = all.Count(card => card.Fallen);
             Summary = $"{all.Count} {(all.Count == 1 ? "carta" : "cartas")} · {shiny} variocolor · {burnt} {(burnt == 1 ? "quemada" : "quemadas")}";
@@ -281,103 +274,8 @@ public sealed partial class AlbumViewModel : SectionViewModel
     }
 
     /// <summary>One Pokémon of the save as its card.</summary>
-    private TcgCard Card(BoxedPokemon pokemon, HashSet<uint> fallen, Dictionary<uint, int> pulled)
-    {
-        var fromGacha = pulled.TryGetValue(pokemon.Pid, out var pulledTier);
-        var sprite = RoomSprite.From(pokemon.IsEgg ? _sprites.GetEgg() : _sprites.Get(pokemon.Species, pokemon.Form, pokemon.IsShiny));
-
-        if (pokemon.IsEgg)
-        {
-            return new TcgCard("Huevo", "Huevo", pokemon.Species, string.Empty, 0, 0, [], [], string.Empty, string.Empty,
-                -1, -1, string.Empty, string.Empty, 0, -1, fromGacha, false, true, fallen.Contains(pokemon.Pid), sprite,
-                [], [], [], pokemon.Pid);
-        }
-
-        var pair = _types.GetTypes(pokemon.Species, pokemon.Form);
-        IReadOnlyList<int> types = pair.IsDual ? [pair.First, pair.Second] : [pair.First];
-
-        // Las mismas cifras que el visor: en caja, las del mundo instalado; en el equipo, las que guarda el juego.
-        var stats = (pokemon.IsInParty ? null : _forecast.With(pokemon, pokemon.Evs)) ?? pokemon.Stats;
-
-        var up = -1;
-        var down = -1;
-        for (var stat = 0; stat < 6; stat++)
-        {
-            var effect = _forecast.NatureEffect(pokemon, stat);
-            if (effect > 0) up = stat;
-            if (effect < 0) down = stat;
-        }
-
-        var moves = new List<TcgMove>();
-        var ids = pokemon.MoveIds ?? [];
-        for (var slot = 0; slot < 4; slot++)
-        {
-            var id = slot < ids.Count ? ids[slot] : 0;
-            if (id != 0 && _moves.Describe(id) is { } sheet)
-            {
-                moves.Add(new TcgMove(sheet.Name, sheet.Type, sheet.Power, sheet.Accuracy, sheet.PP, sheet.CategoryName));
-            }
-            else if (id != 0 && slot < pokemon.Moves.Count && pokemon.Moves[slot].Length > 0)
-            {
-                moves.Add(new TcgMove(pokemon.Moves[slot], -1, 0, 0, 0, string.Empty));
-            }
-        }
-
-        var name = string.IsNullOrWhiteSpace(pokemon.Nickname) ? pokemon.SpeciesName : pokemon.Nickname;
-
-        return new TcgCard(
-            name,
-            pokemon.SpeciesName,
-            pokemon.Species,
-            StageOf(pokemon.Species),
-            pokemon.Level,
-            stats.Count > 0 ? stats[0] : 0,
-            types,
-            moves,
-            pokemon.AbilityName,
-            pokemon.NatureName,
-            up,
-            down,
-            pokemon.HeldItemName,
-            pokemon.MetLocationName,
-            pokemon.MetLevel,
-            fromGacha ? pulledTier : _gacha.TierIndexOf(pokemon.Species),
-            fromGacha,
-            pokemon.IsShiny,
-            false,
-            fallen.Contains(pokemon.Pid),
-            sprite,
-            stats,
-            pokemon.Ivs,
-            pokemon.Evs,
-            pokemon.Pid);
-    }
-
-    /// <summary>«BÁSICO», «FASE 1» or «FASE 2»: the rung of its family it stands on, from the cartridge's families.</summary>
-    private string StageOf(int species)
-    {
-        if (_stages is null)
-        {
-            _stages = [];
-            foreach (var line in _species.Lines)
-            {
-                for (var stage = 0; stage < line.Stages.Count; stage++)
-                {
-                    foreach (var id in line.Stages[stage])
-                    {
-                        _stages.TryAdd(id, stage);
-                    }
-                }
-            }
-        }
-
-        return _stages.GetValueOrDefault(species) switch
-        {
-            0 => "Básico",
-            1 => "Fase 1",
-            _ => "Fase 2"
-        };
-    }
+    private TcgCard Card(BoxedPokemon pokemon, HashSet<uint> fallen, Dictionary<uint, int> pulled) =>
+        _cards.Make(pokemon, fallen.Contains(pokemon.Pid), pulled.TryGetValue(pokemon.Pid, out var tier) ? tier : null);
 
     // ====================================================================================================== PAGES
 
@@ -400,7 +298,7 @@ public sealed partial class AlbumViewModel : SectionViewModel
 
         _position = Math.Clamp(position, 0, _spreads.Count - 1);
         var place = _spreads[_position];
-        var slots = _cards[place.Binder];
+        var slots = _pockets[place.Binder];
         var binder = Binders[place.Binder];
 
         // Las pestañas del canto: «EQ» para el equipo y el número de cada caja.
@@ -491,7 +389,7 @@ public sealed partial class AlbumViewModel : SectionViewModel
             return;
         }
 
-        _inspecting = [.. _cards[_spreads[_position].Binder].OfType<TcgCard>()];
+        _inspecting = [.. _pockets[_spreads[_position].Binder].OfType<TcgCard>()];
         _inspectedIndex = Math.Max(0, _inspecting.IndexOf(card));
         Show();
     }

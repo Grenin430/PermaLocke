@@ -77,7 +77,12 @@ public sealed class HandScene
     /// <param name="front">The card's face, as drawn once; its moving part is added here, lit by the pose.</param>
     /// <param name="back">The other face, seen once it is turned over.</param>
     /// <param name="arrival">Seconds since it landed in the hand, for the burst of a rare card; negative while it flies.</param>
-    public void Render(TcgRender front, TcgRender back, HandPose pose, double seconds, uint seed, double arrival = 99)
+    /// <param name="surroundings">
+    /// False for a card over something that is not a table, such as the game (§190): no shadow and no dust, only the
+    /// card with its rays and its burst.
+    /// </param>
+    public void Render(TcgRender front, TcgRender back, HandPose pose, double seconds, uint seed, double arrival = 99,
+        bool surroundings = true)
     {
         var cardWidth = front.Canvas.Width;
         var cardHeight = front.Canvas.Height;
@@ -107,8 +112,11 @@ public sealed class HandScene
         }
 
         Rays(area, pose, finish, seconds, block);
-        Motes(area, pose, fallen, seconds, seed, block);
-        Shadow(projection, pose, facing.Canvas, block);
+        if (surroundings)
+        {
+            Motes(area, pose, fallen, seconds, seed, block);
+            Shadow(projection, pose, facing.Canvas, block);
+        }
 
         var live = _live;
         live.CopyFrom(facing.Canvas);

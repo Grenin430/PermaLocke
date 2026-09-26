@@ -108,6 +108,7 @@ flowchart LR
 | `MaintenanceService.MarkedDead` | solo la escena |
 | `DeathMarked` | «Caídos» |
 | `TeamWiped` | `ceremony.TeamFell` + aviso |
+| `EncounterGuard.Caught` (récord de capturas sube, al acabar el combate salvaje) | `CatchCeremony`: la carta sale de una ball y entra en el álbum (§190) |
 | `RewardGiven` | «Premio entregado» con el icono del objeto |
 
 - `Notifier.Enabled`, `DeathCeremony.Enabled`, `KillcamRecorder.Enabled` y `EdgeTab.StepAside` los fija `AppSettings` desde CONFIGURACIÓN (`Config/ajustes.json`, §177).

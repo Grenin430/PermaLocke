@@ -23,6 +23,7 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Services/AppDialogs.cs` — **IAppDialogs** — Lets view models ask for a window without knowing that WPF exists, keeping window handling out of the view models and the view models testable. 
 - `Services/AppSettings.cs` — **AppSettingsData** — What the player chose in CONFIGURACIÓN, as it is written to disk.
 - `Services/BattleModeService.cs` — **BattleModeState, BattleModeResult, BattleModeService** — Where the world is right now.
+- `Services/CatchCeremony.cs` — **CatchCeremony** — A wild Pokémon caught becomes its card, and the card flies into the album over the game (§190). 
 - `Services/CemeteryService.cs` — **Grave, CemeteryService** — One of the run's fallen, with what the run knows about how it went.
 - `Services/CommunityService.cs` — **FriendStatus, ClaimedAchievement, CommunityService** — The launcher's friends list and activity: everyone's presence and the achievements they claim, through the tournament server (the shared folder of §126 is gone). 
 - `Services/DarkFrame.cs` — **DarkFrame** — Asks the desktop window manager for a dark title bar. 
@@ -34,7 +35,7 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Services/EmulatorCrashReport.cs` — **EmulatorCrashReport, Machine** — Writes, the moment Azahar falls over, everything needed to know why: so nobody has to reproduce it on the player's computer, and the player only has to pass on one file. 
 - `Services/EmulatorLauncher.cs` — **EmulatorState, CheckLevel, LaunchCheck, LauncherSettings, EmulatorLauncher** — Where the game is, from the launcher's point of view.
 - `Services/EmulatorProcess.cs` — **EmulatorProcess** — Whether the emulator is really running.
-- `Services/EncounterGuard.cs` — **EncounterNotice, EncounterGuard** — Something the guard wants the player to hear, and the Pokémon it is about when there is one.
+- `Services/EncounterGuard.cs` — **EncounterNotice, WildCatch, EncounterGuard** — Something the guard wants the player to hear, and the Pokémon it is about when there is one.
 - `Services/EventIcons.cs` — **EventIcons** — The pixel icon of each kind of event, for the history lists drawn in the pixel style (§176). 
 - `Services/GameLinkMonitor.cs` — **GameLinkMonitor** — Polls the running game and publishes what it sees. One poller for the whole application, so every screen shows the same snapshot and the emulator is asked once per cycle. 
 - `Services/GameWindow.cs` — **GameWindow** — Where the emulator is, and which screen it is on. 
@@ -57,6 +58,7 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Services/Rolling.cs` — **Rolling** — Makes a number arrive by counting up to itself instead of appearing. 
 - `Services/RunActivity.cs` — **RunActivity, WatchedEventStore** — Says out loud that the run's history has just grown. 
 - `Services/SyncService.cs` — **PlayerStatus, SyncService** — The summary of the loaded run and the history it comes from, for `ournamentUpload`. The shared folder it used to publish to is gone (2026-09-24): the tournament server replaced it. 
+- `Services/TcgCardFactory.cs` — **TcgCardFactory** — A Pokémon as its TCG card: the same card in the ÁLBUM (§186) and flying into it when one is caught (§190). 
 - `Services/ToastKind.cs` — **ToastKind** — What a notice is about. Decides its tab, its colour and the mark drawn on its sprite.
 - `Services/ToastPlacement.cs` — **ToastPlacement** — Positions the notice stack in screen pixels, keeping it inside the selected monitor.
 - `Services/TournamentUpload.cs` — **TournamentUpload** — Sends the loaded run to the tournament server: the same summary and history the shared folder used to carry. 
@@ -115,6 +117,8 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Views/CapsuleMachine.cs` — **CapsuleMachine** — The gacha's stage: the capsule machine (`apsuleMachineScene`) on screen, in whole cells. 
 - `Views/CapsuleMachineScene.cs` — **CapsuleBanner, CapsuleRoll, CapsuleShelfItem, CapsuleSceneState, CapsuleTimeline, CapsuleMachineScene** — What the machine is loaded with: the banner chosen under it.
 - `Views/CardStage.cs` — **CardStage** — One card out of the album and in the hand (§186, §187): it flies out of its pocket spinning once, lands big with a burst if it is rare, leans towards the mouse so its foil catches the light, and ...
+- `Views/CatchScene.cs` — **CatchTimeline, CatchScene** — When each thing happens as a caught Pokémon's card goes into the album, in seconds (§190).
+- `Views/CatchWindow.cs` — **CatchWindow** — The card of a wild Pokémon just caught going into the album, over the emulator's top screen (§190). 
 - `Views/CemeteryCanvas.cs` — **CemeteryCanvas** — Shows `emeteryScene` at a whole number of screen pixels per cell, puts the names under the monuments and turns a click on a grave into the pick command. 
 - `Views/CemeteryScene.cs` — **CemeteryScene** — The cemetery, painted cell by cell: night, hills, a fence, fog, and one grave per fallen Pokémon with its ghost above it. 
 - `Views/CemeteryView.xaml.cs` — **CemeteryView** — 

@@ -34,6 +34,7 @@
     <Compile Include="..\..\src\PermaLocke.App\Views\TcgCardArt.cs" Link="App\TcgCardArt.cs" />
     <Compile Include="..\..\src\PermaLocke.App\Views\AlbumScene.cs" Link="App\AlbumScene.cs" />
     <Compile Include="..\..\src\PermaLocke.App\Views\HandScene.cs" Link="App\HandScene.cs" />
+    <Compile Include="..\..\src\PermaLocke.App\Views\CatchScene.cs" Link="App\CatchScene.cs" />
     <Compile Include="..\..\src\PermaLocke.App\Views\RoomSprite.cs" Link="App\RoomSprite.cs" />
     <Compile Include="..\..\src\PermaLocke.App\Views\Pixel\PixelFont.cs" Link="App\PixelFont.cs" />
     <Compile Include="..\..\src\PermaLocke.App\Views\Pixel\SmallFont.cs" Link="App\SmallFont.cs" />

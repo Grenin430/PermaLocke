@@ -194,6 +194,8 @@ public partial class App : Application
         collection.AddSingleton<ShopViewModel>();
         collection.AddSingleton<PokemonViewerViewModel>();
         // ÁLBUM (§186): las cajas como carpeta de cartas, solo para mirar.
+        collection.AddSingleton<TcgCardFactory>();
+        collection.AddSingleton<CatchCeremony>();
         collection.AddSingleton<AlbumViewModel>();
         collection.AddSingleton<EvTrainingViewModel>();
         collection.AddSingleton<MoveReminderViewModel>();
@@ -400,6 +402,16 @@ public partial class App : Application
         {
             // La lluvia de sangre de un amigo que pierde el equipo (§184), sin servidor ni juego.
             await _services!.GetRequiredService<GhostService>().RehearseRainAsync("Ensayo");
+        }
+
+        if (e.Args.Contains("--ensayar-captura", StringComparer.OrdinalIgnoreCase))
+        {
+            // La carta de una captura volando al álbum (§190), con el primero del equipo de la partida.
+            var snapshot = await _services!.GetRequiredService<IBoxReader>().ReadAsync();
+            if (snapshot.Boxes.SelectMany(box => box.Pokemon).FirstOrDefault(p => !p.IsEgg) is { } caught)
+            {
+                await _services!.GetRequiredService<CatchCeremony>().RehearseAsync(caught);
+            }
         }
 
         if (e.Args.Contains("--ensayar-killcam", StringComparer.OrdinalIgnoreCase))

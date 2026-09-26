@@ -141,6 +141,12 @@ public sealed class SaveBoxReader(PlayerSave save, ILocationLookup locations, st
         return string.IsNullOrWhiteSpace(name) ? $"Caja {box + 1}" : name;
     }
 
+    /// <summary>
+    /// A Pokémon read somewhere other than the save — the wild one of a battle — described like one of the party, with
+    /// the figures it carries (§190). Works on a copy: PKHeX changes what it reads.
+    /// </summary>
+    public BoxedPokemon Describe(PK7 pokemon) => Describe((PK7)pokemon.Clone(), BoxedPokemon.PartyBox, 0, inParty: true);
+
     private BoxedPokemon Describe(PK7 pokemon, int box, int slot, bool inParty = false)
     {
         // Un Pokémon guardado en caja no lleva sus estadísticas de combate: el juego se las

@@ -32,8 +32,11 @@ public sealed class PlayNotifications
 {
     public PlayNotifications(GameLinkMonitor monitor, MaintenanceService maintenance, Notifier notifier,
         DeathCeremony ceremony, PokemonSpriteService sprites, EncounterGuard encounters, BallControlService balls,
-        GhostService ghosts)
+        GhostService ghosts, CatchCeremony catches)
     {
+        // Una captura salvaje: su carta vuela al álbum encima del juego (§190).
+        encounters.Caught += (_, caught) => catches.Celebrate(caught);
+
         balls.FirstBallDetected += (_, _) => notifier.Say(
             ToastKind.Info, "¡Primeras Poké Balls!",
             "Tu PermaLocke empieza: desde ahora cuentan las capturas y las muertes.",

@@ -6,6 +6,11 @@ revisado: 2026-09-26
 
 La última sesión va arriba. Antes del 2026-09-23 solo hay un resumen por fechas sacado de `CLAUDE.md` y de `ARCHITECTURE.md`: el detalle está en el § citado ([[Índice de ARCHITECTURE]]). **Cada sesión nueva añade su entrada aquí.**
 
+## 2026-09-26 — la carta de cada captura vuela al álbum (§190), desde la nube
+- Sexta tanda de ideas, enfocada en «espectáculo encima del emulador» o «lucir la app» (la quinta, rechazada entera). Eligió «nueva carta al capturar», solo salvajes: álbum pequeño que entra por la derecha, la carta sale de la Poké Ball, se mete en el álbum y el álbum se va.
+- Hecho: `EncounterGuard.Caught` (récord de capturas, al acabar el combate), el salvaje leído entero y guardado, `SaveBoxReader.Describe(PK7)`, `TcgCardFactory` (sacada del álbum), `CatchScene` + `CatchWindow` + `CatchCeremony`, ajuste «Carta al capturar», `--ensayar-captura`. La ball es nuestra, donde está el entrenador, porque el juego cuenta la captura al acabar el combate.
+- PixelCheck 69 correctas; `captura.png`. Sin ver en Windows ni con una captura real.
+
 ## 2026-09-26 — GACHA con más golpe y cincuenta seguidas sin cansar (§189), desde la nube
 - Tras desplegar prueba y amigos con el §188 (el comando necesita `-ExecutionPolicy Bypass`, ya apuntado en `desplegar.ps1` y `CLAUDE.md`), el usuario pidió «potenciar» el gacha y que 50 tiradas seguidas no cansen.
 - Decidido por mí: la primera tirada entera; las seguidas (≤20 s tras la anterior) en **exprés ×2,5 hasta que se abre** la ball; **SALTAR** en el mismo botón, en la máquina y con ESPACIO/INTRO; «RACHA ×N» en el neón. Nada depende del tier antes de abrirse (regla del §171).

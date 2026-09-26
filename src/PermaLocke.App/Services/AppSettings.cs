@@ -12,7 +12,8 @@ public sealed record AppSettingsData(
     bool DeathScene = true,
     bool Killcam = true,
     bool Follower = true,
-    bool Ghosts = true);
+    bool Ghosts = true,
+    bool CatchCard = true);
 
 /// <summary>
 /// The player's preferences, kept in <c>Config/ajustes.json</c> and pushed into the services that obey them.
@@ -29,6 +30,7 @@ public sealed class AppSettings(
     EdgeTab tab,
     DeathCeremony ceremony,
     KillcamRecorder killcam,
+    CatchCeremony catches,
     ILogger<AppSettings> logger)
 {
     private static readonly JsonSerializerOptions Options = new() { WriteIndented = true };
@@ -80,5 +82,6 @@ public sealed class AppSettings(
         ceremony.Enabled = Current.DeathScene;
         ceremony.Ghosts = Current.Ghosts;
         killcam.Enabled = Current.Killcam;
+        catches.Enabled = Current.CatchCard;
     }
 }
