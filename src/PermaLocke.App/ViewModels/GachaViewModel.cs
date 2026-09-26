@@ -561,7 +561,11 @@ public sealed partial class GachaViewModel : SectionViewModel
     private int _balance;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasStatus))]
     private string _status = string.Empty;
+
+    /// <summary>Whether there is a status line to show, over the floor of the room.</summary>
+    public bool HasStatus => Status.Length > 0;
 
     [ObservableProperty]
     private bool _isRolling;

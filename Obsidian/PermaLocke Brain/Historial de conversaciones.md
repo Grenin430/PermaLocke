@@ -10,7 +10,8 @@ La última sesión va arriba. Antes del 2026-09-23 solo hay un resumen por fecha
 - Tras desplegar prueba y amigos con el §188 (el comando necesita `-ExecutionPolicy Bypass`, ya apuntado en `desplegar.ps1` y `CLAUDE.md`), el usuario pidió «potenciar» el gacha y que 50 tiradas seguidas no cansen.
 - Decidido por mí: la primera tirada entera; las seguidas (≤20 s tras la anterior) en **exprés ×2,5 hasta que se abre** la ball; **SALTAR** en el mismo botón, en la máquina y con ESPACIO/INTRO; «RACHA ×N» en el neón. Nada depende del tier antes de abrirse (regla del §171).
 - Golpe: foco que se cierra en los meneos, luz por la junta, tinte + sacudida + aro + «¡SUBE!» al subir, fogonazo en tramado y sacudida por rareza al abrir, Pokémon que sale al triple, confeti (tiers altos y variocolor), monedas y «¡LEGENDARIO!», «¡VARIOCOLOR!» arcoíris.
-- PixelCheck compila ya `PixelScene` y la máquina (sustitutos en `WpfImaging.cs`) y saca `gacha-*.png`. 66 correctas. ~2 ms por fotograma. Sin ver en Windows.
+- PixelCheck compila ya `PixelScene` y la máquina (sustitutos en `WpfImaging.cs`) y saca `gacha-*.png`. 66 correctas. ~2 ms por fotograma.
+- El usuario lo probó: «todo correcto» salvo que al salir el Pokémon la sala se alejaba y volvía. Era la línea de estado bajo TIRAR, que le quitaba alto a la máquina (3→2 px por celda) hasta que se borraba a los 5 s. Movida encima del suelo de la sala.
 
 ## 2026-09-26 — la carta en la mano iba a trompicones (§188), desde la nube
 - El usuario: «está increíble, pero al inspeccionar la carta va muy muy muy bajo en fps».

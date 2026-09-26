@@ -12228,3 +12228,10 @@ legendario, una variocolor en racha y una BUENO.
 `Every_frame_of_every_pull_draws` ahora con rachas y un legendario variocolor. PixelCheck 66 correctas.
 
 **Sin ver dentro de la app:** el botón SALTAR, ESPACIO y el ritmo real de la racha se comprueban en Windows.
+
+**Corrección (visto por el jugador):** al salir el Pokémon la sala se alejaba y, unos segundos después, volvía a
+acercarse. No era de este §: la línea de estado («Tirada gratis. … va a tu equipo») vivía bajo el botón TIRAR, en una
+fila de alto automático. Al aparecer le quitaba alto a la máquina, que en su pantalla pasaba de caber a 3 píxeles por
+celda a no caber, y bajaba a 2 (`CapsuleMachine.Reshape`); a los 5 s `Fleeting` la borraba y volvía a 3. Ahora la línea
+va **encima del suelo de la sala**, abajo a la izquierda, sobre un panel (`HasStatus`), y no ocupa sitio: la máquina
+tiene siempre el mismo alto (y 8 px más que antes, los del margen de la línea vacía).

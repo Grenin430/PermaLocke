@@ -140,6 +140,16 @@
                     </Grid.InputBindings>
                     <views:CapsuleMachine x:Name="Machine" Play="{Binding CurrentPlay}" />
 
+                    <!-- LA LÍNEA DE ESTADO, encima del suelo y no debajo del botón (§189): al aparecer quitaba alto a la
+                         máquina, que bajaba de 3 a 2 píxeles por celda y se alejaba hasta que la línea se borraba. -->
+                    <Grid HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="12,0,0,12" MaxWidth="420"
+                          IsHitTestVisible="False"
+                          Visibility="{Binding HasStatus, Converter={StaticResource BoolToVisibility}}">
+                        <views:PixelPanel Fill="#EE100C1C" />
+                        <pixel:PixelText Text="{Binding Status}" Scale="2" Wrap="True" Margin="12,9,18,14"
+                                         Colour="{StaticResource PxText}" />
+                    </Grid>
+
                     <Grid x:Name="Stage">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -498,9 +508,6 @@
                                 HorizontalAlignment="Stretch" Command="{Binding ToggleGrantsCommand}" />
                     </StackPanel>
                 </Grid>
-
-                <pixel:PixelText Text="{Binding Status}" Scale="2" Wrap="True" Margin="0,8,0,0"
-                                 Colour="{StaticResource PxText}" />
             </StackPanel>
         </Grid>
 
