@@ -1,4 +1,4 @@
-using System.Windows.Media;
+using Color = PermaLocke.App.Views.PixelColour;
 using PermaLocke.App.Services;
 using PermaLocke.App.Views.Pixel;
 using static PermaLocke.App.Views.CellCanvas;
@@ -711,7 +711,7 @@ public static class TcgCardArt
                 var py = top + sy - minY;
                 if (Inside(px, py))
                 {
-                    c.Put(px, py, sprite.At(sx, sy));
+                    c.Put(px, py, sprite.Cell(sx, sy));
                 }
             }
         }

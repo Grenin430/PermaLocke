@@ -1,4 +1,5 @@
-using System.Windows.Media;
+using Color = PermaLocke.App.Views.PixelColour;
+using System.Runtime.InteropServices;
 using static PermaLocke.App.Views.CellCanvas;
 
 namespace PermaLocke.App.Views;
@@ -64,6 +65,12 @@ public sealed class HandScene
 
     private (int X0, int Y0, int X1, int Y1) _previous = (0, 0, 0, 0);
 
+    /// <summary>The face of this frame with what moves on it, reused from frame to frame.</summary>
+    private CellCanvas? _live;
+
+    /// <summary>Each cell of the face already lit and glared, as the four bytes it puts on screen; 0 for none.</summary>
+    private uint[] _lit = [];
+
     /// <summary>
     /// Paints a frame: the effects behind the card, its shadow and the card itself.
     /// </summary>
@@ -93,12 +100,18 @@ public sealed class HandScene
 
         // La cara que se ve, con lo que se mueve en ella iluminado según la inclinación.
         var facing = projection.FacesFront ? front : back;
+        if (_live is null || _live.Width != facing.Canvas.Width || _live.Height != facing.Canvas.Height)
+        {
+            _live = new CellCanvas(facing.Canvas.Width, facing.Canvas.Height);
+            _lit = new uint[facing.Canvas.Width * facing.Canvas.Height];
+        }
 
         Rays(area, pose, finish, seconds, block);
         Motes(area, pose, fallen, seconds, seed, block);
         Shadow(projection, pose, facing.Canvas, block);
 
-        var live = facing.Canvas.Clone();
+        var live = _live;
+        live.CopyFrom(facing.Canvas);
         var light = Math.Clamp(0.5 - (Math.Sin(pose.Yaw) * 0.9) - (pose.Pitch * 0.8), 0, 1);
         TcgCardArt.Animate(facing, live, 0, 0, seconds, seed, facing.IsLive ? light : null);
 
@@ -218,52 +231,103 @@ public sealed class HandScene
     /// The card, pixel by pixel: the colour of the cell under each one, lit by how the card faces the lamp, with the
     /// glare of the lamp sliding over its face as it turns.
     /// </summary>
+    /// <remarks>
+    /// The hot loop of the album: a quarter of a million pixels a frame. So the light and the glare are worked out once
+    /// per cell of the card (a few thousand) into <see cref="_lit"/>, and each pixel only walks the projection — which
+    /// is linear along a row, so it is advanced by adding — divides once and copies four bytes (§188).
+    /// </remarks>
     private void Card(Projection projection, CellCanvas face, HandPose pose, double light)
     {
-        var (x0, y0, x1, y1) = projection.Bounds;
         var width = face.Width;
         var height = face.Height;
 
         // La lámpara está arriba a la izquierda: la carta se aclara al mirarla y se oscurece al apartarse.
         var lit = Math.Clamp(1.0 - (0.22 * (1 - Math.Abs(projection.Nz))) + (0.08 * ((-projection.Nx * 0.6) - (projection.Ny * 0.8))), 0.7, 1.08);
+        var litScale = (int)Math.Round(lit * 256);
 
         // El brillo de la lámpara: una franja diagonal arriba a la izquierda en reposo, que baja por la carta a donde la
         // inclinación la lleva.
         var glareAt = (light * 1.6) - 0.55;
+        var source = face.Bgra;
 
-        for (var py = Math.Max(0, y0); py < Math.Min(Height, y1 + 1); py++)
+        for (var cv = 0; cv < height; cv++)
         {
-            for (var px = Math.Max(0, x0); px < Math.Min(Width, x1 + 1); px++)
+            for (var cu = 0; cu < width; cu++)
             {
-                if (projection.Sample(px + 0.5, py + 0.5, pose, width, height) is not { } cell)
+                var at = ((cv * width) + cu) * 4;
+                if (source[at + 3] == 0)
                 {
+                    _lit[(cv * width) + cu] = 0;
                     continue;
                 }
 
-                var cu = (int)cell.U;
-                var cv = (int)cell.V;
-
-                // Por detrás, la carta está vuelta: su columna de la derecha es la de la izquierda.
-                if (!projection.FacesFront)
-                {
-                    cu = width - 1 - cu;
-                }
-
-                var colour = face.At(cu, cv);
-                if (colour.A == 0)
-                {
-                    continue;
-                }
+                int b = source[at], g = source[at + 1], r = source[at + 2];
 
                 // Brillo por celda y no por píxel: el reflejo también va en píxeles de la carta.
                 var diagonal = ((cu / (double)width) + (cv / (double)height)) / 2;
                 var glare = 1 - (Math.Abs(diagonal - glareAt) / 0.09);
                 if (glare > 0 && Dither(cu, cv, glare))
                 {
-                    colour = Mix(colour, Glare, 0.28);
+                    b += ((Glare.B - b) * 72) >> 8;
+                    g += ((Glare.G - g) * 72) >> 8;
+                    r += ((Glare.R - r) * 72) >> 8;
                 }
 
-                Put(px, py, Scale(colour, lit));
+                b = Math.Min(255, (b * litScale) >> 8);
+                g = Math.Min(255, (g * litScale) >> 8);
+                r = Math.Min(255, (r * litScale) >> 8);
+                _lit[(cv * width) + cu] = 0xFF000000u | ((uint)r << 16) | ((uint)g << 8) | (uint)b;
+            }
+        }
+
+        var (x0, y0, x1, y1) = projection.Bounds;
+        x0 = Math.Max(0, x0);
+        y0 = Math.Max(0, y0);
+        x1 = Math.Min(Width - 1, x1);
+        y1 = Math.Min(Height - 1, y1);
+        if (x1 < x0 || y1 < y0)
+        {
+            return;
+        }
+
+        var target = MemoryMarshal.Cast<byte, uint>(Pixels.AsSpan());
+        var m = projection.Inverse;
+        var halfW = width / 2.0;
+        var halfH = height / 2.0;
+        var front = projection.FacesFront;
+
+        for (var py = y0; py <= y1; py++)
+        {
+            // Al principio de la fila; a lo largo de ella, la proyección solo suma.
+            var qx = x0 + 0.5 - pose.CentreX;
+            var qy = py + 0.5 - pose.CentreY;
+            var u = (m[0] * qx) + (m[1] * qy) + m[2];
+            var v = (m[3] * qx) + (m[4] * qy) + m[5];
+            var w = (m[6] * qx) + (m[7] * qy) + m[8];
+            var row = py * Width;
+
+            for (var px = x0; px <= x1; px++, u += m[0], v += m[3], w += m[6])
+            {
+                if (w > -1e-9 && w < 1e-9)
+                {
+                    continue;
+                }
+
+                var inverse = 1 / w;
+                var su = (u * inverse) + halfW;
+                var sv = (v * inverse) + halfH;
+                if (su < 0 || sv < 0 || su >= width || sv >= height)
+                {
+                    continue;
+                }
+
+                // Por detrás, la carta está vuelta: su columna de la derecha es la de la izquierda.
+                var cu = front ? (int)su : width - 1 - (int)su;
+                var colour = _lit[((int)sv * width) + cu];
+                if (colour != 0)
+                {
+                    target[row + px] = colour;
+                }
             }
         }
     }
@@ -440,15 +504,6 @@ public sealed class HandScene
         _previous = (0, 0, 0, 0);
     }
 
-    private void Put(int x, int y, Color colour)
-    {
-        var at = ((y * Width) + x) * 4;
-        Pixels[at] = colour.B;
-        Pixels[at + 1] = colour.G;
-        Pixels[at + 2] = colour.R;
-        Pixels[at + 3] = 255;
-    }
-
     /// <summary>Lays a colour over what is there with an opacity, premultiplied as the screen wants it.</summary>
     private void Blend(int x, int y, Color colour, byte alpha)
     {
@@ -457,13 +512,13 @@ public sealed class HandScene
             return;
         }
 
+        // En enteros: (color·a + fondo·(255 − a)) / 255, que es lo que cuesta nada.
         var at = ((y * Width) + x) * 4;
-        var a = alpha / 255.0;
-        var keep = 1 - a;
-        Pixels[at] = (byte)((colour.B * a) + (Pixels[at] * keep));
-        Pixels[at + 1] = (byte)((colour.G * a) + (Pixels[at + 1] * keep));
-        Pixels[at + 2] = (byte)((colour.R * a) + (Pixels[at + 2] * keep));
-        Pixels[at + 3] = (byte)(alpha + (Pixels[at + 3] * keep));
+        var keep = 255 - alpha;
+        Pixels[at] = (byte)(((colour.B * alpha) + (Pixels[at] * keep)) / 255);
+        Pixels[at + 1] = (byte)(((colour.G * alpha) + (Pixels[at + 1] * keep)) / 255);
+        Pixels[at + 2] = (byte)(((colour.R * alpha) + (Pixels[at + 2] * keep)) / 255);
+        Pixels[at + 3] = (byte)(alpha + ((Pixels[at + 3] * keep) / 255));
     }
 
     private void FillBlock(int x, int y, int size, Color colour, byte alpha)
@@ -476,9 +531,4 @@ public sealed class HandScene
             }
         }
     }
-
-    private static Color Scale(Color colour, double amount) => Color.FromRgb(
-        (byte)Math.Clamp(colour.R * amount, 0, 255),
-        (byte)Math.Clamp(colour.G * amount, 0, 255),
-        (byte)Math.Clamp(colour.B * amount, 0, 255));
 }

@@ -1,4 +1,4 @@
-using System.Windows.Media;
+using Color = PermaLocke.App.Views.PixelColour;
 using static PermaLocke.App.Views.CellCanvas;
 
 namespace PermaLocke.App.Views;

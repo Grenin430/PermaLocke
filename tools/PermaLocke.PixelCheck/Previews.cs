@@ -1,6 +1,6 @@
 using System.IO.Compression;
-using System.Windows.Media;
 using PermaLocke.App.Views;
+using Color = PermaLocke.App.Views.PixelColour;
 
 namespace PermaLocke.PixelCheck;
 

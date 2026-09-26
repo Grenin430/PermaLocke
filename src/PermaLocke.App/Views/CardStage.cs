@@ -59,6 +59,12 @@ public sealed class CardStage : ContentControl
     private long _lastStep = -1;
     private bool _broken;
 
+    /// <summary>What a frame costs to paint, in milliseconds, averaged over the last ones.</summary>
+    private double _paintCost = 8;
+
+    /// <summary>At 60 frames a second instead of 30, while this computer paints one quickly enough (§188).</summary>
+    private bool _smooth;
+
     public CardStage()
     {
         RenderOptions.SetBitmapScalingMode(_image, BitmapScalingMode.NearestNeighbor);
@@ -230,11 +236,16 @@ public sealed class CardStage : ContentControl
 
     private void OnFrame(object? sender, EventArgs e)
     {
-        var step = _clock.ElapsedMilliseconds / 33;
+        // A 60 imágenes por segundo si pintar una cuesta poco en este ordenador; si no, a 30. Con margen entre los dos
+        // umbrales para no saltar de uno a otro a cada rato.
+        _smooth = _smooth ? _paintCost < 9 : _paintCost < 6;
+        var step = _clock.ElapsedMilliseconds / (_smooth ? 16 : 33);
         if (IsVisible && step != _lastStep)
         {
             _lastStep = step;
+            var started = Stopwatch.GetTimestamp();
             Paint();
+            _paintCost = (_paintCost * 0.9) + (Stopwatch.GetElapsedTime(started).TotalMilliseconds * 0.1);
         }
     }
 

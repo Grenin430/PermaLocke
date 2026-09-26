@@ -148,6 +148,7 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Views/Pixel/SmallFont.cs` — **SmallFont** — The small pixel font: digits and capitals three cells wide and five tall, for labels where the big one does not fit — the scenes' plaques, the album's cards and tabs. 
 - `Views/PixelBar.cs` — **PixelBar, PixelCursor** — A bar in cells, like the health bars of the handheld games: an ink outline with square ends, a dark track, and the fill with a lighter top row. It fills in whole cells, so a value never shows as a ...
 - `Views/PixelBlood.cs` — **PixelBlood** — The blood of the death ceremony, simulated on the Pokémon's own pixel grid and drawn into a small bitmap that is shown scaled up with no smoothing. 
+- `Views/PixelColour.cs` — **PixelColour** — A colour of the pixel art as four bytes, and nothing else (§188). 
 - `Views/PixelPanel.cs` — **PixelPanel** — A box drawn cell by cell in any colour: one-cell outline, one-cell bevel lit on top, notched corners and a hard shadow. The same box as the notices (`oastFrame`), for places whose colour is data �...
 - `Views/PixelScene.cs` — **PixelScene, CapsuleBall** — What the full pixel-art scenes share: a canvas of cells anchored to the floor, a font, the Poké Balls, and the Pokémon coming out of one with its light. 
 - `Views/PokePasteView.xaml.cs` — **PokePasteView** — 

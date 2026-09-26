@@ -17,7 +17,11 @@ public static class TypePalette
     private static readonly SolidColorBrush Unknown = Frozen("#FF" + TypeColours.UnknownHex[1..]);
 
     /// <summary>The type's colour, or a neutral grey for a type nobody could read.</summary>
-    public static Color ColourOf(int type) => TypeColours.Of(type);
+    public static Color ColourOf(int type)
+    {
+        var colour = TypeColours.Of(type);
+        return Color.FromRgb(colour.R, colour.G, colour.B);
+    }
 
     public static SolidColorBrush BrushOf(int type) =>
         type >= 0 && type < Brushes.Length ? Brushes[type] : Unknown;

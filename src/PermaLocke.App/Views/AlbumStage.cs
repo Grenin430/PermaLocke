@@ -42,6 +42,10 @@ public sealed class AlbumStage : ContentControl
     public static readonly DependencyProperty PreviousCommandProperty = DependencyProperty.Register(
         nameof(PreviousCommand), typeof(ICommand), typeof(AlbumStage));
 
+    public static readonly DependencyProperty IsPausedProperty = DependencyProperty.Register(
+        nameof(IsPaused), typeof(bool), typeof(AlbumStage),
+        new PropertyMetadata(false, (d, _) => ((AlbumStage)d)._dirty = true));
+
     private readonly Image _image = new() { Stretch = Stretch.Fill };
     private readonly ScaleTransform _zoom = new(1, 1);
     private readonly Stopwatch _clock = Stopwatch.StartNew();
@@ -111,6 +115,16 @@ public sealed class AlbumStage : ContentControl
     {
         get => (ICommand?)GetValue(PreviousCommandProperty);
         set => SetValue(PreviousCommandProperty, value);
+    }
+
+    /// <summary>
+    /// Stops what moves on its own while something covers the album, as the card in the hand does (§188): under the
+    /// veil it would not be seen, and each frame of it is a frame less for the card. A change still paints once.
+    /// </summary>
+    public bool IsPaused
+    {
+        get => (bool)GetValue(IsPausedProperty);
+        set => SetValue(IsPausedProperty, value);
     }
 
     private double Now => _clock.Elapsed.TotalSeconds;
@@ -214,7 +228,7 @@ public sealed class AlbumStage : ContentControl
 
     private void OnFrame(object? sender, EventArgs e)
     {
-        if (!IsVisible)
+        if (!IsVisible || (IsPaused && !_dirty && _turnFrom is null))
         {
             return;
         }

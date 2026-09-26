@@ -1,10 +1,16 @@
 ---
 tipo: historial
-revisado: 2026-09-24
+revisado: 2026-09-26
 ---
 # Historial de conversaciones
 
 La última sesión va arriba. Antes del 2026-09-23 solo hay un resumen por fechas sacado de `CLAUDE.md` y de `ARCHITECTURE.md`: el detalle está en el § citado ([[Índice de ARCHITECTURE]]). **Cada sesión nueva añade su entrada aquí.**
+
+## 2026-09-26 — la carta en la mano iba a trompicones (§188), desde la nube
+- El usuario: «está increíble, pero al inspeccionar la carta va muy muy muy bajo en fps».
+- **Causa:** el `Color` de WPF convierte a scRGB con `Math.Pow` al construirse; la mano hacía varios por píxel de pantalla. Medido con un sustituto que imita ese coste: ~100 ms por fotograma.
+- Hecho: `PixelColour` (cuatro bytes) en todo el dibujo del álbum vía `using Color = ...PixelColour;`; `HandScene.Card` con luz y reflejo por celda y proyección incremental; `AlbumStage.IsPaused` mientras se inspecciona; `CardStage` a 60 fps si pintar cuesta < 6 ms.
+- Medido: mano ~100 → 4 ms, página girando 19 → 5 ms. Prueba nueva `A_frame_in_the_hand_is_cheap`. PixelCheck 46, Core 380, Rules 151, Randomizer 485, GameLink 389; imágenes iguales. Sin ver en Windows.
 
 ## 2026-09-26 — ÁLBUM premium (§187), desde la nube
 - Petición: hacerlo «muchísimo más impresionante», acabado premium, sin perder pixel art ni funciones, decidiendo yo. Dirección: «colección nocturna del ultraespacio» (carpeta de piel bajo lámpara, acabados de tirada real, carta en la mano tipo Balatro).

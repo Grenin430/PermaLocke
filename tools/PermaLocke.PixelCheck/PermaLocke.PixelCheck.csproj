@@ -2,8 +2,9 @@
 
   <!--
     Las pruebas del dibujo del ÁLBUM (§187) en cualquier sistema, también en Linux y en la nube, donde WPF no corre.
-    Compila los ficheros puros de la app tal cual (cartas, carpeta, carta en la mano, fuentes, colores de tipo) con un
-    Color de sustituto (WpfColour.cs) y ejecuta las mismas AlbumTests que tests/PermaLocke.App.Tests.
+    Compila los ficheros puros de la app tal cual (cartas, carpeta, carta en la mano, fuentes, colores de tipo), que
+    pintan con PixelColour (§188), y ejecuta las mismas AlbumTests que tests/PermaLocke.App.Tests. El Color de
+    sustituto (WpfColour.cs) queda solo para RoomSprite.At, que usan las otras escenas.
 
       dotnet test tools/PermaLocke.PixelCheck
       PERMALOCKE_PIXEL_DIR=/ruta dotnet test tools/PermaLocke.PixelCheck   # además deja PNG para mirarlos
@@ -26,6 +27,7 @@
 
   <ItemGroup>
     <Using Include="Xunit" />
+    <Compile Include="..\..\src\PermaLocke.App\Views\PixelColour.cs" Link="App\PixelColour.cs" />
     <Compile Include="..\..\src\PermaLocke.App\Views\TcgCard.cs" Link="App\TcgCard.cs" />
     <Compile Include="..\..\src\PermaLocke.App\Views\TcgCardArt.cs" Link="App\TcgCardArt.cs" />
     <Compile Include="..\..\src\PermaLocke.App\Views\AlbumScene.cs" Link="App\AlbumScene.cs" />

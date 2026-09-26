@@ -12133,3 +12133,44 @@ girando, los acabados y la carta en la mano. Para eso salieron de sus ficheros W
 PixelCheck 45 correctas; imágenes de cada pieza revisadas (así se corrigieron la sombra de las caídas, el dorado que no se
 distinguía del amarillo, la cápsula encima de los PS y el reflejo en mitad de la carta). **Sin ver dentro de la app**: el
 ratón, los muelles, el vuelo y el tamaño real en GRANDE se comprueban en Windows.
+
+---
+
+## §188 · ÁLBUM: la carta en la mano iba a trompicones (2026-09-26)
+
+**Problema (jugador):** «al inspeccionar la carta va muy muy muy bajo en fps». El álbum iba bien; la carta en la mano no.
+
+**Causa:** `System.Windows.Media.Color` no son cuatro bytes. `Color.FromRgb` y `FromArgb` guardan también el color en
+scRGB y lo convierten con `Math.Pow` (tres potencias al construirlo, tres al leerlo). Todo el dibujo pixel del álbum
+(`CellCanvas`, `TcgCardArt`, `AlbumScene`, `HandScene`) usaba ese `Color`, y la carta en la mano construye varios por
+**píxel de pantalla** (leer la celda, mezclar el reflejo, escalar la luz): un cuarto de millón de píxeles por fotograma.
+Medido con un sustituto que imita ese coste: **~100 ms por fotograma** en la mano (≈10 fps en el mejor caso; con una
+pantalla grande, menos), 19 ms la página girando.
+
+**Arreglo:**
+- **`PixelColour`** (`Views/PixelColour.cs`): el color del dibujo pixel, cuatro bytes y nada más, con los mismos
+  `FromRgb`/`FromArgb`/`Transparent`. Los ficheros del álbum lo toman con `using Color = PermaLocke.App.Views.PixelColour;`,
+  así que su código no cambió. `TypeColours` devuelve `PixelColour`; `TypePalette` lo pasa a `Color` de WPF para sus
+  pinceles; `RoomSprite.Cell` es `At` sin WPF.
+- **El bucle de la mano** (`HandScene.Card`): la luz y el reflejo se calculan **una vez por celda** de la carta (unos
+  miles) en un búfer de enteros ya listos; cada píxel solo avanza la proyección —lineal a lo largo de la fila, se suma—,
+  divide una vez y copia cuatro bytes. La cara animada reusa su lienzo en vez de clonarlo cada fotograma; las mezclas de
+  rayos, polvo y sombra son en enteros.
+- **El álbum se para debajo** mientras se inspecciona (`AlbumStage.IsPaused` ← `IsInspecting`): bajo el velo casi opaco
+  no se ve, y cada fotograma suyo era uno menos para la carta. Un cambio sigue pintándose una vez; una página girando
+  termina.
+- **La carta va a 60 fps** si el ordenador la pinta rápido: `CardStage` mide lo que cuesta cada fotograma (media móvil);
+  por debajo de 6 ms pasa a 60, por encima de 9 vuelve a 30.
+
+**Medido** (Release, en Linux, 1084×690 y 1900×1350, carta dorada a 6 píxeles por celda): la mano **~100 ms → 3,8–4 ms**
+por fotograma; la página girando 19 → 5 ms; un fotograma quieto del álbum 7 → 4,4 ms. Se ve igual: las imágenes de
+PixelCheck salen píxel a píxel como antes (la luz de la mano pasó a enteros: ±1 en algún canal).
+
+**Prueba nueva:** `A_frame_in_the_hand_is_cheap` (el mejor de 12 fotogramas en 1900×1350 por debajo de 30 ms; antes
+eran 100). PixelCheck 46 correctas.
+
+**Trampa para el futuro:** en bucles por píxel, **nunca** `System.Windows.Media.Color`; `PixelColour` o bytes. Otras
+escenas pixel (cementerio, sala, cápsulas) siguen con el `Color` de WPF; no se han quejado, pero si alguna va lenta,
+esta es la primera sospecha.
+
+**Sin ver dentro de la app:** los 60 fps y la fluidez real se comprueban en Windows.

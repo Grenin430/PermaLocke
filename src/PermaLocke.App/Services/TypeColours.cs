@@ -1,5 +1,6 @@
 using System.Globalization;
-using System.Windows.Media;
+
+using PermaLocke.App.Views;
 
 namespace PermaLocke.App.Services;
 
@@ -24,9 +25,9 @@ public static class TypeColours
     public const string UnknownHex = "#5A5470";
 
     /// <summary>The type's colour, or <see cref="UnknownHex"/> for a type nobody could read.</summary>
-    public static Color Of(int type) => Parse(type >= 0 && type < Hex.Count ? Hex[type] : UnknownHex);
+    public static PixelColour Of(int type) => Parse(type >= 0 && type < Hex.Count ? Hex[type] : UnknownHex);
 
-    public static Color Parse(string hex) => Color.FromRgb(
+    public static PixelColour Parse(string hex) => PixelColour.FromRgb(
         byte.Parse(hex.AsSpan(1, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture),
         byte.Parse(hex.AsSpan(3, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture),
         byte.Parse(hex.AsSpan(5, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture));

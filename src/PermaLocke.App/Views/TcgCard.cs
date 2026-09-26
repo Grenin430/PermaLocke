@@ -1,4 +1,4 @@
-using System.Windows.Media;
+using Color = PermaLocke.App.Views.PixelColour;
 
 namespace PermaLocke.App.Views;
 
@@ -155,7 +155,7 @@ public sealed class CellCanvas
     {
         if (!Inside(x, y))
         {
-            return Colors.Transparent;
+            return Color.Transparent;
         }
 
         var at = ((y * Width) + x) * 4;
@@ -174,6 +174,17 @@ public sealed class CellCanvas
     }
 
     public void Clear() => Array.Clear(Bgra);
+
+    /// <summary>Copies another canvas of the same size over this one, without making a new one.</summary>
+    public void CopyFrom(CellCanvas source)
+    {
+        if (source.Width != Width || source.Height != Height)
+        {
+            throw new ArgumentException("Los lienzos no miden lo mismo.", nameof(source));
+        }
+
+        Buffer.BlockCopy(source.Bgra, 0, Bgra, 0, Bgra.Length);
+    }
 
     public CellCanvas Clone()
     {

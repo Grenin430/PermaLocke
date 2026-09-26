@@ -85,7 +85,8 @@
                           OpenCommand="{Binding OpenCommand}"
                           TabCommand="{Binding OpenTabCommand}"
                           NextCommand="{Binding NextSpreadCommand}"
-                          PreviousCommand="{Binding PreviousSpreadCommand}" />
+                          PreviousCommand="{Binding PreviousSpreadCommand}"
+                          IsPaused="{Binding IsInspecting}" />
 
         <pixel:PixelText Grid.Row="1" Text="LEYENDO LA PARTIDA…" Scale="3" Tight="True"
                          Colour="{StaticResource PxTextDim}" HorizontalAlignment="Center" VerticalAlignment="Center"

@@ -1,4 +1,3 @@
-using System.Windows.Media;
 using PermaLocke.App.ViewModels;
 using PermaLocke.App.Views;
 
@@ -224,7 +223,7 @@ public sealed class AlbumTests
     public void The_foil_never_covers_the_text()
     {
         var render = TcgCardArt.Render(Card(rarity: 3), TcgLayout.Full);
-        var ink = System.Windows.Media.Color.FromRgb(0x1C, 0x16, 0x26);
+        var ink = PixelColour.FromRgb(0x1C, 0x16, 0x26);
         var canvas = render.Canvas;
 
         Assert.Contains(TcgRegion.Art, render.Regions);
@@ -422,10 +421,10 @@ public sealed class AlbumTests
     private static (TcgRender Front, TcgRender Back) Faces(TcgCard card) =>
         (TcgCardArt.Render(card, TcgLayout.Full), TcgCardArt.Render(card, TcgLayout.Full, back: true));
 
-    private static System.Windows.Media.Color At(HandScene scene, int x, int y)
+    private static PixelColour At(HandScene scene, int x, int y)
     {
         var at = ((y * scene.Width) + x) * 4;
-        return System.Windows.Media.Color.FromArgb(scene.Pixels[at + 3], scene.Pixels[at + 2], scene.Pixels[at + 1], scene.Pixels[at]);
+        return PixelColour.FromArgb(scene.Pixels[at + 3], scene.Pixels[at + 2], scene.Pixels[at + 1], scene.Pixels[at]);
     }
 
     /// <summary>
@@ -444,6 +443,27 @@ public sealed class AlbumTests
         scene.Render(front, back, new HandPose(Math.PI, 0, 0, 4, 300, 350, 0.3), 1, 7);
         var mirrored = TcgCardArt.FullWidth - 1 - 35;
         Assert.Equal(back.Canvas.At(mirrored, 60), At(scene, 300 - 140 + (35 * 4) + 1, 350 - 192 + (60 * 4) + 1));
+    }
+
+    /// <summary>
+    /// A frame of the card in the hand is cheap: a big screen, the card as big as it gets and a rare one with its rays,
+    /// well under what 30 frames a second allow. With WPF's colour it took a hundred milliseconds (§188).
+    /// </summary>
+    [Fact]
+    public void A_frame_in_the_hand_is_cheap()
+    {
+        var (front, back) = Faces(Card(rarity: 4));
+        var scene = new HandScene(1900, 1350);
+        var best = double.MaxValue;
+
+        for (var i = 0; i < 12; i++)
+        {
+            var started = System.Diagnostics.Stopwatch.GetTimestamp();
+            scene.Render(front, back, new HandPose(0.2 + (i * 0.02), -0.1, 0, 6, 950, 640, 0.35), i * 0.033, 7);
+            best = Math.Min(best, System.Diagnostics.Stopwatch.GetElapsedTime(started).TotalMilliseconds);
+        }
+
+        Assert.True(best < 30, $"Un fotograma de la carta en la mano tarda {best:F1} ms.");
     }
 
     /// <summary>Edge on, half way through turning over, the card is a sliver of what it is flat.</summary>

@@ -16,4 +16,11 @@ public sealed partial record RoomSprite(byte[] Bgra, int Width, int Height)
         var at = ((y * Width) + x) * 4;
         return Color.FromRgb(Bgra[at + 2], Bgra[at + 1], Bgra[at]);
     }
+
+    /// <summary>The same cell as <see cref="At"/>, as a <see cref="PixelColour"/>: for the album, without WPF's cost.</summary>
+    public PixelColour Cell(int x, int y)
+    {
+        var at = ((y * Width) + x) * 4;
+        return PixelColour.FromRgb(Bgra[at + 2], Bgra[at + 1], Bgra[at]);
+    }
 }

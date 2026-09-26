@@ -133,7 +133,9 @@ Trampas que ya costaron caro y hay que tener siempre presentes:
   instalado (`WorldLimits`, `InstalledWorld`). Las sondas deben llamar a `InstalledWorld.ApplyQuietly` (§91).
 - **Detectable no es detectado**: el vigilante empareja por PID contra lo registrado en la run (§56, §68).
 
-Último: **ÁLBUM premium** (§187): carpeta de piel con pestañas y luz, página que gira en perspectiva, acabados por
+Último: **la carta en la mano del ÁLBUM iba a trompicones** (§188): el `Color` de WPF calcula scRGB con `Math.Pow`, así
+que el dibujo pixel usa `PixelColour`; la mano pasó de ~100 ms a 4 ms por fotograma y va a 60 fps si puede. Antes: **ÁLBUM
+premium** (§187): carpeta de piel con pestañas y luz, página que gira en perspectiva, acabados por
 rareza (holo, inversa, dorada, polícroma) y la carta en la mano en 3D (vuela, se inclina, se da la vuelta). Antes: **ÁLBUM** (§186): las cajas como carpeta de cartas TCG pixel (3×3 o 4×4), rareza por tier del gacha, variocolor
 holográfica, caídas arrugadas y medio quemadas; solo lectura. Antes: **«Jugando a PermaLocke» en Discord** (§185): tubería local de Discord, id en `discordApp` de `Data/torneo.json`;
 el estado propio de Azahar se apaga en su `qt-config.ini`. Antes: **lluvia de sangre** (§184): un wipe hace llover sangre 12 s en el emulador de quien lo sufre y de los
