@@ -9,7 +9,8 @@ La última sesión va arriba. Antes del 2026-09-23 solo hay un resumen por fecha
 ## 2026-09-26 — la carta de cada captura vuela al álbum (§190), desde la nube
 - Sexta tanda de ideas, enfocada en «espectáculo encima del emulador» o «lucir la app» (la quinta, rechazada entera). Eligió «nueva carta al capturar», solo salvajes: álbum pequeño que entra por la derecha, la carta sale de la Poké Ball, se mete en el álbum y el álbum se va.
 - Hecho: `EncounterGuard.Caught` (récord de capturas, al acabar el combate), el salvaje leído entero y guardado, `SaveBoxReader.Describe(PK7)`, `TcgCardFactory` (sacada del álbum), `CatchScene` + `CatchWindow` + `CatchCeremony`, ajuste «Carta al capturar», `--ensayar-captura`. La ball es nuestra, donde está el entrenador, porque el juego cuenta la captura al acabar el combate.
-- PixelCheck 69 correctas; `captura.png`. Sin ver en Windows ni con una captura real.
+- PixelCheck 69 correctas; `captura.png`.
+- **El usuario lo probó: «todo perfecto».** Quedan confirmados también el gacha del §189 (con la línea de estado sobre el suelo) y el álbum fluido del §188.
 
 ## 2026-09-26 — GACHA con más golpe y cincuenta seguidas sin cansar (§189), desde la nube
 - Tras desplegar prueba y amigos con el §188 (el comando necesita `-ExecutionPolicy Bypass`, ya apuntado en `desplegar.ps1` y `CLAUDE.md`), el usuario pidió «potenciar» el gacha y que 50 tiradas seguidas no cansen.

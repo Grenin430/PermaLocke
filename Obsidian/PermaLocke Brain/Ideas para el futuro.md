@@ -35,6 +35,15 @@ fuertes contra los de delante; los primeros, flojos o de defensa). Mantiene el t
 - Cuidado al hacerlo: retirar objetos en vivo tiene que devolverse siempre, también tras un cierre (el libro de
   `objetos-retirados.txt` lleva el id de la run); nada de barrer memoria para buscarlos ([[Trampas y lecciones]]).
 
+## Hechas de las tandas de ideas
+- 2026-09-26, sexta tanda («espectáculo encima del emulador» o «lucir la app»): **nueva carta al capturar** (§190),
+  solo salvajes, confirmada por el jugador. Quedan propuestas y sin decidir de esa tanda: pantalla VS antes de un
+  combate importante, alarma de variocolor salvaje, evolución de lujo (la carta se rompe y se recompone), el equipo en
+  un campamento pixel, la TIENDA como mostrador con tendero, la clasificación como podio. Las cuatro primeras necesitan
+  antes comprobar que la app detecta ese momento de forma fiable.
+- Posible ampliación de la carta al capturar: también regalos, estáticos y huevos (el usuario dijo «de momento»
+  solo salvajes).
+
 ## Rechazadas (no volver a proponer)
 - 2026-09-26: ver el cementerio y las **killcams de los demás** (peso de las killcams en Supabase: ~2 MB por clip).
 - 2026-09-26, «ninguna sorprende»: hitos en directo, epitafio del caído, coincidencia de ruta, muro de la vergüenza,

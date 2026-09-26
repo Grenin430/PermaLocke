@@ -12278,5 +12278,4 @@ escritorio). Mientras sale se avisa a la killcam (`CoverBegins/Ends`), aunque fu
 juego; mostrándose, la carta ocupa su trozo; el último instante del vuelo cae sobre la funda. `captura.png` con dieciséis
 momentos sobre un campo de mentira.
 
-**Sin ver dentro de la app ni con una captura real:** el momento exacto (debería ser al volver al campo), el sitio de la
-ball respecto al entrenador y el tamaño en la ventana del jugador se comprueban en Windows.
+**Visto por el jugador (2026-09-26): «todo perfecto».**
