@@ -30,6 +30,14 @@ dotnet publish src/PermaLocke.App -c Release -r win-x64 --self-contained true -p
 - Después copiar `pub-pixel/PermaLocke.App.exe` a `C:\Users\javie\Desktop\PermaLocke prueba\PermaLocke.exe` (✔).
 - **La carpeta de amigos no se toca sin permiso.**
 
+## Versión nueva para todos (desde 2026-09-26)
+Subir `<Version>` en `src/PermaLocke.App/PermaLocke.App.csproj` + `docs/novedades/<versión>.md` y PR a main: al aceptarlo
+publica la Action ([[Actualizaciones y publicación]]). A mano, si hiciera falta (✔ 1.0.1 así, 2026-09-26):
+```powershell
+powershell -ExecutionPolicy Bypass -File tools/publicar-actualizacion.ps1 -Version 1.0.1   # .dist\PermaLocke-actualizacion-1.0.1.zip
+# y en GitHub > Releases > Draft a new release: tag v1.0.1, zip en «Attach binaries», Publish
+```
+
 ## Distribución completa (no ejecutado en esta sesión)
 ```powershell
 powershell -File tools/publicar.ps1 [-Destino ruta] [-SinZip] [-VisualCppInstaller ruta]   # por defecto .dist\PERMALOCKEEEE, más su zip

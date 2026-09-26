@@ -33,20 +33,17 @@ Descartada de esa tanda: «apuntarse desde la app» (la 2 original). El usuario 
 - Alternativas gratis si Storage no llegara: Cloudflare R2 (10 GB, sin coste de descarga) o Backblaze B2 (10 GB). No se
   ven necesarias. **No hace falta cambiar de base de datos.**
 
-## Estado
-- **Paso 1 — HECHO en el repo (§194), 2026-09-26.** Falta que el usuario ejecute `tools/supabase/15-eventos-y-limpieza.sql`.
-  Hasta entonces las apps nuevas suben entero como antes (vuelta automática) y la LIMPIEZA dice que falta el SQL.
-  Probado en Postgres local con `tools/supabase/pruebas/probar.sh`.
-- **Paso 2 — HECHO en el repo (§195), 2026-09-26.** Botón en HOME sin run; en el paso 4 irá también en la primera vez guiada. Quitarlo en la versión siguiente a la actualización automática.
-- **Paso 3 — HECHO en el repo (§196), 2026-09-26.** Para publicar: `tools/publicar-actualizacion.ps1 -Version x.y.z` y release `vx.y.z` con el zip. El repo tiene que ser público. La primera carpeta repartida del próximo torneo tiene que llevar ya este código (versión 1.0.0).
-- **Paso 4 — HECHO en el repo (§197), 2026-09-26.** PRIMEROS PASOS en JUGAR; el traspaso (§195) va dentro, en el paso de la run.
-- **Paso 5 — HECHO en el repo (§198), 2026-09-26.** Falta que el usuario ejecute `tools/supabase/16-copias.sql` (después del 15). Devolver una copia es a mano con el LEEME del zip.
-- **Paso 6 — HECHO en el repo (§199), 2026-09-26.** Falta que el usuario ejecute `tools/supabase/17-informes.sql` (después del 16). **Plan completo en el repo**: SQL 15, 16 y 17 por orden; nada probado aún en Windows ni contra el Supabase de verdad.
-
-- **En marcha (2026-09-26):** SQL 15-17 ejecutados y verificados; el usuario trajo su partida a una carpeta nueva con el traspaso (§195), probado en Windows y bien; borró la vieja y la nueva se llama otra vez `PermaLocke prueba`. Falta repartirla a los amigos.
-- **1.0.1 (§200), 2026-09-26:** repo público; primera release para probar la actualización automática. Falta que el usuario la publique y la vea entrar.
-- **Actualizaciones (§200-§201):** 1.0.1 publicada a mano y probada por el usuario. Desde la 1.0.2 las publica la Action al aceptar un PR que sube `<Version>`; para cada versión, sus novedades en `docs/novedades/<versión>.md`.
-- **1.0.3 (§202):** franja ACTUALIZAR y aviso fijo sobre el juego; se publica al aceptar su PR.
+## Estado (2026-09-26, al cierre del día)
+- **Los seis pasos hechos** (§194-§199) y aceptados en `main` (PR #1). SQL 15, 16 y 17 **ejecutados y verificados** en el
+  Supabase del torneo.
+- **Traspaso observado bien en Windows** con la partida del usuario; los amigos se pasarán cuando puedan.
+- **Actualización automática observada** con la 1.0.1. Desde la 1.0.2 se publica sola al aceptar un PR que sube la
+  versión: [[Actualizaciones y publicación]]. 1.0.2 pendiente de su Action en verde (PR #4).
+- **Sin observar todavía**: copias en COPIAS de Admin con datos reales de los amigos, informes de fallo reales, LIMPIEZA
+  ejecutada de verdad, la ventana de descarga.
+- **1.0.2 publicada por la Action e instalada por el usuario. 1.0.3 (§202)**: franja ACTUALIZAR y aviso fijo sobre el juego; se publica al aceptar su PR.
+- Pendiente para más adelante: quitar el botón de traspaso cuando todos estén en la versión nueva; el traspaso no trae
+  la configuración de Azahar (controles), ofrecido al usuario.
 
 ## 1. Subir solo lo nuevo y limpiar
 - La app sube solo los eventos que el servidor no tiene todavía (p. ej., tabla `eventos` con una fila por evento, o
