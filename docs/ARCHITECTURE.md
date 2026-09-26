@@ -12594,3 +12594,9 @@ flujo queda: subir la versión y escribir sus novedades en el PR; aceptarlo publ
 
 **Sin probar:** la ventana en Windows y la primera ejecución de la Action. Compilación entera sin avisos; Core 398,
 GameLink 397, Randomizer 485, Rules 151, PixelCheck 69.
+
+**Primera ejecución (2026-09-26): falló** en el paso de las pruebas, antes de hacer nada, por un error de sintaxis de
+PowerShell en el propio workflow (`"$t:"` se lee como una variable con ámbito; va `"${t}:"`). No se publicó nada.
+Arreglado, y el workflow se lanza también cuando cambia su propio fichero, para que el arreglo reintente la versión
+pendiente sin tocar el csproj. Cada bloque `run` y los `tools/*.ps1` pasan ahora por el analizador de PowerShell 7
+antes de subirlos (`dotnet tool install --global PowerShell` en la nube).
