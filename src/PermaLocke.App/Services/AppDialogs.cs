@@ -34,6 +34,9 @@ public interface IAppDialogs
 
     /// <summary>Lets the player pick a folder; null when they cancel.</summary>
     string? PickFolder(string title);
+
+    /// <summary>Shows the update window (§201) until the returned handle is disposed.</summary>
+    IDisposable ShowUpdateProgress(UpdateProgressViewModel model);
 }
 
 public sealed class AppDialogs(IServiceProvider services) : IAppDialogs
@@ -84,6 +87,19 @@ public sealed class AppDialogs(IServiceProvider services) : IAppDialogs
     {
         var dialog = new Microsoft.Win32.OpenFolderDialog { Title = title };
         return dialog.ShowDialog(Application.Current?.MainWindow) == true ? dialog.FolderName : null;
+    }
+
+    public IDisposable ShowUpdateProgress(UpdateProgressViewModel model)
+    {
+        var window = new UpdateWindow(model);
+        if (Application.Current?.MainWindow is { IsVisible: true } owner) window.Owner = owner;
+        window.Show();
+        return new Closer(window.Finish);
+    }
+
+    private sealed class Closer(Action close) : IDisposable
+    {
+        public void Dispose() => close();
     }
 
     private static bool Show(Window window)

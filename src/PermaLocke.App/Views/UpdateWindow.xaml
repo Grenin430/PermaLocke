@@ -1,0 +1,44 @@
+<Window x:Class="PermaLocke.App.Views.UpdateWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:pixel="clr-namespace:PermaLocke.App.Views.Pixel"
+        xmlns:views="clr-namespace:PermaLocke.App.Views"
+        Title="PermaLocke · Actualización"
+        Icon="../Assets/PermaLocke.ico"
+        Height="400" Width="620" ResizeMode="CanMinimize"
+        WindowStartupLocation="CenterScreen"
+        UseLayoutRounding="True" SnapsToDevicePixels="True"
+        Background="{StaticResource PxBaseBrush}">
+
+    <!-- La descarga de una versión nueva (§201), con la misma pinta que la puerta de Discord: la barra, cuánto va de
+         cuánto, la velocidad de ahora y lo que queda. Solo muestra lo que dice UpdateService. -->
+    <Grid>
+        <pixel:PixelBackdrop Base="{StaticResource PxBase}" />
+
+        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="30" Width="520">
+            <pixel:PixelText Text="PERMALOCKE" Scale="6" Tight="True" HorizontalAlignment="Center"
+                             Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
+
+            <pixel:PixelText Text="{Binding Heading}" Scale="2" HorizontalAlignment="Center" Margin="0,16,0,0"
+                             Colour="{StaticResource PxAccentLight}" />
+
+            <views:PixelBar Value="{Binding Fraction}" Height="34" Margin="0,26,0,0" Fill="{StaticResource PxAccent}" />
+
+            <DockPanel Margin="0,10,0,0">
+                <pixel:PixelText DockPanel.Dock="Right" Text="{Binding Percent}" Scale="2" Colour="{StaticResource PxGold}" />
+                <pixel:PixelText Text="{Binding Size}" Scale="2" Colour="{StaticResource PxText}" />
+            </DockPanel>
+
+            <DockPanel Margin="0,8,0,0">
+                <pixel:PixelText DockPanel.Dock="Right" Text="{Binding Left}" Scale="2" Colour="{StaticResource PxTextDim}" />
+                <pixel:PixelText Text="{Binding Speed}" Scale="2" Colour="{StaticResource PxTextDim}" />
+            </DockPanel>
+
+            <pixel:PixelText Text="{Binding Status}" Scale="2" HorizontalAlignment="Center" Margin="0,22,0,0"
+                             Colour="{StaticResource PxGood}" />
+
+            <Button Content="CANCELAR" Style="{StaticResource PxButton}" Command="{Binding CancelCommand}"
+                    HorizontalAlignment="Center" MinWidth="180" Margin="0,18,0,0" />
+        </StackPanel>
+    </Grid>
+</Window>

@@ -207,6 +207,7 @@ generado: 2026-09-24
 - L12497 · 198 · Copias de seguridad en Supabase Storage (paso 5)
 - L12532 · 199 · Informes de fallo directos a Admin (paso 6)
 - L12558 · 200 · PermaLocke 1.0.1: versión a la vista, un solo sitio para ella
+- L12573 · 201 · Ventana de la actualización y releases solas con GitHub Actions (1.0.2)
 
 Subsecciones §176: bis (visor), ter (todas las pantallas, fuera ESTADÍSTICAS), quater (EV/MOVIMIENTOS sin bolsa, diálogos).
 
