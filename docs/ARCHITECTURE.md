@@ -11970,9 +11970,10 @@ Idea del jugador, sobre el camino de los fantasmas (§183). Cuando a alguien se 
 - **en la de los demás**, y **solo si tienen Azahar abierto**, sale un aviso arriba a la izquierda («Juanega ha perdido el
   equipo entero · Llueve sangre.», pestaña EQUIPO CAÍDO y lápida) y llueve sangre encima del emulador.
 
-La lluvia dura **30 s**: empieza floja, arrecia en 3 s, deja de caer a los 27 s y se apaga en cuartos en los dos últimos.
+La lluvia dura **12 s** (eran 30; el jugador la acortó tras verla): empieza floja, arrecia en 1,5 s, deja de caer a los
+9 s y se apaga en cuartos en los dos últimos.
 Las gotas son de la misma celda que el fantasma (`Math.Max(3, alto/140)`), tres rojos lisos, salpican donde caen y
-encharcan el fondo (hasta 1/18 del alto). Hay un velo rojo liso muy fino (alfa `0x34`) para que el juego se vea debajo.
+encharcan el fondo (hasta 1/18 del alto; crece el doble de rápido desde que dura 12 s). Hay un velo rojo liso muy fino (alfa `0x34`) para que el juego se vea debajo.
 Sin degradados ni suavizado, a pasos de 45 ms como el fantasma. Va en la **cola de los fantasmas**: el fantasma del último
 caído cruza primero y luego llueve. La apaga la misma casilla «Fantasmas» de CONFIGURACIÓN.
 

@@ -1,7 +1,7 @@
 namespace PermaLocke.App.Views;
 
 /// <summary>
-/// The blood rain of a team wipe (§184), cell by cell: red drops falling over the emulator for half a minute,
+/// The blood rain of a team wipe (§184), cell by cell: red drops falling over the emulator for twelve seconds,
 /// splashing where they land and pooling at the bottom, then gone.
 /// </summary>
 /// <remarks>
@@ -17,7 +17,7 @@ namespace PermaLocke.App.Views;
 public sealed class BloodRain
 {
     /// <summary>How long it rains, start to last drop.</summary>
-    public static readonly TimeSpan Length = TimeSpan.FromSeconds(30);
+    public static readonly TimeSpan Length = TimeSpan.FromSeconds(12);
 
     /// <summary>One step of the rain: the same beat as the ghost's crossing, so both move like a game sprite.</summary>
     public static readonly TimeSpan Step = TimeSpan.FromMilliseconds(45);
@@ -34,9 +34,9 @@ public sealed class BloodRain
     /// <summary>The wash at its thickest: enough to redden the game, not to hide it.</summary>
     private const int WashAlpha = 0x34;
 
-    private static readonly int RampSteps = (int)(TimeSpan.FromSeconds(3) / Step);
-    private static readonly int StopRaining = (int)(TimeSpan.FromSeconds(27) / Step);
-    private static readonly int FadeFrom = (int)(TimeSpan.FromSeconds(28) / Step);
+    private static readonly int RampSteps = (int)(TimeSpan.FromSeconds(1.5) / Step);
+    private static readonly int StopRaining = (int)(TimeSpan.FromSeconds(9) / Step);
+    private static readonly int FadeFrom = (int)(TimeSpan.FromSeconds(10) / Step);
 
     private readonly Random _random;
     private readonly List<Drop> _drops = [];
@@ -118,9 +118,9 @@ public sealed class BloodRain
             _splashes.Add(new Splash(drop.X, surface, 0));
 
             // El charco crece donde cae, y un poco a los lados para que no salgan agujas.
-            Pool(drop.X, 0.3);
-            Pool(drop.X - 1, 0.1);
-            Pool(drop.X + 1, 0.1);
+            Pool(drop.X, 0.6);
+            Pool(drop.X - 1, 0.2);
+            Pool(drop.X + 1, 0.2);
         }
     }
 

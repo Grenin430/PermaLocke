@@ -8,19 +8,19 @@ namespace PermaLocke.App.Tests;
 /// </summary>
 public sealed class BloodRainTests
 {
-    /// <summary>Half a minute of rain, at the ghost's beat.</summary>
+    /// <summary>Twelve seconds of rain, at the ghost's beat.</summary>
     [Fact]
-    public void It_rains_for_half_a_minute()
+    public void It_rains_for_twelve_seconds()
     {
-        Assert.Equal(TimeSpan.FromSeconds(30), BloodRain.Length);
-        Assert.Equal(666, BloodRain.Steps);
+        Assert.Equal(TimeSpan.FromSeconds(12), BloodRain.Length);
+        Assert.Equal(266, BloodRain.Steps);
     }
 
     /// <summary>Once it pours, there are drops on screen, and every one of them is red.</summary>
     [Fact]
     public void Once_it_pours_everything_drawn_is_red()
     {
-        var rain = Pour(new BloodRain(200, 150, 7), 200);
+        var rain = Pour(new BloodRain(200, 150, 7), 150);
         var drawn = rain.Pixels.Where(p => p >> 24 == 0xFF).ToList();
 
         Assert.True(drawn.Count > 200, $"Solo {drawn.Count} celdas de lluvia.");
@@ -31,7 +31,7 @@ public sealed class BloodRainTests
     [Fact]
     public void The_wash_does_not_hide_the_game()
     {
-        var rain = Pour(new BloodRain(200, 150, 7), 200);
+        var rain = Pour(new BloodRain(200, 150, 7), 150);
 
         Assert.True(rain.Pixels.Min(p => p >> 24) <= 0x40);
     }
@@ -40,7 +40,7 @@ public sealed class BloodRainTests
     [Fact]
     public void Blood_pools_at_the_bottom()
     {
-        var rain = Pour(new BloodRain(200, 150, 7), 500);
+        var rain = Pour(new BloodRain(200, 150, 7), 210);
         var bottom = rain.Pixels.Skip(149 * 200).Count(p => p >> 24 == 0xFF);
 
         Assert.True(bottom > 150, $"Solo {bottom} de 200 columnas con charco.");
