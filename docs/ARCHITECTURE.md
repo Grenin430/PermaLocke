@@ -12552,3 +12552,18 @@ de más de 30 días y los retira por la API de Storage con el mismo sí que lo d
 **Pruebas:** `CrashReportQueueTests` (Core.Tests): cada informe nuevo va una vez, los de más de 30 días y lo que no es un
 informe no van, y marcarlo como enviado no toca el fichero. Compilación entera sin avisos; Core 395, GameLink 397,
 Randomizer 485, Rules 151, PixelCheck 69. **Sin probar** contra el Storage de verdad ni en Windows.
+
+---
+
+## §200 · PermaLocke 1.0.1: la versión a la vista y un solo sitio para ella (2026-09-26)
+
+**Para qué:** la primera release de verdad, para probar la actualización automática (§196) con el repo ya público.
+Tiene que notarse que ha entrado: CONFIGURACIÓN enseña al final **PERMALOCKE x.y.z** (`SettingsViewModel.VersionText`,
+de `UpdateService.Current`).
+
+**La versión, en un solo sitio:** `<Version>` del csproj de la App, ahora **1.0.1**. `tools/publicar.ps1` ya no tiene una
+versión fija por defecto (antes forzaba 1.0.0): sin `-Version` usa la del csproj, igual que `desplegar.ps1`. Con cada
+release se sube el csproj y se lanza `publicar-actualizacion.ps1 -Version` con el mismo número.
+
+Comprobado desde la nube: el repo responde como público en la API de GitHub (todavía sin releases) y
+`dotnet publish -r win-x64` del paquete sale bien (un exe de ~160 MB). **Sin probar** la actualización en Windows.

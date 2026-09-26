@@ -29,6 +29,9 @@ public sealed partial class SettingsViewModel : SectionViewModel
     private readonly ILogger<SettingsViewModel> _logger;
     private bool _loading;
 
+    /// <summary>The version running, to see at a glance whether an update (§196) went in.</summary>
+    public string VersionText { get; } = $"PERMALOCKE {UpdateService.Current.ToString(3)}";
+
     public SettingsViewModel(AppSettings settings, WindowSizeService windowSizes, Notifier notifier, AppPaths paths, PokemonSpriteService sprites, DiscordLogin discord,
         ILogger<SettingsViewModel> logger)
         : base("CONFIGURACIÓN", "Ajustes de la aplicación")
