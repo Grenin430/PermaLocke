@@ -157,6 +157,9 @@ pwsh -File tools/publicar.ps1   # o powershell -File, funciona en los dos
 pwsh -File tools/publicar.ps1 -Destino "otra/ruta"
 # deja tambien <destino>.zip listo para compartir; -SinZip para no hacerlo. Empaquetar una carpeta ya publicada:
 powershell -File tools/empaquetar.ps1 -Carpeta "ruta/publicada" -Zip "PermaLocke.zip"
+# las carpetas del Escritorio: exe nuevo en "PermaLocke prueba" y carpeta+zip nuevos en "PermaLocke para amigos".
+# Sin -ExecutionPolicy Bypass Windows bloquea el script (politica de ejecucion); Bypass solo vale para esa ejecucion.
+powershell -ExecutionPolicy Bypass -File tools/desplegar.ps1 -Prueba -Amigos
 
 # randomizador contra la ROM real (escribe en Randomized/, no en Azahar)
 dotnet run --project tools/PermaLocke.RomTool -- inspect

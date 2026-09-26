@@ -1,8 +1,11 @@
 # Despliega PermaLocke en las carpetas del Escritorio, con las comprobaciones de siempre.
 #
-#   powershell -File tools/desplegar.ps1 -Prueba     exe nuevo en "PermaLocke prueba" (su Data no se toca)
-#   powershell -File tools/desplegar.ps1 -Amigos     carpeta y zip nuevos en "PermaLocke para amigos"
-#   powershell -File tools/desplegar.ps1 -Prueba -Amigos
+#   powershell -ExecutionPolicy Bypass -File tools/desplegar.ps1 -Prueba     exe nuevo en "PermaLocke prueba" (su Data no se toca)
+#   powershell -ExecutionPolicy Bypass -File tools/desplegar.ps1 -Amigos     carpeta y zip nuevos en "PermaLocke para amigos"
+#   powershell -ExecutionPolicy Bypass -File tools/desplegar.ps1 -Prueba -Amigos
+#
+# Sin -ExecutionPolicy Bypass Windows lo bloquea («la ejecucion de scripts esta deshabilitada»). Bypass vale solo para
+# esa ejecucion: no cambia la politica del sistema.
 #
 # Se niega si PermaLocke o Azahar estan abiertos. Nunca borra nada: la carpeta de amigos que habia pasa a
 # "PermaLocke para amigos (anterior)", y si esa ya existe se para y pide que la quites tu.
