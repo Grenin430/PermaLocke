@@ -12,6 +12,7 @@ La última sesión va arriba. Antes del 2026-09-23 solo hay un resumen por fecha
 - `Views/BloodRain.cs` (pura, probada en `BloodRainTests`; umbrales comprobados con la simulación en Python), `GhostWindow.RainAsync`, `GhostService.Rain`/`ReadRainAsync`/`RehearseRainAsync`, `PlayNotifications` en `TeamWiped`. Misma casilla «Fantasmas». Ensayo `--ensayar-lluvia`.
 - Tabla `tools/supabase/13-lluvias.sql` aparte de `fantasmas` (una app vieja pintaría un fantasma vacío). **La ejecuta el usuario.**
 - El usuario la vio con `--ensayar-lluvia`: «va perfecto». Luego pidió **12 s en vez de 30**: parada a 9 s, apagado 10-12 s, charco al doble de ritmo. Descartadas: cementerios y killcams de los demás (peso de las killcams en Supabase) y dos tandas de ideas (hitos, epitafio, ruta compartida, muro de la vergüenza, apuestas, evento temporal; Soul Link automático, manchas de sangre, mausoleo, invasión): «ninguna sorprende».
+- Tercera tanda más amplia (reglas, economía, crónica): le llamó la atención **objetos de Mario Kart**; la dejó apuntada para el futuro en [[Ideas para el futuro]], sin hacer. Allí están también las rechazadas.
 
 ## 2026-09-26 — los fantasmas (§183)
 - Idea del jugador tras rechazar dos tandas de ideas mías (quiere que se le propongan ideas, no que se haga nada sin pedirlo; «tarjeta de entrenador» y listas de mecánicas descartadas). Decisiones suyas: el fantasma sale por la IZQUIERDA; varios en cola; casilla en CONFIGURACIÓN.

@@ -29,6 +29,7 @@ revisado: 2026-09-25
 | Compilar, publicar, desplegar en la carpeta de prueba, sondas | [[Comandos]] |
 | Buscar un § de ARCHITECTURE sin leer 11.7k líneas | [[Índice de ARCHITECTURE]] |
 | Qué sigue sin saberse | [[Preguntas abiertas]] |
+| Ideas guardadas para más adelante y las ya rechazadas (mirar antes de proponer ideas) | [[Ideas para el futuro]] |
 | Ficheros por proyecto | [[Mapa de código/PermaLocke.App]] · [[Mapa de código/PermaLocke.GameLink]] · [[Mapa de código/PermaLocke.Core]] · [[Mapa de código/PermaLocke.Rules]] · [[Mapa de código/PermaLocke.Data]] · [[Mapa de código/PermaLocke.Randomizer]] · [[Mapa de código/PermaLocke.Infrastructure]] · [[Mapa de código/PermaLocke.Admin]] · [[Mapa de código/Tests]] |
 
 ## Qué es, en tres líneas
