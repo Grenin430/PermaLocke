@@ -37,7 +37,7 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Services/EventIcons.cs` — **EventIcons** — The pixel icon of each kind of event, for the history lists drawn in the pixel style (§176). 
 - `Services/GameLinkMonitor.cs` — **GameLinkMonitor** — Polls the running game and publishes what it sees. One poller for the whole application, so every screen shows the same snapshot and the emulator is asked once per cycle. 
 - `Services/GameWindow.cs` — **GameWindow** — Where the emulator is, and which screen it is on. 
-- `Services/GhostService.cs` — **GhostService** — The ghosts (§183): this player's deaths go to the tournament server at once, and the other players' come over this player's emulator as a notice and a ghost crossing the screen. 
+- `Services/GhostService.cs` — **GhostService** — The ghosts (§183): this player's deaths go to the tournament server at once, and the other players' come over this player's emulator as a notice and a ghost crossing the screen. A team wipe makes ...
 - `Services/GiftInbox.cs` — **GiftInbox** — The gifts waiting for this player on the tournament server, and collecting them (§129; the shared folder is gone). 
 - `Services/HpBarWatcher.cs` — **HpBarWatcher** — Waits, looking at the emulator's window, for the player's HP bar to reach zero. 
 - `Services/IKillcamRecorder.cs` — **IKillcamRecorder** — Recording operations used by the game monitor.
@@ -103,6 +103,7 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Views/AlolaPalette.cs` — **AlolaPalette** — The colours of the Alola sky by hour, shared by the sidebar's window and the header's banner so the two never disagree about what time it is. 
 - `Views/AlolaWindow.cs` — **AlolaWindow** — A small pixel-art view of the sea at the hour of the player's Alola: the sky's colours, the sun or the moon on its arc, stars at night, and an island with a palm tree. 
 - `Views/BattleModeView.xaml.cs` — **BattleModeView** — 
+- `Views/BloodRain.cs` — **BloodRain** — The blood rain of a team wipe (§184), cell by cell: red drops falling over the emulator for half a minute, splashing where they land and pooling at the bottom, then gone. 
 - `Views/BoxWallpaper.cs` — **BoxWallpaper** — The wallpaper behind a box of the PC: a flat ground with a small motif repeated in staggered rows, drawn cell by cell like the rest of PermaLocke's pixel art. 
 - `Views/CapsuleMachine.cs` — **CapsuleMachine** — The gacha's stage: the capsule machine (`apsuleMachineScene`) on screen, in whole cells. 
 - `Views/CapsuleMachineScene.cs` — **CapsuleBanner, CapsuleRoll, CapsuleShelfItem, CapsuleSceneState, CapsuleTimeline, CapsuleMachineScene** — What the machine is loaded with: the banner chosen under it.

@@ -190,6 +190,7 @@ generado: 2026-09-24
 - L11860 · 181 · El Pokémon que te sigue (plugin 3GX)
 - L11901 · 182 · Las pruebas se ven en LOGROS sin guardar
 - L11923 · 183 · Los fantasmas de los caídos entre jugadores
+- L11965 · 184 · La lluvia de sangre de un wipe en todos los emuladores
 
 Subsecciones §176: bis (visor), ter (todas las pantallas, fuera ESTADÍSTICAS), quater (EV/MOVIMIENTOS sin bolsa, diálogos).
 

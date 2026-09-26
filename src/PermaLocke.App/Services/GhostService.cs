@@ -8,7 +8,8 @@ namespace PermaLocke.App.Services;
 
 /// <summary>
 /// The ghosts (§183): this player's deaths go to the tournament server at once, and the other players' come over
-/// this player's emulator as a notice and a ghost crossing the screen.
+/// this player's emulator as a notice and a ghost crossing the screen. A team wipe makes it rain blood over the
+/// emulator of everyone, the one who wiped included (§184).
 /// </summary>
 /// <remarks>
 /// <para>
@@ -41,10 +42,14 @@ public sealed class GhostService
 
     /// <summary>Last ghost seen, by server id; negative until the first read sets it to «now».</summary>
     private long _cursor = -1;
+
+    /// <summary>The same for the wipes, which come from their own table (<c>tools/supabase/13-lluvias.sql</c>).</summary>
+    private long _rainCursor = -1;
     private bool _reading;
     private bool _playing;
     private GhostWindow? _window;
     private string? _lastProblem;
+    private string? _lastRainProblem;
 
     public GhostService(DiscordLogin discord, EmulatorLauncher launcher, IZoneProvider zones,
         PokemonSpriteService sprites, DeathCeremony ceremony, ILogger<GhostService> logger)
@@ -110,8 +115,54 @@ public sealed class GhostService
         }
     }
 
+    /// <summary>
+    /// This player's team fell: it rains here at once, and the news goes to the others. Fire and forget, like
+    /// <see cref="Send"/>: the wipe is already in the run.
+    /// </summary>
+    public void Rain(string player)
+    {
+        var name = _discord.Saved?.Name ?? player;
+
+        if (_writes && _discord.Saved is not null)
+        {
+            _ = SendRainAsync(name);
+        }
+
+        // El vigilante avisa desde su hilo; la cola y la ventana son del de la pantalla.
+        _ = _timer.Dispatcher.InvokeAsync(() =>
+        {
+            if (!Enabled)
+            {
+                return;
+            }
+
+            // Aquí sin esperar al servidor: quien ha caído lo ve ya, y sin aviso, que el suyo ya sale.
+            _waiting.Enqueue(new GhostRow(0, Guid.Empty, name, string.Empty, 0, 0, false, null, null, Rain: true, Mine: true));
+
+            if (!_playing)
+            {
+                _ = PlayAllAsync();
+            }
+        });
+    }
+
+    private async Task SendRainAsync(string name)
+    {
+        try
+        {
+            await _discord.PostAsync("lluvias", JsonSerializer.Serialize(new { nombre = name }));
+            _logger.LogInformation("Lluvia de sangre enviada");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "No se pudo enviar la lluvia de sangre");
+        }
+    }
+
     private sealed record GhostRow(long Id, Guid Jugador, string Nombre, string Pokemon, int Especie, int Forma,
-        bool Shiny, int? Nivel, string? Zona);
+        bool Shiny, int? Nivel, string? Zona, bool Rain = false, bool Mine = false);
+
+    private sealed record RainRow(long Id, Guid Jugador, string Nombre);
 
     private async Task ReadAsync()
     {
@@ -124,11 +175,32 @@ public sealed class GhostService
         if (!_launcher.IsRunning || !Enabled || _discord.Saved is null)
         {
             _cursor = -1;
+            _rainCursor = -1;
             return;
         }
 
         _reading = true;
 
+        try
+        {
+            await ReadGhostsAsync();
+
+            // Aparte: si la tabla de las lluvias todavía no existe en el servidor, los fantasmas siguen llegando.
+            await ReadRainAsync();
+        }
+        finally
+        {
+            _reading = false;
+        }
+
+        if (!_playing && _waiting.Count > 0)
+        {
+            await PlayAllAsync();
+        }
+    }
+
+    private async Task ReadGhostsAsync()
+    {
         try
         {
             if (_cursor < 0)
@@ -160,11 +232,6 @@ public sealed class GhostService
             }
 
             _lastProblem = null;
-
-            if (!_playing && _waiting.Count > 0)
-            {
-                await PlayAllAsync();
-            }
         }
         catch (Exception ex)
         {
@@ -175,9 +242,51 @@ public sealed class GhostService
                 _logger.LogWarning(ex, "No se pudieron leer los fantasmas del servidor");
             }
         }
-        finally
+    }
+
+    /// <summary>The others' wipes, after their ghosts: the rain is the end of the deaths that made it.</summary>
+    private async Task ReadRainAsync()
+    {
+        try
         {
-            _reading = false;
+            if (_rainCursor < 0)
+            {
+                var latest = await _discord.GetAsync("lluvias?select=id,jugador,nombre&order=id.desc&limit=1");
+                _rainCursor = latest is null ? -1
+                    : (JsonSerializer.Deserialize<List<RainRow>>(latest, Json) ?? []).FirstOrDefault()?.Id ?? 0;
+                return;
+            }
+
+            var json = await _discord.GetAsync($"lluvias?select=id,jugador,nombre&id=gt.{_rainCursor}&order=id.asc&limit=5");
+
+            if (json is null)
+            {
+                return;
+            }
+
+            var me = _discord.Saved?.UserId ?? Guid.Empty;
+
+            foreach (var row in JsonSerializer.Deserialize<List<RainRow>>(json, Json) ?? [])
+            {
+                _rainCursor = Math.Max(_rainCursor, row.Id);
+
+                // La propia ya llovió al momento, sin esperar al servidor.
+                if (row.Jugador != me)
+                {
+                    _waiting.Enqueue(new GhostRow(row.Id, row.Jugador, row.Nombre, string.Empty, 0, 0, false, null, null,
+                        Rain: true));
+                }
+            }
+
+            _lastRainProblem = null;
+        }
+        catch (Exception ex)
+        {
+            if (ex.Message != _lastRainProblem)
+            {
+                _lastRainProblem = ex.Message;
+                _logger.LogWarning(ex, "No se pudieron leer las lluvias de sangre del servidor");
+            }
         }
     }
 
@@ -192,6 +301,16 @@ public sealed class GhostService
         return _playing ? Task.CompletedTask : PlayAllAsync(rehearsal: true);
     }
 
+    /// <summary>
+    /// The blood rain of a friend's wipe without the server and without the game, for <c>--ensayar-lluvia</c> (§184).
+    /// Nothing is sent or recorded.
+    /// </summary>
+    public Task RehearseRainAsync(string player)
+    {
+        _waiting.Enqueue(new GhostRow(0, Guid.Empty, player, string.Empty, 0, 0, false, null, null, Rain: true));
+        return _playing ? Task.CompletedTask : PlayAllAsync(rehearsal: true);
+    }
+
     private async Task PlayAllAsync(bool rehearsal = false)
     {
         _playing = true;
@@ -203,6 +322,16 @@ public sealed class GhostService
             while (_waiting.Count > 0 && (rehearsal || (_launcher.IsRunning && Enabled)))
             {
                 var row = _waiting.Dequeue();
+                _window ??= new GhostWindow();
+
+                if (row.Rain)
+                {
+                    _logger.LogInformation("Lluvia de sangre: {Player} ha perdido el equipo", row.Nombre);
+                    await _window.RainAsync(row.Mine ? null : new Toast(ToastKind.TeamWipe,
+                        $"{row.Nombre} ha perdido el equipo entero", "Llueve sangre.", null, DateTime.UtcNow, Notifier.Linger));
+                    continue;
+                }
+
                 var sprite = _sprites.Get(row.Especie, row.Forma, row.Shiny);
                 var where = string.Join(" · ", new[] { row.Nivel is { } level ? $"Nv. {level}" : null, row.Zona }
                     .Where(part => !string.IsNullOrWhiteSpace(part)));
@@ -211,7 +340,6 @@ public sealed class GhostService
                     DateTime.UtcNow, Notifier.Linger);
 
                 _logger.LogInformation("Fantasma de {Pokemon}, de {Player}", row.Pokemon, row.Nombre);
-                _window ??= new GhostWindow();
                 await _window.PlayAsync(notice, GhostArt.Make(sprite));
             }
         }

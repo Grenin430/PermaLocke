@@ -73,6 +73,9 @@ public sealed class PlayNotifications
             // Detrás de las muertes que lo formaron, que ya están en la cola.
             ceremony.TeamFell(penalty.Points);
 
+            // Llueve sangre aquí y en el emulador de los demás (§184).
+            ghosts.Rain("Jugador");
+
             notifier.Say(ToastKind.TeamWipe, "Equipo caído", $"{penalty.Points} puntos.");
         };
 

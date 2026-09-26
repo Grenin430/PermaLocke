@@ -390,6 +390,12 @@ public partial class App : Application
             }
         }
 
+        if (e.Args.Contains("--ensayar-lluvia", StringComparer.OrdinalIgnoreCase))
+        {
+            // La lluvia de sangre de un amigo que pierde el equipo (§184), sin servidor ni juego.
+            await _services!.GetRequiredService<GhostService>().RehearseRainAsync("Ensayo");
+        }
+
         if (e.Args.Contains("--ensayar-killcam", StringComparer.OrdinalIgnoreCase))
         {
             await RehearseKillcamAsync(paths, logger);

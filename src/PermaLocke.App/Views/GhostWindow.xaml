@@ -10,8 +10,12 @@
 
     <!-- LOS FANTASMAS DE LOS DEMÁS (§183), encima del emulador. Primero el aviso arriba a la izquierda, con el
          mismo dibujo que el resto de avisos; cuando se va, el fantasma cruza la pantalla de derecha a izquierda.
-         Transparente y sin ratón: el juego sigue debajo. -->
-    <Grid>
+         Transparente y sin ratón: el juego sigue debajo.
+         Si alguien pierde el equipo entero, llueve sangre medio minuto por debajo de todo (§184). -->
+    <Grid ClipToBounds="True">
+        <Image x:Name="Rain" Visibility="Collapsed" Stretch="Fill" HorizontalAlignment="Left" VerticalAlignment="Top"
+               RenderOptions.BitmapScalingMode="NearestNeighbor" />
+
         <Canvas x:Name="Sky" ClipToBounds="True">
             <Image x:Name="Ghost" Opacity="0" Stretch="Fill" RenderOptions.BitmapScalingMode="NearestNeighbor" />
         </Canvas>

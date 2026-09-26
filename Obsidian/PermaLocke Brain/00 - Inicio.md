@@ -36,6 +36,7 @@ revisado: 2026-09-25
 - C# / .NET 10 / WPF / MVVM, GPLv3 porque usa PKHeX.Core y pk3DS.Core.
 - Lee y escribe el juego por el RPC UDP del emulador (memoria viva) y por el fichero de partida (PKHeX, solo con el juego cerrado). Randomiza la ROM por LayeredFS. Lleva la run como un registro de eventos encadenado por hash en SQLite.
 
-## Estado del repositorio (2026-09-24)
-- El último commit es del **2026-09-13** (`43e439e`). Hay unos **410 cambios sin commitear**, entre ellos ficheros nuevos sin seguimiento (p. ej. `BattlePokemon.cs`, `FieldZoneReader.cs`, `HomeViewTests.cs`), así que **git log no cuenta la historia reciente**: la cuentan `CLAUDE.md`, `docs/` y [[Historial de conversaciones]].
+## Estado del repositorio (2026-09-26)
+- Desde el 2026-09-24 todo va commiteado en `main` (en GitHub, `Grenin430/PermaLocke`), un commit por cambio con su §. Antes del 24 hubo meses sin commit: para esa época la historia la cuentan `CLAUDE.md`, `docs/` y [[Historial de conversaciones]].
+- A veces se trabaja desde la **nube** (contenedor Linux, rama `claude/...`): allí no hay Azahar ni el Escritorio, y puede no haber .NET. Lo hecho allí queda sin compilar hasta que el usuario lo baje.
 - Solo se hace commit cuando el usuario lo pide.

@@ -7,6 +7,7 @@ generado: 2026-09-26
 Contado con grep, NO ejecutado. Detalle en [[Pruebas]].
 
 ## PermaLocke.App.Tests
+- `BloodRainTests.cs` (7)
 - `CapsuleMachineTests.cs` (10)
 - `DiscordLoginTests.cs` (1)
 - `EmulatorCrashTests.cs` (8)

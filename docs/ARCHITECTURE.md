@@ -11961,3 +11961,36 @@ pantalla por celda se leía como un tablero y no como un Pokémon, así que se p
 
 **Sin probar:** el viaje por el servidor entre dos PCs, porque la tabla no existía todavía. Si falta, los fallos se
 apuntan una vez y no cada 10 s (§167).
+
+## §184 · La lluvia de sangre: cuando alguien pierde el equipo, llueve en todos los emuladores (2026-09-26)
+
+Idea del jugador, sobre el camino de los fantasmas (§183). Cuando a alguien se le cae el equipo entero (`TeamWiped`):
+- **en su pantalla** llueve sangre al momento, sin esperar al servidor y sin aviso nuevo, porque ya salen la escena de
+  EQUIPO CAÍDO y el aviso de siempre;
+- **en la de los demás**, y **solo si tienen Azahar abierto**, sale un aviso arriba a la izquierda («Juanega ha perdido el
+  equipo entero · Llueve sangre.», pestaña EQUIPO CAÍDO y lápida) y llueve sangre encima del emulador.
+
+La lluvia dura **30 s**: empieza floja, arrecia en 3 s, deja de caer a los 27 s y se apaga en cuartos en los dos últimos.
+Las gotas son de la misma celda que el fantasma (`Math.Max(3, alto/140)`), tres rojos lisos, salpican donde caen y
+encharcan el fondo (hasta 1/18 del alto). Hay un velo rojo liso muy fino (alfa `0x34`) para que el juego se vea debajo.
+Sin degradados ni suavizado, a pasos de 45 ms como el fantasma. Va en la **cola de los fantasmas**: el fantasma del último
+caído cruza primero y luego llueve. La apaga la misma casilla «Fantasmas» de CONFIGURACIÓN.
+
+**Cómo viaja.** Tabla nueva `lluvias` (`tools/supabase/13-lluvias.sql`, **hay que ejecutarla en Supabase**), con las
+mismas reglas que `fantasmas`: cada uno escribe las suyas y los de la lista leen todas. Es aparte a propósito: una app de
+antes que leyera una fila de wipe en `fantasmas` enseñaría un fantasma vacío. Se lee en la misma consulta de cada 10 s,
+**en su propio try**: si la tabla aún no existe, los fantasmas siguen llegando y el fallo se apunta una vez (§167).
+
+**Piezas:**
+- `Views/BloodRain.cs`: la lluvia celda a celda, sin WPF (`Advance`/`Draw`, `Pixels` en Bgra32). Pruebas en
+  `BloodRainTests` (roja, velo fino, charco, nada al acabar, misma semilla misma lluvia, tamaños mínimos).
+- `GhostWindow.RainAsync`: un `Image` con `WriteableBitmap` debajo del fantasma y del aviso, escalado a vecino más
+  próximo. `PlayAsync` se partió en `ShowOver` y `CardAsync` para compartirlos.
+- `GhostService.Rain` (envía y encola la propia, pasando al hilo de la pantalla porque el vigilante avisa desde el suyo),
+  `ReadRainAsync`, `RehearseRainAsync`. `PlayNotifications` la llama en `TeamWiped`.
+
+**Ensayo:** `--sin-juego --ensayar-lluvia`, la de un amigo sin servidor ni juego.
+
+**Sin probar:** escrito desde un contenedor sin .NET (la red no deja bajar el SDK): **ni compilado, ni ejecutadas las
+pruebas, ni visto**. Los umbrales de `BloodRainTests` se comprobaron con la misma simulación pasada a Python. Tampoco el
+viaje entre dos PCs.

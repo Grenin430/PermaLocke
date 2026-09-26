@@ -6,6 +6,12 @@ revisado: 2026-09-24
 
 La última sesión va arriba. Antes del 2026-09-23 solo hay un resumen por fechas sacado de `CLAUDE.md` y de `ARCHITECTURE.md`: el detalle está en el § citado ([[Índice de ARCHITECTURE]]). **Cada sesión nueva añade su entrada aquí.**
 
+## 2026-09-26 — la lluvia de sangre (§184), desde la nube
+- Sesión en un **contenedor Linux en la nube** (rama `claude/relaxed-sagan-9amy20`): sin Azahar, sin el Escritorio del usuario y **sin .NET** (la red bloquea `builds.dotnet.microsoft.com`). Nada compilado ni visto: lo compila y prueba el usuario.
+- Petición: al hacer wipe, lluvia roja «como sangre» ~30 s en todos los demás y en quien lo hace, como los fantasmas.
+- `Views/BloodRain.cs` (pura, probada en `BloodRainTests`; umbrales comprobados con la simulación en Python), `GhostWindow.RainAsync`, `GhostService.Rain`/`ReadRainAsync`/`RehearseRainAsync`, `PlayNotifications` en `TeamWiped`. Misma casilla «Fantasmas». Ensayo `--ensayar-lluvia`.
+- Tabla `tools/supabase/13-lluvias.sql` aparte de `fantasmas` (una app vieja pintaría un fantasma vacío). **La ejecuta el usuario.**
+
 ## 2026-09-26 — los fantasmas (§183)
 - Idea del jugador tras rechazar dos tandas de ideas mías (quiere que se le propongan ideas, no que se haga nada sin pedirlo; «tarjeta de entrenador» y listas de mecánicas descartadas). Decisiones suyas: el fantasma sale por la IZQUIERDA; varios en cola; casilla en CONFIGURACIÓN.
 - `GhostService` (envía al momento, lee cada 10 s solo con Azahar abierto, cola), `GhostWindow` (aviso arriba a la izquierda + cruce derecha→izquierda), `GhostArt`, `DeathWindow.AddGhost`, `ToastKind.Ghost`, ajuste `Ghosts` (vive en `DeathCeremony.Ghosts` para no crear ciclo con `EmulatorLauncher`→`AppSettings`). Ensayo `--ensayar-fantasma`.
