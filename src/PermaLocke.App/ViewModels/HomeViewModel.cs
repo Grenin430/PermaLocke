@@ -69,6 +69,7 @@ public sealed partial class HomeViewModel : SectionViewModel
     private readonly PokemonSpriteService _sprites;
     private readonly LevelCapTable _caps;
     private readonly IAchievementCatalog _achievements;
+    private readonly TransferOffer _transfer;
     private readonly ILogger<HomeViewModel> _logger;
 
     public HomeViewModel(
@@ -87,6 +88,7 @@ public sealed partial class HomeViewModel : SectionViewModel
         RunActivity activity,
         LevelCapTable caps,
         IAchievementCatalog achievements,
+        TransferOffer transfer,
         ILogger<HomeViewModel> logger) : base("HOME", "Tu run y tu equipo")
     {
         _runContext = runContext;
@@ -102,6 +104,7 @@ public sealed partial class HomeViewModel : SectionViewModel
         _sprites = sprites;
         _caps = caps;
         _achievements = achievements;
+        _transfer = transfer;
         _logger = logger;
 
         gameLink.SnapshotChanged += (_, snapshot) => _ = _ui.InvokeAsync(() =>
@@ -376,6 +379,10 @@ public sealed partial class HomeViewModel : SectionViewModel
 
         await SafeRefreshAsync();
     }
+
+    /// <summary>Brings the player's run and save from an old PermaLocke folder (§195). Only without a run here.</summary>
+    [RelayCommand]
+    private void BringFromFolder() => _transfer.Offer();
 
     [RelayCommand]
     private async Task CreateRunAsync()

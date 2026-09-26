@@ -73,6 +73,7 @@ Contado con grep, NO ejecutado. Detalle en [[Pruebas]].
 - `DeathMarkTests.cs` (5)
 - `EncounterRecoveryTests.cs` (26)
 - `FieldRecordTests.cs` (26)
+- `FolderTransferTests.cs` (6)
 - `FormTypesTests.cs` (4)
 - `GachaPartyDeliveryTests.cs` (4)
 - `GameLevelsTests.cs` (3)

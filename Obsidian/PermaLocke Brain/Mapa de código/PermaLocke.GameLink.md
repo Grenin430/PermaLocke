@@ -43,6 +43,7 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ga
 - `Field/FieldZoneReader.cs` — **FieldZoneReader** — Says which map, and so which zone of the run, the player is on, read live from the game. 
 - `Field/SaveDex.cs` — **SaveDex** — The species the Pokédex of the last save says were caught. Only reads. 
 - `Field/SavedGameCache.cs` — **SavedGameCache** — The player's last save, parsed once and parsed again only when the file changes. Only reads. 
+- `FolderTransfer.cs` — **TransferItem, TransferPlan, TransferResult, FolderTransfer** — One thing the transfer brings from the old folder, and where it goes.
 - `PlayerSave.cs` — **PlayerSave** — Where the player's Ultra Moon save lives, and whether the emulator is holding it right now. 
 - `Rpc/AzaharRpcClient.cs` — **RpcRequestType, MemoryWrite, EmulatedProcess, AzaharRpcException, AzaharRpcClient** — Only in PermaLocke's Azahar fork. The official build rejects it.
 - `Rpc/MemorySearch.cs` — **MemoryRegion, MemorySearch** — Finds where the game keeps its data, by scanning the emulated address space over the RPC. 

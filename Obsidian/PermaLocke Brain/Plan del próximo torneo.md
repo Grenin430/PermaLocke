@@ -37,6 +37,7 @@ Descartada de esa tanda: «apuntarse desde la app» (la 2 original). El usuario 
 - **Paso 1 — HECHO en el repo (§194), 2026-09-26.** Falta que el usuario ejecute `tools/supabase/15-eventos-y-limpieza.sql`.
   Hasta entonces las apps nuevas suben entero como antes (vuelta automática) y la LIMPIEZA dice que falta el SQL.
   Probado en Postgres local con `tools/supabase/pruebas/probar.sh`.
+- **Paso 2 — HECHO en el repo (§195), 2026-09-26.** Botón en HOME sin run; en el paso 4 irá también en la primera vez guiada. Quitarlo en la versión siguiente a la actualización automática.
 
 ## 1. Subir solo lo nuevo y limpiar
 - La app sube solo los eventos que el servidor no tiene todavía (p. ej., tabla `eventos` con una fila por evento, o

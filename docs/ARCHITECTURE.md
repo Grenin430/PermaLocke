@@ -12402,3 +12402,36 @@ logros de las dos maneras; otro jugador no puede subir a tu run ni limpiar ni es
 exactamente lo previsto (regalos, fantasmas, anuncios, subidas intermedias) y vacía solo las runs archivadas.
 Compilación entera sin avisos; Core 383, GameLink 391, Randomizer 485, Rules 151, PixelCheck 69. **Sin ver** contra el
 Supabase real ni en Windows: primero hay que ejecutar el 15.
+
+---
+
+## §195 · Traer la partida de otra carpeta, una vez (2026-09-26, plan del próximo torneo, paso 2)
+
+**Para qué:** el próximo torneo se juega con una carpeta nueva de PermaLocke; quien ya jugaba (la carpeta de prueba, la
+de amigos) tiene que poder traerse su run y su partida sin copiar nada a mano. Se quita en la versión siguiente, cuando
+ya exista la actualización automática.
+
+**Qué trae** (`GameLink/FolderTransfer`): `Saves/` entera (run, sesiones, copias, killcams); del emulador de la carpeta
+vieja, la partida de Ultra Luna (la carpeta del título `…/title/00040000/001b5100`, buscada como `PlayerSave` porque las
+carpetas de en medio son identificadores de consola) y el mundo instalado (`load/mods/00040000001B5100`); de `Config/`,
+el jugador (`jugador.json`) y la sesión de Discord (`discord.json`); y la ROM solo si aquí no hay ninguna. No trae
+ajustes ni la configuración del emulador. Si las dos carpetas usan el mismo Azahar instalado, la partida no se mueve.
+
+**Guardas.** Copia, **nunca mueve ni borra** nada de la carpeta vieja. Lo que la nueva ya tuviera en cualquiera de esos
+sitios (la base de datos vacía de haberla abierto, la sesión con la que se entró) se **aparta** a
+`Apartado antes del traspaso <fecha>/` con la misma ruta, no se pisa: copiar una carpeta encima de otra mezclaría los
+ficheros de dos partidas. Se niega si la carpeta es esta misma, si en la vieja no hay run (`Saves/…/run.json`, como las
+encuentra `JsonRunRepository`) o si **aquí ya hay una run**. Con el emulador abierto no se ofrece. El PermaLocke viejo no
+puede estar abierto: solo corre uno a la vez (mutex).
+
+**Cuándo se copia.** Nunca con la base de datos abierta: el jugador pulsa **TRAER MI PARTIDA DE OTRA CARPETA** (HOME sin
+run; en el paso 4 también en la primera vez guiada), elige la carpeta, ve la lista y confirma (`TransferOffer`).
+PermaLocke deja `Config/traspaso-pendiente.json` y se reinicia con `--tras-traspaso` (espera a que la anterior suelte el
+mutex). Al arrancar, antes de la copia de seguridad de la base de datos y de que nada la abra, `FolderTransfer.RunPending`
+lo hace, borra el pendiente (es suyo) y deja el resultado en `Config/traspaso-hecho.json`, que al entrar se dice una vez
+y va al log.
+
+**Pruebas:** `FolderTransferTests` (GameLink, en ficheros de verdad): trae todo a su sitio, deja la vieja idéntica fichero a
+fichero y aparta lo que había, no pisa una run, rechaza la misma carpeta y una sin run, respeta la ROM ya puesta, y el
+pendiente se hace una sola vez. Compilación entera sin avisos; Core 383, GameLink 397, Randomizer 485, Rules 151.
+**Sin ver en Windows** (el selector de carpeta y el reinicio).

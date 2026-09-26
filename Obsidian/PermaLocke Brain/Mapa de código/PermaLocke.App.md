@@ -66,6 +66,7 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Services/ToastKind.cs` — **ToastKind** — What a notice is about. Decides its tab, its colour and the mark drawn on its sprite.
 - `Services/ToastPlacement.cs` — **ToastPlacement** — Positions the notice stack in screen pixels, keeping it inside the selected monitor.
 - `Services/TournamentUpload.cs` — **TournamentUpload** — Sends the loaded run to the tournament server: the same summary and history the shared folder used to carry. 
+- `Services/TransferOffer.cs` — **TransferOffer** — «TRAER MI PARTIDA DE OTRA CARPETA» (§195): the player picks their old PermaLocke folder, sees what will be brought, and PermaLocke restarts to copy it before anything opens the database (`olderT...
 - `Services/TypeColours.cs` — **TypeColours** — The colours the series has used for the types since forever, by the game's type number: the table itself, without the brushes of `ypePalette`. 
 - `Services/TypePalette.cs` — **TypePalette** — The colours the series has used for the types since forever, by the game's type number. 
 - `Services/UiDispatcher.cs` — **IUiDispatcher, WpfUiDispatcher** — Runs work on the UI thread. View models need this because domain services complete their awaits on thread pool threads, and touching a bound ObservableCollection from there throws. 

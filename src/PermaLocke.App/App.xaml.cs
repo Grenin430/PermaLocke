@@ -34,6 +34,47 @@ public partial class App : Application
     /// one of them. <c>--sin-juego</c> is exempt: it is the read-only copy made precisely to look at screens while the
     /// real one runs, and it opens no link to the game.
     /// </remarks>
+    /// <summary>
+    /// Says once what the transfer from the old folder did (§195), and writes it to the log, which did not exist yet when
+    /// it ran.
+    /// </summary>
+    private static void TellTransfer(AppPaths paths, ILogger logger)
+    {
+        var path = Path.Combine(paths.Config, FolderTransfer.DoneFile);
+        if (!File.Exists(path))
+        {
+            return;
+        }
+
+        try
+        {
+            var result = System.Text.Json.JsonSerializer.Deserialize<TransferResult>(File.ReadAllText(path));
+            File.Delete(path);
+            if (result is null)
+            {
+                return;
+            }
+
+            foreach (var line in result.Log)
+            {
+                logger.LogInformation("Traspaso: {Line}", line);
+            }
+
+            MessageBox.Show(MainWindowOrNull(),
+                result.Done
+                    ? $"Tu partida está aquí: {result.Files} ficheros copiados. La carpeta de antes sigue como estaba."
+                      + (result.SetAside is { } aside ? $"\n\nLo que había aquí antes se ha apartado en «{aside}»." : string.Empty)
+                    : "No se ha podido traer tu partida:\n\n" + string.Join("\n", result.Log),
+                "Traer mi partida", MessageBoxButton.OK, result.Done ? MessageBoxImage.Information : MessageBoxImage.Warning);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "No se pudo leer el resultado del traspaso");
+        }
+    }
+
+    private static Window MainWindowOrNull() => Current.MainWindow;
+
     private static bool AnotherIsRunning(StartupEventArgs e)
     {
         if (e.Args.Contains("--sin-juego", StringComparer.OrdinalIgnoreCase))
@@ -42,6 +83,20 @@ public partial class App : Application
         }
 
         _onlyOne = new Mutex(initiallyOwned: true, @"Local\PermaLocke.App", out var createdNew);
+
+        // Reiniciado para el traspaso (§195): la de antes se está cerrando, se le da un momento.
+        if (!createdNew && e.Args.Contains(Services.TransferOffer.RestartArgument, StringComparer.OrdinalIgnoreCase))
+        {
+            try
+            {
+                createdNew = _onlyOne.WaitOne(TimeSpan.FromSeconds(15));
+            }
+            catch (AbandonedMutexException)
+            {
+                createdNew = true;
+            }
+        }
+
         return !createdNew;
     }
 
@@ -61,6 +116,14 @@ public partial class App : Application
 
         var paths = new AppPaths();
         paths.EnsureCreated();
+
+        // EL TRASPASO desde la carpeta vieja, si el jugador lo pidió (§195): antes que la copia de la base de datos y que
+        // nada la abra. Lo que hizo queda en Config/traspaso-hecho.json y se dice al entrar.
+        if (!e.Args.Contains("--sin-juego", StringComparer.OrdinalIgnoreCase))
+        {
+            FolderTransfer.RunPending(paths.Root, paths.Config,
+                Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance);
+        }
 
         // ANTES de que nada abra la base de datos, y por eso está aquí arriba y no dentro de un
         // servicio: es el único momento en el que el fichero está garantizadamente en reposo.
@@ -201,6 +264,7 @@ public partial class App : Application
         // ÁLBUM (§186): las cajas como carpeta de cartas, solo para mirar.
         collection.AddSingleton<TcgCardFactory>();
         collection.AddSingleton<CatchCeremony>();
+        collection.AddSingleton<TransferOffer>();
         collection.AddSingleton<AlbumViewModel>();
         collection.AddSingleton<EvTrainingViewModel>();
         collection.AddSingleton<MoveReminderViewModel>();
@@ -325,6 +389,8 @@ public partial class App : Application
         window.Resize(rehearsedSize ?? _services.GetRequiredService<WindowSizeService>().Current);
         MainWindow = window;
         window.Show();
+
+        TellTransfer(paths, logger);
 
         var run = await _services.GetRequiredService<RunService>().LoadMostRecentAsync();
         logger.LogInformation("Run cargada al inicio: {Run}", run?.Name ?? "ninguna");
