@@ -80,6 +80,11 @@ public static class ServiceCollectionExtensions
             backupFolder,
             sp.GetRequiredService<ILogger<SaveMoveTeacher>>()));
         services.TryAddSingleton<IMoveTeacher>(sp => sp.GetRequiredService<SaveMoveTeacher>());
+        // El mote desde el VISOR (2026-09-26): mismas guardas, y se relee lo escrito.
+        services.TryAddSingleton<IPokemonRenamer>(sp => new SaveRenamer(
+            sp.GetRequiredService<PlayerSave>(),
+            backupFolder,
+            sp.GetRequiredService<ILogger<SaveRenamer>>()));
         services.TryAddSingleton<IMoveCatalog>(_ => new WorldMoveCatalog(language));
         services.TryAddSingleton<IStatForecast, WorldStatForecast>();
         // La zona, los contadores del juego y la Pokédex (§117). FieldZoneReader necesita la MapTable, que

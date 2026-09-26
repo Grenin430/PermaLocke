@@ -173,6 +173,7 @@ public partial class App : Application
         collection.AddSingleton<ShopService>();
         collection.AddSingleton<EvTrainingService>();
         collection.AddSingleton<MoveReminderService>();
+        collection.AddSingleton<RenameService>();
         collection.AddSingleton<PokemonIdentityService>();
         collection.AddSingleton<IRewardCatalog>(_ =>
             JsonRewardCatalog.Load(Path.Combine(paths.Data, "rewards.json")));

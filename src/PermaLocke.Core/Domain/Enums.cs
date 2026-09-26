@@ -378,5 +378,8 @@ public enum GameEventType
     /// 2026-09-21 when the Pokémon Centre healed a fallen party and PermaLocke put it back down. Appended at the end
     /// because the type is stored as a number.
     /// </remarks>
-    WipeRevoked
+    WipeRevoked,
+
+    /// <summary>The player changed a Pokémon's nickname from the viewer, written into the save (2026-09-26). At the end: stored as a number.</summary>
+    PokemonRenamed
 }

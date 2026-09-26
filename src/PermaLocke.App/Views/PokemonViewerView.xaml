@@ -610,6 +610,17 @@
                     <!-- LAS PÁGINAS, como la pantalla de datos del juego: cada una cabe entera, sin desplazarse. -->
                     <TabControl Style="{StaticResource PxTabControl}" Margin="0,14,0,0">
                         <TabItem Header="DATOS">
+                            <StackPanel>
+                            <!-- EL MOTE (2026-09-26): se escribe en la partida con el juego cerrado. Vacío le devuelve el nombre de su especie. -->
+                            <DockPanel Margin="0,0,0,10">
+                                <Button DockPanel.Dock="Right" Content="CAMBIAR MOTE" Style="{StaticResource PxSubtleButton}"
+                                        Padding="12,6,18,11" Margin="8,0,0,0" Command="{Binding RenameCommand}" VerticalAlignment="Center" />
+                                <pixel:PixelText DockPanel.Dock="Left" Text="MOTE" Style="{StaticResource PxLabel}" VerticalAlignment="Center" Margin="0,0,10,0" />
+                                <TextBox Style="{StaticResource PxTextBox}" Padding="8,5" MaxLength="12"
+                                         Text="{Binding NewNickname, UpdateSourceTrigger=PropertyChanged}" />
+                            </DockPanel>
+                            <pixel:PixelText Text="{Binding RenameStatus}" Scale="2" Wrap="True" Margin="0,0,0,10" Colour="{StaticResource PxGold}"
+                                             Visibility="{Binding HasRenameStatus, Converter={StaticResource BoolToVisibility}}" />
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="140" />
@@ -657,6 +668,7 @@
                                                      Colour="{StaticResource PxText}" />
                                 </StackPanel>
                             </Grid>
+                            </StackPanel>
                         </TabItem>
 
                         <TabItem Header="ESTADÍSTICAS">
