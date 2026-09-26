@@ -127,7 +127,7 @@ La última sesión va arriba. Antes del 2026-09-23 solo hay un resumen por fecha
   - INFORMACIÓN: 230 evoluciones (todas las que no son «subir al nivel N» a secas, grupo OTRAS FORMAS, formas regionales con nombre); `RomTool informacion` describe todos los métodos 1-42.
   - Iconos: Pheromosa/Xurkitree estaban cruzados en `PokemonIconIndex`; revisadas a ojo las 1025 especies (`RomTool iconos-nombres` + hoja montada con PowerShell). Formas alternativas sin revisar.
   - Wonder trade ±9 % (leído BxnnyLocke con ILSpy, instalado `ilspycmd` con permiso). Mapa: Konikoni fuera, Colina del Recuerdo dentro (marcador 0.334, 0.927).
-  - Descartado por el usuario: el caído que luchó tras una curación de historia; auto-actualizador (explicado, no hecho). Pendiente de decidir: sprites variocolor (no existen en `a/0/6/2`; opción: recolorear desde texturas 3D, aproximado).
+  - Descartado por el usuario: el caído que luchó tras una curación de historia; auto-actualizador (explicado, no hecho). Los sprites variocolor se hicieron después en otra sesión (§180, desde Showdown).
 - `tools/desplegar.ps1 -Prueba|-Amigos`: el despliegue de siempre en un comando (se niega con PermaLocke o Azahar abiertos; nunca borra; si ya hay un «(anterior)» se para). Probado `-Prueba`; `-Amigos` sin ejecutar todavía.
 
 ## 2026-09-24 — plugins y MISCELÁNEA sin mochila
