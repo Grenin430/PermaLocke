@@ -12,7 +12,7 @@ La última sesión va arriba. Antes del 2026-09-23 solo hay un resumen por fecha
 - Recordar: la carpeta de prueba y la de amigos tienen su propio `Data/torneo.json`: hay que copiarles las claves nuevas.
 - El usuario creó la aplicación de Discord «PermaLocke»: id `1552637220228169770`, ya en `discordApp`. Sin `discordImagen` (se usa el icono de la aplicación).
 - **Funciona** en el PC del usuario (lo juntó en su `main` local con `git merge origin/claude/relaxed-sagan-9amy20`). No salía porque tenía apagado en Discord «Compartir tu actividad detectada»: sin eso no sale nada y el log no dice nada. Sin probar con Azahar abierto a la vez.
-- El usuario desplegó con `desplegar.ps1 -Prueba` (+ `torneo.json` copiado a mano a `PermaLocke prueba\Data`) y `-Amigos`: la carpeta de amigos lleva fantasmas, lluvia (12 s) y estado de Discord. Pendiente de confirmar: si ejecutó `13-lluvias.sql` y que los amigos se actualicen.
+- El usuario desplegó con `desplegar.ps1 -Prueba` (+ `torneo.json` copiado a mano a `PermaLocke prueba\Data`) y `-Amigos`: la carpeta de amigos lleva fantasmas, lluvia (12 s) y estado de Discord. Pendiente de confirmar: si ejecutó `13-lluvias.sql`. **Los amigos aún no juegan** (2026-09-26): el usuario sigue probando él solo; la carpeta de amigos es solo lo preparado para repartir.
 
 ## 2026-09-26 — la lluvia de sangre (§184), desde la nube
 - Sesión en un **contenedor Linux en la nube** (rama `claude/relaxed-sagan-9amy20`): sin Azahar, sin el Escritorio del usuario y **sin .NET** (la red bloquea `builds.dotnet.microsoft.com`). Nada compilado ni visto: lo compila y prueba el usuario.
