@@ -19,6 +19,7 @@ Paso 6 (§199): informes de fallo. SQL `17-informes.sql` (bucket privado, solo e
 
 PR [Grenin430/PermaLocke#1](https://github.com/Grenin430/PermaLocke/pull/1) abierto a main. Repo puesto público por el usuario (se le explicó que el código y el historial quedan copiables; revisado: sin ROM, Locke, partidas ni secretos). §200: versión 1.0.1 en el csproj, visible en CONFIGURACIÓN, `publicar.ps1` sin versión fija; para probar la primera release.
 - **1.0.1 publicada a mano y entró** (el usuario vio PERMALOCKE 1.0.1). PR 1 y 2 aceptados; arreglado `$PSScriptRoot` vacío en `param` de Windows PowerShell 5.1. **§201 (1.0.2):** ventana de descarga con barra, MB, velocidad y tiempo, y GitHub Action que publica sola la release al subir la versión en main (notas en `docs/novedades/`).
+- La primera ejecución de la Action falló por sintaxis de PowerShell en el workflow (`"$t:"`); nada publicado. Arreglado y verificado con `pwsh` instalado como herramienta de .NET (parsear cada `run` antes de subir un workflow).
 
 ## 2026-09-26 — motes desde el VISOR, diez tandas de ideas y antitrampas de recarga
 - **Torneo en curso:** desde hoy solo se toca el repo; nada de `desplegar.ps1` ni copiar a `PermaLocke prueba` ([[Usuario y forma de trabajar]]).

@@ -12,6 +12,8 @@ on:
     branches: [main]
     paths:
       - src/PermaLocke.App/PermaLocke.App.csproj
+      # También si cambia este fichero: un arreglo de la Action vuelve a intentar la versión que aún no está publicada.
+      - .github/workflows/publicar-actualizacion.yml
   workflow_dispatch:
 
 permissions:
@@ -54,7 +56,7 @@ jobs:
         run: |
           foreach ($t in 'tests/PermaLocke.Core.Tests', 'tests/PermaLocke.Rules.Tests', 'tests/PermaLocke.GameLink.Tests', 'tests/PermaLocke.Randomizer.Tests') {
             dotnet test $t -v q --nologo
-            if ($LASTEXITCODE -ne 0) { throw "Fallan las pruebas de $t: no se publica." }
+            if ($LASTEXITCODE -ne 0) { throw "Fallan las pruebas de ${t}: no se publica." }
           }
 
       - name: Paquete
