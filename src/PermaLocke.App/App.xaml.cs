@@ -84,8 +84,9 @@ public partial class App : Application
 
         _onlyOne = new Mutex(initiallyOwned: true, @"Local\PermaLocke.App", out var createdNew);
 
-        // Reiniciado para el traspaso (§195): la de antes se está cerrando, se le da un momento.
-        if (!createdNew && e.Args.Contains(Services.TransferOffer.RestartArgument, StringComparer.OrdinalIgnoreCase))
+        // Reiniciado para el traspaso (§195) o tras actualizar (§196): la de antes se está cerrando, se le da un momento.
+        if (!createdNew && e.Args.Any(arg => arg.Equals(Services.TransferOffer.RestartArgument, StringComparison.OrdinalIgnoreCase)
+                                             || arg.Equals(Services.UpdateService.RestartArgument, StringComparison.OrdinalIgnoreCase)))
         {
             try
             {
@@ -265,6 +266,7 @@ public partial class App : Application
         collection.AddSingleton<TcgCardFactory>();
         collection.AddSingleton<CatchCeremony>();
         collection.AddSingleton<TransferOffer>();
+        collection.AddSingleton<UpdateService>();
         collection.AddSingleton<AlbumViewModel>();
         collection.AddSingleton<EvTrainingViewModel>();
         collection.AddSingleton<MoveReminderViewModel>();
@@ -391,6 +393,15 @@ public partial class App : Application
         window.Show();
 
         TellTransfer(paths, logger);
+
+        // LA ACTUALIZACIÓN (§196): lo que dejó la anterior fuera, y si hay versión nueva se ofrece. Solo en una carpeta
+        // repartida; nunca con --sin-juego, que es una copia de mirar.
+        if (!e.Args.Contains("--sin-juego", StringComparer.OrdinalIgnoreCase))
+        {
+            var updates = _services.GetRequiredService<UpdateService>();
+            updates.CleanUp();
+            _ = updates.CheckAsync();
+        }
 
         var run = await _services.GetRequiredService<RunService>().LoadMostRecentAsync();
         logger.LogInformation("Run cargada al inicio: {Run}", run?.Name ?? "ninguna");

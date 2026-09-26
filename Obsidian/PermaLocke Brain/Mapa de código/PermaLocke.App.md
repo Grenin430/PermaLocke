@@ -70,6 +70,7 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Services/TypeColours.cs` — **TypeColours** — The colours the series has used for the types since forever, by the game's type number: the table itself, without the brushes of `ypePalette`. 
 - `Services/TypePalette.cs` — **TypePalette** — The colours the series has used for the types since forever, by the game's type number. 
 - `Services/UiDispatcher.cs` — **IUiDispatcher, WpfUiDispatcher** — Runs work on the UI thread. View models need this because domain services complete their awaits on thread pool threads, and touching a bound ObservableCollection from there throws. 
+- `Services/UpdateService.cs` — **UpdateService** — The automatic update (§196, plan del próximo torneo, paso 3): at start, asks GitHub for the latest release of the repository named in Data/torneo.json (actualizaciones) and, if it is newer and ha...
 - `Services/VisualCppRuntime.cs` — **VisualCppStatus, VisualCppRuntime** — The runtime the emulator will load: its own when it has one, Windows's otherwise.
 - `Services/WindowSizeService.cs` — **WindowSize, WindowSizeService** — How big the window opens, chosen by the player and remembered. 
 - `Services/WorldAllowedStatics.cs` — **WorldAllowedStatics** — The static captures the competition allows (§119), as the species they are in the world the player is playing. 

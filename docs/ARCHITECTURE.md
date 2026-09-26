@@ -12435,3 +12435,36 @@ y va al log.
 fichero y aparta lo que había, no pisa una run, rechaza la misma carpeta y una sin run, respeta la ROM ya puesta, y el
 pendiente se hace una sola vez. Compilación entera sin avisos; Core 383, GameLink 397, Randomizer 485, Rules 151.
 **Sin ver en Windows** (el selector de carpeta y el reinicio).
+
+---
+
+## §196 · Actualización automática con GitHub Releases (2026-09-26, plan del próximo torneo, paso 3)
+
+**Para qué:** con 20 personas no se puede repartir cada versión a mano. Las versiones van a **GitHub Releases** (0 bytes
+en Supabase); cada app mira al abrirse si hay una nueva y se actualiza sola, sin tocar nada del jugador.
+
+**El paquete** (`tools/publicar-actualizacion.ps1 -Version 1.1.0`): `PermaLocke.exe` publicado con esa versión
+(`-p:Version`) y `Data/*.json`, nada más, en `.dist/PermaLocke-actualizacion-1.1.0.zip`. Se sube a una release con la
+etiqueta `v1.1.0`; sus notas son lo que se le enseña al jugador. La distribución entera (2 GB con emulador y expansión)
+no cambia entre versiones y no cabría en un fichero de release. `publicar.ps1` acepta ahora `-Version` (1.0.0 por
+defecto) para que la carpeta repartida sepa de qué versión parte; la app lleva `<Version>1.0.0</Version>`.
+
+**En la app** (`UpdateService` + `Infrastructure/AppUpdate`, que es la parte pura): solo en una carpeta repartida
+(`PermaLocke.local`) y nunca con `--sin-juego`. Al abrir, pregunta a `api.github.com/repos/<actualizaciones>/releases/latest`
+(`actualizaciones` en `Data/torneo.json`: `Grenin430/PermaLocke`). Si la release es más nueva que la versión que corre,
+no es borrador ni prueba y trae `PermaLocke-actualizacion-*.zip`, lo ofrece con sus notas. Con el emulador abierto no:
+pide cerrarlo y volver a abrir. Con un sí: descarga a `Actualizacion/`, comprueba tamaño y **SHA-256** (el `digest` que da
+GitHub), y lo instala: renombra el programa a `.old` (Windows deja renombrar uno en marcha, no sobrescribirlo), pone el
+nuevo y copia los `Data/*.json` del paquete. **Nunca** toca `Saves/`, `Config/`, `ROM/`, `Emulator/`, `Randomized/` ni un
+Data que el paquete no traiga. **Las reglas oficiales** que el organizador publicó (`RulesSync`, §193) se respetan: los
+ficheros con regla en el servidor no se pisan, y si el servidor no contesta no se pisa ninguno de los de reglas. Luego se
+reinicia con `--tras-actualizar` (espera a que suelte el mutex), y al arrancar se quitan el `.old` y la descarga.
+
+**Requisito:** el repositorio tiene que ser **público** para que las apps lean las releases sin contraseña; si no, GitHub
+responde 404 y la app lo apunta en el log y sigue.
+
+**Pruebas:** `AppUpdateTests` (Core.Tests, en ficheros de verdad): solo cuenta una versión más nueva y publicada con su
+paquete; la descarga se comprueba por tamaño y hash; instalar cambia el programa y los Data del paquete, respeta la regla
+oficial, no toca Saves/Config/Emulator ni un Data que no viene; un paquete sin programa no cambia nada; la limpieza quita
+el `.old` y la descarga. Compilación entera sin avisos; Core 392, GameLink 397, Randomizer 485, Rules 151. **Sin probar**
+contra una release real ni en Windows (el script de PowerShell no se ha ejecutado: aquí no hay PowerShell).

@@ -202,6 +202,7 @@ generado: 2026-09-24
 - L12332 · 193 · Admin ampliado: ficha, órdenes a la app, pausa del torneo, reglas oficiales por el servidor
 - L12364 · 194 · Subir solo lo nuevo (tabla eventos, subir_eventos) y LIMPIEZA en Admin
 - L12408 · 195 · Traer la partida de otra carpeta (FolderTransfer, TransferOffer)
+- L12441 · 196 · Actualización automática con GitHub Releases (UpdateService, AppUpdate)
 
 Subsecciones §176: bis (visor), ter (todas las pantallas, fuera ESTADÍSTICAS), quater (EV/MOVIMIENTOS sin bolsa, diálogos).
 

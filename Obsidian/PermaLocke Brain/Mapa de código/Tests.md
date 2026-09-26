@@ -26,6 +26,7 @@ Contado con grep, NO ejecutado. Detalle en [[Pruebas]].
 - `AbilityDrawTests.cs` (4)
 - `AchievementServiceTests.cs` (15)
 - `AdminOrderTests.cs` (1)
+- `AppUpdateTests.cs` (5)
 - `CreditServiceTests.cs` (12)
 - `EvSpreadTests.cs` (11)
 - `EvTrainingServiceTests.cs` (7)
