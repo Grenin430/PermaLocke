@@ -7,6 +7,7 @@ generado: 2026-09-26
 Contado con grep, NO ejecutado. Detalle en [[Pruebas]].
 
 ## PermaLocke.App.Tests
+- `AlbumTests.cs` (14)
 - `BloodRainTests.cs` (7)
 - `CapsuleMachineTests.cs` (10)
 - `DiscordLoginTests.cs` (1)
@@ -30,7 +31,7 @@ Contado con grep, NO ejecutado. Detalle en [[Pruebas]].
 - `EventChainTests.cs` (4)
 - `ExpansionFolderTests.cs` (4)
 - `FormDrawTests.cs` (3)
-- `GachaServiceTests.cs` (17)
+- `GachaServiceTests.cs` (20)
 - `GiftServiceTests.cs` (11)
 - `IslandMapTests.cs` (4)
 - `JsonRewardCatalogTests.cs` (7)

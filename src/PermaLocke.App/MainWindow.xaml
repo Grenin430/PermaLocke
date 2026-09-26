@@ -54,6 +54,9 @@
         <DataTemplate DataType="{x:Type vm:PokemonViewerViewModel}">
             <views:PokemonViewerView />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:AlbumViewModel}">
+            <views:AlbumView />
+        </DataTemplate>
         <DataTemplate DataType="{x:Type vm:EvTrainingViewModel}">
             <views:EvTrainingView />
         </DataTemplate>

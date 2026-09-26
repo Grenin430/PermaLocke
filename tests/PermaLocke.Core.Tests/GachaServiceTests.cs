@@ -144,6 +144,52 @@ public sealed class GachaServiceTests
     /// can produce a 210 — the first rung of the family that reaches 600 — and that is correct.
     /// Under the old rule a 210 was a tier one and the top tier only ever gave finished Pokémon.
     /// </remarks>
+    /// <summary>
+    /// The album's rarity (§186): any species gets the tier of the band its family ENDS in, the same the banner sells
+    /// it from, so the baby of the pseudo-legendary is a tier five and the first rung of a weak line a tier one.
+    /// </summary>
+    [Theory]
+    [InlineData(1, "tier1")]
+    [InlineData(2, "tier1")]
+    [InlineData(3, "tier2")]
+    [InlineData(5, "tier3")]
+    [InlineData(8, "tier4")]
+    [InlineData(12, "tier5")]
+    [InlineData(13, "tier5")]
+    [InlineData(9, "tier5")]
+    public void Every_species_has_the_tier_its_family_ends_in(int species, string tierId)
+    {
+        Assert.Equal(tierId, Build().TierOf(species)?.Id);
+    }
+
+    /// <summary>A legendary is the tier that deals legendaries, even one whose total sits in a cheaper band.</summary>
+    [Theory]
+    [InlineData(10)]
+    [InlineData(11)]
+    public void A_legendary_is_always_the_tier_that_deals_them(int species)
+    {
+        var service = Build();
+
+        Assert.Equal("tier5", service.TierOf(species)?.Id);
+        Assert.Equal(4, service.TierIndexOf(species));
+    }
+
+    /// <summary>
+    /// A species outside every family is graded on its own total; one nobody knows has no tier at all, and the
+    /// album shows no rarity instead of an invented one.
+    /// </summary>
+    [Fact]
+    public void Without_a_family_the_species_is_graded_alone_and_unknown_ones_have_no_tier()
+    {
+        var service = new GachaService(new Catalog(Tiers(), [Pocho()]),
+            new Species([.. SpeciesTable(), new SpeciesStats(20, "Suelto", 480, false, ["Habilidad A"])]) { Lines = Families() },
+            null!, null!, null!, null!);
+
+        Assert.Equal("tier2", service.TierOf(20)?.Id);
+        Assert.Null(service.TierOf(999));
+        Assert.Equal(-1, service.TierIndexOf(999));
+    }
+
     [Fact]
     public void The_top_tier_can_hand_over_the_weakest_species_in_the_game()
     {

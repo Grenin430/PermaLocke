@@ -12019,3 +12019,57 @@ que PermaLocke esté abierto y **también con el emulador abierto**, por delante
 **Requisito del lado de Discord:** con «Compartir tu actividad detectada con otras personas» apagado (Ajustes >
 Privacidad de la actividad) no sale nada y la app no se entera: no hay error que apuntar. Es lo primero que mirar si a
 alguien no le sale. Sin probar todavía: con el emulador abierto a la vez.
+
+## §186 · ÁLBUM: los Pokémon de la partida como cartas TCG en una carpeta (2026-09-26)
+
+Idea del jugador, a partir de la idea de los «cromos». Una sección nueva, **ÁLBUM**, en el grupo EQUIPO después del
+VISOR. **Solo para mirar**: no escribe nada, no tiene wonder trade ni entrenamiento. Lee la partida como el visor
+(`IBoxReader`), así que funciona con el juego abierto o cerrado (`GameNeed.Either`) y enseña lo último guardado.
+
+**La carpeta.** Dos páginas abiertas con fundas de plástico, anillas en el lomo. Cada caja con Pokémon (y el equipo
+primero) empieza en una doble página nueva; el hueco de una funda es el del PC, con sus vacíos (`AlbumPaging`). Arriba:
+◀ caja ▶, «PÁGINAS 1-2 DE 4», el resumen (cartas, variocolor, quemadas) y los botones **3×3** (carta completa) y
+**4×4** (carta pequeña, sin movimientos), que el jugador quería probar. Se pasa página con las flechas, la rueda del
+ratón o ◀ ▶: la hoja se estrecha hacia el lomo y se abre al otro lado, a columnas enteras. Al pasar el ratón la carta se
+levanta de su funda; con un clic sale **en grande** (hasta 5 píxeles por celda), flotando, y al pulsarla **se da la
+vuelta** y enseña su ficha. ◀ ▶ recorren las cartas de la caja; Esc o un clic fuera la devuelven.
+
+**La carta** (`TcgCard` = datos, `TcgCardArt` = dibujo, puro y probado): pixel art a celdas enteras, sin degradados
+(tramado ordenado). Borde amarillo de carta de siempre; panel y fondo del dibujo del color de su **primer tipo**, con un
+motivo por tipo (llamas, olas, hierba, rayos, noche con luna…). Arriba la **fase** («BÁSICO», «FASE 1», «FASE 2», de su
+línea evolutiva en `ISpeciesStatsCatalog.Lines`) y la **energía** de sus tipos (un pictograma por tipo); el nombre (mote
+o especie); el icono del cartucho con contorno y sombra; la tira con **NV** y **PS**, y la **rareza**; y sus cuatro
+**movimientos** como ataques, con la energía de su tipo. La pequeña lleva nombre, dibujo, NV, PS, energías y rareza. El
+**reverso** es la ficha: habilidad, naturaleza (con lo que sube y baja), objeto, estadísticas con barra de IV (dorada si es
+31) y EV, dónde y a qué nivel se capturó. **Nada inventado**: sin daños de ataque, debilidades ni retirada, que el juego no
+tiene (regla 3).
+
+**Rareza** (petición del jugador): si salió del **gacha**, el tier de su tirada (`rareza` del evento `GachaRoll`, por PID);
+si no, el tier que le toca a su especie por la regla del gacha, **`GachaService.TierOf`**: la banda de la forma final de
+su familia, o el tier de los legendarios si algo de la familia lo es (pruebas en `GachaServiceTests`). Símbolos: ● tier 1,
+◆ 2, ★ 3, ★ plateada 4, ★ dorada 5, y una cápsula pequeña delante si vino del gacha.
+
+**Especiales:**
+- **Variocolor:** lámina holográfica en el dibujo, con rayas de colores fijas, una franja de arcoíris que la cruza cada
+  2,6 s y destellos (`TcgCardArt.Animate`).
+- **Caída** (por PID en la run, petición del jugador «arrugada o medio quemada»): sin color con algo de sepia, tres
+  dobleces, textura de pliegues, y **quemada desde una esquina** (según su PID) con borde carbonizado y **brasas que
+  parpadean**; lo quemado no existe y se ve la funda. Se quema entre un 35 y un 40 %. Por detrás, la misma quemadura en la
+  esquina contraria.
+- **Huevo:** la carta boca abajo, el dorso violeta con una Poké Ball y «HUEVO».
+
+**Piezas:** `Views/TcgCard.cs` (datos y `CellCanvas`), `Views/TcgCardArt.cs`, `Views/AlbumScene.cs` (páginas, fundas,
+lomo, vuelta de hoja; guarda el dibujo de páginas y cartas quietas), `Views/AlbumStage.cs` y `Views/CardStage.cs`
+(controles WPF, celdas enteras centradas en píxeles enteros), `Views/AlbumView.xaml`, `ViewModels/AlbumViewModel.cs`.
+`PixelScene.SmallGlyph` expone la letra pequeña (con `: / ' , ( ) ·` nuevas); en las cartas la N va a 4 celdas porque la
+de 3 se leía D («LADZALLAMAS»). Pruebas: `AlbumTests` (paginado, cartas sin huecos, quemadas, holo que se mueve, huevo,
+funda bajo el ratón, vuelta de hoja sin agujeros) y `HomeViewTests` carga la vista.
+
+**Cómo se hizo desde la nube, sin Windows:** el SDK de .NET 10 se instaló con `apt-get update && apt-get install
+dotnet-sdk-10.0` (Ubuntu 24.04 lo trae), la app compila en Linux con `-p:EnableWindowsTargeting=true`, y el dibujo de
+cartas y álbum se ejecutó en un programa de consola aparte (con `Color` sustituido) que sacaba PNG para revisarlos: así se
+corrigieron el «PS» encima de la placa de fase, la N, el reverso cortado y los pictogramas de Dragón y Volador.
+
+**Sin probar:** la sección dentro de la app (WPF no corre en Linux), el ratón, el teclado y la animación en pantalla, y
+las cartas con los iconos reales del cartucho (en las imágenes de prueba había criaturas dibujadas a mano). Las pruebas de
+`AlbumTests` compilan pero se ejecutan en Windows.

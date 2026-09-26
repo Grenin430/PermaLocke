@@ -22,6 +22,7 @@ public sealed partial class MainViewModel : ObservableObject
     public MainViewModel(LauncherViewModel launcher, HomeViewModel home, RandomizerViewModel randomizer,
         MiscellaneousViewModel miscellaneous, GachaViewModel gacha, PokemonViewerViewModel viewer,
         EvTrainingViewModel evTraining, MoveReminderViewModel moveReminder, AchievementsViewModel achievements,
+        AlbumViewModel album,
         ShopViewModel shop, PokePasteViewModel pokePaste,
         MapViewModel map,
         RouletteViewModel roulette, RouletteService wheel, SettingsViewModel settings,
@@ -52,7 +53,7 @@ public sealed partial class MainViewModel : ObservableObject
 
         // Grupos (2026-09-24): la barra tenía 17 secciones. Las que tratan de lo mismo cuelgan de una entrada.
         var play = new GroupSectionViewModel("JUGAR", "IconPlay", logger, launcher, randomizer);
-        var team = new GroupSectionViewModel("EQUIPO", "IconGrid", logger, viewer, evTraining, moveReminder, pokePaste);
+        var team = new GroupSectionViewModel("EQUIPO", "IconGrid", logger, viewer, album, evTraining, moveReminder, pokePaste);
         var tournament = new GroupSectionViewModel("TORNEO", "IconTrophy", logger, sync, achievements, battle, cemetery);
         var info = new GroupSectionViewModel("INFORMACIÓN", "IconDocument", logger,
             new InformationPageViewModel("EVOLUCIONES", false, information),

@@ -192,6 +192,7 @@ generado: 2026-09-24
 - L11923 · 183 · Los fantasmas de los caídos entre jugadores
 - L11965 · 184 · La lluvia de sangre de un wipe en todos los emuladores
 - L11999 · 185 · «Jugando a PermaLocke» en el estado de Discord
+- L12023 · 186 · ÁLBUM: cartas TCG pixel de la partida
 
 Subsecciones §176: bis (visor), ter (todas las pantallas, fuera ESTADÍSTICAS), quater (EV/MOVIMIENTOS sin bolsa, diálogos).
 

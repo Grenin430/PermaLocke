@@ -180,7 +180,20 @@ public abstract class PixelScene
         ['7'] = ["###", "..#", ".#.", ".#.", ".#."],
         ['8'] = ["###", "#.#", "###", "#.#", "###"],
         ['9'] = ["###", "#.#", "###", "..#", "###"],
+        [':'] = ["...", ".#.", "...", ".#.", "..."],
+        ['/'] = ["..#", "..#", ".#.", "#..", "#.."],
+        ['\''] = [".#.", ".#.", "...", "...", "..."],
+        [','] = ["...", "...", "...", ".#.", "#.."],
+        ['('] = [".#.", "#..", "#..", "#..", ".#."],
+        [')'] = [".#.", "..#", "..#", "..#", ".#."],
+        ['·'] = ["...", "...", ".#.", "...", "..."],
     };
+
+    /// <summary>
+    /// A glyph of the small font, for drawings outside a scene such as the album's cards (§186). The accented capitals
+    /// are the plain letter: whoever draws adds the accent, as <see cref="SmallText"/> does.
+    /// </summary>
+    internal static string[]? SmallGlyph(char ch) => Small.GetValueOrDefault(ch);
 
     /// <param name="width">Columns the panel can show; never fewer than the design.</param>
     /// <param name="height">Rows the panel can show; never fewer than the design. The extra goes above.</param>

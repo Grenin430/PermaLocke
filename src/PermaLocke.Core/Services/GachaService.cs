@@ -158,6 +158,58 @@ public sealed class GachaService(
     public SpeciesStats? StatsOf(int id) => ById.GetValueOrDefault(id);
 
     /// <summary>
+    /// The tier a species belongs to by the gacha's own rule, whether or not it came out of the gacha: the band its
+    /// family ends in, or the tier that deals legendaries when anything in its family is one (§186).
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// For the album's rarity mark. The same rule as <see cref="LinesOf"/>, so a Gible caught in the grass is the
+    /// same tier five the gacha would have sold, and nothing on screen can disagree with the banner's list.
+    /// </para>
+    /// <para>
+    /// A species in no family is graded on its own total. One the catalogue does not know at all has no tier and
+    /// the answer is null: no rarity is shown rather than a made-up one.
+    /// </para>
+    /// </remarks>
+    public GachaTier? TierOf(int species)
+    {
+        if (Ordered.Count == 0)
+        {
+            return null;
+        }
+
+        var byId = ById;
+        var lines = speciesStats.Lines.Where(line => line.AllSpecies.Contains(species)).ToList();
+
+        if (lines.Count == 0)
+        {
+            if (!byId.TryGetValue(species, out var alone))
+            {
+                return null;
+            }
+
+            return alone.Legendary ? LegendaryTier : Band(alone.BaseStatTotal);
+        }
+
+        if (lines.Any(IsLegendary))
+        {
+            return LegendaryTier;
+        }
+
+        return Band(lines.Max(EndOf));
+    }
+
+    /// <summary>Where <see cref="TierOf"/> falls among the tiers, cheapest first, or -1 when it has none.</summary>
+    public int TierIndexOf(int species) =>
+        TierOf(species) is { } tier ? Ordered.ToList().FindIndex(t => t.Id == tier.Id) : -1;
+
+    /// <summary>The tier that deals legendaries, the dearest one if several do, or the dearest tier of all.</summary>
+    private GachaTier LegendaryTier => Ordered.LastOrDefault(tier => tier.LegendaryChance > 0) ?? Ordered[^1];
+
+    /// <summary>The band a total falls in; above every ceiling, the dearest tier.</summary>
+    private GachaTier Band(int total) => Ordered.FirstOrDefault(tier => total <= tier.MaxBaseStatTotal) ?? Ordered[^1];
+
+    /// <summary>
     /// Which rung of a family a roll lands on with this much of the run behind it.
     /// </summary>
     /// <remarks>

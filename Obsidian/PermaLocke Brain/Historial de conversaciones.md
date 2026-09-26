@@ -6,6 +6,12 @@ revisado: 2026-09-24
 
 La última sesión va arriba. Antes del 2026-09-23 solo hay un resumen por fechas sacado de `CLAUDE.md` y de `ARCHITECTURE.md`: el detalle está en el § citado ([[Índice de ARCHITECTURE]]). **Cada sesión nueva añade su entrada aquí.**
 
+## 2026-09-26 — ÁLBUM de cartas TCG (§186), desde la nube
+- Idea del usuario a partir de los cromos: el visor como álbum de cartas TCG. Decisiones suyas: **sección nueva, solo ver** (sin wonder trade ni nada), **probar 3×3 y 4×4**, rareza = **tier del gacha** (y los que no salieron del gacha, por su BST/tier), caídos **arrugados o medio quemados**, «lo más detallado y pulido posible».
+- Hecho: `GachaService.TierOf/TierIndexOf` (+pruebas), `TcgCard`/`CellCanvas`, `TcgCardArt` (completa 70×96, pequeña 50×68, reverso ficha, dorso/huevo, holo animada, quemada con brasas), `AlbumScene` (fundas, anillas, vuelta de hoja), `AlbumStage`, `CardStage` (carta en grande que se da la vuelta), `AlbumView`, `AlbumViewModel` en EQUIPO tras VISOR. `AlbumTests`.
+- **Descubierto:** en la nube se puede compilar: `apt-get update && apt-get install -y dotnet-sdk-10.0`, y `dotnet build src/PermaLocke.App -p:EnableWindowsTargeting=true` compila WPF en Linux (0 avisos). Tests no-WPF (Core) se ejecutan: 380 correctas. Las de App (WPF) solo compilan. El dibujo se verificó con un programa de consola en el scratchpad (`cardpreview`, stub de `Color`) que saca PNG.
+- Sin ver en la app ni con iconos reales. Pendiente de que el usuario lo compile y diga qué cambiar.
+
 ## 2026-09-26 — «Jugando a PermaLocke» en Discord (§185), desde la nube
 - Cuarta tanda de ideas, ya sin tocar la jugabilidad (el usuario **no quiere ideas que alteren la jugabilidad**): estado en Discord, cromos, álbum de fotos automático, el viaje en el MAPA, biografía de cada Pokémon, resumen de sesión, sonido chiptune. Eligió solo el estado de Discord, y **solo** «Jugando a PermaLocke» con el icono, también con el emulador abierto.
 - `DiscordPresence` (tubería `discord-ipc-N`, sin NuGet), `AzaharInstallation.DisableDiscordPresence` (`enable_discord_presence=false` en `[UI]`), claves `discordApp`/`discordImagen` en `Data/torneo.json` (vacías: **el usuario tiene que poner el id de la aplicación de Discord** llamada PermaLocke, con su icono en el Developer Portal). Sin compilar ni ver.

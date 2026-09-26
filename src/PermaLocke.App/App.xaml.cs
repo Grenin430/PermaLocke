@@ -193,6 +193,8 @@ public partial class App : Application
         collection.AddSingleton<RouletteViewModel>();
         collection.AddSingleton<ShopViewModel>();
         collection.AddSingleton<PokemonViewerViewModel>();
+        // ÁLBUM (§186): las cajas como carpeta de cartas, solo para mirar.
+        collection.AddSingleton<AlbumViewModel>();
         collection.AddSingleton<EvTrainingViewModel>();
         collection.AddSingleton<MoveReminderViewModel>();
         collection.AddSingleton<PokePasteViewModel>();

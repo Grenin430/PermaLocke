@@ -54,7 +54,7 @@ public sealed class HomeViewTests
                 UserControl[] screens =
                 [
                     new LauncherView(), new RandomizerView(), new GachaView(), new ShopView(), new AchievementsView(),
-                    new MapView(), new EvTrainingView(), new MoveReminderView(), new PokePasteView(), new CemeteryView(),
+                    new MapView(), new AlbumView(), new EvTrainingView(), new MoveReminderView(), new PokePasteView(), new CemeteryView(),
                     new BattleModeView(), new RouletteView(), new MiscellaneousView(), new SettingsView(),
                 ];
                 foreach (var screen in screens)
