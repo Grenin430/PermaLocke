@@ -115,7 +115,7 @@ public sealed partial class UpdateService(AppPaths paths, DiscordLogin discord, 
         try
         {
             using var request = new HttpRequestMessage(HttpMethod.Get, $"https://api.github.com/repos/{repository}/releases/latest");
-            request.Headers.UserAgent.ParseAdd($"PermaLocke/{Current.ToString(3)}");
+            request.Headers.UserAgent.ParseAdd($"PermaLocke/{AppUpdate.Display(Current)}");
             request.Headers.Accept.ParseAdd("application/vnd.github+json");
             using var cancel = new CancellationTokenSource(TimeSpan.FromSeconds(15));
             using var response = await Http.SendAsync(request, cancel.Token);
@@ -128,7 +128,7 @@ public sealed partial class UpdateService(AppPaths paths, DiscordLogin discord, 
 
             if (AppUpdate.Pick(await response.Content.ReadAsStringAsync(cancel.Token), Current) is not { } asset)
             {
-                logger.LogInformation("PermaLocke {Version} está al día", Current.ToString(3));
+                logger.LogInformation("PermaLocke {Version} está al día", AppUpdate.Display(Current));
                 return;
             }
 

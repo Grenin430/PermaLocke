@@ -23,7 +23,8 @@ Cómo llega una versión nueva a los jugadores desde el 2026-09-26. Detalle téc
    CONFIGURACIÓN enseña **PERMALOCKE x.y.z** al final.
 5. **Desde la 1.0.3 (§202)** no pregunta: mira al abrir y cada 30 min; la versión esperando sale como **franja ámbar
    con ACTUALIZAR** encima de cada sección y, con el juego abierto, como **aviso fijo** sobre el emulador hasta que se
-   cierra. Versiones siempre de **tres cifras** (1.0.2.1 no sería más nueva que 1.0.2).
+   cierra. Hasta la 1.0.3, solo tres cifras. **Desde la 1.0.4 (§203), cuatro**: 1.0.4.1 > 1.0.4. Una app 1.0.3 o anterior no ve
+   el cuarto número: por eso la primera con cuatro cifras tiene que ser 1.0.4.x, no 1.0.3.x.
 
 ## Estado verificado
 - **1.0.1**: publicada a mano por el usuario (script + release en la web). **Observado**: se ofreció, entró y se vio

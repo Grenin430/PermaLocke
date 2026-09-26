@@ -12626,3 +12626,20 @@ tomado por la 1.0.2: es la **1.0.3**.
 
 **Sin probar** en Windows (franja, aviso fijo). Compilación entera sin avisos; Core 398, GameLink 397, Randomizer 485,
 Rules 151, PixelCheck 69.
+
+---
+
+## §203 · Versiones de cuatro números (2026-09-26, PermaLocke 1.0.4)
+
+**Para qué:** el usuario quiere arreglos pequeños como «1.0.3.1». Hasta la 1.0.3, `AppUpdate.Normalise` se quedaba con
+tres números y «1.0.3.1» era igual que «1.0.3»: nunca se habría ofrecido.
+
+**Cómo queda:** `Normalise` guarda los cuatro (los que faltan, a cero): 1.0.4.1 > 1.0.4 = 1.0.4.0, y 1.0.5 > 1.0.4.9.
+`AppUpdate.Display` enseña el cuarto solo si no es cero (CONFIGURACIÓN, logs, el agente de usuario, la franja y el aviso
+de §202). La Action acepta `<Version>` de tres o cuatro números, y `publicar-actualizacion.ps1` también.
+
+**Por qué esta es la 1.0.4 y no la 1.0.3.1:** la 1.0.3 ya estaba publicándose cuando se pidió, y una app 1.0.3 compara
+tres números: una 1.0.3.1 no le habría llegado nunca. Desde la 1.0.4, las siguientes pueden ser 1.0.4.1, 1.0.4.2…
+
+**Pruebas:** `AppUpdateTests` con versiones de cuatro números y `Display`. Core 408. Workflow y scripts pasados por el
+analizador de PowerShell; el paso de la versión, ejecutado con un csproj en 1.0.4.1.

@@ -36,7 +36,7 @@ jobs:
         shell: pwsh
         run: |
           $csproj = Get-Content -Raw src/PermaLocke.App/PermaLocke.App.csproj
-          if ($csproj -notmatch '<Version>(\d+\.\d+\.\d+)</Version>') { throw 'No encuentro <Version> en el csproj de la app.' }
+          if ($csproj -notmatch '<Version>(\d+\.\d+\.\d+(?:\.\d+)?)</Version>') { throw 'No encuentro <Version> en el csproj de la app.' }
           $version = $Matches[1]
           gh release view "v$version" *> $null
           $existe = $LASTEXITCODE -eq 0

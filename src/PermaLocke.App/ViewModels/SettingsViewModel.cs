@@ -30,7 +30,7 @@ public sealed partial class SettingsViewModel : SectionViewModel
     private bool _loading;
 
     /// <summary>The version running, to see at a glance whether an update (§196) went in.</summary>
-    public string VersionText { get; } = $"PERMALOCKE {UpdateService.Current.ToString(3)}";
+    public string VersionText { get; } = $"PERMALOCKE {AppUpdate.Display(UpdateService.Current)}";
 
     public SettingsViewModel(AppSettings settings, WindowSizeService windowSizes, Notifier notifier, AppPaths paths, PokemonSpriteService sprites, DiscordLogin discord,
         ILogger<SettingsViewModel> logger)
