@@ -32,6 +32,7 @@
     <Resource Include="Assets\PermaLocke.Admin.ico" />
     <!-- El mismo inicio de sesión que la app del jugador, sin duplicarlo: el organizador entra con su Discord. -->
     <Compile Include="..\PermaLocke.App\Services\DiscordLogin.cs" Link="Services\DiscordLogin.cs" />
+    <Compile Include="..\PermaLocke.App\Services\DisplayNames.cs" Link="Services\DisplayNames.cs" />
     <!-- El kit pixel de la app, el mismo fichero y no una copia: Admin se ve igual que la app del jugador. -->
     <Compile Include="..\PermaLocke.App\Views\Pixel\*.cs" Link="Pixel\%(Filename)%(Extension)" />
     <Compile Include="..\PermaLocke.App\Views\PixelPanel.cs;..\PermaLocke.App\Views\PixelBar.cs;..\PermaLocke.App\Views\ToastPixels.cs;..\PermaLocke.App\Services\ToastKind.cs" Link="Pixel\%(Filename)%(Extension)" />

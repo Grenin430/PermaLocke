@@ -99,6 +99,11 @@ public sealed partial class EmulatorLauncher : ObservableObject
     private readonly BattleModeService _battle;
     private readonly EmulatorCrashReport _crashes;
     private readonly Notifier _notifier;
+    private readonly IntegrityGuard _integrity;
+    private readonly OrderService _orders;
+
+    /// <summary>Why the organiser closed JUGAR for this run, or null when it is open (2026-09-26).</summary>
+    private string? _lockReason;
     private readonly ILogger<EmulatorLauncher> _logger;
     private readonly DispatcherTimer _timer = new() { Interval = PollEvery };
 
@@ -120,9 +125,11 @@ public sealed partial class EmulatorLauncher : ObservableObject
 
     public EmulatorLauncher(AzaharInstallation azahar, AppPaths paths, IRunContext runContext,
         IPlaytimeStore playtime, BattleModeService battle, EmulatorCrashReport crashes, Notifier notifier,
-        AppSettings settings, ILogger<EmulatorLauncher> logger)
+        AppSettings settings, IntegrityGuard integrity, OrderService orders, ILogger<EmulatorLauncher> logger)
     {
         _settings = settings;
+        _integrity = integrity;
+        _orders = orders;
         _crashes = crashes;
         _notifier = notifier;
         _azahar = azahar;
@@ -161,8 +168,25 @@ public sealed partial class EmulatorLauncher : ObservableObject
 
     private string SettingsPath => Path.Combine(_paths.Config, "lanzador.json");
 
+    /// <summary>Reads again whether the organiser has JUGAR closed for this run, and looks at everything again.</summary>
+    public async Task RefreshLockAsync()
+    {
+        try
+        {
+            _lockReason = _runContext.Current is { } run ? await _orders.PlayLockReasonAsync(run.Id) : null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "No se ha podido mirar si el organizador ha cerrado el juego");
+        }
+
+        Refresh();
+    }
+
     public void Start()
     {
+        _ = RefreshLockAsync();
+        _runContext.CurrentChanged += (_, _) => _ = RefreshLockAsync();
         Refresh();
         _timer.Start();
         _ = PollAsync();
@@ -236,6 +260,11 @@ public sealed partial class EmulatorLauncher : ObservableObject
                     ? $"Instalado · {run.SeedLabel}"
                     : "Instalado", CheckLevel.Ok)
                 : new LaunchCheck("Tu mundo", "No has instalado tu mundo. Hazlo en RANDOMIZADOR.", CheckLevel.Warning));
+
+        if (_lockReason is { } locked)
+        {
+            checks.Add(new LaunchCheck("Organizador", $"El organizador ha cerrado el juego: {locked}", CheckLevel.Blocking));
+        }
 
         checks.Add(_runContext.Current is null
             ? new LaunchCheck("Tu run", "No tienes ninguna run. Créala en HOME.", CheckLevel.Warning)
@@ -359,6 +388,7 @@ public sealed partial class EmulatorLauncher : ObservableObject
         _azahar.DisableDiscordPresence(location);
         _azahar.SetFollower(location, Path.Combine(_paths.Root, "Emulator", "follower", AzaharInstallation.FollowerPluginName),
             _settings.Current.Follower);
+        _integrity.PrepareLaunch(location);
 
         try
         {
@@ -490,6 +520,13 @@ public sealed partial class EmulatorLauncher : ObservableObject
                     _lastHeartbeat = DateTimeOffset.MinValue;
                     _crashNotice = null;
                     _logger.LogInformation("Sesión de juego desde {Start}", started);
+
+                    // Atado a PermaLocke, se abriera desde JUGAR o no: si PermaLocke se va, por donde sea, el juego se va
+                    // con él (2026-09-26).
+                    if (_integrity.Enabled && !EmulatorJob.Attach(process))
+                    {
+                        _logger.LogWarning("Windows no ha dejado atar Azahar a PermaLocke");
+                    }
                 }
 
                 // Se sujeta el proceso mientras vive: al desaparecer, su código de salida es lo único que distingue
@@ -519,6 +556,11 @@ public sealed partial class EmulatorLauncher : ObservableObject
                     await RecordAsync(now);
                 }
 
+                if (_sessionRun is { } playing)
+                {
+                    await _integrity.WatchStatesAsync(playing, _azahar.Locate(AppContext.BaseDirectory));
+                }
+
                 return;
             }
 
@@ -530,6 +572,19 @@ public sealed partial class EmulatorLauncher : ObservableObject
                 await RecordAsync(now);
                 _logger.LogInformation("Sesión de juego terminada: {Length} (código de salida {Code})",
                     Playtime.Say(length), exit is { } seen ? $"0x{seen:X8}" : "desconocido");
+
+                if (_sessionRun is { } ended)
+                {
+                    // Un estado guardado en el último segundo, el combate a medias y lo que la partida dice ahora.
+                    await _integrity.WatchStatesAsync(ended, _azahar.Locate(AppContext.BaseDirectory));
+
+                    if (exit is { } code0)
+                    {
+                        await _integrity.CheckAbandonAsync(ended, code0, _closeRequested, now);
+                    }
+
+                    await _integrity.RememberPlaytimeAsync(ended);
+                }
                 _sessionStart = null;
                 _sessionRun = null;
                 SessionClock = string.Empty;
@@ -601,6 +656,13 @@ public sealed partial class EmulatorLauncher : ObservableObject
             zip is null
                 ? $"{char.ToUpper(meaning![0])}{meaning[1..]}. No se ha podido guardar el informe."
                 : $"Informe guardado en Diagnosticos\\{Path.GetFileName(zip)}. Pásaselo a quien te dio PermaLocke.");
+    }
+
+    /// <summary>True when the emulator is running, whoever opened it.</summary>
+    public static bool IsOpen()
+    {
+        using var process = FindProcess();
+        return process is not null;
     }
 
     private static Process? FindProcess()

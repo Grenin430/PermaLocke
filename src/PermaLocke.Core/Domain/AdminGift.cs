@@ -22,7 +22,10 @@ public sealed record GiftItem(int Id, string Name, int Amount);
 public sealed record AdminGift
 {
     /// <summary>2 since point adjustments (2026-09-24). A plain gift is still written as 1, so older players still get it.</summary>
-    public const int CurrentSchema = 2;
+    public const int CurrentSchema = 3;
+
+    /// <summary>The schema an order is written with (2026-09-26): an older application skips it rather than guess.</summary>
+    public const int OrderSchema = 3;
 
     /// <summary>The schema an adjustment is written with: an older player, who would let it wait forever, does not see it.</summary>
     public const int AdjustmentSchema = 2;
@@ -60,19 +63,27 @@ public sealed record AdminGift
     /// </summary>
     public bool Adjustment { get; init; }
 
+    /// <summary>An order to the player's application instead of a gift (2026-09-26). Applied on its own, like an adjustment.</summary>
+    public AdminOrder? Order { get; init; }
+
     /// <summary>True when this gift is addressed to that player.</summary>
     public bool IsFor(Guid playerId) =>
         string.Equals(To, Everybody, StringComparison.OrdinalIgnoreCase)
         || (Guid.TryParse(To, out var to) && to == playerId);
 
     /// <summary>Whether it carries anything at all, which is what the admin's button checks before sending.</summary>
-    public bool IsEmpty => Points == 0 && Items.Count == 0 && WonderTrades == 0
+    public bool IsEmpty => Order is null && Points == 0 && Items.Count == 0 && WonderTrades == 0
                            && !Rolls.Any(roll => roll.Value > 0);
 
     /// <summary>What it gives, in one line, for the inbox and for the admin's own list.</summary>
     public string Say()
     {
         var parts = new List<string>();
+
+        if (Order is not null)
+        {
+            parts.Add(Order.Summary);
+        }
 
         if (Points != 0)
         {

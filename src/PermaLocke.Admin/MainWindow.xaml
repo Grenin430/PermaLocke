@@ -18,6 +18,9 @@
             <Button DockPanel.Dock="Right" Content="LISTA DEL TORNEO" Click="OnWhitelist" Margin="0,0,8,0" />
             <Button DockPanel.Dock="Right" Content="ANUNCIOS" Click="OnAnnouncements" Margin="0,0,8,0" />
             <Button DockPanel.Dock="Right" Content="CONSUMO" Click="OnUsage" Margin="0,0,8,0" />
+            <Button DockPanel.Dock="Right" Content="REGLAS" Click="OnRules" Margin="0,0,8,0" />
+            <Button DockPanel.Dock="Right" Content="REANUDAR TORNEO" Command="{Binding ResumeAllCommand}" Margin="0,0,8,0" />
+            <Button DockPanel.Dock="Right" Content="PAUSAR TORNEO" Command="{Binding PauseAllCommand}" Margin="0,0,8,0" />
             <Button DockPanel.Dock="Right" Content="ENTRAR CON DISCORD" Style="{StaticResource Primary}" Command="{Binding SignInCommand}" Margin="0,0,8,0"
                     Visibility="{Binding IsSignedOut, Converter={StaticResource BoolToVisibility}}" />
             <!-- La cuenta con la que estás dentro, con su foto de Discord. -->
@@ -91,6 +94,7 @@
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
 
                                     <StackPanel Grid.Column="0">
@@ -104,6 +108,9 @@
                                     </StackPanel>
 
                                     <!-- Conectado ahora: gris, azul en la app, verde jugando, como en JUGAR. -->
+                                    <Button Grid.Column="2" Content="FICHA" Padding="10,4" Margin="10,0,0,0" VerticalAlignment="Center"
+                                            CommandParameter="{Binding}"
+                                            Command="{Binding DataContext.OpenSheetCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
                                     <TextBlock Grid.Column="1" Text="{Binding Presence}" VerticalAlignment="Center" FontSize="11">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">

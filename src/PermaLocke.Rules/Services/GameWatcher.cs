@@ -187,6 +187,7 @@ public sealed class GameWatcher(IPokemonRepository pokemon, IEventStore events, 
     /// </remarks>
     /// <returns>Null when done; otherwise why nothing was done.</returns>
     public async Task<string?> RevokeDeathAsync(PokemonEntry entry, string actor, string reason,
+        EventSource source = EventSource.Player,
         CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(entry);
@@ -243,7 +244,7 @@ public sealed class GameWatcher(IPokemonRepository pokemon, IEventStore events, 
             RunId = entry.RunId,
             Timestamp = clock.Now,
             Type = GameEventType.DeathRevoked,
-            Source = EventSource.Player,
+            Source = source,
             Actor = actor,
             Description = refund > 0
                 ? $"Muerte de {name} revocada: vuelve a estar vivo y se devuelven {refund} puntos."

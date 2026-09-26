@@ -160,6 +160,7 @@ public sealed class ZoneOutcomeService(IEventStore events, IClock clock)
     /// </remarks>
     /// <param name="why">Obligatory: a correction with no reason is indistinguishable from a mistake.</param>
     public Task ClearAsync(Guid runId, string locationId, string locationName, string actor, string why,
+        EventSource source = EventSource.Player,
         CancellationToken ct = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(locationId);
@@ -171,7 +172,7 @@ public sealed class ZoneOutcomeService(IEventStore events, IClock clock)
             RunId = runId,
             Timestamp = clock.Now,
             Type = GameEventType.ZoneCleared,
-            Source = EventSource.Player,
+            Source = source,
             Actor = actor,
             Description = $"{locationName}: la zona vuelve a estar libre.",
             Reason = why,

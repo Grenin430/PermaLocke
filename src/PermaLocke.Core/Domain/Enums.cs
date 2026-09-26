@@ -381,5 +381,21 @@ public enum GameEventType
     WipeRevoked,
 
     /// <summary>The player changed a Pokémon's nickname from the viewer, written into the save (2026-09-26). At the end: stored as a number.</summary>
-    PokemonRenamed
+    PokemonRenamed,
+
+    /// <summary>
+    /// Something that looks like getting round the rules by reloading, seen by PermaLocke and shown only to the organiser
+    /// (2026-09-26): a save state, the game played or restored without PermaLocke, or the emulator closed mid-battle.
+    /// </summary>
+    /// <remarks>
+    /// Evidence, not a sentence: it moves no points and changes no Pokémon; the organiser reads it in Admin and decides.
+    /// Its <c>tipo</c> is one of <see cref="PermaLocke.Core.Services.IntegrityKinds"/>. At the end: stored as a number.
+    /// </remarks>
+    IntegrityFlag,
+
+    /// <summary>
+    /// The organiser closed JUGAR for this player (<c>cerrado</c> = true) or opened it again, with a reason (2026-09-26).
+    /// </summary>
+    /// <remarks>An event, so the lock and its reason stay in the history. At the end: stored as a number.</remarks>
+    PlayLock
 }

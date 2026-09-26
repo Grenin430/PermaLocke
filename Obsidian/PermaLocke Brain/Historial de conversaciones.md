@@ -6,6 +6,14 @@ revisado: 2026-09-26
 
 La última sesión va arriba. Antes del 2026-09-23 solo hay un resumen por fechas sacado de `CLAUDE.md` y de `ARCHITECTURE.md`: el detalle está en el § citado ([[Índice de ARCHITECTURE]]). **Cada sesión nueva añade su entrada aquí.**
 
+## 2026-09-26 — motes desde el VISOR, diez tandas de ideas y antitrampas de recarga
+- **Torneo en curso:** desde hoy solo se toca el repo; nada de `desplegar.ps1` ni copiar a `PermaLocke prueba` ([[Usuario y forma de trabajar]]).
+- **Mote desde VISOR › DATOS** (commit `4de0aa4`): `RenameService` (Core) + `IPokemonRenamer` → `SaveRenamer` (GameLink). Juego cerrado, copia `main-…-mote.sav`, PID, `PokemonBuilder.InPlace`, relectura; evento `PokemonRenamed`; vacío = nombre de especie; 12 letras. Probado en `SaveRenamerTests`; **sin probar en partida real**. Gimmighoul: «reuniendo 999 Monedas de Gimmighoul».
+- Ampliar el ÁLBUM y nueve tandas más de ideas (una con investigación externa): todas rechazadas ([[Ideas para el futuro]]). No proponer más listas sin una pista suya.
+- **Antitrampas de recarga (§192), hecho:** teclas de estados y reinicio fuera + estados movidos a `Saves/estados-retirados` y anotados; la ventana no se cierra con el juego abierto; `EmulatorJob` mata Azahar si PermaLocke muere; tiempo de juego del save contra `partida-vista.json` (fuera/retrocedida); cierre (no fallo) en los 6 s tras un combate = abandono. Evento `IntegrityFlag`, solo en AUDITORÍA de Admin (decisión del usuario). Sin probar jugando.
+- **Admin ampliado (§193):** órdenes (`AdminOrder`, esquema 3 del canal de regalos) que aplica `OrderService` en la app: revivir, marcar caído, revocar wipe, liberar ruta, pruebas, dar objeto/Pokémon, mensaje, cerrar/abrir juego (`PlayLock`). FICHA por jugador, PAUSAR/REANUDAR TORNEO, REGLAS oficiales (`14-reglas.sql` + `RulesSync`). Falta que el usuario ejecute el SQL; sin probar con servidor.
+- Antes de hacerlo: ya cubierto que un muerto sigue muerto (evento + `SaveDeathEnforcer` al cerrar + `KeepFallenDownAsync` en vivo) y que una ruta gastada sigue gastada (`ZoneEncounterSpent` en la run). Huecos: estados guardados de Azahar, cerrar/resetear en mitad de un combate antes de que se detecte la muerte, jugar sin PermaLocke abierto y restaurar la partida desde una copia. Locke (`Desktop\Locke\data`) solo tiene `AntiTamperUSUM`: hash del emulador y aviso por correo; no bloquea estados (hay un `.cst` en su `user/states`).
+
 ## 2026-09-26 — reiniciar desde Admin no se veía en la app (§191), desde la nube
 - El usuario reinició las dos runs desde Admin para empezar ya de verdad y su app seguía igual. Es lo diseñado: `reiniciar_run` solo archiva en el servidor; en el PC hay que pulsar HOME → EMPEZAR DE CERO (borra run y partida, con copia). Faltaba que la app lo dijera: ahora lo detecta (`runs.activa`) y avisa en JUGAR y encima del juego.
 

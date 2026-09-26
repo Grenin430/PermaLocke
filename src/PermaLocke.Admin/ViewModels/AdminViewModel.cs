@@ -47,8 +47,16 @@ public sealed partial class AdminViewModel : ObservableObject
 
     public UsageViewModel Usage { get; }
 
-    public AdminViewModel(GiftDesk desk, DiscordLogin discord, IGachaCatalog gacha, AuditViewModel audit,
-        WhitelistViewModel whitelist, AnnouncementsViewModel announcements, UsageViewModel usage, ILogger<AdminViewModel> logger)
+    /// <summary>The official rules, in their own window (2026-09-26).</summary>
+    public RulesViewModel Rules { get; }
+
+    private readonly IReadOnlyList<Pick> _species;
+    private readonly IReadOnlyList<Pick> _items;
+
+    public AdminViewModel(GiftDesk desk, DiscordLogin discord, IGachaCatalog gacha, ISpeciesStatsCatalog species, IShopCatalog shop,
+        AuditViewModel audit,
+        WhitelistViewModel whitelist, AnnouncementsViewModel announcements, UsageViewModel usage, RulesViewModel rules,
+        ILogger<AdminViewModel> logger)
     {
         ArgumentNullException.ThrowIfNull(gacha);
 
@@ -57,8 +65,11 @@ public sealed partial class AdminViewModel : ObservableObject
         Whitelist = whitelist;
         Announcements = announcements;
         Usage = usage;
+        Rules = rules;
         _discord = discord;
         _logger = logger;
+        _species = [.. species.All.Where(s => s.Id > 0).Select(s => new Pick(s.Id, s.Name))];
+        _items = [.. shop.Items.GroupBy(i => i.Id).Select(g => new Pick(g.Key, g.First().Name)).OrderBy(i => i.Name)];
 
         foreach (var banner in gacha.Banners)
         {
@@ -322,6 +333,62 @@ public sealed partial class AdminViewModel : ObservableObject
 
         OnPropertyChanged(nameof(CanSend));
         OnPropertyChanged(nameof(CanAdjust));
+    }
+
+    // ============================================================ FICHA Y CONTROL DEL TORNEO (2026-09-26)
+
+    /// <summary>Raised when a player's sheet should open; the window creates it.</summary>
+    public event EventHandler<PlayerSheetViewModel>? SheetRequested;
+
+    [RelayCommand]
+    private void OpenSheet(PlayerLine? player)
+    {
+        if (player is not null)
+        {
+            SheetRequested?.Invoke(this, new PlayerSheetViewModel(_desk, player, AdminName, _species, _items, _logger));
+        }
+    }
+
+    /// <summary>Closes JUGAR for every player at once (a pause, or the end of the tournament), with the reason of the gift box.</summary>
+    [RelayCommand]
+    private Task PauseAllAsync() => LockAllAsync(true);
+
+    [RelayCommand]
+    private Task ResumeAllAsync() => LockAllAsync(false);
+
+    private async Task LockAllAsync(bool closed)
+    {
+        if (Reason.Trim().Length == 0)
+        {
+            Status = "Escribe el MOTIVO en MANDAR UN REGALO: lo leen todos.";
+            return;
+        }
+
+        if (System.Windows.MessageBox.Show(
+                $"{(closed ? "Cerrar el juego" : "Volver a abrir el juego")} a los {Players.Count} jugadores.\n\nMotivo: {Reason.Trim()}",
+                closed ? "Pausar el torneo" : "Reanudar el torneo", System.Windows.MessageBoxButton.YesNo,
+                System.Windows.MessageBoxImage.Warning) != System.Windows.MessageBoxResult.Yes)
+        {
+            return;
+        }
+
+        try
+        {
+            foreach (var player in Players)
+            {
+                await _desk.SendOrderAsync(player.Id, AdminName, Reason.Trim(), new AdminOrder(AdminOrderKinds.PlayLock,
+                    new Dictionary<string, string> { ["cerrado"] = closed ? "true" : "false" },
+                    closed ? "Torneo en pausa: juego cerrado" : "Torneo reanudado: juego abierto"));
+            }
+
+            Status = closed ? "Torneo en pausa: nadie puede pulsar JUGAR." : "Torneo reanudado.";
+            Reason = string.Empty;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Falló pausar o reanudar el torneo");
+            Status = "No se ha podido mandar a todos.";
+        }
     }
 
     /// <summary>Takes back a gift nobody has collected yet.</summary>

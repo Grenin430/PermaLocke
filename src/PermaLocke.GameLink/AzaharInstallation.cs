@@ -187,6 +187,96 @@ public sealed class AzaharInstallation(ILogger<AzaharInstallation> logger)
         }
     }
 
+    /// <summary>Azahar's shortcuts that save or load a state, or restart the game without closing the window.</summary>
+    private static readonly string[] ReloadShortcuts =
+    [
+        "Quick%20Save", "Quick%20Load", "Save%20to%20Oldest%20Non-Quicksave%20Slot",
+        "Load%20from%20Newest%20Non-Quicksave%20Slot", "Restart%20Emulation"
+    ];
+
+    /// <summary>
+    /// Takes the keys off Azahar's save state and restart shortcuts, so a death cannot be undone with one key (2026-09-26).
+    /// </summary>
+    /// <remarks>
+    /// The menu entries stay, because Azahar has no setting for them: a state saved from the menu is what
+    /// <see cref="SetAsideSaveStates"/> catches. Each key is written with its <c>\default</c> flag, or Azahar puts its
+    /// default back, and with the emulator closed, like the rest.
+    /// </remarks>
+    public bool DisableSaveStates(AzaharLocation location)
+    {
+        var configPath = Path.Combine(location.UserDirectory, "config", "qt-config.ini");
+
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(configPath)!);
+
+            var lines = File.Exists(configPath) ? File.ReadAllLines(configPath).ToList() : [];
+            var changed = false;
+
+            foreach (var shortcut in ReloadShortcuts)
+            {
+                var key = $@"Shortcuts\Main%20Window\{shortcut}";
+                changed |= SetValue(lines, $@"{key}\KeySeq\default", "false", "[UI]");
+                changed |= SetValue(lines, $@"{key}\KeySeq", string.Empty, "[UI]");
+                changed |= SetValue(lines, $@"{key}\controller_keyseq\default", "false", "[UI]");
+                changed |= SetValue(lines, $@"{key}\controller_keyseq", string.Empty, "[UI]");
+            }
+
+            if (changed)
+            {
+                File.WriteAllLines(configPath, lines);
+                logger.LogInformation("Atajos de estados guardados y reinicio de Azahar desactivados en {Path}", configPath);
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "No se pudieron desactivar los estados guardados de Azahar en {Path}", configPath);
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Moves every save state of the emulator out of its reach, into <paramref name="destination"/> (2026-09-26).
+    /// </summary>
+    /// <remarks>
+    /// Moved and not deleted: they are the player's files. A state Azahar is still writing cannot be moved yet and is
+    /// tried again on the next call.
+    /// </remarks>
+    /// <returns>The names of the states moved.</returns>
+    public IReadOnlyList<string> SetAsideSaveStates(AzaharLocation location, string destination)
+    {
+        var folder = Path.Combine(location.UserDirectory, "states");
+        var moved = new List<string>();
+
+        if (!Directory.Exists(folder))
+        {
+            return moved;
+        }
+
+        foreach (var state in Directory.EnumerateFiles(folder))
+        {
+            try
+            {
+                Directory.CreateDirectory(destination);
+                var name = Path.GetFileName(state);
+                File.Move(state, Path.Combine(destination, $"{DateTime.Now:yyyyMMdd-HHmmss}-{name}"));
+                moved.Add(name);
+            }
+            catch (IOException ex)
+            {
+                logger.LogDebug(ex, "El estado {State} sigue en uso; se retira en la próxima vuelta", state);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                logger.LogWarning(ex, "No se puede retirar el estado {State}", state);
+            }
+        }
+
+        return moved;
+    }
+
     /// <summary>File name of the follower plugin, as its author ships it.</summary>
     public const string FollowerPluginName = "Gen7FieldFollower.3gx";
 

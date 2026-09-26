@@ -12298,3 +12298,63 @@ HOME y pulsa EMPEZAR DE CERO») y en JUGAR un panel rojo «TU RUN SE HA REINICIA
 se subió no tiene fila y no cuenta como reiniciada. Nada se borra solo.
 
 **Sin ver en Windows.**
+
+## §192 · Antitrampas de recarga (2026-09-26)
+
+Petición del organizador: que nadie recargue para deshacer una muerte o repetir el primer encuentro de una ruta.
+
+Lo que ya estaba cubierto: una muerte vive en la run (evento), se vuelve a escribir a 0 PS en la partida al cerrar el
+juego (`SaveDeathEnforcer`) y se mantiene a 0 en vivo (`KeepFallenDownAsync`); una ruta gastada vive en la run
+(`ZoneEncounterSpent`) y vuelve a retirar las balls. Recargar no resucita ni devuelve rutas.
+
+Lo nuevo (`IntegrityGuard` en App, `IntegrityService` en Core, evento `IntegrityFlag` con `tipo`):
+- **Estados guardados:** `AzaharInstallation.DisableSaveStates` quita las teclas de guardar/cargar estado y de
+  reiniciar la emulación (con su `\default=false`). El menú de Azahar no se puede quitar: cualquier fichero que
+  aparezca en `user/states` se **mueve** (no se borra) a `Saves/estados-retirados` en el siguiente segundo y se anota.
+  Los que ya estaban antes de abrir el juego se retiran sin anotar.
+- **Cerrar PermaLocke con el juego abierto:** la ventana se niega. Y si PermaLocke muere por otra vía (fallo,
+  Administrador de tareas), un *job object* de Windows con «kill on job close» (`EmulatorJob`) se lleva Azahar con él.
+  Se ata en cuanto el lanzador ve la sesión, se abriera desde JUGAR o no.
+- **Jugar o restaurar sin PermaLocke:** al acabar cada sesión vigilada se guarda el tiempo de juego del save en
+  `Saves/<run>/partida-vista.json`. Al abrir PermaLocke se compara: más de 1 min de más = «fuera», de menos =
+  «retrocedida». Si el juego ya estaba abierto al arrancar PermaLocke, se anota «fuera».
+- **Cerrar en mitad de un combate:** el vigilante guarda la última lectura dentro de un combate
+  (`GameLinkMonitor.LastReadingInBattle`). Si el emulador termina en los 6 s siguientes con código 0, 1 o 0xC000013A
+  (o desde CERRAR), se anota «abandono». Un fallo (cualquier otro código) nunca se anota.
+
+Los avisos **solo los ve el organizador**: columna «Avisos de recarga» en AUDITORÍA de Admin. HOME los filtra y no mueven
+puntos ni Pokémon: son pruebas, la sanción la decide él. Ojo: viajan en el historial subido, que el servidor deja leer
+a la whitelist; ninguna pantalla del jugador los enseña. Todo apagado con `--sin-juego`.
+
+Sin hacer: reiniciar desde el menú de Azahar (Emulación › Reiniciar) sin cerrar la ventana no se detecta; la tecla sí
+se quita. Probado con pruebas (`IntegrityServiceTests`, `Save_states_lose_their_keys…`); **sin probar jugando**.
+
+## §193 · Admin ampliado: ficha del jugador, órdenes, pausa y reglas oficiales (2026-09-26)
+
+Petición: «que se pueda hacer y gestionar prácticamente todo lo posible» desde Admin. Admin sigue sin tocar ninguna run:
+todo viaja por el canal de regalos como una **orden** y la aplica la app del jugador, con su evento.
+
+- **Canal:** `AdminOrder(Kind, Args, Summary)` dentro de un `AdminGift` de esquema 3 (`AdminGift.OrderSchema`, misma tabla
+  `regalos`). Una app vieja salta los esquemas nuevos en vez de entenderlos a medias. `GiftInbox` las aplica solas cada
+  20 s con `OrderService` (App) y avisa encima del juego. Cerrada (hecha o rechazada para siempre) = un
+  `AdminGiftClaimed` con su id y `resultado`; así Admin ve «Recogido» y nunca se aplica dos veces. Las que esperan al
+  juego (objeto: abierto; Pokémon: cerrado) se reintentan.
+- **Órdenes (`AdminOrderKinds`):** revivir (`GameWatcher.RevokeDeathAsync`, fuente Admin), marcar caído
+  (`RecordDeathAsync`), revocar wipe (`PenaltyService`), liberar ruta (`ZoneOutcomeService.ClearAsync`), pruebas
+  superadas (`ProgressService.AdvanceAsync`, mueve el cap), dar objeto (`IItemDelivery`), dar Pokémon (`IPokemonDelivery`
+  como el gacha, habilidad/naturaleza/IV con semilla de la orden, registrado `AdminGrant` + `PokemonDelivered`), mensaje
+  privado, y cerrar/abrir el juego (evento nuevo `PlayLock`; JUGAR queda bloqueado en `EmulatorLauncher.Evaluate`).
+  Sin orden de cambiar rol: el rol exige regenerar la ROM (EXPERTO).
+- **Ficha (`PlayerSheetWindow`):** botón FICHA en cada jugador. Pestañas POKÉMON (con REVIVIR/MARCAR CAÍDO), HISTORIAL
+  (filtro por tipo y búsqueda), RUTAS GASTADAS (LIBERAR), EQUIPOS CAÍDOS (REVOCAR), AVISOS (§192), LOGROS y ACCIONES
+  (puntos, pruebas, objeto de la tienda o por id, Pokémon, mensaje, cerrar/abrir juego). MOTIVO obligatorio arriba. Los
+  Pokémon vienen de `RunSnapshot.Pokemon` (nuevo, opcional) y las horas de `RunSnapshot.PlayedHours`.
+- **Torneo:** PAUSAR TORNEO / REANUDAR TORNEO mandan el bloqueo a todos con el motivo del regalo.
+- **Reglas oficiales (`RulesWindow`, tabla `tools/supabase/14-reglas.sql`):** los ficheros de `TournamentRules.Files`
+  (tienda, gacha, logros, penalizaciones, caps, roles, ruleta, créditos, premios, wonder trade, reglas). Admin edita el
+  JSON, lo valida (y lo carga con el cargador real en tienda, gacha y wonder trade) y lo sube. `RulesSync` lo descarga
+  al abrir la app, guarda copia en `Data/reglas-anteriores` y avisa: se aplica al reiniciar PermaLocke. Apagado con
+  `--sin-juego` (en el repo pisaría los ficheros versionados).
+
+Pendiente del usuario: ejecutar `14-reglas.sql`. **Sin probar con el servidor ni jugando**; compila, arranca y pasan las
+pruebas (`AdminOrderTests`).
