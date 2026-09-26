@@ -44,6 +44,7 @@ nuevos numerados que ejecuta él, nada de borrar datos sin preguntar, un commit 
   además relanza la Action al cambiar el propio workflow. **En verde: la 1.0.2 se publicó sola y el usuario la instaló.**
 - **§202 (1.0.3):** la 1.0.2 salió por la Action y el usuario la instaló. Pidió «1.0.2.1» (se hizo 1.0.3: la comparación es de tres cifras) sin la pregunta de sí o no: franja ámbar con `IconWarning` y ACTUALIZAR en todas las secciones, aviso fijo sobre el juego mientras haya versión esperando, y comprobación cada 30 min.
 - **§203 (1.0.4):** pidió versiones de cuatro números y que la siguiente fuera 1.0.3.1. La 1.0.3 ya se publicaba y compara tres: una 1.0.3.1 no le llegaría. Se hizo la 1.0.4 con soporte de cuatro números; desde ahí, 1.0.4.1, 1.0.4.2…
+- La 1.0.3 se publicó sola (v1.0.1, v1.0.2 y v1.0.3 en Releases). PR #6 (1.0.4) abierto. El usuario pidió dejarlo todo apuntado; tabla de versiones en [[Actualizaciones y publicación]].
 
 ## 2026-09-26 — motes desde el VISOR, diez tandas de ideas y antitrampas de recarga
 - **Torneo en curso:** desde hoy solo se toca el repo; nada de `desplegar.ps1` ni copiar a `PermaLocke prueba` ([[Usuario y forma de trabajar]]).

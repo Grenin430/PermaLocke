@@ -31,10 +31,22 @@ Cómo llega una versión nueva a los jugadores desde el 2026-09-26. Detalle téc
   PERMALOCKE 1.0.1 (captura del usuario, 2026-09-26). Prueba de extremo a extremo de §196.
 - **1.0.2** (ventana de descarga + Action): la Action falló la 1.ª vez por sintaxis de PowerShell (`"$t:"`), sin publicar
   nada; arreglo en PR #4. **Observado**: la Action la publicó y el usuario la instaló (2026-09-26).
-- **1.0.3** (franja y aviso fijo): pendiente de publicar y de ver en Windows.
+- **1.0.3** (franja y aviso fijo): publicada por la Action. La franja y el aviso fijo se verán por primera vez con la 1.0.4.
 - Repo **público** desde el 2026-09-26 (decisión del usuario tras explicarle que el código y el historial quedan
   copiables y que la GPL ya obliga a dar el código; revisado: sin ROM, `Locke/`, partidas ni secretos; la clave de
   Supabase del repo es la pública). Alternativa descartada: repo de código privado + repo público solo de releases.
+
+## Versiones publicadas
+| Versión | Cómo salió | Qué traía |
+|---|---|---|
+| 1.0.0 | carpeta de amigos (`desplegar.ps1 -Amigos`) | el plan del torneo (§194-§199), sin versión a la vista |
+| 1.0.1 | release a mano | PERMALOCKE x.y.z en CONFIGURACIÓN (§200) |
+| 1.0.2 | Action (2.º intento) | ventana de descarga (§201) |
+| 1.0.3 | Action | franja ACTUALIZAR y aviso fijo sobre el juego (§202) |
+| 1.0.4 | PR #6, pendiente de aceptar | versiones de cuatro cifras (§203) |
+
+Siguiente arreglo pequeño: **1.0.4.1**. El usuario pasa por cada versión (la de antes todavía le enseña su propia forma de
+avisar: la 1.0.2 pregunta con sí o no; desde la 1.0.3, franja).
 
 ## Para Claude, al tocar esto
 - Leer el registro de una Action desde la nube: MCP `actions_list` (runs) y `get_job_logs` con `failed_only`.

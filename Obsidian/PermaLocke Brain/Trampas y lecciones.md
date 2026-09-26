@@ -44,6 +44,8 @@ Errores ya cometidos en este proyecto, con el § donde se cuentan ([[Índice de 
 - Dos PermaLocke a la vez escriben dos veces en el mismo juego. Ahora hay un mutex (§159).
 
 ## Añadidas 2026-09-26 (plan del torneo, releases)
+- **Un cambio en cómo se leen las versiones llega una versión tarde.** Lo que decide si se ofrece una actualización es el código de la app **instalada**, no el de la nueva: la 1.0.3 comparaba tres cifras, así que no podía salir una 1.0.3.1 (hubo que hacer la 1.0.4). Antes de cambiar el formato de versión, de las notas o del paquete, pensar qué hacen con ello las apps que ya están repartidas.
+- **Rehacer la rama `claude/...` desde `origin/main` tira lo que no se fusionó.** Un commit del cerebro subido después de aceptar un PR se perdió así y hubo que recuperarlo con `cherry-pick`. Antes de `git checkout -B … origin/main`, mirar `git log origin/main..HEAD`.
 - **Windows PowerShell 5.1: `$PSScriptRoot` está vacío en los valores por defecto de `param`.** Calcular rutas por defecto en el cuerpo del script.
 - **En cadenas de PowerShell, `"$var:"` es una variable con ámbito** y no compila: `"${var}:"`. Tumbó la 1.ª ejecución de la Action.
 - **Antes de subir un workflow o un `.ps1` desde la nube, parsearlo con `pwsh`** (`dotnet tool install --global PowerShell`); los `${{ }}` sustituidos por un valor.
