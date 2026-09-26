@@ -173,6 +173,11 @@ public partial class App : Application
         collection.AddSingleton<ShopService>();
         collection.AddSingleton<EvTrainingService>();
         collection.AddSingleton<MoveReminderService>();
+        collection.AddSingleton<RenameService>();
+        collection.AddSingleton<IntegrityService>();
+        collection.AddSingleton<IntegrityGuard>();
+        collection.AddSingleton<OrderService>();
+        collection.AddSingleton<RulesSync>();
         collection.AddSingleton<PokemonIdentityService>();
         collection.AddSingleton<IRewardCatalog>(_ =>
             JsonRewardCatalog.Load(Path.Combine(paths.Data, "rewards.json")));
@@ -338,7 +343,36 @@ public partial class App : Application
 
         // El lanzador mira si el juego está abierto una vez por segundo. Con la run ya cargada, para que la
         // sesión que encuentre en marcha se apunte a la run que toca.
-        _services.GetRequiredService<EmulatorLauncher>().Start();
+        // Antitrampas de recarga (2026-09-26), nunca en una copia para mirar pantallas: antes del lanzador, que ata el
+        // juego a PermaLocke en cuanto lo ve. Si el juego ya estaba abierto, nadie lo vigilaba.
+        var integrity = _services.GetRequiredService<IntegrityGuard>();
+        integrity.Enabled = !e.Args.Contains("--sin-juego", StringComparer.OrdinalIgnoreCase);
+
+        if (integrity.Enabled && run is not null)
+        {
+            try
+            {
+                await integrity.CheckPlaytimeAsync(run.Id, gameAlreadyOpen: EmulatorLauncher.IsOpen());
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "No se ha podido comprobar la partida al abrir");
+            }
+        }
+
+        // Cerrar PermaLocke con el juego abierto dejaría la partida sin vigilar: la ventana no se deja.
+        var launcher = _services.GetRequiredService<EmulatorLauncher>();
+        window.Closing += (_, closing) =>
+        {
+            if (integrity.Enabled && EmulatorLauncher.IsOpen())
+            {
+                closing.Cancel = true;
+                MessageBox.Show(window, "Cierra primero el juego. PermaLocke no se puede cerrar mientras Ultra Luna está abierto.",
+                    "PermaLocke", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        };
+
+        launcher.Start();
 
         await main.InitialiseAsync();
 
@@ -359,7 +393,15 @@ public partial class App : Application
         _services.GetRequiredService<DiscordPresence>().Start();
 
         // Los regalos del organizador llegan por el servidor del torneo, también en la distribución local.
-        _services.GetRequiredService<GiftInbox>().Start();
+        var inbox = _services.GetRequiredService<GiftInbox>();
+        inbox.OrdersApplied += (_, _) => _ = launcher.RefreshLockAsync();
+        inbox.Start();
+
+        // Las reglas oficiales del organizador, una vez al abrir; nunca en una copia para mirar pantallas.
+        if (!e.Args.Contains("--sin-juego", StringComparer.OrdinalIgnoreCase))
+        {
+            _ = _services.GetRequiredService<RulesSync>().SyncAsync();
+        }
 
         if (!withoutGame)
         {

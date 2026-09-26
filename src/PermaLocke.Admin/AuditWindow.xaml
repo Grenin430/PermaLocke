@@ -17,7 +17,7 @@
         </DockPanel>
 
         <TextBlock DockPanel.Dock="Bottom" TextWrapping="Wrap" Foreground="{StaticResource Faint}" FontSize="11.5" Margin="0,10,0,0"
-                   Text="CUADRA: los puntos y el número de eventos salen de su historial y la cadena verifica. Retrocesos: subidas en las que su run tenía menos eventos que antes (restaurada de una copia) o la misma cantidad con otra huella (reescrita). No es una prueba contra alguien que fabrique una cadena entera: es lo que hay que mirar." />
+                   Text="CUADRA: los puntos y el número de eventos salen de su historial y la cadena verifica. Retrocesos: subidas en las que su run tenía menos eventos que antes (restaurada de una copia) o la misma cantidad con otra huella (reescrita). No es una prueba contra alguien que fabrique una cadena entera: es lo que hay que mirar. Avisos de recarga: estados guardados del emulador, partida jugada sin PermaLocke o restaurada de una copia, y el emulador cerrado (no caído) en mitad de un combate. Solo los ves tú." />
 
         <DataGrid ItemsSource="{Binding Rows}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
                   GridLinesVisibility="Horizontal" CanUserAddRows="False">
@@ -39,6 +39,7 @@
                 <DataGridTextColumn Header="Subidas" Binding="{Binding Uploads}" Width="70" />
                 <DataGridTextColumn Header="Última" Binding="{Binding LastUpload}" Width="90" />
                 <DataGridTextColumn Header="Retrocesos" Binding="{Binding Rewinds}" Width="*" />
+                <DataGridTextColumn Header="Avisos de recarga" Binding="{Binding Flags}" Width="2*" />
                 <DataGridTextColumn Header="Detalle" Binding="{Binding Detail}" Width="2*" />
                 <DataGridTemplateColumn Header="" Width="Auto">
                     <DataGridTemplateColumn.CellTemplate>

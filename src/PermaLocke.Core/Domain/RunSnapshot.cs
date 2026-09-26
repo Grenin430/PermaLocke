@@ -119,6 +119,12 @@ public sealed record RunSnapshot
 
     public DateTimeOffset RunCreatedAt { get; init; }
 
+    /// <summary>Every Pokémon registered in the run, for the organiser's player sheet in Admin (2026-09-26). Null from older apps.</summary>
+    public IReadOnlyList<PokemonEntry>? Pokemon { get; init; }
+
+    /// <summary>Hours played in the run by PermaLocke's own sessions, for Admin (2026-09-26). Null from older apps.</summary>
+    public double? PlayedHours { get; init; }
+
     /// <summary>When this snapshot was published, by the clock of whoever published it.</summary>
     public DateTimeOffset PublishedAt { get; init; }
 

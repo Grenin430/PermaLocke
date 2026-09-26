@@ -6,6 +6,16 @@ revisado: 2026-09-26
 
 La última sesión va arriba. Antes del 2026-09-23 solo hay un resumen por fechas sacado de `CLAUDE.md` y de `ARCHITECTURE.md`: el detalle está en el § citado ([[Índice de ARCHITECTURE]]). **Cada sesión nueva añade su entrada aquí.**
 
+## 2026-09-26 — motes desde el VISOR, diez tandas de ideas y antitrampas de recarga
+- **Torneo en curso:** desde hoy solo se toca el repo; nada de `desplegar.ps1` ni copiar a `PermaLocke prueba` ([[Usuario y forma de trabajar]]).
+- **Mote desde VISOR › DATOS** (commit `4de0aa4`): `RenameService` (Core) + `IPokemonRenamer` → `SaveRenamer` (GameLink). Juego cerrado, copia `main-…-mote.sav`, PID, `PokemonBuilder.InPlace`, relectura; evento `PokemonRenamed`; vacío = nombre de especie; 12 letras. Probado en `SaveRenamerTests`; **sin probar en partida real**. Gimmighoul: «reuniendo 999 Monedas de Gimmighoul».
+- Ampliar el ÁLBUM y nueve tandas más de ideas (una con investigación externa): todas rechazadas ([[Ideas para el futuro]]). No proponer más listas sin una pista suya.
+- **Antitrampas de recarga (§192), hecho:** teclas de estados y reinicio fuera + estados movidos a `Saves/estados-retirados` y anotados; la ventana no se cierra con el juego abierto; `EmulatorJob` mata Azahar si PermaLocke muere; tiempo de juego del save contra `partida-vista.json` (fuera/retrocedida); cierre (no fallo) en los 6 s tras un combate = abandono. Evento `IntegrityFlag`, solo en AUDITORÍA de Admin (decisión del usuario). Sin probar jugando.
+- **Admin ampliado (§193):** órdenes (`AdminOrder`, esquema 3 del canal de regalos) que aplica `OrderService` en la app: revivir, marcar caído, revocar wipe, liberar ruta, pruebas, dar objeto/Pokémon, mensaje, cerrar/abrir juego (`PlayLock`). FICHA por jugador, PAUSAR/REANUDAR TORNEO, REGLAS oficiales (`14-reglas.sql` + `RulesSync`). Falta que el usuario ejecute el SQL; sin probar con servidor.
+- **Admin rediseñado** (commit `6713e89`): tema plano propio en `PermaLocke.Admin/App.xaml` (pestañas, campos, desplegables con `PART_EditableTextBox`, casillas y tablas oscuros y legibles; `Faint` aclarado) y cabecera en dos filas (TORNEO / CONTROL). Visto en capturas por UI Automation. El usuario ya ejecutó `14-reglas.sql`. El acceso directo del escritorio apunta a `src/PermaLocke.Admin/bin/Release`: recompilar Release tras cambiar Admin.
+- **Plan del próximo torneo** decidido y escrito en [[Plan del próximo torneo]]: orden 1 subir solo lo nuevo + LIMPIEZA en Admin, 2 traspaso de carpeta, 3 actualización (GitHub Releases), 4 primera vez, 5 copias, 6 informes. Sin empezar.
+- Antes de hacerlo: ya cubierto que un muerto sigue muerto (evento + `SaveDeathEnforcer` al cerrar + `KeepFallenDownAsync` en vivo) y que una ruta gastada sigue gastada (`ZoneEncounterSpent` en la run). Huecos: estados guardados de Azahar, cerrar/resetear en mitad de un combate antes de que se detecte la muerte, jugar sin PermaLocke abierto y restaurar la partida desde una copia. Locke (`Desktop\Locke\data`) solo tiene `AntiTamperUSUM`: hash del emulador y aviso por correo; no bloquea estados (hay un `.cst` en su `user/states`).
+
 ## 2026-09-26 — reiniciar desde Admin no se veía en la app (§191), desde la nube
 - El usuario reinició las dos runs desde Admin para empezar ya de verdad y su app seguía igual. Es lo diseñado: `reiniciar_run` solo archiva en el servidor; en el PC hay que pulsar HOME → EMPEZAR DE CERO (borra run y partida, con copia). Faltaba que la app lo dijera: ahora lo detecta (`runs.activa`) y avisa en JUGAR y encima del juego.
 
@@ -127,7 +137,7 @@ La última sesión va arriba. Antes del 2026-09-23 solo hay un resumen por fecha
   - INFORMACIÓN: 230 evoluciones (todas las que no son «subir al nivel N» a secas, grupo OTRAS FORMAS, formas regionales con nombre); `RomTool informacion` describe todos los métodos 1-42.
   - Iconos: Pheromosa/Xurkitree estaban cruzados en `PokemonIconIndex`; revisadas a ojo las 1025 especies (`RomTool iconos-nombres` + hoja montada con PowerShell). Formas alternativas sin revisar.
   - Wonder trade ±9 % (leído BxnnyLocke con ILSpy, instalado `ilspycmd` con permiso). Mapa: Konikoni fuera, Colina del Recuerdo dentro (marcador 0.334, 0.927).
-  - Descartado por el usuario: el caído que luchó tras una curación de historia; auto-actualizador (explicado, no hecho). Pendiente de decidir: sprites variocolor (no existen en `a/0/6/2`; opción: recolorear desde texturas 3D, aproximado).
+  - Descartado por el usuario: el caído que luchó tras una curación de historia; auto-actualizador (explicado, no hecho). Los sprites variocolor se hicieron después en otra sesión (§180, desde Showdown).
 - `tools/desplegar.ps1 -Prueba|-Amigos`: el despliegue de siempre en un comando (se niega con PermaLocke o Azahar abiertos; nunca borra; si ya hay un «(anterior)» se para). Probado `-Prueba`; `-Amigos` sin ejecutar todavía.
 
 ## 2026-09-24 — plugins y MISCELÁNEA sin mochila

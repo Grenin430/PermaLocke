@@ -1,3 +1,4 @@
+using PKHeX.Core;
 using PermaLocke.GameLink.Rpc;
 
 namespace PermaLocke.GameLink;
@@ -70,6 +71,22 @@ public sealed class PlayerSave(AzaharInstallation installation, AzaharRpcClient 
                 .FirstOrDefault(Directory.Exists);
         }
         catch (IOException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>The play time the game wrote in the save the last time it saved, or null when it cannot be read.</summary>
+    /// <remarks>What the integrity check compares (2026-09-26): it only grows while somebody plays and saves.</remarks>
+    public TimeSpan? PlayTime()
+    {
+        try
+        {
+            return Find() is { } path && SaveUtil.TryGetSaveFile(path, out var loaded) && loaded is not null
+                ? new TimeSpan(loaded.PlayedHours, loaded.PlayedMinutes, loaded.PlayedSeconds)
+                : null;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             return null;
         }

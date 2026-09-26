@@ -7,6 +7,7 @@ revisado: 2026-09-24
 Usuario: Grenin430 (git). Escribe en español; se le responde en español. En el texto visible se usan pronombres neutros o no se usan. Participa en una competición de Nuzlocke entre amigos (la de la carpeta `Locke/`, que no es suya) y hace PermaLocke para él y sus amigos.
 
 ## Reglas que ha dado (vigentes)
+- **TORNEO EN CURSO (desde el 2026-09-26): solo se cambia el repo `Permalocke definitivo`.** Nada de `desplegar.ps1`, ni copiar `Data/` a `PermaLocke prueba` (ahí juega el usuario), ni tocar la carpeta de amigos. Lo que se haga es para el siguiente torneo, más grande. Hasta que diga que acabó.
 - **«No hagas nada directamente, si estoy testeando para decirte errores y tú arreglarlos.»** Cuando está probando, arreglar lo que reporta y no emprender cosas por iniciativa propia.
 - **«Si hay que borrar cosas me lo dices y yo te lo confirmo.»** Todo borrado se pregunta antes y se hace solo tras un sí explícito.
 - **«Aún no actualices la carpeta de amigos.»** `C:\Users\javie\Desktop\PermaLocke para amigos` no se toca hasta que lo diga.

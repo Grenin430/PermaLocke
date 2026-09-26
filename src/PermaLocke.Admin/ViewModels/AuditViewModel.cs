@@ -14,7 +14,7 @@ namespace PermaLocke.Admin.ViewModels;
 /// <param name="Verdict">What <see cref="SnapshotAudit"/> says of the last upload.</param>
 /// <param name="Rewinds">Uploads where the history went backwards or was rewritten, from the server's log.</param>
 public sealed record AuditRow(Guid RunId, bool Active, Guid UserId, string Player, int Points, int Events, string Verdict, string Detail, bool Ok,
-    int Uploads, string Rewinds, string LastUpload)
+    int Uploads, string Rewinds, string LastUpload, string Flags = "")
 {
     public string Action => Active ? "REINICIAR" : "REACTIVAR";
 
@@ -97,7 +97,7 @@ public sealed partial class AuditViewModel(DiscordLogin discord, ILogger<AuditVi
 
                 rows.Add(new AuditRow(run.Run_id, run.Activa, run.User_id, snapshot.PlayerName, snapshot.Points, snapshot.EventCount,
                     Say(result.Verdict), result.Detail, result.Verdict == AuditVerdict.Consistent,
-                    log.Count, Rewinds(log), run.Subida.LocalDateTime.ToString("dd/MM HH:mm")));
+                    log.Count, Rewinds(log), run.Subida.LocalDateTime.ToString("dd/MM HH:mm"), Flags(history)));
             }
 
             Rows.Clear();
@@ -105,7 +105,7 @@ public sealed partial class AuditViewModel(DiscordLogin discord, ILogger<AuditVi
 
             Status = rows.Count == 0
                 ? "Todavía no ha subido nadie su run."
-                : $"{rows.Count} runs · {rows.Count(r => !r.Ok || r.Rewinds.Length > 0)} con algo que mirar.";
+                : $"{rows.Count} runs · {rows.Count(r => !r.Ok || r.Rewinds.Length > 0 || r.Flags.Length > 0)} con algo que mirar.";
         }
         catch (Exception ex)
         {
@@ -190,6 +190,16 @@ public sealed partial class AuditViewModel(DiscordLogin discord, ILogger<AuditVi
             .Select(i => log[i].Eventos < log[i - 1].Eventos
                 ? $"{log[i].Llegada.LocalDateTime:dd/MM HH:mm}: de {log[i - 1].Eventos} a {log[i].Eventos} eventos"
                 : $"{log[i].Llegada.LocalDateTime:dd/MM HH:mm}: historial reescrito"));
+
+    /// <summary>
+    /// The reload tricks PermaLocke saw in this run (2026-09-26): save states, playing or restoring without PermaLocke,
+    /// closing the emulator mid-battle. Only the organiser sees them; the player's screens leave them out.
+    /// </summary>
+    private static string Flags(RunHistory? history) =>
+        string.Join("\n", (history?.Events ?? [])
+            .Where(e => e.Type == GameEventType.IntegrityFlag)
+            .OrderByDescending(e => e.Timestamp)
+            .Select(e => $"{e.Timestamp.LocalDateTime:dd/MM HH:mm}: {e.Description}"));
 
     private static string Say(AuditVerdict verdict) => verdict switch
     {

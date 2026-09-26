@@ -59,5 +59,22 @@ fuertes contra los de delante; los primeros, flojos o de defensa). Mantiene el t
 - 2026-09-26, quinta tanda, «no me convence ninguna»: Presiona F sobre el fantasma, ver el álbum de los demás, carta que
   arde en directo, pantalla para retransmitir (OBS), compartir una carta como imagen, intro «DÍA X» al abrir JUGAR,
   vitrina de medallas y cristales Z en 3D, la app cambia de colores según la isla.
+- 2026-09-26, ampliar el ÁLBUM (tres tandas, ninguna convence; lo aparca hasta que el uso real sugiera algo): carta al
+  detalle con ficha, abrir sobre, cartas que evolucionan, Pokédex del álbum, filtros, cementerio de cartas, álbum de un
+  amigo, sellos, portada, PNG; mesa de estrategia contra el próximo combate, sellos de aviso (evoluciona, cap, EV),
+  ordenar cajas desde el álbum, equipos guardados, cicatriz de la carta, carta compañera en directo; duelo de cartas
+  entre amigos.
+- 2026-09-26, séptima tanda, «no me convence ninguna»: canal de Discord automático (webhook), cartel SE BUSCA del que
+  más mata, mapa de calor de muertes, aviso de ruta libre/gastada al entrar, GIF de la sesión, marcador en directo.
+- 2026-09-26, octava tanda (molestar/animar sobre el emulador ajeno), «no me gusta ninguna»: tomatazos, susto de
+  Gengar, grada con ánimos/abucheos, maldición de Mimikyu, pintada, fantasma que persigue a un amigo elegido.
+- 2026-09-26, novena tanda (dentro de la app), «no me convence ninguna»: dónde sale cada especie en el mundo
+  randomizado, Pokédex del mod, máquina del tiempo de copias del save, mini-ventana siempre encima, buscador Ctrl+K,
+  notas por ruta en el MAPA.
+- 2026-09-26, décima tanda (con investigación del repo y fuentes externas, a petición suya), «no me gusta ninguna»:
+  reencarnación (el caído renace como huevo en otro amigo), alijo para el que viene detrás, maldiciones cruzadas en la
+  seed, el trono (el ganador es Campeón del siguiente torneo + veterano), intercambio por cable, mercader nocturno,
+  tribunal de roles, padrinos (un amigo pone el mote), el grito (audio del micro con el fantasma), carrera de semilla
+  hermana. Diez tandas seguidas rechazadas: no seguir proponiendo listas sin que traiga una pista propia.
 - **Regla del usuario (2026-09-26): nada de ideas que alteren la jugabilidad.** Los objetos de Mario Kart la alteran;
   siguen apuntados porque los pidió guardar.

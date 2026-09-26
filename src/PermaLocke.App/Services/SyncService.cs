@@ -23,6 +23,7 @@ public sealed class SyncService(
     IRunRoles roles,
     PlayerProfileService profiles,
     IBoxReader boxes,
+    IPlaytimeStore playtime,
     ILogger<SyncService> logger)
 {
     /// <summary>This machine's player and whose the loaded run is, linking an unowned run on the way.</summary>
@@ -80,6 +81,8 @@ public sealed class SyncService(
             WorldSpecies = WorldSpeciesFrom(history),
             AvatarSpecies = await AvatarAsync(ct),
             RunCreatedAt = run.CreatedAt,
+            Pokemon = team,
+            PlayedHours = Math.Round(Playtime.Total(await playtime.LoadAsync(run.Id, ct)).TotalHours, 1),
             PublishedAt = DateTimeOffset.Now
         };
 

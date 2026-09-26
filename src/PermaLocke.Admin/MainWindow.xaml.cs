@@ -6,7 +6,20 @@ namespace PermaLocke.Admin;
 /// <summary>The admin's window. Everything it does lives in its view model.</summary>
 public partial class MainWindow : Window
 {
-    public MainWindow() => InitializeComponent();
+    public MainWindow()
+    {
+        InitializeComponent();
+        DataContextChanged += (_, _) =>
+        {
+            if (DataContext is AdminViewModel model)
+            {
+                model.SheetRequested += (_, sheet) => new PlayerSheetWindow(sheet) { Owner = this }.Show();
+            }
+        };
+    }
+
+    private void OnRules(object sender, RoutedEventArgs e) =>
+        new RulesWindow(((AdminViewModel)DataContext).Rules) { Owner = this }.Show();
 
     private void OnAudit(object sender, RoutedEventArgs e) =>
         new AuditWindow(((AdminViewModel)DataContext).Audit) { Owner = this }.Show();

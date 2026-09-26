@@ -1,0 +1,190 @@
+<Window x:Class="PermaLocke.Admin.PlayerSheetWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:pixel="clr-namespace:PermaLocke.App.Views.Pixel"
+        Title="{Binding Player.Name, StringFormat=PermaLocke Admin · Ficha de {0}}" Height="760" Width="1240"
+        Icon="Assets/PermaLocke.Admin.ico" Background="{StaticResource PxBaseBrush}" WindowStartupLocation="CenterOwner">
+    <!-- FICHA DEL JUGADOR (2026-09-26): lo que dice su última subida y todas las órdenes que se le pueden mandar. -->
+    <DockPanel Margin="18">
+        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
+            <Button DockPanel.Dock="Right" Content="ACTUALIZAR" Command="{Binding LoadCommand}" Margin="8,0,0,0" />
+            <StackPanel VerticalAlignment="Center">
+                <pixel:PixelText Text="{Binding Player.Name}" Scale="3" Tight="True" Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
+                <TextBlock Text="{Binding Summary}" Foreground="{StaticResource Faint}" FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap" />
+            </StackPanel>
+        </DockPanel>
+
+        <!-- El motivo vale para cualquier orden de esta ventana: lo lee el jugador y queda en su historial. -->
+        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
+            <pixel:PixelText DockPanel.Dock="Left" Text="MOTIVO" Style="{StaticResource Heading}" VerticalAlignment="Center" Margin="0,0,10,0" />
+            <TextBox Text="{Binding Reason, UpdateSourceTrigger=PropertyChanged}" ToolTip="Obligatorio para cualquier orden" />
+        </DockPanel>
+
+        <TextBlock DockPanel.Dock="Bottom" Text="{Binding Status}" Foreground="{StaticResource Gold}" Margin="2,10,0,0" TextWrapping="Wrap" />
+
+        <TabControl>
+            <TabItem Header="POKÉMON">
+                <DataGrid ItemsSource="{Binding Pokemon}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
+                          GridLinesVisibility="Horizontal" CanUserAddRows="False">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Nombre" Binding="{Binding Name}" Width="150" />
+                        <DataGridTextColumn Header="Especie" Binding="{Binding Species}" Width="150" />
+                        <DataGridTextColumn Header="Nv." Binding="{Binding Level}" Width="50" />
+                        <DataGridTextColumn Header="Estado" Binding="{Binding Status}" Width="110" />
+                        <DataGridCheckBoxColumn Header="Vario" Binding="{Binding Shiny}" Width="55" />
+                        <DataGridTextColumn Header="Origen" Binding="{Binding Origin}" Width="110" />
+                        <DataGridTextColumn Header="Obtenido" Binding="{Binding Obtained}" Width="100" />
+                        <DataGridTextColumn Header="Caído" Binding="{Binding Died}" Width="100" />
+                        <DataGridTemplateColumn Header="" Width="*">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button Content="REVIVIR" Margin="4,2" CommandParameter="{Binding}"
+                                                Visibility="{Binding Dead, Converter={StaticResource BoolToVisibility}}"
+                                                Command="{Binding DataContext.ReviveCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+                                        <Button Content="MARCAR CAÍDO" Margin="4,2" CommandParameter="{Binding}"
+                                                Visibility="{Binding Alive, Converter={StaticResource BoolToVisibility}}"
+                                                Command="{Binding DataContext.KillCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+
+            <TabItem Header="HISTORIAL">
+                <DockPanel>
+                    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                        <ComboBox DockPanel.Dock="Left" Width="220" ItemsSource="{Binding EventTypes}" SelectedItem="{Binding EventType}" />
+                        <TextBox Text="{Binding EventSearch, UpdateSourceTrigger=PropertyChanged}" Margin="8,0,0,0" ToolTip="Buscar en la descripción" />
+                    </DockPanel>
+                    <DataGrid ItemsSource="{Binding Events}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
+                              GridLinesVisibility="Horizontal" CanUserAddRows="False">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Cuándo" Binding="{Binding When}" Width="100" />
+                            <DataGridTextColumn Header="Tipo" Binding="{Binding Type}" Width="170" />
+                            <DataGridTextColumn Header="Quién" Binding="{Binding Source}" Width="100" />
+                            <DataGridTextColumn Header="Puntos" Binding="{Binding Points}" Width="60" />
+                            <DataGridTextColumn Header="Descripción" Binding="{Binding Description}" Width="*" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
+
+            <TabItem Header="RUTAS GASTADAS">
+                <DataGrid ItemsSource="{Binding Zones}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
+                          GridLinesVisibility="Horizontal" CanUserAddRows="False">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Ruta" Binding="{Binding Name}" Width="260" />
+                        <DataGridTextColumn Header="Desde" Binding="{Binding When}" Width="110" />
+                        <DataGridTemplateColumn Header="" Width="*">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Content="LIBERAR" Margin="4,2" HorizontalAlignment="Left" CommandParameter="{Binding}"
+                                            Command="{Binding DataContext.FreeZoneCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+
+            <TabItem Header="EQUIPOS CAÍDOS">
+                <DataGrid ItemsSource="{Binding Wipes}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
+                          GridLinesVisibility="Horizontal" CanUserAddRows="False">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Cuándo" Binding="{Binding When}" Width="110" />
+                        <DataGridTextColumn Header="Descripción" Binding="{Binding Description}" Width="*" />
+                        <DataGridTemplateColumn Header="" Width="Auto">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Content="REVOCAR" Margin="4,2" CommandParameter="{Binding}"
+                                            Command="{Binding DataContext.RevokeWipeCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+
+            <TabItem Header="AVISOS">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top" TextWrapping="Wrap" Foreground="{StaticResource Faint}" FontSize="11.5" Margin="0,0,0,8"
+                               Text="Recargas que PermaLocke ha visto: estados guardados, partida jugada sin PermaLocke o restaurada, emulador cerrado (no caído) en mitad de un combate. Solo los ves tú. Para sancionar: AJUSTAR PUNTOS en ACCIONES, MARCAR CAÍDO en POKÉMON o un MENSAJE." />
+                    <DataGrid ItemsSource="{Binding Flags}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
+                              GridLinesVisibility="Horizontal" CanUserAddRows="False">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Cuándo" Binding="{Binding When}" Width="110" />
+                            <DataGridTextColumn Header="Aviso" Binding="{Binding Description}" Width="*" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
+
+            <TabItem Header="LOGROS">
+                <ListBox ItemsSource="{Binding Achievements}" />
+            </TabItem>
+
+            <TabItem Header="ACCIONES">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="4" MaxWidth="720" HorizontalAlignment="Left">
+                        <pixel:PixelText Text="AJUSTAR PUNTOS" Style="{StaticResource Heading}" Margin="0,4,0,6" />
+                        <StackPanel Orientation="Horizontal">
+                            <TextBox Text="{Binding AdjustPoints, UpdateSourceTrigger=PropertyChanged}" Width="90" ToolTip="En negativo para quitar" />
+                            <Button Content="AJUSTAR" Command="{Binding AdjustCommand}" Margin="8,0,0,0" />
+                        </StackPanel>
+
+                        <pixel:PixelText Text="PRUEBAS SUPERADAS" Style="{StaticResource Heading}" Margin="0,18,0,6" />
+                        <StackPanel Orientation="Horizontal">
+                            <TextBox Text="{Binding Stages, UpdateSourceTrigger=PropertyChanged}" Width="60" />
+                            <Button Content="CORREGIR" Command="{Binding SetStagesCommand}" Margin="8,0,0,0" />
+                            <TextBlock Text="Mueve también su cap de nivel." Foreground="{StaticResource Faint}" VerticalAlignment="Center" Margin="10,0,0,0" />
+                        </StackPanel>
+
+                        <pixel:PixelText Text="DAR UN OBJETO" Style="{StaticResource Heading}" Margin="0,18,0,6" />
+                        <StackPanel Orientation="Horizontal">
+                            <ComboBox ItemsSource="{Binding ItemChoices}" SelectedItem="{Binding Item}" Width="320" IsEditable="True" IsTextSearchEnabled="True" />
+                            <TextBlock Text="o id" VerticalAlignment="Center" Margin="8,0,4,0" />
+                            <TextBox Text="{Binding ManualItemId, UpdateSourceTrigger=PropertyChanged}" Width="60" ToolTip="Cualquier objeto por su id; 0 = el de la lista" />
+                            <TextBlock Text="cantidad" VerticalAlignment="Center" Margin="8,0,4,0" />
+                            <TextBox Text="{Binding ItemAmount, UpdateSourceTrigger=PropertyChanged}" Width="50" />
+                            <Button Content="DAR" Command="{Binding GiveItemCommand}" Margin="8,0,0,0" />
+                        </StackPanel>
+                        <TextBlock Text="Llega a su mochila la próxima vez que tenga el juego abierto con la partida cargada."
+                                   Foreground="{StaticResource Faint}" FontSize="11.5" Margin="0,4,0,0" />
+
+                        <pixel:PixelText Text="DAR UN POKÉMON" Style="{StaticResource Heading}" Margin="0,18,0,6" />
+                        <StackPanel Orientation="Horizontal">
+                            <ComboBox ItemsSource="{Binding SpeciesChoices}" SelectedItem="{Binding GiftSpecies}" Width="260" IsEditable="True" IsTextSearchEnabled="True" />
+                            <TextBlock Text="Nv." VerticalAlignment="Center" Margin="10,0,4,0" />
+                            <TextBox Text="{Binding GiftLevel, UpdateSourceTrigger=PropertyChanged}" Width="50" />
+                            <TextBlock Text="Forma" VerticalAlignment="Center" Margin="10,0,4,0" />
+                            <TextBox Text="{Binding GiftForm, UpdateSourceTrigger=PropertyChanged}" Width="40" />
+                            <CheckBox Content="Variocolor" IsChecked="{Binding GiftShiny}" VerticalAlignment="Center" Margin="10,0,0,0" />
+                            <Button Content="DAR" Command="{Binding GivePokemonCommand}" Margin="10,0,0,0" />
+                        </StackPanel>
+                        <TextBlock Text="Entra en sus cajas con el juego cerrado, como el gacha: habilidad y naturaleza al azar. Queda registrado como dado por ti."
+                                   Foreground="{StaticResource Faint}" FontSize="11.5" Margin="0,4,0,0" TextWrapping="Wrap" />
+
+                        <pixel:PixelText Text="MENSAJE PRIVADO" Style="{StaticResource Heading}" Margin="0,18,0,6" />
+                        <DockPanel>
+                            <Button DockPanel.Dock="Right" Content="MANDAR" Command="{Binding SendMessageCommand}" Margin="8,0,0,0" />
+                            <TextBox Text="{Binding Message, UpdateSourceTrigger=PropertyChanged}" />
+                        </DockPanel>
+                        <TextBlock Text="Le sale encima del juego y en su buzón. Usa el MOTIVO de arriba como asunto."
+                                   Foreground="{StaticResource Faint}" FontSize="11.5" Margin="0,4,0,0" />
+
+                        <pixel:PixelText Text="JUEGO" Style="{StaticResource Heading}" Margin="0,18,0,6" />
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="CERRAR EL JUEGO" Command="{Binding LockCommand}" />
+                            <Button Content="VOLVER A ABRIRLO" Command="{Binding UnlockCommand}" Margin="8,0,0,0" />
+                        </StackPanel>
+                        <TextBlock Text="Cerrado, no puede pulsar JUGAR hasta que lo vuelvas a abrir. Si está jugando, se le avisa y el bloqueo vale para la próxima vez."
+                                   Foreground="{StaticResource Faint}" FontSize="11.5" Margin="0,4,0,0" TextWrapping="Wrap" />
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+    </DockPanel>
+</Window>

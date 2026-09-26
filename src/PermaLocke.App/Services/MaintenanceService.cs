@@ -204,7 +204,7 @@ public sealed class MaintenanceService(
         }
 
         var name = entry.Nickname ?? entry.SpeciesName;
-        var refused = await watcher.RevokeDeathAsync(entry, run.PlayerName, why, ct).ConfigureAwait(false);
+        var refused = await watcher.RevokeDeathAsync(entry, run.PlayerName, why, ct: ct).ConfigureAwait(false);
 
         if (refused is not null)
         {
@@ -432,7 +432,7 @@ public sealed class MaintenanceService(
             return "Esa zona ya no está marcada.";
         }
 
-        await zones.ClearAsync(run.Id, locationId, zone.Name, run.PlayerName, why, ct).ConfigureAwait(false);
+        await zones.ClearAsync(run.Id, locationId, zone.Name, run.PlayerName, why, ct: ct).ConfigureAwait(false);
 
         // Se relee: no se da por buena una corrección que no se ha vuelto a ver.
         var still = (await MarkedZonesAsync(ct).ConfigureAwait(false))

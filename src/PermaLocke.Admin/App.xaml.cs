@@ -36,11 +36,16 @@ public partial class App : Application
         collection.AddSingleton<IGachaCatalog>(_ =>
             JsonGachaCatalog.Load(Path.Combine(paths.Data, "gacha.json")));
         collection.AddSingleton<GiftDesk>();
+        collection.AddSingleton<ISpeciesStatsCatalog>(_ =>
+            JsonSpeciesStatsCatalog.Load(Path.Combine(paths.Data, "species.json")));
+        collection.AddSingleton<IShopCatalog>(_ =>
+            JsonShopCatalog.Load(Path.Combine(paths.Data, "shop.json")));
         collection.AddSingleton<PermaLocke.App.Services.DiscordLogin>();
         collection.AddSingleton<AuditViewModel>();
         collection.AddSingleton<WhitelistViewModel>();
         collection.AddSingleton<AnnouncementsViewModel>();
         collection.AddSingleton<UsageViewModel>();
+        collection.AddSingleton<RulesViewModel>();
         collection.AddSingleton<AdminViewModel>();
 
         _services = collection.BuildServiceProvider();

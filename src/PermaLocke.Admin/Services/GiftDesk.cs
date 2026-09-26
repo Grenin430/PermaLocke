@@ -70,6 +70,32 @@ public sealed class GiftDesk(DiscordLogin discord, ILogger<GiftDesk> logger)
         logger.LogInformation("Regalo enviado a {To}: {What}", gift.To, gift.Say());
     }
 
+    /// <summary>Sends an order to one player's application (2026-09-26): it applies it on its own and leaves its event.</summary>
+    public Task SendOrderAsync(Guid player, string from, string reason, AdminOrder order) =>
+        SendAsync(new AdminGift
+        {
+            Schema = AdminGift.OrderSchema,
+            Id = Guid.NewGuid(),
+            From = from,
+            To = player.ToString(),
+            Reason = reason,
+            CreatedAt = DateTimeOffset.Now,
+            Order = order
+        });
+
+    private sealed record RunRow(Guid Run_id, RunSnapshot Snapshot, RunHistory? History, DateTimeOffset Subida);
+
+    /// <summary>A player's active run as they last uploaded it, or null when they have none.</summary>
+    public async Task<(RunSnapshot Snapshot, RunHistory? History, DateTimeOffset Uploaded)?> RunOfAsync(Guid player)
+    {
+        var json = await discord.GetAsync($"runs?select=run_id,snapshot,history,subida&user_id=eq.{player}&activa=eq.true")
+                   ?? throw new InvalidOperationException("Entra con Discord.");
+
+        return (JsonSerializer.Deserialize<List<RunRow>>(json, Json) ?? []).FirstOrDefault() is { } row
+            ? (row.Snapshot, row.History, row.Subida)
+            : null;
+    }
+
     public async Task WithdrawAsync(Guid id)
     {
         await discord.DeleteAsync($"regalos?id=eq.{id}");

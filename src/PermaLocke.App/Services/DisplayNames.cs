@@ -62,6 +62,8 @@ public static class DisplayNames
         [GameEventType.ZoneCleared] = "Zona liberada",
         [GameEventType.DeathRevoked] = "Muerte revocada",
         [GameEventType.WipeRevoked] = "Equipo caído revocado",
+        [GameEventType.PokemonRenamed] = "Mote cambiado",
+        [GameEventType.IntegrityFlag] = "Aviso de integridad",
         [GameEventType.ZoneOutcomeSet] = "Zona marcada",
         [GameEventType.ZoneEncounterSpent] = "Encuentro gastado",
         [GameEventType.FirstPokeBallSeen] = "Primera Poké Ball",

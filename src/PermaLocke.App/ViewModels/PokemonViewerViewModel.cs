@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using PermaLocke.App.Services;
 using PermaLocke.Core.Abstractions;
+using PermaLocke.Core.Services;
 using PermaLocke.Core.Domain;
 
 namespace PermaLocke.App.ViewModels;
@@ -114,7 +115,7 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
     public PokemonViewerViewModel(IBoxReader boxes, PokemonSpriteService sprites,
         WonderTradeViewModel trade, IRunContext runContext,
         IPokemonRepository registered, ITypeLookup types, IMoveCatalog moves, IStatForecast forecast,
-        ILogger<PokemonViewerViewModel> logger) : base("VISOR POKÉMON", "El equipo y las 32 cajas de la partida")
+        ILogger<PokemonViewerViewModel> logger, RenameService? rename = null) : base("VISOR POKÉMON", "El equipo y las 32 cajas de la partida")
     {
         _boxes = boxes;
         _sprites = sprites;
@@ -125,6 +126,8 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
         _forecast = forecast;
         _logger = logger;
         Trade = trade;
+        _rename = rename;
+        Fleeting.Fade(this, nameof(RenameStatus));
 
         // Un intercambio cambia la caja por debajo, así que lo que hay en pantalla deja de ser
         // cierto en cuanto termina.
@@ -133,6 +136,52 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
 
     /// <summary>The wonder trade, which picks its victim from the box on this screen.</summary>
     public WonderTradeViewModel Trade { get; }
+
+    private readonly RenameService? _rename;
+
+    /// <summary>What the MOTE box holds; set to the current nickname whenever the selection changes.</summary>
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(RenameCommand))]
+    private string _newNickname = string.Empty;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasRenameStatus))]
+    private string _renameStatus = string.Empty;
+
+    public bool HasRenameStatus => RenameStatus.Length > 0;
+
+    private bool CanRename() => _rename is not null && Selected is { IsEgg: false, IsIntact: true } pokemon
+                                && NewNickname.Trim() != (pokemon.Nickname ?? string.Empty);
+
+    /// <summary>Writes the new nickname into the save (game closed), records it, and reads the boxes again.</summary>
+    [RelayCommand(CanExecute = nameof(CanRename))]
+    private async Task RenameAsync()
+    {
+        if (_rename is null || Selected is not { } pokemon || _runContext.Current is not { } run)
+        {
+            return;
+        }
+
+        if (!_rename.CanRenameNow(out var reason))
+        {
+            RenameStatus = reason;
+            return;
+        }
+
+        var result = await _rename.RenameAsync(run, pokemon, NewNickname);
+        RenameStatus = result.Message;
+
+        if (result.Delivered)
+        {
+            await LoadAsync();
+        }
+    }
+
+    partial void OnSelectedChanged(BoxedPokemon? value)
+    {
+        NewNickname = value?.Nickname ?? string.Empty;
+        RenameCommand.NotifyCanExecuteChanged();
+    }
 
     /// <summary>
     /// What the save holds, in five figures, for the panel that had nothing in it.

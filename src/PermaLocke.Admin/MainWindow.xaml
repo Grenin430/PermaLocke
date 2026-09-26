@@ -12,30 +12,44 @@
         </Grid.RowDefinitions>
 
         <!-- ================================================== LA CARPETA -->
-        <DockPanel Grid.Row="0" Margin="0,0,0,14">
-            <Button DockPanel.Dock="Right" Content="ACTUALIZAR" Command="{Binding RefreshCommand}" Margin="8,0,0,0" />
-            <Button DockPanel.Dock="Right" Content="AUDITORÍA DEL TORNEO" Click="OnAudit" Margin="0,0,8,0" />
-            <Button DockPanel.Dock="Right" Content="LISTA DEL TORNEO" Click="OnWhitelist" Margin="0,0,8,0" />
-            <Button DockPanel.Dock="Right" Content="ANUNCIOS" Click="OnAnnouncements" Margin="0,0,8,0" />
-            <Button DockPanel.Dock="Right" Content="CONSUMO" Click="OnUsage" Margin="0,0,8,0" />
-            <Button DockPanel.Dock="Right" Content="ENTRAR CON DISCORD" Style="{StaticResource Primary}" Command="{Binding SignInCommand}" Margin="0,0,8,0"
-                    Visibility="{Binding IsSignedOut, Converter={StaticResource BoolToVisibility}}" />
-            <!-- La cuenta con la que estás dentro, con su foto de Discord. -->
-            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="0,0,14,0" VerticalAlignment="Center"
-                        Visibility="{Binding IsSignedIn, Converter={StaticResource BoolToVisibility}}">
-                <Image Source="{Binding Photo, TargetNullValue={x:Null}}" Width="36" Height="36" Margin="0,0,8,0" />
-                <StackPanel VerticalAlignment="Center" Margin="0,0,10,0">
-                    <pixel:PixelText Text="{Binding AdminName}" Scale="2" Tight="True" Colour="{StaticResource PxGold}" />
-                    <TextBlock Text="organizador" Foreground="{StaticResource Faint}" FontSize="11" Margin="0,3,0,0" />
+        <!-- ================================================== CABECERA: título y cuenta arriba, acciones debajo -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,14">
+            <DockPanel>
+                <Button DockPanel.Dock="Right" Content="ENTRAR CON DISCORD" Style="{StaticResource Primary}" Command="{Binding SignInCommand}"
+                        VerticalAlignment="Center" Visibility="{Binding IsSignedOut, Converter={StaticResource BoolToVisibility}}" />
+                <!-- La cuenta con la que estás dentro, con su foto de Discord. -->
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center"
+                            Visibility="{Binding IsSignedIn, Converter={StaticResource BoolToVisibility}}">
+                    <Image Source="{Binding Photo, TargetNullValue={x:Null}}" Width="36" Height="36" Margin="0,0,10,0" />
+                    <StackPanel VerticalAlignment="Center" Margin="0,0,12,0">
+                        <pixel:PixelText Text="{Binding AdminName}" Scale="2" Tight="True" Colour="{StaticResource PxGold}" />
+                        <TextBlock Text="organizador" Foreground="{StaticResource Faint}" FontSize="11" Margin="0,3,0,0" />
+                    </StackPanel>
+                    <Button Content="SALIR" Command="{Binding SignOutCommand}" VerticalAlignment="Center" />
                 </StackPanel>
-                <Button Content="SALIR" Command="{Binding SignOutCommand}" VerticalAlignment="Center" />
-            </StackPanel>
-            <StackPanel VerticalAlignment="Center">
-                <pixel:PixelText Text="PERMALOCKE ADMIN" Scale="3" Tight="True" Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
-                <TextBlock Text="Servidor del torneo" Foreground="{StaticResource Faint}" FontSize="11.5"
-                           TextTrimming="CharacterEllipsis" Margin="0,2,0,0" />
-            </StackPanel>
-        </DockPanel>
+                <StackPanel VerticalAlignment="Center">
+                    <pixel:PixelText Text="PERMALOCKE ADMIN" Scale="3" Tight="True" Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
+                    <TextBlock Text="Servidor del torneo" Foreground="{StaticResource Faint}" FontSize="11.5" Margin="0,4,0,0" />
+                </StackPanel>
+            </DockPanel>
+
+            <Border Background="{StaticResource Surface}" CornerRadius="8" Padding="10,8" Margin="0,14,0,0">
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Content="ACTUALIZAR" Command="{Binding RefreshCommand}" />
+                    <WrapPanel>
+                        <TextBlock Text="TORNEO" Foreground="{StaticResource Faint}" FontSize="11" VerticalAlignment="Center" Margin="4,0,10,0" />
+                        <Button Content="PAUSAR" Command="{Binding PauseAllCommand}" Margin="0,0,6,0" ToolTip="Nadie puede pulsar JUGAR. Usa el MOTIVO del regalo." />
+                        <Button Content="REANUDAR" Command="{Binding ResumeAllCommand}" Margin="0,0,6,0" />
+                        <Button Content="REGLAS" Click="OnRules" Margin="0,0,6,0" />
+                        <Button Content="ANUNCIOS" Click="OnAnnouncements" Margin="0,0,18,0" />
+                        <TextBlock Text="CONTROL" Foreground="{StaticResource Faint}" FontSize="11" VerticalAlignment="Center" Margin="0,0,10,0" />
+                        <Button Content="AUDITORÍA" Click="OnAudit" Margin="0,0,6,0" />
+                        <Button Content="LISTA" Click="OnWhitelist" Margin="0,0,6,0" />
+                        <Button Content="CONSUMO" Click="OnUsage" Margin="0,0,6,0" />
+                    </WrapPanel>
+                </DockPanel>
+            </Border>
+        </StackPanel>
 
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
@@ -91,6 +105,7 @@
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
 
                                     <StackPanel Grid.Column="0">
@@ -104,6 +119,9 @@
                                     </StackPanel>
 
                                     <!-- Conectado ahora: gris, azul en la app, verde jugando, como en JUGAR. -->
+                                    <Button Grid.Column="2" Content="FICHA" Padding="10,4" Margin="10,0,0,0" VerticalAlignment="Center"
+                                            CommandParameter="{Binding}"
+                                            Command="{Binding DataContext.OpenSheetCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
                                     <TextBlock Grid.Column="1" Text="{Binding Presence}" VerticalAlignment="Center" FontSize="11">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">

@@ -82,6 +82,12 @@ public sealed class GameLinkMonitor(
     private readonly SemaphoreSlim _deathGate = new(1, 1);
     private DateTimeOffset _lastRewardCheck = DateTimeOffset.MinValue;
 
+    /// <summary>
+    /// When the game was last read in the middle of a battle, or null when never (2026-09-26).
+    /// </summary>
+    /// <remarks>Not cleared when the emulator goes: that is when <see cref="IntegrityGuard"/> asks.</remarks>
+    public DateTimeOffset? LastReadingInBattle { get; private set; }
+
     /// <summary>Latest snapshot, or null before the first read completes.</summary>
     public GameSnapshot? Latest { get; private set; }
     public string EncounterProblem => Latest?.Connected == true && runContext.Current is not null
@@ -293,6 +299,10 @@ public sealed class GameLinkMonitor(
                 {
                     var tables = battleTables.Read(clock.Now);
                     var faints = _faints.Observe(tables);
+
+                    // La última lectura dentro de un combate: si el emulador se va justo después, se dejó a medias. No se
+                    // borra al salir de él: una lectura vacía mientras el emulador se cierra no puede tapar el combate.
+                    if (_faints.InBattle) LastReadingInBattle = clock.Now;
 
                     // La killcam graba mientras dura el combate y solo entonces.
                     killcam.Recording = _faints.InBattle;

@@ -4533,6 +4533,7 @@ async Task InformacionAsync()
         5 => "por intercambio",
         6 => $"por intercambio llevando {itemNames[argument]}",
         7 => "por intercambio con su pareja",
+        8 when argument == 994 => "reuniendo 999 Monedas de Gimmighoul",
         8 => $"usando {itemNames[argument]}",
         19 => $"subiendo de nivel de día llevando {itemNames[argument]}",
         21 => $"al subir de nivel sabiendo {moveNames[argument]}",

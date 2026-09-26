@@ -34,6 +34,7 @@ public sealed class GiftInbox : INotifyPropertyChanged
 
     private readonly DiscordLogin _discord;
     private readonly GiftService _gifts;
+    private readonly OrderService _orders;
     private readonly IRunContext _runContext;
     private readonly ILogger<GiftInbox> _logger;
     private readonly Notifier _notifier;
@@ -43,11 +44,12 @@ public sealed class GiftInbox : INotifyPropertyChanged
     private readonly DispatcherTimer _timer = new() { Interval = LookEvery };
     private bool _busy;
 
-    public GiftInbox(DiscordLogin discord, GiftService gifts, IRunContext runContext, Notifier notifier,
+    public GiftInbox(DiscordLogin discord, GiftService gifts, OrderService orders, IRunContext runContext, Notifier notifier,
         ILogger<GiftInbox> logger)
     {
         _discord = discord;
         _gifts = gifts;
+        _orders = orders;
         _runContext = runContext;
         _logger = logger;
         _notifier = notifier;
@@ -57,6 +59,9 @@ public sealed class GiftInbox : INotifyPropertyChanged
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
+
+    /// <summary>Raised when an order changed the run, so the screens read it again.</summary>
+    public event EventHandler? OrdersApplied;
 
     /// <summary>What is there to collect, newest first.</summary>
     public IReadOnlyList<AdminGift> Pending { get; private set; } = [];
@@ -114,7 +119,25 @@ public sealed class GiftInbox : INotifyPropertyChanged
                 }
             }
 
-            Set([.. mine.Where(gift => !gift.Adjustment && !collected.Contains(gift.Id))],
+            // Las órdenes del organizador tampoco (2026-09-26): la app las aplica sola, y las que esperan al juego se
+            // vuelven a intentar en la próxima vuelta.
+            foreach (var order in mine.Where(gift => gift.Order is not null && !collected.Contains(gift.Id)))
+            {
+                var applied = await _orders.ApplyAsync(run, order);
+
+                if (applied.Closed)
+                {
+                    collected.Add(order.Id);
+                    _told.Add(order.Id);
+                    _logger.LogInformation("Orden {Id} de {From} cerrada: {What}. {Result}", order.Id, order.From, order.Say(), applied.Message);
+                    _notifier.Say(order.Order!.Kind == AdminOrderKinds.Message ? ToastKind.Gift : ToastKind.Warning,
+                        order.Order.Kind == AdminOrderKinds.Message ? $"Mensaje de {order.From}" : $"Orden de {order.From}",
+                        order.Order.Kind == AdminOrderKinds.Message ? applied.Message : $"{order.Say()}. {applied.Message}");
+                    OrdersApplied?.Invoke(this, EventArgs.Empty);
+                }
+            }
+
+            Set([.. mine.Where(gift => !gift.Adjustment && gift.Order is null && !collected.Contains(gift.Id))],
                 [.. mine.Where(gift => collected.Contains(gift.Id)).Take(6)]);
         }
         catch (Exception ex)

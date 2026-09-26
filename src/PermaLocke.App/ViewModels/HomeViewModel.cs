@@ -548,7 +548,8 @@ public sealed partial class HomeViewModel : SectionViewModel
 
         HasFallen = Fallen.Count > 0;
 
-        foreach (var row in await _events.GetLatestAsync(run.Id, 15))
+        // Los avisos de integridad son para el organizador: el jugador no los ve (2026-09-26).
+        foreach (var row in (await _events.GetLatestAsync(run.Id, 40)).Where(e => e.Type != GameEventType.IntegrityFlag).Take(15))
         {
             RecentEvents.Add(new EventRow(
                 row.Timestamp.LocalDateTime.ToString("dd/MM HH:mm"),

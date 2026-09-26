@@ -160,4 +160,40 @@ public sealed class LauncherEmulatorTests : IDisposable
         Assert.True(installation.DisableDiscordPresence(new AzaharLocation(user, null, false)));
         Assert.Equal(lines, File.ReadAllLines(config));
     }
+
+    /// <summary>The save state and restart keys go, with their default flags, and a state left in reach is moved out (2026-09-26).</summary>
+    [Fact]
+    public void Save_states_lose_their_keys_and_are_moved_out_of_reach()
+    {
+        var user = Path.Combine(_root, "user");
+        var config = Path.Combine(user, "config", "qt-config.ini");
+        Directory.CreateDirectory(Path.GetDirectoryName(config)!);
+        File.WriteAllLines(config,
+        [
+            "[UI]",
+            @"Shortcuts\Main%20Window\Quick%20Load\KeySeq\default=true",
+            @"Shortcuts\Main%20Window\Quick%20Load\KeySeq=F7",
+            @"Shortcuts\Main%20Window\Capture%20Screenshot\KeySeq=Ctrl+P",
+            "[Core]"
+        ]);
+
+        var installation = new AzaharInstallation(NullLogger<AzaharInstallation>.Instance);
+        var location = new AzaharLocation(user, null, false);
+        Assert.True(installation.DisableSaveStates(location));
+
+        var lines = File.ReadAllLines(config);
+        Assert.Contains(@"Shortcuts\Main%20Window\Quick%20Load\KeySeq=", lines);
+        Assert.Contains(@"Shortcuts\Main%20Window\Quick%20Load\KeySeq\default=false", lines);
+        Assert.Contains(@"Shortcuts\Main%20Window\Restart%20Emulation\KeySeq=", lines);
+        Assert.Contains(@"Shortcuts\Main%20Window\Capture%20Screenshot\KeySeq=Ctrl+P", lines);
+
+        var states = Path.Combine(user, "states");
+        Directory.CreateDirectory(states);
+        File.WriteAllText(Path.Combine(states, "00040000001B5100.01.cst"), "estado");
+
+        var aside = Path.Combine(_root, "retirados");
+        Assert.Equal(["00040000001B5100.01.cst"], installation.SetAsideSaveStates(location, aside));
+        Assert.Empty(Directory.GetFiles(states));
+        Assert.Single(Directory.GetFiles(aside));
+    }
 }
