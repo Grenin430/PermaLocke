@@ -72,6 +72,10 @@ Dos pasos en dos sitios, y el segundo lo hace **cada jugador** en su PC (§191):
 Desde el §191 la app lo avisa sola: en cada lectura de amigos (60 s) mira `runs.activa` de su run; si está archivada,
 aviso encima del juego una vez y panel rojo «TU RUN SE HA REINICIADO» en JUGAR. Nunca borra nada por su cuenta.
 Visto el 2026-09-26: el usuario reinició las dos runs desde Admin y su app «no parecía reiniciada», justo por esto.
+Lo que ven los demás sí cambia al momento: ACTIVIDAD, logros, amigos y clasificación salen de la vista `ultima_run`,
+que solo mira runs activas, así que el historial de una run archivada deja de salir sin borrar nada (visto el mismo
+día). En la base de datos sigue, para la auditoría; `subidas`, `reinicios`, `fantasmas` y `lluvias` también guardan
+sus filas.
 
 ## Sondas y herramienta de ROM
 - La lista completa, con ejemplos, está en la sección «Comandos» de `CLAUDE.md`. Las más usadas:
