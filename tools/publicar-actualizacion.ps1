@@ -10,13 +10,16 @@
    Nunca toca las carpetas del Escritorio ni la partida de nadie. #>
 param(
     [Parameter(Mandatory = $true)][string]$Version,
-    [string]$Destino = (Join-Path (Split-Path -Parent $PSScriptRoot) '.dist')
+    # Sin ella, .dist\ del repo. No se calcula aqui: en el PowerShell de Windows (5.1) $PSScriptRoot esta vacio
+    # mientras se leen los parametros.
+    [string]$Destino
 )
 $ErrorActionPreference = 'Stop'
 
 if ($Version -notmatch '^\d+\.\d+\.\d+$') { throw 'La version va como 1.2.3.' }
 
 $raiz = Split-Path -Parent $PSScriptRoot
+if (-not $Destino) { $Destino = Join-Path $raiz '.dist' }
 $zip = Join-Path $Destino "PermaLocke-actualizacion-$Version.zip"
 if (Test-Path -LiteralPath $zip) { throw "Ya existe $zip" }
 

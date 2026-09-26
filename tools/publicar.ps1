@@ -1,6 +1,7 @@
 <# Creates a fresh, standalone distribution. Never deletes a destination or stops the player's app. #>
 param(
-    [string]$Destino = (Join-Path (Split-Path -Parent $PSScriptRoot) '.dist\PERMALOCKEEEE'),
+    # Sin ella, .dist\PERMALOCKEEEE del repo (se calcula abajo: en Windows PowerShell 5.1 $PSScriptRoot esta vacio aqui).
+    [string]$Destino,
     [string]$VisualCppInstaller,
     # Sin esto, al final se deja tambien un zip de la carpeta al lado, listo para compartir.
     [switch]$SinZip,
@@ -12,6 +13,7 @@ $ErrorActionPreference = 'Stop'
 # [IO.Path]::GetRelativePath no existe en el PowerShell de Windows (5.1), que es el que trae todo Windows.
 function Relative([string]$base, [string]$full) { $full.Substring($base.TrimEnd('\').Length + 1) }
 $raiz = Split-Path -Parent $PSScriptRoot
+if (-not $Destino) { $Destino = Join-Path $raiz '.dist\PERMALOCKEEEE' }
 $Destino = [IO.Path]::GetFullPath($Destino)
 if (Test-Path -LiteralPath $Destino) { throw "El destino ya existe. Elige una carpeta nueva: $Destino" }
 foreach ($required in @('Emulator\azahar.exe','Expansion\romfs\a\0\9\4','Expansion\exefs\code.bin','Expansion\README.txt')) {
