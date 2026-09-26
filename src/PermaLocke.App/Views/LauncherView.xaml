@@ -298,6 +298,60 @@
                 </pixel:PixelText.Style>
             </pixel:PixelText>
 
+            <!-- ================================================== PRIMEROS PASOS (§197)
+                 Lo que falta antes de jugar, cada paso con su botón; se tacha solo al cumplirse y se va al acabar. -->
+            <pixel:PixelWindow Title="PRIMEROS PASOS" Icon="IconStar" Margin="0,14,0,0"
+                               Visibility="{Binding Guide.Visible, Converter={StaticResource BoolToVisibility}}">
+                <StackPanel>
+                    <DockPanel Margin="0,0,0,10">
+                        <Button DockPanel.Dock="Right" Content="OCULTAR" Style="{StaticResource PxSubtleButton}"
+                                Command="{Binding Guide.HideCommand}" Margin="8,0,0,0" />
+                        <Button DockPanel.Dock="Right" Content="COMPROBAR" Style="{StaticResource PxSubtleButton}"
+                                Command="{Binding Guide.RefreshCommand}" />
+                        <pixel:PixelText Text="{Binding Guide.Progress}" Scale="2" Tight="True" VerticalAlignment="Center"
+                                         Colour="{StaticResource PxGold}" />
+                    </DockPanel>
+                    <ItemsControl ItemsSource="{Binding Guide.Steps}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <DockPanel Margin="0,0,0,10" Background="Transparent">
+                                    <Grid DockPanel.Dock="Left" Width="34" VerticalAlignment="Top" Margin="0,2,10,0">
+                                        <pixel:PixelIcon Icon="IconTick" Scale="2" HorizontalAlignment="Center"
+                                                         Visibility="{Binding Done, Converter={StaticResource BoolToVisibility}}" />
+                                        <pixel:PixelText Text="{Binding Number}" Scale="3" Tight="True" HorizontalAlignment="Center"
+                                                         Colour="{StaticResource PxAccentLight}"
+                                                         Visibility="{Binding Done, Converter={StaticResource InverseBoolToVisibility}}" />
+                                    </Grid>
+                                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Button Content="{Binding SecondLabel}" Command="{Binding Second}" Style="{StaticResource PxSubtleButton}"
+                                                Margin="8,0,0,0" Visibility="{Binding HasSecond, Converter={StaticResource BoolToVisibility}}" />
+                                        <Button Content="{Binding ActionLabel}" Command="{Binding Action}" Style="{StaticResource PxButton}"
+                                                Margin="8,0,0,0" Visibility="{Binding HasAction, Converter={StaticResource BoolToVisibility}}" />
+                                    </StackPanel>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <pixel:PixelText Text="{Binding Title}" Scale="2" Tight="True">
+                                            <pixel:PixelText.Style>
+                                                <Style TargetType="pixel:PixelText">
+                                                    <Setter Property="Colour" Value="{StaticResource PxText}" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Done}" Value="True">
+                                                            <Setter Property="Colour" Value="{StaticResource PxTextFaint}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </pixel:PixelText.Style>
+                                        </pixel:PixelText>
+                                        <pixel:PixelText Text="{Binding Detail}" Scale="2" Wrap="True" Margin="0,4,0,0"
+                                                         Colour="{StaticResource PxTextFaint}"
+                                                         Visibility="{Binding Done, Converter={StaticResource InverseBoolToVisibility}}" />
+                                    </StackPanel>
+                                </DockPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </pixel:PixelWindow>
+
             <!-- ================================================== LOS ENLACES -->
             <DockPanel Margin="6,14,4,0">
                 <Button DockPanel.Dock="Right" Content="ELEGIR EMULADOR" Style="{StaticResource NavLink}" Margin="0"

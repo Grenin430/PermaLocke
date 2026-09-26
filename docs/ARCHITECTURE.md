@@ -12468,3 +12468,26 @@ paquete; la descarga se comprueba por tamaño y hash; instalar cambia el program
 oficial, no toca Saves/Config/Emulator ni un Data que no viene; un paquete sin programa no cambia nada; la limpieza quita
 el `.old` y la descarga. Compilación entera sin avisos; Core 392, GameLink 397, Randomizer 485, Rules 151. **Sin probar**
 contra una release real ni en Windows (el script de PowerShell no se ha ejecutado: aquí no hay PowerShell).
+
+---
+
+## §197 · PRIMEROS PASOS: la primera vez guiada (2026-09-26, plan del próximo torneo, paso 4)
+
+**Para qué:** con 20 personas, que nadie tenga que leer el `EMPIEZA AQUI.txt` para saber qué le falta. En JUGAR, la
+pantalla en la que se aterriza, un panel **PRIMEROS PASOS** dice lo que queda antes de jugar, con el botón que lo hace.
+
+**Los pasos** (`ViewModels/FirstRunGuide`), cada uno tachado en cuanto es verdad, leído de lo real y nunca guardado:
+1. Entrar con Discord: la sesión está y la cuenta está en la lista.
+2. La ROM: una ROM de Ultra Luna reconocida en `ROM/` (`RomInspector.ScanFolder`). Botón ABRIR CARPETA ROM.
+3. El emulador: el `Emulator/azahar.exe` que viene con PermaLocke (si falta, dice que se vuelva a extraer la carpeta).
+4. La run: CREAR RUN, o **TRAER MI PARTIDA DE OTRA CARPETA** (§195) para quien ya jugaba en otra.
+5. El mundo: instalado en el emulador (`load/mods/00040000001B5100` con algo dentro). Botón IR AL RANDOMIZADOR.
+6. Jugar y guardar: hay partida guardada de Ultra Luna (`PlayerSave.Find`).
+
+Se refresca con JUGAR (y con COMPROBAR). Se va solo cuando está todo; OCULTAR lo esconde para siempre
+(`AppSettingsData.GuideHidden`, en `Config/ajustes.json`). De paso, CONFIGURACIÓN guarda ahora con
+`Current with { … }`: antes rehacía el registro entero y habría devuelto a su valor por defecto cualquier ajuste que no
+fuera suyo, como este.
+
+**Sin probar en Windows** (es solo pantalla y botones que llaman a lo que ya había). Compilación entera sin avisos;
+Core 392, GameLink 397, Randomizer 485, Rules 151.

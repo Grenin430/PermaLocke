@@ -80,9 +80,11 @@ public sealed partial class LauncherViewModel : SectionViewModel
     public LauncherViewModel(EmulatorLauncher launcher, CommunityService community, AlolaSky sky, IRunContext runContext,
         IPlaytimeStore playtime, IBoxReader boxes, PokemonSpriteService sprites, AchievementService achievements,
         IRunRoles roles, IUiDispatcher ui, ILogger<LauncherViewModel> logger, PermaLocke.Infrastructure.AppPaths paths,
-        IPokemonRepository pokemon, PermaLocke.Rules.Services.ProgressService progress)
+        IPokemonRepository pokemon, PermaLocke.Rules.Services.ProgressService progress, FirstRunGuide guide)
         : base("INICIO")
     {
+        Guide = guide;
+        guide.Navigate = Go;
         _pokemon = pokemon;
         _progress = progress;
         _saves = paths.Saves;
@@ -115,6 +117,9 @@ public sealed partial class LauncherViewModel : SectionViewModel
 
     /// <summary>Raised with a section's title when one of the links under the play bar is pressed.</summary>
     public event Action<string>? NavigateRequested;
+
+    /// <summary>PRIMEROS PASOS, while something is left before playing (§197).</summary>
+    public FirstRunGuide Guide { get; }
 
     /// <summary>The trainer's room on the cover (§169), or null with no run: then the room is empty.</summary>
     [ObservableProperty]
@@ -258,6 +263,7 @@ public sealed partial class LauncherViewModel : SectionViewModel
     private async Task RefreshAsync()
     {
         Launcher.Refresh();
+        Guide.Refresh();
         ShowNotice();
 
         if (_runContext.Current is not { } run)

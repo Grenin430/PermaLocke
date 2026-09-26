@@ -267,6 +267,7 @@ public partial class App : Application
         collection.AddSingleton<CatchCeremony>();
         collection.AddSingleton<TransferOffer>();
         collection.AddSingleton<UpdateService>();
+        collection.AddSingleton<FirstRunGuide>();
         collection.AddSingleton<AlbumViewModel>();
         collection.AddSingleton<EvTrainingViewModel>();
         collection.AddSingleton<MoveReminderViewModel>();

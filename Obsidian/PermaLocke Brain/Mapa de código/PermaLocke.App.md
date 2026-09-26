@@ -85,6 +85,7 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `ViewModels/ChangeRoleViewModel.cs` — **ChangeRoleViewModel** — Moves a run from one role to another, on purpose and on the record. 
 - `ViewModels/CreateRunViewModel.cs` — **CreateRunViewModel, RoleChoiceViewModel** — Run creation. Detects the vanilla ROM in ROM/ and refuses to continue unless it is a decrypted Ultra Moon dump, because everything downstream assumes exactly that. 
 - `ViewModels/EvTrainingViewModel.cs` — **EvRowViewModel, EvTrainingViewModel** — One stat on the training bench: what it is now, the EVs being given to it, and what it would become. 
+- `ViewModels/FirstRunGuide.cs` — **GuideStep, FirstRunGuide** — One step of the first time, and whether it is done.
 - `ViewModels/Fleeting.cs` — **Fleeting** — Makes a screen's messages go away on their own: five seconds on screen, then empty (2026-09-24, at the player's request: «el mensaje que sale al cambiar un ataque se queda ahí»). 
 - `ViewModels/GachaViewModel.cs` — **PortalViewModel, GachaHistoryViewModel, PoolStageViewModel, PoolEntryViewModel, OddsSlice, BannerViewModel, GrantRollViewModel, GrantViewModel, GachaViewModel** — One portal of the ultra-space animation: a tier, its colour and whether it is the one that just opened. 
 - `ViewModels/GiftInboxViewModel.cs` — **GiftRowViewModel, GiftInboxViewModel** — One gift as the inbox draws it.

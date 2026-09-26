@@ -203,6 +203,7 @@ generado: 2026-09-24
 - L12364 · 194 · Subir solo lo nuevo (tabla eventos, subir_eventos) y LIMPIEZA en Admin
 - L12408 · 195 · Traer la partida de otra carpeta (FolderTransfer, TransferOffer)
 - L12441 · 196 · Actualización automática con GitHub Releases (UpdateService, AppUpdate)
+- L12474 · 197 · PRIMEROS PASOS en JUGAR (FirstRunGuide)
 
 Subsecciones §176: bis (visor), ter (todas las pantallas, fuera ESTADÍSTICAS), quater (EV/MOVIMIENTOS sin bolsa, diálogos).
 

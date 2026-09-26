@@ -104,7 +104,11 @@ public sealed partial class SettingsViewModel : SectionViewModel
             return;
         }
 
-        _settings.Update(new AppSettingsData(Notifications, StepAside, DeathScene, Killcam, Follower, Ghosts, CatchCard));
+        _settings.Update(_settings.Current with
+        {
+            Notifications = Notifications, StepAside = StepAside, DeathScene = DeathScene, Killcam = Killcam,
+            Follower = Follower, Ghosts = Ghosts, CatchCard = CatchCard
+        });
         Status = "Guardado.";
     }
 
