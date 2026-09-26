@@ -72,7 +72,7 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Services/TypeColours.cs` — **TypeColours** — The colours the series has used for the types since forever, by the game's type number: the table itself, without the brushes of `ypePalette`. 
 - `Services/TypePalette.cs` — **TypePalette** — The colours the series has used for the types since forever, by the game's type number. 
 - `Services/UiDispatcher.cs` — **IUiDispatcher, WpfUiDispatcher** — Runs work on the UI thread. View models need this because domain services complete their awaits on thread pool threads, and touching a bound ObservableCollection from there throws. 
-- `Services/UpdateService.cs` — **UpdateService** — The automatic update (§196, plan del próximo torneo, paso 3): at start, asks GitHub for the latest release of the repository named in Data/torneo.json (actualizaciones) and, if it is newer and ha...
+- `Services/UpdateService.cs` — **UpdateService** — The automatic update (§196, plan del próximo torneo, paso 3): asks GitHub for the latest release of the repository named in Data/torneo.json (actualizaciones) and, if it is newer and has an updat...
 - `Services/VisualCppRuntime.cs` — **VisualCppStatus, VisualCppRuntime** — The runtime the emulator will load: its own when it has one, Windows's otherwise.
 - `Services/WindowSizeService.cs` — **WindowSize, WindowSizeService** — How big the window opens, chosen by the player and remembered. 
 - `Services/WorldAllowedStatics.cs` — **WorldAllowedStatics** — The static captures the competition allows (§119), as the species they are in the world the player is playing. 
@@ -112,6 +112,7 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `ViewModels/SyncViewModel.cs` — **TopRow, RecordCard, SyncViewModel** — One line of the tournament's top.
 - `ViewModels/TradePlay.cs` — **TradePlay** — One wonder trade, as the cabin plays it: who goes and in which ball, who comes, what the screen will say, and when it was confirmed. 
 - `ViewModels/TypeBadges.cs` — **TypeBadges** — The one or two type plates of a Pokémon, for every screen that shows whom you picked: the viewer, ENTRENAR EV and MOVIMIENTOS (§176). 
+- `ViewModels/UpdateBannerViewModel.cs` — **UpdateBannerViewModel** — The bar at the top of every section while a new version waits (§202): the warning sign, «ACTUALIZACIÓN x.y.z DISPONIBLE» and a small ACTUALIZAR that installs it. It replaces the yes/no dialog o...
 - `ViewModels/UpdateProgressViewModel.cs` — **UpdateProgressViewModel** — The update window (§201): how the download is going, then checking, installing and restarting. Only shows what UpdateService tells it; the one thing it does is ask to cancel, while there is still ...
 - `ViewModels/WonderTradeViewModel.cs` — **TypeBadgeViewModel, WonderTradeViewModel** — One type of the received Pokémon, with the colour the games have always used.
 - `Views/AchievementsView.xaml.cs` — **AchievementsView** — The achievements screen. All the work is in the view model.

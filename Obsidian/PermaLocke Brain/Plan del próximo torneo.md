@@ -46,6 +46,7 @@ Descartada de esa tanda: «apuntarse desde la app» (la 2 original). El usuario 
 - **En marcha (2026-09-26):** SQL 15-17 ejecutados y verificados; el usuario trajo su partida a una carpeta nueva con el traspaso (§195), probado en Windows y bien; borró la vieja y la nueva se llama otra vez `PermaLocke prueba`. Falta repartirla a los amigos.
 - **1.0.1 (§200), 2026-09-26:** repo público; primera release para probar la actualización automática. Falta que el usuario la publique y la vea entrar.
 - **Actualizaciones (§200-§201):** 1.0.1 publicada a mano y probada por el usuario. Desde la 1.0.2 las publica la Action al aceptar un PR que sube `<Version>`; para cada versión, sus novedades en `docs/novedades/<versión>.md`.
+- **1.0.3 (§202):** franja ACTUALIZAR y aviso fijo sobre el juego; se publica al aceptar su PR.
 
 ## 1. Subir solo lo nuevo y limpiar
 - La app sube solo los eventos que el servidor no tiene todavía (p. ej., tabla `eventos` con una fila por evento, o

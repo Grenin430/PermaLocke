@@ -309,6 +309,7 @@
         <Grid Grid.Column="1" Margin="16,14,16,14">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" MinHeight="16" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
@@ -454,7 +455,26 @@
             <!-- El contenido se apoya en el suelo, sin marco propio. -->
                 <!-- EL JUEGO, ABIERTO O CERRADO: una franja a todo lo ancho encima de cada sección, con qué pide y por qué (2026-09-24:
                      antes era una etiqueta pequeña en la cabecera y no se veía). Ámbar lo pedido, verde y rojo solo lo comprobado. -->
-                <Grid Grid.Row="1" Margin="4,0,4,14"
+                <!-- LA VERSIÓN NUEVA (§202): una franja ámbar encima de cada sección mientras haya una esperando, con su
+                     señal de peligro y un ACTUALIZAR pequeño dentro. Sustituye a la pregunta de sí o no de §196. -->
+                <Grid Grid.Row="1" Margin="4,0,4,14" DataContext="{Binding Update}"
+                      Visibility="{Binding IsVisible, Converter={StaticResource BoolToVisibility}}">
+                    <views:PixelPanel HasShadow="False" Fill="{StaticResource PxWarnDeep}" />
+                    <DockPanel Margin="14,10,12,10">
+                        <pixel:PixelIcon DockPanel.Dock="Left" Icon="IconWarning" Scale="2" Bob="True"
+                                         VerticalAlignment="Center" Margin="0,0,12,0" />
+                        <Button DockPanel.Dock="Right" Content="ACTUALIZAR" Style="{StaticResource PxButton}"
+                                Command="{Binding UpdateCommand}" VerticalAlignment="Center" Margin="12,0,0,0" />
+                        <StackPanel VerticalAlignment="Center">
+                            <pixel:PixelText Text="{Binding Text}" Scale="3" Tight="True" Colour="{StaticResource PxWarn}"
+                                             Shadow="{StaticResource PxShadow}" />
+                            <pixel:PixelText Text="{Binding Hint}" Scale="2" Tight="True" Margin="0,5,0,0"
+                                             Colour="{StaticResource PxText}" />
+                        </StackPanel>
+                    </DockPanel>
+                </Grid>
+
+                <Grid Grid.Row="2" Margin="4,0,4,14"
                       Visibility="{Binding ShowsNeed, Converter={StaticResource BoolToVisibility}}">
                     <views:PixelPanel HasShadow="False">
                         <views:PixelPanel.Style>
@@ -498,7 +518,7 @@
                                          Colour="{StaticResource PxText}" />
                     </DockPanel>
                 </Grid>
-            <Border Grid.Row="2" Background="Transparent" Padding="4,0">
+            <Border Grid.Row="3" Background="Transparent" Padding="4,0">
                 <ContentControl x:Name="SectionHost" Content="{Binding SelectedSection}">
                     <ContentControl.RenderTransform>
                         <TranslateTransform x:Name="SectionSlide" />

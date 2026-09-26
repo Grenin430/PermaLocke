@@ -12600,3 +12600,29 @@ PowerShell en el propio workflow (`"$t:"` se lee como una variable con ámbito; 
 Arreglado, y el workflow se lanza también cuando cambia su propio fichero, para que el arreglo reintente la versión
 pendiente sin tocar el csproj. Cada bloque `run` y los `tools/*.ps1` pasan ahora por el analizador de PowerShell 7
 antes de subirlos (`dotnet tool install --global PowerShell` en la nube).
+
+---
+
+## §202 · La versión nueva, a la vista: franja arriba y aviso fijo sobre el juego (2026-09-26, PermaLocke 1.0.3)
+
+**Para qué:** pedido por el usuario tras instalar la 1.0.2. La pregunta blanca de sí o no (un `MessageBox`) no pegaba,
+y con el juego abierto la app no decía nada: solo miraba al abrirse.
+
+**Cómo queda:**
+- `UpdateService` es ahora un `ObservableObject` con `Available` (la versión que espera) e `Installing`. `Start()` mira
+  al abrir y **cada 30 min**, así una release publicada a media partida se ve. Ya no pregunta: `InstallAsync()` instala
+  con la ventana de §201 y se reinicia; con el juego abierto no instala y lo dice.
+- **Franja** (`ViewModels/UpdateBannerViewModel`, en `MainWindow.xaml` como una fila nueva del contenido, encima de la
+  franja del juego): fondo `PxWarnDeep`, el icono nuevo **`IconWarning`** (triángulo amarillo con exclamación, dando
+  saltitos), «ACTUALIZACIÓN x.y.z DISPONIBLE» en `PxWarn` y un **ACTUALIZAR** pequeño dentro. Debajo: «PERMALOCKE SE
+  REINICIA SOLO», o «CIERRA EL JUEGO PARA ACTUALIZAR» (el botón se apaga) o «ACTUALIZANDO». Se ve en todas las secciones.
+- **Sobre el juego** (`Notifier.Pin/Unpin`, `ToastKind.Update`, pestaña ACTUALIZACIÓN en ámbar con la señal): mientras
+  el emulador está abierto y hay versión esperando, un aviso **fijo** «Actualización x.y.z disponible · Reinicia la app:
+  cierra el juego y pulsa ACTUALIZAR arriba en PermaLocke». Sin cuenta atrás (`Toast.IsPinned` la oculta) y no cuenta
+  para el máximo de cuatro avisos. Sale aunque los avisos estén apagados; se va al cerrarse el juego.
+
+**Versión:** se pidió «1.0.2.1», pero la comparación (§196, `AppUpdate.VersionOf`) es de tres cifras y la habría
+tomado por la 1.0.2: es la **1.0.3**.
+
+**Sin probar** en Windows (franja, aviso fijo). Compilación entera sin avisos; Core 398, GameLink 397, Randomizer 485,
+Rules 151, PixelCheck 69.

@@ -78,7 +78,18 @@
                             <!-- Lo que le queda en pantalla. Doce segmentos que se apagan de uno en uno. -->
                             <views:ToastCountdown Grid.Row="1" Grid.ColumnSpan="2" Margin="0,10,0,0"
                                                   Kind="{Binding Kind}" Shown="{Binding Shown}"
-                                                  Linger="{Binding Linger}" />
+                                                  Linger="{Binding Linger}">
+                                <!-- Un aviso fijo (§202) no se acaba: sin cuenta atrás. -->
+                                <views:ToastCountdown.Style>
+                                    <Style TargetType="views:ToastCountdown">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsPinned}" Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </views:ToastCountdown.Style>
+                            </views:ToastCountdown>
                         </Grid>
                     </Grid>
 

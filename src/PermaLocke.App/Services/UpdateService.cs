@@ -3,6 +3,7 @@ using System.IO;
 using System.Net.Http;
 using System.Text.Json;
 using System.Windows;
+using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Extensions.Logging;
 using PermaLocke.App.ViewModels;
 using PermaLocke.Core.Domain;
@@ -11,9 +12,10 @@ using PermaLocke.Infrastructure;
 namespace PermaLocke.App.Services;
 
 /// <summary>
-/// The automatic update (§196, plan del próximo torneo, paso 3): at start, asks GitHub for the latest release of the
-/// repository named in <c>Data/torneo.json</c> (<c>actualizaciones</c>) and, if it is newer and has an update package,
-/// offers it; with a yes it downloads, checks and installs it (<see cref="AppUpdate"/>) and restarts.
+/// The automatic update (§196, plan del próximo torneo, paso 3): asks GitHub for the latest release of the repository
+/// named in <c>Data/torneo.json</c> (<c>actualizaciones</c>) and, if it is newer and has an update package, keeps it as
+/// <see cref="Available"/>; <see cref="InstallAsync"/> downloads, checks and installs it (<see cref="AppUpdate"/>) and
+/// restarts.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -21,22 +23,43 @@ namespace PermaLocke.App.Services;
 /// goes to the tournament's database: the versions live in GitHub Releases.
 /// </para>
 /// <para>
-/// Never with the emulator open (the program is replaced under a running game's watcher). The official rules the
-/// organiser published (<see cref="RulesSync"/>) stay: the Data files the server has a rule for are not overwritten, and
-/// if the server cannot be asked, none of the rule files is.
+/// Since §202 it asks at start and every half hour, and never asks the player with a dialog: the version waiting shows
+/// as a bar at the top of every section with its ACTUALIZAR button (<see cref="ViewModels.UpdateBannerViewModel"/>), and
+/// while the game is open as a notice pinned over it (<see cref="Notifier.Pin"/>) until the game closes.
+/// </para>
+/// <para>
+/// Never installs with the emulator open (the program is replaced under a running game's watcher). The official rules
+/// the organiser published (<see cref="RulesSync"/>) stay: the Data files the server has a rule for are not overwritten,
+/// and if the server cannot be asked, none of the rule files is.
 /// </para>
 /// </remarks>
-public sealed class UpdateService(AppPaths paths, DiscordLogin discord, EmulatorLauncher emulator, IAppDialogs dialogs,
-    ILogger<UpdateService> logger)
+public sealed partial class UpdateService(AppPaths paths, DiscordLogin discord, EmulatorLauncher emulator, IAppDialogs dialogs,
+    Notifier notifier, ILogger<UpdateService> logger) : ObservableObject
 {
     /// <summary>The argument of the restart after installing: it waits for this instance to close.</summary>
     public const string RestartArgument = "--tras-actualizar";
+
+    /// <summary>How often it asks GitHub again while PermaLocke is open.</summary>
+    private static readonly TimeSpan Every = TimeSpan.FromMinutes(30);
+
+    private const string PinKey = "actualizacion";
 
     private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromMinutes(10) };
 
     private sealed record Settings(string? Actualizaciones);
 
     private sealed record RuleRow(string Fichero);
+
+    /// <summary>The newer version waiting to be installed, or null when PermaLocke is up to date.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsAvailable))]
+    private UpdateAsset? _available;
+
+    /// <summary>Downloading or installing right now.</summary>
+    [ObservableProperty]
+    private bool _installing;
+
+    public bool IsAvailable => Available is not null;
 
     /// <summary>The version running.</summary>
     public static Version Current => typeof(UpdateService).Assembly.GetName().Version ?? new Version(0, 0, 0);
@@ -52,10 +75,39 @@ public sealed class UpdateService(AppPaths paths, DiscordLogin discord, Emulator
         }
     }
 
-    /// <summary>Looks for a newer version and, if the player says yes, installs it and restarts. Never throws.</summary>
+    /// <summary>Asks now and every half hour; pins or unpins the notice over the game as it opens and closes.</summary>
+    public void Start()
+    {
+        if (!paths.LocalOnly || Repository() is null)
+        {
+            return;
+        }
+
+        emulator.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(EmulatorLauncher.IsRunning))
+            {
+                ShowOverGame();
+            }
+        };
+
+        _ = LoopAsync();
+    }
+
+    private async Task LoopAsync()
+    {
+        using var timer = new PeriodicTimer(Every);
+        do
+        {
+            await CheckAsync();
+        }
+        while (await timer.WaitForNextTickAsync());
+    }
+
+    /// <summary>Looks for a newer version and keeps it as <see cref="Available"/>. Never throws.</summary>
     public async Task CheckAsync()
     {
-        if (!paths.LocalOnly || Repository() is not { } repository)
+        if (!paths.LocalOnly || Installing || Repository() is not { } repository)
         {
             return;
         }
@@ -80,8 +132,12 @@ public sealed class UpdateService(AppPaths paths, DiscordLogin discord, Emulator
                 return;
             }
 
-            logger.LogInformation("Versión nueva disponible: {Version} ({Bytes} bytes)", asset.Version, asset.Size);
-            await OfferAsync(asset);
+            if (Available?.Version != asset.Version)
+            {
+                logger.LogInformation("Versión nueva disponible: {Version} ({Bytes} bytes)", asset.Version, asset.Size);
+                Available = asset;
+                ShowOverGame();
+            }
         }
         catch (Exception ex)
         {
@@ -89,24 +145,55 @@ public sealed class UpdateService(AppPaths paths, DiscordLogin discord, Emulator
         }
     }
 
-    private async Task OfferAsync(UpdateAsset asset)
+    /// <summary>With the game open and a version waiting, the notice stays over the game; otherwise it goes.</summary>
+    private void ShowOverGame()
     {
+        if (Available is { } asset && emulator.IsRunning)
+        {
+            notifier.Pin(PinKey, ToastKind.Update, $"Actualización {asset.Version} disponible",
+                "Reinicia la app: cierra el juego y pulsa ACTUALIZAR arriba en PermaLocke.");
+        }
+        else
+        {
+            notifier.Unpin(PinKey);
+        }
+    }
+
+    /// <summary>
+    /// Downloads and installs the version waiting and restarts, from the ACTUALIZAR button. Refuses with the game open.
+    /// Never throws.
+    /// </summary>
+    public async Task InstallAsync()
+    {
+        if (Available is not { } asset || Installing)
+        {
+            return;
+        }
+
         if (emulator.IsRunning)
         {
-            dialogs.Tell("Versión nueva", $"Hay una versión nueva de PermaLocke ({asset.Version}). Cierra el emulador y vuelve a abrir " +
-                                          "PermaLocke para actualizar.");
+            dialogs.Tell("Versión nueva", "Cierra el juego para actualizar: PermaLocke se reinicia al instalarla.");
             return;
         }
 
-        var notes = asset.Notes.Length > 600 ? asset.Notes[..600] + "…" : asset.Notes;
-        if (!dialogs.Confirm("Versión nueva",
-                $"Hay una versión nueva de PermaLocke: {asset.Version} (tienes la {Current.ToString(3)}).\n\n{notes}\n\n" +
-                $"Se descargan {asset.Size / (1024.0 * 1024):0.0} MB y PermaLocke se reinicia. Tu run, tu partida y tus ajustes " +
-                "no se tocan. ¿Actualizar ahora?"))
+        Installing = true;
+        try
         {
-            return;
+            await InstallAsync(asset);
         }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Falló la actualización a {Version}", asset.Version);
+            dialogs.Tell("Versión nueva", "No se ha podido actualizar. Se puede volver a intentar con ACTUALIZAR.");
+        }
+        finally
+        {
+            Installing = false;
+        }
+    }
 
+    private async Task InstallAsync(UpdateAsset asset)
+    {
         var folder = Path.Combine(paths.Root, AppUpdate.Staging);
         Directory.CreateDirectory(folder);
         var package = Path.Combine(folder, asset.Name);
@@ -129,7 +216,7 @@ public sealed class UpdateService(AppPaths paths, DiscordLogin discord, Emulator
             {
                 Discard(package);
                 logger.LogWarning(ex, "Falló la descarga de {Name}", asset.Name);
-                dialogs.Tell("Versión nueva", "No se ha podido descargar. Se intentará la próxima vez que abras PermaLocke.");
+                dialogs.Tell("Versión nueva", "No se ha podido descargar. Se puede volver a intentar con ACTUALIZAR.");
                 return;
             }
 
@@ -137,7 +224,7 @@ public sealed class UpdateService(AppPaths paths, DiscordLogin discord, Emulator
             if (!await Task.Run(() => AppUpdate.Matches(package, asset)))
             {
                 logger.LogWarning("La descarga de {Name} no coincide con la de GitHub", asset.Name);
-                dialogs.Tell("Versión nueva", "La descarga ha llegado mal. Se intentará la próxima vez que abras PermaLocke.");
+                dialogs.Tell("Versión nueva", "La descarga ha llegado mal. Se puede volver a intentar con ACTUALIZAR.");
                 return;
             }
 

@@ -40,5 +40,8 @@ public enum ToastKind
     Warning,
 
     /// <summary>A friend lost a Pokémon: the notice before its ghost crosses the emulator (§183).</summary>
-    Ghost
+    Ghost,
+
+    /// <summary>A new version is waiting while the game is open (§202): pinned until the game closes.</summary>
+    Update
 }

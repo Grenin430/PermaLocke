@@ -24,10 +24,14 @@ public sealed record Toast(ToastKind Kind, string Title, string Message, BitmapS
         ToastKind.Gift => "REGALO",
         ToastKind.Announcement => "ANUNCIO",
         ToastKind.Ghost => "FANTASMA",
+        ToastKind.Update => "ACTUALIZACIÓN",
         _ => "PERMALOCKE"
     };
 
     public bool HasMessage => !string.IsNullOrWhiteSpace(Message);
+
+    /// <summary>Stays until it is taken away (§202): no countdown and no timer.</summary>
+    public bool IsPinned => Linger == Timeout.InfiniteTimeSpan;
 }
 
 /// <summary>
@@ -60,6 +64,9 @@ public sealed class Notifier(IUiDispatcher ui, ILogger<Notifier> logger)
 
     private ToastWindow? _window;
 
+    /// <summary>The notices that stay until taken away, by who pinned them.</summary>
+    private readonly Dictionary<string, Toast> _pinned = [];
+
     /// <summary>What is on screen right now, newest at the bottom.</summary>
     public ObservableCollection<Toast> Showing { get; } = [];
 
@@ -71,6 +78,42 @@ public sealed class Notifier(IUiDispatcher ui, ILogger<Notifier> logger)
 
     public void Say(ToastKind kind, string title, string message, BitmapSource? sprite = null) =>
         _ = SayAsync(kind, title, message, sprite);
+
+    /// <summary>
+    /// A notice that stays on top of the game until <see cref="Unpin"/> (§202): the new version waiting while the
+    /// player plays. One per <paramref name="key"/>; pinning again replaces it. Shown even with the notices turned off,
+    /// because it is not an interruption that goes away by itself.
+    /// </summary>
+    public void Pin(string key, ToastKind kind, string title, string message) => _ = ui.InvokeAsync(() =>
+    {
+        try
+        {
+            if (_pinned.Remove(key, out var old)) Showing.Remove(old);
+            var toast = new Toast(kind, title, message, null, DateTime.UtcNow, Timeout.InfiniteTimeSpan);
+            _pinned[key] = toast;
+            Showing.Add(toast);
+            Open();
+            logger.LogInformation("Aviso fijo: {Title}", title);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "No se pudo mostrar el aviso fijo {Title}", title);
+        }
+
+        return Task.CompletedTask;
+    });
+
+    /// <summary>Takes a pinned notice away, if it is there.</summary>
+    public void Unpin(string key) => _ = ui.InvokeAsync(() =>
+    {
+        if (_pinned.Remove(key, out var toast))
+        {
+            Showing.Remove(toast);
+            if (Showing.Count == 0) _window?.Hide();
+        }
+
+        return Task.CompletedTask;
+    });
 
     // Observe the UI task here: a failed window must never interrupt game monitoring or disappear silently.
     internal async Task SayAsync(ToastKind kind, string title, string message, BitmapSource? sprite = null)
@@ -99,7 +142,8 @@ public sealed class Notifier(IUiDispatcher ui, ILogger<Notifier> logger)
                 if (!Enabled) return Task.CompletedTask;
                 var toast = new Toast(kind, title, message, sprite, DateTime.UtcNow, Linger);
                 Showing.Add(toast);
-                while (Showing.Count > AtMost) Showing.RemoveAt(0);
+                // Los fijos no cuentan ni se echan: se van los pasajeros más viejos.
+                while (Showing.Count(t => !t.IsPinned) > AtMost) Showing.Remove(Showing.First(t => !t.IsPinned));
 
                 try
                 {

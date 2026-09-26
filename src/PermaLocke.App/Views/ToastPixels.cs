@@ -46,6 +46,7 @@ internal static class ToastPixels
         ToastKind.Death or ToastKind.TeamWipe => Rgb(0xB8, 0x43, 0x3A),
         ToastKind.Warning => Rgb(0xD9, 0x77, 0x2F),
         ToastKind.Ghost => Rgb(0x9C, 0xC8, 0xE0),
+        ToastKind.Update => Rgb(0xE8, 0xC0, 0x3A),
         _ => Rgb(0xB0, 0x7B, 0xF0)
     };
 
@@ -382,7 +383,7 @@ public sealed class ToastPlate : FrameworkElement
         {
             canvas.Sprite(ToastMarks.Grave, (Columns - ToastMarks.Grave[0].Length) / 2, Rows - 3 - ToastMarks.Grave.Length, ToastMarks.Key);
         }
-        else if (Kind is ToastKind.Warning)
+        else if (Kind is ToastKind.Warning or ToastKind.Update)
         {
             canvas.Sprite(ToastMarks.Sign, (Columns - ToastMarks.Sign[0].Length) / 2, Rows - 5 - ToastMarks.Sign.Length - hop, ToastMarks.Key);
         }

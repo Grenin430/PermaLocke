@@ -438,6 +438,23 @@ public static class PixelIcons
             ".oo......oo.",
         ],
 
+        // Un triángulo amarillo con exclamación: algo pide que se haga (la versión nueva, §202).
+        ["IconWarning"] =
+        [
+            ".....oo.....",
+            "....oggo....",
+            "....oggo....",
+            "...oggggo...",
+            "...ogoogo...",
+            "..oggooggo..",
+            "..oggooggo..",
+            ".oggggggggo.",
+            ".ogggooggGo.",
+            "oggggggggGGo",
+            "oGGGGGGGGGGo",
+            ".oooooooooo.",
+        ],
+
         ["IconDot"] =
         [
             "............",

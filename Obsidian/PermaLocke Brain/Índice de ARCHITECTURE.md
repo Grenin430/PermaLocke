@@ -208,6 +208,7 @@ generado: 2026-09-24
 - L12532 · 199 · Informes de fallo directos a Admin (paso 6)
 - L12558 · 200 · PermaLocke 1.0.1: versión a la vista, un solo sitio para ella
 - L12573 · 201 · Ventana de la actualización y releases solas con GitHub Actions (1.0.2)
+- L12606 · 202 · Versión nueva a la vista: franja en todas las secciones y aviso fijo sobre el juego (1.0.3)
 
 Subsecciones §176: bis (visor), ter (todas las pantallas, fuera ESTADÍSTICAS), quater (EV/MOVIMIENTOS sin bolsa, diálogos).
 
