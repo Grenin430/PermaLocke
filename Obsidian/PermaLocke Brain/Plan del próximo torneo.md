@@ -43,6 +43,8 @@ Descartada de esa tanda: «apuntarse desde la app» (la 2 original). El usuario 
 - **Paso 5 — HECHO en el repo (§198), 2026-09-26.** Falta que el usuario ejecute `tools/supabase/16-copias.sql` (después del 15). Devolver una copia es a mano con el LEEME del zip.
 - **Paso 6 — HECHO en el repo (§199), 2026-09-26.** Falta que el usuario ejecute `tools/supabase/17-informes.sql` (después del 16). **Plan completo en el repo**: SQL 15, 16 y 17 por orden; nada probado aún en Windows ni contra el Supabase de verdad.
 
+- **En marcha (2026-09-26):** SQL 15-17 ejecutados y verificados; el usuario ya juega en una carpeta nueva traída desde `PermaLocke prueba` con el traspaso (§195), probado en Windows y bien. Falta repartirla a los amigos.
+
 ## 1. Subir solo lo nuevo y limpiar
 - La app sube solo los eventos que el servidor no tiene todavía (p. ej., tabla `eventos` con una fila por evento, o
   añadir al JSON existente desde el último hash), en vez del historial entero. Mantener la huella (`chainHead`,
