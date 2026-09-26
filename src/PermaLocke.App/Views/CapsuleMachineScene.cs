@@ -19,7 +19,8 @@ public sealed record CapsuleBanner(string Name, int Skin, IReadOnlyList<double> 
 /// so the first ball says nothing, and climbs at most twice.
 /// </param>
 /// <param name="Pokemon">The icon of what came out, from the player's cartridge; null draws only the light.</param>
-public sealed record CapsuleRoll(IReadOnlyList<int> Steps, RoomSprite? Pokemon, bool Shiny, bool Legendary, int Seed);
+/// <param name="Streak">How many pulls in a row this one is: from the second the room shows the streak (§189).</param>
+public sealed record CapsuleRoll(IReadOnlyList<int> Steps, RoomSprite? Pokemon, bool Shiny, bool Legendary, int Seed, int Streak = 1);
 
 /// <summary>One pull on the shelf of what has come out: its icon and its tier, for the colour of its stand.</summary>
 public sealed record CapsuleShelfItem(RoomSprite? Sprite, int Tier);
@@ -73,6 +74,39 @@ public static class CapsuleTimeline
     public const double Revealed = 9.95;
 
     public static double WobbleEnd => WobbleStart + (Wobbles * WobbleLength);
+
+    /// <summary>
+    /// How much faster than normal the machine runs up to the open once pulls come in a row (§189): the coin, the crank,
+    /// the roll and the wobbles, never the Pokémon coming out, which is the payoff. The same for every tier.
+    /// </summary>
+    public const double ExpressSpeed = 2.5;
+
+    /// <summary>Where SALTAR takes a pull that has not opened yet: the ball blinking, an instant before it opens.</summary>
+    public const double SkipTo = Open - 0.12;
+
+    /// <summary>
+    /// The pull's own time for <paramref name="real"/> seconds since the coin dropped: <paramref name="speed"/> times as
+    /// fast up to the open, and at its own pace from there.
+    /// </summary>
+    public static double Warp(double real, double speed)
+    {
+        speed = Math.Max(1, speed);
+        var toOpen = Open / speed;
+        return real <= toOpen ? real * speed : Open + (real - toOpen);
+    }
+
+    /// <summary>The inverse of <see cref="Warp"/>: how many real seconds it takes to reach <paramref name="moment"/>.</summary>
+    public static double RealFor(double moment, double speed)
+    {
+        speed = Math.Max(1, speed);
+        return moment <= Open ? moment / speed : (Open / speed) + (moment - Open);
+    }
+
+    /// <summary>
+    /// Where SALTAR goes from <paramref name="now"/>: to the ball about to open; once it is opening, to the Pokémon out;
+    /// after that, nowhere. Never back.
+    /// </summary>
+    public static double SkipTarget(double now) => now < SkipTo ? SkipTo : now < Revealed ? Revealed : now;
 
     /// <summary>The moment at the end of a wobble when the ball may turn into a better one.</summary>
     public static double UpgradeAt(int wobble) => WobbleStart + (wobble * WobbleLength) + WobbleTilt + 0.02;
@@ -208,7 +242,7 @@ public sealed class CapsuleMachineScene : PixelScene
 
         BeginFrame();
 
-        DrawNeonSign(clock);
+        DrawNeonSign(clock, roll?.Streak ?? 1);
         DrawShelf(state.Shelf, state.ShelfNewestAge);
 
         if (!ReferenceEquals(_layoutFor, banner))
@@ -233,6 +267,8 @@ public sealed class CapsuleMachineScene : PixelScene
         if (roll is not null)
         {
             DrawPull(banner, roll, t, clock);
+            DrawCelebration(roll, t);
+            Punch(roll, t);
         }
         else if (state.Departed is { } gone && state.DepartTime < DepartLength)
         {
@@ -853,8 +889,37 @@ public sealed class CapsuleMachineScene : PixelScene
             Ellipse(x, RestFloor - 0.5, width, 1.8, Shadow, dither: height > 4);
         }
 
+        // La tensión de los meneos: la sala se apaga alrededor de la ball y la luz se cierra sobre ella. Igual para
+        // cualquier tier; al abrirse, la sala entera baja y el foco se suelta.
+        var tension = Tension(t);
+        if (tension > 0) Spotlight(x, y - (r * 0.4), 150 - (100 * tension), 0.5 * tension);
+
         var dim = Math.Clamp((t - CapsuleTimeline.Open) / 0.4, 0, 1) * 0.62;
         if (dim > 0) Darken(dim);
+
+        // Cada subida y la apertura: un aro que corre por el suelo, del color de la ball nueva.
+        var climbWobbles = CapsuleTimeline.UpgradeWobbles(climbs, roll.Seed);
+        for (var i = 0; i < climbWobbles.Length; i++)
+        {
+            var since = t - CapsuleTimeline.UpgradeAt(climbWobbles[i]);
+            if (since is >= 0 and < 0.45)
+            {
+                FloorRing(x, RestFloor - 1, 14 + (since * 190), Lerp(TierColour(roll.Steps[Math.Min(i + 1, roll.Steps.Count - 1)]), White, 0.3), 1 - (since / 0.45));
+            }
+        }
+
+        var opened = t - CapsuleTimeline.Open;
+        if (opened is >= 0 and < 0.6)
+        {
+            FloorRing(x, RestFloor - 1, 12 + (opened * 230), Lerp(tierColour, White, 0.35), 1 - (opened / 0.6));
+            if (final >= 3 && opened >= 0.12) FloorRing(x, RestFloor - 1, 12 + ((opened - 0.12) * 230), White, 1 - ((opened - 0.12) / 0.48));
+        }
+
+        // Justo antes de abrirse, la ball tiembla.
+        if (t >= CapsuleTimeline.Open - 0.35 && t < CapsuleTimeline.Open)
+        {
+            x += (int)(t * 30) % 2 == 0 ? 0.5 : -0.5;
+        }
 
         var open = Math.Clamp((t - CapsuleTimeline.Open) / 0.25, 0, 1);
         var closing = Math.Clamp((t - (CapsuleTimeline.Revealed - 0.1)) / 0.25, 0, 1);
@@ -874,10 +939,10 @@ public sealed class CapsuleMachineScene : PixelScene
         var ballBehind = open > 0;
         if (ballBehind) DrawBall(x, y, r, angle, (CapsuleBall)shown, new BallLook(0, open, squash, false));
 
-        // El Pokémon: silueta blanca, luego al doble, y de golpe en su color.
+        // El Pokémon: silueta blanca, luego de golpe más grande de la cuenta, se asienta al doble y pasa a su color.
         if (t >= CapsuleTimeline.Emerge && roll.Pokemon is { } sprite)
         {
-            var scale = t < CapsuleTimeline.Emerge + 0.2 ? 1 : 2;
+            var scale = t < CapsuleTimeline.Emerge + 0.2 ? 1 : t < CapsuleTimeline.Emerge + 0.27 ? 3 : 2;
             var colour = Math.Clamp((t - (CapsuleTimeline.Emerge + 0.45)) / 0.12, 0, 1);
             var hop = t > CapsuleTimeline.Revealed + 0.4 ? HopAt(t - CapsuleTimeline.Revealed - 0.4) : 0;
             DrawPokemon(sprite, x, y - r + 1 - hop, scale, colour);
@@ -902,6 +967,20 @@ public sealed class CapsuleMachineScene : PixelScene
 
         if (!ballBehind) DrawBall(x, y, r, angle, (CapsuleBall)shown, new BallLook(flash, 0, squash, blink));
 
+        // Por la junta de la ball, a punto de abrirse, se escapa la luz.
+        var leak = (t - (CapsuleTimeline.Open - 0.35)) / 0.35;
+        if (leak is >= 0 and < 1) DrawLightLeak(x, y, r, leak);
+
+        // «¡SUBE!» sobre la ball cada vez que sube, del color de la nueva.
+        for (var i = 0; i < climbWobbles.Length; i++)
+        {
+            var since = t - CapsuleTimeline.UpgradeAt(climbWobbles[i]);
+            if (since is < 0 or >= 0.85 || (since > 0.65 && (int)(since * 20) % 2 == 0)) continue;
+
+            var colour = Lerp(TierColour(roll.Steps[Math.Min(i + 1, roll.Steps.Count - 1)]), White, 0.3);
+            ShoutText("¡SUBE!", x, (int)Math.Round(y - r - 16 - (since * 14)), colour, since < 0.07 ? 2 : 1);
+        }
+
         if (t >= CapsuleTimeline.Emerge + 0.2)
         {
             DrawParticles(x, y - r, t - (CapsuleTimeline.Emerge + 0.2), tierColour, roll.Seed, roll.Legendary);
@@ -913,13 +992,249 @@ public sealed class CapsuleMachineScene : PixelScene
         }
     }
 
+    private static Color TierColour(int tier) => TierColours[Math.Clamp(tier, 0, TierColours.Length - 1)];
+
+    /// <summary>
+    /// How tight the light is on the ball, 0 to 1: it closes over the three wobbles and lets go as the ball opens.
+    /// The same for every pull.
+    /// </summary>
+    private static double Tension(double t)
+    {
+        if (t < CapsuleTimeline.WobbleStart) return 0;
+        if (t < CapsuleTimeline.Open)
+        {
+            var p = (t - CapsuleTimeline.WobbleStart) / (CapsuleTimeline.Open - CapsuleTimeline.WobbleStart);
+            return p * p * (3 - (2 * p));
+        }
+
+        return Math.Max(0, 1 - ((t - CapsuleTimeline.Open) / 0.4));
+    }
+
+    /// <summary>Light escaping from the seam of a ball about to open, in white: it says nothing about what is inside.</summary>
+    private void DrawLightLeak(double x, double y, double r, double p)
+    {
+        var length = r + 2 + (p * 16);
+        foreach (var a in new[] { 0.0, Math.PI, 0.32, -0.32, Math.PI + 0.32, Math.PI - 0.32 })
+        {
+            var (sin, cos) = Math.SinCos(a);
+            var reach = Math.Abs(a) is < 0.1 or > 3.0 ? length : length * 0.7;
+            for (var d = r + 1; d < reach; d += 0.7)
+            {
+                var px = (int)Math.Floor(x + (cos * d));
+                var py = (int)Math.Floor(y + (sin * d));
+                if (Bayer[(py + Oy) & 3, (px + Ox) & 3] < (1 - ((d - r) / (reach - r + 1))) * 16) Put(Canvas, px, py, White);
+            }
+        }
+    }
+
+    // --------------------------------------------------------------------------------------------- celebration
+
+    private static readonly Color[] Rainbow =
+    [
+        Rgb(0xFF, 0x6A, 0x7A), Rgb(0xFF, 0xB0, 0x4A), Rgb(0xFF, 0xEE, 0x6A), Rgb(0x7A, 0xE8, 0x7A),
+        Rgb(0x6A, 0xD0, 0xFF), Rgb(0x9A, 0x8A, 0xFF), Rgb(0xE6, 0x8A, 0xFF)
+    ];
+
+    private static readonly Color Coin2 = Rgb(0xFF, 0xD2, 0x4A);
+    private static readonly Color Coin2Dark = Rgb(0xB0, 0x7A, 0x1C);
+
+    /// <summary>When the Pokémon has come out in colour: where the celebration of a rare pull starts.</summary>
+    private const double Coloured = CapsuleTimeline.Emerge + 0.5;
+
+    /// <summary>
+    /// What a rare pull brings after its Pokémon is out, when there is nothing left to give away: confetti from the
+    /// ceiling for the two top tiers and a shiny, a shower of gold coins and the word LEGENDARIO for a legendary, and
+    /// VARIOCOLOR in rainbow for a shiny.
+    /// </summary>
+    private void DrawCelebration(CapsuleRoll roll, double t)
+    {
+        var s = t - Coloured;
+        if (s < 0) return;
+
+        var final = roll.Steps.Count == 0 ? 0 : roll.Steps[^1];
+        var tier = TierColour(final);
+
+        if (final >= 3 || roll.Shiny || roll.Legendary)
+        {
+            var count = roll.Legendary ? 130 : final >= 4 ? 100 : 70;
+            Color[] colours = roll.Shiny ? Rainbow : [tier, Lerp(tier, White, 0.45), White, roll.Legendary ? GoldLight : Lerp(tier, Void, 0.25)];
+            DrawConfetti(s, count, colours, roll.Seed);
+        }
+
+        if (roll.Legendary) DrawCoins(s, roll.Seed);
+
+        // La palabra, estampada de golpe entre la máquina y el Pokémon, y fuera a los tres segundos.
+        var word = roll.Legendary && (!roll.Shiny || s < 1.6) ? "¡LEGENDARIO!" : roll.Shiny ? "¡VARIOCOLOR!" : null;
+        var since = roll.Legendary && roll.Shiny && s >= 1.6 ? s - 1.6 : s;
+        if (word is null || since > 3.2 || (since > 2.8 && (int)(since * 20) % 2 == 0)) return;
+
+        const double centre = 205;
+        const int top = 9;
+        if (since < 0.06)
+        {
+            ShoutText(word, centre, top - 4, White, 3);
+            return;
+        }
+
+        if (since < 0.12)
+        {
+            ShoutText(word, centre, top, White, 2);
+            return;
+        }
+
+        if (word == "¡VARIOCOLOR!")
+        {
+            // Cada letra de un color, y el arcoíris corre.
+            var left = (int)Math.Round(centre - (BigWidth(word, 2) / 2.0));
+            ShoutText(word, centre, top, White, 2);
+            for (var i = 0; i < word.Length; i++)
+            {
+                BigText(word[i].ToString(), left + (i * 12), top, Rainbow[(i + (int)(since * 8)) % Rainbow.Length], 2);
+            }
+        }
+        else
+        {
+            ShoutText(word, centre, top, (int)(since * 6) % 4 == 0 ? GoldHi : GoldLight, 2);
+        }
+
+        // Destellos alrededor de la palabra.
+        var random = new Random(roll.Seed ^ 0x51);
+        for (var i = 0; i < 5; i++)
+        {
+            var at = (since * 2.2) + (i * 0.37);
+            var phase = at - Math.Floor(at);
+            if (phase > 0.5) continue;
+            Star(centre + ((random.NextDouble() - 0.5) * 170), top + 7 + ((random.NextDouble() - 0.5) * 26), phase < 0.25 ? 2 : 1, White, GoldLight);
+        }
+    }
+
+    /// <summary>Confetti falling from the ceiling over the whole room, each piece fluttering as it turns.</summary>
+    private void DrawConfetti(double s, int count, Color[] colours, int seed)
+    {
+        if (s > 4.2) return;
+
+        var random = new Random(seed ^ 0x2C0F);
+        var left = -Ox;
+        var width = Width;
+        for (var i = 0; i < count; i++)
+        {
+            var delay = random.NextDouble() * 1.3;
+            var x0 = left + (random.NextDouble() * width);
+            var speed = 34 + (random.NextDouble() * 30);
+            var sway = 3 + (random.NextDouble() * 5);
+            var phase = random.NextDouble() * Math.PI * 2;
+            var colour = colours[i % colours.Length];
+
+            var local = s - delay;
+            if (local < 0) continue;
+
+            var y = -Oy - 3 + (local * speed);
+            if (y > DesignRows + 2) continue;
+
+            var x = x0 + (Math.Sin((local * 4) + phase) * sway);
+            var px = (int)Math.Floor(x);
+            var py = (int)Math.Floor(y);
+
+            // Gira: de cara, de canto y del revés, más oscuro.
+            switch ((int)((local * 9) + phase) % 4)
+            {
+                case 0:
+                    Rect(px, py, 2, 2, colour);
+                    break;
+                case 1:
+                    Rect(px - 1, py, 3, 1, colour);
+                    break;
+                case 2:
+                    Rect(px, py - 1, 1, 3, colour);
+                    break;
+                default:
+                    Rect(px, py, 2, 2, Lerp(colour, Void, 0.3));
+                    break;
+            }
+        }
+    }
+
+    /// <summary>Gold coins raining on a legendary: they fall, spin, land on the floor and stay a moment.</summary>
+    private void DrawCoins(double s, int seed)
+    {
+        if (s > 4.5) return;
+
+        var random = new Random(seed ^ 0x6011);
+        for (var i = 0; i < 32; i++)
+        {
+            var delay = random.NextDouble() * 1.1;
+            var x = 118 + (random.NextDouble() * 200);
+            var floor = FloorTop + 6 + (random.NextDouble() * (DesignRows - FloorTop - 10));
+            var speed = 70 + (random.NextDouble() * 40);
+            var life = 2.6 + (random.NextDouble() * 1.2);
+
+            var local = s - delay;
+            if (local < 0 || local > life || (local > life - 0.4 && (int)(local * 20) % 2 == 0)) continue;
+
+            var y = Math.Min(floor, -Oy - 3 + (local * local * speed));
+            var landed = y >= floor;
+            var spin = landed ? 2 : (int)Math.Abs(Math.Round(Math.Cos((local * 11) + i) * 2));
+            var px = (int)Math.Floor(x);
+            var py = (int)Math.Floor(y);
+
+            for (var dx = -spin; dx <= spin; dx++)
+            {
+                Put(Canvas, px + dx, py, Math.Abs(dx) == spin ? Coin2Dark : Coin2);
+                Put(Canvas, px + dx, py + 1, Coin2Dark);
+                if (!landed) Put(Canvas, px + dx, py - 1, Math.Abs(dx) == spin ? Coin2Dark : Coin2);
+            }
+
+            if (!landed && spin > 0) Put(Canvas, px - spin + 1, py - 1, GoldHi);
+        }
+    }
+
+    /// <summary>
+    /// The hits of a pull, over the finished frame: the room tinted and shaken each time the ball climbs, a flash and a
+    /// shake as it opens — harder the rarer the ball, which by then is plain to see — and a golden rumble for a
+    /// legendary.
+    /// </summary>
+    private void Punch(CapsuleRoll roll, double t)
+    {
+        var final = roll.Steps.Count == 0 ? 0 : roll.Steps[^1];
+        var shake = 0.0;
+
+        var climbs = CapsuleTimeline.UpgradeWobbles(Math.Max(0, roll.Steps.Count - 1), roll.Seed);
+        for (var i = 0; i < climbs.Length; i++)
+        {
+            var since = t - CapsuleTimeline.UpgradeAt(climbs[i]);
+            if (since is < 0 or >= 0.3) continue;
+
+            Wash(TierColour(roll.Steps[Math.Min(i + 1, roll.Steps.Count - 1)]), 0.28 * (1 - (since / 0.3)));
+            shake = Math.Max(shake, 3 * (1 - (since / 0.3)));
+        }
+
+        var opened = t - CapsuleTimeline.Open;
+        if (opened is >= 0 and < 0.5)
+        {
+            if (opened < 0.16) Flash(White, 0.8 * (1 - (opened / 0.16)));
+            shake = Math.Max(shake, (1.5 + final) * (1 - (opened / 0.5)));
+        }
+
+        var coloured = t - Coloured;
+        if (roll.Legendary && coloured is >= 0 and < 0.9)
+        {
+            if (coloured < 0.4) Wash(GoldLight, 0.3 * (1 - (coloured / 0.4)));
+            shake = Math.Max(shake, 3 * (1 - (coloured / 0.9)));
+        }
+
+        if (shake >= 0.5)
+        {
+            Shake((int)Math.Round(shake * Math.Sin(t * 91)), (int)Math.Round(shake * 0.7 * Math.Cos(t * 73)));
+        }
+    }
+
     // ============================================================================================= the neon sign
 
     /// <summary>
     /// A neon Poké Ball and the word GACHA on the right wall, which is where the result card will open: it keeps that
     /// half of the room from being an empty wall while the machine waits, and it flickers now and then, as neon does.
     /// </summary>
-    private void DrawNeonSign(double clock)
+    private void DrawNeonSign(double clock, int streak)
     {
         const double cx = 320.0;
         const double cy = 44.0;
@@ -956,6 +1271,15 @@ public sealed class CapsuleMachineScene : PixelScene
         }
 
         BigText(word, left, 72, core);
+
+        // Tirando seguido, la racha debajo en neón (§189): la máquina va en exprés y se nota por qué.
+        if (streak >= 2)
+        {
+            var label = $"RACHA ×{streak}";
+            var labelLeft = (int)cx - ((BigWidth(label) - 1) / 2);
+            if (!off) BigText(label, labelLeft + 1, 87, NeonGlow);
+            BigText(label, labelLeft, 86, off ? NeonGlow : GoldLight);
+        }
     }
 
     // ============================================================================================= the shelf

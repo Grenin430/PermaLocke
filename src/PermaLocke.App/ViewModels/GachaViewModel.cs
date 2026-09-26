@@ -299,6 +299,26 @@ public sealed partial class GachaViewModel : SectionViewModel
     private Guid? _historyRun;
 
     /// <summary>
+    /// How long after a Pokémon comes out the next pull still counts as one in a row (§189): long enough to read the
+    /// card and press again, short enough that coming back later starts with the whole show.
+    /// </summary>
+    private static readonly TimeSpan StreakWindow = TimeSpan.FromSeconds(20);
+
+    /// <summary>Pulls in a row so far, and when the last one's Pokémon came out (a <see cref="System.Diagnostics.Stopwatch"/> timestamp).</summary>
+    private int _streak;
+
+    private long _lastRevealAt;
+
+    /// <summary>
+    /// True while a pull is on the machine and its Pokémon is not out yet: the button says SALTAR and skips to the open,
+    /// and pressed again, to the Pokémon (§189). Nothing about the pull changes, only how soon it is seen.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(RollLabel), nameof(RollCost))]
+    [NotifyCanExecuteChangedFor(nameof(SkipCommand))]
+    private bool _canSkip;
+
+    /// <summary>
     /// Leaving the gacha folds the panels and puts the stage back to how it was before the pull.
     /// </summary>
     /// <remarks>
@@ -316,6 +336,9 @@ public sealed partial class GachaViewModel : SectionViewModel
     {
         ShowingPool = false;
         ShowingGrants = false;
+
+        // Volver más tarde empieza otra racha, con la tirada entera.
+        _streak = 0;
 
         if (IsRolling)
         {
@@ -831,6 +854,7 @@ public sealed partial class GachaViewModel : SectionViewModel
         finally
         {
             IsRolling = false;
+            CanSkip = false;
 
             if (_runContext.Current is { } current)
             {
@@ -878,10 +902,17 @@ public sealed partial class GachaViewModel : SectionViewModel
         // La semilla de la tirada decide también en qué meneos sube la ball, así que la misma tirada se ve igual al
         // recomputarla; y no depende del tier, que es lo que haría que se adivinara antes de tiempo.
         var seed = unchecked((int)(pull.Seed ^ (ulong)pull.Number));
+
+        // Una tirada seguida de otra va en exprés hasta que se abre la ball (§189): la primera se ve entera, las
+        // siguientes no cansan. Lo decide la racha, nunca lo que ha salido.
+        _streak = _streak > 0 && System.Diagnostics.Stopwatch.GetElapsedTime(_lastRevealAt) < StreakWindow ? _streak + 1 : 1;
+        var speed = _streak > 1 ? Views.CapsuleTimeline.ExpressSpeed : 1;
+
         var play = new CapsulePlay(steps, _sprites.Get(pull.Species, pull.Form, pull.IsShiny), pull.IsShiny, pull.Legendary, seed,
-            System.Diagnostics.Stopwatch.GetTimestamp());
+            System.Diagnostics.Stopwatch.GetTimestamp(), speed, _streak);
 
         CurrentPlay = play;
+        CanSkip = true;
         DisplayedTier = Portals.Count > steps[0] ? Portals[steps[0]].TierId : pull.TierId;
 
         var climbs = Views.CapsuleTimeline.UpgradeWobbles(steps.Count - 1, seed);
@@ -894,14 +925,37 @@ public sealed partial class GachaViewModel : SectionViewModel
 
         await WaitUntil(play, Views.CapsuleTimeline.Revealed);
 
+        CanSkip = false;
+        _lastRevealAt = System.Diagnostics.Stopwatch.GetTimestamp();
         DisplayedTier = pull.TierId;
         LastTier = pull.TierId;
     }
 
-    private static Task WaitUntil(CapsulePlay play, double seconds)
+    /// <summary>
+    /// Waits until the pull reaches a moment of its own clock, looking every few hundredths rather than sleeping the
+    /// whole way: SALTAR moves that clock forward, and the portals and the card have to keep up with it.
+    /// </summary>
+    private static async Task WaitUntil(CapsulePlay play, double seconds)
     {
-        var left = seconds - play.Elapsed;
-        return left > 0 ? Task.Delay(TimeSpan.FromSeconds(left)) : Task.CompletedTask;
+        while (play.Elapsed < seconds)
+        {
+            var left = (seconds - play.Elapsed) / Math.Max(1, play.Speed);
+            await Task.Delay(TimeSpan.FromSeconds(Math.Clamp(left, 0.005, 0.04)));
+        }
+    }
+
+    /// <summary>SALTAR: the pull on the machine goes on to its open, or from there to its Pokémon (§189).</summary>
+    /// <remarks>
+    /// Not in the first moment of a pull, so the second click of a double click on TIRAR does not skip the pull it has
+    /// just started.
+    /// </remarks>
+    [RelayCommand(CanExecute = nameof(CanSkip))]
+    private void Skip()
+    {
+        if (CurrentPlay is { } play && System.Diagnostics.Stopwatch.GetElapsedTime(play.StartedAt).TotalSeconds >= 0.3)
+        {
+            play.Skip();
+        }
     }
 
     partial void OnSelectedBannerChanged(BannerViewModel? value)
@@ -941,14 +995,21 @@ public sealed partial class GachaViewModel : SectionViewModel
     /// to find out what a roll cost you had to look away, at the badge on whichever banner card was
     /// selected — and which one that was could only be told apart by a background one shade lighter.
     /// </remarks>
-    public string RollLabel => (SelectedBanner ?? Banners.FirstOrDefault())?.Free > 0
-        ? "TIRAR GRATIS"
-        : "TIRAR";
+    public string RollLabel => CanSkip
+        ? "SALTAR"
+        : (SelectedBanner ?? Banners.FirstOrDefault())?.Free > 0
+            ? "TIRAR GRATIS"
+            : "TIRAR";
 
     public string RollCost
     {
         get
         {
+            if (CanSkip)
+            {
+                return "ir al Pokémon";
+            }
+
             var banner = SelectedBanner ?? Banners.FirstOrDefault();
 
             if (banner is null)

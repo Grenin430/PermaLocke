@@ -195,6 +195,7 @@ generado: 2026-09-24
 - L12023 · 186 · ÁLBUM: cartas TCG pixel de la partida
 - L12077 · 187 · ÁLBUM premium: piel, acabados por rareza, carta en 3D
 - L12139 · 188 · ÁLBUM: la carta en la mano iba a trompicones (PixelColour)
+- L12180 · 189 · GACHA: más golpe, racha exprés y SALTAR
 
 Subsecciones §176: bis (visor), ter (todas las pantallas, fuera ESTADÍSTICAS), quater (EV/MOVIMIENTOS sin bolsa, diálogos).
 

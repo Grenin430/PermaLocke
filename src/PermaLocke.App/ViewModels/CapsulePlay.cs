@@ -12,11 +12,40 @@ namespace PermaLocke.App.ViewModels;
 /// </remarks>
 /// <param name="Steps">Tier indexes the ball shows, from the cheapest the banner holds to the one that came out.</param>
 /// <param name="StartedAt">A <see cref="Stopwatch"/> timestamp.</param>
+/// <param name="Speed">
+/// How fast the machine runs up to the open: 1, or <see cref="Views.CapsuleTimeline.ExpressSpeed"/> for a pull in a row
+/// (§189). Chosen by the streak, never by what came out.
+/// </param>
+/// <param name="Streak">How many pulls in a row this one is, for the room to show.</param>
 public sealed record CapsulePlay(IReadOnlyList<int> Steps, BitmapSource? Sprite, bool Shiny, bool Legendary, int Seed,
-    long StartedAt)
+    long StartedAt, double Speed = 1, int Streak = 1)
 {
-    /// <summary>Seconds since the coin dropped.</summary>
-    public double Elapsed => Stopwatch.GetElapsedTime(StartedAt).TotalSeconds;
+    /// <summary>Real seconds SALTAR has moved this pull forward.</summary>
+    private double _skipped;
+
+    /// <summary>
+    /// Where the pull is, in its own seconds since the coin dropped: <see cref="Views.CapsuleTimeline"/> moments, sped
+    /// up before the open for a pull in a row and moved forward by SALTAR.
+    /// </summary>
+    public double Elapsed => Views.CapsuleTimeline.Warp(Stopwatch.GetElapsedTime(StartedAt).TotalSeconds + _skipped, Speed);
+
+    /// <summary>
+    /// SALTAR: on to the ball about to open, or, once it is opening, to the Pokémon out. The pull was decided before the
+    /// coin dropped, so skipping only moves the clock everyone draws from.
+    /// </summary>
+    /// <returns>False when there was nothing left to skip.</returns>
+    public bool Skip()
+    {
+        var now = Elapsed;
+        var target = Views.CapsuleTimeline.SkipTarget(now);
+        if (target <= now)
+        {
+            return false;
+        }
+
+        _skipped += Views.CapsuleTimeline.RealFor(target, Speed) - Views.CapsuleTimeline.RealFor(now, Speed);
+        return true;
+    }
 
     /// <summary>
     /// The balls a pull climbs through: it drops as the cheapest ball on the banner and climbs at most twice.

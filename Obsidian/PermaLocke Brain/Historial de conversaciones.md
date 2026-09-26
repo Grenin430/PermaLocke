@@ -6,6 +6,12 @@ revisado: 2026-09-26
 
 La última sesión va arriba. Antes del 2026-09-23 solo hay un resumen por fechas sacado de `CLAUDE.md` y de `ARCHITECTURE.md`: el detalle está en el § citado ([[Índice de ARCHITECTURE]]). **Cada sesión nueva añade su entrada aquí.**
 
+## 2026-09-26 — GACHA con más golpe y cincuenta seguidas sin cansar (§189), desde la nube
+- Tras desplegar prueba y amigos con el §188 (el comando necesita `-ExecutionPolicy Bypass`, ya apuntado en `desplegar.ps1` y `CLAUDE.md`), el usuario pidió «potenciar» el gacha y que 50 tiradas seguidas no cansen.
+- Decidido por mí: la primera tirada entera; las seguidas (≤20 s tras la anterior) en **exprés ×2,5 hasta que se abre** la ball; **SALTAR** en el mismo botón, en la máquina y con ESPACIO/INTRO; «RACHA ×N» en el neón. Nada depende del tier antes de abrirse (regla del §171).
+- Golpe: foco que se cierra en los meneos, luz por la junta, tinte + sacudida + aro + «¡SUBE!» al subir, fogonazo en tramado y sacudida por rareza al abrir, Pokémon que sale al triple, confeti (tiers altos y variocolor), monedas y «¡LEGENDARIO!», «¡VARIOCOLOR!» arcoíris.
+- PixelCheck compila ya `PixelScene` y la máquina (sustitutos en `WpfImaging.cs`) y saca `gacha-*.png`. 66 correctas. ~2 ms por fotograma. Sin ver en Windows.
+
 ## 2026-09-26 — la carta en la mano iba a trompicones (§188), desde la nube
 - El usuario: «está increíble, pero al inspeccionar la carta va muy muy muy bajo en fps».
 - **Causa:** el `Color` de WPF convierte a scRGB con `Math.Pow` al construirse; la mano hacía varios por píxel de pantalla. Medido con un sustituto que imita ese coste: ~100 ms por fotograma.

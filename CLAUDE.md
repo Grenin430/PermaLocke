@@ -133,7 +133,9 @@ Trampas que ya costaron caro y hay que tener siempre presentes:
   instalado (`WorldLimits`, `InstalledWorld`). Las sondas deben llamar a `InstalledWorld.ApplyQuietly` (§91).
 - **Detectable no es detectado**: el vigilante empareja por PID contra lo registrado en la run (§56, §68).
 
-Último: **la carta en la mano del ÁLBUM iba a trompicones** (§188): el `Color` de WPF calcula scRGB con `Math.Pow`, así
+Último: **GACHA con más golpe** (§189): racha exprés ×2,5 hasta abrirse, SALTAR (botón, máquina, ESPACIO), tensión,
+«¡SUBE!», fogonazo, confeti, monedas y sellos LEGENDARIO/VARIOCOLOR; nada antes de abrirse depende del tier. Antes: **la
+carta en la mano del ÁLBUM iba a trompicones** (§188): el `Color` de WPF calcula scRGB con `Math.Pow`, así
 que el dibujo pixel usa `PixelColour`; la mano pasó de ~100 ms a 4 ms por fotograma y va a 60 fps si puede. Antes: **ÁLBUM
 premium** (§187): carpeta de piel con pestañas y luz, página que gira en perspectiva, acabados por
 rareza (holo, inversa, dorada, polícroma) y la carta en la mano en 3D (vuela, se inclina, se da la vuelta). Antes: **ÁLBUM** (§186): las cajas como carpeta de cartas TCG pixel (3×3 o 4×4), rareza por tier del gacha, variocolor
@@ -248,7 +250,7 @@ dotnet run --project tools/PermaLocke.Probe -- --shiny-siempre quitar
 dotnet run --project tools/PermaLocke.Probe -- --dar-mod 964 60 278 857,834,812,776 --probar
 dotnet run --project tools/PermaLocke.Probe -- --dar-mod 984 60 281 838,861,915,866 --objeto 960
 
-# el dibujo del ÁLBUM sin Windows (también en la nube); con la variable deja PNG para mirarlos
+# el dibujo del ÁLBUM y del GACHA sin Windows (también en la nube); con la variable deja PNG para mirarlos
 dotnet test tools/PermaLocke.PixelCheck
 PERMALOCKE_PIXEL_DIR=/ruta dotnet test tools/PermaLocke.PixelCheck
 

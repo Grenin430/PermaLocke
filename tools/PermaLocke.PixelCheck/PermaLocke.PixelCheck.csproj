@@ -4,7 +4,9 @@
     Las pruebas del dibujo del ÁLBUM (§187) en cualquier sistema, también en Linux y en la nube, donde WPF no corre.
     Compila los ficheros puros de la app tal cual (cartas, carpeta, carta en la mano, fuentes, colores de tipo), que
     pintan con PixelColour (§188), y ejecuta las mismas AlbumTests que tests/PermaLocke.App.Tests. El Color de
-    sustituto (WpfColour.cs) queda solo para RoomSprite.At, que usan las otras escenas.
+    sustituto (WpfColour.cs) queda para RoomSprite.At y PixelScene. Desde el §189 compila también PixelScene y la
+    máquina de cápsulas del gacha, con sustitutos de WriteableBitmap y compañía (WpfImaging.cs), y ejecuta las
+    CapsuleMachineTests; GachaPreviews deja fotogramas de tiradas en PNG.
 
       dotnet test tools/PermaLocke.PixelCheck
       PERMALOCKE_PIXEL_DIR=/ruta dotnet test tools/PermaLocke.PixelCheck   # además deja PNG para mirarlos
@@ -38,6 +40,11 @@
     <Compile Include="..\..\src\PermaLocke.App\Services\TypeColours.cs" Link="App\TypeColours.cs" />
     <Compile Include="..\..\src\PermaLocke.App\ViewModels\AlbumPaging.cs" Link="App\AlbumPaging.cs" />
     <Compile Include="..\..\tests\PermaLocke.App.Tests\AlbumTests.cs" Link="Tests\AlbumTests.cs" />
+    <Compile Include="..\..\src\PermaLocke.App\Views\PixelScene.cs" Link="App\PixelScene.cs" />
+    <Compile Include="..\..\src\PermaLocke.App\Views\AlolaPalette.cs" Link="App\AlolaPalette.cs" />
+    <Compile Include="..\..\src\PermaLocke.App\Views\CapsuleMachineScene.cs" Link="App\CapsuleMachineScene.cs" />
+    <Compile Include="..\..\src\PermaLocke.App\ViewModels\CapsulePlay.cs" Link="App\CapsulePlay.cs" />
+    <Compile Include="..\..\tests\PermaLocke.App.Tests\CapsuleMachineTests.cs" Link="Tests\CapsuleMachineTests.cs" />
   </ItemGroup>
 
 </Project>

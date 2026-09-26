@@ -12174,3 +12174,57 @@ escenas pixel (cementerio, sala, cápsulas) siguen con el `Color` de WPF; no se 
 esta es la primera sospecha.
 
 **Sin ver dentro de la app:** los 60 fps y la fluidez real se comprueban en Windows.
+
+---
+
+## §189 · GACHA: más golpe en cada tirada, y cincuenta seguidas sin cansar (2026-09-26)
+
+**Petición (jugador):** «potenciar las animaciones del gacha para que impacten aún más y que, si tiras 50 veces
+seguidas, no te canses».
+
+**Cincuenta seguidas.** La tirada dura 9,95 s hasta el Pokémon a color (§171), y así se queda la primera. Tres cosas
+para las siguientes, y ninguna depende de lo que ha salido, que es lo que el §171 protegía:
+- **Racha y exprés.** Una tirada lanzada hasta 20 s después de que saliera el Pokémon anterior cuenta como seguida
+  (`GachaViewModel._streak`, `StreakWindow`). Desde la segunda, la máquina va a **×2,5 hasta que la ball se abre**
+  (`CapsuleTimeline.ExpressSpeed`): moneda, manivela, rodar y meneos. La apertura y el Pokémon, que son el premio, van
+  a su ritmo. Una tirada seguida tarda ~4,6 s en vez de 10. Salir del gacha corta la racha. En la pared, bajo el neón
+  GACHA, sale **«RACHA ×N»**.
+- **SALTAR.** Mientras la ball no se ha abierto, el botón TIRAR dice **SALTAR · ir al Pokémon**. Pulsarlo (o la
+  máquina, o ESPACIO/INTRO) lleva la tirada a la ball parpadeando a punto de abrirse (`CapsuleTimeline.SkipTo`); otra
+  vez, al Pokémon fuera. Nunca hacia atrás. No actúa en los primeros 0,3 s de una tirada, para que el segundo clic de
+  un doble clic en TIRAR no salte la que acaba de empezar.
+- **ESPACIO o INTRO** es el botón grande (TIRAR o SALTAR), con el foco en él al entrar. No mientras se escribe en el
+  buscador, no con la tecla mantenida (repetiría tiradas y gastaría puntos) y no sobre otros botones.
+
+**El reloj.** `CapsulePlay.Elapsed` ya no es el tiempo real: `CapsuleTimeline.Warp(real + saltado, velocidad)`, rápido
+hasta `Open` y a 1× desde ahí; `RealFor` es su inversa. `Skip()` suma el tiempo real que falta hasta el destino. La
+escena, los portales y la ficha leen todos ese mismo reloj, así que saltar lo mueve todo a la vez; el view model ya no
+duerme hasta cada momento, mira cada 5-40 ms (`WaitUntil`).
+
+**Más golpe** (`CapsuleMachineScene`, efectos nuevos en `PixelScene`, todos sobre los bytes: `Spotlight`, `Wash`,
+`Flash`, `Shake`, `FloorRing`, `ShoutText`):
+- **Tensión en los meneos:** la sala se apaga alrededor de la ball y la luz se cierra sobre ella, igual para
+  cualquier tier. En el último tercio de segundo la ball tiembla y se escapa luz blanca por la junta.
+- **Cada subida:** además del fogonazo y las chispas de antes, la sala se tiñe un instante del color de la ball
+  nueva, tiembla, corre un aro por el suelo y sale **«¡SUBE!»**, estampado a doble tamaño y subiendo.
+- **La apertura:** fogonazo blanco en tramado (no un velo gris), aro doble en el suelo si es de los dos tiers altos, y
+  sacudida **más fuerte cuanto más rara la ball**, que para entonces ya se ve.
+- **El Pokémon sale de golpe:** silueta, un instante al triple y se asienta al doble.
+- **Celebración, solo cuando ya no hay nada que ocultar:** confeti del techo para los dos tiers altos y los
+  variocolor (del color del tier, o arcoíris); en un legendario, además, lluvia de monedas de oro que se quedan en el
+  suelo, destello dorado, temblor y **«¡LEGENDARIO!»** estampado; en un variocolor, **«¡VARIOCOLOR!»** con cada letra de
+  un color. Una tirada normal sigue siendo discreta: así lo raro se nota.
+
+**Coste:** ~2 ms por fotograma de media en una escena de 520×210 celdas a lo largo de una tirada legendaria y
+variocolor (medido imitando el `Color` de WPF, §188). Va a 30 fps como antes.
+
+**Comprobar sin Windows:** `tools/PermaLocke.PixelCheck` compila ahora también `PixelScene`, la máquina de cápsulas y
+`CapsulePlay`, con sustitutos de `WriteableBitmap` y compañía (`WpfImaging.cs`), y ejecuta las `CapsuleMachineTests`.
+Con `PERMALOCKE_PIXEL_DIR` deja `gacha-*.png`: dieciséis momentos de una tirada normal, una que sube dos veces a un
+legendario, una variocolor en racha y una BUENO.
+
+**Pruebas nuevas:** `A_pull_in_a_row_hurries_only_up_to_the_open`, `Skipping_goes_to_the_open_then_to_the_pokemon`,
+`Only_a_rare_pull_rains_gold` (y antes de la primera subida, un legendario y una normal son los mismos píxeles);
+`Every_frame_of_every_pull_draws` ahora con rachas y un legendario variocolor. PixelCheck 66 correctas.
+
+**Sin ver dentro de la app:** el botón SALTAR, ESPACIO y el ritmo real de la racha se comprueban en Windows.

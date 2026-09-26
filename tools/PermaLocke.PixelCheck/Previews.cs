@@ -1,4 +1,3 @@
-using System.IO.Compression;
 using PermaLocke.App.Views;
 using Color = PermaLocke.App.Views.PixelColour;
 
@@ -14,7 +13,7 @@ namespace PermaLocke.PixelCheck;
 /// </remarks>
 public sealed class Previews
 {
-    private static RoomSprite Creature(Color body, Color belly, Color dark, bool wings)
+    internal static RoomSprite Creature(Color body, Color belly, Color dark, bool wings)
     {
         const int w = 40, h = 30;
         var px = new byte[w * h * 4];
@@ -46,7 +45,7 @@ public sealed class Previews
         return new RoomSprite(px, w, h);
     }
 
-    private static readonly RoomSprite Dragon = Creature(Color.FromRgb(0xF0, 0x98, 0x40), Color.FromRgb(0xF8, 0xE0, 0xA0), Color.FromRgb(0x30, 0x80, 0x78), true);
+    internal static readonly RoomSprite Dragon = Creature(Color.FromRgb(0xF0, 0x98, 0x40), Color.FromRgb(0xF8, 0xE0, 0xA0), Color.FromRgb(0x30, 0x80, 0x78), true);
     private static readonly RoomSprite Fish = Creature(Color.FromRgb(0x50, 0x90, 0xE0), Color.FromRgb(0xE0, 0xF0, 0xFF), Color.FromRgb(0x20, 0x40, 0x90), false);
     private static readonly RoomSprite Leaf = Creature(Color.FromRgb(0x60, 0xB0, 0x50), Color.FromRgb(0xD0, 0xF0, 0xA0), Color.FromRgb(0x20, 0x60, 0x30), true);
     private static readonly RoomSprite Ghost = Creature(Color.FromRgb(0x80, 0x60, 0xB0), Color.FromRgb(0xC0, 0xA8, 0xE8), Color.FromRgb(0x40, 0x28, 0x60), false);
@@ -153,73 +152,5 @@ public sealed class Previews
     }
 
     /// <summary>A canvas as PNG, each cell as <paramref name="scale"/> × <paramref name="scale"/> pixels.</summary>
-    private static void Png(CellCanvas canvas, int scale, string path)
-    {
-        int w = canvas.Width * scale, h = canvas.Height * scale;
-        var raw = new byte[h * ((w * 4) + 1)];
-        for (var y = 0; y < h; y++)
-        {
-            for (var x = 0; x < w; x++)
-            {
-                var colour = canvas.At(x / scale, y / scale);
-                var o = (y * ((w * 4) + 1)) + 1 + (x * 4);
-                raw[o] = colour.R;
-                raw[o + 1] = colour.G;
-                raw[o + 2] = colour.B;
-                raw[o + 3] = colour.A;
-            }
-        }
-
-        using var file = File.Create(path);
-        file.Write([137, 80, 78, 71, 13, 10, 26, 10]);
-        var header = new byte[13];
-        BigEndian(header, 0, w);
-        BigEndian(header, 4, h);
-        header[8] = 8;
-        header[9] = 6;
-        Chunk(file, "IHDR", header);
-        using var packed = new MemoryStream();
-        using (var zlib = new ZLibStream(packed, CompressionLevel.Optimal, true))
-        {
-            zlib.Write(raw);
-        }
-
-        Chunk(file, "IDAT", packed.ToArray());
-        Chunk(file, "IEND", []);
-    }
-
-    private static void BigEndian(byte[] bytes, int at, int value)
-    {
-        bytes[at] = (byte)(value >> 24);
-        bytes[at + 1] = (byte)(value >> 16);
-        bytes[at + 2] = (byte)(value >> 8);
-        bytes[at + 3] = (byte)value;
-    }
-
-    private static void Chunk(Stream stream, string type, byte[] data)
-    {
-        var length = new byte[4];
-        BigEndian(length, 0, data.Length);
-        stream.Write(length);
-        var body = System.Text.Encoding.ASCII.GetBytes(type).Concat(data).ToArray();
-        stream.Write(body);
-        var crc = new byte[4];
-        BigEndian(crc, 0, (int)Crc(body));
-        stream.Write(crc);
-    }
-
-    private static uint Crc(byte[] data)
-    {
-        var c = 0xFFFFFFFFu;
-        foreach (var b in data)
-        {
-            c ^= b;
-            for (var k = 0; k < 8; k++)
-            {
-                c = (c & 1) != 0 ? 0xEDB88320 ^ (c >> 1) : c >> 1;
-            }
-        }
-
-        return c ^ 0xFFFFFFFF;
-    }
+    private static void Png(CellCanvas canvas, int scale, string path) => PngFile.Write(canvas.Bgra, canvas.Width, canvas.Height, scale, path);
 }

@@ -81,6 +81,54 @@ public sealed class CapsuleMachineTests
     }
 
     /// <summary>
+    /// A pull in a row runs faster up to the open and at its own pace from there, so the Pokémon comes out as it always
+    /// does (§189); at normal speed the clock is the real one.
+    /// </summary>
+    [Fact]
+    public void A_pull_in_a_row_hurries_only_up_to_the_open()
+    {
+        const double express = CapsuleTimeline.ExpressSpeed;
+
+        Assert.Equal(3.2, CapsuleTimeline.Warp(3.2, 1), 9);
+        Assert.Equal(12.5, CapsuleTimeline.Warp(12.5, 1), 9);
+        Assert.Equal(1.0 * express, CapsuleTimeline.Warp(1.0, express), 9);
+        Assert.Equal(CapsuleTimeline.Open, CapsuleTimeline.Warp(CapsuleTimeline.Open / express, express), 9);
+
+        // Desde que se abre, el mismo tiempo que siempre hasta ver el Pokémon.
+        var reveal = CapsuleTimeline.RealFor(CapsuleTimeline.Revealed, express) - CapsuleTimeline.RealFor(CapsuleTimeline.Open, express);
+        Assert.Equal(CapsuleTimeline.Revealed - CapsuleTimeline.Open, reveal, 9);
+        Assert.True(CapsuleTimeline.RealFor(CapsuleTimeline.Revealed, express) < CapsuleTimeline.Revealed / 2);
+
+        for (var real = 0.0; real < 14; real += 0.37)
+        {
+            Assert.Equal(real, CapsuleTimeline.RealFor(CapsuleTimeline.Warp(real, express), express), 9);
+            Assert.True(CapsuleTimeline.Warp(real + 0.01, express) > CapsuleTimeline.Warp(real, express));
+        }
+    }
+
+    /// <summary>SALTAR goes to the ball about to open, then to the Pokémon out, and never back.</summary>
+    [Fact]
+    public void Skipping_goes_to_the_open_then_to_the_pokemon()
+    {
+        Assert.Equal(CapsuleTimeline.SkipTo, CapsuleTimeline.SkipTarget(0));
+        Assert.Equal(CapsuleTimeline.SkipTo, CapsuleTimeline.SkipTarget(5.3));
+        Assert.True(CapsuleTimeline.SkipTo > CapsuleTimeline.WobbleEnd && CapsuleTimeline.SkipTo < CapsuleTimeline.Open);
+        Assert.Equal(CapsuleTimeline.Revealed, CapsuleTimeline.SkipTarget(CapsuleTimeline.SkipTo));
+        Assert.Equal(CapsuleTimeline.Revealed, CapsuleTimeline.SkipTarget(CapsuleTimeline.Emerge));
+        Assert.Equal(11.0, CapsuleTimeline.SkipTarget(11.0));
+
+        foreach (var speed in new[] { 1, CapsuleTimeline.ExpressSpeed })
+        {
+            var play = new CapsulePlay([0, 2], null, false, false, 5, System.Diagnostics.Stopwatch.GetTimestamp(), speed);
+            Assert.True(play.Skip());
+            Assert.InRange(play.Elapsed, CapsuleTimeline.SkipTo, CapsuleTimeline.SkipTo + 0.5);
+            Assert.True(play.Skip());
+            Assert.InRange(play.Elapsed, CapsuleTimeline.Revealed, CapsuleTimeline.Revealed + 0.5);
+            Assert.False(play.Skip());
+        }
+    }
+
+    /// <summary>
     /// Every frame of a pull draws, for every tier, with or without a picture of the Pokémon, shiny or legendary, and
     /// so does the ball flying to the shelf afterwards. A frame that threw would cost the animation of a pull that is
     /// already written.
@@ -95,7 +143,7 @@ public sealed class CapsuleMachineTests
         for (var final = 0; final <= 4; final++)
         {
             var roll = new CapsuleRoll(CapsulePlay.StepsFor(Math.Max(0, final - 2), final), final % 2 == 0 ? sprite : null,
-                Shiny: final == 1, Legendary: final == 4, Seed: final * 7919);
+                Shiny: final is 1 or 4, Legendary: final == 4, Seed: final * 7919, Streak: 1 + (final * 3));
 
             for (var t = 0.0; t < 13; t += 0.05)
             {
@@ -110,6 +158,35 @@ public sealed class CapsuleMachineTests
         }
 
         Assert.Contains(scene.Pixels.Where((_, i) => i % 4 == 3), alpha => alpha == 255);
+    }
+
+    /// <summary>
+    /// The party is for what deserves it (§189): once the Pokémon is out, a legendary rains gold coins and a plain pull
+    /// does not; and before the ball opens both look the same apart from the ball itself.
+    /// </summary>
+    [Fact]
+    public void Only_a_rare_pull_rains_gold()
+    {
+        static int Coins(byte[] bgra) =>
+            Enumerable.Range(0, bgra.Length / 4).Count(i => bgra[(i * 4) + 2] == 0xFF && bgra[(i * 4) + 1] == 0xD2 && bgra[i * 4] == 0x4A);
+
+        var sprite = Sprite(40, 30);
+        var plain = new CapsuleRoll([2], sprite, false, false, 7);
+        var legendary = new CapsuleRoll([2, 3, 4], sprite, false, true, 7);
+        var scene = new CapsuleMachineScene(CapsuleMachineScene.DesignWidth);
+
+        scene.Render(new CapsuleSceneState(Bueno, 5, plain, CapsuleTimeline.Revealed + 1.5, []), 3, toScreen: false);
+        Assert.Equal(0, Coins(scene.Pixels));
+
+        scene.Render(new CapsuleSceneState(Bueno, 5, legendary, CapsuleTimeline.Revealed + 1.5, []), 3, toScreen: false);
+        Assert.True(Coins(scene.Pixels) > 20);
+
+        // Antes de la primera subida posible, la sala no sabe nada: mismos píxeles para una y otra.
+        var early = CapsuleTimeline.UpgradeAt(0) - 0.3;
+        scene.Render(new CapsuleSceneState(Bueno, 5, plain with { Steps = [2, 3, 4] }, early, []), 3, toScreen: false);
+        var before = scene.Pixels.ToArray();
+        scene.Render(new CapsuleSceneState(Bueno, 5, legendary, early, []), 3, toScreen: false);
+        Assert.Equal(before, scene.Pixels);
     }
 
     /// <summary>An empty run is a machine waiting in front of an empty shelf, not an error.</summary>

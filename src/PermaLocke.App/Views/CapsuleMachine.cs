@@ -112,7 +112,7 @@ public sealed class CapsuleMachine : ContentControl
             // Una tirada nueva: lo que siguiera volando aterriza ya.
             Land();
             _play = play;
-            _roll = new CapsuleRoll(play.Steps, RoomSprite.From(play.Sprite), play.Shiny, play.Legendary, play.Seed);
+            _roll = new CapsuleRoll(play.Steps, RoomSprite.From(play.Sprite), play.Shiny, play.Legendary, play.Seed, play.Streak);
         }
         else if (_play is { } ended && _roll is { } shown && ended.Elapsed >= CapsuleTimeline.Revealed)
         {

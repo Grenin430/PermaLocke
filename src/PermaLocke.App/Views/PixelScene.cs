@@ -600,6 +600,163 @@ public abstract class PixelScene
         return Math.Sin(p * Math.PI);
     }
 
+    /// <summary>
+    /// Darkens the frame outside an ellipse around a point, with a dithered edge: the light narrowing on something.
+    /// </summary>
+    /// <remarks>On the bytes, not through <c>Color</c>: it touches every cell of the frame (§188, §189).</remarks>
+    protected void Spotlight(double cx, double cy, double radius, double amount)
+    {
+        if (amount <= 0)
+        {
+            return;
+        }
+
+        const double edge = 16;
+        var keep = (int)Math.Round((1 - Math.Clamp(amount, 0, 1)) * 256);
+        var ccx = cx + Ox;
+        var ccy = cy + Oy;
+        var inner = radius * radius;
+
+        for (var y = 0; y < Height; y++)
+        {
+            var dy = (y + 0.5 - ccy) * 1.3;
+            for (var x = 0; x < Width; x++)
+            {
+                var dx = x + 0.5 - ccx;
+                var d2 = (dx * dx) + (dy * dy);
+                if (d2 <= inner)
+                {
+                    continue;
+                }
+
+                var beyond = Math.Sqrt(d2) - radius;
+                if (beyond < edge && Bayer[y & 3, x & 3] >= beyond / edge * 16)
+                {
+                    continue;
+                }
+
+                var at = ((y * Width) + x) * 4;
+                Canvas[at] = (byte)((Canvas[at] * keep) >> 8);
+                Canvas[at + 1] = (byte)((Canvas[at + 1] * keep) >> 8);
+                Canvas[at + 2] = (byte)((Canvas[at + 2] * keep) >> 8);
+            }
+        }
+    }
+
+    /// <summary>Tints the whole frame towards a colour: a flash of light, or of a tier's colour.</summary>
+    protected void Wash(Color colour, double amount)
+    {
+        if (amount <= 0)
+        {
+            return;
+        }
+
+        var a = (int)Math.Round(Math.Clamp(amount, 0, 1) * 256);
+        int b = colour.B, g = colour.G, r = colour.R;
+        for (var i = 0; i < Canvas.Length; i += 4)
+        {
+            Canvas[i] = (byte)(Canvas[i] + (((b - Canvas[i]) * a) >> 8));
+            Canvas[i + 1] = (byte)(Canvas[i + 1] + (((g - Canvas[i + 1]) * a) >> 8));
+            Canvas[i + 2] = (byte)(Canvas[i + 2] + (((r - Canvas[i + 2]) * a) >> 8));
+        }
+    }
+
+    /// <summary>
+    /// A flash of light over the whole frame in dithered cells rather than a blend: at full strength every cell, and
+    /// thinning to none, so it stays pixel art and reads as light, not as a grey film.
+    /// </summary>
+    protected void Flash(Color colour, double amount)
+    {
+        if (amount <= 0)
+        {
+            return;
+        }
+
+        var threshold = amount * 16;
+        for (var y = 0; y < Height; y++)
+        {
+            for (var x = 0; x < Width; x++)
+            {
+                if (Bayer[y & 3, x & 3] >= threshold) continue;
+
+                var at = ((y * Width) + x) * 4;
+                Canvas[at] = colour.B;
+                Canvas[at + 1] = colour.G;
+                Canvas[at + 2] = colour.R;
+            }
+        }
+    }
+
+    /// <summary>A copy of the frame for <see cref="Shake"/>, made once.</summary>
+    private byte[]? _shaken;
+
+    /// <summary>
+    /// Moves the whole finished frame by whole cells, for a hit that shakes the room; the edge that opens repeats the
+    /// last row or column, so nothing shows through.
+    /// </summary>
+    protected void Shake(int dx, int dy)
+    {
+        dx = Math.Clamp(dx, -(Width - 1), Width - 1);
+        dy = Math.Clamp(dy, -(Height - 1), Height - 1);
+        if (dx == 0 && dy == 0)
+        {
+            return;
+        }
+
+        _shaken ??= new byte[Canvas.Length];
+        var row = Width * 4;
+        for (var y = 0; y < Height; y++)
+        {
+            var from = Math.Clamp(y - dy, 0, Height - 1) * row;
+            var to = y * row;
+            if (dx >= 0)
+            {
+                Buffer.BlockCopy(Canvas, from, _shaken, to + (dx * 4), row - (dx * 4));
+                for (var x = 0; x < dx; x++) Buffer.BlockCopy(Canvas, from, _shaken, to + (x * 4), 4);
+            }
+            else
+            {
+                Buffer.BlockCopy(Canvas, from - (dx * 4), _shaken, to, row + (dx * 4));
+                for (var x = Width + dx; x < Width; x++) Buffer.BlockCopy(Canvas, from + row - 4, _shaken, to + (x * 4), 4);
+            }
+        }
+
+        Buffer.BlockCopy(_shaken, 0, Canvas, 0, Canvas.Length);
+    }
+
+    /// <summary>A ring opening on the floor around a point, seen from above at a slant, thinning as it fades.</summary>
+    protected void FloorRing(double cx, double cy, double radius, Color colour, double strength)
+    {
+        if (strength <= 0 || radius <= 0)
+        {
+            return;
+        }
+
+        var steps = (int)(radius * 7) + 12;
+        for (var i = 0; i < steps; i++)
+        {
+            var a = i / (double)steps * Math.PI * 2;
+            var x = (int)Math.Floor(cx + (Math.Cos(a) * radius));
+            var y = (int)Math.Floor(cy + (Math.Sin(a) * radius * 0.24));
+            if (Bayer[(y + Oy) & 3, (x + Ox) & 3] < strength * 16) Put(Canvas, x, y, colour);
+        }
+    }
+
+    /// <summary>
+    /// A word in the big font with a dark outline round every letter, readable over anything: the words a pull shouts.
+    /// </summary>
+    /// <param name="centreX">Where the middle of the word goes.</param>
+    protected void ShoutText(string text, double centreX, int top, Color colour, int scale = 1)
+    {
+        var left = (int)Math.Round(centreX - (BigWidth(text, scale) / 2.0));
+        foreach (var (ox, oy) in new[] { (-1, 0), (1, 0), (0, -1), (0, 1), (1, 1), (2, 2) })
+        {
+            BigText(text, left + (ox * scale), top + (oy * scale), Outline, scale);
+        }
+
+        BigText(text, left, top, colour, scale);
+    }
+
     /// <summary>Darkens the whole frame drawn so far, for the moment the light comes from the ball.</summary>
     protected void Darken(double amount)
     {

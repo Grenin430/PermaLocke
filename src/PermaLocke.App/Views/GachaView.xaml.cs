@@ -2,6 +2,8 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
+using System.Windows.Input;
 using PermaLocke.App.ViewModels;
 
 namespace PermaLocke.App.Views;
@@ -25,7 +27,42 @@ public partial class GachaView : UserControl
         Machine.RenderFailed += ex => (DataContext as GachaViewModel)?.AnimationFailed(ex);
         DataContextChanged += OnDataContextChanged;
         Unloaded += (_, _) => Detach();
-        Loaded += (_, _) => Attach(DataContext as GachaViewModel);
+        Loaded += (_, _) =>
+        {
+            Attach(DataContext as GachaViewModel);
+
+            // El foco en el botón grande, para que ESPACIO tire nada más entrar.
+            RollButton.Focus();
+        };
+        PreviewKeyDown += OnPreviewKeyDown;
+    }
+
+    /// <summary>
+    /// ESPACIO or INTRO is the big button (§189): TIRAR, or SALTAR while a pull is playing. For fifty pulls in a row
+    /// without aiming the mouse fifty times.
+    /// </summary>
+    /// <remarks>
+    /// Not while typing in the pool's search box, not on a key held down — a held key repeating would spend points —
+    /// and not on the other buttons, which keep their own ESPACIO.
+    /// </remarks>
+    private void OnPreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key is not (Key.Space or Key.Enter) || e.IsRepeat || _model is not { } model
+            || e.OriginalSource is TextBoxBase or ButtonBase { Name: not "RollButton" })
+        {
+            return;
+        }
+
+        if (model.SkipCommand.CanExecute(null))
+        {
+            model.SkipCommand.Execute(null);
+        }
+        else if (model.RollCommand.CanExecute(null))
+        {
+            model.RollCommand.Execute(null);
+        }
+
+        e.Handled = true;
     }
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e) =>

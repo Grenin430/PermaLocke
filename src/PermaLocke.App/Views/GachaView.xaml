@@ -134,6 +134,10 @@
                 <!-- LA MÁQUINA DE CÁPSULAS (§171). Lo que se pulsa va encima: los portales, la ficha, el bote y la
                      tabla de premios. -->
                 <Grid MinHeight="300" Background="{StaticResource SunkenBrush}">
+                    <!-- Pulsar la máquina durante una tirada también la salta. -->
+                    <Grid.InputBindings>
+                        <MouseBinding MouseAction="LeftClick" Command="{Binding SkipCommand}" />
+                    </Grid.InputBindings>
                     <views:CapsuleMachine x:Name="Machine" Play="{Binding CurrentPlay}" />
 
                     <Grid x:Name="Stage">
@@ -422,7 +426,20 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
-                    <Button Grid.Column="0" VerticalAlignment="Center" Command="{Binding RollCommand}" Cursor="Hand" MinWidth="200">
+                    <!-- Mientras la ball no se ha abierto, el mismo botón dice SALTAR (§189): así se tira y se salta sin
+                         mover el ratón, y con ESPACIO o INTRO igual. -->
+                    <Button x:Name="RollButton" Grid.Column="0" VerticalAlignment="Center" Cursor="Hand" MinWidth="200"
+                            ToolTip="También con ESPACIO o INTRO">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                <Setter Property="Command" Value="{Binding RollCommand}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding CanSkip}" Value="True">
+                                        <Setter Property="Command" Value="{Binding SkipCommand}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
                                 <Grid x:Name="Body" Background="Transparent">
