@@ -43,6 +43,10 @@ Errores ya cometidos en este proyecto, con el § donde se cuentan ([[Índice de 
 - El binario instalado no siempre es el que se abre (`Emulator/` frente a `Nuevo_azahar/`, §95).
 - Dos PermaLocke a la vez escriben dos veces en el mismo juego. Ahora hay un mutex (§159).
 
+## Añadidas 2026-09-26
+- **Estado de Discord que no sale:** primero, Ajustes de Discord > Privacidad de la actividad > «Compartir tu actividad detectada». Apagado, Discord acepta el estado y no lo enseña; el log de PermaLocke no puede avisar.
+- Un log sin ninguna línea de un servicio nuevo suele ser que el exe no lleva ese código (otra rama, sin compilar), no que falle.
+
 ## Añadidas 2026-09-25
 - **No guardar ficheros del repo con `Get-Content | Set-Content` de PowerShell 5.1**: lee como ANSI y rompió todas las tildes de `MainWindow.xaml` (se restauró con git). Usar sed/Edit.
 - `perl -0pi -e 's|…|…|'` con `|` de delimitador y `||` o `\|\|` en el patrón o la sustitución: metió el bloque al principio de `Program.cs`. Para eso, Edit.

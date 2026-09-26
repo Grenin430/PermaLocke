@@ -12015,5 +12015,7 @@ que PermaLocke esté abierto y **también con el emulador abierto**, por delante
   RPC y la confirmación de cierre. Prueba en `LauncherEmulatorTests`. Si además Discord detecta `azahar.exe` como juego
   por su cuenta, eso se quita en Discord (Ajustes > Juegos registrados), no desde aquí.
 
-**Sin probar:** escrito en la nube sin .NET: ni compilado ni visto en Discord. No está medido si Discord acepta una
-actividad sin ningún campo de texto; si no la enseña, se le añade el tiempo de juego (`timestamps.start`).
+**Visto (2026-09-26):** el jugador lo compiló y sale «Jugando a PermaLocke» con la actividad vacía, sin tiempo ni texto.
+**Requisito del lado de Discord:** con «Compartir tu actividad detectada con otras personas» apagado (Ajustes >
+Privacidad de la actividad) no sale nada y la app no se entera: no hay error que apuntar. Es lo primero que mirar si a
+alguien no le sale. Sin probar todavía: con el emulador abierto a la vez.
