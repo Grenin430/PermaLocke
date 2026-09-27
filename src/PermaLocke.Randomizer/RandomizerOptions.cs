@@ -217,6 +217,18 @@ public sealed record RandomizerOptions
     public MartItem RegularMartReplacement { get; init; } = new(4, "Poké Ball");
 
     /// <summary>
+    /// What the BP counter of the Mantine Surf beaches sells, in order, to turn into <see cref="RegularMartReplacement"/>
+    /// (2026-09-27). Empty leaves it alone. See <see cref="Modules.ShopRandomizer.ReplaceBattlePointItems"/>.
+    /// </summary>
+    public IReadOnlyList<MartItem> BattlePointShopReplaced { get; init; } = [];
+
+    /// <summary>
+    /// Nobody can learn anything from the BP tutors (2026-09-27): every tutor bit of every species goes to zero, in the
+    /// table and in each row's own copy. The tutors still stand there; they have nobody to teach.
+    /// </summary>
+    public bool BanTutors { get; init; }
+
+    /// <summary>
     /// Blank a trainer Pokémon's moves when its species changes, so the game builds a moveset
     /// from the new species' learnset instead of keeping one picked for the old one.
     /// </summary>

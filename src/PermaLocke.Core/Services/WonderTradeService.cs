@@ -211,8 +211,84 @@ public sealed class WonderTradeService(
         return updated;
     }
 
+    // ============================================================ DOS POR UNO (1.0.4.7)
+
+    /// <summary>
+    /// The band of a two-for-one trade: centred on the <b>average</b> base stat total of the two cards handed over, so
+    /// two weak Pokémon bring back one of their strength, not a stronger one. The price of the trade is the second card.
+    /// </summary>
+    public int AverageTotalOf(WonderTradeGift first, WonderTradeGift second) =>
+        (int)Math.Round((BaseStatTotalOf(first.Species) + BaseStatTotalOf(second.Species)) / 2.0);
+
+    /// <summary>Recomputes a two-for-one trade from the run seed, touching nothing.</summary>
+    public WonderTradeOffer? PreviewTwo(WonderTradeGift first, WonderTradeGift second, ulong runSeed, int number)
+    {
+        var source = new SeededRandomSource(runSeed).Derive(TradeSalt).Derive($"trade-{number}");
+        return Generate(Combined(first, second), source, number, AverageTotalOf(first, second));
+    }
+
+    /// <summary>
+    /// The album's card trade (1.0.4.7): two Pokémon go, one comes back, within the band of their average total and at
+    /// the higher of their two levels. Registers the arrival and writes the event; the caller writes the save and then
+    /// marks both as traded.
+    /// </summary>
+    public async Task<WonderTradeResult> TradeTwoAsync(Run run, WonderTradeGift first, WonderTradeGift second, bool free = false,
+        CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(run);
+
+        if (first.Pid != 0 && first.Pid == second.Pid)
+        {
+            return new WonderTradeResult(false, Error: "Elige dos cartas distintas.");
+        }
+
+        foreach (var gift in new[] { first, second })
+        {
+            if (await IsFallenAsync(run.Id, gift.Pid, ct).ConfigureAwait(false))
+            {
+                return new WonderTradeResult(false, Error: FallenMessage(gift.Name));
+            }
+
+            if (BaseStatTotalOf(gift.Species) == 0)
+            {
+                return new WonderTradeResult(false, Error: $"{gift.Name} no se puede intercambiar.");
+            }
+        }
+
+        var number = await CountTradesAsync(run.Id, ct).ConfigureAwait(false);
+
+        if (PreviewTwo(first, second, run.Seed, number) is not { } offer)
+        {
+            return new WonderTradeResult(false, Error: $"No hay nada que ofrecer por {first.Name} y {second.Name}.");
+        }
+
+        var entry = new PokemonEntry
+        {
+            Id = Guid.NewGuid(),
+            RunId = run.Id,
+            Species = offer.Species,
+            SpeciesName = offer.DisplayName,
+            Level = offer.Level,
+            IsShiny = offer.IsShiny,
+            Origin = PokemonOrigin.WonderTrade,
+            EncounterType = EncounterType.Trade,
+            ObtainedAt = clock.Now,
+            ConsumedZoneEncounter = false,
+            Form = offer.Form
+        };
+
+        await pokemon.SaveAsync(entry, ct).ConfigureAwait(false);
+        await RecordAsync(run, offer, entry, free, ct, second).ConfigureAwait(false);
+
+        return new WonderTradeResult(true, offer, entry);
+    }
+
+    /// <summary>The two cards as one gift: the first's species and box, both names, the higher level.</summary>
+    private static WonderTradeGift Combined(WonderTradeGift first, WonderTradeGift second) =>
+        first with { Name = $"{first.Name} y {second.Name}", Level = Math.Max(first.Level, second.Level) };
+
     private Task RecordAsync(Run run, WonderTradeOffer offer, PokemonEntry entry, bool free,
-        CancellationToken ct) =>
+        CancellationToken ct, WonderTradeGift? second = null) =>
         events.AppendAsync(new GameEvent
         {
             Id = Guid.NewGuid(),
@@ -221,7 +297,7 @@ public sealed class WonderTradeService(
             Type = GameEventType.WonderTrade,
             Source = EventSource.Player,
             Actor = run.PlayerName,
-            Description = $"Wonder trade: {offer.GivenName} ({offer.GivenBaseStatTotal}) "
+            Description = $"{(second is null ? "Wonder trade" : "Intercambio de cartas")}: {offer.GivenName} ({offer.GivenBaseStatTotal}) "
                           + $"por {offer.DisplayName} ({offer.BaseStatTotal})"
                           + (offer.Legendary ? " legendario" : string.Empty)
                           + (offer.IsShiny ? " shiny" : string.Empty),
@@ -245,16 +321,20 @@ public sealed class WonderTradeService(
                 ["shiny"] = offer.IsShiny.ToString(),
                 ["ivs"] = string.Join('/', offer.Ivs),
                 ["naturaleza"] = offer.NatureName,
-                ["habilidad"] = offer.Ability
+                ["habilidad"] = offer.Ability,
+                ["modo"] = second is null ? "uno" : "dosPorUno",
+                ["entregado2"] = second?.Species.ToString() ?? string.Empty,
+                ["entregado2Nombre"] = second?.Name ?? string.Empty,
+                ["entregado2Total"] = second is null ? string.Empty : BaseStatTotalOf(second.Species).ToString()
             }
         }, ct);
 
     /// <summary>
     /// The trade itself. Pure: same source, same result, on any machine and any build.
     /// </summary>
-    private WonderTradeOffer? Generate(WonderTradeGift gift, IRandomSource source, int number)
+    private WonderTradeOffer? Generate(WonderTradeGift gift, IRandomSource source, int number, int? total = null)
     {
-        var givenTotal = BaseStatTotalOf(gift.Species);
+        var givenTotal = total ?? BaseStatTotalOf(gift.Species);
         var (min, max) = catalog.Window.Band(givenTotal);
         var pool = PoolFor(givenTotal);
 

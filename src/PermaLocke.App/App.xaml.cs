@@ -219,7 +219,6 @@ public partial class App : Application
         collection.AddSingleton<HomeViewModel>();
         collection.AddSingleton<RandomizerViewModel>();
         collection.AddSingleton<GachaViewModel>();
-        collection.AddSingleton<WonderTradeViewModel>();
         collection.AddSingleton<IAchievementCatalog>(_ =>
             JsonAchievementCatalog.Load(Path.Combine(paths.Data, "achievements.json")));
         collection.AddSingleton<AchievementService>();
@@ -242,6 +241,7 @@ public partial class App : Application
         collection.AddSingleton<IntegrityGuard>();
         collection.AddSingleton<OrderService>();
         collection.AddSingleton<RulesSync>();
+        collection.AddSingleton<CapBadge>();
         collection.AddSingleton<PokemonIdentityService>();
         collection.AddSingleton<IRewardCatalog>(_ =>
             JsonRewardCatalog.Load(Path.Combine(paths.Data, "rewards.json")));
@@ -492,6 +492,9 @@ public partial class App : Application
             _ = _services.GetRequiredService<CrashReportUpload>().SendPendingAsync();
             _services.GetRequiredService<GameLinkMonitor>().Start();
 
+            // El cap de nivel siempre a la vista, encima del juego (1.0.4.7).
+            _services.GetRequiredService<CapBadge>().Start();
+
             // Las líneas evolutivas se leen ya, en segundo plano: la primera vez puede tocar sacar el fichero de
             // la ROM, y eso no debe caer en el segundo en que empieza un combate.
             var evolutions = _services.GetRequiredService<WorldEvolutionLines>();
@@ -521,6 +524,19 @@ public partial class App : Application
                 await _services!.GetRequiredService<GhostService>().RehearseAsync("Ensayo",
                     new DeathNotice(ghost.Nickname ?? ghost.SpeciesName, ghost.Species, 0, ghost.Form, ghost.IsShiny, ghost.Level));
             }
+        }
+
+        if (e.Args.Contains("--ensayar-intercambio", StringComparer.OrdinalIgnoreCase))
+        {
+            // El intercambio de cartas del álbum (1.0.4.7) con tres cartas de la partida, sin escribir nada.
+            main.Navigate("ÁLBUM");
+            await _services!.GetRequiredService<AlbumViewModel>().RehearseTradeAsync();
+        }
+
+        if (e.Args.Contains("--ensayar-cap", StringComparer.OrdinalIgnoreCase))
+        {
+            // El cuadrito del cap (1.0.4.7), encima de la propia ventana porque no hay juego.
+            _ = _services!.GetRequiredService<CapBadge>().RehearseAsync();
         }
 
         if (e.Args.Contains("--ensayar-amigo", StringComparer.OrdinalIgnoreCase))

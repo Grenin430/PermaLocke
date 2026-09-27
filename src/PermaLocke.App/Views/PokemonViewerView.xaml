@@ -361,8 +361,6 @@
                 <StackPanel DockPanel.Dock="Bottom" Margin="0,10,0,0">
                     <Button Content="RELEER LA PARTIDA" Style="{StaticResource PxButton}" Command="{Binding LoadCommand}"
                             HorizontalAlignment="Stretch" />
-                    <Button Content="WONDER TRADE" Style="{StaticResource PxSubtleButton}"
-                            Command="{Binding Trade.ArmCommand}" HorizontalAlignment="Stretch" Margin="0,8,0,0" />
                     <pixel:PixelText Text="{Binding Summary}" Scale="2" Wrap="True" Margin="2,10,0,0"
                                      Colour="{StaticResource PxTextFaint}" />
                 </StackPanel>
@@ -445,40 +443,6 @@
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <!-- EL INTERCAMBIO. Dice qué se va a entregar antes de tocar nada. -->
-                <Grid Grid.Row="0" Margin="0,0,0,14"
-                      Visibility="{Binding Trade.IsArmed, Converter={StaticResource BoolToVisibility}}">
-                    <views:PixelPanel Fill="#FF2E1418" />
-                    <StackPanel Margin="16,12,22,20">
-                        <DockPanel>
-                            <Grid DockPanel.Dock="Right" Visibility="{Binding Trade.IsLimited, Converter={StaticResource BoolToVisibility}}">
-                                <views:PixelPanel Fill="{StaticResource PxFaceLift}" HasShadow="False" />
-                                <StackPanel Orientation="Horizontal" Margin="9,6,9,7">
-                                    <pixel:PixelText Text="QUEDAN" Style="{StaticResource PxLabel}" Colour="{StaticResource PxTextDim}" />
-                                    <pixel:PixelText Text="{Binding Trade.Left}" Scale="2" Tight="True" Margin="6,0,0,0"
-                                                     Colour="{StaticResource PxText}" />
-                                </StackPanel>
-                            </Grid>
-                            <pixel:PixelText Text="WONDER TRADE" Scale="2" Tight="True" VerticalAlignment="Center"
-                                             Colour="{StaticResource PxBad}" Shadow="{StaticResource PxShadow}" />
-                        </DockPanel>
-
-                        <pixel:PixelText Text="{Binding Trade.Instruction}" Scale="2" Wrap="True" Margin="0,10,0,0"
-                                         Colour="{StaticResource PxText}" />
-                        <pixel:PixelText Text="{Binding Trade.Problem}" Scale="2" Wrap="True" Margin="0,6,0,0"
-                                         Colour="{StaticResource PxBad}" />
-
-                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                            <Button Content="INTERCAMBIAR" Style="{StaticResource PxDangerButton}"
-                                    Command="{Binding Trade.ConfirmCommand}" />
-                            <Button Content="CANCELAR" Style="{StaticResource PxSubtleButton}"
-                                    Command="{Binding Trade.CancelCommand}" Margin="8,0,0,0" />
-                        </StackPanel>
-
-                        <pixel:PixelText Text="Llega otro al mismo nivel. Cierra Azahar antes."
-                                         Scale="2" Wrap="True" Margin="0,10,0,0" Colour="{StaticResource PxTextFaint}" />
-                    </StackPanel>
-                </Grid>
 
                 <!-- Sin selección: el resumen de la partida, como una hoja de datos. -->
                 <StackPanel Grid.Row="1" VerticalAlignment="Top">
@@ -712,8 +676,5 @@
             </StackPanel>
         </Grid>
 
-        <!-- LA ANIMACIÓN, encima de todo. Solo aparece con el intercambio en marcha. -->
-        <views:WonderTradeOverlay Grid.Column="0" Grid.ColumnSpan="5" DataContext="{Binding Trade}"
-                                  Visibility="{Binding IsPlaying, Converter={StaticResource BoolToVisibility}}" />
     </Grid>
 </UserControl>

@@ -12712,3 +12712,18 @@ Las máquinas se apuntaban al fotograma en `Loaded` y se quitaban en `Unloaded`.
 avanzaba dos o tres pasos. Ahora `Loaded` quita antes de poner (idempotente), en `CapsuleMachine`, `RouletteMachine`,
 `TradeMachine`, `AlbumStage`, `CardStage`, `CemeteryCanvas`, `AlolaBanner`, `AlolaWindow` y `TrainerRoom`. `DeathWindow` ya lo
 hacía. Lección en [[Trampas y lecciones]]. Sin reproducirlo a mano.
+
+## §211 · 1.0.4.7: intercambio 2 por 1 en el ÁLBUM, panel del cap sobre el juego, tiendas de surf y gacha sin exprés (2026-09-27)
+
+- **Intercambio de cartas:** fuera el wonder trade del VISOR (`WonderTradeViewModel`, `WonderTradeOverlay`, `TradeMachine*`,
+  `TradePlay` borrados). En el ÁLBUM, INTERCAMBIO: un clic en la página elige (marco dorado y muescas, `AlbumScene.Marks`), la
+  mano no se abre. `WonderTradeService.TradeTwoAsync`: banda ±8 % (`wondertrade.json`) sobre la MEDIA del total base de las
+  dos, nivel el mayor, un crédito. `SaveBoxSwap.SwapTwoIn/ApplyTwoTo`: el nuevo en el hueco de la primera y el de la segunda
+  vaciado (del equipo, `DeletePartySlot`), una escritura con copia y relectura. Animación `CardTradeScene` (pura, PixelCheck
+  `intercambio.png`) + `CardTradeStage`; ensayo `--ensayar-intercambio`. Probado con clics reales; el intercambio real, no.
+- **Panel del cap** (`CapBadge`): arriba a la derecha de la imagen de Azahar, en primer plano; prueba, cap, barra del nivel
+  más alto del equipo (ámbar en el cap) y siguiente cap. `--ensayar-cap`. Sin verlo encima de Azahar.
+- **Tiendas de surf** (solo al regenerar el mundo): `banTutors` pone a cero los 67 bits de tutor de PB de cada especie
+  (`TutorBan`); `battlePointShopReplaced` busca la tienda de PB de las playas en Shop.cro (0x54AA, 13 pares objeto-precio) y la
+  pasa a Poké Ball a 1 PB. Probado generando un mundo.
+- **Gacha:** sin la racha exprés x2,5 del §189 (los jugadores la tomaban por un fallo); SALTAR sigue.

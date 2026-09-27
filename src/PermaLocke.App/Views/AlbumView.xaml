@@ -28,6 +28,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <!-- ================================================== LA BARRA: caja, páginas, tamaño -->
@@ -69,6 +70,10 @@
 
             <Button DockPanel.Dock="Right" Content="RELEER" Style="{StaticResource PxSubtleButton}" Margin="8,0,0,0"
                     Command="{Binding LoadCommand}" VerticalAlignment="Center" />
+            <!-- EL INTERCAMBIO DE CARTAS (1.0.4.7): dos por una, donde antes estaba el wonder trade del visor. -->
+            <ToggleButton DockPanel.Dock="Right" Content="INTERCAMBIO" Style="{StaticResource PxToggleButton}" Margin="8,0,0,0"
+                          IsChecked="{Binding IsTrading, Mode=OneWay}" Command="{Binding ToggleTradeCommand}"
+                          VerticalAlignment="Center" />
             <ToggleButton DockPanel.Dock="Right" Content="4×4" Style="{StaticResource PxToggleButton}" Margin="8,0,0,0"
                           IsChecked="{Binding SmallCards, Mode=OneWay}"
                           Command="{Binding ShowSmallCommand}" VerticalAlignment="Center"
@@ -86,6 +91,7 @@
                           TabCommand="{Binding OpenTabCommand}"
                           NextCommand="{Binding NextSpreadCommand}"
                           PreviousCommand="{Binding PreviousSpreadCommand}"
+                          Marked="{Binding TradeMarked}"
                           IsPaused="{Binding IsInspecting}" />
 
         <pixel:PixelText Grid.Row="1" Text="LEYENDO LA PARTIDA…" Scale="3" Tight="True"
@@ -106,9 +112,39 @@
             </StackPanel>
         </Grid>
 
+        <!-- ================================================== EL INTERCAMBIO: las dos cartas que se entregan -->
+        <Grid Grid.Row="2" Margin="0,8,0,0" Visibility="{Binding IsTrading, Converter={StaticResource BoolToVisibility}}">
+            <views:PixelPanel Fill="#FF2A1840" />
+            <DockPanel Margin="16,10,22,16" LastChildFill="True">
+                <Button DockPanel.Dock="Right" Content="INTERCAMBIAR" Style="{StaticResource PxButton}" Margin="12,0,0,0"
+                        Command="{Binding TradeCommand}" IsEnabled="{Binding CanTrade}" VerticalAlignment="Center" />
+                <Grid DockPanel.Dock="Right" VerticalAlignment="Center" Margin="12,0,0,0"
+                      Visibility="{Binding TradesLimited, Converter={StaticResource BoolToVisibility}}">
+                    <views:PixelPanel Fill="{StaticResource PxFaceLift}" HasShadow="False" />
+                    <StackPanel Orientation="Horizontal" Margin="9,6,9,7">
+                        <pixel:PixelText Text="QUEDAN" Scale="1" Tight="True" VerticalAlignment="Center" Colour="{StaticResource PxTextDim}" />
+                        <pixel:PixelText Text="{Binding TradesLeft}" Scale="2" Tight="True" Margin="6,0,0,0" Colour="{StaticResource PxText}" />
+                    </StackPanel>
+                </Grid>
+                <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
+                    <pixel:PixelText Text="DOS POR UNA" Scale="2" Tight="True" VerticalAlignment="Center"
+                                     Colour="{StaticResource PxAccentLight}" Shadow="{StaticResource PxShadow}" />
+                    <Button Margin="14,0,0,0" Style="{StaticResource PxSubtleButton}" Command="{Binding UnpickCommand}" CommandParameter="1"
+                            Content="{Binding TradeFirst.Name, TargetNullValue='CARTA 1', FallbackValue='CARTA 1'}" MinWidth="130" />
+                    <pixel:PixelText Text="+" Scale="2" Tight="True" Margin="8,0" VerticalAlignment="Center" Colour="{StaticResource PxTextDim}" />
+                    <Button Style="{StaticResource PxSubtleButton}" Command="{Binding UnpickCommand}" CommandParameter="2"
+                            Content="{Binding TradeSecond.Name, TargetNullValue='CARTA 2', FallbackValue='CARTA 2'}" MinWidth="130" />
+                </StackPanel>
+                <StackPanel Margin="16,0,0,0" VerticalAlignment="Center">
+                    <pixel:PixelText Text="{Binding TradeHint}" Scale="1" Wrap="True" Colour="{StaticResource PxText}" />
+                    <pixel:PixelText Text="{Binding TradeProblem}" Scale="1" Wrap="True" Margin="0,4,0,0" Colour="{StaticResource PxBad}" />
+                </StackPanel>
+            </DockPanel>
+        </Grid>
+
         <!-- ================================================== LA CARTA EN LA MANO
              Encima de todo. Pulsar fuera la devuelve a su funda; pulsar la carta le da la vuelta. -->
-        <Grid Grid.Row="0" Grid.RowSpan="2" Background="#EC07050E"
+        <Grid Grid.Row="0" Grid.RowSpan="3" Background="#EC07050E"
               Visibility="{Binding IsInspecting, Converter={StaticResource BoolToVisibility}}">
             <Grid.InputBindings>
                 <MouseBinding MouseAction="LeftClick" Command="{Binding CloseCommand}" />
@@ -149,6 +185,19 @@
                                      HorizontalAlignment="Right" Colour="{StaticResource PxTextDim}" />
                 </StackPanel>
             </DockPanel>
+        </Grid>
+
+        <!-- ================================================== EL INTERCAMBIO EN MARCHA (1.0.4.7)
+             Encima de todo, la escena entera: dos cartas entran en el círculo y sale una. Al final, qué ha salido. -->
+        <Grid Grid.Row="0" Grid.RowSpan="3" Visibility="{Binding IsTradePlaying, Converter={StaticResource BoolToVisibility}}">
+            <views:CardTradeStage Play="{Binding TradePlay}" />
+            <StackPanel VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,26"
+                        Visibility="{Binding TradeRevealed, Converter={StaticResource BoolToVisibility}}">
+                <pixel:PixelText Text="{Binding TradeResultText}" Scale="3" Tight="True" HorizontalAlignment="Center"
+                                 Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
+                <Button Content="CONTINUAR" Style="{StaticResource PxButton}" Command="{Binding EndTradeCommand}"
+                        HorizontalAlignment="Center" MinWidth="200" Margin="0,16,0,0" />
+            </StackPanel>
         </Grid>
     </Grid>
 </UserControl>

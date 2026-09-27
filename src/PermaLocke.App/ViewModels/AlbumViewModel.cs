@@ -39,6 +39,13 @@ public sealed partial class AlbumViewModel : SectionViewModel
     private readonly IEventStore _events;
     private readonly TcgCardFactory _cards;
     private readonly GachaService _gacha;
+    private readonly WonderTradeService _trades;
+    private readonly IPokemonSwap _swap;
+    private readonly PokemonIdentityService _identity;
+    private readonly CreditService _credits;
+
+    /// <summary>The Pokémon of the save behind each card, for the trade (1.0.4.7).</summary>
+    private readonly Dictionary<TcgCard, BoxedPokemon> _owners = new(ReferenceEqualityComparer.Instance);
     private readonly ILogger<AlbumViewModel> _logger;
 
     /// <summary>The cards of each binder by slot, in the order of <see cref="Binders"/>.</summary>
@@ -52,6 +59,7 @@ public sealed partial class AlbumViewModel : SectionViewModel
 
     public AlbumViewModel(IBoxReader boxes, PokemonSpriteService sprites, IRunContext runContext,
         IPokemonRepository registered, IEventStore events, TcgCardFactory cards, GachaService gacha,
+        WonderTradeService trades, IPokemonSwap swap, PokemonIdentityService identity, CreditService credits,
         ILogger<AlbumViewModel> logger)
         : base("ÁLBUM", "Tus Pokémon como cartas")
     {
@@ -62,6 +70,10 @@ public sealed partial class AlbumViewModel : SectionViewModel
         _events = events;
         _cards = cards;
         _gacha = gacha;
+        _trades = trades;
+        _swap = swap;
+        _identity = identity;
+        _credits = credits;
         _logger = logger;
     }
 
@@ -190,6 +202,7 @@ public sealed partial class AlbumViewModel : SectionViewModel
             _moving = true;
             Binders.Clear();
             _pockets.Clear();
+            _owners.Clear();
             Inspected = null;
 
             if (!snapshot.Available)
@@ -213,7 +226,9 @@ public sealed partial class AlbumViewModel : SectionViewModel
                 var slots = new TcgCard?[box.Slots];
                 foreach (var pokemon in box.Pokemon.Where(p => p.Slot >= 0 && p.Slot < box.Slots))
                 {
-                    slots[pokemon.Slot] = Card(pokemon, fallen, pulled);
+                    var card = Card(pokemon, fallen, pulled);
+                    slots[pokemon.Slot] = card;
+                    _owners[card] = pokemon;
                 }
 
                 _pockets.Add(slots);
@@ -382,10 +397,17 @@ public sealed partial class AlbumViewModel : SectionViewModel
     // ====================================================================================================== HAND
 
     [RelayCommand]
-    private void Open(TcgCard? card)
+    private async Task OpenAsync(TcgCard? card)
     {
         if (card is null || _spreads.Count == 0)
         {
+            return;
+        }
+
+        // Con el intercambio abierto, un clic en la página elige la carta (o la quita) en vez de sacarla a la mano (1.0.4.7).
+        if (IsTrading)
+        {
+            await TogglePickAsync(card);
             return;
         }
 
@@ -433,6 +455,254 @@ public sealed partial class AlbumViewModel : SectionViewModel
     {
         if (IsInspecting) Step(1);
         else if (CanGoNext()) GoTo(_position + 1);
+    }
+
+    // ===================================================================================================== TRADE
+
+    /// <summary>The trade bar is open: the card in the hand can be picked, up to two (1.0.4.7).</summary>
+    [ObservableProperty]
+    private bool _isTrading;
+
+    /// <summary>The first card handed over, or null.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TradeHint), nameof(CanTrade), nameof(TradeMarked))]
+    private TcgCard? _tradeFirst;
+
+    /// <summary>The second card handed over, or null.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TradeHint), nameof(CanTrade), nameof(TradeMarked))]
+    private TcgCard? _tradeSecond;
+
+    /// <summary>Card trades left, from the credits of the run.</summary>
+    [ObservableProperty]
+    private int _tradesLeft;
+
+    [ObservableProperty]
+    private string _tradeProblem = string.Empty;
+
+    [ObservableProperty]
+    private bool _tradeBusy;
+
+    /// <summary>What the animation plays; null when nothing is playing.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsTradePlaying))]
+    private CardTradePlay? _tradePlay;
+
+    public bool IsTradePlaying => TradePlay is not null;
+
+    /// <summary>The result is on screen: its name and CONTINUAR come up.</summary>
+    [ObservableProperty]
+    private bool _tradeRevealed;
+
+    [ObservableProperty]
+    private string _tradeResultText = string.Empty;
+
+    public bool TradesLimited => _credits.LimitsWonderTrades;
+
+    public bool CanTrade => TradeFirst is not null && TradeSecond is not null && !TradeBusy;
+
+    /// <summary>The picked cards, in order, for the gold frames on the page.</summary>
+    public IReadOnlyList<TcgCard> TradeMarked => [.. new[] { TradeFirst, TradeSecond }.OfType<TcgCard>()];
+
+    /// <summary>What the bar says: which cards go, and what band comes back.</summary>
+    public string TradeHint
+    {
+        get
+        {
+            if (TradeFirst is null || TradeSecond is null)
+            {
+                return "Pulsa dos cartas del álbum para elegirlas. Entregas dos y recibes una.";
+            }
+
+            var (a, b) = (_owners[TradeFirst], _owners[TradeSecond]);
+            var average = _trades.AverageTotalOf(Gift(a), Gift(b));
+            var (min, max) = _trades.Window.Band(average);
+            return $"Recibirás un Pokémon de nivel {Math.Max(a.Level, b.Level)} con estadísticas totales entre {min} y {max}.";
+        }
+    }
+
+    private static WonderTradeGift Gift(BoxedPokemon p) => new(p.Species, p.DisplayName, p.Level, p.Box, p.Slot, p.Pid);
+
+    [RelayCommand]
+    private async Task ToggleTradeAsync()
+    {
+        IsTrading = !IsTrading;
+        TradeFirst = null;
+        TradeSecond = null;
+        TradeProblem = string.Empty;
+
+        if (IsTrading)
+        {
+            await RefreshTradesAsync();
+            if (!_swap.CanSwapNow(out var reason)) TradeProblem = reason;
+        }
+    }
+
+    private async Task RefreshTradesAsync()
+    {
+        try
+        {
+            TradesLeft = _runContext.Current is { } run ? (await _credits.AvailableAsync(run)).WonderTrades : 0;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Fallo al contar los intercambios disponibles");
+        }
+    }
+
+    /// <summary>The card in the hand goes into the first free place of the trade, or comes out if it was in.</summary>
+    [RelayCommand]
+    private Task PickAsync() => Inspected is { } card ? TogglePickAsync(card) : Task.CompletedTask;
+
+    private async Task TogglePickAsync(TcgCard card)
+    {
+        if (!IsTrading || !_owners.TryGetValue(card, out var pokemon))
+        {
+            return;
+        }
+
+        TradeProblem = string.Empty;
+
+        if (ReferenceEquals(card, TradeFirst)) { TradeFirst = null; return; }
+        if (ReferenceEquals(card, TradeSecond)) { TradeSecond = null; return; }
+
+        if (card.Egg)
+        {
+            TradeProblem = "Un huevo no se puede intercambiar.";
+            return;
+        }
+
+        if (_runContext.Current is { } run && await _trades.IsFallenAsync(run.Id, pokemon.Pid))
+        {
+            TradeProblem = WonderTradeService.FallenMessage(pokemon.DisplayName);
+            return;
+        }
+
+        if (TradeFirst is null) TradeFirst = card;
+        else if (TradeSecond is null) TradeSecond = card;
+        else TradeProblem = "Ya has elegido dos. Quita una tocándola abajo.";
+
+        if (TradeFirst is not null && TradeSecond is not null && IsInspecting) Close();
+    }
+
+    [RelayCommand]
+    private void Unpick(string which)
+    {
+        if (which == "1") TradeFirst = null;
+        else TradeSecond = null;
+    }
+
+    [RelayCommand]
+    private async Task TradeAsync()
+    {
+        if (TradeFirst is not { } one || TradeSecond is not { } two || _runContext.Current is not { } run)
+        {
+            return;
+        }
+
+        TradeBusy = true;
+        OnPropertyChanged(nameof(CanTrade));
+
+        try
+        {
+            if (!_swap.CanSwapNow(out var reason))
+            {
+                TradeProblem = reason;
+                return;
+            }
+
+            if (_credits.LimitsWonderTrades && TradesLeft <= 0)
+            {
+                TradeProblem = "No te quedan intercambios. Consigues más superando pruebas.";
+                return;
+            }
+
+            var (a, b) = (_owners[one], _owners[two]);
+            var result = await _trades.TradeTwoAsync(run, Gift(a), Gift(b), free: _credits.LimitsWonderTrades);
+
+            if (!result.Success || result.Offer is not { } offer)
+            {
+                TradeProblem = result.Error ?? "El intercambio no se ha podido completar.";
+                return;
+            }
+
+            // Primero la partida; sin escritura no hay animación que enseñe un Pokémon que no tienes.
+            var written = await _swap.SwapTwoAsync(offer, a.Box, a.Slot, b.Species, b.Box, b.Slot);
+            if (!written.Delivered)
+            {
+                TradeProblem = written.Message;
+                return;
+            }
+
+            if (result.Entry is { } entry)
+            {
+                await _identity.RememberDeliveryAsync(run, entry, written.Pid, written.Box, written.Slot);
+            }
+
+            await _trades.MarkGivenAsTradedAsync(run, a.Pid, offer.DisplayName);
+            await _trades.MarkGivenAsTradedAsync(run, b.Pid, offer.DisplayName);
+            _logger.LogInformation("Intercambio de cartas: {A} y {B} por {C}", a.DisplayName, b.DisplayName, offer.DisplayName);
+
+            // La carta nueva, leída de la partida recién escrita, con su rareza de verdad.
+            var snapshot = await _boxes.ReadAsync();
+            var received = snapshot.Boxes.SelectMany(box => box.Pokemon).FirstOrDefault(p => p.Pid == written.Pid);
+            var resultCard = received is null ? one : _cards.Make(received);
+
+            TradeResultText = $"{offer.DisplayName.ToUpperInvariant()} · NV. {offer.Level} · {offer.BaseStatTotal} "
+                              + $"({(offer.Difference >= 0 ? "+" : string.Empty)}{offer.Difference} %)"
+                              + (offer.IsShiny ? " · VARIOCOLOR" : string.Empty);
+            TradeRevealed = false;
+            TradePlay = new CardTradePlay(one, two, resultCard);
+
+            await Task.Delay(TimeSpan.FromSeconds(CardTradeTimeline.Rest + 0.3));
+            TradeRevealed = true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Falló el intercambio de cartas");
+            TradeProblem = "Ha fallado el intercambio.";
+        }
+        finally
+        {
+            TradeBusy = false;
+            OnPropertyChanged(nameof(CanTrade));
+            await RefreshTradesAsync();
+        }
+    }
+
+    /// <summary>
+    /// <c>--ensayar-intercambio</c>: the animation with three cards of the save and nothing written, to look at it.
+    /// </summary>
+    public async Task RehearseTradeAsync()
+    {
+        // La sección puede estar leyendo la partida al abrirse: se espera a que acabe.
+        while (IsLoading) await Task.Delay(100);
+        if (_owners.Count == 0) await LoadAsync();
+        var cards = _owners.Keys.Where(card => !card.Egg && !card.Fallen).Take(3).ToList();
+
+        if (cards.Count < 3)
+        {
+            TradeProblem = "Hacen falta tres cartas en la partida para el ensayo.";
+            return;
+        }
+
+        TradeResultText = $"{cards[2].Name.ToUpperInvariant()} · ENSAYO: NO SE HA CAMBIADO NADA";
+        TradeRevealed = false;
+        TradePlay = new CardTradePlay(cards[0], cards[1], cards[2]);
+        await Task.Delay(TimeSpan.FromSeconds(CardTradeTimeline.Rest + 0.3));
+        TradeRevealed = true;
+    }
+
+    /// <summary>After the reveal: the animation goes, the trade bar empties and the album is read again.</summary>
+    [RelayCommand]
+    private async Task EndTradeAsync()
+    {
+        TradePlay = null;
+        TradeRevealed = false;
+        TradeFirst = null;
+        TradeSecond = null;
+        IsTrading = false;
+        await LoadAsync();
     }
 
     /// <summary>The album or the card in the hand could not be drawn; the screen stays still and the log says why.</summary>

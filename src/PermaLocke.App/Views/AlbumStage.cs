@@ -42,6 +42,17 @@ public sealed class AlbumStage : ContentControl
     public static readonly DependencyProperty PreviousCommandProperty = DependencyProperty.Register(
         nameof(PreviousCommand), typeof(ICommand), typeof(AlbumStage));
 
+    /// <summary>Cards picked for the trade, framed in gold (1.0.4.7).</summary>
+    public static readonly DependencyProperty MarkedProperty = DependencyProperty.Register(
+        nameof(Marked), typeof(IReadOnlyList<TcgCard>), typeof(AlbumStage),
+        new PropertyMetadata(null, (d, _) => ((AlbumStage)d)._dirty = true));
+
+    public IReadOnlyList<TcgCard>? Marked
+    {
+        get => (IReadOnlyList<TcgCard>?)GetValue(MarkedProperty);
+        set => SetValue(MarkedProperty, value);
+    }
+
     public static readonly DependencyProperty IsPausedProperty = DependencyProperty.Register(
         nameof(IsPaused), typeof(bool), typeof(AlbumStage),
         new PropertyMetadata(false, (d, _) => ((AlbumStage)d)._dirty = true));
@@ -280,7 +291,7 @@ public sealed class AlbumStage : ContentControl
                 }
             }
 
-            _scene.Render(spread, Now, turn is null ? _hover : -1, turn, _hoverTab);
+            _scene.Render(spread, Now, turn is null ? _hover : -1, turn, _hoverTab, Marked);
             _bitmap.WritePixels(new Int32Rect(0, 0, _scene.Width, _scene.Height), _scene.Canvas.Bgra, _scene.Width * 4, 0);
             _dirty = false;
         }

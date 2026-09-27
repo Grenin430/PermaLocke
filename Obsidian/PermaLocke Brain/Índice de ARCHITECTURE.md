@@ -217,6 +217,7 @@ generado: 2026-09-24
 - L12688 · 208 · 1.0.4.4: caídos vigilados cada 500 ms y aviso en Admin si uno entra vivo en combate
 - L12700 · 209 · 1.0.4.5: aviso pequeño «X está jugando a PermaLocke» solo sobre el emulador
 - L12708 · 210 · 1.0.4.6: gacha x3 por Loaded repetido; suscripción al fotograma idempotente
+- L12716 · 211 · 1.0.4.7: intercambio 2 por 1 en el álbum, panel del cap, tiendas de surf, gacha sin exprés
 
 Subsecciones §176: bis (visor), ter (todas las pantallas, fuera ESTADÍSTICAS), quater (EV/MOVIMIENTOS sin bolsa, diálogos).
 

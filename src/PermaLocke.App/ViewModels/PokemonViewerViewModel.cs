@@ -113,7 +113,7 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
     private BoxSnapshot? _snapshot;
 
     public PokemonViewerViewModel(IBoxReader boxes, PokemonSpriteService sprites,
-        WonderTradeViewModel trade, IRunContext runContext,
+        IRunContext runContext,
         IPokemonRepository registered, ITypeLookup types, IMoveCatalog moves, IStatForecast forecast,
         ILogger<PokemonViewerViewModel> logger, RenameService? rename = null) : base("VISOR POKÉMON", "El equipo y las 32 cajas de la partida")
     {
@@ -125,17 +125,11 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
         _moves = moves;
         _forecast = forecast;
         _logger = logger;
-        Trade = trade;
         _rename = rename;
         Fleeting.Fade(this, nameof(RenameStatus));
 
-        // Un intercambio cambia la caja por debajo, así que lo que hay en pantalla deja de ser
-        // cierto en cuanto termina.
-        Trade.Finished += async (_, _) => await LoadAsync();
     }
 
-    /// <summary>The wonder trade, which picks its victim from the box on this screen.</summary>
-    public WonderTradeViewModel Trade { get; }
 
     private readonly RenameService? _rename;
 
@@ -560,10 +554,6 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
         OnPropertyChanged(nameof(SelectedBallSprite));
         OnPropertyChanged(nameof(HasSelectedBall));
 
-        // Con el intercambio armado, elegir es elegir a quién se entrega, esté en una caja o en el
-        // equipo: el escritor sabe distinguir los dos almacenes. Un huevo no, porque lo que hay
-        // dentro no se sabe y por tanto no se puede decir qué vale.
-        Trade.Choose(pokemon is { IsEgg: false } ? pokemon : null);
 
         Stats.Clear();
         SelectedTypes.Clear();

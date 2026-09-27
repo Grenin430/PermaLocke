@@ -74,6 +74,13 @@ public interface IPokemonSwap
     /// <summary>True when a swap could be attempted right now.</summary>
     bool CanSwapNow(out string reason);
 
+    /// <summary>
+    /// The album's two-for-one (1.0.4.7): the offer goes into the first card's slot and the second card's slot is emptied,
+    /// in one write. Refuses if either slot no longer holds what the caller believes.
+    /// </summary>
+    Task<DeliveryResult> SwapTwoAsync(WonderTradeOffer offer, int box, int slot, int secondSpecies, int secondBox,
+        int secondSlot, CancellationToken ct = default);
+
     Task<DeliveryResult> SwapAsync(WonderTradeOffer offer, int box, int slot,
         CancellationToken ct = default);
 }

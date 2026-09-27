@@ -910,7 +910,9 @@ public sealed partial class GachaViewModel : SectionViewModel
         // Una tirada seguida de otra va en exprés hasta que se abre la ball (§189): la primera se ve entera, las
         // siguientes no cansan. Lo decide la racha, nunca lo que ha salido.
         _streak = _streak > 0 && System.Diagnostics.Stopwatch.GetElapsedTime(_lastRevealAt) < StreakWindow ? _streak + 1 : 1;
-        var speed = _streak > 1 ? Views.CapsuleTimeline.ExpressSpeed : 1;
+        // Sin exprés desde la 1.0.4.7: los jugadores lo veían como la máquina acelerándose sola (x2,5) y lo tomaban por
+        // un fallo. Todas las tiradas a velocidad normal; para ir rápido está SALTAR. La racha se sigue contando para la sala.
+        const double speed = 1;
 
         var play = new CapsulePlay(steps, _sprites.Get(pull.Species, pull.Form, pull.IsShiny), pull.IsShiny, pull.Legendary, seed,
             System.Diagnostics.Stopwatch.GetTimestamp(), speed, _streak);

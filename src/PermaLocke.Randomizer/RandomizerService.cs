@@ -235,6 +235,7 @@ public sealed class RandomizerService(RandomizerOptions options)
                     : string.Empty)
                 + (result.MedicineSlots > 0
                     ? $"; {result.MedicineSlots} curativos de las tiendas normales pasados a Poké Ball"
+                      + (result.BattlePointItems > 0 ? $"; {result.BattlePointItems} objetos de la tienda de PB de las playas pasados a Poké Ball" : string.Empty)
                     : string.Empty)
                 + (result.PricedMachines > 0
                     ? $"; {result.PricedMachines} MT a {options.MachineMartPrice} cada una"
@@ -288,6 +289,14 @@ public sealed class RandomizerService(RandomizerOptions options)
                 + $"{result.Learnable} MT aprendibles en total, antes {result.Before}"));
         }
 
+
+        // Los tutores de PB, prohibidos (2026-09-27): después de barajar las MT, que reescribe la misma tabla.
+        if (options.BanTutors)
+        {
+            var result = new TutorBan(options).Apply(mod);
+            steps.Add(new RandomizerStep("Tutores de PB",
+                $"prohibidos: {result.Cleared} movimientos de tutor quitados en {result.Species} filas"));
+        }
 
         // Despues de todo lo que escribe movimientos -aprendizajes, entrenadores, megas, estaticos-, con su propia sal y
         // cambiando solo los huecos que tenian uno: el resto del mundo sale igual con la misma semilla (§162).

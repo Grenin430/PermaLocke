@@ -39,7 +39,7 @@
     <UseWPF>true</UseWPF>
     <!-- La versión que compara la actualización automática (§196). Se sube aquí con cada release, y
          tools/publicar-actualizacion.ps1 -Version la pone igual al publicarla; tools/publicar.ps1 usa esta. -->
-    <Version>1.0.4.6</Version>
+    <Version>1.0.4.7</Version>
 
     <!-- La Poke Ball es DIBUJADA POR NOSOTROS, geometrica, en nuestros colores. No sale del
          cartucho: los sprites de Nintendo se extraen de la ROM de cada jugador y no se reparten,

@@ -13,7 +13,7 @@ namespace PermaLocke.Randomizer.Modules;
 /// <param name="ShelfItems">Objects sold from a counter's own fixed list (<see cref="MartShelf"/>).</param>
 public sealed record ShopResult(
     int TechnicalMachineShops, int RestockedShops, int Slots, int MedicineSlots = 0,
-    int SpecialItems = 0, int PricedMachines = 0, int ShelfItems = 0);
+    int SpecialItems = 0, int PricedMachines = 0, int ShelfItems = 0, int BattlePointItems = 0);
 
 /// <summary>What stocking the special counters did, before anything is priced or saved.</summary>
 /// <param name="Stocked">How many of <see cref="RandomizerOptions.SpecialMartItems"/> found a slot.</param>
@@ -54,6 +54,7 @@ public sealed class ShopRandomizer(RomWorkspace workspace, RandomizerOptions opt
         ValidateShelves(options, cro, shops);
 
         var medicine = ReplaceMedicines(options, cro, shops, itemNames);
+        var battlePoints = ReplaceBattlePointItems(options, cro, itemNames);
         var stock = StockSpecials(options, cro, shops, random, machines);
 
         await File.WriteAllBytesAsync(path, cro, ct);
@@ -75,7 +76,63 @@ public sealed class ShopRandomizer(RomWorkspace workspace, RandomizerOptions opt
             ], ct);
         await PriceMachinesAsync(mod, stock.MachinesOnSale, ct);
         return new ShopResult(stock.MachineShops, stock.RestockedShops, stock.Slots, medicine, stock.Stocked,
-            options.MachineMartPrice > 0 ? stock.MachinesOnSale.Count : 0, stock.Shelved);
+            options.MachineMartPrice > 0 ? stock.MachinesOnSale.Count : 0, stock.Shelved, battlePoints);
+    }
+
+    /// <summary>
+    /// The counter of the Mantine Surf beaches that sells for BP (2026-09-27): each of its items becomes
+    /// <see cref="RandomizerOptions.RegularMartReplacement"/>, at 1 BP each.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// It is not one of the 28 inventories: the BP counters live after them in <c>Shop.cro</c> as item and price pairs
+    /// (two u16 each), with no table saying where one ends. So it is found by what it sells: the whole list of
+    /// <see cref="RandomizerOptions.BattlePointShopReplaced"/>, in order, four bytes apart, has to appear exactly once.
+    /// Anywhere else, or twice, and nothing is written (§52). Measured on the installed world: at <c>0x54AA</c>, 13 items
+    /// from Zumo de Baya to Más PP, just before the tutors' price list.
+    /// </para>
+    /// <para>
+    /// Static and without a cartridge so it can be tested on a made-up <c>Shop.cro</c>.
+    /// </para>
+    /// </remarks>
+    /// <returns>How many items were replaced.</returns>
+    public static int ReplaceBattlePointItems(RandomizerOptions options, byte[] cro, string[] itemNames)
+    {
+        var wanted = options.BattlePointShopReplaced;
+        if (wanted.Count == 0)
+        {
+            return 0;
+        }
+
+        VerifyNames([.. wanted.Append(options.RegularMartReplacement)], itemNames);
+
+        var found = new List<int>();
+        for (var at = 0; at + (wanted.Count * 4) <= cro.Length; at += 2)
+        {
+            var match = true;
+            for (var i = 0; i < wanted.Count && match; i++)
+            {
+                match = BitConverter.ToUInt16(cro, at + (i * 4)) == wanted[i].Id;
+            }
+
+            if (match) found.Add(at);
+        }
+
+        if (found.Count != 1)
+        {
+            throw new InvalidDataException(
+                $"La tienda de PB de las playas aparece {found.Count} veces en Shop.cro, y tiene que ser una. No se toca.");
+        }
+
+        for (var i = 0; i < wanted.Count; i++)
+        {
+            BitConverter.GetBytes((ushort)options.RegularMartReplacement.Id).CopyTo(cro, found[0] + (i * 4));
+
+            // A 1 PB todas: una Poké Ball a 48 PB (lo que costaba el Caramelo Raro de ese hueco) no tiene sentido.
+            BitConverter.GetBytes((ushort)1).CopyTo(cro, found[0] + (i * 4) + 2);
+        }
+
+        return wanted.Count;
     }
 
     /// <summary>

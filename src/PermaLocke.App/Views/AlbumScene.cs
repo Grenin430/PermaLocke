@@ -256,7 +256,9 @@ public sealed class AlbumScene
     /// </summary>
     /// <param name="hover">The pocket under the mouse: its card lifts off the page and the pocket lights up.</param>
     /// <param name="hoverTab">The tab under the mouse, which lights up.</param>
-    public void Render(AlbumSpread spread, double seconds, int hover = -1, AlbumTurn? turn = null, int hoverTab = -1)
+    /// <param name="marked">Cards picked for the trade (1.0.4.7): their pockets get a gold frame and a notch per pick.</param>
+    public void Render(AlbumSpread spread, double seconds, int hover = -1, AlbumTurn? turn = null, int hoverTab = -1,
+        IReadOnlyList<TcgCard>? marked = null)
     {
         Canvas.Clear();
 
@@ -283,6 +285,7 @@ public sealed class AlbumScene
 
             // La luz de la lámpara cae sobre todo; la carta levantada va después, por encima, más cerca de ella.
             ApplyLight();
+            Marks(spread, marked, seconds);
             if (hover >= 0)
             {
                 Lifted(spread, hover, seconds);
@@ -475,6 +478,57 @@ public sealed class AlbumScene
             // La funda de la carta levantada, vacía y encendida: la carta va luego, por encima.
             var (px, py) = PocketOrigin(hover);
             RedrawPocket(left + px, PageTop + py, empty: true);
+        }
+    }
+
+    /// <summary>
+    /// The cards picked for the trade (1.0.4.7): a double gold frame round the pocket, and one notch on its top edge for
+    /// the first card, two for the second, so the order shows.
+    /// </summary>
+    private void Marks(AlbumSpread spread, IReadOnlyList<TcgCard>? marked, double seconds)
+    {
+        if (marked is null || marked.Count == 0)
+        {
+            return;
+        }
+
+        var shine = (int)(seconds * 3) % 2 == 0 ? GoldHi : Gold;
+
+        for (var pocket = 0; pocket < PocketsPerPage * 2; pocket++)
+        {
+            var page = pocket < PocketsPerPage ? spread.Left : spread.Right;
+            var index = pocket % PocketsPerPage;
+            if (index >= page.Pockets.Count || page.Pockets[index] is not { } card)
+            {
+                continue;
+            }
+
+            var order = -1;
+            for (var i = 0; i < marked.Count; i++)
+            {
+                if (ReferenceEquals(marked[i], card)) order = i;
+            }
+
+            if (order < 0)
+            {
+                continue;
+            }
+
+            var (x, y) = PocketInScene(pocket);
+            Outline(x - 1, y - 1, PocketWidth + 2, PocketHeight + 2, shine);
+            Outline(x - 2, y - 2, PocketWidth + 4, PocketHeight + 4, GoldDark);
+
+            for (var n = 0; n <= order; n++)
+            {
+                var nx = x + 2 + (n * 4);
+                for (var yy = -3; yy <= 0; yy++)
+                {
+                    for (var xx = 0; xx < 3; xx++)
+                    {
+                        Canvas.Put(nx + xx, y + yy, yy == -3 || xx == 0 ? GoldHi : Gold);
+                    }
+                }
+            }
         }
     }
 
