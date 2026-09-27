@@ -6,6 +6,9 @@ revisado: 2026-09-26
 
 La última sesión va arriba. Antes del 2026-09-23 solo hay un resumen por fechas sacado de `CLAUDE.md` y de `ARCHITECTURE.md`: el detalle está en el § citado ([[Índice de ARCHITECTURE]]). **Cada sesión nueva añade su entrada aquí.**
 
+## 2026-09-27 — 1.0.4.1
+- Pedido: acceso directo de Admin al día (Release recompilado) y la 1.0.4.1 con el aviso de primer encuentro 6 s después (`FirstEncounterDelay`) y el variocolor del gacha del 10 % al 2 % (§205). Subida directa a main para que la Action la publique.
+
 ## 2026-09-26 — plan del próximo torneo, desde la nube (y su puesta en marcha)
 **Pedido:** implementar [[Plan del próximo torneo]] en su orden, solo en el repo (torneo en marcha), servidor solo con SQL
 nuevos numerados que ejecuta él, nada de borrar datos sin preguntar, un commit por paso, cerebro y § al acabar cada uno.

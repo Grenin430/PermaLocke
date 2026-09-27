@@ -211,6 +211,7 @@ generado: 2026-09-24
 - L12606 · 202 · Versión nueva a la vista: franja en todas las secciones y aviso fijo sobre el juego (1.0.3)
 - L12632 · 203 · Versiones de cuatro números (1.0.4)
 - L12649 · 204 · La descarga de la 1.0.2 y la 1.0.3 se desbordaba: arreglo y DownloadCopy probado
+- L12666 · 205 · 1.0.4.1: aviso de primer encuentro 6 s después y variocolor del gacha al 2 %
 
 Subsecciones §176: bis (visor), ter (todas las pantallas, fuera ESTADÍSTICAS), quater (EV/MOVIMIENTOS sin bolsa, diálogos).
 

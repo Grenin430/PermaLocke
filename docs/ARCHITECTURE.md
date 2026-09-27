@@ -12662,3 +12662,11 @@ Las 1.0.0 y 1.0.1 descargaban con `CopyToAsync`, sin este bucle: pasan directas 
 prueba de verdad: `DownloadCopyTests` copia 3 MB con un cronómetro real y comprueba el ritmo de avisos con un reloj
 falso. La lección: el camino de descarga de §201 no tenía ninguna prueba que lo ejecutara; la ventana y los números sí.
 Core 410.
+
+## §205 · 1.0.4.1: aviso de primer encuentro con retraso y variocolor del gacha al 2 % (2026-09-27)
+
+- `EncounterGuard.SpendIfDueAsync` sigue gastando la ruta al empezar el combate (§117), pero el aviso PRIMER ENCUENTRO
+  espera 6 s (`FirstEncounterDelay`): el Pokémon salvaje sale unos segundos después del inicio y el aviso lo destripaba.
+- `Data/gacha.json`: `shinyChance` de 0.10 a 0.02 en los cinco tiers. Si el servidor tiene una `gacha.json` oficial
+  (§193), manda esa.
+- Sin probar jugando el retraso.

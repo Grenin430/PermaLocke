@@ -635,8 +635,11 @@ public sealed class EncounterGuard(
 
         battle.SpentByThis = true;
         _spent = null;
-        Say(ToastKind.FirstEncounter, "Primer encuentro", decision.Reason,
-            battle.Species);
+        // Un rato después (2026-09-27): el combate se ve al empezar y el Pokémon sale unos segundos más tarde; el aviso
+        // antes de verlo en el juego destripaba el encuentro.
+        var species = battle.Species;
+        _ = Task.Delay(FirstEncounterDelay).ContinueWith(_ =>
+            Say(ToastKind.FirstEncounter, "Primer encuentro", decision.Reason, species), TaskScheduler.Default);
         return true;
     }
 
@@ -813,6 +816,9 @@ public sealed class EncounterGuard(
 
         return _routes;
     }
+
+    /// <summary>How long after the battle starts the first-encounter notice waits: the wild Pokémon shows up first.</summary>
+    private static readonly TimeSpan FirstEncounterDelay = TimeSpan.FromSeconds(6);
 
     private void Say(ToastKind kind, string title, string message, int? species = null) =>
         Said?.Invoke(this, new EncounterNotice(kind, title, message, species));
