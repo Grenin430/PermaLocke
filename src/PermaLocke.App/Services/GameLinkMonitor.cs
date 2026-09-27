@@ -37,7 +37,8 @@ public sealed class GameLinkMonitor(
     PermaLocke.Infrastructure.AppPaths paths,
     ILogger<GameLinkMonitor> logger,
     PermaLocke.Rules.Services.BallControlService balls,
-    IntegrityService integrity) : IDisposable
+    IntegrityService integrity,
+    RulesConfiguration rules) : IDisposable
 {
     /// <summary>
     /// How often the game is polled.
@@ -964,8 +965,22 @@ public sealed class GameLinkMonitor(
                 if (battleTables.ReadPokemon(block) is { } pokemon && fallen.Contains(pokemon.PID))
                 {
                     logger.LogWarning("Un caído ha entrado vivo en un combate: especie {Species}, PID {Pid:X8}", block.Species, pokemon.PID);
+
+                    // En el banquillo se le deja a 0 PS dentro del propio combate (1.0.4.10), en las dos tablas: para el
+                    // juego es un Pokémon debilitado que no se puede sacar. En el campo (posiciones 0 y 1) no se toca.
+                    var benched = block.BattleId >= 2;
+                    var fixedIt = benched && rules.KnockDownFallenInBattle && tables
+                        .Select(table => table.Block(block.BattleId))
+                        .OfType<BattleBlock>()
+                        .Where(b => b.Species == block.Species && b.MaxHp == block.MaxHp && b.CurrentHp > 0)
+                        .Select(b => battleTables.KnockDownOnBench(b, pokemon.PID))
+                        .ToList() is { Count: > 0 } results && results.All(done => done);
+
                     await integrity.FlagAsync(run.Id, IntegrityKinds.FallenInBattle,
-                        $"Un Pokémon caído (especie {block.Species}) ha entrado en un combate con {block.CurrentHp} PS: el juego lo curó justo antes.",
+                        $"Un Pokémon caído (especie {block.Species}) ha entrado en un combate con {block.CurrentHp} PS: el juego lo curó justo antes."
+                        + (fixedIt ? " Estaba en el banquillo: PermaLocke lo ha dejado debilitado en el combate."
+                            : benched && rules.KnockDownFallenInBattle ? " Estaba en el banquillo, pero no se ha podido debilitar."
+                            : benched ? " Estaba en el banquillo (corrección apagada en las reglas)." : " Salió al campo: no se ha tocado."),
                         new Dictionary<string, string> { ["pid"] = pokemon.PID.ToString("X8"), ["especie"] = block.Species.ToString() },
                         _stopping.Token);
                 }

@@ -47,6 +47,49 @@ public sealed class BattleTableReader(AzaharRpcClient client, ILogger<BattleTabl
     /// </remarks>
     public void SearchSoon() => _lastSearch = DateTimeOffset.MinValue;
 
+    /// <summary>
+    /// Puts a Pokémon waiting on the bench down to zero HP in the battle itself (1.0.4.10), for a fallen one the game
+    /// healed just before the battle. Refuses rather than guesses.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Only the HP field, the one the faint detection reads every quarter of a second (§114). Before writing, the block is
+    /// read again and has to be the same live battle block — heap header, species, max HP, position — and its party
+    /// structure has to carry <paramref name="pid"/>. After, it is read back and has to say zero. Anything else and it
+    /// writes nothing and says so.
+    /// </para>
+    /// <para>
+    /// Never positions 0 and 1: those are on the field when a battle starts (1 in a double), and taking a Pokémon on the
+    /// field to zero mid-turn is behaviour nobody has measured. The caller keeps to the bench; this refuses as well.
+    /// </para>
+    /// </remarks>
+    public bool KnockDownOnBench(BattleBlock block, uint pid)
+    {
+        if (!block.IsPlayers || block.BattleId < 2 || block.CurrentHp == 0)
+        {
+            return false;
+        }
+
+        var header = block.Address - BattleLayout.HeaderSize;
+
+        if (!client.TryReadMemory(header, BattleLayout.ReadLength, out var bytes)
+            || BattleLayout.Parse(header, bytes) is not { } again
+            || again.Species != block.Species || again.MaxHp != block.MaxHp || again.BattleId != block.BattleId
+            || ReadPokemon(again) is not { } pokemon || pokemon.PID != pid)
+        {
+            logger.LogWarning("Caído en el banquillo del combate (posición {Id}): el bloque ha cambiado, no se escribe", block.BattleId);
+            return false;
+        }
+
+        client.WriteMemory(block.Address + BattleLayout.CurrentHpOffset, [0, 0]);
+
+        var written = client.TryReadMemory(header, BattleLayout.ReadLength, out var back)
+                      && BattleLayout.Parse(header, back) is { CurrentHp: 0 };
+        logger.LogWarning("Caído en el banquillo del combate (posición {Id}, PID {Pid:X8}): a 0 PS {Result}",
+            block.BattleId, pid, written ? "comprobado" : "SIN COMPROBAR");
+        return written;
+    }
+
     /// <summary>The whole Pokémon behind a block, or null when it cannot be read or is not that Pokémon.</summary>
     /// <remarks>One read of 296 bytes from the block's own pointer. See <see cref="BattlePokemon"/>.</remarks>
     public PKHeX.Core.PK7? ReadPokemon(BattleBlock block)

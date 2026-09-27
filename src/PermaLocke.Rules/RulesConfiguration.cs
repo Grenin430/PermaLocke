@@ -103,6 +103,12 @@ public sealed record RulesConfiguration
     /// </remarks>
     public BallControlSettings BallControl { get; init; } = new();
 
+    /// <summary>
+    /// A fallen Pokémon the game healed just before a battle is put back to zero HP inside the battle when it is on the
+    /// bench (1.0.4.10). A switch in rules.json so the organiser can turn it off from Admin without a new version.
+    /// </summary>
+    public bool KnockDownFallenInBattle { get; init; } = true;
+
     /// <summary>Settings for a rule, falling back to the global default when unlisted.</summary>
     public RuleSettings For(string ruleId) =>
         Rules.TryGetValue(ruleId, out var settings)
@@ -155,7 +161,8 @@ public static class RulesConfigurationLoader
             Rules = document.Rules ?? RulesConfiguration.Default.Rules,
             EncounterTypesThatConsumeZone = document.EncounterTypesThatConsumeZone
                 ?? [EncounterType.Wild, EncounterType.Fishing, EncounterType.Sos],
-            BallControl = document.BallControl ?? new BallControlSettings()
+            BallControl = document.BallControl ?? new BallControlSettings(),
+            KnockDownFallenInBattle = document.KnockDownFallenInBattle ?? true
         };
     }
 
@@ -166,5 +173,6 @@ public static class RulesConfigurationLoader
         public Dictionary<string, RuleSettings>? Rules { get; init; }
         public List<EncounterType>? EncounterTypesThatConsumeZone { get; init; }
         public BallControlSettings? BallControl { get; init; }
+        public bool? KnockDownFallenInBattle { get; init; }
     }
 }

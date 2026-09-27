@@ -1,6 +1,8 @@
 {
   "_firstEncounter": "Esta es la regla VIEJA, la que juzgaba una captura al registrarla; sigue apagada. La regla de primer encuentro que funciona es ballControl, mas abajo (§117). Y el MAPA ya no se marca a mano: lo marca PermaLocke leyendo la zona del juego y como acaba el primer combate salvaje de cada ruta, con ballControl encendida o apagada (§118).",
   "version": 1,
+  "_knockDownFallenInBattle": "Desde la 1.0.4.10: si el juego cura a un caído justo antes de un combate y entra en el banquillo, PermaLocke le pone 0 PS dentro del combate (nunca al que está en el campo). Ponlo a false para apagarlo si diera problemas; se puede cambiar desde Admin, REGLAS.",
+  "knockDownFallenInBattle": true,
   "comment": "Configuración de reglas y economía de puntos. Ningún valor de esta lista vive en el código.",
 
   "pointRewards": {

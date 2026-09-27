@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using Microsoft.Extensions.Logging.Abstractions;
 using PKHeX.Core;
+using PermaLocke.GameLink.Battle;
 using PermaLocke.GameLink.Data;
 using PermaLocke.GameLink.Rpc;
 
@@ -241,5 +242,64 @@ public sealed class LevelCapLiveTests : IAsyncLifetime
         var after = writer.ReadAuthoritative(Base)!;
         Assert.Equal(14, after.Stat_Level);
         Assert.Equal(StatsAt(15)[0], after.Stat_HPMax);
+    }
+
+    private const uint BlockHeader = 0x30010000;
+    private const uint BlockPointer = 0x30020000;
+
+    /// <summary>A battle block for the Froakie at <paramref name="position"/> with <paramref name="hp"/>, and its party structure.</summary>
+    private BattleBlock Battle(int position, int hp)
+    {
+        var block = new byte[BattleLayout.HeaderSize + BattleLayout.BlockSize];
+        BattleLayout.SearchPattern.CopyTo(block);
+        var data = block.AsSpan(BattleLayout.HeaderSize);
+        BinaryPrimitives.WriteUInt32LittleEndian(data[0x20..], BlockPointer);
+        BinaryPrimitives.WriteUInt16LittleEndian(data[0x2C..], Froakie);
+        BinaryPrimitives.WriteUInt16LittleEndian(data[0x2E..], (ushort)StatsAt(15)[0]);
+        BinaryPrimitives.WriteUInt16LittleEndian(data[BattleLayout.CurrentHpOffset..], (ushort)hp);
+        data[0x39] = (byte)position;
+
+        var party = new byte[BattlePokemon.ReadLength];
+        Encrypted(Pokemon(15)).AsSpan(0, BattlePokemon.StoredSize).CopyTo(party.AsSpan(BattlePokemon.Offset));
+
+        lock (_memory)
+        {
+            _memory[BlockHeader] = block;
+            _memory[BlockPointer] = party;
+        }
+
+        return BattleLayout.Parse(BlockHeader, block)!;
+    }
+
+    private int BattleHp()
+    {
+        lock (_memory) return BinaryPrimitives.ReadUInt16LittleEndian(_memory[BlockHeader].AsSpan(BattleLayout.HeaderSize + BattleLayout.CurrentHpOffset));
+    }
+
+    /// <summary>A fallen Pokémon on the bench goes to zero in the battle, read back (1.0.4.10).</summary>
+    [Fact]
+    public void A_fallen_one_on_the_bench_is_knocked_down_in_the_battle()
+    {
+        var block = Battle(position: 3, hp: 30);
+        using var client = Client();
+        var reader = new BattleTableReader(client, NullLogger<BattleTableReader>.Instance);
+
+        Assert.True(reader.KnockDownOnBench(block, Pid));
+        Assert.Equal(0, BattleHp());
+    }
+
+    /// <summary>On the field, with another Pokémon behind the block, or already at zero: nothing is written.</summary>
+    [Fact]
+    public void The_field_and_a_stranger_are_never_touched()
+    {
+        using var client = Client();
+        var reader = new BattleTableReader(client, NullLogger<BattleTableReader>.Instance);
+
+        Assert.False(reader.KnockDownOnBench(Battle(position: 0, hp: 30), Pid));
+        Assert.Equal(30, BattleHp());
+        Assert.False(reader.KnockDownOnBench(Battle(position: 1, hp: 30), Pid));
+        Assert.Equal(30, BattleHp());
+        Assert.False(reader.KnockDownOnBench(Battle(position: 4, hp: 30), 0xDEADBEEF));
+        Assert.Equal(30, BattleHp());
     }
 }

@@ -44,7 +44,7 @@ public static class BattleLayout
     private const int PointerOffset = 0x20;
     private const int SpeciesOffset = 0x2C;
     private const int MaxHpOffset = 0x2E;
-    private const int CurrentHpOffset = 0x30;
+    public const int CurrentHpOffset = 0x30;
     private const int BattleIdOffset = 0x39;
 
     /// <summary>How much to read, counted from the header, to parse a block.</summary>

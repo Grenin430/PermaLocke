@@ -54,7 +54,7 @@ public sealed class KillcamNotificationTests
         new(provider: null!, runContext: null!, watcher: null!, writer: null!, progress: null!, caps: null!,
             encounterGuard: null!, encounters: null!, rewards: null!, maintenance: null!, events: null!,
             clock: null!, battleTables: null!, killcam: recorder, paths: paths,
-            logger: NullLogger<GameLinkMonitor>.Instance, balls: null!, integrity: null!);
+            logger: NullLogger<GameLinkMonitor>.Instance, balls: null!, integrity: null!, rules: null!);
 
     private sealed class PendingRecorder : IKillcamRecorder
     {
