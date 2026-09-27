@@ -37,6 +37,7 @@ public sealed class GhostService
     private readonly IZoneProvider _zones;
     private readonly PokemonSpriteService _sprites;
     private readonly DeathCeremony _ceremony;
+    private readonly Notifier _notifier;
     private readonly ILogger<GhostService> _logger;
     private readonly DispatcherTimer _timer = new() { Interval = ReadEvery };
     private readonly Queue<GhostRow> _waiting = new();
@@ -53,9 +54,10 @@ public sealed class GhostService
     private string? _lastRainProblem;
 
     public GhostService(DiscordLogin discord, EmulatorLauncher launcher, IZoneProvider zones,
-        PokemonSpriteService sprites, DeathCeremony ceremony, ILogger<GhostService> logger)
+        PokemonSpriteService sprites, DeathCeremony ceremony, Notifier notifier, ILogger<GhostService> logger)
     {
         _ceremony = ceremony;
+        _notifier = notifier;
         _discord = discord;
         _launcher = launcher;
         _zones = zones;
@@ -345,7 +347,16 @@ public sealed class GhostService
                     DateTime.UtcNow, Notifier.Linger);
 
                 _logger.LogInformation("Fantasma de {Pokemon}, de {Player}", row.Pokemon, row.Nombre);
-                await _window.PlayAsync(notice, GhostArt.Make(sprite));
+                // Sin el juego, el aviso va con los demás avisos (abajo a la derecha), y el fantasma cruza PermaLocke (1.0.5.9).
+                if (!rehearsal && !_launcher.IsRunning)
+                {
+                    _notifier.Say(notice.Kind, notice.Title, notice.Message, sprite);
+                    await _window.PlayAsync(null, GhostArt.Make(sprite));
+                }
+                else
+                {
+                    await _window.PlayAsync(notice, GhostArt.Make(sprite));
+                }
             }
         }
         catch (Exception ex)

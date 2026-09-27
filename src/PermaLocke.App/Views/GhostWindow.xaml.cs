@@ -33,10 +33,10 @@ public partial class GhostWindow : Window
     }
 
     /// <summary>Shows the notice, and when it has gone, lets the ghost cross. Completes when it is out of sight.</summary>
-    public async Task PlayAsync(Toast notice, BitmapSource? ghost)
+    public async Task PlayAsync(Toast? notice, BitmapSource? ghost)
     {
         ShowOver();
-        await CardAsync(notice);
+        if (notice is not null) await CardAsync(notice);
 
         if (ghost is not null)
         {
@@ -202,5 +202,11 @@ public partial class GhostWindow : Window
     private static double Snap(double value, int cell) => Math.Floor(value / cell) * cell;
 
     private static (int Left, int Top, int Width, int Height) Target() =>
-        GameWindow.ClientBox(GameWindow.Handle()) ?? OverlayWindows.WorkArea();
+        GameWindow.ClientBox(GameWindow.Handle()) ?? OwnWindow() ?? OverlayWindows.WorkArea();
+
+    /// <summary>PermaLocke's own window when it is on screen (1.0.5.9): without the game, the ghost crosses it.</summary>
+    private static (int Left, int Top, int Width, int Height)? OwnWindow() =>
+        Application.Current?.MainWindow is { IsVisible: true, WindowState: not WindowState.Minimized } main
+            ? GameWindow.ClientBox(new System.Windows.Interop.WindowInteropHelper(main).Handle)
+            : null;
 }
