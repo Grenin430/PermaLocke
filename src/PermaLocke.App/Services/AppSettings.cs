@@ -15,6 +15,7 @@ public sealed record AppSettingsData(
     bool Ghosts = true,
     bool CatchCard = true,
     bool CapPanel = true,
+    bool Background = false,
     bool GuideHidden = false);
 
 /// <summary>

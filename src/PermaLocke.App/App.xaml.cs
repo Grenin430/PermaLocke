@@ -106,8 +106,15 @@ public partial class App : Application
         base.OnStartup(e);
 
         // Lo primero de todo, antes de copiar la base de datos o de tocar nada.
+        // La otra copia se enseña si estaba en segundo plano o detrás (1.0.5.4); el aviso, solo si no contesta.
         if (AnotherIsRunning(e))
         {
+            if (Services.BackgroundMode.AskOtherToShow())
+            {
+                Shutdown();
+                return;
+            }
+
             MessageBox.Show(
                 "PermaLocke ya está abierto. Usa esa ventana: dos a la vez vigilan y escriben en el mismo juego y se pisan.",
                 "PermaLocke", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -242,6 +249,7 @@ public partial class App : Application
         collection.AddSingleton<OrderService>();
         collection.AddSingleton<RulesSync>();
         collection.AddSingleton<CapBadge>();
+        collection.AddSingleton<BackgroundMode>();
         collection.AddSingleton<PokemonIdentityService>();
         collection.AddSingleton<IRewardCatalog>(_ =>
             JsonRewardCatalog.Load(Path.Combine(paths.Data, "rewards.json")));
@@ -452,6 +460,12 @@ public partial class App : Application
                     "PermaLocke", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         };
+
+        // Después de lo anterior: con el juego abierto no se cierra ni se esconde. La copia de --sin-juego no escucha.
+        if (!e.Args.Contains("--sin-juego", StringComparer.OrdinalIgnoreCase))
+        {
+            _services.GetRequiredService<BackgroundMode>().Attach(window);
+        }
 
         launcher.Start();
 

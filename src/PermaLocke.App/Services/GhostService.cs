@@ -13,7 +13,8 @@ namespace PermaLocke.App.Services;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Only inside the emulator</b>, as the player asked: while Azahar is closed nothing is shown, and the pointer
+/// <b>Ghosts also without the emulator</b> (1.0.5.4): with only PermaLocke open, or in the background, over the screen.
+/// The blood rain stays <b>only inside the emulator</b>, as the player asked: while Azahar is closed it is not shown, and the pointer
 /// forgets where it was, so opening the game later does not replay the deaths of the whole evening.
 /// </para>
 /// <para>
@@ -171,8 +172,9 @@ public sealed class GhostService
             return;
         }
 
-        // Solo dentro del emulador. Con el juego cerrado se olvida el puntero: al abrir no se repite lo de antes.
-        if (!_launcher.IsRunning || !Enabled || _discord.Saved is null)
+        // Los fantasmas salen también con solo la app abierta o en segundo plano (1.0.5.4); la lluvia, solo dentro del
+        // emulador. Lo que se apaga olvida el puntero: al volver no se repite lo de antes.
+        if (!Enabled || _discord.Saved is null)
         {
             _cursor = -1;
             _rainCursor = -1;
@@ -186,7 +188,8 @@ public sealed class GhostService
             await ReadGhostsAsync();
 
             // Aparte: si la tabla de las lluvias todavía no existe en el servidor, los fantasmas siguen llegando.
-            await ReadRainAsync();
+            if (_launcher.IsRunning) await ReadRainAsync();
+            else _rainCursor = -1;
         }
         finally
         {
@@ -319,13 +322,15 @@ public sealed class GhostService
         {
             await _sprites.PrepareAsync();
 
-            while (_waiting.Count > 0 && (rehearsal || (_launcher.IsRunning && Enabled)))
+            while (_waiting.Count > 0 && (rehearsal || Enabled))
             {
                 var row = _waiting.Dequeue();
                 _window ??= new GhostWindow();
 
                 if (row.Rain)
                 {
+                    if (!rehearsal && !_launcher.IsRunning) continue;
+
                     _logger.LogInformation("Lluvia de sangre: {Player} ha perdido el equipo", row.Nombre);
                     await _window.RainAsync(row.Mine ? null : new Toast(ToastKind.TeamWipe,
                         $"{row.Nombre} ha perdido el equipo entero", "Llueve sangre.", null, DateTime.UtcNow, Notifier.Linger));

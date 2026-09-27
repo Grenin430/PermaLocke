@@ -57,6 +57,7 @@ public sealed partial class SettingsViewModel : SectionViewModel
         Ghosts = current.Ghosts;
         CatchCard = current.CatchCard;
         CapPanel = current.CapPanel;
+        Background = current.Background;
         _loading = false;
     }
 
@@ -96,6 +97,9 @@ public sealed partial class SettingsViewModel : SectionViewModel
     [ObservableProperty]
     private bool _capPanel;
 
+    [ObservableProperty]
+    private bool _background;
+
     partial void OnNotificationsChanged(bool value) => Save();
     partial void OnStepAsideChanged(bool value) => Save();
     partial void OnDeathSceneChanged(bool value) => Save();
@@ -104,6 +108,7 @@ public sealed partial class SettingsViewModel : SectionViewModel
     partial void OnGhostsChanged(bool value) => Save();
     partial void OnCatchCardChanged(bool value) => Save();
     partial void OnCapPanelChanged(bool value) => Save();
+    partial void OnBackgroundChanged(bool value) => Save();
 
     private void Save()
     {
@@ -115,7 +120,8 @@ public sealed partial class SettingsViewModel : SectionViewModel
         _settings.Update(_settings.Current with
         {
             Notifications = Notifications, StepAside = StepAside, DeathScene = DeathScene, Killcam = Killcam,
-            Follower = Follower, Ghosts = Ghosts, CatchCard = CatchCard, CapPanel = CapPanel
+            Follower = Follower, Ghosts = Ghosts, CatchCard = CatchCard, CapPanel = CapPanel,
+            Background = Background
         });
         Status = "Guardado.";
     }

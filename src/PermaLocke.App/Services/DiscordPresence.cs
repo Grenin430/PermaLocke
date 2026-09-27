@@ -37,12 +37,17 @@ public sealed class DiscordPresence(AppPaths paths, ILogger<DiscordPresence> log
     private const int Ping = 3;
     private const int Pong = 4;
 
-    private readonly CancellationTokenSource _stopping = new();
+    private CancellationTokenSource _stopping = new();
     private string? _lastProblem;
 
     private sealed record PresenceConfig(string? DiscordApp, string? DiscordImagen);
 
-    public void Start() => _ = RunAsync(_stopping.Token);
+    public void Start()
+    {
+        // Otra vez al volver del segundo plano (1.0.5.4), con un token nuevo si el anterior ya se canceló.
+        if (_stopping.IsCancellationRequested) _stopping = new CancellationTokenSource();
+        _ = RunAsync(_stopping.Token);
+    }
 
     /// <summary>Closes the pipe, and with it the activity.</summary>
     public void Stop() => _stopping.Cancel();

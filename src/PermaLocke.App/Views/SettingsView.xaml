@@ -76,6 +76,9 @@
                     <CheckBox Style="{StaticResource Check}" IsChecked="{Binding CapPanel}" Content="Cap de nivel encima del juego" />
                     <pixel:PixelText Style="{StaticResource Explain}" Text="El panel de arriba a la derecha con la prueba, el cap y el nivel de tu equipo." />
 
+                    <CheckBox Style="{StaticResource Check}" IsChecked="{Binding Background}" Content="Seguir en segundo plano al cerrar" />
+                    <pixel:PixelText Style="{StaticResource Explain}" Text="Al cerrar, PermaLocke se queda junto al reloj y te sigue avisando de los caídos de tus amigos. Sin marcar, se cierra del todo." />
+
                     <CheckBox Style="{StaticResource Check}" IsChecked="{Binding Killcam}" Content="Grabar killcams" />
                     <pixel:PixelText Style="{StaticResource Explain}" Text="Repetición de cada muerte en el CEMENTERIO." />
 
