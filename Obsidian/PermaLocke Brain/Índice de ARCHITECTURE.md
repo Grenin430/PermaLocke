@@ -213,6 +213,7 @@ generado: 2026-09-24
 - L12649 · 204 · La descarga de la 1.0.2 y la 1.0.3 se desbordaba: arreglo y DownloadCopy probado
 - L12666 · 205 · 1.0.4.1: aviso de primer encuentro 6 s después y variocolor del gacha al 2 %
 - L12674 · 206 · 1.0.4.2: ventana de actualización sin cortes y comprobación cada 3 min
+- L12681 · 207 · 1.0.4.3: comprobación cada minuto, espera al reset de GitHub
 
 Subsecciones §176: bis (visor), ter (todas las pantallas, fuera ESTADÍSTICAS), quater (EV/MOVIMIENTOS sin bolsa, diálogos).
 

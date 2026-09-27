@@ -40,11 +40,18 @@ public sealed partial class UpdateService(AppPaths paths, DiscordLogin discord, 
     public const string RestartArgument = "--tras-actualizar";
 
     /// <summary>How often it asks GitHub again while PermaLocke is open.</summary>
-    /// <remarks>Three minutes since 1.0.4.2, so a release shows up almost at once (it was 30). GitHub allows 60 anonymous
-    /// questions an hour per computer; this is 20.</remarks>
-    private static readonly TimeSpan Every = TimeSpan.FromMinutes(3);
+    /// <remarks>One minute since 1.0.4.3 (30 until 1.0.4.1, 3 in 1.0.4.2). GitHub allows 60 anonymous questions an hour per
+    /// connection (measured: an anonymous 304 counts too). One a minute fits for one PermaLocke per connection; several on
+    /// the same Wi-Fi run out, and then it waits for GitHub's reset instead of asking (<see cref="_waitUntil"/>).</remarks>
+    private static readonly TimeSpan Every = TimeSpan.FromMinutes(1);
 
     private const string PinKey = "actualizacion";
+
+    /// <summary>The <c>ETag</c> of the last answer, so «nothing new» comes back as a short 304.</summary>
+    private string? _etag;
+
+    /// <summary>When GitHub said «too many», the moment its count starts again; no questions before it.</summary>
+    private DateTimeOffset _waitUntil;
 
     private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromMinutes(10) };
 
@@ -109,7 +116,7 @@ public sealed partial class UpdateService(AppPaths paths, DiscordLogin discord, 
     /// <summary>Looks for a newer version and keeps it as <see cref="Available"/>. Never throws.</summary>
     public async Task CheckAsync()
     {
-        if (!paths.LocalOnly || Installing || Repository() is not { } repository)
+        if (!paths.LocalOnly || Installing || DateTimeOffset.UtcNow < _waitUntil || Repository() is not { } repository)
         {
             return;
         }
@@ -119,14 +126,31 @@ public sealed partial class UpdateService(AppPaths paths, DiscordLogin discord, 
             using var request = new HttpRequestMessage(HttpMethod.Get, $"https://api.github.com/repos/{repository}/releases/latest");
             request.Headers.UserAgent.ParseAdd($"PermaLocke/{AppUpdate.Display(Current)}");
             request.Headers.Accept.ParseAdd("application/vnd.github+json");
+            if (_etag is not null) request.Headers.TryAddWithoutValidation("If-None-Match", _etag);
             using var cancel = new CancellationTokenSource(TimeSpan.FromSeconds(15));
             using var response = await Http.SendAsync(request, cancel.Token);
+
+            if (response.StatusCode == System.Net.HttpStatusCode.NotModified)
+            {
+                return;
+            }
+
+            if ((int)response.StatusCode is 403 or 429
+                && response.Headers.TryGetValues("X-RateLimit-Reset", out var reset)
+                && long.TryParse(reset.FirstOrDefault(), out var seconds))
+            {
+                _waitUntil = DateTimeOffset.FromUnixTimeSeconds(seconds);
+                logger.LogInformation("GitHub pide esperar hasta {Reset} para volver a preguntar", _waitUntil.ToLocalTime());
+                return;
+            }
 
             if (!response.IsSuccessStatusCode)
             {
                 logger.LogInformation("Sin comprobar actualizaciones: GitHub responde {Status}", (int)response.StatusCode);
                 return;
             }
+
+            _etag = response.Headers.ETag?.ToString();
 
             if (AppUpdate.Pick(await response.Content.ReadAsStringAsync(cancel.Token), Current) is not { } asset)
             {

@@ -12677,3 +12677,10 @@ Core 410.
   (captura del usuario instalando la 1.0.4.1, que por lo demás **funcionó**).
 - `UpdateService.Every`: de 30 a 3 min. La franja y el aviso fijo ya existían (§202), pero la versión nueva tardaba hasta
   media hora en verse y el usuario creía que hacía falta reiniciar. 20 preguntas/h a GitHub, por debajo de las 60 anónimas.
+
+## §207 · 1.0.4.3: comprobar versión cada minuto, con espera si GitHub dice basta (2026-09-27)
+
+- `UpdateService.Every` a 1 min (pedido). El límite anónimo de GitHub es 60/h **por conexión**; medido con curl: un 304
+  con `ETag` **también cuenta** sin sesión, así que el `ETag` solo abrevia la respuesta. Una PermaLocke por casa cabe;
+  varias en la misma wifi se quedan sin preguntas: con 403/429 se guarda `X-RateLimit-Reset` en `_waitUntil` y no se
+  pregunta hasta entonces. El aviso llega algo más tarde, nada se rompe.
