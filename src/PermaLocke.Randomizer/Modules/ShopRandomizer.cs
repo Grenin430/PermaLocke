@@ -73,6 +73,9 @@ public sealed class ShopRandomizer(RomWorkspace workspace, RandomizerOptions opt
                 .. wanted.Select(item => (item.Id, item.Price > 0 ? item.Price : options.SpecialMartItemPrice)),
                 .. options.SpecialMartShelves.SelectMany(shelf =>
                     shelf.Items.Select(item => (item.Id, item.Price > 0 ? item.Price : shelf.Price))),
+                // Las megapiedras, para poder venderlas (2026-09-27); una que ya tenga precio de tienda se queda el suyo.
+                .. MegaStones(wanted.Select(item => item.Id)
+                    .Concat(options.SpecialMartShelves.SelectMany(shelf => shelf.Items.Select(item => item.Id))).ToHashSet()),
             ], ct);
         await PriceMachinesAsync(mod, stock.MachinesOnSale, ct);
         return new ShopResult(stock.MachineShops, stock.RestockedShops, stock.Slots, medicine, stock.Stocked,
@@ -318,6 +321,20 @@ public sealed class ShopRandomizer(RomWorkspace workspace, RandomizerOptions opt
     /// into some other number and the shop would quietly charge it, so both are refused rather than
     /// rounded.
     /// </remarks>
+    private IEnumerable<(int Id, int Price)> MegaStones(IReadOnlySet<int> priced) =>
+        options.MegaStonePrice <= 0
+            ? []
+            : MegaTrainerRandomizer.ReadStones(workspace.PathOf(GameFiles.MegaEvolution))
+                .Where(stone => !priced.Contains(stone) && stone < ItemCount())
+                .Order()
+                .Select(stone => (stone, options.MegaStonePrice));
+
+    private int ItemCount()
+    {
+        using var items = new GarcPatcher(workspace.PathOf(GameFiles.Item));
+        return items.FileCount;
+    }
+
     private static async Task PriceAsync(LayeredFsMod mod, IReadOnlyList<(int Id, int Price)> prices,
         CancellationToken ct)
     {

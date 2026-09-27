@@ -320,3 +320,22 @@ Hecho, compilando sin avisos, con **1521 pruebas correctas** (Rules 150, Randomi
   - **Parche 4 del fork** que arregla los cierres (§173).
   - Cabina del wonder trade (§174) y ruleta de feria (§175).
   - Muestra pixel (§176).
+
+## 2026-09-27 (tarde): 1.0.5.1 → 1.0.5.9
+Panel del cap (vida al subir de nivel, fuera de las capturas de pantalla, tamaño adaptable), ventana SE ADAPTA, fantasmas
+sin emulador y aviso con los demás, segundo plano con icono junto al reloj, buzón de sugerencias (18-sugerencias.sql),
+cementerios de todos con killcams en H.264 por Media Foundation (19-caidos.sql, `FallenShare`, `KillcamVideo`, `Mf`),
+pestañas de jugadores en el CEMENTERIO, cámaras de Azahar en blanco, `.old` bloqueado en la actualización. Pantalla en
+negro del estudio de fotos: gen 8-9 en el equipo (ver Trampas y lecciones).
+
+## 2026-09-27 (noche): 1.0.5.10 → 1.0.6
+- 1.0.5.10: panel del cap otra vez ventana normal (WDA_EXCLUDEFROMCAPTURE lo escondía); se esconde solo mientras
+  `HpBarWatcher` mira la barra. WinForms aislado en `BackgroundMode.ShowIcon` (el cierre de una actualización, desde el
+  `.old`, no podía cargarlo) y `BackgroundMode.Leaving` para que actualizar cierre de verdad.
+- 1.0.5.11: los estáticos (Dominantes, aliados, fijos) borran los 4 movimientos del cartucho (0x0C) al cambiar de especie.
+- 1.0.5.12: la comprobación de estáticos deja pasar legendarios mega donde los puso la regla Mega (seed 111: Darkrai mega
+  en el Nihilego paraba todo el randomizado, también en la app).
+- 1.0.6: `megaStonePrice` 20000 en randomizer.json: las megapiedras (método 1 de la tabla de megas a/0/1/5, 94 con el mod)
+  se venden por 10000. Solo runs nuevas: no se toca el mundo instalado del torneo.
+- Pendiente: devolver balls en Centro Pokémon (se explicó que no arregla la libreta a 0; falta el log del amigo),
+  aviso del estudio de fotos con gen 8-9, seed elegible al crear run.

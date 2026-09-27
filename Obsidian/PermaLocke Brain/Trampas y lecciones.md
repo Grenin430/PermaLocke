@@ -75,3 +75,18 @@ Errores ya cometidos en este proyecto, con el § donde se cuentan ([[Índice de 
 - «No está en INFORMACIÓN» no era un fallo del generador: solo listaba lo que cambia el fixer. Preguntar qué se espera ver antes de dar una lista por completa.
 - **WPF: `Loaded` puede repetirse sin `Unloaded`** (volver a una sección). Suscribirse a `CompositionTarget.Rendering` en `Loaded` sin quitar antes duplica el manejador y la animación va x2/x3 (§210). Siempre `-=` antes de `+=`.
 - **Action: `LevelCapLiveTests` puede fallar una vez en GitHub** (servidor RPC falso, tiempos en la máquina de GitHub; ya va en la colección sin paralelo). Pasa en local: `gh run rerun <id> --failed` y publica (1.0.4.7, 2026-09-27).
+
+## Estudio de fotos de Hauoli con Pokémon de gen 8-9 (2026-09-27)
+El tutorial del Poké Finder en Ciudad Hauoli (CRO `FinderStudioCapture`/`FinderStudioViewer`) se queda en negro si el
+equipo lleva Pokémon de la expansión (especie > 807): el estudio carga los modelos del equipo y no sabe con esos. Pasa
+igual sin PermaLocke abierto. Solución confirmada por el jugador: dejar los de gen 8-9 en la caja, entrar, y volverlos
+a meter. La cámara de Azahar (1.0.5.6 la pone en blanco) no era la causa.
+
+## Tabla de megas (a/0/1/5): método 2 no es una piedra (2026-09-27)
+Cada entrada: forma u16, método u16, argumento u16. Método 1 = megapiedra (objeto); método 2 = Rayquaza por movimiento,
+y su argumento es un MOVIMIENTO. Leer el argumento como objeto sin mirar el método pone precio a otro objeto.
+El mod reutiliza ids 505-520 y 1019-1023 para sus megapiedras nuevas.
+
+## WDA_EXCLUDEFROMCAPTURE esconde la ventana (2026-09-27)
+Sacar el panel del cap de las capturas hizo que dejara de verse encima del juego. Para que la copia de pantalla no lo
+lea, se esconde mientras se mira la barra de PS.

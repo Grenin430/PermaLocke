@@ -44,6 +44,29 @@ public sealed class MegaTrainerRandomizer(RomWorkspace workspace, RandomizerOpti
     /// Charizardita Y, and Mewtwo the same. Every other mega-capable species has a single entry
     /// with form 1.
     /// </remarks>
+    /// <summary>Every Mega Stone the mega table names (the item at +4 of each entry), for their price.</summary>
+    public static IReadOnlySet<int> ReadStones(string garcPath)
+    {
+        using var patcher = new GarcPatcher(garcPath);
+        var stones = new HashSet<int>();
+
+        for (var species = 0; species < patcher.FileCount; species++)
+        {
+            var entry = patcher.Read(species);
+            for (var at = 0; at + 8 <= entry.Length; at += 8)
+            {
+                // Método 1 = piedra; el 2 es Rayquaza por movimiento, y su argumento es un movimiento, no un objeto.
+                if (BitConverter.ToUInt16(entry, at) > 0 && BitConverter.ToUInt16(entry, at + 2) == 1
+                    && BitConverter.ToUInt16(entry, at + 4) is var stone and > 0)
+                {
+                    stones.Add(stone);
+                }
+            }
+        }
+
+        return stones;
+    }
+
     public static IReadOnlyDictionary<int, IReadOnlyList<int>> ReadForms(string garcPath)
     {
         const int entrySize = 8;

@@ -447,6 +447,13 @@ public sealed record RandomizerOptions
     public int SpecialMartItemPrice { get; init; }
 
     /// <summary>
+    /// The price of every Mega Stone in the installed world (2026-09-27): shops buy at half, so 20000 sells for 10000 at
+    /// any Pokémon Center. The cartridge has them at 0, which is what makes them unsellable. The stones are read from the
+    /// game's own mega table, the mod's new ones included. Zero leaves them as they are.
+    /// </summary>
+    public int MegaStonePrice { get; init; }
+
+    /// <summary>
     /// Special counters that sell a list of their own instead of taking their turn in
     /// <see cref="SpecialMartItems"/>. Empty leaves every counter to the spilling list.
     /// </summary>
