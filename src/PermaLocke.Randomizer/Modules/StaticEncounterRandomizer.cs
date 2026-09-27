@@ -87,6 +87,13 @@ public sealed class StaticEncounterRandomizer(RomWorkspace workspace, Randomizer
         return new StaticEncounterResult(replaced, kept, starters, raised, starterPool.Count);
     }
 
+    /// <summary>
+    /// Entries a Mega rule wrote (2026-09-27). Legendaries may be megas since 2026-09-25 (Mega Darkrai comes with the mod),
+    /// so <see cref="VerifyAsync"/> lets their banned species through there; seed 111 put Mega Darkrai on the Nihilego and
+    /// the check stopped the whole randomization.
+    /// </summary>
+    private readonly HashSet<(int Subfile, int Index)> _megaEntries = [];
+
     /// <summary>What each override rule matched, for the report.</summary>
     public List<string> Touched { get; } = [];
 
@@ -230,6 +237,7 @@ public sealed class StaticEncounterRandomizer(RomWorkspace workspace, Randomizer
             var form = forms[random.Next(forms.Count)];
 
             StaticEncounterTable.SetSpecies(payload, layout, index, species, form);
+            _megaEntries.Add((layout.Subfile, index));
             return;
         }
 
@@ -467,7 +475,8 @@ public sealed class StaticEncounterRandomizer(RomWorkspace workspace, Randomizer
             for (var i = 0; i < StaticEncounterTable.Count(payload, layout); i++)
             {
                 var species = StaticEncounterTable.GetSpecies(payload, layout, i);
-                if (species != 0 && banned.Contains(species) && !untouchable.Contains(species))
+                if (species != 0 && banned.Contains(species) && !untouchable.Contains(species)
+                    && !_megaEntries.Contains((layout.Subfile, i)))
                 {
                     throw new InvalidDataException(
                         $"El randomizador dejó la especie prohibida {species} en {layout.Name}, entrada {i}.");
