@@ -41,6 +41,7 @@ public sealed class CapBadge
     private readonly GameLinkMonitor _monitor;
     private readonly IRunContext _runContext;
     private readonly ILogger<CapBadge> _logger;
+    private readonly AppSettings _settings;
     private readonly DispatcherTimer _timer = new() { Interval = Follow };
 
     private readonly PixelText _trial = new() { Scale = 1, Tight = true };
@@ -54,7 +55,7 @@ public sealed class CapBadge
     private DateTime _readAt = DateTime.MinValue;
 
     public CapBadge(EmulatorLauncher launcher, ProgressService progress, LevelCapTable caps, IRunContext runContext,
-        GameLinkMonitor monitor, ILogger<CapBadge> logger)
+        GameLinkMonitor monitor, AppSettings settings, ILogger<CapBadge> logger)
     {
         _launcher = launcher;
         _progress = progress;
@@ -62,6 +63,7 @@ public sealed class CapBadge
         _monitor = monitor;
         _runContext = runContext;
         _logger = logger;
+        _settings = settings;
         _timer.Tick += (_, _) => _ = TickAsync();
         monitor.RunDataChanged += (_, _) => _readAt = DateTime.MinValue;
         runContext.CurrentChanged += (_, _) => _readAt = DateTime.MinValue;
@@ -87,7 +89,8 @@ public sealed class CapBadge
         {
             var game = GameWindow.Handle();
 
-            if (!_launcher.IsRunning || game == IntPtr.Zero || GetForegroundWindow() != game
+            // Se quita en CONFIGURACIÓN (1.0.4.8).
+            if (!_settings.Current.CapPanel || !_launcher.IsRunning || game == IntPtr.Zero || GetForegroundWindow() != game
                 || GameWindow.RenderBox(game) is not { } picture)
             {
                 _window?.Hide();
