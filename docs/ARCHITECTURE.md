@@ -12742,3 +12742,17 @@ En combate el juego no copia los PS al equipo hasta el final. `GameLinkMonitor.B
 el bucle de combate ya lee cada 250 ms (una referencia que se sustituye entera; ninguna lectura más al emulador) y
 `CapBadge.WithBattleHp` toma de ahí los PS de cada miembro por especie + PS máximos; si no hay exactamente un bloque, se
 queda lo del equipo. Investigado antes: sin barridos, sin escrituras, errores capturados en el panel. `CapBadgeTests`.
+
+## §214 · 1.0.5: fantasma nuevo, caído en el banquillo a 0 PS y PS del panel con retraso (2026-09-27)
+
+- **Fantasma:** `GhostScene` (pura, PixelCheck `fantasma.png`) sustituye al sprite que cruzaba a saltos: bordes fríos, niebla
+  de tres capas, fantasma en ola con contorno ondulante y mitad de abajo en jirones, dos estelas, dos llamas, motas, parada
+  a mitad mirando a la pantalla con ojos que brillan y chispas al salir. `GhostWindow.CrossAsync` la pinta a 30 fps.
+  Solo el cruce de los fantasmas de los amigos; la escena de muerte propia sigue igual.
+- **Caído curado antes de un combate** (log de juanito, 1.0.4.9: PermaLocke bajó todas las copias conocidas 0,9 s antes y
+  el combate salió igual con PS; el combate los toma de otro sitio): `BattleTableReader.KnockDownOnBench` escribe 0 en el
+  campo de PS del bloque de combate (0x30, el que lee la detección de muertes) de un caído en el banquillo (posición 2 o
+  más; nunca 0 y 1), releyendo antes (cabecera, especie, PS máx., posición, PID) y después. En las dos tablas. Interruptor
+  `knockDownFallenInBattle` en `rules.json` (se apaga desde Admin, REGLAS). Probado con memoria simulada; sin jugar.
+- **Panel del cap:** PS con 3 s de retraso (`CapBadge.Delayed`): la tabla del combate cambia al decidirse el golpe, antes
+  de la animación, y destripaba el daño.

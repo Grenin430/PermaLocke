@@ -6,7 +6,7 @@ revisado: 2026-09-26
 
 La última sesión va arriba. Antes del 2026-09-23 solo hay un resumen por fechas sacado de `CLAUDE.md` y de `ARCHITECTURE.md`: el detalle está en el § citado ([[Índice de ARCHITECTURE]]). **Cada sesión nueva añade su entrada aquí.**
 
-## 2026-09-27 — 1.0.4.1 a 1.0.4.9
+## 2026-09-27 — 1.0.4.1 a 1.0.5
 - 1.0.4.1 instalada sola: **funciona**. Su ventana se cortaba arriba y abajo, y la versión nueva no se veía sin reiniciar (se miraba cada 30 min): 1.0.4.2 (§206).
 - Preguntó si el límite de GitHub es para todos: es 60/h por conexión. Pidió cada minuto: 1.0.4.3 (§207). Lección medida: sin sesión, un 304 con ETag cuenta igual.
 - Iñigo: un caído (SaintPablo) entró vivo en un combate tras una cura de la historia. Mirado con sus eventos del servidor (consulta con la sesión de Admin desde un proyecto temporal en el scratchpad) y su log: la cura llegó 0,8 s antes del combate. 1.0.4.4 (§208). El reemplazo del aviso de actualización ya existía (`Notifier.Pin` con la misma clave y la franja atada a `Available`).
@@ -15,6 +15,7 @@ La última sesión va arriba. Antes del 2026-09-23 solo hay un resumen por fecha
 - 1.0.4.7 (§211): wonder trade 2 por 1 en el ÁLBUM con animación nueva (media de los dos totales, ±8 %, nivel el mayor; el usuario dio el visto bueno a la media), panel del cap sobre Azahar, tutores de PB prohibidos y tienda de PB de surf a Poké Balls (solo al regenerar), gacha sin la racha exprés (era el «x3» de los amigos). Un `PermaLocke.App.exe` colgado (PID 39272, sin permiso para cerrarlo) bloqueaba `binDebug`: los ensayos salieron de `binnsayo`.
 - 1.0.4.8 (§212): el equipo (icono, nivel, PS) bajo el panel del cap y la casilla para quitarlo en CONFIGURACIÓN. Explicado qué hacen PAUSAR/REANUDAR de Admin.
 - 1.0.4.9 (§213): PS del panel en tiempo real en combate con las tablas que ya se leen. El proceso colgado 39272 ya no estaba: pruebas de la App otra vez en verde.
+- 1.0.5 (§214): fantasma nuevo (ensayo `--ensayar-fantasma`), caído curado antes de un combate: juanito con la 1.0.4.9 tuvo tres; el combate toma los PS de otro sitio y ahora se corrige dentro del combate en el banquillo; PS del panel con 3 s de retraso (destripaba los golpes). Lección: los ensayos con overlay salen encima del Azahar del usuario si lo tiene abierto.
 - Pedido: acceso directo de Admin al día (Release recompilado) y la 1.0.4.1 con el aviso de primer encuentro 6 s después (`FirstEncounterDelay`) y el variocolor del gacha del 10 % al 2 % (§205). Subida directa a main para que la Action la publique.
 
 ## 2026-09-26 — plan del próximo torneo, desde la nube (y su puesta en marcha)
