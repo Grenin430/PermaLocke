@@ -73,6 +73,9 @@
          dos tonos se emborronan y lo que queda es una mancha. -->
     <Geometry x:Key="IconGift">M2.4,7.4 H21.6 V11.2 H2.4 Z M4.2,11.2 H19.8 V21.4 H4.2 Z M10.9,7.4 H13.1 V21.4 H10.9 Z M12,7.4 L7.4,3.4 L7.4,6.4 Z M12,7.4 L16.6,3.4 L16.6,6.4 Z</Geometry>
 
+    <!-- El buzón de sugerencias (1.0.5.5): caja redonda con su bandera, sobre un poste. -->
+    <Geometry x:Key="IconMailbox">M3,10 A4.5,4.5 0 0 1 7.5,5.5 H16.5 A4.5,4.5 0 0 1 21,10 V15.6 H3 Z M10.8,15.6 H13.2 V22 H10.8 Z M16.2,5.5 V1.8 H20.6 V4.2 H18 V5.5 Z</Geometry>
+
     <Geometry x:Key="IconPoints">M12,2.2 L21.8,12 L12,21.8 L2.2,12 Z</Geometry>
 
     <!-- ESTADO: conectado / desconectado / indiferente. -->

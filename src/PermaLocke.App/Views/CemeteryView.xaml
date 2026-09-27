@@ -39,7 +39,7 @@
                 <views:CemeteryCanvas Graves="{Binding PageGraves}" PickCommand="{Binding PickCommand}" />
 
                 <!-- Vacío: se dice, no se dibuja un cementerio de mentira. -->
-                <pixel:PixelText Text="Aún no ha caído nadie en esta run." Scale="2" Tight="True"
+                <pixel:PixelText Text="{Binding EmptyText}" Scale="2" Tight="True"
                                  Colour="{StaticResource PxTextDim}"
                                  Visibility="{Binding IsEmpty, Converter={StaticResource Visible}}"
                                  HorizontalAlignment="Center" VerticalAlignment="Center" />
@@ -52,6 +52,20 @@
                                          Colour="{StaticResource PxText}" />
                     </StackPanel>
                 </Grid>
+
+                <!-- DE QUIÉN (1.0.5.5): tu cementerio o el de cada amigo, con sus killcams. -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="10"
+                            Visibility="{Binding HasOwners, Converter={StaticResource Visible}}">
+                    <Button Content="◀" Command="{Binding PreviousOwnerCommand}" Style="{StaticResource PxSubtleButton}"
+                            Padding="12,6,18,11" />
+                    <Grid Margin="6,0" VerticalAlignment="Top">
+                        <views:PixelPanel Fill="#E0120E20" HasShadow="False" />
+                        <pixel:PixelText Text="{Binding OwnerText}" Scale="2" Tight="True" Margin="9,9,10,9"
+                                         Colour="{StaticResource PxText}" />
+                    </Grid>
+                    <Button Content="▶" Command="{Binding NextOwnerCommand}" Style="{StaticResource PxSubtleButton}"
+                            Padding="12,6,18,11" />
+                </StackPanel>
 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="10"
                             Visibility="{Binding HasPages, Converter={StaticResource Visible}}">

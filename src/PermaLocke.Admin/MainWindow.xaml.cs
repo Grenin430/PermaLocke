@@ -33,6 +33,9 @@ public partial class MainWindow : Window
     private void OnReports(object sender, RoutedEventArgs e) =>
         new ReportsWindow(((AdminViewModel)DataContext).Reports) { Owner = this }.Show();
 
+    private void OnSuggestions(object sender, RoutedEventArgs e) =>
+        new SuggestionsWindow(((AdminViewModel)DataContext).Suggestions) { Owner = this }.Show();
+
     private void OnCleanup(object sender, RoutedEventArgs e) =>
         new CleanupWindow(((AdminViewModel)DataContext).Cleanup) { Owner = this }.Show();
 

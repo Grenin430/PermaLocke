@@ -19,14 +19,20 @@ public sealed partial class CemeteryViewModel : SectionViewModel
     private readonly CemeteryService _cemetery;
     private readonly PokemonSpriteService _sprites;
     private readonly ILogger<CemeteryViewModel> _logger;
+    private readonly FallenShare _share;
+    private readonly CommunityService _community;
 
-    public CemeteryViewModel(CemeteryService cemetery, PokemonSpriteService sprites, IRunContext runContext,
+    public CemeteryViewModel(CemeteryService cemetery, PokemonSpriteService sprites, IRunContext runContext, FallenShare share,
+        CommunityService community,
         GameLinkMonitor monitor, IUiDispatcher ui, ILogger<CemeteryViewModel> logger)
         : base("CEMENTERIO", "Los que no volvieron, y cómo cayeron")
     {
         _cemetery = cemetery;
         _sprites = sprites;
         _logger = logger;
+        _share = share;
+        _community = community;
+        community.PropertyChanged += (_, _) => _ = ui.InvokeAsync(() => { OnPropertyChanged(nameof(HasOwners)); return Task.CompletedTask; });
 
         runContext.CurrentChanged += (_, _) => _ = ui.InvokeAsync(RefreshAsync);
 
@@ -137,6 +143,58 @@ public sealed partial class CemeteryViewModel : SectionViewModel
         }
 
         Selected = grave;
+        _ = FetchKillcamAsync(grave);
+    }
+
+    /// <summary>Whose cemetery is on screen (1.0.5.5): null for this player's own, or a friend's id.</summary>
+    private FriendStatus? _owner;
+
+    public string EmptyText => _owner is null ? "Aún no ha caído nadie en esta run." : "Aún no ha caído nadie (o no lo ha compartido).";
+
+    public string OwnerText => _owner is null ? "TU CEMENTERIO" : $"DE {_owner.Name.ToUpperInvariant()}";
+
+    /// <summary>Whether there are friends to switch to.</summary>
+    public bool HasOwners => _community.Friends.Count > 0;
+
+    [RelayCommand]
+    private Task PreviousOwner() => SwitchOwner(-1);
+
+    [RelayCommand]
+    private Task NextOwner() => SwitchOwner(1);
+
+    private Task SwitchOwner(int step)
+    {
+        // Tú y luego cada amigo, en el orden de la lista de amigos, dando la vuelta.
+        var owners = new List<FriendStatus?> { null };
+        owners.AddRange(_community.Friends);
+        var at = _owner is null ? 0 : Math.Max(0, owners.FindIndex(o => o?.PlayerId == _owner.PlayerId));
+        _owner = owners[((at + step) % owners.Count + owners.Count) % owners.Count];
+        OnPropertyChanged(nameof(OwnerText));
+        OnPropertyChanged(nameof(EmptyText));
+        OnPropertyChanged(nameof(HasOwners));
+        IsTheaterOpen = false;
+        return RefreshAsync();
+    }
+
+    private async Task<IReadOnlyList<GraveViewModel>> LoadAsync()
+    {
+        if (_owner is not { } friend)
+        {
+            return [.. (await _cemetery.GravesAsync()).Select(grave => new GraveViewModel(grave, _sprites.Get(grave.Species, grave.Form, grave.IsShiny)))];
+        }
+
+        return [.. (await _share.FriendGravesAsync(friend.PlayerId)).Select(pair =>
+            new GraveViewModel(pair.Grave, _sprites.Get(pair.Grave.Species, pair.Grave.Form, pair.Grave.IsShiny), friend.PlayerId, pair.Killcam))];
+    }
+
+    private async Task FetchKillcamAsync(GraveViewModel grave)
+    {
+        if (grave.Owner is not { } player || !grave.RemoteKillcam || grave.KillcamPath is not null || grave.IsFetching) return;
+
+        grave.IsFetching = true;
+        grave.KillcamPath = await _share.FriendKillcamAsync(player, grave.PokemonId);
+        grave.IsFetching = false;
+        OpenTheaterCommand.NotifyCanExecuteChanged();
     }
 
     private async Task RefreshAsync()
@@ -145,14 +203,15 @@ public sealed partial class CemeteryViewModel : SectionViewModel
         {
             await _sprites.PrepareAsync();
 
-            var graves = await _cemetery.GravesAsync();
+            var graves = await LoadAsync();
             var picked = Selected?.PokemonId;
 
             Graves.Clear();
+            OnPropertyChanged(nameof(HasOwners));
 
             foreach (var grave in graves)
             {
-                Graves.Add(new GraveViewModel(grave, _sprites.Get(grave.Species, grave.Form, grave.IsShiny)));
+                Graves.Add(grave);
             }
 
             IsEmpty = Graves.Count == 0;
@@ -181,7 +240,8 @@ public sealed partial class CemeteryViewModel : SectionViewModel
 }
 
 /// <summary>One grave, already turned into what the screen shows.</summary>
-public sealed partial class GraveViewModel(Grave grave, BitmapSource? sprite) : ObservableObject
+public sealed partial class GraveViewModel(Grave grave, BitmapSource? sprite, Guid? owner = null, bool remoteKillcam = false)
+    : ObservableObject
 {
     private static readonly CultureInfo Spanish = CultureInfo.GetCultureInfo("es-ES");
 
@@ -265,14 +325,30 @@ public sealed partial class GraveViewModel(Grave grave, BitmapSource? sprite) : 
 
     public string SeenText => grave.HowItWasSeen;
 
-    public string? KillcamPath => grave.KillcamPath;
+    /// <summary>The friend this grave belongs to (1.0.5.5), or null for this player's own.</summary>
+    public Guid? Owner { get; } = owner;
 
-    public bool HasKillcam => grave.KillcamPath is not null;
+    /// <summary>A friend's grave whose killcam is on the server, downloaded when it is picked.</summary>
+    public bool RemoteKillcam { get; } = remoteKillcam;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasKillcam))]
+    private string? _killcamPath = grave.KillcamPath;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(NoKillcamText))]
+    private bool _isFetching;
+
+    public bool HasKillcam => KillcamPath is not null;
 
     /// <summary>Why there is no replay, said plainly.</summary>
-    public string NoKillcamText => grave.HowItWasSeen == "Marcada a mano"
-        ? "Sin repetición."
-        : grave.HasBattleRecord
-            ? "Su killcam no llegó a guardarse."
-            : "Sin repetición.";
+    public string NoKillcamText => IsFetching
+        ? "Cargando la killcam..."
+        : RemoteKillcam
+            ? "No se ha podido bajar su killcam."
+            : grave.HowItWasSeen == "Marcada a mano"
+                ? "Sin repetición."
+                : grave.HasBattleRecord
+                    ? "Su killcam no llegó a guardarse."
+                    : "Sin repetición.";
 }

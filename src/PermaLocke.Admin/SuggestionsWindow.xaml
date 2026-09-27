@@ -1,0 +1,44 @@
+<Window x:Class="PermaLocke.Admin.SuggestionsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:pixel="clr-namespace:PermaLocke.App.Views.Pixel"
+        Title="PermaLocke Admin · Sugerencias" Height="600" Width="860" Icon="Assets/PermaLocke.Admin.ico"
+        Background="{StaticResource PxBaseBrush}" WindowStartupLocation="CenterOwner">
+    <!-- SUGERENCIAS (1.0.5.5): lo que mandan los jugadores desde el buzón de su app (18-sugerencias.sql). -->
+    <DockPanel Margin="18">
+        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,14">
+            <Button DockPanel.Dock="Right" Content="ACTUALIZAR" Command="{Binding RefreshCommand}" />
+            <StackPanel VerticalAlignment="Center">
+                <pixel:PixelText Text="SUGERENCIAS" Scale="3" Tight="True" Colour="{StaticResource PxText}"
+                                 Shadow="{StaticResource PxShadow}" />
+                <TextBlock Text="{Binding Status}" Foreground="{StaticResource Faint}" FontSize="11.5" Margin="0,4,0,0"
+                           TextWrapping="Wrap" />
+            </StackPanel>
+        </DockPanel>
+
+        <DataGrid ItemsSource="{Binding Suggestions}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
+                  GridLinesVisibility="Horizontal" CanUserAddRows="False">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Cuándo" Binding="{Binding When}" Width="90" />
+                <DataGridTextColumn Header="Jugador" Binding="{Binding Player}" Width="130" />
+                <DataGridTextColumn Header="Versión" Binding="{Binding Version}" Width="70" />
+                <DataGridTemplateColumn Header="Sugerencia" Width="*">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBox Text="{Binding Text, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap"
+                                     BorderThickness="0" Background="Transparent" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=DataGridCell}}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="" Width="Auto">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Content="BORRAR" Margin="4,2" CommandParameter="{Binding}"
+                                    Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</Window>

@@ -30,7 +30,7 @@ public sealed partial class MainViewModel : ObservableObject
         MapViewModel map,
         RouletteViewModel roulette, RouletteService wheel, SettingsViewModel settings,
         CemeteryViewModel cemetery, SyncViewModel sync, BattleModeViewModel battle,
-        GiftInboxViewModel gifts, InformationViewModel information,
+        GiftInboxViewModel gifts, SuggestionBoxViewModel suggestions, InformationViewModel information,
         PermaLocke.App.Services.GameLinkMonitor gameLink,
         PermaLocke.App.Services.IUiDispatcher ui,
         PermaLocke.App.Services.AlolaSky sky,
@@ -41,6 +41,7 @@ public sealed partial class MainViewModel : ObservableObject
         Sky = sky;
         Launcher = launcher;
         Gifts = gifts;
+        Suggestions = suggestions;
         _home = home;
         _roulette = roulette;
         _wheel = wheel;
@@ -170,6 +171,9 @@ public sealed partial class MainViewModel : ObservableObject
 
     /// <summary>The gift in the header: what the admin has left for this player (§129).</summary>
     public GiftInboxViewModel Gifts { get; }
+
+    /// <summary>The suggestion box in the header (1.0.5.5).</summary>
+    public SuggestionBoxViewModel Suggestions { get; }
 
     /// <summary>The hour in the player's Alola, for the floor and the sidebar's window.</summary>
     public PermaLocke.App.Services.AlolaSky Sky { get; }

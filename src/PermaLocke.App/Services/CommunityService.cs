@@ -350,13 +350,14 @@ public sealed class CommunityService : INotifyPropertyChanged
     private Dictionary<Guid, PresenceState>? _lastStates;
 
     /// <summary>
-    /// «X está jugando a PermaLocke», like a friend starting a game on Steam (1.0.4.5): small, only over the emulator, and
+    /// «X está jugando a PermaLocke», like a friend starting a game on Steam (1.0.4.5): small, with or without the emulator (1.0.5.5), and
     /// only for a friend who was not playing at the last read. Nothing at the first read, or everybody already playing
     /// would pop up at once.
     /// </summary>
     private void TellWhoStartedPlaying(IReadOnlyList<FriendStatus> friends)
     {
-        if (_lastStates is not null && _launcher.IsRunning)
+        // También sin el emulador y en segundo plano (1.0.5.5).
+        if (_lastStates is not null)
         {
             foreach (var friend in friends.Where(f => f.State == PresenceState.Playing
                                                       && _lastStates.GetValueOrDefault(f.PlayerId) != PresenceState.Playing))

@@ -316,10 +316,12 @@ public partial class App : Application
         collection.AddSingleton<GiftService>();
         collection.AddSingleton<GiftInbox>();
         collection.AddSingleton<GiftInboxViewModel>();
+        collection.AddSingleton<SuggestionBoxViewModel>();
         collection.AddSingleton<SyncViewModel>();
         collection.AddSingleton<InformationViewModel>();
         collection.AddSingleton<AlolaSky>();
         collection.AddSingleton<CemeteryService>();
+        collection.AddSingleton<FallenShare>();
         collection.AddSingleton<CemeteryViewModel>();
         collection.AddSingleton<MaintenanceService>();
         collection.AddSingleton<AppSettings>();
@@ -485,6 +487,7 @@ public partial class App : Application
         // Amigos y actividad van por el servidor del torneo, también en la distribución local.
         _services.GetRequiredService<CommunityService>().Start(writes: !withoutGame);
         _services.GetRequiredService<GhostService>().Start(writes: !withoutGame);
+        if (!withoutGame) _services.GetRequiredService<FallenShare>().Start();
         _services.GetRequiredService<DiscordPresence>().Start();
 
         // Los regalos del organizador llegan por el servidor del torneo, también en la distribución local.

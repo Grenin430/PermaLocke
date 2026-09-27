@@ -47,6 +47,7 @@ public partial class App : Application
         collection.AddSingleton<UsageViewModel>();
         collection.AddSingleton<CleanupViewModel>();
         collection.AddSingleton<ReportsViewModel>();
+        collection.AddSingleton<SuggestionsViewModel>();
         collection.AddSingleton<RulesViewModel>();
         collection.AddSingleton<AdminViewModel>();
 
