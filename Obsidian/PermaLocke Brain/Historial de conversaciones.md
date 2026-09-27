@@ -6,11 +6,12 @@ revisado: 2026-09-26
 
 La última sesión va arriba. Antes del 2026-09-23 solo hay un resumen por fechas sacado de `CLAUDE.md` y de `ARCHITECTURE.md`: el detalle está en el § citado ([[Índice de ARCHITECTURE]]). **Cada sesión nueva añade su entrada aquí.**
 
-## 2026-09-27 — 1.0.4.1 a 1.0.4.5
+## 2026-09-27 — 1.0.4.1 a 1.0.4.6
 - 1.0.4.1 instalada sola: **funciona**. Su ventana se cortaba arriba y abajo, y la versión nueva no se veía sin reiniciar (se miraba cada 30 min): 1.0.4.2 (§206).
 - Preguntó si el límite de GitHub es para todos: es 60/h por conexión. Pidió cada minuto: 1.0.4.3 (§207). Lección medida: sin sesión, un 304 con ETag cuenta igual.
 - Iñigo: un caído (SaintPablo) entró vivo en un combate tras una cura de la historia. Mirado con sus eventos del servidor (consulta con la sesión de Admin desde un proyecto temporal en el scratchpad) y su log: la cura llegó 0,8 s antes del combate. 1.0.4.4 (§208). El reemplazo del aviso de actualización ya existía (`Notifier.Pin` con la misma clave y la franja atada a `Available`).
 - 1.0.4.5 (§209): aviso pequeño «X está jugando a PermaLocke» como en Steam, solo sobre el emulador; `--ensayar-amigo`.
+- 1.0.4.6 (§210): el gacha a veces iba x3: `Loaded` repetido apuntaba `OnFrame` varias veces.
 - Pedido: acceso directo de Admin al día (Release recompilado) y la 1.0.4.1 con el aviso de primer encuentro 6 s después (`FirstEncounterDelay`) y el variocolor del gacha del 10 % al 2 % (§205). Subida directa a main para que la Action la publique.
 
 ## 2026-09-26 — plan del próximo torneo, desde la nube (y su puesta en marcha)

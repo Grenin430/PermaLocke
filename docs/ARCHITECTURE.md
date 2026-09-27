@@ -12704,3 +12704,11 @@ y entró vivo. El ciclo de un segundo llegaba tarde.
   sale encima del emulador y nunca en la app. Foto de Discord del amigo si la hay.
 - `ToastKind.FriendPlaying` + `Toast.IsCompact`: tarjeta de 300 px (las otras 440) sin pestaña ni cuenta atrás, nombre y
   «está jugando a PermaLocke» en verde. Ensayo `--ensayar-amigo` (junto a un aviso normal para comparar). Visto en captura.
+
+## §210 · 1.0.4.6: la animación del gacha ya no se acelera x2 o x3 (2026-09-27)
+
+Las máquinas se apuntaban al fotograma en `Loaded` y se quitaban en `Unloaded`. WPF puede lanzar `Loaded` otra vez sin
+`Unloaded` en medio (al volver a la sección), así que `OnFrame` quedaba apuntado dos o tres veces y cada fotograma
+avanzaba dos o tres pasos. Ahora `Loaded` quita antes de poner (idempotente), en `CapsuleMachine`, `RouletteMachine`,
+`TradeMachine`, `AlbumStage`, `CardStage`, `CemeteryCanvas`, `AlolaBanner`, `AlolaWindow` y `TrainerRoom`. `DeathWindow` ya lo
+hacía. Lección en [[Trampas y lecciones]]. Sin reproducirlo a mano.

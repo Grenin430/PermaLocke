@@ -74,7 +74,13 @@ public sealed class CemeteryCanvas : ContentControl
         UseScene(_scene, 1);
 
         SizeChanged += (_, _) => Reshape();
-        Loaded += (_, _) => CompositionTarget.Rendering += OnFrame;
+        // WPF puede lanzar Loaded otra vez sin Unloaded entre medias (al volver a la sección): sin quitarlo antes, el
+        // fotograma se apuntaba dos o tres veces y la animación iba x2 o x3 (1.0.4.6).
+        Loaded += (_, _) =>
+        {
+            CompositionTarget.Rendering -= OnFrame;
+            CompositionTarget.Rendering += OnFrame;
+        };
         Unloaded += (_, _) => CompositionTarget.Rendering -= OnFrame;
     }
 
