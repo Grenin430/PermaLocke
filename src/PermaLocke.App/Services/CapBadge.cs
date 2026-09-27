@@ -402,6 +402,17 @@ public sealed class CapBadge
     {
         var dpi = VisualTreeHelper.GetDpi(window);
         var content = (FrameworkElement)window.Content;
+
+        // Se adapta al tamaño del juego (1.0.5.2): a pantalla completa crece, en una ventana pequeña encoge, y si cabe en
+        // la franja negra junto a las pantallas del 3DS se queda en ella para no tapar el juego.
+        content.LayoutTransform = Transform.Identity;
+        content.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        var natural = content.DesiredSize;
+        var scale = Math.Clamp(picture.Height / dpi.DpiScaleY / 900, 0.6, 1.8);
+        var band = (picture.Width - (picture.Height * 400.0 / 480)) / 2 / dpi.DpiScaleX - 24;
+        if (band >= natural.Width * 0.6) scale = Math.Min(scale, band / natural.Width);
+        scale = Math.Min(scale, (picture.Height / dpi.DpiScaleY - 64) / natural.Height);
+        content.LayoutTransform = new ScaleTransform(scale, scale);
         content.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
         var width = (int)Math.Ceiling(content.DesiredSize.Width * dpi.DpiScaleX);
         var height = (int)Math.Ceiling(content.DesiredSize.Height * dpi.DpiScaleY);
@@ -452,6 +463,7 @@ public sealed class CapBadge
         };
 
         OverlayWindows.MakeUntouchable(window);
+        OverlayWindows.KeepOutOfCaptures(window);
         return window;
     }
 
