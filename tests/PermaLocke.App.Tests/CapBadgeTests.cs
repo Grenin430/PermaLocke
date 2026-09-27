@@ -27,4 +27,18 @@ public sealed class CapBadgeTests
         Assert.Equal(40, shown[1].CurrentHp);
         Assert.Same(party, CapBadge.WithBattleHp(party, []));
     }
+
+    [Fact]
+    public void A_level_up_mid_battle_keeps_the_same_block()
+    {
+        IReadOnlyList<LivePartyMember> party = [Member(0, 25, 50, 50)];
+        var bound = new Dictionary<uint, int>();
+        CapBadge.WithBattleHp(party, [new BattleTable(0, [new BattleBlock(0, 0, 25, 50, 20, 0)])], bound);
+
+        // Sube de nivel: el combate ya tiene 54 de máximo, el equipo aún no.
+        var shown = CapBadge.WithBattleHp(party, [new BattleTable(0, [new BattleBlock(0, 0, 25, 54, 24, 0)])], bound);
+
+        Assert.Equal(24, shown[0].CurrentHp);
+        Assert.Equal(54, shown[0].MaxHp);
+    }
 }

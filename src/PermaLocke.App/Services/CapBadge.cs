@@ -127,7 +127,7 @@ public sealed class CapBadge
 
             // El nivel del equipo se mira cada vuelta: sube en mitad de un combate y la barra lo sigue.
             Show(reading with { Highest = Highest() ?? reading.Highest });
-            ShowParty(_monitor.Latest is { Connected: true } live ? Delayed(WithBattleHp(live.Party, _monitor.BattleNow)) : []);
+            ShowParty(_monitor.Latest is { Connected: true } live ? Delayed(WithLiveHp(live.Party, _monitor.BattleNow)) : []);
             Place(_window!, picture);
         }
         catch (Exception ex)
@@ -272,21 +272,88 @@ public sealed class CapBadge
 
     /// <summary>
     /// In a battle, the party's HP from the battle's own copy (1.0.4.9): the game only copies it back to the party when
-    /// the battle ends. Each member takes the player's block of its species and max HP; when that is not exactly one
-    /// block, the member keeps what the party says rather than a guess.
+    /// the battle ends. Each member takes the player's block of its species (max HP breaks a tie); when that is not
+    /// exactly one block, the member keeps what the party says rather than a guess.
     /// </summary>
-    public static IReadOnlyList<LivePartyMember> WithBattleHp(IReadOnlyList<LivePartyMember> party, IReadOnlyList<BattleTable> tables)
+    /// <remarks>
+    /// <paramref name="bound"/> keeps each PID on the block it matched for the whole battle (1.0.5.1): a level up changes
+    /// max HP in one copy before the other, and matching by max HP again lost the block for a second and showed the
+    /// party's stale, full HP. Both HP and max HP come from the block.
+    /// </remarks>
+    public static IReadOnlyList<LivePartyMember> WithBattleHp(IReadOnlyList<LivePartyMember> party,
+        IReadOnlyList<BattleTable> tables, Dictionary<uint, int>? bound = null)
     {
         if (tables.Count == 0)
         {
+            bound?.Clear();
             return party;
         }
 
         var blocks = tables[0].Blocks.Where(block => block.IsPlayers && block.MaxHp > 0).ToList();
         return [.. party.Select(member =>
         {
-            var match = blocks.Where(block => block.Species == member.Species && block.MaxHp == member.MaxHp).ToList();
-            return match.Count == 1 ? member with { CurrentHp = Math.Clamp(match[0].CurrentHp, 0, member.MaxHp) } : member;
+            BattleBlock? block = null;
+
+            if (bound is not null && bound.TryGetValue(member.Pid, out var id))
+            {
+                block = blocks.FirstOrDefault(b => b.BattleId == id && b.Species == member.Species);
+            }
+
+            if (block is null)
+            {
+                var match = blocks.Where(b => b.Species == member.Species).ToList();
+                if (match.Count > 1) match = [.. match.Where(b => b.MaxHp == member.MaxHp)];
+                if (match.Count == 1) block = match[0];
+            }
+
+            if (block is null)
+            {
+                return member;
+            }
+
+            if (bound is not null) bound[member.Pid] = block.BattleId;
+            return member with { CurrentHp = Math.Clamp(block.CurrentHp, 0, block.MaxHp), MaxHp = block.MaxHp };
+        })];
+    }
+
+    /// <summary>Which battle block each PID matched, for the battle in progress.</summary>
+    private readonly Dictionary<uint, int> _bound = [];
+
+    /// <summary>The last battle HP of each PID and the party's HP when it was read (1.0.5.1).</summary>
+    private readonly Dictionary<uint, (int Hp, int MaxHp, int PartyHp, DateTime At)> _afterBattle = [];
+
+    /// <summary>
+    /// The party with the battle's HP, and just after a battle, the battle's last HP until the party copy catches up: the
+    /// battle ends before the game writes it back, and in between the panel showed the HP from before the battle.
+    /// </summary>
+    private IReadOnlyList<LivePartyMember> WithLiveHp(IReadOnlyList<LivePartyMember> party, IReadOnlyList<BattleTable> tables)
+    {
+        var now = DateTime.UtcNow;
+
+        if (tables.Count > 0)
+        {
+            var shown = WithBattleHp(party, tables, _bound);
+            for (var i = 0; i < party.Count; i++)
+            {
+                if (!ReferenceEquals(shown[i], party[i]))
+                    _afterBattle[party[i].Pid] = (shown[i].CurrentHp, shown[i].MaxHp, party[i].CurrentHp, now);
+            }
+            return shown;
+        }
+
+        _bound.Clear();
+        return [.. party.Select(member =>
+        {
+            if (!_afterBattle.TryGetValue(member.Pid, out var last)) return member;
+
+            // En cuanto el equipo cambia (el juego ya copió, o un Centro Pokémon), manda el equipo.
+            if (member.CurrentHp != last.PartyHp || now - last.At > TimeSpan.FromSeconds(20))
+            {
+                _afterBattle.Remove(member.Pid);
+                return member;
+            }
+
+            return member with { CurrentHp = last.Hp, MaxHp = last.MaxHp };
         })];
     }
 
@@ -324,7 +391,7 @@ public sealed class CapBadge
                 history.Dequeue();
             }
 
-            shown.Add(member with { CurrentHp = history.Peek().Hp });
+            shown.Add(member with { CurrentHp = Math.Min(history.Peek().Hp, member.MaxHp) });
         }
 
         return shown;
