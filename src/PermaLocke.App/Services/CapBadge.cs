@@ -8,6 +8,7 @@ using PermaLocke.App.Views;
 using PermaLocke.App.Views.Pixel;
 using PermaLocke.Core.Abstractions;
 using PermaLocke.Core.Domain;
+using PermaLocke.GameLink.Battle;
 using PermaLocke.Rules;
 using PermaLocke.Rules.Services;
 
@@ -126,7 +127,7 @@ public sealed class CapBadge
 
             // El nivel del equipo se mira cada vuelta: sube en mitad de un combate y la barra lo sigue.
             Show(reading with { Highest = Highest() ?? reading.Highest });
-            ShowParty(_monitor.Latest is { Connected: true } live ? live.Party : []);
+            ShowParty(_monitor.Latest is { Connected: true } live ? WithBattleHp(live.Party, _monitor.BattleNow) : []);
             Place(_window!, picture);
         }
         catch (Exception ex)
@@ -267,6 +268,26 @@ public sealed class CapBadge
             row.Children.Add(info);
             _party.Children.Add(row);
         }
+    }
+
+    /// <summary>
+    /// In a battle, the party's HP from the battle's own copy (1.0.4.9): the game only copies it back to the party when
+    /// the battle ends. Each member takes the player's block of its species and max HP; when that is not exactly one
+    /// block, the member keeps what the party says rather than a guess.
+    /// </summary>
+    public static IReadOnlyList<LivePartyMember> WithBattleHp(IReadOnlyList<LivePartyMember> party, IReadOnlyList<BattleTable> tables)
+    {
+        if (tables.Count == 0)
+        {
+            return party;
+        }
+
+        var blocks = tables[0].Blocks.Where(block => block.IsPlayers && block.MaxHp > 0).ToList();
+        return [.. party.Select(member =>
+        {
+            var match = blocks.Where(block => block.Species == member.Species && block.MaxHp == member.MaxHp).ToList();
+            return match.Count == 1 ? member with { CurrentHp = Math.Clamp(match[0].CurrentHp, 0, member.MaxHp) } : member;
+        })];
     }
 
     /// <summary>Top right of <paramref name="picture"/>, clear of its top edge and a little in from the side.</summary>

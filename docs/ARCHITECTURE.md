@@ -12735,3 +12735,10 @@ hacía. Lección en [[Trampas y lecciones]]. Sin reproducirlo a mano.
   KO. Se rehace solo si algo cambia. `--ensayar-cap` enseña un equipo de ejemplo.
 - `AppSettingsData.CapPanel` + casilla «Cap de nivel encima del juego» en CONFIGURACIÓN: el interruptor de avisos no lo quitaba.
 - Sin verlo encima de Azahar.
+
+## §213 · 1.0.4.9: PS del equipo en tiempo real también en combate (2026-09-27)
+
+En combate el juego no copia los PS al equipo hasta el final. `GameLinkMonitor.BattleNow` expone las tablas del combate que
+el bucle de combate ya lee cada 250 ms (una referencia que se sustituye entera; ninguna lectura más al emulador) y
+`CapBadge.WithBattleHp` toma de ahí los PS de cada miembro por especie + PS máximos; si no hay exactamente un bloque, se
+queda lo del equipo. Investigado antes: sin barridos, sin escrituras, errores capturados en el panel. `CapBadgeTests`.

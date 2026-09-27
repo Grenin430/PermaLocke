@@ -89,6 +89,9 @@ public sealed class GameLinkMonitor(
     /// <remarks>Not cleared when the emulator goes: that is when <see cref="IntegrityGuard"/> asks.</remarks>
     public DateTimeOffset? LastReadingInBattle { get; private set; }
 
+    /// <summary>The tables of the battle in progress as last read, or empty outside one (1.0.4.9). Read-only, for the cap panel.</summary>
+    public IReadOnlyList<BattleTable> BattleNow { get; private set; } = [];
+
     /// <summary>Latest snapshot, or null before the first read completes.</summary>
     public GameSnapshot? Latest { get; private set; }
     public string EncounterProblem => Latest?.Connected == true && runContext.Current is not null
@@ -319,6 +322,10 @@ public sealed class GameLinkMonitor(
                     // borra al salir de él: una lectura vacía mientras el emulador se cierra no puede tapar el combate.
                     if (_faints.InBattle) LastReadingInBattle = clock.Now;
 
+                    // Para el panel del cap (1.0.4.9): los PS del combate en curso, de la misma lectura, sin leer nada más.
+                    // Una referencia que se sustituye entera: el panel la lee desde otro hilo sin cerrojos.
+                    BattleNow = _faints.InBattle ? tables : [];
+
                     // La killcam graba mientras dura el combate y solo entonces.
                     killcam.Recording = _faints.InBattle;
 
@@ -347,6 +354,7 @@ public sealed class GameLinkMonitor(
                 else
                 {
                     _faints.Observe([]);
+                    BattleNow = [];
                     killcam.Recording = false;
                 }
             }

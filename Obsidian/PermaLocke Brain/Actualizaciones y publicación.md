@@ -52,6 +52,7 @@ Cómo llega una versión nueva a los jugadores desde el 2026-09-26. Detalle téc
 | 1.0.4.6 | commit directo a main pedido por el usuario (2026-09-27), Action | gacha a x2/x3 al entrar varias veces: fotograma apuntado de más (§210) |
 | 1.0.4.7 | commit directo a main pedido por el usuario (2026-09-27), Action | intercambio 2 por 1 en el ÁLBUM, panel del cap sobre el juego, tutores y tienda de PB de surf (al regenerar), gacha sin exprés (§211) |
 | 1.0.4.8 | commit directo a main pedido por el usuario (2026-09-27), Action | equipo con icono, nivel y PS en el panel del cap; casilla para quitarlo (§212) |
+| 1.0.4.9 | commit directo a main pedido por el usuario (2026-09-27), Action | PS del equipo del panel en tiempo real también en combate (§213) |
 
 **1.0.2 y 1.0.3 no pueden actualizarse solas** (§204: la descarga se desbordaba en el primer trozo). Quien las tenga,
 una vez a mano: cerrar PermaLocke y cambiar `PermaLocke.exe` por el del zip de la 1.0.4.
