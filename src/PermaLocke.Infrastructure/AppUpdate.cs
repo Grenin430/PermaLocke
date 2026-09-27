@@ -130,7 +130,13 @@ public static class AppUpdate
 
             var target = Path.Combine(root, executable);
             var old = target + ".old";
-            if (File.Exists(old)) File.Delete(old);
+            if (File.Exists(old))
+            {
+                // Un .old que no se deja borrar (sigue abierto: una PermaLocke vieja que no se cerró, o el antivirus) se
+                // aparta con otro nombre, que Windows sí deja; CleanUp lo borra cuando se suelte (1.0.5.8).
+                try { File.Delete(old); }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { File.Move(old, $"{old}-{Guid.NewGuid():N}"); }
+            }
             if (File.Exists(target)) File.Move(target, old);
             File.Copy(newExe, target);
             log.Add($"Programa: {executable}");
@@ -171,8 +177,13 @@ public static class AppUpdate
     {
         try
         {
-            var old = Path.Combine(root, executable + ".old");
-            if (File.Exists(old)) File.Delete(old);
+            // El .old y los apartados con otro nombre (1.0.5.8), uno a uno: el que siga en uso se queda para la próxima.
+            foreach (var old in Directory.EnumerateFiles(root, executable + ".old*"))
+            {
+                try { File.Delete(old); }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+            }
+
             var staging = Path.Combine(root, Staging);
             if (Directory.Exists(staging)) Directory.Delete(staging, recursive: true);
         }

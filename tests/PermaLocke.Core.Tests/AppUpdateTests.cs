@@ -124,7 +124,9 @@ public sealed class AppUpdateTests : IDisposable
         Assert.Equal("yo", File.ReadAllText(Path.Combine(_root, "Config", "jugador.json")));
         Assert.Equal("mi emulador", File.ReadAllText(Path.Combine(_root, "Emulator", "user", "config", "qt-config.ini")));
 
+        Write(Path.Combine(_root, "PermaLocke.exe.old-apartado"), "uno que no se dejó borrar");
         AppUpdate.CleanUp(_root, "PermaLocke.exe");
+        Assert.False(File.Exists(Path.Combine(_root, "PermaLocke.exe.old-apartado")));
         Assert.False(File.Exists(Path.Combine(_root, "PermaLocke.exe.old")));
         Assert.False(Directory.Exists(Path.Combine(_root, AppUpdate.Staging)));
     }
