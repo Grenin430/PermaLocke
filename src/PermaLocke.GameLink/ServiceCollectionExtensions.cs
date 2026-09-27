@@ -85,6 +85,11 @@ public static class ServiceCollectionExtensions
             sp.GetRequiredService<PlayerSave>(),
             backupFolder,
             sp.GetRequiredService<ILogger<SaveRenamer>>()));
+        // Las hierbas de naturaleza de la TIENDA (2026-09-27): las mismas guardas que el mote.
+        services.TryAddSingleton<INatureChanger>(sp => new SaveNatureChanger(
+            sp.GetRequiredService<PlayerSave>(),
+            backupFolder,
+            sp.GetRequiredService<ILogger<SaveNatureChanger>>()));
         services.TryAddSingleton<IMoveCatalog>(_ => new WorldMoveCatalog(language));
         services.TryAddSingleton<IStatForecast, WorldStatForecast>();
         // La zona, los contadores del juego y la Pokédex (§117). FieldZoneReader necesita la MapTable, que

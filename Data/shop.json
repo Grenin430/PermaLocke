@@ -12,6 +12,7 @@
   "comentarioAscensoDraco": "La mega de Rayquaza no tiene piedra: va por el movimiento Ascenso Draco (620). Se vende como una megapiedra mas (2026-09-25), pero no va a la mochila: la compra se apunta en la run y desde entonces EQUIPO › MOVIMIENTOS ofrece Ascenso Draco a cualquier Rayquaza, gratis y cuantas veces haga falta. El id 90620 no es un objeto del juego, solo el nombre de la tarjeta; desbloqueaMovimiento y especie son lo que cuenta.",
   "comentarioCategorias": "categoria decide detrás de qué mostrador va cada cosa. Sin ella, combate. Las megapiedras van aparte porque son cuarenta y siete y mezcladas enterrarían los objetos de combate. Son TODAS las del cartucho menos la de Rayquaza, que no tiene piedra: su mega va por el movimiento Ascenso Draco.",
 
+  "comentarioHierbas": "Las hierbas de naturaleza (2026-09-27, a peticion del organizador): las Mentas de los juegos nuevos no existen en Ultra Luna, asi que no son objetos. id es solo un numero de la tienda (91000 + naturaleza); naturaleza es el orden del juego, de 0 Fuerte a 24 Rara. Al comprar una se elige un Pokemon y la app le cambia la naturaleza en la partida, con el juego cerrado.",
   "comentarioMegapiedras": "Ojo con lo que compras: la piedra sirve para UNA especie, y la mega la tiene la forma FINAL. Una Swampertita no hace nada en un Marshtomp. Y con las especies randomizadas hay 46 especies con mega de 807, así que comprar a ciegas es tirar puntos. Además hace falta la Piedra Activadora (objeto 773) en la mochila, que es lo que el juego mira para dejarte megaevolucionar.",
 
   "items": [
@@ -133,6 +134,32 @@
     { "id": 1021, "name": "Staraptorita",    "price": 300, "categoria": "megapiedras" },
     { "id": 1022, "name": "Heatranita",    "price": 600, "categoria": "megapiedras" },
     { "id": 1023, "name": "Darkrainita",    "price": 600, "categoria": "megapiedras" },
-    { "id": 90620, "name": "Ascenso Draco (Rayquaza)", "price": 600, "categoria": "megapiedras", "desbloqueaMovimiento": 620, "especie": 384 }
+    { "id": 90620, "name": "Ascenso Draco (Rayquaza)", "price": 600, "categoria": "megapiedras", "desbloqueaMovimiento": 620, "especie": 384 },
+
+    { "id": 91000, "name": "Hierba Fuerte", "price": 500, "categoria": "hierbas", "naturaleza": 0 },
+    { "id": 91001, "name": "Hierba Huraña", "price": 500, "categoria": "hierbas", "naturaleza": 1 },
+    { "id": 91002, "name": "Hierba Audaz", "price": 500, "categoria": "hierbas", "naturaleza": 2 },
+    { "id": 91003, "name": "Hierba Firme", "price": 500, "categoria": "hierbas", "naturaleza": 3 },
+    { "id": 91004, "name": "Hierba Pícara", "price": 500, "categoria": "hierbas", "naturaleza": 4 },
+    { "id": 91005, "name": "Hierba Osada", "price": 500, "categoria": "hierbas", "naturaleza": 5 },
+    { "id": 91006, "name": "Hierba Dócil", "price": 500, "categoria": "hierbas", "naturaleza": 6 },
+    { "id": 91007, "name": "Hierba Plácida", "price": 500, "categoria": "hierbas", "naturaleza": 7 },
+    { "id": 91008, "name": "Hierba Agitada", "price": 500, "categoria": "hierbas", "naturaleza": 8 },
+    { "id": 91009, "name": "Hierba Floja", "price": 500, "categoria": "hierbas", "naturaleza": 9 },
+    { "id": 91010, "name": "Hierba Miedosa", "price": 500, "categoria": "hierbas", "naturaleza": 10 },
+    { "id": 91011, "name": "Hierba Activa", "price": 500, "categoria": "hierbas", "naturaleza": 11 },
+    { "id": 91012, "name": "Hierba Seria", "price": 500, "categoria": "hierbas", "naturaleza": 12 },
+    { "id": 91013, "name": "Hierba Alegre", "price": 500, "categoria": "hierbas", "naturaleza": 13 },
+    { "id": 91014, "name": "Hierba Ingenua", "price": 500, "categoria": "hierbas", "naturaleza": 14 },
+    { "id": 91015, "name": "Hierba Modesta", "price": 500, "categoria": "hierbas", "naturaleza": 15 },
+    { "id": 91016, "name": "Hierba Afable", "price": 500, "categoria": "hierbas", "naturaleza": 16 },
+    { "id": 91017, "name": "Hierba Mansa", "price": 500, "categoria": "hierbas", "naturaleza": 17 },
+    { "id": 91018, "name": "Hierba Tímida", "price": 500, "categoria": "hierbas", "naturaleza": 18 },
+    { "id": 91019, "name": "Hierba Alocada", "price": 500, "categoria": "hierbas", "naturaleza": 19 },
+    { "id": 91020, "name": "Hierba Serena", "price": 500, "categoria": "hierbas", "naturaleza": 20 },
+    { "id": 91021, "name": "Hierba Amable", "price": 500, "categoria": "hierbas", "naturaleza": 21 },
+    { "id": 91022, "name": "Hierba Grosera", "price": 500, "categoria": "hierbas", "naturaleza": 22 },
+    { "id": 91023, "name": "Hierba Cauta", "price": 500, "categoria": "hierbas", "naturaleza": 23 },
+    { "id": 91024, "name": "Hierba Rara", "price": 500, "categoria": "hierbas", "naturaleza": 24 }
   ]
 }

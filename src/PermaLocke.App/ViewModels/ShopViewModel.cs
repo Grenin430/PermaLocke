@@ -32,6 +32,16 @@ public sealed partial class ShopItemViewModel(ShopItem item, BitmapSource? icon)
     [ObservableProperty]
     private string _carried = string.Empty;
 
+    /// <summary>What a nature herb raises and lowers (2026-09-27); empty for everything else.</summary>
+    public string Raises => Item.IsHerb && Item.Nature / 5 != Item.Nature % 5 ? $"+ {StatNames[Item.Nature / 5]}" : string.Empty;
+
+    public string Lowers => Item.IsHerb && Item.Nature / 5 != Item.Nature % 5 ? $"- {StatNames[Item.Nature % 5]}" : string.Empty;
+
+    public string Neutral => Item.IsHerb && Item.Nature / 5 == Item.Nature % 5 ? "NO CAMBIA NADA" : string.Empty;
+
+    /// <summary>The game's nature order: raised = nature / 5, lowered = nature % 5.</summary>
+    private static readonly string[] StatNames = ["ATAQUE", "DEFENSA", "VELOCIDAD", "AT. ESP.", "DEF. ESP."];
+
     /// <summary>False while the balance does not reach, so the button says why by being off.</summary>
     [ObservableProperty]
     private bool _affordable = true;
@@ -51,9 +61,10 @@ public sealed partial class ShopViewModel : SectionViewModel
     private readonly PokemonSpriteService _sprites;
     private readonly IAppDialogs _dialogs;
     private readonly ILogger<ShopViewModel> _logger;
+    private readonly IBoxReader _boxes;
 
     public ShopViewModel(ShopService shop, IRunContext runs, PokemonSpriteService sprites,
-        IAppDialogs dialogs, ILogger<ShopViewModel> logger)
+        IAppDialogs dialogs, IBoxReader boxes, ILogger<ShopViewModel> logger)
         : base("TIENDA", "Objetos a cambio de puntos")
     {
         Fleeting.Fade(this, nameof(Status), nameof(Problem));
@@ -63,6 +74,7 @@ public sealed partial class ShopViewModel : SectionViewModel
         _sprites = sprites;
         _dialogs = dialogs;
         _logger = logger;
+        _boxes = boxes;
     }
 
     /// <summary>Everything on sale, both counters. What the bag is asked about in one go.</summary>
@@ -77,27 +89,44 @@ public sealed partial class ShopViewModel : SectionViewModel
     /// </remarks>
     public ObservableCollection<ShopItemViewModel> Visible { get; } = [];
 
+    /// <summary>Which counter is on screen: <see cref="ShopItem.Battle"/>, <see cref="ShopItem.MegaStones"/> or <see cref="ShopItem.Herbs"/>.</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(BattleTab))]
-    [NotifyPropertyChangedFor(nameof(MegaTab))]
-    private bool _showingMegaStones;
+    [NotifyPropertyChangedFor(nameof(ShowingBattle), nameof(ShowingMegaStones), nameof(ShowingHerbs))]
+    private string _counter = ShopItem.Battle;
+
+    public bool ShowingBattle => Counter == ShopItem.Battle;
+
+    public bool ShowingMegaStones => Counter == ShopItem.MegaStones;
+
+    public bool ShowingHerbs => Counter == ShopItem.Herbs;
 
     /// <summary>Leaving the shop puts it back on the tab it opens with.</summary>
-    public override void ResetState() => ShowingMegaStones = false;
+    public override void ResetState()
+    {
+        Counter = ShopItem.Battle;
+        HerbToUse = null;
+    }
 
     /// <summary>Counts on the tabs, so nobody has to open one to find out it is empty.</summary>
-    public string BattleTab => $"COMBATE ({Items.Count(i => !IsMega(i))})";
+    public string BattleTab => $"COMBATE ({Items.Count(i => CounterOf(i) == ShopItem.Battle)})";
 
-    public string MegaTab => $"MEGAPIEDRAS ({Items.Count(IsMega)})";
+    public string MegaTab => $"MEGAPIEDRAS ({Items.Count(i => CounterOf(i) == ShopItem.MegaStones)})";
 
-    private static bool IsMega(ShopItemViewModel card) =>
-        string.Equals(card.Item.Category, ShopItem.MegaStones, StringComparison.OrdinalIgnoreCase);
+    public string HerbTab => $"HIERBAS ({Items.Count(i => CounterOf(i) == ShopItem.Herbs)})";
+
+    private static string CounterOf(ShopItemViewModel card) =>
+        card.Item.IsHerb ? ShopItem.Herbs
+        : string.Equals(card.Item.Category, ShopItem.MegaStones, StringComparison.OrdinalIgnoreCase) ? ShopItem.MegaStones
+        : ShopItem.Battle;
 
     [RelayCommand]
-    private void ShowBattle() => Show(mega: false);
+    private void ShowBattle() => Show(ShopItem.Battle);
 
     [RelayCommand]
-    private void ShowMegaStones() => Show(mega: true);
+    private void ShowMegaStones() => Show(ShopItem.MegaStones);
+
+    [RelayCommand]
+    private void ShowHerbs() => Show(ShopItem.Herbs);
 
     /// <summary>What the player has typed in the box. Empty shows the whole counter.</summary>
     /// <remarks>
@@ -113,17 +142,17 @@ public sealed partial class ShopViewModel : SectionViewModel
     /// <summary>True when the box has something in it and nothing matches.</summary>
     public bool NothingFound => Search.Length > 0 && Visible.Count == 0;
 
-    partial void OnSearchChanged(string value) => Show(ShowingMegaStones);
+    partial void OnSearchChanged(string value) => Show(Counter);
 
     [RelayCommand]
     private void ClearSearch() => Search = string.Empty;
 
-    private void Show(bool mega)
+    private void Show(string counter)
     {
-        ShowingMegaStones = mega;
+        Counter = counter;
         Visible.Clear();
 
-        foreach (var card in Items.Where(card => IsMega(card) == mega && Matches(card)))
+        foreach (var card in Items.Where(card => CounterOf(card) == counter && Matches(card)))
         {
             Visible.Add(card);
         }
@@ -175,7 +204,8 @@ public sealed partial class ShopViewModel : SectionViewModel
 
             OnPropertyChanged(nameof(BattleTab));
             OnPropertyChanged(nameof(MegaTab));
-            Show(ShowingMegaStones);
+            OnPropertyChanged(nameof(HerbTab));
+            Show(Counter);
         }
 
         foreach (var card in Items.Where(card => card.Icon is null))
@@ -194,7 +224,7 @@ public sealed partial class ShopViewModel : SectionViewModel
 
     /// <summary>An unlock has no item to draw: it shows the Pokémon it is for (Rayquaza for Ascenso Draco).</summary>
     private BitmapSource? IconOf(ShopItem item) =>
-        item.IsUnlock ? _sprites.Get(item.UnlockSpecies, 0) : _sprites.GetItem(item.Id);
+        item.IsHerb ? HerbArt.Make(item.Nature) : item.IsUnlock ? _sprites.Get(item.UnlockSpecies, 0) : _sprites.GetItem(item.Id);
 
     /// <summary>
     /// Nothing that talks to the emulator is allowed to run longer than this.
@@ -230,7 +260,7 @@ public sealed partial class ShopViewModel : SectionViewModel
             // dieciocho localizaciones del bloque, y con el emulador cerrado, dieciocho fracasos
             // lentos seguidos: la pantalla se quedaba muerta al abrirla.
             using var cancel = new CancellationTokenSource(GameTimeout);
-            var carried = await _shop.CarriedAllAsync([.. Items.Where(i => !i.Item.IsUnlock).Select(i => i.Item.Id)], cancel.Token);
+            var carried = await _shop.CarriedAllAsync([.. Items.Where(i => !i.Item.IsUnlock && !i.Item.IsHerb).Select(i => i.Item.Id)], cancel.Token);
             var unlocked = await _shop.UnlockedAsync(run.Id);
 
             foreach (var card in Items)
@@ -259,6 +289,12 @@ public sealed partial class ShopViewModel : SectionViewModel
     {
         if (card is null || Busy || _runs.Current is not { } run)
         {
+            return;
+        }
+
+        if (card.Item.IsHerb)
+        {
+            await ChooseTargetAsync(card);
             return;
         }
 
@@ -304,4 +340,112 @@ public sealed partial class ShopViewModel : SectionViewModel
 
         await RefreshAsync();
     }
+
+    /// <summary>The herb waiting for a Pokémon (2026-09-27), or null when the picker is closed.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsPickingTarget), nameof(PickTitle))]
+    private ShopItemViewModel? _herbToUse;
+
+    public bool IsPickingTarget => HerbToUse is not null;
+
+    public string PickTitle => HerbToUse is { } herb ? $"¿A QUIÉN LE DAS LA {herb.Name.ToUpperInvariant()}?" : string.Empty;
+
+    /// <summary>The party of the save, for the herb.</summary>
+    public ObservableCollection<HerbTargetViewModel> Targets { get; } = [];
+
+    [RelayCommand]
+    private void CancelHerb() => HerbToUse = null;
+
+    /// <summary>
+    /// Opens the picker with the party of the save. The herb writes the save, so the game has to be closed: said here,
+    /// before choosing, and not after.
+    /// </summary>
+    private async Task ChooseTargetAsync(ShopItemViewModel card)
+    {
+        if (!_shop.CanChangeNatureNow(out var reason))
+        {
+            Status = string.Empty;
+            Problem = reason;
+            return;
+        }
+
+        var snapshot = await _boxes.ReadAsync();
+        var party = snapshot.Boxes.FirstOrDefault(box => box.IsParty)?.Pokemon ?? [];
+
+        if (party.Count == 0)
+        {
+            Problem = snapshot.Problem ?? "No se ha podido leer tu equipo de la partida.";
+            return;
+        }
+
+        Targets.Clear();
+        foreach (var pokemon in party.Where(p => !p.IsEgg))
+        {
+            Targets.Add(new HerbTargetViewModel(pokemon, _sprites.Get(pokemon.Species, pokemon.Form, pokemon.IsShiny),
+                pokemon.Nature == card.Item.Nature));
+        }
+
+        Problem = string.Empty;
+        HerbToUse = card;
+    }
+
+    [RelayCommand]
+    private async Task UseHerbAsync(HerbTargetViewModel? target)
+    {
+        if (target is null || HerbToUse is not { } herb || Busy || _runs.Current is not { } run)
+        {
+            return;
+        }
+
+        var confirmed = _dialogs.Confirm("Hierba",
+            $"¿Dar la {herb.Name} a {target.Name} por {herb.Price} puntos?"
+            + $"{Environment.NewLine}{Environment.NewLine}"
+            + $"Ahora es {target.Pokemon.NatureName}. El cambio es para siempre. Tienes {Balance} puntos.");
+
+        _logger.LogInformation("Tienda: {Herb} para {Pokemon}, {Answer}", herb.Name, target.Name, confirmed ? "confirmado" : "cancelado");
+
+        if (!confirmed)
+        {
+            return;
+        }
+
+        Busy = true;
+        try
+        {
+            var result = await _shop.ChangeNatureAsync(run, herb.Item.Id, target.Pokemon);
+            Status = result.Succeeded ? result.Message : string.Empty;
+            Problem = result.Succeeded ? string.Empty : result.Message;
+            Balance = result.Balance;
+
+            if (result.Succeeded)
+            {
+                HerbToUse = null;
+            }
+        }
+        finally
+        {
+            Busy = false;
+        }
+
+        foreach (var card in Items)
+        {
+            card.Affordable = Balance >= card.Price;
+        }
+    }
+}
+
+/// <summary>One Pokémon of the party in the herb picker.</summary>
+public sealed class HerbTargetViewModel(BoxedPokemon pokemon, BitmapSource? sprite, bool alreadyHasIt)
+{
+    public BoxedPokemon Pokemon { get; } = pokemon;
+
+    public string Name => Pokemon.DisplayName;
+
+    public BitmapSource? Sprite { get; } = sprite;
+
+    public string Nature => AlreadyHasIt ? $"{Pokemon.NatureName.ToUpperInvariant()} (YA LA TIENE)" : Pokemon.NatureName.ToUpperInvariant();
+
+    public bool AlreadyHasIt { get; } = alreadyHasIt;
+
+    public bool CanPick => !AlreadyHasIt;
 }

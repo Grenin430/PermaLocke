@@ -72,6 +72,14 @@
                     <pixel:PixelText Text="{Binding Carried}" Scale="2" Tight="True" HorizontalAlignment="Center"
                                      Margin="0,2,0,6" Colour="{StaticResource PxTextFaint}" />
 
+                    <!-- Hierbas (2026-09-27): lo que sube en verde y lo que baja en rojo. -->
+                    <pixel:PixelText Text="{Binding Raises}" Scale="2" Tight="True" HorizontalAlignment="Center"
+                                     Margin="0,0,0,4" Colour="{StaticResource PxGood}" />
+                    <pixel:PixelText Text="{Binding Lowers}" Scale="2" Tight="True" HorizontalAlignment="Center"
+                                     Margin="0,0,0,6" Colour="{StaticResource PxBad}" />
+                    <pixel:PixelText Text="{Binding Neutral}" Scale="2" Tight="True" HorizontalAlignment="Center"
+                                     Margin="0,0,0,6" Colour="{StaticResource PxTextDim}" />
+
                     <!-- El precio, con el rombo de los puntos. -->
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                         <pixel:PixelIcon Icon="IconPoints" Scale="1" VerticalAlignment="Center" Margin="0,0,6,0" />
@@ -122,10 +130,10 @@
             <!-- Cada pestaña en dos versiones, encendida y apagada, y se ve la que toca. -->
             <Grid DockPanel.Dock="Left">
                 <Button Content="{Binding BattleTab}" Command="{Binding ShowBattleCommand}" Style="{StaticResource CounterTab}"
-                        Visibility="{Binding ShowingMegaStones, Converter={StaticResource BoolToVisibility}}" />
+                        Visibility="{Binding ShowingBattle, Converter={StaticResource InverseBoolToVisibility}}" />
                 <Button Content="{Binding BattleTab}" Command="{Binding ShowBattleCommand}" Style="{StaticResource PxButton}"
                         Padding="14,7,20,12"
-                        Visibility="{Binding ShowingMegaStones, Converter={StaticResource InverseBoolToVisibility}}" />
+                        Visibility="{Binding ShowingBattle, Converter={StaticResource BoolToVisibility}}" />
             </Grid>
             <Grid DockPanel.Dock="Left" Margin="8,0,0,0">
                 <Button Content="{Binding MegaTab}" Command="{Binding ShowMegaStonesCommand}" Style="{StaticResource CounterTab}"
@@ -133,6 +141,13 @@
                 <Button Content="{Binding MegaTab}" Command="{Binding ShowMegaStonesCommand}" Style="{StaticResource PxButton}"
                         Padding="14,7,20,12"
                         Visibility="{Binding ShowingMegaStones, Converter={StaticResource BoolToVisibility}}" />
+            </Grid>
+            <Grid DockPanel.Dock="Left" Margin="8,0,0,0">
+                <Button Content="{Binding HerbTab}" Command="{Binding ShowHerbsCommand}" Style="{StaticResource CounterTab}"
+                        Visibility="{Binding ShowingHerbs, Converter={StaticResource InverseBoolToVisibility}}" />
+                <Button Content="{Binding HerbTab}" Command="{Binding ShowHerbsCommand}" Style="{StaticResource PxButton}"
+                        Padding="14,7,20,12"
+                        Visibility="{Binding ShowingHerbs, Converter={StaticResource BoolToVisibility}}" />
             </Grid>
 
             <Grid DockPanel.Dock="Left" Width="260" Margin="16,0,0,0" VerticalAlignment="Top">
@@ -171,6 +186,10 @@
                              Colour="{StaticResource PxTextFaint}"
                              Text="Necesitas la Piedra Activadora."
                              Visibility="{Binding ShowingMegaStones, Converter={StaticResource BoolToVisibility}}" />
+            <pixel:PixelText Scale="2" Wrap="True" VerticalAlignment="Center" Margin="16,0,0,0"
+                             Colour="{StaticResource PxTextFaint}"
+                             Text="Cambia la naturaleza para siempre. Con el juego CERRADO."
+                             Visibility="{Binding ShowingHerbs, Converter={StaticResource BoolToVisibility}}" />
         </DockPanel>
 
         <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Padding="0,0,6,0">
@@ -188,9 +207,43 @@
                     Command="{Binding RefreshCommand}" />
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
                 <pixel:PixelText Text="!" Scale="2" Tight="True" Colour="{StaticResource PxWarn}" />
-                <pixel:PixelText Text="Necesita Azahar abierto." Scale="2" Tight="True"
+                <pixel:PixelText Text="Necesita Azahar abierto (las hierbas, cerrado)." Scale="2" Tight="True"
                                  Margin="8,0,0,0" Colour="{StaticResource PxTextDim}" />
             </StackPanel>
         </DockPanel>
+
+        <!-- A QUIÉN LA HIERBA (2026-09-27): el equipo de la partida, uno por fila. -->
+        <Grid Grid.RowSpan="4" Background="#C0000000"
+              Visibility="{Binding IsPickingTarget, Converter={StaticResource BoolToVisibility}}">
+            <pixel:PixelWindow Title="{Binding PickTitle}" Icon="IconShop" Width="560"
+                               HorizontalAlignment="Center" VerticalAlignment="Center">
+                <pixel:PixelWindow.HeaderContent>
+                    <Button Content="CANCELAR" Style="{StaticResource PxSubtleButton}" Command="{Binding CancelHerbCommand}" />
+                </pixel:PixelWindow.HeaderContent>
+                <StackPanel>
+                    <ItemsControl ItemsSource="{Binding Targets}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Style="{StaticResource ShopCard}" Margin="0,0,0,8" IsEnabled="{Binding CanPick}"
+                                        Command="{Binding DataContext.UseHerbCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}">
+                                    <DockPanel>
+                                        <pixel:PixelSprite DockPanel.Dock="Left" Source="{Binding Sprite}" Scale="2" TrimEmpty="True"
+                                                           Width="64" Height="48" VerticalAlignment="Center" />
+                                        <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                                            <pixel:PixelText Text="{Binding Name}" Scale="2" Tight="True" Colour="{StaticResource PxText}"
+                                                             Shadow="{StaticResource PxShadow}" />
+                                            <pixel:PixelText Text="{Binding Nature}" Scale="2" Tight="True" Margin="0,6,0,0"
+                                                             Colour="{StaticResource PxTextDim}" />
+                                        </StackPanel>
+                                    </DockPanel>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <pixel:PixelText Text="{Binding Problem}" Scale="2" Wrap="True" Colour="{StaticResource PxWarn}" />
+                </StackPanel>
+            </pixel:PixelWindow>
+        </Grid>
     </Grid>
 </UserControl>

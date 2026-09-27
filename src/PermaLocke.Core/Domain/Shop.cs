@@ -10,16 +10,26 @@ namespace PermaLocke.Core.Domain;
 /// Which counter it sits behind. The shop grew a second one -- the Mega Stones -- and mixing
 /// forty-seven stones into the same grid as the battle items would bury the battle items.
 /// </param>
+/// <param name="Nature">
+/// A nature herb (0-24, the game's own order): the Mints of later games do not exist in this one, so the herb writes the
+/// nature into the save with the game closed. -1 for everything else.
+/// </param>
 /// <param name="UnlockMove">
 /// Not an object for the bag but a move the reminder unlocks for <paramref name="UnlockSpecies"/>, bought once and
 /// taught free from then on (2026-09-25: Ascenso Draco, the «mega stone» of Rayquaza). Zero for a normal item.
 /// </param>
 public sealed record ShopItem(int Id, string Name, int Price, string Category = ShopItem.Battle,
-    int UnlockMove = 0, int UnlockSpecies = 0)
+    int UnlockMove = 0, int UnlockSpecies = 0, int Nature = -1)
 {
     public const string Battle = "combate";
 
     public const string MegaStones = "megapiedras";
+
+    /// <summary>The nature herbs (2026-09-27): not an item, a nature written into a Pokémon of the save.</summary>
+    public const string Herbs = "hierbas";
+
+    /// <summary>True when buying it changes a Pokémon's nature instead of putting something in the bag.</summary>
+    public bool IsHerb => Nature is >= 0 and <= 24;
 
     /// <summary>True when buying it unlocks a move instead of putting something in the bag.</summary>
     public bool IsUnlock => UnlockMove > 0 && UnlockSpecies > 0;

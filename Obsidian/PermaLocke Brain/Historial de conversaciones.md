@@ -339,3 +339,7 @@ negro del estudio de fotos: gen 8-9 en el equipo (ver Trampas y lecciones).
   se venden por 10000. Solo runs nuevas: no se toca el mundo instalado del torneo.
 - Pendiente: devolver balls en Centro Pokémon (se explicó que no arregla la libreta a 0; falta el log del amigo),
   aviso del estudio de fotos con gen 8-9, seed elegible al crear run.
+- 1.0.6.1: TIENDA › HIERBAS, las 25 naturalezas a 500 (Data/shop.json, `categoria: hierbas`, `naturaleza` 0-24, id
+  91000+n). Las Mentas no existen en el juego: la hierba escribe la naturaleza en la partida con el juego CERRADO
+  (`SaveNatureChanger`, guardas del mote, `StatCalculator.Restat` en el equipo) y luego cobra (`ShopService.ChangeNatureAsync`).
+  Icono pixel propio (`HerbArt`). shop.json es regla oficial: si está en el servidor, publicarla desde Admin › REGLAS.

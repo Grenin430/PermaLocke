@@ -200,4 +200,55 @@ public sealed class ShopServiceTests
         Assert.Equal(100, second.Balance);
         Assert.Equal(2, second.Carried);
     }
+
+    private sealed class Natures(bool works) : INatureChanger
+    {
+        public List<NatureChange> Written { get; } = [];
+
+        public bool CanChangeNow(out string reason)
+        {
+            reason = works ? string.Empty : "El juego está abierto.";
+            return works;
+        }
+
+        public Task<DeliveryResult> ApplyAsync(NatureChange change, CancellationToken ct = default)
+        {
+            if (!works) return Task.FromResult(new DeliveryResult(DeliveryOutcome.GameRunning, "El juego está abierto."));
+            Written.Add(change);
+            return Task.FromResult(new DeliveryResult(DeliveryOutcome.Delivered, string.Empty));
+        }
+    }
+
+    /// <summary>The nature herbs (2026-09-27): written first, charged after, never charged for a refused one.</summary>
+    [Fact]
+    public async Task A_herb_writes_the_nature_then_charges_and_a_refusal_costs_nothing()
+    {
+        var log = new Events();
+        var clock = new FixedClock();
+        var points = new PointsService(log, clock);
+        var run = new Run
+        {
+            Id = Guid.NewGuid(), Name = "Prueba", Game = GameVersion.UltraMoon, SeedLabel = "1", Seed = 1,
+            RoleId = "player", PlayerName = "Grenin"
+        };
+        var timid = new ShopItem(91010, "Hierba Miedosa", 500, ShopItem.Herbs, Nature: 10);
+        var target = new BoxedPokemon(BoxedPokemon.PartyBox, 2, 25, 0, "Pikachu", "", 30, false, false, "", "Fuerte", "", "",
+            "", "", "", 5, [], [], [], [], 70, 0xABCD, Nature: 0);
+        await GiveAsync(points, run, 700);
+
+        var closedGame = new Natures(works: false);
+        var refused = await new ShopService(new Catalog(timid), points, new Bag(true), log, clock, closedGame)
+            .ChangeNatureAsync(run, timid.Id, target);
+        Assert.False(refused.Succeeded);
+        Assert.Equal(700, refused.Balance);
+
+        var natures = new Natures(works: true);
+        var shop = new ShopService(new Catalog(timid), points, new Bag(true), log, clock, natures);
+        var done = await shop.ChangeNatureAsync(run, timid.Id, target);
+
+        Assert.True(done.Succeeded);
+        Assert.Equal(200, done.Balance);
+        Assert.Equal(new NatureChange(BoxedPokemon.PartyBox, 2, 0xABCD, "Pikachu", 10), natures.Written.Single());
+        Assert.False((await shop.ChangeNatureAsync(run, timid.Id, target with { Nature = 10 })).Succeeded);
+    }
 }

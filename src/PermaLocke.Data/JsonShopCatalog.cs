@@ -40,7 +40,7 @@ public sealed class JsonShopCatalog(IReadOnlyList<ShopItem> items) : IShopCatalo
                     string.IsNullOrWhiteSpace(entry.Name) ? $"Objeto {entry.Id}" : entry.Name,
                     entry.Price,
                     string.IsNullOrWhiteSpace(entry.Category) ? ShopItem.Battle : entry.Category.Trim(),
-                    entry.UnlockMove ?? 0, entry.UnlockSpecies ?? 0))
+                    entry.UnlockMove ?? 0, entry.UnlockSpecies ?? 0, entry.Nature ?? -1))
         ]);
     }
 
@@ -53,5 +53,6 @@ public sealed class JsonShopCatalog(IReadOnlyList<ShopItem> items) : IShopCatalo
         [property: JsonPropertyName("price")] int Price,
         [property: JsonPropertyName("categoria")] string? Category,
         [property: JsonPropertyName("desbloqueaMovimiento")] int? UnlockMove = null,
-        [property: JsonPropertyName("especie")] int? UnlockSpecies = null);
+        [property: JsonPropertyName("especie")] int? UnlockSpecies = null,
+        [property: JsonPropertyName("naturaleza")] int? Nature = null);
 }

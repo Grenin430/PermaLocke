@@ -25,7 +25,8 @@ public sealed class ShopService(
     IPointsService points,
     IItemDelivery delivery,
     IEventStore events,
-    IClock clock)
+    IClock clock,
+    INatureChanger? natures = null)
 {
     public IReadOnlyList<ShopItem> Items => catalog.Items;
 
@@ -99,6 +100,91 @@ public sealed class ShopService(
             $"{item.Name} está en tu mochila. Llevas {given.Carried}.");
     }
 
+
+    /// <summary>Whether a herb can be used right now: the game has to be closed. False with the reason otherwise.</summary>
+    public bool CanChangeNatureNow(out string reason)
+    {
+        if (natures is null)
+        {
+            reason = "Esta versión no puede cambiar naturalezas.";
+            return false;
+        }
+
+        return natures.CanChangeNow(out reason);
+    }
+
+    /// <summary>
+    /// Uses a nature herb on a Pokémon of the save (2026-09-27): writes the nature, then records and charges, the order of
+    /// every purchase here, so nobody pays for a nature the save refused.
+    /// </summary>
+    public async Task<PurchaseResult> ChangeNatureAsync(Run run, int itemId, BoxedPokemon target, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(run);
+        ArgumentNullException.ThrowIfNull(target);
+        var balance = await points.GetBalanceAsync(run.Id, ct).ConfigureAwait(false);
+
+        if (catalog.Items.FirstOrDefault(i => i.Id == itemId) is not { IsHerb: true } herb)
+        {
+            return new PurchaseResult(PurchaseOutcome.UnknownItem, null, balance, 0, $"La tienda no vende la hierba {itemId}.");
+        }
+
+        if (balance < herb.Price)
+        {
+            return new PurchaseResult(PurchaseOutcome.NotEnoughPoints, herb, balance, 0,
+                $"{herb.Name} cuesta {herb.Price} y tienes {balance}. Te faltan {herb.Price - balance}.");
+        }
+
+        if (!target.IsIntact || target.IsEgg)
+        {
+            return new PurchaseResult(PurchaseOutcome.NotDelivered, herb, balance, 0, $"{target.DisplayName} no se puede tocar.");
+        }
+
+        if (target.Nature == herb.Nature)
+        {
+            return new PurchaseResult(PurchaseOutcome.NotDelivered, herb, balance, 0,
+                $"{target.DisplayName} ya tiene esa naturaleza. No se ha cobrado nada.");
+        }
+
+        if (natures is null)
+        {
+            return new PurchaseResult(PurchaseOutcome.NotDelivered, herb, balance, 0, "Esta versión no puede cambiar naturalezas.");
+        }
+
+        var written = await natures.ApplyAsync(
+            new NatureChange(target.Box, target.Slot, target.Pid, target.DisplayName, herb.Nature), ct).ConfigureAwait(false);
+
+        if (!written.Delivered)
+        {
+            return new PurchaseResult(PurchaseOutcome.NotDelivered, herb, balance, 0, written.Message);
+        }
+
+        await events.AppendAsync(new GameEvent
+        {
+            Id = Guid.NewGuid(),
+            RunId = run.Id,
+            Timestamp = clock.Now,
+            Type = GameEventType.ShopPurchase,
+            Source = EventSource.Player,
+            Actor = run.PlayerName,
+            Description = $"Tienda: {herb.Name} por {herb.Price} puntos para {target.DisplayName}.",
+            Data = new Dictionary<string, string>
+            {
+                ["objeto"] = herb.Id.ToString(),
+                ["nombre"] = herb.Name,
+                ["precio"] = herb.Price.ToString(),
+                ["pid"] = target.Pid.ToString("X8"),
+                ["naturalezaAntes"] = target.Nature.ToString(),
+                ["naturaleza"] = herb.Nature.ToString()
+            }
+        }, ct).ConfigureAwait(false);
+
+        var spent = await points
+            .SpendAsync(run.Id, herb.Price, $"Tienda: {herb.Name}.", EventSource.Player, run.PlayerName, ct)
+            .ConfigureAwait(false);
+
+        return new PurchaseResult(PurchaseOutcome.Delivered, herb, spent.NewBalance, 1,
+            $"{target.DisplayName} ya tiene la naturaleza nueva. {written.Message}".TrimEnd());
+    }
     /// <summary>The key of a purchase's event that says which move it unlocked.</summary>
     public const string UnlockKey = "desbloqueo";
 
