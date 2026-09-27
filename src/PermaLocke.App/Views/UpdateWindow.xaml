@@ -5,7 +5,7 @@
         xmlns:views="clr-namespace:PermaLocke.App.Views"
         Title="PermaLocke · Actualización"
         Icon="../Assets/PermaLocke.ico"
-        Height="400" Width="620" ResizeMode="CanMinimize"
+        SizeToContent="Height" Width="620" ResizeMode="CanMinimize"
         WindowStartupLocation="CenterScreen"
         UseLayoutRounding="True" SnapsToDevicePixels="True"
         Background="{StaticResource PxBaseBrush}">

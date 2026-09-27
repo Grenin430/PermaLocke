@@ -40,7 +40,9 @@ public sealed partial class UpdateService(AppPaths paths, DiscordLogin discord, 
     public const string RestartArgument = "--tras-actualizar";
 
     /// <summary>How often it asks GitHub again while PermaLocke is open.</summary>
-    private static readonly TimeSpan Every = TimeSpan.FromMinutes(30);
+    /// <remarks>Three minutes since 1.0.4.2, so a release shows up almost at once (it was 30). GitHub allows 60 anonymous
+    /// questions an hour per computer; this is 20.</remarks>
+    private static readonly TimeSpan Every = TimeSpan.FromMinutes(3);
 
     private const string PinKey = "actualizacion";
 

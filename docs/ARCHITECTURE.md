@@ -12670,3 +12670,10 @@ Core 410.
 - `Data/gacha.json`: `shinyChance` de 0.10 a 0.02 en los cinco tiers. Si el servidor tiene una `gacha.json` oficial
   (§193), manda esa.
 - Sin probar jugando el retraso.
+
+## §206 · 1.0.4.2: ventana de actualización sin cortes y aviso de versión casi al momento (2026-09-27)
+
+- `UpdateWindow`: `SizeToContent="Height"` en vez de 400 fijos: con el marco de Windows se cortaban el título y CANCELAR
+  (captura del usuario instalando la 1.0.4.1, que por lo demás **funcionó**).
+- `UpdateService.Every`: de 30 a 3 min. La franja y el aviso fijo ya existían (§202), pero la versión nueva tardaba hasta
+  media hora en verse y el usuario creía que hacía falta reiniciar. 20 preguntas/h a GitHub, por debajo de las 60 anónimas.

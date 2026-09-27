@@ -45,6 +45,7 @@ Cómo llega una versión nueva a los jugadores desde el 2026-09-26. Detalle téc
 | 1.0.3 | Action | franja ACTUALIZAR y aviso fijo sobre el juego (§202) |
 | 1.0.4 | PR #6, aceptado | versiones de cuatro cifras (§203) y **arreglo de la descarga** (§204) |
 | 1.0.4.1 | commit directo a main pedido por el usuario (2026-09-27), Action | aviso de PRIMER ENCUENTRO 6 s después y variocolor del gacha al 2 % (§205) |
+| 1.0.4.2 | commit directo a main pedido por el usuario (2026-09-27), Action | ventana de actualización sin cortes y comprobación cada 3 min (§206). La 1.0.4.1 se instaló sola bien |
 
 **1.0.2 y 1.0.3 no pueden actualizarse solas** (§204: la descarga se desbordaba en el primer trozo). Quien las tenga,
 una vez a mano: cerrar PermaLocke y cambiar `PermaLocke.exe` por el del zip de la 1.0.4.
