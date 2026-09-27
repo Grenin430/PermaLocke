@@ -172,7 +172,6 @@ public static class StatCalculator
             pokemon.Species == Shedinja);
 
         var gained = stats[0] - pokemon.Stat_HPMax;
-
         pokemon.Stat_HPMax = stats[0];
         pokemon.Stat_ATK = stats[1];
         pokemon.Stat_DEF = stats[2];
@@ -180,7 +179,11 @@ public static class StatCalculator
         pokemon.Stat_SPD = stats[4];
         pokemon.Stat_SPE = stats[5];
 
-        if (pokemon.Stat_HPCurrent > 0)
+        // Si bajan los máximos (el cap), los actuales bajan lo mismo y un Pokémon a cero sigue a cero. Si SUBEN, los actuales
+        // no se tocan (2026-09-27): subirlos con los máximos hizo que Ultra Luna dijera «The saved game data is corrupted».
+        // Medido en la partida con Partecoños: EV de PS de 6 a 252, máximos de 98 a 117; con los actuales a 117 la partida
+        // no cargaba, con los actuales en 98 sí. El juego los cura él solo.
+        if (gained < 0 && pokemon.Stat_HPCurrent > 0)
         {
             pokemon.Stat_HPCurrent = Math.Clamp(pokemon.Stat_HPCurrent + gained, 1, stats[0]);
         }

@@ -42,6 +42,18 @@ public sealed class RegionalFormStatsTests : IDisposable
         WorldLimits.FormBaseStats = new Dictionary<(int Species, int Form), byte[]>();
     }
 
+    /// <summary>Raising the HP maximum never raises the current HP: Ultra Moon calls that save corrupted (2026-09-27).</summary>
+    [Fact]
+    public void More_max_hp_leaves_the_current_hp_where_it_was()
+    {
+        var raichu = new PK7 { Species = Raichu, CurrentLevel = 50, Stat_Level = 50, Nature = (Nature)Adamant, Stat_HPMax = 100, Stat_HPCurrent = 80 };
+
+        Assert.True(StatCalculator.Restat(raichu));
+
+        Assert.True(raichu.Stat_HPMax > 100);
+        Assert.Equal(80, raichu.Stat_HPCurrent);
+    }
+
     [Fact]
     public void The_world_answers_by_species_and_form()
     {

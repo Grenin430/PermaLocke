@@ -90,3 +90,10 @@ El mod reutiliza ids 505-520 y 1019-1023 para sus megapiedras nuevas.
 ## WDA_EXCLUDEFROMCAPTURE esconde la ventana (2026-09-27)
 Sacar el panel del cap de las capturas hizo que dejara de verse encima del juego. Para que la copia de pantalla no lo
 lea, se esconde mientras se mira la barra de PS.
+
+## Subir los PS actuales en la partida la corrompe (2026-09-27)
+ENTRENAR EV subió el EV de PS de Partecoños (6 → 252): máximos 98 → 117 y `Restat` subía también los actuales a 117.
+Ultra Luna: «The saved game data is corrupted», aunque PKHeX leía todo bien (39/39) y las estadísticas eran las que el
+juego calcula. Bisección con el jugador sobre las copias: EV sin recalcular carga; recalculado con los actuales en 98
+carga; con los actuales a 117 no. `StatCalculator.Restat` ya no sube nunca los PS actuales (bajarlos con el cap sigue).
+Copias de la prueba en `PermaLocke prueba\Saves\backup` (prueba-A, prueba-B, corrupta-apartada).
