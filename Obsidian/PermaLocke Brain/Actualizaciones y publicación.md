@@ -43,13 +43,22 @@ Cómo llega una versión nueva a los jugadores desde el 2026-09-26. Detalle téc
 | 1.0.1 | release a mano | PERMALOCKE x.y.z en CONFIGURACIÓN (§200) |
 | 1.0.2 | Action (2.º intento) | ventana de descarga (§201) |
 | 1.0.3 | Action | franja ACTUALIZAR y aviso fijo sobre el juego (§202) |
-| 1.0.4 | PR #6, pendiente de aceptar | versiones de cuatro cifras (§203) y **arreglo de la descarga** (§204) |
+| 1.0.4 | Action (PR #6) | versiones de cuatro cifras (§203) y **arreglo de la descarga** (§204). **Observado**: el usuario pasó de la 1.0.2 a la 1.0.4 cambiando el exe a mano (2026-09-27) |
 
 **1.0.2 y 1.0.3 no pueden actualizarse solas** (§204: la descarga se desbordaba en el primer trozo). Quien las tenga,
 una vez a mano: cerrar PermaLocke y cambiar `PermaLocke.exe` por el del zip de la 1.0.4.
 
 Siguiente arreglo pequeño: **1.0.4.1**. El usuario pasa por cada versión (la de antes todavía le enseña su propia forma de
 avisar: la 1.0.2 pregunta con sí o no; desde la 1.0.3, franja).
+
+## Actualizar a mano (para quien se quede atascado)
+1. Cerrar PermaLocke y Azahar; en el Administrador de tareas, que no quede ningún `PermaLocke` ni `azahar`.
+2. Releases → la versión → `PermaLocke-actualizacion-x.y.z.zip`.
+3. Abrir el zip, **copiar solo `PermaLocke.exe`** (Ctrl+C) y pegarlo (Ctrl+V → Reemplazar) dentro de la carpeta de
+   PermaLocke. `Data` solo si la versión la cambia (de la 1.0.2 a la 1.0.4 no cambió).
+4. Si Windows dice «Carpeta en uso» sin nada abierto: un PermaLocke colgado en segundo plano, una terminal abierta en
+   esa carpeta o el Explorador. Cerrarlos; si sigue, reiniciar el PC y hacerlo antes de abrir nada. No arrastrar la
+   carpeta entera del zip.
 
 ## Para Claude, al tocar esto
 - Leer el registro de una Action desde la nube: MCP `actions_list` (runs) y `get_job_logs` con `failed_only`.
