@@ -14,7 +14,7 @@ namespace PermaLocke.Randomizer.Modules;
 /// </para>
 /// </param>
 public sealed record EncounterEntryLayout(
-    int Subfile, int Stride, int SpeciesOffset, int FormOffset, string Name, int? LevelOffset = null);
+    int Subfile, int Stride, int SpeciesOffset, int FormOffset, string Name, int? LevelOffset = null, int? MovesOffset = null);
 
 /// <summary>
 /// Byte-level view of the fixed-size tables in <c>a/1/5/9</c>: starters, the eleven fossils,
@@ -37,7 +37,12 @@ public static class StaticEncounterTable
     /// </summary>
     public static readonly EncounterEntryLayout Gifts = new(0, 0x14, 0x00, 0x02, "regalos");
 
-    public static readonly EncounterEntryLayout Statics = new(1, 0x38, 0x00, 0x02, "estáticos", 0x03);
+    /// <summary>
+    /// Statics carry the cartridge's four moves at 0x0C (pk3DS <c>EncounterStatic7.RelearnMoves</c>). A new species clears
+    /// them (2026-09-27): kept, every Totem had the same moves whatever the seed, and moves meant for another species.
+    /// Zero is what the game fills from the species' own learnset, like the trainers (<c>trainerMovesFromLearnset</c>).
+    /// </summary>
+    public static readonly EncounterEntryLayout Statics = new(1, 0x38, 0x00, 0x02, "estáticos", 0x03, 0x0C);
 
     /// <summary>
     /// A trade holds two species: what you receive at 0x0 and what you must hand over at 0x2.
@@ -88,6 +93,7 @@ public static class StaticEncounterTable
         var at = index * layout.Stride;
         BitConverter.GetBytes((ushort)species).CopyTo(payload, at + layout.SpeciesOffset);
         payload[at + layout.FormOffset] = 0;
+        ClearMoves(payload, layout, at);
     }
 
     /// <summary>
@@ -105,6 +111,13 @@ public static class StaticEncounterTable
         var at = index * layout.Stride;
         BitConverter.GetBytes((ushort)species).CopyTo(payload, at + layout.SpeciesOffset);
         payload[at + layout.FormOffset] = (byte)form;
+        ClearMoves(payload, layout, at);
+    }
+
+    /// <summary>The four moves at zero, where the layout has them: the game then gives the species its own.</summary>
+    private static void ClearMoves(byte[] payload, EncounterEntryLayout layout, int at)
+    {
+        if (layout.MovesOffset is { } moves) Array.Clear(payload, at + moves, 8);
     }
 
     /// <summary>

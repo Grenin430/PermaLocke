@@ -57,7 +57,9 @@ public class StaticEncounterTableTests
             var inEntry1 = i >= layout.Stride && i < layout.Stride * 2;
             var isSpeciesOrForm = i == layout.Stride + layout.SpeciesOffset
                                   || i == layout.Stride + layout.SpeciesOffset + 1
-                                  || i == layout.Stride + layout.FormOffset;
+                                  || i == layout.Stride + layout.FormOffset
+                                  // Los cuatro movimientos del cartucho se borran con la especie (2026-09-27).
+                                  || (i >= layout.Stride + 0x0C && i < layout.Stride + 0x14);
             if (inEntry1 && isSpeciesOrForm)
             {
                 continue;
@@ -90,5 +92,24 @@ public class StaticEncounterTableTests
         Assert.Equal(1, StaticEncounterTable.Statics.Subfile);
         Assert.Equal(4, StaticEncounterTable.Trades.Subfile);
         Assert.Equal(3, StaticEncounterTable.StarterCount);
+    }
+
+    [Fact]
+    public void A_new_species_in_a_static_takes_its_own_moves_not_the_cartridges()
+    {
+        var layout = StaticEncounterTable.Statics;
+        var payload = new byte[layout.Stride * 2];
+        for (var i = 0; i < 8; i++) payload[layout.Stride + 0x0C + i] = 0x55;
+
+        StaticEncounterTable.SetSpecies(payload, layout, 1, 25, 0);
+
+        Assert.All(payload.AsSpan(layout.Stride + 0x0C, 8).ToArray(), b => Assert.Equal(0, b));
+        Assert.Equal(25, StaticEncounterTable.GetSpecies(payload, layout, 1));
+
+        // Los regalos no llevan movimientos en ese sitio: no se toca nada más.
+        var gifts = new byte[StaticEncounterTable.Gifts.Stride];
+        gifts[0x0C] = 0x55;
+        StaticEncounterTable.SetSpecies(gifts, StaticEncounterTable.Gifts, 0, 25);
+        Assert.Equal(0x55, gifts[0x0C]);
     }
 }
