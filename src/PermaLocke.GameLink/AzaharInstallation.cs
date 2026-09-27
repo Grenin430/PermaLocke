@@ -222,6 +222,14 @@ public sealed class AzaharInstallation(ILogger<AzaharInstallation> logger)
                 changed |= SetValue(lines, $@"{key}\controller_keyseq", string.Empty, "[UI]");
             }
 
+            // Las cámaras en blanco, en cada arranque (1.0.5.6): el tutorial de fotos de Hauoli dejó a un jugador con la
+            // pantalla en negro, y una cámara del PC que no contesta cuelga el juego ahí. En el Nuzlocke nadie la usa.
+            foreach (var camera in new[] { "camera_outer_right_name", "camera_inner_name", "camera_outer_left_name" })
+            {
+                changed |= SetValue(lines, $@"{camera}\default", "false", "[Camera]");
+                changed |= SetValue(lines, camera, "blank", "[Camera]");
+            }
+
             if (changed)
             {
                 File.WriteAllLines(configPath, lines);

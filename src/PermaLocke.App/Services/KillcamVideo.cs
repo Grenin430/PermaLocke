@@ -92,7 +92,7 @@ public static class KillcamVideo
             packed.Write(File.ReadAllBytes(mp4));
             return packed.ToArray();
         }
-        catch (COMException)
+        catch (Exception ex) when (ex is COMException or DllNotFoundException or EntryPointNotFoundException or IOException)
         {
             return null;
         }
@@ -154,7 +154,7 @@ public static class KillcamVideo
                 Marshal.ReleaseComObject(reader);
             }
         }
-        catch (COMException)
+        catch (Exception ex) when (ex is COMException or DllNotFoundException or EntryPointNotFoundException or IOException)
         {
             return false;
         }

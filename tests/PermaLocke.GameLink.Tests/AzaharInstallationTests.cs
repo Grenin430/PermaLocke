@@ -195,4 +195,19 @@ public class AzaharInstallationTests : IDisposable
         Assert.False(_installation.SetFollower(location, Path.Combine(_root, "missing.3gx"), on: true));
         Assert.False(File.Exists(Path.Combine(_root, "config", "qt-config.ini")));
     }
+
+    [Fact]
+    public void Launching_puts_the_cameras_blank()
+    {
+        var user = Path.Combine(_root, "user");
+        Directory.CreateDirectory(Path.Combine(user, "config"));
+        File.WriteAllText(Path.Combine(user, "config", "qt-config.ini"), "[Camera]\ncamera_inner_name\\default=true\ncamera_inner_name=qt\n");
+
+        Assert.True(_installation.DisableSaveStates(new AzaharLocation(user, null, true)));
+
+        var ini = File.ReadAllText(Path.Combine(user, "config", "qt-config.ini"));
+        Assert.Contains("camera_inner_name=blank", ini);
+        Assert.Contains("camera_outer_left_name=blank", ini);
+        Assert.DoesNotContain("camera_inner_name=qt", ini);
+    }
 }
