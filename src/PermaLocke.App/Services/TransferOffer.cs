@@ -52,6 +52,7 @@ public sealed class TransferOffer(AppPaths paths, IAppDialogs dialogs, EmulatorL
         logger.LogInformation("Traspaso pedido desde {Old}; se reinicia para hacerlo", plan.OldRoot);
 
         Process.Start(new ProcessStartInfo(Environment.ProcessPath!, RestartArgument) { UseShellExecute = false });
+        BackgroundMode.Leaving = true;
         Application.Current.Shutdown();
     }
 }

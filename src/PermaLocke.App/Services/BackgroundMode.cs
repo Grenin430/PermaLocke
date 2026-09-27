@@ -15,9 +15,14 @@ public sealed class BackgroundMode(AppSettings settings, DiscordPresence presenc
 {
     private const string ShowSignal = @"Local\PermaLocke.App.Show";
 
-    private System.Windows.Forms.NotifyIcon? _icon;
+    // Como IDisposable y no como NotifyIcon: ver ShowIcon.
+    private IDisposable? _icon;
+    private bool _hidden;
     private Window? _window;
     private bool _quitting;
+
+    /// <summary>Set before PermaLocke restarts itself (an update, a transfer): closing then really closes (1.0.5.10).</summary>
+    public static bool Leaving { get; set; }
 
     /// <summary>For the second copy: asks the hidden one to show itself. False when nobody was listening.</summary>
     public static bool AskOtherToShow()
@@ -50,7 +55,7 @@ public sealed class BackgroundMode(AppSettings settings, DiscordPresence presenc
         // Después de la comprobación del juego abierto, que se añade antes: si esa cancela, aquí no se esconde nada.
         window.Closing += (_, closing) =>
         {
-            if (closing.Cancel || _quitting || !settings.Current.Background)
+            if (closing.Cancel || _quitting || Leaving || !settings.Current.Background)
             {
                 return;
             }
@@ -65,33 +70,47 @@ public sealed class BackgroundMode(AppSettings settings, DiscordPresence presenc
     {
         _window!.Hide();
         presence.Stop();
+        ShowIcon(true);
+        _hidden = true;
+        logger.LogInformation("PermaLocke sigue en segundo plano");
+    }
 
+    /// <summary>
+    /// Everything that touches WinForms, apart (1.0.5.10): a method that names its types makes the runtime load the
+    /// assembly when it is compiled, and the close of an update — running from the renamed <c>.old</c> — could not.
+    /// </summary>
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    private void ShowIcon(bool visible)
+    {
         if (_icon is null)
         {
+            if (!visible) return;
+
             var menu = new System.Windows.Forms.ContextMenuStrip();
             menu.Items.Add("Abrir PermaLocke", null, (_, _) => Restore());
             menu.Items.Add("Cerrar del todo", null, (_, _) => Quit());
 
-            _icon = new System.Windows.Forms.NotifyIcon
+            var icon = new System.Windows.Forms.NotifyIcon
             {
                 Icon = System.Drawing.Icon.ExtractAssociatedIcon(Environment.ProcessPath!),
                 Text = "PermaLocke (segundo plano)",
                 ContextMenuStrip = menu
             };
-            _icon.DoubleClick += (_, _) => Restore();
+            icon.DoubleClick += (_, _) => Restore();
+            _icon = icon;
         }
 
-        _icon.Visible = true;
-        logger.LogInformation("PermaLocke sigue en segundo plano");
+        ((System.Windows.Forms.NotifyIcon)_icon).Visible = visible;
     }
 
     private void Restore()
     {
         if (_window is null) return;
 
-        if (_icon is { Visible: true })
+        if (_hidden)
         {
-            _icon.Visible = false;
+            _hidden = false;
+            ShowIcon(false);
             presence.Start();
         }
 

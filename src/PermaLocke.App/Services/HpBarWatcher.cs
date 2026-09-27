@@ -38,7 +38,28 @@ public static class HpBarWatcher
     private readonly record struct Geometry(IntPtr Window, double OriginX, double OriginY, double Scale, int Left, int Top, int Width, int Height);
 
     /// <returns>What happened, in words for the log — with the readings, when the bar was not seen reaching zero.</returns>
+    /// <summary>
+    /// True while the bar is being watched (1.0.5.10): the cap panel hides meanwhile, because the screen copy reads
+    /// whatever is on top, and the panel over the bar read as an empty bar and started the death too early.
+    /// </summary>
+    public static event Action<bool>? WatchingChanged;
+
     public static async Task<string> WaitUntilEmptyAsync(CancellationToken ct)
+    {
+        WatchingChanged?.Invoke(true);
+        try
+        {
+            // Un momento para que el panel se esconda antes de la primera copia.
+            await Task.Delay(80, ct);
+            return await WatchAsync(ct);
+        }
+        finally
+        {
+            WatchingChanged?.Invoke(false);
+        }
+    }
+
+    private static async Task<string> WatchAsync(CancellationToken ct)
     {
         var clock = Stopwatch.StartNew();
         var watch = new HpBar.ZeroWatch();

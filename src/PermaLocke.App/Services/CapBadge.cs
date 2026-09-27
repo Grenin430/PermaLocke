@@ -59,6 +59,7 @@ public sealed class CapBadge
     private Window? _window;
     private CapReading? _reading;
     private DateTime _readAt = DateTime.MinValue;
+    private bool _watchingBar;
 
     public CapBadge(EmulatorLauncher launcher, ProgressService progress, LevelCapTable caps, IRunContext runContext,
         GameLinkMonitor monitor, AppSettings settings, PokemonSpriteService sprites, ILogger<CapBadge> logger)
@@ -74,6 +75,13 @@ public sealed class CapBadge
         _timer.Tick += (_, _) => _ = TickAsync();
         monitor.RunDataChanged += (_, _) => _readAt = DateTime.MinValue;
         runContext.CurrentChanged += (_, _) => _readAt = DateTime.MinValue;
+
+        // Mientras se mira la barra de PS, el panel fuera: la copia de pantalla lo leería como la barra (1.0.5.10).
+        HpBarWatcher.WatchingChanged += watching => _timer.Dispatcher.BeginInvoke(() =>
+        {
+            _watchingBar = watching;
+            if (watching) _window?.Hide();
+        });
     }
 
     public void Start() => _timer.Start();
@@ -105,7 +113,7 @@ public sealed class CapBadge
             var game = GameWindow.Handle();
 
             // Se quita en CONFIGURACIÓN (1.0.4.8).
-            if (!_settings.Current.CapPanel || !_launcher.IsRunning || game == IntPtr.Zero || GetForegroundWindow() != game
+            if (_watchingBar || !_settings.Current.CapPanel || !_launcher.IsRunning || game == IntPtr.Zero || GetForegroundWindow() != game
                 || GameWindow.RenderBox(game) is not { } picture)
             {
                 _window?.Hide();
@@ -463,7 +471,6 @@ public sealed class CapBadge
         };
 
         OverlayWindows.MakeUntouchable(window);
-        OverlayWindows.KeepOutOfCaptures(window);
         return window;
     }
 

@@ -268,6 +268,7 @@ public sealed partial class UpdateService(AppPaths paths, DiscordLogin discord, 
 
         logger.LogInformation("PermaLocke actualizado a {Version}; se reinicia", asset.Version);
         Process.Start(new ProcessStartInfo(Path.Combine(paths.Root, Executable), RestartArgument) { UseShellExecute = false });
+        BackgroundMode.Leaving = true;
         Application.Current.Shutdown();
     }
 

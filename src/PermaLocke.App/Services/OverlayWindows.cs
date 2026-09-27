@@ -30,14 +30,6 @@ public static class OverlayWindows
         SetWindowLong(handle, GwlExStyle, style | WsExTransparent | WsExNoActivate | WsExToolWindow);
     }
 
-    /// <summary>
-    /// Leaves the window out of screen copies (1.0.5.2), for the cap panel: the HP bar watcher copies the screen, and the
-    /// panel over the bar read as an empty bar and started the death too early. Only there, so a stream still shows the
-    /// ghosts and the ceremony. Does nothing on a Windows without it.
-    /// </summary>
-    public static void KeepOutOfCaptures(Window window) =>
-        SetWindowDisplayAffinity(new WindowInteropHelper(window).EnsureHandle(), ExcludeFromCapture);
-
     /// <summary>Puts the window exactly over a box of screen pixels, on top, without activating it.</summary>
     /// <remarks>
     /// With <c>SetWindowPos</c> and not <c>Left</c>/<c>Top</c>, because the box comes in screen pixels
@@ -115,10 +107,6 @@ public static class OverlayWindows
     }
 
     private const uint SrcCopy = 0x00CC0020;
-    private const uint ExcludeFromCapture = 0x11;
-
-    [DllImport("user32.dll")]
-    private static extern bool SetWindowDisplayAffinity(IntPtr window, uint affinity);
     private const uint GetWorkArea = 0x0030;
 
     [StructLayout(LayoutKind.Sequential)]
