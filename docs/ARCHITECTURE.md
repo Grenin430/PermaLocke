@@ -12684,3 +12684,15 @@ Core 410.
   con `ETag` **también cuenta** sin sesión, así que el `ETag` solo abrevia la respuesta. Una PermaLocke por casa cabe;
   varias en la misma wifi se quedan sin preguntas: con 403/429 se guarda `X-RateLimit-Reset` en `_waitUntil` y no se
   pregunta hasta entonces. El aviso llega algo más tarde, nada se rompe.
+
+## §208 · 1.0.4.4: un caído ya no se cuela vivo en un combate de la historia (2026-09-27)
+
+Log de Iñigo (27/09): SaintPablo cayó a las 02:18:13 (registrado y cobrado). El juego lo curó al acabar el combate y otra
+vez a las 02:27:30.058; `KeepFallenDownAsync` lo bajó, pero el combate siguiente se montó a las .867 con el equipo curado
+y entró vivo. El ciclo de un segundo llegaba tarde.
+
+- `KeepFallenDownAsync` también desde `RunBattleAsync` fuera de combate (vuelta de 500 ms), con `_keepingDown` para que
+  los dos bucles no se pisen. Solo lecturas por PID de las copias ya localizadas: sin barridos.
+- `FlagFallenInBattleAsync`: una vez por combate, si un bloque del jugador con PS lleva el PID de un caído
+  (`BattleTableReader.ReadPokemon`), aviso `IntegrityFlag` `caidoEnCombate` solo para Admin. No se escribe en el combate (§53).
+- Sin probar jugando.

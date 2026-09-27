@@ -36,7 +36,8 @@ public sealed class GameLinkMonitor(
     IKillcamRecorder killcam,
     PermaLocke.Infrastructure.AppPaths paths,
     ILogger<GameLinkMonitor> logger,
-    PermaLocke.Rules.Services.BallControlService balls) : IDisposable
+    PermaLocke.Rules.Services.BallControlService balls,
+    IntegrityService integrity) : IDisposable
 {
     /// <summary>
     /// How often the game is polled.
@@ -299,6 +300,20 @@ public sealed class GameLinkMonitor(
                 {
                     var tables = battleTables.Read(clock.Now);
                     var faints = _faints.Observe(tables);
+
+                    // Los caídos, también desde este bucle, que da vueltas cada medio segundo fuera de combate (1.0.4.4):
+                    // el juego cura antes de un combate de la historia y lo monta en menos de un segundo, y el ciclo de un
+                    // segundo llegaba tarde (SaintPablo, 27/09: cura a las 02:27:30.058, combate a las .867).
+                    if (!_faints.InBattle)
+                    {
+                        _fallenCheckedThisBattle = false;
+                        await KeepFallenDownAsync(run, snapshot);
+                    }
+                    else if (!_fallenCheckedThisBattle)
+                    {
+                        _fallenCheckedThisBattle = true;
+                        await FlagFallenInBattleAsync(run, tables);
+                    }
 
                     // La última lectura dentro de un combate: si el emulador se va justo después, se dejó a medias. No se
                     // borra al salir de él: una lectura vacía mientras el emulador se cierra no puede tapar el combate.
@@ -898,6 +913,64 @@ public sealed class GameLinkMonitor(
         {
             return;
         }
+
+        // Lo llaman dos bucles (el de un segundo y el de combate); si ya está en marcha, esta vuelta sobra.
+        if (!_keepingDown.Wait(0))
+        {
+            return;
+        }
+
+        try
+        {
+            await KeepFallenDownCoreAsync(run, snapshot);
+        }
+        finally
+        {
+            _keepingDown.Release();
+        }
+    }
+
+    private readonly SemaphoreSlim _keepingDown = new(1, 1);
+
+    /// <summary>Whether this battle has already been looked at for a fallen Pokémon fighting.</summary>
+    private bool _fallenCheckedThisBattle;
+
+    /// <summary>
+    /// Once per battle: a Pokémon the run holds as fallen that entered it with HP (1.0.4.4). The game healed it right
+    /// before a story battle, faster than PermaLocke could put it down again. Not a punishment, and nothing is written into
+    /// the battle (that structure is only read, §53): the organiser is told in Admin and decides.
+    /// </summary>
+    private async Task FlagFallenInBattleAsync(Run run, IReadOnlyList<BattleTable> tables)
+    {
+        try
+        {
+            var fallen = await watcher.FallenPidsAsync(run.Id, _stopping.Token);
+
+            if (fallen.Count == 0 || tables.Count == 0)
+            {
+                return;
+            }
+
+            foreach (var block in tables[0].Blocks.Where(b => b.IsPlayers && b.CurrentHp > 0))
+            {
+                if (battleTables.ReadPokemon(block) is { } pokemon && fallen.Contains(pokemon.PID))
+                {
+                    logger.LogWarning("Un caído ha entrado vivo en un combate: especie {Species}, PID {Pid:X8}", block.Species, pokemon.PID);
+                    await integrity.FlagAsync(run.Id, IntegrityKinds.FallenInBattle,
+                        $"Un Pokémon caído (especie {block.Species}) ha entrado en un combate con {block.CurrentHp} PS: el juego lo curó justo antes.",
+                        new Dictionary<string, string> { ["pid"] = pokemon.PID.ToString("X8"), ["especie"] = block.Species.ToString() },
+                        _stopping.Token);
+                }
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogWarning(ex, "No se ha podido mirar si un caído ha entrado en el combate");
+        }
+    }
+
+    private async Task KeepFallenDownCoreAsync(Run run, GameSnapshot snapshot)
+    {
 
         // Durante un combate no: sus bloques apuntan a estas mismas estructuras, un caído en combate
         // tiene aquí todavía los PS de antes de empezar, y el juego le copia el cero al terminar. No

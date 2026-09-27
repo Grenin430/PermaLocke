@@ -17,6 +17,9 @@ public static class IntegrityKinds
 
     /// <summary>The emulator was closed, not crashed, in the middle of a battle.</summary>
     public const string BattleAbandoned = "abandono";
+
+    /// <summary>A Pokémon the run holds as fallen entered a battle with HP: the game healed it just before (1.0.4.4).</summary>
+    public const string FallenInBattle = "caidoEnCombate";
 }
 
 /// <summary>
