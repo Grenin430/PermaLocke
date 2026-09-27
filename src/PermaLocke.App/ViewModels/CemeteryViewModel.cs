@@ -32,7 +32,7 @@ public sealed partial class CemeteryViewModel : SectionViewModel
         _logger = logger;
         _share = share;
         _community = community;
-        community.PropertyChanged += (_, _) => _ = ui.InvokeAsync(() => { OnPropertyChanged(nameof(HasOwners)); return Task.CompletedTask; });
+        community.PropertyChanged += (_, _) => _ = ui.InvokeAsync(() => { ShowOwners(); return Task.CompletedTask; });
 
         runContext.CurrentChanged += (_, _) => _ = ui.InvokeAsync(RefreshAsync);
 
@@ -151,27 +151,33 @@ public sealed partial class CemeteryViewModel : SectionViewModel
 
     public string EmptyText => _owner is null ? "Aún no ha caído nadie en esta run." : "Aún no ha caído nadie (o no lo ha compartido).";
 
-    public string OwnerText => _owner is null ? "TU CEMENTERIO" : $"DE {_owner.Name.ToUpperInvariant()}";
-
     /// <summary>Whether there are friends to switch to.</summary>
     public bool HasOwners => _community.Friends.Count > 0;
 
-    [RelayCommand]
-    private Task PreviousOwner() => SwitchOwner(-1);
+    /// <summary>Every player as a tab above the scene (1.0.5.7): you first, then each friend.</summary>
+    public ObservableCollection<OwnerTab> Owners { get; } = [];
 
-    [RelayCommand]
-    private Task NextOwner() => SwitchOwner(1);
-
-    private Task SwitchOwner(int step)
+    private void ShowOwners()
     {
-        // Tú y luego cada amigo, en el orden de la lista de amigos, dando la vuelta.
-        var owners = new List<FriendStatus?> { null };
-        owners.AddRange(_community.Friends);
-        var at = _owner is null ? 0 : Math.Max(0, owners.FindIndex(o => o?.PlayerId == _owner.PlayerId));
-        _owner = owners[((at + step) % owners.Count + owners.Count) % owners.Count];
-        OnPropertyChanged(nameof(OwnerText));
-        OnPropertyChanged(nameof(EmptyText));
+        var tabs = new List<OwnerTab> { new(null, "TÚ", _owner is null) };
+        tabs.AddRange(_community.Friends.Select(f => new OwnerTab(f, f.Name.ToUpperInvariant(), f.PlayerId == _owner?.PlayerId)));
+
+        // Solo si ha cambiado: la lista de amigos avisa a menudo y rehacer las pestañas parpadea.
+        static (Guid?, string, bool) Key(OwnerTab t) => (t.Friend?.PlayerId, t.Name, t.IsSelected);
+        if (tabs.Select(Key).SequenceEqual(Owners.Select(Key))) return;
+        Owners.Clear();
+        foreach (var tab in tabs) Owners.Add(tab);
         OnPropertyChanged(nameof(HasOwners));
+    }
+
+    [RelayCommand]
+    private Task SelectOwner(OwnerTab? tab)
+    {
+        if (tab is null || tab.Friend?.PlayerId == _owner?.PlayerId) return Task.CompletedTask;
+
+        _owner = tab.Friend;
+        ShowOwners();
+        OnPropertyChanged(nameof(EmptyText));
         IsTheaterOpen = false;
         return RefreshAsync();
     }
@@ -207,7 +213,7 @@ public sealed partial class CemeteryViewModel : SectionViewModel
             var picked = Selected?.PokemonId;
 
             Graves.Clear();
-            OnPropertyChanged(nameof(HasOwners));
+            ShowOwners();
 
             foreach (var grave in graves)
             {
@@ -352,3 +358,6 @@ public sealed partial class GraveViewModel(Grave grave, BitmapSource? sprite, Gu
                     ? "Su killcam no llegó a guardarse."
                     : "Sin repetición.";
 }
+
+/// <summary>One player's tab above the cemetery (1.0.5.7); <paramref name="Friend"/> is null for this player.</summary>
+public sealed record OwnerTab(FriendStatus? Friend, string Name, bool IsSelected);
