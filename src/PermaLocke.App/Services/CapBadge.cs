@@ -50,12 +50,17 @@ public sealed class CapBadge
     private readonly PixelText _next = new() { Scale = 1, Tight = true };
     private readonly PixelBar _bar = new() { Height = 10, Margin = new Thickness(0, 4, 0, 0) };
 
+    /// <summary>The party, one row per Pokémon under the cap (1.0.4.8).</summary>
+    private readonly StackPanel _party = new();
+    private readonly PokemonSpriteService _sprites;
+    private string _partyKey = string.Empty;
+
     private Window? _window;
     private CapReading? _reading;
     private DateTime _readAt = DateTime.MinValue;
 
     public CapBadge(EmulatorLauncher launcher, ProgressService progress, LevelCapTable caps, IRunContext runContext,
-        GameLinkMonitor monitor, AppSettings settings, ILogger<CapBadge> logger)
+        GameLinkMonitor monitor, AppSettings settings, PokemonSpriteService sprites, ILogger<CapBadge> logger)
     {
         _launcher = launcher;
         _progress = progress;
@@ -64,6 +69,7 @@ public sealed class CapBadge
         _runContext = runContext;
         _logger = logger;
         _settings = settings;
+        _sprites = sprites;
         _timer.Tick += (_, _) => _ = TickAsync();
         monitor.RunDataChanged += (_, _) => _readAt = DateTime.MinValue;
         runContext.CurrentChanged += (_, _) => _readAt = DateTime.MinValue;
@@ -74,8 +80,16 @@ public sealed class CapBadge
     /// <summary><c>--ensayar-cap</c>: the panel over PermaLocke's own window for ten seconds, without the game.</summary>
     public async Task RehearseAsync()
     {
+        await _sprites.PrepareAsync();
         _reading = _runContext.Current is { } run ? await ReadAsync(run) : null;
         Show((_reading ?? new CapReading("PRUEBA 3 DE 12", 24, 26, null)) with { Highest = 22 });
+        ShowParty(
+        [
+            new(0, 25, "Pikachu", "Chispas", 22, 48, 52, false, 1, 0, "", ""),
+            new(1, 722, "Rowlet", "", 21, 20, 55, false, 2, 0, "", ""),
+            new(2, 19, "Rattata", "Pepe", 14, 0, 40, false, 3, 0, "", ""),
+            new(3, 131, "Lapras", "", 24, 9, 90, true, 4, 0, "", "")
+        ]);
         var main = new System.Windows.Interop.WindowInteropHelper(Application.Current.MainWindow).Handle;
         if (GameWindow.ClientBox(main) is not { } box || _window is not { } window) return;
         Place(window, box);
@@ -101,6 +115,7 @@ public sealed class CapBadge
             {
                 _readAt = DateTime.UtcNow;
                 _reading = await ReadAsync(run);
+                await _sprites.PrepareAsync();
             }
 
             if (_reading is not { } reading)
@@ -111,6 +126,7 @@ public sealed class CapBadge
 
             // El nivel del equipo se mira cada vuelta: sube en mitad de un combate y la barra lo sigue.
             Show(reading with { Highest = Highest() ?? reading.Highest });
+            ShowParty(_monitor.Latest is { Connected: true } live ? live.Party : []);
             Place(_window!, picture);
         }
         catch (Exception ex)
@@ -165,6 +181,94 @@ public sealed class CapBadge
         if (!window.IsVisible) window.Show();
     }
 
+    /// <summary>
+    /// The party under the cap (1.0.4.8): each Pokémon's icon from the player's own ROM, its level (amber at the cap) and
+    /// a small HP bar green, yellow or red as the game colours it; a fallen one greyed out with «KO». Rebuilt only when
+    /// something on it changes, so it costs nothing while the player walks.
+    /// </summary>
+    private void ShowParty(IReadOnlyList<LivePartyMember> party)
+    {
+        var cap = _reading?.Cap ?? int.MaxValue;
+        var key = cap + "|" + string.Join(";", party.Select(p => $"{p.Pid}:{p.Species}:{p.Form}:{p.Level}:{p.CurrentHp}/{p.MaxHp}"));
+        if (key == _partyKey)
+        {
+            return;
+        }
+
+        _partyKey = key;
+        _party.Children.Clear();
+
+        if (party.Count == 0)
+        {
+            return;
+        }
+
+        _party.Children.Add(new Border { Height = 1, Background = new SolidColorBrush(C("PxFaceLift")), Margin = new Thickness(0, 9, 0, 7) });
+        _party.Children.Add(new PixelText { Text = "EQUIPO", Scale = 1, Tight = true, Colour = C("PxTextDim"), Margin = new Thickness(0, 0, 0, 5) });
+
+        foreach (var member in party.OrderBy(p => p.Slot))
+        {
+            var fallen = member.IsFainted;
+            var share = member.MaxHp > 0 ? Math.Clamp(member.CurrentHp / (double)member.MaxHp, 0, 1) : 0;
+            var hpColour = share > 0.5 ? C("PxGood") : share > 0.2 ? C("PxWarn") : C("PxBad");
+
+            var sprite = new System.Windows.Controls.Image
+            {
+                Source = _sprites.Get(member.Species, member.Form, member.IsShiny),
+                Width = 40,
+                Height = 30,
+                Stretch = Stretch.Uniform,
+                Opacity = fallen ? 0.35 : 1,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            RenderOptions.SetBitmapScalingMode(sprite, BitmapScalingMode.NearestNeighbor);
+
+            var name = string.IsNullOrWhiteSpace(member.Nickname) ? member.SpeciesName : member.Nickname;
+            var level = new PixelText
+            {
+                Text = $"NV. {member.Level}",
+                Scale = 1,
+                Tight = true,
+                Colour = fallen ? C("PxTextFaint") : member.Level >= cap ? C("PxWarn") : C("PxText")
+            };
+
+            var info = new StackPanel { Margin = new Thickness(6, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center, Width = 108 };
+            var top = new DockPanel();
+            DockPanel.SetDock(level, Dock.Right);
+            top.Children.Add(level);
+            top.Children.Add(new PixelText
+            {
+                Text = name.Length > 10 ? name[..10] : name,
+                Scale = 1,
+                Tight = true,
+                Colour = fallen ? C("PxTextFaint") : C("PxTextDim")
+            });
+            info.Children.Add(top);
+
+            if (fallen)
+            {
+                info.Children.Add(new PixelText { Text = "KO", Scale = 1, Tight = true, Colour = C("PxBad"), Margin = new Thickness(0, 4, 0, 0) });
+            }
+            else
+            {
+                info.Children.Add(new PixelBar { Height = 10, Value = share, Fill = hpColour, Track = C("PxWell"), Margin = new Thickness(0, 4, 0, 0) });
+                info.Children.Add(new PixelText
+                {
+                    Text = $"{member.CurrentHp}/{member.MaxHp}",
+                    Scale = 1,
+                    Tight = true,
+                    Colour = C("PxTextFaint"),
+                    Margin = new Thickness(0, 3, 0, 0)
+                });
+            }
+
+            var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 2, 0, 2) };
+            row.Children.Add(sprite);
+            row.Children.Add(info);
+            _party.Children.Add(row);
+        }
+    }
+
     /// <summary>Top right of <paramref name="picture"/>, clear of its top edge and a little in from the side.</summary>
     private static void Place(Window window, (int Left, int Top, int Width, int Height) picture)
     {
@@ -200,7 +304,7 @@ public sealed class CapBadge
         {
             Margin = new Thickness(14, 11, 18, 15),
             MinWidth = 170,
-            Children = { head, new Border { Height = 8 }, _cap, new Border { Height = 8 }, _team, _bar, new Border { Height = 6 }, _next }
+            Children = { head, new Border { Height = 8 }, _cap, new Border { Height = 8 }, _team, _bar, new Border { Height = 6 }, _next, _party }
         };
 
         var window = new Window
