@@ -127,7 +127,7 @@ public sealed class CapBadge
 
             // El nivel del equipo se mira cada vuelta: sube en mitad de un combate y la barra lo sigue.
             Show(reading with { Highest = Highest() ?? reading.Highest });
-            ShowParty(_monitor.Latest is { Connected: true } live ? WithBattleHp(live.Party, _monitor.BattleNow) : []);
+            ShowParty(_monitor.Latest is { Connected: true } live ? Delayed(WithBattleHp(live.Party, _monitor.BattleNow)) : []);
             Place(_window!, picture);
         }
         catch (Exception ex)
@@ -288,6 +288,46 @@ public sealed class CapBadge
             var match = blocks.Where(block => block.Species == member.Species && block.MaxHp == member.MaxHp).ToList();
             return match.Count == 1 ? member with { CurrentHp = Math.Clamp(match[0].CurrentHp, 0, member.MaxHp) } : member;
         })];
+    }
+
+    /// <summary>How far behind the battle's own numbers the panel shows HP (1.0.4.9 bis).</summary>
+    /// <remarks>
+    /// The battle table changes when the game decides the hit, at «¡X ha usado Y!», before the attack's animation and the
+    /// game's own bar: shown at once, the panel spoiled the damage. Three seconds behind, it drops after the game's bar.
+    /// </remarks>
+    private static readonly TimeSpan HpDelay = TimeSpan.FromSeconds(3);
+
+    /// <summary>What each Pokémon's HP was <see cref="HpDelay"/> ago, by PID.</summary>
+    private readonly Dictionary<uint, Queue<(DateTime At, int Hp)>> _hpHistory = [];
+
+    /// <summary>Each member with the HP it had <see cref="HpDelay"/> ago, so the panel never runs ahead of the game.</summary>
+    private IReadOnlyList<LivePartyMember> Delayed(IReadOnlyList<LivePartyMember> party)
+    {
+        var now = DateTime.UtcNow;
+        var shown = new List<LivePartyMember>(party.Count);
+
+        foreach (var member in party)
+        {
+            if (!_hpHistory.TryGetValue(member.Pid, out var history))
+            {
+                _hpHistory[member.Pid] = history = new Queue<(DateTime, int)>();
+            }
+
+            if (history.Count == 0 || history.Last().Hp != member.CurrentHp)
+            {
+                history.Enqueue((now, member.CurrentHp));
+            }
+
+            // Se descartan los valores viejos dejando siempre el último que ya tiene más de tres segundos.
+            while (history.Count > 1 && now - history.ElementAt(1).At >= HpDelay)
+            {
+                history.Dequeue();
+            }
+
+            shown.Add(member with { CurrentHp = history.Peek().Hp });
+        }
+
+        return shown;
     }
 
     /// <summary>Top right of <paramref name="picture"/>, clear of its top edge and a little in from the side.</summary>
