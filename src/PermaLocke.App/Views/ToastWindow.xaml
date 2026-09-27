@@ -26,7 +26,24 @@
     <ItemsControl ItemsSource="{Binding Showing}" Width="440">
         <ItemsControl.ItemTemplate>
             <DataTemplate>
-                <Grid Width="440" Margin="0,8,0,0" HorizontalAlignment="Right">
+                <Grid HorizontalAlignment="Right">
+                <!-- LA PEQUEÑA (1.0.4.5): «X está jugando a PermaLocke», como la de un amigo en Steam. Sin pestaña ni cuenta atrás. -->
+                <Grid x:Name="Compact" Width="300" Margin="0,8,0,0" HorizontalAlignment="Right" Visibility="Collapsed">
+                    <views:ToastFrame Kind="{Binding Kind}" />
+                    <DockPanel Margin="12,12,18,14">
+                        <Border DockPanel.Dock="Left" Width="34" Height="34" Background="#FF09070E" Margin="0,0,10,0">
+                            <Image Source="{Binding Sprite}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
+                        </Border>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis"
+                                       FontFamily="{StaticResource DisplayFont}" FontSize="13" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextBrush}" />
+                            <TextBlock Text="{Binding Message}" FontSize="11.5" Margin="0,2,0,0" Foreground="#FF7CF096" />
+                        </StackPanel>
+                    </DockPanel>
+                </Grid>
+
+                <Grid x:Name="Full" Width="440" Margin="0,8,0,0" HorizontalAlignment="Right">
                     <!-- Entra a saltos desde la derecha, tres pasos: se abre como un cuadro de texto
                          de consola, no se desliza como una notificacion de sistema. -->
                     <Grid.RenderTransform>
@@ -102,8 +119,13 @@
                                    FontWeight="Bold" Foreground="#FF09070E" />
                     </Grid>
                 </Grid>
+                </Grid>
 
                 <DataTemplate.Triggers>
+                    <DataTrigger Binding="{Binding IsCompact}" Value="True">
+                        <Setter TargetName="Compact" Property="Visibility" Value="Visible" />
+                        <Setter TargetName="Full" Property="Visibility" Value="Collapsed" />
+                    </DataTrigger>
                     <EventTrigger RoutedEvent="FrameworkElement.Loaded">
                         <BeginStoryboard>
                             <Storyboard>

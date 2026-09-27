@@ -12696,3 +12696,11 @@ y entró vivo. El ciclo de un segundo llegaba tarde.
 - `FlagFallenInBattleAsync`: una vez por combate, si un bloque del jugador con PS lleva el PID de un caído
   (`BattleTableReader.ReadPokemon`), aviso `IntegrityFlag` `caidoEnCombate` solo para Admin. No se escribe en el combate (§53).
 - Sin probar jugando.
+
+## §209 · 1.0.4.5: «X está jugando a PermaLocke», aviso pequeño como el de Steam (2026-09-27)
+
+- `CommunityService.TellWhoStartedPlaying`: al leer la presencia (cada RefreshEvery), un amigo que pasa a `Playing` y no lo estaba
+  en la lectura anterior. Nada en la primera lectura. Solo con el juego abierto (`EmulatorLauncher.IsRunning`), así que
+  sale encima del emulador y nunca en la app. Foto de Discord del amigo si la hay.
+- `ToastKind.FriendPlaying` + `Toast.IsCompact`: tarjeta de 300 px (las otras 440) sin pestaña ni cuenta atrás, nombre y
+  «está jugando a PermaLocke» en verde. Ensayo `--ensayar-amigo` (junto a un aviso normal para comparar). Visto en captura.

@@ -43,5 +43,8 @@ public enum ToastKind
     Ghost,
 
     /// <summary>A new version is waiting while the game is open (§202): pinned until the game closes.</summary>
-    Update
+    Update,
+
+    /// <summary>A friend has just started playing (1.0.4.5): the small card, like Steam's, only over the emulator.</summary>
+    FriendPlaying
 }

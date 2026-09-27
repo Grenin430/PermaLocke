@@ -48,6 +48,7 @@ Cómo llega una versión nueva a los jugadores desde el 2026-09-26. Detalle téc
 | 1.0.4.2 | commit directo a main pedido por el usuario (2026-09-27), Action | ventana de actualización sin cortes y comprobación cada 3 min (§206). La 1.0.4.1 se instaló sola bien |
 | 1.0.4.3 | commit directo a main pedido por el usuario (2026-09-27), Action | comprobación cada minuto con espera al límite de GitHub (§207) |
 | 1.0.4.4 | commit directo a main pedido por el usuario (2026-09-27), Action | caído curado por la historia justo antes de un combate: vigilancia cada 500 ms y aviso en Admin (§208) |
+| 1.0.4.5 | commit directo a main pedido por el usuario (2026-09-27), Action | aviso pequeño de amigo que empieza a jugar, estilo Steam (§209) |
 
 **1.0.2 y 1.0.3 no pueden actualizarse solas** (§204: la descarga se desbordaba en el primer trozo). Quien las tenga,
 una vez a mano: cerrar PermaLocke y cambiar `PermaLocke.exe` por el del zip de la 1.0.4.

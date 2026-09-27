@@ -346,8 +346,43 @@ public sealed class CommunityService : INotifyPropertyChanged
         _lastAnnouncement = latest?.Id ?? 0;
     }
 
+    /// <summary>How each friend was last time, to see who has just started playing; null before the first read.</summary>
+    private Dictionary<Guid, PresenceState>? _lastStates;
+
+    /// <summary>
+    /// «X está jugando a PermaLocke», like a friend starting a game on Steam (1.0.4.5): small, only over the emulator, and
+    /// only for a friend who was not playing at the last read. Nothing at the first read, or everybody already playing
+    /// would pop up at once.
+    /// </summary>
+    private void TellWhoStartedPlaying(IReadOnlyList<FriendStatus> friends)
+    {
+        if (_lastStates is not null && _launcher.IsRunning)
+        {
+            foreach (var friend in friends.Where(f => f.State == PresenceState.Playing
+                                                      && _lastStates.GetValueOrDefault(f.PlayerId) != PresenceState.Playing))
+            {
+                _notifier.Say(ToastKind.FriendPlaying, friend.Name, "está jugando a PermaLocke", Photo(friend.Photo));
+            }
+        }
+
+        _lastStates = friends.ToDictionary(f => f.PlayerId, f => f.State);
+    }
+
+    private static System.Windows.Media.Imaging.BitmapSource? Photo(string? url)
+    {
+        try
+        {
+            return Uri.TryCreate(url, UriKind.Absolute, out var uri) ? new System.Windows.Media.Imaging.BitmapImage(uri) : null;
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
     private void Set(IReadOnlyList<FriendStatus> friends, IReadOnlyList<ClaimedAchievement> feed, string note)
     {
+        TellWhoStartedPlaying(friends);
         Friends = friends;
         Feed = feed;
         Note = note;

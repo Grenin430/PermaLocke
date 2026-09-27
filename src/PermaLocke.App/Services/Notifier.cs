@@ -32,6 +32,9 @@ public sealed record Toast(ToastKind Kind, string Title, string Message, BitmapS
 
     /// <summary>Stays until it is taken away (§202): no countdown and no timer.</summary>
     public bool IsPinned => Linger == Timeout.InfiniteTimeSpan;
+
+    /// <summary>The small card instead of the full one (1.0.4.5).</summary>
+    public bool IsCompact => Kind == ToastKind.FriendPlaying;
 }
 
 /// <summary>

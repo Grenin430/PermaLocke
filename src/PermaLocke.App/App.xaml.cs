@@ -523,6 +523,13 @@ public partial class App : Application
             }
         }
 
+        if (e.Args.Contains("--ensayar-amigo", StringComparer.OrdinalIgnoreCase))
+        {
+            // El aviso pequeño de un amigo que empieza a jugar (1.0.4.5), sin servidor ni juego.
+            _services!.GetRequiredService<Notifier>().Say(ToastKind.FriendPlaying, "Iñigo pero en móvil", "está jugando a PermaLocke");
+            _services!.GetRequiredService<Notifier>().Say(ToastKind.Info, "Aviso normal", "Para comparar el tamaño.");
+        }
+
         if (e.Args.Contains("--ensayar-lluvia", StringComparer.OrdinalIgnoreCase))
         {
             // La lluvia de sangre de un amigo que pierde el equipo (§184), sin servidor ni juego.
