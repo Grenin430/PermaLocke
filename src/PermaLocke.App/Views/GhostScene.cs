@@ -54,7 +54,7 @@ public sealed class GhostScene
         _ghostHeight = ghostHeight;
 
         var random = new Random(seed);
-        _motes = new (double, double, double)[40];
+        _motes = new (double, double, double)[70];
         for (var i = 0; i < _motes.Length; i++)
         {
             _motes[i] = (random.NextDouble(), 0.5 + random.NextDouble(), 4 + (random.NextDouble() * 14));
@@ -115,6 +115,16 @@ public sealed class GhostScene
         var leaving = t >= GhostTimeline.Leave ? (t - GhostTimeline.Leave) / (GhostTimeline.Length - GhostTimeline.Leave) : 0;
 
         Motes(t, cx, cy, leaving);
+
+        // Dos estelas del propio fantasma, más tenues cuanto más atrás, mientras se mueve.
+        if (!looking)
+        {
+            for (var echo = 2; echo >= 1; echo--)
+            {
+                var (ex, ey) = Centre(t - (echo * 0.14));
+                Ghost(t, ex, ey, false, leaving + ((1 - leaving) * (0.55 + (echo * 0.2))));
+            }
+        }
         Ghost(t, cx, cy, looking, leaving);
         Wisps(t, cx, cy, looking, leaving);
         Sparks(t, cx, cy, leaving);
@@ -132,7 +142,7 @@ public sealed class GhostScene
                 var edge = Math.Min(Math.Min(x, Columns - 1 - x) / (Columns * 0.18), Math.Min(y, Rows - 1 - y) / (Rows * 0.22));
                 if (edge >= 1) continue;
                 var band = Math.Floor((1 - edge) * 4) / 4;
-                Blend(x, y, 0x08, 0x10, 0x28, band * 0.42 * chill);
+                Blend(x, y, 0x10, 0x08, 0x02, band * 0.62 * chill);
             }
         }
     }
@@ -143,16 +153,16 @@ public sealed class GhostScene
         for (var layer = 0; layer < 3; layer++)
         {
             var speed = 3 + (layer * 2.5);
-            var top = Rows - 4 - (layer * 3);
+            var top = Rows - 3 - (layer * 5);
             for (var x = 0; x < Columns; x++)
             {
                 var wave = Math.Sin(((x + (t * speed)) * 0.21) + (layer * 1.7)) + Math.Sin(((x + (t * speed * 0.6)) * 0.07) + layer);
-                var height = 2 + (int)Math.Round((wave + 2) * 1.2);
+                var height = 4 + (int)Math.Round((wave + 2) * 2.2);
                 for (var dy = 0; dy < height; dy++)
                 {
                     var y = top + (layer * 2) + dy - height + 3;
                     if (y < 0 || y >= Rows) continue;
-                    Blend(x, y, 0xE0, 0xEC, 0xFF, (0.10 + (layer * 0.03)) * chill * (dy == 0 ? 0.6 : 1));
+                    Blend(x, y, 0xFF, 0xEE, 0xE0, (0.20 - (layer * 0.04)) * chill * (dy == 0 ? 0.5 : 1));
                 }
             }
         }
@@ -228,7 +238,7 @@ public sealed class GhostScene
             var angle = (t * 2.6) + (i * Math.PI);
             var x = cx + (Math.Cos(angle) * radius);
             var y = cy + (Math.Sin(angle) * radius * 0.45);
-            var size = looking ? 2 : 1;
+            var size = looking ? 3 : 2;
             var alpha = (1 - leaving) * (Math.Sin(angle) > 0 ? 1 : 0.55);
 
             for (var dy = -size; dy <= size; dy++)

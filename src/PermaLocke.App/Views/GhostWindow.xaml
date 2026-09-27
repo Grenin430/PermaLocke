@@ -16,6 +16,9 @@
         <Image x:Name="Rain" Visibility="Collapsed" Stretch="Fill" HorizontalAlignment="Left" VerticalAlignment="Top"
                RenderOptions.BitmapScalingMode="NearestNeighbor" />
 
+        <Image x:Name="Haunt" Visibility="Collapsed" Stretch="Fill" HorizontalAlignment="Left" VerticalAlignment="Top"
+               RenderOptions.BitmapScalingMode="NearestNeighbor" />
+
         <Canvas x:Name="Sky" ClipToBounds="True">
             <Image x:Name="Ghost" Opacity="0" Stretch="Fill" RenderOptions.BitmapScalingMode="NearestNeighbor" />
         </Canvas>

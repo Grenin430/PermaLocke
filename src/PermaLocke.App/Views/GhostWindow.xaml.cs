@@ -144,48 +144,58 @@ public partial class GhostWindow : Window
         Hide();
     }
 
+    /// <summary>
+    /// The ghost crossing (1.0.5): <see cref="GhostScene"/> painted on a grid of cells, the whole overlay, until it is gone.
+    /// </summary>
     private Task CrossAsync(BitmapSource ghost)
     {
-        var width = ActualWidth;
-        var height = ActualHeight;
+        var cell = CellFor(ActualHeight);
+        var columns = (int)Math.Ceiling(ActualWidth / cell);
+        var rows = (int)Math.Ceiling(ActualHeight / cell);
 
-        // Píxeles del sprite de tamaño entero: un fantasma estirado a trozos dejaría de ser pixel art.
-        var cell = CellFor(height);
-        var w = ghost.PixelWidth * cell;
-        var h = ghost.PixelHeight * cell;
-        var baseline = Snap((height * 0.42) - (h / 2), cell);
+        var bgra = new FormatConvertedBitmap(ghost, PixelFormats.Bgra32, null, 0);
+        var sprite = new byte[bgra.PixelWidth * bgra.PixelHeight * 4];
+        bgra.CopyPixels(sprite, bgra.PixelWidth * 4, 0);
 
-        Ghost.Source = ghost;
-        Ghost.Width = w;
-        Ghost.Height = h;
-        Ghost.Opacity = 1;
+        var scene = new GhostScene(columns, rows, sprite, bgra.PixelWidth, bgra.PixelHeight, Environment.TickCount);
+        var bitmap = new WriteableBitmap(columns, rows, 96, 96, PixelFormats.Pbgra32, null);
+        var whole = new Int32Rect(0, 0, columns, rows);
+
+        Haunt.Source = bitmap;
+        Haunt.Width = columns * cell;
+        Haunt.Height = rows * cell;
+        Haunt.Visibility = Visibility.Visible;
 
         var clock = Stopwatch.StartNew();
         var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        long lastStep = -1;
 
         void Frame(object? sender, EventArgs e)
         {
-            var t = clock.Elapsed.TotalMilliseconds / Crossing.TotalMilliseconds;
+            var t = clock.Elapsed.TotalSeconds;
 
-            if (t >= 1)
+            if (t >= GhostTimeline.Length)
             {
                 CompositionTarget.Rendering -= Frame;
-                Ghost.Opacity = 0;
+                Haunt.Visibility = Visibility.Collapsed;
+                Haunt.Source = null;
                 done.TrySetResult();
                 return;
             }
 
-            // A pasos de 45 ms: se mueve como un sprite de juego, no se desliza.
-            var stepped = Math.Floor(clock.Elapsed.TotalMilliseconds / 45) * 45 / Crossing.TotalMilliseconds;
-            Canvas.SetLeft(Ghost, Snap(width - ((width + w) * stepped), cell));
-            Canvas.SetTop(Ghost, baseline + ((clock.ElapsedMilliseconds / 300 % 2) * cell));
+            // A 30 imágenes por segundo: pixel art, no hace falta más.
+            var step = clock.ElapsedMilliseconds / 33;
+            if (step == lastStep) return;
+            lastStep = step;
+
+            scene.Render(t);
+            bitmap.WritePixels(whole, scene.Pixels, columns * 4, 0);
         }
 
-        Canvas.SetLeft(Ghost, Snap(width, cell));
-        Canvas.SetTop(Ghost, baseline);
         CompositionTarget.Rendering += Frame;
         return done.Task;
     }
+
 
     private static int CellFor(double height) => Math.Max(3, (int)Math.Round(height / 140));
 
