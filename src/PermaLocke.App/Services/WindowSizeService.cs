@@ -33,7 +33,9 @@ public sealed class WindowSizeService(AppPaths paths, ILogger<WindowSizeService>
     public static readonly IReadOnlyList<WindowSize> Sizes =
     [
         new("grande", "GRANDE", 1360, 860, "1360 × 860"),
-        new("enorme", "MUY GRANDE", 1560, 980, "1560 × 980")
+        new("enorme", "MUY GRANDE", 1560, 980, "1560 × 980"),
+        // Toda la pantalla menos la barra de tareas, sea cual sea (1.0.5.3). Lo que no cabe ya lo encoge Resize.
+        new("adaptar", "SE ADAPTA", double.PositiveInfinity, double.PositiveInfinity, "Toda tu pantalla")
     ];
 
     public static WindowSize Default => Sizes[0];
