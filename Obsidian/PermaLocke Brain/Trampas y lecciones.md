@@ -74,3 +74,4 @@ Errores ya cometidos en este proyecto, con el § donde se cuentan ([[Índice de 
 - Escalado de Windows: una celda pixel que se redondea hacia arriba hace el texto más ancho que el diseño (125 % → +20 %). Siempre `Floor`.
 - «No está en INFORMACIÓN» no era un fallo del generador: solo listaba lo que cambia el fixer. Preguntar qué se espera ver antes de dar una lista por completa.
 - **WPF: `Loaded` puede repetirse sin `Unloaded`** (volver a una sección). Suscribirse a `CompositionTarget.Rendering` en `Loaded` sin quitar antes duplica el manejador y la animación va x2/x3 (§210). Siempre `-=` antes de `+=`.
+- **Action: `LevelCapLiveTests` puede fallar una vez en GitHub** (servidor RPC falso, tiempos en la máquina de GitHub; ya va en la colección sin paralelo). Pasa en local: `gh run rerun <id> --failed` y publica (1.0.4.7, 2026-09-27).
