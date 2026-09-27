@@ -12727,3 +12727,11 @@ hacía. Lección en [[Trampas y lecciones]]. Sin reproducirlo a mano.
   (`TutorBan`); `battlePointShopReplaced` busca la tienda de PB de las playas en Shop.cro (0x54AA, 13 pares objeto-precio) y la
   pasa a Poké Ball a 1 PB. Probado generando un mundo.
 - **Gacha:** sin la racha exprés x2,5 del §189 (los jugadores la tomaban por un fallo); SALTAR sigue.
+
+## §212 · 1.0.4.8: el equipo en el panel del cap y casilla para quitarlo (2026-09-27)
+
+- `CapBadge.ShowParty`: bajo el cap, una fila por miembro del equipo en vivo (`GameLinkMonitor.Latest`): icono de la ROM
+  (variocolor si lo es), mote, nivel (ámbar en el cap), barra de PS verde/amarilla/roja y PS en número; caído en gris con
+  KO. Se rehace solo si algo cambia. `--ensayar-cap` enseña un equipo de ejemplo.
+- `AppSettingsData.CapPanel` + casilla «Cap de nivel encima del juego» en CONFIGURACIÓN: el interruptor de avisos no lo quitaba.
+- Sin verlo encima de Azahar.
