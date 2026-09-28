@@ -104,7 +104,7 @@ public sealed partial class AdminViewModel : ObservableObject
             new("TORNEO", "ANUNCIOS", "IconWarning", Announcements, "Un mensaje que ven todos en JUGAR."),
             new("VIGILANCIA", "AUDITORÍA", "IconCheck", Audit, "Cada run comprobada y los avisos de trampas."),
             new("VIGILANCIA", "INFORMES", "IconTools", Reports, "Los cierres de Azahar que mandan las apps."),
-            new("COMUNIDAD", "BUZÓN", "IconDocument", Suggestions, "Lo que escriben los jugadores en su buzón."),
+            new("COMUNIDAD", "BUZÓN", "IconMailbox", Suggestions, "Lo que escriben los jugadores en su buzón."),
             new("COMUNIDAD", "MOTES", "IconStar", Motes, "Las votaciones de motes, y anularlas."),
             new("SERVIDOR", "LISTA", "IconTick", Whitelist, "Quién puede entrar al torneo."),
             new("SERVIDOR", "CONSUMO", "IconChart", Usage, "Cuánto del plan gratis se usa."),

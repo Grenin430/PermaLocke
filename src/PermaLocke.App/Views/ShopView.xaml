@@ -213,7 +213,7 @@
         </DockPanel>
 
         <!-- CERRADA (2026-09-28): un velo negro que deja ver la tienda detrás y se traga los clics. -->
-        <Grid Grid.RowSpan="4" Background="#C8000000"
+        <Grid Grid.Row="2" Grid.RowSpan="2" Background="#C8000000"
               Visibility="{Binding IsClosed, Converter={StaticResource BoolToVisibility}}">
             <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
                 <views:PixelPanel Fill="#F0120E20" />

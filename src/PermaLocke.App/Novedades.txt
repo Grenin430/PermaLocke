@@ -1,3 +1,9 @@
+1.0.7.1
+TIENDA DE COMBATES
+Cuando el organizador la cierra, ahora se cierra de verdad y sin reiniciar: te llega en un par de minutos. Solo se cierra la pestaña COMBATE; las megapiedras y las hierbas siguen a la venta.
+BUZÓN
+El botón del buzón de sugerencias ahora es una carta, para que se vea qué es.
+
 1.0.7
 MOTES ENTRE TODOS
 Cuando capturas algo, arriba a la izquierda te pregunta si quieres que los demás le pongan el mote. Si dices que sí, al resto le sale una ventanita a la izquierda del juego: primero cada uno propone un nombre y luego se vota. El más votado se lo queda. Si está en tu equipo, el nombre cambia en el momento.

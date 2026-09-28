@@ -31,6 +31,9 @@ public sealed record ShopItem(int Id, string Name, int Price, string Category = 
     /// <summary>True when buying it changes a Pokémon's nature instead of putting something in the bag.</summary>
     public bool IsHerb => Nature is >= 0 and <= 24;
 
+    /// <summary>On the COMBATE counter: neither a herb nor a Mega Stone. The only counter the organiser can close (2026-09-28).</summary>
+    public bool IsBattle => !IsHerb && !string.Equals(Category, MegaStones, StringComparison.OrdinalIgnoreCase);
+
     /// <summary>True when buying it unlocks a move instead of putting something in the bag.</summary>
     public bool IsUnlock => UnlockMove > 0 && UnlockSpecies > 0;
 }

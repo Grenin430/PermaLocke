@@ -217,9 +217,9 @@ public sealed partial class RulesViewModel(DiscordLogin discord, AppPaths paths,
                 "resolution=merge-duplicates");
             logger.LogInformation("Tienda: abierta={Open}, abre en la prueba {Trial}", open, opensAtTrial);
 
-            return !open ? "Tienda CERRADA. A cada jugador se le cierra al reiniciar PermaLocke."
-                : opensAtTrial > 0 ? $"Tienda abierta a partir de la prueba {opensAtTrial}. Se aplica al reiniciar PermaLocke."
-                : "Tienda ABIERTA. Se aplica al reiniciar PermaLocke.";
+            return !open ? "Tienda de COMBATES cerrada (megapiedras y hierbas siguen). Les llega en unos 2 minutos, sin reiniciar."
+                : opensAtTrial > 0 ? $"Tienda de combates abierta a partir de la prueba {opensAtTrial}. Les llega en unos 2 minutos."
+                : "Tienda de combates ABIERTA. Les llega en unos 2 minutos.";
         }
         catch (Exception ex)
         {

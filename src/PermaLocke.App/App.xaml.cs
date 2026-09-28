@@ -501,7 +501,13 @@ public partial class App : Application
         // Las reglas oficiales del organizador, una vez al abrir; nunca en una copia para mirar pantallas.
         if (!e.Args.Contains("--sin-juego", StringComparer.OrdinalIgnoreCase))
         {
-            _ = _services.GetRequiredService<RulesSync>().SyncAsync();
+            var rules = _services.GetRequiredService<RulesSync>();
+            _ = rules.SyncAsync();
+
+            // Y cada dos minutos (1.0.7.1): cerrar la tienda de combates desde Admin llega sin reiniciar.
+            var rulesTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMinutes(2) };
+            rulesTimer.Tick += (_, _) => _ = rules.SyncAsync();
+            rulesTimer.Start();
         }
 
         if (!withoutGame)

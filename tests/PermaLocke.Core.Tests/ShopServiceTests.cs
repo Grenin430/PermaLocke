@@ -281,6 +281,12 @@ public sealed class ShopServiceTests
         Assert.Empty(bag.Given);
         Assert.NotNull(closed.ClosedReason(12));
 
+        // Solo COMBATE se cierra: una megapiedra se sigue vendiendo.
+        var stone = new ShopItem(656, "Gengarita", 100, ShopItem.MegaStones);
+        var closedWithStone = new ShopService(new ClosedCatalog(false, 0, Candy, stone), points, bag, log, clock);
+        Assert.True((await closedWithStone.BuyAsync(run, stone.Id)).Succeeded);
+        Assert.False((await closedWithStone.BuyAsync(run, Candy.Id)).Succeeded);
+
         var late = new ShopService(new ClosedCatalog(true, 6, Candy), points, bag, log, clock);
         Assert.Contains("6", late.ClosedReason(5));
         Assert.Null(late.ClosedReason(6));

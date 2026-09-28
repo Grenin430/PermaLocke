@@ -13,9 +13,40 @@ public sealed class JsonShopCatalog(IReadOnlyList<ShopItem> items, bool open = t
 {
     public IReadOnlyList<ShopItem> Items { get; } = items;
 
-    public bool Open { get; } = open;
+    private (bool Open, int Trial) _flags = (open, opensAtTrial);
+    private string? _path;
+    private DateTime _readAt;
 
-    public int OpensAtTrial { get; } = opensAtTrial;
+    /// <summary>
+    /// Read again whenever the file changes (2026-09-28): the organiser's rule arrives from the server after the app has
+    /// started, and the shop kept the old «abierta» until the next restart.
+    /// </summary>
+    public bool Open => Flags().Open;
+
+    public int OpensAtTrial => Flags().Trial;
+
+    private (bool Open, int Trial) Flags()
+    {
+        try
+        {
+            if (_path is not null && File.Exists(_path) && File.GetLastWriteTimeUtc(_path) != _readAt)
+            {
+                _readAt = File.GetLastWriteTimeUtc(_path);
+                using var stream = File.OpenRead(_path);
+                if (JsonSerializer.Deserialize<ShopFile>(stream) is { } file)
+                {
+                    _flags = (file.Open ?? true, Math.Max(0, file.OpensAtTrial ?? 0));
+                }
+            }
+        }
+        catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException)
+        {
+            // A medio escribir: se queda lo último leído y se prueba en la siguiente consulta.
+            _readAt = default;
+        }
+
+        return _flags;
+    }
 
     /// <summary>Empty when the file is missing, so the screen says so instead of inventing a shop.</summary>
     public static JsonShopCatalog Empty { get; } = new([]);
@@ -45,7 +76,7 @@ public sealed class JsonShopCatalog(IReadOnlyList<ShopItem> items, bool open = t
                     entry.Price,
                     string.IsNullOrWhiteSpace(entry.Category) ? ShopItem.Battle : entry.Category.Trim(),
                     entry.UnlockMove ?? 0, entry.UnlockSpecies ?? 0, entry.Nature ?? -1))
-        ], file.Open ?? true, Math.Max(0, file.OpensAtTrial ?? 0));
+        ], file.Open ?? true, Math.Max(0, file.OpensAtTrial ?? 0)) { _path = path, _readAt = File.GetLastWriteTimeUtc(path) };
     }
 
     private sealed record ShopFile(

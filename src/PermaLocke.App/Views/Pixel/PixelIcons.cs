@@ -353,6 +353,23 @@ public static class PixelIcons
             ".oooooooooo.",
         ],
 
+        // El buzón de sugerencias (1.0.7.1): una carta con su sello; el buzón con poste no se entendía.
+        ["IconMailbox"] =
+        [
+            "............",
+            "oooooooooooo",
+            "owwwwwwwwwwo",
+            "oWwwwwwwwwWo",
+            "owWwwwwwwWwo",
+            "owwWwwwwWwwo",
+            "owwwWrrWwwwo",
+            "owwwwrrwwwwo",
+            "owwwwwwwwwwo",
+            "oWWWWWWWWWWo",
+            "oooooooooooo",
+            "............",
+        ],
+
         // El rombo de los puntos.
         ["IconPoints"] =
         [

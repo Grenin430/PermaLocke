@@ -94,7 +94,7 @@ public sealed partial class ShopViewModel : SectionViewModel
 
     /// <summary>Which counter is on screen: <see cref="ShopItem.Battle"/>, <see cref="ShopItem.MegaStones"/> or <see cref="ShopItem.Herbs"/>.</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ShowingBattle), nameof(ShowingMegaStones), nameof(ShowingHerbs))]
+    [NotifyPropertyChangedFor(nameof(ShowingBattle), nameof(ShowingMegaStones), nameof(ShowingHerbs), nameof(IsClosed))]
     private string _counter = ShopItem.Battle;
 
     public bool ShowingBattle => Counter == ShopItem.Battle;
@@ -186,7 +186,8 @@ public sealed partial class ShopViewModel : SectionViewModel
     [NotifyPropertyChangedFor(nameof(IsClosed))]
     private string _closed = string.Empty;
 
-    public bool IsClosed => Closed.Length > 0;
+    /// <summary>The veil, only over COMBATE: Mega Stones and herbs stay open (the organiser asked).</summary>
+    public bool IsClosed => Closed.Length > 0 && ShowingBattle;
 
     [ObservableProperty]
     private string _status = string.Empty;
@@ -303,7 +304,7 @@ public sealed partial class ShopViewModel : SectionViewModel
             return;
         }
 
-        if (Closed.Length > 0)
+        if (Closed.Length > 0 && card.Item.IsBattle)
         {
             Problem = Closed;
             return;

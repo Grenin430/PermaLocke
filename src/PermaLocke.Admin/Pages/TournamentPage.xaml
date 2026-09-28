@@ -24,7 +24,7 @@
             <pixel:PixelWindow Title="TIENDA DE COMBATES" Icon="IconShop">
                 <StackPanel>
                     <TextBlock TextWrapping="Wrap" Foreground="{StaticResource Muted}"
-                               Text="La TIENDA de la app de cada jugador. Cerrada, sale tapada con «NO DISPONIBLE». Se sube como regla oficial y se aplica cuando cada uno reinicia PermaLocke." />
+                               Text="Solo la pestaña COMBATE de la TIENDA de cada jugador: megapiedras y hierbas siguen a la venta. Cerrada, sale tapada con «NO DISPONIBLE». Les llega en unos 2 minutos, sin reiniciar." />
                     <UniformGrid Columns="2" Margin="0,14,0,0">
                         <Button Content="CERRAR" Click="OnShopClose" Margin="0,0,6,0" ToolTip="Nadie puede comprar. Pregunta antes." />
                         <Button Content="ABRIR A TODOS" Style="{StaticResource Primary}" Click="OnShopOpen" Margin="6,0,0,0"
