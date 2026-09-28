@@ -172,6 +172,18 @@ public sealed class BagService(
         }
     }
 
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<int, DateTime> _ownWrites = new();
+
+    /// <summary>When PermaLocke itself last wrote an item (returned balls, shop, gifts): not something the player picked up.</summary>
+    public DateTime LastOwnWrite(int itemId) => _ownWrites.GetValueOrDefault(itemId, DateTime.MinValue);
+
+    /// <summary>
+    /// The bag's contents only if it is already located and still valid, else null: never sweeps (2026-09-28, the item
+    /// animation reads it every couple of seconds, and a sweep is what brings Azahar down).
+    /// </summary>
+    public IReadOnlyList<BagSlot>? ReadKnown() =>
+        _block is { } block && _locator.StillValid(block) ? _locator.ReadContents(block) : null;
+
     /// <summary>Everything the player is carrying, or an empty list if the bag is not found.</summary>
     public IReadOnlyList<BagSlot> Read(CancellationToken ct = default) =>
         Locate(ct) is { } block ? _locator.ReadContents(block) : [];
@@ -240,6 +252,7 @@ public sealed class BagService(
             entry = new BagEntry(itemId, wanted, 0, false);
         }
 
+        _ownWrites[itemId] = DateTime.UtcNow;
         if (!writer.SetBagSlot(address, entry))
         {
             return new BagWriteResult(BagWriteOutcome.NotApplied, itemId, previous, previous, address);

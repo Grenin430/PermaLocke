@@ -600,6 +600,15 @@ public partial class App : Application
             }
         }
 
+        if (e.Args.Contains("--ensayar-objeto", StringComparer.OrdinalIgnoreCase))
+        {
+            // Objetos saltando a la mochila (2026-09-28): una Poción ×5, una MT y un Caramelo Raro, sin tocar nada.
+            var ceremony = _services!.GetRequiredService<CatchCeremony>();
+            ceremony.CelebrateItem(17, 5);
+            ceremony.CelebrateItem(328, 1);
+            ceremony.CelebrateItem(50, 1);
+        }
+
         if (e.Args.Contains("--ensayar-killcam", StringComparer.OrdinalIgnoreCase))
         {
             await RehearseKillcamAsync(paths, logger);

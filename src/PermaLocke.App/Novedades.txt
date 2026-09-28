@@ -1,3 +1,10 @@
+1.0.7.7
+MOTES ENTRE TODOS
+El inicial ya no pregunta por el mote.
+La pregunta del mote espera a que salgas de los menús de después de capturar: sale cuando das el primer paso.
+OBJETOS A LA MOCHILA
+Cuando coges un objeto del suelo, una MT, lo compras o te lo regalan, sale una mochila pequeña al lado de la pantalla de abajo y el objeto se mete dentro con su nombre.
+
 1.0.7.6
 ARREGLOS
 En COMPETICIÓN ya salen las fotos de perfil en el podio.

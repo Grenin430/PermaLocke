@@ -192,6 +192,19 @@ public sealed class FieldZoneReader(AzaharRpcClient client, SavedGameCache saved
         }
     }
 
+    /// <summary>
+    /// Whether the player has walked since a moment (2026-09-28): the post-capture menus (name, party or PC, summary) and
+    /// the battle never move the player, so a step means they are all closed. Reads only the known records, never searches.
+    /// </summary>
+    public bool MovedSince(DateTimeOffset since)
+    {
+        lock (_gate)
+        {
+            ReadTracked(_records, _time.GetUtcNow());
+            return _records.Any(address => _motion.TryGetValue(address, out var seen) && seen.LastMove > since);
+        }
+    }
+
     /// <summary>How recently a record must have moved twice to count as the one following the player.</summary>
     public static readonly TimeSpan WalkingWindow = TimeSpan.FromSeconds(5);
 

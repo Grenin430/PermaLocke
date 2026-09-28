@@ -47,6 +47,7 @@ public sealed class NicknameVoteService
     private readonly IRunContext _runs;
     private readonly ILogger<NicknameVoteService> _logger;
     private readonly PermaLocke.GameLink.LiveBoxRenamer _boxRenamer;
+    private readonly PermaLocke.GameLink.Field.FieldZoneReader _field;
 
     /// <summary>Encryption constant of each Pokémon offered this session, by PID: what finds it in a box in memory.</summary>
     private readonly System.Collections.Concurrent.ConcurrentDictionary<uint, uint> _encryption = new();
@@ -62,9 +63,11 @@ public sealed class NicknameVoteService
 
     public NicknameVoteService(DiscordLogin discord, PokemonSpriteService sprites, Notifier notifier, RenameService rename,
         GameLinkMonitor monitor, IBoxReader boxes, IRunContext runs, PermaLocke.GameLink.LiveBoxRenamer boxRenamer,
+        PermaLocke.GameLink.Field.FieldZoneReader field,
         ILogger<NicknameVoteService> logger)
     {
         _boxRenamer = boxRenamer;
+        _field = field;
         _discord = discord;
         _sprites = sprites;
         _notifier = notifier;
@@ -102,7 +105,39 @@ public sealed class NicknameVoteService
 
         _encryption[pokemon.PID] = pokemon.EncryptionConstant;
 
-        _ = _timer.Dispatcher.InvokeAsync(async () =>
+        _ = Task.Run(async () =>
+        {
+            await WaitOutOfMenusAsync();
+            await _timer.Dispatcher.InvokeAsync(() => AskAsync(pokemon)).Task.Unwrap();
+        });
+    }
+
+    private static readonly TimeSpan MenusAtMost = TimeSpan.FromSeconds(90);
+
+    /// <summary>
+    /// Until the player takes a step (2026-09-28, asked by the organiser): after a capture come the nickname prompt, party or
+    /// PC, the summary and back, and none of them moves the player, so the first step means they are all closed. Looking
+    /// at the summary and going back does not count. Gives up after <see cref="MenusAtMost"/> for someone standing still.
+    /// </summary>
+    private async Task WaitOutOfMenusAsync()
+    {
+        var since = DateTimeOffset.UtcNow;
+        while (DateTimeOffset.UtcNow - since < MenusAtMost)
+        {
+            await Task.Delay(500);
+            try
+            {
+                if (_field.MovedSince(since)) return;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "No se pudo mirar si el jugador se ha movido");
+            }
+        }
+    }
+
+    private async Task AskAsync(PKHeX.Core.PK7 pokemon)
+    {
         {
             await _sprites.PrepareAsync();
             var ask = new NicknameVoteViewModel(NicknameStage.Ask, pokemon.Nickname,
@@ -116,7 +151,7 @@ public sealed class NicknameVoteService
             };
             ask.Expired += (_, _) => window.Close();
             window.Show();
-        });
+        }
     }
 
     /// <summary>The four windows one after another with made-up names, for <c>--ensayar-mote</c>. Nothing is sent.</summary>

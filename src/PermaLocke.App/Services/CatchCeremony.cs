@@ -21,10 +21,11 @@ namespace PermaLocke.App.Services;
 /// </para>
 /// </remarks>
 public sealed class CatchCeremony(IUiDispatcher ui, SaveBoxReader boxes, TcgCardFactory cards, KillcamRecorder killcam,
+    PokemonSpriteService sprites, IItemLookup items,
     ILogger<CatchCeremony> logger)
 {
     /// <summary>Cards waiting their turn. Only touched on the UI thread.</summary>
-    private readonly Queue<TcgCard> _waiting = new();
+    private readonly Queue<object> _waiting = new();
 
     private bool _playing;
     private CatchWindow? _window;
@@ -55,6 +56,39 @@ public sealed class CatchCeremony(IUiDispatcher ui, SaveBoxReader boxes, TcgCard
             catch (Exception ex)
             {
                 logger.LogError(ex, "No se pudo hacer la carta del Pokémon nuevo");
+                return;
+            }
+
+            if (!_playing)
+            {
+                await PlayAllAsync();
+            }
+        });
+    }
+
+    /// <summary>
+    /// An item the player just got (2026-09-28): off the floor, bought or given. Its icon from the cartridge jumps into a
+    /// bag over the game, in the same queue as the cards. Safe to call from any thread.
+    /// </summary>
+    public void CelebrateItem(int itemId, int amount)
+    {
+        if (!Enabled) return;
+
+        _ = ui.InvokeAsync(async () =>
+        {
+            try
+            {
+                await sprites.PrepareAsync();
+                var name = items.GetName(itemId).ToUpperInvariant();
+
+                var (icon, width, height) = sprites.GetItem(itemId) is { } bitmap
+                    ? (CemeteryScene.Pixels(bitmap), bitmap.PixelWidth, bitmap.PixelHeight)
+                    : ItemScene.Parcel();
+                _waiting.Enqueue(new ItemScene.Item(icon, width, height, name, amount));
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "No se pudo preparar la animación del objeto {Item}", itemId);
                 return;
             }
 
@@ -122,7 +156,17 @@ public sealed class CatchCeremony(IUiDispatcher ui, SaveBoxReader boxes, TcgCard
         {
             while (_waiting.Count > 0)
             {
-                var card = _waiting.Dequeue();
+                var next = _waiting.Dequeue();
+                if (next is ItemScene.Item item)
+                {
+                    var (corner, itemPixel) = BesideBottomScreen();
+                    logger.LogInformation("Objeto a la mochila: {Item} ×{Amount}", item.Name, item.Amount);
+                    _window ??= new CatchWindow();
+                    await _window.PlayAsync(item, corner, itemPixel);
+                    continue;
+                }
+
+                var card = (TcgCard)next;
                 var front = TcgCardArt.Render(card, TcgLayout.Full);
                 var back = TcgCardArt.Render(card, TcgLayout.Full, back: true);
                 var (box, pixel) = TopScreen();
@@ -143,6 +187,29 @@ public sealed class CatchCeremony(IUiDispatcher ui, SaveBoxReader boxes, TcgCard
             _window?.Hide();
             killcam.CoverEnds();
         }
+    }
+
+    /// <summary>
+    /// Where the item animation goes (2026-09-28, where the organiser drew it): in the dark band left of the bottom screen,
+    /// centred in it and level with the middle of that screen, at the game's own pixel size, smaller if the band is narrow.
+    /// Without the emulator, the bottom-left of the desktop.
+    /// </summary>
+    private static ((int Left, int Top) Corner, double Pixel) BesideBottomScreen()
+    {
+        var handle = GameWindow.Handle();
+        if (GameWindow.RenderBox(handle) is { } render && GameWindow.TopScreen(handle) is { } top)
+        {
+            var bottomLeft = top.Left + (40 * top.Scale);
+            var band = bottomLeft - render.Left;
+            var pixel = Math.Max(1, Math.Min(top.Scale, band * 0.9 / ItemScene.SceneWidth));
+            var width = ItemScene.SceneWidth * pixel;
+            var height = ItemScene.SceneHeight * pixel;
+            var middle = top.Top + (360 * top.Scale);
+            return (((int)Math.Round(render.Left + ((band - width) / 2)), (int)Math.Round(middle - (height / 2))), pixel);
+        }
+
+        var area = OverlayWindows.WorkArea();
+        return ((area.Left + 24, area.Top + area.Height - (ItemScene.SceneHeight * 3) - 24), 3);
     }
 
     /// <summary>

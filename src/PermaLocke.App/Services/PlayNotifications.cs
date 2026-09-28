@@ -47,8 +47,11 @@ public sealed class PlayNotifications
         monitor.NewcomerArrived += (_, pokemon) =>
         {
             catches.CelebrateNewcomer(pokemon);
-            votes.Offer(pokemon);
+            if (!monitor.IsStarter(pokemon.PID)) votes.Offer(pokemon);
         };
+
+        // Un objeto del suelo, comprado o regalado salta a la mochila encima del juego (2026-09-28).
+        monitor.ItemGained += (_, item) => catches.CelebrateItem(item.ItemId, item.Amount);
 
         balls.FirstBallDetected += (_, _) => notifier.Say(
             ToastKind.Info, "¡Primeras Poké Balls!",

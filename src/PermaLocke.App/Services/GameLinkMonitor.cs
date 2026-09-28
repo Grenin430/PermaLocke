@@ -39,7 +39,8 @@ public sealed class GameLinkMonitor(
     PermaLocke.Rules.Services.BallControlService balls,
     IntegrityService integrity,
     RulesConfiguration rules,
-    PermaLocke.GameLink.Field.BerryPileKeeper berries) : IDisposable
+    PermaLocke.GameLink.Field.BerryPileKeeper berries,
+    PermaLocke.GameLink.BagService bag) : IDisposable
 {
     /// <summary>
     /// How often the game is polled.
@@ -234,8 +235,56 @@ public sealed class GameLinkMonitor(
     private readonly Dictionary<uint, (int Ability, int Nature, (int Ability, int Nature, DateTimeOffset At)? Before)> _seen = [];
     private DateTimeOffset _rerollCheckedAt = DateTimeOffset.MinValue;
 
+    /// <summary>An item the player got in the game (floor, shop, gift) and how many: id, amount.</summary>
+    public event EventHandler<(int ItemId, int Amount)>? ItemGained;
+
+    /// <summary>What the bag held at the last look, by item; null until it is read (and after a failed read).</summary>
+    private Dictionary<int, int>? _carried;
+
+    /// <summary>
+    /// Compares the bag with the last look (2026-09-28, the item animation). Only the bag already located, never a sweep.
+    /// What PermaLocke wrote itself (balls given back, the shop, gifts from Admin) and balls held back are left out, and
+    /// so is a jump of many items at once: that is a reload or another save, not something picked up.
+    /// </summary>
+    private void WatchBag(Run run)
+    {
+        if (bag.ReadKnown() is not { } slots)
+        {
+            _carried = null;
+            return;
+        }
+
+        var now = slots.Where(slot => slot.Entry.ItemId > 0 && slot.Entry.Count > 0)
+            .GroupBy(slot => slot.Entry.ItemId)
+            .ToDictionary(group => group.Key, group => group.Sum(slot => slot.Entry.Count));
+
+        if (_carried is { } before)
+        {
+            var gained = now.Select(pair => (ItemId: pair.Key, Amount: pair.Value - before.GetValueOrDefault(pair.Key)))
+                .Where(item => item.Amount > 0
+                    && DateTime.UtcNow - bag.LastOwnWrite(item.ItemId) > TimeSpan.FromSeconds(15)
+                    && bag.Owed(run.Id, item.ItemId) == 0)
+                .ToList();
+
+            if (gained.Count is > 0 and <= 4)
+            {
+                foreach (var item in gained)
+                {
+                    logger.LogInformation("Objeto nuevo en la mochila: {Item} ×{Amount}", item.ItemId, item.Amount);
+                    Announce(() => ItemGained?.Invoke(this, item));
+                }
+            }
+        }
+
+        _carried = now;
+    }
+
     /// <summary>Party members seen as eggs, by PID, to tell when one hatches.</summary>
     private readonly HashSet<uint> _eggs = [];
+    private readonly HashSet<uint> _starters = [];
+
+    /// <summary>Whether a Pokémon was registered as the starter: alone in the party when it was registered.</summary>
+    public bool IsStarter(uint pid) => _starters.Contains(pid);
 
     /// <summary>
     /// Flags an Ability Capsule (or anything else) used and undone by reloading without saving (2026-09-28): a party
@@ -261,6 +310,15 @@ public sealed class GameLinkMonitor(
         catch (Exception ex)
         {
             logger.LogWarning(ex, "No se pudieron mirar los montones de bayas");
+        }
+
+        try
+        {
+            WatchBag(run);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "No se pudo mirar la mochila");
         }
 
         foreach (var member in snapshot.Party)
@@ -340,7 +398,7 @@ public sealed class GameLinkMonitor(
         // aparece ya caido se cuenta en el mismo ciclo en vez de no contarse nunca. Solo se vuelve
         // a preguntar si de verdad se registro algo.
         if (findings.NewMembers.Count > 0
-            && await RegisterNewMembersAsync(run, findings.NewMembers) > 0)
+            && await RegisterNewMembersAsync(run, findings.NewMembers, snapshot.Party.Count) > 0)
         {
             changed = true;
             findings = await watcher.InspectAsync(run.Id, snapshot, _stopping.Token);
@@ -644,7 +702,7 @@ public sealed class GameLinkMonitor(
     /// </para>
     /// </remarks>
     /// <returns>How many were actually registered.</returns>
-    private async Task<int> RegisterNewMembersAsync(Run run, IReadOnlyList<LivePartyMember> members)
+    private async Task<int> RegisterNewMembersAsync(Run run, IReadOnlyList<LivePartyMember> members, int partySize)
     {
         var registered = 0;
 
@@ -669,6 +727,10 @@ public sealed class GameLinkMonitor(
                 if (result.Registered)
                 {
                     registered++;
+
+                    // Solo en el equipo cuando se registra = el inicial: se registra con la primera Poké Ball y no lleva
+                    // votación de mote (2026-09-28, lo pidió el organizador).
+                    if (partySize == 1) _starters.Add(member.Pid);
 
                     // La carta al álbum, con el Pokémon leído del equipo en vivo por su PID.
                     var read = provider.AllLayouts.Select(layout => writer.Read(layout.SlotAddress(member.Slot)))

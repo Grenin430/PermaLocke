@@ -36,25 +36,28 @@ public sealed class CatchWindow : Window
         OverlayWindows.MakeUntouchable(this);
     }
 
-    /// <summary>Plays the whole thing over a box of monitor pixels. Completes when nothing is left on screen.</summary>
-    /// <param name="pixel">Monitor pixels per pixel of the game.</param>
-    public Task PlayAsync(TcgRender front, TcgRender back, TcgCard card, (int Left, int Top, int Width, int Height) box, double pixel)
+    /// <summary>An item going into the bag (2026-09-28), in the same window: one animation over the game at a time.</summary>
+    public Task PlayAsync(ItemScene.Item item, (int Left, int Top) corner, double pixel)
     {
-        var scene = new CatchScene(box.Width, box.Height, pixel);
-        var bitmap = new WriteableBitmap(scene.Width, scene.Height, 96, 96, PixelFormats.Pbgra32, null);
-        var whole = new Int32Rect(0, 0, scene.Width, scene.Height);
+        var scene = new ItemScene(pixel);
+        var box = (corner.Left, corner.Top, scene.Width, scene.Height);
+        return Run(box, scene.Width, scene.Height, t => scene.Render(item, t), () => scene.Pixels, ItemTimeline.Length);
+    }
+
+    private Task Run((int Left, int Top, int Width, int Height) box, int width, int height, Action<double> render,
+        Func<byte[]> pixels, double length)
+    {
+        var bitmap = new WriteableBitmap(width, height, 96, 96, PixelFormats.Pbgra32, null);
+        var whole = new Int32Rect(0, 0, width, height);
 
         OverlayWindows.PlaceOver(this, box);
-        if (!IsVisible)
-        {
-            Show();
-        }
-
+        if (!IsVisible) Show();
         OverlayWindows.PlaceOver(this, box);
+
         var dpi = VisualTreeHelper.GetDpi(this);
         _image.Source = bitmap;
-        _image.Width = scene.Width / dpi.DpiScaleX;
-        _image.Height = scene.Height / dpi.DpiScaleY;
+        _image.Width = width / dpi.DpiScaleX;
+        _image.Height = height / dpi.DpiScaleY;
 
         var clock = Stopwatch.StartNew();
         var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -64,8 +67,8 @@ public sealed class CatchWindow : Window
             var t = clock.Elapsed.TotalSeconds;
             try
             {
-                scene.Render(front, back, card, t);
-                bitmap.WritePixels(whole, scene.Pixels, scene.Width * 4, 0);
+                render(t);
+                bitmap.WritePixels(whole, pixels(), width * 4, 0);
             }
             catch (Exception ex)
             {
@@ -74,7 +77,7 @@ public sealed class CatchWindow : Window
                 return;
             }
 
-            if (t >= CatchTimeline.Length)
+            if (t >= length)
             {
                 CompositionTarget.Rendering -= Frame;
                 done.TrySetResult();
@@ -83,5 +86,13 @@ public sealed class CatchWindow : Window
 
         CompositionTarget.Rendering += Frame;
         return done.Task;
+    }
+
+    /// <summary>Plays the whole thing over a box of monitor pixels. Completes when nothing is left on screen.</summary>
+    /// <param name="pixel">Monitor pixels per pixel of the game.</param>
+    public Task PlayAsync(TcgRender front, TcgRender back, TcgCard card, (int Left, int Top, int Width, int Height) box, double pixel)
+    {
+        var scene = new CatchScene(box.Width, box.Height, pixel);
+        return Run(box, scene.Width, scene.Height, t => scene.Render(front, back, card, t), () => scene.Pixels, CatchTimeline.Length);
     }
 }
