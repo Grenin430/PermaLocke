@@ -234,6 +234,7 @@ public sealed class GameLinkMonitor(
     /// <summary>What each party Pokémon was last seen as, and the change it went through, by PID (2026-09-28).</summary>
     private readonly Dictionary<uint, (int Ability, int Nature, (int Ability, int Nature, DateTimeOffset At)? Before)> _seen = [];
     private DateTimeOffset _rerollCheckedAt = DateTimeOffset.MinValue;
+    private DateTimeOffset _bagCheckedAt = DateTimeOffset.MinValue;
 
     /// <summary>An item the player got in the game (floor, shop, gift) and how many: id, amount.</summary>
     public event EventHandler<(int ItemId, int Amount)>? ItemGained;
@@ -312,15 +313,6 @@ public sealed class GameLinkMonitor(
             logger.LogWarning(ex, "No se pudieron mirar los montones de bayas");
         }
 
-        try
-        {
-            WatchBag(run);
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "No se pudo mirar la mochila");
-        }
-
         foreach (var member in snapshot.Party)
         {
             var pokemon = provider.AllLayouts.Select(layout => writer.Read(layout.SlotAddress(member.Slot)))
@@ -379,6 +371,20 @@ public sealed class GameLinkMonitor(
         if (!snapshot.Connected || runContext.Current is not { } run)
         {
             return;
+        }
+
+        // La mochila, también antes de la primera Poké Ball: los primeros objetos del suelo llegan antes (1.0.7.8).
+        if (clock.Now - _bagCheckedAt >= TimeSpan.FromSeconds(5))
+        {
+            _bagCheckedAt = clock.Now;
+            try
+            {
+                WatchBag(run);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "No se pudo mirar la mochila");
+            }
         }
 
         // Hasta la primera Poke Ball no se registra ni se cuenta nada: ni capturas ni muertes (§150). La regla

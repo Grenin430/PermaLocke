@@ -1,3 +1,8 @@
+1.0.7.8
+ARREGLOS
+Wimpod, Golisopod y Crabominable ya salen con su dibujo: estaban cruzados entre ellos.
+La animación de los objetos sale también con los primeros objetos, antes de tener Poké Balls.
+
 1.0.7.7
 MOTES ENTRE TODOS
 El inicial ya no pregunta por el mote.

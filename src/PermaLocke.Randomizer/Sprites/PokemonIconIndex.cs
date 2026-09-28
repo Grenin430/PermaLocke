@@ -208,7 +208,7 @@ public static class PokemonIconIndex
         [731] = 1013,  [732] = 1014,  [733] = 1015,     // Pikipek Trumbeak Toucannon
         [734] = 1069,  [735] = 1070,  [736] = 1084,     // Yungoos Gumshoos Grubbin
         [737] = 1085,  [738] = 1086,  [739] = 1112,     // Charjabug Vikavolt Crabrawler
-        [740] = 1127,  [741] = 1066,  [742] = 1081,     // Crabominable Oricorio Cutiefly
+        [740] = 1113,  [741] = 1066,  [742] = 1081,     // Crabominable Oricorio Cutiefly
         [743] = 1082,  [744] = 1072,  [745] = 1074,     // Ribombee Rockruff Lycanroc
         [746] = 1033,  [747] = 1006,  [748] = 1007,     // Wishiwashi Mareanie Toxapex
         [749] = 1088,  [750] = 1089,  [751] = 1100,     // Mudbray Mudsdale Dewpider
@@ -217,7 +217,7 @@ public static class PokemonIconIndex
         [758] = 1011,  [759] = 1103,  [760] = 1104,     // Salazzle Stufful Bewear
         [761] = 1018,  [762] = 1019,  [763] = 1021,     // Bounsweet Steenee Tsareena
         [764] = 1116,  [765] = 1016,  [766] = 1017,     // Comfey Oranguru Passimian
-        [767] = 1113,  [768] = 1126,  [769] = 1035,     // Wimpod Golisopod Sandygast
+        [767] = 1126,  [768] = 1127,  [769] = 1035,     // Wimpod Golisopod Sandygast (los tres cruzados con Crabominable hasta el 2026-09-28)
         [770] = 1036,  [771] = 1034,  [772] = 1114,     // Palossand Pyukumuku Type: Null
         [773] = 1115,  [774] = 1043,  [775] = 1023,     // Silvally Minior Komala
         [776] = 1105,  [777] = 1110,  [778] = 1028,     // Turtonator Togedemaru Mimikyu
