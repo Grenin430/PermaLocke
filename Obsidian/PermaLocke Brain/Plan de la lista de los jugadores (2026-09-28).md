@@ -85,3 +85,11 @@ acabar la lista entera**, salvo que él diga expresamente que se publique. Lo de
   voto nulo). COLA en el servidor: trigger `motes_en_cola` (bloqueo advisory) pone `empieza` = fin de la anterior + 9 s;
   tramos 3 s / 15 s proponer / 15 s votar / 8 s resultado. La pregunta al que captura va aparte, arriba a la izquierda.
   Re-ejecutar 20-motes.sql. Colas de muertes revisadas: ceremonia propia y fantasmas encolan bien.
+- PENDIENTE (no hecho, lo pidió aparcar): velocidad del emulador. En `PermaLocke prueba\Emulator\user\config\qt-config.ini`
+  vuelve `frame_limit=0` (sin límite) y el juego va al máximo; Azahar lo reescribe al cerrar. Arreglo pensado:
+  `AzaharInstallation.EnsureNormalSpeed` (frame_limit=100, frame_limit\default=true en [Renderer]) llamado desde
+  `EmulatorLauncher.Launch` junto a `DisableDiscordPresence`. A mano mientras: esos dos valores con Azahar cerrado.
+- 1.0.7.3: quien captura ve su votación (proponer y votar como espectador, votos en directo) y el ganador a la vez que
+  todos (`FollowAsync(row, mine)`, `NicknameVoteViewModel.IsWatching`). Mote en directo también en caja:
+  `LiveBoxRenamer` busca UNA vez el EC en claro (+2 bytes a cero) en el heap, descifra, comprueba PID y checksum y
+  escribe solo el bloque guardado; el EC se guarda al ofrecer (solo en esa sesión de la app). SIN PROBAR en juego.

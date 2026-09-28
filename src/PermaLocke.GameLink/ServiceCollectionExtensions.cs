@@ -103,6 +103,7 @@ public static class ServiceCollectionExtensions
             sp.GetRequiredService<ILogger<Field.FieldZoneReader>>()));
         services.TryAddSingleton<IZoneProvider>(sp => sp.GetRequiredService<Field.FieldZoneReader>());
         services.TryAddSingleton<Field.BattleCounterReader>();
+        services.TryAddSingleton<LiveBoxRenamer>();
         // Montones de bayas de una vez por run (2026-09-28): la lista de los ya cogidos va junto a las copias.
         services.TryAddSingleton(sp => new Field.BerryPileKeeper(
             sp.GetRequiredService<AzaharRpcClient>(),

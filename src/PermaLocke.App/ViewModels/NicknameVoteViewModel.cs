@@ -46,9 +46,11 @@ public sealed partial class NicknameOption(string name, IRelayCommand pick) : Ob
 public sealed partial class NicknameVoteViewModel : ObservableObject
 {
     public NicknameVoteViewModel(NicknameStage stage, string pokemon, BitmapSource? sprite, DateTimeOffset ends,
-        string owner = "", IReadOnlyList<string>? options = null, string result = "", DateTimeOffset? starts = null)
+        string owner = "", IReadOnlyList<string>? options = null, string result = "", DateTimeOffset? starts = null,
+        bool watching = false)
     {
         Stage = stage;
+        IsWatching = watching;
         Pokemon = pokemon.ToUpperInvariant();
         Sprite = sprite;
         Ends = ends;
@@ -60,18 +62,30 @@ public sealed partial class NicknameVoteViewModel : ObservableObject
         (Caption, Heading) = stage switch
         {
             NicknameStage.Ask => ("MOTE", "¿Quieres que los otros pongan el mote a este Pokémon?"),
+            NicknameStage.Propose when watching => ("MOTE", "Tus amigos están eligiendo un mote para"),
+            NicknameStage.Vote when watching => ("VOTACIÓN", "Tus amigos votan el mote de"),
             NicknameStage.Propose => ("MOTE", $"{owner} quiere ponerle un mote a"),
             NicknameStage.Vote => ("VOTACIÓN", $"Vota el mote de {owner} para"),
             _ when result.Length == 0 => ("SIN MOTE", "Nadie ha propuesto un nombre para"),
             _ => ("¡MOTE ELEGIDO!", owner.Length == 0 ? "Tus amigos han elegido el mote de" : $"Así se llama el Pokémon de {owner}:")
         };
+
+        // Quien capturó mira su votación sin tocarla (1.0.7.3): los botones apagados y los votos en directo.
+        if (watching && stage == NicknameStage.Vote)
+        {
+            _hasVoted = true;
+            _done = "Estás mirando: votan tus amigos.";
+        }
     }
 
     public NicknameStage Stage { get; }
 
+    /// <summary>The catcher watching their own vote: no box to write in, no vote.</summary>
+    public bool IsWatching { get; }
+
     public bool IsAsk => Stage == NicknameStage.Ask;
 
-    public bool IsPropose => Stage == NicknameStage.Propose;
+    public bool IsPropose => Stage == NicknameStage.Propose && !IsWatching;
 
     public bool IsVote => Stage == NicknameStage.Vote;
 

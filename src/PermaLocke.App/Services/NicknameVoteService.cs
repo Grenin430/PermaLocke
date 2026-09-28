@@ -46,6 +46,10 @@ public sealed class NicknameVoteService
     private readonly IBoxReader _boxes;
     private readonly IRunContext _runs;
     private readonly ILogger<NicknameVoteService> _logger;
+    private readonly PermaLocke.GameLink.LiveBoxRenamer _boxRenamer;
+
+    /// <summary>Encryption constant of each Pokémon offered this session, by PID: what finds it in a box in memory.</summary>
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<uint, uint> _encryption = new();
     private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromSeconds(1) };
     private readonly HashSet<uint> _asked = [];
     private readonly HashSet<long> _followed = [];
@@ -57,8 +61,10 @@ public sealed class NicknameVoteService
     private string? _lastProblem;
 
     public NicknameVoteService(DiscordLogin discord, PokemonSpriteService sprites, Notifier notifier, RenameService rename,
-        GameLinkMonitor monitor, IBoxReader boxes, IRunContext runs, ILogger<NicknameVoteService> logger)
+        GameLinkMonitor monitor, IBoxReader boxes, IRunContext runs, PermaLocke.GameLink.LiveBoxRenamer boxRenamer,
+        ILogger<NicknameVoteService> logger)
     {
+        _boxRenamer = boxRenamer;
         _discord = discord;
         _sprites = sprites;
         _notifier = notifier;
@@ -93,6 +99,8 @@ public sealed class NicknameVoteService
         {
             if (!_asked.Add(pokemon.PID)) return;
         }
+
+        _encryption[pokemon.PID] = pokemon.EncryptionConstant;
 
         _ = _timer.Dispatcher.InvokeAsync(async () =>
         {
@@ -222,11 +230,11 @@ public sealed class NicknameVoteService
     private async Task FollowOthersAsync(Guid me)
     {
         var json = await _discord.GetAsync(
-            $"motes?select={Columns}&jugador=neq.{me}&cierra=gt.{Stamp(DateTimeOffset.Now)}&order=id.asc&limit=10");
+            $"motes?select={Columns}&cierra=gt.{Stamp(DateTimeOffset.Now)}&order=id.asc&limit=10");
 
         foreach (var row in JsonSerializer.Deserialize<List<VoteRow>>(json ?? "[]", Json) ?? [])
         {
-            if (_followed.Add(row.Id)) _ = FollowAsync(row);
+            if (_followed.Add(row.Id)) _ = FollowAsync(row, row.Jugador == me);
         }
     }
 
@@ -234,7 +242,11 @@ public sealed class NicknameVoteService
     /// One vote, at the same moments on every screen: the proposals open <see cref="CommonStart"/> after it was created,
     /// the vote when the proposals close, the winner when the vote closes; all three by the server's clock.
     /// </summary>
-    private async Task FollowAsync(VoteRow row)
+    /// <param name="mine">
+    /// The catcher's own vote (1.0.7.3): the same windows at the same moments, only to watch (no writing, no voting), so the
+    /// winner comes up for them at the same time as for everyone else.
+    /// </param>
+    private async Task FollowAsync(VoteRow row, bool mine)
     {
         // La cola la ordena el servidor (20-motes.sql): cada votación trae cuándo empieza.
         var start = _discord.ToLocal(row.Empieza ?? row.Creado + CommonStart);
@@ -247,8 +259,9 @@ public sealed class NicknameVoteService
             await Until(start);
             if (DateTimeOffset.Now < proposalsEnd)
             {
-                var propose = new NicknameVoteViewModel(NicknameStage.Propose, row.Pokemon, sprite, proposalsEnd, row.Nombre, starts: start);
-                propose.Answered += (_, name) => _ = BallotAsync(row.Id, "propuesta", (string)name);
+                var propose = new NicknameVoteViewModel(NicknameStage.Propose, row.Pokemon, sprite, proposalsEnd, row.Nombre, starts: start,
+                    watching: mine);
+                if (!mine) propose.Answered += (_, name) => _ = BallotAsync(row.Id, "propuesta", (string)name);
                 Show(propose);
             }
 
@@ -258,15 +271,16 @@ public sealed class NicknameVoteService
             if (options.Count == 0)
             {
                 // Nadie propuso nada: se dice, y el Pokémon se queda con su nombre.
-                Show(new NicknameVoteViewModel(NicknameStage.Result, row.Pokemon, sprite, proposalsEnd + ResultFor, row.Nombre,
+                Show(new NicknameVoteViewModel(NicknameStage.Result, row.Pokemon, sprite, proposalsEnd + ResultFor, mine ? "" : row.Nombre,
                     starts: proposalsEnd));
                 return;
             }
 
             if (DateTimeOffset.Now < close)
             {
-                var vote = new NicknameVoteViewModel(NicknameStage.Vote, row.Pokemon, sprite, close, row.Nombre, options, starts: proposalsEnd);
-                vote.Answered += (_, name) => _ = BallotAsync(row.Id, "voto", (string)name);
+                var vote = new NicknameVoteViewModel(NicknameStage.Vote, row.Pokemon, sprite, close, row.Nombre, options, starts: proposalsEnd,
+                    watching: mine);
+                if (!mine) vote.Answered += (_, name) => _ = BallotAsync(row.Id, "voto", (string)name);
                 _counting = (row.Id, vote);
                 Show(vote);
             }
@@ -275,8 +289,8 @@ public sealed class NicknameVoteService
             _counting = null;
             if (NicknameVote.Winner(await BallotsAsync(row.Id)) is { } winner)
             {
-                Show(new NicknameVoteViewModel(NicknameStage.Result, row.Pokemon, sprite, close + ResultFor, row.Nombre, result: winner,
-                    starts: close));
+                Show(new NicknameVoteViewModel(NicknameStage.Result, row.Pokemon, sprite, close + ResultFor, mine ? "" : row.Nombre,
+                    result: winner, starts: close));
             }
         }
         catch (Exception ex)
@@ -339,15 +353,17 @@ public sealed class NicknameVoteService
 
             if (NicknameVote.Winner(ballots) is not { } winner)
             {
+                // Su ventana de espectador ya le dijo «SIN MOTE».
                 await _discord.PatchAsync($"motes?id=eq.{row.Id}", """{"aplicado":true}""");
-                _notifier.Say(ToastKind.Info, $"Nadie ha propuesto mote para {row.Pokemon}", "Se queda como está.", sprite);
                 continue;
             }
 
             var pid = uint.Parse(row.Pid, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
             bool done;
 
-            if (await Task.Run(() => _monitor.RenameLive(pid, winner)))
+            // En directo: en el equipo, o en una caja si se encuentra en la memoria del juego (1.0.7.3).
+            if (await Task.Run(() => _monitor.RenameLive(pid, winner)
+                    || (_encryption.TryGetValue(pid, out var ec) && _boxRenamer.Rename(pid, ec, winner))))
             {
                 await _rename.RecordAsync(run, pid, row.Pokemon, winner, winner);
                 done = true;
@@ -370,8 +386,9 @@ public sealed class NicknameVoteService
 
             if (!done) continue;
 
+            // El ganador ya lo vio en su ventana, a la vez que los demás (1.0.7.3): aquí solo se confirma que está puesto.
             await _discord.PatchAsync($"motes?id=eq.{row.Id}", JsonSerializer.Serialize(new { aplicado = true, ganador = winner }));
-            Show(new NicknameVoteViewModel(NicknameStage.Result, row.Pokemon, sprite, DateTimeOffset.Now + ResultFor, result: winner));
+            _notifier.Say(ToastKind.Reward, $"{row.Pokemon} ya se llama {winner}", "Puesto en tu partida.", sprite);
         }
     }
 }
