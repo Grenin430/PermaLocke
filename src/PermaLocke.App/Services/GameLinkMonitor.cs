@@ -234,6 +234,9 @@ public sealed class GameLinkMonitor(
     private readonly Dictionary<uint, (int Ability, int Nature, (int Ability, int Nature, DateTimeOffset At)? Before)> _seen = [];
     private DateTimeOffset _rerollCheckedAt = DateTimeOffset.MinValue;
 
+    /// <summary>Party members seen as eggs, by PID, to tell when one hatches.</summary>
+    private readonly HashSet<uint> _eggs = [];
+
     /// <summary>
     /// Flags an Ability Capsule (or anything else) used and undone by reloading without saving (2026-09-28): a party
     /// Pokémon whose ability or nature changes and, within six hours, is back to what it was. Only a note for Admin.
@@ -265,6 +268,20 @@ public sealed class GameLinkMonitor(
             var pokemon = provider.AllLayouts.Select(layout => writer.Read(layout.SlotAddress(member.Slot)))
                 .FirstOrDefault(pk => pk is { ChecksumValid: true } && pk.PID == member.Pid);
             if (pokemon is null) continue;
+
+            // Un huevo que eclosiona (1.0.7.4): llegó como huevo, sin carta ni mote posibles; ahora sí, como un regalo.
+            if (pokemon.IsEgg)
+            {
+                _eggs.Add(member.Pid);
+                continue;
+            }
+
+            if (_eggs.Remove(member.Pid))
+            {
+                var hatched = pokemon;
+                logger.LogInformation("{Pokemon} ({Pid:X8}) ha salido del huevo", member.SpeciesName, member.Pid);
+                Announce(() => NewcomerArrived?.Invoke(this, hatched));
+            }
 
             var now = ((int)pokemon.Ability, (int)pokemon.Nature);
             if (!_seen.TryGetValue(member.Pid, out var seen))

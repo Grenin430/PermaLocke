@@ -1,3 +1,9 @@
+1.0.7.4
+MOTES ENTRE TODOS
+Ahora también puedes pedir que te pongan el mote a los Pokémon que te regalan, a los fósiles, a los de las dominsignias y a los que salen del huevo, no solo a los que capturas.
+CARTAS AL ÁLBUM
+Los huevos mandan su carta al álbum cuando eclosionan.
+
 1.0.7.3
 MOTES ENTRE TODOS
 Si pides que te pongan el mote, ahora ves cómo tus amigos proponen y votan, con los votos subiendo en directo, y el ganador te sale a la vez que a ellos.
