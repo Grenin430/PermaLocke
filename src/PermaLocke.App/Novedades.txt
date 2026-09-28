@@ -1,3 +1,8 @@
+1.0.7.2
+MOTES ENTRE TODOS
+Se pueden quitar en CONFIGURACIÓN: si lo apagas, no te pregunta al capturar ni te salen las votaciones de los demás.
+Si nadie propone un nombre, sale un aviso de que el Pokémon se queda como estaba.
+
 1.0.7.1
 TIENDA DE COMBATES
 Cuando el organizador la cierra, ahora se cierra de verdad y sin reiniciar: te llega en un par de minutos. Solo se cierra la pestaña COMBATE; las megapiedras y las hierbas siguen a la venta.

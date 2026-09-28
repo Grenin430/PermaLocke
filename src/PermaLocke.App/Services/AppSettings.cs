@@ -14,6 +14,7 @@ public sealed record AppSettingsData(
     bool Follower = true,
     bool Ghosts = true,
     bool CatchCard = true,
+    bool Nicknames = true,
     bool CapPanel = true,
     bool Background = false,
     bool GuideHidden = false);
@@ -34,6 +35,7 @@ public sealed class AppSettings(
     DeathCeremony ceremony,
     KillcamRecorder killcam,
     CatchCeremony catches,
+    NicknameVoteService nicknames,
     ILogger<AppSettings> logger)
 {
     private static readonly JsonSerializerOptions Options = new() { WriteIndented = true };
@@ -86,5 +88,6 @@ public sealed class AppSettings(
         ceremony.Ghosts = Current.Ghosts;
         killcam.Enabled = Current.Killcam;
         catches.Enabled = Current.CatchCard;
+        nicknames.Enabled = Current.Nicknames;
     }
 }

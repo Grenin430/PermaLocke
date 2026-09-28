@@ -54,7 +54,7 @@ public sealed partial class NicknameVoteViewModel : ObservableObject
         Ends = ends;
         Total = starts is { } from ? Math.Max(1, (ends - from).TotalSeconds) : stage == NicknameStage.Result ? 8 : 15;
         Owner = owner;
-        Result = result;
+        Result = stage == NicknameStage.Result && result.Length == 0 ? "SE QUEDA IGUAL" : result;
         Options = [.. (options ?? []).Select(name => new NicknameOption(name, new RelayCommand(() => Choose(name))))];
 
         (Caption, Heading) = stage switch
@@ -62,6 +62,7 @@ public sealed partial class NicknameVoteViewModel : ObservableObject
             NicknameStage.Ask => ("MOTE", "¿Quieres que los otros pongan el mote a este Pokémon?"),
             NicknameStage.Propose => ("MOTE", $"{owner} quiere ponerle un mote a"),
             NicknameStage.Vote => ("VOTACIÓN", $"Vota el mote de {owner} para"),
+            _ when result.Length == 0 => ("SIN MOTE", "Nadie ha propuesto un nombre para"),
             _ => ("¡MOTE ELEGIDO!", owner.Length == 0 ? "Tus amigos han elegido el mote de" : $"Así se llama el Pokémon de {owner}:")
         };
     }

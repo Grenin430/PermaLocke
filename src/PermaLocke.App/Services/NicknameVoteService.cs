@@ -70,6 +70,12 @@ public sealed class NicknameVoteService
         _timer.Tick += (_, _) => _ = ReadAsync();
     }
 
+    /// <summary>
+    /// CONFIGURACIÓN › «Motes entre todos» (1.0.7.2). Off: no question when capturing and no windows for the others' votes.
+    /// A vote already won is still written into this player's Pokémon.
+    /// </summary>
+    public bool Enabled { get; set; } = true;
+
     /// <param name="writes">False for the read-only copy (<c>--sin-juego</c>): it never opens a vote nor renames.</param>
     public void Start(bool writes)
     {
@@ -80,7 +86,7 @@ public sealed class NicknameVoteService
     /// <summary>A Pokémon of this player's just arrived: ask whether the others name it. Called from any thread.</summary>
     public void Offer(PKHeX.Core.PK7? pokemon)
     {
-        if (!_writes || _discord.Saved is null || pokemon is null || pokemon.IsEgg) return;
+        if (!Enabled || !_writes || _discord.Saved is null || pokemon is null || pokemon.IsEgg) return;
 
         // Una captura salvaje llega dos veces (la captura y el registro en el equipo): una pregunta por PID.
         lock (_asked)
@@ -190,8 +196,11 @@ public sealed class NicknameVoteService
 
         try
         {
-            await FollowOthersAsync(me.UserId);
-            await CountAsync();
+            if (Enabled)
+            {
+                await FollowOthersAsync(me.UserId);
+                await CountAsync();
+            }
             if (_writes) await FinishMineAsync(me.UserId);
             _lastProblem = null;
         }
@@ -246,7 +255,15 @@ public sealed class NicknameVoteService
             // Un poco después del cierre, para que la última propuesta haya llegado al servidor.
             await Until(proposalsEnd.AddMilliseconds(400));
             var options = NicknameVote.Options(await BallotsAsync(row.Id));
-            if (options.Count > 0 && DateTimeOffset.Now < close)
+            if (options.Count == 0)
+            {
+                // Nadie propuso nada: se dice, y el Pokémon se queda con su nombre.
+                Show(new NicknameVoteViewModel(NicknameStage.Result, row.Pokemon, sprite, proposalsEnd + ResultFor, row.Nombre,
+                    starts: proposalsEnd));
+                return;
+            }
+
+            if (DateTimeOffset.Now < close)
             {
                 var vote = new NicknameVoteViewModel(NicknameStage.Vote, row.Pokemon, sprite, close, row.Nombre, options, starts: proposalsEnd);
                 vote.Answered += (_, name) => _ = BallotAsync(row.Id, "voto", (string)name);

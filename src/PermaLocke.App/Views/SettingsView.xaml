@@ -73,6 +73,9 @@
                     <CheckBox Style="{StaticResource Check}" IsChecked="{Binding CatchCard}" Content="Carta al capturar" />
                     <pixel:PixelText Style="{StaticResource Explain}" Text="Al atrapar un Pokémon salvaje, su carta sale de una Poké Ball y se mete en el álbum." />
 
+                    <CheckBox Style="{StaticResource Check}" IsChecked="{Binding Nicknames}" Content="Motes entre todos" />
+                    <pixel:PixelText Style="{StaticResource Explain}" Text="Al capturar te pregunta si los demás eligen el mote, y te salen las votaciones de los motes de tus amigos. Apagado, no te sale ninguna de las dos." />
+
                     <CheckBox Style="{StaticResource Check}" IsChecked="{Binding CapPanel}" Content="Cap de nivel encima del juego" />
                     <pixel:PixelText Style="{StaticResource Explain}" Text="El panel de arriba a la derecha con la prueba, el cap y el nivel de tu equipo." />
 
