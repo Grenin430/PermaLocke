@@ -54,6 +54,10 @@ public sealed partial class AdminViewModel : ObservableObject
 
     public SuggestionsViewModel Suggestions { get; }
 
+    public MotesViewModel Motes { get; }
+
+    public FallenViewModel Fallen { get; }
+
     /// <summary>The official rules, in their own window (2026-09-26).</summary>
     public RulesViewModel Rules { get; }
 
@@ -64,7 +68,7 @@ public sealed partial class AdminViewModel : ObservableObject
         AuditViewModel audit,
         WhitelistViewModel whitelist, AnnouncementsViewModel announcements, UsageViewModel usage, RulesViewModel rules,
         CleanupViewModel cleanup, ReportsViewModel reports, SuggestionsViewModel suggestions,
-        ILogger<AdminViewModel> logger)
+        MotesViewModel motes, FallenViewModel fallen, ILogger<AdminViewModel> logger)
     {
         ArgumentNullException.ThrowIfNull(gacha);
 
@@ -77,6 +81,8 @@ public sealed partial class AdminViewModel : ObservableObject
         Cleanup = cleanup;
         Reports = reports;
         Suggestions = suggestions;
+        Motes = motes;
+        Fallen = fallen;
         _discord = discord;
         _logger = logger;
         _species = [.. species.All.Where(s => s.Id > 0).Select(s => new Pick(s.Id, s.Name))];
@@ -86,6 +92,25 @@ public sealed partial class AdminViewModel : ObservableObject
         {
             Banners.Add(new BannerRow(banner.Id, banner.Name));
         }
+
+        Sections =
+        [
+            new("", "INICIO", "IconHome", new HomeSection(this), "Lo de hoy de un vistazo."),
+            new("JUGADORES", "JUGADORES", "IconPeople", new PlayersSection(this), "Cada jugador y su ficha: revivir, caídos, rutas, pruebas, objetos, Pokémon, mensajes."),
+            new("JUGADORES", "REGALOS", "IconGift", new GiftsSection(this), "Mandar regalos (puntos, tiradas, wonder trades) o ajustar puntos a los que marques."),
+            new("JUGADORES", "CEMENTERIO", "IconGrave", Fallen, "Todos los caídos del torneo."),
+            new("TORNEO", "CONTROL", "IconSwords", new TournamentSection(this), "Pausar o reanudar el torneo y abrir o cerrar la TIENDA."),
+            new("TORNEO", "REGLAS", "IconGrid", Rules, "Las reglas oficiales que bajan todas las apps."),
+            new("TORNEO", "ANUNCIOS", "IconWarning", Announcements, "Un mensaje que ven todos en JUGAR."),
+            new("VIGILANCIA", "AUDITORÍA", "IconCheck", Audit, "Cada run comprobada y los avisos de trampas."),
+            new("VIGILANCIA", "INFORMES", "IconTools", Reports, "Los cierres de Azahar que mandan las apps."),
+            new("COMUNIDAD", "BUZÓN", "IconDocument", Suggestions, "Lo que escriben los jugadores en su buzón."),
+            new("COMUNIDAD", "MOTES", "IconStar", Motes, "Las votaciones de motes, y anularlas."),
+            new("SERVIDOR", "LISTA", "IconTick", Whitelist, "Quién puede entrar al torneo."),
+            new("SERVIDOR", "CONSUMO", "IconChart", Usage, "Cuánto del plan gratis se usa."),
+            new("SERVIDOR", "LIMPIEZA", "IconRefresh", Cleanup, "Borrar del servidor lo que ya no hace falta.")
+        ];
+        _selectedSection = Sections[0];
     }
 
     // ============================================================ QUIÉN HAY
@@ -138,6 +163,8 @@ public sealed partial class AdminViewModel : ObservableObject
             Status = Players.Count == 0
                 ? "Todavía no ha subido nadie su run."
                 : $"{Players.Count} jugador(es).";
+
+            await ShowTodayAsync();
         }
         catch (Exception ex)
         {
@@ -148,6 +175,34 @@ public sealed partial class AdminViewModel : ObservableObject
         {
             IsBusy = false;
         }
+    }
+
+    /// <summary>What needs the organiser today, in one line at the top (2026-09-28, «Admin a prueba de niños»).</summary>
+    [ObservableProperty]
+    private string _today = "Pulsa ACTUALIZAR para ver lo de hoy.";
+
+    private async Task ShowTodayAsync()
+    {
+        var playing = Players.Count(p => p.State != PresenceState.Offline);
+        var waiting = Sent.Count(s => s.Waiting.Count > 0);
+        string mailbox;
+
+        try
+        {
+            var json = await _discord.GetAsync("sugerencias?select=id");
+            var count = json is null ? 0 : System.Text.Json.JsonDocument.Parse(json).RootElement.GetArrayLength();
+            Mailbox = count;
+            mailbox = count == 0 ? "buzón vacío" : $"{count} sugerencia(s) en el BUZÓN";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "No se pudo contar el buzón");
+            mailbox = "buzón sin leer";
+        }
+
+        Today = $"HOY: {playing} de {Players.Count} conectados · {waiting} regalo(s) sin recoger del todo · {mailbox}";
+        OnPropertyChanged(nameof(Online));
+        OnPropertyChanged(nameof(PendingGifts));
     }
 
     /// <summary>Who is signed in, for the header: their Discord name and picture, or nobody.</summary>
@@ -240,6 +295,14 @@ public sealed partial class AdminViewModel : ObservableObject
     private async Task SendAsync()
     {
         if (!CanSend)
+        {
+            return;
+        }
+
+        if (System.Windows.MessageBox.Show(
+                $"Mandar a {string.Join(", ", Chosen.Select(p => p.Name))}.\n\nMotivo: {Reason.Trim()}\n\nCada uno lo recoge al abrir PermaLocke.",
+                "Mandar regalo", System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Question)
+            != System.Windows.MessageBoxResult.Yes)
         {
             return;
         }
@@ -348,17 +411,69 @@ public sealed partial class AdminViewModel : ObservableObject
 
     // ============================================================ FICHA Y CONTROL DEL TORNEO (2026-09-26)
 
-    /// <summary>Raised when a player's sheet should open; the window creates it.</summary>
-    public event EventHandler<PlayerSheetViewModel>? SheetRequested;
+    // ============================================================ EL MENÚ (2026-09-28)
+
+    /// <summary>The side menu, grouped: every page of Admin.</summary>
+    public IReadOnlyList<AdminSection> Sections { get; }
+
+    /// <summary>The buttons of INICIO: every page but INICIO itself.</summary>
+    public IEnumerable<AdminSection> QuickSections => Sections.Skip(1);
+
+    [ObservableProperty]
+    private AdminSection _selectedSection;
+
+    /// <summary>A page opened from the menu reads its data at once, so nothing on screen is stale.</summary>
+    partial void OnSelectedSectionChanged(AdminSection value) => RefreshPage(value);
+
+    /// <summary>ACTUALIZAR of the header: the players and gifts, and the page on screen.</summary>
+    [RelayCommand]
+    private async Task RefreshAllAsync()
+    {
+        await RefreshAsync();
+        RefreshPage(SelectedSection);
+        if (Sheet is not null && SelectedSection.Page is PlayersSection) Sheet.LoadCommand.Execute(null);
+    }
+
+    private void RefreshPage(AdminSection value)
+    {
+        switch (value.Page)
+        {
+            case RulesViewModel rules: rules.LoadCommand.Execute(null); break;
+            case CommunityToolkit.Mvvm.ComponentModel.ObservableObject page when page != this
+                && page.GetType().GetProperty("RefreshCommand")?.GetValue(page) is System.Windows.Input.ICommand refresh:
+                refresh.Execute(null);
+                break;
+        }
+    }
+
+    /// <summary>Opens a page of the menu by its name, from the buttons of INICIO.</summary>
+    [RelayCommand]
+    private void Go(string title)
+    {
+        if (Sections.FirstOrDefault(s => s.Title == title) is { } section) SelectedSection = section;
+    }
+
+    /// <summary>The player open in JUGADORES, beside the list.</summary>
+    [ObservableProperty]
+    private PlayerSheetViewModel? _sheet;
 
     [RelayCommand]
     private void OpenSheet(PlayerLine? player)
     {
-        if (player is not null)
-        {
-            SheetRequested?.Invoke(this, new PlayerSheetViewModel(_desk, player, AdminName, _species, _items, _logger));
-        }
+        if (player is null) return;
+
+        Sheet = new PlayerSheetViewModel(_desk, player, AdminName, _species, _items, _logger);
+        Sheet.LoadCommand.Execute(null);
+        Go("JUGADORES");
     }
+
+    /// <summary>The figures of INICIO.</summary>
+    public int Online => Players.Count(p => p.State != PresenceState.Offline);
+
+    public int PendingGifts => Sent.Count(s => s.Waiting.Count > 0);
+
+    [ObservableProperty]
+    private int _mailbox;
 
     /// <summary>Closes JUGAR for every player at once (a pause, or the end of the tournament), with the reason of the gift box.</summary>
     [RelayCommand]
@@ -414,6 +529,12 @@ public sealed partial class AdminViewModel : ObservableObject
         if (sent.Collected.Count > 0)
         {
             Status = "Ya lo ha recogido alguien: retirarlo no se lo quita.";
+            return;
+        }
+
+        if (System.Windows.MessageBox.Show($"¿Retirar «{sent.Gift.Reason}»? Nadie podrá recogerlo.", "Retirar regalo",
+                System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Question) != System.Windows.MessageBoxResult.Yes)
+        {
             return;
         }
 

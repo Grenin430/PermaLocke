@@ -38,7 +38,8 @@ public sealed class GameLinkMonitor(
     ILogger<GameLinkMonitor> logger,
     PermaLocke.Rules.Services.BallControlService balls,
     IntegrityService integrity,
-    RulesConfiguration rules) : IDisposable
+    RulesConfiguration rules,
+    PermaLocke.GameLink.Field.BerryPileKeeper berries) : IDisposable
 {
     /// <summary>
     /// How often the game is polled.
@@ -95,6 +96,26 @@ public sealed class GameLinkMonitor(
 
     /// <summary>Latest snapshot, or null before the first read completes.</summary>
     public GameSnapshot? Latest { get; private set; }
+
+    /// <summary>
+    /// Writes a nickname into the party with the game open (2026-09-28): every copy that holds that PID. True when at
+    /// least one took it and read back; false when the Pokémon is not in the party or the game is closed.
+    /// </summary>
+    public bool RenameLive(uint pid, string nickname)
+    {
+        if (Latest is not { Connected: true } snapshot || snapshot.Party.FirstOrDefault(m => m.Pid == pid) is not { } member)
+        {
+            return false;
+        }
+
+        var applied = provider.AllLayouts
+            .Select(layout => writer.SetNickname(layout.SlotAddress(member.Slot), nickname, pid))
+            .Count(result => result.Applied);
+
+        logger.LogInformation("Mote «{Nickname}» a {Pokemon} ({Pid:X8}) con el juego abierto: {Applied} copias", nickname,
+            member.SpeciesName, pid, applied);
+        return applied > 0;
+    }
     public string EncounterProblem => Latest?.Connected == true && runContext.Current is not null
         ? encounterGuard.Problem ?? string.Empty : string.Empty;
 
@@ -139,6 +160,12 @@ public sealed class GameLinkMonitor(
     /// emulator may not be ours, the party may have moved- and the death is recorded either way.
     /// </remarks>
     public event EventHandler<DeathNotice>? PokemonDied;
+
+    /// <summary>
+    /// A Pokémon that turned up in the party and was registered on its own (2026-09-28): an egg that hatched, a fossil,
+    /// a gift. The card goes to the album for it too, not only for wild captures.
+    /// </summary>
+    public event EventHandler<PKHeX.Core.PK7>? NewcomerArrived;
 
     public void Start()
     {
@@ -203,6 +230,70 @@ public sealed class GameLinkMonitor(
         }
     }
 
+    /// <summary>What each party Pokémon was last seen as, and the change it went through, by PID (2026-09-28).</summary>
+    private readonly Dictionary<uint, (int Ability, int Nature, (int Ability, int Nature, DateTimeOffset At)? Before)> _seen = [];
+    private DateTimeOffset _rerollCheckedAt = DateTimeOffset.MinValue;
+
+    /// <summary>
+    /// Flags an Ability Capsule (or anything else) used and undone by reloading without saving (2026-09-28): a party
+    /// Pokémon whose ability or nature changes and, within six hours, is back to what it was. Only a note for Admin.
+    /// </summary>
+    /// <remarks>
+    /// Every five seconds, one read per party member through the layouts the game already uses, matched by PID. A change
+    /// that stays is fine (the player saved); only the return is flagged. Kept in memory: closing PermaLocke forgets it.
+    /// </remarks>
+    private async Task WatchRerollsAsync(Run run, GameSnapshot snapshot)
+    {
+        if (clock.Now - _rerollCheckedAt < TimeSpan.FromSeconds(5))
+        {
+            return;
+        }
+
+        _rerollCheckedAt = clock.Now;
+
+        try
+        {
+            berries.Keep(run.Id);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "No se pudieron mirar los montones de bayas");
+        }
+
+        foreach (var member in snapshot.Party)
+        {
+            var pokemon = provider.AllLayouts.Select(layout => writer.Read(layout.SlotAddress(member.Slot)))
+                .FirstOrDefault(pk => pk is { ChecksumValid: true } && pk.PID == member.Pid);
+            if (pokemon is null) continue;
+
+            var now = ((int)pokemon.Ability, (int)pokemon.Nature);
+            if (!_seen.TryGetValue(member.Pid, out var seen))
+            {
+                _seen[member.Pid] = (now.Item1, now.Item2, null);
+                continue;
+            }
+
+            if ((seen.Ability, seen.Nature) == now) continue;
+
+            if (seen.Before is { } before && (before.Ability, before.Nature) == now && clock.Now - before.At < TimeSpan.FromHours(6))
+            {
+                await integrity.FlagAsync(run.Id, IntegrityKinds.Reroll,
+                    $"{member.SpeciesName} cambió de habilidad o naturaleza y ha vuelto a la de antes: se usó algo y se recargó sin guardar.",
+                    new Dictionary<string, string>
+                    {
+                        ["pid"] = member.Pid.ToString("X8"),
+                        ["habilidad"] = $"{before.Ability} > {seen.Ability} > {now.Item1}",
+                        ["naturaleza"] = $"{before.Nature} > {seen.Nature} > {now.Item2}"
+                    }, _stopping.Token);
+                logger.LogWarning("{Pokemon} ({Pid:X8}) volvió a su habilidad/naturaleza de antes: posible recarga", member.SpeciesName, member.Pid);
+                _seen[member.Pid] = (now.Item1, now.Item2, null);
+                continue;
+            }
+
+            _seen[member.Pid] = (now.Item1, now.Item2, (seen.Ability, seen.Nature, clock.Now));
+        }
+    }
+
     /// <summary>
     /// Turns the difference between game and run into action: new party members are registered,
     /// deaths are recorded, and both leave their event behind.
@@ -221,6 +312,8 @@ public sealed class GameLinkMonitor(
         {
             return;
         }
+
+        await WatchRerollsAsync(run, snapshot);
 
         var findings = await watcher.InspectAsync(run.Id, snapshot, _stopping.Token);
         var changed = false;
@@ -559,6 +652,11 @@ public sealed class GameLinkMonitor(
                 if (result.Registered)
                 {
                     registered++;
+
+                    // La carta al álbum, con el Pokémon leído del equipo en vivo por su PID.
+                    var read = provider.AllLayouts.Select(layout => writer.Read(layout.SlotAddress(member.Slot)))
+                        .FirstOrDefault(pk => pk is { ChecksumValid: true } && pk.PID == member.Pid);
+                    if (read is not null) Announce(() => NewcomerArrived?.Invoke(this, read));
                     logger.LogInformation(
                         "{Pokemon} Nv.{Level} registrado solo (PID {Pid:X8}, encontrado en {Where})",
                         member.SpeciesName, member.Level, member.Pid, member.MetLocationName);

@@ -30,6 +30,15 @@ public sealed class ShopService(
 {
     public IReadOnlyList<ShopItem> Items => catalog.Items;
 
+    /// <summary>
+    /// Why the shop cannot sell now, or null when it can (2026-09-28): closed by the organiser, or not open until a trial
+    /// this run has not cleared yet.
+    /// </summary>
+    public string? ClosedReason(int clearedTrials) =>
+        !catalog.Open ? "La tienda está cerrada por el organizador."
+        : clearedTrials < catalog.OpensAtTrial ? $"La tienda abre al superar la prueba {catalog.OpensAtTrial}."
+        : null;
+
     public Task<int> GetBalanceAsync(Guid runId, CancellationToken ct = default) =>
         points.GetBalanceAsync(runId, ct);
 
@@ -43,6 +52,17 @@ public sealed class ShopService(
         delivery.CarriedAllAsync(itemIds, ct);
 
     public async Task<PurchaseResult> BuyAsync(Run run, int itemId, CancellationToken ct = default)
+    {
+        if (!catalog.Open)
+        {
+            return new PurchaseResult(PurchaseOutcome.NotDelivered, null, await points.GetBalanceAsync(run.Id, ct).ConfigureAwait(false), 0,
+                "La tienda está cerrada por el organizador.");
+        }
+
+        return await BuyOpenAsync(run, itemId, ct).ConfigureAwait(false);
+    }
+
+    private async Task<PurchaseResult> BuyOpenAsync(Run run, int itemId, CancellationToken ct)
     {
         var balance = await points.GetBalanceAsync(run.Id, ct).ConfigureAwait(false);
 
@@ -122,6 +142,11 @@ public sealed class ShopService(
         ArgumentNullException.ThrowIfNull(run);
         ArgumentNullException.ThrowIfNull(target);
         var balance = await points.GetBalanceAsync(run.Id, ct).ConfigureAwait(false);
+
+        if (!catalog.Open)
+        {
+            return new PurchaseResult(PurchaseOutcome.NotDelivered, null, balance, 0, "La tienda está cerrada por el organizador.");
+        }
 
         if (catalog.Items.FirstOrDefault(i => i.Id == itemId) is not { IsHerb: true } herb)
         {

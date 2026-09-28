@@ -212,6 +212,23 @@
             </StackPanel>
         </DockPanel>
 
+        <!-- CERRADA (2026-09-28): un velo negro que deja ver la tienda detrás y se traga los clics. -->
+        <Grid Grid.RowSpan="4" Background="#C8000000"
+              Visibility="{Binding IsClosed, Converter={StaticResource BoolToVisibility}}">
+            <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+                <views:PixelPanel Fill="#F0120E20" />
+                <StackPanel Margin="36,26,40,30">
+                    <pixel:PixelIcon Icon="IconShop" Scale="4" HorizontalAlignment="Center" Margin="0,0,0,16" />
+                    <pixel:PixelText Text="TIENDA DE COMBATES" Scale="4" Tight="True" HorizontalAlignment="Center"
+                                     Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
+                    <pixel:PixelText Text="NO DISPONIBLE" Scale="4" Tight="True" HorizontalAlignment="Center" Margin="0,10,0,0"
+                                     Colour="{StaticResource PxBad}" Shadow="{StaticResource PxShadow}" />
+                    <pixel:PixelText Text="{Binding Closed}" Scale="2" Wrap="True" TextAlignment="Center" MaxWidth="460"
+                                     HorizontalAlignment="Center" Margin="0,18,0,0" Colour="{StaticResource PxTextDim}" />
+                </StackPanel>
+            </Grid>
+        </Grid>
+
         <!-- A QUIÉN LA HIERBA (2026-09-27): el equipo de la partida, uno por fila. -->
         <Grid Grid.RowSpan="4" Background="#C0000000"
               Visibility="{Binding IsPickingTarget, Converter={StaticResource BoolToVisibility}}">

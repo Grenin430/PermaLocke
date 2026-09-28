@@ -1,0 +1,45 @@
+<UserControl x:Class="PermaLocke.Admin.Pages.TournamentPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:pixel="clr-namespace:PermaLocke.App.Views.Pixel">
+    <!-- CONTROL (2026-09-28): pausar o reanudar a todos y la TIENDA de combates, cada cosa en su tarjeta y explicada. -->
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <UniformGrid Columns="2" Margin="14" VerticalAlignment="Top">
+            <pixel:PixelWindow Title="EL TORNEO" Icon="IconSwords" Margin="0,0,14,0">
+                <StackPanel>
+                    <TextBlock TextWrapping="Wrap" Foreground="{StaticResource Muted}"
+                               Text="PAUSAR cierra JUGAR a todos los jugadores a la vez (una pausa, o el final del torneo). REANUDAR lo vuelve a abrir. Cada uno lo ve en su app con el motivo." />
+                    <pixel:PixelText Text="MOTIVO" Style="{StaticResource Heading}" Margin="0,16,0,6" />
+                    <TextBox Text="{Binding Reason, UpdateSourceTrigger=PropertyChanged}" TextWrapping="Wrap" MinHeight="46" AcceptsReturn="True"
+                             ToolTip="Lo leen todos. Obligatorio." />
+                    <UniformGrid Columns="2" Margin="0,14,0,0">
+                        <Button Content="PAUSAR" Command="{Binding PauseAllCommand}" Margin="0,0,6,0"
+                                ToolTip="Nadie puede pulsar JUGAR hasta que lo reanudes. Pregunta antes." />
+                        <Button Content="REANUDAR" Style="{StaticResource Primary}" Command="{Binding ResumeAllCommand}" Margin="6,0,0,0"
+                                ToolTip="Todos vuelven a poder pulsar JUGAR. Pregunta antes." />
+                    </UniformGrid>
+                </StackPanel>
+            </pixel:PixelWindow>
+
+            <pixel:PixelWindow Title="TIENDA DE COMBATES" Icon="IconShop">
+                <StackPanel>
+                    <TextBlock TextWrapping="Wrap" Foreground="{StaticResource Muted}"
+                               Text="La TIENDA de la app de cada jugador. Cerrada, sale tapada con «NO DISPONIBLE». Se sube como regla oficial y se aplica cuando cada uno reinicia PermaLocke." />
+                    <UniformGrid Columns="2" Margin="0,14,0,0">
+                        <Button Content="CERRAR" Click="OnShopClose" Margin="0,0,6,0" ToolTip="Nadie puede comprar. Pregunta antes." />
+                        <Button Content="ABRIR A TODOS" Style="{StaticResource Primary}" Click="OnShopOpen" Margin="6,0,0,0"
+                                ToolTip="La TIENDA vende a todos. Pregunta antes." />
+                    </UniformGrid>
+                    <Border Background="{StaticResource FaceHigh}" Padding="12,10" CornerRadius="6" Margin="0,14,0,0">
+                        <DockPanel>
+                            <Button DockPanel.Dock="Right" Content="ABRIR EN ESA PRUEBA" Click="OnShopAtTrial" Margin="8,0,0,0"
+                                    ToolTip="No vende a nadie hasta que supere esa prueba. Pregunta antes." />
+                            <TextBox x:Name="Trial" DockPanel.Dock="Right" Text="6" Width="50" />
+                            <TextBlock Text="Abrir solo al superar la prueba nº (1 a 12):" VerticalAlignment="Center" TextWrapping="Wrap" />
+                        </DockPanel>
+                    </Border>
+                </StackPanel>
+            </pixel:PixelWindow>
+        </UniformGrid>
+    </ScrollViewer>
+</UserControl>

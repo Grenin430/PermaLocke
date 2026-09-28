@@ -90,7 +90,10 @@ public sealed class FieldItemRandomizer(RomWorkspace workspace, RandomizerOption
             var pool = RandomPool(pockets, itemNames, options.FieldItemsBanned.ToHashSet());
 
             regularPool = DrawCapped(regularPool.Count, pool, options.FieldItemsMaxRepeats, random.Derive("normales"));
-            machinePool = DrawCapped(machinePool.Count, machines, options.FieldItemsMaxRepeats, random.Derive("mt"));
+
+            // Las MT del suelo, las que el cartucho ya ponía en el suelo, barajadas y una vez cada una (2026-09-28): sorteadas
+            // de las cien salían MT que regala un NPC o que vende una tienda, y los jugadores las encontraban dos veces.
+            Shuffle(machinePool, random.Derive("mt"));
         }
         else
         {

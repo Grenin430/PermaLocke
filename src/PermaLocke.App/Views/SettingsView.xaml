@@ -108,7 +108,11 @@
             <pixel:PixelText Text="{Binding Status}" Scale="2" Wrap="True" Margin="4,12,0,0" Colour="{StaticResource PxGood}" />
 
             <!-- La versión que corre: lo que se mira para saber si una actualización (§196) ha entrado. -->
-            <pixel:PixelText Text="{Binding VersionText}" Scale="2" Margin="4,12,0,0" Colour="{StaticResource PxTextDim}" />
+            <StackPanel Orientation="Horizontal" Margin="4,12,0,0">
+                <pixel:PixelText Text="{Binding VersionText}" Scale="2" VerticalAlignment="Center" Colour="{StaticResource PxTextDim}" />
+                <Button Content="NOVEDADES" Style="{StaticResource PxSubtleButton}" Margin="14,0,0,0" Click="OnChangelog"
+                        ToolTip="Lo que trae esta versión" />
+            </StackPanel>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

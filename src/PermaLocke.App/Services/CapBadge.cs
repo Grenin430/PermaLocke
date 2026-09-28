@@ -59,7 +59,6 @@ public sealed class CapBadge
     private Window? _window;
     private CapReading? _reading;
     private DateTime _readAt = DateTime.MinValue;
-    private bool _watchingBar;
 
     public CapBadge(EmulatorLauncher launcher, ProgressService progress, LevelCapTable caps, IRunContext runContext,
         GameLinkMonitor monitor, AppSettings settings, PokemonSpriteService sprites, ILogger<CapBadge> logger)
@@ -76,12 +75,6 @@ public sealed class CapBadge
         monitor.RunDataChanged += (_, _) => _readAt = DateTime.MinValue;
         runContext.CurrentChanged += (_, _) => _readAt = DateTime.MinValue;
 
-        // Mientras se mira la barra de PS, el panel fuera: la copia de pantalla lo leería como la barra (1.0.5.10).
-        HpBarWatcher.WatchingChanged += watching => _timer.Dispatcher.BeginInvoke(() =>
-        {
-            _watchingBar = watching;
-            if (watching) _window?.Hide();
-        });
     }
 
     public void Start() => _timer.Start();
@@ -113,7 +106,7 @@ public sealed class CapBadge
             var game = GameWindow.Handle();
 
             // Se quita en CONFIGURACIÓN (1.0.4.8).
-            if (_watchingBar || !_settings.Current.CapPanel || !_launcher.IsRunning || game == IntPtr.Zero || GetForegroundWindow() != game
+            if (!_settings.Current.CapPanel || !_launcher.IsRunning || game == IntPtr.Zero || GetForegroundWindow() != game
                 || GameWindow.RenderBox(game) is not { } picture)
             {
                 _window?.Hide();
@@ -424,8 +417,26 @@ public sealed class CapBadge
         content.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
         var width = (int)Math.Ceiling(content.DesiredSize.Width * dpi.DpiScaleX);
         var height = (int)Math.Ceiling(content.DesiredSize.Height * dpi.DpiScaleY);
-        OverlayWindows.PlaceOver(window, (picture.Left + picture.Width - width - (int)(16 * dpi.DpiScaleX),
-            picture.Top + (int)(48 * dpi.DpiScaleY), width, height));
+        var left = picture.Left + picture.Width - width - (int)(16 * dpi.DpiScaleX);
+        var top = picture.Top + (int)(48 * dpi.DpiScaleY);
+
+        // Nunca encima de la barra de PS (2026-09-28): la copia de pantalla que espera la barra a cero leería el panel.
+        // Antes se escondía mientras se miraba la barra, y eso es el parpadeo al morir; ahora encoge para no llegar.
+        var game = Math.Min(picture.Width / 400.0, picture.Height / 480.0);
+        var gameLeft = picture.Left + ((picture.Width - (400 * game)) / 2);
+        var barTop = picture.Top + ((picture.Height - (480 * game)) / 2) + (PermaLocke.GameLink.Battle.HpBar.FirstRow * game);
+        var barRight = gameLeft + ((PermaLocke.GameLink.Battle.HpBar.Right + 1) * game);
+        if (left < barRight && top + height > barTop - 6 && barTop - 6 - top > 40)
+        {
+            scale *= (barTop - 6 - top) / height;
+            content.LayoutTransform = new ScaleTransform(scale, scale);
+            content.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            width = (int)Math.Ceiling(content.DesiredSize.Width * dpi.DpiScaleX);
+            height = (int)Math.Ceiling(content.DesiredSize.Height * dpi.DpiScaleY);
+            left = picture.Left + picture.Width - width - (int)(16 * dpi.DpiScaleX);
+        }
+
+        OverlayWindows.PlaceOver(window, (left, top, width, height));
     }
 
     private Window Create()

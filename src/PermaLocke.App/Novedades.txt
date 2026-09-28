@@ -1,0 +1,22 @@
+1.0.7
+MOTES ENTRE TODOS
+Cuando capturas algo, arriba a la izquierda te pregunta si quieres que los demás le pongan el mote. Si dices que sí, al resto le sale una ventanita a la izquierda del juego: primero cada uno propone un nombre y luego se vota. El más votado se lo queda. Si está en tu equipo, el nombre cambia en el momento.
+Solo un voto por persona, y no se puede cambiar. Si varios capturan a la vez, van por turnos.
+BAYAS DE UNA VEZ
+Los montones de bayas ya no vuelven a salir. Los coges una vez y se acabó para toda la partida.
+ROTOMBOLA
+La primera tirada, la que te obliga el juego, la haces. A partir de ahí queda apagada.
+TIENDA
+La tienda de combates se puede cerrar o abrir a partir de una prueba. Cuando está cerrada lo verás tapado con un aviso.
+NUEVA PÁGINA: DIFICULTAD
+En INFORMACIÓN tienes una página que explica cuánto más duro es esto que el juego normal, con gráficas.
+CARTAS AL ÁLBUM
+Ahora también llegan al álbum los huevos, los fósiles y los regalos, no solo las capturas.
+FANTASMAS A LA VEZ
+Los fantasmas y la lluvia de sangre salen en todas las pantallas al mismo tiempo.
+RULETA
+Ya no toca Revivir ni Revivir Máximo.
+PARA LAS PARTIDAS NUEVAS
+Las MT solo salen una vez en todo el mundo y los objetos del suelo no se repiten. Los objetos caros bajan a 30.000 y se venden en otros mostradores, no en el Supermercado Ultraganga.
+ARREGLOS
+El panel del nivel máximo y la lluvia de sangre ya no parpadean.

@@ -2,249 +2,136 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:pixel="clr-namespace:PermaLocke.App.Views.Pixel"
-        Title="PermaLocke Admin" Height="780" Width="1320" Icon="Assets/PermaLocke.Admin.ico"
+        xmlns:vm="clr-namespace:PermaLocke.Admin.ViewModels"
+        xmlns:pages="clr-namespace:PermaLocke.Admin.Pages"
+        Title="PermaLocke Admin" Height="860" Width="1440" MinWidth="1100" MinHeight="640" Icon="Assets/PermaLocke.Admin.ico"
         Background="{StaticResource PxBaseBrush}" WindowStartupLocation="CenterScreen">
-    <Grid Margin="18">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
 
-        <!-- ================================================== LA CARPETA -->
-        <!-- ================================================== CABECERA: título y cuenta arriba, acciones debajo -->
-        <StackPanel Grid.Row="0" Margin="0,0,0,14">
+    <!-- Admin (2026-09-28): un menú a la izquierda, agrupado, y cada cosa en su página a la derecha; lo que antes eran
+         ventanas sueltas son ahora páginas. Cada página es un view model y estas plantillas eligen su vista. -->
+    <Window.Resources>
+        <DataTemplate DataType="{x:Type vm:HomeSection}"><pages:HomePage DataContext="{Binding Admin}" /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:PlayersSection}"><pages:PlayersPage DataContext="{Binding Admin}" /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:GiftsSection}"><pages:GiftsPage DataContext="{Binding Admin}" /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:TournamentSection}"><pages:TournamentPage DataContext="{Binding Admin}" /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:RulesViewModel}"><pages:RulesPage /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:AnnouncementsViewModel}"><pages:AnnouncementsPage /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:AuditViewModel}"><pages:AuditPage /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:ReportsViewModel}"><pages:ReportsPage /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:SuggestionsViewModel}"><pages:SuggestionsPage /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:MotesViewModel}"><pages:MotesPage /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:FallenViewModel}"><pages:FallenPage /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:WhitelistViewModel}"><pages:WhitelistPage /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:UsageViewModel}"><pages:UsagePage /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:CleanupViewModel}"><pages:CleanupPage /></DataTemplate>
+
+        <CollectionViewSource x:Key="Menu" Source="{Binding Sections}">
+            <CollectionViewSource.GroupDescriptions>
+                <PropertyGroupDescription PropertyName="Group" />
+            </CollectionViewSource.GroupDescriptions>
+        </CollectionViewSource>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="250" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- ================================================== EL MENÚ -->
+        <Border Grid.Column="0" Background="{StaticResource Canvas}" BorderBrush="{StaticResource Line}" BorderThickness="0,0,1,0">
             <DockPanel>
-                <Button DockPanel.Dock="Right" Content="ENTRAR CON DISCORD" Style="{StaticResource Primary}" Command="{Binding SignInCommand}"
-                        VerticalAlignment="Center" Visibility="{Binding IsSignedOut, Converter={StaticResource BoolToVisibility}}" />
-                <!-- La cuenta con la que estás dentro, con su foto de Discord. -->
-                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center"
-                            Visibility="{Binding IsSignedIn, Converter={StaticResource BoolToVisibility}}">
-                    <Image Source="{Binding Photo, TargetNullValue={x:Null}}" Width="36" Height="36" Margin="0,0,10,0" />
-                    <StackPanel VerticalAlignment="Center" Margin="0,0,12,0">
-                        <pixel:PixelText Text="{Binding AdminName}" Scale="2" Tight="True" Colour="{StaticResource PxGold}" />
-                        <TextBlock Text="organizador" Foreground="{StaticResource Faint}" FontSize="11" Margin="0,3,0,0" />
-                    </StackPanel>
-                    <Button Content="SALIR" Command="{Binding SignOutCommand}" VerticalAlignment="Center" />
+                <StackPanel DockPanel.Dock="Top" Margin="18,20,18,14">
+                    <pixel:PixelText Text="PERMALOCKE" Scale="3" Tight="True" Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
+                    <pixel:PixelText Text="ADMIN" Scale="3" Tight="True" Colour="{StaticResource PxGold}" Shadow="{StaticResource PxShadow}" Margin="0,4,0,0" />
                 </StackPanel>
-                <StackPanel VerticalAlignment="Center">
-                    <pixel:PixelText Text="PERMALOCKE ADMIN" Scale="3" Tight="True" Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
-                    <TextBlock Text="Servidor del torneo" Foreground="{StaticResource Faint}" FontSize="11.5" Margin="0,4,0,0" />
-                </StackPanel>
-            </DockPanel>
 
-            <Border Background="{StaticResource Surface}" CornerRadius="8" Padding="10,8" Margin="0,14,0,0">
-                <DockPanel>
-                    <Button DockPanel.Dock="Right" Content="ACTUALIZAR" Command="{Binding RefreshCommand}" />
-                    <WrapPanel>
-                        <TextBlock Text="TORNEO" Foreground="{StaticResource Faint}" FontSize="11" VerticalAlignment="Center" Margin="4,0,10,0" />
-                        <Button Content="PAUSAR" Command="{Binding PauseAllCommand}" Margin="0,0,6,0" ToolTip="Nadie puede pulsar JUGAR. Usa el MOTIVO del regalo." />
-                        <Button Content="REANUDAR" Command="{Binding ResumeAllCommand}" Margin="0,0,6,0" />
-                        <Button Content="REGLAS" Click="OnRules" Margin="0,0,6,0" />
-                        <Button Content="ANUNCIOS" Click="OnAnnouncements" Margin="0,0,18,0" />
-                        <TextBlock Text="CONTROL" Foreground="{StaticResource Faint}" FontSize="11" VerticalAlignment="Center" Margin="0,0,10,0" />
-                        <Button Content="AUDITORÍA" Click="OnAudit" Margin="0,0,6,0" />
-                        <Button Content="LISTA" Click="OnWhitelist" Margin="0,0,6,0" />
-                        <Button Content="CONSUMO" Click="OnUsage" Margin="0,0,6,0" />
-                        <Button Content="SUGERENCIAS" Click="OnSuggestions" Margin="0,0,6,0" ToolTip="Lo que mandan los jugadores desde el buzón de su app" />
-                        <Button Content="INFORMES" Click="OnReports" Margin="0,0,6,0" ToolTip="Los cierres de Azahar que han mandado las apps" />
-                        <Button Content="LIMPIEZA" Click="OnCleanup" Margin="0,0,6,0" />
-                    </WrapPanel>
-                </DockPanel>
-            </Border>
-        </StackPanel>
+                <!-- La cuenta, abajo del todo -->
+                <Border DockPanel.Dock="Bottom" Background="{StaticResource Surface}" Padding="14,12" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0">
+                    <Grid>
+                        <Button Content="ENTRAR CON DISCORD" Style="{StaticResource Primary}" Command="{Binding SignInCommand}"
+                                Visibility="{Binding IsSignedOut, Converter={StaticResource BoolToVisibility}}" />
+                        <DockPanel Visibility="{Binding IsSignedIn, Converter={StaticResource BoolToVisibility}}">
+                            <Image DockPanel.Dock="Left" Source="{Binding Photo, TargetNullValue={x:Null}}" Width="34" Height="34" Margin="0,0,10,0" />
+                            <Button DockPanel.Dock="Right" Content="SALIR" Command="{Binding SignOutCommand}" Padding="10,4" MinHeight="28"
+                                    ToolTip="Cierra la sesión de Discord en este PC." />
+                            <StackPanel VerticalAlignment="Center">
+                                <pixel:PixelText Text="{Binding AdminName}" Scale="2" Tight="True" Colour="{StaticResource PxGold}" />
+                                <TextBlock Text="organizador" Foreground="{StaticResource Faint}" FontSize="11" Margin="0,3,0,0" />
+                            </StackPanel>
+                        </DockPanel>
+                    </Grid>
+                </Border>
 
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="14" />
-                <ColumnDefinition Width="430" />
-            </Grid.ColumnDefinitions>
-
-            <!-- ================================================== QUIÉN HAY -->
-            <pixel:PixelWindow Grid.Column="0" Title="JUGADORES" Icon="IconPeople">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-
-                    <DockPanel Grid.Row="0" Margin="0,0,0,8">
-                        <Button DockPanel.Dock="Left" Content="SELECCIONAR TODOS" Click="OnChooseAll" />
-                        <TextBlock Text="Clic en un jugador para marcarlo o desmarcarlo." Foreground="{StaticResource Faint}"
-                                   FontSize="11.5" VerticalAlignment="Center" Margin="10,0,0,0" TextWrapping="Wrap" />
-                    </DockPanel>
-
-                    <ListBox x:Name="PlayerList" Grid.Row="1" ItemsSource="{Binding Players}" SelectionMode="Multiple"
-                             SelectionChanged="OnPlayersChosen"
-                             MaxHeight="300" HorizontalContentAlignment="Stretch">
-                        <ListBox.ItemContainerStyle>
-                            <Style TargetType="ListBoxItem">
-                                <Setter Property="Padding" Value="0" />
-                                <Setter Property="Margin" Value="0,0,0,6" />
-                                <Setter Property="Template">
-                                    <Setter.Value>
-                                        <ControlTemplate TargetType="ListBoxItem">
-                                            <Border x:Name="Row" Background="{StaticResource FaceHigh}"
-                                                    BorderBrush="{StaticResource Canvas}" BorderThickness="1"
-                                                    Padding="12,9">
-                                                <ContentPresenter />
-                                            </Border>
-                                            <ControlTemplate.Triggers>
-                                                <Trigger Property="IsSelected" Value="True">
-                                                    <Setter TargetName="Row" Property="BorderBrush"
-                                                            Value="{StaticResource Accent}" />
-                                                </Trigger>
-                                            </ControlTemplate.Triggers>
-                                        </ControlTemplate>
-                                    </Setter.Value>
-                                </Setter>
-                            </Style>
-                        </ListBox.ItemContainerStyle>
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-
-                                    <StackPanel Grid.Column="0">
-                                        <TextBlock Text="{Binding Name}"
-                                                   FontSize="15" />
-                                        <TextBlock Foreground="{StaticResource Faint}" FontSize="11.5" Margin="0,2,0,0">
-                                            <Run Text="{Binding Points, Mode=OneWay}" /><Run Text=" puntos · " /><Run
-                                                Text="{Binding Alive, Mode=OneWay}" /><Run Text=" en pie · " /><Run
-                                                Text="{Binding Dead, Mode=OneWay}" /><Run Text=" caídos" />
-                                        </TextBlock>
-                                    </StackPanel>
-
-                                    <!-- Conectado ahora: gris, azul en la app, verde jugando, como en JUGAR. -->
-                                    <Button Grid.Column="2" Content="FICHA" Padding="10,4" Margin="10,0,0,0" VerticalAlignment="Center"
-                                            CommandParameter="{Binding}"
-                                            Command="{Binding DataContext.OpenSheetCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
-                                    <TextBlock Grid.Column="1" Text="{Binding Presence}" VerticalAlignment="Center" FontSize="11">
-                                        <TextBlock.Style>
-                                            <Style TargetType="TextBlock">
-                                                <Setter Property="Foreground" Value="#FF898989" />
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding State}" Value="Playing">
-                                                        <Setter Property="Foreground" Value="#FF90BA3C" />
-                                                    </DataTrigger>
-                                                    <DataTrigger Binding="{Binding State}" Value="InApp">
-                                                        <Setter Property="Foreground" Value="#FF57CBDE" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
-                                </Grid>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-
-                    <!-- ================================================== LO MANDADO -->
-                    <DockPanel Grid.Row="2" Margin="0,16,0,0">
-                        <pixel:PixelText DockPanel.Dock="Top" Text="REGALOS MANDADOS" Style="{StaticResource Heading}" />
-                        <ScrollViewer VerticalScrollBarVisibility="Auto">
-                            <ItemsControl ItemsSource="{Binding Sent}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Border Background="{StaticResource FaceHigh}" BorderBrush="{StaticResource Canvas}"
-                                                BorderThickness="1" Padding="12,9" Margin="0,0,0,6">
+                <ListBox ItemsSource="{Binding Source={StaticResource Menu}}" SelectedItem="{Binding SelectedSection}"
+                         Background="Transparent" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                    <ListBox.GroupStyle>
+                        <GroupStyle>
+                            <GroupStyle.HeaderTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Name}" Foreground="{StaticResource Faint}" FontSize="10.5"
+                                               FontFamily="Segoe UI Semibold" Margin="20,14,0,4" />
+                                </DataTemplate>
+                            </GroupStyle.HeaderTemplate>
+                        </GroupStyle>
+                    </ListBox.GroupStyle>
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="Cursor" Value="Hand" />
+                            <Setter Property="ToolTip" Value="{Binding Help}" />
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListBoxItem">
+                                        <Border x:Name="Row" Background="Transparent" Margin="10,1" Padding="10,8" CornerRadius="6">
                                             <DockPanel>
-                                                <Button DockPanel.Dock="Right" Content="RETIRAR" Padding="10,5"
-                                                        VerticalAlignment="Center" Margin="10,0,0,0"
-                                                        Command="{Binding DataContext.WithdrawCommand,
-                                                                  RelativeSource={RelativeSource AncestorType=Window}}"
-                                                        CommandParameter="{Binding}" />
-                                                <StackPanel>
-                                                    <TextBlock Text="{Binding Gift.Reason}" TextTrimming="CharacterEllipsis" />
-                                                    <TextBlock Foreground="{StaticResource Gold}" FontSize="12"
-                                                               Margin="0,2,0,0" Text="{Binding Gift.Say}" />
-                                                    <TextBlock Foreground="{StaticResource Faint}" FontSize="11.5"
-                                                               Margin="0,2,0,0">
-                                                        <Run Text="{Binding State, Mode=OneWay}" /><Run Text=" " /><Run
-                                                            Text="{Binding Detail, Mode=OneWay}" />
-                                                    </TextBlock>
-                                                </StackPanel>
+                                                <Border x:Name="Mark" DockPanel.Dock="Left" Width="3" Margin="-10,0,9,0" Background="Transparent" />
+                                                <pixel:PixelIcon x:Name="Glyph" DockPanel.Dock="Left" Icon="{Binding Icon}" Scale="2" Margin="0,0,10,0" VerticalAlignment="Center" />
+                                                <pixel:PixelText x:Name="Label" Text="{Binding Title}" Scale="2" Tight="True" VerticalAlignment="Center"
+                                                                 Colour="{StaticResource PxTextDim}" />
                                             </DockPanel>
                                         </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </ScrollViewer>
-                    </DockPanel>
-                </Grid>
-            </pixel:PixelWindow>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Row" Property="Background" Value="{StaticResource Hover}" />
+                                            </Trigger>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter TargetName="Row" Property="Background" Value="{StaticResource AccentDeep}" />
+                                                <Setter TargetName="Mark" Property="Background" Value="{StaticResource Gold}" />
+                                                <Setter TargetName="Label" Property="Colour" Value="{StaticResource PxText}" />
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                </ListBox>
+            </DockPanel>
+        </Border>
 
-            <!-- ================================================== EL REGALO -->
-            <pixel:PixelWindow Grid.Column="2" Title="MANDAR UN REGALO" Icon="IconGift">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel>
-
-                        <pixel:PixelText Text="MOTIVO" Style="{StaticResource Heading}" Margin="0,0,0,6" />
-                        <TextBox Text="{Binding Reason, UpdateSourceTrigger=PropertyChanged}"
-                                 TextWrapping="Wrap" MinHeight="46" AcceptsReturn="True" />
-                        <TextBlock Foreground="{StaticResource Faint}" FontSize="11.5" Margin="0,4,0,0"
-                                   Text="Lo lee el jugador, y queda en su historial." />
-
-                        <pixel:PixelText Text="PUNTOS" Style="{StaticResource Heading}" Margin="0,16,0,6" />
-                        <TextBox Text="{Binding Points, UpdateSourceTrigger=PropertyChanged}" Width="110"
-                                 HorizontalAlignment="Left" />
-                        <TextBlock Foreground="{StaticResource Faint}" FontSize="11.5" Margin="0,4,0,0"
-                                   Text="En negativo también, para quitar." />
-
-                        <pixel:PixelText Text="TIRADAS DE GACHA" Style="{StaticResource Heading}" Margin="0,16,0,6" />
-                        <ItemsControl ItemsSource="{Binding Banners}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <DockPanel Margin="0,0,0,5">
-                                        <TextBox DockPanel.Dock="Right" Width="60"
-                                                 Text="{Binding Rolls, UpdateSourceTrigger=PropertyChanged}" />
-                                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
-                                    </DockPanel>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-
-                        <pixel:PixelText Text="WONDER TRADES" Style="{StaticResource Heading}" Margin="0,16,0,6" />
-                        <TextBox Text="{Binding WonderTrades, UpdateSourceTrigger=PropertyChanged}" Width="60"
-                                 HorizontalAlignment="Left" />
-
-                        <StackPanel Orientation="Horizontal" Margin="0,18,0,0">
-                            <Button Content="MANDAR" Style="{StaticResource Primary}" Command="{Binding SendCommand}"
-                                    IsEnabled="{Binding CanSend}" MinWidth="120" />
-                            <Button Content="LIMPIAR" Command="{Binding ClearCommand}" Margin="8,0,0,0" />
-                        </StackPanel>
-
-                        <TextBlock Foreground="{StaticResource Faint}" FontSize="11.5" Margin="0,10,0,0"
-                                   TextWrapping="Wrap"
-                                   Text="El jugador lo recoge la próxima vez que abra PermaLocke." />
-
-                        <!-- AJUSTAR PUNTOS, aparte del regalo: no se recoge, la app del jugador lo aplica sola. -->
-                        <Border Background="{StaticResource FaceHigh}" Padding="12,10" Margin="0,22,0,0">
-                            <StackPanel>
-                                <pixel:PixelText Text="AJUSTAR PUNTOS" Style="{StaticResource Heading}" Margin="0,0,0,4" />
-                                <TextBlock Foreground="{StaticResource Faint}" FontSize="11.5" TextWrapping="Wrap" Margin="0,0,0,10"
-                                           Text="Para sanciones y correcciones. No es un regalo: el jugador no tiene que recoger nada, su PermaLocke lo aplica solo en unos segundos (o al abrirlo, si lo tiene cerrado)." />
-                                <DockPanel>
-                                    <TextBox DockPanel.Dock="Left" Text="{Binding AdjustPoints, UpdateSourceTrigger=PropertyChanged}" Width="90"
-                                             ToolTip="Puntos: en negativo para quitar" />
-                                    <TextBox Text="{Binding AdjustReason, UpdateSourceTrigger=PropertyChanged}" Margin="8,0,0,0"
-                                             ToolTip="Motivo: lo lee el jugador y queda en su historial" />
-                                </DockPanel>
-                                <Button Content="AJUSTAR YA" Style="{StaticResource Primary}" Command="{Binding AdjustCommand}"
-                                        IsEnabled="{Binding CanAdjust}" HorizontalAlignment="Left" Margin="0,8,0,0" MinWidth="120" />
-                            </StackPanel>
-                        </Border>
+        <!-- ================================================== LA PÁGINA -->
+        <DockPanel Grid.Column="1">
+            <!-- Arriba: lo de hoy y ACTUALIZAR, siempre a la vista -->
+            <Border DockPanel.Dock="Top" Background="{StaticResource Surface}" Padding="18,10" BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1">
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Content="ACTUALIZAR" Command="{Binding RefreshAllCommand}"
+                            ToolTip="Vuelve a leer todo del servidor (se hace solo cada minuto)." />
+                    <StackPanel VerticalAlignment="Center">
+                        <pixel:PixelText Text="{Binding SelectedSection.Title}" Scale="3" Tight="True" Colour="{StaticResource PxText}"
+                                         Shadow="{StaticResource PxShadow}" />
+                        <TextBlock Text="{Binding SelectedSection.Help}" Foreground="{StaticResource Faint}" FontSize="12" Margin="0,4,0,0" />
                     </StackPanel>
-                </ScrollViewer>
-            </pixel:PixelWindow>
-        </Grid>
+                </DockPanel>
+            </Border>
 
-        <TextBlock Grid.Row="2" Text="{Binding Status}" Foreground="{StaticResource Muted}" Margin="2,12,0,0" />
+            <Border DockPanel.Dock="Bottom" Background="{StaticResource Canvas}" Padding="18,6">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Right" Text="{Binding Today}" Foreground="{StaticResource Gold}" FontSize="11.5" />
+                    <TextBlock Text="{Binding Status}" Foreground="{StaticResource Muted}" FontSize="11.5" />
+                </DockPanel>
+            </Border>
+
+            <ContentControl Content="{Binding SelectedSection.Page}" Margin="4,0,4,0" Focusable="False" />
+        </DockPanel>
     </Grid>
 </Window>

@@ -20,6 +20,15 @@ public static class IntegrityKinds
 
     /// <summary>A Pokémon the run holds as fallen entered a battle with HP: the game healed it just before (1.0.4.4).</summary>
     public const string FallenInBattle = "caidoEnCombate";
+
+    /// <summary>
+    /// A Pokémon's ability or nature changed in the game and later went back to what it was (2026-09-28): an Ability
+    /// Capsule, or anything else, used and then undone by reloading without saving, to try again.
+    /// </summary>
+    public const string Reroll = "repeticion";
+
+    /// <summary>The save had the Roto Loto unlocked; PermaLocke turned it off before opening the game (2026-09-28).</summary>
+    public const string RotoLoto = "rotombola";
 }
 
 /// <summary>

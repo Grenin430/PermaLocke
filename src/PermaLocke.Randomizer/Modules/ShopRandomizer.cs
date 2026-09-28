@@ -175,13 +175,21 @@ public sealed class ShopRandomizer(RomWorkspace workspace, RandomizerOptions opt
             })
             .ToList();
 
+        // Las MT de los mostradores salen de las que el CARTUCHO vendía, una vez cada una entre todos (2026-09-28): sorteadas
+        // de las cien se repetían con las del suelo y las que regala un NPC, y los jugadores encontraban la misma MT dos veces.
+        // Las del suelo se barajan entre las del suelo (FieldItemRandomizer), así que ninguna MT sale en dos sitios.
+        var soldByCartridge = special.Where(shop => ShopTable.SellsTechnicalMachines(cro, shop))
+            .SelectMany(shop => Enumerable.Range(0, shop.Count).Select(slot => ShopTable.GetItem(cro, shop, slot)))
+            .Where(machines.Contains).Distinct().Order().ToArray();
+        var machineBag = new List<int>();
+
         foreach (var shop in special)
         {
             if (ShopTable.SellsTechnicalMachines(cro, shop))
             {
                 // Las de MT gastan numeros aleatorios en su orden de siempre: un mostrador con lista
                 // propia no gasta ninguno, asi que ponerle una no mueve las MT de nadie.
-                FillWithMachines(cro, shop, random, machines);
+                FillWithMachines(cro, shop, random, soldByCartridge.Length > 0 ? soldByCartridge : machines, machineBag);
                 machineShops++;
 
                 // Solo las que acaban en un mostrador: reponer el precio de las cien tocaria
@@ -500,18 +508,26 @@ public sealed class ShopRandomizer(RomWorkspace workspace, RandomizerOptions opt
         return changed;
     }
 
-    /// <summary>Gives a TM shop a fresh set of TMs, without repeating one within the same shop.</summary>
-    private static void FillWithMachines(byte[] cro, ShopInventory shop, IRandomSource random, int[] machines)
+    /// <summary>
+    /// Gives a TM shop its TMs from <paramref name="bag"/>, shared by every TM shop so none is sold in two; only when
+    /// <paramref name="machines"/> is used up does the bag refill (a repeat then, never within the same shop if avoidable).
+    /// </summary>
+    private static void FillWithMachines(byte[] cro, ShopInventory shop, IRandomSource random, int[] machines, List<int> bag)
     {
         var used = new HashSet<int>();
         for (var slot = 0; slot < shop.Count; slot++)
         {
-            var pick = machines[random.Next(machines.Length)];
-            // Bounded, and a repeat is acceptable if the pool is somehow smaller than the shop.
-            for (var attempt = 0; attempt < 64 && !used.Add(pick); attempt++)
+            if (bag.Count == 0) bag.AddRange(machines);
+
+            var index = random.Next(bag.Count);
+            for (var attempt = 0; attempt < 64 && used.Contains(bag[index]); attempt++)
             {
-                pick = machines[random.Next(machines.Length)];
+                index = random.Next(bag.Count);
             }
+
+            var pick = bag[index];
+            bag.RemoveAt(index);
+            used.Add(pick);
             ShopTable.SetItem(cro, shop, slot, pick);
         }
     }

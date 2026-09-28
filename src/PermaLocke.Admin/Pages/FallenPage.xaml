@@ -1,0 +1,24 @@
+<UserControl x:Class="PermaLocke.Admin.Pages.FallenPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- CEMENTERIO (2026-09-28): los caídos de todos (19-caidos.sql), con filtro por jugador. Solo lectura. -->
+    <DockPanel Margin="18">
+        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+            <ComboBox DockPanel.Dock="Right" ItemsSource="{Binding Players}" SelectedItem="{Binding Player}" Width="200" Margin="0,0,10,0"
+                      ToolTip="Solo los de un jugador; en blanco, todos." />
+            <TextBlock Text="{Binding Status}" Foreground="{StaticResource Faint}" VerticalAlignment="Center" />
+        </DockPanel>
+
+        <DataGrid ItemsSource="{Binding Graves}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
+                  GridLinesVisibility="Horizontal" CanUserAddRows="False">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Cuándo" Binding="{Binding When}" Width="90" />
+                <DataGridTextColumn Header="Jugador" Binding="{Binding Player}" Width="130" />
+                <DataGridTextColumn Header="Pokémon" Binding="{Binding Pokemon}" Width="200" />
+                <DataGridTextColumn Header="Cayó ante" Binding="{Binding FellTo}" Width="200" />
+                <DataGridTextColumn Header="Cómo se vio" Binding="{Binding How}" Width="*" />
+                <DataGridTextColumn Header="Killcam" Binding="{Binding HasKillcam}" Width="70" />
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</UserControl>

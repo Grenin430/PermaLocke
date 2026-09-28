@@ -1,13 +1,10 @@
-<Window x:Class="PermaLocke.Admin.RulesWindow"
+<UserControl x:Class="PermaLocke.Admin.Pages.RulesPage"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:pixel="clr-namespace:PermaLocke.App.Views.Pixel"
-        Title="PermaLocke Admin · Reglas oficiales" Height="760" Width="1100" Icon="Assets/PermaLocke.Admin.ico"
-        Background="{StaticResource PxBaseBrush}" WindowStartupLocation="CenterOwner">
+        xmlns:pixel="clr-namespace:PermaLocke.App.Views.Pixel">
     <!-- REGLAS (2026-09-26): los ficheros de Data/ que el organizador cambia para todos, por el servidor. -->
     <DockPanel Margin="18">
         <StackPanel DockPanel.Dock="Top" Margin="0,0,0,12">
-            <pixel:PixelText Text="REGLAS OFICIALES" Scale="3" Tight="True" Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
             <TextBlock TextWrapping="Wrap" Foreground="{StaticResource Faint}" FontSize="11.5" Margin="0,4,0,0"
                        Text="Lo que subas aquí lo descarga el PermaLocke de cada jugador al abrirse (con copia de su versión) y se aplica al reiniciarlo. Sin versión oficial, cada uno usa la de su PermaLocke. Necesita tools/supabase/14-reglas.sql." />
         </StackPanel>
@@ -25,4 +22,4 @@
                  FontFamily="Consolas" FontSize="12.5" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
                  TextWrapping="NoWrap" VerticalContentAlignment="Top" />
     </DockPanel>
-</Window>
+</UserControl>

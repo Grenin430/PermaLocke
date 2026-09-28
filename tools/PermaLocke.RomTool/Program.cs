@@ -4613,10 +4613,11 @@ async Task InformacionAsync()
     }
 
     // Los mostradores con lista propia, y la lista de gen 8-9 derramada por specialMartOrder. Los huecos y los sitios
-    // son los medidos jugando que documenta _specialMartOrder: 10 Hauoli (8), 15 Paniola (3), 21 y 22 Ultraganga (5 y 7).
+    // son los medidos jugando que documenta _specialMartOrder: 10 Hauoli (8), 15 Paniola (3), 25 y 26 (8 y 8, 2026-09-28,
+    // fuera del Ultraganga por su cupón; su pueblo aún no se ha visto jugando).
     (string Place, int Slots)[] spill = [("Ciudad Hauoli · Centro Pokémon", 8), ("Pueblo Paniola · mostrador especial", 3),
-        ("Avenida Royal · Supermercado Ultraganga, mostrador de la izquierda", 5),
-        ("Avenida Royal · Supermercado Ultraganga, mostrador del centro", 7)];
+        ("Mostrador especial de un Centro Pokémon (el 25, sitio por confirmar)", 8),
+        ("Mostrador especial de un Centro Pokémon (el 26, sitio por confirmar)", 8)];
     var shops = options.SpecialMartShelves.Select(shelf => new
     {
         lugar = shelf.Place,

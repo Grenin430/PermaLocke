@@ -182,4 +182,49 @@ public sealed partial class RulesViewModel(DiscordLogin discord, AppPaths paths,
             File.Delete(temporary);
         }
     }
+
+    /// <summary>
+    /// TIENDA de Admin (2026-09-28): opens or closes the players' shop, or sets the trial it opens at, by changing
+    /// «abierta» / «abreEnPrueba» in the official shop.json on the server (this PC's when there is none yet). Every player
+    /// gets it when PermaLocke starts, like any rule. Returns what to tell the organiser.
+    /// </summary>
+    public async Task<string> SetShopAsync(bool open, int opensAtTrial)
+    {
+        try
+        {
+            var json = await discord.GetAsync("reglas?select=fichero,contenido,actualizado&fichero=eq.shop.json");
+            if (json is null) return "Entra con Discord (la cuenta del organizador).";
+
+            var row = (JsonSerializer.Deserialize<List<Row>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? []).FirstOrDefault();
+            var text = row?.Contenido ?? await File.ReadAllTextAsync(Path.Combine(paths.Data, "shop.json"));
+
+            if (System.Text.Json.Nodes.JsonNode.Parse(text) is not System.Text.Json.Nodes.JsonObject shop)
+            {
+                return "La shop.json no se puede leer.";
+            }
+
+            shop["abierta"] = open;
+            shop["abreEnPrueba"] = Math.Max(0, opensAtTrial);
+            var updated = shop.ToJsonString(new JsonSerializerOptions
+            {
+                WriteIndented = true,
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+            });
+
+            if (Problem("shop.json", updated) is { } problem) return $"No se sube: {problem}";
+
+            await discord.PostAsync("reglas", JsonSerializer.Serialize(new { fichero = "shop.json", contenido = updated, actualizado = DateTimeOffset.UtcNow }),
+                "resolution=merge-duplicates");
+            logger.LogInformation("Tienda: abierta={Open}, abre en la prueba {Trial}", open, opensAtTrial);
+
+            return !open ? "Tienda CERRADA. A cada jugador se le cierra al reiniciar PermaLocke."
+                : opensAtTrial > 0 ? $"Tienda abierta a partir de la prueba {opensAtTrial}. Se aplica al reiniciar PermaLocke."
+                : "Tienda ABIERTA. Se aplica al reiniciar PermaLocke.";
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "No se pudo cambiar la tienda");
+            return "No se ha podido. ¿Has ejecutado 14-reglas.sql y eres organizador?";
+        }
+    }
 }

@@ -18,7 +18,7 @@
   "logroDeLiga": "alto-mando-campeon",
   "logroDeRematch": "alto-mando-otra-vez",
 
-  "comentarioCurativos": "Los objetos del bolsillo de medicinas que la ruleta reparte y quita. Ids del cartucho, buscados con Probe --objeto-find y comprobados por nombre antes de escribir. No están los Caramelos Raros a propósito: suben de nivel, que no es curar.",
+  "comentarioCurativos": "Los objetos del bolsillo de medicinas que la ruleta reparte y quita. Ids del cartucho, buscados con Probe --objeto-find y comprobados por nombre antes de escribir. No están los Caramelos Raros a propósito: suben de nivel, que no es curar. Tampoco Revivir ni Revivir Máximo (quitados el 2026-09-28 a petición de los jugadores): en un Nuzlocke no se revive.",
   "objetosCurativos": [
     { "id": 17, "nombre": "Poción" },
     { "id": 26, "nombre": "Superpoción" },
@@ -26,8 +26,6 @@
     { "id": 24, "nombre": "Poción Máxima" },
     { "id": 23, "nombre": "Restaurar Todo" },
     { "id": 27, "nombre": "Cura Total" },
-    { "id": 28, "nombre": "Revivir" },
-    { "id": 29, "nombre": "Revivir Máximo" },
     { "id": 18, "nombre": "Antídoto" },
     { "id": 19, "nombre": "Antiquemar" },
     { "id": 20, "nombre": "Antihielo" },

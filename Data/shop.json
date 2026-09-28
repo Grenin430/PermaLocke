@@ -12,6 +12,10 @@
   "comentarioAscensoDraco": "La mega de Rayquaza no tiene piedra: va por el movimiento Ascenso Draco (620). Se vende como una megapiedra mas (2026-09-25), pero no va a la mochila: la compra se apunta en la run y desde entonces EQUIPO › MOVIMIENTOS ofrece Ascenso Draco a cualquier Rayquaza, gratis y cuantas veces haga falta. El id 90620 no es un objeto del juego, solo el nombre de la tarjeta; desbloqueaMovimiento y especie son lo que cuenta.",
   "comentarioCategorias": "categoria decide detrás de qué mostrador va cada cosa. Sin ella, combate. Las megapiedras van aparte porque son cuarenta y siete y mezcladas enterrarían los objetos de combate. Son TODAS las del cartucho menos la de Rayquaza, que no tiene piedra: su mega va por el movimiento Ascenso Draco.",
 
+  "comentarioAbierta": "abierta: false cierra la tienda entera (nadie compra nada). abreEnPrueba: la tienda no vende hasta que la run supere esa prueba (0 = siempre abierta). Se cambian con los botones TIENDA de Admin, que suben esta regla al servidor; a cada jugador se le aplica al reiniciar PermaLocke. Añadido el 2026-09-28.",
+  "abierta": true,
+  "abreEnPrueba": 0,
+
   "comentarioHierbas": "Las hierbas de naturaleza (2026-09-27, a peticion del organizador): las Mentas de los juegos nuevos no existen en Ultra Luna, asi que no son objetos. id es solo un numero de la tienda (91000 + naturaleza); naturaleza es el orden del juego, de 0 Fuerte a 24 Rara. Al comprar una se elige un Pokemon y la app le cambia la naturaleza en la partida, con el juego cerrado.",
   "comentarioMegapiedras": "Ojo con lo que compras: la piedra sirve para UNA especie, y la mega la tiene la forma FINAL. Una Swampertita no hace nada en un Marshtomp. Y con las especies randomizadas hay 46 especies con mega de 807, así que comprar a ciegas es tirar puntos. Además hace falta la Piedra Activadora (objeto 773) en la mochila, que es lo que el juego mira para dejarte megaevolucionar.",
 

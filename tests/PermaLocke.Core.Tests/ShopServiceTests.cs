@@ -251,4 +251,38 @@ public sealed class ShopServiceTests
         Assert.Equal(new NatureChange(BoxedPokemon.PartyBox, 2, 0xABCD, "Pikachu", 10), natures.Written.Single());
         Assert.False((await shop.ChangeNatureAsync(run, timid.Id, target with { Nature = 10 })).Succeeded);
     }
+
+    private sealed class ClosedCatalog(bool open, int trial, params ShopItem[] items) : IShopCatalog
+    {
+        public IReadOnlyList<ShopItem> Items => items;
+
+        public bool Open => open;
+
+        public int OpensAtTrial => trial;
+    }
+
+    /// <summary>The organiser closes the shop, or opens it at a trial (2026-09-28): nothing sold while closed.</summary>
+    [Fact]
+    public async Task A_closed_shop_sells_nothing_and_says_why()
+    {
+        var bag = new Bag(works: true);
+        var log = new Events();
+        var clock = new FixedClock();
+        var points = new PointsService(log, clock);
+        var run = new Run
+        {
+            Id = Guid.NewGuid(), Name = "Prueba", Game = GameVersion.UltraMoon, SeedLabel = "1", Seed = 1,
+            RoleId = "player", PlayerName = "Grenin"
+        };
+        await GiveAsync(points, run, 1000);
+
+        var closed = new ShopService(new ClosedCatalog(false, 0, Candy), points, bag, log, clock);
+        Assert.False((await closed.BuyAsync(run, Candy.Id)).Succeeded);
+        Assert.Empty(bag.Given);
+        Assert.NotNull(closed.ClosedReason(12));
+
+        var late = new ShopService(new ClosedCatalog(true, 6, Candy), points, bag, log, clock);
+        Assert.Contains("6", late.ClosedReason(5));
+        Assert.Null(late.ClosedReason(6));
+    }
 }

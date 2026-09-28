@@ -1,0 +1,75 @@
+{
+  "_comentario": "La página INFORMACIÓN › DIFICULTAD (2026-09-28). Resume en claro lo que el randomizado hace a los rivales: sale de subida_de_dificultad_explicada.txt (medido el 14-09-2026 contra el cartucho), de Data/randomizer.json y de Data/roles.json. Si cambia el randomizado, se cambia aquí también. Los caps salen solos de Data/levelcaps.json.",
+  "titulo": "LA SUBIDA DE DIFICULTAD",
+  "entradilla": "Los rivales son los mismos Pokémon que te tocan en tu mundo, pero piensan mejor, tienen más talento, entrenan lo que les sirve y llevan más objetos. Así queda, antes y ahora.",
+  "pilares": [
+    {
+      "titulo": "INTELIGENCIA",
+      "icono": "IconTrophy",
+      "antes": "25 %",
+      "ahora": "100 %",
+      "etiqueta": "entrenadores con la IA máxima",
+      "texto": "Todos piensan como un jefe desde el primer niño de la Ruta 1: eligen el mejor ataque, no usan lo que no te hace nada y cambian cuando les conviene.",
+      "barras": [
+        { "tramo": "Hasta la 1ª prueba", "antes": 3, "ahora": 100, "maximo": 100 },
+        { "tramo": "Hasta la 11ª prueba", "antes": 45, "ahora": 100, "maximo": 100 },
+        { "tramo": "Liga y después", "antes": 90, "ahora": 100, "maximo": 100 }
+      ],
+      "unidad": "%"
+    },
+    {
+      "titulo": "TALENTO (IV)",
+      "icono": "IconChart",
+      "antes": "+0 %",
+      "ahora": "+10 a 20 %",
+      "etiqueta": "más IV que en el cartucho",
+      "texto": "Cada Pokémon rival sube entre un 10 y un 20 % el talento que ya tenía, sin pasar de 31. Un IV de 0 sigue en 0, por eso al principio casi no se nota y al final sí.",
+      "barras": [
+        { "tramo": "Hasta la 1ª prueba", "antes": 2.5, "ahora": 2.8, "maximo": 31 },
+        { "tramo": "Hasta la 2ª", "antes": 15.9, "ahora": 18.1, "maximo": 31 },
+        { "tramo": "Hasta la 3ª", "antes": 21.2, "ahora": 23.4, "maximo": 31 },
+        { "tramo": "Hasta la 6ª", "antes": 17.0, "ahora": 19.0, "maximo": 31 },
+        { "tramo": "Hasta la 9ª", "antes": 22.7, "ahora": 24.9, "maximo": 31 },
+        { "tramo": "Hasta la 11ª", "antes": 22.3, "ahora": 24.3, "maximo": 31 },
+        { "tramo": "Hasta la Liga", "antes": 25.1, "ahora": 27.1, "maximo": 31 },
+        { "tramo": "Rematch y después", "antes": 27.1, "ahora": 28.9, "maximo": 31 }
+      ],
+      "unidad": "IV medio"
+    },
+    {
+      "titulo": "ENTRENAMIENTO (EV)",
+      "icono": "IconDumbbell",
+      "antes": "a ciegas",
+      "ahora": "a medida",
+      "etiqueta": "cómo reparten sus EV",
+      "texto": "Llevan los mismos EV que en el cartucho, pero repartidos para el Pokémon que les ha tocado: 252 a su mejor ataque y 252 a Velocidad si es rápido (base 80 o más) o a PS si no. Antes un atacante especial podía llevar todo en Ataque.",
+      "barras": [
+        { "tramo": "Hasta la 1ª prueba", "antes": 6, "ahora": 6, "maximo": 100 },
+        { "tramo": "Rematch y después", "antes": 95, "ahora": 95, "maximo": 100 }
+      ],
+      "unidad": "% con EV (ahora les sirven)"
+    },
+    {
+      "titulo": "OBJETOS",
+      "icono": "IconGift",
+      "antes": "12 %",
+      "ahora": "25 %",
+      "etiqueta": "Pokémon rivales con objeto",
+      "texto": "Uno de cada cuatro lleva objeto: Restos, Baya Zidra o Ziuela, Banda Focus, Vidasfera, Cinta Experto, Casco Dentado, Seguro Debilidad, y Cinta Fuerte o Gafas Especiales según ataquen. Nunca objetos Elegidos ni Chaleco Asalto.",
+      "barras": [
+        { "tramo": "Hasta la 1ª prueba", "antes": 0, "ahora": 16, "maximo": 50 },
+        { "tramo": "Hasta la 3ª", "antes": 23, "ahora": 38, "maximo": 50 },
+        { "tramo": "Liga", "antes": 18, "ahora": 27, "maximo": 50 }
+      ],
+      "unidad": "%"
+    }
+  ],
+  "reglas": [
+    { "titulo": "NIVELES +20 %", "texto": "Todo lo que pelea contra ti está un 20 % por encima del cartucho: entrenadores, Dominantes, legendarios y Ultraentes. El rol EXPERTO sube al 27 % con tu cap igual. Lo que te regalan no sube." },
+    { "titulo": "UN POKÉMON EXTRA", "texto": "Los combates importantes (kahunas, capitanes, Alto Mando, rivales, jefes) llevan un Pokémon más. El EXPERTO, dos." },
+    { "titulo": "EVOLUCIONES FINALES", "texto": "Los entrenadores con Pokémon de nivel 25 o más del cartucho los llevan en su evolución final, y los Dominantes desde la 6ª prueba también." },
+    { "titulo": "MEGAS", "texto": "Los combates importantes desde el nivel 29 llevan una megaevolución." },
+    { "titulo": "ALTO MANDO DURO", "texto": "El Alto Mando y el Campeón solo sacan Pokémon fuertes (suma de estadísticas base de 500 o más)." },
+    { "titulo": "LO QUE NO CAMBIA", "texto": "Sus movimientos (los que aprende su especie), sus habilidades ocultas y sus naturalezas. Los combates entre jugadores no se ven afectados." }
+  ]
+}

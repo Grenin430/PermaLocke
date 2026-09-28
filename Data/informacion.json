@@ -3849,42 +3849,42 @@
         {
           "id": 971,
           "nombre": "Brazal Galanuez",
-          "precio": 50000
+          "precio": 30000
         },
         {
           "id": 972,
           "nombre": "Corona Galanuez",
-          "precio": 50000
+          "precio": 30000
         },
         {
           "id": 973,
           "nombre": "Manzana Ácida",
-          "precio": 50000
+          "precio": 30000
         },
         {
           "id": 974,
           "nombre": "Manzana Dulce",
-          "precio": 50000
+          "precio": 30000
         },
         {
           "id": 975,
           "nombre": "Tetera Agrietada",
-          "precio": 50000
+          "precio": 30000
         },
         {
           "id": 976,
           "nombre": "Tetera Rota",
-          "precio": 50000
+          "precio": 30000
         },
         {
           "id": 977,
           "nombre": "Confite Fresa",
-          "precio": 50000
+          "precio": 30000
         },
         {
           "id": 984,
           "nombre": "Manuscrito Sombras",
-          "precio": 50000
+          "precio": 30000
         }
       ]
     },
@@ -3894,57 +3894,52 @@
         {
           "id": 985,
           "nombre": "Manuscrito Aguas",
-          "precio": 50000
+          "precio": 30000
         },
         {
           "id": 986,
           "nombre": "Mineral Negro",
-          "precio": 50000
+          "precio": 30000
         },
         {
           "id": 987,
           "nombre": "Bloque de Turba",
-          "precio": 50000
+          "precio": 30000
         }
       ]
     },
     {
-      "lugar": "Avenida Royal · Supermercado Ultraganga, mostrador de la izquierda",
+      "lugar": "Mostrador especial de un Centro Pokémon (el 25, sitio por confirmar)",
       "objetos": [
         {
           "id": 988,
           "nombre": "Armadura Auspiciosa",
-          "precio": 50000
+          "precio": 30000
         },
         {
           "id": 989,
           "nombre": "Armadura Maldita",
-          "precio": 50000
+          "precio": 30000
         },
         {
           "id": 990,
           "nombre": "Distintivo de Líder",
-          "precio": 50000
+          "precio": 30000
         },
         {
           "id": 991,
           "nombre": "Manzana Melosa",
-          "precio": 50000
+          "precio": 30000
         },
         {
           "id": 992,
           "nombre": "Cuenco Mediocre",
-          "precio": 50000
-        }
-      ]
-    },
-    {
-      "lugar": "Avenida Royal · Supermercado Ultraganga, mostrador del centro",
-      "objetos": [
+          "precio": 30000
+        },
         {
           "id": 993,
           "nombre": "Cuenco Exquisito",
-          "precio": 50000
+          "precio": 30000
         },
         {
           "id": 994,

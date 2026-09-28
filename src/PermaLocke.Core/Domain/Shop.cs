@@ -39,6 +39,12 @@ public sealed record ShopItem(int Id, string Name, int Price, string Category = 
 public interface IShopCatalog
 {
     IReadOnlyList<ShopItem> Items { get; }
+
+    /// <summary>False when the organiser closed the shop (2026-09-28, «abierta» in shop.json): nothing can be bought.</summary>
+    bool Open => true;
+
+    /// <summary>The trial whose clearing opens the shop, or 0 for always (2026-09-28, «abreEnPrueba»).</summary>
+    int OpensAtTrial => 0;
 }
 
 /// <summary>How a purchase ended.</summary>

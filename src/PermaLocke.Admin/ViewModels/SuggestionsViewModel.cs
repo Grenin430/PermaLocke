@@ -62,6 +62,12 @@ public sealed partial class SuggestionsViewModel(DiscordLogin discord, ILogger<S
             return;
         }
 
+        if (System.Windows.MessageBox.Show("¿Borrar esta sugerencia? No se puede recuperar.", "Borrar",
+                System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Question) != System.Windows.MessageBoxResult.Yes)
+        {
+            return;
+        }
+
         try
         {
             await discord.DeleteAsync($"sugerencias?id=eq.{line.Id}");

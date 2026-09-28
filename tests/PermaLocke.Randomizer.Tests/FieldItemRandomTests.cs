@@ -127,7 +127,7 @@ public sealed class FieldItemRandomTests
 
         Assert.True(options.FieldItems);
         Assert.Equal(FieldItemsMode.Random, options.FieldItemsMode);
-        Assert.Equal(2, options.FieldItemsMaxRepeats);
+        Assert.Equal(1, options.FieldItemsMaxRepeats);
         Assert.Contains(1, options.FieldItemsBanned);
     }
 

@@ -220,9 +220,36 @@ public sealed class DiscordLogin(AppPaths paths, ILogger<DiscordLogin> logger)
         request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _access);
         if (prefer is not null) request.Headers.Add("Prefer", prefer);
 
+        var sent = DateTimeOffset.UtcNow;
         using var response = await Http.SendAsync(request, cancel);
+        LearnServerClock(sent, response.Headers.Date);
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadAsStringAsync(cancel);
+    }
+
+    private int _clockSamples;
+
+    /// <summary>
+    /// The server's clock minus this PC's (2026-09-28): what makes a ghost or a nickname window come up at the same moment
+    /// on every screen, whatever each PC's clock says.
+    /// </summary>
+    public TimeSpan ServerOffset { get; private set; }
+
+    /// <summary>A server moment as this PC's clock reads it.</summary>
+    public DateTimeOffset ToLocal(DateTimeOffset server) => (server - ServerOffset).ToLocalTime();
+
+    /// <remarks>
+    /// The Date header only has whole seconds, so each answer says the server's second plus half, against the middle of
+    /// the round trip; averaged over answers the error shrinks well below a second.
+    /// </remarks>
+    private void LearnServerClock(DateTimeOffset sent, DateTimeOffset? date)
+    {
+        if (date is not { } server) return;
+
+        var received = DateTimeOffset.UtcNow;
+        var sample = server.AddMilliseconds(500) - (sent + ((received - sent) / 2));
+        _clockSamples = Math.Min(_clockSamples + 1, 20);
+        ServerOffset += (sample - ServerOffset) / _clockSamples;
     }
 
     /// <summary>Forgets the session on this PC.</summary>

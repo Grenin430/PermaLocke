@@ -62,9 +62,11 @@ public sealed partial class ShopViewModel : SectionViewModel
     private readonly IAppDialogs _dialogs;
     private readonly ILogger<ShopViewModel> _logger;
     private readonly IBoxReader _boxes;
+    private readonly PermaLocke.Rules.Services.ProgressService? _progress;
 
     public ShopViewModel(ShopService shop, IRunContext runs, PokemonSpriteService sprites,
-        IAppDialogs dialogs, IBoxReader boxes, ILogger<ShopViewModel> logger)
+        IAppDialogs dialogs, IBoxReader boxes, ILogger<ShopViewModel> logger,
+        PermaLocke.Rules.Services.ProgressService? progress = null)
         : base("TIENDA", "Objetos a cambio de puntos")
     {
         Fleeting.Fade(this, nameof(Status), nameof(Problem));
@@ -75,6 +77,7 @@ public sealed partial class ShopViewModel : SectionViewModel
         _dialogs = dialogs;
         _logger = logger;
         _boxes = boxes;
+        _progress = progress;
     }
 
     /// <summary>Everything on sale, both counters. What the bag is asked about in one go.</summary>
@@ -178,6 +181,13 @@ public sealed partial class ShopViewModel : SectionViewModel
     [ObservableProperty]
     private int _balance;
 
+    /// <summary>Why nothing can be bought now (2026-09-28): closed by the organiser or not open until a trial. Empty when open.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsClosed))]
+    private string _closed = string.Empty;
+
+    public bool IsClosed => Closed.Length > 0;
+
     [ObservableProperty]
     private string _status = string.Empty;
 
@@ -250,6 +260,7 @@ public sealed partial class ShopViewModel : SectionViewModel
         try
         {
             Balance = await _shop.GetBalanceAsync(run.Id);
+            Closed = _shop.ClosedReason(_progress is null ? int.MaxValue : await _progress.ClearedAsync(run)) ?? string.Empty;
 
             foreach (var card in Items)
             {
@@ -289,6 +300,12 @@ public sealed partial class ShopViewModel : SectionViewModel
     {
         if (card is null || Busy || _runs.Current is not { } run)
         {
+            return;
+        }
+
+        if (Closed.Length > 0)
+        {
+            Problem = Closed;
             return;
         }
 

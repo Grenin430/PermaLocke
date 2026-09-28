@@ -30,7 +30,7 @@ public sealed partial class MainViewModel : ObservableObject
         MapViewModel map,
         RouletteViewModel roulette, RouletteService wheel, SettingsViewModel settings,
         CemeteryViewModel cemetery, SyncViewModel sync, BattleModeViewModel battle,
-        GiftInboxViewModel gifts, SuggestionBoxViewModel suggestions, InformationViewModel information,
+        GiftInboxViewModel gifts, SuggestionBoxViewModel suggestions, InformationViewModel information, DifficultyViewModel difficulty,
         PermaLocke.App.Services.GameLinkMonitor gameLink,
         PermaLocke.App.Services.IUiDispatcher ui,
         PermaLocke.App.Services.AlolaSky sky,
@@ -64,6 +64,7 @@ public sealed partial class MainViewModel : ObservableObject
         var info = new GroupSectionViewModel("INFORMACIÓN", "IconDocument", logger,
             new InformationPageViewModel("EVOLUCIONES", false, information),
             new InformationPageViewModel("TIENDAS", true, information),
+            difficulty,
             miscellaneous);
         _play = play;
         _gacha = gacha;

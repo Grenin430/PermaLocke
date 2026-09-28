@@ -7,8 +7,8 @@
   "fieldItems": true,
   "_fieldItemsMode": "Random = como el mundo de la carpeta Locke (§163): cada sitio se sortea entre TODOS los objetos de los bolsillos de objetos, medicinas y bayas del juego que se está randomizando -megapiedras, Poké Balls y los de gen 8-9 incluidos-, y cada MT dorada entre las cien MT. Nunca objetos clave ni cristales Z. Shuffle = lo de antes: se barajan entre sí los que el cartucho ya ponía, sin traer ninguno nuevo.",
   "fieldItemsMode": "Random",
-  "_fieldItemsMaxRepeats": "En modo Random, cuántas veces como mucho sale el mismo objeto, y lo mismo para cada MT. La referencia: ninguno más de 2.",
-  "fieldItemsMaxRepeats": 2,
+  "_fieldItemsMaxRepeats": "En modo Random, cuántas veces como mucho sale el mismo objeto, y lo mismo para cada MT. La referencia: ninguno más de 2. Bajado a 1 el 2026-09-28 a petición de los jugadores (encontraban objetos repetidos): hay unos 530 objetos para unos 490 sitios, así que cabe sin repetir. Las MT del suelo ya no se sortean: se barajan las que el cartucho pone en el suelo, y las tiendas venden las que el cartucho vendía, una vez cada una.",
+  "fieldItemsMaxRepeats": 1,
   "_fieldItemsBanned": "En modo Random, objetos que no salen nunca en el suelo, por id. El 1 es la Master Ball: en un Nuzlocke es la captura asegurada del único encuentro de una ruta, y la referencia no puso ninguna. Para buscar un id: Probe --objeto-find \"nombre\".",
   "fieldItemsBanned": [1],
   "staticEncounters": true,
@@ -43,7 +43,7 @@
   "bannedMoves": [ 12, 32, 90, 329 ],
   "_specialMarts": "Solo los mostradores especiales de los centros Pokémon; los ocho inventarios normales se dejan intactos. Las tiendas de MT se randomizan por otras MT; las demás se surten del objeto de abajo en todos sus huecos.",
   "specialMarts": true,
-  "_specialMartOrder": "Por que mostradores especiales se empieza a surtir, por indice. La lista de objetos de evolucion se derrama de uno al siguiente segun se llenan, asi que esto decide cuanto tiene que andar el jugador para completarla. En orden de indice se empezaba por el 8, que es Konikoni, ya bien entrada la region, y hacian falta tres mostradores. Los indices se MIDEN jugando, porque el cartucho no dice que mostrador es de que pueblo: 10 es el Centro Pokemon de Ciudad Hauoli (8 huecos) y 11 el de la Ruta 2 (12). Veinte huecos para dieciocho objetos, o sea la lista entera en los dos primeros mostradores del juego. Un indice que no exista se ignora, y lo que no se nombre sigue yendo en orden. CAMBIADO el 2026-09-19 (§145): la Ruta 2 pasa a vender los objetos de intercambio de specialMartShelves, asi que los diez de gen 8-9 que tenia van a los siguientes mostradores especiales del camino: Pueblo Paniola (15, 3 huecos) y el Supermercado Ultraganga de la Avenida Royal, el mostrador de la izquierda (21, 5) y el del centro (22, 7). CORREGIDO el mismo dia: primero se pusieron en el 24, que pk3DS etiqueta «Route 3 [X Items]», y el jugador dijo que en la Ruta 3 NO HAY Centro Pokemon. O sea que esa etiqueta esta mal y el 24 no se sabe donde esta: se deja con Poke Balls. Paniola lo dio por bueno el jugador; el 21 y el 22 son etiquetas de pk3DS respaldadas por el 23, que en el cartucho vende Estatuillas Raras, y eso solo lo vende el Supermercado Ultraganga. Sin ver jugando.",
+  "_specialMartOrder": "Por que mostradores especiales se empieza a surtir, por indice. La lista de objetos de evolucion se derrama de uno al siguiente segun se llenan, asi que esto decide cuanto tiene que andar el jugador para completarla. En orden de indice se empezaba por el 8, que es Konikoni, ya bien entrada la region, y hacian falta tres mostradores. Los indices se MIDEN jugando, porque el cartucho no dice que mostrador es de que pueblo: 10 es el Centro Pokemon de Ciudad Hauoli (8 huecos) y 11 el de la Ruta 2 (12). Veinte huecos para dieciocho objetos, o sea la lista entera en los dos primeros mostradores del juego. Un indice que no exista se ignora, y lo que no se nombre sigue yendo en orden. CAMBIADO el 2026-09-19 (§145): la Ruta 2 pasa a vender los objetos de intercambio de specialMartShelves, asi que los diez de gen 8-9 que tenia van a los siguientes mostradores especiales del camino: Pueblo Paniola (15, 3 huecos) y el Supermercado Ultraganga de la Avenida Royal, el mostrador de la izquierda (21, 5) y el del centro (22, 7). CORREGIDO el mismo dia: primero se pusieron en el 24, que pk3DS etiqueta «Route 3 [X Items]», y el jugador dijo que en la Ruta 3 NO HAY Centro Pokemon. O sea que esa etiqueta esta mal y el 24 no se sabe donde esta: se deja con Poke Balls. Paniola lo dio por bueno el jugador; el 21 y el 22 son etiquetas de pk3DS respaldadas por el 23, que en el cartucho vende Estatuillas Raras, y eso solo lo vende el Supermercado Ultraganga. Sin ver jugando. CAMBIADO el 2026-09-28 a petición de los jugadores: el Supermercado Ultraganga (21 y 22) aplica un CUPÓN que abarataba los objetos especiales, así que salen de allí y van al 25 y al 26, dos mostradores de objetos X (8 huecos cada uno) cuyo pueblo aún no se ha visto jugando (el 24 no, que pk3DS lo pone en la Ruta 3 y allí no hay Centro Pokémon): el 21 y el 22 vuelven a lo del cartucho.",
   "_shuffleMachineCompatibility": "Baraja que MT puede aprender cada Pokemon. Se BARAJA y no se sortea: cada especie conserva CUANTAS puede aprender y solo cambian cuales, asi que un Magikarp sigue aprendiendo tan poco como antes y nadie se queda sin nada. Los bits estan en 0x28 de la entrada de personal, trece bytes con cuatro sobrantes, y se anclaron midiendo: Mew tiene exactamente 100 y Ditto ninguno. Ojo, es distinto de randomizeMachines, que cambia QUE ENSEÑA cada MT.",
   "shuffleMachineCompatibility": true,
 
@@ -73,7 +73,7 @@
   "_machineMartPrice": "Lo que cuesta cada MT en los mostradores de MT de los centros Pokemon. Es el precio del OBJETO, no del hueco, asi que vale alli donde esa MT se venda. Solo se retocan las que acaban en un mostrador: cambiar el precio de las cien tocaria tambien las que se encuentran por el suelo, y esas no se compran. Multiplo de 10 y como mucho 655350. Un 0 deja los precios del cartucho.",
   "machineMartPrice": 35000,
 
-  "specialMartOrder": [ 10, 15, 21, 22 ],
+  "specialMartOrder": [ 10, 15, 25, 26 ],
 
   "nonMachineMartItem": 4,
 
@@ -148,7 +148,7 @@
   ],
 
   "_specialMartItemPrice": "Lo que cuesta cada uno de specialMartItems. El precio vive en la tabla de objetos y NO en la tienda, asi que cambiarlo los encarece en todas partes, tambien al venderlos. El campo es un ushort que guarda el precio entre diez, o sea que el tope real son 655350 y tiene que ser multiplo de 10. Cero deja los precios como esten.",
-  "specialMartItemPrice": 50000,
+  "specialMartItemPrice": 30000,
 
   "_megaStonePrice": "Precio de TODAS las megapiedras del juego instalado (las del cartucho y las del mod), leidas de su tabla de megas. Las tiendas compran a la mitad, asi que 20000 = se venden por 10000 en cualquier Centro Pokemon. En el cartucho valen 0 y por eso no se pueden vender. Pedido por el jugador el 2026-09-27. 0 las deja como estan. Solo en runs randomizadas desde entonces.",
   "megaStonePrice": 20000,

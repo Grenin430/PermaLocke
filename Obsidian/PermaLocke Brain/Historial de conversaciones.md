@@ -343,3 +343,7 @@ negro del estudio de fotos: gen 8-9 en el equipo (ver Trampas y lecciones).
   91000+n). Las Mentas no existen en el juego: la hierba escribe la naturaleza en la partida con el juego CERRADO
   (`SaveNatureChanger`, guardas del mote, `StatCalculator.Restat` en el equipo) y luego cobra (`ShopService.ChangeNatureAsync`).
   Icono pixel propio (`HerbArt`). shop.json es regla oficial: si está en el servidor, publicarla desde Admin › REGLAS.
+- 2026-09-28 (sin publicar): lista de los jugadores casi entera. Hechas 4, 10, 2, 11, 6, 3, 12, 13 y ahora 1 (montones de
+  bayas de una vez, `BerryPileKeeper`), 5 (Rotombola apagada al pulsar JUGAR, `SaveRotoLoto`), 9 (motes votados,
+  `NicknameVoteService` + `20-motes.sql`) y 7 primera fase (HOY, ayudas y confirmaciones en Admin). Falta 8 (Banda Focus).
+  Detalle y lo que queda por medir jugando en «Plan de la lista de los jugadores (2026-09-28)».

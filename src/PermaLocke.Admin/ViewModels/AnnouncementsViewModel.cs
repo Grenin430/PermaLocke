@@ -58,6 +58,12 @@ public sealed partial class AnnouncementsViewModel(DiscordLogin discord, ILogger
     [RelayCommand(CanExecute = nameof(CanPublish))]
     private async Task PublishAsync()
     {
+        if (System.Windows.MessageBox.Show($"Publicar para todos:\n\n{Text.Trim()}", "Anuncio",
+                System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Question) != System.Windows.MessageBoxResult.Yes)
+        {
+            return;
+        }
+
         try
         {
             await discord.PostAsync("anuncios", JsonSerializer.Serialize(new { texto = Text.Trim() }));
@@ -79,6 +85,12 @@ public sealed partial class AnnouncementsViewModel(DiscordLogin discord, ILogger
     private async Task WithdrawAsync(Announcement? item)
     {
         if (item is null)
+        {
+            return;
+        }
+
+        if (System.Windows.MessageBox.Show("¿Retirar este anuncio?", "Anuncio",
+                System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Question) != System.Windows.MessageBoxResult.Yes)
         {
             return;
         }

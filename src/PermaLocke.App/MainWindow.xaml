@@ -91,6 +91,9 @@
         <DataTemplate DataType="{x:Type vm:InformationPageViewModel}">
             <views:InformationView DataContext="{Binding Info}" Tag="{Binding DataContext.Shops, RelativeSource={RelativeSource AncestorType=ContentPresenter}}" />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:DifficultyViewModel}">
+            <views:DifficultyView />
+        </DataTemplate>
         <DataTemplate DataType="{x:Type vm:MiscellaneousViewModel}">
             <views:MiscellaneousView />
         </DataTemplate>

@@ -40,9 +40,22 @@ public static class OverlayWindows
     {
         var handle = new WindowInteropHelper(window).EnsureHandle();
 
-        return SetWindowPos(handle, TopMost, box.Left, box.Top, box.Width, box.Height,
-            NoActivate | ShowWindow);
+        // Solo si ha cambiado algo (2026-09-28): el panel del cap cada medio segundo y el fantasma o la lluvia cada décima se
+        // ponían encima el uno del otro sin parar, y donde se tocaban parpadeaba. Siendo todas «siempre encima» del juego,
+        // volver a pedirlo no hace falta.
+        if (window.IsVisible && Placed.TryGetValue(window, out var last) && last.Box == box)
+        {
+            return true;
+        }
+
+        var done = SetWindowPos(handle, TopMost, box.Left, box.Top, box.Width, box.Height, NoActivate | ShowWindow);
+        if (done) Placed.AddOrUpdate(window, new PlacedBox(box));
+        return done;
     }
+
+    private sealed record PlacedBox((int Left, int Top, int Width, int Height) Box);
+
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Window, PlacedBox> Placed = new();
 
     /// <summary>
     /// What is on screen inside a box of screen pixels, as a frozen image, or null if it could not be

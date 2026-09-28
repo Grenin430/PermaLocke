@@ -78,3 +78,12 @@ fuertes contra los de delante; los primeros, flojos o de defensa). Mantiene el t
   hermana. Diez tandas seguidas rechazadas: no seguir proponiendo listas sin que traiga una pista propia.
 - **Regla del usuario (2026-09-26): nada de ideas que alteren la jugabilidad.** Los objetos de Mario Kart la alteran;
   siguen apuntados porque los pidió guardar.
+
+## Lista de los jugadores (2026-09-28), pendiente de decidir
+1. Montones de bayas: que no se regeneren. 2. Tienda de combate de la app cerrada hasta el final/late game.
+3. Detectar reinicios para repetir (Cápsula Habilidad…). 4. Parpadeo del panel del cap al morir (se esconde mientras
+HpBarWatcher mira la barra, 1.0.5.10) y de la lluvia de sangre. 5. Bloquear la Rotombola (Roto Loto).
+6. Subida de dificultad explicada en la app, gráfica (hay `subida_de_dificultad_explicada.txt` en la raíz).
+7. Admin «a prueba de niños». 8. Banda Focus que no se gaste. 9. Motes votados por los demás en su emulador.
+10. Ruleta de curativos sin revivir. 11. Carta al álbum también para huevos, fósiles y regalos.
+12. MT y objetos repetidos en el mundo. 13. Balance del dinero y cupón del Supermercado Ultraganga.

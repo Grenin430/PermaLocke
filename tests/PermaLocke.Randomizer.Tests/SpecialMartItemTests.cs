@@ -50,7 +50,7 @@ public sealed class SpecialMartItemTests
 
         Assert.Equal(18, options.SpecialMartItems.Count);
         Assert.Equal(18, options.SpecialMartItems.Select(i => i.Id).Distinct().Count());
-        Assert.Equal(50000, options.SpecialMartItemPrice);
+        Assert.Equal(30000, options.SpecialMartItemPrice);
 
         // El que motivó todo esto, con su nombre oficial en español desde la 1.4 del mod (§133).
         Assert.Contains(options.SpecialMartItems, i => i.Id == 989 && i.Name == "Armadura Maldita");

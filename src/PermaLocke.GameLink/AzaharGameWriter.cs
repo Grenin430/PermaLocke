@@ -463,6 +463,25 @@ public sealed class AzaharGameWriter(
         return true;
     }
 
+    /// <summary>
+    /// Writes a nickname into one party copy with the game running (2026-09-28, the voted nicknames), only if the slot
+    /// holds that PID.
+    /// </summary>
+    /// <remarks>
+    /// The name lives in the stored block, so only that is written (<see cref="StoredSize"/>): the stats tail, and with it
+    /// the current PS that corrupted a save once (1.0.6.2), is never touched. The level cap writes the same block the same
+    /// way while playing.
+    /// </remarks>
+    public MemoryWriteResult SetNickname(uint slotAddress, string nickname, uint expectedPid)
+    {
+        if (Read(slotAddress) is not { ChecksumValid: true } current || current.PID != expectedPid || current.IsEgg)
+        {
+            return MemoryWriteResult.Nothing;
+        }
+
+        return Modify(slotAddress, $"mote «{nickname}»", pokemon => pokemon.SetNickname(nickname), StoredSize);
+    }
+
     public PK7? Read(uint slotAddress) =>
         client.TryReadMemory(slotAddress, PartySize, out var bytes) ? new PK7(bytes) : null;
 

@@ -32,10 +32,23 @@ public sealed class PlayNotifications
 {
     public PlayNotifications(GameLinkMonitor monitor, MaintenanceService maintenance, Notifier notifier,
         DeathCeremony ceremony, PokemonSpriteService sprites, EncounterGuard encounters, BallControlService balls,
-        GhostService ghosts, CatchCeremony catches)
+        GhostService ghosts, CatchCeremony catches, NicknameVoteService votes)
     {
         // Una captura salvaje: su carta vuela al álbum encima del juego (§190).
-        encounters.Caught += (_, caught) => catches.Celebrate(caught);
+        encounters.Caught += (_, caught) =>
+        {
+            catches.Celebrate(caught);
+
+            // Y los demás le votan el mote (2026-09-28).
+            votes.Offer(caught.Pokemon);
+        };
+
+        // Y un huevo, un fósil o un regalo que aparece en el equipo, también (2026-09-28).
+        monitor.NewcomerArrived += (_, pokemon) =>
+        {
+            catches.CelebrateNewcomer(pokemon);
+            votes.Offer(pokemon);
+        };
 
         balls.FirstBallDetected += (_, _) => notifier.Say(
             ToastKind.Info, "¡Primeras Poké Balls!",

@@ -308,6 +308,7 @@ public partial class App : Application
 
         // Los fantasmas (§183): tus muertes a los demás, y las suyas encima de tu emulador.
         collection.AddSingleton<GhostService>();
+        collection.AddSingleton<NicknameVoteService>();
 
         // «Jugando a PermaLocke» en el perfil de Discord mientras la app está abierta (§185).
         collection.AddSingleton<DiscordPresence>();
@@ -317,6 +318,7 @@ public partial class App : Application
         collection.AddSingleton<GiftInbox>();
         collection.AddSingleton<GiftInboxViewModel>();
         collection.AddSingleton<SuggestionBoxViewModel>();
+        collection.AddSingleton<DifficultyViewModel>();
         collection.AddSingleton<SyncViewModel>();
         collection.AddSingleton<InformationViewModel>();
         collection.AddSingleton<AlolaSky>();
@@ -487,6 +489,7 @@ public partial class App : Application
         // Amigos y actividad van por el servidor del torneo, también en la distribución local.
         _services.GetRequiredService<CommunityService>().Start(writes: !withoutGame);
         _services.GetRequiredService<GhostService>().Start(writes: !withoutGame);
+        _services.GetRequiredService<NicknameVoteService>().Start(writes: !withoutGame);
         if (!withoutGame) _services.GetRequiredService<FallenShare>().Start();
         _services.GetRequiredService<DiscordPresence>().Start();
 
@@ -561,6 +564,18 @@ public partial class App : Application
             // El aviso pequeño de un amigo que empieza a jugar (1.0.4.5), sin servidor ni juego.
             _services!.GetRequiredService<Notifier>().Say(ToastKind.FriendPlaying, "Iñigo pero en móvil", "está jugando a PermaLocke");
             _services!.GetRequiredService<Notifier>().Say(ToastKind.Info, "Aviso normal", "Para comparar el tamaño.");
+        }
+
+        if (e.Args.Contains("--ensayar-novedades", StringComparer.OrdinalIgnoreCase))
+        {
+            // La ventana de NOVEDADES de CONFIGURACIÓN (1.0.7).
+            new PermaLocke.App.Views.ChangelogWindow().Show();
+        }
+
+        if (e.Args.Contains("--ensayar-mote", StringComparer.OrdinalIgnoreCase))
+        {
+            // Las cuatro ventanas del mote votado (2026-09-28), una tras otra, sin servidor: no manda nada.
+            await _services!.GetRequiredService<NicknameVoteService>().RehearseAsync();
         }
 
         if (e.Args.Contains("--ensayar-lluvia", StringComparer.OrdinalIgnoreCase))

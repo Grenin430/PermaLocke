@@ -62,6 +62,17 @@ if (args.Length >= 3 && args[0] == "--flags-diff")
     return PermaLocke.Probe.FlagProbe.Diff(args[1], args[2]);
 }
 
+// Rotombola y montones de bayas (2026-09-28): solo lectura de la partida.
+if (args.Length >= 1 && args[0] == "--campo")
+{
+    return PermaLocke.Probe.FieldStateProbe.Run(args.Length > 1 ? args[1] : null, args.Length > 2 ? args[2] : null);
+}
+
+if (args.Length >= 3 && args[0] == "--campo-diff")
+{
+    return PermaLocke.Probe.FieldStateProbe.Diff(args[1], args[2]);
+}
+
 // Reparación de nombres: tampoco necesita emulador, y para escribir lo exige cerrado.
 if (args.Length >= 1 && args[0] == "--nombres")
 {

@@ -32,6 +32,39 @@ public sealed class CatchCeremony(IUiDispatcher ui, SaveBoxReader boxes, TcgCard
     /// <summary>Off in CONFIGURACIÓN: the capture is detected all the same, only the card is not shown.</summary>
     public bool Enabled { get; set; } = true;
 
+    /// <summary>What was celebrated lately, so a wild capture that lands in the party does not get two cards.</summary>
+    private readonly Dictionary<uint, DateTime> _recent = [];
+
+    /// <summary>
+    /// A Pokémon that arrived without a wild battle (2026-09-28): egg, fossil, gift. The same card and the same flight.
+    /// Skipped when that same Pokémon was just celebrated as a capture.
+    /// </summary>
+    public void CelebrateNewcomer(PKHeX.Core.PK7 pokemon)
+    {
+        if (!Enabled || pokemon.IsEgg) return;
+
+        _ = ui.InvokeAsync(async () =>
+        {
+            if (_recent.TryGetValue(pokemon.PID, out var at) && DateTime.UtcNow - at < TimeSpan.FromMinutes(2)) return;
+            _recent[pokemon.PID] = DateTime.UtcNow;
+
+            try
+            {
+                _waiting.Enqueue(cards.Make(boxes.Describe(pokemon)));
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "No se pudo hacer la carta del Pokémon nuevo");
+                return;
+            }
+
+            if (!_playing)
+            {
+                await PlayAllAsync();
+            }
+        });
+    }
+
     /// <summary>Plays one capture. Safe to call from any thread.</summary>
     public void Celebrate(WildCatch caught)
     {
@@ -50,6 +83,8 @@ public sealed class CatchCeremony(IUiDispatcher ui, SaveBoxReader boxes, TcgCard
         {
             try
             {
+                if (_recent.TryGetValue(pokemon.PID, out var at) && DateTime.UtcNow - at < TimeSpan.FromMinutes(2)) return;
+                _recent[pokemon.PID] = DateTime.UtcNow;
                 _waiting.Enqueue(cards.Make(boxes.Describe(pokemon)));
             }
             catch (Exception ex)

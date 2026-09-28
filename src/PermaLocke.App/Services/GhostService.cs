@@ -28,7 +28,13 @@ namespace PermaLocke.App.Services;
 public sealed class GhostService
 {
     /// <summary>How often the others' deaths are asked for while the game is open: a ghost should feel live.</summary>
-    private static readonly TimeSpan ReadEvery = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan ReadEvery = TimeSpan.FromSeconds(2);
+
+    /// <summary>
+    /// A friend's ghost or rain comes up this long after it happened, by the server's clock (2026-09-28): every app has
+    /// read it by then (they read every two seconds), so it shows at the same moment on every screen.
+    /// </summary>
+    private static readonly TimeSpan CommonDelay = TimeSpan.FromSeconds(4);
 
     private static readonly JsonSerializerOptions Json = new() { PropertyNameCaseInsensitive = true };
 
@@ -163,9 +169,9 @@ public sealed class GhostService
     }
 
     private sealed record GhostRow(long Id, Guid Jugador, string Nombre, string Pokemon, int Especie, int Forma,
-        bool Shiny, int? Nivel, string? Zona, bool Rain = false, bool Mine = false);
+        bool Shiny, int? Nivel, string? Zona, bool Rain = false, bool Mine = false, DateTimeOffset? Creado = null);
 
-    private sealed record RainRow(long Id, Guid Jugador, string Nombre);
+    private sealed record RainRow(long Id, Guid Jugador, string Nombre, DateTimeOffset? Creado = null);
 
     private async Task ReadAsync()
     {
@@ -204,6 +210,20 @@ public sealed class GhostService
         }
     }
 
+    /// <summary>Queues a friend's ghost or rain for <see cref="CommonDelay"/> after it happened, and plays it then.</summary>
+    private void Later(GhostRow row, DateTimeOffset? happened)
+    {
+        var wait = happened is { } at ? _discord.ToLocal(at + CommonDelay) - DateTimeOffset.Now : TimeSpan.Zero;
+
+        _ = _timer.Dispatcher.InvokeAsync(async () =>
+        {
+            if (wait > TimeSpan.Zero) await Task.Delay(wait);
+            if (!Enabled) return;
+            _waiting.Enqueue(row);
+            if (!_playing) await PlayAllAsync();
+        });
+    }
+
     private async Task ReadGhostsAsync()
     {
         try
@@ -217,7 +237,7 @@ public sealed class GhostService
             }
 
             var json = await _discord.GetAsync(
-                $"fantasmas?select=id,jugador,nombre,pokemon,especie,forma,shiny,nivel,zona&id=gt.{_cursor}&order=id.asc&limit=20");
+                $"fantasmas?select=id,jugador,nombre,pokemon,especie,forma,shiny,nivel,zona,creado&id=gt.{_cursor}&order=id.asc&limit=20");
 
             if (json is null)
             {
@@ -232,7 +252,7 @@ public sealed class GhostService
 
                 if (row.Jugador != me)
                 {
-                    _waiting.Enqueue(row);
+                    Later(row, row.Creado);
                 }
             }
 
@@ -262,7 +282,7 @@ public sealed class GhostService
                 return;
             }
 
-            var json = await _discord.GetAsync($"lluvias?select=id,jugador,nombre&id=gt.{_rainCursor}&order=id.asc&limit=5");
+            var json = await _discord.GetAsync($"lluvias?select=id,jugador,nombre,creado&id=gt.{_rainCursor}&order=id.asc&limit=5");
 
             if (json is null)
             {
@@ -278,8 +298,8 @@ public sealed class GhostService
                 // La propia ya llovió al momento, sin esperar al servidor.
                 if (row.Jugador != me)
                 {
-                    _waiting.Enqueue(new GhostRow(row.Id, row.Jugador, row.Nombre, string.Empty, 0, 0, false, null, null,
-                        Rain: true));
+                    Later(new GhostRow(row.Id, row.Jugador, row.Nombre, string.Empty, 0, 0, false, null, null,
+                        Rain: true), row.Creado);
                 }
             }
 

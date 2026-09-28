@@ -53,7 +53,23 @@ public sealed class IntegrityGuard(AzaharInstallation azahar, PlayerSave save, I
         {
             logger.LogWarning("Estado guardado {State} retirado antes de abrir el juego", state);
         }
+
+        // La Rotombola (2026-09-28): con el juego cerrado se apaga en la partida; se anota al empezar a vigilar.
+        try
+        {
+            if (save.Find() is { } partida && PermaLocke.GameLink.SaveRotoLoto.TurnOff(partida, paths.SaveBackups))
+            {
+                _rotoLotoTurnedOff = true;
+                logger.LogWarning("La partida tenía la Rotombola activada: apagada antes de abrir el juego");
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "No se pudo mirar la Rotombola de la partida");
+        }
     }
+
+    private bool _rotoLotoTurnedOff;
 
     /// <summary>While playing: a state that appears is moved out before it can be loaded, and flagged.</summary>
     public async Task WatchStatesAsync(Guid run, AzaharLocation location)
@@ -61,6 +77,14 @@ public sealed class IntegrityGuard(AzaharInstallation azahar, PlayerSave save, I
         if (!Enabled)
         {
             return;
+        }
+
+        if (_rotoLotoTurnedOff)
+        {
+            _rotoLotoTurnedOff = false;
+            await integrity.FlagAsync(run, IntegrityKinds.RotoLoto,
+                "Tenía la Rotombola activada. PermaLocke la ha apagado antes de abrir el juego.",
+                new Dictionary<string, string>());
         }
 
         foreach (var state in azahar.SetAsideSaveStates(location, StatesFolder))
