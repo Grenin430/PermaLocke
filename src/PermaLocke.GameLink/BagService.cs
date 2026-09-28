@@ -172,10 +172,10 @@ public sealed class BagService(
         }
     }
 
-    private readonly System.Collections.Concurrent.ConcurrentDictionary<int, DateTime> _ownWrites = new();
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<int, (DateTime At, int Count)> _ownWrites = new();
 
-    /// <summary>When PermaLocke itself last wrote an item (returned balls, shop, gifts): not something the player picked up.</summary>
-    public DateTime LastOwnWrite(int itemId) => _ownWrites.GetValueOrDefault(itemId, DateTime.MinValue);
+    /// <summary>When PermaLocke itself last wrote an item (returned balls, shop, gifts) and the count it left.</summary>
+    public (DateTime At, int Count) LastOwnWrite(int itemId) => _ownWrites.GetValueOrDefault(itemId, (DateTime.MinValue, -1));
 
     /// <summary>
     /// The bag's contents only if it is already located and still valid, else null: never sweeps (2026-09-28, the item
@@ -252,7 +252,7 @@ public sealed class BagService(
             entry = new BagEntry(itemId, wanted, 0, false);
         }
 
-        _ownWrites[itemId] = DateTime.UtcNow;
+        _ownWrites[itemId] = (DateTime.UtcNow, wanted);
         if (!writer.SetBagSlot(address, entry))
         {
             return new BagWriteResult(BagWriteOutcome.NotApplied, itemId, previous, previous, address);

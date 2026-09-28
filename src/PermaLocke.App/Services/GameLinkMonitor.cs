@@ -244,7 +244,7 @@ public sealed class GameLinkMonitor(
 
     /// <summary>
     /// Compares the bag with the last look (2026-09-28, the item animation). Only the bag already located, never a sweep.
-    /// What PermaLocke wrote itself (balls given back, the shop, gifts from Admin) and balls held back are left out, and
+    /// What PermaLocke wrote itself (balls given back, the shop, gifts from Admin) is left out, only what is above it counts, and
     /// so is a jump of many items at once: that is a reload or another save, not something picked up.
     /// </summary>
     private void WatchBag(Run run)
@@ -261,10 +261,16 @@ public sealed class GameLinkMonitor(
 
         if (_carried is { } before)
         {
-            var gained = now.Select(pair => (ItemId: pair.Key, Amount: pair.Value - before.GetValueOrDefault(pair.Key)))
-                .Where(item => item.Amount > 0
-                    && DateTime.UtcNow - bag.LastOwnWrite(item.ItemId) > TimeSpan.FromSeconds(15)
-                    && bag.Owed(run.Id, item.ItemId) == 0)
+            // Lo que escribió PermaLocke hace poco cuenta como ya visto: solo sale lo que hay POR ENCIMA (una ball de un
+            // NPC justo después de devolverlas se veía como escritura propia y no salía, 1.0.7.9).
+            var gained = now.Select(pair =>
+                {
+                    var own = bag.LastOwnWrite(pair.Key);
+                    var seen = before.GetValueOrDefault(pair.Key);
+                    if (DateTime.UtcNow - own.At < TimeSpan.FromSeconds(15)) seen = Math.Max(seen, own.Count);
+                    return (ItemId: pair.Key, Amount: pair.Value - seen);
+                })
+                .Where(item => item.Amount > 0)
                 .ToList();
 
             if (gained.Count is > 0 and <= 4)

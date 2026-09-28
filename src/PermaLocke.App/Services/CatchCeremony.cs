@@ -21,7 +21,7 @@ namespace PermaLocke.App.Services;
 /// </para>
 /// </remarks>
 public sealed class CatchCeremony(IUiDispatcher ui, SaveBoxReader boxes, TcgCardFactory cards, KillcamRecorder killcam,
-    PokemonSpriteService sprites, IItemLookup items,
+    PokemonSpriteService sprites, IItemLookup items, PermaLocke.Core.Domain.IShopCatalog shop,
     ILogger<CatchCeremony> logger)
 {
     /// <summary>Cards waiting their turn. Only touched on the UI thread.</summary>
@@ -79,7 +79,9 @@ public sealed class CatchCeremony(IUiDispatcher ui, SaveBoxReader boxes, TcgCard
             try
             {
                 await sprites.PrepareAsync();
-                var name = items.GetName(itemId).ToUpperInvariant();
+                // Los objetos del mod (megapiedras nuevas) no están en la lista de PKHeX, que da otro nombre con su
+                // número: la TIENDA los tiene con el suyo (1.0.7.9, una Heatranita salía como Caramelo Exeggcute).
+                var name = (shop.Items.FirstOrDefault(i => i.Id == itemId)?.Name ?? items.GetName(itemId)).ToUpperInvariant();
 
                 var (icon, width, height) = sprites.GetItem(itemId) is { } bitmap
                     ? (CemeteryScene.Pixels(bitmap), bitmap.PixelWidth, bitmap.PixelHeight)
