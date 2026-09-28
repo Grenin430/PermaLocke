@@ -337,8 +337,8 @@ negro del estudio de fotos: gen 8-9 en el equipo (ver Trampas y lecciones).
   en el Nihilego paraba todo el randomizado, también en la app).
 - 1.0.6: `megaStonePrice` 20000 en randomizer.json: las megapiedras (método 1 de la tabla de megas a/0/1/5, 94 con el mod)
   se venden por 10000. Solo runs nuevas: no se toca el mundo instalado del torneo.
-- Pendiente: devolver balls en Centro Pokémon (se explicó que no arregla la libreta a 0; falta el log del amigo),
-  aviso del estudio de fotos con gen 8-9, seed elegible al crear run.
+- Descartado por el organizador (2026-09-28): devolver balls en Centro Pokémon, aviso del estudio de fotos con gen 8-9,
+  seed elegible al crear run.
 - 1.0.6.1: TIENDA › HIERBAS, las 25 naturalezas a 500 (Data/shop.json, `categoria: hierbas`, `naturaleza` 0-24, id
   91000+n). Las Mentas no existen en el juego: la hierba escribe la naturaleza en la partida con el juego CERRADO
   (`SaveNatureChanger`, guardas del mote, `StatCalculator.Restat` en el equipo) y luego cobra (`ShopService.ChangeNatureAsync`).

@@ -59,7 +59,7 @@ acabar la lista entera**, salvo que él diga expresamente que se publique. Lo de
   (con el juego abierto no: la trampa de la 1.0.6.2); avisa «se pondrá al cerrar el juego». `--ensayar-mote` la enseña.
 - 7 (primera fase): franja HOY en Admin (conectados, regalos sin recoger, buzón), ayuda en cada botón (ToolTip),
   confirmación en MANDAR, RETIRAR, borrar sugerencia y publicar/retirar anuncio. Asistentes paso a paso: no hechos.
-- 8 (Banda Focus): pendiente de decidir con el organizador.
+- 8 (Banda Focus): descartada por el organizador (2026-09-28).
 - 9 REHECHA como la describió el organizador: ventanas pequeñas arriba a la derecha del emulador con barra de 15 s
   (dorada, roja los últimos 5): 1) al que captura «¿Quieres que los otros pongan el mote…?» SÍ/NO; 2) a los demás
   «X quiere ponerle un mote a POKÉMON» + escribir; 3) votar entre las propuestas; 4) ganador. El servidor pone los

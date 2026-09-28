@@ -4,7 +4,7 @@ revisado: 2026-09-24
 ---
 # UI y kit pixel
 
-Todo `src/PermaLocke.App` está en estilo pixel desde §176–§176 quater, salvo COMPETICIÓN (`SyncView.xaml`, oculta con `LocalOnly`) y algo suelto (`PendingView`, `ToastWindow`, `DeathWindow`). Lista de ficheros en [[Mapa de código/PermaLocke.App]].
+Todo `src/PermaLocke.App` está en estilo pixel desde §176–§176 quater, salvo algo suelto (`PendingView`, `ToastWindow`, `DeathWindow`). Lista de ficheros en [[Mapa de código/PermaLocke.App]].
 
 ## Temas (`App.xaml`: Palette, Icons, Controls, Pixel)
 - `Themes/Pixel.xaml`. Cada color es un `Color` (no un Brush) salvo los `*Brush`:
@@ -33,6 +33,7 @@ Todo `src/PermaLocke.App` está en estilo pixel desde §176–§176 quater, salv
 - Encima del emulador, en la pantalla de arriba (`GameWindow.TopScreen`): fantasmas y lluvia (`GhostWindow`, §183-184), escena de muerte (`DeathWindow`) y la carta de cada captura (`CatchWindow` + `CatchScene`, §190, en píxeles del juego: `Pixel` = tamaño de un píxel del 3DS en el monitor; el álbum a 2 y la ball a 2 píxeles del juego por celda). Las cartas se hacen siempre con `TcgCardFactory`, igual en el ÁLBUM y al capturar.
 - Efectos de sala en `PixelScene` (§189), todos sobre los bytes: `Spotlight` (foco), `Wash` (tinte), `Flash` (fogonazo en tramado), `Shake` (mueve el fotograma entero), `FloorRing`, `ShoutText` (palabra con contorno). La máquina de cápsulas lleva el reloj en `CapsulePlay.Elapsed` (exprés y SALTAR, `CapsuleTimeline.Warp`).
 - ÁLBUM (§186, §187, §188): pinta con `PixelColour` (cuatro bytes; el `Color` de WPF cuesta `Math.Pow`), la mano calcula la luz por celda y va a 60 fps si puede, el álbum se para mientras se inspecciona (`IsPaused`). Acabados `TcgFinish` por región (`CellCanvas.Regions`, `Tint`); `HandScene` proyecta la carta en 3D por píxel (Pbgra32, rectángulo sucio); `AlbumScene` con tapa/pestañas opcional (`dressed`) y luz horneada. `TcgCardArt` dibuja cartas en un `CellCanvas` (BGRA con transparencia, `Stamp`, `StampColumns` para girar a columnas enteras, `Dither` Bayer 4×4, `Hash` estable); `AlbumScene` compone la doble página; `AlbumStage`/`CardStage` las ponen en pantalla a celdas enteras centradas en píxeles enteros.
+- COMPETICIÓN (2026-09-28): podio como estadio pixel de noche (`PodiumScene` + `PodiumStage`): público que salta, focos, marcador de bombillas, bloques oro/plata/bronce, foto de Discord pixelada a 24 celdas con marco del color de presencia, corona y confeti. Tooltip con etapa y equipo. Probado solo en PNG sin datos reales.
 - `EvHexagon` (`Values`, `Saved`, `IsOver`, `Plate`, `Guide`, `Fill`, `OverFill`).
 - `PokemonPickerPanel.xaml`: el selector de equipo y cajas compartido por ENTRENAR EV y MOVIMIENTOS. Enlaza `Party`, `SelectedPartySlot`, `Slots`, `SelectedSlot`, `SelectedBox`, `Previous/NextBoxCommand` y `LoadCommand`.
 - `ResourceKeyConverter` con `ConverterParameter=color` devuelve un Color.

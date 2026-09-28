@@ -54,47 +54,18 @@
                     <pixel:PixelText Text="{Binding Summary}" Scale="2" Tight="True" HorizontalAlignment="Center"
                                      Margin="0,0,0,16" Colour="{StaticResource PxTextDim}" />
 
-                    <!-- EL PODIO: segundo, primero, tercero; el primero más alto. -->
-                    <ItemsControl ItemsSource="{Binding Podium}" HorizontalAlignment="Center">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <StackPanel Orientation="Horizontal" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel Width="230" Margin="8,0" VerticalAlignment="Bottom">
-                                    <Grid Width="92" Height="92" HorizontalAlignment="Center">
-                                        <views:PixelPanel Style="{StaticResource StateFrame}" />
-                                        <Image Source="{Binding Picture}" Margin="6" RenderOptions.BitmapScalingMode="NearestNeighbor" />
-                                    </Grid>
-                                    <pixel:PixelText Text="{Binding Player}" Style="{StaticResource PlayerName}"
-                                                     HorizontalAlignment="Center" Margin="0,8,0,0" />
-                                    <pixel:PixelText Text="{Binding Points, StringFormat={}{0} puntos}" Scale="2" Tight="True"
-                                                     HorizontalAlignment="Center" Margin="0,6,0,0"
-                                                     Colour="{StaticResource PxAccentLight}" />
-                                    <pixel:PixelText Text="{Binding Line}" Style="{StaticResource Small}" TextAlignment="Center"
-                                                     HorizontalAlignment="Center" Margin="0,6,0,0" />
-                                    <pixel:PixelText Text="{Binding Team}" Style="{StaticResource Small}" TextAlignment="Center"
-                                                     HorizontalAlignment="Center" Margin="0,4,0,8" />
-                                    <Grid x:Name="Block" Height="70">
-                                        <views:PixelPanel Fill="{StaticResource PxFaceHigh}" />
-                                        <pixel:PixelText Text="{Binding Position}" Scale="5" Tight="True"
-                                                         HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                         Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
-                                    </Grid>
-                                </StackPanel>
-                                <DataTemplate.Triggers>
-                                    <DataTrigger Binding="{Binding Position}" Value="1">
-                                        <Setter TargetName="Block" Property="Height" Value="110" />
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding Position}" Value="2">
-                                        <Setter TargetName="Block" Property="Height" Value="90" />
-                                    </DataTrigger>
-                                </DataTemplate.Triggers>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                    <!-- EL PODIO: un estadio pixel de noche con el público, focos, marcador y los tres primeros. -->
+                    <views:PodiumStage Players="{Binding Podium}" Height="492" />
+
+                    <!-- Leyenda del marco de la foto. -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
+                        <Rectangle Width="10" Height="10" Fill="#FF90BA3C" Margin="0,0,6,0" />
+                        <pixel:PixelText Text="JUGANDO" Style="{StaticResource Small}" Margin="0,0,16,0" />
+                        <Rectangle Width="10" Height="10" Fill="#FF57CBDE" Margin="0,0,6,0" />
+                        <pixel:PixelText Text="EN LA APP" Style="{StaticResource Small}" Margin="0,0,16,0" />
+                        <Rectangle Width="10" Height="10" Fill="#FF5C5C5C" Margin="0,0,6,0" />
+                        <pixel:PixelText Text="DESCONECTADO" Style="{StaticResource Small}" />
+                    </StackPanel>
 
                     <!-- DEL CUARTO PARA ABAJO. -->
                     <ItemsControl ItemsSource="{Binding Rest}" Margin="0,18,0,0">
@@ -103,8 +74,12 @@
                                 <Grid Margin="0,0,0,8">
                                     <views:PixelPanel Fill="{StaticResource PxWell}" IsSunken="True" HasShadow="False" />
                                     <DockPanel Margin="14,8,18,10">
-                                        <pixel:PixelText DockPanel.Dock="Left" Text="{Binding Position}" Scale="3" Tight="True"
-                                                         Width="50" VerticalAlignment="Center" Colour="{StaticResource PxTextDim}" />
+                                        <Grid DockPanel.Dock="Left" Width="44" Height="44" Margin="0,0,12,0" VerticalAlignment="Center">
+                                            <views:PixelPanel Fill="{StaticResource PxFaceHigh}" HasShadow="False" />
+                                            <pixel:PixelText Text="{Binding Position}" Scale="3" Tight="True"
+                                                             HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                             Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
+                                        </Grid>
                                         <Grid DockPanel.Dock="Left" Width="48" Height="48" Margin="0,0,12,0">
                                             <views:PixelPanel Style="{StaticResource StateFrame}" />
                                             <Image Source="{Binding Picture}" Margin="4" RenderOptions.BitmapScalingMode="NearestNeighbor" />

@@ -1,3 +1,8 @@
+1.0.7.5
+COMPETICIÓN
+El podio ahora es un estadio de noche: público en las gradas, focos, confeti y los tres primeros en bloques de oro, plata y bronce con su foto. El primero lleva corona y tu puesto sale señalado.
+Pasa el ratón por un bloque para ver sus puntos, logros y caídos.
+
 1.0.7.4
 MOTES ENTRE TODOS
 Ahora también puedes pedir que te pongan el mote a los Pokémon que te regalan, a los fósiles, a los de las dominsignias y a los que salen del huevo, no solo a los que capturas.
