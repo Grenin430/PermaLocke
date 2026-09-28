@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Specialized;
 using System.Diagnostics;
+using System.IO;
+using System.Net.Http;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -18,6 +20,8 @@ public sealed class PodiumStage : ContentControl
     public static readonly DependencyProperty PlayersProperty = DependencyProperty.Register(
         nameof(Players), typeof(IEnumerable), typeof(PodiumStage),
         new PropertyMetadata(null, (d, e) => ((PodiumStage)d).OnPlayersChanged(e.OldValue, e.NewValue)));
+
+    private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(15) };
 
     private readonly Image _image = new() { Stretch = Stretch.Fill };
     private readonly ScaleTransform _zoom = new(1, 1);
@@ -100,23 +104,17 @@ public sealed class PodiumStage : ContentControl
         {
             BitmapSource? source = picture as BitmapSource;
 
+            // Bajada a mano y decodificada de los bytes: un BitmapImage que baja solo puede recogerlo el GC a medias y
+            // no avisa nunca (1.0.7.5, las fotos no salían).
             if (picture is string url && Uri.TryCreate(url, UriKind.Absolute, out var uri))
             {
+                var bytes = await Http.GetByteArrayAsync(uri);
                 var image = new BitmapImage();
                 image.BeginInit();
-                image.UriSource = uri;
+                image.StreamSource = new MemoryStream(bytes);
                 image.DecodePixelWidth = PodiumScene.PhotoSize * 2;
                 image.CacheOption = BitmapCacheOption.OnLoad;
                 image.EndInit();
-
-                if (image.IsDownloading)
-                {
-                    var done = new TaskCompletionSource();
-                    image.DownloadCompleted += (_, _) => done.TrySetResult();
-                    image.DownloadFailed += (_, _) => done.TrySetResult();
-                    await done.Task;
-                }
-
                 source = image;
             }
 
@@ -124,7 +122,8 @@ public sealed class PodiumStage : ContentControl
         }
         catch (Exception)
         {
-            // Sin foto se ve el marco vacío: no es motivo para romper la pantalla.
+            // Sin foto se ve el marco vacío; se vuelve a intentar en la siguiente lectura del top.
+            _photos.Remove(picture);
         }
     }
 

@@ -42,7 +42,7 @@ public sealed partial class RandomizerViewModel : SectionViewModel
     public RandomizerViewModel(IRunContext runContext, IEventStore events, IClock clock,
         IAppDialogs dialogs, AzaharInstallation azahar, AppPaths paths, IRunRoles roles,
         IRoleCatalog roleCatalog, InstalledWorld installedWorld, WorldAllowedStatics allowedStatics,
-        WorldEvolutionLines evolutionLines, ILogger<RandomizerViewModel> logger)
+        WorldEvolutionLines evolutionLines, ILogger<RandomizerViewModel> logger, IUiDispatcher ui)
         : base("RANDOMIZADOR", "Crea e instala tu mundo")
     {
         _installedWorld = installedWorld;
@@ -58,7 +58,8 @@ public sealed partial class RandomizerViewModel : SectionViewModel
         _roleCatalog = roleCatalog;
         _logger = logger;
 
-        _runContext.CurrentChanged += (_, _) => Refresh();
+        // Borrar o crear la run lo avisa desde otro hilo; los botones solo se tocan desde el de la ventana (1.0.7.6).
+        _runContext.CurrentChanged += (_, _) => _ = ui.InvokeAsync(() => { Refresh(); return Task.CompletedTask; });
         Refresh();
     }
 
