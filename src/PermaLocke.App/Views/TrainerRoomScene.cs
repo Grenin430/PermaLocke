@@ -201,6 +201,7 @@ public sealed class TrainerRoomScene
         DrawCorkboard(state.Stickers, state.StickersTarget);
         DrawTeam(state.Team, step, still);
 
+        Pixel.PixelTheme.Current.MapPixels(_frame);
         Bitmap.WritePixels(new Int32Rect(0, 0, Width, Height), _frame, Width * 4, 0);
     }
 

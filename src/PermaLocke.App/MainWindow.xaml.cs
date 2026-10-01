@@ -1,80 +1,50 @@
-using System.Collections.Specialized;
-using System.ComponentModel;
 using System.Windows;
-using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Media.Animation;
-using System.Windows.Threading;
+using System.Windows.Controls;
 using PermaLocke.App.Services;
-using PermaLocke.App.ViewModels;
+using PermaLocke.App.Shells;
+using PermaLocke.App.Views.Pixel;
 
 namespace PermaLocke.App;
 
 /// <summary>
-/// The shell window. Holds no logic beyond making its own frame match the theme and fit the screen.
+/// The shell window. Holds no logic beyond making its own frame match the look in use and fit the screen: what is drawn
+/// inside is a shell (<c>Shells/</c>) that the look asks for, and that shares this window's data.
 /// </summary>
 public partial class MainWindow : Window
 {
-    private MainViewModel? _shell;
-
-    /// <summary>What the counter said last time, to know whether the change was good or bad.</summary>
-    private int _lastPoints;
+    private ShellKind? _shownShell;
 
     public MainWindow()
     {
         InitializeComponent();
         DarkFrame.Apply(this);
-        DataContextChanged += OnDataContextChanged;
 
-        Sidebar.SizeChanged += (_, _) => FitAlolaCorner();
-
-        // La franja de Alola acaba justo en la raya de la cabecera: los 20 de margen del contenido más lo que mida.
-        Header.SizeChanged += (_, _) => AlolaStrip.Height = Header.ActualHeight + 20;
-        ((INotifyCollectionChanged)NavList.Items).CollectionChanged +=
-            (_, _) => Dispatcher.BeginInvoke(FitAlolaCorner, DispatcherPriority.Loaded);
-
-        // Un ListBox captura el ratón al pulsar y va seleccionando lo que pisa mientras el botón siga abajo: arrastrar
-        // por la barra cambiaba de sección sin soltar. Sin captura, solo cambia lo que se pulsa. Vale también para la
-        // lista de pestañas de EQUIPO y TORNEO, que avisa por aquí al ser hija.
-        NavList.AddHandler(Mouse.GotMouseCaptureEvent, new MouseEventHandler((_, e) =>
-        {
-            if (e.OriginalSource is System.Windows.Controls.ListBox list)
-            {
-                list.ReleaseMouseCapture();
-            }
-        }), handledEventsToo: true);
+        // El marco según el diseño en uso (2026-10-01): al arrancar y cada vez que se cambia desde la galería.
+        PixelTheme.Changed += ApplyShell;
+        Closed += (_, _) => PixelTheme.Changed -= ApplyShell;
+        ApplyShell();
     }
 
     /// <summary>
-    /// Shows the Alola corner only when the list of sections still fits whole above it.
+    /// Builds the frame the look in use asks for, and throws the old one away. A new one each time, and not one kept
+    /// hidden: a hidden frame is not asked to redraw when the colours change, and would come back in the old ones.
     /// </summary>
-    /// <remarks>
-    /// Measured, not decided by window size: at NORMAL (760 tall) the list alone takes almost the whole
-    /// sidebar, and it grows by one when the run plays with the wheel. A corner that pushes a scroll bar
-    /// onto the navigation is a decoration in the way of the one thing the sidebar is for.
-    /// </remarks>
-    private void FitAlolaCorner()
+    private void ApplyShell()
     {
-        if (Sidebar.ActualHeight <= 0)
+        var kind = PixelTheme.Current.Shell;
+        if (_shownShell == kind) return;
+
+        _shownShell = kind;
+        ShellSlot.Content = kind switch
         {
-            return;
-        }
-
-        var width = Math.Max(1, Sidebar.ActualWidth);
-        NavList.Measure(new Size(width, double.PositiveInfinity));
-
-        var corner = AlolaCorner.Margin.Top + AlolaCorner.Margin.Bottom;
-
-        foreach (UIElement child in AlolaCorner.Children)
-        {
-            child.Measure(new Size(width, double.PositiveInfinity));
-            corner += child.DesiredSize.Height;
-        }
-
-        var room = Sidebar.ActualHeight - Sidebar.RowDefinitions[0].ActualHeight - NavList.DesiredSize.Height;
-        AlolaCorner.Visibility = room >= corner ? Visibility.Visible : Visibility.Collapsed;
+            ShellKind.Tabs => new TabsShell(),
+            ShellKind.Menu => new MenuShell(),
+            ShellKind.Dock => new DockShell(),
+            ShellKind.Keys => new KeysShell(),
+            _ => new RailShell()
+        };
     }
-
 
     /// <summary>
     /// The little unfold when the window comes back from the tab.
@@ -83,13 +53,19 @@ public partial class MainWindow : Window
     /// The content and not the window: <c>Window.Opacity</c> only does anything with
     /// <c>AllowsTransparency</c>, which this window does not have and does not need. Scaling from
     /// 0.97 and fading in over a sixth of a second is enough to read as «se despliega» without
-    /// making you wait for it — the window is already usable while it plays.
+    /// making you wait for it — the window is already usable while it plays. Not at all when the player asked
+    /// Windows for no animations.
     /// </remarks>
     public void PlayUnfold()
     {
+        if (ShellSupport.ReducedMotion)
+        {
+            return;
+        }
+
         var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
 
-        Shell.BeginAnimation(OpacityProperty, new DoubleAnimation
+        ShellSlot.BeginAnimation(OpacityProperty, new DoubleAnimation
         {
             From = 0,
             To = 1,
@@ -97,9 +73,9 @@ public partial class MainWindow : Window
             EasingFunction = ease
         });
 
-        foreach (var axis in new[] { ScaleTransform.ScaleXProperty, ScaleTransform.ScaleYProperty })
+        foreach (var axis in new[] { System.Windows.Media.ScaleTransform.ScaleXProperty, System.Windows.Media.ScaleTransform.ScaleYProperty })
         {
-            ShellScale.BeginAnimation(axis, new DoubleAnimation
+            SlotScale.BeginAnimation(axis, new DoubleAnimation
             {
                 From = 0.97,
                 To = 1,
@@ -107,92 +83,6 @@ public partial class MainWindow : Window
                 EasingFunction = ease
             });
         }
-    }
-
-    private void OnMinimise(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
-
-    private void OnClose(object sender, RoutedEventArgs e) => Close();
-
-    private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
-    {
-        if (_shell is not null)
-        {
-            _shell.PropertyChanged -= OnShellChanged;
-        }
-
-        _shell = DataContext as MainViewModel;
-
-        if (_shell is null)
-        {
-            return;
-        }
-
-        _shell.PropertyChanged += OnShellChanged;
-        _lastPoints = _shell.PointsValue;
-
-    }
-
-    private void OnShellChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName == nameof(MainViewModel.SelectedSection))
-        {
-            EnterSection();
-        }
-
-        if (e.PropertyName == nameof(MainViewModel.PointsValue) && _shell is not null)
-        {
-            FlashPoints(_shell.PointsValue - _lastPoints);
-            _lastPoints = _shell.PointsValue;
-        }
-    }
-
-    /// <summary>
-    /// The new section fades in and settles down a few pixels.
-    /// </summary>
-    /// <remarks>
-    /// Short and small on purpose. This runs on every click of the sidebar, and an animation you
-    /// have to wait for stops being a flourish and becomes a toll — a hundred and forty
-    /// milliseconds is under the threshold where a change of screen feels like a delay.
-    /// </remarks>
-    private void EnterSection()
-    {
-        var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
-
-        SectionHost.BeginAnimation(OpacityProperty, new DoubleAnimation
-        {
-            From = 0,
-            To = 1,
-            Duration = TimeSpan.FromMilliseconds(140),
-            EasingFunction = ease
-        });
-
-        SectionSlide.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation
-        {
-            From = 10,
-            To = 0,
-            Duration = TimeSpan.FromMilliseconds(180),
-            EasingFunction = ease
-        });
-    }
-
-    /// <summary>Tints the points for a moment, green when they went up and red when they went down.</summary>
-    private void FlashPoints(int change)
-    {
-        if (change == 0)
-        {
-            return;
-        }
-
-        var flash = (Color)FindResource(change > 0 ? "PxGood" : "PxBad");
-
-        // La cifra es texto en píxeles (§176): se anima su color, que la vuelve a dibujar en cada paso.
-        PointsNumber.BeginAnimation(Views.Pixel.PixelText.ColourProperty, new ColorAnimation
-        {
-            From = flash,
-            To = (Color)FindResource("PxAccent"),
-            Duration = TimeSpan.FromMilliseconds(900),
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseIn }
-        });
     }
 
     /// <summary>

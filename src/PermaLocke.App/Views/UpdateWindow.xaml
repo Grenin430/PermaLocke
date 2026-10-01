@@ -8,34 +8,34 @@
         SizeToContent="Height" Width="620" ResizeMode="CanMinimize"
         WindowStartupLocation="CenterScreen"
         UseLayoutRounding="True" SnapsToDevicePixels="True"
-        Background="{StaticResource PxBaseBrush}">
+        Background="{DynamicResource PxBaseBrush}">
 
     <!-- La descarga de una versión nueva (§201), con la misma pinta que la puerta de Discord: la barra, cuánto va de
          cuánto, la velocidad de ahora y lo que queda. Solo muestra lo que dice UpdateService. -->
     <Grid>
-        <pixel:PixelBackdrop Base="{StaticResource PxBase}" />
+        <pixel:PixelBackdrop Base="{DynamicResource PxBase}" />
 
         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="30" Width="520">
             <pixel:PixelText Text="PERMALOCKE" Scale="6" Tight="True" HorizontalAlignment="Center"
-                             Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
+                             Colour="{DynamicResource PxText}" Shadow="{DynamicResource PxShadow}" />
 
             <pixel:PixelText Text="{Binding Heading}" Scale="2" HorizontalAlignment="Center" Margin="0,16,0,0"
-                             Colour="{StaticResource PxAccentLight}" />
+                             Colour="{DynamicResource PxAccentInkLight}" />
 
-            <views:PixelBar Value="{Binding Fraction}" Height="34" Margin="0,26,0,0" Fill="{StaticResource PxAccent}" />
+            <views:PixelBar Value="{Binding Fraction}" Height="34" Margin="0,26,0,0" Fill="{DynamicResource PxAccent}" />
 
             <DockPanel Margin="0,10,0,0">
-                <pixel:PixelText DockPanel.Dock="Right" Text="{Binding Percent}" Scale="2" Colour="{StaticResource PxGold}" />
-                <pixel:PixelText Text="{Binding Size}" Scale="2" Colour="{StaticResource PxText}" />
+                <pixel:PixelText DockPanel.Dock="Right" Text="{Binding Percent}" Scale="2" Colour="{DynamicResource PxGold}" />
+                <pixel:PixelText Text="{Binding Size}" Scale="2" Colour="{DynamicResource PxText}" />
             </DockPanel>
 
             <DockPanel Margin="0,8,0,0">
-                <pixel:PixelText DockPanel.Dock="Right" Text="{Binding Left}" Scale="2" Colour="{StaticResource PxTextDim}" />
-                <pixel:PixelText Text="{Binding Speed}" Scale="2" Colour="{StaticResource PxTextDim}" />
+                <pixel:PixelText DockPanel.Dock="Right" Text="{Binding Left}" Scale="2" Colour="{DynamicResource PxTextDim}" />
+                <pixel:PixelText Text="{Binding Speed}" Scale="2" Colour="{DynamicResource PxTextDim}" />
             </DockPanel>
 
             <pixel:PixelText Text="{Binding Status}" Scale="2" HorizontalAlignment="Center" Margin="0,22,0,0"
-                             Colour="{StaticResource PxGood}" />
+                             Colour="{DynamicResource PxGood}" />
 
             <Button Content="CANCELAR" Style="{StaticResource PxButton}" Command="{Binding CancelCommand}"
                     HorizontalAlignment="Center" MinWidth="180" Margin="0,18,0,0" />

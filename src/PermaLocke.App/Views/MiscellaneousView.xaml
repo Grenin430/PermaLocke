@@ -14,7 +14,7 @@
         <Style x:Key="Explain" TargetType="pixel:PixelText">
             <Setter Property="Scale" Value="2" />
             <Setter Property="Wrap" Value="True" />
-            <Setter Property="Colour" Value="{StaticResource PxTextDim}" />
+            <Setter Property="Colour" Value="{DynamicResource PxTextDim}" />
         </Style>
     </UserControl.Resources>
 
@@ -33,7 +33,7 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Grid Margin="0,0,0,10">
-                                    <views:PixelPanel Fill="{StaticResource PxFaceHigh}" />
+                                    <views:PixelPanel Fill="{DynamicResource PxFaceHigh}" />
                                     <DockPanel Margin="16,12,22,18">
                                         <Button DockPanel.Dock="Right" Content="{Binding Action}"
                                                 Style="{StaticResource PxButton}" MinWidth="150" Margin="14,0,0,0"
@@ -46,17 +46,17 @@
                                         <StackPanel DockPanel.Dock="Right" Width="110" VerticalAlignment="Center" Margin="14,0,0,0">
                                             <pixel:PixelText Text="{Binding Progress}" Scale="2" Tight="True"
                                                              HorizontalAlignment="Center" Margin="0,0,0,6"
-                                                             Colour="{StaticResource PxTextDim}" />
+                                                             Colour="{DynamicResource PxTextDim}" />
                                             <views:PixelBar Height="15" Value="{Binding Share, Mode=OneWay}">
                                                 <views:PixelBar.Style>
                                                     <Style TargetType="views:PixelBar">
-                                                        <Setter Property="Fill" Value="{StaticResource PxAccent}" />
+                                                        <Setter Property="Fill" Value="{DynamicResource PxAccent}" />
                                                         <Style.Triggers>
                                                             <DataTrigger Binding="{Binding CanClaim}" Value="True">
-                                                                <Setter Property="Fill" Value="{StaticResource PxGood}" />
+                                                                <Setter Property="Fill" Value="{DynamicResource PxGood}" />
                                                             </DataTrigger>
                                                             <DataTrigger Binding="{Binding Claimed}" Value="True">
-                                                                <Setter Property="Fill" Value="{StaticResource PxGood}" />
+                                                                <Setter Property="Fill" Value="{DynamicResource PxGood}" />
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
@@ -66,7 +66,7 @@
 
                                         <StackPanel>
                                             <pixel:PixelText Text="{Binding Name}" Scale="2" Tight="True"
-                                                             Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
+                                                             Colour="{DynamicResource PxText}" Shadow="{DynamicResource PxShadow}" />
                                             <pixel:PixelText Text="{Binding Description}" Style="{StaticResource Explain}"
                                                              Margin="0,5,0,0" />
 
@@ -80,17 +80,17 @@
                                                 <ItemsControl.ItemTemplate>
                                                     <DataTemplate>
                                                         <Grid Margin="0,0,8,6">
-                                                            <views:PixelPanel Fill="{StaticResource PxWell}" IsSunken="True"
+                                                            <views:PixelPanel Fill="{DynamicResource PxWell}" IsSunken="True"
                                                                               HasShadow="False" />
                                                             <StackPanel Orientation="Horizontal" Margin="8,5,11,5">
                                                                 <pixel:PixelSprite Source="{Binding Icon}" Scale="1" TrimEmpty="True"
                                                                                    VerticalAlignment="Center" Margin="0,0,8,0" />
                                                                 <pixel:PixelText Text="{Binding Amount}" Scale="2" Tight="True"
                                                                                  VerticalAlignment="Center"
-                                                                                 Colour="{StaticResource PxAccentLight}" />
+                                                                                 Colour="{DynamicResource PxAccentInkLight}" />
                                                                 <pixel:PixelText Text="{Binding Name}" Scale="2" Tight="True"
                                                                                  VerticalAlignment="Center" Margin="6,0,0,0"
-                                                                                 Colour="{StaticResource PxText}" />
+                                                                                 Colour="{DynamicResource PxText}" />
                                                             </StackPanel>
                                                         </Grid>
                                                     </DataTemplate>
@@ -108,9 +108,9 @@
             <pixel:PixelWindow Title="DARSE OBJETOS" Icon="IconTools">
                 <pixel:PixelWindow.HeaderContent>
                     <Grid>
-                        <views:PixelPanel Fill="{StaticResource PxWarnDeep}" HasShadow="False" />
+                        <views:PixelPanel Fill="{DynamicResource PxWarnDeep}" HasShadow="False" />
                         <pixel:PixelText Text="HERRAMIENTAS DE PRUEBAS" Scale="2" Tight="True" Margin="9,5,10,6"
-                                         Colour="{StaticResource PxWarn}" />
+                                         Colour="{DynamicResource PxWarn}" />
                     </Grid>
                 </pixel:PixelWindow.HeaderContent>
 
@@ -140,9 +140,9 @@
                         </Style.Triggers>
                     </Style>
                 </Grid.Style>
-                <views:PixelPanel Fill="{StaticResource PxAccentDeep}" />
+                <views:PixelPanel Fill="{DynamicResource PxAccentDeep}" />
                 <pixel:PixelText Text="{Binding Status}" Scale="2" Wrap="True" Margin="16,10,22,16"
-                                 Colour="{StaticResource PxText}" />
+                                 Colour="{DynamicResource PxText}" />
             </Grid>
         </StackPanel>
     </ScrollViewer>

@@ -12,7 +12,7 @@
         <Style x:Key="PxLabel" TargetType="pixel:PixelText">
             <Setter Property="Scale" Value="2" />
             <Setter Property="Tight" Value="True" />
-            <Setter Property="Colour" Value="{StaticResource PxTextFaint}" />
+            <Setter Property="Colour" Value="{DynamicResource PxTextFaint}" />
         </Style>
 
         <!-- El número de un paso: placa apagada, o dorada si el paso ya está hecho. -->
@@ -20,7 +20,7 @@
             <Setter Property="Width" Value="42" />
             <Setter Property="Height" Value="42" />
             <Setter Property="HasShadow" Value="False" />
-            <Setter Property="Fill" Value="{StaticResource PxFaceLift}" />
+            <Setter Property="Fill" Value="{DynamicResource PxFaceLift}" />
         </Style>
     </UserControl.Resources>
 
@@ -37,15 +37,15 @@
 
                 <pixel:PixelWindow Grid.Column="0" Title="SEED DE LA RUN" Icon="IconRandomizer">
                     <pixel:PixelText Text="{Binding SeedLabel}" Scale="3" Tight="True" Trim="True" Margin="0,4,0,0"
-                                     Colour="{StaticResource PxAccentLight}" Shadow="{StaticResource PxShadow}" />
+                                     Colour="{DynamicResource PxAccentInkLight}" Shadow="{DynamicResource PxShadow}" />
                 </pixel:PixelWindow>
 
                 <pixel:PixelWindow Grid.Column="2" Title="ROM" Icon="IconPlay">
-                    <pixel:PixelText Text="{Binding RomText}" Scale="2" Wrap="True" Colour="{StaticResource PxText}" />
+                    <pixel:PixelText Text="{Binding RomText}" Scale="2" Wrap="True" Colour="{DynamicResource PxText}" />
                 </pixel:PixelWindow>
 
                 <pixel:PixelWindow Grid.Column="4" Title="AZAHAR" Icon="IconTools">
-                    <pixel:PixelText Text="{Binding AzaharText}" Scale="2" Wrap="True" Colour="{StaticResource PxText}" />
+                    <pixel:PixelText Text="{Binding AzaharText}" Scale="2" Wrap="True" Colour="{DynamicResource PxText}" />
                 </pixel:PixelWindow>
             </Grid>
 
@@ -54,7 +54,7 @@
                  jugador sin forma de saber que el sitio existe, y esto decide sobre qué mundo se
                  randomiza: enterarse DESPUÉS de generar es enterarse tarde. -->
             <pixel:PixelWindow Title="JUEGO BASE" Icon="IconGacha" Margin="0,12,0,0">
-                <pixel:PixelText Text="{Binding ExpansionText}" Scale="2" Wrap="True" Colour="{StaticResource PxText}" />
+                <pixel:PixelText Text="{Binding ExpansionText}" Scale="2" Wrap="True" Colour="{DynamicResource PxText}" />
             </pixel:PixelWindow>
 
             <!-- Generar e instalar son dos pasos a propósito: instalar cambia la partida. -->
@@ -75,20 +75,20 @@
                                             <Style TargetType="views:PixelPanel" BasedOn="{StaticResource StepPlate}">
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding IsGenerated}" Value="True">
-                                                        <Setter Property="Fill" Value="{StaticResource PxGold}" />
+                                                        <Setter Property="Fill" Value="{DynamicResource PxGold}" />
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
                                         </views:PixelPanel.Style>
                                     </views:PixelPanel>
-                                    <pixel:PixelText Text="1" Scale="3" Tight="True" Colour="{StaticResource PxInk}"
+                                    <pixel:PixelText Text="1" Scale="3" Tight="True" Colour="{DynamicResource PxInk}"
                                                      HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,3" />
                                 </Grid>
                                 <StackPanel VerticalAlignment="Center">
-                                    <pixel:PixelText Text="GENERAR" Scale="2" Tight="True" Colour="{StaticResource PxText}"
-                                                     Shadow="{StaticResource PxShadow}" />
+                                    <pixel:PixelText Text="GENERAR" Scale="2" Tight="True" Colour="{DynamicResource PxText}"
+                                                     Shadow="{DynamicResource PxShadow}" />
                                     <pixel:PixelText Text="Crea tu mundo randomizado. Tarda un rato." Scale="2" Tight="True"
-                                                     Margin="0,4,0,0" Colour="{StaticResource PxTextDim}" />
+                                                     Margin="0,4,0,0" Colour="{DynamicResource PxTextDim}" />
                                 </StackPanel>
                             </DockPanel>
 
@@ -100,20 +100,20 @@
                                             <Style TargetType="views:PixelPanel" BasedOn="{StaticResource StepPlate}">
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding IsInstalled}" Value="True">
-                                                        <Setter Property="Fill" Value="{StaticResource PxGold}" />
+                                                        <Setter Property="Fill" Value="{DynamicResource PxGold}" />
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
                                         </views:PixelPanel.Style>
                                     </views:PixelPanel>
-                                    <pixel:PixelText Text="2" Scale="3" Tight="True" Colour="{StaticResource PxInk}"
+                                    <pixel:PixelText Text="2" Scale="3" Tight="True" Colour="{DynamicResource PxInk}"
                                                      HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,3" />
                                 </Grid>
                                 <StackPanel VerticalAlignment="Center">
-                                    <pixel:PixelText Text="INSTALAR EN AZAHAR" Scale="2" Tight="True" Colour="{StaticResource PxText}"
-                                                     Shadow="{StaticResource PxShadow}" />
+                                    <pixel:PixelText Text="INSTALAR EN AZAHAR" Scale="2" Tight="True" Colour="{DynamicResource PxText}"
+                                                     Shadow="{DynamicResource PxShadow}" />
                                     <pixel:PixelText Text="Lo pone en el juego." Scale="2" Tight="True" Margin="0,4,0,0"
-                                                     Colour="{StaticResource PxTextDim}" />
+                                                     Colour="{DynamicResource PxTextDim}" />
                                 </StackPanel>
                             </DockPanel>
 
@@ -121,14 +121,14 @@
                             <DockPanel>
                                 <Grid DockPanel.Dock="Left" Margin="0,0,14,0">
                                     <views:PixelPanel Style="{StaticResource StepPlate}" />
-                                    <pixel:PixelText Text="3" Scale="3" Tight="True" Colour="{StaticResource PxInk}"
+                                    <pixel:PixelText Text="3" Scale="3" Tight="True" Colour="{DynamicResource PxInk}"
                                                      HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,3" />
                                 </Grid>
                                 <StackPanel VerticalAlignment="Center">
-                                    <pixel:PixelText Text="QUITAR" Scale="2" Tight="True" Colour="{StaticResource PxText}"
-                                                     Shadow="{StaticResource PxShadow}" />
+                                    <pixel:PixelText Text="QUITAR" Scale="2" Tight="True" Colour="{DynamicResource PxText}"
+                                                     Shadow="{DynamicResource PxShadow}" />
                                     <pixel:PixelText Text="Vuelve al juego original." Scale="2" Tight="True" Margin="0,4,0,0"
-                                                     Colour="{StaticResource PxTextDim}" />
+                                                     Colour="{DynamicResource PxTextDim}" />
                                 </StackPanel>
                             </DockPanel>
                         </StackPanel>
@@ -141,9 +141,9 @@
                     <pixel:PixelRule Margin="0,16,0,12" />
 
                     <StackPanel Orientation="Horizontal">
-                        <pixel:PixelText Text="!" Scale="2" Tight="True" Colour="{StaticResource PxWarn}" />
+                        <pixel:PixelText Text="!" Scale="2" Tight="True" Colour="{DynamicResource PxWarn}" />
                         <pixel:PixelText Text="Cierra Azahar antes de instalar o quitar." Scale="2" Tight="True"
-                                         Margin="8,0,0,0" Colour="{StaticResource PxWarn}" />
+                                         Margin="8,0,0,0" Colour="{DynamicResource PxWarn}" />
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
@@ -169,9 +169,9 @@
                         </Style.Triggers>
                     </Style>
                 </Grid.Style>
-                <views:PixelPanel Fill="{StaticResource PxAccentDeep}" />
+                <views:PixelPanel Fill="{DynamicResource PxAccentDeep}" />
                 <pixel:PixelText Text="{Binding Status}" Scale="2" Wrap="True" Margin="16,10,22,16"
-                                 Colour="{StaticResource PxText}" />
+                                 Colour="{DynamicResource PxText}" />
             </Grid>
         </StackPanel>
     </ScrollViewer>

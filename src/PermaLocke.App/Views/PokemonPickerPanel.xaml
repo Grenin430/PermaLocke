@@ -25,24 +25,24 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="ListBoxItem">
                         <Grid Background="Transparent" Height="54">
-                            <views:PixelPanel x:Name="Plate" Fill="{StaticResource PxFaceHigh}" HasShadow="False" />
+                            <views:PixelPanel x:Name="Plate" Fill="{DynamicResource PxFaceHigh}" HasShadow="False" />
                             <ContentPresenter Margin="4,0,8,0" />
-                            <views:PixelCursor x:Name="Cursor" Margin="-3" Visibility="Collapsed" Colour="{StaticResource PxGold}" />
+                            <views:PixelCursor x:Name="Cursor" Margin="-3" Visibility="Collapsed" Colour="{DynamicResource PxGold}" />
                         </Grid>
                         <ControlTemplate.Triggers>
                             <DataTrigger Binding="{Binding IsEmpty}" Value="True">
-                                <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxWell}" />
+                                <Setter TargetName="Plate" Property="Fill" Value="{DynamicResource PxWell}" />
                                 <Setter TargetName="Plate" Property="IsSunken" Value="True" />
                                 <Setter Property="Cursor" Value="Arrow" />
                             </DataTrigger>
                             <DataTrigger Binding="{Binding IsDead}" Value="True">
-                                <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxBadDeep}" />
+                                <Setter TargetName="Plate" Property="Fill" Value="{DynamicResource PxBadDeep}" />
                             </DataTrigger>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxFaceLift}" />
+                                <Setter TargetName="Plate" Property="Fill" Value="{DynamicResource PxFaceLift}" />
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxAccentDeep}" />
+                                <Setter TargetName="Plate" Property="Fill" Value="{DynamicResource PxAccentDeep}" />
                                 <Setter TargetName="Cursor" Property="Visibility" Value="Visible" />
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -57,19 +57,19 @@
                     <ColumnDefinition Width="52" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
-                <pixel:PixelSprite Source="{Binding Sprite}" Scale="2" TrimEmpty="True" Outline="{StaticResource PxShadow}"
+                <pixel:PixelSprite Source="{Binding Sprite}" Scale="2" TrimEmpty="True" Outline="{DynamicResource PxShadow}"
                                    Stone="{Binding IsDead}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="4,0,0,0">
                     <pixel:PixelText Text="{Binding Pokemon.DisplayName}" Scale="2" Tight="True" Trim="True"
-                                     Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
+                                     Colour="{DynamicResource PxText}" Shadow="{DynamicResource PxShadow}" />
                     <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                        <pixel:PixelText Text="Nv." Scale="2" Tight="True" Colour="{StaticResource PxTextFaint}" />
+                        <pixel:PixelText Text="Nv." Scale="2" Tight="True" Colour="{DynamicResource PxTextFaint}" />
                         <pixel:PixelText Text="{Binding Pokemon.LevelForStats}" Scale="2" Tight="True" Margin="4,0,0,0"
-                                         Colour="{StaticResource PxTextDim}" />
+                                         Colour="{DynamicResource PxTextDim}" />
                     </StackPanel>
                 </StackPanel>
                 <pixel:PixelText Grid.ColumnSpan="2" Text="HUECO LIBRE" Scale="2" Tight="True" HorizontalAlignment="Center"
-                                 VerticalAlignment="Center" Colour="{StaticResource PxTextFaint}"
+                                 VerticalAlignment="Center" Colour="{DynamicResource PxTextFaint}"
                                  Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVisibility}}" />
             </Grid>
         </DataTemplate>
@@ -89,19 +89,19 @@
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <pixel:PixelText x:Name="Arrow" Text="▶" Scale="2" Tight="True" Visibility="Hidden"
-                                             Colour="{StaticResource PxGold}" VerticalAlignment="Center" />
-                            <views:PixelPanel x:Name="Plate" Grid.Column="1" Fill="{StaticResource PxFace}" HasShadow="False" />
+                                             Colour="{DynamicResource PxGold}" VerticalAlignment="Center" />
+                            <views:PixelPanel x:Name="Plate" Grid.Column="1" Fill="{DynamicResource PxFace}" HasShadow="False" />
                             <ContentPresenter Grid.Column="1" />
                         </Grid>
                         <ControlTemplate.Triggers>
                             <DataTrigger Binding="{Binding IsDead}" Value="True">
-                                <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxBadDeep}" />
+                                <Setter TargetName="Plate" Property="Fill" Value="{DynamicResource PxBadDeep}" />
                             </DataTrigger>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxFaceLift}" />
+                                <Setter TargetName="Plate" Property="Fill" Value="{DynamicResource PxFaceLift}" />
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="Plate" Property="Fill" Value="{StaticResource PxAccentDeep}" />
+                                <Setter TargetName="Plate" Property="Fill" Value="{DynamicResource PxAccentDeep}" />
                                 <Setter TargetName="Arrow" Property="Visibility" Value="Visible" />
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -122,14 +122,14 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <pixel:PixelSprite Source="{Binding Sprite}" Scale="2" TrimEmpty="True" Outline="{StaticResource PxShadow}"
+                <pixel:PixelSprite Source="{Binding Sprite}" Scale="2" TrimEmpty="True" Outline="{DynamicResource PxShadow}"
                                    Stone="{Binding IsDead}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                 <pixel:PixelText Grid.Column="1" Text="{Binding Pokemon.DisplayName}" Scale="2" Tight="True" Trim="True"
-                                 VerticalAlignment="Center" Colour="{StaticResource PxText}" />
+                                 VerticalAlignment="Center" Colour="{DynamicResource PxText}" />
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,12,0">
-                    <pixel:PixelText Text="Nv." Scale="2" Tight="True" Colour="{StaticResource PxTextFaint}" />
+                    <pixel:PixelText Text="Nv." Scale="2" Tight="True" Colour="{DynamicResource PxTextFaint}" />
                     <pixel:PixelText Text="{Binding Pokemon.LevelForStats}" Scale="2" Tight="True" Margin="4,0,0,0"
-                                     Colour="{StaticResource PxTextDim}" />
+                                     Colour="{DynamicResource PxTextDim}" />
                 </StackPanel>
             </Grid>
         </DataTemplate>
@@ -145,7 +145,7 @@
     <pixel:PixelWindow Title="TU EQUIPO Y TUS CAJAS" Icon="IconGacha" Padding="14,12,20,18">
         <DockPanel>
             <pixel:PixelText DockPanel.Dock="Top" Text="EQUIPO" Scale="2" Tight="True" Margin="2,0,0,8"
-                             Colour="{StaticResource PxTextFaint}" />
+                             Colour="{DynamicResource PxTextFaint}" />
 
             <ListBox DockPanel.Dock="Top" ItemsSource="{Binding Party}" SelectedItem="{Binding SelectedPartySlot}"
                      Style="{StaticResource BareList}" Margin="0,0,-6,0"
@@ -173,12 +173,12 @@
                 <Button Grid.Column="0" Content="◀" Style="{StaticResource PxSubtleButton}" Padding="12,7,18,12"
                         Command="{Binding PreviousBoxCommand}" VerticalAlignment="Center" AutomationProperties.Name="Caja anterior" />
                 <Grid Grid.Column="1" Margin="6,0">
-                    <views:PixelPanel Fill="{StaticResource PxAccentDeep}" />
+                    <views:PixelPanel Fill="{DynamicResource PxAccentDeep}" />
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,6,6">
-                        <pixel:PixelText Text="{Binding SelectedBox.Name}" Scale="2" Tight="True" Colour="{StaticResource PxText}"
-                                         Shadow="{StaticResource PxShadow}" />
+                        <pixel:PixelText Text="{Binding SelectedBox.Name}" Scale="2" Tight="True" Colour="{DynamicResource PxText}"
+                                         Shadow="{DynamicResource PxShadow}" />
                         <pixel:PixelText Text="{Binding SelectedBox.Occupancy}" Scale="2" Tight="True" Margin="10,0,0,0"
-                                         Colour="{StaticResource PxAccentLight}" />
+                                         Colour="{DynamicResource PxAccentInkLight}" />
                     </StackPanel>
                 </Grid>
                 <Button Grid.Column="2" Content="▶" Style="{StaticResource PxSubtleButton}" Padding="12,7,18,12"
@@ -189,9 +189,9 @@
                     Command="{Binding LoadCommand}" Margin="0,10,0,0" HorizontalAlignment="Stretch" />
 
             <Grid>
-                <views:PixelPanel Fill="{StaticResource PxWell}" IsSunken="True" HasShadow="False" />
+                <views:PixelPanel Fill="{DynamicResource PxWell}" IsSunken="True" HasShadow="False" />
                 <pixel:PixelText Text="Esta caja está vacía." Scale="2" Tight="True" Margin="16,14,0,0"
-                                 Colour="{StaticResource PxTextFaint}"
+                                 Colour="{DynamicResource PxTextFaint}"
                                  Visibility="{Binding SelectedBox.Count, Converter={StaticResource ZeroToVisible}}" />
                 <ListBox ItemsSource="{Binding Slots}" SelectedItem="{Binding SelectedSlot}" Style="{StaticResource BareList}"
                          Margin="4,8,6,6" ScrollViewer.VerticalScrollBarVisibility="Auto"

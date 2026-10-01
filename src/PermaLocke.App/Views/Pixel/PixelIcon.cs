@@ -85,7 +85,8 @@ public sealed class PixelIcon : FrameworkElement
 
     private void OnBobChanged()
     {
-        if (Bob && IsLoaded)
+        // Con las animaciones apagadas en Windows el icono se queda quieto.
+        if (Bob && IsLoaded && !PixelTheme.ReducedMotion)
         {
             _timer ??= new DispatcherTimer(TimeSpan.FromMilliseconds(260), DispatcherPriority.Render, (_, _) =>
             {
@@ -131,7 +132,7 @@ public sealed class PixelIcon : FrameworkElement
                 if (!PixelIcons.TryColour(rows[y][x], out var colour)) continue;
 
                 // Apagado: el color se va hacia el violeta oscuro de la barra, sin perder el dibujo.
-                if (Dim && rows[y][x] != 'o') colour = ToastPixels.Mix(colour, Color.FromRgb(0x2A, 0x22, 0x46), 0.55);
+                if (Dim && rows[y][x] != 'o') colour = ToastPixels.Mix(colour, PixelTheme.Current.Dim, 0.55);
                 canvas.Put(x, y + top, colour);
             }
         }

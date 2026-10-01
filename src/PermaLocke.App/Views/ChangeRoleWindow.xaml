@@ -8,7 +8,7 @@
         MinHeight="480" MinWidth="540"
         WindowStartupLocation="CenterOwner"
         UseLayoutRounding="True" SnapsToDevicePixels="True"
-        Background="{StaticResource PxBaseBrush}">
+        Background="{DynamicResource PxBaseBrush}">
 
     <Window.Resources>
         <Style TargetType="ScrollBar" BasedOn="{StaticResource PxScrollBar}" />
@@ -16,7 +16,7 @@
 
     <!-- En píxeles, como el resto de la aplicación (§176). -->
     <Grid>
-        <pixel:PixelBackdrop Base="{StaticResource PxBase}" />
+        <pixel:PixelBackdrop Base="{DynamicResource PxBase}" />
 
         <Grid Margin="18,16,18,18">
             <Grid.RowDefinitions>
@@ -26,10 +26,10 @@
             </Grid.RowDefinitions>
 
             <StackPanel Grid.Row="0" Margin="2,0,0,14">
-                <pixel:PixelText Text="CAMBIAR DE ROL" Scale="4" Tight="True" Colour="{StaticResource PxText}"
-                                 Shadow="{StaticResource PxShadow}" />
+                <pixel:PixelText Text="CAMBIAR DE ROL" Scale="4" Tight="True" Colour="{DynamicResource PxText}"
+                                 Shadow="{DynamicResource PxShadow}" />
                 <pixel:PixelText Text="{Binding CurrentText}" Scale="2" Tight="True" Margin="0,8,0,0"
-                                 Colour="{StaticResource PxTextDim}" />
+                                 Colour="{DynamicResource PxTextDim}" />
             </StackPanel>
 
             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
@@ -37,10 +37,10 @@
                     <!-- El aviso va ARRIBA y no en letra pequeña al final: es lo único de esta ventana que el jugador
                          no puede deshacer con otro cambio de rol. -->
                     <Grid Margin="0,0,0,12">
-                        <views:PixelPanel Fill="{StaticResource PxWarnDeep}" />
+                        <views:PixelPanel Fill="{DynamicResource PxWarnDeep}" />
                         <StackPanel Margin="14,11,20,16">
-                            <pixel:PixelText Text="TU MUNDO NO CAMBIA" Scale="2" Tight="True" Colour="{StaticResource PxWarn}" />
-                            <pixel:PixelText Scale="2" Wrap="True" Margin="0,9,0,0" Colour="{StaticResource PxText}"
+                            <pixel:PixelText Text="TU MUNDO NO CAMBIA" Scale="2" Tight="True" Colour="{DynamicResource PxWarn}" />
+                            <pixel:PixelText Scale="2" Wrap="True" Margin="0,9,0,0" Colour="{DynamicResource PxText}"
                                              Text="Los puntos cambian al momento. Los enemigos siguen como están hasta que vuelvas a generar e instalar tu mundo." />
                         </StackPanel>
                     </Grid>
@@ -53,11 +53,11 @@
                                                  Style="{StaticResource PxRadioCard}" Margin="0,0,0,8">
                                         <StackPanel>
                                             <pixel:PixelText Text="{Binding Name}" Scale="3" Tight="True"
-                                                             Colour="{StaticResource PxAccentLight}" Shadow="{StaticResource PxShadow}" />
+                                                             Colour="{DynamicResource PxAccentInkLight}" Shadow="{DynamicResource PxShadow}" />
                                             <pixel:PixelText Text="{Binding Description}" Scale="2" Wrap="True" Margin="0,7,0,0"
-                                                             Colour="{StaticResource PxTextDim}" />
+                                                             Colour="{DynamicResource PxTextDim}" />
                                             <pixel:PixelText Text="{Binding Effects}" Scale="2" Wrap="True" Margin="0,6,0,0"
-                                                             Colour="{StaticResource PxWarn}" />
+                                                             Colour="{DynamicResource PxWarn}" />
                                         </StackPanel>
                                     </RadioButton>
                                 </DataTemplate>
@@ -67,12 +67,12 @@
 
                     <pixel:PixelWindow Title="POR QUÉ" Icon="IconDocument" Margin="0,12,0,0">
                         <StackPanel>
-                            <pixel:PixelText Text="Obligatorio." Scale="2" Tight="True" Colour="{StaticResource PxTextFaint}"
+                            <pixel:PixelText Text="Obligatorio." Scale="2" Tight="True" Colour="{DynamicResource PxTextFaint}"
                                              Margin="2,0,0,8" />
                             <TextBox Text="{Binding Reason, UpdateSourceTrigger=PropertyChanged}"
                                      Style="{StaticResource PxTextBox}"
                                      AcceptsReturn="True" TextWrapping="Wrap" MinHeight="70" VerticalContentAlignment="Top" />
-                            <pixel:PixelText Text="{Binding Problem}" Scale="2" Wrap="True" Colour="{StaticResource PxBad}"
+                            <pixel:PixelText Text="{Binding Problem}" Scale="2" Wrap="True" Colour="{DynamicResource PxBad}"
                                              Margin="2,10,0,0" />
                         </StackPanel>
                     </pixel:PixelWindow>

@@ -187,7 +187,11 @@ public abstract class PixelScene
 
     protected void BeginFrame() => Buffer.BlockCopy(Back, 0, Canvas, 0, Canvas.Length);
 
-    protected void Present() => Bitmap.WritePixels(new Int32Rect(0, 0, Width, Height), Canvas, Width * 4, 0);
+    protected void Present()
+    {
+        Pixel.PixelTheme.Current.MapPixels(Canvas);
+        Bitmap.WritePixels(new Int32Rect(0, 0, Width, Height), Canvas, Width * 4, 0);
+    }
 
     // ============================================================================================= the room
 

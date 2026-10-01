@@ -32,20 +32,20 @@
                                                 <ItemsControl.ItemTemplate>
                                                     <DataTemplate>
                                                         <Grid Margin="0,0,10,10">
-                                                            <views:PixelPanel Fill="{StaticResource PxWell}" IsSunken="True" HasShadow="False" />
+                                                            <views:PixelPanel Fill="{DynamicResource PxWell}" IsSunken="True" HasShadow="False" />
                                                             <StackPanel Margin="12,10,14,12">
                                                                 <!-- QUIÉN Y EN QUIÉN, con sus dibujos -->
                                                                 <StackPanel Orientation="Horizontal">
                                                                     <pixel:PixelSprite Source="{Binding From}" Scale="2" TrimEmpty="True"
                                                                                        VerticalAlignment="Center" Margin="0,0,6,0" />
                                                                     <pixel:PixelText Text="{Binding FromName}" Scale="2" Tight="True"
-                                                                                     VerticalAlignment="Center" Colour="{StaticResource PxText}" />
+                                                                                     VerticalAlignment="Center" Colour="{DynamicResource PxText}" />
                                                                     <pixel:PixelIcon Icon="IconPlay" Scale="2" VerticalAlignment="Center" Margin="12,0" />
                                                                     <pixel:PixelSprite Source="{Binding To}" Scale="2" TrimEmpty="True"
                                                                                        VerticalAlignment="Center" Margin="0,0,6,0" />
                                                                     <pixel:PixelText Text="{Binding ToName}" Scale="2" Tight="True"
-                                                                                     VerticalAlignment="Center" Colour="{StaticResource PxText}"
-                                                                                     Shadow="{StaticResource PxShadow}" />
+                                                                                     VerticalAlignment="Center" Colour="{DynamicResource PxText}"
+                                                                                     Shadow="{DynamicResource PxShadow}" />
                                                                 </StackPanel>
                                                                 <!-- CÓMO AHORA, con el objeto dibujado si lo pide -->
                                                                 <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
@@ -56,7 +56,7 @@
                                                                                        Margin="0,0,8,0"
                                                                                        Visibility="{Binding HasItem, Converter={StaticResource BoolToVisibility}}" />
                                                                     <pixel:PixelText Text="{Binding Now}" Scale="2" Wrap="True" MaxWidth="400"
-                                                                                     VerticalAlignment="Center" Colour="{StaticResource PxGold}" />
+                                                                                     VerticalAlignment="Center" Colour="{DynamicResource PxGold}" />
                                                                 </StackPanel>
                                                             </StackPanel>
                                                         </Grid>
@@ -90,15 +90,15 @@
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
                                                     <Grid Width="300" Margin="0,0,8,8">
-                                                        <views:PixelPanel Fill="{StaticResource PxWell}" IsSunken="True" HasShadow="False" />
+                                                        <views:PixelPanel Fill="{DynamicResource PxWell}" IsSunken="True" HasShadow="False" />
                                                         <DockPanel Margin="8,6,10,8">
                                                             <pixel:PixelSprite DockPanel.Dock="Left" Source="{Binding Icon}" Scale="1" TrimEmpty="True"
                                                                                VerticalAlignment="Center" Margin="0,0,8,0" />
                                                             <StackPanel VerticalAlignment="Center">
                                                                 <pixel:PixelText Text="{Binding Name}" Scale="2" Tight="True" Trim="True"
-                                                                                 Colour="{StaticResource PxText}" />
+                                                                                 Colour="{DynamicResource PxText}" />
                                                                 <pixel:PixelText Text="{Binding Price}" Scale="2" Tight="True" Margin="0,5,0,0"
-                                                                                 Colour="{StaticResource PxGold}" />
+                                                                                 Colour="{DynamicResource PxGold}" />
                                                             </StackPanel>
                                                         </DockPanel>
                                                     </Grid>
@@ -112,6 +112,6 @@
                     </StackPanel>
                 </ScrollViewer>
 
-        <pixel:PixelText Text="{Binding Status}" Scale="2" Wrap="True" VerticalAlignment="Bottom" Colour="{StaticResource PxBad}" />
+        <pixel:PixelText Text="{Binding Status}" Scale="2" Wrap="True" VerticalAlignment="Bottom" Colour="{DynamicResource PxBad}" />
     </Grid>
 </UserControl>

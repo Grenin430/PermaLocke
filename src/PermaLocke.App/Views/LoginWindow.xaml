@@ -7,21 +7,21 @@
         Height="420" Width="620" ResizeMode="CanMinimize"
         WindowStartupLocation="CenterScreen"
         UseLayoutRounding="True" SnapsToDevicePixels="True"
-        Background="{StaticResource PxBaseBrush}">
+        Background="{DynamicResource PxBaseBrush}">
 
     <!-- La puerta: solo ENTRAR CON DISCORD. Cerrar la ventana cierra PermaLocke. -->
     <Grid>
-        <pixel:PixelBackdrop Base="{StaticResource PxBase}" />
+        <pixel:PixelBackdrop Base="{DynamicResource PxBase}" />
 
         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="30">
             <pixel:PixelText Text="PERMALOCKE" Scale="6" Tight="True" HorizontalAlignment="Center"
-                             Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
+                             Colour="{DynamicResource PxText}" Shadow="{DynamicResource PxShadow}" />
 
             <Button Content="ENTRAR CON DISCORD" Style="{StaticResource PxButton}" Command="{Binding SignInCommand}"
                     HorizontalAlignment="Center" MinWidth="280" Margin="0,40,0,0" />
 
             <pixel:PixelText Text="{Binding Status}" Scale="2" Wrap="True" TextAlignment="Center" MaxWidth="520"
-                             HorizontalAlignment="Center" Margin="0,24,0,0" Colour="{StaticResource PxTextDim}" />
+                             HorizontalAlignment="Center" Margin="0,24,0,0" Colour="{DynamicResource PxTextDim}" />
         </StackPanel>
     </Grid>
 </Window>

@@ -10,7 +10,7 @@
         ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner"
         UseLayoutRounding="True" SnapsToDevicePixels="True"
-        Background="{StaticResource PxBaseBrush}">
+        Background="{DynamicResource PxBaseBrush}">
 
     <Window.Resources>
         <conv:DisplayNameConverter x:Key="DisplayName" />
@@ -18,17 +18,17 @@
         <Style x:Key="Label" TargetType="pixel:PixelText">
             <Setter Property="Scale" Value="2" />
             <Setter Property="Tight" Value="True" />
-            <Setter Property="Colour" Value="{StaticResource PxTextFaint}" />
+            <Setter Property="Colour" Value="{DynamicResource PxTextFaint}" />
             <Setter Property="Margin" Value="2,0,0,7" />
         </Style>
         <DataTemplate x:Key="PlainItem">
-            <pixel:PixelText Text="{Binding}" Scale="2" Tight="True" Colour="{StaticResource PxText}" />
+            <pixel:PixelText Text="{Binding}" Scale="2" Tight="True" Colour="{DynamicResource PxText}" />
         </DataTemplate>
     </Window.Resources>
 
     <!-- En píxeles, como el resto de la aplicación (§176). -->
     <Grid>
-        <pixel:PixelBackdrop Base="{StaticResource PxBase}" />
+        <pixel:PixelBackdrop Base="{DynamicResource PxBase}" />
 
         <Grid Margin="18,16,18,18">
             <Grid.RowDefinitions>
@@ -39,10 +39,10 @@
             </Grid.RowDefinitions>
 
             <StackPanel Grid.Row="0" Margin="2,0,0,14">
-                <pixel:PixelText Text="REGISTRAR CAPTURA" Scale="4" Tight="True" Colour="{StaticResource PxText}"
-                                 Shadow="{StaticResource PxShadow}" />
+                <pixel:PixelText Text="REGISTRAR CAPTURA" Scale="4" Tight="True" Colour="{DynamicResource PxText}"
+                                 Shadow="{DynamicResource PxShadow}" />
                 <pixel:PixelText Text="Abajo verás si cumple las reglas." Scale="2" Tight="True" Margin="0,8,0,0"
-                                 Colour="{StaticResource PxTextDim}" />
+                                 Colour="{DynamicResource PxTextDim}" />
             </StackPanel>
 
             <!-- El formulario -->
@@ -69,7 +69,7 @@
                                   MaxDropDownHeight="260">
                             <ComboBox.ItemTemplate>
                                 <DataTemplate>
-                                    <pixel:PixelText Text="{Binding Name}" Scale="2" Tight="True" Colour="{StaticResource PxText}" />
+                                    <pixel:PixelText Text="{Binding Name}" Scale="2" Tight="True" Colour="{DynamicResource PxText}" />
                                 </DataTemplate>
                             </ComboBox.ItemTemplate>
                         </ComboBox>
@@ -93,7 +93,7 @@
                             <ComboBox.ItemTemplate>
                                 <DataTemplate>
                                     <pixel:PixelText Text="{Binding Converter={StaticResource DisplayName}}" Scale="2" Tight="True"
-                                                     Colour="{StaticResource PxText}" />
+                                                     Colour="{DynamicResource PxText}" />
                                 </DataTemplate>
                             </ComboBox.ItemTemplate>
                         </ComboBox>
@@ -121,16 +121,16 @@
                 <views:PixelPanel>
                     <views:PixelPanel.Style>
                         <Style TargetType="views:PixelPanel">
-                            <Setter Property="Fill" Value="{StaticResource PxFace}" />
+                            <Setter Property="Fill" Value="{DynamicResource PxFace}" />
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding Outcome}" Value="{x:Static rules:RuleOutcome.Blocked}">
-                                    <Setter Property="Fill" Value="{StaticResource PxBadDeep}" />
+                                    <Setter Property="Fill" Value="{DynamicResource PxBadDeep}" />
                                 </DataTrigger>
                                 <DataTrigger Binding="{Binding Outcome}" Value="{x:Static rules:RuleOutcome.Warning}">
-                                    <Setter Property="Fill" Value="{StaticResource PxWarnDeep}" />
+                                    <Setter Property="Fill" Value="{DynamicResource PxWarnDeep}" />
                                 </DataTrigger>
                                 <DataTrigger Binding="{Binding Outcome}" Value="{x:Static rules:RuleOutcome.AllowedWithException}">
-                                    <Setter Property="Fill" Value="{StaticResource PxGoodDeep}" />
+                                    <Setter Property="Fill" Value="{DynamicResource PxGoodDeep}" />
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
@@ -139,26 +139,26 @@
 
                 <DockPanel Margin="16,13,22,18">
                     <pixel:PixelText DockPanel.Dock="Top" Text="{Binding VerdictTitle}" Scale="3" Tight="True"
-                                     Shadow="{StaticResource PxShadow}">
+                                     Shadow="{DynamicResource PxShadow}">
                         <pixel:PixelText.Style>
                             <Style TargetType="pixel:PixelText">
-                                <Setter Property="Colour" Value="{StaticResource PxAccentLight}" />
+                                <Setter Property="Colour" Value="{DynamicResource PxAccentInkLight}" />
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding Outcome}" Value="{x:Static rules:RuleOutcome.Blocked}">
-                                        <Setter Property="Colour" Value="{StaticResource PxBad}" />
+                                        <Setter Property="Colour" Value="{DynamicResource PxBad}" />
                                     </DataTrigger>
                                     <DataTrigger Binding="{Binding Outcome}" Value="{x:Static rules:RuleOutcome.Warning}">
-                                        <Setter Property="Colour" Value="{StaticResource PxWarn}" />
+                                        <Setter Property="Colour" Value="{DynamicResource PxWarn}" />
                                     </DataTrigger>
                                     <DataTrigger Binding="{Binding Outcome}" Value="{x:Static rules:RuleOutcome.AllowedWithException}">
-                                        <Setter Property="Colour" Value="{StaticResource PxGood}" />
+                                        <Setter Property="Colour" Value="{DynamicResource PxGood}" />
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </pixel:PixelText.Style>
                     </pixel:PixelText>
                     <pixel:PixelText DockPanel.Dock="Top" Text="{Binding VerdictMessage}" Scale="2" Wrap="True"
-                                     Colour="{StaticResource PxText}" Margin="0,8,0,12" />
+                                     Colour="{DynamicResource PxText}" Margin="0,8,0,12" />
 
                     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <ItemsControl ItemsSource="{Binding Details}">
@@ -170,9 +170,9 @@
                                             <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
                                         <pixel:PixelText Grid.Column="0" Text="{Binding Label}" Scale="2" Tight="True" Trim="True"
-                                                         Colour="{StaticResource PxAccent}" />
+                                                         Colour="{DynamicResource PxAccentInk}" />
                                         <pixel:PixelText Grid.Column="1" Text="{Binding Value}" Scale="2" Wrap="True"
-                                                         Colour="{StaticResource PxText}" />
+                                                         Colour="{DynamicResource PxText}" />
                                     </Grid>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
@@ -182,7 +182,7 @@
             </Grid>
 
             <StackPanel Grid.Row="3" Margin="0,14,0,0">
-                <pixel:PixelText Text="{Binding ErrorMessage}" Scale="2" Wrap="True" Colour="{StaticResource PxBad}"
+                <pixel:PixelText Text="{Binding ErrorMessage}" Scale="2" Wrap="True" Colour="{DynamicResource PxBad}"
                                  Margin="2,0,0,10">
                     <pixel:PixelText.Style>
                         <Style TargetType="pixel:PixelText">

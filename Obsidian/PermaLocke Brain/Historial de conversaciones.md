@@ -347,3 +347,11 @@ negro del estudio de fotos: gen 8-9 en el equipo (ver Trampas y lecciones).
   bayas de una vez, `BerryPileKeeper`), 5 (Rotombola apagada al pulsar JUGAR, `SaveRotoLoto`), 9 (motes votados,
   `NicknameVoteService` + `20-motes.sql`) y 7 primera fase (HOY, ayudas y confirmaciones en Admin). Falta 8 (Banda Focus).
   Detalle y lo que queda por medir jugando en «Plan de la lista de los jugadores (2026-09-28)».
+
+## 2026-10-01 / 02 — cinco diseños de la app (§215, sin publicar ni commit)
+- Pedido: diseños completos distintos manteniendo el pixel art. Hecho: CLÁSICO (original, `Rail`), ESMERALDA (`Tabs`), GAME BOY
+  (`Menu`, cuatro verdes), ULTRAUMBRAL (`Dock`), ROTOM DEX (`Keys`); galería con botón DISEÑO, cambio en vivo sin perder pantalla,
+  elección guardada en `Config/tema.json`. Segunda pasada: contraste (`PxAccentInk`, paletas de Esmeralda y Game Boy) con test.
+- Verificado: 160 tests, Admin compila, capturas a 1360×860 y 1560×980 sin errores de log, RULETA de 10 secciones cabe.
+  Sin ver: DPI 125/150 %, jugar con cada diseño. Falta que el organizador elija; hasta entonces no se publica.
+- Pendiente de esa misma tanda: arreglo de velocidad del emulador (`EnsureNormalSpeed`), no hecho.

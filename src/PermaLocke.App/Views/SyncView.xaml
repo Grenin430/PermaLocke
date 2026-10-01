@@ -13,10 +13,10 @@
             <Setter Property="Scale" Value="2" />
             <Setter Property="Tight" Value="True" />
             <Setter Property="Trim" Value="True" />
-            <Setter Property="Colour" Value="{StaticResource PxText}" />
+            <Setter Property="Colour" Value="{DynamicResource PxText}" />
             <Style.Triggers>
                 <DataTrigger Binding="{Binding IsMine}" Value="True">
-                    <Setter Property="Colour" Value="{StaticResource PxGold}" />
+                    <Setter Property="Colour" Value="{DynamicResource PxGold}" />
                 </DataTrigger>
             </Style.Triggers>
         </Style>
@@ -39,7 +39,7 @@
             <Setter Property="Scale" Value="2" />
             <Setter Property="Tight" Value="True" />
             <Setter Property="Wrap" Value="True" />
-            <Setter Property="Colour" Value="{StaticResource PxTextDim}" />
+            <Setter Property="Colour" Value="{DynamicResource PxTextDim}" />
         </Style>
     </UserControl.Resources>
 
@@ -52,7 +52,7 @@
 
                 <StackPanel>
                     <pixel:PixelText Text="{Binding Summary}" Scale="2" Tight="True" HorizontalAlignment="Center"
-                                     Margin="0,0,0,16" Colour="{StaticResource PxTextDim}" />
+                                     Margin="0,0,0,16" Colour="{DynamicResource PxTextDim}" />
 
                     <!-- EL PODIO: un estadio pixel de noche con el público, focos, marcador y los tres primeros. -->
                     <views:PodiumStage Players="{Binding Podium}" Height="492" />
@@ -72,13 +72,13 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Grid Margin="0,0,0,8">
-                                    <views:PixelPanel Fill="{StaticResource PxWell}" IsSunken="True" HasShadow="False" />
+                                    <views:PixelPanel Fill="{DynamicResource PxWell}" IsSunken="True" HasShadow="False" />
                                     <DockPanel Margin="14,8,18,10">
                                         <Grid DockPanel.Dock="Left" Width="44" Height="44" Margin="0,0,12,0" VerticalAlignment="Center">
-                                            <views:PixelPanel Fill="{StaticResource PxFaceHigh}" HasShadow="False" />
+                                            <views:PixelPanel Fill="{DynamicResource PxFaceHigh}" HasShadow="False" />
                                             <pixel:PixelText Text="{Binding Position}" Scale="3" Tight="True"
                                                              HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                             Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
+                                                             Colour="{DynamicResource PxText}" Shadow="{DynamicResource PxShadow}" />
                                         </Grid>
                                         <Grid DockPanel.Dock="Left" Width="48" Height="48" Margin="0,0,12,0">
                                             <views:PixelPanel Style="{StaticResource StateFrame}" />
@@ -86,7 +86,7 @@
                                         </Grid>
                                         <pixel:PixelText DockPanel.Dock="Right" Text="{Binding Points, StringFormat={}{0} puntos}"
                                                          Scale="2" Tight="True" VerticalAlignment="Center"
-                                                         Colour="{StaticResource PxAccentLight}" />
+                                                         Colour="{DynamicResource PxAccentInkLight}" />
                                         <StackPanel VerticalAlignment="Center">
                                             <pixel:PixelText Text="{Binding Player}" Style="{StaticResource PlayerName}" />
                                             <pixel:PixelText Style="{StaticResource Small}" Margin="0,5,0,0">
@@ -105,7 +105,7 @@
                     </ItemsControl>
 
                     <pixel:PixelText Text="{Binding Status}" Scale="2" Wrap="True" Margin="0,10,0,0"
-                                     Colour="{StaticResource PxTextDim}" />
+                                     Colour="{DynamicResource PxTextDim}" />
                 </StackPanel>
             </pixel:PixelWindow>
 
@@ -120,21 +120,21 @@
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Grid Margin="0,0,10,0">
-                                <views:PixelPanel Fill="{StaticResource PxFaceHigh}" />
+                                <views:PixelPanel Fill="{DynamicResource PxFaceHigh}" />
                                 <StackPanel Margin="12,12,16,16">
                                     <StackPanel Orientation="Horizontal">
                                         <pixel:PixelIcon Icon="{Binding Icon}" Scale="2" VerticalAlignment="Center" Margin="0,0,8,0" />
                                         <pixel:PixelText Text="{Binding Title}" Scale="2" Tight="True" VerticalAlignment="Center"
-                                                         Colour="{StaticResource PxGold}" />
+                                                         Colour="{DynamicResource PxGold}" />
                                     </StackPanel>
                                     <DockPanel Margin="0,12,0,0">
                                         <Image DockPanel.Dock="Left" Source="{Binding Picture}" Width="40" Height="40" Margin="0,0,10,0"
                                                RenderOptions.BitmapScalingMode="NearestNeighbor" />
                                         <StackPanel VerticalAlignment="Center">
                                             <pixel:PixelText Text="{Binding Player}" Scale="2" Tight="True" Trim="True"
-                                                             Colour="{StaticResource PxText}" />
+                                                             Colour="{DynamicResource PxText}" />
                                             <pixel:PixelText Text="{Binding Value}" Scale="2" Tight="True" Trim="True" Margin="0,5,0,0"
-                                                             Colour="{StaticResource PxAccentLight}" />
+                                                             Colour="{DynamicResource PxAccentInkLight}" />
                                         </StackPanel>
                                     </DockPanel>
                                 </StackPanel>

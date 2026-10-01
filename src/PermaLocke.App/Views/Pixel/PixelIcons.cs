@@ -370,6 +370,23 @@ public static class PixelIcons
             "............",
         ],
 
+        // La paleta de la galería de diseños (2026-10-01): cuatro manchas de color y el agujero del pulgar.
+        ["IconPalette"] =
+        [
+            "............",
+            "...oooooo...",
+            "..onnnnnno..",
+            ".onrrnnggnno",
+            ".onrrnnggnno",
+            "onnnnnnnnnno",
+            "onbbnnnnnnno",
+            "onbbnnoooeeo",
+            ".onnnnonoeeo",
+            ".oonnnnooono",
+            "..oooonnnno.",
+            "......oooo..",
+        ],
+
         // El rombo de los puntos.
         ["IconPoints"] =
         [

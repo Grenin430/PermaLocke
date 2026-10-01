@@ -67,7 +67,11 @@ public sealed class PixelBar : FrameworkElement
 
         var canvas = new ToastPixels.Canvas(columns, rows);
         canvas.Box(0, 0, columns, rows, ToastPixels.Ink);
-        canvas.Box(1, 1, columns - 2, rows - 2, Track, notched: false);
+        // Con otro tema, los colores de siempre (los que nadie cambió) pasan a ser los del tema (2026-10-01).
+        var themed = Pixel.PixelTheme.Current.Key != "clasico";
+        var track = themed && Track == Color.FromRgb(0x1E, 0x18, 0x30) ? Pixel.PixelTheme.Current["PxWell"] : Track;
+        var fill = themed && Fill == Color.FromRgb(0xB0, 0x7B, 0xF0) ? Pixel.PixelTheme.Current["PxAccent"] : Fill;
+        canvas.Box(1, 1, columns - 2, rows - 2, track, notched: false);
 
         var inner = columns - 2;
         var filled = (int)Math.Round(inner * Math.Clamp(double.IsFinite(Value) ? Value : 0, 0, 1));
@@ -78,14 +82,14 @@ public sealed class PixelBar : FrameworkElement
             filled = 1;
         }
 
-        var light = ToastPixels.Mix(Fill, Colors.White, 0.35);
-        var dark = ToastPixels.Mix(Fill, Colors.Black, 0.25);
+        var light = ToastPixels.Mix(fill, Colors.White, 0.35);
+        var dark = ToastPixels.Mix(fill, Colors.Black, 0.25);
 
         for (var x = 1; x <= filled; x++)
         {
             for (var y = 1; y < rows - 1; y++)
             {
-                var colour = y == 1 && rows > 3 ? light : y == rows - 2 && rows > 4 ? dark : Fill;
+                var colour = y == 1 && rows > 3 ? light : y == rows - 2 && rows > 4 ? dark : fill;
                 canvas.Put(x, y, colour);
             }
         }
@@ -117,6 +121,9 @@ public sealed class PixelCursor : FrameworkElement
 
         _timer.Tick += (_, _) =>
         {
+            // Sin animaciones en Windows, las esquinas se quedan quietas.
+            if (Pixel.PixelTheme.ReducedMotion) return;
+
             _in = !_in;
             InvalidateVisual();
         };

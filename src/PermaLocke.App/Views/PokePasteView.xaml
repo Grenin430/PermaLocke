@@ -17,11 +17,11 @@
 
             <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
                 <pixel:PixelText Text="{Binding Status}" Scale="2" Wrap="True" Margin="0,0,0,8"
-                                 Colour="{StaticResource PxGood}" />
+                                 Colour="{DynamicResource PxGood}" />
                 <StackPanel Orientation="Horizontal">
-                    <pixel:PixelText Text="▶" Scale="2" Tight="True" Colour="{StaticResource PxGold}" />
+                    <pixel:PixelText Text="▶" Scale="2" Tight="True" Colour="{DynamicResource PxGold}" />
                     <pixel:PixelText Text="Tu equipo guardado."
-                                     Scale="2" Tight="True" Margin="8,0,0,0" Colour="{StaticResource PxTextDim}" />
+                                     Scale="2" Tight="True" Margin="8,0,0,0" Colour="{DynamicResource PxTextDim}" />
                 </StackPanel>
             </StackPanel>
 

@@ -127,6 +127,14 @@ public sealed class PixelSprite : FrameworkElement
 
     private static void Changed(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((PixelSprite)d)._baked = null;
 
+    /// <summary>Draws the sprite again from its source: a new look changes the colours it is baked in.</summary>
+    public void Rebake()
+    {
+        _baked = null;
+        InvalidateMeasure();
+        InvalidateVisual();
+    }
+
     protected override void OnDpiChanged(DpiScale oldDpi, DpiScale newDpi)
     {
         base.OnDpiChanged(oldDpi, newDpi);

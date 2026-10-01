@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Media;
+using PermaLocke.App.Views.Pixel;
 
 namespace PermaLocke.App.Views;
 
@@ -106,11 +107,60 @@ public sealed class PixelPanel : FrameworkElement
             return;
         }
 
-        var shadow = HasShadow ? Shadow : 0;
+        // El hueco de la sombra solo se guarda en los estilos que la pintan: con los otros, la placa usa todo su sitio.
+        var style = PixelTheme.Current.Panels;
+        var shadow = HasShadow && style is PanelStyle.Bevel or PanelStyle.Heavy or PanelStyle.Device ? Shadow : 0;
         var width = columns - shadow;
         var height = rows - shadow;
         var canvas = new ToastPixels.Canvas(columns, rows);
         var alpha = Fill.A;
+
+        var inset = style switch
+        {
+            PanelStyle.Rounded => DrawRounded(canvas, width, height, alpha),
+            PanelStyle.Heavy => DrawHeavy(canvas, width, height, shadow, alpha),
+            PanelStyle.Neon => DrawNeon(canvas, width, height, alpha),
+            PanelStyle.Device => DrawDevice(canvas, width, height, shadow, alpha),
+            _ => DrawBevel(canvas, width, height, shadow, alpha)
+        };
+
+        // La banda del título: su color con su propio brillo arriba, una línea de tinta debajo y el acento que arranca.
+        var band = (int)Math.Round(HeaderHeight * dpi.DpiScaleY / cell);
+        // La banda empieza donde acaba el borde de cada estilo: la altura es la misma (HeaderHeight), y PixelWindow baja su
+        // título lo que el borde sea más grueso que el de siempre.
+        var bandEnd = inset + band - 1;
+        if (band > 2 && bandEnd < height - 4)
+        {
+            var bandLight = ToastPixels.Mix(HeaderFill, Colors.White, 0.16);
+            for (var y = inset; y <= bandEnd; y++)
+            {
+                for (var x = inset; x < width - inset; x++)
+                {
+                    var corner = y == inset && (x == inset || x == width - inset - 1);
+                    if (!corner) canvas.Put(x, y, y == inset ? bandLight : HeaderFill, alpha);
+                }
+            }
+
+            for (var x = inset; x < width - inset; x++)
+            {
+                canvas.Put(x, bandEnd + 1, ToastPixels.Ink, alpha);
+            }
+
+            if (HeaderAccent.A > 0)
+            {
+                for (var x = inset; x < Math.Min(width - inset, 16); x++)
+                {
+                    canvas.Put(x, bandEnd + 2, HeaderAccent, alpha);
+                }
+            }
+        }
+
+        ToastPixels.Draw(drawingContext, this, canvas);
+    }
+
+    /// <summary>The original box. Returns how many cells the edge takes, for the title band.</summary>
+    private int DrawBevel(ToastPixels.Canvas canvas, int width, int height, int shadow, byte alpha)
+    {
         var light = ToastPixels.Mix(Fill, Colors.White, 0.22);
         var dark = ToastPixels.Mix(Fill, Colors.Black, 0.30);
         var top = IsSunken ? dark : light;
@@ -136,34 +186,190 @@ public sealed class PixelPanel : FrameworkElement
             canvas.Put(width - 2, y, bottom, alpha);
         }
 
-        // La banda del título: su color con su propio brillo arriba, una línea de tinta debajo y el acento que arranca.
-        var band = (int)Math.Round(HeaderHeight * dpi.DpiScaleY / cell);
-        if (band > 2 && band < height - 4)
+        return 1;
+    }
+
+    /// <summary>
+    /// ESMERALDA: round corners of two cells, a dark line and a pale one inside it, no shadow. A hole is the same shape
+    /// with only a soft line and its top row in shade.
+    /// </summary>
+    private int DrawRounded(ToastPixels.Canvas canvas, int width, int height, byte alpha)
+    {
+        var theme = PixelTheme.Current;
+        bool Inside(int x, int y)
         {
-            var bandLight = ToastPixels.Mix(HeaderFill, Colors.White, 0.16);
-            for (var y = 1; y <= band; y++)
-            {
-                for (var x = 1; x < width - 1; x++)
-                {
-                    var corner = y == 1 && (x == 1 || x == width - 2);
-                    if (!corner) canvas.Put(x, y, y == 1 ? bandLight : HeaderFill, alpha);
-                }
-            }
+            if (x < 0 || y < 0 || x >= width || y >= height) return false;
+            var cx = x < 2 ? x : x >= width - 2 ? width - 1 - x : 2;
+            var cy = y < 2 ? y : y >= height - 2 ? height - 1 - y : 2;
+            return cx + cy >= 2;
+        }
 
-            for (var x = 1; x < width - 1; x++)
-            {
-                canvas.Put(x, band + 1, ToastPixels.Ink, alpha);
-            }
+        bool Edge(int x, int y) => Inside(x, y) && (!Inside(x - 1, y) || !Inside(x + 1, y) || !Inside(x, y - 1) || !Inside(x, y + 1));
 
-            if (HeaderAccent.A > 0)
+        var line = IsSunken ? ToastPixels.Mix(Fill, theme.Ink, 0.35) : theme.Ink;
+        var shade = ToastPixels.Mix(Fill, theme.Ink, 0.12);
+
+        for (var y = 0; y < height; y++)
+        {
+            for (var x = 0; x < width; x++)
             {
-                for (var x = 1; x < Math.Min(width - 1, 16); x++)
+                if (!Inside(x, y)) continue;
+
+                if (Edge(x, y))
                 {
-                    canvas.Put(x, band + 2, HeaderAccent, alpha);
+                    canvas.Put(x, y, line, alpha);
+                    continue;
                 }
+
+                var ring = Edge(x - 1, y) || Edge(x + 1, y) || Edge(x, y - 1) || Edge(x, y + 1)
+                           || Edge(x - 1, y - 1) || Edge(x + 1, y - 1) || Edge(x - 1, y + 1) || Edge(x + 1, y + 1);
+                var colour = !ring ? Fill
+                    : IsSunken ? (y <= 1 || x <= 1 ? shade : Fill)
+                    : theme.Rim;
+                canvas.Put(x, y, colour, alpha);
             }
         }
 
-        ToastPixels.Draw(drawingContext, this, canvas);
+        return 2;
+    }
+
+    /// <summary>GAME BOY: a double ink line with the fill between, square corners, a solid shadow of one cell.</summary>
+    private int DrawHeavy(ToastPixels.Canvas canvas, int width, int height, int shadow, byte alpha)
+    {
+        var theme = PixelTheme.Current;
+        var ink = theme.Ink;
+        var thin = IsSunken || width < 12 || height < 14;
+
+        if (shadow > 0)
+        {
+            canvas.Box(1, 1, width, height, theme.Rim, alpha, notched: false);
+        }
+
+        canvas.Box(0, 0, width, height, ink, alpha, notched: false);
+        canvas.Box(1, 1, width - 2, height - 2, Fill, alpha, notched: false);
+
+        if (thin)
+        {
+            if (IsSunken)
+            {
+                var shade = ToastPixels.Mix(Fill, ink, 0.3);
+                for (var x = 1; x < width - 1; x++) canvas.Put(x, 1, shade, alpha);
+                for (var y = 1; y < height - 1; y++) canvas.Put(1, y, shade, alpha);
+            }
+
+            return 1;
+        }
+
+        canvas.Box(2, 2, width - 4, height - 4, ink, alpha, notched: false);
+        canvas.Box(3, 3, width - 6, height - 6, Fill, alpha, notched: false);
+        return 3;
+    }
+
+    /// <summary>
+    /// ULTRAUMBRAL: one line of light round dark glass, brighter corners, and a dithered glow just inside the line. A
+    /// bright fill (a button) gets a pale line of its own colour instead.
+    /// </summary>
+    private int DrawNeon(ToastPixels.Canvas canvas, int width, int height, byte alpha)
+    {
+        var theme = PixelTheme.Current;
+        var luma = ((Fill.R * 0.299) + (Fill.G * 0.587) + (Fill.B * 0.114)) / 255.0;
+        var tube = luma > 0.35 ? ToastPixels.Mix(Fill, Colors.White, 0.45) : theme["PxAccent"];
+        if (IsSunken) tube = ToastPixels.Mix(tube, Fill, 0.6);
+        var glow = ToastPixels.Mix(Fill, tube, 0.28);
+
+        canvas.Box(0, 0, width, height, tube, alpha);
+        canvas.Box(1, 1, width - 2, height - 2, Fill, alpha, notched: false);
+
+        for (var x = 1; x < width - 1; x++)
+        {
+            if ((x & 1) == 0) canvas.Put(x, 1, glow, alpha);
+            if ((x & 1) == 1) canvas.Put(x, height - 2, glow, alpha);
+        }
+
+        for (var y = 2; y < height - 2; y++)
+        {
+            if ((y & 1) == 1) canvas.Put(1, y, glow, alpha);
+            if ((y & 1) == 0) canvas.Put(width - 2, y, glow, alpha);
+        }
+
+        if (!IsSunken && width >= 12 && height >= 10)
+        {
+            // Las esquinas, en el segundo color: una L de tres celdas en cada una.
+            var corner = theme.Rim;
+            for (var i = 1; i <= 3; i++)
+            {
+                canvas.Put(i, 0, corner, alpha);
+                canvas.Put(0, i, corner, alpha);
+                canvas.Put(width - 1 - i, 0, corner, alpha);
+                canvas.Put(width - 1, i, corner, alpha);
+                canvas.Put(i, height - 1, corner, alpha);
+                canvas.Put(0, height - 1 - i, corner, alpha);
+                canvas.Put(width - 1 - i, height - 1, corner, alpha);
+                canvas.Put(width - 1, height - 1 - i, corner, alpha);
+            }
+        }
+
+        return 1;
+    }
+
+    /// <summary>
+    /// ROTOM DEX: a screen in a device — ink outline, a pale bezel two cells wide lit on top, a dark inner line, and the
+    /// fill as the screen. A hole is only the inner line. Small plates get a bezel of one cell.
+    /// </summary>
+    private int DrawDevice(ToastPixels.Canvas canvas, int width, int height, int shadow, byte alpha)
+    {
+        var theme = PixelTheme.Current;
+
+        if (shadow > 0)
+        {
+            canvas.Box(shadow, shadow, width, height, Colors.Black, alpha: 150);
+        }
+
+        canvas.Box(0, 0, width, height, theme.Ink, alpha);
+        var screenLine = ToastPixels.Mix(Fill, Colors.Black, 0.45);
+        // Una placa pequeña (una tecla, un botón) no cabe con marco de pantalla: el borde pálido de un solo grosor.
+        if (width < 16 || height < 14)
+        {
+            var smallLight = ToastPixels.Mix(theme.Rim, Colors.White, 0.55);
+            var smallDark = ToastPixels.Mix(theme.Rim, Colors.Black, 0.28);
+            canvas.Box(1, 1, width - 2, height - 2, Fill, alpha, notched: false);
+            for (var x = 1; x < width - 1; x++)
+            {
+                canvas.Put(x, 1, IsSunken ? smallDark : smallLight, alpha);
+                canvas.Put(x, height - 2, IsSunken ? smallLight : smallDark, alpha);
+            }
+
+            for (var y = 2; y < height - 2; y++)
+            {
+                canvas.Put(1, y, IsSunken ? smallDark : smallLight, alpha);
+                canvas.Put(width - 2, y, IsSunken ? smallLight : smallDark, alpha);
+            }
+
+            return 1;
+        }
+
+
+        if (IsSunken)
+        {
+            canvas.Box(1, 1, width - 2, height - 2, screenLine, alpha, notched: false);
+            canvas.Box(2, 2, width - 4, height - 4, Fill, alpha, notched: false);
+            return 2;
+        }
+
+        var bezel = width >= 16 && height >= 14 ? 2 : 1;
+        var rim = theme.Rim;
+        var rimLight = ToastPixels.Mix(rim, Colors.White, 0.55);
+        var rimDark = ToastPixels.Mix(rim, Colors.Black, 0.28);
+
+        canvas.Box(1, 1, width - 2, height - 2, rim, alpha, notched: false);
+        for (var x = 1; x < width - 1; x++)
+        {
+            canvas.Put(x, 1, rimLight, alpha);
+            canvas.Put(x, height - 2, rimDark, alpha);
+        }
+
+        canvas.Box(1 + bezel, 1 + bezel, width - 2 - (2 * bezel), height - 2 - (2 * bezel), screenLine, alpha, notched: false);
+        canvas.Box(2 + bezel, 2 + bezel, width - 4 - (2 * bezel), height - 4 - (2 * bezel), Fill, alpha, notched: false);
+        return 2 + bezel;
     }
 }

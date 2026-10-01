@@ -1,0 +1,36 @@
+<UserControl x:Class="PermaLocke.App.Shells.ShellCaption"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:pixel="clr-namespace:PermaLocke.App.Views.Pixel"
+             xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework">
+
+    <!-- LA BARRA DE TÍTULO de los diseños nuevos: la marca a la izquierda, lo que cada diseño quiera poner en medio (Centre),
+         y a la derecha DISEÑO (la galería), minimizar y cerrar. WindowChrome sigue haciendo el arrastre: lo que se pulsa
+         se marca como pulsable dentro de la franja. -->
+    <Grid Margin="6,6,6,0" Height="34">
+        <DockPanel>
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center"
+                        shell:WindowChrome.IsHitTestVisibleInChrome="True">
+                <Button Style="{StaticResource PxDesignButton}" Click="OnGallery"
+                        ToolTip="Cambiar de diseño" AutomationProperties.Name="Cambiar de diseño" />
+                <Button Style="{StaticResource PxCaptionButton}" Content="-" Click="OnMinimise"
+                        ToolTip="Minimizar" AutomationProperties.Name="Minimizar" />
+                <Button Style="{StaticResource PxCaptionClose}" Content="×" Click="OnClose"
+                        ToolTip="Cerrar" AutomationProperties.Name="Cerrar" />
+            </StackPanel>
+
+            <ContentPresenter x:Name="CentrePresenter" DockPanel.Dock="Right" VerticalAlignment="Center" Margin="0,0,10,0"
+                              shell:WindowChrome.IsHitTestVisibleInChrome="True" />
+
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0">
+                <pixel:PixelIcon Icon="IconGacha" Scale="2" VerticalAlignment="Center" Margin="0,0,10,0" />
+                <pixel:PixelText Text="PERMALOCKE" Scale="2" Tight="True" Colour="{DynamicResource PxText}"
+                                 Shadow="{DynamicResource PxShadow}" VerticalAlignment="Center" />
+                <pixel:PixelText Text="· NUZLOCKE ULTRA LUNA" Scale="2" Tight="True" Margin="10,0,0,0"
+                                 Colour="{DynamicResource PxTextFaint}" VerticalAlignment="Center"
+                                 Visibility="{Binding ShowSubtitle, RelativeSource={RelativeSource AncestorType=UserControl},
+                                                      Converter={StaticResource BoolToVisibility}}" />
+            </StackPanel>
+        </DockPanel>
+    </Grid>
+</UserControl>

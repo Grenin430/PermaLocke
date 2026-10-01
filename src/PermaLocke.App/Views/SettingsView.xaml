@@ -10,7 +10,7 @@
         <Style x:Key="Explain" TargetType="pixel:PixelText">
             <Setter Property="Scale" Value="2" />
             <Setter Property="Wrap" Value="True" />
-            <Setter Property="Colour" Value="{StaticResource PxTextFaint}" />
+            <Setter Property="Colour" Value="{DynamicResource PxTextFaint}" />
             <Setter Property="Margin" Value="34,4,0,12" />
         </Style>
         <Style x:Key="Check" TargetType="CheckBox" BasedOn="{StaticResource PxCheckBox}" />
@@ -21,7 +21,7 @@
             <!-- ================================================== VENTANA -->
             <pixel:PixelWindow Title="TAMAÑO DE LA VENTANA" Icon="IconTools">
                 <pixel:PixelWindow.HeaderContent>
-                    <pixel:PixelText Text="{Binding CurrentSizeName}" Scale="2" Tight="True" Colour="{StaticResource PxAccentLight}" />
+                    <pixel:PixelText Text="{Binding CurrentSizeName}" Scale="2" Tight="True" Colour="{DynamicResource PxAccentInkLight}" />
                 </pixel:PixelWindow.HeaderContent>
                 <ItemsControl ItemsSource="{Binding WindowSizes}">
                     <ItemsControl.ItemTemplate>
@@ -33,11 +33,24 @@
                                             RelativeSource={RelativeSource AncestorType=UserControl}}"
                                         CommandParameter="{Binding}" />
                                 <pixel:PixelText Text="{Binding Why}" Scale="2" Wrap="True" VerticalAlignment="Center"
-                                                 Margin="14,0,0,0" Colour="{StaticResource PxTextDim}" />
+                                                 Margin="14,0,0,0" Colour="{DynamicResource PxTextDim}" />
                             </DockPanel>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
+            </pixel:PixelWindow>
+
+            <!-- ================================================== DISEÑO (2026-10-01) -->
+            <pixel:PixelWindow Title="DISEÑO DE LA APLICACIÓN" Icon="IconPalette" Margin="0,12,0,0">
+                <pixel:PixelWindow.HeaderContent>
+                    <pixel:PixelText x:Name="DesignName" Scale="2" Tight="True" Colour="{DynamicResource PxAccentInkLight}" />
+                </pixel:PixelWindow.HeaderContent>
+                <DockPanel>
+                    <Button DockPanel.Dock="Left" Content="ABRIR LA GALERÍA" Style="{StaticResource PxSubtleButton}" MinWidth="140"
+                            Click="OnDesign" />
+                    <pixel:PixelText Text="Cinco maneras de ver PermaLocke: cambia al momento, sin perder la pantalla. También está el botón DISEÑO arriba, en la barra de la ventana."
+                                     Scale="2" Wrap="True" VerticalAlignment="Center" Margin="14,0,0,0" Colour="{DynamicResource PxTextDim}" />
+                </DockPanel>
             </pixel:PixelWindow>
 
             <!-- ================================================== TORNEO: entrar con Discord (fase 1, solo identidad) -->
@@ -47,7 +60,7 @@
                                 Visibility="{Binding IsSignedIn, Converter={StaticResource BoolToVisibility}}">
                         <Image Source="{Binding DiscordAvatar, TargetNullValue={x:Null}}" Width="48" Height="48" Margin="0,0,12,0" />
                         <pixel:PixelText Text="{Binding DiscordName}" Scale="3" Tight="True" VerticalAlignment="Center"
-                                         Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
+                                         Colour="{DynamicResource PxText}" Shadow="{DynamicResource PxShadow}" />
                         <Button Content="SALIR" Style="{StaticResource PxSubtleButton}" Command="{Binding SignOutCommand}"
                                 VerticalAlignment="Center" Margin="18,0,0,0" />
                     </StackPanel>
@@ -108,11 +121,11 @@
                 </WrapPanel>
             </pixel:PixelWindow>
 
-            <pixel:PixelText Text="{Binding Status}" Scale="2" Wrap="True" Margin="4,12,0,0" Colour="{StaticResource PxGood}" />
+            <pixel:PixelText Text="{Binding Status}" Scale="2" Wrap="True" Margin="4,12,0,0" Colour="{DynamicResource PxGood}" />
 
             <!-- La versión que corre: lo que se mira para saber si una actualización (§196) ha entrado. -->
             <StackPanel Orientation="Horizontal" Margin="4,12,0,0">
-                <pixel:PixelText Text="{Binding VersionText}" Scale="2" VerticalAlignment="Center" Colour="{StaticResource PxTextDim}" />
+                <pixel:PixelText Text="{Binding VersionText}" Scale="2" VerticalAlignment="Center" Colour="{DynamicResource PxTextDim}" />
                 <Button Content="NOVEDADES" Style="{StaticResource PxSubtleButton}" Margin="14,0,0,0" Click="OnChangelog"
                         ToolTip="Lo que trae esta versión" />
             </StackPanel>

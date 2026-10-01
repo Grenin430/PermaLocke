@@ -4,20 +4,20 @@
         xmlns:views="clr-namespace:PermaLocke.App.Views"
         xmlns:pixel="clr-namespace:PermaLocke.App.Views.Pixel"
         Title="PermaLocke — Novedades" Width="620" Height="700" WindowStartupLocation="CenterOwner"
-        UseLayoutRounding="True" SnapsToDevicePixels="True" Background="{StaticResource PxBaseBrush}">
+        UseLayoutRounding="True" SnapsToDevicePixels="True" Background="{DynamicResource PxBaseBrush}">
     <!-- NOVEDADES (1.0.7): lo que trae cada versión, contado para quien juega (Novedades.txt, dentro del exe). -->
     <Window.Resources>
         <Style TargetType="ScrollBar" BasedOn="{StaticResource PxScrollBar}" />
     </Window.Resources>
     <Grid>
-        <pixel:PixelBackdrop Base="{StaticResource PxBase}" />
+        <pixel:PixelBackdrop Base="{DynamicResource PxBase}" />
         <DockPanel Margin="18">
-            <pixel:PixelText DockPanel.Dock="Top" Text="NOVEDADES" Scale="4" Tight="True" Colour="{StaticResource PxGold}"
-                             Shadow="{StaticResource PxShadow}" Margin="2,0,0,14" />
+            <pixel:PixelText DockPanel.Dock="Top" Text="NOVEDADES" Scale="4" Tight="True" Colour="{DynamicResource PxGold}"
+                             Shadow="{DynamicResource PxShadow}" Margin="2,0,0,14" />
             <Button DockPanel.Dock="Bottom" Content="CERRAR" Style="{StaticResource PxButton}" HorizontalAlignment="Right"
                     Margin="0,14,0,0" IsCancel="True" IsDefault="True" Click="OnClose" />
             <Grid>
-                <views:PixelPanel Fill="{StaticResource PxFace}" />
+                <views:PixelPanel Fill="{DynamicResource PxFace}" />
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="16,14,10,18">
                     <ItemsControl x:Name="Lines" Margin="0,0,10,0">
                         <ItemsControl.ItemTemplate>

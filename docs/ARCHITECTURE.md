@@ -12756,3 +12756,30 @@ queda lo del equipo. Investigado antes: sin barridos, sin escrituras, errores ca
   `knockDownFallenInBattle` en `rules.json` (se apaga desde Admin, REGLAS). Probado con memoria simulada; sin jugar.
 - **Panel del cap:** PS con 3 s de retraso (`CapBadge.Delayed`): la tabla del combate cambia al decidirse el golpe, antes
   de la animación, y destripaba el daño.
+
+## §215 · Diseños de la app: cinco marcos elegibles en vivo (2026-10-02, sin publicar ni commit)
+
+El organizador pidió varios diseños completos, manteniendo el pixel art y sin tocar la lógica. Nada de esto cambia datos,
+reglas ni servicios: solo la capa visual. El original (CLÁSICO) sigue siendo el que arranca y se puede volver a él en cualquier momento.
+
+- **Modelo:** `PixelTheme` (`Views/Pixel/PixelTheme.cs`) = paleta + `PanelStyle` (borde de `PixelPanel`) + `BackdropStyle` (suelo) +
+  `ShellKind` (dónde vive la navegación) + `WindowKind` (cómo lleva el título `PixelWindow`) y, solo el Game Boy, `Shades`
+  (4 verdes; `Map`/`MapPixels` repintan colores, iconos, sprites y escenas por brillo). Cinco: CLÁSICO (`Rail`), ESMERALDA (`Tabs`),
+  GAME BOY (`Menu`), ULTRAUMBRAL (`Dock`), ROTOM DEX (`Keys`). Un test exige un `ShellKind` distinto por diseño.
+- **Cambio en vivo:** los colores viven en `Themes/PixelColours.xaml`; `PixelTheme.Apply` sustituye ese diccionario entero y recorre
+  el árbol con `InvalidateVisual`; todos los estilos leen con `DynamicResource`. `MainWindow` solo tiene un `ShellSlot`
+  (`ApplyShell`): al cambiar de diseño construye un shell NUEVO (los ocultos se quedan con colores viejos) y conserva la sección
+  y el estado (`MainViewModel` es el mismo). Cada shell (`Shells/*Shell.xaml`) enlaza al mismo ViewModel.
+- **Galería:** botón DISEÑO en la barra de cualquiera de ellos y en CONFIGURACIÓN abre `DesignGalleryWindow` (lista con boceto
+  `LayoutSketch`, detalle grande, USAR / Intro / doble clic; se queda abierta para comparar). La elección se guarda en
+  `Config/tema.json` (`ThemeStore`); `--tema <clave>` manda sobre lo guardado sin cambiarlo.
+- **Accesibilidad:** foco de teclado visible en todos (`PixelCursor`, `PxCursor`), `ReducedMotion` (Windows) deja quietos
+  los que oscilan, y `PxAccentInk`/`PxAccentInkLight` separan «color de acento como relleno» de «color de acento como texto».
+  Test `Text_colours_of_every_look_stay_readable...`: texto ≥ 4,5, acento y estados ≥ 3 sobre `PxFace`/`PxWell`/`PxSidebar`
+  en los cuatro nuevos. El CLÁSICO no se mide (es el original; su texto tenue queda en 2,3-2,9).
+- **Capturas** (`--sin-juego`, para no tocar la partida): `--capturas <carpeta> [--pantallas A,B] [--vivo] [--foco] [--ruleta]`,
+  `--tamano grande|enorme|adaptar`. Hechas a 1360×860 y 1560×980: sin errores en los logs, las diez secciones de la RULETA caben.
+- **Admin:** enlaza `Views/Pixel/*.cs`, `PixelColours.xaml` y no puede referenciar `Shells/*` (por eso `ReducedMotion` vive en `PixelTheme`).
+- **Sin comprobar:** DPI de Windows 125/150 %; jugar de verdad con cada diseño; los iconos solos del muelle (ULTRAUMBRAL) y de
+  las teclas (ROTOM) dependen del tooltip y de la sección activa con nombre. Las escenas (gacha, cementerio, álbum, cuarto) guardan
+  sus colores salvo en GAME BOY. No hay versión móvil: es WPF de escritorio.

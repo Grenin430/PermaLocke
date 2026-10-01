@@ -22,8 +22,8 @@ public sealed class PixelRule : FrameworkElement
         nameof(Accent), typeof(Color), typeof(PixelRule),
         new FrameworkPropertyMetadata(Color.FromRgb(0xB0, 0x7B, 0xF0), FrameworkPropertyMetadataOptions.AffectsRender));
 
-    private static readonly Color Dark = Color.FromRgb(0x05, 0x04, 0x0A);
-    private static readonly Color Light = Color.FromRgb(0x2A, 0x22, 0x46);
+    private static Color Dark => PixelTheme.Current.RuleDark;
+    private static Color Light => PixelTheme.Current.RuleLight;
 
     public PixelRule()
     {

@@ -24,7 +24,8 @@ namespace PermaLocke.App.Views;
 /// </remarks>
 internal static class ToastPixels
 {
-    public static readonly Color Ink = Rgb(0x09, 0x07, 0x0E);
+    /// <summary>Outlines; the theme's (2026-10-01).</summary>
+    public static Color Ink => Pixel.PixelTheme.Current.Ink;
     public static readonly Color Face = Rgb(0x13, 0x0F, 0x1F);
     public static readonly Color Bevel = Rgb(0x2E, 0x25, 0x4C);
     public static readonly Color Groove = Rgb(0x0B, 0x09, 0x14);
@@ -77,6 +78,13 @@ internal static class ToastPixels
         public int Columns { get; } = columns;
         public int Rows { get; } = rows;
         private readonly byte[] _pixels = new byte[Math.Max(1, columns * rows * 4)];
+        private readonly bool _shades = Pixel.PixelTheme.Current.Shades is not null;
+
+        /// <summary>A canvas that never redraws in the theme's shades: for the previews of the other looks.</summary>
+        public Canvas(int columns, int rows, bool shades) : this(columns, rows)
+        {
+            _shades = shades && _shades;
+        }
 
         public void Put(int x, int y, Color colour, byte alpha = 255)
         {
@@ -84,6 +92,9 @@ internal static class ToastPixels
             {
                 return;
             }
+
+            // El Game Boy lo redibuja todo en sus cuatro verdes (2026-10-01); los demás temas no tocan nada.
+            if (_shades) colour = Pixel.PixelTheme.Current.Map(colour);
 
             var at = ((y * Columns) + x) * 4;
             _pixels[at] = colour.B;

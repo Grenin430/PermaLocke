@@ -292,8 +292,15 @@ public sealed class PodiumScene : PixelScene
 
         // El puesto, grande, con su sombra; y la placa con los puntos.
         var place = step?.Position.ToString() ?? (slot == 1 ? "1" : slot == 0 ? "2" : "3");
-        BigText(place, centre - (BigWidth(place, 2) / 2) + 1, top + 7, tones[3], 2);
-        BigText(place, centre - (BigWidth(place, 2) / 2), top + 6, step is null ? tones[1] : tones[0], 2);
+        // Con contorno oscuro: sobre el bloque de oro, de plata o de bronce el número se pierde si solo es más claro que él
+        // (y en el Game Boy, donde los tres bloques son casi del mismo verde, se perdía entero).
+        var numberLeft = centre - (BigWidth(place, 2) / 2);
+        foreach (var (ox, oy) in new[] { (-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1), (2, 2) })
+        {
+            BigText(place, numberLeft + ox, top + 6 + oy, Outline, 2);
+        }
+
+        BigText(place, numberLeft, top + 6, step is null ? tones[1] : tones[0], 2);
 
         if (step is not null)
         {

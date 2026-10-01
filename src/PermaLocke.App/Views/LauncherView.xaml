@@ -16,8 +16,8 @@
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="MinWidth" Value="240" />
             <Setter Property="Height" Value="74" />
-            <Setter Property="Background" Value="#FFB07BF0" />
-            <Setter Property="BorderBrush" Value="#FFD2ADFF" />
+            <Setter Property="Background" Value="{DynamicResource PxAccentBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource PxAccentLightBrush}" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
@@ -41,7 +41,7 @@
                                 </Setter>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="Plate" Property="Fill" Value="#FF3A3350" />
+                                <Setter TargetName="Plate" Property="Fill" Value="{DynamicResource PxFaceLift}" />
                                 <Setter Property="Cursor" Value="Arrow" />
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -59,13 +59,13 @@
                     <ControlTemplate TargetType="Button">
                         <StackPanel Orientation="Horizontal" Background="Transparent">
                             <pixel:PixelText x:Name="Cursor" Text="▶" Scale="2" Tight="True" Visibility="Hidden"
-                                             Colour="{StaticResource PxGold}" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                             Colour="{DynamicResource PxGold}" Margin="0,0,6,0" VerticalAlignment="Center" />
                             <pixel:PixelText x:Name="Label" Text="{Binding Content, RelativeSource={RelativeSource TemplatedParent}}"
-                                             Scale="2" Tight="True" Colour="{StaticResource PxTextDim}" VerticalAlignment="Center" />
+                                             Scale="2" Tight="True" Colour="{DynamicResource PxTextDim}" VerticalAlignment="Center" />
                         </StackPanel>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Label" Property="Colour" Value="{StaticResource PxText}" />
+                                <Setter TargetName="Label" Property="Colour" Value="{DynamicResource PxText}" />
                                 <Setter TargetName="Cursor" Property="Visibility" Value="Visible" />
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -108,7 +108,7 @@
         <DataTemplate x:Key="AvatarTemplate">
             <Grid Width="58" Height="58">
                 <views:PixelPanel Style="{StaticResource StateFrame}" />
-                <views:PixelPanel Fill="#FF0B0916" HasShadow="False" IsSunken="True" Margin="6" />
+                <views:PixelPanel Fill="{DynamicResource PxWell}" HasShadow="False" IsSunken="True" Margin="6" />
                 <pixel:PixelSprite Source="{Binding Avatar}" Scale="1" TrimEmpty="True" HorizontalAlignment="Center"
                                    VerticalAlignment="Center"
                                    Visibility="{Binding HasAvatar, Converter={StaticResource BoolToVisibility}}" />
@@ -126,7 +126,7 @@
                 <ContentPresenter DockPanel.Dock="Left" Content="{Binding}" ContentTemplate="{StaticResource AvatarTemplate}"
                                   Margin="0,0,12,0" />
                 <StackPanel VerticalAlignment="Center">
-                    <pixel:PixelText Text="{Binding Name}" Style="{StaticResource StateText}" Shadow="{StaticResource PxShadow}" />
+                    <pixel:PixelText Text="{Binding Name}" Style="{StaticResource StateText}" Shadow="{DynamicResource PxShadow}" />
                     <pixel:PixelText Text="{Binding Detail}" Style="{StaticResource StateText}" Margin="0,5,0,0" />
                 </StackPanel>
             </DockPanel>
@@ -139,32 +139,32 @@
                     <ContentPresenter DockPanel.Dock="Left" Content="{Binding}" ContentTemplate="{StaticResource AvatarTemplate}"
                                       Margin="0,0,12,0" />
                     <pixel:PixelText DockPanel.Dock="Right" Text="{Binding Time}" Scale="2" Tight="True"
-                                     VerticalAlignment="Center" Margin="12,0,0,0" Colour="{StaticResource PxTextFaint}" />
+                                     VerticalAlignment="Center" Margin="12,0,0,0" Colour="{DynamicResource PxTextFaint}" />
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <pixel:PixelText Text="{Binding PlayerName}" Style="{StaticResource StateText}"
-                                         Shadow="{StaticResource PxShadow}" />
+                                         Shadow="{DynamicResource PxShadow}" />
                         <pixel:PixelText Text="{Binding Verb}" Scale="2" Tight="True" Trim="True" Margin="6,0,0,0"
-                                         Colour="{StaticResource PxTextDim}" />
+                                         Colour="{DynamicResource PxTextDim}" />
                     </StackPanel>
                 </DockPanel>
 
                 <Grid Margin="70,8,0,0">
-                    <views:PixelPanel Fill="{StaticResource PxFaceHigh}" HasShadow="False" />
+                    <views:PixelPanel Fill="{DynamicResource PxFaceHigh}" HasShadow="False" />
                     <DockPanel Margin="12,10,18,14">
                         <Grid DockPanel.Dock="Left" Width="64" Height="64" Margin="0,0,14,0" VerticalAlignment="Top">
-                            <views:PixelPanel Fill="{StaticResource PxWell}" IsSunken="True" HasShadow="False" />
-                            <pixel:PixelSprite Source="{Binding Icon}" Scale="1" TrimEmpty="True" Outline="{StaticResource PxShadow}"
+                            <views:PixelPanel Fill="{DynamicResource PxWell}" IsSunken="True" HasShadow="False" />
+                            <pixel:PixelSprite Source="{Binding Icon}" Scale="1" TrimEmpty="True" Outline="{DynamicResource PxShadow}"
                                                HorizontalAlignment="Center" VerticalAlignment="Center"
                                                Visibility="{Binding HasIcon, Converter={StaticResource BoolToVisibility}}" />
                         </Grid>
                         <pixel:PixelText DockPanel.Dock="Right" Text="{Binding PointsText}" Scale="3" Tight="True"
-                                         VerticalAlignment="Center" Margin="16,0,0,0" Colour="{StaticResource PxGold}"
-                                         Shadow="{StaticResource PxShadow}" />
+                                         VerticalAlignment="Center" Margin="16,0,0,0" Colour="{DynamicResource PxGold}"
+                                         Shadow="{DynamicResource PxShadow}" />
                         <StackPanel VerticalAlignment="Center">
-                            <pixel:PixelText Text="{Binding Name}" Scale="2" Wrap="True" Colour="{StaticResource PxText}"
-                                             Shadow="{StaticResource PxShadow}" />
+                            <pixel:PixelText Text="{Binding Name}" Scale="2" Wrap="True" Colour="{DynamicResource PxText}"
+                                             Shadow="{DynamicResource PxShadow}" />
                             <pixel:PixelText Text="{Binding Description}" Scale="2" Wrap="True" Margin="0,5,0,0"
-                                             Colour="{StaticResource PxTextDim}"
+                                             Colour="{DynamicResource PxTextDim}"
                                              Visibility="{Binding HasDescription, Converter={StaticResource BoolToVisibility}}" />
                         </StackPanel>
                     </DockPanel>
@@ -175,7 +175,7 @@
         <Style x:Key="StatLabel" TargetType="pixel:PixelText">
             <Setter Property="Scale" Value="2" />
             <Setter Property="Tight" Value="True" />
-            <Setter Property="Colour" Value="{StaticResource PxTextFaint}" />
+            <Setter Property="Colour" Value="{DynamicResource PxTextFaint}" />
         </Style>
 
         <Style x:Key="StatValue" TargetType="pixel:PixelText">
@@ -183,8 +183,8 @@
             <Setter Property="Tight" Value="True" />
             <Setter Property="Trim" Value="True" />
             <Setter Property="Margin" Value="0,6,12,0" />
-            <Setter Property="Colour" Value="{StaticResource PxText}" />
-            <Setter Property="Shadow" Value="{StaticResource PxShadow}" />
+            <Setter Property="Colour" Value="{DynamicResource PxText}" />
+            <Setter Property="Shadow" Value="{DynamicResource PxShadow}" />
         </Style>
     </UserControl.Resources>
 
@@ -198,41 +198,41 @@
                                    IsPlaying="{Binding Launcher.IsRunning}" />
 
                 <Grid HorizontalAlignment="Left" VerticalAlignment="Top" Margin="18,18,0,0">
-                    <views:PixelPanel Fill="#FF140F24" />
+                    <views:PixelPanel Fill="{DynamicResource PxFace}" />
                     <StackPanel Margin="18,12,26,18">
-                        <pixel:PixelText Text="POKÉMON ULTRA LUNA" Scale="4" Colour="#FFEDE6FF" Shadow="{StaticResource PxShadow}" />
-                        <pixel:PixelText Text="{Binding RunLine}" Scale="2" Tight="True" Margin="1,4,0,0" Colour="#FFB9A8E0" />
+                        <pixel:PixelText Text="POKÉMON ULTRA LUNA" Scale="4" Colour="{DynamicResource PxText}" Shadow="{DynamicResource PxShadow}" />
+                        <pixel:PixelText Text="{Binding RunLine}" Scale="2" Tight="True" Margin="1,4,0,0" Colour="{DynamicResource PxTextDim}" />
                     </StackPanel>
                 </Grid>
             </Grid>
 
             <!-- ================================================== LA BARRA DE JUGAR -->
             <Grid Margin="0,-22,0,0">
-                <views:PixelPanel Fill="#FF110D1D" />
+                <views:PixelPanel Fill="{DynamicResource PxFace}" />
                 <DockPanel Margin="20,14,26,20">
                     <Grid DockPanel.Dock="Left" VerticalAlignment="Center">
                         <Button Style="{StaticResource PlayButton}" Command="{Binding PlayCommand}"
                                 Visibility="{Binding ShowPlay, Converter={StaticResource BoolToVisibility}}">
                             <StackPanel Orientation="Horizontal">
-                                <pixel:PixelText Text="▶" Scale="4" Tight="True" Colour="{StaticResource PxInk}"
+                                <pixel:PixelText Text="▶" Scale="4" Tight="True" Colour="{DynamicResource PxOnAccent}"
                                                  VerticalAlignment="Center" Margin="0,0,14,0" />
-                                <pixel:PixelText Text="JUGAR" Scale="4" Tight="True" Colour="{StaticResource PxInk}"
+                                <pixel:PixelText Text="JUGAR" Scale="4" Tight="True" Colour="{DynamicResource PxOnAccent}"
                                                  VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
 
                         <Button Style="{StaticResource PlayButton}" IsEnabled="False"
                                 Visibility="{Binding ShowBusy, Converter={StaticResource BoolToVisibility}}">
-                            <pixel:PixelText Text="{Binding BusyText}" Scale="3" Tight="True" Colour="#FF8A82A6" />
+                            <pixel:PixelText Text="{Binding BusyText}" Scale="3" Tight="True" Colour="{DynamicResource PxTextDim}" />
                         </Button>
 
                         <Button Style="{StaticResource PlayButton}" Command="{Binding CloseCommand}"
                                 Background="#FFE0664E" BorderBrush="#FFF08A72"
                                 Visibility="{Binding ShowClose, Converter={StaticResource BoolToVisibility}}">
                             <StackPanel Orientation="Horizontal">
-                                <views:PixelPanel Width="21" Height="21" Fill="{StaticResource PxInk}" HasShadow="False"
+                                <views:PixelPanel Width="21" Height="21" Fill="{DynamicResource PxInk}" HasShadow="False"
                                                   VerticalAlignment="Center" Margin="0,0,14,0" />
-                                <pixel:PixelText Text="CERRAR JUEGO" Scale="3" Tight="True" Colour="{StaticResource PxInk}"
+                                <pixel:PixelText Text="CERRAR JUEGO" Scale="3" Tight="True" Colour="{DynamicResource PxInk}"
                                                  VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
@@ -255,7 +255,7 @@
                                     Margin="10,0,0,0" MinWidth="150" AutomationProperties.Name="SEGUIR JUGANDO" />
                         </StackPanel>
                         <pixel:PixelText Text="{Binding AskText}" Scale="2" Wrap="True" VerticalAlignment="Center"
-                                         Colour="{StaticResource PxText}" />
+                                         Colour="{DynamicResource PxText}" />
                     </DockPanel>
 
                     <UniformGrid Rows="1" Margin="30,0,0,0" VerticalAlignment="Center"
@@ -272,26 +272,26 @@
                             <pixel:PixelText Text="LOGROS" Style="{StaticResource StatLabel}" />
                             <DockPanel Margin="0,6,0,0">
                                 <pixel:PixelText DockPanel.Dock="Left" Text="{Binding AchievementsText}" Scale="3" Tight="True"
-                                                 VerticalAlignment="Center" Margin="0,0,12,0" Colour="{StaticResource PxText}"
-                                                 Shadow="{StaticResource PxShadow}" />
+                                                 VerticalAlignment="Center" Margin="0,0,12,0" Colour="{DynamicResource PxText}"
+                                                 Shadow="{DynamicResource PxShadow}" />
                                 <views:PixelBar Height="15" Width="150" HorizontalAlignment="Left" VerticalAlignment="Center"
-                                                Value="{Binding AchievementsShare, Mode=OneWay}" Fill="{StaticResource PxAccent}" />
+                                                Value="{Binding AchievementsShare, Mode=OneWay}" Fill="{DynamicResource PxAccent}" />
                             </DockPanel>
                         </StackPanel>
                     </UniformGrid>
                 </DockPanel>
             </Grid>
 
-            <pixel:PixelText Text="{Binding Problem}" Scale="2" Wrap="True" Margin="4,12,0,0" Colour="{StaticResource PxBad}" />
+            <pixel:PixelText Text="{Binding Problem}" Scale="2" Wrap="True" Margin="4,12,0,0" Colour="{DynamicResource PxBad}" />
 
             <!-- Lo que falta para jugar, o lo que conviene saber antes, en una línea. -->
             <pixel:PixelText Text="{Binding Notice}" Scale="2" Wrap="True" Margin="4,10,0,0">
                 <pixel:PixelText.Style>
                     <Style TargetType="pixel:PixelText">
-                        <Setter Property="Colour" Value="{StaticResource PxWarn}" />
+                        <Setter Property="Colour" Value="{DynamicResource PxWarn}" />
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding NoticeBlocks}" Value="True">
-                                <Setter Property="Colour" Value="{StaticResource PxBad}" />
+                                <Setter Property="Colour" Value="{DynamicResource PxBad}" />
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
@@ -309,7 +309,7 @@
                         <Button DockPanel.Dock="Right" Content="COMPROBAR" Style="{StaticResource PxSubtleButton}"
                                 Command="{Binding Guide.RefreshCommand}" />
                         <pixel:PixelText Text="{Binding Guide.Progress}" Scale="2" Tight="True" VerticalAlignment="Center"
-                                         Colour="{StaticResource PxGold}" />
+                                         Colour="{DynamicResource PxGold}" />
                     </DockPanel>
                     <ItemsControl ItemsSource="{Binding Guide.Steps}">
                         <ItemsControl.ItemTemplate>
@@ -319,7 +319,7 @@
                                         <pixel:PixelIcon Icon="IconTick" Scale="2" HorizontalAlignment="Center"
                                                          Visibility="{Binding Done, Converter={StaticResource BoolToVisibility}}" />
                                         <pixel:PixelText Text="{Binding Number}" Scale="3" Tight="True" HorizontalAlignment="Center"
-                                                         Colour="{StaticResource PxAccentLight}"
+                                                         Colour="{DynamicResource PxAccentInkLight}"
                                                          Visibility="{Binding Done, Converter={StaticResource InverseBoolToVisibility}}" />
                                     </Grid>
                                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
@@ -332,17 +332,17 @@
                                         <pixel:PixelText Text="{Binding Title}" Scale="2" Tight="True">
                                             <pixel:PixelText.Style>
                                                 <Style TargetType="pixel:PixelText">
-                                                    <Setter Property="Colour" Value="{StaticResource PxText}" />
+                                                    <Setter Property="Colour" Value="{DynamicResource PxText}" />
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding Done}" Value="True">
-                                                            <Setter Property="Colour" Value="{StaticResource PxTextFaint}" />
+                                                            <Setter Property="Colour" Value="{DynamicResource PxTextFaint}" />
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
                                             </pixel:PixelText.Style>
                                         </pixel:PixelText>
                                         <pixel:PixelText Text="{Binding Detail}" Scale="2" Wrap="True" Margin="0,4,0,0"
-                                                         Colour="{StaticResource PxTextFaint}"
+                                                         Colour="{DynamicResource PxTextFaint}"
                                                          Visibility="{Binding Done, Converter={StaticResource InverseBoolToVisibility}}" />
                                     </StackPanel>
                                 </DockPanel>
@@ -396,7 +396,7 @@
                                    Visibility="{Binding ShowCommunity, Converter={StaticResource BoolToVisibility}}">
                     <StackPanel>
                         <pixel:PixelText Text="Todavía nadie ha reclamado un logro." Scale="2" Tight="True"
-                                         Colour="{StaticResource PxTextFaint}"
+                                         Colour="{DynamicResource PxTextFaint}"
                                          Visibility="{Binding HasActivity, Converter={StaticResource InverseBoolToVisibility}}" />
 
                         <ItemsControl ItemsSource="{Binding Activity}">
@@ -405,7 +405,7 @@
                                     <StackPanel Margin="0,0,0,6">
                                         <DockPanel Margin="0,0,0,14">
                                             <pixel:PixelText DockPanel.Dock="Left" Text="{Binding Heading}" Scale="2" Tight="True"
-                                                             VerticalAlignment="Center" Margin="0,0,12,0" Colour="#FFB9A8E0" />
+                                                             VerticalAlignment="Center" Margin="0,0,12,0" Colour="{DynamicResource PxTextDim}" />
                                             <pixel:PixelRule VerticalAlignment="Center" />
                                         </DockPanel>
                                         <ItemsControl ItemsSource="{Binding Items}" ItemTemplate="{StaticResource ActivityTemplate}" />
@@ -421,20 +421,20 @@
                     <!-- LA RUN REINICIADA DESDE ADMIN: en el servidor ya está archivada; aquí sigue hasta empezar de cero. -->
                     <pixel:PixelWindow Title="TU RUN SE HA REINICIADO" Icon="IconRefresh" Margin="0,0,0,12"
                                        Visibility="{Binding RunRestarted, Converter={StaticResource BoolToVisibility}}">
-                        <pixel:PixelText Scale="2" Wrap="True" Colour="{StaticResource PxBad}"
+                        <pixel:PixelText Scale="2" Wrap="True" Colour="{DynamicResource PxBad}"
                                          Text="El organizador la ha reiniciado. Ve a HOME y pulsa EMPEZAR DE CERO: borra esta run y la partida, y creas la nueva." />
                     </pixel:PixelWindow>
 
                     <!-- EL ANUNCIO DEL ORGANIZADOR, el más reciente, encima de los amigos. -->
                     <pixel:PixelWindow Title="ANUNCIO DEL TORNEO" Icon="IconStar" Margin="0,0,0,12"
                                        Visibility="{Binding HasAnnouncement, Converter={StaticResource BoolToVisibility}}">
-                        <pixel:PixelText Text="{Binding Announcement}" Scale="2" Wrap="True" Colour="{StaticResource PxGold}" />
+                        <pixel:PixelText Text="{Binding Announcement}" Scale="2" Wrap="True" Colour="{DynamicResource PxGold}" />
                     </pixel:PixelWindow>
                     <pixel:PixelWindow Title="{Binding FriendsHeading}" Icon="IconPeople"
                                        Visibility="{Binding ShowCommunity, Converter={StaticResource BoolToVisibility}}">
                         <StackPanel>
                             <pixel:PixelText Text="{Binding CommunityNote}" Scale="2" Wrap="True" Margin="0,0,0,8"
-                                             Colour="{StaticResource PxTextFaint}"
+                                             Colour="{DynamicResource PxTextFaint}"
                                              Visibility="{Binding HasFriends, Converter={StaticResource InverseBoolToVisibility}}" />
                             <ItemsControl ItemsSource="{Binding Friends}" ItemTemplate="{StaticResource FriendTemplate}" />
                         </StackPanel>
@@ -446,10 +446,10 @@
                                 <Button DockPanel.Dock="Right" Content="VER TODOS" Style="{StaticResource NavLink}" Margin="0"
                                         Command="{Binding GoCommand}" CommandParameter="LOGROS" />
                                 <pixel:PixelText Text="{Binding AchievementsLine}" Scale="2" Wrap="True"
-                                                 Colour="{StaticResource PxText}" />
+                                                 Colour="{DynamicResource PxText}" />
                             </DockPanel>
                             <views:PixelBar Height="15" Margin="0,10,0,14" Value="{Binding AchievementsShare, Mode=OneWay}"
-                                            Fill="{StaticResource PxAccent}" />
+                                            Fill="{DynamicResource PxAccent}" />
                             <WrapPanel>
                                 <ItemsControl ItemsSource="{Binding ClaimedIcons}">
                                     <ItemsControl.ItemsPanel>
@@ -460,9 +460,9 @@
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
                                             <Grid Width="48" Height="48" Margin="0,0,6,6">
-                                                <views:PixelPanel Fill="{StaticResource PxWell}" IsSunken="True" HasShadow="False" />
+                                                <views:PixelPanel Fill="{DynamicResource PxWell}" IsSunken="True" HasShadow="False" />
                                                 <pixel:PixelSprite Source="{Binding}" Scale="1" TrimEmpty="True"
-                                                                   Outline="{StaticResource PxShadow}"
+                                                                   Outline="{DynamicResource PxShadow}"
                                                                    HorizontalAlignment="Center" VerticalAlignment="Center" />
                                             </Grid>
                                         </DataTemplate>
@@ -478,9 +478,9 @@
                                             </Style.Triggers>
                                         </Style>
                                     </Grid.Style>
-                                    <views:PixelPanel Fill="{StaticResource PxWell}" IsSunken="True" HasShadow="False" />
+                                    <views:PixelPanel Fill="{DynamicResource PxWell}" IsSunken="True" HasShadow="False" />
                                     <pixel:PixelText Text="{Binding MoreClaimed}" Scale="2" Tight="True"
-                                                     HorizontalAlignment="Center" VerticalAlignment="Center" Colour="#FFB9A8E0" />
+                                                     HorizontalAlignment="Center" VerticalAlignment="Center" Colour="{DynamicResource PxTextDim}" />
                                 </Grid>
                             </WrapPanel>
                         </StackPanel>

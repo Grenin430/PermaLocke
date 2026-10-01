@@ -45,9 +45,9 @@
                     <DataTemplate>
                         <StackPanel Orientation="Horizontal">
                             <pixel:PixelText Text="{Binding Label}" Scale="2" Tight="True" Trim="True" MaxWidth="230"
-                                             Colour="{StaticResource PxText}" />
+                                             Colour="{DynamicResource PxText}" />
                             <pixel:PixelText Text="{Binding Count}" Scale="2" Tight="True" Margin="10,0,0,0"
-                                             Colour="{StaticResource PxTextDim}" />
+                                             Colour="{DynamicResource PxTextDim}" />
                         </StackPanel>
                     </DataTemplate>
                 </ComboBox.ItemTemplate>
@@ -58,13 +58,13 @@
                     AutomationProperties.Name="Páginas siguientes" />
 
             <StackPanel DockPanel.Dock="Left" Margin="16,0,0,0" VerticalAlignment="Center">
-                <pixel:PixelText Text="{Binding PageLabel}" Scale="2" Tight="True" Colour="{StaticResource PxText}" />
+                <pixel:PixelText Text="{Binding PageLabel}" Scale="2" Tight="True" Colour="{DynamicResource PxText}" />
                 <pixel:PixelText Text="{Binding Summary}" Scale="1" Tight="True" Margin="0,6,0,0"
-                                 Colour="{StaticResource PxTextDim}" />
+                                 Colour="{DynamicResource PxTextDim}" />
                 <!-- Lo que es cierto y no es un fallo (la partida guardada es más vieja que el juego abierto): pequeño,
                      sin tapar la carpeta. -->
                 <pixel:PixelText Text="{Binding Notice}" Scale="1" Tight="True" Margin="0,4,0,0" MaxWidth="360" Trim="True"
-                                 Colour="{StaticResource PxWarn}"
+                                 Colour="{DynamicResource PxWarn}"
                                  Visibility="{Binding HasNotice, Converter={StaticResource BoolToVisibility}}" />
             </StackPanel>
 
@@ -95,20 +95,20 @@
                           IsPaused="{Binding IsInspecting}" />
 
         <pixel:PixelText Grid.Row="1" Text="LEYENDO LA PARTIDA…" Scale="3" Tight="True"
-                         Colour="{StaticResource PxTextDim}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                         Colour="{DynamicResource PxTextDim}" HorizontalAlignment="Center" VerticalAlignment="Center"
                          Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibility}}" />
         <pixel:PixelText Grid.Row="1" Text="NO HAY NINGÚN POKÉMON EN LA PARTIDA" Scale="3" Tight="True"
-                         Colour="{StaticResource PxTextDim}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                         Colour="{DynamicResource PxTextDim}" HorizontalAlignment="Center" VerticalAlignment="Center"
                          Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVisibility}}" />
 
         <!-- Si la partida no se ha podido leer, se dice en grande donde iría la carpeta. -->
         <Grid Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="12,0"
               Visibility="{Binding HasProblem, Converter={StaticResource BoolToVisibility}}">
-            <views:PixelPanel Fill="{StaticResource PxWarnDeep}" />
+            <views:PixelPanel Fill="{DynamicResource PxWarnDeep}" />
             <StackPanel Orientation="Horizontal" Margin="16,10,22,16">
-                <pixel:PixelText Text="!" Scale="3" Tight="True" Colour="{StaticResource PxWarn}" VerticalAlignment="Center" />
+                <pixel:PixelText Text="!" Scale="3" Tight="True" Colour="{DynamicResource PxWarn}" VerticalAlignment="Center" />
                 <pixel:PixelText Text="{Binding Problem}" Scale="2" Wrap="True" Margin="12,0,0,0" MaxWidth="900"
-                                 Colour="{StaticResource PxText}" VerticalAlignment="Center" />
+                                 Colour="{DynamicResource PxText}" VerticalAlignment="Center" />
             </StackPanel>
         </Grid>
 
@@ -120,24 +120,24 @@
                         Command="{Binding TradeCommand}" IsEnabled="{Binding CanTrade}" VerticalAlignment="Center" />
                 <Grid DockPanel.Dock="Right" VerticalAlignment="Center" Margin="12,0,0,0"
                       Visibility="{Binding TradesLimited, Converter={StaticResource BoolToVisibility}}">
-                    <views:PixelPanel Fill="{StaticResource PxFaceLift}" HasShadow="False" />
+                    <views:PixelPanel Fill="{DynamicResource PxFaceLift}" HasShadow="False" />
                     <StackPanel Orientation="Horizontal" Margin="9,6,9,7">
-                        <pixel:PixelText Text="QUEDAN" Scale="1" Tight="True" VerticalAlignment="Center" Colour="{StaticResource PxTextDim}" />
-                        <pixel:PixelText Text="{Binding TradesLeft}" Scale="2" Tight="True" Margin="6,0,0,0" Colour="{StaticResource PxText}" />
+                        <pixel:PixelText Text="QUEDAN" Scale="1" Tight="True" VerticalAlignment="Center" Colour="{DynamicResource PxTextDim}" />
+                        <pixel:PixelText Text="{Binding TradesLeft}" Scale="2" Tight="True" Margin="6,0,0,0" Colour="{DynamicResource PxText}" />
                     </StackPanel>
                 </Grid>
                 <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
                     <pixel:PixelText Text="DOS POR UNA" Scale="2" Tight="True" VerticalAlignment="Center"
-                                     Colour="{StaticResource PxAccentLight}" Shadow="{StaticResource PxShadow}" />
+                                     Colour="{DynamicResource PxAccentInkLight}" Shadow="{DynamicResource PxShadow}" />
                     <Button Margin="14,0,0,0" Style="{StaticResource PxSubtleButton}" Command="{Binding UnpickCommand}" CommandParameter="1"
                             Content="{Binding TradeFirst.Name, TargetNullValue='CARTA 1', FallbackValue='CARTA 1'}" MinWidth="130" />
-                    <pixel:PixelText Text="+" Scale="2" Tight="True" Margin="8,0" VerticalAlignment="Center" Colour="{StaticResource PxTextDim}" />
+                    <pixel:PixelText Text="+" Scale="2" Tight="True" Margin="8,0" VerticalAlignment="Center" Colour="{DynamicResource PxTextDim}" />
                     <Button Style="{StaticResource PxSubtleButton}" Command="{Binding UnpickCommand}" CommandParameter="2"
                             Content="{Binding TradeSecond.Name, TargetNullValue='CARTA 2', FallbackValue='CARTA 2'}" MinWidth="130" />
                 </StackPanel>
                 <StackPanel Margin="16,0,0,0" VerticalAlignment="Center">
-                    <pixel:PixelText Text="{Binding TradeHint}" Scale="1" Wrap="True" Colour="{StaticResource PxText}" />
-                    <pixel:PixelText Text="{Binding TradeProblem}" Scale="1" Wrap="True" Margin="0,4,0,0" Colour="{StaticResource PxBad}" />
+                    <pixel:PixelText Text="{Binding TradeHint}" Scale="1" Wrap="True" Colour="{DynamicResource PxText}" />
+                    <pixel:PixelText Text="{Binding TradeProblem}" Scale="1" Wrap="True" Margin="0,4,0,0" Colour="{DynamicResource PxBad}" />
                 </StackPanel>
             </DockPanel>
         </Grid>
@@ -172,17 +172,17 @@
             <DockPanel Grid.Row="1" Grid.ColumnSpan="3" Margin="24,0,24,16" LastChildFill="False">
                 <StackPanel DockPanel.Dock="Left" VerticalAlignment="Center">
                     <pixel:PixelText Text="{Binding InspectedTitle}" Scale="2" Tight="True" Trim="True" MaxWidth="620"
-                                     Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
+                                     Colour="{DynamicResource PxText}" Shadow="{DynamicResource PxShadow}" />
                     <pixel:PixelText Text="{Binding InspectedCaption}" Scale="1" Tight="True" Margin="0,6,0,0"
-                                     Colour="{StaticResource PxTextDim}" />
+                                     Colour="{DynamicResource PxTextDim}" />
                 </StackPanel>
                 <Button DockPanel.Dock="Right" Content="CERRAR" Style="{StaticResource PxButton}"
                         Command="{Binding CloseCommand}" VerticalAlignment="Center" />
                 <StackPanel DockPanel.Dock="Right" Margin="0,0,18,0" VerticalAlignment="Center">
                     <pixel:PixelText Text="MUEVE EL RATÓN SOBRE LA CARTA PARA INCLINARLA" Scale="1" Tight="True"
-                                     HorizontalAlignment="Right" Colour="{StaticResource PxTextDim}" />
+                                     HorizontalAlignment="Right" Colour="{DynamicResource PxTextDim}" />
                     <pixel:PixelText Text="PULSA LA CARTA PARA DARLE LA VUELTA" Scale="1" Tight="True" Margin="0,6,0,0"
-                                     HorizontalAlignment="Right" Colour="{StaticResource PxTextDim}" />
+                                     HorizontalAlignment="Right" Colour="{DynamicResource PxTextDim}" />
                 </StackPanel>
             </DockPanel>
         </Grid>
@@ -194,7 +194,7 @@
             <StackPanel VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,26"
                         Visibility="{Binding TradeRevealed, Converter={StaticResource BoolToVisibility}}">
                 <pixel:PixelText Text="{Binding TradeResultText}" Scale="3" Tight="True" HorizontalAlignment="Center"
-                                 Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
+                                 Colour="{DynamicResource PxText}" Shadow="{DynamicResource PxShadow}" />
                 <Button Content="CONTINUAR" Style="{StaticResource PxButton}" Command="{Binding EndTradeCommand}"
                         HorizontalAlignment="Center" MinWidth="200" Margin="0,16,0,0" />
             </StackPanel>

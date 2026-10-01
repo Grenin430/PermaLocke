@@ -14,14 +14,14 @@
         <Style x:Key="FactLabel" TargetType="pixel:PixelText">
             <Setter Property="Scale" Value="2" />
             <Setter Property="Tight" Value="True" />
-            <Setter Property="Colour" Value="{StaticResource PxTextFaint}" />
+            <Setter Property="Colour" Value="{DynamicResource PxTextFaint}" />
             <Setter Property="Margin" Value="0,14,0,5" />
         </Style>
 
         <Style x:Key="FactText" TargetType="pixel:PixelText">
             <Setter Property="Scale" Value="2" />
             <Setter Property="Wrap" Value="True" />
-            <Setter Property="Colour" Value="{StaticResource PxText}" />
+            <Setter Property="Colour" Value="{DynamicResource PxText}" />
         </Style>
     </UserControl.Resources>
 
@@ -64,7 +64,7 @@
 
                 <!-- Vacío: se dice, no se dibuja un cementerio de mentira. -->
                 <pixel:PixelText Text="{Binding EmptyText}" Scale="2" Tight="True"
-                                 Colour="{StaticResource PxTextDim}"
+                                 Colour="{DynamicResource PxTextDim}"
                                  Visibility="{Binding IsEmpty, Converter={StaticResource Visible}}"
                                  HorizontalAlignment="Center" VerticalAlignment="Center" />
 
@@ -73,7 +73,7 @@
                     <StackPanel Orientation="Horizontal" Margin="9,6,11,7">
                         <pixel:PixelIcon Icon="IconGrave" Scale="2" VerticalAlignment="Center" Margin="0,0,8,0" />
                         <pixel:PixelText Text="{Binding CountText}" Scale="2" Tight="True" VerticalAlignment="Center"
-                                         Colour="{StaticResource PxText}" />
+                                         Colour="{DynamicResource PxText}" />
                     </StackPanel>
                 </Grid>
 
@@ -85,7 +85,7 @@
                     <Grid Margin="6,0" VerticalAlignment="Top">
                         <views:PixelPanel Fill="#E0120E20" HasShadow="False" />
                         <pixel:PixelText Text="{Binding PageText}" Scale="2" Tight="True" Margin="9,9,10,9"
-                                         Colour="{StaticResource PxText}" />
+                                         Colour="{DynamicResource PxText}" />
                     </Grid>
                     <Button Content="▶" Command="{Binding NextPageCommand}" Style="{StaticResource PxSubtleButton}"
                             Padding="12,6,18,11" />
@@ -110,21 +110,21 @@
                         <Grid Width="104" Height="84">
                             <views:PixelPanel Fill="#FF06050A" IsSunken="True" HasShadow="False" />
                             <pixel:PixelSprite Source="{Binding Sprite}" Scale="2" TrimEmpty="True"
-                                               Outline="{StaticResource PxShadow}" Bob="True"
+                                               Outline="{DynamicResource PxShadow}" Bob="True"
                                                HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Grid>
 
                         <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
                             <pixel:PixelText Text="{Binding Name}" Scale="3" Tight="True" Trim="True"
-                                             Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
+                                             Colour="{DynamicResource PxText}" Shadow="{DynamicResource PxShadow}" />
                             <pixel:PixelText Text="{Binding SpeciesLine}" Scale="2" Tight="True" Trim="True" Margin="0,5,0,0"
-                                             Colour="{StaticResource PxTextDim}" />
+                                             Colour="{DynamicResource PxTextDim}" />
                             <Grid HorizontalAlignment="Left" Margin="0,7,0,0"
                                   Visibility="{Binding IsShiny, Converter={StaticResource Visible}}">
-                                <views:PixelPanel Fill="{StaticResource PxWarnDeep}" HasShadow="False" />
+                                <views:PixelPanel Fill="{DynamicResource PxWarnDeep}" HasShadow="False" />
                                 <StackPanel Orientation="Horizontal" Margin="8,5,10,6">
                                     <pixel:PixelIcon Icon="IconStar" Scale="1" VerticalAlignment="Center" Margin="0,0,6,0" />
-                                    <pixel:PixelText Text="VARIOCOLOR" Scale="2" Tight="True" Colour="{StaticResource PxWarn}" />
+                                    <pixel:PixelText Text="VARIOCOLOR" Scale="2" Tight="True" Colour="{DynamicResource PxWarn}" />
                                 </StackPanel>
                             </Grid>
                         </StackPanel>
@@ -139,20 +139,20 @@
                         </Grid.ColumnDefinitions>
 
                         <Grid>
-                            <views:PixelPanel Fill="{StaticResource PxWell}" IsSunken="True" HasShadow="False" />
+                            <views:PixelPanel Fill="{DynamicResource PxWell}" IsSunken="True" HasShadow="False" />
                             <StackPanel Margin="14,10,14,12">
-                                <pixel:PixelText Text="AGUANTÓ" Scale="2" Tight="True" Colour="{StaticResource PxTextFaint}" />
+                                <pixel:PixelText Text="AGUANTÓ" Scale="2" Tight="True" Colour="{DynamicResource PxTextFaint}" />
                                 <pixel:PixelText Text="{Binding LastedShort}" Scale="3" Tight="True" Margin="0,6,0,0"
-                                                 Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
+                                                 Colour="{DynamicResource PxText}" Shadow="{DynamicResource PxShadow}" />
                             </StackPanel>
                         </Grid>
 
                         <Grid Grid.Column="2">
-                            <views:PixelPanel Fill="{StaticResource PxWell}" IsSunken="True" HasShadow="False" />
+                            <views:PixelPanel Fill="{DynamicResource PxWell}" IsSunken="True" HasShadow="False" />
                             <StackPanel Margin="14,10,14,12">
-                                <pixel:PixelText Text="COSTÓ" Scale="2" Tight="True" Colour="{StaticResource PxTextFaint}" />
+                                <pixel:PixelText Text="COSTÓ" Scale="2" Tight="True" Colour="{DynamicResource PxTextFaint}" />
                                 <pixel:PixelText Text="{Binding PenaltyShort}" Scale="3" Tight="True" Margin="0,6,0,0"
-                                                 Colour="{StaticResource PxBad}" Shadow="{StaticResource PxShadow}" />
+                                                 Colour="{DynamicResource PxBad}" Shadow="{DynamicResource PxShadow}" />
                             </StackPanel>
                         </Grid>
                     </Grid>
@@ -173,9 +173,9 @@
                                 </Style.Triggers>
                             </Style>
                         </Grid.Style>
-                        <views:PixelPanel Fill="{StaticResource PxWell}" IsSunken="True" HasShadow="False" />
+                        <views:PixelPanel Fill="{DynamicResource PxWell}" IsSunken="True" HasShadow="False" />
                         <pixel:PixelText Text="{Binding NoKillcamText}" Scale="2" Wrap="True" TextAlignment="Center"
-                                         Colour="{StaticResource PxTextDim}" Margin="14,22" />
+                                         Colour="{DynamicResource PxTextDim}" Margin="14,22" />
                     </Grid>
 
                 </StackPanel>
@@ -202,22 +202,22 @@
                             Command="{Binding DataContext.CloseTheaterCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
 
                     <pixel:PixelSprite DockPanel.Dock="Left" Source="{Binding Sprite}" Scale="2" TrimEmpty="True"
-                                       Outline="{StaticResource PxShadow}" VerticalAlignment="Center" Margin="0,0,16,0" />
+                                       Outline="{DynamicResource PxShadow}" VerticalAlignment="Center" Margin="0,0,16,0" />
 
                     <StackPanel VerticalAlignment="Center">
-                        <pixel:PixelText Text="KILLCAM" Scale="2" Tight="True" Colour="{StaticResource PxBad}" />
+                        <pixel:PixelText Text="KILLCAM" Scale="2" Tight="True" Colour="{DynamicResource PxBad}" />
                         <pixel:PixelText Text="{Binding Name}" Scale="4" Tight="True" Margin="0,6,0,0"
-                                         Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
+                                         Colour="{DynamicResource PxText}" Shadow="{DynamicResource PxShadow}" />
                         <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                            <pixel:PixelText Text="{Binding FellToText}" Scale="2" Tight="True" Colour="{StaticResource PxTextDim}" />
-                            <pixel:PixelText Text="·" Scale="2" Tight="True" Margin="6,0" Colour="{StaticResource PxTextDim}" />
-                            <pixel:PixelText Text="{Binding DiedText}" Scale="2" Tight="True" Colour="{StaticResource PxTextDim}" />
+                            <pixel:PixelText Text="{Binding FellToText}" Scale="2" Tight="True" Colour="{DynamicResource PxTextDim}" />
+                            <pixel:PixelText Text="·" Scale="2" Tight="True" Margin="6,0" Colour="{DynamicResource PxTextDim}" />
+                            <pixel:PixelText Text="{Binding DiedText}" Scale="2" Tight="True" Colour="{DynamicResource PxTextDim}" />
                         </StackPanel>
                     </StackPanel>
                 </DockPanel>
 
                 <pixel:PixelText DockPanel.Dock="Bottom" Margin="0,12,0,0" HorizontalAlignment="Center" Scale="2" Tight="True"
-                                 Colour="{StaticResource PxTextFaint}"
+                                 Colour="{DynamicResource PxTextFaint}"
                                  Text="Espacio: pausa · ← →: fotograma a fotograma · Esc: cerrar" />
 
                 <views:KillcamPlayer x:Name="TheaterPlayer" Source="{Binding TheaterKillcamPath}" />

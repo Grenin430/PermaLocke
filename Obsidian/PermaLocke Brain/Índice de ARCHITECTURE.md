@@ -221,6 +221,7 @@ generado: 2026-09-24
 - L12731 · 212 · 1.0.4.8: equipo en el panel del cap, casilla para quitarlo
 - L12739 · 213 · 1.0.4.9: PS del equipo del panel en tiempo real en combate
 - L12746 · 214 · 1.0.5: fantasma nuevo, caído del banquillo a 0 PS en combate, PS del panel con retraso
+- L12760 · 215 · Diseños de la app: cinco marcos elegibles en vivo (sin publicar)
 
 Subsecciones §176: bis (visor), ter (todas las pantallas, fuera ESTADÍSTICAS), quater (EV/MOVIMIENTOS sin bolsa, diálogos).
 

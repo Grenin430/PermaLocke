@@ -1,0 +1,322 @@
+<!--
+    LAS PIEZAS DE LOS DISEÑOS NUEVOS (2026-10-01): el botón DISEÑO de la barra, las pestañas de la mochila, las páginas
+    de un grupo, el muelle, las teclas de la Pokédex y las baldosas del menú de inicio. Todas leen sus colores por
+    DynamicResource, así que cambian al cambiar de diseño sin cerrar la ventana.
+-->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:views="clr-namespace:PermaLocke.App.Views"
+                    xmlns:pixel="clr-namespace:PermaLocke.App.Views.Pixel"
+                    xmlns:shells="clr-namespace:PermaLocke.App.Shells"
+                    xmlns:conv="clr-namespace:PermaLocke.App.Converters">
+
+    <conv:SectionCaptionConverter x:Key="SectionCaption" />
+
+    <!-- ==================================================================== DISEÑO (barra de la ventana) -->
+    <Style x:Key="PxDesignButton" TargetType="Button">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Height" Value="27" />
+        <Setter Property="Margin" Value="0,0,8,0" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid x:Name="Body" Background="Transparent">
+                        <views:PixelPanel x:Name="Plate" Fill="{DynamicResource PxFaceLift}" HasShadow="False" />
+                        <StackPanel Orientation="Horizontal" Margin="9,2,11,3" VerticalAlignment="Center">
+                            <pixel:PixelIcon Icon="IconPalette" Scale="1" VerticalAlignment="Center" Margin="0,0,7,0" />
+                            <pixel:PixelText x:Name="Label" Text="DISEÑO" Scale="2" Colour="{DynamicResource PxTextDim}"
+                                             VerticalAlignment="Center" />
+                        </StackPanel>
+                        <views:PixelCursor x:Name="Focus" Margin="-2" Visibility="Collapsed" Colour="{DynamicResource PxCursor}" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Plate" Property="Fill" Value="{DynamicResource PxAccentDeep}" />
+                            <Setter TargetName="Label" Property="Colour" Value="{DynamicResource PxText}" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Focus" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Body" Property="Margin" Value="0,2,0,-2" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ==================================================================== PESTAÑAS DE MOCHILA (ESMERALDA)
+         Una fila de pestañas: la elegida sube, se llena del color del diseño y lleva su letra oscura; las demás se quedan
+         bajas. Con poco sitio (shells:ShellSupport.Compact) las que no están elegidas pierden el nombre y dejan el icono. -->
+    <Style x:Key="PxPocketTab" TargetType="ListBoxItem">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="AutomationProperties.Name" Value="{Binding Title}" />
+        <Setter Property="ToolTip" Value="{Binding Title}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                    <Grid x:Name="Root" Margin="0,8,6,0" Background="Transparent">
+                        <views:PixelPanel x:Name="Plate" Fill="{DynamicResource PxFaceLift}" HasShadow="False" />
+                        <StackPanel Orientation="Horizontal" Margin="11,6,13,11">
+                            <pixel:PixelIcon x:Name="Glyph" Icon="{Binding IconKey}" Scale="2" Margin="0,0,9,0"
+                                             VerticalAlignment="Center" Dim="True" Bob="{TemplateBinding IsSelected}" />
+                            <pixel:PixelText x:Name="Label" Text="{Binding Title}" Scale="2" Tight="True"
+                                             Colour="{DynamicResource PxTextDim}" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <views:PixelCursor x:Name="Focus" Margin="-2" Visibility="Collapsed" Colour="{DynamicResource PxCursor}" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Plate" Property="Fill" Value="{DynamicResource PxFaceHigh}" />
+                            <Setter TargetName="Label" Property="Colour" Value="{DynamicResource PxText}" />
+                            <Setter TargetName="Glyph" Property="Dim" Value="False" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Focus" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="shells:ShellSupport.Compact" Value="True" />
+                                <Condition Property="IsSelected" Value="False" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Label" Property="Visibility" Value="Collapsed" />
+                            <Setter TargetName="Glyph" Property="Margin" Value="0" />
+                        </MultiTrigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Root" Property="Margin" Value="0,0,6,0" />
+                            <Setter TargetName="Plate" Property="Fill" Value="{DynamicResource PxAccent}" />
+                            <Setter TargetName="Label" Property="Colour" Value="{DynamicResource PxOnAccent}" />
+                            <Setter TargetName="Glyph" Property="Dim" Value="False" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ==================================================================== PÁGINAS DE UN GRUPO
+         Texto con una raya debajo en el color del diseño para la página en pantalla. -->
+    <Style x:Key="PxSubTab" TargetType="ListBoxItem">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                    <Grid x:Name="Root" Margin="0,0,6,0" Background="Transparent">
+                        <StackPanel Margin="9,4,9,0">
+                            <pixel:PixelText x:Name="Label" Text="{Binding Title}" Scale="2" Tight="True"
+                                             Colour="{DynamicResource PxTextDim}" />
+                            <Border x:Name="Underline" Height="3" Margin="0,5,0,0" Background="Transparent" />
+                        </StackPanel>
+                        <views:PixelCursor x:Name="Focus" Margin="-2" Visibility="Collapsed" Colour="{DynamicResource PxCursor}" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Label" Property="Colour" Value="{DynamicResource PxText}" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Focus" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Label" Property="Colour" Value="{DynamicResource PxText}" />
+                            <Setter TargetName="Underline" Property="Background" Value="{DynamicResource PxAccentBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ==================================================================== EL MUELLE (ULTRAUMBRAL)
+         Una tecla por sección, solo con el icono; la elegida se ensancha y enseña su nombre. -->
+    <Style x:Key="PxDockItem" TargetType="ListBoxItem">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="AutomationProperties.Name" Value="{Binding Title}" />
+        <Setter Property="ToolTip" Value="{Binding Title}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                    <Grid x:Name="Root" Margin="4,0" Background="Transparent">
+                        <views:PixelPanel x:Name="Plate" Fill="{DynamicResource PxFace}" HasShadow="False" />
+                        <StackPanel Orientation="Horizontal" Margin="12,8,12,12" VerticalAlignment="Center">
+                            <pixel:PixelIcon x:Name="Glyph" Icon="{Binding IconKey}" Scale="2"
+                                             VerticalAlignment="Center" Dim="True" Bob="{TemplateBinding IsSelected}" />
+                            <pixel:PixelText x:Name="Label" Text="{Binding Title}" Scale="2" Tight="True" Margin="10,0,0,0"
+                                             Colour="{DynamicResource PxText}" VerticalAlignment="Center" Visibility="Collapsed" />
+                        </StackPanel>
+                        <views:PixelCursor x:Name="Focus" Margin="-2" Visibility="Collapsed" Colour="{DynamicResource PxCursor}" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Plate" Property="Fill" Value="{DynamicResource PxFaceHigh}" />
+                            <Setter TargetName="Glyph" Property="Dim" Value="False" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Focus" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Plate" Property="Fill" Value="{DynamicResource PxAccentDeep}" />
+                            <Setter TargetName="Label" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="Glyph" Property="Dim" Value="False" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Las páginas de un grupo en el muelle: pastillas pequeñas. -->
+    <Style x:Key="PxPill" TargetType="ListBoxItem">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                    <Grid x:Name="Root" Margin="4,0" Background="Transparent">
+                        <views:PixelPanel x:Name="Plate" Fill="{DynamicResource PxFace}" HasShadow="False" />
+                        <pixel:PixelText x:Name="Label" Text="{Binding Title}" Scale="2" Tight="True" Margin="13,6,13,10"
+                                         Colour="{DynamicResource PxTextDim}" />
+                        <views:PixelCursor x:Name="Focus" Margin="-2" Visibility="Collapsed" Colour="{DynamicResource PxCursor}" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Label" Property="Colour" Value="{DynamicResource PxText}" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Focus" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Plate" Property="Fill" Value="{DynamicResource PxAccent}" />
+                            <Setter TargetName="Label" Property="Colour" Value="{DynamicResource PxOnAccent}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ==================================================================== TECLAS DE ICONO (ROTOM DEX)
+         Una tecla cuadrada por sección en dos columnas; la elegida se enciende. El nombre va en el tooltip y en la
+         pantalla; con el lector de pantalla, en AutomationProperties. -->
+    <Style x:Key="PxKeyItem" TargetType="ListBoxItem">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="AutomationProperties.Name" Value="{Binding Title}" />
+        <Setter Property="ToolTip" Value="{Binding Title}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                    <Grid x:Name="Root" Width="56" Height="52" Margin="3" Background="Transparent">
+                        <views:PixelPanel x:Name="Plate" Fill="{DynamicResource PxFace}" />
+                        <pixel:PixelIcon x:Name="Glyph" Icon="{Binding IconKey}" Scale="2" Dim="True" Margin="0,0,3,5"
+                                         HorizontalAlignment="Center" VerticalAlignment="Center" Bob="{TemplateBinding IsSelected}" />
+                        <views:PixelCursor x:Name="Focus" Margin="-3" Visibility="Collapsed" Colour="{DynamicResource PxCursor}" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Plate" Property="Fill" Value="{DynamicResource PxFaceLift}" />
+                            <Setter TargetName="Glyph" Property="Dim" Value="False" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Focus" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Plate" Property="Fill" Value="{DynamicResource PxAccent}" />
+                            <Setter TargetName="Glyph" Property="Dim" Value="False" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Las páginas de un grupo como teclas blandas bajo la pantalla. -->
+    <Style x:Key="PxSoftKey" TargetType="ListBoxItem">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                    <Grid x:Name="Root" Margin="0,0,8,0" Background="Transparent">
+                        <views:PixelPanel x:Name="Plate" Fill="{DynamicResource PxFace}" />
+                        <StackPanel Orientation="Horizontal" Margin="13,7,17,12">
+                            <pixel:PixelText x:Name="Mark" Text="▶" Scale="2" Tight="True" Margin="0,0,7,0"
+                                             Colour="{DynamicResource PxAccentInk}" Visibility="Hidden" />
+                            <pixel:PixelText x:Name="Label" Text="{Binding Title}" Scale="2" Tight="True"
+                                             Colour="{DynamicResource PxTextDim}" />
+                        </StackPanel>
+                        <views:PixelCursor x:Name="Focus" Margin="-3" Visibility="Collapsed" Colour="{DynamicResource PxCursor}" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Label" Property="Colour" Value="{DynamicResource PxText}" />
+                            <Setter TargetName="Plate" Property="Fill" Value="{DynamicResource PxFaceLift}" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Focus" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Mark" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="Label" Property="Colour" Value="{DynamicResource PxText}" />
+                            <Setter TargetName="Plate" Property="Fill" Value="{DynamicResource PxFaceLift}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ==================================================================== BALDOSAS DEL MENÚ (GAME BOY)
+         Una baldosa por sección: el icono grande, el nombre y una línea que dice para qué sirve o qué páginas tiene.
+         La del sitio donde estás lleva la flecha. -->
+    <Style x:Key="PxTile" TargetType="ListBoxItem">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="AutomationProperties.Name" Value="{Binding Title}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                    <Grid x:Name="Root" Margin="0,0,10,8" MinHeight="100" Background="Transparent">
+                        <views:PixelPanel x:Name="Plate" Fill="{DynamicResource PxFace}" />
+                        <pixel:PixelText x:Name="Arrow" Text="▶" Scale="2" Tight="True" Margin="8,0,0,6" HorizontalAlignment="Left"
+                                         Colour="{DynamicResource PxCursor}" Visibility="Hidden" VerticalAlignment="Center" />
+                        <DockPanel Margin="26,8,14,14">
+                            <pixel:PixelIcon DockPanel.Dock="Left" Icon="{Binding IconKey}" Scale="3" VerticalAlignment="Center"
+                                             Margin="0,0,14,0" Bob="{TemplateBinding IsSelected}" />
+                            <StackPanel VerticalAlignment="Center">
+                                <pixel:PixelText Text="{Binding Title}" Scale="3" Tight="True" Trim="True"
+                                                 Colour="{DynamicResource PxText}" Shadow="{DynamicResource PxShadow}" />
+                                <pixel:PixelText Text="{Binding Converter={StaticResource SectionCaption}}" Scale="2" Wrap="True"
+                                                 Margin="0,8,0,0" Colour="{DynamicResource PxTextDim}" />
+                            </StackPanel>
+                        </DockPanel>
+                        <views:PixelCursor x:Name="Focus" Margin="-3" Visibility="Collapsed" Colour="{DynamicResource PxCursor}" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Plate" Property="Fill" Value="{DynamicResource PxFaceLift}" />
+                            <Setter TargetName="Arrow" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Focus" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="Arrow" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Plate" Property="Fill" Value="{DynamicResource PxAccentDeep}" />
+                            <Setter TargetName="Arrow" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Un botón de «volver» (◀ MENÚ) con la forma de la placa de siempre. -->
+    <Style x:Key="PxBackButton" TargetType="Button" BasedOn="{StaticResource PxSubtleButton}">
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+    </Style>
+</ResourceDictionary>

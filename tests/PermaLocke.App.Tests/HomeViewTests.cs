@@ -22,7 +22,7 @@ public sealed class HomeViewTests
             try
             {
                 app = new Application();
-                foreach (var name in new[] { "Palette", "Icons", "Controls", "Pixel" })
+                foreach (var name in new[] { "Palette", "Icons", "Controls", "Pixel", "Shells" })
                     app.Resources.MergedDictionaries.Add(new ResourceDictionary
                     {
                         Source = new Uri($"/PermaLocke.App;component/Themes/{name}.xaml", UriKind.Relative)
@@ -85,6 +85,35 @@ public sealed class HomeViewTests
                     Details = new[] { new { Label = "Primer encuentro", Value = "Ruta 1 sin gastar" } },
                     ErrorMessage = "", RegisterLabel = "REGISTRAR",
                 }));
+
+                // Los cinco diseños (2026-10-01): cada marco se construye y se mide con los recursos de cada uno, y cambiar de
+                // diseño cambia los colores que leen los estilos. Un recurso que falta o un estilo mal escrito lanza aquí.
+                foreach (var theme in PermaLocke.App.Views.Pixel.PixelTheme.All)
+                {
+                    PermaLocke.App.Views.Pixel.PixelTheme.Apply(theme.Key, app.Resources);
+                    Assert.Equal(theme["PxAccent"], (Color)app.Resources["PxAccent"]);
+                    Assert.Equal(theme.Key, PermaLocke.App.Views.Pixel.PixelTheme.Current.Key);
+
+                    UserControl[] shells =
+                    [
+                        new PermaLocke.App.Shells.RailShell(), new PermaLocke.App.Shells.TabsShell(), new PermaLocke.App.Shells.MenuShell(),
+                        new PermaLocke.App.Shells.DockShell(), new PermaLocke.App.Shells.KeysShell(),
+                    ];
+                    foreach (var shell in shells)
+                    {
+                        shell.Measure(new Size(1360, 860));
+                        shell.Arrange(new Rect(0, 0, 1360, 860));
+                        shell.UpdateLayout();
+                    }
+
+                    var themed = new PokemonViewerView { DataContext = new { HasSelection = false, Summary = "resumen" } };
+                    themed.Measure(new Size(1300, 860));
+                    themed.Arrange(new Rect(0, 0, 1300, 860));
+                    themed.UpdateLayout();
+                    Assert.NotEmpty(Descendants(themed).OfType<PermaLocke.App.Views.Pixel.PixelWindow>());
+                }
+
+                PermaLocke.App.Views.Pixel.PixelTheme.Apply("clasico", app.Resources);
             }
             catch (Exception ex) { failure = ex; }
             finally { app?.Shutdown(); }

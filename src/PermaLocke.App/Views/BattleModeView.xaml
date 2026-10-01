@@ -11,7 +11,7 @@
         <Style x:Key="StepNumber" TargetType="pixel:PixelText">
             <Setter Property="Scale" Value="2" />
             <Setter Property="Tight" Value="True" />
-            <Setter Property="Colour" Value="{StaticResource PxInk}" />
+            <Setter Property="Colour" Value="{DynamicResource PxInk}" />
             <Setter Property="HorizontalAlignment" Value="Center" />
             <Setter Property="VerticalAlignment" Value="Center" />
             <Setter Property="Margin" Value="0,0,0,2" />
@@ -20,7 +20,7 @@
         <Style x:Key="StepText" TargetType="pixel:PixelText">
             <Setter Property="Scale" Value="2" />
             <Setter Property="Wrap" Value="True" />
-            <Setter Property="Colour" Value="{StaticResource PxText}" />
+            <Setter Property="Colour" Value="{DynamicResource PxText}" />
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
     </UserControl.Resources>
@@ -40,9 +40,9 @@
                     <Style TargetType="pixel:PixelWindow" BasedOn="{StaticResource {x:Type pixel:PixelWindow}}">
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding IsInBattle}" Value="True">
-                                <Setter Property="Fill" Value="{StaticResource PxWarnDeep}" />
+                                <Setter Property="Fill" Value="{DynamicResource PxWarnDeep}" />
                                 <Setter Property="HeaderFill" Value="#FF5C4012" />
-                                <Setter Property="HeaderAccent" Value="{StaticResource PxWarn}" />
+                                <Setter Property="HeaderAccent" Value="{DynamicResource PxWarn}" />
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
@@ -50,20 +50,20 @@
 
                 <pixel:PixelWindow.HeaderContent>
                     <Grid Visibility="{Binding IsInBattle, Converter={StaticResource BoolToVisibility}}">
-                        <views:PixelPanel Fill="{StaticResource PxWarn}" HasShadow="False" />
+                        <views:PixelPanel Fill="{DynamicResource PxWarn}" HasShadow="False" />
                         <pixel:PixelText Text="MUNDO GUARDADO" Scale="2" Tight="True" Margin="9,5,10,6"
-                                         Colour="{StaticResource PxInk}" />
+                                         Colour="{DynamicResource PxInk}" />
                     </Grid>
                 </pixel:PixelWindow.HeaderContent>
 
                 <StackPanel>
-                    <pixel:PixelText Text="{Binding Headline}" Scale="3" Wrap="True" Shadow="{StaticResource PxShadow}">
+                    <pixel:PixelText Text="{Binding Headline}" Scale="3" Wrap="True" Shadow="{DynamicResource PxShadow}">
                         <pixel:PixelText.Style>
                             <Style TargetType="pixel:PixelText">
-                                <Setter Property="Colour" Value="{StaticResource PxText}" />
+                                <Setter Property="Colour" Value="{DynamicResource PxText}" />
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding IsInBattle}" Value="True">
-                                        <Setter Property="Colour" Value="{StaticResource PxWarn}" />
+                                        <Setter Property="Colour" Value="{DynamicResource PxWarn}" />
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
@@ -71,7 +71,7 @@
                     </pixel:PixelText>
 
                     <pixel:PixelText Text="{Binding Explanation}" Scale="2" Wrap="True" Margin="0,10,0,0"
-                                     Colour="{StaticResource PxTextDim}" />
+                                     Colour="{DynamicResource PxTextDim}" />
 
                     <pixel:PixelRule Margin="0,16,0,14" />
 
@@ -85,7 +85,7 @@
                     </StackPanel>
 
                     <pixel:PixelText Text="{Binding Status}" Scale="2" Wrap="True" Margin="0,14,0,0"
-                                     Colour="{StaticResource PxText}" />
+                                     Colour="{DynamicResource PxText}" />
                 </StackPanel>
             </pixel:PixelWindow>
 
@@ -104,28 +104,28 @@
                     </Grid.RowDefinitions>
 
                     <Grid Grid.Row="0" Width="33" Height="33" HorizontalAlignment="Left" Margin="0,0,0,10">
-                        <views:PixelPanel Fill="{StaticResource PxGold}" HasShadow="False" />
+                        <views:PixelPanel Fill="{DynamicResource PxGold}" HasShadow="False" />
                         <pixel:PixelText Text="1" Style="{StaticResource StepNumber}" />
                     </Grid>
                     <pixel:PixelText Grid.Row="0" Grid.Column="1" Style="{StaticResource StepText}" Margin="0,0,0,10"
                                      Text="Guarda dentro del juego y cierra Azahar." />
 
                     <Grid Grid.Row="1" Width="33" Height="33" HorizontalAlignment="Left" Margin="0,0,0,10">
-                        <views:PixelPanel Fill="{StaticResource PxGold}" HasShadow="False" />
+                        <views:PixelPanel Fill="{DynamicResource PxGold}" HasShadow="False" />
                         <pixel:PixelText Text="2" Style="{StaticResource StepNumber}" />
                     </Grid>
                     <pixel:PixelText Grid.Row="1" Grid.Column="1" Style="{StaticResource StepText}" Margin="0,0,0,10"
                                      Text="Pulsa PREPARAR PARA COMBATIR. Tenéis que hacerlo todos." />
 
                     <Grid Grid.Row="2" Width="33" Height="33" HorizontalAlignment="Left" Margin="0,0,0,10">
-                        <views:PixelPanel Fill="{StaticResource PxGold}" HasShadow="False" />
+                        <views:PixelPanel Fill="{DynamicResource PxGold}" HasShadow="False" />
                         <pixel:PixelText Text="3" Style="{StaticResource StepNumber}" />
                     </Grid>
                     <pixel:PixelText Grid.Row="2" Grid.Column="1" Style="{StaticResource StepText}" Margin="0,0,0,10"
                                      Text="Abrid Azahar, conectaos en Multijugador y en el juego id a X → Plaza Festival → Combate → Combate Link." />
 
                     <Grid Grid.Row="3" Width="33" Height="33" HorizontalAlignment="Left">
-                        <views:PixelPanel Fill="{StaticResource PxGold}" HasShadow="False" />
+                        <views:PixelPanel Fill="{DynamicResource PxGold}" HasShadow="False" />
                         <pixel:PixelText Text="4" Style="{StaticResource StepNumber}" />
                     </Grid>
                     <pixel:PixelText Grid.Row="3" Grid.Column="1" Style="{StaticResource StepText}"

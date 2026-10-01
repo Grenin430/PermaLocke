@@ -161,6 +161,7 @@ public sealed class AlolaWindow : ContentControl
 
         Islands(top, seconds);
 
+        Pixel.PixelTheme.Current.MapPixels(_pixels);
         _bitmap.WritePixels(new Int32Rect(0, 0, Columns, Rows), _pixels, Columns * 4, 0);
     }
 

@@ -37,6 +37,7 @@
     <Compile Include="..\PermaLocke.App\Views\Pixel\*.cs" Link="Pixel\%(Filename)%(Extension)" />
     <Compile Include="..\PermaLocke.App\Views\PixelPanel.cs;..\PermaLocke.App\Views\PixelBar.cs;..\PermaLocke.App\Views\ToastPixels.cs;..\PermaLocke.App\Services\ToastKind.cs" Link="Pixel\%(Filename)%(Extension)" />
     <Page Include="..\PermaLocke.App\Themes\Pixel.xaml" Link="Themes\Pixel.xaml" />
+    <Page Include="..\PermaLocke.App\Themes\PixelColours.xaml" Link="Themes\PixelColours.xaml" />
   </ItemGroup>
 
 </Project>

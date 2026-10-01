@@ -1,0 +1,54 @@
+<!--
+    LOS COLORES DEL PIXEL, aparte de los estilos (2026-10-01): así un tema (Views/Pixel/PixelTheme.cs) los cambia antes de
+    que se construya ningún estilo de Pixel.xaml, que los busca aquí la primera vez que se usa. Si vivieran en el mismo
+    fichero que los estilos, estos se quedarían con los de siempre.
+-->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Color x:Key="PxInk">#FF09070E</Color>
+    <Color x:Key="PxShadow">#FF05040A</Color>
+    <Color x:Key="PxSidebar">#FF0E0B18</Color>
+    <Color x:Key="PxBase">#FF120E20</Color>
+    <Color x:Key="PxFace">#FF18132C</Color>
+    <Color x:Key="PxFaceHigh">#FF211A3A</Color>
+    <Color x:Key="PxFaceLift">#FF2C2349</Color>
+    <Color x:Key="PxWell">#FF0C0916</Color>
+    <Color x:Key="PxAccent">#FFB07BF0</Color>
+    <Color x:Key="PxAccentLight">#FFD2ADFF</Color>
+    <Color x:Key="PxAccentDeep">#FF3A2766</Color>
+    <Color x:Key="PxText">#FFEEEAF8</Color>
+    <Color x:Key="PxTextDim">#FF9A94B4</Color>
+    <Color x:Key="PxTextFaint">#FF625C80</Color>
+    <Color x:Key="PxGood">#FF7CF096</Color>
+    <Color x:Key="PxGoodDeep">#FF1C4428</Color>
+    <Color x:Key="PxBad">#FFFF6A55</Color>
+    <Color x:Key="PxBadDeep">#FF4A1818</Color>
+    <Color x:Key="PxWarn">#FFFFC04A</Color>
+    <Color x:Key="PxWarnDeep">#FF4A3310</Color>
+    <Color x:Key="PxGold">#FFFFD24A</Color>
+    <!-- Los que añadieron los temas (2026-10-01, PixelTheme): lo que antes iba escrito a mano en las plantillas. -->
+    <Color x:Key="PxWellFocus">#FF120D22</Color>
+    <Color x:Key="PxOnAccent">#FF09070E</Color>
+    <Color x:Key="PxBadHover">#FF6A2222</Color>
+    <Color x:Key="PxGlass">#C8120E20</Color>
+    <Color x:Key="PxDim">#FF2A2246</Color>
+    <Color x:Key="PxRim">#FF2E254C</Color>
+    <Color x:Key="PxRuleDark">#FF05040A</Color>
+    <Color x:Key="PxRuleLight">#FF2A2246</Color>
+    <Color x:Key="PxCursor">#FFEEEAF8</Color>
+    <!-- El color del acento cuando es TEXTO sobre una cara: en los oscuros es el mismo, en un diseño claro es más oscuro para leerse. -->
+    <Color x:Key="PxAccentInk">#FFB07BF0</Color>
+    <Color x:Key="PxAccentInkLight">#FFD2ADFF</Color>
+    <Color x:Key="PxRunning">#FF2E6B45</Color>
+    <Color x:Key="PxRunningText">#FFE4FFEC</Color>
+    <Color x:Key="PxRunningGlyph">#FF8EF0AE</Color>
+
+    <SolidColorBrush x:Key="PxBaseBrush" Color="{StaticResource PxBase}" />
+    <SolidColorBrush x:Key="PxSidebarBrush" Color="{StaticResource PxSidebar}" />
+    <SolidColorBrush x:Key="PxInkBrush" Color="{StaticResource PxInk}" />
+    <SolidColorBrush x:Key="PxAccentDeepBrush" Color="{StaticResource PxAccentDeep}" />
+    <SolidColorBrush x:Key="PxAccentBrush" Color="{StaticResource PxAccent}" />
+    <SolidColorBrush x:Key="PxTextBrush" Color="{StaticResource PxText}" />
+    <SolidColorBrush x:Key="PxAccentLightBrush" Color="{StaticResource PxAccentLight}" />
+    <SolidColorBrush x:Key="PxWellBrush" Color="{StaticResource PxWell}" />
+</ResourceDictionary>

@@ -1,0 +1,124 @@
+<shells:ShellBase x:Class="PermaLocke.App.Shells.KeysShell"
+                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                  xmlns:shells="clr-namespace:PermaLocke.App.Shells"
+                  xmlns:views="clr-namespace:PermaLocke.App.Views"
+                  xmlns:pixel="clr-namespace:PermaLocke.App.Views.Pixel">
+
+    <!-- DISEÑO «LA POKÉDEX» (ROTOM DEX). Un aparato: el cuerpo, con la lente arriba y una columna de teclas de icono, y una
+         pantalla grande a su lado. Encima de la pantalla, la barra con dónde estás y lo de siempre; debajo, las teclas de
+         página del grupo y un rótulo luminoso donde el juego dice lo que necesita. Los nombres de las teclas salen al
+         pasar por encima y en la barra de la pantalla: el icono manda. -->
+    <shells:ShellBase.Resources>
+        <Style TargetType="ScrollBar" BasedOn="{StaticResource PxScrollBar}" />
+    </shells:ShellBase.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="142" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="40" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- El cuerpo rojo, y detrás de la pantalla la rejilla del altavoz -->
+        <views:PixelPanel Grid.ColumnSpan="2" Grid.RowSpan="2" Fill="{DynamicResource PxSidebar}" HasShadow="False" />
+        <pixel:PixelBackdrop Grid.Column="1" Grid.Row="1" Margin="0,0,6,6" Base="{DynamicResource PxBase}" />
+
+        <shells:ShellCaption Grid.ColumnSpan="2" Grid.Row="0" />
+
+        <!-- La lente, las teclas y la hora de Alola -->
+        <DockPanel Grid.Column="0" Grid.Row="1" Margin="8,4,8,12">
+            <StackPanel DockPanel.Dock="Bottom" HorizontalAlignment="Center" DataContext="{Binding Sky}"
+                        Visibility="{Binding IsKnown, Converter={StaticResource BoolToVisibility}}">
+                <pixel:PixelText Text="ALOLA" Scale="2" Tight="True" HorizontalAlignment="Center"
+                                 Colour="{DynamicResource PxText}" />
+                <pixel:PixelText Text="{Binding TimeText}" Scale="3" Tight="True" HorizontalAlignment="Center" Margin="0,5,0,0"
+                                 Colour="{DynamicResource PxText}" Shadow="{DynamicResource PxShadow}" />
+                <pixel:PixelText Text="{Binding PeriodText}" Scale="2" Tight="True" HorizontalAlignment="Center" Margin="0,5,0,0"
+                                 Colour="{DynamicResource PxText}" />
+            </StackPanel>
+
+            <StackPanel>
+                <Grid HorizontalAlignment="Center" Margin="0,0,0,10">
+                    <views:PixelPanel Fill="{DynamicResource PxInk}" HasShadow="False" />
+                    <pixel:PixelIcon Icon="IconGacha" Scale="4" Margin="12,8,12,16" Bob="True" />
+                </Grid>
+                <ListBox x:Name="Keys" Background="Transparent" BorderThickness="0" HorizontalAlignment="Center"
+                         ItemsSource="{Binding Sections}" SelectedItem="{Binding SelectedSection, Mode=TwoWay}"
+                         ItemContainerStyle="{StaticResource PxKeyItem}" shells:ShellSupport.ReleaseCapture="True"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                         AutomationProperties.Name="Secciones">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="2" />
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                </ListBox>
+            </StackPanel>
+        </DockPanel>
+
+        <!-- La pantalla -->
+        <Grid Grid.Column="1" Grid.Row="1" Margin="0,0,14,14">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- La barra de la pantalla: dónde estás y lo de siempre -->
+            <Grid Grid.Row="0" Margin="0,2,0,10">
+                <views:PixelPanel Fill="{DynamicResource PxFaceHigh}" />
+                <DockPanel Margin="14,8,16,16">
+                    <shells:PointsBadge DockPanel.Dock="Right" Compact="True" Margin="12,0,0,0" />
+                    <shells:HeaderActions DockPanel.Dock="Right" Compact="True" />
+                    <pixel:PixelIcon DockPanel.Dock="Left" Icon="{Binding SelectedSection.IconKey}" Scale="3" Bob="True"
+                                     VerticalAlignment="Center" Margin="0,0,12,0" />
+                    <pixel:PixelText Text="{Binding SelectedSection.HeaderTitle}" Scale="3" Tight="True" Trim="True"
+                                     Colour="{DynamicResource PxText}" Shadow="{DynamicResource PxShadow}" VerticalAlignment="Center" />
+                </DockPanel>
+            </Grid>
+
+            <!-- El marco de la pantalla y lo que hay dentro -->
+            <Grid Grid.Row="1">
+                <views:PixelPanel Fill="{DynamicResource PxWell}" />
+                <Grid Margin="16,14,16,20">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <shells:Banners ShowNeed="False" />
+                    <ContentControl x:Name="Section" Grid.Row="1" Content="{Binding SelectedSection}" />
+                </Grid>
+            </Grid>
+
+            <!-- Las teclas de página y el rótulo -->
+            <StackPanel Grid.Row="2" Margin="0,10,0,0">
+                <ListBox x:Name="SoftKeys" Background="Transparent" BorderThickness="0" HorizontalAlignment="Left" Margin="0,0,0,8"
+                         ItemsSource="{Binding SelectedSection.AsGroup.Pages}"
+                         SelectedItem="{Binding SelectedSection.AsGroup.SelectedPage, Mode=OneWay}"
+                         SelectionChanged="OnPageChosen" ItemContainerStyle="{StaticResource PxSoftKey}"
+                         shells:ShellSupport.ReleaseCapture="True" AutomationProperties.Name="Páginas">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                </ListBox>
+
+                <Grid MinHeight="42">
+                    <views:PixelPanel Fill="{DynamicResource PxWell}" IsSunken="True" HasShadow="False" />
+                    <DockPanel Margin="16,8,16,14">
+                        <pixel:PixelText DockPanel.Dock="Left" Text="▶" Scale="2" Tight="True" Margin="0,0,10,0"
+                                         Colour="{DynamicResource PxAccentInk}" VerticalAlignment="Center" />
+                        <shells:NeedLine Idle="Todo listo. Elige una tecla." VerticalAlignment="Center" />
+                    </DockPanel>
+                </Grid>
+            </StackPanel>
+        </Grid>
+
+        <shells:ShellOverlays Grid.Column="1" Grid.Row="1" Offset="0,56,26,0" />
+    </Grid>
+</shells:ShellBase>

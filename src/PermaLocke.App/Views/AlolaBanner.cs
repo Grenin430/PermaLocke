@@ -213,6 +213,7 @@ public sealed class AlolaBanner : ContentControl
         Water(middle, low, horizon, bodyX, bodyY <= horizon, isDay ? Lerp(SunLow, SunHigh, 0.5) : MoonLight, step);
         IslandsAt(top, horizon, night, step);
 
+        Pixel.PixelTheme.Current.MapPixels(_pixels);
         _bitmap.WritePixels(new Int32Rect(0, 0, _columns, _rows), _pixels, _columns * 4, 0);
     }
 

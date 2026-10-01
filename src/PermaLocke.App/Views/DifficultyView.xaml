@@ -14,18 +14,18 @@
         <StackPanel>
             <!-- LA CABECERA -->
             <Grid Margin="0,0,0,14">
-                <views:PixelPanel Fill="{StaticResource PxFace}" />
+                <views:PixelPanel Fill="{DynamicResource PxFace}" />
                 <StackPanel Margin="22,18,26,22">
-                    <pixel:PixelText Text="{Binding Heading}" Scale="4" Tight="True" Colour="{StaticResource PxGold}"
-                                     Shadow="{StaticResource PxShadow}" />
-                    <pixel:PixelText Text="{Binding Intro}" Scale="2" Wrap="True" Margin="0,12,0,0" Colour="{StaticResource PxTextDim}" />
+                    <pixel:PixelText Text="{Binding Heading}" Scale="4" Tight="True" Colour="{DynamicResource PxGold}"
+                                     Shadow="{DynamicResource PxShadow}" />
+                    <pixel:PixelText Text="{Binding Intro}" Scale="2" Wrap="True" Margin="0,12,0,0" Colour="{DynamicResource PxTextDim}" />
                     <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
-                        <Border Width="18" Height="10" VerticalAlignment="Center"><Border.Background><SolidColorBrush Color="{StaticResource PxTextFaint}" /></Border.Background></Border>
-                        <pixel:PixelText Text="CARTUCHO" Scale="2" Tight="True" Margin="8,0,22,0" Colour="{StaticResource PxTextFaint}" />
-                        <Border Width="18" Height="10" Background="{StaticResource PxAccentBrush}" VerticalAlignment="Center" />
-                        <pixel:PixelText Text="PERMALOCKE" Scale="2" Tight="True" Margin="8,0,0,0" Colour="{StaticResource PxAccentLight}" />
+                        <Border Width="18" Height="10" VerticalAlignment="Center"><Border.Background><SolidColorBrush Color="{DynamicResource PxTextFaint}" /></Border.Background></Border>
+                        <pixel:PixelText Text="CARTUCHO" Scale="2" Tight="True" Margin="8,0,22,0" Colour="{DynamicResource PxTextFaint}" />
+                        <Border Width="18" Height="10" Background="{DynamicResource PxAccentBrush}" VerticalAlignment="Center" />
+                        <pixel:PixelText Text="PERMALOCKE" Scale="2" Tight="True" Margin="8,0,0,0" Colour="{DynamicResource PxAccentInkLight}" />
                     </StackPanel>
-                    <pixel:PixelText Text="{Binding Status}" Scale="2" Wrap="True" Colour="{StaticResource PxWarn}" />
+                    <pixel:PixelText Text="{Binding Status}" Scale="2" Wrap="True" Colour="{DynamicResource PxWarn}" />
                 </StackPanel>
             </Grid>
 
@@ -39,32 +39,32 @@
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <Grid Margin="0,0,12,12">
-                            <views:PixelPanel Fill="{StaticResource PxFace}" />
+                            <views:PixelPanel Fill="{DynamicResource PxFace}" />
                             <StackPanel Margin="18,16,22,20">
                                 <DockPanel>
                                     <pixel:PixelIcon DockPanel.Dock="Left" Icon="{Binding Icon}" Scale="3" VerticalAlignment="Center" Margin="0,0,12,0" />
                                     <pixel:PixelText Text="{Binding Title}" Scale="3" Tight="True" VerticalAlignment="Center"
-                                                     Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
+                                                     Colour="{DynamicResource PxText}" Shadow="{DynamicResource PxShadow}" />
                                 </DockPanel>
 
                                 <!-- ANTES → AHORA en grande -->
                                 <Grid Margin="0,14,0,0">
-                                    <views:PixelPanel Fill="{StaticResource PxWell}" IsSunken="True" HasShadow="False" />
+                                    <views:PixelPanel Fill="{DynamicResource PxWell}" IsSunken="True" HasShadow="False" />
                                     <StackPanel Margin="14,12,14,14" HorizontalAlignment="Center">
                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                             <pixel:PixelText Text="{Binding Before}" Scale="3" Tight="True" VerticalAlignment="Center"
-                                                             Colour="{StaticResource PxTextFaint}" />
+                                                             Colour="{DynamicResource PxTextFaint}" />
                                             <pixel:PixelText Text=" &gt; " Scale="3" Tight="True" VerticalAlignment="Center"
-                                                             Colour="{StaticResource PxTextDim}" />
+                                                             Colour="{DynamicResource PxTextDim}" />
                                             <pixel:PixelText Text="{Binding After}" Scale="4" Tight="True" VerticalAlignment="Center"
-                                                             Colour="{StaticResource PxGood}" Shadow="{StaticResource PxShadow}" />
+                                                             Colour="{DynamicResource PxGood}" Shadow="{DynamicResource PxShadow}" />
                                         </StackPanel>
                                         <pixel:PixelText Text="{Binding Label}" Scale="2" Tight="True" HorizontalAlignment="Center"
-                                                         Margin="0,8,0,0" Colour="{StaticResource PxTextDim}" />
+                                                         Margin="0,8,0,0" Colour="{DynamicResource PxTextDim}" />
                                     </StackPanel>
                                 </Grid>
 
-                                <pixel:PixelText Text="{Binding Text}" Scale="2" Wrap="True" Margin="0,12,0,12" Colour="{StaticResource PxTextDim}" />
+                                <pixel:PixelText Text="{Binding Text}" Scale="2" Wrap="True" Margin="0,12,0,12" Colour="{DynamicResource PxTextDim}" />
 
                                 <!-- LA GRÁFICA: por tramo, la barra del cartucho y debajo la de PermaLocke -->
                                 <ItemsControl ItemsSource="{Binding Bars}">
@@ -77,25 +77,25 @@
                                                     <ColumnDefinition Width="52" />
                                                 </Grid.ColumnDefinitions>
                                                 <pixel:PixelText Text="{Binding Stretch}" Scale="2" Wrap="True" VerticalAlignment="Center"
-                                                                 Colour="{StaticResource PxTextFaint}" />
+                                                                 Colour="{DynamicResource PxTextFaint}" />
                                                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="6,0,8,0">
-                                                    <views:PixelBar Height="10" Value="{Binding Before}" Fill="{StaticResource PxTextFaint}"
-                                                                    Track="{StaticResource PxWell}" />
-                                                    <views:PixelBar Height="10" Value="{Binding After}" Fill="{StaticResource PxAccent}"
-                                                                    Track="{StaticResource PxWell}" Margin="0,3,0,0" />
+                                                    <views:PixelBar Height="10" Value="{Binding Before}" Fill="{DynamicResource PxTextFaint}"
+                                                                    Track="{DynamicResource PxWell}" />
+                                                    <views:PixelBar Height="10" Value="{Binding After}" Fill="{DynamicResource PxAccent}"
+                                                                    Track="{DynamicResource PxWell}" Margin="0,3,0,0" />
                                                 </StackPanel>
                                                 <StackPanel Grid.Column="2" VerticalAlignment="Center">
                                                     <pixel:PixelText Text="{Binding BeforeText}" Scale="2" Tight="True" HorizontalAlignment="Right"
-                                                                     Colour="{StaticResource PxTextFaint}" />
+                                                                     Colour="{DynamicResource PxTextFaint}" />
                                                     <pixel:PixelText Text="{Binding AfterText}" Scale="2" Tight="True" HorizontalAlignment="Right"
-                                                                     Margin="0,3,0,0" Colour="{StaticResource PxAccentLight}" />
+                                                                     Margin="0,3,0,0" Colour="{DynamicResource PxAccentInkLight}" />
                                                 </StackPanel>
                                             </Grid>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
                                 <pixel:PixelText Text="{Binding Unit}" Scale="2" Tight="True" HorizontalAlignment="Right"
-                                                 Colour="{StaticResource PxTextFaint}" />
+                                                 Colour="{DynamicResource PxTextFaint}" />
                             </StackPanel>
                         </Grid>
                     </DataTemplate>
@@ -104,12 +104,12 @@
 
             <!-- LA ESCALERA DE CAPS -->
             <Grid Margin="0,0,12,12">
-                <views:PixelPanel Fill="{StaticResource PxFace}" />
+                <views:PixelPanel Fill="{DynamicResource PxFace}" />
                 <StackPanel Margin="18,16,22,20">
-                    <pixel:PixelText Text="LA ESCALERA DE CAPS" Scale="3" Tight="True" Colour="{StaticResource PxText}"
-                                     Shadow="{StaticResource PxShadow}" />
+                    <pixel:PixelText Text="LA ESCALERA DE CAPS" Scale="3" Tight="True" Colour="{DynamicResource PxText}"
+                                     Shadow="{DynamicResource PxShadow}" />
                     <pixel:PixelText Text="El nivel máximo de tu equipo en cada tramo. Sube solo al superar cada prueba."
-                                     Scale="2" Wrap="True" Margin="0,8,0,12" Colour="{StaticResource PxTextDim}" />
+                                     Scale="2" Wrap="True" Margin="0,8,0,12" Colour="{DynamicResource PxTextDim}" />
                     <ItemsControl ItemsSource="{Binding Caps}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
@@ -120,11 +120,11 @@
                                         <ColumnDefinition Width="70" />
                                     </Grid.ColumnDefinitions>
                                     <pixel:PixelText Text="{Binding Name}" Scale="2" Tight="True" VerticalAlignment="Center"
-                                                     Colour="{StaticResource PxTextDim}" />
-                                    <views:PixelBar Grid.Column="1" Height="12" Value="{Binding Share}" Fill="{StaticResource PxGold}"
-                                                    Track="{StaticResource PxWell}" VerticalAlignment="Center" Margin="6,0,10,0" />
+                                                     Colour="{DynamicResource PxTextDim}" />
+                                    <views:PixelBar Grid.Column="1" Height="12" Value="{Binding Share}" Fill="{DynamicResource PxGold}"
+                                                    Track="{DynamicResource PxWell}" VerticalAlignment="Center" Margin="6,0,10,0" />
                                     <pixel:PixelText Grid.Column="2" Text="{Binding Level, StringFormat=NV. {0}}" Scale="2" Tight="True"
-                                                     VerticalAlignment="Center" HorizontalAlignment="Right" Colour="{StaticResource PxGold}" />
+                                                     VerticalAlignment="Center" HorizontalAlignment="Right" Colour="{DynamicResource PxGold}" />
                                 </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
@@ -142,11 +142,11 @@
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <Grid Margin="0,0,12,12">
-                            <views:PixelPanel Fill="{StaticResource PxFaceLift}" />
+                            <views:PixelPanel Fill="{DynamicResource PxFaceLift}" />
                             <StackPanel Margin="16,14,20,18">
-                                <pixel:PixelText Text="{Binding Title}" Scale="2" Tight="True" Colour="{StaticResource PxGold}"
-                                                 Shadow="{StaticResource PxShadow}" />
-                                <pixel:PixelText Text="{Binding Text}" Scale="2" Wrap="True" Margin="0,8,0,0" Colour="{StaticResource PxTextDim}" />
+                                <pixel:PixelText Text="{Binding Title}" Scale="2" Tight="True" Colour="{DynamicResource PxGold}"
+                                                 Shadow="{DynamicResource PxShadow}" />
+                                <pixel:PixelText Text="{Binding Text}" Scale="2" Wrap="True" Margin="0,8,0,0" Colour="{DynamicResource PxTextDim}" />
                             </StackPanel>
                         </Grid>
                     </DataTemplate>

@@ -165,6 +165,12 @@ public sealed partial class MainViewModel : ObservableObject
         Sections.Remove(_roulette);
     }
 
+    /// <summary>For the previews (<c>--capturas --ruleta</c>): shows the wheel as if the role played with it, to see ten sections fit.</summary>
+    internal void PreviewRoulette()
+    {
+        if (!Sections.Contains(_roulette)) Sections.Insert(Sections.IndexOf(_gacha) + 1, _roulette);
+    }
+
     public ObservableCollection<SectionViewModel> Sections { get; }
 
     /// <summary>JUGAR, whose small button also sits in every page's header (§125).</summary>

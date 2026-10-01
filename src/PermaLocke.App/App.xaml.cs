@@ -125,6 +125,14 @@ public partial class App : Application
         var paths = new AppPaths();
         paths.EnsureCreated();
 
+        // El diseño de la interfaz (2026-10-01): antes de que exista ninguna ventana. --tema <clave> lo prueba sin guardarlo.
+        var themeAt = Array.FindIndex(e.Args, arg => string.Equals(arg, "--tema", StringComparison.OrdinalIgnoreCase));
+        var themeKey = Services.ThemeStore.Start(paths.Config, themeAt >= 0 && themeAt + 1 < e.Args.Length ? e.Args[themeAt + 1] : null);
+        if (!string.Equals(themeKey, Views.Pixel.PixelTheme.Current.Key, StringComparison.Ordinal))
+        {
+            Views.Pixel.PixelTheme.Apply(themeKey, Resources);
+        }
+
         // EL TRASPASO desde la carpeta vieja, si el jugador lo pidió (§195): antes que la copia de la base de datos y que
         // nada la abra. Lo que hizo queda en Config/traspaso-hecho.json y se dice al entrar.
         if (!e.Args.Contains("--sin-juego", StringComparer.OrdinalIgnoreCase))
@@ -408,6 +416,14 @@ public partial class App : Application
         MainWindow = window;
         window.Show();
 
+        // --capturas <carpeta>: una foto de cada pantalla y se cierra (2026-10-01, para enseñar los temas). Solo tiene
+        // sentido con --sin-juego, que es la copia de mirar.
+        if (Array.FindIndex(e.Args, arg => string.Equals(arg, "--capturas", StringComparison.OrdinalIgnoreCase)) is var shotsAt
+            and >= 0 && shotsAt + 1 < e.Args.Length)
+        {
+            _ = CaptureScreensAsync(main, window, e.Args[shotsAt + 1], e.Args, logger);
+        }
+
         TellTransfer(paths, logger);
 
         // LA ACTUALIZACIÓN (§196): lo que dejó la anterior fuera, y si hay versión nueva se ofrece. Solo en una carpeta
@@ -624,6 +640,116 @@ public partial class App : Application
     /// file and the reading without either: the clip goes to <c>Logs/</c>, never next to a Pokémon of
     /// the run, because a replay attached to a death it does not show would be a false record.
     /// </remarks>
+    /// <summary>
+    /// A picture of each main screen as it is drawn, then closes (2026-10-01): what the previews of the looks are made of.
+    /// <c>--pantallas A,B</c> picks the screens; <c>--vivo</c> also changes look in place through every one of them, which
+    /// is how switching live is checked. The window is rendered by WPF itself, so nothing in front of it ends up in the picture.
+    /// </summary>
+    private static async Task CaptureScreensAsync(MainViewModel main, Window window, string folder, string[] args, ILogger logger)
+    {
+        void Snap(System.Windows.Media.Visual visual, double width, double height, string name)
+        {
+            var dpi = System.Windows.Media.VisualTreeHelper.GetDpi(visual);
+            var picture = new System.Windows.Media.Imaging.RenderTargetBitmap(
+                (int)Math.Round(width * dpi.DpiScaleX), (int)Math.Round(height * dpi.DpiScaleY),
+                96 * dpi.DpiScaleX, 96 * dpi.DpiScaleY, System.Windows.Media.PixelFormats.Pbgra32);
+            picture.Render(visual);
+
+            var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
+            encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(picture));
+            using var file = File.Create(Path.Combine(folder, name + ".png"));
+            encoder.Save(file);
+        }
+
+        static string Slug(string title) => new string(title.Normalize(System.Text.NormalizationForm.FormD)
+            .Where(ch => char.IsLetterOrDigit(ch) || ch == ' ').ToArray()).Replace(' ', '-').ToLowerInvariant();
+
+        try
+        {
+            Directory.CreateDirectory(folder);
+            await Task.Delay(4000);
+
+            if (args.Contains("--ruleta", StringComparer.OrdinalIgnoreCase)) main.PreviewRoulette();
+
+            var listAt = Array.FindIndex(args, arg => string.Equals(arg, "--pantallas", StringComparison.OrdinalIgnoreCase));
+            var titles = listAt >= 0 && listAt + 1 < args.Length
+                ? args[listAt + 1].Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                : ["INICIO", "HOME", "TIENDA", "VISOR POKÉMON", "LOGROS", "COMPETICIÓN", "CONFIGURACIÓN"];
+
+            foreach (var title in titles)
+            {
+                if (!main.Navigate(title)) continue;
+                await Task.Delay(3500);
+                window.UpdateLayout();
+                Snap(window, window.ActualWidth, window.ActualHeight, Slug(title));
+            }
+
+            // El menú de inicio del Game Boy, abierto.
+            if (((MainWindow)window).ShellSlot.Content is Shells.MenuShell menu)
+            {
+                menu.ShowMenu();
+                await Task.Delay(1200);
+                window.UpdateLayout();
+                Snap(window, window.ActualWidth, window.ActualHeight, "menu");
+                menu.HideMenu();
+            }
+
+            // La galería de diseños.
+            Shells.DesignGalleryWindow.Open(window);
+            await Task.Delay(1500);
+            if (Current.Windows.OfType<Shells.DesignGalleryWindow>().FirstOrDefault() is { } gallery)
+            {
+                gallery.UpdateLayout();
+                Snap(gallery, gallery.ActualWidth, gallery.ActualHeight, "galeria");
+                gallery.Close();
+            }
+
+            // El foco del teclado: la sección elegida y la página del grupo, con su marcador a la vista.
+            if (args.Contains("--foco", StringComparer.OrdinalIgnoreCase))
+            {
+                static IEnumerable<T> Find<T>(DependencyObject root) where T : DependencyObject
+                {
+                    for (var i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(root); i++)
+                    {
+                        var child = System.Windows.Media.VisualTreeHelper.GetChild(root, i);
+                        if (child is T match) yield return match;
+                        foreach (var deeper in Find<T>(child)) yield return deeper;
+                    }
+                }
+
+                main.Navigate("VISOR POKÉMON");
+                await Task.Delay(2500);
+                var items = Find<System.Windows.Controls.ListBoxItem>(((MainWindow)window).ShellSlot).Where(item => item.IsSelected).ToList();
+                for (var i = 0; i < items.Count; i++)
+                {
+                    items[i].Focus();
+                    await Task.Delay(700);
+                    window.UpdateLayout();
+                    Snap(window, window.ActualWidth, window.ActualHeight, $"foco-{i}");
+                }
+            }
+
+            // Cambiar de diseño en vivo por la misma pantalla: lo que ve el jugador al pulsar USAR.
+            if (args.Contains("--vivo", StringComparer.OrdinalIgnoreCase))
+            {
+                main.Navigate("TIENDA");
+                foreach (var theme in Views.Pixel.PixelTheme.All.Concat(Views.Pixel.PixelTheme.All.Take(1)).Select((t, i) => (t, i)))
+                {
+                    Views.Pixel.PixelTheme.Apply(theme.t.Key, Current.Resources);
+                    await Task.Delay(2500);
+                    window.UpdateLayout();
+                    Snap(window, window.ActualWidth, window.ActualHeight, $"vivo-{theme.i}-{theme.t.Key}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Fallaron las capturas de pantalla");
+        }
+
+        Current.Shutdown();
+    }
+
     private async Task RehearseKillcamAsync(AppPaths paths, ILogger logger)
     {
         var recorder = _services!.GetRequiredService<KillcamRecorder>();

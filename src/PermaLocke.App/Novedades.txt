@@ -1,3 +1,9 @@
+1.0.8
+DISEÑOS
+Ahora puedes cambiar el aspecto de toda la app. Pulsa el botón DISEÑO de la barra de arriba (o entra en CONFIGURACIÓN) y elige entre cinco: CLÁSICO (el de siempre), ESMERALDA, GAME BOY, ULTRAUMBRAL y ROTOM DEX.
+Cada uno tiene su propia forma de moverte por la app, no solo otros colores. El cambio es al momento, sigues en la misma pantalla y con tus datos, y se queda guardado para la próxima vez.
+Si no tocas nada, la app se ve igual que antes.
+
 1.0.7.9
 OBJETOS A LA MOCHILA
 Las megapiedras nuevas salen con su nombre.

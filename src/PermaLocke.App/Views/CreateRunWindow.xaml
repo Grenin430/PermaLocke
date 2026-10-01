@@ -8,14 +8,14 @@
         MinHeight="480" MinWidth="540"
         WindowStartupLocation="CenterOwner"
         UseLayoutRounding="True" SnapsToDevicePixels="True"
-        Background="{StaticResource PxBaseBrush}">
+        Background="{DynamicResource PxBaseBrush}">
 
     <Window.Resources>
         <Style TargetType="ScrollBar" BasedOn="{StaticResource PxScrollBar}" />
         <Style x:Key="Label" TargetType="pixel:PixelText">
             <Setter Property="Scale" Value="2" />
             <Setter Property="Tight" Value="True" />
-            <Setter Property="Colour" Value="{StaticResource PxTextFaint}" />
+            <Setter Property="Colour" Value="{DynamicResource PxTextFaint}" />
             <Setter Property="Margin" Value="2,0,0,7" />
         </Style>
     </Window.Resources>
@@ -23,7 +23,7 @@
     <!-- En píxeles, como el resto de la aplicación (§176). La fila de abajo va clavada y el formulario se desplaza,
          así que un mensaje largo de la ROM no puede empujar el botón fuera de la ventana. -->
     <Grid>
-        <pixel:PixelBackdrop Base="{StaticResource PxBase}" />
+        <pixel:PixelBackdrop Base="{DynamicResource PxBase}" />
 
         <Grid Margin="18,16,18,18">
             <Grid.RowDefinitions>
@@ -33,10 +33,10 @@
             </Grid.RowDefinitions>
 
             <StackPanel Grid.Row="0" Margin="2,0,0,14">
-                <pixel:PixelText Text="NUEVA RUN" Scale="4" Tight="True" Colour="{StaticResource PxText}"
-                                 Shadow="{StaticResource PxShadow}" />
+                <pixel:PixelText Text="NUEVA RUN" Scale="4" Tight="True" Colour="{DynamicResource PxText}"
+                                 Shadow="{DynamicResource PxShadow}" />
                 <pixel:PixelText Text="Elige tu rol y tu nombre." Scale="2" Tight="True" Margin="0,8,0,0"
-                                 Colour="{StaticResource PxTextDim}" />
+                                 Colour="{DynamicResource PxTextDim}" />
             </StackPanel>
 
             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
@@ -47,7 +47,7 @@
                     <pixel:PixelWindow Title="ROL" Icon="IconPeople">
                         <StackPanel>
                             <pixel:PixelText Text="El rol decide la dificultad." Scale="2" Wrap="True"
-                                             Colour="{StaticResource PxTextDim}" Margin="2,0,0,12" />
+                                             Colour="{DynamicResource PxTextDim}" Margin="2,0,0,12" />
 
                             <ItemsControl ItemsSource="{Binding Roles}">
                                 <ItemsControl.ItemTemplate>
@@ -58,18 +58,18 @@
                                                      Style="{StaticResource PxRadioCard}" Margin="0,0,0,8">
                                             <StackPanel>
                                                 <pixel:PixelText Text="{Binding Name}" Scale="3" Tight="True"
-                                                                 Colour="{StaticResource PxAccentLight}" Shadow="{StaticResource PxShadow}" />
+                                                                 Colour="{DynamicResource PxAccentInkLight}" Shadow="{DynamicResource PxShadow}" />
                                                 <pixel:PixelText Text="{Binding Description}" Scale="2" Wrap="True" Margin="0,7,0,0"
-                                                                 Colour="{StaticResource PxTextDim}" />
+                                                                 Colour="{DynamicResource PxTextDim}" />
                                                 <pixel:PixelText Text="{Binding Effects}" Scale="2" Wrap="True" Margin="0,6,0,0"
-                                                                 Colour="{StaticResource PxWarn}" />
+                                                                 Colour="{DynamicResource PxWarn}" />
                                             </StackPanel>
                                         </RadioButton>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
 
-                            <pixel:PixelText Text="{Binding RoleProblem}" Scale="2" Wrap="True" Colour="{StaticResource PxBad}"
+                            <pixel:PixelText Text="{Binding RoleProblem}" Scale="2" Wrap="True" Colour="{DynamicResource PxBad}"
                                              Margin="2,4,0,0" />
                         </StackPanel>
                     </pixel:PixelWindow>
@@ -78,9 +78,9 @@
                         <StackPanel>
                             <pixel:PixelText Text="ROM" Style="{StaticResource Label}" />
                             <Grid Margin="0,0,0,16">
-                                <views:PixelPanel Fill="{StaticResource PxWell}" IsSunken="True" HasShadow="False" />
+                                <views:PixelPanel Fill="{DynamicResource PxWell}" IsSunken="True" HasShadow="False" />
                                 <pixel:PixelText Text="{Binding RomStatus}" Scale="2" Wrap="True" Margin="12,9,12,11"
-                                                 Colour="{StaticResource PxText}" />
+                                                 Colour="{DynamicResource PxText}" />
                             </Grid>
 
                             <pixel:PixelText Text="NOMBRE DE LA RUN" Style="{StaticResource Label}" />
@@ -91,16 +91,16 @@
                             <TextBox Text="{Binding PlayerName, UpdateSourceTrigger=PropertyChanged}"
                                      Style="{StaticResource PxTextBox}" />
                             <pixel:PixelText Text="El nombre de tu entrenador en el juego." Scale="2" Tight="True" Margin="2,8,0,0"
-                                             Colour="{StaticResource PxTextFaint}" />
+                                             Colour="{DynamicResource PxTextFaint}" />
                         </StackPanel>
                     </pixel:PixelWindow>
                 </StackPanel>
             </ScrollViewer>
 
             <Grid Grid.Row="2" Margin="0,14,0,0">
-                <views:PixelPanel Fill="{StaticResource PxFace}" />
+                <views:PixelPanel Fill="{DynamicResource PxFace}" />
                 <StackPanel Margin="14,12,20,17">
-                    <pixel:PixelText Text="{Binding ErrorMessage}" Scale="2" Wrap="True" Colour="{StaticResource PxBad}"
+                    <pixel:PixelText Text="{Binding ErrorMessage}" Scale="2" Wrap="True" Colour="{DynamicResource PxBad}"
                                      Margin="0,0,0,10">
                         <pixel:PixelText.Style>
                             <Style TargetType="pixel:PixelText">
@@ -117,7 +117,7 @@
                         <Button DockPanel.Dock="Right" Content="CREAR RUN" Command="{Binding CreateCommand}"
                                 Style="{StaticResource PxButton}" VerticalAlignment="Center" />
                         <pixel:PixelText Text="Necesitas tu ROM de Ultra Luna, un nombre de run y tu nombre." Scale="2" Wrap="True"
-                                         Colour="{StaticResource PxTextFaint}" VerticalAlignment="Center" Margin="0,0,14,0" />
+                                         Colour="{DynamicResource PxTextFaint}" VerticalAlignment="Center" Margin="0,0,14,0" />
                     </DockPanel>
                 </StackPanel>
             </Grid>
