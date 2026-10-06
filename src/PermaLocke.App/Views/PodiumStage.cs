@@ -196,7 +196,7 @@ public sealed class PodiumStage : ContentControl
     private void OnFrame(object? sender, EventArgs e)
     {
         var step = _clock.ElapsedMilliseconds / 33;
-        if (IsVisible && step != _lastStep)
+        if (OnScreen.Showing(this) && step != _lastStep)
         {
             _lastStep = step;
             Paint();

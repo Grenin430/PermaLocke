@@ -59,6 +59,10 @@ public sealed class NicknameVoteService
     private NicknameVoteWindow? _window;
     private bool _reading;
     private bool _writes;
+
+    /// <summary>Seconds between two looks for new votes; the count of the vote on screen goes every second.</summary>
+    private const int LookEvery = 3;
+    private int _ticks;
     private string? _lastProblem;
 
     public NicknameVoteService(DiscordLogin discord, PokemonSpriteService sprites, Notifier notifier, RenameService rename,
@@ -239,12 +243,17 @@ public sealed class NicknameVoteService
 
         try
         {
+            // Votaciones nuevas y las propias por aplicar, cada tres vueltas: una votación empieza 3 s después de abrirse
+            // (CommonStart), así que se ve a tiempo igual. Antes era cada segundo siempre: dos peticiones por segundo y
+            // jugador sin ninguna votación en marcha (2026-10-03). El recuento sí va cada segundo, y solo mientras se vota.
+            var look = _ticks++ % LookEvery == 0;
+
             if (Enabled)
             {
-                await FollowOthersAsync(me.UserId);
+                if (look) await FollowOthersAsync(me.UserId);
                 await CountAsync();
             }
-            if (_writes) await FinishMineAsync(me.UserId);
+            if (_writes && look) await FinishMineAsync(me.UserId);
             _lastProblem = null;
         }
         catch (Exception ex)

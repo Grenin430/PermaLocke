@@ -172,6 +172,35 @@
             </StackPanel>
         </DataTemplate>
 
+        <!-- UNA TARJETA DE NOVEDADES (1.0.9), como un evento de la biblioteca de Steam: placa que se ilumina al pasar por
+             encima y se hunde al pulsarla. -->
+        <Style x:Key="UpdateCard" TargetType="Button">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid Background="Transparent">
+                            <views:PixelPanel x:Name="Plate" Fill="{DynamicResource PxFace}" />
+                            <ContentPresenter x:Name="Face" Margin="8,8,14,14" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Plate" Property="Fill" Value="{DynamicResource PxFaceLift}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Plate" Property="HasShadow" Value="False" />
+                                <Setter TargetName="Face" Property="RenderTransform">
+                                    <Setter.Value>
+                                        <TranslateTransform X="3" Y="3" />
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style x:Key="StatLabel" TargetType="pixel:PixelText">
             <Setter Property="Scale" Value="2" />
             <Setter Property="Tight" Value="True" />
@@ -364,6 +393,70 @@
                     <Button Content="VISOR POKÉMON" Style="{StaticResource NavLink}" Command="{Binding GoCommand}" CommandParameter="VISOR POKÉMON" />
                 </StackPanel>
             </DockPanel>
+
+            <!-- ================================================== NOVEDADES (1.0.9)
+                 Como el escaparate de la biblioteca de Steam: la última versión grande, con su cartel, etiqueta, título,
+                 resumen y hace cuánto; las dos de antes al lado. Una tarjeta abre la entrada entera; VER TODAS, el historial. -->
+            <DockPanel Margin="6,20,4,10">
+                <Button DockPanel.Dock="Right" Content="VER TODAS" Style="{StaticResource NavLink}" Margin="0" Click="OnAllUpdates" />
+                <pixel:PixelText Text="NOVEDADES" Scale="3" Tight="True" Colour="{DynamicResource PxText}"
+                                 Shadow="{DynamicResource PxShadow}" VerticalAlignment="Center" />
+            </DockPanel>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Button Grid.Column="0" Style="{StaticResource UpdateCard}" DataContext="{Binding LatestUpdate}"
+                        Tag="{Binding Version}" Click="OnUpdate" VerticalAlignment="Top">
+                    <StackPanel>
+                        <Grid Height="150">
+                            <views:PixelPanel Fill="{DynamicResource PxAccent}" IsSunken="True" HasShadow="False" />
+                            <pixel:PixelText Text="{Binding Kind}" Scale="2" Tight="True" Margin="14,12,0,0"
+                                             HorizontalAlignment="Left" VerticalAlignment="Top" Colour="{DynamicResource PxOnAccent}" />
+                            <pixel:PixelText Text="{Binding Version}" Scale="8" Tight="True" Margin="14,0,0,14"
+                                             HorizontalAlignment="Left" VerticalAlignment="Bottom" Colour="{DynamicResource PxOnAccent}"
+                                             Shadow="{DynamicResource PxShadow}" />
+                            <pixel:PixelText Text="PERMALOCKE" Scale="2" Tight="True" Margin="0,0,16,16"
+                                             HorizontalAlignment="Right" VerticalAlignment="Bottom" Colour="{DynamicResource PxOnAccent}" />
+                        </Grid>
+                        <StackPanel Margin="10,12,10,4">
+                            <StackPanel Orientation="Horizontal">
+                                <pixel:PixelText Text="{Binding Kind}" Scale="2" Tight="True" Colour="{DynamicResource PxAccentLight}" />
+                                <pixel:PixelText Text="{Binding Ago, StringFormat='  ·  {0}'}" Scale="2" Tight="True"
+                                                 Colour="{DynamicResource PxTextFaint}" />
+                            </StackPanel>
+                            <pixel:PixelText Text="{Binding Title}" Scale="3" Wrap="True" Margin="0,8,0,6" Colour="{DynamicResource PxText}" />
+                            <Grid MaxHeight="64" ClipToBounds="True">
+                                <pixel:PixelText Text="{Binding Summary}" Scale="2" Wrap="True" Colour="{DynamicResource PxTextDim}" />
+                            </Grid>
+                        </StackPanel>
+                    </StackPanel>
+                </Button>
+
+                <ItemsControl Grid.Column="2" ItemsSource="{Binding EarlierUpdates}" VerticalAlignment="Top">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Button Style="{StaticResource UpdateCard}" Tag="{Binding Version}" Click="OnUpdate" Margin="0,0,0,12">
+                                <StackPanel>
+                                    <Grid Height="58">
+                                        <views:PixelPanel Fill="{DynamicResource PxAccentLight}" IsSunken="True" HasShadow="False" />
+                                        <pixel:PixelText Text="{Binding Version}" Scale="4" Tight="True" Margin="10,0,0,0"
+                                                         HorizontalAlignment="Left" VerticalAlignment="Center"
+                                                         Colour="{DynamicResource PxOnAccent}" Shadow="{DynamicResource PxShadow}" />
+                                        <pixel:PixelText Text="{Binding Kind}" Scale="1" Tight="True" Margin="0,8,10,0"
+                                                         HorizontalAlignment="Right" VerticalAlignment="Top" Colour="{DynamicResource PxOnAccent}" />
+                                    </Grid>
+                                    <pixel:PixelText Text="{Binding Title}" Scale="2" Wrap="True" Margin="6,10,6,4" Colour="{DynamicResource PxText}" />
+                                    <pixel:PixelText Text="{Binding Ago}" Scale="2" Tight="True" Margin="6,0,6,2" Colour="{DynamicResource PxTextFaint}" />
+                                </StackPanel>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
 
             <!-- ================================================== ACTIVIDAD Y AMIGOS -->
             <Grid Margin="0,16,0,0">

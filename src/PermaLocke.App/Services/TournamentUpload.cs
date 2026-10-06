@@ -100,6 +100,12 @@ public sealed class TournamentUpload(
             {
                 await UploadAsync();
             }
+            catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.BadRequest)
+            {
+                // El servidor la rechaza (una run archivada por el organizador): repetirlo cada dos minutos no cambia
+                // nada, así que espera de verdad al próximo cambio (log del 2026-09-28: 79 avisos seguidos).
+                logger.LogWarning("El servidor no acepta la run ({Message}); se reintenta con el próximo cambio", ex.Message);
+            }
             catch (Exception ex)
             {
                 _dirty = true;

@@ -39,26 +39,56 @@ public static class EmulatorProcess
     /// </summary>
     public static bool? IsRunning()
     {
-        var liveness = new List<bool?>();
-
-        foreach (var name in Names)
+        // Una ventana no sobrevive a su proceso: si la del juego sigue ahí, está abierto y no hace falta listar nada.
+        if (GameWindow.KnownAlive())
         {
-            var processes = Process.GetProcessesByName(name);
-            try
+            return true;
+        }
+
+        var liveness = new List<bool?>();
+        var processes = Candidates();
+
+        try
+        {
+            foreach (var process in processes)
             {
-                foreach (var process in processes)
-                {
-                    liveness.Add(Liveness(process));
-                }
+                liveness.Add(Liveness(process));
             }
-            finally
-            {
-                // The handle is the whole point: without this, asking keeps the answer true.
-                foreach (var process in processes) process.Dispose();
-            }
+        }
+        finally
+        {
+            // The handle is the whole point: without this, asking keeps the answer true.
+            foreach (var process in processes) process.Dispose();
         }
 
         return Decide(liveness);
+    }
+
+    /// <summary>
+    /// Every azahar or citra process, from one look at the process table. The caller disposes them.
+    /// </summary>
+    /// <remarks>
+    /// One look and not one per name: <see cref="Process.GetProcessesByName(string)"/> lists the whole table every time
+    /// (about 6 ms of CPU with 390 processes, measured 2026-10-03), so asking for the two names cost two of them.
+    /// </remarks>
+    internal static Process[] Candidates()
+    {
+        var all = Process.GetProcesses();
+        var found = new List<Process>();
+
+        foreach (var process in all)
+        {
+            if (Array.Exists(Names, name => string.Equals(name, process.ProcessName, StringComparison.OrdinalIgnoreCase)))
+            {
+                found.Add(process);
+            }
+            else
+            {
+                process.Dispose();
+            }
+        }
+
+        return [.. found];
     }
 
     /// <summary>Whether one process is alive, or null when it will not say.</summary>

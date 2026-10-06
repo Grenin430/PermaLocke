@@ -57,7 +57,8 @@ public sealed class BagService(
     string statePath,
     string knownAddressPath,
     ILogger<BagService> logger,
-    Field.SavedGameCache? saved = null) : IItemWithholder
+    Field.SavedGameCache? saved = null,
+    Field.LiveSave? live = null) : IItemWithholder
 {
     /// <summary>Poké Ball, confirmed against the PKHeX item table.</summary>
     public const int PokeBallItemId = 4;
@@ -93,6 +94,9 @@ public sealed class BagService(
     /// <summary>The bag block currently cached, if it has been located.</summary>
     public BagBlock? Block => _block;
 
+    /// <summary>From the start of the save data in memory to the bag block.</summary>
+    public const uint BagFromSave = 0x0C;
+
     /// <summary>
     /// The bag block, located once and re-checked afterwards. The check is a single read of
     /// the pointer table, so it costs nothing to distrust the cached address every time.
@@ -109,6 +113,19 @@ public sealed class BagService(
         if (_block is { } cached && _locator.StillValid(cached))
         {
             return cached;
+        }
+
+        // Donde la tiene el propio juego (2026-10-06): 12 bytes después del inicio de su partida en memoria (GameData +4,
+        // ver Field.LiveSave), medido con la mochila en 0x33011934 y la partida en 0x33011928. Se revalida igual que la recordada.
+        if (live?.Base() is { } save && new BagBlock(save + BagFromSave, BagLayout.UltraSunMoon) is var own && _locator.StillValid(own))
+        {
+            if (_block?.BaseAddress != own.BaseAddress)
+            {
+                logger.LogInformation("Mochila en 0x{Address:X8}, donde la tiene el juego, sin barrer", own.BaseAddress);
+            }
+
+            _block = own;
+            return _block;
         }
 
         if (Remembered() is { } remembered && _locator.StillValid(remembered))

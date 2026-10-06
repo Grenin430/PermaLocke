@@ -19,6 +19,9 @@ public static class EmulatorJob
 
     private static IntPtr _job;
 
+    /// <summary>The Windows error of the last refused <see cref="Attach"/>, for the log (refused four times on 2026-09-27, cause unknown).</summary>
+    public static int LastError { get; private set; }
+
     /// <summary>Puts the process in the job. False when Windows refused; the game still runs, only unbound.</summary>
     public static bool Attach(Process process)
     {
@@ -47,7 +50,10 @@ public static class EmulatorJob
             _job = job;
         }
 
-        return AssignProcessToJobObject(_job, process.Handle);
+        if (AssignProcessToJobObject(_job, process.Handle)) return true;
+
+        LastError = Marshal.GetLastPInvokeError();
+        return false;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -88,6 +94,6 @@ public static class EmulatorJob
     [DllImport("kernel32.dll")]
     private static extern bool SetInformationJobObject(IntPtr job, int infoClass, IntPtr info, uint length);
 
-    [DllImport("kernel32.dll")]
+    [DllImport("kernel32.dll", SetLastError = true)]
     private static extern bool AssignProcessToJobObject(IntPtr job, IntPtr process);
 }

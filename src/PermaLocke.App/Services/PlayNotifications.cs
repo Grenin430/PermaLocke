@@ -85,7 +85,8 @@ public sealed class PlayNotifications
         // Esto salta al CERRAR el emulador, que es cuando la marca se puede escribir en la partida.
         // Llega con el juego ya cerrado y por tanto sin nada tapando la pantalla, que es justo
         // cuando un aviso se lee: es lo único que dice que se ha hecho.
-        monitor.DeathMarked += (_, notice) => notifier.Say(ToastKind.TeamWipe, "Caídos", notice);
+        // BAJA y no EQUIPO CAÍDO: casi siempre es uno solo, y la otra etiqueta hacía pensar en un wipe.
+        monitor.DeathMarked += (_, notice) => notifier.Say(ToastKind.Death, "Caídos", notice);
 
         monitor.TeamWiped += (_, penalty) =>
         {

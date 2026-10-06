@@ -103,10 +103,10 @@ public sealed class CapBadge
     {
         try
         {
-            var game = GameWindow.Handle();
+            // Se quita en CONFIGURACIÓN (1.0.4.8). Lo barato primero: sin juego abierto no se busca su ventana.
+            var game = _settings.Current.CapPanel && _launcher.IsRunning ? GameWindow.Handle() : IntPtr.Zero;
 
-            // Se quita en CONFIGURACIÓN (1.0.4.8).
-            if (!_settings.Current.CapPanel || !_launcher.IsRunning || game == IntPtr.Zero || GetForegroundWindow() != game
+            if (game == IntPtr.Zero || GetForegroundWindow() != game
                 || GameWindow.RenderBox(game) is not { } picture)
             {
                 _window?.Hide();
@@ -191,7 +191,10 @@ public sealed class CapBadge
     private void ShowParty(IReadOnlyList<LivePartyMember> party)
     {
         var cap = _reading?.Cap ?? int.MaxValue;
-        var key = cap + "|" + string.Join(";", party.Select(p => $"{p.Pid}:{p.Species}:{p.Form}:{p.Level}:{p.CurrentHp}/{p.MaxHp}"));
+        // El mote va en la clave: un mote votado entra en directo y, sin él, el panel seguía con el nombre de antes
+        // (lista de pendientes del organizador, 2026-09-28).
+        var key = cap + "|" + string.Join(";", party.Select(p =>
+            $"{p.Pid}:{p.Species}:{p.Form}:{p.Level}:{p.CurrentHp}/{p.MaxHp}:{p.IsFainted}:{p.Nickname}"));
         if (key == _partyKey)
         {
             return;

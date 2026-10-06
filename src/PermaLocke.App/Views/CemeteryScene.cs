@@ -69,6 +69,11 @@ internal sealed class CemeteryScene
     private static readonly Color Wisp = Color.FromRgb(0xC4, 0xBC, 0xFF);
     private static readonly Color Haze = Color.FromRgb(0x1F, 0x18, 0x2E);
 
+    // Los de cada fotograma, hechos una vez: construir un Color de WPF calcula su scRGB con Math.Pow (§188), y la niebla
+    // lo hacía por píxel 30 veces por segundo (2026-10-03).
+    private static readonly Color NightInk = Color.FromRgb(0x06, 0x05, 0x0A);
+    private static readonly Color FogTint = Color.FromRgb(0x9A, 0x92, 0xB4);
+
     private static readonly int[,] Bayer =
     {
         { 0, 8, 2, 10 },
@@ -479,7 +484,7 @@ internal sealed class CemeteryScene
         foreach (var (x, y, phase) in _twinkles)
         {
             var strength = 0.5 + (0.5 * Math.Sin((seconds * 1.3) + phase));
-            Mix(_frame, x, y, Color.FromRgb(0x06, 0x05, 0x0A), 0.85 * (1 - strength));
+            Mix(_frame, x, y, NightInk, 0.85 * (1 - strength));
         }
     }
 
@@ -499,7 +504,7 @@ internal sealed class CemeteryScene
 
                 if (Bayer[(y + seed) & 3, (x + drift) & 3] < amount)
                 {
-                    Mix(_frame, x, y, Color.FromRgb(0x9A, 0x92, 0xB4), 0.22);
+                    Mix(_frame, x, y, FogTint, 0.22);
                 }
             }
         }
@@ -668,7 +673,7 @@ internal sealed class CemeteryScene
                     continue;
                 }
 
-                Mix(_frame, left + x, top + y, Color.FromRgb(bgra[i + 2], bgra[i + 1], bgra[i]), a);
+                Mix(_frame, left + x, top + y, bgra[i + 2], bgra[i + 1], bgra[i], a);
             }
         }
     }
@@ -687,7 +692,10 @@ internal sealed class CemeteryScene
         target[i + 3] = 255;
     }
 
-    private void Mix(byte[] target, int x, int y, Color colour, double amount)
+    private void Mix(byte[] target, int x, int y, Color colour, double amount) =>
+        Mix(target, x, y, colour.R, colour.G, colour.B, amount);
+
+    private void Mix(byte[] target, int x, int y, byte r, byte g, byte b, double amount)
     {
         if (x < 0 || x >= Width || y < 0 || y >= Height)
         {
@@ -696,9 +704,9 @@ internal sealed class CemeteryScene
 
         amount = Math.Clamp(amount, 0, 1);
         var i = ((y * Width) + x) * 4;
-        target[i] = (byte)(target[i] + ((colour.B - target[i]) * amount));
-        target[i + 1] = (byte)(target[i + 1] + ((colour.G - target[i + 1]) * amount));
-        target[i + 2] = (byte)(target[i + 2] + ((colour.R - target[i + 2]) * amount));
+        target[i] = (byte)(target[i] + ((b - target[i]) * amount));
+        target[i + 1] = (byte)(target[i + 1] + ((g - target[i + 1]) * amount));
+        target[i + 2] = (byte)(target[i + 2] + ((r - target[i + 2]) * amount));
         target[i + 3] = 255;
     }
 

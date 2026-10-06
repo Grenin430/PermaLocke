@@ -355,3 +355,22 @@ negro del estudio de fotos: gen 8-9 en el equipo (ver Trampas y lecciones).
 - Verificado: 160 tests, Admin compila, capturas a 1360×860 y 1560×980 sin errores de log, RULETA de 10 secciones cabe.
   Sin ver: DPI 125/150 %, jugar con cada diseño. Falta que el organizador elija; hasta entonces no se publica.
 - Pendiente de esa misma tanda: arreglo de velocidad del emulador (`EnsureNormalSpeed`), no hecho.
+
+## 2026-10-03 — revisión general de errores y optimización (§216, sin publicar ni commit)
+- Pedido: «gran investigación» de mejoras, optimizar y corregir. Fuente principal: logs reales de `PermaLocke prueba`.
+- Arreglado: `RunContext` publica `CurrentChanged` en el hilo de la interfaz; subida con 400 (run archivada) ya no reintenta
+  cada 2 min; mote votado visible en el panel del cap; un solo aviso «siguen caídos» (BAJA); `\` en la fuente; PixelCheck
+  compila otra vez; test intermitente de `EncounterRecoveryTests`; código de error al no atar Azahar.
+- Optimizado: búsqueda de Azahar con caché de ventana (antes ~7 listados de procesos por segundo), motes cada 3 s, Game Boy
+  `MapPixels` 18× más rápido, cementerio 2,4×, escenas paradas con la ventana minimizada, cielo/isla/cuarto sin bucle de 60 fps.
+- El usuario rechazó abrir la app otra vez para medir con un perfilador temporal: no lanzar la app para medir sin preguntar.
+- Pendiente de decisión: limpiar `Saves/backup` (crece sin límite) y killcams de runs borradas; migrar los diccionarios viejos.
+
+## 2026-10-06 · Reglas dentro del juego (§217)
+- Parches de código probados jugando por el organizador: cap (experiencia y Caramelo Raro), caídos sin curar, duplicados
+  (se vuelve a tirar), zona gastada (el menú rechaza la ball sin gastarla, texto propio). Todo tras `gameRulePatches`.
+- Zona y equipo se leen por puntero fijo (GameManager 0x6A3984 → GameData): sin barrer memoria.
+- Pedidos del organizador: sin aviso «sigue caído» ni avisos de balls quitadas/devueltas con las reglas encendidas; ir
+  quitando lo que la app hacía desde fuera. El torneo actual es un early access de pruebas.
+- Herramientas: Ghidra 12.1.4 en `C:\Users\javie\tools`; detalle en «Plan de parches del juego (2026-10-06)».
+- Nada publicado ni commit. La carpeta de prueba tiene los parches puestos a mano (`--reglas-juego`).

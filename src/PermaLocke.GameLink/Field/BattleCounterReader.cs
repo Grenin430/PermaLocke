@@ -26,7 +26,7 @@ namespace PermaLocke.GameLink.Field;
 /// </para>
 /// </remarks>
 public sealed class BattleCounterReader(AzaharRpcClient client, BagService bag, SavedGameCache saved,
-    ILogger<BattleCounterReader> logger, TimeProvider? timeProvider = null) : IBattleCounters
+    ILogger<BattleCounterReader> logger, TimeProvider? timeProvider = null, LiveSave? live = null) : IBattleCounters
 {
     /// <summary>From the bag block to the records, measured: bag at 0x33011934, records at 0x33079A48.</summary>
     public const uint DistanceFromBag = 0x68114;
@@ -67,8 +67,8 @@ public sealed class BattleCounterReader(AzaharRpcClient client, BagService bag, 
             // reference when it appears, even if the old address still looks plausible.
             var now = _time.GetUtcNow();
             if (_address is not null && now - _lastDirectCheck >= DirectCheckEvery
-                && saved.Load() is { } game && FromBag(now, game.Save) is { } live)
-                _address = live;
+                && saved.Load() is { } game && (FromGame(game.Save) ?? FromBag(now, game.Save)) is { } current)
+                _address = current;
 
             _address ??= Locate();
 
@@ -185,6 +185,7 @@ public sealed class BattleCounterReader(AzaharRpcClient client, BagService bag, 
 
         // A validated bag may become available after an unsuccessful search. Retry this cheap
         // reference independently, instead of keeping it behind the one-minute full-search cooldown.
+        if (FromGame(save) is { } own) return own;
         if (FromBag(now, save) is { } direct) return direct;
 
         if (now - _lastSearch < SearchEvery) return null;
@@ -220,6 +221,21 @@ public sealed class BattleCounterReader(AzaharRpcClient client, BagService bag, 
 
         logger.LogWarning("No se han encontrado los contadores del juego en memoria");
         return null;
+    }
+
+    /// <summary>
+    /// The records where the game's own save data keeps them (<see cref="LiveSave"/>, 2026-10-06): no bag and no search needed.
+    /// Believed only as any other candidate, against the save.
+    /// </summary>
+    private uint? FromGame(SAV7USUM save)
+    {
+        if (live?.AddressOf(LiveSave.RecordBlock) is not { } candidate || candidate == _address
+            || !client.TryReadMemory(candidate, ReadLength, out var bytes) || !MatchesSave(bytes, save.GetRecord))
+            return null;
+
+        Trust(bytes, save.GetRecord);
+        logger.LogInformation("Contadores del juego en 0x{Address:X8}, donde los guarda el propio juego", candidate);
+        return candidate;
     }
 
     private uint? FromBag(DateTimeOffset now, SAV7USUM save)

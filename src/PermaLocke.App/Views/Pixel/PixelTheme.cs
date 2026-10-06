@@ -139,34 +139,50 @@ public sealed record PixelTheme(
     /// keeps colours as they are.
     /// </summary>
     /// <param name="scene">For the scenes, which are almost all dark: the brightness is lifted first so they keep detail.</param>
-    public Color Map(Color colour, bool scene = false)
-    {
-        if (Shades is not { Length: > 0 } shades) return colour;
-
-        // Un tono que ya es de la paleta se queda: así pasar dos veces por aquí no oscurece nada.
-        foreach (var shade in shades)
-        {
-            if (shade.R == colour.R && shade.G == colour.G && shade.B == colour.B) return shade;
-        }
-
-        var luma = ((colour.R * 0.299) + (colour.G * 0.587) + (colour.B * 0.114)) / 255.0;
-        // Con raíz: las escenas son casi todas tonos oscuros, y a tramos iguales se iban enteras al verde más negro.
-        return shades[Math.Clamp((int)((scene ? Math.Sqrt(luma) : luma) * shades.Length), 0, shades.Length - 1)];
-    }
+    public Color Map(Color colour, bool scene = false) =>
+        Shades is { Length: > 0 } shades ? shades[ShadeOf(shades, colour.R, colour.G, colour.B, scene)] : colour;
 
     /// <summary>The same over a whole BGRA frame of a scene, in place; nothing for a theme without shades.</summary>
+    /// <remarks>
+    /// On the bytes, never through a WPF <see cref="Color"/>: building one works out its scRGB with <c>Math.Pow</c> (the
+    /// trap of §188), and a 320 × 220 frame took 9 ms, a third of a core at 30 fps (2026-10-03).
+    /// </remarks>
     public void MapPixels(byte[] bgra)
     {
-        if (Shades is null) return;
+        if (Shades is not { Length: > 0 } shades) return;
+
+        // Las escenas son manchas de un color: el último se recuerda y casi ningún píxel se calcula.
+        var lastKey = -1;
+        var mapped = default(Color);
 
         for (var i = 0; i + 3 < bgra.Length; i += 4)
         {
             if (bgra[i + 3] == 0) continue;
-            var mapped = Map(Color.FromRgb(bgra[i + 2], bgra[i + 1], bgra[i]), scene: true);
+
+            var key = (bgra[i + 2] << 16) | (bgra[i + 1] << 8) | bgra[i];
+            if (key != lastKey)
+            {
+                lastKey = key;
+                mapped = shades[ShadeOf(shades, bgra[i + 2], bgra[i + 1], bgra[i], scene: true)];
+            }
+
             bgra[i] = mapped.B;
             bgra[i + 1] = mapped.G;
             bgra[i + 2] = mapped.R;
         }
+    }
+
+    private static int ShadeOf(Color[] shades, byte r, byte g, byte b, bool scene)
+    {
+        // Un tono que ya es de la paleta se queda: así pasar dos veces por aquí no oscurece nada.
+        for (var i = 0; i < shades.Length; i++)
+        {
+            if (shades[i].R == r && shades[i].G == g && shades[i].B == b) return i;
+        }
+
+        var luma = ((r * 0.299) + (g * 0.587) + (b * 0.114)) / 255.0;
+        // Con raíz: las escenas son casi todas tonos oscuros, y a tramos iguales se iban enteras al verde más negro.
+        return Math.Clamp((int)((scene ? Math.Sqrt(luma) : luma) * shades.Length), 0, shades.Length - 1);
     }
 
     public static IReadOnlyList<PixelTheme> All { get; } = [Original, Emerald(), GameBoy(), UltraWormhole(), Rotom()];

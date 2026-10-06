@@ -21,32 +21,51 @@ namespace PermaLocke.App.Services;
 public static class GameWindow
 {
     /// <summary>The emulator's window, or null when it is not running.</summary>
+    /// <remarks>
+    /// The window found last time is kept, never a process: holding a <c>Process</c> keeps a closed emulator in the table
+    /// (see <see cref="EmulatorProcess"/>). While it is still a visible window of the same process it is the answer, and
+    /// nothing is listed: looking through the process table costs about 6 ms of CPU each time (390 processes, measured
+    /// 2026-10-03), and the cap, the edge tab and the notices asked several times a second, beside the emulator.
+    /// </remarks>
     public static IntPtr Handle()
     {
-        foreach (var name in new[] { "azahar", "citra" })
+        var (known, owner) = _known;
+
+        if (known != IntPtr.Zero && IsWindow(known) && IsWindowVisible(known)
+            && GetWindowThreadProcessId(known, out var process) != 0 && process == owner)
         {
-            var processes = System.Diagnostics.Process.GetProcessesByName(name);
+            return known;
+        }
+
+        _known = (IntPtr.Zero, 0);
+
+        foreach (var candidate in EmulatorProcess.Candidates())
+        {
             try
             {
-                foreach (var process in processes)
-                {
-                    try
-                    {
-                        var handle = process.MainWindowHandle;
-                        if (handle != IntPtr.Zero) return handle;
-                    }
-                    catch (InvalidOperationException) { } // Closed during the lookup.
-                    catch (System.ComponentModel.Win32Exception) { }
-                }
+                var handle = candidate.MainWindowHandle;
+                if (handle != IntPtr.Zero && _known.Window == IntPtr.Zero) _known = (handle, (uint)candidate.Id);
             }
+            catch (InvalidOperationException) { } // Closed during the lookup.
+            catch (System.ComponentModel.Win32Exception) { }
             finally
             {
-                foreach (var process in processes) process.Dispose();
+                candidate.Dispose();
             }
         }
 
-        return IntPtr.Zero;
+        return _known.Window;
     }
+
+    /// <summary>Whether the emulator's window found last time is still there, without listing processes.</summary>
+    internal static bool KnownAlive()
+    {
+        var (known, owner) = _known;
+        return known != IntPtr.Zero && IsWindow(known) && GetWindowThreadProcessId(known, out var process) != 0
+               && process == owner;
+    }
+
+    private static (IntPtr Window, uint Process) _known;
 
     /// <summary>Its window box, or the primary work area when there is no emulator.</summary>
     public static Rect Area()
@@ -297,6 +316,9 @@ public static class GameWindow
 
     [DllImport("user32.dll")]
     private static extern bool IsWindowVisible(IntPtr window);
+
+    [DllImport("user32.dll")]
+    private static extern bool IsWindow(IntPtr window);
 
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     private static extern int GetClassName(IntPtr window, System.Text.StringBuilder name, int capacity);

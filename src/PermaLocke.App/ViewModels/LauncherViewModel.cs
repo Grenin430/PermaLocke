@@ -131,6 +131,17 @@ public sealed partial class LauncherViewModel : SectionViewModel
 
     public ObservableCollection<BitmapSource> ClaimedIcons { get; } = [];
 
+    /// <summary>One card of NOVEDADES.</summary>
+    public sealed record UpdateCard(string Version, string Kind, string Title, string Summary, string Ago);
+
+    /// <summary>NOVEDADES as in Steam's library (1.0.9): the newest version large, the two before it small.</summary>
+    public UpdateCard? LatestUpdate => _updates.FirstOrDefault();
+
+    public IReadOnlyList<UpdateCard> EarlierUpdates => [.. _updates.Skip(1)];
+
+    private readonly IReadOnlyList<UpdateCard> _updates = [.. ReleaseNotes.Embedded().Take(3).Select(note =>
+        new UpdateCard(note.Version, note.Kind, note.Title, note.Summary, note.Ago(DateOnly.FromDateTime(DateTime.Today))))];
+
     [ObservableProperty]
     private string _runLine = string.Empty;
 

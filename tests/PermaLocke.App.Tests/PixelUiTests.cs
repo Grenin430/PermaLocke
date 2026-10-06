@@ -29,7 +29,7 @@ public sealed class PixelUiTests
     public void Spanish_text_needs_no_box_for_a_missing_letter()
     {
         // Lo que HOME y el historial escriben de verdad: ordinales, apartados, flechas y los dos símbolos de sexo.
-        const string text = "ÁÉÍÓÚÜÑ áéíóúüñ ¿¡ 2ª 1º §175 «Nidoran♀» → ← × … · % + - / < > ( ) [ ] : ; , . ' \"";
+        const string text = "ÁÉÍÓÚÜÑ áéíóúüñ ¿¡ 2ª 1º §175 «Nidoran♀» → ← × … · % + - / \\ < >( ) [ ] : ; , . ' \"";
         foreach (var ch in text.Where(ch => ch != ' '))
         {
             var drawn = new List<(int X, int Y)>();

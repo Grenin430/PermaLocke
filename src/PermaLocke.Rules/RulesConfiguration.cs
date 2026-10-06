@@ -109,6 +109,12 @@ public sealed record RulesConfiguration
     /// </summary>
     public bool KnockDownFallenInBattle { get; init; } = true;
 
+    /// <summary>
+    /// The rules patched into the game itself (2026-10-06): no experience at the level cap in battle and no Rare Candy at
+    /// the cap. Off until it has been played: then the organiser turns it on from Admin, REGLAS.
+    /// </summary>
+    public bool GameRulePatches { get; init; }
+
     /// <summary>Settings for a rule, falling back to the global default when unlisted.</summary>
     public RuleSettings For(string ruleId) =>
         Rules.TryGetValue(ruleId, out var settings)
@@ -162,7 +168,8 @@ public static class RulesConfigurationLoader
             EncounterTypesThatConsumeZone = document.EncounterTypesThatConsumeZone
                 ?? [EncounterType.Wild, EncounterType.Fishing, EncounterType.Sos],
             BallControl = document.BallControl ?? new BallControlSettings(),
-            KnockDownFallenInBattle = document.KnockDownFallenInBattle ?? true
+            KnockDownFallenInBattle = document.KnockDownFallenInBattle ?? true,
+            GameRulePatches = document.GameRulePatches ?? false
         };
     }
 
@@ -174,5 +181,6 @@ public static class RulesConfigurationLoader
         public List<EncounterType>? EncounterTypesThatConsumeZone { get; init; }
         public BallControlSettings? BallControl { get; init; }
         public bool? KnockDownFallenInBattle { get; init; }
+        public bool? GameRulePatches { get; init; }
     }
 }

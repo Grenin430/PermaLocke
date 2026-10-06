@@ -12783,3 +12783,110 @@ reglas ni servicios: solo la capa visual. El original (CLÁSICO) sigue siendo el
 - **Sin comprobar:** DPI de Windows 125/150 %; jugar de verdad con cada diseño; los iconos solos del muelle (ULTRAUMBRAL) y de
   las teclas (ROTOM) dependen del tooltip y de la sección activa con nombre. Las escenas (gacha, cementerio, álbum, cuarto) guardan
   sus colores salvo en GAME BOY. No hay versión móvil: es WPF de escritorio.
+
+## §216 · Revisión general: errores de los logs y optimización (2026-10-03, sin publicar ni commit)
+
+Revisión pedida por el organizador: logs reales de `Desktop\PermaLocke prueba\Logs` (27-09 a 03-10), avisos del compilador
+(cero), pruebas, consultas al servidor, búsquedas de procesos y coste de las escenas.
+
+**Errores arreglados**
+- `RunContext.CurrentChanged` se lanzaba en el hilo que cambiaba la run (tras `ConfigureAwait(false)`): al empezar de cero o
+  crear run, `EmulatorLauncher` → `UpdateBannerViewModel.NotifyCanExecuteChanged` reventaba («el subproceso que realiza la
+  llamada no puede obtener acceso», 5 veces el 28-09). Ahora se publica en el contexto donde se creó (el de la interfaz),
+  comparando por hilo (WPF estrena un `DispatcherSynchronizationContext` por operación). `RunContextTests`.
+- `TournamentUpload`: con la run archivada por el organizador el servidor responde 400 y la app reintentaba cada 2 min para
+  siempre (79 avisos con traza el 28-09). Un 400 espera al próximo cambio, como ya decía el mensaje.
+- Panel del cap: la clave de redibujo no llevaba el mote, así que un mote votado no aparecía (lista de pendientes del
+  organizador). Ahora lleva mote y caído.
+- «X sigue caído»: un aviso por Pokémon y con la etiqueta EQUIPO CAÍDO; ahora uno solo con todos y etiqueta BAJA.
+- Fuente pixel sin `\`: las rutas («Falta Emulator\azahar.exe») salían con una caja.
+- `PermaLocke.PixelCheck` no compilaba desde la 1.0.8 (`PixelScene` usa `PixelTheme`): sustituto `PixelThemeStub.cs`.
+- Test intermitente `EncounterRecoveryTests` (tumbó la primera Action de la 1.0.8): cliente RPC a 100 ms; un reintento
+  tardío contaba una búsqueda de más. 1 s.
+- `EmulatorJob`: el aviso «Windows no ha dejado atar Azahar» lleva ahora el código de error de Windows.
+
+**Optimización**
+- Buscar Azahar listaba la tabla de procesos entera (unos 6 ms de CPU con 390 procesos, medido) unas 7 veces por segundo en
+  reposo (cap 4, pestaña del borde 2, lanzador 1) y 5-6 jugando. `GameWindow.Handle` recuerda la ventana (solo el HWND y su
+  pid, nunca un `Process`, por los fantasmas del 20-09) y la valida con `IsWindow`/pid/visible; `EmulatorProcess.Candidates`
+  hace una sola foto para azahar y citra, e `IsRunning` contesta sin listar si la ventana conocida vive; `CapBadge` no busca
+  sin juego abierto. Queda el lanzador, una por segundo.
+- Motes: dos GET por segundo y jugador siempre, sin votación en marcha. Votaciones nuevas y las propias cada 3 s (empiezan
+  3 s después de abrirse); el recuento sigue cada segundo solo mientras se vota.
+- `PixelTheme.MapPixels` (Game Boy) creaba un `Color` por píxel (la trampa del §188): 9,4 ms por fotograma de 320×220;
+  ahora bytes y memoria del último color, 0,5 ms, mismo resultado byte a byte.
+- `CemeteryScene`: colores por píxel de la niebla, las estrellas y los fantasmas fuera; 3,9 → 1,6 ms por fotograma (400×700).
+- Cielo, isla y cuarto del entrenador (4-6 fotogramas por segundo) con `DispatcherTimer` en vez de
+  `CompositionTarget.Rendering`, que obliga a WPF a pintar a 60 fps. `OnScreen.Showing`: cielo, isla, cuarto, cementerio y
+  podio no pintan con la ventana minimizada (al pulsar JUGAR se aparta sola y seguían pintando detrás del juego). Gacha,
+  ruleta y álbum no se tocan: sus secuencias avanzan por fotograma.
+
+**Visto y no hecho (decisión del organizador)**: `Saves/backup` crece sin límite (2.236 copias, 173 MB en 10 días en la
+carpeta de prueba) y `Saves/killcam` guarda las de runs borradas (116 MB, 9 carpetas para 1 run). Borrar necesita su permiso.
+`Palette.xaml`/`Controls.xaml`/`Icons.xaml` aún tienen claves en uso (47 de 138 en Palette). La medición de CPU de la app
+entera es ruidosa (5-10 % de un núcleo en reposo, Debug): los ahorros se dan por coste medido de cada llamada.
+
+## §217 · Reglas dentro del juego: parches de código y lectura directa (2026-10-06, sin publicar ni commit)
+
+Pedido del organizador: que las reglas del Nuzlocke las haga el propio juego. Todo detrás de `gameRulePatches` en
+`Data/rules.json` (false por defecto): con true, `EmulatorLauncher` llama a `RulePatches.Apply` al pulsar JUGAR y con false
+lo quita. `code.bin` nunca se toca (sus cambios van en `exefs/code.ips`, conservando registros ajenos como el de todo
+variocolor); `Battle.cro` y el texto español `a/0/3/6` se cambian en el sitio y vuelven byte a byte. Cada sitio se parchea
+solo si sus palabras originales y su cueva vacía están donde se midieron (Expansion USUM, base USA 1.0). La app escribe las
+reglas en `RuleBlock` (0x6D3F10, los 252 bytes tras el BSS que nadie usa ni limpia); con el bloque a cero el juego es el del
+cartucho. Instrucciones hechas a mano y comprobadas con Capstone en `RulePatchesTests`. Probado jugando por el organizador:
+
+| Regla | Sitio | Bloque | App |
+|---|---|---|---|
+| Sin experiencia al cap | `Battle.cro` 0x91F1C `cmp r0,#100` → rutina 0x11A700 | +4 cap | `TellGameTheCap` |
+| Caramelo Raro «no tendría efecto» al cap | `code.bin` 0x4410E8 → 0x5B9A80 | +4 | — |
+| Caídos sin curar (Centro, Revivir...) | 0x322644, en el guardado de PS de todo Pokémon (0x322638) → 0x5B9AA4 | +0x20 6 constantes de cifrado | `TellGameTheFallen`; sin aviso «sigue caído» |
+| Duplicados: se vuelve a tirar entre los no repetidos | 0x3A7064, elección de hueco salvaje → 0x5B9A00 + 0x5B9AE8 | +0x40 bitset de especies | `TellGameTheDupesAsync` |
+| Zona gastada: el menú rechaza la ball sin gastarla | `Battle.cro` 0xB33D0, motivo del menú → 0x11A724; línea 135 del texto 12 | +8 motivo (8) | `EncounterGuard.RefuseInGameAsync`; sin tocar la mochila ni avisar |
+
+Detalle de cada uno en la nota del cerebro «Plan de parches del juego (2026-10-06)».
+
+**Lectura directa (el «buzón» se queda en esto)**: el GameManager está en un puntero fijo del `code.bin` (0x6A3984) y su
+GameData en +0x24. GameData +0x60 es un registro de posición completo (mundo, mapa, XYZ, rotación: el formato de
+`FieldRecord`) que sigue cada paso, y GameData +0xC es el `PokeParty`: seis punteros en orden de equipo y el número en +0x18;
+cada miembro apunta en +4 a su entrada de la estructura autoritativa. `FieldZoneReader` y `AzaharGameStateProvider` los leen
+antes de buscar: zona y equipo sin barrer memoria, también en combate. Si la cadena no da algo válido, siguen como antes.
+
+**Pendiente**: en un caído, el Revivir se gasta sin efecto. Cama y NPC sin probar (misma función que el Centro). Solo español
+para el texto de zona gastada. Al encender `gameRulePatches` para todos, quitar lo que la app hacía desde fuera solo por
+estas reglas (corrección del cap en memoria, retirada de balls), dejando avisos de solo lectura donde el parche no llega.
+
+**La partida en memoria** (mismo día): GameData +4 apunta a los datos de partida que el juego va actualizando. Los bloques no
+están donde los pone el fichero; medidos tras guardar, todo byte no nulo igual: EventWork (5) +0x15DC, Pokédex (6) +0x23E0,
+cajas (13) +0x3B9C y (14) +0x4188, récords (28) +0x68120. `Field.LiveSave` copia el fichero, pone encima los bloques vivos y
+se lo da a PKHeX. `SaveDex` usa la Pokédex viva si contiene todo lo del fichero (probado: Spoink capturado sin guardar sale
+como capturado) y `BattleCounterReader.FromGame` prueba primero los récords del juego, validados contra el fichero como
+cualquier candidato. Sonda: `--reglas-juego pokedex <carpeta>`, `--reglas-juego partida [desfase] [contadores|localizar N]`.
+
+**Tablas de combate sin buscar** (mismo día): en todos los combates de los logs de prueba (02 a 06/10, salvajes y de
+entrenador) las dos tablas estaban en 0x30002748 y 0x30009730, y ningún puntero cercano las señala (cada Pokémon es un bloque
+suelto del montón, enlazado solo con sus vecinos). `BattleTableReader.AtKnownOrigins` mira primero el primer rival
+(posición 12) de las tablas de la última vez: dos lecturas pequeñas por vuelta. Si vive, lee las 18 posiciones. Medido en
+vivo: salvaje en la 12; entrenador con tres en 12, 13 y 14. La búsqueda del megabyte queda de reserva (cada 3 s, como antes) y
+actualiza las direcciones si las tablas se mueven. Antes se buscaba cada 3 s durante toda la partida y un combate de
+entrenador podía verse hasta 3 s tarde. Los «Fallo al leer el combate» de los logs eran el emulador cerrándose.
+
+**Motes a su hora** (mismo día): la votación salía con la Pokédex aún registrando la captura. Medido con Mime Jr.: el
+registro del juego (GameData +0x60) no cambió del combate al primer paso (17 s), pero alguno de los 16 registros buscados sí,
+y `MovedSince` miraba todos. Ahora mira solo el del juego cuando lo conoce; los buscados quedan para cuando no.
+
+**Mochila por la cadena y limpieza del cap** (mismo día): la mochila está 0xC después del inicio de la partida en memoria
+(`BagService.BagFromSave`; medido en dos runs, 0x33011934 con la partida en 0x33011928). `BagService.Locate` la prueba
+antes que la recordada y que el barrido, validada por su tabla de punteros como siempre. Quitada la corrección del cap
+escribiendo en memoria (`AzaharGameWriter.EnforceLevelCap`, `NeedsCapping`, `CapLiveStats`, `LevelCapTable.CorrectInMemory`,
+`corregirEnMemoria` de `levelcaps.json`, sus tests y la escritura de la sonda `--equipo --cap`): el cap lo pone el juego y
+`GameLinkMonitor` solo avisa. Se quedan como reserva las búsquedas de zona, equipo, mochila y contadores (si la cadena no
+vale, la detección de muertes no puede quedarse ciega) y la retirada de balls (para `gameRulePatches: false` desde Admin).
+Variocolor decidido por el juego: no hecho; en 175 combates de los logs la app supo el salvaje en ≤ 0,6 s, antes de que se
+pueda abrir la mochila.
+
+**NOVEDADES en JUGAR, como en Steam** (mismo día, pedido del organizador): `Services/ReleaseNotes` lee `Novedades.txt`
+(incrustado; la línea de versión lleva ahora su fecha, `1.0.9 2026-10-06`, sacada de git para las ya publicadas) y
+`LauncherView` pinta debajo de los enlaces la última versión en una tarjeta grande (cartel, ACTUALIZACIÓN/PARCHE —tres o
+cuatro números—, título, resumen, «hace N días») y las dos anteriores al lado. Una tarjeta abre `ChangelogWindow(versión)`
+como un evento; VER TODAS, el historial. Nueva opción de capturas `--alto N`. Tests: `ReleaseNotesTests`.

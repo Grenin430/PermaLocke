@@ -11,7 +11,7 @@ namespace PermaLocke.Probe;
 /// decide a Pokémon's level side by side.
 /// </summary>
 /// <remarks>
-/// The level cap writes into the party in memory and the game was undoing it. Which copy the game
+/// Written when the level cap was enforced by writing into the party in memory (removed in 1.0.9). Which copy the game
 /// actually reads is the question that decides whether the cap can work at all, and this is how it
 /// gets answered: write to one, look at all of them, and see which ones moved.
 /// </remarks>
@@ -73,44 +73,11 @@ public static class PartyLiveProbe
             Console.WriteLine();
         }
 
-        if (cap is not { } wanted)
+        if (cap is not null)
         {
-            Console.WriteLine("Para probar la escritura: Probe --equipo --cap 24");
-            return 0;
+            // Desde la 1.0.9 el cap lo pone el juego parcheado (RulePatches); la escritura en memoria se quitó.
+            Console.WriteLine("--cap ya no escribe: el cap lo pone el propio juego (gameRulePatches).");
         }
-
-        Console.WriteLine($"Aplicando el cap {wanted} a todo lo que esté por encima, copia por copia:");
-        Console.WriteLine();
-
-        foreach (var layout in layouts)
-        {
-            for (var slot = 0; slot < 6; slot++)
-            {
-                var address = layout.SlotAddress(slot);
-
-                if (writer.Read(address) is not { Species: > 0 } pokemon || !pokemon.ChecksumValid)
-                {
-                    continue;
-                }
-
-                if (pokemon.CurrentLevel <= wanted)
-                {
-                    continue;
-                }
-
-                var result = writer.EnforceLevelCap(address, wanted, pokemon.PID);
-                var name = pokemon.Species < names.Length ? names[pokemon.Species] : "?";
-
-                Console.WriteLine($"   0x{address:X8} {name,-12} nivel {pokemon.CurrentLevel,3} -> "
-                                  + (result.Applied ? "ESCRITO Y RELEIDO"
-                                      : result.Rejected ? $"RECHAZADO ({result.Verified}/{result.Written} bytes)"
-                                      : "no se ha tocado"));
-            }
-        }
-
-        Console.WriteLine();
-        Console.WriteLine("Vuelve a ejecutar Probe --equipo dentro del juego y despues de un combate:");
-        Console.WriteLine("lo que vuelva a subir dice que copia manda de verdad.");
 
         return 0;
     }

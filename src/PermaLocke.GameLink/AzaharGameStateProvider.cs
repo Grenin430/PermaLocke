@@ -291,6 +291,24 @@ public sealed class AzaharGameStateProvider(
             return new GameSnapshot(true, null, cachedParty, now, TrainerNotice());
         }
 
+        // El equipo que el propio juego tiene en GameData (2026-10-06): sin barrer y siempre el bueno. Si la cadena no
+        // lleva a un equipo legible (juego cargando, otro code.bin), se sigue como siempre.
+        if (FromGame(reader) is { } own && ReadParty(reader, own) is { Count: > 0 } ownParty)
+        {
+            if (_layout != own)
+            {
+                logger.LogInformation("Equipo en 0x{Address:X8}, el que dice el juego, sin barrer", own.Address);
+            }
+
+            _allLayouts = PartyLayoutLocator.Distinct([own, .. _remembered ??= ReadRemembered()]);
+            _layout = own;
+            _notReadyPolls = 0;
+            _fruitlessSweeps = 0;
+            _sweepNext = false;
+            _gameTrainer = own.TrainerName;
+            return new GameSnapshot(true, null, ownParty, now, TrainerNotice());
+        }
+
         // Antes de barrer, se prueban las direcciones de la última sesión. Un barrido son 96 MB
         // y decenas de miles de peticiones, y hacerlo en cada arranque llegó a tumbar el
         // emulador. Fiarse de ellas es seguro porque no se confía: cada copia tiene que devolver
@@ -477,6 +495,56 @@ public sealed class AzaharGameStateProvider(
     private PartyLayout? Choose(Pk7Reader reader, IReadOnlyList<PartyLayout> candidates) =>
         PartyLayoutLocator.Preferred(
             candidates.Select(layout => (Layout: layout, Read: ReadParty(reader, layout).Count)));
+
+    private const uint GameManagerPointer = 0x006A3984, GameDataOffset = 0x24, PartyOffset = 0x0C;
+    private const uint LinearHeap = 0x30000000, LinearHeapEnd = 0x34000000;
+
+    /// <summary>
+    /// The party the game itself holds (2026-10-06, measured on the running game): the GameManager the code.bin keeps at
+    /// 0x6A3984, its GameData at +0x24 (what <c>GameData::GetNowZoneID</c> reads), and GameData +0xC the
+    /// <c>PokeParty</c>: six pointers to the members in party order and their count at +0x18. Each member points at +4 to
+    /// its stored block, an entry of the authoritative structure (stride 0x1E4), so the lowest one is its first slot.
+    /// </summary>
+    private PartyLayout? FromGame(Pk7Reader reader)
+    {
+        static bool InHeap(uint address) => address is >= LinearHeap and < LinearHeapEnd;
+
+        try
+        {
+            var manager = BitConverter.ToUInt32(client.ReadMemory(GameManagerPointer, 4));
+            if (!InHeap(manager)) return null;
+            var data = BitConverter.ToUInt32(client.ReadMemory(manager + GameDataOffset, 4));
+            if (!InHeap(data)) return null;
+            var party = BitConverter.ToUInt32(client.ReadMemory(data + PartyOffset, 4));
+            if (!InHeap(party)) return null;
+
+            var head = client.ReadMemory(party, 0x1C);
+            var count = head[0x18];
+            if (count is 0 or > 6) return null;
+
+            var entries = new List<uint>();
+            for (var i = 0; i < count; i++)
+            {
+                var member = BitConverter.ToUInt32(head, i * 4);
+                if (!InHeap(member)) return null;
+                var entry = BitConverter.ToUInt32(client.ReadMemory(member + 4, 4));
+                if (!InHeap(entry)) return null;
+                entries.Add(entry);
+            }
+
+            var first = entries.Min();
+            const uint Stride = PartyLayoutLocator.AuthoritativeStride;
+            if (entries.Any(e => (e - first) % Stride != 0 || e - first >= 6 * Stride)) return null;
+
+            var trainer = reader.TryRead(first, PartyLayoutLocator.AuthoritativeStatsOffset)?.TrainerName ?? string.Empty;
+            return new PartyLayout(first, Stride, trainer);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return null;
+        }
+    }
+
 
     /// <summary>Layouts found last session, if any. Never used without revalidating them.</summary>
     private IReadOnlyList<PartyLayout> ReadRemembered()

@@ -671,6 +671,10 @@ public partial class App : Application
 
             if (args.Contains("--ruleta", StringComparer.OrdinalIgnoreCase)) main.PreviewRoulette();
 
+            // --alto 2000: una ventana más alta, para ver de una vez lo que en pantalla queda por debajo.
+            var tallAt = Array.FindIndex(args, arg => string.Equals(arg, "--alto", StringComparison.OrdinalIgnoreCase));
+            if (tallAt >= 0 && tallAt + 1 < args.Length && double.TryParse(args[tallAt + 1], out var tall)) window.Height = tall;
+
             var listAt = Array.FindIndex(args, arg => string.Equals(arg, "--pantallas", StringComparison.OrdinalIgnoreCase));
             var titles = listAt >= 0 && listAt + 1 < args.Length
                 ? args[listAt + 1].Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)

@@ -33,7 +33,9 @@ public sealed class EncounterRecoveryTests : IAsyncLifetime
     {
         Directory.CreateDirectory(Path.GetDirectoryName(SavePath)!);
         File.WriteAllText(Path.Combine(_root, "Emulator", "azahar.exe"), "");
-        _client = new("127.0.0.1", ((IPEndPoint)_server.Client.LocalEndPoint!).Port, 100);
+        // 1 s y no 100 ms: en un ejecutor de GitHub cargado la respuesta por UDP local tardó más y el test falló sin
+        // motivo al publicar la 1.0.8 (2026-10-01). Aquí ninguna prueba espera a que se agote el plazo.
+        _client = new("127.0.0.1", ((IPEndPoint)_server.Client.LocalEndPoint!).Port, 1000);
         _saved = new(new PlayerSave(new AzaharInstallation(NullLogger<AzaharInstallation>.Instance), _client, _root));
         _bag = new(_client, null!, Path.Combine(_root, "ledger.json"), BagPath, NullLogger<BagService>.Instance);
         _serving = Task.Run(async () =>
@@ -338,7 +340,8 @@ public sealed class EncounterRecoveryTests : IAsyncLifetime
         var faint = Assert.Single(tracker.Observe(reader.Read(_time.GetUtcNow())));
         Assert.True(faint.IsPlayers);
         Assert.Equal(0, faint.BattleId);
-        Assert.Equal(1, _searches);
+        // Las tablas están donde siempre: se leen sin buscar ni una vez (2026-10-06).
+        Assert.Equal(0, _searches);
     }
 
     [Fact]
@@ -354,7 +357,8 @@ public sealed class EncounterRecoveryTests : IAsyncLifetime
         BattleMemory(35, 0x10000);
         _time.Advance(3);
         Assert.Equal(2, reader.Read(_time.GetUtcNow()).Count);
-        Assert.Equal(2, _searches);
+        // La primera vez estaban donde siempre y no hizo falta buscar; la que se ha movido sí se busca.
+        Assert.Equal(1, _searches);
     }
 
     [Fact]

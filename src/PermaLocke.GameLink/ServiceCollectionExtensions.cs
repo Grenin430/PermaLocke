@@ -29,7 +29,8 @@ public static class ServiceCollectionExtensions
             Path.Combine(backupFolder, "objetos-retirados.txt"),
             Path.Combine(backupFolder, "mochila.txt"),
             sp.GetRequiredService<ILogger<BagService>>(),
-            sp.GetRequiredService<Field.SavedGameCache>()));
+            sp.GetRequiredService<Field.SavedGameCache>(),
+            sp.GetRequiredService<Field.LiveSave>()));
 
         services.TryAddSingleton(sp => new AzaharGameWriter(
             sp.GetRequiredService<AzaharRpcClient>(),
@@ -95,6 +96,7 @@ public static class ServiceCollectionExtensions
         // La zona, los contadores del juego y la Pokédex (§117). FieldZoneReader necesita la MapTable, que
         // registra quien sabe dónde está Data/mapas.json.
         services.TryAddSingleton<Field.SavedGameCache>();
+        services.TryAddSingleton<Field.LiveSave>();
         services.TryAddSingleton(sp => new Field.FieldZoneReader(
             sp.GetRequiredService<AzaharRpcClient>(),
             sp.GetRequiredService<Field.SavedGameCache>(),

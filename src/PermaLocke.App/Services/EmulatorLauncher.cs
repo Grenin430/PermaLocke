@@ -102,6 +102,7 @@ public sealed partial class EmulatorLauncher : ObservableObject
     private readonly Notifier _notifier;
     private readonly IntegrityGuard _integrity;
     private readonly OrderService _orders;
+    private readonly PermaLocke.Rules.RulesConfiguration _rules;
 
     /// <summary>Why the organiser closed JUGAR for this run, or null when it is open (2026-09-26).</summary>
     private string? _lockReason;
@@ -126,9 +127,11 @@ public sealed partial class EmulatorLauncher : ObservableObject
 
     public EmulatorLauncher(AzaharInstallation azahar, AppPaths paths, IRunContext runContext,
         IPlaytimeStore playtime, BattleModeService battle, EmulatorCrashReport crashes, CrashReportUpload reports,
-        Notifier notifier, AppSettings settings, IntegrityGuard integrity, OrderService orders, ILogger<EmulatorLauncher> logger)
+        Notifier notifier, AppSettings settings, IntegrityGuard integrity, OrderService orders,
+        PermaLocke.Rules.RulesConfiguration rules, ILogger<EmulatorLauncher> logger)
     {
         _settings = settings;
+        _rules = rules;
         _integrity = integrity;
         _orders = orders;
         _crashes = crashes;
@@ -387,10 +390,27 @@ public sealed partial class EmulatorLauncher : ObservableObject
         // un Azahar abierto la reescribiría al salir.
         _azahar.EnsureRpcEnabled(location);
         _azahar.DisableCloseConfirmation(location);
+        _azahar.SetSpeedLimit(location, 200);
         _azahar.DisableDiscordPresence(location);
         _azahar.SetFollower(location, Path.Combine(_paths.Root, "Emulator", "follower", AzaharInstallation.FollowerPluginName),
             _settings.Current.Follower);
         _integrity.PrepareLaunch(location);
+
+        // Las reglas dentro del juego (2026-10-06): cap en combate y en el Caramelo Raro. Ahora, con el emulador cerrado,
+        // porque code.ips solo se lee al arrancar; apagadas en rules.json se quitan. Un fallo no impide jugar: la app
+        // sigue vigilando el cap desde fuera.
+        try
+        {
+            foreach (var line in Randomizer.Rom.RulePatches.Apply(
+                         AzaharInstallation.ModDirectory(location, LayeredFsMod.UltraMoonProgramId), _rules.GameRulePatches))
+            {
+                _logger.LogInformation("Reglas en el juego: {Line}", line);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "No se han podido poner o quitar las reglas en el juego");
+        }
 
         try
         {
@@ -527,7 +547,7 @@ public sealed partial class EmulatorLauncher : ObservableObject
                     // con él (2026-09-26).
                     if (_integrity.Enabled && !EmulatorJob.Attach(process))
                     {
-                        _logger.LogWarning("Windows no ha dejado atar Azahar a PermaLocke");
+                        _logger.LogWarning("Windows no ha dejado atar Azahar a PermaLocke (error {Error})", EmulatorJob.LastError);
                     }
                 }
 

@@ -14,13 +14,9 @@ namespace PermaLocke.GameLink.Tests;
 public sealed class WorldLimitsCollection;
 
 /// <summary>
-/// The level cap brings down the level the game SHOWS, with the stats that go with it, in the structure it reads.
+/// A fallen Pokémon on the bench of a battle, put down to zero in the battle itself, against a fake emulator holding a real,
+/// encrypted Pokémon. (Until 1.0.9 this file also tested the level cap written into memory, which the patched game replaced.)
 /// </summary>
-/// <remarks>
-/// Found on 2026-09-21: the log said «corregido y releído» and the party menu still said 15 with a cap of 14. The cap
-/// predated §99 and only lowered the experience; the level the menu shows lives in the 28 bytes at <c>0x158</c>. These
-/// run the real writer against a fake emulator holding a real, encrypted Pokémon.
-/// </remarks>
 [Collection("WorldLimits")]
 public sealed class LevelCapLiveTests : IAsyncLifetime
 {
@@ -148,100 +144,6 @@ public sealed class LevelCapLiveTests : IAsyncLifetime
         var bytes = new byte[pokemon.SIZE_PARTY];
         pokemon.WriteEncryptedDataParty(bytes);
         return bytes;
-    }
-
-    /// <summary>The structure the game reads: the stored block, then its stats 0x158 bytes in.</summary>
-    private void Authoritative(PK7 pokemon)
-    {
-        var bytes = new byte[PartyLayoutLocator.AuthoritativeStride];
-        var encrypted = Encrypted(pokemon);
-        encrypted.AsSpan(0, 0xE8).CopyTo(bytes);
-        encrypted.AsSpan(0xE8).CopyTo(bytes.AsSpan((int)PartyLayoutLocator.AuthoritativeStatsOffset));
-        lock (_memory) _memory[Base] = bytes;
-    }
-
-    [Fact]
-    public void The_level_the_game_shows_comes_down_with_the_stats_of_that_level()
-    {
-        Authoritative(Pokemon(15));
-        using var client = Client();
-        var writer = Writer(client);
-
-        var result = writer.EnforceLevelCap(Base, cap: 14, Pid);
-
-        Assert.True(result.Applied);
-        var after = writer.ReadAuthoritative(Base)!;
-        Assert.Equal(14, after.Stat_Level);
-        Assert.Equal(14, GameLevels.Of(after));
-
-        var expected = StatsAt(14);
-        int[] written = [after.Stat_HPMax, after.Stat_ATK, after.Stat_DEF, after.Stat_SPA, after.Stat_SPD, after.Stat_SPE];
-        Assert.Equal(expected, written);
-
-        // Los PS actuales bajan lo mismo que el máximo: el daño que llevaba lo sigue llevando.
-        Assert.Equal(expected[0] - 5, after.Stat_HPCurrent);
-        Assert.True(PartyStats.AreHere(after));
-    }
-
-    /// <summary>Twenty rare candies and a cap must not leave a level 14 with level 34 stats.</summary>
-    [Fact]
-    public void Candies_past_the_cap_do_not_keep_their_stats()
-    {
-        Authoritative(Pokemon(34));
-        using var client = Client();
-        var writer = Writer(client);
-
-        writer.EnforceLevelCap(Base, cap: 14, Pid);
-
-        var after = writer.ReadAuthoritative(Base)!;
-        Assert.Equal(14, after.Stat_Level);
-        Assert.Equal(StatsAt(14)[1], after.Stat_ATK);
-    }
-
-    /// <summary>Zero PS is a death in this project (§98): the cap must not revive anybody.</summary>
-    [Fact]
-    public void A_fallen_pokemon_stays_at_zero()
-    {
-        Authoritative(Pokemon(15, dead: true));
-        using var client = Client();
-        var writer = Writer(client);
-
-        writer.EnforceLevelCap(Base, cap: 14, Pid);
-
-        var after = writer.ReadAuthoritative(Base)!;
-        Assert.Equal(14, after.Stat_Level);
-        Assert.Equal(0, after.Stat_HPCurrent);
-    }
-
-    /// <summary>Somebody else in the slot is left alone, stats tail included.</summary>
-    [Fact]
-    public void Another_pokemon_in_the_slot_is_not_touched()
-    {
-        Authoritative(Pokemon(15));
-        byte[] before;
-        lock (_memory) before = (byte[])_memory[Base].Clone();
-        using var client = Client();
-
-        var result = Writer(client).EnforceLevelCap(Base, cap: 14, expectedPid: 0xDEADBEEF);
-
-        Assert.False(result.Applied);
-        lock (_memory) Assert.Equal(before, _memory[Base]);
-    }
-
-    /// <summary>Without the installed world's base stats there is no honest number: the level comes down, the stats stay.</summary>
-    [Fact]
-    public void Without_the_world_table_only_the_level_comes_down()
-    {
-        Authoritative(Pokemon(15));
-        WorldLimits.BaseStats = [];
-        using var client = Client();
-        var writer = Writer(client);
-
-        writer.EnforceLevelCap(Base, cap: 14, Pid);
-
-        var after = writer.ReadAuthoritative(Base)!;
-        Assert.Equal(14, after.Stat_Level);
-        Assert.Equal(StatsAt(15)[0], after.Stat_HPMax);
     }
 
     private const uint BlockHeader = 0x30010000;

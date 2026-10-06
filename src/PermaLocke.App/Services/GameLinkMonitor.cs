@@ -441,6 +441,7 @@ public sealed class GameLinkMonitor(
         // un segundo. Esto no se podía hacer hasta el §99, porque hasta entonces PermaLocke solo
         // sabía escribir en el espejo y el juego no lo lee.
         await KeepFallenDownAsync(run, snapshot);
+        await TellGameTheDupesAsync(run, snapshot);
 
         if (findings.NewMembers.Count > 0)
         {
@@ -791,45 +792,120 @@ public sealed class GameLinkMonitor(
         return true;
     }
 
-    /// <summary>
-    /// The Pokémon already brought down to the cap, so a correction the game undoes can be told
-    /// apart from a first one.
-    /// </summary>
-    /// <remarks>
-    /// Keyed by PID, which survives nicknames and evolutions. Without it every revert looks like a
-    /// fresh problem, and the log fills with identical lines that never say the one thing worth
-    /// knowing: that the correction is not holding.
-    /// </remarks>
-    private readonly Dictionary<uint, int> _cappedAt = [];
-
-    /// <summary>Polls in a row with nobody over the cap. The record of who has been corrected
-    /// is only forgotten after a good few, never on the first quiet one.</summary>
-    private int _calmPolls;
-
-    /// <summary>Roughly a minute at the monitor's cadence.</summary>
-    private const int CalmPollsBeforeForgetting = 20;
-
-    /// <summary>Why the cap is not being applied, or empty when it is. Shown on HOME.</summary>
+    /// <summary>Who is over the cap, or empty. Shown on HOME.</summary>
     public string CapProblem { get; private set; } = string.Empty;
 
+    /// <summary>The cap last written into the patched game's block, and when.</summary>
+    private (int Cap, DateTime At)? _toldCap;
+
     /// <summary>
-    /// Brings anything above the cap back down, in the game and in the history.
+    /// With the rules inside the game on (rules.json <c>gameRulePatches</c>), the cap goes into the block the patched game
+    /// reads (2026-10-06): when it changes, and every ten seconds, because restarting the game empties the block without
+    /// PermaLocke seeing a disconnection. One write of eight bytes at a fixed address; the correction below stays as the net.
     /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Applied to every copy of the party for the same reason as the death transform: the one the
-    /// game reads is among them.
-    /// </para>
-    /// <para>
-    /// Nothing is recorded that has not been read back. The writer verifies the bytes and then the
-    /// level itself, so a correction the emulator swallowed is a warning here and not an event
-    /// claiming the run enforced something it did not.
-    /// </para>
-    /// </remarks>
+    private void TellGameTheCap(int cap)
+    {
+        if (!rules.GameRulePatches || (_toldCap is { } told && told.Cap == cap && DateTime.UtcNow - told.At < TimeSpan.FromSeconds(10)))
+        {
+            return;
+        }
+
+        try
+        {
+            if (writer.WriteRuleCap(cap))
+            {
+                if (_toldCap?.Cap != cap) logger.LogInformation("Cap {Cap} escrito para el juego parcheado", cap);
+                _toldCap = (cap, DateTime.UtcNow);
+            }
+            else
+            {
+                logger.LogWarning("El cap {Cap} no se ha quedado en el bloque de reglas del juego", cap);
+                _toldCap = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "No se ha podido escribir el cap para el juego parcheado");
+            _toldCap = null;
+        }
+    }
+
+    /// <summary>The fallen list last written into the patched game's block, and when.</summary>
+    private (string Key, DateTime At)? _toldFallen;
+
+    /// <summary>
+    /// With the rules inside the game on, the encryption constants of the fallen in the party go into the block the patched
+    /// game reads, so every heal leaves them at zero HP (2026-10-06). Same rhythm as <see cref="TellGameTheCap"/>.
+    /// </summary>
+    private void TellGameTheFallen(IReadOnlyCollection<uint> constants)
+    {
+        var key = string.Join(",", constants.Order());
+
+        if (!rules.GameRulePatches || (_toldFallen is { } told && told.Key == key && DateTime.UtcNow - told.At < TimeSpan.FromSeconds(10)))
+        {
+            return;
+        }
+
+        try
+        {
+            if (writer.WriteRuleFallen(constants))
+            {
+                if (_toldFallen?.Key != key) logger.LogInformation("Caídos para el juego parcheado: {Count}", constants.Count);
+                _toldFallen = (key, DateTime.UtcNow);
+            }
+            else
+            {
+                logger.LogWarning("La lista de caídos no se ha quedado en el bloque de reglas del juego");
+                _toldFallen = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "No se ha podido escribir la lista de caídos para el juego parcheado");
+            _toldFallen = null;
+        }
+    }
+
+    /// <summary>When the duplicates were last written into the patched game's block.</summary>
+    private DateTime _toldDupesAt;
+
+    /// <summary>
+    /// With the rules inside the game on, the species of every family the run already has go into the block the patched
+    /// game reads, and a wild slot of one of them is rolled again (2026-10-06). Every fifteen seconds: it reads the save's
+    /// Pokédex, and a capture is followed by the end of the battle long before the next encounter.
+    /// </summary>
+    private async Task TellGameTheDupesAsync(Run run, GameSnapshot snapshot)
+    {
+        if (!rules.GameRulePatches || !snapshot.Connected || DateTime.UtcNow - _toldDupesAt < TimeSpan.FromSeconds(15))
+        {
+            return;
+        }
+
+        _toldDupesAt = DateTime.UtcNow;
+
+        try
+        {
+            var species = rules.For(RuleIds.DupesClause).Enabled
+                ? await encounterGuard.DuplicateSpeciesAsync(run, RuleBlock.DupesSpeciesLimit, _stopping.Token)
+                : new HashSet<int>();
+
+            if (!writer.WriteRuleDupes(species))
+            {
+                logger.LogWarning("La lista de duplicados no se ha quedado en el bloque de reglas del juego");
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogWarning(ex, "No se ha podido escribir la lista de duplicados para el juego parcheado");
+        }
+    }
+
     private async Task EnforceLevelCapAsync(Run run, GameSnapshot snapshot)
     {
         if (!snapshot.Connected)
         {
+            _toldCap = null;
+            _toldFallen = null;
             // Sin juego no hay nada que corregir, y decir que el cap «no se está aplicando» con
             // Azahar cerrado es alarmar por lo evidente: de eso ya avisa la tira del enlace. El
             // aviso rojo tiene que significar que el juego está delante y aun así no se aplica.
@@ -842,137 +918,20 @@ public sealed class GameLinkMonitor(
             return;
         }
 
+        TellGameTheCap(cap);
+
         if (provider.AllLayouts.Count == 0)
         {
             CapProblem = "El nivel máximo no se está vigilando ahora mismo.";
             return;
         }
 
-        var over = snapshot.Party.Where(m => m.Level > cap).ToList();
-
-        // Aviso primero, y sin escribir nada, que es como lo hace la competición.
-        //
-        // Medido sobre los binarios de la referencia: NO accede a la memoria del emulador por
-        // ningún sitio -- ni WriteMemory, ni RPC, ni el puerto 45987 -- y del cap tiene un único
-        // símbolo, el getter de la lista. Allí el cap es una regla que el jugador cumple y la
-        // aplicación le enseña. Forzarlo reescribiendo el juego en marcha es una pelea que no se
-        // gana: el equipo vive en veinticinco sitios de la memoria a la vez, el juego lo restaura
-        // desde el que quiere, y una escritura que entra y se relee bien pierde igual. Y cuando
-        // sale mal no falla, CAMBIA el Pokémon de alguien: el §53 evolucionó un Ledyba así.
-        if (over.Count > 0)
-        {
-            var who = string.Join(", ",
-                over.Select(m => $"{m.SpeciesName} (Nv.{m.Level})"));
-
-            CapProblem = caps.CorrectInMemory
-                ? $"{who} pasa del nivel máximo ({cap}). Se está corrigiendo: vuelve a abrir el menú para verlo."
-                : $"{who} pasa del nivel máximo ({cap}).";
-        }
-
-        if (!caps.CorrectInMemory)
-        {
-            if (over.Count == 0)
-            {
-                CapProblem = string.Empty;
-            }
-
-            return;
-        }
-
-        if (over.Count == 0)
-        {
-            CapProblem = string.Empty;
-
-            // No se olvida a la primera lectura buena, y ese detalle es el que ocultó el fallo.
-            // El equipo vive en varias copias y no todas se corrigen a la vez, así que en cuanto
-            // una lectura caía por debajo del cap el registro se borraba entero -- y la siguiente
-            // corrección del MISMO Pokémon volvía a parecer la primera. Tres seguidas en un
-            // minuto, ninguna marcada como repetición, y el aviso rojo nunca llegó a salir.
-            if (++_calmPolls >= CalmPollsBeforeForgetting)
-            {
-                _cappedAt.Clear();
-            }
-
-            return;
-        }
-
-        _calmPolls = 0;
-
-        foreach (var member in over)
-        {
-            // Con el PID por delante: el hueco tiene que contener a ESE Pokémon. El equipo vive en
-            // varias estructuras y no todas se leen igual, así que sin esta comprobación una copia
-            // desalineada se corrige igual y lo que se corrige es el de al lado.
-            var results = provider.AllLayouts
-                .Select(layout => writer.EnforceLevelCap(layout.SlotAddress(member.Slot), cap, member.Pid))
-                .ToList();
-
-            var applied = results.Count(r => r.Applied);
-            var rejected = results.Count(r => r.Rejected);
-
-            if (applied == 0)
-            {
-                CapProblem = rejected > 0
-                    ? $"{member.SpeciesName} pasa del nivel máximo ({cap}) y no se ha podido corregir. Usa el Azahar que viene con PermaLocke."
-                    : $"{member.SpeciesName} pasa del nivel máximo ({cap}) y no se ha podido corregir.";
-
-                logger.LogWarning("{Pokemon} a nivel {Level} con cap {Cap}: {Rejected} copias rechazaron "
-                                  + "la escritura y ninguna la aceptó", member.SpeciesName, member.Level,
-                    cap, rejected);
-                continue;
-            }
-
-            // Corregirlo otra vez significa que algo lo deshizo entre medias. Eso es información,
-            // no ruido: es la diferencia entre "el cap funciona" y "el cap se pelea y pierde".
-            var again = _cappedAt.ContainsKey(member.Pid);
-            _cappedAt[member.Pid] = cap;
-
-            // Se vuelve a barrer SIEMPRE que hay que corregir, no solo cuando se repite.
-            //
-            // Esperar a la repetición no valía, y el motivo es que el monitor lee y escribe LA
-            // MISMA copia: corrige la que lee, la relee correcta, y la copia desde la que el juego
-            // restaura el nivel le es invisible. La repetición que dispararía el barrido no puede
-            // llegar a detectarse. Medido en la run real: cinco estructuras del equipo en memoria
-            // y la lista de escritura tenía UNA.
-            //
-            // Y ahora se puede pagar. El barrido costaba diez minutos cuando se midió, pero
-            // aquello fue antes de que el §54 arreglase el cliente RPC, que perdía respuestas y
-            // reintentaba: hoy son unos cinco segundos, cronometrados. Corregir el cap es raro
-            // -- solo pasa al pasarse de nivel --, así que cinco segundos por acertar es barato.
-            provider.SweepAgain();
-
-            if (again)
-            {
-                CapProblem = $"{member.SpeciesName} vuelve a pasar del nivel máximo. Se está corrigiendo.";
-            }
-
-            logger.LogWarning(
-                "{Pokemon} estaba a nivel {Level}, cap {Cap}. Corregido y releído en {Copies} copias{Again}",
-                member.SpeciesName, member.Level, cap, applied,
-                again ? " (el juego lo había deshecho)" : string.Empty);
-
-            await events.AppendAsync(new GameEvent
-            {
-                Id = Guid.NewGuid(),
-                RunId = run.Id,
-                Timestamp = clock.Now,
-                Type = GameEventType.LevelCapEnforced,
-                Source = EventSource.AutoDetect,
-                Actor = run.PlayerName,
-                Description = $"{member.SpeciesName} superaba el cap ({member.Level} > {cap}). "
-                              + "Devuelto al cap y comprobado en la memoria del juego"
-                              + (again ? ", después de que el juego lo deshiciera." : "."),
-                Data = new Dictionary<string, string>
-                {
-                    ["nivel"] = member.Level.ToString(),
-                    ["cap"] = cap.ToString(),
-                    ["hueco"] = member.Slot.ToString(),
-                    ["copias"] = applied.ToString(),
-                    ["rechazadas"] = rejected.ToString(),
-                    ["repetida"] = again.ToString()
-                }
-            }, _stopping.Token);
-        }
+        // Solo aviso (1.0.9): el cap lo pone el propio juego (RulePatches) y esto queda para lo que el parche no cubre
+        // (isla del Poké Resort, regalos, lo que da el Admin). La corrección escribiendo en memoria se quitó: el equipo vive
+        // en muchas copias y una escritura mal dirigida cambia el Pokémon de alguien (§53).
+        CapProblem = snapshot.Party.Where(m => m.Level > cap).ToList() is { Count: > 0 } over
+            ? $"{string.Join(", ", over.Select(m => $"{m.SpeciesName} (Nv.{m.Level})"))} pasa del nivel máximo ({cap})."
+            : string.Empty;
     }
 
     /// <summary>
@@ -1196,6 +1155,8 @@ public sealed class GameLinkMonitor(
         {
             var fallen = await watcher.FallenPidsAsync(run.Id, _stopping.Token);
             var here = snapshot.Party.Where(m => fallen.Contains(m.Pid)).ToList();
+            var downAgain = new List<string>();
+            var constants = new HashSet<uint>();
 
             foreach (var member in here)
             {
@@ -1220,6 +1181,7 @@ public sealed class GameLinkMonitor(
                         }
 
                         seen = true;
+                        constants.Add(found.EncryptionConstant);
 
                         if (found.Stat_HPCurrent > 0 && writer.SetLiveHp(at, 0, member.Pid).Applied)
                         {
@@ -1253,7 +1215,21 @@ public sealed class GameLinkMonitor(
                 logger.LogWarning("{Pokemon} está caído y le habían devuelto los PS: al suelo otra vez"
                                   + " ({Copias} copias)", name, applied);
 
-                Announce(() => DeathMarked?.Invoke(this, $"{name} sigue caído."));
+                downAgain.Add(name);
+            }
+
+            // Un aviso para todos y no uno por Pokémon: tras un Centro Pokémon con tres caídos salían tres seguidos
+            // (log del 2026-09-29). Con las reglas en el juego no hay aviso: el juego ya no los cura, y lo que quede
+            // (un caído curado antes de que llegue la lista) se corrige en silencio, solo en el log.
+            TellGameTheFallen(constants);
+
+            if (downAgain.Count > 0 && !rules.GameRulePatches)
+            {
+                var names = downAgain.Count == 1
+                    ? downAgain[0]
+                    : string.Join(", ", downAgain.Take(downAgain.Count - 1)) + " y " + downAgain[^1];
+                var notice = downAgain.Count == 1 ? $"{names} sigue caído." : $"{names} siguen caídos.";
+                Announce(() => DeathMarked?.Invoke(this, notice));
             }
         }
         catch (Exception ex)

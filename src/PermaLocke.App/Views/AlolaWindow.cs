@@ -57,16 +57,14 @@ public sealed class AlolaWindow : ContentControl
         Content = image;
         UseLayoutRounding = true;
 
-        // WPF puede lanzar Loaded otra vez sin Unloaded entre medias (al volver a la sección): sin quitarlo antes, el
-        // fotograma se apuntaba dos o tres veces y la animación iba x2 o x3 (1.0.4.6).
-        Loaded += (_, _) =>
-        {
-            CompositionTarget.Rendering -= OnFrame;
-            CompositionTarget.Rendering += OnFrame;
-        };
-        Unloaded += (_, _) => CompositionTarget.Rendering -= OnFrame;
+        // Un temporizador a su ritmo y no CompositionTarget.Rendering, que obliga a pintar a 60 fps (ver AlolaBanner).
+        _timer.Tick += OnFrame;
+        Loaded += (_, _) => _timer.Start();
+        Unloaded += (_, _) => _timer.Stop();
         Paint();
     }
+
+    private readonly System.Windows.Threading.DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(166) };
 
     public double Hour
     {
@@ -79,7 +77,7 @@ public sealed class AlolaWindow : ContentControl
         // Seis fotogramas por segundo: olas y estrellas, nada que pida más.
         var now = _clock.Elapsed.TotalMilliseconds;
 
-        if (IsVisible && now - _lastFrame >= 166)
+        if (OnScreen.Showing(this) && now - _lastFrame >= 150)
         {
             _lastFrame = now;
             Paint();

@@ -51,15 +51,13 @@ public sealed class TrainerRoom : ContentControl
         Content = new Grid { ClipToBounds = true, UseLayoutRounding = true, Children = { _image } };
 
         SizeChanged += (_, _) => Reshape();
-        // WPF puede lanzar Loaded otra vez sin Unloaded entre medias (al volver a la sección): sin quitarlo antes, el
-        // fotograma se apuntaba dos o tres veces y la animación iba x2 o x3 (1.0.4.6).
-        Loaded += (_, _) =>
-        {
-            CompositionTarget.Rendering -= OnFrame;
-            CompositionTarget.Rendering += OnFrame;
-        };
-        Unloaded += (_, _) => CompositionTarget.Rendering -= OnFrame;
+        // Un temporizador a su ritmo y no CompositionTarget.Rendering, que obliga a pintar a 60 fps (ver AlolaBanner).
+        _timer.Tick += OnFrame;
+        Loaded += (_, _) => _timer.Start();
+        Unloaded += (_, _) => _timer.Stop();
     }
+
+    private readonly System.Windows.Threading.DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(250) };
 
     public TrainerRoomState? State
     {
@@ -129,7 +127,7 @@ public sealed class TrainerRoom : ContentControl
     {
         var step = _clock.ElapsedMilliseconds / 250;
 
-        if (IsVisible && step != _lastStep)
+        if (OnScreen.Showing(this) && step != _lastStep)
         {
             _lastStep = step;
             Paint();

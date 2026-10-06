@@ -217,7 +217,7 @@ public sealed class CemeteryCanvas : ContentControl
         // Treinta veces por segundo sobran para una niebla y unos fantasmas que flotan.
         var now = _clock.Elapsed.TotalMilliseconds;
 
-        if (now - _lastFrame >= 33)
+        if (now - _lastFrame >= 33 && OnScreen.Showing(this))
         {
             var elapsed = Math.Min(0.1, (now - _lastFrame) / 1000);
             _lastFrame = now;

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using PermaLocke.Core.Abstractions;
 using PermaLocke.Core.Domain;
 using PermaLocke.Data;
+using PermaLocke.GameLink;
 using PermaLocke.GameLink.Battle;
 using PermaLocke.GameLink.Field;
 using PermaLocke.Infrastructure;
@@ -54,6 +55,8 @@ public sealed class EncounterGuard(
     TrialZoneService trials,
     AppPaths paths,
     IClock clock,
+    RulesConfiguration rules,
+    AzaharGameWriter writer,
     ILogger<EncounterGuard> logger)
 {
     /// <summary>How old the confirmed zone may be for a battle to be placed in it.</summary>
@@ -723,6 +726,11 @@ public sealed class EncounterGuard(
             return false;
         }
 
+        if (rules.GameRulePatches)
+        {
+            return await RefuseInGameAsync(run, decision, zone, now, ct, species, shiny, allowed);
+        }
+
         var affected = await balls.ApplyAsync(run, decision, zone, ct);
         _applied = decision.Action;
         _appliedAt = now;
@@ -765,6 +773,54 @@ public sealed class EncounterGuard(
         return true;
     }
 
+
+    /// <summary>
+    /// With the rules inside the game on (2026-10-06), the patched battle menu refuses the ball itself, with the spent
+    /// zone's message and no ball spent: the bag is not touched. What was taken before the rules were on goes back.
+    /// </summary>
+    private async Task<bool> RefuseInGameAsync(Run run, EncounterDecision decision, FieldZone? zone, DateTimeOffset now,
+        CancellationToken ct, int? species, bool shiny, bool allowed)
+    {
+        var refuse = decision.Action == BallAction.Withhold;
+        var changed = decision.Action != _applied;
+        _applied = decision.Action;
+        _appliedAt = now;
+
+        try
+        {
+            if (!writer.WriteRuleBallRefusal(refuse ? RuleBlock.SpentZoneReason : (byte)0))
+            {
+                logger.LogWarning("El rechazo de balls no se ha quedado en el bloque de reglas del juego");
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "No se ha podido escribir el rechazo de balls para el juego parcheado");
+        }
+
+        await balls.ApplyAsync(run, decision with { Action = BallAction.GiveBack }, zone, ct);
+
+        if (!changed)
+        {
+            return false;
+        }
+
+        logger.LogInformation("Regla de primer encuentro en el juego: {Action}. {Reason}",
+            refuse ? "balls rechazadas" : "balls permitidas", decision.Reason);
+
+        // El juego ya dice por qué no se puede lanzar; el aviso queda para lo que es noticia.
+        if (!refuse && shiny)
+        {
+            Say(ToastKind.Shiny, "¡Es variocolor!", decision.Reason + " Puedes capturarlo.", species);
+        }
+        else if (!refuse && allowed)
+        {
+            Say(ToastKind.AllowedCapture, "Captura permitida", decision.Reason + " Puedes capturarlo.", species);
+        }
+
+        return true;
+    }
+
     /// <summary>
     /// What the team carries right now, from memory. A Pokémon the game gave away (the Totem Sticker reward, a gift) is
     /// not a capture, so it is not in the run; and until the player saves, the Pokédex of the save does not know it either
@@ -773,6 +829,23 @@ public sealed class EncounterGuard(
     private IReadOnlyCollection<int> _party = [];
 
     private async Task<bool> IsDuplicateAsync(Run run, int species, CancellationToken ct)
+    {
+        var owned = await OwnedAsync(run, ct);
+        var line = lines.GetLineId(species);
+        return owned.Any(own => lines.GetLineId(own) == line);
+    }
+
+    /// <summary>
+    /// Every species below <paramref name="limit"/> of a family the run already has, the same families
+    /// <see cref="IsDuplicateAsync"/> judges by: for the patched game, which rerolls them (2026-10-06).
+    /// </summary>
+    public async Task<IReadOnlySet<int>> DuplicateSpeciesAsync(Run run, int limit, CancellationToken ct)
+    {
+        var families = (await OwnedAsync(run, ct)).Select(lines.GetLineId).ToHashSet();
+        return Enumerable.Range(1, limit - 1).Where(species => families.Contains(lines.GetLineId(species))).ToHashSet();
+    }
+
+    private async Task<HashSet<int>> OwnedAsync(Run run, CancellationToken ct)
     {
         var owned = new HashSet<int>();
 
@@ -788,8 +861,7 @@ public sealed class EncounterGuard(
             owned.Add(entry.Species);
         }
 
-        var line = lines.GetLineId(species);
-        return owned.Any(own => lines.GetLineId(own) == line);
+        return owned;
     }
 
     private async Task<IReadOnlySet<string>> SpentAsync(Run run, DateTimeOffset now, CancellationToken ct)

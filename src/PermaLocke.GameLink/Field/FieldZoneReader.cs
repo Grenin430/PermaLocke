@@ -82,6 +82,28 @@ public sealed class FieldZoneReader(AzaharRpcClient client, SavedGameCache saved
                 return null;
             }
 
+            // El registro que el propio juego lleva en GameData (2026-10-06): [[0x6A3984] + 0x24] + 0x60, la misma cadena
+            // por la que su código de encuentros lee la zona (GameData::GetNowZoneID, +0x62). Sigue cada paso, no se barre
+            // nada, y vale para todos porque la cadena sale del code.bin del mod. Si no da una zona de la tabla, se cae a
+            // los registros buscados de siempre.
+            _own = GameRecord();
+            if (_own is { } own && ReadTracked([own], now) is [{ Zone: { } direct }])
+            {
+                _unknownSince = null;
+                _doubtSince = null;
+                _holding = false;
+                LastConfirmed = (direct, now);
+
+                if (direct.Map != _lastMap)
+                {
+                    logger.LogInformation("Zona: {Zone} (mapa {Map}, mundo {World}) — del juego", direct.LocationName,
+                        direct.Map, direct.World);
+                    _lastMap = direct.Map;
+                }
+
+                return direct;
+            }
+
             var tracked = ReadTracked(_records, now);
             var readings = tracked.Select(record => record.Zone).ToList();
             var (zone, byMotion) = Candidate(tracked, now);
@@ -196,12 +218,20 @@ public sealed class FieldZoneReader(AzaharRpcClient client, SavedGameCache saved
     /// Whether the player has walked since a moment (2026-09-28): the post-capture menus (name, party or PC, summary) and
     /// the battle never move the player, so a step means they are all closed. Reads only the known records, never searches.
     /// </summary>
+    /// <remarks>
+    /// Only the game's own record when it is known (2026-10-06): measured on a capture of Mime Jr., it did not change from the
+    /// battle to the first step 17 s later, while some of the records found by searching did, and the nickname vote came up
+    /// while the Pokédex was still registering it.
+    /// </remarks>
     public bool MovedSince(DateTimeOffset since)
     {
         lock (_gate)
         {
-            ReadTracked(_records, _time.GetUtcNow());
-            return _records.Any(address => _motion.TryGetValue(address, out var seen) && seen.LastMove > since);
+            // Se vuelve a pedir la dirección: si el juego se ha reiniciado mientras se espera, la de antes ya es de otro.
+            _own = GameRecord();
+            var watched = _own is { } own ? [own] : _records;
+            ReadTracked(watched, _time.GetUtcNow());
+            return watched.Any(address => _motion.TryGetValue(address, out var seen) && seen.LastMove > since);
         }
     }
 
@@ -209,6 +239,25 @@ public sealed class FieldZoneReader(AzaharRpcClient client, SavedGameCache saved
     public static readonly TimeSpan WalkingWindow = TimeSpan.FromSeconds(5);
 
     private readonly Dictionary<uint, (float X, float Y, float Z, DateTimeOffset LastMove, DateTimeOffset PreviousMove)> _motion = [];
+
+    /// <summary>Where the game's own record was last found; null while the chain does not lead to the heap.</summary>
+    private uint? _own;
+
+    private const uint GameManagerPointer = 0x006A3984, GameDataOffset = 0x24, GameRecordOffset = 0x60;
+
+    /// <summary>GameData's record of where the player is, through the GameManager the code.bin keeps at a fixed address.</summary>
+    private uint? GameRecord()
+    {
+        static bool InHeap(uint address) => address is >= LinearHeap and < LinearHeap + LinearHeapSize;
+
+        if (!client.TryReadMemory(GameManagerPointer, 4, out var m) || BitConverter.ToUInt32(m) is var manager && !InHeap(manager)
+            || !client.TryReadMemory(manager + GameDataOffset, 4, out var d) || BitConverter.ToUInt32(d) is var data && !InHeap(data))
+        {
+            return null;
+        }
+
+        return data + GameRecordOffset;
+    }
 
     /// <summary>Reads the records and notes which of them moved since the last read.</summary>
     private List<(uint Address, FieldZone? Zone)> ReadTracked(IEnumerable<uint> addresses, DateTimeOffset now)

@@ -34,6 +34,15 @@ public sealed class BattleTableReader(AzaharRpcClient client, ILogger<BattleTabl
     private const int SearchCap = 255;
 
     private IReadOnlyList<(uint Origin, int[] Ids)> _known = [];
+
+    /// <summary>
+    /// Where the tables were last found. Seeded with the two origins every battle in the test folder's logs used (2026-10-02 to
+    /// 10-06, wild and trainer): 0x30002748 and 0x30009730.
+    /// </summary>
+    private IReadOnlyList<uint> _origins = [0x30002748, 0x30009730];
+
+    /// <summary>The first opponent's position (a wild one, or a trainer's lead), and every position a table can hold.</summary>
+    private const int FirstOpponent = 12, Positions = 18;
     private DateTimeOffset _lastSearch = DateTimeOffset.MinValue;
     private int _failedReadings;
 
@@ -118,6 +127,19 @@ public sealed class BattleTableReader(AzaharRpcClient client, ILogger<BattleTabl
             logger.LogInformation("Las tablas del combate han dejado de validar; se vuelve a comprobar el combate");
             _known = [];
             _failedReadings = 0;
+
+            // La tabla que acaba de soltarse no se vuelve a coger en la misma vuelta: un bloque liberado es el final del combate.
+            return [];
+        }
+
+        // Antes que buscar: las tablas de la última vez, si su primer rival está vivo (2026-10-06). Dos lecturas pequeñas
+        // por vuelta en vez de una búsqueda cada tres segundos, y un combate de entrenador se ve en la primera vuelta.
+        if (AtKnownOrigins() is { Count: > 0 } quick)
+        {
+            _known = [.. quick.Select(table => (table.Origin, table.Blocks.Select(block => block.BattleId).ToArray()))];
+            logger.LogInformation("Combate en las tablas de siempre: {Origins}, {Blocks} Pokémon",
+                string.Join(", ", quick.Select(table => $"0x{table.Origin:X8}")), quick[0].Blocks.Count);
+            return quick;
         }
 
         if (now - _lastSearch < SearchEvery)
@@ -138,6 +160,7 @@ public sealed class BattleTableReader(AzaharRpcClient client, ILogger<BattleTabl
         if (battle.Count > 0)
         {
             _known = [.. battle.Select(table => (table.Origin, table.Blocks.Select(block => block.BattleId).ToArray()))];
+            _origins = [.. battle.Select(table => table.Origin)];
 
             logger.LogInformation("Combate localizado: {Tables} tablas en {Origins}, {Blocks} Pokémon",
                 battle.Count, string.Join(", ", battle.Select(table => $"0x{table.Origin:X8}")),
@@ -146,6 +169,35 @@ public sealed class BattleTableReader(AzaharRpcClient client, ILogger<BattleTabl
 
         return battle;
     }
+
+    /// <summary>The battle in the tables where they were last found, or empty when their first opponent is not alive.</summary>
+    private IReadOnlyList<BattleTable> AtKnownOrigins()
+    {
+        var blocks = new List<BattleBlock>();
+
+        foreach (var origin in _origins)
+        {
+            var probe = new BattleTable(origin, []);
+
+            if (!client.TryReadMemory(probe.HeaderOf(FirstOpponent), BattleLayout.ReadLength, out var first)
+                || BattleLayout.Parse(probe.HeaderOf(FirstOpponent), first) is not { BattleId: FirstOpponent })
+            {
+                continue;
+            }
+
+            for (var id = 0; id < Positions; id++)
+            {
+                if (client.TryReadMemory(probe.HeaderOf(id), BattleLayout.ReadLength, out var bytes)
+                    && BattleLayout.Parse(probe.HeaderOf(id), bytes) is { } block && block.BattleId == id)
+                {
+                    blocks.Add(block);
+                }
+            }
+        }
+
+        return BattleFaintTracker.InProgress(BattleTable.Group(blocks));
+    }
+
 
     private IReadOnlyList<BattleTable> Locate(uint start, uint size)
     {

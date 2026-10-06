@@ -152,6 +152,37 @@ public sealed class AzaharInstallation(ILogger<AzaharInstallation> logger)
     }
 
     /// <summary>
+    /// The emulation speed limit, in percent of the console (2026-10-06, asked by the organiser: 200 % every time the game
+    /// opens). Written with the emulator closed, like the other settings: Azahar saves its own on exit.
+    /// </summary>
+    public bool SetSpeedLimit(AzaharLocation location, int percent)
+    {
+        var configPath = Path.Combine(location.UserDirectory, "config", "qt-config.ini");
+
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(configPath)!);
+
+            var lines = File.Exists(configPath) ? File.ReadAllLines(configPath).ToList() : [];
+            var changed = SetValue(lines, "frame_limit", percent.ToString(System.Globalization.CultureInfo.InvariantCulture), "[Renderer]");
+            changed |= SetValue(lines, @"frame_limit\default", "false", "[Renderer]");
+
+            if (changed)
+            {
+                File.WriteAllLines(configPath, lines);
+                logger.LogInformation("Velocidad de Azahar al {Percent} % en {Path}", percent, configPath);
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "No se pudo poner la velocidad de Azahar en {Path}", configPath);
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Stops Azahar putting «Jugando a Azahar» in the player's Discord profile, so PermaLocke's own
     /// «Jugando a PermaLocke» is the one shown (§185).
     /// </summary>

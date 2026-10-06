@@ -1,59 +1,74 @@
-1.0.8
+1.0.9 2026-10-06
+REGLAS DENTRO DEL JUEGO
+El propio juego hace ahora las reglas del Nuzlocke:
+Al nivel máximo no se gana experiencia, y el Caramelo Raro «no tendría ningún efecto».
+Los Pokémon caídos ya no se curan: ni en el Centro Pokémon, ni con NPC, ni con Revivir.
+Si el salvaje es de una familia que ya tienes, el juego saca otro que no lo sea (si en la zona todos son repetidos, sale igual).
+En una zona ya gastada conservas tus Poké Balls: el juego no te deja lanzarlas y te avisa. Un variocolor salvaje sí se puede capturar.
+MÁS FIABLE Y MÁS RÁPIDO
+La ruta, el equipo, los contadores de encuentros, la Pokédex y los combates se leen directamente del juego: menos avisos de «No se identifica la ruta», capturas que cuentan al momento aunque no hayas guardado, y combates contra entrenadores vistos desde el primer turno.
+El emulador arranca siempre al 200 % de velocidad.
+La votación del mote ya no sale antes de tiempo: espera de verdad a tu primer paso después de capturar.
+Ya no salen los avisos de «sigue caído» ni de Poké Balls retiradas o devueltas.
+NOVEDADES EN JUGAR
+Lo que trae cada versión sale ahora en JUGAR, como en Steam: la última en grande y las anteriores al lado. Pulsa una para leerla entera, o VER TODAS para el historial.
+
+1.0.8 2026-10-02
 DISEÑOS
 Ahora puedes cambiar el aspecto de toda la app. Pulsa el botón DISEÑO de la barra de arriba (o entra en CONFIGURACIÓN) y elige entre cinco: CLÁSICO (el de siempre), ESMERALDA, GAME BOY, ULTRAUMBRAL y ROTOM DEX.
 Cada uno tiene su propia forma de moverte por la app, no solo otros colores. El cambio es al momento, sigues en la misma pantalla y con tus datos, y se queda guardado para la próxima vez.
 Si no tocas nada, la app se ve igual que antes.
 
-1.0.7.9
+1.0.7.9 2026-09-28
 OBJETOS A LA MOCHILA
 Las megapiedras nuevas salen con su nombre.
 Sale también lo que te da alguien justo después de que PermaLocke te devuelva las Poké Balls.
 
-1.0.7.8
+1.0.7.8 2026-09-28
 ARREGLOS
 Wimpod, Golisopod y Crabominable ya salen con su dibujo: estaban cruzados entre ellos.
 La animación de los objetos sale también con los primeros objetos, antes de tener Poké Balls.
 
-1.0.7.7
+1.0.7.7 2026-09-28
 MOTES ENTRE TODOS
 El inicial ya no pregunta por el mote.
 La pregunta del mote espera a que salgas de los menús de después de capturar: sale cuando das el primer paso.
 OBJETOS A LA MOCHILA
 Cuando coges un objeto del suelo, una MT, lo compras o te lo regalan, sale una mochila pequeña al lado de la pantalla de abajo y el objeto se mete dentro con su nombre.
 
-1.0.7.6
+1.0.7.6 2026-09-28
 ARREGLOS
 En COMPETICIÓN ya salen las fotos de perfil en el podio.
 Empezar de cero después de que el organizador borre tu run ya no da error.
 
-1.0.7.5
+1.0.7.5 2026-09-28
 COMPETICIÓN
 El podio ahora es un estadio de noche: público en las gradas, focos, confeti y los tres primeros en bloques de oro, plata y bronce con su foto. El primero lleva corona y tu puesto sale señalado.
 Pasa el ratón por un bloque para ver sus puntos, logros y caídos.
 
-1.0.7.4
+1.0.7.4 2026-09-28
 MOTES ENTRE TODOS
 Ahora también puedes pedir que te pongan el mote a los Pokémon que te regalan, a los fósiles, a los de las dominsignias y a los que salen del huevo, no solo a los que capturas.
 CARTAS AL ÁLBUM
 Los huevos mandan su carta al álbum cuando eclosionan.
 
-1.0.7.3
+1.0.7.3 2026-09-28
 MOTES ENTRE TODOS
 Si pides que te pongan el mote, ahora ves cómo tus amigos proponen y votan, con los votos subiendo en directo, y el ganador te sale a la vez que a ellos.
 El mote se pone con el juego abierto también si el Pokémon ha ido a la caja: ya no hace falta cerrar el juego.
 
-1.0.7.2
+1.0.7.2 2026-09-28
 MOTES ENTRE TODOS
 Se pueden quitar en CONFIGURACIÓN: si lo apagas, no te pregunta al capturar ni te salen las votaciones de los demás.
 Si nadie propone un nombre, sale un aviso de que el Pokémon se queda como estaba.
 
-1.0.7.1
+1.0.7.1 2026-09-28
 TIENDA DE COMBATES
 Cuando el organizador la cierra, ahora se cierra de verdad y sin reiniciar: te llega en un par de minutos. Solo se cierra la pestaña COMBATE; las megapiedras y las hierbas siguen a la venta.
 BUZÓN
 El botón del buzón de sugerencias ahora es una carta, para que se vea qué es.
 
-1.0.7
+1.0.7 2026-09-28
 MOTES ENTRE TODOS
 Cuando capturas algo, arriba a la izquierda te pregunta si quieres que los demás le pongan el mote. Si dices que sí, al resto le sale una ventanita a la izquierda del juego: primero cada uno propone un nombre y luego se vota. El más votado se lo queda. Si está en tu equipo, el nombre cambia en el momento.
 Solo un voto por persona, y no se puede cambiar. Si varios capturan a la vez, van por turnos.

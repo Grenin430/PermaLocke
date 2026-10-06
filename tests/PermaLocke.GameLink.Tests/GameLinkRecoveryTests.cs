@@ -79,6 +79,10 @@ public sealed class GameLinkRecoveryTests : IAsyncLifetime
                 break;
             case RpcRequestType.ReadMemory:
                 data = new byte[BinaryPrimitives.ReadUInt32LittleEndian(request.AsSpan(20))];
+                // El puntero fijo al GameManager (code.bin, siempre mapeado) no cuenta: es una lectura de 4 bytes que aquí
+                // devuelve cero y no lleva a ninguna otra.
+                if (BinaryPrimitives.ReadUInt32LittleEndian(request.AsSpan(16)) == 0x006A3984)
+                    break;
                 if (Interlocked.Increment(ref _memoryReads) >= _dropSelectionAfterReads)
                     _selected = uint.MaxValue;
                 break;

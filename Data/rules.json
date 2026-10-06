@@ -3,6 +3,8 @@
   "version": 1,
   "_knockDownFallenInBattle": "Desde la 1.0.4.10: si el juego cura a un caído justo antes de un combate y entra en el banquillo, PermaLocke le pone 0 PS dentro del combate (nunca al que está en el campo). Ponlo a false para apagarlo si diera problemas; se puede cambiar desde Admin, REGLAS.",
   "knockDownFallenInBattle": true,
+  "_gameRulePatches": "(2026-10-06, 1.0.9) el cap dentro del juego. Con true, al pulsar JUGAR PermaLocke parchea el juego instalado: en combate no se gana experiencia al llegar al cap, el Caramelo Raro no se puede usar al cap, los caídos del equipo no se curan (Centro, NPC, objetos) y no sale el aviso «sigue caído», y un salvaje de una familia que ya tienes se vuelve a tirar entre los que no son repetidos (si todos lo son, sale igual), y en una zona gastada no se quitan las balls: el menú de combate las rechaza con «¡Ya has tenido tu encuentro en esta zona!» sin gastarlas (un variocolor salvaje sí se puede capturar). Con false se quita. Probado jugando por el organizador; se puede apagar desde Admin, REGLAS.",
+  "gameRulePatches": true,
   "comment": "Configuración de reglas y economía de puntos. Ningún valor de esta lista vive en el código.",
 
   "pointRewards": {

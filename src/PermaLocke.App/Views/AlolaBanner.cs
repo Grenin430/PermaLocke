@@ -106,15 +106,14 @@ public sealed class AlolaBanner : ContentControl
         Content = new Grid { ClipToBounds = true, UseLayoutRounding = true, Children = { _image } };
 
         SizeChanged += (_, _) => Reshape();
-        // WPF puede lanzar Loaded otra vez sin Unloaded entre medias (al volver a la sección): sin quitarlo antes, el
-        // fotograma se apuntaba dos o tres veces y la animación iba x2 o x3 (1.0.4.6).
-        Loaded += (_, _) =>
-        {
-            CompositionTarget.Rendering -= OnFrame;
-            CompositionTarget.Rendering += OnFrame;
-        };
-        Unloaded += (_, _) => CompositionTarget.Rendering -= OnFrame;
+        // Un temporizador a su ritmo y no CompositionTarget.Rendering: estar apuntado ahí obliga a WPF a pintar la ventana
+        // entera 60 veces por segundo, y esto cambia cuatro (2026-10-03, CPU en reposo). Start dos veces no apunta dos.
+        _timer.Tick += OnFrame;
+        Loaded += (_, _) => _timer.Start();
+        Unloaded += (_, _) => _timer.Stop();
     }
+
+    private readonly System.Windows.Threading.DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(250) };
 
     public double Hour
     {
@@ -162,7 +161,7 @@ public sealed class AlolaBanner : ContentControl
         // A saltos, cuatro veces por segundo: se mueve como un juego de píxeles, no como un salvapantallas.
         var step = _clock.ElapsedMilliseconds / 250;
 
-        if (IsVisible && step != _lastStep)
+        if (OnScreen.Showing(this) && step != _lastStep)
         {
             _lastStep = step;
             Paint();

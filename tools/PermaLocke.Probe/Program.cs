@@ -93,6 +93,12 @@ if (args.Length >= 1 && args[0] == "--situacion")
     return PermaLocke.Probe.SituationProbe.Run(args.Length >= 2 ? args[1] : string.Empty, args.Skip(2).ToArray());
 }
 
+// Prueba: el cap dentro del juego (combate y Caramelo Raro), a mano, antes de encenderlo en rules.json. «quitar» lo quita.
+if (args.Length >= 1 && args[0] == "--reglas-juego")
+{
+    return PermaLocke.Probe.RulesProbe.Run(args[1..]);
+}
+
 // Prueba: todo lo que genera el juego sale variocolor, con un code.ips junto al code.bin del mod. «quitar» lo borra.
 if (args.Length >= 1 && args[0] == "--shiny-siempre")
 {

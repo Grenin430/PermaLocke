@@ -47,6 +47,64 @@ public sealed class AzaharGameWriter(
 {
     private static readonly int PartySize = new PK7().SIZE_PARTY;
 
+    /// <summary>
+    /// The level cap into the block the patched game reads (<see cref="PermaLocke.Core.Domain.RuleBlock"/>, 2026-10-06).
+    /// A fixed address outside anything the game uses, so nothing is searched and nothing of the game's is touched.
+    /// True when it reads back as written.
+    /// </summary>
+    public bool WriteRuleFallen(IReadOnlyCollection<uint> encryptionConstants)
+    {
+        var list = new byte[PermaLocke.Core.Domain.RuleBlock.FallenSlots * 4];
+        var i = 0;
+        foreach (var constant in encryptionConstants.Take(PermaLocke.Core.Domain.RuleBlock.FallenSlots))
+        {
+            System.Buffers.Binary.BinaryPrimitives.WriteUInt32LittleEndian(list.AsSpan(i++ * 4), constant);
+        }
+
+        client.WriteMemory(PermaLocke.Core.Domain.RuleBlock.Fallen, list);
+        return client.TryReadMemory(PermaLocke.Core.Domain.RuleBlock.Fallen, list.Length, out var back) && back.AsSpan().SequenceEqual(list);
+    }
+
+    /// <summary>The reason the patched battle menu gives for not throwing a ball (<see cref="PermaLocke.Core.Domain.RuleBlock.BallRefusal"/>; 0 = it can).</summary>
+    public bool WriteRuleBallRefusal(byte reason)
+    {
+        client.WriteMemory(PermaLocke.Core.Domain.RuleBlock.BallRefusal, [reason]);
+        return client.TryReadMemory(PermaLocke.Core.Domain.RuleBlock.BallRefusal, 1, out var back) && back[0] == reason;
+    }
+
+    /// <summary>
+    /// The species the duplicates clause rerolls into the block the patched game reads (<see cref="PermaLocke.Core.Domain.RuleBlock.Dupes"/>).
+    /// An empty set clears it, and the game rolls as the cartridge does.
+    /// </summary>
+    public bool WriteRuleDupes(IReadOnlyCollection<int> species)
+    {
+        var bits = new byte[PermaLocke.Core.Domain.RuleBlock.DupesBytes];
+        foreach (var s in species.Where(s => s is > 0 and < PermaLocke.Core.Domain.RuleBlock.DupesSpeciesLimit))
+        {
+            bits[s >> 3] |= (byte)(1 << (s & 7));
+        }
+
+        // El hueco vacío (especie 0) cuenta como repetido en cuanto hay alguno: así nunca sale al volver a tirar.
+        if (bits.Any(b => b != 0)) bits[0] |= 1;
+
+        client.WriteMemory(PermaLocke.Core.Domain.RuleBlock.Dupes, bits);
+        return client.TryReadMemory(PermaLocke.Core.Domain.RuleBlock.Dupes, bits.Length, out var back) && back.AsSpan().SequenceEqual(bits);
+    }
+
+    /// <summary>
+    /// The level cap into the block the patched game reads. See <see cref="WriteRuleFallen"/> for the fallen list, which
+    /// the patched game uses to keep their HP at zero.
+    /// </summary>
+    public bool WriteRuleCap(int cap)
+    {
+        var block = new byte[8];
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt32LittleEndian(block, PermaLocke.Core.Domain.RuleBlock.Magic);
+        block[PermaLocke.Core.Domain.RuleBlock.CapOffset] = (byte)Math.Clamp(cap, 0, 100);
+
+        client.WriteMemory(PermaLocke.Core.Domain.RuleBlock.Address, block);
+        return client.TryReadMemory(PermaLocke.Core.Domain.RuleBlock.Address, block.Length, out var back) && back.AsSpan().SequenceEqual(block);
+    }
+
     /// <summary>The encrypted block, whose layout the checksum vouches for wherever it appears.</summary>
     private static readonly int StoredSize = new PK7().SIZE_STORED;
 
@@ -245,182 +303,6 @@ public sealed class AzaharGameWriter(
             entryAddress, hp, after.Stat_HPMax);
 
         return new MemoryWriteResult(touched.Count, touched.Count);
-    }
-
-    /// <summary>
-    /// Whether the Pokémon in a slot should be brought down to the cap.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Pulled out of the write so it can be tested on its own. Three conditions, and every one of
-    /// them earned: the block has to be a real Pokémon, it has to be <em>that</em> Pokémon, and its
-    /// <b>experience</b> has to be over the cap.
-    /// </para>
-    /// <para>
-    /// Experience and never <c>Stat_Level</c>. The game keeps the party in several structures and
-    /// only one lays its battle stats out where a PK7 has them; in the others that offset belongs
-    /// to something else and reads anything at all. Trusting it read <b>145</b> for a level 4
-    /// Ledyba, decided it was over a cap of 24, wrote 24 — and the game evolved it into a Ledian.
-    /// The experience lives inside the encrypted block, which the checksum vouches for.
-    /// </para>
-    /// </remarks>
-    public static bool NeedsCapping(PK7? slot, uint expectedPid, int cap) =>
-        slot is { ChecksumValid: true }
-        && slot.PID == expectedPid
-        && Data.GameLevels.Of(slot) > cap;
-
-    /// <summary>
-    /// Brings a Pokémon back to the level cap with no progress into the next level. This covers
-    /// the three cases the run defines — rare candies, experience gained at the cap, and
-    /// levelling past it — because all three end in the same state.
-    /// </summary>
-    /// <param name="expectedPid">
-    /// The Pokémon that must be in that slot: it is written only if it is really there.
-    /// </param>
-    /// <remarks>
-    /// How far the write may reach is no longer asked of the caller. It used to be passed in as
-    /// «this is the party stride», and the stride turned out not to be the fact: two structures
-    /// with the same <c>0x104</c> stride read 118/131 and 42649/10902 for the same Gyarados on the
-    /// same second. <see cref="PartyStats.AreHere"/> decides it from the entry itself now, so the
-    /// answer cannot drift from what is actually in the slot.
-    /// </remarks>
-    public MemoryWriteResult EnforceLevelCap(uint slotAddress, int cap, uint expectedPid)
-    {
-        var current = Read(slotAddress);
-
-        if (!NeedsCapping(current, expectedPid, cap))
-        {
-            logger.LogDebug(
-                "0x{Address:X8}: el cap no lo toca (PID {Found}, esperado {Wanted:X8}, nivel {Level}, cap {Cap})",
-                slotAddress, current is null ? "ilegible" : current.PID.ToString("X8"),
-                expectedPid, current is null ? null : Data.GameLevels.Of(current), cap);
-
-            return MemoryWriteResult.Nothing;
-        }
-
-        // ¿Es la copia que lee el juego, con las estadísticas en 0x158 (§99)? Se mide ANTES de bajar la experiencia:
-        // después, el nivel de la cola ya no coincide con el de la experiencia y AreHere diría que no.
-        var live = ReadAuthoritative(slotAddress);
-        var statsAtLiveOffset = live is { ChecksumValid: true } && live.PID == expectedPid && Data.PartyStats.AreHere(live);
-        var statsContiguous = Data.PartyStats.AreHere(current);
-
-        var result = Modify(slotAddress, $"cap de nivel {cap}",
-            pokemon =>
-            {
-                Data.GameLevels.Set(pokemon, cap);
-
-                // Donde la cola son estadísticas de verdad, que acompañen al nivel.
-                if (statsContiguous)
-                {
-                    Data.StatCalculator.Restat(pokemon);
-                }
-            },
-            statsContiguous ? null : StoredSize);
-
-        if (!result.Applied)
-        {
-            return result;
-        }
-
-        // Y la comprobación que de verdad importa: no que los bytes estén, sino que el Pokémon
-        // haya bajado. Por experiencia, que es lo único fiable en todas las estructuras.
-        var after = Read(slotAddress);
-
-        if (after is null || Data.GameLevels.Of(after) > cap)
-        {
-            logger.LogWarning(
-                "0x{Address:X8}: los bytes del cap se escribieron pero el Pokémon sigue a nivel {Level}, "
-                + "cap {Cap}", slotAddress, after is null ? null : Data.GameLevels.Of(after), cap);
-
-            return new MemoryWriteResult(result.Written, 0);
-        }
-
-        if (!statsAtLiveOffset)
-        {
-            return result;
-        }
-
-        var tail = CapLiveStats(slotAddress, cap);
-
-        return new MemoryWriteResult(result.Written + tail.Written, result.Verified + tail.Verified);
-    }
-
-    /// <summary>
-    /// Brings the level the game shows, and the stats that go with it, down to the cap in the structure it reads.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Found on 2026-09-21: the cap had stopped working on screen. The log said «corregido y releído» and the party menu
-    /// still said 15 with a cap of 14. The cap was written before §99 found where the game keeps the battle stats of
-    /// the structure it reads — 28 bytes at <c>0x158</c> — so it only ever lowered the <b>experience</b>, inside the
-    /// encrypted block, and the <b>level the menu shows</b> lives in that tail. The app read the experience back, saw
-    /// 14, and called it done.
-    /// </para>
-    /// <para>
-    /// The level alone would not do: twenty rare candies and a cap would leave a level 14 with level 34 stats. So the
-    /// stats are worked out again with <see cref="Data.StatCalculator.Restat"/>, the same code ENTRENAR EV writes with,
-    /// from the installed world's base stats. With no world table there is no honest number, so the level is written
-    /// and the stats are left as they were, and the log says so. The current PS follow the maximum down, and a Pokémon at
-    /// zero stays at zero: in this project that is a death (§98).
-    /// </para>
-    /// <para>
-    /// Only the tail is written, and only the bytes that differ, the same way the death mark writes it; and it is read
-    /// back as the game reads it before anything is called done.
-    /// </para>
-    /// </remarks>
-    private MemoryWriteResult CapLiveStats(uint entryAddress, int cap)
-    {
-        var statsAt = entryAddress + Data.PartyLayoutLocator.AuthoritativeStatsOffset;
-
-        if (ReadAuthoritative(entryAddress) is not { ChecksumValid: true } pokemon
-            || !client.TryReadMemory(statsAt, PartySize - StoredSize, out var before))
-        {
-            return MemoryWriteResult.Nothing;
-        }
-
-        pokemon.Stat_Level = (byte)cap;
-
-        if (!Data.StatCalculator.Restat(pokemon))
-        {
-            logger.LogWarning("0x{Address:X8}: sin estadísticas base del mundo instalado; se baja el nivel y las "
-                              + "estadísticas se quedan como estaban", entryAddress);
-        }
-
-        var encrypted = new byte[PartySize];
-        pokemon.WriteEncryptedDataParty(encrypted);
-
-        Backup(statsAt, before, $"cap de nivel {cap} (estadísticas)");
-
-        var touched = 0;
-
-        for (var i = 0; i < before.Length; i++)
-        {
-            if (encrypted[StoredSize + i] != before[i])
-            {
-                client.WriteMemory((uint)(statsAt + i), [encrypted[StoredSize + i]]);
-                touched++;
-            }
-        }
-
-        if (touched == 0)
-        {
-            return MemoryWriteResult.Nothing;
-        }
-
-        var after = ReadAuthoritative(entryAddress);
-
-        if (after is null || after.Stat_Level != cap || !Data.PartyStats.AreHere(after))
-        {
-            logger.LogWarning("0x{Address:X8}: escritas las estadísticas del cap pero el nivel que enseña el juego es {Level}",
-                entryAddress, after is null ? "ilegible" : after.Stat_Level.ToString());
-
-            return new MemoryWriteResult(touched, 0);
-        }
-
-        logger.LogInformation("0x{Address:X8}: nivel {Level} y estadísticas recalculadas en la copia que el juego lee "
-                              + "(PS {Hp}/{Max})", entryAddress, cap, after.Stat_HPCurrent, after.Stat_HPMax);
-
-        return new MemoryWriteResult(touched, touched);
     }
 
     /// <summary>

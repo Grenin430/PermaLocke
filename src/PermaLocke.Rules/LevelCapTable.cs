@@ -21,33 +21,9 @@ public sealed record LevelCapStage(string Id, int Order, string Name, int Level,
 /// trials cleared it is the first entry, after clearing one it is the second, and so on. That
 /// is how the user stated it ("1ª prueba: nivel 14").
 /// </remarks>
-public sealed class LevelCapTable(IReadOnlyList<LevelCapStage> stages, bool correctInMemory = false)
+public sealed class LevelCapTable(IReadOnlyList<LevelCapStage> stages)
 {
     public IReadOnlyList<LevelCapStage> Stages { get; } = stages;
-
-    /// <summary>
-    /// Whether PermaLocke should force an over-levelled Pokémon back down in the running game.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// Off, and that is the competition's own answer rather than a retreat. The reference the
-    /// competition is played with does <b>no emulator memory access at all</b> — measured on its
-    /// own binaries: no WriteMemory, no RPC, nothing on port 45987, and exactly one level-cap
-    /// symbol, a getter for the list. There the cap is a rule the player keeps and the app shows.
-    /// </para>
-    /// <para>
-    /// PermaLocke tried to enforce it by rewriting the running game, and that is a fight it cannot
-    /// reliably win: the party lives in twenty-five places in memory at once, the game restores it
-    /// from whichever it likes, and a write that lands and re-reads correctly still loses. Worse,
-    /// a correction that goes slightly wrong <b>changes somebody's Pokémon</b> — §53 evolved a
-    /// Ledyba that way. Warning always works and can never damage a save.
-    /// </para>
-    /// <para>
-    /// The switch stays because the machinery is written, measured and tested. It is off by default
-    /// because the safe behaviour has to be the one you get without thinking about it.
-    /// </para>
-    /// </remarks>
-    public bool CorrectInMemory { get; } = correctInMemory;
 
     /// <param name="clearedStages">How many milestones the player has already completed.</param>
     public LevelCapStage? Current(int clearedStages) =>
@@ -71,10 +47,10 @@ public sealed class LevelCapTable(IReadOnlyList<LevelCapStage> stages, bool corr
             .. (file?.Caps ?? [])
                 .OrderBy(c => c.Order)
                 .Select(c => new LevelCapStage(c.Id, c.Order, c.Name, c.Level, c.Logro))
-        ], file?.CorregirEnMemoria ?? false);
+        ]);
     }
 
     private sealed record CapEntry(string Id, int Order, string Name, int Level, string? Logro);
 
-    private sealed record CapFile(List<CapEntry>? Caps, bool? CorregirEnMemoria);
+    private sealed record CapFile(List<CapEntry>? Caps);
 }
