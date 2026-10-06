@@ -85,6 +85,19 @@ public sealed class ItemIconReader
         return Crop(itemId, BflimTexture.Decode(Decompress(raw)));
     }
 
+    /// <summary>
+    /// The SuperCarameloraro, painted from the Rare Candy: decoded from the very BFLIM the game gets
+    /// (<see cref="SuperCandyIcon"/>), so the app shows the same five bits per channel.
+    /// </summary>
+    public PokemonIcon ReadSuperCandy()
+    {
+        return Crop(PermaLocke.Core.Domain.SuperCandy.ItemId,
+            BflimTexture.Decode(SuperCandyIcon.Bflim(Decompress(_garc.GetFile(RareCandyItemId - 1)))
+                                ?? throw new InvalidDataException("El icono del Caramelo Raro no es el que se conoce.")));
+    }
+
+    private const int RareCandyItemId = 50;
+
     private static byte[] Decompress(byte[] data)
     {
         if (data.Length == 0 || data[0] != 0x11)

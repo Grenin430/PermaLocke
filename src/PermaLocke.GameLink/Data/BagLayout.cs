@@ -248,6 +248,13 @@ public sealed class BagLayout
                 legal = legal.Concat(ExpansionMegaStones);
             }
 
+            // El SuperCarameloraro (2026-10-06) es un hueco libre de la expansión que PermaLocke convierte en una copia
+            // del Caramelo Raro, y va donde él.
+            if (pouch.Type == InventoryType.Medicine)
+            {
+                legal = legal.Append((ushort)PermaLocke.Core.Domain.SuperCandy.ItemId);
+            }
+
             pockets.Add(new BagPocket(pouch.Type, offset, pouch.Items.Length, pouch.MaxCount, legal));
         }
 

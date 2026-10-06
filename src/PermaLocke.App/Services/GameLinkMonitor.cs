@@ -25,12 +25,10 @@ public sealed class GameLinkMonitor(
     GameWatcher watcher,
     AzaharGameWriter writer,
     ProgressService progress,
-    LevelCapTable caps,
     EncounterGuard encounterGuard,
     EncounterService encounters,
     RewardService rewards,
     MaintenanceService maintenance,
-    IEventStore events,
     IClock clock,
     BattleTableReader battleTables,
     IKillcamRecorder killcam,
@@ -172,6 +170,44 @@ public sealed class GameLinkMonitor(
     {
         _loop ??= Task.Run(RunAsync);
         _battleLoop ??= Task.Run(RunBattleAsync);
+        _bagLoop ??= Task.Run(RunBagAsync);
+    }
+
+    private Task? _bagLoop;
+
+    /// <summary>How often the bag is compared for the item animation.</summary>
+    private static readonly TimeSpan BagInterval = TimeSpan.FromMilliseconds(400);
+
+    /// <summary>
+    /// The bag, in a loop of its own (1.0.9.1): it was looked at every five seconds inside the main pass, so an item could take
+    /// five seconds or more to fly into the little bag. Also before the first Poké Ball: the first floor items come earlier
+    /// (1.0.7.8). Only the bag already located: a few small reads, never a search.
+    /// </summary>
+    private async Task RunBagAsync()
+    {
+        while (!_stopping.IsCancellationRequested)
+        {
+            try
+            {
+                if (Latest is { Connected: true } && runContext.Current is { } run)
+                {
+                    WatchBag(run);
+                }
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                logger.LogDebug(ex, "No se pudo mirar la mochila");
+            }
+
+            try
+            {
+                await Task.Delay(BagInterval, _stopping.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+        }
     }
 
     private async Task RunAsync()
@@ -234,7 +270,6 @@ public sealed class GameLinkMonitor(
     /// <summary>What each party Pokémon was last seen as, and the change it went through, by PID (2026-09-28).</summary>
     private readonly Dictionary<uint, (int Ability, int Nature, (int Ability, int Nature, DateTimeOffset At)? Before)> _seen = [];
     private DateTimeOffset _rerollCheckedAt = DateTimeOffset.MinValue;
-    private DateTimeOffset _bagCheckedAt = DateTimeOffset.MinValue;
 
     /// <summary>An item the player got in the game (floor, shop, gift) and how many: id, amount.</summary>
     public event EventHandler<(int ItemId, int Amount)>? ItemGained;
@@ -379,18 +414,11 @@ public sealed class GameLinkMonitor(
             return;
         }
 
-        // La mochila, también antes de la primera Poké Ball: los primeros objetos del suelo llegan antes (1.0.7.8).
-        if (clock.Now - _bagCheckedAt >= TimeSpan.FromSeconds(5))
+        // El cap va al juego desde el principio: desde la 1.0.9 lo aplica el propio juego, también a los Caramelos Raros y
+        // SuperCarameloraros que se usan antes de la primera Poké Ball (2026-10-06: sin esto, una run nueva no tenía cap).
+        if (await progress.CurrentCapAsync(run, _stopping.Token) is { } cap)
         {
-            _bagCheckedAt = clock.Now;
-            try
-            {
-                WatchBag(run);
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "No se pudo mirar la mochila");
-            }
+            TellGameTheCap(cap);
         }
 
         // Hasta la primera Poke Ball no se registra ni se cuenta nada: ni capturas ni muertes (§150). La regla

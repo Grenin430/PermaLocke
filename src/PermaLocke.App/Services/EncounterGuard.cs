@@ -788,7 +788,7 @@ public sealed class EncounterGuard(
 
         try
         {
-            if (!writer.WriteRuleBallRefusal(refuse ? RuleBlock.SpentZoneReason : (byte)0))
+            if (!writer.WriteRuleBallRefusal(!refuse ? (byte)0 : decision.Trial ? RuleBlock.TrialReason : RuleBlock.SpentZoneReason))
             {
                 logger.LogWarning("El rechazo de balls no se ha quedado en el bloque de reglas del juego");
             }

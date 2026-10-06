@@ -201,6 +201,11 @@ public sealed partial class MiscellaneousViewModel : SectionViewModel
     private Task GrantCandiesAsync() =>
         GiveAsync(BagService.RareCandyItemId, CandiesPerPress, "Caramelo Raro", "Probar el cap de nivel");
 
+    /// <summary>Ten SuperCarameloraros (2026-10-06): the Rare Candy that raises five levels, which only PermaLocke gives.</summary>
+    [RelayCommand(CanExecute = nameof(CanUseTools))]
+    private Task GrantSuperCandiesAsync() =>
+        GiveAsync(SuperCandy.ItemId, CandiesPerPress, SuperCandy.Name, "Subir de nivel");
+
     /// <summary>
     /// The Shiny Charm, which is a key item: the bag holds exactly one no matter how often this
     /// is pressed, so pressing it again says so instead of pretending to have given another.
@@ -322,6 +327,7 @@ public sealed partial class MiscellaneousViewModel : SectionViewModel
     private void NotifyCommands()
     {
         GrantCandiesCommand.NotifyCanExecuteChanged();
+        GrantSuperCandiesCommand.NotifyCanExecuteChanged();
         GrantShinyCharmCommand.NotifyCanExecuteChanged();
         ClaimRewardCommand.NotifyCanExecuteChanged();
     }

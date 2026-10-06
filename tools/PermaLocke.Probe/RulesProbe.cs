@@ -298,6 +298,67 @@ internal static class RulesProbe
             return 0;
         }
 
+        // --reglas-juego texto pm0722 pm0725: dónde aparece cada texto en el montón lineal (una búsqueda por texto, sin bucles).
+        if (args.Length >= 2 && args[0] == "texto")
+        {
+            using var client = new PermaLocke.GameLink.Rpc.AzaharRpcClient();
+            foreach (var word in args.Skip(1))
+            {
+                var pattern = System.Text.Encoding.ASCII.GetBytes(word);
+                var hits = client.SearchMemory(0x30000000, 0x04000000, pattern, Enumerable.Repeat((byte)0xFF, pattern.Length).ToArray(), stride: 1);
+                Console.WriteLine($"{word}: {hits.Count} sitios" + (hits.Count == 0 ? "" : ": " + string.Join(", ", hits.Take(12).Select(h => $"0x{h:X8}"))));
+            }
+
+            return 0;
+        }
+
+        // --reglas-juego especies 722 725 728: dónde está cada número (u16) en el montón lineal, y las ternas a la misma
+        // distancia (estructuras iguales seguidas). Hasta 8 páginas de búsqueda por número, sin bucles de lectura.
+        if (args.Length >= 4 && args[0] == "especies")
+        {
+            using var client = new PermaLocke.GameLink.Rpc.AzaharRpcClient();
+            var values = args.Skip(1).Select(ushort.Parse).ToArray();
+            var found = new List<HashSet<uint>>();
+            foreach (var value in values)
+            {
+                var set = new HashSet<uint>();
+                uint from = 0x30000000;
+                for (var page = 0; page < 8; page++)
+                {
+                    var hits = client.SearchMemory(from, 0x34000000 - from, BitConverter.GetBytes(value), [0xFF, 0xFF], stride: 2);
+                    set.UnionWith(hits);
+                    if (hits.Count < 255) break;
+                    from = hits[^1] + 2;
+                }
+
+                Console.WriteLine($"{value}: {set.Count} sitios");
+                found.Add(set);
+            }
+
+            foreach (var a in found[0].Order())
+            foreach (var b in found[1].Where(b => b > a && b - a <= 0x2000))
+            {
+                var step = b - a;
+                if (found[2].Contains(b + step)) Console.WriteLine($"terna a la misma distancia: 0x{a:X8} 0x{b:X8} 0x{b + step:X8} (paso 0x{step:X})");
+            }
+
+            return 0;
+        }
+
+        // --reglas-juego escribir16 32E5AAE4 25 [addr valor ...]: escribe u16 en esas direcciones y relee (pruebas a mano).
+        if (args.Length >= 3 && args[0] == "escribir16")
+        {
+            using var client = new PermaLocke.GameLink.Rpc.AzaharRpcClient();
+            for (var i = 1; i + 1 < args.Length; i += 2)
+            {
+                var address = Convert.ToUInt32(args[i].Replace("0x", ""), 16);
+                client.WriteMemory(address, BitConverter.GetBytes(ushort.Parse(args[i + 1])));
+                Console.WriteLine($"0x{address:X8} = {BitConverter.ToUInt16(client.ReadMemory(address, 2))}");
+            }
+
+            return 0;
+        }
+
         // --reglas-juego equipo 33F807C4: el equipo en esa dirección exacta (la que la app ya conoce), sin barrer.
         if (args.Length >= 2 && args[0] == "equipo")
         {

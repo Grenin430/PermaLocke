@@ -12890,3 +12890,45 @@ pueda abrir la mochila.
 `LauncherView` pinta debajo de los enlaces la última versión en una tarjeta grande (cartel, ACTUALIZACIÓN/PARCHE —tres o
 cuatro números—, título, resumen, «hace N días») y las dos anteriores al lado. Una tarjeta abre `ChangelogWindow(versión)`
 como un evento; VER TODAS, el historial. Nueva opción de capturas `--alto N`. Tests: `ReleaseNotesTests`.
+
+## §218 · SuperCarameloraro: un objeto nuevo dentro del juego (2026-10-06, sin publicar ni commit)
+
+Pedido del organizador (el «Supercaramelo» descartado antes por no poder meter objetos: ahora se parchea el código). Un
+Caramelo Raro dorado que sube **cinco niveles de golpe, sin pasar del cap**, y que solo da la app (MISCELÁNEA, «+10
+SUPERCARAMELORAROS», como los Caramelos Raros de prueba). `Core/Domain/SuperCandy` (id 113, nombre, 5 niveles) lo comparten
+la app y el randomizador.
+
+- **Objeto**: el 113 es uno de los 63 huecos libres de la expansión («(?)», datos vacíos). `RulePatches.InstallSuperCandy`,
+  llamado por `Apply` en cada JUGAR y **siempre** (no es una regla: va con `gameRulePatches` a true o false), pone en el mod
+  instalado sus datos (copia de los del 50 con otro precio, `a/0/1/9`), su nombre y descripción (`a/0/3/6`, ficheros 40 y
+  39, con `GameTextPatch`) y su icono: el del Caramelo Raro teñido de dorado (`SuperCandyTint`, tono +180°) añadido al
+  final de `a/0/6/1` (849 en la expansión) con un añadidor de GARC v6 propio (pk3DS no añade ficheros). Todo idempotente.
+- **Efecto**: en la función de efecto de objetos (0x445754, la de `PokeTool::ITEM_RCV_Recover`), un objeto con «sube nivel»
+  (bit del byte 0x11 de sus datos, parámetro 0x1E) hace `mov r1,#1; cpy r0,r7; bl 0x325ab8`, y 0x325ab8 suma r1 niveles
+  (tope 100). El `mov` (file 0x345990) pasa a `bl` a una rutina que da 1 para cualquier otro objeto y, si el precio de sus
+  datos es 0x400, el cap menos el nivel con tope 5 (sin cap, o con uno ya pasado, 5). No cabía en un hueco: va en tres
+  trozos (0x4B9B24, 0x4B9BA8 entre funciones del mod, 0x4B9A70). La comprobación de uso ya lo rechaza en el cap (§217). La
+  tabla objeto→icono que usa el código de la expansión (0x5BC8BC, u32 por objeto) apunta el 113 al icono nuevo. Todo en
+  `code.ips`.
+- **App**: `BagLayout` acepta el 113 en medicinas; `PkhexItemLookup` lo nombra; `PokemonSpriteService.GetItem` lo dibuja
+  tiñendo el Caramelo Raro igual; `FieldItemRandomizer.RandomPool` no lo reparte nunca.
+- Sin probar en el juego: si al subir cinco de golpe ofrece los movimientos de los niveles intermedios. Tests en
+  `RulePatchesTests` (rutina leída con Capstone, ficheros de la expansión instalados dos veces) y `BagLayoutTests`.
+- **Tras la primera prueba en el juego (mismo día):** el nombre salía «(?)» porque la mochila, con más de uno, enseña el
+  **plural** (`a/0/3/6` fichero 41); también va la forma de los mensajes (fichero 42, `Nombre[VAR 1101(00FE,0100)]s`: una
+  letra añadida, ninguna quitada). **Icono** elegido por el organizador entre cuatro: rojo con aura dorada y tres
+  destellos (`Sprites/SuperCandyIcon`): se decodifica el del Caramelo Raro, se pinta y se vuelve a codificar con su misma
+  disposición (al decodificador se le pasa una copia cuyos píxeles guardan su propio índice). La app lo lee del BFLIM
+  que va al juego (`ItemIconReader.ReadSuperCandy`). **Movimientos de los niveles saltados**: solo aprendía los del nivel
+  final. `CoreParam::LearnNewWazaOnCurrentLevel` (0x32555C) compara `cmp r7,r8; bcc fin; bne siguiente` (nivel actual
+  contra el de cada entrada); el `bne` pasa a `blne` a una comprobación que acepta también las entradas desde el nivel
+  menos `RuleBlock.SkippedLevels` (byte +0xC, lo escribe el tercer trozo del caramelo: niveles subidos menos uno), y el
+  retorno «nada más» (0x3257C0, `mov r0,#3`) lo devuelve a 0. Las dos rutinas van en dos asserts vacíos de la misma
+  función (`mov r3,#0; cpy r2..r0,r3; cpy r0,r0; nop; nop; b`), cuya guardia salta ahora directa adonde iba. El tope
+  que «no funcionaba» no era del caramelo: esa sesión la app no llegó a escribir el cap en el bloque (sin «Cap N escrito»
+  en el log); pendiente de mirarlo en vivo.
+- **Probado en el juego por el organizador (mismo día):** de 10 a 14 con cap 14, en el cap ya no se deja usar, y aprende
+  los movimientos de los niveles saltados. El cap no se escribía porque `GameLinkMonitor.InspectAsync` corta todo hasta
+  la primera Poké Ball (§150) y una run nueva no tiene: ahora el cap va al juego antes de ese corte (desde la 1.0.9 lo
+  aplica el propio juego, también a los caramelos usados antes de la primera ball). Quitado el parámetro `caps` de
+  `GameLinkMonitor`, que ya no se usaba.

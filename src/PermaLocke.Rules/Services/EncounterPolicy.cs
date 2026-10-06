@@ -39,7 +39,8 @@ public sealed record EncounterSituation(
 
 /// <param name="SpendZone">This battle uses up the zone's encounter.</param>
 /// <param name="Reason">In Spanish, for the event and the log.</param>
-public sealed record EncounterDecision(BallAction Action, bool SpendZone, string Reason);
+/// <param name="Trial">The balls are held because the zone's trial is not passed yet: the patched game says so with its own message.</param>
+public sealed record EncounterDecision(BallAction Action, bool SpendZone, string Reason, bool Trial = false);
 
 /// <summary>
 /// The competition's first-encounter rule, as a decision with no side effects.
@@ -87,7 +88,7 @@ public static class EncounterPolicy
 
         // Una zona de prueba sin su cristal Z: aquí aún no se captura (§179). Un variocolor, sí.
         var trialClosed = situation.PendingTrial is { } trial
-            ? new EncounterDecision(BallAction.Withhold, false, $"{zone.LocationName}: primero supera la prueba ({trial}). Con el cristal Z ya se podrá capturar aquí.")
+            ? new EncounterDecision(BallAction.Withhold, false, $"{zone.LocationName}: primero supera la prueba ({trial}). Con el cristal Z ya se podrá capturar aquí.", Trial: true)
             : null;
 
         if (!situation.InWildBattle && trialClosed is not null)

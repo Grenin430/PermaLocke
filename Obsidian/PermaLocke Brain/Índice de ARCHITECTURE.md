@@ -224,6 +224,7 @@ generado: 2026-09-24
 - L12760 · 215 · Diseños de la app: cinco marcos elegibles en vivo (sin publicar)
 - L12787 · 216 · Revisión general: errores de los logs (hilo de RunContext, subida 400, mote en el cap) y optimización (procesos, motes, Game Boy, cementerio)
 - L12829 · 217 · Reglas dentro del juego: cap, Caramelo Raro, caídos, duplicados y zona gastada parcheados; zona y equipo leídos por puntero fijo
+- L12894 · 218 · SuperCarameloraro (objeto 113): cinco niveles sin pasar del cap, movimientos de los niveles saltados, icono rojo; cap escrito antes de la primera ball
 
 Subsecciones §176: bis (visor), ter (todas las pantallas, fuera ESTADÍSTICAS), quater (EV/MOVIMIENTOS sin bolsa, diálogos).
 

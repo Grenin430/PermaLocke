@@ -123,6 +123,8 @@
                     <WrapPanel>
                         <Button Content="+10 CARAMELOS RAROS" Style="{StaticResource PxButton}"
                                 Command="{Binding GrantCandiesCommand}" ToolTip="Diez más cada vez." Margin="0,0,10,6" />
+                        <Button Content="+10 SUPERCARAMELORAROS" Style="{StaticResource PxButton}"
+                                Command="{Binding GrantSuperCandiesCommand}" ToolTip="Diez más cada vez. Cada uno sube cinco niveles, sin pasar del cap." Margin="0,0,10,6" />
                         <Button Content="AMULETO IRIS" Style="{StaticResource PxButton}"
                                 Command="{Binding GrantShinyCharmCommand}" ToolTip="Solo se puede llevar uno." Margin="0,0,10,6" />
                     </WrapPanel>

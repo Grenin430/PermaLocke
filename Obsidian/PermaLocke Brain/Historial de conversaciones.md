@@ -171,7 +171,7 @@ nuevos numerados que ejecuta él, nada de borrar datos sin preguntar, un commit 
 - Admin (`10-control.sql`): JUGADORES con estado (gris/azul/verde, relee cada minuto); auditoría con «Ver archivadas» y REACTIVAR (`reactivar_run`, se niega si ya tiene otra activa; queda en `reinicios.accion`); SUSPENDER/REACTIVAR en la lista (`whitelist.suspendido`, `permitido()` lo excluye); ventana ANUNCIOS (tabla `anuncios`). App: el anuncio más reciente sale en JUGAR y como aviso la primera vez que aparece uno nuevo (`CommunityService.ReadAnnouncementAsync`).
 - Limpieza (confirmada por el usuario): borrados `SnapshotStore`, `GiftStore`, `SharedFolderSettings`, `SeenMarksStore`, `OfficialRules`, `OfficialRulesService` y sus pruebas (también `RunSnapshotBattleTests`, que solo probaba la carpeta). `SyncService` queda solo con `PlayerAsync` y `BuildAsync` para la subida. 1483 pruebas.
 - Admin: al entrar con Discord la cabecera enseña tu foto, nombre y SALIR, y el botón ENTRAR desaparece; la auditoría ya no tiene su propio ENTRAR.
-- Apuntes del amigo: bandeja de REGALOS de la app en pixel (`MainWindow.xaml`); Admin sin «A todos», con SELECCIONAR TODOS encima de JUGADORES (un regalo por jugador marcado). Supercaramelo descartado por el usuario (un objeto nuevo en el juego no es viable). Baya Tamate (174) en la tienda de incienso de Konikoni con `price` 10 (pidió 1; 10 es el mínimo): solo en mundos generados después. `Tiendas especiales.txt` al repo, con la TIENDA de PermaLocke, y se reparte como `TIENDAS.txt`.
+- Apuntes del amigo: bandeja de REGALOS de la app en pixel (`MainWindow.xaml`); Admin sin «A todos», con SELECCIONAR TODOS encima de JUGADORES (un regalo por jugador marcado). Supercaramelo descartado por el usuario (un objeto nuevo en el juego no es viable; retomado y hecho el 2026-10-06, §218). Baya Tamate (174) en la tienda de incienso de Konikoni con `price` 10 (pidió 1; 10 es el mínimo): solo en mundos generados después. `Tiendas especiales.txt` al repo, con la TIENDA de PermaLocke, y se reparte como `TIENDAS.txt`.
 - Sección INFORMACIÓN (`InformationViewModel`/`InformationView`, antes de CONFIGURACIÓN): pestañas EVOLUCIONES (agrupadas por cómo evolucionan ahora, con sprites de especie, forma y objeto) y TIENDAS DEL JUEGO (mostradores especiales con icono y precio). Datos de `Data/informacion.json`, que genera `RomTool informacion` desde el cartucho + mod y `randomizer.json` pasando por `ImpossibleEvolutionFixer` (`Partners` ahora público). 45 evoluciones, 7 mostradores.
 - INFORMACIÓN: buscador por pestaña (sin tildes ni mayúsculas), sin textos de explicación ni «antes:», flecha verde en las que evolucionan al subir de nivel. `ItemIconIndex` medido para piedras 107-110, Baya Tamate, objetos de intercambio (221-252, 321-327), 537, 646-647 y Piedra Hielo 849→698.
 - Barra lateral agrupada: `GroupSectionViewModel` (pestañas; el aviso de juego es el de la pestaña visible). EQUIPO = VISOR, ENTRENAR EV, MOVIMIENTOS, POKE PASTE; TORNEO = COMPETICIÓN, LOGROS, COMBATES, CEMENTERIO. `MainViewModel.Navigate(título)` encuentra también pestañas (JUGAR, `--seccion`, visor→EV). Las pestañas cuelgan en la barra como subdesplegable (PxNavItem + NavChildrenTemplate); arrastrar con el botón pulsado ya no cambia de sección (se suelta la captura del ListBox). Luego: JUGAR = JUGAR, RANDOMIZADOR; PUNTOS = TIENDA (+ RULETA si la run juega con ella, en `_points.Pages`); INFORMACIÓN = EVOLUCIONES, TIENDAS (dos `InformationPageViewModel` sobre el mismo `InformationViewModel`), MISCELÁNEA. Barra: 9 entradas.
@@ -374,3 +374,22 @@ negro del estudio de fotos: gen 8-9 en el equipo (ver Trampas y lecciones).
   quitando lo que la app hacía desde fuera. El torneo actual es un early access de pruebas.
 - Herramientas: Ghidra 12.1.4 en `C:\Users\javie\tools`; detalle en «Plan de parches del juego (2026-10-06)».
 - Nada publicado ni commit. La carpeta de prueba tiene los parches puestos a mano (`--reglas-juego`).
+- **Publicada la 1.0.9** (commit d56d864, release v1.0.9 creada por la Action en 2m40s). Pendiente menor: el parámetro
+  `events` de `GameLinkMonitor` ya no se usa (lo usaba la corrección del cap); quitarlo en el próximo parche. Si alguna vez
+  se subió `levelcaps.json` desde Admin, volver a subirlo (ya sin `corregirEnMemoria`).
+- Tras la 1.0.9 (sin publicar): quitado el parámetro `events` de `GameLinkMonitor`; Súper Ultraganga (Local Abandonado)
+  como zona de prueba 8 (Zarala) en `rules.json`; con las reglas del juego las zonas de prueba rechazan la ball con el
+  mensaje del juego de la prueba (motivo 5, `EncounterDecision.Trial`). Iniciales: el texto ya dice los randomizados (§146);
+  los MODELOS de la escena no se han comprobado nunca, y la terna 722/725/728 no aparece en `code.bin` ni en los `.cro` del mod.
+- Animación de objetos al instante: la mochila se miraba cada 5 s dentro de la vuelta de 1 s del monitor; ahora
+  `GameLinkMonitor.RunBagAsync`, bucle propio cada 0,4 s (solo la mochila ya localizada, sin buscar). Sin publicar:
+  para la próxima versión (1.0.9.1) junto con la zona de Zarala, el mensaje de prueba y el parámetro `events`.
+- Modelos de la escena de los iniciales: **abandonado** tras un segundo intento (convertidor de modelos de combate a
+  campo hecho, a/0/9/4, a/2/0/0 y las 7 escenas de a/0/8/3 cambiados: en pantalla siguen los originales). Detalle
+  en «Preguntas abiertas». Mod de prueba restaurado.
+- **SuperCarameloraro** (§218, sin publicar): objeto 113 (hueco libre de la expansión) convertido en un Caramelo Raro
+  rojo que sube 5 niveles sin pasar del cap; solo lo da MISCELÁNEA (+10). Se instala en cada JUGAR, siempre. Antes se
+  había descartado (2026-09) por no poder meter objetos nuevos; ahora sí, con code.ips. Probado: cap respetado, plural en la
+  mochila (texto 41), icono rojo con aura dorada (diseño 2 del organizador) y aprende los movimientos de los niveles
+  saltados (parche en LearnNewWazaOnCurrentLevel, rutinas en dos asserts vacíos). Encontrado de paso: el cap no se
+  escribía en el juego hasta la primera Poké Ball (corte del §150); arreglado, sin desplegar aún.

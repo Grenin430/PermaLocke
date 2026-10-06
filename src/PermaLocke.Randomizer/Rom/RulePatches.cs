@@ -30,7 +30,7 @@ namespace PermaLocke.Randomizer.Rom;
 /// <c>.cro</c> has no such layer, so the installed mod's copy is patched in place.
 /// </para>
 /// </remarks>
-public static class RulePatches
+public static partial class RulePatches
 {
     public const string BattleCro = "Battle.cro";
 
@@ -371,6 +371,10 @@ public static class RulePatches
         var ips = Path.Combine(modFolder, "exefs", "code.ips");
         var battle = Path.Combine(modFolder, "romfs", BattleCro);
 
+        // El SuperCarameloraro no es una regla: va siempre, con las reglas puestas o no.
+        var superIcon = InstallSuperCandy(Path.Combine(modFolder, "romfs"), out var superProblem);
+        if (superProblem is not null) said.Add(superProblem);
+
         if (File.Exists(code))
         {
             var existing = File.Exists(ips) ? Ips.Read(File.ReadAllBytes(ips)) : [];
@@ -383,10 +387,13 @@ public static class RulePatches
             {
                 // Lo nuestro se quita siempre antes de decidir: si el code.bin ha cambiado, unos registros viejos se
                 // aplicarían a un código que no es el que se midió.
-                var rest = existing.Where(r => !CodeOffsets.Contains(r.Offset)).ToList();
-                var hadOurs = rest.Count != existing.Count;
-                var ours = on ? CodeRecords(File.ReadAllBytes(code)) : null;
+                var hadOurs = existing.Any(r => CodeOffsets.Contains(r.Offset));
+                var rest = existing.Where(r => !CodeOffsets.Contains(r.Offset) && !SuperCandyOffsets.Contains(r.Offset)).ToList();
+                var bytes = File.ReadAllBytes(code);
+                var ours = on ? CodeRecords(bytes) : null;
+                var super = superIcon is { } icon ? SuperCandyRecords(bytes, icon) : null;
                 var final = ours is null ? rest : Ips.Merge(rest, ours);
+                if (super is not null) final = Ips.Merge(final, super);
 
                 if (final.Count > 0) File.WriteAllBytes(ips, Ips.Write(final));
                 else if (File.Exists(ips)) File.Delete(ips);
@@ -394,6 +401,9 @@ public static class RulePatches
                 if (ours is not null) said.Add("code.bin: cap en el Caramelo Raro, caídos sin curar y duplicados puestos (code.ips)");
                 else if (on) said.Add("code.bin no es el que se conoce: sin cap en el Caramelo Raro, caídos sin curar ni duplicados");
                 else if (hadOurs) said.Add("code.bin: cap en el Caramelo Raro, caídos sin curar y duplicados quitados");
+
+                if (super is not null) said.Add("code.bin: SuperCarameloraro puesto (code.ips)");
+                else if (superIcon is not null) said.Add("code.bin no es el que se conoce: el SuperCarameloraro sube un solo nivel");
             }
         }
 

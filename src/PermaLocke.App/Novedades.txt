@@ -1,3 +1,14 @@
+1.0.9.1 2026-10-06
+SUPERCARAMELORARO
+Nuevo objeto: el SuperCarameloraro, un Caramelo Raro rojo con aura dorada que sube cinco niveles de golpe.
+Nunca pasa del nivel máximo: si te faltan tres, sube tres, y en el nivel máximo no se gasta.
+Te ofrece los movimientos de todos los niveles que sube, no solo los del último.
+Solo se consigue con PermaLocke: en MISCELÁNEA, junto a los Caramelos Raros.
+ARREGLOS
+El nivel máximo funciona desde el principio de la run, también antes de tener Poké Balls.
+En el Supermercado Ultraganga (local abandonado) no se puede capturar hasta superar la prueba de Zarala, y el juego te avisa con su propio mensaje de prueba.
+La animación de los objetos sale al momento al cogerlos.
+
 1.0.9 2026-10-06
 REGLAS DENTRO DEL JUEGO
 El propio juego hace ahora las reglas del Nuzlocke:

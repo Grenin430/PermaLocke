@@ -248,6 +248,112 @@ public sealed class RulePatchesTests
     }
 
     [Fact]
+    public void The_super_candy_gives_one_level_to_other_items_and_up_to_five_below_the_cap()
+    {
+        var a = RulePatches.SuperCandyA();
+        Assert.Equal("ldr r1, [sp, #0x18]; ldrh r1, [r1]; cmp r1, #0x400; movne r1, #1; bxne lr; b #0x5b9ba8",
+            Disassemble(a[..24], RulePatches.SuperCaveA + 0x100000));
+        Assert.Equal(RuleBlock.Cap, BinaryPrimitives.ReadUInt32LittleEndian(a.AsSpan(24)));
+
+        // La carga del segundo trozo cae en el literal del primero.
+        var b = RulePatches.SuperCandyB();
+        Assert.Equal("ldr ip, [pc, #-0x74]; ldrb r1, [ip]; subs r1, r1, r8; movle r1, #5; cmp r1, #5; b #0x5b9a70",
+            Disassemble(b, RulePatches.SuperCaveB + 0x100000));
+        Assert.Equal(RulePatches.SuperCaveA + 24, RulePatches.SuperCaveB + 8 - 0x74);
+
+        // ip sigue en el cap: ocho bytes más allá, los niveles saltados.
+        Assert.Equal("movgt r1, #5; sub r2, r1, #1; strb r2, [ip, #8]; bx lr",
+            Disassemble(RulePatches.SuperCandyC(), RulePatches.SuperCaveC + 0x100000));
+        Assert.Equal(RuleBlock.SkippedLevels, RuleBlock.Cap + 8);
+        Assert.Equal("bl #0x5b9b24",
+            Disassemble(BitConverter.GetBytes(RulePatches.Bl(RulePatches.SuperCandySite, RulePatches.SuperCaveA)), RulePatches.SuperCandySite + 0x100000));
+
+        // Los tres trozos caben en sus huecos: el de la duplicada acaba en 0x4B9A70, la prueba en 0x4B9B24, el mod empieza en 0x4B9B40.
+        Assert.True(RulePatches.SuperCaveC + RulePatches.SuperCandyC().Length <= RulePatches.CodeCave);
+        Assert.True(RulePatches.SuperCaveA + a.Length <= 0x4B9B40);
+        Assert.True(RulePatches.SuperCaveB + b.Length <= 0x4B9BC0);
+        Assert.Equal(RulePatches.SuperCaveA, RulePatches.DupeTestCave + RulePatches.DupeTest().Length);
+    }
+
+    [Fact]
+    public void The_move_check_takes_the_skipped_levels_and_forgets_them_when_it_is_done()
+    {
+        var skipped = RulePatches.LearnSkipped();
+        Assert.Equal("ldr r2, [pc, #0x10]; ldrb r2, [r2]; sub r3, r7, r2; cmp r8, r3; bxhs lr; b #0x3257b0",
+            Disassemble(skipped[..24], RulePatches.LearnCave + 0x100000));
+        Assert.Equal(RuleBlock.SkippedLevels, BinaryPrimitives.ReadUInt32LittleEndian(skipped.AsSpan(24)));
+
+        var done = RulePatches.LearnDone();
+        Assert.Equal("ldr r1, [pc, #0xc]; mov r0, #0; strb r0, [r1]; mov r0, #3; bx lr",
+            Disassemble(done[..20], RulePatches.LearnDoneCave + 0x100000));
+        Assert.Equal(RuleBlock.SkippedLevels, BinaryPrimitives.ReadUInt32LittleEndian(done.AsSpan(20)));
+
+        // Cada rutina cabe en su assert vacío (siete palabras desde el segundo, sin la guardia ni su salto).
+        Assert.True(skipped.Length <= 28 && done.Length <= 28);
+        Assert.Equal("blne #0x325678",
+            Disassemble(BitConverter.GetBytes(RulePatches.B(RulePatches.LearnSite, RulePatches.LearnCave, cond: 1, link: true)), RulePatches.LearnSite + 0x100000));
+    }
+
+    [Fact]
+    public void The_super_candy_goes_into_the_mods_files_once_and_its_code_points_at_its_icon()
+    {
+        if (Expansion("romfs", "a", "0", "1", "9") is not { } data || Expansion("romfs", "a", "0", "3", "6") is not { } text
+            || Expansion("romfs", "a", "0", "6", "1") is not { } icons || Expansion("exefs", "code.bin") is not { } code) return;
+
+        var romfs = Path.Combine(Path.GetTempPath(), "permalocke-super-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            foreach (var (from, parts) in new[] { (data, "1/9"), (text, "3/6"), (icons, "6/1") })
+            {
+                var to = Path.Combine([romfs, "a", "0", .. parts.Split('/')]);
+                Directory.CreateDirectory(Path.GetDirectoryName(to)!);
+                File.Copy(from, to);
+            }
+
+            var before = new pk3DS.Core.CTR.GARC.LazyGARC(File.ReadAllBytes(icons)).FileCount;
+            var icon = RulePatches.InstallSuperCandy(romfs, out var problem);
+            Assert.Null(problem);
+            Assert.Equal(before, icon);
+            Assert.Equal(icon, RulePatches.InstallSuperCandy(romfs, out problem));
+            Assert.Null(problem);
+
+            var items = new pk3DS.Core.CTR.GARC.LazyGARC(File.ReadAllBytes(Path.Combine(romfs, "a", "0", "1", "9")));
+            Assert.Equal(RulePatches.SuperCandyPrice, BinaryPrimitives.ReadUInt16LittleEndian(items[SuperCandy.ItemId]));
+            Assert.Equal(items[RulePatches.RareCandyItem][2..], items[SuperCandy.ItemId][2..]);
+
+            var config = new pk3DS.Core.GameConfig(pk3DS.Core.GameVersion.UM);
+            var garc = new pk3DS.Core.CTR.GARC.LazyGARC(File.ReadAllBytes(Path.Combine(romfs, "a", "0", "3", "6")));
+            string Line(int file) => pk3DS.Core.TextFile.GetStrings(config, garc[file])[SuperCandy.ItemId];
+            Assert.Equal(SuperCandy.Name, Line(RulePatches.ItemNamesFile));
+            Assert.Equal(SuperCandy.Name + "s", Line(RulePatches.ItemPluralFile));
+            Assert.Equal(SuperCandy.Name + "[VAR 1101(00FE,0100)]s", Line(RulePatches.ItemMessageFile));
+            Assert.Equal(RulePatches.SuperCandyDescription, Line(RulePatches.ItemFlavorFile));
+
+            var all = new pk3DS.Core.CTR.GARC.LazyGARC(File.ReadAllBytes(Path.Combine(romfs, "a", "0", "6", "1")));
+            Assert.Equal(before + 1, all.FileCount);
+            var original = new pk3DS.Core.CTR.GARC.LazyGARC(File.ReadAllBytes(icons));
+            Assert.All(Enumerable.Range(0, before), i => Assert.Equal(original[i], all[i]));
+
+            // El icono del juego se lee igual que lo pinta la app: rojo donde era azul, con el aura alrededor.
+            var drawn = Sprites.BflimTexture.Decode(all[before]);
+            var candy = Sprites.BflimTexture.Decode(original[RulePatches.RareCandyItem - 1]);
+            var painted = Sprites.SuperCandyIcon.Paint(candy.Pixels, candy.Width, candy.Height);
+            Assert.Equal((32, 32), (drawn.Width, drawn.Height));
+            Assert.All(Enumerable.Range(0, drawn.Pixels.Length), i => Assert.Equal(painted[i] >> 3, drawn.Pixels[i] >> 3));
+            Assert.True(drawn.Pixels.Where((_, i) => i % 4 == 3 && drawn.Pixels[i] != 0).Count()
+                        > candy.Pixels.Where((_, i) => i % 4 == 3 && candy.Pixels[i] != 0).Count());
+
+            var records = RulePatches.SuperCandyRecords(File.ReadAllBytes(code), icon!.Value)!;
+            Assert.Equal((uint)icon, BinaryPrimitives.ReadUInt32LittleEndian(records.Single(r => r.Offset == RulePatches.ItemIconTable + 4 * SuperCandy.ItemId).Bytes));
+            Assert.Equal(11, records.Count);
+        }
+        finally
+        {
+            Directory.Delete(romfs, true);
+        }
+    }
+
+    [Fact]
     public void The_mods_code_gets_its_records_on_the_rare_candy_check_the_hp_store_and_the_empty_cave()
     {
         if (Expansion("exefs", "code.bin") is not { } path) return;

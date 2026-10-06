@@ -41,6 +41,10 @@ public sealed class EncounterPolicyTests
         Assert.Equal(BallAction.GiveBack, shiny.Action);
         Assert.Equal(BallAction.GiveBack, after.Action);
         Assert.True(after.SpendZone);
+
+        // Con las reglas en el juego, el rechazo lleva el mensaje de la prueba y no el de zona gastada (2026-10-06).
+        Assert.True(walking.Trial && battle.Trial);
+        Assert.False(shiny.Trial || after.Trial);
     }
 
     private static readonly FieldZone VolcanoTunnel = new(0, 0, "tunel-del-volcan", "Túnel del Volcán");

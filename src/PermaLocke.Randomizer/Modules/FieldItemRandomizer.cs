@@ -188,7 +188,8 @@ public sealed class FieldItemRandomizer(RomWorkspace workspace, RandomizerOption
             .Where(id => pockets[id] is GeneralPocket or MedicinePocket or BerryPocket
                          && !banned.Contains(id)
                          && !string.IsNullOrWhiteSpace(names[id])
-                         && names[id] is not ("(?)" or "???"))
+                         && names[id] is not ("(?)" or "???")
+                         && id != PermaLocke.Core.Domain.SuperCandy.ItemId)
     ];
 
     /// <summary>

@@ -51,8 +51,8 @@ public sealed class KillcamNotificationTests
     }
 
     private static GameLinkMonitor Monitor(IKillcamRecorder recorder, AppPaths paths) =>
-        new(provider: null!, runContext: null!, watcher: null!, writer: null!, progress: null!, caps: null!,
-            encounterGuard: null!, encounters: null!, rewards: null!, maintenance: null!, events: null!,
+        new(provider: null!, runContext: null!, watcher: null!, writer: null!, progress: null!,
+            encounterGuard: null!, encounters: null!, rewards: null!, maintenance: null!,
             clock: null!, battleTables: null!, killcam: recorder, paths: paths,
             logger: NullLogger<GameLinkMonitor>.Instance, balls: null!, integrity: null!, rules: null!, berries: null!, bag: null!);
 

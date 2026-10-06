@@ -34,8 +34,20 @@ public static class RuleBlock
 
     public static uint BallRefusal => Address + BallRefusalOffset;
 
+    /// <summary>
+    /// Levels a SuperCarameloraro has just raised beyond the first (a byte, 0-4), so the move check that follows also
+    /// offers the moves of the levels it skipped. The game itself writes it and puts it back to 0 when the check ends;
+    /// PermaLocke never touches it.
+    /// </summary>
+    public const uint SkippedLevelsOffset = 0xC;
+
+    public static uint SkippedLevels => Address + SkippedLevelsOffset;
+
     /// <summary>The reason whose message (battle text 135, the fused Necrozma's) says the zone is spent.</summary>
     public const byte SpentZoneReason = 8;
+
+    /// <summary>The game's own reason for a trial zone (battle text 63): «¡No podrás atrapar Pokémon hasta haber superado la prueba!».</summary>
+    public const byte TrialReason = 5;
 
     /// <summary>
     /// The encryption constants of the run's fallen in the party, six words (0 = empty slot). The patched game keeps their
