@@ -13253,3 +13253,11 @@ un ataque largo no esconde la caja tanto, y con mucho color no cuenta, que es el
 
 **Revisor y comprobador nuevos (2026-10-07).** `.claude/agents/permalocke-reviewer.md` (Sonnet, con las trampas del proyecto) y `permalocke-release-check.md` (Haiku, lista mecánica de publicación). El revisor, probado contra
 este cambio, pidió dos lecturas ocultas seguidas para la regla de «barra bajando y caja que se esconde» (`_hiddenReads`); el comprobador marcó que el índice del cerebro llevaba un tiempo viejo.
+
+## §235 · Con Vulkan, el panel del cap y todo lo que va sobre el juego callaba (2026-10-07, publicado en la 1.0.12.2)
+
+Un amigo no veía el cap de nivel con la opción puesta. `GameWindow.RenderBox` busca la superficie de dibujo por la clase de ventana `…QWindowOwnDC…`, que solo existe con OpenGL. Medido arrancando Azahar 0dfe782 en una copia aparte
+(sin tocar la prueba) con `graphics_api` 2 y 1: con Vulkan las ventanas hijas son todas de clase `Qt693QWindowIcon` y ninguna lleva «OwnDC»; la superficie es la mayor de todas (1296×519 en la ventana de prueba, en el mismo sitio
+y con el mismo tamaño que la OwnDC de OpenGL). Con `RenderBox` nulo, `CapBadge` oculta el panel y también se quedaban sin juego los avisos sobre él y la barra de PS de la escena de muerte (la killcam y `GameWindow.TopScreen` también). El
+log no decía nada: es una ocultación silenciosa. Ahora `RenderBox` prefiere la OwnDC y, si no hay, toma la ventana hija visible de mayor área. Probado solo por la medida (las dos listas de ventanas); sin ver el panel con Vulkan en vivo.
+Otras causas posibles de «no sale el cap», por si no fuera esta: el juego no se abrió desde JUGAR (`_launcher.IsRunning`), Azahar no es la ventana en primer plano, y no hay etapa de cap (`ReadAsync` nulo).

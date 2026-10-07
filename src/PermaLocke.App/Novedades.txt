@@ -1,3 +1,7 @@
+1.0.12.2 2026-10-07
+VULKAN
+Con Vulkan en el emulador, el panel del cap de nivel, los avisos sobre el juego, la barra de PS de la escena de muerte y la repetición no se encontraban el juego y no salían. Ahora salen con OpenGL y con Vulkan.
+
 1.0.12.1 2026-10-07
 MUERTES
 La escena de muerte ya no tarda 6 segundos cuando el juego se lleva la caja de PS sin enseñarla a cero (pasaba a doble velocidad): sale en cuanto la barra baja a casi nada y la caja se va, o a los 3,5 s si la caja no vuelve.

@@ -166,15 +166,26 @@ public static class GameWindow
         }
 
         (int Left, int Top, int Width, int Height)? found = null;
+        (int Left, int Top, int Width, int Height)? largest = null;
         var name = new System.Text.StringBuilder(128);
 
         EnumChildWindows(window, (child, _) =>
         {
             name.Clear();
 
-            if (IsWindowVisible(child) && GetClassName(child, name, name.Capacity) > 0
-                && name.ToString().Contains("OwnDC", StringComparison.Ordinal)
-                && GetWindowRect(child, out var box) && box.Right > box.Left && box.Bottom > box.Top)
+            if (!IsWindowVisible(child) || GetClassName(child, name, name.Capacity) <= 0
+                || !GetWindowRect(child, out var box) || box.Right <= box.Left || box.Bottom <= box.Top)
+            {
+                return true;
+            }
+
+            var area = (box.Right - box.Left) * (box.Bottom - box.Top);
+            if (largest is not { } best || area > best.Width * best.Height)
+            {
+                largest = (box.Left, box.Top, box.Right - box.Left, box.Bottom - box.Top);
+            }
+
+            if (name.ToString().Contains("OwnDC", StringComparison.Ordinal))
             {
                 found = (box.Left, box.Top, box.Right - box.Left, box.Bottom - box.Top);
                 return false;
@@ -183,7 +194,10 @@ public static class GameWindow
             return true;
         }, IntPtr.Zero);
 
-        return found;
+        // Con Vulkan Qt no crea esa ventana de clase OwnDC (medido con Azahar 0dfe782, 2026-10-07): la superficie de dibujo es una
+        // ventana «QWindowIcon» del mismo tamaño y en el mismo sitio, la mayor de todas. Sin esto, el panel del cap, los avisos
+        // sobre el juego y la barra de PS no encontraban el juego y callaban (§235).
+        return found ?? largest;
     }
 
     /// <summary>
