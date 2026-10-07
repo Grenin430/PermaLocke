@@ -255,6 +255,13 @@ public sealed class BagLayout
                 legal = legal.Append((ushort)PermaLocke.Core.Domain.SuperCandy.ItemId);
             }
 
+            // El Repelente Infinito y la Incubadora Turbo (2026-10-07), otros huecos libres, son copias del Repartir Exp: objetos clave.
+            if (pouch.Type == InventoryType.KeyItems)
+            {
+                legal = legal.Append((ushort)PermaLocke.Core.Domain.InfiniteRepel.ItemId);
+                legal = legal.Append((ushort)PermaLocke.Core.Domain.EggTurbo.ItemId);
+            }
+
             pockets.Add(new BagPocket(pouch.Type, offset, pouch.Items.Length, pouch.MaxCount, legal));
         }
 

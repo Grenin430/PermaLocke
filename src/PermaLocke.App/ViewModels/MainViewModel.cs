@@ -14,6 +14,8 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly HomeViewModel _home;
     private readonly RouletteViewModel _roulette;
     private readonly RouletteService _wheel;
+    private readonly NurseryViewModel _nursery;
+    private readonly NurseryService _nurseryService;
     private readonly GroupSectionViewModel _play;
     private readonly SectionViewModel _gacha;
     private readonly PermaLocke.App.Services.IUiDispatcher _ui;
@@ -28,7 +30,8 @@ public sealed partial class MainViewModel : ObservableObject
         AlbumViewModel album,
         ShopViewModel shop, PokePasteViewModel pokePaste,
         MapViewModel map,
-        RouletteViewModel roulette, RouletteService wheel, SettingsViewModel settings,
+        RouletteViewModel roulette, RouletteService wheel, NurseryViewModel nursery, NurseryService nurseryService,
+        SettingsViewModel settings,
         CemeteryViewModel cemetery, SyncViewModel sync, BattleModeViewModel battle,
         GiftInboxViewModel gifts, SuggestionBoxViewModel suggestions, InformationViewModel information, DifficultyViewModel difficulty,
         PermaLocke.App.Services.GameLinkMonitor gameLink,
@@ -45,6 +48,8 @@ public sealed partial class MainViewModel : ObservableObject
         _home = home;
         _roulette = roulette;
         _wheel = wheel;
+        _nursery = nursery;
+        _nurseryService = nurseryService;
         _ui = ui;
         _runContext = runContext;
         _logger = logger;
@@ -122,11 +127,13 @@ public sealed partial class MainViewModel : ObservableObject
         {
             UpdateRole();
             UpdateRoulette();
+            UpdateNursery();
             return Task.CompletedTask;
         });
 
         UpdateRole();
         UpdateRoulette();
+        UpdateNursery();
     }
 
     /// <summary>
@@ -163,6 +170,34 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         Sections.Remove(_roulette);
+    }
+
+    /// <summary>
+    /// Puts the nursery in the sidebar, or takes it out, according to the role of the loaded run (§221): only the MONOTYPE roles
+    /// have one, and it goes where the wheel goes, under the GACHA.
+    /// </summary>
+    private void UpdateNursery()
+    {
+        var wanted = _runContext.Current is { } run && _nurseryService.PlaysWithTheNursery(run);
+        var there = Sections.Contains(_nursery);
+
+        if (wanted == there)
+        {
+            return;
+        }
+
+        if (wanted)
+        {
+            Sections.Insert(Sections.IndexOf(_gacha) + 1, _nursery);
+            return;
+        }
+
+        if (ReferenceEquals(SelectedSection, _nursery))
+        {
+            SelectedSection = Sections[0];
+        }
+
+        Sections.Remove(_nursery);
     }
 
     /// <summary>For the previews (<c>--capturas --ruleta</c>): shows the wheel as if the role played with it, to see ten sections fit.</summary>

@@ -16,7 +16,7 @@ namespace PermaLocke.Randomizer.Sprites;
 /// </para>
 /// <list type="bullet">
 /// <item>Icons 1 to 866 are species 1 to 649 in National Dex order, each species followed by its
-/// own forms. Icon 0 is the egg. That block is computed, not listed: see <see cref="Build(Func{int, int})"/>.</item>
+/// own forms. Icon 0 is the «?» and the egg is the last, 1153 (§225). That block is computed, not listed: see <see cref="Build(Func{int, int})"/>.</item>
 /// <item>Icons 867 to 1153 hold species 650 to 807 in an order that is <b>not</b> the National
 /// Dex — Furfrou first, then Phantump, then Litleo — so those 287 icons were identified one by
 /// one and are listed in <see cref="UnorderedBlock"/>.</item>
@@ -51,8 +51,8 @@ public static class PokemonIconIndex
     /// <summary>Icons <c>a/0/6/2</c> holds in this cartridge, egg included.</summary>
     public const int ContainerIcons = 1154;
 
-    /// <summary>Index of the egg icon, which is the only one that needs no working out.</summary>
-    public const int EggIcon = 0;
+    /// <summary>Index of the egg icon: the last of the cartridge's container, after Zeraora (§225; it was 0, which is the «?» picture).</summary>
+    public const int EggIcon = 1153;
 
     /// <summary>
     /// Icons a species takes beyond what <c>personal</c> declares. Negative means fewer.

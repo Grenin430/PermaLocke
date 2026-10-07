@@ -496,6 +496,13 @@ public sealed record RandomizerOptions
     public IReadOnlyList<int> WildBannedSpecies { get; init; } = [];
 
     /// <summary>
+    /// PKHeX type id (0-17) of a MONOTYPE run (§223): wild slots, starters, gifts, fossils and in-game trades only hand out
+    /// species that have it, in a form that has it. Trainers, totems and legendary statics are left alone. Null for every
+    /// other role. Set from the run's role, never from the options file.
+    /// </summary>
+    public int? MonoType { get; init; }
+
+    /// <summary>
     /// Regional forms a randomized Pokémon may come out in: Alola, Galar, Hisui and Paldea. Empty
     /// means every Pokémon comes out in its ordinary form, which is how it was until §138.
     /// </summary>

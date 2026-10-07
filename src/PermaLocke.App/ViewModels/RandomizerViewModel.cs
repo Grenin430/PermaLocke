@@ -186,6 +186,7 @@ public sealed partial class RandomizerViewModel : SectionViewModel
                     EnemyLevelPercent = role.EnemyLevelPercent,
                     ExtraTrainerPokemon = role.ExtraTrainerPokemon,
                     ImportantTrainerClasses = _roleCatalog.ImportantTrainerClasses,
+                    MonoType = role.MonoType,
                 };
             }
 

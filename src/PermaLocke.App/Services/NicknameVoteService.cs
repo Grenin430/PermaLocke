@@ -126,12 +126,21 @@ public sealed class NicknameVoteService
     private async Task WaitOutOfMenusAsync()
     {
         var since = DateTimeOffset.UtcNow;
+        var walking = 0;
         while (DateTimeOffset.UtcNow - since < MenusAtMost)
         {
             await Task.Delay(500);
             try
             {
-                if (_field.MovedSince(since)) return;
+                // Andar de verdad: la posición cambia en varias lecturas seguidas (1,5 s). Un solo cambio no vale: el fin del
+                // combate o un menú lo pueden provocar, y el mote salía encima de la pregunta del juego (2026-10-07).
+                walking = _field.IsWalking(TimeSpan.FromSeconds(1)) ? walking + 1 : 0;
+
+                if (walking >= 3)
+                {
+                    _logger.LogInformation("Mote: el jugador anda tras {Seconds:F0} s, se pregunta", (DateTimeOffset.UtcNow - since).TotalSeconds);
+                    return;
+                }
             }
             catch (Exception ex)
             {

@@ -68,8 +68,30 @@ public sealed class SpeciesPool
             throw new ArgumentException($"Ninguna especie disponible cumple: {what}.", nameof(keep));
         }
 
-        return new SpeciesPool(kept, _baseStatTotals, _options) { Forms = Forms };
+        return new SpeciesPool(kept, _baseStatTotals, _options) { Forms = Forms, HasType = HasType };
     }
+
+    /// <summary>
+    /// Whether a species, in a given form, has a type: (species, form, PKHeX type id). Read from the loaded world by
+    /// <see cref="FromGame"/>; null for a pool built by hand, which cannot be narrowed by type.
+    /// </summary>
+    public Func<int, int, int, bool>? HasType { get; init; }
+
+    /// <summary>
+    /// Only the species that have the type in some form (§223), and their forms narrowed to those that do: a Vulpix is a
+    /// FUEGO one only in its ordinary form, a Galarian Ponyta is the PSÍQUICO one.
+    /// </summary>
+    public SpeciesPool OfType(int type)
+    {
+        var has = HasType ?? throw new InvalidOperationException("Este pool no sabe los tipos de las especies.");
+        bool Keep(int species, int form) => has(species, form, type);
+
+        return Where(species => Keep(species, 0) || Forms.Of(species).Any(form => Keep(species, form)), $"tener el tipo {type}")
+            .WithForms(Forms.Restrict(Keep));
+    }
+
+    private SpeciesPool WithForms(RegionalForms forms) =>
+        new(_allowed, _baseStatTotals, _options) { Forms = forms, HasType = HasType };
 
     /// <summary>Reads the base stat totals out of the loaded personal table.</summary>
     /// <param name="gameMaxSpecies">
@@ -96,7 +118,8 @@ public sealed class SpeciesPool
         // Las formas que ESTE mundo declara: el cartucho solo trae las de Alola (§138).
         return new SpeciesPool(totals, options)
         {
-            Forms = RegionalForms.From(options.RegionalForms, species => config.Personal[species].FormeCount)
+            Forms = RegionalForms.From(options.RegionalForms, species => config.Personal[species].FormeCount),
+            HasType = (species, form, type) => config.Personal.GetFormEntry(species, form).Types.Contains(type)
         };
     }
 

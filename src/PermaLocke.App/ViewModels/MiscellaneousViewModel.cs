@@ -214,6 +214,16 @@ public sealed partial class MiscellaneousViewModel : SectionViewModel
     private Task GrantShinyCharmAsync() =>
         GiveAsync(BagService.ShinyCharmItemId, 1, "Amuleto Iris", "Herramienta de pruebas");
 
+    /// <summary>The Repelente Infinito (2026-10-07), a key item like the Shiny Charm: one in the bag, used to turn it on and off.</summary>
+    [RelayCommand(CanExecute = nameof(CanUseTools))]
+    private Task GrantInfiniteRepelAsync() =>
+        GiveAsync(InfiniteRepel.ItemId, 1, InfiniteRepel.Name, "Repelente que no se acaba");
+
+    /// <summary>The Incubadora Turbo (2026-10-07), a key item too: one in the bag, used to turn it on and off.</summary>
+    [RelayCommand(CanExecute = nameof(CanUseTools))]
+    private Task GrantEggTurboAsync() =>
+        GiveAsync(EggTurbo.ItemId, 1, EggTurbo.Name, "Huevos que eclosionan en dos pasos");
+
     /// <summary>
     /// Adds an item to the bag on top of what is already there, and records it.
     /// </summary>
@@ -329,6 +339,8 @@ public sealed partial class MiscellaneousViewModel : SectionViewModel
         GrantCandiesCommand.NotifyCanExecuteChanged();
         GrantSuperCandiesCommand.NotifyCanExecuteChanged();
         GrantShinyCharmCommand.NotifyCanExecuteChanged();
+        GrantInfiniteRepelCommand.NotifyCanExecuteChanged();
+        GrantEggTurboCommand.NotifyCanExecuteChanged();
         ClaimRewardCommand.NotifyCanExecuteChanged();
     }
 }

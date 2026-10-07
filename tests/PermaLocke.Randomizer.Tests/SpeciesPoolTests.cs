@@ -170,4 +170,38 @@ public class SpeciesPoolTests
 
         Assert.Contains("algo imposible", refused.Message);
     }
+
+    /// <summary>
+    /// §223. Type 5 is held by species 2 and 4 in their ordinary form, and by species 6 only in its regional form 1; species 8
+    /// has it ordinarily but not in its regional form.
+    /// </summary>
+    [Fact]
+    public void A_pool_of_a_type_hands_out_only_species_and_forms_that_have_it()
+    {
+        static bool Has(int species, int form, int type) =>
+            type == 5 && (species, form) is (2, 0) or (4, 0) or (6, 1) or (8, 0);
+
+        var options = Options() with { SimilarStrength = false };
+        var forms = RegionalForms.From([new RegionalFormEntry(6, [1]), new RegionalFormEntry(8, [1])], _ => 2);
+        var pool = new SpeciesPool(Totals(), options) { Forms = forms, HasType = Has }.OfType(5);
+        var random = new SeededRandomSource(9);
+        var seen = new HashSet<int>();
+
+        for (var i = 0; i < 3_000; i++)
+        {
+            var species = pool.Pick(random, 1);
+            var form = pool.Forms.Pick(random, species);
+
+            Assert.True(Has(species, form, 5), $"{species} forma {form}");
+            seen.Add(species);
+        }
+
+        Assert.Equal([2, 4, 6, 8], seen.Order());
+    }
+
+    [Fact]
+    public void A_pool_built_by_hand_cannot_be_narrowed_by_type()
+    {
+        Assert.Throws<InvalidOperationException>(() => new SpeciesPool(Totals(), Options()).OfType(5));
+    }
 }

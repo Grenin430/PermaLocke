@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "comment": "La GUARDERÍA de los roles MONOTYPE. Lo que la ruleta es al LUDÓPATA, esto es a ellos: gastan sus tiradas en HUEVOS de especies de su tipo, que se escriben en las cajas de la partida con el juego cerrado. Un huevo es del tipo (solo o con un segundo tipo), sin legendarios, a nivel 1, con naturaleza, habilidad e IV al azar.",
+
+  "comentarioTiradas": "Se DEBEN igual que las de la ruleta: una por prueba superada, tres por ganar la liga y dos más por el rematch, leído de los logros; lo ya gastado sale del historial (un evento por huevo). Al pulsar se gastan todas las que se deban de una vez.",
+  "tiradasPorPrueba": 1,
+  "tiradasPorLiga": 3,
+  "tiradasPorRematch": 2,
+  "logrosDePrueba": [
+    "prueba-01", "prueba-02", "prueba-03", "prueba-04", "prueba-05", "prueba-06",
+    "prueba-07", "prueba-08", "prueba-09", "prueba-10", "prueba-11", "prueba-12"
+  ],
+  "logroDeLiga": "alto-mando-campeon",
+  "logroDeRematch": "alto-mando-otra-vez",
+
+  "comentarioFuerza": "La especie del huevo se sortea entre las del tipo cuyo total de estadísticas base cae cerca de un OBJETIVO que sube con las pruebas superadas: empieza en la más floja del tipo y sube un doceavo (divisiones) del camino hasta la más fuerte por cada prueba, sin pasar de totalMaximo. La banda alrededor del objetivo se abre de uno en uno por ciento hasta que caen minimoDeCandidatos especies. Los números son los de la guardería de BxnnyLocke.",
+  "totalMaximo": 540,
+  "divisiones": 12,
+  "minimoDeCandidatos": 15
+}

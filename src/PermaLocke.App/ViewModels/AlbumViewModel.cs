@@ -459,19 +459,14 @@ public sealed partial class AlbumViewModel : SectionViewModel
 
     // ===================================================================================================== TRADE
 
-    /// <summary>The trade bar is open: the card in the hand can be picked, up to two (1.0.4.7).</summary>
+    /// <summary>The trade bar is open: the card in the hand can be picked, one (2026-10-07; before, two for one).</summary>
     [ObservableProperty]
     private bool _isTrading;
 
-    /// <summary>The first card handed over, or null.</summary>
+    /// <summary>The card handed over, or null.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(TradeHint), nameof(CanTrade), nameof(TradeMarked))]
     private TcgCard? _tradeFirst;
-
-    /// <summary>The second card handed over, or null.</summary>
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(TradeHint), nameof(CanTrade), nameof(TradeMarked))]
-    private TcgCard? _tradeSecond;
 
     /// <summary>Card trades left, from the credits of the run.</summary>
     [ObservableProperty]
@@ -499,25 +494,26 @@ public sealed partial class AlbumViewModel : SectionViewModel
 
     public bool TradesLimited => _credits.LimitsWonderTrades;
 
-    public bool CanTrade => TradeFirst is not null && TradeSecond is not null && !TradeBusy;
+    public bool CanTrade => TradeFirst is not null && !TradeBusy;
 
-    /// <summary>The picked cards, in order, for the gold frames on the page.</summary>
-    public IReadOnlyList<TcgCard> TradeMarked => [.. new[] { TradeFirst, TradeSecond }.OfType<TcgCard>()];
+    /// <summary>The picked card, for the gold frame on the page.</summary>
+    public IReadOnlyList<TcgCard> TradeMarked => [.. new[] { TradeFirst }.OfType<TcgCard>()];
 
-    /// <summary>What the bar says: which cards go, and what band comes back.</summary>
+    /// <summary>What the bar says: which card goes, and what band comes back.</summary>
     public string TradeHint
     {
         get
         {
-            if (TradeFirst is null || TradeSecond is null)
+            if (TradeFirst is null)
             {
-                return "Pulsa dos cartas del álbum para elegirlas. Entregas dos y recibes una.";
+                return "Pulsa una carta del álbum para elegirla. Entregas una y recibes otra.";
             }
 
-            var (a, b) = (_owners[TradeFirst], _owners[TradeSecond]);
-            var average = _trades.AverageTotalOf(Gift(a), Gift(b));
-            var (min, max) = _trades.Window.Band(average);
-            return $"Recibirás un Pokémon de nivel {Math.Max(a.Level, b.Level)} con estadísticas totales entre {min} y {max}.";
+            var gift = Gift(_owners[TradeFirst]);
+            var monoType = _runContext.Current is { } run ? _trades.MonoTypeOf(run) : null;
+            var (min, max) = _trades.BandFor(_trades.BaseStatTotalOf(gift.Species), monoType);
+            return $"Recibirás un Pokémon de nivel {gift.Level} con estadísticas totales entre {min} y {max}"
+                   + (monoType is null ? "." : ", de tu tipo.");
         }
     }
 
@@ -528,7 +524,6 @@ public sealed partial class AlbumViewModel : SectionViewModel
     {
         IsTrading = !IsTrading;
         TradeFirst = null;
-        TradeSecond = null;
         TradeProblem = string.Empty;
 
         if (IsTrading)
@@ -550,7 +545,7 @@ public sealed partial class AlbumViewModel : SectionViewModel
         }
     }
 
-    /// <summary>The card in the hand goes into the first free place of the trade, or comes out if it was in.</summary>
+    /// <summary>The card in the hand is the one to hand over, or comes out if it already was.</summary>
     [RelayCommand]
     private Task PickAsync() => Inspected is { } card ? TogglePickAsync(card) : Task.CompletedTask;
 
@@ -564,7 +559,6 @@ public sealed partial class AlbumViewModel : SectionViewModel
         TradeProblem = string.Empty;
 
         if (ReferenceEquals(card, TradeFirst)) { TradeFirst = null; return; }
-        if (ReferenceEquals(card, TradeSecond)) { TradeSecond = null; return; }
 
         if (card.Egg)
         {
@@ -578,24 +572,18 @@ public sealed partial class AlbumViewModel : SectionViewModel
             return;
         }
 
-        if (TradeFirst is null) TradeFirst = card;
-        else if (TradeSecond is null) TradeSecond = card;
-        else TradeProblem = "Ya has elegido dos. Quita una tocándola abajo.";
+        TradeFirst = card;
 
-        if (TradeFirst is not null && TradeSecond is not null && IsInspecting) Close();
+        if (IsInspecting) Close();
     }
 
     [RelayCommand]
-    private void Unpick(string which)
-    {
-        if (which == "1") TradeFirst = null;
-        else TradeSecond = null;
-    }
+    private void Unpick() => TradeFirst = null;
 
     [RelayCommand]
     private async Task TradeAsync()
     {
-        if (TradeFirst is not { } one || TradeSecond is not { } two || _runContext.Current is not { } run)
+        if (TradeFirst is not { } one || _runContext.Current is not { } run)
         {
             return;
         }
@@ -617,8 +605,8 @@ public sealed partial class AlbumViewModel : SectionViewModel
                 return;
             }
 
-            var (a, b) = (_owners[one], _owners[two]);
-            var result = await _trades.TradeTwoAsync(run, Gift(a), Gift(b), free: _credits.LimitsWonderTrades);
+            var given = _owners[one];
+            var result = await _trades.TradeAsync(run, Gift(given), free: _credits.LimitsWonderTrades);
 
             if (!result.Success || result.Offer is not { } offer)
             {
@@ -627,7 +615,7 @@ public sealed partial class AlbumViewModel : SectionViewModel
             }
 
             // Primero la partida; sin escritura no hay animación que enseñe un Pokémon que no tienes.
-            var written = await _swap.SwapTwoAsync(offer, a.Box, a.Slot, b.Species, b.Box, b.Slot);
+            var written = await _swap.SwapAsync(offer, given.Box, given.Slot);
             if (!written.Delivered)
             {
                 TradeProblem = written.Message;
@@ -639,9 +627,8 @@ public sealed partial class AlbumViewModel : SectionViewModel
                 await _identity.RememberDeliveryAsync(run, entry, written.Pid, written.Box, written.Slot);
             }
 
-            await _trades.MarkGivenAsTradedAsync(run, a.Pid, offer.DisplayName);
-            await _trades.MarkGivenAsTradedAsync(run, b.Pid, offer.DisplayName);
-            _logger.LogInformation("Intercambio de cartas: {A} y {B} por {C}", a.DisplayName, b.DisplayName, offer.DisplayName);
+            await _trades.MarkGivenAsTradedAsync(run, given.Pid, offer.DisplayName);
+            _logger.LogInformation("Intercambio de cartas: {A} por {C}", given.DisplayName, offer.DisplayName);
 
             // La carta nueva, leída de la partida recién escrita, con su rareza de verdad.
             var snapshot = await _boxes.ReadAsync();
@@ -652,7 +639,7 @@ public sealed partial class AlbumViewModel : SectionViewModel
                               + $"({(offer.Difference >= 0 ? "+" : string.Empty)}{offer.Difference} %)"
                               + (offer.IsShiny ? " · VARIOCOLOR" : string.Empty);
             TradeRevealed = false;
-            TradePlay = new CardTradePlay(one, two, resultCard);
+            TradePlay = new CardTradePlay(one, resultCard);
 
             await Task.Delay(TimeSpan.FromSeconds(CardTradeTimeline.Rest + 0.3));
             TradeRevealed = true;
@@ -671,24 +658,24 @@ public sealed partial class AlbumViewModel : SectionViewModel
     }
 
     /// <summary>
-    /// <c>--ensayar-intercambio</c>: the animation with three cards of the save and nothing written, to look at it.
+    /// <c>--ensayar-intercambio</c>: the animation with two cards of the save and nothing written, to look at it.
     /// </summary>
     public async Task RehearseTradeAsync()
     {
         // La sección puede estar leyendo la partida al abrirse: se espera a que acabe.
         while (IsLoading) await Task.Delay(100);
         if (_owners.Count == 0) await LoadAsync();
-        var cards = _owners.Keys.Where(card => !card.Egg && !card.Fallen).Take(3).ToList();
+        var cards = _owners.Keys.Where(card => !card.Egg && !card.Fallen).Take(2).ToList();
 
-        if (cards.Count < 3)
+        if (cards.Count < 2)
         {
-            TradeProblem = "Hacen falta tres cartas en la partida para el ensayo.";
+            TradeProblem = "Hacen falta dos cartas en la partida para el ensayo.";
             return;
         }
 
-        TradeResultText = $"{cards[2].Name.ToUpperInvariant()} · ENSAYO: NO SE HA CAMBIADO NADA";
+        TradeResultText = $"{cards[1].Name.ToUpperInvariant()} · ENSAYO: NO SE HA CAMBIADO NADA";
         TradeRevealed = false;
-        TradePlay = new CardTradePlay(cards[0], cards[1], cards[2]);
+        TradePlay = new CardTradePlay(cards[0], cards[1]);
         await Task.Delay(TimeSpan.FromSeconds(CardTradeTimeline.Rest + 0.3));
         TradeRevealed = true;
     }
@@ -700,7 +687,6 @@ public sealed partial class AlbumViewModel : SectionViewModel
         TradePlay = null;
         TradeRevealed = false;
         TradeFirst = null;
-        TradeSecond = null;
         IsTrading = false;
         await LoadAsync();
     }

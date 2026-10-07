@@ -12932,3 +12932,253 @@ la app y el randomizador.
   la primera Poké Ball (§150) y una run nueva no tiene: ahora el cap va al juego antes de ese corte (desde la 1.0.9 lo
   aplica el propio juego, también a los caramelos usados antes de la primera ball). Quitado el parámetro `caps` de
   `GameLinkMonitor`, que ya no se usaba.
+
+## §219 · Repelente Infinito: un objeto clave que se activa y desactiva desde la mochila (2026-10-07, sin publicar ni commit)
+
+Pedido del organizador: un objeto clave que, usado desde la mochila, actúa como repelente hasta que se vuelve a usar (entonces
+se apaga). Icono elegido entre cinco prototipos: la lata del Repelente pintada como galaxia (azul a magenta, estrellas, ∞
+dorado, brillo azul). Solo lo da la app (MISCELÁNEA, botón «REPELENTE INFINITO», uno solo: es objeto clave).
+`Core/Domain/InfiniteRepel` (id 114, nombre). Probado en el juego por el organizador: activa, desactiva, vuelve a activar.
+
+- **Objeto**: el 114, otro hueco libre de la expansión. `RulePatches.InstallInfiniteRepel` (siempre, en cada JUGAR, como el
+  §218) copia los datos del Repartir Exp (216: bolsillo clave, uso de campo 5, no se gasta), pone nombre, plural,
+  descripción y forma de mensaje (`a/0/3/6`, 39 a 42) y añade el icono (`Sprites/InfiniteRepelIcon`, pintado desde el
+  Repelente 79) al final de `a/0/6/1` (850 en la expansión). Los ayudantes `ItemData`, `ItemText` y `AppendIcon` son
+  los del SuperCarameloraro, generalizados; `SuperCandyIcon.Repaint` recodifica cualquier BFLIM RGBA5551.
+- **El repelente del juego**: `Field::EventWork` guarda los pasos que quedan en +0xA58 y el objeto que los puso en +0xA3E
+  (`SetMushiyokeCount(item, pasos)`, 0x3A8FA8). `DecMushiyokeCount` (code.bin 0x2A8EB8) se llama una vez por paso del
+  jugador y devuelve 1 cuando llega a cero. Reescrita en sus 12 palabras (`RepelCount`): si el objeto que puso los pasos
+  es el 114, no resta. Un paso, puesto por este objeto, dura para siempre. Es **un gancho por paso** utilizable para
+  otras cosas (contadores por zona, eventos).
+- **La mochila (`Bag.cro`)**: el uso de objetos busca el objeto en una tabla de 13 entradas (Repelentes, Cuerda Huida,
+  Miel, Repartir Exp, cupones) y llama a la función que encuentra (`FUN_00012b24`; la tabla en 0x17744). Antes de la
+  búsqueda, el `cmp r3,r5` de 0x12B54 pasa a `bl` a una cueva en el hueco de ceros que deja el código del módulo
+  (0x16C00–0x16DFC, comprobado que nada salta ni apunta ahí): el 114 va a su propia rutina (`BagHandlerCode`) y los demás
+  recuperan su compare. La rutina decide: sin pasos, o pasos de otro objeto, enciende (`SetMushiyokeCount(114, 1)`);
+  pasos del 114, apaga (`(114, 0)`). Enseña la línea 59 o 60 del texto de la mochila (`a/0/3/6` fichero 1, vacías
+  hasta ahora) con la rutina de mostrar mensaje de la mochila (`BagShowCode`, copia del caso del Repartir Exp), cierra
+  la ventana y vuelve al estado 2 sin gastar nada. `PatchBag` reescribe la cueva si el gancho ya estaba.
+- **App**: `BagLayout` acepta el 114 en objetos clave; `PkhexItemLookup` lo nombra; `PokemonSpriteService` lo dibuja con
+  `ReadInfiniteRepel`; `FieldItemRandomizer.RandomPool` no lo reparte.
+- **Trampa que costó dos despliegues**: la primera versión invertía la lógica (con 0 pasos elegía «apagar»), así que
+  siempre decía «desactivado»; y al corregirla seguía igual porque `PatchBag` daba por buenos el gancho y la cueva
+  viejos y no reescribía la cueva. Los tests con Capstone solo prueban que las palabras ARM son las escritas, no que
+  la lógica sea la buena: eso solo se ve en el juego. Tests en `RulePatchesTests` (rutinas leídas con Capstone, mochila
+  de la expansión parcheada y corregida, ficheros instalados dos veces) y `BagLayoutTests`.
+
+## §220 · Roles MONOTYPE: un solo tipo, con gacha y wonder trade filtrados (2026-10-07, sin publicar ni commit)
+
+Pedido del organizador, a partir del monotype de BxnnyLocke (analizado en solo lectura: nota «Monotype de BxnnyLocke» del
+cerebro). Ocho roles nuevos en `Data/roles.json`: `monotype_agua`, `_normal`, `_planta`, `_volador`, `_psiquico`, `_bicho`,
+`_veneno` y `_fuego`. Todos juegan igual que el normal (enemigos +20 %, +1 Pokémon en combates importantes, cap sin tocar),
+**ganan ×1,5 los puntos** y pierden normal (×1): lo que se cuece en la ROM es lo mismo, así que cambiar entre ellos no pide
+randomizar otra vez. La regla es la de BxnnyLocke, sin la guardería (PermaLocke no tiene).
+
+- **Menú (2026-10-07, a petición del organizador)**: en la pantalla de crear run y en la de cambiar de rol sale **un solo
+  MONOTYPE** entre las tarjetas; al elegirlo aparece debajo «ELIGE TU TIPO» con una tarjeta por tipo (placa de su color y
+  el icono de un Pokémon del tipo, de los sprites de la propia ROM; sin ROM, solo la placa). `RoleMenuViewModel` (App) agrupa
+  los roles con tipo del catálogo en esa tarjeta y no da rol (`SelectedRoleId` vacío, botón apagado) hasta que se elige un
+  tipo; el rol sigue siendo `monotype_X` en todo lo demás. `Role.IconSpecies` (campo `"especieIcono"` del JSON) dice qué
+  especie pone el icono. Los tipos que salen son los roles `monotype_*` de roles.json: añadir uno ahí lo añade al menú.
+- **Dato**: `Role.MonoType` (`int?`, numeración de tipos de PKHeX: 0 Normal … 17 Hada), del campo `"monotipo"` de cada rol
+  en el JSON; fuera de 0-17 se queda sin tipo. `Role.IsMonotype` y `Role.MonoTypeName` (en español, para pantallas); la
+  tarjeta del rol dice «solo Pokémon de tipo X» en su línea de efectos.
+- **`Core/Services/MonotypeRule`**: qué admite un tipo. Un Pokémon se admite cuando el tipo es **uno de sus dos, en la forma
+  que tiene** (`ITypeLookup.GetTypes(especie, forma)`: tipos del cartucho y, para la expansión de gen 8-9 y las formas
+  regionales, los del mundo instalado). La lista **se calcula**, no está escrita: no puede faltarle una especie nueva.
+  Con la expansión puesta, admitidas: agua 155, normal 133, planta 129, volador 109, psíquico 107, bicho 92, veneno 87,
+  fuego 83 (solo cartucho: 131, 109, 97, 98, 82, 77, 66, 64). `SpeciesOf(tipo)` incluye una especie si lo cumple su forma
+  normal o alguna regional; `FormFor` da la forma que sale: la sorteada si cumple, si no la normal, si no la primera regional que
+  cumpla. La caché de `SpeciesOf` supone que el mundo instalado se aplica al arrancar (`InstalledWorld`, antes de usar nada).
+- **Gacha** (`GachaService`, parámetro opcional `MonotypeRule? monotype`): `LinesOf`, `PoolOf` y `Preview` aceptan el tipo.
+  Solo entran las familias con alguna especie del tipo; de la etapa sorteada solo valen las especies del tipo y, si ninguna,
+  la etapa más cercana que tenga (hacia atrás primero); si un tier no tiene ninguna familia del tipo se baja al tier más
+  cercano que sí (debajo primero, luego arriba) en vez de dejar sin tirada. El dado de la etapa y el de la especie se tiran
+  siempre, como antes. Datos reales, 2000 tiradas × banner × rol: 0 tiradas nulas y 0 especies de otro tipo. La tirada
+  apunta `monotipo` en el evento (solo cuando lo hay) para poder recomputarla. **La puerta**: `RollAsync` rechaza la tirada,
+  también la gratis, mientras la run tenga un Pokémon **vivo** (por el registro de la run, no por la partida) que el tipo no
+  admita, con «Equipo no válido para MONOTYPE X: A, B y N más no es de tu tipo. Suéltalo o cámbialo en el wonder trade…».
+  Lo que se tiene sale de la PARTIDA (equipo y cajas, la última guardada), no del registro de la run: el registro nunca se entera de una
+  liberación, así que un Pokémon soltado seguiría «vivo» para siempre y el gacha no volvería a abrirse (corregido el mismo día de §220).
+  Los caídos (por PID), los de entrada dañada y los soltados no cuentan; sin partida legible se usa el registro. Por eso el aviso
+  dice «Suéltalo y guarda la partida».
+  Los muertos, soltados e intercambiados no cuentan. El panel de «qué puede salir» (`GachaViewModel`) también filtra.
+- **Wonder trade** (`WonderTradeService`): `PoolFor`, `Preview`, `PreviewTwo` y las operaciones aceptan el tipo; el
+  intercambio de dos cartas por una devuelve solo especies del tipo. Si en la banda del archivo no cae ninguna del tipo (un
+  Veneno de 700), `BandFor` la abre de 2 en 2 puntos por los dos lados hasta que caiga alguna (como mucho ±100 %): con datos
+  reales, entregando cada una de las 1025 especies, nunca hay un intercambio imposible; se abre en 0-34 de 1025 según el tipo
+  (hasta +45 % en fuego). También apunta `monotipo`.
+- **Un Pokémon inválido se suelta** (2026-10-07, a petición del organizador): el aviso del gacha dice solo «Suéltalo para volver a
+  usar el gacha» y no hay válvula de «último Pokémon» como la de BxnnyLocke (regalar un wonder trade si el único Pokémon es
+  inválido): lo que reemplaza a lo soltado es la guardería (§221). El wonder trade no se toca: sigue valiendo para quien lo use.
+- **Cosas a saber**: roles.json es un archivo de reglas oficiales (`TournamentRules`): lo que lleguen a tener los jugadores sale
+  del servidor, así que el organizador tiene que publicarlo desde Admin (REGLAS). Una versión **vieja** de la app ignora
+  `monotipo` y trataría a esos roles como un normal con ×1,5: publicar primero la app, después el archivo.
+  Silvally y Código Cero cuentan como Normal (sus tipos base); Mew, solo Psíquico.
+- Tests: `MonotypeRuleTests` (tipos, formas, gacha solo del tipo con tiers vacíos, tirada igual que antes sin tipo, puerta, otro
+  rol sin traza, wonder trade con banda abierta), `JsonRoleCatalogTests` (los ocho roles del archivo real).
+
+## §221 · La GUARDERÍA de los roles MONOTYPE: huevos de su tipo (2026-10-07, sin publicar ni commit)
+
+Pedido del organizador: la guardería es **una de las mecánicas principales** del rol (en BxnnyLocke sustituye a la ruleta del
+ludópata, ver la nota «Monotype de BxnnyLocke» del cerebro). Un MONOTYPE solo puede quedarse Pokémon de su tipo y los salvajes
+son de cualquiera: la guardería es cómo consigue los suyos. Cada tirada es **un huevo** de una especie del tipo, a nivel 1, que
+se escribe en una caja de la partida (con el juego cerrado) y eclosiona caminando en el juego como cualquier huevo.
+
+- **Pantalla**: GUARDERÍA, una sección que sale en el menú (debajo del GACHA, donde la ruleta) **solo** con un rol monotype
+  (`MainViewModel.UpdateNursery`). Dice lo que te deben, la fuerza a la que apuntan los huevos, y un botón OBTENER HUEVOS que
+  gasta todo lo debido de una vez. Los huevos de la tanda salen como cartas que se bambolean y se dan la vuelta una a una
+  (cada 0,42 s) enseñando especie, total, naturaleza, habilidad, IV y dónde está. Las animaciones van en los disparadores de la
+  plantilla sobre transformaciones con nombre: una animación dentro de un estilo lanza «no se puede animar un objeto inalterable».
+- **Tiradas** (`NurseryService`, `Data/guarderia.json`, en `TournamentRules` para publicarlo desde Admin): las mismas que la
+  ruleta, **una por prueba, tres por la liga, dos por el rematch**, leídas de los logros; lo gastado sale del historial (un
+  evento `NurseryEgg` por huevo), no hay contador. Un huevo solo se apunta cuando ya está en el archivo: si la entrega falla
+  (juego abierto, cajas llenas) la tirada sigue debida y se dice por qué.
+- **El huevo**: especie del tipo (el mismo cálculo por tipos del §220), sin legendarios; naturaleza, habilidad (`AbilityDraw`, como
+  el gacha) e IV al azar, sin variocolor; la forma regional que cumpla el tipo. Reproducible de la seed y del número de huevo
+  (`Preview`), como una tirada de gacha. **La fuerza**: el total de estadísticas base al que apunta empieza en el de la especie más
+  floja del tipo y sube un doceavo del camino hasta la más fuerte por cada prueba superada, sin pasar de 540 (`totalMaximo`,
+  `divisiones`); la especie se sortea entre las que caen en una banda alrededor del objetivo, que se abre de uno en uno por ciento
+  hasta que caben 15 (`minimoDeCandidatos`). Son los números de BxnnyLocke. Con datos reales (400 huevos × tipo × cinco puntos de la
+  run): 0 huevos de otro tipo ni legendarios, y la media sigue al objetivo (por ejemplo, agua: 244 sin pruebas, 391 con seis, 532 con doce).
+- **Entrega** (`IEggDelivery`, `SaveBoxDelivery.DeliverEggsTo`): **una copia de seguridad y una escritura para todos los huevos de
+  la tanda** (las copias se llaman por segundo: una escritura por huevo habría intentado repetir el nombre y dejado el pedido a medias),
+  en los primeros huecos libres de las cajas, nunca en el equipo; se relee y cada uno tiene que ser un huevo, de esa especie y
+  forma y con su PID. Lo que no cabe queda como debido (`BoxesFull`); con las cajas llenas no se escribe ni se copia nada.
+  `PokemonBuilder.BuildEgg`: nivel 1, `IsEgg`, nombre «Huevo», pasos de eclosión de la especie (los de la tabla del cartucho; 20 para las
+  de la expansión, que esa tabla no tiene), guardería (60002) como lugar y la fecha de hoy, sin lugar ni nivel de encuentro y sin
+  entrenador que lo maneje. **Sin comprobar en el juego**: que eclosionen y que las especies de la expansión lo hagan.
+- **En la run**: `PokemonOrigin.Nursery` («Guardería») y `GameEventType.NurseryEgg` («Huevo de la guardería»), los dos al final de sus
+  enums. El huevo se apunta con el PID que le dio el juego, así que el vigilante lo reconoce al eclosionar y cuando caiga.
+- Tests: `MonotypeRuleTests` (tiradas debidas y gastadas huevo a huevo, objetivo por pruebas, huevo del tipo y no legendario y
+  reproducible, banda que se abre), `NurseryEggDeliveryTests` (partida real: varios huevos en una escritura con una copia, huecos
+  ocupados, cajas llenas, ninguno) y la pantalla en `HomeViewTests`.
+
+## §222 · El wonder trade, de una carta por otra (2026-10-07, sin publicar ni commit)
+
+Pedido del organizador: el intercambio del ÁLBUM deja de ser **dos por una** (§1.0.4.7) y pasa a **uno por uno**, y de paso resuelve
+el inicial no válido de los roles MONOTYPE (§220): con un solo Pokémon, o con uno de otro tipo, se cambia por uno de tu tipo.
+Es la válvula del «último Pokémon» de BxnnyLocke, que antes no se podía copiar porque con una sola carta no había intercambio.
+
+- **Servicio**: `WonderTradeService.TradeAsync` (la operación de una carta, que ya existía y es la que usa MONOTYPE) es la única. Se quitó lo
+  de dos cartas: `TradeTwoAsync`, `PreviewTwo`, `AverageTotalOf` y la carta combinada. El nivel que llega es el del entregado, la banda es
+  la del archivo alrededor de su total (y, en un MONOTYPE, la que se abre hasta que caiga algo del tipo, §220) y lo que llega es del tipo.
+  Los eventos nuevos ya no llevan `modo` ni `entregado2*`; los viejos que los tengan se leen igual. `MonoTypeOf(run)` para las pantallas.
+- **Partida**: `IPokemonSwap` ya solo tiene `SwapAsync`; se quitaron `SwapTwoAsync`, `SwapTwoIn` y `ApplyTwoTo` de `SaveBoxSwap`. La única
+  carta entregada se cambia por la nueva en su sitio (caja o equipo; el equipo no cambia de tamaño).
+- **Álbum**: `AlbumViewModel` elige una carta (`TradeFirst`; fuera `TradeSecond` y el parámetro de `Unpick`); la barra dice «UNA POR UNA» y
+  el consejo da el nivel y la banda de lo que vendrá (de tu tipo, en un MONOTYPE). Un huevo o un caído no se pueden entregar, como antes.
+- **Animación** (`CardTradeScene`, `CardTradeStage`, `CardTradePlay(First, Result)`): una carta entra por la izquierda, espera meciéndose y
+  **orbita en espiral hacia el centro hasta estallar** (el fogonazo, la onda y las esquirlas de siempre, ahora sin segunda carta), y el orbe
+  se pliega en la carta nueva. `--ensayar-intercambio` usa dos cartas de la partida, no tres. Capturas con `PixelCheck`.
+- Tests: `SaveBoxSwapTests` (una carta, de caja y de equipo), `MonotypeRuleTests` (un intercambio de MONOTYPE devuelve el tipo) y
+  `WonderTradeServiceTests` (las de una carta, que ya estaban).
+
+## §223 · El mundo de un MONOTYPE sale solo de su tipo (2026-10-07, sin publicar ni commit)
+
+Idea del organizador: BxnnyLocke, limitado, se apaña con wonder trade y soltar; PermaLocke genera el mundo, así que lo genera ya del tipo.
+
+- **Opción**: `RandomizerOptions.MonoType` (id de tipo de PKHeX, 0-17). Nunca viene de `randomizer.json`: `RandomizerViewModel` (y `RomTool randomize --rol`)
+  la ponen desde `Role.MonoType` al generar, como el resto de lo que manda el rol.
+- **Pool**: `SpeciesPool.OfType(type)` deja las especies que tienen el tipo en alguna forma, con los tipos leídos del **mundo instalado**
+  (`config.Personal.GetFormEntry(especie, forma).Types`, así vale para la expansión), y `RegionalForms.Restrict` deja solo las formas que
+  lo tienen: un Vulpix de Alola nunca sale en FUEGO, un Ponyta de Galar es el único que sale en PSÍQUICO. Un pool hecho a mano no sabe tipos y lo rechaza.
+- **Qué cambia**: los salvajes (`WildEncounterRandomizer.PoolFor`, las llamadas SOS siguen copiando el hueco base), los tres iniciales, los regalos, los
+  fósiles y los tratos (`StaticEncounterRandomizer`). **Qué no**: los estáticos que se pelean (dominantes, legendarios, ultraentes), los
+  entrenadores y los Pokémon extra del rol. Los iniciales siguen siendo primera etapa de una línea de tres **de ese tipo**; la evolución puede perder el tipo.
+- **Medido con la ROM real** (seed 777, PSÍQUICO, el tipo con menos): iniciales Beldum, Solosis y Gothita; Ruta 1 con Ralts, Kirlia, Slowpoke, Natu, Munna…; 7 tratos y 34
+  regalos cambiados, Cosmog intacto. Sin comprobar en el juego.
+- **El mundo ya generado no cambia** al cambiar de rol: hay que volver a generarlo e instalarlo. El gacha mantiene su comprobación como red.
+- Tests: `SpeciesPoolTests` (especies y formas del tipo, pool a mano rechazado).
+- **Corrección (mismo día)**: el primer Pokémon tras las Poké Balls salía de cualquier tipo. Salía de la tabla de **estáticos**, no de las de salvajes:
+  las filas 0 y 151-154 (Pikipek, Yungoos, Rattata de Alola, Grubbin, Spearow, a nivel 3-4 en el cartucho) son las capturas del principio, y los estáticos
+  usaban el pool de siempre. Ahora, en un MONOTYPE, los estáticos **corrientes** (byte de clase 0: esas, Sudowoodo, Pinsir, Skarmory…) salen del pool del
+  tipo; dominantes, legendarios y ultraentes (clases 1-3) siguen igual. Medido (FUEGO, seed 777): filas 151-154 Slugma, Charcadet, Salandit, Vulpix.
+  `RomTool aprendizajes <GARC> --especie N` y `dump <seed> <zona> --tipo N` comprueban un mundo ya generado.
+
+## §224 · El mote entre todos esperaba mal a que acabaran los menús (2026-10-07, sin publicar ni commit)
+
+Visto en partida: tras capturar un Charcadet, el panel «¿Quieres que los otros pongan el mote?» salió encima de la pregunta del propio juego
+(«¿Quieres ponerle un mote?»), con 8 s de los 15 ya gastados. `WaitOutOfMenusAsync` soltaba la espera con `FieldZoneReader.MovedSince`, que
+queda **verdadero para siempre** tras UN solo cambio de posición, y el fin del combate o un menú pueden provocar uno.
+Ahora espera a **andar de verdad**: `FieldZoneReader.IsWalking(1 s)` (el registro cambió al menos dos veces en el último segundo) en tres
+lecturas seguidas (1,5 s). Queda una línea en el log al soltarse («Mote: el jugador anda tras N s»), para ver con qué retraso salió si se repite.
+**Sin comprobar en el juego**; no se pudo reproducir sin Azahar. Si vuelve a salir pronto, el log dice a los cuántos segundos y hay que medir qué registro cambia.
+
+## §225 · La guardería con llegada de huevos, y el huevo que se veía como Meltan (2026-10-07, sin publicar ni commit)
+
+- **Huevos como Meltan en el juego (sin resolver)**: el jugador vio los huevos dibujados como Meltan. Se pensó que era el icono del contenedor `a/0/6/2` (el huevo está en el 1153, Meltan en el 1154) y se escribió `EggIconFix`, que copiaba el huevo en el 1154: **se quitó el mismo día**, porque rompía el icono de Meltan y no era la causa. Leído el código del juego (`code.bin` de la expansión, Ghidra), la función que da el icono de caja y equipo (`FUN_0030c88c(especie, forma, género, huevo, variocolor)`) **ya devuelve el 1153, el huevo, para cualquier huevo** (`IsEgg` es el bit 30 de IV32, el mismo que escribe PKHeX), y Meltan (808) va a `especie + 0x15A` = 1154. Así que el icono sale bien; lo que se ve como Meltan es otra cosa, probablemente el modelo 3D o la ficha, donde el hueco 808 que en el cartucho es el del huevo ahora es Meltan. **Falta saber dónde se ve** (caja, equipo, ficha) para buscar esa ruta.
+- **El huevo en la app**: `PokemonIconIndex.EggIcon` pasa de 0 a **1153**. Hasta ahora la app dibujaba los huevos del VISOR, del ÁLBUM y de la guardería con la bola «?».
+- **Llegada de los huevos** (`NurseryScene`, `NurseryStage`, `NurseryPlay`): al pulsar OBTENER HUEVOS y escribirse en la partida, la sala se oscurece, se enciende un círculo de
+  runas con el color del **tipo del rol** y los huevos caen uno tras otro a su nido de paja (rebote, polvo, chispas del tipo). Cuando cae el último tiemblan todos, sube una columna de
+  luz y estalla un fogonazo; luego se mecen y suben estrellas. Las manchas de cada huevo son del color del tipo y salen de la seed de la run y el número del huevo. Los
+  huevos son todos iguales a propósito: no se enseña lo que hay dentro (la pega que ya puso el jugador con los iniciales, §49). La duración crece con los huevos pero una tanda llena cabe en 9 s
+  (test). Al acabar sale CONTINUAR, y entonces las cartas se dan la vuelta como antes. Pantalla propia en `PixelCheck` (`NurseryPreviews`, hojas `guarderia-5.png`/`-12.png`).
+- **La sección**: el rol con el color de su tipo, los huevos que se deben dibujados con el icono del huevo (hasta doce y un «+N»), una ventana «LO QUE SALDRÁ» con un cuadrado por prueba
+  de la run, una barra de fuerza de los huevos (del más flojo al más fuerte del tipo, `NurseryService.RangeFor`) y los puntos a los que apuntan.
+
+## §226 · El duplicado se elige: capturarlo cuenta, pasar no (2026-10-07, sin publicar ni commit)
+
+Pedido del organizador: con las capturas ya dentro del juego, un salvaje de una línea que ya tienes (un Frogadier con un Greninja; un Abomasnow vivo **o muerto**) deja de ser
+imposible: puede **capturarlo o volver a mirar**. Si lo captura, cuenta como el encuentro de la ruta; si no, no cuenta y la ruta sigue libre para el siguiente.
+Antes el juego parcheado volvía a sortear esos slots (la lista de duplicados del bloque de reglas, §189 y siguientes) y, si uno salía, las balls se rechazaban.
+
+- **Política** (`EncounterPolicy.Decide`): duplicado en una ruta libre → `GiveBack`, `SpendZone` falso al empezar y `Optional` verdadero (mensaje: «puedes capturarlo (cuenta como el
+  encuentro de la ruta) o pasar al siguiente (no cuenta)»). En una ruta ya gastada, o mientras no se lee la especie, sigue sin poder capturarse.
+- **Fin del combate** (`EncounterGuard.SettleAsync`): un duplicado capturado, medido por los contadores del juego (se espera `CountGrace` a que lo apunten), llama a `SpendZoneAsync` y marca la
+  ruta como capturada; uno dejado pasar (huida, KO o derrota) no gasta nada ni marca el mapa, y queda en el log.
+- **El juego ya no vuelve a sortear duplicados**: `TellGameTheDupesAsync` escribe siempre la lista vacía (y así borra la de una versión anterior). El parche del reroll sigue en `code.ips`, inerte con la lista vacía.
+- **Aviso nuevo** (`ToastKind.Duplicate`, pestaña «DUPLICADO», color verde azulado): «Duplicado: tú eliges», unos segundos después de empezar el combate, como el de primer encuentro, para no destripar el salvaje.
+- Un variocolor sigue pudiéndose capturar siempre, y las capturas permitidas no cambian.
+- Tests: `EncounterPolicyTests` (duplicado opcional; ruta gastada y especie sin leer, igual que antes). **Sin comprobar en el juego**; `Data/rules.json` lleva el texto nuevo (no está copiado a «PermaLocke prueba»).
+
+## §227 · Incubadora Turbo: un objeto clave que abre los huevos al dar dos pasos (2026-10-07, sin publicar ni commit)
+
+Pedido del organizador: otro objeto propio, para abrir huevos muy rápido (con dos pasos, del tirón), con varios prototipos de icono, y en MISCELÁNEA con los demás.
+Icono elegido entre siete (A rayo, B cohete, C reloj, D eclosión dorada, E alas, F galaxia, G pollito): **A, el rayo**: huevo crema con manchas verdes, un rayo dorado
+cruzado, líneas de velocidad a la izquierda y borde dorado (`Sprites/EggTurboIcon`, dibujado desde cero y entregado al juego sobre la plantilla del Repelente).
+`Core/Domain/EggTurbo` (id 115, «Incubadora Turbo»). Funciona como el Repelente Infinito (§219): objeto clave, se activa y se desactiva desde la mochila, solo la da la app.
+
+- **Los huevos del juego** (Ghidra sobre `FieldRo.cro`, que no va en el mod, y los nombres de usum-re): la función por paso (`FieldRo.cro` 0x25354, llamada desde la actualización del
+  jugador con el bit 0x400 de sus banderas) suma `Rotom::CalcHatch(364)` a un contador (`Situation::GetEggStepCount`); al pasar de 0x10000, cada huevo del equipo pierde un ciclo
+  (`CoreParam::SubOriginalFamiliarity(huevo, 1)`, 2 con Cuerpo Llama o Armadura Magma en el equipo) y el contador vuelve a cero; un huevo sin ciclos eclosiona.
+  Se cambian dos sitios de `code.bin` (por `code.ips`), porque el módulo del campo no está en el mod:
+  - `CalcHatch` (0x27DF30, el ×1,5 del Poder Rotom) se reescribe más corto (sin la guarda de un `n` de cientos de millones) y, con el byte puesto, devuelve 0x8001: dos pasos pasan de 0x10000.
+  - `SubOriginalFamiliarity` (0x22244C, solo la llama el módulo del campo) cambia su `cpy r5,r1` (la cantidad) por una llamada a un stub que hace lo mismo y, con el byte puesto, pone 255: satura en 0 y el huevo
+    eclosiona en ese mismo paso. El stub y la dirección del byte caben en el hueco que deja el `CalcHatch` corto (26 palabras en total). Sin el byte, todo sale como en el cartucho.
+- **El byte**: `RuleBlock.EggTurbo` (+0x10 del bloque de reglas), en RAM y no en el guardado: el juego arranca con la incubadora apagada. Solo lo escribe el juego, desde la mochila.
+- **La mochila** (`Bag.cro`): la cueva (0x16C00) lleva ahora dos objetos: el gancho compara con 114 y con 115, y el 115 va a su rutina (`BagEggCode`, tras la del Repelente), que invierte el byte, enseña las líneas 91
+  («Has activado la Incubadora Turbo.») o 92 («Has desactivado…») del texto de la mochila (las que quedaban vacías junto a 59 y 60 del Repelente) y vuelve a la mochila sin gastar nada. Ocupa 0x188 de los 0x1FC que tiene la cueva.
+- **Objeto**: `InstallEggTurbo` copia los datos del Repartir Exp (216), pone nombre, plural, descripción y mensaje (`a/0/3/6` 39 a 42) y añade el icono al final de `a/0/6/1`; `EggTurboRecords` pone las
+  dos palabras de código y la entrada de la tabla de iconos. App: `BagLayout` (objeto clave), `PkhexItemLookup`, `PokemonSpriteService` (`ReadEggTurbo`) y el botón «INCUBADORA TURBO» de MISCELÁNEA.
+- Tests (`RulePatchesTests`): instalación una y dos veces sobre los ficheros de la expansión, texto, icono, registros del código, y el código leído con Capstone (lo que está escrito, no que la lógica sea la buena: eso solo se ve en el juego).
+  **Sin comprobar en el juego**: que dos pasos abran los huevos, que la mochila diga activada/desactivada y que con la incubadora apagada los huevos vayan como siempre.
+
+## §228 · Guardería: un huevo cada vez, sin enseñar qué trae, y la animación rehecha (2026-10-07, sin publicar ni commit)
+
+Pedido del organizador: quitar de MISCELÁNEA las tiradas de huevo de prueba (el botón «+5 TIRADAS DE HUEVO» y su comando); la animación de llegada más trabajada y pulida; que **la app no diga qué Pokémon trae cada huevo** (se pierde la
+sorpresa); pulir la sección; y que las tiradas se pidan **de una en una**, no todas a la vez.
+
+- **Una tirada, un huevo**: `NurseryViewModel.GetEggAsync` («PEDIR UN HUEVO (N)») prepara **un** huevo, lo escribe en la partida, lo apunta (solo entonces cuenta como gastado) y lanza su animación. Las demás tiradas siguen debidas.
+- **Sin especie en la app**: se quitaron las cartas que se daban la vuelta y enseñaban especie, total, IV y lugar. Lo que se ve ahora de cada huevo es su número y dónde fue («CAJA 3 · HUECO 5»). El evento `NurseryEgg` ya no lleva
+  la especie en el texto («Guardería: huevo n.º 4 en la caja 3, hueco 5.») ni en los datos (fuera `especie`, `forma`, `total`, `ivs`, `naturaleza` y `habilidad`): sale de la semilla y el número, si hace falta comprobarlo. **Queda** el Pokémon
+  de la run con su especie (el vigilante lo empareja por PID al eclosionar): cualquier pantalla que liste los Pokémon registrados la mostraría, aunque los huevos del VISOR, el ÁLBUM y la guardería se dibujan como huevo.
+- **Animación** (`NurseryScene`, pensada para un huevo grande, y sigue valiendo para varios): sala oscura con viñeta de bandas y motas de luz que suben; círculo de runas de tres anillos en el color del tipo dibujándose en el suelo; nido de paja
+  (más grueso cuanto más grande el huevo); el huevo cae con un rastro de luz y una **sombra** que crece, rebota, se aplasta y levanta polvo, un anillo en el suelo y chispas, con un **temblor de pantalla**; luego **se carga** (tiembla cada vez más,
+  los anillos giran más deprisa, una espiral de luz entra en él, sube una columna y **grietas de luz** parpadean por la cáscara); el **estallido** es un fogonazo blanco, un abanico de rayos que gira, dos ondas (en el suelo y alrededor del huevo)
+  y confeti del color del tipo, blanco y oro; después el huevo **flota** con una aureola dorada y suben estrellas. Termina con «¡HUEVO EN TU CAJA!», dónde fue y CONTINUAR. Dura unos ocho segundos con un huevo (test: una tanda de 40 cabe en 9).
+- **Sección**: el rol con el color de su tipo, lo que se debe con los huevos dibujados, el botón de un huevo (dice cuántos quedan), «LO QUE SALDRÁ» (una casilla por prueba y la barra de fuerza), «CÓMO ECLOSIONAN» (los tres pasos, con la Incubadora
+  Turbo) y «HUEVOS PEDIDOS», una lista de los pedidos desde que se abrió la pantalla que entran con un salto y un bamboleo.
+- **Tiradas de prueba**: `GameEventType.NurseryGrant` y `NurseryService.GrantAsync` se quedan (el organizador puede dar tiradas con una sonda), pero ya no hay botón en MISCELÁNEA.
+- Tests: `HomeViewTests` (la pantalla), `NurseryPreviews` de PixelCheck (hojas `guarderia-1.png` y `guarderia-5.png`). **Sin comprobar en el juego**.
+- **Lo que da cada prueba** (añadido al §228, a petición del organizador): una ventana «LO QUE DA CADA PRUEBA», como la tabla del gacha: cada hito de `Data/guarderia.json` (las doce pruebas, el Campeón y «Y otra vez») con los huevos
+  que paga, el punto verde cuando ya se consiguió y atenuado si falta, y un resumen («2 de 14 conseguidos: 2 de 17 huevos»). `NurseryService.MilestonesAsync` los lee de los logros; los nombres son los de `Data/achievements.json`.
+
+## §229 · Animación de la guardería: la lluvia de estrellas (2026-10-07, sin publicar ni commit)
+
+El organizador no quedó convencido con la animación del §228 y pidió prototipos; de los seis descritos eligió el **5, «lluvia de estrellas»**. `NurseryScene` se rehízo:
+una lluvia de estrellas fugaces del color del tipo (cola larga, cabeza blanca) que empieza con pocas y acaba en aguacero; cada una cae sobre el bloque que le toca de un huevo que se esculpe **con polvo de estrellas de abajo arriba**
+sobre un contorno tenue que dice dónde va a estar, y deja una chispa al llegar; las que fallan acaban en un charco de luz en el suelo. Al encenderse el último bloque llega un **pulso**: un fogonazo suave y un pequeño respingo de pantalla, el polvo
+se vuelve cascarón de abajo arriba con las manchas del tipo, salen dos ondas (suelo y alrededor) y polvo de estrellas, y el huevo **flota** con una aureola dorada mientras siguen cruzando estrellas y subiendo destellos.
+Dura 5,9 s (`NurseryTimeline`: `Lead` 0,8 + `Rain` 3,2 + pulso 0,2 + descanso 1,3), igual con un huevo que con cuarenta, porque se construyen todos a la vez. Se fueron el nido de paja, las runas, la caída, las grietas y el
+ensanche de rayos del §228. Tests: `NurseryPreviews` (la duración no depende del número, hojas `guarderia-1.png` y `-5.png`). **Sin ver en la app real**.

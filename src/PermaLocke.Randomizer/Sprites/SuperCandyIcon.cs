@@ -53,37 +53,41 @@ public static class SuperCandyIcon
         return output;
     }
 
+    /// <summary>The Rare Candy's BFLIM (LZ-free, RGBA5551) repainted; null when it is not that.</summary>
+    public static byte[]? Bflim(byte[] rareCandy) => Repaint(rareCandy, Paint);
+
     /// <summary>
-    /// The Rare Candy's BFLIM (LZ-free, RGBA5551) repainted, with its own layout and footer; null when it is not that.
+    /// An item icon's BFLIM (LZ-free, RGBA5551) repainted by <paramref name="paint"/>, with its own layout and footer;
+    /// null when it is not one.
     /// </summary>
     /// <remarks>
     /// The layout (8×8 tiles in Morton order, maybe stored rotated) is not worked out again: the decoder is handed a copy
     /// whose every stored pixel carries its own index, and where each index lands says where each pixel goes back.
     /// </remarks>
-    public static byte[]? Bflim(byte[] rareCandy)
+    public static byte[]? Repaint(byte[] icon, Func<byte[], int, int, byte[]> paint)
     {
         BflimTexture texture;
         try
         {
-            texture = BflimTexture.Decode(rareCandy);
+            texture = BflimTexture.Decode(icon);
         }
         catch (Exception)
         {
             return null;
         }
 
-        var size = (int)BinaryPrimitives.ReadUInt32LittleEndian(rareCandy.AsSpan(rareCandy.Length - 0x28 + 0x24));
+        var size = (int)BinaryPrimitives.ReadUInt32LittleEndian(icon.AsSpan(icon.Length - 0x28 + 0x24));
         if (texture.Format != BflimFormat.Rgba5551 || size != texture.Width * texture.Height * 2 || size > 2048) return null;
 
-        var probe = (byte[])rareCandy.Clone();
+        var probe = (byte[])icon.Clone();
         for (var index = 0; index < size / 2; index++)
         {
             BinaryPrimitives.WriteUInt16LittleEndian(probe.AsSpan(index * 2), (ushort)((index & 31) << 11 | (index >> 5) << 6 | 1));
         }
 
         var where = BflimTexture.Decode(probe).Pixels;
-        var painted = Paint(texture.Pixels, texture.Width, texture.Height);
-        var output = (byte[])rareCandy.Clone();
+        var painted = paint(texture.Pixels, texture.Width, texture.Height);
+        var output = (byte[])icon.Clone();
 
         for (var pixel = 0; pixel < texture.Width * texture.Height; pixel++)
         {
@@ -96,7 +100,7 @@ public static class SuperCandyIcon
         return output;
     }
 
-    private static void Star(byte[] pixels, int width, int height, int cx, int cy, int size, (int R, int G, int B) colour)
+    internal static void Star(byte[] pixels, int width, int height, int cx, int cy, int size, (int R, int G, int B) colour)
     {
         for (var d = -size; d <= size; d++)
         {
@@ -112,7 +116,7 @@ public static class SuperCandyIcon
         }
     }
 
-    private static void Put(byte[] pixels, int at, (int R, int G, int B) colour)
+    internal static void Put(byte[] pixels, int at, (int R, int G, int B) colour)
     {
         pixels[at] = (byte)colour.R;
         pixels[at + 1] = (byte)colour.G;
@@ -120,6 +124,6 @@ public static class SuperCandyIcon
         pixels[at + 3] = 255;
     }
 
-    private static (int R, int G, int B) Lerp((int R, int G, int B) a, (int R, int G, int B) b, double t) =>
+    internal static (int R, int G, int B) Lerp((int R, int G, int B) a, (int R, int G, int B) b, double t) =>
         ((int)(a.R + (b.R - a.R) * t), (int)(a.G + (b.G - a.G) * t), (int)(a.B + (b.B - a.B) * t));
 }

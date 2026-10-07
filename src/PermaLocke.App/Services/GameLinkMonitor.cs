@@ -898,7 +898,7 @@ public sealed class GameLinkMonitor(
     private DateTime _toldDupesAt;
 
     /// <summary>
-    /// With the rules inside the game on, the species of every family the run already has go into the block the patched
+    /// With the rules inside the game on (until 2026-10-07; now the list goes empty), the species of every family the run already has went into the block the patched
     /// game reads, and a wild slot of one of them is rolled again (2026-10-06). Every fifteen seconds: it reads the save's
     /// Pokédex, and a capture is followed by the end of the battle long before the next encounter.
     /// </summary>
@@ -913,9 +913,9 @@ public sealed class GameLinkMonitor(
 
         try
         {
-            var species = rules.For(RuleIds.DupesClause).Enabled
-                ? await encounterGuard.DuplicateSpeciesAsync(run, RuleBlock.DupesSpeciesLimit, _stopping.Token)
-                : new HashSet<int>();
+            // Desde el 2026-10-07 el juego ya no vuelve a sortear los duplicados: salen, y el jugador elige entre capturarlos (cuenta)
+            // o pasar al siguiente (no cuenta). Se sigue escribiendo la lista, vacía, para borrar la que dejó una versión anterior.
+            var species = new HashSet<int>();
 
             if (!writer.WriteRuleDupes(species))
             {

@@ -225,6 +225,10 @@ generado: 2026-09-24
 - L12787 · 216 · Revisión general: errores de los logs (hilo de RunContext, subida 400, mote en el cap) y optimización (procesos, motes, Game Boy, cementerio)
 - L12829 · 217 · Reglas dentro del juego: cap, Caramelo Raro, caídos, duplicados y zona gastada parcheados; zona y equipo leídos por puntero fijo
 - L12894 · 218 · SuperCarameloraro (objeto 113): cinco niveles sin pasar del cap, movimientos de los niveles saltados, icono rojo; cap escrito antes de la primera ball
+- L12936 · 219 · Repelente Infinito (objeto 114, objeto clave): activa y desactiva desde la mochila; gancho por paso en DecMushiyokeCount; cueva en Bag.cro
+- L12969 · 220 · Roles MONOTYPE (agua, normal, planta, volador, psíquico, bicho, veneno, fuego): lista de especies calculada por tipo, gacha y wonder trade filtrados, puerta del gacha
+- L13017 · 221 · GUARDERÍA de los roles MONOTYPE: huevos de su tipo, tiradas como la ruleta, fuerza por pruebas, entrega en cajas en una escritura
+- L13057 · 222 · Wonder trade de una carta por otra (antes dos por una): válvula del inicial no válido de los MONOTYPE, animación de una carta
 
 Subsecciones §176: bis (visor), ter (todas las pantallas, fuera ESTADÍSTICAS), quater (EV/MOVIMIENTOS sin bolsa, diálogos).
 

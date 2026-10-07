@@ -304,6 +304,7 @@ async Task RandomizeAsync(ulong seed)
             EnemyLevelPercent = role.EnemyLevelPercent,
             ExtraTrainerPokemon = role.ExtraTrainerPokemon,
             ImportantTrainerClasses = roles.ImportantTrainerClasses,
+            MonoType = role.MonoType,
         };
 
         Console.WriteLine($"rol {role.Id}: entrenadores +{role.EnemyLevelPercent}%, "
@@ -401,6 +402,77 @@ async Task DumpAsync(ulong seed, string zone)
             }
         }
     }
+    // --tipo N: huecos de CUALQUIER tabla (dia, noche, agua, SOS...) cuya especie y forma no tengan ese tipo (§223).
+    if (args.SkipWhile(a => a != "--tipo").Skip(1).FirstOrDefault() is { } typeText && int.TryParse(typeText, out var wanted))
+    {
+        var wrong = new List<string>();
+
+        foreach (var area in areas.Where(a => a.HasTables))
+        {
+            for (var t = 0; t < area.Tables.Count; t++)
+            {
+                for (var set = 0; set < area.Tables[t].Encounter7s.Length; set++)
+                {
+                    foreach (var slot in area.Tables[t].Encounter7s[set])
+                    {
+                        if (slot.Species == 0) continue;
+                        var types = workspace.Config.Personal.GetFormEntry((int)slot.Species, (int)slot.Forme).Types;
+                        if (!types.Contains(wanted) || slot.Species == 56)
+                        {
+                            wrong.Add($"{area.Name} tabla {t} serie {set}: #{slot.Species} {SpeciesName(names, (int)slot.Species)} forma {slot.Forme}");
+                        }
+                    }
+                }
+            }
+        }
+
+        // Lo mismo leido a mano, byte a byte, como lo escribe el randomizador: cubre lo que pk3DS no enseña.
+        var raw = new GARC.LazyGARC(File.ReadAllBytes(generated));
+        var rawWrong = 0;
+
+        for (var area = 0; area < raw.FileCount / 11; area++)
+        {
+            var payload = raw[(area * 11) + 9];
+            if (payload.Length < 4 || payload[0] != (byte)'E' || payload[1] != (byte)'A') continue;
+
+            for (var entry = 0; entry < BitConverter.ToUInt16(payload, 2); entry++)
+            {
+                var start = BitConverter.ToInt32(payload, 4 + (entry * 4));
+                var end = BitConverter.ToInt32(payload, 8 + (entry * 4));
+                if (end - start < EncounterTable7.MinimumEntrySize)
+                {
+                    // Entradas que el randomizador se salta por no caber dos tablas: se miran aparte, por si llevan algo.
+                    var oneTable = new EncounterTable7(payload, start + EncounterTable7.DayTableOffset);
+                    var held = (end - start) >= EncounterTable7.DayTableOffset + EncounterTable7.Size
+                        ? EncounterTable7.SlotOffsets().Select(oneTable.GetSpecies).Where(s => s != 0).Distinct().ToArray()
+                        : [];
+                    Console.WriteLine($"  SALTADA area {area} entrada {entry} tamaño {end - start}: niv {(held.Length > 0 ? oneTable.MinLevel + "-" + oneTable.MaxLevel : "-")} {string.Join(",", held.Select(s => SpeciesName(names, s)))}");
+                    continue;
+                }
+
+                foreach (var tableOffset in (int[])[EncounterTable7.DayTableOffset, EncounterTable7.NightTableOffset])
+                {
+                    var table = new EncounterTable7(payload, start + tableOffset);
+                    foreach (var slotOffset in EncounterTable7.SlotOffsets())
+                    {
+                        var species = table.GetSpecies(slotOffset);
+                        if (species == 0) continue;
+                        if (!workspace.Config.Personal.GetFormEntry(species, table.GetForme(slotOffset)).Types.Contains(wanted))
+                        {
+                            rawWrong++;
+                            if (rawWrong <= 20)
+                                Console.WriteLine($"  RAW area {area} entrada {entry} niv {table.MinLevel}-{table.MaxLevel}: #{species} {SpeciesName(names, species)}");
+                        }
+                    }
+                }
+            }
+        }
+
+        Console.WriteLine($"RAW huecos sin el tipo: {rawWrong}");
+        Console.WriteLine($"\nhuecos sin el tipo {wanted}: {wrong.Count}");
+        foreach (var line in wrong.Take(40)) Console.WriteLine("  " + line);
+    }
+
     Console.WriteLine($"\n{areas.Count(a => a.HasTables)} zonas con tablas, {total} huecos base");
     Console.WriteLine($"huecos con especie prohibida: {offenders}");
 
@@ -2038,6 +2110,19 @@ async Task AprendizajesAsync(string learnsetPath)
             if (BitConverter.ToUInt16(entry, (pair * 4) + 2) <= 1)
             {
                 last = pair;
+            }
+        }
+
+        // --especie N: el aprendizaje de esa especie, con nivel, tipo y potencia de cada movimiento.
+        if (args.SkipWhile(a => a != "--especie").Skip(1).FirstOrDefault() is { } wanted && int.TryParse(wanted, out var id) && id == index)
+        {
+            var speciesNames = workspace.Config.GetText(TextName.SpeciesNames);
+            var typeNames = workspace.Config.GetText(TextName.Types);
+            Console.WriteLine($"\n{speciesNames[id]}: {learnt.Count} movimientos");
+            for (var pair = 0; pair < learnt.Count; pair++)
+            {
+                var move = learnt[pair];
+                Console.WriteLine($"  Nv.{BitConverter.ToUInt16(entry, (pair * 4) + 2),3}  {names[move],-18} {typeNames[moves[move].Type],-10} pot {moves[move].Power}");
             }
         }
 

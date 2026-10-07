@@ -58,7 +58,11 @@ public sealed class JsonRoleCatalog(IReadOnlyList<Role> all, IReadOnlySet<int> i
                     Math.Clamp(entry.EnemyLevelPercent ?? entry.LegacyTrainerLevelPercent ?? 0, 0, 200),
                     Math.Clamp(entry.PlayerCapPercent ?? 0, 0, 200),
                     Math.Clamp(entry.ExtraTrainerPokemon ?? 0, 0, 5),
-                    entry.Roulette ?? false))
+                    entry.Roulette ?? false,
+
+                    // Un tipo fuera de 0-17 no es un tipo: el rol se queda sin monotipo antes que con uno inventado.
+                    entry.MonoType is >= 0 and <= 17 ? entry.MonoType : null,
+                    entry.IconSpecies is > 0 ? entry.IconSpecies : null))
         ], important);
     }
 
@@ -77,5 +81,7 @@ public sealed class JsonRoleCatalog(IReadOnlyList<Role> all, IReadOnlySet<int> i
         [property: JsonPropertyName("nivelEntrenadores")] int? LegacyTrainerLevelPercent,
         [property: JsonPropertyName("capDelJugador")] int? PlayerCapPercent,
         [property: JsonPropertyName("pokemonExtra")] int? ExtraTrainerPokemon,
-        [property: JsonPropertyName("ruleta")] bool? Roulette);
+        [property: JsonPropertyName("ruleta")] bool? Roulette,
+        [property: JsonPropertyName("monotipo")] int? MonoType = null,
+        [property: JsonPropertyName("especieIcono")] int? IconSpecies = null);
 }

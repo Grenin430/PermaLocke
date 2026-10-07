@@ -8,10 +8,14 @@ public sealed class PkhexItemLookup(string language = "es") : IItemLookup
 {
     private readonly string[] _names = GameInfo.GetStrings(language).itemlist;
 
-    // El SuperCarameloraro ocupa un hueco que el cartucho no nombra (2026-10-06).
-    public string GetName(int itemId) => itemId == PermaLocke.Core.Domain.SuperCandy.ItemId
-        ? PermaLocke.Core.Domain.SuperCandy.Name
-        : itemId >= 0 && itemId < _names.Length && !string.IsNullOrWhiteSpace(_names[itemId])
+    // El SuperCarameloraro y el Repelente Infinito ocupan huecos que el cartucho no nombra (2026-10-06, 2026-10-07).
+    public string GetName(int itemId) => itemId switch
+    {
+        PermaLocke.Core.Domain.SuperCandy.ItemId => PermaLocke.Core.Domain.SuperCandy.Name,
+        PermaLocke.Core.Domain.InfiniteRepel.ItemId => PermaLocke.Core.Domain.InfiniteRepel.Name,
+        PermaLocke.Core.Domain.EggTurbo.ItemId => PermaLocke.Core.Domain.EggTurbo.Name,
+        _ => itemId >= 0 && itemId < _names.Length && !string.IsNullOrWhiteSpace(_names[itemId])
             ? _names[itemId]
-            : $"Objeto {itemId}";
+            : $"Objeto {itemId}"
+    };
 }

@@ -188,6 +188,7 @@ public partial class App : Application
             JsonSpeciesStatsCatalog.Load(Path.Combine(paths.Data, "species.json"),
                 [.. PermaLocke.Randomizer.RandomizerOptionsLoader
                     .Load(Path.Combine(paths.Data, "randomizer.json")).BannedAbilities]));
+        collection.AddSingleton<MonotypeRule>();
         collection.AddSingleton<GachaService>();
         collection.AddSingleton<IWonderTradeCatalog>(_ =>
             JsonWonderTradeCatalog.Load(Path.Combine(paths.Data, "wondertrade.json")));
@@ -276,6 +277,9 @@ public partial class App : Application
         collection.AddSingleton<CreditService>();
         collection.AddSingleton<RouletteService>();
         collection.AddSingleton<RouletteViewModel>();
+        collection.AddSingleton<INurseryCatalog>(_ => JsonNurseryCatalog.Load(Path.Combine(paths.Data, "guarderia.json")));
+        collection.AddSingleton<NurseryService>();
+        collection.AddSingleton<NurseryViewModel>();
         collection.AddSingleton<ShopViewModel>();
         collection.AddSingleton<PokemonViewerViewModel>();
         // ÁLBUM (§186): las cajas como carpeta de cartas, solo para mirar.

@@ -72,6 +72,9 @@
         <DataTemplate DataType="{x:Type vm:RouletteViewModel}">
             <views:RouletteView />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:NurseryViewModel}">
+            <views:NurseryView />
+        </DataTemplate>
         <DataTemplate DataType="{x:Type vm:BattleModeViewModel}">
             <views:BattleModeView />
         </DataTemplate>

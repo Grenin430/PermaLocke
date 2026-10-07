@@ -1,0 +1,255 @@
+<UserControl x:Class="PermaLocke.App.Views.NurseryView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:PermaLocke.App.Views"
+             xmlns:pixel="clr-namespace:PermaLocke.App.Views.Pixel">
+
+    <!-- LA GUARDERÍA (§221, §225): la pantalla de los roles MONOTYPE. Lo que debe la guardería, dibujado en huevos; el botón que pide un huevo cada vez, con su animación de llegada; y los huevos pedidos, sin decir qué traen -->
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+
+        <Style TargetType="ScrollBar" BasedOn="{StaticResource PxScrollBar}" />
+
+        <Style x:Key="Explain" TargetType="pixel:PixelText">
+            <Setter Property="Scale" Value="2" />
+            <Setter Property="Wrap" Value="True" />
+            <Setter Property="Colour" Value="{DynamicResource PxTextDim}" />
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="0,0,10,0">
+
+                <pixel:PixelWindow Title="TU GUARDERÍA" Icon="IconGacha" Margin="0,0,0,12">
+                    <StackPanel>
+
+                        <!-- El rol, con el color de su tipo. -->
+                        <pixel:PixelText Text="{Binding RoleName}" Scale="4" Tight="True" Colour="{Binding TypeColour}"
+                                         Shadow="{DynamicResource PxShadow}" />
+                        <pixel:PixelText Style="{StaticResource Explain}" Text="{Binding TypeText}" Margin="0,8,0,0" />
+
+                        <!-- Lo que debe: el número y los huevos que lo componen. -->
+                        <StackPanel Orientation="Horizontal" Margin="0,18,0,0">
+                            <pixel:PixelText Text="TE DEBEN" Scale="2" Tight="True" Colour="{DynamicResource PxTextDim}"
+                                             VerticalAlignment="Center" />
+                            <pixel:PixelText Text="{Binding Owed}" Scale="6" Tight="True" Colour="{DynamicResource PxAccentInkLight}"
+                                             Shadow="{DynamicResource PxShadow}" Margin="14,0,14,0" VerticalAlignment="Center" />
+                            <pixel:PixelText Text="HUEVOS" Scale="2" Tight="True" Colour="{DynamicResource PxTextDim}"
+                                             VerticalAlignment="Center" />
+                        </StackPanel>
+
+                        <WrapPanel Margin="0,10,0,0">
+                            <ItemsControl ItemsSource="{Binding OwedEggs}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Image Source="{Binding Sprite}" Width="38" Height="38" Margin="0,0,4,4" Stretch="Uniform"
+                                               RenderOptions.BitmapScalingMode="NearestNeighbor" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <pixel:PixelText Text="{Binding OwedMore}" Scale="3" Tight="True" Colour="{DynamicResource PxAccentInkLight}"
+                                             VerticalAlignment="Center" Margin="6,0,0,0" />
+                        </WrapPanel>
+
+                        <Button Content="{Binding ButtonText}" Style="{StaticResource PxButton}" HorizontalAlignment="Left"
+                                Command="{Binding GetEggCommand}" Margin="0,14,0,0" />
+
+                        <pixel:PixelText Text="{Binding Status}" Scale="2" Wrap="True" Margin="0,12,0,0">
+                            <pixel:PixelText.Style>
+                                <Style TargetType="pixel:PixelText">
+                                    <Setter Property="Colour" Value="{DynamicResource PxGood}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding StatusIsWarning}" Value="True">
+                                            <Setter Property="Colour" Value="{DynamicResource PxWarn}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </pixel:PixelText.Style>
+                        </pixel:PixelText>
+                    </StackPanel>
+                </pixel:PixelWindow>
+
+                <!-- Hasta dónde ha llegado la run y cuánto pegan los huevos por ello. -->
+                <pixel:PixelWindow Title="LO QUE SALDRÁ" Icon="IconGift" Margin="0,0,0,12">
+                    <StackPanel>
+                        <DockPanel>
+                            <pixel:PixelText DockPanel.Dock="Right" Text="{Binding ProgressLabel}" Scale="2" Tight="True"
+                                             Colour="{DynamicResource PxTextDim}" VerticalAlignment="Center" />
+                            <ItemsControl ItemsSource="{Binding Trials}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border x:Name="Pip" Width="22" Height="22" Margin="0,0,5,0"
+                                                Background="{DynamicResource PxWellBrush}" BorderThickness="2" BorderBrush="{DynamicResource PxInkBrush}">
+                                            <Rectangle x:Name="Lit" Margin="3" Fill="{DynamicResource PxAccentBrush}" Visibility="Collapsed" />
+                                        </Border>
+                                        <DataTemplate.Triggers>
+                                            <DataTrigger Binding="{Binding Cleared}" Value="True">
+                                                <Setter TargetName="Lit" Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </DataTemplate.Triggers>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </DockPanel>
+
+                        <DockPanel Margin="0,12,0,0">
+                            <pixel:PixelText DockPanel.Dock="Left" Text="FUERZA" Scale="2" Tight="True" VerticalAlignment="Center"
+                                             Margin="0,0,10,0" Colour="{DynamicResource PxText}" />
+                            <pixel:PixelText DockPanel.Dock="Right" Text="{Binding StrengthLabel}" Scale="2" Tight="True"
+                                             VerticalAlignment="Center" Margin="10,0,0,0" Colour="{DynamicResource PxAccentInkLight}" />
+                            <views:PixelBar Height="15" VerticalAlignment="Center" Value="{Binding StrengthShare, Mode=OneWay}"
+                                            Fill="{Binding TypeColour}" />
+                        </DockPanel>
+
+                        <pixel:PixelText Style="{StaticResource Explain}" Text="{Binding StrengthText}" Margin="0,10,0,0" />
+                    </StackPanel>
+                </pixel:PixelWindow>
+
+                <!-- LO QUE DA CADA PRUEBA, como la tabla del gacha: de Data/guarderia.json. Lo conseguido se marca y no se quita. -->
+                <pixel:PixelWindow Title="LO QUE DA CADA PRUEBA" Icon="IconTrophy" Margin="0,0,0,12">
+                    <StackPanel>
+                        <pixel:PixelText Style="{StaticResource Explain}" Text="Los huevos se ganan solos al superar cada prueba." />
+
+                        <ItemsControl ItemsSource="{Binding Milestones}" Margin="0,10,0,0">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Columns="2" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid x:Name="Row" Margin="0,0,8,6">
+                                        <views:PixelPanel Fill="{DynamicResource PxFace}" HasShadow="False" />
+                                        <DockPanel Margin="11,7,11,8">
+                                            <!-- Encendida cuando ya se consiguió, apagada cuando falta. -->
+                                            <views:PixelPanel x:Name="Dot" DockPanel.Dock="Left" Width="18" Height="18"
+                                                              Margin="0,0,10,0" VerticalAlignment="Center"
+                                                              Fill="{DynamicResource PxWell}" IsSunken="True" HasShadow="False" />
+
+                                            <Grid DockPanel.Dock="Right" Margin="4,0,0,0" VerticalAlignment="Center">
+                                                <views:PixelPanel Fill="{DynamicResource PxWell}" HasShadow="False" />
+                                                <pixel:PixelText Text="{Binding EggsText}" Scale="2" Tight="True" Margin="7,4,8,5"
+                                                                 Colour="{DynamicResource PxAccentInkLight}" />
+                                            </Grid>
+
+                                            <pixel:PixelText Text="{Binding Name}" Scale="2" Tight="True" Trim="True"
+                                                             VerticalAlignment="Center" Colour="{DynamicResource PxText}" />
+                                        </DockPanel>
+                                    </Grid>
+                                    <DataTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding Reached}" Value="True">
+                                            <Setter TargetName="Dot" Property="Fill" Value="{DynamicResource PxGood}" />
+                                            <Setter TargetName="Dot" Property="IsSunken" Value="False" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Reached}" Value="False">
+                                            <Setter TargetName="Row" Property="Opacity" Value="0.5" />
+                                        </DataTrigger>
+                                    </DataTemplate.Triggers>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <pixel:PixelText Style="{StaticResource Explain}" Text="{Binding MilestonesSummary}" Margin="0,4,0,0" />
+                    </StackPanel>
+                </pixel:PixelWindow>
+
+                <!-- Cómo eclosionan: lo único que hay que saber, sin decir qué trae cada uno. -->
+                <pixel:PixelWindow Title="CÓMO ECLOSIONAN" Icon="IconGift" Margin="0,0,0,12">
+                    <StackPanel>
+                        <pixel:PixelText Style="{StaticResource Explain}"
+                                         Text="1. Pide el huevo con el juego cerrado: va a una caja de tu PC." />
+                        <pixel:PixelText Style="{StaticResource Explain}" Margin="0,6,0,0"
+                                         Text="2. Abre el juego, llévalo al equipo y camina. Cuanto más fuerte es la especie, más pasos pide." />
+                        <pixel:PixelText Style="{StaticResource Explain}" Margin="0,6,0,0"
+                                         Text="3. Con la INCUBADORA TURBO (la das en MISCELÁNEA y se activa desde la mochila) eclosiona al dar dos pasos." />
+                    </StackPanel>
+                </pixel:PixelWindow>
+
+                <!-- Los huevos pedidos desde que se abrió la pantalla: dónde fue cada uno, y nada de lo que lleva dentro. -->
+                <pixel:PixelWindow Title="HUEVOS PEDIDOS" Icon="IconGift"
+                                   Visibility="{Binding HasReceived, Converter={StaticResource BoolToVisibility}}">
+                    <ItemsControl ItemsSource="{Binding Received}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Width="196" Margin="0,0,12,12" RenderTransformOrigin="0.5,0.5">
+                                    <Grid.RenderTransform>
+                                        <ScaleTransform x:Name="Pop" ScaleX="1" ScaleY="1" />
+                                    </Grid.RenderTransform>
+                                    <views:PixelPanel Fill="{DynamicResource PxFaceHigh}" />
+                                    <StackPanel Margin="12,10,18,16" HorizontalAlignment="Center">
+                                        <Image Source="{Binding Sprite}" Width="64" Height="64" Stretch="Uniform"
+                                               RenderOptions.BitmapScalingMode="NearestNeighbor" RenderTransformOrigin="0.5,0.85">
+                                            <Image.RenderTransform>
+                                                <RotateTransform x:Name="Tilt" Angle="0" />
+                                            </Image.RenderTransform>
+                                        </Image>
+                                        <pixel:PixelText Text="{Binding Title}" Scale="2" Tight="True" HorizontalAlignment="Center"
+                                                         Colour="{DynamicResource PxAccentInkLight}" Shadow="{DynamicResource PxShadow}" Margin="0,6,0,0" />
+                                        <pixel:PixelText Text="{Binding Place}" Scale="2" Tight="True" HorizontalAlignment="Center"
+                                                         Colour="{DynamicResource PxText}" Margin="0,4,0,0" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <!-- Entra con un salto y el huevo se bambolea un momento, como al caer en el nido. -->
+                                <DataTemplate.Triggers>
+                                    <EventTrigger RoutedEvent="FrameworkElement.Loaded">
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetName="Pop" Storyboard.TargetProperty="ScaleX" From="0.4" To="1" Duration="0:0:0.4">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <BackEase EasingMode="EaseOut" Amplitude="0.7" />
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                                <DoubleAnimation Storyboard.TargetName="Pop" Storyboard.TargetProperty="ScaleY" From="0.4" To="1" Duration="0:0:0.4">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <BackEase EasingMode="EaseOut" Amplitude="0.7" />
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                                <DoubleAnimation Storyboard.TargetName="Tilt" Storyboard.TargetProperty="Angle" From="-12" To="0" Duration="0:0:0.9">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <ElasticEase EasingMode="EaseOut" Oscillations="4" Springiness="4" />
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </EventTrigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </pixel:PixelWindow>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- ================================================== LOS HUEVOS LLEGAN (§225)
+             Encima de todo, la escena entera: los huevos caen en sus nidos, tiemblan y estalla la luz. Al acabar, CONTINUAR. -->
+        <Grid Visibility="{Binding IsPlaying, Converter={StaticResource BoolToVisibility}}">
+            <views:NurseryStage Play="{Binding Play}" />
+            <StackPanel VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,26"
+                        Visibility="{Binding PlayDone, Converter={StaticResource BoolToVisibility}}">
+                <pixel:PixelText Text="¡HUEVO EN TU CAJA!" Scale="4" Tight="True" HorizontalAlignment="Center"
+                                 Colour="{DynamicResource PxText}" Shadow="{DynamicResource PxShadow}" />
+                <pixel:PixelText Text="{Binding ArrivedPlace}" Scale="3" Tight="True" HorizontalAlignment="Center" Margin="0,8,0,0"
+                                 Colour="{DynamicResource PxAccentInkLight}" Shadow="{DynamicResource PxShadow}" />
+                <Button Content="CONTINUAR" Style="{StaticResource PxButton}" Command="{Binding ContinueCommand}"
+                        HorizontalAlignment="Center" MinWidth="200" Margin="0,16,0,0" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</UserControl>

@@ -373,9 +373,9 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
         // Se atiende aquí y no en un método aparte para que quien pide un dibujo solo tenga que
         // saber el id del objeto, que es lo único que hay escrito en Data/achievements.json.
         var crystal = ZCrystalIndex.TryGet(itemId, out _);
-        var superCandy = itemId == SuperCandy.ItemId;
+        var painted = itemId is SuperCandy.ItemId or InfiniteRepel.ItemId or EggTurbo.ItemId;
 
-        if (!_prepared || (!crystal && !superCandy && !ItemIconIndex.TryGet(itemId, out _, _itemIcons)))
+        if (!_prepared || (!crystal && !painted && !ItemIconIndex.TryGet(itemId, out _, _itemIcons)))
         {
             return null;
         }
@@ -487,11 +487,16 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
         {
             Directory.CreateDirectory(ItemDirectory);
 
-            // El SuperCarameloraro se pinta desde el Caramelo Raro, igual que el icono que se pone en el juego.
+            // El SuperCarameloraro se pinta desde el Caramelo Raro y el Repelente Infinito desde el Repelente, igual que
+            // el icono que se pone en el juego.
             var sprite = crystal
                 ? ZCrystalIconReader.Open(_romPath, _scratch).Read(itemId)
                 : itemId == SuperCandy.ItemId
                     ? ItemIconReader.Open(_romPath, _scratch, _baseLayer).ReadSuperCandy()
+                : itemId == InfiniteRepel.ItemId
+                    ? ItemIconReader.Open(_romPath, _scratch, _baseLayer).ReadInfiniteRepel()
+                : itemId == EggTurbo.ItemId
+                    ? ItemIconReader.Open(_romPath, _scratch, _baseLayer).ReadEggTurbo()
                     : ItemIconReader.Open(_romPath, _scratch, _baseLayer).Read(ItemIconIndex.Of(itemId, _itemIcons) + 1);
 
             File.WriteAllBytes(destination, PngImage.Encode(sprite.Pixels, sprite.Width, sprite.Height));

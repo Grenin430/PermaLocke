@@ -36,6 +36,7 @@ public static class DisplayNames
         [GameEventType.GachaRoll] = "Tirada de gacha",
         [GameEventType.ShopPurchase] = "Compra",
         [GameEventType.WonderTrade] = "Wonder trade",
+        [GameEventType.NurseryEgg] = "Huevo de la guardería",
 
         [GameEventType.AchievementUnlocked] = "Logro conseguido",
         [GameEventType.AchievementProgressed] = "Progreso a mano",
@@ -111,7 +112,8 @@ public static class DisplayNames
         [PokemonOrigin.WonderTrade] = "Wonder trade",
         [PokemonOrigin.Gift] = "Regalo",
         [PokemonOrigin.Starter] = "Inicial",
-        [PokemonOrigin.AdminGrant] = "Dado por el admin"
+        [PokemonOrigin.AdminGrant] = "Dado por el admin",
+        [PokemonOrigin.Nursery] = "Guardería"
     };
 
     /// <summary>

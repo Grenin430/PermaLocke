@@ -35,8 +35,8 @@ public sealed partial class ChangeRoleViewModel : ObservableObject
     private readonly IRunContext _runContext;
     private readonly ILogger<ChangeRoleViewModel> _logger;
 
-    public ChangeRoleViewModel(RunService runs, IRoleCatalog roles, IRunContext runContext,
-        ILogger<ChangeRoleViewModel> logger)
+    public ChangeRoleViewModel(RunService runs, IRoleCatalog roles, PermaLocke.App.Services.PokemonSpriteService sprites,
+        IRunContext runContext, ILogger<ChangeRoleViewModel> logger)
     {
         _runs = runs;
         _runContext = runContext;
@@ -44,20 +44,15 @@ public sealed partial class ChangeRoleViewModel : ObservableObject
 
         Current = runContext.Current?.RoleId ?? string.Empty;
 
-        foreach (var role in roles.All)
-        {
-            Roles.Add(new RoleChoiceViewModel(role, OnRoleChosen));
-        }
+        Menu = new RoleMenuViewModel(roles.All, sprites);
+        Menu.Changed += (_, _) => RoleId = Menu.SelectedRoleId;
 
         // El rol de ahora sale marcado, para que se vea de dónde se sale y no solo a dónde se va.
-        foreach (var role in Roles.Where(r =>
-                     string.Equals(r.Role.Id, Current, StringComparison.OrdinalIgnoreCase)))
-        {
-            role.IsSelected = true;
-        }
+        Menu.Select(Current);
     }
 
-    public ObservableCollection<RoleChoiceViewModel> Roles { get; } = [];
+    /// <summary>The roles on offer: the ordinary ones as cards and MONOTYPE as one more that opens its type menu (§220).</summary>
+    public RoleMenuViewModel Menu { get; }
 
     /// <summary>Role the run has right now, so the window can say what it is leaving.</summary>
     public string Current { get; }
@@ -89,16 +84,6 @@ public sealed partial class ChangeRoleViewModel : ObservableObject
         && !string.IsNullOrWhiteSpace(RoleId)
         && !string.IsNullOrWhiteSpace(Reason)
         && !string.Equals(RoleId, Current, StringComparison.OrdinalIgnoreCase);
-
-    private void OnRoleChosen(RoleChoiceViewModel chosen)
-    {
-        foreach (var other in Roles.Where(r => !ReferenceEquals(r, chosen)))
-        {
-            other.Clear();
-        }
-
-        RoleId = chosen.Role.Id;
-    }
 
     [RelayCommand(CanExecute = nameof(CanConfirm))]
     private async Task ConfirmAsync()

@@ -96,7 +96,25 @@ public sealed class ItemIconReader
                                 ?? throw new InvalidDataException("El icono del Caramelo Raro no es el que se conoce.")));
     }
 
+    /// <summary>The Repelente Infinito, painted from the Repel the same way (<see cref="InfiniteRepelIcon"/>).</summary>
+    public PokemonIcon ReadInfiniteRepel()
+    {
+        return Crop(PermaLocke.Core.Domain.InfiniteRepel.ItemId,
+            BflimTexture.Decode(InfiniteRepelIcon.Bflim(Decompress(_garc.GetFile(RepelItemId - 1)))
+                                ?? throw new InvalidDataException("El icono del Repelente no es el que se conoce.")));
+    }
+
+    /// <summary>The Incubadora Turbo, drawn on the Repel's template the same way (<see cref="EggTurboIcon"/>).</summary>
+    public PokemonIcon ReadEggTurbo()
+    {
+        return Crop(PermaLocke.Core.Domain.EggTurbo.ItemId,
+            BflimTexture.Decode(EggTurboIcon.Bflim(Decompress(_garc.GetFile(RepelItemId - 1)))
+                                ?? throw new InvalidDataException("El icono del Repelente no es el que se conoce.")));
+    }
+
     private const int RareCandyItemId = 50;
+
+    private const int RepelItemId = 79;
 
     private static byte[] Decompress(byte[] data)
     {

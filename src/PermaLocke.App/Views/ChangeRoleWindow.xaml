@@ -46,23 +46,7 @@
                     </Grid>
 
                     <pixel:PixelWindow Title="ROL NUEVO" Icon="IconPeople">
-                        <ItemsControl ItemsSource="{Binding Roles}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <RadioButton GroupName="RolNuevo" IsChecked="{Binding IsSelected, Mode=TwoWay}"
-                                                 Style="{StaticResource PxRadioCard}" Margin="0,0,0,8">
-                                        <StackPanel>
-                                            <pixel:PixelText Text="{Binding Name}" Scale="3" Tight="True"
-                                                             Colour="{DynamicResource PxAccentInkLight}" Shadow="{DynamicResource PxShadow}" />
-                                            <pixel:PixelText Text="{Binding Description}" Scale="2" Wrap="True" Margin="0,7,0,0"
-                                                             Colour="{DynamicResource PxTextDim}" />
-                                            <pixel:PixelText Text="{Binding Effects}" Scale="2" Wrap="True" Margin="0,6,0,0"
-                                                             Colour="{DynamicResource PxWarn}" />
-                                        </StackPanel>
-                                    </RadioButton>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                        <views:RoleMenuView DataContext="{Binding Menu}" />
                     </pixel:PixelWindow>
 
                     <pixel:PixelWindow Title="POR QUÉ" Icon="IconDocument" Margin="0,12,0,0">

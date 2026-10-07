@@ -15,6 +15,7 @@ public sealed record Toast(ToastKind Kind, string Title, string Message, BitmapS
     {
         ToastKind.BallsTaken or ToastKind.BallsBack => "POKÉ BALLS",
         ToastKind.FirstEncounter => "PRIMER ENCUENTRO",
+        ToastKind.Duplicate => "DUPLICADO",
         ToastKind.Shiny => "VARIOCOLOR",
         ToastKind.AllowedCapture => "CAPTURA PERMITIDA",
         ToastKind.Death => "BAJA",

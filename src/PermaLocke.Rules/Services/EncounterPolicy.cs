@@ -40,7 +40,8 @@ public sealed record EncounterSituation(
 /// <param name="SpendZone">This battle uses up the zone's encounter.</param>
 /// <param name="Reason">In Spanish, for the event and the log.</param>
 /// <param name="Trial">The balls are held because the zone's trial is not passed yet: the patched game says so with its own message.</param>
-public sealed record EncounterDecision(BallAction Action, bool SpendZone, string Reason, bool Trial = false);
+/// <param name="Optional">A duplicate (2026-10-07): the balls are back and the player chooses. A capture spends the zone; letting it go does not, and the route stays free for the next encounter.</param>
+public sealed record EncounterDecision(BallAction Action, bool SpendZone, string Reason, bool Trial = false, bool Optional = false);
 
 /// <summary>
 /// The competition's first-encounter rule, as a decision with no side effects.
@@ -48,8 +49,9 @@ public sealed record EncounterDecision(BallAction Action, bool SpendZone, string
 /// <remarks>
 /// <para>
 /// What the player decided on 2026-09-14 (§117): the first wild battle in a route spends it, whatever happens in
-/// it; a duplicate — a Pokémon whose evolutionary line is already caught — cannot be caught and does not spend
-/// the route; a shiny can always be caught. The routes are the ones the player placed on the map screen.
+/// it; a duplicate — a Pokémon whose evolutionary line is already caught, alive or dead — was not catchable
+/// and did not spend the route. Since 2026-10-07 the player <b>chooses</b>: the balls are back, a capture counts as the
+/// route's encounter, and letting it go does not count and leaves the route free for the next one. A shiny can always be caught. The routes are the ones the player placed on the map screen.
 /// </para>
 /// <para>
 /// And what the player added on 2026-09-14 (§119): <b>outside the routes of the map there is nothing to catch, ever</b>.
@@ -131,7 +133,10 @@ public static class EncounterPolicy
 
         if (situation.Duplicate)
         {
-            return new(BallAction.Withhold, false, $"Duplicado en {zone.LocationName}: la zona sigue libre.");
+            // Elige el jugador (2026-10-07): capturarlo cuenta como el encuentro de la ruta; pasar al siguiente no cuenta.
+            return new(BallAction.GiveBack, false,
+                $"Duplicado en {zone.LocationName}: puedes capturarlo (cuenta como el encuentro de la ruta) o pasar al siguiente (no cuenta).",
+                Optional: true);
         }
 
         return new(BallAction.GiveBack, true, $"Primer encuentro en {zone.LocationName}.");

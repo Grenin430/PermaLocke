@@ -22,7 +22,7 @@ public sealed partial class CreateRunViewModel : ObservableObject
     private readonly ILogger<CreateRunViewModel> _logger;
 
     public CreateRunViewModel(RunService runs, PlayerProfileService profiles, AppPaths paths,
-        IRoleCatalog roles, DiscordLogin discord, ILogger<CreateRunViewModel> logger)
+        IRoleCatalog roles, PokemonSpriteService sprites, DiscordLogin discord, ILogger<CreateRunViewModel> logger)
     {
         _runs = runs;
         _profiles = profiles;
@@ -30,14 +30,12 @@ public sealed partial class CreateRunViewModel : ObservableObject
         _discord = discord;
         _logger = logger;
 
-        foreach (var role in roles.All)
-        {
-            Roles.Add(new RoleChoiceViewModel(role, OnRoleChosen));
-        }
+        Menu = new RoleMenuViewModel(roles.All, sprites);
+        Menu.Changed += (_, _) => RoleId = Menu.SelectedRoleId;
 
         // Sin roles no se crea nada. Arrancar a todo el mundo con reglas inventadas sería peor
         // que no arrancar, porque la competición no se enteraría hasta el recuento final.
-        RoleProblem = Roles.Count == 0
+        RoleProblem = roles.All.Count == 0
             ? "No se han podido cargar los roles."
             : string.Empty;
 
@@ -64,22 +62,11 @@ public sealed partial class CreateRunViewModel : ObservableObject
         }
     }
 
-    /// <summary>The roles on offer, in the order the catalogue lists them.</summary>
-    public System.Collections.ObjectModel.ObservableCollection<RoleChoiceViewModel> Roles { get; } = [];
+    /// <summary>The roles on offer: the ordinary ones as cards and MONOTYPE as one more that opens its type menu (§220).</summary>
+    public RoleMenuViewModel Menu { get; }
 
     [ObservableProperty]
     private string _roleProblem = string.Empty;
-
-    private void OnRoleChosen(RoleChoiceViewModel chosen)
-    {
-        foreach (var other in Roles.Where(r => !ReferenceEquals(r, chosen)))
-        {
-            other.Clear();
-        }
-
-        RoleId = chosen.Role.Id;
-        CreateCommand.NotifyCanExecuteChanged();
-    }
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(CreateCommand))]
@@ -191,10 +178,13 @@ public sealed partial class CreateRunViewModel : ObservableObject
 /// competition that edits <c>Data/roles.json</c> cannot end up with a screen that describes the
 /// old rules.
 /// </remarks>
-public sealed partial class RoleChoiceViewModel(Role role, Action<RoleChoiceViewModel> chosen)
+public sealed partial class RoleChoiceViewModel(Role role, Action<RoleChoiceViewModel> chosen, bool isGroup = false)
     : ObservableObject
 {
     public Role Role { get; } = role;
+
+    /// <summary>True for the MONOTYPE card, which stands for several roles and settles none until a type is picked.</summary>
+    public bool IsGroup { get; } = isGroup;
 
     public string Name => Role.Name;
 
@@ -221,6 +211,15 @@ public sealed partial class RoleChoiceViewModel(Role role, Action<RoleChoiceView
             if (Role.Roulette)
             {
                 parts.Add("ruleta obligatoria tras cada hito");
+            }
+
+            if (IsGroup)
+            {
+                parts.Add("eliges tu tipo en el menú de abajo");
+            }
+            else if (Role.IsMonotype)
+            {
+                parts.Add($"solo Pokémon de tipo {Role.MonoTypeName}");
             }
 
             return string.Join(" · ", parts);

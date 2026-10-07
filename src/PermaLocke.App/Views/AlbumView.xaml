@@ -70,7 +70,7 @@
 
             <Button DockPanel.Dock="Right" Content="RELEER" Style="{StaticResource PxSubtleButton}" Margin="8,0,0,0"
                     Command="{Binding LoadCommand}" VerticalAlignment="Center" />
-            <!-- EL INTERCAMBIO DE CARTAS (1.0.4.7): dos por una, donde antes estaba el wonder trade del visor. -->
+            <!-- EL INTERCAMBIO DE CARTAS (1.0.4.7): una por una desde el 2026-10-07 (antes, dos por una). -->
             <ToggleButton DockPanel.Dock="Right" Content="INTERCAMBIO" Style="{StaticResource PxToggleButton}" Margin="8,0,0,0"
                           IsChecked="{Binding IsTrading, Mode=OneWay}" Command="{Binding ToggleTradeCommand}"
                           VerticalAlignment="Center" />
@@ -112,7 +112,7 @@
             </StackPanel>
         </Grid>
 
-        <!-- ================================================== EL INTERCAMBIO: las dos cartas que se entregan -->
+        <!-- ================================================== EL INTERCAMBIO: la carta que se entrega -->
         <Grid Grid.Row="2" Margin="0,8,0,0" Visibility="{Binding IsTrading, Converter={StaticResource BoolToVisibility}}">
             <views:PixelPanel Fill="#FF2A1840" />
             <DockPanel Margin="16,10,22,16" LastChildFill="True">
@@ -127,13 +127,10 @@
                     </StackPanel>
                 </Grid>
                 <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
-                    <pixel:PixelText Text="DOS POR UNA" Scale="2" Tight="True" VerticalAlignment="Center"
+                    <pixel:PixelText Text="UNA POR UNA" Scale="2" Tight="True" VerticalAlignment="Center"
                                      Colour="{DynamicResource PxAccentInkLight}" Shadow="{DynamicResource PxShadow}" />
-                    <Button Margin="14,0,0,0" Style="{StaticResource PxSubtleButton}" Command="{Binding UnpickCommand}" CommandParameter="1"
-                            Content="{Binding TradeFirst.Name, TargetNullValue='CARTA 1', FallbackValue='CARTA 1'}" MinWidth="130" />
-                    <pixel:PixelText Text="+" Scale="2" Tight="True" Margin="8,0" VerticalAlignment="Center" Colour="{DynamicResource PxTextDim}" />
-                    <Button Style="{StaticResource PxSubtleButton}" Command="{Binding UnpickCommand}" CommandParameter="2"
-                            Content="{Binding TradeSecond.Name, TargetNullValue='CARTA 2', FallbackValue='CARTA 2'}" MinWidth="130" />
+                    <Button Margin="14,0,0,0" Style="{StaticResource PxSubtleButton}" Command="{Binding UnpickCommand}"
+                            Content="{Binding TradeFirst.Name, TargetNullValue='CARTA', FallbackValue='CARTA'}" MinWidth="130" />
                 </StackPanel>
                 <StackPanel Margin="16,0,0,0" VerticalAlignment="Center">
                     <pixel:PixelText Text="{Binding TradeHint}" Scale="1" Wrap="True" Colour="{DynamicResource PxText}" />
@@ -188,7 +185,7 @@
         </Grid>
 
         <!-- ================================================== EL INTERCAMBIO EN MARCHA (1.0.4.7)
-             Encima de todo, la escena entera: dos cartas entran en el círculo y sale una. Al final, qué ha salido. -->
+             Encima de todo, la escena entera: una carta entra en el círculo y sale otra. Al final, qué ha salido. -->
         <Grid Grid.Row="0" Grid.RowSpan="3" Visibility="{Binding IsTradePlaying, Converter={StaticResource BoolToVisibility}}">
             <views:CardTradeStage Play="{Binding TradePlay}" />
             <StackPanel VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,26"

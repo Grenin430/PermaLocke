@@ -28,7 +28,7 @@ public sealed class PokemonIconReader
 
     private PokemonIconReader(GARC.MemGARC garc) => _garc = garc;
 
-    /// <summary>How many icons the cartridge carries. 1154 on Ultra Moon, index 0 being the egg.</summary>
+    /// <summary>How many icons the cartridge carries. 1154 on Ultra Moon, the egg being the last (1153).</summary>
     public int Count => _garc.FileCount;
 
     /// <summary>Opens the icon container straight from the cartridge, without extracting the RomFS.</summary>

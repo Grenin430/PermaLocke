@@ -87,3 +87,25 @@ HpBarWatcher mira la barra, 1.0.5.10) y de la lluvia de sangre. 5. Bloquear la R
 7. Admin «a prueba de niños». 8. Banda Focus que no se gaste. 9. Motes votados por los demás en su emulador.
 10. Ruleta de curativos sin revivir. 11. Carta al álbum también para huevos, fósiles y regalos.
 12. MT y objetos repetidos en el mundo. 13. Balance del dinero y cupón del Supermercado Ultraganga.
+
+## Reglas que se apilan por fase (apuntada el 2026-10-07, para verla más tarde)
+Sacada de una búsqueda de formatos Nuzlocke multijugador (el Nuzlocke World Cup suma una regla en cada fase: semifinales,
+estilo Fijo obligatorio; final, sin objetos en combate). Aquí: **después de cada prueba el torneo vota una regla más que
+se suma a las anteriores** (Fijo obligatorio, sin objetos en combate, sin curar en combate…), con animación en cada app.
+Apoyo ya hecho: las reglas viven dentro del juego (§217, `RuleBlock` + `Battle.cro`); «sin objetos en combate» y «estilo
+Fijo» serían parches pequeños del mismo tipo. Sin hacer. Choca con la regla de arriba (nada que altere la jugabilidad):
+el usuario la pidió guardar, así que se decide con él cuando toque.
+
+## Rol «monotype» (HECHO el 2026-10-07 en §220 y §221 (guardería), sin publicar; investigación: [[Monotype de BxnnyLocke]])
+Hecho: ocho roles monotype (agua, normal, planta, volador, psíquico, bicho, veneno, fuego) con la regla de BxnnyLocke. Ver §220
+de `docs/ARCHITECTURE.md`. Roles en `Data/roles.json`: normal, cagoneta, experto, ludopata y los ocho `monotype_*`.
+
+Lo que hace BxnnyLocke (2026-10-07, leído del ensamblado `Locke/data/BxnnyLocke.dll` con System.Reflection.Metadata, solo lectura; nada copiado). 14 roles: normal, eviolite, ludópata, cagoneta, experto, monotype (agua, normal, bicho, psíquico, volador) y temático (alto mando, villanos, Ash, feos). Puntos de logro: cagoneta ×0,5, experto ×1,75, eviolite ×1,5, monotype ×1,5, temático ×1,25, normal y ludópata ×1. Monotype y temático = lista blanca de especies por rol (GetLimitePorRol: agua 134, normal 113, bicho 81, psíquico 76, volador 95, alto mando 145, villanos 163, Ash 138, feos 187). `checkValidezEquipo` recorre equipo y cajas desbloqueadas: una especie fuera de la lista bloquea el gacha y la guardería con «Líbralo o usa wondertrade»; si es la última y no quedan tiradas de wondertrade, regala una. Gacha, wondertrade y huevos salen solo de esa lista, con BST parecido. En vez de la ruleta del ludópata, esos roles tienen **GUARDERÍA** (huevos de la lista). El rol «eviolite» solo abarata la Eviolite a la mitad en la tienda y suma ×1,5: no hay restricción de equipo en el código.
+
+## Otras ideas de la búsqueda del 2026-10-07 (sin elegir; ninguna le hizo clic)
+Mentor/pupilo (veterano con novato, el mentor gana según el pupilo), chasquido colectivo (votar qué tipos o especies
+desaparecen), criador (recibe capturas de otros), relevo (jugar la partida de otro una prueba), traidor secreto, alma
+gemela, necromante, rey, adivino, saboteador, benefactor, cazarrecompensas, espía, árbitro, parásito, mercader. Más las
+listas de objetos y cambios de código de esa sesión (Caramelo Tope, Pañuelo Cariño, epitafio al caer, zonas que caducan,
+caos por pasos…): **todas rechazadas.** Con esto van más de doce tandas seguidas rechazadas: no volver a proponer listas;
+esperar una pista suya.

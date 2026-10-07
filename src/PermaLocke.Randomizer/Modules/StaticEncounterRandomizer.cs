@@ -33,7 +33,10 @@ public sealed class StaticEncounterRandomizer(RomWorkspace workspace, Randomizer
         var raised = 0;
         string[] starters;
 
-        var starterPool = StarterPool(pool);
+        // Lo que el jugador RECIBE (iniciales, regalos, fosiles, tratos) es de su tipo en un rol MONOTYPE (§223); los
+        // estaticos que se pelean, con sus dominantes y legendarios, siguen saliendo del pool de siempre.
+        var given = options.MonoType is { } type ? pool.OfType(type) : pool;
+        var starterPool = StarterPool(given);
 
         // La forma regional, de su propia fuente: la especie de cada fila sale igual que antes (§138).
         var forms = random.Derive("forms");
@@ -49,7 +52,7 @@ public sealed class StaticEncounterRandomizer(RomWorkspace workspace, Randomizer
                     .Select(i => names[StaticEncounterTable.GetSpecies(gifts, StaticEncounterTable.Gifts, i)]),
             ];
 
-            Randomize(gifts, StaticEncounterTable.Gifts, random, forms, pool, untouchable,
+            Randomize(gifts, StaticEncounterTable.Gifts, random, forms, given, untouchable,
                 StaticEncounterTable.StarterCount, ref replaced, ref kept);
             patcher.Write(StaticEncounterTable.Gifts.Subfile, gifts);
 
@@ -68,8 +71,11 @@ public sealed class StaticEncounterRandomizer(RomWorkspace workspace, Randomizer
                     ? ApplyOverrides(payload, layout, random, pool, ref replaced)
                     : [];
 
-                Randomize(payload, layout, random, forms, pool, untouchable, 0, ref replaced, ref kept,
-                    claimed);
+                // De los estaticos, los corrientes (tipo 0: el Pokemon de la captura de Hau, Sudowoodo, Pinsir...) tambien son
+                // del tipo en un MONOTYPE: el primero que se ve tras las Poke Balls es uno de ellos. Dominantes, legendarios y
+                // ultraentes (tipos 1-3) siguen del pool de siempre.
+                Randomize(payload, layout, random, forms, isStatics ? pool : given, untouchable, 0, ref replaced, ref kept,
+                    claimed, isStatics && options.MonoType is not null ? given : null);
 
                 ApplyIndependent(payload, layout, independent, random, pool);
 
@@ -310,7 +316,7 @@ public sealed class StaticEncounterRandomizer(RomWorkspace workspace, Randomizer
 
     private static void Randomize(byte[] payload, EncounterEntryLayout layout, IRandomSource random, IRandomSource forms,
         SpeciesPool pool, HashSet<int> untouchable, int from, ref int replaced, ref int kept,
-        HashSet<int>? claimed = null)
+        HashSet<int>? claimed = null, SpeciesPool? ordinary = null)
     {
         for (var i = from; i < StaticEncounterTable.Count(payload, layout); i++)
         {
@@ -333,8 +339,11 @@ public sealed class StaticEncounterRandomizer(RomWorkspace workspace, Randomizer
                 continue;
             }
 
-            var species = pool.Pick(random, original);
-            StaticEncounterTable.SetSpecies(payload, layout, i, species, pool.Forms.Pick(forms, species));
+            var source = ordinary is not null && payload[(i * layout.Stride) + StaticEncounterTable.KindOffset] == 0
+                ? ordinary
+                : pool;
+            var species = source.Pick(random, original);
+            StaticEncounterTable.SetSpecies(payload, layout, i, species, source.Forms.Pick(forms, species));
             replaced++;
         }
     }

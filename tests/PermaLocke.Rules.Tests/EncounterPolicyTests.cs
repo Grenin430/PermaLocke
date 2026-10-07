@@ -188,14 +188,36 @@ public sealed class EncounterPolicyTests
     }
 
     [Fact]
-    public void A_duplicate_cannot_be_caught_and_leaves_the_route_free()
+    public void A_duplicate_can_be_caught_or_left_and_does_not_spend_the_route_by_itself()
     {
         var decision = Decide(new EncounterSituation(Route2, IsRoute: true, Spent: false, InWildBattle: true,
             WildSpecies: 657, Duplicate: true));
 
-        Assert.Equal(BallAction.Withhold, decision.Action);
+        // Elige el jugador (2026-10-07): las balls vuelven, la ruta no se gasta al empezar (solo si lo captura) y el aviso lo dice.
+        Assert.Equal(BallAction.GiveBack, decision.Action);
         Assert.False(decision.SpendZone);
-        Assert.Contains("sigue libre", decision.Reason);
+        Assert.True(decision.Optional);
+        Assert.Contains("capturarlo", decision.Reason);
+        Assert.Contains("pasar al siguiente", decision.Reason);
+    }
+
+    [Fact]
+    public void A_duplicate_in_a_spent_route_still_cannot_be_caught()
+    {
+        var decision = Decide(new EncounterSituation(Route2, IsRoute: true, Spent: true, InWildBattle: true,
+            WildSpecies: 657, Duplicate: true));
+
+        Assert.Equal(BallAction.Withhold, decision.Action);
+        Assert.False(decision.Optional);
+    }
+
+    [Fact]
+    public void A_species_that_is_not_read_yet_still_keeps_the_balls_even_if_it_will_be_a_duplicate()
+    {
+        var decision = Decide(new EncounterSituation(Route2, IsRoute: true, Spent: false, InWildBattle: true, WildSpecies: null));
+
+        Assert.Equal(BallAction.Withhold, decision.Action);
+        Assert.False(decision.Optional);
     }
 
     [Theory]

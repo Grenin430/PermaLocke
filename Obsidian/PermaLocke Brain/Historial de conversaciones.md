@@ -393,3 +393,37 @@ negro del estudio de fotos: gen 8-9 en el equipo (ver Trampas y lecciones).
   mochila (texto 41), icono rojo con aura dorada (diseño 2 del organizador) y aprende los movimientos de los niveles
   saltados (parche en LearnNewWazaOnCurrentLevel, rutinas en dos asserts vacíos). Encontrado de paso: el cap no se
   escribía en el juego hasta la primera Poké Ball (corte del §150); arreglado, sin desplegar aún.
+- **Repelente Infinito** (§219, sin publicar): objeto 114, clave, icono galaxia (diseño 3 de cinco prototipos). Usado desde
+  la mochila activa un repelente que no se gasta y, usado otra vez, lo apaga. Probado por el organizador. `DecMushiyokeCount`
+  (0x2A8EB8) es un gancho por paso. Cueva en Bag.cro 0x16C00 con la rutina del objeto. Dos fallos de mi parche: lógica
+  invertida y `PatchBag` que no reescribía la cueva con el gancho ya puesto. Desplegado solo en prueba. Pedido aparte: más
+  ideas de objetos y de cambios de código; el organizador rechazó cinco listas (comodidad, Nuzlocke, cambios de código,
+  espectáculo, locuras) y queda por saber qué quiere: preguntado, sin respuesta.
+- **Roles MONOTYPE** (§220, sin publicar): el usuario eligió ocho tipos (agua, normal, planta, volador, psíquico, bicho, veneno,
+  fuego) y la regla de BxnnyLocke (solo se mira lo que se posee; el gacha se bloquea con un Pokémon vivo fuera del tipo). Antes
+  se rechazaron cinco listas de ideas (objetos, cambios de código, roles) y se investigó BxnnyLocke leyendo su DLL con
+  System.Reflection.Metadata (nota «Monotype de BxnnyLocke»; también «Repelente Infinito» §219 probado en el juego). Lo hecho:
+  `Role.MonoType`, ocho roles en roles.json (×1,5 puntos), `MonotypeRule` (lista calculada por tipos, no escrita), gacha y
+  wonder trade filtrados, banda del wonder trade que se abre si no cae nada del tipo, puerta del gacha. Sin guardería ni
+  válvula del último Pokémon. Pendiente del organizador: publicar roles.json desde Admin (REGLAS) DESPUÉS de la app nueva.
+- **Menú de tipos y GUARDERÍA** (§220-§221, sin publicar): el organizador pidió un solo «MONOTYPE» en el menú de roles con un segundo
+  menú de tipos con sprite (hecho: `RoleMenuViewModel`, `RoleMenuView`; icono = especie de `especieIcono` en roles.json) y la
+  guardería, «una de las mecánicas principales» que yo había dejado fuera por no tenerla. Hecha: sección GUARDERÍA para los roles
+  monotype, tiradas como la ruleta (1 por prueba, 3 liga, 2 rematch), huevos de especies del tipo a nivel 1 escritos en las cajas con
+  el juego cerrado, fuerza que sube con las pruebas (números de BxnnyLocke), `Data/guarderia.json` en `TournamentRules`. Sobre el
+  wonder trade dijo «que libere a los pokemon y ya»: el aviso del gacha dice solo «Suéltalo», sin válvula. Lo que su respuesta
+  corrigió de mí: quedarme con lo que «no teníamos» en vez de construirlo. Sin probar en el juego: que los huevos eclosionen.
+- **Wonder trade de una sola carta** (§222, sin publicar): tras ver cómo BxnnyLocke resuelve el inicial no válido (si es tu único Pokémon, te
+  regala un wondertrade y el wondertrade da uno del rol), el organizador pidió quitar el dos por una y dejar uno por uno «en general». Quitado
+  todo lo de dos cartas (servicio, puerto de intercambio, `SaveBoxSwap`, álbum, escena); la animación pasa a ser una carta que orbita y
+  estalla. El gate del gacha mira ahora la partida, no el registro (que nunca se entera de una liberación).
+- **Mundo monotype** (§223, sin publicar): el organizador propuso que los salvajes, iniciales y demás salgan solo del tipo (mejor que el
+  «wonder trade y soltar» de BxnnyLocke). Hecho: `RandomizerOptions.MonoType` desde el rol, `SpeciesPool.OfType` (tipos del mundo instalado, formas
+  regionales filtradas). Salvajes, iniciales, regalos, fósiles y tratos del tipo; estáticos de pelea y entrenadores igual. Medido con ROM real
+  (PSÍQUICO, seed 777). No quiere cambio de rol ni se preocupa de partidas ya empezadas. Pendiente: generar e instalar en prueba y jugarlo.
+  Probándolo vio un Mankey de nivel 5 como primer salvaje: salía de los **estáticos** (las capturas del principio, filas 0 y 151-154), no de los salvajes; ahora los estáticos
+  corrientes (clase 0) también salen del tipo. Mi comprobación anterior solo miraba salvajes: mirar TODAS las tablas.
+- **Mote entre todos** (§224): el panel salía encima de la pregunta del juego porque `MovedSince` es verdadero tras un solo cambio de posición. Ahora `IsWalking` (varias lecturas
+  seguidas). Ya se lo había dicho varias veces: sin probar aún; el log dice «Mote: el jugador anda tras N s».
+- **Guardería** (§225): los huevos salían como **Meltan** en el juego. Se probó a copiar el huevo en el hueco 1154 del contenedor de iconos y se quitó: el código del juego (`FUN_0030c88c`) ya da el icono del huevo (1153) a cualquier huevo, así que lo que se ve como Meltan es otra ruta (¿modelo 3D o ficha?), sin localizar. El icono 0 es «?», no el huevo: la app dibujaba una bola. Animación de llegada de huevos (`NurseryScene`) y la sección rehecha.
+- **Duplicados** (§226): el duplicado se elige (capturarlo cuenta, pasar no); el juego ya no vuelve a sortearlos; aviso «DUPLICADO». **Incubadora Turbo** (§227): objeto clave 115, icono A (rayo) elegido entre siete, dos pasos abren los huevos; parche en `CalcHatch` y `SubOriginalFamiliarity` de `code.bin` y cueva nueva en `Bag.cro`. Sin probar en el juego.

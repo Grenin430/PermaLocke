@@ -364,4 +364,206 @@ public sealed class RulePatchesTests
         Assert.Equal([RulePatches.FallenSite, RulePatches.DupeSite, RulePatches.CandySite, RulePatches.DupeCave, RulePatches.CodeCave, RulePatches.FallenCave, RulePatches.DupeTestCave],
             records!.Select(r => r.Offset).Order());
     }
+
+    [Fact]
+    public void The_repel_steps_stay_put_when_the_infinite_repel_set_them()
+    {
+        Assert.Equal("add r0, r0, #0xa00; ldrh r2, [r0, #0x3e]; cmp r2, #0x72; ldrhne r1, [r0, #0x58]; cmpne r1, #0; "
+                     + "moveq r0, #0; bxeq lr; subs r1, r1, #1; strh r1, [r0, #0x58]; moveq r0, #1; movne r0, #0; bx lr",
+            Disassemble(RulePatches.RepelCount(), RulePatches.RepelCountSite + 0x100000));
+        Assert.Equal(48, RulePatches.RepelCount().Length);
+    }
+
+    [Fact]
+    public void The_bag_sends_the_infinite_repel_to_its_routine_which_turns_it_on_and_off()
+    {
+        Assert.Equal("cmp r5, #0x72; beq #0x16c18; cmp r5, #0x73; beq #0x16c28; cmp r3, r5; bx lr; mov r0, r4; mov r1, r5; pop {r3, r4, r5, r6, r7, lr}; b #0x16c38; "
+                     + "mov r0, r4; mov r1, r5; pop {r3, r4, r5, r6, r7, lr}; b #0x16ce8",
+            Disassemble(RulePatches.BagLookup(), RulePatches.BagCave));
+        Assert.Equal("push {r4, r5, r6, lr}; mov r4, r0; mov r5, r1; ldr r0, [r4, #0x4c]; add r3, r0, #0xa00; "
+                     + "ldrh r2, [r3, #0x58]; ldrh r3, [r3, #0x3e]; subs r6, r3, r5; movne r6, #1; cmp r2, #0; moveq r6, #1; "
+                     + "mov r2, r6; mov r1, r5; bl #0x738; ldr r0, [r4, #0x70]; cmp r6, #0; moveq r1, #0x3c; movne r1, #0x3b; "
+                     + "bl #0x16ca0; ldr r0, [r4, #0x70]; mov r1, #0; bl #0xa5e4; mov r0, #2; str r0, [r4, #4]; mov r0, #0; "
+                     + "pop {r4, r5, r6, pc}",
+            Disassemble(RulePatches.BagHandlerCode(), RulePatches.BagCave + 0x38));
+        Assert.Equal("push {r4, r5, sb, sl, fp, lr}; mov r4, r0; mov r5, r1; add r0, r0, #4; bl #0x3a8; mov sl, r0; mov r1, #1; "
+                     + "bl #0x460; mov sb, r0; mov r1, r0; mov r2, r5; mov r0, sl; bl #0x590; mov r1, sb; mov r0, r4; mov r2, #1; "
+                     + "pop {r4, r5, sb, sl, fp, lr}; b #0xae20",
+            Disassemble(RulePatches.BagShowCode(), RulePatches.BagCave + 0xA0));
+        Assert.Equal(0x38, RulePatches.BagLookup().Length);
+        Assert.Equal(0x68, RulePatches.BagHandlerCode().Length);
+        Assert.Equal((RulePatches.RepelOnLine, RulePatches.RepelOffLine), (0x3B, 0x3C));
+    }
+
+    [Fact]
+    public void The_mods_bag_takes_the_hook_and_the_cave_and_nothing_else()
+    {
+        if (Expansion("romfs", "Bag.cro") is not { } path) return;
+
+        var original = File.ReadAllBytes(path);
+        var bytes = (byte[])original.Clone();
+
+        Assert.Equal(RulePatches.BattleState.Patched, RulePatches.PatchBag(bytes));
+        var once = (byte[])bytes.Clone();
+        Assert.Equal(RulePatches.BattleState.AlreadyPatched, RulePatches.PatchBag(bytes));
+        Assert.Equal(once, bytes);
+
+        // Una cueva de una versión anterior se corrige con el gancho ya puesto.
+        bytes[RulePatches.BagCave + 0x30] ^= 0xFF;
+        Assert.Equal(RulePatches.BattleState.Patched, RulePatches.PatchBag(bytes));
+        Assert.Equal(once, bytes);
+        Assert.Equal("bl #0x16c00", Disassemble(bytes[RulePatches.BagLookupSite..(RulePatches.BagLookupSite + 4)], RulePatches.BagLookupSite));
+
+        // El código del segmento acaba en 0x16DFC: la cueva cabe dentro.
+        var changed = Enumerable.Range(0, bytes.Length).Where(i => bytes[i] != original[i]).ToList();
+        Assert.All(changed, i => Assert.True(
+            i is >= RulePatches.BagLookupSite and < RulePatches.BagLookupSite + 4 || i is >= RulePatches.BagCave and < 0x16DFC));
+
+        Assert.Equal(RulePatches.BattleState.Unknown, RulePatches.PatchBag(new byte[original.Length]));
+    }
+
+    [Fact]
+    public void The_infinite_repel_goes_into_the_mods_files_once_next_to_the_super_candy()
+    {
+        if (Expansion("romfs", "a", "0", "1", "9") is not { } data || Expansion("romfs", "a", "0", "3", "6") is not { } text
+            || Expansion("romfs", "a", "0", "6", "1") is not { } icons || Expansion("exefs", "code.bin") is not { } code) return;
+
+        var romfs = Path.Combine(Path.GetTempPath(), "permalocke-repel-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            foreach (var (from, parts) in new[] { (data, "1/9"), (text, "3/6"), (icons, "6/1") })
+            {
+                var to = Path.Combine([romfs, "a", "0", .. parts.Split('/')]);
+                Directory.CreateDirectory(Path.GetDirectoryName(to)!);
+                File.Copy(from, to);
+            }
+
+            var before = new pk3DS.Core.CTR.GARC.LazyGARC(File.ReadAllBytes(icons)).FileCount;
+            var super = RulePatches.InstallSuperCandy(romfs, out var problem);
+            Assert.Null(problem);
+            var icon = RulePatches.InstallInfiniteRepel(romfs, out problem);
+            Assert.Null(problem);
+            Assert.Equal((before, before + 1), (super, icon));
+            Assert.Equal(super, RulePatches.InstallSuperCandy(romfs, out problem));
+            Assert.Equal(icon, RulePatches.InstallInfiniteRepel(romfs, out problem));
+            Assert.Null(problem);
+
+            var items = new pk3DS.Core.CTR.GARC.LazyGARC(File.ReadAllBytes(Path.Combine(romfs, "a", "0", "1", "9")));
+            Assert.Equal(items[RulePatches.ExpShareItem], items[InfiniteRepel.ItemId]);
+
+            var config = new pk3DS.Core.GameConfig(pk3DS.Core.GameVersion.UM);
+            var garc = new pk3DS.Core.CTR.GARC.LazyGARC(File.ReadAllBytes(Path.Combine(romfs, "a", "0", "3", "6")));
+            string Line(int file, int line = InfiniteRepel.ItemId) => pk3DS.Core.TextFile.GetStrings(config, garc[file])[line];
+            Assert.Equal(InfiniteRepel.Name, Line(RulePatches.ItemNamesFile));
+            Assert.Equal("Repelentes Infinitos", Line(RulePatches.ItemPluralFile));
+            Assert.Equal(InfiniteRepel.Name + "[VAR 1101(00FE,0000)]", Line(RulePatches.ItemMessageFile));
+            Assert.Equal(RulePatches.InfiniteRepelDescription, Line(RulePatches.ItemFlavorFile));
+            Assert.Equal(RulePatches.RepelOnText, Line(RulePatches.BagTextFile, RulePatches.RepelOnLine));
+            Assert.Equal(RulePatches.RepelOffText, Line(RulePatches.BagTextFile, RulePatches.RepelOffLine));
+            Assert.Equal(@"El Repelente sigue haciendo efecto.\nNo puedes usar otro todavía.", Line(RulePatches.BagTextFile, 78));
+
+            var all = new pk3DS.Core.CTR.GARC.LazyGARC(File.ReadAllBytes(Path.Combine(romfs, "a", "0", "6", "1")));
+            Assert.Equal(before + 2, all.FileCount);
+            var repel = Sprites.BflimTexture.Decode(new pk3DS.Core.CTR.GARC.LazyGARC(File.ReadAllBytes(icons))[RulePatches.RepelItem - 1]);
+            var painted = Sprites.InfiniteRepelIcon.Paint(repel.Pixels, repel.Width, repel.Height);
+            var drawn = Sprites.BflimTexture.Decode(all[icon!.Value]);
+            Assert.All(Enumerable.Range(0, drawn.Pixels.Length), i => Assert.Equal(painted[i] >> 3, drawn.Pixels[i] >> 3));
+
+            var records = RulePatches.InfiniteRepelRecords(File.ReadAllBytes(code), icon.Value)!;
+            Assert.Equal([RulePatches.RepelCountSite, RulePatches.ItemIconTable + 4 * InfiniteRepel.ItemId], records.Select(r => r.Offset));
+            Assert.Equal((uint)icon, BinaryPrimitives.ReadUInt32LittleEndian(records[1].Bytes));
+        }
+        finally
+        {
+            Directory.Delete(romfs, true);
+        }
+    }
+
+    [Fact]
+    public void The_incubator_goes_into_the_mods_files_after_the_repel_and_its_code_reads_as_written()
+    {
+        if (Expansion("romfs", "a", "0", "1", "9") is not { } data || Expansion("romfs", "a", "0", "3", "6") is not { } text
+            || Expansion("romfs", "a", "0", "6", "1") is not { } icons || Expansion("exefs", "code.bin") is not { } code) return;
+
+        var romfs = Path.Combine(Path.GetTempPath(), "permalocke-egg-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            foreach (var (from, parts) in new[] { (data, "1/9"), (text, "3/6"), (icons, "6/1") })
+            {
+                var to = Path.Combine([romfs, "a", "0", .. parts.Split('/')]);
+                Directory.CreateDirectory(Path.GetDirectoryName(to)!);
+                File.Copy(from, to);
+            }
+
+            var before = new pk3DS.Core.CTR.GARC.LazyGARC(File.ReadAllBytes(icons)).FileCount;
+            Assert.Equal(before, RulePatches.InstallSuperCandy(romfs, out var problem));
+            Assert.Equal(before + 1, RulePatches.InstallInfiniteRepel(romfs, out problem));
+            var icon = RulePatches.InstallEggTurbo(romfs, out problem);
+            Assert.Null(problem);
+            Assert.Equal(before + 2, icon);
+            Assert.Equal(icon, RulePatches.InstallEggTurbo(romfs, out problem));
+            Assert.Null(problem);
+
+            var items = new pk3DS.Core.CTR.GARC.LazyGARC(File.ReadAllBytes(Path.Combine(romfs, "a", "0", "1", "9")));
+            Assert.Equal(items[RulePatches.ExpShareItem], items[EggTurbo.ItemId]);
+
+            var config = new pk3DS.Core.GameConfig(pk3DS.Core.GameVersion.UM);
+            var garc = new pk3DS.Core.CTR.GARC.LazyGARC(File.ReadAllBytes(Path.Combine(romfs, "a", "0", "3", "6")));
+            string Line(int file, int line = EggTurbo.ItemId) => pk3DS.Core.TextFile.GetStrings(config, garc[file])[line];
+            Assert.Equal(EggTurbo.Name, Line(RulePatches.ItemNamesFile));
+            Assert.Equal("Incubadoras Turbo", Line(RulePatches.ItemPluralFile));
+            Assert.Equal(RulePatches.EggTurboDescription, Line(RulePatches.ItemFlavorFile));
+            Assert.Equal(RulePatches.EggTurboOnText, Line(RulePatches.BagTextFile, RulePatches.EggTurboOnLine));
+            Assert.Equal(RulePatches.EggTurboOffText, Line(RulePatches.BagTextFile, RulePatches.EggTurboOffLine));
+            Assert.Equal(RulePatches.RepelOnText, Line(RulePatches.BagTextFile, RulePatches.RepelOnLine));
+
+            var all = new pk3DS.Core.CTR.GARC.LazyGARC(File.ReadAllBytes(Path.Combine(romfs, "a", "0", "6", "1")));
+            var template = Sprites.BflimTexture.Decode(new pk3DS.Core.CTR.GARC.LazyGARC(File.ReadAllBytes(icons))[RulePatches.RepelItem - 1]);
+            var painted = Sprites.EggTurboIcon.Paint(template.Pixels, template.Width, template.Height);
+            var drawn = Sprites.BflimTexture.Decode(all[icon!.Value]);
+            Assert.All(Enumerable.Range(0, drawn.Pixels.Length), i => Assert.Equal(painted[i] >> 3, drawn.Pixels[i] >> 3));
+
+            var bytes = File.ReadAllBytes(code);
+            var records = RulePatches.EggTurboRecords(bytes, icon.Value)!;
+            Assert.Equal([RulePatches.HatchSite, RulePatches.FamiliarityAmountSite, RulePatches.ItemIconTable + 4 * EggTurbo.ItemId], records.Select(r => r.Offset));
+            Assert.Equal((uint)icon, BinaryPrimitives.ReadUInt32LittleEndian(records[2].Bytes));
+
+            // El código nuevo, leído con el desensamblador: con el byte puesto 0x8001; si no, n o 1,5 n; y el cuerpo viejo no queda.
+            var hatch = records[0].Bytes;
+            Assert.Equal(26 * 4, hatch.Length);
+            Assert.Equal(
+                "ldr r2, [pc, #0x5c]; ldrb r2, [r2]; cmp r2, #0; movne r0, #0x8000; addne r0, r0, #1; bxne lr; ldrb r2, [r0, #0x28]; "
+                + "mov r0, r1; cmp r2, #1; addeq r0, r1, r1, lsr #1; bx lr; mov r5, r1; ldr ip, [pc, #0x2c]; ldrb ip, [ip]; cmp ip, #0; movne r5, #0xff; bx lr",
+                Disassemble(hatch[..(17 * 4)], RulePatches.HatchSite));
+            Assert.Equal(RuleBlock.EggTurbo, BinaryPrimitives.ReadUInt32LittleEndian(hatch.AsSpan(25 * 4)));
+            Assert.Equal($"bl #0x{RulePatches.HatchSite + 44:x}", Disassemble(records[1].Bytes, RulePatches.FamiliarityAmountSite));
+
+            // El cuerpo del juego no cambia más que en esas 26 palabras y la llamada, y con otro code.bin no se toca nada.
+            Assert.Null(RulePatches.EggTurboRecords(new byte[bytes.Length], icon.Value));
+        }
+        finally
+        {
+            Directory.Delete(romfs, true);
+        }
+    }
+
+    [Fact]
+    public void The_bag_routes_both_key_items_and_the_incubator_flips_the_blocks_byte()
+    {
+        var lookup = RulePatches.BagLookup();
+        Assert.Equal(14 * 4, lookup.Length);
+        Assert.Equal(
+            "cmp r5, #0x72; beq #0x16c18; cmp r5, #0x73; beq #0x16c28; cmp r3, r5; bx lr; mov r0, r4; mov r1, r5; pop {r3, r4, r5, r6, r7, lr}; "
+            + $"b #0x{0x16C00 + 0x38:x}; mov r0, r4; mov r1, r5; pop {{r3, r4, r5, r6, r7, lr}}; b #0x{0x16C00 + 0x38 + 0x68 + 0x48:x}",
+            Disassemble(lookup, 0x16C00));
+
+        var egg = RulePatches.BagEggCode();
+        Assert.Equal(19 * 4, egg.Length);
+        Assert.Equal(RuleBlock.EggTurbo, BinaryPrimitives.ReadUInt32LittleEndian(egg.AsSpan(18 * 4)));
+        var at = 0x16C00 + 0x38 + 0x68 + 0x48;
+        Assert.Equal(
+            "push {r4, r5, r6, lr}; mov r4, r0; ldr r2, [pc, #0x38]; ldrb r3, [r2]; eor r6, r3, #1; strb r6, [r2]; ldr r0, [r4, #0x70]; cmp r6, #0; "
+            + "moveq r1, #0x5c; movne r1, #0x5b",
+            Disassemble(egg[..(10 * 4)], at));
+    }
 }

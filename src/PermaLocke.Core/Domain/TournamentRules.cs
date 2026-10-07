@@ -18,6 +18,7 @@ public static class TournamentRules
         ("levelcaps.json", "Caps de nivel por prueba"),
         ("roles.json", "Roles y sus multiplicadores"),
         ("roulette.json", "RULETA"),
+        ("guarderia.json", "GUARDERÍA de los roles MONOTYPE"),
         ("grants.json", "Créditos gratis por hito"),
         ("rewards.json", "Premios de una vez"),
         ("wondertrade.json", "Wonder trade"),

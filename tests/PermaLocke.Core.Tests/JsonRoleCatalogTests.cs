@@ -101,7 +101,7 @@ public sealed class JsonRoleCatalogTests : IDisposable
 
         var catalog = JsonRoleCatalog.Load(shipped);
 
-        Assert.Equal(4, catalog.All.Count);
+        Assert.Equal(12, catalog.All.Count);
         Assert.NotEmpty(catalog.ImportantTrainerClasses);
 
         var normal = catalog.Find("normal")!;
@@ -137,6 +137,52 @@ public sealed class JsonRoleCatalogTests : IDisposable
         Assert.Equal(1, normal.ExtraTrainerPokemon);
         Assert.Equal(1, cagoneta.ExtraTrainerPokemon);
         Assert.Equal(2, experto.ExtraTrainerPokemon);
+    }
+
+    /// <summary>The eight MONOTYPE roles (§220): their type, and that each plays like normal except for the points.</summary>
+    [Fact]
+    public void The_shipped_file_has_the_eight_monotype_roles()
+    {
+        var catalog = JsonRoleCatalog.Load(Path.Combine(Root(), "Data", "roles.json"));
+        var normal = catalog.Find("normal")!;
+
+        var expected = new Dictionary<string, (int Type, string Name)>
+        {
+            ["monotype_agua"] = (10, "Agua"), ["monotype_normal"] = (0, "Normal"), ["monotype_planta"] = (11, "Planta"),
+            ["monotype_volador"] = (2, "Volador"), ["monotype_psiquico"] = (13, "Psíquico"), ["monotype_bicho"] = (6, "Bicho"),
+            ["monotype_veneno"] = (3, "Veneno"), ["monotype_fuego"] = (9, "Fuego")
+        };
+
+        Assert.Equal(expected.Count, catalog.All.Count(r => r.IsMonotype));
+
+        foreach (var (id, (type, name)) in expected)
+        {
+            var role = catalog.Find(id)!;
+            Assert.Equal(type, role.MonoType);
+            Assert.Equal(name, role.MonoTypeName);
+            Assert.Equal(1.5, role.Earn);
+            Assert.Equal(1.0, role.Lose);
+            Assert.False(role.Roulette);
+
+            // Lo mismo que el normal en lo que se cuece en la ROM: cambiar entre ellos no pide randomizar otra vez.
+            Assert.Equal(normal.EnemyLevelPercent, role.EnemyLevelPercent);
+            Assert.Equal(normal.PlayerCapPercent, role.PlayerCapPercent);
+            Assert.Equal(normal.ExtraTrainerPokemon, role.ExtraTrainerPokemon);
+        }
+
+        Assert.All(catalog.All.Where(r => !r.IsMonotype), r => Assert.Equal(string.Empty, r.MonoTypeName));
+    }
+
+    [Fact]
+    public void A_type_outside_the_eighteen_leaves_the_role_without_one()
+    {
+        var catalog = Load("""
+            { "roles": [ { "id": "a", "monotipo": 18 }, { "id": "b", "monotipo": -1 }, { "id": "c", "monotipo": 9 } ] }
+            """);
+
+        Assert.Null(catalog.Find("a")!.MonoType);
+        Assert.Null(catalog.Find("b")!.MonoType);
+        Assert.Equal(9, catalog.Find("c")!.MonoType);
     }
 
     /// <summary>

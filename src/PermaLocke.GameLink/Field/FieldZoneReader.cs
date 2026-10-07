@@ -235,6 +235,24 @@ public sealed class FieldZoneReader(AzaharRpcClient client, SavedGameCache saved
         }
     }
 
+    /// <summary>
+    /// Whether the player is walking <b>right now</b> (2026-10-07): a record has changed at least twice, both within
+    /// <paramref name="within"/> of this read. <see cref="MovedSince"/> stays true for ever after one change, and a single
+    /// change is what a menu or the end of a battle can make; walking changes the position on every read.
+    /// </summary>
+    public bool IsWalking(TimeSpan within)
+    {
+        lock (_gate)
+        {
+            _own = GameRecord();
+            var watched = _own is { } own ? [own] : _records;
+            var now = _time.GetUtcNow();
+            ReadTracked(watched, now);
+            return watched.Any(address => _motion.TryGetValue(address, out var seen)
+                                          && now - seen.LastMove <= within && now - seen.PreviousMove <= within);
+        }
+    }
+
     /// <summary>How recently a record must have moved twice to count as the one following the player.</summary>
     public static readonly TimeSpan WalkingWindow = TimeSpan.FromSeconds(5);
 

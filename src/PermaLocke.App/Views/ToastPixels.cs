@@ -44,6 +44,7 @@ internal static class ToastPixels
         ToastKind.BallsTaken => Rgb(0xCF, 0x50, 0x44),
         ToastKind.BallsBack or ToastKind.Reward => Rgb(0x58, 0xA5, 0x6E),
         ToastKind.AllowedCapture => Rgb(0x5B, 0x8A, 0xC4),
+        ToastKind.Duplicate => Rgb(0x4F, 0xB8, 0xB0),
         ToastKind.Death or ToastKind.TeamWipe => Rgb(0xB8, 0x43, 0x3A),
         ToastKind.Warning => Rgb(0xD9, 0x77, 0x2F),
         ToastKind.Ghost => Rgb(0x9C, 0xC8, 0xE0),

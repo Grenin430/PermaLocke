@@ -109,6 +109,41 @@ public static class PokemonBuilder
     }
 
     /// <summary>
+    /// The same Pokémon as an egg of the NURSERY (§221): level 1, hatching by walking like any egg, in the player's name
+    /// from the day it hatches and not before. What the game keeps for an egg and not for a Pokémon is set here: the
+    /// egg's name and its steps, the day-care as where it was found and the date it was found on, no met place or level
+    /// and nobody handling it yet.
+    /// </summary>
+    /// <remarks>
+    /// The steps are the species' own cycles from the cartridge's table; for the species the expansion adds, which that
+    /// table does not have, 20 cycles, the usual middle of the road. They are the one number the game counts down.
+    /// </remarks>
+    public static PK7 BuildEgg(NewPokemon spec, SAV7USUM save)
+    {
+        var egg = Build(spec with { Level = 1 }, save);
+
+        var cycles = spec.Species > 0 && spec.Species <= PersonalTable.USUM.MaxSpeciesID
+            ? PersonalTable.USUM[spec.Species].HatchCycles
+            : 20;
+
+        egg.IsEgg = true;
+        egg.IsNicknamed = false;
+        egg.Nickname = SpeciesName.GetEggName(egg.Language, egg.Format);
+        egg.OriginalTrainerFriendship = (byte)Math.Clamp(cycles, 1, 255);
+        egg.EggLocation = 60002;
+        egg.EggMetDate = DateOnly.FromDateTime(DateTime.Now);
+        egg.MetDate = null;
+        egg.MetLocation = 0;
+        egg.MetLevel = 0;
+        egg.CurrentHandler = 0;
+        egg.HandlingTrainerName = string.Empty;
+        egg.HandlingTrainerFriendship = 0;
+        egg.RefreshChecksum();
+
+        return egg;
+    }
+
+    /// <summary>
     /// Gives the Pokémon a personality value and an encryption constant of its own.
     /// </summary>
     /// <remarks>

@@ -46,5 +46,8 @@ public enum ToastKind
     Update,
 
     /// <summary>A friend has just started playing (1.0.4.5): the small card, like Steam's, only over the emulator.</summary>
-    FriendPlaying
+    FriendPlaying,
+
+    /// <summary>A duplicate (2026-10-07): the player chooses between catching it, which counts, and moving on, which does not.</summary>
+    Duplicate
 }

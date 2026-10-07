@@ -42,12 +42,12 @@ public static partial class RulePatches
     public const int ItemFlavorFile = 39, ItemNamesFile = 40, ItemPluralFile = 41, ItemMessageFile = 42;
 
     /// <summary>Each text line of the item: what an unused slot has there, and what it gets.</summary>
-    private static readonly (int File, string Unused, string Wanted)[] SuperCandyLines =
+    private static readonly (int File, int Line, string Unused, string Wanted)[] SuperCandyLines =
     [
-        (ItemFlavorFile, "", SuperCandyDescription),
-        (ItemNamesFile, "(?)", SuperCandyName),
-        (ItemPluralFile, "(?)", SuperCandyName + "s"),
-        (ItemMessageFile, "(?)[VAR 1101(00FE,0000)]", SuperCandyName + "[VAR 1101(00FE,0100)]s")
+        (ItemFlavorFile, SuperCandyItem, "", SuperCandyDescription),
+        (ItemNamesFile, SuperCandyItem, "(?)", SuperCandyName),
+        (ItemPluralFile, SuperCandyItem, "(?)", SuperCandyName + "s"),
+        (ItemMessageFile, SuperCandyItem, "(?)[VAR 1101(00FE,0000)]", SuperCandyName + "[VAR 1101(00FE,0100)]s")
     ];
 
     /// <summary>File offsets in <c>code.bin</c>: the site, the three gaps and the item→icon table.</summary>
@@ -211,59 +211,68 @@ public static partial class RulePatches
             return null;
         }
 
-        problem = SuperCandyData(itemData) ?? SuperCandyText(text);
+        problem = ItemData(itemData, SuperCandyItem, RareCandyItem, SuperCandyPrice, SuperCandyName)
+                  ?? ItemText(text, SuperCandyLines, SuperCandyName);
         if (problem is not null) return null;
 
-        return SuperCandyIcon(icons, out problem);
+        return AppendIcon(icons, Sprites.SuperCandyIcon.Bflim, RareCandyItem, SuperCandyName, out problem);
     }
 
-    private static string? SuperCandyData(string path)
+    /// <summary>
+    /// Makes the unused slot <paramref name="item"/> a copy of <paramref name="model"/>'s data with the price word
+    /// <paramref name="price"/>. Null when done (or already so), what went wrong otherwise.
+    /// </summary>
+    private static string? ItemData(string path, int item, int model, ushort price, string name)
     {
         var garc = new pk3DS.Core.CTR.GARC.LazyGARC(File.ReadAllBytes(path));
-        if (garc.FileCount <= SuperCandyItem) return "datos de objetos distintos: sin SuperCarameloraro";
+        if (garc.FileCount <= item) return $"datos de objetos distintos: sin {name}";
 
-        var wanted = (byte[])garc[RareCandyItem].Clone();
-        BinaryPrimitives.WriteUInt16LittleEndian(wanted, SuperCandyPrice);
+        var wanted = (byte[])garc[model].Clone();
+        BinaryPrimitives.WriteUInt16LittleEndian(wanted, price);
 
-        var current = garc[SuperCandyItem];
+        var current = garc[item];
         if (current.AsSpan().SequenceEqual(wanted)) return null;
         // Un hueco libre de la expansión solo lleva el byte 0x0D puesto.
-        if (current.Where((value, i) => i != 0x0D && value != 0).Any()) return "el objeto 113 ya se usa: sin SuperCarameloraro";
+        if (current.Where((value, i) => i != 0x0D && value != 0).Any()) return $"el objeto {item} ya se usa: sin {name}";
 
-        garc[SuperCandyItem] = wanted;
+        garc[item] = wanted;
         File.WriteAllBytes(path, garc.Save());
         return null;
     }
 
-    private static string? SuperCandyText(string path)
+    /// <summary>Writes each line that still holds what it had unused; a line holding anything else stops it all.</summary>
+    private static string? ItemText(string path, (int File, int Line, string Unused, string Wanted)[] lines, string name)
     {
         var config = new pk3DS.Core.GameConfig(pk3DS.Core.GameVersion.UM);
         var garc = new pk3DS.Core.CTR.GARC.LazyGARC(File.ReadAllBytes(path));
-        var before = SuperCandyLines.ToDictionary(line => line.File, line => pk3DS.Core.TextFile.GetStrings(config, garc[line.File]));
+        var files = lines.Select(line => line.File).Distinct().ToArray();
+        var before = files.ToDictionary(file => file, file => pk3DS.Core.TextFile.GetStrings(config, garc[file]));
 
-        if (before.Values.Any(lines => lines.Length <= SuperCandyItem)) return "texto de objetos distinto: sin SuperCarameloraro";
-        if (SuperCandyLines.All(line => before[line.File][SuperCandyItem] == line.Wanted)) return null;
-        if (SuperCandyLines.Any(line => before[line.File][SuperCandyItem] != line.Unused && before[line.File][SuperCandyItem] != line.Wanted))
+        if (lines.Any(line => before[line.File].Length <= line.Line)) return $"texto del juego distinto: sin {name}";
+        if (lines.All(line => before[line.File][line.Line] == line.Wanted)) return null;
+        if (lines.Any(line => before[line.File][line.Line] != line.Unused && before[line.File][line.Line] != line.Wanted))
         {
-            return "el objeto 113 ya tiene texto: sin SuperCarameloraro";
+            return $"el texto del {name} ya está ocupado: no se toca";
         }
 
-        foreach (var (file, _, wanted) in SuperCandyLines)
+        foreach (var file in files)
         {
-            garc[file] = GameTextPatch.ReplaceLines(garc[file],
-                new Dictionary<int, ushort[]> { [SuperCandyItem] = GameTextPatch.Encode(config, wanted) });
+            garc[file] = GameTextPatch.ReplaceLines(garc[file], lines.Where(line => line.File == file)
+                .ToDictionary(line => line.Line, line => GameTextPatch.Encode(config, line.Wanted)));
         }
 
         var packed = garc.Save();
 
-        // Se relee antes de escribir: en cada fichero solo cambia la línea del objeto.
+        // Se relee antes de escribir: en cada fichero solo cambian las líneas pedidas.
         var back = new pk3DS.Core.CTR.GARC.LazyGARC(packed);
-        foreach (var (file, _, wanted) in SuperCandyLines)
+        foreach (var file in files)
         {
-            var lines = pk3DS.Core.TextFile.GetStrings(config, back[file]);
-            if (lines[SuperCandyItem] != wanted || lines.Where((line, i) => i != SuperCandyItem && line != before[file][i]).Any())
+            var read = pk3DS.Core.TextFile.GetStrings(config, back[file]);
+            var wanted = lines.Where(line => line.File == file).ToDictionary(line => line.Line, line => line.Wanted);
+            if (read.Length != before[file].Length
+                || read.Where((line, i) => line != (wanted.TryGetValue(i, out var w) ? w : before[file][i])).Any())
             {
-                return "el texto del SuperCarameloraro no se relee bien: no se toca";
+                return $"el texto del {name} no se relee bien: no se toca";
             }
         }
 
@@ -271,27 +280,33 @@ public static partial class RulePatches
         return null;
     }
 
-    /// <summary>The icon goes last in <c>a/0/6/1</c>; when the last one already is it, that one is used.</summary>
-    private static int? SuperCandyIcon(string path, out string? problem)
+    /// <summary>
+    /// The icon of <paramref name="model"/> repainted by <paramref name="paint"/>, added at the end of <c>a/0/6/1</c>; when
+    /// one of the files added after the cartridge's already is it, that one is used.
+    /// </summary>
+    private static int? AppendIcon(string path, Func<byte[], byte[]?> paint, int model, string name, out string? problem)
     {
         problem = null;
         var bytes = File.ReadAllBytes(path);
         var garc = new pk3DS.Core.CTR.GARC.LazyGARC(bytes);
-        var icon = Sprites.SuperCandyIcon.Bflim(garc[RareCandyItem - 1]);
+        var icon = paint(garc[model - 1]);
 
         if (icon is null)
         {
-            problem = "el icono del Caramelo Raro no es el que se conoce: sin SuperCarameloraro";
+            problem = $"el icono del que sale el {name} no es el que se conoce: sin {name}";
             return null;
         }
 
-        if (garc[garc.FileCount - 1].AsSpan().SequenceEqual(icon)) return garc.FileCount - 1;
+        for (var index = garc.FileCount - 1; index > model; index--)
+        {
+            if (garc[index].AsSpan().SequenceEqual(icon)) return index;
+        }
 
         if (Garc.Append(bytes, Compress(icon)) is not { } grown
             || new pk3DS.Core.CTR.GARC.LazyGARC(grown) is var back && back.FileCount != garc.FileCount + 1
             || !back[back.FileCount - 1].AsSpan().SequenceEqual(icon))
         {
-            problem = "no se pudo añadir el icono del SuperCarameloraro";
+            problem = $"no se pudo añadir el icono del {name}";
             return null;
         }
 

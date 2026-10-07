@@ -1131,15 +1131,18 @@ public sealed partial class GachaViewModel : SectionViewModel
 
         Pool.Clear();
 
-        foreach (var line in _gacha.LinesOf(tier, legendary: true)
+        // MONOTYPE (§220): solo las familias del tipo, y dentro de ellas solo las especies que lo tienen.
+        var monoType = _runContext.Current is { } current ? _gacha.MonoTypeOf(current) : null;
+
+        foreach (var line in _gacha.LinesOf(tier, legendary: true, monoType)
             .Select(l => (Line: l, Legendary: true))
-            .Concat(_gacha.LinesOf(tier, legendary: false).Select(l => (Line: l, Legendary: false))))
+            .Concat(_gacha.LinesOf(tier, legendary: false, monoType).Select(l => (Line: l, Legendary: false))))
         {
             var stages = new List<PoolStageViewModel>();
 
             foreach (var stage in line.Line.Stages)
             {
-                foreach (var id in stage)
+                foreach (var id in stage.Where(id => _gacha.Admits(monoType, id)))
                 {
                     if (_gacha.StatsOf(id) is { } stats)
                     {

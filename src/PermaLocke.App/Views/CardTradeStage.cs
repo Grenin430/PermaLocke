@@ -6,8 +6,8 @@ using System.Windows.Media.Imaging;
 
 namespace PermaLocke.App.Views;
 
-/// <summary>What the card trade shows (1.0.4.7): the two cards handed over and the one that comes out.</summary>
-public sealed record CardTradePlay(TcgCard First, TcgCard Second, TcgCard Result);
+/// <summary>What the card trade shows: the card handed over and the one that comes out.</summary>
+public sealed record CardTradePlay(TcgCard First, TcgCard Result);
 
 /// <summary>
 /// Puts <see cref="CardTradeScene"/> on screen over the album: a bitmap at the screen's own resolution, painted from the
@@ -25,7 +25,6 @@ public sealed class CardTradeStage : ContentControl
     private CardTradeScene? _scene;
     private WriteableBitmap? _bitmap;
     private TcgRender? _first;
-    private TcgRender? _second;
     private TcgRender? _result;
     private TcgRender? _back;
     private long _lastStep = -1;
@@ -62,7 +61,6 @@ public sealed class CardTradeStage : ContentControl
         if (Play is { } play)
         {
             _first = TcgCardArt.Render(play.First, TcgLayout.Full);
-            _second = TcgCardArt.Render(play.Second, TcgLayout.Full);
             _result = TcgCardArt.Render(play.Result, TcgLayout.Full);
             _back = TcgCardArt.RenderBack(TcgLayout.Full);
             _clock.Restart();
@@ -112,14 +110,14 @@ public sealed class CardTradeStage : ContentControl
     private void Paint()
     {
         if (_broken || _scene is null || _bitmap is null || Play is not { } play
-            || _first is null || _second is null || _result is null || _back is null)
+            || _first is null || _result is null || _back is null)
         {
             return;
         }
 
         try
         {
-            _scene.Render(_first, _second, _back, _result, play.Result.Rarity, play.Result.Shiny, play.Result.Seed,
+            _scene.Render(_first, _back, _result, play.Result.Rarity, play.Result.Shiny, play.Result.Seed,
                 _clock.Elapsed.TotalSeconds);
             _bitmap.WritePixels(new Int32Rect(0, 0, _scene.Width, _scene.Height), _scene.Pixels, _scene.Width * 4, 0);
         }

@@ -64,18 +64,81 @@ public sealed class HomeViewTests
                     screen.UpdateLayout();
                 }
 
+                // La guardería de los roles MONOTYPE (§221), con una tanda de huevos a medio dar la vuelta.
+                PermaLocke.Core.Domain.GachaPull Pull(int species, string name, int total, int number) => new("guarderia", "guarderia", species, name, false, total, 1, false,
+                    [31, 20, 15, 10, 5, 0], 3, "Firme", 66, "Mar llamas", 1UL, number);
+                var nursery = new NurseryView
+                {
+                    DataContext = new
+                    {
+                        RoleName = "MONOTYPE FUEGO", TypeColour = System.Windows.Media.Color.FromRgb(0xE6, 0x28, 0x29),
+                        TypeText = "Solo salen especies de tu tipo, sin legendarios. Cada tirada es un huevo a nivel 1 que va a una caja de tu PC.",
+                        StrengthText = "Los huevos apuntan a especies más fuertes con cada prueba que superas.",
+                        StrengthShare = 0.35, StrengthLabel = "~338 PTS", ProgressLabel = "PRUEBAS 2/8",
+                        Trials = new[] { new PermaLocke.App.ViewModels.TrialPipViewModel(true), new(true), new(false), new(false), new(false), new(false), new(false), new(false) },
+                        OwedEggs = new[] { new PermaLocke.App.ViewModels.OwedEggViewModel(Placeholder(1)), new(Placeholder(1)), new(Placeholder(1)) }, OwedMore = "",
+                        IsPlaying = false, PlayDone = false, Play = (PermaLocke.App.Views.NurseryPlay?)null, ContinueCommand = new PermaLocke.App.Tests.NoCommand(),
+                        Owed = 3, Status = "Huevo en caja 1, hueco 3. Todavía te quedan 3.", StatusIsWarning = false, ButtonText = "PEDIR UN HUEVO (3)",
+                        Milestones = new[] { new PermaLocke.App.ViewModels.MilestoneEggsViewModel("Prueba 1", 1, true), new("Prueba 2", 1, true), new("Prueba 3", 1, false), new("Campeón de la Liga", 3, false) },
+                        MilestonesSummary = "2 de 4 conseguidos: 2 de 6 huevos.",
+                        HasReceived = true, ArrivedPlace = "CAJA 1 · HUECO 3",
+                        Received = new[] { new PermaLocke.App.ViewModels.ReceivedEggViewModel(2, "CAJA 1 · HUECO 3", Placeholder(1)), new(1, "CAJA 1 · HUECO 2", Placeholder(1)) },
+                        GetEggCommand = new PermaLocke.App.Tests.NoCommand(),
+                    }
+                };
+                LoadDialogHost(nursery, 900, 1500);
+
                 // Los diálogos en píxeles: se construyen sin su view model (piden uno de verdad en el constructor) y se
                 // miden con datos de muestra. Con PERMALOCKE_SNAP_DIR se guardan además en PNG, para mirarlos.
                 var role = Mutable(new { Name = "EXPERTO", Description = "Para quien ya sabe jugar.", Effects = "Puntos x1,5 · enemigos +27%", IsSelected = true });
                 var other = Mutable(new { Name = "NORMAL", Description = "La experiencia de siempre.", Effects = "Puntos x1", IsSelected = false });
+                // El menú de roles de verdad (§220), con los de Data/roles.json: las tarjetas, MONOTYPE como una más y sus tipos.
+                var catalog = PermaLocke.Data.JsonRoleCatalog.Load(RolesFile());
+                Assert.Equal(12, catalog.All.Count);
+                var menu = new PermaLocke.App.ViewModels.RoleMenuViewModel(catalog.All);
+                Assert.Equal(["normal", "cagoneta", "experto", "ludopata", ""], menu.Cards.Select(c => c.Role.Id));
+                Assert.Equal(8, menu.Types.Count);
+                Assert.False(menu.ShowTypes);
+                menu.Cards.Last().IsSelected = true;
+                Assert.True(menu.ShowTypes);
+                Assert.Equal(string.Empty, menu.SelectedRoleId);      // MONOTYPE sin tipo no es un rol todavía
+                menu.Types.Single(t => t.Role.Id == "monotype_fuego").IsSelected = true;
+                Assert.Equal("monotype_fuego", menu.SelectedRoleId);
+                Assert.Single(menu.Types, t => t.IsSelected);
+                menu.Cards.First().IsSelected = true;
+                Assert.False(menu.ShowTypes);
+                Assert.Equal("normal", menu.SelectedRoleId);
+                Assert.DoesNotContain(menu.Types, t => t.IsSelected);
+                menu.Select("monotype_agua");
+                Assert.True(menu.ShowTypes);
+                Assert.Equal("monotype_agua", menu.SelectedRoleId);
+                foreach (var type in menu.Types) type.Sprite = Placeholder(type.Role.IconSpecies ?? 1);
+
+                // El menú entero, sin el scroll de la ventana, para poder mirarlo.
+                var whole = new RoleMenuView { DataContext = menu };
+                var holder = new Border { Child = whole, Background = (Brush)app.Resources["PxBaseBrush"], Padding = new Thickness(14), Width = 600 };
+                holder.Measure(new Size(600, double.PositiveInfinity));
+                holder.Arrange(new Rect(0, 0, 600, holder.DesiredSize.Height));
+                holder.UpdateLayout();
+                Assert.NotEmpty(Descendants(whole).OfType<PermaLocke.App.Views.Pixel.PixelText>().Where(t => t.Text == "ELIGE TU TIPO"));
+                if (Environment.GetEnvironmentVariable("PERMALOCKE_SNAP_DIR") is { Length: > 0 } snap)
+                {
+                    var shot = new System.Windows.Media.Imaging.RenderTargetBitmap((int)holder.ActualWidth, (int)holder.ActualHeight, 96, 96, PixelFormats.Pbgra32);
+                    shot.Render(holder);
+                    var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
+                    encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(shot));
+                    using var shotFile = System.IO.File.Create(System.IO.Path.Combine(snap, "RoleMenu.png"));
+                    encoder.Save(shotFile);
+                }
+
                 LoadDialog<CreateRunWindow>(Mutable(new
                 {
-                    Roles = new[] { other, role }, RoleProblem = "", RomStatus = "Pokemon Ultra Moon (Europe) · 00040000001B5100",
+                    Menu = menu, RoleProblem = "", RomStatus = "Pokemon Ultra Moon (Europe) · 00040000001B5100",
                     RunName = "Mi run", PlayerName = "Grenin", ErrorMessage = "",
                 }));
                 LoadDialog<ChangeRoleWindow>(Mutable(new
                 {
-                    CurrentText = "Ahora eres NORMAL.", Roles = new[] { other, role }, Reason = "", Problem = "Falta el motivo.",
+                    CurrentText = "Ahora eres NORMAL.", Menu = menu, Reason = "", Problem = "Falta el motivo.",
                 }));
                 LoadDialog<RegisterCaptureWindow>(Mutable(new
                 {
@@ -124,6 +187,34 @@ public sealed class HomeViewTests
         if (failure is not null) ExceptionDispatchInfo.Capture(failure).Throw();
     }
 
+    private static string RolesFile()
+    {
+        for (var dir = new System.IO.DirectoryInfo(AppContext.BaseDirectory); dir is not null; dir = dir.Parent)
+        {
+            var path = System.IO.Path.Combine(dir.FullName, "Data", "roles.json");
+            if (System.IO.File.Exists(path)) return path;
+        }
+
+        throw new System.IO.FileNotFoundException("Data/roles.json");
+    }
+
+    /// <summary>A stand-in for a species icon, so the type menu can be looked at without a ROM.</summary>
+    private static System.Windows.Media.Imaging.BitmapSource Placeholder(int seed)
+    {
+        var pixels = new byte[40 * 30 * 4];
+        for (var i = 0; i < 40 * 30; i++)
+        {
+            pixels[i * 4] = (byte)(60 + (seed * 37 % 150));
+            pixels[i * 4 + 1] = (byte)(80 + (i % 40) * 3);
+            pixels[i * 4 + 2] = (byte)(100 + (i / 40) * 4);
+            pixels[i * 4 + 3] = 255;
+        }
+
+        var bitmap = System.Windows.Media.Imaging.BitmapSource.Create(40, 30, 96, 96, PixelFormats.Bgra32, null, pixels, 40 * 4);
+        bitmap.Freeze();
+        return bitmap;
+    }
+
     // Los diálogos enlazan en los dos sentidos, y un tipo anónimo es de solo lectura.
     private static System.Dynamic.ExpandoObject Mutable(object values)
     {
@@ -160,6 +251,27 @@ public sealed class HomeViewTests
         png.Save(file);
     }
 
+    /// <summary>Measures a screen at a fixed size and, with PERMALOCKE_SNAP_DIR, saves it as a PNG.</summary>
+    private static void LoadDialogHost(FrameworkElement view, double width, double height)
+    {
+        var host = new Border { Child = view, Background = (Brush)Application.Current.Resources["PxBaseBrush"], Width = width, Height = height };
+        host.Measure(new Size(width, height));
+        host.Arrange(new Rect(0, 0, width, height));
+        host.UpdateLayout();
+
+        if (Environment.GetEnvironmentVariable("PERMALOCKE_SNAP_DIR") is not { Length: > 0 } dir)
+        {
+            return;
+        }
+
+        var bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap((int)width, (int)height, 96, 96, PixelFormats.Pbgra32);
+        bitmap.Render(host);
+        var png = new System.Windows.Media.Imaging.PngBitmapEncoder();
+        png.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bitmap));
+        using var file = System.IO.File.Create(System.IO.Path.Combine(dir, view.GetType().Name + ".png"));
+        png.Save(file);
+    }
+
     private static IEnumerable<DependencyObject> Descendants(DependencyObject parent)
     {
         for (var i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
@@ -169,4 +281,14 @@ public sealed class HomeViewTests
             foreach (var nested in Descendants(child)) yield return nested;
         }
     }
+}
+
+/// <summary>A command that does nothing, for a screen shown only to be looked at.</summary>
+internal sealed class NoCommand : System.Windows.Input.ICommand
+{
+    public event EventHandler? CanExecuteChanged { add { } remove { } }
+
+    public bool CanExecute(object? parameter) => true;
+
+    public void Execute(object? parameter) { }
 }

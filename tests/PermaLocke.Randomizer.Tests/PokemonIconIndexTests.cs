@@ -18,7 +18,7 @@ public class PokemonIconIndexTests
     {
         Assert.Equal(649, PokemonIconIndex.OrderedBlockSpecies);
         Assert.Equal(866, PokemonIconIndex.OrderedBlockIcons);
-        Assert.Equal(0, PokemonIconIndex.EggIcon);
+        Assert.Equal(1153, PokemonIconIndex.EggIcon);
         Assert.Equal(807, PokemonIconIndex.LastSpecies);
         Assert.Equal(1154, PokemonIconIndex.ContainerIcons);
     }

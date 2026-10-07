@@ -30,7 +30,7 @@ namespace PermaLocke.GameLink;
 public sealed class SaveBoxDelivery(
     PlayerSave save,
     string backupFolder,
-    ILogger<SaveBoxDelivery> logger) : IPokemonDelivery
+    ILogger<SaveBoxDelivery> logger) : IPokemonDelivery, IEggDelivery
 {
     /// <summary>The save file, or null when it cannot be found.</summary>
     public string? FindSave() => save.Find();
@@ -132,6 +132,109 @@ public sealed class SaveBoxDelivery(
                 "No se pudo escribir en la partida.");
         }
     }
+
+    // ======================================================== HUEVOS DE LA GUARDERÍA (§221)
+
+    public Task<IReadOnlyList<DeliveryResult>> DeliverEggsAsync(IReadOnlyList<GachaPull> eggs, CancellationToken ct = default) =>
+        Task.Run<IReadOnlyList<DeliveryResult>>(() =>
+        {
+            if (!CanDeliverNow(out var reason))
+            {
+                var outcome = IsGameLoaded() ? DeliveryOutcome.GameRunning : DeliveryOutcome.SaveNotFound;
+                return [.. eggs.Select(_ => new DeliveryResult(outcome, reason))];
+            }
+
+            return DeliverEggsTo(FindSave()!, eggs);
+        }, ct);
+
+    /// <summary>
+    /// Writes eggs into the first free box slots of one specific save file with <b>one</b> backup and <b>one</b> write, and
+    /// reads the file back: each one an egg, of that species and form, with its PID, in the slot it was put in. Never into the
+    /// party. Nothing is written when there is no room for the first one.
+    /// </summary>
+    /// <remarks>
+    /// One write for all of them because the backups are named by the second: a write per egg would try to name two backups
+    /// the same and refuse the second, and the player would be left with half an order.
+    /// </remarks>
+    public IReadOnlyList<DeliveryResult> DeliverEggsTo(string path, IReadOnlyList<GachaPull> eggs)
+    {
+        DeliveryResult[] Fail(DeliveryOutcome outcome, string message) =>
+            [.. eggs.Select(_ => new DeliveryResult(outcome, message))];
+
+        try
+        {
+            if (eggs.Count == 0)
+            {
+                return [];
+            }
+
+            if (!SaveUtil.TryGetSaveFile(path, out var loaded) || loaded is not SAV7USUM save)
+            {
+                return Fail(DeliveryOutcome.SaveUnreadable, "No se ha podido leer tu partida.");
+            }
+
+            var placed = new List<(PK7 Pokemon, int Box, int Slot, GachaPull Egg)>();
+
+            foreach (var egg in eggs)
+            {
+                var (box, slot) = FindFreeSlot(save);
+
+                if (box < 0)
+                {
+                    break;
+                }
+
+                var pokemon = PokemonBuilder.BuildEgg(
+                    new NewPokemon(egg.Species, 1, egg.Nature, egg.AbilityId, egg.Ivs, egg.IsShiny, egg.Form), save);
+
+                // Se escribe ya en la copia en memoria: el siguiente hueco libre no puede ser este.
+                save.SetBoxSlotAtIndex(pokemon, box, slot, PokemonBuilder.Handover);
+                placed.Add((pokemon, box, slot, egg));
+            }
+
+            if (placed.Count == 0)
+            {
+                return Fail(DeliveryOutcome.BoxesFull, "Todas las cajas del PC están llenas.");
+            }
+
+            Backup(path);
+            File.WriteAllBytes(path, save.Write().ToArray());
+
+            // Se relee del disco: no se da por entregado lo que no se ha vuelto a ver.
+            var reread = SaveUtil.TryGetSaveFile(path, out var again) ? again as SAV7USUM : null;
+            var results = new List<DeliveryResult>();
+
+            foreach (var (pokemon, box, slot, egg) in placed)
+            {
+                if (reread?.GetBoxSlotAtIndex(box, slot) is { IsEgg: true } found
+                    && found.Species == egg.Species && found.Form == egg.Form && found.PID == pokemon.PID)
+                {
+                    logger.LogInformation("Huevo de {Species} entregado en la caja {Box}, hueco {Slot} de {Path}",
+                        egg.SpeciesName, box + 1, slot + 1, path);
+
+                    results.Add(new DeliveryResult(DeliveryOutcome.Delivered,
+                        $"Huevo de {egg.DisplayName} en la caja {box + 1}, hueco {slot + 1}.", box + 1, slot + 1, pokemon.PID));
+                }
+                else
+                {
+                    results.Add(new DeliveryResult(DeliveryOutcome.Failed, "No se ha podido guardar el cambio. Vuelve a intentarlo."));
+                }
+            }
+
+            // Los que no cupieron.
+            results.AddRange(eggs.Skip(placed.Count)
+                .Select(_ => new DeliveryResult(DeliveryOutcome.BoxesFull, "Todas las cajas del PC están llenas.")));
+
+            return results;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Falló la entrega de {Count} huevos en la partida", eggs.Count);
+
+            return Fail(DeliveryOutcome.Failed, "No se pudo escribir en la partida.");
+        }
+    }
+
 
     /// <summary>Most Pokémon a party holds.</summary>
     private const int PartySlots = 6;

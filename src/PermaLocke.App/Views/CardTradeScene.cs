@@ -6,7 +6,7 @@ namespace PermaLocke.App.Views;
 /// <summary>The moments of the card trade, in seconds from the button (1.0.4.7).</summary>
 public static class CardTradeTimeline
 {
-    /// <summary>The two cards fly in from below and settle either side of the circle.</summary>
+    /// <summary>The card flies in from below and settles on the left of the circle.</summary>
     public const double Arrive = 0.9;
 
     /// <summary>The trade circle draws itself under them.</summary>
@@ -35,7 +35,7 @@ public static class CardTradeTimeline
 }
 
 /// <summary>
-/// The card trade of the ALBUM (1.0.4.7): two cards go into the circle and one comes out. Pixel art at the screen's own
+/// The card trade of the ALBUM (1.0.4.7): one card goes into the circle and another comes out (2026-10-07; before, two went in). Pixel art at the screen's own
 /// resolution, drawn a frame at a time from a moment, so it is tested without a window.
 /// </summary>
 /// <remarks>
@@ -60,7 +60,6 @@ public sealed class CardTradeScene
     ];
 
     private readonly HandScene _left;
-    private readonly HandScene _right;
     private readonly HandScene _result;
     private readonly (double X, double Y, double Vx, double Vy, int Colour)[] _shards;
 
@@ -71,7 +70,6 @@ public sealed class CardTradeScene
         Pixels = new byte[Width * Height * 4];
         Cell = Math.Max(2, (int)Math.Round(Height / 200.0));
         _left = new HandScene(Width, Height);
-        _right = new HandScene(Width, Height);
         _result = new HandScene(Width, Height);
         Peak = Math.Max(2, (int)Math.Floor(Height * 0.46 / TcgCardArt.FullHeight));
 
@@ -105,7 +103,7 @@ public sealed class CardTradeScene
 
     /// <summary>Draws the moment <paramref name="t"/> seconds after INTERCAMBIAR.</summary>
     /// <param name="rarity">The rarity of the card that comes out, 0 to 4: the colour of the orb.</param>
-    public void Render(TcgRender first, TcgRender second, TcgRender back, TcgRender result, int rarity, bool shiny,
+    public void Render(TcgRender first, TcgRender back, TcgRender result, int rarity, bool shiny,
         uint seed, double t)
     {
         var tier = Tiers[Math.Clamp(rarity, 0, Tiers.Length - 1)];
@@ -116,9 +114,7 @@ public sealed class CardTradeScene
         {
             Trails(t);
             _left.Render(first, back, Pose(t, -1), t, seed, surroundings: false);
-            _right.Render(second, back, Pose(t, 1), t + 0.37, seed ^ 0x5A5A, surroundings: false);
             Over(_left.Pixels, _left.Dirty);
-            Over(_right.Pixels, _right.Dirty);
         }
 
         if (t >= CardTradeTimeline.Clash - 0.05)
@@ -248,7 +244,7 @@ public sealed class CardTradeScene
 
     // ===================================================================================================== CARDS
 
-    /// <summary>Where each of the two cards is: <paramref name="side"/> is -1 for the left one and 1 for the right.</summary>
+    /// <summary>Where the card is. <paramref name="side"/> is -1: it comes in on the left, and from there it spirals into the centre.</summary>
     private HandPose Pose(double t, int side)
     {
         var restX = CentreX + (side * Width * 0.22);
@@ -284,7 +280,7 @@ public sealed class CardTradeScene
             CentreX + (Math.Cos(angle) * radius), restY + (Math.Sin(angle) * radius * 0.35), 0.8);
     }
 
-    /// <summary>The trails behind the two cards while they orbit: blocks where they have been, fading.</summary>
+    /// <summary>The trail behind the card while it orbits: blocks where it has been, fading.</summary>
     private void Trails(double t)
     {
         if (t < CardTradeTimeline.Circle + 0.1)
@@ -292,17 +288,14 @@ public sealed class CardTradeScene
             return;
         }
 
-        for (var side = -1; side <= 1; side += 2)
+        for (var k = 1; k <= 14; k++)
         {
-            for (var k = 1; k <= 14; k++)
-            {
-                var back = t - (k * 0.018);
-                if (back < CardTradeTimeline.Circle) break;
-                var pose = Pose(back, side);
-                var colour = k < 4 ? RuneHot : k < 9 ? Rune : RuneDim;
-                Block(pose.CentreX, pose.CentreY, colour);
-                if (k % 3 == 0) Block(pose.CentreX + Cell, pose.CentreY - Cell, colour);
-            }
+            var back = t - (k * 0.018);
+            if (back < CardTradeTimeline.Circle) break;
+            var pose = Pose(back, -1);
+            var colour = k < 4 ? RuneHot : k < 9 ? Rune : RuneDim;
+            Block(pose.CentreX, pose.CentreY, colour);
+            if (k % 3 == 0) Block(pose.CentreX + Cell, pose.CentreY - Cell, colour);
         }
     }
 

@@ -24,7 +24,8 @@ public sealed class GachaService(
     IPointsService points,
     IEventStore events,
     IPokemonRepository pokemon,
-    IClock clock)
+    IClock clock,
+    MonotypeRule? monotype = null)
 {
     /// <summary>Salt for the gacha random stream, so other modules do not shift it.</summary>
     private const string GachaSalt = "gacha";
@@ -34,6 +35,13 @@ public sealed class GachaService(
     /// <summary>Tiers sorted by their ceiling, which is what turns them into ranges.</summary>
     private IReadOnlyList<GachaTier> Ordered =>
         _ordered ??= [.. catalog.Tiers.OrderBy(tier => tier.MaxBaseStatTotal)];
+
+    /// <summary>The type a MONOTYPE run is restricted to (§220), or null for any other role. For screens that list what can come out.</summary>
+    public int? MonoTypeOf(Run run) => monotype?.TypeOf(run);
+
+    /// <summary>Whether a species can come out of a roll of a run restricted to <paramref name="monoType"/> (always, when there is none).</summary>
+    public bool Admits(int? monoType, int species) =>
+        monoType is not { } type || monotype is null || monotype.SpeciesOf(type).Contains(species);
 
     public IReadOnlyList<GachaBanner> Banners => catalog.Banners;
 
@@ -60,7 +68,10 @@ public sealed class GachaService(
     /// tier's ceiling, so every family belongs to exactly one tier.
     /// </para>
     /// </remarks>
-    public IReadOnlyList<EvolutionLine> LinesOf(GachaTier tier, bool legendary)
+    /// <param name="monoType">
+    /// The type of a MONOTYPE run (§220): only the families with at least one species of it. Null leaves every family in.
+    /// </param>
+    public IReadOnlyList<EvolutionLine> LinesOf(GachaTier tier, bool legendary, int? monoType = null)
     {
         // Todos los legendarios, sin recortar por banda -- pero SOLO en un tier que de verdad los
         // reparta. Sin esa condicion la lista de «quien puede salir» los enseñaba en los cinco,
@@ -68,17 +79,29 @@ public sealed class GachaService(
         // probabilidad a cero decia que podia dar un Mewtwo y no podia dar ninguno.
         if (legendary)
         {
-            return tier.LegendaryChance > 0 ? LegendaryLines : [];
+            return tier.LegendaryChance > 0 ? OfType(LegendaryLines, monoType) : [];
         }
 
         var index = Ordered.ToList().FindIndex(t => t.Id == tier.Id);
         var floor = index > 0 ? Ordered[index - 1].MaxBaseStatTotal : 0;
 
-        return [.. speciesStats.Lines.Where(line =>
+        return OfType([.. speciesStats.Lines.Where(line =>
         {
             var end = EndOf(line);
             return end > floor && end <= tier.MaxBaseStatTotal && !IsLegendary(line);
-        })];
+        })], monoType);
+    }
+
+    /// <summary>The families that have a species of the type, or all of them when there is no type.</summary>
+    private IReadOnlyList<EvolutionLine> OfType(IReadOnlyList<EvolutionLine> lines, int? monoType)
+    {
+        if (monoType is not { } type || monotype is null)
+        {
+            return lines;
+        }
+
+        var admitted = monotype.SpeciesOf(type);
+        return [.. lines.Where(line => line.AllSpecies.Any(admitted.Contains))];
     }
 
     /// <summary>
@@ -89,14 +112,16 @@ public sealed class GachaService(
     /// reachable. The screen that lists this is answering «what can come out of here», and the
     /// honest answer stopped being one species per family the moment the stage became a roll.
     /// </remarks>
-    public IReadOnlyList<SpeciesStats> PoolOf(GachaTier tier, bool legendary)
+    public IReadOnlyList<SpeciesStats> PoolOf(GachaTier tier, bool legendary, int? monoType = null)
     {
         var byId = ById;
+        var admitted = monoType is { } type ? monotype?.SpeciesOf(type) : null;
 
-        return [.. LinesOf(tier, legendary)
+        return [.. LinesOf(tier, legendary, monoType)
             .SelectMany(line => line.AllSpecies)
             .Distinct()
             .Where(byId.ContainsKey)
+            .Where(id => admitted is null || admitted.Contains(id))
             .Select(id => byId[id])];
     }
 
@@ -243,10 +268,14 @@ public sealed class GachaService(
     /// would give a different Pokémon, and an audit would call an honest roll a lie. It is the one
     /// input to a pull that is not derivable from the seed.
     /// </remarks>
-    public GachaPull? Preview(GachaBanner banner, ulong runSeed, int number, int cleared = 0)
+    /// <param name="monoType">
+    /// The type of a MONOTYPE run (§220), the other input that is not derivable from the seed: the roll only lands on
+    /// species that have it. Null for every other role, and then the roll is exactly what it always was.
+    /// </param>
+    public GachaPull? Preview(GachaBanner banner, ulong runSeed, int number, int cleared = 0, int? monoType = null)
     {
         var source = new SeededRandomSource(runSeed).Derive(GachaSalt).Derive($"roll-{number}");
-        return Generate(banner, source, number, cleared);
+        return Generate(banner, source, number, cleared, monoType);
     }
 
     /// <param name="free">
@@ -286,12 +315,21 @@ public sealed class GachaService(
                 Error: $"Te faltan {banner.Cost - balance} puntos: «{banner.Name}» cuesta {banner.Cost}.");
         }
 
+        // MONOTYPE (§220): con un Pokémon vivo que no es del tipo no se tira, ni siquiera una tirada gratis.
+        var monoType = monotype?.TypeOf(run);
+
+        if (monoType is { } type && monotype is not null
+            && await monotype.InvalidAsync(run, type, ct).ConfigureAwait(false) is { Count: > 0 } invalid)
+        {
+            return new GachaRollResult(false, balance, Error: monotype.BlockedMessage(run, invalid));
+        }
+
         // Se genera antes de cobrar. La tirada es pura y no toca nada, así que si el cobro
         // fallara no habría nada que deshacer ni el jugador perdería puntos por una tirada que
         // no llegó a existir.
         var number = await CountRollsAsync(run.Id, ct).ConfigureAwait(false);
 
-        if (Preview(banner, run.Seed, number, cleared) is not { } pull)
+        if (Preview(banner, run.Seed, number, cleared, monoType) is not { } pull)
         {
             return new GachaRollResult(false, balance,
                 Error: $"«{banner.Name}» no está disponible.");
@@ -329,13 +367,13 @@ public sealed class GachaService(
         };
 
         await pokemon.SaveAsync(entry, ct).ConfigureAwait(false);
-        await RecordAsync(run, banner, pull, entry, free, cleared, ct).ConfigureAwait(false);
+        await RecordAsync(run, banner, pull, entry, free, cleared, monoType, ct).ConfigureAwait(false);
 
         return new GachaRollResult(true, spent.NewBalance, pull, entry);
     }
 
     private Task RecordAsync(Run run, GachaBanner banner, GachaPull pull, PokemonEntry entry,
-        bool free, int cleared, CancellationToken ct) =>
+        bool free, int cleared, int? monoType, CancellationToken ct) =>
         events.AppendAsync(new GameEvent
         {
             Id = Guid.NewGuid(),
@@ -349,7 +387,7 @@ public sealed class GachaService(
                           + (pull.IsShiny ? " shiny" : string.Empty),
             PokemonId = entry.Id,
             Seed = pull.Seed,
-            Data = new Dictionary<string, string>
+            Data = WithMonotype(new Dictionary<string, string>
             {
                 ["banner"] = banner.Id,
 
@@ -373,13 +411,70 @@ public sealed class GachaService(
                 ["ivs"] = string.Join('/', pull.Ivs),
                 ["naturaleza"] = pull.NatureName,
                 ["habilidad"] = pull.Ability
-            }
+            }, monoType)
         }, ct);
+
+    /// <summary>
+    /// The species of the type in the rung a roll landed on, or in the nearest rung that has any: first the ones before
+    /// it, then the ones after. Empty only when the family has none, which <see cref="LinesOf"/> already rules out.
+    /// </summary>
+    private static IReadOnlyList<int> NearestRungOfType(EvolutionLine line, int stage, IReadOnlySet<int> admitted)
+    {
+        var start = Math.Clamp(stage, 0, line.Stages.Count - 1);
+
+        for (var rungIndex = start; rungIndex >= 0; rungIndex--)
+        {
+            if (line.Stages[rungIndex].Where(admitted.Contains).ToList() is { Count: > 0 } found)
+            {
+                return found;
+            }
+        }
+
+        for (var rungIndex = start + 1; rungIndex < line.Stages.Count; rungIndex++)
+        {
+            if (line.Stages[rungIndex].Where(admitted.Contains).ToList() is { Count: > 0 } found)
+            {
+                return found;
+            }
+        }
+
+        return line.StageAt(stage);
+    }
+
+    /// <summary>The families of the type in the tier nearest to <paramref name="tier"/> that has any: below first, then above.</summary>
+    private IReadOnlyList<EvolutionLine> NearestLinesOfType(GachaTier tier, int? monoType)
+    {
+        var index = Ordered.ToList().FindIndex(t => t.Id == tier.Id);
+
+        for (var distance = 1; distance < Ordered.Count; distance++)
+        {
+            foreach (var other in new[] { index - distance, index + distance })
+            {
+                if (other >= 0 && other < Ordered.Count && LinesOf(Ordered[other], false, monoType) is { Count: > 0 } found)
+                {
+                    return found;
+                }
+            }
+        }
+
+        return [];
+    }
+
+    /// <summary>The event's data, plus the type of a MONOTYPE run when there is one (§220). Other runs' events keep their shape.</summary>
+    private static Dictionary<string, string> WithMonotype(Dictionary<string, string> data, int? monoType)
+    {
+        if (monoType is { } type)
+        {
+            data["monotipo"] = type.ToString();
+        }
+
+        return data;
+    }
 
     /// <summary>
     /// The roll itself. Pure: same source, same result, on any machine and any build.
     /// </summary>
-    private GachaPull? Generate(GachaBanner banner, IRandomSource source, int number, int cleared)
+    private GachaPull? Generate(GachaBanner banner, IRandomSource source, int number, int cleared, int? monoType = null)
     {
         if (PickTier(banner, source) is not { } tier)
         {
@@ -387,7 +482,7 @@ public sealed class GachaService(
         }
 
         var wantLegendary = source.Chance(tier.LegendaryChance);
-        var lines = LinesOf(tier, wantLegendary);
+        var lines = LinesOf(tier, wantLegendary, monoType);
 
         // Si no hay legendarios se cae a los normales, pero NUNCA al revés: un tier sin candidatos
         // normales es un fallo de configuración, y entregar un legendario para taparlo repartiría
@@ -395,7 +490,14 @@ public sealed class GachaService(
         if (lines.Count == 0 && wantLegendary)
         {
             wantLegendary = false;
-            lines = LinesOf(tier, false);
+            lines = LinesOf(tier, false, monoType);
+        }
+
+        // MONOTYPE (§220): un tier puede no tener ninguna familia del tipo. Se baja al tier más cercano que sí la tenga
+        // (primero el de debajo, luego el de arriba) antes que dejar al jugador sin tirada. No gasta nada del azar.
+        if (lines.Count == 0 && monoType is not null)
+        {
+            lines = NearestLinesOfType(tier, monoType);
         }
 
         if (lines.Count == 0)
@@ -414,6 +516,14 @@ public sealed class GachaService(
         var stage = roll < odds.First ? 0 : roll < odds.First + odds.Second ? 1 : 2;
 
         var rung = line.StageAt(stage);
+
+        // MONOTYPE (§220): de la etapa sorteada solo valen las especies del tipo; si ninguna lo es, la etapa más cercana que
+        // tenga alguna (primero hacia atrás). El dado se tira siempre una vez, como antes.
+        if (monoType is { } type && monotype is not null)
+        {
+            rung = NearestRungOfType(line, stage, monotype.SpeciesOf(type));
+        }
+
         var chosen = ById[rung[source.Next(rung.Count)]];
 
         var level = tier.MaxLevel > tier.MinLevel
@@ -433,6 +543,11 @@ public sealed class GachaService(
 
         // La forma regional, de una fuente derivada: el resto de la tirada sale igual que antes (§139).
         var (form, formName) = FormDraw.Roll(source, chosen);
+
+        if (monoType is { } formType && monotype is not null)
+        {
+            (form, formName) = monotype.FormFor(formType, chosen, form, formName);
+        }
 
         return new GachaPull(
             banner.Id,

@@ -36,9 +36,12 @@ public sealed class WildEncounterRandomizer(RandomizerOptions options)
     {
         var banned = options.WildBannedSpecies.ToHashSet();
 
-        return banned.Count == 0
+        var allowed = banned.Count == 0
             ? pool
             : pool.Where(species => !banned.Contains(species), "no prohibida en salvajes");
+
+        // Un rol MONOTYPE (§223): todo lo que sale en el suelo es de su tipo.
+        return options.MonoType is { } type ? allowed.OfType(type) : allowed;
     }
 
     public WildEncounterResult Apply(IRandomSource random, SpeciesPool pool,

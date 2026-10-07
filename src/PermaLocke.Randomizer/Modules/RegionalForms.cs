@@ -33,7 +33,40 @@ public sealed class RegionalForms
 {
     private readonly Dictionary<int, int[]> _forms;
 
+    /// <summary>Species whose ordinary form is out of a restricted pool: only a regional form may come out.</summary>
+    private readonly HashSet<int> _regionalOnly = [];
+
     private RegionalForms(Dictionary<int, int[]> forms) => _forms = forms;
+
+    /// <summary>
+    /// The same forms, kept only where the form passes the test. A species whose ordinary form fails it comes out in a
+    /// regional one every time (a Galarian Ponyta in a PSÍQUICO world).
+    /// </summary>
+    public RegionalForms Restrict(Func<int, int, bool> keep)
+    {
+        var forms = new Dictionary<int, int[]>();
+        var restricted = new RegionalForms(forms);
+
+        foreach (var (species, all) in _forms)
+        {
+            int[] valid = [.. all.Where(form => keep(species, form))];
+            var ordinary = keep(species, 0);
+
+            if (valid.Length == 0)
+            {
+                continue;
+            }
+
+            forms[species] = valid;
+
+            if (!ordinary)
+            {
+                restricted._regionalOnly.Add(species);
+            }
+        }
+
+        return restricted;
+    }
 
     /// <summary>No regional forms at all: everything comes out in its ordinary form, as before.</summary>
     public static RegionalForms None { get; } = new([]);
@@ -81,6 +114,11 @@ public sealed class RegionalForms
         if (!_forms.TryGetValue(species, out var forms))
         {
             return 0;
+        }
+
+        if (_regionalOnly.Contains(species))
+        {
+            return forms[source.Next(forms.Length)];
         }
 
         var pick = source.Next(forms.Length + 1);

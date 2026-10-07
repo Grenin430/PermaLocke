@@ -32,6 +32,14 @@ namespace PermaLocke.Core.Domain;
 /// consequences that no multiplier can express. Every other role leaves it false.
 /// </para>
 /// </param>
+/// <param name="MonoType">
+/// The type id (PKHeX numbering: 0 Normal, 6 Bug, 9 Fire, 10 Water, 11 Grass, 13 Psychic...) of a MONOTYPE role, or null.
+/// <para>
+/// Such a role may only own Pokémon that have that type, one of two or the only one; the gacha and the wonder trade only give
+/// them, and the gacha refuses to roll while the run owns one that is not (§220).
+/// </para>
+/// </param>
+/// <param name="IconSpecies">The species whose icon stands for a MONOTYPE role on the type menu. Only for decoration.</param>
 public sealed record Role(
     string Id,
     string Name,
@@ -42,8 +50,22 @@ public sealed record Role(
     int EnemyLevelPercent,
     int PlayerCapPercent,
     int ExtraTrainerPokemon,
-    bool Roulette = false)
+    bool Roulette = false,
+    int? MonoType = null,
+    int? IconSpecies = null)
 {
+    /// <summary>True when the role only lets the player own Pokémon of one type (§220).</summary>
+    public bool IsMonotype => MonoType is not null;
+
+    private static readonly string[] TypeNames =
+    [
+        "Normal", "Lucha", "Volador", "Veneno", "Tierra", "Roca", "Bicho", "Fantasma", "Acero",
+        "Fuego", "Agua", "Planta", "Eléctrico", "Psíquico", "Hielo", "Dragón", "Siniestro", "Hada"
+    ];
+
+    /// <summary>The restricted type in Spanish for a screen (the game's own order), or empty when there is none.</summary>
+    public string MonoTypeName => MonoType is { } type && type >= 0 && type < TypeNames.Length ? TypeNames[type] : string.Empty;
+
     /// <summary>What a reward of <paramref name="amount"/> is really worth in this role.</summary>
     /// <remarks>
     /// Rounded away from zero so a half-point reward is worth something: with the halving role, a

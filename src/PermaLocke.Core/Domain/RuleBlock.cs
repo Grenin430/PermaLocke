@@ -72,4 +72,12 @@ public static class RuleBlock
     public const int DupesSpeciesLimit = DupesBytes * 8;
 
     public static uint Dupes => Address + DupesOffset;
+
+    /// <summary>
+    /// The Incubadora Turbo (2026-10-07): a byte, 1 while it is on. The game writes it, from the bag (<c>Bag.cro</c>), and reads it in the
+    /// egg step count; PermaLocke never touches it. A fresh game reads 0, so the cartridge hatches eggs as it always did.
+    /// </summary>
+    public const uint EggTurboOffset = 0x10;
+
+    public static uint EggTurbo => Address + EggTurboOffset;
 }

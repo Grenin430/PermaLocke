@@ -64,6 +64,8 @@ public sealed class BagLayoutTests
     [InlineData(514, InventoryType.Items)]   // Lucarionite Z, de la expansión (id reusado)
     [InlineData(961, InventoryType.Items)]   // megapiedra nueva de la expansión
     [InlineData(PermaLocke.Core.Domain.SuperCandy.ItemId, InventoryType.Medicine)]   // el SuperCarameloraro, junto al Caramelo Raro
+    [InlineData(PermaLocke.Core.Domain.InfiniteRepel.ItemId, InventoryType.KeyItems)] // el Repelente Infinito, objeto clave
+    [InlineData(PermaLocke.Core.Domain.EggTurbo.ItemId, InventoryType.KeyItems)] // la Incubadora Turbo, objeto clave
     [InlineData(1017, InventoryType.Items)]  // Hawluchanita, de la expansión
     public void An_item_is_routed_to_its_own_pocket(int itemId, InventoryType expected)
     {

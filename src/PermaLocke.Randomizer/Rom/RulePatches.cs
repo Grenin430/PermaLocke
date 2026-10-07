@@ -374,6 +374,10 @@ public static partial class RulePatches
         // El SuperCarameloraro no es una regla: va siempre, con las reglas puestas o no.
         var superIcon = InstallSuperCandy(Path.Combine(modFolder, "romfs"), out var superProblem);
         if (superProblem is not null) said.Add(superProblem);
+        var repelIcon = InstallInfiniteRepel(Path.Combine(modFolder, "romfs"), out var repelProblem);
+        if (repelProblem is not null) said.Add(repelProblem);
+        var eggIcon = InstallEggTurbo(Path.Combine(modFolder, "romfs"), out var eggProblem);
+        if (eggProblem is not null) said.Add(eggProblem);
 
         if (File.Exists(code))
         {
@@ -388,12 +392,18 @@ public static partial class RulePatches
                 // Lo nuestro se quita siempre antes de decidir: si el code.bin ha cambiado, unos registros viejos se
                 // aplicarían a un código que no es el que se midió.
                 var hadOurs = existing.Any(r => CodeOffsets.Contains(r.Offset));
-                var rest = existing.Where(r => !CodeOffsets.Contains(r.Offset) && !SuperCandyOffsets.Contains(r.Offset)).ToList();
+                var rest = existing.Where(r => !CodeOffsets.Contains(r.Offset) && !SuperCandyOffsets.Contains(r.Offset)
+                                                   && !InfiniteRepelOffsets.Contains(r.Offset)
+                                                   && !EggTurboOffsets.Contains(r.Offset)).ToList();
                 var bytes = File.ReadAllBytes(code);
                 var ours = on ? CodeRecords(bytes) : null;
                 var super = superIcon is { } icon ? SuperCandyRecords(bytes, icon) : null;
                 var final = ours is null ? rest : Ips.Merge(rest, ours);
                 if (super is not null) final = Ips.Merge(final, super);
+                var repel = repelIcon is { } repelAt ? InfiniteRepelRecords(bytes, repelAt) : null;
+                if (repel is not null) final = Ips.Merge(final, repel);
+                var egg = eggIcon is { } eggAt ? EggTurboRecords(bytes, eggAt) : null;
+                if (egg is not null) final = Ips.Merge(final, egg);
 
                 if (final.Count > 0) File.WriteAllBytes(ips, Ips.Write(final));
                 else if (File.Exists(ips)) File.Delete(ips);
@@ -404,7 +414,23 @@ public static partial class RulePatches
 
                 if (super is not null) said.Add("code.bin: SuperCarameloraro puesto (code.ips)");
                 else if (superIcon is not null) said.Add("code.bin no es el que se conoce: el SuperCarameloraro sube un solo nivel");
+
+                if (repel is not null) said.Add("code.bin: Repelente Infinito puesto (code.ips)");
+                else if (repelIcon is not null) said.Add("code.bin no es el que se conoce: el Repelente Infinito se gasta al primer paso");
+
+                if (egg is not null) said.Add("code.bin: Incubadora Turbo puesta (code.ips)");
+                else if (eggIcon is not null) said.Add("code.bin no es el que se conoce: la Incubadora Turbo no acelera los huevos");
             }
+        }
+
+        var bag = Path.Combine(modFolder, "romfs", BagCro);
+        if (repelIcon is not null && File.Exists(bag))
+        {
+            var bytes = File.ReadAllBytes(bag);
+            var state = PatchBag(bytes);
+            if (state == BattleState.Patched) File.WriteAllBytes(bag, bytes);
+            if (state == BattleState.Unknown) said.Add("Bag.cro no es el que se conoce: el Repelente Infinito no se puede usar");
+            else if (state == BattleState.Patched) said.Add("Bag.cro: Repelente Infinito puesto");
         }
 
         if (SpentZoneText(Path.Combine(modFolder, "romfs", "a", "0", "3", "6"), on) is { } text) said.Add(text);

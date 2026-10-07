@@ -27,22 +27,67 @@ public sealed class WonderTradeService(
     ITypeLookup types,
     IEventStore events,
     IPokemonRepository pokemon,
-    IClock clock)
+    IClock clock,
+    MonotypeRule? monotype = null)
 {
     /// <summary>Salt for this random stream, so other modules do not shift it.</summary>
     private const string TradeSalt = "wondertrade";
 
     public WonderTradeWindow Window => catalog.Window;
 
+    /// <summary>The type a MONOTYPE run is restricted to (§220), or null for any other role. For screens that say what can come back.</summary>
+    public int? MonoTypeOf(Run run) => monotype?.TypeOf(run);
+
     /// <summary>What a Pokémon with this base stat total could come back as.</summary>
-    public IReadOnlyList<SpeciesStats> PoolFor(int baseStatTotal)
+    /// <param name="monoType">The type of a MONOTYPE run (§220): only species that have it. Null for every other role.</param>
+    public IReadOnlyList<SpeciesStats> PoolFor(int baseStatTotal, int? monoType = null)
     {
-        var (min, max) = catalog.Window.Band(baseStatTotal);
+        var (min, max) = BandFor(baseStatTotal, monoType);
+        return Candidates(min, max, monoType);
+    }
+
+    private List<SpeciesStats> Candidates(int min, int max, int? monoType)
+    {
+        var admitted = monoType is { } type ? monotype?.SpeciesOf(type) : null;
 
         return [.. speciesStats.All.Where(s =>
             s.BaseStatTotal >= min
             && s.BaseStatTotal <= max
-            && (catalog.Window.AllowLegendaries || !s.Legendary))];
+            && (catalog.Window.AllowLegendaries || !s.Legendary)
+            && (admitted is null || admitted.Contains(s.Id)))];
+    }
+
+    /// <summary>
+    /// The band a total trades into. Wide as the file says, except in a MONOTYPE run (§220) when nothing of the type falls in
+    /// it: then the band opens two points of percentage at a time, both ways, until something does (as far as ±100 %).
+    /// </summary>
+    /// <remarks>
+    /// A type has a fraction of the species, so a narrow band can be empty (a Poison Pokémon at 700). Refusing the trade
+    /// for that would turn the role into a trap; opening the band keeps the trade possible and as close as it can get.
+    /// Deterministic in the total and the type, so the trade still recomputes.
+    /// </remarks>
+    public (int Min, int Max) BandFor(int baseStatTotal, int? monoType)
+    {
+        var window = catalog.Window;
+        var (min, max) = window.Band(baseStatTotal);
+
+        if (monoType is null || monotype is null || Candidates(min, max, monoType).Count > 0)
+        {
+            return (min, max);
+        }
+
+        for (var extra = 0.02; extra <= 1.0001; extra += 0.02)
+        {
+            min = (int)Math.Floor(baseStatTotal * (1 - window.Below - extra));
+            max = (int)Math.Ceiling(baseStatTotal * (1 + window.Above + extra));
+
+            if (Candidates(min, max, monoType).Count > 0)
+            {
+                break;
+            }
+        }
+
+        return (min, max);
     }
 
     /// <summary>Base stat total of a species, or zero when the catalogue does not know it.</summary>
@@ -60,10 +105,10 @@ public sealed class WonderTradeService(
     /// Recomputes a trade from the run seed without touching anything, which is what makes the
     /// result auditable rather than merely recorded.
     /// </summary>
-    public WonderTradeOffer? Preview(WonderTradeGift gift, ulong runSeed, int number)
+    public WonderTradeOffer? Preview(WonderTradeGift gift, ulong runSeed, int number, int? monoType = null)
     {
         var source = new SeededRandomSource(runSeed).Derive(TradeSalt).Derive($"trade-{number}");
-        return Generate(gift, source, number);
+        return Generate(gift, source, number, monoType);
     }
 
     /// <param name="free">
@@ -90,7 +135,9 @@ public sealed class WonderTradeService(
 
         var number = await CountTradesAsync(run.Id, ct).ConfigureAwait(false);
 
-        if (Preview(gift, run.Seed, number) is not { } offer)
+        var monoType = monotype?.TypeOf(run);
+
+        if (Preview(gift, run.Seed, number, monoType) is not { } offer)
         {
             var (min, max) = catalog.Window.Band(BaseStatTotalOf(gift.Species));
             return new WonderTradeResult(false,
@@ -115,7 +162,7 @@ public sealed class WonderTradeService(
         };
 
         await pokemon.SaveAsync(entry, ct).ConfigureAwait(false);
-        await RecordAsync(run, offer, entry, free, ct).ConfigureAwait(false);
+        await RecordAsync(run, offer, entry, free, ct, monoType).ConfigureAwait(false);
 
         return new WonderTradeResult(true, offer, entry);
     }
@@ -211,84 +258,8 @@ public sealed class WonderTradeService(
         return updated;
     }
 
-    // ============================================================ DOS POR UNO (1.0.4.7)
-
-    /// <summary>
-    /// The band of a two-for-one trade: centred on the <b>average</b> base stat total of the two cards handed over, so
-    /// two weak Pokémon bring back one of their strength, not a stronger one. The price of the trade is the second card.
-    /// </summary>
-    public int AverageTotalOf(WonderTradeGift first, WonderTradeGift second) =>
-        (int)Math.Round((BaseStatTotalOf(first.Species) + BaseStatTotalOf(second.Species)) / 2.0);
-
-    /// <summary>Recomputes a two-for-one trade from the run seed, touching nothing.</summary>
-    public WonderTradeOffer? PreviewTwo(WonderTradeGift first, WonderTradeGift second, ulong runSeed, int number)
-    {
-        var source = new SeededRandomSource(runSeed).Derive(TradeSalt).Derive($"trade-{number}");
-        return Generate(Combined(first, second), source, number, AverageTotalOf(first, second));
-    }
-
-    /// <summary>
-    /// The album's card trade (1.0.4.7): two Pokémon go, one comes back, within the band of their average total and at
-    /// the higher of their two levels. Registers the arrival and writes the event; the caller writes the save and then
-    /// marks both as traded.
-    /// </summary>
-    public async Task<WonderTradeResult> TradeTwoAsync(Run run, WonderTradeGift first, WonderTradeGift second, bool free = false,
-        CancellationToken ct = default)
-    {
-        ArgumentNullException.ThrowIfNull(run);
-
-        if (first.Pid != 0 && first.Pid == second.Pid)
-        {
-            return new WonderTradeResult(false, Error: "Elige dos cartas distintas.");
-        }
-
-        foreach (var gift in new[] { first, second })
-        {
-            if (await IsFallenAsync(run.Id, gift.Pid, ct).ConfigureAwait(false))
-            {
-                return new WonderTradeResult(false, Error: FallenMessage(gift.Name));
-            }
-
-            if (BaseStatTotalOf(gift.Species) == 0)
-            {
-                return new WonderTradeResult(false, Error: $"{gift.Name} no se puede intercambiar.");
-            }
-        }
-
-        var number = await CountTradesAsync(run.Id, ct).ConfigureAwait(false);
-
-        if (PreviewTwo(first, second, run.Seed, number) is not { } offer)
-        {
-            return new WonderTradeResult(false, Error: $"No hay nada que ofrecer por {first.Name} y {second.Name}.");
-        }
-
-        var entry = new PokemonEntry
-        {
-            Id = Guid.NewGuid(),
-            RunId = run.Id,
-            Species = offer.Species,
-            SpeciesName = offer.DisplayName,
-            Level = offer.Level,
-            IsShiny = offer.IsShiny,
-            Origin = PokemonOrigin.WonderTrade,
-            EncounterType = EncounterType.Trade,
-            ObtainedAt = clock.Now,
-            ConsumedZoneEncounter = false,
-            Form = offer.Form
-        };
-
-        await pokemon.SaveAsync(entry, ct).ConfigureAwait(false);
-        await RecordAsync(run, offer, entry, free, ct, second).ConfigureAwait(false);
-
-        return new WonderTradeResult(true, offer, entry);
-    }
-
-    /// <summary>The two cards as one gift: the first's species and box, both names, the higher level.</summary>
-    private static WonderTradeGift Combined(WonderTradeGift first, WonderTradeGift second) =>
-        first with { Name = $"{first.Name} y {second.Name}", Level = Math.Max(first.Level, second.Level) };
-
     private Task RecordAsync(Run run, WonderTradeOffer offer, PokemonEntry entry, bool free,
-        CancellationToken ct, WonderTradeGift? second = null) =>
+        CancellationToken ct, int? monoType = null) =>
         events.AppendAsync(new GameEvent
         {
             Id = Guid.NewGuid(),
@@ -297,13 +268,13 @@ public sealed class WonderTradeService(
             Type = GameEventType.WonderTrade,
             Source = EventSource.Player,
             Actor = run.PlayerName,
-            Description = $"{(second is null ? "Wonder trade" : "Intercambio de cartas")}: {offer.GivenName} ({offer.GivenBaseStatTotal}) "
+            Description = $"Wonder trade: {offer.GivenName} ({offer.GivenBaseStatTotal}) "
                           + $"por {offer.DisplayName} ({offer.BaseStatTotal})"
                           + (offer.Legendary ? " legendario" : string.Empty)
                           + (offer.IsShiny ? " shiny" : string.Empty),
             PokemonId = entry.Id,
             Seed = offer.Seed,
-            Data = new Dictionary<string, string>
+            Data = WithMonotype(new Dictionary<string, string>
             {
                 ["intercambio"] = offer.Number.ToString(),
                 ["gratis"] = free.ToString(),
@@ -321,22 +292,29 @@ public sealed class WonderTradeService(
                 ["shiny"] = offer.IsShiny.ToString(),
                 ["ivs"] = string.Join('/', offer.Ivs),
                 ["naturaleza"] = offer.NatureName,
-                ["habilidad"] = offer.Ability,
-                ["modo"] = second is null ? "uno" : "dosPorUno",
-                ["entregado2"] = second?.Species.ToString() ?? string.Empty,
-                ["entregado2Nombre"] = second?.Name ?? string.Empty,
-                ["entregado2Total"] = second is null ? string.Empty : BaseStatTotalOf(second.Species).ToString()
-            }
+                ["habilidad"] = offer.Ability
+            }, monoType)
         }, ct);
+
+    /// <summary>The event data plus the type of a MONOTYPE run (§220), which the trade cannot be recomputed without.</summary>
+    private static Dictionary<string, string> WithMonotype(Dictionary<string, string> data, int? monoType)
+    {
+        if (monoType is { } type)
+        {
+            data["monotipo"] = type.ToString();
+        }
+
+        return data;
+    }
 
     /// <summary>
     /// The trade itself. Pure: same source, same result, on any machine and any build.
     /// </summary>
-    private WonderTradeOffer? Generate(WonderTradeGift gift, IRandomSource source, int number, int? total = null)
+    private WonderTradeOffer? Generate(WonderTradeGift gift, IRandomSource source, int number, int? monoType = null)
     {
-        var givenTotal = total ?? BaseStatTotalOf(gift.Species);
-        var (min, max) = catalog.Window.Band(givenTotal);
-        var pool = PoolFor(givenTotal);
+        var givenTotal = BaseStatTotalOf(gift.Species);
+        var (min, max) = BandFor(givenTotal, monoType);
+        var pool = Candidates(min, max, monoType);
 
         if (pool.Count == 0)
         {
@@ -384,6 +362,11 @@ public sealed class WonderTradeService(
         // La forma regional, de una fuente derivada: el resto del intercambio sale igual que antes, y
         // los tipos que se anuncian son los de esa forma (§139).
         var (form, formName) = FormDraw.Roll(source, chosen);
+
+        if (monoType is { } formType && monotype is not null)
+        {
+            (form, formName) = monotype.FormFor(formType, chosen, form, formName);
+        }
 
         return new WonderTradeOffer(
             gift.Species,

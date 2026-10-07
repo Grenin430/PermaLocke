@@ -75,7 +75,10 @@ public enum PokemonOrigin
     WonderTrade,
     Gift,
     Starter,
-    AdminGrant
+    AdminGrant,
+
+    /// <summary>An egg from the NURSERY of a MONOTYPE role (§221). At the end: stored as a number.</summary>
+    Nursery
 }
 
 public enum IslandState
@@ -397,5 +400,15 @@ public enum GameEventType
     /// The organiser closed JUGAR for this player (<c>cerrado</c> = true) or opened it again, with a reason (2026-09-26).
     /// </summary>
     /// <remarks>An event, so the lock and its reason stay in the history. At the end: stored as a number.</remarks>
-    PlayLock
+    PlayLock,
+
+    /// <summary>
+    /// An egg of the NURSERY of a MONOTYPE role (§221), written into the save. Each one is a spin spent. At the end: stored as a number.
+    /// </summary>
+    NurseryEgg,
+
+    /// <summary>
+    /// Spins of the NURSERY handed over by a testing tool (2026-10-07); the number is in the data («tiradas»). At the end: stored as a number.
+    /// </summary>
+    NurseryGrant
 }

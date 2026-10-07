@@ -21,13 +21,12 @@ public sealed class CardTradePreviews
         {
             var scene = new CardTradeScene(width, height);
             var a = TcgCardArt.Render(Card("Pikipek", 731, 0, false, 0), TcgLayout.Full);
-            var b = TcgCardArt.Render(Card("Rattata", 19, 1, false, 0), TcgLayout.Full);
             var result = TcgCardArt.Render(Card("Lucario", 448, 3, true, 1), TcgLayout.Full);
             var back = TcgCardArt.RenderBack(TcgLayout.Full);
 
             for (var t = 0.0; t < CardTradeTimeline.Length + 0.5; t += 1 / 30.0)
             {
-                scene.Render(a, b, back, result, 3, true, 5, t);
+                scene.Render(a, back, result, 3, true, 5, t);
                 Assert.All(scene.Pixels.Where((_, i) => i % 4 == 3), alpha => Assert.Equal(255, alpha));
             }
         }
@@ -46,7 +45,6 @@ public sealed class CardTradePreviews
         const int w = 900, h = 560;
         var scene = new CardTradeScene(w, h);
         var a = TcgCardArt.Render(Card("Pikipek", 731, 0, false, 0), TcgLayout.Full);
-        var b = TcgCardArt.Render(Card("Rattata", 19, 1, false, 0), TcgLayout.Full);
         var result = TcgCardArt.Render(Card("Lucario", 448, 3, true, 1), TcgLayout.Full);
         var back = TcgCardArt.RenderBack(TcgLayout.Full);
         double[] times = [0.3, 0.9, 1.5, 2.2, 2.8, 3.25, 3.45, 3.6, 3.9, 4.4, 5.0, 5.5, 5.9, 6.2, 6.6, 7.4];
@@ -56,7 +54,7 @@ public sealed class CardTradePreviews
         var sheet = new byte[w * columns * h * rows * 4];
         for (var i = 0; i < times.Length; i++)
         {
-            scene.Render(a, b, back, result, 3, true, 5, times[i]);
+            scene.Render(a, back, result, 3, true, 5, times[i]);
             var left = (i % columns) * w;
             var top = (i / columns) * h;
             for (var y = 0; y < h; y++)

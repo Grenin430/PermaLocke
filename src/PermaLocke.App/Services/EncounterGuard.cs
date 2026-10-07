@@ -517,6 +517,49 @@ public sealed class EncounterGuard(
             }
         }
 
+        // Un duplicado lo elige el jugador (2026-10-07): capturarlo gasta la ruta, dejarlo pasar no gasta nada y la ruta sigue
+        // libre para el siguiente encuentro. La captura se mira en los contadores del juego, que la apuntan un momento
+        // después de irse las tablas: se espera ese momento antes de decidir que se dejó pasar.
+        if (!battle.SpentByThis && battle.Duplicate && battle.IsRoute && !battle.SpentBefore && battle.Trial is null
+            && battle.Zone is { } duplicateZone)
+        {
+            if (read is null)
+            {
+                if (!overdue)
+                {
+                    return changed;
+                }
+
+                GiveUp(battle, "no se pudieron leer los contadores del juego");
+                _battle = null;
+                return changed;
+            }
+
+            if (read.Caught <= battle.Start.Caught)
+            {
+                if (now - battle.EndedAt!.Value < CountGrace)
+                {
+                    return changed;
+                }
+
+                logger.LogInformation("Duplicado en {Zone} dejado pasar: no gasta la ruta", duplicateZone.LocationName);
+                _battle = null;
+                return changed;
+            }
+
+            if (await balls.HasHadBallsAsync(run, ct))
+            {
+                await balls.SpendZoneAsync(run, duplicateZone, battle.Species ?? 0,
+                    battle.Species is { } caughtId ? speciesNames.GetName(caughtId) : string.Empty,
+                    $"Duplicado capturado en {duplicateZone.LocationName}: cuenta como el encuentro de la ruta.", ct);
+
+                battle.SpentByThis = true;
+                _spent = null;
+                changed = true;
+                logger.LogInformation("Duplicado capturado en {Zone}: gasta la ruta", duplicateZone.LocationName);
+            }
+        }
+
         if (!battle.SpentByThis)
         {
             _battle = null;
@@ -743,7 +786,7 @@ public sealed class EncounterGuard(
         // Devolver lo que se quitó en silencio mientras se leía el Pokémon es devolverlo en silencio también: el aviso
         // de ese combate es «Primer encuentro», y dos avisos por una misma cosa tapan el juego. Salvo que lo devuelto
         // sea la noticia, que es lo que pasa con un variocolor o una captura permitida.
-        var news = shiny || allowed;
+        var news = shiny || allowed || decision.Optional;
         var silent = quiet || (decision.Action == BallAction.GiveBack && _withheldQuietly && !news);
         _withheldQuietly = decision.Action == BallAction.Withhold && quiet;
 
@@ -760,6 +803,10 @@ public sealed class EncounterGuard(
             else if (allowed)
             {
                 Say(ToastKind.AllowedCapture, "Captura permitida", decision.Reason + " Tienes tus Poké Balls.", species);
+            }
+            else if (decision.Optional)
+            {
+                SayDuplicateLater(decision.Reason, species);
             }
             else
             {
@@ -816,6 +863,10 @@ public sealed class EncounterGuard(
         else if (!refuse && allowed)
         {
             Say(ToastKind.AllowedCapture, "Captura permitida", decision.Reason + " Puedes capturarlo.", species);
+        }
+        else if (!refuse && decision.Optional)
+        {
+            SayDuplicateLater(decision.Reason, species);
         }
 
         return true;
@@ -891,6 +942,11 @@ public sealed class EncounterGuard(
 
     /// <summary>How long after the battle starts the first-encounter notice waits: the wild Pokémon shows up first.</summary>
     private static readonly TimeSpan FirstEncounterDelay = TimeSpan.FromSeconds(6);
+
+    /// <summary>The duplicate notice, a few seconds after the battle starts: the Pokémon shows up first, and the notice names no one.</summary>
+    private void SayDuplicateLater(string reason, int? species) =>
+        _ = Task.Delay(FirstEncounterDelay).ContinueWith(_ => Say(ToastKind.Duplicate, "Duplicado: tú eliges", reason, species),
+            TaskScheduler.Default);
 
     private void Say(ToastKind kind, string title, string message, int? species = null) =>
         Said?.Invoke(this, new EncounterNotice(kind, title, message, species));

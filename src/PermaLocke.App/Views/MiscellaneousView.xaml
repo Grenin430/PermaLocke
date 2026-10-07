@@ -127,6 +127,10 @@
                                 Command="{Binding GrantSuperCandiesCommand}" ToolTip="Diez más cada vez. Cada uno sube cinco niveles, sin pasar del cap." Margin="0,0,10,6" />
                         <Button Content="AMULETO IRIS" Style="{StaticResource PxButton}"
                                 Command="{Binding GrantShinyCharmCommand}" ToolTip="Solo se puede llevar uno." Margin="0,0,10,6" />
+                        <Button Content="REPELENTE INFINITO" Style="{StaticResource PxButton}"
+                                Command="{Binding GrantInfiniteRepelCommand}" ToolTip="Objeto clave: se activa y desactiva desde la mochila. Solo se puede llevar uno." Margin="0,0,10,6" />
+                        <Button Content="INCUBADORA TURBO" Style="{StaticResource PxButton}"
+                                Command="{Binding GrantEggTurboCommand}" ToolTip="Objeto clave: se activa y desactiva desde la mochila. Con ella puesta, los huevos del equipo eclosionan al dar dos pasos. Solo se puede llevar uno." Margin="0,0,10,6" />
                     </WrapPanel>
                 </StackPanel>
             </pixel:PixelWindow>

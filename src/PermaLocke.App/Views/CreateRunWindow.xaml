@@ -49,25 +49,7 @@
                             <pixel:PixelText Text="El rol decide la dificultad." Scale="2" Wrap="True"
                                              Colour="{DynamicResource PxTextDim}" Margin="2,0,0,12" />
 
-                            <ItemsControl ItemsSource="{Binding Roles}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <!-- La tarjeta entera es el radio: un objetivo grande para un botón que solo se
-                                             pulsa una vez en toda la run. -->
-                                        <RadioButton GroupName="Rol" IsChecked="{Binding IsSelected, Mode=TwoWay}"
-                                                     Style="{StaticResource PxRadioCard}" Margin="0,0,0,8">
-                                            <StackPanel>
-                                                <pixel:PixelText Text="{Binding Name}" Scale="3" Tight="True"
-                                                                 Colour="{DynamicResource PxAccentInkLight}" Shadow="{DynamicResource PxShadow}" />
-                                                <pixel:PixelText Text="{Binding Description}" Scale="2" Wrap="True" Margin="0,7,0,0"
-                                                                 Colour="{DynamicResource PxTextDim}" />
-                                                <pixel:PixelText Text="{Binding Effects}" Scale="2" Wrap="True" Margin="0,6,0,0"
-                                                                 Colour="{DynamicResource PxWarn}" />
-                                            </StackPanel>
-                                        </RadioButton>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
+                            <views:RoleMenuView DataContext="{Binding Menu}" />
 
                             <pixel:PixelText Text="{Binding RoleProblem}" Scale="2" Wrap="True" Colour="{DynamicResource PxBad}"
                                              Margin="2,4,0,0" />
