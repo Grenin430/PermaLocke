@@ -229,6 +229,14 @@ generado: 2026-09-24
 - L12969 · 220 · Roles MONOTYPE (agua, normal, planta, volador, psíquico, bicho, veneno, fuego): lista de especies calculada por tipo, gacha y wonder trade filtrados, puerta del gacha
 - L13017 · 221 · GUARDERÍA de los roles MONOTYPE: huevos de su tipo, tiradas como la ruleta, fuerza por pruebas, entrega en cajas en una escritura
 - L13057 · 222 · Wonder trade de una carta por otra (antes dos por una): válvula del inicial no válido de los MONOTYPE, animación de una carta
+- L13077 · 223 · El mundo de un MONOTYPE sale solo de su tipo (salvajes, inicial, regalos, fósiles, tratos, estáticos corrientes)
+- L13099 · 224 · Mote entre todos: el panel espera a que el jugador ande de verdad
+- L13108 · 225 · Guardería con llegada de huevos; el huevo que se ve como Meltan (sin resolver)
+- L13120 · 226 · Duplicado a elegir: capturarlo cuenta, pasar no; aviso DUPLICADO
+- L13135 · 227 · Incubadora Turbo (objeto 115): dos pasos abren los huevos; CalcHatch y SubOriginalFamiliarity
+- L13157 · 228 · Guardería: un huevo cada vez, sin enseñar qué trae, qué da cada prueba
+- L13177 · 229 · Animación de la guardería: la lluvia de estrellas
+- L13186 · 230 · Un huevo no enseña nada: panel, equipo, cajas, ficha y registro (Huevo eclosionado)
 
 Subsecciones §176: bis (visor), ter (todas las pantallas, fuera ESTADÍSTICAS), quater (EV/MOVIMIENTOS sin bolsa, diálogos).
 

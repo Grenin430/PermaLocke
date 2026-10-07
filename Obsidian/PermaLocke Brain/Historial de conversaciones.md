@@ -427,3 +427,12 @@ negro del estudio de fotos: gen 8-9 en el equipo (ver Trampas y lecciones).
   seguidas). Ya se lo había dicho varias veces: sin probar aún; el log dice «Mote: el jugador anda tras N s».
 - **Guardería** (§225): los huevos salían como **Meltan** en el juego. Se probó a copiar el huevo en el hueco 1154 del contenedor de iconos y se quitó: el código del juego (`FUN_0030c88c`) ya da el icono del huevo (1153) a cualquier huevo, así que lo que se ve como Meltan es otra ruta (¿modelo 3D o ficha?), sin localizar. El icono 0 es «?», no el huevo: la app dibujaba una bola. Animación de llegada de huevos (`NurseryScene`) y la sección rehecha.
 - **Duplicados** (§226): el duplicado se elige (capturarlo cuenta, pasar no); el juego ya no vuelve a sortearlos; aviso «DUPLICADO». **Incubadora Turbo** (§227): objeto clave 115, icono A (rayo) elegido entre siete, dos pasos abren los huevos; parche en `CalcHatch` y `SubOriginalFamiliarity` de `code.bin` y cueva nueva en `Bag.cro`. Sin probar en el juego.
+- **Guardería pulida** (§228-§229): un huevo cada vez, sin revelar la especie, tabla «lo que da cada prueba», 5 tiradas de prueba dadas con un
+  proyecto del scratchpad, botón de tiradas fuera de MISCELÁNEA. Animación rechazada a la primera; el organizador pidió prototipos como imagen y
+  eligió el 5, **lluvia de estrellas** (estrellas del color del tipo construyen el huevo, pulso, flotación; unos 6 s, igual para 1 o 40 huevos).
+- **Publicadas** (commit directo a main, Action): **1.0.10** (aea0857: monotype, guardería, duplicados, Repelente Infinito, Incubadora Turbo, mote;
+  revisor sin fallos reales, solo un comentario con un offset mal escrito), **1.0.10.1** (9063b72) y **1.0.10.2** (a6ee5eb), estas dos por §230: el
+  organizador vio en el panel del cap que los huevos enseñaban sprite, nombre y PS de la especie, y luego la FICHA con género, naturaleza,
+  habilidad, bola, entrenador y encuentro. Ahora un huevo sale como «Huevo» sin nada más en panel, equipo, cajas y ficha; el registro lo
+  apunta con `Species = 0` hasta que eclosiona (`HatchedAsync`, evento `NurseryHatch`). Lo que aprendí: al esconder un dato, mirar **todas** las
+  pantallas que lo leen (se hizo en tres tandas) y arreglar en la fuente (`SaveBoxReader`), no en cada vista. Sin probar en el juego.

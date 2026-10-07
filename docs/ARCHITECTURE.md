@@ -13074,7 +13074,7 @@ Es la válvula del «último Pokémon» de BxnnyLocke, que antes no se podía co
 - Tests: `SaveBoxSwapTests` (una carta, de caja y de equipo), `MonotypeRuleTests` (un intercambio de MONOTYPE devuelve el tipo) y
   `WonderTradeServiceTests` (las de una carta, que ya estaban).
 
-## §223 · El mundo de un MONOTYPE sale solo de su tipo (2026-10-07, sin publicar ni commit)
+## §223 · El mundo de un MONOTYPE sale solo de su tipo (2026-10-07, publicado en la 1.0.10)
 
 Idea del organizador: BxnnyLocke, limitado, se apaña con wonder trade y soltar; PermaLocke genera el mundo, así que lo genera ya del tipo.
 
@@ -13096,7 +13096,7 @@ Idea del organizador: BxnnyLocke, limitado, se apaña con wonder trade y soltar;
   tipo; dominantes, legendarios y ultraentes (clases 1-3) siguen igual. Medido (FUEGO, seed 777): filas 151-154 Slugma, Charcadet, Salandit, Vulpix.
   `RomTool aprendizajes <GARC> --especie N` y `dump <seed> <zona> --tipo N` comprueban un mundo ya generado.
 
-## §224 · El mote entre todos esperaba mal a que acabaran los menús (2026-10-07, sin publicar ni commit)
+## §224 · El mote entre todos esperaba mal a que acabaran los menús (2026-10-07, publicado en la 1.0.10)
 
 Visto en partida: tras capturar un Charcadet, el panel «¿Quieres que los otros pongan el mote?» salió encima de la pregunta del propio juego
 («¿Quieres ponerle un mote?»), con 8 s de los 15 ya gastados. `WaitOutOfMenusAsync` soltaba la espera con `FieldZoneReader.MovedSince`, que
@@ -13105,7 +13105,7 @@ Ahora espera a **andar de verdad**: `FieldZoneReader.IsWalking(1 s)` (el registr
 lecturas seguidas (1,5 s). Queda una línea en el log al soltarse («Mote: el jugador anda tras N s»), para ver con qué retraso salió si se repite.
 **Sin comprobar en el juego**; no se pudo reproducir sin Azahar. Si vuelve a salir pronto, el log dice a los cuántos segundos y hay que medir qué registro cambia.
 
-## §225 · La guardería con llegada de huevos, y el huevo que se veía como Meltan (2026-10-07, sin publicar ni commit)
+## §225 · La guardería con llegada de huevos, y el huevo que se veía como Meltan (2026-10-07, publicado en la 1.0.10)
 
 - **Huevos como Meltan en el juego (sin resolver)**: el jugador vio los huevos dibujados como Meltan. Se pensó que era el icono del contenedor `a/0/6/2` (el huevo está en el 1153, Meltan en el 1154) y se escribió `EggIconFix`, que copiaba el huevo en el 1154: **se quitó el mismo día**, porque rompía el icono de Meltan y no era la causa. Leído el código del juego (`code.bin` de la expansión, Ghidra), la función que da el icono de caja y equipo (`FUN_0030c88c(especie, forma, género, huevo, variocolor)`) **ya devuelve el 1153, el huevo, para cualquier huevo** (`IsEgg` es el bit 30 de IV32, el mismo que escribe PKHeX), y Meltan (808) va a `especie + 0x15A` = 1154. Así que el icono sale bien; lo que se ve como Meltan es otra cosa, probablemente el modelo 3D o la ficha, donde el hueco 808 que en el cartucho es el del huevo ahora es Meltan. **Falta saber dónde se ve** (caja, equipo, ficha) para buscar esa ruta.
 - **El huevo en la app**: `PokemonIconIndex.EggIcon` pasa de 0 a **1153**. Hasta ahora la app dibujaba los huevos del VISOR, del ÁLBUM y de la guardería con la bola «?».
@@ -13117,7 +13117,7 @@ lecturas seguidas (1,5 s). Queda una línea en el log al soltarse («Mote: el ju
 - **La sección**: el rol con el color de su tipo, los huevos que se deben dibujados con el icono del huevo (hasta doce y un «+N»), una ventana «LO QUE SALDRÁ» con un cuadrado por prueba
   de la run, una barra de fuerza de los huevos (del más flojo al más fuerte del tipo, `NurseryService.RangeFor`) y los puntos a los que apuntan.
 
-## §226 · El duplicado se elige: capturarlo cuenta, pasar no (2026-10-07, sin publicar ni commit)
+## §226 · El duplicado se elige: capturarlo cuenta, pasar no (2026-10-07, publicado en la 1.0.10)
 
 Pedido del organizador: con las capturas ya dentro del juego, un salvaje de una línea que ya tienes (un Frogadier con un Greninja; un Abomasnow vivo **o muerto**) deja de ser
 imposible: puede **capturarlo o volver a mirar**. Si lo captura, cuenta como el encuentro de la ruta; si no, no cuenta y la ruta sigue libre para el siguiente.
@@ -13132,7 +13132,7 @@ Antes el juego parcheado volvía a sortear esos slots (la lista de duplicados de
 - Un variocolor sigue pudiéndose capturar siempre, y las capturas permitidas no cambian.
 - Tests: `EncounterPolicyTests` (duplicado opcional; ruta gastada y especie sin leer, igual que antes). **Sin comprobar en el juego**; `Data/rules.json` lleva el texto nuevo (no está copiado a «PermaLocke prueba»).
 
-## §227 · Incubadora Turbo: un objeto clave que abre los huevos al dar dos pasos (2026-10-07, sin publicar ni commit)
+## §227 · Incubadora Turbo: un objeto clave que abre los huevos al dar dos pasos (2026-10-07, publicado en la 1.0.10)
 
 Pedido del organizador: otro objeto propio, para abrir huevos muy rápido (con dos pasos, del tirón), con varios prototipos de icono, y en MISCELÁNEA con los demás.
 Icono elegido entre siete (A rayo, B cohete, C reloj, D eclosión dorada, E alas, F galaxia, G pollito): **A, el rayo**: huevo crema con manchas verdes, un rayo dorado
@@ -13154,7 +13154,7 @@ cruzado, líneas de velocidad a la izquierda y borde dorado (`Sprites/EggTurboIc
 - Tests (`RulePatchesTests`): instalación una y dos veces sobre los ficheros de la expansión, texto, icono, registros del código, y el código leído con Capstone (lo que está escrito, no que la lógica sea la buena: eso solo se ve en el juego).
   **Sin comprobar en el juego**: que dos pasos abran los huevos, que la mochila diga activada/desactivada y que con la incubadora apagada los huevos vayan como siempre.
 
-## §228 · Guardería: un huevo cada vez, sin enseñar qué trae, y la animación rehecha (2026-10-07, sin publicar ni commit)
+## §228 · Guardería: un huevo cada vez, sin enseñar qué trae, y la animación rehecha (2026-10-07, publicado en la 1.0.10)
 
 Pedido del organizador: quitar de MISCELÁNEA las tiradas de huevo de prueba (el botón «+5 TIRADAS DE HUEVO» y su comando); la animación de llegada más trabajada y pulida; que **la app no diga qué Pokémon trae cada huevo** (se pierde la
 sorpresa); pulir la sección; y que las tiradas se pidan **de una en una**, no todas a la vez.
@@ -13174,7 +13174,7 @@ sorpresa); pulir la sección; y que las tiradas se pidan **de una en una**, no t
 - **Lo que da cada prueba** (añadido al §228, a petición del organizador): una ventana «LO QUE DA CADA PRUEBA», como la tabla del gacha: cada hito de `Data/guarderia.json` (las doce pruebas, el Campeón y «Y otra vez») con los huevos
   que paga, el punto verde cuando ya se consiguió y atenuado si falta, y un resumen («2 de 14 conseguidos: 2 de 17 huevos»). `NurseryService.MilestonesAsync` los lee de los logros; los nombres son los de `Data/achievements.json`.
 
-## §229 · Animación de la guardería: la lluvia de estrellas (2026-10-07, sin publicar ni commit)
+## §229 · Animación de la guardería: la lluvia de estrellas (2026-10-07, publicado en la 1.0.10)
 
 El organizador no quedó convencido con la animación del §228 y pidió prototipos; de los seis descritos eligió el **5, «lluvia de estrellas»**. `NurseryScene` se rehízo:
 una lluvia de estrellas fugaces del color del tipo (cola larga, cabeza blanca) que empieza con pocas y acaba en aguacero; cada una cae sobre el bloque que le toca de un huevo que se esculpe **con polvo de estrellas de abajo arriba**
@@ -13183,11 +13183,12 @@ se vuelve cascarón de abajo arriba con las manchas del tipo, salen dos ondas (s
 Dura 5,9 s (`NurseryTimeline`: `Lead` 0,8 + `Rain` 3,2 + pulso 0,2 + descanso 1,3), igual con un huevo que con cuarenta, porque se construyen todos a la vez. Se fueron el nido de paja, las runas, la caída, las grietas y el
 ensanche de rayos del §228. Tests: `NurseryPreviews` (la duración no depende del número, hojas `guarderia-1.png` y `-5.png`). **Sin ver en la app real**.
 
-## §230 — Un huevo no enseña nada (2026-10-07)
+## §230 · Un huevo no enseña nada (2026-10-07, publicado en la 1.0.10.1 y 1.0.10.2)
 
 El panel del cap y la ficha del equipo enseñaban el sprite, el nombre y los PS de la especie que había dentro del huevo, y el registro de la run
 guardaba la especie desde que se pedía. Ahora: `LivePokemon.IsEgg` y `LivePartyMember.IsEgg`; un huevo vivo sale con nombre y mote «Huevo»,
 icono de huevo, sin nivel ni PS (`CapBadge`, `HomeViewModel`); `BoxedPokemon.DisplayName` da «Huevo». `NurseryService.RecordAsync` apunta el huevo
 con `Species = 0` y nombre «Huevo»; al salir del huevo el monitor llama a `HatchedAsync` (una vez por PID), que pone la especie real y deja el evento
 `NurseryHatch`. `MonotypeRule` ignora las entradas sin especie. Sin probar en el juego. Las runs con huevos ya apuntados conservan su especie.
+
 La FICHA de un huevo tampoco enseña nada: la caja lee un huevo sin género, naturaleza, habilidad, bola, entrenador, origen ni cifras, y la vista oculta DATOS, ESTADÍSTICAS y ATAQUES (1.0.10.2).

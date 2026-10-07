@@ -54,6 +54,9 @@ Cómo llega una versión nueva a los jugadores desde el 2026-09-26. Detalle téc
 | 1.0.4.8 | commit directo a main pedido por el usuario (2026-09-27), Action | equipo con icono, nivel y PS en el panel del cap; casilla para quitarlo (§212) |
 | 1.0.4.9 | commit directo a main pedido por el usuario (2026-09-27), Action | PS del equipo del panel en tiempo real también en combate (§213) |
 | 1.0.5 | commit directo a main pedido por el usuario (2026-09-27), Action | fantasma nuevo, caído curado en el banquillo a 0 PS dentro del combate (interruptor en rules.json), PS del panel con 3 s de retraso (§214) |
+| 1.0.9 / 1.0.9.1 | commit directo a main, Action | reglas dentro del juego (§217); SuperCarameloraro y cap desde el principio (§218) |
+| 1.0.10 | commit directo a main, Action | roles MONOTYPE, guardería, duplicados a elegir, Repelente Infinito, Incubadora Turbo, mote (§219-§229) |
+| 1.0.10.1 / 1.0.10.2 | commit directo a main, Action | un huevo no enseña nada: panel, equipo, cajas y ficha (§230) |
 
 **1.0.2 y 1.0.3 no pueden actualizarse solas** (§204: la descarga se desbordaba en el primer trozo). Quien las tenga,
 una vez a mano: cerrar PermaLocke y cambiar `PermaLocke.exe` por el del zip de la 1.0.4.

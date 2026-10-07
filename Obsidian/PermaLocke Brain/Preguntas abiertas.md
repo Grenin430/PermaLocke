@@ -73,3 +73,12 @@ Lo que sigue sin saberse o sin verse. La tabla «Lo que NO está resuelto» de `
     - Lo único que queda es seguir en Ghidra cómo crea la escena sus Pokémon (`FieldRo.cro`). Muchas horas, sin
       garantía. Mod de prueba restaurado. El registro de lecturas de Azahar (`Service.FS:Trace`) no sale: está quitado
       al compilar.
+
+## Huevos de la guardería (2026-10-07)
+- **¿Dónde se ve el huevo como Meltan?** Sin respuesta del organizador (icono de caja, equipo, resumen o modelo 3D). El código del juego da el icono 1153
+  (huevo) a cualquier huevo; probablemente es el modelo o la ficha de resumen (hueco 808 compartido con Meltan). Arreglarlo puede exigir parchear el
+  juego y afectar a Meltan. Ver §225.
+- Sin probar en el juego: que los huevos eclosionen con la Incubadora Turbo en dos pasos y los mensajes de la mochila (§227), que el Repelente
+  siga bien, el aviso y el flujo de duplicados (§226), la animación en la app real (§229), eclosión de especies de gen 8-9, y que `HatchedAsync`
+  pone la especie al salir del huevo (§230). Las runs con huevos ya apuntados antes de la 1.0.10.1 conservan la especie.
+- El organizador debe publicar `roles.json` y `guarderia.json` desde Admin después de que los jugadores tengan la app nueva.
