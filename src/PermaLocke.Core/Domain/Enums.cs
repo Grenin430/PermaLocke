@@ -415,5 +415,10 @@ public enum GameEventType
     /// <summary>
     /// An egg of the NURSERY hatched: its entry takes the species it turned out to be (§230). At the end: stored as a number.
     /// </summary>
-    NurseryHatch
+    NurseryHatch,
+
+    /// <summary>
+    /// A registered Pokémon is now another species (it evolved, or was found to be one): the entry follows the game (§233). At the end: stored as a number.
+    /// </summary>
+    PokemonEvolved
 }

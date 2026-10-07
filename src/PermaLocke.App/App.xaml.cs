@@ -279,6 +279,7 @@ public partial class App : Application
         collection.AddSingleton<RouletteViewModel>();
         collection.AddSingleton<INurseryCatalog>(_ => JsonNurseryCatalog.Load(Path.Combine(paths.Data, "guarderia.json")));
         collection.AddSingleton<NurseryService>();
+        collection.AddSingleton<SpeciesSyncService>();
         collection.AddSingleton<NurseryViewModel>();
         collection.AddSingleton<ShopViewModel>();
         collection.AddSingleton<PokemonViewerViewModel>();

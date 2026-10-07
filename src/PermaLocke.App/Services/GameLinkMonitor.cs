@@ -39,10 +39,11 @@ public sealed class GameLinkMonitor(
     RulesConfiguration rules,
     PermaLocke.GameLink.Field.BerryPileKeeper berries,
     PermaLocke.GameLink.BagService bag,
-    PermaLocke.Core.Services.NurseryService nursery) : IDisposable
+    PermaLocke.Core.Services.NurseryService nursery,
+    PermaLocke.Core.Services.SpeciesSyncService speciesSync) : IDisposable
 {
-    /// <summary>PIDs already checked for being a hatched nursery egg this session.</summary>
-    private readonly HashSet<uint> _hatchChecked = [];
+    /// <summary>The species and form each PID had the last time it was looked at.</summary>
+    private readonly Dictionary<uint, (int Species, int Form)> _species = [];
 
     /// <summary>
     /// How often the game is polled.
@@ -371,11 +372,14 @@ public sealed class GameLinkMonitor(
                 continue;
             }
 
-            // Un huevo de la guardería sin especie en la run: ahora que ha salido, se apunta lo que era (una vez por PID).
-            if (_hatchChecked.Add(member.Pid))
+            // Lo que el juego dice que es, y la run lo sigue (una vez por PID y cada vez que cambia): un huevo de la guardería que
+            // sale se apunta, y lo que evoluciona deja de figurar como su primera forma (§233).
+            if (!_species.TryGetValue(member.Pid, out var known) || known != (member.Species, member.Form))
             {
+                _species[member.Pid] = (member.Species, member.Form);
                 await nursery.HatchedAsync(run, member.Pid, member.Species, member.SpeciesName, member.Form, member.Level,
                     _stopping.Token);
+                await speciesSync.SyncAsync(run, [new(member.Pid, member.Species, member.SpeciesName, member.Form)], _stopping.Token);
             }
 
             if (_eggs.Remove(member.Pid))
@@ -603,6 +607,9 @@ public sealed class GameLinkMonitor(
         }
     }
 
+    /// <summary>What the game takes to show a Pokémon fainting once its bar is empty: the fall, the cry and the message.</summary>
+    private static readonly TimeSpan FaintAnimation = TimeSpan.FromMilliseconds(1800);
+
     private async Task OnBattleFaintAsync(Run run, GameSnapshot snapshot, BattleFaint faint,
         IReadOnlyList<BattleTable> tables)
     {
@@ -638,6 +645,14 @@ public sealed class GameLinkMonitor(
         var bar = await HpBarWatcher.WaitUntilEmptyAsync(_stopping.Token);
         var mark = killcam.Mark();
         logger.LogInformation("Caída en combate de la posición {Id}: {Bar}", faint.BattleId, bar);
+
+        // La barra a cero no es el Pokémon caído: después viene su animación (cae, grita, sale «¡X se ha debilitado!»), y la escena
+        // de muerte, que tapa el juego, salía encima de ella, unos 100 a 250 ms después del cero. Se espera a que acabe; la killcam
+        // ya tiene su marca en el cero, y como la escena no ha salido sigue grabando y recoge la caída entera (§234).
+        if (bar.StartsWith("barra a cero", StringComparison.Ordinal))
+        {
+            await Task.Delay(FaintAnimation, _stopping.Token);
+        }
 
         if (await RecordDeathOnceAsync(run, member.Pid, member, "combate, en el momento", Rivals(tables), mark) is { } fallen)
         {

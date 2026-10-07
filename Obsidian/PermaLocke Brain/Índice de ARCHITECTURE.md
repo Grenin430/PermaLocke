@@ -237,6 +237,10 @@ generado: 2026-09-24
 - L13157 · 228 · Guardería: un huevo cada vez, sin enseñar qué trae, qué da cada prueba
 - L13177 · 229 · Animación de la guardería: la lluvia de estrellas
 - L13186 · 230 · Un huevo no enseña nada: panel, equipo, cajas, ficha y registro (Huevo eclosionado)
+- L13196 · 231 · Los objetos recogidos salían como un paquete: tabla objeto a icono del propio juego
+- L13204 · 232 · Gráficos del emulador: resolución y Vulkan antes de arrancar
+- L13216 · 233 · Cementerio con la especie de verdad y killcams compartidas a 1,5 Mbit/s
+- L13230 · 234 · La escena de muerte espera a que el Pokémon acabe de debilitarse (1,8 s tras el cero) y la barra espera más a una caja escondida por un ataque largo
 
 Subsecciones §176: bis (visor), ter (todas las pantallas, fuera ESTADÍSTICAS), quater (EV/MOVIMIENTOS sin bolsa, diálogos).
 

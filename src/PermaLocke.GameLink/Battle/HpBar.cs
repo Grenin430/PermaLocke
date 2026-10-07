@@ -137,9 +137,10 @@ public static class HpBar
         /// In the fifty falls measured up to 2026-09-22 the bar was seen at zero within 1889 ms at the worst, because
         /// the fall is given when the second table reaches zero, which is the bar itself finishing. A box that has not
         /// shown by now is one that has already gone — which is what a death by poison or by an entry hazard looks
-        /// like — and there is nothing left to wait for (§165).
+        /// like — and there is nothing left to wait for (§165). It was 2500 ms until 1.0.12: a long attack animation hides the box
+        /// for longer than that, and the ceremony then came over the game before the Pokémon had fainted (§234).
         /// </remarks>
-        public const double NoBoxLimit = 2_500;
+        public const double NoBoxLimit = 4_000;
 
         private double? _lastColour;
         private double _lastColourAt;

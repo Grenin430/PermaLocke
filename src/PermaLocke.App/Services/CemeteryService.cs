@@ -1,6 +1,7 @@
 using System.IO;
 using PermaLocke.Core.Abstractions;
 using PermaLocke.Core.Domain;
+using PermaLocke.Core.Services;
 using PermaLocke.Infrastructure;
 
 namespace PermaLocke.App.Services;
@@ -38,13 +39,27 @@ public sealed record Grave(
 /// that existed simply lack it, and the cemetery says so instead of filling the gap.
 /// </remarks>
 public sealed class CemeteryService(IRunContext runs, IPokemonRepository pokemon, IEventStore events,
-    ISpeciesLookup species, AppPaths paths)
+    ISpeciesLookup species, AppPaths paths, IBoxReader boxes, SpeciesSyncService sync)
 {
     public async Task<IReadOnlyList<Grave>> GravesAsync(CancellationToken ct = default)
     {
         if (runs.Current is not { } run)
         {
             return [];
+        }
+
+        // Los que evolucionaron antes de que la run los siguiera: lo que el juego tiene en las cajas manda sobre la primera especie.
+        try
+        {
+            if (await boxes.ReadAsync(ct) is { Available: true } held)
+            {
+                await sync.SyncAsync(run, held.Boxes.SelectMany(box => box.Pokemon).Where(p => !p.IsEgg)
+                    .Select(p => new SeenSpecies(p.Pid, p.Species, p.SpeciesName, p.Form)), ct);
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            // Sin partida que leer, el cementerio sale como estaba.
         }
 
         var fallen = (await pokemon.GetAllAsync(run.Id, ct)).Where(entry => entry.Status == PokemonStatus.Dead).ToList();

@@ -1,3 +1,13 @@
+1.0.12 2026-10-07
+MUERTES
+La escena de muerte ya no sale encima del juego antes de que el Pokémon se debilite del todo: espera a que acabe su caída y el mensaje de «se ha debilitado».
+Si un ataque largo esconde la barra de PS, la app espera más antes de rendirse, en vez de sacar la escena en mitad de la animación.
+La repetición (killcam) de cada muerte ahora incluye también la caída entera.
+CEMENTERIO
+Los Pokémon que evolucionan salen con su especie de ahora y no con la primera (Gimmighoul y Gholdengo, Ferroseed y Ferrothorn, Yamask y Cofagrigus). Cada cambio queda anotado.
+Las repeticiones que compartes con tus amigos se ven con mucha más calidad: antes los ataques con fuego o hielo se deshacían en cuadros.
+Las que ya estaban subidas no se pueden mejorar; las nuevas sí.
+
 1.0.11 2026-10-07
 GRÁFICOS DEL EMULADOR
 Nuevo en CONFIGURACIÓN: resolución del emulador de x1 a x4 (una imagen mucho más nítida) y una casilla para usar Vulkan, más estable que OpenGL en las tarjetas gráficas nuevas.

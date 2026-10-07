@@ -13212,3 +13212,31 @@ arranque: bien. Probado: `AzaharInstallationTests`. Azahar reescribe su configur
 
 Aparte, el mismo día: Admin 1.0.10.x no leía las runs con huevos de guardería (`PokemonOrigin.Nursery` no existía en su build de Release); la auditoría salta ahora las
 runs ilegibles y avisa. Recompilar Admin en Release tras cada versión que añada valores a un enum.
+
+## §233 · El cementerio con la especie de verdad y las killcams compartidas con calidad (2026-10-07, publicado en la 1.0.12)
+
+**Especies.** El registro de la run escribía la especie al ver un Pokémon por primera vez y no la volvía a mirar: un Gimmighoul que pasó a Gholdengo, un Ferroseed
+a Ferrothorn o un Yamask a Cofagrigus salían en el CEMENTERIO con el nombre y el icono de antes sobre una killcam del nuevo. `SpeciesSyncService.SyncAsync`
+(Core) pone la especie y la forma que el juego tiene, por PID, y deja el evento `PokemonEvolved` (añadido al final del enum); un mote que era el nombre viejo
+se borra. Se llama (1) desde `GameLinkMonitor` cada vez que un miembro del equipo se ve por primera vez o cambia de especie o forma, y (2) desde
+`CemeteryService.GravesAsync` con lo que hay en las cajas de la partida, para arreglar los que evolucionaron antes. Un caído que ya no esté en la partida
+(soltado) no se puede corregir: no queda de dónde saber qué era. Un huevo de la guardería (especie 0) se deja a `NurseryService.HatchedAsync`.
+
+**Killcams de los amigos.** Un amigo comparte cada killcam como un vídeo H.264 (`KillcamVideo`), y estaba a 250 kbit/s: en las animaciones de ataque (fuego, hielo)
+el vídeo se deshacía en bloques y las dos últimas muertes de Juanmaa apenas se entendían (se vio en `Saves/killcam-amigos`: fotogramas con ruido y mosaico justo en los
+efectos). Ahora 1,5 Mbit/s: una killcam real de 1,97 MB local da 783 KB, muy por debajo de los 3 MB del bucket (`19-caidos.sql`). Solo vale para lo que se comparta
+desde la versión nueva: lo ya subido (Storage no reemplaza) se queda como está. El formato no cambia: se decodifica igual.
+
+## §234 · La escena de muerte salía antes de que el Pokémon se debilitara (2026-10-07, publicado en la 1.0.12)
+
+**Investigación.** Las killcams guardadas de los últimos días acaban 90 a 250 ms después de su marca (la marca es el cero de la barra): la grabación se corta porque
+sale la escena de muerte, que tapa el juego. En esos fotogramas el Pokémon aún está en pie, con el polvo del golpe o con «¡Es supereficaz!» sin acabar: la caída del
+sprite, el grito y «¡X se ha debilitado!» llegan después y se perdían bajo la escena (y la killcam, que guarda 1,3 s tras la marca, nunca los tuvo). Todas las muertes
+de los logs vienen del camino de combate (`OnBattleFaintAsync`, 40 de 40 «combate, en el momento»), no del ciclo del equipo.
+Había un segundo camino hacia lo mismo: `HpBar.ZeroWatch.NoBoxLimit` daba la barra por «ya se ha ido» a los 2,5 s sin haber visto la caja, pero una animación de ataque
+larga (golpe crítico, movimiento Z, varios golpes) esconde la caja más tiempo, y la escena salía en mitad del ataque. En los logs hay tres de esas salidas por tiempo.
+
+**Arreglo.** (1) Tras ver la barra a cero se espera `FaintAnimation` (1,8 s) antes de registrar la muerte y sacar la escena; la marca de la killcam se toma en el cero y,
+como la escena no ha salido, la grabación sigue y recoge la caída entera. (2) `NoBoxLimit` pasa de 2,5 a 4 s: los envenenados y las trampas de entrada, que no tienen
+animación, tardan 1,5 s más en saltar; un ataque largo ya no se confunde con ellos. Los 1,8 s son una estimación (caída, grito y mensaje); con las killcams nuevas, que
+ahora incluyen la caída, se podrá medir y ajustar. Sin probar en el juego.

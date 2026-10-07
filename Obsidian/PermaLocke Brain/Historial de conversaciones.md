@@ -436,3 +436,12 @@ negro del estudio de fotos: gen 8-9 en el equipo (ver Trampas y lecciones).
   habilidad, bola, entrenador y encuentro. Ahora un huevo sale como «Huevo» sin nada más en panel, equipo, cajas y ficha; el registro lo
   apunta con `Species = 0` hasta que eclosiona (`HatchedAsync`, evento `NurseryHatch`). Lo que aprendí: al esconder un dato, mirar **todas** las
   pantallas que lo leen (se hizo en tres tandas) y arreglar en la fuente (`SaveBoxReader`), no en cada vista. Sin probar en el juego.
+- **1.0.11 publicada** (048f05a; GitHub dio varios 500 al subir y el reintento automático acabó entrando): resolución x1-x4 y casilla Vulkan en CONFIGURACIÓN (§232),
+  iconos de objeto desde la tabla del propio juego (§231). La resolución cambiada con el juego abierto deja la imagen en negro/ampliada/parpadeando (log limpio): el
+  organizador siempre jugó en Vulkan y su prueba estaba en OpenGL. Admin: auditoría que salta las runs ilegibles; recompilar Admin en Release tras cada versión.
+- **Cementerio y killcams** (§233, sin publicar): especies que no seguían la evolución (`SpeciesSyncService`, evento `PokemonEvolved`) y killcams de amigos a 250 kbit/s
+  → 1,5 Mbit/s. Se vieron los fotogramas de Juanmaa (Volvo y Blombi, 18:51) en `killcam-amigos`: ruido y mosaico en los efectos. Lo ya subido no se puede mejorar.
+- **Muerte antes de debilitarse** (§234, 1.0.12): «lo he dicho muchas veces». Las killcams acababan 90-250 ms tras el cero de la barra, con el Pokémon aún en pie: la escena de muerte
+  salía sobre su caída. Ahora espera 1,8 s tras el cero (estimado, a medir con las killcams nuevas que ya incluyen la caída) y `NoBoxLimit` sube de 2,5 a 4 s para que un ataque largo
+  no se tome por veneno. Lo que aprendí: mirar los fotogramas del propio fallo (las killcams) y no solo los logs; el límite de la killcam, que acababa pronto, ya lo delataba.
+  Publicada con el sincronizador de especies del cementerio (§233) y las killcams a 1,5 Mbit/s.

@@ -562,4 +562,39 @@ public sealed class MonotypeRuleTests
 
         Assert.Equal(["Hoja A"], await rule.InvalidAsync(FireRun(), Fire));
     }
+
+    [Fact]
+    public async Task A_registered_pokemon_follows_the_species_the_game_says_it_is_and_leaves_an_event()
+    {
+        var gimmighoul = Owned(999, "Gimmighoul", PokemonStatus.Dead) with { Pid = 0xABCDEF01, Nickname = "Gimmighoul" };
+        var other = Owned(7, "Squirtle") with { Pid = 0x11111111 };
+        var egg = Owned(0, "Huevo") with { Pid = 0x22222222 };
+        var team = new Repository(gimmighoul, other, egg);
+        var log = new Events();
+        var sync = new SpeciesSyncService(team, log, new Clock());
+
+        var changed = await sync.SyncAsync(FireRun(),
+        [
+            new SeenSpecies(0xABCDEF01, 1000, "Gholdengo", 0),   // evolucionó
+            new SeenSpecies(0x11111111, 7, "Squirtle", 0),       // igual
+            new SeenSpecies(0x22222222, 25, "Pikachu", 0),       // un huevo sin eclosionar no se toca aquí
+            new SeenSpecies(0x33333333, 9, "Blastoise", 0)       // no registrado
+        ]);
+
+        Assert.Equal(1, changed);
+        var now = team.Entries.Single(p => p.Pid == 0xABCDEF01);
+        Assert.Equal(1000, now.Species);
+        Assert.Equal("Gholdengo", now.SpeciesName);
+        Assert.Null(now.Nickname);                       // el mote era el nombre viejo
+        Assert.Equal(PokemonStatus.Dead, now.Status);
+        Assert.Equal(0, team.Entries.Single(p => p.Pid == 0x22222222).Species);
+
+        var recorded = Assert.Single(log.Appended);
+        Assert.Equal(GameEventType.PokemonEvolved, recorded.Type);
+        Assert.Equal("999", recorded.Data["antes"]);
+        Assert.Equal("1000", recorded.Data["despues"]);
+
+        // Segunda lectura igual: nada que cambiar.
+        Assert.Equal(0, await sync.SyncAsync(FireRun(), [new SeenSpecies(0xABCDEF01, 1000, "Gholdengo", 0)]));
+    }
 }

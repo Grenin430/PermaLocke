@@ -7,7 +7,7 @@ using System.Windows.Media.Imaging;
 namespace PermaLocke.App.Services;
 
 /// <summary>
-/// A killcam as a small H.264 video (1.0.5.5), for sharing it through the tournament server: about 250 KB instead of the
+/// A killcam as a small H.264 video (1.0.5.5), for sharing it through the tournament server: about 1 MB (250 KB until 1.0.12) instead of the
 /// 1.7 MB of the local file, and it looks the same.
 /// </summary>
 /// <remarks>
@@ -25,7 +25,9 @@ namespace PermaLocke.App.Services;
 public static class KillcamVideo
 {
     private const int Version = 1;
-    private const int Bitrate = 250_000;
+    // 1,5 Mbit/s (1.0.12): a 250 kbit/s video fell apart in fire, ice and every effect of an attack, and a friend's last deaths could
+    // not be made out. A clip of six seconds stays around 1 MB, well under the 3 MB the killcams bucket allows (19-caidos.sql).
+    private const int Bitrate = 1_500_000;
     private static readonly byte[] Magic = "PLKV"u8.ToArray();
     private static readonly Lazy<bool> Started = new(() => { Mf.MFStartup(Mf.Version, 0); return true; });
 
