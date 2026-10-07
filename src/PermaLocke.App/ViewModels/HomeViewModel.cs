@@ -288,12 +288,12 @@ public sealed partial class HomeViewModel : SectionViewModel
 
             LiveTeam.Add(new TeamRow(
                 string.IsNullOrWhiteSpace(member.Nickname) ? member.SpeciesName : member.Nickname,
-                $"Nv. {member.Level}",
-                $"{member.CurrentHp}/{member.MaxHp}",
+                member.IsEgg ? string.Empty : $"Nv. {member.Level}",
+                member.IsEgg ? string.Empty : $"{member.CurrentHp}/{member.MaxHp}",
                 Math.Clamp(ratio, 0d, 1d),
                 member.IsFainted ? "fainted" : ratio <= 0.2 ? "critical" : ratio <= 0.5 ? "low" : "ok",
                 member.IsShiny,
-                _sprites.Get(member.Species, member.Form, member.IsShiny)));
+                member.IsEgg ? _sprites.GetEgg() : _sprites.Get(member.Species, member.Form, member.IsShiny)));
         }
 
         GameLinkStatus = snapshot.Party.Count == 0

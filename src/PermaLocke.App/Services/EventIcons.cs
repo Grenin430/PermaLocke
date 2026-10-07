@@ -15,7 +15,7 @@ public static class EventIcons
     {
         GameEventType.PokemonDied or GameEventType.TeamWiped or GameEventType.DeathRevoked
             or GameEventType.WipeRevoked => "IconGrave",
-        GameEventType.PokemonCaught or GameEventType.PokemonDelivered or GameEventType.GachaRoll or GameEventType.NurseryEgg
+        GameEventType.PokemonCaught or GameEventType.PokemonDelivered or GameEventType.GachaRoll or GameEventType.NurseryEgg or GameEventType.NurseryHatch
             or GameEventType.FirstPokeBallSeen or GameEventType.BallsWithheld or GameEventType.BallsReturned => "IconGacha",
         GameEventType.WonderTrade or GameEventType.PokemonTraded or GameEventType.PokemonReleased
             or GameEventType.RoleChanged or GameEventType.PlayerLinked => "IconPeople",

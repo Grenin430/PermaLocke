@@ -100,7 +100,7 @@ public sealed record BoxedPokemon(
     public bool IsInParty => Box == PartyBox;
 
     /// <summary>What the player calls it: the nickname when there is one, the species otherwise.</summary>
-    public string DisplayName => string.IsNullOrWhiteSpace(Nickname) ? SpeciesName : Nickname;
+    public string DisplayName => IsEgg ? "Huevo" : string.IsNullOrWhiteSpace(Nickname) ? SpeciesName : Nickname;
 
     /// <summary>
     /// The line under the name: the species, only when the name is a nickname, so an unnamed Pokémon does

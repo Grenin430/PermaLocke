@@ -132,7 +132,7 @@ public sealed class MonotypeRule(
         return
         [
             .. registered
-                .Where(p => p.Status == PokemonStatus.Alive && !Allows(type, p.Species, p.Form))
+                .Where(p => p.Status == PokemonStatus.Alive && p.Species > 0 && !Allows(type, p.Species, p.Form))
                 .Select(p => p.Nickname ?? p.SpeciesName)
         ];
     }

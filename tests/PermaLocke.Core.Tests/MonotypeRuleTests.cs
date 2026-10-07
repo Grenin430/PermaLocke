@@ -427,6 +427,14 @@ public sealed class MonotypeRuleTests
         Assert.Equal("CAFEBABE", recorded.Data["pid"]);
         Assert.Equal(6, await service.OwedAsync(run));
 
+        // Un huevo no dice qué hay dentro: sin especie hasta que eclosiona, y entonces queda anotado.
+        Assert.Equal(0, entry.Species);
+        Assert.Equal("Huevo", entry.SpeciesName);
+        var hatched = await service.HatchedAsync(run, 0xCAFEBABE, 126, "Magmar", 0, 5);
+        Assert.Equal(126, hatched!.Species);
+        Assert.Equal(GameEventType.NurseryHatch, log.Appended.Last().Type);
+        Assert.Null(await service.HatchedAsync(run, 0xCAFEBABE, 126, "Magmar", 0, 5));
+
         // El siguiente huevo es el número 1: lo gastado sale del historial.
         Assert.Equal(1, (await service.PrepareAsync(run, 1))[0].Number);
 

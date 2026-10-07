@@ -34,6 +34,9 @@ public sealed class NurseryService(
     /// <summary>The id the egg carries as banner and as tier, so a screen can tell it from a gacha roll.</summary>
     public const string Banner = "guarderia";
 
+    /// <summary>What an unhatched egg is called everywhere.</summary>
+    public const string EggName = "Huevo";
+
     public INurseryCatalog Catalog => catalog;
 
     /// <summary>True when the run's role has a nursery: the MONOTYPE ones.</summary>
@@ -270,8 +273,9 @@ public sealed class NurseryService(
         {
             Id = Guid.NewGuid(),
             RunId = run.Id,
-            Species = egg.Species,
-            SpeciesName = egg.DisplayName,
+            // Un huevo no dice qué hay dentro (§230): sin especie hasta que eclosiona (HatchedAsync).
+            Species = 0,
+            SpeciesName = EggName,
             Level = egg.Level,
             Origin = PokemonOrigin.Nursery,
             EncounterType = EncounterType.Special,
@@ -279,7 +283,6 @@ public sealed class NurseryService(
 
             // Un huevo de la guardería no sale de ninguna zona.
             ConsumedZoneEncounter = false,
-            Form = egg.Form,
             Pid = delivery.Pid
         };
 
@@ -310,6 +313,41 @@ public sealed class NurseryService(
         }, ct).ConfigureAwait(false);
 
         return entry;
+    }
+
+    /// <summary>True for an egg of the nursery that has not hatched: it has no species yet.</summary>
+    public static bool IsUnhatched(PokemonEntry entry) => entry is { Origin: PokemonOrigin.Nursery, Species: 0 };
+
+    /// <summary>
+    /// The egg of this PID has hatched: the entry takes the species it turned out to be, with an event. Null when the
+    /// PID is not an unhatched egg of the run.
+    /// </summary>
+    public async Task<PokemonEntry?> HatchedAsync(Run run, uint pid, int species, string speciesName, int form, int level,
+        CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(run);
+
+        var entry = (await pokemon.GetAllAsync(run.Id, ct).ConfigureAwait(false))
+            .FirstOrDefault(p => p.Pid == pid && IsUnhatched(p));
+        if (entry is null) return null;
+
+        var hatched = entry with { Species = species, SpeciesName = speciesName, Form = form, Level = level };
+        await pokemon.SaveAsync(hatched, ct).ConfigureAwait(false);
+
+        await events.AppendAsync(new GameEvent
+        {
+            Id = Guid.NewGuid(),
+            RunId = run.Id,
+            Timestamp = clock.Now,
+            Type = GameEventType.NurseryHatch,
+            Source = EventSource.Player,
+            Actor = run.PlayerName,
+            Description = $"Guardería: el huevo ha eclosionado y es {speciesName}.",
+            PokemonId = hatched.Id,
+            Data = new Dictionary<string, string> { ["pid"] = pid.ToString("X8"), ["especie"] = species.ToString() }
+        }, ct).ConfigureAwait(false);
+
+        return hatched;
     }
 }
 

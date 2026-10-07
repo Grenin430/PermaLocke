@@ -37,6 +37,7 @@ public static class DisplayNames
         [GameEventType.ShopPurchase] = "Compra",
         [GameEventType.WonderTrade] = "Wonder trade",
         [GameEventType.NurseryEgg] = "Huevo de la guardería",
+        [GameEventType.NurseryHatch] = "Huevo eclosionado",
 
         [GameEventType.AchievementUnlocked] = "Logro conseguido",
         [GameEventType.AchievementProgressed] = "Progreso a mano",

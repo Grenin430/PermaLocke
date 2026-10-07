@@ -38,8 +38,12 @@ public sealed class GameLinkMonitor(
     IntegrityService integrity,
     RulesConfiguration rules,
     PermaLocke.GameLink.Field.BerryPileKeeper berries,
-    PermaLocke.GameLink.BagService bag) : IDisposable
+    PermaLocke.GameLink.BagService bag,
+    PermaLocke.Core.Services.NurseryService nursery) : IDisposable
 {
+    /// <summary>PIDs already checked for being a hatched nursery egg this session.</summary>
+    private readonly HashSet<uint> _hatchChecked = [];
+
     /// <summary>
     /// How often the game is polled.
     /// </summary>
@@ -365,6 +369,13 @@ public sealed class GameLinkMonitor(
             {
                 _eggs.Add(member.Pid);
                 continue;
+            }
+
+            // Un huevo de la guardería sin especie en la run: ahora que ha salido, se apunta lo que era (una vez por PID).
+            if (_hatchChecked.Add(member.Pid))
+            {
+                await nursery.HatchedAsync(run, member.Pid, member.Species, member.SpeciesName, member.Form, member.Level,
+                    _stopping.Token);
             }
 
             if (_eggs.Remove(member.Pid))

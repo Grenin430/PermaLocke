@@ -410,5 +410,10 @@ public enum GameEventType
     /// <summary>
     /// Spins of the NURSERY handed over by a testing tool (2026-10-07); the number is in the data («tiradas»). At the end: stored as a number.
     /// </summary>
-    NurseryGrant
+    NurseryGrant,
+
+    /// <summary>
+    /// An egg of the NURSERY hatched: its entry takes the species it turned out to be (§230). At the end: stored as a number.
+    /// </summary>
+    NurseryHatch
 }

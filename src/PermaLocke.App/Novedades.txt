@@ -1,3 +1,9 @@
+1.0.10.1 2026-10-07
+HUEVOS
+Un huevo ya no enseña qué hay dentro: ni el sprite, ni el nombre, ni el nivel, ni los PS en el panel del nivel máximo y en el equipo.
+En las cajas se llama simplemente Huevo.
+La especie solo se apunta en tu run cuando el huevo eclosiona.
+
 1.0.10 2026-10-07
 ROLES MONOTYPE
 Nuevos roles MONOTYPE, con un menú propio para elegir el tipo (agua, normal, planta, volador, psíquico, bicho, veneno o fuego).

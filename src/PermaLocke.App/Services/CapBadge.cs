@@ -219,7 +219,7 @@ public sealed class CapBadge
 
             var sprite = new System.Windows.Controls.Image
             {
-                Source = _sprites.Get(member.Species, member.Form, member.IsShiny),
+                Source = member.IsEgg ? _sprites.GetEgg() : _sprites.Get(member.Species, member.Form, member.IsShiny),
                 Width = 40,
                 Height = 30,
                 Stretch = Stretch.Uniform,
@@ -231,7 +231,7 @@ public sealed class CapBadge
             var name = string.IsNullOrWhiteSpace(member.Nickname) ? member.SpeciesName : member.Nickname;
             var level = new PixelText
             {
-                Text = $"NV. {member.Level}",
+                Text = member.IsEgg ? string.Empty : $"NV. {member.Level}",
                 Scale = 1,
                 Tight = true,
                 Colour = fallen ? C("PxTextFaint") : member.Level >= cap ? C("PxWarn") : C("PxText")
@@ -250,7 +250,11 @@ public sealed class CapBadge
             });
             info.Children.Add(top);
 
-            if (fallen)
+            if (member.IsEgg)
+            {
+                // An egg shows nothing but itself: no level, no HP.
+            }
+            else if (fallen)
             {
                 info.Children.Add(new PixelText { Text = "KO", Scale = 1, Tight = true, Colour = C("PxBad"), Margin = new Thickness(0, 4, 0, 0) });
             }

@@ -620,11 +620,12 @@ public sealed class AzaharGameStateProvider(
                 break;
             }
 
+            // An egg tells nothing of what is inside: no species name, no nickname (§230).
             party.Add(new LivePartyMember(
                 slot,
                 member.Species,
-                species.GetName(member.Species),
-                member.Nickname,
+                member.IsEgg ? "Huevo" : species.GetName(member.Species),
+                member.IsEgg ? "Huevo" : member.Nickname,
                 member.Level,
                 member.CurrentHp,
                 member.MaxHp,
@@ -634,7 +635,8 @@ public sealed class AzaharGameStateProvider(
                 locations.GetName(member.MetLocation),
                 member.TrainerName,
                 member.Form,
-                member.Moves));
+                member.Moves,
+                member.IsEgg));
         }
 
         return party;

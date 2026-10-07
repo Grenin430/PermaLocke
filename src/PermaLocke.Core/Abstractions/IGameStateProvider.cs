@@ -31,7 +31,8 @@ public sealed record LivePartyMember(
     string MetLocationName,
     string TrainerName,
     int Form = 0,
-    IReadOnlyList<int>? Moves = null)
+    IReadOnlyList<int>? Moves = null,
+    bool IsEgg = false)
 {
     public bool IsFainted => CurrentHp == 0;
 }

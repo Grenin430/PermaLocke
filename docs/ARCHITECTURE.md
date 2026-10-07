@@ -13182,3 +13182,11 @@ sobre un contorno tenue que dice dónde va a estar, y deja una chispa al llegar;
 se vuelve cascarón de abajo arriba con las manchas del tipo, salen dos ondas (suelo y alrededor) y polvo de estrellas, y el huevo **flota** con una aureola dorada mientras siguen cruzando estrellas y subiendo destellos.
 Dura 5,9 s (`NurseryTimeline`: `Lead` 0,8 + `Rain` 3,2 + pulso 0,2 + descanso 1,3), igual con un huevo que con cuarenta, porque se construyen todos a la vez. Se fueron el nido de paja, las runas, la caída, las grietas y el
 ensanche de rayos del §228. Tests: `NurseryPreviews` (la duración no depende del número, hojas `guarderia-1.png` y `-5.png`). **Sin ver en la app real**.
+
+## §230 — Un huevo no enseña nada (2026-10-07)
+
+El panel del cap y la ficha del equipo enseñaban el sprite, el nombre y los PS de la especie que había dentro del huevo, y el registro de la run
+guardaba la especie desde que se pedía. Ahora: `LivePokemon.IsEgg` y `LivePartyMember.IsEgg`; un huevo vivo sale con nombre y mote «Huevo»,
+icono de huevo, sin nivel ni PS (`CapBadge`, `HomeViewModel`); `BoxedPokemon.DisplayName` da «Huevo». `NurseryService.RecordAsync` apunta el huevo
+con `Species = 0` y nombre «Huevo»; al salir del huevo el monitor llama a `HatchedAsync` (una vez por PID), que pone la especie real y deja el evento
+`NurseryHatch`. `MonotypeRule` ignora las entradas sin especie. Sin probar en el juego. Las runs con huevos ya apuntados conservan su especie.

@@ -16,7 +16,8 @@ public sealed record LivePokemon(
     int MetLocation,
     string TrainerName,
     int Form = 0,
-    IReadOnlyList<int>? Moves = null);
+    IReadOnlyList<int>? Moves = null,
+    bool IsEgg = false);
 
 /// <summary>
 /// Reads party structures out of the running game and parses them with PKHeX.Core.
@@ -101,7 +102,8 @@ public sealed class Pk7Reader(AzaharRpcClient client)
             pokemon.MetLocation,
             pokemon.OriginalTrainerName,
             pokemon.Form,
-            [pokemon.Move1, pokemon.Move2, pokemon.Move3, pokemon.Move4]);
+            [pokemon.Move1, pokemon.Move2, pokemon.Move3, pokemon.Move4],
+            pokemon.IsEgg);
     }
 
     /// <summary>Reads consecutive slots from the start of a party block.</summary>
