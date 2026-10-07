@@ -168,6 +168,8 @@ public sealed class SaveBoxReader(PlayerSave save, ILocationLookup locations, st
             pokemon.ResetPartyStats();
         }
 
+        var egg = pokemon.IsEgg;
+
         return new BoxedPokemon(
             Box: box,
             Slot: slot,
@@ -180,20 +182,21 @@ public sealed class SaveBoxReader(PlayerSave save, ILocationLookup locations, st
             Level: Data.GameLevels.Of(pokemon),
             IsShiny: pokemon.IsShiny,
             IsEgg: pokemon.IsEgg,
-            GenderMark: GenderMarkFor(pokemon.Gender),
-            NatureName: Name(_strings.Natures, (int)pokemon.Nature, "?"),
-            AbilityName: Name(_strings.Ability, Data.PokemonAbility.Of(pokemon), "?"),
+            // An egg shows none of what it will be (§230): no gender, nature, ability, stats or origin.
+            GenderMark: egg ? string.Empty : GenderMarkFor(pokemon.Gender),
+            NatureName: egg ? string.Empty : Name(_strings.Natures, (int)pokemon.Nature, "?"),
+            AbilityName: egg ? string.Empty : Name(_strings.Ability, Data.PokemonAbility.Of(pokemon), "?"),
             HeldItemName: pokemon.HeldItem == 0 ? string.Empty : Name(_strings.Item, pokemon.HeldItem, "?"),
-            BallName: Name(_strings.balllist, pokemon.Ball, "?"),
-            TrainerName: pokemon.OriginalTrainerName,
-            MetLocationName: locations.GetName(pokemon.MetLocation),
-            MetLevel: pokemon.MetLevel,
-            Moves: [.. pokemon.Moves.Where(move => move != 0).Select(move => Name(_strings.Move, move, "?"))],
-            Stats: [pokemon.Stat_HPMax, pokemon.Stat_ATK, pokemon.Stat_DEF,
+            BallName: egg ? string.Empty : Name(_strings.balllist, pokemon.Ball, "?"),
+            TrainerName: egg ? string.Empty : pokemon.OriginalTrainerName,
+            MetLocationName: egg ? string.Empty : locations.GetName(pokemon.MetLocation),
+            MetLevel: egg ? 0 : pokemon.MetLevel,
+            Moves: egg ? [] : [.. pokemon.Moves.Where(move => move != 0).Select(move => Name(_strings.Move, move, "?"))],
+            Stats: egg ? [0, 0, 0, 0, 0, 0] : [pokemon.Stat_HPMax, pokemon.Stat_ATK, pokemon.Stat_DEF,
                 pokemon.Stat_SPA, pokemon.Stat_SPD, pokemon.Stat_SPE],
-            Ivs: [pokemon.IV_HP, pokemon.IV_ATK, pokemon.IV_DEF,
+            Ivs: egg ? [0, 0, 0, 0, 0, 0] : [pokemon.IV_HP, pokemon.IV_ATK, pokemon.IV_DEF,
                 pokemon.IV_SPA, pokemon.IV_SPD, pokemon.IV_SPE],
-            Evs: [pokemon.EV_HP, pokemon.EV_ATK, pokemon.EV_DEF,
+            Evs: egg ? [0, 0, 0, 0, 0, 0] : [pokemon.EV_HP, pokemon.EV_ATK, pokemon.EV_DEF,
                 pokemon.EV_SPA, pokemon.EV_SPD, pokemon.EV_SPE],
             Friendship: pokemon.OriginalTrainerFriendship,
             Pid: pokemon.PID,

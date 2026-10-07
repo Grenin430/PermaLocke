@@ -1,3 +1,7 @@
+1.0.10.2 2026-10-07
+HUEVOS
+La ficha de un huevo ya no enseña género, naturaleza, habilidad, bola, entrenador, encuentro, estadísticas ni ataques. Solo el huevo.
+
 1.0.10.1 2026-10-07
 HUEVOS
 Un huevo ya no enseña qué hay dentro: ni el sprite, ni el nombre, ni el nivel, ni los PS en el panel del nivel máximo y en el equipo.

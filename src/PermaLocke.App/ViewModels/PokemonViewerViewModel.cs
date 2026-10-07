@@ -581,7 +581,7 @@ public sealed partial class PokemonViewerViewModel : SectionViewModel
             Stats.Add(new StatRowViewModel(index, StatNames[index], computed?[index] ?? pokemon.Stats[index], pokemon.Ivs[index], effect));
         }
 
-        NatureEffect = raised is null || lowered is null ? "neutra" : $"▲ {raised}  ▼ {lowered}";
+        NatureEffect = pokemon.IsEgg ? string.Empty : raised is null || lowered is null ? "neutra" : $"▲ {raised}  ▼ {lowered}";
 
         // Un huevo no enseña ni tipos ni ataques: el juego tampoco lo hace hasta que eclosiona.
         if (pokemon.IsEgg)

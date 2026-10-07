@@ -13190,3 +13190,4 @@ guardaba la especie desde que se pedía. Ahora: `LivePokemon.IsEgg` y `LiveParty
 icono de huevo, sin nivel ni PS (`CapBadge`, `HomeViewModel`); `BoxedPokemon.DisplayName` da «Huevo». `NurseryService.RecordAsync` apunta el huevo
 con `Species = 0` y nombre «Huevo»; al salir del huevo el monitor llama a `HatchedAsync` (una vez por PID), que pone la especie real y deja el evento
 `NurseryHatch`. `MonotypeRule` ignora las entradas sin especie. Sin probar en el juego. Las runs con huevos ya apuntados conservan su especie.
+La FICHA de un huevo tampoco enseña nada: la caja lee un huevo sin género, naturaleza, habilidad, bola, entrenador, origen ni cifras, y la vista oculta DATOS, ESTADÍSTICAS y ATAQUES (1.0.10.2).

@@ -585,7 +585,7 @@
                             </DockPanel>
                             <pixel:PixelText Text="{Binding RenameStatus}" Scale="2" Wrap="True" Margin="0,0,0,10" Colour="{DynamicResource PxGold}"
                                              Visibility="{Binding HasRenameStatus, Converter={StaticResource BoolToVisibility}}" />
-                            <Grid>
+                            <Grid Visibility="{Binding Selected.IsEgg, Converter={StaticResource InverseBoolToVisibility}}">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="140" />
                                     <ColumnDefinition Width="*" />
@@ -635,7 +635,7 @@
                             </StackPanel>
                         </TabItem>
 
-                        <TabItem Header="ESTADÍSTICAS">
+                        <TabItem Header="ESTADÍSTICAS" Visibility="{Binding Selected.IsEgg, Converter={StaticResource InverseBoolToVisibility}}">
                             <StackPanel>
                         <DockPanel Margin="0,0,0,8">
                             <Button DockPanel.Dock="Right" Content="ENTRENAR EV" Style="{StaticResource PxSubtleButton}"
@@ -657,7 +657,7 @@
                             </StackPanel>
                         </TabItem>
 
-                        <TabItem Header="ATAQUES">
+                        <TabItem Header="ATAQUES" Visibility="{Binding Selected.IsEgg, Converter={StaticResource InverseBoolToVisibility}}">
                             <ItemsControl ItemsSource="{Binding SelectedMoves}" ItemTemplate="{StaticResource MoveTemplate}" />
                         </TabItem>
                     </TabControl>
