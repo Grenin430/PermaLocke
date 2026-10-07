@@ -148,6 +148,9 @@ public static class HpBar
         private int _empties;
         private bool _sawBox;
         private HpBarState _previous = HpBarState.Hidden;
+        private double? _hiddenSince;
+        private bool _draining;
+        private int _hiddenReads;
 
         /// <summary>Whether the bar has been seen with colour at any point.</summary>
         public bool SawColour => _lastColour is not null;
@@ -158,6 +161,17 @@ public static class HpBar
         /// <summary>Whether to stop waiting because the box has never been on screen. See <see cref="NoBoxLimit"/>.</summary>
         public bool GiveUpWithoutBox(double ms) => !_sawBox && ms >= NoBoxLimit;
 
+        /// <summary>
+        /// How long a box may stay hidden after the bar was last seen in red (30 % or less) before it is taken as the fall. When a
+        /// Pokémon faints the game takes the box away and does not always show it empty: two deaths of 2026-10-06 and 10-07 left the
+        /// watch waiting its six seconds with the Pokémon long gone. An attack animation hides the box for less than this (§234).
+        /// </summary>
+        public const double HiddenAfterLowLimit = 3_500;
+
+        /// <summary>Whether to stop waiting: the box went away with the bar nearly empty and has not come back.</summary>
+        public bool GiveUpHiddenAfterLow(double ms) =>
+            _lastColour is <= LowFill && _hiddenSince is { } since && ms - since >= HiddenAfterLowLimit;
+
         /// <returns>Whether this reading completes a fall to zero.</returns>
         public bool Observe(HpBarReading reading, double ms)
         {
@@ -167,19 +181,31 @@ public static class HpBar
             switch (reading.State)
             {
                 case HpBarState.Filled:
+                    // Bajando: menos color que la lectura anterior.
+                    _hiddenReads = 0;
+                    _draining = _lastColour is { } before && reading.Fill < before;
                     _lastColour = reading.Fill;
                     _lastColourAt = ms;
                     _empties = 0;
                     _sawBox = true;
+                    _hiddenSince = null;
                     return false;
 
                 case HpBarState.Hidden:
+                    _hiddenSince ??= ms;
+                    _hiddenReads++;
                     _empties = 0;
                     _emptyRightAfterColour = false;
-                    return false;
+
+                    // La barra bajaba casi a cero y la caja se esconde al instante: el juego se la lleva sin enseñarla
+                    // vacía (a doble velocidad dura menos que una lectura). Es la caída (§234).
+                    // Dos lecturas ocultas seguidas, no una: una captura fallida o una ventana delante dan una sola.
+                    return _draining && _hiddenReads >= 2 && _lastColour is <= 0.15 && ms - _lastColourAt <= 150;
             }
 
             _sawBox = true;
+            _hiddenSince = null;
+            _hiddenReads = 0;
 
             if (previous != HpBarState.Empty)
             {

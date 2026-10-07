@@ -608,7 +608,7 @@ public sealed class GameLinkMonitor(
     }
 
     /// <summary>What the game takes to show a Pokémon fainting once its bar is empty: the fall, the cry and the message.</summary>
-    private static readonly TimeSpan FaintAnimation = TimeSpan.FromMilliseconds(1800);
+    private static readonly TimeSpan FaintAnimation = TimeSpan.FromMilliseconds(1200);
 
     private async Task OnBattleFaintAsync(Run run, GameSnapshot snapshot, BattleFaint faint,
         IReadOnlyList<BattleTable> tables)

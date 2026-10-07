@@ -240,7 +240,7 @@ generado: 2026-09-24
 - L13196 · 231 · Los objetos recogidos salían como un paquete: tabla objeto a icono del propio juego
 - L13204 · 232 · Gráficos del emulador: resolución y Vulkan antes de arrancar
 - L13216 · 233 · Cementerio con la especie de verdad y killcams compartidas a 1,5 Mbit/s
-- L13230 · 234 · La escena de muerte espera a que el Pokémon acabe de debilitarse (1,8 s tras el cero) y la barra espera más a una caja escondida por un ataque largo
+- L13230 · 234 · La escena de muerte espera a que el Pokémon acabe de debilitarse (1,2 s tras el cero; caída sin cero visible por reglas nuevas) y la barra espera más a una caja escondida por un ataque largo
 
 Subsecciones §176: bis (visor), ter (todas las pantallas, fuera ESTADÍSTICAS), quater (EV/MOVIMIENTOS sin bolsa, diálogos).
 

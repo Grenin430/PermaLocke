@@ -97,6 +97,39 @@ public class HpBarTests
         Assert.False(seen.GiveUpWithoutBox(5_000));
     }
 
+
+    /// <summary>
+    /// Two real deaths (2026-10-06 and 10-07) read red, then hidden, and never empty: the game took the box away without showing
+    /// it at zero, and the ceremony waited its six seconds with the Pokémon long gone (§234).
+    /// </summary>
+    [Fact]
+    public void A_bar_draining_to_red_whose_box_then_goes_is_the_fall()
+    {
+        var watch = new HpBar.ZeroWatch();
+
+        Assert.False(watch.Observe(Colour(0.49), 188));
+        Assert.False(watch.Observe(Colour(0.24), 223));
+        Assert.False(watch.Observe(Colour(0.06), 251));
+        Assert.False(watch.Observe(Hidden, 266));            // una sola lectura oculta puede ser una captura fallida
+        Assert.True(watch.Observe(Hidden, 276));
+    }
+
+    [Fact]
+    public void A_box_hidden_with_a_steady_low_bar_is_a_fall_only_after_a_while()
+    {
+        var watch = new HpBar.ZeroWatch();
+
+        Assert.False(watch.Observe(Colour(0.06), 0));
+        Assert.False(watch.Observe(Hidden, 30));              // una lectura sin bajar: puede ser el principio de una animación
+        Assert.False(watch.GiveUpHiddenAfterLow(2_000));       // un ataque largo tapa la caja más que esto
+        Assert.True(watch.GiveUpHiddenAfterLow(30 + HpBar.ZeroWatch.HiddenAfterLowLimit));
+
+        // Una barra con mucho color no cuenta: es el menú o una animación (el caso del §114 quater).
+        var full = new HpBar.ZeroWatch();
+        full.Observe(Colour(0.80), 0);
+        full.Observe(Hidden, 30);
+        Assert.False(full.GiveUpHiddenAfterLow(30_000));
+    }
     [Fact]
     public void A_full_bar_is_filled() =>
         Assert.Equal(HpBarState.Filled, HpBar.Classify(Row((Green, 85))));

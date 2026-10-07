@@ -445,3 +445,9 @@ negro del estudio de fotos: gen 8-9 en el equipo (ver Trampas y lecciones).
   salía sobre su caída. Ahora espera 1,8 s tras el cero (estimado, a medir con las killcams nuevas que ya incluyen la caída) y `NoBoxLimit` sube de 2,5 a 4 s para que un ataque largo
   no se tome por veneno. Lo que aprendí: mirar los fotogramas del propio fallo (las killcams) y no solo los logs; el límite de la killcam, que acababa pronto, ya lo delataba.
   Publicada con el sincronizador de especies del cementerio (§233) y las killcams a 1,5 Mbit/s.
+- **Recorte con x2 y Vulkan** (corrige §232, sin publicar): imagen mayor que la ventana (barra de PS rival cortada). Aislado en la carpeta de prueba: x1+Vulkan bien, x2+OpenGL bien. La explicación de la casilla
+  Vulkan ya avisa. Lo que aprendí: no prometer «más estable» sin probarlo en esa GPU.
+- **La muerte que tardó 6 s** (seguimiento del §234, publicada en la 1.0.12.1): Beldum, 19:56, «6 % · oculta». La killcam mostró que el Pokémon ya había caído y el juego escondió la caja sin enseñar el cero (a 200 % el cero dura
+  menos que una lectura). `ZeroWatch`: barra bajando a ≤15 % y caja oculta en 150 ms = caída; caja oculta 3,5 s tras rojo = caída. `FaintAnimation` 1,2 s. Antes de publicar: probar en el juego que no salga temprano.
+- **Subagentes del proyecto** (2026-10-07): `permalocke-reviewer` (Sonnet) y `permalocke-release-check` (Haiku 5.5 por alias `haiku`) junto al `permalocke-investigator` (Haiku). Probados contra el cambio de la muerte lenta: ambos útiles. **1.0.12.1 publicada** con ese cambio.
+  El amigo no veía el juego al abrir x2: sin datos de su PC; el organizador pidió olvidarlo (queda pendiente por si se repite: log en `Emulator\user\log\azahar_log.txt`).

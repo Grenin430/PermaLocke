@@ -13240,3 +13240,16 @@ larga (golpe crítico, movimiento Z, varios golpes) esconde la caja más tiempo,
 como la escena no ha salido, la grabación sigue y recoge la caída entera. (2) `NoBoxLimit` pasa de 2,5 a 4 s: los envenenados y las trampas de entrada, que no tienen
 animación, tardan 1,5 s más en saltar; un ataque largo ya no se confunde con ellos. Los 1,8 s son una estimación (caída, grito y mensaje); con las killcams nuevas, que
 ahora incluyen la caída, se podrá medir y ajustar. Sin probar en el juego.
+
+**Corrección al §232 (2026-10-07, publicada en la 1.0.12.1).** Con x2 y Vulkan en la RTX 5060 Ti la imagen salió más grande que la ventana (escala 1,99 donde cabía 1,97): la caja de PS del rival
+perdía la parte de arriba y los botones de abajo el borde. Con x1 y Vulkan no se cortaba, y con x2 y OpenGL desde el arranque va bien. La casilla de Vulkan ya no dice que sea «más estable»:
+avisa del recorte. Pasar a Vulkan por defecto (se pensó) queda descartado; el recorte rompería además la lectura de la barra de PS (posición fija) de la escena de muerte.
+
+**Seguimiento del §234 (2026-10-07, publicado en la 1.0.12.1): la muerte que tardaba 6 s.** La última muerte de la prueba (Beldum, 19:56) salió a los 6 s: el log decía «barra vista pero sin llegar a cero en 6 s (0 color 6 % · 30 oculta)».
+Su killcam lo explica: a 1,5 s del inicio de la espera el campo ya estaba vacío por el lado del jugador, es decir, el Pokémon había caído y el juego se llevó la caja **sin enseñarla a cero**. Pasó igual
+con Michelangelo el 10-06 (49, 35, 24, 14, 6 % y oculta). El juego va a doble velocidad (límite de 200 %), así que el cero dura menos que una lectura. Dos reglas nuevas en `HpBar.ZeroWatch`:
+(1) una barra que **bajaba** hasta el 15 % o menos y cuya caja se esconde en 150 ms es la caída; (2) una caja escondida 3,5 s tras haber estado en rojo (30 % o menos) se da por caída (`GiveUpHiddenAfterLow`;
+un ataque largo no esconde la caja tanto, y con mucho color no cuenta, que es el menú). Además `FaintAnimation` baja de 1,8 a 1,2 s: el juego va al doble. Los tiempos son estimaciones.
+
+**Revisor y comprobador nuevos (2026-10-07).** `.claude/agents/permalocke-reviewer.md` (Sonnet, con las trampas del proyecto) y `permalocke-release-check.md` (Haiku, lista mecánica de publicación). El revisor, probado contra
+este cambio, pidió dos lecturas ocultas seguidas para la regla de «barra bajando y caja que se esconde» (`_hiddenReads`); el comprobador marcó que el índice del cerebro llevaba un tiempo viejo.

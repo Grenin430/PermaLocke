@@ -102,7 +102,7 @@
                     <pixel:PixelText Style="{StaticResource Explain}" Text="Calidad de imagen del emulador, de 1 a 4 veces la de la consola. Se aplica al abrir el juego: cámbiala con el juego cerrado, porque cambiarla dentro hace que la imagen se ponga negra o parpadee." />
 
                     <CheckBox Style="{StaticResource Check}" IsChecked="{Binding Vulkan}" Content="Usar Vulkan en el emulador" />
-                    <pixel:PixelText Style="{StaticResource Explain}" Text="Más estable que OpenGL en las tarjetas gráficas nuevas. Se aplica al abrir el juego." />
+                    <pixel:PixelText Style="{StaticResource Explain}" Text="Con una resolución alta, en algunas tarjetas gráficas Vulkan recorta la imagen por arriba y por abajo (la caja de PS se corta): si te pasa, apágala. Se aplica al abrir el juego." />
 
                     <CheckBox Style="{StaticResource Check}" IsChecked="{Binding Background}" Content="Seguir en segundo plano al cerrar" />
                     <pixel:PixelText Style="{StaticResource Explain}" Text="Al cerrar, PermaLocke se queda junto al reloj y te sigue avisando de los caídos de tus amigos. Sin marcar, se cierra del todo." />

@@ -1,3 +1,10 @@
+1.0.12.1 2026-10-07
+MUERTES
+La escena de muerte ya no tarda 6 segundos cuando el juego se lleva la caja de PS sin enseñarla a cero (pasaba a doble velocidad): sale en cuanto la barra baja a casi nada y la caja se va, o a los 3,5 s si la caja no vuelve.
+La pausa tras la caída para que el Pokémon acabe de debilitarse baja a 1,2 segundos, porque el juego va más rápido.
+AJUSTES
+La casilla de Vulkan avisa de que con una resolución alta algunas tarjetas recortan la imagen: si te pasa, apágala.
+
 1.0.12 2026-10-07
 MUERTES
 La escena de muerte ya no sale encima del juego antes de que el Pokémon se debilite del todo: espera a que acabe su caída y el mensaje de «se ha debilitado».

@@ -84,6 +84,13 @@ public static class HpBarWatcher
                        + $"({readings} lecturas: {string.Join(" · ", trace)})";
             }
 
+            // La barra estaba casi vacía y la caja se fue sin volver: el Pokémon ya ha caído, solo que el juego no enseñó el cero.
+            if (watch.GiveUpHiddenAfterLow(ms))
+            {
+                return $"la caja de PS se escondió con la barra casi vacía y no ha vuelto en {HpBar.ZeroWatch.HiddenAfterLowLimit:F0} ms "
+                       + $"({readings} lecturas: {string.Join(" · ", trace)})";
+            }
+
             await Task.Delay(10, ct);
         }
 
