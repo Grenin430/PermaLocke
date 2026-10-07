@@ -92,6 +92,18 @@
                     <CheckBox Style="{StaticResource Check}" IsChecked="{Binding CapPanel}" Content="Cap de nivel encima del juego" />
                     <pixel:PixelText Style="{StaticResource Explain}" Text="El panel de arriba a la derecha con la prueba, el cap y el nivel de tu equipo." />
 
+                    <pixel:PixelText Text="{Binding ResolutionText}" Scale="2" Tight="True" Margin="0,6,0,4" Colour="{DynamicResource PxAccentInkLight}" />
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                        <Button Content="x1" Style="{StaticResource PxSubtleButton}" MinWidth="60" Margin="0,0,8,0" Command="{Binding SetResolutionCommand}" CommandParameter="1" />
+                        <Button Content="x2" Style="{StaticResource PxSubtleButton}" MinWidth="60" Margin="0,0,8,0" Command="{Binding SetResolutionCommand}" CommandParameter="2" />
+                        <Button Content="x3" Style="{StaticResource PxSubtleButton}" MinWidth="60" Margin="0,0,8,0" Command="{Binding SetResolutionCommand}" CommandParameter="3" />
+                        <Button Content="x4" Style="{StaticResource PxSubtleButton}" MinWidth="60" Command="{Binding SetResolutionCommand}" CommandParameter="4" />
+                    </StackPanel>
+                    <pixel:PixelText Style="{StaticResource Explain}" Text="Calidad de imagen del emulador, de 1 a 4 veces la de la consola. Se aplica al abrir el juego: cámbiala con el juego cerrado, porque cambiarla dentro hace que la imagen se ponga negra o parpadee." />
+
+                    <CheckBox Style="{StaticResource Check}" IsChecked="{Binding Vulkan}" Content="Usar Vulkan en el emulador" />
+                    <pixel:PixelText Style="{StaticResource Explain}" Text="Más estable que OpenGL en las tarjetas gráficas nuevas. Se aplica al abrir el juego." />
+
                     <CheckBox Style="{StaticResource Check}" IsChecked="{Binding Background}" Content="Seguir en segundo plano al cerrar" />
                     <pixel:PixelText Style="{StaticResource Explain}" Text="Al cerrar, PermaLocke se queda junto al reloj y te sigue avisando de los caídos de tus amigos. Sin marcar, se cierra del todo." />
 

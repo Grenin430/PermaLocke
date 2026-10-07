@@ -13192,3 +13192,23 @@ con `Species = 0` y nombre «Huevo»; al salir del huevo el monitor llama a `Hat
 `NurseryHatch`. `MonotypeRule` ignora las entradas sin especie. Sin probar en el juego. Las runs con huevos ya apuntados conservan su especie.
 
 La FICHA de un huevo tampoco enseña nada: la caja lee un huevo sin género, naturaleza, habilidad, bola, entrenador, origen ni cifras, y la vista oculta DATOS, ESTADÍSTICAS y ATAQUES (1.0.10.2).
+
+## §231 · Los objetos recogidos salían como un paquete (2026-10-07, publicado en la 1.0.11)
+
+La animación de un objeto recogido dibuja su icono con `PokemonSpriteService.GetItem`, y cuando `ItemIconIndex.TryGet` no conocía el objeto
+devolvía null y la escena ponía el paquete de regalo. El índice solo tenía lo medido a ojo (§45), y faltaban muchos objetos de campo.
+El juego trae su propia tabla objeto → icono en `code.bin` (0x4BC8BC, 960 entradas de 32 bits, 768 = «?»); coincide con todo lo medido, así que
+`ItemIconIndex.UseCartridgeTable` la lee de `Expansion/exefs/code.bin` al preparar los sprites y rellena lo no medido (lo medido manda).
+Los objetos del mod (960 en adelante) siguen por `TryExpansion`. Prueba: `CartridgeItemIconTests`. Sin ver en la app.
+
+## §232 · Gráficos del emulador: resolución y Vulkan antes de arrancar (2026-10-07, publicado en la 1.0.11)
+
+Cambiar la resolución interna de Azahar con el juego abierto (x1 a x2 a x1) dejó la imagen en negro y luego ampliada y parpadeando, en OpenGL y en Vulkan,
+sin ningún error en el log: es el emulador reutilizando texturas del tamaño anterior, no el driver (RTX 5060 Ti, 610.74). El Azahar de la prueba estaba en OpenGL
+(`graphics_api=1`; 2 es Vulkan); nada de PermaLocke lo tocaba. Desde la 1.0.11, `AzaharInstallation.SetGraphics` escribe `resolution_factor` (1 a 4, con su
+`\default`) y, si se pide, `graphics_api=2`, en cada arranque y con el emulador cerrado, como el resto. `AppSettingsData.Resolution` (0 = no tocar la del
+emulador, por defecto) y `Vulkan` (apagado por defecto); botones x1 a x4 y casilla en CONFIGURACIÓN (pulsar el botón activo vuelve a 0). Visto con x2 desde el
+arranque: bien. Probado: `AzaharInstallationTests`. Azahar reescribe su configuración al cerrarse: editarla con él abierto no sirve.
+
+Aparte, el mismo día: Admin 1.0.10.x no leía las runs con huevos de guardería (`PokemonOrigin.Nursery` no existía en su build de Release); la auditoría salta ahora las
+runs ilegibles y avisa. Recompilar Admin en Release tras cada versión que añada valores a un enum.

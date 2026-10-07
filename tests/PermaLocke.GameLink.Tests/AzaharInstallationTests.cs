@@ -210,4 +210,37 @@ public class AzaharInstallationTests : IDisposable
         Assert.Contains("camera_outer_left_name=blank", ini);
         Assert.DoesNotContain("camera_inner_name=qt", ini);
     }
+
+    [Fact]
+    public void The_graphics_are_written_before_the_game_opens_and_vulkan_only_when_asked()
+    {
+        // Las claves de Azahar llevan una barra invertida: «clave\default».
+        static string Default(string key) => key + (char)92 + "default";
+
+        var user = Path.Combine(_root, "user");
+        Directory.CreateDirectory(Path.Combine(user, "config"));
+        var ini = Path.Combine(user, "config", "qt-config.ini");
+        File.WriteAllLines(ini,
+        [
+            "[Renderer]", "resolution_factor=1", Default("resolution_factor") + "=true",
+            Default("graphics_api") + "=true", "graphics_api=1"
+        ]);
+        var location = new AzaharLocation(user, null, true);
+
+        Assert.True(_installation.SetGraphics(location, 3, vulkan: false));
+        var text = File.ReadAllText(ini);
+        Assert.Contains("resolution_factor=3", text);
+        Assert.Contains(Default("resolution_factor") + "=false", text);
+        Assert.Contains("graphics_api=1", text);                // sin pedirlo, el renderizador no se toca
+
+        Assert.True(_installation.SetGraphics(location, 99, vulkan: true));
+        text = File.ReadAllText(ini);
+        Assert.Contains("resolution_factor=4", text);           // el tope es x4
+        Assert.Contains("graphics_api=2", text);
+        Assert.Contains(Default("graphics_api") + "=false", text);
+
+        Assert.True(_installation.SetGraphics(location, 1, vulkan: true));
+        Assert.Contains(Default("resolution_factor") + "=true", File.ReadAllText(ini));
+// Con 0 la resolución del emulador no se toca.        File.WriteAllLines(ini, ["[Renderer]", "resolution_factor=3"]);        Assert.True(_installation.SetGraphics(location, 0, vulkan: false));        Assert.Contains("resolution_factor=3", File.ReadAllText(ini));
+    }
 }

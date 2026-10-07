@@ -11,6 +11,7 @@ namespace PermaLocke.Randomizer.Tests;
 /// equivocado no se nota (§45). Dos aros, tres manzanas, dos teteras, dos pergaminos, dos
 /// armaduras, dos tazas y una moneda de oro sí se reconocen de un vistazo.
 /// </remarks>
+[Collection("ItemIconIndex")]
 public sealed class ExpansionItemIconTests
 {
     private const int Mod = ItemIconIndex.ExpansionIcons;

@@ -12,6 +12,7 @@ namespace PermaLocke.Randomizer.Tests;
 /// answer, so a later edit cannot quietly shift the block by one and show every stone as its
 /// neighbour, which is a mistake nobody would ever notice (§45).
 /// </remarks>
+[Collection("ItemIconIndex")]
 public sealed class MegaStoneIconTests
 {
     [Fact]

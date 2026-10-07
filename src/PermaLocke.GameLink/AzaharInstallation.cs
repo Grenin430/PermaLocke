@@ -152,6 +152,51 @@ public sealed class AzaharInstallation(ILogger<AzaharInstallation> logger)
     }
 
     /// <summary>
+    /// The emulator's internal resolution (1 to 4 times the console's) and, when asked, the Vulkan renderer (2026-10-07). Written
+    /// with the emulator closed, at every launch: changing the resolution inside a running game leaves a black or zoomed
+    /// picture that flickers, and Azahar saves its own settings on exit and would undo it.
+    /// </summary>
+    public bool SetGraphics(AzaharLocation location, int resolution, bool vulkan)
+    {
+        var configPath = Path.Combine(location.UserDirectory, "config", "qt-config.ini");
+
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(configPath)!);
+
+            var lines = File.Exists(configPath) ? File.ReadAllLines(configPath).ToList() : [];
+            var changed = false;
+            var factor = Math.Clamp(resolution, 1, 4);
+
+            // 0 es «la que tenga el emulador»: no se toca.
+            if (resolution > 0)
+            {
+                changed |= SetValue(lines, "resolution_factor", factor.ToString(), "[Renderer]");
+                changed |= SetValue(lines, @"resolution_factor\default", factor == 1 ? "true" : "false", "[Renderer]");
+            }
+
+            if (vulkan)
+            {
+                changed |= SetValue(lines, "graphics_api", "2", "[Renderer]");
+                changed |= SetValue(lines, @"graphics_api\default", "false", "[Renderer]");
+            }
+
+            if (changed)
+            {
+                File.WriteAllLines(configPath, lines);
+                logger.LogInformation("Gráficos de Azahar: resolución x{Factor}{Api} en {Path}", factor, vulkan ? ", Vulkan" : string.Empty, configPath);
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "No se pudieron poner los gráficos de Azahar en {Path}", configPath);
+            return false;
+        }
+    }
+
+    /// <summary>
     /// The emulation speed limit, in percent of the console (2026-10-06, asked by the organiser: 200 % every time the game
     /// opens). Written with the emulator closed, like the other settings: Azahar saves its own on exit.
     /// </summary>

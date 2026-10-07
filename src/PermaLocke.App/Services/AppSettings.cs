@@ -17,7 +17,9 @@ public sealed record AppSettingsData(
     bool Nicknames = true,
     bool CapPanel = true,
     bool Background = false,
-    bool GuideHidden = false);
+    bool GuideHidden = false,
+    int Resolution = 0,
+    bool Vulkan = false);
 
 /// <summary>
 /// The player's preferences, kept in <c>Config/ajustes.json</c> and pushed into the services that obey them.

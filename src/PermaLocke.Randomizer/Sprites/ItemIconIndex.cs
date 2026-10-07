@@ -157,7 +157,52 @@ public static class ItemIconIndex
             return true;
         }
 
-        return Measured.TryGetValue(itemId, out icon);
+        if (Measured.TryGetValue(itemId, out icon))
+        {
+            return true;
+        }
+
+        // Lo que nadie midió lo dice el propio cartucho (2026-10-07).
+        if (_cartridge is { } table && itemId > 0 && itemId < table.Length && table[itemId] is var found
+            && found != BlankIcon && found < containerIcons)
+        {
+            icon = found;
+            return true;
+        }
+
+        icon = 0;
+        return false;
+    }
+
+    /// <summary>The icon an item without one points to in the cartridge's own table: the «?».</summary>
+    private const int BlankIcon = 768;
+
+    /// <summary>Where the game keeps its item to icon table inside <c>code.bin</c>, and how many items it has (the cartridge's 960).</summary>
+    public const int CartridgeTableOffset = 0x4BC8BC, CartridgeTableItems = 960;
+
+    private static int[]? _cartridge;
+
+    /// <summary>
+    /// Reads the game's own item to icon table from its <c>code.bin</c> (one 32 bit number per item). Every entry the measured
+    /// table holds agrees with it (checked 2026-10-07), so it only fills in what was never measured: the key items, the berries and
+    /// the held items of the whole cartridge. Without it, an item with no entry here is drawn as a parcel.
+    /// </summary>
+    public static void UseCartridgeTable(ReadOnlySpan<byte> code)
+    {
+        var end = CartridgeTableOffset + (4 * CartridgeTableItems);
+        if (code.Length < end)
+        {
+            _cartridge = null;
+            return;
+        }
+
+        var table = new int[CartridgeTableItems];
+        for (var i = 0; i < table.Length; i++)
+        {
+            table[i] = (int)System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(code[(CartridgeTableOffset + (4 * i))..]);
+        }
+
+        _cartridge = table;
     }
 
     /// <summary>

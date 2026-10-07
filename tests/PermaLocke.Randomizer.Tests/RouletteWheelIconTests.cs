@@ -18,6 +18,7 @@ namespace PermaLocke.Randomizer.Tests;
 /// see <c>PermaLocke.Data</c>, and pulling one field out of a file does not need it.
 /// </para>
 /// </remarks>
+[Collection("ItemIconIndex")]
 public sealed class RouletteWheelIconTests
 {
     private static string Root()

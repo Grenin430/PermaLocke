@@ -59,6 +59,8 @@ public sealed partial class SettingsViewModel : SectionViewModel
         Nicknames = current.Nicknames;
         CapPanel = current.CapPanel;
         Background = current.Background;
+        Resolution = current.Resolution;
+        Vulkan = current.Vulkan;
         _loading = false;
     }
 
@@ -104,6 +106,14 @@ public sealed partial class SettingsViewModel : SectionViewModel
     [ObservableProperty]
     private bool _background;
 
+    [ObservableProperty]
+    private int _resolution;
+
+    [ObservableProperty]
+    private bool _vulkan;
+
+    public string ResolutionText => Resolution == 0 ? "Resolución: la que tenga el emulador" : $"Resolución x{Resolution}";
+
     partial void OnNotificationsChanged(bool value) => Save();
     partial void OnStepAsideChanged(bool value) => Save();
     partial void OnDeathSceneChanged(bool value) => Save();
@@ -115,6 +125,19 @@ public sealed partial class SettingsViewModel : SectionViewModel
     partial void OnNicknamesChanged(bool value) => Save();
     partial void OnCapPanelChanged(bool value) => Save();
     partial void OnBackgroundChanged(bool value) => Save();
+    partial void OnVulkanChanged(bool value) => Save();
+
+    partial void OnResolutionChanged(int value)
+    {
+        OnPropertyChanged(nameof(ResolutionText));
+        Save();
+    }
+
+    [RelayCommand]
+    private void SetResolution(string? factor)
+    {
+        if (int.TryParse(factor, out var value)) Resolution = value == Resolution ? 0 : Math.Clamp(value, 1, 4);
+    }
 
     private void Save()
     {
@@ -127,7 +150,7 @@ public sealed partial class SettingsViewModel : SectionViewModel
         {
             Notifications = Notifications, StepAside = StepAside, DeathScene = DeathScene, Killcam = Killcam,
             Follower = Follower, Ghosts = Ghosts, CatchCard = CatchCard, Nicknames = Nicknames, CapPanel = CapPanel,
-            Background = Background
+            Background = Background, Resolution = Resolution, Vulkan = Vulkan
         });
         Status = "Guardado.";
     }

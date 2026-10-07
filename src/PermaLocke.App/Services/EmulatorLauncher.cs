@@ -392,6 +392,7 @@ public sealed partial class EmulatorLauncher : ObservableObject
         _azahar.DisableCloseConfirmation(location);
         _azahar.SetSpeedLimit(location, 200);
         _azahar.DisableDiscordPresence(location);
+        _azahar.SetGraphics(location, _settings.Current.Resolution, _settings.Current.Vulkan);
         _azahar.SetFollower(location, Path.Combine(_paths.Root, "Emulator", "follower", AzaharInstallation.FollowerPluginName),
             _settings.Current.Follower);
         _integrity.PrepareLaunch(location);

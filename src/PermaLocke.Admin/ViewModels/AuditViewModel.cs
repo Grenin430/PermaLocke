@@ -87,25 +87,36 @@ public sealed partial class AuditViewModel(DiscordLogin discord, ILogger<AuditVi
 
             var uploads = (JsonSerializer.Deserialize<List<UploadRow>>(uploadsJson, Json) ?? []).ToLookup(u => u.Run_id);
             var rows = new List<AuditRow>();
+            var unreadable = 0;
 
             foreach (var run in JsonSerializer.Deserialize<List<RunRow>>(runsJson, Json) ?? [])
             {
-                var snapshot = run.Snapshot.Deserialize<RunSnapshot>(Json)!;
-                var history = await Services.ServerHistory.CompleteAsync(discord, run.History.Deserialize<RunHistory>(Json), snapshot, Json);
-                var result = SnapshotAudit.Check(snapshot, history);
-                var log = uploads[run.Run_id].ToList();
+                try
+                {
+                    var snapshot = run.Snapshot.Deserialize<RunSnapshot>(Json)!;
+                    var history = await Services.ServerHistory.CompleteAsync(discord, run.History.Deserialize<RunHistory>(Json), snapshot, Json);
+                    var result = SnapshotAudit.Check(snapshot, history);
+                    var log = uploads[run.Run_id].ToList();
 
-                rows.Add(new AuditRow(run.Run_id, run.Activa, run.User_id, snapshot.PlayerName, snapshot.Points, snapshot.EventCount,
-                    Say(result.Verdict), result.Detail, result.Verdict == AuditVerdict.Consistent,
-                    log.Count, Rewinds(log), run.Subida.LocalDateTime.ToString("dd/MM HH:mm"), Flags(history)));
+                    rows.Add(new AuditRow(run.Run_id, run.Activa, run.User_id, snapshot.PlayerName, snapshot.Points, snapshot.EventCount,
+                        Say(result.Verdict), result.Detail, result.Verdict == AuditVerdict.Consistent,
+                        log.Count, Rewinds(log), run.Subida.LocalDateTime.ToString("dd/MM HH:mm"), Flags(history)));
+                }
+                catch (Exception ex)
+                {
+                    // Una run que este Admin no sabe leer (suele ser un Admin más viejo que la app del jugador) no tapa a las demás.
+                    unreadable++;
+                    logger.LogError(ex, "No se pudo auditar la run {Run}", run.Run_id);
+                }
             }
 
             Rows.Clear();
             foreach (var row in rows.OrderByDescending(r => r.Active).ThenBy(r => r.Ok).ThenByDescending(r => r.Points)) Rows.Add(row);
 
-            Status = rows.Count == 0
+            Status = rows.Count == 0 && unreadable == 0
                 ? "Todavía no ha subido nadie su run."
-                : $"{rows.Count} runs · {rows.Count(r => !r.Ok || r.Rewinds.Length > 0 || r.Flags.Length > 0)} con algo que mirar.";
+                : $"{rows.Count} runs · {rows.Count(r => !r.Ok || r.Rewinds.Length > 0 || r.Flags.Length > 0)} con algo que mirar."
+                  + (unreadable > 0 ? $" {unreadable} no se pueden leer: actualiza Admin." : string.Empty);
         }
         catch (Exception ex)
         {

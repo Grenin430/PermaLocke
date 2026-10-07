@@ -1,3 +1,12 @@
+1.0.11 2026-10-07
+GRÁFICOS DEL EMULADOR
+Nuevo en CONFIGURACIÓN: resolución del emulador de x1 a x4 (una imagen mucho más nítida) y una casilla para usar Vulkan, más estable que OpenGL en las tarjetas gráficas nuevas.
+Se aplican al abrir el juego. Cámbialas con el juego cerrado: cambiar la resolución dentro del emulador, con el juego en marcha, deja la imagen en negro o parpadeando.
+Por defecto no se toca nada: sigue la resolución y el renderizador que tengas.
+ARREGLOS
+La animación al coger un objeto enseña su dibujo de verdad en vez de un regalo, también con los objetos que no estaban medidos.
+Un huevo no enseña nada en el equipo, las cajas ni la ficha (ya en la 1.0.10.1 y la 1.0.10.2).
+
 1.0.10.2 2026-10-07
 HUEVOS
 La ficha de un huevo ya no enseña género, naturaleza, habilidad, bola, entrenador, encuentro, estadísticas ni ataques. Solo el huevo.

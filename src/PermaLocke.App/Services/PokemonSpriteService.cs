@@ -116,6 +116,13 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
             // contenedor, no de si la carpeta existe: la carpeta puede estar y el fichero no.
             _itemIcons = await Task.Run(() => ItemIconReader.Open(rom.Path, scratch, baseLayer).Count, ct);
 
+            // La tabla objeto -> icono del propio juego completa la medida: sin ella, lo no medido se dibujaba como un paquete.
+            var code = Path.Combine(paths.Expansion, "exefs", "code.bin");
+            if (File.Exists(code))
+            {
+                ItemIconIndex.UseCartridgeTable(await File.ReadAllBytesAsync(code, ct));
+            }
+
             await Task.Run(() => ExtractItems(rom.Path, scratch), ct);
 
             _cache.Clear();
