@@ -79,7 +79,12 @@ public sealed class FieldItemRandomizer(RomWorkspace workspace, RandomizerOption
             .Where(item => item != 0)
             .ToList();
 
-        var machinePool = placed.Where(isMachine.Contains).ToList();
+        // Una MT que el cartucho pone en dos zonas es el mismo sitio en las dos versiones del juego (Lago Corosol y Lago
+        // Coroluna, las dos mitades del Cañón de Poni, el Paraíso Æther): barajar cada hueco por separado la repartía por
+        // dos lugares y el jugador la encontraba dos veces (2026-10-08, MT93). Se baraja cada MT distinta, y todos sus
+        // huecos reciben la misma.
+        var machinePool = placed.Where(isMachine.Contains).Distinct().ToList();
+        var machineOriginal = machinePool.ToList();
         var regularPool = placed.Where(item => !isMachine.Contains(item)).ToList();
 
         if (options?.FieldItemsMode == FieldItemsMode.Random)
@@ -101,6 +106,7 @@ public sealed class FieldItemRandomizer(RomWorkspace workspace, RandomizerOption
             Shuffle(regularPool, random);
         }
 
+        var machineMap = MachineMap(machineOriginal, machinePool);
         var machineCount = 0;
         var regularCount = 0;
         var touchedZones = new HashSet<int>();
@@ -115,7 +121,8 @@ public sealed class FieldItemRandomizer(RomWorkspace workspace, RandomizerOption
 
             if (isMachine.Contains(item))
             {
-                FieldItemTable.SetItem(environment, slot, machinePool[machineCount++]);
+                machineCount++;
+                FieldItemTable.SetItem(environment, slot, machineMap[item]);
             }
             else
             {
@@ -134,6 +141,10 @@ public sealed class FieldItemRandomizer(RomWorkspace workspace, RandomizerOption
 
         return new FieldItemResult(machineCount, regularCount, touchedZones.Count);
     }
+
+    /// <summary>What each TM the cartridge lies on the ground becomes: every one of its spots gets the same new TM.</summary>
+    public static Dictionary<int, int> MachineMap(IReadOnlyList<int> original, IReadOnlyList<int> shuffled) =>
+        original.Zip(shuffled).ToDictionary(pair => pair.First, pair => pair.Second);
 
     private static void Shuffle(List<int> values, IRandomSource random)
     {

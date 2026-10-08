@@ -1060,7 +1060,10 @@ async Task FieldItemsAsync()
     var items = workspace.Config.GetText(TextName.ItemNames);
     var locations = workspace.Config.GetText(TextName.metlist_000000);
     var generatedEnc = Path.Combine(root, "Randomized", "seed-20260818", "romfs", "a", "0", "8", "3");
-    var useGen = args.Contains("--gen") && File.Exists(generatedEnc);
+    // --dir <carpeta del mundo>: mira un mundo ya instalado en vez del de la semilla de pruebas.
+    var dirAt = Array.IndexOf(args, "--dir");
+    if (dirAt >= 0 && dirAt + 1 < args.Length) generatedEnc = Path.Combine(args[dirAt + 1], "romfs", "a", "0", "8", "3");
+    var useGen = (args.Contains("--gen") || dirAt >= 0) && File.Exists(generatedEnc);
     Console.WriteLine(useGen ? "=== FICHERO GENERADO ===" : "=== VANILLA ===");
     var garc = new GARC.LazyGARC(await File.ReadAllBytesAsync(useGen ? generatedEnc : workspace.PathOf(GameFiles.EncounterDataUltraMoon)));
 
@@ -1068,6 +1071,7 @@ async Task FieldItemsAsync()
     var machineIds = ShopTable.TechnicalMachines(items).ToHashSet();
     int total = 0, machines = 0, zonesWith = 0, unnamed = 0, berries = 0;
     var sample = new List<string>();
+    var machinePlaces = new Dictionary<int, List<int>>();
 
     for (var zone = 0; zone < zones; zone++)
     {
@@ -1080,7 +1084,12 @@ async Task FieldItemsAsync()
         {
             var item = FieldItemTable.GetItem(environment, slot);
             total++;
-            if (machineIds.Contains(item)) machines++;
+            if (machineIds.Contains(item))
+            {
+                machines++;
+                if (!machinePlaces.TryGetValue(item, out var where)) machinePlaces[item] = where = [];
+                where.Add(zone);
+            }
             if (item >= items.Length || items[item] == "(?)" || string.IsNullOrWhiteSpace(items[item])) unnamed++;
             if (sample.Count < 22 && item != 0) sample.Add($"z{zone}:{(item < items.Length ? items[item] : item.ToString())}");
             if (item < items.Length && items[item].StartsWith("Baya", StringComparison.OrdinalIgnoreCase)) berries++;
@@ -1093,6 +1102,11 @@ async Task FieldItemsAsync()
     Console.WriteLine($"  de los cuales BAYAS: {berries}");
     Console.WriteLine($"  ids sin nombre real: {unnamed}   (mucho = el localizador está mal)");
     Console.WriteLine($"\n  muestra: {string.Join(", ", sample)}");
+    Console.WriteLine($"  MT en el suelo (ids): {string.Join(" ", machinePlaces.Keys.Order())}");
+    foreach (var (item, where) in machinePlaces.Where(p => p.Value.Count > 1).OrderBy(p => p.Key))
+    {
+        Console.WriteLine($"  MT REPETIDA EN EL SUELO: {items[item]} (id {item}) en las zonas {string.Join(", ", where)}");
+    }
 }
 
 // Genera Data/zones.json: por cada área de encdata, los nombres de localización que cubre.

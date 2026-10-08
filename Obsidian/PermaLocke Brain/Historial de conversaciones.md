@@ -474,3 +474,25 @@ negro del estudio de fotos: gen 8-9 en el equipo (ver Trampas y lecciones).
 - **Cerebro al día** (2026-10-08): a petición («documenta todo en el cerebro si no está») se añadió lo de §238-§239 a
   [[Flujos del vigilante]], [[UI y kit pixel]], [[Pruebas]], [[Comandos]], [[Trampas y lecciones]], [[Preguntas abiertas]],
   [[Ideas para el futuro]], [[Usuario y forma de trabajar]] y [[Mapa de código/Tests]].
+
+## 2026-10-08 — Admin como centro de control (§240, sin publicar ni commit)
+- Pedido (texto largo pegado y luego «sí, arranca y baja el postgres»): rediseñar Admin entero como centro de control, con
+  servidor y datos nuevos donde hagan falta, seguridad, trazabilidad, pruebas y capturas. El usuario autorizó bajar
+  PostgreSQL: binarios 17.6 de EnterpriseDB en `C:\Users\javie\tools\pg17` (zip en `tools\pg-descarga`), base de pruebas en
+  el puerto 5433 (ver [[Comandos]]).
+- Hecho: `21-admin.sql` (registro por disparadores, `mandar_regalos` atómica e idempotente, notas, versión de cada app,
+  `admin_jugadores()`), Admin con JUGADORES filtrable y acciones a varios, ficha en 8 pestañas (MANDADO con el estado de
+  cada orden), confirmación con motivo en cada acción, INICIO con «requiere atención», página REGISTRO con «volver a antes»
+  para reglas, `--demo` (32 jugadores inventados) y `--capturas`. La app del jugador anota su versión.
+- Verificado: SQL 01-21 y sus pruebas en Postgres local; 1693 pruebas .NET (21 nuevas de Admin); revisor: 9 hallazgos (ninguno alto), todos arreglados; capturas de todas las
+  páginas, ficha, varios marcados, vacío, ventana mínima y confirmaciones con `--demo`.
+- Sin verificar: nada contra el Supabase real (no se tocó producción). Pendiente del organizador: ejecutar `21-admin.sql`
+  en Supabase; Admin funciona sin él y lo avisa con una franja.
+- Lo que aprendí: los subagentes del proyecto (`.claude/agents/`) no se ven si la sesión no está abierta en el repo; se
+  lanzó el revisor como agente general con sus instrucciones. Con heredocs largos en Git Bash, escribir el trozo con la
+  herramienta de ficheros y sustituir con `rep.pl` del scratchpad.
+- El organizador ejecutó `21-admin.sql` en Supabase (2026-10-08). Comprobado con la clave pública: `admin_jugadores`,
+  `mandar_regalos`, `limpiar`, `anotar_version` y las tablas `admin_registro`/`admin_notas` responden 401 «permission
+  denied» (existen y anon no entra), no 404. Las funciones con parámetros hay que llamarlas con ellos: vacías dan 404 aunque
+  existan. Admin Release recompilado; el acceso directo del Escritorio ya apuntaba a `bin\Release`.
+- **MT repetidas en el suelo** (2026-10-08, §241, publicada en la 1.0.15.1): «ya tenía la MT Imagen y la conseguí del suelo». Log: objeto 618 (MT93) a las 03:20 en Pueblo Ohana y a las 16:03 en Jungla Umbría. Causa: el cartucho pone MT03, MT06 y MT93 en dos zonas cada una (versiones Sol/Luna del mismo sitio) y el barajado por huecos las repartía por dos lugares. Arreglo: barajar MT distintas y dar la misma a todos los huecos de una. Lo que aprendí: antes de culpar a la tienda o a un NPC, contar repeticiones en el mundo (`RomTool fielditems --dir`); y un hueco no es un sitio. Hay que regenerar el mundo.

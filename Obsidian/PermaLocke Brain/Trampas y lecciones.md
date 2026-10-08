@@ -112,3 +112,8 @@ Copias de la prueba en `PermaLocke prueba\Saves\backup` (prueba-A, prueba-B, cor
   ventana se recarga (cambio de tema), `Loaded` reanuda la apertura y vuelve a programar el cierre.
 - **Prototipos:** medir el ancho del texto antes de maquetar (nombre + chip no cabían en 100 celdas, se pasó a 112) y
   dejar los chips oscuros con letras claras sobre latón: claro sobre claro no se lee.
+
+## Un hueco no es un sitio: MT del suelo (2026-10-08, §241)
+- El cartucho repite objetos en zonas distintas que son **el mismo sitio en Sol y Luna** (MT03, MT06, MT93: Lago Corosol/Coroluna, Cañón de Poni, Paraíso Æther). Barajar hueco a hueco las reparte por dos lugares. Barajar **objetos distintos** y dar el mismo a todos sus huecos (`FieldItemRandomizer.MachineMap`).
+- Ante «me ha salido repetido»: mirar el log (`Objeto nuevo en la mochila: <id>`) y `RomTool fielditems --dir <mundo>` antes de culpar a tiendas o NPC. Tiendas (29 MT) y suelo (42) no comparten ninguna en el cartucho.
+- La misma semilla da otro reparto tras el cambio; los mundos ya instalados no se arreglan solos.

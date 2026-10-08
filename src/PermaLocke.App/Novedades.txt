@@ -1,3 +1,7 @@
+1.0.15.1 2026-10-08
+MT
+Arreglado: una MT del suelo podía salir en dos sitios y la encontrabas dos veces (pasaba con MT03, MT06 y MT93). Ahora cada MT del suelo sale en un solo lugar. Hay que generar e instalar el mundo de nuevo para notarlo.
+
 1.0.15 2026-10-08
 CAP DE NIVEL
 El panel del cap sobre el juego es ahora una placa de trofeo: escudo de nogal con una copa de latón, el cap grabado en grande con la prueba y el siguiente, la mecha del nivel de tu equipo y una placa de latón por Pokémon (dorada si ya está en el tope, tachada si ha caído).

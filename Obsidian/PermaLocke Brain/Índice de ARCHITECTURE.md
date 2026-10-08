@@ -246,7 +246,9 @@ generado: 2026-09-24
 - L13271 · 237 · El juego recalcula la habilidad al evolucionar y cambiar de forma (ChangeFormNo, ChangeMonsNo); libro y restauración desde la app
 - L13309 · 238 · Los avisos son un pergamino que se desenrolla hacia la izquierda (ToastScroll, mecha, sello); prototipos A–Q
 - L13320 · 239 · El cap como placa de trofeo (CapPlaque, celdas enteras), el pergamino que se enrolla al irse (abre y cierra suave) y el aviso de duplicado que no salía (NewsSaid); 1.0.15
+- L13334 · 240 · Admin como centro de control: 21-admin.sql (admin_registro por disparadores, mandar_regalos, admin_notas, admin_jugadores, versión), JUGADORES con filtros y acciones a varios, ficha por pestañas, Confirm, REGISTRO, --demo y --capturas; sin publicar
 
 Subsecciones §176: bis (visor), ter (todas las pantallas, fuera ESTADÍSTICAS), quater (EV/MOVIMIENTOS sin bolsa, diálogos).
 
 Otros docs: `docs/DISTRIBUCION-LOCAL.md` (reparto local, informes del amigo, revisiones r2/r3; ver [[Incidencias del PC del amigo]]), `docs/MOD-EXPANSION.md` (mod gen 8-9), `docs/fork/` (parches del fork de Azahar).
+- L13361 · 241 · Una MT del suelo salía en dos sitios (MT03/06/93 en dos zonas del cartucho); se baraja por MT distinta

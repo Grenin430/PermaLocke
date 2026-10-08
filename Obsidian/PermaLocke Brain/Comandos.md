@@ -116,3 +116,23 @@ dotnet run --project tools/PermaLocke.RomTool -- clases "<mod>/romfs/a/1/0/6"   
 dotnet run --project tools/PermaLocke.RomTool -- variocolor           # ✔ Data/variocolor.json + hojas de revisión (§180)
 ```
 - Captura de la app sin que tape otra ventana: `PrintWindow` sobre el `MainWindowHandle` (PowerShell con Add-Type), `--sin-juego --seccion "X" --tamano grande`; clics con `SetCursorPos` + `mouse_event`.
+
+## Probar los SQL de Supabase en local (2026-10-08)
+Postgres 17.6 portable en `C:\Users\javie\tools\pg17` (datos en `pg17\datos`, log en `pg17\log.txt`). Nunca contra el torneo.
+```bash
+/c/Users/javie/tools/pg17/pgsql/bin/pg_ctl.exe -D /c/Users/javie/tools/pg17/datos -o "-p 5433" -l /c/Users/javie/tools/pg17/log.txt start
+PATH="/c/Users/javie/tools/pg17/pgsql/bin:$PATH" PGPORT=5433 PGHOST=localhost sh tools/supabase/pruebas/probar.sh
+```
+`probar.sh` crea y borra `permalocke_pruebas`, aplica 01..NN y ejecuta `pruebas/NN-*.sql`; cada «bien:» es una negativa
+esperada y un «MAL» es un fallo. Pararlo: `pg_ctl.exe -D ... stop`.
+
+## Admin sin tocar el torneo (§240)
+- `PermaLocke.Admin.exe --demo`: 32 jugadores inventados en memoria (`DemoServer`); lo que se manda se queda ahí.
+- `PermaLocke.Admin.exe --demo --capturas <carpeta>`: PNG de todas las páginas, la ficha pestaña a pestaña, varios
+  marcados, vacío, ventana mínima y dos confirmaciones; se cierra solo. Sin `--demo` lee el torneo de verdad (solo lectura).
+
+## MT repetidas en el suelo (§241)
+```bash
+dotnet run --project tools/PermaLocke.RomTool -- fielditems                       # el cartucho: lista MT repetidas
+dotnet run --project tools/PermaLocke.RomTool -- fielditems --dir "<mundo>"       # un mundo instalado (Randomized/seed-...)
+```

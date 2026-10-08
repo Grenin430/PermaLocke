@@ -29,6 +29,17 @@ public sealed class FieldItemRandomTests
     private const int OrdinarySpots = 493, GoldSpots = 45;
 
     [Fact]
+    public void A_machine_lying_in_two_zones_becomes_one_machine_in_both()
+    {
+        // MT93 sits in both halves of Poni Canyon in the cartridge: after the shuffle it is one TM there, never two places.
+        var original = new[] { 330, 333, 618 };
+        var map = FieldItemRandomizer.MachineMap(original, [618, 330, 333]);
+
+        Assert.Equal(618, map[330]);
+        Assert.Equal(original.Length, map.Values.Distinct().Count());
+    }
+
+    [Fact]
     public void No_item_comes_out_more_times_than_the_cap_and_every_one_is_from_the_pool()
     {
         var pool = Enumerable.Range(100, 534).ToList();
