@@ -177,6 +177,7 @@ public sealed class HomeViewTests
                 }
 
                 PermaLocke.App.Views.Pixel.PixelTheme.Apply("clasico", app.Resources);
+                RenderNotices();
             }
             catch (Exception ex) { failure = ex; }
             finally { app?.Shutdown(); }
@@ -185,6 +186,49 @@ public sealed class HomeViewTests
         thread.Start();
         Assert.True(thread.Join(TimeSpan.FromSeconds(20)), "WPF view load timed out");
         if (failure is not null) ExceptionDispatchInfo.Capture(failure).Throw();
+    }
+
+    /// <summary>
+    /// The notices over the game (the scroll): every kind builds, measures and draws through the real template, at the
+    /// first step of the entrance and wide open. With PERMALOCKE_SNAP_DIR it saves both as PNG, over a game-coloured floor.
+    /// </summary>
+    private static void RenderNotices()
+    {
+        var now = DateTime.UtcNow;
+        var linger = TimeSpan.FromSeconds(6);
+        var toasts = new[]
+        {
+            new PermaLocke.App.Services.Toast(PermaLocke.App.Services.ToastKind.Death, "pedicure ha caído", "-25 puntos · Nv. 20", Placeholder(2), now.AddSeconds(-1), linger),
+            new PermaLocke.App.Services.Toast(PermaLocke.App.Services.ToastKind.Shiny, "¡Variocolor!", "Charizard · siempre se captura", Placeholder(3), now.AddSeconds(-3), linger),
+            new PermaLocke.App.Services.Toast(PermaLocke.App.Services.ToastKind.Duplicate, "Ya lo tienes", "Frogadier · captúralo o pasa y se descuenta", null, now.AddSeconds(-5), linger),
+            new PermaLocke.App.Services.Toast(PermaLocke.App.Services.ToastKind.Update, "Hay una versión nueva", "PermaLocke 1.0.14 está lista. Abre PermaLocke para actualizar.", null, now, Timeout.InfiniteTimeSpan),
+            new PermaLocke.App.Services.Toast(PermaLocke.App.Services.ToastKind.FriendPlaying, "Bavi está jugando a PermaLocke", "Ya lleva 3 medallas", Placeholder(1), now, linger)
+        };
+
+        var window = new PermaLocke.App.Views.ToastWindow { DataContext = new { Showing = toasts } };
+        var content = (FrameworkElement)window.Content;
+        window.Content = null;
+        var host = new Border { Child = content, Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(0x3C, 0x8A, 0x4A)), Width = 470, Height = 860, DataContext = new { Showing = toasts } };
+
+        string? dir = Environment.GetEnvironmentVariable("PERMALOCKE_SNAP_DIR");
+        foreach (var (reveal, name) in new[] { (0.48, "ToastScroll-abriendo"), (1.0, "ToastScroll-abierto") })
+        {
+            host.Measure(new Size(470, 860));
+            host.Arrange(new Rect(0, 0, 470, 860));
+            host.UpdateLayout();
+            var scrolls = Descendants(host).OfType<PermaLocke.App.Views.ToastScroll>().ToList();
+            Assert.Equal(toasts.Length * 2, scrolls.Count);
+            foreach (var scroll in scrolls) scroll.Reveal = reveal;
+            host.UpdateLayout();
+
+            if (string.IsNullOrEmpty(dir)) continue;
+            var bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap(470, 860, 96, 96, PixelFormats.Pbgra32);
+            bitmap.Render(host);
+            var png = new System.Windows.Media.Imaging.PngBitmapEncoder();
+            png.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bitmap));
+            using var file = System.IO.File.Create(System.IO.Path.Combine(dir, name + ".png"));
+            png.Save(file);
+        }
     }
 
     private static string RolesFile()

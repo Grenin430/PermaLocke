@@ -13305,3 +13305,14 @@ Canto Mortal, Autodestrucción), que antes también esperaban el tope. Sin proba
 (los eventos no dicen a quién): `AbilityBackfill` no deduce nada en esas runs; (2) tras restaurar una habilidad, `_seen` del vigilante de rerolls la veía como una recarga: se vacía el PID restaurado; (3) un fallo transitorio al leer el
 libro lo daba por vacío y el siguiente `Record` escribía encima: ahora no se escribe si la lectura falló, y un JSON roto se guarda como `.roto`. También: la deducción desde la historia se hace una vez por sesión y `MachineItemLookup`
 no reconstruye cada 5 s un mundo sin tabla de MT.
+
+## §238 · Los avisos son un pergamino que se desenrolla (2026-10-08, publicado en la 1.0.14)
+
+Rework visual de los avisos sobre el juego. Se hicieron tres rondas de prototipos (A–Q, en `tools/PermaLocke.PixelCheck/NotificationPrototypes*.cs`, imágenes en `Obsidian/PermaLocke Brain/prototipos/`) y el organizador eligió el **pergamino** (O), con la entrada abriéndose hacia la izquierda.
+
+- `ToastScroll` (`Views/ToastScroll.cs`, un `Decorator`): pinta el pergamino celda a celda (`ToastPixels.Canvas`): dos rollos de madera con sombreado, la hoja con manchas por hash de la celda contada desde el rollo derecho (no se mueven al abrirse), borde ondulado, sombra dura y, en la tarjeta grande, el sello de lacre del color de `AccentOf(kind)`. Su `Reveal` (0..1) avanza en seis pasos de 55 ms (0,33 s) con un `DispatcherTimer`: el rollo derecho queda fijo, el izquierdo viaja, y el hijo se recorta (`Clip`) a la hoja abierta, así que el texto se destapa de derecha a izquierda. Solo se anima la primera vez que carga.
+- `ToastPlate.Parchment` (marco de madera marrón en vez del violeta; una baja sigue en gris) y `ToastCountdown.Fuse` (una mecha de cuerda con brasa que avanza de derecha a izquierda, tres celdas de alto, repinta cuando la brasa cambia de celda). Ambas son opciones: `GhostWindow` usa las mismas piezas con su estilo oscuro de siempre.
+- `ToastWindow.xaml`: grande y pequeña envueltas en `ToastScroll`; texto marrón oscuro; márgenes para los rollos (8 celdas), la sombra (2) y el sello; la pestaña del tipo (`ToastFrame IsTab`) está oculta y aparece a los 0,33 s con un `Storyboard`. Ya no hay el deslizamiento de 36 px de antes. Pequeña: rollos de 5 celdas y sin sello (`rows < 30`).
+- Prueba: `HomeViewTests.RenderNotices` (dentro del único `Application` del proceso) construye la plantilla real con muerte, variocolor, duplicado, actualización fija y amigo, y comprueba que hay dos `ToastScroll` por aviso; con `PERMALOCKE_SNAP_DIR` guarda `ToastScroll-abriendo.png` y `ToastScroll-abierto.png`.
+
+Sin probar en el juego (solo en capturas de la ventana real). Pendiente de ver: legibilidad del texto marrón sobre escenas claras y si 0,33 s de apertura se nota demasiado con avisos seguidos.

@@ -4,7 +4,7 @@ revisado: 2026-09-24
 ---
 # UI y kit pixel
 
-Todo `src/PermaLocke.App` está en estilo pixel desde §176–§176 quater, salvo algo suelto (`PendingView`, `ToastWindow`, `DeathWindow`). Lista de ficheros en [[Mapa de código/PermaLocke.App]].
+Todo `src/PermaLocke.App` está en estilo pixel desde §176–§176 quater, salvo algo suelto (`PendingView`, `DeathWindow`). Los avisos de `ToastWindow` son un pergamino (`ToastScroll`, §238). Lista de ficheros en [[Mapa de código/PermaLocke.App]].
 
 ## Temas (`App.xaml`: Palette, Icons, Controls, Pixel)
 - `Themes/Pixel.xaml`. Cada color es un `Color` (no un Brush) salvo los `*Brush`:

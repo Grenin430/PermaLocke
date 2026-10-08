@@ -181,6 +181,7 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Views/TcgCard.cs` — **TcgMove, TcgCard, TcgLayout, CellCanvas** — One of the four moves printed on a card, as the installed world describes it.
 - `Views/TcgCardArt.cs` — **TcgFinish, TcgRegion, TcgRender, TcgCardArt** — The finish of a card, as the print runs of the real game have them: the rarer, the more it shines (§187). 
 - `Views/ToastPixels.cs` — **ToastPixels, ToastFrame, ToastPlate, ToastCountdown, ToastMarks** — What the pieces of a notice share: the size of a cell, the colours of each kind, and drawing in cells. 
+- `Views/ToastScroll.cs` — **ToastScroll** — The notice body: parchment scroll with wooden rolls and a wax seal that opens to the left in steps (§238).
 - `Views/ToastWindow.xaml.cs` — **ToastWindow** — The window the notices live in. It has no logic: where it goes and what it says is `ervices.Notifier`'s job. 
 - `Views/TradeMachine.cs` — **TradeMachine** — The wonder trade's stage: the trade cabin (`radeMachineScene`) on screen, in whole cells. 
 - `Views/TradeMachineScene.cs` — **TradeType, TradeShow, TradeTimeline, TradeMachineScene** — One type of what arrives, as the cabin's screen shows it: its name and the colour the games give it.

@@ -33,6 +33,12 @@ internal static class ToastPixels
     public static readonly Color WellFloor = Rgb(0x1A, 0x15, 0x2C);
     public static readonly Color Off = Rgb(0x23, 0x1C, 0x3B);
 
+    /// <summary>The scroll's own browns (2026-10-08): the ink on the paper, the well of the engraving, the burnt end of the fuse.</summary>
+    public static readonly Color InkBrown = Rgb(0x3A, 0x24, 0x10);
+    public static readonly Color WellBrown = Rgb(0x3A, 0x28, 0x18);
+    public static readonly Color WellFloorBrown = Rgb(0x55, 0x3C, 0x24);
+    public static readonly Color Ash = Rgb(0xB8, 0xA2, 0x7A);
+
     /// <summary>The colour of each kind: its tab, its countdown and the floor under its sprite.</summary>
     /// <remarks>
     /// The same colours the rest of PermaLocke already means something with: gold is the shiny of the roulette's
@@ -337,8 +343,19 @@ public sealed class ToastPlate : FrameworkElement
         nameof(Sprite), typeof(BitmapSource), typeof(ToastPlate),
         new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender));
 
+    /// <summary>On the parchment of the scroll the well is brown wood, not the dark card's violet.</summary>
+    public static readonly DependencyProperty ParchmentProperty = DependencyProperty.Register(
+        nameof(Parchment), typeof(bool), typeof(ToastPlate),
+        new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsRender));
+
     private readonly DispatcherTimer _step = new() { Interval = TimeSpan.FromMilliseconds(250) };
     private int _frame;
+
+    public bool Parchment
+    {
+        get => (bool)GetValue(ParchmentProperty);
+        set => SetValue(ParchmentProperty, value);
+    }
 
     public ToastPlate()
     {
@@ -380,7 +397,8 @@ public sealed class ToastPlate : FrameworkElement
         var canvas = new ToastPixels.Canvas(Columns, Rows);
         var accent = ToastPixels.AccentOf(Kind);
 
-        Well(canvas, accent);
+        var well = Parchment ? ToastPixels.WellBrown : ToastPixels.Well;
+        Well(canvas, accent, Parchment);
 
         var fallen = Kind is ToastKind.Death or ToastKind.Ghost;
         var hop = !fallen && Kind is not ToastKind.TeamWipe && (_frame / 2) % 2 == 1 ? 1 : 0;
@@ -389,7 +407,7 @@ public sealed class ToastPlate : FrameworkElement
         {
             var left = Math.Max(1, (Columns - pixels.Width) / 2);
             var top = Math.Max(1, Rows - 3 - Math.Min(pixels.Height, Rows - 3) - hop);
-            SpriteInto(canvas, pixels, left, top, grey: fallen);
+            SpriteInto(canvas, pixels, left, top, fallen ? well : null);
         }
         else if (Kind is ToastKind.Death or ToastKind.TeamWipe)
         {
@@ -408,13 +426,13 @@ public sealed class ToastPlate : FrameworkElement
         ToastPixels.Draw(drawingContext, this, canvas);
     }
 
-    private static void Well(ToastPixels.Canvas canvas, Color accent)
+    private static void Well(ToastPixels.Canvas canvas, Color accent, bool parchment)
     {
-        canvas.Box(0, 0, Columns, Rows, ToastPixels.Ink);
-        canvas.Box(1, 1, Columns - 2, Rows - 2, ToastPixels.Well, notched: false);
+        canvas.Box(0, 0, Columns, Rows, parchment ? ToastPixels.InkBrown : ToastPixels.Ink);
+        canvas.Box(1, 1, Columns - 2, Rows - 2, parchment ? ToastPixels.WellBrown : ToastPixels.Well, notched: false);
 
         // El suelo: trama ordenada de dos colores, más densa abajo. Nada de fundido.
-        var floorColour = ToastPixels.Mix(ToastPixels.WellFloor, accent, 0.28);
+        var floorColour = ToastPixels.Mix(parchment ? ToastPixels.WellFloorBrown : ToastPixels.WellFloor, accent, 0.28);
 
         for (var y = Rows - 1 - Floor; y < Rows - 1; y++)
         {
@@ -473,7 +491,8 @@ public sealed class ToastPlate : FrameworkElement
         }
     }
 
-    private static void SpriteInto(ToastPixels.Canvas canvas, ToastPixels.SpritePixels pixels, int left, int top, bool grey)
+    /// <summary>A fallen Pokémon is drawn in grey, toned towards <paramref name="greyOver"/>, the colour of the well.</summary>
+    private static void SpriteInto(ToastPixels.Canvas canvas, ToastPixels.SpritePixels pixels, int left, int top, Color? greyOver)
     {
         // Si alguno se pasa de la placa, se recorta en vez de encogerlo: encoger un sprite de píxeles es emborronarlo.
         for (var y = 0; y < Math.Min(pixels.Height, Rows - 3); y++)
@@ -487,10 +506,10 @@ public sealed class ToastPlate : FrameworkElement
 
                 var colour = pixels.At(x, y);
 
-                if (grey)
+                if (greyOver is { } over)
                 {
                     var luma = (byte)Math.Round((0.30 * colour.R) + (0.59 * colour.G) + (0.11 * colour.B));
-                    colour = ToastPixels.Mix(Color.FromRgb(luma, luma, luma), ToastPixels.Well, 0.35);
+                    colour = ToastPixels.Mix(Color.FromRgb(luma, luma, luma), over, 0.35);
                 }
 
                 canvas.Put(left + x, top + y, colour);
@@ -521,6 +540,11 @@ public sealed class ToastCountdown : FrameworkElement
         nameof(Linger), typeof(TimeSpan), typeof(ToastCountdown),
         new FrameworkPropertyMetadata(TimeSpan.FromSeconds(6), FrameworkPropertyMetadataOptions.AffectsRender));
 
+    /// <summary>On the scroll the countdown is a fuse that burns from the right instead of twelve segments.</summary>
+    public static readonly DependencyProperty FuseProperty = DependencyProperty.Register(
+        nameof(Fuse), typeof(bool), typeof(ToastCountdown),
+        new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsRender | FrameworkPropertyMetadataOptions.AffectsMeasure));
+
     private readonly DispatcherTimer _step = new() { Interval = TimeSpan.FromMilliseconds(100) };
     private int _lit = -1;
 
@@ -529,10 +553,10 @@ public sealed class ToastCountdown : FrameworkElement
         IsHitTestVisible = false;
         RenderOptions.SetBitmapScalingMode(this, BitmapScalingMode.NearestNeighbor);
 
-        // Se pregunta a menudo pero solo se repinta cuando se apaga un segmento: a saltos.
+        // Se pregunta a menudo pero solo se repinta cuando se apaga un segmento (o avanza una celda la brasa): a saltos.
         _step.Tick += (_, _) =>
         {
-            if (Lit() != _lit)
+            if ((Fuse ? Burnt() : Lit()) != _lit)
             {
                 InvalidateVisual();
             }
@@ -559,12 +583,23 @@ public sealed class ToastCountdown : FrameworkElement
         set => SetValue(LingerProperty, value);
     }
 
-    protected override Size MeasureOverride(Size availableSize) => new(0, ToastPixels.Units(this, Tall));
-
-    private int Lit()
+    public bool Fuse
     {
-        var left = 1 - ((DateTime.UtcNow - Shown).TotalMilliseconds / Math.Max(1, Linger.TotalMilliseconds));
-        return Math.Clamp((int)Math.Ceiling(left * Segments), 0, Segments);
+        get => (bool)GetValue(FuseProperty);
+        set => SetValue(FuseProperty, value);
+    }
+
+    protected override Size MeasureOverride(Size availableSize) => new(0, ToastPixels.Units(this, Fuse ? 3 : Tall));
+
+    private double Left() => Math.Clamp(1 - ((DateTime.UtcNow - Shown).TotalMilliseconds / Math.Max(1, Linger.TotalMilliseconds)), 0, 1);
+
+    private int Lit() => Math.Clamp((int)Math.Ceiling(Left() * Segments), 0, Segments);
+
+    /// <summary>Cells of fuse left unburnt, counted from the left: the flame is at this cell.</summary>
+    private int Burnt()
+    {
+        var dpi = VisualTreeHelper.GetDpi(this);
+        return (int)Math.Round(Math.Floor(ActualWidth * dpi.DpiScaleX / ToastPixels.Cell(this)) * Left());
     }
 
     protected override void OnRender(DrawingContext drawingContext)
@@ -575,6 +610,12 @@ public sealed class ToastCountdown : FrameworkElement
 
         if (columns < Segments * 2)
         {
+            return;
+        }
+
+        if (Fuse)
+        {
+            PaintFuse(drawingContext, columns);
             return;
         }
 
@@ -592,6 +633,38 @@ public sealed class ToastCountdown : FrameworkElement
             var on = segment >= Segments - _lit;
             canvas.Box(left + (segment * (width + gap)), 0, width, Tall, on ? accent : ToastPixels.Off, notched: false);
         }
+
+        ToastPixels.Draw(drawingContext, this, canvas);
+    }
+
+    /// <summary>
+    /// A fuse: rope on the left, the flame where it has got to, and the burnt stretch behind it, to the right. What is left
+    /// is what is still to be read, so it shortens towards the left like the segments did.
+    /// </summary>
+    private void PaintFuse(DrawingContext drawingContext, int columns)
+    {
+        _lit = Burnt();
+        var canvas = new ToastPixels.Canvas(columns, 3);
+        var accent = ToastPixels.AccentOf(Kind);
+
+        for (var x = 0; x < columns; x++)
+        {
+            if (x < _lit - 1)
+            {
+                canvas.Put(x, 1, (x / 2) % 2 == 0 ? ToastPixels.InkBrown : ToastPixels.Mix(ToastPixels.InkBrown, accent, 0.45));
+            }
+            else if (x > _lit + 1 && x % 3 != 0)
+            {
+                canvas.Put(x, 1, ToastPixels.Ash, 150);
+            }
+        }
+
+        var spark = (_lit / 2) % 2 == 0;
+        canvas.Put(_lit, 1, ToastPixels.Rgb(0xFF, 0xE0, 0x70));
+        canvas.Put(_lit - 1, 1, ToastPixels.Rgb(0xF0, 0x8A, 0x3A));
+        canvas.Put(_lit + 1, 1, ToastPixels.Rgb(0xE8, 0x5A, 0x20));
+        canvas.Put(_lit, 0, spark ? ToastPixels.Rgb(0xF0, 0x8A, 0x3A) : ToastPixels.Rgb(0xFF, 0xE0, 0x70));
+        canvas.Put(_lit, 2, ToastPixels.Rgb(0xE8, 0x5A, 0x20));
 
         ToastPixels.Draw(drawingContext, this, canvas);
     }

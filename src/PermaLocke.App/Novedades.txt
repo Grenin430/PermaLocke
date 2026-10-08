@@ -1,3 +1,10 @@
+1.0.14 2026-10-08
+AVISOS
+Los avisos sobre el juego tienen un diseño nuevo: un pergamino con rollos de madera y un sello de lacre del color del tipo (baja, variocolor, duplicado…).
+Al salir se desenrolla hacia la izquierda, a saltos, y el texto se va destapando; la pestaña del tipo salta a su sitio al acabar.
+La cuenta atrás es ahora una mecha que se consume de derecha a izquierda, con su brasa. El aviso fijo de actualización no la lleva.
+El aviso pequeño de «X está jugando a PermaLocke» es un pergamino más chico, sin sello.
+
 1.0.13 2026-10-08
 HABILIDADES
 El juego recalcula la habilidad de un Pokémon cuando evoluciona o cambia de forma (la megaevolución al acabar el combate, por ejemplo) y pisaba las habilidades que reparte PermaLocke: un Heracross del gacha con Espada Indómita salió con Gran Encanto.

@@ -29,27 +29,26 @@
                 <Grid HorizontalAlignment="Right">
                 <!-- LA PEQUEÑA (1.0.4.5): «X está jugando a PermaLocke», como la de un amigo en Steam. Sin pestaña ni cuenta atrás. -->
                 <Grid x:Name="Compact" Width="300" Margin="0,8,0,0" HorizontalAlignment="Right" Visibility="Collapsed">
-                    <views:ToastFrame Kind="{Binding Kind}" />
-                    <DockPanel Margin="12,12,18,14">
-                        <Border DockPanel.Dock="Left" Width="34" Height="34" Background="#FF09070E" Margin="0,0,10,0">
-                            <Image Source="{Binding Sprite}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
-                        </Border>
-                        <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis"
-                                       FontFamily="{StaticResource DisplayFont}" FontSize="13" FontWeight="SemiBold"
-                                       Foreground="{StaticResource TextBrush}" />
-                            <TextBlock Text="{Binding Message}" FontSize="11.5" Margin="0,2,0,0" Foreground="#FF7CF096" />
-                        </StackPanel>
-                    </DockPanel>
+                    <views:ToastScroll Kind="{Binding Kind}">
+                        <Grid>
+                            <DockPanel Margin="23,10,27,16">
+                                <Border DockPanel.Dock="Left" Width="34" Height="34" Background="#FF3A2818" Margin="0,0,10,0">
+                                    <Image Source="{Binding Sprite}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
+                                </Border>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis"
+                                               FontFamily="{StaticResource DisplayFont}" FontSize="13" FontWeight="SemiBold"
+                                               Foreground="#FF3A2410" />
+                                    <TextBlock Text="{Binding Message}" FontSize="11.5" Margin="0,2,0,0" Foreground="#FF5A4026" />
+                                </StackPanel>
+                            </DockPanel>
+                        </Grid>
+                    </views:ToastScroll>
                 </Grid>
 
                 <Grid x:Name="Full" Width="440" Margin="0,8,0,0" HorizontalAlignment="Right">
-                    <!-- Entra a saltos desde la derecha, tres pasos: se abre como un cuadro de texto
-                         de consola, no se desliza como una notificacion de sistema. -->
-                    <Grid.RenderTransform>
-                        <TranslateTransform x:Name="Slide" X="36" />
-                    </Grid.RenderTransform>
-
+                    <!-- Entra desenrollandose hacia la izquierda, a saltos (ToastScroll): el rollo de la
+                         derecha se queda y el de la izquierda viaja, y el texto se va destapando. -->
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
@@ -57,10 +56,10 @@
 
                     <!-- LA CAJA -->
                     <Grid Grid.Row="1">
-                        <views:ToastFrame Kind="{Binding Kind}" />
-
-                        <!-- El margen derecho y el de abajo dejan sitio a la sombra, que son dos celdas. -->
-                        <Grid Margin="15,17,21,17">
+                      <views:ToastScroll Kind="{Binding Kind}">
+                        <Grid>
+                        <!-- Los margenes dejan sitio a los rollos (ocho celdas), a la sombra (dos) y al sello del lacre. -->
+                        <Grid Margin="33,18,36,24">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
@@ -70,16 +69,16 @@
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
 
-                            <views:ToastPlate Kind="{Binding Kind}" Sprite="{Binding Sprite}"
+                            <views:ToastPlate Kind="{Binding Kind}" Sprite="{Binding Sprite}" Parchment="True"
                                               VerticalAlignment="Top" />
 
-                            <StackPanel Grid.Column="1" Margin="14,0,4,0" VerticalAlignment="Center">
+                            <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
                                 <TextBlock Text="{Binding Title}" TextWrapping="Wrap"
                                            FontFamily="{StaticResource DisplayFont}" FontSize="15.5"
-                                           FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" />
+                                           FontWeight="SemiBold" Foreground="#FF3A2410" />
                                 <TextBlock Text="{Binding Message}" TextWrapping="Wrap" Margin="0,4,0,0"
                                            FontSize="12.5" LineHeight="17"
-                                           Foreground="{StaticResource TextMutedBrush}">
+                                           Foreground="#FF5A4026">
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
                                             <Style.Triggers>
@@ -92,8 +91,9 @@
                                 </TextBlock>
                             </StackPanel>
 
-                            <!-- Lo que le queda en pantalla. Doce segmentos que se apagan de uno en uno. -->
-                            <views:ToastCountdown Grid.Row="1" Grid.ColumnSpan="2" Margin="0,10,0,0"
+                            <!-- Lo que le queda en pantalla: una mecha que se consume de derecha a izquierda.
+                                 Acaba antes del sello, que cuelga abajo a la derecha. -->
+                            <views:ToastCountdown Grid.Row="1" Grid.ColumnSpan="2" Margin="0,10,18,0" Fuse="True"
                                                   Kind="{Binding Kind}" Shown="{Binding Shown}"
                                                   Linger="{Binding Linger}">
                                 <!-- Un aviso fijo (§202) no se acaba: sin cuenta atrás. -->
@@ -108,11 +108,13 @@
                                 </views:ToastCountdown.Style>
                             </views:ToastCountdown>
                         </Grid>
+                        </Grid>
+                      </views:ToastScroll>
                     </Grid>
 
-                    <!-- LA PESTAÑA. Se mete seis unidades en la caja -contorno y relieve- y va por
-                         encima, asi que sale de ella en vez de estar apoyada. -->
-                    <Grid Grid.Row="0" HorizontalAlignment="Left" Margin="15,0,0,-6" Panel.ZIndex="1">
+                    <!-- LA PESTAÑA. Se mete seis unidades en el pergamino y va por encima, asi que sale
+                         de el en vez de estar apoyada. -->
+                    <Grid x:Name="Tab" Visibility="Hidden" Grid.Row="0" HorizontalAlignment="Left" Margin="33,0,0,-6" Panel.ZIndex="1">
                         <views:ToastFrame Kind="{Binding Kind}" IsTab="True" />
                         <TextBlock Text="{Binding Label}" Margin="11,6,18,8"
                                    FontFamily="{StaticResource DisplayFont}" FontSize="11"
@@ -126,16 +128,13 @@
                         <Setter TargetName="Compact" Property="Visibility" Value="Visible" />
                         <Setter TargetName="Full" Property="Visibility" Value="Collapsed" />
                     </DataTrigger>
+                    <!-- La pestaña salta a su sitio cuando el pergamino acaba de abrirse (seis pasos de 55 ms). -->
                     <EventTrigger RoutedEvent="FrameworkElement.Loaded">
                         <BeginStoryboard>
                             <Storyboard>
-                                <DoubleAnimationUsingKeyFrames Storyboard.TargetName="Slide"
-                                                               Storyboard.TargetProperty="X">
-                                    <DiscreteDoubleKeyFrame KeyTime="0:0:0" Value="36" />
-                                    <DiscreteDoubleKeyFrame KeyTime="0:0:0.05" Value="22" />
-                                    <DiscreteDoubleKeyFrame KeyTime="0:0:0.10" Value="8" />
-                                    <DiscreteDoubleKeyFrame KeyTime="0:0:0.15" Value="0" />
-                                </DoubleAnimationUsingKeyFrames>
+                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="Tab" Storyboard.TargetProperty="Visibility">
+                                    <DiscreteObjectKeyFrame KeyTime="0:0:0.33" Value="{x:Static Visibility.Visible}" />
+                                </ObjectAnimationUsingKeyFrames>
                             </Storyboard>
                         </BeginStoryboard>
                     </EventTrigger>
