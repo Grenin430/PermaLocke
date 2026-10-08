@@ -100,3 +100,15 @@ Ultra Luna: «The saved game data is corrupted», aunque PKHeX leía todo bien (
 juego calcula. Bisección con el jugador sobre las copias: EV sin recalcular carga; recalculado con los actuales en 98
 carga; con los actuales a 117 no. `StatCalculator.Restat` ya no sube nunca los PS actuales (bajarlos con el cap sigue).
 Copias de la prueba en `PermaLocke prueba\Saves\backup` (prueba-A, prueba-B, corrupta-apartada).
+
+## Avisos y panel del cap (2026-10-08, §238-§239)
+- **Un aviso que se dice «al cambiar algo» se pierde cuando ese algo ya estaba así.** Las noticias del combate solo salían
+  si las balls cambiaban; un duplicado leído en la primera vuelta encontraba las balls ya permitidas por la ruta y no se
+  avisaba nunca. Ahora se marca qué se ha dicho en cada combate (`WildBattle.NewsSaid`).
+- **Pixel art encima del juego: píxeles enteros por celda.** Un tamaño de celda con decimales emborrona las líneas de 1
+  celda. `CapBadge.Place` redondea hacia abajo y, si no cabe, esconde la ventana en vez de pisar la barra de PS (que
+  la detección de la muerte lee por copia de pantalla).
+- **Animación de cierre que empieza a medias:** guardar desde dónde sale (`_motionFrom`) y no saltar a abierto; si la
+  ventana se recarga (cambio de tema), `Loaded` reanuda la apertura y vuelve a programar el cierre.
+- **Prototipos:** medir el ancho del texto antes de maquetar (nombre + chip no cabían en 100 celdas, se pasó a 112) y
+  dejar los chips oscuros con letras claras sobre latón: claro sobre claro no se lee.

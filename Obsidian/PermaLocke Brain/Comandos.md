@@ -12,7 +12,12 @@ dotnet build src/PermaLocke.App -v q        # ✔ compilar solo la app, rápido
 dotnet build -v q                           # ✔ la solución entera
 dotnet test --no-build -v q                 # ✔ 1521 correctas (2026-09-23)
 dotnet test tests/PermaLocke.App.Tests --filter HomeViewTests   # ✔
-PERMALOCKE_SNAP_DIR="<dir>" dotnet test tests/PermaLocke.App.Tests --filter HomeViewTests   # ✔ PNG de los diálogos
+PERMALOCKE_SNAP_DIR="<dir>" dotnet test tests/PermaLocke.App.Tests --filter HomeViewTests   # ✔ PNG de los diálogos y avisos
+PERMALOCKE_SNAP_DIR="<dir>" dotnet test tests/PermaLocke.App.Tests --filter CapPlaqueTests   # ✔ PNG de la placa del cap
+PERMALOCKE_SNAP_LIVE="<dir>" dotnet test tests/PermaLocke.App.Tests --filter HomeViewTests  # ✔ tira de fotogramas del aviso en ventana real
+# ✔ prototipos de avisos (A-Q) y del cap (S-Z) sobre fotogramas del juego. PROTO_ASSETS = carpeta con bg1.png, bg3.png
+# (capturas de la pantalla del juego) e icon*.png; vivía en el scratchpad (notif/), hay que recrearla en otra sesión
+PERMALOCKE_PIXEL_DIR="<dir>" PERMALOCKE_PROTO_ASSETS="<assets>" dotnet test tools/PermaLocke.PixelCheck --filter NotificationPrototypes
 ```
 
 ## Publicar y desplegar en la carpeta de prueba del usuario

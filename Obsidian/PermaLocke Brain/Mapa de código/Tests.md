@@ -9,6 +9,7 @@ Contado con grep, NO ejecutado. Detalle en [[Pruebas]].
 ## PermaLocke.App.Tests
 - `AlbumTests.cs` (24)
 - `BloodRainTests.cs` (7)
+- `CapPlaqueTests.cs` (1, añadido 2026-10-08)
 - `CapsuleMachineTests.cs` (13)
 - `DiscordLoginTests.cs` (1)
 - `EmulatorCrashTests.cs` (8)

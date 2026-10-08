@@ -76,6 +76,11 @@ fuertes contra los de delante; los primeros, flojos o de defensa). Mantiene el t
   seed, el trono (el ganador es Campeón del siguiente torneo + veterano), intercambio por cable, mercader nocturno,
   tribunal de roles, padrinos (un amigo pone el mote), el grito (audio del micro con el fantasma), carrera de semilla
   hermana. Diez tandas seguidas rechazadas: no seguir proponiendo listas sin que traiga una pista propia.
+- 2026-10-08, aspectos de los avisos (§238): A–J en maquetas de píxeles (Rotom Dex, cartel de Alola, caja de texto del
+  juego, medalla, cristal neón, y la tanda de objetos F–J), «bonitas pero no son mi estilo». De su lista se hicieron K–Q
+  (menú de Alola, chat de Rotom, alarma del laboratorio, cinta de vídeo, pergamino, cartas en abanico, sprite que salta) y
+  eligió **O, el pergamino** abriéndose a la izquierda. Panel del cap (§239): S–Y no elegidas (pergamino, tablón, cuaderno,
+  etiquetas, mapa de la ruta, edicto de la Liga, pergamino horizontal); eligió **Z, placa de trofeo**. PNG en `prototipos/`.
 - **Regla del usuario (2026-09-26): nada de ideas que alteren la jugabilidad.** Los objetos de Mario Kart la alteran;
   siguen apuntados porque los pidió guardar.
 

@@ -28,7 +28,11 @@ Usuario: Grenin430 (git). Escribe en español; se le responde en español. En el
 ## Gustos que ha dejado claros
 - Lo que más le gusta: **pixel art con animación de juego y datos reales**. La máquina de cápsulas del gacha es el listón. Lo difuminado y los degradados «parecen hechos por una IA» y se tiraron.
 - Acento **violeta** (el del ultraespacio). La paleta `Px*` está en `Themes/Pixel.xaml`.
-- No quiere listas de ideas en texto: prefiere ver cosas hechas.
+- No quiere listas de ideas en texto: prefiere ver cosas hechas. **Excepción (2026-10-08):** tras dos tandas de maquetas
+  «bonitas pero no son mi estilo», pidió él una lista numerada de ideas para elegir («listame ideas en vez de tener que
+  hacer más») y de ahí salió lo que le gustó. Para rediseños visuales: primero maquetas sobre un fotograma real del juego;
+  si no conectan, lista corta numerada y maquetas solo de las que elija. Cuando pide «más detalladas y trabajadas», sube
+  el detalle de cada pieza (bisel, trama, sombras, remates), no el número de piezas.
 - Quiere saber qué está verificado y qué no, sin adornos.
 - Se le dicen los números medidos, no estimaciones.
 - Quiere ver el progreso de lo que tarda (pidió barra, total, lo que va y la velocidad en la descarga de la actualización).

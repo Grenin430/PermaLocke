@@ -115,6 +115,24 @@ flowchart LR
 - Coloca la ventana con `SetWindowPos` en coordenadas nativas dentro del monitor del juego (arreglo del 20/09 para escalas distintas de 100 %).
 - Los errores de UI se capturan dentro de `Notifier` y no llegan al vigilante.
 - Probar: CONFIGURACIÓN, botón «VER UN AVISO».
+- **Noticias del combate salvaje, una vez por combate (§239, 1.0.15).** `EncounterGuard.ApplyAsync` dice variocolor, captura
+  permitida y duplicado con `SayNews` cuando el combate (`WildBattle.NewsSaid`: 0 nada, 1 permitido/duplicado, 2 variocolor)
+  aún no lo ha dicho. Antes solo se decían al **cambiar** las balls: si la especie se leía en la primera vuelta, las balls ya
+  estaban permitidas desde la ruta y el aviso de duplicado no se pedía nunca. Un variocolor descubierto tras el duplicado
+  sube de 1 a 2 y también sale. Fuera de combate (`_battle is null`) siguen las ramas viejas.
+- **Dibujo del aviso (§238-§239):** `ToastWindow` envuelve la tarjeta compacta y la completa en `ToastScroll` (pergamino
+  que se desenrolla hacia la izquierda en 420 ms con salida suave y se enrolla en 360 ms antes de irse, `Shown + Linger -
+  CloseTime - 60 ms`). La pestaña de color sale solo con el pergamino abierto (`IsOpen`, `DataTrigger ElementName=Scroll`).
+  `ReducedMotion` lo abre de golpe. `GhostWindow` sigue con el aspecto oscuro viejo.
+- Ante «el aviso no sale»: buscar en el log `Aviso solicitado`. Sin esa línea el fallo está en quien lo pide, no en el dibujo.
+
+## 6 bis. Panel del cap encima del juego (`App/Services/CapBadge.cs` → `Views/CapPlaque.cs`, §239)
+- `CapBadge.Show` arma `CapPlaqueData` (prueba, cap, siguiente, más alto) solo si cambia la clave; `ShowParty` los miembros
+  (sprite, nivel, PS; huevo solo «HUEVO»). `CapPlaque` es una placa de trofeo de 112 columnas dibujada en celdas
+  (`Rows = PartyTop + 21 por miembro + 37`).
+- `Place` elige **píxeles enteros por celda**: 2 en un juego de 900 de alto (×0,6…×1,8), limitado por la franja negra, el alto
+  del juego y la barra de PS (baja de uno en uno hasta no pisarla). Si ni a 1 cabe, **esconde la ventana**. La ventana se
+  enseña en `Place`, no en `Show`.
 - La primera ball se anuncia una vez por run. El primer encuentro, una vez por ruta.
 
 ## 7. Sprites (`App/Services/PokemonSpriteService.cs`)

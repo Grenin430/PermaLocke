@@ -31,6 +31,12 @@ revisado: 2026-09-24
 - Mide las 14 pantallas.
 - Construye los 3 diálogos sin ViewModel (`LoadDialog<T>`, datos de muestra con `Mutable()` y `ExpandoObject`).
 - `PERMALOCKE_SNAP_DIR=<dir>` guarda un PNG de cada diálogo.
+- Avisos (§238): `RenderNotices` pinta 5 avisos (2 `ToastScroll` por aviso, compacto y completo) a `Reveal` 0,48 y 1
+  (`ToastScroll-abriendo.png`, `ToastScroll-abierto.png`). `LiveNotices`, solo con `PERMALOCKE_SNAP_LIVE=<dir>`, abre una
+  `ToastWindow` de verdad fuera de pantalla (Left -3000) con el dispatcher en marcha y guarda una tira de fotogramas de 16 ms a
+  5,9 s (`ToastScroll-vivo.png`): así se ve la animación real, no solo el dibujo.
+- `CapPlaqueTests` (fuera de `HomeViewTests`, no necesita `Application`): filas, tamaño, píxeles, punta transparente; con
+  `PERMALOCKE_SNAP_DIR` deja `CapPlaque.png` y `CapPlaque-liga.png`.
 - **Si se añade una pantalla o un diálogo, se añade aquí**: un `StaticResource` mal escrito revienta en esta prueba y no al abrirlo.
 
 ## Verificación que no es xUnit
