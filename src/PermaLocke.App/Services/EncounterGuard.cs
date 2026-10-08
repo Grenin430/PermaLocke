@@ -178,6 +178,13 @@ public sealed class EncounterGuard(
         public required BattleCounters Before { get; init; }
 
         public required DateTimeOffset StartedAt { get; init; }
+
+        /// <summary>
+        /// The news of this battle already said: 0 none, 1 an allowed capture or a duplicate to choose, 2 a shiny. Once per
+        /// battle, but a shiny read after a duplicate is still said: it is the bigger news.
+        /// </summary>
+        public int NewsSaid { get; set; }
+
         public int? Species { get; set; }
 
         /// <summary>What it is, when it is one of the static captures allowed in its zone (§119).</summary>
@@ -761,6 +768,16 @@ public sealed class EncounterGuard(
             return false;
         }
 
+        // Lo que es noticia en un combate se dice una vez, cambien o no las balls (2026-10-08). Se decía solo al pasar de
+        // retirar a devolver, y si el Pokémon se leía en la primera vuelta no había retirada: las balls seguían permitidas
+        // desde que se entró en la ruta y el duplicado a elegir (o un variocolor) pasaba sin aviso.
+        var tellNews = decision.Action != BallAction.Withhold && !quiet && (shiny || allowed || decision.Optional);
+        if (tellNews && _battle is { } current && current.NewsSaid < (shiny ? 2 : 1))
+        {
+            current.NewsSaid = shiny ? 2 : 1;
+            SayNews(decision, species, shiny, allowed, inGame: rules.GameRulePatches);
+        }
+
         var due = decision.Action != _applied
                   || (decision.Action == BallAction.Withhold && now - _appliedAt >= RecheckWithheld);
 
@@ -796,17 +813,10 @@ public sealed class EncounterGuard(
             {
                 Say(ToastKind.BallsTaken, "Poké Balls retiradas", decision.Reason, species);
             }
-            else if (shiny)
+            else if (shiny || allowed || decision.Optional)
             {
-                Say(ToastKind.Shiny, "¡Es variocolor!", decision.Reason + " Tienes tus Poké Balls.", species);
-            }
-            else if (allowed)
-            {
-                Say(ToastKind.AllowedCapture, "Captura permitida", decision.Reason + " Tienes tus Poké Balls.", species);
-            }
-            else if (decision.Optional)
-            {
-                SayDuplicateLater(decision.Reason, species);
+                // En un combate ya se ha dicho arriba, una sola vez.
+                if (_battle is null) SayNews(decision, species, shiny, allowed, inGame: false);
             }
             else
             {
@@ -855,21 +865,32 @@ public sealed class EncounterGuard(
         logger.LogInformation("Regla de primer encuentro en el juego: {Action}. {Reason}",
             refuse ? "balls rechazadas" : "balls permitidas", decision.Reason);
 
-        // El juego ya dice por qué no se puede lanzar; el aviso queda para lo que es noticia.
-        if (!refuse && shiny)
+        // El juego ya dice por qué no se puede lanzar; el aviso queda para lo que es noticia, y en un combate ya se ha dicho.
+        if (!refuse && _battle is null && (shiny || allowed || decision.Optional))
         {
-            Say(ToastKind.Shiny, "¡Es variocolor!", decision.Reason + " Puedes capturarlo.", species);
-        }
-        else if (!refuse && allowed)
-        {
-            Say(ToastKind.AllowedCapture, "Captura permitida", decision.Reason + " Puedes capturarlo.", species);
-        }
-        else if (!refuse && decision.Optional)
-        {
-            SayDuplicateLater(decision.Reason, species);
+            SayNews(decision, species, shiny, allowed, inGame: true);
         }
 
         return true;
+    }
+
+    /// <summary>The news of a battle: a shiny, an allowed static capture or a duplicate the player may take or leave.</summary>
+    private void SayNews(EncounterDecision decision, int? species, bool shiny, bool allowed, bool inGame)
+    {
+        var balls = inGame ? " Puedes capturarlo." : " Tienes tus Poké Balls.";
+
+        if (shiny)
+        {
+            Say(ToastKind.Shiny, "¡Es variocolor!", decision.Reason + balls, species);
+        }
+        else if (allowed)
+        {
+            Say(ToastKind.AllowedCapture, "Captura permitida", decision.Reason + balls, species);
+        }
+        else if (decision.Optional)
+        {
+            SayDuplicateLater(decision.Reason, species);
+        }
     }
 
     /// <summary>

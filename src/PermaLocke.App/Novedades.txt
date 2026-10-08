@@ -1,3 +1,11 @@
+1.0.15 2026-10-08
+CAP DE NIVEL
+El panel del cap sobre el juego es ahora una placa de trofeo: escudo de nogal con una copa de latón, el cap grabado en grande con la prueba y el siguiente, la mecha del nivel de tu equipo y una placa de latón por Pokémon (dorada si ya está en el tope, tachada si ha caído).
+Se ve siempre nítida: crece y encoge con el juego a saltos enteros, sin emborronarse, y sigue sin tapar la barra de PS.
+AVISOS
+El pergamino de los avisos se abre y se enrolla con suavidad, fotograma a fotograma, en vez de a saltos; y ahora se enrolla también antes de irse.
+Arreglado: el aviso de duplicado («tú eliges») no salía si el juego dejaba leer el Pokémon al instante. Lo mismo podía pasar con el de variocolor en una ruta libre.
+
 1.0.14 2026-10-08
 AVISOS
 Los avisos sobre el juego tienen un diseño nuevo: un pergamino con rollos de madera y un sello de lacre del color del tipo (baja, variocolor, duplicado…).

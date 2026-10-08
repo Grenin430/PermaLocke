@@ -245,6 +245,7 @@ generado: 2026-09-24
 - L13265 · 236 · «MT01 · Hiperrayo» sobre una MT de Atracción: los nombres de las MT se leían una vez al arrancar y no seguían a un mundo nuevo
 - L13271 · 237 · El juego recalcula la habilidad al evolucionar y cambiar de forma (ChangeFormNo, ChangeMonsNo); libro y restauración desde la app
 - L13309 · 238 · Los avisos son un pergamino que se desenrolla hacia la izquierda (ToastScroll, mecha, sello); prototipos A–Q
+- L13320 · 239 · El cap como placa de trofeo (CapPlaque, celdas enteras) y el pergamino de los avisos que se enrolla al irse
 
 Subsecciones §176: bis (visor), ter (todas las pantallas, fuera ESTADÍSTICAS), quater (EV/MOVIMIENTOS sin bolsa, diálogos).
 

@@ -29,7 +29,7 @@
                 <Grid HorizontalAlignment="Right">
                 <!-- LA PEQUEÑA (1.0.4.5): «X está jugando a PermaLocke», como la de un amigo en Steam. Sin pestaña ni cuenta atrás. -->
                 <Grid x:Name="Compact" Width="300" Margin="0,8,0,0" HorizontalAlignment="Right" Visibility="Collapsed">
-                    <views:ToastScroll Kind="{Binding Kind}">
+                    <views:ToastScroll Kind="{Binding Kind}" Shown="{Binding Shown}" Linger="{Binding Linger}">
                         <Grid>
                             <DockPanel Margin="23,10,27,16">
                                 <Border DockPanel.Dock="Left" Width="34" Height="34" Background="#FF3A2818" Margin="0,0,10,0">
@@ -56,7 +56,7 @@
 
                     <!-- LA CAJA -->
                     <Grid Grid.Row="1">
-                      <views:ToastScroll Kind="{Binding Kind}">
+                      <views:ToastScroll x:Name="Scroll" Kind="{Binding Kind}" Shown="{Binding Shown}" Linger="{Binding Linger}">
                         <Grid>
                         <!-- Los margenes dejan sitio a los rollos (ocho celdas), a la sombra (dos) y al sello del lacre. -->
                         <Grid Margin="33,18,36,24">
@@ -128,16 +128,10 @@
                         <Setter TargetName="Compact" Property="Visibility" Value="Visible" />
                         <Setter TargetName="Full" Property="Visibility" Value="Collapsed" />
                     </DataTrigger>
-                    <!-- La pestaña salta a su sitio cuando el pergamino acaba de abrirse (seis pasos de 55 ms). -->
-                    <EventTrigger RoutedEvent="FrameworkElement.Loaded">
-                        <BeginStoryboard>
-                            <Storyboard>
-                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="Tab" Storyboard.TargetProperty="Visibility">
-                                    <DiscreteObjectKeyFrame KeyTime="0:0:0.33" Value="{x:Static Visibility.Visible}" />
-                                </ObjectAnimationUsingKeyFrames>
-                            </Storyboard>
-                        </BeginStoryboard>
-                    </EventTrigger>
+                    <!-- La pestaña sale cuando el pergamino acaba de abrirse y se esconde en cuanto empieza a enrollarse. -->
+                    <DataTrigger Binding="{Binding IsOpen, ElementName=Scroll}" Value="True">
+                        <Setter TargetName="Tab" Property="Visibility" Value="Visible" />
+                    </DataTrigger>
                 </DataTemplate.Triggers>
             </DataTemplate>
         </ItemsControl.ItemTemplate>

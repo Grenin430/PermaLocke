@@ -3,17 +3,18 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
 using PermaLocke.App.Services;
+using PermaLocke.App.Views.Pixel;
 
 namespace PermaLocke.App.Views;
 
 /// <summary>
 /// A notice's body: a parchment scroll with a wooden roll at each end and, on the big card, a wax seal in the notice's
-/// colour. It opens towards the left in steps — the right roll stays where it is and the left one travels — and the text
+/// colour. It opens towards the left — the right roll stays where it is and the left one travels, turning — and the text
 /// inside is uncovered as the paper goes by (2026-10-08, chosen from the prototypes).
 /// </summary>
 /// <remarks>
 /// Drawn cell by cell like the rest of the notices (<see cref="ToastPixels"/>): hard edges, a solid shadow, and the motion
-/// in whole steps. The paper's stains come from a hash of the cell counted from the right roll, so they do not swim while
+/// a whole cell at a time. The paper's stains come from a hash of the cell counted from the right roll, so they do not swim while
 /// the scroll opens. Anything that is not the paper — the rolls, the seal — is painted under the content, which is clipped
 /// to the sheet that is open at that step.
 /// </remarks>
@@ -22,8 +23,9 @@ public sealed class ToastScroll : Decorator
     /// <summary>How far the shadow falls, in cells, down and to the right.</summary>
     private const int Shadow = 2;
 
-    /// <summary>How much of the sheet is open at each step of the entrance, in order. 1 is wide open.</summary>
-    private static readonly double[] Steps = [0.10, 0.28, 0.48, 0.68, 0.86, 1.0];
+    /// <summary>How long the scroll takes to open, and to roll up again.</summary>
+    private static readonly TimeSpan OpenTime = TimeSpan.FromMilliseconds(420);
+    private static readonly TimeSpan CloseTime = TimeSpan.FromMilliseconds(360);
 
     private static readonly Color Paper = ToastPixels.Rgb(0xF0, 0xDF, 0xB0);
     private static readonly Color PaperLow = ToastPixels.Rgb(0xD8, 0xBE, 0x84);
@@ -41,39 +43,149 @@ public sealed class ToastScroll : Decorator
         nameof(Reveal), typeof(double), typeof(ToastScroll),
         new FrameworkPropertyMetadata(1.0, FrameworkPropertyMetadataOptions.AffectsRender, (d, _) => ((ToastScroll)d).ApplyClip()));
 
-    private readonly DispatcherTimer _step = new() { Interval = TimeSpan.FromMilliseconds(55) };
-    private int _at;
+    /// <summary>When the notice appeared; with <see cref="Linger"/>, when it rolls itself up again.</summary>
+    public static readonly DependencyProperty ShownProperty = DependencyProperty.Register(
+        nameof(Shown), typeof(DateTime), typeof(ToastScroll), new FrameworkPropertyMetadata(DateTime.MinValue));
+
+    /// <summary>How long it stays. Infinite (a pinned notice) never rolls up by itself.</summary>
+    public static readonly DependencyProperty LingerProperty = DependencyProperty.Register(
+        nameof(Linger), typeof(TimeSpan), typeof(ToastScroll), new FrameworkPropertyMetadata(Timeout.InfiniteTimeSpan));
+
+    private static readonly DependencyPropertyKey IsOpenKey = DependencyProperty.RegisterReadOnly(
+        nameof(IsOpen), typeof(bool), typeof(ToastScroll), new FrameworkPropertyMetadata(false));
+
+    /// <summary>Wide open and not rolling up: the tab of the notice shows only then.</summary>
+    public static readonly DependencyProperty IsOpenProperty = IsOpenKey.DependencyProperty;
+
+    private readonly DispatcherTimer _close = new();
+    private DateTime _motionStart;
+    private double _motionFrom;
+    private bool _moving;
     private bool _opened;
+    private bool _closing;
 
     public ToastScroll()
     {
         IsHitTestVisible = false;
         RenderOptions.SetBitmapScalingMode(this, BitmapScalingMode.NearestNeighbor);
-        Reveal = Steps[0];
+        Reveal = 0.04;
 
-        _step.Tick += (_, _) =>
+        _close.Tick += (_, _) =>
         {
-            _at++;
-            Reveal = Steps[Math.Min(_at, Steps.Length - 1)];
-
-            if (_at >= Steps.Length - 1)
-            {
-                _step.Stop();
-            }
+            _close.Stop();
+            SetValue(IsOpenKey, false);
+            Move(closing: true);
         };
 
         Loaded += (_, _) =>
         {
-            // Una sola vez: volver a cargarse (cambio de ventana, de tema) no la cierra otra vez.
+            // Volver a cargarse (cambio de ventana, de tema) no la cierra ni la abre otra vez: sigue donde estaba, y lo
+            // que se paró al descargarse (la apertura a medias, el cierre programado) vuelve a ponerse en marcha.
             if (_opened)
             {
+                if (!_closing && Reveal < 1) Move(closing: false);
+                if (!_closing) ScheduleClose();
                 return;
             }
 
             _opened = true;
-            _step.Start();
+            Move(closing: false);
+            ScheduleClose();
         };
-        Unloaded += (_, _) => _step.Stop();
+        Unloaded += (_, _) =>
+        {
+            Stop();
+            _close.Stop();
+        };
+    }
+
+    public DateTime Shown
+    {
+        get => (DateTime)GetValue(ShownProperty);
+        set => SetValue(ShownProperty, value);
+    }
+
+    public TimeSpan Linger
+    {
+        get => (TimeSpan)GetValue(LingerProperty);
+        set => SetValue(LingerProperty, value);
+    }
+
+    public bool IsOpen => (bool)GetValue(IsOpenProperty);
+
+    /// <summary>
+    /// Opens or rolls up following the screen's own frames (<see cref="CompositionTarget.Rendering"/>), not a timer:
+    /// fast at first and settling at the end when it opens, slow to start and quick at the end when it rolls up. The
+    /// rolls still move a whole cell at a time, so it stays pixel art; it just never skips cells.
+    /// </summary>
+    private void Move(bool closing)
+    {
+        _closing = closing;
+        _motionStart = DateTime.UtcNow;
+        _motionFrom = Reveal;
+
+        // Con «menos movimiento» en Windows, sin animación: abierto al momento, y al irse se va sin enrollarse.
+        if (PixelTheme.ReducedMotion)
+        {
+            Reveal = closing ? Reveal : 1;
+            SetValue(IsOpenKey, !closing);
+            return;
+        }
+
+        if (!_moving)
+        {
+            _moving = true;
+            CompositionTarget.Rendering += OnFrame;
+        }
+    }
+
+    private void Stop()
+    {
+        if (!_moving) return;
+        _moving = false;
+        CompositionTarget.Rendering -= OnFrame;
+    }
+
+    private void OnFrame(object? sender, EventArgs e)
+    {
+        var length = _closing ? CloseTime : OpenTime;
+        var t = Math.Clamp((DateTime.UtcNow - _motionStart).TotalMilliseconds / length.TotalMilliseconds, 0, 1);
+
+        // Al abrir, salida rápida y frenada suave; al cerrar, arranque lento que se acelera hasta juntar los rollos.
+        // Desde donde esté: un cierre que llega con la apertura a medias se enrolla desde ahí, sin saltar a abierto.
+        var reveal = _closing ? _motionFrom * (1 - (t * t * t)) : _motionFrom + ((1 - _motionFrom) * (1 - Math.Pow(1 - t, 3)));
+
+        // Solo se repinta cuando el rollo cambia de celda.
+        if (Left(reveal) != Left(Reveal) || t >= 1)
+        {
+            Reveal = reveal;
+        }
+
+        if (t < 1)
+        {
+            return;
+        }
+
+        Stop();
+        Reveal = _closing ? 0 : 1;
+        SetValue(IsOpenKey, !_closing);
+    }
+
+    /// <summary>
+    /// Starts rolling up so that the rolls meet just as the notifier takes the notice away (<see cref="Services.Notifier"/>
+    /// removes it at <see cref="Linger"/>), with a little room.
+    /// </summary>
+    private void ScheduleClose()
+    {
+        if (Linger == Timeout.InfiniteTimeSpan || Linger <= TimeSpan.Zero || Shown == DateTime.MinValue)
+        {
+            return;
+        }
+
+        var start = Shown + Linger - CloseTime - TimeSpan.FromMilliseconds(60);
+        var wait = start - DateTime.UtcNow;
+        _close.Interval = wait > TimeSpan.Zero ? wait : TimeSpan.FromMilliseconds(1);
+        _close.Start();
     }
 
     public ToastKind Kind
@@ -102,7 +214,9 @@ public sealed class ToastScroll : Decorator
     }
 
     /// <summary>The cells the geometry of the scroll uses: its width, height and the sheet that is open.</summary>
-    private (int Columns, int Rows, int Roll, int Left, int Right) Geometry()
+    private (int Columns, int Rows, int Roll, int Left, int Right) Geometry() => Geometry(Reveal);
+
+    private (int Columns, int Rows, int Roll, int Left, int Right) Geometry(double reveal)
     {
         var dpi = VisualTreeHelper.GetDpi(this);
         var cell = ToastPixels.Cell(this);
@@ -110,9 +224,12 @@ public sealed class ToastScroll : Decorator
         var rows = (int)Math.Floor(ActualHeight * dpi.DpiScaleY / cell);
         var roll = rows < 30 ? 5 : 8;
         var box = columns - Shadow;
-        var left = (int)Math.Round(Math.Max(0, box - (2 * roll)) * (1 - Reveal));
+        var left = (int)Math.Round(Math.Max(0, box - (2 * roll)) * (1 - reveal));
         return (columns, rows, roll, left + roll, box - roll);
     }
+
+    /// <summary>The cell where the sheet starts for an opening: what decides whether a frame changes anything.</summary>
+    private int Left(double reveal) => Geometry(reveal).Left;
 
     private void ApplyClip()
     {
@@ -148,8 +265,8 @@ public sealed class ToastScroll : Decorator
         canvas.Box(left + Shadow, Shadow + 3, right - left, height - 6, Colors.Black, alpha: 150, notched: false);
 
         PaintSheet(canvas, left, right, height);
-        PaintRoll(canvas, left - roll, roll, height);
-        PaintRoll(canvas, right, roll, height);
+        PaintRoll(canvas, left - roll, roll, height, left);
+        PaintRoll(canvas, right, roll, height, left);
 
         if (!small)
         {
@@ -208,8 +325,8 @@ public sealed class ToastScroll : Decorator
         }
     }
 
-    /// <summary>A wooden roll seen from the front: lit a little left of its middle, with its two ends darker.</summary>
-    private static void PaintRoll(ToastPixels.Canvas canvas, int x0, int width, int height)
+    /// <summary>A wooden roll seen from the front: lit a little left of its middle, its ends darker, its grain turning with <paramref name="turn"/>.</summary>
+    private static void PaintRoll(ToastPixels.Canvas canvas, int x0, int width, int height, int turn)
     {
         for (var i = 0; i < width; i++)
         {
@@ -232,7 +349,7 @@ public sealed class ToastScroll : Decorator
                     // Las puntas del rollo: la madera cortada, más oscura.
                     colour = ToastPixels.Mix(colour, Edge, 0.40 + (shade * 0.2));
                 }
-                else if (i == width / 2 && (y / 3) % 2 == 0)
+                else if (i == 1 + (((width / 2) - 1 + turn) % (width - 2)) && (y / 3) % 2 == 0)
                 {
                     colour = ToastPixels.Mix(colour, Edge, 0.22);
                 }

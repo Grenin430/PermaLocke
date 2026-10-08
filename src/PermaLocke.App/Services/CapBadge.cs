@@ -1,11 +1,9 @@
 using System.Runtime.InteropServices;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
 using Microsoft.Extensions.Logging;
 using PermaLocke.App.Views;
-using PermaLocke.App.Views.Pixel;
 using PermaLocke.Core.Abstractions;
 using PermaLocke.Core.Domain;
 using PermaLocke.GameLink.Battle;
@@ -25,9 +23,9 @@ public sealed record CapReading(string Trial, int Cap, int? Next, int? Highest);
 /// the black band beside the 3DS screens, while the game is open and in front.
 /// </summary>
 /// <remarks>
-/// A trophy and the stage (<c>PRUEBA 3 DE 12</c>), the cap big in gold, and a bar of how close the strongest of the
-/// party is to it (<c>EQUIPO NV. 22 / 24</c>) that turns amber at the cap; under it, the next cap. Subtle: a little
-/// transparent, and clear of the top edge. It follows the emulator's window every half second, goes when the game
+/// Since §239 a trophy plaque drawn in cells (<see cref="CapPlaque"/>): the cap engraved big on brass with the stage
+/// (<c>PRUEBA 3 DE 12</c>) and the next cap, the strongest of the party against it as the notices' burning fuse, and a
+/// brass plate per Pokémon. A little transparent, and clear of the top edge. It follows the emulator's window every half second, goes when the game
 /// closes or another window comes in front, and reads the cap again every ten seconds and whenever the run changes.
 /// Click-through, like every overlay.
 /// </remarks>
@@ -45,16 +43,15 @@ public sealed class CapBadge
     private readonly AppSettings _settings;
     private readonly DispatcherTimer _timer = new() { Interval = Follow };
 
-    private readonly PixelText _trial = new() { Scale = 1, Tight = true };
-    private readonly PixelText _cap = new() { Scale = 3, Tight = true };
-    private readonly PixelText _team = new() { Scale = 1, Tight = true };
-    private readonly PixelText _next = new() { Scale = 1, Tight = true };
-    private readonly PixelBar _bar = new() { Height = 10, Margin = new Thickness(0, 4, 0, 0) };
+    /// <summary>The panel itself: a trophy plaque drawn in cells (§239).</summary>
+    private readonly CapPlaque _plaque = new();
 
-    /// <summary>The party, one row per Pokémon under the cap (1.0.4.8).</summary>
-    private readonly StackPanel _party = new();
+    /// <summary>The party, one plate per Pokémon under the cap (1.0.4.8).</summary>
+    private IReadOnlyList<CapPlaqueMember> _party = [];
     private readonly PokemonSpriteService _sprites;
     private string _partyKey = string.Empty;
+    private string _shownKey = string.Empty;
+    private CapReading? _shown;
 
     private Window? _window;
     private CapReading? _reading;
@@ -94,7 +91,7 @@ public sealed class CapBadge
         ]);
         var main = new System.Windows.Interop.WindowInteropHelper(Application.Current.MainWindow).Handle;
         if (GameWindow.ClientBox(main) is not { } box || _window is not { } window) return;
-        Place(window, box);
+        Place(window, _plaque, box);
         await Task.Delay(TimeSpan.FromSeconds(10));
         window.Hide();
     }
@@ -129,7 +126,7 @@ public sealed class CapBadge
             // El nivel del equipo se mira cada vuelta: sube en mitad de un combate y la barra lo sigue.
             Show(reading with { Highest = Highest() ?? reading.Highest });
             ShowParty(_monitor.Latest is { Connected: true } live ? Delayed(WithLiveHp(live.Party, _monitor.BattleNow)) : []);
-            Place(_window!, picture);
+            Place(_window!, _plaque, picture);
         }
         catch (Exception ex)
         {
@@ -156,37 +153,24 @@ public sealed class CapBadge
     private int? Highest() =>
         _monitor.Latest is { Connected: true, Party.Count: > 0 } snapshot ? snapshot.Party.Max(member => member.Level) : null;
 
-    private static Color C(string key) => (Color)Application.Current.Resources[key];
-
     private void Show(CapReading reading)
     {
-        var window = _window ??= Create();
+        _window ??= Create();
 
-        _trial.Text = reading.Trial;
-        _cap.Text = $"NV. {reading.Cap}";
-        _next.Text = reading.Next is { } next ? $"SIGUIENTE: NV. {next}" : "ULTIMO CAP";
-
-        if (reading.Highest is { } highest)
+        // Solo se repinta cuando cambia algo: el panel se mira cada medio segundo y casi nunca cambia.
+        var key = $"{reading}|{_partyKey}";
+        if (key != _shownKey)
         {
-            var atCap = highest >= reading.Cap;
-            _team.Text = $"EQUIPO NV. {highest} / {reading.Cap}";
-            _bar.Value = Math.Clamp(highest / (double)reading.Cap, 0, 1);
-            _bar.Fill = C(atCap ? "PxWarn" : "PxGood");
-            _team.Colour = C(atCap ? "PxWarn" : "PxTextDim");
-            _team.Visibility = _bar.Visibility = Visibility.Visible;
+            _shownKey = key;
+            _shown = reading;
+            _plaque.Data = new CapPlaqueData(reading.Trial, reading.Cap, reading.Next, reading.Highest, _party);
         }
-        else
-        {
-            _team.Visibility = _bar.Visibility = Visibility.Collapsed;
-        }
-
-        if (!window.IsVisible) window.Show();
     }
 
     /// <summary>
-    /// The party under the cap (1.0.4.8): each Pokémon's icon from the player's own ROM, its level (amber at the cap) and
-    /// a small HP bar green, yellow or red as the game colours it; a fallen one greyed out with «KO». Rebuilt only when
-    /// something on it changes, so it costs nothing while the player walks.
+    /// The party under the cap (1.0.4.8): each Pokémon's icon from the player's own ROM, its level (gold at the cap) and an
+    /// HP bar green, yellow or red as the game colours it; a fallen one greyed out and crossed, with «KO». An egg, its
+    /// name alone (§230). Rebuilt only when something on it changes, so it costs nothing while the player walks.
     /// </summary>
     private void ShowParty(IReadOnlyList<LivePartyMember> party)
     {
@@ -194,87 +178,21 @@ public sealed class CapBadge
         // El mote va en la clave: un mote votado entra en directo y, sin él, el panel seguía con el nombre de antes
         // (lista de pendientes del organizador, 2026-09-28).
         var key = cap + "|" + string.Join(";", party.Select(p =>
-            $"{p.Pid}:{p.Species}:{p.Form}:{p.Level}:{p.CurrentHp}/{p.MaxHp}:{p.IsFainted}:{p.Nickname}"));
+            $"{p.Pid}:{p.Species}:{p.Form}:{p.Level}:{p.CurrentHp}/{p.MaxHp}:{p.IsFainted}:{p.Nickname}:{p.IsEgg}"));
         if (key == _partyKey)
         {
             return;
         }
 
         _partyKey = key;
-        _party.Children.Clear();
+        _party = [.. party.OrderBy(p => p.Slot).Select(member => new CapPlaqueMember(
+            member.IsEgg ? _sprites.GetEgg() : _sprites.Get(member.Species, member.Form, member.IsShiny),
+            string.IsNullOrWhiteSpace(member.Nickname) ? member.SpeciesName : member.Nickname,
+            member.Level, member.CurrentHp, member.MaxHp, member.IsEgg))];
 
-        if (party.Count == 0)
+        if (_shown is { } shown)
         {
-            return;
-        }
-
-        _party.Children.Add(new Border { Height = 1, Background = new SolidColorBrush(C("PxFaceLift")), Margin = new Thickness(0, 9, 0, 7) });
-        _party.Children.Add(new PixelText { Text = "EQUIPO", Scale = 1, Tight = true, Colour = C("PxTextDim"), Margin = new Thickness(0, 0, 0, 5) });
-
-        foreach (var member in party.OrderBy(p => p.Slot))
-        {
-            var fallen = member.IsFainted;
-            var share = member.MaxHp > 0 ? Math.Clamp(member.CurrentHp / (double)member.MaxHp, 0, 1) : 0;
-            var hpColour = share > 0.5 ? C("PxGood") : share > 0.2 ? C("PxWarn") : C("PxBad");
-
-            var sprite = new System.Windows.Controls.Image
-            {
-                Source = member.IsEgg ? _sprites.GetEgg() : _sprites.Get(member.Species, member.Form, member.IsShiny),
-                Width = 40,
-                Height = 30,
-                Stretch = Stretch.Uniform,
-                Opacity = fallen ? 0.35 : 1,
-                VerticalAlignment = VerticalAlignment.Center
-            };
-            RenderOptions.SetBitmapScalingMode(sprite, BitmapScalingMode.NearestNeighbor);
-
-            var name = string.IsNullOrWhiteSpace(member.Nickname) ? member.SpeciesName : member.Nickname;
-            var level = new PixelText
-            {
-                Text = member.IsEgg ? string.Empty : $"NV. {member.Level}",
-                Scale = 1,
-                Tight = true,
-                Colour = fallen ? C("PxTextFaint") : member.Level >= cap ? C("PxWarn") : C("PxText")
-            };
-
-            var info = new StackPanel { Margin = new Thickness(6, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center, Width = 108 };
-            var top = new DockPanel();
-            DockPanel.SetDock(level, Dock.Right);
-            top.Children.Add(level);
-            top.Children.Add(new PixelText
-            {
-                Text = name.Length > 10 ? name[..10] : name,
-                Scale = 1,
-                Tight = true,
-                Colour = fallen ? C("PxTextFaint") : C("PxTextDim")
-            });
-            info.Children.Add(top);
-
-            if (member.IsEgg)
-            {
-                // An egg shows nothing but itself: no level, no HP.
-            }
-            else if (fallen)
-            {
-                info.Children.Add(new PixelText { Text = "KO", Scale = 1, Tight = true, Colour = C("PxBad"), Margin = new Thickness(0, 4, 0, 0) });
-            }
-            else
-            {
-                info.Children.Add(new PixelBar { Height = 10, Value = share, Fill = hpColour, Track = C("PxWell"), Margin = new Thickness(0, 4, 0, 0) });
-                info.Children.Add(new PixelText
-                {
-                    Text = $"{member.CurrentHp}/{member.MaxHp}",
-                    Scale = 1,
-                    Tight = true,
-                    Colour = C("PxTextFaint"),
-                    Margin = new Thickness(0, 3, 0, 0)
-                });
-            }
-
-            var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 2, 0, 2) };
-            row.Children.Add(sprite);
-            row.Children.Add(info);
-            _party.Children.Add(row);
+            Show(shown);
         }
     }
 
@@ -405,26 +323,30 @@ public sealed class CapBadge
         return shown;
     }
 
-    /// <summary>Top right of <paramref name="picture"/>, clear of its top edge and a little in from the side.</summary>
-    private static void Place(Window window, (int Left, int Top, int Width, int Height) picture)
+    /// <summary>
+    /// Top right of <paramref name="picture"/>, clear of its top edge and a little in from the side, with as many screen
+    /// pixels per cell as fit (§239): whole pixels, so the plaque never blurs.
+    /// </summary>
+    private static void Place(Window window, CapPlaque plaque, (int Left, int Top, int Width, int Height) picture)
     {
-        var dpi = VisualTreeHelper.GetDpi(window);
-        var content = (FrameworkElement)window.Content;
+        if (plaque.Data is not { } data)
+        {
+            return;
+        }
 
-        // Se adapta al tamaño del juego (1.0.5.2): a pantalla completa crece, en una ventana pequeña encoge, y si cabe en
-        // la franja negra junto a las pantallas del 3DS se queda en ella para no tapar el juego.
-        content.LayoutTransform = Transform.Identity;
-        content.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-        var natural = content.DesiredSize;
-        var scale = Math.Clamp(picture.Height / dpi.DpiScaleY / 900, 0.6, 1.8);
-        var band = (picture.Width - (picture.Height * 400.0 / 480)) / 2 / dpi.DpiScaleX - 24;
-        if (band >= natural.Width * 0.6) scale = Math.Min(scale, band / natural.Width);
-        scale = Math.Min(scale, (picture.Height / dpi.DpiScaleY - 64) / natural.Height);
-        content.LayoutTransform = new ScaleTransform(scale, scale);
-        content.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-        var width = (int)Math.Ceiling(content.DesiredSize.Width * dpi.DpiScaleX);
-        var height = (int)Math.Ceiling(content.DesiredSize.Height * dpi.DpiScaleY);
-        var left = picture.Left + picture.Width - width - (int)(16 * dpi.DpiScaleX);
+        var dpi = VisualTreeHelper.GetDpi(window);
+        var rows = CapPlaque.Rows(data);
+
+        // Se adapta al tamaño del juego (1.0.5.2): dos píxeles por celda en un juego de 900 de alto, más a pantalla completa
+        // y menos en una ventana pequeña; si cabe en la franja negra junto a las pantallas del 3DS se queda en ella, y nunca
+        // pasa del alto del juego.
+        var cell = 2 * dpi.DpiScaleX * Math.Clamp(picture.Height / dpi.DpiScaleY / 900, 0.6, 1.8);
+        var band = ((picture.Width - (picture.Height * 400.0 / 480)) / 2) - (24 * dpi.DpiScaleX);
+        if (band >= CapPlaque.Columns * cell * 0.6) cell = Math.Min(cell, band / CapPlaque.Columns);
+        cell = Math.Min(cell, (picture.Height - (64 * dpi.DpiScaleY)) / rows);
+        var pixels = Math.Max(1, (int)Math.Floor(cell));
+
+        int width, height, left;
         var top = picture.Top + (int)(48 * dpi.DpiScaleY);
 
         // Nunca encima de la barra de PS (2026-09-28): la copia de pantalla que espera la barra a cero leería el panel.
@@ -433,45 +355,30 @@ public sealed class CapBadge
         var gameLeft = picture.Left + ((picture.Width - (400 * game)) / 2);
         var barTop = picture.Top + ((picture.Height - (480 * game)) / 2) + (PermaLocke.GameLink.Battle.HpBar.FirstRow * game);
         var barRight = gameLeft + ((PermaLocke.GameLink.Battle.HpBar.Right + 1) * game);
-        if (left < barRight && top + height > barTop - 6 && barTop - 6 - top > 40)
+        while (true)
         {
-            scale *= (barTop - 6 - top) / height;
-            content.LayoutTransform = new ScaleTransform(scale, scale);
-            content.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-            width = (int)Math.Ceiling(content.DesiredSize.Width * dpi.DpiScaleX);
-            height = (int)Math.Ceiling(content.DesiredSize.Height * dpi.DpiScaleY);
+            width = CapPlaque.Columns * pixels;
+            height = rows * pixels;
             left = picture.Left + picture.Width - width - (int)(16 * dpi.DpiScaleX);
+            if (pixels == 1 || !(left < barRight && top + height > barTop - 6)) break;
+            pixels--;
         }
 
+        // Una ventana tan pequeña que ni a un píxel por celda cabe sin salirse del juego o pisar la barra de PS: mejor sin
+        // panel que encima de lo que hay que leer.
+        if (top + height > picture.Top + picture.Height || (left < barRight && top + height > barTop - 6))
+        {
+            window.Hide();
+            return;
+        }
+
+        plaque.CellPixels = pixels;
+        if (!window.IsVisible) window.Show();
         OverlayWindows.PlaceOver(window, (left, top, width, height));
     }
 
     private Window Create()
     {
-        _trial.Colour = C("PxAccentLight");
-        _cap.Colour = C("PxGold");
-        _cap.Shadow = C("PxShadow");
-        _next.Colour = C("PxTextFaint");
-        _bar.Track = C("PxWell");
-
-        var label = new PixelText { Text = "CAP DE NIVEL", Scale = 1, Tight = true, Colour = C("PxTextDim") };
-
-        var head = new StackPanel { Orientation = Orientation.Horizontal };
-        head.Children.Add(new PixelIcon { Icon = "IconTrophy", Scale = 2, VerticalAlignment = VerticalAlignment.Center });
-        head.Children.Add(new StackPanel
-        {
-            Margin = new Thickness(8, 0, 0, 0),
-            VerticalAlignment = VerticalAlignment.Center,
-            Children = { _trial, new Border { Height = 4 }, label }
-        });
-
-        var body = new StackPanel
-        {
-            Margin = new Thickness(14, 11, 18, 15),
-            MinWidth = 170,
-            Children = { head, new Border { Height = 8 }, _cap, new Border { Height = 8 }, _team, _bar, new Border { Height = 6 }, _next, _party }
-        };
-
         var window = new Window
         {
             WindowStyle = WindowStyle.None,
@@ -484,8 +391,8 @@ public sealed class CapBadge
             ResizeMode = ResizeMode.NoResize,
             SizeToContent = SizeToContent.WidthAndHeight,
             UseLayoutRounding = true,
-            Opacity = 0.9,
-            Content = new Grid { Children = { new PixelPanel { Fill = C("PxFace") }, body } }
+            Opacity = 0.95,
+            Content = _plaque
         };
 
         OverlayWindows.MakeUntouchable(window);
