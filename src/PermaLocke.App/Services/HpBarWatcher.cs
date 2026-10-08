@@ -29,7 +29,7 @@ public static class HpBarWatcher
     /// The longest wait. Long enough for an ordinary attack animation, which hides the box, and short
     /// enough that a bar that is never seen does not leave the death without its moment.
     /// </summary>
-    public static readonly TimeSpan Limit = TimeSpan.FromSeconds(6);
+    public static readonly TimeSpan Limit = TimeSpan.FromSeconds(10);
 
     private const int NativeWidth = 400;
     private const int NativeHeight = 480;

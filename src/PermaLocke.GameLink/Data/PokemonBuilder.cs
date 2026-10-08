@@ -105,6 +105,9 @@ public static class PokemonBuilder
         pokemon.ResetPartyStats();
         pokemon.RefreshChecksum();
 
+        // Lo que se le da se apunta: el juego recalcula la habilidad al evolucionar o cambiar de forma (§237).
+        AbilityLedger.Record(pokemon.PID, spec.AbilityId);
+
         return pokemon;
     }
 

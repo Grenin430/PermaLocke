@@ -420,5 +420,10 @@ public enum GameEventType
     /// <summary>
     /// A registered Pokémon is now another species (it evolved, or was found to be one): the entry follows the game (§233). At the end: stored as a number.
     /// </summary>
-    PokemonEvolved
+    PokemonEvolved,
+
+    /// <summary>
+    /// PermaLocke put back the ability it had given a Pokémon, which the game had recomputed after an evolution or a form change (§237). At the end: stored as a number.
+    /// </summary>
+    AbilityRestored
 }

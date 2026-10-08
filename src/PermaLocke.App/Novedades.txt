@@ -1,3 +1,13 @@
+1.0.13 2026-10-08
+HABILIDADES
+El juego recalcula la habilidad de un Pokémon cuando evoluciona o cambia de forma (la megaevolución al acabar el combate, por ejemplo) y pisaba las habilidades que reparte PermaLocke: un Heracross del gacha con Espada Indómita salió con Gran Encanto.
+Ahora PermaLocke apunta la habilidad que reparte (gacha, intercambio sorpresa, guardería, ruleta) y la devuelve en tu partida al cerrar el juego y antes de abrirlo. Dentro de la misma sesión, el Pokémon tiene la habilidad de la tabla hasta que se cierra el juego.
+Una cápsula o parche de habilidad se deshace en esos Pokémon: las habilidades repartidas son fijas.
+MUERTES
+La escena de muerte espera hasta 10 segundos a ver la barra de PS a cero, en vez de 6: un ataque Z esconde la caja de PS más tiempo y la escena salía por encima de la animación.
+OBJETOS
+Los nombres de las MT (en la animación de recoger objetos, la ruleta, la tienda) siguen al mundo que instales mientras PermaLocke está abierto, en vez de quedarse con el del arranque.
+
 1.0.12.2 2026-10-07
 VULKAN
 Con Vulkan en el emulador, el panel del cap de nivel, los avisos sobre el juego, la barra de PS de la escena de muerte y la repetición no se encontraban el juego y no salían. Ahora salen con OpenGL y con Vulkan.

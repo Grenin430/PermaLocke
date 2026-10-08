@@ -13261,3 +13261,47 @@ Un amigo no veía el cap de nivel con la opción puesta. `GameWindow.RenderBox` 
 y con el mismo tamaño que la OwnDC de OpenGL). Con `RenderBox` nulo, `CapBadge` oculta el panel y también se quedaban sin juego los avisos sobre él y la barra de PS de la escena de muerte (la killcam y `GameWindow.TopScreen` también). El
 log no decía nada: es una ocultación silenciosa. Ahora `RenderBox` prefiere la OwnDC y, si no hay, toma la ventana hija visible de mayor área. Probado solo por la medida (las dos listas de ventanas); sin ver el panel con Vulkan en vivo.
 Otras causas posibles de «no sale el cap», por si no fuera esta: el juego no se abrió desde JUGAR (`_launcher.IsRunning`), Azahar no es la ventana en primer plano, y no hay etapa de cap (`ReadAsync` nulo).
+
+## §236 · «MT01 · Hiperrayo» sobre una MT que enseña Atracción (2026-10-07, publicado en la 1.0.13)
+
+La animación del objeto recogido dijo «MT01 · HIPERRAYO» y en la mochila ponía Atracción. El juego tenía razón: la tabla de MT del `code.bin` instalado (leída con `MachineTable`, 4.962.702 de offset) da 213 (Atracción) para la MT01, y
+ese fichero se había escrito a las 22:55, al instalar otro mundo con la app ya abierta. `MachineItemLookup` leía la tabla **una vez, al arrancar**, así que seguía con la del mundo anterior (MT01 = Hiperrayo). Ahora mira el fichero cada 5 s
+(tamaño y fecha de escritura) y reconstruye los nombres cuando cambia. Afecta a todo lo que nombra una MT (animación, ruleta, tienda, premios). Sin test (necesita un Azahar localizable); comprobado contra el `code.bin` real de la prueba.
+
+## §237 · El juego recalcula la habilidad al evolucionar y al cambiar de forma (2026-10-08, publicado en la 1.0.13)
+
+**Lo que pasó.** Un Heracross del gacha con Espada Indómita (234) salió de una Megaevolución con Gran Encanto (56) en la partida de un amigo, y la app lo vio en la FICHA. Las copias de seguridad lo
+delimitaron: el `main` guardado justo antes de la primera escritura de PermaLocke ya tenía la 56, así que no fue PermaLocke (la edición de movimientos solo toca 11 bytes del Pokémon, ni la habilidad ni la forma).
+
+**La causa, en el código del juego** (Ghidra sobre `code.bin`, direcciones de archivo +0x100000): `CoreParam::ChangeFormNo` (0x323D28) y `ChangeMonsNo` (0x323EE0) acaban igual: calculan el hueco de habilidad
+del Pokémon (banderas de `+0xD`: 0 si ninguna, 1 con la primera, 2 con la segunda), piden a `FUN_00323320(especie, forma, hueco)` la habilidad **de la tabla** y la escriben con `FUN_00321758`. `ResetMegaEvolve` (0x324840)
+llama a `ChangeFormNo` con la forma de origen al acabar el combate, así que la Megaevolución deja la habilidad de la tabla; la evolución hace lo mismo con la especie nueva. Toda habilidad que no sea la de la tabla
+(gacha, intercambio sorpresa, guardería, caras de habilidad de la ruleta, que PermaLocke escribe en la partida) se pierde en cuanto el Pokémon cambia de forma o de especie. El juego **sí respeta** lo escrito mientras
+no cambie (§136); por eso no se había visto antes.
+
+**Por qué no está parcheado en el juego.** Habría bastado un guardián en esas dos funciones (si la habilidad actual no es la de la tabla de la forma vieja, no recalcular), pero `code.bin` no tiene hueco:
+el texto acaba en 0x4BA000 (después hay cadenas de aserciones) y los 320 bytes libres de 0x4B9A00 los usan ya la regla de duplicados, la de caídos y el SuperCarameloraro. Sin probar en el juego, y tocando la evolución y todas las
+formas, no era un cambio para hacer a ciegas.
+
+**Lo que se hace desde PermaLocke.**
+- `AbilityLedger` (GameLink): un JSON (`Saves/habilidades-puestas.json`) con la habilidad que PermaLocke puso a cada PID. Se apunta en `PokemonBuilder.Build` (gacha, huevos, intercambio sorpresa) y en la cara de habilidad de
+  `SaveRouletteWorld`. Estático y sin configurar por defecto: las pruebas no escriben nada.
+- `SaveAbilityKeeper` (GameLink): en una partida **cerrada**, con copia previa (`...-habilidades.sav`) y releída después, devuelve la habilidad apuntada a cada Pokémon del equipo y de las cajas cuya PID esté en el libro y
+  cuya habilidad sea otra (nunca a un huevo). Solo toca la habilidad (con su noveno bit) y el checksum; el hueco de habilidad se queda.
+- `AbilityBackfill` (Core): lo repartido antes del libro se deduce de los eventos del gacha y del intercambio sorpresa, que guardan el **nombre** de la habilidad; solo vale un nombre que el mundo tenga una sola vez, y el último evento gana.
+- `AbilityKeeper` (App): rellena el libro con eso y restaura, dejando un evento `AbilityRestored` por Pokémon. Se llama al cerrarse el juego (`GameLinkMonitor`, tras `MarkFallenAsync`) y antes de abrirlo (`IntegrityGuard.PrepareLaunch`).
+- **Lo que cubre y lo que no.** Dentro de la sesión, el Pokémon tiene la habilidad de la tabla desde que megaevoluciona o evoluciona hasta que se cierra el juego. Una habilidad que el jugador cambie con una cápsula o un parche se deshace
+  si PermaLocke la repartió (las habilidades repartidas son fijas). Una habilidad dada por el roulette antes del libro no se puede deducir y no se restaura.
+
+Pruebas: `AbilityKeeperTests` (restaura en equipo y cajas, noveno bit, huevo intacto, libro persistente y tolerante a un fichero roto, el constructor lo apunta), `AbilityBackfillTests`. Sin probar en el juego: el ciclo
+megaevolución, cierre y reapertura. Para el caso concreto del amigo se le preparó a mano su `main` con la 234 puesta (checksums y la zona de 128 bytes de `0x6C100` rehechos por PKHeX; solo cambian 133 bytes).
+
+**Tercer seguimiento del §234 (2026-10-08, publicado en la 1.0.13): el ataque Z.** Captura del organizador: «PEDICURE HA MUERTO» sobre la animación de un ataque Z, con el Pokémon a 28/52 PS. El log:
+«barra vista pero sin llegar a cero en 6 s (0 oculta · 3834 vacía · 3865 oculta · 5178 color 96 % · 5194 oculta)». Una animación Z esconde la caja de PS más de seis segundos, y las reglas nuevas del 1.0.12.1 (barra
+bajando a casi nada, o caja oculta tras el rojo) no entran porque la barra estaba a media vida: caía al tope de espera. `HpBarWatcher.Limit` pasa de 6 a 10 s. Cuesta más tiempo en las caídas sin barra que baje (Mismodestino,
+Canto Mortal, Autodestrucción), que antes también esperaban el tope. Sin probar en el juego.
+
+**Revisor del §237 (2026-10-08).** `permalocke-reviewer` encontró tres fallos medios, arreglados antes de publicar: (1) en una run cuya ruleta ya sacó una cara de habilidad, deducir las habilidades del gacha podría deshacer la de la ruleta
+(los eventos no dicen a quién): `AbilityBackfill` no deduce nada en esas runs; (2) tras restaurar una habilidad, `_seen` del vigilante de rerolls la veía como una recarga: se vacía el PID restaurado; (3) un fallo transitorio al leer el
+libro lo daba por vacío y el siguiente `Record` escribía encima: ahora no se escribe si la lectura falló, y un JSON roto se guarda como `.roto`. También: la deducción desde la historia se hace una vez por sesión y `MachineItemLookup`
+no reconstruye cada 5 s un mundo sin tabla de MT.

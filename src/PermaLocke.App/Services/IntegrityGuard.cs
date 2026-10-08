@@ -24,7 +24,7 @@ namespace PermaLocke.App.Services;
 /// </para>
 /// </remarks>
 public sealed class IntegrityGuard(AzaharInstallation azahar, PlayerSave save, IntegrityService integrity,
-    GameLinkMonitor monitor, AppPaths paths, ILogger<IntegrityGuard> logger)
+    GameLinkMonitor monitor, AppPaths paths, AbilityKeeper abilities, ILogger<IntegrityGuard> logger)
 {
     /// <summary>How close to the end of the emulator a battle reading has to be for the battle to have been left open.</summary>
     private static readonly TimeSpan BattleWindow = TimeSpan.FromSeconds(6);
@@ -47,6 +47,9 @@ public sealed class IntegrityGuard(AzaharInstallation azahar, PlayerSave save, I
         }
 
         azahar.DisableSaveStates(location);
+
+        // Las habilidades que el juego recalculó en la sesión anterior, antes de abrirlo otra vez (§237).
+        abilities.RestoreNow();
 
         // Los que ya estaban son de antes de esta sesión: se retiran sin más, porque cargarlos es la trampa.
         foreach (var state in azahar.SetAsideSaveStates(location, StatesFolder))

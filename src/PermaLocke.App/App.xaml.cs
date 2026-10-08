@@ -123,6 +123,7 @@ public partial class App : Application
         }
 
         var paths = new AppPaths();
+        PermaLocke.GameLink.AbilityLedger.Configure(Path.Combine(paths.Saves, "habilidades-puestas.json"));
         paths.EnsureCreated();
 
         // El diseño de la interfaz (2026-10-01): antes de que exista ninguna ventana. --tema <clave> lo prueba sin guardarlo.
@@ -280,6 +281,7 @@ public partial class App : Application
         collection.AddSingleton<INurseryCatalog>(_ => JsonNurseryCatalog.Load(Path.Combine(paths.Data, "guarderia.json")));
         collection.AddSingleton<NurseryService>();
         collection.AddSingleton<SpeciesSyncService>();
+        collection.AddSingleton<AbilityKeeper>();
         collection.AddSingleton<NurseryViewModel>();
         collection.AddSingleton<ShopViewModel>();
         collection.AddSingleton<PokemonViewerViewModel>();

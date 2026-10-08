@@ -230,6 +230,8 @@ public sealed class SaveRouletteWorld(
                 // primero vale siempre y evita que la ficha enseñe un hueco imposible.
                 pokemon.AbilityNumber = 1;
 
+                AbilityLedger.Record(pokemon.PID, ability);
+
                 return $"{Name(pokemon)}: habilidad {abilities.GetName(ability)}.";
             }
 

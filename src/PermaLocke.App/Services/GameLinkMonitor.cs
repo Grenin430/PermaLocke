@@ -40,7 +40,8 @@ public sealed class GameLinkMonitor(
     PermaLocke.GameLink.Field.BerryPileKeeper berries,
     PermaLocke.GameLink.BagService bag,
     PermaLocke.Core.Services.NurseryService nursery,
-    PermaLocke.Core.Services.SpeciesSyncService speciesSync) : IDisposable
+    PermaLocke.Core.Services.SpeciesSyncService speciesSync,
+    AbilityKeeper abilityKeeper) : IDisposable
 {
     /// <summary>The species and form each PID had the last time it was looked at.</summary>
     private readonly Dictionary<uint, (int Species, int Form)> _species = [];
@@ -245,6 +246,13 @@ public sealed class GameLinkMonitor(
                 if (Latest?.Connected == true && !snapshot.Connected)
                 {
                     await MarkFallenAsync();
+
+                    // Con el juego cerrado también se devuelven las habilidades que el juego recalculó al evolucionar o cambiar de forma (§237).
+                    foreach (var restored in await abilityKeeper.RestoreAsync(_stopping.Token))
+                    {
+                        // Lo que se ha devuelto no es una recarga: el vigilante de rerolls no debe verlo como tal.
+                        _seen.Remove(restored.Pid);
+                    }
                 }
 
                 Latest = snapshot;

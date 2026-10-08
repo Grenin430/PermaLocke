@@ -39,6 +39,7 @@ public static class DisplayNames
         [GameEventType.NurseryEgg] = "Huevo de la guardería",
         [GameEventType.NurseryHatch] = "Huevo eclosionado",
         [GameEventType.PokemonEvolved] = "Cambio de especie",
+        [GameEventType.AbilityRestored] = "Habilidad devuelta",
 
         [GameEventType.AchievementUnlocked] = "Logro conseguido",
         [GameEventType.AchievementProgressed] = "Progreso a mano",
