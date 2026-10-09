@@ -30,6 +30,7 @@ public static class ItemStyles
         ItemCategory.ZCrystal => ZCrystalStyle.Instance,
         ItemCategory.Key => KeyItemStyle.Instance,
         ItemCategory.Evolution => EvolutionStyle.Instance,
+        ItemCategory.Machine => MachineStyle.Instance,
         _ => ClassicStyle.Instance
     };
 
