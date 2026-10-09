@@ -33,6 +33,7 @@ public static class ItemStyles
         ItemCategory.Machine => MachineStyle.Instance,
         ItemCategory.Berry => BerryStyle.Instance,
         ItemCategory.Healing => HealingStyle.Instance,
+        ItemCategory.Boost => BoostStyle.Instance,
         _ => ClassicStyle.Instance
     };
 
