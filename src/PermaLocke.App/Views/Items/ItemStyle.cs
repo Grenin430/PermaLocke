@@ -29,6 +29,7 @@ public static class ItemStyles
         ItemCategory.MegaStone => MegaStoneStyle.Instance,
         ItemCategory.ZCrystal => ZCrystalStyle.Instance,
         ItemCategory.Key => KeyItemStyle.Instance,
+        ItemCategory.Evolution => EvolutionStyle.Instance,
         _ => ClassicStyle.Instance
     };
 

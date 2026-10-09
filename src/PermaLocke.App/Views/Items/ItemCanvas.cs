@@ -188,8 +188,10 @@ public sealed class ItemCanvas
     /// <param name="washColour">The colour of the band.</param>
     /// <param name="washWidth">How many columns it reaches to each side.</param>
     /// <param name="lean">Columns the top of the bag is displaced against its bottom: it bows or leans, row by row.</param>
+    /// <param name="flat">When not 0, every cell of the bag but its outline is this colour: a silhouette.</param>
     public void Bag(int left, int bottom, bool open, double scaleX = 1, double scaleY = 1, int shiver = 0, uint stitch = 0,
-        double bulgeRow = -1, double bulge = 0, double wash = -1, uint washColour = 0, double washWidth = 6, double lean = 0)
+        double bulgeRow = -1, double bulge = 0, double wash = -1, uint washColour = 0, double washWidth = 6, double lean = 0,
+        uint flat = 0)
     {
         var art = open ? BagOpen : BagClosed;
         var rows = art.Length;
@@ -214,6 +216,9 @@ public sealed class ItemCanvas
                 if (ch == '.') continue;
 
                 var colour = stitch != 0 && ch is 's' or 'G' ? stitch : BagColours[ch];
+
+                // Its silhouette in one colour, outline apart: what a bag looks like for a frame when something changes in it.
+                if (flat != 0 && ch != 'o') colour = flat;
                 if (wash >= 0)
                 {
                     // Three hard steps and no blend between them: a band of recoloured leather moving across the bag.
