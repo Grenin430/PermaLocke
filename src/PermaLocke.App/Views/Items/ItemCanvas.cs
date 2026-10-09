@@ -341,9 +341,10 @@ public sealed class ItemCanvas
 
         if (badge is not null)
         {
-            foreach (var (bx, by) in badge)
+            // By index: walking a list through its interface makes an enumerator at every frame.
+            for (var i = 0; i < badge.Count; i++)
             {
-                Put(at + width - 9 + bx, top + 4 + by, edge2);
+                Put(at + width - 9 + badge[i].X, top + 4 + badge[i].Y, edge2);
             }
         }
     }

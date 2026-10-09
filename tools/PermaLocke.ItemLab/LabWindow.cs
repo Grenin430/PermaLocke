@@ -391,8 +391,12 @@ public sealed class LabWindow : Window
             var category = entry.Class.Category;
             var (pixels, width, height) = _data.Icon(entry.Id);
             var power = _power.SelectedIndex <= 0 ? entry.Class.Power : _power.SelectedIndex - 1;
+
+            // Each tile is the next pickup of the one before: a style that alternates (the healing items) shows another entry in
+            // each, and the seed is the app's own for that id and that count. The type of a stone is read with the catalog.
+            var count = Counter + _tiles.Count;
             var item = new ItemScene.Item(pixels, width, height, entry.Name, (int)_amount.SelectedItem, category, power,
-                ItemTint.Of(pixels), ItemScene.SeedFor(entry.Id, Counter));
+                ItemTint.Of(pixels), ItemScene.SeedFor(entry.Id, count), null, entry.Class.Kind, count);
 
             var scene = new ItemScene(_scale.Value, ItemScene.HeightFor(item));
             var bitmap = new WriteableBitmap(scene.Width, scene.Height, 96, 96, PixelFormats.Pbgra32, null);

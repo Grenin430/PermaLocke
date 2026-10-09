@@ -32,6 +32,7 @@ public static class ItemStyles
         ItemCategory.Evolution => EvolutionStyle.Instance,
         ItemCategory.Machine => MachineStyle.Instance,
         ItemCategory.Berry => BerryStyle.Instance,
+        ItemCategory.Healing => HealingStyle.Instance,
         _ => ClassicStyle.Instance
     };
 
