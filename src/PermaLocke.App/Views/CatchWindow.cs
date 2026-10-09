@@ -37,15 +37,22 @@ public sealed class CatchWindow : Window
     }
 
     /// <summary>An item going into the bag (2026-09-28), in the same window: one animation over the game at a time.</summary>
-    public Task PlayAsync(ItemScene.Item item, (int Left, int Top) corner, double pixel)
+    /// <param name="hurry">Asked every frame: while it says yes the animation plays three times as fast, so that an item
+    /// does not hold up the ones behind it (the long ones, the Mega Stones, can be cut that way as the player goes on).</param>
+    /// <param name="leave">Asked every frame: the first time it says yes the player has carried on, and the scene goes out
+    /// through the dither in <see cref="ItemScene.ExitSeconds"/> instead of waiting for its end.</param>
+    /// <param name="speed">1 is real time; the rehearsal slows it down to be able to look at it.</param>
+    public Task PlayAsync(ItemScene.Item item, (int Left, int Top) corner, double pixel, Func<bool>? hurry = null,
+        Func<bool>? leave = null, double speed = 1)
     {
-        var scene = new ItemScene(pixel);
+        var scene = new ItemScene(pixel, ItemScene.HeightFor(item));
         var box = (corner.Left, corner.Top, scene.Width, scene.Height);
-        return Run(box, scene.Width, scene.Height, t => scene.Render(item, t), () => scene.Pixels, ItemTimeline.Length);
+        return Run(box, scene.Width, scene.Height, (t, fade) => scene.Render(item, t, fade), () => scene.Pixels, scene.LengthFor(item),
+            hurry, leave, speed);
     }
 
-    private Task Run((int Left, int Top, int Width, int Height) box, int width, int height, Action<double> render,
-        Func<byte[]> pixels, double length)
+    private Task Run((int Left, int Top, int Width, int Height) box, int width, int height, Action<double, double> render,
+        Func<byte[]> pixels, double length, Func<bool>? hurry = null, Func<bool>? leave = null, double speed = 1)
     {
         var bitmap = new WriteableBitmap(width, height, 96, 96, PixelFormats.Pbgra32, null);
         var whole = new Int32Rect(0, 0, width, height);
@@ -61,13 +68,24 @@ public sealed class CatchWindow : Window
 
         var clock = Stopwatch.StartNew();
         var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var played = 0.0;
+        var seen = 0.0;
+        double? left = null;
 
         void Frame(object? sender, EventArgs e)
         {
-            var t = clock.Elapsed.TotalSeconds;
+            // Real time passes at the frame rate there is; what the scene sees is time, never a count of frames.
+            var now = clock.Elapsed.TotalSeconds;
+            played += (now - seen) * speed * (hurry?.Invoke() == true ? 3 : 1);
+            seen = now;
+            var t = played;
+
+            if (left is null && leave?.Invoke() == true) left = clock.Elapsed.TotalSeconds;
+            var fade = left is { } since ? 1 - ((now - since) / ItemScene.ExitSeconds) : 1;
+
             try
             {
-                render(t);
+                render(t, fade);
                 bitmap.WritePixels(whole, pixels(), width * 4, 0);
             }
             catch (Exception ex)
@@ -77,7 +95,7 @@ public sealed class CatchWindow : Window
                 return;
             }
 
-            if (t >= length)
+            if (t >= length || fade <= 0)
             {
                 CompositionTarget.Rendering -= Frame;
                 done.TrySetResult();
@@ -93,6 +111,6 @@ public sealed class CatchWindow : Window
     public Task PlayAsync(TcgRender front, TcgRender back, TcgCard card, (int Left, int Top, int Width, int Height) box, double pixel)
     {
         var scene = new CatchScene(box.Width, box.Height, pixel);
-        return Run(box, scene.Width, scene.Height, t => scene.Render(front, back, card, t), () => scene.Pixels, CatchTimeline.Length);
+        return Run(box, scene.Width, scene.Height, (t, _) => scene.Render(front, back, card, t), () => scene.Pixels, CatchTimeline.Length);
     }
 }

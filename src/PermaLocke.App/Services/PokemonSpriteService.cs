@@ -368,11 +368,20 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
     }
 
     /// <summary>
-    /// The icon of any item whose index has been measured, straight from the cartridge.
+    /// True when the game draws an icon for this item and <see cref="GetItem"/> can take it out: the Z-Crystals, the mod's
+    /// own items, and whatever <see cref="ItemIconIndex"/> knows, which with the game's own table loaded
+    /// (<see cref="ItemIconIndex.UseCartridgeTable"/>) is every item the game does not draw as a «?».
+    /// </summary>
+    public static bool HasItemIcon(int itemId, int containerIcons = ItemIconIndex.ExpansionIcons) =>
+        ZCrystalIndex.TryGet(itemId, out _) || itemId is SuperCandy.ItemId or InfiniteRepel.ItemId or EggTurbo.ItemId
+        || ItemIconIndex.TryGet(itemId, out _, containerIcons);
+
+    /// <summary>
+    /// The icon of any item the game draws one for, straight from the cartridge.
     /// </summary>
     /// <remarks>
-    /// Null for an item nobody has checked. The shop only asks for what it sells, and every one of
-    /// those was identified on screen: see <see cref="ItemIconIndex"/>.
+    /// Null for an item the game itself draws as a «?» (see <see cref="HasItemIcon"/>), or before <see cref="PrepareAsync"/>.
+    /// The shop's items were identified on screen, and the rest come from the game's own table: see <see cref="ItemIconIndex"/>.
     /// </remarks>
     public BitmapSource? GetItem(int itemId)
     {
@@ -382,7 +391,7 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
         var crystal = ZCrystalIndex.TryGet(itemId, out _);
         var painted = itemId is SuperCandy.ItemId or InfiniteRepel.ItemId or EggTurbo.ItemId;
 
-        if (!_prepared || (!crystal && !painted && !ItemIconIndex.TryGet(itemId, out _, _itemIcons)))
+        if (!_prepared || !HasItemIcon(itemId, _itemIcons))
         {
             return null;
         }

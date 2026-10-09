@@ -209,6 +209,7 @@ public partial class App : Application
         // registra Rules, porque es la última que se registra la que se sirve.
         collection.AddSingleton(_ => JsonMapTable.Load(Path.Combine(paths.Data, "mapas.json")));
         collection.AddSingleton<WorldEvolutionLines>();
+        collection.AddSingleton<WorldItemCatalog>();
         collection.AddSingleton<PermaLocke.Rules.IEvolutionLineProvider>(sp => sp.GetRequiredService<WorldEvolutionLines>());
         collection.AddSingleton<WorldAllowedStatics>();
         collection.AddSingleton<PermaLocke.Rules.Services.TrialZoneService>();
@@ -552,6 +553,10 @@ public partial class App : Application
             // Y las capturas estáticas permitidas, por lo mismo: la tabla del cartucho puede tocar sacarla de la ROM.
             var allowedStatics = _services.GetRequiredService<WorldAllowedStatics>();
             _ = Task.Run(allowedStatics.Warm);
+
+            // Y qué es cada objeto para su animación: lo mismo, la tabla del cartucho.
+            var worldItems = _services.GetRequiredService<WorldItemCatalog>();
+            _ = Task.Run(worldItems.Warm);
         }
 
         if (Array.FindIndex(e.Args, arg => string.Equals(arg, "--seccion", StringComparison.OrdinalIgnoreCase)) is var at
@@ -625,11 +630,27 @@ public partial class App : Application
 
         if (e.Args.Contains("--ensayar-objeto", StringComparer.OrdinalIgnoreCase))
         {
-            // Objetos saltando a la mochila (2026-09-28): una Poción ×5, una MT y un Caramelo Raro, sin tocar nada.
+            // Objetos saltando a la mochila (2026-09-28): una Poción ×5, una MT y un Caramelo Raro, sin tocar nada. Con una
+            // lista detrás (--ensayar-objeto 664,752,1011) salen esos objetos, en ese orden, de uno en uno; y con
+            // --ensayar-lento, a cámara lenta (0,25), para poder mirar y capturar un fotograma.
             var ceremony = _services!.GetRequiredService<CatchCeremony>();
-            ceremony.CelebrateItem(17, 5);
-            ceremony.CelebrateItem(328, 1);
-            ceremony.CelebrateItem(50, 1);
+            if (e.Args.Contains("--ensayar-lento", StringComparer.OrdinalIgnoreCase)) ceremony.Speed = 0.25;
+
+            var listAt = Array.FindIndex(e.Args, arg => string.Equals(arg, "--ensayar-objeto", StringComparison.OrdinalIgnoreCase));
+            var listed = listAt + 1 < e.Args.Length
+                ? e.Args[listAt + 1].Split(',').Select(text => int.TryParse(text, out var id) ? id : 0).Where(id => id > 0).ToArray()
+                : [];
+
+            if (listed.Length > 0)
+            {
+                foreach (var id in listed) ceremony.CelebrateItem(id, 1);
+            }
+            else
+            {
+                ceremony.CelebrateItem(17, 5);
+                ceremony.CelebrateItem(328, 1);
+                ceremony.CelebrateItem(50, 1);
+            }
         }
 
         if (e.Args.Contains("--ensayar-killcam", StringComparer.OrdinalIgnoreCase))

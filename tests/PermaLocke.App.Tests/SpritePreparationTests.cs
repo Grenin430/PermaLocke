@@ -6,6 +6,7 @@ using PermaLocke.Infrastructure;
 
 namespace PermaLocke.App.Tests;
 
+[Collection("ItemIconIndex")]
 public sealed class SpritePreparationTests : IDisposable
 {
     private readonly string _root = Path.Combine(Path.GetTempPath(), "permalocke-sprite-test-" + Guid.NewGuid().ToString("N"));

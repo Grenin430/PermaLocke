@@ -21,14 +21,20 @@ namespace PermaLocke.App.Services;
 /// </para>
 /// </remarks>
 public sealed class CatchCeremony(IUiDispatcher ui, SaveBoxReader boxes, TcgCardFactory cards, KillcamRecorder killcam,
-    PokemonSpriteService sprites, IItemLookup items, PermaLocke.Core.Domain.IShopCatalog shop,
+    PokemonSpriteService sprites, IItemLookup items, PermaLocke.Core.Domain.IShopCatalog shop, WorldItemCatalog worldItems,
     ILogger<CatchCeremony> logger)
 {
+    /// <summary>Items celebrated so far in this run of the app: with the item's id it is the seed, so the same item never plays twice alike.</summary>
+    private int _itemsSeen;
+
     /// <summary>Cards waiting their turn. Only touched on the UI thread.</summary>
     private readonly Queue<object> _waiting = new();
 
     private bool _playing;
     private CatchWindow? _window;
+
+    /// <summary>1 is real time. The rehearsal (<c>--ensayar-lento</c>) lowers it to be able to look at an animation and capture a frame.</summary>
+    public double Speed { get; set; } = 1;
 
     /// <summary>Off in CONFIGURACIÓN: the capture is detected all the same, only the card is not shown.</summary>
     public bool Enabled { get; set; } = true;
@@ -86,7 +92,9 @@ public sealed class CatchCeremony(IUiDispatcher ui, SaveBoxReader boxes, TcgCard
                 var (icon, width, height) = sprites.GetItem(itemId) is { } bitmap
                     ? (CemeteryScene.Pixels(bitmap), bitmap.PixelWidth, bitmap.PixelHeight)
                     : ItemScene.Parcel();
-                _waiting.Enqueue(new ItemScene.Item(icon, width, height, name, amount));
+                var kind = worldItems.Current.Classify(itemId);
+                _waiting.Enqueue(new ItemScene.Item(icon, width, height, name, amount, kind.Category, kind.Power, ItemTint.Of(icon),
+                    ItemScene.SeedFor(itemId, _itemsSeen++)));
             }
             catch (Exception ex)
             {
@@ -161,10 +169,15 @@ public sealed class CatchCeremony(IUiDispatcher ui, SaveBoxReader boxes, TcgCard
                 var next = _waiting.Dequeue();
                 if (next is ItemScene.Item item)
                 {
-                    var (corner, itemPixel) = BesideBottomScreen();
+                    var (corner, itemPixel) = BesideBottomScreen(ItemScene.HeightFor(item));
                     logger.LogInformation("Objeto a la mochila: {Item} ×{Amount}", item.Name, item.Amount);
                     _window ??= new CatchWindow();
-                    await _window.PlayAsync(item, corner, itemPixel);
+
+                    // The player carrying on (a key or a button of the game going down) sends it out at once; so does another
+                    // item waiting, at triple speed. What is held when it begins does not count: see GameInputWatch.
+                    var input = new GameInputWatch();
+                    input.Begin();
+                    await _window.PlayAsync(item, corner, itemPixel, () => _waiting.Count > 0, input.Advanced, Speed);
                     continue;
                 }
 
@@ -196,7 +209,9 @@ public sealed class CatchCeremony(IUiDispatcher ui, SaveBoxReader boxes, TcgCard
     /// centred in it and level with the middle of that screen, at the game's own pixel size, smaller if the band is narrow.
     /// Without the emulator, the bottom-left of the desktop.
     /// </summary>
-    private static ((int Left, int Top) Corner, double Pixel) BesideBottomScreen()
+    /// <param name="sceneHeight">The height the item's style asks for, in pixels of the game: only the height changes with it,
+    /// the pixel is still computed from the width, so a taller scene is the same drawing scaled the same.</param>
+    private static ((int Left, int Top) Corner, double Pixel) BesideBottomScreen(int sceneHeight)
     {
         var handle = GameWindow.Handle();
         if (GameWindow.RenderBox(handle) is { } render && GameWindow.TopScreen(handle) is { } top)
@@ -205,13 +220,13 @@ public sealed class CatchCeremony(IUiDispatcher ui, SaveBoxReader boxes, TcgCard
             var band = bottomLeft - render.Left;
             var pixel = Math.Max(1, Math.Min(top.Scale, band * 0.9 / ItemScene.SceneWidth));
             var width = ItemScene.SceneWidth * pixel;
-            var height = ItemScene.SceneHeight * pixel;
+            var height = sceneHeight * pixel;
             var middle = top.Top + (360 * top.Scale);
             return (((int)Math.Round(render.Left + ((band - width) / 2)), (int)Math.Round(middle - (height / 2))), pixel);
         }
 
         var area = OverlayWindows.WorkArea();
-        return ((area.Left + 24, area.Top + area.Height - (ItemScene.SceneHeight * 3) - 24), 3);
+        return ((area.Left + 24, area.Top + area.Height - (sceneHeight * 3) - 24), 3);
     }
 
     /// <summary>

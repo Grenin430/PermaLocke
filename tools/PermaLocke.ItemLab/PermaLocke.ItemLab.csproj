@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    El previsualizador de las animaciones de objeto (2026-10-09): enseña ItemScene tal cual la compila la app, en bucle, una
+    categoria al lado de otra, con velocidad, escala (con decimales, para ver los huecos de §242), semilla, potencia y
+    fotograma a fotograma. Lee la tabla de objetos de Expansion/ para que cada categoria use objetos de verdad.
+
+      dotnet run con el proyecto tools/PermaLocke.ItemLab
+
+    Usa la propia app como referencia, no copias de sus ficheros: lo que ves es lo que compila PermaLocke.App. Los iconos salen como en la app, de ROM/ y Expansion/ (a Data/sprites). Con la opcion iconos y un fichero de informe comprueba que cada objeto con icono en el juego lo saca.
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>PermaLocke.ItemLab</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\PermaLocke.App\PermaLocke.App.csproj" />
+  </ItemGroup>
+
+</Project>
