@@ -219,14 +219,14 @@ public static class ItemFx
     /// The plate, coming in from the left through the dither at a moment and being the last thing drawn so that nothing covers it.
     /// </summary>
     public static void PlateIn(ItemCanvas c, ItemScene.Item item, double t, double start, int left, int top, string? caption = null,
-        uint accent = 0, uint accentLight = 0, IReadOnlyList<(int X, int Y)>? badge = null)
+        uint accent = 0, uint accentLight = 0, IReadOnlyList<(int X, int Y)>? badge = null, bool ornate = false)
     {
         var u = Math.Clamp((t - start) / 0.4, 0, 1);
         if (u <= 0) return;
 
         var kept = c.Alpha;
         c.Alpha = Math.Min(kept, ItemCanvas.Smooth(u));
-        c.Plate(item, left, top, -(int)Math.Round((1 - ItemCanvas.Ease(u)) * 6), caption, accent, accentLight, badge);
+        c.Plate(item, left, top, -(int)Math.Round((1 - ItemCanvas.Ease(u)) * 6), caption, accent, accentLight, badge, ornate);
         c.Alpha = kept;
     }
 }

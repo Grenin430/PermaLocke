@@ -270,8 +270,9 @@ public sealed class ItemCanvas
     /// <param name="caption">The second line, instead of «A LA MOCHILA»: the kind of item it is.</param>
     /// <param name="accent">Colour of the edge, instead of gold; <paramref name="accentLight"/> its highlight.</param>
     /// <param name="badge">Cells of a mark of five by five that says the kind at a glance, in the top right corner.</param>
+    /// <param name="ornate">A second frame inside the edge, for the plates that are to be solemn.</param>
     public void Plate(ItemScene.Item item, int left, int top, int slide, string? caption = null, uint accent = 0,
-        uint accentLight = 0, IReadOnlyList<(int X, int Y)>? badge = null)
+        uint accentLight = 0, IReadOnlyList<(int X, int Y)>? badge = null, bool ornate = false)
     {
         const int Height = 24;
         var reserved = badge is null ? 0 : 8;
@@ -297,6 +298,10 @@ public sealed class ItemCanvas
                     : y == 1 ? PlateLight
                     : y == Height - 2 ? PlateDark
                     : PlateFill;
+
+                // A second frame inside the first, in the colour of the edge: what the plate of a key item has.
+                if (ornate && !edge && x >= 4 && (y == 3 || y == Height - 4 || x == width - 4) && y >= 3 && y <= Height - 4) colour = edge1;
+
                 Put(at + x, top + y, colour);
             }
         }
