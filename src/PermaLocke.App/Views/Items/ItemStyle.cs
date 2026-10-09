@@ -24,9 +24,12 @@ public abstract class ItemStyle
 /// <summary>Which style each category has.</summary>
 public static class ItemStyles
 {
-    /// <summary>Every category plays the classic scene until it has a style of its own.</summary>
-    public static ItemStyle For(ItemCategory category) => ClassicStyle.Instance;
+    public static ItemStyle For(ItemCategory category) => category switch
+    {
+        ItemCategory.MegaStone => MegaStoneStyle.Instance,
+        _ => ClassicStyle.Instance
+    };
 
     /// <summary>Every style there is, once each.</summary>
-    public static IReadOnlyList<ItemStyle> All { get; } = [ClassicStyle.Instance];
+    public static IReadOnlyList<ItemStyle> All { get; } = [ClassicStyle.Instance, MegaStoneStyle.Instance];
 }

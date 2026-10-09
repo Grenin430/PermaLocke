@@ -4,8 +4,8 @@ using Xunit;
 namespace PermaLocke.App.Tests;
 
 /// <summary>
-/// The styles of the item animations (2026-10-09): each draws inside the height it declares, and the scaling leaves no hole at
-/// any size of the game's pixel.
+/// The styles of the item animations (2026-10-09): each draws inside the height it declares, the scaling leaves no hole at
+/// any size of the game's pixel, and the same moment of the same item is always the same frame.
 /// </summary>
 public sealed class ItemStyleTests
 {
@@ -42,6 +42,17 @@ public sealed class ItemStyleTests
         }
     }
 
+    [Fact]
+    public void The_styles_that_have_a_climax_may_ask_for_more_height_but_not_for_more_width()
+    {
+        Assert.Equal(ItemScene.SceneHeight, ItemStyles.For(ItemCategory.Misc).Height);
+        Assert.Equal(112, ItemStyles.For(ItemCategory.MegaStone).Height);
+
+        var scene = new ItemScene(2.3, 112);
+        Assert.Equal((int)Math.Ceiling(ItemScene.SceneWidth * 2.3), scene.Width);
+        Assert.Equal((int)Math.Ceiling(112 * 2.3), scene.Height);
+    }
+
     /// <summary>
     /// A frame at any size is the frame at size one with every cell of the game blown up to the block between its edges, so
     /// that no monitor pixel inside the drawing is left transparent (the straight lines of §242) and none is painted twice.
@@ -53,7 +64,7 @@ public sealed class ItemStyleTests
     [InlineData(1.0)]
     public void Scaling_a_frame_leaves_no_hole_at_any_size_of_the_game_pixel(double pixel)
     {
-        foreach (var item in new[] { Stone(77, category: ItemCategory.Misc), Stone(4242, 0xFF20A060) })
+        foreach (var item in new[] { Stone(77, category: ItemCategory.Misc), Stone(77), Stone(4242, 0xFF20A060) })
         {
             var style = ItemStyles.For(item.Category);
             var length = style.Phases(item).Length;
@@ -70,7 +81,7 @@ public sealed class ItemStyleTests
                 {
                     for (var gx = 0; gx < ItemScene.SceneWidth; gx++)
                     {
-                        var want = Cell(reference, gx, gy);
+                        var want = Cell(reference, gx, gy, 1);
 
                         var left = (int)Math.Round(gx * pixel);
                         var top = (int)Math.Round(gy * pixel);
@@ -81,7 +92,7 @@ public sealed class ItemStyleTests
                         {
                             for (var x = left; x < Math.Min(scaled.Width, right); x++)
                             {
-                                if (want != Cell(scaled, x, y))
+                                if (want != Cell(scaled, x, y, 1))
                                 {
                                     Assert.Fail($"{item.Category}, t={t:0.00}: la celda ({gx},{gy}) a escala {pixel} no es la del tamaño uno en ({x},{y}).");
                                 }
@@ -93,10 +104,83 @@ public sealed class ItemStyleTests
         }
     }
 
-    /// <summary>The pixel as a number, to compare cells.</summary>
-    private static uint Cell(ItemScene scene, int x, int y)
+    [Fact]
+    public void The_same_moment_of_the_same_item_is_the_same_frame_and_the_seed_changes_it()
     {
-        var i = ((y * scene.Width) + x) * 4;
+        var a = new ItemScene(2, 112);
+        var b = new ItemScene(2, 112);
+        var c = new ItemScene(2, 112);
+
+        // A moment of the resonance, with the strands and the heartbeat, and another with the rings and the glyph.
+        foreach (var t in new[] { 1.7, 2.9 })
+        {
+            a.Render(Stone(5), t);
+            b.Render(Stone(5), t);
+            c.Render(Stone(6), t);
+
+            Assert.Equal(a.Pixels, b.Pixels);
+            Assert.NotEqual(a.Pixels, c.Pixels);
+        }
+    }
+
+    [Fact]
+    public void The_stone_tints_the_scene_and_a_stone_of_another_colour_tints_it_another_way()
+    {
+        var red = new ItemScene(2, 112);
+        var blue = new ItemScene(2, 112);
+
+        red.Render(Stone(3, 0xFFD02020), 2.9);
+        blue.Render(Stone(3, 0xFF2040D0), 2.9);
+
+        // The bag is orange in both: what tells them apart is the stone's family of colours.
+        Assert.NotEqual(red.Pixels, blue.Pixels);
+        Assert.True(Dominant(red.Pixels) > Dominant(blue.Pixels) + 40, "a red stone makes the scene redder than a blue one does");
+    }
+
+    [Fact]
+    public void The_plate_is_there_whenever_the_scene_is_whole_and_nothing_is_drawn_after_the_end()
+    {
+        var item = Stone(2);
+        var scene = new ItemScene(2, 112);
+        var phases = ItemStyles.For(ItemCategory.MegaStone).Phases(item);
+
+        foreach (var t in new[] { 1.0, 1.7, 2.45, 2.9, 3.5 })
+        {
+            scene.Render(item, t);
+
+            // Where the plate's gold edge goes, 66 columns in and 44 rows down: opaque.
+            var x = (int)(68 * 2);
+            var y = (int)(50 * 2);
+            Assert.Equal(0xFF, scene.Pixels[(((y * scene.Width) + x) * 4) + 3]);
+        }
+
+        scene.Render(item, phases.Length + 0.1);
+        Assert.All(scene.Pixels, value => Assert.Equal(0, value));
+    }
+
+    /// <summary>The pixel as a number, to compare cells.</summary>
+    private static uint Cell(ItemScene scene, int x, int y, int cell)
+    {
+        var i = (((y * scene.Width) + x) * 4 * cell);
         return scene.Pixels[i] | ((uint)scene.Pixels[i + 1] << 8) | ((uint)scene.Pixels[i + 2] << 16) | ((uint)scene.Pixels[i + 3] << 24);
+    }
+
+    /// <summary>More than zero when the frame has more red than blue in what it paints, less when it has more blue.</summary>
+    private static long Dominant(byte[] bgra)
+    {
+        long sum = 0;
+        for (var i = 0; i + 3 < bgra.Length; i += 4)
+        {
+            if (bgra[i + 3] == 0) continue;
+            var b = bgra[i];
+            var g = bgra[i + 1];
+            var r = bgra[i + 2];
+
+            // Only what is clearly one or the other: the plate, the bag and the white are none of them.
+            if (r > b + 60 && r > g + 40) sum++;
+            else if (b > r + 60 && b > g + 40) sum--;
+        }
+
+        return sum;
     }
 }

@@ -46,6 +46,7 @@
     <Compile Include="..\..\src\PermaLocke.App\Views\Items\ItemCanvas.cs" Link="App\ItemCanvas.cs" />
     <Compile Include="..\..\src\PermaLocke.App\Views\Items\ItemStyle.cs" Link="App\ItemStyle.cs" />
     <Compile Include="..\..\src\PermaLocke.App\Views\Items\ClassicStyle.cs" Link="App\ClassicStyle.cs" />
+    <Compile Include="..\..\src\PermaLocke.App\Views\Items\MegaStoneStyle.cs" Link="App\MegaStoneStyle.cs" />
     <Compile Include="..\..\src\PermaLocke.App\Views\Items\ItemTint.cs" Link="App\ItemTint.cs" />
     <Compile Include="..\..\src\PermaLocke.App\Services\TypeColours.cs" Link="App\TypeColours.cs" />
     <Compile Include="..\..\src\PermaLocke.App\ViewModels\AlbumPaging.cs" Link="App\AlbumPaging.cs" />
