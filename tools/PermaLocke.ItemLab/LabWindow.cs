@@ -39,6 +39,37 @@ public sealed class LabWindow : Window
     /// <summary>The three stones the Megapiedra view shows: fire (Blazikenita), water (Swampertita) and one of the mod (Chesnaughtita).</summary>
     private static readonly int[] MegaPicks = [664, 752, 1011];
 
+    /// <summary>
+    /// What each category shows when it is looked at alone (--solo, or the category chosen with no item): a few items that
+    /// differ in what the style varies with: power, type, kind of item.
+    /// </summary>
+    private static readonly Dictionary<ItemCategory, int[]> Picks = new()
+    {
+        [ItemCategory.Misc] = [92, 88, 63],
+        [ItemCategory.Machine] = [328, 340, 420],
+        [ItemCategory.Berry] = [157, 174, 149],
+        [ItemCategory.Healing] = [17, 26, 25, 24, 28],
+        [ItemCategory.Boost] = [50, 45, 51, 113],
+        [ItemCategory.Evolution] = [83, 80, 81, 221],
+        [ItemCategory.MegaStone] = MegaPicks,
+        [ItemCategory.Battle] = [220, 270, 548],
+        [ItemCategory.PokeBall] = [4, 3, 2, 1, 576],
+        [ItemCategory.Key] = [216, 114, 115],
+        [ItemCategory.ZCrystal] = [807, 808, 809, 825]
+    };
+
+    /// <summary>The names --solo understands.</summary>
+    private static readonly Dictionary<string, ItemCategory> SoloNames = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["varios"] = ItemCategory.Misc, ["mt"] = ItemCategory.Machine, ["bayas"] = ItemCategory.Berry,
+        ["curativos"] = ItemCategory.Healing, ["mejoras"] = ItemCategory.Boost, ["evolutivas"] = ItemCategory.Evolution,
+        ["mega"] = ItemCategory.MegaStone, ["combate"] = ItemCategory.Battle, ["balls"] = ItemCategory.PokeBall,
+        ["clave"] = ItemCategory.Key, ["z"] = ItemCategory.ZCrystal
+    };
+
+    /// <summary>Moments are fractions of the length of each item (0 to 1) and not seconds: categories last different times.</summary>
+    private bool _relative;
+
     private sealed record Tile(ItemScene Scene, ItemScene.Item Item, WriteableBitmap Bitmap, double Length);
 
     private readonly LabData _data;
@@ -186,7 +217,13 @@ public sealed class LabWindow : Window
         };
 
         _loading = false;
-        if (args.Contains("--mega")) OnlyMega(); else Rebuild();
+        _relative = args.Contains("--rel");
+
+        // --solo z|clave|evolutivas|mt|bayas|curativos|mejoras|balls|combate|varios|mega: esa categoria sola, a camara lenta.
+        var soloAt = Array.IndexOf(args, "--solo");
+        if (soloAt >= 0 && soloAt + 1 < args.Length && SoloNames.TryGetValue(args[soloAt + 1], out var solo)) Solo(solo);
+        else if (args.Contains("--mega")) OnlyMega();
+        else Rebuild();
 
         // --escala 2.3: el tamaño del píxel del juego, con decimales, igual que el deslizador.
         if (Array.IndexOf(args, "--escala") is var s and >= 0 && s + 1 < args.Length
@@ -216,7 +253,7 @@ public sealed class LabWindow : Window
             var file = args[strip + 1];
             var moments = Array.IndexOf(args, "--en") is var m and >= 0 && m + 1 < args.Length
                 ? args[m + 1].Split(',').Select(v => double.Parse(v, System.Globalization.CultureInfo.InvariantCulture)).ToArray()
-                : [0.9, 1.7, 2.45, 2.9, 3.6, 4.2];
+                : _relative ? [0.06, 0.18, 0.32, 0.46, 0.6, 0.74, 0.88] : [0.9, 1.7, 2.45, 2.9, 3.6, 4.2];
             Loaded += (_, _) => Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle, () => { Strip(file, moments); Close(); });
         }
     }
@@ -247,14 +284,15 @@ public sealed class LabWindow : Window
                 for (var col = 0; col < moments.Length; col++)
                 {
                     var left = Gap + (col * (cell.Width + Gap));
-                    tile.Scene.Render(tile.Item, moments[col]);
+                    var moment = _relative ? moments[col] * tile.Length : moments[col];
+                    tile.Scene.Render(tile.Item, moment);
 
                     var frame = BitmapSource.Create(tile.Scene.Width, tile.Scene.Height, 96, 96, PixelFormats.Pbgra32, null,
                         tile.Scene.Pixels, tile.Scene.Width * 4);
                     dc.DrawRectangle(Backdrop(tile.Scene.Pixel), null, new Rect(left, top, cell.Width, cell.Height));
                     dc.DrawImage(frame, new Rect(left, top, tile.Scene.Width, tile.Scene.Height));
 
-                    var text = new FormattedText($"{tile.Item.Name} t={moments[col]:0.00}s", System.Globalization.CultureInfo.InvariantCulture,
+                    var text = new FormattedText($"{tile.Item.Name} t={moment:0.00}s", System.Globalization.CultureInfo.InvariantCulture,
                         FlowDirection.LeftToRight, face, 13, Brushes.Gainsboro, dpi);
                     dc.DrawText(text, new Point(left + 2, top + cell.Height + 3));
                 }
@@ -307,10 +345,12 @@ public sealed class LabWindow : Window
         _loading = wasLoading;
     }
 
-    private void OnlyMega()
+    private void OnlyMega() => Solo(ItemCategory.MegaStone);
+
+    private void Solo(ItemCategory category)
     {
         _loading = true;
-        _category.SelectedIndex = 1 + Array.IndexOf(Enum.GetValues<ItemCategory>(), ItemCategory.MegaStone);
+        _category.SelectedIndex = 1 + Array.IndexOf(Enum.GetValues<ItemCategory>(), category);
         FillItems();
         _speed.Value = 0.25;
         _scale.Value = 3;
@@ -335,10 +375,10 @@ public sealed class LabWindow : Window
             {
                 wanted.Add(picked);
             }
-            else if (category == ItemCategory.MegaStone && Chosen is not null)
+            else if (Chosen is not null && Picks.TryGetValue(category, out var ids))
             {
-                // Una de fuego, una de agua y una del mod: que el tinte y la variacion se vean funcionar.
-                wanted.AddRange(MegaPicks.Select(id => _data.Entries.FirstOrDefault(e => e.Id == id)).OfType<Entry>());
+                // Varios objetos que difieren en lo que el estilo varia (potencia, tipo, clase): que se vea funcionar.
+                wanted.AddRange(ids.Select(id => _data.Entries.FirstOrDefault(e => e.Id == id)).OfType<Entry>());
             }
             else if ((_data.Entries.FirstOrDefault(e => e.Id == Usual[category]) ?? _data.Entries.FirstOrDefault(e => e.Class.Category == category)) is { } usual)
             {
@@ -394,7 +434,7 @@ public sealed class LabWindow : Window
     {
         foreach (var tile in _tiles)
         {
-            var t = _paused ? _clock : _clock % (tile.Length + Rest);
+            var t = _paused ? (_relative ? _clock * tile.Length : _clock) : _clock % (tile.Length + Rest);
             tile.Scene.Render(tile.Item, t);
             tile.Bitmap.WritePixels(new Int32Rect(0, 0, tile.Scene.Width, tile.Scene.Height), tile.Scene.Pixels, tile.Scene.Width * 4, 0);
         }

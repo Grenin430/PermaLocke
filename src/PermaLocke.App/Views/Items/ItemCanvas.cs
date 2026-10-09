@@ -183,8 +183,13 @@ public sealed class ItemCanvas
     /// <param name="stitch">Colour for its stitching and buckle shine, or 0 for the leather's own.</param>
     /// <param name="bulgeRow">A row of the art (0 is the handle's top) where the leather swells, for a swallow; below 0 for none.</param>
     /// <param name="bulge">How much it swells there, as a fraction of the bag's width.</param>
+    /// <param name="wash">A column of the art (0 to 23) where a band of colour is passing over the leather, in three hard steps;
+    /// below 0 for none.</param>
+    /// <param name="washColour">The colour of the band.</param>
+    /// <param name="washWidth">How many columns it reaches to each side.</param>
+    /// <param name="lean">Columns the top of the bag is displaced against its bottom: it bows or leans, row by row.</param>
     public void Bag(int left, int bottom, bool open, double scaleX = 1, double scaleY = 1, int shiver = 0, uint stitch = 0,
-        double bulgeRow = -1, double bulge = 0)
+        double bulgeRow = -1, double bulge = 0, double wash = -1, uint washColour = 0, double washWidth = 6, double lean = 0)
     {
         var art = open ? BagOpen : BagClosed;
         var rows = art.Length;
@@ -200,6 +205,7 @@ public sealed class ItemCanvas
             var swell = bulge > 0 ? 1 + (bulge * Math.Exp(-((sy - bulgeRow) * (sy - bulgeRow)) / 5)) : 1;
             var width = Math.Max(1, (int)Math.Round(columns * scaleX * swell));
             var start = left + ((columns - width) / 2) + shiver;
+            if (lean != 0) start += (int)Math.Round(lean * (height - 1 - dy) / Math.Max(1, height - 1));
 
             for (var dx = 0; dx < width; dx++)
             {
@@ -207,7 +213,15 @@ public sealed class ItemCanvas
                 var ch = art[sy][sx];
                 if (ch == '.') continue;
 
-                Put(start + dx, top + dy, stitch != 0 && ch is 's' or 'G' ? stitch : BagColours[ch]);
+                var colour = stitch != 0 && ch is 's' or 'G' ? stitch : BagColours[ch];
+                if (wash >= 0)
+                {
+                    // Three hard steps and no blend between them: a band of recoloured leather moving across the bag.
+                    var away = Math.Abs(sx - wash) / washWidth;
+                    if (away < 1) colour = Lerp(colour, washColour, away < 0.34 ? 0.85 : away < 0.67 ? 0.55 : 0.30);
+                }
+
+                Put(start + dx, top + dy, colour);
             }
         }
     }

@@ -27,9 +27,11 @@ public static class ItemStyles
     public static ItemStyle For(ItemCategory category) => category switch
     {
         ItemCategory.MegaStone => MegaStoneStyle.Instance,
+        ItemCategory.ZCrystal => ZCrystalStyle.Instance,
         _ => ClassicStyle.Instance
     };
 
-    /// <summary>Every style there is, once each.</summary>
-    public static IReadOnlyList<ItemStyle> All { get; } = [ClassicStyle.Instance, MegaStoneStyle.Instance];
+    /// <summary>Every style there is, once each: the ones the categories have and the classic scene that is left over.</summary>
+    public static IReadOnlyList<ItemStyle> All { get; } =
+        [.. Enum.GetValues<ItemCategory>().Select(For).Append(ClassicStyle.Instance).Distinct()];
 }
