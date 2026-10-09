@@ -1,3 +1,5 @@
+using static PermaLocke.App.Views.ItemFx;
+
 namespace PermaLocke.App.Views;
 
 /// <summary>
@@ -77,14 +79,30 @@ public sealed class MegaStoneStyle : ItemStyle
         return hue < 75 || hue >= 335 ? 0 : hue < 165 ? 1 : hue < 255 ? 2 : 3;
     }
 
+    /// <summary>
+    /// The family of glyph of an item: from the type of the Pokémon the stone is for, read from the cartridge (the mega
+    /// evolution and personal tables), and from the hue of its tint when that could not be read.
+    /// </summary>
+    public static int FamilyOf(ItemScene.Item item) =>
+        item.Kind is >= 0 and < 18 ? FamilyOfType[item.Kind] : Family(item.Tint);
+
+    /// <summary>Each of the game's eighteen types, by its number, in the family of glyph that suits it.</summary>
+    private static readonly int[] FamilyOfType = [4, 0, 2, 3, 1, 3, 1, 3, 4, 0, 2, 1, 0, 3, 2, 0, 3, 3];
+
     /// <summary>How many strands of light a seed gives its stone: three in one of four, two in the rest.</summary>
     public static int StrandsFor(int seed) => Look.Of(seed).Strands;
+
+    /// <summary>
+    /// Which of five scores a seed plays: 0 the usual one, two of every three; 2 a double beat (lub-dub); 3 the rings leave before the white;
+    /// 4 the glyph is traced before it; 5 a beat that starts slow and ends frantic.
+    /// </summary>
+    public static int VariantFor(int seed) => Look.Of(seed).Variant;
 
     public override void Draw(ItemCanvas c, ItemScene.Item item, ItemPhases p, double t)
     {
         var look = Look.Of(item.Seed);
-        var prism = new Prism(item.Tint != 0 ? item.Tint : Fallback);
-        var family = Family(item.Tint);
+        var prism = new ItemPrism(item.Tint, Fallback);
+        var family = FamilyOf(item);
 
         var impact = ImpactAt(p);
         var fallStart = impact + 0.26;
@@ -108,7 +126,11 @@ public sealed class MegaStoneStyle : ItemStyle
                 ? 0.5 * spread * s * s / p.Resonance
                 : (0.5 * spread * p.Resonance) + (spread * (s - p.Resonance));
             beat = (int)Math.Floor(phase);
-            pulse = Math.Exp(-(phase - beat) * 4.5);
+            var along = phase - beat;
+            pulse = Math.Exp(-along * 4.5);
+
+            // Lub-dub: a second, weaker knock right behind the first.
+            if (look.Variant == 2 && along > 0.28) pulse = Math.Max(pulse, 0.8 * Math.Exp(-(along - 0.28) * 5));
         }
 
         // The stone: where it is, how it is squashed, and how white.
@@ -212,7 +234,9 @@ public sealed class MegaStoneStyle : ItemStyle
         Vignette(c, prism, p, t, impact, pulse, a);
         c.ShadowPatch(Cx, BagBottom + offset, 13 + (int)Math.Round((1 - bagY) * 8));
         Ripple(c, prism, landed);
-        Rings(c, prism, look, since);
+
+        // In one score of six the rings leave while the strands are still closing, before the white.
+        Rings(c, prism, look, look.Variant == 3 ? since + 0.30 : since);
 
         var grow = ItemCanvas.Smooth((t - (p.In + (0.55 * p.Anticipation))) / ((0.25 * p.Resonance) + (0.45 * p.Anticipation)));
         var beating = stone && t >= p.ResonanceAt && t < impact;
@@ -238,7 +262,7 @@ public sealed class MegaStoneStyle : ItemStyle
         Landing(c, prism, landed);
         Sparks(c, prism, look, landed);
         Mark(c, prism, mark);
-        GlyphAt(c, prism, look, family, since);
+        GlyphAt(c, prism, look, family, look.Variant == 4 ? since + 0.40 : since);
         if (flash > 0) Flash(c, flash);
 
         // The plate comes in on its own, from the left and through the dither, and is the last thing drawn: nothing covers it.
@@ -258,7 +282,7 @@ public sealed class MegaStoneStyle : ItemStyle
     /// inner edge of that darkness a contour of lighter dots in the stone's colour: darkening what is already black shows
     /// nothing, the contour does.
     /// </summary>
-    private static void Vignette(ItemCanvas c, Prism prism, ItemPhases p, double t, double impact, double pulse, double a)
+    private static void Vignette(ItemCanvas c, ItemPrism prism, ItemPhases p, double t, double impact, double pulse, double a)
     {
         var density = 0.55 * ItemCanvas.Smooth(t / p.ResonanceAt);
         if (t >= p.ResonanceAt) density += (0.2 * Math.Clamp((t - p.ResonanceAt) / p.Resonance, 0, 1)) + (0.06 * pulse);
@@ -290,7 +314,7 @@ public sealed class MegaStoneStyle : ItemStyle
     /// The strands of light round the stone. The back half goes behind it and the front half in front, which is all the
     /// depth there is: the nearer part is two cells thick, the farther one a cell and darker.
     /// </summary>
-    private static void Strands(ItemCanvas c, Prism prism, Look look, ItemPhases p, double t, double grow, double conv,
+    private static void Strands(ItemCanvas c, ItemPrism prism, Look look, ItemPhases p, double t, double grow, double conv,
         double pulse, double stoneX, double stoneY, bool front)
     {
         // What surrounds the stone breathes with it, since the stone itself does not change size.
@@ -336,41 +360,44 @@ public sealed class MegaStoneStyle : ItemStyle
     /// The beat of the stone seen from outside: a ring of dots that opens from the stone with every beat, whole at the start
     /// of it and thinning out as it goes, with the gaps on the other half every other beat.
     /// </summary>
-    private static void Halo(ItemCanvas c, Prism prism, double x, double y, double pulse, int beat)
+    private static void Halo(ItemCanvas c, ItemPrism prism, double x, double y, double pulse, int beat)
     {
         if (pulse < 0.05) return;
 
+        // Two rings of the beat, one behind the other: the first is whole and thick at the peak, so that it carries on its own
+        // in a single frame, and both thin out into dashes and dither as the beat is spent.
         var spent = 1 - pulse;
-        var radius = 14 + (16 * ItemCanvas.Ease(spent));
-        var density = Math.Min(16, pulse * 22);
-        const int Steps = 72;
+        var peak = spent < 0.35;
+        const int Steps = 84;
 
-        for (var s = 0; s < Steps; s++)
+        for (var ring = 0; ring < 2; ring++)
         {
-            if (((s + (beat & 1)) & 3) == 3) continue;
+            var radius = 13 + (ring * 5) + (17 * ItemCanvas.Ease(spent));
+            var density = Math.Min(16, (pulse * 24) - (ring * 6));
+            if (density <= 0) continue;
 
-            var f = s / (double)Steps;
-            var gx = (int)Math.Round(x + (radius * Math.Cos(2 * Math.PI * f)));
-            var gy = (int)Math.Round(y + (radius * Math.Sin(2 * Math.PI * f)));
-            if (!c.Contains(gx, gy) || ItemCanvas.Bayer[gy & 3, gx & 3] >= density) continue;
+            for (var s = 0; s < Steps; s++)
+            {
+                // Whole on the peak; later the gaps are on one half and on the other every other beat.
+                if (!peak && ((s + (beat & 1)) & 3) == 3) continue;
 
-            c.Put(gx, gy, spent < 0.3 ? prism.Pale : (s & 1) == 0 ? prism.Light : prism.Base);
-        }
-    }
+                var f = s / (double)Steps;
+                var gx = (int)Math.Round(x + (radius * Math.Cos(2 * Math.PI * f)));
+                var gy = (int)Math.Round(y + (radius * Math.Sin(2 * Math.PI * f)));
+                if (!c.Contains(gx, gy) || ItemCanvas.Bayer[gy & 3, gx & 3] >= density) continue;
 
-    /// <summary>A straight line of cells between two, as thick as asked: the joins of a strand.</summary>
-    private static void Segment(ItemCanvas c, int x0, int y0, int x1, int y1, int size, uint colour)
-    {
-        var steps = Math.Max(Math.Abs(x1 - x0), Math.Abs(y1 - y0));
-        for (var i = 0; i <= steps; i++)
-        {
-            var f = steps == 0 ? 0 : i / (double)steps;
-            Block(c, (int)Math.Round(x0 + ((x1 - x0) * f)), (int)Math.Round(y0 + ((y1 - y0) * f)), size, colour);
+                c.Put(gx, gy, ring == 0 && spent < 0.3 ? prism.Pale : (s & 1) == 0 ? prism.Light : prism.Base);
+                if (peak && ring == 0)
+                {
+                    // A second cell outwards on the peak: a ring two cells thick.
+                    Dot(c, gx + Math.Sign(gx - (int)Math.Round(x)), gy + Math.Sign(gy - (int)Math.Round(y)), prism.Light);
+                }
+            }
         }
     }
 
     /// <summary>The rings of shock: dashed, each turned a little more, whole while they travel and gone through the dither after.</summary>
-    private static void Rings(ItemCanvas c, Prism prism, Look look, double since)
+    private static void Rings(ItemCanvas c, ItemPrism prism, Look look, double since)
     {
         for (var ring = 0; ring < RingReach.Length; ring++)
         {
@@ -402,7 +429,7 @@ public sealed class MegaStoneStyle : ItemStyle
     }
 
     /// <summary>The second, smaller wave, after the rebound: a ripple on the ground round the bag, flat, in dashes.</summary>
-    private static void Ripple(ItemCanvas c, Prism prism, double landed)
+    private static void Ripple(ItemCanvas c, ItemPrism prism, double landed)
     {
         const double Start = 0.12, Length = 0.65;
         var u = (landed - Start) / Length;
@@ -428,7 +455,7 @@ public sealed class MegaStoneStyle : ItemStyle
     }
 
     /// <summary>The bag takes the blow: a dome of dashes opens over its mouth, half the height of a ring.</summary>
-    private static void Landing(ItemCanvas c, Prism prism, double landed)
+    private static void Landing(ItemCanvas c, ItemPrism prism, double landed)
     {
         const double Length = 0.45;
         if (landed < 0 || landed >= Length) return;
@@ -456,7 +483,7 @@ public sealed class MegaStoneStyle : ItemStyle
     /// The mark of impact, the sound of the blow as the comics draw it: rays from where the stone touches the bottom of the bag
     /// and a tick on each side, two frames, white and then in the stone's colour and smaller.
     /// </summary>
-    private static void Mark(ItemCanvas c, Prism prism, int mark)
+    private static void Mark(ItemCanvas c, ItemPrism prism, int mark)
     {
         if (mark == 0) return;
 
@@ -488,7 +515,7 @@ public sealed class MegaStoneStyle : ItemStyle
     /// The glyph over the stone, one of five families by the hue of the stone (sun, sprout, rings, crystal and the plain double
     /// diamond), traced one cell at a time in the colours of the prism, held for an instant and dissolved through the dither.
     /// </summary>
-    private static void GlyphAt(ItemCanvas c, Prism prism, Look look, int family, double since)
+    private static void GlyphAt(ItemCanvas c, ItemPrism prism, Look look, int family, double since)
     {
         const double Start = 0.07, Trace = 0.25, Hold = 0.55, Gone = 0.95;
         if (since < Start || since >= Gone) return;
@@ -515,7 +542,7 @@ public sealed class MegaStoneStyle : ItemStyle
     /// The sparks that are left: they scatter from the bag's mouth, fall to the ground, bounce once, settle, and go out one by
     /// one, in the order the seed says.
     /// </summary>
-    private static void Sparks(ItemCanvas c, Prism prism, Look look, double tau)
+    private static void Sparks(ItemCanvas c, ItemPrism prism, Look look, double tau)
     {
         if (tau < 0) return;
 
@@ -584,23 +611,6 @@ public sealed class MegaStoneStyle : ItemStyle
                 c.Put(gx, gy, ItemCanvas.White);
             }
         }
-    }
-
-    private static void Block(ItemCanvas c, int gx, int gy, int size, uint colour)
-    {
-        for (var dy = 0; dy < size; dy++)
-        {
-            for (var dx = 0; dx < size; dx++)
-            {
-                Dot(c, gx + dx, gy + dy, colour);
-            }
-        }
-    }
-
-    /// <summary>A cell that is left off when it falls outside of the scene, instead of being asked of the canvas.</summary>
-    private static void Dot(ItemCanvas c, int gx, int gy, uint colour)
-    {
-        if (c.Contains(gx, gy)) c.Put(gx, gy, colour);
     }
 
     /// <summary>The five glyphs, each a list of cells in the order they are traced, round the point (0, 0).</summary>
@@ -691,23 +701,26 @@ public sealed class MegaStoneStyle : ItemStyle
 
     /// <summary>What the item's seed decides.</summary>
     private readonly record struct Look(uint Key, double Turns, int Spin, double BeatStart, double BeatEnd, int Segments,
-        double Turn, int Corner, int SparkStep, int Strands)
+        double Turn, int Corner, int SparkStep, int Strands, int Variant)
     {
         public static Look Of(int seed)
         {
             var key = Mix(unchecked((uint)seed) + 0x9E3779B9);
+            var roll = (int)(Mix(key + 10) % 12);
+            var variant = roll < 8 ? 0 : roll - 6;
 
             return new Look(
                 key,
                 Turns: 1.5 + (0.5 * (Mix(key + 1) % 4)),
                 Spin: (Mix(key + 2) & 1) == 0 ? 1 : -1,
-                BeatStart: 1.5 + ((Mix(key + 3) % 100) / 100.0 * 0.9),
-                BeatEnd: 7.0 + ((Mix(key + 4) % 100) / 100.0 * 2.5),
+                BeatStart: (variant == 5 ? 0.8 : 1.5) + ((Mix(key + 3) % 100) / 100.0 * 0.9),
+                BeatEnd: (variant == 5 ? 11.0 : 7.0) + ((Mix(key + 4) % 100) / 100.0 * 2.5),
                 Segments: 10 + (int)(Mix(key + 5) % 5),
                 Turn: (Mix(key + 6) % 1000) / 1000.0,
                 Corner: (int)(Mix(key + 7) % 4),
                 SparkStep: (Mix(key + 8) % 3) switch { 0 => 3, 1 => 9, _ => 11 },
-                Strands: Mix(key + 9) % 4 == 0 ? 3 : 2);
+                Strands: Mix(key + 9) % 4 == 0 ? 3 : 2,
+                Variant: variant);
         }
 
         public static uint Mix(uint x)
@@ -724,32 +737,4 @@ public sealed class MegaStoneStyle : ItemStyle
         }
     }
 
-    /// <summary>The colours of the scene: the stone's own, in four lightnesses, and five turned a little round the wheel.</summary>
-    private readonly struct Prism
-    {
-        public readonly uint Deep;
-        public readonly uint Base;
-        public readonly uint Light;
-        public readonly uint Pale;
-        private readonly uint _h0;
-        private readonly uint _h1;
-        private readonly uint _h2;
-        private readonly uint _h3;
-        private readonly uint _h4;
-
-        public Prism(uint tint)
-        {
-            Deep = ItemTint.Shade(tint, 0, 0.28);
-            Base = ItemTint.Shade(tint, 0, 0.52);
-            Light = ItemTint.Shade(tint, 0, 0.72);
-            Pale = ItemTint.Shade(tint, 0, 0.90, 0.6);
-            _h0 = ItemTint.Shade(tint, -60, 0.62);
-            _h1 = ItemTint.Shade(tint, -30, 0.68);
-            _h2 = ItemTint.Shade(tint, 0, 0.74);
-            _h3 = ItemTint.Shade(tint, 30, 0.68);
-            _h4 = ItemTint.Shade(tint, 60, 0.62);
-        }
-
-        public uint Hue(int i) => (((i % 5) + 5) % 5) switch { 0 => _h0, 1 => _h1, 2 => _h2, 3 => _h3, _ => _h4 };
-    }
 }

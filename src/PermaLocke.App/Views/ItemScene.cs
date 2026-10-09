@@ -111,10 +111,13 @@ public sealed class ItemScene
     /// <summary>
     /// What the scene shows: the icon as BGRA, its name and how many. The rest says how to show it: the kind of item and its
     /// power (<see cref="ItemCatalog"/>), the colour of its icon, the seed that makes this one different from the last, and a
-    /// second line for the plate (the move of a TM).
+    /// second line for the plate (the type of the move of a TM). <c>Kind</c> is the type (the game's number, 0 to 17) the item
+    /// is of, when it has one that could be read: the move of a TM, the Pokémon of a Mega Stone, or -1. <c>Count</c> is how many
+    /// items had been picked up before this one, which the styles that alternate use so as never to repeat themselves.
     /// </summary>
     public sealed record Item(byte[] Icon, int IconWidth, int IconHeight, string Name, int Amount,
-        ItemCategory Category = ItemCategory.Misc, int Power = 0, uint Tint = 0, int Seed = 0, string? Detail = null);
+        ItemCategory Category = ItemCategory.Misc, int Power = 0, uint Tint = 0, int Seed = 0, string? Detail = null,
+        int Kind = -1, int Count = 0);
 
     /// <summary>The height of the scene this item needs, in pixels of the game: its style says.</summary>
     public static int HeightFor(Item item) => ItemStyles.For(item.Category).Height;

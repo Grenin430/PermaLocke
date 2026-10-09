@@ -4,7 +4,7 @@ using PermaLocke.Core.Domain;
 namespace PermaLocke.App.Services;
 
 /// <summary>What an item is for its animation, and how strong: see <see cref="ItemCategory"/> for what each power means.</summary>
-public readonly record struct ItemClass(ItemCategory Category, int Power = 0);
+public readonly record struct ItemClass(ItemCategory Category, int Power = 0, int Kind = -1);
 
 /// <summary>
 /// Which <see cref="ItemCategory"/> every item of the game belongs to (2026-10-09), told by the cartridge itself.
@@ -64,13 +64,16 @@ public sealed class ItemCatalog
 
     private readonly IReadOnlyList<int> _pockets;
     private readonly IReadOnlySet<int> _megaStones;
+    private readonly IReadOnlyDictionary<int, int> _stoneKinds;
 
     /// <param name="pockets">The pocket of every item by id, as the cartridge says it.</param>
     /// <param name="megaStones">The ids of the Mega Stones, from the cartridge's mega evolution table.</param>
-    public ItemCatalog(IReadOnlyList<int> pockets, IReadOnlySet<int> megaStones)
+    /// <param name="stoneKinds">The type (the game's number, 0 to 17) of the Pokémon each Mega Stone is for, when it could be read.</param>
+    public ItemCatalog(IReadOnlyList<int> pockets, IReadOnlySet<int> megaStones, IReadOnlyDictionary<int, int>? stoneKinds = null)
     {
         _pockets = pockets;
         _megaStones = megaStones;
+        _stoneKinds = stoneKinds ?? new Dictionary<int, int>();
     }
 
     /// <summary>False when the cartridge could not be read: everything is then <see cref="ItemCategory.Misc"/>.</summary>
@@ -79,7 +82,7 @@ public sealed class ItemCatalog
     public ItemClass Classify(int itemId)
     {
         if (Exceptions.TryGetValue(itemId, out var exception)) return exception;
-        if (_megaStones.Contains(itemId)) return new(ItemCategory.MegaStone);
+        if (_megaStones.Contains(itemId)) return new(ItemCategory.MegaStone, 0, _stoneKinds.GetValueOrDefault(itemId, -1));
 
         var pocket = itemId >= 0 && itemId < _pockets.Count ? _pockets[itemId] : -1;
 

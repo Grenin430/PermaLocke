@@ -97,6 +97,8 @@ public sealed class MachineItemLookup : IItemLookup
     private Dictionary<int, string> Build(string code)
     {
         var taught = new Dictionary<int, string>();
+        var moveIds = new Dictionary<int, int>();
+        _moveIds = moveIds;
 
         if (!File.Exists(code))
         {
@@ -126,9 +128,20 @@ public sealed class MachineItemLookup : IItemLookup
                 && !string.IsNullOrWhiteSpace(strings.movelist[move]))
             {
                 taught[machines[number]] = strings.movelist[move];
+                moveIds[machines[number]] = move;
             }
         }
 
+        _moveIds = moveIds;
         return taught;
     }
+
+    /// <summary>The id of the move this machine teaches in the world being played, or 0 when it cannot be read.</summary>
+    public int MoveOf(int itemId)
+    {
+        Refresh();
+        return _moveIds.GetValueOrDefault(itemId);
+    }
+
+    private Dictionary<int, int> _moveIds = [];
 }

@@ -250,4 +250,59 @@ public sealed class MegaStoneStyleTests
         Assert.Equal(0, gone);
         Assert.InRange(ItemScene.ExitSeconds, 0.10, 0.25);
     }
+
+    // ============================================================ TIPO Y VARIACIÓN
+
+    [Fact]
+    public void The_family_comes_from_the_type_the_cartridge_gave_and_from_the_tint_when_it_gave_none()
+    {
+        var fireButBlue = Stone(1, 0xFF2060D0) with { Kind = 9 };   // Fire, with the icon of a blue stone
+        var noType = fireButBlue with { Kind = -1 };
+
+        Assert.Equal(0, MegaStoneStyle.FamilyOf(fireButBlue));
+        Assert.Equal(2, MegaStoneStyle.FamilyOf(noType));
+
+        // Every one of the eighteen types has a family.
+        Assert.All(Enumerable.Range(0, 18), type => Assert.InRange(MegaStoneStyle.FamilyOf(Stone() with { Kind = type }), 0, 4));
+    }
+
+    [Fact]
+    public void A_stone_the_catalog_knows_the_type_of_carries_it()
+    {
+        var pockets = new int[1024];
+        var catalog = new ItemCatalog(pockets, new HashSet<int> { 664, 1011 }, new Dictionary<int, int> { [664] = 9 });
+
+        Assert.Equal(new ItemClass(ItemCategory.MegaStone, 0, 9), catalog.Classify(664));
+        Assert.Equal(new ItemClass(ItemCategory.MegaStone, 0, -1), catalog.Classify(1011));
+    }
+
+    [Fact]
+    public void Some_seeds_play_another_score_and_the_beat_of_a_peak_can_be_seen_in_one_frame()
+    {
+        var variants = Enumerable.Range(0, 600).Select(n => MegaStoneStyle.VariantFor(ItemScene.SeedFor(656, n))).ToArray();
+
+        Assert.Equal(5, variants.Distinct().Count());
+        Assert.InRange(variants.Count(v => v >= 2), 150, 260);
+
+        // A frame on the peak of a beat has the ring of dots: more lit cells round the stone than a frame between beats.
+        var item = Stone();
+        var scene = new ItemScene(1, MegaStoneStyle.SceneHeight);
+        var lit = Enumerable.Range(0, 400).Select(n =>
+        {
+            scene.Render(item, 1.3 + (n * 0.001));
+            var ring = 0;
+            for (var gy = 30; gy < 76; gy++)
+            {
+                for (var gx = 26; gx < 70; gx++)
+                {
+                    var d = Math.Sqrt(((gx - 48) * (gx - 48)) + ((gy - 52) * (gy - 52)));
+                    if (d is >= 13 and < 31 && At(scene, gx, gy) >> 24 == 0xFF) ring++;
+                }
+            }
+
+            return ring;
+        }).ToArray();
+
+        Assert.True(lit.Max() > lit.Min() + 20, "the ring of the beat does not show");
+    }
 }

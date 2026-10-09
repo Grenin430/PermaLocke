@@ -22,7 +22,7 @@ namespace PermaLocke.App.Services;
 /// </remarks>
 public sealed class CatchCeremony(IUiDispatcher ui, SaveBoxReader boxes, TcgCardFactory cards, KillcamRecorder killcam,
     PokemonSpriteService sprites, IItemLookup items, PermaLocke.Core.Domain.IShopCatalog shop, WorldItemCatalog worldItems,
-    ILogger<CatchCeremony> logger)
+    IMoveCatalog moves, ILogger<CatchCeremony> logger)
 {
     /// <summary>Items celebrated so far in this run of the app: with the item's id it is the seed, so the same item never plays twice alike.</summary>
     private int _itemsSeen;
@@ -93,8 +93,21 @@ public sealed class CatchCeremony(IUiDispatcher ui, SaveBoxReader boxes, TcgCard
                     ? (CemeteryScene.Pixels(bitmap), bitmap.PixelWidth, bitmap.PixelHeight)
                     : ItemScene.Parcel();
                 var kind = worldItems.Current.Classify(itemId);
+
+                // The type of a machine is the type of the move it teaches in this world: the second line of its plate says it
+                // and it tints the whole scene. A Mega Stone brings its own from the catalog.
+                var type = kind.Kind;
+                string? detail = null;
+                if (kind.Category == ItemCategory.Machine && items is MachineItemLookup machines
+                    && machines.MoveOf(itemId) is > 0 and var move && moves.Describe(move) is { } sheet)
+                {
+                    type = sheet.Type;
+                    detail = sheet.TypeName.ToUpperInvariant();
+                }
+
+                var count = _itemsSeen++;
                 _waiting.Enqueue(new ItemScene.Item(icon, width, height, name, amount, kind.Category, kind.Power, ItemTint.Of(icon),
-                    ItemScene.SeedFor(itemId, _itemsSeen++)));
+                    ItemScene.SeedFor(itemId, count), detail, type, count));
             }
             catch (Exception ex)
             {
