@@ -214,24 +214,29 @@ public sealed class ZCrystalStyle : ItemStyle
 
         for (var d = 1; d <= arm; d++)
         {
-            foreach (var (dx, dy) in new[] { (d, 0), (-d, 0), (0, d), (0, -d) })
-            {
-                var gx = Cx + dx;
-                var gy = (int)RestY + dy;
-                if (c.Contains(gx, gy) && ItemCanvas.Bayer[gy & 3, gx & 3] < density) c.Put(gx, gy, d < arm * 0.5 ? ItemCanvas.White : prism.Pale);
-            }
+            var colour = d < arm * 0.5 ? ItemCanvas.White : prism.Pale;
+            Spoke(c, d, 0, density, colour);
+            Spoke(c, -d, 0, density, colour);
+            Spoke(c, 0, d, density, colour);
+            Spoke(c, 0, -d, density, colour);
         }
 
         var diagonal = (int)Math.Round(arm * 0.55);
         for (var d = 1; d <= diagonal; d++)
         {
-            foreach (var (dx, dy) in new[] { (d, d), (-d, d), (d, -d), (-d, -d) })
-            {
-                var gx = Cx + dx;
-                var gy = (int)RestY + dy;
-                if (c.Contains(gx, gy) && ItemCanvas.Bayer[gy & 3, gx & 3] < density) c.Put(gx, gy, prism.Light);
-            }
+            Spoke(c, d, d, density, prism.Light);
+            Spoke(c, -d, d, density, prism.Light);
+            Spoke(c, d, -d, density, prism.Light);
+            Spoke(c, -d, -d, density, prism.Light);
         }
+    }
+
+    /// <summary>One cell of the cross, at an offset from the crystal, through the dither.</summary>
+    private static void Spoke(ItemCanvas c, int dx, int dy, double density, uint colour)
+    {
+        var gx = Cx + dx;
+        var gy = (int)RestY + dy;
+        if (c.Contains(gx, gy) && ItemCanvas.Bayer[gy & 3, gx & 3] < density) c.Put(gx, gy, colour);
     }
 
     /// <summary>The emblem, a Z in a diamond, traced cell by cell over where the crystal is and dissolved.</summary>

@@ -171,7 +171,12 @@ public sealed class MachineStyle : ItemStyle
     }
 
     /// <summary>«MT FUEGO» or «MO FUEGO»: what it is and the type of its move, when the type is known.</summary>
-    public static string Caption(ItemScene.Item item)
+    public static string Caption(ItemScene.Item item) => Captions.GetValue(item, MakeCaption);
+
+    /// <summary>Made once for an item, not at every frame: nothing is allocated per frame.</summary>
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<ItemScene.Item, string> Captions = new();
+
+    private static string MakeCaption(ItemScene.Item item)
     {
         var kind = item.Power > 0 ? "MO" : "MT";
         return string.IsNullOrWhiteSpace(item.Detail) ? kind : $"{kind} {item.Detail}";

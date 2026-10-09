@@ -269,6 +269,12 @@ public sealed class ItemCanvas
         }
     }
 
+    private ItemScene.Item? _plateItem;
+    private int _plateLeft;
+    private int _plateReserved;
+    private string _plateName = string.Empty;
+    private string _plateAmount = string.Empty;
+
     /// <summary>The tag beside the bag: an edge, what it was, and how many. At most what is left of the scene's width.</summary>
     /// <param name="left">Where it sits when it has arrived.</param>
     /// <param name="slide">Columns it is still short of that, while it comes in.</param>
@@ -281,8 +287,19 @@ public sealed class ItemCanvas
     {
         const int Height = 24;
         var reserved = badge is null ? 0 : 8;
-        var name = Fit(item.Name, ItemScene.SceneWidth - left - 12 - reserved);
-        var amount = item.Amount > 1 ? $"×{item.Amount}" : "NUEVO";
+
+        // The two strings of the plate are made once for an item and a place, not at every frame: nothing is allocated per frame.
+        if (!ReferenceEquals(item, _plateItem) || left != _plateLeft || reserved != _plateReserved)
+        {
+            _plateItem = item;
+            _plateLeft = left;
+            _plateReserved = reserved;
+            _plateName = Fit(item.Name, ItemScene.SceneWidth - left - 12 - reserved);
+            _plateAmount = item.Amount > 1 ? $"×{item.Amount}" : "NUEVO";
+        }
+
+        var name = _plateName;
+        var amount = _plateAmount;
         var line = caption ?? "A LA MOCHILA";
         var width = Math.Max(TextWidth(name) + reserved, TextWidth(line) + 4 + TextWidth(amount)) + 12;
         var at = left + slide;

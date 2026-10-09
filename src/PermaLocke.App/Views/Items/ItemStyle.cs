@@ -31,6 +31,7 @@ public static class ItemStyles
         ItemCategory.Key => KeyItemStyle.Instance,
         ItemCategory.Evolution => EvolutionStyle.Instance,
         ItemCategory.Machine => MachineStyle.Instance,
+        ItemCategory.Berry => BerryStyle.Instance,
         _ => ClassicStyle.Instance
     };
 

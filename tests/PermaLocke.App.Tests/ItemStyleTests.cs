@@ -158,6 +158,30 @@ public sealed class ItemStyleTests
         Assert.All(scene.Pixels, value => Assert.Equal(0, value));
     }
 
+    /// <summary>
+    /// Nothing is allocated to draw a frame: not the plate's strings, not the arrays of a loop, not a closure. The first pass lets
+    /// everything that is made once be made, and the second is measured.
+    /// </summary>
+    [Fact]
+    public void A_frame_of_any_style_allocates_nothing()
+    {
+        foreach (var category in Enum.GetValues<ItemCategory>())
+        {
+            var item = Stone(31, 0xFF3070D0, category) with { Amount = 3, Power = 2, Kind = 9, Detail = "FUEGO", Name = "UN NOMBRE LARGO DE OBJETO" };
+            var style = ItemStyles.For(category);
+            var scene = new ItemScene(2.25, style.Height);
+            var length = style.Phases(item).Length;
+
+            for (var t = 0.0; t < length; t += 1 / 30.0) scene.Render(item, t);
+
+            var before = GC.GetAllocatedBytesForCurrentThread();
+            for (var t = 0.0; t < length; t += 1 / 30.0) scene.Render(item, t);
+            var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+
+            Assert.True(allocated == 0, $"{category}: {allocated} bytes asignados en {(int)(length * 30)} fotogramas");
+        }
+    }
+
     /// <summary>The pixel as a number, to compare cells.</summary>
     private static uint Cell(ItemScene scene, int x, int y, int cell)
     {
