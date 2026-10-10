@@ -36,6 +36,7 @@ public static class ItemStyles
         ItemCategory.Boost => BoostStyle.Instance,
         ItemCategory.PokeBall => PokeBallStyle.Instance,
         ItemCategory.Battle => BattleStyle.Instance,
+        ItemCategory.Misc => MiscStyle.Instance,
         _ => ClassicStyle.Instance
     };
 
