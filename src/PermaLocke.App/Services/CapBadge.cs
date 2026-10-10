@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Media;
@@ -6,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using PermaLocke.App.Views;
 using PermaLocke.Core.Abstractions;
 using PermaLocke.Core.Domain;
+using PermaLocke.GameLink;
 using PermaLocke.GameLink.Battle;
 using PermaLocke.Rules;
 using PermaLocke.Rules.Services;
@@ -16,23 +19,33 @@ namespace PermaLocke.App.Services;
 /// <param name="Trial">«PRUEBA 3 DE 12», or «LIGA», «REMATCH».</param>
 /// <param name="Next">The cap after this stage, or null at the last one.</param>
 /// <param name="Highest">The highest level in the party right now, or null without a reading.</param>
-public sealed record CapReading(string Trial, int Cap, int? Next, int? Highest);
+/// <param name="Cleared">How many stages the player has cleared.</param>
+/// <param name="Trials">How many trials there are in all.</param>
+public sealed record CapReading(string Trial, int Cap, int? Next, int? Highest, int Cleared = 0, int Trials = 0);
 
 /// <summary>
-/// The level cap, always on screen over the emulator (1.0.4.7): a small pixel panel in the top right of the picture, in
-/// the black band beside the 3DS screens, while the game is open and in front.
+/// The level cap, always on screen over the emulator (1.0.4.7): since 2026-10-10 a walnut showcase that fills the black band beside the
+/// 3DS screens, in the mode that fits it, with the party in a niche each and, if the other band has room, a memorial of the fallen.
 /// </summary>
 /// <remarks>
-/// Since §239 a trophy plaque drawn in cells (<see cref="CapPlaque"/>): the cap engraved big on brass with the stage
-/// (<c>PRUEBA 3 DE 12</c>) and the next cap, the strongest of the party against it as the notices' burning fuse, and a
-/// brass plate per Pokémon. A little transparent, and clear of the top edge. It follows the emulator's window every half second, goes when the game
-/// closes or another window comes in front, and reads the cap again every ten seconds and whenever the run changes.
-/// Click-through, like every overlay.
+/// <para>
+/// The band is found from the picture's box (<see cref="GameWindow.RenderBox"/>) and the layout of the screens in the emulator's
+/// <c>qt-config.ini</c> (<see cref="CapGeometry"/>); <see cref="CapBandGuard"/> checks on the screen that the game is not in it, because
+/// F8, F9 and F10 change the layout without the file knowing. Nothing is ever drawn over the game: a layout that is not computed, or one
+/// the guard doubts, hides the panel.
+/// </para>
+/// <para>
+/// It follows the emulator's window every half second, goes when the game closes or another window comes in front, and reads the cap
+/// again every ten seconds and whenever the run changes. Click-through, like every overlay.
+/// </para>
 /// </remarks>
 public sealed class CapBadge
 {
     private static readonly TimeSpan Follow = TimeSpan.FromMilliseconds(500);
     private static readonly TimeSpan Reread = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan Frames = TimeSpan.FromMilliseconds(83);
+    private static readonly TimeSpan Doubt = TimeSpan.FromSeconds(6);
+    private static readonly TimeSpan Verify = TimeSpan.FromSeconds(1.5);
 
     private readonly EmulatorLauncher _launcher;
     private readonly ProgressService _progress;
@@ -41,24 +54,34 @@ public sealed class CapBadge
     private readonly IRunContext _runContext;
     private readonly ILogger<CapBadge> _logger;
     private readonly AppSettings _settings;
+    private readonly AlolaSky _sky;
     private readonly DispatcherTimer _timer = new() { Interval = Follow };
+    private readonly DispatcherTimer _frames = new() { Interval = Frames };
+    private readonly Stopwatch _clock = Stopwatch.StartNew();
 
-    /// <summary>The panel itself: a trophy plaque drawn in cells (§239).</summary>
-    private readonly CapPlaque _plaque = new();
-
-    /// <summary>The party, one plate per Pokémon under the cap (1.0.4.8).</summary>
+    /// <summary>The party, one niche per Pokémon (1.0.4.8).</summary>
     private IReadOnlyList<CapPlaqueMember> _party = [];
     private readonly PokemonSpriteService _sprites;
     private string _partyKey = string.Empty;
-    private string _shownKey = string.Empty;
+    private CapPlaqueData? _data;
     private CapReading? _shown;
+    private bool _battle;
 
-    private Window? _window;
+    private Panel? _main;
+    private Panel? _memorial;
     private CapReading? _reading;
     private DateTime _readAt = DateTime.MinValue;
 
+    private (string Path, DateTime Stamp, AzaharScreenLayout Layout)? _layout;
+    private CapMode? _lastMode;
+    private DateTime _doubtUntil = DateTime.MinValue;
+    private DateTime _verifiedAt = DateTime.MinValue;
+
+    /// <summary>A window and the plaque in it: the party's, or the memorial's.</summary>
+    private sealed record Panel(Window Window, CapPlaque Plaque);
+
     public CapBadge(EmulatorLauncher launcher, ProgressService progress, LevelCapTable caps, IRunContext runContext,
-        GameLinkMonitor monitor, AppSettings settings, PokemonSpriteService sprites, ILogger<CapBadge> logger)
+        GameLinkMonitor monitor, AppSettings settings, PokemonSpriteService sprites, AlolaSky sky, ILogger<CapBadge> logger)
     {
         _launcher = launcher;
         _progress = progress;
@@ -68,20 +91,29 @@ public sealed class CapBadge
         _logger = logger;
         _settings = settings;
         _sprites = sprites;
+        _sky = sky;
         _timer.Tick += (_, _) => _ = TickAsync();
+        _frames.Tick += (_, _) => Frame();
         monitor.RunDataChanged += (_, _) => _readAt = DateTime.MinValue;
         runContext.CurrentChanged += (_, _) => _readAt = DateTime.MinValue;
-
     }
 
-    public void Start() => _timer.Start();
+    public void Start()
+    {
+        _timer.Start();
+        _frames.Start();
+    }
+
+    private double Now => _clock.Elapsed.TotalSeconds;
 
     /// <summary><c>--ensayar-cap</c>: the panel over PermaLocke's own window for ten seconds, without the game.</summary>
     public async Task RehearseAsync()
     {
         await _sprites.PrepareAsync();
         _reading = _runContext.Current is { } run ? await ReadAsync(run) : null;
-        Show((_reading ?? new CapReading("PRUEBA 3 DE 12", 24, 26, null)) with { Highest = 22 });
+        var reading = (_reading ?? new CapReading("PRUEBA 3 DE 12", 24, 26, null, 2, 12)) with { Highest = 22 };
+        _shown = reading;
+        _partyKey = string.Empty;
         ShowParty(
         [
             new(0, 25, "Pikachu", "Chispas", 22, 48, 52, false, 1, 0, "", ""),
@@ -90,10 +122,11 @@ public sealed class CapBadge
             new(3, 131, "Lapras", "", 24, 9, 90, true, 4, 0, "", "")
         ]);
         var main = new System.Windows.Interop.WindowInteropHelper(Application.Current.MainWindow).Handle;
-        if (GameWindow.ClientBox(main) is not { } box || _window is not { } window) return;
-        Place(window, _plaque, box);
+        if (GameWindow.ClientBox(main) is not { } box) return;
+
+        Apply(new CapRect(box.Left, box.Top, box.Width, box.Height), AzaharScreenLayout.Default, Dpi());
         await Task.Delay(TimeSpan.FromSeconds(10));
-        window.Hide();
+        HideAll();
     }
 
     private async Task TickAsync()
@@ -106,7 +139,7 @@ public sealed class CapBadge
             if (game == IntPtr.Zero || GetForegroundWindow() != game
                 || GameWindow.RenderBox(game) is not { } picture)
             {
-                _window?.Hide();
+                HideAll();
                 return;
             }
 
@@ -119,19 +152,20 @@ public sealed class CapBadge
 
             if (_reading is not { } reading)
             {
-                _window?.Hide();
+                HideAll();
                 return;
             }
 
             // El nivel del equipo se mira cada vuelta: sube en mitad de un combate y la barra lo sigue.
-            Show(reading with { Highest = Highest() ?? reading.Highest });
+            _shown = reading with { Highest = Highest() ?? reading.Highest };
+            _battle = _monitor.BattleNow.Count > 0;
             ShowParty(_monitor.Latest is { Connected: true } live ? Delayed(WithLiveHp(live.Party, _monitor.BattleNow)) : []);
-            Place(_window!, _plaque, picture);
+            Apply(new CapRect(picture.Left, picture.Top, picture.Width, picture.Height), ScreenLayout(), Dpi());
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "No se ha podido poner el cap encima del juego");
-            _window?.Hide();
+            HideAll();
         }
     }
 
@@ -147,28 +181,128 @@ public sealed class CapBadge
         var label = stage.Id.StartsWith("trial-", StringComparison.Ordinal) ? $"PRUEBA {stage.Order} DE {trials}"
             : stage.Id == "rematch" ? "REMATCH" : stage.Name.ToUpperInvariant();
         var next = cleared + 1 < _caps.Stages.Count ? _caps.Stages[cleared + 1].Level : (int?)null;
-        return new CapReading(label, stage.Level, next, Highest());
+        return new CapReading(label, stage.Level, next, Highest(), cleared, trials);
     }
 
     private int? Highest() =>
         _monitor.Latest is { Connected: true, Party.Count: > 0 } snapshot ? snapshot.Party.Max(member => member.Level) : null;
 
-    private void Show(CapReading reading)
+    /// <summary>The layout of the screens, from the qt-config.ini of the emulator that runs; the file is only read again when it changes.</summary>
+    private AzaharScreenLayout ScreenLayout()
     {
-        _window ??= Create();
-
-        // Solo se repinta cuando cambia algo: el panel se mira cada medio segundo y casi nunca cambia.
-        var key = $"{reading}|{_partyKey}";
-        if (key != _shownKey)
+        try
         {
-            _shownKey = key;
-            _shown = reading;
-            _plaque.Data = new CapPlaqueData(reading.Trial, reading.Cap, reading.Next, reading.Highest, _party);
+            var path = _sky.ConfigPath();
+            var stamp = File.Exists(path) ? File.GetLastWriteTimeUtc(path) : DateTime.MinValue;
+            if (_layout is { } known && known.Path == path && known.Stamp == stamp) return known.Layout;
+
+            var layout = AzaharScreenLayout.Read(path);
+            _layout = (path, stamp, layout);
+            return layout;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return _layout?.Layout ?? AzaharScreenLayout.Default;
         }
     }
 
+    private double Dpi() => _main is { } panel ? VisualTreeHelper.GetDpi(panel.Window).DpiScaleX : 1.0;
+
+    // ---------------------------------------------------------------- the windows
+
+    /// <summary>Plans the band, checks it, and puts each window where its slot says (or hides it).</summary>
+    private void Apply(CapRect picture, AzaharScreenLayout layout, double dpi)
+    {
+        if (_shown is not { } reading)
+        {
+            HideAll();
+            return;
+        }
+
+        var options = new CapOptions();
+        var plan = CapGeometry.Plan(picture, layout, dpi, options, _lastMode);
+
+        // The layout that the file says may not be the one on screen (F8, F9 and F10 do not write it until Azahar closes).
+        if (DateTime.UtcNow < _doubtUntil)
+        {
+            HideAll();
+            return;
+        }
+
+        if (plan.Main is not null && DateTime.UtcNow - _verifiedAt > Verify)
+        {
+            _verifiedAt = DateTime.UtcNow;
+            if (CapBandGuard.LooksRight(plan, picture) == false)
+            {
+                _doubtUntil = DateTime.UtcNow + Doubt;
+                _logger.LogWarning("El juego se ve donde la configuración de Azahar dice que hay banda ({Why}): el panel del cap se esconde {Seconds} s",
+                    plan.Why, Doubt.TotalSeconds);
+                HideAll();
+                return;
+            }
+        }
+
+        _lastMode = plan.Main?.Mode;
+        var data = new CapPlaqueData(reading.Trial, reading.Cap, reading.Next, reading.Highest, _party, _battle, null, reading.Cleared, reading.Trials);
+        _data = data;
+
+        Show(ref _main, CapPanelKind.Party, plan.Main, data, plan.Memorial is null);
+        Show(ref _memorial, CapPanelKind.Memorial, plan.Memorial, data, false);
+    }
+
+    private void Show(ref Panel? panel, CapPanelKind kind, CapSlot? slot, CapPlaqueData data, bool gravesInside)
+    {
+        if (slot is null)
+        {
+            panel?.Window.Hide();
+            return;
+        }
+
+        panel ??= Create(kind);
+        panel.Plaque.Set(data, slot.Mode, slot.Cols, slot.Rows, slot.Cell, gravesInside, Now);
+        OverlayWindows.PlaceOver(panel.Window, (slot.Box.Left, slot.Box.Top, slot.Box.Width, slot.Box.Height));
+        if (!panel.Window.IsVisible) panel.Window.Show();
+    }
+
+    private void HideAll()
+    {
+        _main?.Window.Hide();
+        _memorial?.Window.Hide();
+    }
+
+    /// <summary>One frame of the moving part, for each window that is showing.</summary>
+    private void Frame()
+    {
+        var now = Now;
+        if (_main is { Window.IsVisible: true } main) main.Plaque.Tick(now);
+        if (_memorial is { Window.IsVisible: true } memorial) memorial.Plaque.Tick(now);
+    }
+
+    private Panel Create(CapPanelKind kind)
+    {
+        var plaque = new CapPlaque(kind);
+        var window = new Window
+        {
+            WindowStyle = WindowStyle.None,
+            AllowsTransparency = true,
+            Background = Brushes.Transparent,
+            ShowInTaskbar = false,
+            ShowActivated = false,
+            Focusable = false,
+            Topmost = true,
+            ResizeMode = ResizeMode.NoResize,
+            SizeToContent = SizeToContent.WidthAndHeight,
+            UseLayoutRounding = true,
+            Opacity = 0.97,
+            Content = plaque
+        };
+
+        OverlayWindows.MakeUntouchable(window);
+        return new Panel(window, plaque);
+    }
+
     /// <summary>
-    /// The party under the cap (1.0.4.8): each Pokémon's icon from the player's own ROM, its level (gold at the cap) and an
+    /// The party in the niches (1.0.4.8): each Pokémon's icon from the player's own ROM, its level (gold at the cap) and an
     /// HP bar green, yellow or red as the game colours it; a fallen one greyed out and crossed, with «KO». An egg, its
     /// name alone (§230). Rebuilt only when something on it changes, so it costs nothing while the player walks.
     /// </summary>
@@ -188,12 +322,7 @@ public sealed class CapBadge
         _party = [.. party.OrderBy(p => p.Slot).Select(member => new CapPlaqueMember(
             member.IsEgg ? _sprites.GetEgg() : _sprites.Get(member.Species, member.Form, member.IsShiny),
             string.IsNullOrWhiteSpace(member.Nickname) ? member.SpeciesName : member.Nickname,
-            member.Level, member.CurrentHp, member.MaxHp, member.IsEgg))];
-
-        if (_shown is { } shown)
-        {
-            Show(shown);
-        }
+            member.Level, member.CurrentHp, member.MaxHp, member.IsEgg, member.Pid))];
     }
 
     /// <summary>
@@ -321,82 +450,6 @@ public sealed class CapBadge
         }
 
         return shown;
-    }
-
-    /// <summary>
-    /// Top right of <paramref name="picture"/>, clear of its top edge and a little in from the side, with as many screen
-    /// pixels per cell as fit (§239): whole pixels, so the plaque never blurs.
-    /// </summary>
-    private static void Place(Window window, CapPlaque plaque, (int Left, int Top, int Width, int Height) picture)
-    {
-        if (plaque.Data is not { } data)
-        {
-            return;
-        }
-
-        var dpi = VisualTreeHelper.GetDpi(window);
-        var rows = CapPlaque.Rows(data);
-
-        // Se adapta al tamaño del juego (1.0.5.2): dos píxeles por celda en un juego de 900 de alto, más a pantalla completa
-        // y menos en una ventana pequeña; si cabe en la franja negra junto a las pantallas del 3DS se queda en ella, y nunca
-        // pasa del alto del juego.
-        var cell = 2 * dpi.DpiScaleX * Math.Clamp(picture.Height / dpi.DpiScaleY / 900, 0.6, 1.8);
-        var band = ((picture.Width - (picture.Height * 400.0 / 480)) / 2) - (24 * dpi.DpiScaleX);
-        if (band >= CapPlaque.Columns * cell * 0.6) cell = Math.Min(cell, band / CapPlaque.Columns);
-        cell = Math.Min(cell, (picture.Height - (64 * dpi.DpiScaleY)) / rows);
-        var pixels = Math.Max(1, (int)Math.Floor(cell));
-
-        int width, height, left;
-        var top = picture.Top + (int)(48 * dpi.DpiScaleY);
-
-        // Nunca encima de la barra de PS (2026-09-28): la copia de pantalla que espera la barra a cero leería el panel.
-        // Antes se escondía mientras se miraba la barra, y eso es el parpadeo al morir; ahora encoge para no llegar.
-        var game = Math.Min(picture.Width / 400.0, picture.Height / 480.0);
-        var gameLeft = picture.Left + ((picture.Width - (400 * game)) / 2);
-        var barTop = picture.Top + ((picture.Height - (480 * game)) / 2) + (PermaLocke.GameLink.Battle.HpBar.FirstRow * game);
-        var barRight = gameLeft + ((PermaLocke.GameLink.Battle.HpBar.Right + 1) * game);
-        while (true)
-        {
-            width = CapPlaque.Columns * pixels;
-            height = rows * pixels;
-            left = picture.Left + picture.Width - width - (int)(16 * dpi.DpiScaleX);
-            if (pixels == 1 || !(left < barRight && top + height > barTop - 6)) break;
-            pixels--;
-        }
-
-        // Una ventana tan pequeña que ni a un píxel por celda cabe sin salirse del juego o pisar la barra de PS: mejor sin
-        // panel que encima de lo que hay que leer.
-        if (top + height > picture.Top + picture.Height || (left < barRight && top + height > barTop - 6))
-        {
-            window.Hide();
-            return;
-        }
-
-        plaque.CellPixels = pixels;
-        if (!window.IsVisible) window.Show();
-        OverlayWindows.PlaceOver(window, (left, top, width, height));
-    }
-
-    private Window Create()
-    {
-        var window = new Window
-        {
-            WindowStyle = WindowStyle.None,
-            AllowsTransparency = true,
-            Background = Brushes.Transparent,
-            ShowInTaskbar = false,
-            ShowActivated = false,
-            Focusable = false,
-            Topmost = true,
-            ResizeMode = ResizeMode.NoResize,
-            SizeToContent = SizeToContent.WidthAndHeight,
-            UseLayoutRounding = true,
-            Opacity = 0.95,
-            Content = _plaque
-        };
-
-        OverlayWindows.MakeUntouchable(window);
-        return window;
     }
 
     [DllImport("user32.dll")]

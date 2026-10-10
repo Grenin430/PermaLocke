@@ -76,7 +76,7 @@ public static class CapGeometry
     public static (int Cols, int Rows, int MinCell) Design(CapMode mode) => mode switch
     {
         CapMode.Column => (132, 250, 2),
-        CapMode.Strip => (270, 50, 2),
+        CapMode.Strip => (420, 46, 2),
         CapMode.Slim => (76, 170, 2),
         CapMode.Compact => (60, 64, 1),
         _ => (0, 0, 1)

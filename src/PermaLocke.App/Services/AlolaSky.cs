@@ -90,7 +90,8 @@ public sealed partial class AlolaSky : ObservableObject
         };
     }
 
-    private string ConfigPath()
+    /// <summary>Where the qt-config.ini of the emulator that is running is (or the one PermaLocke would use): the clock and the screen layout come from it.</summary>
+    public string ConfigPath()
     {
         foreach (var name in new[] { "azahar", "citra" })
         {
