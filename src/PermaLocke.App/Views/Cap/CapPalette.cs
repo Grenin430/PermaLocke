@@ -35,6 +35,9 @@ public sealed class CapSeaPalette
     /// <summary>How strong the light shafts are, 0 to 1.</summary>
     public required double ShaftStrength { get; init; }
 
+    /// <summary>How much of the sea's colour the sky takes: 0 when calm, more when the sea is cold, red or grey, so that the sky and the sun are of the same weather.</summary>
+    public double Murk { get; init; }
+
     public static CapSeaPalette Of(CapMood mood) => mood switch
     {
         CapMood.Battle => Battle,
@@ -61,7 +64,7 @@ public sealed class CapSeaPalette
         Shaft = 0xD8ECFF, Snow = 0xDCEBFF, Glow = 0xF0F8FF, Ink = 0x030A18,
         Floor = [0x5A7A9A, 0x3D5878, 0x2A3F5C, 0x1B2842],
         Strata = [0x6A7288, 0x4E5C82, 0x625A82, 0x486A7A, 0x7A6E58, 0x465278],
-        Tempo = 1.7, Agitation = 1.9, ShaftStrength = 0.55
+        Tempo = 1.7, Agitation = 1.9, ShaftStrength = 0.55, Murk = 0.25
     };
 
     // Danger: a red tide, the abyss goes to wine and violet.
@@ -71,7 +74,7 @@ public sealed class CapSeaPalette
         Shaft = 0xFF9078, Snow = 0xF0B8A8, Glow = 0xFFE4D0, Ink = 0x14040E,
         Floor = [0x7A4A5A, 0x58364E, 0x3C2442, 0x261632],
         Strata = [0x7A4A4A, 0x62405A, 0x70505A, 0x5A3A48, 0x80584A, 0x523A5A],
-        Tempo = 2.3, Agitation = 2.6, ShaftStrength = 0.5
+        Tempo = 2.3, Agitation = 2.6, ShaftStrength = 0.5, Murk = 0.5
     };
 
     // Mourning: grey and violet, still; what falls is ash.
@@ -81,7 +84,7 @@ public sealed class CapSeaPalette
         Shaft = 0xB8C0D8, Snow = 0xC8CCD8, Glow = 0xDCE0F0, Ink = 0x080A18,
         Floor = [0x5A607A, 0x434862, 0x2E3350, 0x1E2238],
         Strata = [0x5E6074, 0x4E5470, 0x5E5878, 0x465068, 0x6A6460, 0x424A68],
-        Tempo = 0.45, Agitation = 0.35, ShaftStrength = 0.3
+        Tempo = 0.45, Agitation = 0.35, ShaftStrength = 0.3, Murk = 0.65
     };
 
     // Cap: the sea floods with gold light from the surface.

@@ -253,13 +253,13 @@ public static class CapFauna
         {
             double wx = x + ctx.WorldX;
             var centre = (l.SkyRows * 0.45) + (Math.Sin((wx * 0.05) + (phase * 0.6)) * (l.SkyRows * 0.18));
-            var width = 3 + (2 * Math.Sin((wx * 0.11) - (phase * 0.4)));
+            var width = 4 + (3 * Math.Sin((wx * 0.11) - (phase * 0.4)));
             for (var y = (int)(centre - width); y <= (int)(centre + width); y++)
             {
                 if (y < 0 || y >= l.SurfaceY) continue;
                 var edge = 1 - (Math.Abs(y - centre) / (width + 0.5));
                 if (edge * 14 <= CapSeaPalette.Bayer[((y & 3) * 4) + (x & 3)]) continue;
-                p.Set(x, y, Math.Sin((wx * 0.04) + (phase * 0.3)) > 0 ? 0x78F0B8u : 0xFFE890u, (int)(110 * strength * edge));
+                p.Set(x, y, Math.Sin((wx * 0.04) + (phase * 0.3)) > 0 ? 0x78F0B8u : 0xFFE890u, (int)(200 * strength * edge));
             }
         }
     }

@@ -8,6 +8,9 @@ public sealed record CapStep(double At, CapPlaqueData Data);
 /// <summary>A situation of the panel to look at without the game: a list of moments the lab, the tests and <c>--ensayar-cap</c> all play the same way.</summary>
 public sealed record CapScenario(string Name, string Title, IReadOnlyList<CapStep> Steps)
 {
+    /// <summary>The moment that says most about it, in seconds, when it is not the one just after its first change: where the lab takes its picture.</summary>
+    public double? Moment { get; init; }
+
     /// <summary>How long it lasts: until a little after its last step.</summary>
     public double Length => Steps.Count == 0 ? 0 : Steps[^1].At + 4;
 
@@ -64,9 +67,9 @@ public static class CapScenarios
     }
 
     private static CapPlaqueData Base(Func<int, BitmapSource?> icon, IReadOnlyList<CapPlaqueMember> party, int graves = 3, bool battle = false,
-        int cap = 42, int? highest = null, int cleared = 7) =>
+        int cap = 42, int? highest = null, int cleared = 7, double hour = 15.5, int seed = 7421) =>
         new("PRUEBA 8 DE 12", cap, 54, highest ?? party.Where(m => !m.Egg).Select(m => m.Level).DefaultIfEmpty(0).Max(), party, battle,
-            Graves(icon, graves), cleared, 12, 15.5, 7421);
+            Graves(icon, graves), cleared, 12, hour, seed);
 
     public static IReadOnlyList<CapScenario> All(Func<int, BitmapSource?> icon)
     {
@@ -154,6 +157,36 @@ public static class CapScenarios
             [Member(0, icon, 41, 143, 143, exp: 0.93), Member(1, icon, 41, 122, 122, exp: 0.85), Member(2, icon, 38, 170, 170, exp: 0.2),
              Member(3, icon, 40, 124, 124, exp: 0.5), Member(4, icon, 42, 124, 124), Member(5, icon, 39, 124, 124, exp: 0.7)])));
         _ = calm;
+
+        // The moods and the hours of the day, each as a scene of its own.
+        scenarios.Add(Still("batalla", "Un combate sin peligro: el mar frío y la corriente", Base(icon, full, battle: true)));
+        scenarios.Add(new CapScenario("luto", "Doce segundos después de una caída: el mar de luto", [
+            new(0, Base(icon, Replace(full, 3, m => m with { Hp = 5 }), battle: true)),
+            new(1, Base(icon, Replace(full, 3, m => m with { Hp = 0 }), 4))]) { Moment = 13 });
+        scenarios.Add(Still("noche", "De noche: la luna, las estrellas y el brillo del mar", Base(icon, full, hour: 23.5)));
+        scenarios.Add(Still("amanecer", "Al amanecer", Base(icon, full, hour: 6.7)));
+        scenarios.Add(Still("atardecer", "Al atardecer", Base(icon, full, hour: 18.5)));
+
+        // The rare events, at the moment each is half way across: the seed of the run and the time are found that make it happen then.
+        void Rare(string name, string title, int kind, double period, double duration, int chance, double hour = 15.5)
+        {
+            for (var seed = 1; seed < 400; seed++)
+            {
+                for (var t = 1.0; t < period; t += 1)
+                {
+                    var e = CapFauna.EventAt(seed, kind, t, period, duration, chance);
+                    if (!e.Active || !(e.Progress is >= 0.1 and <= 0.22 || e.Progress is >= 0.78 and <= 0.9)) continue;
+                    scenarios.Add(new CapScenario(name, title, [new(0, Base(icon, full, hour: hour, seed: seed))]) { Moment = t });
+                    return;
+                }
+            }
+        }
+
+        Rare("ballena", "Una ballena cruza el mar por detrás del juego", 1, 480, 80, 70);
+        Rare("manta", "Una manta pasa", 2, 210, 38, 70);
+        Rare("banco", "Un banco de peces", 3, 95, 26, 65);
+        Rare("ola", "Una ola de luz recorre el mar", 4, 330, 9, 60);
+        Rare("estrella", "Una estrella fugaz sobre el mar nocturno", 5, 50, 2.2, 80, 23.5);
 
         return scenarios;
     }

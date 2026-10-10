@@ -25,7 +25,6 @@ public sealed class CapAnimTests
             Assert.Equal(0, anim.HitPulse(i, 5.1));
             Assert.Equal(0, anim.HealPulse(i, 5.1));
             Assert.Equal(0, anim.LevelPulse(i, 5.1));
-            Assert.Equal(1, anim.Dissolve(i, 5.1));
             Assert.Null(anim.TrailFraction(i, 5.1));
         }
 
@@ -168,19 +167,6 @@ public sealed class CapAnimTests
         Assert.True(anim.HatchPulse(0, 2.1) > 0.8);
         Assert.Equal(0, anim.HatchPulse(0, 3.5));
         Assert.Equal(0, anim.HealPulse(0, 2.1));
-    }
-
-    [Fact]
-    public void The_dissolve_of_a_change_runs_from_zero_to_one_over_its_time_and_only_for_what_changed()
-    {
-        var anim = new CapAnim();
-        anim.Update(Data(Party(Member(1), Member(2))), 0);
-        anim.Update(Data(Party(Member(1, hp: 60), Member(2))), 5);
-
-        Assert.Equal(0, anim.Dissolve(0, 5), 3);
-        Assert.InRange(anim.Dissolve(0, 5 + (CapAnim.DissolveSeconds / 2)), 0.4, 0.6);
-        Assert.Equal(1, anim.Dissolve(0, 5 + CapAnim.DissolveSeconds), 3);
-        Assert.Equal(1, anim.Dissolve(1, 5), 3);
     }
 
     [Fact]

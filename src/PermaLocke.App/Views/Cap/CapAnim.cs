@@ -50,9 +50,6 @@ public sealed class CapAnim
         public int MaxHp;
         public bool Egg;
         public CapStatus Status;
-        public string Name = string.Empty;
-        public string? Item;
-        public int Types;
 
         public double HpAt = Never;
         public double HpFrom;
@@ -64,7 +61,6 @@ public sealed class CapAnim
         public double FellAt = Never;
         public int GravesAtFall;
         public double HatchAt = Never;
-        public double ChangedAt = Never;
         public double StatusAt = Never;
     }
 
@@ -241,13 +237,7 @@ public sealed class CapAnim
 
         if (m.Status != track.Status && m.Status != CapStatus.None) track.StatusAt = now;
 
-        if (Visible(track, m)) track.ChangedAt = now;
     }
-
-    /// <summary>Whether something the niche shows in its still part changed: a text, a chip, the icon's state. Experience is a bar, so it is not.</summary>
-    private static bool Visible(Track track, CapPlaqueMember m) =>
-        track.Level != m.Level || track.Hp != m.Hp || track.MaxHp != m.MaxHp || track.Egg != m.Egg || track.Status != m.Status
-        || track.Name != m.Name || track.Item != m.Item || track.Types != (m.Types?.Count ?? 0);
 
     private static void Remember(Track track, CapPlaqueMember m)
     {
@@ -257,9 +247,6 @@ public sealed class CapAnim
         track.MaxHp = m.MaxHp;
         track.Egg = m.Egg;
         track.Status = m.Status;
-        track.Name = m.Name;
-        track.Item = m.Item;
-        track.Types = m.Types?.Count ?? 0;
     }
 
     // ---------------------------------------------------------------- what a niche shows
@@ -327,10 +314,6 @@ public sealed class CapAnim
 
     /// <summary>How long ago a Pokémon got a status it did not have, or null.</summary>
     public double? SinceStatus(int index, double t) => At(index) is { } track && track.StatusAt > Never && t >= track.StatusAt ? t - track.StatusAt : null;
-
-    /// <summary>How far a niche's change has dissolved from the old drawing into the new one: 0 just changed, 1 done (or nothing changed).</summary>
-    public double Dissolve(int index, double t) =>
-        At(index) is { } track && t >= track.ChangedAt ? Math.Clamp((t - track.ChangedAt) / DissolveSeconds, 0, 1) : 1;
 
     /// <summary>The same for the head of the panel (the cap, the trial, the fuse).</summary>
     public double HeaderDissolve(double t) => t >= _headerAt ? Math.Clamp((t - _headerAt) / DissolveSeconds, 0, 1) : 1;
@@ -402,7 +385,7 @@ public sealed class CapAnim
         {
             if (track is null) continue;
             if (t - track.HitAt < 1.3 || t - track.HealAt < 1 || t - track.LevelAt < 1.2 || t - track.HatchAt < 1.3
-                || t - track.ChangedAt < DissolveSeconds || t - track.HpAt < 0.7 || t - track.FellAt < 8) return true;
+                || t - track.HpAt < 0.7 || t - track.FellAt < 8) return true;
         }
 
         return false;

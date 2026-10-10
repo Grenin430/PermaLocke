@@ -66,8 +66,8 @@ public static class CapSea
         var grave = data.Graves ?? [];
         var fossilColumns = FossilColumns(l, grave.Count, ctx);
 
-        Sky(p, l, ctx);
-        if (l.Panel == CapPanelKind.Deep && l.Sun.Width > 0) Sun(p, l, ctx);
+        Sky(p, l, pal, ctx);
+        if (l.Panel == CapPanelKind.Deep && l.Sun.Width > 0) Sun(p, l, pal, ctx);
         Water(p, l, pal);
         if (l.Panel == CapPanelKind.Deep && l.Sun.Width > 0) Glitter(p, l, pal, ctx);
         Floor(p, l, pal, data, ctx, fossilColumns);
@@ -77,11 +77,13 @@ public static class CapSea
 
     // ---------------------------------------------------------------- sky and water
 
-    private static void Sky(CapSheet p, CapWorldLayout l, CapSeaContext ctx)
+    private static void Sky(CapSheet p, CapWorldLayout l, CapSeaPalette pal, CapSeaContext ctx)
     {
         if (l.SkyRows <= 0) return;
 
         var (top, horizon) = CapSeaPalette.Sky(ctx.SkyHour);
+        top = CapSheet.Mix(top, pal.Water[3], pal.Murk);
+        horizon = CapSheet.Mix(horizon, pal.Water[1], pal.Murk);
         var night = CapSeaPalette.Night(ctx.SkyHour);
         uint[] ramp = [top, CapSheet.Mix(top, horizon, 0.35), CapSheet.Mix(top, horizon, 0.7), horizon];
         for (var y = 0; y < l.SurfaceY; y++)
@@ -105,7 +107,7 @@ public static class CapSea
     }
 
     /// <summary>The sun going over the sky of the deep window by the hour of Alola, or the moon at night: low in the east, high at noon, low in the west.</summary>
-    private static void Sun(CapSheet p, CapWorldLayout l, CapSeaContext ctx)
+    private static void Sun(CapSheet p, CapWorldLayout l, CapSeaPalette pal, CapSeaContext ctx)
     {
         var hour = ctx.SkyHour;
         var day = hour is >= 6 and < 19;
@@ -124,7 +126,7 @@ public static class CapSea
                 if (d <= radius)
                 {
                     var edge = d > radius - 1.6;
-                    if (day) p.Set(x, y, edge ? 0xFFB84Au : (d < radius * 0.5 ? 0xFFFBE0u : 0xFFE890u));
+                    if (day) p.Set(x, y, CapSheet.Mix(edge ? 0xFFB84Au : (d < radius * 0.5 ? 0xFFFBE0u : 0xFFE890u), pal.Glow, pal.Murk * 0.8));
                     else
                     {
                         var crater = CapArt.Hash(ctx.Seed, (x - cx + 20) * 7 + (y - cy + 20)) % 41 == 0 && d < radius - 2;

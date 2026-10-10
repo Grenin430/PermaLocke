@@ -28,7 +28,7 @@ public static class Exports
                 var preset = LabScreen.Presets.First(p => p.Name == name);
 
                 // A scenario that moves is shown at the moment that says most; the strips show the rest.
-                var t = still ? 0 : scenario.Steps.Count > 1 ? scenario.Steps[1].At + 0.2 : 0;
+                var t = scenario.Moment ?? (still ? 0 : scenario.Steps.Count > 1 ? scenario.Steps[1].At + 0.2 : 0);
                 var (bgra, plan) = LabScreen.Compose(scenario, t, preset, options, game: true);
                 CapSnap.Save(Path.Combine(dir, $"{Safe(scenario.Name)}__{Safe(preset.Name)}__{plan.Main?.Mode.ToString() ?? "oculto"}.png"), bgra, preset.Width, preset.Height);
                 count++;
@@ -56,19 +56,26 @@ public static class Exports
         return count;
     }
 
+    /// <summary>The moments of each scenario worth a frame, in seconds after its first change, and the part of the panel to look at: the whole of it when none is given.</summary>
+    private static readonly Dictionary<string, (double[] Offsets, CapRect? Region)> Moments = new()
+    {
+        ["caida"] = ([-0.3, 0.3, 1.2, 2.5, 4.0, 6.0], new CapRect(0, 40, 178, 281)),
+        ["cambio-cap"] = ([-0.3, 0.4, 1.0, 1.6, 2.4, 3.6], null),
+        ["subida"] = ([-0.2, 0.15, 0.5, 0.9, 1.4], new CapRect(0, 55, 178, 70)),
+        ["golpe"] = ([-0.2, 0.1, 0.3, 0.8, 1.5, 3.2], new CapRect(0, 55, 178, 100)),
+        ["curacion"] = ([-0.2, 0.2, 0.5, 0.9, 1.4], new CapRect(0, 55, 178, 130)),
+        ["eclosion"] = ([-0.2, 0.15, 0.4, 0.8, 1.3], new CapRect(0, 85, 178, 60))
+    };
+
     /// <summary>A strip of frames of a scenario, side by side: the moments before and after each change.</summary>
     public static void Strip(string dir, CapScenario scenario, CapMode mode, int cols, int rows)
     {
-        var times = new List<double> { 0 };
-        foreach (var step in scenario.Steps.Skip(1))
-        {
-            times.AddRange([step.At - 0.2, step.At + 0.1, step.At + 0.4, step.At + 1.0, step.At + 2.0, step.At + 3.2, step.At + 4.5, step.At + 6.0]);
-        }
-
-        times.Add(scenario.Length);
-        var frames = times.Select(t => CapSnap.Bgra(CapPlaque.Replay(scenario, mode, cols, rows, t), 2, 0x000000)).ToList();
-        var width = cols * 2;
-        var height = rows * 2;
+        var (offsets, region) = Moments.TryGetValue(scenario.Name, out var m) ? m : ([-0.2, 0.1, 0.4, 1.0, 2.0, 3.2], null);
+        var change = scenario.Steps.Count > 1 ? scenario.Steps[1].At : 0;
+        var times = offsets.Select(o => change + o).ToList();
+        var frames = times.Select(t => CapSnap.Bgra(CapPlaque.Replay(scenario, mode, cols, rows, t), 2, 0x000000, 1, region)).ToList();
+        var width = (region?.Width ?? cols) * 2;
+        var height = (region?.Height ?? rows) * 2;
         var gap = 6;
         var total = (frames.Count * (width + gap)) - gap;
         var sheet = new byte[total * height * 4];
