@@ -22,6 +22,7 @@
   -->
   <ItemGroup>
     <Compile Include="..\..\src\PermaLocke.App\Services\InstalledWorld.cs" Link="InstalledWorld.cs" />
+    <Compile Include="..\..\src\PermaLocke.App\Services\HighResolutionTimer.cs" Link="HighResolutionTimer.cs" />
   </ItemGroup>
 
   <PropertyGroup>

@@ -260,6 +260,7 @@ public partial class App : Application
         collection.AddSingleton<OrderService>();
         collection.AddSingleton<RulesSync>();
         collection.AddSingleton<VitalsPump>();
+        collection.AddSingleton<BarSync>();
         collection.AddSingleton<CapBadge>();
         collection.AddSingleton<BackgroundMode>();
         collection.AddSingleton<PokemonIdentityService>();

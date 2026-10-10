@@ -111,13 +111,21 @@
                     <pixel:PixelText Style="{StaticResource Explain}" Text="Cuántos píxeles de pantalla mide cada celda del panel. Más pequeño, más discreto." />
 
                     <CheckBox Style="{StaticResource Check}" IsChecked="{Binding CapMemorial}" Content="El fondo del mar en la otra banda" />
-                    <pixel:PixelText Style="{StaticResource Explain}" Text="Si hay banda negra a los dos lados del juego, la otra sigue el mismo mar: el sol o la luna a la hora de Alola, las linternas de las pruebas superadas, los estratos del suelo y el nombre y el nivel de cada caído. Apagado, solo se ve el mar del equipo." />
+                    <pixel:PixelText Style="{StaticResource Explain}" Text="Si hay banda negra a los dos lados del juego, la otra sigue el mismo mar: el sol o la luna a la hora de Alola, las linternas de las pruebas superadas, los estratos del suelo y cada caído como un fósil con su propio dibujo, sin una sola letra: un rayo de luz los va recorriendo del más nuevo al más viejo. Apagado, solo se ve el mar del equipo." />
 
                     <CheckBox Style="{StaticResource Check}" IsChecked="{Binding CapDetails}" Content="Tipos, objeto, estado y experiencia" />
                     <pixel:PixelText Style="{StaticResource Explain}" Text="Lo que se lee del juego de cada Pokémon además del nivel y los PS. El estado solo se ve fuera de combate." />
 
                     <CheckBox Style="{StaticResource Check}" IsChecked="{Binding CapAnimations}" Content="Animaciones del panel" />
                     <pixel:PixelText Style="{StaticResource Explain}" Text="Las olas, el polvo marino, las criaturas que respiran, los golpes, las curas, las subidas de nivel, el Pokémon que cae y se hunde hasta el fondo, el suelo que se abre al cambiar de cap, el estado del mar (calma, combate, peligro, luto, cap) y los bichos raros que cruzan el mar por detrás del juego. Apagado, queda quieto." />
+
+                    <pixel:PixelText Text="{Binding CapHpSyncText}" Scale="2" Tight="True" Margin="0,6,0,4" Colour="{DynamicResource PxAccentInkLight}" />
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                        <Button Content="Sincronizada" Style="{StaticResource PxSubtleButton}" MinWidth="60" Margin="0,0,8,0" Command="{Binding SetCapHpSyncCommand}" CommandParameter="0" />
+                        <Button Content="Instantánea" Style="{StaticResource PxSubtleButton}" MinWidth="60" Margin="0,0,8,0" Command="{Binding SetCapHpSyncCommand}" CommandParameter="1" />
+                        <Button Content="Retrasada" Style="{StaticResource PxSubtleButton}" MinWidth="60" Command="{Binding SetCapHpSyncCommand}" CommandParameter="2" />
+                    </StackPanel>
+                    <pixel:PixelText Style="{StaticResource Explain}" Text="Cuándo enseña el panel que a un Pokémon le han quitado o dado vida. Sincronizada: cuando la barra del juego empieza a moverse (si no se ve la barra, con un retraso calculado del daño). Instantánea: en cuanto se lee, antes de que el juego lo enseñe, así que adelanta el daño. Retrasada: tres segundos después, como antes." />
 
                     <pixel:PixelText Text="{Binding CapKeyText}" Scale="2" Tight="True" Margin="0,6,0,4" Colour="{DynamicResource PxAccentInkLight}" />
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,2">

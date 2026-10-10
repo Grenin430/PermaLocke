@@ -61,6 +61,9 @@ public sealed class CapBadge
     private readonly IMoveCatalog _moves;
     private readonly CemeteryService _cemetery;
     private readonly VitalsPump _pump;
+    private readonly BarSync _bar;
+    private readonly HpPresenter _hp = new();
+    private readonly DispatcherTimer _due = new();
     private readonly DispatcherTimer _timer = new() { Interval = Follow };
     private readonly DispatcherTimer _frames = new() { Interval = Frames };
     private readonly Stopwatch _clock = Stopwatch.StartNew();
@@ -94,7 +97,7 @@ public sealed class CapBadge
 
     public CapBadge(EmulatorLauncher launcher, ProgressService progress, LevelCapTable caps, IRunContext runContext,
         GameLinkMonitor monitor, AppSettings settings, PokemonSpriteService sprites, AlolaSky sky, ITypeLookup types, IItemLookup items,
-        IMoveCatalog moves, CemeteryService cemetery, VitalsPump pump, ILogger<CapBadge> logger)
+        IMoveCatalog moves, CemeteryService cemetery, VitalsPump pump, BarSync bar, ILogger<CapBadge> logger)
     {
         _launcher = launcher;
         _progress = progress;
@@ -110,7 +113,14 @@ public sealed class CapBadge
         _moves = moves;
         _cemetery = cemetery;
         _pump = pump;
+        _bar = bar;
         pump.Changed += OnVitals;
+        bar.Signal += OnBar;
+        _due.Tick += (_, _) =>
+        {
+            _due.Stop();
+            Repaint();
+        };
         _timer.Tick += (_, _) => _ = TickAsync();
         _frames.Tick += (_, _) => Frame();
         monitor.RunDataChanged += (_, _) => _readAt = DateTime.MinValue;
@@ -119,6 +129,8 @@ public sealed class CapBadge
 
     public void Start()
     {
+        // The bar of the game is looked for where the emulator's own layout puts it, not only in the default one.
+        HpBarWatcher.LayoutSource = ScreenLayout;
         _pump.Start();
         _timer.Start();
         _frames.Start();
@@ -247,7 +259,37 @@ public sealed class CapBadge
         }
 
         var tables = frame is { Battle.Count: > 0 } ? frame.ToTables(_monitor.BattleNow) : _monitor.BattleNow;
-        return Delayed(WithLiveHp(party, tables));
+        return Present(WithLiveHp(party, tables));
+    }
+
+    /// <summary>
+    /// What life to show for each of them: the real one, held back or not as the chosen mode says (<see cref="HpPresenter"/>). A change read in a battle is
+    /// held until the game's bar starts to move, or until the delay worked out from the damage when the bar cannot be seen.
+    /// </summary>
+    private IReadOnlyList<LivePartyMember> Present(IReadOnlyList<LivePartyMember> party)
+    {
+        _hp.Mode = (HpSyncMode)Math.Clamp(_settings.Current.CapHpSync, 0, 2);
+        var now = Now;
+        var arm = false;
+        foreach (var member in party)
+        {
+            if (!member.IsEgg) arm |= _hp.Observe(member.Pid, member.CurrentHp, member.MaxHp, now, _battle);
+        }
+
+        if (!_battle) _hp.Flush();
+        _hp.Keep([.. party.Select(member => member.Pid)]);
+        if (arm) _bar.Arm();
+
+        var shown = party.Select(member => member.IsEgg ? member : member with { CurrentHp = Math.Min(_hp.Shown(member.Pid, now), member.MaxHp) }).ToList();
+
+        // A change that is held has a time of its own to come out, if the bar never says.
+        if (_hp.NextDue is { } due && _hp.HasWaiting)
+        {
+            _due.Interval = TimeSpan.FromSeconds(Math.Clamp(due - now, 0.01, 10));
+            _due.Start();
+        }
+
+        return shown;
     }
 
     private int _pushing;
@@ -260,18 +302,36 @@ public sealed class CapBadge
         _ = Application.Current?.Dispatcher.BeginInvoke(DispatcherPriority.Send, () =>
         {
             Interlocked.Exchange(ref _pushing, 0);
-            try
-            {
-                if (_rehearsing || _shown is null || _picture.Width == 0 || (_main?.Window.IsVisible != true && _memorial?.Window.IsVisible != true)) return;
-                _battle = _monitor.BattleNow.Count > 0;
-                ShowParty(LiveParty());
-                Apply(_picture, ScreenLayout(), Dpi());
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "No se ha podido repintar el cap con la lectura rápida");
-            }
+            Repaint();
         });
+    }
+
+    /// <summary>The bar of the game started to move: the oldest change held back is shown now.</summary>
+    private void OnBar(BarSignal signal)
+    {
+        if (signal.Kind != BarSignalKind.Started) return;
+        var ago = (Stopwatch.GetTimestamp() - signal.At) / (double)Stopwatch.Frequency;
+        _ = Application.Current?.Dispatcher.BeginInvoke(DispatcherPriority.Send, () =>
+        {
+            _hp.BarStarted(Now - ago);
+            Repaint();
+        });
+    }
+
+    /// <summary>Shows the party as it is now, at once: a change of the fast reading, the bar of the game, or the time of a held change coming.</summary>
+    private void Repaint()
+    {
+        try
+        {
+            if (_rehearsing || _shown is null || _picture.Width == 0 || (_main?.Window.IsVisible != true && _memorial?.Window.IsVisible != true)) return;
+            _battle = _monitor.BattleNow.Count > 0;
+            ShowParty(LiveParty());
+            Apply(_picture, ScreenLayout(), Dpi());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "No se ha podido repintar el cap");
+        }
     }
 
     private async Task<CapReading?> ReadAsync(Run run)
@@ -648,46 +708,6 @@ public sealed class CapBadge
 
             return member with { CurrentHp = last.Hp, MaxHp = last.MaxHp };
         })];
-    }
-
-    /// <summary>How far behind the battle's own numbers the panel shows HP (1.0.4.9 bis).</summary>
-    /// <remarks>
-    /// The battle table changes when the game decides the hit, at «¡X ha usado Y!», before the attack's animation and the
-    /// game's own bar: shown at once, the panel spoiled the damage. Three seconds behind, it drops after the game's bar.
-    /// </remarks>
-    private static readonly TimeSpan HpDelay = TimeSpan.FromSeconds(3);
-
-    /// <summary>What each Pokémon's HP was <see cref="HpDelay"/> ago, by PID.</summary>
-    private readonly Dictionary<uint, Queue<(DateTime At, int Hp)>> _hpHistory = [];
-
-    /// <summary>Each member with the HP it had <see cref="HpDelay"/> ago, so the panel never runs ahead of the game.</summary>
-    private IReadOnlyList<LivePartyMember> Delayed(IReadOnlyList<LivePartyMember> party)
-    {
-        var now = DateTime.UtcNow;
-        var shown = new List<LivePartyMember>(party.Count);
-
-        foreach (var member in party)
-        {
-            if (!_hpHistory.TryGetValue(member.Pid, out var history))
-            {
-                _hpHistory[member.Pid] = history = new Queue<(DateTime, int)>();
-            }
-
-            if (history.Count == 0 || history.Last().Hp != member.CurrentHp)
-            {
-                history.Enqueue((now, member.CurrentHp));
-            }
-
-            // Se descartan los valores viejos dejando siempre el último que ya tiene más de tres segundos.
-            while (history.Count > 1 && now - history.ElementAt(1).At >= HpDelay)
-            {
-                history.Dequeue();
-            }
-
-            shown.Add(member with { CurrentHp = Math.Min(history.Peek().Hp, member.MaxHp) });
-        }
-
-        return shown;
     }
 
     [DllImport("user32.dll")]

@@ -25,7 +25,8 @@ public sealed record AppSettingsData(
     bool CapMemorial = true,
     bool CapDetails = true,
     bool CapAnimations = true,
-    int CapKey = 0x13);
+    int CapKey = 0x13,
+    int CapHpSync = 0);
 
 /// <summary>
 /// The player's preferences, kept in <c>Config/ajustes.json</c> and pushed into the services that obey them.

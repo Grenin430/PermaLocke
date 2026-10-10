@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using PermaLocke.GameLink;
 using PermaLocke.GameLink.Battle;
 
 namespace PermaLocke.App.Services;
@@ -31,8 +32,6 @@ public static class HpBarWatcher
     /// </summary>
     public static readonly TimeSpan Limit = TimeSpan.FromSeconds(10);
 
-    private const int NativeWidth = 400;
-    private const int NativeHeight = 480;
 
     /// <summary>Where the bar is on screen: the picture's origin and scale, refreshed now and then.</summary>
     private readonly record struct Geometry(IntPtr Window, double OriginX, double OriginY, double Scale, int Left, int Top, int Width, int Height);
@@ -104,6 +103,32 @@ public static class HpBarWatcher
     /// <summary>The bar's state right now, or hidden when the window or the bar cannot be read.</summary>
     public static HpBarState ReadNow() => Locate() is { } where ? Read(where).State : HpBarState.Hidden;
 
+    /// <summary>
+    /// How the emulator lays the screens out (the panel sets it from the emulator's configuration): the bar is looked for where that layout puts it.
+    /// Without it, the layout of the emulator's default is assumed, as it always was.
+    /// </summary>
+    public static Func<AzaharScreenLayout>? LayoutSource { get; set; }
+
+    private static Geometry? _cached;
+    private static long _cachedAt;
+
+    /// <summary>
+    /// One reading of the bar with how much colour it has, for the tracker that says when the game starts to show a change. The window is located
+    /// again at most twice a second: locating it costs tens of milliseconds, a reading a few. Null when the bar cannot be looked for (a layout
+    /// that is not computed, the emulator closed).
+    /// </summary>
+    public static HpBarReading? Sample()
+    {
+        var now = Stopwatch.GetTimestamp();
+        if (_cached is null || (now - _cachedAt) * 1000.0 / Stopwatch.Frequency >= 500)
+        {
+            _cached = Locate();
+            _cachedAt = now;
+        }
+
+        return _cached is { } where ? Read(where) : null;
+    }
+
     private static Geometry? Locate()
     {
         var window = GameWindow.Handle();
@@ -113,17 +138,22 @@ public static class HpBarWatcher
             return null;
         }
 
-        // Disposición por defecto: 400×480 (pantalla de arriba de 400×240 y la de abajo debajo),
-        // escalado a lo que quepa y centrado.
-        var scale = Math.Min(box.Width / (double)NativeWidth, box.Height / (double)NativeHeight);
+        // The picture is scaled to fit and centred; the top screen, the one with the player's box, is where the layout puts it (the default is 400×480,
+        // the top screen at the top). A layout that is not computed has no bar to look for.
+        if (HpBarGeometry.Of(LayoutSource?.Invoke() ?? AzaharScreenLayout.Default) is not { } place)
+        {
+            return null;
+        }
+
+        var scale = Math.Min(box.Width / (double)place.PictureWidth, box.Height / (double)place.PictureHeight);
 
         if (scale <= 0)
         {
             return null;
         }
 
-        var originX = box.Left + ((box.Width - (NativeWidth * scale)) / 2);
-        var originY = box.Top + ((box.Height - (NativeHeight * scale)) / 2);
+        var originX = box.Left + ((box.Width - (place.PictureWidth * scale)) / 2) + (place.TopX * scale);
+        var originY = box.Top + ((box.Height - (place.PictureHeight * scale)) / 2) + (place.TopY * scale);
 
         return new Geometry(window, originX, originY, scale,
             (int)Math.Floor(originX + (HpBar.Left * scale)),

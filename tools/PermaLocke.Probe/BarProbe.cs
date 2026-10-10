@@ -226,7 +226,7 @@ public static class BarProbe
     }
 
     /// <summary>One bar read from a 400×240 frame of the top screen, and how many cells had colour.</summary>
-    private static (HpBarState State, int Cells, HpBarReading Reading) Bar(byte[] frame, int from, int to, int firstRow, int lastRow)
+    internal static (HpBarState State, int Cells, HpBarReading Reading) Bar(byte[] frame, int from, int to, int firstRow, int lastRow)
     {
         var rows = new List<HpBarReading>();
         var samples = new byte[(to - from + 1) * 4];
@@ -259,7 +259,7 @@ public static class BarProbe
     };
 
     /// <summary>The child window Qt draws the game in: its box is the picture, menu bar excluded.</summary>
-    private static (int Left, int Top, int Width, int Height)? RenderBox(IntPtr window)
+    internal static (int Left, int Top, int Width, int Height)? RenderBox(IntPtr window)
     {
         (int, int, int, int)? found = null;
         var name = new StringBuilder(128);
@@ -348,7 +348,7 @@ public static class BarProbe
     }
 
     /// <summary>Copies a screen area scaled down into a 32-bit buffer with GDI.</summary>
-    private sealed class Capture : IDisposable
+    internal sealed class Capture : IDisposable
     {
         private readonly (int Left, int Top, int Width, int Height) _area;
         private readonly int _width, _height;

@@ -83,9 +83,16 @@ public static class BattleHpProbe
             "detector" => Detector(client, seconds),
             "barra" => BarProbe.Run(client, seconds),
             "indicador" => GaugeProbe.Run(client, seconds),
+            "sincronia" => LiveProbes.Sync(client, Math.Min(seconds, 600), LayoutOption()),
+            "latencia" => LiveProbes.Latency(client, Math.Min(seconds, 600)),
+            "estado" => StatusProbe.Run(client, Environment.GetCommandLineArgs().SkipWhile(a => a != "estado").Skip(1).ToArray()),
             _ => Usage()
         };
     }
+
+    /// <summary>The layout of the emulator's screens for the bar probes: <c>--layout 0|1|3</c> after the seconds; 0 (stacked) when not given.</summary>
+    private static int LayoutOption() => Array.IndexOf(Environment.GetCommandLineArgs(), "--layout") is var at and >= 0 && at + 1 < Environment.GetCommandLineArgs().Length
+        && int.TryParse(Environment.GetCommandLineArgs()[at + 1], out var option) ? option : 0;
 
     private static int Usage()
     {
@@ -93,6 +100,9 @@ public static class BattleHpProbe
         Console.WriteLine("  Probe --combate buscar             una búsqueda con los PS de ahora");
         Console.WriteLine("  Probe --combate filtrar            tras un golpe: se queda con lo que ha bajado");
         Console.WriteLine("  Probe --combate vigilar [segundos] graba los supervivientes");
+        Console.WriteLine("  Probe --combate sincronia [segundos] [--layout 0|1|3]  cuándo empieza la barra del juego tras el cambio en memoria, y cuánto dura");
+        Console.WriteLine("  Probe --combate estado capturar <nombre> | analizar <sano> <con-estado> [<despues>]  ¿hay un byte de estado fiable en el bloque de combate?");
+        Console.WriteLine("  Probe --combate latencia [segundos]  cuánto tarda cada forma de leer en enterarse del cambio, con Azahar de verdad");
         return 1;
     }
 
@@ -435,7 +445,7 @@ public static class BattleHpProbe
     /// The party from the structure the game reads, starting from the addresses the application
     /// already found, so the probe does not sweep memory by itself.
     /// </summary>
-    private static IReadOnlyList<LivePartyMember> ReadParty(AzaharRpcClient client)
+    internal static IReadOnlyList<LivePartyMember> ReadParty(AzaharRpcClient client)
     {
         var known = Path.Combine(new PermaLocke.Infrastructure.AppPaths().SaveBackups, "equipo.txt");
         var copy = Path.Combine(Path.GetTempPath(), "permalocke-probe-equipo.txt");

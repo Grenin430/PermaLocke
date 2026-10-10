@@ -67,6 +67,7 @@ public sealed partial class SettingsViewModel : SectionViewModel
         CapDetails = current.CapDetails;
         CapAnimations = current.CapAnimations;
         CapKey = current.CapKey;
+        CapHpSync = current.CapHpSync;
         _loading = false;
     }
 
@@ -139,9 +140,15 @@ public sealed partial class SettingsViewModel : SectionViewModel
     [ObservableProperty]
     private int _capKey;
 
+    /// <summary>When the panel shows a change of life: 0 with the game (default), 1 as soon as it is read, 2 three seconds after.</summary>
+    [ObservableProperty]
+    private int _capHpSync;
+
     public string CapSizeText => CapSize switch { 1 => "Tamaño del panel: reducido", 2 => "Tamaño del panel: estrecho", 3 => "Tamaño del panel: completo", _ => "Tamaño del panel: el que quepa" };
 
     public string CapMaxCellText => CapMaxCell == 0 ? "Escala del panel: la mayor que quepa" : $"Escala del panel: hasta x{CapMaxCell}";
+
+    public string CapHpSyncText => CapHpSync switch { 1 => "Vida del panel: instantánea (se adelanta al juego)", 2 => "Vida del panel: con 3 s de retraso", _ => "Vida del panel: sincronizada con el juego" };
 
     public string CapKeyText => CapKey switch { 0x13 => "Plegar el panel con: Pausa", 0x2D => "Plegar el panel con: Insert", 0x91 => "Plegar el panel con: Bloq Despl", _ => "Plegar el panel con: ninguna tecla" };
 
@@ -173,6 +180,18 @@ public sealed partial class SettingsViewModel : SectionViewModel
     {
         OnPropertyChanged(nameof(CapMaxCellText));
         Save();
+    }
+
+    partial void OnCapHpSyncChanged(int value)
+    {
+        OnPropertyChanged(nameof(CapHpSyncText));
+        Save();
+    }
+
+    [RelayCommand]
+    private void SetCapHpSync(string? mode)
+    {
+        if (int.TryParse(mode, out var value)) CapHpSync = Math.Clamp(value, 0, 2);
     }
 
     partial void OnCapKeyChanged(int value)
@@ -223,7 +242,7 @@ public sealed partial class SettingsViewModel : SectionViewModel
             Notifications = Notifications, StepAside = StepAside, DeathScene = DeathScene, Killcam = Killcam,
             Follower = Follower, Ghosts = Ghosts, CatchCard = CatchCard, Nicknames = Nicknames, CapPanel = CapPanel,
             Background = Background, Resolution = Resolution, Vulkan = Vulkan, CapSize = CapSize, CapMaxCell = CapMaxCell,
-            CapMemorial = CapMemorial, CapDetails = CapDetails, CapAnimations = CapAnimations, CapKey = CapKey
+            CapMemorial = CapMemorial, CapDetails = CapDetails, CapAnimations = CapAnimations, CapKey = CapKey, CapHpSync = CapHpSync
         });
         Status = "Guardado.";
     }
