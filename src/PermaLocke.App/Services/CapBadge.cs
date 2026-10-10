@@ -71,6 +71,8 @@ public sealed class CapBadge
     private CapPlaqueData? _data;
     private CapReading? _shown;
     private bool _battle;
+    private bool _rehearsing;
+    private CapPlaqueData? _rehearsal;
     private IReadOnlyList<CapGrave> _graves = [];
     private CapRect _picture;
     private int _fold;
@@ -120,31 +122,68 @@ public sealed class CapBadge
 
     private double Now => _clock.Elapsed.TotalSeconds;
 
-    /// <summary><c>--ensayar-cap</c>: the panel over PermaLocke's own window for ten seconds, without the game.</summary>
-    public async Task RehearseAsync()
+    /// <summary>
+    /// <c>--ensayar-cap [escenario] [segundos]</c>: the panel with no real party, from a scenario of the lab (<see cref="CapScenarios"/>:
+    /// completo, caidos, huevos, combate, tope, inicio, liga, subida, golpe, caida, curacion, cambio-cap, eclosion, estados, casi-tope) on a loop.
+    /// With the game open it goes over its real band, with the real layout, whichever window has the focus; without it, over PermaLocke's own
+    /// window. Thirty seconds by default. Reads nothing of the run and writes nothing: only the panel is shown.
+    /// </summary>
+    public async Task RehearseAsync(string? name = null, double seconds = 30)
     {
         await _sprites.PrepareAsync();
-        _reading = _runContext.Current is { } run ? await ReadAsync(run) : null;
-        var reading = (_reading ?? new CapReading("PRUEBA 3 DE 12", 24, 26, null, 2, 12)) with { Highest = 22 };
-        _shown = reading;
-        _partyKey = string.Empty;
-        ShowParty(
-        [
-            new(0, 25, "Pikachu", "Chispas", 22, 48, 52, false, 1, 0, "", ""),
-            new(1, 722, "Rowlet", "", 21, 20, 55, false, 2, 0, "", ""),
-            new(2, 19, "Rattata", "Pepe", 14, 0, 40, false, 3, 0, "", ""),
-            new(3, 131, "Lapras", "", 24, 9, 90, true, 4, 0, "", "")
-        ]);
-        var main = new System.Windows.Interop.WindowInteropHelper(Application.Current.MainWindow).Handle;
-        if (GameWindow.ClientBox(main) is not { } box) return;
+        var scenarios = CapScenarios.All(species => _sprites.Get(species, 0, false));
+        var scenario = scenarios.FirstOrDefault(s => string.Equals(s.Name, name, StringComparison.OrdinalIgnoreCase))
+            ?? scenarios.First(s => s.Name == "completo");
+        _logger.LogInformation("Ensayo del cap: {Scenario} durante {Seconds} s", scenario.Name, seconds);
 
-        Apply(new CapRect(box.Left, box.Top, box.Width, box.Height), AzaharScreenLayout.Default, Dpi());
-        await Task.Delay(TimeSpan.FromSeconds(10));
-        HideAll();
+        _rehearsing = true;
+        _frames.Start();
+        try
+        {
+            var started = Now;
+            while (Now - started < seconds)
+            {
+                var game = GameWindow.Handle();
+                CapRect? picture = game != IntPtr.Zero && GameWindow.RenderBox(game) is { } box ? new CapRect(box.Left, box.Top, box.Width, box.Height) : null;
+                var layout = AzaharScreenLayout.Default;
+                if (picture is null)
+                {
+                    var main = new System.Windows.Interop.WindowInteropHelper(Application.Current.MainWindow).Handle;
+                    if (GameWindow.ClientBox(main) is not { } own) break;
+                    picture = new CapRect(own.Left, own.Top, own.Width, own.Height);
+                }
+                else
+                {
+                    layout = ScreenLayout();
+                }
+
+                // The scenarios loop: after the last moment there is a quiet second, and it starts again.
+                var t = (Now - started) % (scenario.Length + 1);
+                var data = scenario.At(t);
+                _rehearsal = data;
+                _shown = new CapReading(data.Trial, data.Cap, data.Next, data.Highest, data.Cleared, data.Trials);
+                _party = data.Party;
+                _battle = data.InBattle;
+                _graves = data.Graves ?? [];
+                Apply(picture.Value, layout, Dpi());
+                await Task.Delay(40);
+            }
+        }
+        finally
+        {
+            _rehearsing = false;
+            _rehearsal = null;
+            _party = [];
+            _graves = [];
+            HideAll();
+        }
     }
 
     private async Task TickAsync()
     {
+        // A rehearsal drives the panel itself, with the game in front or not.
+        if (_rehearsing) return;
+
         try
         {
             // Se quita en CONFIGURACIÓN (1.0.4.8). Lo barato primero: sin juego abierto no se busca su ventana.
@@ -286,7 +325,7 @@ public sealed class CapBadge
         }
 
         _lastMode = plan.Main?.Mode;
-        var data = new CapPlaqueData(reading.Trial, reading.Cap, reading.Next, reading.Highest, _party, _battle, _graves, reading.Cleared, reading.Trials);
+        var data = _rehearsal ?? new CapPlaqueData(reading.Trial, reading.Cap, reading.Next, reading.Highest, _party, _battle, _graves, reading.Cleared, reading.Trials);
         _data = data;
 
         Show(ref _main, CapPanelKind.Party, plan.Main, data, plan.Memorial is null);

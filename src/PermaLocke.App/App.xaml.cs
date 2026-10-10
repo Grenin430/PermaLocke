@@ -589,8 +589,11 @@ public partial class App : Application
 
         if (e.Args.Contains("--ensayar-cap", StringComparer.OrdinalIgnoreCase))
         {
-            // El cuadrito del cap (1.0.4.7), encima de la propia ventana porque no hay juego.
-            _ = _services!.GetRequiredService<CapBadge>().RehearseAsync();
+            // El panel del cap con un escenario de ensayo (completo, golpe, caida, subida...), encima del juego si esta abierto o de la propia ventana.
+            var capAt = Array.FindIndex(e.Args, a => a.Equals("--ensayar-cap", StringComparison.OrdinalIgnoreCase));
+            var scenario = capAt + 1 < e.Args.Length && !e.Args[capAt + 1].StartsWith("--", StringComparison.Ordinal) ? e.Args[capAt + 1] : null;
+            var seconds = capAt + 2 < e.Args.Length && double.TryParse(e.Args[capAt + 2], System.Globalization.CultureInfo.InvariantCulture, out var s) ? s : 30;
+            _ = _services!.GetRequiredService<CapBadge>().RehearseAsync(scenario, seconds);
         }
 
         if (e.Args.Contains("--ensayar-amigo", StringComparer.OrdinalIgnoreCase))
