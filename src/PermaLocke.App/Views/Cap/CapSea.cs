@@ -244,6 +244,8 @@ public static class CapSea
     {
         foreach (var fossil in CapFossils.Build(l, graves, ctx, columns))
         {
+            // A dark rim round the stone, so that it stands out from the sand and from the water whatever is behind it.
+            if (l.Panel == CapPanelKind.Deep) foreach (var (rx, ry) in fossil.Rim) p.Set(rx, ry, 0x0A1224u, 170);
             foreach (var cell in fossil.Cells) p.Set(cell.X, cell.Y, cell.Stone);
             Overgrowth(p, l, pal, fossil.Spec, ctx, columns);
         }

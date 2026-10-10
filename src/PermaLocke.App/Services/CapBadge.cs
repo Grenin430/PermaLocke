@@ -25,8 +25,10 @@ namespace PermaLocke.App.Services;
 public sealed record CapReading(string Trial, int Cap, int? Next, int? Highest, int Cleared = 0, int Trials = 0);
 
 /// <summary>
-/// The level cap, always on screen over the emulator (1.0.4.7): since 2026-10-10 a walnut showcase that fills the black band beside the
-/// 3DS screens, in the mode that fits it, with the party in a niche each and, if the other band has room, a memorial of the fallen.
+/// The level cap, always on screen over the emulator (1.0.4.7): since 2026-10-10 a sea that fills the black band beside the 3DS screens, in the
+/// mode that fits it, with the party as creatures of light and the cap on a buoy and, if the other band has room, the same sea seen from the other
+/// side, with the fallen as fossils and no letters. Since 2026-10-11 it reads the life of the party on a thread of its own (<see cref="VitalsPump"/>)
+/// and shows each change when the game does (<see cref="HpPresenter"/>, <see cref="BarSync"/>).
 /// </summary>
 /// <remarks>
 /// <para>
@@ -143,8 +145,9 @@ public sealed class CapBadge
     private double Now => _clock.Elapsed.TotalSeconds;
 
     /// <summary>
-    /// <c>--ensayar-cap [escenario] [segundos]</c>: the panel with no real party, from a scenario of the lab (<see cref="CapScenarios"/>:
-    /// completo, caidos, huevos, combate, tope, inicio, liga, subida, golpe, caida, curacion, cambio-cap, eclosion, estados, casi-tope) on a loop.
+    /// <c>--ensayar-cap [escenario] [segundos]</c>: the panel with no real party, from a scenario of the lab (<see cref="CapScenarios"/>: captura, completo,
+    /// caidos, huevos, combate, tope, inicio, liga, subida, golpe, caida, curacion, cambio-cap, eclosion, estados, casi-tope, batalla, luto, noche, amanecer,
+    /// atardecer, ballena, manta, banco, ola, estrella, ev-golpe, ev-cura, ev-antidoto, ev-curas, ev-revivir, ev-estado, ev-objeto, ev-movimiento) on a loop.
     /// With the game open it goes over its real band, with the real layout, whichever window has the focus; without it, over PermaLocke's own
     /// window. Thirty seconds by default. Reads nothing of the run and writes nothing: only the panel is shown.
     /// </summary>

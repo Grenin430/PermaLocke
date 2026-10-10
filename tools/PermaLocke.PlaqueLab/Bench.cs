@@ -18,19 +18,25 @@ public static class Bench
     public static int Frames(LabData data)
     {
         Console.WriteLine("Coste de un fotograma del panel del cap, sin ventana (CapPlaque.Set y Tick, mapa de bits reutilizado)");
-        Console.WriteLine($"{"escenario",-12} {"modo",-8} {"rejilla",-9} {"Tick medio",11} {"p95",8} {"maximo",8} {"Set medio",10}  {"fotogramas",10}");
+        Console.WriteLine($"{"escenario",-14} {"panel",-6} {"modo",-8} {"rejilla",-9} {"Tick medio",11} {"p95",8} {"maximo",8} {"Set medio",10} {"KB/fotograma",13} {"fotogramas",10}");
 
-        foreach (var (mode, cols, rows) in new[] { (CapMode.Column, 178, 321), (CapMode.Column, 132, 250), (CapMode.Slim, 100, 321), (CapMode.Strip, 636, 52), (CapMode.Compact, 70, 90) })
+        foreach (var (panel, mode, cols, rows) in new[]
+                 {
+                     (CapPanelKind.Party, CapMode.Column, 178, 321), (CapPanelKind.Deep, CapMode.Column, 178, 321), (CapPanelKind.Party, CapMode.Column, 132, 250),
+                     (CapPanelKind.Party, CapMode.Slim, 100, 321), (CapPanelKind.Party, CapMode.Strip, 636, 52), (CapPanelKind.Deep, CapMode.Strip, 636, 52),
+                     (CapPanelKind.Party, CapMode.Compact, 70, 90)
+                 })
         {
-            foreach (var name in new[] { "completo", "golpe", "combate", "caida" })
+            foreach (var name in new[] { "captura", "combate", "ev-golpe", "ev-revivir", "ev-curas", "caida" })
             {
                 var scenario = data.Scenarios.First(s => s.Name == name);
-                var plaque = new CapPlaque();
+                var plaque = new CapPlaque(panel);
                 var ticks = new List<double>();
+                var bytes = new List<long>();
                 var sets = new List<double>();
                 var watch = new Stopwatch();
 
-                // Twelve seconds at the ambient twelve frames a second, and twenty-five while it is busy, as the app does.
+                // Sixty frames a second while something moves (the render loop of WPF, as the app does), twelve at rest.
                 var t = 0.0;
                 CapPlaqueData? shown = null;
                 while (t < 12)
@@ -39,19 +45,21 @@ public static class Bench
                     if (!ReferenceEquals(data1, shown))
                     {
                         watch.Restart();
-                        plaque.Set(data1, new CapSlot(CapPanelKind.Party, mode, new CapRect(0, 0, cols * 3, rows * 3), 3, cols, rows), t);
+                        plaque.Set(data1, new CapSlot(panel, mode, new CapRect(0, 0, cols * 3, rows * 3), 3, cols, rows), t);
                         sets.Add(watch.Elapsed.TotalMilliseconds);
                         shown = data1;
                     }
 
+                    var allocated = GC.GetAllocatedBytesForCurrentThread();
                     watch.Restart();
                     plaque.Tick(t);
                     ticks.Add(watch.Elapsed.TotalMilliseconds);
-                    t += plaque.Busy(t) ? 0.04 : 0.083;
+                    bytes.Add(GC.GetAllocatedBytesForCurrentThread() - allocated);
+                    t += plaque.Busy(t) ? 1.0 / 60 : 0.083;
                 }
 
                 ticks.Sort();
-                Console.WriteLine($"{name,-12} {mode,-8} {cols + "x" + rows,-9} {ticks.Average(),9:F2} ms {ticks[(int)(ticks.Count * 0.95)],6:F2} ms {ticks[^1],6:F2} ms {sets.Average(),8:F2} ms  {ticks.Count,10}");
+                Console.WriteLine($"{name,-14} {panel,-6} {mode,-8} {cols + "x" + rows,-9} {ticks.Average(),9:F2} ms {ticks[(int)(ticks.Count * 0.95)],6:F2} ms {ticks[^1],6:F2} ms {sets.Average(),8:F2} ms {bytes.Average() / 1024.0,11:F1}   {ticks.Count,10}");
             }
         }
 

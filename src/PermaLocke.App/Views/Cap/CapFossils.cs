@@ -92,7 +92,7 @@ public static class CapFossils
 
                 // Stone: the colour's light turned into a cold grey-blue, with a lit edge on top.
                 var luma = ((0.30 * c.R) + (0.59 * c.G) + (0.11 * c.B)) / 255.0;
-                var stone = CapSheet.Mix(0x1E2A40u, 0xC4D0E4u, luma * 0.85);
+                var stone = CapSheet.Mix(0x2A3A58u, 0xDCE6F6u, luma * 0.9);
                 if (!Sample(pixels, sx * spec.Scale, (sy - 1) * spec.Scale, spec.Scale).Found) stone = CapSheet.Lighter(stone, 0.3);
                 cells.Add(new CapFossilCell(cx, cy, CapSheet.Rgb(c.R, c.G, c.B), stone));
             }
