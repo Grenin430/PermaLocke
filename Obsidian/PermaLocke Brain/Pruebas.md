@@ -43,3 +43,9 @@ revisado: 2026-09-24
 - Sondas `tools/PermaLocke.Probe` con `--probar`: escriben **sobre una copia** de la partida ([[Comandos]]).
 - Capturas de la app real en la copia aislada ([[UI y kit pixel]]).
 - Jugando, con el usuario: es lo que falta para casi todo lo marcado «sin jugar» en la tabla de `CLAUDE.md`.
+
+## Animación del objeto por categorías (2026-10-10, §243)
+- `tests/PermaLocke.App.Tests`: `ItemCatalogTests` (13), `ItemIconCoverageTests` (3, sobre `Expansion/`), `ItemSceneTests` (1, sin huecos a cuatro tamaños), `ItemStyleTests` (7: altura declarada, escalado a 1,0/1,5/2,3/3,7, determinismo, tinte, placa y **0 bytes por fotograma**) y un fichero por estilo: `MegaStoneStyleTests` (14), `ZCrystalStyleTests` (4), `KeyItemStyleTests` (4), `EvolutionStyleTests` (3), `MachineStyleTests` (4), `BerryStyleTests` (3), `HealingStyleTests` (3), `BoostStyleTests` (4), `PokeBallStyleTests` (3), `BattleStyleTests` (3), `MiscStyleTests` (3).
+- De la Megapiedra, las que importan: destello visible a 30, 45 y 60 fps con diez desfases, marca de impacto a 30, placa que no se sale de la escena y fondo vacío en todo instante (`The_background_is_left_alone_...`).
+- Visual: `ItemLab --solo <categoría> --rel --tira a.png --en ...` y `--fondo negro|juego` ([[Comandos]]). En el juego: `--ensayar-objeto`, **pendiente**.
+- Totales de la 1.0.16 (locales): App 262, Core 442, Rules 149, GameLink 404, Randomizer 514, Admin 21, PixelCheck 82. La Action solo corre Core, Rules, GameLink y Randomizer.

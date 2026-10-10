@@ -57,6 +57,12 @@ Cómo llega una versión nueva a los jugadores desde el 2026-09-26. Detalle téc
 | 1.0.9 / 1.0.9.1 | commit directo a main, Action | reglas dentro del juego (§217); SuperCarameloraro y cap desde el principio (§218) |
 | 1.0.10 | commit directo a main, Action | roles MONOTYPE, guardería, duplicados a elegir, Repelente Infinito, Incubadora Turbo, mote (§219-§229) |
 | 1.0.10.1 / 1.0.10.2 | commit directo a main, Action | un huevo no enseña nada: panel, equipo, cajas y ficha (§230) |
+| 1.0.11 | commit directo a main, Action | resolución y Vulkan del emulador en ajustes; iconos reales de los objetos en la animación de recoger |
+| 1.0.12 / .1 / .2 | commit directo a main, Action | la escena de muerte espera al desmayo y a la barra de PS; cementerio sigue las evoluciones; panel del cap, avisos y barra de PS con Vulkan |
+| 1.0.13 | commit directo a main, Action | habilidades repartidas por PermaLocke vuelven tras evolucionar o cambiar de forma; espera de 10 s a la barra de PS; nombres de MT del mundo instalado |
+| 1.0.14 | commit directo a main, Action | avisos como pergamino que se desenrolla a la izquierda, con mecha como cuenta atrás |
+| 1.0.15 / 1.0.15.1 | commit directo a main, Action | panel del cap como placa de trofeo, pergamino suave, aviso de duplicado que no se pierde; una MT del suelo en un solo sitio (§241) |
+| 1.0.16 | commit directo a main pedido por el usuario (2026-10-10), Action | animación del objeto por categorías: las once con estilo propio, Megapiedra de 4,5 s (§243). **Sin probar en el emulador real** |
 
 **1.0.2 y 1.0.3 no pueden actualizarse solas** (§204: la descarga se desbordaba en el primer trozo). Quien las tenga,
 una vez a mano: cerrar PermaLocke y cambiar `PermaLocke.exe` por el del zip de la 1.0.4.

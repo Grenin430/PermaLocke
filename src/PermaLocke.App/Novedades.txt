@@ -1,3 +1,10 @@
+1.0.16 2026-10-10
+OBJETOS
+Cada objeto que recoges entra en la mochila a su manera. MT y MO, bayas, curativos, mejoras, piedras evolutivas, Poké Balls, objetos de combate, objetos clave, Cristales Z y megapiedras tienen su propia animación, con su duración, su color y su forma de mover la mochila; los demás, un saltito corto.
+La megapiedra es el gran momento (4,5 segundos): la piedra late cada vez más rápido envuelta en hebras de luz, destella dos veces, una onda recorre la escena y cae en la mochila con peso. Los objetos clave son los más solemnes (3,2 segundos) y los Cristales Z se cargan de poder.
+Cada pieza cambia un poco con cada recogida (nunca sale dos veces igual del todo) y los curativos no repiten la entrada de la anterior. El color sale del propio icono, y en las MT y las megapiedras, del tipo del movimiento o de la piedra con el mundo instalado.
+Si pulsas una tecla del juego a mitad de una animación, se va sola en un instante, y si recoges varios objetos seguidos van más rápido.
+
 1.0.15.1 2026-10-08
 MT
 Arreglado: una MT del suelo podía salir en dos sitios y la encontrabas dos veces (pasaba con MT03, MT06 y MT93). Ahora cada MT del suelo sale en un solo lugar. Hay que generar e instalar el mundo de nuevo para notarlo.

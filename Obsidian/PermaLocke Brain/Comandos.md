@@ -18,6 +18,18 @@ PERMALOCKE_SNAP_LIVE="<dir>" dotnet test tests/PermaLocke.App.Tests --filter Hom
 # ✔ prototipos de avisos (A-Q) y del cap (S-Z) sobre fotogramas del juego. PROTO_ASSETS = carpeta con bg1.png, bg3.png
 # (capturas de la pantalla del juego) e icon*.png; vivía en el scratchpad (notif/), hay que recrearla en otra sesión
 PERMALOCKE_PIXEL_DIR="<dir>" PERMALOCKE_PROTO_ASSETS="<assets>" dotnet test tools/PermaLocke.PixelCheck --filter NotificationPrototypes
+# ✔ previsualizador de las animaciones de objeto por categoría (§243), siempre desde la raíz del repo (no desde la carpeta de la app):
+#   cd "C:\Users\javie\Desktop\Permalocke definitivo"; dotnet run --project tools/PermaLocke.ItemLab -c Release -- [opciones]
+# --solo z|clave|evolutivas|mt|bayas|curativos|mejoras|balls|combate|varios|mega  una categoría sola con varios objetos que difieren
+#   en lo que su estilo varía (--mega es el atajo de la Megapiedra); sin --solo salen las once lado a lado.
+# --rel        los instantes de --tira y --captura son fracciones (0 a 1) de la duración de cada objeto, no segundos.
+# --captura <carpeta> --en 0.5,1.2   deja un PNG por instante y se cierra; --tira a.png --en 0.9,1.7   una fila por objeto y una
+#   columna por instante en un solo PNG; --fondo negro|juego (negro = la banda del emulador: lo que ilumina se ve);
+#   --escala 2.3; --iconos informe.txt extrae de verdad el icono de cada objeto. Espacio pausa, flechas = un fotograma, Inicio reinicia.
+# En el juego (app desplegada con tools/desplegar.ps1 -Prueba, PermaLocke y Azahar cerrados antes, mundo del mod instalado y emulador abierto):
+#   PermaLocke.exe --ensayar-objeto 807,216,83,328,157,17,50,4,220,92,664 [--ensayar-lento]   # una por categoría: Z, Clave, Evolutiva, MT,
+#   Baya, Curativo, Mejora, Poké Ball, Combate, Varios, Megapiedra. Los que esperan detrás van a ×3; --ensayar-lento pone 0,25.
+#   Para ver el tiempo real, un solo id por arranque (PermaLocke solo admite una instancia).
 ```
 
 ## Publicar y desplegar en la carpeta de prueba del usuario

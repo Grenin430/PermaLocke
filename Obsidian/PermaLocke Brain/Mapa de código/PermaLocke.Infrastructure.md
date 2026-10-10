@@ -1,7 +1,7 @@
 ---
 tipo: mapa-codigo
 proyecto: PermaLocke.Infrastructure
-generado: 2026-09-26
+generado: 2026-10-10
 ---
 # PermaLocke.Infrastructure — mapa de ficheros
 

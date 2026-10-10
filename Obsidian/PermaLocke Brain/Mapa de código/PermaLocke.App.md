@@ -1,7 +1,7 @@
 ---
 tipo: mapa-codigo
 proyecto: PermaLocke.App
-generado: 2026-09-26
+generado: 2026-10-10
 ---
 # PermaLocke.App — mapa de ficheros
 
@@ -15,14 +15,18 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Converters/InverseBoolToVisibilityConverter.cs` — **InverseBoolToVisibilityConverter** — Shows an element while a flag is false, which is what WPF's own converter cannot do. 
 - `Converters/NegateConverter.cs` — **NegateConverter** — Flips the sign of a number, which is how something inside a rotating thing stays upright. 
 - `Converters/ResourceKeyConverter.cs` — **ResourceKeyConverter** — Turns a resource key into the resource itself, so a view model can name a palette entry without referencing WPF brushes. 
+- `Converters/SectionCaptionConverter.cs` — **SectionCaptionConverter** — The line under a section's name in the start menu (2026-10-01): what it is for, or, for a group, the pages it holds. Presentation only: the names are the sections' own, the sentences are interface ...
 - `Converters/WidthSwitchConverter.cs` — **WidthSwitchConverter** — One number or another depending on a width: ConverterParameter="umbral;ancho;estrecho". 
 - `Converters/WidthToColumnsConverter.cs` — **WidthToColumnsConverter** — How many columns fit in a width: four when there is room for them, two when there is not. 
 - `Converters/ZeroToVisibleConverter.cs` — **ZeroToVisibleConverter** — Visible when the number is zero: «this box is empty», which a list of nothing does not say by itself.
-- `MainWindow.xaml.cs` — **MainWindow** — The shell window. Holds no logic beyond making its own frame match the theme and fit the screen. 
+- `MainWindow.xaml.cs` — **MainWindow** — The shell window. Holds no logic beyond making its own frame match the look in use and fit the screen: what is drawn inside is a shell (Shells/) that the look asks for, and that shares this window'...
+- `Services/AbilityKeeper.cs` — **AbilityKeeper** — Puts back the ability PermaLocke gave a Pokémon when the game has recomputed it (§237). 
 - `Services/AlolaSky.cs` — **AlolaSky** — The hour in the player's Alola, for the sky behind the application. 
 - `Services/AppDialogs.cs` — **IAppDialogs** — Lets view models ask for a window without knowing that WPF exists, keeping window handling out of the view models and the view models testable. 
 - `Services/AppSettings.cs` — **AppSettingsData** — What the player chose in CONFIGURACIÓN, as it is written to disk.
+- `Services/BackgroundMode.cs` — **BackgroundMode** — «Seguir en segundo plano al cerrar» (1.0.5.4): closing the window hides it instead, with an icon by the clock, and the friends' ghosts keep coming. Off by default. Discord stops saying «Jugando ...
 - `Services/BattleModeService.cs` — **BattleModeState, BattleModeResult, BattleModeService** — Where the world is right now.
+- `Services/CapBadge.cs` — **CapReading, CapBadge** — What the cap panel shows.
 - `Services/CatchCeremony.cs` — **CatchCeremony** — A wild Pokémon caught becomes its card, and the card flies into the album over the game (§190). 
 - `Services/CemeteryService.cs` — **Grave, CemeteryService** — One of the run's fallen, with what the run knows about how it went.
 - `Services/CommunityService.cs` — **FriendStatus, ClaimedAchievement, CommunityService** — The launcher's friends list and activity: everyone's presence and the achievements they claim, through the tournament server (the shared folder of §126 is gone). 
@@ -39,32 +43,41 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Services/EmulatorProcess.cs` — **EmulatorProcess** — Whether the emulator is really running.
 - `Services/EncounterGuard.cs` — **EncounterNotice, WildCatch, EncounterGuard** — Something the guard wants the player to hear, and the Pokémon it is about when there is one.
 - `Services/EventIcons.cs` — **EventIcons** — The pixel icon of each kind of event, for the history lists drawn in the pixel style (§176). 
+- `Services/FallenShare.cs` — **FallenShare** — The cemeteries of everybody (1.0.5.5): this player's graves and killcams go to the tournament server, and the friends' ones come back for the CEMENTERIO (tools/supabase/19-caidos.sql). 
+- `Services/GameInputWatch.cs` — **GameInputWatch, InputEdges** — Tells when the player carries on (2026-10-09): a key or a button of the controller that goes down while the emulator's window has the focus. What the animation of an item uses to leave at once inst...
 - `Services/GameLinkMonitor.cs` — **GameLinkMonitor** — Polls the running game and publishes what it sees. One poller for the whole application, so every screen shows the same snapshot and the emulator is asked once per cycle. 
 - `Services/GameWindow.cs` — **GameWindow** — Where the emulator is, and which screen it is on. 
 - `Services/GhostService.cs` — **GhostService** — The ghosts (§183): this player's deaths go to the tournament server at once, and the other players' come over this player's emulator as a notice and a ghost crossing the screen. A team wipe makes ...
 - `Services/GiftInbox.cs` — **GiftInbox** — The gifts waiting for this player on the tournament server, and collecting them (§129; the shared folder is gone). 
+- `Services/HerbArt.cs` — **HerbArt** — The icon of a nature herb (2026-09-27): a pixel leaf tinted by the stat it raises, since the cartridge has no Mints and so no icon for them. Grey for the five natures that change nothing. 
 - `Services/HpBarWatcher.cs` — **HpBarWatcher** — Waits, looking at the emulator's window, for the player's HP bar to reach zero. 
 - `Services/IKillcamRecorder.cs` — **IKillcamRecorder** — Recording operations used by the game monitor.
 - `Services/InstalledWorld.cs` — **InstalledWorld** — Reads how big the world Azahar will actually load is, and tells the live readers. 
 - `Services/IntegrityGuard.cs` — **IntegrityGuard** — Stops the reload tricks of a locke and writes down, for the organiser only, the ones it cannot stop (2026-09-26). 
 - `Services/IslandMapService.cs` — **IslandMapService** — The four island maps, taken from the player's own cartridge the first time they are needed. 
+- `Services/ItemCatalog.cs` — **ItemClass, ItemCatalog** — What an item is for its animation, and how strong: see `temCategory` for what each power means.
 - `Services/KillcamClip.cs` — **KillcamFrame, KillcamClip** — One frame of a killcam: when it was taken, relative to the moment the bar reached zero.
 - `Services/KillcamFrameBuffer.cs` — **KillcamFrameBuffer** — A bounded ring that reuses pixel arrays; snapshots own their pixels.
 - `Services/KillcamRecorder.cs` — **KillcamRecorder** — Keeps the last seconds of the battle on screen, so a death can be saved with what led to it. 
+- `Services/KillcamVideo.cs` — **KillcamVideo** — A killcam as a small H.264 video (1.0.5.5), for sharing it through the tournament server: about 1 MB (250 KB until 1.0.12) instead of the 1.7 MB of the local file, and it looks the same. 
 - `Services/MachineItemLookup.cs` — **MachineItemLookup** — Item names, with a TM saying which move it teaches in the world being played. 
 - `Services/MaintenanceService.cs` — **AuditRow, AuditReport, MaintenanceService, MarkedZone, WithheldItem, StageReadout** — The checks and repairs that until now only existed as Probe commands in a terminal. 
+- `Services/Mf.cs` — **Mf, IMFAttributes, IMFMediaType, IMFMediaBuffer, IMFSample, IMFSinkWriter, IMFSourceReader** — Media Foundation, only what the killcam video needs (1.0.5.5): H.264 in an MP4 out of BGRA frames, and BGRA frames back out of it. Built into Windows 10 and 11; nothing shipped. 
+- `Services/NicknameVoteService.cs` — **NicknameVoteService** — Nicknames voted by the others (2026-09-28, players' list item 9), as the organiser described it. Four small windows in the left of the emulator, half way down, each with its bar: the catcher: «¿Q...
 - `Services/Notifier.cs` — **Toast, Notifier** — One thing worth saying while somebody is playing.
 - `Services/OrderService.cs` — **OrderResult, OrderService** — Applies the organiser's orders to this player's run (2026-09-26), through the same services the player's own buttons use, and closes each one with an `ameEventType.AdminGiftClaimed` so it never run...
 - `Services/OverlayWindows.cs` — **OverlayWindows** — What every window drawn on top of the game has to do so the game keeps being playable. 
 - `Services/PlayNotifications.cs` — **PlayNotifications** — Turns what the watcher does on its own into notices on top of the game. 
 - `Services/PokemonSpriteService.cs` — **PokemonSpriteService** — The Pokémon icons, taken from the player's own cartridge. 
 - `Services/ProcessExitWatch.cs` — **ProcessExitWatch** — Holds on to a process PermaLocke did not start, so that once it is gone its exit code can still be read. 
+- `Services/ReleaseNotes.cs` — **ReleaseSection, ReleaseNote, ReleaseNotes** — One heading of a version's notes and its lines.
 - `Services/Rolling.cs` — **Rolling** — Makes a number arrive by counting up to itself instead of appearing. 
 - `Services/RulesSync.cs` — **RulesSync** — Brings the organiser's official rules into this PermaLocke's Data/ (2026-09-26, 14-reglas.sql). 
 - `Services/RunActivity.cs` — **RunActivity, WatchedEventStore** — Says out loud that the run's history has just grown. 
 - `Services/ServerBackupService.cs` — **ServerBackupService** — The copies on the server (§198, plan del próximo torneo, paso 5): every six hours the application is open, a zip with the run and the Ultra Moon save (`erverBackup`) goes to the tournament's Stor...
 - `Services/SyncService.cs` — **PlayerStatus, SyncService** — The summary of the loaded run and the history it comes from, for `ournamentUpload`. The shared folder it used to publish to is gone (2026-09-24): the tournament server replaced it. 
 - `Services/TcgCardFactory.cs` — **TcgCardFactory** — A Pokémon as its TCG card: the same card in the ÁLBUM (§186) and flying into it when one is caught (§190). 
+- `Services/ThemeStore.cs` — **ThemeStore** — Which look the player chose, remembered in Config/tema.json (2026-10-01). Read once at start, before any window exists, and written when the gallery changes it. 
 - `Services/ToastKind.cs` — **ToastKind** — What a notice is about. Decides its tab, its colour and the mark drawn on its sprite.
 - `Services/ToastPlacement.cs` — **ToastPlacement** — Positions the notice stack in screen pixels, keeping it inside the selected monitor.
 - `Services/TournamentUpload.cs` — **TournamentUpload** — Sends the loaded run to the tournament server: the same summary and history the shared folder used to carry. 
@@ -77,15 +90,32 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Services/WindowSizeService.cs` — **WindowSize, WindowSizeService** — How big the window opens, chosen by the player and remembered. 
 - `Services/WorldAllowedStatics.cs` — **WorldAllowedStatics** — The static captures the competition allows (§119), as the species they are in the world the player is playing. 
 - `Services/WorldEvolutionLines.cs` — **WorldEvolutionLines** — Evolutionary families, read from the world the player is actually playing. 
+- `Services/WorldItemCatalog.cs` — **WorldItemCatalog** — The `temCatalog` of the world the player is actually playing (2026-10-09), read from the item table (a/0/1/9) and the mega evolution table (a/0/1/5) of the game Azahar loads. 
 - `Services/ZonePhotoService.cs` — **ZonePhotoService** — The picture of each zone, shown on the card that appears when hovering a marker. 
+- `Shells/Banners.xaml.cs` — **Banners** — False when the design says the need elsewhere (the dialogue box, the ticker): only the update strip stays.
+- `Shells/DesignGalleryWindow.xaml.cs` — **ThemeCard, DesignGalleryWindow** — One look in the gallery: whether it is the one in use now.
+- `Shells/DockShell.xaml.cs` — **DockShell** — A HUD on top and a dock of icons along the bottom (ULTRAUMBRAL). See the XAML for the composition.
+- `Shells/HeaderActions.xaml.cs` — **HeaderActions** — Smaller plates, for the bar of the window: 30 units tall instead of 40.
+- `Shells/KeysShell.xaml.cs` — **KeysShell** — A device: icon keys, one screen and soft keys (ROTOM DEX). See the XAML for the composition.
+- `Shells/LayoutSketch.cs` — **LayoutSketch** — A look in miniature (2026-10-01): the composition of its window drawn in 66 by 40 cells with its own colours, for the gallery. No real data and no screenshot: a sketch cannot show a player's name, ...
+- `Shells/MenuShell.xaml.cs` — **MenuShell** — A start menu of tiles and a back bar on every screen (GAME BOY). See the XAML for the composition.
+- `Shells/NeedLine.xaml.cs` — **NeedLine** — What the line says when the section asks nothing of the game.
+- `Shells/PointsBadge.xaml.cs` — **PointsBadge** — One short line instead of the figure with its caption underneath.
+- `Shells/RailShell.xaml.cs` — **RailShell** — The look PermaLocke has always had: the side rail with the names, the header with the sky of Alola. What used to be the code of the main window, moved here so that it is one shell among the others. 
+- `Shells/ShellBase.cs` — **ShellBase** — What every alternative shell does the same way: hosts the section on screen with its small entrance, and tells the window what to animate when the window comes back from the tab. The look of each s...
+- `Shells/ShellCaption.xaml.cs` — **ShellCaption** — What goes between the brand and the window buttons.
+- `Shells/ShellOverlays.xaml.cs` — **ShellOverlays** — Where the trays open: the distance from the top right corner of the window.
+- `Shells/ShellSupport.cs` — **ShellSupport** — What the alternative shells (2026-10-01) have in common: motion, the list fix and the section entrance.
+- `Shells/TabsShell.xaml.cs` — **TabsShell** — Pocket tabs along the top (ESMERALDA). See the XAML for the composition.
 - `ViewModels/AchievementsViewModel.cs` — **AchievementRowViewModel, AchievementsViewModel** — One achievement as the list shows it.
 - `ViewModels/AlbumPaging.cs` — **AlbumSpreadPlace, AlbumPaging** — Where each spread of the album starts: which binder, and its first page.
 - `ViewModels/AlbumViewModel.cs` — **AlbumBinder, AlbumViewModel** — A box of the PC, or the party, as a section of the album.
 - `ViewModels/BattleModeViewModel.cs` — **BattleModeViewModel** — Setting the randomized world aside to link-battle, and putting it back. 
 - `ViewModels/CapsulePlay.cs` — **CapsulePlay** — One pull, as the capsule machine plays it: the balls it climbs through, who comes out, and when the coin dropped. 
-- `ViewModels/CemeteryViewModel.cs` — **CemeteryViewModel, GraveViewModel** — The run's fallen, one grave each, and the story of the one picked: how it arrived, what it fell to and, when there is one, the replay of its death. 
+- `ViewModels/CemeteryViewModel.cs` — **CemeteryViewModel, GraveViewModel, OwnerTab** — The run's fallen, one grave each, and the story of the one picked: how it arrived, what it fell to and, when there is one, the replay of its death. 
 - `ViewModels/ChangeRoleViewModel.cs` — **ChangeRoleViewModel** — Moves a run from one role to another, on purpose and on the record. 
 - `ViewModels/CreateRunViewModel.cs` — **CreateRunViewModel, RoleChoiceViewModel** — Run creation. Detects the vanilla ROM in ROM/ and refuses to continue unless it is a decrypted Ultra Moon dump, because everything downstream assumes exactly that. 
+- `ViewModels/DifficultyViewModel.cs` — **DifficultyBar, DifficultyPillar, DifficultyRule, CapStep, DifficultyViewModel** — One stretch of the game in a pillar's chart: the cartridge's figure and ours, as bar lengths and as text.
 - `ViewModels/EvTrainingViewModel.cs` — **EvRowViewModel, EvTrainingViewModel** — One stat on the training bench: what it is now, the EVs being given to it, and what it would become. 
 - `ViewModels/FirstRunGuide.cs` — **GuideStep, FirstRunGuide** — One step of the first time, and whether it is done.
 - `ViewModels/Fleeting.cs` — **Fleeting** — Makes a screen's messages go away on their own: five seconds on screen, then empty (2026-09-24, at the player's request: «el mensaje que sale al cambiar un ataque se queda ahí»). 
@@ -100,21 +130,23 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `ViewModels/MapViewModel.cs` — **MapZoneViewModel, IslandViewModel, MapViewModel** — One zone on the map, and what the player marked happened there.
 - `ViewModels/MiscellaneousViewModel.cs` — **RewardGiftViewModel, RewardRowViewModel, MiscellaneousViewModel** — One thing a prize hands over, with the drawing the cartridge has for it.
 - `ViewModels/MoveReminderViewModel.cs` — **MoveCardViewModel, MoveStatViewModel, MoveReminderViewModel** — One move as the reminder draws it: a known one in its slot, or one it can remember.
+- `ViewModels/NicknameVoteViewModel.cs` — **NicknameStage, NicknameOption, NicknameVoteViewModel** — The four moments of a voted nickname, each one small window over the emulator.
+- `ViewModels/NurseryViewModel.cs` — **NurseryViewModel, OwedEggViewModel, TrialPipViewModel, ReceivedEggViewModel, MilestoneEggsViewModel** — The NURSERY of the MONOTYPE roles (§221, §228): the spins the run is owed, spent one at a time, each one an egg that goes into a box of the save with its own animation. 
 - `ViewModels/PokePasteViewModel.cs` — **PasteSourceViewModel, PokePasteViewModel** — What can be exported. Today only the party, which is what a paste is for.
 - `ViewModels/PokemonViewerViewModel.cs` — **BoxSlotViewModel, OverviewRow, ViewerTypeBadge, BoxTabViewModel, StatRowViewModel, PokemonViewerViewModel** — One hole of the PC: a Pokémon and its icon, or nothing at all.
 - `ViewModels/RandomizerViewModel.cs` — **RandomizerViewModel** — Generates the LayeredFS mod for the current run and, as a separate and explicit step, installs it into Azahar. Generating and installing are deliberately two buttons. Installing replaces the world ...
 - `ViewModels/RegisterCaptureViewModel.cs` — **DetailRow, RegisterCaptureViewModel** — Registers a capture. Evaluates the rules live as the form is filled in, so the player sees the verdict before committing, and never silently bypasses a rule: forcing a blocked capture is an explici...
+- `ViewModels/RoleMenuViewModel.cs` — **RoleMenuViewModel, TypeChoiceViewModel** — The role menu of the run creation and of the role change (§220): the ordinary roles as cards, and ONE card for MONOTYPE that opens a second menu with its types, each with an icon, before the role ...
 - `ViewModels/RoulettePlay.cs` — **RoulettePlayWedge** — One of the six wedges of a spin, with its picture out of the cartridge.
 - `ViewModels/RouletteViewModel.cs` — **RouletteViewModel** — The LUDÓPATA wheel. 
 - `ViewModels/SectionViewModel.cs` — **GameNeed, SectionViewModel, PendingSectionViewModel** — Whether a section needs Azahar running, needs it shut, or does not care. 
 - `ViewModels/SettingsViewModel.cs` — **SettingsViewModel** — CONFIGURACIÓN: the window size, the notices over the game, the death scene, the killcam and the folders. 
-- `ViewModels/ShopViewModel.cs` — **ShopItemViewModel, ShopViewModel** — One card in the shop grid.
+- `ViewModels/ShopViewModel.cs` — **ShopItemViewModel, ShopViewModel, HerbTargetViewModel** — One card in the shop grid.
+- `ViewModels/SuggestionBoxViewModel.cs` — **SuggestionBoxViewModel** — The suggestion box in the header (1.0.5.5): whatever the player writes goes to the organiser's Admin, through the tournament server (tools/supabase/18-sugerencias.sql). Nothing else reads it. 
 - `ViewModels/SyncViewModel.cs` — **TopRow, RecordCard, SyncViewModel** — One line of the tournament's top.
-- `ViewModels/TradePlay.cs` — **TradePlay** — One wonder trade, as the cabin plays it: who goes and in which ball, who comes, what the screen will say, and when it was confirmed. 
 - `ViewModels/TypeBadges.cs` — **TypeBadges** — The one or two type plates of a Pokémon, for every screen that shows whom you picked: the viewer, ENTRENAR EV and MOVIMIENTOS (§176). 
 - `ViewModels/UpdateBannerViewModel.cs` — **UpdateBannerViewModel** — The bar at the top of every section while a new version waits (§202): the warning sign, «ACTUALIZACIÓN x.y.z DISPONIBLE» and a small ACTUALIZAR that installs it. It replaces the yes/no dialog o...
 - `ViewModels/UpdateProgressViewModel.cs` — **UpdateProgressViewModel** — The update window (§201): how the download is going, then checking, installing and restarting. Only shows what UpdateService tells it; the one thing it does is ask to cancel, while there is still ...
-- `ViewModels/WonderTradeViewModel.cs` — **TypeBadgeViewModel, WonderTradeViewModel** — One type of the received Pokémon, with the colour the games have always used.
 - `Views/AchievementsView.xaml.cs` — **AchievementsView** — The achievements screen. All the work is in the view model.
 - `Views/AlbumScene.cs` — **AlbumPage, AlbumTab, AlbumSpread, AlbumTurn, AlbumScene** — One page of the album: its pockets in reading order, a card or an empty one each.
 - `Views/AlbumStage.cs` — **AlbumStage** — The album on screen (§186, §187): `lbumScene` in whole cells, the card under the mouse lifted, the tabs of its edge, the wheel to turn pages and a click to take a card out. 
@@ -125,32 +157,61 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Views/BattleModeView.xaml.cs` — **BattleModeView** — 
 - `Views/BloodRain.cs` — **BloodRain** — The blood rain of a team wipe (§184), cell by cell: red drops falling over the emulator for twelve seconds, splashing where they land and pooling at the bottom, then gone. 
 - `Views/BoxWallpaper.cs` — **BoxWallpaper** — The wallpaper behind a box of the PC: a flat ground with a small motif repeated in staggered rows, drawn cell by cell like the rest of PermaLocke's pixel art. 
+- `Views/CapPlaque.cs` — **CapPlaqueMember, CapPlaqueData** — One Pokémon on the cap plaque. An egg shows nothing but itself (§230).
 - `Views/CapsuleMachine.cs` — **CapsuleMachine** — The gacha's stage: the capsule machine (`apsuleMachineScene`) on screen, in whole cells. 
 - `Views/CapsuleMachineScene.cs` — **CapsuleBanner, CapsuleRoll, CapsuleShelfItem, CapsuleSceneState, CapsuleTimeline, CapsuleMachineScene** — What the machine is loaded with: the banner chosen under it.
 - `Views/CardStage.cs` — **CardStage** — One card out of the album and in the hand (§186, §187): it flies out of its pocket spinning once, lands big with a burst if it is rare, leans towards the mouse so its foil catches the light, and ...
+- `Views/CardTradeScene.cs` — **CardTradeTimeline, CardTradeScene** — The moments of the card trade, in seconds from the button (1.0.4.7).
+- `Views/CardTradeStage.cs` — **CardTradePlay, CardTradeStage** — What the card trade shows: the card handed over and the one that comes out.
 - `Views/CatchScene.cs` — **CatchTimeline, CatchScene** — When each thing happens as a caught Pokémon's card goes into the album, in seconds (§190).
 - `Views/CatchWindow.cs` — **CatchWindow** — The card of a wild Pokémon just caught going into the album, over the emulator's top screen (§190). 
 - `Views/CemeteryCanvas.cs` — **CemeteryCanvas** — Shows `emeteryScene` at a whole number of screen pixels per cell, puts the names under the monuments and turns a click on a grave into the pick command. 
 - `Views/CemeteryScene.cs` — **CemeteryScene** — The cemetery, painted cell by cell: night, hills, a fence, fog, and one grave per fallen Pokémon with its ghost above it. 
 - `Views/CemeteryView.xaml.cs` — **CemeteryView** — 
 - `Views/ChangeRoleWindow.xaml.cs` — **ChangeRoleWindow** — 
+- `Views/ChangelogWindow.xaml.cs` — **ChangelogWindow** — NOVEDADES (1.0.7): every version's notes from Novedades.txt, or one of them opened from its card on JUGAR like a Steam event (1.0.9). Presentation only: `eleaseNotes` reads the file. 
 - `Views/CreateRunWindow.xaml.cs` — **CreateRunWindow** — 
 - `Views/DeathWindow.xaml.cs` — **DeathWindow** — Draws the death ceremony over the emulator: opens the scene, plays each death, closes it. 
+- `Views/DifficultyView.xaml.cs` — **DifficultyView** — INFORMACIÓN › DIFICULTAD. Presentation only: everything lives in `iewModels.DifficultyViewModel`.
 - `Views/EdgeTabWindow.xaml.cs` — **EdgeTabWindow** — The little tab that stays on the edge of the screen while PermaLocke is out of the way. 
 - `Views/EvHexagon.cs` — **EvHexagon** — The effort hexagon of the summary screen, drawn cell by cell: PS at the top and then Ataque, Defensa, Velocidad, Def. Esp. and At. Esp. going round clockwise, which is the order the handheld games ...
 - `Views/EvTrainingView.xaml.cs` — **EvTrainingView** — 
 - `Views/GachaView.xaml.cs` — **GachaView** — The gacha screen. The only code here feeds the capsule machine. 
 - `Views/GhostArt.cs` — **GhostArt** — A fallen Pokémon drawn as its ghost: the cartridge's own icon, pale and see-through, pixel by pixel (§183). 
+- `Views/GhostScene.cs` — **GhostTimeline, GhostScene** — The moments of a friend's ghost crossing this emulator (1.0.5), in seconds.
 - `Views/GhostWindow.xaml.cs` — **GhostWindow** — A friend's fallen Pokémon over this player's emulator (§183): the notice at the top left, then its ghost crossing the screen from right to left. 
 - `Views/HandScene.cs` — **HandPose, HandScene** — Where the card in the hand is and how it is turned, for one frame.
 - `Views/HomeView.xaml.cs` — **HomeView** — 
 - `Views/InformationView.xaml.cs` — **InformationView** — 
+- `Views/ItemScene.cs` — **ItemPhases, ItemTimeline, ItemScene** — How long each part of an item's animation lasts, in seconds (2026-10-09): the dither coming in, the anticipation, the resonance (only the Mega Stones have one), the climax, the wrap-up, and the dit...
+- `Views/Items/BattleStyle.cs` — **BattleStyle** — A held item or a battle item going into the bag (2026-10-09): strength and presence, and quickly. The item appears at once, a dry glint crosses it in a single sweep, and it comes down hard with str...
+- `Views/Items/BerryStyle.cs` — **BerryStyle** — A berry going into the bag (2026-10-09): organic and playful. It is thrown out of the bag, stretched while it is fast and squashed when it lands, bounces on the rim of the bag once or twice with a ...
+- `Views/Items/BoostStyle.cs` — **BoostStyle** — An upgrade (Rare Candy, vitamins, PP Up, feathers, the Super Candy) going into the bag (2026-10-09): progress and reward, so as never to be taken for a healing item. The item rises and arrows climb...
+- `Views/Items/ClassicStyle.cs` — **ClassicStyle** — The scene of 2026-09-28 and the one every category plays until it has a style of its own: the bag with the item's icon jumping out of it with a glint across, floating, dropping in, and the bag hopp...
+- `Views/Items/EvolutionStyle.cs` — **EvolutionStyle** — An evolution item going into the bag (2026-10-09): a gesture, not an event, so that it can never be taken for a Mega Stone. The stone hops out of the bag and beats three or four times, faster each ...
+- `Views/Items/HealingStyle.cs` — **HealingStyle** — A healing item going into the bag (2026-10-09): warmth and relief. The item floats up out of the bag and hangs there while something good happens round it; there are four of those, and the one that...
+- `Views/Items/ItemCanvas.cs` — **ItemCanvas** — The trunk every item animation is drawn on (2026-10-09): the pixels, the dither that fades the scene in and out, and the pieces they all share, the bag, its shadow, the item's icon and the plate wi...
+- `Views/Items/ItemCategory.cs` — **ItemCategory** — What kind of thing a picked-up item is (2026-10-09): each kind has its own animation going into the bag, and has to be told from the others at a glance, without reading the plate. 
+- `Views/Items/ItemKit.cs` — **ItemSeed, ItemPrism, ItemFx** — Numbers that depend on an item's seed and on nothing else (2026-10-09): the same seed always gives the same ones, so any frame of any animation can be made again. Nothing here is random. 
+- `Views/Items/ItemStyle.cs` — **ItemStyle, ItemStyles** — How one category of item goes into the bag (2026-10-09): its choreography, its colours and its particles, drawn on the trunk (`temCanvas`) as a pure function of the moment and the item's seed. A st...
+- `Views/Items/ItemTint.cs` — **ItemTint** — The colour an item is known by (2026-10-09), taken from its own icon so that no table of colours is written by hand.
+- `Views/Items/KeyItemStyle.cs` — **KeyItemStyle** — A key item going into the bag (2026-10-09): the most solemn of all. A beam of light comes down from above into the open bag, which leans towards it as in a bow; the item rises along it slowly, with...
+- `Views/Items/MachineStyle.cs` — **MachineStyle** — A TM or an HM going into the bag (2026-10-09): knowledge being downloaded. The disc comes out of the bag spinning like a coin, opens into rings of data that turn the other way from each other, bits...
+- `Views/Items/MegaStoneStyle.cs` — **MegaStoneStyle** — A Mega Stone going into the bag (2026-10-09): the event of the whole system, the longest animation there is (4.5 s) and the only one with a resonance. The bag crouches and springs open, the stone r...
+- `Views/Items/MiscStyle.cs` — **MiscStyle** — Everything else going into the bag (2026-10-09): treasures, repels, fossils, mail. The simplest and the quickest of all, because it is also what is picked up most: the item hops out of the bag, han...
+- `Views/Items/PokeBallStyle.cs` — **PokeBallStyle** — A Poké Ball going into the bag (2026-10-09): the sound of a ball. It is thrown out of the bag spinning, lands on the edge of the mouth and bounces two or three times, each smaller than the last, w...
+- `Views/Items/ZCrystalStyle.cs` — **ZCrystalStyle** — A Z-Crystal going into the bag (2026-10-09): the power of the move being gathered. The crystal rises out of the bag spinning like a coin and settles facing us; a ring of tips appears round it one b...
 - `Views/KillcamPlayer.cs` — **KillcamPlayer** — Plays a killcam: the frames at their own times, at real speed or slowed down, looping, with a mark on the timeline where the bar reached zero. 
-- `Views/LauncherView.xaml.cs` — **LauncherView** — 
+- `Views/LauncherView.xaml.cs` — **LauncherView** — A card of NOVEDADES opens that version as its own post, like an event on Steam. Presentation only.
 - `Views/LoginWindow.xaml.cs` — **LoginWindow** — 
 - `Views/MapView.xaml.cs` — **MapView** — The island whose entrance has already played, so it does not play twice.
 - `Views/MiscellaneousView.xaml.cs` — **MiscellaneousView** — 
 - `Views/MoveReminderView.xaml.cs` — **MoveReminderView** — 
+- `Views/NicknameVoteWindow.xaml.cs` — **NicknameVoteWindow** — Presentation only: places the window on the left of the emulator, half way down (of the screen without it), moves the bar smoothly and gives the keyboard back to the game when it closes. 
+- `Views/NurseryScene.cs` — **NurseryTimeline, NurseryScene** — The moments of the nursery's eggs arriving, in seconds from the button (§225, redone in §228 and §229).
+- `Views/NurseryStage.cs` — **NurseryPlay, NurseryStage** — What the nursery shows: how many eggs come, in the colour of the run's type, from the run's seed.
+- `Views/NurseryView.xaml.cs` — **NurseryView** — The nursery of the MONOTYPE roles. All the logic is in NurseryViewModel.
+- `Views/OnScreen.cs` — **OnScreen** — Whether an animated control is worth a new frame.
 - `Views/PendingView.xaml.cs` — **PendingView** — 
 - `Views/Pixel/PixelBackdrop.cs` — **PixelBackdrop** — The floor the screens sit on: a flat violet with a faint lattice of lighter cells, like the patterned backgrounds of a handheld's menus. Faint on purpose — it is texture, not decoration, and it s...
 - `Views/Pixel/PixelFont.cs` — **PixelFont** — The application's own pixel font: capitals seven cells tall, lower case with descenders, accents and the Ñ, proportional widths and tabular digits. 
@@ -159,6 +220,7 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Views/Pixel/PixelRule.cs` — **PixelRule** — A groove in cells: a dark line and a lit one under it, the way the frames of a handheld menu are cut. Optionally starts in the accent colour for a few cells, which is what turns a divider into a he...
 - `Views/Pixel/PixelSprite.cs` — **PixelSprite** — A sprite out of the cartridge drawn the way the scenes draw theirs: every pixel a whole number of screen pixels, optionally as a silhouette, with a one-cell outline, and bobbing like the party menu. 
 - `Views/Pixel/PixelText.cs` — **PixelText** — Text in the application's pixel font (`ixelFont`), every cell a whole number of screen pixels. 
+- `Views/Pixel/PixelTheme.cs` — **PanelStyle, BackdropStyle, ShellKind, WindowKind, PixelTheme** — How a `ixelPanel` draws its edge.
 - `Views/Pixel/PixelWindow.cs` — **PixelWindow** — A window of a game's menu: a `ixelPanel` with a title band, its icon and its name, and whatever the panel holds underneath. What HOME, the viewer and every screen after them put their blocks in (§...
 - `Views/Pixel/SmallFont.cs` — **SmallFont** — The small pixel font: digits and capitals three cells wide and five tall, for labels where the big one does not fit — the scenes' plaques, the album's cards and tabs. 
 - `Views/PixelBar.cs` — **PixelBar, PixelCursor** — A bar in cells, like the health bars of the handheld games: an ink outline with square ends, a dark track, and the fill with a lighter top row. It fills in whole cells, so a value never shows as a ...
@@ -166,28 +228,27 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Views/PixelColour.cs` — **PixelColour** — A colour of the pixel art as four bytes, and nothing else (§188). 
 - `Views/PixelPanel.cs` — **PixelPanel** — A box drawn cell by cell in any colour: one-cell outline, one-cell bevel lit on top, notched corners and a hard shadow. The same box as the notices (`oastFrame`), for places whose colour is data �...
 - `Views/PixelScene.cs` — **PixelScene, CapsuleBall** — What the full pixel-art scenes share: a canvas of cells anchored to the floor, a font, the Poké Balls, and the Pokémon coming out of one with its light. 
+- `Views/PodiumScene.cs` — **PodiumScene** — COMPETICIÓN's podium, painted cell by cell: a night stadium with a crowd in the stands, two searchlights sweeping, a scoreboard of bulbs, and the top three on gold, silver and bronze blocks with t...
+- `Views/PodiumStage.cs` — **PodiumStage** — COMPETICIÓN's podium on screen: `odiumScene` in whole cells, like the roulette (§175), with each player's photo turned into `odiumScene.PhotoSize` cells once it has downloaded. 
 - `Views/PokePasteView.xaml.cs` — **PokePasteView** — 
 - `Views/PokemonPickerPanel.xaml.cs` — **PokemonPickerPanel** — 
 - `Views/PokemonViewerView.xaml.cs` — **PokemonViewerView** — The PC of the player's game. All the work is in the view model.
 - `Views/RandomizerView.xaml.cs` — **RandomizerView** — 
 - `Views/RegisterCaptureWindow.xaml.cs` — **RegisterCaptureWindow** — 
+- `Views/RoleMenuView.xaml.cs` — **RoleMenuView** — The role menu: the cards, and the type menu behind MONOTYPE. All the logic is in RoleMenuViewModel.
 - `Views/RoomSprite.cs` — **RoomSprite** — A picture from the cartridge, as the scenes draw it: BGRA, one icon pixel per cell.
 - `Views/RouletteMachine.cs` — **RouletteMachine** — The LUDÓPATA wheel on screen: `ouletteMachineScene` in whole cells. 
 - `Views/RouletteMachineScene.cs` — **RouletteWedge, RouletteBoardItem, RouletteShow, RouletteSceneState, RouletteTimeline, RouletteMachineScene** — One of the six wedges as the wheel shows it once it is turned over.
 - `Views/RouletteView.xaml.cs` — **RouletteView** — The LUDÓPATA wheel: the wheel of fortune in the arcade room, and the card of what came out once it has landed. 
-- `Views/SettingsView.xaml.cs` — **SettingsView** — 
+- `Views/SettingsView.xaml.cs` — **SettingsView** — NOVEDADES, beside the version (1.0.7).
 - `Views/ShopView.xaml.cs` — **ShopView** — The shop screen. All the work is in the view model.
 - `Views/SyncView.xaml.cs` — **SyncView** — 
 - `Views/TcgCard.cs` — **TcgMove, TcgCard, TcgLayout, CellCanvas** — One of the four moves printed on a card, as the installed world describes it.
 - `Views/TcgCardArt.cs` — **TcgFinish, TcgRegion, TcgRender, TcgCardArt** — The finish of a card, as the print runs of the real game have them: the rarer, the more it shines (§187). 
 - `Views/ToastPixels.cs` — **ToastPixels, ToastFrame, ToastPlate, ToastCountdown, ToastMarks** — What the pieces of a notice share: the size of a cell, the colours of each kind, and drawing in cells. 
-- `Views/ToastScroll.cs` — **ToastScroll** — The notice body: parchment scroll with wooden rolls and a wax seal that unrolls to the left (420 ms, eased) and rolls up before leaving (360 ms) (§238, §239).
-- `Views/CapPlaque.cs` — **CapPlaque, CapPlaqueData, CapPlaqueMember** — The level cap over the game as a trophy plaque drawn in cells (§239).
+- `Views/ToastScroll.cs` — **ToastScroll** — A notice's body: a parchment scroll with a wooden roll at each end and, on the big card, a wax seal in the notice's colour. It opens towards the left — the right roll stays where it is and the le...
 - `Views/ToastWindow.xaml.cs` — **ToastWindow** — The window the notices live in. It has no logic: where it goes and what it says is `ervices.Notifier`'s job. 
-- `Views/TradeMachine.cs` — **TradeMachine** — The wonder trade's stage: the trade cabin (`radeMachineScene`) on screen, in whole cells. 
-- `Views/TradeMachineScene.cs` — **TradeType, TradeShow, TradeTimeline, TradeMachineScene** — One type of what arrives, as the cabin's screen shows it: its name and the colour the games give it.
 - `Views/TrainerRoom.cs` — **TrainerRoom** — JUGAR's cover: the trainer's room (`rainerRoomScene`) on screen, in whole cells. 
 - `Views/TrainerRoomScene.cs` — **RoomSprite, RoomCrystal, TrainerRoomState, TrainerRoomScene** — A picture of the cartridge as cells, or null without one.
 - `Views/UpdateWindow.xaml.cs` — **UpdateWindow** — The update window (§201). Closing it during the download cancels it; after that it waits.
 - `Views/WheelEnding.cs` — **WheelEnding** — One way the wheel can come to a stop: how hard it brakes, how far it travels, and how much it settles back at the very end. 
-- `Views/WonderTradeOverlay.xaml.cs` — **WonderTradeOverlay** — The wonder trade as it plays: the trade cabin in the arcade room, and the card of what arrived once it is out. 

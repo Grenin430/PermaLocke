@@ -1,7 +1,7 @@
 ---
 tipo: mapa-codigo
 proyecto: PermaLocke.Data
-generado: 2026-09-26
+generado: 2026-10-10
 ---
 # PermaLocke.Data — mapa de ficheros
 
@@ -12,6 +12,7 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Da
 - `JsonGachaCatalog.cs` — **JsonGachaCatalog, JsonSpeciesStatsCatalog** — Reads Data/gacha.json: the banners, their cost and their odds.
 - `JsonIslandMap.cs` — **MapZone, JsonIslandMap** — Reads Data/islas.json: which island each of Alola's zones belongs to. 
 - `JsonMapTable.cs` — **JsonMapTable** — Reads Data/mapas.json, the game's maps with their world and zone, into a `apTable`. 
+- `JsonNurseryCatalog.cs` — **JsonNurseryCatalog** — Reads Data/guarderia.json: when the NURSERY pays a spin and how strong its eggs are (§221).
 - `JsonPenaltyCatalog.cs` — **JsonPenaltyCatalog** — Reads Data/penalties.json: what losing costs.
 - `JsonPlayerProfileStore.cs` — **JsonPlayerProfileStore** — This machine's player, as Config/jugador.json. 
 - `JsonPlaytimeStore.cs` — **JsonPlaytimeStore** — Play sessions as Saves/&lt;run&gt;/sesiones.json, beside the run they belong to.

@@ -1,12 +1,13 @@
 ---
 tipo: mapa-codigo
 proyecto: PermaLocke.GameLink
-generado: 2026-09-26
+generado: 2026-10-10
 ---
 # PermaLocke.GameLink — mapa de ficheros
 
 Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.GameLink/`). Tipos en negrita. Vuelve a [[00 - Inicio]] · [[Arquitectura]].
 
+- `AbilityLedger.cs` — **AbilityLedger** — The ability PermaLocke gave each Pokémon it wrote into a save, by PID (2026-10-08). 
 - `AzaharExecutable.cs` — **EmulatorChoice, AzaharExecutable** — Which azahar.exe the launcher starts (§125). 
 - `AzaharGameStateProvider.cs` — **AzaharGameStateProvider** — Live link to Ultra Moon running in Azahar, over the emulator's RPC server. 
 - `AzaharGameWriter.cs` — **MemoryWriteResult, AzaharGameWriter** — What happened to a write into the game's memory. 
@@ -39,15 +40,19 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ga
 - `Data/WorldMoveCatalog.cs` — **WorldMoveCatalog** — Learnsets and moves from the installed world when it has published them, from PKHeX's Ultra Sun / Ultra Moon tables otherwise. 
 - `Data/WorldMoves.cs` — **WorldMove, WorldMoves** — What one move is in the installed world, before any name is attached.
 - `Field/BattleCounterReader.cs` — **BattleCounterReader** — The trainer card counters, read live: how many wild battles, captures, escapes and shinies. 
+- `Field/BerryPileKeeper.cs` — **BerryPileKeeper** — Berry piles give once per run (2026-09-28, players' list item 1): a pile picked once is put back as picked whenever the game regrows it. 
 - `Field/FieldRecord.cs` — **FieldRecord** — One of the game's records of where the player is: world and map, then the position and the rotation. 
 - `Field/FieldZoneReader.cs` — **FieldZoneReader** — Says which map, and so which zone of the run, the player is on, read live from the game. 
-- `Field/SaveDex.cs` — **SaveDex** — The species the Pokédex of the last save says were caught. Only reads. 
+- `Field/LiveSave.cs` — **LiveSave** — The save as the running game holds it now, not as it was last written to the file (2026-10-06). 
+- `Field/SaveDex.cs` — **SaveDex** — The species the Pokédex says were caught: the one the running game holds when it can be read, the last save's otherwise. Only reads. 
 - `Field/SavedGameCache.cs` — **SavedGameCache** — The player's last save, parsed once and parsed again only when the file changes. Only reads. 
 - `FolderTransfer.cs` — **TransferItem, TransferPlan, TransferResult, FolderTransfer** — One thing the transfer brings from the old folder, and where it goes.
+- `LiveBoxRenamer.cs` — **LiveBoxRenamer** — Writes a voted nickname into a Pokémon sitting in a PC box, with the game running (1.0.7.3): a capture with a full party goes to the box, and waiting for the game to close took the fun out of the ...
 - `PlayerSave.cs` — **PlayerSave** — Where the player's Ultra Moon save lives, and whether the emulator is holding it right now. 
 - `Rpc/AzaharRpcClient.cs` — **RpcRequestType, MemoryWrite, EmulatedProcess, AzaharRpcException, AzaharRpcClient** — Only in PermaLocke's Azahar fork. The official build rejects it.
 - `Rpc/MemorySearch.cs` — **MemoryRegion, MemorySearch** — Finds where the game keeps its data, by scanning the emulated address space over the RPC. 
 - `Rpc/RpcTrace.cs` — **RpcTraceEntry** — The last requests sent to the emulator, kept so that a crash report can say what PermaLocke was doing at the moment Azahar went down. 
+- `SaveAbilityKeeper.cs` — **SaveAbilityKeeper** — Puts back, in a closed save, the ability PermaLocke gave a Pokémon when the game has recomputed it since (§237). 
 - `SaveBoxDelivery.cs` — **SaveBoxDelivery** — Delivers a Pokémon by writing it into the player's save file: into the party when it has room, into a box otherwise. 
 - `SaveBoxReader.cs` — **SaveBoxReader** — Reads the player's PC boxes out of the save file. 
 - `SaveBoxSwap.cs` — **SaveBoxSwap** — Performs a wonder trade on the player's save: the Pokémon handed over is replaced, in its own slot, by the one that came back. 
@@ -57,9 +62,11 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ga
 - `SaveGameUnlocks.cs` — **SaveGameUnlocks** — Turns on the saved game's own unlock flags. 
 - `SaveMoveTeacher.cs` — **SaveMoveTeacher** — Writes one remembered move into the player's save, in the slot the Pokémon already occupies. 
 - `SaveNameRepair.cs` — **NameRepairReport, SaveNameRepair** — Puts the species name back on the Pokémon PermaLocke delivered without one. 
+- `SaveNatureChanger.cs` — **SaveNatureChanger** — Writes a nature into the player's save, in the slot the Pokémon already occupies: the herbs of the shop (2026-09-27). 
 - `SavePidRepair.cs` — **PidAssignment, PidRepairReport, SavePidRepair** — Gives a personality value to the Pokémon PermaLocke delivered without one. 
 - `SaveRecordReader.cs` — **SaveRecordReader** — Reads the game's own record counters out of the save file. 
 - `SaveRenamer.cs` — **SaveRenamer** — Writes a nickname into the player's save, in the slot the Pokémon already occupies (2026-09-26). 
+- `SaveRotoLoto.cs` — **SaveRotoLoto** — Turns the Roto Loto off in the save (2026-09-28, players' list item 5): its two unlock flags in the field menu block, which PKHeX names RotomLoto1 and RotomLoto2. 
 - `SaveRouletteWorld.cs` — **SaveRouletteWorld** — Everything the LUDÓPATA wheel does to the player's game, against the save file. 
 - `ServiceCollectionExtensions.cs` — **ServiceCollectionExtensions** — The encryption constants of the party in the last save, or null when there is no save: what tells the provider whether a full sweep has anything to find. 
 - `WithheldLedger.cs` — **WithheldLedger** — What the first-encounter rule has taken out of the bag and owes back, and which run it owes it to. 

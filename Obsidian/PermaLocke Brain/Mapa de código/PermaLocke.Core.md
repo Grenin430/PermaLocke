@@ -1,7 +1,7 @@
 ---
 tipo: mapa-codigo
 proyecto: PermaLocke.Core
-generado: 2026-09-26
+generado: 2026-10-10
 ---
 # PermaLocke.Core — mapa de ficheros
 
@@ -19,7 +19,8 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Co
 - `Abstractions/ILocationLookup.cs` — **ILocationLookup** — Resolves the zone identifiers the game stores into names players recognise. 
 - `Abstractions/IMoveCatalog.cs` — **LevelUpMove, MoveSheet, IMoveCatalog** — One entry of a level-up learnset: the move and the level it is learnt at.
 - `Abstractions/IMoveTeacher.cs` — **MoveChange, IMoveTeacher** — One move taught to a Pokémon that is already the player's, in the slot it already occupies. 
-- `Abstractions/IPokemonDelivery.cs` — **DeliveryOutcome, DeliveryResult, IPokemonDelivery, IPokemonSwap** — Written into the party or a box of the save and read back to confirm it.
+- `Abstractions/INatureChanger.cs` — **NatureChange, INatureChanger** — A new nature for a Pokémon already in the save, in the slot it occupies (2026-09-27, the herbs).
+- `Abstractions/IPokemonDelivery.cs` — **DeliveryOutcome, DeliveryResult, IPokemonDelivery, IPokemonSwap, IEggDelivery** — Written into the party or a box of the save and read back to confirm it.
 - `Abstractions/IPokemonRenamer.cs` — **NicknameChange, IPokemonRenamer** — A new nickname for a Pokémon already in the save, in the slot it occupies.
 - `Abstractions/IRandomSource.cs` — **IRandomSource** — Deterministic randomness. The same seed must yield the same sequence on every machine and every build, because a run's randomization and its gacha rolls have to be reproducible and auditable. That ...
 - `Abstractions/ISpeciesLookup.cs` — **SpeciesInfo, ISpeciesLookup** — Resolves species numbers to names and back. A port so the domain never depends on where the Pokédex comes from; today it is PKHeX.Core, later it could be the randomized ROM. 
@@ -30,11 +31,14 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Co
 - `Domain/AdminGift.cs` — **GiftItem, AdminGift** — Something the admin sends a player through the shared folder: points, items, free rolls or wonder trades (§129). 
 - `Domain/AdminOrder.cs` — **AdminOrder, AdminOrderKinds** — Something the organiser orders a player's application to do to their run, from Admin (2026-09-26). 
 - `Domain/Credits.cs` — **MilestoneGrant, RunCredits, ICreditCatalog** — Free gacha rolls and wonder trades a milestone hands over. 
+- `Domain/EggTurbo.cs` — **EggTurbo** — The Incubadora Turbo (2026-10-07): a key item that, used from the bag, makes every egg of the party hatch after two steps, and used again, stops. PermaLocke puts it into the game (see RulePatches.E...
 - `Domain/Enums.cs` — **GameVersion, EncounterType, ZoneOutcome, PokemonStatus, PokemonOrigin, IslandState, EventSource, GameEventType** — Supported games. PermaLocke targets Ultra Moon first.
 - `Domain/EvSpread.cs` — **EvSpread** — The six effort values of one Pokémon. 
 - `Domain/Gacha.cs` — **SpeciesStats, SpeciesForm, ISpeciesStatsCatalog, EvolutionLine, StageOdds, GachaTier, GachaBanner, GachaPull, GachaRollResult, IGachaCatalog** — The regional forms, never null.
 - `Domain/GameEvent.cs` — **GameEvent** — An immutable, append-only record of something that happened in a run. The points balance is a projection over these; no code may change state without one. 
+- `Domain/InfiniteRepel.cs` — **InfiniteRepel** — The Repelente Infinito (2026-10-07): a key item that, used from the bag, turns a never-ending Repel on and, used again, off. PermaLocke puts it into the game (see RulePatches.InfiniteRepel) and is ...
 - `Domain/MapTable.cs` — **MapInfo, MapTable** — One map of the game, as the cartridge describes it.
+- `Domain/Nursery.cs` — **INurseryCatalog** — The NURSERY of the MONOTYPE roles (§221): the numbers it runs on, read from Data/guarderia.json. 
 - `Domain/Penalties.cs` — **PenaltyRules, IPenaltyCatalog, PenaltyResult** — What losing costs. 
 - `Domain/PlaySession.cs` — **PlaySession, IPlaytimeStore** — One stretch of the emulator being open while a run was loaded.
 - `Domain/PlayerPresence.cs` — **PresenceState, PlayerPresence** — What a player is doing, as a friends list says it.
@@ -43,12 +47,15 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Co
 - `Domain/Reward.cs` — **RewardItem, IRewardCatalog, RewardOutcome, RewardResult, RewardStatus** — Something the competition hands over once, for reaching a milestone. 
 - `Domain/Role.cs` — **Role, IRoleCatalog** — One way of playing the competition: how points move, and how hard the cartridge is made. 
 - `Domain/Roulette.cs` — **RouletteEffect, RouletteFace, IRouletteCatalog, RouletteWheel, RoulettePokemon, RouletteWorld, RouletteItemChange, RouletteAction, RouletteApplyResult, IRouletteWorldPort, RouletteOutcome, RouletteSpinResult** — What a face of the wheel does when it wins.
+- `Domain/RuleBlock.cs` — **RuleBlock** — Where PermaLocke leaves the run's rules for the patched game to read (2026-10-06, rules inside the game). 
 - `Domain/Run.cs` — **Island, Run** — An island of the Alola tour and how far the player has got in it.
 - `Domain/RunSnapshot.cs` — **RunSnapshot** — What one player's application publishes about their run so the others can see it. 
 - `Domain/Shop.cs` — **ShopItem, IShopCatalog, PurchaseOutcome, PurchaseResult** — One thing the shop sells.
+- `Domain/SuperCandy.cs` — **SuperCandy** — The SuperCarameloraro (2026-10-06): a Rare Candy that raises five levels at once, never past the cap. PermaLocke puts it into the game (see RulePatches.SuperCandy) and is the only way to get it. 
 - `Domain/TournamentRules.cs` — **TournamentRules** — The files of Data/ the organiser can change for every player from Admin (2026-09-26), and what each one holds. 
 - `Domain/WonderTrade.cs` — **WonderTradeWindow, IWonderTradeCatalog, WonderTradeGift, WonderTradeOffer, WonderTradeResult, Generations** — How wide the band of acceptable trades is, as a fraction of what the player handed over. 
 - `ServiceCollectionExtensions.cs` — **ServiceCollectionExtensions** — Domain services shared by PermaLocke.App and PermaLocke.Admin. Neither application implements business logic of its own; both resolve these. 
+- `Services/AbilityBackfill.cs` — **AbilityBackfill** — What ability each Pokémon was given, worked out from the history for those PermaLocke dealt before it kept a ledger of its own (§237): the gacha and the wonder trade wrote the ability's name into...
 - `Services/AbilityDraw.cs` — **AbilityDraw** — The ability the gacha and the wonder trade hand out: any the game names, bar the banned ones. 
 - `Services/AchievementService.cs` — **AchievementService** — Counts what the run has done and hands out the points for it. 
 - `Services/CreditService.cs` — **CreditService** — The free gacha rolls and wonder trades a run has, and how many are left. 
@@ -60,8 +67,11 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Co
 - `Services/GiftService.cs` — **GiftResult, GiftService** — Collecting the gifts the admin left in the shared folder (§129). 
 - `Services/IntegrityService.cs` — **IntegrityKinds, IntegrityService** — The tipo of an `ameEventType.IntegrityFlag`.
 - `Services/LinkBattleAdvice.cs` — **LinkBattleNote, LinkBattleAdvice** — Whether the published players can link-battle each other, said once for the whole group. 
+- `Services/MonotypeRule.cs` — **MonotypeRule** — What a MONOTYPE role means (§220): which species it admits, and whether the run is owning only those. 
 - `Services/MoveReminder.cs` — **RememberedFrom, RememberableMove, MoveReminder** — Why a move is on the reminder's list.
 - `Services/MoveReminderService.cs` — **MoveReminderOptions, MoveReminderService** — What the reminder has for one Pokémon.
+- `Services/NicknameVote.cs` — **NicknameBallot, NicknameVote** — One player's part in a nickname vote: the name they proposed and the one they voted for, either may be missing.
+- `Services/NurseryService.cs` — **NurseryService, NurseryMilestone** — The NURSERY of the MONOTYPE roles (§221): spins they are owed, and the eggs those spins turn into. 
 - `Services/PenaltyService.cs` — **PenaltyService** — Takes points away when the competition says losing costs. 
 - `Services/PlayerProfileService.cs` — **RunOwnership, PlayerProfileService** — Whose the loaded run is, from this machine's point of view.
 - `Services/PointsService.cs` — **PointsService** — The balance is a projection over the event log, never a stored number. There is no way to change points without leaving an event behind, which is the whole point of the design. 
@@ -76,5 +86,6 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Co
 - `Services/SeededRandomSource.cs` — **SeededRandomSource** — SplitMix64. Chosen because it is a handful of lines, has no hidden state, and is specified exactly, so "same seed, same result" survives a change of runtime or machine. 
 - `Services/ShopService.cs` — **ShopService** — Sells the competition's items for run points and puts them in the player's bag. 
 - `Services/SnapshotAudit.cs` — **AuditVerdict, AuditResult, SeenMark, SnapshotAudit** — No history was published with the snapshot, so there is nothing to check it against.
+- `Services/SpeciesSyncService.cs` — **SeenSpecies, SpeciesSyncService** — A Pokémon as the game has it right now: who it is, by PID, and which species and form it is.
 - `Services/TradedAwayReconciler.cs` — **TradedAwayCandidate, TradedAwayReport, TradedAwayReconciler** — Closes the records of Pokémon handed over in a wonder trade that the run still counts as alive. 
 - `Services/WonderTradeService.cs` — **WonderTradeService** — Trades a Pokémon away for another of comparable strength. 

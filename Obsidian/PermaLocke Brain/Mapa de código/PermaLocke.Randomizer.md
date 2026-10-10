@@ -1,7 +1,7 @@
 ---
 tipo: mapa-codigo
 proyecto: PermaLocke.Randomizer
-generado: 2026-09-26
+generado: 2026-10-10
 ---
 # PermaLocke.Randomizer — mapa de ficheros
 
@@ -37,6 +37,7 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ra
 - `Modules/TrainerDifficultyRandomizer.cs` — **TrainerDifficultyResult, TrainerDifficultyRandomizer** — Makes the trainers harder without touching who they are: their AI byte, their IVs, their EV spreads and how many of their Pokémon hold an item. 
 - `Modules/TrainerPokemonTable.cs` — **TrainerPokemonTable** — Byte-level view of one trainer's party inside trpoke (a/1/0/7): a flat run of fixed-size entries, one per Pokémon, one subfile per trainer. Both trainer GARCs are uncompressed, so parties are patc...
 - `Modules/TrainerRandomizer.cs` — **TrainerResult, TrainerRandomizer** — Replaces the species of every trainer Pokémon in trpoke (a/1/0/7), and raises their levels by whatever the role asks for. The randomization of species still never touches levels: the competition's...
+- `Modules/TutorBan.cs` — **TutorBanResult** — Nobody learns anything from the BP tutors (2026-09-27, `andomizerOptions.BanTutors`). 
 - `Modules/TutorRandomizer.cs` — **TutorResult, TutorRandomizer** — Shuffles what the move tutors teach. 
 - `Modules/TutorTable.cs` — **TutorTable** — The move tutors' list, which lives in code.bin and nowhere else. 
 - `Modules/WildEncounterRandomizer.cs` — **WildEncounterResult, WildEncounterRandomizer** — Rewrites the wild encounter tables of Ultra Moon. The encdata GARC is ~460 MB because each area ships eleven subfiles and only one of them is encounters; the rest is map data. Its subfiles are LZ11...
@@ -53,8 +54,14 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ra
 - `Rom/RomFsReader.cs` — **RomFsEntry, RomFsReader** — One file inside the cartridge's RomFS, addressed absolutely within the .3ds.
 - `Rom/RomInspector.cs` — **RomInfo, RomInspector** — Reads the NCSD/NCCH headers of a 3DS cartridge dump. Opens the file read-only and never writes to it: the vanilla ROM is untouchable. 
 - `Rom/RomWorkspace.cs` — **RomWorkspace** — A scratch copy of the handful of RomFS files the randomizer needs, plus the pk3DS `ameConfig` that reads them. The vanilla cartridge is opened read-only and never written to. Extracting only these ...
+- `Rom/RulePatches.EggTurbo.cs` — **RulePatches** — The Incubadora Turbo (2026-10-07): a key item that, used from the bag, makes every egg of the party hatch after two steps, and used again, stops. Only PermaLocke hands it out (MISCELÁNEA). 
+- `Rom/RulePatches.InfiniteRepel.cs` — **RulePatches** — The Repelente Infinito (2026-10-07): a key item that, used from the bag, turns a Repel that never wears off on, and used again, off. Only PermaLocke hands it out (MISCELÁNEA). 
+- `Rom/RulePatches.SuperCandy.cs` — **RulePatches** — The SuperCarameloraro (2026-10-06): a Rare Candy that raises five levels at once, never past the cap, and that only PermaLocke hands out (MISCELÁNEA writes it into the bag like the Rare Candies). 
+- `Rom/RulePatches.cs` — **RulePatches, IpsRecord** — The level cap inside the game (2026-10-06): no experience at the cap in battle, and no Rare Candy at the cap. 
 - `Sprites/BflimTexture.cs` — **BflimFormat, BflimTexture** — How the pixels of a BFLIM are encoded. Only what Ultra Moon's icons actually use.
+- `Sprites/EggTurboIcon.cs` — **EggTurboIcon** — The Incubadora Turbo's icon (2026-10-07, the organiser picked the «rayo» among seven): a cream egg with green spots, a golden lightning bolt across it, speed lines on the left and a golden outlin...
 - `Sprites/Etc1Texture.cs` — **Etc1Texture** — Decodes the 3DS's ETC1 and ETC1A4 textures, which is where the cartridge keeps its big artwork. 
+- `Sprites/InfiniteRepelIcon.cs` — **InfiniteRepelIcon** — The Repelente Infinito's icon (2026-10-07, the organiser picked the «galaxy» among five): the Repel's can painted as a night sky from blue to magenta, with stars, a golden ∞ over the Poké Ball...
 - `Sprites/IslandMapReader.cs` — **IslandMap, IslandMapReader** — The four island maps of Alola, cut out of the player's own cartridge. 
 - `Sprites/ItemIconIndex.cs` — **ItemIconIndex** — Which icon of a/0/6/1 belongs to which item. 
 - `Sprites/ItemIconReader.cs` — **ItemIconReader** — Reads the item icons out of the player's own cartridge. 
@@ -63,6 +70,7 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ra
 - `Sprites/PokemonIconIndex.cs` — **PokemonIconIndex** — Which icon of a/0/6/2 belongs to which species. 
 - `Sprites/PokemonIconReader.cs` — **PokemonIcon, PokemonIconReader** — One decoded box icon: straight RGBA8888, already cropped to what is drawn.
 - `Sprites/ShinyPalette.cs` — **ShinyPalette** — Works out how a box icon changes colour when its Pokémon is shiny, from a pair of reference renders. 
+- `Sprites/SuperCandyIcon.cs` — **SuperCandyIcon** — The SuperCarameloraro's icon (2026-10-06, the organiser picked it among four): the Rare Candy in deep red, with a golden aura around it and three sparkles. The game gets it as a BFLIM laid out like...
 - `Sprites/ZCrystalIconReader.cs` — **ZCrystalIconReader** — Reads the eighteen type Z-Crystals out of the player's own cartridge. 
 - `Sprites/ZCrystalIndex.cs` — **ZCrystalIndex** — Which of the eighteen carved Z-Crystals belongs to which item. 
 - `StaticOverride.cs` — **StaticOverrideRule** — What a static encounter is replaced by, when the ordinary draw is not what is wanted.
