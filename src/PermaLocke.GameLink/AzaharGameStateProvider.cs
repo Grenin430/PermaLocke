@@ -636,7 +636,11 @@ public sealed class AzaharGameStateProvider(
                 member.TrainerName,
                 member.Form,
                 member.Moves,
-                member.IsEgg));
+                member.IsEgg,
+                member.HeldItem,
+                member.Status,
+                member.ExpProgress,
+                member.Pp));
         }
 
         return party;

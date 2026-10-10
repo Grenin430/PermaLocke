@@ -17,7 +17,11 @@ public sealed record LivePokemon(
     string TrainerName,
     int Form = 0,
     IReadOnlyList<int>? Moves = null,
-    bool IsEgg = false);
+    bool IsEgg = false,
+    int HeldItem = 0,
+    int Status = 0,
+    double ExpProgress = -1,
+    IReadOnlyList<int>? Pp = null);
 
 /// <summary>
 /// Reads party structures out of the running game and parses them with PKHeX.Core.
@@ -103,7 +107,30 @@ public sealed class Pk7Reader(AzaharRpcClient client)
             pokemon.OriginalTrainerName,
             pokemon.Form,
             [pokemon.Move1, pokemon.Move2, pokemon.Move3, pokemon.Move4],
-            pokemon.IsEgg);
+            pokemon.IsEgg,
+            pokemon.HeldItem,
+            pokemon.Status_Condition,
+            ExpProgress(pokemon, level),
+            [pokemon.Move1_PP, pokemon.Move2_PP, pokemon.Move3_PP, pokemon.Move4_PP]);
+    }
+
+    /// <summary>
+    /// How far a Pokémon is from its next level, 0 to 1, on the curve its own game uses (the installed world's when it has one, as
+    /// <see cref="GameLevels"/> does); -1 when the curve is not known or the experience does not agree with the level.
+    /// </summary>
+    public static double ExpProgress(PKM pokemon, int level)
+    {
+        if (level >= 100) return 1;
+
+        var growth = WorldLimits.GrowthOf(pokemon.Species)
+            ?? (pokemon.Species <= PersonalTable.USUM.MaxSpeciesID ? PersonalTable.USUM[pokemon.Species].EXPGrowth : (byte?)null);
+        if (growth is not { } curve) return -1;
+
+        var floor = Experience.GetEXP((byte)level, curve);
+        var next = Experience.GetEXP((byte)(level + 1), curve);
+        if (next <= floor || pokemon.EXP < floor) return -1;
+
+        return Math.Clamp((pokemon.EXP - floor) / (double)(next - floor), 0, 1);
     }
 
     /// <summary>Reads consecutive slots from the start of a party block.</summary>

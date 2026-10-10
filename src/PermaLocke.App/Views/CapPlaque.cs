@@ -33,6 +33,9 @@ public sealed class CapPlaque : FrameworkElement
     private WriteableBitmap? _bitmap;
     private byte[]? _shaded;
 
+    /// <summary>False keeps the panel still: no flame, no flashes, no trails; the HP are the real ones.</summary>
+    public bool Animated { get; set; } = true;
+
     private CapMode _mode = CapMode.Column;
     private int _cols = 132;
     private int _rows = 250;
@@ -116,7 +119,7 @@ public sealed class CapPlaque : FrameworkElement
         if (_data is null || _layout is null || _still is null || _frame is null || _bitmap is null) return;
 
         _frame.CopyFrom(_still);
-        CapLive.Paint(_frame, _layout, _data, _anim, now);
+        CapLive.Paint(_frame, _layout, _data, Animated ? _anim : null, Animated ? now : 0);
 
         var pixels = _frame.B;
         if (CapSheet.ThemeShades)

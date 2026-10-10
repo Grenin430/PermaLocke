@@ -55,6 +55,10 @@ public sealed class CapBadge
     private readonly ILogger<CapBadge> _logger;
     private readonly AppSettings _settings;
     private readonly AlolaSky _sky;
+    private readonly ITypeLookup _types;
+    private readonly IItemLookup _items;
+    private readonly IMoveCatalog _moves;
+    private readonly CemeteryService _cemetery;
     private readonly DispatcherTimer _timer = new() { Interval = Follow };
     private readonly DispatcherTimer _frames = new() { Interval = Frames };
     private readonly Stopwatch _clock = Stopwatch.StartNew();
@@ -66,6 +70,10 @@ public sealed class CapBadge
     private CapPlaqueData? _data;
     private CapReading? _shown;
     private bool _battle;
+    private IReadOnlyList<CapGrave> _graves = [];
+    private CapRect _picture;
+    private int _fold;
+    private bool _keyWas;
 
     private Panel? _main;
     private Panel? _memorial;
@@ -81,7 +89,8 @@ public sealed class CapBadge
     private sealed record Panel(Window Window, CapPlaque Plaque);
 
     public CapBadge(EmulatorLauncher launcher, ProgressService progress, LevelCapTable caps, IRunContext runContext,
-        GameLinkMonitor monitor, AppSettings settings, PokemonSpriteService sprites, AlolaSky sky, ILogger<CapBadge> logger)
+        GameLinkMonitor monitor, AppSettings settings, PokemonSpriteService sprites, AlolaSky sky, ITypeLookup types, IItemLookup items,
+        IMoveCatalog moves, CemeteryService cemetery, ILogger<CapBadge> logger)
     {
         _launcher = launcher;
         _progress = progress;
@@ -92,6 +101,10 @@ public sealed class CapBadge
         _settings = settings;
         _sprites = sprites;
         _sky = sky;
+        _types = types;
+        _items = items;
+        _moves = moves;
+        _cemetery = cemetery;
         _timer.Tick += (_, _) => _ = TickAsync();
         _frames.Tick += (_, _) => Frame();
         monitor.RunDataChanged += (_, _) => _readAt = DateTime.MinValue;
@@ -148,6 +161,7 @@ public sealed class CapBadge
                 _readAt = DateTime.UtcNow;
                 _reading = await ReadAsync(run);
                 await _sprites.PrepareAsync();
+                _graves = await ReadGravesAsync();
             }
 
             if (_reading is not { } reading)
@@ -160,7 +174,8 @@ public sealed class CapBadge
             _shown = reading with { Highest = Highest() ?? reading.Highest };
             _battle = _monitor.BattleNow.Count > 0;
             ShowParty(_monitor.Latest is { Connected: true } live ? Delayed(WithLiveHp(live.Party, _monitor.BattleNow)) : []);
-            Apply(new CapRect(picture.Left, picture.Top, picture.Width, picture.Height), ScreenLayout(), Dpi());
+            _picture = new CapRect(picture.Left, picture.Top, picture.Width, picture.Height);
+            Apply(_picture, ScreenLayout(), Dpi());
         }
         catch (Exception ex)
         {
@@ -182,6 +197,22 @@ public sealed class CapBadge
             : stage.Id == "rematch" ? "REMATCH" : stage.Name.ToUpperInvariant();
         var next = cleared + 1 < _caps.Stages.Count ? _caps.Stages[cleared + 1].Level : (int?)null;
         return new CapReading(label, stage.Level, next, Highest(), cleared, trials);
+    }
+
+    /// <summary>The run's fallen, the latest first, with the icon of each; empty when the run's record cannot be read.</summary>
+    private async Task<IReadOnlyList<CapGrave>> ReadGravesAsync()
+    {
+        try
+        {
+            var graves = await _cemetery.GravesAsync();
+            return [.. graves.OrderByDescending(g => g.DiedAt ?? DateTimeOffset.MinValue)
+                .Select(g => new CapGrave(_sprites.Get(g.Species, g.Form, g.IsShiny), g.Name, g.FellTo))];
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "No se ha podido leer el cementerio para el panel del cap");
+            return [];
+        }
     }
 
     private int? Highest() =>
@@ -219,7 +250,18 @@ public sealed class CapBadge
             return;
         }
 
-        var options = new CapOptions();
+        var current = _settings.Current;
+
+        // The key folds the panel: whole, then compact, then away.
+        if (_fold == 2)
+        {
+            HideAll();
+            return;
+        }
+
+        CapMode? forced = current.CapSize switch { 1 => CapMode.Compact, 2 => CapMode.Slim, 3 => CapMode.Column, _ => null };
+        if (_fold == 1) forced = CapMode.Compact;
+        var options = new CapOptions(forced, current.CapMaxCell, current.CapMemorial);
         var plan = CapGeometry.Plan(picture, layout, dpi, options, _lastMode);
 
         // The layout that the file says may not be the one on screen (F8, F9 and F10 do not write it until Azahar closes).
@@ -243,7 +285,7 @@ public sealed class CapBadge
         }
 
         _lastMode = plan.Main?.Mode;
-        var data = new CapPlaqueData(reading.Trial, reading.Cap, reading.Next, reading.Highest, _party, _battle, null, reading.Cleared, reading.Trials);
+        var data = new CapPlaqueData(reading.Trial, reading.Cap, reading.Next, reading.Highest, _party, _battle, _graves, reading.Cleared, reading.Trials);
         _data = data;
 
         Show(ref _main, CapPanelKind.Party, plan.Main, data, plan.Memorial is null);
@@ -260,6 +302,7 @@ public sealed class CapBadge
 
         panel ??= Create(kind);
         panel.Plaque.Set(data, slot.Mode, slot.Cols, slot.Rows, slot.Cell, gravesInside, Now);
+        panel.Plaque.Animated = _settings.Current.CapAnimations && !PermaLocke.App.Views.Pixel.PixelTheme.ReducedMotion;
         OverlayWindows.PlaceOver(panel.Window, (slot.Box.Left, slot.Box.Top, slot.Box.Width, slot.Box.Height));
         if (!panel.Window.IsVisible) panel.Window.Show();
     }
@@ -274,8 +317,27 @@ public sealed class CapBadge
     private void Frame()
     {
         var now = Now;
+        WatchKey();
         if (_main is { Window.IsVisible: true } main) main.Plaque.Tick(now);
         if (_memorial is { Window.IsVisible: true } memorial) memorial.Plaque.Tick(now);
+    }
+
+    /// <summary>
+    /// The key that folds the panel. The windows take no clicks, so this looks at the state of the keyboard (as <see cref="GameInputWatch"/> does,
+    /// with no hook) while the game has the focus, and acts on the key going down, once. Risk, said straight: a key held while the game
+    /// gets the focus counts as a press, and a key another program also reads (Pausa is the one the emulator and Steam leave alone) does both.
+    /// </summary>
+    private void WatchKey()
+    {
+        var key = _settings.Current.CapKey;
+        var down = key != 0 && GetForegroundWindow() is var front && front != IntPtr.Zero && front == GameWindow.Handle() && (GetAsyncKeyState(key) & 0x8000) != 0;
+        var pressed = down && !_keyWas;
+        _keyWas = down;
+        if (!pressed) return;
+
+        _fold = (_fold + 1) % 3;
+        _logger.LogInformation("Cap del juego plegado con la tecla: {Fold}", _fold == 0 ? "completo" : _fold == 1 ? "reducido" : "escondido");
+        if (_picture.Width > 0) Apply(_picture, ScreenLayout(), Dpi());
     }
 
     private Panel Create(CapPanelKind kind)
@@ -311,19 +373,60 @@ public sealed class CapBadge
         var cap = _reading?.Cap ?? int.MaxValue;
         // El mote va en la clave: un mote votado entra en directo y, sin él, el panel seguía con el nombre de antes
         // (lista de pendientes del organizador, 2026-09-28).
-        var key = cap + "|" + string.Join(";", party.Select(p =>
-            $"{p.Pid}:{p.Species}:{p.Form}:{p.Level}:{p.CurrentHp}/{p.MaxHp}:{p.IsFainted}:{p.Nickname}:{p.IsEgg}"));
+        var details = _settings.Current.CapDetails;
+        var key = cap + "|" + details + "|" + _battle + "|" + string.Join(";", party.Select(p =>
+            $"{p.Pid}:{p.Species}:{p.Form}:{p.Level}:{p.CurrentHp}/{p.MaxHp}:{p.IsFainted}:{p.Nickname}:{p.IsEgg}:{p.HeldItem}:{p.Status}:{p.ExpProgress:F2}:{string.Join(",", p.Pp ?? [])}"));
         if (key == _partyKey)
         {
             return;
         }
 
         _partyKey = key;
-        _party = [.. party.OrderBy(p => p.Slot).Select(member => new CapPlaqueMember(
-            member.IsEgg ? _sprites.GetEgg() : _sprites.Get(member.Species, member.Form, member.IsShiny),
-            string.IsNullOrWhiteSpace(member.Nickname) ? member.SpeciesName : member.Nickname,
-            member.Level, member.CurrentHp, member.MaxHp, member.IsEgg, member.Pid))];
+        _party = [.. party.OrderBy(p => p.Slot).Select(member => ToMember(member, details))];
     }
+
+    /// <summary>
+    /// One Pokémon of the party for the panel. Everything beyond its name, level and HP is read, not guessed: the types are the installed
+    /// world's, the item and the moves are the ones in its structure, the experience is measured on its own curve. The status is only
+    /// shown out of battle, because in a battle the game keeps it in a copy this does not read (as with the HP, §99): showing the
+    /// party's would be showing last battle's. An egg tells nothing (§230).
+    /// </summary>
+    private CapPlaqueMember ToMember(LivePartyMember member, bool details)
+    {
+        var sprite = member.IsEgg ? _sprites.GetEgg() : _sprites.Get(member.Species, member.Form, member.IsShiny);
+        var name = string.IsNullOrWhiteSpace(member.Nickname) ? member.SpeciesName : member.Nickname;
+        if (member.IsEgg || !details)
+        {
+            return new CapPlaqueMember(sprite, name, member.Level, member.CurrentHp, member.MaxHp, member.IsEgg, member.Pid);
+        }
+
+        var pair = _types.GetTypes(member.Species, member.Form);
+        var types = new List<int>();
+        if (pair.First >= 0) types.Add(pair.First);
+        if (pair.IsDual && pair.Second >= 0) types.Add(pair.Second);
+
+        var moves = new List<CapMove>();
+        for (var i = 0; i < (member.Moves?.Count ?? 0); i++)
+        {
+            var id = member.Moves![i];
+            if (id <= 0) continue;
+            var pp = member.Pp is { } left && i < left.Count ? left[i] : 1;
+            moves.Add(new CapMove(_moves.Describe(id)?.Type ?? -1, pp <= 0));
+        }
+
+        return new CapPlaqueMember(sprite, name, member.Level, member.CurrentHp, member.MaxHp, false, member.Pid, types,
+            member.HeldItem > 0 ? _items.GetName(member.HeldItem) : null, _battle ? CapStatus.None : StatusOf(member.Status),
+            member.ExpProgress, moves);
+    }
+
+    /// <summary>The status byte of a generation 7 party Pokémon: bits 0-2 the turns of sleep, then poison, burn, freeze, paralysis and bad poison.</summary>
+    public static CapStatus StatusOf(int status) =>
+        (status & 7) != 0 ? CapStatus.Sleep
+        : (status & 0x88) != 0 ? CapStatus.Poison
+        : (status & 0x10) != 0 ? CapStatus.Burn
+        : (status & 0x20) != 0 ? CapStatus.Freeze
+        : (status & 0x40) != 0 ? CapStatus.Paralysis
+        : CapStatus.None;
 
     /// <summary>
     /// In a battle, the party's HP from the battle's own copy (1.0.4.9): the game only copies it back to the party when
@@ -454,4 +557,7 @@ public sealed class CapBadge
 
     [DllImport("user32.dll")]
     private static extern IntPtr GetForegroundWindow();
+
+    [DllImport("user32.dll")]
+    private static extern short GetAsyncKeyState(int key);
 }

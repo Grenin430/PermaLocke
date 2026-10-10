@@ -121,8 +121,13 @@ public static class CapLive
 
             if (metrics.HasExp && m.Exp >= 0)
             {
+                // Blue on the way; gold and blinking when the next battle may put it at the cap; a full dim gold once it is there.
                 var e = metrics.Exp;
-                p.Rect(e.Left, e.Top, Math.Max(0, (int)(e.Width * Math.Clamp(m.Exp, 0, 1))), e.Height, 0x58B0D8);
+                var atCap = m.AtCap(data.Cap);
+                var near = m.NearCap(data.Cap);
+                var on = !near || ((int)Math.Floor(t * 3) & 1) == 0;
+                var colour = atCap ? 0xA87828u : near ? (on ? CapArt.Gold : 0x6A4A18u) : 0x58B0D8u;
+                p.Rect(e.Left, e.Top, atCap ? e.Width : Math.Max(0, (int)(e.Width * Math.Clamp(m.Exp, 0, 1))), e.Height, colour);
             }
         }
     }

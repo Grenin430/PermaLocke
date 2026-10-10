@@ -61,6 +61,12 @@ public sealed partial class SettingsViewModel : SectionViewModel
         Background = current.Background;
         Resolution = current.Resolution;
         Vulkan = current.Vulkan;
+        CapSize = current.CapSize;
+        CapMaxCell = current.CapMaxCell;
+        CapMemorial = current.CapMemorial;
+        CapDetails = current.CapDetails;
+        CapAnimations = current.CapAnimations;
+        CapKey = current.CapKey;
         _loading = false;
     }
 
@@ -112,6 +118,33 @@ public sealed partial class SettingsViewModel : SectionViewModel
     [ObservableProperty]
     private bool _vulkan;
 
+    /// <summary>0 automatic, 1 compact, 2 slim, 3 the whole showcase: the richest mode the panel may use.</summary>
+    [ObservableProperty]
+    private int _capSize;
+
+    /// <summary>The biggest cell in screen pixels the panel may use; 0 is no limit.</summary>
+    [ObservableProperty]
+    private int _capMaxCell;
+
+    [ObservableProperty]
+    private bool _capMemorial;
+
+    [ObservableProperty]
+    private bool _capDetails;
+
+    [ObservableProperty]
+    private bool _capAnimations;
+
+    /// <summary>The key that folds the panel (a virtual-key code), or 0 for none.</summary>
+    [ObservableProperty]
+    private int _capKey;
+
+    public string CapSizeText => CapSize switch { 1 => "Tamaño del panel: reducido", 2 => "Tamaño del panel: estrecho", 3 => "Tamaño del panel: completo", _ => "Tamaño del panel: el que quepa" };
+
+    public string CapMaxCellText => CapMaxCell == 0 ? "Escala del panel: la mayor que quepa" : $"Escala del panel: hasta x{CapMaxCell}";
+
+    public string CapKeyText => CapKey switch { 0x13 => "Plegar el panel con: Pausa", 0x2D => "Plegar el panel con: Insert", 0x91 => "Plegar el panel con: Bloq Despl", _ => "Plegar el panel con: ninguna tecla" };
+
     public string ResolutionText => Resolution == 0 ? "Resolución: la que tenga el emulador" : $"Resolución x{Resolution}";
 
     partial void OnNotificationsChanged(bool value) => Save();
@@ -126,6 +159,45 @@ public sealed partial class SettingsViewModel : SectionViewModel
     partial void OnCapPanelChanged(bool value) => Save();
     partial void OnBackgroundChanged(bool value) => Save();
     partial void OnVulkanChanged(bool value) => Save();
+    partial void OnCapMemorialChanged(bool value) => Save();
+    partial void OnCapDetailsChanged(bool value) => Save();
+    partial void OnCapAnimationsChanged(bool value) => Save();
+
+    partial void OnCapSizeChanged(int value)
+    {
+        OnPropertyChanged(nameof(CapSizeText));
+        Save();
+    }
+
+    partial void OnCapMaxCellChanged(int value)
+    {
+        OnPropertyChanged(nameof(CapMaxCellText));
+        Save();
+    }
+
+    partial void OnCapKeyChanged(int value)
+    {
+        OnPropertyChanged(nameof(CapKeyText));
+        Save();
+    }
+
+    [RelayCommand]
+    private void SetCapSize(string? size)
+    {
+        if (int.TryParse(size, out var value)) CapSize = Math.Clamp(value, 0, 3);
+    }
+
+    [RelayCommand]
+    private void SetCapMaxCell(string? cell)
+    {
+        if (int.TryParse(cell, out var value)) CapMaxCell = value == 0 ? 0 : Math.Clamp(value, 2, 8);
+    }
+
+    [RelayCommand]
+    private void SetCapKey(string? key)
+    {
+        if (int.TryParse(key, out var value)) CapKey = value;
+    }
 
     partial void OnResolutionChanged(int value)
     {
@@ -150,7 +222,8 @@ public sealed partial class SettingsViewModel : SectionViewModel
         {
             Notifications = Notifications, StepAside = StepAside, DeathScene = DeathScene, Killcam = Killcam,
             Follower = Follower, Ghosts = Ghosts, CatchCard = CatchCard, Nicknames = Nicknames, CapPanel = CapPanel,
-            Background = Background, Resolution = Resolution, Vulkan = Vulkan
+            Background = Background, Resolution = Resolution, Vulkan = Vulkan, CapSize = CapSize, CapMaxCell = CapMaxCell,
+            CapMemorial = CapMemorial, CapDetails = CapDetails, CapAnimations = CapAnimations, CapKey = CapKey
         });
         Status = "Guardado.";
     }

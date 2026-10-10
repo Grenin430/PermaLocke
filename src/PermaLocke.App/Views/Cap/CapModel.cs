@@ -30,6 +30,12 @@ public sealed record CapPlaqueMember(BitmapSource? Sprite, string Name, int Leve
     double Exp = -1, IReadOnlyList<CapMove>? Moves = null)
 {
     public bool Fallen => !Egg && Hp <= 0;
+
+    /// <summary>At the cap or over it: it can learn nothing more from the next battle.</summary>
+    public bool AtCap(int cap) => !Egg && !Fallen && Level >= cap;
+
+    /// <summary>One level under the cap and most of the way to the next: the next battle may put it at the cap.</summary>
+    public bool NearCap(int cap) => !Egg && !Fallen && Level == cap - 1 && Exp >= 0.8;
 }
 
 /// <summary>One of the run's fallen, for the memorial and for the little graves under the party.</summary>

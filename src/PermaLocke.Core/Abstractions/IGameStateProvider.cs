@@ -32,7 +32,11 @@ public sealed record LivePartyMember(
     string TrainerName,
     int Form = 0,
     IReadOnlyList<int>? Moves = null,
-    bool IsEgg = false)
+    bool IsEgg = false,
+    int HeldItem = 0,
+    int Status = 0,
+    double ExpProgress = -1,
+    IReadOnlyList<int>? Pp = null)
 {
     public bool IsFainted => CurrentHp == 0;
 }

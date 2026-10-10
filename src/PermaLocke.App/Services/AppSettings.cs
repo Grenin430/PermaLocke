@@ -19,7 +19,13 @@ public sealed record AppSettingsData(
     bool Background = false,
     bool GuideHidden = false,
     int Resolution = 0,
-    bool Vulkan = false);
+    bool Vulkan = false,
+    int CapSize = 0,
+    int CapMaxCell = 0,
+    bool CapMemorial = true,
+    bool CapDetails = true,
+    bool CapAnimations = true,
+    int CapKey = 0x13);
 
 /// <summary>
 /// The player's preferences, kept in <c>Config/ajustes.json</c> and pushed into the services that obey them.
