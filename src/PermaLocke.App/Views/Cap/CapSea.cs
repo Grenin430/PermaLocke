@@ -36,22 +36,24 @@ public static class CapSea
         return Math.Clamp(l.FloorTop + (int)Math.Round(h), 6, l.Rows - 4);
     }
 
-    /// <summary>The columns the fossils lie in, oldest first: spread over the floor, keeping clear of the edges, never in the notch's ear above the floor.</summary>
+    /// <summary>
+    /// The column of the sea the fossil of a given number lies in: a golden-ratio walk over the floor, so each new fossil falls in the largest gap
+    /// there is and no fossil ever moves when another is added.
+    /// </summary>
+    public static int FossilColumn(CapWorldLayout l, int index, CapSeaContext ctx)
+    {
+        var left = 14;
+        var span = Math.Max(1, l.Cols - 28);
+        var fraction = (0.5 + ((ctx.Seed % 1000) / 1000.0) + (index * 0.6180339887)) % 1.0;
+        return left + (int)(fraction * span);
+    }
+
+    /// <summary>The columns the fossils lie in, oldest first.</summary>
     public static int[] FossilColumns(CapWorldLayout l, int count, CapSeaContext ctx)
     {
         if (count <= 0) return [];
-
-        var left = 14;
-        var right = l.Cols - 14;
-        var span = right - left;
         var columns = new int[count];
-        for (var i = 0; i < count; i++)
-        {
-            // Evenly spaced, nudged by a hash so a row of them does not look ruled.
-            var x = left + (int)((i + 0.5) * span / count) + ((CapArt.Hash(ctx.Seed, i + 100) % 7) - 3);
-            columns[i] = Math.Clamp(x, left, right);
-        }
-
+        for (var i = 0; i < count; i++) columns[i] = FossilColumn(l, i, ctx);
         return columns;
     }
 
@@ -157,19 +159,19 @@ public static class CapSea
 
     private static void Water(CapSheet p, CapWorldLayout l, CapSeaPalette pal)
     {
-        var top = Math.Max(0, l.SurfaceY);
-        var bottom = l.Rows;
-        var span = Math.Max(1, l.FloorTop + 14 - top);
-        for (var y = top; y < bottom; y++)
+        for (var y = Math.Max(0, l.SurfaceY); y < l.Rows; y++)
         {
-            var t = (y - top) / (double)span;
-            for (var x = 0; x < l.Cols; x++)
-            {
-                // A slow mottling across the width, so the bands of the ramp are not ruled straight.
-                var bias = 0.09 * Math.Sin((x * 0.057) + (y * 0.021)) + (0.05 * Math.Sin((x * 0.19) - (y * 0.06)));
-                p.Set(x, y, CapSeaPalette.Dithered(pal.Water, t, x, y, bias));
-            }
+            for (var x = 0; x < l.Cols; x++) p.Set(x, y, WaterAt(l, pal, x, y));
         }
+    }
+
+    /// <summary>The water at a cell: the dithered ramp from the surface to the abyss, mottled slowly across the width so that its bands are not ruled straight.</summary>
+    public static uint WaterAt(CapWorldLayout l, CapSeaPalette pal, int x, int y)
+    {
+        var top = Math.Max(0, l.SurfaceY);
+        var span = Math.Max(1, l.FloorTop + 14 - top);
+        var bias = (0.09 * Math.Sin((x * 0.057) + (y * 0.021))) + (0.05 * Math.Sin((x * 0.19) - (y * 0.06)));
+        return CapSeaPalette.Dithered(pal.Water, (y - top) / (double)span, x, y, bias);
     }
 
     // ---------------------------------------------------------------- the floor

@@ -65,6 +65,27 @@ public sealed class CapSheet(int width, int height)
         }
     }
 
+    /// <summary>
+    /// Puts another sheet on this one with the ordered dither: only the cells whose pattern number is under <paramref name="progress"/> (0 to 1) of the way
+    /// to 16 are put, so a picture arrives over another in a pattern, not all at once.
+    /// </summary>
+    public void BlitDithered(CapSheet src, int ox, int oy, double progress)
+    {
+        var cut = progress * 16;
+        for (var y = 0; y < src.H; y++)
+        {
+            for (var x = 0; x < src.W; x++)
+            {
+                var i = ((y * src.W) + x) * 4;
+                if (src.B[i + 3] == 0) continue;
+                if (Bayer[(((y + oy) & 3) * 4) + ((x + ox) & 3)] >= cut) continue;
+                Set(ox + x, oy + y, Rgb(src.B[i + 2], src.B[i + 1], src.B[i]), src.B[i + 3]);
+            }
+        }
+    }
+
+    private static readonly int[] Bayer = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+
     /// <summary>Takes everything from a sheet of the same size.</summary>
     public void CopyFrom(CapSheet other) => Buffer.BlockCopy(other.B, 0, B, 0, Math.Min(B.Length, other.B.Length));
 

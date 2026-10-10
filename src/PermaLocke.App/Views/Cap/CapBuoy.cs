@@ -11,6 +11,9 @@ public sealed class CapBuoy
 
     public CapSheet? Body { get; private set; }
 
+    /// <summary>The buoy as it was before the last time it was made: what a new cap dissolves from.</summary>
+    public CapSheet? Previous { get; private set; }
+
     public CapSheet? Tag { get; private set; }
 
     /// <summary>The row of the buoy's picture the waterline is at: below it everything is under the water.</summary>
@@ -23,6 +26,7 @@ public sealed class CapBuoy
 
     public void Build(CapWorldLayout l, CapSeaPalette pal, CapPlaqueData data)
     {
+        Previous = Body;
         BuildBody(l, pal, data);
         BuildTag(l, pal, data);
     }
@@ -161,12 +165,22 @@ public sealed class CapBuoy
     }
 
     /// <summary>The buoy and its tag at their place, bobbing; the part under the water darker and rippled.</summary>
-    public void Paint(CapSheet p, CapWorldLayout l, CapSeaPalette pal, double phase, double glow)
+    public void Paint(CapSheet p, CapWorldLayout l, CapSeaPalette pal, double phase, double glow, double changed = 1, uint lantern = 0xFFF0B0)
     {
         if (Body is null) return;
 
         var bob = (int)Math.Round(1.1 * Math.Sin(phase * 1.4) * Math.Min(2.0, pal.Agitation));
-        p.Blit(Body, l.Buoy.Left, l.Buoy.Top + bob);
+
+        // A new cap arrives over the old one with the dither.
+        if (changed < 1 && Previous is { } old)
+        {
+            p.Blit(old, l.Buoy.Left, l.Buoy.Top + bob);
+            p.BlitDithered(Body, l.Buoy.Left, l.Buoy.Top + bob, changed);
+        }
+        else
+        {
+            p.Blit(Body, l.Buoy.Left, l.Buoy.Top + bob);
+        }
 
         // The lantern breathes: a halo of dither round it, bright and then not.
         var lx = l.Buoy.Left + Lantern.X;
@@ -178,7 +192,7 @@ public sealed class CapBuoy
             {
                 var d = Math.Sqrt((dx * dx / 2.2) + (dy * dy));
                 if (d > 5.2 || (d < 2 && glow < 0.5) || ((dx + dy) & 1) != 0) continue;
-                p.Set(lx + dx, ly + dy, 0xFFF0B0u, (int)((30 + (70 * breath * glow)) * (1 - (d / 5.2))));
+                p.Set(lx + dx, ly + dy, lantern, (int)((30 + (70 * breath * glow)) * (1 - (d / 5.2))));
             }
         }
 

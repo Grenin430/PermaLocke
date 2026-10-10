@@ -26,6 +26,9 @@ public sealed class CapCreature
     /// <summary>Where the text sheet goes in the window: the info box's corner, or under the little picture in the compact mode.</summary>
     public (int X, int Y) InfoAt { get; private set; }
 
+    /// <summary>Where the level is written, in the window's cells: what flashes when the level goes up.</summary>
+    public CapRect LevelBox { get; private set; }
+
     public uint Tint { get; private set; }
 
     /// <summary>Where the beads of the life go, in the window's cells, and how many cells wide they are.</summary>
@@ -94,7 +97,7 @@ public sealed class CapCreature
                     if (fallen)
                     {
                         var luma = ((0.30 * c.R) + (0.59 * c.G) + (0.11 * c.B)) / 255.0;
-                        rgb = CapSheet.Mix(0x1A2236u, 0x8C9AB4u, luma * 0.9);
+                        rgb = CapSheet.Mix(0x26324Cu, 0xB4C4E0u, luma * 0.95);
                     }
 
                     solid[x, y] = true;
@@ -140,7 +143,7 @@ public sealed class CapCreature
                 }
 
                 if (ring == 1) outline.Add((x, y));
-                else if (ring > 1 && !fallen) halo.Add((x, y, ring));
+                else if (ring > 1) halo.Add((x, y, ring));
             }
         }
 
@@ -150,7 +153,7 @@ public sealed class CapCreature
     }
 
     /// <summary>The picture of the creature at its place, over the water: halo first, then the outline, then the body. <paramref name="breath"/> is 0 to 1.</summary>
-    public void PaintPicture(CapSheet p, int ox, int oy, uint ink, double breath, double strength = 1)
+    public void PaintPicture(CapSheet p, int ox, int oy, uint ink, double breath, double strength = 1, uint? haloTint = null)
     {
         if (_body.Length == 0) return;
 
@@ -160,13 +163,26 @@ public sealed class CapCreature
         foreach (var (x, y, ring) in _halo)
         {
             // The inner ring is a steady glow; the outer one is a dither that breathes in and out.
-            if (ring == 2) p.Set(baseX + x, baseY + y, Tint, (int)((55 + (60 * breath)) * strength));
-            else if (((x + y) & 1) == 0) p.Set(baseX + x, baseY + y, Tint, (int)((20 + (50 * breath)) * strength));
+            var halo = haloTint ?? Tint;
+            if (ring == 2) p.Set(baseX + x, baseY + y, halo, (int)((55 + (60 * breath)) * strength));
+            else if (((x + y) & 1) == 0) p.Set(baseX + x, baseY + y, halo, (int)((20 + (50 * breath)) * strength));
         }
 
         foreach (var (x, y) in _outline) p.Set(baseX + x, baseY + y, ink, 215);
         foreach (var (x, y, rgb) in _body) p.Set(baseX + x, baseY + y, rgb, (int)(255 * Math.Min(1, strength + 0.15)));
     }
+
+    /// <summary>The body of the creature in one colour over itself, at a place: the white flash of a hit, the gold of a level, the glow of a heal.</summary>
+    public void PaintTint(CapSheet p, int ox, int oy, uint colour, int alpha)
+    {
+        if (alpha <= 0) return;
+        var baseX = Slot.Sprite.Left + ox + ((Slot.Sprite.Width - _spriteW) / 2);
+        var baseY = Slot.Sprite.Top + oy + ((Slot.Sprite.Height - _spriteH) / 2);
+        foreach (var (x, y, _) in _body) p.Set(baseX + x, baseY + y, colour, alpha);
+    }
+
+    /// <summary>The size of the picture in cells, for the effects that go round it.</summary>
+    public (int W, int H) PictureSize => (_spriteW, _spriteH);
 
     // ---------------------------------------------------------------- the text
 
@@ -183,6 +199,7 @@ public sealed class CapCreature
         var gold = 0xFFD860u;
         var colour = fallen ? 0x7A86A4u : m.AtCap(cap) ? gold : pal.Glow;
         CapGlyphs.Outlined(sheet, level, Math.Max(1, (sheet.W - CapGlyphs.Width(level, false)) / 2), 1, colour, pal.Ink);
+        LevelBox = new CapRect(InfoAt.X, InfoAt.Y, sheet.W, 6);
         if (fallen) return;
 
         Beads = Math.Min(3, Math.Max(1, s.Width / 4));
@@ -219,13 +236,18 @@ public sealed class CapCreature
 
         CapGlyphs.Outlined(sheet, name, 1, y + 1, fallen ? 0x7A86A4u : glow, ink, big);
         if (fallen) sheet.HLine(1, y + 1 + (lineH / 2), CapGlyphs.Width(name, big), 0xB8433Au);
-        if (wide && level.Length > 0) CapGlyphs.Outlined(sheet, level, box.Width - levelW - 1, y + 1, levelColour, ink, big: true);
+        if (wide && level.Length > 0)
+        {
+            CapGlyphs.Outlined(sheet, level, box.Width - levelW - 1, y + 1, levelColour, ink, big: true);
+            LevelBox = new CapRect(box.Left + box.Width - levelW - 2, box.Top + y, levelW + 2, 9);
+        }
         y += lineH + 4;
 
         // The level goes under the name in a narrow text, so that both stay whole.
         if (!wide && level.Length > 0)
         {
             CapGlyphs.Outlined(sheet, level, 1, y, levelColour, ink, big: true);
+            LevelBox = new CapRect(box.Left, box.Top + y - 1, levelW + 2, 9);
             y += 11;
         }
 

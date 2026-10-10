@@ -92,20 +92,36 @@ public sealed class CapWorldView
         frame.CopyFrom(Scene(mood.Now));
         if (mood.Blend < 1 && mood.Before != mood.Now) DitherFrom(frame, Scene(mood.Before), mood.Blend);
 
+        // The change of the cap opens the floor: it drops away, glowing along its cracks, and comes back with its new stratum.
+        var drop = anim?.FloorDrop(t, 30) ?? 0;
+        if (drop > 0) DropFloor(frame, drop, pal, anim!.SinceCap(t) ?? 0);
+
         CapSeaLive.Surface(frame, Layout, pal, _context, phase);
         CapSeaLive.Stars(frame, Layout, _context, phase);
         CapSeaLive.Shafts(frame, Layout, pal, _context, phase);
         CapSeaLive.Snow(frame, Layout, pal, _context, phase);
+        if (anim is not null) CapFauna.Paint(frame, Layout, pal, mood, _context, t, phase, data.Graves ?? []);
         CapFlora.Paint(frame, Layout, pal, _context, _fossils, phase);
         CapDeep.Lanterns(frame, Layout, pal, data, phase);
 
-        if (Layout.Panel == CapPanelKind.Party) PaintParty(frame, data, pal, anim, t, phase);
+        if (Layout.Panel == CapPanelKind.Party) PaintParty(frame, data, pal, mood, anim, t, phase);
+
+        // A fall darkens the whole sea for a moment: a veil of dither that comes down fast and lifts slowly, in both windows.
+        if (anim?.LastFallSince(t) is { } since && since < 2.6)
+        {
+            var veil = since < 0.25 ? since / 0.25 : 1 - ((since - 0.25) / 2.35);
+            frame.Dither(0, 0, frame.W, frame.H, 0x04061Au, (int)(130 * veil), (int)Math.Floor(since * 12) & 1);
+        }
     }
 
-    private void PaintParty(CapSheet p, CapPlaqueData data, CapSeaPalette pal, CapAnim? anim, double t, double phase)
+    private void PaintParty(CapSheet p, CapPlaqueData data, CapSeaPalette pal, (CapMood Now, CapMood Before, double Blend) mood, CapAnim? anim, double t, double phase)
     {
-        _buoy.Paint(p, Layout, pal, phase, 1);
+        var danger = mood.Now == CapMood.Danger;
+        _buoy.Paint(p, Layout, pal, phase, 1, anim?.HeaderDissolve(t) ?? 1, danger ? 0xFF5040u : 0xFFF0B0u);
+        if (anim?.SinceCap(t) is { } sinceCap && sinceCap < 2.0) CapFx.CapRing(p, Layout, sinceCap);
+
         CapSounding.Paint(p, Layout, pal, data, _creatures, anim, t, phase);
+        var graves = data.Graves?.Count ?? 0;
 
         for (var i = 0; i < _creatures.Length; i++)
         {
@@ -117,18 +133,26 @@ public sealed class CapWorldView
             }
 
             var sway = Layout.Mode == CapMode.Slim || Layout.Dense ? 1.0 : 1.7;
-            var ox = (int)Math.Round(sway * Math.Sin((phase * 0.8) + (i * 1.3)));
-            var oy = (int)Math.Round(1.2 * Math.Sin((phase * 1.1) + (i * 1.7)));
             var share = anim?.HpFraction(i, t) ?? (m.MaxHp > 0 ? Math.Clamp(m.Hp / (double)m.MaxHp, 0, 1) : 0);
+            var pose = CapFx.Pose(anim, i, t, m, share, data.InBattle, Layout, _context, graves);
 
-            // The halo breathes slower the healthier it is: a heartbeat that quickens as the life runs out.
-            var rate = m.Fallen || m.Egg ? 0.5 : 0.7 + (2.0 * (1 - share));
-            var breath = 0.5 + (0.5 * Math.Sin(((anim is null ? 0 : t) * rate * 2) + i));
-            creature.PaintPicture(p, ox, oy, pal.Ink, breath, m.Fallen ? 0.5 : 1);
+            var ox = pose.Dx + (anim is null ? 0 : (int)Math.Round(sway * Math.Sin((phase * 0.8) + (i * 1.3))));
+            var oy = pose.Dy + (anim is null ? 0 : (int)Math.Round(1.2 * Math.Sin((phase * 1.1) + (i * 1.7))));
+            if (!pose.Hidden)
+            {
+                creature.PaintPicture(p, ox, oy, pal.Ink, pose.Breath, pose.Strength, pose.HaloTint);
+                if (pose.Wash is { } wash) creature.PaintTint(p, ox, oy, wash, pose.WashAlpha);
+            }
 
             if (creature.Info is { } info) p.Blit(info, creature.InfoAt.X, creature.InfoAt.Y);
-            PaintBeads(p, creature, m, share, breath, pal);
+            PaintBeads(p, creature, m, share, pose.Breath, pal, anim?.TrailFraction(i, t));
             PaintTicker(p, creature, m, i, anim is null ? 0 : t, pal);
+
+            if (anim is not null)
+            {
+                CapFx.Overlay(p, Layout, pal, creature, m, anim, i, t, phase);
+                CapFx.Fall(p, Layout, pal, _context, creature, anim, i, t, graves, _fossils);
+            }
         }
     }
 
@@ -159,13 +183,53 @@ public sealed class CapWorldView
         if (move.Empty) p.HLine(x + 7, y + 2, CapGlyphs.Width(name, false), 0xFF6A50u);
     }
 
-    private static void PaintBeads(CapSheet p, CapCreature c, CapPlaqueMember m, double share, double breath, CapSeaPalette pal)
+    private static void PaintBeads(CapSheet p, CapCreature c, CapPlaqueMember m, double share, double breath, CapSeaPalette pal, double? trail)
     {
         if (c.Beads <= 0 || m.Egg || m.Fallen) return;
 
-        var lit = share <= 0 ? 0 : Math.Max(1, (int)Math.Ceiling(share * c.Beads - 0.001));
+        var lit = share <= 0 ? 0 : Math.Max(1, (int)Math.Ceiling((share * c.Beads) - 0.001));
         var colour = share > 0.5 ? 0x6EF0A0u : share > 0.2 ? 0xF0D060u : 0xFF6A50u;
+
+        // The trail of a drop: the beads that were lit a moment ago and are not now, pale, going out one by one.
+        if (trail is { } was)
+        {
+            var before = Math.Clamp((int)Math.Ceiling((was * c.Beads) - 0.001), 0, c.Beads);
+            for (var b = lit; b < before; b++) CapGlyphs.Beads(p, c.BeadsAt.X + (b * 4), c.BeadsAt.Y, 1, 1, 0xF4E4C0u, pal.Ink, 0);
+        }
+
         CapGlyphs.Beads(p, c.BeadsAt.X, c.BeadsAt.Y, c.Beads, lit, colour, pal.Ink, 0.4 + (0.6 * breath));
+    }
+
+    /// <summary>
+    /// The floor with the cap changing: everything below the line of the floor is moved down <paramref name="drop"/> rows and the gap filled with water,
+    /// a crack of light runs along the new edge, and sediment goes up from it.
+    /// </summary>
+    private void DropFloor(CapSheet frame, int drop, CapSeaPalette pal, double since)
+    {
+        var from = Layout.FloorTop - 18;
+        if (from <= Layout.Notch.Y1 || drop <= 0) return;
+
+        for (var y = frame.H - 1; y >= from + drop; y--)
+        {
+            Buffer.BlockCopy(frame.B, (y - drop) * frame.W * 4, frame.B, y * frame.W * 4, frame.W * 4);
+        }
+
+        for (var y = from; y < Math.Min(frame.H, from + drop); y++)
+        {
+            for (var x = 0; x < frame.W; x++) frame.Erase(x, y);
+            for (var x = 0; x < frame.W; x++) frame.Set(x, y, CapSea.WaterAt(Layout, pal, x, y));
+        }
+
+        // The crack: a bright thread that follows the edge of the floor, flickering, and dust rising from it.
+        var beat = (int)Math.Floor(since * 14);
+        for (var x = 0; x < frame.W; x++)
+        {
+            var edge = CapSea.Relief(Layout, _context, x, _fossils) + drop;
+            if (edge >= frame.H) continue;
+            var jitter = (CapArt.Hash(x + (beat * 3), 7) % 3) - 1;
+            frame.Set(x, edge + jitter, 0xFFE890u, 220);
+            if (((x + beat) & 3) == 0) frame.Set(x, edge + jitter - 1 - (CapArt.Hash(x, beat) % 6), 0xFFF8D0u, 150);
+        }
     }
 
     /// <summary>One mood's scene over another with the dither: the cells whose pattern number is above the progress still show the old one.</summary>

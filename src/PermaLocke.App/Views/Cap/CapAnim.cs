@@ -37,7 +37,7 @@ public enum CapMood
 public sealed class CapAnim
 {
     /// <summary>How long a change dissolves from the old drawing into the new one, in seconds.</summary>
-    public const double DissolveSeconds = 0.45;
+    public const double DissolveSeconds = 1.0;
 
     private const double Never = -1e9;
     private const double MourningSeconds = 20;
@@ -62,6 +62,7 @@ public sealed class CapAnim
         public double HealAt = Never;
         public double HitAt = Never;
         public double FellAt = Never;
+        public int GravesAtFall;
         public double HatchAt = Never;
         public double ChangedAt = Never;
         public double StatusAt = Never;
@@ -73,6 +74,7 @@ public sealed class CapAnim
     private int _cap;
     private int _previousCap;
     private double _capAt = Never;
+    private int _graves;
     private double _headerAt = Never;
     private int _highest;
     private int _previousHighest;
@@ -103,6 +105,7 @@ public sealed class CapAnim
     /// <summary>Tells it what the panel says now, at a moment: it notices what changed since the last time.</summary>
     public void Update(CapPlaqueData data, double now)
     {
+        _graves = data.Graves?.Count ?? 0;
         var old = _tracks;
         var next = new Track?[CapWorld.Creatures];
 
@@ -226,6 +229,7 @@ public sealed class CapAnim
                 if (m.Hp <= 0 && track.Hp > 0)
                 {
                     track.FellAt = now;
+                    track.GravesAtFall = _graves;
                     _lastFallAt = now;
                 }
             }
@@ -312,6 +316,12 @@ public sealed class CapAnim
     /// <summary>How long ago a Pokémon fell, in seconds, or null if it has not in the time the panel has been open.</summary>
     public double? SinceFall(int index, double t) => At(index) is { } track && track.FellAt > Never && t >= track.FellAt ? t - track.FellAt : null;
 
+    /// <summary>How many graves the run had when this Pokémon fell: the fossil it becomes is the next one, at that place.</summary>
+    public int GravesAtFall(int index) => At(index)?.GravesAtFall ?? 0;
+
+    /// <summary>How long ago the latest fall was, in seconds, or null when none has happened in the time the panel has been open.</summary>
+    public double? LastFallSince(double t) => _lastFallAt > Never && t >= _lastFallAt ? t - _lastFallAt : null;
+
     /// <summary>How long ago a Pokémon was hit, in seconds, or null.</summary>
     public double? SinceHit(int index, double t) => At(index) is { } track && track.HitAt > Never && t >= track.HitAt ? t - track.HitAt : null;
 
@@ -350,6 +360,22 @@ public sealed class CapAnim
         return target;
     }
 
+    /// <summary>
+    /// How far the floor has dropped at a moment, in rows, when the cap changes: it falls away for a second and a half and comes back for another second
+    /// and a half with its new stratum, shaking as it goes. Zero the rest of the time.
+    /// </summary>
+    public int FloorDrop(double t, int rows)
+    {
+        if (_capAt <= Never || t < _capAt) return 0;
+        var k = t - _capAt;
+        if (k > 3.2) return 0;
+        var depth = k < 1.5 ? Ease(k / 1.5) : k < 3.2 ? 1 - Ease((k - 1.5) / 1.7) : 0;
+        return (int)Math.Round(depth * rows);
+    }
+
+    /// <summary>How long ago the cap changed, in seconds, or null when it has not in the time the panel has been open.</summary>
+    public double? SinceCap(double t) => _capAt > Never && t >= _capAt ? t - _capAt : null;
+
     /// <summary>The fuse is closing and opening because the cap changed: 0 when not, 1 at the moment it is out.</summary>
     public double CapPulse(double t) => Pulse(_capAt, t, 1.6);
 
@@ -369,14 +395,14 @@ public sealed class CapAnim
     /// <summary>Whether something is moving that needs frames more often than the ambient flicker: a pulse, a trail, a change dissolving, or danger.</summary>
     public bool Busy(double t)
     {
-        if (_danger || t - _capAt < 1.7 || t - _highestAt < 1) return true;
+        if (_danger || t - _capAt < 3.4 || t - _highestAt < 1) return true;
         if (t - _headerAt < DissolveSeconds) return true;
 
         foreach (var track in _tracks)
         {
             if (track is null) continue;
             if (t - track.HitAt < 1.3 || t - track.HealAt < 1 || t - track.LevelAt < 1.2 || t - track.HatchAt < 1.3
-                || t - track.ChangedAt < DissolveSeconds || t - track.HpAt < 0.7 || t - track.FellAt < 2.2) return true;
+                || t - track.ChangedAt < DissolveSeconds || t - track.HpAt < 0.7 || t - track.FellAt < 8) return true;
         }
 
         return false;

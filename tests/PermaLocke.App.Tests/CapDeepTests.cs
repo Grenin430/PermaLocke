@@ -37,7 +37,7 @@ public sealed class CapDeepTests
             var ctx = new CapSeaContext(Seed: 5);
             var fossils = CapSea.FossilColumns(layout, 6, ctx);
             Assert.Equal(6, fossils.Length);
-            Assert.True(fossils.SequenceEqual(fossils.OrderBy(x => x)), "the fossils are in order");
+            for (var a = 0; a < fossils.Length; a++) for (var b = a + 1; b < fossils.Length; b++) Assert.True(Math.Abs(fossils[a] - fossils[b]) >= Math.Max(2, (cols - 28) / 20), $"{mode}: fossils {a} and {b} too close");
             Assert.All(fossils, x => Assert.InRange(x, 0, cols - 1));
 
             for (var x = 0; x < cols; x++) Assert.InRange(CapSea.Relief(layout, ctx, x, fossils), 6, rows - 4);

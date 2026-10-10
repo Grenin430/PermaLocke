@@ -62,7 +62,7 @@ public static class Exports
         var times = new List<double> { 0 };
         foreach (var step in scenario.Steps.Skip(1))
         {
-            times.AddRange([step.At - 0.1, step.At + 0.05, step.At + 0.2, step.At + 0.45, step.At + 0.9, step.At + 1.6]);
+            times.AddRange([step.At - 0.2, step.At + 0.1, step.At + 0.4, step.At + 1.0, step.At + 2.0, step.At + 3.2, step.At + 4.5, step.At + 6.0]);
         }
 
         times.Add(scenario.Length);

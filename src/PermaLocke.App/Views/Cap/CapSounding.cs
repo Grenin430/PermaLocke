@@ -38,6 +38,13 @@ public static class CapSounding
         if (atCap) orb = l.LineEnd - 2;
         orb = Math.Clamp(orb, l.LineAlong + 6, l.LineEnd - 2);
 
+        // A new cap: the line is hauled up to the buoy and let down again to where the lure belongs.
+        if (anim?.SinceCap(t) is { } since && since < 1.6)
+        {
+            var up = l.LineAlong + 6;
+            orb = since < 0.6 ? (int)(orb + ((up - orb) * (since / 0.6))) : (int)(up + ((orb - up) * Math.Pow((since - 0.6) / 1.0, 2)));
+        }
+
         void Cell(int along, int across, uint colour, int alpha)
         {
             if (horizontal) p.Set(along, across, colour, alpha);
