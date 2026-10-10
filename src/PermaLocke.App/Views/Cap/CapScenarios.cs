@@ -107,8 +107,53 @@ public static class CapScenarios
             Still("liga", "La Liga, sin siguiente cap", Base(icon, full, 9, cap: 90, cleared: 12) with { Trial = "CAMPEONATO DE LA LIGA", Next = null }),
         };
 
+        // The ones that move: each is a few moments in order, and the panel is told them the way the game would.
+        var calm = Base(icon, full);
+        var fight = Base(icon, full, battle: true);
+
+        scenarios.Add(new CapScenario("subida", "Gyarados sube del 41 al 42", [
+            new(0, Base(icon, Replace(full, 0, m => m with { Level = 41, Exp = 0.96, MaxHp = 139, Hp = 139 }), highest: 42)),
+            new(2, Base(icon, Replace(full, 0, m => m with { Level = 42, Exp = 0.04 })))]));
+
+        scenarios.Add(new CapScenario("golpe", "Un combate: Gyarados baja de 143 a 90 y a 31", [
+            new(0, fight),
+            new(2, Base(icon, Replace(full, 0, m => m with { Hp = 90 }), battle: true)),
+            new(5, Base(icon, Replace(full, 0, m => m with { Hp = 31 }), battle: true))]));
+
+        scenarios.Add(new CapScenario("caida", "Gyarados cae en combate y su tumba aparece", [
+            new(0, Base(icon, Replace(full, 0, m => m with { Hp = 31 }), battle: true)),
+            new(2, Base(icon, Replace(full, 0, m => m with { Hp = 0 }), battle: true)),
+            new(7, Base(icon, Replace(full, 0, m => m with { Hp = 0 }), 4))]));
+
+        scenarios.Add(new CapScenario("curacion", "Un Centro Pokémon cura al equipo", [
+            new(0, Base(icon, combat, 3)),
+            new(2, Base(icon, [.. full.Select(m => m with { Hp = m.MaxHp, Status = CapStatus.None })], 3))]));
+
+        scenarios.Add(new CapScenario("cambio-cap", "Se supera la prueba: el cap pasa de 42 a 54", [
+            new(0, Base(icon, atCap, 5, highest: 42)),
+            new(2, Base(icon, atCap, 5, cap: 54, highest: 42, cleared: 8) with { Trial = "PRUEBA 9 DE 12", Next = 60 })]));
+
+        scenarios.Add(new CapScenario("eclosion", "Un huevo eclosiona", [
+            new(0, Base(icon, eggs, 0)),
+            new(2, Base(icon, Replace(eggs, 1, m => m with { Egg = false, Level = 1, Hp = 11, MaxHp = 11 }), 0))]));
+
+        var states = new[]
+        {
+            Member(0, icon, 42, 143, 143, CapStatus.Poison), Member(1, icon, 42, 122, 122, CapStatus.Burn),
+            Member(2, icon, 41, 170, 170, CapStatus.Sleep), Member(3, icon, 40, 124, 124, CapStatus.Paralysis),
+            Member(4, icon, 42, 124, 124, CapStatus.Freeze), Member(5, icon, 39, 124, 124)
+        };
+        scenarios.Add(Still("estados", "Los cinco estados alterados", Base(icon, states)));
+        scenarios.Add(Still("casi-tope", "Dos Pokémon a punto de llegar al cap", Base(icon,
+            [Member(0, icon, 41, 143, 143, exp: 0.93), Member(1, icon, 41, 122, 122, exp: 0.85), Member(2, icon, 38, 170, 170, exp: 0.2),
+             Member(3, icon, 40, 124, 124, exp: 0.5), Member(4, icon, 42, 124, 124), Member(5, icon, 39, 124, 124, exp: 0.7)])));
+        _ = calm;
+
         return scenarios;
     }
+
+    private static CapPlaqueMember[] Replace(IReadOnlyList<CapPlaqueMember> party, int index, Func<CapPlaqueMember, CapPlaqueMember> change) =>
+        [.. party.Select((m, i) => i == index ? change(m) : m)];
 
     private static CapScenario Still(string name, string title, CapPlaqueData data) => new(name, title, [new CapStep(0, data)]);
 }

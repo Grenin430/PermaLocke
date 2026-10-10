@@ -235,7 +235,7 @@ public static class CapComposer
         var y = inner.Top + 3;
         var header = new CapRect(inner.Left + margin, y, width, slim ? 26 : 30);
         y += header.Height + 3;
-        var footH = slim ? 26 : 34;
+        var footH = slim ? 32 : 34;
         var plinthH = slim ? 6 : 8;
         var foot = new CapRect(inner.Left + margin, inner.Bottom - 2 - plinthH - 3 - footH, width, footH);
         var bodyRect = new CapRect(inner.Left + margin, y, width, foot.Top - 3 - y);
@@ -612,16 +612,17 @@ public static class CapComposer
         p.HLine(f.Left, f.Top, f.Width, CapArt.GoldDim, 120);
 
         var alive = data.Party.Count(m => m is { Egg: false, Fallen: false });
-        var line1 = data.Trials > 0 ? $"PRUEBAS {Math.Min(data.Cleared, data.Trials)} DE {data.Trials}" : data.Trial;
+        var narrow = layout.Narrow;
+        var line1 = data.Trials > 0 ? (narrow ? $"PRUEBAS {Math.Min(data.Cleared, data.Trials)}/{data.Trials}" : $"PRUEBAS {Math.Min(data.Cleared, data.Trials)} DE {data.Trials}") : data.Trial;
         p.Small(line1, f.Left + 4, f.Top + 4, CapArt.Paper);
-        var line2 = $"EQUIPO VIVO {alive}";
-        p.Small(line2, f.Right - 4 - CapSheet.SmallWidth(line2), f.Top + 4, alive == 0 ? CapArt.HpRed : CapArt.HpGreen);
+        var line2 = narrow ? $"VIVOS {alive}" : $"EQUIPO VIVO {alive}";
+        p.Small(line2, narrow ? f.Left + 4 : f.Right - 4 - CapSheet.SmallWidth(line2), narrow ? f.Top + 11 : f.Top + 4, alive == 0 ? CapArt.HpRed : CapArt.HpGreen);
 
         if (data.Trials <= 0) return;
         var size = layout.Narrow ? 4 : 6;
         var step = size + 1;
         var total = (data.Trials * step) - 1;
         var x = f.Left + ((f.Width - total) / 2);
-        for (var i = 0; i < data.Trials; i++) CapArt.Gem(p, x + (i * step), f.Top + 14, size, i < data.Cleared);
+        for (var i = 0; i < data.Trials; i++) CapArt.Gem(p, x + (i * step), f.Top + (narrow ? 20 : 14), size, i < data.Cleared);
     }
 }

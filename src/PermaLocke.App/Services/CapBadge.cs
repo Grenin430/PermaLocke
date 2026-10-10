@@ -44,6 +44,7 @@ public sealed class CapBadge
     private static readonly TimeSpan Follow = TimeSpan.FromMilliseconds(500);
     private static readonly TimeSpan Reread = TimeSpan.FromSeconds(10);
     private static readonly TimeSpan Frames = TimeSpan.FromMilliseconds(83);
+    private static readonly TimeSpan Fast = TimeSpan.FromMilliseconds(40);
     private static readonly TimeSpan Doubt = TimeSpan.FromSeconds(6);
     private static readonly TimeSpan Verify = TimeSpan.FromSeconds(1.5);
 
@@ -318,8 +319,22 @@ public sealed class CapBadge
     {
         var now = Now;
         WatchKey();
-        if (_main is { Window.IsVisible: true } main) main.Plaque.Tick(now);
-        if (_memorial is { Window.IsVisible: true } memorial) memorial.Plaque.Tick(now);
+        var busy = false;
+        if (_main is { Window.IsVisible: true } main)
+        {
+            main.Plaque.Tick(now);
+            busy |= main.Plaque.Busy(now);
+        }
+
+        if (_memorial is { Window.IsVisible: true } memorial)
+        {
+            memorial.Plaque.Tick(now);
+            busy |= memorial.Plaque.Busy(now);
+        }
+
+        // Twelve frames a second for the flame and the dust; twenty-five only while something is flashing, trailing or dissolving.
+        var wanted = busy ? Fast : Frames;
+        if (_frames.Interval != wanted) _frames.Interval = wanted;
     }
 
     /// <summary>

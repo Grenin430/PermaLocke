@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    El laboratorio del panel del cap (2026-10-10): enseña el panel tal cual lo compila la app, sobre un emulador simulado, en cualquier
+    tamano de ventana y disposicion de pantallas, con la banda negra, los modos (completo, estrecho, reducido, tira) y los escenarios
+    (equipo completo, caidos, huevos, combate, subida de nivel, curacion, golpe, caida, cambio de cap, eclosion, estados). Selector
+    de escenario, escala con decimales, velocidad, fondo negro o de juego, fotograma a fotograma y exportacion a PNG.
+
+      dotnet run con el proyecto tools/PermaLocke.PlaqueLab
+      dotnet run con el proyecto tools/PermaLocke.PlaqueLab con la opcion exportar y una carpeta: deja los PNG y se cierra
+      dotnet run con el proyecto tools/PermaLocke.PlaqueLab con la opcion medir: coste por fotograma, sin ventanas
+      dotnet run con el proyecto tools/PermaLocke.PlaqueLab con la opcion medir-ventana: ABRE dos ventanas encima del escritorio 10 s, pedir antes
+
+    Las opciones llevan dos guiones delante. Usa la propia app como referencia, no copias de sus ficheros. Los iconos salen como en la app,
+    de ROM y Expansion (a Data/sprites); sin ellos, manchas de colores. No esta en PermaLocke.slnx a proposito, como PixelCheck: es una
+    herramienta de desarrollo.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>PermaLocke.PlaqueLab</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\PermaLocke.App\PermaLocke.App.csproj" />
+  </ItemGroup>
+
+</Project>
