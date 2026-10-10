@@ -29,57 +29,72 @@ public static class CapBandGuard
     {
         var judged = false;
 
-        foreach (var slot in new[] { plan.Main, plan.Memorial })
+        foreach (var slot in new[] { plan.Main, plan.Companion })
         {
             if (slot is null) continue;
-            if (Strips(slot.Box, plan.Content, picture) is not { } strips) continue;
+            if (Strips(slot, plan, picture) is not { } strips) continue;
 
-            var near = Read(strips.Near);
             var far = Read(strips.Far);
-            if (near is null || far is null) continue;
+            if (far is null) continue;
 
             var (r, g, b, flat) = Average(far);
             if (!flat) continue;
 
-            judged = true;
-            var bad = 0;
-            for (var i = 0; i < near.Length; i += 4)
+            foreach (var strip in strips.Near)
             {
-                var d = Math.Abs(near[i + 2] - r) + Math.Abs(near[i + 1] - g) + Math.Abs(near[i] - b);
-                if (d > 40) bad++;
-            }
+                var near = Read(strip);
+                if (near is null) continue;
 
-            if (bad * 100 > near.Length / 4) return false;
+                judged = true;
+                var bad = 0;
+                for (var i = 0; i < near.Length; i += 4)
+                {
+                    var d = Math.Abs(near[i + 2] - r) + Math.Abs(near[i + 1] - g) + Math.Abs(near[i] - b);
+                    if (d > 40) bad++;
+                }
+
+                if (bad * 100 > near.Length / 4) return false;
+            }
         }
 
         return judged ? true : null;
     }
 
-    /// <summary>The two strips a slot's band is checked by: next to the picture, and at the outer edge of the window.</summary>
-    public static (CapRect Near, CapRect Far)? Strips(CapRect box, CapRect content, CapRect picture)
+    /// <summary>
+    /// The strips a slot's band is checked by: the ones next to the picture and the one at the outer edge of the window. All of them are in
+    /// the margin the panel never covers; in a window with an ear that is the notch (above it, beside the top screen) and the gap between the
+    /// ear and the bottom screen.
+    /// </summary>
+    public static (IReadOnlyList<CapRect> Near, CapRect Far)? Strips(CapSlot slot, CapPlan plan, CapRect picture)
     {
-        if (box.Left >= content.Right)
-        {
-            return (new CapRect(content.Right + 2, picture.Top + 4, Strip, picture.Height - 8),
-                new CapRect(picture.Right - Strip - 1, picture.Top + 4, Strip, picture.Height - 8));
-        }
+        var content = plan.Content;
+        var ear = slot.EarCols > 0;
+        var notchBottom = ear ? slot.NotchBox.Bottom : picture.Bottom - 4;
+        var bottom = ear && plan.Screens is { Count: 2 } screens ? screens[1] : (CapRect?)null;
 
-        if (box.Right <= content.Left)
+        switch (slot.Side)
         {
-            return (new CapRect(content.Left - 2 - Strip, picture.Top + 4, Strip, picture.Height - 8),
-                new CapRect(picture.Left + 1, picture.Top + 4, Strip, picture.Height - 8));
-        }
+            case CapSide.Right:
+            {
+                var near = new List<CapRect> { new(content.Right + 2, picture.Top + 4, Strip, notchBottom - picture.Top - 4) };
+                if (bottom is { } b) near.Add(new CapRect(b.Right + 2, notchBottom, Strip, picture.Bottom - 4 - notchBottom));
+                return (near, new CapRect(picture.Right - Strip - 1, picture.Top + 4, Strip, picture.Height - 8));
+            }
 
-        if (box.Top >= content.Bottom)
-        {
-            return (new CapRect(picture.Left + 4, content.Bottom + 2, picture.Width - 8, Strip),
-                new CapRect(picture.Left + 4, picture.Bottom - Strip - 1, picture.Width - 8, Strip));
-        }
+            case CapSide.Left:
+            {
+                var near = new List<CapRect> { new(content.Left - 2 - Strip, picture.Top + 4, Strip, notchBottom - picture.Top - 4) };
+                if (bottom is { } b) near.Add(new CapRect(b.Left - 2 - Strip, notchBottom, Strip, picture.Bottom - 4 - notchBottom));
+                return (near, new CapRect(picture.Left + 1, picture.Top + 4, Strip, picture.Height - 8));
+            }
 
-        if (box.Bottom <= content.Top)
-        {
-            return (new CapRect(picture.Left + 4, content.Top - 2 - Strip, picture.Width - 8, Strip),
-                new CapRect(picture.Left + 4, picture.Top + 1, picture.Width - 8, Strip));
+            case CapSide.Below:
+                return ([new CapRect(picture.Left + 4, content.Bottom + 2, picture.Width - 8, Strip)],
+                    new CapRect(picture.Left + 4, picture.Bottom - Strip - 1, picture.Width - 8, Strip));
+
+            case CapSide.Above:
+                return ([new CapRect(picture.Left + 4, content.Top - 2 - Strip, picture.Width - 8, Strip)],
+                    new CapRect(picture.Left + 4, picture.Top + 1, picture.Width - 8, Strip));
         }
 
         return null;

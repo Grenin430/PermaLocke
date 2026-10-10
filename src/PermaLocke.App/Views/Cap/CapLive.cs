@@ -16,7 +16,7 @@ public static class CapLive
     {
         var mood = anim?.Mood(t) ?? (CapMood.Calm, CapMood.Calm, 1.0);
 
-        if (layout.Panel == CapPanelKind.Memorial)
+        if (layout.Panel == CapPanelKind.Deep)
         {
             Memorial(p, layout, anim, t, mood);
             return;

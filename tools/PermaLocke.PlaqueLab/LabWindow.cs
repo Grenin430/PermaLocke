@@ -207,7 +207,7 @@ public sealed class LabWindow : Window
         _bitmap.WritePixels(new Int32Rect(0, 0, preset.Width, preset.Height), bgra, preset.Width * 4, 0);
 
         var main = plan.Main;
-        var memorial = plan.Memorial;
+        var memorial = plan.Companion;
         _info.Text = $"t = {_t,5:F2} s de {Scenario.Length:F1}   ·   {plan.Why}\n"
             + $"party: {(main is null ? "—" : $"{main.Mode} {main.Cols}×{main.Rows} celdas de {main.Cell} px = {main.Box.Width}×{main.Box.Height} px en ({main.Box.Left},{main.Box.Top})")}"
             + $"   ·   memorial: {(memorial is null ? "—" : $"{memorial.Mode} {memorial.Cols}×{memorial.Rows} en ({memorial.Box.Left},{memorial.Box.Top})")}\n"

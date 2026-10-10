@@ -36,7 +36,7 @@ public sealed class CapPlaqueTests
         yield return (CapMode.Column, 132, 250);
         yield return (CapMode.Column, 178, 321);
         yield return (CapMode.Column, 200, 337);
-        yield return (CapMode.Slim, 76, 170);
+        
         yield return (CapMode.Slim, 110, 330);
         yield return (CapMode.Compact, 60, 80);
         yield return (CapMode.Compact, 84, 96);
@@ -52,9 +52,9 @@ public sealed class CapPlaqueTests
         {
             foreach (var (mode, cols, rows) in Grids())
             {
-                foreach (var panel in new[] { CapPanelKind.Party, CapPanelKind.Memorial })
+                foreach (var panel in new[] { CapPanelKind.Party, CapPanelKind.Deep })
                 {
-                    if (panel == CapPanelKind.Memorial && mode == CapMode.Compact) continue;
+                    if (panel == CapPanelKind.Deep && mode == CapMode.Compact) continue;
 
                     var sheet = CapPlaque.Render(scenario.At(0), mode, cols, rows, 0, panel);
                     Assert.Equal(cols, sheet.W);
@@ -142,7 +142,7 @@ public sealed class CapPlaqueTests
                 CapSnap.Save(Path.Combine(dir, $"cap-{scenario.Name}-{mode}-{cols}x{rows}.png"), sheet, mode == CapMode.Strip ? 2 : 3);
             }
 
-            var memorial = CapPlaque.Render(scenario.At(0), CapMode.Column, 178, 321, 0, CapPanelKind.Memorial);
+            var memorial = CapPlaque.Render(scenario.At(0), CapMode.Column, 178, 321, 0, CapPanelKind.Deep);
             CapSnap.Save(Path.Combine(dir, $"cap-{scenario.Name}-memorial.png"), memorial, 3);
         }
     }

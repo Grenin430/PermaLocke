@@ -40,6 +40,7 @@ public sealed class CapPlaque : FrameworkElement
     /// <summary>False keeps the panel still: no flame, no flashes, no trails; the HP are the real ones.</summary>
     public bool Animated { get; set; } = true;
 
+    private (int X0, int X1, int Y1) _notch;
     private CapMode _mode = CapMode.Column;
     private int _cols = 132;
     private int _rows = 250;
@@ -78,9 +79,10 @@ public sealed class CapPlaque : FrameworkElement
     public bool Busy(double now) => Animated && _data is not null && _anim.Busy(now);
 
     /// <summary>Sets what to draw and on what grid; repaints the still part only if something changed.</summary>
-    public void Set(CapPlaqueData? data, CapMode mode, int cols, int rows, int cell, bool gravesInside, double now)
+    public void Set(CapPlaqueData? data, CapMode mode, int cols, int rows, int cell, bool gravesInside, double now, (int X0, int X1, int Y1) notch = default)
     {
-        var sizeChanged = mode != _mode || cols != _cols || rows != _rows || cell != _cell || gravesInside != _gravesInside;
+        var sizeChanged = mode != _mode || cols != _cols || rows != _rows || cell != _cell || gravesInside != _gravesInside || notch != _notch;
+        _notch = notch;
         var dataChanged = !ReferenceEquals(data, _data) && !Equals(data, _data);
         if (!sizeChanged && !dataChanged) return;
 
@@ -130,6 +132,12 @@ public sealed class CapPlaque : FrameworkElement
             _previous ??= new CapSheet(_cols, _rows);
             (_previous, _still) = (_still, _previous);
             _hasPrevious = true;
+        }
+
+        foreach (var sheet in new[] { _still, _previous, _frame })
+        {
+            if (sheet is null) continue;
+            (sheet.NotchX0, sheet.NotchX1, sheet.NotchY1) = _notch;
         }
 
         _layout = CapComposer.Arrange(_mode, Panel, _cols, _rows, data, _gravesInside);

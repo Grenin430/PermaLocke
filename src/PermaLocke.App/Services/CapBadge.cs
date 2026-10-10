@@ -328,8 +328,8 @@ public sealed class CapBadge
         var data = _rehearsal ?? new CapPlaqueData(reading.Trial, reading.Cap, reading.Next, reading.Highest, _party, _battle, _graves, reading.Cleared, reading.Trials);
         _data = data;
 
-        Show(ref _main, CapPanelKind.Party, plan.Main, data, plan.Memorial is null);
-        Show(ref _memorial, CapPanelKind.Memorial, plan.Memorial, data, false);
+        Show(ref _main, CapPanelKind.Party, plan.Main, data, plan.Companion is null);
+        Show(ref _memorial, CapPanelKind.Deep, plan.Companion, data, false);
     }
 
     private void Show(ref Panel? panel, CapPanelKind kind, CapSlot? slot, CapPlaqueData data, bool gravesInside)
@@ -341,7 +341,7 @@ public sealed class CapBadge
         }
 
         panel ??= Create(kind);
-        panel.Plaque.Set(data, slot.Mode, slot.Cols, slot.Rows, slot.Cell, gravesInside, Now);
+        panel.Plaque.Set(data, slot.Mode, slot.Cols, slot.Rows, slot.Cell, gravesInside, Now, slot.Notch);
         panel.Plaque.Animated = _settings.Current.CapAnimations && !PermaLocke.App.Views.Pixel.PixelTheme.ReducedMotion;
         OverlayWindows.PlaceOver(panel.Window, (slot.Box.Left, slot.Box.Top, slot.Box.Width, slot.Box.Height));
         if (!panel.Window.IsVisible) panel.Window.Show();

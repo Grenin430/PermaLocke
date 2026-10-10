@@ -38,13 +38,30 @@ public sealed class CapGeometryTests
         var picture = new CapRect(100, 56, w, h);
         var layout = new AzaharScreenLayout(option, swapped, upright);
 
-        foreach (var dpi in new[] { 1.0, 1.25, 1.5, 2.0 })
+        foreach (var dpi in new[] { 1.0, 1.25, 1.5, 2.0, 2.3, 3.7 })
         {
             var plan = CapGeometry.Plan(picture, layout, dpi, new CapOptions());
 
-            foreach (var slot in new[] { plan.Main, plan.Memorial }.OfType<CapSlot>())
+            foreach (var slot in new[] { plan.Main, plan.Companion }.OfType<CapSlot>())
             {
-                Assert.False(slot.Box.Intersects(plan.Content), $"{slot.Mode} over the game at {w}x{h} dpi {dpi}");
+                // The only place a window may be over the picture is its notch, which is empty: the ear is beside the bottom screen.
+                if (slot.EarCols == 0)
+                {
+                    Assert.False(slot.Box.Intersects(plan.Content), $"{slot.Mode} over the game at {w}x{h} dpi {dpi}");
+                }
+                else
+                {
+                    // With an ear the window is over the black beside the bottom screen, and over the top screen only in its notch, which is empty.
+                    foreach (var screen in plan.Screens!)
+                    {
+                        if (!slot.Box.Intersects(screen)) continue;
+                        var over = new CapRect(Math.Max(slot.Box.Left, screen.Left), Math.Max(slot.Box.Top, screen.Top),
+                            Math.Min(slot.Box.Right, screen.Right) - Math.Max(slot.Box.Left, screen.Left),
+                            Math.Min(slot.Box.Bottom, screen.Bottom) - Math.Max(slot.Box.Top, screen.Top));
+                        Assert.True(slot.NotchBox.Contains(over), $"{slot.Mode} over a screen outside its notch at {w}x{h} dpi {dpi}");
+                    }
+                }
+
                 Assert.True(slot.Box.Left >= picture.Left && slot.Box.Top >= picture.Top, $"{slot.Mode} out at the top or left");
                 Assert.True(slot.Box.Right <= picture.Right && slot.Box.Bottom <= picture.Bottom, $"{slot.Mode} out at the bottom or right");
                 Assert.Equal(slot.Cols * slot.Cell, slot.Box.Width);
@@ -52,7 +69,7 @@ public sealed class CapGeometryTests
                 Assert.True(slot.Cell >= 1);
             }
 
-            if (plan.Main is { } main && plan.Memorial is { } memorial)
+            if (plan.Main is { } main && plan.Companion is { } memorial)
             {
                 Assert.False(main.Box.Intersects(memorial.Box));
                 Assert.Equal(main.Cell, memorial.Cell);
@@ -72,15 +89,23 @@ public sealed class CapGeometryTests
         Assert.NotNull(plan.Main);
         Assert.Equal(CapMode.Column, plan.Main!.Mode);
         Assert.Equal(CapPanelKind.Party, plan.Main.Panel);
-        Assert.True(plan.Main.Box.Left > plan.Content.Right, "the party is in the right band");
+        Assert.True(plan.Main.Box.Left + (plan.Main.EarCols * plan.Main.Cell) > plan.Content.Right, "the party is in the right band, its ear aside");
 
         // It fills the band: within one cell of its height, and wide in cells (up to the widest a column is drawn).
         Assert.InRange(plan.Main.Box.Height, 976 - 12 - plan.Main.Cell, 976 - 12);
-        Assert.InRange(plan.Main.Cols, 132, CapGeometry.MaxColumnCols);
+        Assert.InRange(plan.Main.Cols - plan.Main.EarCols, 132, CapGeometry.MaxColumnCols);
 
-        Assert.NotNull(plan.Memorial);
-        Assert.Equal(CapPanelKind.Memorial, plan.Memorial!.Panel);
-        Assert.True(plan.Memorial.Box.Right < plan.Content.Left, "the memorial is in the left band");
+        Assert.NotNull(plan.Companion);
+        Assert.Equal(CapPanelKind.Deep, plan.Companion!.Panel);
+        Assert.True(plan.Companion.Box.Left < plan.Content.Left, "the deep is in the left band");
+
+        // Beside the bottom screen the band is wider: both windows reach towards the game from below the top screen, with the notch empty above.
+        Assert.InRange(plan.Main.EarCols, 20, 34);
+        Assert.InRange(plan.Companion.EarCols, 20, 34);
+        Assert.True(plan.Main.Box.Left < plan.Content.Right, "the ear goes in under the top screen");
+        Assert.True(plan.Main.NotchRows * plan.Main.Cell + plan.Main.Box.Top > plan.Content.Top + (240 * 976 / 480));
+        Assert.Equal((0, plan.Main.EarCols, plan.Main.NotchRows), plan.Main.Notch);
+        Assert.Equal((plan.Companion.Cols - plan.Companion.EarCols, plan.Companion.Cols, plan.Companion.NotchRows), plan.Companion.Notch);
     }
 
     [Fact]
@@ -90,8 +115,8 @@ public sealed class CapGeometryTests
 
         Assert.Equal(CapMode.Strip, plan.Main!.Mode);
         Assert.True(plan.Main.Box.Bottom < plan.Content.Top);
-        Assert.NotNull(plan.Memorial);
-        Assert.True(plan.Memorial!.Box.Top > plan.Content.Bottom);
+        Assert.NotNull(plan.Companion);
+        Assert.True(plan.Companion!.Box.Top > plan.Content.Bottom);
     }
 
     [Fact]
@@ -101,7 +126,7 @@ public sealed class CapGeometryTests
         {
             var plan = CapGeometry.Plan(Player, new AzaharScreenLayout(option, false, false), 1, new CapOptions());
             Assert.Null(plan.Main);
-            Assert.Null(plan.Memorial);
+            Assert.Null(plan.Companion);
         }
     }
 
@@ -130,7 +155,7 @@ public sealed class CapGeometryTests
     {
         var compact = CapGeometry.Plan(Player, Stacked, 1, new CapOptions(Forced: CapMode.Compact));
         Assert.Equal(CapMode.Compact, compact.Main!.Mode);
-        Assert.Null(compact.Memorial);
+        Assert.Null(compact.Companion);
 
         var slim = CapGeometry.Plan(Player, Stacked, 1, new CapOptions(Forced: CapMode.Slim));
         Assert.Equal(CapMode.Slim, slim.Main!.Mode);
@@ -145,7 +170,7 @@ public sealed class CapGeometryTests
     {
         var plan = CapGeometry.Plan(Player, Stacked, 1, new CapOptions(MaxCell: 2));
         Assert.Equal(2, plan.Main!.Cell);
-        Assert.Equal(2, plan.Memorial!.Cell);
+        Assert.Equal(2, plan.Companion!.Cell);
     }
 
     [Fact]
@@ -176,7 +201,7 @@ public sealed class CapGeometryTests
     {
         var one = CapGeometry.Plan(Player, Stacked, 1, new CapOptions());
         var two = CapGeometry.Plan(Player, Stacked, 2, new CapOptions());
-        Assert.True(two.Main!.Box.Left >= one.Main!.Box.Left - one.Main.Cell);
+        Assert.True(two.Main!.Box.Left >= one.Main!.Box.Left - one.Main.Cell - (one.Main.EarCols * one.Main.Cell));
         Assert.Equal(6, CapGeometry.Safety(1));
         Assert.Equal(12, CapGeometry.Safety(2));
     }
@@ -190,5 +215,41 @@ public sealed class CapGeometryTests
         Assert.Equal((320, 240), CapGeometry.PictureOf(new AzaharScreenLayout(1, true, false)));
         Assert.Equal((720, 240), CapGeometry.PictureOf(Side));
         Assert.Null(CapGeometry.PictureOf(new AzaharScreenLayout(2, false, false)));
+    }
+
+    [Theory]
+    [InlineData(1920, 976, 0)]
+    [InlineData(1280, 690, 0)]
+    [InlineData(1920, 976, 3)]
+    [InlineData(2560, 1300, 0)]
+    public void The_guard_looks_only_where_the_panel_never_paints(int w, int h, int option)
+    {
+        var picture = new CapRect(0, 56, w, h);
+        var plan = CapGeometry.Plan(picture, new AzaharScreenLayout(option, false, false), 1, new CapOptions());
+
+        foreach (var slot in new[] { plan.Main, plan.Companion }.OfType<CapSlot>())
+        {
+            var strips = PermaLocke.App.Services.CapBandGuard.Strips(slot, plan, picture);
+            Assert.NotNull(strips);
+
+            foreach (var strip in strips!.Value.Near.Append(strips.Value.Far))
+            {
+                Assert.True(strip.Width > 0 && strip.Height > 0, $"empty strip {strip}");
+                Assert.True(picture.Contains(strip), $"strip {strip} outside the picture");
+
+                // Whatever of a strip is under the window is under its empty notch.
+                if (!strip.Intersects(slot.Box)) continue;
+                var over = new CapRect(Math.Max(strip.Left, slot.Box.Left), Math.Max(strip.Top, slot.Box.Top),
+                    Math.Min(strip.Right, slot.Box.Right) - Math.Max(strip.Left, slot.Box.Left),
+                    Math.Min(strip.Bottom, slot.Box.Bottom) - Math.Max(strip.Top, slot.Box.Top));
+                Assert.True(slot.NotchBox.Contains(over), $"strip {strip} under the painted part of {slot.Panel}");
+            }
+
+            // And the strip next to the game really is next to it: not on a screen.
+            foreach (var near in strips.Value.Near)
+            {
+                foreach (var screen in plan.Screens!) Assert.False(near.Intersects(screen), $"strip {near} on a screen");
+            }
+        }
     }
 }

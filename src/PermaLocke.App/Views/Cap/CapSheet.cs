@@ -30,6 +30,16 @@ public sealed class CapSheet(int width, int height)
 
     public static uint Darker(uint c, double t) => Mix(c, 0x000000, t);
 
+    /// <summary>
+    /// The empty corner of an L-shaped window (the notch): columns from <c>NotchX0</c> up to <c>NotchX1</c>, rows above <c>NotchY1</c>. Nothing
+    /// is ever painted there, whoever asks: it is over the game.
+    /// </summary>
+    public int NotchX0 { get; set; }
+
+    public int NotchX1 { get; set; }
+
+    public int NotchY1 { get; set; }
+
     public void Clear() => Array.Clear(B);
 
     /// <summary>Whether the theme repaints the cells in its own shades (the Game Boy), which a frame has to do on a copy.</summary>
@@ -40,7 +50,7 @@ public sealed class CapSheet(int width, int height)
 
     public void Set(int x, int y, uint rgb, int alpha = 255)
     {
-        if (x < 0 || y < 0 || x >= W || y >= H || alpha <= 0) return;
+        if (x < 0 || y < 0 || x >= W || y >= H || alpha <= 0 || (y < NotchY1 && x >= NotchX0 && x < NotchX1)) return;
         var i = ((y * W) + x) * 4;
         var r = (int)((rgb >> 16) & 255);
         var g = (int)((rgb >> 8) & 255);
@@ -71,7 +81,7 @@ public sealed class CapSheet(int width, int height)
 
     public void Erase(int x, int y)
     {
-        if (x < 0 || y < 0 || x >= W || y >= H) return;
+        if (x < 0 || y < 0 || x >= W || y >= H || (y < NotchY1 && x >= NotchX0 && x < NotchX1)) return;
         var i = ((y * W) + x) * 4;
         B[i] = B[i + 1] = B[i + 2] = B[i + 3] = 0;
     }

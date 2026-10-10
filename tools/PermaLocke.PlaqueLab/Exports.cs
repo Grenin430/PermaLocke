@@ -48,7 +48,7 @@ public static class Exports
             {
                 var scale = mode == CapMode.Strip ? 2 : 3;
                 CapSnap.Save(Path.Combine(dir, $"modo-{scenario.Name}-{mode}.png"), CapPlaque.Replay(scenario, mode, cols, rows, 3), scale);
-                CapSnap.Save(Path.Combine(dir, $"modo-{scenario.Name}-{mode}-cementerio.png"), CapPlaque.Replay(scenario, mode, cols, rows, 3, CapPanelKind.Memorial), scale);
+                CapSnap.Save(Path.Combine(dir, $"modo-{scenario.Name}-{mode}-cementerio.png"), CapPlaque.Replay(scenario, mode, cols, rows, 3, CapPanelKind.Deep), scale);
                 count += 2;
             }
         }

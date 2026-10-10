@@ -27,9 +27,9 @@ public sealed class CapLiveTests
         {
             foreach (var (mode, cols, rows) in SomeGrids())
             {
-                foreach (var panel in new[] { CapPanelKind.Party, CapPanelKind.Memorial })
+                foreach (var panel in new[] { CapPanelKind.Party, CapPanelKind.Deep })
                 {
-                    if (panel == CapPanelKind.Memorial && mode == CapMode.Compact) continue;
+                    if (panel == CapPanelKind.Deep && mode == CapMode.Compact) continue;
 
                     var data = scenario.At(0);
                     var layout = CapComposer.Arrange(mode, panel, cols, rows, data, true);

@@ -63,7 +63,7 @@ public static class Bench
     {
         var app = new Application();
         var scenario = data.Scenarios.First(s => s.Name == "completo");
-        var plan = new[] { (CapPanelKind.Party, 178, 321, 3), (CapPanelKind.Memorial, 178, 321, 3) };
+        var plan = new[] { (CapPanelKind.Party, 178, 321, 3), (CapPanelKind.Deep, 178, 321, 3) };
         var windows = new List<(Window Window, CapPlaque Plaque)>();
         var left = 0;
 

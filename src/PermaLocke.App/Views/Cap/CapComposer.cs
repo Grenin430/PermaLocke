@@ -66,7 +66,7 @@ public static class CapComposer
 
     public static CapLayout Arrange(CapMode mode, CapPanelKind panel, int cols, int rows, CapPlaqueData data, bool gravesInside)
     {
-        return panel == CapPanelKind.Memorial ? ArrangeMemorial(mode, cols, rows, data)
+        return panel == CapPanelKind.Deep ? ArrangeMemorial(mode, cols, rows, data)
             : mode switch
             {
                 CapMode.Strip => ArrangeStrip(cols, rows, data),
@@ -221,7 +221,7 @@ public static class CapComposer
             var body = new CapRect(banner.Right + 4, si.Top + 3, si.Right - banner.Right - 7, sh);
             return new CapLayout
             {
-                Mode = mode, Panel = CapPanelKind.Memorial, Cols = cols, Rows = rows, Narrow = true, Top = 0, Frame = sf, Inner = si,
+                Mode = mode, Panel = CapPanelKind.Deep, Cols = cols, Rows = rows, Narrow = true, Top = 0, Frame = sf, Inner = si,
                 Header = banner, Banner = banner, Body = body
             };
         }
@@ -242,7 +242,7 @@ public static class CapComposer
         var plinth = new CapRect(inner.Left, inner.Bottom - 2 - plinthH + 1, inner.Width, plinthH + 1);
         return new CapLayout
         {
-            Mode = mode, Panel = CapPanelKind.Memorial, Cols = cols, Rows = rows, Narrow = slim, Top = top, Frame = frame, Inner = inner,
+            Mode = mode, Panel = CapPanelKind.Deep, Cols = cols, Rows = rows, Narrow = slim, Top = top, Frame = frame, Inner = inner,
             Header = header, Banner = header, Body = bodyRect, Foot = foot, Plinth = plinth, HasCup = true
         };
     }
@@ -255,7 +255,7 @@ public static class CapComposer
         p.Clear();
         var seed = CapArt.StableHash(data.Trial) + data.Cap;
 
-        if (layout.Panel == CapPanelKind.Memorial)
+        if (layout.Panel == CapPanelKind.Deep)
         {
             PaintMemorial(p, layout, data, seed);
             return;

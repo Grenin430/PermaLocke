@@ -52,10 +52,10 @@ public static class LabScreen
         var plan = CapGeometry.Plan(new CapRect(0, 0, w, h), preset.Layout, dpi, options, previous);
         DrawGame(bgra, w, h, preset.Layout, plan.Content, game);
 
-        foreach (var slot in new[] { plan.Main, plan.Memorial })
+        foreach (var slot in new[] { plan.Main, plan.Companion })
         {
             if (slot is null) continue;
-            var sheet = CapPlaque.Replay(scenario, slot.Mode, slot.Cols, slot.Rows, t, slot.Panel, plan.Memorial is null);
+            var sheet = CapPlaque.Replay(scenario, slot.Mode, slot.Cols, slot.Rows, t, slot.Panel, plan.Companion is null);
             Blit(sheet, bgra, w, slot.Box, slot.Cell, 0.97);
         }
 
