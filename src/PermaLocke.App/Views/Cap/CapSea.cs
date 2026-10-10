@@ -56,7 +56,7 @@ public static class CapSea
     }
 
     /// <summary>How big the fossils are for how many there are: half size up to eight, then smaller.</summary>
-    public static int FossilScale(int count) => count <= 3 ? 1 : count <= 8 ? 2 : 4;
+    public static int FossilScale(CapWorldLayout l, int count) => l.Mode == CapMode.Compact ? 4 : count <= 3 ? 1 : count <= 8 ? 2 : 4;
 
     public static void Paint(CapSheet p, CapWorldLayout l, CapSeaPalette pal, CapPlaqueData data, CapSeaContext ctx)
     {
@@ -70,6 +70,7 @@ public static class CapSea
         if (l.Panel == CapPanelKind.Deep && l.Sun.Width > 0) Glitter(p, l, pal, ctx);
         Floor(p, l, pal, data, ctx, fossilColumns);
         Fossils(p, l, pal, grave, ctx, fossilColumns);
+        CapDeep.Writing(p, l, pal, data, ctx, fossilColumns);
     }
 
     // ---------------------------------------------------------------- sky and water
@@ -176,9 +177,7 @@ public static class CapSea
     private static void Floor(CapSheet p, CapWorldLayout l, CapSeaPalette pal, CapPlaqueData data, CapSeaContext ctx, int[] fossils)
     {
         // One stratum for each trial cleared, thick enough to read and no thicker than the room allows.
-        var strata = Math.Clamp(data.Cleared, 0, 12);
-        var sandRows = 5;
-        var layerRows = strata == 0 ? 0 : Math.Clamp((l.Rows - l.FloorTop - sandRows - 4) / Math.Max(1, strata), 2, 6);
+        var (strata, sandRows, layerRows) = CapDeep.StrataOf(l, data);
 
         for (var x = 0; x < l.Cols; x++)
         {
@@ -233,7 +232,7 @@ public static class CapSea
 
     private static void Fossils(CapSheet p, CapWorldLayout l, CapSeaPalette pal, IReadOnlyList<CapGrave> graves, CapSeaContext ctx, int[] columns)
     {
-        var scale = FossilScale(graves.Count);
+        var scale = FossilScale(l, graves.Count);
         for (var i = 0; i < graves.Count; i++)
         {
             var grave = graves[i];

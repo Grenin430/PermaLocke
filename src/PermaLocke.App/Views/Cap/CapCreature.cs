@@ -23,6 +23,9 @@ public sealed class CapCreature
     /// <summary>The text of the creature, painted into a sheet of the size of its info box: the box's top left is the sheet's.</summary>
     public CapSheet? Info { get; private set; }
 
+    /// <summary>Where the text sheet goes in the window: the info box's corner, or under the little picture in the compact mode.</summary>
+    public (int X, int Y) InfoAt { get; private set; }
+
     public uint Tint { get; private set; }
 
     /// <summary>Where the beads of the life go, in the window's cells, and how many cells wide they are.</summary>
@@ -57,7 +60,9 @@ public sealed class CapCreature
             : CapArt.Hues[CapArt.StableHash(m.Name) % CapArt.Hues.Length];
 
         BuildPicture(m, fallen);
-        BuildText(m, pal, cap, narrow, fallen);
+        InfoAt = (Slot.Info.Left, Slot.Info.Top);
+        if (Slot.Info.Width == 0 && Slot.Sprite.Width <= 14) BuildTiny(m, pal, cap, fallen);
+        else BuildText(m, pal, cap, narrow, fallen);
     }
 
     // ---------------------------------------------------------------- the picture
@@ -65,7 +70,7 @@ public sealed class CapCreature
     private void BuildPicture(CapPlaqueMember m, bool fallen)
     {
         var slot = Slot.Sprite;
-        var scale = Slot.Half ? 2 : 1;
+        var scale = slot.Width <= 14 ? 4 : Slot.Half ? 2 : 1;
         if (ToastPixels.SpritePixels.From(m.Sprite) is not { } pixels) return;
 
         _spriteW = Math.Min(slot.Width, Math.Max(1, pixels.Width / scale));
@@ -164,6 +169,25 @@ public sealed class CapCreature
     }
 
     // ---------------------------------------------------------------- the text
+
+    /// <summary>The compact mode: no room for words, only the level in small letters under the picture and three beads for the life.</summary>
+    private void BuildTiny(CapPlaqueMember m, CapSeaPalette pal, int cap, bool fallen)
+    {
+        var s = Slot.Sprite;
+        InfoAt = (s.Left - 1, s.Bottom + 1);
+        var sheet = new CapSheet(s.Width + 2, 6);
+        Info = sheet;
+        if (m.Egg) return;
+
+        var level = m.Level.ToString();
+        var gold = 0xFFD860u;
+        var colour = fallen ? 0x7A86A4u : m.AtCap(cap) ? gold : pal.Glow;
+        CapGlyphs.Outlined(sheet, level, Math.Max(1, (sheet.W - CapGlyphs.Width(level, false)) / 2), 1, colour, pal.Ink);
+        if (fallen) return;
+
+        Beads = Math.Min(3, Math.Max(1, s.Width / 4));
+        BeadsAt = (s.Left, s.Bottom + 9);
+    }
 
     private void BuildText(CapPlaqueMember m, CapSeaPalette pal, int cap, bool narrow, bool fallen)
     {

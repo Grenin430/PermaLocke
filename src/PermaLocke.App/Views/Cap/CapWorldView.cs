@@ -17,6 +17,7 @@ public sealed class CapWorldView
     private CapSeaContext _context = new();
     private string _sceneKey = string.Empty;
     private string _buoyKey = string.Empty;
+    private int[] _fossils = [];
 
     public CapWorldView(CapMode mode, CapPanelKind panel, int cols, int rows, (int X0, int X1, int Y1) notch)
     {
@@ -45,6 +46,7 @@ public sealed class CapWorldView
         {
             _sceneKey = key;
             _scenes.Clear();
+            _fossils = CapSea.FossilColumns(Layout, graves.Count, _context);
         }
 
         if (Layout.Panel != CapPanelKind.Party) return;
@@ -94,6 +96,8 @@ public sealed class CapWorldView
         CapSeaLive.Stars(frame, Layout, _context, phase);
         CapSeaLive.Shafts(frame, Layout, pal, _context, phase);
         CapSeaLive.Snow(frame, Layout, pal, _context, phase);
+        CapFlora.Paint(frame, Layout, pal, _context, _fossils, phase);
+        CapDeep.Lanterns(frame, Layout, pal, data, phase);
 
         if (Layout.Panel == CapPanelKind.Party) PaintParty(frame, data, pal, anim, t, phase);
     }
@@ -122,8 +126,9 @@ public sealed class CapWorldView
             var breath = 0.5 + (0.5 * Math.Sin(((anim is null ? 0 : t) * rate * 2) + i));
             creature.PaintPicture(p, ox, oy, pal.Ink, breath, m.Fallen ? 0.5 : 1);
 
-            if (creature.Info is { } info) p.Blit(info, creature.Slot.Info.Left, creature.Slot.Info.Top);
+            if (creature.Info is { } info) p.Blit(info, creature.InfoAt.X, creature.InfoAt.Y);
             PaintBeads(p, creature, m, share, breath, pal);
+            PaintTicker(p, creature, m, i, anim is null ? 0 : t, pal);
         }
     }
 
@@ -137,6 +142,21 @@ public sealed class CapWorldView
             var angle = a * Math.PI / 12;
             p.Set(cx + (int)Math.Round(Math.Cos(angle) * 7), cy + (int)Math.Round(Math.Sin(angle) * 6), pal.Glow, 55);
         }
+    }
+
+    /// <summary>The moves, one at a time: the name of one with a pip of the colour of its type, changing every two and a half seconds, each Pokémon on its own beat.</summary>
+    private static void PaintTicker(CapSheet p, CapCreature c, CapPlaqueMember m, int index, double t, CapSeaPalette pal)
+    {
+        var (x, y, letters) = c.TickerAt;
+        if (letters < 5 || m.Moves is not { Count: > 0 } moves || m.Egg || m.Fallen) return;
+
+        var move = moves[((int)Math.Floor((t / 2.5) + index)) % moves.Count];
+        var name = (move.Name ?? "MOVIMIENTO").ToUpperInvariant();
+        if (name.Length > letters) name = name[..letters];
+        var colour = move.Type >= 0 ? CapArt.TypeColour(move.Type) : 0x8A98B0u;
+        CapGlyphs.Spot(p, x, y, move.Empty ? CapSheet.Darker(colour, 0.6) : colour, pal.Ink);
+        CapGlyphs.Outlined(p, name, x + 7, y, move.Empty ? CapSheet.Mix(pal.Glow, pal.Water[4], 0.6) : pal.Glow, pal.Ink);
+        if (move.Empty) p.HLine(x + 7, y + 2, CapGlyphs.Width(name, false), 0xFF6A50u);
     }
 
     private static void PaintBeads(CapSheet p, CapCreature c, CapPlaqueMember m, double share, double breath, CapSeaPalette pal)
