@@ -67,7 +67,7 @@ public sealed class CapAnim
         public double StatusAt = Never;
     }
 
-    private Track?[] _tracks = new Track?[CapComposer.PartySlots];
+    private Track?[] _tracks = new Track?[CapWorld.Creatures];
     private bool _seen;
 
     private int _cap;
@@ -89,19 +89,22 @@ public sealed class CapAnim
     /// <summary>Forgets everything, as if the panel had just opened.</summary>
     public void Reset()
     {
-        _tracks = new Track?[CapComposer.PartySlots];
+        _tracks = new Track?[CapWorld.Creatures];
         _seen = false;
         _cap = 0;
         _capAt = _headerAt = _highestAt = _lastFallAt = Never;
         _mood = _previousMood = CapMood.Calm;
         _moodAt = Never;
+        _phaseBase = 0;
+        _tempoFrom = _tempoTo = 1;
+        _tempoAt = 0;
     }
 
     /// <summary>Tells it what the panel says now, at a moment: it notices what changed since the last time.</summary>
     public void Update(CapPlaqueData data, double now)
     {
         var old = _tracks;
-        var next = new Track?[CapComposer.PartySlots];
+        var next = new Track?[CapWorld.Creatures];
 
         for (var i = 0; i < data.Party.Count && i < next.Length; i++)
         {
@@ -154,6 +157,37 @@ public sealed class CapAnim
             _mood = mood;
             _moodAt = now;
         }
+
+        // The clock of the sea changes speed with the mood, smoothly: the phase is the integral of the tempo, so nothing jumps.
+        var effective = !_danger && now - _lastFallAt < MourningSeconds ? CapMood.Mourning : mood;
+        var target = CapSeaPalette.Of(effective).Tempo;
+        if (Math.Abs(target - _tempoTo) > 1e-6)
+        {
+            _phaseBase = Phase(now);
+            _tempoFrom = TempoAt(now);
+            _tempoTo = target;
+            _tempoAt = now;
+        }
+    }
+
+    private double _phaseBase;
+    private double _tempoFrom = 1;
+    private double _tempoTo = 1;
+    private double _tempoAt;
+    private const double TempoSeconds = 1.2;
+
+    private double TempoAt(double t)
+    {
+        var k = Math.Clamp((t - _tempoAt) / TempoSeconds, 0, 1);
+        return _tempoFrom + ((_tempoTo - _tempoFrom) * k);
+    }
+
+    /// <summary>The clock everything that drifts goes by (the snow, the waves, the creatures' sway): seconds, but faster in a battle, slower in mourning.</summary>
+    public double Phase(double t)
+    {
+        var dt = Math.Max(0, t - _tempoAt);
+        if (dt < TempoSeconds) return _phaseBase + (_tempoFrom * dt) + ((_tempoTo - _tempoFrom) * dt * dt / (2 * TempoSeconds));
+        return _phaseBase + (_tempoFrom * TempoSeconds) + ((_tempoTo - _tempoFrom) * TempoSeconds / 2) + (_tempoTo * (dt - TempoSeconds));
     }
 
     private static Track? Find(Track?[] tracks, uint pid, int index)

@@ -55,7 +55,8 @@ public static class LabScreen
         foreach (var slot in new[] { plan.Main, plan.Companion })
         {
             if (slot is null) continue;
-            var sheet = CapPlaque.Replay(scenario, slot.Mode, slot.Cols, slot.Rows, t, slot.Panel, plan.Companion is null);
+            var world = CapGeometry.WorldOf(plan);
+            var sheet = CapPlaque.Replay(scenario, slot.Mode, slot.Cols, slot.Rows, t, slot.Panel, slot.Notch, slot.Panel == CapPanelKind.Party ? world.Party : world.Deep, world.Width);
             Blit(sheet, bgra, w, slot.Box, slot.Cell, 0.97);
         }
 

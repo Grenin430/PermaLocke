@@ -42,10 +42,16 @@ public static class CapScenarios
 
     private static readonly int[][] Moves = [[10, 2, 15, 9], [3, 10, 17, 0], [0, 0, 1, 4], [7, 3, 13, 16], [10, 15, 0, 14], [15, 2, 0, 9]];
 
+    private static readonly string[][] MoveNames =
+    [
+        ["Cascada", "Ataque Ala", "Dragodanza", "Colmillo Igneo"], ["Toxico", "Surf", "Rayo Hielo", "Placaje"], ["Golpe Cuerpo", "Descanso", "Bola Sombra", "Terremoto"],
+        ["Bola Sombra", "Bomba Lodo", "Psiquico", "Pulso Umbrio"], ["Hidrobomba", "Dragoaliento", "Hiperrayo", "Rayo Hielo"], ["Dragoaliento", "Ataque Ala", "Hiperrayo", "Lanzallamas"]
+    ];
+
     private static CapPlaqueMember Member(int i, Func<int, BitmapSource?> icon, int level, int hp, int max, CapStatus status = CapStatus.None,
         double exp = 0.4, bool egg = false)
     {
-        var moves = Moves[i].Select((type, k) => new CapMove(type, i == 3 && k == 1 && hp < max / 2)).ToList();
+        var moves = Moves[i].Select((type, k) => new CapMove(type, i == 3 && k == 1 && hp < max / 2, MoveNames[i][k])).ToList();
         return new CapPlaqueMember(icon(Species[i]), Names[i], level, hp, max, egg, (uint)(1000 + i), Types[i], Items[i], status, exp, moves);
     }
 
@@ -54,13 +60,13 @@ public static class CapScenarios
         var names = new[] { "Ratatta", "Pidgey", "Zubat", "Rowlet", "Magikarp", "Caterpie", "Weedle", "Geodude", "Machop", "Abra" };
         var killers = new[] { "Kahili", "Hala", "Olivia", "Salvaje", "Plumeria", "Totem", "Guzma", "Nanu", "Ilima", "Lana" };
         var species = new[] { 19, 16, 41, 722, 129, 10, 13, 74, 66, 63 };
-        return [.. Enumerable.Range(0, count).Select(i => new CapGrave(icon(species[i % species.Length]), names[i % names.Length], killers[i % killers.Length], 8 + (i * 3)))];
+        return [.. Enumerable.Range(0, count).Select(i => new CapGrave(icon(species[i % species.Length]), names[i % names.Length], killers[i % killers.Length], 8 + (i * 3), 1 + ((count - 1 - i) * 4)))];
     }
 
     private static CapPlaqueData Base(Func<int, BitmapSource?> icon, IReadOnlyList<CapPlaqueMember> party, int graves = 3, bool battle = false,
         int cap = 42, int? highest = null, int cleared = 7) =>
         new("PRUEBA 8 DE 12", cap, 54, highest ?? party.Where(m => !m.Egg).Select(m => m.Level).DefaultIfEmpty(0).Max(), party, battle,
-            Graves(icon, graves), cleared, 12);
+            Graves(icon, graves), cleared, 12, 15.5, 7421);
 
     public static IReadOnlyList<CapScenario> All(Func<int, BitmapSource?> icon)
     {

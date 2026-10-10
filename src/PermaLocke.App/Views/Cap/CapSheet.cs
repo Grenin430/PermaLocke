@@ -45,6 +45,26 @@ public sealed class CapSheet(int width, int height)
     /// <summary>Whether the theme repaints the cells in its own shades (the Game Boy), which a frame has to do on a copy.</summary>
     public static bool ThemeShades => PixelTheme.Current.Shades is not null;
 
+    /// <summary>
+    /// Puts another sheet on this one at a place, cell by cell, over what is there. <paramref name="alpha"/> fades it; from <paramref name="dimFromRow"/>
+    /// down (a row of the other sheet) its colours are mixed towards <paramref name="dimColour"/> by <paramref name="dim"/>: what is under the water.
+    /// </summary>
+    public void Blit(CapSheet src, int ox, int oy, int alpha = 255, int dimFromRow = int.MaxValue, uint dimColour = 0, double dim = 0)
+    {
+        for (var y = 0; y < src.H; y++)
+        {
+            for (var x = 0; x < src.W; x++)
+            {
+                var i = ((y * src.W) + x) * 4;
+                var a = src.B[i + 3];
+                if (a == 0) continue;
+                var rgb = Rgb(src.B[i + 2], src.B[i + 1], src.B[i]);
+                if (y >= dimFromRow) rgb = Mix(rgb, dimColour, dim);
+                Set(ox + x, oy + y, rgb, a == 255 ? alpha : Math.Min(a, alpha));
+            }
+        }
+    }
+
     /// <summary>Takes everything from a sheet of the same size.</summary>
     public void CopyFrom(CapSheet other) => Buffer.BlockCopy(other.B, 0, B, 0, Math.Min(B.Length, other.B.Length));
 

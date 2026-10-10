@@ -107,16 +107,20 @@ public static class CapWorld
         var x1 = notch.X1 > notch.X0 ? (earOnLeft ? cols : notch.X0) : cols;
         var main = new CapRect(x0, 0, x1 - x0, rows);
 
-        var skyRows = dense ? 6 : 9;
-        var surface = skyRows + 2;
-        var floorH = slim ? (dense ? 54 : 66) : dense ? 62 : 78;
+        // The buoy sets the horizon: it floats with its waterline on the surface, so both windows put the surface where the buoy's waterline is.
+        var (buoyW, buoyH) = slim ? (dense ? (56, 32) : (64, 40)) : dense ? (72, 38) : (96, 48);
+        var faceInset = slim ? 9 : 14;
+        var waterRow = buoyH - (dense ? 7 : slim ? 8 : 9);
+        var surface = 2 + waterRow;
+        var skyRows = waterRow;
+        var floorH = slim ? (dense ? 54 : 62) : dense ? 62 : 68;
         var floorTop = rows - floorH;
         var reef = new CapRect(0, floorTop - 14, cols, floorH + 14);
 
         if (panel == CapPanelKind.Deep)
         {
             // The deep: the sky with the sun or the moon, open water with the chain of lanterns, and the cutaway of the floor.
-            var sun = new CapRect(x0 + (main.Width / 2) - 14, 0, 28, skyRows + 24);
+            var sun = new CapRect(x0, 0, main.Width, surface);
             var lanterns = new CapRect(x0 + 6, skyRows + 28, main.Width - 12, floorTop - skyRows - 40);
             var strata = new CapRect(0, floorTop + 8, cols, floorH - 8);
             return new CapWorldLayout
@@ -127,10 +131,8 @@ public static class CapWorld
         }
 
         // The party: the buoy on the surface, the tag under it, the line down to the floor and the six creatures between them.
-        var buoyW = slim ? 52 : 68;
-        var buoyH = slim ? 30 : 38;
         var buoy = new CapRect(x0 + ((main.Width - buoyW) / 2) + (slim ? 0 : 6), 2, buoyW, buoyH);
-        var face = new CapRect(buoy.Left + 6, buoy.Top + 8, buoy.Width - 12, buoy.Height - 14);
+        var face = new CapRect(buoy.Left + faceInset, buoy.Top + 9, buoy.Width - (2 * faceInset), buoy.Height - (dense ? 16 : 18));
         var tag = new CapRect(x0 + 14, buoy.Bottom + 2, main.Width - 28, 12);
 
         var lineX = x0 + (slim ? 6 : 9);
@@ -169,8 +171,8 @@ public static class CapWorld
     private static CapWorldLayout ArrangeStrip(CapPanelKind panel, int cols, int rows)
     {
         var main = new CapRect(0, 0, cols, rows);
-        var skyRows = 5;
-        var surface = skyRows + 1;
+        var skyRows = 11;
+        var surface = 12;
 
         if (panel == CapPanelKind.Deep)
         {

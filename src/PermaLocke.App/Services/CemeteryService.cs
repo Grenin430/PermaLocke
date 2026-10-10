@@ -11,6 +11,7 @@ namespace PermaLocke.App.Services;
 /// <param name="BattleAgainst">Every rival of the battle it fell in, when the battle was recorded.</param>
 /// <param name="HasBattleRecord">Whether the death was recorded by a version that kept the battle -- the ones that also record a killcam.</param>
 /// <param name="KillcamPath">The replay of its death, or null when there is none.</param>
+/// <param name="Level">The level it had when it fell, from the <c>nivel</c> the death event already carries; 0 when the event has none.</param>
 public sealed record Grave(
     Guid PokemonId,
     string Name,
@@ -27,7 +28,8 @@ public sealed record Grave(
     bool HasBattleRecord,
     int Penalty,
     string? KillcamPath,
-    int Form = 0);
+    int Form = 0,
+    int Level = 0);
 
 /// <summary>
 /// The run's fallen, told from the run's own record.
@@ -104,7 +106,8 @@ public sealed class CemeteryService(IRunContext runs, IPokemonRepository pokemon
             death?.Data.ContainsKey("rivales") == true,
             Math.Max(0, penalty),
             File.Exists(killcam) ? killcam : null,
-            entry.Form);
+            entry.Form,
+            death?.Data.TryGetValue("nivel", out var level) == true && int.TryParse(level, out var fell) ? fell : 0);
     }
 
     private static string HowItWasSeen(GameEvent? death)

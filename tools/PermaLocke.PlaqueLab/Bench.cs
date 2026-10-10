@@ -39,7 +39,7 @@ public static class Bench
                     if (!ReferenceEquals(data1, shown))
                     {
                         watch.Restart();
-                        plaque.Set(data1, mode, cols, rows, 3, true, t);
+                        plaque.Set(data1, new CapSlot(CapPanelKind.Party, mode, new CapRect(0, 0, cols * 3, rows * 3), 3, cols, rows), t);
                         sets.Add(watch.Elapsed.TotalMilliseconds);
                         shown = data1;
                     }
@@ -70,7 +70,7 @@ public static class Bench
         foreach (var (panel, cols, rows, cell) in plan)
         {
             var plaque = new CapPlaque(panel);
-            plaque.Set(scenario.At(0), CapMode.Column, cols, rows, cell, false, 0);
+            plaque.Set(scenario.At(0), new CapSlot(panel, CapMode.Column, new CapRect(0, 0, cols * cell, rows * cell), cell, cols, rows), 0);
             var window = new Window
             {
                 WindowStyle = WindowStyle.None, AllowsTransparency = true, Background = Brushes.Transparent, ShowInTaskbar = false,

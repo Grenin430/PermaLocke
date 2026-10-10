@@ -245,8 +245,9 @@ public sealed class CapBadge
         try
         {
             var graves = await _cemetery.GravesAsync();
-            return [.. graves.OrderByDescending(g => g.DiedAt ?? DateTimeOffset.MinValue)
-                .Select(g => new CapGrave(_sprites.Get(g.Species, g.Form, g.IsShiny), g.Name, g.FellTo))];
+            return [.. graves.OrderBy(g => g.DiedAt ?? DateTimeOffset.MinValue)
+                .Select(g => new CapGrave(_sprites.Get(g.Species, g.Form, g.IsShiny), g.Name, g.FellTo, g.Level,
+                    g.DiedAt is { } died ? Math.Max(0, (int)(DateTimeOffset.UtcNow - died).TotalDays) : 0))];
         }
         catch (Exception ex)
         {
@@ -325,14 +326,18 @@ public sealed class CapBadge
         }
 
         _lastMode = plan.Main?.Mode;
-        var data = _rehearsal ?? new CapPlaqueData(reading.Trial, reading.Cap, reading.Next, reading.Highest, _party, _battle, _graves, reading.Cleared, reading.Trials);
+        var seed = _runContext.Current is { } activeRun ? activeRun.Id.GetHashCode() & 0x7FFFFFFF : 0;
+        var data = _rehearsal ?? new CapPlaqueData(reading.Trial, reading.Cap, reading.Next, reading.Highest, _party, _battle, _graves, reading.Cleared,
+            reading.Trials, _sky.IsKnown ? _sky.Hour : -1, seed);
         _data = data;
 
-        Show(ref _main, CapPanelKind.Party, plan.Main, data, plan.Companion is null);
-        Show(ref _memorial, CapPanelKind.Deep, plan.Companion, data, false);
+        // One sea in two windows.
+        var (partyX, deepX, world) = CapGeometry.WorldOf(plan);
+        Show(ref _main, CapPanelKind.Party, plan.Main, data, partyX, world);
+        Show(ref _memorial, CapPanelKind.Deep, plan.Companion, data, deepX, world);
     }
 
-    private void Show(ref Panel? panel, CapPanelKind kind, CapSlot? slot, CapPlaqueData data, bool gravesInside)
+    private void Show(ref Panel? panel, CapPanelKind kind, CapSlot? slot, CapPlaqueData data, int worldX, int worldWidth)
     {
         if (slot is null)
         {
@@ -341,8 +346,8 @@ public sealed class CapBadge
         }
 
         panel ??= Create(kind);
-        panel.Plaque.Set(data, slot.Mode, slot.Cols, slot.Rows, slot.Cell, gravesInside, Now, slot.Notch);
         panel.Plaque.Animated = _settings.Current.CapAnimations && !PermaLocke.App.Views.Pixel.PixelTheme.ReducedMotion;
+        panel.Plaque.Set(data, slot, Now, worldX, worldWidth);
         OverlayWindows.PlaceOver(panel.Window, (slot.Box.Left, slot.Box.Top, slot.Box.Width, slot.Box.Height));
         if (!panel.Window.IsVisible) panel.Window.Show();
     }
@@ -465,7 +470,8 @@ public sealed class CapBadge
             var id = member.Moves![i];
             if (id <= 0) continue;
             var pp = member.Pp is { } left && i < left.Count ? left[i] : 1;
-            moves.Add(new CapMove(_moves.Describe(id)?.Type ?? -1, pp <= 0));
+            var sheet = _moves.Describe(id);
+            moves.Add(new CapMove(sheet?.Type ?? -1, pp <= 0, sheet?.Name));
         }
 
         return new CapPlaqueMember(sprite, name, member.Level, member.CurrentHp, member.MaxHp, false, member.Pid, types,

@@ -15,7 +15,7 @@ public enum CapStatus
 
 /// <summary>One of a Pokémon's moves, reduced to what the panel draws: the colour of its type, and whether it has no PP left.</summary>
 /// <param name="Type">The type id (0 to 17), or -1 when the world could not say.</param>
-public sealed record CapMove(int Type, bool Empty);
+public sealed record CapMove(int Type, bool Empty, string? Name = null);
 
 /// <summary>
 /// One Pokémon on the cap panel. An egg shows nothing but itself (§230). Everything after <c>Egg</c> is optional and comes only
@@ -40,8 +40,9 @@ public sealed record CapPlaqueMember(BitmapSource? Sprite, string Name, int Leve
 
 /// <summary>One of the run's fallen, for the memorial and for the little graves under the party.</summary>
 /// <param name="FellTo">The rival it fell to, when the run recorded it.</param>
-/// <param name="Level">The level it had when it fell, or 0 when the run did not keep it.</param>
-public sealed record CapGrave(BitmapSource? Sprite, string Name, string? FellTo = null, int Level = 0);
+/// <param name="Level">The level it had when it fell, from the 'nivel' of the death event; 0 when the run did not keep it.</param>
+/// <param name="AgeDays">Days since it fell: how overgrown its fossil is.</param>
+public sealed record CapGrave(BitmapSource? Sprite, string Name, string? FellTo = null, int Level = 0, int AgeDays = 0);
 
 /// <summary>
 /// What the cap panel says: the stage, its cap, the next one, the party's strongest, the party, and what the run knows besides.
@@ -49,6 +50,8 @@ public sealed record CapGrave(BitmapSource? Sprite, string Name, string? FellTo 
 /// <param name="InBattle">A battle is going on, so the HP are the battle's own and the status of the party is not known.</param>
 /// <param name="Graves">The run's fallen, the latest first; null when the run's record could not be read.</param>
 /// <param name="Cleared">How many stages the player has cleared.</param>
-/// <param name="Trials">How many trials there are in all: zero hides the gems.</param>
+/// <param name="Trials">How many trials there are in all: zero hides the lanterns.</param>
+/// <param name="Hour">The game's hour of the day, 0 to 24, or -1 when it cannot be known: the sky of the sea follows it.</param>
+/// <param name="Seed">A number out of the run (its id): the relief of the floor, the coral and the rare events come from it.</param>
 public sealed record CapPlaqueData(string Trial, int Cap, int? Next, int? Highest, IReadOnlyList<CapPlaqueMember> Party,
-    bool InBattle = false, IReadOnlyList<CapGrave>? Graves = null, int Cleared = 0, int Trials = 0);
+    bool InBattle = false, IReadOnlyList<CapGrave>? Graves = null, int Cleared = 0, int Trials = 0, double Hour = -1, int Seed = 0);

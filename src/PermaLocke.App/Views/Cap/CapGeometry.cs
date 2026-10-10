@@ -251,6 +251,21 @@ public static class CapGeometry
             ScreensOf(picture, layout, content));
     }
 
+    /// <summary>
+    /// Where each window sits in the one sea: the deep (left) is its first columns, then come the columns the screens of the game take, then the party.
+    /// Zero everywhere when there is only one window or the bands are over and under, where each is a sea of its own.
+    /// </summary>
+    public static (int Party, int Deep, int Width) WorldOf(CapPlan plan)
+    {
+        if (plan.Main is { Side: CapSide.Right } main && plan.Companion is { Side: CapSide.Left } deep)
+        {
+            var gap = plan.Content.Width / Math.Max(1, main.Cell);
+            return (deep.Cols + gap, 0, deep.Cols + gap + main.Cols);
+        }
+
+        return (0, 0, 0);
+    }
+
     /// <summary>The richest mode that fits a band, or null when not even the compact one does.</summary>
     private static CapSlot? Fit(CapPanelKind panel, CapRect band, CapSide side, Ear? ear, CapOptions options, CapMode? previous)
     {

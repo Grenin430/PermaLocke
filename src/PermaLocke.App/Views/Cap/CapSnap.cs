@@ -8,20 +8,22 @@ namespace PermaLocke.App.Views;
 public static class CapSnap
 {
     /// <summary>The panel over a colour (<paramref name="background"/>, 0xRRGGBB; black is the emulator's band), each cell <paramref name="scale"/> pixels.</summary>
-    public static byte[] Bgra(CapSheet sheet, int scale, uint background, double opacity = 1)
+    public static byte[] Bgra(CapSheet sheet, int scale, uint background, double opacity = 1, CapRect? region = null)
     {
-        var w = sheet.W * scale;
-        var h = sheet.H * scale;
+        var area = region ?? new CapRect(0, 0, sheet.W, sheet.H);
+        var w = area.Width * scale;
+        var h = area.Height * scale;
         var pixels = new byte[w * h * 4];
         var bgR = (int)((background >> 16) & 255);
         var bgG = (int)((background >> 8) & 255);
         var bgB = (int)(background & 255);
 
-        for (var y = 0; y < sheet.H; y++)
+        for (var y = 0; y < area.Height; y++)
         {
-            for (var x = 0; x < sheet.W; x++)
+            for (var x = 0; x < area.Width; x++)
             {
-                var i = ((y * sheet.W) + x) * 4;
+                var i = (((y + area.Top) * sheet.W) + x + area.Left) * 4;
+                if (y + area.Top >= sheet.H || x + area.Left >= sheet.W) continue;
                 var a = sheet.B[i + 3] / 255.0 * opacity;
                 var b = (byte)((sheet.B[i] * a) + (bgB * (1 - a)));
                 var g = (byte)((sheet.B[i + 1] * a) + (bgG * (1 - a)));
@@ -50,6 +52,6 @@ public static class CapSnap
         png.Save(file);
     }
 
-    public static void Save(string path, CapSheet sheet, int scale = 3, uint background = 0x000000, double opacity = 1) =>
-        Save(path, Bgra(sheet, scale, background, opacity), sheet.W * scale, sheet.H * scale);
+    public static void Save(string path, CapSheet sheet, int scale = 3, uint background = 0x000000, double opacity = 1, CapRect? region = null) =>
+        Save(path, Bgra(sheet, scale, background, opacity, region), (region?.Width ?? sheet.W) * scale, (region?.Height ?? sheet.H) * scale);
 }
