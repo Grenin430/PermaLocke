@@ -96,9 +96,9 @@ public sealed class LabWindow : Window
     private string _backdrop = "lab";
 
     /// <summary>
-    /// The background of a scene. «negro» is what the band beside the emulator's bottom screen is: a vignette that only darkens
-    /// shows nothing there. «juego» is a field of grass and path in two greens and a sand, which the scene may overlap in a small
-    /// window of the emulator.
+    /// The background of a scene. «negro» is what the band beside the emulator's bottom screen is: what only darkens shows nothing
+    /// there, and whatever lights a cell there is plain to see. «juego» is a field of grass and path in two greens and a sand,
+    /// which the scene may overlap in a small window of the emulator.
     /// </summary>
     private Brush Backdrop(double scale)
     {

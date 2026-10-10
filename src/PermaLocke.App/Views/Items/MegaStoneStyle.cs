@@ -6,10 +6,10 @@ namespace PermaLocke.App.Views;
 /// A Mega Stone going into the bag (2026-10-09): the event of the whole system, the longest animation there is (4.5 s) and the
 /// only one with a resonance. The bag crouches and springs open, the stone rises out of it with an overshoot and hangs, two
 /// or three strands of light wind round it in front and behind while it beats faster and faster (its outline pulses, a ring of
-/// dots opens with every beat) and the edges of the scene darken in dots; the strands close on it, two flashes of white, rings
-/// of shock sweep the scene and a glyph is drawn and dissolves; the stone drops into the bag with weight, the bag swallows it,
-/// rebounds and settles, a mark of impact, a ripple on the ground and a dome of dashes, and the sparks that are left bounce once
-/// and go out one by one.
+/// dots opens with every beat); the strands close on it, two flashes of white, rings of shock sweep the scene and a glyph is
+/// drawn and dissolves; the stone drops into the bag with weight, the bag swallows it, rebounds and settles, a mark of impact,
+/// a ripple on the ground and a dome of dashes, and the sparks that are left bounce once and go out one by one. The background
+/// is never lit or darkened: everything drawn belongs to the stone, the bag, the plate or the rings and sparks round them.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -231,7 +231,6 @@ public sealed class MegaStoneStyle : ItemStyle
 
         var bagX = 1 + ((1 - bagY) * 0.6);
 
-        Vignette(c, prism, p, t, impact, pulse, a);
         c.ShadowPatch(Cx, BagBottom + offset, 13 + (int)Math.Round((1 - bagY) * 8));
         Ripple(c, prism, landed);
 
@@ -274,39 +273,6 @@ public sealed class MegaStoneStyle : ItemStyle
             c.Plate(item, PlateLeft, PlateTop, -(int)Math.Round((1 - ItemCanvas.Ease(plateIn)) * 6), "MEGAPIEDRA", prism.Base,
                 prism.Pale, Badges[family]);
             c.Alpha = kept;
-        }
-    }
-
-    /// <summary>
-    /// Dots that darken the edges of the scene to put the focus on the middle, as dark as the resonance is far on, and on the
-    /// inner edge of that darkness a contour of lighter dots in the stone's colour: darkening what is already black shows
-    /// nothing, the contour does.
-    /// </summary>
-    private static void Vignette(ItemCanvas c, ItemPrism prism, ItemPhases p, double t, double impact, double pulse, double a)
-    {
-        var density = 0.55 * ItemCanvas.Smooth(t / p.ResonanceAt);
-        if (t >= p.ResonanceAt) density += (0.2 * Math.Clamp((t - p.ResonanceAt) / p.Resonance, 0, 1)) + (0.06 * pulse);
-        if (t >= impact) density *= 1 - ItemCanvas.Smooth((t - impact) / ((p.WrapAt + 0.2) - impact));
-        if (density <= 0.01 || a <= 0) return;
-
-        var dark = ItemTint.Shade(prism.Deep, 0, 0.10);
-        for (var gy = 0; gy < SceneHeight; gy++)
-        {
-            var dy = (gy + 0.5 - (SceneHeight / 2.0)) / (SceneHeight / 2.0);
-            for (var gx = 0; gx < ItemScene.SceneWidth; gx++)
-            {
-                var dx = (gx + 0.5 - (ItemScene.SceneWidth / 2.0)) / (ItemScene.SceneWidth / 2.0);
-                var distance = Math.Sqrt((dx * dx) + (dy * dy));
-                var edge = Math.Clamp((distance - 0.7) / 0.45, 0, 1);
-
-                if (edge > 0 && ItemCanvas.Bayer[gy & 3, gx & 3] < edge * density * 16) c.Put(gx, gy, dark);
-
-                // The contour, one cell thick, a dot in every few, in the stone's own colour.
-                if (distance is >= 0.66 and < 0.72 && ItemCanvas.Bayer[gy & 3, gx & 3] < density * 7)
-                {
-                    c.Put(gx, gy, (gx + gy) % 3 == 0 ? prism.Light : prism.Base);
-                }
-            }
         }
     }
 

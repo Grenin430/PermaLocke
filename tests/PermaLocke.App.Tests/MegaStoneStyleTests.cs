@@ -6,7 +6,7 @@ namespace PermaLocke.App.Tests;
 
 /// <summary>
 /// The Mega Stone going into the bag (2026-10-09): the flash that is there at any frame rate, the plate that says what it is,
-/// the vignette that shows on black, the glyph of each hue and the player carrying on.
+/// the background that is left alone, the glyph of each hue and the player carrying on.
 /// </summary>
 public sealed class MegaStoneStyleTests
 {
@@ -128,36 +128,42 @@ public sealed class MegaStoneStyleTests
         }
     }
 
-    // ============================================================ LA VIÑETA
+    // ============================================================ EL FONDO
 
     /// <summary>
-    /// What the vignette is for is to be seen where the game is black: its contour of dots has to light cells that a dark colour
-    /// would not show, in the stone's colour, away from the plate and from the stone.
+    /// The scene does not light or darken the background (1.0.16): away from the bag, the stone, its rings and the plate there
+    /// is nothing at all at any moment, whatever the seed and the colour of the stone. The vignette of dots that tinted the
+    /// edges of the scene in the stone's colour is gone.
     /// </summary>
     [Fact]
-    public void The_vignette_has_dots_bright_enough_to_be_seen_on_black()
+    public void The_background_is_left_alone_at_every_moment_of_the_scene()
     {
         var scene = new ItemScene(1, MegaStoneStyle.SceneHeight);
-        scene.Render(Stone(), 1.7);
+        var length = ItemStyles.For(ItemCategory.MegaStone).Phases(Stone()).Length;
 
-        var visible = 0;
-        for (var gy = 0; gy < MegaStoneStyle.SceneHeight; gy++)
+        foreach (var tint in new[] { Red, 0xFF2060D0u, 0xFF30B040u, 0u })
         {
-            for (var gx = 0; gx < ItemScene.SceneWidth; gx++)
+            foreach (var seed in new[] { 1, 7, 99 })
             {
-                var dx = (gx + 0.5 - 75) / 75;
-                var dy = (gy + 0.5 - 56) / 56;
-                var distance = Math.Sqrt((dx * dx) + (dy * dy));
-                var cell = At(scene, gx, gy);
-                var strongest = Math.Max((cell >> 16) & 0xFF, Math.Max((cell >> 8) & 0xFF, cell & 0xFF));
+                var item = Stone(seed, tint);
 
-                // On the ring of the contour, outside the plate (columns 60 and over, rows 40 to 72), and lit.
-                var onPlate = gx >= 60 && gy is >= 40 and <= 72;
-                if (distance is >= 0.66 and < 0.72 && !onPlate && cell >> 24 == 0xFF && strongest >= 60) visible++;
+                for (var t = 0.0; t < length; t += 1 / 30.0)
+                {
+                    scene.Render(item, t);
+
+                    // The right of the scene, above and below the plate, further out than any ring reaches.
+                    for (var gy = 0; gy < MegaStoneStyle.SceneHeight; gy++)
+                    {
+                        if (gy is >= 36 and < 84) continue;
+
+                        for (var gx = 100; gx < ItemScene.SceneWidth; gx++)
+                        {
+                            Assert.True(At(scene, gx, gy) >> 24 == 0, $"tinte {tint:X8}, semilla {seed}, t={t:0.00}: hay algo en el fondo ({gx}, {gy}).");
+                        }
+                    }
+                }
             }
         }
-
-        Assert.True(visible >= 40, $"solo {visible} puntos del contorno se verían sobre negro");
     }
 
     // ============================================================ EL TIPO
