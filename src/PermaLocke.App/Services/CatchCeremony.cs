@@ -186,11 +186,9 @@ public sealed class CatchCeremony(IUiDispatcher ui, SaveBoxReader boxes, TcgCard
                     logger.LogInformation("Objeto a la mochila: {Item} ×{Amount}", item.Name, item.Amount);
                     _window ??= new CatchWindow();
 
-                    // The player carrying on (a key or a button of the game going down) sends it out at once; so does another
-                    // item waiting, at triple speed. What is held when it begins does not count: see GameInputWatch.
-                    var input = new GameInputWatch();
-                    input.Begin();
-                    await _window.PlayAsync(item, corner, itemPixel, () => _waiting.Count > 0, input.Advanced, Speed);
+                    // Never cut by the player's keys (2026-10-10, asked by the organiser): it plays to its end. Only another item
+                    // waiting makes it go at triple speed. GameInputWatch and the window's leave hook stay for a future use.
+                    await _window.PlayAsync(item, corner, itemPixel, () => _waiting.Count > 0, null, Speed);
                     continue;
                 }
 
