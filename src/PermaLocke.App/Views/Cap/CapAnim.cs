@@ -1,3 +1,5 @@
+using PermaLocke.App.Services;
+
 namespace PermaLocke.App.Views;
 
 /// <summary>How the panel feels, which tints its case and the light on it.</summary>
@@ -20,15 +22,17 @@ public enum CapMood
 }
 
 /// <summary>
-/// What the panel remembers between frames so that what changes is seen changing (2026-10-10): the HP that drop and rise, the level
-/// that goes up, the one that falls, the egg that hatches, the cap that changes. Pure: it is told the data and the time, never reads a
-/// clock, and everything it answers is a function of the two, so a frame is the same wherever and whenever it is asked for.
+/// What the panel remembers between frames so that what happens is seen happening (2026-10-10, events 2026-10-11): the HP bars that go down and up,
+/// and for each thing that happened to a Pokémon (a hit, a heal, a revive, a level, a fall, a hatching, a status in or out, an item, a move) the moment
+/// it was shown. What happened comes as <see cref="CapEvent"/> in the data (<see cref="CapEventFeed"/> decides it, once); when the data carry none
+/// (the lab, the tests) it works them out itself with a feed of its own. Pure: it is told the data and the time, never reads a clock, and everything it
+/// answers is a function of the two, so a frame is the same wherever and whenever it is asked for.
 /// </summary>
 /// <remarks>
 /// <para>
-/// It follows each Pokémon by PID (the rule of the whole app, §96): a swap of two in the party moves their histories with them, and
-/// a Pokémon without a PID (the rehearsal) is followed by its place. The first time it sees a party it takes it as it is and
-/// announces nothing: a panel that opens does not flash six level-ups.
+/// It follows each Pokémon by PID (the rule of the whole app, §96): a swap of two in the party moves their histories with them, and a Pokémon without
+/// a PID (the rehearsal) is followed by its place. The first time it sees a party it takes it as it is and announces nothing: a panel that opens does
+/// not flash six level-ups.
 /// </para>
 /// <para>
 /// To see it again from a moment (the lab, the tests) build a new one and tell it the steps up to there: it has no other state.
@@ -41,6 +45,9 @@ public sealed class CapAnim
 
     private const double Never = -1e9;
     private const double MourningSeconds = 20;
+
+    /// <summary>How many hits on one Pokémon are kept to write their numbers one above the other.</summary>
+    public const int HitMemory = 3;
 
     private sealed class Track
     {
@@ -62,10 +69,26 @@ public sealed class CapAnim
         public int GravesAtFall;
         public double HatchAt = Never;
         public double StatusAt = Never;
+
+        public int HealAmount;
+        public double ReviveAt = Never;
+        public double CureAt = Never;
+        public CapStatus CuredStatus;
+        public double ItemAt = Never;
+        public int ItemKind;
+        public double MoveAt = Never;
+        public int MoveType = -1;
+
+        /// <summary>The latest hits, the newest first: when and how much.</summary>
+        public readonly (double At, int Amount)[] Hits = new (double, int)[HitMemory];
+
+        public int HitCount;
     }
 
     private Track?[] _tracks = new Track?[CapWorld.Creatures];
     private bool _seen;
+    private readonly CapEventFeed _feed = new();
+    private long _lastSeq;
 
     private int _cap;
     private int _previousCap;
@@ -96,12 +119,18 @@ public sealed class CapAnim
         _phaseBase = 0;
         _tempoFrom = _tempoTo = 1;
         _tempoAt = 0;
+        _feed.Rebaseline();
+        _lastSeq = 0;
     }
 
     /// <summary>Tells it what the panel says now, at a moment: it notices what changed since the last time.</summary>
     public void Update(CapPlaqueData data, double now)
     {
         _graves = data.Graves?.Count ?? 0;
+
+        // What happened: from the data when the app sent it, from its own feed when it did not.
+        var events = data.Events ?? _feed.Observe(data, now, now).Events!;
+
         var old = _tracks;
         var next = new Track?[CapWorld.Creatures];
 
@@ -110,7 +139,7 @@ public sealed class CapAnim
             var m = data.Party[i];
             var before = Find(old, m.Pid, i);
             var track = before ?? new Track { Pid = m.Pid };
-            if (before is not null && _seen) Notice(track, m, now);
+            if (before is not null && _seen) NoticeLife(track, m, now);
             else Take(track, m);
 
             Remember(track, m);
@@ -118,6 +147,10 @@ public sealed class CapAnim
         }
 
         _tracks = next;
+
+        // The first time it sees the party it takes it as it is: events from before it opened are not shown.
+        if (_seen) Apply(events);
+        else if (events.Count > 0) _lastSeq = events.Max(e => e.Seq);
 
         var wasSeen = _seen;
         _seen = true;
@@ -205,38 +238,73 @@ public sealed class CapAnim
         track.TrailFrom = m.Hp;
     }
 
-    private void Notice(Track track, CapPlaqueMember m, double now)
+    /// <summary>The bar follows the life: from where it is shown now to the new value, in a time that grows with how much it moves.</summary>
+    private static void NoticeLife(Track track, CapPlaqueMember m, double now)
     {
+        if (m.Hp == track.Hp || m.Egg || track.Egg) return;
+
         // What the bar shows right now is where a new move starts from, so changes in a row do not jump.
         var shown = ShownHp(track, now);
+        track.HpFrom = shown;
+        track.HpTo = m.Hp;
+        track.HpAt = now;
+        if (m.Hp < track.Hp) track.TrailFrom = Math.Max(track.TrailFrom, shown);
+    }
 
-        if (m.Level > track.Level && !m.Egg) track.LevelAt = now;
-        if (track.Egg && !m.Egg) track.HatchAt = now;
-
-        if (m.Hp != track.Hp && !m.Egg && !track.Egg)
+    /// <summary>Puts what happened on the tracks of the Pokémon it happened to, each with the moment it is shown.</summary>
+    private void Apply(IReadOnlyList<CapEvent> events)
+    {
+        foreach (var e in events.Where(e => e.Seq > _lastSeq).OrderBy(e => e.Seq))
         {
-            track.HpFrom = shown;
-            track.HpTo = m.Hp;
-            track.HpAt = now;
-            if (m.Hp < track.Hp)
+            _lastSeq = e.Seq;
+            var track = e.Pid != 0 ? _tracks.FirstOrDefault(t => t is not null && t.Pid == e.Pid) : e.Slot >= 0 && e.Slot < _tracks.Length ? _tracks[e.Slot] : null;
+            if (track is null) continue;
+
+            switch (e.Kind)
             {
-                track.HitAt = now;
-                track.TrailFrom = Math.Max(track.TrailFrom, shown);
-                if (m.Hp <= 0 && track.Hp > 0)
-                {
-                    track.FellAt = now;
+                case CapEventKind.Hit:
+                    track.HitAt = e.At;
+                    for (var k = HitMemory - 1; k > 0; k--) track.Hits[k] = track.Hits[k - 1];
+                    track.Hits[0] = (e.At, e.Amount);
+                    track.HitCount = Math.Min(HitMemory, track.HitCount + 1);
+                    break;
+                case CapEventKind.Fell:
+                    track.FellAt = e.At;
                     track.GravesAtFall = _graves;
-                    _lastFallAt = now;
-                }
-            }
-            else if (m.Hp > track.Hp && m.MaxHp >= track.MaxHp)
-            {
-                track.HealAt = now;
+                    _lastFallAt = e.At;
+                    break;
+                case CapEventKind.Heal:
+                    track.HealAt = e.At;
+                    track.HealAmount = e.Amount;
+                    break;
+                case CapEventKind.Revive:
+                    track.HealAt = e.At;
+                    track.ReviveAt = e.At;
+                    track.HealAmount = e.Amount;
+                    break;
+                case CapEventKind.Level:
+                    track.LevelAt = e.At;
+                    break;
+                case CapEventKind.Hatch:
+                    track.HatchAt = e.At;
+                    break;
+                case CapEventKind.StatusIn:
+                    track.StatusAt = e.At;
+                    break;
+                case CapEventKind.StatusOut:
+                    track.CureAt = e.At;
+                    track.CuredStatus = e.Status;
+                    break;
+                case CapEventKind.ItemChanged:
+                    track.ItemAt = e.At;
+                    track.ItemKind = e.Extra;
+                    break;
+                case CapEventKind.MoveLearned:
+                    track.MoveAt = e.At;
+                    track.MoveType = e.Extra;
+                    break;
             }
         }
-
-        if (m.Status != track.Status && m.Status != CapStatus.None) track.StatusAt = now;
-
     }
 
     private static void Remember(Track track, CapPlaqueMember m)
@@ -255,12 +323,21 @@ public sealed class CapAnim
 
     private static double Ease(double k) => k * k * (3 - (2 * Math.Clamp(k, 0, 1)));
 
+    /// <summary>How long the bar takes in its current move: the table's (<see cref="HpSyncTable.BarSeconds"/>), which is the game's own once it is measured.</summary>
+    private static double BarSeconds(Track track)
+    {
+        var share = track.MaxHp > 0 ? Math.Abs(track.HpTo - track.HpFrom) / track.MaxHp : 0;
+        return HpSyncTable.BarSeconds(share, track.HpTo < track.HpFrom);
+    }
+
     private static double ShownHp(Track track, double now)
     {
-        var dur = track.HpTo < track.HpFrom ? 0.30 : 0.55;
-        var k = Math.Clamp((now - track.HpAt) / dur, 0, 1);
+        var k = Math.Clamp((now - track.HpAt) / BarSeconds(track), 0, 1);
         return track.HpFrom + ((track.HpTo - track.HpFrom) * Ease(k));
     }
+
+    /// <summary>How long the bar of a niche takes in its current move, in seconds.</summary>
+    public double BarSeconds(int index) => At(index) is { } track ? BarSeconds(track) : 0;
 
     /// <summary>The HP bar to show for a niche at a moment, 0 to 1: the real one moving to its new value. Null when it knows nothing of the niche.</summary>
     public double? HpFraction(int index, double t)
@@ -270,20 +347,22 @@ public sealed class CapAnim
     }
 
     /// <summary>
-    /// The lighter stretch that stays behind a drop and then catches up (the trail), as the fraction the bar had; null when there is none.
+    /// The lighter stretch that stays behind a drop and then catches up (the ghost), as the fraction the bar had: it holds where the bar was until the real
+    /// one has got down to its place, and then chases it. Null when there is none.
     /// </summary>
     public double? TrailFraction(int index, double t)
     {
         if (At(index) is not { MaxHp: > 0 } track || track.HitAt <= Never) return null;
 
         var since = t - track.HitAt;
-        if (since < 0 || since > 1.2) return null;
+        var duration = BarSeconds(track);
+        if (since < 0 || since > duration + 1.2) return null;
 
         var from = track.TrailFrom / track.MaxHp;
         var to = ShownHp(track, t) / track.MaxHp;
-        if (since < 0.35) return Math.Max(to, Math.Clamp(from, 0, 1));
-        var k = Math.Clamp((since - 0.35) / 0.7, 0, 1);
-        return Math.Max(to, Math.Clamp(from + ((to - from) * k), 0, 1));
+        if (since < duration + 0.1) return Math.Max(to, Math.Clamp(from, 0, 1));
+        var chase = Math.Clamp((since - duration - 0.1) / 1.0, 0, 1);
+        return Math.Max(to, Math.Clamp(from + ((to - from) * Ease(chase)), 0, 1));
     }
 
     private static double Pulse(double at, double t, double length) => t < at || at <= Never ? 0 : Math.Clamp(1 - ((t - at) / length), 0, 1);
@@ -314,6 +393,45 @@ public sealed class CapAnim
 
     /// <summary>How long ago a Pokémon got a status it did not have, or null.</summary>
     public double? SinceStatus(int index, double t) => At(index) is { } track && track.StatusAt > Never && t >= track.StatusAt ? t - track.StatusAt : null;
+
+    /// <summary>The latest hits on a Pokémon, the newest first, with how long ago each was and how much it took: so that the numbers stack and none hides another.</summary>
+    public int Hits(int index, double t, Span<(double Since, int Amount)> into)
+    {
+        if (At(index) is not { } track) return 0;
+        var n = 0;
+        for (var k = 0; k < track.HitCount && n < into.Length; k++)
+        {
+            if (t < track.Hits[k].At) continue;
+            into[n++] = (t - track.Hits[k].At, track.Hits[k].Amount);
+        }
+
+        return n;
+    }
+
+    /// <summary>The size of the last hit as a share of the maximum life, 0 to 1 (0 when unknown).</summary>
+    public double HitShare(int index) => At(index) is { MaxHp: > 0, HitCount: > 0 } track ? Math.Clamp(track.Hits[0].Amount / (double)track.MaxHp, 0, 1) : 0;
+
+    public double HealShare(int index) => At(index) is { MaxHp: > 0 } track ? Math.Clamp(track.HealAmount / (double)track.MaxHp, 0, 1) : 0;
+
+    public int HealAmount(int index) => At(index)?.HealAmount ?? 0;
+
+    /// <summary>How long ago a Pokémon got up from zero life, or null.</summary>
+    public double? SinceRevive(int index, double t) => At(index) is { } track && track.ReviveAt > Never && t >= track.ReviveAt ? t - track.ReviveAt : null;
+
+    /// <summary>How long ago a Pokémon was healed (revives included), or null.</summary>
+    public double? SinceHeal(int index, double t) => At(index) is { } track && track.HealAt > Never && t >= track.HealAt ? t - track.HealAt : null;
+
+    /// <summary>How long ago a status was cured, and which one, or null.</summary>
+    public (double Since, CapStatus Status)? SinceCure(int index, double t) =>
+        At(index) is { } track && track.CureAt > Never && t >= track.CureAt ? (t - track.CureAt, track.CuredStatus) : null;
+
+    /// <summary>How long ago the held item changed and how (0 got one, 1 lost it, 2 swapped), or null.</summary>
+    public (double Since, int Kind)? SinceItem(int index, double t) =>
+        At(index) is { } track && track.ItemAt > Never && t >= track.ItemAt ? (t - track.ItemAt, track.ItemKind) : null;
+
+    /// <summary>How long ago a move was learned and its type, or null.</summary>
+    public (double Since, int Type)? SinceMove(int index, double t) =>
+        At(index) is { } track && track.MoveAt > Never && t >= track.MoveAt ? (t - track.MoveAt, track.MoveType) : null;
 
     /// <summary>The same for the head of the panel (the cap, the trial, the fuse).</summary>
     public double HeaderDissolve(double t) => t >= _headerAt ? Math.Clamp((t - _headerAt) / DissolveSeconds, 0, 1) : 1;
@@ -375,7 +493,7 @@ public sealed class CapAnim
         return (_mood, _previousMood, Math.Clamp((t - _moodAt) / 0.8, 0, 1));
     }
 
-    /// <summary>Whether something is moving that needs frames more often than the ambient flicker: a pulse, a trail, a change dissolving, or danger.</summary>
+    /// <summary>Whether something is moving that needs frames at the pace of the screen: a pulse, a trail, a number, a change dissolving, or danger.</summary>
     public bool Busy(double t)
     {
         if (_danger || t - _capAt < 3.4 || t - _highestAt < 1) return true;
@@ -384,8 +502,9 @@ public sealed class CapAnim
         foreach (var track in _tracks)
         {
             if (track is null) continue;
-            if (t - track.HitAt < 1.3 || t - track.HealAt < 1 || t - track.LevelAt < 1.2 || t - track.HatchAt < 1.3
-                || t - track.HpAt < 0.7 || t - track.FellAt < 8) return true;
+            if (t - track.HitAt < 3.4 || t - track.HealAt < 2.8 || t - track.LevelAt < 1.2 || t - track.HatchAt < 1.3 || t - track.StatusAt < 1.4
+                || t - track.CureAt < 2.2 || t - track.ItemAt < 1.6 || t - track.MoveAt < 1.6 || t - track.HpAt < BarSeconds(track) + 1.4
+                || t - track.FellAt < 8) return true;
         }
 
         return false;

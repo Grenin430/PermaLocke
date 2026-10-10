@@ -1,3 +1,4 @@
+using PermaLocke.App.Services;
 using PermaLocke.App.Views;
 using Xunit;
 
@@ -39,20 +40,23 @@ public sealed class CapAnimTests
         anim.Update(Data(Party(Member(1))), 0);
         anim.Update(Data(Party(Member(1, hp: 40))), 2);
 
+        // The bar takes as long as the table says for a hit of that size (60 % of the life here), and the numbers of the table are in one place.
+        var seconds = anim.BarSeconds(0);
+        Assert.Equal(HpSyncTable.BarSeconds(0.6, drop: true), seconds, 6);
         Assert.Equal(1.0, anim.HpFraction(0, 2.0)!.Value, 3);
-        Assert.Equal(0.4, anim.HpFraction(0, 2.4)!.Value, 3);
-        var mid = anim.HpFraction(0, 2.15)!.Value;
-        Assert.InRange(mid, 0.4, 1.0);
+        Assert.Equal(0.4, anim.HpFraction(0, 2 + seconds + 0.01)!.Value, 3);
+        Assert.InRange(anim.HpFraction(0, 2 + (seconds / 2))!.Value, 0.4, 1.0);
 
-        // The trail stays where the bar was for a moment, then goes down to it and is gone.
-        Assert.Equal(1.0, anim.TrailFraction(0, 2.2)!.Value, 3);
-        Assert.InRange(anim.TrailFraction(0, 2.7)!.Value, 0.4, 1.0);
-        Assert.Null(anim.TrailFraction(0, 3.4));
+        // The ghost stays where the bar was until the real one has got down to its place, then goes down to it and is gone.
+        Assert.Equal(1.0, anim.TrailFraction(0, 2 + (seconds / 2))!.Value, 3);
+        Assert.Equal(1.0, anim.TrailFraction(0, 2 + seconds)!.Value, 3);
+        Assert.InRange(anim.TrailFraction(0, 2 + seconds + 0.6)!.Value, 0.4, 1.0);
+        Assert.Null(anim.TrailFraction(0, 2 + seconds + 1.5));
 
         Assert.Equal(1, anim.HitPulse(0, 2.0), 3);
         Assert.Equal(0, anim.HitPulse(0, 2.4), 3);
         Assert.True(anim.Busy(2.2));
-        Assert.False(anim.Busy(6));
+        Assert.False(anim.Busy(9));
     }
 
     [Fact]
@@ -63,7 +67,7 @@ public sealed class CapAnimTests
         anim.Update(Data(Party(Member(1, hp: 100))), 1);
 
         Assert.Equal(0.3, anim.HpFraction(0, 1.0)!.Value, 3);
-        Assert.Equal(1.0, anim.HpFraction(0, 1.6)!.Value, 3);
+        Assert.Equal(1.0, anim.HpFraction(0, 1 + anim.BarSeconds(0) + 0.01)!.Value, 3);
         Assert.True(anim.HealPulse(0, 1.2) > 0);
         Assert.Equal(0, anim.HealPulse(0, 2.0));
         Assert.Equal(0, anim.HitPulse(0, 1.2));

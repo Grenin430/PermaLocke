@@ -13,6 +13,9 @@ public sealed class CapCreature
     /// <summary>PROPOSAL: where the HP numbers are painted live (the bar going down is read with them going down), or (0, 0).</summary>
     public (int X, int Y) NumbersAt { get; private set; }
 
+    /// <summary>Where the held item's picture is (its middle, in the window's cells), or (0, 0) when it holds none: the glint of an item changing hands.</summary>
+    public (int X, int Y) ItemAt { get; private set; }
+
     private (int X, int Y, uint Rgb)[] _body = [];
     private (int X, int Y, int Ring)[] _halo = [];
     private (int X, int Y)[] _outline = [];
@@ -57,6 +60,7 @@ public sealed class CapCreature
         _outline = [];
         Info = null;
         TickerAt = default;
+        ItemAt = default;
         Beads = 0;
         if (m is null) return;
 
@@ -156,23 +160,32 @@ public sealed class CapCreature
     }
 
     /// <summary>The picture of the creature at its place, over the water: halo first, then the outline, then the body. <paramref name="breath"/> is 0 to 1.</summary>
-    public void PaintPicture(CapSheet p, int ox, int oy, uint ink, double breath, double strength = 1, uint? haloTint = null)
+    /// <param name="wave">How far the picture sways in the water, in cells, row by row (each row a little behind the one above it, so it swims and does not slide).</param>
+    /// <param name="wavePhase">The moment of the sway: the sea's clock times the creature's own speed.</param>
+    /// <param name="haloScale">How much of the halo shows: the blink of its light.</param>
+    public void PaintPicture(CapSheet p, int ox, int oy, uint ink, double breath, double strength = 1, uint? haloTint = null, double wave = 0, double wavePhase = 0,
+        double haloScale = 1)
     {
         if (_body.Length == 0) return;
 
         var baseX = Slot.Sprite.Left + ox + ((Slot.Sprite.Width - _spriteW) / 2);
         var baseY = Slot.Sprite.Top + oy + ((Slot.Sprite.Height - _spriteH) / 2);
 
+        // The sway of each row of the picture, worked out once: the rows run from -3 (the halo above) to the height plus three.
+        Span<int> shift = stackalloc int[_spriteH + 7];
+        for (var row = 0; row < shift.Length; row++) shift[row] = wave <= 0 ? 0 : (int)Math.Round(wave * Math.Sin(wavePhase + ((row - 3) * 0.45)));
+
         foreach (var (x, y, ring) in _halo)
         {
             // The inner ring is a steady glow; the outer one is a dither that breathes in and out.
             var halo = haloTint ?? Tint;
-            if (ring == 2) p.Set(baseX + x, baseY + y, halo, (int)((55 + (60 * breath)) * strength));
-            else if (((x + y) & 1) == 0) p.Set(baseX + x, baseY + y, halo, (int)((20 + (50 * breath)) * strength));
+            var sx = baseX + x + shift[y + 3];
+            if (ring == 2) p.Set(sx, baseY + y, halo, (int)((55 + (60 * breath)) * strength * haloScale));
+            else if (((x + y) & 1) == 0) p.Set(sx, baseY + y, halo, (int)((20 + (50 * breath)) * strength * haloScale));
         }
 
-        foreach (var (x, y) in _outline) p.Set(baseX + x, baseY + y, ink, 215);
-        foreach (var (x, y, rgb) in _body) p.Set(baseX + x, baseY + y, rgb, (int)(255 * Math.Min(1, strength + 0.15)));
+        foreach (var (x, y) in _outline) p.Set(baseX + x + shift[y + 3], baseY + y, ink, 215);
+        foreach (var (x, y, rgb) in _body) p.Set(baseX + x + shift[y + 3], baseY + y, rgb, (int)(255 * Math.Min(1, strength + 0.15)));
     }
 
     /// <summary>The body of the creature in one colour over itself, at a place: the white flash of a hit, the gold of a level, the glow of a heal.</summary>
@@ -257,7 +270,11 @@ public sealed class CapCreature
         {
             CapGlyphs.Outlined(sheet, level, box.Width - levelW - 1, y + 1, levelColour, ink, big: true);
             LevelBox = new CapRect(box.Left + box.Width - levelW - 2, box.Top + y, levelW + 2, 9);
-            if (hasItem) DrawItem(sheet, box.Width - levelW - 12, y, m.ItemIcon, glow, ink);
+            if (hasItem)
+            {
+                DrawItem(sheet, box.Width - levelW - 12, y, m.ItemIcon, glow, ink);
+                ItemAt = (box.Left + box.Width - levelW - 8, box.Top + y + 4);
+            }
         }
         y += lineH + 4;
 
@@ -285,8 +302,9 @@ public sealed class CapCreature
         if (wide)
         {
             var numbers = $"{m.Hp}/{m.MaxHp}";
+            // The numbers are painted every frame, counting down and up with the bar, so they are not in the still text.
             NumbersAt = (box.Left + (beads * 4) + 3, box.Top + y - 1);
-            CapGlyphs.Outlined(sheet, numbers, (beads * 4) + 3, y - 1, glow, ink);
+            _ = numbers;
         }
 
         y += 7;

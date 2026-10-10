@@ -54,7 +54,7 @@ public sealed class CapPhenomenaTests
         Assert.NotEqual(0, hit.Dx);
         Assert.Equal(0xFFFFFFu, hit.Wash);
 
-        var later = CapFx.Pose(anim, 0, 5.5, Member(1, 60), 0.6, true, layout, ctx, 0);
+        var later = CapFx.Pose(anim, 0, 6.5, Member(1, 60), 0.6, true, layout, ctx, 0);
         Assert.Equal(0, later.Dx);
         Assert.Null(later.Wash);
 
@@ -156,7 +156,7 @@ public sealed class CapPhenomenaTests
             foreach (var panel in new[] { CapPanelKind.Party, CapPanelKind.Deep })
             {
                 var notch = CapSeaTests.NotchOf(panel, 207, 321, 27);
-                foreach (var t in new[] { 0.0, 1.0, 2.1, 2.6, 3.4, 4.5, 6.0, 8.0, 21.0, 130.0, 470.0 })
+                foreach (var t in new[] { 0.0, 1.0, 2.1, 2.3, 2.6, 3.4, 4.5, 6.0, 6.3, 8.0, 10.3, 14.5, 21.0, 130.0, 470.0 })
                 {
                     var frame = CapPlaque.Replay(scenario, CapMode.Column, 207, 321, t, panel, notch, panel == CapPanelKind.Party ? 400 : 0, 600);
                     for (var y = 0; y < notch.Item3; y++)

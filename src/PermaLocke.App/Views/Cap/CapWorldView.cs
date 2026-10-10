@@ -144,12 +144,12 @@ public sealed class CapWorldView
             var oy = pose.Dy + (anim is null ? 0 : (int)Math.Round(1.2 * Math.Sin((phase * 1.1) + (i * 1.7))));
             if (!pose.Hidden)
             {
-                creature.PaintPicture(p, ox, oy, pal.Ink, pose.Breath, pose.Strength, pose.HaloTint);
+                creature.PaintPicture(p, ox, oy, pal.Ink, pose.Breath, pose.Strength, pose.HaloTint, pose.Wave, (phase * pose.WaveSpeed) + (i * 1.1), pose.HaloScale);
                 if (pose.Wash is { } wash) creature.PaintTint(p, ox, oy, wash, pose.WashAlpha);
             }
 
             if (creature.Info is { } info) p.Blit(info, creature.InfoAt.X, creature.InfoAt.Y);
-            PaintBeads(p, creature, m, share, pose.Breath, pal, anim?.TrailFraction(i, t));
+            PaintBeads(p, creature, m, share, pose.Breath, pal, anim?.TrailFraction(i, t), anim, i, t);
             PaintTicker(p, creature, m, i, anim is null ? 0 : t, pal);
 
             if (anim is not null)
@@ -187,7 +187,8 @@ public sealed class CapWorldView
         if (move.Empty) p.HLine(x + 7, y + 2, CapGlyphs.Width(name, false), 0xFF6A50u);
     }
 
-    private static void PaintBeads(CapSheet p, CapCreature c, CapPlaqueMember m, double share, double breath, CapSeaPalette pal, double? trail)
+    private static void PaintBeads(CapSheet p, CapCreature c, CapPlaqueMember m, double share, double breath, CapSeaPalette pal, double? trail, CapAnim? anim = null,
+        int index = 0, double t = 0)
     {
         if (c.Beads <= 0 || m.Egg || m.Fallen) return;
 
@@ -202,6 +203,31 @@ public sealed class CapWorldView
         }
 
         CapGlyphs.Beads(p, c.BeadsAt.X, c.BeadsAt.Y, c.Beads, lit, colour, pal.Ink, 0.4 + (0.6 * breath));
+
+        // The numbers count with the bar, and warm or cool while it moves.
+        var shownHp = (int)Math.Round(share * m.MaxHp);
+        var duration = anim?.BarSeconds(index) ?? 0;
+        var hot = anim?.SinceHit(index, t) is { } hit && hit < duration + 0.3;
+        var warm = anim?.SinceHeal(index, t) is { } heal && heal < duration + 0.3;
+        if (c.NumbersAt.X > 0) CapGlyphs.Outlined(p, $"{shownHp}/{m.MaxHp}", c.NumbersAt.X, c.NumbersAt.Y, hot ? 0xFFB090u : warm ? 0xA8FFC0u : pal.Glow, pal.Ink);
+        if (anim is null) return;
+
+        // The bead that goes out throws a spark up; the one that lights flashes.
+        if (anim.SinceHit(index, t) is { } since && since < duration + 0.9 && trail is { } ghost)
+        {
+            var before = Math.Clamp((int)Math.Ceiling((ghost * c.Beads) - 0.001), 0, c.Beads);
+            for (var b = lit; b < before; b++)
+            {
+                var age = ((since * 5) + (b * 0.37)) % 1.0;
+                p.Set(c.BeadsAt.X + (b * 4) + 1 + (int)Math.Round(Math.Sin((age * 6) + b)), c.BeadsAt.Y - 1 - (int)(age * 7), 0xFFE0B0u, (int)(220 * (1 - age)));
+            }
+        }
+
+        if (anim.SinceHeal(index, t) is { } healed && healed < duration + 0.6 && lit > 0)
+        {
+            p.Set(c.BeadsAt.X + ((lit - 1) * 4) + 1, c.BeadsAt.Y - 1, 0xFFFFFFu, 230);
+            p.Set(c.BeadsAt.X + ((lit - 1) * 4) + 1, c.BeadsAt.Y + 3, 0xFFFFFFu, 150);
+        }
     }
 
     /// <summary>

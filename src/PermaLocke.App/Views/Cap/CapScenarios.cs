@@ -253,6 +253,17 @@ public static class CapScenarios
             new(0, Data(down)),
             new(2, Data(With(down, 1, m => m with { Hp = 61 })))]));
 
+        var held = Team();
+        scenarios.Add(new CapScenario("ev-objeto", "Gyarados cambia los Restos por una Baya y Kingdra suelta su objeto", [
+            new(0, Data(held)),
+            new(2, Data(With(held, 0, m => m with { Item = "Baya Zidra" }))),
+            new(6, Data(With(With(held, 0, m => m with { Item = "Baya Zidra" }), 4, m => m with { Item = null })))]));
+
+        scenarios.Add(new CapScenario("ev-movimiento", "Snorlax aprende Hiperrayo y Dragonite, Danza Dragon", [
+            new(0, Data(held)),
+            new(2, Data(With(held, 2, m => m with { Moves = [.. m.Moves!.Take(3), new CapMove(0, false, "Hiperrayo")] }))),
+            new(6, Data(With(With(held, 2, m => m with { Moves = [.. m.Moves!.Take(3), new CapMove(0, false, "Hiperrayo")] }), 5, m => m with { Moves = [new CapMove(15, false, "Danza Dragon"), .. m.Moves!.Skip(1)] })))]));
+
         var clean = Team();
         scenarios.Add(new CapScenario("ev-estado", "Entra el estado: Dragonite se duerme y Kingdra queda paralizado", [
             new(0, Data(clean)),

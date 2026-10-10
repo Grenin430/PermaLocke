@@ -1,7 +1,10 @@
 namespace PermaLocke.App.Views;
 
 /// <summary>What the animations do to the picture of a creature this moment: where it is, how much of it shows, what colour washes over it.</summary>
-public readonly record struct CapPose(int Dx, int Dy, double Strength, bool Hidden, uint? HaloTint, uint? Wash, int WashAlpha, double Breath);
+/// <param name="Wave">How far the creature sways in the water, in cells, and <paramref name="WaveSpeed"/> how fast; both follow its life and the mood.</param>
+/// <param name="HaloScale">How much of its halo shows: it dips now and then, the blink of its light.</param>
+public readonly record struct CapPose(int Dx, int Dy, double Strength, bool Hidden, uint? HaloTint, uint? Wash, int WashAlpha, double Breath,
+    double Wave = 0, double WaveSpeed = 0, double HaloScale = 1);
 
 /// <summary>
 /// The happenings of the sea (2026-10-10), as things that happen in water and light, not as flashes on a panel: a hit is a shock that goes out
@@ -28,12 +31,6 @@ public static class CapFx
         var washAlpha = 0;
         uint? halo = null;
 
-        if (anim.SinceHit(i, t) is { } hit && hit < 0.35)
-        {
-            dx = (i % 2 == 0 ? 1 : -1) * (int)Math.Round(3 * (1 - (hit / 0.35)));
-            if (hit < 0.14) (wash, washAlpha) = (0xFFFFFFu, (int)(180 * (1 - (hit / 0.14))));
-        }
-
         var heal = anim.HealPulse(i, t);
         if (heal > 0.3) (wash, washAlpha) = (0xB8FFD0u, (int)(110 * (heal - 0.3)));
 
@@ -44,6 +41,9 @@ public static class CapFx
         if (battle && !m.Fallen && !m.Egg && share > 0 && share <= 0.25) halo = 0xFF4A3Au;
 
         if (m.Status == CapStatus.Freeze) breath = 0.15;
+
+        // What happened to it (a hit, a getting up) and its quiet life: the sway and the blink.
+        CapFxEvents.Pose(anim, i, t, m, share, battle, ref dx, ref wash, ref washAlpha, ref strength, out var wave, out var waveSpeed, out var haloScale);
 
         var hidden = false;
         if (anim.SinceFall(i, t) is { } fall)
@@ -57,7 +57,7 @@ public static class CapFx
         _ = l;
         _ = ctx;
         _ = gravesNow;
-        return new CapPose(dx, dy, strength, hidden, halo, wash, washAlpha, breath);
+        return new CapPose(dx, dy, strength, hidden, halo, wash, washAlpha, breath, wave, waveSpeed, haloScale);
     }
 
     // ---------------------------------------------------------------- overlays
@@ -68,11 +68,8 @@ public static class CapFx
         var (cx, cy) = c.Centre;
         var (w, h) = c.PictureSize;
 
-        var hit = anim.SinceHit(i, t);
-        if (hit is { } sh && sh < 0.6) Shock(p, cx, cy, sh, pal);
-
-        var heal = anim.HealPulse(i, t);
-        if (heal > 0) Heal(p, cx, cy, w, h, heal);
+        // Hits, heals, revives, cures, statuses coming in, items and moves are CapFxEvents'.
+        CapFxEvents.Overlay(p, l, pal, c, m, anim, i, t);
 
         var level = anim.LevelPulse(i, t);
         if (level > 0) Level(p, c, cx, cy, level, i);
@@ -80,7 +77,7 @@ public static class CapFx
         var hatch = anim.HatchPulse(i, t);
         if (hatch > 0) Hatch(p, cx, cy, hatch, i);
 
-        if (!m.Fallen && !m.Egg && m.Status != CapStatus.None) Status(p, c, m.Status, phase, i, pal);
+        if (!m.Fallen && !m.Egg && m.Status != CapStatus.None) Status(p, c, m.Status, phase, i, pal, CapFxEvents.Intensity(anim, i, t));
 
         // The light of a creature that falls goes out in a ring of pale light that closes in on it and a second that goes out.
         if (anim.SinceFall(i, t) is { } fall && fall < 1.2)
@@ -99,40 +96,6 @@ public static class CapFx
             if (dither && (a & 1) == 1) continue;
             var angle = a * 2 * Math.PI / steps;
             p.Set(cx + (int)Math.Round(Math.Cos(angle) * rx), cy + (int)Math.Round(Math.Sin(angle) * ry), colour, alpha);
-        }
-    }
-
-    /// <summary>A hit: a ring that goes out through the water, a second behind it, and bubbles thrown from the creature.</summary>
-    private static void Shock(CapSheet p, int cx, int cy, double since, CapSeaPalette pal)
-    {
-        var k = since / 0.6;
-        Ring(p, cx, cy, 5 + (k * 40), (5 + (k * 40)) * 0.55, 0xFF8050, (int)(190 * (1 - k)));
-        if (k > 0.2) Ring(p, cx, cy, 5 + ((k - 0.2) * 40), (5 + ((k - 0.2) * 40)) * 0.55, 0xFFC090, (int)(120 * (1 - k)));
-
-        for (var b = 0; b < 7; b++)
-        {
-            var angle = (CapArt.Hash(b, 11) % 628) / 100.0;
-            var reach = k * (18 + (CapArt.Hash(b, 12) % 18));
-            p.Set(cx + (int)Math.Round(Math.Cos(angle) * reach), cy + (int)Math.Round(Math.Sin(angle) * reach * 0.7) - (int)(k * 6), pal.Snow, (int)(220 * (1 - k)));
-        }
-    }
-
-    /// <summary>A heal: a ring of green light that closes in, and crosses of pale light rising from the creature.</summary>
-    private static void Heal(CapSheet p, int cx, int cy, int w, int h, double pulse)
-    {
-        var k = 1 - pulse;
-        Ring(p, cx, cy, 4 + ((1 - k) * 18), (4 + ((1 - k) * 18)) * 0.6, 0x9CF0A8, (int)(150 * pulse));
-
-        for (var q = 0; q < 4; q++)
-        {
-            var x = cx + ((CapArt.Hash(q, 21) % Math.Max(3, w)) - (w / 2));
-            var y = cy + (h / 2) - (int)(((k * 1.3) + (q * 0.18)) % 1.0 * (h + 14));
-            var alpha = (int)(220 * pulse);
-            p.Set(x, y, 0xC8FFD8, alpha);
-            p.Set(x - 1, y, 0xC8FFD8, alpha);
-            p.Set(x + 1, y, 0xC8FFD8, alpha);
-            p.Set(x, y - 1, 0xC8FFD8, alpha);
-            p.Set(x, y + 1, 0xC8FFD8, alpha);
         }
     }
 
@@ -188,8 +151,9 @@ public static class CapFx
     }
 
     /// <summary>A status, as something that happens round the creature: bubbles, embers, a Z, sparks, ice.</summary>
-    private static void Status(CapSheet p, CapCreature c, CapStatus status, double phase, int i, CapSeaPalette pal)
+    private static void Status(CapSheet p, CapCreature c, CapStatus status, double phase, int i, CapSeaPalette pal, double intensity = 1)
     {
+        int Few(int count) => (int)Math.Ceiling(count * intensity);
         var (cx, cy) = c.Centre;
         var (w, h) = c.PictureSize;
         var left = cx - (w / 2);
@@ -199,7 +163,7 @@ public static class CapFx
         switch (status)
         {
             case CapStatus.Poison:
-                for (var k = 0; k < 4; k++)
+                for (var k = 0; k < Few(4); k++)
                 {
                     var rise = ((phase * 0.7) + (k / 4.0)) % 1.0;
                     var x = left + (CapArt.Hash(i, k + 41) % Math.Max(1, w)) + (int)Math.Round(Math.Sin((phase * 2) + k) * 1.5);
@@ -211,7 +175,7 @@ public static class CapFx
 
                 break;
             case CapStatus.Burn:
-                for (var k = 0; k < 5; k++)
+                for (var k = 0; k < Few(5); k++)
                 {
                     var rise = ((phase * 1.2) + (k / 5.0)) % 1.0;
                     var x = left + (CapArt.Hash(i, k + 51) % Math.Max(1, w));
@@ -220,7 +184,7 @@ public static class CapFx
 
                 break;
             case CapStatus.Sleep:
-                for (var k = 0; k < 2; k++)
+                for (var k = 0; k < Few(2); k++)
                 {
                     var rise = ((phase * 0.4) + (k * 0.5)) % 1.0;
                     CapGlyphs.Outlined(p, "Z", left + w + (int)(rise * 4) - 2, top - (int)(rise * 7) + 2, 0xE8E8F8, pal.Ink, alpha: (int)(255 * (1 - (rise * 0.8))));
@@ -228,7 +192,7 @@ public static class CapFx
 
                 break;
             case CapStatus.Paralysis:
-                if (beat % 3 == 0)
+                if (beat % 3 == 0 && intensity > 0.4)
                 {
                     var ax = left + (CapArt.Hash(beat, i) % Math.Max(1, w));
                     var ay = top + (CapArt.Hash(beat, i + 1) % Math.Max(1, h));
@@ -240,8 +204,8 @@ public static class CapFx
 
                 break;
             case CapStatus.Freeze:
-                c.PaintTint(p, 0, 0, 0xA8E8F8, 56);
-                for (var k = 0; k < 6; k++)
+                c.PaintTint(p, 0, 0, 0xA8E8F8, (int)(56 * intensity));
+                for (var k = 0; k < Few(6); k++)
                 {
                     var gx = left + (CapArt.Hash(i, k + 61) % Math.Max(1, w));
                     var gy = top + (CapArt.Hash(i, k + 71) % Math.Max(1, h));

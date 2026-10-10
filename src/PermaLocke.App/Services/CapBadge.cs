@@ -63,6 +63,10 @@ public sealed class CapBadge
     private readonly VitalsPump _pump;
     private readonly BarSync _bar;
     private readonly HpPresenter _hp = new();
+    private readonly CapEventFeed _feed = new();
+    private IReadOnlyList<CapEvent> _events = [];
+    private double _eventAt;
+    private long _epoch;
     private readonly DispatcherTimer _due = new();
     private readonly DispatcherTimer _timer = new() { Interval = Follow };
     private readonly DispatcherTimer _frames = new() { Interval = Frames };
@@ -229,6 +233,8 @@ public sealed class CapBadge
             // El nivel del equipo se mira cada vuelta: sube en mitad de un combate y la barra lo sigue.
             _shown = reading with { Highest = Highest() ?? reading.Highest };
             _battle = _monitor.BattleNow.Count > 0;
+            _eventAt = Now;
+            TakeNewEpoch();
             ShowParty(LiveParty());
             _picture = new CapRect(picture.Left, picture.Top, picture.Width, picture.Height);
             Apply(_picture, ScreenLayout(), Dpi());
@@ -299,11 +305,21 @@ public sealed class CapBadge
     {
         // One push waiting at most: a hundred changes a second cost one repaint a frame, the last one.
         if (Interlocked.Exchange(ref _pushing, 1) == 1) return;
+        var ago = (Stopwatch.GetTimestamp() - frame.ReadAt) / (double)Stopwatch.Frequency;
         _ = Application.Current?.Dispatcher.BeginInvoke(DispatcherPriority.Send, () =>
         {
             Interlocked.Exchange(ref _pushing, 0);
-            Repaint();
+            Repaint(Now - ago);
         });
+    }
+
+    /// <summary>The fast reading started again from nothing (the game came back): what is read next is taken as it is, nothing is announced.</summary>
+    private void TakeNewEpoch()
+    {
+        if (_pump.Epoch == _epoch) return;
+        _epoch = _pump.Epoch;
+        _feed.Rebaseline();
+        _hp.Reset();
     }
 
     /// <summary>The bar of the game started to move: the oldest change held back is shown now.</summary>
@@ -314,15 +330,17 @@ public sealed class CapBadge
         _ = Application.Current?.Dispatcher.BeginInvoke(DispatcherPriority.Send, () =>
         {
             _hp.BarStarted(Now - ago);
-            Repaint();
+            Repaint(Now - ago);
         });
     }
 
     /// <summary>Shows the party as it is now, at once: a change of the fast reading, the bar of the game, or the time of a held change coming.</summary>
-    private void Repaint()
+    private void Repaint(double? at = null)
     {
         try
         {
+            _eventAt = at ?? Now;
+            TakeNewEpoch();
             if (_rehearsing || _shown is null || _picture.Width == 0 || (_main?.Window.IsVisible != true && _memorial?.Window.IsVisible != true)) return;
             _battle = _monitor.BattleNow.Count > 0;
             ShowParty(LiveParty());
@@ -438,7 +456,7 @@ public sealed class CapBadge
         _lastMode = plan.Main?.Mode;
         var seed = _runContext.Current is { } activeRun ? activeRun.Id.GetHashCode() & 0x7FFFFFFF : 0;
         var data = _rehearsal ?? new CapPlaqueData(reading.Trial, reading.Cap, reading.Next, reading.Highest, _party, _battle, _graves, reading.Cleared,
-            reading.Trials, _sky.IsKnown ? _sky.Hour : -1, seed);
+            reading.Trials, _sky.IsKnown ? _sky.Hour : -1, seed, _events);
         _data = data;
 
         // One sea in two windows.
@@ -577,6 +595,9 @@ public sealed class CapBadge
 
         _partyKey = key;
         _party = [.. party.OrderBy(p => p.Slot).Select(member => ToMember(member, details))];
+
+        // What happened to each of them, with the moment the news came (the reading, the bar of the game), not the moment it is painted.
+        _events = _feed.Observe(new CapPlaqueData(string.Empty, 0, null, null, _party, _battle), _eventAt, Now).Events ?? [];
     }
 
     /// <summary>

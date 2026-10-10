@@ -55,4 +55,46 @@ public sealed record CapGrave(BitmapSource? Sprite, string Name, string? FellTo 
 /// <param name="Hour">The game's hour of the day, 0 to 24, or -1 when it cannot be known: the sky of the sea follows it.</param>
 /// <param name="Seed">A number out of the run (its id): the relief of the floor, the coral and the rare events come from it.</param>
 public sealed record CapPlaqueData(string Trial, int Cap, int? Next, int? Highest, IReadOnlyList<CapPlaqueMember> Party,
-    bool InBattle = false, IReadOnlyList<CapGrave>? Graves = null, int Cleared = 0, int Trials = 0, double Hour = -1, int Seed = 0);
+    bool InBattle = false, IReadOnlyList<CapGrave>? Graves = null, int Cleared = 0, int Trials = 0, double Hour = -1, int Seed = 0,
+    IReadOnlyList<CapEvent>? Events = null);
+
+/// <summary>What can happen to one Pokémon that the sea shows as something that happens to its creature.</summary>
+public enum CapEventKind
+{
+    /// <summary>It lost life: <see cref="CapEvent.Amount"/> points.</summary>
+    Hit,
+
+    /// <summary>It got life back: <see cref="CapEvent.Amount"/> points.</summary>
+    Heal,
+
+    /// <summary>It got up from zero life: <see cref="CapEvent.Amount"/> points.</summary>
+    Revive,
+
+    /// <summary>It went up a level.</summary>
+    Level,
+
+    /// <summary>It fell: its life reached zero.</summary>
+    Fell,
+
+    /// <summary>An egg hatched.</summary>
+    Hatch,
+
+    /// <summary>It got a status: <see cref="CapEvent.Status"/>.</summary>
+    StatusIn,
+
+    /// <summary>It lost a status (cured): <see cref="CapEvent.Status"/> is the one it had.</summary>
+    StatusOut,
+
+    /// <summary>The held item changed: <see cref="CapEvent.Extra"/> 0 it got one, 1 it lost it, 2 it swapped it.</summary>
+    ItemChanged,
+
+    /// <summary>It learned a move: <see cref="CapEvent.Extra"/> is the type of the move, -1 when unknown.</summary>
+    MoveLearned
+}
+
+/// <summary>
+/// Something that happened to a Pokémon, with the moment it is shown (2026-10-11): seconds on the panel's clock, counted from when the data said it —
+/// the reading of the fast path or the bar of the game — and never from when it was painted, so that the delay of one is not added to the other.
+/// Events live a few seconds in the data and are then dropped; <see cref="Seq"/> is how the animation tells a new one from one it has seen.
+/// </summary>
+public sealed record CapEvent(long Seq, CapEventKind Kind, uint Pid, int Slot, double At, int Amount = 0, CapStatus Status = CapStatus.None, int Extra = 0);
