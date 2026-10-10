@@ -116,6 +116,21 @@ public sealed class BattleTableReader(AzaharRpcClient client, ILogger<BattleTabl
     /// </summary>
     public IReadOnlyList<BattleTable> Read(DateTimeOffset now)
     {
+        var tables = ReadTables(now);
+        Volatile.Write(ref _last, tables);
+        return tables;
+    }
+
+    private IReadOnlyList<BattleTable> _last = [];
+
+    /// <summary>
+    /// What the last <see cref="Read"/> found: the blocks the fast reading follows between two of those (a reference that is replaced whole, so
+    /// another thread can take it without a lock). Empty when no battle is known.
+    /// </summary>
+    public IReadOnlyList<BattleTable> LastTables => Volatile.Read(ref _last);
+
+    private IReadOnlyList<BattleTable> ReadTables(DateTimeOffset now)
+    {
         if (_known.Count > 0)
         {
             if (ReadKnown() is { } tables)

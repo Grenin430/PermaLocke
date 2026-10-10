@@ -259,6 +259,7 @@ public partial class App : Application
         collection.AddSingleton<IntegrityGuard>();
         collection.AddSingleton<OrderService>();
         collection.AddSingleton<RulesSync>();
+        collection.AddSingleton<VitalsPump>();
         collection.AddSingleton<CapBadge>();
         collection.AddSingleton<BackgroundMode>();
         collection.AddSingleton<PokemonIdentityService>();

@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using PermaLocke.GameLink.Battle;
 using PermaLocke.GameLink.Rpc;
+using PermaLocke.GameLink.Vitals;
 
 namespace PermaLocke.PlaqueLab;
 
@@ -95,51 +96,6 @@ public static class Latency
         Console.WriteLine($"### {title}  ({unit})");
         Console.WriteLine("| prueba                                                     |      media |   mediana |       p95 |       p99 |    máximo |      n |");
         Console.WriteLine("|---|---:|---:|---:|---:|---:|---:|");
-    }
-
-    // ---------------------------------------------------------------- the pipelined client (proposal)
-
-    /// <summary>Sends every request first and then collects the replies: one trip of waiting instead of one per read.</summary>
-    private sealed class PipeClient : IDisposable
-    {
-        private readonly Socket _socket = new(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-        private readonly EndPoint _server = new IPEndPoint(IPAddress.Loopback, Port);
-        private uint _next = 1000;
-
-        public PipeClient() => _socket.ReceiveTimeout = 500;
-
-        public byte[][] ReadMany((uint Address, int Size)[] ranges)
-        {
-            var first = _next;
-            foreach (var (address, size) in ranges)
-            {
-                var request = new byte[24];
-                BinaryPrimitives.WriteUInt32LittleEndian(request, 1);
-                BinaryPrimitives.WriteUInt32LittleEndian(request.AsSpan(4), _next++);
-                BinaryPrimitives.WriteUInt32LittleEndian(request.AsSpan(8), 1);
-                BinaryPrimitives.WriteUInt32LittleEndian(request.AsSpan(12), 8);
-                BinaryPrimitives.WriteUInt32LittleEndian(request.AsSpan(16), address);
-                BinaryPrimitives.WriteUInt32LittleEndian(request.AsSpan(20), (uint)size);
-                _socket.SendTo(request, _server);
-            }
-
-            var result = new byte[ranges.Length][];
-            var got = 0;
-            var buffer = new byte[2048];
-            EndPoint from = new IPEndPoint(IPAddress.Any, 0);
-            while (got < ranges.Length)
-            {
-                var n = _socket.ReceiveFrom(buffer, ref from);
-                var index = (int)(BinaryPrimitives.ReadUInt32LittleEndian(buffer.AsSpan(4)) - first);
-                if (index < 0 || index >= ranges.Length || result[index] is not null) continue;
-                result[index] = buffer.AsSpan(16, n - 16).ToArray();
-                got++;
-            }
-
-            return result;
-        }
-
-        public void Dispose() => _socket.Dispose();
     }
 
     // ---------------------------------------------------------------- timers
@@ -315,17 +271,17 @@ public static class Latency
         rows.Add(Of($"HOY combate, cada 250 ms: BattleTableReader.Read real ({found.Sum(t => t.Blocks.Count)} bloques de 74 B)", Run(500, () => reader.Read(DateTimeOffset.UtcNow))));
 
         var blocks = Enumerable.Range(0, 6).Select(id => TableB + (uint)(id * Stride) + 0x2C).ToArray();
-        rows.Add(Of("PROPUESTA combate, 6 lecturas de 14 B (especie, PS máx., PS, id), en serie", Run(2000, () =>
+        rows.Add(Of("IMPLEMENTADO combate, 6 lecturas de 14 B (especie, PS máx., PS, id), en serie", Run(2000, () =>
         {
             foreach (var address in blocks) Read(address, 14);
         })));
 
-        using (var pipe = new PipeClient())
+        using (var pipe = new AzaharBatchReader(500, port: Port))
         {
             var ranges = blocks.Select(a => (a, 14)).ToArray();
-            rows.Add(Of("PROPUESTA combate, las mismas 6 enviadas de golpe y recogidas después", Run(2000, () => pipe.ReadMany(ranges))));
+            rows.Add(Of("IMPLEMENTADO combate, las mismas 6 enviadas de golpe y recogidas después", Run(2000, () => pipe.ReadMany(ranges))));
             var all = Enumerable.Range(0, 12).Select(id => (TableB + (uint)((id % 6) * Stride) + 0x2C, 14)).ToArray();
-            rows.Add(Of("PROPUESTA combate, 12 de golpe (las dos tablas)", Run(2000, () => pipe.ReadMany(all))));
+            rows.Add(Of("IMPLEMENTADO combate, 12 de golpe (las dos tablas)", Run(2000, () => pipe.ReadMany(all))));
         }
 
         rows.Add(Of("ALTERNATIVA: un solo bloque contiguo de 3,3 KB (4 trozos de ≤1024)", Run(1000, () => Read(TableB, 3300))));
@@ -413,35 +369,10 @@ public static class Latency
                 }
             }, client, done, seen, token, false)));
 
-        foreach (var (label, period, pipelined) in new[] { ("PROPUESTA 60 Hz", 16.0, false), ("PROPUESTA 120 Hz", 8.0, false), ("PROPUESTA 240 Hz", 4.0, false), ("PROPUESTA 240 Hz, lecturas de golpe", 4.0, true) })
+        foreach (var (label, period) in new[] { ("IMPLEMENTADO 30 Hz", 33.3), ("IMPLEMENTADO 60 Hz", 16.7), ("IMPLEMENTADO 120 Hz (el de combate)", 8.3), ("IMPLEMENTADO 240 Hz", 4.2) })
         {
-            rows.Add(DetectionLag($"{label}: hilo propio, temporizador de alta resolución, 6×14 B, confirma con 2.ª lectura", eventsPerTest, (client, done, seen, token) =>
-                Poller((c, d, s, t) =>
-                {
-                    var timer = new HighResolutionTimer();
-                    using var pipe = pipelined ? new PipeClient() : null;
-                    var ranges = Enumerable.Range(0, 6).Select(id => (TableB + (uint)(id * Stride) + 0x2C, 14)).ToArray();
-                    var last = 200;
-                    ushort Hp(byte[] block) => BitConverter.ToUInt16(block, 4);
-                    byte[][] Read() => pipe is not null ? pipe.ReadMany(ranges) : [.. ranges.Select(r => c.ReadMemory(r.Item1, r.Item2))];
-                    while (!t.IsCancellationRequested)
-                    {
-                        var first = Read();
-                        if (Hp(first[0]) != last)
-                        {
-                            // A value counts when two readings in a row agree: a torn read costs one more round trip, not a false event.
-                            var again = Read();
-                            if (Hp(again[0]) == Hp(first[0]))
-                            {
-                                last = Hp(again[0]);
-                                Interlocked.Exchange(ref s[0], Stopwatch.GetTimestamp());
-                                d.Set();
-                            }
-                        }
-
-                        timer.Sleep(period);
-                    }
-                }, client, done, seen, token, true)));
+            rows.Add(DetectionLag($"{label}: VitalsReader real, lecturas de golpe, confirma con 2.ª lectura", eventsPerTest, (client, done, seen, token) =>
+                Poller((c, d, s, t) => RealLoop(c, d, s, t, period, null), client, done, seen, token, true)));
         }
 
         foreach (var row in rows)
@@ -498,32 +429,56 @@ public static class Latency
             }
         }, false);
 
-        foreach (var hz in new[] { 60, 120, 240 })
+        foreach (var hz in new[] { 30, 60, 120, 240 })
         {
-            Measure($"PROPUESTA {hz} Hz: 6×14 B en serie", (c, n, t) =>
-            {
-                var timer = new HighResolutionTimer();
-                while (!t.IsCancellationRequested)
-                {
-                    foreach (var address in blocks) c.ReadMemory(address, 14);
-                    n[0] += 6;
-                    timer.Sleep(1000.0 / hz);
-                }
-            }, true);
+            Measure($"IMPLEMENTADO {hz} Hz: VitalsReader real, 6×14 B de golpe", (c, n, t) => RealLoop(c, null, new long[1], t, 1000.0 / hz, n), true);
         }
 
-        Measure("PROPUESTA 240 Hz: 6×14 B de golpe", (c, n, t) =>
+        Measure("IMPLEMENTADO fuera de combate, 4 Hz: 12 lecturas de golpe (equipo)", (c, n, t) =>
         {
-            var timer = new HighResolutionTimer();
-            using var pipe = new PipeClient();
-            var ranges = blocks.Select(a => (a, 14)).ToArray();
+            using var batch = new AzaharBatchReader(100, port: Port);
+            var timer = new PermaLocke.App.Services.HighResolutionTimer();
+            var ranges = Enumerable.Range(0, 12).Select(i => (TableB + (uint)(i * 40), i % 2 == 0 ? 20 : 28)).ToArray();
             while (!t.IsCancellationRequested)
             {
-                pipe.ReadMany(ranges);
-                n[0] += 6;
-                timer.Sleep(1000.0 / 240);
+                batch.ReadMany(ranges);
+                n[0] += 12;
+                timer.Sleep(250);
             }
         }, true);
+    }
+
+    /// <summary>The loop of the pump, as it is in the app: the real reader and the real timer against the fake emulator.</summary>
+    private static void RealLoop(AzaharRpcClient c, ManualResetEventSlim? d, long[] s, CancellationToken t, double period, int[]? count)
+    {
+        var cold = new BattleTableReader(c, Microsoft.Extensions.Logging.Abstractions.NullLogger<BattleTableReader>.Instance);
+        cold.Read(DateTimeOffset.UtcNow);
+        cold.Read(DateTimeOffset.UtcNow);
+        var tables = BattleFaintTracker.InProgress(cold.LastTables);
+        using var batch = new AzaharBatchReader(100, port: Port);
+        var vitals = new PermaLocke.GameLink.Vitals.VitalsReader(batch);
+        var timer = new PermaLocke.App.Services.HighResolutionTimer();
+        PermaLocke.GameLink.Vitals.VitalsFrame? accepted = null;
+        var last = 200;
+        while (!t.IsCancellationRequested)
+        {
+            var started = Stopwatch.GetTimestamp();
+            var frame = vitals.ReadConfirmed(accepted, tables, null, 0);
+            if (frame is { Battle.Count: > 0 })
+            {
+                if (frame.Battle[0].Hp != last)
+                {
+                    last = frame.Battle[0].Hp;
+                    Interlocked.Exchange(ref s[0], frame.ReadAt);
+                    d?.Set();
+                }
+
+                accepted = frame;
+            }
+
+            if (count is not null) count[0] += 6;
+            timer.Sleep(Math.Max(0.2, period - Ms(Stopwatch.GetTimestamp() - started)));
+        }
     }
 
     // ---------------------------------------------------------------- the screen proxy
@@ -558,6 +513,7 @@ public static class Latency
     public static int Run(string[] args)
     {
         var at = Array.IndexOf(args, "--latencia");
+        Console.OutputEncoding = System.Text.Encoding.UTF8;
         var seconds = at + 1 < args.Length && double.TryParse(args[at + 1], out var s) ? s : 8;
         var self = Environment.ProcessPath!;
         using var server = Process.Start(new ProcessStartInfo(self, $"--servidor-falso {Port}") { UseShellExecute = false, CreateNoWindow = true })!;

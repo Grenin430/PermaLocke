@@ -10,6 +10,7 @@ using PermaLocke.Core.Abstractions;
 using PermaLocke.Core.Domain;
 using PermaLocke.GameLink;
 using PermaLocke.GameLink.Battle;
+using PermaLocke.GameLink.Vitals;
 using PermaLocke.Rules;
 using PermaLocke.Rules.Services;
 
@@ -44,7 +45,6 @@ public sealed class CapBadge
     private static readonly TimeSpan Follow = TimeSpan.FromMilliseconds(500);
     private static readonly TimeSpan Reread = TimeSpan.FromSeconds(10);
     private static readonly TimeSpan Frames = TimeSpan.FromMilliseconds(83);
-    private static readonly TimeSpan Fast = TimeSpan.FromMilliseconds(40);
     private static readonly TimeSpan Doubt = TimeSpan.FromSeconds(6);
     private static readonly TimeSpan Verify = TimeSpan.FromSeconds(1.5);
 
@@ -60,6 +60,7 @@ public sealed class CapBadge
     private readonly IItemLookup _items;
     private readonly IMoveCatalog _moves;
     private readonly CemeteryService _cemetery;
+    private readonly VitalsPump _pump;
     private readonly DispatcherTimer _timer = new() { Interval = Follow };
     private readonly DispatcherTimer _frames = new() { Interval = Frames };
     private readonly Stopwatch _clock = Stopwatch.StartNew();
@@ -93,7 +94,7 @@ public sealed class CapBadge
 
     public CapBadge(EmulatorLauncher launcher, ProgressService progress, LevelCapTable caps, IRunContext runContext,
         GameLinkMonitor monitor, AppSettings settings, PokemonSpriteService sprites, AlolaSky sky, ITypeLookup types, IItemLookup items,
-        IMoveCatalog moves, CemeteryService cemetery, ILogger<CapBadge> logger)
+        IMoveCatalog moves, CemeteryService cemetery, VitalsPump pump, ILogger<CapBadge> logger)
     {
         _launcher = launcher;
         _progress = progress;
@@ -108,6 +109,8 @@ public sealed class CapBadge
         _items = items;
         _moves = moves;
         _cemetery = cemetery;
+        _pump = pump;
+        pump.Changed += OnVitals;
         _timer.Tick += (_, _) => _ = TickAsync();
         _frames.Tick += (_, _) => Frame();
         monitor.RunDataChanged += (_, _) => _readAt = DateTime.MinValue;
@@ -116,6 +119,7 @@ public sealed class CapBadge
 
     public void Start()
     {
+        _pump.Start();
         _timer.Start();
         _frames.Start();
     }
@@ -213,7 +217,7 @@ public sealed class CapBadge
             // El nivel del equipo se mira cada vuelta: sube en mitad de un combate y la barra lo sigue.
             _shown = reading with { Highest = Highest() ?? reading.Highest };
             _battle = _monitor.BattleNow.Count > 0;
-            ShowParty(_monitor.Latest is { Connected: true } live ? Delayed(WithLiveHp(live.Party, _monitor.BattleNow)) : []);
+            ShowParty(LiveParty());
             _picture = new CapRect(picture.Left, picture.Top, picture.Width, picture.Height);
             Apply(_picture, ScreenLayout(), Dpi());
         }
@@ -222,6 +226,52 @@ public sealed class CapBadge
             _logger.LogWarning(ex, "No se ha podido poner el cap encima del juego");
             HideAll();
         }
+    }
+
+    /// <summary>
+    /// The party to show: the full reading of every second (names, moves, the things that do not change), with the HP, the status and the item of
+    /// the fast reading over it when there is one, and in a battle the HP of the battle's blocks as the fast reading last saw them.
+    /// </summary>
+    private IReadOnlyList<LivePartyMember> LiveParty()
+    {
+        if (_monitor.Latest is not { Connected: true } live) return [];
+        var frame = _pump.Latest;
+        var party = live.Party;
+
+        // The fast reading of the party stands in for the slow one only for a Pokémon it agrees on by PID; anything else keeps what the slow one said.
+        if (frame is { Party.Count: > 0 })
+        {
+            party = [.. party.Select(member => frame.Party.FirstOrDefault(s => s.Pid != 0 && s.Pid == member.Pid) is { Pid: not 0 } sample && sample.Species == member.Species
+                ? member with { CurrentHp = sample.Hp, MaxHp = sample.MaxHp, Status = sample.Status, HeldItem = sample.HeldItem }
+                : member)];
+        }
+
+        var tables = frame is { Battle.Count: > 0 } ? frame.ToTables(_monitor.BattleNow) : _monitor.BattleNow;
+        return Delayed(WithLiveHp(party, tables));
+    }
+
+    private int _pushing;
+
+    /// <summary>The fast reading found a change: the interface hears of it at once and does not wait for its half-second timer.</summary>
+    private void OnVitals(VitalsFrame frame)
+    {
+        // One push waiting at most: a hundred changes a second cost one repaint a frame, the last one.
+        if (Interlocked.Exchange(ref _pushing, 1) == 1) return;
+        _ = Application.Current?.Dispatcher.BeginInvoke(DispatcherPriority.Send, () =>
+        {
+            Interlocked.Exchange(ref _pushing, 0);
+            try
+            {
+                if (_rehearsing || _shown is null || _picture.Width == 0 || (_main?.Window.IsVisible != true && _memorial?.Window.IsVisible != true)) return;
+                _battle = _monitor.BattleNow.Count > 0;
+                ShowParty(LiveParty());
+                Apply(_picture, ScreenLayout(), Dpi());
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "No se ha podido repintar el cap con la lectura rápida");
+            }
+        });
     }
 
     private async Task<CapReading?> ReadAsync(Run run)
@@ -361,6 +411,33 @@ public sealed class CapBadge
     /// <summary>One frame of the moving part, for each window that is showing.</summary>
     private void Frame()
     {
+        var busy = Step();
+
+        // Twelve frames a second for the flame and the dust. While something is happening the frames come with the screen, sixty a second, from the
+        // render loop of WPF: a timer cannot (it wakes on the 15.6 ms tick, so the 40 ms of «fast» was really 47).
+        if (busy && !_rendering)
+        {
+            _rendering = true;
+            _frames.Stop();
+            CompositionTarget.Rendering += OnRendering;
+        }
+    }
+
+    private bool _rendering;
+
+    private void OnRendering(object? sender, EventArgs e)
+    {
+        if (Step()) return;
+
+        // Nothing is moving any more: back to the slow beat.
+        CompositionTarget.Rendering -= OnRendering;
+        _rendering = false;
+        _frames.Start();
+    }
+
+    /// <summary>One frame of the moving part for each window that is showing; true while something in it needs frames at the screen's pace.</summary>
+    private bool Step()
+    {
         var now = Now;
         WatchKey();
         var busy = false;
@@ -376,9 +453,7 @@ public sealed class CapBadge
             busy |= memorial.Plaque.Busy(now);
         }
 
-        // Twelve frames a second for the flame and the dust; twenty-five only while something is flashing, trailing or dissolving.
-        var wanted = busy ? Fast : Frames;
-        if (_frames.Interval != wanted) _frames.Interval = wanted;
+        return busy;
     }
 
     /// <summary>
