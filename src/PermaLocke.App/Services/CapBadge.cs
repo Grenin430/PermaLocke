@@ -476,7 +476,7 @@ public sealed class CapBadge
 
         return new CapPlaqueMember(sprite, name, member.Level, member.CurrentHp, member.MaxHp, false, member.Pid, types,
             member.HeldItem > 0 ? _items.GetName(member.HeldItem) : null, _battle ? CapStatus.None : StatusOf(member.Status),
-            member.ExpProgress, moves);
+            member.ExpProgress, moves, member.HeldItem > 0 ? _sprites.GetItem(member.HeldItem) : null);
     }
 
     /// <summary>The status byte of a generation 7 party Pokémon: bits 0-2 the turns of sleep, then poison, burn, freeze, paralysis and bad poison.</summary>

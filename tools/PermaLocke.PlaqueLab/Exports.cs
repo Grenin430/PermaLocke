@@ -92,5 +92,27 @@ public static class Exports
         CapSnap.Save(Path.Combine(dir, $"tira-{scenario.Name}.png"), sheet, total, height);
     }
 
+    /// <summary>Key frames of a scenario at the times given (absolute, in seconds), side by side, over a region of the panel, each frame with its time written under it.</summary>
+    public static void TimedStrip(string file, CapScenario scenario, CapMode mode, int cols, int rows, int scale, CapRect region, double[] times)
+    {
+        var frames = times.Select(t => CapSnap.Bgra(CapPlaque.Replay(scenario, mode, cols, rows, t), scale, 0x000000, 1, region)).ToList();
+        var width = region.Width * scale;
+        var height = region.Height * scale;
+        var gap = 6;
+        var total = (frames.Count * (width + gap)) - gap;
+        var sheet = new byte[total * height * 4];
+        for (var i = 3; i < sheet.Length; i += 4) sheet[i] = 255;
+
+        for (var f = 0; f < frames.Count; f++)
+        {
+            for (var y = 0; y < height; y++)
+            {
+                Buffer.BlockCopy(frames[f], y * width * 4, sheet, ((y * total) + (f * (width + gap))) * 4, width * 4);
+            }
+        }
+
+        CapSnap.Save(file, sheet, total, height);
+    }
+
     private static string Safe(string name) => new([.. name.Select(c => char.IsLetterOrDigit(c) || c == '-' ? c : '_')]);
 }

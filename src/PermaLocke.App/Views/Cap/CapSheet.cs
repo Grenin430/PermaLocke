@@ -92,6 +92,7 @@ public sealed class CapSheet(int width, int height)
     public void Set(int x, int y, uint rgb, int alpha = 255)
     {
         if (x < 0 || y < 0 || x >= W || y >= H || alpha <= 0 || (y < NotchY1 && x >= NotchX0 && x < NotchX1)) return;
+        alpha = Math.Min(alpha, 255);
         var i = ((y * W) + x) * 4;
         var r = (int)((rgb >> 16) & 255);
         var g = (int)((rgb >> 8) & 255);
@@ -204,6 +205,7 @@ public sealed class CapSheet(int width, int height)
     /// <summary>The 5×7 pixel font at <paramref name="scale"/> cells per font pixel, with a shadow one cell down and right.</summary>
     public void Text(string text, int x, int y, uint rgb, int scale = 1, uint? shadow = null)
     {
+        if (!string.IsNullOrEmpty(text)) CapTextProbe.Hit();
         void Block(int px, int py, uint c)
         {
             for (var sy = 0; sy < scale; sy++)
@@ -222,6 +224,7 @@ public sealed class CapSheet(int width, int height)
     /// <summary>The 3×5 capitals; accents are dropped, unknown characters leave a gap.</summary>
     public void Small(string text, int x, int y, uint rgb)
     {
+        if (!string.IsNullOrEmpty(text)) CapTextProbe.Hit();
         foreach (var raw in text.ToUpperInvariant())
         {
             var ch = Plain(raw);

@@ -72,7 +72,6 @@ public static class CapSea
         if (l.Panel == CapPanelKind.Deep && l.Sun.Width > 0) Glitter(p, l, pal, ctx);
         Floor(p, l, pal, data, ctx, fossilColumns);
         Fossils(p, l, pal, grave, ctx, fossilColumns);
-        CapDeep.Writing(p, l, pal, data, ctx, fossilColumns);
     }
 
     // ---------------------------------------------------------------- sky and water
@@ -107,15 +106,22 @@ public static class CapSea
     }
 
     /// <summary>The sun going over the sky of the deep window by the hour of Alola, or the moon at night: low in the east, high at noon, low in the west.</summary>
+    /// <summary>Where the sun (or the moon at night) is in the sky of the deep: the light of the focus comes down from there.</summary>
+    public static (int X, int Y) SunAt(CapWorldLayout l, CapSeaContext ctx)
+    {
+        var hour = ctx.SkyHour;
+        var day = hour is >= 6 and < 19;
+        var k = Math.Clamp(day ? (hour - 6) / 13.0 : (((hour + 5) % 24) / 11.0), 0, 1);
+        var radius = day ? 8 : 6;
+        return (l.Sun.Left + 14 + (int)(k * (l.Sun.Width - 28)), l.SurfaceY - 3 - (int)(Math.Sin(Math.PI * k) * (l.SurfaceY - 3 - radius - 2)));
+    }
+
     private static void Sun(CapSheet p, CapWorldLayout l, CapSeaPalette pal, CapSeaContext ctx)
     {
         var hour = ctx.SkyHour;
         var day = hour is >= 6 and < 19;
-        var k = day ? (hour - 6) / 13.0 : (((hour + 5) % 24) / 11.0);
-        k = Math.Clamp(k, 0, 1);
         var radius = day ? 8 : 6;
-        var cx = l.Sun.Left + 14 + (int)(k * (l.Sun.Width - 28));
-        var cy = l.SurfaceY - 3 - (int)(Math.Sin(Math.PI * k) * (l.SurfaceY - 3 - radius - 2));
+        var (cx, cy) = SunAt(l, ctx);
 
         for (var y = cy - radius - 7; y <= cy + radius + 7; y++)
         {
@@ -236,54 +242,39 @@ public static class CapSea
 
     private static void Fossils(CapSheet p, CapWorldLayout l, CapSeaPalette pal, IReadOnlyList<CapGrave> graves, CapSeaContext ctx, int[] columns)
     {
-        var scale = FossilScale(l, graves.Count);
-        for (var i = 0; i < graves.Count; i++)
+        foreach (var fossil in CapFossils.Build(l, graves, ctx, columns))
         {
-            var grave = graves[i];
-            var x = columns[i];
-            var ground = Relief(l, ctx, x, columns);
-            if (ToastPixels.SpritePixels.From(grave.Sprite) is not { } pixels) continue;
-
-            var w = Math.Max(1, pixels.Width / scale);
-            var h = Math.Max(1, pixels.Height / scale);
-
-            // Sunk to its middle in the sediment: only what is above the ground shows.
-            var left = x - (w / 2);
-            var topY = ground - ((h * 2) / 3);
-            for (var sy = 0; sy < h; sy++)
-            {
-                for (var sx = 0; sx < w; sx++)
-                {
-                    var (found, c) = Sample(pixels, sx * scale, sy * scale, scale);
-                    if (!found) continue;
-                    var cx = left + sx;
-                    var cy = topY + sy;
-                    if (cy > Relief(l, ctx, cx, columns) + 1) continue;
-
-                    // Stone: the colour's light turned into a cold grey-blue, with a lit edge on top.
-                    var luma = ((0.30 * c.R) + (0.59 * c.G) + (0.11 * c.B)) / 255.0;
-                    var stone = CapSheet.Mix(0x1E2A40u, 0xC4D0E4u, luma * 0.85);
-                    var above = Sample(pixels, sx * scale, (sy - 1) * scale, scale).Found;
-                    if (!above) stone = CapSheet.Lighter(stone, 0.3);
-                    p.Set(cx, cy, stone);
-                }
-            }
+            foreach (var cell in fossil.Cells) p.Set(cell.X, cell.Y, cell.Stone);
+            Overgrowth(p, l, pal, fossil.Spec, ctx, columns);
         }
     }
 
-    private static (bool Found, System.Windows.Media.Color Colour) Sample(ToastPixels.SpritePixels pixels, int x, int y, int scale)
+    /// <summary>
+    /// What the days have done to a fossil: a strand of kelp for every three days it has lain there, up to four, and from the ninth day a little coral
+    /// on its shoulder. Still, painted into the scene with the fossil.
+    /// </summary>
+    private static void Overgrowth(CapSheet p, CapWorldLayout l, CapSeaPalette pal, CapFossilSpec spec, CapSeaContext ctx, int[] columns)
     {
-        if (y < 0) return (false, default);
-
-        // The first solid pixel of the block it stands for, like the half-scale icons of the rest of the app.
-        for (var dy = 0; dy < scale; dy++)
+        for (var k = 0; k < spec.Growth; k++)
         {
-            for (var dx = 0; dx < scale; dx++)
+            var bx = spec.Left + (((k * 5) + 1) % Math.Max(3, spec.Width));
+            var by = Relief(l, ctx, bx, columns);
+            var height = 4 + (CapArt.Hash(spec.Index, k) % 4);
+            for (var h = 0; h < height; h++)
             {
-                if (pixels.Solid(x + dx, y + dy)) return (true, pixels.At(x + dx, y + dy));
+                var lean = h / 3 * (k % 2 == 0 ? 1 : -1);
+                p.Set(bx + lean, by - h, h % 2 == 0 ? 0x2F8A74u : 0x246E62u);
             }
         }
 
-        return (false, default);
+        if (spec.Growth >= 3)
+        {
+            var cx = spec.Left + spec.Width - 1;
+            p.Set(cx, spec.Top + 1, 0xC8607Au);
+            p.Set(cx - 1, spec.Top + 2, 0xE890A8u);
+            p.Set(cx + 1, spec.Top + 2, 0xC8607Au);
+        }
+
+        _ = pal;
     }
 }

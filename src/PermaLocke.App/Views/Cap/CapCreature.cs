@@ -8,7 +8,10 @@ namespace PermaLocke.App.Views;
 /// </summary>
 public sealed class CapCreature
 {
-    private const int BeadCount = 12;
+    private const int BeadCount = 18;
+
+    /// <summary>PROPOSAL: where the HP numbers are painted live (the bar going down is read with them going down), or (0, 0).</summary>
+    public (int X, int Y) NumbersAt { get; private set; }
 
     private (int X, int Y, uint Rgb)[] _body = [];
     private (int X, int Y, int Ring)[] _halo = [];
@@ -181,6 +184,18 @@ public sealed class CapCreature
         foreach (var (x, y, _) in _body) p.Set(baseX + x, baseY + y, colour, alpha);
     }
 
+    /// <summary>PROPOSAL: the body painted in one colour only between two rows of the picture (0 is its top): a band of light that sweeps down it.</summary>
+    public void PaintBand(CapSheet p, int ox, int oy, uint colour, int alpha, int fromRow, int toRow)
+    {
+        if (alpha <= 0) return;
+        var baseX = Slot.Sprite.Left + ox + ((Slot.Sprite.Width - _spriteW) / 2);
+        var baseY = Slot.Sprite.Top + oy + ((Slot.Sprite.Height - _spriteH) / 2);
+        foreach (var (x, y, _) in _body)
+        {
+            if (y >= fromRow && y < toRow) p.Set(baseX + x, baseY + y, colour, alpha);
+        }
+    }
+
     /// <summary>The size of the picture in cells, for the effects that go round it.</summary>
     public (int W, int H) PictureSize => (_spriteW, _spriteH);
 
@@ -226,7 +241,9 @@ public sealed class CapCreature
 
         // The letters of a name: the big ones if they fit beside the level, else the small ones, else cut.
         var big = wide && box.Height >= 18;
-        var room = wide ? box.Width - levelW - 3 : box.Width - 1;
+        // The held item is a small picture beside the level (eight cells: the cartridge's icon at a third of its size), not a line of words.
+        var hasItem = wide && m.Item is { Length: > 0 };
+        var room = wide ? box.Width - levelW - 3 - (hasItem ? 11 : 0) : box.Width - 1;
         while (name.Length > 1 && CapGlyphs.Width(name, big) > room) name = name[..^1];
 
         var lineH = big ? 7 : 5;
@@ -240,6 +257,7 @@ public sealed class CapCreature
         {
             CapGlyphs.Outlined(sheet, level, box.Width - levelW - 1, y + 1, levelColour, ink, big: true);
             LevelBox = new CapRect(box.Left + box.Width - levelW - 2, box.Top + y, levelW + 2, 9);
+            if (hasItem) DrawItem(sheet, box.Width - levelW - 12, y, m.ItemIcon, glow, ink);
         }
         y += lineH + 4;
 
@@ -263,9 +281,11 @@ public sealed class CapCreature
         var beads = Math.Min(BeadCount, Math.Max(4, (wide ? box.Width - 34 : box.Width - 2) / 4));
         Beads = beads;
         BeadsAt = (box.Left + 1, box.Top + y);
+        NumbersAt = default;
         if (wide)
         {
             var numbers = $"{m.Hp}/{m.MaxHp}";
+            NumbersAt = (box.Left + (beads * 4) + 3, box.Top + y - 1);
             CapGlyphs.Outlined(sheet, numbers, (beads * 4) + 3, y - 1, glow, ink);
         }
 
@@ -278,48 +298,94 @@ public sealed class CapCreature
             y += 3;
         }
 
-        // Types as spots (with their letters when there is room), the status, then the item and the moves.
-        var x = 1;
-        foreach (var type in m.Types ?? [])
+        // One line for what a creature is and what it can do: its types, its status, and the moves rotating in what is left of the line. When
+        // the letters of the types and of the status leave less than six letters for the moves, the types go as coloured spots only.
+        var types = (m.Types ?? []).Where(t => t >= 0).Take(2).ToList();
+        var hasMoves = wide && m.Moves is { Count: > 0 };
+        var statusLook = m.Status != CapStatus.None ? CapArt.StatusLook(m.Status) : default;
+        const int MovesMinimum = 7 + (6 * 4);
+
+        int Used(bool letters) => 1 + types.Sum(t => 5 + (letters ? 2 + CapGlyphs.Width(CapArt.TypeName(t), false) : 0) + 3)
+            + (m.Status != CapStatus.None ? 5 + (letters ? 2 + CapGlyphs.Width(statusLook.Text, false) : 0) + 3 : 0);
+
+        var letters = wide && (!hasMoves || Used(true) + MovesMinimum <= box.Width);
+        if (y + 5 <= box.Height)
         {
-            if (type < 0 || y + 5 > box.Height) break;
-            var label = CapArt.TypeName(type);
-            var w = 5 + (wide ? 2 + CapGlyphs.Width(label, false) : 0) + 3;
-            if (x + w > box.Width) break;
-            CapGlyphs.Spot(sheet, x, y, CapArt.TypeColour(type), ink);
-            if (wide) CapGlyphs.Outlined(sheet, label, x + 7, y, glow, ink);
-            x += w;
+            var x = 1;
+            foreach (var type in types)
+            {
+                var label = CapArt.TypeName(type);
+                CapGlyphs.Spot(sheet, x, y, CapArt.TypeColour(type), ink);
+                if (letters) CapGlyphs.Outlined(sheet, label, x + 7, y, glow, ink);
+                x += 5 + (letters ? 2 + CapGlyphs.Width(label, false) : 0) + 3;
+            }
+
+            if (m.Status != CapStatus.None)
+            {
+                CapGlyphs.Spot(sheet, x, y, statusLook.Colour, ink);
+                if (letters) CapGlyphs.Outlined(sheet, statusLook.Text, x + 7, y, glow, ink);
+                x += 5 + (letters ? 2 + CapGlyphs.Width(statusLook.Text, false) : 0) + 3;
+            }
+
+            // The moves rotate in the rest of the line: the pip of the colour of the type, and the name coming one at a time.
+            if (hasMoves)
+            {
+                var from = x + 3;
+                TickerAt = (box.Left + from, box.Top + y, Math.Max(0, (box.Width - from - 7) / 4));
+            }
+        }
+    }
+
+    /// <summary>The picture of a held item in eight by eight cells, with a dark outline; a small gold gem when the cartridge has no icon for it.</summary>
+    private static void DrawItem(CapSheet sheet, int x, int y, System.Windows.Media.Imaging.BitmapSource? icon, uint glow, uint ink)
+    {
+        if (ToastPixels.SpritePixels.From(icon) is not { } pixels)
+        {
+            CapGlyphs.Spot(sheet, x + 1, y + 1, 0xFFD860u, ink);
+            return;
         }
 
-        if (m.Status != CapStatus.None && y + 5 <= box.Height)
+        var cells = new uint?[8, 8];
+        var step = Math.Max(1, pixels.Width / 8);
+        for (var cy = 0; cy < 8; cy++)
         {
-            var (code, colour) = CapArt.StatusLook(m.Status);
-            if (x + 5 + 2 + CapGlyphs.Width(code, false) <= box.Width)
+            for (var cx = 0; cx < 8; cx++)
             {
-                CapGlyphs.Spot(sheet, x, y, colour, ink);
-                CapGlyphs.Outlined(sheet, code, x + 7, y, glow, ink);
+                int r = 0, g = 0, b = 0, n = 0;
+                for (var dy = 0; dy < step; dy++)
+                {
+                    for (var dx = 0; dx < step; dx++)
+                    {
+                        var sx = (cx * step) + dx;
+                        var sy = (cy * step) + dy;
+                        if (!pixels.Solid(sx, sy)) continue;
+                        var c = pixels.At(sx, sy);
+                        (r, g, b, n) = (r + c.R, g + c.G, b + c.B, n + 1);
+                    }
+                }
+
+                if (n * 3 >= step * step) cells[cx, cy] = CapSheet.Rgb(r / n, g / n, b / n);
             }
         }
 
-        y += 8;
-        if (wide && y + 5 <= box.Height)
+        bool Has(int cx, int cy) => cx >= 0 && cy >= 0 && cx < 8 && cy < 8 && cells[cx, cy] is not null;
+        for (var cy = -1; cy <= 8; cy++)
         {
-            if (m.Item is { Length: > 0 } item)
+            for (var cx = -1; cx <= 8; cx++)
             {
-                var label = item.ToUpperInvariant();
-                var letters = Math.Max(0, (box.Width - 2) / 2 / 4);
-                if (label.Length > letters) label = label[..letters];
-                CapGlyphs.Outlined(sheet, label, 1, y, CapSheet.Mix(glow, ink, 0.25), ink);
-            }
-
-            // The moves rotate in the right half: their pips are in the text, their names come one at a time.
-            if (m.Moves is { Count: > 0 })
-            {
-                var from = (box.Width / 2) + 2;
-                TickerAt = (box.Left + from, box.Top + y, Math.Max(0, (box.Width - from) / 4 - 2));
+                if (!Has(cx, cy) && (Has(cx - 1, cy) || Has(cx + 1, cy) || Has(cx, cy - 1) || Has(cx, cy + 1))) sheet.Set(x + cx, y + cy, ink, 220);
             }
         }
 
+        for (var cy = 0; cy < 8; cy++)
+        {
+            for (var cx = 0; cx < 8; cx++)
+            {
+                if (cells[cx, cy] is { } rgb) sheet.Set(x + cx, y + cy, rgb);
+            }
+        }
+
+        _ = glow;
     }
 
     /// <summary>How many rows of the info box the lines will take, to centre them: the same walk as <see cref="BuildText"/> without painting.</summary>
@@ -328,8 +394,7 @@ public sealed class CapCreature
         if (m.Egg) return 8;
         var rows = (wide ? 10 : 8) + (wide ? 0 : 9) + 6;
         if (m.Exp >= 0 && height >= 28 && wide) rows += 3;
-        if (m.Types is { Count: > 0 } || m.Status != CapStatus.None) rows += 8;
-        if (wide && height >= 30 && (m.Item is not null || m.Moves is { Count: > 0 })) rows += 6;
+        if (m.Types is { Count: > 0 } || m.Status != CapStatus.None || m.Moves is { Count: > 0 }) rows += 8;
         return Math.Min(rows, height);
     }
 }

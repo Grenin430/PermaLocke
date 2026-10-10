@@ -7,7 +7,57 @@ public static class Program
     [STAThread]
     public static int Main(string[] args)
     {
+        if (Array.IndexOf(args, "--servidor-falso") is var fake and >= 0 && fake + 1 < args.Length) return Latency.Serve(int.Parse(args[fake + 1]));
+        if (args.Contains("--latencia")) return Latency.Run(args);
+
         var data = LabData.Load();
+
+        // PROPOSALS (branch cap-propuestas): --equipo zigzag|columna|pares|colgado, --caidos dispersos|rotulo|hilera|ultimo, --eventos
+        string? Option(string name) => Array.IndexOf(args, name) is var at and >= 0 && at + 1 < args.Length ? args[at + 1] : null;
+
+        // --ventana escenario t "preset" fichero: una ventana entera del emulador con el panel (el escenario de la captura del jugador)
+        if (Option("--ventana") is { } windowScenario && Array.IndexOf(args, "--ventana") + 4 < args.Length + 0)
+        {
+            var at = Array.IndexOf(args, "--ventana");
+            var scenario = data.Scenarios.First(s => s.Name == windowScenario);
+            var tw = double.Parse(args[at + 2], System.Globalization.CultureInfo.InvariantCulture);
+            var preset = LabScreen.Presets.First(p => p.Name.StartsWith(args[at + 3], StringComparison.Ordinal));
+            var (bgra, _) = LabScreen.Compose(scenario, tw, preset, new PermaLocke.App.Views.CapOptions(), game: true);
+            PermaLocke.App.Views.CapSnap.Save(args[at + 4], bgra, preset.Width, preset.Height);
+            return 0;
+        }
+
+        // --tira escenario fichero modo colsxfilas escala x,y,w,h t1,t2,...: fotogramas clave lado a lado, con los tiempos absolutos del escenario
+        if (Array.IndexOf(args, "--tira") is var strip and >= 0 && strip + 7 < args.Length)
+        {
+            var scenario = data.Scenarios.First(s => s.Name == args[strip + 1]);
+            var mode = Enum.Parse<PermaLocke.App.Views.CapMode>(args[strip + 3], true);
+            var grid = args[strip + 4].Split('x').Select(int.Parse).ToArray();
+            var scale = int.Parse(args[strip + 5]);
+            var r = args[strip + 6].Split(',').Select(int.Parse).ToArray();
+            var times = args[strip + 7].Split(',').Select(s => double.Parse(s, System.Globalization.CultureInfo.InvariantCulture)).ToArray();
+            Exports.TimedStrip(args[strip + 2], scenario, mode, grid[0], grid[1], scale, new PermaLocke.App.Views.CapRect(r[0], r[1], r[2], r[3]), times);
+            return 0;
+        }
+
+        // --sonda escenario modo columnasxfilas t x,y x,y ...: el valor BGRA de unas celdas del panel del fondo del mar, para depurar
+        if (Array.IndexOf(args, "--sonda") is var probe and >= 0 && probe + 5 < args.Length)
+        {
+            var scenario = data.Scenarios.First(s => s.Name == args[probe + 1]);
+            var mode = Enum.Parse<PermaLocke.App.Views.CapMode>(args[probe + 2], true);
+            var grid = args[probe + 3].Split('x').Select(int.Parse).ToArray();
+            var t = double.Parse(args[probe + 4], System.Globalization.CultureInfo.InvariantCulture);
+            var sheet = PermaLocke.App.Views.CapPlaque.Replay(scenario, mode, grid[0], grid[1], t, PermaLocke.App.Views.CapPanelKind.Deep);
+            Console.WriteLine("celdas no opacas: " + Enumerable.Range(0, sheet.W * sheet.H).Count(k => sheet.B[(k * 4) + 3] != 255) + " de " + (sheet.W * sheet.H));
+            foreach (var cell in args.Skip(probe + 5))
+            {
+                var xy = cell.Split(',').Select(int.Parse).ToArray();
+                var i = ((xy[1] * sheet.W) + xy[0]) * 4;
+                Console.WriteLine($"{cell}: B={sheet.B[i]} G={sheet.B[i + 1]} R={sheet.B[i + 2]} A={sheet.B[i + 3]}");
+            }
+
+            return 0;
+        }
 
         var detail = Array.IndexOf(args, "--detalle");
         if (detail >= 0 && detail + 7 < args.Length)

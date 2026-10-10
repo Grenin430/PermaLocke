@@ -26,6 +26,7 @@ public static class CapGlyphs
     public static void Outlined(CapSheet p, string text, int x, int y, uint colour, uint ink, bool big = false, int scale = 1, int alpha = 255)
     {
         if (string.IsNullOrEmpty(text) || alpha <= 0) return;
+        CapTextProbe.Hit();
 
         var inkAlpha = Math.Min(alpha, 235);
         Pass(p, text, x, y, big, scale, (px, py) =>
@@ -137,4 +138,20 @@ public static class CapGlyphs
         p.Set(x + 1, y + 1, CapSheet.Lighter(colour, 0.6), alpha);
         p.Set(x + 3, y + 3, CapSheet.Darker(colour, 0.3), alpha);
     }
+}
+
+/// <summary>
+/// Counts the strings the panel writes on this thread, so that a test can say that a window writes none (the deep tells the story with light, not
+/// with letters). Thread static: tests run side by side.
+/// </summary>
+public static class CapTextProbe
+{
+    [ThreadStatic]
+    private static int _count;
+
+    public static int Count => _count;
+
+    public static void Reset() => _count = 0;
+
+    internal static void Hit() => _count++;
 }

@@ -18,6 +18,7 @@ public sealed class CapWorldView
     private string _sceneKey = string.Empty;
     private string _buoyKey = string.Empty;
     private int[] _fossils = [];
+    private CapFossil[] _fossilViews = [];
 
     public CapWorldView(CapMode mode, CapPanelKind panel, int cols, int rows, (int X0, int X1, int Y1) notch)
     {
@@ -41,12 +42,13 @@ public sealed class CapWorldView
 
         // The scene is remade when the floor changes (a grave, a stratum), the hour moves a quarter, or the run is another.
         var graves = data.Graves ?? [];
-        var key = $"{data.Seed}|{(int)(_context.SkyHour * 4)}|{worldX}|{data.Cleared}|{graves.Count}|{string.Join(",", graves.Select(g => g.Name.Length + g.AgeDays / 7))}";
+        var key = $"{data.Seed}|{(int)(_context.SkyHour * 4)}|{worldX}|{data.Cleared}|{graves.Count}|{string.Join(",", graves.Select(g => g.Level + ":" + Math.Min(4, g.AgeDays / 3)))}";
         if (key != _sceneKey)
         {
             _sceneKey = key;
             _scenes.Clear();
             _fossils = CapSea.FossilColumns(Layout, graves.Count, _context);
+            _fossilViews = Layout.Panel == CapPanelKind.Deep ? CapFossils.Build(Layout, graves, _context, _fossils) : [];
         }
 
         if (Layout.Panel != CapPanelKind.Party) return;
@@ -103,6 +105,8 @@ public sealed class CapWorldView
         if (anim is not null) CapFauna.Paint(frame, Layout, pal, mood, _context, t, phase, data.Graves ?? []);
         CapFlora.Paint(frame, Layout, pal, _context, _fossils, phase);
         CapDeep.Lanterns(frame, Layout, pal, data, phase);
+        CapDeep.Souls(frame, Layout, _fossilViews, phase);
+        CapDeep.Focus(frame, Layout, pal, _fossilViews, _context, anim is null ? 0 : t);
 
         if (Layout.Panel == CapPanelKind.Party) PaintParty(frame, data, pal, mood, anim, t, phase);
 

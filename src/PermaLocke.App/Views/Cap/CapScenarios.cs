@@ -158,6 +158,8 @@ public static class CapScenarios
              Member(3, icon, 40, 124, 124, exp: 0.5), Member(4, icon, 42, 124, 124), Member(5, icon, 39, 124, 124, exp: 0.7)])));
         _ = calm;
 
+        AddProposalScenarios(scenarios, icon);
+
         // The moods and the hours of the day, each as a scene of its own.
         scenarios.Add(Still("batalla", "Un combate sin peligro: el mar frío y la corriente", Base(icon, full, battle: true)));
         scenarios.Add(new CapScenario("luto", "Doce segundos después de una caída: el mar de luto", [
@@ -189,6 +191,73 @@ public static class CapScenarios
         Rare("estrella", "Una estrella fugaz sobre el mar nocturno", 5, 50, 2.2, 80, 23.5);
 
         return scenarios;
+    }
+
+    // ---------------------------------------------------------------- PROPOSALS (branch cap-propuestas)
+
+    private static IReadOnlyList<CapGrave> Fallen12(Func<int, BitmapSource?> icon)
+    {
+        var names = new[] { "Kompecono", "Marshtomp", "Panchito", "Prenador", "Crawdaunt", "Lapras", "Pidgeotto", "Golbat", "Mudsdale", "Lombre", "Zubat", "Pikipek" };
+        var killers = new[] { "Kahili", "Hala", "Olivia", "Salvaje", "Plumeria", "Totem", "Guzma", "Nanu", "Ilima", "Lana", "Mallow", "Acerola" };
+        var species = new[] { 784, 259, 19, 17, 342, 131, 17, 42, 750, 271, 41, 731 };
+        var levels = new[] { 6, 14, 17, 21, 24, 27, 29, 31, 33, 35, 36, 38 };
+        return [.. Enumerable.Range(0, 12).Select(i => new CapGrave(icon(species[i]), names[i], killers[i], levels[i], 1 + ((11 - i) * 3)))];
+    }
+
+    private static void AddProposalScenarios(List<CapScenario> scenarios, Func<int, BitmapSource?> icon)
+    {
+        CapPlaqueMember[] Team(Func<int, CapPlaqueMember, CapPlaqueMember>? change = null) =>
+        [
+            .. new[]
+            {
+                Member(0, icon, 42, 143, 143, exp: 0.62), Member(1, icon, 42, 122, 122, exp: 0.3), Member(2, icon, 42, 170, 170, exp: 0.9),
+                Member(3, icon, 42, 124, 124, exp: 0.15), Member(4, icon, 42, 124, 124, exp: 0.5), Member(5, icon, 42, 124, 124, exp: 0.7)
+            }.Select((m, i) => change is null ? m : change(i, m))
+        ];
+
+        CapPlaqueData Data(CapPlaqueMember[] party, bool battle = false) => Base(icon, party, 12, battle) with { Graves = Fallen12(icon) };
+        CapPlaqueMember[] With(CapPlaqueMember[] party, int index, Func<CapPlaqueMember, CapPlaqueMember> change) => Replace(party, index, change);
+
+        scenarios.Add(Still("captura", "Captura del jugador: seis de nivel 42, doce caídos, prueba 8 de 12", Data(Team())));
+
+        var fight = Team();
+        scenarios.Add(new CapScenario("ev-golpe", "Golpes de 37 %, 41 % y un rasguño del 3 % sobre Gyarados", [
+            new(0, Data(fight, true)),
+            new(2, Data(With(fight, 0, m => m with { Hp = 90 }), true)),
+            new(6, Data(With(fight, 0, m => m with { Hp = 31 }), true)),
+            new(10, Data(With(fight, 0, m => m with { Hp = 27 }), true))]));
+
+        var hurt = Team((i, m) => i == 0 ? m with { Hp = 31 } : i == 1 ? m with { Hp = 12 } : m);
+        scenarios.Add(new CapScenario("ev-cura", "Una cura pequeña (+29, 20 %) y una grande (+110, 90 %)", [
+            new(0, Data(hurt)),
+            new(2, Data(With(hurt, 0, m => m with { Hp = 60 }))),
+            new(6, Data(With(With(hurt, 0, m => m with { Hp = 60 }), 1, m => m with { Hp = 122 })))]));
+
+        var poisoned = Team((i, m) => i == 3 ? m with { Hp = 120, Status = CapStatus.Poison } : m);
+        scenarios.Add(new CapScenario("ev-antidoto", "Un Antídoto quita el veneno a Gengar", [
+            new(0, Data(poisoned)),
+            new(2, Data(With(poisoned, 3, m => m with { Status = CapStatus.None })))]));
+
+        var ailing = Team((i, m) => i switch
+        {
+            0 => m with { Status = CapStatus.Poison }, 1 => m with { Status = CapStatus.Burn }, 2 => m with { Status = CapStatus.Sleep },
+            4 => m with { Status = CapStatus.Paralysis }, 5 => m with { Status = CapStatus.Freeze }, _ => m
+        });
+        // The statuses are cured one after another: poison, burn, sleep, paralysis, freeze.
+        CapPlaqueData Cured(params int[] cured) => Data([.. ailing.Select((m, i) => cured.Contains(i) ? m with { Status = CapStatus.None } : m)]);
+        scenarios.Add(new CapScenario("ev-curas", "Cada estado se cura a su manera, uno cada tres segundos", [
+            new(0, Cured()), new(2, Cured(0)), new(5, Cured(0, 1)), new(8, Cured(0, 1, 2)), new(11, Cured(0, 1, 2, 4)), new(14, Cured(0, 1, 2, 4, 5))]));
+
+        var down = Team((i, m) => i == 1 ? m with { Hp = 0 } : m);
+        scenarios.Add(new CapScenario("ev-revivir", "Un Revivir levanta a Toxapex con la mitad de sus PS", [
+            new(0, Data(down)),
+            new(2, Data(With(down, 1, m => m with { Hp = 61 })))]));
+
+        var clean = Team();
+        scenarios.Add(new CapScenario("ev-estado", "Entra el estado: Dragonite se duerme y Kingdra queda paralizado", [
+            new(0, Data(clean)),
+            new(2, Data(With(clean, 5, m => m with { Status = CapStatus.Sleep }))),
+            new(6, Data(With(With(clean, 5, m => m with { Status = CapStatus.Sleep }), 4, m => m with { Status = CapStatus.Paralysis })))]));
     }
 
     private static CapPlaqueMember[] Replace(IReadOnlyList<CapPlaqueMember> party, int index, Func<CapPlaqueMember, CapPlaqueMember> change) =>

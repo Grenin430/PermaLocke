@@ -121,7 +121,8 @@ public static class CapWorld
         {
             // The deep: the sky with the sun or the moon, open water with the chain of lanterns, and the cutaway of the floor.
             var sun = new CapRect(x0, 0, main.Width, surface);
-            var lanterns = new CapRect(x0 + 6, skyRows + 28, main.Width - 12, floorTop - skyRows - 40);
+            // No counters in the deep any more: the chain of lanterns starts right under the surface and uses the water on the left.
+            var lanterns = new CapRect(x0 + 6, skyRows + 12, main.Width - 12, floorTop - skyRows - 24);
             var strata = new CapRect(0, floorTop + 8, cols, floorH - 8);
             return new CapWorldLayout
             {
@@ -141,21 +142,17 @@ public static class CapWorld
         var slotH = Math.Max(14, (teamBottom - teamTop) / Creatures);
 
         var spriteW = slim ? 24 : dense ? 24 : 40;
-        var spriteH = slim || dense ? 16 : 30;
+        var spriteH = slim || dense ? 16 : Math.Min(30, slotH - 1);
         var creatures = new CapCreatureSlot[Creatures];
         var infoLeft = x0 + (slim ? 14 : 24);
         for (var i = 0; i < Creatures; i++)
         {
             var top = teamTop + (i * slotH) + Math.Max(0, (slotH - spriteH) / 2);
 
-            // The creatures zigzag across the water in the wide modes, so the sea does not read as a list; the narrow one keeps one line.
-            var zig = !slim && i % 2 == 1;
-            var spriteX = zig ? x1 - spriteW - 8 : infoLeft;
-            var sprite = new CapRect(spriteX, top, spriteW, spriteH);
-            var info = zig
-                ? new CapRect(infoLeft, teamTop + (i * slotH), spriteX - 4 - infoLeft, slotH)
-                : new CapRect(spriteX + spriteW + 4, teamTop + (i * slotH), x1 - 6 - (spriteX + spriteW + 4), slotH);
-            creatures[i] = new CapCreatureSlot(i, sprite, info, !zig, slim || dense);
+            // One column in every mode, the picture always on the left and the words on its right: the eye starts every row in the same place.
+            var sprite = new CapRect(infoLeft, top, spriteW, spriteH);
+            var info = new CapRect(sprite.Right + 4, teamTop + (i * slotH), x1 - 6 - (sprite.Right + 4), slotH);
+            creatures[i] = new CapCreatureSlot(i, sprite, info, true, slim || dense);
         }
 
         return new CapWorldLayout

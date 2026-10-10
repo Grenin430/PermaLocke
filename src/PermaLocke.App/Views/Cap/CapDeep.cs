@@ -1,9 +1,11 @@
 namespace PermaLocke.App.Views;
 
 /// <summary>
-/// The history of the run, written into the sea (2026-10-10): the strata of the floor are the trials cleared, each fossil is a Pokémon that
-/// fell, and above them a chain of lanterns, one for each trial of the run, lit as they are cleared. Nothing here is a list or a panel: it is
-/// the floor and the water, with writing on them. The writing is still (painted into the scene); the lanterns' light moves.
+/// The history of the run, in the deep window, without a single letter (2026-10-10): the strata of the floor are the trials cleared, a chain of
+/// lanterns hangs one for each trial, and each Pokémon fallen is a fossil of its own icon half buried in the floor (<see cref="CapFossils"/>).
+/// What a name and a level used to say is said by the light: a beam from the sun or the moon goes over the fossils, newest to oldest, and the one
+/// it falls on gets back the colours of its icon and does something of its own (its soul goes up, its dust rises, a bubble leaves it). Everything
+/// here is a function of the data and the time.
 /// </summary>
 public static class CapDeep
 {
@@ -16,114 +18,157 @@ public static class CapDeep
         return (strata, sandRows, layerRows);
     }
 
-    // ---------------------------------------------------------------- the writing
+    private static double Ease(double k) { k = Math.Clamp(k, 0, 1); return k * k * (3 - (2 * k)); }
 
-    /// <summary>The stills of the history: the numbers of the strata, the counters, and the names of the latest fossils with leaders up to them.</summary>
-    public static void Writing(CapSheet p, CapWorldLayout l, CapSeaPalette pal, CapPlaqueData data, CapSeaContext ctx, int[] fossilColumns)
-    {
-        var graves = data.Graves ?? [];
+    // ---------------------------------------------------------------- the focus
 
-        // Only the deep tells the story in writing; the party's floor shows the fossils and leaves the names to it.
-        if (l.Panel != CapPanelKind.Deep) return;
-
-        Counters(p, l, pal, data, graves.Count);
-        if (l.Mode == CapMode.Strip) NamesInTheSediment(p, l, pal, graves, ctx, fossilColumns);
-        else FossilNames(p, l, pal, graves, ctx, fossilColumns);
-    }
-
-    private static void Counters(CapSheet p, CapWorldLayout l, CapSeaPalette pal, CapPlaqueData data, int fallen)
-    {
-        if (l.Mode == CapMode.Strip) return;
-
-        var x = l.Main.Left + 7;
-        var y = l.SurfaceY + 8;
-        var trials = data.Trials > 0 ? $"PRUEBAS {Math.Min(data.Cleared, data.Trials)}/{data.Trials}" : data.Trial;
-        CapGlyphs.Outlined(p, trials, x, y, pal.Glow, pal.Ink, big: l.Main.Width >= 90);
-        var cost = fallen == 0 ? "NINGUN CAIDO" : fallen == 1 ? "1 CAIDO" : $"{fallen} CAIDOS";
-        CapGlyphs.Outlined(p, cost, x, y + 12, fallen == 0 ? pal.Glow : 0xFF8A78, pal.Ink, big: l.Main.Width >= 90);
-    }
+    /// <summary>How long the focus stays on the newest fossil and on each of the others, in seconds.</summary>
+    public const double NewestSeconds = 5.0, EachSeconds = 3.2;
 
     /// <summary>
-    /// In a flat band there is no water over the fossils to write in, so the name goes under each one, in the sediment: name and level on one line,
-    /// for the latest ones the width allows.
+    /// Which fossil the focus is on at a moment (counted from the oldest, 0), how far along it is in its time, and how lit it is, 0 to 1. The focus goes
+    /// from the newest to the oldest and starts again.
     /// </summary>
-    private static void NamesInTheSediment(CapSheet p, CapWorldLayout l, CapSeaPalette pal, IReadOnlyList<CapGrave> graves, CapSeaContext ctx, int[] columns)
+    public static (int Index, double Local, double Length, double Lit) FocusAt(int count, double t)
     {
-        var right = int.MinValue;
-        for (var n = 0; n < graves.Count; n++)
+        if (count <= 0) return (-1, 0, 0, 0);
+        var total = NewestSeconds + (EachSeconds * (count - 1));
+        var at = ((t % total) + total) % total;
+        var step = at < NewestSeconds ? 0 : 1 + (int)((at - NewestSeconds) / EachSeconds);
+        var local = step == 0 ? at : (at - NewestSeconds) % EachSeconds;
+        var length = step == 0 ? NewestSeconds : EachSeconds;
+        return (count - 1 - step, local, length, Ease(Math.Min(local / 0.55, (length - local) / 0.55)));
+    }
+
+    /// <summary>The beam of the focus, the colours of the fossil it is on, and the small thing that fossil does.</summary>
+    public static void Focus(CapSheet p, CapWorldLayout l, CapSeaPalette pal, CapFossil[] fossils, CapSeaContext ctx, double t)
+    {
+        if (l.Panel != CapPanelKind.Deep || fossils.Length == 0) return;
+
+        var (index, local, length, lit) = FocusAt(fossils.Length, t);
+        if (lit <= 0.01) return;
+        var fossil = fossils[index];
+        var spec = fossil.Spec;
+        var night = CapSeaPalette.Night(ctx.SkyHour) > 0.5;
+        var beam = night ? 0xCFE0FFu : 0xFFF0C8u;
+
+        // The beam: from the sun (or the moon) to the fossil, a cone that widens as it comes down, shimmering.
+        var flat = l.Mode == CapMode.Strip;
+        var (sx, sy) = flat ? (spec.X, 0) : CapSea.SunAt(l, ctx);
+        var y0 = flat ? 0 : Math.Max(sy, l.SurfaceY - 1);
+        var span = Math.Max(1, spec.Ground - y0);
+        for (var y = y0; y < spec.Ground; y++)
         {
-            var i = graves.Count - 1 - n;
-            var x = columns[i];
-            var text = graves[i].Name.ToUpperInvariant();
-            if (text.Length > 9) text = text[..9];
-            if (graves[i].Level > 0) text += $" {graves[i].Level}";
+            var k = (y - y0) / (double)span;
+            var cx = sx + (int)Math.Round((spec.X - sx) * k);
+            var half = 1 + (int)(k * ((spec.Width / 2) + 4));
+            var shimmer = 0.75 + (0.25 * Math.Sin((y * 0.5) - (t * 5)));
+            for (var dx = -half; dx <= half; dx++)
+            {
+                var edge = Math.Abs(dx) / (double)(half + 1);
+                p.Set(cx + dx, y, beam, (int)((8 + (34 * (1 - edge))) * lit * shimmer * (0.4 + (0.6 * k))));
+            }
 
-            var width = CapGlyphs.Width(text, false);
-            var left = Math.Clamp(x - (width / 2), 2, l.Cols - width - 2);
+            p.Set(cx, y, beam, (int)(120 * lit * shimmer * (0.3 + (0.7 * k))));
+        }
 
-            // Newest first and from the right: a name that would touch the one already written is left out.
-            if (n > 0 && left + width + 3 > right) continue;
-            var y = CapSea.Relief(l, ctx, x, columns) + 5;
-            if (y + 5 >= l.Rows) continue;
+        // The fossil gets the colours of its icon back, with a halo of light round it.
+        var (fx, fy) = (spec.X, spec.Top + (spec.Height / 2));
+        p.Disc(fx, fy, (spec.Width / 2) + 5, beam, (int)(30 * lit));
+        foreach (var (rx, ry) in fossil.Rim) p.Set(rx, ry, beam, (int)(170 * lit));
+        foreach (var cell in fossil.Cells) p.Set(cell.X, cell.Y, CapSheet.Mix(cell.Colour, 0xFFFFFFu, 0.12), (int)(250 * lit));
 
-            CapGlyphs.Outlined(p, text, left, y, pal.Glow, pal.Ink);
-            right = left;
+        // What it does: its soul goes up, its dust rises, a bubble leaves it; each fossil always does the same, by its place in the story.
+        switch (spec.Index % 3)
+        {
+            case 0:
+                Soul(p, spec, local, lit);
+                break;
+            case 1:
+                Dust(p, spec, local, length);
+                break;
+            default:
+                Bubble(p, spec, local);
+                break;
         }
     }
 
-    private static void FossilNames(CapSheet p, CapWorldLayout l, CapSeaPalette pal, IReadOnlyList<CapGrave> graves, CapSeaContext ctx, int[] columns)
+    /// <summary>A pale wisp that goes up from the fossil with a tail behind it, as bright as the soul is.</summary>
+    private static void Soul(CapSheet p, CapFossilSpec spec, double local, double lit)
     {
-        if (graves.Count == 0) return;
-
-        // The deep names the latest ones; the party's floor names only the latest one: the rest of the story is in the other window.
-        var deep = l.Panel == CapPanelKind.Deep;
-        var named = deep ? Math.Min(graves.Count, 10) : 1;
-        var tiers = deep ? 4 : 1;
-        var placed = Enumerable.Range(0, tiers).Select(_ => new List<(int Left, int Right)>()).ToArray();
-
-        // The chain of lanterns takes the left of a tall deep: the names keep to the right of it.
-        var minX = deep && l.Mode != CapMode.Strip && l.Lanterns.Width > 0 ? l.Lanterns.Left + 30 : 2;
-        var sparse = graves.Count <= 4 && deep && l.Mode == CapMode.Column;
-
-        for (var n = 0; n < named; n++)
+        var rise = Math.Max(0, local - 0.35);
+        for (var k = 0; k < 9; k++)
         {
-            var i = graves.Count - 1 - n;
-            var grave = graves[i];
-            var x = columns[i];
-            var ground = CapSea.Relief(l, ctx, x, columns);
+            var y = spec.Top - 2 - (int)(rise * 9) - (k * 2);
+            var x = spec.X + (int)Math.Round(Math.Sin((rise * 3) + (k * 0.45)) * 2.5);
+            var alpha = (int)((230 - (k * 22)) * lit * (0.5 + (0.5 * spec.Soul)));
+            p.Set(x, y, k == 0 ? 0xFFFFFFu : 0xDDE8FFu, alpha);
+            if (k < 2) p.Set(x + 1, y, 0xB8C8F0u, alpha / 2);
+        }
+    }
 
-            var name = grave.Name.ToUpperInvariant();
-            if (name.Length > 9) name = name[..9];
-            var lines = new List<(string Text, uint Colour)> { (name, pal.Glow) };
-            if (grave.Level > 0) lines.Add(($"NV{grave.Level}", CapSheet.Mix(pal.Glow, pal.Floor[1], 0.3)));
-            if (sparse && grave.FellTo is { Length: > 0 } fell) lines.Add(("ANTE " + (fell.Length > 9 ? fell[..9] : fell).ToUpperInvariant(), CapSheet.Mix(pal.Glow, 0xFF8A78u, 0.5)));
+    /// <summary>Sediment lifted round the base that goes up and settles again.</summary>
+    private static void Dust(CapSheet p, CapFossilSpec spec, double local, double length)
+    {
+        var k = Math.Clamp((local - 0.3) / (length - 0.9), 0, 1);
+        for (var d = 0; d < 22; d++)
+        {
+            var side = ((CapArt.Hash(spec.Index, d + 100) % 100) - 50) / 50.0;
+            var rise = (CapArt.Hash(spec.Index, d + 200) % 100) / 100.0;
+            var x = spec.X + (int)(side * (spec.Width / 2.0 + 2 + (k * 12)));
+            var y = spec.Ground - (int)((rise * 11 * Math.Sin(Math.Min(1, k) * Math.PI)) + 1);
+            if (((x + y) & 1) == 0) p.Set(x, y, 0xC8B890u, (int)(190 * (1 - k)));
+        }
+    }
 
-            var width = lines.Max(line => CapGlyphs.Width(line.Text, false));
-            var height = (lines.Count * 7) - 2;
-            var left = Math.Clamp(x - (width / 2), minX, Math.Max(minX, l.Cols - width - 2));
-            var right = left + width;
-
-            // The lowest tier where it does not run into another name, or none (the fossil is still there, only unnamed).
-            var tier = -1;
-            for (var t = 0; t < tiers && tier < 0; t++)
+    /// <summary>A bubble that wobbles up from the top of the fossil and pops.</summary>
+    private static void Bubble(CapSheet p, CapFossilSpec spec, double local)
+    {
+        var rise = local - 0.4;
+        if (rise < 0) return;
+        var y = spec.Top - 3 - (int)(rise * 8);
+        var x = spec.X + (int)Math.Round(Math.Sin(rise * 3) * 3);
+        if (rise < 2.2)
+        {
+            foreach (var (dx, dy) in new[] { (-1, -2), (0, -2), (1, -2), (-2, -1), (2, -1), (-2, 0), (2, 0), (-2, 1), (2, 1), (-1, 2), (0, 2), (1, 2) })
             {
-                if (!placed[t].Any(o => left < o.Right + 3 && right + 3 > o.Left)) tier = t;
+                p.Set(x + dx, y + dy, 0xDDEEFFu, 200);
             }
 
-            if (tier < 0) continue;
-            placed[tier].Add((left, right));
-
-            var top = ground - 22 - height - (tier * 22);
-            if (top < l.SurfaceY + 6) continue;
-
-            // The leader: a dotted thread from the writing down to the fossil.
-            var fossilTop = ground - (CapSea.FossilScale(l, graves.Count) == 1 ? 18 : 9);
-            for (var y = top + height + 1; y < fossilTop; y++)
+            p.Set(x - 1, y - 1, 0xFFFFFFu, 255);
+        }
+        else if (rise < 2.7)
+        {
+            var burst = (rise - 2.2) / 0.5;
+            for (var s = 0; s < 6; s++)
             {
-                if (((y + x) & 1) == 0) p.Set(x, y, pal.Glow, 130);
+                var angle = s * Math.PI / 3;
+                p.Set(x + (int)Math.Round(Math.Cos(angle) * (3 + (burst * 5))), y + (int)Math.Round(Math.Sin(angle) * (3 + (burst * 5))), 0xFFFFFFu, (int)(230 * (1 - burst)));
             }
+        }
+    }
 
-            for (var k = 0; k < lines.Count; k++) CapGlyphs.Outlined(p, lines[k].Text, left, top + (k * 7), lines[k].Colour, pal.Ink);
+    // ---------------------------------------------------------------- the souls
+
+    /// <summary>
+    /// A small light over each fossil for as long as the run lasts, the dimmer the lower the level it fell at: the water over the floor counts the
+    /// fallen as a sky of faint stars counts nights. Painted every frame because they drift.
+    /// </summary>
+    public static void Souls(CapSheet p, CapWorldLayout l, CapFossil[] fossils, double phase)
+    {
+        if (l.Panel != CapPanelKind.Deep) return;
+        foreach (var fossil in fossils)
+        {
+            var spec = fossil.Spec;
+            var bob = (int)Math.Round(Math.Sin((phase * 0.9) + (spec.Index * 1.7)) * 1.5);
+            var x = spec.X + (int)Math.Round(Math.Sin((phase * 0.5) + (spec.Index * 2.3)) * 2);
+            var y = spec.Top - 9 - ((spec.Index % 3) * 4) + bob;
+            var alpha = 40 + (int)(110 * spec.Soul);
+            p.Set(x, y, 0xDDE8FFu, alpha);
+            p.Set(x - 1, y, 0xB8C8F0u, alpha / 3);
+            p.Set(x + 1, y, 0xB8C8F0u, alpha / 3);
+            p.Set(x, y - 1, 0xB8C8F0u, alpha / 3);
+            p.Set(x, y + 1, 0xB8C8F0u, alpha / 3);
         }
     }
 
@@ -131,7 +176,7 @@ public static class CapDeep
 
     /// <summary>
     /// One lantern for each trial, hung on a rope from the surface to the floor (along under it, in a flat band): lit gold the ones cleared, the next
-    /// one breathing, the rest dark glass. Painted every frame because the light breathes.
+    /// one breathing, the rest dark glass. No numbers: the count is the lights. Painted every frame because the light breathes.
     /// </summary>
     public static void Lanterns(CapSheet p, CapWorldLayout l, CapSeaPalette pal, CapPlaqueData data, double phase)
     {
@@ -177,11 +222,6 @@ public static class CapDeep
             }
 
             Lantern(p, cx, cy, lit, next, pulse, pal);
-
-            var label = (k + 1).ToString();
-            var lx = horizontal ? cx - (CapGlyphs.Width(label, false) / 2) : cx + 7;
-            var ly = horizontal ? cy + 8 : cy - 2;
-            CapGlyphs.Outlined(p, label, lx, ly, lit ? 0xFFE9A8u : next ? pal.Glow : CapSheet.Mix(pal.Glow, pal.Water[4], 0.55), pal.Ink);
         }
     }
 

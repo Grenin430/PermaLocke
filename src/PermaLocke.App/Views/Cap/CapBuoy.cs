@@ -154,13 +154,16 @@ public sealed class CapBuoy
 
         var next = data.Next is { } n ? $"SIG {n}" : "ULTIMO";
         var tw = CapGlyphs.Width(trial, big);
-        var nw = CapGlyphs.Width(next, false);
         var gap = 6;
+
+        // The next cap is as big as the trial when both fit (it was a tiny afterthought), and small only when the tag is narrow.
+        var bigNext = big && tw + gap + CapGlyphs.Width(next, true) <= box.Width;
+        var nw = CapGlyphs.Width(next, bigNext);
         var total = tw + gap + nw;
         var x = Math.Max(0, (box.Width - total) / 2);
         var y = Math.Max(0, (box.Height - (big ? 7 : 5)) / 2);
         CapGlyphs.Outlined(s, trial, x, y, pal.Glow, pal.Ink, big);
-        CapGlyphs.Outlined(s, next, x + tw + gap, y + (big ? 1 : 0), CapSheet.Mix(pal.Glow, pal.Water[3], 0.35), pal.Ink);
+        CapGlyphs.Outlined(s, next, x + tw + gap, y + (big && !bigNext ? 1 : 0), CapSheet.Mix(pal.Glow, 0xFFD860u, 0.45), pal.Ink, bigNext);
         Tag = s;
     }
 
