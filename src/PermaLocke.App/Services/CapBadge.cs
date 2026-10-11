@@ -211,6 +211,7 @@ public sealed class CapBadge
         {
             // Se quita en CONFIGURACIÓN (1.0.4.8). Lo barato primero: sin juego abierto no se busca su ventana.
             var game = _settings.Current.CapPanel && _launcher.IsRunning ? GameWindow.Handle() : IntPtr.Zero;
+            _gameHandle = game;
 
             if (game == IntPtr.Zero || GetForegroundWindow() != game
                 || GameWindow.RenderBox(game) is not { } picture)
@@ -481,6 +482,7 @@ public sealed class CapBadge
         panel.Plaque.Set(data, slot, Now, worldX, worldWidth);
         OverlayWindows.PlaceOver(panel.Window, (slot.Box.Left, slot.Box.Top, slot.Box.Width, slot.Box.Height));
         if (!panel.Window.IsVisible) panel.Window.Show();
+        EnsureRendering();
     }
 
     private void HideAll()
@@ -490,30 +492,63 @@ public sealed class CapBadge
     }
 
     /// <summary>One frame of the moving part, for each window that is showing.</summary>
+    /// <summary>The slow beat (a timer, 100 ms): it keeps the key and starts the render loop when a window shows; the frames themselves come from <see cref="OnRendering"/>.</summary>
     private void Frame()
     {
-        var busy = Step();
-
-        // Twelve frames a second for the flame and the dust. While something is happening the frames come with the screen, sixty a second, from the
-        // render loop of WPF: a timer cannot (it wakes on the 15.6 ms tick, so the 40 ms of «fast» was really 47).
-        if (busy && !_rendering)
-        {
-            _rendering = true;
-            _frames.Stop();
-            CompositionTarget.Rendering += OnRendering;
-        }
+        if (!_rendering) Step();
+        EnsureRendering();
     }
 
     private bool _rendering;
+    private long _lastStep;
+    private double _interval = 33;
+    private double _cost;
+    private IntPtr _front;
+    private IntPtr _gameHandle;
 
+    private bool AnyVisible() => _main?.Window.IsVisible == true || _memorial?.Window.IsVisible == true;
+
+    private void EnsureRendering()
+    {
+        if (_rendering || !AnyVisible()) return;
+        _rendering = true;
+        CompositionTarget.Rendering += OnRendering;
+    }
+
+    /// <summary>
+    /// The frames, at the pace of the screen's own render loop and not of a timer (a timer wakes on the 15.6 ms tick of the system: 83 ms was 94, 40 was 47, and
+    /// the panel stuttered). Thirty a second at rest, sixty while something moves, and half of that if a frame is costing the interface too much: a layered
+    /// window is expensive to update, and the panel must never be what makes the interface late. Each beat also asks who has the focus, which is cheap,
+    /// so that the panel goes the moment another window comes in front and comes back the moment the game does.
+    /// </summary>
     private void OnRendering(object? sender, EventArgs e)
     {
-        if (Step()) return;
+        CheckFront();
+        var now = Stopwatch.GetTimestamp();
+        if ((now - _lastStep) * 1000.0 / Stopwatch.Frequency < _interval) return;
+        _lastStep = now;
 
-        // Nothing is moving any more: back to the slow beat.
-        CompositionTarget.Rendering -= OnRendering;
-        _rendering = false;
-        _frames.Start();
+        var busy = Step();
+        var took = (Stopwatch.GetTimestamp() - now) * 1000.0 / Stopwatch.Frequency;
+        _cost = (_cost * 0.8) + (took * 0.2);
+        _interval = busy && _cost < 6 ? 16 : 33;
+
+        if (!AnyVisible())
+        {
+            CompositionTarget.Rendering -= OnRendering;
+            _rendering = false;
+        }
+    }
+
+    /// <summary>Another window in front takes the panel away at once; the game in front again brings it back without waiting for the half-second beat.</summary>
+    private void CheckFront()
+    {
+        var front = GetForegroundWindow();
+        if (front == _front) return;
+        _front = front;
+        if (_rehearsing || _gameHandle == IntPtr.Zero) return;
+        if (front != _gameHandle) HideAll();
+        else if (!AnyVisible()) _ = TickAsync();
     }
 
     /// <summary>One frame of the moving part for each window that is showing; true while something in it needs frames at the screen's pace.</summary>
