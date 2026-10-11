@@ -6,10 +6,10 @@ namespace PermaLocke.App.Services;
 
 /// <summary>
 /// How much life the Pokémon that is on the field has, read from the game's own HP bar on the screen (2026-10-11): memory does not say which of the party
-/// is out (the battle's blocks keep the order the battle began with), but the bar on the screen is always that one's. Four looks a second, only while there
+/// is out (the battle's blocks keep the order the battle began with), but the bar on the screen is always that one's. Eight looks a second, only while there
 /// is a battle, a few milliseconds each (measured on the desktop: 4 ms mean). The last look with colour is kept for <see cref="HoldSeconds"/>: the box hides
 /// under an attack animation and a message, and a hidden box says nothing, so the panel keeps what it knew until the box is back. Without the window, with a
-/// layout that is not computed, or with the box hidden for long, it says nothing (null) and the panel falls back to the party's lowest life.
+/// layout that is not computed, or with the box hidden for long, it says nothing (null) and the sea is not in danger.
 /// </summary>
 public sealed class ActiveBar : IDisposable
 {
@@ -22,6 +22,9 @@ public sealed class ActiveBar : IDisposable
     private double _fill = -1;
     private long _seenAt;
     private string _lastWhat = "";
+
+    /// <summary>The life of the one on the field moved by a notch: the panel looks again at once and does not wait for its own beat.</summary>
+    public event Action? Moved;
 
     public ActiveBar(ILogger<ActiveBar>? log = null) => _log = log;
 
@@ -73,7 +76,9 @@ public sealed class ActiveBar : IDisposable
                 var sample = HpBarWatcher.Sample();
                 if (sample is { State: HpBarState.Filled } reading)
                 {
+                    var before = Volatile.Read(ref _fill);
                     Volatile.Write(ref _fill, reading.Fill);
+                    if (Math.Abs(before - reading.Fill) >= 0.04) Moved?.Invoke();
                     Interlocked.Exchange(ref _seenAt, Stopwatch.GetTimestamp());
                 }
 
@@ -90,7 +95,7 @@ public sealed class ActiveBar : IDisposable
                 // A look that fails is a look that did not happen.
             }
 
-            timer.Sleep(250);
+            timer.Sleep(120);
         }
     }
 

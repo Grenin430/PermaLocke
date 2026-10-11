@@ -124,6 +124,7 @@ public sealed class CapBadge
         _active = active;
         _bar = bar;
         pump.Changed += OnVitals;
+        active.Moved += OnActive;
         bar.Signal += OnBar;
         _due.Tick += (_, _) =>
         {
@@ -314,6 +315,17 @@ public sealed class CapBadge
     }
 
     private int _pushing;
+
+    /// <summary>The bar of the Pokémon on the field moved: the sea may change mood now.</summary>
+    private void OnActive()
+    {
+        if (Interlocked.Exchange(ref _pushing, 1) == 1) return;
+        _ = Application.Current?.Dispatcher.BeginInvoke(DispatcherPriority.Send, () =>
+        {
+            Interlocked.Exchange(ref _pushing, 0);
+            Repaint();
+        });
+    }
 
     /// <summary>The fast reading found a change: the interface hears of it at once and does not wait for its half-second timer.</summary>
     private void OnVitals(VitalsFrame frame)
@@ -687,7 +699,7 @@ public sealed class CapBadge
         }
 
         return new CapPlaqueMember(sprite, name, member.Level, member.CurrentHp, member.MaxHp, false, member.Pid, types,
-            member.HeldItem > 0 ? _items.GetName(member.HeldItem) : null, _battle ? CapStatus.None : StatusOf(member.Status),
+            member.HeldItem > 0 ? _items.GetName(member.HeldItem) : null, StatusOf(member.Status),
             member.ExpProgress, moves, member.HeldItem > 0 ? _sprites.GetItem(member.HeldItem) : null);
     }
 
