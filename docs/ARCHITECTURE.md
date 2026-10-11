@@ -13434,7 +13434,7 @@ Encargo: rediseñar la animación del objeto que entra en la mochila para que se
 - Combate: todos los objetos hacen lo mismo salvo la semilla.
 - Varios: una estrella y nada más, a propósito.
 
-## §244 · El panel del cap ocupa toda la banda negra (2026-10-10, sin publicar, cuatro commits locales)
+## §244 · El panel del cap ocupa toda la banda negra (2026-10-10, publicada en la 1.0.17, cuatro commits locales)
 
 Encargo: rediseñar `CapPlaque` + `CapBadge` con la ambición de las animaciones de objetos y que llene la banda negra del emulador, no una esquina. Dirección elegida: **vitrina de nogal** (la misma madera, latón, copa y mecha de antes, llevadas a una composición): escudo con el cap, mecha con llama, un nicho por Pokémon y un cementerio. Commits: `f836c19` (a), `e773652` (b), `dee8b2c` (c), `a71f314` (d) y el del ensayo.
 
@@ -13447,7 +13447,7 @@ Encargo: rediseñar `CapPlaque` + `CapBadge` con la ambición de las animaciones
 - **Herramientas:** `tools/PermaLocke.PlaqueLab` (no está en la solución, como PixelCheck): `dotnet run --project tools/PermaLocke.PlaqueLab` (ventana con selector de escenario, tamaño y layout de ventana, modo, celda, zoom con decimales, velocidad, fondo, fotograma a fotograma y PNG), `-- --exportar <carpeta>`, `-- --medir`. En el juego real, con la app desplegada y el emulador abierto: `PermaLocke.exe --ensayar-cap golpe 40` (escenarios: completo, caidos, huevos, combate, tope, inicio, liga, subida, golpe, caida, curacion, cambio-cap, eclosion, estados, casi-tope).
 - **Sin probar en el emulador real**: la banda real, el guardián, el estado, la EXP y los PP leídos de la memoria, la tecla y el coste de la ventana. Tests: 450 de App (los de este panel: geometría 153 con sus casos, placa, datos, animación 12, parte móvil 8), 412 de GameLink.
 
-## §245 · El panel del cap es un mar (2026-10-10, sin publicar, commits locales a, b, c, d y e encima del §244)
+## §245 · El panel del cap es un mar (2026-10-10, publicada en la 1.0.17, commits locales a, b, c, d y e encima del §244)
 
 El usuario descartó la vitrina de nogal del §244 («correcta pero previsible») y el cementerio como panel aparte, y pidió un mundo con identidad propia donde el equipo, el cap, la mecha y los caídos sean habitantes y fenómenos, no filas. Se conserva todo lo técnico (banda, guardián, modos, celda entera, datos, PID, retraso de 3 s de los PS, atajo, ajustes, 12/25 fps, `Paint` puro) y se cambia el dibujo entero.
 
@@ -13475,7 +13475,7 @@ El usuario descartó la vitrina de nogal del §244 («correcta pero previsible»
 
 **Quedó fuera o mejorable**: no se sabe qué Pokémon está activo en combate (no se lee), se destaca el último golpeado; el estado solo se ve fuera de combate; el fósil de un Pokémon cuyo sprite no está en la ROM sale como lápida sin cara; la medusa y la ballena son siluetas procedurales (sin pulir a mano); el suelo cae con el cambio de cap pero el mar no cambia de profundidad de verdad. **Sin probar en el emulador real.** Tests: App 518 (geometría con oreja y muesca, guardián, disposición, mar, fondo, animación, fenómenos), GameLink 412.
 
-## §246 · El mar, segunda ronda: columna alineada, fósiles sin letras, lectura rápida y sucesos (2026-10-11, sin publicar, commits locales a-e encima del §245)
+## §246 · El mar, segunda ronda: columna alineada, fósiles sin letras, lectura rápida y sucesos (2026-10-11, publicada en la 1.0.17, commits locales a-e encima del §245)
 
 Lo que el organizador eligió sobre las propuestas (rama de trabajo `cap-propuestas`, mockups y mediciones en `tools/PermaLocke.PlaqueLab`).
 
@@ -13494,3 +13494,13 @@ Lo que el organizador eligió sobre las propuestas (rama de trabajo `cap-propues
 **(e) Mediciones** (esta máquina, Release; el servidor es falso, ver `docs/MEDICIONES-CAP.md`). Retraso de lectura, desde que cambia el dato hasta que PermaLocke lo tiene: antes, 128 ms de media (p95 257, máx. 265); ahora a 120 Hz, 4,8 ms (p95 8,7, máx. 8,8); a 240 Hz, 2,8 ms. Una petición RPC: 0,035 ms de media. CPU del hilo: 1,6 % de un núcleo a 120 Hz. Un fotograma del panel: 0,2-1,2 ms (columna), 1-6 KB de basura; 60 por segundo solo con algo en movimiento. Probes para el juego real: `Probe --combate sincronia | latencia | estado`.
 
 **Queda por hacer / sin verificar**: todo lo anterior contra el emulador real; el estado dentro de un combate (`Probe --combate estado`); la duración de la barra del juego según el daño; el coste de la ventana transparente de WPF (`--medir-ventana`, que no se ha corrido).
+
+## §247 · El mar con el juego delante: estado, fondo por el que está en el campo y quemadura (2026-10-11, publicada en la 1.0.17)
+
+Arreglos de lo que se vio al jugar el §246, más la publicación de todo el panel del mar (23 commits del §244-§246 y estos).
+
+- **Estado**: el número que guarda la memoria es el del propio juego, no el campo de bits del save (un Azumarill quemado salía dormido). `CapBadge.StatusOf`: 1 parálisis, 2 sueño, 3 hielo, 4 quemadura, 5 veneno, del byte bajo. Confirmado solo el 4 (log «valor del juego 0x00000004»); los demás son de la lista del juego, y cualquier otro valor no enseña nada. En combate el estado ya no se oculta: la copia del equipo conserva el de antes del combate. Un estado nuevo o curado en pleno combate no se ve hasta que acaba.
+- **Fondo por el Pokémon del campo**: `CapPlaqueData.ActiveShare` (la barra de PS de la pantalla, `ActiveBar`) manda: peligro si ≤ `CapAnim.DangerShare` (0,30). **Sin barra no hay peligro**: la primera versión caía al más bajo del equipo y el mar seguía rojo tras cambiar a uno sano. `ActiveBar` mira 8 veces por segundo, avisa con `Moved` (cambio de 0,04 o soltar el valor) y el panel repinta al instante; guarda la última lectura con color `HoldSeconds` = 3 s. Medido en el log (`ActiveBar: la barra… se ve así`): la caja de PS está **oculta casi todo el combate** (menús, animaciones, cambio), y solo hay lectura cuando el juego la enseña, así que el cambio de fondo tras sacar a otro tarda lo que tarde el juego en enseñar su caja. Con 8 s de retención tardaba ~6 s; con 3 s, el usuario dijo que iba bien. Riesgo conocido: un ataque largo de uno con poca vida puede esconder la caja más de 3 s y el fondo parpadea a «combate».
+- **Quemadura = aura** (elegida entre cinco prototipos, `PERMALOCKE_BURN` ya quitado): brillo rojo naranja que pulsa sobre el cuerpo, llamitas que nacen del contorno (`CapCreature.Edge`) y chispas y ceniza que salen a los lados. Veneno (10 burbujas de tres tamaños y tinte), sueño (3 Z y tinte) y parálisis (3 rayos por destello) rellenados también. Lo anterior (llamas en los pies, brasas, cuerpo ardiendo) no gustó.
+- **Lectura**: la bomba rápida va a **120 por segundo** en combate (`VitalsPump.BattleHz`); estuvo a 200 unas horas, sin medir contra Azahar de verdad, y el revisor lo señaló (≈2800 peticiones UDP por segundo). `AzaharBatchReader` tiene un plazo total por lote además del de cada recepción.
+- **Sin verificar**: el orden de los números de estado (salvo el 4); el tiempo real y las constantes de `HpSyncTable`; la latencia contra Azahar de verdad (`docs/MEDICIONES-CAP.md`); el coste de la ventana (`--medir-ventana`). Pendientes menores del revisor: `_layout` de `CapBadge` leído desde varios hilos, `HighResolutionTimer` sin `Dispose`, `ActiveBar.Follow(false)` puede dejar una lectura de 3 s, la calibración del equipo caliente puede fallar en la primera captura de una pelea.
