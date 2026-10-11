@@ -163,43 +163,81 @@ public static class CapFx
         switch (status)
         {
             case CapStatus.Poison:
-                for (var k = 0; k < Few(4); k++)
+                // A sickly violet tint that breathes, and bubbles of three sizes that rise, wobble and swell as they go.
+                c.PaintTint(p, 0, 0, 0xA030C0, (int)((26 + (12 * Math.Sin(phase * 3))) * intensity));
+                for (var k = 0; k < Few(10); k++)
                 {
-                    var rise = ((phase * 0.7) + (k / 4.0)) % 1.0;
-                    var x = left + (CapArt.Hash(i, k + 41) % Math.Max(1, w)) + (int)Math.Round(Math.Sin((phase * 2) + k) * 1.5);
-                    var y = top + h - (int)(rise * (h + 12));
-                    p.Set(x, y, 0xC060C0, (int)(230 * (1 - rise)));
-                    p.Set(x + 1, y, 0xE0A0E0, (int)(170 * (1 - rise)));
-                    p.Set(x, y + 1, 0xE0A0E0, (int)(120 * (1 - rise)));
+                    var rise = ((phase * (0.45 + ((k % 3) * 0.15))) + (k / 10.0)) % 1.0;
+                    var x = left + (CapArt.Hash(i, k + 41) % Math.Max(1, w)) + (int)Math.Round(Math.Sin((phase * 2) + k) * 2);
+                    var y = top + h - (int)(rise * (h + 14));
+                    var r = 1 + (k % 3) + (rise > 0.6 ? 1 : 0);
+                    var fade = (int)(240 * (1 - (rise * rise)));
+                    Ring(p, x, y, r, r, 0xC060C0, fade, dither: false);
+                    p.Set(x - (r / 2), y - (r / 2), 0xF0C0F0, fade);
                 }
 
                 break;
             case CapStatus.Burn:
-                for (var k = 0; k < Few(5); k++)
+                // The creature glows warm and flickers; embers climb as small glowing blocks (a bright core in an orange halo), flames lick up from its feet
+                // and a few grey wisps of smoke go higher.
+                c.PaintTint(p, 0, 0, 0xFF6020, (int)((34 + (14 * Math.Sin(phase * 9))) * intensity));
+                for (var k = 0; k < Few(16); k++)
                 {
-                    var rise = ((phase * 1.2) + (k / 5.0)) % 1.0;
-                    var x = left + (CapArt.Hash(i, k + 51) % Math.Max(1, w));
-                    p.Set(x, top + h - (int)(rise * (h + 10)), k % 2 == 0 ? 0xFF8030u : 0xFFD060u, (int)(240 * (1 - rise)));
+                    var rise = ((phase * (0.9 + ((k % 4) * 0.18))) + (k / 16.0)) % 1.0;
+                    var x = left + (CapArt.Hash(i, k + 51) % Math.Max(1, w)) + (int)Math.Round(Math.Sin((phase * 3) + k) * 2);
+                    var y = top + h - (int)(rise * (h + 14));
+                    var fade = (int)(255 * (1 - (rise * rise)));
+                    var hot = k % 3 == 0;
+                    p.Rect(x - 1, y - 1, 3, 3, 0xFF6A20, fade / 3);
+                    p.Rect(x, y, 2, 2, hot ? 0xFFF0A0u : 0xFFA030u, fade);
+                }
+
+                for (var f = 0; f < Few(5); f++)
+                {
+                    var fx = left + (w * (f + 1) / 6);
+                    var flick = (int)Math.Floor((phase * 7) + (f * 1.7));
+                    var tall = 3 + (CapArt.Hash(flick, f + i) % 4);
+                    for (var d = 0; d < tall; d++)
+                    {
+                        var k = d / (double)tall;
+                        p.Set(fx, top + h - d, CapSheet.Mix(0xFFE070u, 0xE03010u, k), (int)(230 * (1 - (k * 0.6))));
+                        if (d < tall - 2) p.Set(fx + 1, top + h - d, 0xFF8020, (int)(180 * (1 - k)));
+                    }
+                }
+
+                for (var s = 0; s < Few(3); s++)
+                {
+                    var rise = ((phase * 0.45) + (s / 3.0)) % 1.0;
+                    var x = left + (w / 4) + (s * w / 4) + (int)Math.Round(Math.Sin((phase * 2) + s) * 3);
+                    var y = top - 2 - (int)(rise * 12);
+                    p.Rect(x, y, 3, 1, 0xB8BAC8, (int)(150 * (1 - rise)));
+                    p.Rect(x + 1, y - 1, 2, 1, 0xB8BAC8, (int)(110 * (1 - rise)));
                 }
 
                 break;
             case CapStatus.Sleep:
-                for (var k = 0; k < Few(2); k++)
+                c.PaintTint(p, 0, 0, 0x4060C0, (int)(30 * intensity));
+                for (var k = 0; k < Few(3); k++)
                 {
-                    var rise = ((phase * 0.4) + (k * 0.5)) % 1.0;
-                    CapGlyphs.Outlined(p, "Z", left + w + (int)(rise * 4) - 2, top - (int)(rise * 7) + 2, 0xE8E8F8, pal.Ink, alpha: (int)(255 * (1 - (rise * 0.8))));
+                    var rise = ((phase * 0.4) + (k / 3.0)) % 1.0;
+                    CapGlyphs.Outlined(p, "Z", left + w + (int)(rise * 6) - 2, top - (int)(rise * 10) + 2, 0xE8E8F8, pal.Ink, alpha: (int)(255 * (1 - (rise * 0.8))));
                 }
 
                 break;
             case CapStatus.Paralysis:
-                if (beat % 3 == 0 && intensity > 0.4)
+                if (beat % 2 == 0 && intensity > 0.4)
                 {
-                    var ax = left + (CapArt.Hash(beat, i) % Math.Max(1, w));
-                    var ay = top + (CapArt.Hash(beat, i + 1) % Math.Max(1, h));
-                    var bx = left + (CapArt.Hash(beat, i + 2) % Math.Max(1, w));
-                    var by = top + (CapArt.Hash(beat, i + 3) % Math.Max(1, h));
-                    p.Line(ax, ay, (ax + bx) / 2 + 2, (ay + by) / 2 - 2, 0xFFF060);
-                    p.Line((ax + bx) / 2 + 2, (ay + by) / 2 - 2, bx, by, 0xFFD030);
+                    c.PaintTint(p, 0, 0, 0xFFF060, 40);
+                    for (var s = 0; s < 3; s++)
+                    {
+                        var ax = left + (CapArt.Hash(beat, i + (s * 7)) % Math.Max(1, w));
+                        var ay = top + (CapArt.Hash(beat, i + 1 + (s * 7)) % Math.Max(1, h));
+                        var bx = left + (CapArt.Hash(beat, i + 2 + (s * 7)) % Math.Max(1, w));
+                        var by = top + (CapArt.Hash(beat, i + 3 + (s * 7)) % Math.Max(1, h));
+                        p.Line(ax, ay, ((ax + bx) / 2) + 2, ((ay + by) / 2) - 2, 0xFFF060);
+                        p.Line(((ax + bx) / 2) + 2, ((ay + by) / 2) - 2, bx, by, 0xFFD030);
+                        p.Set(bx, by, 0xFFFFFF);
+                    }
                 }
 
                 break;

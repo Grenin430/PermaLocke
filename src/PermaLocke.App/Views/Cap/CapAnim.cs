@@ -179,9 +179,9 @@ public sealed class CapAnim
         _inBattle = data.InBattle;
 
         var alive = data.Party.Where(m => !m.Egg && !m.Fallen).ToList();
-        // The sea is in danger when the Pokémon on the field is: its bar on the screen says how much life it has. When the bar cannot be seen, the lowest of the
-        // party stands in (the rule from before).
-        _danger = data.InBattle && (data.ActiveShare is { } active ? active <= DangerShare : alive.Any(m => m.MaxHp > 0 && m.Hp * 4 <= m.MaxHp));
+        // The sea is in danger when the Pokémon on the field is: its bar on the screen says how much life it has. When the bar cannot be seen the sea is not
+        // in danger: the lowest of the party stood in for it and kept the sea red after a swap to a healthy one (seen in the game, 2026-10-11).
+        _danger = data.InBattle && data.ActiveShare is { } active && active <= DangerShare;
         var capped = alive.Count > 0 && highest >= data.Cap && data.Cap > 0;
 
         var mood = _danger ? CapMood.Danger

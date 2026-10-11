@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Microsoft.Extensions.Logging;
 using PermaLocke.GameLink.Battle;
 
 namespace PermaLocke.App.Services;
@@ -17,8 +18,12 @@ public sealed class ActiveBar : IDisposable
     private readonly ManualResetEventSlim _on = new(false);
     private readonly CancellationTokenSource _stop = new();
     private Thread? _thread;
+    private readonly ILogger<ActiveBar>? _log;
     private double _fill = -1;
     private long _seenAt;
+    private string _lastWhat = "";
+
+    public ActiveBar(ILogger<ActiveBar>? log = null) => _log = log;
 
     /// <summary>Starts or stops looking: on while a battle goes on.</summary>
     public void Follow(bool on)
@@ -65,10 +70,19 @@ public sealed class ActiveBar : IDisposable
             try
             {
                 // Only a bar with colour counts: an empty one is a box coming back from hiding as grey (measured at the move menu), not a fall.
-                if (HpBarWatcher.Sample() is { State: HpBarState.Filled } reading)
+                var sample = HpBarWatcher.Sample();
+                if (sample is { State: HpBarState.Filled } reading)
                 {
                     Volatile.Write(ref _fill, reading.Fill);
                     Interlocked.Exchange(ref _seenAt, Stopwatch.GetTimestamp());
+                }
+
+                // What the look says is logged when it changes, so a bar that is never seen leaves the reason in the log.
+                var what = sample is null ? "sin ventana o con un diseño de pantallas que no se calcula" : sample.Value.State.ToString();
+                if (what != _lastWhat)
+                {
+                    _lastWhat = what;
+                    _log?.LogInformation("ActiveBar: la barra de PS del que está en el campo se ve así: {What}", what);
                 }
             }
             catch (Exception ex) when (ex is not OperationCanceledException)

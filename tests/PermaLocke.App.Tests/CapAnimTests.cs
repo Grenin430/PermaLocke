@@ -120,7 +120,7 @@ public sealed class CapAnimTests
     }
 
     [Fact]
-    public void The_sea_follows_the_life_of_the_one_on_the_field_when_the_bar_says_it_and_the_lowest_of_the_party_when_it_does_not()
+    public void The_sea_follows_the_life_of_the_one_on_the_field_when_the_bar_says_it_and_is_calm_when_it_does_not()
     {
         var anim = new CapAnim();
         var party = Party(Member(1, hp: 17), Member(2, hp: 100));
@@ -135,9 +135,9 @@ public sealed class CapAnimTests
         anim.Update(Data(party, battle: true) with { ActiveShare = 0.80 }, 4);
         Assert.Equal(CapMood.Battle, anim.Mood(6).Now);
 
-        // The bar not seen: the lowest of the party stands in, as before.
+        // The bar not seen: no danger (the lowest of the party kept the sea red after a swap).
         anim.Update(Data(party, battle: true), 8);
-        Assert.Equal(CapMood.Danger, anim.Mood(10).Now);
+        Assert.Equal(CapMood.Battle, anim.Mood(10).Now);
         Assert.Equal(0.30, CapAnim.DangerShare);
     }
 
@@ -145,14 +145,14 @@ public sealed class CapAnimTests
     public void Someone_at_a_quarter_of_their_hp_in_a_battle_is_danger_and_out_of_one_is_not()
     {
         var anim = new CapAnim();
-        anim.Update(Data(Party(Member(1, hp: 100), Member(2, hp: 25)), battle: true), 0);
+        anim.Update(Data(Party(Member(1, hp: 100), Member(2, hp: 25)), battle: true) with { ActiveShare = 0.25 }, 0);
         Assert.Equal(CapMood.Danger, anim.Mood(1).Now);
         Assert.True(anim.Busy(1));
 
         anim.Update(Data(Party(Member(1, hp: 100), Member(2, hp: 25)), battle: false), 2);
         Assert.Equal(CapMood.Calm, anim.Mood(10).Now);
 
-        anim.Update(Data(Party(Member(1, hp: 100), Member(2, hp: 80)), battle: true), 12);
+        anim.Update(Data(Party(Member(1, hp: 100), Member(2, hp: 80)), battle: true) with { ActiveShare = 0.8 }, 12);
         Assert.Equal(CapMood.Battle, anim.Mood(20).Now);
     }
 
