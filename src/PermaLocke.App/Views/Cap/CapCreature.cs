@@ -209,6 +209,14 @@ public sealed class CapCreature
         }
     }
 
+    /// <summary>The cells of the outline, at their places on the sheet: where a fire can grow out of the silhouette.</summary>
+    public IEnumerable<(int X, int Y)> Edge()
+    {
+        var baseX = Slot.Sprite.Left + ((Slot.Sprite.Width - _spriteW) / 2);
+        var baseY = Slot.Sprite.Top + ((Slot.Sprite.Height - _spriteH) / 2);
+        foreach (var (x, y) in _outline) yield return (baseX + x, baseY + y);
+    }
+
     /// <summary>The size of the picture in cells, for the effects that go round it.</summary>
     public (int W, int H) PictureSize => (_spriteW, _spriteH);
 

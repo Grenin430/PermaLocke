@@ -178,37 +178,7 @@ public static class CapFx
 
                 break;
             case CapStatus.Burn:
-                // The body itself burns: it flickers orange, a band of heat sweeps up it again and again, and a swarm of sparks with a trail climbs off it,
-                // going from white-yellow to red as they cool. Three small flames flicker over the head.
-                c.PaintTint(p, 0, 0, 0xFF5A18, (int)((22 + (14 * Math.Sin(phase * 8)) + (6 * Math.Sin(phase * 13))) * intensity));
-                var sweep = (phase * 0.9) % 1.0;
-                var bandTop = h - (int)(sweep * (h + 6));
-                c.PaintBand(p, 0, 0, 0xFFC040, (int)(70 * intensity * Math.Sin(sweep * Math.PI)), Math.Max(0, bandTop - 3), Math.Max(0, bandTop + 2));
-
-                for (var k = 0; k < Few(22); k++)
-                {
-                    var rise = ((phase * (0.7 + ((k % 4) * 0.17))) + (k / 22.0)) % 1.0;
-                    var x = left + (CapArt.Hash(i, k + 51) % Math.Max(1, w)) + (int)Math.Round(Math.Sin((phase * 3.5) + k) * 2);
-                    var y = top + h - 2 - (int)(rise * (h + 10));
-                    var fade = (int)(255 * (1 - (rise * rise)));
-                    p.Set(x, y, CapSheet.Mix(0xFFF4B0u, 0xFF6010u, rise), fade);
-                    p.Set(x, y + 1, 0xFF8A20, fade * 3 / 5);
-                    p.Set(x, y + 2, 0xD83010, fade / 4);
-                }
-
-                for (var f = 0; f < 3; f++)
-                {
-                    var fx = left + (w * (f + 1) / 4);
-                    var tall = 4 + (int)Math.Round(1.5 * Math.Sin((phase * 6) + (f * 2.1))) + (CapArt.Hash((int)Math.Floor(phase * 7), f + i) % 2);
-                    for (var d = 0; d < tall; d++)
-                    {
-                        var k = d / (double)tall;
-                        var sway = (int)Math.Round(Math.Sin((phase * 6) + (f * 1.7) + (d * 0.5)) * (0.4 + (k * 1.4)));
-                        var half = k < 0.5 ? 1 : 0;
-                        p.Rect(fx + sway - half, top - d + 1, (half * 2) + 1, 1, k < 0.35 ? 0xFFE070u : 0xFF7A20u, (int)(235 * (1 - (k * 0.4))));
-                    }
-                }
-
+                Burn(p, c, phase, i, intensity);
                 break;
             case CapStatus.Sleep:
                 c.PaintTint(p, 0, 0, 0x4060C0, (int)(30 * intensity));
@@ -254,6 +224,37 @@ public static class CapFx
                 }
 
                 break;
+        }
+    }
+
+    /// <summary>
+    /// The burn: a red-orange glow that pulses round the silhouette, small flames that lick up from its outline, and sparks and ash that float out to the
+    /// sides and up (chosen among five prototypes, 2026-10-11).
+    /// </summary>
+    private static void Burn(CapSheet p, CapCreature c, double phase, int i, double intensity)
+    {
+        var (cx, cy) = c.Centre;
+        var (w, h) = c.PictureSize;
+        int Few(int count) => (int)Math.Ceiling(count * intensity);
+
+        c.PaintTint(p, 0, 0, 0xFF4010, (int)((18 + (12 * Math.Sin(phase * 5))) * intensity));
+        foreach (var (ex, ey) in c.Edge())
+        {
+            var seed = CapArt.Hash(ex + 3, ey + i);
+            if (seed % 4 != 0) continue;
+            var r = 1 + (int)Math.Round(1 + Math.Sin((phase * 4) + seed));
+            p.Set(ex, ey - r, 0xFF6A18, (int)(150 + (60 * Math.Sin((phase * 6) + seed))));
+            if (r > 1) p.Set(ex, ey - r - 1, 0xFFC040, 120);
+        }
+
+        for (var k = 0; k < Few(12); k++)
+        {
+            var rise = ((phase * 0.5) + (k / 12.0)) % 1.0;
+            var dir = k % 2 == 0 ? 1 : -1;
+            var x = cx + (int)(dir * ((w / 2.0) + (rise * 10))) + (int)Math.Round(Math.Sin((phase * 2) + k) * 2);
+            var y = cy + (h / 2) - (int)(rise * (h + 6)) - ((k % 3) * 3);
+            p.Set(x, y, k % 3 == 0 ? 0xFFE070u : 0xFF7A20u, (int)(240 * (1 - rise)));
+            p.Set(x + dir, y + 1, 0x9A9AA8, (int)(120 * (1 - rise)));
         }
     }
 
