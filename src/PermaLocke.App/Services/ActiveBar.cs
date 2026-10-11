@@ -13,7 +13,7 @@ namespace PermaLocke.App.Services;
 /// </summary>
 public sealed class ActiveBar : IDisposable
 {
-    public const double HoldSeconds = 8;
+    public const double HoldSeconds = 3;
 
     private readonly ManualResetEventSlim _on = new(false);
     private readonly CancellationTokenSource _stop = new();
@@ -22,6 +22,7 @@ public sealed class ActiveBar : IDisposable
     private double _fill = -1;
     private long _seenAt;
     private string _lastWhat = "";
+    private bool _had;
 
     /// <summary>The life of the one on the field moved by a notch: the panel looks again at once and does not wait for its own beat.</summary>
     public event Action? Moved;
@@ -94,6 +95,11 @@ public sealed class ActiveBar : IDisposable
             {
                 // A look that fails is a look that did not happen.
             }
+
+            // The held look ran out (the box stayed away): the panel is told, so the sea does not wait for its own beat to let go of it.
+            var has = Current() is not null;
+            if (_had && !has) Moved?.Invoke();
+            _had = has;
 
             timer.Sleep(120);
         }

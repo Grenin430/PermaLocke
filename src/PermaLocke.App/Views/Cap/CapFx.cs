@@ -178,46 +178,35 @@ public static class CapFx
 
                 break;
             case CapStatus.Burn:
-                // Flames: tongues that stand on the feet and climb the sides, each a stack of rows that narrow as they go up (red outside, orange, a
-                // pale core), swaying out of step; sparks with a short trail rise from them and a thin smoke goes over the head.
-                c.PaintTint(p, 0, 0, 0xFF5018, (int)((24 + (10 * Math.Sin(phase * 7))) * intensity));
-                var tongues = Math.Max(2, Few(7));
-                for (var f = 0; f < tongues; f++)
+                // The body itself burns: it flickers orange, a band of heat sweeps up it again and again, and a swarm of sparks with a trail climbs off it,
+                // going from white-yellow to red as they cool. Three small flames flicker over the head.
+                c.PaintTint(p, 0, 0, 0xFF5A18, (int)((22 + (14 * Math.Sin(phase * 8)) + (6 * Math.Sin(phase * 13))) * intensity));
+                var sweep = (phase * 0.9) % 1.0;
+                var bandTop = h - (int)(sweep * (h + 6));
+                c.PaintBand(p, 0, 0, 0xFFC040, (int)(70 * intensity * Math.Sin(sweep * Math.PI)), Math.Max(0, bandTop - 3), Math.Max(0, bandTop + 2));
+
+                for (var k = 0; k < Few(22); k++)
                 {
-                    var side = f % 3;
-                    var fx = side == 1 ? left - 1 : side == 2 ? left + w : left + (w * (f + 1) / (tongues + 1));
-                    var baseY = side == 0 ? top + h : top + h - 4 - ((f * 5) % Math.Max(1, h / 2));
-                    var tall = (side == 0 ? 8 : 6) + (int)Math.Round(2.5 * Math.Sin((phase * 5) + (f * 2.3))) + (CapArt.Hash((int)Math.Floor(phase * 6), f + i) % 3);
+                    var rise = ((phase * (0.7 + ((k % 4) * 0.17))) + (k / 22.0)) % 1.0;
+                    var x = left + (CapArt.Hash(i, k + 51) % Math.Max(1, w)) + (int)Math.Round(Math.Sin((phase * 3.5) + k) * 2);
+                    var y = top + h - 2 - (int)(rise * (h + 10));
+                    var fade = (int)(255 * (1 - (rise * rise)));
+                    p.Set(x, y, CapSheet.Mix(0xFFF4B0u, 0xFF6010u, rise), fade);
+                    p.Set(x, y + 1, 0xFF8A20, fade * 3 / 5);
+                    p.Set(x, y + 2, 0xD83010, fade / 4);
+                }
+
+                for (var f = 0; f < 3; f++)
+                {
+                    var fx = left + (w * (f + 1) / 4);
+                    var tall = 4 + (int)Math.Round(1.5 * Math.Sin((phase * 6) + (f * 2.1))) + (CapArt.Hash((int)Math.Floor(phase * 7), f + i) % 2);
                     for (var d = 0; d < tall; d++)
                     {
                         var k = d / (double)tall;
-                        var sway = (int)Math.Round(Math.Sin((phase * 6) + (f * 1.7) + (d * 0.45)) * (0.5 + (k * 1.8)));
-                        var half = (int)Math.Round(3.2 * Math.Pow(1 - k, 0.7));
-                        var y = baseY - d;
-                        p.Rect(fx + sway - half, y, (half * 2) + 1, 1, 0xE03010, (int)(215 * (1 - (k * 0.35))));
-                        if (half >= 1) p.Rect(fx + sway - half + 1, y, Math.Max(1, (half * 2) - 1), 1, 0xFF8A20, 235);
-                        if (half >= 2 && k < 0.65) p.Rect(fx + sway - half + 2, y, Math.Max(1, (half * 2) - 3), 1, 0xFFE880, 245);
+                        var sway = (int)Math.Round(Math.Sin((phase * 6) + (f * 1.7) + (d * 0.5)) * (0.4 + (k * 1.4)));
+                        var half = k < 0.5 ? 1 : 0;
+                        p.Rect(fx + sway - half, top - d + 1, (half * 2) + 1, 1, k < 0.35 ? 0xFFE070u : 0xFF7A20u, (int)(235 * (1 - (k * 0.4))));
                     }
-                }
-
-                for (var k = 0; k < Few(8); k++)
-                {
-                    var rise = ((phase * (0.8 + ((k % 3) * 0.2))) + (k / 8.0)) % 1.0;
-                    var x = left + (CapArt.Hash(i, k + 51) % Math.Max(1, w)) + (int)Math.Round(Math.Sin((phase * 3) + k) * 2);
-                    var y = top + h - 4 - (int)(rise * (h + 12));
-                    var fade = (int)(255 * (1 - (rise * rise)));
-                    p.Set(x, y, 0xFFF0A0, fade);
-                    p.Set(x, y + 1, 0xFF9A30, fade * 2 / 3);
-                    p.Set(x, y + 2, 0xE03010, fade / 3);
-                }
-
-                for (var s2 = 0; s2 < Few(3); s2++)
-                {
-                    var rise = ((phase * 0.4) + (s2 / 3.0)) % 1.0;
-                    var x = left + (w / 4) + (s2 * w / 4) + (int)Math.Round(Math.Sin((phase * 2) + s2) * 3);
-                    var y = top - 2 - (int)(rise * 12);
-                    p.Rect(x, y, 3, 1, 0xB8BAC8, (int)(130 * (1 - rise)));
-                    p.Rect(x + 1, y - 1, 2, 1, 0xB8BAC8, (int)(90 * (1 - rise)));
                 }
 
                 break;
