@@ -70,6 +70,7 @@ public sealed class AzaharBatchReader : IGameMemory, IDisposable
             }
 
             var pending = ranges.Count;
+            var started = System.Diagnostics.Stopwatch.StartNew();
             var from = (EndPoint)new IPEndPoint(IPAddress.Any, 0);
             while (pending > 0)
             {
@@ -82,6 +83,9 @@ public sealed class AzaharBatchReader : IGameMemory, IDisposable
                 {
                     break;
                 }
+
+                // The timeout is for each receive, not for the batch: stray datagrams must not stretch the batch past it.
+                if (started.ElapsedMilliseconds > _socket.ReceiveTimeout) break;
 
                 if (n < HeaderSize) continue;
                 var index = unchecked((int)(BinaryPrimitives.ReadUInt32LittleEndian(_buffer.AsSpan(4)) - first));

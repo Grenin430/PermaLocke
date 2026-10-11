@@ -40,7 +40,7 @@ public enum PumpState
 /// </remarks>
 public sealed class VitalsPump : IDisposable
 {
-    public const double BattleHz = 200, IdleHz = 4;
+    public const double BattleHz = 120, IdleHz = 4;
 
     private readonly GameLinkMonitor _monitor;
     private readonly AzaharGameStateProvider _provider;

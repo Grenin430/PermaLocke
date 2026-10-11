@@ -1,3 +1,13 @@
+1.0.17 2026-10-11
+PANEL DEL CAP
+La banda negra del emulador es ahora un mar. El cielo es el de Alola a la hora del juego, tu equipo son criaturas de luz alineadas en una columna, el cap es una boya y los Pokémon caídos quedan como fósiles en el fondo, con un foco de luz que los va recorriendo.
+El mar cambia con el combate: se pone en peligro cuando el Pokémon que tienes en el campo baja del 30 % de vida, y se calma en cuanto sacas a otro sano.
+Cada cosa que le pasa a un Pokémon se ve: golpes (pequeños, medios y fuertes, con su número), curas, revivir, subir de nivel, eclosión, caída, cambio de objeto y movimiento nuevo.
+Los estados tienen su propia animación y ya se ven también en combate: la quemadura es un aura de fuego alrededor del Pokémon, el veneno burbujea, el sueño trae sus Z y la parálisis suelta chispas.
+VIDA
+La vida del panel se lee mucho más rápido y más pareja: el golpe aparece a la vez que en la barra del juego. En CONFIGURACIÓN, «Vida del panel», puedes elegir sincronizada, instantánea o con retraso.
+Arreglado: un Pokémon quemado salía como dormido.
+
 1.0.16.1 2026-10-10
 OBJETOS
 La animación de un objeto ya no se corta nunca al pulsar una tecla del juego: llega siempre hasta su final. Solo si hay otro objeto esperando detrás va más rápido.
