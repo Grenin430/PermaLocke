@@ -63,6 +63,8 @@ public sealed class CapBadge
     private readonly IMoveCatalog _moves;
     private readonly CemeteryService _cemetery;
     private readonly VitalsPump _pump;
+    private readonly ActiveBar _active;
+    private readonly Dictionary<uint, int> _rawStatus = [];
     private readonly BarSync _bar;
     private readonly HpPresenter _hp = new();
     private readonly CapEventFeed _feed = new();
@@ -103,7 +105,7 @@ public sealed class CapBadge
 
     public CapBadge(EmulatorLauncher launcher, ProgressService progress, LevelCapTable caps, IRunContext runContext,
         GameLinkMonitor monitor, AppSettings settings, PokemonSpriteService sprites, AlolaSky sky, ITypeLookup types, IItemLookup items,
-        IMoveCatalog moves, CemeteryService cemetery, VitalsPump pump, BarSync bar, ILogger<CapBadge> logger)
+        IMoveCatalog moves, CemeteryService cemetery, VitalsPump pump, BarSync bar, ActiveBar active, ILogger<CapBadge> logger)
     {
         _launcher = launcher;
         _progress = progress;
@@ -119,6 +121,7 @@ public sealed class CapBadge
         _moves = moves;
         _cemetery = cemetery;
         _pump = pump;
+        _active = active;
         _bar = bar;
         pump.Changed += OnVitals;
         bar.Signal += OnBar;
@@ -268,6 +271,14 @@ public sealed class CapBadge
                 : member)];
         }
 
+        foreach (var member in party)
+        {
+            if (_rawStatus.TryGetValue(member.Pid, out var raw) && raw == member.Status) continue;
+            if (_rawStatus.ContainsKey(member.Pid) || member.Status != 0)
+                _logger.LogInformation("Estado de {Name} (PID {Pid:X8}): valor del juego 0x{Raw:X8}, el panel lo lee como {Shown}", member.Nickname, member.Pid, member.Status, StatusOf(member.Status));
+            _rawStatus[member.Pid] = member.Status;
+        }
+
         var tables = frame is { Battle.Count: > 0 } ? frame.ToTables(_monitor.BattleNow) : _monitor.BattleNow;
         return Present(WithLiveHp(party, tables));
     }
@@ -315,6 +326,13 @@ public sealed class CapBadge
             Interlocked.Exchange(ref _pushing, 0);
             Repaint(Now - ago);
         });
+    }
+
+    /// <summary>The life of the Pokémon on the field, from the game's bar, in steps of five per cent (so that the data do not change at every look); null out of a battle or when the bar is not seen.</summary>
+    private double? ActiveShare()
+    {
+        _active.Follow(_battle);
+        return _battle && _active.Current() is { } fill ? Math.Round(fill * 20) / 20 : null;
     }
 
     /// <summary>The fast reading started again from nothing (the game came back): what is read next is taken as it is, nothing is announced.</summary>
@@ -460,7 +478,7 @@ public sealed class CapBadge
         _lastMode = plan.Main?.Mode;
         var seed = _runContext.Current is { } activeRun ? activeRun.Id.GetHashCode() & 0x7FFFFFFF : 0;
         var data = _rehearsal ?? new CapPlaqueData(reading.Trial, reading.Cap, reading.Next, reading.Highest, _party, _battle, _graves, reading.Cleared,
-            reading.Trials, _sky.IsKnown ? _sky.Hour : -1, seed, _events);
+            reading.Trials, _sky.IsKnown ? _sky.Hour : -1, seed, _events, ActiveShare());
         _data = data;
 
         // One sea in two windows.
@@ -673,14 +691,21 @@ public sealed class CapBadge
             member.ExpProgress, moves, member.HeldItem > 0 ? _sprites.GetItem(member.HeldItem) : null);
     }
 
-    /// <summary>The status byte of a generation 7 party Pokémon: bits 0-2 the turns of sleep, then poison, burn, freeze, paralysis and bad poison.</summary>
-    public static CapStatus StatusOf(int status) =>
-        (status & 7) != 0 ? CapStatus.Sleep
-        : (status & 0x88) != 0 ? CapStatus.Poison
-        : (status & 0x10) != 0 ? CapStatus.Burn
-        : (status & 0x20) != 0 ? CapStatus.Freeze
-        : (status & 0x40) != 0 ? CapStatus.Paralysis
-        : CapStatus.None;
+    /// <summary>
+    /// The status of a party Pokémon as the game's structure in memory holds it: a number, not the bit field of the save file. A burnt Azumarill read as
+    /// asleep (2026-10-11) because bits 0-2 were taken for the turns of sleep; the number is the game's own list, 1 paralysis, 2 sleep, 3 freeze, 4 burn,
+    /// 5 poison. Only the low byte: the bytes above it are counters. The numbers are from that list and from that one burn; the log writes the raw value of
+    /// every change (<c>Estado de ...</c>) so that each one can be checked against the screen, and any other value shows nothing rather than a guess.
+    /// </summary>
+    public static CapStatus StatusOf(int status) => (status & 0xFF) switch
+    {
+        1 => CapStatus.Paralysis,
+        2 => CapStatus.Sleep,
+        3 => CapStatus.Freeze,
+        4 => CapStatus.Burn,
+        5 => CapStatus.Poison,
+        _ => CapStatus.None
+    };
 
     /// <summary>
     /// In a battle, the party's HP from the battle's own copy (1.0.4.9): the game only copies it back to the party when

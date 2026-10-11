@@ -109,6 +109,7 @@ public static class HpBarWatcher
     /// </summary>
     public static Func<AzaharScreenLayout>? LayoutSource { get; set; }
 
+    private static readonly object SampleGate = new();
     private static Geometry? _cached;
     private static long _cachedAt;
 
@@ -119,14 +120,20 @@ public static class HpBarWatcher
     /// </summary>
     public static HpBarReading? Sample()
     {
-        var now = Stopwatch.GetTimestamp();
-        if (_cached is null || (now - _cachedAt) * 1000.0 / Stopwatch.Frequency >= 500)
+        Geometry? where;
+        lock (SampleGate)
         {
-            _cached = Locate();
-            _cachedAt = now;
+            var now = Stopwatch.GetTimestamp();
+            if (_cached is null || (now - _cachedAt) * 1000.0 / Stopwatch.Frequency >= 500)
+            {
+                _cached = Locate();
+                _cachedAt = now;
+            }
+
+            where = _cached;
         }
 
-        return _cached is { } where ? Read(where) : null;
+        return where is { } found ? Read(found) : null;
     }
 
     private static Geometry? Locate()

@@ -261,6 +261,7 @@ public partial class App : Application
         collection.AddSingleton<RulesSync>();
         collection.AddSingleton<VitalsPump>();
         collection.AddSingleton<BarSync>();
+        collection.AddSingleton<ActiveBar>();
         collection.AddSingleton<CapBadge>();
         collection.AddSingleton<BackgroundMode>();
         collection.AddSingleton<PokemonIdentityService>();

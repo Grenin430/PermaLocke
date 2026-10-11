@@ -225,9 +225,14 @@ public sealed class VitalsTests
         withWild[1] = new BattleTable(TableB, [.. withWild[1].Blocks, new BattleBlock(TableB + (12u * BattleLayout.Stride), 0, 19, 20, 20, 12)]);
         memory.Poke(TableB + 0x30, 60);
 
-        var tables = new VitalsReader(memory).ReadOnce(withWild, null, 0)!.ToTables(withWild);
+        var frame = new VitalsReader(memory).ReadOnce(withWild, null, 0)!;
 
-        Assert.Equal(143, tables[0].Block(0)!.CurrentHp);
+        // The lead not known yet: the first table's life stands in for both. With the second table leading, its life is the one in every table.
+        var unknown = frame.ToTables(withWild);
+        Assert.Equal(143, unknown[0].Block(0)!.CurrentHp);
+        Assert.Equal(143, unknown[1].Block(0)!.CurrentHp);
+        var tables = (frame with { Lead = 1 }).ToTables(withWild);
+        Assert.Equal(60, tables[0].Block(0)!.CurrentHp);
         Assert.Equal(60, tables[1].Block(0)!.CurrentHp);
         Assert.Equal(20, tables[1].Block(12)!.CurrentHp);
         Assert.Equal(122, tables[1].Block(1)!.CurrentHp);
@@ -259,6 +264,36 @@ public sealed class VitalsTests
         var torn = new TornMemory(memory);
         var kept = new VitalsReader(torn).ReadConfirmed(changed, cold, null, 0)!;
         Assert.True(kept.SameAs(changed));
+    }
+
+    [Fact]
+    public void The_table_that_moves_first_leads_and_the_other_one_walking_to_the_same_value_is_not_news_and_never_shows_a_hit_in_pieces()
+    {
+        var (memory, cold) = Battle((0, 130, 200, 200));
+        var reader = new VitalsReader(memory);
+        var accepted = reader.ReadConfirmed(null, cold, null, 0)!;
+
+        // The calculation (B, the second table here) changes in one go; the screen's (A) walks there through intermediate values.
+        memory.Poke(TableB + 0x30, 173);
+        var first = reader.ReadConfirmed(accepted, cold, null, 0)!;
+        Assert.Equal(1, first.Lead);
+        Assert.Equal(173, first.ToTables(cold)[0].Block(0)!.CurrentHp);
+        Assert.Equal(173, first.ToTables(cold)[1].Block(0)!.CurrentHp);
+
+        // A catches up in steps: 199, 197, 173. The panel's life does not move, and no frame counts as a change.
+        foreach (var step in new ushort[] { 199, 197, 173 })
+        {
+            memory.Poke(TableA + 0x30, step);
+            var again = reader.ReadConfirmed(first, cold, null, 0)!;
+            Assert.True(again.SameAs(first), $"a step of the other table ({step}) counted as news");
+            Assert.Equal(173, again.ToTables(cold)[0].Block(0)!.CurrentHp);
+            first = again;
+        }
+
+        // The next hit is led by the same table and is shown whole at once.
+        memory.Poke(TableB + 0x30, 120);
+        var next = reader.ReadConfirmed(first, cold, null, 0)!;
+        Assert.Equal(120, next.ToTables(cold)[0].Block(0)!.CurrentHp);
     }
 
     /// <summary>The first read of a pair sees a half-written value, the next ones see the right one.</summary>

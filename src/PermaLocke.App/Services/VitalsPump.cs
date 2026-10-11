@@ -40,7 +40,7 @@ public enum PumpState
 /// </remarks>
 public sealed class VitalsPump : IDisposable
 {
-    public const double BattleHz = 120, IdleHz = 4;
+    public const double BattleHz = 200, IdleHz = 4;
 
     private readonly GameLinkMonitor _monitor;
     private readonly AzaharGameStateProvider _provider;
@@ -97,6 +97,7 @@ public sealed class VitalsPump : IDisposable
         var failures = 0;
         var nextCalibration = 0L;
         var lastReadMs = 0.0;
+        var deadline = Stopwatch.GetTimestamp();
 
         while (!_stop.IsCancellationRequested)
         {
@@ -108,6 +109,7 @@ public sealed class VitalsPump : IDisposable
                 {
                     if (accepted is not null || State != PumpState.Away) Restart(ref accepted, ref calibratedFor, reader);
                     State = PumpState.Away;
+                    deadline = Stopwatch.GetTimestamp();
                     wait = 250;
                 }
                 else
@@ -154,9 +156,14 @@ public sealed class VitalsPump : IDisposable
                         }
                     }
 
-                    // A hundred and twenty a second in a battle, four out of one; never faster than four times what a reading takes.
-                    var period = 1000.0 / (State == PumpState.Battle ? BattleHz : IdleHz);
-                    wait = Math.Max(period - lastReadMs, Math.Min(250, lastReadMs * 3));
+                    // Two hundred a second in a battle, four out of one; never faster than four times what a reading takes. The beats are laid out on a
+                    // line of their own (each at the last one plus the period, not at "the end of the reading plus the period"), so that the time between
+                    // readings does not wander with how long each took: the age of what is read stays even.
+                    var period = Math.Max(1000.0 / (State == PumpState.Battle ? BattleHz : IdleHz), lastReadMs * 4);
+                    deadline += (long)(period * Stopwatch.Frequency / 1000.0);
+                    var behind = Stopwatch.GetTimestamp() - deadline;
+                    if (behind > 2 * period * Stopwatch.Frequency / 1000.0) deadline = Stopwatch.GetTimestamp();
+                    wait = Math.Max(0, (deadline - Stopwatch.GetTimestamp()) * 1000.0 / Stopwatch.Frequency);
                 }
             }
             catch (Exception ex) when (ex is not OperationCanceledException)

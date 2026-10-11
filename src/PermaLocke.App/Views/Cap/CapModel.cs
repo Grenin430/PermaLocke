@@ -53,10 +53,11 @@ public sealed record CapGrave(BitmapSource? Sprite, string Name, string? FellTo 
 /// <param name="Cleared">How many stages the player has cleared.</param>
 /// <param name="Trials">How many trials there are in all: zero hides the lanterns.</param>
 /// <param name="Hour">The game's hour of the day, 0 to 24, or -1 when it cannot be known: the sky of the sea follows it.</param>
+/// <param name="ActiveShare">The life of the Pokémon on the field in a battle, 0 to 1, read from the game's bar; null when it cannot be seen. The sea's danger follows it.</param>
 /// <param name="Seed">A number out of the run (its id): the relief of the floor, the coral and the rare events come from it.</param>
 public sealed record CapPlaqueData(string Trial, int Cap, int? Next, int? Highest, IReadOnlyList<CapPlaqueMember> Party,
     bool InBattle = false, IReadOnlyList<CapGrave>? Graves = null, int Cleared = 0, int Trials = 0, double Hour = -1, int Seed = 0,
-    IReadOnlyList<CapEvent>? Events = null);
+    IReadOnlyList<CapEvent>? Events = null, double? ActiveShare = null);
 
 /// <summary>What can happen to one Pokémon that the sea shows as something that happens to its creature.</summary>
 public enum CapEventKind

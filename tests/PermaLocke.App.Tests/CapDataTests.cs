@@ -9,14 +9,15 @@ public sealed class CapDataTests
 {
     [Theory]
     [InlineData(0, CapStatus.None)]
-    [InlineData(1, CapStatus.Sleep)]
-    [InlineData(7, CapStatus.Sleep)]
-    [InlineData(0x08, CapStatus.Poison)]
-    [InlineData(0x80, CapStatus.Poison)]
-    [InlineData(0x10, CapStatus.Burn)]
-    [InlineData(0x20, CapStatus.Freeze)]
-    [InlineData(0x40, CapStatus.Paralysis)]
-    public void The_status_byte_of_a_party_pokemon_becomes_one_status(int raw, CapStatus expected)
+    [InlineData(1, CapStatus.Paralysis)]
+    [InlineData(2, CapStatus.Sleep)]
+    [InlineData(3, CapStatus.Freeze)]
+    [InlineData(4, CapStatus.Burn)]
+    [InlineData(5, CapStatus.Poison)]
+    [InlineData(0x0300 | 4, CapStatus.Burn)]
+    [InlineData(6, CapStatus.None)]
+    [InlineData(0x10, CapStatus.None)]
+    public void The_status_of_a_party_pokemon_is_the_games_number_and_a_burnt_one_is_not_asleep(int raw, CapStatus expected)
     {
         Assert.Equal(expected, CapBadge.StatusOf(raw));
     }

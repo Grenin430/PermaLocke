@@ -19,19 +19,42 @@ public readonly record struct BattleSample(int Table, int BattleId, int Species,
 /// </summary>
 public sealed record VitalsFrame(long ReadAt, IReadOnlyList<PartySample> Party, IReadOnlyList<BattleSample> Battle)
 {
-    /// <summary>Whether two frames say the same, whenever each was read.</summary>
-    public bool SameAs(VitalsFrame? other) =>
-        other is not null && Party.SequenceEqual(other.Party) && Battle.SequenceEqual(other.Battle);
+    /// <summary>
+    /// Which of the battle's two tables is the one that changes first (the table of the calculation: its value is the final one at once, while the other
+    /// walks to it through intermediate values for up to three seconds, §114), or -1 while that is not known. The life of a block is its value in that
+    /// table, so that the panel never shows a hit in pieces.
+    /// </summary>
+    public int Lead { get; init; } = -1;
 
-    /// <summary>The tables of the battle with the HP of this frame in the player's blocks: what the panel already knows how to read, only fresher.</summary>
+    /// <summary>The life of each player's block: the lead table's, or the first one seen while the lead is not known.</summary>
+    public IReadOnlyList<BattleSample> Effective()
+    {
+        var result = new List<BattleSample>();
+        foreach (var sample in Battle)
+        {
+            var at = result.FindIndex(r => r.BattleId == sample.BattleId);
+            if (at < 0) result.Add(sample);
+            else if (sample.Table == Lead) result[at] = sample;
+        }
+
+        return result;
+    }
+
+    /// <summary>Whether two frames say the same, whenever each was read: the party and the effective life of the battle (the other table's walk is not news).</summary>
+    public bool SameAs(VitalsFrame? other) =>
+        other is not null && Party.SequenceEqual(other.Party)
+        && (Lead >= 0 ? Effective().SequenceEqual(other.Effective()) : Battle.SequenceEqual(other.Battle));
+
+    /// <summary>The tables of the battle with the effective life in the player's blocks of every table: what the panel already knows how to read, only fresher and whole.</summary>
     public IReadOnlyList<BattleTable> ToTables(IReadOnlyList<BattleTable> cold)
     {
         if (Battle.Count == 0) return cold;
-        return [.. cold.Select((table, t) => new BattleTable(table.Origin, [.. table.Blocks.Select(block =>
+        var effective = Effective();
+        return [.. cold.Select(table => new BattleTable(table.Origin, [.. table.Blocks.Select(block =>
         {
-            foreach (var sample in Battle)
+            foreach (var sample in effective)
             {
-                if (sample.Table == t && sample.BattleId == block.BattleId) return block with { CurrentHp = sample.Hp, MaxHp = sample.MaxHp };
+                if (sample.BattleId == block.BattleId) return block with { CurrentHp = sample.Hp, MaxHp = sample.MaxHp };
             }
 
             return block;
@@ -165,6 +188,8 @@ public sealed class VitalsReader(IGameMemory memory, Func<long>? clock = null)
 {
     private readonly Func<long> _clock = clock ?? System.Diagnostics.Stopwatch.GetTimestamp;
     private readonly PartyHotReader _party = new();
+    private int _lead = -1;
+    private string _origins = string.Empty;
 
     public bool PartyReady => _party.Calibrated;
 
@@ -190,10 +215,38 @@ public sealed class VitalsReader(IGameMemory memory, Func<long>? clock = null)
     /// <summary>A reading that differs from the last accepted one is read once more; if the two disagree the last accepted one stays and nothing changed.</summary>
     public VitalsFrame? ReadConfirmed(VitalsFrame? accepted, IReadOnlyList<BattleTable> cold, PartyLayout? layout, int partyCount)
     {
+        // Another battle, another pair of tables: which one leads is found again.
+        var origins = string.Join(",", cold.Select(table => table.Origin));
+        if (origins != _origins)
+        {
+            _origins = origins;
+            _lead = -1;
+        }
+
         var first = ReadOnce(cold, layout, partyCount);
         if (first is null) return null;
+        first = first with { Lead = _lead };
         if (accepted is null || first.SameAs(accepted)) return first;
+
         var second = ReadOnce(cold, layout, partyCount);
-        return second is not null && second.SameAs(first) ? second : accepted;
+        if (second is null || !second.SameAs(first)) return accepted;
+
+        // The first time the battle's life moves, the table that moved first is the one that leads from then on.
+        if (_lead < 0 && FindLead(accepted, second) is { } found) _lead = found;
+        return second with { Lead = _lead };
+    }
+
+    /// <summary>The table whose life differs from the accepted frame's while the others still agree with it: the one ahead. Null when it cannot be said.</summary>
+    private static int? FindLead(VitalsFrame accepted, VitalsFrame now)
+    {
+        var moved = new HashSet<int>();
+        foreach (var sample in now.Battle)
+        {
+            var before = accepted.Battle.FirstOrDefault(b => b.Table == sample.Table && b.BattleId == sample.BattleId);
+            if (before.Species != 0 && before.Hp != sample.Hp) moved.Add(sample.Table);
+        }
+
+        var tables = now.Battle.Select(s => s.Table).Distinct().Count();
+        return tables >= 2 && moved.Count == 1 ? moved.First() : null;
     }
 }

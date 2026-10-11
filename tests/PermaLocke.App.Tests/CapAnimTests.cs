@@ -120,6 +120,28 @@ public sealed class CapAnimTests
     }
 
     [Fact]
+    public void The_sea_follows_the_life_of_the_one_on_the_field_when_the_bar_says_it_and_the_lowest_of_the_party_when_it_does_not()
+    {
+        var anim = new CapAnim();
+        var party = Party(Member(1, hp: 17), Member(2, hp: 100));
+
+        // Gyarados is at 17 % but Quesito is out and healthy: no danger. Switching back to Gyarados is.
+        anim.Update(Data(party, battle: true) with { ActiveShare = 0.95 }, 0);
+        Assert.Equal(CapMood.Battle, anim.Mood(1).Now);
+        anim.Update(Data(party, battle: true) with { ActiveShare = 0.15 }, 2);
+        Assert.Equal(CapMood.Danger, anim.Mood(3).Now);
+
+        // Switching out of the weak one puts the sea back as it was, which is what it did not do.
+        anim.Update(Data(party, battle: true) with { ActiveShare = 0.80 }, 4);
+        Assert.Equal(CapMood.Battle, anim.Mood(6).Now);
+
+        // The bar not seen: the lowest of the party stands in, as before.
+        anim.Update(Data(party, battle: true), 8);
+        Assert.Equal(CapMood.Danger, anim.Mood(10).Now);
+        Assert.Equal(0.30, CapAnim.DangerShare);
+    }
+
+    [Fact]
     public void Someone_at_a_quarter_of_their_hp_in_a_battle_is_danger_and_out_of_one_is_not()
     {
         var anim = new CapAnim();

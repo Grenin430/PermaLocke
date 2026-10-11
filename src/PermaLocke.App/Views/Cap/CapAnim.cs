@@ -46,6 +46,9 @@ public sealed class CapAnim
     private const double Never = -1e9;
     private const double MourningSeconds = 20;
 
+    /// <summary>The share of life at or below which the one on the field puts the sea in danger.</summary>
+    public const double DangerShare = 0.30;
+
     /// <summary>How many hits on one Pokémon are kept to write their numbers one above the other.</summary>
     public const int HitMemory = 3;
 
@@ -176,7 +179,9 @@ public sealed class CapAnim
         _inBattle = data.InBattle;
 
         var alive = data.Party.Where(m => !m.Egg && !m.Fallen).ToList();
-        _danger = data.InBattle && alive.Any(m => m.MaxHp > 0 && m.Hp * 4 <= m.MaxHp);
+        // The sea is in danger when the Pokémon on the field is: its bar on the screen says how much life it has. When the bar cannot be seen, the lowest of the
+        // party stands in (the rule from before).
+        _danger = data.InBattle && (data.ActiveShare is { } active ? active <= DangerShare : alive.Any(m => m.MaxHp > 0 && m.Hp * 4 <= m.MaxHp));
         var capped = alive.Count > 0 && highest >= data.Cap && data.Cap > 0;
 
         var mood = _danger ? CapMood.Danger
