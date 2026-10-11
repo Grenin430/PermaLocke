@@ -106,7 +106,8 @@ public sealed class CapWorldView
         CapFlora.Paint(frame, Layout, pal, _context, _fossils, phase);
         CapDeep.Lanterns(frame, Layout, pal, data, phase);
         CapDeep.Souls(frame, Layout, _fossilViews, phase);
-        CapDeep.Focus(frame, Layout, pal, _fossilViews, _context, anim is null ? 0 : t);
+        // A still frame (no animation) shows the focus in the middle of its time on the newest fossil, not dark at the start of it.
+        CapDeep.Focus(frame, Layout, pal, _fossilViews, _context, anim is null ? CapDeep.NewestSeconds / 2 : t);
 
         if (Layout.Panel == CapPanelKind.Party) PaintParty(frame, data, pal, mood, anim, t, phase);
 

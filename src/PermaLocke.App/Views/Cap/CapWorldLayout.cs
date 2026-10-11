@@ -113,7 +113,8 @@ public static class CapWorld
         var waterRow = buoyH - (dense ? 7 : slim ? 8 : 9);
         var surface = 2 + waterRow;
         var skyRows = waterRow;
-        var floorH = slim ? (dense ? 54 : 62) : dense ? 62 : 68;
+        // The party's floor is thinner (more room for the six creatures); the deep keeps the whole seabed.
+        var floorH = slim ? (dense ? 54 : 62) : dense ? 62 : panel == CapPanelKind.Deep ? 68 : 58;
         var floorTop = rows - floorH;
         var reef = new CapRect(0, floorTop - 14, cols, floorH + 14);
 

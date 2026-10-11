@@ -257,6 +257,16 @@ public static class CapSea
     /// </summary>
     private static void Overgrowth(CapSheet p, CapWorldLayout l, CapSeaPalette pal, CapFossilSpec spec, CapSeaContext ctx, int[] columns)
     {
+        // The terrace of a fossil of the back row: a mound of dark sand from where it lies down to the floor in front.
+        if (spec.Back)
+        {
+            for (var x = spec.Left - 3; x < spec.Left + spec.Width + 3; x++)
+            {
+                var edge = Math.Min(x - (spec.Left - 3), (spec.Left + spec.Width + 2) - x);
+                for (var y = spec.Ground + 1 + Math.Max(0, 3 - edge); y < Relief(l, ctx, x, columns); y++) p.Set(x, y, ((x + y) & 1) == 0 ? 0x5A6A6Eu : 0x4A5A62u);
+            }
+        }
+
         for (var k = 0; k < spec.Growth; k++)
         {
             var bx = spec.Left + (((k * 5) + 1) % Math.Max(3, spec.Width));

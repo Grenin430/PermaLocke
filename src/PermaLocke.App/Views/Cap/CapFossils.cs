@@ -8,8 +8,9 @@ public readonly record struct CapFossilCell(int X, int Y, uint Colour, uint Ston
 /// <param name="Scale">How many cells of the real icon make one cell of the fossil: 2 is the biggest, 4 the smallest.</param>
 /// <param name="Sunk">How many rows of the sprite are under the sand: the oldest lie the deepest.</param>
 /// <param name="Growth">0 to 4: how much kelp has grown round it, from the days it has lain there.</param>
+/// <param name="Back">The older half of a big reef lies on a terrace behind, a few rows higher, so that the pile has two depths and every fossil has room to be seen.</param>
 /// <param name="Soul">0 to 1: the brightness of its soul, from the level it had when it fell.</param>
-public sealed record CapFossilSpec(int Index, int X, int Left, int Top, int Width, int Height, int Ground, int Scale, int Sunk, int Growth, double Soul);
+public sealed record CapFossilSpec(int Index, int X, int Left, int Top, int Width, int Height, int Ground, int Scale, int Sunk, int Growth, double Soul, bool Back = false);
 
 /// <summary>A fossil with its cells.</summary>
 public sealed record CapFossil(CapFossilSpec Spec, CapFossilCell[] Cells, (int X, int Y)[] Rim);
@@ -41,11 +42,13 @@ public static class CapFossils
         {
             var grave = graves[i];
             var x = columns[i];
-            var ground = CapSea.Relief(l, ctx, x, columns);
+            var floor = CapSea.Relief(l, ctx, x, columns);
 
             // When the run did not keep the level, the fossil is of middle size and middle light.
             var share = grave.Level > 0 && highest > 0 ? grave.Level / (double)highest : 0.5;
             var rank = graves.Count - 1 - i;
+            var back = l.Panel == CapPanelKind.Deep && l.Mode == CapMode.Column && rank >= 6;
+            var ground = back ? floor - 9 : floor;
             var scale = ScaleFor(l, graves.Count, rank);
             var pixels = ToastPixels.SpritePixels.From(grave.Sprite);
             var w = pixels is null ? 1 : Math.Max(1, pixels.Width / scale);
@@ -53,7 +56,7 @@ public static class CapFossils
             var sunk = (int)Math.Round(h * (0.2 + (0.5 * (graves.Count <= 1 ? 0 : rank / (double)(graves.Count - 1)))));
             var left = x - (w / 2);
             var top = ground - (h - sunk);
-            var spec = new CapFossilSpec(i, x, left, top, w, h, ground, scale, sunk, Math.Min(4, grave.AgeDays / 3), share);
+            var spec = new CapFossilSpec(i, x, left, top, w, h, ground, scale, sunk, Math.Min(4, grave.AgeDays / 3), share, back);
             var cells = pixels is null ? [] : Cells(l, ctx, columns, pixels, spec);
             result[i] = new CapFossil(spec, cells, RimOf(cells));
         }
