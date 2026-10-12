@@ -312,7 +312,7 @@ public sealed class GachaService(
         if (!free && balance < banner.Cost)
         {
             return new GachaRollResult(false, balance,
-                Error: $"Te faltan {banner.Cost - balance} puntos: «{banner.Name}» cuesta {banner.Cost}.");
+                Error: $"Te faltan {banner.Cost - balance} ₽: «{banner.Name}» cuesta {banner.Cost} ₽.");
         }
 
         // MONOTYPE (§220): con un Pokémon vivo que no es del tipo no se tira, ni siquiera una tirada gratis.

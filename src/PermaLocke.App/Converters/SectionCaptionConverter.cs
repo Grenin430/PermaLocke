@@ -14,7 +14,7 @@ public sealed class SectionCaptionConverter : IValueConverter
     {
         ["HOME"] = "Tu run, tu equipo y tus pruebas",
         ["GACHA"] = "Tira y consigue Pokémon",
-        ["TIENDA"] = "Gasta tus puntos en objetos",
+        ["TIENDA"] = "Gasta tu dinero del juego en objetos",
         ["MAPA"] = "Las islas de Alola",
         ["RULETA"] = "Un giro de feria",
         ["CONFIGURACIÓN"] = "Ventana, avisos y torneo"

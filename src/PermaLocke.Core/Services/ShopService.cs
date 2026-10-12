@@ -103,7 +103,7 @@ public sealed class ShopService(
             Type = GameEventType.ShopPurchase,
             Source = EventSource.Player,
             Actor = run.PlayerName,
-            Description = $"Tienda: {item.Name} por {item.Price} puntos.",
+            Description = $"Tienda: {item.Name} por {item.Price} ₽.",
             Data = new Dictionary<string, string>
             {
                 ["objeto"] = item.Id.ToString(),
@@ -187,7 +187,7 @@ public sealed class ShopService(
             Type = GameEventType.ShopPurchase,
             Source = EventSource.Player,
             Actor = run.PlayerName,
-            Description = $"Tienda: {herb.Name} por {herb.Price} puntos para {target.DisplayName}.",
+            Description = $"Tienda: {herb.Name} por {herb.Price} ₽ para {target.DisplayName}.",
             Data = new Dictionary<string, string>
             {
                 ["objeto"] = herb.Id.ToString(),
@@ -251,7 +251,7 @@ public sealed class ShopService(
             Type = GameEventType.ShopPurchase,
             Source = EventSource.Player,
             Actor = run.PlayerName,
-            Description = $"Tienda: {item.Name} por {item.Price} puntos.",
+            Description = $"Tienda: {item.Name} por {item.Price} ₽.",
             Data = new Dictionary<string, string>
             {
                 ["objeto"] = item.Id.ToString(),

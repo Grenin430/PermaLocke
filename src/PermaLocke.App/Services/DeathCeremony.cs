@@ -90,7 +90,8 @@ public sealed class DeathCeremony(IUiDispatcher ui, PokemonSpriteService sprites
         }
     }
 
-    private static string Points(int penalty) => penalty > 0 ? $"−{penalty} PUNTOS" : string.Empty;
+    // Sin puntos en la versión de un jugador: la escena no pone cifra.
+    private static string Points(int penalty) => string.Empty;
 
     private void Enqueue(DeathCard card)
     {
