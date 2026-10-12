@@ -13,6 +13,8 @@ using PermaLocke.Randomizer;
 using PermaLocke.Randomizer.Output;
 using PermaLocke.Randomizer.Rom;
 
+using PermaLocke.App.Views;
+
 namespace PermaLocke.App.ViewModels;
 
 /// <summary>
@@ -38,11 +40,12 @@ public sealed partial class RandomizerViewModel : SectionViewModel
     private readonly WorldAllowedStatics _allowedStatics;
     private readonly WorldEvolutionLines _evolutionLines;
     private readonly ILogger<RandomizerViewModel> _logger;
+    private readonly PokemonSpriteService _sprites;
 
     public RandomizerViewModel(IRunContext runContext, IEventStore events, IClock clock,
         IAppDialogs dialogs, AzaharInstallation azahar, AppPaths paths, IRunRoles roles,
         IRoleCatalog roleCatalog, InstalledWorld installedWorld, WorldAllowedStatics allowedStatics,
-        WorldEvolutionLines evolutionLines, ILogger<RandomizerViewModel> logger, IUiDispatcher ui)
+        WorldEvolutionLines evolutionLines, ILogger<RandomizerViewModel> logger, IUiDispatcher ui, PokemonSpriteService sprites)
         : base("RANDOMIZADOR", "Crea e instala tu mundo")
     {
         _installedWorld = installedWorld;
@@ -57,6 +60,7 @@ public sealed partial class RandomizerViewModel : SectionViewModel
         _roles = roles;
         _roleCatalog = roleCatalog;
         _logger = logger;
+        _sprites = sprites;
 
         // Borrar o crear la run lo avisa desde otro hilo; los botones solo se tocan desde el de la ventana (1.0.7.6).
         _runContext.CurrentChanged += (_, _) => _ = ui.InvokeAsync(() => { Refresh(); return Task.CompletedTask; });
@@ -80,6 +84,10 @@ public sealed partial class RandomizerViewModel : SectionViewModel
 
     [ObservableProperty]
     private bool _isBusy;
+
+    /// <summary>The Ultra Wormhole over the screen while a world is generated (2026-10-12); null when there is none.</summary>
+    [ObservableProperty]
+    private WormholeShow? _portal;
 
     [ObservableProperty]
     private bool _isGenerated;
@@ -171,6 +179,8 @@ public sealed partial class RandomizerViewModel : SectionViewModel
         IsBusy = true;
         NotifyCommands();
         Status = "Generando...";
+        var portal = Portal = NewPortal();
+        var failed = false;
 
         try
         {
@@ -191,8 +201,11 @@ public sealed partial class RandomizerViewModel : SectionViewModel
             }
 
             var work = Path.Combine(Path.GetTempPath(), "permalocke-randomizer");
-            var report = await new RandomizerService(options)
-                .RandomizeAsync(RomPath, work, OutputDirectory, run.Seed, BaseLayer);
+            // En otro hilo: con el trabajo en el de la ventana, el portal se quedaba a trompicones mientras se generaba.
+            var progress = new Progress<RandomizerStep>(step => portal.Step(step.Module));
+            var report = await Task.Run(() => new RandomizerService(options)
+                .RandomizeAsync(RomPath, work, OutputDirectory, run.Seed, BaseLayer,
+                    progress: progress));
 
             Status = "Mundo generado. Ya puedes instalarlo.";
 
@@ -241,12 +254,66 @@ public sealed partial class RandomizerViewModel : SectionViewModel
         {
             _logger.LogError(ex, "Falló la randomización");
             Status = "La randomización ha fallado.";
+            failed = true;
         }
         finally
         {
             IsBusy = false;
             Refresh();
         }
+
+        await ClosePortalAsync(portal, failed);
+    }
+
+    /// <summary>The finale of the portal, and the screen back once it is over.</summary>
+    private async Task ClosePortalAsync(WormholeShow portal, bool failed)
+    {
+        await Task.Delay(TimeSpan.FromSeconds(portal.End(failed)));
+        if (ReferenceEquals(Portal, portal)) Portal = null;
+    }
+
+    /// <summary>
+    /// Pictures for the portal: Pokémon, items and machines of the cartridge picked at random. On purpose not those of the world
+    /// being generated, which the portal must not give away.
+    /// </summary>
+    private WormholeShow NewPortal()
+    {
+        var random = new Random();
+        var pictures = new List<RoomSprite>();
+        for (var i = 0; i < 90; i++)
+        {
+            if (RoomSprite.From(_sprites.GetRandom(random)) is { } mon) pictures.Add(mon);
+        }
+
+        // Objetos al azar, y MT (328-419) aparte para que siempre salgan unas cuantas.
+        for (var i = 0; i < 160 && pictures.Count < 150; i++)
+        {
+            var id = i % 4 == 0 ? random.Next(328, 420) : random.Next(1, 960);
+            if (RoomSprite.From(_sprites.GetItem(id)) is { } item) pictures.Add(item);
+        }
+
+        return new WormholeShow([.. pictures.OrderBy(_ => random.Next())]);
+    }
+
+    /// <summary>
+    /// <c>--ensayar-portal</c>: the portal with the step names of the randomizer arriving as fast as a quick generation, to look at it or record it.
+    /// Nothing is generated and nothing is written.
+    /// </summary>
+    public async Task RehearsePortalAsync()
+    {
+        await _sprites.PrepareAsync();
+        var portal = Portal = NewPortal();
+        string[] steps = ["Encuentros salvajes", "Objetos del suelo", "Iniciales, fósiles y estáticos", "Entrenadores", "Datos de Pokémon",
+            "Dificultad de los entrenadores", "Tiendas", "MT", "Tutores"];
+        // Como un randomizador rápido: todos los pasos en un segundo. El portal los reparte en su propio reloj.
+        await Task.Delay(TimeSpan.FromSeconds(0.3));
+        foreach (var step in steps)
+        {
+            portal.Step(step);
+            await Task.Delay(TimeSpan.FromSeconds(0.1));
+        }
+
+        await ClosePortalAsync(portal, failed: false);
     }
 
     [RelayCommand(CanExecute = nameof(CanInstall))]

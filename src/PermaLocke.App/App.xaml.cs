@@ -590,6 +590,13 @@ public partial class App : Application
             await _services!.GetRequiredService<AlbumViewModel>().RehearseTradeAsync();
         }
 
+        if (e.Args.Contains("--ensayar-portal", StringComparer.OrdinalIgnoreCase))
+        {
+            // La Ultraumbral del randomizador (2026-10-12) con pasos de ensayo: no genera ni escribe nada.
+            main.Navigate("RANDOMIZADOR");
+            _ = _services!.GetRequiredService<RandomizerViewModel>().RehearsePortalAsync();
+        }
+
         if (e.Args.Contains("--ensayar-cap", StringComparer.OrdinalIgnoreCase))
         {
             // El panel del cap con un escenario de ensayo (completo, golpe, caida, subida...), encima del juego si esta abierto o de la propia ventana.

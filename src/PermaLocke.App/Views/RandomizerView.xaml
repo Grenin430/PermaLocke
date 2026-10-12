@@ -24,6 +24,7 @@
         </Style>
     </UserControl.Resources>
 
+    <Grid>
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel Margin="0,0,10,0">
             <Grid>
@@ -175,4 +176,8 @@
             </Grid>
         </StackPanel>
     </ScrollViewer>
+
+    <!-- La Ultraumbral (2026-10-12): tapa la sección mientras se genera el mundo. Cada destello es un paso real del randomizador. -->
+    <views:WormholeStage Show="{Binding Portal}" />
+    </Grid>
 </UserControl>

@@ -59,11 +59,29 @@ public sealed class RandomizerService(RandomizerOptions options)
         public const string TrainerDifficulty = "trainer-difficulty";
     }
 
+    /// <summary>The steps done so far, each one told to whoever watches as soon as it is added.</summary>
+    private sealed class StepLog(IProgress<RandomizerStep>? progress) : List<RandomizerStep>
+    {
+        public new void Add(RandomizerStep step)
+        {
+            base.Add(step);
+            progress?.Report(step);
+        }
+
+        public new void AddRange(IEnumerable<RandomizerStep> more)
+        {
+            foreach (var step in more) Add(step);
+        }
+    }
+
+    /// <param name="progress">Told each step the moment it is done, for a screen that wants to show the work going on (the portal of the
+    /// randomizer, 2026-10-12). It changes nothing in what is generated.</param>
     public async Task<RandomizationReport> RandomizeAsync(string romPath, string workDirectory,
-        string modDirectory, ulong seed, string? baseLayer = null, CancellationToken ct = default)
+        string modDirectory, ulong seed, string? baseLayer = null, CancellationToken ct = default,
+        IProgress<RandomizerStep>? progress = null)
     {
         var started = DateTimeOffset.UtcNow;
-        var steps = new List<RandomizerStep>();
+        var steps = new StepLog(progress);
 
         using var workspace = await RomWorkspace.ExtractAsync(romPath, workDirectory,
             baseLayer: baseLayer, ct: ct);
