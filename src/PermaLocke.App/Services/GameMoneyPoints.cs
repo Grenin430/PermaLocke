@@ -10,8 +10,14 @@ namespace PermaLocke.App.Services;
 /// each time; spending takes it from the save or from the game (<see cref="GameMoney"/>) and leaves an event so the run still
 /// says what was bought. Nothing is earned here: money is earned playing.
 /// </summary>
-public sealed class GameMoneyPoints(GameMoney money, IEventStore events, IClock clock) : IPointsService
+public sealed class GameMoneyPoints(GameMoney money, IEventStore events, IClock clock) : IPointsService, IMoneyPort
 {
+    public Task<MoneyChange> ChangeAsync(int delta, CancellationToken ct = default) => Task.Run(() =>
+    {
+        var (result, applied) = money.Change(delta);
+        return new MoneyChange(result.Success, applied, result.Balance, result.Problem);
+    }, ct);
+
     public Task<int> GetBalanceAsync(Guid runId, CancellationToken ct = default) => Task.Run(() => money.Read() ?? 0, ct);
 
     /// <summary>Money is not handed out by the app: what used to award points awards nothing.</summary>

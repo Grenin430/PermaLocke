@@ -793,6 +793,15 @@ public sealed partial class GachaViewModel : SectionViewModel
             // disponible es lo ganado menos lo marcado, asi que no hay contador que llevar.
             var free = selected.Free > 0;
 
+            // Versión de un jugador (2026-10-12): se paga con dinero de verdad, así que antes de cobrar se mira que el Pokémon
+            // pueda llegar a la partida. Con puntos, uno sin entregar se quedaba en la run; con dinero sería pagar por nada.
+            if (!_delivery.CanDeliverNow(out var cannot))
+            {
+                Status = cannot;
+                _statusIsWarning = true;
+                return;
+            }
+
             // Las etapas superadas deciden hasta donde de la linea evolutiva llega la tirada, y
             // viajan en el evento: sin ellas la tirada dejaria de poder recomputarse en cuanto la
             // run superara otra prueba.

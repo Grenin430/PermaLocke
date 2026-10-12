@@ -3,9 +3,9 @@
 Gestor y dinamizador de Nuzlockes para **Pokémon Ultra Luna**, jugado en el emulador Azahar.
 Aplicación de escritorio para Windows en C# / .NET 10 / WPF.
 
-Acompaña la partida de principio a fin: genera una randomización propia por jugador, lee el
-juego en vivo, aplica las reglas de la Nuzlocke y lleva la cuenta de puntos con un historial
-auditable.
+**Versión de un jugador.** Acompaña la partida de principio a fin: genera una randomización propia, lee el
+juego en vivo y aplica las reglas de la Nuzlocke. Sin torneo, sin cuentas y sin servidor: el gacha, la tienda y lo demás
+se pagan con el dinero del propio juego.
 
 ## Licencia
 

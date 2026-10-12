@@ -2,7 +2,7 @@
   "version": 1,
   "comment": "Los roles de la competición. Se elige UNO al crear la run y es lo primero que se pregunta, antes que la ROM y la seed, porque de él dependen los cambios que se le hacen al juego: una vez randomizado con un rol, cambiar de rol exigiría volver a randomizar.",
 
-  "comentarioPuntos": "ganancia y perdida multiplican los puntos que se GANAN y los que se PIERDEN por penalización. NO tocan lo que se GASTA: una Master Ball cuesta 300 en todos los roles, porque gastar no es perder. Cada evento del historial guarda el número base, el multiplicador y el resultado, así que siempre se puede ver de dónde salió cada punto.",
+  "comentarioPuntos": "Versión de un jugador (2026-10-12): ganancia y perdida ya no hacen nada, no hay puntos. Se dejan para no romper el formato.",
 
   "comentarioJuego": "nivelEnemigos es el porcentaje que se le suma a TODO lo que combate contra ti sobre el cartucho: entrenadores, Pokémon dominantes, Necrozma, Solgaleo, los Ultraentes y los estáticos. Los REGALOS no -iniciales, fósiles, los dominantes de las pegatinas-, porque subirle el nivel a lo que te dan es un premio y no una dificultad. +20% es la edición base de la competición y el suelo de todos los roles. capDelJugador se queda en 0 a propósito: el cap del jugador es el de Data/levelcaps.json, tal cual lo dio la competición, y no se toca. pokemonExtra son los Pokémon de más que llevan los combates importantes, y el +1 lo llevan todos.",
 
@@ -35,7 +35,7 @@
       "id": "normal",
       "name": "NORMAL",
       "summary": "El randomlocke sin cambios.",
-      "description": "Juegas el randomlocke sin ningún cambio sobre la base de la competición: todo lo que combate contra ti va un 20% por encima del cartucho -entrenadores y dominantes incluidos- y todos los combates importantes llevan un Pokémon extra.",
+      "description": "Juegas el randomlocke sin ningún cambio sobre la base: todo lo que combate contra ti va un 20% por encima del cartucho -entrenadores y dominantes incluidos- y todos los combates importantes llevan un Pokémon extra.",
       "ganancia": 1.0,
       "perdida": 1.0,
       "nivelEnemigos": 20,
@@ -45,19 +45,19 @@
     {
       "id": "cagoneta",
       "name": "CAGONETA",
-      "summary": "Más relajado: no pierdes puntos, pero ganas la mitad.",
-      "description": "Juegas el randomlocke de forma más relajada. Exactamente igual que el rol normal pero sin perder puntos y sólo ganando la mitad.",
+      "summary": "Más relajado: rivales más flojos y sin Pokémon extra.",
+      "description": "Juegas el randomlocke de forma más relajada. Todo lo que combate contra ti va solo un 10% por encima del cartucho, en vez del 20%, y los combates importantes no llevan Pokémon extra.",
       "ganancia": 0.5,
       "perdida": 0.0,
-      "nivelEnemigos": 20,
+      "nivelEnemigos": 10,
       "capDelJugador": 0,
-      "pokemonExtra": 1
+      "pokemonExtra": 0
     },
     {
       "id": "experto",
       "name": "EXPERTO",
-      "summary": "Más difícil: ganas 1,5x, pierdes el doble y los rivales van por delante.",
-      "description": "Juegas el randomlocke de forma más complicada. Ganas 1,5x puntos pero pierdes el doble. Los niveles de los enemigos suben un 7% sobre el 20% base mientras tu cap de nivel se queda igual, y los combates importantes llevan otro Pokémon extra además del que llevan todos.",
+      "summary": "Más difícil: los rivales van por delante y llevan más Pokémon.",
+      "description": "Juegas el randomlocke de forma más complicada. Los niveles de los enemigos suben un 7% sobre el 20% base mientras tu cap de nivel se queda igual, y los combates importantes llevan otro Pokémon extra además del que llevan todos.",
       "ganancia": 1.5,
       "perdida": 2.0,
       "nivelEnemigos": 27,
@@ -67,8 +67,8 @@
     {
       "id": "ludopata",
       "name": "LUDÓPATA",
-      "summary": "Los puntos van igual, pero la ruleta decide por ti.",
-      "description": "Juegas el randomlocke a merced de la ruleta. Después de cada prueba tiras una vez, obligatoriamente; después de la liga, tres; y si haces el rematch, dos más. Lo que salga se aplica: puede darte tiradas de gacha, habilidades buenas, IV perfectos, objetos o 200 puntos, y puede matarte Pokémon, dejarte los IV a cero, quitarte objetos o restarte 200. Los puntos que ganas y pierdes por lo demás no cambian.",
+      "summary": "La ruleta decide por ti tras cada hito.",
+      "description": "Juegas el randomlocke a merced de la ruleta. Después de cada prueba tiras una vez, obligatoriamente; después de la liga, tres; y si haces el rematch, dos más. Lo que salga se aplica: puede darte tiradas de gacha, habilidades buenas, IV perfectos, objetos o 20.000 ₽, y puede matarte Pokémon, dejarte los IV a cero, quitarte objetos o quitarte 20.000 ₽.",
       "ganancia": 1.0,
       "perdida": 1.0,
       "nivelEnemigos": 20,
@@ -79,8 +79,8 @@
     {
       "id": "monotype_agua",
       "name": "MONOTYPE AGUA",
-      "summary": "Solo Pokémon de tipo Agua: ganas 1,5x los puntos.",
-      "description": "Juegas el randomlocke con un único tipo: Agua. Solo puedes tener Pokémon que sean de tipo Agua (solo o con un segundo tipo). Los Pokémon salvajes, tus iniciales, los regalos y los fósiles del mundo que generes, y también el gacha y el wonder trade, son solo de ese tipo (los jefes, dominantes y legendarios de la historia no cambian), y el gacha no se deja usar mientras tengas en tu equipo o en tus cajas algún Pokémon que no lo sea: tienes que soltarlo. Tu guardería te da huevos de tu tipo con cada prueba superada. Ganas 1,5x los puntos. Todo lo demás es igual que el rol normal.",
+      "summary": "Solo Pokémon de tipo Agua.",
+      "description": "Juegas el randomlocke con un único tipo: Agua. Solo puedes tener Pokémon que sean de tipo Agua (solo o con un segundo tipo). Los Pokémon salvajes, tus iniciales, los regalos y los fósiles del mundo que generes, y también el gacha y el wonder trade, son solo de ese tipo (los jefes, dominantes y legendarios de la historia no cambian), y el gacha no se deja usar mientras tengas en tu equipo o en tus cajas algún Pokémon que no lo sea: tienes que soltarlo. Tu guardería te da huevos de tu tipo con cada prueba superada. Todo lo demás es igual que el rol normal.",
       "ganancia": 1.5,
       "perdida": 1,
       "nivelEnemigos": 20,
@@ -92,8 +92,8 @@
     {
       "id": "monotype_normal",
       "name": "MONOTYPE NORMAL",
-      "summary": "Solo Pokémon de tipo Normal: ganas 1,5x los puntos.",
-      "description": "Juegas el randomlocke con un único tipo: Normal. Solo puedes tener Pokémon que sean de tipo Normal (solo o con un segundo tipo). Los Pokémon salvajes, tus iniciales, los regalos y los fósiles del mundo que generes, y también el gacha y el wonder trade, son solo de ese tipo (los jefes, dominantes y legendarios de la historia no cambian), y el gacha no se deja usar mientras tengas en tu equipo o en tus cajas algún Pokémon que no lo sea: tienes que soltarlo. Tu guardería te da huevos de tu tipo con cada prueba superada. Ganas 1,5x los puntos. Todo lo demás es igual que el rol normal.",
+      "summary": "Solo Pokémon de tipo Normal.",
+      "description": "Juegas el randomlocke con un único tipo: Normal. Solo puedes tener Pokémon que sean de tipo Normal (solo o con un segundo tipo). Los Pokémon salvajes, tus iniciales, los regalos y los fósiles del mundo que generes, y también el gacha y el wonder trade, son solo de ese tipo (los jefes, dominantes y legendarios de la historia no cambian), y el gacha no se deja usar mientras tengas en tu equipo o en tus cajas algún Pokémon que no lo sea: tienes que soltarlo. Tu guardería te da huevos de tu tipo con cada prueba superada. Todo lo demás es igual que el rol normal.",
       "ganancia": 1.5,
       "perdida": 1,
       "nivelEnemigos": 20,
@@ -105,8 +105,8 @@
     {
       "id": "monotype_planta",
       "name": "MONOTYPE PLANTA",
-      "summary": "Solo Pokémon de tipo Planta: ganas 1,5x los puntos.",
-      "description": "Juegas el randomlocke con un único tipo: Planta. Solo puedes tener Pokémon que sean de tipo Planta (solo o con un segundo tipo). Los Pokémon salvajes, tus iniciales, los regalos y los fósiles del mundo que generes, y también el gacha y el wonder trade, son solo de ese tipo (los jefes, dominantes y legendarios de la historia no cambian), y el gacha no se deja usar mientras tengas en tu equipo o en tus cajas algún Pokémon que no lo sea: tienes que soltarlo. Tu guardería te da huevos de tu tipo con cada prueba superada. Ganas 1,5x los puntos. Todo lo demás es igual que el rol normal.",
+      "summary": "Solo Pokémon de tipo Planta.",
+      "description": "Juegas el randomlocke con un único tipo: Planta. Solo puedes tener Pokémon que sean de tipo Planta (solo o con un segundo tipo). Los Pokémon salvajes, tus iniciales, los regalos y los fósiles del mundo que generes, y también el gacha y el wonder trade, son solo de ese tipo (los jefes, dominantes y legendarios de la historia no cambian), y el gacha no se deja usar mientras tengas en tu equipo o en tus cajas algún Pokémon que no lo sea: tienes que soltarlo. Tu guardería te da huevos de tu tipo con cada prueba superada. Todo lo demás es igual que el rol normal.",
       "ganancia": 1.5,
       "perdida": 1,
       "nivelEnemigos": 20,
@@ -118,8 +118,8 @@
     {
       "id": "monotype_volador",
       "name": "MONOTYPE VOLADOR",
-      "summary": "Solo Pokémon de tipo Volador: ganas 1,5x los puntos.",
-      "description": "Juegas el randomlocke con un único tipo: Volador. Solo puedes tener Pokémon que sean de tipo Volador (solo o con un segundo tipo). Los Pokémon salvajes, tus iniciales, los regalos y los fósiles del mundo que generes, y también el gacha y el wonder trade, son solo de ese tipo (los jefes, dominantes y legendarios de la historia no cambian), y el gacha no se deja usar mientras tengas en tu equipo o en tus cajas algún Pokémon que no lo sea: tienes que soltarlo. Tu guardería te da huevos de tu tipo con cada prueba superada. Ganas 1,5x los puntos. Todo lo demás es igual que el rol normal.",
+      "summary": "Solo Pokémon de tipo Volador.",
+      "description": "Juegas el randomlocke con un único tipo: Volador. Solo puedes tener Pokémon que sean de tipo Volador (solo o con un segundo tipo). Los Pokémon salvajes, tus iniciales, los regalos y los fósiles del mundo que generes, y también el gacha y el wonder trade, son solo de ese tipo (los jefes, dominantes y legendarios de la historia no cambian), y el gacha no se deja usar mientras tengas en tu equipo o en tus cajas algún Pokémon que no lo sea: tienes que soltarlo. Tu guardería te da huevos de tu tipo con cada prueba superada. Todo lo demás es igual que el rol normal.",
       "ganancia": 1.5,
       "perdida": 1,
       "nivelEnemigos": 20,
@@ -131,8 +131,8 @@
     {
       "id": "monotype_psiquico",
       "name": "MONOTYPE PSÍQUICO",
-      "summary": "Solo Pokémon de tipo Psíquico: ganas 1,5x los puntos.",
-      "description": "Juegas el randomlocke con un único tipo: Psíquico. Solo puedes tener Pokémon que sean de tipo Psíquico (solo o con un segundo tipo). Los Pokémon salvajes, tus iniciales, los regalos y los fósiles del mundo que generes, y también el gacha y el wonder trade, son solo de ese tipo (los jefes, dominantes y legendarios de la historia no cambian), y el gacha no se deja usar mientras tengas en tu equipo o en tus cajas algún Pokémon que no lo sea: tienes que soltarlo. Tu guardería te da huevos de tu tipo con cada prueba superada. Ganas 1,5x los puntos. Todo lo demás es igual que el rol normal.",
+      "summary": "Solo Pokémon de tipo Psíquico.",
+      "description": "Juegas el randomlocke con un único tipo: Psíquico. Solo puedes tener Pokémon que sean de tipo Psíquico (solo o con un segundo tipo). Los Pokémon salvajes, tus iniciales, los regalos y los fósiles del mundo que generes, y también el gacha y el wonder trade, son solo de ese tipo (los jefes, dominantes y legendarios de la historia no cambian), y el gacha no se deja usar mientras tengas en tu equipo o en tus cajas algún Pokémon que no lo sea: tienes que soltarlo. Tu guardería te da huevos de tu tipo con cada prueba superada. Todo lo demás es igual que el rol normal.",
       "ganancia": 1.5,
       "perdida": 1,
       "nivelEnemigos": 20,
@@ -144,8 +144,8 @@
     {
       "id": "monotype_bicho",
       "name": "MONOTYPE BICHO",
-      "summary": "Solo Pokémon de tipo Bicho: ganas 1,5x los puntos.",
-      "description": "Juegas el randomlocke con un único tipo: Bicho. Solo puedes tener Pokémon que sean de tipo Bicho (solo o con un segundo tipo). Los Pokémon salvajes, tus iniciales, los regalos y los fósiles del mundo que generes, y también el gacha y el wonder trade, son solo de ese tipo (los jefes, dominantes y legendarios de la historia no cambian), y el gacha no se deja usar mientras tengas en tu equipo o en tus cajas algún Pokémon que no lo sea: tienes que soltarlo. Tu guardería te da huevos de tu tipo con cada prueba superada. Ganas 1,5x los puntos. Todo lo demás es igual que el rol normal.",
+      "summary": "Solo Pokémon de tipo Bicho.",
+      "description": "Juegas el randomlocke con un único tipo: Bicho. Solo puedes tener Pokémon que sean de tipo Bicho (solo o con un segundo tipo). Los Pokémon salvajes, tus iniciales, los regalos y los fósiles del mundo que generes, y también el gacha y el wonder trade, son solo de ese tipo (los jefes, dominantes y legendarios de la historia no cambian), y el gacha no se deja usar mientras tengas en tu equipo o en tus cajas algún Pokémon que no lo sea: tienes que soltarlo. Tu guardería te da huevos de tu tipo con cada prueba superada. Todo lo demás es igual que el rol normal.",
       "ganancia": 1.5,
       "perdida": 1,
       "nivelEnemigos": 20,
@@ -157,8 +157,8 @@
     {
       "id": "monotype_veneno",
       "name": "MONOTYPE VENENO",
-      "summary": "Solo Pokémon de tipo Veneno: ganas 1,5x los puntos.",
-      "description": "Juegas el randomlocke con un único tipo: Veneno. Solo puedes tener Pokémon que sean de tipo Veneno (solo o con un segundo tipo). Los Pokémon salvajes, tus iniciales, los regalos y los fósiles del mundo que generes, y también el gacha y el wonder trade, son solo de ese tipo (los jefes, dominantes y legendarios de la historia no cambian), y el gacha no se deja usar mientras tengas en tu equipo o en tus cajas algún Pokémon que no lo sea: tienes que soltarlo. Tu guardería te da huevos de tu tipo con cada prueba superada. Ganas 1,5x los puntos. Todo lo demás es igual que el rol normal.",
+      "summary": "Solo Pokémon de tipo Veneno.",
+      "description": "Juegas el randomlocke con un único tipo: Veneno. Solo puedes tener Pokémon que sean de tipo Veneno (solo o con un segundo tipo). Los Pokémon salvajes, tus iniciales, los regalos y los fósiles del mundo que generes, y también el gacha y el wonder trade, son solo de ese tipo (los jefes, dominantes y legendarios de la historia no cambian), y el gacha no se deja usar mientras tengas en tu equipo o en tus cajas algún Pokémon que no lo sea: tienes que soltarlo. Tu guardería te da huevos de tu tipo con cada prueba superada. Todo lo demás es igual que el rol normal.",
       "ganancia": 1.5,
       "perdida": 1,
       "nivelEnemigos": 20,
@@ -170,8 +170,8 @@
     {
       "id": "monotype_fuego",
       "name": "MONOTYPE FUEGO",
-      "summary": "Solo Pokémon de tipo Fuego: ganas 1,5x los puntos.",
-      "description": "Juegas el randomlocke con un único tipo: Fuego. Solo puedes tener Pokémon que sean de tipo Fuego (solo o con un segundo tipo). Los Pokémon salvajes, tus iniciales, los regalos y los fósiles del mundo que generes, y también el gacha y el wonder trade, son solo de ese tipo (los jefes, dominantes y legendarios de la historia no cambian), y el gacha no se deja usar mientras tengas en tu equipo o en tus cajas algún Pokémon que no lo sea: tienes que soltarlo. Tu guardería te da huevos de tu tipo con cada prueba superada. Ganas 1,5x los puntos. Todo lo demás es igual que el rol normal.",
+      "summary": "Solo Pokémon de tipo Fuego.",
+      "description": "Juegas el randomlocke con un único tipo: Fuego. Solo puedes tener Pokémon que sean de tipo Fuego (solo o con un segundo tipo). Los Pokémon salvajes, tus iniciales, los regalos y los fósiles del mundo que generes, y también el gacha y el wonder trade, son solo de ese tipo (los jefes, dominantes y legendarios de la historia no cambian), y el gacha no se deja usar mientras tengas en tu equipo o en tus cajas algún Pokémon que no lo sea: tienes que soltarlo. Tu guardería te da huevos de tu tipo con cada prueba superada. Todo lo demás es igual que el rol normal.",
       "ganancia": 1.5,
       "perdida": 1,
       "nivelEnemigos": 20,

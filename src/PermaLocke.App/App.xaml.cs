@@ -173,7 +173,9 @@ public partial class App : Application
         collection.AddPermaLockeGameLink(paths.SaveBackups);
 
         // Una sola persona (2026-10-12): lo que costaba puntos cuesta el dinero del juego.
-        collection.Replace(ServiceDescriptor.Singleton<IPointsService, GameMoneyPoints>());
+        collection.AddSingleton<GameMoneyPoints>();
+        collection.Replace(ServiceDescriptor.Singleton<IPointsService>(sp => sp.GetRequiredService<GameMoneyPoints>()));
+        collection.AddSingleton<IMoneyPort>(sp => sp.GetRequiredService<GameMoneyPoints>());
 
         // EL ALMACEN DE EVENTOS, ENVUELTO para que avise cuando la run cambia. Se hace aqui y
         // despues de registrarlo porque la envoltura es cosa de la aplicacion que dibuja los

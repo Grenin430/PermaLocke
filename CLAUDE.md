@@ -1,4 +1,13 @@
-# PermaLocke
+# PermaLocke (versión de un jugador)
+
+> **Esta carpeta es la versión de un jugador** (rama `singleplayer`, creada el 2026-10-12 desde la app del torneo en
+> `Desktop\Permalocke definitivo`). Sin torneo: sin login de Discord, sin amigos, fantasmas, motes votados, regalos,
+> órdenes, sugerencias, reglas oficiales, servidor ni actualizaciones automáticas, sin logros en pantalla, sin Admin y sin
+> puntos. Lo que costaba puntos se paga con el **dinero del juego** (`GameMoney`, `GameMoneyPoints`): del fichero con el
+> juego cerrado y de la memoria con el juego abierto (este último **sin verificar**: `Probe --dinero`). Precios x100 en
+> `Data/gacha.json` y `Data/shop.json`. No hay `desplegar.ps1`: esta versión **nunca** se copia a `PermaLocke prueba`
+> ni a `PermaLocke para amigos`. El resto de este fichero es el de la app del torneo y vale para el código común.
+
 
 > **Cerebro de Claude:** antes de explorar el código, leer `Obsidian/PermaLocke Brain/00 - Inicio.md` (mapa de código,
 > flujos, conversaciones anteriores, trampas). Al acabar un trabajo, actualizar allí el historial y la nota afectada.
