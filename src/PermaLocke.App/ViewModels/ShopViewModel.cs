@@ -20,7 +20,7 @@ public sealed partial class ShopItemViewModel(ShopItem item, BitmapSource? icon)
 
     public int Price => Item.Price;
 
-    public string PriceText => $"{Item.Price} pts.";
+    public string PriceText => $"{Item.Price} ₽";
 
     [ObservableProperty]
     private BitmapSource? _icon = icon;

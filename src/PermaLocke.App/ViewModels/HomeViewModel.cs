@@ -562,9 +562,10 @@ public sealed partial class HomeViewModel : SectionViewModel
                 row.Timestamp.LocalDateTime.ToString("dd/MM HH:mm"),
                 DisplayNames.Of(row.Type),
                 row.Description,
-                row.PointsDelta == 0 ? string.Empty : row.PointsDelta.ToString("+#;-#;0"),
-                row.PointsDelta > 0,
-                row.PointsDelta < 0,
+                // Sin puntos en la versión de un jugador: el historial no pone cifras.
+                string.Empty,
+                false,
+                false,
                 EventIcons.Of(row.Type)));
         }
 

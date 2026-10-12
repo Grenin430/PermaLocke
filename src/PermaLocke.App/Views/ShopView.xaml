@@ -116,7 +116,7 @@
         </Grid.RowDefinitions>
 
         <!-- CABECERA: qué es y los avisos. El saldo vive en la cabecera de la ventana. -->
-        <pixel:PixelWindow Grid.Row="0" Title="TIENDA DE LA COMPETICIÓN" Icon="IconShop" Margin="0,0,0,12">
+        <pixel:PixelWindow Grid.Row="0" Title="TIENDA" Icon="IconShop" Margin="0,0,0,12">
             <StackPanel>
                 <pixel:PixelText Text="Va a tu mochila." Scale="2" Wrap="True"
                                  Colour="{DynamicResource PxTextDim}" />
