@@ -21,30 +21,23 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly PermaLocke.App.Services.IUiDispatcher _ui;
     private readonly ILogger<MainViewModel> _logger;
 
-    /// <summary>The bar at the top of every section while a new version waits (§202).</summary>
-    public UpdateBannerViewModel Update { get; }
-
     public MainViewModel(LauncherViewModel launcher, HomeViewModel home, RandomizerViewModel randomizer,
         MiscellaneousViewModel miscellaneous, GachaViewModel gacha, PokemonViewerViewModel viewer,
-        EvTrainingViewModel evTraining, MoveReminderViewModel moveReminder, AchievementsViewModel achievements,
+        EvTrainingViewModel evTraining, MoveReminderViewModel moveReminder,
         AlbumViewModel album,
         ShopViewModel shop, PokePasteViewModel pokePaste,
         MapViewModel map,
         RouletteViewModel roulette, RouletteService wheel, NurseryViewModel nursery, NurseryService nurseryService,
         SettingsViewModel settings,
-        CemeteryViewModel cemetery, SyncViewModel sync, BattleModeViewModel battle,
-        GiftInboxViewModel gifts, SuggestionBoxViewModel suggestions, InformationViewModel information, DifficultyViewModel difficulty,
+        CemeteryViewModel cemetery, BattleModeViewModel battle,
+        InformationViewModel information, DifficultyViewModel difficulty,
         PermaLocke.App.Services.GameLinkMonitor gameLink,
         PermaLocke.App.Services.IUiDispatcher ui,
         PermaLocke.App.Services.AlolaSky sky,
-        IRunContext runContext, ILogger<MainViewModel> logger, PermaLocke.Infrastructure.AppPaths paths,
-        UpdateBannerViewModel update)
+        IRunContext runContext, ILogger<MainViewModel> logger, PermaLocke.Infrastructure.AppPaths paths)
     {
-        Update = update;
         Sky = sky;
         Launcher = launcher;
-        Gifts = gifts;
-        Suggestions = suggestions;
         _home = home;
         _roulette = roulette;
         _wheel = wheel;
@@ -63,9 +56,9 @@ public sealed partial class MainViewModel : ObservableObject
         });
 
         // Grupos (2026-09-24): la barra tenía 17 secciones. Las que tratan de lo mismo cuelgan de una entrada.
-        var play = new GroupSectionViewModel("JUGAR", "IconPlay", logger, launcher, randomizer);
-        var team = new GroupSectionViewModel("EQUIPO", "IconGrid", logger, viewer, album, evTraining, moveReminder, pokePaste);
-        var tournament = new GroupSectionViewModel("TORNEO", "IconTrophy", logger, sync, achievements, battle, cemetery);
+        // Una sola persona (singleplayer): sin TORNEO. El combate se queda en JUGAR y el cementerio va con el equipo.
+        var play = new GroupSectionViewModel("JUGAR", "IconPlay", logger, launcher, randomizer, battle);
+        var team = new GroupSectionViewModel("EQUIPO", "IconGrid", logger, viewer, album, cemetery, evTraining, moveReminder, pokePaste);
         var info = new GroupSectionViewModel("INFORMACIÓN", "IconDocument", logger,
             new InformationPageViewModel("EVOLUCIONES", false, information),
             new InformationPageViewModel("TIENDAS", true, information),
@@ -73,7 +66,7 @@ public sealed partial class MainViewModel : ObservableObject
             miscellaneous);
         _play = play;
         _gacha = gacha;
-        foreach (var group in new[] { play, team, tournament, info })
+        foreach (var group in new[] { play, team, info })
         {
             group.PropertyChanged += (_, e) =>
             {
@@ -96,7 +89,6 @@ public sealed partial class MainViewModel : ObservableObject
             shop,
             map,
             team,
-            tournament,
             info,
             settings
         ];
@@ -210,12 +202,6 @@ public sealed partial class MainViewModel : ObservableObject
 
     /// <summary>JUGAR, whose small button also sits in every page's header (§125).</summary>
     public LauncherViewModel Launcher { get; }
-
-    /// <summary>The gift in the header: what the admin has left for this player (§129).</summary>
-    public GiftInboxViewModel Gifts { get; }
-
-    /// <summary>The suggestion box in the header (1.0.5.5).</summary>
-    public SuggestionBoxViewModel Suggestions { get; }
 
     /// <summary>The hour in the player's Alola, for the floor and the sidebar's window.</summary>
     public PermaLocke.App.Services.AlolaSky Sky { get; }

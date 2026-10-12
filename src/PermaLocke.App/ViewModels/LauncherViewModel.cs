@@ -57,7 +57,7 @@ public sealed record ActivityDay(string Heading, IReadOnlyList<ActivityItem> Ite
 /// <remarks>
 /// The cover and the play bar on top; under them, on the left, the achievements everybody in the competition claims
 /// and, on the right, the friends list and this player's achievements. The emulator is <see cref="EmulatorLauncher"/>
-/// and the other players come from <see cref="CommunityService"/>; this only asks and shows.
+/// and this only asks and shows.
 /// </remarks>
 public sealed partial class LauncherViewModel : SectionViewModel
 {
@@ -69,7 +69,6 @@ public sealed partial class LauncherViewModel : SectionViewModel
     private readonly PokemonSpriteService _sprites;
     private readonly AchievementService _achievements;
     private readonly IRunRoles _roles;
-    private readonly CommunityService _community;
     private readonly IUiDispatcher _ui;
     private readonly ILogger<LauncherViewModel> _logger;
     private readonly IPokemonRepository _pokemon;
@@ -77,7 +76,7 @@ public sealed partial class LauncherViewModel : SectionViewModel
     private readonly string _saves;
     private BitmapSource? _myAvatar;
 
-    public LauncherViewModel(EmulatorLauncher launcher, CommunityService community, AlolaSky sky, IRunContext runContext,
+    public LauncherViewModel(EmulatorLauncher launcher, AlolaSky sky, IRunContext runContext,
         IPlaytimeStore playtime, IBoxReader boxes, PokemonSpriteService sprites, AchievementService achievements,
         IRunRoles roles, IUiDispatcher ui, ILogger<LauncherViewModel> logger, PermaLocke.Infrastructure.AppPaths paths,
         IPokemonRepository pokemon, PermaLocke.Rules.Services.ProgressService progress, FirstRunGuide guide)
@@ -89,9 +88,9 @@ public sealed partial class LauncherViewModel : SectionViewModel
         _progress = progress;
         _saves = paths.Saves;
         Launcher = launcher;
-        ShowCommunity = true;
+        // Sin amigos ni actividad en la versión de una sola persona: la columna se queda oculta.
+        ShowCommunity = false;
         Sky = sky;
-        _community = community;
         _runContext = runContext;
         _playtime = playtime;
         _boxes = boxes;
@@ -103,7 +102,6 @@ public sealed partial class LauncherViewModel : SectionViewModel
 
         Launcher.PropertyChanged += OnLauncherChanged;
         Launcher.PlaytimeChanged += (_, _) => _ = _ui.InvokeAsync(LoadPlaytimeAsync);
-        _community.PropertyChanged += (_, _) => _ = _ui.InvokeAsync(ShowCommunityAsync);
         _runContext.CurrentChanged += (_, _) => _ = _ui.InvokeAsync(SafeRefreshAsync);
     }
 
@@ -347,42 +345,8 @@ public sealed partial class LauncherViewModel : SectionViewModel
         LastPlayed = Playtime.Ago(Playtime.LastPlayed(sessions), DateTimeOffset.Now);
     }
 
-    private async Task ShowCommunityAsync()
-    {
-        // La primera lectura de la carpeta llega antes que la primera de la pantalla: sin esto, avatares vacíos.
-        await _sprites.PrepareAsync();
-
-        Friends.Clear();
-
-        foreach (var friend in _community.Friends)
-        {
-            Friends.Add(new FriendItem(friend.Name, friend.State, friend.Detail,
-                friend.Avatar is { } species ? _sprites.Get(species) : null, friend.Photo));
-        }
-
-        var playing = _community.Friends.Count(f => f.State == PresenceState.Playing);
-        FriendsHeading = playing > 0 ? $"AMIGOS · {playing} JUGANDO" : "AMIGOS";
-
-        Activity.Clear();
-
-        foreach (var day in _community.Feed.GroupBy(f => f.At.LocalDateTime.Date))
-        {
-            Activity.Add(new ActivityDay(
-                day.Key.ToString("d 'DE' MMMM", Spanish).ToUpper(Spanish),
-                [.. day.Select(f => new ActivityItem(
-                    f.PlayerName, f.State,
-                    f.Avatar is { } species ? _sprites.Get(species) : f.IsMine ? _myAvatar : null,
-                    f.Name, f.Description,
-                    f.Icon is { } item ? _sprites.GetItem(item) : null,
-                    f.Points, f.At.LocalDateTime.ToString("HH:mm"), f.Photo))]));
-        }
-
-        CommunityNote = _community.Note;
-        Announcement = _community.Announcement;
-        RunRestarted = _community.RunRestarted;
-        OnPropertyChanged(nameof(HasFriends));
-        OnPropertyChanged(nameof(HasActivity));
-    }
+    /// <summary>Nothing to show: the friends and their activity were the tournament server (singleplayer).</summary>
+    private Task ShowCommunityAsync() => Task.CompletedTask;
 
     /// <summary>The achievement whose unlock is winning the league, for the trophy on the television.</summary>
     private const string ChampionAchievement = "alto-mando-campeon";

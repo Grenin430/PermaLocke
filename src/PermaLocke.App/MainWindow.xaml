@@ -48,9 +48,6 @@
             <views:ShopView />
         </DataTemplate>
 
-        <DataTemplate DataType="{x:Type vm:AchievementsViewModel}">
-            <views:AchievementsView />
-        </DataTemplate>
         <DataTemplate DataType="{x:Type vm:PokemonViewerViewModel}">
             <views:PokemonViewerView />
         </DataTemplate>
@@ -77,9 +74,6 @@
         </DataTemplate>
         <DataTemplate DataType="{x:Type vm:BattleModeViewModel}">
             <views:BattleModeView />
-        </DataTemplate>
-        <DataTemplate DataType="{x:Type vm:SyncViewModel}">
-            <views:SyncView />
         </DataTemplate>
         <DataTemplate DataType="{x:Type vm:CemeteryViewModel}">
             <views:CemeteryView />

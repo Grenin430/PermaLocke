@@ -1,6 +1,5 @@
 <Solution>
   <Folder Name="/src/">
-    <Project Path="src/PermaLocke.Admin/PermaLocke.Admin.csproj" />
     <Project Path="src/PermaLocke.App/PermaLocke.App.csproj" />
     <Project Path="src/PermaLocke.Core/PermaLocke.Core.csproj" />
     <Project Path="src/PermaLocke.Data/PermaLocke.Data.csproj" />

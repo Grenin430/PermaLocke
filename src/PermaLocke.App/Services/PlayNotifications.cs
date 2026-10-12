@@ -32,23 +32,13 @@ public sealed class PlayNotifications
 {
     public PlayNotifications(GameLinkMonitor monitor, MaintenanceService maintenance, Notifier notifier,
         DeathCeremony ceremony, PokemonSpriteService sprites, EncounterGuard encounters, BallControlService balls,
-        GhostService ghosts, CatchCeremony catches, NicknameVoteService votes)
+        WipeRain rain, CatchCeremony catches)
     {
         // Una captura salvaje: su carta vuela al álbum encima del juego (§190).
-        encounters.Caught += (_, caught) =>
-        {
-            catches.Celebrate(caught);
-
-            // Y los demás le votan el mote (2026-09-28).
-            votes.Offer(caught.Pokemon);
-        };
+        encounters.Caught += (_, caught) => catches.Celebrate(caught);
 
         // Y un huevo, un fósil o un regalo que aparece en el equipo, también (2026-09-28).
-        monitor.NewcomerArrived += (_, pokemon) =>
-        {
-            catches.CelebrateNewcomer(pokemon);
-            if (!monitor.IsStarter(pokemon.PID)) votes.Offer(pokemon);
-        };
+        monitor.NewcomerArrived += (_, pokemon) => catches.CelebrateNewcomer(pokemon);
 
         // Un objeto del suelo, comprado o regalado salta a la mochila encima del juego (2026-09-28).
         monitor.ItemGained += (_, item) => catches.CelebrateItem(item.ItemId, item.Amount);
@@ -66,16 +56,7 @@ public sealed class PlayNotifications
         {
             ceremony.Mourn(fallen);
 
-            // Al momento, a las pantallas de los demás (§183). Solo las vistas en directo, no las marcadas a mano.
-            ghosts.Send(fallen, "Jugador");
-
-            // Lo que costó DE VERDAD. Ponía «−25 puntos» escrito a mano, que es mentira para el
-            // CAGONETA -no pierde puntos- y para cualquier rol que multiplique las pérdidas.
-            notifier.Say(
-                ToastKind.Death,
-                $"{fallen.Name} ha caído",
-                fallen.Penalty > 0 ? $"−{fallen.Penalty} puntos." : string.Empty,
-                sprites.Get(fallen.Species, fallen.Form, fallen.Shiny));
+            notifier.Say(ToastKind.Death, $"{fallen.Name} ha caído", string.Empty, sprites.Get(fallen.Species, fallen.Form, fallen.Shiny));
         };
 
         // Las marcadas a mano en MANTENIMIENTO son justo las que la app no llegó a ver: tienen su
@@ -93,10 +74,10 @@ public sealed class PlayNotifications
             // Detrás de las muertes que lo formaron, que ya están en la cola.
             ceremony.TeamFell(penalty.Points);
 
-            // Llueve sangre aquí y en el emulador de los demás (§184).
-            ghosts.Rain("Jugador");
+            // Llueve sangre sobre el juego (§184).
+            rain.Play();
 
-            notifier.Say(ToastKind.TeamWipe, "Equipo caído", $"{penalty.Points} puntos.");
+            notifier.Say(ToastKind.TeamWipe, "Equipo caído", "Fin de la partida.");
         };
 
         monitor.RewardGiven += (_, given) => notifier.Say(

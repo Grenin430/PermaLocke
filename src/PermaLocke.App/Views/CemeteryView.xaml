@@ -33,30 +33,7 @@
         </Grid.ColumnDefinitions>
 
         <!-- LA ESCENA, en un marco de tinta. Negro detrás, del mismo tono que lo alto del cielo. -->
-        <!-- DE QUIÉN (1.0.5.7): una pestaña por jugador encima de la escena, tú el primero. -->
         <DockPanel Grid.Column="0">
-        <ItemsControl DockPanel.Dock="Top" ItemsSource="{Binding Owners}" Margin="0,0,0,8"
-                      Visibility="{Binding HasOwners, Converter={StaticResource Visible}}">
-            <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <WrapPanel />
-                </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <!-- La elegida, en el color fuerte; las demás, discretas. -->
-                    <Grid Margin="0,0,6,6">
-                        <Button Content="{Binding Name}" Style="{StaticResource PxButton}"
-                                Visibility="{Binding IsSelected, Converter={StaticResource Visible}}" />
-                        <Button Content="{Binding Name}" Style="{StaticResource PxSubtleButton}"
-                                Visibility="{Binding IsSelected, Converter={StaticResource InverseBoolToVisibility}}"
-                                Command="{Binding DataContext.SelectOwnerCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                CommandParameter="{Binding}" />
-                    </Grid>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
-
         <Grid>
             <views:PixelPanel Fill="#FF06050A" />
             <Grid Margin="3,3,9,9" ClipToBounds="True">

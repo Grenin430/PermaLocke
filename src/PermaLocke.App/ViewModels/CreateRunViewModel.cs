@@ -18,16 +18,14 @@ public sealed partial class CreateRunViewModel : ObservableObject
     private readonly RunService _runs;
     private readonly PlayerProfileService _profiles;
     private readonly AppPaths _paths;
-    private readonly DiscordLogin _discord;
     private readonly ILogger<CreateRunViewModel> _logger;
 
     public CreateRunViewModel(RunService runs, PlayerProfileService profiles, AppPaths paths,
-        IRoleCatalog roles, PokemonSpriteService sprites, DiscordLogin discord, ILogger<CreateRunViewModel> logger)
+        IRoleCatalog roles, PokemonSpriteService sprites, ILogger<CreateRunViewModel> logger)
     {
         _runs = runs;
         _profiles = profiles;
         _paths = paths;
-        _discord = discord;
         _logger = logger;
 
         Menu = new RoleMenuViewModel(roles.All, sprites);
@@ -101,14 +99,6 @@ public sealed partial class CreateRunViewModel : ObservableObject
     {
         try
         {
-            // Una sola run por jugador en el torneo: la primera la crea él; empezar de cero lo decide el organizador,
-            // que la reinicia desde Admin. El servidor lo impone igualmente (tools/supabase/07-una-run.sql).
-            if ((await _discord.CallAsync("puedo_crear_run"))?.Trim() != "true")
-            {
-                ErrorMessage = "Ya tienes una run en el torneo. Para empezar de cero, pide al organizador que te la reinicie.";
-                return;
-            }
-
             // El perfil antes que la run: la run nace ya con dueño y no hace falta vincularla luego.
             var profile = await _profiles.EnsureAsync(PlayerName.Trim());
 

@@ -85,8 +85,7 @@ public partial class App : Application
         _onlyOne = new Mutex(initiallyOwned: true, @"Local\PermaLocke.App", out var createdNew);
 
         // Reiniciado para el traspaso (§195) o tras actualizar (§196): la de antes se está cerrando, se le da un momento.
-        if (!createdNew && e.Args.Any(arg => arg.Equals(Services.TransferOffer.RestartArgument, StringComparison.OrdinalIgnoreCase)
-                                             || arg.Equals(Services.UpdateService.RestartArgument, StringComparison.OrdinalIgnoreCase)))
+        if (!createdNew && e.Args.Any(arg => arg.Equals(Services.TransferOffer.RestartArgument, StringComparison.OrdinalIgnoreCase)))
         {
             try
             {
@@ -223,6 +222,7 @@ public partial class App : Application
         // una vez para que exista, y eso se hace al arrancar el vigilante.
         collection.AddSingleton<Notifier>();
         collection.AddSingleton<PlayNotifications>();
+        collection.AddSingleton<WipeRain>();
         collection.AddSingleton<DeathCeremony>();
         collection.AddSingleton<KillcamRecorder>();
         collection.AddSingleton<IKillcamRecorder>(sp => sp.GetRequiredService<KillcamRecorder>());
@@ -240,7 +240,6 @@ public partial class App : Application
         collection.AddSingleton<IAchievementCatalog>(_ =>
             JsonAchievementCatalog.Load(Path.Combine(paths.Data, "achievements.json")));
         collection.AddSingleton<AchievementService>();
-        collection.AddSingleton<AchievementsViewModel>();
         collection.AddSingleton<IRoleCatalog>(_ =>
             JsonRoleCatalog.Load(Path.Combine(paths.Data, "roles.json")));
         collection.AddSingleton<IRunRoles, RunRoles>();
@@ -256,9 +255,6 @@ public partial class App : Application
         collection.AddSingleton<MoveReminderService>();
         collection.AddSingleton<RenameService>();
         collection.AddSingleton<IntegrityService>();
-        collection.AddSingleton<IntegrityGuard>();
-        collection.AddSingleton<OrderService>();
-        collection.AddSingleton<RulesSync>();
         collection.AddSingleton<VitalsPump>();
         collection.AddSingleton<BarSync>();
         collection.AddSingleton<ActiveBar>();
@@ -293,10 +289,6 @@ public partial class App : Application
         collection.AddSingleton<TcgCardFactory>();
         collection.AddSingleton<CatchCeremony>();
         collection.AddSingleton<TransferOffer>();
-        collection.AddSingleton<UpdateService>();
-        collection.AddSingleton<UpdateBannerViewModel>();
-        collection.AddSingleton<ServerBackupService>();
-        collection.AddSingleton<CrashReportUpload>();
         collection.AddSingleton<FirstRunGuide>();
         collection.AddSingleton<AlbumViewModel>();
         collection.AddSingleton<EvTrainingViewModel>();
@@ -320,35 +312,15 @@ public partial class App : Application
         // EL JUGADOR DE ESTA MAQUINA (§123). En Config/ y no en Saves/: empezar de cero borra la run y
         // la partida, pero quien vuelve a empezar sigue siendo el mismo jugador.
         collection.AddSingleton<IPlayerProfileStore>(_ => new JsonPlayerProfileStore(paths.Config));
-        collection.AddSingleton<SyncService>();
 
-        // AMIGOS Y ACTIVIDAD de JUGAR (§126): presencia y logros de todos, por el servidor del torneo.
-        collection.AddSingleton<CommunityService>();
-
-        // Los fantasmas (§183): tus muertes a los demás, y las suyas encima de tu emulador.
-        collection.AddSingleton<GhostService>();
-        collection.AddSingleton<NicknameVoteService>();
-
-        // «Jugando a PermaLocke» en el perfil de Discord mientras la app está abierta (§185).
-        collection.AddSingleton<DiscordPresence>();
-
-        // LA BANDEJA DE REGALOS (§129): lo que el organizador manda por el servidor, y recogerlo aquí.
         collection.AddSingleton<GiftService>();
-        collection.AddSingleton<GiftInbox>();
-        collection.AddSingleton<GiftInboxViewModel>();
-        collection.AddSingleton<SuggestionBoxViewModel>();
         collection.AddSingleton<DifficultyViewModel>();
-        collection.AddSingleton<SyncViewModel>();
         collection.AddSingleton<InformationViewModel>();
         collection.AddSingleton<AlolaSky>();
         collection.AddSingleton<CemeteryService>();
-        collection.AddSingleton<FallenShare>();
         collection.AddSingleton<CemeteryViewModel>();
         collection.AddSingleton<MaintenanceService>();
         collection.AddSingleton<AppSettings>();
-        collection.AddSingleton<DiscordLogin>();
-        collection.AddSingleton<TournamentUpload>();
-        collection.AddTransient<LoginViewModel>();
         collection.AddSingleton<SettingsViewModel>();
         collection.AddSingleton<MainViewModel>();
 
@@ -397,23 +369,6 @@ public partial class App : Application
 
         sky.Start();
 
-        // LA PUERTA DEL TORNEO: sin una cuenta de Discord de la whitelist no se abre nada. Mientras se enseña, la
-        // aplicación no se cierra al cerrar una ventana: la de entrar sería la "principal" y se llevaría todo.
-        var login = _services.GetRequiredService<LoginViewModel>();
-
-        if (!await login.TryKeptSessionAsync())
-        {
-            ShutdownMode = ShutdownMode.OnExplicitShutdown;
-
-            if (new Views.LoginWindow(login).ShowDialog() != true)
-            {
-                Shutdown();
-                return;
-            }
-
-            ShutdownMode = ShutdownMode.OnMainWindowClose;
-        }
-
         var main = _services.GetRequiredService<MainViewModel>();
         var window = new MainWindow { DataContext = main };
         // --tamano grande|enorme abre a ese tamaño SIN guardarlo, para ver una pantalla a otro tamaño sin
@@ -437,60 +392,12 @@ public partial class App : Application
 
         TellTransfer(paths, logger);
 
-        // LA ACTUALIZACIÓN (§196): lo que dejó la anterior fuera, y si hay versión nueva se ofrece. Solo en una carpeta
-        // repartida; nunca con --sin-juego, que es una copia de mirar.
-        if (!e.Args.Contains("--sin-juego", StringComparer.OrdinalIgnoreCase))
-        {
-            var updates = _services.GetRequiredService<UpdateService>();
-            updates.CleanUp();
-            updates.Start();
-        }
-
         var run = await _services.GetRequiredService<RunService>().LoadMostRecentAsync();
         logger.LogInformation("Run cargada al inicio: {Run}", run?.Name ?? "ninguna");
 
-        // Una run de antes de los perfiles se vincula aqui, una vez y con su evento. Un fallo no
-        // detiene el arranque: sin perfil la aplicacion funciona igual, solo no puede publicar.
-        try
-        {
-            var ownership = await _services.GetRequiredService<PlayerProfileService>().LinkCurrentRunAsync();
-            logger.LogInformation("Run y jugador: {Ownership}", ownership);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "No se ha podido vincular la run al perfil del jugador");
-        }
-
         // El lanzador mira si el juego está abierto una vez por segundo. Con la run ya cargada, para que la
         // sesión que encuentre en marcha se apunte a la run que toca.
-        // Antitrampas de recarga (2026-09-26), nunca en una copia para mirar pantallas: antes del lanzador, que ata el
-        // juego a PermaLocke en cuanto lo ve. Si el juego ya estaba abierto, nadie lo vigilaba.
-        var integrity = _services.GetRequiredService<IntegrityGuard>();
-        integrity.Enabled = !e.Args.Contains("--sin-juego", StringComparer.OrdinalIgnoreCase);
-
-        if (integrity.Enabled && run is not null)
-        {
-            try
-            {
-                await integrity.CheckPlaytimeAsync(run.Id, gameAlreadyOpen: EmulatorLauncher.IsOpen());
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "No se ha podido comprobar la partida al abrir");
-            }
-        }
-
-        // Cerrar PermaLocke con el juego abierto dejaría la partida sin vigilar: la ventana no se deja.
         var launcher = _services.GetRequiredService<EmulatorLauncher>();
-        window.Closing += (_, closing) =>
-        {
-            if (integrity.Enabled && EmulatorLauncher.IsOpen())
-            {
-                closing.Cancel = true;
-                MessageBox.Show(window, "Cierra primero el juego. PermaLocke no se puede cerrar mientras Ultra Luna está abierto.",
-                    "PermaLocke", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-        };
 
         // Después de lo anterior: con el juego abierto no se cierra ni se esconde. La copia de --sin-juego no escucha.
         if (!e.Args.Contains("--sin-juego", StringComparer.OrdinalIgnoreCase))
@@ -504,7 +411,7 @@ public partial class App : Application
 
         // Started last: it polls the emulator, and there is no point doing that before the
         // run it belongs to has been loaded.
-        // Antes de arrancar el vigilante, para no perderse lo que pase en su primer ciclo.
+        // Los avisos y las escenas sobre el juego (muertes, capturas, objetos), antes de arrancar el vigilante.
         _services.GetRequiredService<PlayNotifications>();
 
         // --sin-juego: una copia para mirar pantallas SIN vigilante ni pestaña. Con la aplicación de
@@ -512,37 +419,9 @@ public partial class App : Application
         // veces -cada uno tiene su propia puerta-, así que las pruebas visuales van siempre con esto.
         var withoutGame = e.Args.Contains("--sin-juego", StringComparer.OrdinalIgnoreCase);
 
-        // Una copia para mirar pantallas lee a los amigos, pero no dice que está aquí ni publica la run.
-        // Amigos y actividad van por el servidor del torneo, también en la distribución local.
-        _services.GetRequiredService<CommunityService>().Start(writes: !withoutGame);
-        _services.GetRequiredService<GhostService>().Start(writes: !withoutGame);
-        _services.GetRequiredService<NicknameVoteService>().Start(writes: !withoutGame);
-        if (!withoutGame) _services.GetRequiredService<FallenShare>().Start();
-        _services.GetRequiredService<DiscordPresence>().Start();
-
-        // Los regalos del organizador llegan por el servidor del torneo, también en la distribución local.
-        var inbox = _services.GetRequiredService<GiftInbox>();
-        inbox.OrdersApplied += (_, _) => _ = launcher.RefreshLockAsync();
-        inbox.Start();
-
-        // Las reglas oficiales del organizador, una vez al abrir; nunca en una copia para mirar pantallas.
-        if (!e.Args.Contains("--sin-juego", StringComparer.OrdinalIgnoreCase))
-        {
-            var rules = _services.GetRequiredService<RulesSync>();
-            _ = rules.SyncAsync();
-
-            // Y cada dos minutos (1.0.7.1): cerrar la tienda de combates desde Admin llega sin reiniciar.
-            var rulesTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMinutes(2) };
-            rulesTimer.Tick += (_, _) => _ = rules.SyncAsync();
-            rulesTimer.Start();
-        }
-
         if (!withoutGame)
         {
             _services.GetRequiredService<EdgeTab>().Attach(window);
-            _services.GetRequiredService<TournamentUpload>().Start();
-            _services.GetRequiredService<ServerBackupService>().Start();
-            _ = _services.GetRequiredService<CrashReportUpload>().SendPendingAsync();
             _services.GetRequiredService<GameLinkMonitor>().Start();
 
             // El cap de nivel siempre a la vista, encima del juego (1.0.4.7).
@@ -571,16 +450,6 @@ public partial class App : Application
         if (e.Args.Contains("--ensayar-muerte", StringComparer.OrdinalIgnoreCase))
         {
             await RehearseDeathsAsync(logger);
-        }
-
-        if (e.Args.Contains("--ensayar-fantasma", StringComparer.OrdinalIgnoreCase))
-        {
-            // El fantasma de un amigo tal como lo vería él (§183), con el último caído de esta run.
-            if ((await _services!.GetRequiredService<MaintenanceService>().FallenAsync()).FirstOrDefault() is { } ghost)
-            {
-                await _services!.GetRequiredService<GhostService>().RehearseAsync("Ensayo",
-                    new DeathNotice(ghost.Nickname ?? ghost.SpeciesName, ghost.Species, 0, ghost.Form, ghost.IsShiny, ghost.Level));
-            }
         }
 
         if (e.Args.Contains("--ensayar-intercambio", StringComparer.OrdinalIgnoreCase))
@@ -619,16 +488,10 @@ public partial class App : Application
             new PermaLocke.App.Views.ChangelogWindow().Show();
         }
 
-        if (e.Args.Contains("--ensayar-mote", StringComparer.OrdinalIgnoreCase))
-        {
-            // Las cuatro ventanas del mote votado (2026-09-28), una tras otra, sin servidor: no manda nada.
-            await _services!.GetRequiredService<NicknameVoteService>().RehearseAsync();
-        }
-
         if (e.Args.Contains("--ensayar-lluvia", StringComparer.OrdinalIgnoreCase))
         {
-            // La lluvia de sangre de un amigo que pierde el equipo (§184), sin servidor ni juego.
-            await _services!.GetRequiredService<GhostService>().RehearseRainAsync("Ensayo");
+            // La lluvia de sangre al perder el equipo (§184), sin juego.
+            await _services!.GetRequiredService<WipeRain>().RehearseAsync();
         }
 
         if (e.Args.Contains("--ensayar-captura", StringComparer.OrdinalIgnoreCase))
@@ -860,10 +723,6 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
-        // Antes de soltar los servicios: los amigos ven «desconectado» ahora y no dentro de tres minutos.
-        _services?.GetService<CommunityService>()?.SignOff();
-        _services?.GetService<TournamentUpload>()?.Flush();
-        _services?.GetService<DiscordPresence>()?.Stop();
         _services?.Dispose();
         base.OnExit(e);
     }

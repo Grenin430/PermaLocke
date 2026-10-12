@@ -25,14 +25,13 @@ public sealed partial class SettingsViewModel : SectionViewModel
     private readonly Notifier _notifier;
     private readonly AppPaths _paths;
     private readonly PokemonSpriteService _sprites;
-    private readonly DiscordLogin _discord;
     private readonly ILogger<SettingsViewModel> _logger;
     private bool _loading;
 
     /// <summary>The version running, to see at a glance whether an update (§196) went in.</summary>
-    public string VersionText { get; } = $"PERMALOCKE {AppUpdate.Display(UpdateService.Current)}";
+    public string VersionText { get; } = $"PERMALOCKE {AppUpdate.Display(typeof(SettingsViewModel).Assembly.GetName().Version ?? new Version(0, 0))} · UN JUGADOR";
 
-    public SettingsViewModel(AppSettings settings, WindowSizeService windowSizes, Notifier notifier, AppPaths paths, PokemonSpriteService sprites, DiscordLogin discord,
+    public SettingsViewModel(AppSettings settings, WindowSizeService windowSizes, Notifier notifier, AppPaths paths, PokemonSpriteService sprites,
         ILogger<SettingsViewModel> logger)
         : base("CONFIGURACIÓN", "Ajustes de la aplicación")
     {
@@ -43,8 +42,6 @@ public sealed partial class SettingsViewModel : SectionViewModel
         _notifier = notifier;
         _paths = paths;
         _sprites = sprites;
-        _discord = discord;
-        ShowAccount(discord.Saved);
         _logger = logger;
 
         _loading = true;
@@ -267,64 +264,6 @@ public sealed partial class SettingsViewModel : SectionViewModel
             _logger.LogError(ex, "No se pudo cambiar el tamaño de ventana");
             Status = "No se pudo guardar el tamaño.";
         }
-    }
-
-    // ================================================== TORNEO (inicio de sesión con Discord, fase 1)
-
-    [ObservableProperty]
-    private string _discordName = string.Empty;
-
-    [ObservableProperty]
-    private string? _discordAvatar;
-
-    [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(SignInCommand))]
-    private bool _signingIn;
-
-    public bool IsSignedIn => DiscordName.Length > 0;
-
-    partial void OnDiscordNameChanged(string value) => OnPropertyChanged(nameof(IsSignedIn));
-
-    private void ShowAccount(DiscordAccount? account)
-    {
-        DiscordName = account?.Name ?? string.Empty;
-        DiscordAvatar = account?.AvatarUrl;
-    }
-
-    [RelayCommand(CanExecute = nameof(CanSignIn))]
-    private async Task SignInAsync()
-    {
-        SigningIn = true;
-        Status = "Termina de entrar en el navegador...";
-
-        try
-        {
-            ShowAccount(await _discord.SignInAsync());
-            Status = $"Has entrado como {DiscordName}.";
-        }
-        catch (OperationCanceledException)
-        {
-            Status = "Se ha cansado de esperar al navegador. Vuelve a intentarlo.";
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Falló el inicio de sesión con Discord");
-            Status = "No se ha podido entrar con Discord.";
-        }
-        finally
-        {
-            SigningIn = false;
-        }
-    }
-
-    private bool CanSignIn => !SigningIn;
-
-    [RelayCommand]
-    private void SignOut()
-    {
-        _discord.SignOut();
-        ShowAccount(null);
-        Status = "Sesión cerrada en este PC.";
     }
 
     [RelayCommand]
