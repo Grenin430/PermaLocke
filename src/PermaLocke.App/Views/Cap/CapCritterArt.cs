@@ -24,11 +24,15 @@ public enum CritterMotion
 /// <param name="Sheet">A sheet of hand-finished frames inside the app (<c>Views/Cap/Critters/&lt;name&gt;.png</c>): one row per tilt in <paramref name="Angles"/>
 /// (degrees the nose is lifted, for a fish drawn facing left), one column per frame of the swim, <paramref name="Cell"/> square cells with the
 /// body's pivot at their centre (2026-10-14). When it has a sheet the Pokémon swims a curving path and tilts with it.</param>
+/// <param name="Height">The drawing's own height in its cells, for the room it needs in the sea or the sky.</param>
+/// <param name="Drift">How far its path drifts up and down on the slow wave, in cells; <paramref name="Bob"/> the short sway on top; <paramref name="Surge"/>
+/// how far each beat pushes it ahead.</param>
 /// <param name="Pose">How far below the horizontal the drawing's own nose points, in degrees: the tilt that makes it swim level.</param>
 /// <param name="Flap">How the wings beat: <c>up</c> (drawn raised, they swing down through the body line and back) or <c>sym</c> (drawn open
 /// both ways, they close towards the pivot and open), or null for none.</param>
 public sealed record CritterArt(int Species, string Name, CritterMotion Motion, string Palette, string Rows, string? Flap = null, int Pivot = 0,
-    double Fps = 0, IReadOnlyList<string>? Frames = null, string? Sheet = null, int Cell = 0, int[]? Angles = null, double Pose = 0)
+    double Fps = 0, IReadOnlyList<string>? Frames = null, string? Sheet = null, int Cell = 0, int[]? Angles = null, double Pose = 0,
+    int Height = 0, double Drift = 8, double Bob = 1.5, double Surge = 1.6)
 {
     public static readonly IReadOnlyDictionary<int, CritterArt> All = Build();
 
@@ -37,31 +41,9 @@ public sealed record CritterArt(int Species, string Name, CritterMotion Motion, 
         CritterArt[] all =
         [
             // ------------------------------------------------------------ the sea, common
-            new(129, "Magikarp", CritterMotion.Fish, "", "", Fps: 8, Sheet: "magikarp", Cell: 64, Angles: [0, 4, 8, 12, 16, 20, 24], Pose: 15),
-            new(118, "Goldeen", CritterMotion.Fish, "w=F8F8F0 r=F06040 k=181818", """
-                .......rr.......
-                ..w..rrrrww.....
-                .ww.wwwwwrrw..rr
-                wwwwwwwwwwwwrrrr
-                .wwkwwrrwwwwwrr.
-                ..wwwwrrrwwwwrrr
-                ...wwwwwwwwwrrrr
-                .....rr..rww..rr
-                """),
-            new(116, "Horsea", CritterMotion.Bob, "b=60A8E8 l=F8E8A0 k=181818 d=3878C0", """
-                ....bbb.
-                ..bbbbbd
-                bbbkbbbd
-                .bbbbbd.
-                ....lbb.
-                ...llbbd
-                ...lbbd.
-                ....bbd.
-                .....bb.
-                ...b.bb.
-                ...bbbd.
-                ....bb..
-                """),
+            new(129, "Magikarp", CritterMotion.Fish, "", "", Fps: 8, Sheet: "magikarp", Cell: 64, Angles: [0, 4, 8, 12, 16, 20, 24], Pose: 15, Height: 57),
+            new(118, "Goldeen", CritterMotion.Fish, "", "", Fps: 7, Sheet: "goldeen", Cell: 88, Angles: [0, 4, 8, 12, 16, 20], Pose: 10, Height: 40, Drift: 8, Bob: 1.5, Surge: 1.4),
+            new(116, "Horsea", CritterMotion.Fish, "", "", Fps: 10, Sheet: "horsea", Cell: 48, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 35, Drift: 5, Bob: 3, Surge: 0.5),
             new(456, "Finneon", CritterMotion.Fish, "b=58A0D8 d=3870A8 p=F080B0 k=181818 w=F8F8F8", """
                 ....dddd......
                 ..bbbbbbbb..pp
@@ -213,18 +195,7 @@ public sealed record CritterArt(int Species, string Name, CritterMotion Motion, 
                 ..bbbbd...
                 ...bbd....
                 """),
-            new(131, "Lapras", CritterMotion.Fish, "b=58A0D8 l=F0E8C8 s=8C8880 n=5C5850 k=181818", """
-                .bbb..............
-                bkbbb.............
-                .bbbb.............
-                ..bbb.....nnn.....
-                ...bb..ssssssss...
-                ...bbbsnssnssnss..
-                ...bbbbbbbbbbbbbb.
-                ..lllllbbbbbbbbbbb
-                ...lllllbbbbbbbb..
-                ....bb.......bb...
-                """),
+            new(131, "Lapras", CritterMotion.Fish, "", "", Fps: 6, Sheet: "lapras", Cell: 88, Angles: [-4, 0, 4, 8], Pose: 0, Height: 66, Drift: 4, Bob: 1, Surge: 1),
             new(130, "Gyarados", CritterMotion.Serpent, "b=3878C8 l=F0E0A0 w=F0F0F0 r=D83030 k=181818 d=205098", """
                 ..w............................
                 .wwbbbb..........d..d..d.....ww
@@ -308,14 +279,7 @@ public sealed record CritterArt(int Species, string Name, CritterMotion Motion, 
                 """, "up", 5),
 
             // ------------------------------------------------------------ the sky, common
-            new(278, "Wingull", CritterMotion.Fish, "w=F8F8F8 b=4878C8 y=F8D040 k=181818", """
-                .BB...BB...
-                ..BB.BB....
-                ...BBB.....
-                yywwwwwww..
-                .wkwwwwwwww
-                ..wwwwwww..
-                """, "up", 3),
+            new(278, "Wingull", CritterMotion.Fish, "", "", Fps: 9, Sheet: "wingull", Cell: 82, Angles: [-8, -4, 0, 4, 8], Pose: 0, Height: 39, Drift: 10, Bob: 1.5, Surge: 0.8),
             new(16, "Pidgey", CritterMotion.Fish, "b=A07848 c=F0D8A0 k=181818 y=E8A040", """
                 ....BBB....
                 ...BBBB....
@@ -358,15 +322,7 @@ public sealed record CritterArt(int Species, string Name, CritterMotion Motion, 
                 .bbbbbbbb.
                 ..b...b...
                 """, "up", 3),
-            new(41, "Zubat", CritterMotion.Bob, "b=6890D8 p=9858B8 w=F8F8F8 r=C04060", """
-                PP.......PP
-                PPP.....PPP
-                .PPPbbbPPP.
-                ..PbbbbbP..
-                ...bwwrb...
-                ....bbb....
-                ....b.b....
-                """, "sym", 3),
+            new(41, "Zubat", CritterMotion.Fish, "", "", Fps: 12, Sheet: "zubat", Cell: 76, Angles: [-8, -4, 0, 4, 8], Pose: 0, Height: 44, Drift: 7, Bob: 3.5, Surge: 1),
 
             // ------------------------------------------------------------ the sky, less common and rare
             new(279, "Pelipper", CritterMotion.Fish, "w=F8F8F8 b=4878C8 y=F8D040 o=E8A030 k=181818", """

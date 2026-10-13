@@ -20,6 +20,9 @@ public static class CapVisitors
     /// <summary>For the lab only: every lane that comes out draws this species, to look at one drawing in the sea.</summary>
     public static int? ForcedSpecies { get; set; }
 
+    /// <summary>For the lab only: every lane passes at once, each with the next of these species that suits it (sea or sky).</summary>
+    public static int[]? ForcedAll { get; set; }
+
     public static readonly Lane[] Lanes =
     [
         // The sea: commons often, then the less common with a rare among them, and the great ones now and then.
@@ -54,29 +57,33 @@ public static class CapVisitors
     }
 
     /// <summary>
-    /// A Pokémon with a sheet swims a path of its own: depth that drifts on two slow waves that never line up the same way, a little push on
-    /// every beat of the tail and a glide after it, and the body tilted to where it is going, from the frames turned for that tilt.
+    /// A Pokémon with a sheet swims (or flies) a path of its own: height that drifts on two slow waves that never line up the same way, a
+    /// little push on every beat and a glide after it, and the body tilted to where it is going, from the frames turned for that tilt. Each
+    /// species has its own drift, sway and push; each passing its own phase, so no two beat together.
     /// </summary>
     private static void Swimmer(CapSheet p, CapWorldLayout l, CapSeaPalette pal, CapSeaContext ctx, CritterArt art, Lane lane, (double Progress, int Variant) e,
-        int dir, int world, int scale, bool party)
+        int dir, int world, bool party)
     {
         if (SheetOf(art.Sheet!) is not { } sheet || art.Angles is not { Length: > 0 } angles) return;
+        const int scale = 1;
         var cell = art.Cell;
-        var size = cell * scale;
-        var tau = e.Progress * lane.Duration;
-        var loop = 8 / art.Fps;
+        var size = cell;
+        var count = Math.Max(1, sheet.Width / cell);
+        var tau = (e.Progress * lane.Duration) + ((e.Variant % 13) * 0.173);
+        var loop = count / art.Fps;
         var speed = (world + (2.0 * size)) / lane.Duration;
 
-        // the push: a little ahead on the stroke, a little behind on the glide; the frame of the tail is the same clock
-        const double Surge = 1.6;
+        // the push: a little ahead on the stroke, a little behind on the glide; the frame of the beat is the same clock
+        var Surge = art.Surge;
         var beat = 2 * Math.PI * tau / loop;
         var x = Across(e.Progress, dir, world, size) + (dir * Surge * Math.Sin(beat)) - ctx.WorldX + (dir > 0 ? -size / 2.0 : size / 2.0);
         if (x + (size / 2.0) < -4 || x - (size / 2.0) > l.Cols + 4) return;
 
         // depth: two slow waves with the run's own phases
-        double w1 = 2 * Math.PI / 13.0, w2 = 2 * Math.PI / 4.3, a1 = 8, a2 = 1.5, p1 = e.Variant % 7, p2 = e.Variant % 11;
-        var top = l.SurfaceY + 6 + (size / 2.0);
-        var bottom = l.FloorTop - 16 - (size / 2.0);
+        double w1 = 2 * Math.PI / 13.0, w2 = 2 * Math.PI / 4.3, a1 = art.Drift, a2 = art.Bob, p1 = e.Variant % 7, p2 = e.Variant % 11;
+        var half = Math.Max(4, art.Height / 2.0);
+        var top = lane.Flies ? 3 + half : l.SurfaceY + 6 + half;
+        var bottom = lane.Flies ? l.SurfaceY - 4 - half : l.FloorTop - 16 - half;
         if (bottom <= top) return;
         var mid = top + ((e.Variant / 3) % Math.Max(1, (int)(bottom - top)));
         var y = Math.Clamp(mid + (a1 * Math.Sin((w1 * tau) + p1)) + (a2 * Math.Sin((w2 * tau) + p2)), top, bottom);
@@ -88,13 +95,16 @@ public static class CapVisitors
         var lift = Math.Clamp(art.Pose - heading, angles[0], angles[^1]);
         var row = 0;
         for (var k = 1; k < angles.Length; k++) if (Math.Abs(angles[k] - lift) < Math.Abs(angles[row] - lift)) row = k;
-        var col = (int)Math.Floor(tau * art.Fps) % 8;
+        var col = (int)Math.Floor(tau * art.Fps) % count;
 
         var left = (int)Math.Round(x - (size / 2.0));
         var topY = (int)Math.Round(y - (size / 2.0));
         var depth = Math.Clamp((y - l.SurfaceY) / Math.Max(1, l.FloorTop - l.SurfaceY), 0, 1);
-        var alpha = party ? 120 : 255;
-        var tintAmount = (party ? 0.45 : 0.08) + (0.25 * depth);
+        // in the sky: full colour by day, a shape against it at night; under water: bluer with depth, faint behind the party
+        var night = CapSeaPalette.Night(ctx.SkyHour);
+        var alpha = party && !lane.Flies ? 120 : 255;
+        var tint = lane.Flies ? 0x141C38u : pal.Water[5];
+        var tintAmount = lane.Flies ? 0.6 * night : (party ? 0.45 : 0.08) + (0.25 * depth);
         for (var sy = 0; sy < cell; sy++)
         {
             for (var sx = 0; sx < cell; sx++)
@@ -105,11 +115,11 @@ public static class CapVisitors
                 if (sheet.Bgra[at + 3] < 128) continue;
                 var rgb = ((uint)sheet.Bgra[at + 2] << 16) | ((uint)sheet.Bgra[at + 1] << 8) | sheet.Bgra[at];
                 var dx = dir > 0 ? cell - 1 - sx : sx;
-                p.Rect(left + (dx * scale), topY + (sy * scale), scale, scale, CapSheet.Mix(rgb, pal.Water[5], tintAmount), alpha);
+                p.Rect(left + (dx * scale), topY + (sy * scale), scale, scale, tintAmount > 0 ? CapSheet.Mix(rgb, tint, tintAmount) : rgb, alpha);
             }
         }
 
-        if (!party) Bubbles(p, pal, (int)Math.Round(x + (dir * size * 0.33)), topY + (size / 2), beat);
+        if (!party && !lane.Flies) Bubbles(p, pal, (int)Math.Round(x + (dir * size * 0.33)), topY + (size / 2), beat);
     }
 
     public static void Paint(CapSheet p, CapWorldLayout l, CapSeaPalette pal, CapSeaContext ctx, double t, double phase)
@@ -120,12 +130,23 @@ public static class CapVisitors
 
         foreach (var lane in Lanes)
         {
-            if (CapFauna.EventAt(ctx.Seed, lane.Kind, t, lane.Period, lane.Duration, lane.Chance) is not { Active: true } e) continue;
-            var species = ForcedSpecies is { } forced && !lane.Flies ? forced : lane.Pool[e.Variant % lane.Pool.Length];
-            if (!lane.Flies && CritterArt.All.TryGetValue(species, out var posed) && posed.Sheet is not null)
+            var e = CapFauna.EventAt(ctx.Seed, lane.Kind, t, lane.Period, lane.Duration, lane.Chance);
+            if (ForcedAll is { Length: > 0 } all)
             {
-                Swimmer(p, l, pal, ctx, posed, lane, (e.Progress, e.Variant), (e.Variant / 7) % 2 == 0 ? 1 : -1, world, lane.Big && roomy ? 2 : 1,
-                    l.Panel == CapPanelKind.Party);
+                var suits = all.Where(id => Lanes.Any(other => other.Flies == lane.Flies && other.Pool.Contains(id))).ToArray();
+                if (suits.Length == 0) continue;
+                var k = Array.IndexOf(Lanes, lane);
+                var progress = ((t / lane.Duration) + (k * 0.37)) % 1.0;
+                Swimmer(p, l, pal, ctx, CritterArt.All[suits[k % suits.Length]], lane, (progress, 17 + (k * 29)), k % 2 == 0 ? 1 : -1, world, l.Panel == CapPanelKind.Party);
+                continue;
+            }
+
+            if (!e.Active) continue;
+            var forcedHere = ForcedSpecies is { } forced && Lanes.Any(other => other.Flies == lane.Flies && other.Pool.Contains(forced));
+            var species = forcedHere ? ForcedSpecies!.Value : lane.Pool[e.Variant % lane.Pool.Length];
+            if (CritterArt.All.TryGetValue(species, out var posed) && posed.Sheet is not null)
+            {
+                Swimmer(p, l, pal, ctx, posed, lane, (e.Progress, e.Variant), (e.Variant / 7) % 2 == 0 ? 1 : -1, world, l.Panel == CapPanelKind.Party);
                 continue;
             }
 

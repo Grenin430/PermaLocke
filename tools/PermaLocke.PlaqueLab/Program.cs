@@ -18,6 +18,9 @@ public static class Program
         // --especie N: todo lo que pasa nadando es esa especie (para revisar un dibujo en el mar)
         if (Option("--especie") is { } forcedSpecies) PermaLocke.App.Views.CapVisitors.ForcedSpecies = int.Parse(forcedSpecies);
 
+        // --especies a,b,c: todas las rutas pasan a la vez con esas especies (vista conjunta)
+        if (Option("--especies") is { } forcedAll) PermaLocke.App.Views.CapVisitors.ForcedAll = [.. forcedAll.Split(',').Select(int.Parse)];
+
         // --ventana escenario t "preset" fichero: una ventana entera del emulador con el panel (el escenario de la captura del jugador)
         if (Option("--ventana") is { } windowScenario && Array.IndexOf(args, "--ventana") + 4 < args.Length + 0)
         {
