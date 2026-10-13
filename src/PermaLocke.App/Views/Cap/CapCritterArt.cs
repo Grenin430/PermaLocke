@@ -69,16 +69,7 @@ public sealed record CritterArt(int Species, string Name, CritterMotion Motion, 
                 .wwwwggggggdd.
                 ..d.d...d...dd
                 """),
-            new(211, "Qwilfish", CritterMotion.Fish, "g=80A0A8 s=404848 k=181818 w=F0F0F0 y=E8D060", """
-                ..s.s.s.....
-                .sgggggs....
-                sgggggggs.yy
-                gkggggggggyy
-                gggggggggyy.
-                sgwwgggggsyy
-                .sgggggs....
-                ..s.s.s.....
-                """),
+            new(211, "Qwilfish", CritterMotion.Fish, "", "", Fps: 8, Sheet: "qwilfish", Cell: 62, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 44, Drift: 5, Bob: 2.5, Surge: 0.5),
             new(746, "Wishiwashi", CritterMotion.Fish, "b=6890E0 w=F0F0F8 k=181818", """
                 .bbbbb...
                 bwkbbbbbb
@@ -118,24 +109,8 @@ public sealed record CritterArt(int Species, string Name, CritterMotion Motion, 
                 .....rrr...rrww....rr.
                 """),
             new(226, "Mantine", CritterMotion.Fish, "", "", Fps: 6, Sheet: "mantine", Cell: 96, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 57, Drift: 7, Bob: 2, Surge: 0.9),
-            new(320, "Wailmer", CritterMotion.Bob, "b=4878C8 l=E8E8D0 k=181818 d=305898", """
-                ..bbbbbbb....
-                .bbbbbbbbbb..
-                bbkbbbbbbbbbd
-                bbbbbbbbbbbbd
-                lllbbbbbbbbd.
-                .llllllbbbbdd
-                ..lllllbbb...
-                """),
-            new(319, "Sharpedo", CritterMotion.Fish, "b=3050A0 r=C83838 w=F0F0F0 y=F8D030 k=181818", """
-                .......bb........
-                ...bbbbbbbbb.....
-                .bbbbbbbbbbbbb.bb
-                bkybbbbbbbbbbbbbb
-                wwwrrrrrbbbbbbbb.
-                .wwrrrrrrrbbb.bbb
-                ...www...........
-                """),
+            new(320, "Wailmer", CritterMotion.Fish, "", "", Fps: 6, Sheet: "wailmer", Cell: 88, Angles: [-4, 0, 4], Pose: 0, Height: 47, Drift: 4, Bob: 1.5, Surge: 0.6),
+            new(319, "Sharpedo", CritterMotion.Fish, "", "", Fps: 9, Sheet: "sharpedo", Cell: 90, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 70, Drift: 7, Bob: 1.5, Surge: 1.6),
             new(457, "Lumineon", CritterMotion.Fish, "b=4878C0 p=F078B0 y=F8E040", """
                 ....PPP.......
                 ...PPPP.......
@@ -254,14 +229,7 @@ public sealed record CritterArt(int Species, string Name, CritterMotion Motion, 
             // ------------------------------------------------------------ the sky, common
             new(278, "Wingull", CritterMotion.Fish, "", "", Fps: 9, Sheet: "wingull", Cell: 82, Angles: [-8, -4, 0, 4, 8], Pose: 0, Height: 39, Drift: 10, Bob: 1.5, Surge: 0.8),
             new(16, "Pidgey", CritterMotion.Fish, "", "", Fps: 12, Sheet: "pidgey", Cell: 64, Angles: [-8, -4, 0, 4, 8], Pose: 0, Height: 41, Drift: 9, Bob: 2.5, Surge: 1),
-            new(21, "Spearow", CritterMotion.Fish, "b=A06840 r=C84030 y=F0B0A0 k=181818 c=E8D8B0", """
-                ...RRR.....
-                ..RRRR.....
-                .bbbRRbb...
-                yybkbbbbbb.
-                ..cccbbbbbb
-                ...ccbbb...
-                """, "up", 3),
+            new(21, "Spearow", CritterMotion.Fish, "", "", Fps: 12, Sheet: "spearow", Cell: 64, Angles: [-8, -4, 0, 4, 8], Pose: 0, Height: 39, Drift: 10, Bob: 2, Surge: 1.2),
             new(731, "Pikipek", CritterMotion.Fish, "n=303030 w=F0F0F0 r=E04040 k=101010", """
                 ...NNN....
                 ..NNNN....
@@ -271,14 +239,7 @@ public sealed record CritterArt(int Species, string Name, CritterMotion Motion, 
                 ...wwnn...
                 """, "up", 3),
             new(12, "Butterfree", CritterMotion.Fish, "", "", Fps: 8, Sheet: "butterfree", Cell: 76, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 52, Drift: 8, Bob: 3.5, Surge: 0.6),
-            new(333, "Swablu", CritterMotion.Fish, "b=68B8F0 w=F8F8F8 y=F8D040 k=181818", """
-                ....WWWW..
-                ...WWWWWW.
-                .bbbWWWWbb
-                ybkbbbbbbb
-                .bbbbbbbb.
-                ..b...b...
-                """, "up", 3),
+            new(333, "Swablu", CritterMotion.Fish, "", "", Fps: 8, Sheet: "swablu", Cell: 94, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 38, Drift: 8, Bob: 3, Surge: 0.6),
             new(41, "Zubat", CritterMotion.Fish, "", "", Fps: 12, Sheet: "zubat", Cell: 76, Angles: [-8, -4, 0, 4, 8], Pose: 0, Height: 44, Drift: 7, Bob: 3.5, Surge: 1),
 
             // ------------------------------------------------------------ the sky, less common and rare

@@ -200,12 +200,49 @@ public static class CapVisitors
     /// <summary>The shark of a sea in danger, now a Sharpedo: dark, slow, for good while the danger lasts.</summary>
     public static void Prowl(CapSheet p, CapWorldLayout l, CapSeaPalette pal, CapSeaContext ctx, double phase, double strength)
     {
-        if (l.Mode is CapMode.Compact or CapMode.Strip || Get(319) is not { } s) return;
+        if (l.Mode is CapMode.Compact or CapMode.Strip) return;
+        if (CritterArt.All.TryGetValue(319, out var shark) && shark.Sheet is not null)
+        {
+            ProwlSheet(p, l, pal, ctx, shark, phase, strength);
+            return;
+        }
+
+        if (Get(319) is not { } s) return;
         var scale = l.Mode == CapMode.Column && !l.Dense ? 2 : 1;
         var world = ctx.WorldWidth > 0 ? ctx.WorldWidth : l.Cols;
         var x = (int)((phase * 3.2) % (world + (2 * s.W * scale))) - (s.W * scale) - ctx.WorldX;
         var y = l.SurfaceY + 30 + (int)(Math.Sin(phase * 0.2) * 12);
         Draw(p, s, x, y, scale, flip: true, (int)(230 * strength), CapSheet.Mix(pal.Water[6], 0x000000u, 0.4), 0.6, phase * 0.7, big: true, pal.Ink);
+    }
+
+    /// <summary>
+    /// The danger shark from its sheet (2026-10-14): level (the row nearest no tilt), its own swim at its pace, slow across the world and dark
+    /// with the water, as strong as the danger.
+    /// </summary>
+    private static void ProwlSheet(CapSheet p, CapWorldLayout l, CapSeaPalette pal, CapSeaContext ctx, CritterArt art, double phase, double strength)
+    {
+        if (SheetOf(art.Sheet!) is not { } sheet || art.Angles is not { Length: > 0 } angles) return;
+        var cell = art.Cell;
+        var count = Math.Max(1, sheet.Width / cell);
+        var row = 0;
+        for (var k = 1; k < angles.Length; k++) if (Math.Abs(angles[k]) < Math.Abs(angles[row])) row = k;
+        var col = (int)Math.Floor(phase * art.Fps) % count;
+        var world = ctx.WorldWidth > 0 ? ctx.WorldWidth : l.Cols;
+        var left = (int)((phase * 3.2) % (world + (2 * cell))) - cell - ctx.WorldX;
+        var top = l.SurfaceY + 18 + (int)(Math.Sin(phase * 0.2) * 12);
+        var alpha = (int)(230 * strength);
+        var tint = CapSheet.Mix(pal.Water[6], 0x000000u, 0.4);
+        for (var sy = 0; sy < cell; sy++)
+        {
+            for (var sx = 0; sx < cell; sx++)
+            {
+                var at = ((((row * cell) + sy) * sheet.Width) + (col * cell) + sx) * 4;
+                if (sheet.Bgra[at + 3] < 128) continue;
+                var rgb = ((uint)sheet.Bgra[at + 2] << 16) | ((uint)sheet.Bgra[at + 1] << 8) | sheet.Bgra[at];
+                // it swims to the right, so the drawing (facing left) is turned round
+                p.Rect(left + (cell - 1 - sx), top + sy, 1, 1, CapSheet.Mix(rgb, tint, 0.6), alpha);
+            }
+        }
     }
 
     private static void Bubbles(CapSheet p, CapSeaPalette pal, int mouth, int y, double beat)

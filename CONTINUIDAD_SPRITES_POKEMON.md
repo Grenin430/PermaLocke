@@ -297,10 +297,10 @@ Para cada especie nueva: define `protect` con la caja del ojo (y dientes u otros
    animación (§3.2) → revisar ampliada → hoja (§3.3) → integración (§3.4) → vista en el layout (§3.5).
 4. Entregar el lote (§1 de los criterios) y **parar**.
 
-### Lote 2 (2026-10-14): entregado, pendiente de la revisión del usuario
+### Lote 2 (2026-10-14): aprobado por el usuario
 Gyarados (130), Mantine (226), Chinchou (170), Pidgey (16) y Butterfree (12), confirmados por el usuario. Integrados en la app (hojas en
 `Critters/`, entradas en `CapCritterArt.cs`, `META` en `build_batch.js`); revisión en `C:\Users\javie\Desktop\imagenes\revision\lote2\`.
-**No dar por aprobados** hasta que el usuario lo diga. Lo nuevo respecto al método:
+Lo nuevo respecto al método:
 - `recon2.js` acepta un 4.º argumento opcional, el periodo de la cuadrícula: la referencia de Gyarados mide 230 px y sus celdas 2,77 px, por
   debajo del mínimo de la búsqueda (3), que cogía la cuadrícula gruesa (13,8). `node recon2.js .../gyarados.jpg gyarados 16 2.77`. Sin el
   argumento todo sale igual que antes (comprobado con Horsea, idéntico byte a byte).
@@ -318,6 +318,22 @@ Gyarados (130), Mantine (226), Chinchou (170), Pidgey (16) y Butterfree (12), co
   cara, de todas las celdas de una hoja, en mosaico: así se comprueba el ojo en todas las inclinaciones y fotogramas).
 - Comprobado: `iso 0, holes 0` en las cinco; ojos en las 40 celdas (30 en Pidgey) con `rostro.js`; 551 pruebas en verde; `--medir` con las
   cinco a la vez: panel del equipo en columna 1,7–2,0 ms de mediana.
+
+### Lote 3 (2026-10-14): entregado, pendiente de la revisión del usuario
+Sharpedo (319), Wailmer (320), Qwilfish (211), Spearow (21) y Swablu (333). Revisión en `imagenes\revision\lote3\`. **No dar por aprobados**
+hasta que el usuario lo diga. Lo nuevo:
+- Sharpedo: referencia de celdas de 3,3 px (`recon2.js ... sharpedo 16 3.3`). La cuadrícula de la referencia se colaba como un damero entre los
+  dos azules del cuerpo (`K`, `L`): su script pone a cada celda K/L el color mayoritario de su vecindad 3×3. Una celda blanca suelta (ruido
+  JPEG, fila 29) se quita.
+- **El tiburón del peligro** (`CapVisitors.Prowl`) usa ahora la hoja de Sharpedo (`ProwlSheet`: fila sin inclinación, su ciclo, oscuro y con la
+  opacidad del peligro); sin hoja sigue el dibujo antiguo. Prueba: `CapProwlTests` (con `PERMALOCKE_SNAP_DIR` deja el fotograma en BGRA).
+  El laboratorio no tiene escenario de peligro (pide `ActiveShare` ≤ 0,30 en combate), por eso se comprobó con la prueba.
+- Spearow: la referencia tiene el ala levantada; se dobla hacia abajo columna a columna desde el hombro (cada columna entera, sin agujero
+  debajo), en vez de girarla.
+- Qwilfish: la cola-paleta se dobla desde su raíz, dibujada hacia atrás como el ala de Mantine.
+- Wailmer: aleta grande con onda columna a columna y aleta pequeña con cizalla; solo 3 inclinaciones (-4, 0, 4), es lento y casi plano.
+- Swablu: las dos nubes giran sobre sus hombros (`C.swing`) como las alas de Wingull.
+- Comprobado: `iso 0, holes 0`; ojos en todas las celdas con `rostro.js`; 553 pruebas en verde; `--medir` con los cinco: 1,7–1,9 ms de mediana.
 
 ### Siguiente lote
 No hay un orden acordado. El criterio del usuario para el lote 1 fue "anatomías y movimientos diferentes". **Propuesta** (a confirmar o

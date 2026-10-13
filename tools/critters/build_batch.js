@@ -14,6 +14,11 @@ const META = {
   chinchou: { id: 170, drift: 4, bob: 3, surge: 0.4 },
   pidgey: { id: 16, drift: 9, bob: 2.5, surge: 1.0 },
   butterfree: { id: 12, drift: 8, bob: 3.5, surge: 0.6 },
+  sharpedo: { id: 319, drift: 7, bob: 1.5, surge: 1.6 },
+  wailmer: { id: 320, drift: 4, bob: 1.5, surge: 0.6 },
+  qwilfish: { id: 211, drift: 5, bob: 2.5, surge: 0.5 },
+  spearow: { id: 21, drift: 10, bob: 2, surge: 1.2 },
+  swablu: { id: 333, drift: 8, bob: 3, surge: 0.6 },
 };
 const lines = [];
 for (const name of process.argv.slice(2)) {
