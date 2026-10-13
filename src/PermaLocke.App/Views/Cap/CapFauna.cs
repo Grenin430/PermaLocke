@@ -30,7 +30,6 @@ public static class CapFauna
         // The rare ones, only when the sea is not in danger or mourning.
         if (hush > 0.5)
         {
-            CapVisitors.Paint(p, l, pal, ctx, t, phase);
             if (EventAt(seed, 3, t, 95, 26, 65) is { Active: true } school) School(p, l, pal, ctx, school.Progress, school.Variant, world, phase);
             if (EventAt(seed, 4, t, 330, 9, 60) is { Active: true } wave) LightWave(p, l, pal, ctx, wave.Progress, world);
         }
@@ -44,6 +43,10 @@ public static class CapFauna
         if (cap > 0.05) Aurora(p, l, ctx, phase, cap);
 
         Souls(p, l, ctx, graves, phase, Strength(mood, CapMood.Mourning));
+
+        // The Pokémon that pass go last, in front of the little school, the wave of light and the souls: a speck of the school crossing a
+        // pupil washed the eye out (2026-10-14).
+        if (hush > 0.5) CapVisitors.Paint(p, l, pal, ctx, t, phase);
     }
 
     private static double Strength((CapMood Now, CapMood Before, double Blend) mood, CapMood which) =>
