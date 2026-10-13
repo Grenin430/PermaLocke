@@ -20,7 +20,9 @@ public static class Program
         {
             var at = Array.IndexOf(args, "--ventana");
             var scenario = data.Scenarios.First(s => s.Name == windowScenario);
-            var tw = double.Parse(args[at + 2], System.Globalization.CultureInfo.InvariantCulture);
+            // "m" or "m+5": the moment that says most about the scenario.
+            var tw = args[at + 2].StartsWith('m') ? (scenario.Moment ?? 0) + (args[at + 2].Length > 1 ? double.Parse(args[at + 2][1..], System.Globalization.CultureInfo.InvariantCulture) : 0)
+                : double.Parse(args[at + 2], System.Globalization.CultureInfo.InvariantCulture);
             var preset = LabScreen.Presets.First(p => p.Name.StartsWith(args[at + 3], StringComparison.Ordinal));
             var (bgra, _) = LabScreen.Compose(scenario, tw, preset, new PermaLocke.App.Views.CapOptions(), game: true);
             PermaLocke.App.Views.CapSnap.Save(args[at + 4], bgra, preset.Width, preset.Height);

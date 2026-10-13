@@ -110,11 +110,14 @@ public static class CapWorld
         // The buoy sets the horizon: it floats with its waterline on the surface, so both windows put the surface where the buoy's waterline is.
         var (buoyW, buoyH) = slim ? (dense ? (56, 32) : (64, 40)) : dense ? (72, 38) : (96, 48);
         var faceInset = slim ? 9 : 14;
-        var waterRow = buoyH - (dense ? 7 : slim ? 8 : 9);
+        // Singleplayer (2026-10-13): the sea and the sand sit lower, so there is sky for the Pokémon that fly past. The buoy goes down with the
+        // surface; the floor is thinner by as much, so the six creatures keep their room.
+        var air = dense ? 16 : 28;
+        var waterRow = buoyH - (dense ? 7 : slim ? 8 : 9) + air;
         var surface = 2 + waterRow;
         var skyRows = waterRow;
         // The party's floor is thinner (more room for the six creatures); the deep keeps the whole seabed.
-        var floorH = slim ? (dense ? 54 : 62) : dense ? 62 : panel == CapPanelKind.Deep ? 68 : 58;
+        var floorH = (slim ? (dense ? 54 : 62) : dense ? 62 : panel == CapPanelKind.Deep ? 68 : 58) - air + (panel == CapPanelKind.Deep ? 6 : 0);
         var floorTop = rows - floorH;
         var reef = new CapRect(0, floorTop - 14, cols, floorH + 14);
 
@@ -133,7 +136,7 @@ public static class CapWorld
         }
 
         // The party: the buoy on the surface, the tag under it, the line down to the floor and the six creatures between them.
-        var buoy = new CapRect(x0 + ((main.Width - buoyW) / 2) + (slim ? 0 : 6), 2, buoyW, buoyH);
+        var buoy = new CapRect(x0 + ((main.Width - buoyW) / 2) + (slim ? 0 : 6), 2 + air, buoyW, buoyH);
         var face = new CapRect(buoy.Left + faceInset, buoy.Top + 9, buoy.Width - (2 * faceInset), buoy.Height - (dense ? 16 : 18));
         var tag = new CapRect(x0 + 14, buoy.Bottom + 2, main.Width - 28, 12);
 

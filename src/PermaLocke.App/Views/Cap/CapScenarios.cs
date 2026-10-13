@@ -184,8 +184,14 @@ public static class CapScenarios
             }
         }
 
-        Rare("ballena", "Una ballena cruza el mar por detrás del juego", 1, 480, 80, 70);
-        Rare("manta", "Una manta pasa", 2, 210, 38, 70);
+        foreach (var (lane, name, title) in new[] { (0, "nadador", "Un Pokémon común pasa nadando"), (1, "nadador-raro", "Un Pokémon menos común pasa nadando"),
+                     (2, "nadador-leyenda", "Un gran Pokémon cruza el mar"), (3, "volador", "Una bandada pasa volando"), (4, "volador-raro", "Un Pokémon menos común pasa volando"),
+                     (5, "volador-leyenda", "Un legendario cruza el cielo") })
+        {
+            var l = CapVisitors.Lanes[lane];
+            Rare(name, title, l.Kind, l.Period, l.Duration, l.Chance);
+        }
+
         Rare("banco", "Un banco de peces", 3, 95, 26, 65);
         Rare("ola", "Una ola de luz recorre el mar", 4, 330, 9, 60);
         Rare("estrella", "Una estrella fugaz sobre el mar nocturno", 5, 50, 2.2, 80, 23.5);
