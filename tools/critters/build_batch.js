@@ -9,6 +9,11 @@ const META = {
   lapras: { id: 131, drift: 4, bob: 1, surge: 1.0 },
   wingull: { id: 278, drift: 10, bob: 1.5, surge: 0.8 },
   zubat: { id: 41, drift: 7, bob: 3.5, surge: 1.0 },
+  gyarados: { id: 130, drift: 6, bob: 1.5, surge: 1.2 },
+  mantine: { id: 226, drift: 7, bob: 2, surge: 0.9 },
+  chinchou: { id: 170, drift: 4, bob: 3, surge: 0.4 },
+  pidgey: { id: 16, drift: 9, bob: 2.5, surge: 1.0 },
+  butterfree: { id: 12, drift: 8, bob: 3.5, surge: 0.6 },
 };
 const lines = [];
 for (const name of process.argv.slice(2)) {

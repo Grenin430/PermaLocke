@@ -297,6 +297,28 @@ Para cada especie nueva: define `protect` con la caja del ojo (y dientes u otros
    animación (§3.2) → revisar ampliada → hoja (§3.3) → integración (§3.4) → vista en el layout (§3.5).
 4. Entregar el lote (§1 de los criterios) y **parar**.
 
+### Lote 2 (2026-10-14): entregado, pendiente de la revisión del usuario
+Gyarados (130), Mantine (226), Chinchou (170), Pidgey (16) y Butterfree (12), confirmados por el usuario. Integrados en la app (hojas en
+`Critters/`, entradas en `CapCritterArt.cs`, `META` en `build_batch.js`); revisión en `C:\Users\javie\Desktop\imagenes\revision\lote2\`.
+**No dar por aprobados** hasta que el usuario lo diga. Lo nuevo respecto al método:
+- `recon2.js` acepta un 4.º argumento opcional, el periodo de la cuadrícula: la referencia de Gyarados mide 230 px y sus celdas 2,77 px, por
+  debajo del mínimo de la búsqueda (3), que cogía la cuadrícula gruesa (13,8). `node recon2.js .../gyarados.jpg gyarados 16 2.77`. Sin el
+  argumento todo sale igual que antes (comprobado con Horsea, idéntico byte a byte).
+- `gyarados_base.js`: las aletas blancas de Gyarados solo tienen un contorno gris fino y roto, y el relleno del fondo se comía su interior; en
+  las cajas de esas aletas, cada hueco cerrado por los cuatro lados a ≤ 7 celdas vuelve a ser blanco (`B`). 46 celdas.
+- Chinchou tenía fondo atrapado dentro del bucle de la antena derecha: su script lo quita (`B` con x ≥ 36 en filas 0–27).
+- **Doblar en vez de girar** (Mantine): un ala girada con `C.swing` abría muescas en la unión con el cuerpo. El ala de arriba se dobla (la raíz
+  quieta y la punta desplazada en perpendicular al ala) y se dibuja **hacia atrás** (cada celda pregunta de dónde viene), sin grietas; el ala
+  de abajo, casi horizontal, se dobla columna a columna.
+- **Lo que hay debajo de un ala que se levanta** (Pidgey): la referencia está posada con el ala plegada; al subirla quedaba un agujero. Se
+  rellena fila a fila con el color del cuerpo más cercano a su izquierda (pasado el contorno).
+- **Alas vistas de frente** (Butterfree): cada ala se estrecha hacia su raíz (`swing` con escala) y las alas de delante y de detrás se separan
+  por su borde real (fila 36 a la izquierda, 35 a la derecha), si no el borde de una asomaba por debajo de la otra.
+- Herramientas nuevas: `ppm.js` (una base o el primer fotograma de una animación a PPM, para comparar) y `rostro.js` (el mismo recorte, la
+  cara, de todas las celdas de una hoja, en mosaico: así se comprueba el ojo en todas las inclinaciones y fotogramas).
+- Comprobado: `iso 0, holes 0` en las cinco; ojos en las 40 celdas (30 en Pidgey) con `rostro.js`; 551 pruebas en verde; `--medir` con las
+  cinco a la vez: panel del equipo en columna 1,7–2,0 ms de mediana.
+
 ### Siguiente lote
 No hay un orden acordado. El criterio del usuario para el lote 1 fue "anatomías y movimientos diferentes". **Propuesta** (a confirmar o
 ajustar con el usuario): Gyarados (serpiente, ondulación de todo el cuerpo), Mantine (aletas-ala bajo el agua), Chinchou (redondo con

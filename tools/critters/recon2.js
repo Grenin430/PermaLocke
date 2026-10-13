@@ -3,7 +3,8 @@
 const fs = require("fs");
 const { execFileSync } = require("child_process");
 const FF = "C:/Program Files (x86)/Soundux/ffmpeg.exe";
-const [img, outp, kArg] = process.argv.slice(2);
+const [img, outp, kArg, pArg] = process.argv.slice(2);
+// [periodo] (optional) fixes the cell size when the reference is too small for the search (Gyarados: 230 px wide, cells under 3 px).
 let W, H;
 try { execFileSync(FF, ["-hide_banner", "-i", img]); } catch (e) { const m = e.stderr.toString().match(/, (\d{2,4})x(\d{2,4})/); W = +m[1]; H = +m[2]; }
 const raw = execFileSync(FF, ["-hide_banner", "-loglevel", "error", "-i", img, "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], { maxBuffer: 1 << 26 });
@@ -30,7 +31,7 @@ function scoreAt(m, p) {
 // cells are square: one period for both axes, the smallest that scores nearly as well as the best (a multiple scores the same)
 const mx = profile(W, H, (i, j) => lum(i, j)), my = profile(H, W, (i, j) => lum(j, i));
 const cand = [];
-for (let p = 3; p <= 16; p += 0.02) { const a = scoreAt(mx, p), b = scoreAt(my, p); cand.push({ p, s: a.score + b.score, phx: a.ph, phy: b.ph }); }
+for (let p = pArg ? +pArg : 3; p <= (pArg ? +pArg : 16); p += 0.02) { const a = scoreAt(mx, p), b = scoreAt(my, p); cand.push({ p, s: a.score + b.score, phx: a.ph, phy: b.ph }); }
 const top = Math.max(...cand.map(c => c.s));
 const pick = cand.find(c => c.s >= top * 0.8);
 const gx = { p: pick.p, ph: pick.phx }, gy = { p: pick.p, ph: pick.phy };
