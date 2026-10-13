@@ -28,6 +28,19 @@ public sealed class CapEventFeed
     private readonly List<CapEvent> _events = [];
     private long _next = 1;
 
+    /// <summary>
+    /// Whether life reaching zero is a fall. The lab and the tests say yes; the app says no (singleplayer, 2026-10-13) and calls <see cref="Fall"/> when
+    /// the run records the death: before the first Poké Ball a Pokémon at zero is only knocked out, and the record waits for the game to show the faint.
+    /// </summary>
+    public bool FallsFromLife { get; set; } = true;
+
+    /// <summary>A death the run has recorded, as a fall of the Pokémon with that PID. Returns the events of the last few seconds.</summary>
+    public IReadOnlyList<CapEvent> Fall(uint pid, double at)
+    {
+        _events.Add(new CapEvent(_next++, CapEventKind.Fell, pid, -1, at, 0, CapStatus.None, 0));
+        return [.. _events];
+    }
+
     /// <summary>Forgets what it has seen: the next reading of each Pokémon is taken as it is, as when the reading started again (the game came back).</summary>
     public void Rebaseline() => _seen.Clear();
 
@@ -75,7 +88,7 @@ public sealed class CapEventFeed
             if (now.Hp < before.Hp)
             {
                 Add(CapEventKind.Hit, member, slot, at, before.Hp - now.Hp);
-                if (now.Hp <= 0) Add(CapEventKind.Fell, member, slot, at);
+                if (now.Hp <= 0 && FallsFromLife) Add(CapEventKind.Fell, member, slot, at);
             }
             else if (before.Hp <= 0) Add(CapEventKind.Revive, member, slot, at, now.Hp - before.Hp);
             else Add(CapEventKind.Heal, member, slot, at, now.Hp - before.Hp);

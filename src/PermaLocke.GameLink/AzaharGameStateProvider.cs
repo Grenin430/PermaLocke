@@ -640,7 +640,8 @@ public sealed class AzaharGameStateProvider(
                 member.HeldItem,
                 member.Status,
                 member.ExpProgress,
-                member.Pp));
+                member.Pp,
+                member.Ability));
         }
 
         return party;

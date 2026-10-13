@@ -21,7 +21,8 @@ public sealed record LivePokemon(
     int HeldItem = 0,
     int Status = 0,
     double ExpProgress = -1,
-    IReadOnlyList<int>? Pp = null);
+    IReadOnlyList<int>? Pp = null,
+    int Ability = 0);
 
 /// <summary>
 /// Reads party structures out of the running game and parses them with PKHeX.Core.
@@ -111,7 +112,8 @@ public sealed class Pk7Reader(AzaharRpcClient client)
             pokemon.HeldItem,
             pokemon.Status_Condition,
             ExpProgress(pokemon, level),
-            [pokemon.Move1_PP, pokemon.Move2_PP, pokemon.Move3_PP, pokemon.Move4_PP]);
+            [pokemon.Move1_PP, pokemon.Move2_PP, pokemon.Move3_PP, pokemon.Move4_PP],
+            PokemonAbility.Of(pokemon));
     }
 
     /// <summary>

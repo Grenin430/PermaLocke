@@ -17,7 +17,6 @@ public sealed class LabData
     private LabData(PokemonSpriteService? sprites)
     {
         _sprites = sprites;
-        if (sprites is not null) CapVisitors.Icons = species => sprites.Get(species, 0, false);
         Scenarios = CapScenarios.All(Icon);
     }
 

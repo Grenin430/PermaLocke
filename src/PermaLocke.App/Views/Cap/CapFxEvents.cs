@@ -98,7 +98,7 @@ public static class CapFxEvents
     }
 
     /// <summary>The highest a number may float: under the head of the panel, so that the creature at the top never writes over the cap.</summary>
-    private static int Ceiling(CapWorldLayout l) => l.Tag.Height > 0 && l.Mode != CapMode.Strip ? l.Tag.Bottom + 1 : 0;
+    private static int Ceiling(CapWorldLayout l) => l.Mode is CapMode.Column or CapMode.Slim ? l.SurfaceY + 1 : 0;
 
     // ---------------------------------------------------------------- hit
 

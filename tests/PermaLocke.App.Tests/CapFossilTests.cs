@@ -160,17 +160,18 @@ public sealed class CapFossilTests
     }
 
     [Fact]
-    public void Types_and_the_moves_that_rotate_share_one_line_with_room_for_six_letters_in_the_player_s_window()
+    public void The_moves_are_not_shown_any_more_and_the_ability_fits_in_the_box_in_the_player_s_window()
     {
+        // Singleplayer (2026-10-13): types whole and the ability under them, no ticker of moves.
         var scenario = CapSeaTests.Scenarios().First(s => s.Name == "captura");
         var view = new CapWorldView(CapMode.Column, CapPanelKind.Party, 178, 321, (0, 0, 0));
         view.SetData(scenario.At(0));
         for (var i = 0; i < 6; i++)
         {
-            var (x, y, letters) = view.Creature(i)!.TickerAt;
-            Assert.True(letters >= 6, $"creature {i}: room for {letters} letters of a move");
-            Assert.True(y + 5 <= view.Layout.Creatures[i].Info.Bottom, $"creature {i}: the line of moves is below its box");
-            Assert.True(x > view.Layout.Creatures[i].Info.Left);
+            Assert.Equal(0, view.Creature(i)!.TickerAt.Letters);
+            var info = view.Creature(i)!.Info!;
+            var lastRowWithInk = Enumerable.Range(0, info.H).Last(y => Enumerable.Range(0, info.W).Any(x => info.Solid(x, y)));
+            Assert.True(lastRowWithInk <= info.H - 1 && lastRowWithInk > 20, $"creature {i}: the ability touches the bottom of its box");
         }
     }
 }

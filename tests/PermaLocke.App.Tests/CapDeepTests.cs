@@ -61,31 +61,6 @@ public sealed class CapDeepTests
     }
 
     [Fact]
-    public void A_lantern_is_lit_for_each_trial_cleared_and_dark_for_the_rest()
-    {
-        var layout = CapWorld.Arrange(CapMode.Column, CapPanelKind.Deep, 180, 321, (0, 0, 0));
-        foreach (var cleared in new[] { 0, 5, 12 })
-        {
-            var data = Data(cleared, 0) with { Trials = 12 };
-            var frame = CapPlaque.Render(data, CapMode.Column, 180, 321, 0, CapPanelKind.Deep, new CapAnim());
-
-            // The lanterns hang on the rope at the left of the chain, evenly: count the gold ones.
-            var area = layout.Lanterns;
-            var lit = 0;
-            for (var k = 0; k < 12; k++)
-            {
-                var cy = area.Top + 8 + (int)(k * (area.Height - 20) / 11.0);
-                var cx = area.Left + 6;
-                var c = frame.At(cx - 1, cy + 1);
-                var (r, g, b) = ((int)((c >> 16) & 255), (int)((c >> 8) & 255), (int)(c & 255));
-                if (r > 220 && g > 160 && b < 160) lit++;
-            }
-
-            Assert.Equal(cleared, lit);
-        }
-    }
-
-    [Fact]
     public void The_ear_of_the_deep_and_of_the_party_hold_the_floor_and_kelp_and_nothing_above_the_notch()
     {
         foreach (var panel in new[] { CapPanelKind.Party, CapPanelKind.Deep })

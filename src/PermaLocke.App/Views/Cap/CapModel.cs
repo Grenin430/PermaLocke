@@ -25,10 +25,11 @@ public sealed record CapMove(int Type, bool Empty, string? Name = null);
 /// <param name="Types">One or two type ids, from the installed world.</param>
 /// <param name="Item">The name of the held item, or null for none.</param>
 /// <param name="ItemIcon">The cartridge's icon of the held item, when it has one; the panel draws it small beside the level.</param>
+/// <param name="Ability">The name of its ability, read from its structure in the game (singleplayer, 2026-10-13).</param>
 /// <param name="Exp">Progress to its next level, 0 to 1; -1 when it could not be read.</param>
 public sealed record CapPlaqueMember(BitmapSource? Sprite, string Name, int Level, int Hp, int MaxHp, bool Egg,
     uint Pid = 0, IReadOnlyList<int>? Types = null, string? Item = null, CapStatus Status = CapStatus.None,
-    double Exp = -1, IReadOnlyList<CapMove>? Moves = null, BitmapSource? ItemIcon = null)
+    double Exp = -1, IReadOnlyList<CapMove>? Moves = null, BitmapSource? ItemIcon = null, string? Ability = null)
 {
     public bool Fallen => !Egg && Hp <= 0;
 

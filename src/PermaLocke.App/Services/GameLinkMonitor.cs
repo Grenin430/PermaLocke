@@ -741,7 +741,7 @@ public sealed class GameLinkMonitor(
                 details: details);
 
             var notice = new DeathNotice(name, live?.Species ?? entry.Species, charged.Points, live?.Form ?? entry.Form,
-                live?.IsShiny ?? entry.IsShiny, live?.Level ?? entry.Level);
+                live?.IsShiny ?? entry.IsShiny, live?.Level ?? entry.Level, pid);
             // Both monitors can win the death gate. Whichever records it also saves the available
             // recording, so the party fallback cannot silently skip a clip the battle loop captured.
             _ = SaveKillcamAsync(run.Id, entry.Id, mark);

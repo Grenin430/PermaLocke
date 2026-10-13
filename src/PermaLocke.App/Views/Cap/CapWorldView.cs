@@ -104,7 +104,6 @@ public sealed class CapWorldView
         CapSeaLive.Snow(frame, Layout, pal, _context, phase);
         if (anim is not null) CapFauna.Paint(frame, Layout, pal, mood, _context, t, phase, data.Graves ?? []);
         CapFlora.Paint(frame, Layout, pal, _context, _fossils, phase);
-        CapDeep.Lanterns(frame, Layout, pal, data, phase);
         CapDeep.Souls(frame, Layout, _fossilViews, phase);
         // A still frame (no animation) shows the focus in the middle of its time on the newest fossil, not dark at the start of it.
         CapDeep.Focus(frame, Layout, pal, _fossilViews, _context, anim is null ? CapDeep.NewestSeconds / 2 : t);
@@ -121,11 +120,7 @@ public sealed class CapWorldView
 
     private void PaintParty(CapSheet p, CapPlaqueData data, CapSeaPalette pal, (CapMood Now, CapMood Before, double Blend) mood, CapAnim? anim, double t, double phase)
     {
-        var danger = mood.Now == CapMood.Danger;
-        _buoy.Paint(p, Layout, pal, phase, 1, anim?.HeaderDissolve(t) ?? 1, danger ? 0xFF5040u : 0xFFF0B0u);
-        if (anim?.SinceCap(t) is { } sinceCap && sinceCap < 2.0) CapFx.CapRing(p, Layout, sinceCap);
-
-        CapSounding.Paint(p, Layout, pal, data, _creatures, anim, t, phase);
+        // Singleplayer (2026-10-13): no buoy with the cap, no tag under it, no sounding line; the level turns gold at the cap and that is all.
         var graves = data.Graves?.Count ?? 0;
 
         for (var i = 0; i < _creatures.Length; i++)

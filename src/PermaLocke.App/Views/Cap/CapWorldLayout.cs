@@ -141,7 +141,8 @@ public static class CapWorld
         var tag = new CapRect(x0 + 14, buoy.Bottom + 2, main.Width - 28, 12);
 
         var lineX = x0 + (slim ? 6 : 9);
-        var teamTop = tag.Bottom + (dense ? 4 : 8);
+        // No buoy nor tag are painted any more (singleplayer, 2026-10-13): the six creatures start just under the surface.
+        var teamTop = surface + (dense ? 4 : 8);
         var teamBottom = floorTop - 6;
         var slotH = Math.Max(14, (teamBottom - teamTop) / Creatures);
 

@@ -76,6 +76,13 @@ public static class Program
             return 0;
         }
 
+        // --bichos fichero: cada Pokémon que pasa por el mar en seis momentos de su movimiento, ampliado
+        if (Option("--bichos") is { } critters)
+        {
+            PermaLocke.App.Views.CapSnap.Save(critters, PermaLocke.App.Views.CapVisitors.Gallery(), 4);
+            return 0;
+        }
+
         var export = Array.IndexOf(args, "--exportar");
         if (export >= 0 && export + 1 < args.Length)
         {

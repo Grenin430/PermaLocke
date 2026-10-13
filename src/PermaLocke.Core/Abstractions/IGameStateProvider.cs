@@ -36,7 +36,8 @@ public sealed record LivePartyMember(
     int HeldItem = 0,
     int Status = 0,
     double ExpProgress = -1,
-    IReadOnlyList<int>? Pp = null)
+    IReadOnlyList<int>? Pp = null,
+    int Ability = 0)
 {
     public bool IsFainted => CurrentHp == 0;
 }

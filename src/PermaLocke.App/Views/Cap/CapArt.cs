@@ -13,7 +13,8 @@ public static class CapArt
 
     /// <summary>The three letters of each type, in Spanish, by the game's type number.</summary>
     private static readonly string[] TypeNames =
-        ["NOR", "LUC", "VOL", "VEN", "TIE", "ROC", "BIC", "FAN", "ACE", "FUE", "AGU", "PLA", "ELE", "PSI", "HIE", "DRA", "SIN", "HAD"];
+        ["NORMAL", "LUCHA", "VOLADOR", "VENENO", "TIERRA", "ROCA", "BICHO", "FANTASMA", "ACERO", "FUEGO", "AGUA", "PLANTA", "ELÉCTRICO", "PSÍQUICO", "HIELO",
+         "DRAGÓN", "SINIESTRO", "HADA"];
 
     public static string TypeName(int type) => type >= 0 && type < TypeNames.Length ? TypeNames[type] : "???";
 
@@ -41,11 +42,11 @@ public static class CapArt
     /// <summary>The three letters and the colour of a status.</summary>
     public static (string Text, uint Colour) StatusLook(CapStatus status) => status switch
     {
-        CapStatus.Poison => ("VEN", 0xA040A0u),
-        CapStatus.Burn => ("QUE", 0xF08030u),
-        CapStatus.Paralysis => ("PAR", 0xF8D030u),
-        CapStatus.Sleep => ("DOR", 0x8C888Cu),
-        CapStatus.Freeze => ("CON", 0x98D8D8u),
+        CapStatus.Poison => ("ENVENENADO", 0xA040A0u),
+        CapStatus.Burn => ("QUEMADO", 0xF08030u),
+        CapStatus.Paralysis => ("PARALIZADO", 0xF8D030u),
+        CapStatus.Sleep => ("DORMIDO", 0x8C888Cu),
+        CapStatus.Freeze => ("CONGELADO", 0x98D8D8u),
         _ => ("", 0u)
     };
 }

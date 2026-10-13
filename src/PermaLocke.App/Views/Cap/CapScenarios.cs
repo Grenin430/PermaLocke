@@ -37,6 +37,8 @@ public static class CapScenarios
     /// <summary>The species of the sample party, in order: a stand-in for each cartridge icon is asked for by number.</summary>
     public static readonly int[] Species = [130, 748, 143, 94, 230, 149];
 
+    private static readonly string[] Abilities = ["Intimidación", "Ensañamiento", "Sebo", "Cuerpo Maldito", "Nado Rápido", "Compensación"];
+
     private static readonly string[] Names = ["Gyarados", "Toxapex", "Snorlax", "Gengar", "Kingdra", "Dragonite"];
 
     private static readonly int[][] Types = [[10, 2], [3, 10], [0], [7, 3], [10, 15], [15, 2]];
@@ -55,7 +57,7 @@ public static class CapScenarios
         double exp = 0.4, bool egg = false)
     {
         var moves = Moves[i].Select((type, k) => new CapMove(type, i == 3 && k == 1 && hp < max / 2, MoveNames[i][k])).ToList();
-        return new CapPlaqueMember(icon(Species[i]), Names[i], level, hp, max, egg, (uint)(1000 + i), Types[i], Items[i], status, exp, moves);
+        return new CapPlaqueMember(icon(Species[i]), Names[i], level, hp, max, egg, (uint)(1000 + i), Types[i], Items[i], status, exp, moves, null, Abilities[i]);
     }
 
     private static IReadOnlyList<CapGrave> Graves(Func<int, BitmapSource?> icon, int count)

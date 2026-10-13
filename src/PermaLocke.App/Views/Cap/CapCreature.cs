@@ -49,7 +49,7 @@ public sealed class CapCreature
     public (int X, int Y) Centre => (Slot.Sprite.Left + (Slot.Sprite.Width / 2), Slot.Sprite.Top + (Slot.Sprite.Height / 2));
 
     public static string KeyOf(CapPlaqueMember? m) => m is null ? string.Empty
-        : $"{m.Name}|{m.Level}|{m.Hp}/{m.MaxHp}|{m.Egg}|{m.Status}|{m.Item}|{string.Join(",", m.Types ?? [])}|{m.Exp:F2}|{string.Join(",", (m.Moves ?? []).Select(x => x.Type + ":" + x.Empty + ":" + x.Name))}";
+        : $"{m.Name}|{m.Level}|{m.Hp}/{m.MaxHp}|{m.Egg}|{m.Status}|{m.Item}|{string.Join(",", m.Types ?? [])}|{m.Exp:F2}|{m.Ability}";
 
     /// <summary>Rebuilds the creature's picture and text for a Pokémon (or an empty slot: null).</summary>
     public void Build(CapPlaqueMember? m, CapSeaPalette pal, int cap, bool narrow)
@@ -284,7 +284,7 @@ public sealed class CapCreature
                 ItemAt = (box.Left + box.Width - levelW - 8, box.Top + y + 4);
             }
         }
-        y += lineH + 4;
+        y += lineH + 3;
 
         // The level goes under the name in a narrow text, so that both stay whole.
         if (!wide && level.Length > 0)
@@ -324,17 +324,17 @@ public sealed class CapCreature
             y += 3;
         }
 
-        // One line for what a creature is and what it can do: its types, its status, and the moves rotating in what is left of the line. When
-        // the letters of the types and of the status leave less than six letters for the moves, the types go as coloured spots only.
+        // What a creature is (singleplayer, 2026-10-13): its types with their whole names and its status on one line, and its ability on the next.
+        // The moves are not shown any more. Types that do not fit whole go as coloured spots only.
         var types = (m.Types ?? []).Where(t => t >= 0).Take(2).ToList();
-        var hasMoves = wide && m.Moves is { Count: > 0 };
         var statusLook = m.Status != CapStatus.None ? CapArt.StatusLook(m.Status) : default;
-        const int MovesMinimum = 7 + (6 * 4);
 
         int Used(bool letters) => 1 + types.Sum(t => 5 + (letters ? 2 + CapGlyphs.Width(CapArt.TypeName(t), false) : 0) + 3)
             + (m.Status != CapStatus.None ? 5 + (letters ? 2 + CapGlyphs.Width(statusLook.Text, false) : 0) + 3 : 0);
 
-        var letters = wide && (!hasMoves || Used(true) + MovesMinimum <= box.Width);
+        // The types whole first; the status keeps its word only if there is room left for it, else it is its spot.
+        var letters = wide && Used(true) - (m.Status != CapStatus.None ? 2 + CapGlyphs.Width(statusLook.Text, false) : 0) <= box.Width;
+        var statusLetters = letters && Used(true) <= box.Width;
         if (y + 5 <= box.Height)
         {
             var x = 1;
@@ -349,16 +349,17 @@ public sealed class CapCreature
             if (m.Status != CapStatus.None)
             {
                 CapGlyphs.Spot(sheet, x, y, statusLook.Colour, ink);
-                if (letters) CapGlyphs.Outlined(sheet, statusLook.Text, x + 7, y, glow, ink);
-                x += 5 + (letters ? 2 + CapGlyphs.Width(statusLook.Text, false) : 0) + 3;
+                if (statusLetters) CapGlyphs.Outlined(sheet, statusLook.Text, x + 7, y, glow, ink);
             }
 
-            // The moves rotate in the rest of the line: the pip of the colour of the type, and the name coming one at a time.
-            if (hasMoves)
-            {
-                var from = x + 3;
-                TickerAt = (box.Left + from, box.Top + y, Math.Max(0, (box.Width - from - 7) / 4));
-            }
+            y += 7;
+        }
+
+        if (wide && m.Ability is { Length: > 0 } ability && y + 6 <= box.Height)
+        {
+            var text = ability.ToUpperInvariant();
+            while (text.Length > 1 && CapGlyphs.Width(text, false) > box.Width - 2) text = text[..^1];
+            CapGlyphs.Outlined(sheet, text, 1, y, 0xFFE6A0u, ink);
         }
     }
 
@@ -418,9 +419,10 @@ public sealed class CapCreature
     private static int Needed(int height, bool wide, CapPlaqueMember m)
     {
         if (m.Egg) return 8;
-        var rows = (wide ? 10 : 8) + (wide ? 0 : 9) + 6;
+        var rows = (wide ? 10 : 8) + (wide ? 0 : 9) + 7;
         if (m.Exp >= 0 && height >= 28 && wide) rows += 3;
-        if (m.Types is { Count: > 0 } || m.Status != CapStatus.None || m.Moves is { Count: > 0 }) rows += 8;
+        if (m.Types is { Count: > 0 } || m.Status != CapStatus.None) rows += 7;
+        if (wide && m.Ability is { Length: > 0 }) rows += 6;
         return Math.Min(rows, height);
     }
 }

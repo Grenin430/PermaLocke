@@ -67,7 +67,7 @@ public sealed class CapBadge
     private readonly Dictionary<uint, int> _rawStatus = [];
     private readonly BarSync _bar;
     private readonly HpPresenter _hp = new();
-    private readonly CapEventFeed _feed = new();
+    private readonly CapEventFeed _feed = new() { FallsFromLife = false };
     private IReadOnlyList<CapEvent> _events = [];
     private double _eventAt;
     private long _epoch;
@@ -79,6 +79,7 @@ public sealed class CapBadge
     /// <summary>The party, one niche per Pokémon (1.0.4.8).</summary>
     private IReadOnlyList<CapPlaqueMember> _party = [];
     private readonly PokemonSpriteService _sprites;
+    private readonly IAbilityLookup _abilities;
     private string _partyKey = string.Empty;
     private CapPlaqueData? _data;
     private CapReading? _shown;
@@ -105,7 +106,7 @@ public sealed class CapBadge
 
     public CapBadge(EmulatorLauncher launcher, ProgressService progress, LevelCapTable caps, IRunContext runContext,
         GameLinkMonitor monitor, AppSettings settings, PokemonSpriteService sprites, AlolaSky sky, ITypeLookup types, IItemLookup items,
-        IMoveCatalog moves, CemeteryService cemetery, VitalsPump pump, BarSync bar, ActiveBar active, ILogger<CapBadge> logger)
+        IMoveCatalog moves, CemeteryService cemetery, VitalsPump pump, BarSync bar, ActiveBar active, IAbilityLookup abilities, ILogger<CapBadge> logger)
     {
         _launcher = launcher;
         _progress = progress;
@@ -115,11 +116,11 @@ public sealed class CapBadge
         _logger = logger;
         _settings = settings;
         _sprites = sprites;
-        CapVisitors.Icons = species => sprites.Get(species, 0, false);
         _sky = sky;
         _types = types;
         _items = items;
         _moves = moves;
+        _abilities = abilities;
         _cemetery = cemetery;
         _pump = pump;
         _active = active;
@@ -135,6 +136,18 @@ public sealed class CapBadge
         _timer.Tick += (_, _) => _ = TickAsync();
         _frames.Tick += (_, _) => Frame();
         monitor.RunDataChanged += (_, _) => _readAt = DateTime.MinValue;
+
+        // The creature sinks when the run records the death, not when the life reads zero: only once the PermaLocke has started (the first Poké Ball),
+        // and after the game has shown the faint (singleplayer, 2026-10-13).
+        monitor.PokemonDied += (_, fallen) =>
+        {
+            if (fallen.Pid == 0) return;
+            _ = Application.Current?.Dispatcher.BeginInvoke(() =>
+            {
+                _events = _feed.Fall(fallen.Pid, Now);
+                Repaint();
+            });
+        };
         runContext.CurrentChanged += (_, _) => _readAt = DateTime.MinValue;
     }
 
@@ -656,7 +669,7 @@ public sealed class CapBadge
         // (lista de pendientes del organizador, 2026-09-28).
         var details = _settings.Current.CapDetails;
         var key = cap + "|" + details + "|" + _battle + "|" + string.Join(";", party.Select(p =>
-            $"{p.Pid}:{p.Species}:{p.Form}:{p.Level}:{p.CurrentHp}/{p.MaxHp}:{p.IsFainted}:{p.Nickname}:{p.IsEgg}:{p.HeldItem}:{p.Status}:{p.ExpProgress:F2}:{string.Join(",", p.Pp ?? [])}"));
+            $"{p.Pid}:{p.Species}:{p.Form}:{p.Level}:{p.CurrentHp}/{p.MaxHp}:{p.IsFainted}:{p.Nickname}:{p.IsEgg}:{p.HeldItem}:{p.Status}:{p.Ability}:{p.ExpProgress:F2}:{string.Join(",", p.Pp ?? [])}"));
         if (key == _partyKey)
         {
             return;
@@ -701,7 +714,8 @@ public sealed class CapBadge
 
         return new CapPlaqueMember(sprite, name, member.Level, member.CurrentHp, member.MaxHp, false, member.Pid, types,
             member.HeldItem > 0 ? _items.GetName(member.HeldItem) : null, StatusOf(member.Status),
-            member.ExpProgress, moves, member.HeldItem > 0 ? _sprites.GetItem(member.HeldItem) : null);
+            member.ExpProgress, moves, member.HeldItem > 0 ? _sprites.GetItem(member.HeldItem) : null,
+            member.Ability > 0 ? _abilities.GetName(member.Ability) : null);
     }
 
     /// <summary>
