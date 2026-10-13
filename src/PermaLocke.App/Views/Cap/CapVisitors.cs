@@ -1,3 +1,5 @@
+using System.Windows.Media.Imaging;
+
 namespace PermaLocke.App.Views;
 
 /// <summary>
@@ -38,6 +40,78 @@ public static class CapVisitors
 
     private static readonly Dictionary<int, Sprite?> Cache = [];
 
+    private static readonly Dictionary<string, ToastPixels.SpritePixels?> Sheets = [];
+
+    /// <summary>A sheet of frames shipped inside the app, decoded once.</summary>
+    private static ToastPixels.SpritePixels? SheetOf(string name)
+    {
+        if (Sheets.TryGetValue(name, out var known)) return known;
+        using var stream = typeof(CapVisitors).Assembly.GetManifestResourceStream($"PermaLocke.App.Critters.{name}.png");
+        if (stream is null) return Sheets[name] = null;
+        var frame = new PngBitmapDecoder(stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad).Frames[0];
+        frame.Freeze();
+        return Sheets[name] = ToastPixels.SpritePixels.From(frame);
+    }
+
+    /// <summary>
+    /// A Pokémon with a sheet swims a path of its own: depth that drifts on two slow waves that never line up the same way, a little push on
+    /// every beat of the tail and a glide after it, and the body tilted to where it is going, from the frames turned for that tilt.
+    /// </summary>
+    private static void Swimmer(CapSheet p, CapWorldLayout l, CapSeaPalette pal, CapSeaContext ctx, CritterArt art, Lane lane, (double Progress, int Variant) e,
+        int dir, int world, int scale, bool party)
+    {
+        if (SheetOf(art.Sheet!) is not { } sheet || art.Angles is not { Length: > 0 } angles) return;
+        var cell = art.Cell;
+        var size = cell * scale;
+        var tau = e.Progress * lane.Duration;
+        var loop = 8 / art.Fps;
+        var speed = (world + (2.0 * size)) / lane.Duration;
+
+        // the push: a little ahead on the stroke, a little behind on the glide; the frame of the tail is the same clock
+        const double Surge = 1.6;
+        var beat = 2 * Math.PI * tau / loop;
+        var x = Across(e.Progress, dir, world, size) + (dir * Surge * Math.Sin(beat)) - ctx.WorldX + (dir > 0 ? -size / 2.0 : size / 2.0);
+        if (x + (size / 2.0) < -4 || x - (size / 2.0) > l.Cols + 4) return;
+
+        // depth: two slow waves with the run's own phases
+        double w1 = 2 * Math.PI / 13.0, w2 = 2 * Math.PI / 4.3, a1 = 8, a2 = 1.5, p1 = e.Variant % 7, p2 = e.Variant % 11;
+        var top = l.SurfaceY + 6 + (size / 2.0);
+        var bottom = l.FloorTop - 16 - (size / 2.0);
+        if (bottom <= top) return;
+        var mid = top + ((e.Variant / 3) % Math.Max(1, (int)(bottom - top)));
+        var y = Math.Clamp(mid + (a1 * Math.Sin((w1 * tau) + p1)) + (a2 * Math.Sin((w2 * tau) + p2)), top, bottom);
+
+        // the tilt follows where it is going on the slow wave only, at its mean speed: the push of each beat and the short sway would make
+        // it rock between two tilts; down is positive, and the drawing already points its nose down by its pose
+        var vy = a1 * w1 * Math.Cos((w1 * tau) + p1);
+        var heading = Math.Atan2(vy, Math.Max(1, speed)) * 180 / Math.PI;
+        var lift = Math.Clamp(art.Pose - heading, angles[0], angles[^1]);
+        var row = 0;
+        for (var k = 1; k < angles.Length; k++) if (Math.Abs(angles[k] - lift) < Math.Abs(angles[row] - lift)) row = k;
+        var col = (int)Math.Floor(tau * art.Fps) % 8;
+
+        var left = (int)Math.Round(x - (size / 2.0));
+        var topY = (int)Math.Round(y - (size / 2.0));
+        var depth = Math.Clamp((y - l.SurfaceY) / Math.Max(1, l.FloorTop - l.SurfaceY), 0, 1);
+        var alpha = party ? 120 : 255;
+        var tintAmount = (party ? 0.45 : 0.08) + (0.25 * depth);
+        for (var sy = 0; sy < cell; sy++)
+        {
+            for (var sx = 0; sx < cell; sx++)
+            {
+                var gx = (col * cell) + sx;
+                var gy = (row * cell) + sy;
+                var at = ((gy * sheet.Width) + gx) * 4;
+                if (sheet.Bgra[at + 3] < 128) continue;
+                var rgb = ((uint)sheet.Bgra[at + 2] << 16) | ((uint)sheet.Bgra[at + 1] << 8) | sheet.Bgra[at];
+                var dx = dir > 0 ? cell - 1 - sx : sx;
+                p.Rect(left + (dx * scale), topY + (sy * scale), scale, scale, CapSheet.Mix(rgb, pal.Water[5], tintAmount), alpha);
+            }
+        }
+
+        if (!party) Bubbles(p, pal, (int)Math.Round(x + (dir * size * 0.33)), topY + (size / 2), beat);
+    }
+
     public static void Paint(CapSheet p, CapWorldLayout l, CapSeaPalette pal, CapSeaContext ctx, double t, double phase)
     {
         if (l.Mode is CapMode.Compact or CapMode.Strip) return;
@@ -48,6 +122,13 @@ public static class CapVisitors
         {
             if (CapFauna.EventAt(ctx.Seed, lane.Kind, t, lane.Period, lane.Duration, lane.Chance) is not { Active: true } e) continue;
             var species = ForcedSpecies is { } forced && !lane.Flies ? forced : lane.Pool[e.Variant % lane.Pool.Length];
+            if (!lane.Flies && CritterArt.All.TryGetValue(species, out var posed) && posed.Sheet is not null)
+            {
+                Swimmer(p, l, pal, ctx, posed, lane, (e.Progress, e.Variant), (e.Variant / 7) % 2 == 0 ? 1 : -1, world, lane.Big && roomy ? 2 : 1,
+                    l.Panel == CapPanelKind.Party);
+                continue;
+            }
+
             if (Get(species) is not { } s) continue;
 
             var scale = lane.Big && roomy ? 2 : 1;
@@ -216,7 +297,7 @@ public static class CapVisitors
     private static Sprite? Get(int species)
     {
         if (Cache.TryGetValue(species, out var known)) return known;
-        if (!CritterArt.All.TryGetValue(species, out var art)) return Cache[species] = null;
+        if (!CritterArt.All.TryGetValue(species, out var art) || art.Sheet is not null) return Cache[species] = null;
 
         if (art.Frames is { Count: > 0 } posed)
         {
