@@ -30,7 +30,8 @@ public static class CapVisitors
     /// <summary>One pixel of a drawing, already lit (top edge) and shaded (bottom edge).</summary>
     private readonly record struct Dot(int X, int Y, uint Rgb, bool Wing);
 
-    private sealed record Sprite(CritterArt Art, int W, int H, Dot[] Dots);
+    /// <param name="Frames">The hand-posed frames, when the drawing has them; empty otherwise.</param>
+    private sealed record Sprite(CritterArt Art, int W, int H, Dot[] Dots, Dot[][] Frames);
 
     private static readonly Dictionary<int, Sprite?> Cache = [];
 
@@ -121,6 +122,20 @@ public static class CapVisitors
     {
         var art = s.Art;
 
+        // Hand-posed frames carry their own outline and shading: the frame of the moment, facing where it goes, with a gentle drift up and down.
+        if (s.Frames.Length > 0)
+        {
+            var frame = s.Frames[(int)Math.Floor(Math.Abs(beat) * art.Fps) % s.Frames.Length];
+            var drift = (int)Math.Round(Math.Sin(beat * 1.3) * 1.0);
+            foreach (var d in frame)
+            {
+                var x = flip ? s.W - 1 - d.X : d.X;
+                p.Rect(left + (x * scale), top + ((d.Y + drift) * scale), scale, scale, tintAmount > 0 ? CapSheet.Mix(d.Rgb, tint, tintAmount) : d.Rgb, alpha);
+            }
+
+            return;
+        }
+
         // The wings: drawn raised, they swing down through the shoulder line and back; drawn open, they close and open. Big ones beat slowly.
         var swing = Math.Cos(beat * (big ? 3.6 : art.Motion == CritterMotion.Bob ? 9 : 7.5));
         var fold = art.Flap switch { "up" => swing, "sym" => 0.6 + (0.4 * swing), _ => 1.0 };
@@ -200,6 +215,15 @@ public static class CapVisitors
         if (Cache.TryGetValue(species, out var known)) return known;
         if (!CritterArt.All.TryGetValue(species, out var art)) return Cache[species] = null;
 
+        if (art.Frames is { Count: > 0 } posed)
+        {
+            var colours = art.Palette.Split(' ', StringSplitOptions.RemoveEmptyEntries).ToDictionary(entry => entry[0], entry => Convert.ToUInt32(entry[2..], 16));
+            var frames = posed.Select(f => f.Replace("\r", string.Empty).Split('\n')).ToList();
+            var dotsOf = frames.Select(lines => lines.SelectMany((r, y) => r.Select((c, x) => (c, x, y)))
+                .Where(q => q.c != '.' && colours.ContainsKey(q.c)).Select(q => new Dot(q.x, q.y, colours[q.c], false)).ToArray()).ToArray();
+            return Cache[species] = new Sprite(art, frames.Max(r => r.Max(l => l.Length)), frames.Max(r => r.Length), dotsOf[0], dotsOf);
+        }
+
         var palette = art.Palette.Split(' ', StringSplitOptions.RemoveEmptyEntries)
             .ToDictionary(entry => entry[0], entry => Convert.ToUInt32(entry[2..], 16));
         var rows = art.Rows.Replace("\r", string.Empty).Split('\n');
@@ -223,6 +247,6 @@ public static class CapVisitors
             }
         }
 
-        return Cache[species] = new Sprite(art, w, rows.Length, [.. dots]);
+        return Cache[species] = new Sprite(art, w, rows.Length, [.. dots], []);
     }
 }
