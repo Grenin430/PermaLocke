@@ -15,6 +15,9 @@ public static class Program
         // PROPOSALS (branch cap-propuestas): --equipo zigzag|columna|pares|colgado, --caidos dispersos|rotulo|hilera|ultimo, --eventos
         string? Option(string name) => Array.IndexOf(args, name) is var at and >= 0 && at + 1 < args.Length ? args[at + 1] : null;
 
+        // --especie N: todo lo que pasa nadando es esa especie (para revisar un dibujo en el mar)
+        if (Option("--especie") is { } forcedSpecies) PermaLocke.App.Views.CapVisitors.ForcedSpecies = int.Parse(forcedSpecies);
+
         // --ventana escenario t "preset" fichero: una ventana entera del emulador con el panel (el escenario de la captura del jugador)
         if (Option("--ventana") is { } windowScenario && Array.IndexOf(args, "--ventana") + 4 < args.Length + 0)
         {

@@ -13,7 +13,10 @@ public static class CapVisitors
     public sealed record Lane(int Kind, double Period, double Duration, int Chance, bool Flies, int[] Pool, bool Big = false);
 
     /// <summary>Species that pass in a little group of three (a school, a flock).</summary>
-    private static readonly HashSet<int> Groups = [129, 456, 370, 746, 223, 278, 16, 21, 333, 41];
+    private static readonly HashSet<int> Groups = [456, 370, 746, 223, 278, 16, 21, 333, 41];
+
+    /// <summary>For the lab only: every lane that comes out draws this species, to look at one drawing in the sea.</summary>
+    public static int? ForcedSpecies { get; set; }
 
     public static readonly Lane[] Lanes =
     [
@@ -44,7 +47,7 @@ public static class CapVisitors
         foreach (var lane in Lanes)
         {
             if (CapFauna.EventAt(ctx.Seed, lane.Kind, t, lane.Period, lane.Duration, lane.Chance) is not { Active: true } e) continue;
-            var species = lane.Pool[e.Variant % lane.Pool.Length];
+            var species = ForcedSpecies is { } forced && !lane.Flies ? forced : lane.Pool[e.Variant % lane.Pool.Length];
             if (Get(species) is not { } s) continue;
 
             var scale = lane.Big && roomy ? 2 : 1;
