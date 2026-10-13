@@ -319,9 +319,8 @@ Lo nuevo respecto al método:
 - Comprobado: `iso 0, holes 0` en las cinco; ojos en las 40 celdas (30 en Pidgey) con `rostro.js`; 551 pruebas en verde; `--medir` con las
   cinco a la vez: panel del equipo en columna 1,7–2,0 ms de mediana.
 
-### Lote 3 (2026-10-14): entregado, pendiente de la revisión del usuario
-Sharpedo (319), Wailmer (320), Qwilfish (211), Spearow (21) y Swablu (333). Revisión en `imagenes\revision\lote3\`. **No dar por aprobados**
-hasta que el usuario lo diga. Lo nuevo:
+### Lote 3 (2026-10-14): aprobado por el usuario
+Sharpedo (319), Wailmer (320), Qwilfish (211), Spearow (21) y Swablu (333). Revisión en `imagenes\revision\lote3\`. Lo nuevo:
 - Sharpedo: referencia de celdas de 3,3 px (`recon2.js ... sharpedo 16 3.3`). La cuadrícula de la referencia se colaba como un damero entre los
   dos azules del cuerpo (`K`, `L`): su script pone a cada celda K/L el color mayoritario de su vecindad 3×3. Una celda blanca suelta (ruido
   JPEG, fila 29) se quita.
