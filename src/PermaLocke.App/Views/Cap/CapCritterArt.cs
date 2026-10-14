@@ -75,7 +75,7 @@ public sealed record CritterArt(int Species, string Name, CritterMotion Motion, 
 
             // ------------------------------------------------------------ the sky, common
             new(278, "Wingull", CritterMotion.Fish, "", "", Fps: 9, Sheet: "wingull", Cell: 82, Angles: [-8, -4, 0, 4, 8], Pose: 0, Height: 39, Drift: 10, Bob: 1.5, Surge: 0.8),
-            new(16, "Pidgey", CritterMotion.Fish, "", "", Fps: 12, Sheet: "pidgey", Cell: 64, Angles: [-8, -4, 0, 4, 8], Pose: 0, Height: 41, Drift: 9, Bob: 2.5, Surge: 1),
+            new(16, "Pidgey", CritterMotion.Fish, "", "", Fps: 12, Sheet: "pidgey", Cell: 78, Angles: [-4, 0, 4], Pose: 0, Height: 58, Drift: 1, Bob: 0.3, Surge: 0.6),
             new(21, "Spearow", CritterMotion.Fish, "", "", Fps: 12, Sheet: "spearow", Cell: 92, Angles: [-2, 0, 2], Pose: 0, Height: 60, Drift: 1, Bob: 0.3, Surge: 0.6),
             new(731, "Pikipek", CritterMotion.Fish, "", "", Fps: 14, Sheet: "pikipek", Cell: 84, Angles: [-2, 0, 2], Pose: 0, Height: 58, Drift: 1, Bob: 0.3, Surge: 0.6),
             new(12, "Butterfree", CritterMotion.Fish, "", "", Fps: 8, Sheet: "butterfree", Cell: 76, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 52, Drift: 8, Bob: 3.5, Surge: 0.6),

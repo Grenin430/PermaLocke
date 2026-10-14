@@ -8,11 +8,11 @@ public sealed class CapVisitorLabTests
     [Fact]
     public void A_batch_with_four_fliers_keeps_every_flier_in_the_sky_preview()
     {
-        int[] batch = [779, 398, 373, 6, 381];
+        int[] batch = [779, 398, 149, 6, 381];
         var selected = Enumerable.Range(0, CapVisitors.Lanes.Length)
             .Where(i => CapVisitors.Lanes[i].Flies)
             .SelectMany(i => CapVisitors.ForcedLaneSpecies(batch, i)).ToArray();
-        Assert.Equal(new[] { 6, 373, 381, 398 }, selected.Order().ToArray());
+        Assert.Equal(new[] { 6, 149, 381, 398 }, selected.Order().ToArray());
         Assert.DoesNotContain(779, selected);
     }
 

@@ -59,7 +59,7 @@ const META = {
   swablu: { id: 333, drift: 8, bob: 3, surge: 0.6 },
 };
 // Approved originals stay available; these species use their explicitly requested flight corrections.
-const FLIGHT = new Set(['spearow','pikipek','pidgeot','toucannon','staraptor','skarmory','dragonite','charizard','salamence']);
+const FLIGHT = new Set(['pidgey','spearow','pikipek','pidgeot','toucannon','staraptor','skarmory','dragonite','charizard','salamence']);
 const lines = [];
 for (const name of process.argv.slice(2)) {
   const flight = FLIGHT.has(name);
