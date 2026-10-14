@@ -1515,3 +1515,11 @@ hacia atrás, dibujando hacia atrás (bentTail), la misma técnica de Mantine y 
 Se dibuja detrás del cuerpo, como en el original. Desaparecen TAIL_TURN y TAIL_SINK.
 
 [Verificado] 103×81, 2583 píxeles opacos en una sola pieza, iso 0, holes 0 y solo la paleta original.
+
+#### Dragonite base v6, sexta entrega: solo el nacimiento de la cola (2026-10-14), pendiente de aprobación
+El usuario rechaza la cola curvada de la quinta entrega: solo había que cambiar el nacimiento y el resto de la cola estaba bien. Se
+recupera la cola de la cuarta entrega (201a148: girada aparte y con la raíz metida en la cadera). TAIL_ROOT_FILL rellena la raíz
+desde la línea de la espalda hasta la cadera, detrás del cuerpo y de la cola, con las columnas naranjas P/N de la cola y contorno H
+donde da al fondo. Así la cola nace casi tan ancha como el cuerpo, como en el original, y el resto no cambia.
+
+[Verificado] 103×81, 2597 píxeles opacos en una sola pieza, iso 0, holes 0 y solo la paleta original.
