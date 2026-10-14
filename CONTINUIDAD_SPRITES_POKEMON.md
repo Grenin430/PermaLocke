@@ -1605,3 +1605,8 @@ Desde tools/critters: node review_salamence_pose_v3.js. Sin build_batch.js ni in
 la tanda 2 rechazada.
 
 Siguiente paso: esperar la aprobación visual de esta base; después, la fase 2 (planeo con alas fijas).
+
+### Salamence descartado (2026-10-14)
+El usuario descarta Salamence: no se aprueba la base v3 ni se anima. La app sigue mostrando la hoja de la tanda 2 rechazada (410e8d0) en la
+ruta 14 del cielo hasta que se decida qué hacer con él (quitarlo de la ruta o dejar esa hoja). Los scripts salamence_flight_pose_v3.js y
+review_salamence_pose_v3.js quedan como histórico.
