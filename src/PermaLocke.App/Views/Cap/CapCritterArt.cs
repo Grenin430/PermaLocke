@@ -44,14 +44,7 @@ public sealed record CritterArt(int Species, string Name, CritterMotion Motion, 
             new(129, "Magikarp", CritterMotion.Fish, "", "", Fps: 8, Sheet: "magikarp", Cell: 64, Angles: [0, 4, 8, 12, 16, 20, 24], Pose: 15, Height: 57),
             new(118, "Goldeen", CritterMotion.Fish, "", "", Fps: 7, Sheet: "goldeen", Cell: 88, Angles: [0, 4, 8, 12, 16, 20], Pose: 10, Height: 40, Drift: 8, Bob: 1.5, Surge: 1.4),
             new(116, "Horsea", CritterMotion.Fish, "", "", Fps: 10, Sheet: "horsea", Cell: 48, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 35, Drift: 5, Bob: 3, Surge: 0.5),
-            new(456, "Finneon", CritterMotion.Fish, "b=58A0D8 d=3870A8 p=F080B0 k=181818 w=F8F8F8", """
-                ....dddd......
-                ..bbbbbbbb..pp
-                .bwkbbbbbbbppp
-                bbbbbbbbbbbpp.
-                .wwbbbbbbbbbpp
-                ..pp..pp....pp
-                """),
+            new(456, "Finneon", CritterMotion.Fish, "", "", Fps: 9, Sheet: "finneon", Cell: 62, Angles: [0, 4, 8, 12, 16, 20, 24], Pose: 12, Height: 33, Drift: 6, Bob: 1.5, Surge: 0.8),
             new(370, "Luvdisc", CritterMotion.Fish, "p=F88CA8 l=F8C0D0 k=181818 r=E05080", """
                 .pp.pp....
                 pppppppp..
@@ -153,15 +146,7 @@ public sealed record CritterArt(int Species, string Name, CritterMotion Motion, 
                 """),
             new(131, "Lapras", CritterMotion.Fish, "", "", Fps: 6, Sheet: "lapras", Cell: 88, Angles: [-4, 0, 4, 8], Pose: 0, Height: 66, Drift: 4, Bob: 1, Surge: 1),
             new(130, "Gyarados", CritterMotion.Fish, "", "", Fps: 7, Sheet: "gyarados", Cell: 100, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 76, Drift: 6, Bob: 1.5, Surge: 1.2),
-            new(350, "Milotic", CritterMotion.Serpent, "c=F0E0B8 r=E05060 p=F8A0B0 b=6090E0 y=F0D060 k=181818", """
-                .rr...........................
-                rcccc.........................
-                cckcc.......................bp
-                .cccccccccccccccccccccccccc.bbp
-                ..cccccccccccccccccccccccbbbpp.
-                ...yyycccccyyyyccccccccccbbbp..
-                .........................bp....
-                """),
+            new(350, "Milotic", CritterMotion.Fish, "", "", Fps: 7, Sheet: "milotic", Cell: 106, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 76, Drift: 5, Bob: 1, Surge: 0.7),
             new(230, "Kingdra", CritterMotion.Bob, "b=4888D8 y=F0D878 k=181818 d=2860A8", """
                 ..b.......
                 .bbbb..b..
@@ -176,17 +161,7 @@ public sealed record CritterArt(int Species, string Name, CritterMotion Motion, 
                 ..bbbbd...
                 ...bbb....
                 """),
-            new(490, "Manaphy", CritterMotion.Bob, "b=58A8E8 w=F0F8FF r=E83850 y=F8E040 k=181818", """
-                bb.......bb
-                .bb.....bb.
-                ..bbbbbbb..
-                .bbbbbbbbb.
-                .bkbbbbbkb.
-                .bbbbrbbbb.
-                ..wwwwwww..
-                .bb.yyy.bb.
-                bb.......bb
-                """),
+            new(490, "Manaphy", CritterMotion.Fish, "", "", Fps: 8, Sheet: "manaphy", Cell: 72, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 39, Drift: 4, Bob: 2.5, Surge: 0.5),
 
             // ------------------------------------------------------------ the great ones of the sea
             new(382, "Kyogre", CritterMotion.Fish, "b=2858B8 d=183888 r=E83040 w=E8E8F0 y=F8E040 k=181818", """
@@ -243,16 +218,7 @@ public sealed record CritterArt(int Species, string Name, CritterMotion Motion, 
             new(41, "Zubat", CritterMotion.Fish, "", "", Fps: 12, Sheet: "zubat", Cell: 76, Angles: [-8, -4, 0, 4, 8], Pose: 0, Height: 44, Drift: 7, Bob: 3.5, Surge: 1),
 
             // ------------------------------------------------------------ the sky, less common and rare
-            new(279, "Pelipper", CritterMotion.Fish, "w=F8F8F8 b=4878C8 y=F8D040 o=E8A030 k=181818", """
-                .....BBB......
-                ....BBBBB.....
-                ...BBBBB......
-                .wwwBBBwwwww..
-                wkwwwwwwwwwwww
-                yyyyywwwwwwww.
-                oyyyyy.ww.....
-                .oooo.........
-                """, "up", 4),
+            new(279, "Pelipper", CritterMotion.Fish, "", "", Fps: 7, Sheet: "pelipper", Cell: 88, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 61, Drift: 7, Bob: 2, Surge: 0.8),
             new(18, "Pidgeot", CritterMotion.Fish, "b=A07040 c=F0D8A0 r=E05040 y=F0C040 k=181818", """
                 ..ryyrr...........
                 .ryyr....BBBB.....
@@ -303,15 +269,7 @@ public sealed record CritterArt(int Species, string Name, CritterMotion Motion, 
                 oowwwnnnnnnnnnnnnn
                 ..wwwwnnnnnnnnn...
                 """, "up", 3),
-            new(169, "Crobat", CritterMotion.Bob, "p=9858C0 y=F8E040 r=C04060 k=181818", """
-                PP.........PP
-                PPP.......PPP
-                .PPP.ppp.PPP.
-                ..PPpykpyPP..
-                ...ppprppp...
-                ..PPpppppPP..
-                .PP...p...PP.
-                """, "sym", 3),
+            new(169, "Crobat", CritterMotion.Fish, "", "", Fps: 11, Sheet: "crobat", Cell: 112, Angles: [-8, -4, 0, 4, 8], Pose: 0, Height: 61, Drift: 9, Bob: 2.5, Surge: 1.2),
             new(468, "Togekiss", CritterMotion.Fish, "w=F8F8F8 r=E04040 b=4878C8 y=F0D060 k=181818", """
                 ...........WWW..
                 .........WWWWW..

@@ -73,3 +73,12 @@ Todo `src/PermaLocke.App` está en estilo pixel desde §176–§176 quater, salv
 - Solo cabe **una `Application` por proceso** en las pruebas.
 - Un `DataTrigger` sobre un tipo anónimo con enlace TwoWay lanza, porque es de solo lectura: en pruebas se usa `ExpandoObject`.
 - `StaticResource Visible` no existe; se usa `BoolToVisibility` (fallo r3 de HOME).
+
+## Sprites del mar: lote 4 singleplayer (2026-10-14)
+Finneon, Milotic, Manaphy, Pelipper y Crobat están integrados y entregados para revisión, todavía sin aprobación del usuario.
+Método, tamaños, comandos, limitaciones y comprobaciones: `CONTINUIDAD_SPRITES_POKEMON.md`, sección «Lote 4».
+Entrega: `C:\Users\javie\Desktop\imagenes\revision\lote4\`.
+Las bases se reconstruyen de las referencias; no se redibujan. Las 216 celdas inclinadas pasan `iso 0, holes 0` y las 256 regiones de ojos
+conservan sus colores característicos. La revisión de costuras sigue siendo visual: un hueco grande no lo detecta `check`.
+`seal_sheet.js` solo cierra huecos aislados de rotación en las dos especies que lo solicitan. `critter.js` y las hojas aprobadas no se modifican.
+El laboratorio exporta recorridos continuos con `--secuencia-ventana`; compilación aislada en `.lab-art`. No desplegar ni avanzar al lote 5.

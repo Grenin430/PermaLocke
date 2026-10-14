@@ -360,3 +360,53 @@ mejor cuando el método de cada anatomía esté probado.
 - `build_batch.js` sobrescribe las hojas de la app de las especies que le pases.
 - `recon2.js` imprime en la consola la información de entrada de ffmpeg antes de su resultado; es normal.
 - Requisitos [verificado]: Node v24.21.0, ffmpeg en `C:\Program Files (x86)\Soundux\ffmpeg.exe`, SDK .NET 10.
+
+### Lote 4 (2026-10-14): entregado para revisión
+Finneon (456), Milotic (350), Manaphy (490), Pelipper (279) y Crobat (169), elegidos y confirmados por el usuario antes de empezar.
+Fuentes e integración en la rama `singleplayer`; entrega en `C:\Users\javie\Desktop\imagenes\revision\lote4\`. No están aprobados todavía.
+
+| Especie | Base reconstruida | Celda de hoja | Fotogramas / inclinaciones | FPS | Movimiento |
+|---|---|---|---|---|---|
+| Finneon | 38×33 | 62×62 | 8 / 7 | 9 | Cola bilobulada y aletas con retraso |
+| Milotic | 84×76 | 106×106 | 8 / 5 | 7 | Ondulación de la serpiente enroscada, abanico y antenas |
+| Manaphy | 54×38 | 72×72 | 8 / 5 | 8 | Brazos alternos y antena que sigue al cuerpo |
+| Pelipper | 65×61 | 88×88 | 8 / 5 | 7 | Aleteo lento de las alas colgantes, pico estable |
+| Crobat | 88×48 | 112×112 | 8 / 5 | 11 | Cuatro alas; el par inferior sigue al superior |
+
+Lo nuevo del método:
+- Crobat: referencia de 246×137; el detector confundía el periodo real con su múltiplo 13,60. Se reconstruye con
+  `node recon2.js C:/Users/javie/Desktop/imagenes/Crobat.jpg crobat 16 2.72`. Su JPEG limita el detalle: no se inventa lo que no se ve.
+  Se quitan las celdas claras de fondo/compresión fuera de la boca; se conservan sus dientes.
+- Milotic: se elimina el fondo blanco atrapado entre la espira y el apéndice, además de una celda junto al abanico. La máscara de la antena
+  derecha necesita un límite en X (53): sin él capturaba el extremo del abanico y abría una grieta grande que `check` no detectaba.
+  **`iso 0, holes 0` no sustituye la revisión de las costuras ampliadas**.
+- Pelipper: el ala cercana se separa siguiendo su borde blanco fila a fila y se dobla por muestreo inverso con desplazamiento cero en la raíz.
+  Crobat: las cuatro alas se doblan por columnas completas, con las raíces fijas y fases distintas.
+- `audit_batch4.js` lee las hojas RGBA reales, comprueba dimensiones, píxeles aislados, huecos de una celda, bordes y colores del ojo en sus
+  regiones giradas. Hay **216 celdas y 256 regiones de ojos** (dos por celda en Manaphy). Todas pasan. No es una prueba de similitud perceptual:
+  se complementa con `rostro.js` y los mosaicos ampliados.
+- La rotación introducía 7 huecos de una celda aun con fotogramas base correctos: 2 en Finneon y 5 en Milotic. `seal_sheet.js`, activado solo
+  mediante `sealRotatedHoles` en esas dos especies, cierra las celdas transparentes rodeadas por cuatro vecinos usando el color vecino mayoritario.
+  No se modifica `critter.js`, ni las animaciones ni las hojas aprobadas. Resultado: **iso 0, holes 0 en los 40 fotogramas y las 216 celdas**.
+- Crobat reserva `layoutHeight: 61` en su entrada: su altura de referencia (48) no bastaba para que las puntas elevadas quedasen dentro del cielo.
+  `build_batch.js` permite esta reserva opcional; las demás especies mantienen su cálculo anterior.
+- El laboratorio admite `--secuencia-ventana escenario inicio segundos fps preset carpeta`, para exportar una secuencia sin reiniciar por
+  fotograma. `render_batch4.ps1` documenta la exportación de 70 segundos (840 PNG a 12 fps), el GIF a 1920×976 sin reescalar y la medición.
+  La paleta del GIF se genera en una pasada aparte para evitar acumular todos los fotogramas en RAM.
+- `review_batch4.js deliver` genera comparaciones a la misma altura, bucles fijos y mosaicos. La entrega añade rostros e informe JSON.
+- Bucles individuales periódicos de 8 fotogramas; el cambio del último al primero está dentro del rango de cambios del ciclo (tolerancia del 5 %).
+  El GIF del recorrido completo vuelve al inicio tras 70 segundos: ese reinicio de la escena no representa el bucle individual del Pokémon.
+- Integración mediante `integrate_entries.js`; solo se sustituyen las cinco entradas nuevas. Las 16 hojas anteriores, sus 15 scripts anatómicos
+  y `critter.js` mantienen sus 32 SHA-256 originales. No se han tocado las especies grandes reservadas.
+
+Limitaciones: revisión en el laboratorio, sin abrir el juego ni desplegar. El agua aplica el tinte y la transparencia existentes detrás del
+texto del equipo; en ventanas que no tienen espacio la fauna sigue las reglas actuales del layout. Los FPS de un GIF se aproximan a centésimas
+por el propio formato. El siguiente lote requiere aprobación explícita; Kyogre, Lugia, Rayquaza, Wailord y Ho-Oh quedan pendientes.
+
+Comprobación final del lote 4 [verificado]: `dotnet build tools/PermaLocke.PlaqueLab --artifacts-path .lab-art`, 0 errores (dos avisos CS0649
+previos en `EmulatorLauncher`). `dotnet test tests/PermaLocke.App.Tests --artifacts-path .lab-art`: **553/553**, 0 fallos y 0 omitidas.
+`--especies 456,350,490,279,169 --medir`: columna del equipo 178×321 **1,90–2,30 ms de media por fotograma**, p95 **2,55–3,53 ms**;
+columna del fondo **1,18–1,42 ms**. Primera preparación 90,05 ms. Son medidas de este PC y del laboratorio, sin el coste del emulador.
+Las cinco hojas PNG suman 101.804 bytes. GIF final decodificado completo: **840 fotogramas, 70,00 s, 1920×976**, sin errores.
+Se han revisado las hojas de rostros completas y ambos paneles del recorrido mediante mosaicos; el GIF mantiene las oclusiones normales del
+juego y del equipo. `--especies` fuerza seis rutas simultáneas y, con dos voladores, repite Crobat: no es la frecuencia normal de la app.

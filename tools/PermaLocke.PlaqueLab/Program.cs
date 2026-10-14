@@ -21,6 +21,30 @@ public static class Program
         // --especies a,b,c: todas las rutas pasan a la vez con esas especies (vista conjunta)
         if (Option("--especies") is { } forcedAll) PermaLocke.App.Views.CapVisitors.ForcedAll = [.. forcedAll.Split(',').Select(int.Parse)];
 
+        // --secuencia-ventana scenario start seconds fps preset directory: render a continuous review without restarting the lab per frame.
+        if (Array.IndexOf(args, "--secuencia-ventana") is var sequence and >= 0)
+        {
+            if (sequence + 6 >= args.Length) throw new ArgumentException("Faltan argumentos de --secuencia-ventana.");
+            var culture = System.Globalization.CultureInfo.InvariantCulture;
+            var scenario = data.Scenarios.First(s => s.Name == args[sequence + 1]);
+            var start = double.Parse(args[sequence + 2], culture);
+            var seconds = double.Parse(args[sequence + 3], culture);
+            var fps = int.Parse(args[sequence + 4], culture);
+            if (!double.IsFinite(start) || !double.IsFinite(seconds) || seconds <= 0 || seconds > 300 || fps is < 1 or > 60)
+                throw new ArgumentException("Duración o frecuencia fuera de rango.");
+            var preset = LabScreen.Presets.First(p => p.Name.StartsWith(args[sequence + 5], StringComparison.Ordinal));
+            var directory = args[sequence + 6];
+            System.IO.Directory.CreateDirectory(directory);
+            var options = new PermaLocke.App.Views.CapOptions();
+            var count = (int)Math.Ceiling(seconds * fps);
+            for (var i = 0; i < count; i++)
+            {
+                var (bgra, _) = LabScreen.Compose(scenario, start + i / (double)fps, preset, options, game: true);
+                PermaLocke.App.Views.CapSnap.Save(System.IO.Path.Combine(directory, $"frame-{i:D4}.png"), bgra, preset.Width, preset.Height);
+            }
+            Console.WriteLine($"{count} fotogramas a {fps} fps en {directory}");
+            return 0;
+        }
         // --ventana escenario t "preset" fichero: una ventana entera del emulador con el panel (el escenario de la captura del jugador)
         if (Option("--ventana") is { } windowScenario && Array.IndexOf(args, "--ventana") + 4 < args.Length + 0)
         {
