@@ -1568,3 +1568,40 @@ Pendiente de aprobación visual. Salamence espera.
 
 ### Dragonite aprobado (2026-10-14)
 El usuario aprueba el vuelo de Dragonite (dragonite_vuelo, commit 253ccf1). Queda Salamence, último de la tanda de vuelo 2.
+
+### Salamence: base de vuelo v3 (2026-10-14), pendiente de aprobación
+Último de la tanda de vuelo 2. Planea con las alas fijas, sin batirlas.
+
+Primero se buscó una referencia de planeo de perfil en cardcodex.com y se eligió la carta japonesa Sky-Splitting Charisma 065/096
+(Mitsuhiro Arita). Sobre ella se empezó una propuesta con la cola atrás y las patas plegadas, que **no se entregó**: el usuario aportó
+otra referencia (una imagen de Salamence en vuelo, de tres cuartos hacia la izquierda, boca abierta, ala lejana alzada detrás, ala
+cercana baja delante, patas colgando y cola curvada detrás) con la indicación: «hazlo de nuevo usando esta imagen como referencia, lo
+único que tienes que hacer es bajarle un poco las alas». Esa postura es la del sprite original. La carta y las 13 descartadas, con el
+motivo de cada una, constan en referencias/fuentes.json.
+
+**Método** (tools/critters/salamence_flight_pose_v3.js): el original entero a escala 1. Solo cambian las alas.
+- Las dos alas forman una masa roja continua. Se separan del resto con edge(y), la línea del hueso blanco y gris del borde de ataque
+  del ala grande, y las máscaras de cresta y boca (isCrestOrMouth). El ala de delante es el rojo por delante de esa línea, junto a la
+  cabeza, con la punta bajo la barbilla. El ala grande es todo lo que queda detrás de la línea, contorno y huesos incluidos.
+- Girarlas por separado (la grande hacia abajo y la de delante hacia el otro lado) abría un hueco de cielo entre ellas y dejaba el ala
+  de delante con un corte recto. Por eso bajan **juntas, como una pieza rígida**: 9° en sentido horario sobre el hombro (SHOULDER
+  [45, 38]) y 5 px más abajo (WINGS_TURN, WINGS_DROP), dibujadas detrás de la cabeza y el cuerpo, al estilo RotSprite.
+- El contorno oscuro del ala de delante se mueve con ella donde da al cielo (isNearOutline). Donde toca el cuello se queda, para que el
+  cuello conserve su borde. Todo píxel rojo de ala que queda junto al cielo toma el contorno H.
+- Rellenado de poros de hasta 4 px, eliminación de migas de menos de 6 px (desaparecen las del original en las filas 69-71) y recorte
+  con 2 px de margen.
+- compose({ wings }) suma grados a las dos alas, para un leve balanceo de planeo en la fase 2. build() da la base.
+
+[Verificado] 85×71 (original 79×72), 3507 píxeles opacos en una sola pieza (8 vecinos), iso 0, holes 0 y solo la paleta original.
+2852 de los 3660 píxeles del original siguen exactamente en su sitio; el resto son las alas movidas y las migas quitadas. Estas pruebas
+no demuestran que la pose sea artísticamente correcta.
+
+Entrega: C:/Users/javie/Desktop/imagenes/revision/salamence_pose_v3/
+- salamence_pose_y_referencia.png: referencia | original ×3 | nueva base ×3.
+- salamence_base_ampliada.png (×6) y salamence_base_nativa.png.
+- salamence_base.txt/.json, auditoria.json y referencias/ (referencia_usuario_vuelo.png, la carta y fuentes.json).
+
+Desde tools/critters: node review_salamence_pose_v3.js. Sin build_batch.js ni integrate_entries.js: la app sigue con el Salamence de
+la tanda 2 rechazada.
+
+Siguiente paso: esperar la aprobación visual de esta base; después, la fase 2 (planeo con alas fijas).
