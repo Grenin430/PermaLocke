@@ -661,3 +661,62 @@ fotograma, p95 **2,39–3,86 ms**; fondo **1,06–1,43 ms**. Primera preparació
 Recorrido de revisión: **840 fotogramas, 70 s, 1920×976**, exportado a 12 fps. Mosaicos de ambos paneles cada dos segundos y vista completa
 revisados: aparecen las cinco especies; se mantienen solapamientos y oclusiones normales. Registro externo y cerebro actualizados.
 GIF completo decodificado sin errores: 840 fotogramas y 70,00 s; registro en `lote9/verificacion_gif.txt`.
+
+### Lote 10 (2026-10-14): entregado para revisión
+Articuno (144), Zapdos (145), Moltres (146), Kyogre (382) y Lugia (249), propuestos y confirmados antes de empezar.
+El usuario confirmó incorporar ahora Kyogre y Lugia, antes reservados. Quedan Wailord, Rayquaza y Ho-Oh para el último lote.
+Integrados en `singleplayer`; entrega en `C:\Users\javie\Desktop\imagenes\revision\lote10\`. Pendiente de aprobación visual.
+
+| Especie | Base reconstruida | Escala de visualización | Celda | Fotogramas / inclinaciones | FPS | Movimiento |
+|---|---|---|---|---|---|---|
+| Articuno | 72×81 | 75 % | 76×76 | 8 / 3 | 7 | Alas elevadas dobladas desde la raíz, cola larga y patas |
+| Zapdos | 91×58 | 100 % | 108×108 | 8 / 3 | 9 | Alas angulosas por columnas, cresta, cola y garras |
+| Moltres | 87×70 | 85,7 % (6/7) | 90×90 | 8 / 3 | 8 | Alas, cola de fuego, cresta y patas con desfase |
+| Kyogre | 94×57 | 100 % | 132×132 | 8 / 5 | 6 | Aletas amplias, cola bifurcada y dorsal; balanceo del cuerpo |
+| Lugia | 80×80 | 75 % | 76×76 | 8 / 3 | 6 | Alas articuladas por doblado inverso, cola y patas |
+
+Lo nuevo del método:
+- Cuadrículas: Articuno automática **7,04**, Moltres **6,90**, Kyogre **7,34**, Lugia **6,58**. Zapdos detectaba el doble (**14,74**):
+  se usa el cuarto argumento explícito **7,37**. Comparaciones de referencia y reconstrucción a igual altura.
+- Fondo atrapado: celdas blancas dentro del bucle de la cola y entre plumas de Articuno; entre patas de Zapdos; dos celdas claras entre
+  llamas de Moltres y blanco puro entre uñas de Kyogre. Lugia conserva sus blancos anatómicos sin limpieza adicional.
+- Se mantiene la autorización de reducir solo la visualización cuando no cabe en el cielo: Articuno y Lugia al 75 %, Moltres a 6/7.
+  `rows`, TXT y `sourceFrames` conservan base y animación nativa. `batch10_display.js` aplica vecino más cercano, proyección de rasgos
+  originales y sellado de huecos de una celda totalmente encerrados con color vecino. Ningún color interpolado ni redibujado.
+  Sellado tras reducir: Articuno 0, Moltres 12, Lugia 1 celdas sumadas entre sus ocho fotogramas. Cero muestras aisladas eliminadas.
+- Articuno: al reducir, iris rojo y blanco contiguo coincidían en el mismo píxel. Se proyecta primero el blanco del ojo y después la celda
+  original roja (29,33); el blanco de la fila superior queda visible. La auditoría exige expresamente rojo C y blanco B en las 24 celdas.
+  No proyectar todo el contorno después del iris: puede taparlo cuando dos celdas originales convergen en la misma celda reducida.
+- Moltres: el ala izquierda elevada se desplaza por filas desde su raíz; la derecha por columnas. La cola de fuego usa muestreo inverso
+  horizontal con desfase por altura. Se ajustó su máscara en y=24/31/40 para no incluir puntas de llama del ala derecha.
+  Así desaparecen las cinco muestras aisladas del intento inicial sin borrarlas de la animación nativa.
+- Lugia: alas por muestreo inverso, raíces quietas; la máscara deja fuera la cola que pasa por detrás. Ojo y boca preservados al reducir.
+  Usa la misma hoja en el mar y en el cielo; no se cambia la programación de sus apariciones.
+- Kyogre: **Pose 28°**, filas 16/22/28/34/40 para compensar la pose diagonal original. Reserva de altura **90** en el mar para cubrir
+  las inclinaciones; no se amplía ni se reduce. Se conservan las marcas rojas de las aletas y la pupila negra dentro del iris amarillo.
+- `integrate_entries.js`: la última entrada del catálogo (Moltres) no llevaba coma final. El patrón acepta ahora coma opcional.
+  Integración repetida comprobada sin cambios en el archivo; las demás entradas mantienen su sintaxis. Solo se sustituyen las cinco de este lote.
+- `audit_batch10.js`: **40 fotogramas de visualización + 24 nativos**, **136 celdas inclinadas**, **160/160 regiones de ojos**
+  (Moltres tiene dos regiones), **iso 0, holes 0**, cero celdas tocando bordes y cierre de los cinco ciclos dentro del máximo con tolerancia 5 %.
+  Costuras revisadas con `zoom.js` y todos los rostros con `rostro.js`.
+- Sellado de rotaciones aprobado: **76 huecos de una celda** (Articuno 4, Moltres 3, Kyogre 69), mediante `sealRotatedHoles`.
+  No se modifica `critter.js`, `seal_sheet.js` ni ninguna especie aprobada.
+- Cielo (superficie 69, redondeo de C#): Articuno **y=3..64**, Zapdos **4..62**, Moltres **3..64**, Lugia **4..64**.
+  Auditoría adicional de mar, conservadora para el redondeo: Kyogre mínimo **y=80**, margen mínimo al suelo **13**; Lugia **y=75**, margen **16**.
+- Laboratorio compilado solo con `--artifacts-path .lab-art`: **0 errores**, dos advertencias CS0649 previas.
+  Pruebas **555/555**, cero fallos y cero omitidas, **24 s**; advertencias CS8321 y xUnit2030 previas.
+- **92 hashes SHA-256 idénticos**: 46 hojas aprobadas, 45 scripts anatómicos y `critter.js`. Las cinco hojas nuevas suman **90.822 bytes**.
+- Reproducción desde `tools/critters`: `review_batch10.js deliver`, `audit_batch10.js`, `render_batch10.ps1`.
+
+Limitaciones: las tres reducciones pierden detalle fino, conservando los originales. Las amplitudes de los voladores se contienen para caber
+en el cielo; el dibujo de referencia determina la pose. El modo forzado mantiene siete recorridos: Kyogre en dos rutas y Lugia en mar y cielo,
+además de las tres aves; no representa su frecuencia normal y puede haber solapamientos. Se conservan el tinte del agua y la atenuación tras
+el equipo. El GIF usa 256 colores y tiempos en centésimas, mientras la app conserva sus PNG. El reinicio del recorrido largo es distinto del
+bucle individual de cada especie. Solo laboratorio, sin emulador ni despliegue.
+**Lote 10 entregado para revisión. No comenzar el lote 11 hasta la aprobación del usuario.**
+
+Rendimiento final [verificado] con `--especies 144,145,146,382,249 --medir`: columna del equipo 178×321 **1,80–2,26 ms de media** por
+fotograma, p95 **2,46–3,43 ms**; fondo **1,15–1,60 ms**. Primera preparación 94,23 ms. Medidas de este PC en laboratorio, sin emulador.
+Recorrido de revisión: **840 fotogramas, 70 s, 1920×976**, exportado a 12 fps. Mosaicos de ambos paneles cada dos segundos y una vista
+completa revisados: aparecen las cinco especies; Lugia pasa por mar y cielo. Se mantienen los solapamientos y las oclusiones habituales.
+GIF final completo decodificado sin errores: **840 fotogramas, 70,00 s**; registro en `lote10/verificacion_gif.txt`.

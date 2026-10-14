@@ -9,9 +9,10 @@ let s = fs.readFileSync(file, "utf8");
 const crlf = s.includes("\r\n");
 s = s.replace(/\r\n/g, "\n");
 for (const { id, entry } of entries) {
+  // The last catalog entry can omit its trailing comma.
   // an old hand-drawn entry spans several lines up to its closing """) or """, "up", 3); a sheet entry is one line with Sheet:
   const sheetLine = new RegExp(String.raw`            new\(${id}, "([^"]+)",[^\n]*Sheet:[^\n]*\n`);
-  const drawn = new RegExp(String.raw`            new\(${id}, "([^"]+)"[\s\S]*?"""(, "(up|sym)", \d+)?\),\n`);
+  const drawn = new RegExp(String.raw`            new\(${id}, "([^"]+)"[\s\S]*?"""(, "(up|sym)", \d+)?\),?\n`);
   const m = s.match(sheetLine) ?? s.match(drawn);
   if (!m) throw new Error("no entry for species " + id);
   s = s.replace(m[0], `            new(${id}, "${m[1]}", CritterMotion.Fish, "", "", ${entry}),\n`);

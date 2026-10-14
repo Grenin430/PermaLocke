@@ -559,3 +559,9 @@ negro del estudio de fotos: gen 8-9 en el equipo (ver Trampas y lecciones).
 - **Aprobación del lote 9** (2026-10-14): el usuario confirmó «aprobado». Bruxish, Staraptor, Salamence, Charizard y Latios quedan aprobados,
   incluidas las visualizaciones reducidas entregadas. Actualizados continuidad, registro externo y LEEME de la entrega. Sin cambios en los sprites.
   La selección del lote 10 sigue pendiente. Commit local sin push.
+
+- **Sprites del mar, lote 10** (2026-10-14): el usuario confirmó Articuno, Zapdos, Moltres, Kyogre y Lugia, incluyendo los dos grandes
+  antes reservados. Reconstrucción celda a celda y animación por anatomía. Reducción de visualización de Articuno/Lugia al 75 % y Moltres
+  a 6/7 dentro de la autorización anterior; originales conservados. Iris de Articuno preservado tras reducir; Kyogre compensa su pose a 28°.
+  Corregida la integración de la última entrada del catálogo sin coma. 555 pruebas correctas, 136 celdas, 160 regiones de ojos, 92 archivos
+  aprobados intactos. Entrega en `imagenes/revision/lote10`, pendiente de aprobación. Commit local sin push. No empezar el lote 11.

@@ -122,3 +122,12 @@ Reducción de visualización autorizada: Salamence 83,3 %, Charizard 75 %, Latio
 `recon2.js` toma el centro cuando una cuadrícula diminuta no tiene muestra interior; ojo de Latios preservado al reducir.
 El laboratorio ahora incluye los cuatro voladores en la vista forzada, con dos pruebas nuevas; las asignaciones anteriores se conservan.
 41 hojas aprobadas intactas, 82 hashes sin cambios. Solo `.lab-art`, sin desplegar. Lote 9 aprobado; confirmar la selección del lote 10 antes de empezar.
+
+## Sprites del mar: lote 10 singleplayer (2026-10-14)
+Articuno, Zapdos, Moltres, Kyogre y Lugia: integrados y entregados para revisión, pendientes de aprobación.
+El usuario confirmó incluir ahora Kyogre y Lugia; quedan Wailord, Rayquaza y Ho-Oh. Método en `CONTINUIDAD_SPRITES_POKEMON.md`, «Lote 10».
+Entrega: `C:\Users\javie\Desktop\imagenes\revision\lote10\`. Articuno y Lugia al 75 %, Moltres a 6/7; solo visualización, originales conservados.
+Zapdos usa periodo 7,37; Kyogre mantiene tamaño nativo, Pose 28 y reserva 90 en el mar. `batch10_display.js` preserva rasgos al reducir;
+el iris rojo de Articuno se proyecta después del blanco para evitar que lo tape. Integración admite la entrada final sin coma.
+136 celdas, 160 regiones de ojos y 555 pruebas correctas. Mar y cielo auditados. 92 hashes anteriores intactos; sin despliegue.
+No iniciar lote 11 hasta aprobar el lote 10 y confirmar la selección.
