@@ -557,9 +557,9 @@ fotograma, p95 **2,13–3,66 ms**; fondo **1,02–1,21 ms**. Primera preparació
 GIF decodificado completo sin errores: **840 fotogramas, 70,00 s, 1920×976**, exportado a 12 fps. Mosaicos de ambos paneles revisados;
 se mantienen las oclusiones habituales detrás del juego y del equipo, y los solapamientos entre Pokémon de la vista forzada.
 
-### Lote 8 (2026-10-14): entregado para revisión
+### Lote 8 (2026-10-14): aprobado por el usuario
 Carvanha (318), Seaking (119), Fearow (22), Dragonite (149) y Latias (380), propuestos y confirmados por el usuario antes de empezar.
-Integrados en `singleplayer`; entrega en `C:\Users\javie\Desktop\imagenes\revision\lote8\`. Pendiente de aprobación del usuario.
+Integrados en `singleplayer`; entrega en `C:\Users\javie\Desktop\imagenes\revision\lote8\`. Aprobados por el usuario el 2026-10-14.
 
 | Especie | Base reconstruida | Celda de hoja | Fotogramas / inclinaciones | FPS | Movimiento |
 |---|---|---|---|---|---|
@@ -599,7 +599,7 @@ aunque la base original se conserva. Los JPEG pequeños limitan la reconstrucci�
 ni despliegue. Los nadadores mantienen el tinte del agua y la atenuación tras el equipo. La vista forzada repite Carvanha en seis rutas;
 no representa la frecuencia normal y puede producir solapamientos. GIF de 256 colores y tiempos en centésimas; los PNG son los originales.
 El reinicio del recorrido de 70 segundos es distinto del bucle individual. Los cinco grandes siguen reservados.
-**Parar aquí: no comenzar el lote 9 hasta aprobar el lote 8 y confirmar las siguientes especies.**
+**Lote 8 aprobado. Confirmar las cinco especies del lote 9 antes de comenzar.**
 
 Rendimiento final [verificado] con `--especies 318,119,22,149,380 --medir`: columna del equipo 178×321 **1,75–2,10 ms de media** por
 fotograma, p95 **2,21–3,50 ms**; fondo **1,07–1,30 ms**. Primera preparación 86,33 ms. Medidas de este PC en el laboratorio, sin emulador.

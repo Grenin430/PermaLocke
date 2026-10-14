@@ -545,3 +545,7 @@ negro del estudio de fotos: gen 8-9 en el equipo (ver Trampas y lecciones).
   el cielo: la visualización usa 75 % por vecino más cercano, conservando la base y los fotogramas originales. Fearow pliega las alas.
   168 celdas, 168 regiones de ojos y 553 pruebas correctas; 72 archivos aprobados intactos. Entrega en `imagenes/revision/lote8`,
   pendiente de aprobación. Commit local sin push; no avanzar al lote 9.
+
+- **Aprobación del lote 8** (2026-10-14): el usuario confirmó «aprobado». Carvanha, Seaking, Fearow, Dragonite y Latias quedan aprobados,
+  incluida la visualización de Dragonite al 75 % autorizada previamente. Actualizados continuidad, registro externo y LEEME de la entrega.
+  Sin cambios en los sprites. La selección del lote 9 sigue pendiente.
