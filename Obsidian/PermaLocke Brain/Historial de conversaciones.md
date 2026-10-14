@@ -531,3 +531,8 @@ negro del estudio de fotos: gen 8-9 en el equipo (ver Trampas y lecciones).
 
 - **Aprobación del lote 6** (2026-10-14): el usuario confirmó «aprobado». Remoraid, Lanturn, Kingdra, Toucannon y Altaria quedan aprobados.
   Actualizados continuidad, registro externo y LEEME de la entrega. Sin cambios en los sprites. La selección del lote 7 sigue pendiente.
+
+- **Lote 7 de sprites del mar** (2026-10-14): el usuario pidió continuar y confirmó Wishiwashi, Relicanth, Pidgeot, Togekiss y Aerodactyl.
+  Reconstruidos de sus referencias y animados por anatomía. Pidgeot y Togekiss necesitaron periodo explícito; Relicanth ajusta Pose a 28°.
+  La auditoría comprueba 168 celdas, 168 regiones de ojos y el espacio de los voladores en el cielo con redondeo al par. 553 pruebas aprobadas,
+  62 archivos aprobados intactos. Entrega en `imagenes/revision/lote7`, pendiente de aprobación. Commit local sin push; no avanzar al lote 8.

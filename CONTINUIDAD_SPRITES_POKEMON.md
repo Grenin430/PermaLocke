@@ -503,3 +503,56 @@ Rendimiento final [verificado] con `--especies 223,171,230,733,334 --medir`: col
 fotograma, p95 **2,41–3,74 ms**; fondo **1,00–1,35 ms**. Primera preparación 85,42 ms. Son medidas de este PC en el laboratorio, sin emulador.
 GIF final decodificado sin errores: **840 fotogramas, 70,00 s, 1920×976**, exportado a 12 fps. Revisados los mosaicos de ambos paneles;
 se conservan las oclusiones habituales al pasar detrás del juego, del equipo o de otro Pokémon en esta vista forzada.
+
+### Lote 7 (2026-10-14): entregado para revisión
+Wishiwashi (746), Relicanth (369), Pidgeot (18), Togekiss (468) y Aerodactyl (142), propuestos y confirmados por el usuario antes de empezar.
+Integrados en `singleplayer`; entrega en `C:\Users\javie\Desktop\imagenes\revision\lote7\`. Pendiente de aprobación del usuario.
+
+| Especie | Base | Celda de hoja | Fotogramas / inclinaciones | FPS | Movimiento |
+|---|---|---|---|---|---|
+| Wishiwashi | 43×25 | 60×60 | 8 / 5 | 10 | Cola rápida, dorsal y dos aletas ventrales desfasadas |
+| Relicanth | 51×49 | 92×92 | 8 / 5 | 6 | Cuerpo firme, dorsal, cola y tres aletas lobuladas |
+| Pidgeot | 55×68 | 84×84 | 8 / 3 | 8 | Cabeza, ala plegada, cresta larga, cola y dedos |
+| Togekiss | 77×43 | 100×100 | 8 / 5 | 8 | Alas anchas dobladas por columnas, cola y pies |
+| Aerodactyl | 79×59 | 100×100 | 8 / 3 | 9 | Dos membranas, cola curvada y patas con retraso |
+
+Método y comprobaciones:
+- Reconstrucción celda a celda, sin redibujar: Wishiwashi periodo 15,90; Relicanth 9,98; Aerodactyl 7,10.
+  Pidgeot requiere **3,55** explícito (automático 7,10); Togekiss, **3,08** (automático 15,44). Con la cuadrícula gruesa se perdían rasgos
+  y el relleno de fondo atravesaba el contorno claro de Togekiss. Comparaciones a la misma altura revisadas antes de animar.
+- Pidgeot: retirar blanco de fondo detrás de la cabeza y entre puntas de la cresta (x >= 20, y < 60); conservar ojo y uñas claras.
+  La máscara de la cresta sigue el primer rojo de cada fila para separar el apéndice largo del ala plegada y del cuerpo.
+- Togekiss: siete celdas claras de ruido de cuadrícula/JPEG retiradas fuera de la cresta roja y sobre el ala derecha, con coordenadas
+  explícitas en el script. Se conservan las zonas blancas del cuerpo y su patrón de sombreado. Las alas se doblan por columnas desde
+  raíces fijas, con distinta amplitud; la máscara de la cola no invade el ala.
+- Aerodactyl: se separa primero la cola que pasa por encima de la cabeza para que su punta no pertenezca al ala izquierda. Ambas
+  membranas bajan por columnas completas, con movimiento cero en el hombro; las patas siguen el ciclo con fases distintas.
+- Relicanth: la referencia apunta hacia abajo; `Pose: 28`, inclinaciones 16/22/28/34/40, para avanzar aproximadamente horizontal en el
+  layout. Se conserva el ojo cerrado de la referencia, sin inventar pupila. La auditoría verifica sus colores en esa región y el mosaico
+  permite comprobar su forma. Boca y marca roja lateral protegidas al girar.
+- Pidgeot: `layoutHeight: 61`, sin traslación vertical del cuerpo e inclinaciones -1/0/1 por su altura. Aerodactyl usa altura 61 y -3/0/3;
+  Togekiss reserva altura 56 y -6/-3/0/3/6. La nueva auditoría de cielo reproduce `Math.Round` de C# (empates al par), no `floor`:
+  los límites verticales de todas las celdas son **Pidgeot y=0..67, Togekiss y=8..59, Aerodactyl y=3..63**, con superficie en y=69.
+  Pidgeot cabe con poco margen; no se reduce la escala ni se modifica el layout para esconder el problema.
+- `audit_batch7.js`: **40 fotogramas base, 168 celdas inclinadas, iso 0, holes 0, cero celdas tocando sus bordes**.
+  **168/168 regiones de ojos** comprobadas; mosaicos `rostro.js` y costuras ampliadas con `zoom.js` revisados visualmente.
+  La auditoría también comprueba la transición del último al primer fotograma, dentro del mayor cambio del resto del ciclo.
+- Rotación: 17 huecos aislados de una celda en Relicanth y 4 en Pidgeot, cerrados con `sealRotatedHoles` y el `seal_sheet.js` aprobado.
+  Ninguna modificación de `critter.js`, de la herramienta de sellado ni de las especies aprobadas.
+- Laboratorio compilado con `--artifacts-path .lab-art`: **0 errores**, dos avisos CS0649 previos de `EmulatorLauncher`.
+  `dotnet test tests/PermaLocke.App.Tests --artifacts-path .lab-art`: **553/553**, cero fallos y cero omitidas, 25 s.
+- Las 31 hojas anteriores, sus 30 scripts anatómicos y `critter.js` conservan sus **62 hashes SHA-256** originales.
+  Las cinco hojas nuevas suman **61.801 bytes**. Solo se reemplazan sus cinco entradas en `CapCritterArt.cs`.
+- Reproducción desde `tools/critters`: `review_batch7.js deliver`, `audit_batch7.js`, `render_batch7.ps1`.
+
+Limitaciones: Pidgeot conserva la pose posada y movimientos contenidos por su altura. Aerodactyl también tiene una amplitud moderada
+para caber en el cielo. La calidad de las referencias pequeñas limita los detalles de Pidgeot y Togekiss. Verificado en el laboratorio,
+sin abrir juego ni desplegar. Los nadadores mantienen el tinte del agua y la atenuación detrás del equipo. GIF con 256 colores y tiempos
+en centésimas; la app conserva los PNG originales. El reinicio del recorrido largo es distinto del bucle individual de cada especie.
+`--especies` fuerza seis rutas simultáneas y repite Wishiwashi: no es la frecuencia normal de la app. Los cinco grandes siguen reservados.
+**Parar aquí: no comenzar el lote 8 hasta aprobar el lote 7 y confirmar las siguientes especies.**
+
+Rendimiento final [verificado] con `--especies 746,369,18,468,142 --medir`: columna del equipo 178×321 **1,68–2,02 ms de media** por
+fotograma, p95 **2,13–3,66 ms**; fondo **1,02–1,21 ms**. Primera preparación 88,45 ms. Medidas de este PC en el laboratorio, sin emulador.
+GIF decodificado completo sin errores: **840 fotogramas, 70,00 s, 1920×976**, exportado a 12 fps. Mosaicos de ambos paneles revisados;
+se mantienen las oclusiones habituales detrás del juego y del equipo, y los solapamientos entre Pokémon de la vista forzada.

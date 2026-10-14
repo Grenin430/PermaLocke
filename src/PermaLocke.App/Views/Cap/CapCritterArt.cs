@@ -48,12 +48,7 @@ public sealed record CritterArt(int Species, string Name, CritterMotion Motion, 
             new(370, "Luvdisc", CritterMotion.Fish, "", "", Fps: 7, Sheet: "luvdisc", Cell: 50, Angles: [-8, -4, 0, 4, 8], Pose: 0, Height: 34, Drift: 5, Bob: 1.5, Surge: 0.5),
             new(223, "Remoraid", CritterMotion.Fish, "", "", Fps: 9, Sheet: "remoraid", Cell: 54, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 34, Drift: 6, Bob: 1.5, Surge: 1),
             new(211, "Qwilfish", CritterMotion.Fish, "", "", Fps: 8, Sheet: "qwilfish", Cell: 62, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 44, Drift: 5, Bob: 2.5, Surge: 0.5),
-            new(746, "Wishiwashi", CritterMotion.Fish, "b=6890E0 w=F0F0F8 k=181818", """
-                .bbbbb...
-                bwkbbbbbb
-                bbbbbbbb.
-                .wwbbb.bb
-                """),
+            new(746, "Wishiwashi", CritterMotion.Fish, "", "", Fps: 10, Sheet: "wishiwashi", Cell: 60, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 25, Drift: 7, Bob: 2, Surge: 1.1),
             new(170, "Chinchou", CritterMotion.Fish, "", "", Fps: 8, Sheet: "chinchou", Cell: 70, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 35, Drift: 4, Bob: 3, Surge: 0.4),
             new(318, "Carvanha", CritterMotion.Fish, "r=D84050 b=3860A0 y=F0E060 w=F8F8F8 k=181818", """
                 ...bbbb.....
@@ -91,15 +86,7 @@ public sealed record CritterArt(int Species, string Name, CritterMotion Motion, 
             new(319, "Sharpedo", CritterMotion.Fish, "", "", Fps: 9, Sheet: "sharpedo", Cell: 90, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 70, Drift: 7, Bob: 1.5, Surge: 1.6),
             new(457, "Lumineon", CritterMotion.Fish, "", "", Fps: 8, Sheet: "lumineon", Cell: 80, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 57, Drift: 6, Bob: 1.5, Surge: 0.6),
             new(171, "Lanturn", CritterMotion.Fish, "", "", Fps: 7, Sheet: "lanturn", Cell: 86, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 46, Drift: 5, Bob: 2, Surge: 0.6),
-            new(369, "Relicanth", CritterMotion.Fish, "b=A08868 d=786048 p=E8A0A0 k=181818 y=E8D8A0", """
-                .....dddd.......
-                ..bbbbbbbbbb..dd
-                .pbkbbdbbdbbbddd
-                pbbbbbbbbbbbbbdd
-                .yyybbdbbdbbbddd
-                ..yyyybbbbbb..dd
-                .....dd..dd.....
-                """),
+            new(369, "Relicanth", CritterMotion.Fish, "", "", Fps: 6, Sheet: "relicanth", Cell: 92, Angles: [16, 22, 28, 34, 40], Pose: 28, Height: 49, Drift: 4, Bob: 1, Surge: 0.6),
             new(117, "Seadra", CritterMotion.Fish, "", "", Fps: 10, Sheet: "seadra", Cell: 68, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 47, Drift: 4, Bob: 2, Surge: 0.7),
             new(131, "Lapras", CritterMotion.Fish, "", "", Fps: 6, Sheet: "lapras", Cell: 88, Angles: [-4, 0, 4, 8], Pose: 0, Height: 66, Drift: 4, Bob: 1, Surge: 1),
             new(130, "Gyarados", CritterMotion.Fish, "", "", Fps: 7, Sheet: "gyarados", Cell: 100, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 76, Drift: 6, Bob: 1.5, Surge: 1.2),
@@ -156,16 +143,7 @@ public sealed record CritterArt(int Species, string Name, CritterMotion Motion, 
 
             // ------------------------------------------------------------ the sky, less common and rare
             new(279, "Pelipper", CritterMotion.Fish, "", "", Fps: 7, Sheet: "pelipper", Cell: 88, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 61, Drift: 7, Bob: 2, Surge: 0.8),
-            new(18, "Pidgeot", CritterMotion.Fish, "b=A07040 c=F0D8A0 r=E05040 y=F0C040 k=181818", """
-                ..ryyrr...........
-                .ryyr....BBBB.....
-                ..bbb...BBBBBB....
-                .bkbbb.BBBBBBB....
-                ybbbbbbbbbBBBbbbbb
-                .cccbbbbbbbbbbbbbbr
-                ..cccccbbbbbbbbrry
-                ....ccc.....rryy..
-                """, "up", 4),
+            new(18, "Pidgeot", CritterMotion.Fish, "", "", Fps: 8, Sheet: "pidgeot", Cell: 84, Angles: [-1, 0, 1], Pose: 0, Height: 61, Drift: 1, Bob: 0.3, Surge: 0.5),
             new(22, "Fearow", CritterMotion.Fish, "b=A06840 r=C84030 y=F0B0A0 k=181818 c=E8D8B0", """
                 ..........RRR.....
                 .........RRRRR....
@@ -186,15 +164,7 @@ public sealed record CritterArt(int Species, string Name, CritterMotion Motion, 
                 ..wwwwnnnnnnnnn...
                 """, "up", 3),
             new(169, "Crobat", CritterMotion.Fish, "", "", Fps: 11, Sheet: "crobat", Cell: 112, Angles: [-8, -4, 0, 4, 8], Pose: 0, Height: 61, Drift: 9, Bob: 2.5, Surge: 1.2),
-            new(468, "Togekiss", CritterMotion.Fish, "w=F8F8F8 r=E04040 b=4878C8 y=F0D060 k=181818", """
-                ...........WWW..
-                .........WWWWW..
-                .www...WWWWWW...
-                wkwww.WWWWWwwwr.
-                .wwwwwwwwwwwwwwb
-                ..wwwwwwwwwwwwr.
-                ....www.........
-                """, "up", 3),
+            new(468, "Togekiss", CritterMotion.Fish, "", "", Fps: 8, Sheet: "togekiss", Cell: 100, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 56, Drift: 5, Bob: 1, Surge: 0.7),
             new(149, "Dragonite", CritterMotion.Fish, "o=F0A040 c=F8E0A0 g=60A880 k=181818", """
                 .o.o.....GGG....
                 ..oo....GGGG....
@@ -225,15 +195,7 @@ public sealed record CritterArt(int Species, string Name, CritterMotion Motion, 
                 ..cccccooooooo.....rf.
                 .....oo.....oo........
                 """, "up", 3),
-            new(142, "Aerodactyl", CritterMotion.Fish, "g=A098B8 d=706888 w=F0F0F0 k=181818", """
-                ..........GGGG....
-                .........GGGGGG...
-                .ggg....GGGGGG....
-                gkggg..GGGGGgggg..
-                wwgggggggggggggggg
-                .wgggggggggggg..gg
-                ...........gg.....
-                """, "up", 3),
+            new(142, "Aerodactyl", CritterMotion.Fish, "", "", Fps: 9, Sheet: "aerodactyl", Cell: 100, Angles: [-3, 0, 3], Pose: 0, Height: 61, Drift: 3, Bob: 0.5, Surge: 0.9),
             new(380, "Latias", CritterMotion.Fish, "w=F0F0F8 r=E04050 b=3868C8 k=181818", """
                 ........RRR.....
                 .......RRRR.....
