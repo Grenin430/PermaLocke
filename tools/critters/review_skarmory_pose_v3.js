@@ -2,7 +2,7 @@
 // alone. Nothing here touches the production sheets, CapCritterArt.cs or the animation pipeline.
 const fs = require("fs"), path = require("path"), { execFileSync } = require("child_process");
 const C = require("./critter"), pose = require("./skarmory_flight_pose_v3");
-const OUT = "C:/Users/javie/Desktop/imagenes/revision/skarmory_pose_v3", FF = "C:/Program Files (x86)/Soundux/ffmpeg.exe";
+const OUT = process.env.SKARMORY_OUT || "C:/Users/javie/Desktop/imagenes/revision/skarmory_pose_v3", FF = "C:/Program Files (x86)/Soundux/ffmpeg.exe";
 const REF = path.join(OUT, "referencias/phantom_forces_59.png");
 fs.mkdirSync(OUT, { recursive: true });
 const b = pose.build(), { pal } = b, base = b.rows, orig = C.load("skarmory").rows;
@@ -38,10 +38,20 @@ execFileSync(FF, ["-v", "error", "-y", "-i", REF, "-i", path.join(OUT, "_origina
   path.join(OUT, "skarmory_pose_y_referencia.png")]);
 for (const f of ["_original_x3.png", "_base_x3.png"]) fs.unlinkSync(path.join(OUT, f));
 
-const check = C.check([base.map(r => [...r])]);
+const check = C.check([base]);
+// one drawing: every opaque pixel reaches every other through its 8 neighbours
+const seen = new Set(), pieces = [];
+base.forEach((r, y) => [...r].forEach((c, x) => {
+  if (c === "." || seen.has(x + "," + y)) return;
+  const q = [[x, y]]; seen.add(x + "," + y); let n = 0;
+  while (q.length) { const [a, b2] = q.pop(); n++;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const X = a + dx, Y = b2 + dy;
+      if (base[Y]?.[X] && base[Y][X] !== "." && !seen.has(X + "," + Y)) { seen.add(X + "," + Y); q.push([X, Y]); } } }
+  pieces.push(n);
+}));
 const used = new Set(base.join("").replace(/\./g, ""));
 const report = {
-  size: [base[0].length, base.length], opaque: check.pixels[0], iso: check.iso, holes: check.holes,
+  size: [base[0].length, base.length], opaque: check.pixels[0], pieces, iso: check.iso, holes: check.holes,
   paletteOnly: [...used].every(c => c in pal), originalSize: [orig[0].length, orig.length],
   limits: ["La prueba holes solo detecta huecos unitarios", "Base estatica: sin animacion, integracion ni medicion del layout"],
 };

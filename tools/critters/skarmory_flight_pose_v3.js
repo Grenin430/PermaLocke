@@ -12,17 +12,21 @@ rows[31][60] = ".";
 // Pieces of the original, by region (66x68 source).
 const red = c => "DFJKOP".includes(c);
 const isHead = (x, y) => x <= 21 && y >= 13 && y <= 39 && !(x >= 18 && y >= 30);
-const isNeck = (x, y) => !isHead(x, y) && x >= 15 && x <= 37 && y >= 26 && y <= 45 && !(x >= 34 && red(at(x, y)));
-const isFarBlades = (x, y) => x >= 22 && x <= 40 && y <= 25;
-const isTail = (x, y) => x >= 46 && y >= 35 && y <= 48 && !(x <= 50 && y <= 37);
+// Above the line from the back of the head to the wing root the striped block is the far wing's base plating, not neck: left
+// standing without its blades it read as a second neck. The neck is the striped band below that line.
+const isPlating = (x, y) => x >= 22 && x <= 37 && y >= 26 && y < 27 + (x - 21) * 0.75;
+const isNeck = (x, y) => !isHead(x, y) && !isPlating(x, y) && x >= 15 && x <= 37 && y >= 26 && y <= 45 && !(x >= 34 && red(at(x, y)));
+// The far wing's upright blades; the near wing's silver leading edge starts at x 37 and stays whole down to the shoulder.
+const isFarBlades = (x, y) => x >= 22 && x <= (y <= 19 ? 37 : 36) && y <= 25;
+const isTail = (x, y) => x >= 46 && y >= 35 && y <= 48 && !(x <= 50 && y <= 37) && !(x <= 53 && y <= 36);
 const isNearWing = (x, y) => y <= 38 && !isHead(x, y) && !isNeck(x, y) && !isFarBlades(x, y) && !isTail(x, y) && x >= 33;
 const isFrontLeg = (x, y) => y >= 49 && x <= 35;
 const isBackLeg = (x, y) => y >= 50 && x >= 38;
 const isBody = (x, y) => y >= 38 && y <= 53 && x >= 22 && x <= 50 && !isTail(x, y) && !isNeck(x, y) && !isFrontLeg(x, y) && !isBackLeg(x, y);
-// The far wing's silver blades are left out of this pose; where they rose from the neck its top is closed with the dark
-// outline the rest of the neck has.
-for (let y = 26; y <= 30; y++) for (let x = 22; x <= 37; x++)
-  if (isNeck(x, y) && rows[y][x] !== "." && isFarBlades(x, y - 1) && rows[y - 1][x] !== "." && !"CGL".includes(rows[y][x])) rows[y][x] = "G";
+// Where the plating came off, the neck and back are closed with the dark blue outline the rest of the drawing has.
+const cut = rows.map((r, y) => r.map((c, x) => c !== "." && (isPlating(x, y) || isFarBlades(x, y))));
+for (let y = 26; y <= 45; y++) for (let x = 15; x <= 38; x++)
+  if (isNeck(x, y) && rows[y][x] !== "." && !"CGL".includes(rows[y][x]) && [[0, -1], [1, 0], [1, -1]].some(([dx, dy]) => cut[y + dy]?.[x + dx])) rows[y][x] = "G";
 
 function scale2x(g) {
   const h = g.length, w = g[0].length, o = Array.from({ length: h * 2 }, () => Array(w * 2).fill("."));
@@ -38,13 +42,14 @@ function scale2x(g) {
 }
 // A piece turned `deg` clockwise round `pivot` (source coords) and its pivot moved to `to` (canvas coords).
 // `squash` shortens it along the canvas axes round the pivot (a far part seen in depth).
-function piece(mask, pivot, deg, to, recolour = {}, squash = [1, 1]) {
+// `flip` mirrors it left to right round the pivot before turning (the far wing is the near one seen from its other side).
+function piece(mask, pivot, deg, to, recolour = {}, squash = [1, 1], flip = false) {
   const part = rows.map((r, y) => r.map((c, x) => (mask(x, y) && c !== "." ? recolour[c] || c : ".")));
   const big = scale2x(scale2x(scale2x(part))), S = 8, a = (deg * Math.PI) / 180, co = Math.cos(a), si = Math.sin(a);
   const out = [];
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
     const dx = (x + 0.5 - to[0]) / squash[0], dy = (y + 0.5 - to[1]) / squash[1];
-    const sx = co * dx + si * dy + pivot[0], sy = -si * dx + co * dy + pivot[1];
+    const ux = co * dx + si * dy, sx = (flip ? -ux : ux) + pivot[0], sy = -si * dx + co * dy + pivot[1];
     const c = big[Math.floor(sy * S)]?.[Math.floor(sx * S)];
     if (c && c !== ".") out.push([x, y, c]);
   }
@@ -65,16 +70,16 @@ const onCore = ([x, y]) => {
 };
 const SHOULDER = [37, 36];
 const layers = {
-  farWing: piece(isNearWing, SHOULDER, TILT + 170, (([x, y]) => [x - 8, y + 9])(onCore(SHOULDER)), SHADE, [0.85, 0.7]),
-  backLeg: piece(isBackLeg, [44, 51], TILT - 45, onCore([45, 50])),
+  farWing: piece(isNearWing, SHOULDER, TILT - 80, (([x, y]) => [x - 9, y + 6])(onCore(SHOULDER)), SHADE, [0.85, 0.7], true),
+  backLeg: piece(isBackLeg, [44, 51], TILT - 15, onCore([49, 47])),
   core: piece(core, CORE, TILT, T(...CORE)),
-  frontLeg: piece(isFrontLeg, [31, 50], TILT - 95, onCore([36, 50])),
+  frontLeg: piece(isFrontLeg, [31, 50], TILT - 15, onCore([39, 47]), {}, [1, 1], true),
   nearWing: piece(isNearWing, SHOULDER, TILT - 16, onCore([38, 37])),
 };
 
 function build() {
   const g = Array.from({ length: H }, () => Array(W).fill("."));
-  for (const id of ["farWing", "backLeg", "core", "frontLeg", "nearWing"])
+  for (const id of ["farWing", "backLeg", "frontLeg", "core", "nearWing"])
     for (const [x, y, c] of layers[id]) if (g[y]?.[x] !== undefined) g[y][x] = c;
   // Pieces turned apart leave pinholes where they met (wing root, folded legs): small pockets of background shut in by the
   // drawing take the colour most of their neighbours have. Larger pockets are air between parts and stay.

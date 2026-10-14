@@ -1291,7 +1291,8 @@ está en referencias/fuentes.json.
 - Los poros de hasta 4 píxeles que dejan las piezas al separarse toman el color mayoritario de sus vecinos. Los huecos mayores son
   aire entre partes y se quedan.
 
-[Verificado] 70×71 nativo (original 66×68), 6713 píxeles opacos, iso 0, holes 0 y solo la paleta original. Estas pruebas no
+[Verificado, primera entrega] 70×71 nativo (original 66×68), iso 0, holes 0 y solo la paleta original. (El recuento de opacos de
+esa entrega estaba inflado: C.check recibía filas como arrays.) Estas pruebas no
 demuestran que la pose sea artísticamente correcta.
 
 Entrega: C:/Users/javie/Desktop/imagenes/revision/skarmory_pose_v3/
@@ -1303,3 +1304,20 @@ Desde tools/critters: node review_skarmory_pose_v3.js. No se ejecutan build_batc
 Skarmory de la tanda 2 rechazada (410e8d0).
 
 Siguiente paso: esperar la aprobación visual de esta base. Dragonite y Salamence esperan.
+
+#### Skarmory base v3, segunda entrega: correcciones pedidas (2026-10-14), pendiente de aprobación
+El usuario acepta la pose, pero señala cuatro fallos: el cuello duplicado, el ala derecha invertida, plumas sin conectar al cuerpo
+y patas que no se entienden.
+- **Cuello duplicado.** Por encima de la línea que va de la nuca a la raíz del ala, el bloque rayado era la base blindada del ala
+  lejana. Sin sus cuchillas parecía un segundo cuello, así que sale de la pose (isPlating). Queda una sola banda rayada de la
+  cabeza al cuerpo, cerrada con contorno G donde se cortó.
+- **Ala derecha (lejana) invertida.** Girar 170° ponía el borde plateado debajo y el abanico del revés. Ahora es el ala cercana en
+  espejo y girada 80° (piece con flip): borde plateado arriba y cuchillas rojas colgando detrás, como en la carta.
+- **Plumas sin conectar.** El borde plateado del ala cercana se cortaba en su base porque isFarBlades llegaba a x 40. Ahora llega
+  a x 36 (x 37 por encima de y 19, la última cuchilla lejana), y el borde baja entero hasta el hombro. La punta de la cuchilla
+  roja más baja (x 51–52, y 35) se contaba como cola y quedaba suelta: ya es del ala.
+- **Patas.** Girarlas emborronaba los dedos. La delantera va en espejo (los dedos apuntan atrás) y girada 15°; la trasera, girada
+  15°. Las dos salen de detrás del vientre, de modo que los muslos quedan ocultos y se ven la caña y el pie plegados hacia atrás.
+
+[Verificado] 70×66, 1791 píxeles opacos en una sola pieza (8 vecinos), iso 0, holes 0 y solo la paleta original. Además, cada
+capa es una pieza: ala lejana, ala cercana, núcleo y las dos patas.
