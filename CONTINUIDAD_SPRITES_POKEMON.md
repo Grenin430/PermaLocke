@@ -1610,3 +1610,13 @@ Siguiente paso: esperar la aprobación visual de esta base; después, la fase 2 
 El usuario descarta Salamence: no se aprueba la base v3 ni se anima. La app sigue mostrando la hoja de la tanda 2 rechazada (410e8d0) en la
 ruta 14 del cielo hasta que se decida qué hacer con él (quitarlo de la ruta o dejar esa hoja). Los scripts salamence_flight_pose_v3.js y
 review_salamence_pose_v3.js quedan como histórico.
+
+### Salamence fuera de la ruta y Pidgey de vuelo integrado (2026-10-14)
+- **Salamence (373):** sale de la ruta 14 de los voladores en CapVisitors.cs, así que no aparece. Su entrada y su hoja siguen en el
+  catálogo, sin uso. CapVisitorLabTests usaba el 373 como ejemplo de lote con cuatro voladores; ahora usa Dragonite (149).
+- **Pidgey (16):** build_batch.js lo incluye en FLIGHT, así que usa pidgey_flight_anim.js, intacto desde 8da0848. La hoja integrada es
+  idéntica píxel a píxel a revision/vuelo_piloto/detalle_pidgey/pidgey_hoja_propuesta.png (624×234, celda 78, inclinaciones -4/0/4,
+  12 fps). Entrada: Height 58, Drift 1, Bob 0,3, Surge 0,6, como los demás voladores corregidos.
+- [Verificado] Build del laboratorio: 0 errores. Tests App: 555/555. Pidgey revisado en el cielo del laboratorio, en las dos direcciones.
+- Desplegado **solo** en la carpeta de PermaLocke singleplayer: `dotnet build src/PermaLocke.App`, con la app y Azahar cerrados. Es el
+  ejecutable al que apunta el acceso directo PermaLocke singleplayer.lnk. Sin push y sin tocar PermaLocke prueba ni para amigos.
