@@ -5,17 +5,17 @@
 // This standalone base is not imported by the production pipelines.
 const C = require("./critter");
 const { pal, rows } = C.load("dragonite");
-const W = 130, H = 110, TOP = 12; // drawing rows run from -TOP to H
+const W = 160, H = 110, TOP = 12; // drawing rows run from -TOP to H
 
 const isTail = (x, y) => x >= 44 && y >= 23 && y <= 67 && !(x >= 34 && x < 48 && y >= 12 && y <= 31);
 // pieces that do not simply lean with the body
 const isHead = (x, y) => ((y <= 27 && x >= 14 && x <= 31) || (y <= 10 && x >= 5 && x <= 34)) && !(x <= 13 && y >= 13);
-const isNearLeg = (x, y) => x <= 19 && y >= 64;
-// the far (right) hand would sit on top of the back once the body leans: from the side it is behind the body
-const isFarHand = (x, y) => x >= 33 && x <= 43 && y >= 44 && y <= 51;
+// the near wing (the original's right one) turns on its own, tipped a little further back than the body
+const isNearWing = (x, y) => x >= 34 && y >= 12 && y <= 31 && !(x >= 48 && y >= 23);
 // the small far wing of the original would hang under the chin once the body leans
 const isFarWing = (x, y) => x <= 13 && y >= 13 && y <= 24;
-const isBody = (x, y) => !isTail(x, y) && !isHead(x, y) && !isNearLeg(x, y) && !isFarHand(x, y) && !isFarWing(x, y);
+// Both legs and both hands stay with the body: turned apart they read as cut off.
+const isBody = (x, y) => !isTail(x, y) && !isHead(x, y) && !isNearWing(x, y) && !isFarWing(x, y);
 
 // A piece of the original turned `deg` clockwise round `pivot` and landed at `to`, RotSprite-style; `flip` mirrors it first.
 function scale2x(g) {
@@ -43,14 +43,14 @@ function piece(mask, pivot, deg, to, { recolour = {}, flip = false } = {}) {
 
 
 // lean forward (degrees, anticlockwise) round the middle of the belly; where a source point lands
-const LEAN = -55, CORE = [26, 48], AT = [62, 52];
+const LEAN = -55, CORE = [26, 48], AT = [78, 56];
 const onCore = ([x, y]) => {
   const a = (LEAN * Math.PI) / 180, dx = x - CORE[0], dy = y - CORE[1];
   return [AT[0] + Math.cos(a) * dx - Math.sin(a) * dy, AT[1] + Math.sin(a) * dx + Math.cos(a) * dy];
 };
 const TAIL_ROOT = [45, 60], TAIL_TURN = 110;
 // the head leans less than the body so it looks ahead; the near leg swings further back to trail like the other
-const NECK = [23, 27], HEAD_TURN = 25, HIP = [12, 64], LEG_TURN = -65;
+const NECK = [23, 27], HEAD_TURN = 25, SHOULDER = [36, 28], WING_TURN = 10;
 
 function build() {
   // canvas row r holds drawing row r - TOP
@@ -58,7 +58,7 @@ function build() {
   const draw = cells => { for (const [x, y, c] of cells) if (g[y + TOP]?.[x] !== undefined) g[y + TOP][x] = c; };
   draw(piece(isTail, TAIL_ROOT, LEAN + TAIL_TURN, onCore(TAIL_ROOT)));
   draw(piece(isBody, CORE, LEAN, AT));
-  draw(piece(isNearLeg, HIP, LEAN + LEG_TURN, onCore(HIP)));
+  draw(piece(isNearWing, SHOULDER, LEAN + WING_TURN, onCore(SHOULDER)));
   draw(piece(isHead, NECK, LEAN + HEAD_TURN, onCore(NECK)));
   // Pieces turned apart leave pinholes where they met (wing root, folded legs): small pockets of background shut in by the
   // drawing take the colour most of their neighbours have. Larger pockets are air between parts and stay.

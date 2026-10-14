@@ -1478,3 +1478,13 @@ elige inclinar el original. tools/critters/dragonite_flight_pose_v6.js conserva 
 
 [Verificado] 110×73, 2475 píxeles opacos en una sola pieza, iso 0, holes 0 y solo la paleta original.
 Entrega: C:/Users/javie/Desktop/imagenes/revision/dragonite_pose_v6/. Desde tools/critters: node review_dragonite_pose_v6.js.
+
+#### Dragonite base v6, segunda entrega (2026-10-14), pendiente de aprobación
+El usuario aprueba el camino. Pide inclinar las alas un poco hacia la derecha y corregir una mano cortada y una pata cortada.
+- **Ala cercana:** gira por su cuenta 10° más hacia atrás que el cuerpo, desde el hombro.
+- **Mano cortada:** era la derecha. Al quitarla quedaba el brazo sin mano; vuelve con el cuerpo.
+- **Pata cortada:** era la izquierda, girada aparte desde la caña y partida en la cadera. Vuelve con el cuerpo; las dos piernas y las
+  dos manos ya no se separan.
+- **Lienzo:** más margen (AT [78, 56], ancho 160), porque la mano izquierda se recortaba en el borde y luego la punta de la cola.
+
+[Verificado] 110×81, 2608 píxeles opacos en una sola pieza, iso 0, holes 0 y solo la paleta original.
