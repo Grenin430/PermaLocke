@@ -597,3 +597,10 @@ negro del estudio de fotos: gen 8-9 en el equipo (ver Trampas y lecciones).
   Integradas sus cinco hojas; comparación, ciclos y layout real en imagenes/revision/vuelo_tanda1. 120/120 ojos, 0 huecos/aislados,
   555 pruebas correctas; 107 archivos protegidos sin cambios. Tanda entregada para revisión. Cuatro especies restantes para la siguiente.
   Pidgey aprobado permanece como fuente/propuesta separada sin modificar en esta tanda. Commit local sin push; no despliegue.
+
+- **Última tanda de correcciones de vuelo** (2026-10-14): tras «ok» a la tanda 1, usuario exige Salamence sin batir y pide continuar.
+  Corregidos Skarmory, Dragonite, Charizard y Salamence. Alas fijas de Salamence verificadas en las ocho fases; movimiento corporal
+  adaptado a cada anatomía, patas recogidas y rasgos originales preservados. Nuevas hojas integradas, comparaciones/ciclos/layout
+  entregados en imagenes/revision/vuelo_tanda2. 32 fotogramas, 96 celdas/ojos correctos, iso/holes 0, 555 pruebas pasan.
+  Conservados 123 archivos protegidos, incluidos Pidgey y toda la tanda 1. Tanda 2 pendiente de aprobación; no quedan otros afectados
+  sin propuesta. Se mantiene Pidgey como fuente aprobada separada sin sustituir su antigua hoja de producción. Commit local sin push.

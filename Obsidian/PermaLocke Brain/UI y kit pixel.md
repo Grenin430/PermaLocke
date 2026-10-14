@@ -177,3 +177,11 @@ Fuentes flight_batch1_specs.js/flight_rig.js y cinco *_flight_anim.js; build_bat
 40 fotogramas, 120 celdas/ojos correctos, iso/holes 0, 107 archivos protegidos intactos, 555 pruebas correctas.
 Layout real 28 s a tamaño nativo en imagenes/revision/vuelo_tanda1; rutas definitivas y método en CONTINUIDAD_SPRITES_POKEMON.md.
 Restan cuatro: Skarmory, Dragonite, Charizard y Salamence. Sin despliegue ni push.
+
+## Correcciones de vuelo: tanda 2 (2026-10-14)
+Usuario aprueba tanda 1 y precisa Salamence sin batido. Skarmory, Dragonite, Charizard y Salamence corregidos e integrados, entregados
+para revisión. Nuevos flight_rig2.js/flight_batch2_specs.js independientes de la tanda 1; originales y Pidgey intactos.
+Salamence: alas idénticas en ocho fases, cola suave, Drift 1.2/Bob 0/Surge 0. Los demás tienen articulación propia.
+32 fotogramas, 96 celdas/ojos, iso/holes 0, 123 archivos protegidos idénticos y 555 pruebas correctas. Layout real exportado a tamaño nativo.
+Fuentes y rutas definitivas en CONTINUIDAD_SPRITES_POKEMON.md, «Correcciones de vuelo, tanda 2»; entrega imagenes/revision/vuelo_tanda2.
+No quedan especies del inventario sin propuesta; esta tanda está pendiente de aprobación artística. Sin despliegue ni push.

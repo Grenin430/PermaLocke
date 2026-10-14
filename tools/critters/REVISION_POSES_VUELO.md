@@ -1,6 +1,6 @@
 # Revisión de poses de vuelo — piloto de Pidgey
 
-Estado: Pidgey corregido aprobado y conservado intacto. Tanda 1 de cinco especies integrada y entregada para revisión visual.
+Estado: Pidgey y tanda 1 aprobados e intactos. Tanda 2 de los cuatro restantes integrada y entregada para revisión; Salamence sin batido.
 Fecha: 2026-10-14. El usuario autoriza redibujar la pose base cuando la referencia representa apoyo en tierra;
 esta instrucción sustituye la restricción anterior de reconstruir siempre la misma pose. No autoriza rehacer las especies que ya funcionan.
 
@@ -143,3 +143,64 @@ La frecuencia forzada no representa apariciones normales. El GIF del layout usa 
 los tiempos GIF se cuantizan a centésimas. El reinicio del recorrido conjunto no es el bucle del batido. Pantallas del juego simuladas por el laboratorio.
 Estado: tanda 1 entregada para revisión visual. Restan Skarmory, Dragonite, Charizard y Salamence para la siguiente tanda (cuatro restantes).
 No se ha desplegado ni abierto la app o Azahar. Commit local, sin push.
+
+### Correcciones de vuelo, tanda 2 (2026-10-14): cuatro restantes, entregados para revisión
+El usuario respondió «ok» a la tanda 1, precisó que Salamence no debe batir las alas y pidió continuar.
+Spearow, Pikipek, Pidgeot, Toucannon y Staraptor se conservan. Pidgey aprobado permanece intacto en su fuente y entrega separadas.
+Se corrigen Skarmory, Dragonite, Charizard y Salamence; no se añade una quinta especie porque solo quedaban estas cuatro del inventario.
+
+| Especie | Lienzo nativo | Celda | Fotogramas / fps | Anatomía y movimiento |
+|---|---|---|---|---|
+| Skarmory | 112×72 | 116 | 8 / 7 | Torso de placas horizontal, patas metálicas recogidas y planeo con ajustes angulares de láminas rígidas |
+| Dragonite | 112×74 | 116 | 8 / 10 | Torso inclinado con vientre segmentado, rodillas flexionadas, brazos recogidos y batido de alas pequeñas |
+| Charizard | 128×74 | 132 | 8 / 8 | Membranas amplias con nervaduras, torso inclinado, patas recogidas, cola extendida y llama conservada |
+| Salamence | 144×74 | 148 | 8 / 6 | Planeo con dos alas extendidas fijas, cuatro patas recogidas, cuernos unidos al cráneo y cola estabilizadora |
+
+Todas usan la resolución de la cuadrícula original y su paleta, sin reducción de estas nuevas poses: caben en el cielo por su orientación
+reconstruida. Se conservan los antiguos TXT, scripts y fotogramas de referencia, incluidas sus antiguas reducciones de visualización.
+Los tamaños de lienzo incluyen transparencia, no son cajas ajustadas al dibujo. No confundirlos con la altura real ocupada en el cielo.
+
+Método nuevo: flight_rig2.js es independiente de flight_rig.js para no alterar la tanda 1. Recorta cabezas por rectángulo y máscara explícitos,
+compone extremidades cercanas/lejanas, redibuja torso y rabadilla y usa texturas de alas diferentes: metal, membrana o superficie fija.
+Las membranas de Charizard se ampliaron para conservar su carácter y nervaduras; Dragonite/Charizard recuperaron volumen abdominal.
+Revisión de costuras: se corrigió la unión de la cola de Skarmory, una muestra aislada de membrana y la raíz del cuerno lejano de Salamence.
+Se eliminaron restos del ala original que no pertenecían a la cabeza, sin borrar los ojos, dientes ni la boca.
+
+Salamence: las capas de ambas alas son idénticas píxel a píxel en las ocho fases (fixedWings=true). No hay batido, plegado ni deformación
+periódica de las alas. Solo la cola varía en el ciclo local; la inclinación global de la trayectoria afecta al animal completo. Su entrada usa
+Drift 1.2, Bob 0 y Surge 0: sin impulso periódico que aparente un golpe de ala. Los otros tres conservan Drift 1, Bob 0.3, Surge 0.6.
+Inclinaciones -2/0/2 y reserva 60 en los cuatro; trayectoria con dos unidades de margen dentro del cielo de 69.
+
+Fuentes definitivas: C:/Users/javie/Desktop/Permalocke singleplayer/tools/critters/flight_batch2_specs.js, flight_rig2.js
+y {skarmory,dragonite,charizard,salamence}_flight_anim.js. Cada <especie>_before_flight.json conserva su versión anterior.
+Hojas definitivas integradas: C:/Users/javie/Desktop/Permalocke singleplayer/src/PermaLocke.App/Views/Cap/Critters/
+{skarmory,dragonite,charizard,salamence}.png. Solo sus cuatro entradas cambian en CapCritterArt.cs.
+build_batch.js selecciona las nuevas fuentes para las nueve especies de ambas tandas; los parámetros de las cinco anteriores no cambian.
+
+Entrega: C:/Users/javie/Desktop/imagenes/revision/vuelo_tanda2/
+- tanda2_antes_y_despues.png y tanda2_ciclos_comparados.gif: antes a resolución nativa frente a las nuevas poses, igual escala ×3.
+- <especie>_antes_y_despues.png, <especie>_flight_bucle_fijo.gif y <especie>_flight_fotogramas.png.
+- <especie>_hoja_definitiva.png, <especie>_rostros.png y <especie>_uniones.png.
+- tanda2_juntos_en_el_layout_tamano_real.gif: laboratorio real, 1920×976, 336 fotogramas a 12 fps, 28 segundos, sin reescalado.
+- auditoria.json, conservacion.json, rendimiento.txt, *_verificacion.txt y mosaicos de ambos paneles.
+
+Comprobaciones [verificado]: 32 fotogramas y 96 celdas inclinadas, 96/96 ojos, iso 0, holes 0 y una componente conectada en los 128 dibujos.
+Sin contacto con bordes de lienzos nativos ni celdas. Cabezas conservadas en todas las fases: Skarmory 283 píxeles, Dragonite 427,
+Charizard 419, Salamence 472. Cierres de ciclo dentro del máximo de transiciones con tolerancia 5 %; algunas fases del planeo se repiten
+porque no hay batido. Sellado de huecos unitarios al rotar: 13/0/3/0, respectivamente. Límites de cielo y=0..45, 1..52, 1..52 y 3..52.
+Hojas integradas idénticas byte a byte a las auditadas. 123 archivos protegidos intactos: 50 hojas ajenas a la tanda, 53 scripts anatómicos
+originales, critter.js, cuatro archivos de Pidgey y 15 archivos de la tanda 1. No se modifica la entrega aprobada de Pidgey.
+Build del laboratorio en .lab-art: 0 errores, dos advertencias CS0649 previas. Pruebas App: 555/555, 0 fallos y 0 omitidas, 24 s;
+advertencias CS8321 y xUnit2030 previas. --medir: Party 178×321 media 1,57–1,87 ms, p95 2,13–3,24 ms; Deep media 0,90–1,25 ms.
+Primera preparación 91,99 ms. Medidas en este PC, sin emulador y sin comparación controlada con versiones anteriores.
+GIF conjunto y ciclos individuales decodificados sin errores. Mosaicos de ambos paneles y una ventana completa revisados: aparecen los cuatro.
+
+Reproducción desde tools/critters: node review_flight_batch2.js; node assemble_flight_batch2.js;
+node build_batch.js skarmory dragonite charizard salamence; node integrate_entries.js.
+Desde raíz: dotnet build tools/PermaLocke.PlaqueLab --artifacts-path .lab-art;
+dotnet test tests/PermaLocke.App.Tests --artifacts-path .lab-art; tools/critters/render_flight_batch2.ps1.
+Limitaciones: amplitud y balanceo contenidos por el cielo; solapamientos naturales entre visitantes y oclusión detrás del juego en modo forzado.
+La frecuencia forzada no representa apariciones normales. El layout se exporta a 12 fps; los ciclos individuales mantienen sus frecuencias.
+Los tiempos GIF se cuantizan a centésimas y el reinicio del recorrido no es el cierre del ciclo individual. Las pantallas centrales son simuladas
+por el laboratorio. La aprobación artística de esta tanda sigue pendiente; no quedan especies del inventario sin una propuesta de corrección.
+Sin despliegue, sin abrir la app ni Azahar, commit local sin push.
