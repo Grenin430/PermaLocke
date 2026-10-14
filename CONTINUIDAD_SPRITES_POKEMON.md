@@ -16,7 +16,7 @@ Magikarp y lotes 1–11 aprobados por el usuario. Los lotes 10 y 11 recibieron a
 «acaba esos 3» y autorizó terminar Wailord, Rayquaza y Ho-Oh. Las tablas iniciales de esta sección son históricas;
 el estado actualizado está en las secciones de cada lote y en el registro externo.
 
-**Revisión posterior:** Pidgey corregido y tanda 1 aprobados e intactos. Tanda 2 RECHAZADA por el usuario. Las cuatro bases rehechas también RECHAZADAS. Charizard con cuello corregido: base definitiva APROBADA y primer batido rechazado; segunda revisión rechazada por el ala lejana; tercera aceptada como avance; cuarta (lectura de las dos alas): movimiento APROBADO; quinta (color de cada cara del ala) integrada y pendiente de aprobación en charizard_batido_v5. Skarmory, Dragonite y Salamence pendientes, uno por uno desde referencias de vuelo.
+**Revisión posterior:** Pidgey corregido y tanda 1 aprobados e intactos. Tanda 2 RECHAZADA por el usuario. Las cuatro bases rehechas también RECHAZADAS. Charizard con cuello corregido: base definitiva APROBADA y primer batido rechazado; segunda revisión rechazada por el ala lejana; tercera aceptada como avance; cuarta (lectura de las dos alas): movimiento APROBADO; quinta (color de cada cara del ala) APROBADA: Charizard terminado. Skarmory: base de vuelo v3 pendiente de aprobación en skarmory_pose_v3. Skarmory, Dragonite y Salamence pendientes, uno por uno desde referencias de vuelo.
 Ver «Correcciones de vuelo, tanda 2» y tools/critters/REVISION_POSES_VUELO.md. Salamence planea con las alas fijas.
 
 ### Qué estamos creando
@@ -1264,3 +1264,42 @@ ala lejana (939 píxeles distintos de la base, todos de ala lejana).
 - Ciclo revisado a tamaño real y 12 fps en el laboratorio.
 
 Entrega: C:/Users/javie/Desktop/imagenes/revision/charizard_batido_v5/ (mismas piezas que la v4).
+
+### Charizard aprobado; Skarmory: base de vuelo v3 (2026-10-14), pendiente de aprobación
+El usuario aprueba la v5 de Charizard (charizard_batido_v5, commit c9b48ee): Charizard queda terminado. Sigue Skarmory con el mismo
+método: primero SOLO la base de vuelo junto a su referencia; sin animación ni integración hasta que se apruebe.
+
+Referencia de postura: ilustración de la carta Skarmory 59/119 de XY Phantom Forces (Sanosuke Sakuma), vista en cardcodex.com.
+Muestra a Skarmory de perfil, volando hacia la izquierda:
+- Cuerpo nivelado y cabeza delante.
+- Ala cercana levantada hacia arriba y atrás.
+- Ala lejana barrida hacia abajo y adelante bajo el pecho, enseñando su cara roja.
+- Cola recta atrás y patas recogidas bajo el vientre.
+
+Se descartaron otras cuatro cartas porque no son vuelo de perfil (cernido, picado de frente, de frente y posado). La procedencia
+está en referencias/fuentes.json.
+
+**Método** (tools/critters/skarmory_flight_pose_v3.js): piezas del sprite original a escala 1, giradas al estilo RotSprite (Scale2x
+×3 y muestreo hacia atrás), sin reducir ni redibujar desde cero.
+- **Núcleo rígido:** cabeza, cuello, cuerpo y cola sin girar. Inclinarlo 12° rompía las rayas del cuello.
+- **Ala cercana:** levantada 16° desde el hombro.
+- **Ala lejana:** el ala cercana girada 170° hacia abajo y adelante. Va acortada en profundidad (85 % × 70 %) y con los rojos y
+  platas un tono más oscuros.
+- **Patas plegadas hacia atrás** desde la cadera: la delantera 95° y la trasera 45°.
+- Se quitan las cuchillas plateadas verticales del ala lejana del original. Donde nacían, la parte de arriba del cuello se cierra
+  con el contorno azul oscuro (G).
+- Los poros de hasta 4 píxeles que dejan las piezas al separarse toman el color mayoritario de sus vecinos. Los huecos mayores son
+  aire entre partes y se quedan.
+
+[Verificado] 70×71 nativo (original 66×68), 6713 píxeles opacos, iso 0, holes 0 y solo la paleta original. Estas pruebas no
+demuestran que la pose sea artísticamente correcta.
+
+Entrega: C:/Users/javie/Desktop/imagenes/revision/skarmory_pose_v3/
+- skarmory_pose_y_referencia.png: la comparación para revisar.
+- skarmory_base_ampliada.png (×6) y skarmory_base_nativa.png.
+- skarmory_base.txt/.json, auditoria.json y referencias/.
+
+Desde tools/critters: node review_skarmory_pose_v3.js. No se ejecutan build_batch.js ni integrate_entries.js: la app sigue con el
+Skarmory de la tanda 2 rechazada (410e8d0).
+
+Siguiente paso: esperar la aprobación visual de esta base. Dragonite y Salamence esperan.
