@@ -504,9 +504,9 @@ fotograma, p95 **2,41–3,74 ms**; fondo **1,00–1,35 ms**. Primera preparació
 GIF final decodificado sin errores: **840 fotogramas, 70,00 s, 1920×976**, exportado a 12 fps. Revisados los mosaicos de ambos paneles;
 se conservan las oclusiones habituales al pasar detrás del juego, del equipo o de otro Pokémon en esta vista forzada.
 
-### Lote 7 (2026-10-14): entregado para revisión
+### Lote 7 (2026-10-14): aprobado por el usuario
 Wishiwashi (746), Relicanth (369), Pidgeot (18), Togekiss (468) y Aerodactyl (142), propuestos y confirmados por el usuario antes de empezar.
-Integrados en `singleplayer`; entrega en `C:\Users\javie\Desktop\imagenes\revision\lote7\`. Pendiente de aprobación del usuario.
+Integrados en `singleplayer`; entrega en `C:\Users\javie\Desktop\imagenes\revision\lote7\`. Aprobados por el usuario el 2026-10-14.
 
 | Especie | Base | Celda de hoja | Fotogramas / inclinaciones | FPS | Movimiento |
 |---|---|---|---|---|---|
@@ -550,7 +550,7 @@ para caber en el cielo. La calidad de las referencias pequeñas limita los detal
 sin abrir juego ni desplegar. Los nadadores mantienen el tinte del agua y la atenuación detrás del equipo. GIF con 256 colores y tiempos
 en centésimas; la app conserva los PNG originales. El reinicio del recorrido largo es distinto del bucle individual de cada especie.
 `--especies` fuerza seis rutas simultáneas y repite Wishiwashi: no es la frecuencia normal de la app. Los cinco grandes siguen reservados.
-**Parar aquí: no comenzar el lote 8 hasta aprobar el lote 7 y confirmar las siguientes especies.**
+**Lote 7 aprobado. Confirmar las cinco especies del lote 8 antes de comenzar.**
 
 Rendimiento final [verificado] con `--especies 746,369,18,468,142 --medir`: columna del equipo 178×321 **1,68–2,02 ms de media** por
 fotograma, p95 **2,13–3,66 ms**; fondo **1,02–1,21 ms**. Primera preparación 88,45 ms. Medidas de este PC en el laboratorio, sin emulador.

@@ -98,9 +98,9 @@ y 3,61 para Toucannon. Toucannon conserva su pose posada; Altaria dobla la nube 
 Las 26 hojas anteriores permanecen intactas. Solo `.lab-art`, sin desplegar ni tocar la app abierta. Lote 6 aprobado; confirmar las especies del lote 7 antes de comenzar.
 
 ## Sprites del mar: lote 7 singleplayer (2026-10-14)
-Wishiwashi, Relicanth, Pidgeot, Togekiss y Aerodactyl: integrados y entregados para revisión; aún no aprobados.
+Wishiwashi, Relicanth, Pidgeot, Togekiss y Aerodactyl: integrados y aprobados por el usuario el 2026-10-14.
 Método: `CONTINUIDAD_SPRITES_POKEMON.md`, sección «Lote 7». Entrega: `C:\Users\javie\Desktop\imagenes\revision\lote7\`.
 40 fotogramas, 168 celdas y 168 regiones de ojos comprobados; 553 pruebas aprobadas. Periodos explícitos 3,55 (Pidgeot) y 3,08 (Togekiss).
 Relicanth usa Pose 28 y conserva su ojo cerrado. Pidgeot mantiene su pose posada, altura 61 e inclinaciones -1/0/1 para caber en el cielo.
 La auditoría comprueba el espacio vertical con el redondeo real de C#. Las 31 hojas anteriores siguen intactas. Solo `.lab-art`, sin desplegar.
-Parar hasta aprobación del lote 7; confirmar la selección del lote 8 antes de empezar.
+Lote 7 aprobado; confirmar la selección del lote 8 antes de empezar.
