@@ -43,6 +43,12 @@ for (let cy = 0; cy < R; cy++) for (let cx = 0; cx < C; cx++) {
   const ix0 = Math.ceil(x0 + cx * gx.p + gx.p * 0.28), ix1 = Math.floor(x0 + (cx + 1) * gx.p - gx.p * 0.24);
   const iy0 = Math.ceil(y0 + cy * gy.p + gy.p * 0.28), iy1 = Math.floor(y0 + (cy + 1) * gy.p - gy.p * 0.24);
   for (let y = iy0; y <= iy1; y++) for (let x = ix0; x <= ix1; x++) if (x >= 0 && y >= 0 && x < W && y < H) s.push(pix(x, y));
+  // Tiny references can have no integer pixel inside the inset cell; sample its centre instead.
+  // Without this fallback, a valid two-pixel grid produces whole empty rows and columns.
+  if (!s.length) {
+    const sx = Math.round(x0 + (cx + 0.5) * gx.p), sy = Math.round(y0 + (cy + 0.5) * gy.p);
+    if (sx >= 0 && sy >= 0 && sx < W && sy < H) s.push(pix(sx, sy));
+  }
   cells.push(s.length ? [0, 1, 2].map(k => s.map(q => q[k]).sort((a, b) => a - b)[s.length >> 1]) : null);
 }
 const cell = (x, y) => (x < 0 || y < 0 || x >= C || y >= R ? null : cells[y * C + x]);

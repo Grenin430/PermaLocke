@@ -605,3 +605,59 @@ Rendimiento final [verificado] con `--especies 318,119,22,149,380 --medir`: colu
 fotograma, p95 **2,21–3,50 ms**; fondo **1,07–1,30 ms**. Primera preparación 86,33 ms. Medidas de este PC en el laboratorio, sin emulador.
 GIF completo decodificado sin errores: **840 fotogramas, 70,00 s, 1920×976**, exportado a 12 fps. Revisados ambos paneles mediante mosaicos
 cada dos segundos del recorrido y una vista completa a tamaño real. Los solapamientos y la oclusión tras el juego y el equipo son los normales.
+### Lote 9 (2026-10-14): entregado para revisión
+Bruxish (779), Staraptor (398), Salamence (373), Charizard (6) y Latios (381), confirmados por el usuario antes de empezar.
+Integrados en `singleplayer`; entrega en `C:\Users\javie\Desktop\imagenes\revision\lote9\`. Pendiente de aprobación visual.
+
+| Especie | Base reconstruida | Escala de visualización | Celda | Fotogramas / inclinaciones | FPS | Movimiento |
+|---|---|---|---|---|---|---|
+| Bruxish | 60×39 | 100 % | 78×78 | 8 / 5 | 8 | Cola, señuelo dorsal y aletas con desfase |
+| Staraptor | 55×64 | 100 % | 80×80 | 8 / 3 | 8 | Cabeza y cresta, ala plegada, cola y patas |
+| Salamence | 79×72 | 83,3 % | 78×78 | 8 / 3 | 7 | Alas de distinta profundidad, cola y patas |
+| Charizard | 76×79 | 75 % | 74×74 | 8 / 3 | 8 | Membranas de las alas, llama y cola, brazo |
+| Latios | 74×74 | 80 % | 78×78 | 8 / 3 | 7 | Planeo, alas, antenas y apéndices inferiores |
+
+Lo nuevo del método:
+- Periodos: Bruxish automático 9,98; Staraptor explícito 3,66; Salamence explícito 2,004; Charizard explícito 5,16;
+  Latios automático 7,32. Comparaciones de referencia y reconstrucción a igual altura, sin redibujar.
+- `recon2.js`: con una cuadrícula de dos píxeles, el margen interior puede no contener ninguna coordenada entera.
+  Antes esto generaba filas y columnas vacías en Salamence. Solo cuando no hay muestras interiores se toma el centro de la celda.
+  Regresión comprobada: reconstruir Horsea produce el mismo TXT que antes, byte por byte.
+- Fondos atrapados: blanco entre las patas de Staraptor; grises y blancos entre cuello y alas de Salamence; tablero blanco/gris entre
+  alas y cuello de Charizard. Máscaras acotadas para conservar los blancos anatómicos de ojos, dientes, vientre y uñas.
+- **Reducciones autorizadas por el usuario para los que no caben en el cielo:** Salamence 5/6, Charizard 3/4 y Latios 4/5.
+  TXT, `rows` y `sourceFrames` conservan la reconstrucción y animación nativas; solo `fr` se reduce por vecino más cercano.
+  Las comparaciones enseñan la base nativa; los bucles y hojas de fotogramas enseñan la visualización. Sin colores interpolados.
+  Los huecos totalmente encerrados de una celda tras muestrear se sellan con colores vecinos. Charizard pierde seis muestras aisladas
+  de una celda de la llama, repartidas entre sus ocho fotogramas reducidos; no se recorta la animación nativa.
+- Latios: la reducción saltaba la fila del iris y el brillo. Se proyectan explícitamente las celdas originales D/M/C de la región
+  x=38..42, y=16..19 sobre su posición reducida antes de girar; no se inventan rasgos ni colores. Ojo protegido en todas las inclinaciones.
+- Alas desde raíces fijas, dobladas por columnas o muestreo inverso; separación siguiendo los bordes de la referencia.
+  Staraptor conserva su pose posada. Giros contenidos: Staraptor -1/0/1; los tres reducidos -2/0/2. Altura de layout 61 para los cuatro.
+- Sellado de rotaciones: cuatro huecos de una celda en Salamence con el mecanismo aprobado `sealRotatedHoles`.
+  No se cambia `critter.js` ni `seal_sheet.js`.
+- `audit_batch9.js`: **40 fotogramas de visualización, 24 fotogramas nativos adicionales y 136 celdas inclinadas**.
+  **136/136 regiones de ojos**, iso 0, holes 0, cero celdas tocando bordes. Cierre de los cinco bucles dentro del máximo del resto
+  del ciclo con tolerancia del 5 %. Mosaicos de ojos de todas las celdas y costuras ampliadas revisados.
+- Cielo con redondeo al par de C#: Staraptor **y=2..65**, Salamence **3..63**, Charizard **4..64**, Latios **3..64**; superficie en 69.
+- Laboratorio: había tres rutas de cielo y el modo `ForcedAll` omitía una especie al pedir cuatro voladores.
+  `ForcedLaneSpecies` distribuye los excedentes entre las rutas con desfase, conservando las asignaciones antiguas cuando caben.
+  Solo cambia la vista forzada; el flujo normal no cambia. `CapVisitorLabTests.cs` añade dos pruebas para cobertura y compatibilidad.
+- Build aislado con `--artifacts-path .lab-art`: **0 errores**, dos advertencias CS0649 previas.
+  Pruebas **555/555**, cero fallos y cero omitidas, 25 s; advertencias CS8321 y xUnit2030 previas.
+- **82 hashes SHA-256 intactos**: 41 hojas aprobadas, 40 scripts anatómicos y `critter.js`.
+  Las cinco hojas nuevas suman **52.629 bytes**. Integración limitada a sus cinco entradas en `CapCritterArt.cs`.
+- Reproducción desde `tools/critters`: `review_batch9.js deliver`, `audit_batch9.js`, `render_batch9.ps1`.
+
+Limitaciones: la referencia diminuta de Salamence y el JPEG de Staraptor limitan el detalle. Las tres reducciones pierden detalles finos,
+aunque las bases nativas se conservan. Staraptor mantiene la pose posada y movimientos pequeños. Verificado en laboratorio, sin emulador
+ni despliegue. El modo forzado muestra siete recorridos (Bruxish repetido tres veces y cuatro voladores), con posibles solapamientos;
+no representa la frecuencia normal. Se conserva la oclusión detrás del juego/equipo y el tinte del agua. El GIF usa 256 colores y tiempos
+en centésimas; el reinicio del recorrido largo es distinto del bucle individual. Los cinco grandes siguen reservados.
+**Lote 9 entregado para revisión. No comenzar el lote 10 hasta la aprobación del usuario.**
+
+Rendimiento final [verificado] con `--especies 779,398,373,6,381 --medir`: columna del equipo 178×321 **1,83–2,14 ms de media** por
+fotograma, p95 **2,39–3,86 ms**; fondo **1,06–1,43 ms**. Primera preparación 92,21 ms. Medidas de este PC en laboratorio, sin emulador.
+Recorrido de revisión: **840 fotogramas, 70 s, 1920×976**, exportado a 12 fps. Mosaicos de ambos paneles cada dos segundos y vista completa
+revisados: aparecen las cinco especies; se mantienen solapamientos y oclusiones normales. Registro externo y cerebro actualizados.
+GIF completo decodificado sin errores: 840 fotogramas y 70,00 s; registro en `lote9/verificacion_gif.txt`.

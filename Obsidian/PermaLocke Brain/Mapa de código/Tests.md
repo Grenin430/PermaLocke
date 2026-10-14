@@ -14,6 +14,7 @@ Contado con grep, NO ejecutado. Detalle en [[Pruebas]].
 - `BoostStyleTests.cs` (4)
 - `CapBadgeTests.cs` (2)
 - `CapPlaqueTests.cs` (1)
+- `CapVisitorLabTests.cs` (2; añadido 2026-10-14, cobertura de cuatro voladores y compatibilidad de rutas del laboratorio)
 - `CapsuleMachineTests.cs` (13)
 - `DiscordLoginTests.cs` (1)
 - `EmulatorCrashTests.cs` (8)

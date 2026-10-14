@@ -549,3 +549,9 @@ negro del estudio de fotos: gen 8-9 en el equipo (ver Trampas y lecciones).
 - **Aprobación del lote 8** (2026-10-14): el usuario confirmó «aprobado». Carvanha, Seaking, Fearow, Dragonite y Latias quedan aprobados,
   incluida la visualización de Dragonite al 75 % autorizada previamente. Actualizados continuidad, registro externo y LEEME de la entrega.
   Sin cambios en los sprites. La selección del lote 9 sigue pendiente.
+
+- **Sprites del mar, lote 9** (2026-10-14): el usuario confirmó Bruxish, Staraptor, Salamence, Charizard y Latios y autorizó reducir
+  la visualización de los que excedieran el cielo. Salamence usa 83,3 %, Charizard 75 % y Latios 80 %, conservando bases y animaciones nativas.
+  Corregida la muestra vacía de cuadrículas pequeñas y preservado el iris de Latios al reducir. El laboratorio admite cuatro voladores
+  en sus tres rutas; dos pruebas verifican cobertura y compatibilidad. 555 pruebas correctas; 136 celdas y ojos auditados; 82 archivos
+  aprobados intactos. Entrega en `imagenes/revision/lote9`, pendiente de aprobación. Commit local sin push; no avanzar al lote 10.

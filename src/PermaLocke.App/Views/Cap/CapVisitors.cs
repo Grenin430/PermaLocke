@@ -122,6 +122,17 @@ public static class CapVisitors
         if (!party && !lane.Flies) Bubbles(p, pal, (int)Math.Round(x + (dir * size * 0.33)), topY + (size / 2), beat);
     }
 
+    /// <summary>Lab selection: retain the existing lane assignments, but include every species when a batch exceeds its sea or sky lanes.</summary>
+    internal static int[] ForcedLaneSpecies(int[] all, int laneIndex)
+    {
+        var flies = Lanes[laneIndex].Flies;
+        var suits = all.Where(id => Lanes.Any(other => other.Flies == flies && other.Pool.Contains(id))).ToArray();
+        if (suits.Length == 0) return [];
+        var laneCount = Lanes.Count(lane => lane.Flies == flies);
+        if (suits.Length <= laneCount) return [suits[laneIndex % suits.Length]];
+        return [.. suits.Where((_, index) => index % laneCount == laneIndex % laneCount)];
+    }
+
     public static void Paint(CapSheet p, CapWorldLayout l, CapSeaPalette pal, CapSeaContext ctx, double t, double phase)
     {
         if (l.Mode is CapMode.Compact or CapMode.Strip) return;
@@ -133,11 +144,14 @@ public static class CapVisitors
             var e = CapFauna.EventAt(ctx.Seed, lane.Kind, t, lane.Period, lane.Duration, lane.Chance);
             if (ForcedAll is { Length: > 0 } all)
             {
-                var suits = all.Where(id => Lanes.Any(other => other.Flies == lane.Flies && other.Pool.Contains(id))).ToArray();
-                if (suits.Length == 0) continue;
                 var k = Array.IndexOf(Lanes, lane);
-                var progress = ((t / lane.Duration) + (k * 0.37)) % 1.0;
-                Swimmer(p, l, pal, ctx, CritterArt.All[suits[k % suits.Length]], lane, (progress, 17 + (k * 29)), k % 2 == 0 ? 1 : -1, world, l.Panel == CapPanelKind.Party);
+                var suits = ForcedLaneSpecies(all, k);
+                for (var extra = 0; extra < suits.Length; extra++)
+                {
+                    var progress = ((t / lane.Duration) + (k * 0.37) + (extra * 0.19)) % 1.0;
+                    Swimmer(p, l, pal, ctx, CritterArt.All[suits[extra]], lane, (progress, 17 + (k * 29) + (extra * 11)),
+                        k % 2 == 0 ? 1 : -1, world, l.Panel == CapPanelKind.Party);
+                }
                 continue;
             }
 
