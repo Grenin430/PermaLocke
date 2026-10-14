@@ -11,6 +11,11 @@ español, nunca desplegar a `PermaLocke prueba` ni a `PermaLocke para amigos`, n
 
 ## 1. Objetivo y estado actual
 
+**Actualización del lote 11 (2026-10-14): las 54 especies del catálogo ya tienen hoja animada integrada.**
+Magikarp y lotes 1–9 aprobados; lotes 10 y 11 entregados para revisión, sin aprobación visual todavía. El usuario pidió
+«acaba esos 3» y autorizó terminar Wailord, Rayquaza y Ho-Oh. Las tablas iniciales de esta sección son históricas;
+el estado actualizado está en las secciones de cada lote y en el registro externo.
+
 ### Qué estamos creando
 
 El **panel del cap** es un "mar" pixel art que la app dibuja en las dos bandas laterales de la ventana del emulador mientras se juega
@@ -720,3 +725,52 @@ fotograma, p95 **2,46–3,43 ms**; fondo **1,15–1,60 ms**. Primera preparació
 Recorrido de revisión: **840 fotogramas, 70 s, 1920×976**, exportado a 12 fps. Mosaicos de ambos paneles cada dos segundos y una vista
 completa revisados: aparecen las cinco especies; Lugia pasa por mar y cielo. Se mantienen los solapamientos y las oclusiones habituales.
 GIF final completo decodificado sin errores: **840 fotogramas, 70,00 s**; registro en `lote10/verificacion_gif.txt`.
+
+### Lote 11 (2026-10-14): los tres últimos, entregados para revisión
+Wailord (321), Rayquaza (384) y Ho-Oh (250). El usuario pidió expresamente «acaba esos 3»: autoriza este lote final,
+sin convertir el lote 10 en aprobado. Ambos quedan pendientes de aprobación visual. Las 54 entradas de CritterArt.All ya usan hojas PNG.
+Entrega: C:\Users\javie\Desktop\imagenes\revision\lote11\. Rama singleplayer, commit local sin push.
+
+| Especie | Base reconstruida | Escala de visualización | Celda | Fotogramas / inclinaciones | FPS | Movimiento |
+|---|---|---|---|---|---|---|
+| Wailord | 87×74 | 100 % | 110×110 | 8 / 3 | 5 | Elevación lenta del cuerpo, cola bifurcada y aletas pequeñas alternadas |
+| Rayquaza | 89×83 | 75 % | 80×80 | 8 / 3 | 7 | Onda por columnas del cuerpo enroscado, cuernos y punta de cola desfasados |
+| Ho-Oh | 84×91 | 70 % | 80×80 | 8 / 3 | 6 | Alas anchas dobladas desde la raíz y cola en abanico retrasada |
+
+Lo nuevo del método:
+- Wailord: la detección automática daba periodo 13,62, cinco veces el fino. Cuarto argumento explícito 2,724.
+  Se retiran restos de fondo A por encima de y=24; conserva vientre, rayas y manchas claras del lomo. Aletas separadas por bordes existentes.
+- Rayquaza: periodo automático 6,28. Blanco B entre las curvas y detrás de la mandíbula retirado; garras lavanda M/P conservadas.
+  La onda crece desde el cuello hacia la cola. El iris amarillo C original se proyecta después del negro G al reducir, para no perderlo.
+- Ho-Oh: periodo explícito 2,52, frente al 12,60 automático. Se retiran restos blancos exteriores conservando pecho, ojo y garras.
+  Las alas usan muestreo inverso con cuatro iteraciones; sus raíces quedan quietas. La cola parte del borde ya dibujado del cuerpo.
+- Se reutiliza batch10_display.js sin modificarlo: vecino más cercano, colores originales y proyección de rasgos. Solo se reducen los
+  fotogramas de visualización de Rayquaza/Ho-Oh, dentro de la autorización anterior. TXT, rows y sourceFrames conservan sus tamaños nativos.
+  Sellado al reducir: Rayquaza 0, Ho-Oh 2 huecos de una celda sumados entre los ocho fotogramas. Cero muestras aisladas eliminadas.
+- Wailord: proteger toda la zona del ojo hacía que un azul vecino sobrescribiera el punto negro al girar -4° en un fotograma.
+  La protección selecciona ahora solo B en esa región. Las 24 celdas conservan el ojo negro original; la referencia no tiene iris blanco.
+- Inclinaciones: Wailord -4/0/4, Rayquaza y Ho-Oh -1/0/1. Pose 0 en los tres. Reservas de altura 84, 61 y 61 respectivamente.
+- La primera vista conjunta reveló una condición adicional: Swimmer no dibuja si bottom <= top. Con cielo de 69, la reserva
+  debe ser menor de 62, aunque los píxeles quepan. Rayquaza y Ho-Oh usan reserva 61 y conservan sus tamaños; no se cambia el motor.
+  La auditoría exige ahora trajectoryRange > 0 además de los límites de los píxeles. Revisar siempre el recorrido real después de auditar.
+- audit_batch11.js: 24 fotogramas de visualización, 16 nativos adicionales, 72 celdas y 72/72 regiones de ojos correctas.
+  Iso 0, holes 0 y cero celdas tocando bordes. Los tres cierres de bucle pasan el criterio previo (máximo de transiciones con tolerancia 5 %).
+  Ningún sellado adicional de rotaciones necesario. Revisadas costuras ampliadas y los ojos en todas las celdas.
+- Cielo, superficie 69: Rayquaza y=3..64, Ho-Oh y=2..66. Wailord: mínimo y=76 y margen conservador de 20 píxeles al suelo.
+- Build del laboratorio solo en .lab-art: cero errores, dos advertencias CS0649 previas. Pruebas 555/555, cero fallos y cero omitidas,
+  22 s; advertencias CS8321 y xUnit2030 previas. No se abre el juego ni se despliega.
+- 102 SHA-256 anteriores idénticos: 51 hojas, 50 scripts de anatomía y critter.js. Las tres hojas nuevas suman 39.098 bytes.
+  Solo se sustituyen sus tres entradas del catálogo; helpers anteriores intactos.
+- Reproducción desde tools/critters: review_batch11.js deliver, audit_batch11.js y render_batch11.ps1.
+
+Limitaciones: Wailord y Ho-Oh parten de JPEG diminutos y Rayquaza/Ho-Oh pierden detalle fino al reducir solo su visualización.
+Las bases originales quedan guardadas. Los movimientos de las alas y las inclinaciones se contienen para respetar los 69 píxeles de cielo.
+El modo forzado repite Wailord en tres rutas de mar, Ho-Oh en dos de cielo y Rayquaza en una: seis recorridos, sin representar frecuencia normal.
+Se conservan el tinte del agua, las oclusiones tras el juego/equipo y los solapamientos entre visitantes. GIF con 256 colores y tiempos en
+centésimas; los PNG integrados conservan sus paletas. El reinicio del recorrido largo es distinto del bucle individual. Solo laboratorio,
+sin emulador ni despliegue. Lote 11 entregado para revisión: parar y esperar la aprobación visual.
+
+Rendimiento final [verificado] con --especies 321,384,250 --medir: columna del equipo 178×321, media 1,83–2,45 ms por fotograma,
+p95 2,57–3,73 ms; fondo 1,01–1,69 ms. Primera preparación 90,80 ms. Medido en este PC y sin emulador.
+GIF definitivo decodificado sin errores: 840 fotogramas, 70,00 s, 1920×976, exportado a 12 fps. Revisados ambos paneles mediante mosaicos
+cada dos segundos y una vista completa: aparecen las tres especies y permanecen dentro de sus bandas verticales.

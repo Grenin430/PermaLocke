@@ -4,6 +4,9 @@ const C = require("./critter.js");
 const APP = "C:/Users/javie/Desktop/Permalocke singleplayer/src/PermaLocke.App/Views/Cap/Critters/";
 // species number, motion of the path: depth drift, short bob, push per beat
 const META = {
+  hooh: { id: 250, drift: 2, bob: 0.5, surge: 0.6 },
+  rayquaza: { id: 384, drift: 2, bob: 0.5, surge: 0.7 },
+  wailord: { id: 321, drift: 4, bob: 1, surge: 0.5 },
   lugia: { id: 249, drift: 2, bob: 0.5, surge: 0.6 },
   kyogre: { id: 382, drift: 5, bob: 1.5, surge: 0.7 },
   moltres: { id: 146, drift: 2, bob: 0.5, surge: 0.8 },

@@ -565,3 +565,12 @@ negro del estudio de fotos: gen 8-9 en el equipo (ver Trampas y lecciones).
   a 6/7 dentro de la autorización anterior; originales conservados. Iris de Articuno preservado tras reducir; Kyogre compensa su pose a 28°.
   Corregida la integración de la última entrada del catálogo sin coma. 555 pruebas correctas, 136 celdas, 160 regiones de ojos, 92 archivos
   aprobados intactos. Entrega en `imagenes/revision/lote10`, pendiente de aprobación. Commit local sin push. No empezar el lote 11.
+
+- **Sprites del mar, lote 11 final** (2026-10-14): el usuario pidió «acaba esos 3», autorizando Wailord, Rayquaza y Ho-Oh.
+  Reconstruidos de sus referencias y animados por anatomía. Wailord/Ho-Oh necesitan el periodo fino explícito; Rayquaza conserva la onda del
+  cuerpo enroscado. Solo la visualización de Rayquaza y Ho-Oh se reduce al 75 % y 70 % dentro de la autorización anterior; originales guardados.
+  Corregida la colisión de proyección del diminuto ojo negro de Wailord. 72 celdas, 72 regiones de ojos, 555 pruebas correctas y 102 archivos
+  anteriores intactos. Entrega en imagenes/revision/lote11. Todas las 54 especies integradas; lotes 10 y 11 pendientes de aprobación visual.
+  Commit local sin push; no despliegue. Parar para revisión.
+  La vista conjunta detectó que los voladores se omitían con reserva >=62. Se ajustó a 61, se añadió la comprobación de espacio
+  de trayectoria a la auditoría y se verificó su aparición en el laboratorio. Las 555 pruebas finales vuelven a pasar (22 s).

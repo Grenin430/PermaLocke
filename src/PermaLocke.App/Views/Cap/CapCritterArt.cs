@@ -70,17 +70,7 @@ public sealed record CritterArt(int Species, string Name, CritterMotion Motion, 
 
             // ------------------------------------------------------------ the great ones of the sea
             new(382, "Kyogre", CritterMotion.Fish, "", "", Fps: 6, Sheet: "kyogre", Cell: 132, Angles: [16, 22, 28, 34, 40], Pose: 28, Height: 90, Drift: 5, Bob: 1.5, Surge: 0.7),
-            new(321, "Wailord", CritterMotion.Fish, "b=3868B8 l=E8E0C8 d=2850A0 k=181818", """
-                ...........bbbbbbbbbbbb..................
-                ......bbbbbbbbbbbbbbbbbbbbbb.............
-                ...bbbbbbbbbbbbbbbbbbbbbbbbbbbbb.......dd
-                .bbkbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb..ddd
-                bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbddd.
-                lllllllbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbdd.
-                .lllllllllllllllbbbbbbbbbbbbbbbbbbbbb.ddd
-                ..llllllllllllllllllllllbbbbbbbbbbb...ddd
-                ....llllllllllllllllllll.................
-                """),
+            new(321, "Wailord", CritterMotion.Fish, "", "", Fps: 5, Sheet: "wailord", Cell: 110, Angles: [-4, 0, 4], Pose: 0, Height: 84, Drift: 4, Bob: 1, Surge: 0.5),
             new(249, "Lugia", CritterMotion.Fish, "", "", Fps: 6, Sheet: "lugia", Cell: 76, Angles: [-2, 0, 2], Pose: 0, Height: 61, Drift: 2, Bob: 0.5, Surge: 0.6),
 
             // ------------------------------------------------------------ the sky, common
@@ -110,24 +100,8 @@ public sealed record CritterArt(int Species, string Name, CritterMotion Motion, 
             new(381, "Latios", CritterMotion.Fish, "", "", Fps: 7, Sheet: "latios", Cell: 78, Angles: [-2, 0, 2], Pose: 0, Height: 61, Drift: 2, Bob: 0.5, Surge: 0.7),
 
             // ------------------------------------------------------------ the legends of the sky
-            new(384, "Rayquaza", CritterMotion.Serpent, "g=388848 d=205830 y=F0D040 r=E03030 k=181818", """
-                ..dd............................................
-                .gggg.......d.......d.......d.......d...........
-                gkgggggggggggggggggggggggggggggggggggggggggggg.dd
-                rgggygggggyggggggggyggggggggyggggggggygggggggggdd
-                .ggggggggggggggggggggggggggggggggggggggggggggg.dd
-                ..y..........y..........y..........y............
-                """),
-            new(250, "Ho-Oh", CritterMotion.Fish, "r=E04030 y=F8D040 g=48A060 w=F0F0F0 k=181818", """
-                ............GGGG........
-                ...........GRRRRG.......
-                ..yy......RRRRRRR.......
-                .yyry....RRRRRRR........
-                yrkrr...RRRRRRrrrrrry...
-                .yrrrrrrrrrrrrrrrrrrryyg
-                ..wwwwrrrrrrrrrrrryyygg.
-                ...wwww.....rr.yyyg.....
-                """, "up", 4),
+            new(384, "Rayquaza", CritterMotion.Fish, "", "", Fps: 7, Sheet: "rayquaza", Cell: 80, Angles: [-1, 0, 1], Pose: 0, Height: 61, Drift: 2, Bob: 0.5, Surge: 0.7),
+            new(250, "Ho-Oh", CritterMotion.Fish, "", "", Fps: 6, Sheet: "hooh", Cell: 80, Angles: [-1, 0, 1], Pose: 0, Height: 61, Drift: 2, Bob: 0.5, Surge: 0.6),
             new(144, "Articuno", CritterMotion.Fish, "", "", Fps: 7, Sheet: "articuno", Cell: 76, Angles: [-2, 0, 2], Pose: 0, Height: 61, Drift: 2, Bob: 0.5, Surge: 0.6),
             new(145, "Zapdos", CritterMotion.Fish, "", "", Fps: 9, Sheet: "zapdos", Cell: 108, Angles: [-2, 0, 2], Pose: 0, Height: 61, Drift: 2, Bob: 0.5, Surge: 0.9),
             new(146, "Moltres", CritterMotion.Fish, "", "", Fps: 8, Sheet: "moltres", Cell: 90, Angles: [-2, 0, 2], Pose: 0, Height: 61, Drift: 2, Bob: 0.5, Surge: 0.8),

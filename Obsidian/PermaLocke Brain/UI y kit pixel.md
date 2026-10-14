@@ -131,3 +131,15 @@ Zapdos usa periodo 7,37; Kyogre mantiene tamaño nativo, Pose 28 y reserva 90 en
 el iris rojo de Articuno se proyecta después del blanco para evitar que lo tape. Integración admite la entrada final sin coma.
 136 celdas, 160 regiones de ojos y 555 pruebas correctas. Mar y cielo auditados. 92 hashes anteriores intactos; sin despliegue.
 No iniciar lote 11 hasta aprobar el lote 10 y confirmar la selección.
+
+## Sprites del mar: lote 11 singleplayer (2026-10-14)
+Wailord, Rayquaza y Ho-Oh: integrados y entregados para revisión. El usuario pidió «acaba esos 3», autorizando el lote final;
+no equivale a aprobar visualmente el lote 10. Ahora las 54 especies del catálogo tienen hoja animada, con lotes 10/11 aún pendientes de aprobación.
+Entrega: C:\Users\javie\Desktop\imagenes\revision\lote11\. Método completo en CONTINUIDAD_SPRITES_POKEMON.md, «Lote 11».
+Bases 87×74, 89×83 y 84×91; visualización 100 %, 75 % y 70 %. Se conservan fuentes nativas. Periodos explícitos 2,724 y 2,52 para Wailord y Ho-Oh.
+Wailord conserva el punto negro del ojo protegiendo solo ese color; Rayquaza proyecta el iris amarillo después del contorno al reducir.
+Ho-Oh dobla alas y cola por muestreo inverso. 72 celdas y 72 ojos correctos, iso/holes 0; mar/cielo auditados, 555 pruebas correctas.
+102 archivos anteriores idénticos. Solo .lab-art, sin desplegar. Parar para revisión del usuario.
+
+Lección del lote 11: caber por píxeles no basta. Swimmer omite al visitante cuando bottom <= top; el cielo de 69 requiere reserva menor
+de 62. Rayquaza/Ho-Oh usan 61. La auditoría añade trajectoryRange > 0 y la vista conjunta confirma que realmente aparecen.
