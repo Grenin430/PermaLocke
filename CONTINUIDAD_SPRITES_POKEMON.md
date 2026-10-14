@@ -16,7 +16,7 @@ Magikarp y lotes 1–11 aprobados por el usuario. Los lotes 10 y 11 recibieron a
 «acaba esos 3» y autorizó terminar Wailord, Rayquaza y Ho-Oh. Las tablas iniciales de esta sección son históricas;
 el estado actualizado está en las secciones de cada lote y en el registro externo.
 
-**Revisión posterior:** Pidgey corregido y tanda 1 aprobados e intactos. Tanda 2 RECHAZADA por el usuario. Las cuatro bases rehechas también RECHAZADAS. Charizard con cuello corregido: base definitiva APROBADA y primer batido rechazado; segunda revisión rechazada por el ala lejana; tercera aceptada como avance; cuarta (lectura de las dos alas): movimiento APROBADO; quinta (color de cada cara del ala) APROBADA: Charizard terminado. Skarmory: vuelo APROBADO (skarmory_vuelo, c95d23c). Dragonite: bases v3 y v4 RECHAZADAS; base v5 pendiente de aprobación en dragonite_pose_v5. Skarmory, Dragonite y Salamence pendientes, uno por uno desde referencias de vuelo.
+**Revisión posterior:** Pidgey corregido y tanda 1 aprobados e intactos. Tanda 2 RECHAZADA por el usuario. Las cuatro bases rehechas también RECHAZADAS. Charizard con cuello corregido: base definitiva APROBADA y primer batido rechazado; segunda revisión rechazada por el ala lejana; tercera aceptada como avance; cuarta (lectura de las dos alas): movimiento APROBADO; quinta (color de cada cara del ala) APROBADA: Charizard terminado. Skarmory: vuelo APROBADO (skarmory_vuelo, c95d23c). Dragonite: bases v3, v4 y v5 RECHAZADAS; base v6 (original inclinado) pendiente de aprobación en dragonite_pose_v6. Skarmory, Dragonite y Salamence pendientes, uno por uno desde referencias de vuelo.
 Ver «Correcciones de vuelo, tanda 2» y tools/critters/REVISION_POSES_VUELO.md. Salamence planea con las alas fijas.
 
 ### Qué estamos creando
@@ -1464,3 +1464,17 @@ como en todas las bases: la app voltea el sprite cuando cruza hacia la derecha.
 
 [Verificado] 106×67, 2727 píxeles opacos en una sola pieza, iso 0, holes 0 y solo la paleta original.
 Entrega: C:/Users/javie/Desktop/imagenes/revision/dragonite_pose_v5/. Desde tools/critters: node review_dragonite_pose_v5.js.
+
+#### Dragonite base v6: el original inclinado (2026-10-14), pendiente de aprobación
+El usuario rechaza la v5 («peor que la anterior») y, entre tres opciones (volver a la v4, inclinar el original o dejar Dragonite),
+elige inclinar el original. tools/critters/dragonite_flight_pose_v6.js conserva el sprite casi entero y lo inclina hacia delante.
+- **Cuerpo:** gira 55° como una sola pieza (RotSprite a escala 1). Brazo, alas, vientre con sus bandas y garras conservan su dibujo y
+  sus proporciones; las bandas quedan en diagonal.
+- **Cabeza:** inclinada 30° (25° menos que el cuerpo), para que mire hacia delante.
+- **Pierna izquierda:** gira 65° más que el cuerpo para quedar atrás, junto a la derecha, que ya queda atrás con la inclinación.
+- **Cola:** se separa y gira para salir hacia atrás.
+- **Piezas quitadas:** la mano derecha, que quedaría encima de la espalda, y el ala pequeña izquierda, que colgaría bajo la barbilla.
+  De perfil, las dos quedan detrás del cuerpo.
+
+[Verificado] 110×73, 2475 píxeles opacos en una sola pieza, iso 0, holes 0 y solo la paleta original.
+Entrega: C:/Users/javie/Desktop/imagenes/revision/dragonite_pose_v6/. Desde tools/critters: node review_dragonite_pose_v6.js.
