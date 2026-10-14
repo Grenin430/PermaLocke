@@ -16,7 +16,7 @@ Magikarp y lotes 1–11 aprobados por el usuario. Los lotes 10 y 11 recibieron a
 «acaba esos 3» y autorizó terminar Wailord, Rayquaza y Ho-Oh. Las tablas iniciales de esta sección son históricas;
 el estado actualizado está en las secciones de cada lote y en el registro externo.
 
-**Revisión posterior:** Pidgey corregido y tanda 1 aprobados e intactos. Tanda 2 RECHAZADA por el usuario. Las cuatro bases rehechas también RECHAZADAS. Charizard con cuello corregido: base definitiva APROBADA y primer batido rechazado; segunda revisión rechazada por el ala lejana; tercera aceptada como avance; cuarta (lectura de las dos alas): movimiento APROBADO; quinta (color de cada cara del ala) APROBADA: Charizard terminado. Skarmory: vuelo APROBADO (skarmory_vuelo, c95d23c). Dragonite: base v3 RECHAZADA; base v4 (construida) pendiente de aprobación en dragonite_pose_v4. Skarmory, Dragonite y Salamence pendientes, uno por uno desde referencias de vuelo.
+**Revisión posterior:** Pidgey corregido y tanda 1 aprobados e intactos. Tanda 2 RECHAZADA por el usuario. Las cuatro bases rehechas también RECHAZADAS. Charizard con cuello corregido: base definitiva APROBADA y primer batido rechazado; segunda revisión rechazada por el ala lejana; tercera aceptada como avance; cuarta (lectura de las dos alas): movimiento APROBADO; quinta (color de cada cara del ala) APROBADA: Charizard terminado. Skarmory: vuelo APROBADO (skarmory_vuelo, c95d23c). Dragonite: bases v3 y v4 RECHAZADAS; base v5 pendiente de aprobación en dragonite_pose_v5. Skarmory, Dragonite y Salamence pendientes, uno por uno desde referencias de vuelo.
 Ver «Correcciones de vuelo, tanda 2» y tools/critters/REVISION_POSES_VUELO.md. Salamence planea con las alas fijas.
 
 ### Qué estamos creando
@@ -1444,3 +1444,23 @@ mal proporcionadas, cuello hinchado, alas que deben ir algo más arriba del cuer
   píxeles que quedan sueltas de los bordes de las piezas.
 
 [Verificado] 103×66, 2583 píxeles opacos en una sola pieza, iso 0, holes 0 y solo la paleta original.
+
+#### Dragonite base v5: la lista de proporciones del usuario (2026-10-14), pendiente de aprobación
+El usuario pasa una lista de correcciones sobre la v4 (tools/critters/dragonite_flight_pose_v5.js; la v4 queda como histórico):
+- **Torso:** compacto y redondo (elipse 18×16).
+- **Vientre:** crema ancho con bandas horizontales: una línea I cada 3 filas, crema L y E en la parte baja.
+- **Cabeza:** la original, a su tamaño, ligeramente levantada (girada 6°), con sus antenas.
+- **Cuello:** corto y grueso (tramo de radio 7).
+- **Cola:** gruesa en la raíz, se afila y se curva un poco hacia arriba, con la punta en crema (L/E).
+- **Patas traseras:** muslos grandes y cañas estiradas hacia atrás, con las garras originales blancas.
+- **Brazo:** recogido bajo el pecho, con la mano original.
+- **Alas construidas:**
+  - La verde es grande y nace de la espalda: hueso naranja en el borde de ataque, tres dedos y membrana D/G/O, más oscura hacia
+    el borde de salida festoneado.
+  - La marrón es pequeña y va detrás, pegada a la espalda (F/P/A).
+
+La lista pedía mirar a la derecha «como en la referencia», pero la referencia vuela hacia la izquierda. Se mantiene la izquierda,
+como en todas las bases: la app voltea el sprite cuando cruza hacia la derecha.
+
+[Verificado] 106×67, 2727 píxeles opacos en una sola pieza, iso 0, holes 0 y solo la paleta original.
+Entrega: C:/Users/javie/Desktop/imagenes/revision/dragonite_pose_v5/. Desde tools/critters: node review_dragonite_pose_v5.js.
