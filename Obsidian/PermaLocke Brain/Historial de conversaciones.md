@@ -514,3 +514,8 @@ negro del estudio de fotos: gen 8-9 en el equipo (ver Trampas y lecciones).
 - **Aprobación del lote 4** (2026-10-14): el usuario dijo «aprobado, continua». Finneon, Milotic, Manaphy, Pelipper y Crobat quedan aprobados;
   se actualizan continuidad, registro externo y entrega sin modificar sus sprites. Propuesta para el lote 5: Luvdisc, Seadra, Lumineon,
   Pikipek y Skarmory, con referencias comprobadas y anatomías distintas. Pendiente de confirmar las cinco antes de comenzar su reconstrucción.
+
+- **Lote 5 de sprites del mar** (2026-10-14): tras aprobar el lote 4, el usuario confirmó Luvdisc, Seadra, Lumineon, Pikipek y Skarmory.
+  Reconstrucción desde sus referencias, animación por anatomía, integración y entrega en `imagenes/revision/lote5`. 184 celdas y ojos
+  comprobados, 553 pruebas aprobadas. Skarmory requirió periodo 3,24 y vuelo casi plano para caber en el cielo; Pikipek conserva la pose
+  posada. Ninguna hoja aprobada modificada. Estado: entregado para revisión, no aprobado aún. Commit local sin push; no avanzar al lote 6.

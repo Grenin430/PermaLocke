@@ -410,3 +410,49 @@ columna del fondo **1,18–1,42 ms**. Primera preparación 90,05 ms. Son medidas
 Las cinco hojas PNG suman 101.804 bytes. GIF final decodificado completo: **840 fotogramas, 70,00 s, 1920×976**, sin errores.
 Se han revisado las hojas de rostros completas y ambos paneles del recorrido mediante mosaicos; el GIF mantiene las oclusiones normales del
 juego y del equipo. `--especies` fuerza seis rutas simultáneas y, con dos voladores, repite Crobat: no es la frecuencia normal de la app.
+
+### Lote 5 (2026-10-14): entregado para revisión
+Luvdisc (370), Seadra (117), Lumineon (457), Pikipek (731) y Skarmory (227), propuestos y confirmados por el usuario antes de empezar.
+Integración en `singleplayer`; entrega en `C:\Users\javie\Desktop\imagenes\revision\lote5\`. Pendientes de aprobación.
+
+| Especie | Base | Celda de hoja | Fotogramas / inclinaciones | FPS | Movimiento |
+|---|---|---|---|---|---|
+| Luvdisc | 22×34 | 50×50 | 8 / 5 | 7 | Flexión leve de los dos lóbulos del cuerpo plano |
+| Seadra | 50×47 | 68×68 | 8 / 5 | 10 | Aleta dorsal rápida y cola enroscada con retraso |
+| Lumineon | 57×57 | 80×80 | 8 / 5 | 8 | Membranas dorsales, cola y aletas ventrales |
+| Pikipek | 30×42 | 60×60 | 8 / 5 | 9 | Cabeza, ala plegada y patas en la pose posada |
+| Skarmory | 66×68 | 88×88 | 8 / 3 | 8 | Alas metálicas con recorridos distintos, cola y patas |
+
+Método y comprobaciones:
+- Reconstrucción celda a celda con `recon2.js`, comparación a la misma altura y animación separando las piezas por sus bordes existentes.
+  Luvdisc no tiene aletas visibles en la referencia: se flexionan sus lóbulos sin inventarlas.
+- Seadra: las celdas blancas detrás de la cabeza (x >= 24) son fondo atrapado; se conservan las del ojo. La cola se dobla por filas enteras,
+  con desplazamiento cero en la unión. La aleta dorsal mueve columnas enteras desde su raíz.
+- Lumineon: la cola pequeña tiene prioridad sobre la máscara de la membrana grande para no absorberla. Las dos membranas tienen distinta
+  fase y dirección de movimiento; las aletas ventrales siguen al cuerpo.
+- Pikipek: movimiento pequeño de cabeza y ala plegada, conservando la pose posada. La amplitud del ala aumenta desde la raíz, evitando
+  descubrir un hueco bajo ella. Cuello y patas se revisaron ampliados.
+- Skarmory: referencia pequeña de 221×228, cuadrícula automática incorrecta de 12,94. Periodo explícito **3,24** con el cuarto argumento.
+  Se retira fondo blanco entre los dedos delanteros y una celda clara aislada de ruido JPEG en (60,31). Las dos alas se separan antes de
+  moverlas, con las raíces fijas. `layoutHeight: 61`, inclinaciones -2/0/2 y sin desplazamiento vertical adicional del cuerpo: la referencia
+  es alta y un aleteo vertical grande no cabe en el cielo existente. La pose, escala y anatomía de referencia se conservan.
+- `audit_batch5.js`: **40 fotogramas base y 184 celdas inclinadas**, `iso 0, holes 0`, ninguna toca los bordes de su celda.
+  **184/184 regiones de ojos** conservan pupila y colores del ojo; mosaicos `rostro.js` completos revisados.
+- Rotación: 3 huecos aislados en Luvdisc, 3 en Lumineon y 1 en Skarmory; corregidos con `sealRotatedHoles` y el `seal_sheet.js` aprobado,
+  sin modificar la herramienta compartida. Las máscaras y costuras se revisaron con `zoom.js`; el conteo no detecta grietas grandes.
+- Los ciclos son periódicos de ocho fotogramas. El cambio del último al primero no supera el mayor cambio entre fotogramas consecutivos.
+- `dotnet build tools/PermaLocke.PlaqueLab --artifacts-path .lab-art`: 0 errores, dos avisos previos CS0649 de `EmulatorLauncher`.
+  `dotnet test tests/PermaLocke.App.Tests --artifacts-path .lab-art`: **553/553**, 0 fallos, 0 omitidas.
+- Las 21 hojas anteriores, sus 20 scripts anatómicos y `critter.js` mantienen sus **42 hashes SHA-256**. No se toca ningún sprite aprobado.
+- `review_batch5.js deliver`, `audit_batch5.js` y `render_batch5.ps1` reproducen entrega, auditoría y recorrido usando el laboratorio aislado.
+
+Limitaciones: Pikipek mantiene su pose posada mientras recorre el cielo, como la referencia y el método de aves posadas; no se inventa una
+pose de vuelo distinta. Skarmory tiene amplitud e inclinación contenidas por su altura y por la resolución de la referencia. Revisión en el
+laboratorio, sin abrir juego ni desplegar. Los nadadores mantienen el tinte del agua y se atenúan detrás del texto del equipo. El GIF usa
+256 colores y tiempos en centésimas; la hoja PNG de la app conserva su paleta original. El reinicio del recorrido largo no es el bucle
+individual de cada Pokémon. Kyogre, Lugia, Rayquaza, Wailord y Ho-Oh siguen reservados. Parar tras este lote y esperar aprobación del usuario.
+
+Rendimiento final [verificado] con `--especies 370,117,457,731,227 --medir`: columna del equipo 178×321 **1,73–2,03 ms de media** por
+fotograma, p95 **2,23–3,31 ms**; fondo **0,95–1,48 ms**. Primera preparación 90,77 ms. Medición del laboratorio en este PC, sin emulador.
+Las cinco hojas suman **60.951 bytes**. Se exportaron **840 fotogramas, 70,00 s a 12 fps, 1920×976**; GIF decodificado completo sin errores.
+Mosaicos de ambos paneles revisados; `--especies` fuerza seis rutas y repite Skarmory en dos, sin cambiar la frecuencia normal de la app.
