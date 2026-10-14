@@ -22,6 +22,10 @@ const isTail = (x, y) => x >= 46 && y >= 35 && y <= 48 && !(x <= 50 && y <= 37) 
 const isNearWing = (x, y) => y <= 38 && !isHead(x, y) && !isNeck(x, y) && !isFarBlades(x, y) && !isTail(x, y) && x >= 33;
 const isFrontLeg = (x, y) => y >= 49 && x <= 35;
 const isBackLeg = (x, y) => y >= 50 && x >= 38;
+// In flight the legs fold up against the body and only the clenched feet show (as in the card): the toe clusters of the original
+// feet, without their shins.
+const isFrontFoot = (x, y) => y >= 55 && x >= 15 && x <= 28;
+const isBackFoot = (x, y) => y >= 58 && x >= 45;
 const isBody = (x, y) => y >= 38 && y <= 53 && x >= 22 && x <= 50 && !isTail(x, y) && !isNeck(x, y) && !isFrontLeg(x, y) && !isBackLeg(x, y);
 // Where the plating came off, the neck and back are closed with the dark blue outline the rest of the drawing has.
 const cut = rows.map((r, y) => r.map((c, x) => c !== "." && (isPlating(x, y) || isFarBlades(x, y))));
@@ -69,17 +73,19 @@ const onCore = ([x, y]) => {
   return T(CORE[0] + Math.cos(a) * dx - Math.sin(a) * dy, CORE[1] + Math.sin(a) * dx + Math.cos(a) * dy);
 };
 const SHOULDER = [37, 36];
+// feet: turn (degrees) and where their ankle lands on the body
+const FRONT_FOOT = [-55, [39, 50]], BACK_FOOT = [-40, [48, 48]];
 const layers = {
   farWing: piece(isNearWing, SHOULDER, TILT - 80, (([x, y]) => [x - 9, y + 6])(onCore(SHOULDER)), SHADE, [0.85, 0.7], true),
-  backLeg: piece(isBackLeg, [44, 51], TILT - 15, onCore([49, 47])),
+  backLeg: piece(isBackFoot, [47, 60], TILT + BACK_FOOT[0], onCore(BACK_FOOT[1])),
   core: piece(core, CORE, TILT, T(...CORE)),
-  frontLeg: piece(isFrontLeg, [31, 50], TILT - 15, onCore([39, 47]), {}, [1, 1], true),
+  frontLeg: piece(isFrontFoot, [26, 58], TILT + FRONT_FOOT[0], onCore(FRONT_FOOT[1])),
   nearWing: piece(isNearWing, SHOULDER, TILT - 16, onCore([38, 37])),
 };
 
 function build() {
   const g = Array.from({ length: H }, () => Array(W).fill("."));
-  for (const id of ["farWing", "backLeg", "frontLeg", "core", "nearWing"])
+  for (const id of ["farWing", "backLeg", "core", "frontLeg", "nearWing"])
     for (const [x, y, c] of layers[id]) if (g[y]?.[x] !== undefined) g[y][x] = c;
   // Pieces turned apart leave pinholes where they met (wing root, folded legs): small pockets of background shut in by the
   // drawing take the colour most of their neighbours have. Larger pockets are air between parts and stay.

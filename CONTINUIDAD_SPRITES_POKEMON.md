@@ -1321,3 +1321,16 @@ y patas que no se entienden.
 
 [Verificado] 70×66, 1791 píxeles opacos en una sola pieza (8 vecinos), iso 0, holes 0 y solo la paleta original. Además, cada
 capa es una pieza: ala lejana, ala cercana, núcleo y las dos patas.
+
+#### Skarmory base v3, tercera entrega: patas de vuelo (2026-10-14), pendiente de aprobación
+El usuario aprueba el resto y señala que las patas estaban colocadas como en tierra. En la carta, las patas van plegadas contra el
+cuerpo y no se ven las cañas, solo los pies cerrados: uno bajo el vientre, con las garras hacia abajo, y otro detrás, en la raíz de
+la cola.
+
+Solo se ven los dedos de cada pie original, sin la caña (isFrontFoot e isBackFoot):
+- **Pie delantero:** girado 55° y con el tobillo pegado bajo el vientre (FRONT_FOOT). Se dibuja delante del cuerpo.
+- **Pie trasero:** girado 40° y con el tobillo en la raíz de la cola (BACK_FOOT). Se dibuja detrás del cuerpo.
+
+El resto de la pose no cambia.
+
+[Verificado] 70×62, 1710 píxeles opacos en una sola pieza (8 vecinos), iso 0, holes 0 y solo la paleta original.
