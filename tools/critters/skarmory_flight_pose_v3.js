@@ -75,15 +75,19 @@ const onCore = ([x, y]) => {
 const SHOULDER = [37, 36];
 // feet: turn (degrees) and where their ankle lands on the body
 const FRONT_FOOT = [-55, [39, 50]], BACK_FOOT = [-40, [48, 48]];
-const layers = {
-  farWing: piece(isNearWing, SHOULDER, TILT - 80, (([x, y]) => [x - 9, y + 6])(onCore(SHOULDER)), SHADE, [0.85, 0.7], true),
+// The pose with each wing turned `near` and `far` degrees more round its own root (the flight cycle); none is the approved base.
+const layersFor = ({ near = 0, far = 0 } = {}) => ({
+  farWing: piece(isNearWing, SHOULDER, TILT - 80 + far, (([x, y]) => [x - 9, y + 6])(onCore(SHOULDER)), SHADE, [0.85, 0.7], true),
   backLeg: piece(isBackFoot, [47, 60], TILT + BACK_FOOT[0], onCore(BACK_FOOT[1])),
   core: piece(core, CORE, TILT, T(...CORE)),
   frontLeg: piece(isFrontFoot, [26, 58], TILT + FRONT_FOOT[0], onCore(FRONT_FOOT[1])),
-  nearWing: piece(isNearWing, SHOULDER, TILT - 16, onCore([38, 37])),
-};
+  nearWing: piece(isNearWing, SHOULDER, TILT - 16 + near, onCore([38, 37])),
+});
+const layers = layersFor();
 
-function build() {
+// The whole canvas for a pose, before cropping.
+function compose(turns) {
+  const layers = layersFor(turns);
   const g = Array.from({ length: H }, () => Array(W).fill("."));
   for (const id of ["farWing", "backLeg", "core", "frontLeg", "nearWing"])
     for (const [x, y, c] of layers[id]) if (g[y]?.[x] !== undefined) g[y][x] = c;
@@ -109,6 +113,11 @@ function build() {
       g[py][px] = Object.entries(n).sort((p, q) => q[1] - p[1])[0][0];
     }
   }
+  return { g, layers };
+}
+
+function build() {
+  const { g } = compose();
   // cropped to the drawing with a two-pixel margin
   const ys = g.map((r, y) => (r.some(c => c !== ".") ? y : -1)).filter(y => y >= 0);
   const xs = g[0].map((_, x) => (g.some(r => r[x] !== ".") ? x : -1)).filter(x => x >= 0);
@@ -116,7 +125,7 @@ function build() {
   const out = g.slice(y0, Math.max(...ys) + 3).map(r => r.slice(x0, Math.max(...xs) + 3).join(""));
   return { pal, rows: out, layers, origin: [x0, y0] };
 }
-module.exports = { build, pal, W, H };
+module.exports = { build, compose, pal, W, H };
 if (require.main === module) {
   const b = build();
   console.log(JSON.stringify(C.check([b.rows.map(r => [...r])])));

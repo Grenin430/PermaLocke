@@ -16,7 +16,7 @@ Magikarp y lotes 1–11 aprobados por el usuario. Los lotes 10 y 11 recibieron a
 «acaba esos 3» y autorizó terminar Wailord, Rayquaza y Ho-Oh. Las tablas iniciales de esta sección son históricas;
 el estado actualizado está en las secciones de cada lote y en el registro externo.
 
-**Revisión posterior:** Pidgey corregido y tanda 1 aprobados e intactos. Tanda 2 RECHAZADA por el usuario. Las cuatro bases rehechas también RECHAZADAS. Charizard con cuello corregido: base definitiva APROBADA y primer batido rechazado; segunda revisión rechazada por el ala lejana; tercera aceptada como avance; cuarta (lectura de las dos alas): movimiento APROBADO; quinta (color de cada cara del ala) APROBADA: Charizard terminado. Skarmory: base de vuelo v3 pendiente de aprobación en skarmory_pose_v3. Skarmory, Dragonite y Salamence pendientes, uno por uno desde referencias de vuelo.
+**Revisión posterior:** Pidgey corregido y tanda 1 aprobados e intactos. Tanda 2 RECHAZADA por el usuario. Las cuatro bases rehechas también RECHAZADAS. Charizard con cuello corregido: base definitiva APROBADA y primer batido rechazado; segunda revisión rechazada por el ala lejana; tercera aceptada como avance; cuarta (lectura de las dos alas): movimiento APROBADO; quinta (color de cada cara del ala) APROBADA: Charizard terminado. Skarmory: base de vuelo v3 APROBADA; vuelo animado e integrado, pendiente de aprobación en skarmory_vuelo. Skarmory, Dragonite y Salamence pendientes, uno por uno desde referencias de vuelo.
 Ver «Correcciones de vuelo, tanda 2» y tools/critters/REVISION_POSES_VUELO.md. Salamence planea con las alas fijas.
 
 ### Qué estamos creando
@@ -1334,3 +1334,41 @@ Solo se ven los dedos de cada pie original, sin la caña (isFrontFoot e isBackFo
 El resto de la pose no cambia.
 
 [Verificado] 70×62, 1710 píxeles opacos en una sola pieza (8 vecinos), iso 0, holes 0 y solo la paleta original.
+
+### Skarmory: base aprobada, vuelo animado e integrado (2026-10-14), pendiente de aprobación
+El usuario aprueba la base v3 con las patas plegadas (commit 9b13c6c). Queda congelada en
+tools/critters/skarmory_flight_approved.json (70×62, origen en el lienzo del generador [48, 39]).
+SHA256: 0225669839f5d7c64f6d21e8cc205e19972271c8c8a4ef3b3e218f3f814cad3a.
+skarmory_flight_pose_v3.js expone ahora compose({near, far}), la misma pose con cada ala girada unos grados más sobre su raíz.
+build() sigue dando exactamente la base aprobada.
+
+**Animación** (skarmory_approved_flight.js): 12 fotogramas a 10 fps, ciclo de 1,2 s.
+- Las cuchillas de acero son rígidas: cada ala gira entera desde su raíz al estilo RotSprite, a partir de las piezas de la base, y
+  ninguna se dobla.
+- Las dos baten a la vez: la cercana baja de levantada hacia horizontal (hasta 32°) y la lejana baja más bajo el pecho (hasta 18°).
+  Después vuelven.
+- El cuerpo sube un píxel en el golpe hacia abajo. Cabeza, cuello, cuerpo, cola y pies no cambian.
+- El fotograma 0 es la base aprobada píxel a píxel, y el script lo comprueba.
+- Todo el ciclo usa una sola caja de 78×68, a escala 1 y sin reducir.
+
+skarmory_flight_anim.js apunta a este módulo; build_batch.js e integrate_entries.js integran la hoja.
+- Entrada en CapCritterArt.cs: Fps 10, Cell 82, Angles [-2, 0, 2], Height 60.
+- Drift, Bob y Surge de vuelo: 1, 0,3 y 0,6.
+
+[Verificado]
+- iso 0 y holes 0 en los 12 fotogramas y en las 36 celdas, con una sola pieza en cada uno.
+- El ojo (3 píxeles amarillos) aparece en las 36 celdas.
+- Cielo previsto y0–67, dentro de 0–68. Cierre del bucle con 1253 píxeles distintos, por debajo del máximo interior.
+- Build del laboratorio: 0 errores. Tests App: 555/555.
+- --medir: Party media 1,46–1,73 ms, Deep 0,70–0,92 ms.
+- Recorrido del laboratorio revisado a tamaño real: vuela hacia la derecha en la banda del cielo.
+
+Entrega: C:/Users/javie/Desktop/imagenes/revision/skarmory_vuelo/
+- skarmory_bucle_fijo.gif y skarmory_fotogramas.png: ciclo ×4.
+- skarmory_ciclo_tamano_real_recorte.gif y skarmory_en_el_layout_tamano_real.gif: laboratorio a 12 fps.
+- skarmory_hoja_definitiva.png, skarmory_rostros_36_celdas.png, auditoria.json y rendimiento.txt.
+
+Desde tools/critters: node build_batch.js skarmory; node review_skarmory_flight.js; node integrate_entries.js.
+
+Limitaciones: el cielo va justo (y0–67). Las alas no se flexionan porque son de acero. Pendiente de aprobación visual; Dragonite y
+Salamence esperan.
