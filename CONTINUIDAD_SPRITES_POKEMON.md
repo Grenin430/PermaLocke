@@ -1654,3 +1654,6 @@ Limitaciones: el halo del cartel es sutil; en modo Delgado o denso no hay cartel
 
 #### Cap panel, 2026-10-15 (segunda tanda)
 El usuario quita la aurora del cielo y no queda convencido de los corales y objetos de CapReefLife. Se borra Aurora de CapFauna.cs (el cielo ya no lleva cintas verdes y doradas con el equipo en el cap). CapReefLife.cs deja de pintarse (sigue en el repositorio, sin llamada en CapWorldView.Paint) hasta que se elija una de las cuatro opciones del prototipo imagenes/revision/prototipo_arena: A tesoros del fondo, B ruinas, C pecio, D nido de huevos. El cartel del cap se queda. Pruebas App 555/555.
+
+#### Arena izquierda y cielo, 2026-10-15
+El usuario aprueba la opción 4 del prototipo de la arena izquierda (imagenes/revision/prototipo_izquierda_v2, script izquierda.js copiado allí): el muro de las ruinas Unown con la inscripción NANIKAGA / OKORU?, los cristales de la Caverna Abisal Cero y los fósiles (ammonites, ámbar, cúpula, garra, placa). Aún no está en la app. Pide añadir muy al fondo del cielo el Pilar Celeste y un Ultraumbral: prototipo en imagenes/revision/prototipo_cielo (cielo.js en la carpeta temporal de la sesión), pendiente de aprobación.
