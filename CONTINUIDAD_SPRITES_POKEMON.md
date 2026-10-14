@@ -556,3 +556,52 @@ Rendimiento final [verificado] con `--especies 746,369,18,468,142 --medir`: colu
 fotograma, p95 **2,13–3,66 ms**; fondo **1,02–1,21 ms**. Primera preparación 88,45 ms. Medidas de este PC en el laboratorio, sin emulador.
 GIF decodificado completo sin errores: **840 fotogramas, 70,00 s, 1920×976**, exportado a 12 fps. Mosaicos de ambos paneles revisados;
 se mantienen las oclusiones habituales detrás del juego y del equipo, y los solapamientos entre Pokémon de la vista forzada.
+
+### Lote 8 (2026-10-14): entregado para revisión
+Carvanha (318), Seaking (119), Fearow (22), Dragonite (149) y Latias (380), propuestos y confirmados por el usuario antes de empezar.
+Integrados en `singleplayer`; entrega en `C:\Users\javie\Desktop\imagenes\revision\lote8\`. Pendiente de aprobación del usuario.
+
+| Especie | Base reconstruida | Celda de hoja | Fotogramas / inclinaciones | FPS | Movimiento |
+|---|---|---|---|---|---|
+| Carvanha | 48×51 | 70×70 | 8 / 5 | 10 | Cola rápida, dorsal y aletas laterales y ventral |
+| Seaking | 59×50 | 80×80 | 8 / 5 | 7 | Cola amplia, dorsal y aletas inferiores con desfase |
+| Fearow | 82×72 | 100×100 | 8 / 3 | 8 | Alas parcialmente plegadas, cola y patas |
+| Dragonite | 64×80; visualización al 75 % (48×60) | 76×76 | 8 / 3 | 8 | Alas pequeñas, cola enroscada, antenas y brazo |
+| Latias | 68×53 | 88×88 | 8 / 5 | 7 | Planeo, alas, patas y cola inferior |
+
+Lo nuevo del método:
+- Periodos explícitos: Carvanha **4,34**, Fearow **2,84** y Latias **3,49** píxeles; el detector tomaba la cuadrícula doble.
+  Seaking se reconstruye automáticamente a 8 y Dragonite a 6. Comparaciones a la misma altura, sin interpretar ni redibujar.
+- Fearow: la reconstrucción mide 72 de alto y no cabe completamente extendida en el cielo de 69. Las alas permanecen parcialmente
+  plegadas: la trasera se dobla por muestreo inverso y la delantera por columnas completas, raíces fijas. Anclaje del lienzo desplazado
+  tres píxeles hacia arriba; `layoutHeight: 61`, inclinaciones -1/0/1. No se reduce su escala ni se cambia el layout.
+  Se quitan las celdas B de fondo en las puntas superiores (y < 12); las plumas claras y el pecho se conservan.
+- **Excepción de Dragonite, autorizada por el usuario:** su base 64×80 no cabe en el cielo; el usuario eligió «Reducir solo Dragonite».
+  El TXT y `rows` conservan la reconstrucción original; `sourceFrames` conserva la animación a escala nativa. Solo `fr`, los fotogramas
+  para visualizar, se muestrea al 75 % por vecino más cercano. Paleta intacta, sin suavizado. Los huecos totalmente encerrados de una
+  celda del muestreo se rellenan con un color vecino. El ojo y la boca se protegen en las coordenadas reducidas. Reserva 61, giros -2/0/2.
+  La comparación junto a la referencia enseña la base original; los bucles y fotogramas enseñan la visualización reducida.
+- Latias: dos celdas claras aisladas de fondo, (0,28) y la D de fila 22 entre x=35..49, se retiran. Alas de distinta longitud dobladas
+  por columnas, patas y cola con retraso. Reserva 59, giros -4/-2/0/2/4.
+- `audit_batch8.js`: **40 fotogramas de visualización, 168 celdas, 168/168 regiones de ojos**, iso 0, holes 0 y cero celdas tocando bordes.
+  También audita los ocho `sourceFrames` de Dragonite. Sus regiones de ojos se expresan en las coordenadas reducidas, antes del pad.
+  Todas las transiciones de cierre del bucle quedan dentro del máximo del resto del ciclo, con la tolerancia previa del 5 %.
+- Sellado aprobado de rotaciones: **21 huecos** (Seaking 3, Fearow 17, Latias 1). Sin modificar `critter.js` ni `seal_sheet.js`.
+- Límites verticales de todas las celdas, con el redondeo al par de C#: **Fearow y=1..66, Dragonite y=4..63, Latias y=3..64**, superficie 69.
+- Laboratorio compilado solo con `--artifacts-path .lab-art`: **0 errores**, dos avisos CS0649 previos. Pruebas: **553/553**, 0 fallos,
+  0 omitidas, 24 s; avisos CS8321 y xUnit2030 previos. No se abre el juego ni se despliega.
+- **72 SHA-256 anteriores idénticos**: 36 hojas aprobadas, sus 35 scripts y `critter.js`. Las cinco hojas nuevas suman **80.866 bytes**.
+  `integrate_entries.js` sustituye únicamente las cinco entradas de este lote en `CapCritterArt.cs`.
+- Herramientas reproducibles desde `tools/critters`: `review_batch8.js deliver`, `audit_batch8.js`, `render_batch8.ps1`.
+
+Limitaciones: Fearow vuela con las alas parcialmente plegadas y giros mínimos. Dragonite pierde detalle fino por su reducción autorizada,
+aunque la base original se conserva. Los JPEG pequeños limitan la reconstrucción. Verificado en el laboratorio de este PC, sin emulador
+ni despliegue. Los nadadores mantienen el tinte del agua y la atenuación tras el equipo. La vista forzada repite Carvanha en seis rutas;
+no representa la frecuencia normal y puede producir solapamientos. GIF de 256 colores y tiempos en centésimas; los PNG son los originales.
+El reinicio del recorrido de 70 segundos es distinto del bucle individual. Los cinco grandes siguen reservados.
+**Parar aquí: no comenzar el lote 9 hasta aprobar el lote 8 y confirmar las siguientes especies.**
+
+Rendimiento final [verificado] con `--especies 318,119,22,149,380 --medir`: columna del equipo 178×321 **1,75–2,10 ms de media** por
+fotograma, p95 **2,21–3,50 ms**; fondo **1,07–1,30 ms**. Primera preparación 86,33 ms. Medidas de este PC en el laboratorio, sin emulador.
+GIF completo decodificado sin errores: **840 fotogramas, 70,00 s, 1920×976**, exportado a 12 fps. Revisados ambos paneles mediante mosaicos
+cada dos segundos del recorrido y una vista completa a tamaño real. Los solapamientos y la oclusión tras el juego y el equipo son los normales.

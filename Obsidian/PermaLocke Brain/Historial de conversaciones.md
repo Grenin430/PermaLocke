@@ -539,3 +539,9 @@ negro del estudio de fotos: gen 8-9 en el equipo (ver Trampas y lecciones).
 
 - **Aprobación del lote 7** (2026-10-14): el usuario confirmó «aprobado». Wishiwashi, Relicanth, Pidgeot, Togekiss y Aerodactyl quedan aprobados.
   Actualizados continuidad, registro externo y LEEME de la entrega. Sin cambios en los sprites. La selección del lote 8 sigue pendiente.
+
+- **Sprites del mar, lote 8** (2026-10-14): el usuario confirmó Carvanha, Seaking, Fearow, Dragonite y Latias.
+  Reconstruidos por cuadrícula y animados por anatomía. El usuario autorizó reducir solo Dragonite al detectar que su base 64×80 excedía
+  el cielo: la visualización usa 75 % por vecino más cercano, conservando la base y los fotogramas originales. Fearow pliega las alas.
+  168 celdas, 168 regiones de ojos y 553 pruebas correctas; 72 archivos aprobados intactos. Entrega en `imagenes/revision/lote8`,
+  pendiente de aprobación. Commit local sin push; no avanzar al lote 9.

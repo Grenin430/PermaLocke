@@ -104,3 +104,12 @@ Método: `CONTINUIDAD_SPRITES_POKEMON.md`, sección «Lote 7». Entrega: `C:\Use
 Relicanth usa Pose 28 y conserva su ojo cerrado. Pidgeot mantiene su pose posada, altura 61 e inclinaciones -1/0/1 para caber en el cielo.
 La auditoría comprueba el espacio vertical con el redondeo real de C#. Las 31 hojas anteriores siguen intactas. Solo `.lab-art`, sin desplegar.
 Lote 7 aprobado; confirmar la selección del lote 8 antes de empezar.
+
+## Sprites del mar: lote 8 singleplayer (2026-10-14)
+Carvanha, Seaking, Fearow, Dragonite y Latias: integrados y entregados para revisión; aún no aprobados.
+Método: `CONTINUIDAD_SPRITES_POKEMON.md`, sección «Lote 8». Entrega: `C:\Users\javie\Desktop\imagenes\revision\lote8\`.
+40 fotogramas, 168 celdas y 168 regiones de ojos comprobados; 553 pruebas aprobadas. Periodos explícitos 4,34 / 2,84 / 3,49 para Carvanha,
+Fearow y Latias. Fearow mantiene las alas parcialmente plegadas, anclaje -3 e inclinaciones mínimas para caber en el cielo.
+El usuario autorizó reducir solo Dragonite: visualización al 75 % por vecino más cercano; la base 64×80 y su animación nativa se conservan.
+Los tres voladores caben en el cielo. Las 36 hojas anteriores permanecen intactas. Solo `.lab-art`, sin desplegar.
+Parar hasta aprobación del lote 8; confirmar la selección del lote 9 antes de empezar.
