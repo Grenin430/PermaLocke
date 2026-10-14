@@ -16,7 +16,7 @@ Magikarp y lotes 1–11 aprobados por el usuario. Los lotes 10 y 11 recibieron a
 «acaba esos 3» y autorizó terminar Wailord, Rayquaza y Ho-Oh. Las tablas iniciales de esta sección son históricas;
 el estado actualizado está en las secciones de cada lote y en el registro externo.
 
-**Revisión posterior:** Pidgey corregido y tanda 1 aprobados e intactos. Tanda 2 RECHAZADA por el usuario. Las cuatro bases rehechas también RECHAZADAS. Charizard con cuello corregido: base definitiva APROBADA y primer batido rechazado; segunda revisión rechazada por el ala lejana; tercera aceptada como avance; cuarta (lectura de las dos alas): movimiento APROBADO; quinta (color de cada cara del ala) APROBADA: Charizard terminado. Skarmory: vuelo APROBADO (skarmory_vuelo, c95d23c). Dragonite: base v6 (original inclinado) APROBADA; vuelo animado e integrado, pendiente de aprobación en dragonite_vuelo. Skarmory, Dragonite y Salamence pendientes, uno por uno desde referencias de vuelo.
+**Revisión posterior:** Pidgey corregido y tanda 1 aprobados e intactos. Tanda 2 RECHAZADA por el usuario. Las cuatro bases rehechas también RECHAZADAS. Charizard con cuello corregido: base definitiva APROBADA y primer batido rechazado; segunda revisión rechazada por el ala lejana; tercera aceptada como avance; cuarta (lectura de las dos alas): movimiento APROBADO; quinta (color de cada cara del ala) APROBADA: Charizard terminado. Skarmory: vuelo APROBADO (skarmory_vuelo, c95d23c). Dragonite: vuelo APROBADO (dragonite_vuelo, 253ccf1). Siguiente: Salamence. Skarmory, Dragonite y Salamence pendientes, uno por uno desde referencias de vuelo.
 Ver «Correcciones de vuelo, tanda 2» y tools/critters/REVISION_POSES_VUELO.md. Salamence planea con las alas fijas.
 
 ### Qué estamos creando
@@ -1565,3 +1565,6 @@ Entrega: C:/Users/javie/Desktop/imagenes/revision/dragonite_vuelo/
 Desde tools/critters: node build_batch.js dragonite; node review_dragonite_flight.js; node integrate_entries.js.
 
 Pendiente de aprobación visual. Salamence espera.
+
+### Dragonite aprobado (2026-10-14)
+El usuario aprueba el vuelo de Dragonite (dragonite_vuelo, commit 253ccf1). Queda Salamence, último de la tanda de vuelo 2.
