@@ -143,3 +143,11 @@ Ho-Oh dobla alas y cola por muestreo inverso. 72 celdas y 72 ojos correctos, iso
 
 Lección del lote 11: caber por píxeles no basta. Swimmer omite al visitante cuando bottom <= top; el cielo de 69 requiere reserva menor
 de 62. Rayquaza/Ho-Oh usan 61. La auditoría añade trajectoryRange > 0 y la vista conjunta confirma que realmente aparecen.
+
+## Revisión de poses de vuelo (2026-10-14)
+El usuario permite ahora redibujar las poses terrestres para vuelo, conservando identidad y acabado. Diez afectados: Pidgey, Spearow, Pikipek,
+Pidgeot, Toucannon, Staraptor, Skarmory, Dragonite, Charizard y Salamence. Piloto de Pidgey separado y pendiente de revisión: cabeza original,
+torso horizontal reconstruido, patas flexionadas, cola unida y alas nuevas articuladas con batido completo y recuperación plegada.
+Ver tools/critters/REVISION_POSES_VUELO.md y entrega imagenes/revision/vuelo_piloto. 8 fotogramas a 12 fps, 24 celdas/ojos correctos,
+iso/holes 0 y una sola componente conectada: comprobar esto último detecta apéndices separados que no son píxeles aislados.
+No se ha cambiado ninguna hoja de producción ni integrado el piloto. Esperar aprobación de pose/ciclo antes de integrar o extender.

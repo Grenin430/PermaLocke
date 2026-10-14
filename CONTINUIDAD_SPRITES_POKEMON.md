@@ -16,6 +16,9 @@ Magikarp y lotes 1–11 aprobados por el usuario. Los lotes 10 y 11 recibieron a
 «acaba esos 3» y autorizó terminar Wailord, Rayquaza y Ho-Oh. Las tablas iniciales de esta sección son históricas;
 el estado actualizado está en las secciones de cada lote y en el registro externo.
 
+**Revisión posterior solicitada:** diez voladores requieren adaptar la pose terrestre. Piloto separado de Pidgey pendiente de aprobación;
+ver «Revisión posterior: poses de vuelo» y tools/critters/REVISION_POSES_VUELO.md. Ninguna hoja de producción ha cambiado.
+
 ### Qué estamos creando
 
 El **panel del cap** es un "mar" pixel art que la app dibuja en las dos bandas laterales de la ventana del emulador mientras se juega
@@ -774,3 +777,15 @@ Rendimiento final [verificado] con --especies 321,384,250 --medir: columna del e
 p95 2,57–3,73 ms; fondo 1,01–1,69 ms. Primera preparación 90,80 ms. Medido en este PC y sin emulador.
 GIF definitivo decodificado sin errores: 840 fotogramas, 70,00 s, 1920×976, exportado a 12 fps. Revisados ambos paneles mediante mosaicos
 cada dos segundos y una vista completa: aparecen las tres especies y permanecen dentro de sus bandas verticales.
+
+### Revisión posterior: poses de vuelo (2026-10-14), piloto pendiente
+El usuario detectó postura de apoyo en varios voladores y autorizó redibujar torso, patas, alas y cola, conservando identidad, proporciones,
+rostro, paleta y detalle. Esta indicación sustituye «nunca redibujar» únicamente para los casos afectados. Primero exige revisar un piloto.
+Inventario: Pidgey, Spearow, Pikipek, Pidgeot, Toucannon, Staraptor, Skarmory, Dragonite, Charizard y Salamence. Los otros 18 voladores intactos.
+Piloto separado de Pidgey: tools/critters/pidgey_flight_anim.js; comparación, ciclo fijo y simulación externa de dirección en
+C:/Users/javie/Desktop/imagenes/revision/vuelo_piloto/. Método y diagnóstico: tools/critters/REVISION_POSES_VUELO.md.
+8 fotogramas a 12 fps, 24 celdas, 24 ojos correctos; 212 píxeles de cabeza conservados en cada fotograma; iso/holes 0 y una sola componente
+conectada en fotogramas y rotaciones. No integrar ni extender a los otros nueve antes de aprobar pose y ciclo. La integración prematura
+fue rechazada por revisión automática; se completó la propuesta separada. Las 54 hojas y los scripts aprobados permanecen sin cambios.
+La aprobación anterior de los lotes es histórica: estos diez quedan ahora señalados para revisión de postura. No se han repetido las pruebas
+WPF porque no se ha cambiado la app; falta validación integrada después de aprobar el piloto. Sin despliegue ni push.

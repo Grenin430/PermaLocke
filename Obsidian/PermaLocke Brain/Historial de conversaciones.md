@@ -579,3 +579,9 @@ negro del estudio de fotos: gen 8-9 en el equipo (ver Trampas y lecciones).
   Lugia, Wailord, Rayquaza y Ho-Oh quedan aprobados, incluidas las escalas visuales entregadas. Las 54 especies del catálogo están
   terminadas, integradas y aprobadas. Actualizados continuidad, registro externo y LEEME de ambos lotes. Sin cambios de sprites ni código;
   commit local sin push, sin despliegue.
+
+- **Corrección de poses terrestres en el aire** (2026-10-14): tras aprobar los lotes, el usuario pidió identificar los afectados y redibujar
+  uno representativo antes de extender el cambio. Se señalaron diez; se creó un piloto separado de Pidgey con cabeza/paleta conservadas,
+  torso, patas, cola y alas reconstruidos para vuelo. 8 fotogramas, 24 celdas, ojos y conectividad correctos. La revisión automática
+  rechazó integrar antes de revisar; se entregan comparación, ciclo fijo y simulación externa, sin cambiar los sprites aprobados.
+  Pendiente de aprobación del piloto; no interpretar «continua» durante su preparación como aprobación de la propuesta aún no entregada.
