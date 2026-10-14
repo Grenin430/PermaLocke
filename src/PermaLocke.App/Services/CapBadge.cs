@@ -165,7 +165,7 @@ public sealed class CapBadge
     /// <summary>
     /// <c>--ensayar-cap [escenario] [segundos]</c>: the panel with no real party, from a scenario of the lab (<see cref="CapScenarios"/>: captura, completo,
     /// caidos, huevos, combate, tope, inicio, liga, subida, golpe, caida, curacion, cambio-cap, eclosion, estados, casi-tope, batalla, luto, noche, amanecer,
-    /// atardecer, nadador, nadador-raro, nadador-leyenda, volador, volador-raro, volador-leyenda, banco, ola, estrella, ev-golpe, ev-cura, ev-antidoto, ev-curas, ev-revivir, ev-estado, ev-objeto, ev-movimiento) on a loop.
+    /// atardecer, nadador, nadador-raro, nadador-leyenda, volador, volador-raro, volador-leyenda, estrella, ev-golpe, ev-cura, ev-antidoto, ev-curas, ev-revivir, ev-estado, ev-objeto, ev-movimiento) on a loop.
     /// With the game open it goes over its real band, with the real layout, whichever window has the focus; without it, over PermaLocke's own
     /// window. Thirty seconds by default. Reads nothing of the run and writes nothing: only the panel is shown.
     /// </summary>

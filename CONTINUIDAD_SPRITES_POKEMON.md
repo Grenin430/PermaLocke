@@ -1623,3 +1623,31 @@ review_salamence_pose_v3.js quedan como histórico.
 
 ### Todos los visitantes a 2/3 y el doble de frecuentes (2026-10-14)
 El usuario prueba los sprites en la app y pide reducir TODOS a 2/3 y que aparezcan más a menudo. Se hace al pintar, sin regenerar hojas: CapVisitors.Swimmer y ProwlSheet (Sharpedo) dibujan cada celda a ceil(celda × 2/3) tomando el píxel de la hoja por vecino más próximo (Shrink, Shrunk, Source). La altura reservada (Height) se escala igual. Los periodos de los seis carriles bajan a la mitad (mar 34/48/150 s, cielo 22/60/165 s); duración y probabilidad no cambian. La caché de hojas (SheetOf) pasa a usar un lock: un test de determinismo falló una vez con varios hilos pintando a la vez. Tests App 555/555 (tres pasadas). Limitación: a 2/3 por vecino más próximo, los detalles de 1 px (ojos, antenas, garras) pueden perderse en algún fotograma; si alguno se nota, habría que regenerar esa hoja a su nuevo tamaño.
+
+### Layout del cap: cartel del cap, arrecife con vida, sin banco ni ola, Spearow y reducción (2026-10-15)
+El usuario pide, tras probar los sprites a 2/3 (commit 43f2a03):
+1. **Cartel del cap** (idea 4 de las propuestas, solo el cartel): CapSign.cs. Un poste con tabla clavado en la arena a la izquierda del
+   suelo del panel del equipo. Dice «CAP ACTUAL» y debajo «LVL» pequeño y el cap en letras grandes (escala 2, o 1 si no cabe). Con el
+   equipo en el cap, el número lo rodea un halo dorado que respira (mood Cap). Solo en modo Columna y solo si cabe entre el borde y las
+   seis imágenes (44 columnas de ancho con escala 2); si no cabe, no se pinta. Los corales se apartan de él (CapSign.Extent).
+2. **Sin el banco de peces en V ni la ola de luz vertical**: se quitan School y LightWave de CapFauna.cs y los escenarios «banco» y «ola»
+   de CapScenarios.cs. Los demás sucesos raros mantienen su número de clase, así que no cambia cuándo aparece ninguno.
+3. **Corales y vida en la arena** (CapReefLife.cs), todo del mundo Pokémon y pintado a escala 1 con la paleta del mar:
+   - Coral de Corsola: tronco rosa que se bifurca y puntas claras, a veces en colonia con otro más joven al lado; se mece con la corriente.
+   - Abanico de coral morado con costillas.
+   - Un Staryu tumbado con su núcleo rojo que late.
+   - Un Shellder que abre y cierra la concha sobre una perla.
+   - Una Poké Ball medio enterrada con el botón que brilla de vez en cuando.
+   Cada uno ocupa una casilla de 19 columnas del mar único, calculada con la semilla y la columna del mundo, así que las dos ventanas
+   coinciden. Se apartan de los fósiles y del cartel, sueltan burbujas y no se pintan en banda ni compacto.
+4. **Spearow, cabeza-cuerpo** (spearow_flight_anim.js): el contorno negro del propio mentón se quedaba dentro del dibujo como una barra
+   negra entre la garganta roja y el pecho. Esos píxeles negros interiores (filas 26–29) pasan al marrón oscuro del pecho; el contorno
+   exterior sigue. Medido: el dibujo nativo ya era una sola pieza, así que lo que se leía como corte era esa barra.
+5. **La reducción a 2/3 cortaba uniones finas** (CapVisitors.Pick): con vecino más próximo, 31 especies perdían alguna unión
+   (cuello, antena, cola) en 4-vecinos. Ahora un píxel de salida se enciende si el dibujo cubre al menos el 30 % del parche de hoja que
+   tiene debajo, y toma el color que más lo llena (un contorno oscuro cuenta una vez y media). Con ese criterio ninguna especie pierde
+   una unión salvo 8 cuyas hojas ya venían partidas en trozos de pocos píxeles.
+
+[Verificado] Build del laboratorio sin errores; pruebas App 555/555; capturas del laboratorio de ambos paneles, del cartel con los datos
+del escenario (cap 42) y de Fearow, Spearow y Dragonite cruzando a 2/3.
+Limitaciones: el halo del cartel es sutil; en modo Delgado o denso no hay cartel por falta de sitio.

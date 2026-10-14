@@ -37,13 +37,44 @@ public static class CapVisitors
         new(15, 165, 26, 45, true, [384, 384, 250, 144, 145, 146, 249], Big: true)
     ];
 
-    /// <summary>Every drawing from a sheet is painted at two thirds of its size, nearest neighbour (2026-10-14).</summary>
+    /// <summary>Every drawing from a sheet is painted at two thirds of its size (2026-10-14), keeping its thin joins (<see cref="Pick"/>).</summary>
     private const double Shrink = 2.0 / 3.0;
 
-    /// <summary>The side of a cell once shrunk, and the sheet pixel an output pixel of it takes.</summary>
+    /// <summary>The side of a cell once shrunk.</summary>
     private static int Shrunk(int cell) => (int)Math.Ceiling(cell * Shrink);
 
-    private static int Source(int o, int cell) => Math.Min(cell - 1, (int)((o + 0.5) / Shrink));
+    /// <summary>
+    /// The sheet pixel (an index into its BGRA bytes) that an output pixel of a drawing shrunk to two thirds shows, or -1 for none. The
+    /// output pixel is on if the drawing covers at least 30 % of the patch of sheet under it, and it shows the colour that fills most of that
+    /// patch, a dark outline counting half as much again. Plain nearest neighbour dropped the thin joins (a neck, an antenna, a tail) in
+    /// thirty species; this keeps them (2026-10-14).
+    /// </summary>
+    private static int Pick(ToastPixels.SpritePixels sheet, int baseX, int baseY, int cell, int ox, int oy)
+    {
+        double x0 = ox / Shrink, x1 = (ox + 1) / Shrink, y0 = oy / Shrink, y1 = (oy + 1) / Shrink;
+        double total = 0, covered = 0, bestScore = 0;
+        var best = -1;
+        for (var y = (int)Math.Floor(y0); y < Math.Min(cell, (int)Math.Ceiling(y1)); y++)
+        {
+            var wy = Math.Min(y + 1, y1) - Math.Max(y, y0);
+            for (var x = (int)Math.Floor(x0); x < Math.Min(cell, (int)Math.Ceiling(x1)); x++)
+            {
+                var w = wy * (Math.Min(x + 1, x1) - Math.Max(x, x0));
+                total += w;
+                var at = (((baseY + y) * sheet.Width) + baseX + x) * 4;
+                if (sheet.Bgra[at + 3] < 128) continue;
+                covered += w;
+                var score = sheet.Bgra[at] + sheet.Bgra[at + 1] + sheet.Bgra[at + 2] < 150 ? w * 1.5 : w;
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    best = at;
+                }
+            }
+        }
+
+        return total > 0 && covered / total >= 0.30 ? best : -1;
+    }
 
     /// <summary>One pixel of a drawing, already lit (top edge) and shaded (bottom edge).</summary>
     private readonly record struct Dot(int X, int Y, uint Rgb, bool Wing);
@@ -124,10 +155,8 @@ public static class CapVisitors
         {
             for (var ox = 0; ox < size; ox++)
             {
-                var gx = (col * cell) + Source(ox, cell);
-                var gy = (row * cell) + Source(oy, cell);
-                var at = ((gy * sheet.Width) + gx) * 4;
-                if (sheet.Bgra[at + 3] < 128) continue;
+                var at = Pick(sheet, col * cell, row * cell, cell, ox, oy);
+                if (at < 0) continue;
                 var rgb = ((uint)sheet.Bgra[at + 2] << 16) | ((uint)sheet.Bgra[at + 1] << 8) | sheet.Bgra[at];
                 var dx = dir > 0 ? size - 1 - ox : ox;
                 p.Rect(left + dx, topY + oy, 1, 1, tintAmount > 0 ? CapSheet.Mix(rgb, tint, tintAmount) : rgb, alpha);
@@ -266,8 +295,8 @@ public static class CapVisitors
         {
             for (var ox = 0; ox < size; ox++)
             {
-                var at = ((((row * cell) + Source(oy, cell)) * sheet.Width) + (col * cell) + Source(ox, cell)) * 4;
-                if (sheet.Bgra[at + 3] < 128) continue;
+                var at = Pick(sheet, col * cell, row * cell, cell, ox, oy);
+                if (at < 0) continue;
                 var rgb = ((uint)sheet.Bgra[at + 2] << 16) | ((uint)sheet.Bgra[at + 1] << 8) | sheet.Bgra[at];
                 // it swims to the right, so the drawing (facing left) is turned round
                 p.Rect(left + (size - 1 - ox), top + oy, 1, 1, CapSheet.Mix(rgb, tint, 0.6), alpha);

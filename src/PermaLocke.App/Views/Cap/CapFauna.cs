@@ -2,8 +2,9 @@ namespace PermaLocke.App.Views;
 
 /// <summary>
 /// What lives in the sea besides the party (2026-10-10), by the mood: the Pokémon that swim and fly past (<see cref="CapVisitors"/>, singleplayer
-/// 2026-10-13, in place of the jellyfish, the whale and the manta), a school of fish, a bioluminescent wave, a shooting star at night, the aurora
-/// when the party is at the cap, the Sharpedo that prowls in danger, the soul that rises from a fresh fossil.
+/// 2026-10-13, in place of the jellyfish, the whale and the manta), a shooting star at night, the aurora when the party is at the cap, the
+/// Sharpedo that prowls in danger, the soul that rises from a fresh fossil. The school of fish in a V and the wave of light that crossed the
+/// sea were taken out on 2026-10-15.
 /// The rare ones are scheduled from the seed of the run and the time, nothing else: the same run sees them at the same moments, another run does not.
 /// </summary>
 public static class CapFauna
@@ -27,13 +28,6 @@ public static class CapFauna
         var seed = ctx.Seed;
         var hush = Math.Clamp(1 - Strength(mood, CapMood.Danger) - (0.7 * Strength(mood, CapMood.Mourning)), 0, 1);
 
-        // The rare ones, only when the sea is not in danger or mourning.
-        if (hush > 0.5)
-        {
-            if (EventAt(seed, 3, t, 95, 26, 65) is { Active: true } school) School(p, l, pal, ctx, school.Progress, school.Variant, world, phase);
-            if (EventAt(seed, 4, t, 330, 9, 60) is { Active: true } wave) LightWave(p, l, pal, ctx, wave.Progress, world);
-        }
-
         if (CapSeaPalette.Night(ctx.SkyHour) > 0.5 && EventAt(seed, 5, t, 50, 2.2, 80) is { Active: true } star) ShootingStar(p, l, ctx, star.Progress, star.Variant, world);
 
         var danger = Strength(mood, CapMood.Danger);
@@ -44,53 +38,12 @@ public static class CapFauna
 
         Souls(p, l, ctx, graves, phase, Strength(mood, CapMood.Mourning));
 
-        // The Pokémon that pass go last, in front of the little school, the wave of light and the souls: a speck of the school crossing a
-        // pupil washed the eye out (2026-10-14).
+        // The Pokémon that pass go last, in front of the souls.
         if (hush > 0.5) CapVisitors.Paint(p, l, pal, ctx, t, phase);
     }
 
     private static double Strength((CapMood Now, CapMood Before, double Blend) mood, CapMood which) =>
         (mood.Now == which ? mood.Blend : 0) + (mood.Before == which ? 1 - mood.Blend : 0);
-
-    // ---------------------------------------------------------------- the ones that cross the sea
-
-    private static int Across(double progress, int dir, int world, int length) =>
-        dir > 0 ? -length + (int)(progress * (world + (2 * length))) : world + length - (int)(progress * (world + (2 * length)));
-
-    private static void School(CapSheet p, CapWorldLayout l, CapSeaPalette pal, CapSeaContext ctx, double progress, int variant, int world, double phase)
-    {
-        var dir = variant % 2 == 0 ? 1 : -1;
-        var lead = Across(progress, dir, world, 40);
-        var y = l.SurfaceY + 24 + (variant % Math.Max(10, l.FloorTop - l.SurfaceY - 70));
-
-        for (var k = 0; k < 16; k++)
-        {
-            // A V of fish with the leader at its point, each swimming a little on its own.
-            var row = (k + 1) / 2;
-            var side = k % 2 == 0 ? -1 : 1;
-            var fx = lead - (dir * row * 5) - ctx.WorldX;
-            var fy = y + (side * row * 2) + (int)Math.Round(Math.Sin((phase * 3) + k) * 1.2);
-            p.Set(fx, fy, pal.Snow, 215);
-            p.Set(fx - dir, fy, pal.Snow, 215);
-            p.Set(fx - (2 * dir), fy + ((k & 1) == 0 ? -1 : 1), pal.Snow, 150);
-        }
-    }
-
-    private static void LightWave(CapSheet p, CapWorldLayout l, CapSeaPalette pal, CapSeaContext ctx, double progress, int world)
-    {
-        // A front of light that crosses the sea from one side to the other: a column of dither, bright at the front and fading behind.
-        var front = (int)(progress * (world + 40)) - 20;
-        for (var x = 0; x < l.Cols; x++)
-        {
-            var behind = front - (x + ctx.WorldX);
-            if (behind < 0 || behind > 22) continue;
-            var level = 1 - (behind / 22.0);
-            for (var y = l.SurfaceY + 2; y < l.FloorTop - 4; y++)
-            {
-                if (((x + y) & 1) == 0 && CapArt.Hash(x + ctx.WorldX, y) % 3 == 0) p.Set(x, y, pal.Glow, (int)(150 * level * level));
-            }
-        }
-    }
 
     private static void ShootingStar(CapSheet p, CapWorldLayout l, CapSeaContext ctx, double progress, int variant, int world)
     {

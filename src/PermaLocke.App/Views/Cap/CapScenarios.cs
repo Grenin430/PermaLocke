@@ -194,8 +194,6 @@ public static class CapScenarios
             Rare(name, title, l.Kind, l.Period, l.Duration, l.Chance);
         }
 
-        Rare("banco", "Un banco de peces", 3, 95, 26, 65);
-        Rare("ola", "Una ola de luz recorre el mar", 4, 330, 9, 60);
         Rare("estrella", "Una estrella fugaz sobre el mar nocturno", 5, 50, 2.2, 80, 23.5);
 
         return scenarios;

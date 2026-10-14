@@ -103,6 +103,15 @@ public sealed class CapWorldView
         CapSeaLive.Shafts(frame, Layout, pal, _context, phase);
         CapSeaLive.Snow(frame, Layout, pal, _context, phase);
         CapFlora.Paint(frame, Layout, pal, _context, _fossils, phase);
+        // The reef: coral and a few things out of the Pokémon world on the sand, and in the party's window the sign with the cap (2026-10-15).
+        var sign = Layout.Panel == CapPanelKind.Party ? CapSign.Extent(Layout, data, _context, _fossils) : null;
+        CapReefLife.Paint(frame, Layout, pal, _context, _fossils, sign, phase);
+        if (Layout.Panel == CapPanelKind.Party)
+        {
+            var atCap = (mood.Now == CapMood.Cap ? mood.Blend : 0) + (mood.Before == CapMood.Cap ? 1 - mood.Blend : 0);
+            CapSign.Paint(frame, Layout, pal, _context, data, _fossils, atCap, phase);
+        }
+
         CapDeep.Souls(frame, Layout, _fossilViews, phase);
         // A still frame (no animation) shows the focus in the middle of its time on the newest fossil, not dark at the start of it.
         CapDeep.Focus(frame, Layout, pal, _fossilViews, _context, anim is null ? CapDeep.NewestSeconds / 2 : t);
