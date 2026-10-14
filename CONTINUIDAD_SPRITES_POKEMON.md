@@ -12,7 +12,7 @@ español, nunca desplegar a `PermaLocke prueba` ni a `PermaLocke para amigos`, n
 ## 1. Objetivo y estado actual
 
 **Actualización del lote 11 (2026-10-14): las 54 especies del catálogo ya tienen hoja animada integrada.**
-Magikarp y lotes 1–9 aprobados; lotes 10 y 11 entregados para revisión, sin aprobación visual todavía. El usuario pidió
+Magikarp y lotes 1–11 aprobados por el usuario. Los lotes 10 y 11 recibieron aprobación conjunta («ok a todo») el 2026-10-14. El usuario pidió
 «acaba esos 3» y autorizó terminar Wailord, Rayquaza y Ho-Oh. Las tablas iniciales de esta sección son históricas;
 el estado actualizado está en las secciones de cada lote y en el registro externo.
 
@@ -667,10 +667,10 @@ Recorrido de revisión: **840 fotogramas, 70 s, 1920×976**, exportado a 12 fps.
 revisados: aparecen las cinco especies; se mantienen solapamientos y oclusiones normales. Registro externo y cerebro actualizados.
 GIF completo decodificado sin errores: 840 fotogramas y 70,00 s; registro en `lote9/verificacion_gif.txt`.
 
-### Lote 10 (2026-10-14): entregado para revisión
+### Lote 10 (2026-10-14): aprobado por el usuario
 Articuno (144), Zapdos (145), Moltres (146), Kyogre (382) y Lugia (249), propuestos y confirmados antes de empezar.
 El usuario confirmó incorporar ahora Kyogre y Lugia, antes reservados. Quedan Wailord, Rayquaza y Ho-Oh para el último lote.
-Integrados en `singleplayer`; entrega en `C:\Users\javie\Desktop\imagenes\revision\lote10\`. Pendiente de aprobación visual.
+Integrados en `singleplayer`; entrega en `C:\Users\javie\Desktop\imagenes\revision\lote10\`. Aprobado por el usuario el 2026-10-14 («ok a todo»).
 
 | Especie | Base reconstruida | Escala de visualización | Celda | Fotogramas / inclinaciones | FPS | Movimiento |
 |---|---|---|---|---|---|---|
@@ -718,7 +718,7 @@ en el cielo; el dibujo de referencia determina la pose. El modo forzado mantiene
 además de las tres aves; no representa su frecuencia normal y puede haber solapamientos. Se conservan el tinte del agua y la atenuación tras
 el equipo. El GIF usa 256 colores y tiempos en centésimas, mientras la app conserva sus PNG. El reinicio del recorrido largo es distinto del
 bucle individual de cada especie. Solo laboratorio, sin emulador ni despliegue.
-**Lote 10 entregado para revisión. No comenzar el lote 11 hasta la aprobación del usuario.**
+**Lote 10 aprobado junto al lote 11. Catálogo completo.**
 
 Rendimiento final [verificado] con `--especies 144,145,146,382,249 --medir`: columna del equipo 178×321 **1,80–2,26 ms de media** por
 fotograma, p95 **2,46–3,43 ms**; fondo **1,15–1,60 ms**. Primera preparación 94,23 ms. Medidas de este PC en laboratorio, sin emulador.
@@ -726,9 +726,9 @@ Recorrido de revisión: **840 fotogramas, 70 s, 1920×976**, exportado a 12 fps.
 completa revisados: aparecen las cinco especies; Lugia pasa por mar y cielo. Se mantienen los solapamientos y las oclusiones habituales.
 GIF final completo decodificado sin errores: **840 fotogramas, 70,00 s**; registro en `lote10/verificacion_gif.txt`.
 
-### Lote 11 (2026-10-14): los tres últimos, entregados para revisión
+### Lote 11 (2026-10-14): los tres últimos, aprobados por el usuario
 Wailord (321), Rayquaza (384) y Ho-Oh (250). El usuario pidió expresamente «acaba esos 3»: autoriza este lote final,
-sin convertir el lote 10 en aprobado. Ambos quedan pendientes de aprobación visual. Las 54 entradas de CritterArt.All ya usan hojas PNG.
+sin aprobar entonces el lote 10. Después confirmó «ok a todo»: ambos lotes aprobados el 2026-10-14. Las 54 entradas de CritterArt.All ya usan hojas PNG.
 Entrega: C:\Users\javie\Desktop\imagenes\revision\lote11\. Rama singleplayer, commit local sin push.
 
 | Especie | Base reconstruida | Escala de visualización | Celda | Fotogramas / inclinaciones | FPS | Movimiento |
@@ -768,7 +768,7 @@ Las bases originales quedan guardadas. Los movimientos de las alas y las inclina
 El modo forzado repite Wailord en tres rutas de mar, Ho-Oh en dos de cielo y Rayquaza en una: seis recorridos, sin representar frecuencia normal.
 Se conservan el tinte del agua, las oclusiones tras el juego/equipo y los solapamientos entre visitantes. GIF con 256 colores y tiempos en
 centésimas; los PNG integrados conservan sus paletas. El reinicio del recorrido largo es distinto del bucle individual. Solo laboratorio,
-sin emulador ni despliegue. Lote 11 entregado para revisión: parar y esperar la aprobación visual.
+sin emulador ni despliegue. Lote 11 aprobado junto al lote 10: las 54 especies quedan terminadas, integradas y aprobadas.
 
 Rendimiento final [verificado] con --especies 321,384,250 --medir: columna del equipo 178×321, media 1,83–2,45 ms por fotograma,
 p95 2,57–3,73 ms; fondo 1,01–1,69 ms. Primera preparación 90,80 ms. Medido en este PC y sin emulador.

@@ -574,3 +574,8 @@ negro del estudio de fotos: gen 8-9 en el equipo (ver Trampas y lecciones).
   Commit local sin push; no despliegue. Parar para revisión.
   La vista conjunta detectó que los voladores se omitían con reserva >=62. Se ajustó a 61, se añadió la comprobación de espacio
   de trayectoria a la auditoría y se verificó su aparición en el laboratorio. Las 555 pruebas finales vuelven a pasar (22 s).
+
+- **Aprobación final de sprites: lotes 10 y 11** (2026-10-14): el usuario confirmó «ok a todo». Articuno, Zapdos, Moltres, Kyogre,
+  Lugia, Wailord, Rayquaza y Ho-Oh quedan aprobados, incluidas las escalas visuales entregadas. Las 54 especies del catálogo están
+  terminadas, integradas y aprobadas. Actualizados continuidad, registro externo y LEEME de ambos lotes. Sin cambios de sprites ni código;
+  commit local sin push, sin despliegue.
