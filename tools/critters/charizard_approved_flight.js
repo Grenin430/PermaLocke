@@ -42,21 +42,64 @@ function clean(g){let sealed=0,isolated=0;
  return {sealed,isolated};
 }
 const frames=[],stats=[],wingLayers=[];
+const NEAR_ROOT=[59,40],FAR_SHIFT=[-8,-3],FAR_TURN_UP=30,FAR_TURN_DOWN=28,FAR_SPAN=.9,FAR_ROOM=[3,96],REVERSE={C:'K',J:'M',M:'G',I:'M',H:'J'};
 function frame(f){
  const t=f/N*2*Math.PI,bob=Math.round(-.9*Math.sin(t));
  const g=Array.from({length:H},()=>Array(W).fill('.'));
  const put=(x,y,c)=>{if(c!=='.'&&g[y+OY+bob]?.[x+OX]!==undefined)g[y+OY+bob][x+OX]=c;};
  const wings={near:Array.from({length:H},()=>Array(W).fill('.')),far:Array.from({length:H},()=>Array(W).fill('.'))};
- function wing(rows,isFar){
-  const layer=wings[isFar?'far':'near'];
-  const draw=(x,y,c)=>{put(x,y,c);if(c!=='.'&&layer[y+OY+bob]?.[x+OX]!==undefined)layer[y+OY+bob][x+OX]=c;};
-  if(f%N===0){rows.forEach((r,y)=>[...r].forEach((c,x)=>{if(c!=='.')draw(x,y,c);}));return;}
-    require('./charizard_wing_poses').paint(rows,isFar,f,draw);
-  // The broad shoulder cuff is invariant in local body coordinates throughout both half-strokes.
-  const box=isFar?[53,34,61,39]:[56,36,64,43];
-  for(let y=box[1];y<=box[3];y++)for(let x=box[0];x<=box[2];x++)if(rows[y][x]!=='.')draw(x,y,rows[y][x]);
+ // The far wing is the near wing of the same frame seen across the back: same membrane, fingers and stroke, its root set a little
+ // forward and up on the far shoulder, its span shortened by the turn of the body and swung towards the head, so it opens ahead of
+ // the near wing when both are high and under the chest when both are low. It shows its shaded reverse; the body hides its root.
+ function farWing(){
+  const layer=wings.far,PX=40,PY=60,L=Array.from({length:SH+2*PY},()=>Array(SW+2*PX).fill('.'));
+  const local=(x,y,c)=>{if(c!=='.'&&L[y+PY]?.[x+PX]!==undefined)L[y+PY][x+PX]=c;};
+  if(f%N===0)nearRows.forEach((r,y)=>[...r].forEach((c,x)=>local(x,y,c)));else require('./charizard_wing_poses').paint(nearRows,false,f,local);
+  // The arm decides the turn: the wrist above the shoulder swings the far wing forward and up, below it forward and down.
+  const hub=require('./charizard_wing_poses').pose(f).nh,arm=[hub[0]-NEAR_ROOT[0],hub[1]-NEAR_ROOT[1]];
+  const turn=(arm[1]<0?FAR_TURN_UP:FAR_TURN_DOWN)*arm[1]/Math.hypot(...arm);
+  // Further away, it is also shorter up and down: drawn into a scratch grid and sampled back squashed towards its root, just enough
+  // to stay within the height the near wing already takes, so the sky keeps room for it.
+  const T=new Map();
+  C.swing(L,()=>true,[NEAR_ROOT[0]+PX,NEAR_ROOT[1]+PY],()=>turn,()=>FAR_SPAN)(0,(x,y,c)=>T.set(x+','+y,c));
+  const ys=[...T.keys()].map(k=>+k.split(',')[1]),xs=[...T.keys()].map(k=>+k.split(',')[0]),ry=NEAR_ROOT[1]+PY,
+   FAR_DEPTH=Math.min(1,(ry-FAR_ROOM[0]-PY+FAR_SHIFT[1])/(ry-Math.min(...ys)),(FAR_ROOM[1]+PY-FAR_SHIFT[1]-ry)/(Math.max(...ys)-ry));
+  for(let y=Math.floor(ry+(Math.min(...ys)-ry)*FAR_DEPTH)-1;y<=Math.ceil(ry+(Math.max(...ys)-ry)*FAR_DEPTH)+1;y++)
+   for(let x=Math.min(...xs);x<=Math.max(...xs);x++){
+    const c=T.get(x+','+Math.round(ry+(y+.5-ry)/FAR_DEPTH-.5));if(!c)continue;
+    const X=x-PX+FAR_SHIFT[0],Y=y-PY+FAR_SHIFT[1],k=REVERSE[c]||c;put(X,Y,k);if(layer[Y+OY+bob]?.[X+OX]!==undefined)layer[Y+OY+bob][X+OX]=k;
+   }
  }
- wing(completeFar,true);
+ function wing(rows){
+  const layer=wings.near,PX=40,PY=60,L=Array.from({length:SH+2*PY},()=>Array(SW+2*PX).fill('.'));
+  const local=(x,y,c)=>{if(c!=='.'&&L[y+PY]?.[x+PX]!==undefined)L[y+PY][x+PX]=c;};
+  if(f%N===0)rows.forEach((r,y)=>[...r].forEach((c,x)=>local(x,y,c)));
+  else{
+   const poses=require('./charizard_wing_poses');poses.paint(rows,false,f,local);
+   if(poses.pose(f).nh[1]<NEAR_ROOT[1]){
+    // While the arm is raised the broad shoulder cuff stays as drawn in the base.
+    for(let y=36;y<=43;y++)for(let x=56;x<=64;x++)if(rows[y][x]!=='.')local(x,y,rows[y][x]);
+   }else{
+    // Lowered, the cuff of the raised wing would point the wrong way: the root is just the shoulder and the arm, and the slivers
+    // the resampled leading edge leaves around the elbow go.
+    // Nothing of the membrane rises above the arm: it hangs behind it.
+    const p=poses.pose(f).near,chain=[NEAR_ROOT,[p[1][0]+1,p[1][1]+2],[p[2][0]+7,p[2][1]+8]];
+    for(let y=20;y<=70;y++)for(let x=46;x<=110;x++)for(let i=1;i<chain.length;i++){
+     const [ax,ay]=chain[i-1],[bx,by]=chain[i],dx=bx-ax,dy=by-ay,u=((x-ax)*dx+(y-ay)*dy)/(dx*dx+dy*dy);
+     if(u<0||u>1)continue;
+     const side=(dx*(y-ay)-dy*(x-ax))/Math.hypot(dx,dy);
+     if(side<-3.2)L[y+PY][x+PX]='.';
+    }
+    for(let pass=0;pass<3;pass++)for(let y=26;y<=64;y++)for(let x=50;x<=100;x++){
+     const c=L[y+PY][x+PX];if(c==='.')continue;let n=0;
+     for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)if((dx||dy)&&L[y+PY+dy][x+PX+dx]!=='.')n++;
+     if(n<=2)L[y+PY][x+PX]='.';
+    }
+   }
+  }
+  L.forEach((r,y)=>r.forEach((c,x)=>{if(c==='.')return;const X=x-PX,Y=y-PY;put(X,Y,c);if(layer[Y+OY+bob]?.[X+OX]!==undefined)layer[Y+OY+bob][X+OX]=c;}));
+ }
+ farWing();
  // Recover only torso pixels originally hidden by the near wing.
  for(let y=30;y<=44;y++)for(let x=53;x<=86;x++)if(torso[y]?.[x]&&nearRows[y][x]!=='.')put(x,y,y<39?'J':'M');
  for(let y=0;y<SH;y++)for(let x=0;x<SW;x++){
@@ -66,15 +109,16 @@ function frame(f){
   const dx=flame?Math.round(.9*Math.sin(2*t)*Math.max(0,(55-y)/20)):y>=63&&x>=73&&x<=107?Math.round(.65*Math.sin(t)*(y-62)/14):0;
   put(x+dx,y+dy,c);
  }
- wing(nearRows,false);
+ wing(nearRows);
  // The forearm crosses in front of the membrane root.
  for(let y=39;y<67;y++)for(let x=47;x<=63;x++)if(arm[y]?.[x]&&body[y][x]!=='.')put(x,y,body[y][x]);
  const repairs=clean(g);return {g:g.map(r=>r.join('')),bob,wings,...repairs};
 }
 for(let f=0;f<N;f++){const a=frame(f);frames.push(a.g);wingLayers.push(a.wings);stats.push({frame:f,bob:a.bob,sealed:a.sealed,isolated:a.isolated});}
 assert.deepEqual(frame(N).g,frames[0]);
-let baselineChanges=0;for(let y=0;y<SH;y++)for(let x=0;x<SW;x++)if(frames[0][y+OY][x+OX]!==base[y][x])baselineChanges++;
-assert.equal(baselineChanges,0);
+// Frame 0 is the approved base except where the old far wing was and where the new one shows.
+let baselineChanges=0;for(let y=0;y<SH;y++)for(let x=0;x<SW;x++)if(frames[0][y+OY][x+OX]!==base[y][x]){baselineChanges++;
+ assert.ok(completeFar[y][x]!=='.'||wingLayers[0].far[y+OY][x+OX]!=='.',`frame 0 changed outside the far wing at ${x},${y}`);}
 // All frames share one bounding box, preserving the body's position throughout the loop.
 const pts=[];frames.forEach(g=>g.forEach((r,y)=>[...r].forEach((c,x)=>{if(c!=='.')pts.push([x,y]);})));
 const minX=Math.min(...pts.map(p=>p[0]))-3,maxX=Math.max(...pts.map(p=>p[0]))+3,minY=Math.min(...pts.map(p=>p[1]))-3,maxY=Math.max(...pts.map(p=>p[1]))+3;

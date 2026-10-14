@@ -1,8 +1,8 @@
-// Key poses at one fixed scale, with shoulder crops and an isolated far-wing view to inspect the hidden attachment.
+// Key poses at one fixed scale, with both wings isolated over a subdued body guide to inspect their shape and their root on the back.
 const fs=require('fs'),path=require('path'),{execFileSync}=require('child_process'),m=require('./charizard_approved_flight');
-const OUT='C:/Users/javie/Desktop/imagenes/revision/charizard_batido_v2',FF='C:/Program Files (x86)/Soundux/ffmpeg.exe';
+const OUT='C:/Users/javie/Desktop/imagenes/revision/charizard_batido_v3',FF='C:/Program Files (x86)/Soundux/ffmpeg.exe';
 const picks=[0,3,7,9,11,14],titles=['ALAS ALTAS','GOLPE DESCENDENTE','ALAS BAJAS','INICIO DE RECUPERACION','RECUPERACION FLEXIONADA','APERTURA ANTES DEL GOLPE'];
-const pw=600,ph=480,W=pw*3,H=ph*2,b=Buffer.alloc(W*H*3);
+const pw=680,ph=600,W=pw*3,H=ph*2,b=Buffer.alloc(W*H*3);
 const rgb=h=>[0,2,4].map(k=>parseInt(h.slice(k,k+2),16));
 for(let i=0;i<W*H;i++)b.set(rgb('182B3A'),i*3);
 function rect(x,y,w,h,color){for(let yy=y;yy<y+h;yy++)for(let xx=x;xx<x+w;xx++)b.set(rgb(color),(yy*W+xx)*3);}
@@ -14,14 +14,14 @@ for(let j=0;j<picks.length;j++){
  labels.push([String(f).padStart(2,'0')+' - '+titles[j],x+14,y+12,18,'white']);
  // All full poses use the same source canvas and magnification.
  draw(m.fullFrames[f].slice(12,112).map(r=>r.slice(0,194)),x+9,y+46,3);
- const bob=m.stats[f].bob,crop=m.fullFrames[f].slice(12+bob+28,12+bob+51).map(r=>r.slice(10+49,10+82));
- draw(crop,x+20,y+375,4);
- labels.push(['UNION AL HOMBRO x4',x+20,y+352,14,'0x182B3A']);
- // The dorsal wing is usually occluded; display it behind a subdued body guide, keeping the real root.
- const far=m.wingLayers[f].far.slice(12+bob+4,12+bob+94).map(r=>r.slice(10,10+125));
- draw(m.body.slice(4,92).map(r=>r.slice(0,125)),x+240,y+370,1,true);
- draw(far,x+240,y+370,1);
- labels.push(['ALA LEJANA AISLADA x1',x+240,y+352,14,'0x182B3A']);
+ const bob=m.stats[f].bob,guide=m.body.slice(0,100).map(r=>r.slice(0,160));
+ // Each wing alone, at twice its size, over the grey body it hangs from.
+ for(const [side,ox] of [['near',x+12],['far',x+342]]){
+  draw(guide,ox,y+380,2,true);
+  draw(m.wingLayers[f][side].slice(12+bob,12+bob+100).map(r=>r.slice(10,170)),ox,y+380,2);
+ }
+ labels.push(['ALA CERCANA AISLADA x2',x+12,y+356,14,'0x182B3A']);
+ labels.push(['ALA LEJANA AISLADA x2',x+342,y+356,14,'0x182B3A']);
 }
 const filters=labels.map(([t,x,y,z,c])=>"drawtext=fontfile='C\\:/Windows/Fonts/arial.ttf':text='"+t+"':x="+x+":y="+y+":fontsize="+z+":fontcolor="+c+":expansion=none").join(',');
 execFileSync(FF,['-v','error','-y','-f','rawvideo','-pixel_format','rgb24','-video_size',W+'x'+H,'-i','pipe:0','-vf',filters,'-frames:v','1',path.join(OUT,'charizard_fotogramas_clave.png')],{input:b});

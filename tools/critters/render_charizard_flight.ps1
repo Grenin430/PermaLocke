@@ -2,8 +2,8 @@
 $ErrorActionPreference = 'Stop'
 $project = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
 $lab = Join-Path $project '.lab-art/bin/PermaLocke.PlaqueLab/debug/PermaLocke.PlaqueLab.exe'
-$frames = Join-Path $project '.lab-art/charizard-wing-v2-sequence'
-$out = 'C:/Users/javie/Desktop/imagenes/revision/charizard_batido_v2'
+$frames = Join-Path $project '.lab-art/charizard-wing-v3-sequence'
+$out = 'C:/Users/javie/Desktop/imagenes/revision/charizard_batido_v3'
 $ffmpeg = 'C:/Program Files (x86)/Soundux/ffmpeg.exe'
 & $lab --especies 6 --secuencia-ventana completo 0 28 12 1920 $frames
 if ($LASTEXITCODE -ne 0) { throw 'Falló la exportación del laboratorio.' }

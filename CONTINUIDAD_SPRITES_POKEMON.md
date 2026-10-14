@@ -16,7 +16,7 @@ Magikarp y lotes 1–11 aprobados por el usuario. Los lotes 10 y 11 recibieron a
 «acaba esos 3» y autorizó terminar Wailord, Rayquaza y Ho-Oh. Las tablas iniciales de esta sección son históricas;
 el estado actualizado está en las secciones de cada lote y en el registro externo.
 
-**Revisión posterior:** Pidgey corregido y tanda 1 aprobados e intactos. Tanda 2 RECHAZADA por el usuario. Las cuatro bases rehechas también RECHAZADAS. Charizard con cuello corregido: base definitiva APROBADA y primer batido rechazado; segunda revisión integrada y pendiente de aprobación en charizard_batido_v2. Skarmory, Dragonite y Salamence pendientes, uno por uno desde referencias de vuelo.
+**Revisión posterior:** Pidgey corregido y tanda 1 aprobados e intactos. Tanda 2 RECHAZADA por el usuario. Las cuatro bases rehechas también RECHAZADAS. Charizard con cuello corregido: base definitiva APROBADA y primer batido rechazado; segunda revisión rechazada por el ala lejana; tercera integrada y pendiente de aprobación en charizard_batido_v3. Skarmory, Dragonite y Salamence pendientes, uno por uno desde referencias de vuelo.
 Ver «Correcciones de vuelo, tanda 2» y tools/critters/REVISION_POSES_VUELO.md. Salamence planea con las alas fijas.
 
 ### Qué estamos creando
@@ -1153,3 +1153,51 @@ Limitaciones: los chequeos geométricos no equivalen a aprobación visual. La pe
 cambian el área visible de las alas; no se exige área opaca constante del animal completo. GIF con tiempos
 cuantizados a centésimas. Pendiente revisar este batido; Skarmory, Dragonite y Salamence siguen esperando
 poses individuales desde referencias de vuelo, sin modificar en esta tarea. Commit local sin push.
+
+### Charizard: tercera revisión del batido (2026-10-14), pendiente de aprobación
+El usuario conserva la base y los avances del ala cercana, y rechaza el ala lejana: en casi todo el ciclo era una tira naranja
+o una pieza triangular detrás de la cabeza, y Charizard parecía volar con una sola ala. También pide limpiar la raíz del ala
+cercana en los fotogramas 7–11, donde se acumulaban líneas y pliegues.
+
+**Ala lejana derivada de la cercana del mismo fotograma** (charizard_approved_flight.js, farWing). Se pinta el ala cercana en una
+rejilla aparte con su misma pose (o la base en el fotograma 0) y se transforma:
+- Raíz movida 8 px hacia delante y 3 hacia arriba, en el hombro lejano.
+- Giro RotSprite (C.swing) hacia la cabeza, proporcional a la altura de la muñeca: 30° con el brazo alto y 28° con el bajo. Así se
+  abre por delante del ala cercana cuando las dos suben y bajo el pecho cuando bajan.
+- Envergadura al 90 % y aplastamiento vertical hacia la raíz solo cuando hace falta para no pasar de la altura que ya ocupa la
+  cercana (filas 3–96 de la base). Así el dibujo cabe en el cielo: 99×60 en pantalla, celda 102.
+- Muestra el reverso en sombra (C→K, J→M, M→G, I→M, H→J) y el cuerpo tapa su raíz.
+- Queda de canto solo en los pasos (fotogramas 4–5 y 10–12).
+
+El fotograma 0 deja de ser idéntico a la base: 945 píxeles distintos, todos dentro del ala lejana antigua o de la nueva. El script
+lo comprueba.
+
+**Raíz del ala cercana.** Con la muñeca por debajo del hombro (fotogramas 5–12), el ala cercana:
+- No copia el manguito de la pose alta, que apuntaba al revés.
+- Borra lo que el remuestreo dejaba por encima del brazo (a más de 3,2 px de su borde).
+- Quita astillas de 1–2 píxeles en tres pasadas.
+
+Queda el brazo continuo del hombro a la muñeca, con la membrana colgando debajo. Con el brazo alto se mantiene el manguito de la
+base (57/57 píxeles).
+
+[Verificado]
+- iso 0 y holes 0 en los dibujos nativos y de pantalla y en las 48 celdas, con una componente conectada en cada uno.
+- Ojos en 48/48 celdas y rostro/cuello 568/568 en cada fase.
+- Cielo previsto y4–62. Cierre del bucle con 1385 píxeles distintos (máximo interior 3592).
+- Las dos alas tocan su raíz en los 16 fotogramas. 137 archivos protegidos intactos.
+- Build del laboratorio: 0 errores. Tests App: 555/555.
+- --medir: Party media 1,48–1,69 ms, Deep 0,77–1,06 ms.
+- GIF del layout revisado: aparece en la banda del cielo con las dos alas.
+
+Entrega: C:/Users/javie/Desktop/imagenes/revision/charizard_batido_v3/
+- charizard_fotogramas_clave.png: seis poses y las dos alas aisladas ×2.
+- charizard_bucle_fijo.gif, charizard_en_el_layout_tamano_real.gif, auditoria.json y rendimiento.txt.
+- Las mismas comprobaciones que la v2.
+
+Desde tools/critters: node build_batch.js charizard; node review_charizard_flight.js; node review_charizard_wing_keys.js;
+node integrate_entries.js; powershell -ExecutionPolicy Bypass -File render_charizard_flight.ps1.
+
+Limitaciones:
+- El reverso del ala lejana es un recoloreado en sombra de la cercana, no un dibujo propio.
+- En los pasos se ve estrecha o tapada por el cuerpo.
+- Pendiente de aprobación visual. Commit local sin push.
