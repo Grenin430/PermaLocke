@@ -1651,3 +1651,6 @@ El usuario pide, tras probar los sprites a 2/3 (commit 43f2a03):
 [Verificado] Build del laboratorio sin errores; pruebas App 555/555; capturas del laboratorio de ambos paneles, del cartel con los datos
 del escenario (cap 42) y de Fearow, Spearow y Dragonite cruzando a 2/3.
 Limitaciones: el halo del cartel es sutil; en modo Delgado o denso no hay cartel por falta de sitio.
+
+#### Cap panel, 2026-10-15 (segunda tanda)
+El usuario quita la aurora del cielo y no queda convencido de los corales y objetos de CapReefLife. Se borra Aurora de CapFauna.cs (el cielo ya no lleva cintas verdes y doradas con el equipo en el cap). CapReefLife.cs deja de pintarse (sigue en el repositorio, sin llamada en CapWorldView.Paint) hasta que se elija una de las cuatro opciones del prototipo imagenes/revision/prototipo_arena: A tesoros del fondo, B ruinas, C pecio, D nido de huevos. El cartel del cap se queda. Pruebas App 555/555.

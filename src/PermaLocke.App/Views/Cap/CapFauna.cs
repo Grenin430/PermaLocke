@@ -2,9 +2,9 @@ namespace PermaLocke.App.Views;
 
 /// <summary>
 /// What lives in the sea besides the party (2026-10-10), by the mood: the Pokémon that swim and fly past (<see cref="CapVisitors"/>, singleplayer
-/// 2026-10-13, in place of the jellyfish, the whale and the manta), a shooting star at night, the aurora when the party is at the cap, the
-/// Sharpedo that prowls in danger, the soul that rises from a fresh fossil. The school of fish in a V and the wave of light that crossed the
-/// sea were taken out on 2026-10-15.
+/// 2026-10-13, in place of the jellyfish, the whale and the manta), a shooting star at night, the Sharpedo that prowls in danger, the soul
+/// that rises from a fresh fossil. The school of fish in a V and the wave of light that crossed the sea were taken out on 2026-10-15, and the
+/// aurora that waved across the sky when the party was at the cap on 2026-10-15 too.
 /// The rare ones are scheduled from the seed of the run and the time, nothing else: the same run sees them at the same moments, another run does not.
 /// </summary>
 public static class CapFauna
@@ -33,9 +33,6 @@ public static class CapFauna
         var danger = Strength(mood, CapMood.Danger);
         if (danger > 0.05) CapVisitors.Prowl(p, l, pal, ctx, phase, danger);
 
-        var cap = Strength(mood, CapMood.Cap);
-        if (cap > 0.05) Aurora(p, l, ctx, phase, cap);
-
         Souls(p, l, ctx, graves, phase, Strength(mood, CapMood.Mourning));
 
         // The Pokémon that pass go last, in front of the souls.
@@ -60,25 +57,6 @@ public static class CapFauna
     }
 
     // ---------------------------------------------------------------- the moods
-
-    /// <summary>The aurora of a sea at its cap: ribbons of green and gold light that wave across the sky.</summary>
-    private static void Aurora(CapSheet p, CapWorldLayout l, CapSeaContext ctx, double phase, double strength)
-    {
-        if (l.SkyRows < 6) return;
-        for (var x = 0; x < l.Cols; x++)
-        {
-            double wx = x + ctx.WorldX;
-            var centre = (l.SkyRows * 0.45) + (Math.Sin((wx * 0.05) + (phase * 0.6)) * (l.SkyRows * 0.18));
-            var width = 4 + (3 * Math.Sin((wx * 0.11) - (phase * 0.4)));
-            for (var y = (int)(centre - width); y <= (int)(centre + width); y++)
-            {
-                if (y < 0 || y >= l.SurfaceY) continue;
-                var edge = 1 - (Math.Abs(y - centre) / (width + 0.5));
-                if (edge * 14 <= CapSeaPalette.Bayer[((y & 3) * 4) + (x & 3)]) continue;
-                p.Set(x, y, Math.Sin((wx * 0.04) + (phase * 0.3)) > 0 ? 0x78F0B8u : 0xFFE890u, (int)(200 * strength * edge));
-            }
-        }
-    }
 
     /// <summary>A soul that rises from each of the latest two fossils, pale, slowly: more of them while the sea mourns.</summary>
     private static void Souls(CapSheet p, CapWorldLayout l, CapSeaContext ctx, IReadOnlyList<CapGrave> graves, double phase, double mourning)

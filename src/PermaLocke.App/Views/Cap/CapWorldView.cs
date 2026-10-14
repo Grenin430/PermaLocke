@@ -103,9 +103,8 @@ public sealed class CapWorldView
         CapSeaLive.Shafts(frame, Layout, pal, _context, phase);
         CapSeaLive.Snow(frame, Layout, pal, _context, phase);
         CapFlora.Paint(frame, Layout, pal, _context, _fossils, phase);
-        // The reef: coral and a few things out of the Pokémon world on the sand, and in the party's window the sign with the cap (2026-10-15).
-        var sign = Layout.Panel == CapPanelKind.Party ? CapSign.Extent(Layout, data, _context, _fossils) : null;
-        CapReefLife.Paint(frame, Layout, pal, _context, _fossils, sign, phase);
+        // In the party's window, the sign with the cap (2026-10-15). The coral and the little things on the sand (CapReefLife) were not liked
+        // and are not painted until something else is chosen.
         if (Layout.Panel == CapPanelKind.Party)
         {
             var atCap = (mood.Now == CapMood.Cap ? mood.Blend : 0) + (mood.Before == CapMood.Cap ? 1 - mood.Blend : 0);
