@@ -1488,3 +1488,11 @@ El usuario aprueba el camino. Pide inclinar las alas un poco hacia la derecha y 
 - **Lienzo:** más margen (AT [78, 56], ancho 160), porque la mano izquierda se recortaba en el borde y luego la punta de la cola.
 
 [Verificado] 110×81, 2608 píxeles opacos en una sola pieza, iso 0, holes 0 y solo la paleta original.
+
+#### Dragonite base v6, tercera entrega (2026-10-14), pendiente de aprobación
+El usuario pide levantar un poco la cabeza, para que no mire hacia abajo, y arreglar un corte en la cola.
+- **Cabeza:** inclinada 15° en lugar de 30° (HEAD_TURN 40 frente a LEAN -55), así que mira al frente, un poco hacia arriba.
+- **Cola:** la raíz tocaba el cuerpo en el original y ese borde no tenía contorno; girada aparte, quedaba abierta. Ahora todo píxel
+  de la cola que queda junto al fondo toma el contorno negro H.
+
+[Verificado] 107×81, 2558 píxeles opacos en una sola pieza, iso 0, holes 0 y solo la paleta original.

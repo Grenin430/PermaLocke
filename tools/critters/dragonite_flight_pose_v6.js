@@ -50,16 +50,23 @@ const onCore = ([x, y]) => {
 };
 const TAIL_ROOT = [45, 60], TAIL_TURN = 110;
 // the head leans less than the body so it looks ahead; the near leg swings further back to trail like the other
-const NECK = [23, 27], HEAD_TURN = 25, SHOULDER = [36, 28], WING_TURN = 10;
+const NECK = [23, 27], HEAD_TURN = 40, SHOULDER = [36, 28], WING_TURN = 10;
 
 function build() {
   // canvas row r holds drawing row r - TOP
   const g = Array.from({ length: H + TOP }, () => Array(W).fill("."));
   const draw = cells => { for (const [x, y, c] of cells) if (g[y + TOP]?.[x] !== undefined) g[y + TOP][x] = c; };
-  draw(piece(isTail, TAIL_ROOT, LEAN + TAIL_TURN, onCore(TAIL_ROOT)));
+  const tail = piece(isTail, TAIL_ROOT, LEAN + TAIL_TURN, onCore(TAIL_ROOT));
+  draw(tail);
   draw(piece(isBody, CORE, LEAN, AT));
   draw(piece(isNearWing, SHOULDER, LEAN + WING_TURN, onCore(SHOULDER)));
   draw(piece(isHead, NECK, LEAN + HEAD_TURN, onCore(NECK)));
+  // The tail's root touched the body in the original, so that edge had no outline; turned apart it is open to the sky: every
+  // tail pixel that ends up beside background gets the black outline.
+  for (const [x, y] of tail) {
+    const r = y + TOP;
+    if (g[r]?.[x] && !"HA".includes(g[r][x]) && [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => g[r + dy]?.[x + dx] === ".")) g[r][x] = "H";
+  }
   // Pieces turned apart leave pinholes where they met (wing root, folded legs): small pockets of background shut in by the
   // drawing take the colour most of their neighbours have. Larger pockets are air between parts and stay.
   const seen = g.map(r => r.map(() => false));
