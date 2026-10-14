@@ -1496,3 +1496,10 @@ El usuario pide levantar un poco la cabeza, para que no mire hacia abajo, y arre
   de la cola que queda junto al fondo toma el contorno negro H.
 
 [Verificado] 107×81, 2558 píxeles opacos en una sola pieza, iso 0, holes 0 y solo la paleta original.
+
+#### Dragonite base v6, cuarta entrega (2026-10-14), pendiente de aprobación
+El usuario señala que la cola se une al cuerpo demasiado cerrada: un cuello estrecho. Ahora se dibuja encima del cuerpo, con la
+raíz gruesa metida 4 px hacia delante y 2 px hacia abajo en la cadera (TAIL_SINK). Tapa el contorno trasero del cuerpo en la unión y
+la cola sale de él a todo su grosor. Los bordes de la cola junto al fondo conservan el contorno negro.
+
+[Verificado] 103×81, 2517 píxeles opacos en una sola pieza, iso 0, holes 0 y solo la paleta original.

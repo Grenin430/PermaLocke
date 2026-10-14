@@ -48,7 +48,7 @@ const onCore = ([x, y]) => {
   const a = (LEAN * Math.PI) / 180, dx = x - CORE[0], dy = y - CORE[1];
   return [AT[0] + Math.cos(a) * dx - Math.sin(a) * dy, AT[1] + Math.sin(a) * dx + Math.cos(a) * dy];
 };
-const TAIL_ROOT = [45, 60], TAIL_TURN = 110;
+const TAIL_ROOT = [45, 60], TAIL_TURN = 110, TAIL_SINK = [-4, 2];
 // the head leans less than the body so it looks ahead; the near leg swings further back to trail like the other
 const NECK = [23, 27], HEAD_TURN = 40, SHOULDER = [36, 28], WING_TURN = 10;
 
@@ -56,9 +56,10 @@ function build() {
   // canvas row r holds drawing row r - TOP
   const g = Array.from({ length: H + TOP }, () => Array(W).fill("."));
   const draw = cells => { for (const [x, y, c] of cells) if (g[y + TOP]?.[x] !== undefined) g[y + TOP][x] = c; };
-  const tail = piece(isTail, TAIL_ROOT, LEAN + TAIL_TURN, onCore(TAIL_ROOT));
-  draw(tail);
+  // the tail goes over the body with its thick root sunk into the haunch, so the two run into each other with no seam
+  const root = onCore(TAIL_ROOT), tail = piece(isTail, TAIL_ROOT, LEAN + TAIL_TURN, [root[0] + TAIL_SINK[0], root[1] + TAIL_SINK[1]]);
   draw(piece(isBody, CORE, LEAN, AT));
+  draw(tail);
   draw(piece(isNearWing, SHOULDER, LEAN + WING_TURN, onCore(SHOULDER)));
   draw(piece(isHead, NECK, LEAN + HEAD_TURN, onCore(NECK)));
   // The tail's root touched the body in the original, so that edge had no outline; turned apart it is open to the sky: every
