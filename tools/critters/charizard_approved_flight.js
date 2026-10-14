@@ -47,18 +47,37 @@ function trimTips(L,passes){for(let p=0;p<passes;p++){const cut=[];
  for(let y=1;y<L.length-1;y++)for(let x=1;x<L[0].length-1;x++){if(L[y][x]==='.')continue;let n=0;
   for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)if((dx||dy)&&L[y+dy][x+dx]!=='.')n++;if(n<=1)cut.push([x,y]);}
  for(const [x,y] of cut)L[y][x]='.';}}
+// Which face of a wing shows. The blue-green membrane is the underside, the upper side is orange like the body. Seen from the
+// side, the near (left) wing raised shows its underside and lowered its upper side; the far (right) wing the other way round.
+// Passing edge-on the leading part, by the arm, turns first and the trailing membrane follows: the share of the new face grows
+// with how far the wrist has crossed the shoulder's height.
+function faces(L,PX,PY,f,isFar,under,upper){
+ const p=require('./charizard_wing_poses').pose(f),arm=[p.nh[0]-NEAR_ROOT[0],p.nh[1]-NEAR_ROOT[1]],e=-arm[1]/Math.hypot(...arm);
+ const raised=Math.max(0,Math.min(1,(e+FACE_TURN)/(2*FACE_TURN))),upperShare=isFar?raised:1-raised;
+ const lead=p.near.slice(0,5),down=p.phase==='downstroke';
+ // the face it is turning to: near goes underside to upper side on the downstroke, the far wing the reverse
+ const toUpper=isFar?!down:down,newShare=toUpper?upperShare:1-upperShare;
+ const dist=(x,y)=>{let d=1e9;for(let i=1;i<lead.length;i++){const [ax,ay]=lead[i-1],[bx,by]=lead[i],dx=bx-ax,dy=by-ay,
+  u=Math.max(0,Math.min(1,((x-ax)*dx+(y-ay)*dy)/(dx*dx+dy*dy)));d=Math.min(d,Math.hypot(x-ax-u*dx,y-ay-u*dy));}return d;};
+ let far=0;const cells=[];
+ for(let y=0;y<L.length;y++)for(let x=0;x<L[0].length;x++)if(L[y][x]!=='.'){const d=dist(x-PX,y-PY);cells.push([x,y,d]);far=Math.max(far,d);}
+ L.upperShare=upperShare;
+ for(const [x,y,d] of cells){const isNew=d/(far||1)<newShare,up=isNew?toUpper:!toUpper,map=up?upper:under;L[y][x]=map[L[y][x]]||L[y][x];}
+}
 // Scale2x, as critter.js uses inside C.swing (it does not export it).
 function scale2x(g){const h=g.length,w=g[0].length,o=Array.from({length:h*2},()=>Array(w*2).fill('.')),at=(x,y)=>y<0||y>=h||x<0||x>=w?'.':g[y][x];
  for(let y=0;y<h;y++)for(let x=0;x<w;x++){const P=at(x,y),A=at(x,y-1),B=at(x+1,y),C=at(x-1,y),D=at(x,y+1);
   o[y*2][x*2]=C===A&&C!==D&&A!==B?A:P;o[y*2][x*2+1]=A===B&&A!==C&&B!==D?B:P;o[y*2+1][x*2]=D===C&&D!==B&&C!==A?C:P;o[y*2+1][x*2+1]=B===D&&B!==A&&D!==C?D:P;}
  return o;}
 const frames=[],stats=[],wingLayers=[];
-const NEAR_ROOT=[59,40],CUFF_ABOVE=31,FAR_SHIFT=[-8,-3],FAR_TURN_UP=30,FAR_TURN_DOWN=28,FAR_SPAN=.9,FAR_ROOM=[3,96],FAR_LOW_SHIFT=[5,1],FAR_MIN_PIECE=70,REVERSE={C:'K',J:'M',M:'G',I:'M',H:'J'};
+const NEAR_ROOT=[59,40],CUFF_ABOVE=31,FAR_SHIFT=[-8,-3],FAR_TURN_UP=30,FAR_TURN_DOWN=28,FAR_SPAN=.9,FAR_ROOM=[3,96],FAR_LOW_SHIFT=[5,1],FAR_MIN_PIECE=70,REVERSE={C:'K',J:'M',M:'G',I:'M',H:'J'},
+ // the upper side in the body's oranges: lit on the near wing, a step darker on the far one
+ NEAR_UPPER={C:'J',K:'M',M:'G'},FAR_UPPER={C:'M',K:'G',J:'J',M:'G'},FACE_TURN=.3;
 function frame(f){
  const t=f/N*2*Math.PI,bob=Math.round(-.9*Math.sin(t));
  const g=Array.from({length:H},()=>Array(W).fill('.'));
  // Who drew each pixel last: f far wing, n near wing, b body.
- const own=Array.from({length:H},()=>Array(W).fill(''));let who='b';
+ const own=Array.from({length:H},()=>Array(W).fill(''));let who='b',nearUpper=0;
  const put=(x,y,c)=>{if(c!=='.'&&g[y+OY+bob]?.[x+OX]!==undefined){g[y+OY+bob][x+OX]=c;own[y+OY+bob][x+OX]=who;}};
  const wings={near:Array.from({length:H},()=>Array(W).fill('.')),far:Array.from({length:H},()=>Array(W).fill('.'))};
  // The far wing is the near wing of the same frame seen across the back: same membrane, fingers and stroke, its root set a little
@@ -68,6 +87,7 @@ function frame(f){
   const layer=wings.far,PX=40,PY=60,L=Array.from({length:SH+2*PY},()=>Array(SW+2*PX).fill('.'));
   const local=(x,y,c)=>{if(c!=='.'&&L[y+PY]?.[x+PX]!==undefined)L[y+PY][x+PX]=c;};
   if(f%N===0)nearRows.forEach((r,y)=>[...r].forEach((c,x)=>local(x,y,c)));else{require('./charizard_wing_poses').paint(nearRows,false,f,local);trimTips(L,2);}
+  faces(L,PX,PY,f,true,REVERSE,FAR_UPPER);
   // The arm decides the turn: the wrist above the shoulder swings the far wing forward and up, below it forward and down.
   const hub=require('./charizard_wing_poses').pose(f).nh,arm=[hub[0]-NEAR_ROOT[0],hub[1]-NEAR_ROOT[1]];
   const turn=(arm[1]<0?FAR_TURN_UP:FAR_TURN_DOWN)*arm[1]/Math.hypot(...arm);
@@ -85,7 +105,7 @@ function frame(f){
   const depth=Math.min(1,(py-FAR_ROOM[0]-PY+sh[1])/(py-top),(FAR_ROOM[1]+PY-sh[1]-py)/(bottom-py));
   for(let y=0;y<L.length;y++)for(let x=0;x<L[0].length;x++){
     const c=sample(x,y,depth);if(!c)continue;
-    const X=x-PX+sh[0],Y=y-PY+sh[1],k=REVERSE[c]||c;put(X,Y,k);if(layer[Y+OY+bob]?.[X+OX]!==undefined)layer[Y+OY+bob][X+OX]=k;
+    const X=x-PX+sh[0],Y=y-PY+sh[1],k=c;put(X,Y,k);if(layer[Y+OY+bob]?.[X+OX]!==undefined)layer[Y+OY+bob][X+OX]=k;
    }
  }
  function wing(rows){
@@ -115,6 +135,7 @@ function frame(f){
     }
    }
   }
+  if(f%N!==0){faces(L,PX,PY,f,false,{},NEAR_UPPER);nearUpper=L.upperShare;}
   L.forEach((r,y)=>r.forEach((c,x)=>{if(c==='.')return;const X=x-PX,Y=y-PY;put(X,Y,c);if(layer[Y+OY+bob]?.[X+OX]!==undefined)layer[Y+OY+bob][X+OX]=c;}));
  }
  who='f';farWing();who='b';
@@ -140,6 +161,10 @@ function frame(f){
  // Where the near wing lies over the far one its edge is drawn dark, so the two outlines do not run into each other.
  const edge=[];
  for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++)if(own[y][x]==='n'&&!'EG'.includes(g[y][x])&&[[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>own[y+dy][x+dx]==='f'))edge.push([x,y]);
+ // Showing its orange upper side, the near wing is drawn dark where it lies over the orange body too, except at the shoulder it
+ // grows from.
+ if(nearUpper>0)for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++)if(own[y][x]==='n'&&'JM'.includes(g[y][x])&&Math.hypot(x-OX-NEAR_ROOT[0],y-OY-bob-NEAR_ROOT[1])>5&&
+  [[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>own[y+dy][x+dx]==='b'&&g[y+dy][x+dx]!=='.'))edge.push([x,y]);
  for(const [x,y] of edge)g[y][x]='E';
  const repairs=clean(g);return {g:g.map(r=>r.join('')),bob,wings,...repairs};
 }

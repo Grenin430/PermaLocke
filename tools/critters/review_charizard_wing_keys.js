@@ -1,6 +1,6 @@
 // Key poses at one fixed scale, with both wings isolated over a subdued body guide to inspect their shape and their root on the back.
 const fs=require('fs'),path=require('path'),{execFileSync}=require('child_process'),m=require('./charizard_approved_flight');
-const OUT='C:/Users/javie/Desktop/imagenes/revision/charizard_batido_v4',FF='C:/Program Files (x86)/Soundux/ffmpeg.exe';
+const OUT='C:/Users/javie/Desktop/imagenes/revision/charizard_batido_v5',FF='C:/Program Files (x86)/Soundux/ffmpeg.exe';
 const picks=[0,3,7,9,11,14],titles=['ALAS ALTAS','GOLPE DESCENDENTE','ALAS BAJAS','INICIO DE RECUPERACION','RECUPERACION FLEXIONADA','APERTURA ANTES DEL GOLPE'];
 const pw=680,ph=600,W=pw*3,H=ph*2,b=Buffer.alloc(W*H*3);
 const rgb=h=>[0,2,4].map(k=>parseInt(h.slice(k,k+2),16));

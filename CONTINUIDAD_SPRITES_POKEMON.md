@@ -16,7 +16,7 @@ Magikarp y lotes 1–11 aprobados por el usuario. Los lotes 10 y 11 recibieron a
 «acaba esos 3» y autorizó terminar Wailord, Rayquaza y Ho-Oh. Las tablas iniciales de esta sección son históricas;
 el estado actualizado está en las secciones de cada lote y en el registro externo.
 
-**Revisión posterior:** Pidgey corregido y tanda 1 aprobados e intactos. Tanda 2 RECHAZADA por el usuario. Las cuatro bases rehechas también RECHAZADAS. Charizard con cuello corregido: base definitiva APROBADA y primer batido rechazado; segunda revisión rechazada por el ala lejana; tercera aceptada como avance; cuarta (lectura de las dos alas) integrada y pendiente de aprobación en charizard_batido_v4. Skarmory, Dragonite y Salamence pendientes, uno por uno desde referencias de vuelo.
+**Revisión posterior:** Pidgey corregido y tanda 1 aprobados e intactos. Tanda 2 RECHAZADA por el usuario. Las cuatro bases rehechas también RECHAZADAS. Charizard con cuello corregido: base definitiva APROBADA y primer batido rechazado; segunda revisión rechazada por el ala lejana; tercera aceptada como avance; cuarta (lectura de las dos alas): movimiento APROBADO; quinta (color de cada cara del ala) integrada y pendiente de aprobación en charizard_batido_v5. Skarmory, Dragonite y Salamence pendientes, uno por uno desde referencias de vuelo.
 Ver «Correcciones de vuelo, tanda 2» y tools/critters/REVISION_POSES_VUELO.md. Salamence planea con las alas fijas.
 
 ### Qué estamos creando
@@ -1229,3 +1229,38 @@ de ala lejana.
 - Ciclo revisado a tamaño real en el laboratorio (charizard_ciclo_tamano_real_recorte.gif, 12 fps).
 
 Entrega: C:/Users/javie/Desktop/imagenes/revision/charizard_batido_v4/ (mismas piezas que la v3 más el recorte a tamaño real).
+
+### Charizard: quinta revisión, color de cada cara del ala (2026-10-14), pendiente de aprobación
+El usuario aprueba el movimiento de la v4. Pide corregir solo el color: la membrana azul es la cara inferior y la superior es
+naranja. Hay que decidir en cada fotograma qué cara se ve, aplicar el mismo criterio a las dos alas y representar la transición
+cuando el ala pasa de canto. Bulbapedia confirma que la cara inferior de las alas es verde azulado; el naranja de la cara superior
+es el del cuerpo.
+
+**Criterio, por geometría.** Charizard mira a la izquierda, así que el ala cercana es la izquierda. Al subir un ala sobre el eje
+del cuerpo, su cara superior gira hacia fuera:
+- Ala cercana, levantada: cara inferior (azul). Bajada: cara superior (naranja).
+- Ala lejana (derecha), levantada: cara superior (naranja). Bajada: cara inferior (azul).
+
+La elevación se mide por la muñeca respecto al hombro: e = -dy/|brazo|.
+
+**Transición.** Con |e| < 0,3, la parte delantera, junto al brazo (hasta las cinco primeras anclas del borde de ataque), toma
+primero la cara nueva y la membrana de detrás la sigue según su distancia al borde de ataque. Ocurre en los fotogramas 4–5 y 11–12.
+
+**Colores, en charizard_approved_flight.js (faces).**
+- Cara superior del ala cercana: C→J y K→M, con los dedos M→G.
+- Cara superior del ala lejana, más oscura: C→M, K→G, J→J y M→G.
+- Cara inferior del ala lejana: el reverso en sombra de antes.
+- Con la cara naranja hacia nosotros, el ala cercana lleva borde oscuro donde pisa el cuerpo naranja, salvo a menos de 5 px del
+  hombro, para no cortar la unión.
+
+Sin cambios: movimiento, siluetas, articulaciones, cuerpo, cabeza, extremidades y cola. El fotograma 0 solo cambia de color en el
+ala lejana (939 píxeles distintos de la base, todos de ala lejana).
+
+[Verificado]
+- iso 0 y holes 0 en los dibujos y en las celdas. Ojos 48/48.
+- Cielo y4–62, 99×60, celda 102. Cierre del bucle 1398 (máximo interior 3636).
+- Raíces en los 16 fotogramas. 137 protegidos intactos. Tests App 555/555.
+- --medir: Party media 1,46–1,74 ms, Deep 0,78–1,09 ms.
+- Ciclo revisado a tamaño real y 12 fps en el laboratorio.
+
+Entrega: C:/Users/javie/Desktop/imagenes/revision/charizard_batido_v5/ (mismas piezas que la v4).
