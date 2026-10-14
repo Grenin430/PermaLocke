@@ -528,3 +528,6 @@ negro del estudio de fotos: gen 8-9 en el equipo (ver Trampas y lecciones).
   la cuadrícula fina; se limpiaron fondos encerrados en Kingdra, Toucannon y Altaria. Se corrigió la separación cola/dedos de Toucannon y
   nueve huecos de rotación con la herramienta aprobada. 168 celdas y 192 regiones de ojos correctas; 553 pruebas aprobadas. Entrega en
   `imagenes/revision/lote6`, pendiente de aprobación. 52 hashes de archivos aprobados intactos. Commit local sin push; no avanzar al lote 7.
+
+- **Aprobación del lote 6** (2026-10-14): el usuario confirmó «aprobado». Remoraid, Lanturn, Kingdra, Toucannon y Altaria quedan aprobados.
+  Actualizados continuidad, registro externo y LEEME de la entrega. Sin cambios en los sprites. La selección del lote 7 sigue pendiente.

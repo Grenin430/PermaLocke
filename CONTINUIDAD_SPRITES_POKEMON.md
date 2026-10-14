@@ -457,9 +457,9 @@ fotograma, p95 **2,23–3,31 ms**; fondo **0,95–1,48 ms**. Primera preparació
 Las cinco hojas suman **60.951 bytes**. Se exportaron **840 fotogramas, 70,00 s a 12 fps, 1920×976**; GIF decodificado completo sin errores.
 Mosaicos de ambos paneles revisados; `--especies` fuerza seis rutas y repite Skarmory en dos, sin cambiar la frecuencia normal de la app.
 
-### Lote 6 (2026-10-14): entregado para revisión
+### Lote 6 (2026-10-14): aprobado por el usuario
 Remoraid (223), Lanturn (171), Kingdra (230), Toucannon (733) y Altaria (334), propuestos y confirmados por el usuario antes de empezar.
-Integración en `singleplayer`; entrega en `C:\Users\javie\Desktop\imagenes\revision\lote6\`. Pendiente de aprobación del usuario.
+Integración en `singleplayer`; entrega en `C:\Users\javie\Desktop\imagenes\revision\lote6\`. Aprobados por el usuario el 2026-10-14.
 
 | Especie | Base | Celda de hoja | Fotogramas / inclinaciones | FPS | Movimiento |
 |---|---|---|---|---|---|
@@ -497,7 +497,7 @@ no se cambia su escala ni se inventa una pose. Las referencias pequeñas limitan
 sin abrir el juego ni desplegar. Los nadadores mantienen el tinte del agua y la atenuación detrás del equipo. El GIF usa 256 colores y tiempos
 en centésimas; la app conserva los PNG originales. El reinicio del recorrido largo no representa el bucle individual de cada especie.
 `--especies` fuerza seis rutas simultáneas y repite Altaria; no es la frecuencia normal de la app. Los cinco grandes siguen reservados.
-**Parar aquí: no comenzar el lote 7 hasta aprobar el lote 6 y confirmar su siguiente selección.**
+**Lote 6 aprobado. Confirmar las cinco especies del lote 7 antes de comenzar.**
 
 Rendimiento final [verificado] con `--especies 223,171,230,733,334 --medir`: columna del equipo 178×321 **1,80–1,99 ms de media** por
 fotograma, p95 **2,41–3,74 ms**; fondo **1,00–1,35 ms**. Primera preparación 85,42 ms. Son medidas de este PC en el laboratorio, sin emulador.

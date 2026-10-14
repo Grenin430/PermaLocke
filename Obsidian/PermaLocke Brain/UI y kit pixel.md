@@ -91,8 +91,8 @@ plana e inclinaciones -2/0/2 para respetar su altura. Pikipek conserva la pose p
 Compilar solo en `.lab-art`; no desplegar. Lote 5 aprobado; confirmar las especies del lote 6 antes de comenzar.
 
 ## Sprites del mar: lote 6 singleplayer (2026-10-14)
-Remoraid, Lanturn, Kingdra, Toucannon y Altaria: integrados y entregados para revisión; aún no aprobados.
+Remoraid, Lanturn, Kingdra, Toucannon y Altaria: integrados y aprobados por el usuario el 2026-10-14.
 Método y límites: `CONTINUIDAD_SPRITES_POKEMON.md`, sección «Lote 6». Entrega: `C:\Users\javie\Desktop\imagenes\revision\lote6\`.
 40 fotogramas base, 168 celdas inclinadas y 192 regiones de ojos comprobados; 553 pruebas aprobadas. Periodos explícitos 3,66 para Lanturn
 y 3,61 para Toucannon. Toucannon conserva su pose posada; Altaria dobla la nube por columnas. Alturas y ángulos contenidos para caber en el cielo.
-Las 26 hojas anteriores permanecen intactas. Solo `.lab-art`, sin desplegar ni tocar la app abierta. Parar hasta aprobación del lote 6.
+Las 26 hojas anteriores permanecen intactas. Solo `.lab-art`, sin desplegar ni tocar la app abierta. Lote 6 aprobado; confirmar las especies del lote 7 antes de comenzar.
