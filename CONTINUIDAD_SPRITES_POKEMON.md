@@ -1430,3 +1430,17 @@ Cambio de método, como en la base aprobada de Charizard (tools/critters/dragoni
 
 Entrega: C:/Users/javie/Desktop/imagenes/revision/dragonite_pose_v4/. Desde tools/critters: node review_dragonite_pose_v4.js.
 Sin integrar.
+
+#### Dragonite base v4, segunda entrega: proporciones del original (2026-10-14), pendiente de aprobación
+El usuario acepta la postura de vuelo y pide guiarse por las proporciones del sprite original. Señala cuatro fallos: manos y patas
+mal proporcionadas, cuello hinchado, alas que deben ir algo más arriba del cuerpo y una cola distinta de la original.
+- **Cuello:** pasa de polígono ancho a un tramo de radio 5, más estrecho que la cabeza, como en el original.
+- **Brazo:** corto y grueso (unos 8 px), en dos tramos, con la mano original de garras blancas.
+- **Piernas:** muslo grande y redondo (9×8), caña muy corta y el pie original en espejo; la lejana, en sombra.
+- **Cola:** unos 17 px de grosor en la raíz y se afila poco a poco hasta la punta. Pintada como la original: arriba iluminada,
+  columnas alternas P/N y la parte de abajo marrón F/I.
+- **Alas:** las raíces suben 2–3 px y las alas se alzan sobre la espalda sin despegarse de ella.
+- **Lienzo:** gana 12 filas por arriba (TOP) para que el ala lejana levantada no se corte. Se quitan las migas de menos de 6
+  píxeles que quedan sueltas de los bordes de las piezas.
+
+[Verificado] 103×66, 2583 píxeles opacos en una sola pieza, iso 0, holes 0 y solo la paleta original.
