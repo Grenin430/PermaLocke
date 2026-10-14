@@ -1,2 +1,2 @@
-// Flight correction with anatomy-specific membranes, blades or fixed gliding surfaces.
-module.exports=require('./flight_rig2').build(require('./flight_batch2_specs').charizard);
+// Flight built from the approved base, including the corrected jaw and neck.
+module.exports=require('./charizard_approved_flight');

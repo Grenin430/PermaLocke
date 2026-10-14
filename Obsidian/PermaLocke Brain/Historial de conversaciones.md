@@ -648,3 +648,17 @@ La fidelidad fuera de la unión se comprueba comparando las cuadrículas complet
 Reproducir desde tools/critters: node review_charizard_neck.js.
 Sin animaciones, integración, cambios de layout, build/tests de C# ni despliegue. Las pruebas de píxeles
 no sustituyen la revisión artística. Esperar aprobación de esta unión antes de continuar.
+
+## Charizard: base definitiva aprobada y vuelo integrado (2026-10-14)
+Base con unión cabeza-cuello aprobada por el usuario, congelada en tools/critters/charizard_flight_approved.json.
+Nuevo charizard_approved_flight.js, enlazado desde charizard_flight_anim.js: 16 fases/12 fps, alas articuladas,
+superficies ocultas reconstruidas, acompañamiento sutil y primer fotograma idéntico a la base. Fuente 165×96
+sin reducir, display 60 % nítido 99×58 para caber en el cielo; hoja de 48 celdas 102×102 integrada solo para Charizard.
+Auditoría: una componente e iso/holes unitarios 0 en fases y hoja; rostro/cuello 568/568 en cada fase; ojos 48/48.
+136 archivos protegidos intactos. Build aislado correcto, tests App 555/555. Layout 336 fotogramas/28 s/12 fps;
+medidas locales Party 178×321 media 1,38–1,71 ms. Sin app/emulador, sin despliegue, sin push.
+Entrega C:/Users/javie/Desktop/imagenes/revision/charizard_vuelo_definitivo/: base, bucle fijo, GIF de layout real,
+mosaicos, hoja y auditoría. Animación pendiente de aprobación artística; base ya definitiva.
+Próximo: Skarmory, después Dragonite y Salamence, cada uno con referencia específica de vuelo y pose base
+mostrada y aprobada ANTES de animar. Salamence sin batido. Pidgey y los otros aprobados intactos.
+Detalles, rutas y reproducción en la última sección de CONTINUIDAD_SPRITES_POKEMON.md.

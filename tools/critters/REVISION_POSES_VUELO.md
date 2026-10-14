@@ -323,3 +323,68 @@ La fidelidad fuera de la unión se comprueba comparando las cuadrículas complet
 Reproducir desde tools/critters: node review_charizard_neck.js.
 Sin animaciones, integración, cambios de layout, build/tests de C# ni despliegue. Las pruebas de píxeles
 no sustituyen la revisión artística. Esperar aprobación de esta unión antes de continuar.
+
+### Charizard definitivo aprobado: animación e integración (2026-10-14)
+El usuario aprueba la pose v3 con la corrección de mandíbula-cuello-pecho de charizard_cuello.
+Esa base queda definitiva y congelada en tools/critters/charizard_flight_approved.json (paleta y lienzo 174×92;
+caja ocupada 158×72). SHA256: 8717a80a6862970eba54867220219bdace421c16144af95d55aed6a5a47efb89.
+Los generadores de pose y cuello anteriores permanecen intactos. No volver a redibujar esta anatomía.
+
+Nuevo tools/critters/charizard_approved_flight.js: 16 fases a 12 fps, ciclo de 1,333 s. El primer fotograma
+reproduce exactamente la base aprobada, 0 píxeles distintos. Alas dobladas por columnas desde sus raíces,
+muñeca y extremo con desplazamientos diferentes y leve acortamiento en la recuperación para la perspectiva.
+Se reconstruye la superficie dorsal del ala lejana oculta por la cabeza: mover solo sus fragmentos visibles
+dejaba piezas desconectadas. Cuatro píxeles de su borde, superpuestos en el antiguo recorte de cabeza,
+pertenecen al ala y se mueven con ella. La cara y el cuello no se reconstruyen ni se deforman.
+Torso con acompañamiento vertical de hasta un píxel, patas con desplazamiento mínimo, cola con flexión
+suave y llama con oscilación local. El ala cercana oculta naturalmente partes del torso/patas al bajar.
+El torso oculto por la raíz del ala se reconstruye antes de componer; los brazos se dibujan delante.
+
+Fuente nativa de animación: lienzo común 165×96, conservado sin reducir. Visualización de layout: 60 %,
+vecino más cercano, lienzo 99×58. La reducción permite el batido completo dentro del cielo de 69 píxeles;
+no es una compresión de la anatomía base ni modifica el tamaño del panel. Hoja 1632×306, celdas 102×102,
+16 columnas y tres inclinaciones [-2,0,2]. Height 60, Drift 1, Bob 0.3, Surge 0.6.
+La fila inclinada protege el rostro y el extremo fino del ala para evitar separar dos píxeles de su punta.
+
+Integración limitada a charizard_flight_anim.js, Critters/charizard.png y la entrada 6 de CapCritterArt.cs.
+Skarmory, Dragonite, Salamence, Pidgey y todas las demás hojas permanecen intactos.
+[Verificado] 136 archivos protegidos sin cambios respecto a c20806c, incluyendo 53 hojas ajenas.
+16/16 fases nativas y de visualización, y 48/48 celdas de hoja: una componente conectada, iso 0, holes 0
+(huecos unitarios). 568/568 píxeles del rostro y unión del cuello conservados en cada fase nativa.
+Ojos comprobados en las 48 celdas y mosaico de rostro revisado. Paleta original. Cierre periódico exacto:
+generar f=16 coincide con f=0; diferencia de última a primera 1372 píxeles, dentro del rango de transiciones
+interiores (646–3562), sin salto extra de reinicio. Recorrido vertical previsto dentro de y6–62 del cielo.
+Las comprobaciones geométricas no sustituyen la aprobación artística del ciclo: pendiente de revisión.
+
+[Verificado] dotnet build tools/PermaLocke.PlaqueLab --artifacts-path .lab-art: 0 errores, 2 CS0649 previas.
+dotnet test tests/PermaLocke.App.Tests --artifacts-path .lab-art: 555 correctas, 0 fallos, 0 omitidas, 25 s.
+Advertencias previas CS8321 y xUnit2030. --especies 6 --medir: Party 178×321 media 1,38–1,71 ms,
+p95 1,91–3,19 ms; Deep media 0,78–1,04 ms. Primera preparación 84,15 ms. Son medidas locales sin emulador;
+no demuestran una mejora frente a versiones anteriores ni equivalen a FPS de juego.
+Layout real del laboratorio: 336 fotogramas, 28 s a 12 fps, preset 1920, sin reescalado de la exportación.
+Revisados ambos cielos, trayectoria en ambas direcciones y ampliaciones. GIF fijo y layout decodifican sin errores.
+
+Entrega definitiva: C:/Users/javie/Desktop/imagenes/revision/charizard_vuelo_definitivo/
+- charizard_base_aprobada.png / .json: base aprobada congelada.
+- charizard_bucle_fijo.gif: animación nativa ampliada ×3, personaje sin recorrido horizontal.
+- charizard_layout_bucle_fijo.gif: ciclo a escala del sprite de layout, ×1.
+- charizard_fotogramas.png y charizard_layout_fotogramas.png: fases de ambos tamaños.
+- charizard_hoja_definitiva.png: hoja integrada.
+- charizard_rostros_48_celdas.png y charizard_uniones.png: revisión de rasgos y articulaciones.
+- charizard_en_el_layout_tamano_real.gif: laboratorio a tamaño real; apariciones forzadas de Charizard.
+- layout_cielos_revision.png, auditoria.json, rendimiento.txt y LEEME.md: comprobaciones y alcance.
+
+Reproducción desde tools/critters: node build_batch.js charizard; node integrate_entries.js;
+node review_charizard_flight.js. Desde raíz: build y tests con --artifacts-path .lab-art;
+tools/critters/render_charizard_flight.ps1. No usar el antiguo review_flight_batch2.js para esta versión:
+su contrato espera el rig rechazado de ocho fases. Usar la auditoría específica nueva.
+Limitaciones: el GIF cuantiza tiempos a centésimas; la frecuencia forzada del laboratorio no representa
+apariciones normales, puede haber solapamientos y oclusión detrás de las pantallas centrales simuladas.
+El reinicio del recorrido de 28 s no es el cierre del ciclo individual. No se desplegó ni se abrió la app
+o Azahar; solo se ejecutó el laboratorio aislado. Commit local, sin push.
+
+Pendiente, uno por uno: Skarmory → Dragonite → Salamence. Buscar e inspeccionar referencias de vuelo
+específicas (preferiblemente oficiales o fotogramas), construir primero silueta y pose base, recuperar
+paleta/rostro/detalle del original y mostrar base junto a referencia. Esperar aprobación de cada pose
+antes de animarla. Las cuatro bases v2 rechazadas no son punto de partida aprobado. Salamence planea,
+sin agitar las alas. Mantener Pidgey y todas las especies aprobadas intactas.

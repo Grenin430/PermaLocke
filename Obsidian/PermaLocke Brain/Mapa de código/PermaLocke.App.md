@@ -268,3 +268,12 @@ Ningún fichero de src/ cambia. Estado vigente en [[UI y kit pixel]].
 - tools/critters/charizard_neck_refinement.js: corrección estática de 106 píxeles sobre la base v3 conservada.
 - tools/critters/review_charizard_neck.js: antes/después ×12, sprite completo ×6 y auditoría de igualdad fuera de la unión.
 No importados por producción. Pendiente revisión de la unión; la pose general v3 ya gusta al usuario.
+
+### Charizard: animación desde la base definitiva (2026-10-14)
+- tools/critters/charizard_flight_approved.json: base aprobada inmutable, con cuello corregido.
+- tools/critters/charizard_approved_flight.js: alas articuladas y animación secundaria; fuentes nativas y display.
+- tools/critters/charizard_flight_anim.js: entrada del generador que ahora importa el nuevo rig.
+- tools/critters/review_charizard_flight.js: auditoría de las 48 celdas y vistas fijas.
+- tools/critters/render_charizard_flight.ps1: exportación/medición exclusiva del laboratorio aislado.
+CapCritterArt.cs cambia solo la entrada 6 y Critters/charizard.png se sustituye. Resto de hojas intactas.
+No ejecutar review_flight_batch2.js para el nuevo Charizard: espera el contrato del rig rechazado.
