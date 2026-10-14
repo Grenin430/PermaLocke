@@ -388,3 +388,50 @@ específicas (preferiblemente oficiales o fotogramas), construir primero silueta
 paleta/rostro/detalle del original y mostrar base junto a referencia. Esperar aprobación de cada pose
 antes de animarla. Las cuatro bases v2 rechazadas no son punto de partida aprobado. Salamence planea,
 sin agitar las alas. Mantener Pidgey y todas las especies aprobadas intactas.
+
+### Charizard: segunda revisión del batido (2026-10-14), pendiente de aprobación
+El usuario conserva la base aprobada y rechaza el batido anterior por rigidez del ala cercana y poca
+participación de la lejana. charizard_vuelo_definitivo queda como histórico del primer ciclo, no como
+animación aprobada. La base charizard_flight_approved.json mantiene su hash y su anatomía.
+
+Nuevo tools/critters/charizard_wing_poses.js: poses clave explícitas con hombro, codo, muñeca, dedos
+y centro de membrana independientes. Ambas alas comparten las fases 0/3/7/11/14/16, con máximo descenso
+en 7. Bajada extendida y recuperación flexionada con otra perspectiva. La membrana se reconstruye
+por sectores y los nervios se redibujan continuos. No se gira el ala como un bloque.
+El brazo del ala conserva grosor. Raíces fijas en coordenadas del cuerpo: 57/57 píxeles del anclaje
+cercano y 50/50 del lejano conservados en todas las fases, comprobados en sus capas antes de las oclusiones.
+Orden: ala lejana, volumen oculto del tórax, cuerpo/patas/cola, ala cercana y brazo delantero.
+La lejana queda tapada al pasar detrás del cuerpo; la cercana ocluye torso/patas/cola durante la bajada.
+Respuesta corporal de un píxel hacia arriba durante el impulso y hacia abajo al recuperar, sin deformar
+anatomía ni unión cabeza-cuello. Se conservan los pequeños movimientos de cola, patas y llama.
+
+[Verificado] Primer fotograma idéntico a la base: 0 píxeles distintos. Rostro/cuello 568/568 en cada fase.
+16 fases a 12 fps (1,333 s), inclinaciones [-2,0,2], 48 celdas de 104×104; hoja 1664×312.
+Lienzo nativo 168×96; display 101×58 al 60 % sin suavizado, Height 60. Una componente conectada e iso 0,
+holes unitarios 0 en todas las fases nativas/display y celdas. Ojos presentes en 48/48; cielo previsto y6–62.
+f16=f0; cierre 1308 píxeles distintos, dentro del rango interior 1258–2859. 137 archivos protegidos
+intactos respecto a 8121f8a. Solo cambia la hoja/entrada de Charizard; base y otros Pokémon intactos.
+La integración en código no equivale a aprobación artística: el batido v2 sigue pendiente.
+
+Build de laboratorio con --artifacts-path .lab-art: 0 errores, dos CS0649 previas.
+Tests App con --artifacts-path .lab-art: 555 correctas, 0 fallos, 0 omitidas, 24 s (CS8321/xUnit2030 previas).
+--especies 6 --medir: Party 178×321 media 1,41–2,09 ms, p95 1,90–4,27 ms; Deep media 0,80–1,12 ms.
+Primera preparación 104,87 ms. Medidas locales sin emulador, no comparación controlada ni FPS de juego.
+Captura de control del layout revisada, GIF decodificado sin errores. Sin abrir app/Azahar ni desplegar.
+
+Entrega actual: C:/Users/javie/Desktop/imagenes/revision/charizard_batido_v2/
+- charizard_bucle_fijo.gif: ciclo nativo ampliado ×3.
+- charizard_fotogramas_clave.png: seis poses, hombro ×4 y ala lejana aislada sobre guía gris del cuerpo.
+  Esa vista diagnóstica revela la superficie que el cuerpo oculta y no modifica el sprite final.
+- charizard_fotogramas.png, charizard_uniones.png y charizard_rostros_48_celdas.png: comprobaciones.
+- charizard_layout_bucle_fijo.gif y charizard_layout_fotogramas.png: tamaño de sprite para layout.
+- charizard_base_aprobada.png/.json, charizard_hoja_definitiva.png, auditoria.json, rendimiento.txt,
+  layout_control.png y LEEME.md. No se exporta otro recorrido completo en esta revisión.
+Desde tools/critters: node build_batch.js charizard; node integrate_entries.js;
+node review_charizard_flight.js; node review_charizard_wing_keys.js.
+render_charizard_flight.ps1 apunta a esta entrega para una futura exportación completa opcional.
+
+Limitaciones: los chequeos geométricos no equivalen a aprobación visual. La perspectiva y las oclusiones
+cambian el área visible de las alas; no se exige área opaca constante del animal completo. GIF con tiempos
+cuantizados a centésimas. Pendiente revisar este batido; Skarmory, Dragonite y Salamence siguen esperando
+poses individuales desde referencias de vuelo, sin modificar en esta tarea. Commit local sin push.

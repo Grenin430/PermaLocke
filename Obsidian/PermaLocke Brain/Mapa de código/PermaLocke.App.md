@@ -277,3 +277,9 @@ No importados por producción. Pendiente revisión de la unión; la pose general
 - tools/critters/render_charizard_flight.ps1: exportación/medición exclusiva del laboratorio aislado.
 CapCritterArt.cs cambia solo la entrada 6 y Critters/charizard.png se sustituye. Resto de hojas intactas.
 No ejecutar review_flight_batch2.js para el nuevo Charizard: espera el contrato del rig rechazado.
+
+### Charizard: articulación de alas v2 (2026-10-14)
+- tools/critters/charizard_wing_poses.js: poses clave de ambas alas y membranas articuladas, hombros fijos.
+- tools/critters/review_charizard_wing_keys.js: hoja clave con ampliaciones de hombro y ala lejana aislada.
+charizard_approved_flight.js usa las poses nuevas; review_charizard_flight.js comprueba también los anclajes.
+Solo cambia la entrada 6/charizard.png en producción. Base aprobada sin cambios. Estado en [[UI y kit pixel]].

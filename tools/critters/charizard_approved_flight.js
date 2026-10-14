@@ -41,19 +41,20 @@ function clean(g){let sealed=0,isolated=0;
  const copy=g.map(r=>[...r]);for(let y=0;y<g.length;y++)for(let x=0;x<g[0].length;x++)if(copy[y][x]!=='.'&&![-1,0,1].some(dy=>[-1,0,1].some(dx=>(dx||dy)&&copy[y+dy]?.[x+dx]&&copy[y+dy][x+dx]!=='.'))){g[y][x]='.';isolated++;}
  return {sealed,isolated};
 }
-const frames=[],stats=[];
+const frames=[],stats=[],wingLayers=[];
 function frame(f){
- const t=f/N*2*Math.PI,down=(1-Math.cos(t))/2,recover=Math.max(0,-Math.sin(t)),bob=Math.round(.7*Math.sin(t));
+ const t=f/N*2*Math.PI,bob=Math.round(-.9*Math.sin(t));
  const g=Array.from({length:H},()=>Array(W).fill('.'));
  const put=(x,y,c)=>{if(c!=='.'&&g[y+OY+bob]?.[x+OX]!==undefined)g[y+OY+bob][x+OX]=c;};
+ const wings={near:Array.from({length:H},()=>Array(W).fill('.')),far:Array.from({length:H},()=>Array(W).fill('.'))};
  function wing(rows,isFar){
-  const root=isFar?[58,37]:[58,40],sx=1-recover*(isFar?.10:.06),chord=1-recover*.12;
-  for(let y=0;y<112;y++)for(let x=0;x<174;x++){
-   const xx=root[0]+(x-root[0])/sx;
-   const d=isFar?Math.max(0,(58-xx)/41)*38:(xx<75?Math.max(0,(xx-58)/17)*50:50+(xx-75)/72*8);
-   const yy=root[1]+(y-root[1]-down*d)/chord;
-   const c=rows[Math.round(yy)]?.[Math.round(xx)];if(c&&c!=='.')put(x,y,c);
-  }
+  const layer=wings[isFar?'far':'near'];
+  const draw=(x,y,c)=>{put(x,y,c);if(c!=='.'&&layer[y+OY+bob]?.[x+OX]!==undefined)layer[y+OY+bob][x+OX]=c;};
+  if(f%N===0){rows.forEach((r,y)=>[...r].forEach((c,x)=>{if(c!=='.')draw(x,y,c);}));return;}
+    require('./charizard_wing_poses').paint(rows,isFar,f,draw);
+  // The broad shoulder cuff is invariant in local body coordinates throughout both half-strokes.
+  const box=isFar?[53,34,61,39]:[56,36,64,43];
+  for(let y=box[1];y<=box[3];y++)for(let x=box[0];x<=box[2];x++)if(rows[y][x]!=='.')draw(x,y,rows[y][x]);
  }
  wing(completeFar,true);
  // Recover only torso pixels originally hidden by the near wing.
@@ -68,9 +69,9 @@ function frame(f){
  wing(nearRows,false);
  // The forearm crosses in front of the membrane root.
  for(let y=39;y<67;y++)for(let x=47;x<=63;x++)if(arm[y]?.[x]&&body[y][x]!=='.')put(x,y,body[y][x]);
- const repairs=clean(g);return {g:g.map(r=>r.join('')),bob,...repairs};
+ const repairs=clean(g);return {g:g.map(r=>r.join('')),bob,wings,...repairs};
 }
-for(let f=0;f<N;f++){const a=frame(f);frames.push(a.g);stats.push({frame:f,bob:a.bob,sealed:a.sealed,isolated:a.isolated});}
+for(let f=0;f<N;f++){const a=frame(f);frames.push(a.g);wingLayers.push(a.wings);stats.push({frame:f,bob:a.bob,sealed:a.sealed,isolated:a.isolated});}
 assert.deepEqual(frame(N).g,frames[0]);
 let baselineChanges=0;for(let y=0;y<SH;y++)for(let x=0;x<SW;x++)if(frames[0][y+OY][x+OX]!==base[y][x])baselineChanges++;
 assert.equal(baselineChanges,0);
@@ -81,5 +82,5 @@ const nativeFrames=frames.map(g=>g.slice(minY,maxY+1).map(r=>r.slice(minX,maxX+1
 const displayScale=.60,dh=Math.ceil(nativeFrames[0].length*displayScale),dw=Math.ceil(nativeFrames[0][0].length*displayScale);
 const fr=nativeFrames.map(g=>{const o=Array.from({length:dh},(_,y)=>Array.from({length:dw},(_,x)=>g[Math.min(g.length-1,Math.floor((y+.5)/displayScale))][Math.min(g[0].length-1,Math.floor((x+.5)/displayScale))]));clean(o);return o.map(r=>r.join(''));});
 const face=[Math.round((12+OX-minX)*displayScale),Math.round((17+OY-minY)*displayScale),17,13];
-module.exports={name:'charizard',pal:approved.pal,rows:base,fr,nativeFrames,fullFrames:frames,body,nearRows,farRows,fps:12,angles:[-2,0,2],pose:0,pad:0,layoutHeight:60,sealRotatedHoles:true,displayScale,stats,baselineChanges,sourceOffset:[OX-minX,OY-minY],face,
+module.exports={name:'charizard',pal:approved.pal,rows:base,fr,nativeFrames,fullFrames:frames,wingLayers,body,nearRows,farRows,fps:12,angles:[-2,0,2],pose:0,pad:0,layoutHeight:60,sealRotatedHoles:true,displayScale,stats,baselineChanges,sourceOffset:[OX-minX,OY-minY],face,
  protect:(g,x,y)=>(x>=face[0]&&x<=face[0]+face[2]&&y>=face[1]&&y<=face[1]+face[3]&&'BCE'.includes(g[y][x]))||(x>=72&&y>=35&&y<=55&&'EGJ'.includes(g[y][x]))};

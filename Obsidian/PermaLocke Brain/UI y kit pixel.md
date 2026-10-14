@@ -243,3 +243,14 @@ mosaicos, hoja y auditoría. Animación pendiente de aprobación artística; bas
 Próximo: Skarmory, después Dragonite y Salamence, cada uno con referencia específica de vuelo y pose base
 mostrada y aprobada ANTES de animar. Salamence sin batido. Pidgey y los otros aprobados intactos.
 Detalles, rutas y reproducción en la última sección de CONTINUIDAD_SPRITES_POKEMON.md.
+
+## Charizard: batido v2 (2026-10-14)
+Base y cuello aprobados intactos; primer batido rechazado por rigidez y poca participación del ala lejana.
+Nuevas poses articuladas en charizard_wing_poses.js: misma fase para ambas alas, raíces fijas y recuperación
+flexionada, membranas y nervios reconstruidos. charizard_approved_flight.js conserva cuerpo y secundarios.
+Entrega imagenes/revision/charizard_batido_v2: bucle, hoja clave con hombros ampliados/ala lejana aislada,
+auditorías y control de layout. No hay otro recorrido completo en esta revisión.
+16 fases/12 fps, 48 celdas 104×104, una componente e iso/holes unitarios 0; rostro/cuello 568/568;
+anclajes cercano 57/57 y lejano 50/50 por fase; base idéntica. 137 archivos protegidos intactos.
+Build aislado correcto y 555 tests App pasan. Solo hoja/entrada de Charizard actualizadas.
+Batido pendiente de aprobación; otros tres sin modificar. Rutas y método en la última sección de continuidad.
