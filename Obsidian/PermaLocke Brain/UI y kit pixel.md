@@ -196,3 +196,14 @@ y prueba estática de cielo. Bases 80×49, 102×69, 137×87 y 134×79; paletas o
 No son animaciones aprobadas ni una captura del layout real. La app sigue con la entrega rechazada de 410e8d0; no se ha sustituido
 ningún recurso. Sin build/tests nuevos (no cambia C# ni sprites integrados), sin abrir app/emulador ni desplegar. Sin push.
 Estado vigente y rutas completas: sección «Tanda 2 rechazada» de CONTINUIDAD_SPRITES_POKEMON.md.
+
+## Charizard: revisión de postura v3 (2026-10-14)
+Las cuatro bases v2 también rechazadas. Ahora se trabaja uno por uno: SOLO Charizard está redibujado
+desde una referencia de vuelo de Pokémon Ranger (archivo LaunchBox, copyright visible). Silueta primero,
+detalle después; paleta y rostro del original. Entrega imagenes/revision/charizard_pose_v3:
+charizard_pose_y_referencia.png, base nativa y ampliada, fuentes TXT/JSON y auditorías.
+158×72, 4885 píxeles, una componente, iso/holes unitarios 0, cabeza 425/425 y 137 archivos previos intactos
+respecto a 21c95bb. Los chequeos no equivalen a aprobación de la pose. Sin animación ni integración,
+sin build/tests nuevos; app con la tanda 2 rechazada de 410e8d0. Pidgey y tanda 1 intactos.
+Esperar aprobación de Charizard antes de otros tres o ciclos. La altura/layout queda pendiente.
+Método, referencia y rutas completas: sección «Charizard: pose v3» en CONTINUIDAD_SPRITES_POKEMON.md.

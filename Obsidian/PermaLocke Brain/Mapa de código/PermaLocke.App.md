@@ -257,3 +257,9 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `tools/critters/flight_bases_v2.js`: cuatro bases de vuelo rehechas; no importadas por la app ni por build_batch.js.
 - `tools/critters/review_flight_bases_v2.js`: comparación con referencias originales, PNG estáticos y auditoría de conservación.
 Pendientes de aprobación; estado en [[UI y kit pixel]]. Ningún fichero de src/ cambia.
+
+### Propuesta secuencial de Charizard (2026-10-14)
+Las cuatro bases v2 anteriores también rechazadas; solo la nueva pose de Charizard espera revisión.
+- tools/critters/charizard_flight_pose_v3.js: base estática basada en ilustración de vuelo, sin importar en producción.
+- tools/critters/review_charizard_pose_v3.js: comparación con referencia, PNG y auditorías.
+Ningún fichero de src/ cambia. Estado vigente en [[UI y kit pixel]].

@@ -205,7 +205,7 @@ Los tiempos GIF se cuantizan a centésimas y el reinicio del recorrido no es el 
 por el laboratorio. La aprobación artística de esta tanda sigue pendiente; no quedan especies del inventario sin una propuesta de corrección.
 Sin despliegue, sin abrir la app ni Azahar, commit local sin push.
 
-### Tanda 2 rechazada: cuatro bases rehechas, pendientes de aprobación (2026-10-14)
+### Tanda 2 rechazada: cuatro bases rehechas, también RECHAZADAS posteriormente (2026-10-14)
 
 La tanda de vuelo de Skarmory, Dragonite, Charizard y Salamence NO está aprobada: el usuario señala pérdida de anatomía,
 volumen y detalle en los cuatro. Las comprobaciones técnicas anteriores no validan esa calidad artística. Pidgey y tanda 1
@@ -254,3 +254,50 @@ Limitaciones: la prueba de cielo no es una captura del laboratorio ni verifica t
 ocupa 65 de 69 píxeles y Salamence 66 de 69: el margen estático es de 4 y 3 píxeles; habrá que resolver el margen de movimiento
 al animarlos, conservando las bases y sin comprimir su anatomía. No hay fps nuevos ni ciclo de vuelo que aprobar todavía.
 Siguiente paso: esperar la revisión de estas cuatro bases. Solo tras ella, preparar ciclos y revisar cada fotograma y el layout real.
+
+### Charizard: pose v3 desde una referencia de vuelo (2026-10-14), pendiente de aprobación
+
+Las cuatro bases v2 también han sido RECHAZADAS por construcción de pose. La instrucción vigente sustituye
+la revisión conjunta: trabajar uno por uno, empezar por Charizard y mostrar SOLO su nueva base junto a la
+referencia de vuelo. Esperar aprobación antes de tocar los otros tres o construir animaciones.
+Pidgey y tanda 1 siguen aprobados e intactos. Salamence deberá conservar planeo sin batido.
+
+Referencia de postura: ilustración de Pokémon Ranger con copyright 2006 visible, conservada en LaunchBox
+https://gamesdb.launchbox-app.com/games/images/13003-pokmon-ranger
+Imagen: https://images.launchbox-app.com/d4b1eb5d-8a70-48ef-845f-a9572b83e701.png
+El anfitrión es un archivo externo, no una web oficial de Pokémon. Se inspeccionó la imagen antes de dibujar.
+Las descripciones del buscador confundían otras dos imágenes con Charizard: una lámina oficial de Aerodactyl
+y un fotograma de Dragonite. Ambas descartadas. Un fotograma real de Charizard en Horizons EP18 sirvió
+de contraste secundario; la postura dibujada se basa en Ranger.
+
+Método: primero silueta, luego piezas con color plano, después detalle y sombras usando exclusivamente la
+paleta del sprite original. Tórax por delante de pelvis, muslos y patas hacia atrás, brazos flexionados,
+cola gruesa continuando desde las caderas, dos alas diferenciadas. Se reconstruyen las piezas del cuerpo,
+sin comprimir ni girar el sprite completo. Cabeza original reorientada como pieza independiente 20 grados,
+escala 1; rostro, cuernos y llama proceden del original. La referencia oculta el extremo de la cola tras el
+entrenador: esa parte se completa con el sprite original y no se presenta como anatomía totalmente visible.
+
+Fuentes reproducibles, separadas de producción:
+- tools/critters/charizard_flight_pose_v3.js: construcción de la base.
+- tools/critters/review_charizard_pose_v3.js: comparación, PNG y auditorías.
+Ejecutar node review_charizard_pose_v3.js desde tools/critters, con referencias/ranger.png en la entrega.
+No ejecutar build_batch.js ni integrate_entries.js para esta propuesta.
+
+Entrega: C:/Users/javie/Desktop/imagenes/revision/charizard_pose_v3/
+- charizard_pose_y_referencia.png: única comparación destinada a esta revisión.
+- charizard_base_nativa.png: 158×72, transparente; charizard_base_ampliada.png: ampliación ×6 sin suavizado.
+- charizard_base.txt y charizard_base.json: propuesta fuente, NO aprobada ni integrada.
+- 01_silueta.png, 02_construccion_plana.png y 03_base_detallada.png: etapas de desarrollo.
+  La etapa plana es histórica; la cara original se recuperó en la etapa detallada.
+- auditoria.json, conservacion.json, LEEME.md y referencias/fuentes.json: datos y procedencia.
+
+[Verificado] 4885 píxeles opacos, una componente de 8 vecinos, iso 0 y holes 0 (solo huecos unitarios).
+425/425 píxeles de la pieza de cabeza conservados en la composición. Paleta original, sin colores añadidos.
+137 archivos protegidos intactos respecto a 21c95bb: 54 PNG byte a byte y texto normalizando CRLF.
+Ambos scripts pasan node --check. Estas comprobaciones NO demuestran que la pose sea artísticamente correcta.
+No hay animación, integración ni nueva medición del layout. No se repiten build/tests de C# sin cambios
+en la aplicación. La altura nativa de 72 supera el cielo de 69: la futura visualización y sus márgenes
+siguen pendientes, sin reducir esta base para resolverlos artificialmente. La app conserva la tanda 2
+rechazada de 410e8d0. Sin despliegue, sin tocar la app/emulador, commit local sin push.
+
+Siguiente paso: esperar aprobación visual de esta base de Charizard. Skarmory, Dragonite y Salamence esperan.
