@@ -510,3 +510,7 @@ negro del estudio de fotos: gen 8-9 en el equipo (ver Trampas y lecciones).
   que invadía el abanico y siete huecos introducidos por las inclinaciones. Auditoría: 40 fotogramas base, 216 celdas y 256 regiones de ojos.
   Entrega en `imagenes/revision/lote4`, pendiente de aprobación. Método en `CONTINUIDAD_SPRITES_POKEMON.md`; solo laboratorio `.lab-art`,
   commit local sin push. No continuar el lote 5 hasta que el usuario apruebe.
+
+- **Aprobación del lote 4** (2026-10-14): el usuario dijo «aprobado, continua». Finneon, Milotic, Manaphy, Pelipper y Crobat quedan aprobados;
+  se actualizan continuidad, registro externo y entrega sin modificar sus sprites. Propuesta para el lote 5: Luvdisc, Seadra, Lumineon,
+  Pikipek y Skarmory, con referencias comprobadas y anatomías distintas. Pendiente de confirmar las cinco antes de comenzar su reconstrucción.

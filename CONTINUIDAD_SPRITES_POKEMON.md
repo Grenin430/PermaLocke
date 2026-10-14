@@ -361,9 +361,9 @@ mejor cuando el método de cada anatomía esté probado.
 - `recon2.js` imprime en la consola la información de entrada de ffmpeg antes de su resultado; es normal.
 - Requisitos [verificado]: Node v24.21.0, ffmpeg en `C:\Program Files (x86)\Soundux\ffmpeg.exe`, SDK .NET 10.
 
-### Lote 4 (2026-10-14): entregado para revisión
+### Lote 4 (2026-10-14): aprobado por el usuario
 Finneon (456), Milotic (350), Manaphy (490), Pelipper (279) y Crobat (169), elegidos y confirmados por el usuario antes de empezar.
-Fuentes e integración en la rama `singleplayer`; entrega en `C:\Users\javie\Desktop\imagenes\revision\lote4\`. No están aprobados todavía.
+Fuentes e integración en la rama `singleplayer`; entrega en `C:\Users\javie\Desktop\imagenes\revision\lote4\`. Aprobados por el usuario el 2026-10-14 («aprobado, continua»).
 
 | Especie | Base reconstruida | Celda de hoja | Fotogramas / inclinaciones | FPS | Movimiento |
 |---|---|---|---|---|---|
