@@ -252,3 +252,8 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Views/TrainerRoomScene.cs` — **RoomSprite, RoomCrystal, TrainerRoomState, TrainerRoomScene** — A picture of the cartridge as cells, or null without one.
 - `Views/UpdateWindow.xaml.cs` — **UpdateWindow** — The update window (§201). Closing it during the download cancels it; after that it waits.
 - `Views/WheelEnding.cs` — **WheelEnding** — One way the wheel can come to a stop: how hard it brakes, how far it travels, and how much it settles back at the very end. 
+
+### Herramientas externas de revisión de sprites (2026-10-14)
+- `tools/critters/flight_bases_v2.js`: cuatro bases de vuelo rehechas; no importadas por la app ni por build_batch.js.
+- `tools/critters/review_flight_bases_v2.js`: comparación con referencias originales, PNG estáticos y auditoría de conservación.
+Pendientes de aprobación; estado en [[UI y kit pixel]]. Ningún fichero de src/ cambia.

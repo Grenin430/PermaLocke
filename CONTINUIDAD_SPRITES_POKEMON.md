@@ -16,7 +16,7 @@ Magikarp y lotes 1–11 aprobados por el usuario. Los lotes 10 y 11 recibieron a
 «acaba esos 3» y autorizó terminar Wailord, Rayquaza y Ho-Oh. Las tablas iniciales de esta sección son históricas;
 el estado actualizado está en las secciones de cada lote y en el registro externo.
 
-**Revisión posterior:** Pidgey corregido aprobado y conservado. Tanda 1 aprobada; tanda 2 (los cuatro restantes) integrada y entregada para revisión.
+**Revisión posterior:** Pidgey corregido y tanda 1 aprobados e intactos. Tanda 2 RECHAZADA por el usuario. Cuatro bases rehechas, sin animar ni integrar, pendientes de revisión.
 Ver «Correcciones de vuelo, tanda 2» y tools/critters/REVISION_POSES_VUELO.md. Salamence planea con las alas fijas.
 
 ### Qué estamos creando
@@ -862,7 +862,7 @@ los tiempos GIF se cuantizan a centésimas. El reinicio del recorrido conjunto n
 Estado: tanda 1 entregada para revisión visual. Restan Skarmory, Dragonite, Charizard y Salamence para la siguiente tanda (cuatro restantes).
 No se ha desplegado ni abierto la app o Azahar. Commit local, sin push.
 
-### Correcciones de vuelo, tanda 2 (2026-10-14): cuatro restantes, entregados para revisión
+### Correcciones de vuelo, tanda 2 (2026-10-14): entrega histórica RECHAZADA posteriormente
 El usuario respondió «ok» a la tanda 1, precisó que Salamence no debe batir las alas y pidió continuar.
 Spearow, Pikipek, Pidgeot, Toucannon y Staraptor se conservan. Pidgey aprobado permanece intacto en su fuente y entrega separadas.
 Se corrigen Skarmory, Dragonite, Charizard y Salamence; no se añade una quinta especie porque solo quedaban estas cuatro del inventario.
@@ -922,3 +922,53 @@ La frecuencia forzada no representa apariciones normales. El layout se exporta a
 Los tiempos GIF se cuantizan a centésimas y el reinicio del recorrido no es el cierre del ciclo individual. Las pantallas centrales son simuladas
 por el laboratorio. La aprobación artística de esta tanda sigue pendiente; no quedan especies del inventario sin una propuesta de corrección.
 Sin despliegue, sin abrir la app ni Azahar, commit local sin push.
+
+### Tanda 2 rechazada: cuatro bases rehechas, pendientes de aprobación (2026-10-14)
+
+La tanda de vuelo de Skarmory, Dragonite, Charizard y Salamence NO está aprobada: el usuario señala pérdida de anatomía,
+volumen y detalle en los cuatro. Las comprobaciones técnicas anteriores no validan esa calidad artística. Pidgey y tanda 1
+siguen aprobados e intactos. La nueva instrucción es mostrar primero LAS CUATRO BASES, antes de modificar animaciones.
+
+Se preparan propuestas estáticas separadas, sin cambiar las hojas ya integradas, sus ciclos ni CapCritterArt.cs. Por tanto,
+la app todavía contiene la tanda 2 rechazada del commit 410e8d0. No confundir estas bases con una corrección publicada.
+Salamence mantiene el criterio de planeo con alas fijas; no se ha generado ningún ciclo nuevo en esta revisión.
+
+Método: tools/critters/flight_bases_v2.js lee los cuatro *_before_flight.json originales. Las piezas aprovechables se
+reorientan por separado a escala 1, conservando el área nativa y la paleta; se reconstruyen superficies, articulaciones,
+membranas, patas y uniones. No se gira el animal completo ni se comprime el torso para caber en el panel. Se conservan
+cabezas, ojos y bocas por superposición verificable, se separan los brazos de las alas y se reconstruyen las zonas ocultas.
+Los torsos y colas de Dragonite/Charizard recuperan grosor, las placas de Skarmory siguen la articulación y Salamence
+presenta cuatro extremidades diferenciadas y cinco placas abdominales. Son decisiones de dibujo pendientes de revisión visual.
+
+| Base | Caja nativa ocupada | Píxeles opacos | Cabeza conservada | Prueba de visualización |
+|---|---|---|---|---|
+| Skarmory | 80×49 | 1669 | 283/283 | 100 %, 80×49 |
+| Dragonite | 102×69 | 2726 | 433/433 | 75 %, 77×52 |
+| Charizard | 137×87 | 4935 | 419/419 | 75 %, 103×65 |
+| Salamence | 134×79 | 5295 | 587/587 | 5/6, 112×66 |
+
+No se igualan las cantidades de píxeles opacos: la perspectiva, las alas desplegadas y las oclusiones cambian la silueta.
+La caja de trabajo es 170×120; las medidas de la tabla excluyen transparencia. Ninguna base fuente se reduce.
+Las escalas de prueba son las de las reconstrucciones originales y SOLO se aplican en una imagen de evaluación.
+
+[Verificado] Cuatro bases con iso 0, holes 0 en critter.check (huecos unitarios), una componente de 8 vecinos por base,
+paleta original sin colores nuevos y 1722/1722 píxeles de las máscaras de cabeza conservados tras componer. Se registran
+también las regiones transparentes cerradas mayores: espacios de aire entre alas, cuerpo, patas y láminas; no se declara
+que toda transparencia cerrada sea un error ni que la prueba de huecos unitarios demuestre ausencia de todos los defectos.
+135 archivos protegidos sin cambios respecto a 410e8d0: incluye las 54 hojas PNG, catálogo, generador, rigs y fuentes anteriores.
+PNG comparados byte a byte; texto comparado normalizando CRLF a LF por Git. No se ejecutan build/test/medir: no hay cambios
+en la app ni en animaciones. Los 555 tests anteriores pertenecen a la tanda anterior, no a una integración de estas bases.
+
+Entrega estática: C:/Users/javie/Desktop/imagenes/revision/vuelo_tanda2_bases_rehechas/
+- cuatro_referencias_y_bases.png: referencia real, sprite reconstruido original y nueva base, escala de celda comparable ×3.
+- <especie>_referencia_y_base.png y <especie>_original_y_base.png: comparaciones individuales ×3 y ×4.
+- <especie>_base_ampliada.png: ampliación ×6 sin suavizado; <especie>_base_nativa.png: PNG transparente a resolución nativa.
+- <especie>_base.txt / _base.json: propuestas exportadas reproducibles, NO fuentes de producción aprobadas.
+- bases_tamano_nativo.png: los cuatro dibujos a 1:1; prueba_cielo_69px.png: prueba estática de cuatro cielos de 178×69.
+- auditoria_bases.json, conservacion.json y LEEME.md: alcance, datos y limitaciones.
+
+Reproducción desde tools/critters: node review_flight_bases_v2.js. No llamar build_batch.js ni integrate_entries.js para esta revisión.
+Limitaciones: la prueba de cielo no es una captura del laboratorio ni verifica trayectorias, inclinaciones o ciclos. Charizard
+ocupa 65 de 69 píxeles y Salamence 66 de 69: el margen estático es de 4 y 3 píxeles; habrá que resolver el margen de movimiento
+al animarlos, conservando las bases y sin comprimir su anatomía. No hay fps nuevos ni ciclo de vuelo que aprobar todavía.
+Siguiente paso: esperar la revisión de estas cuatro bases. Solo tras ella, preparar ciclos y revisar cada fotograma y el layout real.

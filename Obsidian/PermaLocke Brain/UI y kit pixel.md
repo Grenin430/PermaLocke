@@ -185,3 +185,14 @@ Salamence: alas idénticas en ocho fases, cola suave, Drift 1.2/Bob 0/Surge 0. L
 32 fotogramas, 96 celdas/ojos, iso/holes 0, 123 archivos protegidos idénticos y 555 pruebas correctas. Layout real exportado a tamaño nativo.
 Fuentes y rutas definitivas en CONTINUIDAD_SPRITES_POKEMON.md, «Correcciones de vuelo, tanda 2»; entrega imagenes/revision/vuelo_tanda2.
 No quedan especies del inventario sin propuesta; esta tanda está pendiente de aprobación artística. Sin despliegue ni push.
+
+## Rechazo de la tanda 2 y revisión de bases (2026-10-14)
+El usuario rechaza las cuatro correcciones por pérdida de detalle, volumen y anatomía. Primero requiere cuatro bases estáticas
+junto a sus referencias; animación e integración esperarán su revisión. Nuevos tools/critters/flight_bases_v2.js y
+review_flight_bases_v2.js, independientes de los rigs actuales, sin comprimir cuerpos. Pidgey y tanda 1 intactos.
+Entrega: imagenes/revision/vuelo_tanda2_bases_rehechas. Comparaciones con originales ×3/×4, ampliaciones ×6, PNG nativos
+y prueba estática de cielo. Bases 80×49, 102×69, 137×87 y 134×79; paletas originales, una componente cada una, iso/holes unitarios 0,
+1722/1722 píxeles de cabeza y 135 archivos protegidos conservados. La prueba estática deja solo 4/3 px de margen en Charizard/Salamence.
+No son animaciones aprobadas ni una captura del layout real. La app sigue con la entrega rechazada de 410e8d0; no se ha sustituido
+ningún recurso. Sin build/tests nuevos (no cambia C# ni sprites integrados), sin abrir app/emulador ni desplegar. Sin push.
+Estado vigente y rutas completas: sección «Tanda 2 rechazada» de CONTINUIDAD_SPRITES_POKEMON.md.

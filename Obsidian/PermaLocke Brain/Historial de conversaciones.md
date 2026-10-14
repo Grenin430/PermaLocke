@@ -604,3 +604,14 @@ negro del estudio de fotos: gen 8-9 en el equipo (ver Trampas y lecciones).
   entregados en imagenes/revision/vuelo_tanda2. 32 fotogramas, 96 celdas/ojos correctos, iso/holes 0, 555 pruebas pasan.
   Conservados 123 archivos protegidos, incluidos Pidgey y toda la tanda 1. Tanda 2 pendiente de aprobación; no quedan otros afectados
   sin propuesta. Se mantiene Pidgey como fuente aprobada separada sin sustituir su antigua hoja de producción. Commit local sin push.
+
+## Rechazo de la tanda 2 y revisión de bases (2026-10-14)
+El usuario rechaza las cuatro correcciones por pérdida de detalle, volumen y anatomía. Primero requiere cuatro bases estáticas
+junto a sus referencias; animación e integración esperarán su revisión. Nuevos tools/critters/flight_bases_v2.js y
+review_flight_bases_v2.js, independientes de los rigs actuales, sin comprimir cuerpos. Pidgey y tanda 1 intactos.
+Entrega: imagenes/revision/vuelo_tanda2_bases_rehechas. Comparaciones con originales ×3/×4, ampliaciones ×6, PNG nativos
+y prueba estática de cielo. Bases 80×49, 102×69, 137×87 y 134×79; paletas originales, una componente cada una, iso/holes unitarios 0,
+1722/1722 píxeles de cabeza y 135 archivos protegidos conservados. La prueba estática deja solo 4/3 px de margen en Charizard/Salamence.
+No son animaciones aprobadas ni una captura del layout real. La app sigue con la entrega rechazada de 410e8d0; no se ha sustituido
+ningún recurso. Sin build/tests nuevos (no cambia C# ni sprites integrados), sin abrir app/emulador ni desplegar. Sin push.
+Estado vigente y rutas completas: sección «Tanda 2 rechazada» de CONTINUIDAD_SPRITES_POKEMON.md.
