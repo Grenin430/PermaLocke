@@ -591,3 +591,9 @@ negro del estudio de fotos: gen 8-9 en el equipo (ver Trampas y lecciones).
   de cabeza idénticos. 8 fotogramas/24 celdas, iso/holes 0, 49 coordenadas y 345 muestras visibles estables, 108 archivos previos intactos.
   Comparación vuelo anterior/corregido a igual escala y GIF fijo en vuelo_piloto/detalle_pidgey. Detalle pendiente de revisión;
   no integrar ni extender todavía. Commit local sin push; app y emulador intactos.
+
+- **Aprobación de Pidgey y primera tanda de vuelo** (2026-10-14): usuario aprueba la pasada de detalle y pide corregir los restantes
+  en tandas de cinco. Conservado Pidgey; corregidos Spearow, Pikipek, Pidgeot, Toucannon y Staraptor con anatomías, plumas y batidos propios.
+  Integradas sus cinco hojas; comparación, ciclos y layout real en imagenes/revision/vuelo_tanda1. 120/120 ojos, 0 huecos/aislados,
+  555 pruebas correctas; 107 archivos protegidos sin cambios. Tanda entregada para revisión. Cuatro especies restantes para la siguiente.
+  Pidgey aprobado permanece como fuente/propuesta separada sin modificar en esta tanda. Commit local sin push; no despliegue.

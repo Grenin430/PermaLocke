@@ -1,6 +1,6 @@
 # Revisión de poses de vuelo — piloto de Pidgey
 
-Estado: pose y movimiento de Pidgey aprobados; pasada de detalle entregada para revisión. No integrada en la app ni en el laboratorio WPF.
+Estado: Pidgey corregido aprobado y conservado intacto. Tanda 1 de cinco especies integrada y entregada para revisión visual.
 Fecha: 2026-10-14. El usuario autoriza redibujar la pose base cuando la referencia representa apoyo en tierra;
 esta instrucción sustituye la restricción anterior de reconstruir siempre la misma pose. No autoriza rehacer las especies que ya funcionan.
 
@@ -88,3 +88,58 @@ Reproducción desde tools/critters: node review_pidgey_flight.js C:/Users/javie/
 seguido de node review_pidgey_detail.js. La instantánea anterior no debe regenerarse al repetir la revisión.
 Estado: pose/movimiento aprobados; pasada de detalle entregada para revisión. Aún no integrada ni extendida a los otros nueve.
 No hay cambios de WPF ni ejecución nueva de sus pruebas; la validación integrada queda pendiente. Sin despliegue ni push.
+
+### Correcciones de vuelo, tanda 1 (2026-10-14): cinco entregados para revisión
+Pidgey corregido aprobado por el usuario: conservar exactamente tools/critters/pidgey_flight_anim.js (commit de detalle 8da0848)
+y C:/Users/javie/Desktop/imagenes/revision/vuelo_piloto/detalle_pidgey/. Esta tanda no modifica su código, paleta, movimiento ni PNG.
+Su propuesta aprobada sigue separada de la antigua hoja de producción; no se sustituye aquí para respetar la indicación de mantenerlo intacto.
+El usuario autoriza continuar con los demás afectados en tandas de cinco y conservar los que ya funcionan.
+
+Primera tanda: Spearow, Pikipek, Pidgeot, Toucannon y Staraptor. Se redibujan torso, patas flexionadas, cola y alas abiertas en sus paletas;
+no se gira el personaje completo ni se conserva el cuerpo de pie. Cabezas y marcas conservadas por recortes explícitos de las referencias.
+Pidgeot prolonga la cresta hacia atrás; las zonas descubiertas tienen pecho/vientre completos. Alas articuladas por hombro, codo y muñeca,
+con textura propia por especie, muestreo inverso sin suavizado, coberteras que cubren la raíz y ala lejana sombreada.
+La primera revisión corrigió uniones de rabadilla/patas y retiró cuatro píxeles del ala antigua incluidos en el recorte de cabeza de Spearow.
+
+| Especie | Lienzo (sin reducción) | Celda | Ciclo / fps | Movimiento y rasgos |
+|---|---|---|---|---|
+| Spearow | 88×68 | 92 | 8 / 12 | Batido rápido y estrecho, pecho listado, plumas rosadas y cola naranja |
+| Pikipek | 80×64 | 84 | 8 / 14 | Golpe rápido, recogida y dos fases de planeo breve; iris azul y cresta roja |
+| Pidgeot | 104×68 | 108 | 8 / 8 | Batido amplio, recuperación plegada, cresta larga hacia atrás, pecho escalonado |
+| Toucannon | 116×70 | 120 | 8 / 10 | Alas anchas, pico original equilibrado por torso horizontal y cola; patas azules recogidas |
+| Staraptor | 104×70 | 108 | 8 / 9 | Batido firme, primarias abiertas; máscara, cresta y grupos blancos del pecho conservados |
+
+Archivos definitivos del proyecto: C:/Users/javie/Desktop/Permalocke singleplayer/src/PermaLocke.App/Views/Cap/Critters/
+{spearow,pikipek,pidgeot,toucannon,staraptor}.png. Integradas solo sus cinco entradas de CapCritterArt.cs.
+Fuentes: tools/critters/flight_batch1_specs.js, flight_rig.js y los cinco <especie>_flight_anim.js.
+Los <especie>_anim.js anteriores y los TXT reconstruidos permanecen intactos; <especie>_before_flight.json conserva el antes.
+build_batch.js selecciona las nuevas fuentes solo para estos cinco nombres: regenerar el lote no recupera accidentalmente la pose de tierra.
+Se mantienen las rutas del layout; inclinaciones -2/0/2, reserva 60 (Pikipek 58), Drift 1, Bob 0.3, Surge 0.6 para contener el avance vertical.
+
+Entrega: C:/Users/javie/Desktop/imagenes/revision/vuelo_tanda1/
+- tanda1_antes_y_despues.png: comparación a igual escala ×3.
+- tanda1_ciclos_comparados.gif: antes estático y ciclos nuevos con cuerpo fijo; cada especie conserva su frecuencia.
+- <especie>_antes_y_despues.png, <especie>_flight_bucle_fijo.gif, <especie>_flight_fotogramas.png.
+- <especie>_hoja_definitiva.png, <especie>_rostros.png, <especie>_uniones.png.
+- tanda1_juntos_en_el_layout_tamano_real.gif: laboratorio real, 336 fotogramas, 28 s, 12 fps, 1920×976, sin reescalado.
+- auditoria.json, conservacion.json, rendimiento.txt, verificacion_gif.txt y mosaicos de ambos paneles.
+
+Verificado: 40 fotogramas, 120 celdas, 120/120 regiones de ojos. Iso 0, holes 0 y una única componente conectada en los 160 dibujos.
+Cabeza idéntica en cada fase: 247 píxeles Spearow, 351 Pikipek, 433 Pidgeot, 721 Toucannon y 590 Staraptor.
+Sin celdas recortadas; cierres de ciclo dentro del máximo de las transiciones (tolerancia 5 %).
+Sellado de huecos unitarios tras rotar: 10/0/8/1/0 respectivamente. Cielo y=5..56, 7..54, 2..55, 4..56 y 0..56; margen de trayectoria 2/4/2/2/2.
+Las hojas integradas coinciden byte a byte con las auditadas. 107 archivos protegidos intactos: las otras 49 hojas, los 53 scripts
+anatómicos anteriores, critter.js y cuatro archivos del piloto de Pidgey. Ninguna especie fuera de la tanda cambia.
+Build aislado: 0 errores, dos advertencias CS0649 previas. Pruebas App: 555/555, 0 fallos y 0 omitidas (23 s);
+advertencias CS8321/xUnit2030 previas. Laboratorio --medir: Party 178×321 media 1,48–1,71 ms, p95 2,14–3,23 ms;
+Deep media 0,87–1,22 ms. Primera preparación 87,19 ms. Medidas de este PC, sin emulador; no son una comparación controlada de rendimiento.
+
+Reproducción desde tools/critters: node review_flight_batch1.js; node assemble_flight_batch1.js;
+node build_batch.js spearow pikipek pidgeot toucannon staraptor; node integrate_entries.js.
+Desde raíz: dotnet build tools/PermaLocke.PlaqueLab --artifacts-path .lab-art;
+dotnet test tests/PermaLocke.App.Tests --artifacts-path .lab-art; tools/critters/render_flight_batch1.ps1.
+Limitaciones: amplitud contenida por los 69 píxeles de cielo; oclusión natural por alas y solapamientos entre visitantes en la vista forzada.
+La frecuencia forzada no representa apariciones normales. El GIF del layout usa 12 fps, mientras los ciclos individuales conservan sus fps;
+los tiempos GIF se cuantizan a centésimas. El reinicio del recorrido conjunto no es el bucle del batido. Pantallas del juego simuladas por el laboratorio.
+Estado: tanda 1 entregada para revisión visual. Restan Skarmory, Dragonite, Charizard y Salamence para la siguiente tanda (cuatro restantes).
+No se ha desplegado ni abierto la app o Azahar. Commit local, sin push.

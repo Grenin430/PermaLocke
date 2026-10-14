@@ -58,9 +58,12 @@ const META = {
   spearow: { id: 21, drift: 10, bob: 2, surge: 1.2 },
   swablu: { id: 333, drift: 8, bob: 3, surge: 0.6 },
 };
+// Approved originals stay available; these five use their explicitly requested flight corrections.
+const FLIGHT = new Set(['spearow','pikipek','pidgeot','toucannon','staraptor']);
 const lines = [];
 for (const name of process.argv.slice(2)) {
-  const m = require(`./${name}_anim.js`), meta = META[name];
+  const flight = FLIGHT.has(name);
+  const m = require(`./${name}${flight ? "_flight" : ""}_anim.js`), meta = flight ? { ...META[name], drift: 1, bob: 0.3, surge: 0.6 } : META[name];
   const w = m.fr[0][0].length, h = m.fr[0].length;
   const maxTilt = Math.max(...m.angles.map(Math.abs)) * Math.PI / 180;
   let cell = Math.ceil(Math.max(w * Math.cos(maxTilt) + h * Math.sin(maxTilt), h * Math.cos(maxTilt) + w * Math.sin(maxTilt)));

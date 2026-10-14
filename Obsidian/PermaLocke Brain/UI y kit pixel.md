@@ -169,3 +169,11 @@ Reproducción desde tools/critters: node review_pidgey_flight.js C:/Users/javie/
 seguido de node review_pidgey_detail.js. La instantánea anterior no debe regenerarse al repetir la revisión.
 Estado: pose/movimiento aprobados; pasada de detalle entregada para revisión. Aún no integrada ni extendida a los otros nueve.
 No hay cambios de WPF ni ejecución nueva de sus pruebas; la validación integrada queda pendiente. Sin despliegue ni push.
+
+## Correcciones de vuelo: tanda 1 (2026-10-14)
+Pidgey corregido aprobado, fuente y entrega intactas; sigue separado de su hoja antigua de producción.
+Spearow, Pikipek, Pidgeot, Toucannon y Staraptor: nuevas poses y ciclos, integrados solo en singleplayer y entregados para revisión.
+Fuentes flight_batch1_specs.js/flight_rig.js y cinco *_flight_anim.js; build_batch.js los selecciona. Originales *_anim.js conservados.
+40 fotogramas, 120 celdas/ojos correctos, iso/holes 0, 107 archivos protegidos intactos, 555 pruebas correctas.
+Layout real 28 s a tamaño nativo en imagenes/revision/vuelo_tanda1; rutas definitivas y método en CONTINUIDAD_SPRITES_POKEMON.md.
+Restan cuatro: Skarmory, Dragonite, Charizard y Salamence. Sin despliegue ni push.
