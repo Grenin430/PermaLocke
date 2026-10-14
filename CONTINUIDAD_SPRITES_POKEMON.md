@@ -456,3 +456,50 @@ Rendimiento final [verificado] con `--especies 370,117,457,731,227 --medir`: col
 fotograma, p95 **2,23–3,31 ms**; fondo **0,95–1,48 ms**. Primera preparación 90,77 ms. Medición del laboratorio en este PC, sin emulador.
 Las cinco hojas suman **60.951 bytes**. Se exportaron **840 fotogramas, 70,00 s a 12 fps, 1920×976**; GIF decodificado completo sin errores.
 Mosaicos de ambos paneles revisados; `--especies` fuerza seis rutas y repite Skarmory en dos, sin cambiar la frecuencia normal de la app.
+
+### Lote 6 (2026-10-14): entregado para revisión
+Remoraid (223), Lanturn (171), Kingdra (230), Toucannon (733) y Altaria (334), propuestos y confirmados por el usuario antes de empezar.
+Integración en `singleplayer`; entrega en `C:\Users\javie\Desktop\imagenes\revision\lote6\`. Pendiente de aprobación del usuario.
+
+| Especie | Base | Celda de hoja | Fotogramas / inclinaciones | FPS | Movimiento |
+|---|---|---|---|---|---|
+| Remoraid | 36×36 | 54×54 | 8 / 5 | 9 | Cola, aleta superior y ventral con fases distintas |
+| Lanturn | 65×46 | 86×86 | 8 / 5 | 7 | Dos antenas, cola y aletas pectorales |
+| Kingdra | 54×66 | 88×88 | 8 / 5 | 9 | Membrana dorsal, cola enroscada y puntas de la corona |
+| Toucannon | 61×59 | 80×80 | 8 / 3 | 8 | Cabeza, ala plegada, cola y patas en pose posada |
+| Altaria | 58×63 | 80×80 | 8 / 3 | 7 | Nube doblada por columnas, plumas largas, cola y patas |
+
+Método y comprobaciones:
+- Reconstrucción celda a celda, sin redibujar. Remoraid: periodo 9,98; Kingdra: 8,94; Altaria: 3,60.
+  Lanturn requiere **3,66** explícito: el detector elegía 7,32 y perdía detalles. Toucannon requiere **3,61**: con 7,22 se perdían contornos
+  y el relleno de fondo atravesaba el pecho blanco. Se comprobó cada reconstrucción contra su referencia a la misma altura.
+- Kingdra: se quita el blanco encerrado en la corona y el fondo blanco/gris entre tronco y aleta, conservando la membrana clara de la aleta.
+  La membrana se dobla por columnas completas desde la raíz y la cola enroscada por filas. No se sustituye la membrana por transparencia.
+- Toucannon: blanco entre las piernas retirado. La máscara de la cola empieza en x=47: incluir x=46 absorbía un dedo y lo dejaba aislado
+  cuando las patas se desplazaban. Separar por el borde real corrigió el problema sin borrar el dedo.
+- Altaria: retirada únicamente la celda blanca de fondo entre las plumas de la cola (45,57). El blanco de la nube y las mejillas permanece.
+  La nube se dobla por columnas, sin mover su unión al cuello; plumas largas y cola llevan desfases propios.
+- Toucannon y Altaria usan `layoutHeight: 61` y no añaden balanceo vertical a los fotogramas. Inclinaciones -3/0/3 y -2/0/2, respectivamente.
+  En el cielo del laboratorio (superficie y=69), todas sus celdas quedan verticalmente entre y=4..64 y y=1..67, sin recorte vertical.
+- `audit_batch6.js`: **40 fotogramas base, 168 celdas inclinadas, iso 0, holes 0, cero celdas tocando el borde**.
+  **192/192 regiones de ojos** pasan (Altaria tiene dos); revisión visual adicional de los cinco mosaicos `rostro.js` y las costuras con `zoom.js`.
+- La rotación creó 7 huecos aislados en Lanturn y 2 en Kingdra. Se cierran con el `seal_sheet.js` aprobado, mediante `sealRotatedHoles`
+  solo en estas dos especies. No se modifica la biblioteca compartida. El cambio del último al primer fotograma no supera el mayor cambio
+  del resto del ciclo; la auditoría lo comprueba explícitamente.
+- Compilación aislada del laboratorio: **0 errores**, dos avisos CS0649 previos de `EmulatorLauncher`.
+  `dotnet test tests/PermaLocke.App.Tests --artifacts-path .lab-art`: **553/553**, cero fallos y cero omitidas, 25 s.
+- Las 26 hojas aprobadas, sus 25 scripts anatómicos y `critter.js` conservan sus **52 SHA-256** originales.
+  Las cinco hojas nuevas suman **60.536 bytes**. Solo se reemplazan las cinco entradas correspondientes en `CapCritterArt.cs`.
+- Herramientas de reproducción: `review_batch6.js deliver`, `audit_batch6.js`, `render_batch6.ps1` desde `tools/critters`.
+
+Limitaciones: Toucannon mantiene la pose posada de la referencia. Los dos voladores tienen movimientos pequeños para respetar el cielo;
+no se cambia su escala ni se inventa una pose. Las referencias pequeñas limitan el detalle de origen. Verificación en el laboratorio,
+sin abrir el juego ni desplegar. Los nadadores mantienen el tinte del agua y la atenuación detrás del equipo. El GIF usa 256 colores y tiempos
+en centésimas; la app conserva los PNG originales. El reinicio del recorrido largo no representa el bucle individual de cada especie.
+`--especies` fuerza seis rutas simultáneas y repite Altaria; no es la frecuencia normal de la app. Los cinco grandes siguen reservados.
+**Parar aquí: no comenzar el lote 7 hasta aprobar el lote 6 y confirmar su siguiente selección.**
+
+Rendimiento final [verificado] con `--especies 223,171,230,733,334 --medir`: columna del equipo 178×321 **1,80–1,99 ms de media** por
+fotograma, p95 **2,41–3,74 ms**; fondo **1,00–1,35 ms**. Primera preparación 85,42 ms. Son medidas de este PC en el laboratorio, sin emulador.
+GIF final decodificado sin errores: **840 fotogramas, 70,00 s, 1920×976**, exportado a 12 fps. Revisados los mosaicos de ambos paneles;
+se conservan las oclusiones habituales al pasar detrás del juego, del equipo o de otro Pokémon en esta vista forzada.

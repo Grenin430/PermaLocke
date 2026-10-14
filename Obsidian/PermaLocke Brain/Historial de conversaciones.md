@@ -522,3 +522,9 @@ negro del estudio de fotos: gen 8-9 en el equipo (ver Trampas y lecciones).
 
 - **Aprobación del lote 5** (2026-10-14): el usuario confirmó «aprobado». Luvdisc, Seadra, Lumineon, Pikipek y Skarmory quedan aprobados.
   Actualizados continuidad, registro de sprites y LEEME de la entrega. Sin cambios en los sprites. La selección del lote 6 sigue pendiente.
+
+- **Lote 6 de sprites del mar** (2026-10-14): el usuario pidió continuar y confirmó Remoraid, Lanturn, Kingdra, Toucannon y Altaria.
+  Reconstruidos de las referencias, animados por partes e integrados. Lanturn y Toucannon necesitaban un periodo explícito para recuperar
+  la cuadrícula fina; se limpiaron fondos encerrados en Kingdra, Toucannon y Altaria. Se corrigió la separación cola/dedos de Toucannon y
+  nueve huecos de rotación con la herramienta aprobada. 168 celdas y 192 regiones de ojos correctas; 553 pruebas aprobadas. Entrega en
+  `imagenes/revision/lote6`, pendiente de aprobación. 52 hashes de archivos aprobados intactos. Commit local sin push; no avanzar al lote 7.
