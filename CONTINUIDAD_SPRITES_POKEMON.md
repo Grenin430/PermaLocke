@@ -16,7 +16,7 @@ Magikarp y lotes 1–11 aprobados por el usuario. Los lotes 10 y 11 recibieron a
 «acaba esos 3» y autorizó terminar Wailord, Rayquaza y Ho-Oh. Las tablas iniciales de esta sección son históricas;
 el estado actualizado está en las secciones de cada lote y en el registro externo.
 
-**Revisión posterior:** Pidgey corregido y tanda 1 aprobados e intactos. Tanda 2 RECHAZADA por el usuario. Las cuatro bases rehechas también RECHAZADAS. Charizard con cuello corregido: base definitiva APROBADA y primer batido rechazado; segunda revisión rechazada por el ala lejana; tercera aceptada como avance; cuarta (lectura de las dos alas): movimiento APROBADO; quinta (color de cada cara del ala) APROBADA: Charizard terminado. Skarmory: vuelo APROBADO (skarmory_vuelo, c95d23c). Dragonite: base de vuelo v3 pendiente de aprobación en dragonite_pose_v3. Skarmory, Dragonite y Salamence pendientes, uno por uno desde referencias de vuelo.
+**Revisión posterior:** Pidgey corregido y tanda 1 aprobados e intactos. Tanda 2 RECHAZADA por el usuario. Las cuatro bases rehechas también RECHAZADAS. Charizard con cuello corregido: base definitiva APROBADA y primer batido rechazado; segunda revisión rechazada por el ala lejana; tercera aceptada como avance; cuarta (lectura de las dos alas): movimiento APROBADO; quinta (color de cada cara del ala) APROBADA: Charizard terminado. Skarmory: vuelo APROBADO (skarmory_vuelo, c95d23c). Dragonite: base v3 RECHAZADA; base v4 (construida) pendiente de aprobación en dragonite_pose_v4. Skarmory, Dragonite y Salamence pendientes, uno por uno desde referencias de vuelo.
 Ver «Correcciones de vuelo, tanda 2» y tools/critters/REVISION_POSES_VUELO.md. Salamence planea con las alas fijas.
 
 ### Qué estamos creando
@@ -1408,3 +1408,25 @@ Dudas para la revisión:
 Entrega: C:/Users/javie/Desktop/imagenes/revision/dragonite_pose_v3/ (dragonite_pose_y_referencia.png, dragonite_base_ampliada.png,
 dragonite_base_nativa.png, .txt/.json, auditoria.json y referencias/). Desde tools/critters: node review_dragonite_pose_v3.js. Sin
 integrar: la app sigue con el Dragonite de la tanda 2 rechazada.
+
+#### Dragonite base v4: construida en lugar de girada (2026-10-14), pendiente de aprobación
+El usuario rechaza la v3: no se ven la mano ni la pata izquierdas, la cola y las alas están raras, y la unión de la cabeza con el
+cuerpo también. La causa común es que girar un cuarto el torso de un sprite de frente no da una anatomía de perfil.
+
+Cambio de método, como en la base aprobada de Charizard (tools/critters/dragonite_flight_pose_v4.js; la v3 queda como histórico):
+- **Construido de nuevo con la paleta original:** torso (elipse horizontal), cuello, cola gruesa que se afila hacia atrás, brazo de
+  dos segmentos y dos piernas de muslo y caña.
+- **Sombreado por volumen:** contorno H, banda iluminada M arriba, base C y sombra N abajo. La pierna lejana es un tono más oscura.
+- **Vientre:** crema a lo largo de la parte de abajo, con las rayas de los segmentos de través (I/L/E) y una franja fina bajo la
+  raíz de la cola.
+- **Piezas del original a escala 1:**
+  - La cabeza hasta la garganta, con las dos antenas.
+  - La mano izquierda con sus garras blancas, girada hacia delante y abajo.
+  - El pie izquierdo en espejo, con los dedos atrás, para las dos piernas; el lejano, en sombra.
+  - El ala derecha del original como ala cercana, levantada 20°; la lejana es esa ala girada 52°, con su cara exterior en
+    naranja de sombra.
+
+[Verificado] 102×65, 2530 píxeles opacos en una sola pieza, iso 0, holes 0 y solo la paleta original.
+
+Entrega: C:/Users/javie/Desktop/imagenes/revision/dragonite_pose_v4/. Desde tools/critters: node review_dragonite_pose_v4.js.
+Sin integrar.
