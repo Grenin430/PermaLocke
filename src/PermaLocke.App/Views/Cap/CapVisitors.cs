@@ -8,6 +8,7 @@ namespace PermaLocke.App.Views;
 /// body, a serpent waves all of it, a bird beats its wings round its shoulders. They cross the whole sea behind the screens of the game, like the
 /// whale did (one window sees them go in and the other sees them come out). A few lanes, each a slot of <see cref="CapFauna.EventAt"/> on the seed
 /// of the run and the time: one or two at once at most, the commons often, the legends rarely and twice the size where there is room.
+/// Drawings from sheets are painted at two thirds of their size (2026-10-14).
 /// </summary>
 public static class CapVisitors
 {
@@ -23,17 +24,26 @@ public static class CapVisitors
     /// <summary>For the lab only: every lane passes at once, each with the next of these species that suits it (sea or sky).</summary>
     public static int[]? ForcedAll { get; set; }
 
+    // Periods halved (2026-10-14): the visitors come by twice as often, now that they are drawn smaller.
     public static readonly Lane[] Lanes =
     [
         // The sea: commons often, then the less common with a rare among them, and the great ones now and then.
-        new(10, 55, 32, 75, false, [129, 129, 118, 116, 456, 370, 223, 211, 746, 779, 170, 318]),
-        new(11, 95, 42, 60, false, [119, 226, 320, 319, 457, 171, 369, 117, 131, 130, 350, 230, 490]),
-        new(12, 300, 70, 55, false, [382, 382, 249, 321, 131], Big: true),
+        new(10, 34, 32, 75, false, [129, 129, 118, 116, 456, 370, 223, 211, 746, 779, 170, 318]),
+        new(11, 48, 42, 60, false, [119, 226, 320, 319, 457, 171, 369, 117, 131, 130, 350, 230, 490]),
+        new(12, 150, 70, 55, false, [382, 382, 249, 321, 131], Big: true),
         // The sky.
-        new(13, 45, 14, 70, true, [278, 278, 16, 21, 731, 12, 333, 41]),
-        new(14, 120, 20, 55, true, [279, 18, 22, 733, 334, 227, 398, 169, 468, 149, 6, 142, 380, 381]),
-        new(15, 330, 26, 45, true, [384, 384, 250, 144, 145, 146, 249], Big: true)
+        new(13, 22, 14, 70, true, [278, 278, 16, 21, 731, 12, 333, 41]),
+        new(14, 60, 20, 55, true, [279, 18, 22, 733, 334, 227, 398, 169, 468, 149, 6, 142, 380, 381]),
+        new(15, 165, 26, 45, true, [384, 384, 250, 144, 145, 146, 249], Big: true)
     ];
+
+    /// <summary>Every drawing from a sheet is painted at two thirds of its size, nearest neighbour (2026-10-14).</summary>
+    private const double Shrink = 2.0 / 3.0;
+
+    /// <summary>The side of a cell once shrunk, and the sheet pixel an output pixel of it takes.</summary>
+    private static int Shrunk(int cell) => (int)Math.Ceiling(cell * Shrink);
+
+    private static int Source(int o, int cell) => Math.Min(cell - 1, (int)((o + 0.5) / Shrink));
 
     /// <summary>One pixel of a drawing, already lit (top edge) and shaded (bottom edge).</summary>
     private readonly record struct Dot(int X, int Y, uint Rgb, bool Wing);
@@ -47,6 +57,12 @@ public static class CapVisitors
 
     /// <summary>A sheet of frames shipped inside the app, decoded once.</summary>
     private static ToastPixels.SpritePixels? SheetOf(string name)
+    {
+        // panels (and tests) paint from more than one thread; the cache is a plain dictionary
+        lock (Sheets) return LoadSheet(name);
+    }
+
+    private static ToastPixels.SpritePixels? LoadSheet(string name)
     {
         if (Sheets.TryGetValue(name, out var known)) return known;
         using var stream = typeof(CapVisitors).Assembly.GetManifestResourceStream($"PermaLocke.App.Critters.{name}.png");
@@ -65,9 +81,8 @@ public static class CapVisitors
         int dir, int world, bool party)
     {
         if (SheetOf(art.Sheet!) is not { } sheet || art.Angles is not { Length: > 0 } angles) return;
-        const int scale = 1;
         var cell = art.Cell;
-        var size = cell;
+        var size = Shrunk(cell);
         var count = Math.Max(1, sheet.Width / cell);
         var tau = (e.Progress * lane.Duration) + ((e.Variant % 13) * 0.173);
         var loop = count / art.Fps;
@@ -81,7 +96,7 @@ public static class CapVisitors
 
         // depth: two slow waves with the run's own phases
         double w1 = 2 * Math.PI / 13.0, w2 = 2 * Math.PI / 4.3, a1 = art.Drift, a2 = art.Bob, p1 = e.Variant % 7, p2 = e.Variant % 11;
-        var half = Math.Max(4, art.Height / 2.0);
+        var half = Math.Max(4, art.Height * Shrink / 2.0);
         var top = lane.Flies ? 3 + half : l.SurfaceY + 6 + half;
         var bottom = lane.Flies ? l.SurfaceY - 4 - half : l.FloorTop - 16 - half;
         if (bottom <= top) return;
@@ -105,17 +120,17 @@ public static class CapVisitors
         var alpha = party && !lane.Flies ? 120 : 255;
         var tint = lane.Flies ? 0x141C38u : pal.Water[5];
         var tintAmount = lane.Flies ? 0.6 * night : (party ? 0.45 : 0.08) + (0.25 * depth);
-        for (var sy = 0; sy < cell; sy++)
+        for (var oy = 0; oy < size; oy++)
         {
-            for (var sx = 0; sx < cell; sx++)
+            for (var ox = 0; ox < size; ox++)
             {
-                var gx = (col * cell) + sx;
-                var gy = (row * cell) + sy;
+                var gx = (col * cell) + Source(ox, cell);
+                var gy = (row * cell) + Source(oy, cell);
                 var at = ((gy * sheet.Width) + gx) * 4;
                 if (sheet.Bgra[at + 3] < 128) continue;
                 var rgb = ((uint)sheet.Bgra[at + 2] << 16) | ((uint)sheet.Bgra[at + 1] << 8) | sheet.Bgra[at];
-                var dx = dir > 0 ? cell - 1 - sx : sx;
-                p.Rect(left + (dx * scale), topY + (sy * scale), scale, scale, tintAmount > 0 ? CapSheet.Mix(rgb, tint, tintAmount) : rgb, alpha);
+                var dx = dir > 0 ? size - 1 - ox : ox;
+                p.Rect(left + dx, topY + oy, 1, 1, tintAmount > 0 ? CapSheet.Mix(rgb, tint, tintAmount) : rgb, alpha);
             }
         }
 
@@ -242,19 +257,20 @@ public static class CapVisitors
         for (var k = 1; k < angles.Length; k++) if (Math.Abs(angles[k]) < Math.Abs(angles[row])) row = k;
         var col = (int)Math.Floor(phase * art.Fps) % count;
         var world = ctx.WorldWidth > 0 ? ctx.WorldWidth : l.Cols;
-        var left = (int)((phase * 3.2) % (world + (2 * cell))) - cell - ctx.WorldX;
+        var size = Shrunk(cell);
+        var left = (int)((phase * 3.2) % (world + (2 * size))) - size - ctx.WorldX;
         var top = l.SurfaceY + 18 + (int)(Math.Sin(phase * 0.2) * 12);
         var alpha = (int)(230 * strength);
         var tint = CapSheet.Mix(pal.Water[6], 0x000000u, 0.4);
-        for (var sy = 0; sy < cell; sy++)
+        for (var oy = 0; oy < size; oy++)
         {
-            for (var sx = 0; sx < cell; sx++)
+            for (var ox = 0; ox < size; ox++)
             {
-                var at = ((((row * cell) + sy) * sheet.Width) + (col * cell) + sx) * 4;
+                var at = ((((row * cell) + Source(oy, cell)) * sheet.Width) + (col * cell) + Source(ox, cell)) * 4;
                 if (sheet.Bgra[at + 3] < 128) continue;
                 var rgb = ((uint)sheet.Bgra[at + 2] << 16) | ((uint)sheet.Bgra[at + 1] << 8) | sheet.Bgra[at];
                 // it swims to the right, so the drawing (facing left) is turned round
-                p.Rect(left + (cell - 1 - sx), top + sy, 1, 1, CapSheet.Mix(rgb, tint, 0.6), alpha);
+                p.Rect(left + (size - 1 - ox), top + oy, 1, 1, CapSheet.Mix(rgb, tint, 0.6), alpha);
             }
         }
     }

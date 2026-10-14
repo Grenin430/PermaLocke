@@ -1620,3 +1620,6 @@ review_salamence_pose_v3.js quedan como histórico.
 - [Verificado] Build del laboratorio: 0 errores. Tests App: 555/555. Pidgey revisado en el cielo del laboratorio, en las dos direcciones.
 - Desplegado **solo** en la carpeta de PermaLocke singleplayer: `dotnet build src/PermaLocke.App`, con la app y Azahar cerrados. Es el
   ejecutable al que apunta el acceso directo PermaLocke singleplayer.lnk. Sin push y sin tocar PermaLocke prueba ni para amigos.
+
+### Todos los visitantes a 2/3 y el doble de frecuentes (2026-10-14)
+El usuario prueba los sprites en la app y pide reducir TODOS a 2/3 y que aparezcan más a menudo. Se hace al pintar, sin regenerar hojas: CapVisitors.Swimmer y ProwlSheet (Sharpedo) dibujan cada celda a ceil(celda × 2/3) tomando el píxel de la hoja por vecino más próximo (Shrink, Shrunk, Source). La altura reservada (Height) se escala igual. Los periodos de los seis carriles bajan a la mitad (mar 34/48/150 s, cielo 22/60/165 s); duración y probabilidad no cambian. La caché de hojas (SheetOf) pasa a usar un lock: un test de determinismo falló una vez con varios hilos pintando a la vez. Tests App 555/555 (tres pasadas). Limitación: a 2/3 por vecino más próximo, los detalles de 1 px (ojos, antenas, garras) pueden perderse en algún fotograma; si alguno se nota, habría que regenerar esa hoja a su nuevo tamaño.
