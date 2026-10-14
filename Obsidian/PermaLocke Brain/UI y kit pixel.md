@@ -84,8 +84,8 @@ conservan sus colores característicos. La revisión de costuras sigue siendo vi
 El laboratorio exporta recorridos continuos con `--secuencia-ventana`; compilación aislada en `.lab-art`. No desplegar. El usuario ha autorizado continuar con el lote 5; confirmar primero su selección de especies.
 
 ## Sprites del mar: lote 5 singleplayer (2026-10-14)
-Luvdisc, Seadra, Lumineon, Pikipek y Skarmory: integrados, entregados para revisión, pendientes de aprobación. El usuario confirmó las cinco.
+Luvdisc, Seadra, Lumineon, Pikipek y Skarmory: integrados y aprobados por el usuario el 2026-10-14.
 Método y límites: `CONTINUIDAD_SPRITES_POKEMON.md`, sección «Lote 5». Entrega: `C:\Users\javie\Desktop\imagenes\revision\lote5\`.
 40 fotogramas, 184 celdas inclinadas y 184 regiones de ojos comprobadas; 553 pruebas aprobadas. Skarmory usa periodo 3,24, trayectoria casi
 plana e inclinaciones -2/0/2 para respetar su altura. Pikipek conserva la pose posada. Las 21 hojas anteriores permanecen intactas.
-Compilar solo en `.lab-art`; no desplegar. Parar hasta la aprobación del lote 5.
+Compilar solo en `.lab-art`; no desplegar. Lote 5 aprobado; confirmar las especies del lote 6 antes de comenzar.

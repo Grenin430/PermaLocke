@@ -411,9 +411,9 @@ Las cinco hojas PNG suman 101.804 bytes. GIF final decodificado completo: **840 
 Se han revisado las hojas de rostros completas y ambos paneles del recorrido mediante mosaicos; el GIF mantiene las oclusiones normales del
 juego y del equipo. `--especies` fuerza seis rutas simultáneas y, con dos voladores, repite Crobat: no es la frecuencia normal de la app.
 
-### Lote 5 (2026-10-14): entregado para revisión
+### Lote 5 (2026-10-14): aprobado por el usuario
 Luvdisc (370), Seadra (117), Lumineon (457), Pikipek (731) y Skarmory (227), propuestos y confirmados por el usuario antes de empezar.
-Integración en `singleplayer`; entrega en `C:\Users\javie\Desktop\imagenes\revision\lote5\`. Pendientes de aprobación.
+Integración en `singleplayer`; entrega en `C:\Users\javie\Desktop\imagenes\revision\lote5\`. Aprobados por el usuario el 2026-10-14.
 
 | Especie | Base | Celda de hoja | Fotogramas / inclinaciones | FPS | Movimiento |
 |---|---|---|---|---|---|
@@ -450,7 +450,7 @@ Limitaciones: Pikipek mantiene su pose posada mientras recorre el cielo, como la
 pose de vuelo distinta. Skarmory tiene amplitud e inclinación contenidas por su altura y por la resolución de la referencia. Revisión en el
 laboratorio, sin abrir juego ni desplegar. Los nadadores mantienen el tinte del agua y se atenúan detrás del texto del equipo. El GIF usa
 256 colores y tiempos en centésimas; la hoja PNG de la app conserva su paleta original. El reinicio del recorrido largo no es el bucle
-individual de cada Pokémon. Kyogre, Lugia, Rayquaza, Wailord y Ho-Oh siguen reservados. Parar tras este lote y esperar aprobación del usuario.
+individual de cada Pokémon. Kyogre, Lugia, Rayquaza, Wailord y Ho-Oh siguen reservados. Lote aprobado. Confirmar las cinco especies del lote 6 antes de comenzar.
 
 Rendimiento final [verificado] con `--especies 370,117,457,731,227 --medir`: columna del equipo 178×321 **1,73–2,03 ms de media** por
 fotograma, p95 **2,23–3,31 ms**; fondo **0,95–1,48 ms**. Primera preparación 90,77 ms. Medición del laboratorio en este PC, sin emulador.

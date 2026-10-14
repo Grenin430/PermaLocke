@@ -519,3 +519,6 @@ negro del estudio de fotos: gen 8-9 en el equipo (ver Trampas y lecciones).
   Reconstrucción desde sus referencias, animación por anatomía, integración y entrega en `imagenes/revision/lote5`. 184 celdas y ojos
   comprobados, 553 pruebas aprobadas. Skarmory requirió periodo 3,24 y vuelo casi plano para caber en el cielo; Pikipek conserva la pose
   posada. Ninguna hoja aprobada modificada. Estado: entregado para revisión, no aprobado aún. Commit local sin push; no avanzar al lote 6.
+
+- **Aprobación del lote 5** (2026-10-14): el usuario confirmó «aprobado». Luvdisc, Seadra, Lumineon, Pikipek y Skarmory quedan aprobados.
+  Actualizados continuidad, registro de sprites y LEEME de la entrega. Sin cambios en los sprites. La selección del lote 6 sigue pendiente.
