@@ -41,12 +41,25 @@ function clean(g){let sealed=0,isolated=0;
  const copy=g.map(r=>[...r]);for(let y=0;y<g.length;y++)for(let x=0;x<g[0].length;x++)if(copy[y][x]!=='.'&&![-1,0,1].some(dy=>[-1,0,1].some(dx=>(dx||dy)&&copy[y+dy]?.[x+dx]&&copy[y+dy][x+dx]!=='.'))){g[y][x]='.';isolated++;}
  return {sealed,isolated};
 }
+// One-pixel whiskers at the membrane's scalloped tips, left by resampling a bent wing, flicker in and out between frames: trimmed
+// back to where the tip is at least two pixels thick.
+function trimTips(L,passes){for(let p=0;p<passes;p++){const cut=[];
+ for(let y=1;y<L.length-1;y++)for(let x=1;x<L[0].length-1;x++){if(L[y][x]==='.')continue;let n=0;
+  for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)if((dx||dy)&&L[y+dy][x+dx]!=='.')n++;if(n<=1)cut.push([x,y]);}
+ for(const [x,y] of cut)L[y][x]='.';}}
+// Scale2x, as critter.js uses inside C.swing (it does not export it).
+function scale2x(g){const h=g.length,w=g[0].length,o=Array.from({length:h*2},()=>Array(w*2).fill('.')),at=(x,y)=>y<0||y>=h||x<0||x>=w?'.':g[y][x];
+ for(let y=0;y<h;y++)for(let x=0;x<w;x++){const P=at(x,y),A=at(x,y-1),B=at(x+1,y),C=at(x-1,y),D=at(x,y+1);
+  o[y*2][x*2]=C===A&&C!==D&&A!==B?A:P;o[y*2][x*2+1]=A===B&&A!==C&&B!==D?B:P;o[y*2+1][x*2]=D===C&&D!==B&&C!==A?C:P;o[y*2+1][x*2+1]=B===D&&B!==A&&D!==C?D:P;}
+ return o;}
 const frames=[],stats=[],wingLayers=[];
-const NEAR_ROOT=[59,40],FAR_SHIFT=[-8,-3],FAR_TURN_UP=30,FAR_TURN_DOWN=28,FAR_SPAN=.9,FAR_ROOM=[3,96],REVERSE={C:'K',J:'M',M:'G',I:'M',H:'J'};
+const NEAR_ROOT=[59,40],CUFF_ABOVE=31,FAR_SHIFT=[-8,-3],FAR_TURN_UP=30,FAR_TURN_DOWN=28,FAR_SPAN=.9,FAR_ROOM=[3,96],FAR_LOW_SHIFT=[5,1],FAR_MIN_PIECE=70,REVERSE={C:'K',J:'M',M:'G',I:'M',H:'J'};
 function frame(f){
  const t=f/N*2*Math.PI,bob=Math.round(-.9*Math.sin(t));
  const g=Array.from({length:H},()=>Array(W).fill('.'));
- const put=(x,y,c)=>{if(c!=='.'&&g[y+OY+bob]?.[x+OX]!==undefined)g[y+OY+bob][x+OX]=c;};
+ // Who drew each pixel last: f far wing, n near wing, b body.
+ const own=Array.from({length:H},()=>Array(W).fill(''));let who='b';
+ const put=(x,y,c)=>{if(c!=='.'&&g[y+OY+bob]?.[x+OX]!==undefined){g[y+OY+bob][x+OX]=c;own[y+OY+bob][x+OX]=who;}};
  const wings={near:Array.from({length:H},()=>Array(W).fill('.')),far:Array.from({length:H},()=>Array(W).fill('.'))};
  // The far wing is the near wing of the same frame seen across the back: same membrane, fingers and stroke, its root set a little
  // forward and up on the far shoulder, its span shortened by the turn of the body and swung towards the head, so it opens ahead of
@@ -54,20 +67,25 @@ function frame(f){
  function farWing(){
   const layer=wings.far,PX=40,PY=60,L=Array.from({length:SH+2*PY},()=>Array(SW+2*PX).fill('.'));
   const local=(x,y,c)=>{if(c!=='.'&&L[y+PY]?.[x+PX]!==undefined)L[y+PY][x+PX]=c;};
-  if(f%N===0)nearRows.forEach((r,y)=>[...r].forEach((c,x)=>local(x,y,c)));else require('./charizard_wing_poses').paint(nearRows,false,f,local);
+  if(f%N===0)nearRows.forEach((r,y)=>[...r].forEach((c,x)=>local(x,y,c)));else{require('./charizard_wing_poses').paint(nearRows,false,f,local);trimTips(L,2);}
   // The arm decides the turn: the wrist above the shoulder swings the far wing forward and up, below it forward and down.
   const hub=require('./charizard_wing_poses').pose(f).nh,arm=[hub[0]-NEAR_ROOT[0],hub[1]-NEAR_ROOT[1]];
   const turn=(arm[1]<0?FAR_TURN_UP:FAR_TURN_DOWN)*arm[1]/Math.hypot(...arm);
-  // Further away, it is also shorter up and down: drawn into a scratch grid and sampled back squashed towards its root, just enough
-  // to stay within the height the near wing already takes, so the sky keeps room for it.
-  const T=new Map();
-  C.swing(L,()=>true,[NEAR_ROOT[0]+PX,NEAR_ROOT[1]+PY],()=>turn,()=>FAR_SPAN)(0,(x,y,c)=>T.set(x+','+y,c));
-  const ys=[...T.keys()].map(k=>+k.split(',')[1]),xs=[...T.keys()].map(k=>+k.split(',')[0]),ry=NEAR_ROOT[1]+PY,
-   FAR_DEPTH=Math.min(1,(ry-FAR_ROOM[0]-PY+FAR_SHIFT[1])/(ry-Math.min(...ys)),(FAR_ROOM[1]+PY-FAR_SHIFT[1]-ry)/(Math.max(...ys)-ry));
-  for(let y=Math.floor(ry+(Math.min(...ys)-ry)*FAR_DEPTH)-1;y<=Math.ceil(ry+(Math.max(...ys)-ry)*FAR_DEPTH)+1;y++)
-   for(let x=Math.min(...xs);x<=Math.max(...xs);x++){
-    const c=T.get(x+','+Math.round(ry+(y+.5-ry)/FAR_DEPTH-.5));if(!c)continue;
-    const X=x-PX+FAR_SHIFT[0],Y=y-PY+FAR_SHIFT[1],k=REVERSE[c]||c;put(X,Y,k);if(layer[Y+OY+bob]?.[X+OX]!==undefined)layer[Y+OY+bob][X+OX]=k;
+  // Lowered, the far shoulder sits further forward under the chest, so the two wings hang from different sides of the back
+  // instead of lying one along the other.
+  const down=Math.max(0,arm[1]/Math.hypot(...arm)),sh=[Math.round(FAR_SHIFT[0]-FAR_LOW_SHIFT[0]*down),Math.round(FAR_SHIFT[1]+FAR_LOW_SHIFT[1]*down)];
+  // Further away, it is also shorter up and down: squashed towards its root just enough to stay within the height the near wing
+  // already takes, so the sky keeps room for it. Turn, span and squash are one backward sampling of the wing smoothed eight times
+  // over (as C.swing does), so its outline stays whole instead of losing rows.
+  const big=scale2x(scale2x(scale2x(L))),S=8,a=turn*Math.PI/180,co=Math.cos(a),si=Math.sin(a),px=NEAR_ROOT[0]+PX,py=NEAR_ROOT[1]+PY;
+  const sample=(x,y,depth)=>{const dx=x+.5-px,dy=(y+.5-py)/depth,sx=(co*dx+si*dy)/FAR_SPAN+px,sy=-si*dx+co*dy+py,
+   ix=Math.floor(sx*S),iy=Math.floor(sy*S);return big[iy]?.[ix]&&big[iy][ix]!=='.'?big[iy][ix]:null;};
+  let top=1e9,bottom=-1e9;
+  for(let y=0;y<L.length;y++)for(let x=0;x<L[0].length;x++)if(sample(x,y,1)){top=Math.min(top,y);bottom=Math.max(bottom,y);}
+  const depth=Math.min(1,(py-FAR_ROOM[0]-PY+sh[1])/(py-top),(FAR_ROOM[1]+PY-sh[1]-py)/(bottom-py));
+  for(let y=0;y<L.length;y++)for(let x=0;x<L[0].length;x++){
+    const c=sample(x,y,depth);if(!c)continue;
+    const X=x-PX+sh[0],Y=y-PY+sh[1],k=REVERSE[c]||c;put(X,Y,k);if(layer[Y+OY+bob]?.[X+OX]!==undefined)layer[Y+OY+bob][X+OX]=k;
    }
  }
  function wing(rows){
@@ -75,8 +93,8 @@ function frame(f){
   const local=(x,y,c)=>{if(c!=='.'&&L[y+PY]?.[x+PX]!==undefined)L[y+PY][x+PX]=c;};
   if(f%N===0)rows.forEach((r,y)=>[...r].forEach((c,x)=>local(x,y,c)));
   else{
-   const poses=require('./charizard_wing_poses');poses.paint(rows,false,f,local);
-   if(poses.pose(f).nh[1]<NEAR_ROOT[1]){
+   const poses=require('./charizard_wing_poses');poses.paint(rows,false,f,local);trimTips(L,2);
+   if(poses.pose(f).nh[1]<CUFF_ABOVE){
     // While the arm is raised the broad shoulder cuff stays as drawn in the base.
     for(let y=36;y<=43;y++)for(let x=56;x<=64;x++)if(rows[y][x]!=='.')local(x,y,rows[y][x]);
    }else{
@@ -99,7 +117,7 @@ function frame(f){
   }
   L.forEach((r,y)=>r.forEach((c,x)=>{if(c==='.')return;const X=x-PX,Y=y-PY;put(X,Y,c);if(layer[Y+OY+bob]?.[X+OX]!==undefined)layer[Y+OY+bob][X+OX]=c;}));
  }
- farWing();
+ who='f';farWing();who='b';
  // Recover only torso pixels originally hidden by the near wing.
  for(let y=30;y<=44;y++)for(let x=53;x<=86;x++)if(torso[y]?.[x]&&nearRows[y][x]!=='.')put(x,y,y<39?'J':'M');
  for(let y=0;y<SH;y++)for(let x=0;x<SW;x++){
@@ -109,9 +127,20 @@ function frame(f){
   const dx=flame?Math.round(.9*Math.sin(2*t)*Math.max(0,(55-y)/20)):y>=63&&x>=73&&x<=107?Math.round(.65*Math.sin(t)*(y-62)/14):0;
   put(x+dx,y+dy,c);
  }
- wing(nearRows);
+ who='n';wing(nearRows);who='b';
  // The forearm crosses in front of the membrane root.
  for(let y=39;y<67;y++)for(let x=47;x<=63;x++)if(arm[y]?.[x]&&body[y][x]!=='.')put(x,y,body[y][x]);
+ // What shows of the far wing is one piece: shards it leaves round the body's outline go, they would flicker from frame to frame.
+ const seen=own.map(r=>r.map(()=>false));
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++){if(own[y][x]!=='f'||seen[y][x])continue;
+  const piece=[[x,y]];seen[y][x]=true;for(let i=0;i<piece.length;i++){const [a,b]=piece[i];
+   for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]])if(own[b+dy]?.[a+dx]==='f'&&!seen[b+dy][a+dx]){seen[b+dy][a+dx]=true;piece.push([a+dx,b+dy]);}}
+ if(piece.length<FAR_MIN_PIECE)for(const [a,b] of piece){g[b][a]='.';own[b][a]='';}
+ }
+ // Where the near wing lies over the far one its edge is drawn dark, so the two outlines do not run into each other.
+ const edge=[];
+ for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++)if(own[y][x]==='n'&&!'EG'.includes(g[y][x])&&[[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>own[y+dy][x+dx]==='f'))edge.push([x,y]);
+ for(const [x,y] of edge)g[y][x]='E';
  const repairs=clean(g);return {g:g.map(r=>r.join('')),bob,wings,...repairs};
 }
 for(let f=0;f<N;f++){const a=frame(f);frames.push(a.g);wingLayers.push(a.wings);stats.push({frame:f,bob:a.bob,sealed:a.sealed,isolated:a.isolated});}

@@ -1,6 +1,6 @@
 // Structural and visual verification of the approved Charizard flight cycle.
 const fs=require('fs'),path=require('path'),assert=require('assert/strict'),crypto=require('crypto'),{execFileSync}=require('child_process'),C=require('./critter'),m=require('./charizard_approved_flight');
-const OUT='C:/Users/javie/Desktop/imagenes/revision/charizard_batido_v3',ROOT=path.resolve('../..');
+const OUT='C:/Users/javie/Desktop/imagenes/revision/charizard_batido_v4',ROOT=path.resolve('../..');
 const tilt=Math.max(...m.angles.map(Math.abs))*Math.PI/180;let cell=Math.ceil(Math.max(m.fr[0][0].length*Math.cos(tilt)+m.fr[0].length*Math.sin(tilt),m.fr[0].length*Math.cos(tilt)+m.fr[0][0].length*Math.sin(tilt)));cell+=cell%2;
 fs.mkdirSync(OUT,{recursive:true});
 function components(g){const seen=new Set(),sizes=[];for(let y=0;y<g.length;y++)for(let x=0;x<g[0].length;x++){const id=x+','+y;if(g[y][x]==='.'||seen.has(id))continue;const q=[[x,y]];seen.add(id);let count=0;while(q.length){const [a,b]=q.pop();count++;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const xx=a+dx,yy=b+dy,key=xx+','+yy;if(g[yy]?.[xx]&&g[yy][xx]!=='.'&&!seen.has(key)){seen.add(key);q.push([xx,yy]);}}}sizes.push(count);}return sizes;}
@@ -47,7 +47,7 @@ const rootChecks=[],poses=require('./charizard_wing_poses');
 for(let f=0;f<16;f++){
  const near=m.wingLayers[f].near,far=m.wingLayers[f].far,bob=m.stats[f].bob,at=(g,[x,y])=>[-2,-1,0,1,2].some(dy=>[-2,-1,0,1,2].some(dx=>g[y+12+bob+dy]?.[x+10+dx]&&g[y+12+bob+dy][x+10+dx]!=='.'));
  let pixels=0,kept=0;
- if(f===0||poses.pose(f).nh[1]<40)for(let y=36;y<=43;y++)for(let x=56;x<=64;x++){const c=m.wingLayers[0].near[y+12][x+10];if(c==='.')continue;pixels++;if(near[y+12+bob][x+10]===c)kept++;}
+ if(f===0||poses.pose(f).nh[1]<31)for(let y=36;y<=43;y++)for(let x=56;x<=64;x++){const c=m.wingLayers[0].near[y+12][x+10];if(c==='.')continue;pixels++;if(near[y+12+bob][x+10]===c)kept++;}
  rootChecks.push({f,cuffPixels:pixels,cuffKept:kept,nearAtRoot:at(near,[59,40]),farAtRoot:at(far,[51,37])});
 }
 assert.ok(rootChecks.every(r=>r.cuffPixels===r.cuffKept&&r.nearAtRoot&&r.farAtRoot));

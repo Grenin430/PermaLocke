@@ -16,7 +16,7 @@ Magikarp y lotes 1–11 aprobados por el usuario. Los lotes 10 y 11 recibieron a
 «acaba esos 3» y autorizó terminar Wailord, Rayquaza y Ho-Oh. Las tablas iniciales de esta sección son históricas;
 el estado actualizado está en las secciones de cada lote y en el registro externo.
 
-**Revisión posterior:** Pidgey corregido y tanda 1 aprobados e intactos. Tanda 2 RECHAZADA por el usuario. Las cuatro bases rehechas también RECHAZADAS. Charizard con cuello corregido: base definitiva APROBADA y primer batido rechazado; segunda revisión rechazada por el ala lejana; tercera integrada y pendiente de aprobación en charizard_batido_v3. Skarmory, Dragonite y Salamence pendientes, uno por uno desde referencias de vuelo.
+**Revisión posterior:** Pidgey corregido y tanda 1 aprobados e intactos. Tanda 2 RECHAZADA por el usuario. Las cuatro bases rehechas también RECHAZADAS. Charizard con cuello corregido: base definitiva APROBADA y primer batido rechazado; segunda revisión rechazada por el ala lejana; tercera aceptada como avance; cuarta (lectura de las dos alas) integrada y pendiente de aprobación en charizard_batido_v4. Skarmory, Dragonite y Salamence pendientes, uno por uno desde referencias de vuelo.
 Ver «Correcciones de vuelo, tanda 2» y tools/critters/REVISION_POSES_VUELO.md. Salamence planea con las alas fijas.
 
 ### Qué estamos creando
@@ -1201,3 +1201,31 @@ Limitaciones:
 - El reverso del ala lejana es un recoloreado en sombra de la cercana, no un dibujo propio.
 - En los pasos se ve estrecha o tapada por el cuerpo.
 - Pendiente de aprobación visual. Commit local sin push.
+
+### Charizard: cuarta revisión, lectura de las dos alas (2026-10-14), pendiente de aprobación
+El usuario acepta la v3 como avance y pide una pasada localizada, sin más amplitud ni rehacer la animación:
+- En las posiciones bajas los contornos de las dos alas se superponen y parecen fusionadas.
+- En la recuperación aparecen puntas sin continuidad entre fotogramas.
+
+Cambios, todos en charizard_approved_flight.js:
+- **Hombro lejano más adelantado con el brazo bajo:** hasta 5 px más hacia la cabeza y 1 px más abajo (FAR_LOW_SHIFT). Las dos
+  alas cuelgan de lados distintos de la espalda en lugar de ir una pegada a la otra.
+- **Borde oscuro del ala cercana:** donde el ala cercana pisa a la lejana, su píxel de borde pasa a E.
+- **Un solo muestreo para el ala lejana:** giro, envergadura y aplastamiento se hacen en una sola pasada hacia atrás sobre el ala
+  ampliada ×8 con Scale2x (copia local de la de critter.js). Antes se perdían filas al aplastar y el contorno salía dentado.
+- **Trozos sueltos del ala lejana fuera:** se quitan los trozos visibles de menos de 70 píxeles que quedan al borde del cuerpo
+  (FAR_MIN_PIECE), porque saltaban de un fotograma a otro.
+- **Puntas recortadas:** en los fotogramas 1–15 se recortan los bigotes de 1 px de las puntas de las dos alas (2 pasadas).
+- **Manguito del hombro:** solo con el brazo claramente alto (muñeca por encima de y=31). En los fotogramas 4 y 12 ya no asoma.
+
+Sin cambios: cuerpo, cabeza, extremidades, cola, poses clave y amplitud. El fotograma 0 difiere de la base en 956 píxeles, todos
+de ala lejana.
+
+[Verificado]
+- iso 0 y holes 0 en los dibujos nativos y de pantalla y en las celdas. Ojos 48/48.
+- Cielo y4–62, 99×60, celda 102. Cierre del bucle 1389 (máximo interior 3598).
+- Raíces en los 16 fotogramas. 137 protegidos intactos. Tests App 555/555.
+- --medir: Party media 1,39–1,68 ms, Deep 0,71–1,05 ms.
+- Ciclo revisado a tamaño real en el laboratorio (charizard_ciclo_tamano_real_recorte.gif, 12 fps).
+
+Entrega: C:/Users/javie/Desktop/imagenes/revision/charizard_batido_v4/ (mismas piezas que la v3 más el recorte a tamaño real).
