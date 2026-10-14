@@ -1,7 +1,7 @@
 // Standalone flight review. Never writes app assets, catalog entries, or the approved animation.
 const fs=require('fs'),{execFileSync}=require('child_process'),crypto=require('crypto'),C=require('./critter');
 const m=require('./pidgey_flight_anim'),old=C.load('pidgey');
-const OUT='C:/Users/javie/Desktop/imagenes/revision/vuelo_piloto',FF='C:/Program Files (x86)/Soundux/ffmpeg.exe';
+const OUT=process.argv[2]||'C:/Users/javie/Desktop/imagenes/revision/vuelo_piloto',FF='C:/Program Files (x86)/Soundux/ffmpeg.exe';
 fs.mkdirSync(OUT,{recursive:true});
 function ff(args){execFileSync(FF,['-v','error','-y',...args],{maxBuffer:32<<20});}
 function rgb(fr){const w=fr[0][0].length,h=fr[0].length,b=Buffer.alloc(w*h*3*fr.length);fr.forEach((g,f)=>g.forEach((r,y)=>[...r].forEach((c,x)=>{const v=c==='.'?'2A6A90':m.pal[c];[0,2,4].forEach((p,k)=>b[((f*h+y)*w+x)*3+k]=parseInt(v.slice(p,p+2),16));})));return b;}

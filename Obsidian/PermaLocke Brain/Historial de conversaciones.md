@@ -585,3 +585,9 @@ negro del estudio de fotos: gen 8-9 en el equipo (ver Trampas y lecciones).
   torso, patas, cola y alas reconstruidos para vuelo. 8 fotogramas, 24 celdas, ojos y conectividad correctos. La revisión automática
   rechazó integrar antes de revisar; se entregan comparación, ciclo fijo y simulación externa, sin cambiar los sprites aprobados.
   Pendiente de aprobación del piloto; no interpretar «continua» durante su preparación como aprobación de la propuesta aún no entregada.
+
+- **Pasada de fidelidad de Pidgey en vuelo** (2026-10-14): el usuario aprueba pose y movimiento, solicita recuperar plumaje.
+  Solo cambia el torso del piloto separado: grupos de plumas y sombras de garganta/pecho/vientre. Alas, cola, patas y 212 píxeles
+  de cabeza idénticos. 8 fotogramas/24 celdas, iso/holes 0, 49 coordenadas y 345 muestras visibles estables, 108 archivos previos intactos.
+  Comparación vuelo anterior/corregido a igual escala y GIF fijo en vuelo_piloto/detalle_pidgey. Detalle pendiente de revisión;
+  no integrar ni extender todavía. Commit local sin push; app y emulador intactos.

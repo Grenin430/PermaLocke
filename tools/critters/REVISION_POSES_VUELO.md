@@ -1,6 +1,6 @@
 # Revisión de poses de vuelo — piloto de Pidgey
 
-Estado: propuesta separada, pendiente de revisión del usuario. No integrada en la app ni en el laboratorio WPF.
+Estado: pose y movimiento de Pidgey aprobados; pasada de detalle entregada para revisión. No integrada en la app ni en el laboratorio WPF.
 Fecha: 2026-10-14. El usuario autoriza redibujar la pose base cuando la referencia representa apoyo en tierra;
 esta instrucción sustituye la restricción anterior de reconstruir siempre la misma pose. No autoriza rehacer las especies que ya funcionan.
 
@@ -71,3 +71,20 @@ los otros nueve afectados, respetando la anatomía y el tipo de vuelo de cada un
 
 Desde tools/critters: node review_flight_inventory.js y node review_pidgey_flight.js.
 La propuesta vive en pidgey_flight_anim.js; pidgey_anim.js y pidgey.png siguen siendo las versiones anteriores.
+
+### Fidelidad del piloto de Pidgey (2026-10-14)
+El usuario aprueba la nueva pose y el movimiento, pero solicita recuperar detalle del plumaje antes de extender la corrección.
+Se conservan exactamente articulaciones, alas, cola, patas, cabeza, lienzo 72×64, 8 fotogramas y 12 fps. Solo se retoca el torso:
+garganta cálida, pecho claro con grupos de plumas escalonados y sombras que continúan hacia el vientre horizontal.
+Cabeza/rostro/cresta cotejados: sus 212 píxeles siguen idénticos. Alas y cola mantienen los grupos de plumas y bordes del piloto;
+no se añaden cambios en estas partes. Los retoques afectan 31–49 píxeles por fotograma, exclusivamente dentro de x=16..41, y=30..39.
+La versión previa se conserva en tools/critters/pidgey_flight_before_detail.json para comparar vuelo contra vuelo, sin usar la pose de pie.
+Comprobaciones: 49 coordenadas de detalle estables, 345 muestras visibles correctas, oclusión natural del ala excluida del cotejo;
+iso 0, holes 0 en los 8 fotogramas y 24 celdas inclinadas; una componente conectada en todas; 24/24 ojos; sin recortes ni salto de cierre
+según el criterio de variación previo. 108 archivos de producción/aprobados intactos. Misma paleta y escala de píxel.
+Entrega separada en C:/Users/javie/Desktop/imagenes/revision/vuelo_piloto/detalle_pidgey/: comparación estática y animada sincronizada,
+ciclo actualizado con cuerpo fijo, ampliaciones del pecho y los 24 rostros, hoja y auditorías JSON. Script: review_pidgey_detail.js.
+Reproducción desde tools/critters: node review_pidgey_flight.js C:/Users/javie/Desktop/imagenes/revision/vuelo_piloto/detalle_pidgey
+seguido de node review_pidgey_detail.js. La instantánea anterior no debe regenerarse al repetir la revisión.
+Estado: pose/movimiento aprobados; pasada de detalle entregada para revisión. Aún no integrada ni extendida a los otros nueve.
+No hay cambios de WPF ni ejecución nueva de sus pruebas; la validación integrada queda pendiente. Sin despliegue ni push.
