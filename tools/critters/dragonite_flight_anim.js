@@ -1,2 +1,2 @@
-// Flight correction with anatomy-specific membranes, blades or fixed gliding surfaces.
-module.exports=require('./flight_rig2').build(require('./flight_batch2_specs').dragonite);
+// Flight built from the approved base (dragonite_flight_approved.json).
+module.exports=require('./dragonite_approved_flight');

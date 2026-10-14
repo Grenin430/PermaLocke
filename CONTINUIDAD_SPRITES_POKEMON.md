@@ -16,7 +16,7 @@ Magikarp y lotes 1–11 aprobados por el usuario. Los lotes 10 y 11 recibieron a
 «acaba esos 3» y autorizó terminar Wailord, Rayquaza y Ho-Oh. Las tablas iniciales de esta sección son históricas;
 el estado actualizado está en las secciones de cada lote y en el registro externo.
 
-**Revisión posterior:** Pidgey corregido y tanda 1 aprobados e intactos. Tanda 2 RECHAZADA por el usuario. Las cuatro bases rehechas también RECHAZADAS. Charizard con cuello corregido: base definitiva APROBADA y primer batido rechazado; segunda revisión rechazada por el ala lejana; tercera aceptada como avance; cuarta (lectura de las dos alas): movimiento APROBADO; quinta (color de cada cara del ala) APROBADA: Charizard terminado. Skarmory: vuelo APROBADO (skarmory_vuelo, c95d23c). Dragonite: bases v3, v4 y v5 RECHAZADAS; base v6 (original inclinado) pendiente de aprobación en dragonite_pose_v6. Skarmory, Dragonite y Salamence pendientes, uno por uno desde referencias de vuelo.
+**Revisión posterior:** Pidgey corregido y tanda 1 aprobados e intactos. Tanda 2 RECHAZADA por el usuario. Las cuatro bases rehechas también RECHAZADAS. Charizard con cuello corregido: base definitiva APROBADA y primer batido rechazado; segunda revisión rechazada por el ala lejana; tercera aceptada como avance; cuarta (lectura de las dos alas): movimiento APROBADO; quinta (color de cada cara del ala) APROBADA: Charizard terminado. Skarmory: vuelo APROBADO (skarmory_vuelo, c95d23c). Dragonite: base v6 (original inclinado) APROBADA; vuelo animado e integrado, pendiente de aprobación en dragonite_vuelo. Skarmory, Dragonite y Salamence pendientes, uno por uno desde referencias de vuelo.
 Ver «Correcciones de vuelo, tanda 2» y tools/critters/REVISION_POSES_VUELO.md. Salamence planea con las alas fijas.
 
 ### Qué estamos creando
@@ -1523,3 +1523,45 @@ desde la línea de la espalda hasta la cadera, detrás del cuerpo y de la cola, 
 donde da al fondo. Así la cola nace casi tan ancha como el cuerpo, como en el original, y el resto no cambia.
 
 [Verificado] 103×81, 2597 píxeles opacos en una sola pieza, iso 0, holes 0 y solo la paleta original.
+
+### Dragonite: base v6 aprobada, vuelo animado e integrado (2026-10-14), pendiente de aprobación
+El usuario aprueba la base v6 en su sexta entrega (commit a950fe3). Queda congelada en tools/critters/dragonite_flight_approved.json
+(103×81, origen [34, 23] en el lienzo del generador).
+SHA256: b3a73389d383296844ef64d4226ad55c508066ddc09862f103bab73c0fb7389a.
+dragonite_flight_pose_v6.js expone compose({wing}), la misma pose con el ala cercana girada unos grados más sobre el hombro.
+build() sigue dando exactamente la base aprobada.
+
+**Animación** (dragonite_approved_flight.js): 8 fotogramas a 12 fps, ciclo de 0,67 s.
+- El ala es pequeña, así que bate corto y rápido: gira entera desde el hombro (RotSprite) hasta 34° hacia atrás y vuelve.
+- El cuerpo sube un píxel en el golpe hacia abajo. Cabeza, cuerpo, brazos, piernas y cola no cambian.
+- El fotograma 0 es la base aprobada píxel a píxel, y el script lo comprueba.
+
+**Tamaño en pantalla.** El original inclinado mide 82 px de alto, más de lo que cabe en el cielo, así que el panel lo recibe al 75 %
+por vecino más próximo (78×62). Se hace como con Charizard al 60 %, y el dibujo nativo queda en nativeFrames.
+- **Ojo:** la reducción se hace sobre los fotogramas sin balanceo y el balanceo se aplica después. Así se toman las mismas filas de
+  la cara en todos los fotogramas y el blanco del ojo no desaparece.
+- **Píxeles sueltos y huecos:** se limpian los de 1 px.
+- **Antena:** junto a la cabeza, los píxeles unidos solo por la esquina reciben un vecino lateral. Si una parte fina queda separada
+  (el rizo de la antena), se une con un puente escalonado de su color, para que las inclinaciones de ±2° del panel no la rompan.
+
+skarmory y dragonite siguen el mismo esquema: <especie>_flight_anim.js apunta al módulo, y build_batch.js e integrate_entries.js
+integran la hoja.
+- Entrada en CapCritterArt.cs: Fps 12, Cell 82, Angles [-2, 0, 2], Height 60.
+
+[Verificado]
+- iso 0 y holes 0 en los 8 fotogramas nativos y de pantalla y en las 24 celdas, con una sola pieza en cada uno.
+- El ojo aparece en las 24 celdas (2 píxeles blancos).
+- Cielo previsto y4–64. Cierre del bucle con 917 píxeles distintos, por debajo del máximo interior.
+- Build del laboratorio: 0 errores. Tests App: 555/555.
+- --medir: Party media 1,51–1,69 ms, Deep 0,69–0,97 ms.
+- Recorrido del laboratorio revisado a tamaño real.
+
+Entrega: C:/Users/javie/Desktop/imagenes/revision/dragonite_vuelo/
+- dragonite_bucle_fijo.gif: pantalla ×4.
+- dragonite_nativo_bucle_fijo.gif: nativo ×3.
+- dragonite_ciclo_tamano_real_recorte.gif y dragonite_en_el_layout_tamano_real.gif.
+- Hoja, rostros, auditoria.json y rendimiento.txt.
+
+Desde tools/critters: node build_batch.js dragonite; node review_dragonite_flight.js; node integrate_entries.js.
+
+Pendiente de aprobación visual. Salamence espera.

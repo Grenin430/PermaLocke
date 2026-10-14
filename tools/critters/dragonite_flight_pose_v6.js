@@ -63,10 +63,12 @@ function tailRoot() {
   for (let y = -TOP; y < H; y++) for (let x = 0; x < W; x++) if (inside(x + 0.5, y + 0.5, TAIL_ROOT_FILL)) out.push([x, y, x % 2 ? "N" : "P"]);
   return out;
 }
-// the head leans less than the body so it looks ahead; the near leg swings further back to trail like the other
+// the head leans less than the body so it looks ahead; the near wing is tipped a little further back than the body
 const NECK = [23, 27], HEAD_TURN = 40, SHOULDER = [36, 28], WING_TURN = 10;
 
-function build() {
+// The whole canvas for a pose, before cropping; `wing` turns the near wing that many degrees more round its shoulder (the
+// flight cycle); none is the approved base.
+function compose({ wing = 0 } = {}) {
   // canvas row r holds drawing row r - TOP
   const g = Array.from({ length: H + TOP }, () => Array(W).fill("."));
   const draw = cells => { for (const [x, y, c] of cells) if (g[y + TOP]?.[x] !== undefined) g[y + TOP][x] = c; };
@@ -76,7 +78,7 @@ function build() {
   draw(rootFill);
   draw(piece(isBody, CORE, LEAN, AT));
   draw(tail);
-  draw(piece(isNearWing, SHOULDER, LEAN + WING_TURN, onCore(SHOULDER)));
+  draw(piece(isNearWing, SHOULDER, LEAN + WING_TURN + wing, onCore(SHOULDER)));
   draw(piece(isHead, NECK, LEAN + HEAD_TURN, onCore(NECK)));
   // The tail's root touched the body in the original, so that edge had no outline; turned apart it is open to the sky: every
   // tail pixel that ends up beside background gets the black outline.
@@ -117,10 +119,15 @@ function build() {
     }
     if (bit.length < 6) for (const [X, Y] of bit) g[Y][X] = ".";
   }
+  return { g };
+}
+
+function build() {
+  const { g } = compose();
   const ys = g.map((r, y) => (r.some(c => c !== ".") ? y : -1)).filter(y => y >= 0);
   const xs = g[0].map((_, x) => (g.some(r => r[x] !== ".") ? x : -1)).filter(x => x >= 0);
   const x0 = Math.min(...xs) - 2, y0 = Math.min(...ys) - 2;
   return { pal, rows: g.slice(y0, Math.max(...ys) + 3).map(r => r.slice(x0, Math.max(...xs) + 3).join("")), origin: [x0, y0] };
 }
-module.exports = { build, pal, W, H };
+module.exports = { build, compose, pal, W, H, TOP };
 if (require.main === module) console.log(JSON.stringify(C.check([build().rows])));
