@@ -626,3 +626,25 @@ respecto a 21c95bb. Los chequeos no equivalen a aprobación de la pose. Sin anim
 sin build/tests nuevos; app con la tanda 2 rechazada de 410e8d0. Pidgey y tanda 1 intactos.
 Esperar aprobación de Charizard antes de otros tres o ciclos. La altura/layout queda pendiente.
 Método, referencia y rutas completas: sección «Charizard: pose v3» en CONTINUIDAD_SPRITES_POKEMON.md.
+
+### Charizard: ajuste localizado de mandíbula, cuello y pecho (2026-10-14)
+El usuario aprueba la construcción de la pose v3 y pide conservar cuerpo, alas, extremidades, cola y acabado.
+Solo solicita corregir la transición cabeza-cuello-pecho. Nueva propuesta estática pendiente de revisión de esa unión.
+Se usa la misma referencia de vuelo de Pokémon Ranger, inspeccionada de nuevo junto al sprite v3.
+
+tools/critters/charizard_neck_refinement.js deriva de charizard_flight_pose_v3.js sin modificarlo.
+Elimina el escalón bajo la mandíbula, traza una garganta progresiva, une nuca y espalda y redistribuye
+la sombra del cuello en grupos continuos de píxeles. No hay desenfoque ni nuevos colores.
+tools/critters/review_charizard_neck.js genera las comparaciones y comprueba el alcance exacto.
+
+Entrega: C:/Users/javie/Desktop/imagenes/revision/charizard_cuello/
+- charizard_cuello_antes_despues.png: zona ampliada ×12, antes a la izquierda, después a la derecha.
+- charizard_completo.png: sprite completo ×6 sin suavizado.
+- charizard_base_nativa.png, charizard_base.json, charizard_base.txt: nueva base de revisión, 158×72.
+- auditoria.json: 106 píxeles modificados; caja afectada x23–51, y29–43 del lienzo fuente 174×92.
+[Verificado] Todos los píxeles fuera de la región autorizada x23–54/y29–43 idénticos a v3; paleta idéntica.
+4842 píxeles opacos, iso 0, holes 0 (huecos unitarios). Ambos scripts pasan node --check.
+La fidelidad fuera de la unión se comprueba comparando las cuadrículas completas, no solo la silueta.
+Reproducir desde tools/critters: node review_charizard_neck.js.
+Sin animaciones, integración, cambios de layout, build/tests de C# ni despliegue. Las pruebas de píxeles
+no sustituyen la revisión artística. Esperar aprobación de esta unión antes de continuar.

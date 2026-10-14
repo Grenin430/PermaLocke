@@ -16,7 +16,7 @@ Magikarp y lotes 1–11 aprobados por el usuario. Los lotes 10 y 11 recibieron a
 «acaba esos 3» y autorizó terminar Wailord, Rayquaza y Ho-Oh. Las tablas iniciales de esta sección son históricas;
 el estado actualizado está en las secciones de cada lote y en el registro externo.
 
-**Revisión posterior:** Pidgey corregido y tanda 1 aprobados e intactos. Tanda 2 RECHAZADA por el usuario. Las cuatro bases rehechas también RECHAZADAS. Solo Charizard v3 pendiente de aprobación; otros tres y animaciones en espera.
+**Revisión posterior:** Pidgey corregido y tanda 1 aprobados e intactos. Tanda 2 RECHAZADA por el usuario. Las cuatro bases rehechas también RECHAZADAS. Pose de Charizard v3 aprobada; ajuste localizado de cuello pendiente de revisión en charizard_cuello. Otros tres y animaciones en espera.
 Ver «Correcciones de vuelo, tanda 2» y tools/critters/REVISION_POSES_VUELO.md. Salamence planea con las alas fijas.
 
 ### Qué estamos creando
@@ -1019,3 +1019,25 @@ siguen pendientes, sin reducir esta base para resolverlos artificialmente. La ap
 rechazada de 410e8d0. Sin despliegue, sin tocar la app/emulador, commit local sin push.
 
 Siguiente paso: esperar aprobación visual de esta base de Charizard. Skarmory, Dragonite y Salamence esperan.
+
+### Charizard: ajuste localizado de mandíbula, cuello y pecho (2026-10-14)
+El usuario aprueba la construcción de la pose v3 y pide conservar cuerpo, alas, extremidades, cola y acabado.
+Solo solicita corregir la transición cabeza-cuello-pecho. Nueva propuesta estática pendiente de revisión de esa unión.
+Se usa la misma referencia de vuelo de Pokémon Ranger, inspeccionada de nuevo junto al sprite v3.
+
+tools/critters/charizard_neck_refinement.js deriva de charizard_flight_pose_v3.js sin modificarlo.
+Elimina el escalón bajo la mandíbula, traza una garganta progresiva, une nuca y espalda y redistribuye
+la sombra del cuello en grupos continuos de píxeles. No hay desenfoque ni nuevos colores.
+tools/critters/review_charizard_neck.js genera las comparaciones y comprueba el alcance exacto.
+
+Entrega: C:/Users/javie/Desktop/imagenes/revision/charizard_cuello/
+- charizard_cuello_antes_despues.png: zona ampliada ×12, antes a la izquierda, después a la derecha.
+- charizard_completo.png: sprite completo ×6 sin suavizado.
+- charizard_base_nativa.png, charizard_base.json, charizard_base.txt: nueva base de revisión, 158×72.
+- auditoria.json: 106 píxeles modificados; caja afectada x23–51, y29–43 del lienzo fuente 174×92.
+[Verificado] Todos los píxeles fuera de la región autorizada x23–54/y29–43 idénticos a v3; paleta idéntica.
+4842 píxeles opacos, iso 0, holes 0 (huecos unitarios). Ambos scripts pasan node --check.
+La fidelidad fuera de la unión se comprueba comparando las cuadrículas completas, no solo la silueta.
+Reproducir desde tools/critters: node review_charizard_neck.js.
+Sin animaciones, integración, cambios de layout, build/tests de C# ni despliegue. Las pruebas de píxeles
+no sustituyen la revisión artística. Esperar aprobación de esta unión antes de continuar.

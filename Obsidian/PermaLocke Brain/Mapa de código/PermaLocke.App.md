@@ -263,3 +263,8 @@ Las cuatro bases v2 anteriores también rechazadas; solo la nueva pose de Chariz
 - tools/critters/charizard_flight_pose_v3.js: base estática basada en ilustración de vuelo, sin importar en producción.
 - tools/critters/review_charizard_pose_v3.js: comparación con referencia, PNG y auditorías.
 Ningún fichero de src/ cambia. Estado vigente en [[UI y kit pixel]].
+
+### Ajuste localizado de cuello de Charizard (2026-10-14)
+- tools/critters/charizard_neck_refinement.js: corrección estática de 106 píxeles sobre la base v3 conservada.
+- tools/critters/review_charizard_neck.js: antes/después ×12, sprite completo ×6 y auditoría de igualdad fuera de la unión.
+No importados por producción. Pendiente revisión de la unión; la pose general v3 ya gusta al usuario.
