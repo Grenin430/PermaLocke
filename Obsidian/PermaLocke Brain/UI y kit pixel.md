@@ -115,10 +115,10 @@ Los tres voladores caben en el cielo. Las 36 hojas anteriores permanecen intacta
 Lote 8 aprobado; confirmar la selección del lote 9 antes de empezar.
 
 ## Sprites del mar: lote 9 singleplayer (2026-10-14)
-Bruxish, Staraptor, Salamence, Charizard y Latios: integrados y entregados para revisión; pendientes de aprobación.
+Bruxish, Staraptor, Salamence, Charizard y Latios: integrados y aprobados por el usuario el 2026-10-14.
 Método y medidas: `CONTINUIDAD_SPRITES_POKEMON.md`, sección «Lote 9». Entrega: `C:\Users\javie\Desktop\imagenes\revision\lote9\`.
 40 fotogramas, 24 fotogramas nativos adicionales, 136 celdas y 136 regiones de ojos correctas; 555 pruebas aprobadas.
 Reducción de visualización autorizada: Salamence 83,3 %, Charizard 75 %, Latios 80 %; originales conservados.
 `recon2.js` toma el centro cuando una cuadrícula diminuta no tiene muestra interior; ojo de Latios preservado al reducir.
 El laboratorio ahora incluye los cuatro voladores en la vista forzada, con dos pruebas nuevas; las asignaciones anteriores se conservan.
-41 hojas aprobadas intactas, 82 hashes sin cambios. Solo `.lab-art`, sin desplegar. No iniciar lote 10 sin aprobación.
+41 hojas aprobadas intactas, 82 hashes sin cambios. Solo `.lab-art`, sin desplegar. Lote 9 aprobado; confirmar la selección del lote 10 antes de empezar.

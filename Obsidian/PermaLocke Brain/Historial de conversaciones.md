@@ -555,3 +555,7 @@ negro del estudio de fotos: gen 8-9 en el equipo (ver Trampas y lecciones).
   Corregida la muestra vacía de cuadrículas pequeñas y preservado el iris de Latios al reducir. El laboratorio admite cuatro voladores
   en sus tres rutas; dos pruebas verifican cobertura y compatibilidad. 555 pruebas correctas; 136 celdas y ojos auditados; 82 archivos
   aprobados intactos. Entrega en `imagenes/revision/lote9`, pendiente de aprobación. Commit local sin push; no avanzar al lote 10.
+
+- **Aprobación del lote 9** (2026-10-14): el usuario confirmó «aprobado». Bruxish, Staraptor, Salamence, Charizard y Latios quedan aprobados,
+  incluidas las visualizaciones reducidas entregadas. Actualizados continuidad, registro externo y LEEME de la entrega. Sin cambios en los sprites.
+  La selección del lote 10 sigue pendiente. Commit local sin push.

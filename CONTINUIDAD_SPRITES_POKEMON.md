@@ -605,9 +605,9 @@ Rendimiento final [verificado] con `--especies 318,119,22,149,380 --medir`: colu
 fotograma, p95 **2,21–3,50 ms**; fondo **1,07–1,30 ms**. Primera preparación 86,33 ms. Medidas de este PC en el laboratorio, sin emulador.
 GIF completo decodificado sin errores: **840 fotogramas, 70,00 s, 1920×976**, exportado a 12 fps. Revisados ambos paneles mediante mosaicos
 cada dos segundos del recorrido y una vista completa a tamaño real. Los solapamientos y la oclusión tras el juego y el equipo son los normales.
-### Lote 9 (2026-10-14): entregado para revisión
+### Lote 9 (2026-10-14): aprobado por el usuario
 Bruxish (779), Staraptor (398), Salamence (373), Charizard (6) y Latios (381), confirmados por el usuario antes de empezar.
-Integrados en `singleplayer`; entrega en `C:\Users\javie\Desktop\imagenes\revision\lote9\`. Pendiente de aprobación visual.
+Integrados en `singleplayer`; entrega en `C:\Users\javie\Desktop\imagenes\revision\lote9\`. Aprobado por el usuario el 2026-10-14.
 
 | Especie | Base reconstruida | Escala de visualización | Celda | Fotogramas / inclinaciones | FPS | Movimiento |
 |---|---|---|---|---|---|---|
@@ -654,7 +654,7 @@ aunque las bases nativas se conservan. Staraptor mantiene la pose posada y movim
 ni despliegue. El modo forzado muestra siete recorridos (Bruxish repetido tres veces y cuatro voladores), con posibles solapamientos;
 no representa la frecuencia normal. Se conserva la oclusión detrás del juego/equipo y el tinte del agua. El GIF usa 256 colores y tiempos
 en centésimas; el reinicio del recorrido largo es distinto del bucle individual. Los cinco grandes siguen reservados.
-**Lote 9 entregado para revisión. No comenzar el lote 10 hasta la aprobación del usuario.**
+**Lote 9 aprobado. Confirmar la selección del lote 10 antes de comenzar.**
 
 Rendimiento final [verificado] con `--especies 779,398,373,6,381 --medir`: columna del equipo 178×321 **1,83–2,14 ms de media** por
 fotograma, p95 **2,39–3,86 ms**; fondo **1,06–1,43 ms**. Primera preparación 92,21 ms. Medidas de este PC en laboratorio, sin emulador.
