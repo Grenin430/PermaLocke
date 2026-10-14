@@ -16,7 +16,7 @@ Magikarp y lotes 1–11 aprobados por el usuario. Los lotes 10 y 11 recibieron a
 «acaba esos 3» y autorizó terminar Wailord, Rayquaza y Ho-Oh. Las tablas iniciales de esta sección son históricas;
 el estado actualizado está en las secciones de cada lote y en el registro externo.
 
-**Revisión posterior:** Pidgey corregido y tanda 1 aprobados e intactos. Tanda 2 RECHAZADA por el usuario. Las cuatro bases rehechas también RECHAZADAS. Charizard con cuello corregido: base definitiva APROBADA y primer batido rechazado; segunda revisión rechazada por el ala lejana; tercera aceptada como avance; cuarta (lectura de las dos alas): movimiento APROBADO; quinta (color de cada cara del ala) APROBADA: Charizard terminado. Skarmory: base de vuelo v3 APROBADA; vuelo animado e integrado, pendiente de aprobación en skarmory_vuelo. Skarmory, Dragonite y Salamence pendientes, uno por uno desde referencias de vuelo.
+**Revisión posterior:** Pidgey corregido y tanda 1 aprobados e intactos. Tanda 2 RECHAZADA por el usuario. Las cuatro bases rehechas también RECHAZADAS. Charizard con cuello corregido: base definitiva APROBADA y primer batido rechazado; segunda revisión rechazada por el ala lejana; tercera aceptada como avance; cuarta (lectura de las dos alas): movimiento APROBADO; quinta (color de cada cara del ala) APROBADA: Charizard terminado. Skarmory: vuelo APROBADO (skarmory_vuelo, c95d23c). Dragonite: base de vuelo v3 pendiente de aprobación en dragonite_pose_v3. Skarmory, Dragonite y Salamence pendientes, uno por uno desde referencias de vuelo.
 Ver «Correcciones de vuelo, tanda 2» y tools/critters/REVISION_POSES_VUELO.md. Salamence planea con las alas fijas.
 
 ### Qué estamos creando
@@ -1372,3 +1372,39 @@ Desde tools/critters: node build_batch.js skarmory; node review_skarmory_flight.
 
 Limitaciones: el cielo va justo (y0–67). Las alas no se flexionan porque son de acero. Pendiente de aprobación visual; Dragonite y
 Salamence esperan.
+
+### Skarmory aprobado; Dragonite: base de vuelo v3 (2026-10-14), pendiente de aprobación
+El usuario aprueba el vuelo de Skarmory (skarmory_vuelo, commit c95d23c). Sigue Dragonite con el mismo método: primero SOLO la base
+junto a su referencia.
+
+Referencia de postura: carta Dragonite 5 de las Wizards Black Star Promos (1999, Toshinao Aoki), vista en cardcodex.com. Muestra a
+Dragonite de perfil, volando nivelado hacia la izquierda:
+- Cabeza delante.
+- Ala cercana verde levantada sobre la espalda y ala lejana marrón detrás.
+- Brazo hacia delante y abajo.
+- Piernas atrás y cola recta detrás.
+
+La bolsa de correo no se dibuja. Se descartaron tres cartas: Fossil 4/62 (sentado), Tag Bolt 065/095 (de frente) y Miracle Twin
+068/094 (boca arriba).
+
+**Método** (tools/critters/dragonite_flight_pose_v3.js): piezas del original de pie y de frente, a escala 1 y sin reducir.
+- **Torso, brazo izquierdo y pierna izquierda:** giran un cuarto exacto (90°, sin remuestreo), así que la barriga queda abajo, el
+  brazo cuelga delante y la pierna va atrás. Las rayas de la barriga quedan verticales, como en la carta.
+- **Mano derecha:** se quita, porque con el giro saldría por la espalda y de perfil queda tras el cuerpo.
+- **Pie derecho:** se traslada abajo, junto al otro, detrás del cuerpo.
+- **Cabeza:** queda derecha delante, con las antenas.
+- **Ala derecha del original:** es el ala cercana, girada 15° sobre la espalda. El ala lejana es la misma girada 55°, más
+  adelantada y con la cara exterior en naranja de sombra (D→P, G→F, O→A, E→M, L→I). El ala izquierda pequeña del original no se usa.
+- **Cola:** girada 52°, sale recta hacia atrás desde la parte trasera.
+- Los poros de hasta 4 píxeles toman el color de sus vecinos, como en Skarmory.
+
+[Verificado] 106×68, 2543 píxeles opacos en una sola pieza, iso 0, holes 0 y solo la paleta original.
+
+Dudas para la revisión:
+- Las alas conservan su tamaño original, más pequeño que en la carta.
+- El hombro derecho, sin mano, queda como un bulto en la espalda entre las alas.
+- El torso es redondo, como el original.
+
+Entrega: C:/Users/javie/Desktop/imagenes/revision/dragonite_pose_v3/ (dragonite_pose_y_referencia.png, dragonite_base_ampliada.png,
+dragonite_base_nativa.png, .txt/.json, auditoria.json y referencias/). Desde tools/critters: node review_dragonite_pose_v3.js. Sin
+integrar: la app sigue con el Dragonite de la tanda 2 rechazada.
