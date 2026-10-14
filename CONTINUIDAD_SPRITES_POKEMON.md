@@ -1503,3 +1503,15 @@ raíz gruesa metida 4 px hacia delante y 2 px hacia abajo en la cadera (TAIL_SIN
 la cola sale de él a todo su grosor. Los bordes de la cola junto al fondo conservan el contorno negro.
 
 [Verificado] 103×81, 2517 píxeles opacos en una sola pieza, iso 0, holes 0 y solo la paleta original.
+
+#### Dragonite base v6, quinta entrega: cola con la raíz del original (2026-10-14), pendiente de aprobación
+El usuario aclara que en el original la cola empieza casi tan ancha como el cuerpo, y separarla y girarla la estrechaba. Ahora la
+cola se inclina con el cuerpo, así que la raíz queda pegada tal como en el original y a su anchura. Después se curva progresivamente
+hacia atrás, dibujando hacia atrás (bentTail), la misma técnica de Mantine y Qwilfish:
+- Ningún giro a menos de 2 px de la raíz (punto 45,58 del original).
+- Hasta 112° en el sentido de las agujas del reloj a 20 px, con transición suave, de modo que sale hacia atrás y la punta se alza
+  un poco.
+
+Se dibuja detrás del cuerpo, como en el original. Desaparecen TAIL_TURN y TAIL_SINK.
+
+[Verificado] 103×81, 2583 píxeles opacos en una sola pieza, iso 0, holes 0 y solo la paleta original.

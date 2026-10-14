@@ -1,7 +1,8 @@
 // Dragonite only: flight base v6. The constructed side views (v3-v5) were rejected; at the user's choice this one keeps the original
 // sprite nearly whole and leans it forward into flight: the whole figure turns as one piece, RotSprite-style at scale 1, so head,
 // face, belly bands, arms, wings and claws keep their own drawing and proportions; the legs, already pointing down, end up trailing
-// back. Only the tail is a piece of its own, turned so it streams out behind instead of standing up.
+// back. The tail leans with the body, so its root stays as wide as in the original, and then curls back progressively from the
+// root to the tip so it streams out behind instead of standing up.
 // This standalone base is not imported by the production pipelines.
 const C = require("./critter");
 const { pal, rows } = C.load("dragonite");
@@ -48,7 +49,23 @@ const onCore = ([x, y]) => {
   const a = (LEAN * Math.PI) / 180, dx = x - CORE[0], dy = y - CORE[1];
   return [AT[0] + Math.cos(a) * dx - Math.sin(a) * dy, AT[1] + Math.sin(a) * dx + Math.cos(a) * dy];
 };
-const TAIL_ROOT = [45, 60], TAIL_TURN = 110, TAIL_SINK = [-4, 2];
+// The tail's bend: none within BEND_FROM of its root, growing smoothly to BEND degrees clockwise by BEND_TO and beyond.
+const TAIL_ROOT = [45, 58], BEND = 112, BEND_FROM = 2, BEND_TO = 20;
+function bentTail() {
+  const part = rows.map((r, y) => r.map((c, x) => (isTail(x, y) && c !== "." ? c : ".")));
+  const big = scale2x(scale2x(scale2x(part))), S = 8, a = (LEAN * Math.PI) / 180, co = Math.cos(a), si = Math.sin(a);
+  const P = onCore(TAIL_ROOT), out = [];
+  for (let y = -TOP; y < H; y++) for (let x = 0; x < W; x++) {
+    const dx = x + 0.5 - P[0], dy = y + 0.5 - P[1], r = Math.hypot(dx, dy);
+    const u = Math.max(0, Math.min(1, (r - BEND_FROM) / (BEND_TO - BEND_FROM))), b = (BEND * (u * u * (3 - 2 * u)) * Math.PI) / 180;
+    const phi = Math.atan2(dy, dx) - b, lx = P[0] + r * Math.cos(phi) - AT[0], ly = P[1] + r * Math.sin(phi) - AT[1];
+    // back from the leaned picture to the source
+    const sx = co * lx + si * ly + CORE[0], sy = -si * lx + co * ly + CORE[1];
+    const c = big[Math.floor(sy * S)]?.[Math.floor(sx * S)];
+    if (c && c !== ".") out.push([x, y, c]);
+  }
+  return out;
+}
 // the head leans less than the body so it looks ahead; the near leg swings further back to trail like the other
 const NECK = [23, 27], HEAD_TURN = 40, SHOULDER = [36, 28], WING_TURN = 10;
 
@@ -56,14 +73,13 @@ function build() {
   // canvas row r holds drawing row r - TOP
   const g = Array.from({ length: H + TOP }, () => Array(W).fill("."));
   const draw = cells => { for (const [x, y, c] of cells) if (g[y + TOP]?.[x] !== undefined) g[y + TOP][x] = c; };
-  // the tail goes over the body with its thick root sunk into the haunch, so the two run into each other with no seam
-  const root = onCore(TAIL_ROOT), tail = piece(isTail, TAIL_ROOT, LEAN + TAIL_TURN, [root[0] + TAIL_SINK[0], root[1] + TAIL_SINK[1]]);
-  draw(piece(isBody, CORE, LEAN, AT));
+  // the tail behind the body, as in the original
+  const tail = bentTail();
   draw(tail);
+  draw(piece(isBody, CORE, LEAN, AT));
   draw(piece(isNearWing, SHOULDER, LEAN + WING_TURN, onCore(SHOULDER)));
   draw(piece(isHead, NECK, LEAN + HEAD_TURN, onCore(NECK)));
-  // The tail's root touched the body in the original, so that edge had no outline; turned apart it is open to the sky: every
-  // tail pixel that ends up beside background gets the black outline.
+  // Where the bend opens the tail's edge to the sky it keeps a black outline.
   for (const [x, y] of tail) {
     const r = y + TOP;
     if (g[r]?.[x] && !"HA".includes(g[r][x]) && [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => g[r + dy]?.[x + dx] === ".")) g[r][x] = "H";
