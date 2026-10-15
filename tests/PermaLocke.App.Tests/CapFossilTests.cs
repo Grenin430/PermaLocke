@@ -88,27 +88,34 @@ public sealed class CapFossilTests
     [InlineData(CapMode.Column, 180, 321)]
     [InlineData(CapMode.Column, 207, 325)]
     [InlineData(CapMode.Slim, 100, 321)]
-    public void In_the_tall_band_the_fallen_drift_small_and_grey_in_the_open_water_over_the_ruins_and_none_moves_when_another_falls(CapMode mode, int cols, int rows)
+    public void In_the_tall_band_the_fallen_wander_grey_in_the_open_water_over_the_ruins_the_latest_eight_whole(CapMode mode, int cols, int rows)
     {
         var (layout, ctx, _) = Sea(mode, cols, rows, 15);
         Assert.True(CapFossils.InWater(layout));
-        var fossils = CapFossils.Build(layout, Graves(15), ctx, []);
-        foreach (var fossil in fossils)
+        var built = CapFossils.Build(layout, Graves(15), ctx, []);
+        Assert.Equal(Enumerable.Range(0, 15).Select(i => i >= 7 ? 1 : 2), built.Select(f => f.Spec.Scale));
+
+        foreach (var phase in new[] { 0.0, 17.0, 45.5, 200.0 })
         {
-            var spec = fossil.Spec;
-            Assert.Equal(4, spec.Scale);
-            Assert.InRange(spec.Top, layout.SurfaceY + 12, layout.FloorTop - 46);
-            Assert.InRange(spec.Left, layout.Main.Left, layout.Main.Right - spec.Width);
-            Assert.All(fossil.Cells, cell =>
+            foreach (var fossil in CapFossils.Drift(layout, ctx, built, phase))
             {
-                var (r, g, b) = ((cell.Stone >> 16) & 255, (cell.Stone >> 8) & 255, cell.Stone & 255);
-                Assert.True(Math.Max(r, Math.Max(g, b)) - Math.Min(r, Math.Min(g, b)) <= 16, $"fossil {spec.Index} is not grey");
-            });
+                var spec = fossil.Spec;
+                Assert.InRange(spec.Top, layout.SurfaceY + 12, Math.Max(layout.SurfaceY + 13, layout.FloorTop - 46 - spec.Height));
+                Assert.InRange(spec.Left, layout.Main.Left, layout.Main.Right - spec.Width);
+                Assert.All(fossil.Cells, cell =>
+                {
+                    Assert.InRange(cell.X, spec.Left, spec.Left + spec.Width - 1);
+                    var (r, g, b) = ((cell.Stone >> 16) & 255, (cell.Stone >> 8) & 255, cell.Stone & 255);
+                    Assert.True(Math.Max(r, Math.Max(g, b)) - Math.Min(r, Math.Min(g, b)) <= 16, $"fossil {spec.Index} is not grey");
+                });
+            }
         }
 
-        // The place of each one depends only on its number.
-        var fewer = CapFossils.Build(layout, Graves(6), ctx, []);
-        for (var i = 0; i < fewer.Length; i++) Assert.Equal((fossils[i].Spec.Left, fossils[i].Spec.Top), (fewer[i].Spec.Left, fewer[i].Spec.Top));
+        // They move, slowly: something has moved in ten seconds, nothing more than a few cells in one.
+        var now = CapFossils.Drift(layout, ctx, built, 30);
+        Assert.Contains(Enumerable.Range(0, 15), i => now[i].Spec.Left != CapFossils.Drift(layout, ctx, built, 40)[i].Spec.Left);
+        var next = CapFossils.Drift(layout, ctx, built, 31);
+        Assert.All(Enumerable.Range(0, 15), i => Assert.InRange(Math.Abs(now[i].Spec.Left - next[i].Spec.Left), 0, 5));
     }
 
     [Fact]

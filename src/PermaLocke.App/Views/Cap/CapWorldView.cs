@@ -114,9 +114,12 @@ public sealed class CapWorldView
             CapSign.Paint(frame, Layout, pal, _context, data, _fossils, atCap, phase);
         }
 
-        CapDeep.Souls(frame, Layout, _fossilViews, phase);
+        // The fallen wander in the deep's water (2026-10-15): where they are now, for their figures, their souls and the focus.
+        var fallen = CapFossils.Drift(Layout, _context, _fossilViews, phase);
+        CapFossils.PaintDrifting(frame, Layout, fallen);
+        CapDeep.Souls(frame, Layout, fallen, phase);
         // A still frame (no animation) shows the focus in the middle of its time on the newest fossil, not dark at the start of it.
-        CapDeep.Focus(frame, Layout, pal, _fossilViews, _context, anim is null ? CapDeep.NewestSeconds / 2 : t);
+        CapDeep.Focus(frame, Layout, pal, fallen, _context, anim is null ? CapDeep.NewestSeconds / 2 : t);
         // What swims and flies past goes in front of the light on the fossils: the beam was washing out the eyes of whoever crossed it (2026-10-14).
         if (anim is not null) CapFauna.Paint(frame, Layout, pal, mood, _context, t, phase, data.Graves ?? []);
 

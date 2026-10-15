@@ -245,16 +245,12 @@ public static class CapSea
 
     private static void Fossils(CapSheet p, CapWorldLayout l, CapSeaPalette pal, IReadOnlyList<CapGrave> graves, CapSeaContext ctx, int[] columns)
     {
+        // The fallen that wander in the water move: they are painted every frame (CapFossils.PaintDrifting), not into the scene.
+        if (CapFossils.InWater(l)) return;
+
         foreach (var fossil in CapFossils.Build(l, graves, ctx, columns))
         {
             // A dark rim round the stone, so that it stands out from the sand and from the water whatever is behind it.
-            if (CapFossils.InWater(l))
-            {
-                // A small grey figure in the water, a little see-through, nothing grows on it.
-                foreach (var cell in fossil.Cells) p.Set(cell.X, cell.Y, cell.Stone, 205);
-                continue;
-            }
-
             if (l.Panel == CapPanelKind.Deep) foreach (var (rx, ry) in fossil.Rim) p.Set(rx, ry, 0x0A1224u, 170);
             foreach (var cell in fossil.Cells) p.Set(cell.X, cell.Y, cell.Stone);
             Overgrowth(p, l, pal, fossil.Spec, ctx, columns);
