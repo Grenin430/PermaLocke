@@ -65,7 +65,6 @@ public sealed partial class SettingsViewModel : SectionViewModel
         CapAnimations = current.CapAnimations;
         CapKey = current.CapKey;
         CapHpSync = current.CapHpSync;
-        CapPinned = current.CapPinned;
         _loading = false;
     }
 
@@ -134,9 +133,6 @@ public sealed partial class SettingsViewModel : SectionViewModel
     [ObservableProperty]
     private bool _capAnimations;
 
-    [ObservableProperty]
-    private bool _capPinned;
-
     /// <summary>The key that folds the panel (a virtual-key code), or 0 for none.</summary>
     [ObservableProperty]
     private int _capKey;
@@ -170,7 +166,6 @@ public sealed partial class SettingsViewModel : SectionViewModel
     partial void OnCapMemorialChanged(bool value) => Save();
     partial void OnCapDetailsChanged(bool value) => Save();
     partial void OnCapAnimationsChanged(bool value) => Save();
-    partial void OnCapPinnedChanged(bool value) => Save();
 
     partial void OnCapSizeChanged(int value)
     {
@@ -244,8 +239,7 @@ public sealed partial class SettingsViewModel : SectionViewModel
             Notifications = Notifications, StepAside = StepAside, DeathScene = DeathScene, Killcam = Killcam,
             Follower = Follower, Ghosts = Ghosts, CatchCard = CatchCard, Nicknames = Nicknames, CapPanel = CapPanel,
             Background = Background, Resolution = Resolution, Vulkan = Vulkan, CapSize = CapSize, CapMaxCell = CapMaxCell,
-            CapMemorial = CapMemorial, CapDetails = CapDetails, CapAnimations = CapAnimations, CapKey = CapKey, CapHpSync = CapHpSync,
-            CapPinned = CapPinned
+            CapMemorial = CapMemorial, CapDetails = CapDetails, CapAnimations = CapAnimations, CapKey = CapKey, CapHpSync = CapHpSync
         });
         Status = "Guardado.";
     }
