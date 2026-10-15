@@ -196,7 +196,7 @@ public sealed class CapAnim
         }
 
         // The clock of the sea changes speed with the mood, smoothly: the phase is the integral of the tempo, so nothing jumps.
-        var effective = !_danger && now - _lastFallAt < MourningSeconds ? CapMood.Mourning : mood;
+        var effective = mood;
         var target = CapSeaPalette.Of(effective).Tempo;
         if (Math.Abs(target - _tempoTo) > 1e-6)
         {
@@ -478,13 +478,7 @@ public sealed class CapAnim
     /// <summary>The mood now, and the one before it with how far the change has gone (0 just changed, 1 done).</summary>
     public (CapMood Now, CapMood Before, double Blend) Mood(double t)
     {
-        // Mourning is not kept as a mood but worked out here, so it ends by itself twenty seconds after the fall without a new update.
-        var mourning = !_danger && _lastFallAt > Never && t >= _lastFallAt && t - _lastFallAt < MourningSeconds;
-        if (mourning) return (CapMood.Mourning, _mood, Math.Clamp((t - Math.Max(_moodAt, _lastFallAt)) / 0.8, 0, 1));
-
-        var ended = _lastFallAt + MourningSeconds;
-        if (!_danger && _lastFallAt > Never && t >= ended && t - ended < 0.8) return (_mood, CapMood.Mourning, (t - ended) / 0.8);
-
+        // No mourning any more (2026-10-15, asked by the player): a fall no longer turns the sea grey for twenty seconds; its death is the moment.
         return (_mood, _previousMood, Math.Clamp((t - _moodAt) / 0.8, 0, 1));
     }
 

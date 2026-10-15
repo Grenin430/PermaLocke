@@ -104,7 +104,7 @@ public sealed class CapAnimTests
     }
 
     [Fact]
-    public void A_fall_is_timed_and_brings_the_mourning_light_for_twenty_seconds()
+    public void A_fall_is_timed_and_does_not_turn_the_sea_grey()
     {
         var anim = new CapAnim();
         anim.Update(Data(Party(Member(1, hp: 10)), battle: true), 0);
@@ -112,11 +112,11 @@ public sealed class CapAnimTests
 
         Assert.Equal(0.5, anim.SinceFall(0, 4.5)!.Value, 3);
         Assert.Null(anim.SinceFall(0, 3));
-        Assert.Equal(CapMood.Mourning, anim.Mood(5).Now);
-        Assert.Equal(CapMood.Mourning, anim.Mood(23).Now);
 
-        // It ends by itself, without anything new being told.
-        Assert.NotEqual(CapMood.Mourning, anim.Mood(40).Now);
+        // No mourning any more (2026-10-15): the sea keeps its own mood; the fall is shown by its death.
+        Assert.NotEqual(CapMood.Mourning, anim.Mood(5).Now);
+        Assert.NotEqual(CapMood.Mourning, anim.Mood(5).Before);
+        Assert.NotEqual(CapMood.Mourning, anim.Mood(23).Now);
     }
 
     [Fact]

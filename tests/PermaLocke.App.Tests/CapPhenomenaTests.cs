@@ -15,6 +15,40 @@ public sealed class CapPhenomenaTests
     private static CapWorldLayout Layout() => CapWorld.Arrange(CapMode.Column, CapPanelKind.Party, 180, 321, (0, 0, 0));
 
     [Fact]
+    public void The_rows_follow_the_game_s_order_sliding_and_a_fallen_one_leaves_its_row_once_its_death_is_shown()
+    {
+        var view = new CapWorldView(CapMode.Column, CapPanelKind.Party, 180, 321, (0, 0, 0));
+        var anim = new CapAnim();
+        var frame = new CapSheet(180, 321);
+        uint Shown(int slot) => view.Creature(slot)!.Member?.Pid ?? 0;
+
+        var first = Data([Member(1), Member(2), Member(3)]);
+        view.SetData(first);
+        anim.Update(first, 0);
+        view.Paint(frame, 0.5, anim);
+        Assert.Equal([1u, 2u, 3u, 0u], Enumerable.Range(0, 4).Select(Shown));
+
+        // the player swaps them in the game: the third goes first, and slides up from its old row
+        var swapped = Data([Member(3), Member(1), Member(2)]);
+        view.SetData(swapped);
+        anim.Update(swapped, 2);
+        view.Paint(frame, 2, anim);
+        Assert.Equal([3u, 1u, 2u], Enumerable.Range(0, 3).Select(Shown));
+        Assert.True(view.Slide(Member(3), 0, 2.2, true) > 0, "it does not slide up from below");
+        Assert.Equal(0, view.Slide(Member(3), 0, 2.7, true));
+
+        // the second falls: its row stays while its death plays, then the ones under it move up and the last rows are empty
+        var fallen = Data([Member(3), Member(1, 0), Member(2)]);
+        view.SetData(fallen);
+        anim.Update(fallen, 5);
+        view.Paint(frame, 5.5, anim);
+        Assert.Equal(1u, Shown(1));
+        var end = CapDeath.Schedule(fallen, anim, 6).Single().End;
+        view.Paint(frame, end + 0.1, anim);
+        Assert.Equal([3u, 2u, 0u], Enumerable.Range(0, 3).Select(Shown));
+    }
+
+    [Fact]
     public void Deaths_that_happen_together_are_shown_one_after_another_each_with_the_death_of_its_pid()
     {
         var anim = new CapAnim();

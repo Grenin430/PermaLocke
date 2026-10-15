@@ -143,6 +143,10 @@ public static class CapScenarios
                 new(2, Base(icon, Replace(alive, 0, m => m with { Hp = 0 }), battle: true))]));
         }
 
+        scenarios.Add(new CapScenario("orden", "El jugador cambia el orden en el juego: el tercero pasa a ser el primero", [
+            new(0, Base(icon, full)),
+            new(2, Base(icon, [full[2], full[0], full[1], .. full.Skip(3)]))]));
+
         scenarios.Add(new CapScenario("muertes-seguidas", "Caen dos a la vez: sus muertes van una detrás de otra", [
             new(0, Base(icon, Replace(full, 0, m => m with { Hp = 31 }), battle: true)),
             new(2, Base(icon, Replace(Replace(full, 0, m => m with { Hp = 0 }), 2, m => m with { Hp = 0 }), battle: true))]));

@@ -21,6 +21,11 @@ public sealed class CapWorldView
     private int[] _fossils = [];
     private readonly Dictionary<string, CapDeathScene> _deaths = [];
     private CapTrial.Plaque? _plaque;
+
+    /// <summary>Where each of the party was last drawn (by PID): its slot, and where it slides from when it moves to another.</summary>
+    private readonly Dictionary<uint, (int Slot, double FromY, double At)> _rows = [];
+    private CapSheet? _rowSheet;
+    private const double SlideSeconds = 0.6;
     private string _plaqueKey = string.Empty;
 
     public CapWorldView(CapMode mode, CapPanelKind panel, int cols, int rows, (int X0, int X1, int Y1) notch)
@@ -99,7 +104,8 @@ public sealed class CapWorldView
         // The deaths of the party, one after another (2026-10-15): the one being shown now, and in this window its scene.
         var deaths = anim is null ? [] : CapDeath.Schedule(data, anim, t);
         var dying = data.DeathScenes ? deaths.FirstOrDefault(d => t >= d.Start && t < d.End) : null;
-        var scene = Layout.Panel == CapPanelKind.Party && dying is not null ? SceneOf(dying, data, pal) : null;
+        var order = Layout.Panel == CapPanelKind.Party ? Arrange(data, deaths, t) : [];
+        var scene = Layout.Panel == CapPanelKind.Party && dying is not null ? SceneOf(dying, data, pal, order) : null;
 
         // A trial passed (2026-10-15): its two films, the crystal's and the cap's; until the cap's breaks it, the plaque and the levels keep the old cap.
         var trial = data.Cap > 0 ? CapTrial.Now(data, anim, t) : null;
@@ -126,7 +132,7 @@ public sealed class CapWorldView
 
         if (anim is not null) CapFauna.Paint(frame, Layout, pal, mood, _context, t, phase, []);
 
-        if (Layout.Panel == CapPanelKind.Party) PaintParty(frame, data, pal, mood, anim, t, phase, deaths, trial);
+        if (Layout.Panel == CapPanelKind.Party) PaintParty(frame, data, pal, mood, anim, t, phase, deaths, trial, order);
 
         // The death being shown: in the party's window the fallen one taken apart; in the deep's, its share of the deaths that reach it.
         scene?.Paint(frame, t, phase);
@@ -172,13 +178,14 @@ public sealed class CapWorldView
     /// The scene of a death, made when it starts from the creature as it was: its picture in its own colours (not the grey of the fallen) and
     /// everything written beside it, and the rest of the party for the deaths that touch them. Kept while it plays.
     /// </summary>
-    private CapDeathScene? SceneOf(CapDeathTurn turn, CapPlaqueData data, CapSeaPalette pal)
+    private CapDeathScene? SceneOf(CapDeathTurn turn, CapPlaqueData data, CapSeaPalette pal, IReadOnlyList<int> order)
     {
         var key = $"{turn.Pid}|{turn.Index}|{turn.Start:R}";
         if (_deaths.TryGetValue(key, out var made)) return made;
-        if (turn.Index >= _creatures.Length || _creatures[turn.Index].Member is not { } member) return null;
+        var slot = order.ToList().IndexOf(turn.Index);
+        if (slot < 0 || _creatures[slot].Member is not { } member) return null;
 
-        var creature = _creatures[turn.Index];
+        var creature = _creatures[slot];
         // a fallen one is drawn grey; its death starts from it in its own colours (one point of life for the drawing, none for its bar)
         var m = member with { Hp = Math.Max(1, member.Hp) };
         var shadow = new CapCreature { Slot = creature.Slot };
@@ -189,42 +196,120 @@ public sealed class CapWorldView
         if (shadow.Info is { } info) writing.Blit(info, shadow.InfoAt.X, shadow.InfoAt.Y);
         var share = m.MaxHp > 0 ? Math.Clamp(member.Hp / (double)m.MaxHp, 0, 1) : 0;
         PaintBeads(writing, shadow, m, share, 0.5, pal, null);
-        var others = _creatures.Where((c, i) => i != turn.Index && c.Member is { Fallen: false }).ToList();
+        var others = _creatures.Where((c, j) => j != slot && c.Member is { Fallen: false }).ToList();
         var rowLine = creature.Slot.Info.Height > 0 ? creature.Slot.Info.Bottom - 1 : creature.Slot.Sprite.Bottom + 3;
 
         if (_deaths.Count > 8) _deaths.Clear();
         return _deaths[key] = new CapDeathScene(turn, Layout, picture, writing, shadow.InfoAt.X, rowLine, others);
     }
 
+    /// <summary>
+    /// Which of the party each slot shows, in the game's order (2026-10-15): the fallen keep their slot until their death has been shown, and
+    /// then leave it; the ones under them move up and the empty slots are the last ones. A slot whose Pokémon changed is built again.
+    /// </summary>
+    private List<int> Arrange(CapPlaqueData data, IReadOnlyList<CapDeathTurn> deaths, double t)
+    {
+        var order = new List<int>();
+        for (var i = 0; i < data.Party.Count && order.Count < _creatures.Length; i++)
+        {
+            var m = data.Party[i];
+            var turn = deaths.FirstOrDefault(d => d.Index == i);
+            if (m.Fallen && (turn is null || !data.DeathScenes || t >= turn.End)) continue;
+            order.Add(i);
+        }
+
+        var narrow = Layout.Mode != CapMode.Column;
+        for (var j = 0; j < _creatures.Length; j++)
+        {
+            var member = j < order.Count ? data.Party[order[j]] : null;
+            var key = CapCreature.KeyOf(member) + "|" + data.Cap + "|" + narrow;
+            if (key == _keys[j]) continue;
+
+            _keys[j] = key;
+            _builtCap[j] = data.Cap;
+            _creatures[j].Build(member, _writing, data.Cap, narrow);
+        }
+
+        return order;
+    }
+
+    /// <summary>How far above or below its slot a row is drawn now: it slides from where it was when it changed slot.</summary>
+    internal int Slide(CapPlaqueMember m, int slot, double t, bool animated)
+    {
+        var id = m.Pid != 0 ? m.Pid : (uint)m.Name.GetHashCode();
+        var top = _creatures[slot].Slot.Sprite.Top;
+        if (!_rows.TryGetValue(id, out var row) || !animated)
+        {
+            _rows[id] = (slot, top, t);
+            return 0;
+        }
+
+        if (row.Slot != slot)
+        {
+            // from wherever it is drawn now, the slide it was in included
+            var was = _creatures[row.Slot].Slot.Sprite.Top;
+            var now = row.FromY + ((was - row.FromY) * Ease(Math.Clamp((t - row.At) / SlideSeconds, 0, 1)));
+            _rows[id] = row = (slot, now, t);
+        }
+
+        var k = Math.Clamp((t - row.At) / SlideSeconds, 0, 1);
+        return (int)Math.Round((row.FromY - top) * (1 - Ease(k)));
+    }
+
+    private static double Ease(double k) => k * k * (3 - (2 * k));
+
     private void PaintParty(CapSheet p, CapPlaqueData data, CapSeaPalette pal, (CapMood Now, CapMood Before, double Blend) mood, CapAnim? anim, double t, double phase,
-        IReadOnlyList<CapDeathTurn> deaths, CapTrialTurn? trial)
+        IReadOnlyList<CapDeathTurn> deaths, CapTrialTurn? trial, IReadOnlyList<int> order)
     {
         var ground = trial is null ? Layout.Rows : CapSign.Where(Layout, data, _context, _fossils)?.Ground ?? Layout.Rows;
 
         // Singleplayer (2026-10-13): no buoy with the cap, no tag under it, no sounding line; the level turns gold at the cap and that is all.
         var graves = data.Graves?.Count ?? 0;
 
-        for (var i = 0; i < _creatures.Length; i++)
+        for (var slot = 0; slot < _creatures.Length; slot++)
         {
-            var creature = _creatures[i];
-            if (creature.Member is not { } m)
+            var creature = _creatures[slot];
+            if (slot >= order.Count || creature.Member is not { } m)
             {
                 PaintVacant(p, creature, pal, phase);
                 continue;
             }
 
-            // A fallen one is drawn until its death's turn comes; from then on its death paints it, and after it nothing does: its row is empty.
-            // One that fell before the panel opened is not drawn at all; with the death scenes off, it goes when it falls.
+            // The slot shows the party's member i (the game's order, the fallen whose death has been shown left out).
+            var i = order[slot];
+
+            // A fallen one is drawn until its death's turn comes; from then on its death paints it.
             var turn = deaths.FirstOrDefault(d => d.Index == i);
             if (turn is not null ? !data.DeathScenes || t >= turn.Start : m.Fallen) continue;
 
             // While a trial plays, its level keeps the old cap until the cap's last wave passes it.
             var cap = CapTrial.CapOf(trial, data.Cap, creature.Slot.Info.Top + 3, ground);
-            if (cap != _builtCap[i])
+            if (cap != _builtCap[slot])
             {
-                _builtCap[i] = cap;
+                _builtCap[slot] = cap;
                 creature.Build(m, _writing, cap, Layout.Mode != CapMode.Column);
             }
+
+            // A row that moved up (one above it gone) or down (the order changed in the game) slides there: drawn apart, then put in place.
+            var dy = Slide(m, slot, t, anim is not null);
+            var target = p;
+            if (dy != 0)
+            {
+                _rowSheet ??= new CapSheet(p.W, p.H);
+                if (_rowSheet.W != p.W || _rowSheet.H != p.H) _rowSheet = new CapSheet(p.W, p.H);
+                _rowSheet.Clear();
+                target = _rowSheet;
+            }
+
+            PaintRow(target, data, pal, anim, t, phase, trial, ground, graves, creature, m, i);
+            if (dy != 0) p.Blit(_rowSheet!, 0, dy);
+        }
+    }
+
+    private void PaintRow(CapSheet p, CapPlaqueData data, CapSeaPalette pal, CapAnim? anim, double t, double phase, CapTrialTurn? trial, int ground, int graves,
+        CapCreature creature, CapPlaqueMember m, int i)
+    {
+        {
 
             var sway = Layout.Mode == CapMode.Slim || Layout.Dense ? 1.0 : 1.7;
             var share = anim?.HpFraction(i, t) ?? (m.MaxHp > 0 ? Math.Clamp(m.Hp / (double)m.MaxHp, 0, 1) : 0);

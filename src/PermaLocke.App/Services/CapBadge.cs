@@ -299,6 +299,13 @@ public sealed class CapBadge
             _rawStatus[member.Pid] = member.Status;
         }
 
+        // In the game's order (2026-10-15): the slots in memory are not it once the player swaps two in the game's menu.
+        if (live.Order is { Count: > 0 } order)
+        {
+            var ranks = order.ToList();
+            party = [.. party.OrderBy(member => ranks.IndexOf(member.Pid) is var at && at >= 0 ? at : 6 + member.Slot)];
+        }
+
         var tables = frame is { Battle.Count: > 0 } ? frame.ToTables(_monitor.BattleNow) : _monitor.BattleNow;
         return Present(WithLiveHp(party, tables));
     }
