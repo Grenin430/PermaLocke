@@ -466,18 +466,8 @@ public sealed class CapAnim
         return target;
     }
 
-    /// <summary>
-    /// How far the floor has dropped at a moment, in rows, when the cap changes: it falls away for a second and a half and comes back for another second
-    /// and a half with its new stratum, shaking as it goes. Zero the rest of the time.
-    /// </summary>
-    public int FloorDrop(double t, int rows)
-    {
-        if (_capAt <= Never || t < _capAt) return 0;
-        var k = t - _capAt;
-        if (k > 3.2) return 0;
-        var depth = k < 1.5 ? Ease(k / 1.5) : k < 3.2 ? 1 - Ease((k - 1.5) / 1.7) : 0;
-        return (int)Math.Round(depth * rows);
-    }
+    /// <summary>The cap rose (a trial passed) while the panel was open: how long ago, from which cap to which; null otherwise (2026-10-15).</summary>
+    public (double Since, int From, int To)? CapRise(double t) => _capAt > Never && t >= _capAt && _cap > _previousCap ? (t - _capAt, _previousCap, _cap) : null;
 
     /// <summary>How long ago the cap changed, in seconds, or null when it has not in the time the panel has been open.</summary>
     public double? SinceCap(double t) => _capAt > Never && t >= _capAt ? t - _capAt : null;

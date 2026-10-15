@@ -41,11 +41,17 @@ public static class CapSign
         return null;
     }
 
+    /// <summary>Where the board stands and where its number is written, for the trial film that breaks and remakes it (CapTrial).</summary>
+    public static (CapRect Board, int Ground, int NumberX, int NumberY, int Scale)? Where(CapWorldLayout l, CapPlaqueData data, CapSeaContext ctx, IReadOnlyList<int> fossils) =>
+        Place(l, data, ctx, fossils) is { } f ? (new CapRect(f.Left, f.Top, f.Width, f.Height), f.Ground, f.RowX + Small("LVL") + 3, f.Top + 11, f.Scale) : null;
+
     /// <summary>The columns the sign takes, a little round it, or null when it is not there: the coral keeps out of them.</summary>
     public static (int Left, int Right)? Extent(CapWorldLayout l, CapPlaqueData data, CapSeaContext ctx, IReadOnlyList<int> fossils) =>
         Place(l, data, ctx, fossils) is { } f ? (f.Left - 2, f.Left + f.Width + 2) : null;
 
-    public static void Paint(CapSheet p, CapWorldLayout l, CapSeaPalette pal, CapSeaContext ctx, CapPlaqueData data, IReadOnlyList<int> fossils, double atCap, double phase)
+    /// <param name="number">The cap it writes: its own (null), another, or none while the trial film breaks and remakes it.</param>
+    public static void Paint(CapSheet p, CapWorldLayout l, CapSeaPalette pal, CapSeaContext ctx, CapPlaqueData data, IReadOnlyList<int> fossils, double atCap, double phase,
+        int? number = null, bool written = true)
     {
         if (Place(l, data, ctx, fossils) is not { } f) return;
 
@@ -102,8 +108,7 @@ public static class CapSign
         var title = "CAP ACTUAL";
         CapGlyphs.Outlined(p, title, f.Left + ((f.Width - Small(title)) / 2), f.Top + 3, 0xF2E2B0u, Ink);
         var numberY = f.Top + 11;
-        var number = data.Cap.ToString(CultureInfo.InvariantCulture);
         CapGlyphs.Outlined(p, "LVL", f.RowX, numberY + (7 * f.Scale) - 5, 0xE8D8A0u, Ink);
-        CapGlyphs.Outlined(p, number, f.RowX + Small("LVL") + 3, numberY, 0xFFD860u, Ink, true, f.Scale);
+        if (written) CapGlyphs.Outlined(p, (number ?? data.Cap).ToString(CultureInfo.InvariantCulture), f.RowX + Small("LVL") + 3, numberY, 0xFFD860u, Ink, true, f.Scale);
     }
 }

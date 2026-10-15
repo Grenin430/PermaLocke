@@ -22,7 +22,8 @@ namespace PermaLocke.App.Services;
 /// <param name="Highest">The highest level in the party right now, or null without a reading.</param>
 /// <param name="Cleared">How many stages the player has cleared.</param>
 /// <param name="Trials">How many trials there are in all.</param>
-public sealed record CapReading(string Trial, int Cap, int? Next, int? Highest, int Cleared = 0, int Trials = 0);
+/// <param name="CrystalItem">The Z-Crystal of the last stage cleared (its item id, from its achievement), 0 when it has none.</param>
+public sealed record CapReading(string Trial, int Cap, int? Next, int? Highest, int Cleared = 0, int Trials = 0, int CrystalItem = 0);
 
 /// <summary>
 /// The level cap, always on screen over the emulator (1.0.4.7): since 2026-10-10 a sea that fills the black band beside the 3DS screens, in the
@@ -80,6 +81,7 @@ public sealed class CapBadge
     private IReadOnlyList<CapPlaqueMember> _party = [];
     private readonly PokemonSpriteService _sprites;
     private readonly IAbilityLookup _abilities;
+    private readonly IAchievementCatalog _achievements;
     private string _partyKey = string.Empty;
     private CapPlaqueData? _data;
     private CapReading? _shown;
@@ -106,8 +108,10 @@ public sealed class CapBadge
 
     public CapBadge(EmulatorLauncher launcher, ProgressService progress, LevelCapTable caps, IRunContext runContext,
         GameLinkMonitor monitor, AppSettings settings, PokemonSpriteService sprites, AlolaSky sky, ITypeLookup types, IItemLookup items,
-        IMoveCatalog moves, CemeteryService cemetery, VitalsPump pump, BarSync bar, ActiveBar active, IAbilityLookup abilities, ILogger<CapBadge> logger)
+        IMoveCatalog moves, CemeteryService cemetery, VitalsPump pump, BarSync bar, ActiveBar active, IAbilityLookup abilities, IAchievementCatalog achievements,
+        ILogger<CapBadge> logger)
     {
+        _achievements = achievements;
         _launcher = launcher;
         _progress = progress;
         _caps = caps;
@@ -172,7 +176,7 @@ public sealed class CapBadge
     public async Task RehearseAsync(string? name = null, double seconds = 30)
     {
         await _sprites.PrepareAsync();
-        var scenarios = CapScenarios.All(species => _sprites.Get(species, 0, false));
+        var scenarios = CapScenarios.All(species => _sprites.Get(species, 0, false), _sprites.GetItem);
         var scenario = scenarios.FirstOrDefault(s => string.Equals(s.Name, name, StringComparison.OrdinalIgnoreCase))
             ?? scenarios.First(s => s.Name == "completo");
         _logger.LogInformation("Ensayo del cap: {Scenario} durante {Seconds} s", scenario.Name, seconds);
@@ -412,7 +416,10 @@ public sealed class CapBadge
         var label = stage.Id.StartsWith("trial-", StringComparison.Ordinal) ? $"PRUEBA {stage.Order} DE {trials}"
             : stage.Id == "rematch" ? "REMATCH" : stage.Name.ToUpperInvariant();
         var next = cleared + 1 < _caps.Stages.Count ? _caps.Stages[cleared + 1].Level : (int?)null;
-        return new CapReading(label, stage.Level, next, Highest(), cleared, trials);
+        // the crystal of the stage just cleared, for the trial film (the league and the rematch have none)
+        var last = cleared > 0 && cleared <= _caps.Stages.Count ? _caps.Stages.OrderBy(s => s.Order).ElementAt(cleared - 1) : null;
+        var crystal = last?.Achievement is { } id && _achievements.All.FirstOrDefault(a => a.Id == id)?.Item is { } item and >= 807 and <= 824 ? item : 0;
+        return new CapReading(label, stage.Level, next, Highest(), cleared, trials, crystal);
     }
 
     /// <summary>The run's fallen, the latest first, with the icon of each; empty when the run's record cannot be read.</summary>
@@ -504,7 +511,8 @@ public sealed class CapBadge
         _lastMode = plan.Main?.Mode;
         var seed = _runContext.Current is { } activeRun ? activeRun.Id.GetHashCode() & 0x7FFFFFFF : 0;
         var data = _rehearsal ?? new CapPlaqueData(reading.Trial, reading.Cap, reading.Next, reading.Highest, _party, _battle, _graves, reading.Cleared,
-            reading.Trials, _sky.IsKnown ? _sky.Hour : -1, seed, _events, ActiveShare(), _settings.Current.DeathScene);
+            reading.Trials, _sky.IsKnown ? _sky.Hour : -1, seed, _events, ActiveShare(), _settings.Current.DeathScene,
+            reading.CrystalItem, reading.CrystalItem > 0 ? _sprites.GetItem(reading.CrystalItem) : null);
         _data = data;
 
         // One sea in two windows.

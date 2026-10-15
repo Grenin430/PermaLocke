@@ -10,6 +10,7 @@ public sealed class CapWorldView
     private readonly Dictionary<CapMood, CapSheet> _scenes = [];
     private readonly CapCreature[] _creatures;
     private readonly string?[] _keys;
+    private readonly int[] _builtCap;
     private readonly CapBuoy _buoy = new();
     private readonly CapSeaPalette _writing = CapSeaPalette.Of(CapMood.Calm);
 
@@ -19,12 +20,15 @@ public sealed class CapWorldView
     private string _buoyKey = string.Empty;
     private int[] _fossils = [];
     private readonly Dictionary<string, CapDeathScene> _deaths = [];
+    private CapTrial.Plaque? _plaque;
+    private string _plaqueKey = string.Empty;
 
     public CapWorldView(CapMode mode, CapPanelKind panel, int cols, int rows, (int X0, int X1, int Y1) notch)
     {
         Layout = CapWorld.Arrange(mode, panel, cols, rows, notch);
         _creatures = [.. Layout.Creatures.Select(slot => new CapCreature { Slot = slot })];
         _keys = new string?[_creatures.Length];
+        _builtCap = new int[_creatures.Length];
     }
 
     public CapWorldLayout Layout { get; }
@@ -68,6 +72,7 @@ public sealed class CapWorldView
             if (memberKey == _keys[i]) continue;
 
             _keys[i] = memberKey;
+            _builtCap[i] = data.Cap;
             _creatures[i].Build(member, _writing, data.Cap, narrow);
         }
     }
@@ -96,12 +101,11 @@ public sealed class CapWorldView
         var dying = data.DeathScenes ? deaths.FirstOrDefault(d => t >= d.Start && t < d.End) : null;
         var scene = Layout.Panel == CapPanelKind.Party && dying is not null ? SceneOf(dying, data, pal) : null;
 
+        // A trial passed (2026-10-15): its two films, the crystal's and the cap's; until the cap's breaks it, the plaque and the levels keep the old cap.
+        var trial = data.Cap > 0 ? CapTrial.Now(data, anim, t) : null;
+
         frame.CopyFrom(Scene(mood.Now));
         if (mood.Blend < 1 && mood.Before != mood.Now) DitherFrom(frame, Scene(mood.Before), mood.Blend);
-
-        // The change of the cap opens the floor: it drops away, glowing along its cracks, and comes back with its new stratum.
-        var drop = anim?.FloorDrop(t, 30) ?? 0;
-        if (drop > 0) DropFloor(frame, drop, pal, anim!.SinceCap(t) ?? 0);
 
         // The stars twinkle behind what stands far off in the sky (the Sky Pillar, the Ultra Wormhole, 2026-10-15), and the sea is in front of it.
         CapSeaLive.Stars(frame, Layout, _context, phase);
@@ -116,12 +120,13 @@ public sealed class CapWorldView
         if (Layout.Panel == CapPanelKind.Party)
         {
             var atCap = (mood.Now == CapMood.Cap ? mood.Blend : 0) + (mood.Before == CapMood.Cap ? 1 - mood.Blend : 0);
-            CapSign.Paint(frame, Layout, pal, _context, data, _fossils, atCap, phase);
+            var number = CapTrial.SignNumber(trial, data.Cap);
+            CapSign.Paint(frame, Layout, pal, _context, data, _fossils, atCap, phase, number ?? data.Cap, number is not null);
         }
 
         if (anim is not null) CapFauna.Paint(frame, Layout, pal, mood, _context, t, phase, []);
 
-        if (Layout.Panel == CapPanelKind.Party) PaintParty(frame, data, pal, mood, anim, t, phase, deaths);
+        if (Layout.Panel == CapPanelKind.Party) PaintParty(frame, data, pal, mood, anim, t, phase, deaths, trial);
 
         // The death being shown: in the party's window the fallen one taken apart; in the deep's, its share of the deaths that reach it.
         scene?.Paint(frame, t, phase);
@@ -141,6 +146,26 @@ public sealed class CapWorldView
                     break;
             }
         }
+
+        if (trial is not null)
+        {
+            CapTrial.PaintCrystal(frame, Layout, _context, trial);
+            if (Layout.Panel == CapPanelKind.Party && PlaqueOf(trial, data) is { } plaque) CapTrial.PaintCap(frame, Layout, trial, plaque);
+        }
+    }
+
+    /// <summary>What the cap's film breaks and remakes, worked out when a trial starts and kept while it plays.</summary>
+    private CapTrial.Plaque? PlaqueOf(CapTrialTurn trial, CapPlaqueData data)
+    {
+        if (CapSign.Where(Layout, data, _context, _fossils) is not { } sign) return null;
+        var key = $"{trial.From}|{trial.To}|{sign.Board}|{sign.NumberX}|{sign.NumberY}|{sign.Scale}";
+        if (key != _plaqueKey || _plaque is null)
+        {
+            _plaqueKey = key;
+            _plaque = new CapTrial.Plaque(sign.Board, sign.Ground, sign.NumberX, sign.NumberY, sign.Scale, trial.From, trial.To, Layout.Cols, Layout.Rows);
+        }
+
+        return _plaque;
     }
 
     /// <summary>
@@ -172,8 +197,10 @@ public sealed class CapWorldView
     }
 
     private void PaintParty(CapSheet p, CapPlaqueData data, CapSeaPalette pal, (CapMood Now, CapMood Before, double Blend) mood, CapAnim? anim, double t, double phase,
-        IReadOnlyList<CapDeathTurn> deaths)
+        IReadOnlyList<CapDeathTurn> deaths, CapTrialTurn? trial)
     {
+        var ground = trial is null ? Layout.Rows : CapSign.Where(Layout, data, _context, _fossils)?.Ground ?? Layout.Rows;
+
         // Singleplayer (2026-10-13): no buoy with the cap, no tag under it, no sounding line; the level turns gold at the cap and that is all.
         var graves = data.Graves?.Count ?? 0;
 
@@ -191,16 +218,28 @@ public sealed class CapWorldView
             var turn = deaths.FirstOrDefault(d => d.Index == i);
             if (turn is not null ? !data.DeathScenes || t >= turn.Start : m.Fallen) continue;
 
+            // While a trial plays, its level keeps the old cap until the cap's last wave passes it.
+            var cap = CapTrial.CapOf(trial, data.Cap, creature.Slot.Info.Top + 3, ground);
+            if (cap != _builtCap[i])
+            {
+                _builtCap[i] = cap;
+                creature.Build(m, _writing, cap, Layout.Mode != CapMode.Column);
+            }
+
             var sway = Layout.Mode == CapMode.Slim || Layout.Dense ? 1.0 : 1.7;
             var share = anim?.HpFraction(i, t) ?? (m.MaxHp > 0 ? Math.Clamp(m.Hp / (double)m.MaxHp, 0, 1) : 0);
             var pose = CapFx.Pose(anim, i, t, m, share, data.InBattle, Layout, _context, graves);
 
+            // the light of a trial passing over it: it hops, washes towards the light and its halo grows
+            var lift = trial is null ? null : CapTrial.Lift(trial, Layout, _context, creature.Centre, ground);
             var ox = pose.Dx + (anim is null ? 0 : (int)Math.Round(sway * Math.Sin((phase * 0.8) + (i * 1.3))));
-            var oy = pose.Dy + (anim is null ? 0 : (int)Math.Round(1.2 * Math.Sin((phase * 1.1) + (i * 1.7))));
+            var oy = pose.Dy - (lift?.Hop ?? 0) + (anim is null ? 0 : (int)Math.Round(1.2 * Math.Sin((phase * 1.1) + (i * 1.7))));
             if (!pose.Hidden)
             {
-                creature.PaintPicture(p, ox, oy, pal.Ink, pose.Breath, pose.Strength, pose.HaloTint, pose.Wave, (phase * pose.WaveSpeed) + (i * 1.1), pose.HaloScale);
+                creature.PaintPicture(p, ox, oy, pal.Ink, pose.Breath, pose.Strength, lift?.Wash ?? pose.HaloTint, pose.Wave, (phase * pose.WaveSpeed) + (i * 1.1),
+                    pose.HaloScale + (lift?.Halo ?? 0));
                 if (pose.Wash is { } wash) creature.PaintTint(p, ox, oy, wash, pose.WashAlpha);
+                if (lift is { } l) creature.PaintTint(p, ox, oy, l.Wash, l.Alpha);
             }
 
             if (creature.Info is { } info) p.Blit(info, creature.InfoAt.X, creature.InfoAt.Y);
@@ -281,38 +320,6 @@ public sealed class CapWorldView
         {
             p.Set(c.BeadsAt.X + ((lit - 1) * 4) + 1, c.BeadsAt.Y - 1, 0xFFFFFFu, 230);
             p.Set(c.BeadsAt.X + ((lit - 1) * 4) + 1, c.BeadsAt.Y + 3, 0xFFFFFFu, 150);
-        }
-    }
-
-    /// <summary>
-    /// The floor with the cap changing: everything below the line of the floor is moved down <paramref name="drop"/> rows and the gap filled with water,
-    /// a crack of light runs along the new edge, and sediment goes up from it.
-    /// </summary>
-    private void DropFloor(CapSheet frame, int drop, CapSeaPalette pal, double since)
-    {
-        var from = Layout.FloorTop - 18;
-        if (from <= Layout.Notch.Y1 || drop <= 0) return;
-
-        for (var y = frame.H - 1; y >= from + drop; y--)
-        {
-            Buffer.BlockCopy(frame.B, (y - drop) * frame.W * 4, frame.B, y * frame.W * 4, frame.W * 4);
-        }
-
-        for (var y = from; y < Math.Min(frame.H, from + drop); y++)
-        {
-            for (var x = 0; x < frame.W; x++) frame.Erase(x, y);
-            for (var x = 0; x < frame.W; x++) frame.Set(x, y, CapSea.WaterAt(Layout, pal, x, y));
-        }
-
-        // The crack: a bright thread that follows the edge of the floor, flickering, and dust rising from it.
-        var beat = (int)Math.Floor(since * 14);
-        for (var x = 0; x < frame.W; x++)
-        {
-            var edge = CapSea.Relief(Layout, _context, x, _fossils) + drop;
-            if (edge >= frame.H) continue;
-            var jitter = (CapArt.Hash(x + (beat * 3), 7) % 3) - 1;
-            frame.Set(x, edge + jitter, 0xFFE890u, 220);
-            if (((x + beat) & 3) == 0) frame.Set(x, edge + jitter - 1 - (CapArt.Hash(x, beat) % 6), 0xFFF8D0u, 150);
         }
     }
 

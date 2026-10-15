@@ -99,20 +99,32 @@ public sealed class CapPhenomenaTests
     }
 
     [Fact]
-    public void The_floor_drops_away_for_a_second_and_a_half_and_comes_back_after_a_new_cap_and_only_then()
+    public void A_new_cap_plays_the_trial_film_keeping_the_old_cap_on_the_plaque_and_the_levels_until_it_is_remade()
     {
         var anim = new CapAnim();
         anim.Update(Data([Member(1)], cap: 40), 0);
-        Assert.Equal(0, anim.FloorDrop(1, 30));
+        Assert.Null(anim.CapRise(1));
 
-        anim.Update(Data([Member(1)], cap: 50), 5);
-        Assert.Equal(0, anim.FloorDrop(5, 30));
-        Assert.InRange(anim.FloorDrop(5.75, 30), 5, 25);
-        Assert.Equal(30, anim.FloorDrop(6.5, 30));
-        Assert.InRange(anim.FloorDrop(7.5, 30), 1, 29);
-        Assert.Equal(0, anim.FloorDrop(8.3, 30));
+        var raised = Data([Member(1)], cap: 50);
+        anim.Update(raised, 5);
         Assert.Null(anim.SinceCap(4));
         Assert.Equal(1.5, anim.SinceCap(6.5)!.Value, 3);
+        Assert.Equal((1.5, 40, 50), anim.CapRise(6.5)!.Value);
+
+        // without a crystal only the cap's film plays: the plaque writes the old cap, then nothing while it breaks, then the new one
+        var trial = CapTrial.Now(raised, anim, 5.1)!;
+        Assert.Null(trial.Crystal);
+        Assert.Equal(50, CapTrial.SignNumber(CapTrial.Now(raised, anim, 4.99), 50));
+        Assert.Null(CapTrial.SignNumber(CapTrial.Now(raised, anim, 6), 50));
+        Assert.Equal(50, CapTrial.SignNumber(CapTrial.Now(raised, anim, 5 + CapTrial.Length(false) + 1), 50));
+
+        // a level is gold (the old cap) until the last wave climbs past it
+        Assert.Equal(40, CapTrial.CapOf(CapTrial.Now(raised, anim, 6), 50, 100, 280));
+        Assert.Equal(50, CapTrial.CapOf(CapTrial.Now(raised, anim, 5 + CapTrial.Length(false) - 0.1), 50, 100, 280));
+
+        // a fall of the cap (a new run) is not a trial
+        anim.Update(Data([Member(1)], cap: 30), 20);
+        Assert.Null(CapTrial.Now(Data([Member(1)], cap: 30), anim, 21));
     }
 
     [Fact]

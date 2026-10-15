@@ -73,7 +73,8 @@ public static class CapScenarios
         new("PRUEBA 8 DE 12", cap, 54, highest ?? party.Where(m => !m.Egg).Select(m => m.Level).DefaultIfEmpty(0).Max(), party, battle,
             Graves(icon, graves), cleared, 12, hour, seed);
 
-    public static IReadOnlyList<CapScenario> All(Func<int, BitmapSource?> icon)
+    /// <param name="item">An item's icon, for the Z-Crystal of the trial passed; without it the trial plays only the cap's film.</param>
+    public static IReadOnlyList<CapScenario> All(Func<int, BitmapSource?> icon, Func<int, BitmapSource?>? item = null)
     {
         var full = new[]
         {
@@ -157,7 +158,7 @@ public static class CapScenarios
 
         scenarios.Add(new CapScenario("cambio-cap", "Se supera la prueba: el cap pasa de 42 a 54", [
             new(0, Base(icon, atCap, 5, highest: 42)),
-            new(2, Base(icon, atCap, 5, cap: 54, highest: 42, cleared: 8) with { Trial = "PRUEBA 9 DE 12", Next = 60 })]));
+            new(2, Base(icon, atCap, 5, cap: 54, highest: 42, cleared: 8) with { Trial = "PRUEBA 9 DE 12", Next = 60, CrystalItem = 820, Crystal = item?.Invoke(820) })]));
 
         scenarios.Add(new CapScenario("eclosion", "Un huevo eclosiona", [
             new(0, Base(icon, eggs, 0)),
