@@ -235,7 +235,8 @@ public sealed class CapBadge
             var game = _settings.Current.CapPanel && _launcher.IsRunning ? GameWindow.Handle() : IntPtr.Zero;
             _gameHandle = game;
 
-            if (game == IntPtr.Zero || GetForegroundWindow() != game
+            // Fijo (CONFIGURACIÓN), otra ventana delante del juego no lo esconde: solo el juego cerrado o minimizado.
+            if (game == IntPtr.Zero || (!_settings.Current.CapPinned && GetForegroundWindow() != game)
                 || GameWindow.RenderBox(game) is not { } picture)
             {
                 HideAll();
@@ -599,7 +600,7 @@ public sealed class CapBadge
         if (front == _front) return;
         _front = front;
         if (_rehearsing || _gameHandle == IntPtr.Zero) return;
-        if (front != _gameHandle) HideAll();
+        if (front != _gameHandle && !_settings.Current.CapPinned) HideAll();
         else if (!AnyVisible()) _ = TickAsync();
     }
 

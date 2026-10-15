@@ -928,10 +928,19 @@ public sealed class EncounterGuard(
 
         owned.UnionWith(_party);
 
-        foreach (var entry in await pokemon.GetAllAsync(run.Id, ct))
+        var entries = await pokemon.GetAllAsync(run.Id, ct);
+        foreach (var entry in entries)
         {
             owned.Add(entry.Species);
         }
+
+        // What the gacha or a wonder trade handed over is not a Pokémon the player found (2026-10-15, asked by the player): until
+        // they catch one of its family themselves, a wild one of it is the route's first encounter, not a duplicate. The handover
+        // marks the Pokédex too, and the gift may be in the party, so the family comes out of everything.
+        static bool Given(PokemonEntry e) => e.Origin is PokemonOrigin.Gacha or PokemonOrigin.WonderTrade;
+        var found = entries.Where(e => !Given(e)).Select(e => lines.GetLineId(e.Species)).ToHashSet();
+        var givenOnly = entries.Where(Given).Select(e => lines.GetLineId(e.Species)).Where(line => !found.Contains(line)).ToHashSet();
+        owned.RemoveWhere(species => givenOnly.Contains(lines.GetLineId(species)));
 
         return owned;
     }
