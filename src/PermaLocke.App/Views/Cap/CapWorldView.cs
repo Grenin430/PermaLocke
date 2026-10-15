@@ -98,11 +98,14 @@ public sealed class CapWorldView
         var drop = anim?.FloorDrop(t, 30) ?? 0;
         if (drop > 0) DropFloor(frame, drop, pal, anim!.SinceCap(t) ?? 0);
 
-        CapSeaLive.Surface(frame, Layout, pal, _context, phase);
+        // The stars twinkle behind what stands far off in the sky (the Sky Pillar, the Ultra Wormhole, 2026-10-15), and the sea is in front of it.
         CapSeaLive.Stars(frame, Layout, _context, phase);
+        CapFarSky.Paint(frame, Layout, pal, _context, phase);
+        CapSeaLive.Surface(frame, Layout, pal, _context, phase);
         CapSeaLive.Shafts(frame, Layout, pal, _context, phase);
         CapSeaLive.Snow(frame, Layout, pal, _context, phase);
         CapFlora.Paint(frame, Layout, pal, _context, _fossils, phase);
+        CapRuins.Live(frame, Layout, pal, _context, _fossils, phase);
         // In the party's window, the sign with the cap (2026-10-15). The coral and the little things on the sand (CapReefLife) were not liked
         // and are not painted until something else is chosen.
         if (Layout.Panel == CapPanelKind.Party)

@@ -19,7 +19,7 @@ public static class CapFlora
         for (var k = 0; k < count; k++)
         {
             var x = 4 + (CapArt.Hash(ctx.Seed + ctx.WorldX, k + 200) % Math.Max(1, l.Cols - 8));
-            if (fossilColumns.Any(f => Math.Abs(f - x) < 13)) continue;
+            if (fossilColumns.Any(f => Math.Abs(f - x) < 13) || CapRuins.Covers(l, x)) continue;
 
             var inEar = ear.X1 > ear.X0 && x >= ear.X0 && x < ear.X1;
             var room = inEar ? Math.Max(10, l.FloorTop - l.Notch.Y1 - 10) : 22;

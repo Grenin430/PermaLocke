@@ -71,6 +71,8 @@ public static class CapSea
         Water(p, l, pal);
         if (l.Panel == CapPanelKind.Deep && l.Sun.Width > 0) Glitter(p, l, pal, ctx);
         Floor(p, l, pal, data, ctx, fossilColumns);
+        // The ruins, the crystals and the old fossils on the deep's sand (2026-10-15); the fossils of the fallen lie in front of them.
+        CapRuins.Paint(p, l, pal, ctx, fossilColumns);
         Fossils(p, l, pal, grave, ctx, fossilColumns);
     }
 
