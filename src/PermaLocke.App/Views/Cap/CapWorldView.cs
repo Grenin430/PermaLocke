@@ -47,7 +47,7 @@ public sealed class CapWorldView
         {
             _sceneKey = key;
             _scenes.Clear();
-            _fossils = CapSea.FossilColumns(Layout, graves.Count, _context);
+            _fossils = CapFossils.InWater(Layout) ? [] : CapSea.FossilColumns(Layout, graves.Count, _context);
             _fossilViews = Layout.Panel == CapPanelKind.Deep ? CapFossils.Build(Layout, graves, _context, _fossils) : [];
         }
 

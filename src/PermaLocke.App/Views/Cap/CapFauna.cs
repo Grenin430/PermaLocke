@@ -61,7 +61,8 @@ public static class CapFauna
     /// <summary>A soul that rises from each of the latest two fossils, pale, slowly: more of them while the sea mourns.</summary>
     private static void Souls(CapSheet p, CapWorldLayout l, CapSeaContext ctx, IReadOnlyList<CapGrave> graves, double phase, double mourning)
     {
-        if (graves.Count == 0 || l.Mode == CapMode.Compact) return;
+        // The fallen that drift in the water have their own small light (CapDeep.Souls); nothing rises from the sand there.
+        if (graves.Count == 0 || l.Mode == CapMode.Compact || CapFossils.InWater(l)) return;
 
         var shown = Math.Min(graves.Count, 2 + (int)(mourning * 3));
         for (var n = 0; n < shown; n++)

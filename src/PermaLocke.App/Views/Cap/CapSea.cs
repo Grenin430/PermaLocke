@@ -64,7 +64,8 @@ public static class CapSea
     {
         p.Clear();
         var grave = data.Graves ?? [];
-        var fossilColumns = FossilColumns(l, grave.Count, ctx);
+        // The fallen that drift in the water (CapFossils.InWater) leave the sand as it is.
+        var fossilColumns = CapFossils.InWater(l) ? [] : FossilColumns(l, grave.Count, ctx);
 
         Sky(p, l, pal, ctx);
         if (l.Panel == CapPanelKind.Deep && l.Sun.Width > 0) Sun(p, l, pal, ctx);
@@ -247,6 +248,13 @@ public static class CapSea
         foreach (var fossil in CapFossils.Build(l, graves, ctx, columns))
         {
             // A dark rim round the stone, so that it stands out from the sand and from the water whatever is behind it.
+            if (CapFossils.InWater(l))
+            {
+                // A small grey figure in the water, a little see-through, nothing grows on it.
+                foreach (var cell in fossil.Cells) p.Set(cell.X, cell.Y, cell.Stone, 205);
+                continue;
+            }
+
             if (l.Panel == CapPanelKind.Deep) foreach (var (rx, ry) in fossil.Rim) p.Set(rx, ry, 0x0A1224u, 170);
             foreach (var cell in fossil.Cells) p.Set(cell.X, cell.Y, cell.Stone);
             Overgrowth(p, l, pal, fossil.Spec, ctx, columns);

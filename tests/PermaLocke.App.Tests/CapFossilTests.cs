@@ -67,7 +67,8 @@ public sealed class CapFossilTests
     [Fact]
     public void The_oldest_lies_the_deepest_the_newest_is_the_biggest_and_the_kelp_grows_with_the_days()
     {
-        var (layout, ctx, columns) = Sea(CapMode.Column, 180, 321, 8);
+        // On the sand: the flat band (the tall one keeps its fallen in the water, see below).
+        var (layout, ctx, columns) = Sea(CapMode.Strip, 636, 52, 8);
         var fossils = CapFossils.Build(layout, Graves(8, age: i => i * 3), ctx, columns);
 
         // Sunk as a share of its own height rises as they get older (the index 0 is the oldest).
@@ -81,6 +82,33 @@ public sealed class CapFossilTests
 
         // Kelp: none for a fossil of today, one more every three days, four at most.
         Assert.Equal([0, 1, 2, 3, 4, 4], Enumerable.Range(0, 6).Select(i => CapFossils.Build(layout, Graves(1, age: _ => i * 3), ctx, CapSea.FossilColumns(layout, 1, ctx))[0].Spec.Growth));
+    }
+
+    [Theory]
+    [InlineData(CapMode.Column, 180, 321)]
+    [InlineData(CapMode.Column, 207, 325)]
+    [InlineData(CapMode.Slim, 100, 321)]
+    public void In_the_tall_band_the_fallen_drift_small_and_grey_in_the_open_water_over_the_ruins_and_none_moves_when_another_falls(CapMode mode, int cols, int rows)
+    {
+        var (layout, ctx, _) = Sea(mode, cols, rows, 15);
+        Assert.True(CapFossils.InWater(layout));
+        var fossils = CapFossils.Build(layout, Graves(15), ctx, []);
+        foreach (var fossil in fossils)
+        {
+            var spec = fossil.Spec;
+            Assert.Equal(4, spec.Scale);
+            Assert.InRange(spec.Top, layout.SurfaceY + 12, layout.FloorTop - 46);
+            Assert.InRange(spec.Left, layout.Main.Left, layout.Main.Right - spec.Width);
+            Assert.All(fossil.Cells, cell =>
+            {
+                var (r, g, b) = ((cell.Stone >> 16) & 255, (cell.Stone >> 8) & 255, cell.Stone & 255);
+                Assert.True(Math.Max(r, Math.Max(g, b)) - Math.Min(r, Math.Min(g, b)) <= 16, $"fossil {spec.Index} is not grey");
+            });
+        }
+
+        // The place of each one depends only on its number.
+        var fewer = CapFossils.Build(layout, Graves(6), ctx, []);
+        for (var i = 0; i < fewer.Length; i++) Assert.Equal((fossils[i].Spec.Left, fossils[i].Spec.Top), (fewer[i].Spec.Left, fewer[i].Spec.Top));
     }
 
     [Fact]
