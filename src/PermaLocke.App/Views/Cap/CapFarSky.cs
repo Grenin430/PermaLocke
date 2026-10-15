@@ -8,13 +8,33 @@ namespace PermaLocke.App.Views;
 /// </summary>
 public static class CapFarSky
 {
-    public static void Paint(CapSheet p, CapWorldLayout l, CapSeaPalette pal, CapSeaContext ctx, double phase)
+    /// <param name="wormholeSize">How big the wormhole is drawn (1 its own size): a death can make it swell (2026-10-15).</param>
+    /// <param name="wormholeAlpha">How much of it shows: it flickers while it charges.</param>
+    public static void Paint(CapSheet p, CapWorldLayout l, CapSeaPalette pal, CapSeaContext ctx, double phase, double wormholeSize = 1, double wormholeAlpha = 1)
     {
         if (l.Mode is not (CapMode.Column or CapMode.Slim)) return;
 
         var t = phase / 3;
         if (l.Panel == CapPanelKind.Deep) Pillar(p, l, pal, ctx, t);
-        else Wormhole(p, l, t);
+        else Wormhole(p, l, t, wormholeSize, wormholeAlpha);
+    }
+
+    /// <summary>Where the wormhole's core is in the party's window, or null when it is not drawn there.</summary>
+    public static (int X, int Y)? WormholeAt(CapWorldLayout l)
+    {
+        if (l.Mode is not (CapMode.Column or CapMode.Slim) || l.Panel != CapPanelKind.Party) return null;
+        var cx = l.Main.Left + R(l.Main.Width * 0.49);
+        var cy = R(l.SurfaceY * 0.43);
+        var trail = Math.Min(72, l.Main.Right - 4 - (cx + 3));
+        return cy < 24 || cx - 28 < l.Main.Left || trail < 30 ? null : (cx, cy);
+    }
+
+    /// <summary>The top of the Sky Pillar in the deep's window (in the middle of its crown), or null when it is not drawn there.</summary>
+    public static (int X, int Y)? PillarTopAt(CapWorldLayout l)
+    {
+        if (l.Mode is not (CapMode.Column or CapMode.Slim) || l.Panel != CapPanelKind.Deep) return null;
+        var cx = l.Main.Left + 42;
+        return 49 + l.SurfaceY - 70 < 34 || l.Main.Width < 70 || l.InNotch(cx + 16, 2) ? null : (cx, 9);
     }
 
     /// <summary>Rounds as the prototype did (halves up), so the shapes are the ones approved.</summary>
@@ -258,14 +278,21 @@ public static class CapFarSky
     /// broken from the centre, still; a soft envelope of violet, pink and cyan round it; the net of its side view, a funnel of thin lines with no
     /// fill narrowing away from the opening and bright inside; and a long cyan and violet trail along it, fading into the sky.
     /// </summary>
-    private static void Wormhole(CapSheet p, CapWorldLayout l, double t)
+    private static void Wormhole(CapSheet p, CapWorldLayout l, double t, double size = 1, double shown = 1)
     {
-        var cx = l.Main.Left + R(l.Main.Width * 0.49);
-        var cy = R(l.SurfaceY * 0.43);
+        if (WormholeAt(l) is not { } at) return;
+        var (cx, cy) = at;
         var trail = Math.Min(72, l.Main.Right - 4 - (cx + 3));
-        if (cy < 24 || cx - 28 < l.Main.Left || trail < 30) return;
 
-        void Put(double x, double y, uint c, double alpha) => Far(p, l, cx + (int)x, cy + (int)y, c, 0.04, Math.Clamp(R(alpha), 0, 255));
+        // bigger than its own size, each cell of it is a block of cells, as far from the core as it is made bigger
+        var block = Math.Max(1, (int)Math.Ceiling(size));
+        void Put(double x, double y, uint c, double alpha)
+        {
+            var a = Math.Clamp(R(alpha * shown), 0, 255);
+            if (size == 1) { Far(p, l, cx + (int)x, cy + (int)y, c, 0.04, a); return; }
+            int bx = cx + R((int)x * size), by = cy + R((int)y * size);
+            for (var v = 0; v < block; v++) for (var u = 0; u < block; u++) Far(p, l, bx + u, by + v, c, 0.04, a);
+        }
         void Line(double x0, double y0, double x1, double y1, uint c, double alpha)
         {
             int ax = R(x0), ay = R(y0), bx = R(x1), by = R(y1);

@@ -197,6 +197,14 @@ public sealed class CapCreature
         foreach (var (x, y, _) in _body) p.Set(baseX + x, baseY + y, colour, alpha);
     }
 
+    /// <summary>The body in negative colours at its place, for an instant: a bolt has gone through it.</summary>
+    public void PaintNegative(CapSheet p)
+    {
+        var baseX = Slot.Sprite.Left + ((Slot.Sprite.Width - _spriteW) / 2);
+        var baseY = Slot.Sprite.Top + ((Slot.Sprite.Height - _spriteH) / 2);
+        foreach (var (x, y, rgb) in _body) p.Set(baseX + x, baseY + y, 0xFFFFFFu - rgb);
+    }
+
     /// <summary>PROPOSAL: the body painted in one colour only between two rows of the picture (0 is its top): a band of light that sweeps down it.</summary>
     public void PaintBand(CapSheet p, int ox, int oy, uint colour, int alpha, int fromRow, int toRow)
     {

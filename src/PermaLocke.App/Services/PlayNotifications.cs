@@ -20,8 +20,9 @@ namespace PermaLocke.App.Services;
 /// written and verified, so a notice can never claim something that did not happen.
 /// </para>
 /// <para>
-/// A death gets both: the <see cref="DeathCeremony"/> over the game, which is the moment, and the
-/// corner notice, which stays in the list of notices once the moment has gone.
+/// A death gets the corner notice, which stays in the list of notices. The moment itself is in the cap panel
+/// beside the game (2026-10-15, <c>CapDeath</c>): nothing covers the game any more, neither the old scene
+/// over it nor the blood rain of a wipe.
 /// </para>
 /// <para>
 /// Every notice carries a sprite from the player's own cartridge when there is one to carry: the Pokémon of the
@@ -30,9 +31,8 @@ namespace PermaLocke.App.Services;
 /// </remarks>
 public sealed class PlayNotifications
 {
-    public PlayNotifications(GameLinkMonitor monitor, MaintenanceService maintenance, Notifier notifier,
-        DeathCeremony ceremony, PokemonSpriteService sprites, EncounterGuard encounters, BallControlService balls,
-        WipeRain rain, CatchCeremony catches)
+    public PlayNotifications(GameLinkMonitor monitor, Notifier notifier, PokemonSpriteService sprites, EncounterGuard encounters,
+        BallControlService balls, CatchCeremony catches)
     {
         // Una captura salvaje: su carta vuela al álbum encima del juego (§190).
         encounters.Caught += (_, caught) => catches.Celebrate(caught);
@@ -53,15 +53,7 @@ public sealed class PlayNotifications
             SpriteFor(notice, sprites));
 
         monitor.PokemonDied += (_, fallen) =>
-        {
-            ceremony.Mourn(fallen);
-
             notifier.Say(ToastKind.Death, $"{fallen.Name} ha caído", string.Empty, sprites.Get(fallen.Species, fallen.Form, fallen.Shiny));
-        };
-
-        // Las marcadas a mano en MANTENIMIENTO son justo las que la app no llegó a ver: tienen su
-        // momento igual. Sin aviso de esquina, porque quien las marca acaba de pulsar el botón.
-        maintenance.MarkedDead += (_, fallen) => ceremony.Mourn(fallen);
 
         // Esto salta al CERRAR el emulador, que es cuando la marca se puede escribir en la partida.
         // Llega con el juego ya cerrado y por tanto sin nada tapando la pantalla, que es justo
@@ -69,16 +61,8 @@ public sealed class PlayNotifications
         // BAJA y no EQUIPO CAÍDO: casi siempre es uno solo, y la otra etiqueta hacía pensar en un wipe.
         monitor.DeathMarked += (_, notice) => notifier.Say(ToastKind.Death, "Caídos", notice);
 
-        monitor.TeamWiped += (_, penalty) =>
-        {
-            // Detrás de las muertes que lo formaron, que ya están en la cola.
-            ceremony.TeamFell(penalty.Points);
-
-            // Llueve sangre sobre el juego (§184).
-            rain.Play();
-
-            notifier.Say(ToastKind.TeamWipe, "Equipo caído", "Fin de la partida.");
-        };
+        // Las muertes del wipe se ven en la plantilla una detrás de otra; el aviso dice que se acabó.
+        monitor.TeamWiped += (_, _) => notifier.Say(ToastKind.TeamWipe, "Equipo caído", "Fin de la partida.");
 
         monitor.RewardGiven += (_, given) => notifier.Say(
             ToastKind.Reward,

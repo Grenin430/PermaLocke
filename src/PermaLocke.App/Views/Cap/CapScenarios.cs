@@ -131,7 +131,22 @@ public static class CapScenarios
             new(2, Base(icon, Replace(full, 0, m => m with { Hp = 90 }), battle: true)),
             new(5, Base(icon, Replace(full, 0, m => m with { Hp = 31 }), battle: true))]));
 
-        scenarios.Add(new CapScenario("caida", "Gyarados cae en combate y su tumba aparece", [
+        // Each death of the overlay (CapDeath) on Gyarados: its PID is the first one that draws that death, past those of the rest of the party.
+        foreach (var kind in Enum.GetValues<CapDeathKind>())
+        {
+            var pid = 2000u;
+            while (CapDeath.KindOf(pid, 0) != kind) pid++;
+            var alive = Replace(full, 0, m => m with { Pid = pid, Hp = 31 });
+            scenarios.Add(new CapScenario($"muerte-{kind.ToString().ToLowerInvariant()}", $"Gyarados cae: muerte {kind}", [
+                new(0, Base(icon, alive, battle: true)),
+                new(2, Base(icon, Replace(alive, 0, m => m with { Hp = 0 }), battle: true))]));
+        }
+
+        scenarios.Add(new CapScenario("muertes-seguidas", "Caen dos a la vez: sus muertes van una detrás de otra", [
+            new(0, Base(icon, Replace(full, 0, m => m with { Hp = 31 }), battle: true)),
+            new(2, Base(icon, Replace(Replace(full, 0, m => m with { Hp = 0 }), 2, m => m with { Hp = 0 }), battle: true))]));
+
+        scenarios.Add(new CapScenario("caida", "Gyarados cae en combate y su muerte se ve en la plantilla", [
             new(0, Base(icon, Replace(full, 0, m => m with { Hp = 31 }), battle: true)),
             new(2, Base(icon, Replace(full, 0, m => m with { Hp = 0 }), battle: true)),
             new(7, Base(icon, Replace(full, 0, m => m with { Hp = 0 }), 4))]));

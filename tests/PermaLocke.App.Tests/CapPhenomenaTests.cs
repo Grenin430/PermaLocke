@@ -15,30 +15,26 @@ public sealed class CapPhenomenaTests
     private static CapWorldLayout Layout() => CapWorld.Arrange(CapMode.Column, CapPanelKind.Party, 180, 321, (0, 0, 0));
 
     [Fact]
-    public void A_pokemon_that_falls_leaves_its_place_for_the_time_it_takes_to_sink_and_then_a_ghost_stays()
+    public void Deaths_that_happen_together_are_shown_one_after_another_each_with_the_death_of_its_pid()
     {
         var anim = new CapAnim();
-        anim.Update(Data([Member(1, 10), Member(2)], 3, battle: true), 0);
-        anim.Update(Data([Member(1, 0), Member(2)], 3, battle: true), 2);
-        var layout = Layout();
-        var ctx = new CapSeaContext(Seed: 4);
+        var alive = Data([Member(11, 10), Member(12), Member(13, 5)], 3, battle: true);
+        anim.Update(alive, 0);
+        var fallen = Data([Member(11, 0), Member(12), Member(13, 0)], 3, battle: true);
+        anim.Update(fallen, 2);
 
-        CapPose At(double t) => CapFx.Pose(anim, 0, t, Member(1, 0), 0, true, layout, ctx, 3);
+        Assert.Empty(CapDeath.Schedule(fallen, anim, 1.9));
+        var turns = CapDeath.Schedule(fallen, anim, 2.5);
+        Assert.Equal([0, 2], turns.Select(d => d.Index));
+        Assert.Equal(2, turns[0].Start, 3);
+        Assert.Equal(turns[0].End, turns[1].Start, 3);
+        Assert.Equal(CapDeath.KindOf(11, 0), turns[0].Kind);
+        Assert.Equal(CapDeath.KindOf(13, 2), turns[1].Kind);
 
-        Assert.False(At(1.9).Hidden);
-        Assert.True(At(2.3).Hidden);
-        Assert.True(At(2 + CapFx.SinkSeconds - 0.1).Hidden);
-        Assert.False(At(2 + CapFx.SinkSeconds + 0.1).Hidden);
-        Assert.InRange(At(2 + CapFx.SinkSeconds + 2).Strength, 0.2, 0.5);
-
-        // The first half second is a white flash of the whole picture.
-        Assert.Equal(0xFFFFFFu, At(2.05).Wash);
-        Assert.True(At(2.05).WashAlpha > 150);
-        Assert.Null(At(3.0).Wash);
-
-        // The one that did not fall is untouched.
-        Assert.False(CapFx.Pose(anim, 1, 3, Member(2), 1, true, layout, ctx, 3).Hidden);
-        Assert.Equal(3, anim.GravesAtFall(0));
+        // The one that did not fall has no turn, and the same PID always draws the same death.
+        Assert.DoesNotContain(turns, d => d.Index == 1);
+        Assert.Equal(CapDeath.KindOf(11, 0), CapDeath.KindOf(11, 4));
+        Assert.Equal(Enum.GetValues<CapDeathKind>().Length, Enumerable.Range(1, 400).Select(p => CapDeath.KindOf((uint)p, 0)).Distinct().Count());
     }
 
     [Fact]

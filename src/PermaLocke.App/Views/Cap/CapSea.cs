@@ -65,7 +65,8 @@ public static class CapSea
         p.Clear();
         var grave = data.Graves ?? [];
         // The fallen that drift in the water (CapFossils.InWater) leave the sand as it is.
-        var fossilColumns = CapFossils.InWater(l) ? [] : FossilColumns(l, grave.Count, ctx);
+        // The fallen are not in the overlay any more (2026-10-15): after its death a Pokémon is kept by the cemetery, not by the sea floor.
+        int[] fossilColumns = [];
 
         Sky(p, l, pal, ctx);
         if (l.Panel == CapPanelKind.Deep && l.Sun.Width > 0) Sun(p, l, pal, ctx);
@@ -74,7 +75,6 @@ public static class CapSea
         Floor(p, l, pal, data, ctx, fossilColumns);
         // The ruins, the crystals and the old fossils on the deep's sand (2026-10-15); the fossils of the fallen lie in front of them.
         CapRuins.Paint(p, l, pal, ctx, fossilColumns);
-        Fossils(p, l, pal, grave, ctx, fossilColumns);
     }
 
     // ---------------------------------------------------------------- sky and water

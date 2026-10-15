@@ -45,14 +45,8 @@ public static class CapFx
         // What happened to it (a hit, a getting up) and its quiet life: the sway and the blink.
         CapFxEvents.Pose(anim, i, t, m, share, battle, ref dx, ref wash, ref washAlpha, ref strength, out var wave, out var waveSpeed, out var haloScale);
 
+        // A fall is the death's own (CapDeath, 2026-10-15): until its turn the fallen one stays as it is, from its turn on it is not drawn here.
         var hidden = false;
-        if (anim.SinceFall(i, t) is { } fall)
-        {
-            // The light goes out (a white flash), the creature leaves its place and sinks; once it has landed a pale ghost of it stays where it was.
-            if (fall < 0.5) (wash, washAlpha) = (0xFFFFFFu, (int)(210 * (1 - (fall / 0.5))));
-            if (fall < SinkSeconds) hidden = true;
-            else strength = Math.Min(0.5, 0.2 + ((fall - SinkSeconds) * 0.3));
-        }
 
         _ = l;
         _ = ctx;

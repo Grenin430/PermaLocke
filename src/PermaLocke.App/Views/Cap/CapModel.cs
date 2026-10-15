@@ -58,7 +58,7 @@ public sealed record CapGrave(BitmapSource? Sprite, string Name, string? FellTo 
 /// <param name="Seed">A number out of the run (its id): the relief of the floor, the coral and the rare events come from it.</param>
 public sealed record CapPlaqueData(string Trial, int Cap, int? Next, int? Highest, IReadOnlyList<CapPlaqueMember> Party,
     bool InBattle = false, IReadOnlyList<CapGrave>? Graves = null, int Cleared = 0, int Trials = 0, double Hour = -1, int Seed = 0,
-    IReadOnlyList<CapEvent>? Events = null, double? ActiveShare = null);
+    IReadOnlyList<CapEvent>? Events = null, double? ActiveShare = null, bool DeathScenes = true);
 
 /// <summary>What can happen to one Pokémon that the sea shows as something that happens to its creature.</summary>
 public enum CapEventKind

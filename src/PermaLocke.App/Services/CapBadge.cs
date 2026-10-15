@@ -504,7 +504,7 @@ public sealed class CapBadge
         _lastMode = plan.Main?.Mode;
         var seed = _runContext.Current is { } activeRun ? activeRun.Id.GetHashCode() & 0x7FFFFFFF : 0;
         var data = _rehearsal ?? new CapPlaqueData(reading.Trial, reading.Cap, reading.Next, reading.Highest, _party, _battle, _graves, reading.Cleared,
-            reading.Trials, _sky.IsKnown ? _sky.Hour : -1, seed, _events, ActiveShare());
+            reading.Trials, _sky.IsKnown ? _sky.Hour : -1, seed, _events, ActiveShare(), _settings.Current.DeathScene);
         _data = data;
 
         // One sea in two windows.

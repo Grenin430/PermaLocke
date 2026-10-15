@@ -18,7 +18,7 @@ public sealed class CapWorldView
     private string _sceneKey = string.Empty;
     private string _buoyKey = string.Empty;
     private int[] _fossils = [];
-    private CapFossil[] _fossilViews = [];
+    private readonly Dictionary<string, CapDeathScene> _deaths = [];
 
     public CapWorldView(CapMode mode, CapPanelKind panel, int cols, int rows, (int X0, int X1, int Y1) notch)
     {
@@ -47,8 +47,8 @@ public sealed class CapWorldView
         {
             _sceneKey = key;
             _scenes.Clear();
-            _fossils = CapFossils.InWater(Layout) ? [] : CapSea.FossilColumns(Layout, graves.Count, _context);
-            _fossilViews = Layout.Panel == CapPanelKind.Deep ? CapFossils.Build(Layout, graves, _context, _fossils) : [];
+            // The fallen are not drawn in the overlay any more (2026-10-15): the cemetery keeps them.
+            _fossils = [];
         }
 
         if (Layout.Panel != CapPanelKind.Party) return;
@@ -91,6 +91,11 @@ public sealed class CapWorldView
         var phase = anim?.Phase(t) ?? 0;
         var pal = CapSeaPalette.Of(mood.Now);
 
+        // The deaths of the party, one after another (2026-10-15): the one being shown now, and in this window its scene.
+        var deaths = anim is null ? [] : CapDeath.Schedule(data, anim, t);
+        var dying = data.DeathScenes ? deaths.FirstOrDefault(d => t >= d.Start && t < d.End) : null;
+        var scene = Layout.Panel == CapPanelKind.Party && dying is not null ? SceneOf(dying, data, pal) : null;
+
         frame.CopyFrom(Scene(mood.Now));
         if (mood.Blend < 1 && mood.Before != mood.Now) DitherFrom(frame, Scene(mood.Before), mood.Blend);
 
@@ -100,7 +105,7 @@ public sealed class CapWorldView
 
         // The stars twinkle behind what stands far off in the sky (the Sky Pillar, the Ultra Wormhole, 2026-10-15), and the sea is in front of it.
         CapSeaLive.Stars(frame, Layout, _context, phase);
-        CapFarSky.Paint(frame, Layout, pal, _context, phase);
+        CapFarSky.Paint(frame, Layout, pal, _context, phase, scene?.WormholeSize(t) ?? 1);
         CapSeaLive.Surface(frame, Layout, pal, _context, phase);
         CapSeaLive.Shafts(frame, Layout, pal, _context, phase);
         CapSeaLive.Snow(frame, Layout, pal, _context, phase);
@@ -114,26 +119,60 @@ public sealed class CapWorldView
             CapSign.Paint(frame, Layout, pal, _context, data, _fossils, atCap, phase);
         }
 
-        // The fallen wander in the deep's water (2026-10-15): where they are now, for their figures, their souls and the focus.
-        var fallen = CapFossils.Drift(Layout, _context, _fossilViews, phase);
-        CapFossils.PaintDrifting(frame, Layout, fallen);
-        CapDeep.Souls(frame, Layout, fallen, phase);
-        // A still frame (no animation) shows the focus in the middle of its time on the newest fossil, not dark at the start of it.
-        CapDeep.Focus(frame, Layout, pal, fallen, _context, anim is null ? CapDeep.NewestSeconds / 2 : t);
-        // What swims and flies past goes in front of the light on the fossils: the beam was washing out the eyes of whoever crossed it (2026-10-14).
-        if (anim is not null) CapFauna.Paint(frame, Layout, pal, mood, _context, t, phase, data.Graves ?? []);
+        if (anim is not null) CapFauna.Paint(frame, Layout, pal, mood, _context, t, phase, []);
 
-        if (Layout.Panel == CapPanelKind.Party) PaintParty(frame, data, pal, mood, anim, t, phase);
+        if (Layout.Panel == CapPanelKind.Party) PaintParty(frame, data, pal, mood, anim, t, phase, deaths);
 
-        // A fall darkens the whole sea for a moment: a veil of dither that comes down fast and lifts slowly, in both windows.
-        if (anim?.LastFallSince(t) is { } since && since < 2.6)
+        // The death being shown: in the party's window the fallen one taken apart; in the deep's, its share of the deaths that reach it.
+        scene?.Paint(frame, t, phase);
+        if (Layout.Panel == CapPanelKind.Deep && dying is not null)
         {
-            var veil = since < 0.25 ? since / 0.25 : 1 - ((since - 0.25) / 2.35);
-            frame.Dither(0, 0, frame.W, frame.H, 0x04061Au, (int)(130 * veil), (int)Math.Floor(since * 12) & 1);
+            var since = t - dying.Start;
+            switch (dying.Kind)
+            {
+                case CapDeathKind.Sky:
+                    CapDeathSky.Deep(frame, Layout, since);
+                    break;
+                case CapDeathKind.Storm:
+                    CapDeathStormSky.Deep(frame, Layout, since);
+                    break;
+                case CapDeathKind.Necrozma:
+                    NecrozmaDeath.Deep(frame, Layout, _context, since);
+                    break;
+            }
         }
     }
 
-    private void PaintParty(CapSheet p, CapPlaqueData data, CapSeaPalette pal, (CapMood Now, CapMood Before, double Blend) mood, CapAnim? anim, double t, double phase)
+    /// <summary>
+    /// The scene of a death, made when it starts from the creature as it was: its picture in its own colours (not the grey of the fallen) and
+    /// everything written beside it, and the rest of the party for the deaths that touch them. Kept while it plays.
+    /// </summary>
+    private CapDeathScene? SceneOf(CapDeathTurn turn, CapPlaqueData data, CapSeaPalette pal)
+    {
+        var key = $"{turn.Pid}|{turn.Index}|{turn.Start:R}";
+        if (_deaths.TryGetValue(key, out var made)) return made;
+        if (turn.Index >= _creatures.Length || _creatures[turn.Index].Member is not { } member) return null;
+
+        var creature = _creatures[turn.Index];
+        // a fallen one is drawn grey; its death starts from it in its own colours (one point of life for the drawing, none for its bar)
+        var m = member with { Hp = Math.Max(1, member.Hp) };
+        var shadow = new CapCreature { Slot = creature.Slot };
+        shadow.Build(m, _writing, data.Cap, Layout.Mode != CapMode.Column);
+        var picture = new CapSheet(Layout.Cols, Layout.Rows);
+        shadow.PaintPicture(picture, 0, 0, pal.Ink, 0.5, 1, null, 0, 0, 0);
+        var writing = new CapSheet(Layout.Cols, Layout.Rows);
+        if (shadow.Info is { } info) writing.Blit(info, shadow.InfoAt.X, shadow.InfoAt.Y);
+        var share = m.MaxHp > 0 ? Math.Clamp(member.Hp / (double)m.MaxHp, 0, 1) : 0;
+        PaintBeads(writing, shadow, m, share, 0.5, pal, null);
+        var others = _creatures.Where((c, i) => i != turn.Index && c.Member is { Fallen: false }).ToList();
+        var rowLine = creature.Slot.Info.Height > 0 ? creature.Slot.Info.Bottom - 1 : creature.Slot.Sprite.Bottom + 3;
+
+        if (_deaths.Count > 8) _deaths.Clear();
+        return _deaths[key] = new CapDeathScene(turn, Layout, picture, writing, shadow.InfoAt.X, rowLine, others);
+    }
+
+    private void PaintParty(CapSheet p, CapPlaqueData data, CapSeaPalette pal, (CapMood Now, CapMood Before, double Blend) mood, CapAnim? anim, double t, double phase,
+        IReadOnlyList<CapDeathTurn> deaths)
     {
         // Singleplayer (2026-10-13): no buoy with the cap, no tag under it, no sounding line; the level turns gold at the cap and that is all.
         var graves = data.Graves?.Count ?? 0;
@@ -146,6 +185,11 @@ public sealed class CapWorldView
                 PaintVacant(p, creature, pal, phase);
                 continue;
             }
+
+            // A fallen one is drawn until its death's turn comes; from then on its death paints it, and after it nothing does: its row is empty.
+            // One that fell before the panel opened is not drawn at all; with the death scenes off, it goes when it falls.
+            var turn = deaths.FirstOrDefault(d => d.Index == i);
+            if (turn is not null ? !data.DeathScenes || t >= turn.Start : m.Fallen) continue;
 
             var sway = Layout.Mode == CapMode.Slim || Layout.Dense ? 1.0 : 1.7;
             var share = anim?.HpFraction(i, t) ?? (m.MaxHp > 0 ? Math.Clamp(m.Hp / (double)m.MaxHp, 0, 1) : 0);
@@ -166,7 +210,6 @@ public sealed class CapWorldView
             if (anim is not null)
             {
                 CapFx.Overlay(p, Layout, pal, creature, m, anim, i, t, phase);
-                CapFx.Fall(p, Layout, pal, _context, creature, anim, i, t, graves, _fossils);
             }
         }
     }
