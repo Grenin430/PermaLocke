@@ -319,7 +319,10 @@ public sealed class RulePatchesTests
 
             var items = new pk3DS.Core.CTR.GARC.LazyGARC(File.ReadAllBytes(Path.Combine(romfs, "a", "0", "1", "9")));
             Assert.Equal(RulePatches.SuperCandyPrice, BinaryPrimitives.ReadUInt16LittleEndian(items[SuperCandy.ItemId]));
-            Assert.Equal(items[RulePatches.RareCandyItem][2..], items[SuperCandy.ItemId][2..]);
+            // the Rare Candy's data but for the price and its own place in the pocket's order, after the Rare Candy's (2026-10-15)
+            Assert.Equal(items[RulePatches.RareCandyItem][2..0x0F], items[SuperCandy.ItemId][2..0x0F]);
+            Assert.Equal(items[RulePatches.RareCandyItem][0x10..], items[SuperCandy.ItemId][0x10..]);
+            Assert.True(items[SuperCandy.ItemId][0x0F] > items[RulePatches.RareCandyItem][0x0F]);
 
             var config = new pk3DS.Core.GameConfig(pk3DS.Core.GameVersion.UM);
             var garc = new pk3DS.Core.CTR.GARC.LazyGARC(File.ReadAllBytes(Path.Combine(romfs, "a", "0", "3", "6")));

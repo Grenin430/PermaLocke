@@ -211,7 +211,7 @@ public static partial class RulePatches
             return null;
         }
 
-        problem = ItemData(itemData, SuperCandyItem, RareCandyItem, SuperCandyPrice, SuperCandyName)
+        problem = ItemData(itemData, SuperCandyItem, RareCandyItem, SuperCandyPrice, SuperCandyName, ownSort: true)
                   ?? ItemText(text, SuperCandyLines, SuperCandyName);
         if (problem is not null) return null;
 
@@ -222,21 +222,45 @@ public static partial class RulePatches
     /// Makes the unused slot <paramref name="item"/> a copy of <paramref name="model"/>'s data with the price word
     /// <paramref name="price"/>. Null when done (or already so), what went wrong otherwise.
     /// </summary>
-    private static string? ItemData(string path, int item, int model, ushort price, string name)
+    /// <param name="ownSort">
+    /// Give it a place of its own in its pocket's order (the byte at <see cref="SortOffset"/>), the first free one after the model's, instead of
+    /// sharing the model's (2026-10-15). With the Rare Candy's, the bag came back from a move to learn or an evolution with the cursor on the Rare
+    /// Candy, not on the SuperCarameloraro being used: a guess at why, still to be seen in the game.
+    /// </param>
+    private static string? ItemData(string path, int item, int model, ushort price, string name, bool ownSort = false)
     {
         var garc = new pk3DS.Core.CTR.GARC.LazyGARC(File.ReadAllBytes(path));
         if (garc.FileCount <= item) return $"datos de objetos distintos: sin {name}";
 
-        var wanted = (byte[])garc[model].Clone();
-        BinaryPrimitives.WriteUInt16LittleEndian(wanted, price);
+        var copy = (byte[])garc[model].Clone();
+        BinaryPrimitives.WriteUInt16LittleEndian(copy, price);
+        var wanted = (byte[])copy.Clone();
+        if (ownSort && FreeSortAfter(garc, model, item) is { } sort) wanted[SortOffset] = sort;
 
         var current = garc[item];
         if (current.AsSpan().SequenceEqual(wanted)) return null;
-        // Un hueco libre de la expansión solo lleva el byte 0x0D puesto.
-        if (current.Where((value, i) => i != 0x0D && value != 0).Any()) return $"el objeto {item} ya se usa: sin {name}";
+        // Un hueco libre de la expansión solo lleva el byte 0x0D puesto; el que dejó una versión anterior (la copia sin orden propio) se rehace.
+        if (!current.AsSpan().SequenceEqual(copy) && current.Where((value, i) => i != 0x0D && value != 0).Any()) return $"el objeto {item} ya se usa: sin {name}";
 
         garc[item] = wanted;
         File.WriteAllBytes(path, garc.Save());
+        return null;
+    }
+
+    /// <summary>Where an item's place in its pocket's order is (pk3DS's <c>Item.SortIndex</c>).</summary>
+    private const int SortOffset = 0x0F;
+
+    /// <summary>The pocket an item goes in, from its packed word (bits 7-10).</summary>
+    private static int PocketOf(byte[] data) => (BinaryPrimitives.ReadUInt16LittleEndian(data.AsSpan(8)) >> 7) & 0xF;
+
+    /// <summary>The first place in the model's pocket after the model's own that no other item there takes (the item itself aside).</summary>
+    private static byte? FreeSortAfter(pk3DS.Core.CTR.GARC.LazyGARC garc, int model, int item)
+    {
+        var pocket = PocketOf(garc[model]);
+        var taken = Enumerable.Range(1, garc.FileCount - 1)
+            .Where(i => i != item && garc[i] is { Length: > SortOffset } d && PocketOf(d) == pocket)
+            .Select(i => (int)garc[i][SortOffset]).ToHashSet();
+        for (var sort = garc[model][SortOffset] + 1; sort < 255; sort++) if (!taken.Contains(sort)) return (byte)sort;
         return null;
     }
 

@@ -189,9 +189,9 @@ public sealed class CatchCeremony(IUiDispatcher ui, SaveBoxReader boxes, TcgCard
                     logger.LogInformation("Objeto a la mochila: {Item} ×{Amount}", item.Name, item.Amount);
                     _window ??= new CatchWindow();
 
-                    // Never cut by the player's keys (2026-10-10, asked by the organiser): it plays to its end. Only another item
-                    // waiting makes it go at triple speed. GameInputWatch and the window's leave hook stay for a future use.
-                    await _window.PlayAsync(item, corner, itemPixel, () => _waiting.Count > 0, null, Speed * ItemPace);
+                    // Never cut by the player's keys (2026-10-10, asked by the organiser) and never hurried (2026-10-15, asked by the player:
+                    // another item waiting used to make it go at triple speed): each plays to its end at its own pace.
+                    await _window.PlayAsync(item, corner, itemPixel, null, null, Speed * ItemPace);
                     continue;
                 }
 
