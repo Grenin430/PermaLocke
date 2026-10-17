@@ -106,6 +106,20 @@ public sealed class FieldItemRandomizer(RomWorkspace workspace, RandomizerOption
             Shuffle(regularPool, random);
         }
 
+        // La Poción Variocolor (2026-10-17): unos pocos sitios normales, al azar, la esconden. No está en el saco de arriba porque el cartucho
+        // no la nombra (es un hueco «(?)» que PermaLocke rellena al jugar).
+        if (options is { FieldShinyPotions: > 0 })
+        {
+            var potions = random.Derive("variocolor");
+            var spots = Enumerable.Range(0, regularPool.Count).ToList();
+            for (var k = 0; k < Math.Min(options.FieldShinyPotions, spots.Count); k++)
+            {
+                var at = potions.Next(k, spots.Count);
+                (spots[k], spots[at]) = (spots[at], spots[k]);
+                regularPool[spots[k]] = PermaLocke.Core.Domain.ShinyPotion.ItemId;
+            }
+        }
+
         var machineMap = MachineMap(machineOriginal, machinePool);
         var machineCount = 0;
         var regularCount = 0;

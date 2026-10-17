@@ -1,4 +1,4 @@
-namespace PermaLocke.App.Views;
+﻿namespace PermaLocke.App.Views;
 
 /// <summary>How a passer-by moves: a fish beats its tail, a serpent waves its whole body, a bird beats its wings.</summary>
 public enum CritterMotion
@@ -64,6 +64,19 @@ public sealed record CritterArt(int Species, string Name, CritterMotion Motion, 
             new(117, "Seadra", CritterMotion.Fish, "", "", Fps: 10, Sheet: "seadra", Cell: 68, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 47, Drift: 4, Bob: 2, Surge: 0.7),
             new(131, "Lapras", CritterMotion.Fish, "", "", Fps: 6, Sheet: "lapras", Cell: 88, Angles: [-4, 0, 4, 8], Pose: 0, Height: 66, Drift: 4, Bob: 1, Surge: 1),
             new(130, "Gyarados", CritterMotion.Fish, "", "", Fps: 7, Sheet: "gyarados", Cell: 100, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 76, Drift: 6, Bob: 1.5, Surge: 1.2),
+            // The Mega forms (2026-10-16): 10000 + the species, for after the Mega Evolution is unlocked.
+            new(10130, "Mega Gyarados", CritterMotion.Fish, "", "", Fps: 7, Sheet: "megagyarados", Cell: 114, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 90, Drift: 6, Bob: 1.5, Surge: 1.2),
+            new(10319, "Mega Sharpedo", CritterMotion.Fish, "", "", Fps: 9, Sheet: "megasharpedo", Cell: 100, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 80, Drift: 7, Bob: 1.5, Surge: 1.6),
+            new(10382, "Primal Kyogre", CritterMotion.Fish, "", "", Fps: 6, Sheet: "primalkyogre", Cell: 132, Angles: [0, 6, 12, 18, 24], Pose: 12, Height: 77, Drift: 5, Bob: 1.5, Surge: 0.7),
+            new(10006, "Mega Charizard X", CritterMotion.Fish, "", "", Fps: 12, Sheet: "megacharizardx", Cell: 102, Angles: [-2, 0, 2], Pose: 0, Height: 60, Drift: 1, Bob: 0.3, Surge: 0.6),
+            new(10018, "Mega Pidgeot", CritterMotion.Fish, "", "", Fps: 8, Sheet: "megapidgeot", Cell: 154, Angles: [-2, 0, 2], Pose: 0, Height: 60, Drift: 1, Bob: 0.3, Surge: 0.6),
+            new(10142, "Mega Aerodactyl", CritterMotion.Fish, "", "", Fps: 9, Sheet: "megaaerodactyl", Cell: 100, Angles: [-3, 0, 3], Pose: 0, Height: 70, Drift: 3, Bob: 0.5, Surge: 0.9),
+            new(10334, "Mega Altaria", CritterMotion.Fish, "", "", Fps: 7, Sheet: "megaaltaria", Cell: 90, Angles: [-2, 0, 2], Pose: 0, Height: 72, Drift: 2, Bob: 0.5, Surge: 0.5),
+            new(10149, "Mega Dragonite", CritterMotion.Fish, "", "", Fps: 12, Sheet: "megadragonite", Cell: 80, Angles: [-2, 0, 2], Pose: 0, Height: 60, Drift: 1, Bob: 0.3, Surge: 0.6),
+            new(10227, "Mega Skarmory", CritterMotion.Fish, "", "", Fps: 10, Sheet: "megaskarmory", Cell: 82, Angles: [-2, 0, 2], Pose: 0, Height: 66, Drift: 1, Bob: 0.3, Surge: 0.6),
+            new(10398, "Mega Staraptor", CritterMotion.Fish, "", "", Fps: 9, Sheet: "megastaraptor", Cell: 98, Angles: [-2, 0, 2], Pose: 0, Height: 83, Drift: 2, Bob: 0.5, Surge: 0.7),
+            new(10380, "Mega Latias", CritterMotion.Fish, "", "", Fps: 7, Sheet: "megalatias", Cell: 94, Angles: [-4, -2, 0, 2, 4], Pose: 0, Height: 74, Drift: 4, Bob: 1, Surge: 0.8),
+            new(10381, "Mega Latios", CritterMotion.Fish, "", "", Fps: 7, Sheet: "megalatios", Cell: 114, Angles: [-2, 0, 2], Pose: 0, Height: 68, Drift: 2, Bob: 0.5, Surge: 0.7),
             new(350, "Milotic", CritterMotion.Fish, "", "", Fps: 7, Sheet: "milotic", Cell: 106, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 76, Drift: 5, Bob: 1, Surge: 0.7),
             new(230, "Kingdra", CritterMotion.Fish, "", "", Fps: 9, Sheet: "kingdra", Cell: 88, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 66, Drift: 4, Bob: 1.5, Surge: 0.5),
             new(490, "Manaphy", CritterMotion.Fish, "", "", Fps: 8, Sheet: "manaphy", Cell: 72, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 39, Drift: 4, Bob: 2.5, Surge: 0.5),

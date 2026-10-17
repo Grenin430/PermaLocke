@@ -19,8 +19,9 @@ namespace PermaLocke.GameLink;
 /// is loaded the snapshot says so, instead of passing off a stale PC as the live one.
 /// </para>
 /// </remarks>
+/// <param name="items">The item names of the installed world (2026-10-17); without it, PKHeX's, which go wrong from item 960 on.</param>
 public sealed class SaveBoxReader(PlayerSave save, ILocationLookup locations, string language,
-    ILogger<SaveBoxReader> logger) : IBoxReader
+    ILogger<SaveBoxReader> logger, IItemLookup? items = null) : IBoxReader
 {
     private readonly GameStrings _strings = GameInfo.GetStrings(language);
 
@@ -186,7 +187,7 @@ public sealed class SaveBoxReader(PlayerSave save, ILocationLookup locations, st
             GenderMark: egg ? string.Empty : GenderMarkFor(pokemon.Gender),
             NatureName: egg ? string.Empty : Name(_strings.Natures, (int)pokemon.Nature, "?"),
             AbilityName: egg ? string.Empty : Name(_strings.Ability, Data.PokemonAbility.Of(pokemon), "?"),
-            HeldItemName: pokemon.HeldItem == 0 ? string.Empty : Name(_strings.Item, pokemon.HeldItem, "?"),
+            HeldItemName: pokemon.HeldItem == 0 ? string.Empty : items?.GetName(pokemon.HeldItem) ?? Name(_strings.Item, pokemon.HeldItem, "?"),
             BallName: egg ? string.Empty : Name(_strings.balllist, pokemon.Ball, "?"),
             TrainerName: egg ? string.Empty : pokemon.OriginalTrainerName,
             MetLocationName: egg ? string.Empty : locations.GetName(pokemon.MetLocation),

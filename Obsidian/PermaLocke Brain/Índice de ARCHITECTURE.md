@@ -254,3 +254,7 @@ Otros docs: `docs/DISTRIBUCION-LOCAL.md` (reparto local, informes del amigo, rev
 - L13361 · 241 · Una MT del suelo salía en dos sitios (MT03/06/93 en dos zonas del cartucho); se baraja por MT distinta
 - L13367 · 242 · Rectas negras en la animación del objeto (bloques de ancho fijo con píxel no entero) y seis prototipos de rediseño A-F
 - L13374 · 243 · Animación del objeto por categorías, publicada en la 1.0.16: fase 1 (ItemCatalog, tiempos, ItemLab; iconos reales de la tabla del cartucho: 944 de 1001, 57 son «?» del propio juego), Megapiedra, las once categorías con estilo propio, Megapiedra sin viñeta y qué quedó fuera por categoría; 1.0.16.1: la tecla ya no corta el objeto
+- L13508 · 248 · Las megas del mar y el cielo (12 hojas) y la megaevolución de la prueba 6 (CapMega v2, guía Pokémon Champions); visitantes mega desde Cleared >= 6
+- L13516 · 249 · Pestaña que se cerraba, cruce entre ventanas (orejas), botón DISEÑO quitado y SuperCarameloraro que no se gastaba (tabla de bolsillos a/1/0/3)
+
+- §250 · Tanda del 2026-10-17: cursor del SuperCarameloraro, Poción Variocolor, variocolor del panel sin bloqueo, humo del Repelente, fuera todos los avisos encima del juego.

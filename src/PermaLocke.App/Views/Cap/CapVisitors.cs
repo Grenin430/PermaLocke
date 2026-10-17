@@ -24,6 +24,7 @@ public static class CapVisitors
     /// <summary>For the lab only: every lane passes at once, each with the next of these species that suits it (sea or sky).</summary>
     public static int[]? ForcedAll { get; set; }
 
+    // Spearow and Rayquaza taken out of the skies (2026-10-16, the player's wish); their drawings stay.
     // Periods halved (2026-10-14): the visitors come by twice as often, now that they are drawn smaller.
     public static readonly Lane[] Lanes =
     [
@@ -32,9 +33,9 @@ public static class CapVisitors
         new(11, 48, 42, 60, false, [119, 226, 320, 319, 457, 171, 369, 117, 131, 130, 350, 230, 490]),
         new(12, 150, 70, 55, false, [382, 382, 249, 321, 131], Big: true),
         // The sky.
-        new(13, 22, 14, 70, true, [278, 278, 16, 21, 731, 12, 333, 41]),
+        new(13, 22, 14, 70, true, [278, 278, 16, 731, 12, 333, 41]),
         new(14, 60, 20, 55, true, [279, 18, 22, 733, 334, 227, 398, 169, 468, 149, 6, 142, 380, 381]),
-        new(15, 165, 26, 45, true, [384, 384, 250, 144, 145, 146, 249], Big: true)
+        new(15, 165, 26, 45, true, [250, 144, 145, 146, 249], Big: true)
     ];
 
     /// <summary>Every drawing from a sheet is painted at two thirds of its size (2026-10-14), keeping its thin joins (<see cref="Pick"/>).</summary>
@@ -47,11 +48,12 @@ public static class CapVisitors
     /// The sheet pixel (an index into its BGRA bytes) that an output pixel of a drawing shrunk to two thirds shows, or -1 for none. The
     /// output pixel is on if the drawing covers at least 30 % of the patch of sheet under it, and it shows the colour that fills most of that
     /// patch, a dark outline counting half as much again. Plain nearest neighbour dropped the thin joins (a neck, an antenna, a tail) in
-    /// thirty species; this keeps them (2026-10-14).
+    /// thirty species; this keeps them (2026-10-14). A lone pixel, one with no neighbour of its own colour (an eye, its glint), counts
+    /// two and a half times: otherwise it won or lost by where the frame fell on the grid, and the eye blinked as the body moved (2026-10-17).
     /// </summary>
-    private static int Pick(ToastPixels.SpritePixels sheet, int baseX, int baseY, int cell, int ox, int oy)
+    private static int Pick(ToastPixels.SpritePixels sheet, int baseX, int baseY, int cell, int ox, int oy, double scale = Shrink)
     {
-        double x0 = ox / Shrink, x1 = (ox + 1) / Shrink, y0 = oy / Shrink, y1 = (oy + 1) / Shrink;
+        double x0 = ox / scale, x1 = (ox + 1) / scale, y0 = oy / scale, y1 = (oy + 1) / scale;
         double total = 0, covered = 0, bestScore = 0;
         var best = -1;
         for (var y = (int)Math.Floor(y0); y < Math.Min(cell, (int)Math.Ceiling(y1)); y++)
@@ -65,6 +67,7 @@ public static class CapVisitors
                 if (sheet.Bgra[at + 3] < 128) continue;
                 covered += w;
                 var score = sheet.Bgra[at] + sheet.Bgra[at + 1] + sheet.Bgra[at + 2] < 150 ? w * 1.5 : w;
+                if (Lone(sheet, baseX, baseY, cell, x, y)) score *= 2.5;
                 if (score > bestScore)
                 {
                     bestScore = score;
@@ -74,6 +77,24 @@ public static class CapVisitors
         }
 
         return total > 0 && covered / total >= 0.30 ? best : -1;
+    }
+
+    /// <summary>Whether a drawn pixel of a cell has no neighbour, of the eight round it, of exactly its colour.</summary>
+    private static bool Lone(ToastPixels.SpritePixels sheet, int baseX, int baseY, int cell, int x, int y)
+    {
+        var at = (((baseY + y) * sheet.Width) + baseX + x) * 4;
+        for (var dy = -1; dy <= 1; dy++)
+        {
+            for (var dx = -1; dx <= 1; dx++)
+            {
+                if ((dx | dy) == 0 || x + dx < 0 || y + dy < 0 || x + dx >= cell || y + dy >= cell) continue;
+                var n = (((baseY + y + dy) * sheet.Width) + baseX + x + dx) * 4;
+                if (sheet.Bgra[n + 3] >= 128 && sheet.Bgra[n] == sheet.Bgra[at] && sheet.Bgra[n + 1] == sheet.Bgra[at + 1]
+                    && sheet.Bgra[n + 2] == sheet.Bgra[at + 2]) return false;
+            }
+        }
+
+        return true;
     }
 
     /// <summary>One pixel of a drawing, already lit (top edge) and shaded (bottom edge).</summary>
@@ -151,6 +172,9 @@ public static class CapVisitors
         var alpha = party && !lane.Flies ? 120 : 255;
         var tint = lane.Flies ? 0x141C38u : pal.Water[5];
         var tintAmount = lane.Flies ? 0.6 * night : (party ? 0.45 : 0.08) + (0.25 * depth);
+        // a shiny in the battle (2026-10-17): it passes in its shiny colours, whole, over the rainbow, with sparkles behind it
+        var shiny = ctx.Shiny >= 0;
+        if (shiny) (alpha, tintAmount) = (255, 0);
         for (var oy = 0; oy < size; oy++)
         {
             for (var ox = 0; ox < size; ox++)
@@ -159,9 +183,12 @@ public static class CapVisitors
                 if (at < 0) continue;
                 var rgb = ((uint)sheet.Bgra[at + 2] << 16) | ((uint)sheet.Bgra[at + 1] << 8) | sheet.Bgra[at];
                 var dx = dir > 0 ? size - 1 - ox : ox;
-                p.Rect(left + dx, topY + oy, 1, 1, tintAmount > 0 ? CapSheet.Mix(rgb, tint, tintAmount) : rgb, alpha);
+                p.Rect(left + dx, topY + oy, 1, 1, shiny ? CapShiny.Shiny(rgb) : tintAmount > 0 ? CapSheet.Mix(rgb, tint, tintAmount) : rgb, alpha);
+                if (shiny) CapShiny.Keep(left + dx, topY + oy);
             }
         }
+
+        if (shiny) CapShiny.Trail(p, left + (size / 2), topY + (size / 2), size, dir, ctx.Shiny);
 
         if (!party && !lane.Flies) Bubbles(p, pal, (int)Math.Round(x + (dir * size * 0.33)), topY + (size / 2), beat);
     }
@@ -170,7 +197,7 @@ public static class CapVisitors
     internal static int[] ForcedLaneSpecies(int[] all, int laneIndex)
     {
         var flies = Lanes[laneIndex].Flies;
-        var suits = all.Where(id => Lanes.Any(other => other.Flies == flies && other.Pool.Contains(id))).ToArray();
+        var suits = all.Where(id => Lanes.Any(other => other.Flies == flies && other.Pool.Contains(id % 10000))).ToArray();
         if (suits.Length == 0) return [];
         var laneCount = Lanes.Count(lane => lane.Flies == flies);
         if (suits.Length <= laneCount) return [suits[laneIndex % suits.Length]];
@@ -179,7 +206,7 @@ public static class CapVisitors
 
     public static void Paint(CapSheet p, CapWorldLayout l, CapSeaPalette pal, CapSeaContext ctx, double t, double phase)
     {
-        if (l.Mode is CapMode.Compact or CapMode.Strip) return;
+        if (l.Mode is CapMode.Compact or CapMode.Strip || ctx.Parade) return;
         var world = ctx.WorldWidth > 0 ? ctx.WorldWidth : l.Cols;
         var roomy = l.Mode == CapMode.Column && !l.Dense;
 
@@ -200,8 +227,11 @@ public static class CapVisitors
             }
 
             if (!e.Active) continue;
-            var forcedHere = ForcedSpecies is { } forced && Lanes.Any(other => other.Flies == lane.Flies && other.Pool.Contains(forced));
+            // a Mega form (10000 + the species) goes where its species goes
+            var forcedHere = ForcedSpecies is { } forced && Lanes.Any(other => other.Flies == lane.Flies && other.Pool.Contains(forced % 10000));
             var species = forcedHere ? ForcedSpecies!.Value : lane.Pool[e.Variant % lane.Pool.Length];
+            // once the Mega Evolution is unlocked (the sixth trial), those that have a Mega form pass in it (2026-10-16)
+            if (ctx.Megas && !forcedHere && CritterArt.All.ContainsKey(10000 + species)) species += 10000;
             if (CritterArt.All.TryGetValue(species, out var posed) && posed.Sheet is not null)
             {
                 Swimmer(p, l, pal, ctx, posed, lane, (e.Progress, e.Variant), (e.Variant / 7) % 2 == 0 ? 1 : -1, world, l.Panel == CapPanelKind.Party);
@@ -303,6 +333,39 @@ public static class CapVisitors
             }
         }
     }
+
+    /// <summary>
+    /// A drawing from its sheet at any <paramref name="scale"/>, centred on a point, at its own pace (the Mega parade, 2026-10-16): turned by
+    /// <paramref name="tilt"/> degrees (nose up positive) as far as its sheet has frames for, its colours mixed towards <paramref name="mixTo"/>
+    /// by <paramref name="mix"/>, and only <paramref name="keep"/> of its cells drawn (an ordered dither, for coming and going).
+    /// </summary>
+    internal static void Centred(CapSheet p, CritterArt art, double tau, int cx, int cy, double scale, bool faceRight, uint mixTo = 0xFFFFFF, double mix = 0,
+        double tilt = 0, double keep = 1)
+    {
+        if (scale < 0.04 || keep <= 0 || art.Sheet is null || SheetOf(art.Sheet) is not { } sheet || art.Angles is not { Length: > 0 } angles) return;
+        var cell = art.Cell;
+        var count = Math.Max(1, sheet.Width / cell);
+        var row = 0;
+        var lift = art.Pose + tilt;
+        for (var k = 1; k < angles.Length; k++) if (Math.Abs(angles[k] - lift) < Math.Abs(angles[row] - lift)) row = k;
+        var col = (int)Math.Floor(Math.Max(0, tau) * art.Fps) % count;
+        var size = (int)Math.Ceiling(cell * scale);
+        int left = cx - (size / 2), top = cy - (size / 2);
+        for (var oy = 0; oy < size; oy++)
+        {
+            for (var ox = 0; ox < size; ox++)
+            {
+                var at = Pick(sheet, col * cell, row * cell, cell, ox, oy, scale);
+                if (at < 0) continue;
+                int x = left + (faceRight ? size - 1 - ox : ox), y = top + oy;
+                if (keep < 1 && Dither[y & 3, x & 3] >= keep * 16) continue;
+                var rgb = ((uint)sheet.Bgra[at + 2] << 16) | ((uint)sheet.Bgra[at + 1] << 8) | sheet.Bgra[at];
+                p.Set(x, y, mix > 0 ? CapSheet.Mix(rgb, mixTo, mix) : rgb);
+            }
+        }
+    }
+
+    private static readonly int[,] Dither = { { 0, 8, 2, 10 }, { 12, 4, 14, 6 }, { 3, 11, 1, 9 }, { 15, 7, 13, 5 } };
 
     private static void Bubbles(CapSheet p, CapSeaPalette pal, int mouth, int y, double beat)
     {

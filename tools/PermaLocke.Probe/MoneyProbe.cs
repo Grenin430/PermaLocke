@@ -27,6 +27,22 @@ internal static class MoneyProbe
         {
             Console.WriteLine($"Dinero en el fichero (la última vez que guardaste): {file.Save.Money} ₽");
             Console.WriteLine("Si acabas de guardar y no has gastado nada, los dos números tienen que ser iguales.");
+
+            // Where that number is in the save data the game holds (2026-10-16): the Misc block was looked for in a window that may not reach it.
+            if (live.Base() is { } start)
+            {
+                Console.WriteLine($"Partida en memoria desde 0x{start:X8}. Busco {file.Save.Money} en los primeros 0x10000 bytes:");
+                var needle = BitConverter.GetBytes(file.Save.Money);
+                for (var at = 0u; at < 0x10000; at += 0x200)
+                {
+                    if (!client.TryReadMemory(start + at, 0x200, out var part)) { Console.WriteLine($"  no se puede leer +0x{at:X5}"); break; }
+                    for (var i = 0; i + 4 <= part.Length; i += 4)
+                    {
+                        if (part.AsSpan(i, 4).SequenceEqual(needle)) Console.WriteLine($"  +0x{at + (uint)i:X5}");
+                    }
+                }
+            }
+            else Console.WriteLine("No llego a la partida en memoria (la cadena de punteros no lleva al montón).");
         }
 
         return 0;

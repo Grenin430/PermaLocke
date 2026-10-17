@@ -19,7 +19,7 @@ public sealed class WipeRain(EmulatorLauncher launcher)
         try
         {
             _window ??= new GhostWindow();
-            await _window.RainAsync(null);
+            await _window.RainAsync();
         }
         finally
         {
@@ -31,6 +31,6 @@ public sealed class WipeRain(EmulatorLauncher launcher)
     public async Task RehearseAsync()
     {
         _window ??= new GhostWindow();
-        await _window.RainAsync(null);
+        await _window.RainAsync();
     }
 }

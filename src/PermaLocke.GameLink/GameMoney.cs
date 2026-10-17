@@ -27,8 +27,8 @@ public sealed record MoneyResult(bool Success, int Balance, string? Problem = nu
 /// A few reads, never a sweep. Without a match nothing is written and the payment is refused, saying why.
 /// </para>
 /// <para>
-/// UNVERIFIED in the game (2026-10-12): the file path is PKHeX's; the live path follows the bag's (same save data, same
-/// heap), but whether the game reads its money from there has not been seen. <c>Probe --dinero</c> looks without writing.
+/// Seen in the game (2026-10-16): the live money follows the purchases in the shops, and a value written there is the one the menu shows
+/// (after it is opened again) and the one the next purchase takes from. Like everything written to memory, it is only kept if the player saves.
 /// </para>
 /// </remarks>
 public sealed class GameMoney(PlayerSave save, AzaharRpcClient client, LiveSave live, string backupFolder, ILogger<GameMoney> logger)
@@ -36,13 +36,14 @@ public sealed class GameMoney(PlayerSave save, AzaharRpcClient client, LiveSave 
     public const int Max = 9_999_999;
     private const int MiscFileOffset = 0x4400;
     private const int MoneyInMisc = 4;
-    private const uint SearchFrom = 0x3600;
-    private const int SearchLength = 0x800;
-    private const int Chunk = 0x200;
+    /// <summary>
+    /// Where the money is from the save data's start in memory: measured on 2026-10-16 (Probe --dinero), the money of the last save (36672)
+    /// is at +0x38E8 and nowhere else in the first 64 KB; the Misc block, 0x4400 in the file, sits at +0x38E4. The search by the block's bytes it
+    /// replaces found nothing: the block is mostly zeros and gave too few bytes to match.
+    /// </summary>
+    private const uint MoneyInMemory = 0x038E8;
 
     private readonly object _gate = new();
-    private uint? _base;
-    private uint? _miscAt;
 
     /// <summary>The money now, or null when it cannot be read (no save, or the game loaded and its money not found).</summary>
     public int? Read()
@@ -188,55 +189,7 @@ public sealed class GameMoney(PlayerSave save, AzaharRpcClient client, LiveSave 
     }
 
     /// <summary>Where the money is in the game's memory now, or null. The Misc block is found once per save-data address.</summary>
-    private uint? LiveAddress()
-    {
-        if (live.Base() is not { } start) return null;
-        if (_base == start && _miscAt is { } known) return start + known + MoneyInMisc;
-
-        _base = start;
-        _miscAt = FindMisc(start);
-        return _miscAt is { } found ? start + found + MoneyInMisc : null;
-    }
-
-    /// <summary>
-    /// The Misc block's offset from the save data's start in memory, found by matching the file's block (money left out) in a
-    /// short window. Null without a near-perfect, unique match.
-    /// </summary>
-    private uint? FindMisc(uint start)
-    {
-        if (LoadFile() is not { } file) return null;
-        var block = file.Save.AllBlocks.First(b => b.Offset == MiscFileOffset);
-        var print = file.Save.Data.Slice(block.Offset, block.Length).ToArray();
-
-        var window = new byte[SearchLength];
-        for (var at = 0; at < SearchLength; at += Chunk)
-        {
-            if (!client.TryReadMemory(start + SearchFrom + (uint)at, Chunk, out var part)) return null;
-            part.CopyTo(window, at);
-        }
-
-        var wanted = Enumerable.Range(0, print.Length).Where(i => print[i] != 0 && i is not (>= MoneyInMisc and < MoneyInMisc + 4)).ToArray();
-        if (wanted.Length < 32) return null;
-
-        var best = (Offset: -1, Score: 0.0, Second: 0.0);
-        for (var pos = 0; pos + print.Length <= window.Length; pos += 4)
-        {
-            var hits = wanted.Count(i => window[pos + i] == print[i]);
-            var score = hits / (double)wanted.Length;
-            if (score > best.Score) best = (pos, score, best.Score);
-            else if (score > best.Second) best = best with { Second = score };
-        }
-
-        if (best.Score < 0.9 || best.Second > 0.6)
-        {
-            logger.LogWarning("Dinero del juego: el bloque Misc no aparece claro en memoria (mejor {Best:P0}, segundo {Second:P0})", best.Score, best.Second);
-            return null;
-        }
-
-        var offset = SearchFrom + (uint)best.Offset;
-        logger.LogInformation("Dinero del juego: bloque Misc en la partida en memoria +0x{Offset:X5} ({Score:P0} igual que el fichero)", offset, best.Score);
-        return offset;
-    }
+    private uint? LiveAddress() => live.Base() is { } start ? start + MoneyInMemory : null;
 
     private (SAV7USUM Save, string Path)? LoadFile()
     {

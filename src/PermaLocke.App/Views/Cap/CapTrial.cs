@@ -22,7 +22,7 @@ public sealed record CapTrialTurn(double Since, int From, int To, CapTrialCrysta
 /// The crystal (both windows): the skies dim and the Ultra Wormhole beats; it bursts and the trial's Z-Crystal is born in its core; spinning,
 /// trailing ribbons of its light, it crosses the party's sky and the abyss's in one curve, splashes into the abyss, sinks, hangs over the sand
 /// while its symbol kindles, and drives itself into it: the frame holds, everything flashes, three waves of its light run through both
-/// windows, lighting the Unown, the crystals of the abyss, the Pillar, the Wormhole and each of the party. It stays, a beam of light over it.
+/// windows, lighting the Pillar, the Wormhole and each of the party. It stays, a beam of light over it.
 /// </para>
 /// <para>
 /// The cap (the party's window): a light falls on the plaque; cracks of light open in the old number and stay, rays turn out of them, the
@@ -299,6 +299,42 @@ public static class CapTrial
     }
 
     /// <summary>The crystal's film, in either window: what of it happens there.</summary>
+    /// <summary>
+    /// The crystals of every trial cleared, set in the abyss's sand for good (2026-10-16): one slot each across the sand, in the order of the trials,
+    /// half buried, with a glow that breathes and a glint now and then. The one whose film is playing joins them as its film fades.
+    /// </summary>
+    public static void PaintBed(CapSheet p, CapWorldLayout l, IReadOnlyList<(int Item, System.Windows.Media.Imaging.BitmapSource? Icon)>? crystals,
+        CapTrialTurn? turn, int filming, double phase)
+    {
+        if (l.Panel != CapPanelKind.Deep || crystals is not { Count: > 0 }) return;
+
+        const int Slots = 12;
+        const double Size = 0.75;
+        var ground = l.Rows - 10;
+        var left = 10;
+        var right = l.Cols - 10;
+        if (right - left < 40) return;
+
+        for (var i = 0; i < crystals.Count && i < Slots; i++)
+        {
+            var (item, icon) = crystals[i];
+            if (CapTrialCrystal.Of(item, icon) is not { } crystal) continue;
+
+            // the newest, while its film plays: it comes in as the film's crystal goes
+            var alpha = 1.0;
+            if (turn is not null && item == filming) alpha = Clamp01((turn.CrystalT - CrystalEnd - 1.5) / 1.5);
+            if (alpha <= 0) continue;
+
+            var x = left + (int)Math.Round((i + 0.5) * (right - left) / Slots);
+            var y = ground + ((i % 3) - 1);
+            var stand = y - (int)Math.Round(CapTrialCrystal.H * Size * 0.55);
+            var breath = 0.7 + (0.3 * Math.Sin((phase * 0.9) + (i * 1.7)));
+            Shine(p, x, stand, 12, 8, crystal.Glow, 55 * breath * alpha);
+            var glint = ((phase * 0.25) + (i * 0.37)) % 6;
+            crystal.Paint(p, x, stand, Size, 0.35 * Math.Sin(i * 2.1), 0.25 + (0.15 * breath), glint < 1 ? glint : -1, y, (int)(255 * alpha));
+        }
+    }
+
     public static void PaintCrystal(CapSheet p, CapWorldLayout l, CapSeaContext ctx, CapTrialTurn turn)
     {
         if (turn.Crystal is not { } crystal || l.Mode is not (CapMode.Column or CapMode.Slim)) return;
@@ -310,29 +346,6 @@ public static class CapTrial
         var surface = l.SurfaceY;
         var hit = t - Hit;
         var st = Where(l, ctx, t);
-
-        // what the waves will light, read before anything is painted over it: the strokes of the Unown, the glass of the abyss's crystals
-        List<(int X, int Y)>? unown = null;
-        List<(int X, int Y, uint C)>? glass = null;
-        if (deep && hit > 0 && hit < 2.6)
-        {
-            unown = [];
-            glass = [];
-            for (var y = Math.Max(0, l.FloorTop - 45); y < Math.Min(l.Rows, l.FloorTop + 3); y++)
-            {
-                for (var x = 2; x < Math.Min(l.Cols, 90); x++)
-                {
-                    var c = p.At(x, y);
-                    if (Luma(c) < 95 && Red(c) > Blue(c)) unown.Add((x, y));
-                }
-
-                for (var x = 82; x < Math.Min(l.Cols, 142); x++)
-                {
-                    var c = p.At(x, y);
-                    if (Blue(c) > Red(c) + 25 && Luma(c) > 100 && y < l.FloorTop) glass.Add((x, y, c));
-                }
-            }
-        }
 
         // the skies dim for it, and stay dim until its light has gone through
         var darkness = t < Born ? Ease(t / 0.6) : t < Hit ? 1 : 1 - Ease((t - Hit - 1.2) / 1.6);
@@ -557,25 +570,7 @@ public static class CapTrial
                 });
             }
 
-            // what the waves touch: the Unown and the glass of the abyss, the Pillar and the Wormhole (the party is lit through its pose)
-            if (unown is not null)
-            {
-                foreach (var (x, y) in unown)
-                {
-                    var a = hit - WaveAt(l, ctx, x, y) - ((x % 7) * 0.02);
-                    if (a > 0 && a < 2.2) Put(p, x, y, CapSheet.Mix(crystal.Shine, White, a < 0.2 ? 0.6 : 0.1), 255 * (a < 0.15 ? a / 0.15 : 1 - ((a - 0.15) / 2.05)));
-                }
-            }
-
-            if (glass is not null)
-            {
-                foreach (var (x, y, c) in glass)
-                {
-                    var a = hit - WaveAt(l, ctx, x, y);
-                    if (a > 0 && a < 1.8) Put(p, x, y, CapSheet.Mix(c, CapSheet.Mix(crystal.Shine, White, 0.4), 0.9), 255 * (a < 0.12 ? a / 0.12 : 1 - ((a - 0.12) / 1.68)));
-                }
-            }
-
+            // what the waves touch: the Pillar and the Wormhole (the party is lit through its pose); the Unown wall and the abyss's crystals were taken out (2026-10-15)
             foreach (var (point, size) in new[] { (CapFarSky.PillarTopAt(l), 3), (CapFarSky.WormholeAt(l), 4) })
             {
                 if (point is not { } at) continue;

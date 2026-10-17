@@ -259,7 +259,10 @@ public static class CapGeometry
     {
         if (plan.Main is { Side: CapSide.Right } main && plan.Companion is { Side: CapSide.Left } deep)
         {
-            var gap = plan.Content.Width / Math.Max(1, main.Cell);
+            // What lies between the two windows, measured between their own edges (2026-10-16): the game's picture minus the ears each window
+            // reaches over it. With the whole picture, the stretch behind the game was longer than the eye sees, and whatever crossed it (most of
+            // all a fast one) came out of the other side late.
+            var gap = Math.Max(0, main.Box.Left - deep.Box.Right) / Math.Max(1, main.Cell);
             return (deep.Cols + gap, 0, deep.Cols + gap + main.Cols);
         }
 

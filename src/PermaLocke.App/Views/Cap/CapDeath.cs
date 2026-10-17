@@ -52,15 +52,19 @@ public static class CapDeath
         CapDeathKind.Sky => 3.6,
         CapDeathKind.Corruption => 3.6,
         CapDeathKind.Storm => 7.4,
-        CapDeathKind.Bolts => 3.0,
+        CapDeathKind.Bolts => 3.8,
         _ => 6.6
     };
 
-    /// <summary>The death of a Pokémon: one of all of them, by its PID (by its place when it has none).</summary>
-    public static CapDeathKind KindOf(uint pid, int index)
+    /// <summary>
+    /// The death of a Pokémon: one of all of them, by its PID (by its place when it has none) and by which of its falls this is (2026-10-15): the same
+    /// Pokémon falling again, before the first Poké Ball, gets another one each time, never the one of the fall before.
+    /// </summary>
+    public static CapDeathKind KindOf(uint pid, int index, int fall = 0)
     {
         var h = pid != 0 ? CapArt.Hash((int)(pid & 0x7FFFFFFF), 7919 + (int)(pid >> 31)) : CapArt.Hash(index, 911);
-        return Kinds[h % Kinds.Length];
+        var step = Kinds.Length % 2 == 0 ? 1 + (2 * ((h / Kinds.Length) % (Kinds.Length / 2))) : 1;
+        return Kinds[(int)((h + ((long)fall * step)) % Kinds.Length)];
     }
 
     /// <summary>The deaths of the party in the order they happened, each starting when the one before it has ended.</summary>
@@ -77,7 +81,7 @@ public static class CapDeath
         var end = double.NegativeInfinity;
         foreach (var (index, pid, at) in falls.OrderBy(f => f.At).ThenBy(f => f.Index))
         {
-            var kind = KindOf(pid, index);
+            var kind = anim.Death(index) ?? KindOf(pid, index, anim.Falls(index));
             var start = Math.Max(at, end);
             turns.Add(new CapDeathTurn(index, pid, kind, start));
             end = start + Seconds(kind);

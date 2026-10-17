@@ -12,6 +12,31 @@ namespace PermaLocke.App.Services;
 /// </summary>
 public sealed class GameMoneyPoints(GameMoney money, IEventStore events, IClock clock) : IPointsService, IMoneyPort
 {
+    /// <summary>
+    /// The money changed while nobody asked (2026-10-16): bought or sold in the game. It is looked at every two seconds, and the sections that
+    /// show it (home, shop, gacha) take the new figure without waiting to be opened again. Raised on a background thread.
+    /// </summary>
+    public static event Action<int>? BalanceSeen;
+
+    private int? _seen;
+    private Timer? _watch;
+
+    /// <summary>Starts looking at the money; the first look only takes note.</summary>
+    public void Watch() => _watch ??= new Timer(_ =>
+    {
+        try
+        {
+            if (money.Read() is not { } now) return;
+            var before = _seen;
+            _seen = now;
+            if (before is not null && before != now) BalanceSeen?.Invoke(now);
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            // A look that fails is a look that did not happen.
+        }
+    }, null, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
+
     public Task<MoneyChange> ChangeAsync(int delta, CancellationToken ct = default) => Task.Run(() =>
     {
         var (result, applied) = money.Change(delta);

@@ -91,6 +91,8 @@ public sealed partial class HomeViewModel : SectionViewModel
         TransferOffer transfer,
         ILogger<HomeViewModel> logger) : base("HOME", "Tu run y tu equipo")
     {
+        // Bought or sold in the game (2026-10-16): the figure in the header follows it without opening a section again.
+        Services.GameMoneyPoints.BalanceSeen += money => System.Windows.Application.Current?.Dispatcher.BeginInvoke(() => PointsBalance = money);
         _runContext = runContext;
         _events = events;
         _points = points;

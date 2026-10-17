@@ -167,6 +167,12 @@ public sealed class GameLinkMonitor(
     public event EventHandler<DeathNotice>? PokemonDied;
 
     /// <summary>
+    /// A Pokémon of the party has fallen, as the game has shown it: whether or not the PermaLocke has started and whether or not it is recorded (singleplayer,
+    /// 2026-10-15). The overlay plays its death with it, also in the first battle and before the first Poké Ball. It may come more than once for one fall.
+    /// </summary>
+    public event EventHandler<uint>? FaintShown;
+
+    /// <summary>
     /// A Pokémon that turned up in the party and was registered on its own (2026-09-28): an egg that hatched, a fossil,
     /// a gift. The card goes to the album for it too, not only for wild captures.
     /// </summary>
@@ -711,6 +717,9 @@ public sealed class GameLinkMonitor(
     private async Task<PokemonEntry?> RecordDeathOnceAsync(Run run, uint pid, LivePartyMember? live, string detection,
         IReadOnlyDictionary<string, string>? details = null, double? clipMark = null)
     {
+        // The overlay plays the death even when it does not count (singleplayer, 2026-10-15).
+        if (pid != 0) Announce(() => FaintShown?.Invoke(this, pid));
+
         // Antes de la primera Poke Ball una muerte no cuenta, tampoco la del combate (§150).
         if (!await balls.HasHadBallsAsync(run, _stopping.Token))
         {

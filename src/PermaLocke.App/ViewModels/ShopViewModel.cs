@@ -69,6 +69,12 @@ public sealed partial class ShopViewModel : SectionViewModel
         PermaLocke.Rules.Services.ProgressService? progress = null)
         : base("TIENDA", "Objetos a cambio del dinero del juego")
     {
+        // Bought or sold in the game (2026-10-16): the figure and what can be afforded follow it without opening the section again.
+        Services.GameMoneyPoints.BalanceSeen += money => System.Windows.Application.Current?.Dispatcher.BeginInvoke(() =>
+        {
+            Balance = money;
+            foreach (var card in Items) card.Affordable = Balance >= card.Price;
+        });
         Fleeting.Fade(this, nameof(Status), nameof(Problem));
 
         _shop = shop;

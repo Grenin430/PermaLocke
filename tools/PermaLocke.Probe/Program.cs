@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using PermaLocke.GameLink.Data;
 using PermaLocke.GameLink.Rpc;
 
@@ -89,6 +89,11 @@ if (args.Length >= 1 && args[0] == "--huevo-copias")
 // Dónde guarda el juego el mapa y la posición mientras se juega, tomando la última partida guardada como
 // verdad. Sin argumento enseña lo guardado; «buscar» hace UNA búsqueda; «vigilar» solo lee. Ver §117.
 // El dinero del juego tal como lo lee la versión de un jugador (2026-10-12). Solo lee.
+if (args.Length >= 1 && args[0] == "--repelente")
+{
+    return PermaLocke.Probe.RepelProbe.Run();
+}
+
 if (args.Length >= 1 && args[0] == "--dinero")
 {
     return PermaLocke.Probe.MoneyProbe.Run();
@@ -106,6 +111,12 @@ if (args.Length >= 1 && args[0] == "--reglas-juego")
 }
 
 // Prueba: todo lo que genera el juego sale variocolor, con un code.ips junto al code.bin del mod. «quitar» lo borra.
+// La Poción Variocolor en el juego en marcha (2026-10-17): su byte y su parche en memoria; «poner» pone el byte a mano.
+if (args.Length >= 1 && args[0] == "--variocolor")
+{
+    return PermaLocke.Probe.ShinyPotionProbe.Run(args.Length >= 2 ? args[1] : string.Empty);
+}
+
 if (args.Length >= 1 && args[0] == "--shiny-siempre")
 {
     return PermaLocke.Probe.ShinyProbe.Run(args.Length >= 2 ? args[1] : string.Empty);

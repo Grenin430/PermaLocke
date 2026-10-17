@@ -46,6 +46,9 @@ public sealed class ProgressService(
     public int? CurrentCap(Run run) => caps.CapFor(run.ClearedStages);
 
     /// <summary>Stages cleared, counting what the achievements already know.</summary>
+    /// <summary>Forgets what detection saw (2026-10-16): a trial's Z-Crystal just came into the bag, and the cap must not wait up to twenty seconds for it.</summary>
+    public void Forget() => _detected = null;
+
     public async Task<int> ClearedAsync(Run run, CancellationToken ct = default) =>
         Math.Max(run.ClearedStages, await DetectedAsync(run, ct).ConfigureAwait(false));
 

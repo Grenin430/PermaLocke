@@ -53,6 +53,34 @@ public static class OverlayWindows
         return done;
     }
 
+    /// <summary>
+    /// Puts the window over a box of screen pixels as part of another window, the game's (2026-10-16): owned by it and not «always on top».
+    /// Windows then keeps it just above the game in the stack, so another window in front covers the panel as it covers the game, the panel
+    /// goes and comes back with the game when it is minimised and restored, and nothing has to hide it or bring it back by hand.
+    /// </summary>
+    /// <remarks>
+    /// <paramref name="force"/> places it again even if the box has not changed: after the game comes back from being minimised, the box can be
+    /// the same while the window is not where it was in the stack, and the panel stayed away until the game was resized.
+    /// </remarks>
+    public static bool PlaceOnOwner(Window window, (int Left, int Top, int Width, int Height) box, IntPtr owner, bool force = false)
+    {
+        var handle = new WindowInteropHelper(window).EnsureHandle();
+        if (handle == IntPtr.Zero || owner == IntPtr.Zero) return false;
+
+        var ownerChanged = GetWindowLongPtr(handle, GwlpHwndParent) != owner;
+        if (ownerChanged) SetWindowLongPtr(handle, GwlpHwndParent, owner);
+
+        if (!force && !ownerChanged && window.IsVisible && Placed.TryGetValue(window, out var last) && last.Box == box) return true;
+
+        // Not topmost any more, and straight above the game in the stack: under whatever window is just above the game (the top when none is).
+        var done = SetWindowPos(handle, NotTopMost, box.Left, box.Top, box.Width, box.Height, NoActivate | ShowWindow);
+        var above = GetWindow(owner, GwHwndPrev);
+        while (above == handle && above != IntPtr.Zero) above = GetWindow(above, GwHwndPrev);
+        SetWindowPos(handle, above == IntPtr.Zero ? Top : above, 0, 0, 0, 0, NoActivate | NoMove | NoSize);
+        if (done) Placed.AddOrUpdate(window, new PlacedBox(box));
+        return done;
+    }
+
     private sealed record PlacedBox((int Left, int Top, int Width, int Height) Box);
 
     private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Window, PlacedBox> Placed = new();
@@ -165,6 +193,21 @@ public static class OverlayWindows
     private const int WsExToolWindow = 0x80;
 
     private static readonly IntPtr TopMost = new(-1);
+    private static readonly IntPtr NotTopMost = new(-2);
+    private static readonly IntPtr Top = IntPtr.Zero;
+    private const uint NoSize = 0x0001;
+    private const uint NoMove = 0x0002;
+    private const int GwlpHwndParent = -8;
+    private const uint GwHwndPrev = 3;
+
+    [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
+    private static extern IntPtr GetWindowLongPtr(IntPtr window, int index);
+
+    [DllImport("user32.dll", EntryPoint = "SetWindowLongPtrW")]
+    private static extern IntPtr SetWindowLongPtr(IntPtr window, int index, IntPtr value);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetWindow(IntPtr window, uint relation);
     private const uint NoActivate = 0x0010;
     private const uint ShowWindow = 0x0040;
 

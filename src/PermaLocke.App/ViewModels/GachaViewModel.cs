@@ -245,6 +245,8 @@ public sealed partial class GachaViewModel : SectionViewModel
         PermaLocke.Rules.Services.ProgressService progress, ILogger<GachaViewModel> logger)
         : base("GACHA", "Paga con el dinero del juego y llévate un Pokémon: a tu equipo si cabe, si no al PC")
     {
+        // Bought or sold in the game (2026-10-16): the figure follows it without opening the section again.
+        Services.GameMoneyPoints.BalanceSeen += money => System.Windows.Application.Current?.Dispatcher.BeginInvoke(() => Balance = money);
         Fleeting.Fade(this, nameof(Status));
 
         _gacha = gacha;

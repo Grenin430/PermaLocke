@@ -55,8 +55,6 @@ public partial class RailShell : ShellBase
         }
     }
 
-    private void OnGallery(object sender, RoutedEventArgs e) => DesignGalleryWindow.Open(Window.GetWindow(this));
-
     private void OnMinimise(object sender, RoutedEventArgs e)
     {
         if (Window.GetWindow(this) is { } window) window.WindowState = WindowState.Minimized;

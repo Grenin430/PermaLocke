@@ -62,8 +62,11 @@ public sealed class CapPhenomenaTests
         Assert.Equal([0, 2], turns.Select(d => d.Index));
         Assert.Equal(2, turns[0].Start, 3);
         Assert.Equal(turns[0].End, turns[1].Start, 3);
-        Assert.Equal(CapDeath.KindOf(11, 0), turns[0].Kind);
-        Assert.Equal(CapDeath.KindOf(13, 2), turns[1].Kind);
+        Assert.Equal(CapDeath.KindOf(11, 0, anim.Falls(0)), turns[0].Kind);
+        Assert.Equal(CapDeath.KindOf(13, 2, anim.Falls(2)), turns[1].Kind);
+
+        // A next fall of the same Pokémon is never the same death as the one before.
+        Assert.All(Enumerable.Range(0, 50), n => Assert.NotEqual(CapDeath.KindOf(11, 0, n), CapDeath.KindOf(11, 0, n + 1)));
 
         // The one that did not fall has no turn, and the same PID always draws the same death.
         Assert.DoesNotContain(turns, d => d.Index == 1);

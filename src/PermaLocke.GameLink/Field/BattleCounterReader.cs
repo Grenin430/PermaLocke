@@ -35,6 +35,7 @@ public sealed class BattleCounterReader(AzaharRpcClient client, BagService bag, 
     public const int CaughtRecord = 6;
     public const int FledRecord = 46;
     public const int ShinyRecord = 127;
+    public const int CentreHealsRecord = 10;
 
     /// <summary>Enough bytes to reach record 127, the first 16-bit one past the hundred 32-bit ones.</summary>
     private const int ReadLength = (100 * 4) + (28 * 2);
@@ -113,7 +114,8 @@ public sealed class BattleCounterReader(AzaharRpcClient client, BagService bag, 
         BinaryPrimitives.ReadInt32LittleEndian(block[OffsetOf(WildBattlesRecord)..]),
         BinaryPrimitives.ReadInt32LittleEndian(block[OffsetOf(CaughtRecord)..]),
         BinaryPrimitives.ReadInt32LittleEndian(block[OffsetOf(FledRecord)..]),
-        BinaryPrimitives.ReadUInt16LittleEndian(block[OffsetOf(ShinyRecord)..]));
+        BinaryPrimitives.ReadUInt16LittleEndian(block[OffsetOf(ShinyRecord)..]),
+        BinaryPrimitives.ReadInt32LittleEndian(block[OffsetOf(CentreHealsRecord)..]));
 
     /// <summary>Counters only go up, and not by much between two readings a fraction of a second apart.</summary>
     public static bool Plausible(BattleCounters before, BattleCounters now) =>

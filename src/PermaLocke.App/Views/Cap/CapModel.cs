@@ -57,11 +57,29 @@ public sealed record CapGrave(BitmapSource? Sprite, string Name, string? FellTo 
 /// <param name="ActiveShare">The life of the Pokémon on the field in a battle, 0 to 1, read from the game's bar; null when it cannot be seen. The sea's danger follows it.</param>
 /// <param name="Seed">A number out of the run (its id): the relief of the floor, the coral and the rare events come from it.</param>
 /// <param name="DeathScenes">Whether a fall is shown as one of the deaths of the panel (CapDeath).</param>
+/// <param name="Crystals">Every trial's Z-Crystal cleared so far, in order, with its icon: they stay set in the abyss's sand.</param>
 /// <param name="CrystalItem">The Z-Crystal of the last trial cleared (its item id), 0 when there is none: the trial film (CapTrial) shows it.</param>
 /// <param name="Crystal">That crystal's icon, out of the player's cartridge.</param>
 public sealed record CapPlaqueData(string Trial, int Cap, int? Next, int? Highest, IReadOnlyList<CapPlaqueMember> Party,
     bool InBattle = false, IReadOnlyList<CapGrave>? Graves = null, int Cleared = 0, int Trials = 0, double Hour = -1, int Seed = 0,
-    IReadOnlyList<CapEvent>? Events = null, double? ActiveShare = null, bool DeathScenes = true, int CrystalItem = 0, BitmapSource? Crystal = null);
+    IReadOnlyList<CapEvent>? Events = null, double? ActiveShare = null, bool DeathScenes = true, int CrystalItem = 0, BitmapSource? Crystal = null,
+    IReadOnlyList<(int Item, BitmapSource? Icon)>? Crystals = null, CapShinyTurn? Shiny = null, CapVialState? Vial = null,
+    CapToggle? Repel = null, CapToggle? Turbo = null);
+
+/// <summary>
+/// The Pokévial in the overlay (2026-10-16): its uses left and the most it holds, and when it was last used (on the panel's clock) with the uses it had
+/// before, for the animation of the healing.
+/// </summary>
+public sealed record CapVialState(int Uses, int Max, double UsedAt = double.NegativeInfinity, int From = 0);
+
+/// <summary>
+/// An item of the overlay turned on and off, the Repelente Infinito or the Incubadora Turbo (2026-10-16): when it was last turned on and off, on
+/// the panel's clock. On between the two; never on, both minus infinity.
+/// </summary>
+public sealed record CapToggle(double OnAt = double.NegativeInfinity, double OffAt = double.PositiveInfinity)
+{
+    public static CapToggle Off { get; } = new(double.NegativeInfinity, double.NegativeInfinity);
+}
 
 /// <summary>What can happen to one Pokémon that the sea shows as something that happens to its creature.</summary>
 public enum CapEventKind

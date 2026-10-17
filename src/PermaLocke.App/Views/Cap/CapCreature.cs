@@ -380,26 +380,47 @@ public sealed class CapCreature
             return;
         }
 
+        // The whole drawing, whatever its size and wherever it sits in the icon (2026-10-15): the mod's Mega Stones are drawn bigger or off the
+        // top-left, and a fixed grid from the corner cut them. The opaque part is found, made square round its centre and spread over the 8 by 8.
+        int left = pixels.Width, top = pixels.Height, right = -1, bottom = -1;
+        for (var sy = 0; sy < pixels.Height; sy++)
+        {
+            for (var sx = 0; sx < pixels.Width; sx++)
+            {
+                if (!pixels.Solid(sx, sy)) continue;
+                (left, top, right, bottom) = (Math.Min(left, sx), Math.Min(top, sy), Math.Max(right, sx), Math.Max(bottom, sy));
+            }
+        }
+
+        if (right < 0)
+        {
+            CapGlyphs.Spot(sheet, x + 1, y + 1, 0xFFD860u, ink);
+            return;
+        }
+
+        var size = Math.Max(right - left + 1, bottom - top + 1);
+        var ox = left - ((size - (right - left + 1)) / 2.0);
+        var oy = top - ((size - (bottom - top + 1)) / 2.0);
         var cells = new uint?[8, 8];
-        var step = Math.Max(1, pixels.Width / 8);
         for (var cy = 0; cy < 8; cy++)
         {
             for (var cx = 0; cx < 8; cx++)
             {
-                int r = 0, g = 0, b = 0, n = 0;
-                for (var dy = 0; dy < step; dy++)
+                int x0 = (int)Math.Floor(ox + (cx * size / 8.0)), x1 = Math.Max(x0 + 1, (int)Math.Ceiling(ox + ((cx + 1) * size / 8.0)));
+                int y0 = (int)Math.Floor(oy + (cy * size / 8.0)), y1 = Math.Max(y0 + 1, (int)Math.Ceiling(oy + ((cy + 1) * size / 8.0)));
+                int r = 0, g = 0, b = 0, n = 0, area = 0;
+                for (var sy = y0; sy < y1; sy++)
                 {
-                    for (var dx = 0; dx < step; dx++)
+                    for (var sx = x0; sx < x1; sx++)
                     {
-                        var sx = (cx * step) + dx;
-                        var sy = (cy * step) + dy;
-                        if (!pixels.Solid(sx, sy)) continue;
+                        area++;
+                        if (sx < 0 || sy < 0 || sx >= pixels.Width || sy >= pixels.Height || !pixels.Solid(sx, sy)) continue;
                         var c = pixels.At(sx, sy);
                         (r, g, b, n) = (r + c.R, g + c.G, b + c.B, n + 1);
                     }
                 }
 
-                if (n * 3 >= step * step) cells[cx, cy] = CapSheet.Rgb(r / n, g / n, b / n);
+                if (n > 0 && n * 3 >= area) cells[cx, cy] = CapSheet.Rgb(r / n, g / n, b / n);
             }
         }
 

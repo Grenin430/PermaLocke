@@ -33,11 +33,19 @@ public static class HpSyncTable
     /// <summary>The longest the panel holds a change back waiting for the bar of the game: after this it is shown whatever the bar did.</summary>
     public const double GiveUpSeconds = 6.0;
 
+    /// <summary>The longest a change is held while the game's bar is seen and followed (2026-10-15): a long attack animation, a Z-move, comes before the bar moves.</summary>
+    public const double FollowGiveUpSeconds = 15.0;
+
+    /// <summary>How far the bar on the screen has to be from where it was to count as moving, and from the end to count as there: about one pixel of the game's bar.</summary>
+    public const double BarNotch = 0.025;
+
     /// <summary>PROVISIONAL. Seconds the game's bar takes to go down, or up, by a share of the maximum HP: what the panel's own bar takes too, so the two end together.</summary>
     public static double BarSeconds(double share, bool drop)
     {
         share = Math.Clamp(share, 0, 1);
-        return drop ? 0.45 + (1.5 * share) : 0.7 + (1.0 * share);
+        // Proportional, with no fixed start (2026-10-15): following the game's bar the panel gets small steps thirty times a second, and a fixed
+        // part of almost half a second on each left the panel that far behind the game.
+        return Math.Max(0.06, drop ? 1.9 * share : 1.7 * share);
     }
 
     /// <summary>How long to wait for a change of that size when the bar cannot say.</summary>
@@ -90,7 +98,7 @@ public sealed class HpPresenter
 
     /// <summary>Tells the life really read for a Pokémon at a moment.</summary>
     /// <returns>True when this reading holds a change back that the game's bar will have to release: the bar is worth arming.</returns>
-    public bool Observe(uint pid, int hp, int max, double now, bool inBattle)
+    public bool Observe(uint pid, int hp, int max, double now, bool inBattle, bool barSeen = false)
     {
         if (!_tracks.TryGetValue(pid, out var track))
         {
@@ -114,7 +122,7 @@ public sealed class HpPresenter
         }
 
         var share = max > 0 ? Math.Abs(hp - before) / (double)max : 0;
-        track.Waiting.Add(new Held(hp, now, now + (Mode == HpSyncMode.Delayed ? HpSyncTable.DelayedSeconds : HpSyncTable.CalculatedDelay(share))));
+        track.Waiting.Add(new Held(hp, now, now + (Mode == HpSyncMode.Delayed ? HpSyncTable.DelayedSeconds : barSeen ? HpSyncTable.FollowGiveUpSeconds : HpSyncTable.CalculatedDelay(share))));
         return Mode == HpSyncMode.Synchronized;
     }
 
@@ -125,6 +133,38 @@ public sealed class HpPresenter
         {
             track.Shown = track.Real;
             track.Waiting.Clear();
+        }
+    }
+
+    /// <summary>
+    /// The game's bar of the one on the field, as the screen shows it now, 0 to 1 (2026-10-15): the life shown follows it while it drains or fills, so the
+    /// panel moves with the game and not with memory. It is the bar of the Pokémon whose held change it is in the middle of; when it reaches the end of
+    /// that change, the change is done. A bar that has not moved from what is shown says nothing.
+    /// </summary>
+    public void Follow(double fill, double now)
+    {
+        if (Mode != HpSyncMode.Synchronized) return;
+        const double Notch = HpSyncTable.BarNotch;
+
+        foreach (var track in _tracks.Values)
+        {
+            if (track.Waiting.Count == 0 || track.Max <= 0) continue;
+            var from = track.Shown / (double)track.Max;
+            var to = track.Waiting[^1].Hp / (double)track.Max;
+            if (fill < Math.Min(from, to) - Notch || fill > Math.Max(from, to) + Notch || Math.Abs(fill - from) < Notch) continue;
+
+            if (Math.Abs(fill - to) <= Notch)
+            {
+                track.Shown = track.Waiting[^1].Hp;
+                track.Waiting.Clear();
+            }
+            else
+            {
+                var hp = (int)Math.Round(fill * track.Max);
+                track.Shown = Math.Clamp(hp, Math.Min(track.Shown, track.Waiting[^1].Hp), Math.Max(track.Shown, track.Waiting[^1].Hp));
+            }
+
+            return;
         }
     }
 

@@ -373,7 +373,7 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
     /// (<see cref="ItemIconIndex.UseCartridgeTable"/>) is every item the game does not draw as a «?».
     /// </summary>
     public static bool HasItemIcon(int itemId, int containerIcons = ItemIconIndex.ExpansionIcons) =>
-        ZCrystalIndex.TryGet(itemId, out _) || itemId is SuperCandy.ItemId or InfiniteRepel.ItemId or EggTurbo.ItemId
+        ZCrystalIndex.TryGet(itemId, out _) || itemId is SuperCandy.ItemId or InfiniteRepel.ItemId or EggTurbo.ItemId or PokeVial.ItemId or ShinyPotion.ItemId
         || ItemIconIndex.TryGet(itemId, out _, containerIcons);
 
     /// <summary>
@@ -389,7 +389,7 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
         // Se atiende aquí y no en un método aparte para que quien pide un dibujo solo tenga que
         // saber el id del objeto, que es lo único que hay escrito en Data/achievements.json.
         var crystal = ZCrystalIndex.TryGet(itemId, out _);
-        var painted = itemId is SuperCandy.ItemId or InfiniteRepel.ItemId or EggTurbo.ItemId;
+        var painted = itemId is SuperCandy.ItemId or InfiniteRepel.ItemId or EggTurbo.ItemId or PokeVial.ItemId or ShinyPotion.ItemId;
 
         if (!_prepared || !HasItemIcon(itemId, _itemIcons))
         {
@@ -513,6 +513,10 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
                     ? ItemIconReader.Open(_romPath, _scratch, _baseLayer).ReadInfiniteRepel()
                 : itemId == EggTurbo.ItemId
                     ? ItemIconReader.Open(_romPath, _scratch, _baseLayer).ReadEggTurbo()
+                : itemId == PokeVial.ItemId
+                    ? ItemIconReader.Open(_romPath, _scratch, _baseLayer).ReadPokeVial()
+                : itemId == ShinyPotion.ItemId
+                    ? ItemIconReader.Open(_romPath, _scratch, _baseLayer).ReadShinyPotion()
                     : ItemIconReader.Open(_romPath, _scratch, _baseLayer).Read(ItemIconIndex.Of(itemId, _itemIcons) + 1);
 
             File.WriteAllBytes(destination, PngImage.Encode(sprite.Pixels, sprite.Width, sprite.Height));

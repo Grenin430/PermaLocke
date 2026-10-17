@@ -37,7 +37,8 @@ public interface IZoneProvider
 /// <param name="Caught">Record 6.</param>
 /// <param name="Fled">Record 46.</param>
 /// <param name="ShinyEncountered">Record 127.</param>
-public sealed record BattleCounters(int WildBattles, int Caught, int Fled, int ShinyEncountered);
+/// <param name="CentreHeals">Record 10, «Pokémon healed at Pokémon Centres»: goes up each time the nurse heals the party.</param>
+public sealed record BattleCounters(int WildBattles, int Caught, int Fled, int ShinyEncountered, int CentreHeals = 0);
 
 /// <summary>Reads <see cref="BattleCounters"/> from the running game.</summary>
 public interface IBattleCounters

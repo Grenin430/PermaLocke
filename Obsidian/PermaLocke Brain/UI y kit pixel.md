@@ -254,3 +254,10 @@ auditorías y control de layout. No hay otro recorrido completo en esta revisió
 anclajes cercano 57/57 y lejano 50/50 por fase; base idéntica. 137 archivos protegidos intactos.
 Build aislado correcto y 555 tests App pasan. Solo hoja/entrada de Charizard actualizadas.
 Batido pendiente de aprobación; otros tres sin modificar. Rutas y método en la última sección de continuidad.
+
+## Prototipo de encuentro variocolor salvaje (2026-10-16)
+
+- `Views/Cap/CapShiny.cs`: efecto pixel art puro para las dos bandas del layout de Azahar. Apertura con estrella y rayos, siete arcos de color, prismas bajo el agua, cintas ondulantes, chispas y rótulo `¡VARIOCOLOR!`. Estado sostenido mientras transcurre el combate y salida de 1,5 s.
+- `CapWorldView` pinta el fondo prismático antes del equipo y los destellos finales después; `CapPlaqueData.ShinyAt` y `ShinyEnd` son los instantes de comienzo y fin. Por ahora solo el laboratorio los suministra: **prototipo para revisión, aún sin conectar a `EncounterGuard.Said` en la app real**.
+- Escenario de laboratorio `shiny`: empieza a 1,25 s, termina el combate a 10,8 s. `tools/PermaLocke.PlaqueLab --video-shiny prototipos/SHINY_PRISMATICO_preview.mp4` produce 14 s, 1280×690, 24 fps, H.264 mediante Media Foundation. Las pantallas centrales son ilustraciones exclusivas del vídeo hechas en `ShinyPreviewArt`; los dos paneles son el compositor real. Las pantallas ilustrativas se guardan bajo `prototipos/shiny-pantallas-ilustrativas/`.
+- Una prueba `CapShinyTests` verifica intensidad de inicio, permanencia y restitución exacta del fondo tras la salida; pasa. Pendiente de decisión artística antes de conectar el evento real o desplegar.

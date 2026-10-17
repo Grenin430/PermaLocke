@@ -34,8 +34,6 @@
                      Windows se queda el clic y el boton no llega a enterarse. -->
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center"
                             shell:WindowChrome.IsHitTestVisibleInChrome="True">
-                    <Button Style="{StaticResource PxDesignButton}" Click="OnGallery"
-                            ToolTip="Cambiar de diseño" AutomationProperties.Name="Cambiar de diseño" />
                     <Button Style="{StaticResource PxCaptionButton}" Content="-" Click="OnMinimise"
                             ToolTip="Minimizar" AutomationProperties.Name="Minimizar" />
                     <Button Style="{StaticResource PxCaptionClose}" Content="×" Click="OnClose"

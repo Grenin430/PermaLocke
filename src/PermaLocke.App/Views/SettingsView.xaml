@@ -56,14 +56,9 @@
             <!-- ================================================== MIENTRAS JUEGAS -->
             <pixel:PixelWindow Title="MIENTRAS JUEGAS" Icon="IconPlay" Margin="0,12,0,0">
                 <StackPanel>
-                    <CheckBox Style="{StaticResource Check}" IsChecked="{Binding Notifications}" Content="Avisos encima del juego" />
-                    <pixel:PixelText Style="{StaticResource Explain}" Text="Avisos encima de Azahar." />
-
                     <CheckBox Style="{StaticResource Check}" IsChecked="{Binding DeathScene}" Content="Escena de muerte" />
                     <pixel:PixelText Style="{StaticResource Explain}" Text="Al caer un Pokémon, su muerte se ve en la plantilla del cap (una de ocho, al azar). Sin ella, su fila se vacía y ya está." />
 
-                    <CheckBox Style="{StaticResource Check}" IsChecked="{Binding CatchCard}" Content="Carta al capturar" />
-                    <pixel:PixelText Style="{StaticResource Explain}" Text="Al atrapar un Pokémon salvaje, su carta sale de una Poké Ball y se mete en el álbum." />
 
                     <CheckBox Style="{StaticResource Check}" IsChecked="{Binding CapPanel}" Content="Cap de nivel encima del juego" />
                     <pixel:PixelText Style="{StaticResource Explain}" Text="Un mar de luz en la banda negra del emulador: tu equipo con sus datos, el cap en un cartel en la arena, y las muertes y las pruebas superadas como escenas. Nunca tapa las pantallas del juego: si no cabe, se hace más pequeño o se esconde." />
@@ -139,8 +134,6 @@
                     <CheckBox Style="{StaticResource Check}" IsChecked="{Binding StepAside}" Content="Minimizar PermaLocke al abrir el juego" />
                     <pixel:PixelText Style="{StaticResource Explain}" Text="Se aparta solo cuando se abre Azahar." />
 
-                    <Button Content="VER UN AVISO" Style="{StaticResource PxSubtleButton}" Command="{Binding TestNotificationCommand}"
-                            HorizontalAlignment="Left" Margin="0,4,0,0" />
                 </StackPanel>
             </pixel:PixelWindow>
 

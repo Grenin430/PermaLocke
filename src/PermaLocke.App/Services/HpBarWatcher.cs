@@ -176,6 +176,7 @@ public static class HpBarWatcher
         if (!GameWindow.Shows(where.Window, where.Left, where.Top, where.Width, where.Height)
             || Grab(where.Left, where.Top, where.Width, where.Height) is not { } pixels)
         {
+            LastWhy = "tapada por otra ventana o sin poder capturarla";
             return new HpBarReading(HpBarState.Hidden, 0);
         }
 
@@ -196,8 +197,13 @@ public static class HpBarWatcher
             rows.Add(HpBar.Measure(samples));
         }
 
+        var mid = ((Math.Clamp((int)((where.OriginY + ((HpBar.FirstRow + 1.5) * where.Scale)) - where.Top), 0, where.Height - 1) * where.Width) + (where.Width / 2)) * 4;
+        LastWhy = $"en ({where.Left},{where.Top}) {where.Width}x{where.Height}, escala {where.Scale:0.00}, color en el centro de la barra {pixels[mid + 2]},{pixels[mid + 1]},{pixels[mid]}";
         return HpBar.Combine(rows);
     }
+
+    /// <summary>Why the last look said what it said: where it looked and the colour it found, or that the box was covered. For the log.</summary>
+    public static string LastWhy { get; private set; } = "";
 
     private static byte[]? Grab(int left, int top, int width, int height)
     {

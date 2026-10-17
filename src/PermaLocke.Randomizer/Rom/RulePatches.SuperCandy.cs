@@ -211,8 +211,16 @@ public static partial class RulePatches
             return null;
         }
 
+        var pockets = Path.Combine(romfs, "a", "1", "0", "3");
+        if (!File.Exists(pockets))
+        {
+            problem = "falta la tabla de bolsillos del mod: sin SuperCarameloraro";
+            return null;
+        }
+
         problem = ItemData(itemData, SuperCandyItem, RareCandyItem, SuperCandyPrice, SuperCandyName, ownSort: true)
-                  ?? ItemText(text, SuperCandyLines, SuperCandyName);
+                  ?? ItemText(text, SuperCandyLines, SuperCandyName)
+                  ?? ItemPocket(pockets, SuperCandyItem, RareCandyItem, SuperCandyName);
         if (problem is not null) return null;
 
         return AppendIcon(icons, Sprites.SuperCandyIcon.Bflim, RareCandyItem, SuperCandyName, out problem);
@@ -243,6 +251,30 @@ public static partial class RulePatches
         if (!current.AsSpan().SequenceEqual(copy) && current.Where((value, i) => i != 0x0D && value != 0).Any()) return $"el objeto {item} ya se usa: sin {name}";
 
         garc[item] = wanted;
+        File.WriteAllBytes(path, garc.Save());
+        return null;
+    }
+
+    /// <summary>
+    /// Gives <paramref name="item"/> the pocket of <paramref name="model"/> in the bag's pocket table (<c>a/1/0/3</c>, 2026-10-16): half a byte per
+    /// item (odd items the low half), loaded at boot and read by <c>Savedata::MyItem::Sub</c> and <c>Check</c> (through <c>code.bin</c> 0x276B90)
+    /// to know which pocket to look in. The item's own data says medicine, but this table still had the unused slot's 0, so the bag looked for
+    /// the SuperCarameloraro in the wrong pocket and never took one away: it was never spent. Null when done (or already so).
+    /// </summary>
+    private static string? ItemPocket(string path, int item, int model, string name)
+    {
+        var garc = new pk3DS.Core.CTR.GARC.LazyGARC(File.ReadAllBytes(path));
+        if (garc.FileCount < 1 || garc[0].Length <= Math.Max(item, model) / 2) return $"tabla de bolsillos distinta: el {name} no se gastaría";
+
+        var table = (byte[])garc[0].Clone();
+        static int Nibble(byte[] t, int i) => (i & 1) == 1 ? t[i >> 1] & 0xF : t[i >> 1] >> 4;
+        var pocket = Nibble(table, model);
+        var current = Nibble(table, item);
+        if (current == pocket) return null;
+        if (current != 0) return $"el objeto {item} ya tiene bolsillo: el {name} no se gastaría";
+
+        table[item >> 1] = (byte)((item & 1) == 1 ? (table[item >> 1] & 0xF0) | pocket : (table[item >> 1] & 0x0F) | (pocket << 4));
+        garc[0] = table;
         File.WriteAllBytes(path, garc.Save());
         return null;
     }
@@ -414,5 +446,80 @@ public static partial class RulePatches
             BinaryPrimitives.WriteUInt32LittleEndian(span[(fimb + 20 + 8)..], dataSize + (uint)padded);
             return output;
         }
+    }
+
+    /// <summary>
+    /// <c>Bag.cro</c>: after a level up that leads to a move to learn or an evolution, the bag reopens on a hard-coded 50
+    /// (<c>mov r2,#0x32</c> handed to its «item in use» setter, 0x9530, at 0xE8BC and 0xEA58), and the «are there more»
+    /// check before using another asks for 50 too (0xE8F4). All three now read the item actually used, which the bag keeps
+    /// at <c>[this+0x170]</c> (stored zero-extended at 0xE810), so a SuperCarameloraro brings the cursor back to itself.
+    /// With a Rare Candy that word is 50, so nothing changes for it.
+    /// </summary>
+    public const int BagCursorSiteA = 0xE8BC, BagCursorSiteB = 0xEA58, BagMoreSite = 0xE8F4;
+
+    private const uint MovR2Fifty = 0xE3A02032, MovR1Fifty = 0xE3A01032, LdrR2Used = 0xE5942170, LdrR1Used = 0xE5941170;
+
+    private static readonly (int Offset, uint Word)[] BagCursorContext =
+    [
+        (0xE804, 0xE5940170), (0xE810, 0xE5845170),
+        (BagCursorSiteA - 4, 0xE3A03000), (BagCursorSiteA + 4, 0xE3A01003), (BagCursorSiteA + 12, Bl(BagCursorSiteA + 12, 0x9530)),
+        (BagCursorSiteB - 4, 0xE1D533B0), (BagCursorSiteB + 4, 0xE3A01002), (BagCursorSiteB + 12, Bl(BagCursorSiteB + 12, 0x9530)),
+        (BagMoreSite - 4, 0xE3A02001), (BagMoreSite + 4, Bl(BagMoreSite + 4, 0x6D8))
+    ];
+
+    /// <summary>
+    /// The «use another» loop, in three places: <c>ldrh r0,[r0,#0x4c]; cmp r0,#50; bne out; ldr r0,[rB,#0x3c]; mov r2,#1;
+    /// mov r1,#50; bl Check</c> carries on only with Rare Candies. Rewritten in the same seven words as <c>ldrh r1; cmp r1,#50;
+    /// cmpne r1,#113; bne out; ldr r0; mov r2,#1; bl Check</c>, so the SuperCarameloraro asks for itself. Every «out» sets
+    /// r0 and r1 before reading them, so r1 holding the item there instead of r0 changes nothing.
+    /// </summary>
+    private static readonly (int Site, int Out)[] BagLoops = [(0xD86C, 0xD8A8), (0xDA28, 0xDA68), (0x13DD4, 0x13E8C)];
+
+    private static uint[] BagLoopBefore(ReadOnlySpan<byte> cro, int at, int @out) =>
+    [
+        0xE1D004BC, 0xE3500032, B(at + 8, @out, 1),
+        BinaryPrimitives.ReadUInt32LittleEndian(cro[(at + 12)..]) is var ldr && (ldr & 0xFFF0FFFF) == 0xE590003C ? ldr : 0,
+        0xE3A02001, MovR1Fifty, Bl(at + 24, 0x6D8)
+    ];
+
+    private static uint[] BagLoopAfter(uint ldr, int at, int @out) =>
+        [0xE1D014BC, 0xE3510032, 0x13510000 | SuperCandyItem, B(at + 12, @out, 1), ldr, 0xE3A02001, Bl(at + 24, 0x6D8)];
+
+    private static bool LoopDone(ReadOnlySpan<byte> cro, int site, int @out) =>
+        Holds(cro, site, BagLoopAfter(BinaryPrimitives.ReadUInt32LittleEndian(cro[(site + 16)..]), site, @out));
+
+    private static bool CursorAs(ReadOnlySpan<byte> cro, uint siteWord, uint moreWord) =>
+        Matches(cro, BagCursorSiteA, siteWord, BagCursorContext)
+        && BinaryPrimitives.ReadUInt32LittleEndian(cro[BagCursorSiteB..]) == siteWord
+        && BinaryPrimitives.ReadUInt32LittleEndian(cro[BagMoreSite..]) == moreWord;
+
+    /// <summary>Points the bag's return cursor at the item used and lets the loop go on with it, in place.</summary>
+    public static BattleState PatchBagCursor(Span<byte> cro)
+    {
+        var loopsDone = true;
+        foreach (var (site, @out) in BagLoops)
+        {
+            if (site + 28 > cro.Length) return BattleState.Unknown;
+            if (LoopDone(cro, site, @out)) continue;
+            if (!Holds(cro, site, BagLoopBefore(cro, site, @out))) return BattleState.Unknown;
+            loopsDone = false;
+        }
+
+        // Una mochila con el cursor ya puesto (de la versión anterior) recibe solo los bucles.
+        var cursorDone = CursorAs(cro, LdrR2Used, LdrR1Used);
+        if (!cursorDone && !CursorAs(cro, MovR2Fifty, MovR1Fifty)) return BattleState.Unknown;
+        if (cursorDone && loopsDone) return BattleState.AlreadyPatched;
+
+        BinaryPrimitives.WriteUInt32LittleEndian(cro[BagCursorSiteA..], LdrR2Used);
+        BinaryPrimitives.WriteUInt32LittleEndian(cro[BagCursorSiteB..], LdrR2Used);
+        BinaryPrimitives.WriteUInt32LittleEndian(cro[BagMoreSite..], LdrR1Used);
+        foreach (var (site, @out) in BagLoops)
+        {
+            if (LoopDone(cro, site, @out)) continue;
+            var words = BagLoopAfter(BinaryPrimitives.ReadUInt32LittleEndian(cro[(site + 12)..]), site, @out);
+            for (var i = 0; i < words.Length; i++) BinaryPrimitives.WriteUInt32LittleEndian(cro[(site + 4 * i)..], words[i]);
+        }
+
+        return BattleState.Patched;
     }
 }

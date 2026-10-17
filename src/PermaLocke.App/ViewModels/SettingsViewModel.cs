@@ -22,7 +22,6 @@ public sealed partial class SettingsViewModel : SectionViewModel
 {
     private readonly AppSettings _settings;
     private readonly WindowSizeService _windowSizes;
-    private readonly Notifier _notifier;
     private readonly AppPaths _paths;
     private readonly PokemonSpriteService _sprites;
     private readonly ILogger<SettingsViewModel> _logger;
@@ -31,7 +30,7 @@ public sealed partial class SettingsViewModel : SectionViewModel
     /// <summary>The version running, to see at a glance whether an update (§196) went in.</summary>
     public string VersionText { get; } = $"PERMALOCKE {AppUpdate.Display(typeof(SettingsViewModel).Assembly.GetName().Version ?? new Version(0, 0))} · UN JUGADOR";
 
-    public SettingsViewModel(AppSettings settings, WindowSizeService windowSizes, Notifier notifier, AppPaths paths, PokemonSpriteService sprites,
+    public SettingsViewModel(AppSettings settings, WindowSizeService windowSizes, AppPaths paths, PokemonSpriteService sprites,
         ILogger<SettingsViewModel> logger)
         : base("CONFIGURACIÓN", "Ajustes de la aplicación")
     {
@@ -39,14 +38,12 @@ public sealed partial class SettingsViewModel : SectionViewModel
 
         _settings = settings;
         _windowSizes = windowSizes;
-        _notifier = notifier;
         _paths = paths;
         _sprites = sprites;
         _logger = logger;
 
         _loading = true;
         var current = settings.Current;
-        Notifications = current.Notifications;
         StepAside = current.StepAside;
         DeathScene = current.DeathScene;
         Killcam = current.Killcam;
@@ -80,9 +77,6 @@ public sealed partial class SettingsViewModel : SectionViewModel
 
     [ObservableProperty]
     private string _status = string.Empty;
-
-    [ObservableProperty]
-    private bool _notifications;
 
     [ObservableProperty]
     private bool _stepAside;
@@ -155,7 +149,6 @@ public sealed partial class SettingsViewModel : SectionViewModel
 
     public string ResolutionText => Resolution == 0 ? "Resolución: la que tenga el emulador" : $"Resolución x{Resolution}";
 
-    partial void OnNotificationsChanged(bool value) => Save();
     partial void OnStepAsideChanged(bool value) => Save();
     partial void OnDeathSceneChanged(bool value) => Save();
     partial void OnKillcamChanged(bool value) => Save();
@@ -241,7 +234,7 @@ public sealed partial class SettingsViewModel : SectionViewModel
 
         _settings.Update(_settings.Current with
         {
-            Notifications = Notifications, StepAside = StepAside, DeathScene = DeathScene, Killcam = Killcam,
+            StepAside = StepAside, DeathScene = DeathScene, Killcam = Killcam,
             Follower = Follower, Ghosts = Ghosts, CatchCard = CatchCard, Nicknames = Nicknames, CapPanel = CapPanel,
             Background = Background, Resolution = Resolution, Vulkan = Vulkan, CapSize = CapSize, CapMaxCell = CapMaxCell,
             CapMemorial = CapMemorial, CapDetails = CapDetails, CapAnimations = CapAnimations, CapKey = CapKey, CapHpSync = CapHpSync,
@@ -270,23 +263,6 @@ public sealed partial class SettingsViewModel : SectionViewModel
             _logger.LogError(ex, "No se pudo cambiar el tamaño de ventana");
             Status = "No se pudo guardar el tamaño.";
         }
-    }
-
-    [RelayCommand]
-    private void TestNotification()
-    {
-        if (!Notifications)
-        {
-            Status = "Los avisos están desactivados.";
-            return;
-        }
-
-        var random = new Random();
-        _notifier.Say(ToastKind.Info, "Así se ven los avisos", "Aparecen aquí mientras juegas.");
-        _notifier.Say(ToastKind.Shiny, "Prueba: variocolor", "Un variocolor se puede capturar siempre.", _sprites.GetRandom(random));
-        _notifier.Say(ToastKind.BallsTaken, "Prueba: Poké Balls retiradas", "Esta ruta ya ha gastado su encuentro.", _sprites.GetBall());
-        _notifier.Say(ToastKind.Death, "Prueba: baja", "Esto es solo una prueba.", _sprites.GetRandom(random));
-        Status = "Aviso enviado.";
     }
 
     [RelayCommand]

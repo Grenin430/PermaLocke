@@ -160,8 +160,10 @@ internal sealed class WormholeDeath : DeathStyle
             }
         }
 
+        // The rays grow and then go (2026-10-15): they stayed whole until the death ended and were cut in one frame.
         var grow = Ease((t - 2.75) / 0.4);
-        if (grow > 0)
+        var rays = 235 * (1 - Ease((t - 3.15) / 0.4));
+        if (grow > 0 && rays > 0)
         {
             for (var i = 0; i < 4; i++)
             {
@@ -169,7 +171,7 @@ internal sealed class WormholeDeath : DeathStyle
                 var len = (16 + (i * 4)) * grow;
                 Line(cx + (Math.Cos(a) * 6), cy + (Math.Sin(a) * 9), cx + (Math.Cos(a) * (6 + len)), cy + (Math.Sin(a) * (9 + (len * 0.8))), (x, y) =>
                 {
-                    if (y < S.Layout.SurfaceY) p.Set(x, y, 0xFFFFFFu, 235);
+                    if (y < S.Layout.SurfaceY) p.Set(x, y, 0xFFFFFFu, (int)rays);
                 });
             }
         }
@@ -622,6 +624,55 @@ internal sealed class CorruptionDeath : DeathStyle
 
         Shake(p, t, 3, 0.3);
     }
+
+    /// <summary>
+    /// The deep's share (2026-10-15): the corruption takes the whole overlay, not only the party's window. Blocks of wrong colour, rows torn
+    /// sideways and the colours swapped now and then, as strong as the chaos in the party's window at the same moment.
+    /// </summary>
+    public static void Deep(CapSheet p, double t)
+    {
+        var k = Chaos(t);
+        if (k <= 0) return;
+        var f = (int)Math.Floor(t * 12);
+
+        for (var n = 0; n < R(k * 40); n++)
+        {
+            var tx = (int)(Rnd(n * 3, f + 11) * Math.Max(1, p.W - 6));
+            var ty = (int)(Rnd(n * 5, f + 13) * Math.Max(1, p.H - 6));
+            var c = Glitch[(int)(Rnd(n, f + 17) * 6)];
+            var w = 2 + (int)(Rnd(n, f + 19) * 6);
+            var h = 1 + (int)(Rnd(f + 19, n) * 4);
+            for (var dy = 0; dy < h; dy++)
+            {
+                for (var dx = 0; dx < w; dx++)
+                {
+                    if (p.Solid(tx + dx, ty + dy)) p.Set(tx + dx, ty + dy, c);
+                }
+            }
+        }
+
+        var copy = (byte[])p.B.Clone();
+        var row = 0;
+        while (row < p.H)
+        {
+            var h = 2 + (int)(Rnd(row, f + 23) * 5);
+            var shift = Rnd(f + 23, row) < k * 0.55 ? R((Rnd(row + 1, f + 23) - 0.5) * 24 * k) : 0;
+            for (var yy = row; yy < Math.Min(p.H, row + h) && shift != 0; yy++)
+            {
+                for (var x = 0; x < p.W; x++)
+                {
+                    var from = x - shift;
+                    if (from < 0 || from >= p.W) continue;
+                    if (yy < p.NotchY1 && ((x >= p.NotchX0 && x < p.NotchX1) || (from >= p.NotchX0 && from < p.NotchX1))) continue;
+                    Buffer.BlockCopy(copy, ((yy * p.W) + from) * 4, p.B, ((yy * p.W) + x) * 4, 4);
+                }
+            }
+
+            row += h;
+        }
+
+        if (Rnd(f, 79) < k * 0.35) Each(p, (x, y) => { if (p.Solid(x, y)) p.Set(x, y, Swap(p.At(x, y))); });
+    }
 }
 
 // ---------------------------------------------------------------- Ultra Space bolts
@@ -704,7 +755,18 @@ internal sealed class BoltsDeath : DeathStyle
 
     public override void Particle(CapSheet p, DeathCell q, double x, double y, double age, DeathPiece? piece) => Sucked(p, q, x, y, age);
 
-    public override double WormholeSize(double t) => 1 + (0.35 * Clamp01(t / 0.45)) - (t > 0.45 ? 0.15 : 0) + (Clamp01((t - Hit - 1.1) / 0.4) * 0.4);
+    /// <summary>
+    /// The wormhole as it charges, lets go, swallows the pieces and settles (2026-10-15): every change of size is eased. It used to drop 0.15 in one
+    /// frame after the charge and to be cut from 1.6 back to 1 when the death ended; now it charges, eases back, swells as it swallows and goes
+    /// slowly back to its size before the end.
+    /// </summary>
+    public override double WormholeSize(double t)
+    {
+        var charge = 0.3 * (Ease(Clamp01(t / 0.45)) - (0.6 * Ease(Clamp01((t - 0.45) / 0.5))));
+        var swallow = Hit + 1.1;
+        var swell = 0.4 * (Ease(Clamp01((t - swallow) / 0.45)) - Ease(Clamp01((t - swallow - 0.55) / (CapDeath.Seconds(CapDeathKind.Bolts) - swallow - 0.75))));
+        return 1 + charge + swell;
+    }
 
     public override void Frame(CapSheet p, double t, double phase)
     {

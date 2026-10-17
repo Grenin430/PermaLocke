@@ -91,6 +91,13 @@ public sealed class AzaharGameWriter(
         return client.TryReadMemory(PermaLocke.Core.Domain.RuleBlock.Dupes, bits.Length, out var back) && back.AsSpan().SequenceEqual(bits);
     }
 
+    /// <summary>The Poción Variocolor spent (2026-10-17): its byte back to 0, once the wild Pokémon it was for is in the battle.</summary>
+    public bool WriteRuleShinyPotionSpent()
+    {
+        client.WriteMemory(PermaLocke.Core.Domain.RuleBlock.ShinyPotion, [0]);
+        return client.TryReadMemory(PermaLocke.Core.Domain.RuleBlock.ShinyPotion, 1, out var back) && back[0] == 0;
+    }
+
     /// <summary>
     /// The level cap into the block the patched game reads. See <see cref="WriteRuleFallen"/> for the fallen list, which
     /// the patched game uses to keep their HP at zero.
@@ -304,6 +311,85 @@ public sealed class AzaharGameWriter(
 
         return new MemoryWriteResult(touched.Count, touched.Count);
     }
+
+    /// <summary>
+    /// Heals a party Pokémon where the game reads it (2026-10-16, the Pokévial): HP to its maximum, no status, every move's PP full. The same
+    /// structure and the same care as <see cref="SetLiveHp"/>: the PID and the checksum first, the tail read as stats, only the bytes that
+    /// differ written (the PP in the stored block and its checksum, HP and status in the tail), each part backed up, and the Pokémon read back.
+    /// </summary>
+    public MemoryWriteResult HealLive(uint entryAddress, uint expectedPid, Func<int, int?>? basePp = null)
+    {
+        var statsAt = entryAddress + Data.PartyLayoutLocator.AuthoritativeStatsOffset;
+
+        if (ReadAuthoritative(entryAddress) is not { ChecksumValid: true } pokemon || pokemon.PID != expectedPid
+            || !Data.PartyStats.AreHere(pokemon))
+        {
+            return MemoryWriteResult.Nothing;
+        }
+
+        if (!client.TryReadMemory(entryAddress, StoredSize, out var storedBefore)
+            || !client.TryReadMemory(statsAt, PartySize - StoredSize, out var tailBefore))
+        {
+            return MemoryWriteResult.Nothing;
+        }
+
+        pokemon.Stat_HPCurrent = pokemon.Stat_HPMax;
+        pokemon.Status_Condition = 0;
+        // PP from the installed world's move table when it is given (2026-10-16): PKHeX does not know the mod's moves (Wave Crash, Expanding
+        // Force…) and gave them a maximum of 0, so the vial left them empty. Each PP Up adds a fifth of the base.
+        for (var i = 0; i < 4; i++)
+        {
+            var move = pokemon.GetMove(i);
+            if (move == 0) continue;
+            var basic = basePp?.Invoke(move) ?? 0;
+            var ups = i switch { 0 => pokemon.Move1_PPUps, 1 => pokemon.Move2_PPUps, 2 => pokemon.Move3_PPUps, _ => pokemon.Move4_PPUps };
+            var max = basic > 0 ? basic + (basic * ups / 5) : pokemon.GetMovePP(move, ups);
+            if (max <= 0) continue;
+            switch (i)
+            {
+                case 0: pokemon.Move1_PP = max; break;
+                case 1: pokemon.Move2_PP = max; break;
+                case 2: pokemon.Move3_PP = max; break;
+                default: pokemon.Move4_PP = max; break;
+            }
+        }
+
+        var encrypted = new byte[PartySize];
+        pokemon.WriteEncryptedDataParty(encrypted);
+
+        var stored = Enumerable.Range(0, StoredSize).Where(i => encrypted[i] != storedBefore[i]).ToList();
+        var tail = Enumerable.Range(0, PartySize - StoredSize).Where(i => encrypted[StoredSize + i] != tailBefore[i]).ToList();
+        if (stored.Count + tail.Count == 0) return MemoryWriteResult.Nothing;
+
+        if (stored.Count > 0) Backup(entryAddress, storedBefore, "Pokévial");
+        if (tail.Count > 0) Backup(statsAt, tailBefore, "Pokévial cola");
+        foreach (var i in stored) client.WriteMemory((uint)(entryAddress + i), [encrypted[i]]);
+        foreach (var i in tail) client.WriteMemory((uint)(statsAt + i), [encrypted[StoredSize + i]]);
+
+        var after = ReadAuthoritative(entryAddress);
+        var healed = after is { ChecksumValid: true } && after.Stat_HPCurrent == after.Stat_HPMax && after.Status_Condition == 0;
+        logger.LogInformation("0x{Address:X8}: curado con el Pokévial ({Count} bytes){Problem}", entryAddress, stored.Count + tail.Count,
+            healed ? "" : ": al releerlo no está curado");
+
+        return new MemoryWriteResult(stored.Count + tail.Count, healed ? stored.Count + tail.Count : 0);
+    }
+
+    /// <summary>The Pokévial's uses into the block the patched game reads (<see cref="PermaLocke.Core.Domain.RuleBlock.PokeVialUses"/>).</summary>
+    public bool WriteRuleVialUses(byte uses)
+    {
+        client.WriteMemory(PermaLocke.Core.Domain.RuleBlock.PokeVialUses, [uses]);
+        return client.TryReadMemory(PermaLocke.Core.Domain.RuleBlock.PokeVialUses, 1, out var back) && back[0] == uses;
+    }
+
+    /// <summary>Whether the bag has asked for the Pokévial's healing, and the uses the game has now; null when the block cannot be read.</summary>
+    public (bool Asked, byte Uses)? ReadVial()
+    {
+        if (!client.TryReadMemory(PermaLocke.Core.Domain.RuleBlock.PokeVialUses, 2, out var bytes)) return null;
+        return (bytes[1] == 1, bytes[0]);
+    }
+
+    /// <summary>The request answered: back to 0.</summary>
+    public void ClearVialRequest() => client.WriteMemory(PermaLocke.Core.Domain.RuleBlock.PokeVialRequest, [0]);
 
     /// <summary>
     /// Writes one bag slot: backs the word up, writes it, and reads it back to confirm.

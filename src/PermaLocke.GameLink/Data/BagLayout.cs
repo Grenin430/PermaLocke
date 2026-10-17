@@ -246,6 +246,8 @@ public sealed class BagLayout
             if (pouch.Type == InventoryType.Items)
             {
                 legal = legal.Concat(ExpansionMegaStones);
+                // La Poción Variocolor (2026-10-17), otro hueco libre, va con los objetos normales, como el Repelente del que copia los datos.
+                legal = legal.Append((ushort)PermaLocke.Core.Domain.ShinyPotion.ItemId);
             }
 
             // El SuperCarameloraro (2026-10-06) es un hueco libre de la expansión que PermaLocke convierte en una copia
@@ -260,6 +262,7 @@ public sealed class BagLayout
             {
                 legal = legal.Append((ushort)PermaLocke.Core.Domain.InfiniteRepel.ItemId);
                 legal = legal.Append((ushort)PermaLocke.Core.Domain.EggTurbo.ItemId);
+                legal = legal.Append((ushort)PermaLocke.Core.Domain.PokeVial.ItemId);
             }
 
             pockets.Add(new BagPocket(pouch.Type, offset, pouch.Items.Length, pouch.MaxCount, legal));

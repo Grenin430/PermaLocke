@@ -4,7 +4,7 @@
 > `Desktop\Permalocke definitivo`). Sin torneo: sin login de Discord, sin amigos, fantasmas, motes votados, regalos,
 > órdenes, sugerencias, reglas oficiales, servidor ni actualizaciones automáticas, sin logros en pantalla, sin Admin y sin
 > puntos. Lo que costaba puntos se paga con el **dinero del juego** (`GameMoney`, `GameMoneyPoints`): del fichero con el
-> juego cerrado y de la memoria con el juego abierto (este último **sin verificar**: `Probe --dinero`). Precios x100 en
+> juego cerrado y de la memoria con el juego abierto (comprobado en el juego el 2026-10-16; lo pagado con el juego abierto solo queda si se guarda). Precios x100 en
 > `Data/gacha.json` y `Data/shop.json`. No hay `desplegar.ps1`: esta versión **nunca** se copia a `PermaLocke prueba`
 > ni a `PermaLocke para amigos`. El resto de este fichero es el de la app del torneo y vale para el código común.
 

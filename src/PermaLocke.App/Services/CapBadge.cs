@@ -23,7 +23,8 @@ namespace PermaLocke.App.Services;
 /// <param name="Cleared">How many stages the player has cleared.</param>
 /// <param name="Trials">How many trials there are in all.</param>
 /// <param name="CrystalItem">The Z-Crystal of the last stage cleared (its item id, from its achievement), 0 when it has none.</param>
-public sealed record CapReading(string Trial, int Cap, int? Next, int? Highest, int Cleared = 0, int Trials = 0, int CrystalItem = 0);
+public sealed record CapReading(string Trial, int Cap, int? Next, int? Highest, int Cleared = 0, int Trials = 0, int CrystalItem = 0,
+    IReadOnlyList<int>? Crystals = null);
 
 /// <summary>
 /// The level cap, always on screen over the emulator (1.0.4.7): since 2026-10-10 a sea that fills the black band beside the 3DS screens, in the
@@ -83,9 +84,33 @@ public sealed class CapBadge
     private readonly IAbilityLookup _abilities;
     private readonly IAchievementCatalog _achievements;
     private string _partyKey = string.Empty;
+
+    /// <summary>The Pokémon whose fall the overlay has been told of; one comes out of it when it is alive again.</summary>
+    private readonly HashSet<uint> _told = [];
     private CapPlaqueData? _data;
     private CapReading? _shown;
     private bool _battle;
+    private double _battleSeenAt = double.NegativeInfinity;
+    private IReadOnlyList<BattleTable> _lastTables = [];
+
+    /// <summary>How long a battle is still taken as going on after its tables stop answering: between turns they stop validating for a moment.</summary>
+    private const double BattleGrace = 3;
+
+    /// <summary>
+    /// Whether a battle goes on (2026-10-15): the battle's tables stop validating for a moment between turns, just when the end-of-turn damage
+    /// (Bind, Whirlpool, poison, weather) is in memory, and for the panel that was the battle over: what was held came out at once, before the game
+    /// showed it. A battle is over only after <see cref="BattleGrace"/> seconds without its tables.
+    /// </summary>
+    private bool InBattleNow()
+    {
+        if (_monitor.BattleNow.Count > 0)
+        {
+            _battleSeenAt = Now;
+            return true;
+        }
+
+        return Now - _battleSeenAt < BattleGrace;
+    }
     private bool _rehearsing;
     private CapPlaqueData? _rehearsal;
     private IReadOnlyList<CapGrave> _graves = [];
@@ -102,6 +127,15 @@ public sealed class CapBadge
     private CapMode? _lastMode;
     private DateTime _doubtUntil = DateTime.MinValue;
     private DateTime _verifiedAt = DateTime.MinValue;
+    private DateTime _movedAt = DateTime.MinValue;
+    private DateTime _hurryUntil = DateTime.MinValue;
+    private CapShinyTurn? _shinyTurn;
+    private PokeVialService? _vialService;
+    private double _vialUsedAt = double.NegativeInfinity;
+    private int _vialFrom;
+    private FieldItemsService? _fieldItems;
+    private CapToggle _repel = CapToggle.Off, _turbo = CapToggle.Off;
+    private bool _fieldSeen;
 
     /// <summary>A window and the plaque in it: the party's, or the memorial's.</summary>
     private sealed record Panel(Window Window, CapPlaque Plaque);
@@ -109,7 +143,7 @@ public sealed class CapBadge
     public CapBadge(EmulatorLauncher launcher, ProgressService progress, LevelCapTable caps, IRunContext runContext,
         GameLinkMonitor monitor, AppSettings settings, PokemonSpriteService sprites, AlolaSky sky, ITypeLookup types, IItemLookup items,
         IMoveCatalog moves, CemeteryService cemetery, VitalsPump pump, BarSync bar, ActiveBar active, IAbilityLookup abilities, IAchievementCatalog achievements,
-        ILogger<CapBadge> logger)
+        EncounterGuard encounters, PokeVialService vial, FieldItemsService fieldItems, ILogger<CapBadge> logger)
     {
         _achievements = achievements;
         _launcher = launcher;
@@ -141,18 +175,63 @@ public sealed class CapBadge
         _frames.Tick += (_, _) => Frame();
         monitor.RunDataChanged += (_, _) => _readAt = DateTime.MinValue;
 
-        // The creature sinks when the run records the death, not when the life reads zero: only once the PermaLocke has started (the first Poké Ball),
-        // and after the game has shown the faint (singleplayer, 2026-10-13).
-        monitor.PokemonDied += (_, fallen) =>
+        // The death plays when the game has shown the faint, not when the life reads zero, and always: also before the first Poké Ball, when the
+        // fall does not count (singleplayer, 2026-10-15). Once per fall: the news may come twice, and a Pokémon brought back may fall again.
+        monitor.FaintShown += (_, pid) =>
         {
-            if (fallen.Pid == 0) return;
             _ = Application.Current?.Dispatcher.BeginInvoke(() =>
             {
-                _events = _feed.Fall(fallen.Pid, Now);
+                if (!_told.Add(pid)) return;
+                // One of the deaths at random, each time (2026-10-15).
+                _events = _feed.Fall(pid, Now, Random.Shared.Next(Enum.GetValues<CapDeathKind>().Length));
                 Repaint();
             });
         };
         runContext.CurrentChanged += (_, _) => _readAt = DateTime.MinValue;
+
+        // The Pokévial (2026-10-16): its uses, and the moment it is used for its healing in the overlay.
+        _vialService = vial;
+        vial.Changed += () => _ = Application.Current?.Dispatcher.BeginInvoke(Replace);
+        vial.Used += (from, left) => _ = Application.Current?.Dispatcher.BeginInvoke(() =>
+        {
+            _vialUsedAt = Now;
+            _vialFrom = from;
+            Replace();
+        });
+
+        // The Repelente Infinito and the Incubadora Turbo (2026-10-16): the moments each is turned on and off, for their animations. On already
+        // when first seen: on long ago, so it does not play the turning on.
+        _fieldItems = fieldItems;
+        fieldItems.Changed += () => _ = Application.Current?.Dispatcher.BeginInvoke(() =>
+        {
+            var (_, repelOn, _, turboOn) = fieldItems.Now;
+            _repel = Turned(_repel, repelOn, !_fieldSeen);
+            _turbo = Turned(_turbo, turboOn, !_fieldSeen);
+            _fieldSeen = true;
+            Replace();
+        });
+
+        // A shiny (2026-10-16): its look until the battle ends; only the rainbow since 2026-10-17 (the violet one was taken out).
+        encounters.ShinyAppeared += (_, _) => _ = Application.Current?.Dispatcher.BeginInvoke(() =>
+        {
+            _shinyTurn = new CapShinyTurn(CapShinyKind.Things, Now);
+            _logger.LogInformation("Variocolor: el panel del cap se pone {Kind}", _shinyTurn.Kind);
+            Replace();
+        });
+
+        // A trial's Z-Crystal in the bag (2026-10-16): the cap and its film come at once, not on the next ten-second read. The run takes a moment
+        // to count the trial as cleared, so for a few seconds it is read every second.
+        monitor.ItemGained += (_, gained) =>
+        {
+            if (gained.ItemId is < 807 or > 824) return;
+            _ = Application.Current?.Dispatcher.BeginInvoke(() =>
+            {
+                _progress.Forget();
+                _hurryUntil = DateTime.UtcNow.AddSeconds(15);
+                _readAt = DateTime.MinValue;
+                Replace();
+            });
+        };
     }
 
     public void Start()
@@ -162,9 +241,19 @@ public sealed class CapBadge
         _pump.Start();
         _timer.Start();
         _frames.Start();
+        HookGame();
     }
 
     private double Now => _clock.Elapsed.TotalSeconds;
+
+    /// <summary>A toggle after a reading: turned on now, off now, or as it was; on at the first reading, on long ago.</summary>
+    private CapToggle Turned(CapToggle was, bool on, bool first)
+    {
+        var wasOn = Now >= was.OnAt && Now < was.OffAt;
+        if (on == wasOn) return was;
+        if (!on) return was with { OffAt = Now };
+        return new CapToggle(first ? Now - 100 : Now);
+    }
 
     /// <summary>
     /// <c>--ensayar-cap [escenario] [segundos]</c>: the panel with no real party, from a scenario of the lab (<see cref="CapScenarios"/>: captura, completo,
@@ -235,17 +324,18 @@ public sealed class CapBadge
             var game = _settings.Current.CapPanel && _launcher.IsRunning ? GameWindow.Handle() : IntPtr.Zero;
             _gameHandle = game;
 
-            // Fijo (CONFIGURACIÓN), otra ventana delante del juego no lo esconde: solo el juego cerrado o minimizado.
-            if (game == IntPtr.Zero || (!_settings.Current.CapPinned && GetForegroundWindow() != game)
-                || GameWindow.RenderBox(game) is not { } picture)
+            // One with the game (2026-10-16): another window in front covers the panel as it covers the game, Windows does that, so nothing hides it
+            // for that; only the game closed or minimised takes it away.
+            if (game == IntPtr.Zero || IsIconic(game) || GameWindow.RenderBox(game) is not { } picture)
             {
                 HideAll();
                 return;
             }
 
-            if (DateTime.UtcNow - _readAt > Reread && _runContext.Current is { } run)
+            if (DateTime.UtcNow - _readAt > (DateTime.UtcNow < _hurryUntil ? TimeSpan.FromSeconds(1) : Reread) && _runContext.Current is { } run)
             {
                 _readAt = DateTime.UtcNow;
+                if (DateTime.UtcNow < _hurryUntil) _progress.Forget();
                 _reading = await ReadAsync(run);
                 await _sprites.PrepareAsync();
                 _graves = await ReadGravesAsync();
@@ -259,7 +349,7 @@ public sealed class CapBadge
 
             // El nivel del equipo se mira cada vuelta: sube en mitad de un combate y la barra lo sigue.
             _shown = reading with { Highest = Highest() ?? reading.Highest };
-            _battle = _monitor.BattleNow.Count > 0;
+            _battle = InBattleNow();
             _eventAt = Now;
             TakeNewEpoch();
             ShowParty(LiveParty());
@@ -307,6 +397,11 @@ public sealed class CapBadge
         }
 
         var tables = frame is { Battle.Count: > 0 } ? frame.ToTables(_monitor.BattleNow) : _monitor.BattleNow;
+
+        // Between turns the tables stop answering for a moment: the party's HP in memory is still the one from before the battle, so the last tables stand in.
+        if (tables.Count > 0) _lastTables = tables;
+        else if (_battle) tables = _lastTables;
+        else _lastTables = [];
         return Present(WithLiveHp(party, tables));
     }
 
@@ -319,11 +414,16 @@ public sealed class CapBadge
         _hp.Mode = (HpSyncMode)Math.Clamp(_settings.Current.CapHpSync, 0, 2);
         var now = Now;
         var arm = false;
+
+        // The game's bar of the one on the field, as the screen shows it: what the life shown follows (2026-10-15).
+        _active.Follow(_battle);
+        var fill = _monitor.BattleNow.Count > 0 ? _active.Current() : null;
         foreach (var member in party)
         {
-            if (!member.IsEgg) arm |= _hp.Observe(member.Pid, member.CurrentHp, member.MaxHp, now, _battle);
+            if (!member.IsEgg) arm |= _hp.Observe(member.Pid, member.CurrentHp, member.MaxHp, now, _battle, _battle && _active.SeenInBattle);
         }
 
+        if (fill is { } seen) _hp.Follow(seen, now);
         if (!_battle) _hp.Flush();
         _hp.Keep([.. party.Select(member => member.Pid)]);
         if (arm) _bar.Arm();
@@ -370,8 +470,14 @@ public sealed class CapBadge
     private double? ActiveShare()
     {
         _active.Follow(_battle);
-        return _battle && _active.Current() is { } fill ? Math.Round(fill * 20) / 20 : null;
+
+        // Only while the battle's tables answer (2026-10-15): in the seconds a battle is still taken as going on after they stop, the screen is already
+        // the field, and a look at it turned the sea dark again for a moment after it had cleared. Then the last share stays, and at the end it goes.
+        if (_monitor.BattleNow.Count > 0) return _share = _active.Current() is { } fill ? Math.Round(fill * 20) / 20 : null;
+        return _battle ? _share : _share = null;
     }
+
+    private double? _share;
 
     /// <summary>The fast reading started again from nothing (the game came back): what is read next is taken as it is, nothing is announced.</summary>
     private void TakeNewEpoch()
@@ -386,6 +492,9 @@ public sealed class CapBadge
     private void OnBar(BarSignal signal)
     {
         if (signal.Kind != BarSignalKind.Started) return;
+
+        // While the bar is seen, the life follows it step by step (HpPresenter.Follow): its start alone would give the whole change away at once.
+        if (_hp.Mode == HpSyncMode.Synchronized && _active.SeenInBattle) return;
         var ago = (Stopwatch.GetTimestamp() - signal.At) / (double)Stopwatch.Frequency;
         _ = Application.Current?.Dispatcher.BeginInvoke(DispatcherPriority.Send, () =>
         {
@@ -402,7 +511,7 @@ public sealed class CapBadge
             _eventAt = at ?? Now;
             TakeNewEpoch();
             if (_rehearsing || _shown is null || _picture.Width == 0 || (_main?.Window.IsVisible != true && _memorial?.Window.IsVisible != true)) return;
-            _battle = _monitor.BattleNow.Count > 0;
+            _battle = InBattleNow();
             ShowParty(LiveParty());
             Apply(_picture, ScreenLayout(), Dpi());
         }
@@ -427,7 +536,11 @@ public sealed class CapBadge
         // the crystal of the stage just cleared, for the trial film (the league and the rematch have none)
         var last = cleared > 0 && cleared <= _caps.Stages.Count ? _caps.Stages.OrderBy(s => s.Order).ElementAt(cleared - 1) : null;
         var crystal = last?.Achievement is { } id && _achievements.All.FirstOrDefault(a => a.Id == id)?.Item is { } item and >= 807 and <= 824 ? item : 0;
-        return new CapReading(label, stage.Level, next, Highest(), cleared, trials, crystal);
+        // every trial's crystal cleared so far, in order: they stay set in the abyss's sand (2026-10-16)
+        var crystals = _caps.Stages.OrderBy(s => s.Order).Take(cleared)
+            .Select(s => s.Achievement is { } a && _achievements.All.FirstOrDefault(x => x.Id == a)?.Item is { } i and >= 807 and <= 824 ? i : 0)
+            .Where(i => i > 0).ToList();
+        return new CapReading(label, stage.Level, next, Highest(), cleared, trials, crystal, crystals);
     }
 
     /// <summary>The run's fallen, the latest first, with the icon of each; empty when the run's record cannot be read.</summary>
@@ -503,7 +616,9 @@ public sealed class CapBadge
             return;
         }
 
-        if (plan.Main is not null && DateTime.UtcNow - _verifiedAt > Verify)
+        // Only with the game in front and still (2026-10-16): the check looks at the screen, and with another window over the game or the game
+        // being resized it saw something else and hid the panel for six seconds, which is what made it slow to come back.
+        if (plan.Main is not null && DateTime.UtcNow - _verifiedAt > Verify && DateTime.UtcNow - _movedAt > Verify && GetForegroundWindow() == _gameHandle)
         {
             _verifiedAt = DateTime.UtcNow;
             if (CapBandGuard.LooksRight(plan, picture) == false)
@@ -516,17 +631,25 @@ public sealed class CapBadge
             }
         }
 
+        // The shiny lasts as long as its battle; then it runs back, and when that is done it is forgotten.
+        if (_shinyTurn is { End: null } running && !_battle) _shinyTurn = running with { End = Now };
+        if (_shinyTurn?.Over(Now) == true) _shinyTurn = null;
+
         _lastMode = plan.Main?.Mode;
         var seed = _runContext.Current is { } activeRun ? activeRun.Id.GetHashCode() & 0x7FFFFFFF : 0;
         var data = _rehearsal ?? new CapPlaqueData(reading.Trial, reading.Cap, reading.Next, reading.Highest, _party, _battle, _graves, reading.Cleared,
             reading.Trials, _sky.IsKnown ? _sky.Hour : -1, seed, _events, ActiveShare(), _settings.Current.DeathScene,
-            reading.CrystalItem, reading.CrystalItem > 0 ? _sprites.GetItem(reading.CrystalItem) : null);
+            reading.CrystalItem, reading.CrystalItem > 0 ? _sprites.GetItem(reading.CrystalItem) : null,
+            [.. (reading.Crystals ?? []).Select(i => (i, _sprites.GetItem(i)))], _shinyTurn,
+            _vialService?.Now is { Owned: true } held ? new CapVialState(held.Uses, held.Max, _vialUsedAt, _vialFrom) : null,
+            _fieldItems?.Now.RepelOwned == true ? _repel : null, _fieldItems?.Now.TurboOwned == true ? _turbo : null);
         _data = data;
 
         // One sea in two windows.
         var (partyX, deepX, world) = CapGeometry.WorldOf(plan);
         Show(ref _main, CapPanelKind.Party, plan.Main, data, partyX, world);
         Show(ref _memorial, CapPanelKind.Deep, plan.Companion, data, deepX, world);
+        _replace = false;
     }
 
     private void Show(ref Panel? panel, CapPanelKind kind, CapSlot? slot, CapPlaqueData data, int worldX, int worldWidth)
@@ -540,13 +663,15 @@ public sealed class CapBadge
         panel ??= Create(kind);
         panel.Plaque.Animated = _settings.Current.CapAnimations && !PermaLocke.App.Views.Pixel.PixelTheme.ReducedMotion;
         panel.Plaque.Set(data, slot, Now, worldX, worldWidth);
-        OverlayWindows.PlaceOver(panel.Window, (slot.Box.Left, slot.Box.Top, slot.Box.Width, slot.Box.Height));
+        // Part of the game's window (2026-10-16): owned by it, not «always on top». See OverlayWindows.PlaceOnOwner.
+        OverlayWindows.PlaceOnOwner(panel.Window, (slot.Box.Left, slot.Box.Top, slot.Box.Width, slot.Box.Height), _gameHandle, _replace);
         if (!panel.Window.IsVisible) panel.Window.Show();
         EnsureRendering();
     }
 
     private void HideAll()
     {
+        _replace = true;
         _main?.Window.Hide();
         _memorial?.Window.Hide();
     }
@@ -563,6 +688,7 @@ public sealed class CapBadge
     private long _lastStep;
     private double _interval = 33;
     private double _cost;
+    private DateTime _slowSaid = DateTime.MinValue;
     private IntPtr _front;
     private IntPtr _gameHandle;
 
@@ -591,7 +717,15 @@ public sealed class CapBadge
         var busy = Step();
         var took = (Stopwatch.GetTimestamp() - now) * 1000.0 / Stopwatch.Frequency;
         _cost = (_cost * 0.8) + (took * 0.2);
-        _interval = busy && _cost < 6 ? 16 : 33;
+        // Never much more than half the interface's time (2026-10-17): with the shiny's rainbow a frame cost more than the 33 ms between
+        // frames, the next one came at once, the interface thread never rested, and after five seconds Windows put a ghost of the window in
+        // front of the game that took the clicks. A costly frame now spaces the next ones out instead.
+        _interval = Math.Max(busy && _cost < 6 ? 16 : 33, _cost * 1.6);
+        if (took > 40 && DateTime.UtcNow - _slowSaid > TimeSpan.FromSeconds(30))
+        {
+            _slowSaid = DateTime.UtcNow;
+            _logger.LogInformation("Panel del cap: un fotograma costó {Took:0} ms; el siguiente espera {Interval:0} ms", took, _interval);
+        }
 
         if (!AnyVisible())
         {
@@ -600,16 +734,28 @@ public sealed class CapBadge
         }
     }
 
-    /// <summary>Another window in front takes the panel away at once; the game in front again brings it back without waiting for the half-second beat.</summary>
+    /// <summary>
+    /// The game coming to the front again (2026-10-16): the panel is placed again straight above it, at once. Another window in front no longer
+    /// hides anything: it covers the panel as it covers the game.
+    /// </summary>
     private void CheckFront()
     {
         var front = GetForegroundWindow();
         if (front == _front) return;
         _front = front;
-        if (_rehearsing || _gameHandle == IntPtr.Zero) return;
-        if (front != _gameHandle && !_settings.Current.CapPinned) HideAll();
-        else if (!AnyVisible()) _ = TickAsync();
+        if (_rehearsing || _gameHandle == IntPtr.Zero || front != _gameHandle) return;
+        _doubtUntil = DateTime.MinValue;
+        Replace();
     }
+
+    /// <summary>Places the windows again on the next look, even where nothing moved, and looks now.</summary>
+    private void Replace()
+    {
+        _replace = true;
+        _ = TickAsync();
+    }
+
+    private bool _replace = true;
 
     /// <summary>One frame of the moving part for each window that is showing; true while something in it needs frames at the screen's pace.</summary>
     private bool Step()
@@ -661,7 +807,7 @@ public sealed class CapBadge
             ShowInTaskbar = false,
             ShowActivated = false,
             Focusable = false,
-            Topmost = true,
+            Topmost = false,
             ResizeMode = ResizeMode.NoResize,
             SizeToContent = SizeToContent.WidthAndHeight,
             UseLayoutRounding = true,
@@ -692,7 +838,9 @@ public sealed class CapBadge
         }
 
         _partyKey = key;
-        _party = [.. party.OrderBy(p => p.Slot).Select(member => ToMember(member, details))];
+        // Already in the game's order (LiveParty): sorting by the slot in memory undid a swap made in the game's party menu (2026-10-15).
+        _party = [.. party.Select(member => ToMember(member, details))];
+        _told.RemoveWhere(pid => party.Any(member => member.Pid == pid && member.CurrentHp > 0));
 
         // What happened to each of them, with the moment the news came (the reading, the bar of the game), not the moment it is painted.
         _events = _feed.Observe(new CapPlaqueData(string.Empty, 0, null, null, _party, _battle), _eventAt, Now).Events ?? [];
@@ -836,6 +984,48 @@ public sealed class CapBadge
             return member with { CurrentHp = last.Hp, MaxHp = last.MaxHp };
         })];
     }
+
+    /// <summary>
+    /// The panel follows the game the moment it moves, is resized, minimised or restored (2026-10-16), not on the next half-second beat: Windows
+    /// tells, and only the game's own window is listened to. The callback comes on this thread (out of context, through its message loop).
+    /// </summary>
+    private void HookGame()
+    {
+        _onGameEvent = (_, kind, window, item, _, _, _) =>
+        {
+            if (window == IntPtr.Zero || window != _gameHandle || item != 0 || _rehearsing) return;
+            if (kind == EventMinimizeStart)
+            {
+                HideAll();
+                return;
+            }
+
+            // Coming back from the taskbar the picture is still growing for a moment: the check of the band waits for it to settle, and a doubt
+            // raised while it was minimised or growing does not keep the panel away.
+            if (kind == EventMinimizeEnd)
+            {
+                _doubtUntil = DateTime.MinValue;
+                _verifiedAt = DateTime.UtcNow;
+            }
+
+            _movedAt = DateTime.UtcNow;
+            Replace();
+        };
+
+        SetWinEventHook(EventMinimizeStart, EventMinimizeEnd, IntPtr.Zero, _onGameEvent, 0, 0, OutOfContext);
+        SetWinEventHook(EventMoveSizeEnd, EventMoveSizeEnd, IntPtr.Zero, _onGameEvent, 0, 0, OutOfContext);
+        SetWinEventHook(EventLocationChange, EventLocationChange, IntPtr.Zero, _onGameEvent, 0, 0, OutOfContext);
+    }
+
+    private WinEventProc? _onGameEvent;
+    private delegate void WinEventProc(IntPtr hook, uint kind, IntPtr window, int item, int child, uint thread, uint time);
+    private const uint EventMoveSizeEnd = 0x000B, EventMinimizeStart = 0x0016, EventMinimizeEnd = 0x0017, EventLocationChange = 0x800B, OutOfContext = 0;
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr SetWinEventHook(uint min, uint max, IntPtr module, WinEventProc proc, uint process, uint thread, uint flags);
+
+    [DllImport("user32.dll")]
+    private static extern bool IsIconic(IntPtr window);
 
     [DllImport("user32.dll")]
     private static extern IntPtr GetForegroundWindow();

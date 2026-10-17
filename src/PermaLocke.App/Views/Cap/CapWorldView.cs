@@ -9,6 +9,11 @@ public sealed class CapWorldView
 {
     private readonly Dictionary<CapMood, CapSheet> _scenes = [];
     private readonly CapCreature[] _creatures;
+    private readonly CapShiny _shiny = new();
+    private readonly CapVial _vial = new();
+    private readonly CapRepel _repel = new();
+    private readonly CapEggTurbo _turbo = new();
+    private readonly List<CapVial.Target> _vialTargets = [];
     private readonly string?[] _keys;
     private readonly int[] _builtCap;
     private readonly CapBuoy _buoy = new();
@@ -104,11 +109,20 @@ public sealed class CapWorldView
         // The deaths of the party, one after another (2026-10-15): the one being shown now, and in this window its scene.
         var deaths = anim is null ? [] : CapDeath.Schedule(data, anim, t);
         var dying = data.DeathScenes ? deaths.FirstOrDefault(d => t >= d.Start && t < d.End) : null;
-        var order = Layout.Panel == CapPanelKind.Party ? Arrange(data, deaths, t) : [];
+        var order = Layout.Panel == CapPanelKind.Party ? Arrange(data, deaths, anim, t) : [];
         var scene = Layout.Panel == CapPanelKind.Party && dying is not null ? SceneOf(dying, data, pal, order) : null;
 
         // A trial passed (2026-10-15): its two films, the crystal's and the cap's; until the cap's breaks it, the plaque and the levels keep the old cap.
         var trial = data.Cap > 0 ? CapTrial.Now(data, anim, t) : null;
+
+        // The Mega Evolution unlocked at the sixth trial (2026-10-16): the Megas' parade while its films play; the visitors are Megas once they come out.
+        var parade = CapMega.Since(data, anim, t);
+        _context = _context with
+        {
+            Megas = data.Cleared >= 6 && !(parade < CapMega.Reveal), Parade = parade is not null,
+            Shiny = data.Shiny is { } rainbow && t >= rainbow.Start && rainbow.End is null ? t - rainbow.Start : -1
+        };
+        CapShiny.BeginFrame(frame.W);
 
         frame.CopyFrom(Scene(mood.Now));
         if (mood.Blend < 1 && mood.Before != mood.Now) DitherFrom(frame, Scene(mood.Before), mood.Blend);
@@ -120,7 +134,6 @@ public sealed class CapWorldView
         CapSeaLive.Shafts(frame, Layout, pal, _context, phase);
         CapSeaLive.Snow(frame, Layout, pal, _context, phase);
         CapFlora.Paint(frame, Layout, pal, _context, _fossils, phase);
-        CapRuins.Live(frame, Layout, pal, _context, _fossils, phase);
         // In the party's window, the sign with the cap (2026-10-15). The coral and the little things on the sand (CapReefLife) were not liked
         // and are not painted until something else is chosen.
         if (Layout.Panel == CapPanelKind.Party)
@@ -131,8 +144,34 @@ public sealed class CapWorldView
         }
 
         if (anim is not null) CapFauna.Paint(frame, Layout, pal, mood, _context, t, phase, []);
+        if (parade is { } megaSince) CapMega.Paint(frame, Layout, _context, megaSince, Layout.Panel == CapPanelKind.Deep);
+
+        // The crystals of the trials cleared, set in the abyss's sand (2026-10-16).
+        CapTrial.PaintBed(frame, Layout, data.Crystals, trial, data.CrystalItem, phase);
 
         if (Layout.Panel == CapPanelKind.Party) PaintParty(frame, data, pal, mood, anim, t, phase, deaths, trial, order);
+
+        // The Pokévial (2026-10-16): beside the cap's sign, and its healing over the party while it plays.
+        if (Layout.Panel == CapPanelKind.Party && data.Vial is { } vial && CapSign.Where(Layout, data, _context, _fossils) is { } sign)
+        {
+            _vialTargets.Clear();
+            for (var slot = 0; slot < order.Count && slot < _creatures.Length; slot++)
+            {
+                var c = _creatures[slot];
+                if (c.Member is not { Fallen: false, Egg: false }) continue;
+                _vialTargets.Add(new CapVial.Target(c.Centre.X, c.Centre.Y, c.Slot.Sprite, c.BeadsAt.X, c.BeadsAt.Y + 1, c.Beads * 4));
+            }
+
+            _vial.Paint(frame, sign.Board, sign.Ground, vial, _vialTargets, t);
+        }
+
+        // The Incubadora Turbo (2026-10-16): right of the Pokévial, overcharged while it is on (2026-10-17: it and the repel swapped places).
+        if (Layout.Panel == CapPanelKind.Party && data.Turbo is { } turbo && CapSign.Where(Layout, data, _context, _fossils) is { } stand)
+            _turbo.Paint(frame, stand.Board.Left + stand.Board.Width + 13 + 27, frame.H - 10, turbo, t);
+
+        // The Repelente Infinito (2026-10-16): right of the Incubadora Turbo, its smoke rising from the nozzle while it is on.
+        if (Layout.Panel == CapPanelKind.Party && data.Repel is { } repel && CapSign.Where(Layout, data, _context, _fossils) is { } post)
+            _repel.Paint(frame, post.Board.Left + post.Board.Width + 13 + 27 + 24, frame.H - 10, repel, x => CapSea.Relief(Layout, _context, x, _fossils), t);
 
         // The death being shown: in the party's window the fallen one taken apart; in the deep's, its share of the deaths that reach it.
         scene?.Paint(frame, t, phase);
@@ -150,6 +189,9 @@ public sealed class CapWorldView
                 case CapDeathKind.Necrozma:
                     NecrozmaDeath.Deep(frame, Layout, _context, since);
                     break;
+                case CapDeathKind.Corruption:
+                    CorruptionDeath.Deep(frame, since);
+                    break;
             }
         }
 
@@ -158,6 +200,9 @@ public sealed class CapWorldView
             CapTrial.PaintCrystal(frame, Layout, _context, trial);
             if (Layout.Panel == CapPanelKind.Party && PlaqueOf(trial, data) is { } plaque) CapTrial.PaintCap(frame, Layout, trial, plaque);
         }
+
+        // A shiny in this battle (2026-10-16): over everything, the look drawn for it.
+        if (data.Shiny is { } shiny) _shiny.Paint(frame, Layout, shiny, t);
     }
 
     /// <summary>What the cap's film breaks and remakes, worked out when a trial starts and kept while it plays.</summary>
@@ -207,14 +252,14 @@ public sealed class CapWorldView
     /// Which of the party each slot shows, in the game's order (2026-10-15): the fallen keep their slot until their death has been shown, and
     /// then leave it; the ones under them move up and the empty slots are the last ones. A slot whose Pokémon changed is built again.
     /// </summary>
-    private List<int> Arrange(CapPlaqueData data, IReadOnlyList<CapDeathTurn> deaths, double t)
+    private List<int> Arrange(CapPlaqueData data, IReadOnlyList<CapDeathTurn> deaths, CapAnim? anim, double t)
     {
         var order = new List<int>();
         for (var i = 0; i < data.Party.Count && order.Count < _creatures.Length; i++)
         {
             var m = data.Party[i];
             var turn = deaths.FirstOrDefault(d => d.Index == i);
-            if (m.Fallen && (turn is null || !data.DeathScenes || t >= turn.End)) continue;
+            if (m.Fallen && (turn is null ? anim?.AwaitingFall(i, t) != true : !data.DeathScenes || t >= turn.End)) continue;
             order.Add(i);
         }
 
@@ -280,7 +325,7 @@ public sealed class CapWorldView
 
             // A fallen one is drawn until its death's turn comes; from then on its death paints it.
             var turn = deaths.FirstOrDefault(d => d.Index == i);
-            if (turn is not null ? !data.DeathScenes || t >= turn.Start : m.Fallen) continue;
+            if (turn is not null ? !data.DeathScenes || t >= turn.Start : m.Fallen && anim?.AwaitingFall(i, t) != true) continue;
 
             // While a trial plays, its level keeps the old cap until the cap's last wave passes it.
             var cap = CapTrial.CapOf(trial, data.Cap, creature.Slot.Info.Top + 3, ground);

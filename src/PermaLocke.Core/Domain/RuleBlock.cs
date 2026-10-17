@@ -75,9 +75,39 @@ public static class RuleBlock
 
     /// <summary>
     /// The Incubadora Turbo (2026-10-07): a byte, 1 while it is on. The game writes it, from the bag (<c>Bag.cro</c>), and reads it in the
-    /// egg step count; PermaLocke never touches it. A fresh game reads 0, so the cartridge hatches eggs as it always did.
+    /// egg step count. A fresh game reads 0, so the cartridge hatches eggs as it always did. The save does not keep it, so PermaLocke keeps it for
+    /// the run and puts it back when the game starts again (2026-10-16, see <see cref="EggTurboKept"/>).
     /// </summary>
     public const uint EggTurboOffset = 0x10;
 
     public static uint EggTurbo => Address + EggTurboOffset;
+
+    /// <summary>
+    /// The Pokévial (2026-10-16): the uses it has left (a byte). PermaLocke writes it (what the run keeps), and the game's bag takes one when it is
+    /// used, then asks for the healing with <see cref="PokeVialRequest"/>. A fresh game reads 0: the vial is empty.
+    /// </summary>
+    public const uint PokeVialUsesOffset = 0x11;
+
+    public static uint PokeVialUses => Address + PokeVialUsesOffset;
+
+    /// <summary>The bag sets this byte to 1 when the Pokévial is used; PermaLocke heals the party and puts it back to 0.</summary>
+    public const uint PokeVialRequestOffset = 0x12;
+
+    public static uint PokeVialRequest => Address + PokeVialRequestOffset;
+
+    /// <summary>
+    /// PermaLocke sets this byte to 1 once it has put the run's Incubadora Turbo back into this game's memory (2026-10-16). A 0 is a game just
+    /// started, whose turbo the save did not keep.
+    /// </summary>
+    public const uint EggTurboKeptOffset = 0x13;
+
+    public static uint EggTurboKept => Address + EggTurboKeptOffset;
+    /// <summary>
+    /// The Poción Variocolor (2026-10-17): a byte, 1 from the moment it is used until PermaLocke reads the next wild Pokémon of a battle;
+    /// meanwhile everything the game makes at random comes out shiny. The bag (<c>Bag.cro</c>) sets it, the Pokémon maker in <c>code.bin</c>
+    /// reads it, PermaLocke clears it (<c>EncounterGuard</c>). In RAM only: a potion used and the game closed before an encounter is lost.
+    /// </summary>
+    public const uint ShinyPotionOffset = 0x14;
+
+    public static uint ShinyPotion => Address + ShinyPotionOffset;
 }

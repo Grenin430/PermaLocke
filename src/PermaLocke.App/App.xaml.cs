@@ -226,7 +226,6 @@ public partial class App : Application
         // LOS AVISOS ENCIMA DEL JUEGO. Su propia ventana, para que salgan con PermaLocke
         // minimizado, que es como se juega. PlayNotifications solo se suscribe: hay que pedirlo
         // una vez para que exista, y eso se hace al arrancar el vigilante.
-        collection.AddSingleton<Notifier>();
         collection.AddSingleton<PlayNotifications>();
         collection.AddSingleton<WipeRain>();
         collection.AddSingleton<DeathCeremony>();
@@ -265,6 +264,8 @@ public partial class App : Application
         collection.AddSingleton<BarSync>();
         collection.AddSingleton<ActiveBar>();
         collection.AddSingleton<CapBadge>();
+        collection.AddSingleton<PokeVialService>();
+        collection.AddSingleton<FieldItemsService>();
         collection.AddSingleton<BackgroundMode>();
         collection.AddSingleton<PokemonIdentityService>();
         collection.AddSingleton<IRewardCatalog>(_ =>
@@ -432,6 +433,9 @@ public partial class App : Application
 
             // El cap de nivel siempre a la vista, encima del juego (1.0.4.7).
             _services.GetRequiredService<CapBadge>().Start();
+            _services.GetRequiredService<GameMoneyPoints>().Watch();
+            _services.GetRequiredService<PokeVialService>().Start();
+            _services.GetRequiredService<FieldItemsService>().Start();
 
             // Las líneas evolutivas se leen ya, en segundo plano: la primera vez puede tocar sacar el fichero de
             // la ROM, y eso no debe caer en el segundo en que empieza un combate.
@@ -479,13 +483,6 @@ public partial class App : Application
             var scenario = capAt + 1 < e.Args.Length && !e.Args[capAt + 1].StartsWith("--", StringComparison.Ordinal) ? e.Args[capAt + 1] : null;
             var seconds = capAt + 2 < e.Args.Length && double.TryParse(e.Args[capAt + 2], System.Globalization.CultureInfo.InvariantCulture, out var s) ? s : 30;
             _ = _services!.GetRequiredService<CapBadge>().RehearseAsync(scenario, seconds);
-        }
-
-        if (e.Args.Contains("--ensayar-amigo", StringComparer.OrdinalIgnoreCase))
-        {
-            // El aviso pequeño de un amigo que empieza a jugar (1.0.4.5), sin servidor ni juego.
-            _services!.GetRequiredService<Notifier>().Say(ToastKind.FriendPlaying, "Iñigo pero en móvil", "está jugando a PermaLocke");
-            _services!.GetRequiredService<Notifier>().Say(ToastKind.Info, "Aviso normal", "Para comparar el tamaño.");
         }
 
         if (e.Args.Contains("--ensayar-novedades", StringComparer.OrdinalIgnoreCase))

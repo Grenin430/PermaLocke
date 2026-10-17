@@ -18,6 +18,27 @@ public sealed class HpPresenterTests
     }
 
     [Fact]
+    public void While_the_bar_of_the_game_is_seen_the_life_shown_follows_it_as_it_drains()
+    {
+        var presenter = new HpPresenter(HpSyncMode.Synchronized);
+        presenter.Observe(A, 100, 100, 0, true, barSeen: true);
+        presenter.Observe(A, 40, 100, 1.0, true, barSeen: true);
+
+        // The attack's animation: the bar has not moved, nothing is shown, and it is not given up on in the usual few seconds.
+        presenter.Follow(1.0, 2.0);
+        Assert.Equal(100, presenter.Shown(A, 7.0));
+
+        // It drains: the panel goes with it, and never past where memory says it ends.
+        presenter.Follow(0.8, 7.1);
+        Assert.Equal(80, presenter.Shown(A, 7.1));
+        presenter.Follow(0.55, 7.3);
+        Assert.Equal(55, presenter.Shown(A, 7.3));
+        presenter.Follow(0.40, 7.5);
+        Assert.Equal(40, presenter.Shown(A, 7.5));
+        Assert.False(presenter.HasWaiting);
+    }
+
+    [Fact]
     public void In_the_synchronised_mode_a_hit_is_held_until_the_bar_of_the_game_starts_and_then_shown_at_once()
     {
         var presenter = new HpPresenter(HpSyncMode.Synchronized);

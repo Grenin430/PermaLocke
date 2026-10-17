@@ -11,6 +11,8 @@
   "fieldItemsMaxRepeats": 1,
   "_fieldItemsBanned": "En modo Random, objetos que no salen nunca en el suelo, por id. El 1 es la Master Ball: en un Nuzlocke es la captura asegurada del único encuentro de una ruta, y la referencia no puso ninguna. Para buscar un id: Probe --objeto-find \"nombre\".",
   "fieldItemsBanned": [1],
+  "_fieldShinyPotions": "Cuántos objetos normales del suelo se cambian por una Poción Variocolor (el siguiente salvaje sale variocolor), en sitios al azar. Solo cuenta al generar un mundo nuevo.",
+  "fieldShinyPotions": 3,
   "staticEncounters": true,
   "trainers": true,
 

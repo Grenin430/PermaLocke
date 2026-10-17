@@ -117,6 +117,17 @@ public static class CapScenarios
             Still("tope", "Todo el equipo en el cap", Base(icon, atCap, 5, highest: 42)),
             Still("inicio", "Inicio de la run: dos Pokémon, sin caídos", Base(icon, begin, 0, cap: 15, cleared: 0) with { Trial = "PRUEBA 1 DE 12", Next = 22 }),
             Still("liga", "La Liga, sin siguiente cap", Base(icon, full, 9, cap: 90, cleared: 12) with { Trial = "CAMPEONATO DE LA LIGA", Next = null }),
+            // A shiny (2026-10-16): each of its two looks from the start of the battle, ending at 12 s.
+            Still("shiny-cosas", "Variocolor: cada cosa su color", Base(icon, full, battle: true) with { Shiny = new CapShinyTurn(CapShinyKind.Things, 0.5, 12.5) }),
+            // The Pokévial (2026-10-16): at rest with two of three, and used at 1 s, two of two to one.
+            Still("pokevial", "Pokévial con dos de tres usos", Base(icon, full) with { Vial = new CapVialState(2, 3) }),
+            Still("pokevial-uso", "Pokévial usado: de dos a uno", Base(icon, full) with { Vial = new CapVialState(1, 2, 1.0, 2) }),
+            // The Repelente Infinito (2026-10-16): off, and turned on at 1 s and off at 9 s.
+            Still("repelente", "Repelente Infinito apagado", Base(icon, full) with { Vial = new CapVialState(2, 3), Repel = CapToggle.Off }),
+            Still("repelente-uso", "Repelente Infinito: se enciende a 1 s y se apaga a 9 s", Base(icon, full) with { Vial = new CapVialState(2, 3), Repel = new CapToggle(1.0, 9.0), Turbo = CapToggle.Off }),
+            // The Incubadora Turbo (2026-10-16): beside them, off, and turned on at 1 s and off at 9 s.
+            Still("turbo", "Incubadora Turbo apagada", Base(icon, full) with { Vial = new CapVialState(2, 3), Repel = CapToggle.Off, Turbo = CapToggle.Off }),
+            Still("turbo-uso", "Incubadora Turbo: se enciende a 1 s y se apaga a 9 s", Base(icon, full) with { Vial = new CapVialState(2, 3), Repel = CapToggle.Off, Turbo = new CapToggle(1.0, 9.0) }),
         };
 
         // The ones that move: each is a few moments in order, and the panel is told them the way the game would.
@@ -163,6 +174,11 @@ public static class CapScenarios
         scenarios.Add(new CapScenario("cambio-cap", "Se supera la prueba: el cap pasa de 42 a 54", [
             new(0, Base(icon, atCap, 5, highest: 42)),
             new(2, Base(icon, atCap, 5, cap: 54, highest: 42, cleared: 8) with { Trial = "PRUEBA 9 DE 12", Next = 60, CrystalItem = 820, Crystal = item?.Invoke(820) })]));
+
+        // The sixth trial passed (2026-10-16): the Z-Crystal's film and the Megas' parade, from 2 s.
+        scenarios.Add(new CapScenario("megas", "Se supera la prueba 6: el cristal Z y las megas", [
+            new(0, Base(icon, atCap, 5, cap: 36, highest: 36, cleared: 5) with { Trial = "PRUEBA 6 DE 12", Next = 42 }),
+            new(2, Base(icon, atCap, 5, cap: 42, highest: 36, cleared: 6) with { Trial = "PRUEBA 7 DE 12", Next = 48, CrystalItem = 820, Crystal = item?.Invoke(820) })]));
 
         scenarios.Add(new CapScenario("eclosion", "Un huevo eclosiona", [
             new(0, Base(icon, eggs, 0)),

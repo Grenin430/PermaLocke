@@ -35,9 +35,10 @@ public sealed class CapEventFeed
     public bool FallsFromLife { get; set; } = true;
 
     /// <summary>A death the run has recorded, as a fall of the Pokémon with that PID. Returns the events of the last few seconds.</summary>
-    public IReadOnlyList<CapEvent> Fall(uint pid, double at)
+    public IReadOnlyList<CapEvent> Fall(uint pid, double at, int death = -1)
     {
-        _events.Add(new CapEvent(_next++, CapEventKind.Fell, pid, -1, at, 0, CapStatus.None, 0));
+        // The death drawn for it, when the app chose one (2026-10-15), goes as the event's amount, plus one: 0 is none.
+        _events.Add(new CapEvent(_next++, CapEventKind.Fell, pid, -1, at, death + 1, CapStatus.None, 0));
         return [.. _events];
     }
 

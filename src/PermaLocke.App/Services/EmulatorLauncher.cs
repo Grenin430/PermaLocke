@@ -98,7 +98,6 @@ public sealed partial class EmulatorLauncher : ObservableObject
     private readonly IPlaytimeStore _playtime;
     private readonly BattleModeService _battle;
     private readonly EmulatorCrashReport _crashes;
-    private readonly Notifier _notifier;
     private readonly PermaLocke.Rules.RulesConfiguration _rules;
 
     /// <summary>Why the organiser closed JUGAR for this run, or null when it is open (2026-09-26).</summary>
@@ -124,13 +123,12 @@ public sealed partial class EmulatorLauncher : ObservableObject
 
     public EmulatorLauncher(AzaharInstallation azahar, AppPaths paths, IRunContext runContext,
         IPlaytimeStore playtime, BattleModeService battle, EmulatorCrashReport crashes,
-        Notifier notifier, AppSettings settings,
+        AppSettings settings,
         PermaLocke.Rules.RulesConfiguration rules, ILogger<EmulatorLauncher> logger)
     {
         _settings = settings;
         _rules = rules;
         _crashes = crashes;
-        _notifier = notifier;
         _azahar = azahar;
         _paths = paths;
         _runContext = runContext;
@@ -629,10 +627,6 @@ public sealed partial class EmulatorLauncher : ObservableObject
             ? $"Azahar se ha cerrado solo ({meaning})."
             : $"Azahar se ha cerrado solo ({meaning}). Informe en Diagnosticos\\{Path.GetFileName(zip)}.";
 
-        _notifier.Say(ToastKind.Warning, "Azahar se ha cerrado solo",
-            zip is null
-                ? $"{char.ToUpper(meaning![0])}{meaning[1..]}. No se ha podido guardar el informe."
-                : $"Informe guardado en Diagnosticos\\{Path.GetFileName(zip)}.");
 
     }
 

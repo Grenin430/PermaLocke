@@ -21,6 +21,21 @@ public static class Program
         // --especies a,b,c: todas las rutas pasan a la vez con esas especies (vista conjunta)
         if (Option("--especies") is { } forcedAll) PermaLocke.App.Views.CapVisitors.ForcedAll = [.. forcedAll.Split(',').Select(int.Parse)];
 
+        // --medir scenario start preset frames: what a window's frame costs, without saving it (2026-10-17, the shiny's rainbow).
+        if (Array.IndexOf(args, "--medir") is var measure and >= 0)
+        {
+            var scenario = data.Scenarios.First(s => s.Name == args[measure + 1]);
+            var start = double.Parse(args[measure + 2], System.Globalization.CultureInfo.InvariantCulture);
+            var preset = LabScreen.Presets.First(p => p.Name.StartsWith(args[measure + 3], StringComparison.Ordinal));
+            var frames = int.Parse(args[measure + 4]);
+            var options = new PermaLocke.App.Views.CapOptions();
+            LabScreen.Compose(scenario, start, preset, options, game: true);
+            var clock = System.Diagnostics.Stopwatch.StartNew();
+            for (var i = 0; i < frames; i++) LabScreen.Compose(scenario, start + (i / 30.0), preset, options, game: true);
+            Console.WriteLine($"{args[measure + 1]}: {clock.Elapsed.TotalMilliseconds / frames:0.0} ms por fotograma ({frames} fotogramas, {preset.Name})");
+            return 0;
+        }
+
         // --secuencia-ventana scenario start seconds fps preset directory: render a continuous review without restarting the lab per frame.
         if (Array.IndexOf(args, "--secuencia-ventana") is var sequence and >= 0)
         {

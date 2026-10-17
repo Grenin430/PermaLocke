@@ -180,6 +180,14 @@ public sealed class RulePatchesTests
     }
 
     /// <summary>The Expansion mod's own files, when this PC has them (not in the repository: they are not ours to share).</summary>
+    /// <summary>The bag's pocket table (a/1/0/3), which the SuperCarameloraro needs a pocket in.</summary>
+    private static void CopyPockets(string romfs)
+    {
+        var to = Path.Combine(romfs, "a", "1", "0", "3");
+        Directory.CreateDirectory(Path.GetDirectoryName(to)!);
+        File.Copy(Expansion("romfs", "a", "1", "0", "3")!, to);
+    }
+
     private static string? Expansion(params string[] parts)
     {
         for (var dir = new DirectoryInfo(AppContext.BaseDirectory); dir is not null; dir = dir.Parent)
@@ -310,6 +318,8 @@ public sealed class RulePatchesTests
                 File.Copy(from, to);
             }
 
+            CopyPockets(romfs);
+
             var before = new pk3DS.Core.CTR.GARC.LazyGARC(File.ReadAllBytes(icons)).FileCount;
             var icon = RulePatches.InstallSuperCandy(romfs, out var problem);
             Assert.Null(problem);
@@ -323,6 +333,14 @@ public sealed class RulePatchesTests
             Assert.Equal(items[RulePatches.RareCandyItem][2..0x0F], items[SuperCandy.ItemId][2..0x0F]);
             Assert.Equal(items[RulePatches.RareCandyItem][0x10..], items[SuperCandy.ItemId][0x10..]);
             Assert.True(items[SuperCandy.ItemId][0x0F] > items[RulePatches.RareCandyItem][0x0F]);
+
+            // the bag's pocket table puts it with the Rare Candy (medicine), or the bag never takes one away (2026-10-16)
+            var pockets = new pk3DS.Core.CTR.GARC.LazyGARC(File.ReadAllBytes(Path.Combine(romfs, "a", "1", "0", "3")))[0];
+            var vanilla = new pk3DS.Core.CTR.GARC.LazyGARC(File.ReadAllBytes(Expansion("romfs", "a", "1", "0", "3")!))[0];
+            Assert.Equal(0, vanilla[SuperCandy.ItemId >> 1] & 0xF);
+            Assert.Equal(vanilla[RulePatches.RareCandyItem >> 1] >> 4, pockets[SuperCandy.ItemId >> 1] & 0xF);
+            Assert.Equal(vanilla[SuperCandy.ItemId >> 1] >> 4, pockets[SuperCandy.ItemId >> 1] >> 4);
+            Assert.Equal(vanilla.Where((_, i) => i != SuperCandy.ItemId >> 1), pockets.Where((_, i) => i != SuperCandy.ItemId >> 1));
 
             var config = new pk3DS.Core.GameConfig(pk3DS.Core.GameVersion.UM);
             var garc = new pk3DS.Core.CTR.GARC.LazyGARC(File.ReadAllBytes(Path.Combine(romfs, "a", "0", "3", "6")));
@@ -380,20 +398,21 @@ public sealed class RulePatchesTests
     [Fact]
     public void The_bag_sends_the_infinite_repel_to_its_routine_which_turns_it_on_and_off()
     {
-        Assert.Equal("cmp r5, #0x72; beq #0x16c18; cmp r5, #0x73; beq #0x16c28; cmp r3, r5; bx lr; mov r0, r4; mov r1, r5; pop {r3, r4, r5, r6, r7, lr}; b #0x16c38; "
-                     + "mov r0, r4; mov r1, r5; pop {r3, r4, r5, r6, r7, lr}; b #0x16ce8",
+        Assert.Equal("cmp r5, #0x72; beq #0x16c28; cmp r5, #0x73; beq #0x16c38; cmp r5, #0x78; beq #0x16c48; cmp r5, #0x79; beq #0x16c54; cmp r3, r5; bx lr; mov r0, r4; mov r1, r5; pop {r3, r4, r5, r6, r7, lr}; b #0x16c64; "
+                     + "mov r0, r4; mov r1, r5; pop {r3, r4, r5, r6, r7, lr}; b #0x16d14; mov r0, r4; pop {r3, r4, r5, r6, r7, lr}; b #0x16d60; "
+                     + "mov r0, r4; mov r1, r5; pop {r3, r4, r5, r6, r7, lr}; b #0x16db4",
             Disassemble(RulePatches.BagLookup(), RulePatches.BagCave));
         Assert.Equal("push {r4, r5, r6, lr}; mov r4, r0; mov r5, r1; ldr r0, [r4, #0x4c]; add r3, r0, #0xa00; "
                      + "ldrh r2, [r3, #0x58]; ldrh r3, [r3, #0x3e]; subs r6, r3, r5; movne r6, #1; cmp r2, #0; moveq r6, #1; "
                      + "mov r2, r6; mov r1, r5; bl #0x738; ldr r0, [r4, #0x70]; cmp r6, #0; moveq r1, #0x3c; movne r1, #0x3b; "
-                     + "bl #0x16ca0; ldr r0, [r4, #0x70]; mov r1, #0; bl #0xa5e4; mov r0, #2; str r0, [r4, #4]; mov r0, #0; "
+                     + "bl #0x16ccc; ldr r0, [r4, #0x70]; mov r1, #0; bl #0xa5e4; mov r0, #2; str r0, [r4, #4]; mov r0, #0; "
                      + "pop {r4, r5, r6, pc}",
-            Disassemble(RulePatches.BagHandlerCode(), RulePatches.BagCave + 0x38));
+            Disassemble(RulePatches.BagHandlerCode(), RulePatches.BagCave + 0x64));
         Assert.Equal("push {r4, r5, sb, sl, fp, lr}; mov r4, r0; mov r5, r1; add r0, r0, #4; bl #0x3a8; mov sl, r0; mov r1, #1; "
                      + "bl #0x460; mov sb, r0; mov r1, r0; mov r2, r5; mov r0, sl; bl #0x590; mov r1, sb; mov r0, r4; mov r2, #1; "
                      + "pop {r4, r5, sb, sl, fp, lr}; b #0xae20",
-            Disassemble(RulePatches.BagShowCode(), RulePatches.BagCave + 0xA0));
-        Assert.Equal(0x38, RulePatches.BagLookup().Length);
+            Disassemble(RulePatches.BagShowCode(), RulePatches.BagCave + 0xCC));
+        Assert.Equal(0x64, RulePatches.BagLookup().Length);
         Assert.Equal(0x68, RulePatches.BagHandlerCode().Length);
         Assert.Equal((RulePatches.RepelOnLine, RulePatches.RepelOffLine), (0x3B, 0x3C));
     }
@@ -440,6 +459,8 @@ public sealed class RulePatchesTests
                 Directory.CreateDirectory(Path.GetDirectoryName(to)!);
                 File.Copy(from, to);
             }
+
+            CopyPockets(romfs);
 
             var before = new pk3DS.Core.CTR.GARC.LazyGARC(File.ReadAllBytes(icons)).FileCount;
             var super = RulePatches.InstallSuperCandy(romfs, out var problem);
@@ -498,6 +519,8 @@ public sealed class RulePatchesTests
                 File.Copy(from, to);
             }
 
+            CopyPockets(romfs);
+
             var before = new pk3DS.Core.CTR.GARC.LazyGARC(File.ReadAllBytes(icons)).FileCount;
             Assert.Equal(before, RulePatches.InstallSuperCandy(romfs, out var problem));
             Assert.Equal(before + 1, RulePatches.InstallInfiniteRepel(romfs, out problem));
@@ -543,6 +566,21 @@ public sealed class RulePatchesTests
 
             // El cuerpo del juego no cambia más que en esas 26 palabras y la llamada, y con otro code.bin no se toca nada.
             Assert.Null(RulePatches.EggTurboRecords(new byte[bytes.Length], icon.Value));
+
+            // The Pokévial (2026-10-16): the next icon, a copy of the Exp. Share's data, its text and the two lines of the bag, and only its icon in code.bin.
+            var vial = RulePatches.InstallPokeVial(romfs, out problem);
+            Assert.Null(problem);
+            Assert.Equal(before + 3, vial);
+            Assert.Equal(vial, RulePatches.InstallPokeVial(romfs, out problem));
+            items = new pk3DS.Core.CTR.GARC.LazyGARC(File.ReadAllBytes(Path.Combine(romfs, "a", "0", "1", "9")));
+            Assert.Equal(items[RulePatches.ExpShareItem], items[PokeVial.ItemId]);
+            garc = new pk3DS.Core.CTR.GARC.LazyGARC(File.ReadAllBytes(Path.Combine(romfs, "a", "0", "3", "6")));
+            Assert.Equal(PokeVial.Name, Line(RulePatches.ItemNamesFile, PokeVial.ItemId));
+            Assert.Equal(RulePatches.PokeVialUsedText, Line(RulePatches.BagTextFile, RulePatches.PokeVialUsedLine));
+            Assert.Equal(RulePatches.PokeVialEmptyText, Line(RulePatches.BagTextFile, RulePatches.PokeVialEmptyLine));
+            Assert.Equal(RulePatches.EggTurboOnText, Line(RulePatches.BagTextFile, RulePatches.EggTurboOnLine));
+            var vialRecords = RulePatches.PokeVialRecords(bytes, vial!.Value)!;
+            Assert.Equal([RulePatches.ItemIconTable + 4 * PokeVial.ItemId], vialRecords.Select(r => r.Offset));
         }
         finally
         {
@@ -554,19 +592,99 @@ public sealed class RulePatchesTests
     public void The_bag_routes_both_key_items_and_the_incubator_flips_the_blocks_byte()
     {
         var lookup = RulePatches.BagLookup();
-        Assert.Equal(14 * 4, lookup.Length);
+        Assert.Equal(25 * 4, lookup.Length);
         Assert.Equal(
-            "cmp r5, #0x72; beq #0x16c18; cmp r5, #0x73; beq #0x16c28; cmp r3, r5; bx lr; mov r0, r4; mov r1, r5; pop {r3, r4, r5, r6, r7, lr}; "
-            + $"b #0x{0x16C00 + 0x38:x}; mov r0, r4; mov r1, r5; pop {{r3, r4, r5, r6, r7, lr}}; b #0x{0x16C00 + 0x38 + 0x68 + 0x48:x}",
+            "cmp r5, #0x72; beq #0x16c28; cmp r5, #0x73; beq #0x16c38; cmp r5, #0x78; beq #0x16c48; cmp r5, #0x79; beq #0x16c54; cmp r3, r5; bx lr; mov r0, r4; mov r1, r5; pop {r3, r4, r5, r6, r7, lr}; b #0x16c64; "
+                     + "mov r0, r4; mov r1, r5; pop {r3, r4, r5, r6, r7, lr}; b #0x16d14; mov r0, r4; pop {r3, r4, r5, r6, r7, lr}; b #0x16d60; "
+                     + "mov r0, r4; mov r1, r5; pop {r3, r4, r5, r6, r7, lr}; b #0x16db4",
             Disassemble(lookup, 0x16C00));
 
         var egg = RulePatches.BagEggCode();
         Assert.Equal(19 * 4, egg.Length);
         Assert.Equal(RuleBlock.EggTurbo, BinaryPrimitives.ReadUInt32LittleEndian(egg.AsSpan(18 * 4)));
-        var at = 0x16C00 + 0x38 + 0x68 + 0x48;
+        var at = 0x16C00 + 0x64 + 0x68 + 0x48;
         Assert.Equal(
             "push {r4, r5, r6, lr}; mov r4, r0; ldr r2, [pc, #0x38]; ldrb r3, [r2]; eor r6, r3, #1; strb r6, [r2]; ldr r0, [r4, #0x70]; cmp r6, #0; "
             + "moveq r1, #0x5c; movne r1, #0x5b",
             Disassemble(egg[..(10 * 4)], at));
+    }
+
+    [Fact]
+    public void The_pokevial_takes_a_use_asks_for_the_healing_and_says_so_or_says_it_is_empty()
+    {
+        var vial = RulePatches.BagVialCode();
+        Assert.Equal(21 * 4, vial.Length);
+        Assert.Equal(RuleBlock.PokeVialUses, BinaryPrimitives.ReadUInt32LittleEndian(vial.AsSpan(20 * 4)));
+        Assert.Equal(RuleBlock.PokeVialUses + 1, RuleBlock.PokeVialRequest);
+        var at = 0x16C00 + 0x64 + 0x68 + 0x48 + 0x4C;
+        Assert.Equal(
+            "push {r4, r5, r6, lr}; mov r4, r0; ldr r2, [pc, #0x40]; ldrb r3, [r2]; cmp r3, #0; subne r3, r3, #1; strbne r3, [r2]; movne r6, #1; "
+            + "strbne r6, [r2, #1]; ldr r0, [r4, #0x70]; moveq r1, #0x96; movne r1, #0x95; bl #0x16ccc; ldr r0, [r4, #0x70]; mov r1, #0; bl #0xa5e4; "
+            + "mov r0, #2; str r0, [r4, #4]; mov r0, #0; pop {r4, r5, r6, pc}",
+            Disassemble(vial[..(20 * 4)], at));
+        Assert.Equal(PermaLocke.Core.Domain.PokeVial.ItemId, 120);
+        Assert.Equal([1, 1, 1, 1, 2, 2, 3, 3], Enumerable.Range(0, 8).Select(PermaLocke.Core.Domain.PokeVial.MaxUses));
+    }
+    [Fact]
+    public void Bag_cursor_returns_to_the_item_used()
+    {
+        var cro = new byte[0x18000];
+        void Put(int at, uint word) => BinaryPrimitives.WriteUInt32LittleEndian(cro.AsSpan(at), word);
+        Put(0xE804, 0xE5940170); Put(0xE810, 0xE5845170);
+        Put(0xE8B8, 0xE3A03000); Put(0xE8BC, 0xE3A02032); Put(0xE8C0, 0xE3A01003); Put(0xE8C8, RulePatches.Bl(0xE8C8, 0x9530));
+        Put(0xEA54, 0xE1D533B0); Put(0xEA58, 0xE3A02032); Put(0xEA5C, 0xE3A01002); Put(0xEA64, RulePatches.Bl(0xEA64, 0x9530));
+        Put(0xE8F0, 0xE3A02001); Put(0xE8F4, 0xE3A01032); Put(0xE8F8, RulePatches.Bl(0xE8F8, 0x6D8));
+        (int Site, int Out, uint Ldr)[] loops = [(0xD86C, 0xD8A8, 0xE594003C), (0xDA28, 0xDA68, 0xE594003C), (0x13DD4, 0x13E8C, 0xE595003C)];
+        foreach (var (site, @out, ldr) in loops)
+        {
+            Put(site, 0xE1D004BC); Put(site + 4, 0xE3500032); Put(site + 8, RulePatches.B(site + 8, @out, 1));
+            Put(site + 12, ldr); Put(site + 16, 0xE3A02001); Put(site + 20, 0xE3A01032); Put(site + 24, RulePatches.Bl(site + 24, 0x6D8));
+        }
+
+        Assert.Equal(RulePatches.BattleState.Patched, RulePatches.PatchBagCursor(cro));
+        Assert.Equal(0xE5942170u, BinaryPrimitives.ReadUInt32LittleEndian(cro.AsSpan(0xE8BC)));
+        Assert.Equal(0xE5942170u, BinaryPrimitives.ReadUInt32LittleEndian(cro.AsSpan(0xEA58)));
+        Assert.Equal(0xE5941170u, BinaryPrimitives.ReadUInt32LittleEndian(cro.AsSpan(0xE8F4)));
+        foreach (var (site, @out, ldr) in loops)
+        {
+            Assert.Equal(0xE1D014BCu, BinaryPrimitives.ReadUInt32LittleEndian(cro.AsSpan(site)));
+            Assert.Equal(0x13510071u, BinaryPrimitives.ReadUInt32LittleEndian(cro.AsSpan(site + 8)));
+            Assert.Equal(RulePatches.B(site + 12, @out, 1), BinaryPrimitives.ReadUInt32LittleEndian(cro.AsSpan(site + 12)));
+            Assert.Equal(ldr, BinaryPrimitives.ReadUInt32LittleEndian(cro.AsSpan(site + 16)));
+            Assert.Equal(RulePatches.Bl(site + 24, 0x6D8), BinaryPrimitives.ReadUInt32LittleEndian(cro.AsSpan(site + 24)));
+        }
+        Assert.Equal(RulePatches.BattleState.AlreadyPatched, RulePatches.PatchBagCursor(cro));
+
+        Assert.Equal(RulePatches.BattleState.Unknown, RulePatches.PatchBagCursor(new byte[0x10000]));
+    }
+
+    [Fact]
+    public void Bag_cave_fits_in_the_gap_the_module_leaves()
+    {
+        // 0x16C00-0x16DFC is the gap checked empty in Bag.cro; the Poción Variocolor (2026-10-17) left it nearly full.
+        var cro = new byte[0x18000];
+        var hook = RulePatches.BagLookupSite;
+        BinaryPrimitives.WriteUInt32LittleEndian(cro.AsSpan(hook), 0xE1530005);
+        var cave = RulePatches.BagLookup().Length + RulePatches.BagHandlerCode().Length + RulePatches.BagShowCode().Length
+                   + RulePatches.BagEggCode().Length + RulePatches.BagVialCode().Length + RulePatches.BagShinyCode().Length;
+        Assert.True(RulePatches.BagCave + cave <= 0x16DFC, $"la cueva acaba en {RulePatches.BagCave + cave:X}");
+    }
+
+    [Fact]
+    public void The_shiny_potion_sets_its_byte_and_ends_in_the_repels_tails_and_the_maker_takes_the_always_branch()
+    {
+        var bag = RulePatches.BagShinyCode();
+        Assert.Equal(15 * 4, bag.Length);
+        Assert.Equal(RuleBlock.ShinyPotion, BinaryPrimitives.ReadUInt32LittleEndian(bag.AsSpan(14 * 4)));
+        Assert.Equal(
+            "push {r3, r4, r5, r6, r7, lr}; mov r4, r0; mov r5, r1; mov r6, #0; ldr r2, [pc, #0x20]; ldrb r3, [r2]; cmp r3, #0; moveq r3, #1; "
+            + "strbeq r3, [r2]; beq #0x6cf8; ldr r0, [r4, #0x70]; mov r1, #0x97; bl #0x16ccc; b #0x6d34",
+            Disassemble(bag[..(14 * 4)], 0x16DB4));
+
+        Assert.Equal("ldr ip, [pc, #8]; ldrb r0, [ip]; cmp r0, #0; b #0x2235f0",
+            Disassemble(RulePatches.ShinyCaveACode()[..16], RulePatches.ShinyCaveA));
+        Assert.Equal(RuleBlock.ShinyPotion, BinaryPrimitives.ReadUInt32LittleEndian(RulePatches.ShinyCaveACode().AsSpan(16)));
+        Assert.Equal("ldrbeq r0, [r4, #0x23]; bxeq lr; b #0x220644; nop; nop",
+            Disassemble(RulePatches.ShinyCaveBCode(), RulePatches.ShinyCaveB));
     }
 }

@@ -15,13 +15,13 @@ public sealed class ItemIconCoverageTests
 {
     /// <summary>
     /// The only items of the expansion's table that have a name and no icon, and why: the game's own table says «?» (768)
-    /// for every one of them. They are slots of other games or of nothing: the bag pockets and the Box Link (121-128), two
+    /// for every one of them. They are slots of other games or of nothing: the bag pockets and the Box Link (122-128; 121 is the Poción Variocolor since 2026-10-17), two
     /// HMs of generation 4 (426-427), the Data Cards that the mod did not turn into Mega Stones (521-531), key items of
     /// Let's Go (717, 745-750, 861-866, 872-878), its collectibles (885-896) and its lures (900-903).
     /// </summary>
     private static readonly int[] DrawnAsQuestionMark =
     [
-        121, 122, 123, 124, 125, 126, 127, 128, 426, 427, 521, 522, 523, 524, 525, 526, 527, 528, 529, 530, 531, 717, 745, 746,
+        122, 123, 124, 125, 126, 127, 128, 426, 427, 521, 522, 523, 524, 525, 526, 527, 528, 529, 530, 531, 717, 745, 746,
         747, 748, 749, 750, 861, 862, 863, 864, 865, 866, 872, 873, 874, 875, 876, 877, 878, 885, 886, 887, 888, 889, 890, 891,
         892, 893, 894, 895, 896, 900, 901, 902, 903
     ];
@@ -76,7 +76,7 @@ public sealed class ItemIconCoverageTests
 
             var expected = new Dictionary<ItemCategory, (int With, int Total)>
             {
-                [ItemCategory.Misc] = (130, 163), [ItemCategory.Machine] = (107, 107), [ItemCategory.Berry] = (67, 67),
+                [ItemCategory.Misc] = (131, 163), [ItemCategory.Machine] = (107, 107), [ItemCategory.Berry] = (67, 67),
                 [ItemCategory.Healing] = (38, 42), [ItemCategory.Boost] = (17, 17), [ItemCategory.Evolution] = (27, 27),
                 [ItemCategory.MegaStone] = (94, 94), [ItemCategory.Battle] = (199, 199), [ItemCategory.PokeBall] = (27, 27),
                 [ItemCategory.Key] = (168, 188), [ItemCategory.ZCrystal] = (70, 70)

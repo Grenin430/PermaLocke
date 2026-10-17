@@ -71,7 +71,7 @@ public sealed partial class MiscellaneousViewModel : SectionViewModel
 
     public MiscellaneousViewModel(BagService bag, IItemDelivery delivery, IItemLookup items,
         IRunContext runContext, IEventStore events, IClock clock, RewardService rewards,
-        PokemonSpriteService sprites, Notifier notifier, EdgeTab tab,
+        PokemonSpriteService sprites, EdgeTab tab,
         ILogger<MiscellaneousViewModel> logger)
         : base("MISCELÁNEA", "Premios y herramientas de pruebas")
     {
@@ -224,6 +224,16 @@ public sealed partial class MiscellaneousViewModel : SectionViewModel
     private Task GrantEggTurboAsync() =>
         GiveAsync(EggTurbo.ItemId, 1, EggTurbo.Name, "Huevos que eclosionan en dos pasos");
 
+    /// <summary>The Pokévial (2026-10-16), a key item too: one in the bag; its uses are the run's (PokeVialService).</summary>
+    [RelayCommand(CanExecute = nameof(CanUseTools))]
+    private Task GrantPokeVialAsync() =>
+        GiveAsync(PokeVial.ItemId, 1, PokeVial.Name, "Cura a todo el equipo en cualquier sitio");
+
+    /// <summary>One Poción Variocolor (2026-10-17), on top of whatever the bag holds: the next wild Pokémon comes out shiny.</summary>
+    [RelayCommand(CanExecute = nameof(CanUseTools))]
+    private Task GrantShinyPotionAsync() =>
+        GiveAsync(ShinyPotion.ItemId, 1, ShinyPotion.Name, "El siguiente salvaje sale variocolor");
+
     /// <summary>
     /// Adds an item to the bag on top of what is already there, and records it.
     /// </summary>
@@ -341,6 +351,7 @@ public sealed partial class MiscellaneousViewModel : SectionViewModel
         GrantShinyCharmCommand.NotifyCanExecuteChanged();
         GrantInfiniteRepelCommand.NotifyCanExecuteChanged();
         GrantEggTurboCommand.NotifyCanExecuteChanged();
+        GrantPokeVialCommand.NotifyCanExecuteChanged();
         ClaimRewardCommand.NotifyCanExecuteChanged();
     }
 }
