@@ -8,7 +8,8 @@ namespace PermaLocke.App.Services;
 /// <summary>A Pokémon that has just died, as the ceremony needs it.</summary>
 /// <param name="Name">Its nickname if it has one, its species otherwise.</param>
 /// <param name="Penalty">What its death actually cost, which is zero for a role that loses nothing.</param>
-public sealed record DeathNotice(string Name, int Species, int Penalty, int Form = 0, bool Shiny = false, int Level = 0);
+/// <param name="Pid">Who fell, for the cap panel's sinking (0 when unknown).</param>
+public sealed record DeathNotice(string Name, int Species, int Penalty, int Form = 0, bool Shiny = false, int Level = 0, uint Pid = 0);
 
 /// <summary>One death of the ceremony, already resolved to what is drawn.</summary>
 /// <param name="Flash">The sprite as a white silhouette, for the hit it takes before it faints.</param>

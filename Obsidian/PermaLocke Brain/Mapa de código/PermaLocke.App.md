@@ -215,7 +215,7 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Views/PixelBar.cs` — **PixelBar, PixelCursor** — A bar in cells, like the health bars of the handheld games: an ink outline with square ends, a dark track, and the fill with a lighter top row. It fills in whole cells, so a value never shows as a ...
 - `Views/PixelBlood.cs` — **PixelBlood** — The blood of the death ceremony, simulated on the Pokémon's own pixel grid and drawn into a small bitmap that is shown scaled up with no smoothing. 
 - `Views/PixelColour.cs` — **PixelColour** — A colour of the pixel art as four bytes, and nothing else (§188). 
-- `Views/PixelPanel.cs` — **PixelPanel** — A box drawn cell by cell in any colour: one-cell outline, one-cell bevel lit on top, notched corners and a hard shadow. The same box as the notices (`oastFrame`), for places whose colour is data �...
+- `Views/PixelPanel.cs` — **PixelPanel** — A box drawn cell by cell in any colour: one-cell outline, one-cell bevel lit on top, notched corners and a hard shadow. The same box as the notices (`oastFrame`), for places whose colour is data �...
 - `Views/PixelScene.cs` — **PixelScene, CapsuleBall** — What the full pixel-art scenes share: a canvas of cells anchored to the floor, a font, the Poké Balls, and the Pokémon coming out of one with its light. 
 - `Views/PodiumScene.cs` — **PodiumScene** — COMPETICIÓN's podium, painted cell by cell: a night stadium with a crowd in the stands, two searchlights sweeping, a scoreboard of bulbs, and the top three on gold, silver and bronze blocks with t...
 - `Views/PodiumStage.cs` — **PodiumStage** — COMPETICIÓN's podium on screen: `odiumScene` in whole cells, like the roulette (§175), with each player's photo turned into `odiumScene.PhotoSize` cells once it has downloaded. 
@@ -242,3 +242,34 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Views/UpdateWindow.xaml.cs` — **UpdateWindow** — The update window (§201). Closing it during the download cancels it; after that it waits.
 - `Views/WheelEnding.cs` — **WheelEnding** — One way the wheel can come to a stop: how hard it brakes, how far it travels, and how much it settles back at the very end. 
 - `Services/PokeVialService.cs` — **PokeVialService** — The Pokévial's side in the app (1.0.18): keeps the run's uses (Saves/pokevial-<run>.json), writes them to the rule block, heals the party in memory on request, refills on the nurse's record.
+
+### Herramientas externas de revisión de sprites (2026-10-14)
+- `tools/critters/flight_bases_v2.js`: cuatro bases de vuelo rehechas; no importadas por la app ni por build_batch.js.
+- `tools/critters/review_flight_bases_v2.js`: comparación con referencias originales, PNG estáticos y auditoría de conservación.
+Pendientes de aprobación; estado en [[UI y kit pixel]]. Ningún fichero de src/ cambia.
+
+### Propuesta secuencial de Charizard (2026-10-14)
+Las cuatro bases v2 anteriores también rechazadas; solo la nueva pose de Charizard espera revisión.
+- tools/critters/charizard_flight_pose_v3.js: base estática basada en ilustración de vuelo, sin importar en producción.
+- tools/critters/review_charizard_pose_v3.js: comparación con referencia, PNG y auditorías.
+Ningún fichero de src/ cambia. Estado vigente en [[UI y kit pixel]].
+
+### Ajuste localizado de cuello de Charizard (2026-10-14)
+- tools/critters/charizard_neck_refinement.js: corrección estática de 106 píxeles sobre la base v3 conservada.
+- tools/critters/review_charizard_neck.js: antes/después ×12, sprite completo ×6 y auditoría de igualdad fuera de la unión.
+No importados por producción. Pendiente revisión de la unión; la pose general v3 ya gusta al usuario.
+
+### Charizard: animación desde la base definitiva (2026-10-14)
+- tools/critters/charizard_flight_approved.json: base aprobada inmutable, con cuello corregido.
+- tools/critters/charizard_approved_flight.js: alas articuladas y animación secundaria; fuentes nativas y display.
+- tools/critters/charizard_flight_anim.js: entrada del generador que ahora importa el nuevo rig.
+- tools/critters/review_charizard_flight.js: auditoría de las 48 celdas y vistas fijas.
+- tools/critters/render_charizard_flight.ps1: exportación/medición exclusiva del laboratorio aislado.
+CapCritterArt.cs cambia solo la entrada 6 y Critters/charizard.png se sustituye. Resto de hojas intactas.
+No ejecutar review_flight_batch2.js para el nuevo Charizard: espera el contrato del rig rechazado.
+
+### Charizard: articulación de alas v2 (2026-10-14)
+- tools/critters/charizard_wing_poses.js: poses clave de ambas alas y membranas articuladas, hombros fijos.
+- tools/critters/review_charizard_wing_keys.js: hoja clave con ampliaciones de hombro y ala lejana aislada.
+charizard_approved_flight.js usa las poses nuevas; review_charizard_flight.js comprueba también los anclajes.
+Solo cambia la entrada 6/charizard.png en producción. Base aprobada sin cambios. Estado en [[UI y kit pixel]].

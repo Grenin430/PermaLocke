@@ -15,30 +15,63 @@ public sealed class CapPhenomenaTests
     private static CapWorldLayout Layout() => CapWorld.Arrange(CapMode.Column, CapPanelKind.Party, 180, 321, (0, 0, 0));
 
     [Fact]
-    public void A_pokemon_that_falls_leaves_its_place_for_the_time_it_takes_to_sink_and_then_a_ghost_stays()
+    public void The_rows_follow_the_game_s_order_sliding_and_a_fallen_one_leaves_its_row_once_its_death_is_shown()
+    {
+        var view = new CapWorldView(CapMode.Column, CapPanelKind.Party, 180, 321, (0, 0, 0));
+        var anim = new CapAnim();
+        var frame = new CapSheet(180, 321);
+        uint Shown(int slot) => view.Creature(slot)!.Member?.Pid ?? 0;
+
+        var first = Data([Member(1), Member(2), Member(3)]);
+        view.SetData(first);
+        anim.Update(first, 0);
+        view.Paint(frame, 0.5, anim);
+        Assert.Equal([1u, 2u, 3u, 0u], Enumerable.Range(0, 4).Select(Shown));
+
+        // the player swaps them in the game: the third goes first, and slides up from its old row
+        var swapped = Data([Member(3), Member(1), Member(2)]);
+        view.SetData(swapped);
+        anim.Update(swapped, 2);
+        view.Paint(frame, 2, anim);
+        Assert.Equal([3u, 1u, 2u], Enumerable.Range(0, 3).Select(Shown));
+        Assert.True(view.Slide(Member(3), 0, 2.2, true) > 0, "it does not slide up from below");
+        Assert.Equal(0, view.Slide(Member(3), 0, 2.7, true));
+
+        // the second falls: its row stays while its death plays, then the ones under it move up and the last rows are empty
+        var fallen = Data([Member(3), Member(1, 0), Member(2)]);
+        view.SetData(fallen);
+        anim.Update(fallen, 5);
+        view.Paint(frame, 5.5, anim);
+        Assert.Equal(1u, Shown(1));
+        var end = CapDeath.Schedule(fallen, anim, 6).Single().End;
+        view.Paint(frame, end + 0.1, anim);
+        Assert.Equal([3u, 2u, 0u], Enumerable.Range(0, 3).Select(Shown));
+    }
+
+    [Fact]
+    public void Deaths_that_happen_together_are_shown_one_after_another_each_with_the_death_of_its_pid()
     {
         var anim = new CapAnim();
-        anim.Update(Data([Member(1, 10), Member(2)], 3, battle: true), 0);
-        anim.Update(Data([Member(1, 0), Member(2)], 3, battle: true), 2);
-        var layout = Layout();
-        var ctx = new CapSeaContext(Seed: 4);
+        var alive = Data([Member(11, 10), Member(12), Member(13, 5)], 3, battle: true);
+        anim.Update(alive, 0);
+        var fallen = Data([Member(11, 0), Member(12), Member(13, 0)], 3, battle: true);
+        anim.Update(fallen, 2);
 
-        CapPose At(double t) => CapFx.Pose(anim, 0, t, Member(1, 0), 0, true, layout, ctx, 3);
+        Assert.Empty(CapDeath.Schedule(fallen, anim, 1.9));
+        var turns = CapDeath.Schedule(fallen, anim, 2.5);
+        Assert.Equal([0, 2], turns.Select(d => d.Index));
+        Assert.Equal(2, turns[0].Start, 3);
+        Assert.Equal(turns[0].End, turns[1].Start, 3);
+        Assert.Equal(CapDeath.KindOf(11, 0, anim.Falls(0)), turns[0].Kind);
+        Assert.Equal(CapDeath.KindOf(13, 2, anim.Falls(2)), turns[1].Kind);
 
-        Assert.False(At(1.9).Hidden);
-        Assert.True(At(2.3).Hidden);
-        Assert.True(At(2 + CapFx.SinkSeconds - 0.1).Hidden);
-        Assert.False(At(2 + CapFx.SinkSeconds + 0.1).Hidden);
-        Assert.InRange(At(2 + CapFx.SinkSeconds + 2).Strength, 0.2, 0.5);
+        // A next fall of the same Pokémon is never the same death as the one before.
+        Assert.All(Enumerable.Range(0, 50), n => Assert.NotEqual(CapDeath.KindOf(11, 0, n), CapDeath.KindOf(11, 0, n + 1)));
 
-        // The first half second is a white flash of the whole picture.
-        Assert.Equal(0xFFFFFFu, At(2.05).Wash);
-        Assert.True(At(2.05).WashAlpha > 150);
-        Assert.Null(At(3.0).Wash);
-
-        // The one that did not fall is untouched.
-        Assert.False(CapFx.Pose(anim, 1, 3, Member(2), 1, true, layout, ctx, 3).Hidden);
-        Assert.Equal(3, anim.GravesAtFall(0));
+        // The one that did not fall has no turn, and the same PID always draws the same death.
+        Assert.DoesNotContain(turns, d => d.Index == 1);
+        Assert.Equal(CapDeath.KindOf(11, 0), CapDeath.KindOf(11, 4));
+        Assert.Equal(Enum.GetValues<CapDeathKind>().Length, Enumerable.Range(1, 400).Select(p => CapDeath.KindOf((uint)p, 0)).Distinct().Count());
     }
 
     [Fact]
@@ -103,20 +136,32 @@ public sealed class CapPhenomenaTests
     }
 
     [Fact]
-    public void The_floor_drops_away_for_a_second_and_a_half_and_comes_back_after_a_new_cap_and_only_then()
+    public void A_new_cap_plays_the_trial_film_keeping_the_old_cap_on_the_plaque_and_the_levels_until_it_is_remade()
     {
         var anim = new CapAnim();
         anim.Update(Data([Member(1)], cap: 40), 0);
-        Assert.Equal(0, anim.FloorDrop(1, 30));
+        Assert.Null(anim.CapRise(1));
 
-        anim.Update(Data([Member(1)], cap: 50), 5);
-        Assert.Equal(0, anim.FloorDrop(5, 30));
-        Assert.InRange(anim.FloorDrop(5.75, 30), 5, 25);
-        Assert.Equal(30, anim.FloorDrop(6.5, 30));
-        Assert.InRange(anim.FloorDrop(7.5, 30), 1, 29);
-        Assert.Equal(0, anim.FloorDrop(8.3, 30));
+        var raised = Data([Member(1)], cap: 50);
+        anim.Update(raised, 5);
         Assert.Null(anim.SinceCap(4));
         Assert.Equal(1.5, anim.SinceCap(6.5)!.Value, 3);
+        Assert.Equal((1.5, 40, 50), anim.CapRise(6.5)!.Value);
+
+        // without a crystal only the cap's film plays: the plaque writes the old cap, then nothing while it breaks, then the new one
+        var trial = CapTrial.Now(raised, anim, 5.1)!;
+        Assert.Null(trial.Crystal);
+        Assert.Equal(50, CapTrial.SignNumber(CapTrial.Now(raised, anim, 4.99), 50));
+        Assert.Null(CapTrial.SignNumber(CapTrial.Now(raised, anim, 6), 50));
+        Assert.Equal(50, CapTrial.SignNumber(CapTrial.Now(raised, anim, 5 + CapTrial.Length(false) + 1), 50));
+
+        // a level is gold (the old cap) until the last wave climbs past it
+        Assert.Equal(40, CapTrial.CapOf(CapTrial.Now(raised, anim, 6), 50, 100, 280));
+        Assert.Equal(50, CapTrial.CapOf(CapTrial.Now(raised, anim, 5 + CapTrial.Length(false) - 0.1), 50, 100, 280));
+
+        // a fall of the cap (a new run) is not a trial
+        anim.Update(Data([Member(1)], cap: 30), 20);
+        Assert.Null(CapTrial.Now(Data([Member(1)], cap: 30), anim, 21));
     }
 
     [Fact]

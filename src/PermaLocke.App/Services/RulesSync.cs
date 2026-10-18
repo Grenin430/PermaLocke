@@ -21,7 +21,7 @@ namespace PermaLocke.App.Services;
 /// <c>--sin-juego</c>, which in the repository would overwrite the files under version control.
 /// </para>
 /// </remarks>
-public sealed class RulesSync(DiscordLogin discord, AppPaths paths, Notifier notifier, ILogger<RulesSync> logger)
+public sealed class RulesSync(DiscordLogin discord, AppPaths paths, ILogger<RulesSync> logger)
 {
     private sealed record Row(string Fichero, string Contenido);
 
@@ -65,8 +65,7 @@ public sealed class RulesSync(DiscordLogin discord, AppPaths paths, Notifier not
 
             if (changed.Count > 0)
             {
-                notifier.Say(ToastKind.Warning, "Reglas nuevas del organizador",
-                    $"{string.Join(" · ", changed)}. Se aplican al reiniciar PermaLocke.");
+                logger.LogInformation("Reglas nuevas del organizador: {What}. Se aplican al reiniciar PermaLocke", string.Join(" · ", changed));
             }
         }
         catch (Exception ex)

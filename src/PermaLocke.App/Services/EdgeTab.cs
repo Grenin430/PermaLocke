@@ -34,25 +34,11 @@ public sealed partial class EdgeTab : ObservableObject
     private EdgeTabWindow? _tab;
     private Window? _main;
 
-    public EdgeTab(AppPaths paths, Notifier notifier)
+    public EdgeTab(AppPaths paths)
     {
         _paths = paths;
         _watch.Tick += (_, _) => Decide();
 
-        // Algo que ha pasado mientras no mirabas. El punto se enciende solo si estabas fuera: si
-        // tenias la aplicacion delante, ya lo has visto y un aviso pendiente seria mentira.
-        // AL HILO DE LA INTERFAZ, SIEMPRE. Esto lo dispara el vigilante desde su propio hilo, y
-        // leer WindowState desde ahi lanza: una ventana de WPF solo se deja tocar por el hilo que
-        // la creo. Sin este salto, el adorno se llevo por delante la deteccion de muertes -la
-        // excepcion subia hasta InspectAsync-, que es exactamente lo que el §96 ya habia costado
-        // una vez: una comodidad no puede tumbar el trabajo.
-        notifier.Said += (_, _) => Application.Current?.Dispatcher.BeginInvoke(() =>
-        {
-            if (_main?.WindowState == WindowState.Minimized)
-            {
-                Pending = true;
-            }
-        });
     }
 
     /// <summary>
@@ -70,8 +56,15 @@ public sealed partial class EdgeTab : ObservableObject
     /// </remarks>
     public bool StepAside { get; set; } = true;
 
-    /// <summary>Whether the emulator was there last time we looked, to spot it arriving.</summary>
-    private bool _emulatorWasThere;
+    /// <summary>
+    /// Whether the emulator was last seen for certain not to be running, to spot it arriving. A doubtful look (the process table
+    /// not answering) changes nothing: counting it as «gone» made the next look an arrival, and the application, just brought back
+    /// from the tab, minimised itself again a second later (2026-10-16).
+    /// </summary>
+    private bool _emulatorWasAway = true;
+
+    /// <summary>When the player last brought the application back from the tab: for a moment the game coming to the front does not hide it.</summary>
+    private DateTime _restoredAt = DateTime.MinValue;
 
     /// <summary>Something happened while the application was out of sight.</summary>
     [ObservableProperty]
@@ -128,7 +121,7 @@ public sealed partial class EdgeTab : ObservableObject
     /// </remarks>
     private void OnForeground(IntPtr window)
     {
-        if (!StepAside || _main is not { WindowState: not WindowState.Minimized } main)
+        if (!StepAside || _main is not { WindowState: not WindowState.Minimized } main || DateTime.UtcNow - _restoredAt < TimeSpan.FromSeconds(2))
         {
             return;
         }
@@ -174,16 +167,20 @@ public sealed partial class EdgeTab : ObservableObject
     /// <summary>Shows the tab when it is worth showing, and hides it otherwise.</summary>
     private void Decide()
     {
-        var emulator = EmulatorIsRunning();
+        var state = EmulatorProcess.IsRunning();
+        var emulator = state == true;
 
-        // El emulador ACABA de aparecer: la aplicacion se aparta sola y deja la pestaña.
-        if (emulator && !_emulatorWasThere && StepAside
+        // El emulador ACABA de aparecer (antes se le vio cerrado de verdad): la aplicacion se aparta sola y deja la pestaña.
+        if (emulator && _emulatorWasAway && StepAside
             && _main is { WindowState: not WindowState.Minimized })
         {
             _main.WindowState = WindowState.Minimized;
         }
 
-        _emulatorWasThere = emulator;
+        if (state is { } known)
+        {
+            _emulatorWasAway = !known;
+        }
 
         if (_main?.WindowState != WindowState.Minimized || !emulator)
         {
@@ -193,13 +190,6 @@ public sealed partial class EdgeTab : ObservableObject
 
         Open();
     }
-
-    /// <summary>Whether to treat the emulator as running, for the purpose of stepping aside.</summary>
-    /// <remarks>
-    /// Only a confirmed emulator counts: hiding the application is a visible thing to do, and doing
-    /// it on a doubt leaves someone looking for a window that walked off on its own.
-    /// </remarks>
-    private static bool EmulatorIsRunning() => EmulatorProcess.IsRunning() == true;
 
     private void Open()
     {
@@ -238,6 +228,7 @@ public sealed partial class EdgeTab : ObservableObject
     private void Restore()
     {
         Pending = false;
+        _restoredAt = DateTime.UtcNow;
         _tab?.Hide();
 
         if (_main is null)

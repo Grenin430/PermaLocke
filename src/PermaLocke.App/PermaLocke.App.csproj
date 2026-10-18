@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <EmbeddedResource Include="Novedades.txt" LogicalName="PermaLocke.App.Novedades.txt" />
+    <EmbeddedResource Include="Views\Cap\Critters\*.png" LogicalName="PermaLocke.App.Critters.%(Filename).png" />
   </ItemGroup>
 
   <ItemGroup>

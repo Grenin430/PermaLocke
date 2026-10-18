@@ -31,8 +31,6 @@ public partial class ShellCaption : UserControl
         set => SetValue(ShowSubtitleProperty, value);
     }
 
-    private void OnGallery(object sender, RoutedEventArgs e) => DesignGalleryWindow.Open(Window.GetWindow(this));
-
     private void OnMinimise(object sender, RoutedEventArgs e)
     {
         if (Window.GetWindow(this) is { } window) window.WindowState = WindowState.Minimized;

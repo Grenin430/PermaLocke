@@ -49,7 +49,7 @@ public sealed class CapCreature
     public (int X, int Y) Centre => (Slot.Sprite.Left + (Slot.Sprite.Width / 2), Slot.Sprite.Top + (Slot.Sprite.Height / 2));
 
     public static string KeyOf(CapPlaqueMember? m) => m is null ? string.Empty
-        : $"{m.Name}|{m.Level}|{m.Hp}/{m.MaxHp}|{m.Egg}|{m.Status}|{m.Item}|{string.Join(",", m.Types ?? [])}|{m.Exp:F2}|{string.Join(",", (m.Moves ?? []).Select(x => x.Type + ":" + x.Empty + ":" + x.Name))}";
+        : $"{m.Name}|{m.Level}|{m.Hp}/{m.MaxHp}|{m.Egg}|{m.Status}|{m.Item}|{string.Join(",", m.Types ?? [])}|{m.Exp:F2}|{m.Ability}";
 
     /// <summary>Rebuilds the creature's picture and text for a Pokémon (or an empty slot: null).</summary>
     public void Build(CapPlaqueMember? m, CapSeaPalette pal, int cap, bool narrow)
@@ -197,6 +197,14 @@ public sealed class CapCreature
         foreach (var (x, y, _) in _body) p.Set(baseX + x, baseY + y, colour, alpha);
     }
 
+    /// <summary>The body in negative colours at its place, for an instant: a bolt has gone through it.</summary>
+    public void PaintNegative(CapSheet p)
+    {
+        var baseX = Slot.Sprite.Left + ((Slot.Sprite.Width - _spriteW) / 2);
+        var baseY = Slot.Sprite.Top + ((Slot.Sprite.Height - _spriteH) / 2);
+        foreach (var (x, y, rgb) in _body) p.Set(baseX + x, baseY + y, 0xFFFFFFu - rgb);
+    }
+
     /// <summary>PROPOSAL: the body painted in one colour only between two rows of the picture (0 is its top): a band of light that sweeps down it.</summary>
     public void PaintBand(CapSheet p, int ox, int oy, uint colour, int alpha, int fromRow, int toRow)
     {
@@ -284,7 +292,7 @@ public sealed class CapCreature
                 ItemAt = (box.Left + box.Width - levelW - 8, box.Top + y + 4);
             }
         }
-        y += lineH + 4;
+        y += lineH + 3;
 
         // The level goes under the name in a narrow text, so that both stay whole.
         if (!wide && level.Length > 0)
@@ -324,17 +332,17 @@ public sealed class CapCreature
             y += 3;
         }
 
-        // One line for what a creature is and what it can do: its types, its status, and the moves rotating in what is left of the line. When
-        // the letters of the types and of the status leave less than six letters for the moves, the types go as coloured spots only.
+        // What a creature is (singleplayer, 2026-10-13): its types with their whole names and its status on one line, and its ability on the next.
+        // The moves are not shown any more. Types that do not fit whole go as coloured spots only.
         var types = (m.Types ?? []).Where(t => t >= 0).Take(2).ToList();
-        var hasMoves = wide && m.Moves is { Count: > 0 };
         var statusLook = m.Status != CapStatus.None ? CapArt.StatusLook(m.Status) : default;
-        const int MovesMinimum = 7 + (6 * 4);
 
         int Used(bool letters) => 1 + types.Sum(t => 5 + (letters ? 2 + CapGlyphs.Width(CapArt.TypeName(t), false) : 0) + 3)
             + (m.Status != CapStatus.None ? 5 + (letters ? 2 + CapGlyphs.Width(statusLook.Text, false) : 0) + 3 : 0);
 
-        var letters = wide && (!hasMoves || Used(true) + MovesMinimum <= box.Width);
+        // The types whole first; the status keeps its word only if there is room left for it, else it is its spot.
+        var letters = wide && Used(true) - (m.Status != CapStatus.None ? 2 + CapGlyphs.Width(statusLook.Text, false) : 0) <= box.Width;
+        var statusLetters = letters && Used(true) <= box.Width;
         if (y + 5 <= box.Height)
         {
             var x = 1;
@@ -349,16 +357,17 @@ public sealed class CapCreature
             if (m.Status != CapStatus.None)
             {
                 CapGlyphs.Spot(sheet, x, y, statusLook.Colour, ink);
-                if (letters) CapGlyphs.Outlined(sheet, statusLook.Text, x + 7, y, glow, ink);
-                x += 5 + (letters ? 2 + CapGlyphs.Width(statusLook.Text, false) : 0) + 3;
+                if (statusLetters) CapGlyphs.Outlined(sheet, statusLook.Text, x + 7, y, glow, ink);
             }
 
-            // The moves rotate in the rest of the line: the pip of the colour of the type, and the name coming one at a time.
-            if (hasMoves)
-            {
-                var from = x + 3;
-                TickerAt = (box.Left + from, box.Top + y, Math.Max(0, (box.Width - from - 7) / 4));
-            }
+            y += 7;
+        }
+
+        if (wide && m.Ability is { Length: > 0 } ability && y + 6 <= box.Height)
+        {
+            var text = ability.ToUpperInvariant();
+            while (text.Length > 1 && CapGlyphs.Width(text, false) > box.Width - 2) text = text[..^1];
+            CapGlyphs.Outlined(sheet, text, 1, y, 0xFFE6A0u, ink);
         }
     }
 
@@ -371,26 +380,47 @@ public sealed class CapCreature
             return;
         }
 
+        // The whole drawing, whatever its size and wherever it sits in the icon (2026-10-15): the mod's Mega Stones are drawn bigger or off the
+        // top-left, and a fixed grid from the corner cut them. The opaque part is found, made square round its centre and spread over the 8 by 8.
+        int left = pixels.Width, top = pixels.Height, right = -1, bottom = -1;
+        for (var sy = 0; sy < pixels.Height; sy++)
+        {
+            for (var sx = 0; sx < pixels.Width; sx++)
+            {
+                if (!pixels.Solid(sx, sy)) continue;
+                (left, top, right, bottom) = (Math.Min(left, sx), Math.Min(top, sy), Math.Max(right, sx), Math.Max(bottom, sy));
+            }
+        }
+
+        if (right < 0)
+        {
+            CapGlyphs.Spot(sheet, x + 1, y + 1, 0xFFD860u, ink);
+            return;
+        }
+
+        var size = Math.Max(right - left + 1, bottom - top + 1);
+        var ox = left - ((size - (right - left + 1)) / 2.0);
+        var oy = top - ((size - (bottom - top + 1)) / 2.0);
         var cells = new uint?[8, 8];
-        var step = Math.Max(1, pixels.Width / 8);
         for (var cy = 0; cy < 8; cy++)
         {
             for (var cx = 0; cx < 8; cx++)
             {
-                int r = 0, g = 0, b = 0, n = 0;
-                for (var dy = 0; dy < step; dy++)
+                int x0 = (int)Math.Floor(ox + (cx * size / 8.0)), x1 = Math.Max(x0 + 1, (int)Math.Ceiling(ox + ((cx + 1) * size / 8.0)));
+                int y0 = (int)Math.Floor(oy + (cy * size / 8.0)), y1 = Math.Max(y0 + 1, (int)Math.Ceiling(oy + ((cy + 1) * size / 8.0)));
+                int r = 0, g = 0, b = 0, n = 0, area = 0;
+                for (var sy = y0; sy < y1; sy++)
                 {
-                    for (var dx = 0; dx < step; dx++)
+                    for (var sx = x0; sx < x1; sx++)
                     {
-                        var sx = (cx * step) + dx;
-                        var sy = (cy * step) + dy;
-                        if (!pixels.Solid(sx, sy)) continue;
+                        area++;
+                        if (sx < 0 || sy < 0 || sx >= pixels.Width || sy >= pixels.Height || !pixels.Solid(sx, sy)) continue;
                         var c = pixels.At(sx, sy);
                         (r, g, b, n) = (r + c.R, g + c.G, b + c.B, n + 1);
                     }
                 }
 
-                if (n * 3 >= step * step) cells[cx, cy] = CapSheet.Rgb(r / n, g / n, b / n);
+                if (n > 0 && n * 3 >= area) cells[cx, cy] = CapSheet.Rgb(r / n, g / n, b / n);
             }
         }
 
@@ -418,9 +448,10 @@ public sealed class CapCreature
     private static int Needed(int height, bool wide, CapPlaqueMember m)
     {
         if (m.Egg) return 8;
-        var rows = (wide ? 10 : 8) + (wide ? 0 : 9) + 6;
+        var rows = (wide ? 10 : 8) + (wide ? 0 : 9) + 7;
         if (m.Exp >= 0 && height >= 28 && wide) rows += 3;
-        if (m.Types is { Count: > 0 } || m.Status != CapStatus.None || m.Moves is { Count: > 0 }) rows += 8;
+        if (m.Types is { Count: > 0 } || m.Status != CapStatus.None) rows += 7;
+        if (wide && m.Ability is { Length: > 0 }) rows += 6;
         return Math.Min(rows, height);
     }
 }

@@ -7,12 +7,12 @@ namespace PermaLocke.App.Services;
 
 /// <summary>What the player chose in CONFIGURACIÓN, as it is written to disk.</summary>
 public sealed record AppSettingsData(
-    bool Notifications = true,
+    bool Notifications = true, // unused since 2026-10-17 (the notices were taken out); kept so older files still read
     bool StepAside = true,
     bool DeathScene = true,
     bool Killcam = true,
     bool Follower = true,
-    bool Ghosts = true,
+    bool Ghosts = true, // unused since 1.0.19 (the ghosts were taken out); kept so older files still read
     bool CatchCard = true,
     bool Nicknames = true,
     bool CapPanel = true,
@@ -26,7 +26,8 @@ public sealed record AppSettingsData(
     bool CapDetails = true,
     bool CapAnimations = true,
     int CapKey = 0x13,
-    int CapHpSync = 0);
+    int CapHpSync = 0,
+    bool CapPinned = false);
 
 /// <summary>
 /// The player's preferences, kept in <c>Config/ajustes.json</c> and pushed into the services that obey them.
@@ -39,7 +40,6 @@ public sealed record AppSettingsData(
 /// </remarks>
 public sealed class AppSettings(
     AppPaths paths,
-    Notifier notifier,
     EdgeTab tab,
     DeathCeremony ceremony,
     KillcamRecorder killcam,
@@ -91,10 +91,8 @@ public sealed class AppSettings(
 
     private void Apply()
     {
-        notifier.Enabled = Current.Notifications;
         tab.StepAside = Current.StepAside;
         ceremony.Enabled = Current.DeathScene;
-        ceremony.Ghosts = Current.Ghosts;
         killcam.Enabled = Current.Killcam;
         catches.Enabled = Current.CatchCard;
         nicknames.Enabled = Current.Nicknames;

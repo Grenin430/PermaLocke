@@ -109,6 +109,18 @@ public sealed class CapGeometryTests
     }
 
     [Fact]
+    public void The_one_sea_skips_only_what_lies_between_the_two_windows_not_their_ears()
+    {
+        var plan = CapGeometry.Plan(Player, Stacked, 1, new CapOptions());
+        var (party, deep, width) = CapGeometry.WorldOf(plan);
+
+        Assert.Equal(0, deep);
+        Assert.Equal((plan.Main!.Box.Left - plan.Companion!.Box.Right) / plan.Main.Cell, party - plan.Companion.Cols);
+        Assert.True(party - plan.Companion.Cols < plan.Content.Width / plan.Main.Cell, "the ears reach over the picture: the gap is less than all of it");
+        Assert.Equal(party + plan.Main.Cols, width);
+    }
+
+    [Fact]
     public void Side_by_side_puts_the_strip_over_the_screens_and_the_memorial_under_them()
     {
         var plan = CapGeometry.Plan(Player, Side, 1, new CapOptions());

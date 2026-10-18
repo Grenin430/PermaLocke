@@ -15,12 +15,79 @@ public static class Program
         // PROPOSALS (branch cap-propuestas): --equipo zigzag|columna|pares|colgado, --caidos dispersos|rotulo|hilera|ultimo, --eventos
         string? Option(string name) => Array.IndexOf(args, name) is var at and >= 0 && at + 1 < args.Length ? args[at + 1] : null;
 
+        // --especie N: todo lo que pasa nadando es esa especie (para revisar un dibujo en el mar)
+        if (Option("--especie") is { } forcedSpecies) PermaLocke.App.Views.CapVisitors.ForcedSpecies = int.Parse(forcedSpecies);
+
+        // --especies a,b,c: todas las rutas pasan a la vez con esas especies (vista conjunta)
+        // --muerte kind: every fall gets that death
+        if (Option("--muerte") is { } death) PermaLocke.App.Views.CapDeath.Forced = Enum.Parse<PermaLocke.App.Views.CapDeathKind>(death, true);
+        // --hora h: every window at that hour of Alola
+        if (Option("--hora") is { } hour) PermaLocke.App.Views.CapWorldView.ForcedHour = double.Parse(hour, System.Globalization.CultureInfo.InvariantCulture);
+        if (Option("--variante") is { } variant) PermaLocke.App.Views.CapCrystalFall.Variant = int.Parse(variant);
+        if (Option("--especies") is { } forcedAll) PermaLocke.App.Views.CapVisitors.ForcedAll = [.. forcedAll.Split(',').Select(int.Parse)];
+
+        // --medir scenario start preset frames: what a window's frame costs, without saving it (2026-10-17, the shiny's rainbow).
+        if (Array.IndexOf(args, "--medir") is var measure and >= 0)
+        {
+            var scenario = data.Scenarios.First(s => s.Name == args[measure + 1]);
+            var start = double.Parse(args[measure + 2], System.Globalization.CultureInfo.InvariantCulture);
+            var preset = LabScreen.Presets.First(p => p.Name.StartsWith(args[measure + 3], StringComparison.Ordinal));
+            var frames = int.Parse(args[measure + 4]);
+            var options = new PermaLocke.App.Views.CapOptions();
+            LabScreen.Compose(scenario, start, preset, options, game: true);
+            var clock = System.Diagnostics.Stopwatch.StartNew();
+            for (var i = 0; i < frames; i++) LabScreen.Compose(scenario, start + (i / 30.0), preset, options, game: true);
+            Console.WriteLine($"{args[measure + 1]}: {clock.Elapsed.TotalMilliseconds / frames:0.0} ms por fotograma ({frames} fotogramas, {preset.Name})");
+            // Only the panels, as the app makes them: the lab's fake game and its blow-up to the window are not the app's work.
+            var plan = PermaLocke.App.Views.CapGeometry.Plan(new PermaLocke.App.Views.CapRect(0, 0, preset.Width, preset.Height), preset.Layout, 1, options, null);
+            var world = PermaLocke.App.Views.CapGeometry.WorldOf(plan);
+            var panels = System.Diagnostics.Stopwatch.StartNew();
+            for (var i = 0; i < frames; i++)
+            {
+                foreach (var slot in new[] { plan.Main, plan.Companion })
+                {
+                    if (slot is null) continue;
+                    PermaLocke.App.Views.CapPlaque.Replay(scenario, slot.Mode, slot.Cols, slot.Rows, start + (i / 30.0), slot.Panel, slot.Notch,
+                        slot.Panel == PermaLocke.App.Views.CapPanelKind.Party ? world.Party : world.Deep, world.Width);
+                }
+            }
+
+            Console.WriteLine($"  solo los paneles: {panels.Elapsed.TotalMilliseconds / frames:0.0} ms ({plan.Main?.Cols}x{plan.Main?.Rows} y {plan.Companion?.Cols}x{plan.Companion?.Rows} celdas)");
+            return 0;
+        }
+
+        // --secuencia-ventana scenario start seconds fps preset directory: render a continuous review without restarting the lab per frame.
+        if (Array.IndexOf(args, "--secuencia-ventana") is var sequence and >= 0)
+        {
+            if (sequence + 6 >= args.Length) throw new ArgumentException("Faltan argumentos de --secuencia-ventana.");
+            var culture = System.Globalization.CultureInfo.InvariantCulture;
+            var scenario = data.Scenarios.First(s => s.Name == args[sequence + 1]);
+            var start = double.Parse(args[sequence + 2], culture);
+            var seconds = double.Parse(args[sequence + 3], culture);
+            var fps = int.Parse(args[sequence + 4], culture);
+            if (!double.IsFinite(start) || !double.IsFinite(seconds) || seconds <= 0 || seconds > 300 || fps is < 1 or > 60)
+                throw new ArgumentException("Duración o frecuencia fuera de rango.");
+            var preset = LabScreen.Presets.First(p => p.Name.StartsWith(args[sequence + 5], StringComparison.Ordinal));
+            var directory = args[sequence + 6];
+            System.IO.Directory.CreateDirectory(directory);
+            var options = new PermaLocke.App.Views.CapOptions();
+            var count = (int)Math.Ceiling(seconds * fps);
+            for (var i = 0; i < count; i++)
+            {
+                var (bgra, _) = LabScreen.Compose(scenario, start + i / (double)fps, preset, options, game: true);
+                PermaLocke.App.Views.CapSnap.Save(System.IO.Path.Combine(directory, $"frame-{i:D4}.png"), bgra, preset.Width, preset.Height);
+            }
+            Console.WriteLine($"{count} fotogramas a {fps} fps en {directory}");
+            return 0;
+        }
         // --ventana escenario t "preset" fichero: una ventana entera del emulador con el panel (el escenario de la captura del jugador)
         if (Option("--ventana") is { } windowScenario && Array.IndexOf(args, "--ventana") + 4 < args.Length + 0)
         {
             var at = Array.IndexOf(args, "--ventana");
             var scenario = data.Scenarios.First(s => s.Name == windowScenario);
-            var tw = double.Parse(args[at + 2], System.Globalization.CultureInfo.InvariantCulture);
+            // "m" or "m+5": the moment that says most about the scenario.
+            var tw = args[at + 2].StartsWith('m') ? (scenario.Moment ?? 0) + (args[at + 2].Length > 1 ? double.Parse(args[at + 2][1..], System.Globalization.CultureInfo.InvariantCulture) : 0)
+                : double.Parse(args[at + 2], System.Globalization.CultureInfo.InvariantCulture);
             var preset = LabScreen.Presets.First(p => p.Name.StartsWith(args[at + 3], StringComparison.Ordinal));
             var (bgra, _) = LabScreen.Compose(scenario, tw, preset, new PermaLocke.App.Views.CapOptions(), game: true);
             PermaLocke.App.Views.CapSnap.Save(args[at + 4], bgra, preset.Width, preset.Height);
@@ -71,6 +138,13 @@ public static class Program
             var panel = args.Contains("--fondo-del-mar") ? PermaLocke.App.Views.CapPanelKind.Deep : PermaLocke.App.Views.CapPanelKind.Party;
             var sheet = PermaLocke.App.Views.CapPlaque.Replay(scenario, mode, grid[0], grid[1], t, panel);
             PermaLocke.App.Views.CapSnap.Save(args[detail + 7], sheet, int.Parse(args[detail + 6]), 0x000000, 1, new PermaLocke.App.Views.CapRect(r[0], r[1], r[2], r[3]));
+            return 0;
+        }
+
+        // --bichos fichero: cada Pokémon que pasa por el mar en seis momentos de su movimiento, ampliado
+        if (Option("--bichos") is { } critters)
+        {
+            PermaLocke.App.Views.CapSnap.Save(critters, PermaLocke.App.Views.CapVisitors.Gallery(), 4);
             return 0;
         }
 

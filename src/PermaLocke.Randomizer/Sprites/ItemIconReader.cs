@@ -120,6 +120,14 @@ public sealed class ItemIconReader
                                 ?? throw new InvalidDataException("El icono del Repelente no es el que se conoce.")));
     }
 
+    /// <summary>The Poción Variocolor, drawn on the Repel's template the same way (<see cref="ShinyPotionIcon"/>).</summary>
+    public PokemonIcon ReadShinyPotion()
+    {
+        return Crop(PermaLocke.Core.Domain.ShinyPotion.ItemId,
+            BflimTexture.Decode(ShinyPotionIcon.Bflim(Decompress(_garc.GetFile(RepelItemId - 1)))
+                                ?? throw new InvalidDataException("El icono del Repelente no es el que se conoce.")));
+    }
+
     private const int RareCandyItemId = 50;
 
     private const int RepelItemId = 79;

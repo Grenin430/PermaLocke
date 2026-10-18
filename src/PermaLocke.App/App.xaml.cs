@@ -222,7 +222,6 @@ public partial class App : Application
         // LOS AVISOS ENCIMA DEL JUEGO. Su propia ventana, para que salgan con PermaLocke
         // minimizado, que es como se juega. PlayNotifications solo se suscribe: hay que pedirlo
         // una vez para que exista, y eso se hace al arrancar el vigilante.
-        collection.AddSingleton<Notifier>();
         collection.AddSingleton<PlayNotifications>();
         collection.AddSingleton<DeathCeremony>();
         collection.AddSingleton<KillcamRecorder>();
@@ -265,6 +264,7 @@ public partial class App : Application
         collection.AddSingleton<ActiveBar>();
         collection.AddSingleton<CapBadge>();
         collection.AddSingleton<PokeVialService>();
+        collection.AddSingleton<FieldItemsService>();
         collection.AddSingleton<BackgroundMode>();
         collection.AddSingleton<PokemonIdentityService>();
         collection.AddSingleton<IRewardCatalog>(_ =>
@@ -327,8 +327,7 @@ public partial class App : Application
         // AMIGOS Y ACTIVIDAD de JUGAR (§126): presencia y logros de todos, por el servidor del torneo.
         collection.AddSingleton<CommunityService>();
 
-        // Los fantasmas (§183): tus muertes a los demás, y las suyas encima de tu emulador.
-        collection.AddSingleton<GhostService>();
+        // Los motes votados por los demás (2026-09-28). Los fantasmas (§183) se quitaron en la 1.0.19.
         collection.AddSingleton<NicknameVoteService>();
 
         // «Jugando a PermaLocke» en el perfil de Discord mientras la app está abierta (§185).
@@ -517,7 +516,6 @@ public partial class App : Application
         // Una copia para mirar pantallas lee a los amigos, pero no dice que está aquí ni publica la run.
         // Amigos y actividad van por el servidor del torneo, también en la distribución local.
         _services.GetRequiredService<CommunityService>().Start(writes: !withoutGame);
-        _services.GetRequiredService<GhostService>().Start(writes: !withoutGame);
         _services.GetRequiredService<NicknameVoteService>().Start(writes: !withoutGame);
         if (!withoutGame) _services.GetRequiredService<FallenShare>().Start();
         _services.GetRequiredService<DiscordPresence>().Start();
@@ -550,6 +548,7 @@ public partial class App : Application
             // El cap de nivel siempre a la vista, encima del juego (1.0.4.7).
             _services.GetRequiredService<CapBadge>().Start();
             _services.GetRequiredService<PokeVialService>().Start();
+            _services.GetRequiredService<FieldItemsService>().Start();
 
             // Las líneas evolutivas se leen ya, en segundo plano: la primera vez puede tocar sacar el fichero de
             // la ROM, y eso no debe caer en el segundo en que empieza un combate.
@@ -576,16 +575,6 @@ public partial class App : Application
             await RehearseDeathsAsync(logger);
         }
 
-        if (e.Args.Contains("--ensayar-fantasma", StringComparer.OrdinalIgnoreCase))
-        {
-            // El fantasma de un amigo tal como lo vería él (§183), con el último caído de esta run.
-            if ((await _services!.GetRequiredService<MaintenanceService>().FallenAsync()).FirstOrDefault() is { } ghost)
-            {
-                await _services!.GetRequiredService<GhostService>().RehearseAsync("Ensayo",
-                    new DeathNotice(ghost.Nickname ?? ghost.SpeciesName, ghost.Species, 0, ghost.Form, ghost.IsShiny, ghost.Level));
-            }
-        }
-
         if (e.Args.Contains("--ensayar-intercambio", StringComparer.OrdinalIgnoreCase))
         {
             // El intercambio de cartas del álbum (1.0.4.7) con tres cartas de la partida, sin escribir nada.
@@ -609,13 +598,6 @@ public partial class App : Application
             _ = _services!.GetRequiredService<CapBadge>().RehearseAsync(scenario, seconds);
         }
 
-        if (e.Args.Contains("--ensayar-amigo", StringComparer.OrdinalIgnoreCase))
-        {
-            // El aviso pequeño de un amigo que empieza a jugar (1.0.4.5), sin servidor ni juego.
-            _services!.GetRequiredService<Notifier>().Say(ToastKind.FriendPlaying, "Iñigo pero en móvil", "está jugando a PermaLocke");
-            _services!.GetRequiredService<Notifier>().Say(ToastKind.Info, "Aviso normal", "Para comparar el tamaño.");
-        }
-
         if (e.Args.Contains("--ensayar-novedades", StringComparer.OrdinalIgnoreCase))
         {
             // La ventana de NOVEDADES de CONFIGURACIÓN (1.0.7).
@@ -626,12 +608,6 @@ public partial class App : Application
         {
             // Las cuatro ventanas del mote votado (2026-09-28), una tras otra, sin servidor: no manda nada.
             await _services!.GetRequiredService<NicknameVoteService>().RehearseAsync();
-        }
-
-        if (e.Args.Contains("--ensayar-lluvia", StringComparer.OrdinalIgnoreCase))
-        {
-            // La lluvia de sangre de un amigo que pierde el equipo (§184), sin servidor ni juego.
-            await _services!.GetRequiredService<GhostService>().RehearseRainAsync("Ensayo");
         }
 
         if (e.Args.Contains("--ensayar-captura", StringComparer.OrdinalIgnoreCase))

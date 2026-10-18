@@ -238,7 +238,37 @@ public sealed class AzaharGameStateProvider(
     }
 
     public Task<GameSnapshot> ReadAsync(CancellationToken ct = default) =>
-        Task.Run(() => Read(ct), ct);
+        Task.Run(() => Ordered(Read(ct)), ct);
+
+    /// <summary>
+    /// The party in the order the game has it (2026-10-15): the game keeps its party as a list of pointers, and swapping two in its menu
+    /// swaps the pointers, not the Pokémon where they are stored; the slots read one after another in memory are not that order. The PIDs
+    /// in the pointers' order go with the snapshot, for what shows the party in the game's order (the cap panel). Nothing else changes.
+    /// </summary>
+    private GameSnapshot Ordered(GameSnapshot snapshot)
+    {
+        if (!snapshot.Connected || snapshot.Party.Count == 0) return snapshot;
+        try
+        {
+            if (GameEntries() is not { } entries) return snapshot;
+            var reader = new Pk7Reader(client);
+            var order = new List<uint>();
+            foreach (var entry in entries)
+            {
+                var pid = _layout is { } l && entry >= l.Address && (entry - l.Address) % l.Stride == 0 && (entry - l.Address) / l.Stride < snapshot.Party.Count
+                    ? snapshot.Party[(int)((entry - l.Address) / l.Stride)].Pid
+                    : reader.TryRead(entry, PartyLayoutLocator.AuthoritativeStatsOffset)?.Pid;
+                if (pid is not { } found || found == 0) return snapshot;
+                order.Add(found);
+            }
+
+            return snapshot with { Order = order };
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return snapshot;
+        }
+    }
 
     private GameSnapshot Read(CancellationToken ct)
     {
@@ -505,32 +535,40 @@ public sealed class AzaharGameStateProvider(
     /// <c>PokeParty</c>: six pointers to the members in party order and their count at +0x18. Each member points at +4 to
     /// its stored block, an entry of the authoritative structure (stride 0x1E4), so the lowest one is its first slot.
     /// </summary>
-    private PartyLayout? FromGame(Pk7Reader reader)
+    /// <summary>Where each of the party is stored, in the game's own order (its list of pointers in GameData); null when the chain does not lead to one.</summary>
+    private List<uint>? GameEntries()
     {
         static bool InHeap(uint address) => address is >= LinearHeap and < LinearHeapEnd;
 
+        var manager = BitConverter.ToUInt32(client.ReadMemory(GameManagerPointer, 4));
+        if (!InHeap(manager)) return null;
+        var data = BitConverter.ToUInt32(client.ReadMemory(manager + GameDataOffset, 4));
+        if (!InHeap(data)) return null;
+        var party = BitConverter.ToUInt32(client.ReadMemory(data + PartyOffset, 4));
+        if (!InHeap(party)) return null;
+
+        var head = client.ReadMemory(party, 0x1C);
+        var count = head[0x18];
+        if (count is 0 or > 6) return null;
+
+        var entries = new List<uint>();
+        for (var i = 0; i < count; i++)
+        {
+            var member = BitConverter.ToUInt32(head, i * 4);
+            if (!InHeap(member)) return null;
+            var entry = BitConverter.ToUInt32(client.ReadMemory(member + 4, 4));
+            if (!InHeap(entry)) return null;
+            entries.Add(entry);
+        }
+
+        return entries;
+    }
+
+    private PartyLayout? FromGame(Pk7Reader reader)
+    {
         try
         {
-            var manager = BitConverter.ToUInt32(client.ReadMemory(GameManagerPointer, 4));
-            if (!InHeap(manager)) return null;
-            var data = BitConverter.ToUInt32(client.ReadMemory(manager + GameDataOffset, 4));
-            if (!InHeap(data)) return null;
-            var party = BitConverter.ToUInt32(client.ReadMemory(data + PartyOffset, 4));
-            if (!InHeap(party)) return null;
-
-            var head = client.ReadMemory(party, 0x1C);
-            var count = head[0x18];
-            if (count is 0 or > 6) return null;
-
-            var entries = new List<uint>();
-            for (var i = 0; i < count; i++)
-            {
-                var member = BitConverter.ToUInt32(head, i * 4);
-                if (!InHeap(member)) return null;
-                var entry = BitConverter.ToUInt32(client.ReadMemory(member + 4, 4));
-                if (!InHeap(entry)) return null;
-                entries.Add(entry);
-            }
+            if (GameEntries() is not { } entries) return null;
 
             var first = entries.Min();
             const uint Stride = PartyLayoutLocator.AuthoritativeStride;
@@ -640,7 +678,8 @@ public sealed class AzaharGameStateProvider(
                 member.HeldItem,
                 member.Status,
                 member.ExpProgress,
-                member.Pp));
+                member.Pp,
+                member.Ability));
         }
 
         return party;

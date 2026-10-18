@@ -37,6 +37,8 @@ public static class CapScenarios
     /// <summary>The species of the sample party, in order: a stand-in for each cartridge icon is asked for by number.</summary>
     public static readonly int[] Species = [130, 748, 143, 94, 230, 149];
 
+    private static readonly string[] Abilities = ["Intimidación", "Ensañamiento", "Sebo", "Cuerpo Maldito", "Nado Rápido", "Compensación"];
+
     private static readonly string[] Names = ["Gyarados", "Toxapex", "Snorlax", "Gengar", "Kingdra", "Dragonite"];
 
     private static readonly int[][] Types = [[10, 2], [3, 10], [0], [7, 3], [10, 15], [15, 2]];
@@ -55,7 +57,7 @@ public static class CapScenarios
         double exp = 0.4, bool egg = false)
     {
         var moves = Moves[i].Select((type, k) => new CapMove(type, i == 3 && k == 1 && hp < max / 2, MoveNames[i][k])).ToList();
-        return new CapPlaqueMember(icon(Species[i]), Names[i], level, hp, max, egg, (uint)(1000 + i), Types[i], Items[i], status, exp, moves);
+        return new CapPlaqueMember(icon(Species[i]), Names[i], level, hp, max, egg, (uint)(1000 + i), Types[i], Items[i], status, exp, moves, null, Abilities[i]);
     }
 
     private static IReadOnlyList<CapGrave> Graves(Func<int, BitmapSource?> icon, int count)
@@ -71,7 +73,8 @@ public static class CapScenarios
         new("PRUEBA 8 DE 12", cap, 54, highest ?? party.Where(m => !m.Egg).Select(m => m.Level).DefaultIfEmpty(0).Max(), party, battle,
             Graves(icon, graves), cleared, 12, hour, seed);
 
-    public static IReadOnlyList<CapScenario> All(Func<int, BitmapSource?> icon)
+    /// <param name="item">An item's icon, for the Z-Crystal of the trial passed; without it the trial plays only the cap's film.</param>
+    public static IReadOnlyList<CapScenario> All(Func<int, BitmapSource?> icon, Func<int, BitmapSource?>? item = null)
     {
         var full = new[]
         {
@@ -114,6 +117,17 @@ public static class CapScenarios
             Still("tope", "Todo el equipo en el cap", Base(icon, atCap, 5, highest: 42)),
             Still("inicio", "Inicio de la run: dos Pokémon, sin caídos", Base(icon, begin, 0, cap: 15, cleared: 0) with { Trial = "PRUEBA 1 DE 12", Next = 22 }),
             Still("liga", "La Liga, sin siguiente cap", Base(icon, full, 9, cap: 90, cleared: 12) with { Trial = "CAMPEONATO DE LA LIGA", Next = null }),
+            // A shiny (2026-10-16): each of its two looks from the start of the battle, ending at 12 s.
+            Still("shiny-cosas", "Variocolor: cada cosa su color", Base(icon, full, battle: true) with { Shiny = new CapShinyTurn(CapShinyKind.Things, 0.5, 12.5) }),
+            // The Pokévial (2026-10-16): at rest with two of three, and used at 1 s, two of two to one.
+            Still("pokevial", "Pokévial con dos de tres usos", Base(icon, full) with { Vial = new CapVialState(2, 3) }),
+            Still("pokevial-uso", "Pokévial usado: de dos a uno", Base(icon, full) with { Vial = new CapVialState(1, 2, 1.0, 2) }),
+            // The Repelente Infinito (2026-10-16): off, and turned on at 1 s and off at 9 s.
+            Still("repelente", "Repelente Infinito apagado", Base(icon, full) with { Vial = new CapVialState(2, 3), Repel = CapToggle.Off }),
+            Still("repelente-uso", "Repelente Infinito: se enciende a 1 s y se apaga a 9 s", Base(icon, full) with { Vial = new CapVialState(2, 3), Repel = new CapToggle(1.0, 9.0), Turbo = CapToggle.Off }),
+            // The Incubadora Turbo (2026-10-16): beside them, off, and turned on at 1 s and off at 9 s.
+            Still("turbo", "Incubadora Turbo apagada", Base(icon, full) with { Vial = new CapVialState(2, 3), Repel = CapToggle.Off, Turbo = CapToggle.Off }),
+            Still("turbo-uso", "Incubadora Turbo: se enciende a 1 s y se apaga a 9 s", Base(icon, full) with { Vial = new CapVialState(2, 3), Repel = CapToggle.Off, Turbo = new CapToggle(1.0, 9.0) }),
         };
 
         // The ones that move: each is a few moments in order, and the panel is told them the way the game would.
@@ -129,7 +143,26 @@ public static class CapScenarios
             new(2, Base(icon, Replace(full, 0, m => m with { Hp = 90 }), battle: true)),
             new(5, Base(icon, Replace(full, 0, m => m with { Hp = 31 }), battle: true))]));
 
-        scenarios.Add(new CapScenario("caida", "Gyarados cae en combate y su tumba aparece", [
+        // Each death of the overlay (CapDeath) on Gyarados: its PID is the first one that draws that death, past those of the rest of the party.
+        foreach (var kind in Enum.GetValues<CapDeathKind>())
+        {
+            var pid = 2000u;
+            while (CapDeath.KindOf(pid, 0) != kind) pid++;
+            var alive = Replace(full, 0, m => m with { Pid = pid, Hp = 31 });
+            scenarios.Add(new CapScenario($"muerte-{kind.ToString().ToLowerInvariant()}", $"Gyarados cae: muerte {kind}", [
+                new(0, Base(icon, alive, battle: true)),
+                new(2, Base(icon, Replace(alive, 0, m => m with { Hp = 0 }), battle: true))]));
+        }
+
+        scenarios.Add(new CapScenario("orden", "El jugador cambia el orden en el juego: el tercero pasa a ser el primero", [
+            new(0, Base(icon, full)),
+            new(2, Base(icon, [full[2], full[0], full[1], .. full.Skip(3)]))]));
+
+        scenarios.Add(new CapScenario("muertes-seguidas", "Caen dos a la vez: sus muertes van una detrás de otra", [
+            new(0, Base(icon, Replace(full, 0, m => m with { Hp = 31 }), battle: true)),
+            new(2, Base(icon, Replace(Replace(full, 0, m => m with { Hp = 0 }), 2, m => m with { Hp = 0 }), battle: true))]));
+
+        scenarios.Add(new CapScenario("caida", "Gyarados cae en combate y su muerte se ve en la plantilla", [
             new(0, Base(icon, Replace(full, 0, m => m with { Hp = 31 }), battle: true)),
             new(2, Base(icon, Replace(full, 0, m => m with { Hp = 0 }), battle: true)),
             new(7, Base(icon, Replace(full, 0, m => m with { Hp = 0 }), 4))]));
@@ -138,9 +171,70 @@ public static class CapScenarios
             new(0, Base(icon, combat, 3)),
             new(2, Base(icon, [.. full.Select(m => m with { Hp = m.MaxHp, Status = CapStatus.None })], 3))]));
 
+        // the altar of the trials with seven crystals won, and with all twelve (2026-10-18)
+        foreach (var (name, won) in new[] { ("altar", 7), ("altar-completo", 12) })
+        {
+            var crystals = CapAltar.Order.Take(won).Select(id => (id, item?.Invoke(id))).ToList();
+            scenarios.Add(new CapScenario(name, $"El altar de las pruebas con {won} cristales", [new(0, Base(icon, full, cleared: won) with { Crystals = crystals })]));
+        }
+
         scenarios.Add(new CapScenario("cambio-cap", "Se supera la prueba: el cap pasa de 42 a 54", [
             new(0, Base(icon, atCap, 5, highest: 42)),
-            new(2, Base(icon, atCap, 5, cap: 54, highest: 42, cleared: 8) with { Trial = "PRUEBA 9 DE 12", Next = 60 })]));
+            new(2, Base(icon, atCap, 5, cap: 54, highest: 42, cleared: 8) with { Trial = "PRUEBA 9 DE 12", Next = 60, CrystalItem = 820, Crystal = item?.Invoke(820) })]));
+
+        // The sixth trial passed (2026-10-16): the Z-Crystal's film and the Megas' parade, from 2 s.
+        scenarios.Add(new CapScenario("megas", "Se supera la prueba 6: el cristal Z y las megas", [
+            new(0, Base(icon, atCap, 5, cap: 36, highest: 36, cleared: 5) with { Trial = "PRUEBA 6 DE 12", Next = 42 }),
+            new(2, Base(icon, atCap, 5, cap: 42, highest: 36, cleared: 6) with { Trial = "PRUEBA 7 DE 12", Next = 48, CrystalItem = 820, Crystal = item?.Invoke(820) })]));
+
+        // The first trial passed (2026-10-18, prototype): the Normastal's way into the Gimmighoul ruins, from 2 s; --variante picks how it comes down.
+        scenarios.Add(new CapScenario("normastal", "Se supera la prueba 1: el Normastal cae en las ruinas", [
+            new(0, Base(icon, atCap, 5, cap: 15, highest: 15, cleared: 0) with { Trial = "PRUEBA 1 DE 12", Next = 22 }),
+            new(2, Base(icon, atCap, 5, cap: 22, highest: 15, cleared: 1) with { Trial = "PRUEBA 2 DE 12", Next = 28, CrystalItem = 807, Crystal = item?.Invoke(807), Crystals = [(807, item?.Invoke(807))] })]));
+
+        // The second trial passed (2026-10-18, prototype): Gigantamax Machamp punches the Lucharastal into the ruins' column, from 2 s.
+        scenarios.Add(new CapScenario("lucharastal", "Se supera la prueba 2: Machamp Gigamax clava el Lucharastal", [
+            new(0, Base(icon, atCap, 5, cap: 22, highest: 22, cleared: 1) with { Trial = "PRUEBA 2 DE 12", Next = 28, Crystals = [(807, item?.Invoke(807))] }),
+            new(2, Base(icon, atCap, 5, cap: 28, highest: 22, cleared: 2) with
+            {
+                Trial = "PRUEBA 3 DE 12", Next = 32, CrystalItem = 813, Crystal = item?.Invoke(813), Crystals = [(807, item?.Invoke(807)), (813, item?.Invoke(813))],
+            })]));
+
+        // The third trial passed (2026-10-18, prototype): Mega Greninja throws the Hidrostal into the ruins, from 2 s.
+        scenarios.Add(new CapScenario("hidrostal", "Se supera la prueba 3: Mega Greninja y el Hidrostal", [
+            new(0, Base(icon, atCap, 5, cap: 28, highest: 28, cleared: 2) with { Trial = "PRUEBA 3 DE 12", Next = 32, Crystals = [(807, item?.Invoke(807)), (813, item?.Invoke(813))] }),
+            new(2, Base(icon, atCap, 5, cap: 32, highest: 28, cleared: 3) with
+            {
+                Trial = "PRUEBA 4 DE 12", Next = 36, CrystalItem = 809, Crystal = item?.Invoke(809),
+                Crystals = [(807, item?.Invoke(807)), (813, item?.Invoke(813)), (809, item?.Invoke(809))],
+            })]));
+
+        // The fourth trial passed (2026-10-18, prototype): Ho-Oh brings the Pirostal in a rainbow feather, from 2 s.
+        scenarios.Add(new CapScenario("pirostal", "Se supera la prueba 4: Ho-Oh y el Pirostal", [
+            new(0, Base(icon, atCap, 5, cap: 32, highest: 32, cleared: 3) with { Trial = "PRUEBA 4 DE 12", Next = 36, Crystals = [(807, item?.Invoke(807)), (813, item?.Invoke(813)), (809, item?.Invoke(809))] }),
+            new(2, Base(icon, atCap, 5, cap: 36, highest: 32, cleared: 4) with
+            {
+                Trial = "PRUEBA 5 DE 12", Next = 40, CrystalItem = 808, Crystal = item?.Invoke(808),
+                Crystals = [(807, item?.Invoke(807)), (813, item?.Invoke(813)), (809, item?.Invoke(809)), (808, item?.Invoke(808))],
+            })]));
+
+        // The fifth trial passed (2026-10-18, prototype): Shaymin brings the Fitostal, from 2 s.
+        scenarios.Add(new CapScenario("fitostal", "Se supera la prueba 5: Shaymin y el Fitostal", [
+            new(0, Base(icon, atCap, 5, cap: 36, highest: 36, cleared: 4) with { Trial = "PRUEBA 5 DE 12", Next = 40, Crystals = [(807, item?.Invoke(807)), (813, item?.Invoke(813)), (809, item?.Invoke(809)), (808, item?.Invoke(808))] }),
+            new(2, Base(icon, atCap, 5, cap: 40, highest: 36, cleared: 5) with
+            {
+                Trial = "PRUEBA 6 DE 12", Next = 44, CrystalItem = 811, Crystal = item?.Invoke(811),
+                Crystals = [(807, item?.Invoke(807)), (813, item?.Invoke(813)), (809, item?.Invoke(809)), (808, item?.Invoke(808)), (811, item?.Invoke(811))],
+            })]));
+
+        // The sixth trial passed (2026-10-18, prototype): Terapagos and Miraidon, the Litostal, from 2 s.
+        scenarios.Add(new CapScenario("litostal", "Se supera la prueba 6: Terápagos, Miraidon y el Litostal", [
+            new(0, Base(icon, atCap, 5, cap: 40, highest: 40, cleared: 5) with { Trial = "PRUEBA 6 DE 12", Next = 44, Crystals = [(807, item?.Invoke(807)), (813, item?.Invoke(813)), (809, item?.Invoke(809)), (808, item?.Invoke(808)), (811, item?.Invoke(811))] }),
+            new(2, Base(icon, atCap, 5, cap: 44, highest: 40, cleared: 6) with
+            {
+                Trial = "PRUEBA 7 DE 12", Next = 48, CrystalItem = 819, Crystal = item?.Invoke(819),
+                Crystals = [(807, item?.Invoke(807)), (813, item?.Invoke(813)), (809, item?.Invoke(809)), (808, item?.Invoke(808)), (811, item?.Invoke(811)), (819, item?.Invoke(819))],
+            })]));
 
         scenarios.Add(new CapScenario("eclosion", "Un huevo eclosiona", [
             new(0, Base(icon, eggs, 0)),
@@ -184,10 +278,14 @@ public static class CapScenarios
             }
         }
 
-        Rare("ballena", "Una ballena cruza el mar por detrás del juego", 1, 480, 80, 70);
-        Rare("manta", "Una manta pasa", 2, 210, 38, 70);
-        Rare("banco", "Un banco de peces", 3, 95, 26, 65);
-        Rare("ola", "Una ola de luz recorre el mar", 4, 330, 9, 60);
+        foreach (var (lane, name, title) in new[] { (0, "nadador", "Un Pokémon común pasa nadando"), (1, "nadador-raro", "Un Pokémon menos común pasa nadando"),
+                     (2, "nadador-leyenda", "Un gran Pokémon cruza el mar"), (3, "volador", "Una bandada pasa volando"), (4, "volador-raro", "Un Pokémon menos común pasa volando"),
+                     (5, "volador-leyenda", "Un legendario cruza el cielo") })
+        {
+            var l = CapVisitors.Lanes[lane];
+            Rare(name, title, l.Kind, l.Period, l.Duration, l.Chance);
+        }
+
         Rare("estrella", "Una estrella fugaz sobre el mar nocturno", 5, 50, 2.2, 80, 23.5);
 
         return scenarios;

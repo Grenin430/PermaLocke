@@ -3,7 +3,7 @@ namespace PermaLocke.App.Views;
 /// <summary>
 /// The history of the run, in the deep window, without a single letter (2026-10-10): the strata of the floor are the trials cleared, a chain of
 /// lanterns hangs one for each trial, and each Pokémon fallen is a fossil of its own icon half buried in the floor (<see cref="CapFossils"/>).
-/// What a name and a level used to say is said by the light: a beam from the sun or the moon goes over the fossils, newest to oldest, and the one
+/// What a name and a level used to say is said by the light: a focus goes over the fossils, newest to oldest, and the one
 /// it falls on gets back the colours of its icon and does something of its own (its soul goes up, its dust rises, a bubble leaves it). Everything
 /// here is a function of the data and the time.
 /// </summary>
@@ -40,7 +40,7 @@ public static class CapDeep
         return (count - 1 - step, local, length, Ease(Math.Min(local / 0.55, (length - local) / 0.55)));
     }
 
-    /// <summary>The beam of the focus, the colours of the fossil it is on, and the small thing that fossil does.</summary>
+    /// <summary>The colours of the fossil the focus is on, a halo round it, and the small thing that fossil does.</summary>
     public static void Focus(CapSheet p, CapWorldLayout l, CapSeaPalette pal, CapFossil[] fossils, CapSeaContext ctx, double t)
     {
         if (l.Panel != CapPanelKind.Deep || fossils.Length == 0) return;
@@ -52,25 +52,7 @@ public static class CapDeep
         var night = CapSeaPalette.Night(ctx.SkyHour) > 0.5;
         var beam = night ? 0xCFE0FFu : 0xFFF0C8u;
 
-        // The beam: from the sun (or the moon) to the fossil, a cone that widens as it comes down, shimmering.
-        var flat = l.Mode == CapMode.Strip;
-        var (sx, sy) = flat ? (spec.X, 0) : CapSea.SunAt(l, ctx);
-        var y0 = flat ? 0 : Math.Max(sy, l.SurfaceY - 1);
-        var span = Math.Max(1, spec.Ground - y0);
-        for (var y = y0; y < spec.Ground; y++)
-        {
-            var k = (y - y0) / (double)span;
-            var cx = sx + (int)Math.Round((spec.X - sx) * k);
-            var half = 1 + (int)(k * ((spec.Width / 2) + 4));
-            var shimmer = 0.75 + (0.25 * Math.Sin((y * 0.5) - (t * 5)));
-            for (var dx = -half; dx <= half; dx++)
-            {
-                var edge = Math.Abs(dx) / (double)(half + 1);
-                p.Set(cx + dx, y, beam, (int)((8 + (34 * (1 - edge))) * lit * shimmer * (0.4 + (0.6 * k))));
-            }
-
-            p.Set(cx, y, beam, (int)(120 * lit * shimmer * (0.3 + (0.7 * k))));
-        }
+        // No beam from the sun or the moon into the sea any more (2026-10-17, asked by the player): only the fossil lights up.
 
         // The fossil gets the colours of its icon back, with a halo of light round it.
         var (fx, fy) = (spec.X, spec.Top + (spec.Height / 2));

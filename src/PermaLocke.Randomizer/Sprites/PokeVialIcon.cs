@@ -5,7 +5,7 @@ namespace PermaLocke.Randomizer.Sprites;
 /// is a Poké Ball, glossy, its button a window of glass full of pink medicine, a glass neck with medicine in it and a cork, a golden aura and
 /// two sparkles. Drawn by hand cell by cell (vial2.js) and handed to the game as the Repel's BFLIM with its pixels replaced
 /// (<see cref="SuperCandyIcon.Repaint"/>), as the Incubadora Turbo; the app draws the same pixels.
-/// Redrawn smaller on 2026-10-17 (in the single-player version): the bag shows icons under 32 and smoothed, and cut the one that reached the edge.
+/// Redrawn smaller on 2026-10-17 (prototipo_variocolor/small.js), the same flask as the Poción Variocolor: the bag shows icons under 32 and smoothed, and cut the one that reached the edge.
 /// </summary>
 public static class PokeVialIcon
 {

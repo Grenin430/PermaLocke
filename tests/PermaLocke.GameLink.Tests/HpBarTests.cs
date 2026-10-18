@@ -33,6 +33,15 @@ public class HpBarTests
     /// all the old test asked for; the bar's colours are its own three.
     /// </summary>
     [Fact]
+    public void The_bar_at_a_scale_that_is_not_whole_is_still_a_bar()
+    {
+        // Measured on 2026-10-15 with the window at 2.03: the middle of the bar and its lit edge; and grass is not a bar.
+        (byte R, byte G, byte B) middle = (90, 255, 43), edge = (225, 254, 147), grass = (45, 138, 73);
+        Assert.Equal(HpBarState.Filled, HpBar.Classify(Row((middle, 60), (edge, 25))));
+        Assert.Equal(HpBarState.Hidden, HpBar.Classify(Row((grass, 85))));
+    }
+
+    [Fact]
     public void The_floor_where_the_box_is_not_is_never_a_bar()
     {
         Assert.Equal(HpBarState.Hidden, HpBar.Classify(Row((Floor, 85))));

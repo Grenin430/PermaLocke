@@ -517,3 +517,335 @@ negro del estudio de fotos: gen 8-9 en el equipo (ver Trampas y lecciones).
 - Verificado: compila; pruebas Randomizer 515, GameLink 437, Core 442, Rules 149 y App 553 en verde (con los ficheros reales de `Expansion/`). **Sin probar en el juego en esta app**; en el singleplayer sí se usó jugando.
 - Publicado: el usuario pidió «súbelo del tirón»; commit directo a main solo con los ficheros del Pokévial (el resto de cambios locales del torneo se quedó fuera) y la Action publica la release.
 - Falta: probarlo en Azahar (usar con usos y sin usos, caídos sin tocar, recarga con la enfermera, uso extra tras la prueba 4).
+
+- **Lote 4 de sprites del mar, singleplayer** (2026-10-14): el usuario confirmó Finneon, Milotic, Manaphy, Pelipper y Crobat. Reconstrucción celda
+  a celda, animación por anatomía e integración de las cinco hojas. Se corrigió el periodo de Crobat (2,72 px), una máscara de antena de Milotic
+  que invadía el abanico y siete huecos introducidos por las inclinaciones. Auditoría: 40 fotogramas base, 216 celdas y 256 regiones de ojos.
+  Entrega en `imagenes/revision/lote4`, pendiente de aprobación. Método en `CONTINUIDAD_SPRITES_POKEMON.md`; solo laboratorio `.lab-art`,
+  commit local sin push. No continuar el lote 5 hasta que el usuario apruebe.
+
+- **Aprobación del lote 4** (2026-10-14): el usuario dijo «aprobado, continua». Finneon, Milotic, Manaphy, Pelipper y Crobat quedan aprobados;
+  se actualizan continuidad, registro externo y entrega sin modificar sus sprites. Propuesta para el lote 5: Luvdisc, Seadra, Lumineon,
+  Pikipek y Skarmory, con referencias comprobadas y anatomías distintas. Pendiente de confirmar las cinco antes de comenzar su reconstrucción.
+
+- **Lote 5 de sprites del mar** (2026-10-14): tras aprobar el lote 4, el usuario confirmó Luvdisc, Seadra, Lumineon, Pikipek y Skarmory.
+  Reconstrucción desde sus referencias, animación por anatomía, integración y entrega en `imagenes/revision/lote5`. 184 celdas y ojos
+  comprobados, 553 pruebas aprobadas. Skarmory requirió periodo 3,24 y vuelo casi plano para caber en el cielo; Pikipek conserva la pose
+  posada. Ninguna hoja aprobada modificada. Estado: entregado para revisión, no aprobado aún. Commit local sin push; no avanzar al lote 6.
+
+- **Aprobación del lote 5** (2026-10-14): el usuario confirmó «aprobado». Luvdisc, Seadra, Lumineon, Pikipek y Skarmory quedan aprobados.
+  Actualizados continuidad, registro de sprites y LEEME de la entrega. Sin cambios en los sprites. La selección del lote 6 sigue pendiente.
+
+- **Lote 6 de sprites del mar** (2026-10-14): el usuario pidió continuar y confirmó Remoraid, Lanturn, Kingdra, Toucannon y Altaria.
+  Reconstruidos de las referencias, animados por partes e integrados. Lanturn y Toucannon necesitaban un periodo explícito para recuperar
+  la cuadrícula fina; se limpiaron fondos encerrados en Kingdra, Toucannon y Altaria. Se corrigió la separación cola/dedos de Toucannon y
+  nueve huecos de rotación con la herramienta aprobada. 168 celdas y 192 regiones de ojos correctas; 553 pruebas aprobadas. Entrega en
+  `imagenes/revision/lote6`, pendiente de aprobación. 52 hashes de archivos aprobados intactos. Commit local sin push; no avanzar al lote 7.
+
+- **Aprobación del lote 6** (2026-10-14): el usuario confirmó «aprobado». Remoraid, Lanturn, Kingdra, Toucannon y Altaria quedan aprobados.
+  Actualizados continuidad, registro externo y LEEME de la entrega. Sin cambios en los sprites. La selección del lote 7 sigue pendiente.
+
+- **Lote 7 de sprites del mar** (2026-10-14): el usuario pidió continuar y confirmó Wishiwashi, Relicanth, Pidgeot, Togekiss y Aerodactyl.
+  Reconstruidos de sus referencias y animados por anatomía. Pidgeot y Togekiss necesitaron periodo explícito; Relicanth ajusta Pose a 28°.
+  La auditoría comprueba 168 celdas, 168 regiones de ojos y el espacio de los voladores en el cielo con redondeo al par. 553 pruebas aprobadas,
+  62 archivos aprobados intactos. Entrega en `imagenes/revision/lote7`, pendiente de aprobación. Commit local sin push; no avanzar al lote 8.
+
+- **Aprobación del lote 7** (2026-10-14): el usuario confirmó «aprobado». Wishiwashi, Relicanth, Pidgeot, Togekiss y Aerodactyl quedan aprobados.
+  Actualizados continuidad, registro externo y LEEME de la entrega. Sin cambios en los sprites. La selección del lote 8 sigue pendiente.
+
+- **Sprites del mar, lote 8** (2026-10-14): el usuario confirmó Carvanha, Seaking, Fearow, Dragonite y Latias.
+  Reconstruidos por cuadrícula y animados por anatomía. El usuario autorizó reducir solo Dragonite al detectar que su base 64×80 excedía
+  el cielo: la visualización usa 75 % por vecino más cercano, conservando la base y los fotogramas originales. Fearow pliega las alas.
+  168 celdas, 168 regiones de ojos y 553 pruebas correctas; 72 archivos aprobados intactos. Entrega en `imagenes/revision/lote8`,
+  pendiente de aprobación. Commit local sin push; no avanzar al lote 9.
+
+- **Aprobación del lote 8** (2026-10-14): el usuario confirmó «aprobado». Carvanha, Seaking, Fearow, Dragonite y Latias quedan aprobados,
+  incluida la visualización de Dragonite al 75 % autorizada previamente. Actualizados continuidad, registro externo y LEEME de la entrega.
+  Sin cambios en los sprites. La selección del lote 9 sigue pendiente.
+
+- **Sprites del mar, lote 9** (2026-10-14): el usuario confirmó Bruxish, Staraptor, Salamence, Charizard y Latios y autorizó reducir
+  la visualización de los que excedieran el cielo. Salamence usa 83,3 %, Charizard 75 % y Latios 80 %, conservando bases y animaciones nativas.
+  Corregida la muestra vacía de cuadrículas pequeñas y preservado el iris de Latios al reducir. El laboratorio admite cuatro voladores
+  en sus tres rutas; dos pruebas verifican cobertura y compatibilidad. 555 pruebas correctas; 136 celdas y ojos auditados; 82 archivos
+  aprobados intactos. Entrega en `imagenes/revision/lote9`, pendiente de aprobación. Commit local sin push; no avanzar al lote 10.
+
+- **Aprobación del lote 9** (2026-10-14): el usuario confirmó «aprobado». Bruxish, Staraptor, Salamence, Charizard y Latios quedan aprobados,
+  incluidas las visualizaciones reducidas entregadas. Actualizados continuidad, registro externo y LEEME de la entrega. Sin cambios en los sprites.
+  La selección del lote 10 sigue pendiente. Commit local sin push.
+
+- **Sprites del mar, lote 10** (2026-10-14): el usuario confirmó Articuno, Zapdos, Moltres, Kyogre y Lugia, incluyendo los dos grandes
+  antes reservados. Reconstrucción celda a celda y animación por anatomía. Reducción de visualización de Articuno/Lugia al 75 % y Moltres
+  a 6/7 dentro de la autorización anterior; originales conservados. Iris de Articuno preservado tras reducir; Kyogre compensa su pose a 28°.
+  Corregida la integración de la última entrada del catálogo sin coma. 555 pruebas correctas, 136 celdas, 160 regiones de ojos, 92 archivos
+  aprobados intactos. Entrega en `imagenes/revision/lote10`, pendiente de aprobación. Commit local sin push. No empezar el lote 11.
+
+- **Sprites del mar, lote 11 final** (2026-10-14): el usuario pidió «acaba esos 3», autorizando Wailord, Rayquaza y Ho-Oh.
+  Reconstruidos de sus referencias y animados por anatomía. Wailord/Ho-Oh necesitan el periodo fino explícito; Rayquaza conserva la onda del
+  cuerpo enroscado. Solo la visualización de Rayquaza y Ho-Oh se reduce al 75 % y 70 % dentro de la autorización anterior; originales guardados.
+  Corregida la colisión de proyección del diminuto ojo negro de Wailord. 72 celdas, 72 regiones de ojos, 555 pruebas correctas y 102 archivos
+  anteriores intactos. Entrega en imagenes/revision/lote11. Todas las 54 especies integradas; lotes 10 y 11 pendientes de aprobación visual.
+  Commit local sin push; no despliegue. Parar para revisión.
+  La vista conjunta detectó que los voladores se omitían con reserva >=62. Se ajustó a 61, se añadió la comprobación de espacio
+  de trayectoria a la auditoría y se verificó su aparición en el laboratorio. Las 555 pruebas finales vuelven a pasar (22 s).
+
+- **Aprobación final de sprites: lotes 10 y 11** (2026-10-14): el usuario confirmó «ok a todo». Articuno, Zapdos, Moltres, Kyogre,
+  Lugia, Wailord, Rayquaza y Ho-Oh quedan aprobados, incluidas las escalas visuales entregadas. Las 54 especies del catálogo están
+  terminadas, integradas y aprobadas. Actualizados continuidad, registro externo y LEEME de ambos lotes. Sin cambios de sprites ni código;
+  commit local sin push, sin despliegue.
+
+- **Corrección de poses terrestres en el aire** (2026-10-14): tras aprobar los lotes, el usuario pidió identificar los afectados y redibujar
+  uno representativo antes de extender el cambio. Se señalaron diez; se creó un piloto separado de Pidgey con cabeza/paleta conservadas,
+  torso, patas, cola y alas reconstruidos para vuelo. 8 fotogramas, 24 celdas, ojos y conectividad correctos. La revisión automática
+  rechazó integrar antes de revisar; se entregan comparación, ciclo fijo y simulación externa, sin cambiar los sprites aprobados.
+  Pendiente de aprobación del piloto; no interpretar «continua» durante su preparación como aprobación de la propuesta aún no entregada.
+
+- **Pasada de fidelidad de Pidgey en vuelo** (2026-10-14): el usuario aprueba pose y movimiento, solicita recuperar plumaje.
+  Solo cambia el torso del piloto separado: grupos de plumas y sombras de garganta/pecho/vientre. Alas, cola, patas y 212 píxeles
+  de cabeza idénticos. 8 fotogramas/24 celdas, iso/holes 0, 49 coordenadas y 345 muestras visibles estables, 108 archivos previos intactos.
+  Comparación vuelo anterior/corregido a igual escala y GIF fijo en vuelo_piloto/detalle_pidgey. Detalle pendiente de revisión;
+  no integrar ni extender todavía. Commit local sin push; app y emulador intactos.
+
+- **Aprobación de Pidgey y primera tanda de vuelo** (2026-10-14): usuario aprueba la pasada de detalle y pide corregir los restantes
+  en tandas de cinco. Conservado Pidgey; corregidos Spearow, Pikipek, Pidgeot, Toucannon y Staraptor con anatomías, plumas y batidos propios.
+  Integradas sus cinco hojas; comparación, ciclos y layout real en imagenes/revision/vuelo_tanda1. 120/120 ojos, 0 huecos/aislados,
+  555 pruebas correctas; 107 archivos protegidos sin cambios. Tanda entregada para revisión. Cuatro especies restantes para la siguiente.
+  Pidgey aprobado permanece como fuente/propuesta separada sin modificar en esta tanda. Commit local sin push; no despliegue.
+
+- **Última tanda de correcciones de vuelo** (2026-10-14): tras «ok» a la tanda 1, usuario exige Salamence sin batir y pide continuar.
+  Corregidos Skarmory, Dragonite, Charizard y Salamence. Alas fijas de Salamence verificadas en las ocho fases; movimiento corporal
+  adaptado a cada anatomía, patas recogidas y rasgos originales preservados. Nuevas hojas integradas, comparaciones/ciclos/layout
+  entregados en imagenes/revision/vuelo_tanda2. 32 fotogramas, 96 celdas/ojos correctos, iso/holes 0, 555 pruebas pasan.
+  Conservados 123 archivos protegidos, incluidos Pidgey y toda la tanda 1. Tanda 2 pendiente de aprobación; no quedan otros afectados
+  sin propuesta. Se mantiene Pidgey como fuente aprobada separada sin sustituir su antigua hoja de producción. Commit local sin push.
+
+## Rechazo de la tanda 2 y revisión de bases (2026-10-14)
+El usuario rechaza las cuatro correcciones por pérdida de detalle, volumen y anatomía. Primero requiere cuatro bases estáticas
+junto a sus referencias; animación e integración esperarán su revisión. Nuevos tools/critters/flight_bases_v2.js y
+review_flight_bases_v2.js, independientes de los rigs actuales, sin comprimir cuerpos. Pidgey y tanda 1 intactos.
+Entrega: imagenes/revision/vuelo_tanda2_bases_rehechas. Comparaciones con originales ×3/×4, ampliaciones ×6, PNG nativos
+y prueba estática de cielo. Bases 80×49, 102×69, 137×87 y 134×79; paletas originales, una componente cada una, iso/holes unitarios 0,
+1722/1722 píxeles de cabeza y 135 archivos protegidos conservados. La prueba estática deja solo 4/3 px de margen en Charizard/Salamence.
+No son animaciones aprobadas ni una captura del layout real. La app sigue con la entrega rechazada de 410e8d0; no se ha sustituido
+ningún recurso. Sin build/tests nuevos (no cambia C# ni sprites integrados), sin abrir app/emulador ni desplegar. Sin push.
+Estado vigente y rutas completas: sección «Tanda 2 rechazada» de CONTINUIDAD_SPRITES_POKEMON.md.
+
+## Charizard: revisión de postura v3 (2026-10-14)
+Las cuatro bases v2 también rechazadas. Ahora se trabaja uno por uno: SOLO Charizard está redibujado
+desde una referencia de vuelo de Pokémon Ranger (archivo LaunchBox, copyright visible). Silueta primero,
+detalle después; paleta y rostro del original. Entrega imagenes/revision/charizard_pose_v3:
+charizard_pose_y_referencia.png, base nativa y ampliada, fuentes TXT/JSON y auditorías.
+158×72, 4885 píxeles, una componente, iso/holes unitarios 0, cabeza 425/425 y 137 archivos previos intactos
+respecto a 21c95bb. Los chequeos no equivalen a aprobación de la pose. Sin animación ni integración,
+sin build/tests nuevos; app con la tanda 2 rechazada de 410e8d0. Pidgey y tanda 1 intactos.
+Esperar aprobación de Charizard antes de otros tres o ciclos. La altura/layout queda pendiente.
+Método, referencia y rutas completas: sección «Charizard: pose v3» en CONTINUIDAD_SPRITES_POKEMON.md.
+
+### Charizard: ajuste localizado de mandíbula, cuello y pecho (2026-10-14)
+El usuario aprueba la construcción de la pose v3 y pide conservar cuerpo, alas, extremidades, cola y acabado.
+Solo solicita corregir la transición cabeza-cuello-pecho. Nueva propuesta estática pendiente de revisión de esa unión.
+Se usa la misma referencia de vuelo de Pokémon Ranger, inspeccionada de nuevo junto al sprite v3.
+
+tools/critters/charizard_neck_refinement.js deriva de charizard_flight_pose_v3.js sin modificarlo.
+Elimina el escalón bajo la mandíbula, traza una garganta progresiva, une nuca y espalda y redistribuye
+la sombra del cuello en grupos continuos de píxeles. No hay desenfoque ni nuevos colores.
+tools/critters/review_charizard_neck.js genera las comparaciones y comprueba el alcance exacto.
+
+Entrega: C:/Users/javie/Desktop/imagenes/revision/charizard_cuello/
+- charizard_cuello_antes_despues.png: zona ampliada ×12, antes a la izquierda, después a la derecha.
+- charizard_completo.png: sprite completo ×6 sin suavizado.
+- charizard_base_nativa.png, charizard_base.json, charizard_base.txt: nueva base de revisión, 158×72.
+- auditoria.json: 106 píxeles modificados; caja afectada x23–51, y29–43 del lienzo fuente 174×92.
+[Verificado] Todos los píxeles fuera de la región autorizada x23–54/y29–43 idénticos a v3; paleta idéntica.
+4842 píxeles opacos, iso 0, holes 0 (huecos unitarios). Ambos scripts pasan node --check.
+La fidelidad fuera de la unión se comprueba comparando las cuadrículas completas, no solo la silueta.
+Reproducir desde tools/critters: node review_charizard_neck.js.
+Sin animaciones, integración, cambios de layout, build/tests de C# ni despliegue. Las pruebas de píxeles
+no sustituyen la revisión artística. Esperar aprobación de esta unión antes de continuar.
+
+## Charizard: base definitiva aprobada y vuelo integrado (2026-10-14)
+Base con unión cabeza-cuello aprobada por el usuario, congelada en tools/critters/charizard_flight_approved.json.
+Nuevo charizard_approved_flight.js, enlazado desde charizard_flight_anim.js: 16 fases/12 fps, alas articuladas,
+superficies ocultas reconstruidas, acompañamiento sutil y primer fotograma idéntico a la base. Fuente 165×96
+sin reducir, display 60 % nítido 99×58 para caber en el cielo; hoja de 48 celdas 102×102 integrada solo para Charizard.
+Auditoría: una componente e iso/holes unitarios 0 en fases y hoja; rostro/cuello 568/568 en cada fase; ojos 48/48.
+136 archivos protegidos intactos. Build aislado correcto, tests App 555/555. Layout 336 fotogramas/28 s/12 fps;
+medidas locales Party 178×321 media 1,38–1,71 ms. Sin app/emulador, sin despliegue, sin push.
+Entrega C:/Users/javie/Desktop/imagenes/revision/charizard_vuelo_definitivo/: base, bucle fijo, GIF de layout real,
+mosaicos, hoja y auditoría. Animación pendiente de aprobación artística; base ya definitiva.
+Próximo: Skarmory, después Dragonite y Salamence, cada uno con referencia específica de vuelo y pose base
+mostrada y aprobada ANTES de animar. Salamence sin batido. Pidgey y los otros aprobados intactos.
+Detalles, rutas y reproducción en la última sección de CONTINUIDAD_SPRITES_POKEMON.md.
+
+## Charizard: batido v2 (2026-10-14)
+Base y cuello aprobados intactos; primer batido rechazado por rigidez y poca participación del ala lejana.
+Nuevas poses articuladas en charizard_wing_poses.js: misma fase para ambas alas, raíces fijas y recuperación
+flexionada, membranas y nervios reconstruidos. charizard_approved_flight.js conserva cuerpo y secundarios.
+Entrega imagenes/revision/charizard_batido_v2: bucle, hoja clave con hombros ampliados/ala lejana aislada,
+auditorías y control de layout. No hay otro recorrido completo en esta revisión.
+16 fases/12 fps, 48 celdas 104×104, una componente e iso/holes unitarios 0; rostro/cuello 568/568;
+anclajes cercano 57/57 y lejano 50/50 por fase; base idéntica. 137 archivos protegidos intactos.
+Build aislado correcto y 555 tests App pasan. Solo hoja/entrada de Charizard actualizadas.
+Batido pendiente de aprobación; otros tres sin modificar. Rutas y método en la última sección de continuidad.
+
+## Overlay: orden del equipo, caída a destiempo y muertes siempre (2026-10-15)
+- Cambiar de sitio en el menú del equipo no movía las filas: `CapBadge.ShowParty` volvía a ordenar por `Slot` (hueco en memoria) y deshacía el orden del juego que trae `LiveParty`. Quitado; desde el PC funcionaba porque el PC reescribe los huecos.
+- El sprite desaparecía antes de verse caer: con la vida a cero (la barra empieza a bajar) y sin aviso de caída, `CapWorldView` lo quitaba. Ahora `CapAnim.AwaitingFall` lo deja dibujado hasta 15 s después del golpe a cero, a la espera de la caída.
+- Muertes siempre, también antes de la primera Poké Ball (combate de Tilo): `GameLinkMonitor.FaintShown` sale en `RecordDeathOnceAsync` antes de mirar si la muerte cuenta (en combate, tras la animación de desmayo); `CapBadge` lo escucha en vez de `PokemonDied`, una vez por caída (`_told`, se limpia si revive).
+- Pruebas App 560/560 (nueva: `A_pokemon_hit_to_zero_waits_for_its_fall_...`). `dotnet build src/PermaLocke.App` hecho. Sin probar en el juego ni commit.
+- (mismo día) La vida del panel se adelantaba al juego: el modo «sincronizado» soltaba el cambio entero al primer movimiento de la barra o a los 1,6 s calculados. Ahora, mientras la barra del que está en el campo se ve, la vida del panel la sigue paso a paso (`HpPresenter.Follow`, `ActiveBar` a 30 lecturas por segundo, retención hasta 15 s si la barra se ve, `BarStarted` ignorado entonces) y la barra del panel tarda en proporción al cambio, sin el medio segundo fijo. Prueba nueva en `HpPresenterTests`. No compilado en `bin` (PermaLocke abierto); pruebas en carpeta aparte: 558 pasan, 3 fallan solo por buscar la raíz del repo desde esa carpeta.
+- (mismo día, tanda de bugs) Muertes al azar (`Random.Shared` en `CapBadge`, el número va en el evento `Fell`; el dibujo sigue sin azar). Fuera ruinas Unown, cristales y fósiles (`CapRuins` sin llamadas; la onda de la prueba ya no los enciende). Mar: el peligro solo mira la barra mientras las tablas responden (`_share`), sin el parpadeo de oscuro al acabar el combate. Icono del objeto en el overlay: se recorta lo opaco y se encaja en 8×8 (megapiedras del mod cortadas). Corrupción también en la ventana del abismo (`CorruptionDeath.Deep`); Ultraumbral de los rayos con curva suave y muerte de 3,8 s; rayos blancos de la muerte del Ultraumbral se apagan en vez de cortarse. Avisos de encuentro con forma y variocolor del salvaje (`EncounterNotice.Form/Shiny`). Barra de PS: también por tono (escala 2,03). Combate: 3 s de margen sin tablas (`InBattleNow`). App 561/561, GameLink 438/438. Sin probar en el juego, sin commit.
+- (2026-10-16) Dinero: lectura en memoria a +0x038E8 de la partida en memoria (medido con `Probe --dinero`, que ahora también busca el número); escribir ahí lo ve el juego (menú y siguiente compra), y solo queda si se guarda. `GameMoneyPoints.Watch` mira el dinero cada 2 s y avisa a INICIO, TIENDA y GACHA. Panel del cap «uno con el emulador»: ventanas propiedad de la del juego (`OverlayWindows.PlaceOnOwner`, sin «siempre encima»), ya no se esconden cuando otra ventana pasa delante (las tapa Windows), se esconden solo con el juego minimizado (`IsIconic`), y un gancho de eventos de Windows (`SetWinEventHook`: mover, minimizar, restaurar) las recoloca al instante; al restaurar se fuerza la colocación y se olvida la duda de la banda. Sin probar en el juego, sin commit.
+
+## 2026-10-16 — Prototipo SHINY PRISMÁTICO para el layout
+- Petición: efecto espectacular en pixel art ante un salvaje variocolor, que permanezca hasta capturar o salir del combate, y vídeo dentro del layout real. `CapShiny` pinta arcoíris dobles en las dos bandas, brillo submarino, cintas espectrales, estrellas, rótulo pixel y apagado progresivo. `CapWorldView` lo compone en su flujo normal mediante `CapPlaqueData.ShinyAt/ShinyEnd`.
+- Laboratorio: escenario `shiny` con entrada 1,25 s y fin a 10,8 s; MP4 H.264 de 14 s/24 fps/1280×690 en `prototipos/SHINY_PRISMATICO_preview.mp4`, exportado por `tools/PermaLocke.PlaqueLab/ShinyVideo.cs` con Media Foundation. El centro enseña una batalla de muestra dibujada para la previsualización (`ShinyPreviewArt`), las bandas usan el renderizador real. `CapShinyTests` pasa.
+- **Pendiente de aprobación artística**: aún no hay conexión con el aviso real `EncounterGuard.Said`; nada desplegado ni tocado en la partida. Reproducción y archivos en `prototipos/LEEME_SHINY.md`.
+- (2026-10-16) Variocolor en el overlay: `CapShiny` (Views/Cap) con dos aspectos sorteados en `CapBadge` (`EncounterGuard.ShinyAppeared` → `CapShinyTurn`, fin al acabar el combate): «colores shiny» (mapa de tono continuo: azules a violeta/rosa, verdes a oro, amarillos a naranja, morados a azul) y «cada cosa su color» (cada mancha de color se llena de abajo arriba y gira por el arcoíris; el agua, prisma de 8 capas por profundidad; cielo, textos y grises intactos). Brillo shiny, frente tramado con estrellas, vuelta atrás al acabar. Prototipos aprobados en imagenes/revision/prototipo_shiny. Laboratorio: escenarios `shiny-colores` y `shiny-cosas`. Además: Rayquaza y Spearow fuera de los cielos; cristales Z de las pruebas superadas en la arena del abismo (`CapTrial.PaintBed`); película del cristal sin esperar la caché de 20 s del progreso (`ProgressService.Forget`). Sin probar en el juego, sin commit.
+- (2026-10-16) Pokévial (objeto 120, clave, icono «B» frasco Poké Ball elegido entre seis, imagenes/revision/prototipo_vial): `RulePatches.PokeVial` (datos del Repartir Exp, texto, icono `PokeVialIcon`, líneas 149/150 de la mochila) y rama nueva en la cueva de `Bag.cro` (`BagVialCode`: quita un uso de `RuleBlock.PokeVialUses` 0x11 y pone `PokeVialRequest` 0x12, o dice que está vacío). `PokeVialService` en la app: usos por run en `Saves/pokevial-<run>.json` (1, +1 tras la prueba 4, +1 tras la 6), los escribe en el bloque, atiende la petición curando en memoria PS, estado y PP (`AzaharGameWriter.HealLive`) menos a los caídos, y recarga al ver el equipo entero curado de golpe fuera de combate (Centro Pokémon, también camas). MISCELÁNEA: botón POKÉVIAL. Pruebas: rutina desensamblada, instalación sobre copia del mod. Sin probar en el juego, sin commit.
+- (2026-10-16) Pokévial en el overlay: `CapVial` (Views/Cap) dibuja el frasco del icono B en 3D (modelo SDF renderizado una vez por nivel a celdas: bola roja y blanca con banda y botón, cuello, corcho; inclinado a la derecha y hacia el espectador; aura dorada), a la derecha del cartel del cap y apoyado en la arena (la arena de delante se repinta sobre su pie). Nivel en la ventana del botón según usos/máximo; número dorado. Al usarlo (`PokeVialService.Used` → `CapBadge` → `CapVialState.UsedAt`): salta el corcho, chorro por Pokémon, salpicadura, lavado rosa, destello, corazón y cruces, luz por la barra de PS, el número gira. Solo se ve si el Pokévial está en la mochila (`PokeVialService.Now.Owned`). Laboratorio: `pokevial` y `pokevial-uso`. Prototipos en imagenes/revision/prototipo_vial_overlay (vial3d.js). Sin probar en el juego, sin commit.
+
+## 2026-10-16 — Pokévial: recarga en el Centro y sitio del frasco
+- La recarga fallaba: el último uso del vial dejaba el equipo lleno, así que al curarse en el Centro no mejoraba nada y no saltaba la regla. Ahora `PokeVialService` aprende zonas de curación (`Saves/pokevial-centros.json`, sembrada con 162 = Centro de Ohana). Una cura grande enseña la zona; estar en una zona aprendida con todo el equipo lleno también recarga.
+- El frasco del overlay baja a la línea de arena de los cristales Z (`p.H - 10`), con el mismo hundimiento.
+- Tests de la App: 558 bien, 3 fallos esperados (raíz del repo desde la carpeta de artefactos). La App compila.
+
+## 2026-10-16 — Pokévial: corcho, brillos y recarga sola
+- Se recargaba solo a los 10 s: lo usaba dentro del Centro de Ohana (zona 162 aprendida), equipo lleno + zona conocida = recarga. Ahora la zona donde se usó no cuenta hasta salir de ella (`_usedIn`).
+- Corcho nuevo: se empuja con la presión, estalla con rayos, vuela alto girando con estela, destello arriba, vuelve aplastándose y rebota con anillo de destellos; espuma rosa sale del cuello mientras está abierto (`CorkAt`).
+- Brillos del icono: cuatro estrellas de cuatro puntas doradas que titilan alrededor del frasco (`Twinkle`, `Glints`).
+
+## 2026-10-16 — Pokévial: recarga solo al curar con la enfermera
+- Fuera las zonas aprendidas y la regla «equipo curado de golpe». Ahora la recarga mira el récord 10 del juego («Pokémon healed at Pokémon Centres», PKHeX `RecordList_7`), leído en vivo por `BattleCounterReader` (`CentreHeals`). Sube cada vez que la enfermera cura, aunque el equipo ya esté lleno; camas, pociones y el vial no lo tocan.
+- En la partida guardada vale 17. Falta verlo subir en vivo al hablar con la enfermera.
+- Tests GameLink: 23 fallos de GrantConfig/RouletteConfig por compilar fuera del repo (no encuentran los JSON), no por esto.
+
+## 2026-10-16 — Prototipo: Repelente Infinito en el overlay
+- `CapRepel.cs`: lata 3D (raymarch como el Pokévial) con la galaxia del icono, estrellas que giran y titilan, ∞ dorado con barrido de luz, tapa con estrías, difusor a la derecha, aura azul del icono. Al lado derecho del Pokévial, hundida en la arena.
+- Encendido: tapa pulsada, temblor, anillo de luz, chorro; humo violeta con polvo de estrellas que baja a la arena y rueda por `CapSea.Relief` hacia la derecha. Apagado: tapa rebota, el humo que queda se va y se deshace.
+- `CapRepelState(OnAt, OffAt)`; escenarios `repelente` y `repelente-uso`. Vídeo en imagenes/revision/prototipo_repelente. Falta: aprobación y conectarlo al estado real del repelente en el juego.
+- Humo v2 (no gustaban las bolas densas): jirones finos translúcidos, campo de ruido arrastrado a la derecha cortado en hebras onduladas, banda baja que sigue la arena y se abre con la distancia; hilo fino desde el difusor; frente que avanza al encender, cola que se va al apagar. Vídeo `repelente_uso_v2.mp4`.
+
+## 2026-10-16 — Prototipo: Incubadora Turbo en el overlay
+- `CapEggTurbo.cs`: huevo 3D (elipsoide más ancho abajo) con las manchas verdes y el rayo del icono en sus tres dorados (sobresale arriba y abajo como en el icono), contorno y aura dorada; a la derecha del Repelente.
+- Siempre: destellos dorados, chispitas por el borde, líneas de velocidad del icono que salen a la izquierda, luz bajando por el rayo.
+- Al activar: descarga (rayo en estrobo, rayos ramificados, anillo de chispas, temblor). Sobrecargado: rayo palpitando al blanco, arcos por la cáscara y a la arena, chispas de las puntas del rayo, aura parpadeando, tirones. Al apagar: chisporroteo que se apaga.
+- `CapRepelState` pasa a `CapToggle` (repelente y turbo). Escenarios `turbo` y `turbo-uso`. Vídeo en imagenes/revision/prototipo_turbo. Falta aprobar y conectar al juego (repelente y turbo).
+- Turbo v2 (los rayos parecían palos): electricidad fractal por desplazamiento de punto medio, recalculada cada fotograma (crepita); núcleo blanco, piel amarilla, bruma ámbar tramada; ramas; destello en los impactos; arcos que trepan por el contorno de la cáscara (`Rim`, 40 ángulos); arcos que cruzan el huevo y bajan a la arena; chispas con estela que rebotan. Vídeo `turbo_uso_v2.mp4`.
+
+## 2026-10-16 — Repelente Infinito e Incubadora Turbo en el overlay (implementado)
+- `FieldItemsService` (cada 400 ms): repelente encendido = EventWork en vivo (`LiveSave` bloque 5) +0xA3E == 114 y pasos +0xA58 > 0; si ahí hay un objeto que no es repelente, avisa en el log una vez y lo da por apagado (posición sin medir en vivo todavía). Incubadora = byte `RuleBlock.EggTurbo` == 1. Se muestran solo si están en la mochila (cada 4 s).
+- `CapBadge` guarda los momentos de encendido y apagado en `CapToggle`; si ya estaba encendido en la primera lectura, cuenta como encendido hace tiempo (sin animación de encendido).
+- Tests de la App: 561 bien. Falta probar en el juego.
+- Repelente: no se encendía en el overlay. Medido con `Probe --repelente`: objeto 114 en partida +0x2016 y pasos en +0x2030; `Field::EventWork` empieza en +0x15D8, 4 bytes antes que el bloque guardado (+0x15DC). `FieldItemsService` lee ahora esas dos posiciones.
+- Incubadora Turbo: la partida no guarda su byte (RuleBlock 0x10), al reabrir el juego estaba apagada. Ahora `FieldItemsService` la recuerda por run (`Saves/turbo-<run>.txt`) y, si la marca nueva `RuleBlock.EggTurboKept` (0x13) está a 0 (juego recién arrancado), la vuelve a encender y pone la marca. Límite: sigue lo que hizo la mochila, no lo guardado.
+
+## 2026-10-16 — Prototipos: megaevolución desbloqueada (tras la prueba 6)
+- Lista de 11 ideas dada; eligió la 3 (capullo de luz) y la 5 (grietas en el agua), las dos con la 11 (rótulo).
+- `CapMega.cs` (`CapMegaTurn`, `CapMegaKind`), en la ventana del abismo (la ancha), escala según el ancho (hasta 2,6). Capullo: luz que converge, esfera de bandas arcoíris que late y se agrieta, estallido, seis pétalos, símbolo. Grietas: agua oscurecida, grietas fractales con la luz de los 7 colores fluyendo, símbolo en el cruce, se cierran desde las puntas. Rótulo «MEGAEVOLUCIÓN / DESBLOQUEADA» letra a letra a doble tamaño.
+- Escenarios `mega-capullo` y `mega-grietas`; vídeos en imagenes/revision/prototipo_mega. Falta elegir y conectar al final de la prueba 6.
+- Mega v2 (no convencían el símbolo ni el acabado): símbolo trazado del oficial (hélice de ADN en S con travesaños huecos, 28x37), colores de amarillo a violeta por filas, tres tonos y tinta, barrido de luz. Capullo: esfera de cristal oscuro con la hélice girando dentro y borde de colores; estalla en esquirlas facetadas. Grietas: más finas, borde de tinta, luz tramada sobre el agua, esquirlas, el símbolo sube del cruce. Vídeos `mega_*_v2.mp4`.
+- Mega v3 (eligió las grietas, por todo el layout): `CapMega` sin capullo. Red de grietas en coordenadas del mar común (`WorldX`/`WorldWidth`), nace detrás de la pantalla del juego: 16 radios con ramas y 5 anillos que los unen (cristal roto), cubre las dos ventanas. Avanza en blanco, fogonazo, luz de colores hacia fuera, el símbolo rompe el agua en el abismo con su estrella de grietas, rótulo; se cierran desde las puntas hacia el juego. Escenario `mega`; vídeo `mega_layout.mp4`. Ojo: quedaron procesos del PlaqueLab colgados en .lab-art (acceso denegado al matarlos); compilar el lab en otra carpeta de artefactos.
+
+## 2026-10-16 — Megas como visitantes del overlay (uno a uno)
+- Plan del usuario: durante la animación del 6.º cristal Z entran en el layout todos los Pokémon con mega que pasan por él; cuando están todos, se meten en una esfera blanca que se rompe como un huevo con destellos arcoíris y se abre mostrando el símbolo mega; desde entonces pasan siempre en su forma mega. Se hacen mega a mega.
+- Megas que pasan por el layout (tabla del mod a/0/1/5): Gyarados, Sharpedo, Kyogre (primigenio), Charizard X/Y, Pidgeot, Aerodactyl, Altaria, Latias, Latios, Dragonite, Skarmory, Staraptor. Referencias en imagenes/megas.
+- Hecho: Mega-Gyarados con la cadena de tools/critters (`recon2.js` a 6 px, `megagyarados_base.js` limpia el fondo atrapado por los bigotes, `megagyarados_anim.js`, hoja 114). Entrada `CritterArt` 10130 (10000 + especie); `--especie 10130` del lab la pone en la ruta de su especie. Vídeo en imagenes/revision/prototipo_megas.
+- Gyarados aprobado. Charizard: solo Mega-X por ahora. Mega-Sharpedo hecho: referencia sin cuadrícula y con marca de agua, nueva `tools/critters/recon_plain.js` (busca tamaño y desfase del píxel) + `shrink_grid.js` (reduce por moda y limpia ruido), 75x80, `megasharpedo_anim.js`, entrada 10319. Procesos del PlaqueLab colgados tras `--bichos` (falla con todo en hojas): compilar el lab en carpetas nuevas del scratchpad (lab3...).
+- Sharpedo aprobado. Kyogre primigenio hecho: `recon2.js` a 6,5 px (85x77), `primalkyogre_anim.js` (palas opuestas, cola, aleta), inclinación 12 (no 28 como el normal: su morro va más horizontal), entrada 10382, ruta de los grandes. `--especies` del lab acepta ya formas mega (id % 10000).
+- Kyogre aprobado. Mega-Charizard X (propuesta): la referencia está de pie, así que se parte del vuelo aprobado de Charizard y se recolorea (`recolor_sheet.js` + `megacharizardx.map.json`: cuerpo gris oscuro, vientre cian, alas azul, llama de la cola azul) y `megacharizardx_flames.js` (ojo rojo, llamita azul en la comisura localizando el hocico por celda). Entrada 10006. Sin cambios de silueta (cuernos/púas de los hombros); ofrecido redibujar el vuelo si no basta.
+- Mega-Charizard X v2 (pidió cuernos y púas): `megacharizardx_features.js` añade dos cuernos que suben hacia atrás desde la cabeza (anclados al ojo rojo de cada celda) y tres púas azules en los hombros (11 celdas encima del pecho cian buscado por debajo de la cabeza; van detrás de las alas). Rojo de la llama EC0000 pasado a azul. Orden: recolor_sheet, megacharizardx_flames, megacharizardx_features.
+- Charizard X: cuernos acortados (8 celdas) con las dos últimas azules.
+- Charizard X aprobado. Mega-Pidgeot (propuesta): mismo esqueleto de vuelo del Pidgeot (`flight_rig` + spec del lote 1) con piezas cambiadas en `megapidgeot_flight_anim.js`: cresta estirada x1,7 con pluma azul, plumas exteriores de las alas azules, cola x1,5 carmesí con puntas azules; `megapidgeot.txt` = paleta de Pidgeot + Q/R/S/T. Lienzo 150x74, entrada 10018.
+- Pidgeot aprobado. Mega-Aerodactyl (propuesta): `recon_plain.js` con píxel fijo 4 (la detección automática daba 8), 79x70, `megaaerodactyl_anim.js` como el normal (membranas bajan, cola curvada, patas y púa de la barbilla con retraso), entrada 10142.
+- Aerodactyl: aleteo más amplio (pidió más movimiento): las alas suben y bajan (seno, 4,5 y 5,5 celdas) en vez de solo bajar.
+- Aerodactyl aprobado. Mega-Altaria (propuesta): `recon_plain.js` píxel 4 (95x96) + `shrink_grid.js` 1,35 (71x72), borde de la nube en gris pizarra (se movía aparte: incluido en la parte de la nube), `megaaltaria_anim.js` (nubes suben/bajan por columnas, cola ondea, cabeza se mece), entrada 10334.
+- Altaria aprobado. Mega-Dragonite (propuesta): sin copiar la referencia (su autor no permite repostear), dibujado desde el diseño oficial. `megadragonite_make.js` genera `megadragonite_flight_pose.js` (pose v6 con ala nueva: abanico de 5 plumas crema con contorno propio + plumas pequeñas en el hombro; cuerno blanco; bola turquesa con anillo violeta en la cola; lienzo TOP 34) y `megadragonite_flight_anim.js` (mismo batido y reducción 75 %). Entrada 10149.
+- Mega-Dragonite v2 (las alas grandes eran un error): las alas crema van en la cabeza en lugar de las antenas, del tamaño de la cabeza (pluma alta + ala arqueada con las puntas colgando, en la pieza de la cabeza ampliada); la espalda conserva las alitas turquesa originales con su batido.
+- Mega-Dragonite v3: las alas de la cabeza son pieza propia (dibujadas aparte a la derecha de la rejilla, x>=64) más grandes, ala cercana + lejana en abanico, que baten girando desde la coronilla (`onHead`); alitas turquesa de la espalda al 60 % y casi quietas (piece con scale); bola de la cola mayor (r 4,6 + anillo). Ojo: las máscaras de cola y ala cercana se limitan a x<64.
+- Dragonite: el usuario aprueba la versión 2 (alas pequeñas de plumas en la cabeza, alitas turquesa normales). Generador restaurado a v2. Traspaso para la sesión siguiente en `Traspaso megas.md`.
+- Mega-Skarmory (propuesta): sin reconstruir, el vuelo aprobado de Skarmory recoloreado por pieza (`megaskarmory_flight_anim.js` lee las capas de `skarmory_flight_pose_v3.compose`): cabeza, cuerpo y cola dorados, collar índigo, alas de cuchillas índigo con el borde de ataque dorado, patas índigo, ojo rojo. Entrada 10227. Vídeo `mega_skarmory_volando.mp4`.
+- Skarmory v2 (dijo que la mega tiene las garras muy largas): fuera las patas plegadas del vuelo; patas índigo con garras doradas largas y finas colgando, dos cuchillas índigo en la espalda. Aprobado. El usuario pide que se le pase siempre vídeo e imagen (SendUserFile).
+- Mega-Staraptor (propuesta): `megastaraptor_flight_anim.js` sobre el rig de vuelo aprobado (penacho rojo largo hacia delante sustituye la cresta, raya roja del ojo, barras amarillas en el brazo del ala, puntas oscuras, cola x1,4 con amarillo). Entrada 10398.
+- Staraptor: el usuario no quiere el vuelo del normal cambiado, sino **el sprite de la mega animado**. v2: sprite de la referencia (1:1, 77x111) reducido a 1,35 (58x83) para que quepa en el cielo (Height máx. ≈ (SurfaceY-7)×1,5: 82 Slim, 93 normal, 63 en ventanas densas), alas que giran desde el hombro (`C.swing`), cola que se mece. `megastaraptor_anim.js`.
+- Staraptor v2 aprobado. Mega-Latias (propuesta): sprite de la referencia sin reducir (74x74, cabe), animado como Latias (`megalatias_anim.js`). Entrada 10380.
+- Latias aprobado. Mega-Latios (propuesta): sprite de la referencia (96x68) animado; los desgarros en filas (desplazamiento vertical según y, y en la unión con el cuerpo) se arreglan con desplazamiento según x y una copia quieta de la unión debajo (`ghost`). Entrada 10381.
+- Mega-Latios: el usuario quiere **el verde** (abajo a la derecha de la referencia). Misma silueta y animación; tinta BEL.
+- Latios verde aprobado. Latias y Latios son variocolor: brillos pintados en la hoja (`sparkle.js`, estrellas blancas con puntas doradas, crecen hasta 4 y se apagan). Con fondo oscuro apareció un desgarro en el ala de Latias (fotogramas 6-8) que el fondo blanco de las revisiones tapaba: arreglado con desplazamiento según x y `ghost`. Revisar siempre las hojas sobre fondo oscuro.
+- Brillos aprobados. **Prototipo del evento de la prueba 6** en `CapMega.cs` (reescrito, grietas fuera, hélice conservada): entran las 12 megas en forma normal durante el cristal Z, anillo en el abismo, esfera blanca que late y se agrieta como un huevo con luz y destellos arcoíris, se rompe, símbolo + rótulo y salen en forma mega. Se deduce de la subida del cap con Cleared == 6 (sin dato nuevo); visitantes mega para siempre con `CapSeaContext.Megas`. Escenario `megas`. Tests App 561/561. Pendiente de aprobación; sin commit.
+- Evento v1 rechazado. **v2** a partir de la megaevolución de Pokémon Champions (vídeo de YouTube de Mixeli, 8:35): llegadas por curvas con estelas, salpicaduras e inclinación, carrusel en perspectiva, rayos que convergen, esfera iridiscente que se vuelve obsidiana con grietas de colores que pasan a oro, estallido, revelación con aurora, polvo de estrellas, cintas doradas y símbolo; salida por curvas. 20 s. Tests de la App 561/561. Pendiente de aprobación; sin commit.
+- Evento v2 **aprobado**. §248 en ARCHITECTURE. Queda: probarlo en el juego real (superar la prueba 6) y hacer commit cuando el usuario lo pida.
+
+## 2026-10-16 — Apuntes del jugador (tanda)
+- Pestaña del borde que se cerraba al pulsarla: `EdgeTab.Decide` tomaba una lectura dudosa del emulador (`IsRunning()` null) como «cerrado», y la siguiente como «acaba de aparecer» → minimizaba la app recién abierta. Ahora solo cuenta como aparición tras verlo cerrado de verdad, y 2 s de gracia tras abrir desde la pestaña (`_restoredAt`). Sin probar en el juego.
+- Visitantes que tardaban de más en salir por la otra ventana: `CapGeometry.WorldOf` contaba como hueco todo el ancho de la imagen del juego, pero las ventanas tienen orejas encima; ahora el hueco es `main.Box.Left - deep.Box.Right`. Test `The_one_sea_skips_only_what_lies_between_the_two_windows_not_their_ears`.
+- Quitado el botón DISEÑO (galería) de la barra de título (`ShellCaption`, `RailShell`) y su estilo `PxDesignButton`. La galería sigue para `--capturas`.
+- **SuperCarameloraro que no se gastaba, encontrado**: tabla de bolsillos `a/1/0/3` (medio byte por objeto) que usan `MyItem::Sub/Check`; el 113 tenía 0. `InstallSuperCandy` le pone el bolsillo del Caramelo Raro (`ItemPocket`); se aplica en el próximo JUGAR. Herramientas: desensamblador Capstone en el scratchpad, importaciones con nombre de `Bag.cro`, exportaciones de `static.crs` (leído de la ROM con `RomFsReader`). Pendiente: `Bag.cro` 0xE8BC/0xEA58 pasa el 50 fijo al aprender o evolucionar (cursor al Caramelo Raro). §249.
+- Tests App 562/562. Sin commit.
+
+## 2026-10-17 — Rediseño de la app sobre el mundo del overlay (prototipos)
+- Lista de ideas dada (3 conceptos: el mar, la isla del faro, el cuaderno; piezas comunes: madera del cartel, fuente pixel, paleta del overlay, punteado; ideas por pantalla).
+- Prototipos de la pantalla de inicio en los 3 conceptos: `Desktop/imagenes/revision/prototipo_rediseno/` (`maquetas.js` dibuja en celdas 480x270 a x4 con piezas reales: mar/cielo/faro/arena del overlay renderizado por el lab, `piezas/overlay.png`; iconos del cartucho; fuente `PixelFont.cs` leída del código; objetos). Datos de ejemplo.
+- Ojo: la caché `Data/sprites/v2/<clave>/NNNN.png` va por número de icono, no de especie (Gyarados 179, Lapras 181, Snorlax 194, Gengar 136, Aerodactyl 192, Dragonite 200). Megas pendientes (ver `Traspaso megas.md`).
+
+
+## 2026-10-17 — Cursor del SuperCarameloraro, Poción Variocolor, variocolor del panel, humo, fuera los avisos
+- Todo en §250 de ARCHITECTURE. Probado por el jugador: cursor y bucle del SuperCarameloraro, Poción Variocolor (salvaje variocolor), variocolor épico sin bloqueo, humo aprobado.
+- Trampas: el acceso directo abre binDebug; el juego genera otro Pokémon al azar antes del salvaje (la poción la apaga la app); un fotograma del panel más caro que su intervalo deja la interfaz sin respirar y Windows pone una ventana fantasma que se come los clics.
+- Herramientas nuevas: `Probe --variocolor [poner]`, `PlaqueLab --medir`. Prototipos en `Desktop/imagenes/revision/prototipo_variocolor` y GIFs en `revision/`.
+- Tests: 2088 en verde. Sin commit.
+
+
+## 2026-10-17/18 — Optimización, final del variocolor, cuelgues y cura tras el combate
+- Todo en §251 de ARCHITECTURE (y el final del §250).
+- Optimización medida: panel 6-7 ms por fotograma, nada atascado; registro limpio (dos líneas a depuración, 67 % menos). `PlaqueLab --medir` mide ahora solo los paneles.
+- Variocolor: se va al segundo de acabar el combate (antes 3 s). Pregunta del jugador: un variocolor no gasta la ruta (`shinyClause.consumesEncounter: false`), el siguiente salvaje es el primer encuentro (leído en código, sin probar).
+- Cuelgue del juego con **Olor Persistente** (268) al contagiarla por contacto: veto fijo en código y en `bannedAbilities`; el mundo actual la conserva (la Furioseta del jugador). Nueva nota [[Para pasar al torneo]] y memoria `pasar-al-torneo`.
+- Cuelgue de una **evolución con SuperCarameloraro** («Goldeen evolucionó a Goldeen»): culpa del parche del cursor en 0xE8BC; vuelve a su 50. El cursor tras evolucionar va al Caramelo Raro; el arreglo completo se dejó (no hay sitio en la cueva de la mochila).
+- Cura de Fabio tras el combate doble: el panel tardaba ~5 s; ahora una subida de vida con las tablas caídas sale al momento.
+- Mod coreano Uhuru Gift mirado: no viable para dinamax o tera en los dominantes (Ultra Sol, código de combate).
+- Cuelgue anterior (Samurott) explicado por Olor Persistente. El registro de Azahar se llena (100 MB) con las consultas de memoria: si hace falta, quitarle ese nivel de detalle.
+- Tests 2091 en verde. Desplegado en Debug. Commit `155b0f5` hecho antes de esta tanda; esta tanda sin commit.
+- **Confirmado por el jugador (2026-10-18):** los voladores corregidos se ven bien cruzando el cielo en el juego real, y un variocolor no gasta la ruta (observado, ya no solo leido en codigo).
+
+
+## 2026-10-18 — Ultraumbral fiel al arte oficial (§252)
+- Ideas de decoración para el layout: la primera lista no convenció; quiere estructuras grandes y fijas, con detalle y que reaccionen a la partida (lista 2 dada: muelle, cementerio, templo, barco, volcán, altar, faro, ciudad; sin elegir aún).
+- Ultraumbral: prototipos v1-v3 sobre el arte oficial que pasó; correcciones suyas: inclinación como la referencia (arriba a la izquierda), la red de anillos alrededor de la boca, grietas ordenadas en círculo, «alarga MUY poco». Aprobado v3 y desplegado en Debug. Muertes del ultraumbral ajustadas al núcleo nuevo (vistas en el lab, sin jugar).
+- Lección: los escenarios `muerte-*` del lab ya no eligen la muerte (la secuencia sale del reloj): usar `--muerte tipo`. Un dibujo del panel con lambdas o listas por fotograma rompe la prueba de memoria.
+- **Nubes de Araki (§253):** le gusta el estilo de Araki. Las procedurales no daban el trazo; funcionó pixelar las nubes de su propia imagen (como los sprites desde referencias). Pidió más nubes «no tantas» y el cielo más azul. Desplegado en Debug tras cerrar él PermaLocke y Azahar.
+- **PLAN DE LAS RUINAS DE GIMMIGHOUL (pedido el 2026-10-18, en fases, cada una con su aprobación):** sustituir el altar por las ruinas de Gimmighoul de Escarlata/Púrpura abajo a la izquierda del fondo (ladrillo de piedra gastado con moho, referencias en `Desktop/imagenes/revision/prototipo_ruinas/referencias`), con un Gimmighoul cofre cuyo Gimmighoul lleva gafas y tubo de buceo. **Fase 1:** prototipo de ruinas y cofre, sin cristales. **Fase 2:** los 12 cristales Z repartidos por las ruinas, cada uno en un sitio distinto (clavado medio incrustado en un muro, encima del cofre, alrededor, dentro…). **Fase 3:** una animación nueva por cada cristal, de una en una, con aprobación de cada una. El altar (`CapAltar`) fue un prototipo descartado por esta idea.
+- **Ruinas de Gimmighoul, fase 1 APROBADA (2026-10-18):** ruinas al estilo del primer prototipo por todo el suelo de la ventana del fondo, y el Gimmighoul es el sprite del propio jugador (cuadrícula 32x40) con gafas turquesa y tubo en la boca. Sin desplegar ni commit. **Siguiente sesión: leer [[Plan de las ruinas de Gimmighoul]]** — primero enviarle `prototipo_ruinas/v9/para_marcar_cristal.png` para que marque el sitio del primer cristal, luego prototipos de animación de ese cristal, luego integrarlo; cristal a cristal.
+
+## 2026-10-18 — Ruinas: cristal 1 (Normastal) integrado
+- Marcas del jugador (rojo, verde, amarillo); caída con física (apoyo en caras, sin atravesar muros, media vuelta como mucho). Llegadas probadas: hoja, picado, espiral, anzuelo de Gimmighoul (no convenció, «más caótico»); elegida **Tapu Koko variocolor** con su sprite (conchas negras, cresta salmón), rastro de fragmentos de rayo en el aire y rayo fractal al soltar. Integrado solo para el 807; reposo permanente en la ventana. Tests App 549/549. Sin commit. Siguiente: Lucharastal clavado con grietas en la columna estrecha (ver el plan).
+
+## 2026-10-18 — Ruinas: cristal 2 (Lucharastal) integrado (§254)
+- Descartó el prototipo del «puño del cristal» por su idea: Machamp sale del ultraumbral con Setas Dinamax, se las come, se transforma en Gigamax (sprites suyos, setas a mano) y le pega un puñetazo al cristal, que sale por la derecha y entra por la izquierda del abismo hasta clavarse en la columna.
+- Correcciones: Gigamax mirando a la derecha, nubes también a la izquierda, flotador bajo los dos (como en los juegos), todo más lento, tres nubes girando sobre la cabeza, pies en el flotador al transformarse, impact frames en el puñetazo (más detallados, en las dos ventanas) y en el impacto contra la columna en vez del flash blanco; fuera las ondas de luz (cutres), en su lugar onda que dobla el agua y arena.
+- Aprobado el v6 e integrado (solo 813). Tests App 549/549. Sin commit ni despliegue. Siguiente: Hidrostal (809), que marque el sitio.
+
+## 2026-10-18 — Ruinas: cristal 3 (Hidrostal) integrado (§255)
+- Nueva regla del jugador: cada cristal llega con una animación de su tipo, a ser posible con guiño a una mecánica (Dinamax en el Lucharastal).
+- Kyogre Primigenio probado y descartado. Elegido Mega Greninja (sus tres sprites; usados el de pie y el boca abajo). Pulido en cinco versiones: más lento, shurikens siempre girando, llegada con sombra y géiser, shuriken detallado, salida con humo y tronco Sustituto de Smash (uno grande con palito y hoja) que flota y se va por la derecha; el humo con líneas interiores le pareció «cutre y raro», el blando le gustó.
+- Aprobado el v5 e integrado (solo 809). Tests App 549/549. Sin commit ni despliegue. **El sitio del Hidrostal es provisional**: falta que lo marque (imagen `prototipo_ruinas/hidrostal/para_marcar_hidrostal.png`). Siguiente: Pirostal (808), ideas de fuego.
+
+## 2026-10-18 — Ruinas: cristal 4 (Pirostal) integrado (§256)
+- Marcó el sitio (encima del muro pequeño de la derecha); entendido como del Pirostal, el Hidrostal sigue provisional en el muro alto (no lo corrigió).
+- Ideas de fuego dadas; eligió Ho-Oh con Fuego Sagrado y pasó su sprite. Le gustó Ho-Oh aleteando; la pluma pequeña «no se distingue» (rehecha grande y legible); el rastro arcoíris de puntos y las llamas de rayas le parecieron cutres (rehechos: cinta tramada y llamas de ruido).
+- Aprobado el v3 e integrado (solo 808). Tests App 549/549. Sin commit ni despliegue. Siguiente: Fitostal (811), ideas de planta.
+
+## 2026-10-18 — Fitostal (Shaymin) y entorno por tipo (§257)
+- Pokévial llevado al torneo por otra sesión: la 1.0.18 se publicó (commit 40d2e65 en main).
+- Fitostal: eligió Shaymin con la Gracídea y pasó sus tres sprites; pidió animar los dos Shaymin (vuelo de verdad), el de Tierra sobre el flotador de Machamp y la Gracídea visible fundiéndose con él. Hecho (v2).
+- Nueva regla: el tipo de cada cristal cambia las ruinas donde se queda. Lucharastal: grietas rojas y con humo; Pirostal: muro magmatizado; Fitostal: jardín más detallado; Normastal: polvo de estrellas; Hidrostal: huella de Greninja (eligió la 5 frente al manantial).
+- Tests App 549/549. Sin commit ni despliegue. El Fitostal v2 no lo ha aprobado explícitamente (pasó directamente al entorno). Siguiente: Litostal (819), ideas de roca con su efecto en las ruinas.
+
+## 2026-10-18 — Litostal: prototipo simple y traspaso (§258)
+- Marcó el sitio (encima del muro bajo de la ventana grande). Pidió: Terápagos sale del ultraumbral, da vueltas y hace brotar cristales del Área Cero; se va por un lado; Miraidon los rompe uno a uno y el grande, con el Litostal dentro, el último, que queda en su sitio. Sprites sin animar de momento.
+- Hecho el prototipo muy simple (`CapAreaZero`). Conflicto con el evento de megas de la prueba 6: aplazado tras las películas, por decidir.
+- Cambia de sesión: prompt en [[Traspaso Litostal]].
+
+## 2026-10-18 — Litostal pulido y aprobado (§259)
+- Megas de la prueba 6: decidido «primero el Litostal y después las megas» (ya funcionaba así con `CapMega.Wait`).
+- Terápagos y Miraidon animados (8 fotogramas cada uno); cristales rehechos tres veces hasta los bloques pálidos del Área Cero de sus referencias; torre y nubes cristalizadas; golpes de Miraidon épicos; bloque ámbar del Litostal; marca de roca en el muro. Todo aprobado. App compilada en Debug, 549 pruebas en verde, sin commit.
+- Trampas: `CapAreaZero.cs` quedó con fin de línea CRLF (los parches con \n fallan: normalizar antes); los heredoc con apóstrofos rompen el bash: escribir los parches a un fichero con Write.

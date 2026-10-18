@@ -71,7 +71,7 @@ public sealed partial class MiscellaneousViewModel : SectionViewModel
 
     public MiscellaneousViewModel(BagService bag, IItemDelivery delivery, IItemLookup items,
         IRunContext runContext, IEventStore events, IClock clock, RewardService rewards,
-        PokemonSpriteService sprites, Notifier notifier, EdgeTab tab,
+        PokemonSpriteService sprites, EdgeTab tab,
         ILogger<MiscellaneousViewModel> logger)
         : base("MISCELÁNEA", "Premios y herramientas de pruebas")
     {
@@ -228,6 +228,11 @@ public sealed partial class MiscellaneousViewModel : SectionViewModel
     [RelayCommand(CanExecute = nameof(CanUseTools))]
     private Task GrantPokeVialAsync() =>
         GiveAsync(PokeVial.ItemId, 1, PokeVial.Name, "Cura a todo el equipo en cualquier sitio");
+
+    /// <summary>One Poción Variocolor (2026-10-17), on top of whatever the bag holds: the next wild Pokémon comes out shiny.</summary>
+    [RelayCommand(CanExecute = nameof(CanUseTools))]
+    private Task GrantShinyPotionAsync() =>
+        GiveAsync(ShinyPotion.ItemId, 1, ShinyPotion.Name, "El siguiente salvaje sale variocolor");
 
     /// <summary>
     /// Adds an item to the bag on top of what is already there, and records it.

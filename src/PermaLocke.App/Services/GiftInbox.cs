@@ -37,14 +37,13 @@ public sealed class GiftInbox : INotifyPropertyChanged
     private readonly OrderService _orders;
     private readonly IRunContext _runContext;
     private readonly ILogger<GiftInbox> _logger;
-    private readonly Notifier _notifier;
 
     /// <summary>Gifts already announced over the game, so each one is said once per session.</summary>
     private readonly HashSet<Guid> _told = [];
     private readonly DispatcherTimer _timer = new() { Interval = LookEvery };
     private bool _busy;
 
-    public GiftInbox(DiscordLogin discord, GiftService gifts, OrderService orders, IRunContext runContext, Notifier notifier,
+    public GiftInbox(DiscordLogin discord, GiftService gifts, OrderService orders, IRunContext runContext,
         ILogger<GiftInbox> logger)
     {
         _discord = discord;
@@ -52,7 +51,6 @@ public sealed class GiftInbox : INotifyPropertyChanged
         _orders = orders;
         _runContext = runContext;
         _logger = logger;
-        _notifier = notifier;
 
         _timer.Tick += (_, _) => _ = LookAsync();
         _runContext.CurrentChanged += (_, _) => _ = LookAsync();
@@ -115,7 +113,6 @@ public sealed class GiftInbox : INotifyPropertyChanged
                     collected.Add(adjustment.Id);
                     _told.Add(adjustment.Id);
                     _logger.LogInformation("Ajuste {Id} de {From} aplicado: {What}", adjustment.Id, adjustment.From, adjustment.Say());
-                    _notifier.Say(ToastKind.Warning, $"Ajuste de {adjustment.From}", $"{adjustment.Say()}. {adjustment.Reason}");
                 }
             }
 
@@ -130,9 +127,6 @@ public sealed class GiftInbox : INotifyPropertyChanged
                     collected.Add(order.Id);
                     _told.Add(order.Id);
                     _logger.LogInformation("Orden {Id} de {From} cerrada: {What}. {Result}", order.Id, order.From, order.Say(), applied.Message);
-                    _notifier.Say(order.Order!.Kind == AdminOrderKinds.Message ? ToastKind.Gift : ToastKind.Warning,
-                        order.Order.Kind == AdminOrderKinds.Message ? $"Mensaje de {order.From}" : $"Orden de {order.From}",
-                        order.Order.Kind == AdminOrderKinds.Message ? applied.Message : $"{order.Say()}. {applied.Message}");
                     OrdersApplied?.Invoke(this, EventArgs.Empty);
                 }
             }
@@ -179,11 +173,10 @@ public sealed class GiftInbox : INotifyPropertyChanged
 
     private void Set(IReadOnlyList<AdminGift> pending, IReadOnlyList<AdminGift> collected)
     {
-        // Encima del juego también (2026-09-24): con la app minimizada, la bandeja no la ve nadie. Uno por regalo, y solo
-        // la primera vez que se ve en esta sesión; al arrancar avisa de los que ya estaban esperando.
+        // Al registro, uno por regalo y solo la primera vez que se ve en esta sesión (nada encima del juego desde la 1.0.19).
         foreach (var gift in pending.Where(gift => _told.Add(gift.Id)))
         {
-            _notifier.Say(ToastKind.Gift, $"Regalo de {gift.From}", gift.Say());
+            _logger.LogInformation("Regalo de {From} esperando: {What}", gift.From, gift.Say());
         }
 
         Pending = pending;

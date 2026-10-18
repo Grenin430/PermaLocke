@@ -79,6 +79,10 @@ public sealed record RandomizerOptions
     /// <summary>How many times the random draw may place the same item. Only for <see cref="FieldItemsMode.Random"/>.</summary>
     public int FieldItemsMaxRepeats { get; init; } = 2;
 
+    /// <summary>How many ordinary ground items become a Poción Variocolor (2026-10-17), in either mode. 0 by default, so a world generated
+    /// from a file that does not say keeps coming out the same.</summary>
+    public int FieldShinyPotions { get; init; }
+
     /// <summary>Starters, the eleven fossils, gifts, statics and totems.</summary>
     public bool StaticEncounters { get; init; } = true;
 

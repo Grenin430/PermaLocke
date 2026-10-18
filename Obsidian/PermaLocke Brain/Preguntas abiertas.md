@@ -78,17 +78,11 @@ Lo que sigue sin saberse o sin verse. La tabla «Lo que NO está resuelto» de `
 - **¿Dónde se ve el huevo como Meltan?** Sin respuesta del organizador (icono de caja, equipo, resumen o modelo 3D). El código del juego da el icono 1153
   (huevo) a cualquier huevo; probablemente es el modelo o la ficha de resumen (hueco 808 compartido con Meltan). Arreglarlo puede exigir parchear el
   juego y afectar a Meltan. Ver §225.
-- Sin probar en el juego: que los huevos eclosionen con la Incubadora Turbo en dos pasos y los mensajes de la mochila (§227), que el Repelente
+- **Probado 2026-10-17 por el jugador:** la Incubadora Turbo y el Repelente Infinito con sus mensajes de la mochila, el evento de la megaevolución de la prueba 6 (§248) y la animación de los objetos por categorías (§243).
+- Sin probar en el juego (de antes): que los huevos eclosionen con la Incubadora Turbo en dos pasos y los mensajes de la mochila (§227), que el Repelente
   siga bien, el aviso y el flujo de duplicados (§226), la animación en la app real (§229), eclosión de especies de gen 8-9, y que `HatchedAsync`
   pone la especie al salir del huevo (§230). Las runs con huevos ya apuntados antes de la 1.0.10.1 conservan la especie.
 - El organizador debe publicar `roles.json` y `guarderia.json` desde Admin después de que los jugadores tengan la app nueva.
 
 ## Avisos en pergamino y placa del cap (2026-10-08, 1.0.14-1.0.15)
-- **El aviso de primer encuentro «sale super bugueado»** (dicho por el organizador jugando la 1.0.14). Sin reproducir: el log
-  pide y enseña los avisos con normalidad, y la tira de fotogramas en ventana real (`PERMALOCKE_SNAP_LIVE`) se ve bien.
-  Pendiente de su captura o descripción. Si llega: mirar escala del monitor, tema GAME BOY (`PixelTheme.Map`) y si el
-  aviso se apila con otro (primer encuentro + duplicado + variocolor salen casi a la vez).
-- **Hipótesis sin probar (revisor del §239):** una captura estática permitida vista primero sin contador de combate y luego
-  con él podría avisarse dos veces (una por la rama vieja con `_battle is null`, otra por `NewsSaid`).
-- Sin probar en el juego: el pergamino abriéndose y enrollándose, la placa del cap (tamaño y sitio en pantalla completa,
-  ventana pequeña y Vulkan), el aviso de duplicado arreglado.
+- **Cerrado 2026-10-17:** los avisos encima del juego se quitaron del singleplayer (§250); el «aviso bugueado» y lo demás de esta sección ya no aplican aquí.

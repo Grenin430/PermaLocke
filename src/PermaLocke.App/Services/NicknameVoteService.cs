@@ -40,7 +40,6 @@ public sealed class NicknameVoteService
 
     private readonly DiscordLogin _discord;
     private readonly PokemonSpriteService _sprites;
-    private readonly Notifier _notifier;
     private readonly RenameService _rename;
     private readonly GameLinkMonitor _monitor;
     private readonly IBoxReader _boxes;
@@ -65,7 +64,7 @@ public sealed class NicknameVoteService
     private int _ticks;
     private string? _lastProblem;
 
-    public NicknameVoteService(DiscordLogin discord, PokemonSpriteService sprites, Notifier notifier, RenameService rename,
+    public NicknameVoteService(DiscordLogin discord, PokemonSpriteService sprites, RenameService rename,
         GameLinkMonitor monitor, IBoxReader boxes, IRunContext runs, PermaLocke.GameLink.LiveBoxRenamer boxRenamer,
         PermaLocke.GameLink.Field.FieldZoneReader field,
         ILogger<NicknameVoteService> logger)
@@ -74,7 +73,6 @@ public sealed class NicknameVoteService
         _field = field;
         _discord = discord;
         _sprites = sprites;
-        _notifier = notifier;
         _rename = rename;
         _monitor = monitor;
         _boxes = boxes;
@@ -217,8 +215,6 @@ public sealed class NicknameVoteService
                 shiny = pokemon.IsShiny,
                 pid = pokemon.PID.ToString("X8")
             }));
-            _notifier.Say(ToastKind.Info, $"Tus amigos van a elegir el mote de {pokemon.Nickname}",
-                "Si hay otra votación en marcha, la tuya va justo detrás.", _sprites.Get(pokemon.Species, pokemon.Form, pokemon.IsShiny));
             _logger.LogInformation("Votación de mote abierta para {Pokemon} ({Pid:X8})", pokemon.Nickname, pokemon.PID);
         }
         catch (Exception ex)
@@ -430,8 +426,7 @@ public sealed class NicknameVoteService
             {
                 if (_waitingSaid.Add(row.Id))
                 {
-                    _notifier.Say(ToastKind.Info, $"Tus amigos han llamado «{winner}» a {row.Pokemon}",
-                        "No está en tu equipo: se pondrá cuando guardes y cierres el juego.", sprite);
+                    _logger.LogInformation("Mote «{Winner}» para {Pokemon}: se pondrá al guardar y cerrar el juego", winner, row.Pokemon);
                 }
 
                 continue;
@@ -441,7 +436,7 @@ public sealed class NicknameVoteService
 
             // El ganador ya lo vio en su ventana, a la vez que los demás (1.0.7.3): aquí solo se confirma que está puesto.
             await _discord.PatchAsync($"motes?id=eq.{row.Id}", JsonSerializer.Serialize(new { aplicado = true, ganador = winner }));
-            _notifier.Say(ToastKind.Reward, $"{row.Pokemon} ya se llama {winner}", "Puesto en tu partida.", sprite);
+            _logger.LogInformation("{Pokemon} ya se llama {Winner}", row.Pokemon, winner);
         }
     }
 }

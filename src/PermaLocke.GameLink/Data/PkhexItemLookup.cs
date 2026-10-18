@@ -15,6 +15,7 @@ public sealed class PkhexItemLookup(string language = "es") : IItemLookup
         PermaLocke.Core.Domain.InfiniteRepel.ItemId => PermaLocke.Core.Domain.InfiniteRepel.Name,
         PermaLocke.Core.Domain.EggTurbo.ItemId => PermaLocke.Core.Domain.EggTurbo.Name,
         PermaLocke.Core.Domain.PokeVial.ItemId => PermaLocke.Core.Domain.PokeVial.Name,
+        PermaLocke.Core.Domain.ShinyPotion.ItemId => PermaLocke.Core.Domain.ShinyPotion.Name,
         _ => itemId >= 0 && itemId < _names.Length && !string.IsNullOrWhiteSpace(_names[itemId])
             ? _names[itemId]
             : $"Objeto {itemId}"

@@ -24,8 +24,8 @@ namespace PermaLocke.App.Services;
 /// </para>
 /// <para>
 /// Since §202 it asks at start and every half hour, and never asks the player with a dialog: the version waiting shows
-/// as a bar at the top of every section with its ACTUALIZAR button (<see cref="ViewModels.UpdateBannerViewModel"/>), and
-/// while the game is open as a notice pinned over it (<see cref="Notifier.Pin"/>) until the game closes.
+/// as a bar at the top of every section with its ACTUALIZAR button (<see cref="ViewModels.UpdateBannerViewModel"/>). The notice
+/// pinned over the game went in 1.0.19 with the rest of the notices.
 /// </para>
 /// <para>
 /// Never installs with the emulator open (the program is replaced under a running game's watcher). The official rules
@@ -34,7 +34,7 @@ namespace PermaLocke.App.Services;
 /// </para>
 /// </remarks>
 public sealed partial class UpdateService(AppPaths paths, DiscordLogin discord, EmulatorLauncher emulator, IAppDialogs dialogs,
-    Notifier notifier, ILogger<UpdateService> logger) : ObservableObject
+    ILogger<UpdateService> logger) : ObservableObject
 {
     /// <summary>The argument of the restart after installing: it waits for this instance to close.</summary>
     public const string RestartArgument = "--tras-actualizar";
@@ -44,8 +44,6 @@ public sealed partial class UpdateService(AppPaths paths, DiscordLogin discord, 
     /// connection (measured: an anonymous 304 counts too). One a minute fits for one PermaLocke per connection; several on
     /// the same Wi-Fi run out, and then it waits for GitHub's reset instead of asking (<see cref="_waitUntil"/>).</remarks>
     private static readonly TimeSpan Every = TimeSpan.FromMinutes(1);
-
-    private const string PinKey = "actualizacion";
 
     /// <summary>The <c>ETag</c> of the last answer, so «nothing new» comes back as a short 304.</summary>
     private string? _etag;
@@ -91,14 +89,6 @@ public sealed partial class UpdateService(AppPaths paths, DiscordLogin discord, 
         {
             return;
         }
-
-        emulator.PropertyChanged += (_, e) =>
-        {
-            if (e.PropertyName == nameof(EmulatorLauncher.IsRunning))
-            {
-                ShowOverGame();
-            }
-        };
 
         _ = LoopAsync();
     }
@@ -162,26 +152,11 @@ public sealed partial class UpdateService(AppPaths paths, DiscordLogin discord, 
             {
                 logger.LogInformation("Versión nueva disponible: {Version} ({Bytes} bytes)", asset.Version, asset.Size);
                 Available = asset;
-                ShowOverGame();
             }
         }
         catch (Exception ex)
         {
             logger.LogWarning(ex, "No se pudo comprobar si hay una versión nueva");
-        }
-    }
-
-    /// <summary>With the game open and a version waiting, the notice stays over the game; otherwise it goes.</summary>
-    private void ShowOverGame()
-    {
-        if (Available is { } asset && emulator.IsRunning)
-        {
-            notifier.Pin(PinKey, ToastKind.Update, $"Actualización {asset.Version} disponible",
-                "Reinicia la app: cierra el juego y pulsa ACTUALIZAR arriba en PermaLocke.");
-        }
-        else
-        {
-            notifier.Unpin(PinKey);
         }
     }
 

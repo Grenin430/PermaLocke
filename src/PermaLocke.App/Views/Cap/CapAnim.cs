@@ -69,6 +69,9 @@ public sealed class CapAnim
         public double HealAt = Never;
         public double HitAt = Never;
         public double FellAt = Never;
+        public int Falls;
+        public double FirstFellAt = Never;
+        public int Death = -1;
         public int GravesAtFall;
         public double HatchAt = Never;
         public double StatusAt = Never;
@@ -196,7 +199,7 @@ public sealed class CapAnim
         }
 
         // The clock of the sea changes speed with the mood, smoothly: the phase is the integral of the tempo, so nothing jumps.
-        var effective = !_danger && now - _lastFallAt < MourningSeconds ? CapMood.Mourning : mood;
+        var effective = mood;
         var target = CapSeaPalette.Of(effective).Tempo;
         if (Math.Abs(target - _tempoTo) > 1e-6)
         {
@@ -275,6 +278,9 @@ public sealed class CapAnim
                     break;
                 case CapEventKind.Fell:
                     track.FellAt = e.At;
+                    track.Falls++;
+                    track.Death = (int)e.Amount - 1;
+                    if (track.FirstFellAt <= Never) track.FirstFellAt = e.At;
                     track.GravesAtFall = _graves;
                     _lastFallAt = e.At;
                     break;
@@ -285,6 +291,8 @@ public sealed class CapAnim
                 case CapEventKind.Revive:
                     track.HealAt = e.At;
                     track.ReviveAt = e.At;
+                    // Back from a fall (before the first Poké Ball a fall does not count, 2026-10-15): it is drawn again and its next fall plays its own death.
+                    track.FellAt = Never;
                     track.HealAmount = e.Amount;
                     break;
                 case CapEventKind.Level:
@@ -387,6 +395,28 @@ public sealed class CapAnim
     /// <summary>How long ago a Pokémon fell, in seconds, or null if it has not in the time the panel has been open.</summary>
     public double? SinceFall(int index, double t) => At(index) is { } track && track.FellAt > Never && t >= track.FellAt ? t - track.FellAt : null;
 
+    /// <summary>
+    /// Whether a Pokémon at zero is still waiting for its fall to be told (2026-10-15): it was hit to zero in the last few seconds and the fall has not come
+    /// yet. The life reads zero when the game's bar starts to drain; the fall comes once the game has shown the faint. Until then it stays drawn.
+    /// </summary>
+    public bool AwaitingFall(int index, double t) =>
+        At(index) is { } track && track.FellAt <= Never && track.HitAt > Never && t >= track.HitAt && t - track.HitAt < AwaitFall;
+
+    /// <summary>How long a Pokémon hit to zero waits for its fall before it is taken as fallen without a scene.</summary>
+    private const double AwaitFall = 15;
+
+    /// <summary>The death the app drew at random for its latest fall, or null when none was drawn (then it is worked out from its PID).</summary>
+    public CapDeathKind? Death(int index) => At(index) is { Death: >= 0 } track ? (CapDeathKind)track.Death : null;
+
+    /// <summary>How many times this Pokémon has fallen before its latest fall, while the panel has been open: which death it gets.</summary>
+    /// <remarks>
+    /// Where its sequence of deaths starts comes from the moment of its first fall on the panel's clock (2026-10-15), so a new run of the app does not
+    /// begin with the same death either; each fall after it moves on, never to the death of the fall before.
+    /// </remarks>
+    public int Falls(int index) => At(index) is { Falls: > 0 } track
+        ? CapArt.Hash((int)(track.FirstFellAt * 1000), 4231) % 64 + track.Falls - 1
+        : 0;
+
     /// <summary>How many graves the run had when this Pokémon fell: the fossil it becomes is the next one, at that place.</summary>
     public int GravesAtFall(int index) => At(index)?.GravesAtFall ?? 0;
 
@@ -466,18 +496,8 @@ public sealed class CapAnim
         return target;
     }
 
-    /// <summary>
-    /// How far the floor has dropped at a moment, in rows, when the cap changes: it falls away for a second and a half and comes back for another second
-    /// and a half with its new stratum, shaking as it goes. Zero the rest of the time.
-    /// </summary>
-    public int FloorDrop(double t, int rows)
-    {
-        if (_capAt <= Never || t < _capAt) return 0;
-        var k = t - _capAt;
-        if (k > 3.2) return 0;
-        var depth = k < 1.5 ? Ease(k / 1.5) : k < 3.2 ? 1 - Ease((k - 1.5) / 1.7) : 0;
-        return (int)Math.Round(depth * rows);
-    }
+    /// <summary>The cap rose (a trial passed) while the panel was open: how long ago, from which cap to which; null otherwise (2026-10-15).</summary>
+    public (double Since, int From, int To)? CapRise(double t) => _capAt > Never && t >= _capAt && _cap > _previousCap ? (t - _capAt, _previousCap, _cap) : null;
 
     /// <summary>How long ago the cap changed, in seconds, or null when it has not in the time the panel has been open.</summary>
     public double? SinceCap(double t) => _capAt > Never && t >= _capAt ? t - _capAt : null;
@@ -488,13 +508,7 @@ public sealed class CapAnim
     /// <summary>The mood now, and the one before it with how far the change has gone (0 just changed, 1 done).</summary>
     public (CapMood Now, CapMood Before, double Blend) Mood(double t)
     {
-        // Mourning is not kept as a mood but worked out here, so it ends by itself twenty seconds after the fall without a new update.
-        var mourning = !_danger && _lastFallAt > Never && t >= _lastFallAt && t - _lastFallAt < MourningSeconds;
-        if (mourning) return (CapMood.Mourning, _mood, Math.Clamp((t - Math.Max(_moodAt, _lastFallAt)) / 0.8, 0, 1));
-
-        var ended = _lastFallAt + MourningSeconds;
-        if (!_danger && _lastFallAt > Never && t >= ended && t - ended < 0.8) return (_mood, CapMood.Mourning, (t - ended) / 0.8);
-
+        // No mourning any more (2026-10-15, asked by the player): a fall no longer turns the sea grey for twenty seconds; its death is the moment.
         return (_mood, _previousMood, Math.Clamp((t - _moodAt) / 0.8, 0, 1));
     }
 

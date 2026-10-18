@@ -22,7 +22,6 @@ public sealed partial class SettingsViewModel : SectionViewModel
 {
     private readonly AppSettings _settings;
     private readonly WindowSizeService _windowSizes;
-    private readonly Notifier _notifier;
     private readonly AppPaths _paths;
     private readonly PokemonSpriteService _sprites;
     private readonly DiscordLogin _discord;
@@ -32,7 +31,7 @@ public sealed partial class SettingsViewModel : SectionViewModel
     /// <summary>The version running, to see at a glance whether an update (§196) went in.</summary>
     public string VersionText { get; } = $"PERMALOCKE {AppUpdate.Display(UpdateService.Current)}";
 
-    public SettingsViewModel(AppSettings settings, WindowSizeService windowSizes, Notifier notifier, AppPaths paths, PokemonSpriteService sprites, DiscordLogin discord,
+    public SettingsViewModel(AppSettings settings, WindowSizeService windowSizes, AppPaths paths, PokemonSpriteService sprites, DiscordLogin discord,
         ILogger<SettingsViewModel> logger)
         : base("CONFIGURACIÓN", "Ajustes de la aplicación")
     {
@@ -40,7 +39,6 @@ public sealed partial class SettingsViewModel : SectionViewModel
 
         _settings = settings;
         _windowSizes = windowSizes;
-        _notifier = notifier;
         _paths = paths;
         _sprites = sprites;
         _discord = discord;
@@ -49,12 +47,10 @@ public sealed partial class SettingsViewModel : SectionViewModel
 
         _loading = true;
         var current = settings.Current;
-        Notifications = current.Notifications;
         StepAside = current.StepAside;
         DeathScene = current.DeathScene;
         Killcam = current.Killcam;
         Follower = current.Follower;
-        Ghosts = current.Ghosts;
         CatchCard = current.CatchCard;
         Nicknames = current.Nicknames;
         CapPanel = current.CapPanel;
@@ -68,6 +64,7 @@ public sealed partial class SettingsViewModel : SectionViewModel
         CapAnimations = current.CapAnimations;
         CapKey = current.CapKey;
         CapHpSync = current.CapHpSync;
+        CapPinned = current.CapPinned;
         _loading = false;
     }
 
@@ -84,9 +81,6 @@ public sealed partial class SettingsViewModel : SectionViewModel
     private string _status = string.Empty;
 
     [ObservableProperty]
-    private bool _notifications;
-
-    [ObservableProperty]
     private bool _stepAside;
 
     [ObservableProperty]
@@ -97,9 +91,6 @@ public sealed partial class SettingsViewModel : SectionViewModel
 
     [ObservableProperty]
     private bool _follower;
-
-    [ObservableProperty]
-    private bool _ghosts;
 
     [ObservableProperty]
     private bool _catchCard;
@@ -136,6 +127,9 @@ public sealed partial class SettingsViewModel : SectionViewModel
     [ObservableProperty]
     private bool _capAnimations;
 
+    [ObservableProperty]
+    private bool _capPinned;
+
     /// <summary>The key that folds the panel (a virtual-key code), or 0 for none.</summary>
     [ObservableProperty]
     private int _capKey;
@@ -154,12 +148,10 @@ public sealed partial class SettingsViewModel : SectionViewModel
 
     public string ResolutionText => Resolution == 0 ? "Resolución: la que tenga el emulador" : $"Resolución x{Resolution}";
 
-    partial void OnNotificationsChanged(bool value) => Save();
     partial void OnStepAsideChanged(bool value) => Save();
     partial void OnDeathSceneChanged(bool value) => Save();
     partial void OnKillcamChanged(bool value) => Save();
     partial void OnFollowerChanged(bool value) => Save();
-    partial void OnGhostsChanged(bool value) => Save();
     partial void OnCatchCardChanged(bool value) => Save();
 
     partial void OnNicknamesChanged(bool value) => Save();
@@ -169,6 +161,7 @@ public sealed partial class SettingsViewModel : SectionViewModel
     partial void OnCapMemorialChanged(bool value) => Save();
     partial void OnCapDetailsChanged(bool value) => Save();
     partial void OnCapAnimationsChanged(bool value) => Save();
+    partial void OnCapPinnedChanged(bool value) => Save();
 
     partial void OnCapSizeChanged(int value)
     {
@@ -239,10 +232,11 @@ public sealed partial class SettingsViewModel : SectionViewModel
 
         _settings.Update(_settings.Current with
         {
-            Notifications = Notifications, StepAside = StepAside, DeathScene = DeathScene, Killcam = Killcam,
-            Follower = Follower, Ghosts = Ghosts, CatchCard = CatchCard, Nicknames = Nicknames, CapPanel = CapPanel,
+            StepAside = StepAside, DeathScene = DeathScene, Killcam = Killcam,
+            Follower = Follower, CatchCard = CatchCard, Nicknames = Nicknames, CapPanel = CapPanel,
             Background = Background, Resolution = Resolution, Vulkan = Vulkan, CapSize = CapSize, CapMaxCell = CapMaxCell,
-            CapMemorial = CapMemorial, CapDetails = CapDetails, CapAnimations = CapAnimations, CapKey = CapKey, CapHpSync = CapHpSync
+            CapMemorial = CapMemorial, CapDetails = CapDetails, CapAnimations = CapAnimations, CapKey = CapKey, CapHpSync = CapHpSync,
+            CapPinned = CapPinned
         });
         Status = "Guardado.";
     }
@@ -325,23 +319,6 @@ public sealed partial class SettingsViewModel : SectionViewModel
         _discord.SignOut();
         ShowAccount(null);
         Status = "Sesión cerrada en este PC.";
-    }
-
-    [RelayCommand]
-    private void TestNotification()
-    {
-        if (!Notifications)
-        {
-            Status = "Los avisos están desactivados.";
-            return;
-        }
-
-        var random = new Random();
-        _notifier.Say(ToastKind.Info, "Así se ven los avisos", "Aparecen aquí mientras juegas.");
-        _notifier.Say(ToastKind.Shiny, "Prueba: variocolor", "Un variocolor se puede capturar siempre.", _sprites.GetRandom(random));
-        _notifier.Say(ToastKind.BallsTaken, "Prueba: Poké Balls retiradas", "Esta ruta ya ha gastado su encuentro.", _sprites.GetBall());
-        _notifier.Say(ToastKind.Death, "Prueba: baja", "Esto es solo una prueba.", _sprites.GetRandom(random));
-        Status = "Aviso enviado.";
     }
 
     [RelayCommand]

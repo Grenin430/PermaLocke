@@ -252,6 +252,13 @@ public static class HpBar
     /// </remarks>
     private static bool IsFill(byte r, byte g, byte b)
     {
+        // By hue as well (2026-10-15): with the emulator's window at a scale that is not whole (2.03) the bar read as hidden for a whole battle, its
+        // cells (90,255,43), (225,254,147) away from the three measured colours. Each band is narrow enough to leave out the Iki Town floor
+        // (170,110,65) and the grass behind the box.
+        if (g >= 190 && g > r && g - b >= 90 && r <= 235) return true;      // green
+        if (r >= 200 && g >= 150 && r >= g && b <= 110) return true;        // yellow
+        if (r >= 190 && g <= 90 && b <= 90) return true;                    // red
+
         foreach (var (fr, fg, fb) in Fills)
         {
             if (Math.Abs(r - fr) <= Tolerance && Math.Abs(g - fg) <= Tolerance && Math.Abs(b - fb) <= Tolerance)

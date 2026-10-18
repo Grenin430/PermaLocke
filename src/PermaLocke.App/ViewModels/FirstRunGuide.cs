@@ -33,7 +33,7 @@ public sealed record GuideStep(int Number, string Title, string Detail, bool Don
 /// itself once all is done; hidden for good with OCULTAR.
 /// </remarks>
 public sealed partial class FirstRunGuide(AppPaths paths, IRunContext runs, DiscordLogin discord, AzaharInstallation azahar,
-    PlayerSave save, IAppDialogs dialogs, TransferOffer transfer, AppSettings settings) : ObservableObject
+    PlayerSave save, IAppDialogs dialogs, TransferOffer transfer, AppSettings settings, EmulatorLauncher launcher) : ObservableObject
 {
     private const string ProgramId = "00040000001B5100";
 
@@ -54,6 +54,7 @@ public sealed partial class FirstRunGuide(AppPaths paths, IRunContext runs, Disc
     public void Refresh()
     {
         var location = azahar.Locate(AppContext.BaseDirectory);
+        var emulator = launcher.Emulator().Executable;
         var hasRun = runs.Current is not null;
         var mod = AzaharInstallation.ModDirectory(location, ProgramId);
 
@@ -62,10 +63,11 @@ public sealed partial class FirstRunGuide(AppPaths paths, IRunContext runs, Disc
             new(1, "Entrar con Discord", "Con una cuenta de la lista del torneo.", discord.Saved is { Allowed: true }),
             new(2, "Tu ROM de Ultra Luna", "Desencriptada, .3ds o .cci, en la carpeta ROM.",
                 RomInspector.ScanFolder(paths.Rom).Count > 0, "ABRIR CARPETA ROM", OpenRomFolderCommand),
-            new(3, "El emulador", location.ExecutablePath is not null
+            // La misma elección que JUGAR: en una build de desarrollo el exe está en bin, lejos de Emulator.
+            new(3, "El emulador", emulator is not null
                     ? "Viene con PermaLocke, ya preparado."
                     : "Falta Emulator\\azahar.exe: vuelve a extraer la carpeta entera.",
-                location.ExecutablePath is not null),
+                emulator is not null),
             new(4, "Tu run", "Con tu nombre y el rol que quieras. ¿Ya jugabas en otra carpeta? Tráetela entera.",
                 hasRun, "CREAR RUN", CreateRunCommand, "TRAER MI PARTIDA DE OTRA CARPETA", BringCommand),
             new(5, "Tu mundo", "En RANDOMIZADOR: genéralo y pulsa INSTALAR EN AZAHAR, con el emulador cerrado.",

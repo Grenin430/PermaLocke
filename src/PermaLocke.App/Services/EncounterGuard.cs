@@ -13,7 +13,7 @@ using PermaLocke.Rules.Services;
 namespace PermaLocke.App.Services;
 
 /// <summary>Something the guard wants the player to hear, and the Pokémon it is about when there is one.</summary>
-public sealed record EncounterNotice(ToastKind Kind, string Title, string Message, int? Species);
+public sealed record EncounterNotice(ToastKind Kind, string Title, string Message, int? Species, int Form = 0, bool Shiny = false);
 
 /// <summary>A wild Pokémon the game has just counted as caught (§190).</summary>
 /// <param name="Pokemon">The whole Pokémon as it was read in the battle; null if it could not be read.</param>
@@ -127,7 +127,9 @@ public sealed class EncounterGuard(
     private DateTimeOffset _routesAt;
 
     /// <summary>Something the player should hear about: balls taken, given back, a route spent.</summary>
-    public event EventHandler<EncounterNotice>? Said;
+
+    /// <summary>The wild Pokémon of this battle is shiny (2026-10-16): the overlay turns shiny with it until the battle ends. Once per battle; off the UI thread.</summary>
+    public event EventHandler? ShinyAppeared;
 
     /// <summary>
     /// A wild battle ended in a capture, as soon as the game's own record of captures says so (§190): the card flies
@@ -392,9 +394,14 @@ public sealed class EncounterGuard(
                 battle.PokemonRead = true;
                 battle.Wild = pokemon;
 
+                // La Poción Variocolor (2026-10-17) se gasta aquí y no en el juego: el juego hace otro Pokémon al azar justo antes del
+                // salvaje, y ese se la llevaba. Ya está leído el salvaje, que salió variocolor si la poción estaba puesta.
+                if (!writer.WriteRuleShinyPotionSpent()) logger.LogWarning("No se pudo apagar la Poción Variocolor en el juego");
+
                 if (pokemon.IsShiny)
                 {
                     battle.Shiny = true;
+                    ShinyAppeared?.Invoke(this, EventArgs.Empty);
                     logger.LogInformation("Variocolor: el salvaje lo es (PID {Pid:X8})", pokemon.PID);
                 }
             }
@@ -418,6 +425,7 @@ public sealed class EncounterGuard(
             && read.ShinyEncountered > battle.Before.ShinyEncountered)
         {
             battle.Shiny = true;
+            ShinyAppeared?.Invoke(this, EventArgs.Empty);
             logger.LogInformation("Variocolor: el récord 127 pasó de {Before} a {Now}",
                 battle.Before.ShinyEncountered, read.ShinyEncountered);
         }
@@ -691,8 +699,9 @@ public sealed class EncounterGuard(
         // Un rato después (2026-09-27): el combate se ve al empezar y el Pokémon sale unos segundos más tarde; el aviso
         // antes de verlo en el juego destripaba el encuentro.
         var species = battle.Species;
+        var look = LookOf(species);
         _ = Task.Delay(FirstEncounterDelay).ContinueWith(_ =>
-            Say(ToastKind.FirstEncounter, "Primer encuentro", decision.Reason, species), TaskScheduler.Default);
+            Say(ToastKind.FirstEncounter, "Primer encuentro", decision.Reason, species, look), TaskScheduler.Default);
         return true;
     }
 
@@ -965,10 +974,20 @@ public sealed class EncounterGuard(
     private static readonly TimeSpan FirstEncounterDelay = TimeSpan.FromSeconds(6);
 
     /// <summary>The duplicate notice, a few seconds after the battle starts: the Pokémon shows up first, and the notice names no one.</summary>
-    private void SayDuplicateLater(string reason, int? species) =>
-        _ = Task.Delay(FirstEncounterDelay).ContinueWith(_ => Say(ToastKind.Duplicate, "Duplicado: tú eliges", reason, species),
+    private void SayDuplicateLater(string reason, int? species)
+    {
+        var look = LookOf(species);
+        _ = Task.Delay(FirstEncounterDelay).ContinueWith(_ => Say(ToastKind.Duplicate, "Duplicado: tú eliges", reason, species, look),
             TaskScheduler.Default);
+    }
 
-    private void Say(ToastKind kind, string title, string message, int? species = null) =>
-        Said?.Invoke(this, new EncounterNotice(kind, title, message, species));
+    private void Say(ToastKind kind, string title, string message, int? species = null, (int Form, bool Shiny)? look = null)
+    {
+        // The notices over the game were taken out (2026-10-17, asked by the player): what they said goes to the log.
+        logger.LogInformation("{Title}: {Message}", title, message);
+    }
+
+    /// <summary>The form and shininess of the wild Pokémon of this battle, when it is the species said and it has been read.</summary>
+    private (int Form, bool Shiny) LookOf(int? species) =>
+        _battle?.Wild is { } wild && wild.Species == species ? (wild.Form, wild.IsShiny) : (0, false);
 }

@@ -11,7 +11,7 @@ namespace PermaLocke.App.Views;
 /// The card of a wild Pokémon just caught going into the album, over the emulator's top screen (§190).
 /// </summary>
 /// <remarks>
-/// Presentation only, like <see cref="GhostWindow"/>: transparent, never takes the mouse or the focus, and draws what
+/// Presentation only, like the old ghost window: transparent, never takes the mouse or the focus, and draws what
 /// <see cref="CatchScene"/> paints, at the monitor's own pixels.
 /// </remarks>
 public sealed class CatchWindow : Window

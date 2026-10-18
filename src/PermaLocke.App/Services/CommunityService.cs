@@ -52,7 +52,6 @@ public sealed class CommunityService : INotifyPropertyChanged
     private readonly IRunContext _runContext;
     private readonly IEventStore _events;
     private readonly IAchievementCatalog _catalog;
-    private readonly Notifier _notifier;
     private readonly ILogger<CommunityService> _logger;
     private long _lastAnnouncement = -1;
     private readonly DispatcherTimer _timer = new() { Interval = RefreshEvery };
@@ -63,14 +62,13 @@ public sealed class CommunityService : INotifyPropertyChanged
     private DateTimeOffset _lastBeat = DateTimeOffset.MinValue;
 
     public CommunityService(DiscordLogin discord, EmulatorLauncher launcher, IRunContext runContext, IEventStore events,
-        IAchievementCatalog catalog, Notifier notifier, ILogger<CommunityService> logger)
+        IAchievementCatalog catalog, ILogger<CommunityService> logger)
     {
         _discord = discord;
         _launcher = launcher;
         _runContext = runContext;
         _events = events;
         _catalog = catalog;
-        _notifier = notifier;
         _logger = logger;
 
         _timer.Tick += (_, _) => _ = TickAsync();
@@ -343,8 +341,6 @@ public sealed class CommunityService : INotifyPropertyChanged
         {
             _restartTold = run.Id;
             _logger.LogWarning("El organizador ha reiniciado la run {Run} en el servidor", run.Name);
-            _notifier.Say(ToastKind.Announcement, "Tu run se ha reiniciado",
-                "El organizador la ha reiniciado. Ve a HOME y pulsa EMPEZAR DE CERO.");
         }
     }
 
@@ -364,7 +360,7 @@ public sealed class CommunityService : INotifyPropertyChanged
 
         if (latest is not null && _lastAnnouncement >= 0 && latest.Id != _lastAnnouncement)
         {
-            _notifier.Say(ToastKind.Announcement, "Anuncio", latest.Texto);
+            _logger.LogInformation("Anuncio nuevo: {Text}", latest.Texto);
         }
 
         _lastAnnouncement = latest?.Id ?? 0;
@@ -386,7 +382,7 @@ public sealed class CommunityService : INotifyPropertyChanged
             foreach (var friend in friends.Where(f => f.State == PresenceState.Playing
                                                       && _lastStates.GetValueOrDefault(f.PlayerId) != PresenceState.Playing))
             {
-                _notifier.Say(ToastKind.FriendPlaying, friend.Name, "está jugando a PermaLocke", Photo(friend.Photo));
+                _logger.LogInformation("{Friend} está jugando a PermaLocke", friend.Name);
             }
         }
 

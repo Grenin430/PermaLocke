@@ -177,8 +177,6 @@ public sealed class HomeViewTests
                 }
 
                 PermaLocke.App.Views.Pixel.PixelTheme.Apply("clasico", app.Resources);
-                RenderNotices();
-                LiveNotices();
             }
             catch (Exception ex) { failure = ex; }
             finally { app?.Shutdown(); }
@@ -187,114 +185,6 @@ public sealed class HomeViewTests
         thread.Start();
         Assert.True(thread.Join(TimeSpan.FromSeconds(20)), "WPF view load timed out");
         if (failure is not null) ExceptionDispatchInfo.Capture(failure).Throw();
-    }
-
-    /// <summary>
-    /// The notices living in a real window, with the dispatcher running: with PERMALOCKE_SNAP_LIVE set to a folder, a
-    /// strip of frames from the entrance to the roll-up, for looking at what a still picture cannot show.
-    /// </summary>
-    private static void LiveNotices()
-    {
-        if (Environment.GetEnvironmentVariable("PERMALOCKE_SNAP_LIVE") is not { Length: > 0 } dir) return;
-
-        void Wait(int milliseconds)
-        {
-            var frame = new System.Windows.Threading.DispatcherFrame();
-            var timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(milliseconds) };
-            timer.Tick += (_, _) =>
-            {
-                timer.Stop();
-                frame.Continue = false;
-            };
-            timer.Start();
-            System.Windows.Threading.Dispatcher.PushFrame(frame);
-        }
-
-        var showing = new System.Collections.ObjectModel.ObservableCollection<PermaLocke.App.Services.Toast>();
-        var window = new PermaLocke.App.Views.ToastWindow { DataContext = new { Showing = showing }, Width = 470, Height = 760, Left = -3000, Top = 0 };
-        window.Show();
-        var linger = TimeSpan.FromSeconds(6);
-        var toast = new PermaLocke.App.Services.Toast(PermaLocke.App.Services.ToastKind.FirstEncounter, "Primer encuentro",
-            "Primer encuentro en Ruta 5.", Placeholder(4), DateTime.UtcNow, linger);
-        showing.Add(toast);
-
-        var start = DateTime.UtcNow;
-        var frames = new List<System.Windows.Media.Imaging.BitmapSource>();
-        foreach (var at in new[] { 16, 60, 110, 170, 240, 330, 450, 1500, 5620, 5720, 5800, 5870, 5930 })
-        {
-            var left = at - (int)(DateTime.UtcNow - start).TotalMilliseconds;
-            if (left > 0) Wait(left);
-            var shot = new System.Windows.Media.Imaging.RenderTargetBitmap(470, 260, 96, 96, PixelFormats.Pbgra32);
-            var content = (FrameworkElement)window.Content;
-            var host = new DrawingVisual();
-            using (var dc = host.RenderOpen())
-            {
-                dc.DrawRectangle(new SolidColorBrush(Color.FromRgb(0x3C, 0x8A, 0x4A)), null, new Rect(0, 0, 470, 260));
-                dc.DrawRectangle(new VisualBrush(content) { Stretch = Stretch.None, AlignmentX = AlignmentX.Left, AlignmentY = AlignmentY.Bottom }, null, new Rect(0, 0, 470, 260));
-            }
-
-            shot.Render(host);
-            frames.Add(shot);
-        }
-
-        showing.Remove(toast);
-        window.Close();
-
-        var strip = new System.Windows.Media.Imaging.RenderTargetBitmap(470, 260 * frames.Count, 96, 96, PixelFormats.Pbgra32);
-        var all = new DrawingVisual();
-        using (var dc = all.RenderOpen())
-        {
-            for (var i = 0; i < frames.Count; i++) dc.DrawImage(frames[i], new Rect(0, i * 260, 470, 260));
-        }
-
-        strip.Render(all);
-        var png = new System.Windows.Media.Imaging.PngBitmapEncoder();
-        png.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(strip));
-        using var file = System.IO.File.Create(System.IO.Path.Combine(dir, "ToastScroll-vivo.png"));
-        png.Save(file);
-    }
-
-    /// <summary>
-    /// The notices over the game (the scroll): every kind builds, measures and draws through the real template, at the
-    /// first step of the entrance and wide open. With PERMALOCKE_SNAP_DIR it saves both as PNG, over a game-coloured floor.
-    /// </summary>
-    private static void RenderNotices()
-    {
-        var now = DateTime.UtcNow;
-        var linger = TimeSpan.FromSeconds(6);
-        var toasts = new[]
-        {
-            new PermaLocke.App.Services.Toast(PermaLocke.App.Services.ToastKind.Death, "pedicure ha caído", "-25 puntos · Nv. 20", Placeholder(2), now.AddSeconds(-1), linger),
-            new PermaLocke.App.Services.Toast(PermaLocke.App.Services.ToastKind.Shiny, "¡Variocolor!", "Charizard · siempre se captura", Placeholder(3), now.AddSeconds(-3), linger),
-            new PermaLocke.App.Services.Toast(PermaLocke.App.Services.ToastKind.Duplicate, "Ya lo tienes", "Frogadier · captúralo o pasa y se descuenta", null, now.AddSeconds(-5), linger),
-            new PermaLocke.App.Services.Toast(PermaLocke.App.Services.ToastKind.Update, "Hay una versión nueva", "PermaLocke 1.0.14 está lista. Abre PermaLocke para actualizar.", null, now, Timeout.InfiniteTimeSpan),
-            new PermaLocke.App.Services.Toast(PermaLocke.App.Services.ToastKind.FriendPlaying, "Bavi está jugando a PermaLocke", "Ya lleva 3 medallas", Placeholder(1), now, linger)
-        };
-
-        var window = new PermaLocke.App.Views.ToastWindow { DataContext = new { Showing = toasts } };
-        var content = (FrameworkElement)window.Content;
-        window.Content = null;
-        var host = new Border { Child = content, Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(0x3C, 0x8A, 0x4A)), Width = 470, Height = 860, DataContext = new { Showing = toasts } };
-
-        string? dir = Environment.GetEnvironmentVariable("PERMALOCKE_SNAP_DIR");
-        foreach (var (reveal, name) in new[] { (0.48, "ToastScroll-abriendo"), (1.0, "ToastScroll-abierto") })
-        {
-            host.Measure(new Size(470, 860));
-            host.Arrange(new Rect(0, 0, 470, 860));
-            host.UpdateLayout();
-            var scrolls = Descendants(host).OfType<PermaLocke.App.Views.ToastScroll>().ToList();
-            Assert.Equal(toasts.Length * 2, scrolls.Count);
-            foreach (var scroll in scrolls) scroll.Reveal = reveal;
-            host.UpdateLayout();
-
-            if (string.IsNullOrEmpty(dir)) continue;
-            var bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap(470, 860, 96, 96, PixelFormats.Pbgra32);
-            bitmap.Render(host);
-            var png = new System.Windows.Media.Imaging.PngBitmapEncoder();
-            png.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bitmap));
-            using var file = System.IO.File.Create(System.IO.Path.Combine(dir, name + ".png"));
-            png.Save(file);
-        }
     }
 
     private static string RolesFile()

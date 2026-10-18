@@ -380,6 +380,8 @@ public static partial class RulePatches
         if (eggProblem is not null) said.Add(eggProblem);
         var vialIcon = InstallPokeVial(Path.Combine(modFolder, "romfs"), out var vialProblem);
         if (vialProblem is not null) said.Add(vialProblem);
+        var shinyIcon = InstallShinyPotion(Path.Combine(modFolder, "romfs"), out var shinyProblem);
+        if (shinyProblem is not null) said.Add(shinyProblem);
 
         if (File.Exists(code))
         {
@@ -397,7 +399,8 @@ public static partial class RulePatches
                 var rest = existing.Where(r => !CodeOffsets.Contains(r.Offset) && !SuperCandyOffsets.Contains(r.Offset)
                                                    && !InfiniteRepelOffsets.Contains(r.Offset)
                                                    && !EggTurboOffsets.Contains(r.Offset)
-                                                   && !PokeVialOffsets.Contains(r.Offset)).ToList();
+                                                   && !PokeVialOffsets.Contains(r.Offset)
+                                                   && !ShinyPotionOffsets.Contains(r.Offset)).ToList();
                 var bytes = File.ReadAllBytes(code);
                 var ours = on ? CodeRecords(bytes) : null;
                 var super = superIcon is { } icon ? SuperCandyRecords(bytes, icon) : null;
@@ -409,6 +412,8 @@ public static partial class RulePatches
                 if (egg is not null) final = Ips.Merge(final, egg);
                 var vial = vialIcon is { } vialAt ? PokeVialRecords(bytes, vialAt) : null;
                 if (vial is not null) final = Ips.Merge(final, vial);
+                var shiny = shinyIcon is { } shinyAt ? ShinyPotionRecords(bytes, shinyAt) : null;
+                if (shiny is not null) final = Ips.Merge(final, shiny);
 
                 if (final.Count > 0) File.WriteAllBytes(ips, Ips.Write(final));
                 else if (File.Exists(ips)) File.Delete(ips);
@@ -428,6 +433,9 @@ public static partial class RulePatches
 
                 if (vial is not null) said.Add("code.bin: Pokévial puesto (code.ips)");
                 else if (vialIcon is not null) said.Add("code.bin no es el que se conoce: el Pokévial sale sin icono");
+
+                if (shiny is not null) said.Add("code.bin: Poción Variocolor puesta (code.ips)");
+                else if (shinyIcon is not null) said.Add("code.bin no es el que se conoce: la Poción Variocolor no hace nada");
             }
         }
 
@@ -436,9 +444,13 @@ public static partial class RulePatches
         {
             var bytes = File.ReadAllBytes(bag);
             var state = PatchBag(bytes);
-            if (state == BattleState.Patched) File.WriteAllBytes(bag, bytes);
+            var cursor = PatchBagCursor(bytes);
+            if (state == BattleState.Patched || cursor == BattleState.Patched) File.WriteAllBytes(bag, bytes);
             if (state == BattleState.Unknown) said.Add("Bag.cro no es el que se conoce: el Repelente Infinito no se puede usar");
             else if (state == BattleState.Patched) said.Add("Bag.cro: Repelente Infinito puesto");
+            // El cursor de la mochila tras aprender un movimiento o evolucionar: vuelve al objeto usado, no al 50.
+            if (cursor == BattleState.Unknown) said.Add("Bag.cro no es el que se conoce: tras el SuperCarameloraro el cursor vuelve al Caramelo Raro");
+            else if (cursor == BattleState.Patched) said.Add("Bag.cro: el cursor vuelve al objeto usado");
         }
 
         if (SpentZoneText(Path.Combine(modFolder, "romfs", "a", "0", "3", "6"), on) is { } text) said.Add(text);

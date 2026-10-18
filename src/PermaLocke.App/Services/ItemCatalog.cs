@@ -34,7 +34,8 @@ public sealed class ItemCatalog
         [SuperCandy.ItemId] = new(ItemCategory.Boost, 3),
         [InfiniteRepel.ItemId] = new(ItemCategory.Key),
         [EggTurbo.ItemId] = new(ItemCategory.Key),
-        [PokeVial.ItemId] = new(ItemCategory.Key)
+        [PokeVial.ItemId] = new(ItemCategory.Key),
+        [ShinyPotion.ItemId] = new(ItemCategory.Misc)
     };
 
     private static readonly HashSet<int> HiddenMachines = [420, 421, 422, 423, 424, 425, 737];

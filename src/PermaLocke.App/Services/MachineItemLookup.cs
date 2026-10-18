@@ -39,6 +39,11 @@ public sealed class MachineItemLookup : IItemLookup
     private readonly string _language;
     private Dictionary<int, string> _taught = [];
 
+    // The names in the installed world's own text (2026-10-17): from item 960 the mod numbers its items its own way, and PKHeX's list (the
+    // cartridge's) called the Dynamax Candy «Caramelo Vigor» and the Mega Stones something else. Empty and «(?)» entries fall back to PKHeX.
+    private string[] _names = [];
+    private (long Length, DateTime Written) _namesSource;
+
     /// <summary>The mod's <c>code.bin</c> the names were read from, as its size and write time, and when it was last looked at.</summary>
     private (long Length, DateTime Written) _source;
     private DateTime _checked = DateTime.MinValue;
@@ -65,9 +70,10 @@ public sealed class MachineItemLookup : IItemLookup
     {
         Refresh();
 
-        return _taught.TryGetValue(itemId, out var move)
-            ? $"{_inner.GetName(itemId)} · {move}"
+        var name = itemId >= 0 && itemId < _names.Length && _names[itemId] is { Length: > 0 } own && own != "(?)" && own != "???"
+            ? own
             : _inner.GetName(itemId);
+        return _taught.TryGetValue(itemId, out var move) ? $"{name} · {move}" : name;
     }
 
     private void Refresh()
@@ -78,7 +84,9 @@ public sealed class MachineItemLookup : IItemLookup
         try
         {
             var location = _azahar.Locate(AppContext.BaseDirectory);
-            var code = Path.Combine(AzaharInstallation.ModDirectory(location, LayeredFsMod.UltraMoonProgramId), "exefs", "code.bin");
+            var mod = AzaharInstallation.ModDirectory(location, LayeredFsMod.UltraMoonProgramId);
+            RefreshNames(Path.Combine(mod, "romfs", "a", "0", "3", "6"));
+            var code = Path.Combine(mod, "exefs", "code.bin");
             var info = new FileInfo(code);
             var stamp = info.Exists ? (info.Length, info.LastWriteTimeUtc) : (0L, DateTime.MinValue);
 
@@ -91,6 +99,31 @@ public sealed class MachineItemLookup : IItemLookup
         {
             // Nunca impide arrancar: sin esto las MT salen por su numero, que es como salian antes.
             _logger.LogWarning(ex, "No se ha podido leer qué enseña cada MT del mundo instalado");
+        }
+    }
+
+    /// <summary>The item names of the installed world's Spanish text (file 40 of <c>a/0/3/6</c>), read again when that file changes.</summary>
+    private void RefreshNames(string text)
+    {
+        try
+        {
+            var info = new FileInfo(text);
+            var stamp = info.Exists ? (info.Length, info.LastWriteTimeUtc) : (0L, DateTime.MinValue);
+            if (stamp == _namesSource) return;
+            _namesSource = stamp;
+            if (!info.Exists)
+            {
+                _names = [];
+                return;
+            }
+
+            var garc = new pk3DS.Core.CTR.GARC.LazyGARC(File.ReadAllBytes(text));
+            _names = pk3DS.Core.TextFile.GetStrings(new pk3DS.Core.GameConfig(pk3DS.Core.GameVersion.UM), garc[40]);
+        }
+        catch (Exception ex)
+        {
+            _names = [];
+            _logger.LogWarning(ex, "No se han podido leer los nombres de los objetos del mundo instalado; se usan los de PKHeX");
         }
     }
 

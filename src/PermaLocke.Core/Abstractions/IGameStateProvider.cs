@@ -36,19 +36,22 @@ public sealed record LivePartyMember(
     int HeldItem = 0,
     int Status = 0,
     double ExpProgress = -1,
-    IReadOnlyList<int>? Pp = null)
+    IReadOnlyList<int>? Pp = null,
+    int Ability = 0)
 {
     public bool IsFainted => CurrentHp == 0;
 }
 
 /// <param name="Problem">Why the read failed, in words the player can act on. Null when fine.</param>
 /// <param name="Notice">Something worth telling the player that is not a failure.</param>
+/// <param name="Order">The PIDs of the party in the order the game has it (its list of pointers), when it can be read; <c>Party</c> is in the order it is stored.</param>
 public sealed record GameSnapshot(
     bool Connected,
     string? Problem,
     IReadOnlyList<LivePartyMember> Party,
     DateTimeOffset ReadAt,
-    string? Notice = null)
+    string? Notice = null,
+    IReadOnlyList<uint>? Order = null)
 {
     public static GameSnapshot Disconnected(string problem, DateTimeOffset at) =>
         new(false, problem, [], at);

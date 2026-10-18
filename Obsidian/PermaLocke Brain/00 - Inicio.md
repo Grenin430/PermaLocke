@@ -19,6 +19,8 @@ revisado: 2026-09-25
 |---|---|
 | Cómo trabajar con el usuario (reglas, permisos, carpetas intocables) | [[Usuario y forma de trabajar]] |
 | Qué se hizo en conversaciones anteriores | [[Historial de conversaciones]] · el diario viejo de CLAUDE.md: [[Archivo - estado de CLAUDE.md (2026-09-24)]] |
+| Qué pasar del singleplayer a la app del torneo | [[Para pasar al torneo]] |
+| **Ruinas de Gimmighoul y cristales Z (plan en curso, leer antes de seguir)** | [[Plan de las ruinas de Gimmighoul]] |
 | Proyectos, DI, rutas, ficheros de datos, persistencia | [[Arquitectura]] |
 | El vigilante: bucles, muertes, killcam, encuentros, avisos, cap | [[Flujos del vigilante]] |
 | RPC de Azahar, memoria, equipo, zona, combate, partida guardada | [[GameLink y memoria]] |

@@ -257,3 +257,16 @@ Otros docs: `docs/DISTRIBUCION-LOCAL.md` (reparto local, informes del amigo, rev
 - L13437 · 244-246 · El panel del cap como un mar (banda negra, cielo de Alola, criaturas de luz, fósiles, sucesos, lectura rápida de vida), publicado en la 1.0.17
 - L13498 · 247 · El mar con el juego delante: estado por el número del juego, fondo por la barra del que está en el campo (sin barra no hay peligro), quemadura en aura, bomba a 120 Hz
 - L13508 · 248 · Pokévial traído del singleplayer (publicado en la 1.0.18): objeto 120, rama de la mochila, curación desde la app, usos por pruebas superadas y recarga con la enfermera
+- L13508 · 248 · Las megas del mar y el cielo (12 hojas) y la megaevolución de la prueba 6 (CapMega v2, guía Pokémon Champions); visitantes mega desde Cleared >= 6
+- L13516 · 249 · Pestaña que se cerraba, cruce entre ventanas (orejas), botón DISEÑO quitado y SuperCarameloraro que no se gastaba (tabla de bolsillos a/1/0/3)
+
+- §250 · Tanda del 2026-10-17: cursor del SuperCarameloraro, Poción Variocolor, variocolor del panel sin bloqueo, humo del Repelente, fuera todos los avisos encima del juego.
+- §251 · Apuntes jugando (2026-10-17/18): optimización medida, final del variocolor al segundo, cura tras el combate sin retraso, cuelgues por Olor Persistente y por la evolución con SuperCarameloraro, el mod coreano Uhuru Gift descartado.
+- §252 · El ultraumbral del cielo fiel al arte oficial: fracturas ordenadas, red de la boca, túnel con aurora, muertes ajustadas; `--hora` y `--muerte` en el laboratorio.
+- §253 · Nubes de Araki pixeladas de un fotograma de JoJo (`tools/clouds/araki_clouds.js`, `CapCloudArt`, `CapClouds`) y el cielo de día más azul.
+- §254 · Ruinas, cristal 2: Machamp Gigamax clava el Lucharastal en la columna (`CapMachamp`), flotador, nubes giratorias, impact frames en el puñetazo y en el impacto, onda que dobla el agua.
+- §255 · Ruinas, cristal 3: Mega Greninja lanza el Hidrostal (`CapGreninja`): géiser, shuriken de agua, humo y tronco Sustituto que se va flotando; sitio provisional.
+- §256 · Ruinas, cristal 4: Ho-Oh trae el Pirostal en una pluma arcoíris (`CapHoOh`), cinta arcoíris, llamas de Fuego Sagrado; sitio marcado (muro pequeño de la derecha).
+- §257 · Ruinas: Fitostal con Shaymin (`CapShaymin`, flotador compartido) y el entorno de cada cristal por su tipo (estrellas, grietas enfadadas, huella de Greninja, magma, jardín).
+- §258 · Ruinas, cristal 6: Terápagos y Miraidon con el Litostal (`CapAreaZero`, prototipo simple); megas de la prueba 6 aplazadas. Traspaso en [[Traspaso Litostal]].
+- §259 · Litostal pulido y aprobado: Terápagos y Miraidon animados, cristales del Área Cero (bloques pálidos en la arena), torre y nubes cristalizadas, golpes épicos de Miraidon, bloque ámbar y la marca de roca en el muro.

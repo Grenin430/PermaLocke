@@ -91,6 +91,13 @@ public sealed class AzaharGameWriter(
         return client.TryReadMemory(PermaLocke.Core.Domain.RuleBlock.Dupes, bits.Length, out var back) && back.AsSpan().SequenceEqual(bits);
     }
 
+    /// <summary>The Poción Variocolor spent (2026-10-17): its byte back to 0, once the wild Pokémon it was for is in the battle.</summary>
+    public bool WriteRuleShinyPotionSpent()
+    {
+        client.WriteMemory(PermaLocke.Core.Domain.RuleBlock.ShinyPotion, [0]);
+        return client.TryReadMemory(PermaLocke.Core.Domain.RuleBlock.ShinyPotion, 1, out var back) && back[0] == 0;
+    }
+
     /// <summary>
     /// The level cap into the block the patched game reads. See <see cref="WriteRuleFallen"/> for the fallen list, which
     /// the patched game uses to keep their HP at zero.

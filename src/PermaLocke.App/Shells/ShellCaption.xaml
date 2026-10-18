@@ -6,14 +6,12 @@
              xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework">
 
     <!-- LA BARRA DE TÍTULO de los diseños nuevos: la marca a la izquierda, lo que cada diseño quiera poner en medio (Centre),
-         y a la derecha DISEÑO (la galería), minimizar y cerrar. WindowChrome sigue haciendo el arrastre: lo que se pulsa
+         y a la derecha minimizar y cerrar (el botón DISEÑO de la galería se quitó el 2026-10-16, a petición del jugador). WindowChrome sigue haciendo el arrastre: lo que se pulsa
          se marca como pulsable dentro de la franja. -->
     <Grid Margin="6,6,6,0" Height="34">
         <DockPanel>
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center"
                         shell:WindowChrome.IsHitTestVisibleInChrome="True">
-                <Button Style="{StaticResource PxDesignButton}" Click="OnGallery"
-                        ToolTip="Cambiar de diseño" AutomationProperties.Name="Cambiar de diseño" />
                 <Button Style="{StaticResource PxCaptionButton}" Content="-" Click="OnMinimise"
                         ToolTip="Minimizar" AutomationProperties.Name="Minimizar" />
                 <Button Style="{StaticResource PxCaptionClose}" Content="×" Click="OnClose"

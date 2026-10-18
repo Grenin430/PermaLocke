@@ -128,3 +128,13 @@ Copias de la prueba en `PermaLocke prueba\Saves\backup` (prueba-A, prueba-B, cor
 - **La Action no corre las pruebas de App** (solo Core, Rules, GameLink y Randomizer): antes de subir una versión con cambios de App, `dotnet test tests/PermaLocke.App.Tests` en local.
 - **Un heredoc largo de Bash falla con ciertos textos y `perl -0pi` sobre un `.md` UTF-8 con cadenas pegadas desde la línea de órdenes lo doble-codifica entero:** para editar documentación, `Edit`, y mirar `git diff --stat` después.
 - **Sin probar en el emulador real:** el corte por tecla, el tipo de MT y megapiedra con el mundo instalado y el encaje de los 112 de alto junto a la pantalla de abajo solo los dirá el juego (ver §243).
+- **Un objeto nuevo en un hueco libre necesita también su bolsillo en `a/1/0/3`** (tabla de medio byte por objeto que usan `MyItem::Sub/Check`), no solo en sus datos: sin él, el juego no lo resta nunca (SuperCarameloraro, §249). Para leer código de los `.cro`: sus importaciones con nombre dicen qué es cada `bl` a un stub, y `static.crs` (en la ROM) da la dirección de las funciones de `code.bin`.
+- **Revisar hojas de sprites sobre fondo oscuro:** sobre blanco no se ven los desgarros (huecos transparentes) de una animación.
+- **Tests de la App con `--artifacts-path` fuera del repo fallan** (buscan la raíz del repo desde la salida): usar una carpeta dentro del repo y borrarla después.
+
+- **El acceso directo «PermaLocke singleplayer.lnk» abre `binDebug`** (2026-10-17): compilar solo Release no despliega nada para el jugador.
+- **El juego genera otro Pokémon al azar justo antes del salvaje** (2026-10-17): un efecto «el siguiente generado» se lo lleva ese; la Poción Variocolor la apaga la app al leer el salvaje (§250).
+- **Un fotograma del panel más caro que su intervalo bloquea el juego** (2026-10-17): el hilo de la interfaz no respira, Windows pone una ventana fantasma de la capa encima del emulador y se come los clics; `CapBadge` espacia los fotogramas por su coste (§250).
+- **La habilidad 268 Olor Persistente cuelga el juego con el mod** en cuanto contagia a un atacante por contacto (2026-10-17): vetada en `bannedAbilities`; en el mundo actual sigue.
+- **En `Bag.cro`, el «objeto en uso» del camino de la evolución lo lee también la escena de evolución** (2026-10-17): cambiarlo por el SuperCarameloraro colgó una evolución. Probar SIEMPRE evolución y movimiento nuevo al tocar el uso de objetos.
+- **Un cambio de vida dentro de la gracia de 3 s tras un combate no es de combate si sube** (2026-10-18): la cura de un NPC al acabar se retenía; con las tablas caídas, las subidas se muestran al momento.

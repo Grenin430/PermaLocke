@@ -36,6 +36,9 @@ public sealed class CatchCeremony(IUiDispatcher ui, SaveBoxReader boxes, TcgCard
     /// <summary>1 is real time. The rehearsal (<c>--ensayar-lento</c>) lowers it to be able to look at an animation and capture a frame.</summary>
     public double Speed { get; set; } = 1;
 
+    /// <summary>The items play at half their timeline's pace (2026-10-15, asked by the player: at 1 it looked doubled).</summary>
+    private const double ItemPace = 0.5;
+
     /// <summary>Off in CONFIGURACIÓN: the capture is detected all the same, only the card is not shown.</summary>
     public bool Enabled { get; set; } = true;
 
@@ -186,9 +189,9 @@ public sealed class CatchCeremony(IUiDispatcher ui, SaveBoxReader boxes, TcgCard
                     logger.LogInformation("Objeto a la mochila: {Item} ×{Amount}", item.Name, item.Amount);
                     _window ??= new CatchWindow();
 
-                    // Never cut by the player's keys (2026-10-10, asked by the organiser): it plays to its end. Only another item
-                    // waiting makes it go at triple speed. GameInputWatch and the window's leave hook stay for a future use.
-                    await _window.PlayAsync(item, corner, itemPixel, () => _waiting.Count > 0, null, Speed);
+                    // Never cut by the player's keys (2026-10-10, asked by the organiser) and never hurried (2026-10-15, asked by the player:
+                    // another item waiting used to make it go at triple speed): each plays to its end at its own pace.
+                    await _window.PlayAsync(item, corner, itemPixel, null, null, Speed * ItemPace);
                     continue;
                 }
 
@@ -216,9 +219,9 @@ public sealed class CatchCeremony(IUiDispatcher ui, SaveBoxReader boxes, TcgCard
     }
 
     /// <summary>
-    /// Where the item animation goes (2026-09-28, where the organiser drew it): in the dark band left of the bottom screen,
-    /// centred in it and level with the middle of that screen, at the game's own pixel size, smaller if the band is narrow.
-    /// Without the emulator, the bottom-left of the desktop.
+    /// Where the item animation goes: in the dark band left of the bottom screen, down in its bottom-left corner (2026-10-15, asked
+    /// by the player; until then centred in the band, level with the middle of that screen), at the game's own pixel size, smaller if
+    /// the band is narrow. Without the emulator, the bottom-left of the desktop.
     /// </summary>
     /// <param name="sceneHeight">The height the item's style asks for, in pixels of the game: only the height changes with it,
     /// the pixel is still computed from the width, so a taller scene is the same drawing scaled the same.</param>
@@ -232,8 +235,8 @@ public sealed class CatchCeremony(IUiDispatcher ui, SaveBoxReader boxes, TcgCard
             var pixel = Math.Max(1, Math.Min(top.Scale, band * 0.9 / ItemScene.SceneWidth));
             var width = ItemScene.SceneWidth * pixel;
             var height = sceneHeight * pixel;
-            var middle = top.Top + (360 * top.Scale);
-            return (((int)Math.Round(render.Left + ((band - width) / 2)), (int)Math.Round(middle - (height / 2))), pixel);
+            var margin = 4 * pixel;
+            return (((int)Math.Round(render.Left + margin), (int)Math.Round(render.Top + render.Height - height - margin)), pixel);
         }
 
         var area = OverlayWindows.WorkArea();

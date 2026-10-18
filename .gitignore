@@ -77,3 +77,8 @@ obj/
 
 # Distribuciones locales y pruebas aisladas
 /.dist/
+
+# Ajustes y perfil del jugador, y los prototipos de revision (videos): no son codigo (2026-10-17)
+/Config/ajustes.json
+/Config/jugador.json
+/prototipos/

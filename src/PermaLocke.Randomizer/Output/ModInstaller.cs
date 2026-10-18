@@ -135,9 +135,16 @@ public static class ModInstaller
             writes.AddRange(Writes(ours, exefs, fromBase: false));
         }
 
+        // Lo que ni la capa base ni el mundo generado traen ya (2026-10-17): en la 1.4 del mod hubo que apartar a mano banner.bin e
+        // icon.bin, que la versión nueva ya no tenía. Solo con capa base: sin ella, borrar lo que no se escribe se llevaría la expansión
+        // entera, y a la copia. code.ips no: lo escribe PermaLocke al pulsar JUGAR.
+        var stale = hasBase ? Stale(writes, romfs, exefs) : [];
+
         var kept = KeepWhatWouldBeLost(writes, modDirectory,
             hasBase ? baseLayerRomfs : null, hasBaseExefs ? baseLayerExefs : null,
-            backupRoot, onProgress);
+            backupRoot, onProgress, stale);
+
+        foreach (var file in stale) File.Delete(file);
 
         if (hasBase)
         {
@@ -202,6 +209,20 @@ public static class ModInstaller
     /// <summary>One file an operation is going to write.</summary>
     private sealed record Write(string Source, string Target, bool FromBase);
 
+    /// <summary>The installed files that nothing of this install writes: left from an older version of the base mod or of the world.</summary>
+    private static List<string> Stale(IReadOnlyList<Write> writes, string romfs, string exefs)
+    {
+        var written = writes.Select(write => Path.GetFullPath(write.Target)).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var rulesPatch = Path.GetFullPath(Path.Combine(exefs, "code.ips"));
+        return
+        [
+            .. new[] { romfs, exefs }.Where(Directory.Exists)
+                .SelectMany(dir => Directory.EnumerateFiles(dir, "*", SearchOption.AllDirectories))
+                .Select(Path.GetFullPath)
+                .Where(file => !written.Contains(file) && !string.Equals(file, rulesPatch, StringComparison.OrdinalIgnoreCase))
+        ];
+    }
+
     private static IEnumerable<Write> Writes(string source, string destination, bool fromBase) =>
         Directory.Exists(source)
             ? Directory.EnumerateFiles(source, "*", SearchOption.AllDirectories)
@@ -227,7 +248,8 @@ public static class ModInstaller
     /// </para>
     /// </remarks>
     private static string? KeepWhatWouldBeLost(IReadOnlyList<Write> writes, string modDirectory,
-        string? baseLayerRomfs, string? baseLayerExefs, string? backupRoot, Action<string>? onProgress)
+        string? baseLayerRomfs, string? baseLayerExefs, string? backupRoot, Action<string>? onProgress,
+        IReadOnlyList<string>? removed = null)
     {
         var last = new Dictionary<string, Write>(StringComparer.OrdinalIgnoreCase);
 
@@ -248,6 +270,7 @@ public static class ModInstaller
                 : !SameBytes(write.Source, write.Target))
             .Where(write => !IsBaseLayerCopy(write.Target, modDirectory, baseLayerRomfs, baseLayerExefs))
             .Select(write => write.Target)
+            .Concat(removed ?? [])
             .ToList();
 
         if (lost.Count == 0)

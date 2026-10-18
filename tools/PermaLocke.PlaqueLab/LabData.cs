@@ -17,7 +17,7 @@ public sealed class LabData
     private LabData(PokemonSpriteService? sprites)
     {
         _sprites = sprites;
-        Scenarios = CapScenarios.All(Icon);
+        Scenarios = CapScenarios.All(Icon, item => _sprites?.GetItem(item));
     }
 
     public IReadOnlyList<CapScenario> Scenarios { get; }

@@ -104,7 +104,32 @@ public sealed class CapAnimTests
     }
 
     [Fact]
-    public void A_fall_is_timed_and_brings_the_mourning_light_for_twenty_seconds()
+    public void A_pokemon_hit_to_zero_waits_for_its_fall_and_is_drawn_until_it_comes()
+    {
+        // As the app does: the fall is told when the game has shown the faint, not read from the life.
+        var feed = new CapEventFeed { FallsFromLife = false };
+        var anim = new CapAnim();
+        var alive = Data(Party(Member(1, hp: 10)), battle: true);
+        var zero = Data(Party(Member(1, hp: 0)), battle: true);
+        anim.Update(alive with { Events = feed.Observe(alive, 0, 0).Events }, 0);
+        anim.Update(zero with { Events = feed.Observe(zero, 4, 4).Events }, 4);
+
+        Assert.True(anim.AwaitingFall(0, 5));
+        Assert.False(anim.AwaitingFall(0, 30));
+
+        anim.Update(zero with { Events = feed.Fall(1, 6, (int)CapDeathKind.Stone) }, 6);
+        Assert.Equal(CapDeathKind.Stone, anim.Death(0));
+        Assert.False(anim.AwaitingFall(0, 6.5));
+        Assert.Equal(0.5, anim.SinceFall(0, 6.5)!.Value, 3);
+
+        // Brought back (a Pokémon Centre before the first Poké Ball): it is no longer fallen and is drawn again.
+        var back = Data(Party(Member(1, hp: 100)));
+        anim.Update(back with { Events = feed.Observe(back, 20, 20).Events }, 20);
+        Assert.Null(anim.SinceFall(0, 21));
+    }
+
+    [Fact]
+    public void A_fall_is_timed_and_does_not_turn_the_sea_grey()
     {
         var anim = new CapAnim();
         anim.Update(Data(Party(Member(1, hp: 10)), battle: true), 0);
@@ -112,11 +137,11 @@ public sealed class CapAnimTests
 
         Assert.Equal(0.5, anim.SinceFall(0, 4.5)!.Value, 3);
         Assert.Null(anim.SinceFall(0, 3));
-        Assert.Equal(CapMood.Mourning, anim.Mood(5).Now);
-        Assert.Equal(CapMood.Mourning, anim.Mood(23).Now);
 
-        // It ends by itself, without anything new being told.
-        Assert.NotEqual(CapMood.Mourning, anim.Mood(40).Now);
+        // No mourning any more (2026-10-15): the sea keeps its own mood; the fall is shown by its death.
+        Assert.NotEqual(CapMood.Mourning, anim.Mood(5).Now);
+        Assert.NotEqual(CapMood.Mourning, anim.Mood(5).Before);
+        Assert.NotEqual(CapMood.Mourning, anim.Mood(23).Now);
     }
 
     [Fact]

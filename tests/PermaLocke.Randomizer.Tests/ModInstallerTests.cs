@@ -73,6 +73,28 @@ public sealed class ModInstallerTests : IDisposable
         Assert.Equal("encuentros", Read("mod/romfs/a/0/8/3"));
     }
 
+    /// <summary>
+    /// What the new version of the base mod no longer has is not left behind (2026-10-17: with the 1.4, banner.bin and icon.bin had to be
+    /// moved aside by hand), but it goes to the copy first; the rules' code.ips, which PermaLocke writes at JUGAR, stays.
+    /// </summary>
+    [Fact]
+    public void Lo_que_la_version_nueva_ya_no_trae_se_quita_y_se_guarda_en_la_copia()
+    {
+        Make("base/romfs/a/0/1/7", "especies");
+        Make("gen/romfs/a/0/8/3", "encuentros");
+        Make("mod/romfs/banner.bin", "de la version vieja");
+        Make("mod/exefs/code.ips", "reglas");
+
+        var kept = ModInstaller.Install(Path.Combine(_root, "gen"), Path.Combine(_root, "mod"),
+            Path.Combine(_root, "base", "romfs"), null, backupRoot: Path.Combine(_root, "copias"));
+
+        Assert.False(File.Exists(Path.Combine(_root, "mod", "romfs", "banner.bin")));
+        Assert.Equal("reglas", Read("mod/exefs/code.ips"));
+        Assert.Equal("especies", Read("mod/romfs/a/0/1/7"));
+        Assert.NotNull(kept);
+        Assert.Contains(Directory.EnumerateFiles(kept!, "*", SearchOption.AllDirectories), file => Path.GetFileName(file) == "banner.bin");
+    }
+
     /// <summary>The exefs goes beside romfs, never inside it.</summary>
     [Fact]
     public void El_exefs_va_al_lado_de_romfs_y_no_dentro()

@@ -5,7 +5,11 @@ namespace PermaLocke.App.Views;
 /// <param name="Hour">The game's hour, 0 to 24, or -1 when it cannot be known (then it is mid-morning).</param>
 /// <param name="WorldX">The column of the sea this window's first column is: the party's window is further along than the deep's, so the floor runs on from one to the other and whatever swims behind the game comes out of the other side.</param>
 /// <param name="WorldWidth">How many columns the whole sea is: the deep, the screens of the game, and the party.</param>
-public sealed record CapSeaContext(int Seed = 0, double Hour = -1, int WorldX = 0, int WorldWidth = 0)
+/// <param name="Megas">The Mega Evolution is unlocked (the sixth trial cleared, 2026-10-16): the visitors that have a Mega form pass in it.</param>
+/// <param name="Parade">The Megas' parade is on (CapMega): the visitors keep away.</param>
+/// <param name="Shiny">Seconds since a shiny's rainbow began (2026-10-17), -1 without one: the passing Pokémon then come out in their shiny colours.</param>
+public sealed record CapSeaContext(int Seed = 0, double Hour = -1, int WorldX = 0, int WorldWidth = 0, bool Megas = false, bool Parade = false,
+    double Shiny = -1)
 {
     public double SkyHour => Hour < 0 ? 10 : Hour;
 }
@@ -64,14 +68,16 @@ public static class CapSea
     {
         p.Clear();
         var grave = data.Graves ?? [];
-        var fossilColumns = FossilColumns(l, grave.Count, ctx);
+        // The fallen that drift in the water (CapFossils.InWater) leave the sand as it is.
+        // The fallen are not in the overlay any more (2026-10-15): after its death a Pokémon is kept by the cemetery, not by the sea floor.
+        int[] fossilColumns = [];
 
         Sky(p, l, pal, ctx);
         if (l.Panel == CapPanelKind.Deep && l.Sun.Width > 0) Sun(p, l, pal, ctx);
         Water(p, l, pal);
         if (l.Panel == CapPanelKind.Deep && l.Sun.Width > 0) Glitter(p, l, pal, ctx);
         Floor(p, l, pal, data, ctx, fossilColumns);
-        Fossils(p, l, pal, grave, ctx, fossilColumns);
+        // The ruins, the crystals and the old fossils on the deep's sand (2026-10-15); the fossils of the fallen lie in front of them.
     }
 
     // ---------------------------------------------------------------- sky and water
@@ -242,6 +248,9 @@ public static class CapSea
 
     private static void Fossils(CapSheet p, CapWorldLayout l, CapSeaPalette pal, IReadOnlyList<CapGrave> graves, CapSeaContext ctx, int[] columns)
     {
+        // The fallen that wander in the water move: they are painted every frame (CapFossils.PaintDrifting), not into the scene.
+        if (CapFossils.InWater(l)) return;
+
         foreach (var fossil in CapFossils.Build(l, graves, ctx, columns))
         {
             // A dark rim round the stone, so that it stands out from the sand and from the water whatever is behind it.

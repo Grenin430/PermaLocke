@@ -1,0 +1,105 @@
+// Builds the sheets of a batch and the C# entries for them. node build_batch.js horsea goldeen ...
+const fs = require("fs");
+const C = require("./critter.js");
+const APP = "C:/Users/javie/Desktop/Permalocke singleplayer/src/PermaLocke.App/Views/Cap/Critters/";
+// species number, motion of the path: depth drift, short bob, push per beat
+const META = {
+  hooh: { id: 250, drift: 2, bob: 0.5, surge: 0.6 },
+  rayquaza: { id: 384, drift: 2, bob: 0.5, surge: 0.7 },
+  wailord: { id: 321, drift: 4, bob: 1, surge: 0.5 },
+  lugia: { id: 249, drift: 2, bob: 0.5, surge: 0.6 },
+  kyogre: { id: 382, drift: 5, bob: 1.5, surge: 0.7 },
+  primalkyogre: { id: 382, drift: 5, bob: 1.5, surge: 0.7 },
+  moltres: { id: 146, drift: 2, bob: 0.5, surge: 0.8 },
+  zapdos: { id: 145, drift: 2, bob: 0.5, surge: 0.9 },
+  articuno: { id: 144, drift: 2, bob: 0.5, surge: 0.6 },
+  latios: { id: 381, drift: 2, bob: 0.5, surge: 0.7 },
+  megalatios: { id: 381, drift: 2, bob: 0.5, surge: 0.7 },
+  charizard: { id: 6, drift: 2, bob: 0.5, surge: 0.8 },
+  salamence: { id: 373, drift: 2, bob: 0.5, surge: 0.8 },
+  staraptor: { id: 398, drift: 1, bob: 0.3, surge: 0.5 },
+  megastaraptor: { id: 398, drift: 2, bob: 0.5, surge: 0.7 },
+  bruxish: { id: 779, drift: 5, bob: 1.5, surge: 0.9 },
+  latias: { id: 380, drift: 4, bob: 1, surge: 0.8 },
+  megalatias: { id: 380, drift: 4, bob: 1, surge: 0.8 },
+  dragonite: { id: 149, drift: 2, bob: 0.5, surge: 0.6 },
+  megadragonite: { id: 149, drift: 2, bob: 0.5, surge: 0.6 },
+  fearow: { id: 22, drift: 1, bob: 0.3, surge: 0.8 },
+  seaking: { id: 119, drift: 5, bob: 1.5, surge: 0.8 },
+  carvanha: { id: 318, drift: 6, bob: 1.5, surge: 1.3 },
+  aerodactyl: { id: 142, drift: 3, bob: 0.5, surge: 0.9 },
+  megaaerodactyl: { id: 142, drift: 3, bob: 0.5, surge: 0.9 },
+  togekiss: { id: 468, drift: 5, bob: 1, surge: 0.7 },
+  pidgeot: { id: 18, drift: 1, bob: 0.3, surge: 0.5 },
+  megapidgeot: { id: 18, drift: 1, bob: 0.3, surge: 0.5 },
+  relicanth: { id: 369, drift: 4, bob: 1, surge: 0.6 },
+  wishiwashi: { id: 746, drift: 7, bob: 2, surge: 1.1 },
+  altaria: { id: 334, drift: 2, bob: 0.5, surge: 0.5 },
+  megaaltaria: { id: 334, drift: 2, bob: 0.5, surge: 0.5 },
+  toucannon: { id: 733, drift: 3, bob: 0.8, surge: 0.6 },
+  kingdra: { id: 230, drift: 4, bob: 1.5, surge: 0.5 },
+  lanturn: { id: 171, drift: 5, bob: 2, surge: 0.6 },
+  remoraid: { id: 223, drift: 6, bob: 1.5, surge: 1.0 },
+  skarmory: { id: 227, drift: 2, bob: 0.5, surge: 0.8 },
+  megaskarmory: { id: 227, drift: 2, bob: 0.5, surge: 0.8 },
+  tapukoko: { id: 785, drift: 0, bob: 0, surge: 0 },
+  machamp: { id: 68, drift: 0, bob: 0, surge: 0 },
+  gmaxmachamp: { id: 20068, drift: 0, bob: 0, surge: 0 },
+  setasdinamax: { id: 20069, drift: 0, bob: 0, surge: 0 },
+  megagreninja: { id: 10658, drift: 0, bob: 0, surge: 0 },
+  megagreninjasalto: { id: 20658, drift: 0, bob: 0, surge: 0 },
+  hoohsagrado: { id: 20250, drift: 0, bob: 0, surge: 0 },
+  shaymintierra: { id: 492, drift: 0, bob: 0, surge: 0 },
+  shaymincielo: { id: 10492, drift: 0, bob: 0, surge: 0 },
+  gracidea: { id: 20492, drift: 0, bob: 0, surge: 0 },
+  terapagos: { id: 1024, drift: 0, bob: 0, surge: 0 },
+  miraidon: { id: 1008, drift: 0, bob: 0, surge: 0 },
+  pikipek: { id: 731, drift: 7, bob: 2, surge: 0.6 },
+  lumineon: { id: 457, drift: 6, bob: 1.5, surge: 0.6 },
+  seadra: { id: 117, drift: 4, bob: 2, surge: 0.7 },
+  luvdisc: { id: 370, drift: 5, bob: 1.5, surge: 0.5 },
+  crobat: { id: 169, drift: 9, bob: 2.5, surge: 1.2 },
+  pelipper: { id: 279, drift: 7, bob: 2, surge: 0.8 },
+  manaphy: { id: 490, drift: 4, bob: 2.5, surge: 0.5 },
+  milotic: { id: 350, drift: 5, bob: 1, surge: 0.7 },
+  finneon: { id: 456, drift: 6, bob: 1.5, surge: 0.8 },
+  horsea: { id: 116, drift: 5, bob: 3, surge: 0.5 },
+  goldeen: { id: 118, drift: 8, bob: 1.5, surge: 1.4 },
+  lapras: { id: 131, drift: 4, bob: 1, surge: 1.0 },
+  wingull: { id: 278, drift: 10, bob: 1.5, surge: 0.8 },
+  zubat: { id: 41, drift: 7, bob: 3.5, surge: 1.0 },
+  gyarados: { id: 130, drift: 6, bob: 1.5, surge: 1.2 },
+  megagyarados: { id: 130, drift: 6, bob: 1.5, surge: 1.2 },
+  mantine: { id: 226, drift: 7, bob: 2, surge: 0.9 },
+  chinchou: { id: 170, drift: 4, bob: 3, surge: 0.4 },
+  pidgey: { id: 16, drift: 9, bob: 2.5, surge: 1.0 },
+  butterfree: { id: 12, drift: 8, bob: 3.5, surge: 0.6 },
+  sharpedo: { id: 319, drift: 7, bob: 1.5, surge: 1.6 },
+  megasharpedo: { id: 319, drift: 7, bob: 1.5, surge: 1.6 },
+  wailmer: { id: 320, drift: 4, bob: 1.5, surge: 0.6 },
+  qwilfish: { id: 211, drift: 5, bob: 2.5, surge: 0.5 },
+  spearow: { id: 21, drift: 10, bob: 2, surge: 1.2 },
+  swablu: { id: 333, drift: 8, bob: 3, surge: 0.6 },
+};
+// Approved originals stay available; these species use their explicitly requested flight corrections.
+const FLIGHT = new Set(['megaskarmory','megadragonite','megapidgeot','pidgey','spearow','pikipek','pidgeot','toucannon','staraptor','skarmory','dragonite','charizard','salamence']);
+const lines = [];
+for (const name of process.argv.slice(2)) {
+  const flight = FLIGHT.has(name);
+  const m = require(`./${name}${flight ? "_flight" : ""}_anim.js`), meta = name === "salamence" ? { ...META[name], drift: 1.2, bob: 0, surge: 0 } : flight ? { ...META[name], drift: 1, bob: 0.3, surge: 0.6 } : META[name];
+  const w = m.fr[0][0].length, h = m.fr[0].length;
+  const maxTilt = Math.max(...m.angles.map(Math.abs)) * Math.PI / 180;
+  let cell = Math.ceil(Math.max(w * Math.cos(maxTilt) + h * Math.sin(maxTilt), h * Math.cos(maxTilt) + w * Math.sin(maxTilt)));
+  cell += cell % 2;
+  // a drawing turned right round (the flips) needs room for its diagonal
+  if (Math.max(...m.angles.map(Math.abs)) > 90) cell = Math.ceil(Math.hypot(w, h)) + (Math.ceil(Math.hypot(w, h)) % 2);
+  const pivot = [w / 2, h / 2];
+  const { cells } = C.sheet(name, m.pal, m.fr, m.angles, pivot, cell, m.protect);
+  if (m.sealRotatedHoles) require("./seal_sheet")(name, m.pal, cells);
+  // the drawing's real height (rows with something in them), for the room it needs
+  const filled = m.layoutHeight ?? m.fr[0].filter(r => /[^.]/.test(r)).length;
+  fs.copyFileSync(`${name}_sheet.png`, APP + `${name}.png`);
+  lines.push({ id: meta.id, entry: `Fps: ${m.fps}, Sheet: "${name}", Cell: ${cell}, Angles: [${m.angles.join(", ")}], Pose: ${m.pose}, Height: ${filled}, Drift: ${meta.drift}, Bob: ${meta.bob}, Surge: ${meta.surge}` });
+  console.log(`${name}: frames ${m.fr.length}, ${w}x${h}, cell ${cell}, tilts ${m.angles.length}`);
+}
+fs.writeFileSync("batch_entries.json", JSON.stringify(lines));
