@@ -78,65 +78,6 @@ public sealed class GameMoney(PlayerSave save, AzaharRpcClient client, LiveSave 
         }
     }
 
-    /// <summary>
-    /// Adds <paramref name="delta"/> to the money, or takes it when negative, never below zero nor above <see cref="Max"/>. Returns
-    /// what really changed in <see cref="MoneyResult.Balance"/> terms: the money after.
-    /// </summary>
-    public (MoneyResult Result, int Applied) Change(int delta)
-    {
-        lock (_gate)
-        {
-            try
-            {
-                var before = Read();
-                if (before is null) return (new MoneyResult(false, 0, "No se encuentra el dinero de tu partida."), 0);
-                var target = Math.Clamp(before.Value + delta, 0, Max);
-                if (target == before.Value) return (new MoneyResult(true, target), 0);
-
-                var result = target < before.Value ? Spend(before.Value - target) : Add(target - before.Value);
-                return (result, result.Success ? target - before.Value : 0);
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-            {
-                logger.LogWarning(ex, "No se pudo cambiar el dinero en {Delta}", delta);
-                return (new MoneyResult(false, 0, "No se ha podido tocar la partida."), 0);
-            }
-        }
-    }
-
-    private MoneyResult Add(int amount) => save.IsGameLoaded() ? WriteLive(amount) : WriteFile(amount);
-
-    private MoneyResult WriteFile(int amount)
-    {
-        if (save.Find() is not { } path || LoadFile() is not { } file) return new MoneyResult(false, 0, "No se encuentra tu partida de Ultra Luna.");
-        var game = file.Save;
-        var before = (int)game.Money;
-        Backup(path);
-        game.Money = (uint)Math.Min(Max, before + amount);
-        File.WriteAllBytes(path, game.Write().ToArray());
-        var after = LoadFile() is { } again ? (int)again.Save.Money : -1;
-        if (after != Math.Min(Max, before + amount)) return new MoneyResult(false, Math.Max(0, after), "La partida no ha quedado como debía.");
-        logger.LogInformation("Dado {Amount} ₽ en la partida: {Before} -> {After}", amount, before, after);
-        return new MoneyResult(true, after);
-    }
-
-    private MoneyResult WriteLive(int amount)
-    {
-        if (LiveAddress() is not { } address || !client.TryReadMemory(address, 4, out var bytes))
-        {
-            return new MoneyResult(false, 0, "No encuentro tu dinero en el juego. Guarda la partida y vuelve a intentarlo.");
-        }
-
-        var before = (int)BitConverter.ToUInt32(bytes);
-        if (before is < 0 or > Max) return new MoneyResult(false, 0, "El dinero del juego no se ha leído bien. No se ha tocado nada.");
-        var target = Math.Min(Max, before + amount);
-        client.WriteMemory(address, BitConverter.GetBytes((uint)target));
-        var after = client.TryReadMemory(address, 4, out var check) ? (int)BitConverter.ToUInt32(check) : -1;
-        if (after != target) return new MoneyResult(false, Math.Max(0, after), "El juego no ha aceptado el cambio de dinero.");
-        logger.LogInformation("Dado {Amount} ₽ en el juego: {Before} -> {After}", amount, before, after);
-        return new MoneyResult(true, after);
-    }
-
     private MoneyResult SpendInFile(int amount)
     {
         if (save.Find() is not { } path || LoadFile() is not { } file)

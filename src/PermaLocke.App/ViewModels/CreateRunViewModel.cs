@@ -187,7 +187,8 @@ public sealed partial class RoleChoiceViewModel(Role role, Action<RoleChoiceView
         {
             var parts = new List<string>
             {
-                // Sin puntos en la versión de un jugador: lo que el rol ganaba o perdía ya no se enseña.
+                Role.Earn == 1 ? "puntos normales" : $"ganas ×{Role.Earn:0.##}",
+                Role.Lose == 0 ? "no pierdes puntos" : Role.Lose == 1 ? "pierdes normal" : $"pierdes ×{Role.Lose:0.##}",
                 $"enemigos +{Role.EnemyLevelPercent}%",
                 $"tu cap +{Role.PlayerCapPercent}%"
             };

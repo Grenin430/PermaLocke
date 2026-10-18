@@ -4,7 +4,7 @@
 
   "comentarioTiradas": "Cuántas tiradas se DEBEN: una por cada prueba superada, tres por ganar la liga y dos más por el rematch. Sale de los logros, que se detectan solos contra el cartucho, así que no hay nada que marcar a mano. Lo ya tirado sale del historial.",
 
-  "comentarioEfectos": "efecto dice QUÉ hace la cara; cantidad y cada dicen CUÁNTO. Gacha lleva la lista de banners. HabilidadBuena/HabilidadMala, IvPerfectos/IvCero y Muerte usan cantidad como número de Pokémon DEL EQUIPO. Puntos usa cantidad con signo: en la versión de un jugador es dinero del juego. DarCurativos/QuitarCurativos usan cantidad como cuántos objetos DISTINTOS y cada como cuántos de cada uno. DarMt/QuitarMt usan cantidad como número de MT.",
+  "comentarioEfectos": "efecto dice QUÉ hace la cara; cantidad y cada dicen CUÁNTO. Gacha lleva la lista de banners. HabilidadBuena/HabilidadMala, IvPerfectos/IvCero y Muerte usan cantidad como número de Pokémon DEL EQUIPO. Puntos usa cantidad con signo. DarCurativos/QuitarCurativos usan cantidad como cuántos objetos DISTINTOS y cada como cuántos de cada uno. DarMt/QuitarMt usan cantidad como número de MT.",
 
   "comentarioSiNoSePuede": "Si la cosa no se puede hacer entera se hace lo que se pueda y se dice: quitar una MT a quien no lleva ninguna no hace nada, y subir los IV a tres Pokémon cuando el equipo tiene dos se los sube a esos dos. No se inventa nada ni se falla del todo.",
 
@@ -69,7 +69,7 @@
     { "id": "gacha-1", "buena": true, "nombre": "1 tirada de gacha", "corto": "TIRADA GACHA", "cifra": "+1", "icono": 4, "detalle": "Una tirada del banner DECENTE, gratis.", "efecto": "Gacha", "banners": ["decente"] },
     { "id": "gacha-3", "buena": true, "nombre": "3 tiradas de gacha", "corto": "TIRADAS GACHA", "cifra": "+3", "icono": 2, "detalle": "Una de cada banner: POCHO, DECENTE y BUENO, gratis.", "efecto": "Gacha", "banners": ["pocho", "decente", "bueno"] },
     { "id": "habilidad-buena", "buena": true, "nombre": "Habilidad buena", "corto": "HABILIDAD BUENA", "cifra": "×3", "icono": 645, "detalle": "Una habilidad buena a 3 Pokémon del equipo.", "efecto": "HabilidadBuena", "cantidad": 3 },
-    { "id": "puntos-mas", "buena": true, "nombre": "+20.000 ₽", "corto": "DINERO", "cifra": "+20000", "icono": 92, "detalle": "Veinte mil pokédólares para tu partida.", "efecto": "Puntos", "cantidad": 20000 },
+    { "id": "puntos-mas", "buena": true, "nombre": "+200 puntos", "corto": "PUNTOS", "cifra": "+200", "icono": 92, "detalle": "Doscientos puntos a tu favor.", "efecto": "Puntos", "cantidad": 200 },
     { "id": "curativos-1", "buena": true, "nombre": "Objetos curativos", "corto": "CURATIVOS", "cifra": "+3", "icono": 25, "detalle": "Tres objetos curativos distintos, uno de cada.", "efecto": "DarCurativos", "cantidad": 3, "cada": 1 },
     { "id": "curativos-3", "buena": true, "nombre": "Objetos curativos x3", "corto": "CURATIVOS", "cifra": "+9", "icono": 23, "detalle": "Tres objetos curativos distintos, tres de cada.", "efecto": "DarCurativos", "cantidad": 3, "cada": 3 },
     { "id": "mt-mas", "buena": true, "nombre": "1 MT", "corto": "MT", "cifra": "+1", "icono": 328, "detalle": "Una MT que no tengas.", "efecto": "DarMt", "cantidad": 1 },
@@ -78,7 +78,7 @@
     { "id": "muerte-1", "buena": false, "nombre": "Muere 1 Pokémon", "corto": "MUERE", "cifra": "1", "iconoEspecie": 292, "detalle": "Uno del equipo, al azar. No resta puntos.", "efecto": "Muerte", "cantidad": 1 },
     { "id": "muerte-3", "buena": false, "nombre": "Mueren 3 Pokémon", "corto": "MUEREN", "cifra": "3", "iconoEspecie": 292, "detalle": "Tres del equipo, al azar. No resta puntos.", "efecto": "Muerte", "cantidad": 3 },
     { "id": "habilidad-mala", "buena": false, "nombre": "Habilidad mala", "corto": "HABILIDAD MALA", "cifra": "×3", "icono": 645, "detalle": "Una habilidad mala a 3 Pokémon del equipo.", "efecto": "HabilidadMala", "cantidad": 3 },
-    { "id": "puntos-menos", "buena": false, "nombre": "-20.000 ₽", "corto": "DINERO", "cifra": "−20000", "icono": 92, "detalle": "Veinte mil pokédólares menos (lo que tengas, si no llegas).", "efecto": "Puntos", "cantidad": -20000 },
+    { "id": "puntos-menos", "buena": false, "nombre": "-200 puntos", "corto": "PUNTOS", "cifra": "−200", "icono": 92, "detalle": "Doscientos puntos en tu contra.", "efecto": "Puntos", "cantidad": -200 },
     { "id": "iv-cero", "buena": false, "nombre": "IV a cero", "corto": "IV A CERO", "cifra": "0", "icono": 795, "detalle": "Los seis IV a 0 en 3 Pokémon del equipo.", "efecto": "IvCero", "cantidad": 3 },
     { "id": "mt-menos", "buena": false, "nombre": "Menos 1 MT", "corto": "MT", "cifra": "−1", "icono": 328, "detalle": "Se te va una MT de las que llevas.", "efecto": "QuitarMt", "cantidad": 1 },
     { "id": "curativos-menos-1", "buena": false, "nombre": "Menos objetos curativos", "corto": "CURATIVOS", "cifra": "−3", "icono": 25, "detalle": "Se van tres objetos curativos distintos, uno de cada.", "efecto": "QuitarCurativos", "cantidad": 3, "cada": 1 },

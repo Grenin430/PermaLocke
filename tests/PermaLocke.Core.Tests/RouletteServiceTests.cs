@@ -194,7 +194,7 @@ public sealed class RouletteServiceTests
     ];
 
     private static (RouletteService Service, Events Log, World World, Repository Team) Build(
-        Records? records = null, World? world = null, bool roulette = true, Catalog? catalog = null, IMoneyPort? money = null)
+        Records? records = null, World? world = null, bool roulette = true, Catalog? catalog = null)
     {
         var log = new Events();
         var clock = new FixedClock();
@@ -206,7 +206,7 @@ public sealed class RouletteServiceTests
             records ?? new Records(), new FixedRole(FixedRole.Normal));
 
         var service = new RouletteService(catalog ?? new Catalog(), achievements, seen,
-            new Roles(roulette), team, log, clock, money);
+            new Roles(roulette), team, log, clock);
 
         return (service, log, seen, team);
     }
@@ -440,40 +440,6 @@ public sealed class RouletteServiceTests
         var face = Sixteen().First(f => f.Effect == RouletteEffect.Puntos && f.Amount < 0);
 
         Assert.Equal(-200, face.Amount);
-    }
-
-    /// <summary>Singleplayer: a money face goes to the game's money, and when the game cannot be reached the spin is not spent.</summary>
-    [Fact]
-    public async Task A_money_face_changes_the_game_money_and_a_failure_keeps_the_spin()
-    {
-        var onlyMoney = new Catalog { Faces = [.. Enumerable.Range(0, 6).Select(i => new RouletteFace($"dinero-{i}", "+20000", "", true, RouletteEffect.Puntos, 20000))] };
-
-        var money = new Money();
-        var (service, log, _, _) = Build(new Records(), catalog: onlyMoney, money: money);
-        var run = TheRun();
-        await service.GrantAsync(run, 2, "prueba");
-
-        var spun = await service.SpinAsync(run);
-        Assert.Equal(RouletteOutcome.Spun, spun.Outcome);
-        Assert.Equal([20000], money.Asked);
-        Assert.Contains(log.Appended, e => e.Type == GameEventType.RouletteSpun && e.PointsDelta == 0);
-
-        money.Reachable = false;
-        var failed = await service.SpinAsync(run);
-        Assert.Equal(RouletteOutcome.Failed, failed.Outcome);
-        Assert.Equal(1, failed.Owed);
-    }
-
-    private sealed class Money : IMoneyPort
-    {
-        public List<int> Asked { get; } = [];
-        public bool Reachable { get; set; } = true;
-
-        public Task<MoneyChange> ChangeAsync(int delta, CancellationToken ct = default)
-        {
-            Asked.Add(delta);
-            return Task.FromResult(Reachable ? new MoneyChange(true, delta, 50000 + delta) : new MoneyChange(false, 0, 0, "Sin partida."));
-        }
     }
 
     /// <summary>Three of the party when the party has four: three different ones.</summary>

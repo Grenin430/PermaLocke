@@ -32,8 +32,7 @@ public sealed class RouletteService(
     IRunRoles roles,
     IPokemonRepository pokemon,
     IEventStore events,
-    IClock clock,
-    IMoneyPort? money = null)
+    IClock clock)
 {
     /// <summary>Salt for this random stream, so other modules do not shift it.</summary>
     private const string RouletteSalt = "ruleta";
@@ -197,20 +196,6 @@ public sealed class RouletteService(
             // Los puntos no pasan por el mundo del juego: son de la run. Van en el delta del propio
             // evento de la tirada, que es de donde sale el saldo, así que la ruleta mueve puntos con
             // un solo apunte y el historial dice que fue ella.
-            case RouletteEffect.Puntos when money is not null:
-            {
-                // Versión de un jugador (2026-10-12): la cantidad es dinero del juego. Si no se llega a la partida, la tirada no
-                // se gasta: volver a tirar con la misma seed da la misma cara.
-                var changed = await money.ChangeAsync(wheel.Winner.Amount, ct).ConfigureAwait(false);
-                if (!changed.Done)
-                {
-                    return new RouletteSpinResult(RouletteOutcome.Failed, wheel, [], owed, changed.Problem ?? "No se ha podido tocar el dinero de la partida.");
-                }
-
-                lines.Add($"{changed.Applied:+#;-#;0} ₽. Te quedan {changed.Balance} ₽.");
-                break;
-            }
-
             case RouletteEffect.Puntos:
                 lines.Add($"{wheel.Winner.Amount:+#;-#;0} puntos.");
                 break;
@@ -432,7 +417,7 @@ public sealed class RouletteService(
             // Los puntos de la ruleta van aquí y no en un evento aparte: el saldo es la suma de
             // los deltas del historial, así que un solo apunte deja el saldo bien y dice quién lo
             // movió. Y no lo multiplica el rol: la ruleta dice doscientos y son doscientos.
-            PointsDelta = wheel.Winner.Effect == RouletteEffect.Puntos && money is null ? wheel.Winner.Amount : 0,
+            PointsDelta = wheel.Winner.Effect == RouletteEffect.Puntos ? wheel.Winner.Amount : 0,
             Data = new Dictionary<string, string>
             {
                 ["tirada"] = wheel.Number.ToString(),
