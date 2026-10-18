@@ -2,6 +2,8 @@
 
 Lo que se hizo en **PermaLocke singleplayer** (`Desktop\Permalocke singleplayer`, rama `singleplayer`) y que el usuario quiere llevar en el futuro a la app del torneo (`Desktop\Permalocke definitivo`). Pedido el 2026-10-17. Cada punto dice dónde está documentado y si es solo del singleplayer.
 
+> **Pasado al torneo el 2026-10-18 (§260, 1.0.19)**: todo lo de esta nota salvo lo que es solo del singleplayer. Lo que se haga desde ahora en el singleplayer, apuntarlo debajo de nuevo.
+
 ## Imprescindible (fallos que también tiene el torneo)
 
 - **Habilidad 268 Olor Persistente vetada para siempre** (2026-10-17). Con el mod de gen 8-9, al contagiársela a quien golpea por contacto **el juego se cuelga** (visto jugando: Furioseta con ella, un Samurott salvaje la golpeó). Veto fijo en código: `Core/Domain/BrokenAbilities.cs`, usado por `AbilityTable.Assignable` (randomizador) y `AbilityDraw.IsDealable` (gacha, guardería, wonder trade); además en `bannedAbilities` de `Data/randomizer.json`. Test `Lingering_aroma_is_never_dealt_whatever_the_configuration_says`. **Un mundo ya generado la conserva**: hay que regenerarlo o cambiarla en la tabla de especies instalada.

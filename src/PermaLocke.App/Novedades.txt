@@ -1,3 +1,21 @@
+1.0.19 2026-10-18
+PANEL DEL CAP
+El mar se llena de vida: los Pokémon que pasan por el agua y por el cielo están redibujados, y tras superar la prueba 6 aparecen también megas. En el cielo, el ultraumbral es ahora fiel al arte oficial, hay nubes nuevas y el día es más azul.
+Abajo a la izquierda están las ruinas de Gimmighoul. Al superar una prueba, una película trae su Cristal Z y lo deja marcado en las ruinas con un detalle de su tipo.
+Cuando cae un Pokémon, su muerte se ve dentro del panel, una distinta cada vez.
+El Repelente Infinito, la Incubadora Turbo y el Pokévial se ven en el panel cuando los llevas.
+OBJETOS
+Nueva Poción Variocolor: se usa desde la mochila y el siguiente Pokémon salvaje sale variocolor. Hay 3 en el suelo de los mundos nuevos.
+Al usar el SuperCarameloraro, el cursor de la mochila vuelve a él para que puedas usar otro.
+Arreglado: la habilidad Olor Persistente colgaba el juego y ya no se reparte. Igual que la Poción, solo se nota en un mundo nuevo.
+FUERA
+Ya no sale nada encima del juego: ni avisos, ni la escena de muerte, ni la carta que volaba al álbum, ni los fantasmas y la lluvia de sangre de los demás. El aviso de versión nueva sigue en la franja de arriba de la app.
+
+1.0.18 2026-10-18
+POKÉVIAL
+Nuevo objeto clave: el Pokévial. Desde la mochila cura los PS, el estado y los PP de todo tu equipo en cualquier sitio; los caídos siguen caídos.
+Empieza con un uso; ganas otro al superar la prueba 4 y otro al superar la 6. Cada vez que la enfermera te cura en un Centro Pokémon se llena entero. Necesita PermaLocke abierto.
+
 1.0.17 2026-10-11
 PANEL DEL CAP
 La banda negra del emulador es ahora un mar. El cielo es el de Alola a la hora del juego, tu equipo son criaturas de luz alineadas en una columna, el cap es una boya y los Pokémon caídos quedan como fósiles en el fondo, con un foco de luz que los va recorriendo.

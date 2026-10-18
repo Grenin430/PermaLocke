@@ -270,3 +270,4 @@ Otros docs: `docs/DISTRIBUCION-LOCAL.md` (reparto local, informes del amigo, rev
 - §257 · Ruinas: Fitostal con Shaymin (`CapShaymin`, flotador compartido) y el entorno de cada cristal por su tipo (estrellas, grietas enfadadas, huella de Greninja, magma, jardín).
 - §258 · Ruinas, cristal 6: Terápagos y Miraidon con el Litostal (`CapAreaZero`, prototipo simple); megas de la prueba 6 aplazadas. Traspaso en [[Traspaso Litostal]].
 - §259 · Litostal pulido y aprobado: Terápagos y Miraidon animados, cristales del Área Cero (bloques pálidos en la arena), torre y nubes cristalizadas, golpes épicos de Miraidon, bloque ámbar y la marca de roca en el muro.
+- §260 · El singleplayer en el torneo (1.0.19): panel del cap entero, Poción Variocolor, cursor del SuperCarameloraro, Olor Persistente vetada; fuera avisos, muerte encima del juego, carta al álbum y fantasmas.
