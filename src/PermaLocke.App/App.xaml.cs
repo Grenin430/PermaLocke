@@ -327,7 +327,7 @@ public partial class App : Application
         // AMIGOS Y ACTIVIDAD de JUGAR (§126): presencia y logros de todos, por el servidor del torneo.
         collection.AddSingleton<CommunityService>();
 
-        // Los motes votados por los demás (2026-09-28). Los fantasmas (§183) se quitaron en la 1.0.19.
+        // Los motes votados por los demás (2026-09-28). Los fantasmas (§183) se quitaron en la 1.1.0.
         collection.AddSingleton<NicknameVoteService>();
 
         // «Jugando a PermaLocke» en el perfil de Discord mientras la app está abierta (§185).

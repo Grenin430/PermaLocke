@@ -12,7 +12,7 @@ public sealed record AppSettingsData(
     bool DeathScene = true,
     bool Killcam = true,
     bool Follower = true,
-    bool Ghosts = true, // unused since 1.0.19 (the ghosts were taken out); kept so older files still read
+    bool Ghosts = true, // unused since 1.1.0 (the ghosts were taken out); kept so older files still read
     bool CatchCard = true,
     bool Nicknames = true,
     bool CapPanel = true,

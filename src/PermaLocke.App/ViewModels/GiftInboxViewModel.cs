@@ -13,7 +13,8 @@ public sealed partial class GiftRowViewModel(AdminGift gift, bool collected) : O
 
     public string From => Gift.From;
 
-    public string What => Gift.Say();
+    /// <summary>A private message shows its own text (1.1.0: the tray is the only place it is read).</summary>
+    public string What => Gift.Order is { Kind: AdminOrderKinds.Message } order ? order.Arg("texto") : Gift.Say();
 
     public string Reason => Gift.Reason;
 
@@ -56,7 +57,7 @@ public sealed partial class GiftInboxViewModel : ObservableObject
 
     public ObservableCollection<GiftRowViewModel> Items { get; } = [];
 
-    /// <summary>How many are waiting: the number on the gift.</summary>
+    /// <summary>How many are waiting, plus what the organiser applied and the player has not seen: the number on the gift.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasGifts))]
     private int _count;
@@ -79,6 +80,7 @@ public sealed partial class GiftInboxViewModel : ObservableObject
         if (IsOpen)
         {
             Status = string.Empty;
+            _inbox.MarkSeen();
             _ = _inbox.LookAsync();
         }
     }
@@ -122,7 +124,7 @@ public sealed partial class GiftInboxViewModel : ObservableObject
             Items.Add(new GiftRowViewModel(gift, collected: true));
         }
 
-        Count = _inbox.Pending.Count;
+        Count = _inbox.Pending.Count + _inbox.Unseen;
         OnPropertyChanged(nameof(IsEmpty));
 
         // Nada que recoger y nadie mirando: la bandeja se cierra sola en vez de quedarse abierta y vacía.

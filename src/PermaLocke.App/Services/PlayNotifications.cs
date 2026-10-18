@@ -6,7 +6,7 @@ namespace PermaLocke.App.Services;
 /// What the watcher does on its own that the app answers outside the cap panel.
 /// </summary>
 /// <remarks>
-/// Nothing is said on top of the game any more (2026-10-17 in the single-player version, in the tournament from 1.0.19 at the player's word):
+/// Nothing is said on top of the game any more (2026-10-17 in the single-player version, in the tournament from 1.1.0 at the player's word):
 /// no notices, no card flying to the album, no death scene over the game, no ghosts nor blood rain on the others' screens; the deaths
 /// happen inside the cap panel (<c>CapDeath</c>) and what the notices said goes to the log. Better ones may come back later. What stays: an
 /// item from the ground, bought or given jumps into the bag over the game, and the others vote the nickname of every wild catch and every

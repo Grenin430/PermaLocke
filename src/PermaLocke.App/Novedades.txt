@@ -1,4 +1,4 @@
-1.0.19 2026-10-18
+1.1.0 2026-10-18
 PANEL DEL CAP
 El mar se llena de vida: los Pokémon que pasan por el agua y por el cielo están redibujados, y tras superar la prueba 6 aparecen también megas. En el cielo, el ultraumbral es ahora fiel al arte oficial, hay nubes nuevas y el día es más azul.
 Abajo a la izquierda están las ruinas de Gimmighoul. Al superar una prueba, una película trae su Cristal Z y lo deja marcado en las ruinas con un detalle de su tipo.
@@ -9,7 +9,7 @@ Nueva Poción Variocolor: se usa desde la mochila y el siguiente Pokémon salvaj
 Al usar el SuperCarameloraro, el cursor de la mochila vuelve a él para que puedas usar otro.
 Arreglado: la habilidad Olor Persistente colgaba el juego y ya no se reparte. Igual que la Poción, solo se nota en un mundo nuevo.
 FUERA
-Ya no sale nada encima del juego: ni avisos, ni la escena de muerte, ni la carta que volaba al álbum, ni los fantasmas y la lluvia de sangre de los demás. El aviso de versión nueva sigue en la franja de arriba de la app.
+Ya no sale nada encima del juego: ni avisos, ni la escena de muerte, ni la carta que volaba al álbum, ni los fantasmas y la lluvia de sangre de los demás. El aviso de versión nueva sigue en la franja de arriba de la app. Los mensajes, ajustes y órdenes del organizador se leen en el regalo de arriba, que sale con un número cuando hay algo nuevo.
 
 1.0.18 2026-10-18
 POKÉVIAL

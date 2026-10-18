@@ -67,6 +67,20 @@ public sealed class GiftInbox : INotifyPropertyChanged
     /// <summary>The last few collected, so the inbox is not empty the moment after pressing the button.</summary>
     public IReadOnlyList<AdminGift> Collected { get; private set; } = [];
 
+    /// <summary>
+    /// Adjustments and orders applied in this session that the player has not looked at yet (1.1.0): with nothing over the game any more,
+    /// the organiser's messages and what their orders did are read in the gift tray, and this count is what calls the player to it.
+    /// </summary>
+    public int Unseen { get; private set; }
+
+    /// <summary>The tray was opened: what was applied has been seen.</summary>
+    public void MarkSeen()
+    {
+        if (Unseen == 0) return;
+        Unseen = 0;
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(null));
+    }
+
     public void Start()
     {
         _timer.Start();
@@ -112,6 +126,7 @@ public sealed class GiftInbox : INotifyPropertyChanged
                 {
                     collected.Add(adjustment.Id);
                     _told.Add(adjustment.Id);
+                    Unseen++;
                     _logger.LogInformation("Ajuste {Id} de {From} aplicado: {What}", adjustment.Id, adjustment.From, adjustment.Say());
                 }
             }
@@ -126,6 +141,7 @@ public sealed class GiftInbox : INotifyPropertyChanged
                 {
                     collected.Add(order.Id);
                     _told.Add(order.Id);
+                    Unseen++;
                     _logger.LogInformation("Orden {Id} de {From} cerrada: {What}. {Result}", order.Id, order.From, order.Say(), applied.Message);
                     OrdersApplied?.Invoke(this, EventArgs.Empty);
                 }
@@ -173,7 +189,7 @@ public sealed class GiftInbox : INotifyPropertyChanged
 
     private void Set(IReadOnlyList<AdminGift> pending, IReadOnlyList<AdminGift> collected)
     {
-        // Al registro, uno por regalo y solo la primera vez que se ve en esta sesión (nada encima del juego desde la 1.0.19).
+        // Al registro, uno por regalo y solo la primera vez que se ve en esta sesión (nada encima del juego desde la 1.1.0).
         foreach (var gift in pending.Where(gift => _told.Add(gift.Id)))
         {
             _logger.LogInformation("Regalo de {From} esperando: {What}", gift.From, gift.Say());

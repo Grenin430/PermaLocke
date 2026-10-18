@@ -850,7 +850,7 @@ Batido pendiente de aprobación; otros tres sin modificar. Rutas y método en la
 - Terápagos y Miraidon animados (8 fotogramas cada uno); cristales rehechos tres veces hasta los bloques pálidos del Área Cero de sus referencias; torre y nubes cristalizadas; golpes de Miraidon épicos; bloque ámbar del Litostal; marca de roca en el muro. Todo aprobado. App compilada en Debug, 549 pruebas en verde, sin commit.
 - Trampas: `CapAreaZero.cs` quedó con fin de línea CRLF (los parches con \n fallan: normalizar antes); los heredoc con apóstrofos rompen el bash: escribir los parches a un fichero con Write.
 
-## 2026-10-18 — Traspaso del singleplayer al torneo (§260, 1.0.19)
+## 2026-10-18 — Traspaso del singleplayer al torneo (§260, 1.1.0)
 - Lista aprobada por el jugador: fuera los fantasmas enteros («en un futuro lo haremos mejorado»), la carta al álbum, avisos y muerte encima del juego; dentro el ultraumbral del randomizador (WormholeStage).
 - Primero commit del trabajo pendiente del torneo (`37248de`, Admin como centro de control). Luego rama `traspaso-singleplayer`: fases 1-4 deshechas en una copia y fusión con main. 2110 pruebas y PixelCheck en verde.
-- Pidió publicar «la 1.0.8», pero ya iba por la 1.0.18 y la actualización sola nunca llegaría: preparada como 1.0.19.
+- Pidió publicar «la 1.0.8», pero ya iba por la 1.0.18 y la actualización sola nunca llegaría; eligió la 1.1.0. Los mensajes del organizador pasan a la bandeja de regalos (contador de lo no visto).

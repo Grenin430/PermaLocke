@@ -25,7 +25,7 @@ namespace PermaLocke.App.Services;
 /// <para>
 /// Since §202 it asks at start and every half hour, and never asks the player with a dialog: the version waiting shows
 /// as a bar at the top of every section with its ACTUALIZAR button (<see cref="ViewModels.UpdateBannerViewModel"/>). The notice
-/// pinned over the game went in 1.0.19 with the rest of the notices.
+/// pinned over the game went in 1.1.0 with the rest of the notices.
 /// </para>
 /// <para>
 /// Never installs with the emulator open (the program is replaced under a running game's watcher). The official rules
