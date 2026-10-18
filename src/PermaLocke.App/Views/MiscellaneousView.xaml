@@ -24,7 +24,7 @@
             <!-- Los premios de la competición. No son herramientas de pruebas y por eso van en su
                  propio panel: se ganan, se dan una vez, y lo que hace que «una vez» sea verdad es
                  el evento que queda en el historial, no este botón. -->
-            <pixel:PixelWindow Title="PREMIOS" Icon="IconTrophy" Margin="0,0,0,12"
+            <pixel:PixelWindow Title="PREMIOS DE LA COMPETICIÓN" Icon="IconTrophy" Margin="0,0,0,12"
                                Visibility="{Binding HasRewards, Converter={StaticResource BoolToVisibility}}">
                 <StackPanel>
                     <pixel:PixelText Style="{StaticResource Explain}" Text="Se recogen una vez." />

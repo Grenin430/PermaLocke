@@ -297,6 +297,16 @@
                             <pixel:PixelText Text="TIEMPO DE JUEGO" Style="{StaticResource StatLabel}" />
                             <pixel:PixelText Text="{Binding TotalPlayed}" Style="{StaticResource StatValue}" />
                         </StackPanel>
+                        <StackPanel>
+                            <pixel:PixelText Text="LOGROS" Style="{StaticResource StatLabel}" />
+                            <DockPanel Margin="0,6,0,0">
+                                <pixel:PixelText DockPanel.Dock="Left" Text="{Binding AchievementsText}" Scale="3" Tight="True"
+                                                 VerticalAlignment="Center" Margin="0,0,12,0" Colour="{DynamicResource PxText}"
+                                                 Shadow="{DynamicResource PxShadow}" />
+                                <views:PixelBar Height="15" Width="150" HorizontalAlignment="Left" VerticalAlignment="Center"
+                                                Value="{Binding AchievementsShare, Mode=OneWay}" Fill="{DynamicResource PxAccent}" />
+                            </DockPanel>
+                        </StackPanel>
                     </UniformGrid>
                 </DockPanel>
             </Grid>
@@ -376,6 +386,9 @@
                 <Button DockPanel.Dock="Right" Content="ELEGIR EMULADOR" Style="{StaticResource NavLink}" Margin="0"
                         Command="{Binding ChooseEmulatorCommand}" />
                 <StackPanel Orientation="Horizontal">
+                    <Button Content="LOGROS" Style="{StaticResource NavLink}" Command="{Binding GoCommand}" CommandParameter="LOGROS" />
+                    <Button Content="COMPETICIÓN" Style="{StaticResource NavLink}" Command="{Binding GoCommand}" CommandParameter="COMPETICIÓN"
+                            Visibility="{Binding ShowCommunity, Converter={StaticResource BoolToVisibility}}" />
                     <Button Content="CEMENTERIO" Style="{StaticResource NavLink}" Command="{Binding GoCommand}" CommandParameter="CEMENTERIO" />
                     <Button Content="VISOR POKÉMON" Style="{StaticResource NavLink}" Command="{Binding GoCommand}" CommandParameter="VISOR POKÉMON" />
                 </StackPanel>
