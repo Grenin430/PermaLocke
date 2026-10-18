@@ -100,7 +100,7 @@ public sealed class ActiveBar : IDisposable
                 {
                     _lastWhat = what;
                     _loggedAt = stamp;
-                    _log?.LogInformation("ActiveBar: la barra de PS del que está en el campo se ve así: {What} ({Why})", what, HpBarWatcher.LastWhy);
+                    _log?.LogDebug("ActiveBar: la barra de PS del que está en el campo se ve así: {What} ({Why})", what, HpBarWatcher.LastWhy);
                 }
             }
             catch (Exception ex) when (ex is not OperationCanceledException)

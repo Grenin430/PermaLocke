@@ -780,3 +780,59 @@ Batido pendiente de aprobación; otros tres sin modificar. Rutas y método en la
 - Trampas: el acceso directo abre binDebug; el juego genera otro Pokémon al azar antes del salvaje (la poción la apaga la app); un fotograma del panel más caro que su intervalo deja la interfaz sin respirar y Windows pone una ventana fantasma que se come los clics.
 - Herramientas nuevas: `Probe --variocolor [poner]`, `PlaqueLab --medir`. Prototipos en `Desktop/imagenes/revision/prototipo_variocolor` y GIFs en `revision/`.
 - Tests: 2088 en verde. Sin commit.
+
+
+## 2026-10-17/18 — Optimización, final del variocolor, cuelgues y cura tras el combate
+- Todo en §251 de ARCHITECTURE (y el final del §250).
+- Optimización medida: panel 6-7 ms por fotograma, nada atascado; registro limpio (dos líneas a depuración, 67 % menos). `PlaqueLab --medir` mide ahora solo los paneles.
+- Variocolor: se va al segundo de acabar el combate (antes 3 s). Pregunta del jugador: un variocolor no gasta la ruta (`shinyClause.consumesEncounter: false`), el siguiente salvaje es el primer encuentro (leído en código, sin probar).
+- Cuelgue del juego con **Olor Persistente** (268) al contagiarla por contacto: veto fijo en código y en `bannedAbilities`; el mundo actual la conserva (la Furioseta del jugador). Nueva nota [[Para pasar al torneo]] y memoria `pasar-al-torneo`.
+- Cuelgue de una **evolución con SuperCarameloraro** («Goldeen evolucionó a Goldeen»): culpa del parche del cursor en 0xE8BC; vuelve a su 50. El cursor tras evolucionar va al Caramelo Raro; el arreglo completo se dejó (no hay sitio en la cueva de la mochila).
+- Cura de Fabio tras el combate doble: el panel tardaba ~5 s; ahora una subida de vida con las tablas caídas sale al momento.
+- Mod coreano Uhuru Gift mirado: no viable para dinamax o tera en los dominantes (Ultra Sol, código de combate).
+- Cuelgue anterior (Samurott) explicado por Olor Persistente. El registro de Azahar se llena (100 MB) con las consultas de memoria: si hace falta, quitarle ese nivel de detalle.
+- Tests 2091 en verde. Desplegado en Debug. Commit `155b0f5` hecho antes de esta tanda; esta tanda sin commit.
+- **Confirmado por el jugador (2026-10-18):** los voladores corregidos se ven bien cruzando el cielo en el juego real, y un variocolor no gasta la ruta (observado, ya no solo leido en codigo).
+
+
+## 2026-10-18 — Ultraumbral fiel al arte oficial (§252)
+- Ideas de decoración para el layout: la primera lista no convenció; quiere estructuras grandes y fijas, con detalle y que reaccionen a la partida (lista 2 dada: muelle, cementerio, templo, barco, volcán, altar, faro, ciudad; sin elegir aún).
+- Ultraumbral: prototipos v1-v3 sobre el arte oficial que pasó; correcciones suyas: inclinación como la referencia (arriba a la izquierda), la red de anillos alrededor de la boca, grietas ordenadas en círculo, «alarga MUY poco». Aprobado v3 y desplegado en Debug. Muertes del ultraumbral ajustadas al núcleo nuevo (vistas en el lab, sin jugar).
+- Lección: los escenarios `muerte-*` del lab ya no eligen la muerte (la secuencia sale del reloj): usar `--muerte tipo`. Un dibujo del panel con lambdas o listas por fotograma rompe la prueba de memoria.
+- **Nubes de Araki (§253):** le gusta el estilo de Araki. Las procedurales no daban el trazo; funcionó pixelar las nubes de su propia imagen (como los sprites desde referencias). Pidió más nubes «no tantas» y el cielo más azul. Desplegado en Debug tras cerrar él PermaLocke y Azahar.
+- **PLAN DE LAS RUINAS DE GIMMIGHOUL (pedido el 2026-10-18, en fases, cada una con su aprobación):** sustituir el altar por las ruinas de Gimmighoul de Escarlata/Púrpura abajo a la izquierda del fondo (ladrillo de piedra gastado con moho, referencias en `Desktop/imagenes/revision/prototipo_ruinas/referencias`), con un Gimmighoul cofre cuyo Gimmighoul lleva gafas y tubo de buceo. **Fase 1:** prototipo de ruinas y cofre, sin cristales. **Fase 2:** los 12 cristales Z repartidos por las ruinas, cada uno en un sitio distinto (clavado medio incrustado en un muro, encima del cofre, alrededor, dentro…). **Fase 3:** una animación nueva por cada cristal, de una en una, con aprobación de cada una. El altar (`CapAltar`) fue un prototipo descartado por esta idea.
+- **Ruinas de Gimmighoul, fase 1 APROBADA (2026-10-18):** ruinas al estilo del primer prototipo por todo el suelo de la ventana del fondo, y el Gimmighoul es el sprite del propio jugador (cuadrícula 32x40) con gafas turquesa y tubo en la boca. Sin desplegar ni commit. **Siguiente sesión: leer [[Plan de las ruinas de Gimmighoul]]** — primero enviarle `prototipo_ruinas/v9/para_marcar_cristal.png` para que marque el sitio del primer cristal, luego prototipos de animación de ese cristal, luego integrarlo; cristal a cristal.
+
+## 2026-10-18 — Ruinas: cristal 1 (Normastal) integrado
+- Marcas del jugador (rojo, verde, amarillo); caída con física (apoyo en caras, sin atravesar muros, media vuelta como mucho). Llegadas probadas: hoja, picado, espiral, anzuelo de Gimmighoul (no convenció, «más caótico»); elegida **Tapu Koko variocolor** con su sprite (conchas negras, cresta salmón), rastro de fragmentos de rayo en el aire y rayo fractal al soltar. Integrado solo para el 807; reposo permanente en la ventana. Tests App 549/549. Sin commit. Siguiente: Lucharastal clavado con grietas en la columna estrecha (ver el plan).
+
+## 2026-10-18 — Ruinas: cristal 2 (Lucharastal) integrado (§254)
+- Descartó el prototipo del «puño del cristal» por su idea: Machamp sale del ultraumbral con Setas Dinamax, se las come, se transforma en Gigamax (sprites suyos, setas a mano) y le pega un puñetazo al cristal, que sale por la derecha y entra por la izquierda del abismo hasta clavarse en la columna.
+- Correcciones: Gigamax mirando a la derecha, nubes también a la izquierda, flotador bajo los dos (como en los juegos), todo más lento, tres nubes girando sobre la cabeza, pies en el flotador al transformarse, impact frames en el puñetazo (más detallados, en las dos ventanas) y en el impacto contra la columna en vez del flash blanco; fuera las ondas de luz (cutres), en su lugar onda que dobla el agua y arena.
+- Aprobado el v6 e integrado (solo 813). Tests App 549/549. Sin commit ni despliegue. Siguiente: Hidrostal (809), que marque el sitio.
+
+## 2026-10-18 — Ruinas: cristal 3 (Hidrostal) integrado (§255)
+- Nueva regla del jugador: cada cristal llega con una animación de su tipo, a ser posible con guiño a una mecánica (Dinamax en el Lucharastal).
+- Kyogre Primigenio probado y descartado. Elegido Mega Greninja (sus tres sprites; usados el de pie y el boca abajo). Pulido en cinco versiones: más lento, shurikens siempre girando, llegada con sombra y géiser, shuriken detallado, salida con humo y tronco Sustituto de Smash (uno grande con palito y hoja) que flota y se va por la derecha; el humo con líneas interiores le pareció «cutre y raro», el blando le gustó.
+- Aprobado el v5 e integrado (solo 809). Tests App 549/549. Sin commit ni despliegue. **El sitio del Hidrostal es provisional**: falta que lo marque (imagen `prototipo_ruinas/hidrostal/para_marcar_hidrostal.png`). Siguiente: Pirostal (808), ideas de fuego.
+
+## 2026-10-18 — Ruinas: cristal 4 (Pirostal) integrado (§256)
+- Marcó el sitio (encima del muro pequeño de la derecha); entendido como del Pirostal, el Hidrostal sigue provisional en el muro alto (no lo corrigió).
+- Ideas de fuego dadas; eligió Ho-Oh con Fuego Sagrado y pasó su sprite. Le gustó Ho-Oh aleteando; la pluma pequeña «no se distingue» (rehecha grande y legible); el rastro arcoíris de puntos y las llamas de rayas le parecieron cutres (rehechos: cinta tramada y llamas de ruido).
+- Aprobado el v3 e integrado (solo 808). Tests App 549/549. Sin commit ni despliegue. Siguiente: Fitostal (811), ideas de planta.
+
+## 2026-10-18 — Fitostal (Shaymin) y entorno por tipo (§257)
+- Pokévial llevado al torneo por otra sesión: la 1.0.18 se publicó (commit 40d2e65 en main).
+- Fitostal: eligió Shaymin con la Gracídea y pasó sus tres sprites; pidió animar los dos Shaymin (vuelo de verdad), el de Tierra sobre el flotador de Machamp y la Gracídea visible fundiéndose con él. Hecho (v2).
+- Nueva regla: el tipo de cada cristal cambia las ruinas donde se queda. Lucharastal: grietas rojas y con humo; Pirostal: muro magmatizado; Fitostal: jardín más detallado; Normastal: polvo de estrellas; Hidrostal: huella de Greninja (eligió la 5 frente al manantial).
+- Tests App 549/549. Sin commit ni despliegue. El Fitostal v2 no lo ha aprobado explícitamente (pasó directamente al entorno). Siguiente: Litostal (819), ideas de roca con su efecto en las ruinas.
+
+## 2026-10-18 — Litostal: prototipo simple y traspaso (§258)
+- Marcó el sitio (encima del muro bajo de la ventana grande). Pidió: Terápagos sale del ultraumbral, da vueltas y hace brotar cristales del Área Cero; se va por un lado; Miraidon los rompe uno a uno y el grande, con el Litostal dentro, el último, que queda en su sitio. Sprites sin animar de momento.
+- Hecho el prototipo muy simple (`CapAreaZero`). Conflicto con el evento de megas de la prueba 6: aplazado tras las películas, por decidir.
+- Cambia de sesión: prompt en [[Traspaso Litostal]].
+
+## 2026-10-18 — Litostal pulido y aprobado (§259)
+- Megas de la prueba 6: decidido «primero el Litostal y después las megas» (ya funcionaba así con `CapMega.Wait`).
+- Terápagos y Miraidon animados (8 fotogramas cada uno); cristales rehechos tres veces hasta los bloques pálidos del Área Cero de sus referencias; torre y nubes cristalizadas; golpes de Miraidon épicos; bloque ámbar del Litostal; marca de roca en el muro. Todo aprobado. App compilada en Debug, 549 pruebas en verde, sin commit.
+- Trampas: `CapAreaZero.cs` quedó con fin de línea CRLF (los parches con \n fallan: normalizar antes); los heredoc con apóstrofos rompen el bash: escribir los parches a un fichero con Write.

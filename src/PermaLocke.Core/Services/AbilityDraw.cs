@@ -53,7 +53,8 @@ public static class AbilityDraw
     }
 
     public static bool IsDealable(IReadOnlyList<string> names, int id, IReadOnlyCollection<int> banned) =>
-        id > 0 && id < names.Count && id <= MaxStorable && HasName(names[id]) && !banned.Contains(id);
+        id > 0 && id < names.Count && id <= MaxStorable && HasName(names[id]) && !banned.Contains(id)
+           && !PermaLocke.Core.Domain.BrokenAbilities.All.Contains(id);
 
     /// <summary>The mod marks its holes with «-»; older lists used «—».</summary>
     private static bool HasName(string? name) =>

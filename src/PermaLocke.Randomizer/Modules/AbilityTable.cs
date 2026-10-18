@@ -35,7 +35,8 @@ public static class AbilityTable
         return
         [
             .. Enumerable.Range(1, Math.Max(0, maxAbility))
-                .Where(id => id < names.Count && HasName(names[id]) && !banned.Contains(id))
+                .Where(id => id < names.Count && HasName(names[id]) && !banned.Contains(id)
+                       && !PermaLocke.Core.Domain.BrokenAbilities.All.Contains(id))
         ];
     }
 

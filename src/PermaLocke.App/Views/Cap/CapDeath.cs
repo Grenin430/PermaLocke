@@ -43,6 +43,9 @@ public static class CapDeath
 {
     private static readonly CapDeathKind[] Kinds = Enum.GetValues<CapDeathKind>();
 
+    /// <summary>The lab only: every fall gets this death (the scenarios can no longer pick one by PID since the sequence starts from the clock).</summary>
+    public static CapDeathKind? Forced { get; set; }
+
     /// <summary>How long each death lasts, from its first frame to its last.</summary>
     public static double Seconds(CapDeathKind kind) => kind switch
     {
@@ -81,7 +84,7 @@ public static class CapDeath
         var end = double.NegativeInfinity;
         foreach (var (index, pid, at) in falls.OrderBy(f => f.At).ThenBy(f => f.Index))
         {
-            var kind = anim.Death(index) ?? KindOf(pid, index, anim.Falls(index));
+            var kind = Forced ?? anim.Death(index) ?? KindOf(pid, index, anim.Falls(index));
             var start = Math.Max(at, end);
             turns.Add(new CapDeathTurn(index, pid, kind, start));
             end = start + Seconds(kind);

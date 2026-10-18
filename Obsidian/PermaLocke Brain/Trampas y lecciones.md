@@ -135,3 +135,6 @@ Copias de la prueba en `PermaLocke prueba\Saves\backup` (prueba-A, prueba-B, cor
 - **El acceso directo «PermaLocke singleplayer.lnk» abre `binDebug`** (2026-10-17): compilar solo Release no despliega nada para el jugador.
 - **El juego genera otro Pokémon al azar justo antes del salvaje** (2026-10-17): un efecto «el siguiente generado» se lo lleva ese; la Poción Variocolor la apaga la app al leer el salvaje (§250).
 - **Un fotograma del panel más caro que su intervalo bloquea el juego** (2026-10-17): el hilo de la interfaz no respira, Windows pone una ventana fantasma de la capa encima del emulador y se come los clics; `CapBadge` espacia los fotogramas por su coste (§250).
+- **La habilidad 268 Olor Persistente cuelga el juego con el mod** en cuanto contagia a un atacante por contacto (2026-10-17): vetada en `bannedAbilities`; en el mundo actual sigue.
+- **En `Bag.cro`, el «objeto en uso» del camino de la evolución lo lee también la escena de evolución** (2026-10-17): cambiarlo por el SuperCarameloraro colgó una evolución. Probar SIEMPRE evolución y movimiento nuevo al tocar el uso de objetos.
+- **Un cambio de vida dentro de la gracia de 3 s tras un combate no es de combate si sube** (2026-10-18): la cura de un NPC al acabar se retenía; con las tablas caídas, las subidas se muestran al momento.

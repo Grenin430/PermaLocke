@@ -451,9 +451,14 @@ public static partial class RulePatches
     /// <summary>
     /// <c>Bag.cro</c>: after a level up that leads to a move to learn or an evolution, the bag reopens on a hard-coded 50
     /// (<c>mov r2,#0x32</c> handed to its «item in use» setter, 0x9530, at 0xE8BC and 0xEA58), and the «are there more»
-    /// check before using another asks for 50 too (0xE8F4). All three now read the item actually used, which the bag keeps
-    /// at <c>[this+0x170]</c> (stored zero-extended at 0xE810), so a SuperCarameloraro brings the cursor back to itself.
-    /// With a Rare Candy that word is 50, so nothing changes for it.
+    /// check before using another asks for 50 too (0xE8F4). The move's (0xEA58) and the check now read the item actually used,
+    /// which the bag keeps at <c>[this+0x170]</c> (stored zero-extended at 0xE810), so a SuperCarameloraro brings the cursor back
+    /// to itself. With a Rare Candy that word is 50, so nothing changes for it.
+    /// <para>
+    /// <b>The evolution's (0xE8BC) keeps its 50</b> (2026-10-17, seen playing: a Goldeen «evolved into Goldeen» and the game froze).
+    /// That value is not only the cursor: the evolution scene reads it to know how the Pokémon evolves, and with 113 it found no
+    /// evolution. A bag patched by the first version gets its 50 back. After an evolution the cursor goes to the Rare Candy.
+    /// </para>
     /// </summary>
     public const int BagCursorSiteA = 0xE8BC, BagCursorSiteB = 0xEA58, BagMoreSite = 0xE8F4;
 
@@ -488,10 +493,11 @@ public static partial class RulePatches
     private static bool LoopDone(ReadOnlySpan<byte> cro, int site, int @out) =>
         Holds(cro, site, BagLoopAfter(BinaryPrimitives.ReadUInt32LittleEndian(cro[(site + 16)..]), site, @out));
 
-    private static bool CursorAs(ReadOnlySpan<byte> cro, uint siteWord, uint moreWord) =>
-        Matches(cro, BagCursorSiteA, siteWord, BagCursorContext)
-        && BinaryPrimitives.ReadUInt32LittleEndian(cro[BagCursorSiteB..]) == siteWord
-        && BinaryPrimitives.ReadUInt32LittleEndian(cro[BagMoreSite..]) == moreWord;
+    /// <summary>The three sites as wanted (<paramref name="evolution"/> at the evolution's, <paramref name="move"/> at the move's, <paramref name="more"/> at the check).</summary>
+    private static bool CursorAs(ReadOnlySpan<byte> cro, uint evolution, uint move, uint more) =>
+        Matches(cro, BagCursorSiteA, evolution, BagCursorContext)
+        && BinaryPrimitives.ReadUInt32LittleEndian(cro[BagCursorSiteB..]) == move
+        && BinaryPrimitives.ReadUInt32LittleEndian(cro[BagMoreSite..]) == more;
 
     /// <summary>Points the bag's return cursor at the item used and lets the loop go on with it, in place.</summary>
     public static BattleState PatchBagCursor(Span<byte> cro)
@@ -505,12 +511,13 @@ public static partial class RulePatches
             loopsDone = false;
         }
 
-        // Una mochila con el cursor ya puesto (de la versión anterior) recibe solo los bucles.
-        var cursorDone = CursorAs(cro, LdrR2Used, LdrR1Used);
-        if (!cursorDone && !CursorAs(cro, MovR2Fifty, MovR1Fifty)) return BattleState.Unknown;
+        // Lo que se quiere, lo de la primera versión (que cambiaba también la evolución, y la colgaba) y lo del cartucho.
+        var cursorDone = CursorAs(cro, MovR2Fifty, LdrR2Used, LdrR1Used);
+        if (!cursorDone && !CursorAs(cro, LdrR2Used, LdrR2Used, LdrR1Used) && !CursorAs(cro, MovR2Fifty, MovR2Fifty, MovR1Fifty))
+            return BattleState.Unknown;
         if (cursorDone && loopsDone) return BattleState.AlreadyPatched;
 
-        BinaryPrimitives.WriteUInt32LittleEndian(cro[BagCursorSiteA..], LdrR2Used);
+        BinaryPrimitives.WriteUInt32LittleEndian(cro[BagCursorSiteA..], MovR2Fifty);
         BinaryPrimitives.WriteUInt32LittleEndian(cro[BagCursorSiteB..], LdrR2Used);
         BinaryPrimitives.WriteUInt32LittleEndian(cro[BagMoreSite..], LdrR1Used);
         foreach (var (site, @out) in BagLoops)

@@ -71,7 +71,7 @@ public sealed class SaveBoxReader(PlayerSave save, ILocationLookup locations, st
 
         var snapshot = ReadFrom(game, notice, now);
 
-        logger.LogInformation("Cajas leídas de {Path}: {Count} Pokémon en {Boxes} cajas",
+        logger.LogDebug("Cajas leídas de {Path}: {Count} Pokémon en {Boxes} cajas",
             path, snapshot.Total, snapshot.Boxes.Count);
 
         return snapshot;

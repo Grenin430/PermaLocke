@@ -19,6 +19,11 @@ public static class Program
         if (Option("--especie") is { } forcedSpecies) PermaLocke.App.Views.CapVisitors.ForcedSpecies = int.Parse(forcedSpecies);
 
         // --especies a,b,c: todas las rutas pasan a la vez con esas especies (vista conjunta)
+        // --muerte kind: every fall gets that death
+        if (Option("--muerte") is { } death) PermaLocke.App.Views.CapDeath.Forced = Enum.Parse<PermaLocke.App.Views.CapDeathKind>(death, true);
+        // --hora h: every window at that hour of Alola
+        if (Option("--hora") is { } hour) PermaLocke.App.Views.CapWorldView.ForcedHour = double.Parse(hour, System.Globalization.CultureInfo.InvariantCulture);
+        if (Option("--variante") is { } variant) PermaLocke.App.Views.CapCrystalFall.Variant = int.Parse(variant);
         if (Option("--especies") is { } forcedAll) PermaLocke.App.Views.CapVisitors.ForcedAll = [.. forcedAll.Split(',').Select(int.Parse)];
 
         // --medir scenario start preset frames: what a window's frame costs, without saving it (2026-10-17, the shiny's rainbow).
@@ -33,6 +38,21 @@ public static class Program
             var clock = System.Diagnostics.Stopwatch.StartNew();
             for (var i = 0; i < frames; i++) LabScreen.Compose(scenario, start + (i / 30.0), preset, options, game: true);
             Console.WriteLine($"{args[measure + 1]}: {clock.Elapsed.TotalMilliseconds / frames:0.0} ms por fotograma ({frames} fotogramas, {preset.Name})");
+            // Only the panels, as the app makes them: the lab's fake game and its blow-up to the window are not the app's work.
+            var plan = PermaLocke.App.Views.CapGeometry.Plan(new PermaLocke.App.Views.CapRect(0, 0, preset.Width, preset.Height), preset.Layout, 1, options, null);
+            var world = PermaLocke.App.Views.CapGeometry.WorldOf(plan);
+            var panels = System.Diagnostics.Stopwatch.StartNew();
+            for (var i = 0; i < frames; i++)
+            {
+                foreach (var slot in new[] { plan.Main, plan.Companion })
+                {
+                    if (slot is null) continue;
+                    PermaLocke.App.Views.CapPlaque.Replay(scenario, slot.Mode, slot.Cols, slot.Rows, start + (i / 30.0), slot.Panel, slot.Notch,
+                        slot.Panel == PermaLocke.App.Views.CapPanelKind.Party ? world.Party : world.Deep, world.Width);
+                }
+            }
+
+            Console.WriteLine($"  solo los paneles: {panels.Elapsed.TotalMilliseconds / frames:0.0} ms ({plan.Main?.Cols}x{plan.Main?.Rows} y {plan.Companion?.Cols}x{plan.Companion?.Rows} celdas)");
             return 0;
         }
 

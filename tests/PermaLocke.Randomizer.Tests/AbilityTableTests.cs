@@ -25,7 +25,7 @@ public sealed class AbilityTableTests
         Assert.DoesNotContain(318, pool);
         Assert.Contains(300, pool);
         Assert.Contains(319, pool);
-        Assert.Equal(319 - 6, pool.Count);
+        Assert.Equal(319 - 6 - PermaLocke.Core.Domain.BrokenAbilities.All.Count, pool.Count); // the six holes and the broken ones (268)
     }
 
     [Fact]
@@ -92,5 +92,16 @@ public sealed class AbilityTableTests
             dir = dir.Parent;
         }
         return dir?.FullName ?? throw new DirectoryNotFoundException("No se encuentra la raíz.");
+    }
+
+    [Fact]
+    public void Lingering_aroma_is_never_dealt_whatever_the_configuration_says()
+    {
+        // 2026-10-17: passing itself on to a Pokémon that hit by contact froze the game with the mod.
+        var names = Enumerable.Range(0, 320).Select(i => i == 0 ? "-" : $"Habilidad {i}").ToList();
+
+        Assert.DoesNotContain(268, AbilityTable.Assignable(names, 0 + 319, []));
+        Assert.False(PermaLocke.Core.Services.AbilityDraw.IsDealable(names, 268, []));
+        Assert.True(PermaLocke.Core.Services.AbilityDraw.IsDealable(names, 267, []));
     }
 }

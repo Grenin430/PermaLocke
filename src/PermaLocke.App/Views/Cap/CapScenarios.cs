@@ -171,6 +171,13 @@ public static class CapScenarios
             new(0, Base(icon, combat, 3)),
             new(2, Base(icon, [.. full.Select(m => m with { Hp = m.MaxHp, Status = CapStatus.None })], 3))]));
 
+        // the altar of the trials with seven crystals won, and with all twelve (2026-10-18)
+        foreach (var (name, won) in new[] { ("altar", 7), ("altar-completo", 12) })
+        {
+            var crystals = CapAltar.Order.Take(won).Select(id => (id, item?.Invoke(id))).ToList();
+            scenarios.Add(new CapScenario(name, $"El altar de las pruebas con {won} cristales", [new(0, Base(icon, full, cleared: won) with { Crystals = crystals })]));
+        }
+
         scenarios.Add(new CapScenario("cambio-cap", "Se supera la prueba: el cap pasa de 42 a 54", [
             new(0, Base(icon, atCap, 5, highest: 42)),
             new(2, Base(icon, atCap, 5, cap: 54, highest: 42, cleared: 8) with { Trial = "PRUEBA 9 DE 12", Next = 60, CrystalItem = 820, Crystal = item?.Invoke(820) })]));
@@ -179,6 +186,55 @@ public static class CapScenarios
         scenarios.Add(new CapScenario("megas", "Se supera la prueba 6: el cristal Z y las megas", [
             new(0, Base(icon, atCap, 5, cap: 36, highest: 36, cleared: 5) with { Trial = "PRUEBA 6 DE 12", Next = 42 }),
             new(2, Base(icon, atCap, 5, cap: 42, highest: 36, cleared: 6) with { Trial = "PRUEBA 7 DE 12", Next = 48, CrystalItem = 820, Crystal = item?.Invoke(820) })]));
+
+        // The first trial passed (2026-10-18, prototype): the Normastal's way into the Gimmighoul ruins, from 2 s; --variante picks how it comes down.
+        scenarios.Add(new CapScenario("normastal", "Se supera la prueba 1: el Normastal cae en las ruinas", [
+            new(0, Base(icon, atCap, 5, cap: 15, highest: 15, cleared: 0) with { Trial = "PRUEBA 1 DE 12", Next = 22 }),
+            new(2, Base(icon, atCap, 5, cap: 22, highest: 15, cleared: 1) with { Trial = "PRUEBA 2 DE 12", Next = 28, CrystalItem = 807, Crystal = item?.Invoke(807), Crystals = [(807, item?.Invoke(807))] })]));
+
+        // The second trial passed (2026-10-18, prototype): Gigantamax Machamp punches the Lucharastal into the ruins' column, from 2 s.
+        scenarios.Add(new CapScenario("lucharastal", "Se supera la prueba 2: Machamp Gigamax clava el Lucharastal", [
+            new(0, Base(icon, atCap, 5, cap: 22, highest: 22, cleared: 1) with { Trial = "PRUEBA 2 DE 12", Next = 28, Crystals = [(807, item?.Invoke(807))] }),
+            new(2, Base(icon, atCap, 5, cap: 28, highest: 22, cleared: 2) with
+            {
+                Trial = "PRUEBA 3 DE 12", Next = 32, CrystalItem = 813, Crystal = item?.Invoke(813), Crystals = [(807, item?.Invoke(807)), (813, item?.Invoke(813))],
+            })]));
+
+        // The third trial passed (2026-10-18, prototype): Mega Greninja throws the Hidrostal into the ruins, from 2 s.
+        scenarios.Add(new CapScenario("hidrostal", "Se supera la prueba 3: Mega Greninja y el Hidrostal", [
+            new(0, Base(icon, atCap, 5, cap: 28, highest: 28, cleared: 2) with { Trial = "PRUEBA 3 DE 12", Next = 32, Crystals = [(807, item?.Invoke(807)), (813, item?.Invoke(813))] }),
+            new(2, Base(icon, atCap, 5, cap: 32, highest: 28, cleared: 3) with
+            {
+                Trial = "PRUEBA 4 DE 12", Next = 36, CrystalItem = 809, Crystal = item?.Invoke(809),
+                Crystals = [(807, item?.Invoke(807)), (813, item?.Invoke(813)), (809, item?.Invoke(809))],
+            })]));
+
+        // The fourth trial passed (2026-10-18, prototype): Ho-Oh brings the Pirostal in a rainbow feather, from 2 s.
+        scenarios.Add(new CapScenario("pirostal", "Se supera la prueba 4: Ho-Oh y el Pirostal", [
+            new(0, Base(icon, atCap, 5, cap: 32, highest: 32, cleared: 3) with { Trial = "PRUEBA 4 DE 12", Next = 36, Crystals = [(807, item?.Invoke(807)), (813, item?.Invoke(813)), (809, item?.Invoke(809))] }),
+            new(2, Base(icon, atCap, 5, cap: 36, highest: 32, cleared: 4) with
+            {
+                Trial = "PRUEBA 5 DE 12", Next = 40, CrystalItem = 808, Crystal = item?.Invoke(808),
+                Crystals = [(807, item?.Invoke(807)), (813, item?.Invoke(813)), (809, item?.Invoke(809)), (808, item?.Invoke(808))],
+            })]));
+
+        // The fifth trial passed (2026-10-18, prototype): Shaymin brings the Fitostal, from 2 s.
+        scenarios.Add(new CapScenario("fitostal", "Se supera la prueba 5: Shaymin y el Fitostal", [
+            new(0, Base(icon, atCap, 5, cap: 36, highest: 36, cleared: 4) with { Trial = "PRUEBA 5 DE 12", Next = 40, Crystals = [(807, item?.Invoke(807)), (813, item?.Invoke(813)), (809, item?.Invoke(809)), (808, item?.Invoke(808))] }),
+            new(2, Base(icon, atCap, 5, cap: 40, highest: 36, cleared: 5) with
+            {
+                Trial = "PRUEBA 6 DE 12", Next = 44, CrystalItem = 811, Crystal = item?.Invoke(811),
+                Crystals = [(807, item?.Invoke(807)), (813, item?.Invoke(813)), (809, item?.Invoke(809)), (808, item?.Invoke(808)), (811, item?.Invoke(811))],
+            })]));
+
+        // The sixth trial passed (2026-10-18, prototype): Terapagos and Miraidon, the Litostal, from 2 s.
+        scenarios.Add(new CapScenario("litostal", "Se supera la prueba 6: Terápagos, Miraidon y el Litostal", [
+            new(0, Base(icon, atCap, 5, cap: 40, highest: 40, cleared: 5) with { Trial = "PRUEBA 6 DE 12", Next = 44, Crystals = [(807, item?.Invoke(807)), (813, item?.Invoke(813)), (809, item?.Invoke(809)), (808, item?.Invoke(808)), (811, item?.Invoke(811))] }),
+            new(2, Base(icon, atCap, 5, cap: 44, highest: 40, cleared: 6) with
+            {
+                Trial = "PRUEBA 7 DE 12", Next = 48, CrystalItem = 819, Crystal = item?.Invoke(819),
+                Crystals = [(807, item?.Invoke(807)), (813, item?.Invoke(813)), (809, item?.Invoke(809)), (808, item?.Invoke(808)), (811, item?.Invoke(811)), (819, item?.Invoke(819))],
+            })]));
 
         scenarios.Add(new CapScenario("eclosion", "Un huevo eclosiona", [
             new(0, Base(icon, eggs, 0)),

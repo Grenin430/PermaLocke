@@ -167,4 +167,18 @@ public sealed class HpPresenterTests
         Assert.False(presenter.Observe(B, 5, 122, 2, true));
         Assert.Equal(5, presenter.Shown(B, 2));
     }
+
+    [Fact]
+    public void With_the_battle_tables_gone_a_heal_shows_at_once_and_a_drop_is_still_held()
+    {
+        // 2026-10-17: Faba's heal right after a double battle waited about five seconds in the panel.
+        var presenter = new HpPresenter(HpSyncMode.Delayed);
+        presenter.Observe(A, 20, 100, 0, inBattle: true);
+        presenter.Observe(A, 100, 100, 1, inBattle: true, tablesGone: true);
+        Assert.Equal(100, presenter.Shown(A, 1));
+
+        presenter.Observe(B, 100, 100, 0, inBattle: true);
+        presenter.Observe(B, 80, 100, 1, inBattle: true, tablesGone: true);
+        Assert.Equal(100, presenter.Shown(B, 1));
+    }
 }

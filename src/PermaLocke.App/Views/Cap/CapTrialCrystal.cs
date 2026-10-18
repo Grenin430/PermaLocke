@@ -35,6 +35,9 @@ public sealed class CapTrialCrystal
     private readonly Dictionary<(int X, int Y), uint> _cells = [];
     private readonly HashSet<(int X, int Y)> _symbol = [];
 
+    /// <summary>The item it is the crystal of.</summary>
+    public int Item { get; private init; }
+
     public uint Ink { get; private init; }
 
     public uint Deep { get; private init; }
@@ -94,7 +97,7 @@ public sealed class CapTrialCrystal
         var symU = Most(q => q.Y < girdle && Math.Abs(q.X - mid) < 3 && Dist(q.C, light) > 40 && Dist(q.C, up) > 40, CapSheet.Darker(up, 0.3));
         var symL = Most(q => q.Y > girdle && Math.Abs(q.X - mid) < 3 && Dist(q.C, lowL) > 30 && Dist(q.C, lowR) > 30, CapSheet.Darker(lowR, 0.3));
         var glow = Saturate(CapSheet.Mix(up, gird, 0.5), 1.6);
-        var crystal = new CapTrialCrystal { Ink = ink, Deep = deep, Glow = glow, Shine = CapSheet.Mix(glow, 0xFFFFFFu, 0.55) };
+        var crystal = new CapTrialCrystal { Item = item, Ink = ink, Deep = deep, Glow = glow, Shine = CapSheet.Mix(glow, 0xFFFFFFu, 0.55) };
 
         // the crystal at twice the icon: the same rhombus, girdle and facets, the same colours
         static bool Inside(int x, int y) => (Math.Abs(x) / (double)W) + (Math.Abs(y) / (double)H) <= 1;
@@ -172,11 +175,43 @@ public sealed class CapTrialCrystal
     /// The crystal as it is at a moment: its size, its turn about its long (upright) axis, how much its symbol burns, a glint running over its
     /// facets (0 to 1, or below 0 for none), what is under the sand cut away, and a wash of white.
     /// </summary>
-    public void Paint(CapSheet p, int cx, int cy, double scale = 1, double spin = 0, double burn = 0, double glint = -1, int cut = int.MaxValue, int alpha = 255, double white = 0)
+    /// <param name="roll">Turned in the plane of the picture by this many radians (clockwise), round its middle: tipping and tumbling.</param>
+    /// <param name="wall">No cell right of this column is drawn: what is driven into a wall.</param>
+    public void Paint(CapSheet p, int cx, int cy, double scale = 1, double spin = 0, double burn = 0, double glint = -1, int cut = int.MaxValue, int alpha = 255, double white = 0,
+        double roll = 0, int wall = int.MaxValue)
     {
         var s = Math.Cos(spin);
         var w = W * Math.Abs(s) * scale;
         var h = H * scale;
+        if (roll != 0 && w >= 1.2)
+        {
+            // each cell of the window looks back through the turn to the cell of the crystal it shows
+            double co = Math.Cos(roll), si = Math.Sin(roll);
+            var reach = (int)Math.Ceiling(Math.Sqrt((w * w) + (h * h))) + 1;
+            for (var dy = -reach; dy <= reach; dy++)
+            {
+                if (cy + dy > cut) continue;
+                for (var dx = -reach; dx <= reach; dx++)
+                {
+                    double ux = (co * dx) + (si * dy), uy = (-si * dx) + (co * dy);
+                    var key = (CapDeath.R(ux / (s * scale)), CapDeath.R(uy / scale));
+                    if (cx + dx > wall || !_cells.TryGetValue(key, out var c)) continue;
+                    if (s < 0) c = CapSheet.Mix(c, Deep, 0.25);
+                    if (burn > 0 && _symbol.Contains(key)) c = CapSheet.Mix(c, CapSheet.Mix(Shine, 0xFFFFFFu, burn * 0.6), Math.Min(1, burn));
+                    if (glint >= 0 && c != Ink)
+                    {
+                        var g = (key.Item1 * 0.55) + key.Item2 - (-H - 6 + (glint * ((2 * H) + 18)));
+                        if (Math.Abs(g) < 1.4) c = CapSheet.Mix(c, 0xFFFFFFu, 0.85 * (1 - (Math.Abs(g) / 1.4)));
+                    }
+
+                    if (white > 0) c = CapSheet.Mix(c, 0xFFFFFFu, white);
+                    p.Set(cx + dx, cy + dy, c, alpha);
+                }
+            }
+
+            return;
+        }
+
         if (w < 1.2)
         {
             // edge on: a line of light

@@ -87,8 +87,13 @@ public static class CapMega
     private readonly record struct Pose(double X, double Y, double Scale, double Depth, bool Right, double Tilt, double White, double Keep, bool Moving);
 
     /// <summary>How long ago the parade started, while it plays: the cap rose at the sixth trial.</summary>
+    // The sixth trial is now the Litostal's, with a long film of its own (CapAreaZero, 2026-10-18, prototype): the parade waits until its
+    // films are over (to be settled with the player).
     public static double? Since(CapPlaqueData data, CapAnim? anim, double t) =>
-        data.Cleared == 6 && anim?.CapRise(t) is { } rise && rise.Since < Length ? rise.Since : null;
+        data.Cleared == 6 && anim?.CapRise(t) is { } rise && rise.Since - Wait(data) is var since and >= 0 && since < Length ? since : null;
+
+    private static double Wait(CapPlaqueData data) =>
+        data.CrystalItem == CapAreaZero.Litostal ? CapTrial.Length(CapTrialCrystal.Of(data.CrystalItem, data.Crystal)) : 0;
 
     /// <summary>Paints its part in one window, <paramref name="s"/> seconds in.</summary>
     public static void Paint(CapSheet p, CapWorldLayout l, CapSeaContext ctx, double s, bool deep)

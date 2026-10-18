@@ -100,11 +100,11 @@ public sealed class CapSeaPalette
     /// <summary>The sky at an hour of Alola, 0 to 24: the top colour and the colour at the horizon, between the keyframes of the day.</summary>
     public static (uint Top, uint Horizon) Sky(double hour)
     {
-        // Night, dawn, morning, noon, afternoon, dusk, night: each a top and a horizon.
+        // Night, dawn, morning, noon, afternoon, dusk, night: each a top and a horizon. The day is the deep blue of Araki's skies (2026-10-18).
         (double At, uint Top, uint Horizon)[] keys =
         [
-            (0, 0x050B24, 0x16294C), (5, 0x0A1430, 0x2A3A66), (6.5, 0x3A3A78, 0xF0905A), (8.5, 0x4A82D0, 0xB8E0F4),
-            (12, 0x3A8AE0, 0xB8ECFA), (16.5, 0x4A82D0, 0xF0D8A0), (18.5, 0x4A3A82, 0xF0704A), (20.5, 0x10183C, 0x3A3A6A), (24, 0x050B24, 0x16294C)
+            (0, 0x050B24, 0x16294C), (5, 0x0A1430, 0x2A3A66), (6.5, 0x3A3A78, 0xF0905A), (8.5, 0x2A64CC, 0x6CB4EC),
+            (12, 0x1C5AC8, 0x4AA2E8), (16.5, 0x2A64CC, 0x84C0EA), (18.5, 0x4A3A82, 0xF0704A), (20.5, 0x10183C, 0x3A3A6A), (24, 0x050B24, 0x16294C)
         ];
 
         hour = ((hour % 24) + 24) % 24;

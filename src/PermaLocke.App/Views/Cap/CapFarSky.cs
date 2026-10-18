@@ -16,7 +16,7 @@ public static class CapFarSky
 
         var t = phase / 3;
         if (l.Panel == CapPanelKind.Deep) Pillar(p, l, pal, ctx, t);
-        else Wormhole(p, l, t, wormholeSize, wormholeAlpha);
+        else Wormhole(p, l, t, wormholeSize, wormholeAlpha, CapSeaPalette.Night(ctx.SkyHour), phase);
     }
 
     /// <summary>Where the wormhole's core is in the party's window, or null when it is not drawn there.</summary>
@@ -220,86 +220,126 @@ public static class CapFarSky
 
     // ---------------------------------------------------------------- the Ultra Wormhole
 
-    private const double CoreRx = 4.5, CoreRy = 8;
+    internal const double CoreRx = 8, CoreRy = 13;
+    private const double CoreTilt = -0.17;
+    private const int Tunnel = 72;
 
-    /// <summary>The cracks, made once: from the rim of the core outward, straight runs each with a small turn, a branch now and then, and a few pieces across.</summary>
-    private static readonly (double X, double Y)[][] Cracks = MakeCracks();
+    /// <summary>One bolt of the radial fractures, from the rim of the core outward; a branch is drawn a little dimmer.</summary>
+    private sealed record Bolt((double X, double Y)[] Points, bool Branch);
 
-    private static (double X, double Y)[][] MakeCracks()
+    /// <summary>The fractures, made once: jagged bolts all round the core, fewer and shorter on the right where it opens into the tunnel.</summary>
+    private static readonly Bolt[] Bolts = MakeBolts();
+
+    private static Bolt[] MakeBolts()
     {
-        double seed = 977;
+        double seed = 4111;
         double Rnd()
         {
-            seed = Hash(seed, 31);
+            seed = Hash(seed, 57);
             return seed % 10000 / 10000;
         }
 
-        var cracks = new List<(double, double)[]>();
-        for (var i = 0; i < 18; i++)
+        // Ordered as in the art: rays evenly spread round the core, each a jagged line straight out (starting at the rim or at the first ring
+        // of the net), small ticks off its sides, and a forked tip; the tips all end near one circle, so together they draw a round burst.
+        var bolts = new List<Bolt>();
+        void Twig(double x, double y, double a, double length) =>
+            bolts.Add(new Bolt([(x, y), (x + (Math.Cos(a) * length), y + (Math.Sin(a) * length))], true));
+
+        const int rays = 16;
+        for (var i = 0; i < rays; i++)
         {
-            var a = (i / 18.0 * 2 * Math.PI) + ((Rnd() - 0.5) * 0.25);
-            var x = Math.Cos(a) * (CoreRx + 0.5);
-            var y = Math.Sin(a) * (CoreRy + 0.5);
-            var len = 9 + (Rnd() * 10);
-            var points = new List<(double, double)> { (x, y) };
-            var run = 0.0;
-            while (run < len)
+            var a = (i / (double)rays * 2 * Math.PI) + ((Rnd() - 0.5) * 0.12);
+            var right = Math.Cos(a);
+            if (right > 0.8 && i % 2 == 1) continue;
+            var (x, y) = Rim(a, i % 3 == 0 ? 2.5 : 0.4);
+            var end = (right > 0.5 ? 22.5 : 28) + ((Rnd() - 0.5) * 3);
+            var points = new List<(double X, double Y)> { (x, y) };
+            var dist = Math.Sqrt((x * x) + (y * y));
+            while (dist < end - 3)
             {
-                var step = 2.5 + (Rnd() * 3);
-                a += (Rnd() - 0.5) * 0.45;
-                x += Math.Cos(a) * step;
-                y += Math.Sin(a) * step * 0.95;
-                run += step;
-                points.Add((x, y));
-                if (Rnd() < 0.3 && run > 4)
-                {
-                    var branch = a + (Rnd() < 0.5 ? 0.75 : -0.75);
-                    var branchLength = 2.5 + (Rnd() * 3);
-                    cracks.Add([(x, y), (x + (Math.Cos(branch) * branchLength), y + (Math.Sin(branch) * branchLength))]);
-                }
+                dist += 2 + (Rnd() * 1.5);
+                var side = (Rnd() - 0.5) * 2.2;
+                points.Add(((Math.Cos(a) * dist) - (Math.Sin(a) * side), (Math.Sin(a) * dist) + (Math.Cos(a) * side)));
+                if (Rnd() < 0.15) Twig(points[^1].X, points[^1].Y, a + ((Rnd() < 0.5 ? 1 : -1) * (0.8 + (Rnd() * 0.4))), 1.5 + (Rnd() * 1.5));
             }
 
-            cracks.Add([.. points]);
+            var tipAngle = a + ((Rnd() - 0.5) * 0.3);
+            points.Add((Math.Cos(tipAngle) * end, Math.Sin(tipAngle) * end));
+            bolts.Add(new Bolt([.. points], false));
+            var (fx, fy) = points[^2];
+            Twig(fx, fy, a + 0.35 + (Rnd() * 0.25), 2.5 + (Rnd() * 1.5));
+            if (Rnd() < 0.5) Twig(fx, fy, a - 0.35 - (Rnd() * 0.25), 2.5 + (Rnd() * 1.5));
         }
 
-        for (var i = 0; i < 7; i++)
-        {
-            var r = 9 + (Rnd() * 8);
-            var a0 = Rnd() * 2 * Math.PI;
-            var a1 = a0 + 0.25 + (Rnd() * 0.2);
-            cracks.Add([(Math.Cos(a0) * r * 1.05, Math.Sin(a0) * r), (Math.Cos(a1) * r * 1.05, Math.Sin(a1) * r)]);
-        }
-
-        return [.. cracks];
+        return [.. bolts];
     }
 
+    /// <summary>A point on the rim of the core (a tilted oval) at angle <paramref name="a"/>, pushed out by <paramref name="extra"/> cells.</summary>
+    private static (double X, double Y) Rim(double a, double extra)
+    {
+        double x = Math.Cos(a) * (CoreRx + extra), y = Math.Sin(a) * (CoreRy + extra);
+        return ((x * Math.Cos(CoreTilt)) - (y * Math.Sin(CoreTilt)), (x * Math.Sin(CoreTilt)) + (y * Math.Cos(CoreTilt)));
+    }
+
+    /// <summary>How far out of the core a cell is: under 1 inside it.</summary>
+    private static double CoreDistance(double x, double y, double grow)
+    {
+        double u = (x * Math.Cos(CoreTilt)) + (y * Math.Sin(CoreTilt)), v = (-x * Math.Sin(CoreTilt)) + (y * Math.Cos(CoreTilt));
+        return Math.Sqrt(Math.Pow(u / (CoreRx + grow), 2) + Math.Pow(v / (CoreRy + grow), 2));
+    }
+
+    private static double Frac(uint h) => h % 10000 / 10000.0;
+
+    /// <summary>The broken rings of the net round the mouth: size against the core, how far left, up to which side, how bright.</summary>
+    private static readonly (double Scale, double Shift, double Upto, double Alpha)[] Webs = [(1.22, 0.5, 2, 200), (1.6, 3, 0.35, 170), (2.0, 6, 0.1, 140)];
+
+    /// <summary>The night's two hexagons of lens flare: where and how big.</summary>
+    private static readonly (double X, double Y, double R)[] Flares = [(-35, -1, 4.5), (-28, 12, 3)];
+
+    /// <summary>A point of a ring of the tunnel: its offset from the axis turned as the core is, so every ring leans like the mouth.</summary>
+    private static (double X, double Y) Tilted(double x, double y, double ox, double oy) =>
+        (x + (ox * Math.Cos(CoreTilt)) - (oy * Math.Sin(CoreTilt)), y + (ox * Math.Sin(CoreTilt)) + (oy * Math.Cos(CoreTilt)));
+
     /// <summary>
-    /// After the official art (day, night and the side view): a white core, round and very bright; white cracks running out of it like a pane
-    /// broken from the centre, still; a soft envelope of violet, pink and cyan round it; the net of its side view, a funnel of thin lines with no
-    /// fill narrowing away from the opening and bright inside; and a long cyan and violet trail along it, fading into the sky.
+    /// After the official concept art (day, night, the side view and its three images): a tall white oval, blinding; jagged white fractures
+    /// out of it all round like broken glass struck by lightning, which crackle; a glow of violet, magenta and pink round it with a warm touch on
+    /// the left; behind it a tunnel of thin white lines (rings and runs along it) narrowing to the right, bright inside, an aurora of cyan along
+    /// its top and violet along its bottom flowing away; at night two pale hexagons of lens flare on the left.
     /// </summary>
-    private static void Wormhole(CapSheet p, CapWorldLayout l, double t, double size = 1, double shown = 1)
+    private static void Wormhole(CapSheet p, CapWorldLayout l, double t, double size = 1, double shown = 1, double night = 0, double seconds = 0)
     {
         if (WormholeAt(l) is not { } at) return;
         var (cx, cy) = at;
-        var trail = Math.Min(72, l.Main.Right - 4 - (cx + 3));
+        var length = Math.Min(Tunnel, l.Main.Right - 4 - cx);
 
         // bigger than its own size, each cell of it is a block of cells, as far from the core as it is made bigger
         var block = Math.Max(1, (int)Math.Ceiling(size));
         void Put(double x, double y, uint c, double alpha)
         {
             var a = Math.Clamp(R(alpha * shown), 0, 255);
-            if (size == 1) { Far(p, l, cx + (int)x, cy + (int)y, c, 0.04, a); return; }
-            int bx = cx + R((int)x * size), by = cy + R((int)y * size);
+            if (size == 1) { Far(p, l, cx + R(x), cy + R(y), c, 0.04, a); return; }
+            int bx = cx + R(R(x) * size), by = cy + R(R(y) * size);
             for (var v = 0; v < block; v++) for (var u = 0; u < block; u++) Far(p, l, bx + u, by + v, c, 0.04, a);
         }
-        void Line(double x0, double y0, double x1, double y1, uint c, double alpha)
+        // A line of cells; `outside` keeps it off the core; `reach` paints a halo that far round each cell instead of the cell itself (no
+        // delegates, so a frame allocates nothing).
+        void Line(double x0, double y0, double x1, double y1, uint c, double alpha, bool outside = false, int reach = 0)
         {
             int ax = R(x0), ay = R(y0), bx = R(x1), by = R(y1);
             int dx = Math.Abs(bx - ax), dy = -Math.Abs(by - ay), sx = ax < bx ? 1 : -1, sy = ay < by ? 1 : -1, err = dx + dy;
             while (true)
             {
-                Put(ax, ay, c, alpha);
+                if (reach == 0)
+                {
+                    if (!outside || CoreDistance(ax, ay, 0) >= 1) Put(ax, ay, c, alpha);
+                }
+                else
+                {
+                    for (var v = -reach; v <= reach; v++)
+                        for (var u = -reach; u <= reach; u++)
+                            if ((u != 0 || v != 0) && CoreDistance(ax + u, ay + v, 0) >= 1) Put(ax + u, ay + v, c, alpha / Math.Max(Math.Abs(u), Math.Abs(v)));
+                }
+
                 if (ax == bx && ay == by) return;
                 var e2 = 2 * err;
                 if (e2 >= dy) { err += dy; ax += sx; }
@@ -307,102 +347,167 @@ public static class CapFarSky
             }
         }
 
-        var pulse = 0.5 + (0.5 * Math.Sin(2 * Math.PI * t));
+        var wave = 2 * Math.PI * t;
+        var pulse = 0.5 + (0.5 * Math.Sin(wave));
+        double Axis(double x) => -x * 0.14;
+        double Half(double x) => (CoreRy + 5) * (1 - (0.65 * Math.Pow(Math.Clamp(x / length, 0, 1), 0.9)));
 
-        // the envelope: violet all round, pink and a touch of orange on the open side, cyan close to the core
-        for (var dy = -24; dy <= 24; dy++)
+        // the glow: violet outside, magenta and pink nearer, pale pink by the core, a warm orange touch on the left and bluer on the right
+        for (var dy = -38; dy <= 38; dy++)
         {
-            for (var dx = -27; dx <= 27; dx++)
+            for (var dx = -48; dx <= 38; dx++)
             {
-                var d = Math.Sqrt(Math.Pow(dx / 25.0, 2) + Math.Pow(dy / 23.0, 2));
+                var d = Math.Sqrt(Math.Pow((dx + 4) / 44.0, 2) + Math.Pow(dy / 36.0, 2));
                 if (d > 1) continue;
-                var left = Math.Max(0, -dx / 25.0);
-                var c = CapSheet.Mix(0x7A48D8u, 0xF08CC8u, Math.Min(1, left * 1.5));
-                if (left > 0.45 && Math.Abs(dy) < 8) c = CapSheet.Mix(c, 0xF8B888u, (left - 0.45) * 0.8);
-                if (d < 0.4) c = CapSheet.Mix(c, 0x8CF4E8u, (0.4 - d) / 0.4);
-                Put(dx, dy, c, 235 * (1 - (d * d)));
+                var c = CapSheet.Mix(0x7048E0u, 0xE050D0u, Math.Clamp((0.9 - d) / 0.45, 0, 1));
+                c = CapSheet.Mix(c, 0xFFC8F0u, Math.Clamp((0.35 - d) / 0.25, 0, 1));
+                if (dx > 0) c = CapSheet.Mix(c, 0x5A7CF0u, dx / 40.0);
+                var warm = Math.Sqrt(Math.Pow((dx + 12) / 9.0, 2) + Math.Pow((dy + 4) / 8.0, 2));
+                if (warm < 1) c = CapSheet.Mix(c, 0xFFA868u, (1 - warm) * 0.8);
+                Put(dx, dy, c, Math.Min(255, (300 + (40 * pulse)) * Math.Pow(1 - d, 1.1)));
             }
         }
 
-        // the trail: a long band of cyan into violet, going right and a little up along the tunnel, fading; it drifts a little
-        var drift = Math.Sin(2 * Math.PI * t) * 1.2;
-        for (var dy = -22; dy <= 8; dy++)
+        // the tunnel's inside: bright by the mouth, an aurora of cyan along the top and violet along the bottom flowing away, a haze past its end
+        for (var dx = 0; dx <= length + 10; dx++)
         {
-            for (var dx = 0; dx <= trail + 4; dx++)
+            var along = dx / (double)length;
+            var axis = Axis(dx);
+            var half = Half(dx);
+            for (var dy = (int)Math.Floor(axis - half); dy <= axis + half; dy++)
             {
-                var along = dx / (double)trail;
-                var axis = -2 - (along * 12) + (drift * along);
-                var width = 7 * (1 - (along * 0.5));
-                var off = Math.Abs(dy - axis) / width;
-                if (along > 1 || off > 1) continue;
-                var c = CapSheet.Mix(0x5CFFE8u, 0xB06CFFu, Math.Min(1, along * 1.1));
-                var shimmer = 0.82 + (0.18 * Math.Sin((along * 14) - (2 * Math.PI * t)));
-                Put(dx + 3, dy, c, 250 * Math.Pow(1 - along, 0.75) * (1 - (off * off)) * shimmer);
+                var off = (dy - axis) / half;
+                if (Math.Abs(off) > 1) continue;
+                var fade = along > 1 ? Math.Max(0, 1 - ((along - 1) * length / 10)) * 0.35 : Math.Pow(1 - (along * 0.85), 0.8);
+                var flow = 0.6 + (0.4 * Math.Sin((along * 15) - (wave * 2)));
+                var ripple = 0.08 * Math.Sin((along * 9) + wave);
+                var c = CapSheet.Mix(0x6A50E0u, 0x6C9CF8u, along);
+                var alpha = 185.0;
+                var top = Math.Max(0, 1 - (Math.Abs(off + 0.5 + ripple) / 0.45));
+                var bottom = Math.Max(0, 1 - (Math.Abs(off - 0.45 - ripple) / 0.35));
+                if (top > 0) { c = CapSheet.Mix(c, 0x58FFD8u, Math.Min(1, top * flow * 1.3)); alpha += 200 * top * flow; }
+                if (bottom > 0) { c = CapSheet.Mix(c, 0xC27CFFu, bottom * flow * 0.8); alpha += 70 * bottom * flow; }
+                if (along < 0.25) { var mouth = 1 - (along / 0.25); c = CapSheet.Mix(c, 0xC8FAFFu, mouth * 0.7); alpha += 90 * mouth; }
+                Put(dx, dy, c, alpha * fade * (1 - (Math.Pow(off, 6) * 0.6)));
             }
         }
 
-        // the net seen from the side: rings shrinking away from the opening and lines along it, thin and unfilled; the inside a little bright
-        var rings = Enumerable.Range(0, 7).Select(i => (X: 4 + (i * 8) - (i * i * 0.25), Ry: 11 * (1 - (i * 0.1)), Rx: 11 * (1 - (i * 0.1)) * 0.3)).ToArray();
-        for (var i = 0; i + 1 < rings.Length; i++)
+        // the net: rings that run away from the mouth (closer and closer as they go) and lines along the tunnel, thin, white and unfilled
+        for (var i = 0; i < 7; i++)
         {
-            var (a, b) = (rings[i], rings[i + 1]);
-            for (var x = (int)Math.Ceiling(a.X); x < b.X; x++)
-            {
-                var ry = a.Ry + ((b.Ry - a.Ry) * ((x - a.X) / (b.X - a.X)));
-                for (var y = -(int)Math.Floor(ry); y <= ry; y++) Put(x, y, 0xC8FFF8u, 60 * (1 - (i / 7.0)));
-            }
-        }
-
-        for (var i = 0; i < rings.Length; i++)
-        {
-            var r = rings[i];
+            var u = ((i + (t * 2)) / 7) % 1;
+            var x = length * (1 - Math.Pow(1 - u, 1.6));
+            var half = Half(x);
+            var alpha = 150 * Math.Min(1, u / 0.12) * Math.Pow(1 - (x / length), 0.7);
             (double X, double Y)? previous = null;
-            for (var s = 0.0; s <= 1.0001; s += 1 / 40.0)
+            for (var s = 0.0; s <= 1.0001; s += 1 / 36.0)
             {
                 var angle = s * 2 * Math.PI;
-                var point = (X: r.X + (Math.Cos(angle) * r.Rx), Y: Math.Sin(angle) * r.Ry);
-                if (previous is { } from) Line(from.X, from.Y, point.X, point.Y, 0xE6FAFFu, (Math.Cos(angle) > 0 ? 120 : 70) * (1 - (i * 0.11)));
+                var point = Tilted(x, Axis(x), Math.Cos(angle) * half * 0.3, Math.Sin(angle) * half);
+                var a = alpha * (Math.Cos(angle) > 0 ? 1 : 0.6);
+                if (previous is { } from) Line(from.X, from.Y, point.X, point.Y, 0xEAF6FFu, a);
                 previous = point;
             }
         }
 
-        for (var j = 0; j < 10; j++)
+        for (var j = 0; j < 9; j++)
         {
-            var angle = (j / 10.0 * 2 * Math.PI) + 0.3;
-            for (var i = 0; i + 1 < rings.Length; i++)
+            var angle = (j / 9.0 * 2 * Math.PI) + 0.35;
+            (double X, double Y) P(double at) => Tilted(at, Axis(at), Math.Cos(angle) * Half(at) * 0.3, Math.Sin(angle) * Half(at));
+            for (var x = 0.0; x + 3 <= length; x += 3)
             {
-                var (a, b) = (rings[i], rings[i + 1]);
-                Line(a.X + (Math.Cos(angle) * a.Rx), Math.Sin(angle) * a.Ry, b.X + (Math.Cos(angle) * b.Rx), Math.Sin(angle) * b.Ry, 0xE6FAFFu, 85 * (1 - (i * 0.13)));
+                var a = 130 * Math.Pow(1 - (x / length), 0.8) * (Math.Cos(angle) > 0 ? 1 : 0.65);
+                var (x0, y0) = P(x);
+                var (x1, y1) = P(x + 3);
+                Line(x0, y0, x1, y1, 0xEAF6FFu, a);
             }
         }
 
-        // the cracks, thin and white, still; never over the core
-        foreach (var crack in Cracks)
+        // the net round the mouth (marked by the user on the art): broken rings round the core, each bigger one further left, as the funnel
+        // flares open towards us, with short ticks across between them; the first hugs the core all round, the others only on its open side
+        for (var k = 0; k < Webs.Length; k++)
         {
-            for (var i = 0; i + 1 < crack.Length; i++)
+            var (scale, shift, upto, alpha) = Webs[k];
+            (double X, double Y) On(double angle, double grow)
             {
-                int ax = R(crack[i].X), ay = R(crack[i].Y), bx = R(crack[i + 1].X), by = R(crack[i + 1].Y);
-                int dx = Math.Abs(bx - ax), dy = -Math.Abs(by - ay), sx = ax < bx ? 1 : -1, sy = ay < by ? 1 : -1, err = dx + dy;
-                while (true)
+                var (rx, ry) = Rim(angle, 0);
+                return ((rx * (scale + grow)) - shift, ry * (scale + grow));
+            }
+
+            const int steps = 96;
+            for (var s = 0; s < steps; s++)
+            {
+                var a0 = s / (double)steps * 2 * Math.PI;
+                if (Math.Cos(a0) > upto || Hash(k + 11, s / 3) % 10 >= 7) continue;
+                var (x0, y0) = On(a0, 0);
+                var (x1, y1) = On(a0 + (2 * Math.PI / steps), 0);
+                Line(x0, y0, x1, y1, 0xF0F8FFu, alpha, outside: true);
+            }
+
+            if (k + 1 == Webs.Length) continue;
+            for (var n = 0; n < 9; n++)
+            {
+                var a = Frac(Hash(k + 21, n)) * 2 * Math.PI;
+                if (Math.Cos(a) > Webs[k + 1].Upto) continue;
+                var (x0, y0) = On(a, 0.05);
+                var (x1, y1) = On(a, 0.05 + ((Webs[k + 1].Scale - scale) * 0.6));
+                Line(x0, y0, x1, y1, 0xF0F8FFu, 90);
+            }
+        }
+
+        // at night, two pale hexagons of lens flare on the left
+        if (night > 0.05)
+        {
+            foreach (var (hx, hy, hr) in Flares)
+            {
+                for (var dy = -4; dy <= 4; dy++)
                 {
-                    if (Math.Pow(ax / (CoreRx + 0.5), 2) + Math.Pow(ay / (CoreRy + 0.5), 2) >= 1) Put(ax, ay, 0xFFFFFFu, 235);
-                    if (ax == bx && ay == by) break;
-                    var e2 = 2 * err;
-                    if (e2 >= dy) { err += dy; ax += sx; }
-                    if (e2 <= dx) { err += dx; ay += sy; }
+                    for (var dx = -4; dx <= 4; dx++)
+                    {
+                        var e = Math.Max(Math.Abs(dy) / 0.866, (Math.Abs(dy) * 0.577) + Math.Abs(dx)) / hr;
+                        if (e <= 1) Put(hx + dx, hy + dy, 0xC8A8FFu, night * (e > 0.75 ? 80 : 45));
+                    }
                 }
             }
         }
 
-        // the core: a bloom round it, a cyan rim on the far side, the white body; it pulses softly
-        var grow = 0.5 * pulse;
-        for (var dy = -13; dy <= 13; dy++)
+        // the fractures: a lavender glow under each, then the white bolt; they crackle ten times a second (the inner points shake, the tips
+        // come and go, one now and then flashes)
+        var tick = Math.Floor(seconds * 10);
+        (double X, double Y) Shaken(int b, int i)
         {
-            for (var dx = -9; dx <= 9; dx++)
+            var (x, y) = Bolts[b].Points[i];
+            if (i == 0) return (x, y);
+            return (x + ((Frac(Hash(tick, (b * 131) + (i * 7))) - 0.5) * 1.1), y + ((Frac(Hash(tick + 7, (b * 131) + (i * 7))) - 0.5) * 1.1));
+        }
+
+        for (var pass = 0; pass < 2; pass++)
+        {
+            for (var b = 0; b < Bolts.Length; b++)
             {
-                var d = Math.Sqrt(Math.Pow(dx / (CoreRx + grow), 2) + Math.Pow(dy / (CoreRy + grow), 2));
-                if (d <= 1) Put(dx, dy, d > 0.82 && dx > 1 ? 0xA8FFF0u : 0xFFFFFFu, 255);
-                else if (d < 1.6) Put(dx, dy, 0xF4FFFFu, (150 + (60 * pulse)) * (1.6 - d) / 0.6);
+                var count = Bolts[b].Points.Length;
+                if (count > 2 && Frac(Hash(tick, (b * 17) + 3)) < 0.3) count--;
+                var light = (Bolts[b].Branch ? 0.8 : 1) * (0.72 + (0.28 * Frac(Hash(tick, b + 900))));
+                var flash = Hash(tick, b + 400) % 14 == 0;
+                for (var i = 0; i + 1 < count; i++)
+                {
+                    var (x0, y0) = Shaken(b, i);
+                    var (x1, y1) = Shaken(b, i + 1);
+                    if (pass == 0) Line(x0, y0, x1, y1, 0xD6B4FFu, (flash ? 90 : 30) * light, reach: flash ? 2 : 1);
+                    else Line(x0, y0, x1, y1, 0xFFFFFFu, flash ? 255 : 255 * light, outside: true);
+                }
+            }
+        }
+
+        // the core: the white oval, a pale cyan rim on its right where the tunnel opens, a bloom round it; it pulses softly
+        var grow = 0.5 * pulse;
+        for (var dy = -24; dy <= 24; dy++)
+        {
+            for (var dx = -16; dx <= 16; dx++)
+            {
+                var d = CoreDistance(dx, dy, grow);
+                if (d <= 1) Put(dx, dy, d > 0.85 && dx > 2 ? 0xC8FFF8u : 0xFFFFFFu, 255);
+                else if (d < 1.7) Put(dx, dy, 0xF8F0FFu, (170 + (60 * pulse)) * (1.7 - d) / 0.7);
             }
         }
     }

@@ -96,6 +96,9 @@ public sealed class CapBadge
     /// <summary>How long a battle is still taken as going on after its tables stop answering: between turns they stop validating for a moment.</summary>
     private const double BattleGrace = 3;
 
+    /// <summary>How long the battle's tables stay silent before the shiny's look starts to go (2026-10-17).</summary>
+    private const double ShinyGrace = 1;
+
     /// <summary>
     /// Whether a battle goes on (2026-10-15): the battle's tables stop validating for a moment between turns, just when the end-of-turn damage
     /// (Bind, Whirlpool, poison, weather) is in memory, and for the panel that was the battle over: what was held came out at once, before the game
@@ -420,7 +423,8 @@ public sealed class CapBadge
         var fill = _monitor.BattleNow.Count > 0 ? _active.Current() : null;
         foreach (var member in party)
         {
-            if (!member.IsEgg) arm |= _hp.Observe(member.Pid, member.CurrentHp, member.MaxHp, now, _battle, _battle && _active.SeenInBattle);
+            if (!member.IsEgg) arm |= _hp.Observe(member.Pid, member.CurrentHp, member.MaxHp, now, _battle, _battle && _active.SeenInBattle,
+                tablesGone: _monitor.BattleNow.Count == 0);
         }
 
         if (fill is { } seen) _hp.Follow(seen, now);
@@ -631,8 +635,12 @@ public sealed class CapBadge
             }
         }
 
-        // The shiny lasts as long as its battle; then it runs back, and when that is done it is forgotten.
-        if (_shinyTurn is { End: null } running && !_battle) _shinyTurn = running with { End = Now };
+        // The shiny lasts as long as its battle; then it runs back, and when that is done it is forgotten. Its end does not wait the panel's three
+        // seconds of grace (2026-10-17: it was slow to go): one second without the battle's tables; and if that was only a pause between turns and
+        // the battle answers again while it is going, it comes back.
+        var tablesGone = _monitor.BattleNow.Count == 0 && Now - _battleSeenAt > ShinyGrace;
+        if (_shinyTurn is { End: null } running && tablesGone) _shinyTurn = running with { End = Now };
+        else if (_shinyTurn is { End: { } ended } leaving && _monitor.BattleNow.Count > 0 && Now - ended < CapShiny.Back) _shinyTurn = leaving with { End = null };
         if (_shinyTurn?.Over(Now) == true) _shinyTurn = null;
 
         _lastMode = plan.Main?.Mode;

@@ -146,16 +146,18 @@ internal sealed class WormholeDeath : DeathStyle
         // the core draws breath while it eats, then flashes violet, cyan and white, cracks more and spits sparks back
         var (cx, cy) = S.Core;
         var eating = Clamp01((t - 1.0) / 1.8);
-        Glow(p, cx, cy, 6 + (eating * 3), 9 + (eating * 4), 0xFFFFFFu, 120 * eating);
+        // sized by the core of the wormhole as drawn since the official art (2026-10-18), so the breath shows round it and not inside it
+        const double rx = CapFarSky.CoreRx, ry = CapFarSky.CoreRy;
+        Glow(p, cx, cy, rx + 2 + (eating * 4), ry + 2 + (eating * 5), 0xFFFFFFu, 120 * eating);
         var k = (t - 2.75) / 0.6;
         if (k > 0 && k < 1)
         {
             var c = k < 0.33 ? 0xB070FFu : k < 0.66 ? 0x7CF0FFu : 0xFFFFFFu;
-            Glow(p, cx, cy, 8 + (k * 18), 8 + (k * 16), c, 255 * (1 - k));
+            Glow(p, cx, cy, rx + 3 + (k * 22), ry + 1 + (k * 20), c, 255 * (1 - k));
             for (var a = 0; a < 70; a++)
             {
                 var ang = a / 70.0 * 2 * Math.PI;
-                var r = 6 + (k * 30);
+                var r = rx + 2 + (k * 34);
                 Put(p, cx + (Math.Cos(ang) * r), cy + (Math.Sin(ang) * r * 0.85), CapSheet.Mix(0xE0C8FFu, 0xFFFFFFu, k), 220 * (1 - k));
             }
         }
@@ -168,8 +170,8 @@ internal sealed class WormholeDeath : DeathStyle
             for (var i = 0; i < 4; i++)
             {
                 var a = (i * 1.57) + 0.6;
-                var len = (16 + (i * 4)) * grow;
-                Line(cx + (Math.Cos(a) * 6), cy + (Math.Sin(a) * 9), cx + (Math.Cos(a) * (6 + len)), cy + (Math.Sin(a) * (9 + (len * 0.8))), (x, y) =>
+                var len = (24 + (i * 5)) * grow;
+                Line(cx + (Math.Cos(a) * rx), cy + (Math.Sin(a) * ry), cx + (Math.Cos(a) * (rx + len)), cy + (Math.Sin(a) * (ry + (len * 0.8))), (x, y) =>
                 {
                     if (y < S.Layout.SurfaceY) p.Set(x, y, 0xFFFFFFu, (int)rays);
                 });
@@ -183,7 +185,7 @@ internal sealed class WormholeDeath : DeathStyle
                 var age = t - 2.85 - (i * 0.04);
                 if (age < 0 || age > 0.9) continue;
                 var a = -0.3 + (i * 0.4) + (Math.PI * 0.5);
-                Put(p, cx + (Math.Cos(a) * (8 + (age * 30))), cy + (Math.Sin(a) * (6 + (age * 14))) + (age * age * 30), i % 2 == 1 ? 0x9CF2FFu : 0xFFE0FFu, 255 * (1 - (age / 0.9)));
+                Put(p, cx + (Math.Cos(a) * (rx + 2 + (age * 30))), cy + (Math.Sin(a) * (ry + (age * 14))) + (age * age * 30), i % 2 == 1 ? 0x9CF2FFu : 0xFFE0FFu, 255 * (1 - (age / 0.9)));
             }
         }
     }
@@ -762,9 +764,10 @@ internal sealed class BoltsDeath : DeathStyle
     /// </summary>
     public override double WormholeSize(double t)
     {
-        var charge = 0.3 * (Ease(Clamp01(t / 0.45)) - (0.6 * Ease(Clamp01((t - 0.45) / 0.5))));
+        // smaller swells since the wormhole is drawn bigger after the official art (2026-10-18), so it stays in the sky
+        var charge = 0.22 * (Ease(Clamp01(t / 0.45)) - (0.6 * Ease(Clamp01((t - 0.45) / 0.5))));
         var swallow = Hit + 1.1;
-        var swell = 0.4 * (Ease(Clamp01((t - swallow) / 0.45)) - Ease(Clamp01((t - swallow - 0.55) / (CapDeath.Seconds(CapDeathKind.Bolts) - swallow - 0.75))));
+        var swell = 0.28 * (Ease(Clamp01((t - swallow) / 0.45)) - Ease(Clamp01((t - swallow - 0.55) / (CapDeath.Seconds(CapDeathKind.Bolts) - swallow - 0.75))));
         return 1 + charge + swell;
     }
 

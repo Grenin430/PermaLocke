@@ -42,6 +42,18 @@ const META = {
   remoraid: { id: 223, drift: 6, bob: 1.5, surge: 1.0 },
   skarmory: { id: 227, drift: 2, bob: 0.5, surge: 0.8 },
   megaskarmory: { id: 227, drift: 2, bob: 0.5, surge: 0.8 },
+  tapukoko: { id: 785, drift: 0, bob: 0, surge: 0 },
+  machamp: { id: 68, drift: 0, bob: 0, surge: 0 },
+  gmaxmachamp: { id: 20068, drift: 0, bob: 0, surge: 0 },
+  setasdinamax: { id: 20069, drift: 0, bob: 0, surge: 0 },
+  megagreninja: { id: 10658, drift: 0, bob: 0, surge: 0 },
+  megagreninjasalto: { id: 20658, drift: 0, bob: 0, surge: 0 },
+  hoohsagrado: { id: 20250, drift: 0, bob: 0, surge: 0 },
+  shaymintierra: { id: 492, drift: 0, bob: 0, surge: 0 },
+  shaymincielo: { id: 10492, drift: 0, bob: 0, surge: 0 },
+  gracidea: { id: 20492, drift: 0, bob: 0, surge: 0 },
+  terapagos: { id: 1024, drift: 0, bob: 0, surge: 0 },
+  miraidon: { id: 1008, drift: 0, bob: 0, surge: 0 },
   pikipek: { id: 731, drift: 7, bob: 2, surge: 0.6 },
   lumineon: { id: 457, drift: 6, bob: 1.5, surge: 0.6 },
   seadra: { id: 117, drift: 4, bob: 2, surge: 0.7 },
@@ -79,6 +91,8 @@ for (const name of process.argv.slice(2)) {
   const maxTilt = Math.max(...m.angles.map(Math.abs)) * Math.PI / 180;
   let cell = Math.ceil(Math.max(w * Math.cos(maxTilt) + h * Math.sin(maxTilt), h * Math.cos(maxTilt) + w * Math.sin(maxTilt)));
   cell += cell % 2;
+  // a drawing turned right round (the flips) needs room for its diagonal
+  if (Math.max(...m.angles.map(Math.abs)) > 90) cell = Math.ceil(Math.hypot(w, h)) + (Math.ceil(Math.hypot(w, h)) % 2);
   const pivot = [w / 2, h / 2];
   const { cells } = C.sheet(name, m.pal, m.fr, m.angles, pivot, cell, m.protect);
   if (m.sealRotatedHoles) require("./seal_sheet")(name, m.pal, cells);

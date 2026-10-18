@@ -21,6 +21,9 @@ public sealed class CapWorldView
 
     private CapPlaqueData? _data;
     private CapSeaContext _context = new();
+
+    /// <summary>The lab only: draws every window at this hour of Alola instead of the run's.</summary>
+    public static double? ForcedHour { get; set; }
     private string _sceneKey = string.Empty;
     private string _buoyKey = string.Empty;
     private int[] _fossils = [];
@@ -52,7 +55,7 @@ public sealed class CapWorldView
     public void SetData(CapPlaqueData data, int worldX = 0, int worldWidth = 0)
     {
         _data = data;
-        _context = new CapSeaContext(data.Seed, data.Hour, worldX, worldWidth);
+        _context = new CapSeaContext(data.Seed, ForcedHour ?? data.Hour, worldX, worldWidth);
 
         // The scene is remade when the floor changes (a grave, a stratum), the hour moves a quarter, or the run is another.
         var graves = data.Graves ?? [];
@@ -129,6 +132,7 @@ public sealed class CapWorldView
 
         // The stars twinkle behind what stands far off in the sky (the Sky Pillar, the Ultra Wormhole, 2026-10-15), and the sea is in front of it.
         CapSeaLive.Stars(frame, Layout, _context, phase);
+        CapClouds.Paint(frame, Layout, pal, _context, t);
         CapFarSky.Paint(frame, Layout, pal, _context, phase, scene?.WormholeSize(t) ?? 1);
         CapSeaLive.Surface(frame, Layout, pal, _context, phase);
         CapSeaLive.Shafts(frame, Layout, pal, _context, phase);
@@ -147,7 +151,41 @@ public sealed class CapWorldView
         if (parade is { } megaSince) CapMega.Paint(frame, Layout, _context, megaSince, Layout.Panel == CapPanelKind.Deep);
 
         // The crystals of the trials cleared, set in the abyss's sand (2026-10-16).
-        CapTrial.PaintBed(frame, Layout, data.Crystals, trial, data.CrystalItem, phase);
+        // prototype of the plan (2026-10-18): the Gimmighoul ruins take the altar's place; the crystals go into them in the next step
+        CapGimmighoulRuins.Paint(frame, Layout, pal, _context, phase);
+
+        // the Normastal in the ruins' window for the rest of the run (2026-10-18), unless its film is showing it coming
+        if (Layout.Panel == CapPanelKind.Deep && trial?.Crystal?.Item != CapCrystalFall.Normastal && data.Crystals is { } won)
+        {
+            foreach (var (item, icon) in won)
+            {
+                if (item == CapCrystalFall.Normastal && CapTrialCrystal.Of(item, icon) is { } normastal) CapCrystalFall.PaintRest(frame, Layout, _context, normastal, phase);
+                if (item == CapAreaZero.Litostal && trial?.Crystal?.Item != CapAreaZero.Litostal && CapTrialCrystal.Of(item, icon) is { } litostal)
+                {
+                    CapAreaZero.PaintRest(frame, Layout, _context, litostal, phase);
+                }
+
+                if (item == CapShaymin.Fitostal && trial?.Crystal?.Item != CapShaymin.Fitostal && CapTrialCrystal.Of(item, icon) is { } fitostal)
+                {
+                    CapShaymin.PaintRest(frame, Layout, _context, fitostal, phase);
+                }
+
+                if (item == CapHoOh.Pirostal && trial?.Crystal?.Item != CapHoOh.Pirostal && CapTrialCrystal.Of(item, icon) is { } pirostal)
+                {
+                    CapHoOh.PaintRest(frame, Layout, _context, pirostal, phase);
+                }
+
+                if (item == CapGreninja.Hidrostal && trial?.Crystal?.Item != CapGreninja.Hidrostal && CapTrialCrystal.Of(item, icon) is { } hidrostal)
+                {
+                    CapGreninja.PaintRest(frame, Layout, _context, hidrostal, phase);
+                }
+
+                if (item == CapMachamp.Lucharastal && trial?.Crystal?.Item != CapMachamp.Lucharastal && CapTrialCrystal.Of(item, icon) is { } lucharastal)
+                {
+                    CapMachamp.PaintRest(frame, Layout, _context, lucharastal, phase);
+                }
+            }
+        }
 
         if (Layout.Panel == CapPanelKind.Party) PaintParty(frame, data, pal, mood, anim, t, phase, deaths, trial, order);
 

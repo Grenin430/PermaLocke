@@ -77,6 +77,25 @@ public sealed record CritterArt(int Species, string Name, CritterMotion Motion, 
             new(10398, "Mega Staraptor", CritterMotion.Fish, "", "", Fps: 9, Sheet: "megastaraptor", Cell: 98, Angles: [-2, 0, 2], Pose: 0, Height: 83, Drift: 2, Bob: 0.5, Surge: 0.7),
             new(10380, "Mega Latias", CritterMotion.Fish, "", "", Fps: 7, Sheet: "megalatias", Cell: 94, Angles: [-4, -2, 0, 2, 4], Pose: 0, Height: 74, Drift: 4, Bob: 1, Surge: 0.8),
             new(10381, "Mega Latios", CritterMotion.Fish, "", "", Fps: 7, Sheet: "megalatios", Cell: 114, Angles: [-2, 0, 2], Pose: 0, Height: 68, Drift: 2, Bob: 0.5, Surge: 0.7),
+            // Shiny Tapu Koko (2026-10-18): it brings the first Z-Crystal to the Gimmighoul ruins (CapTapuKoko); not a visitor of any lane.
+            new(785, "Tapu Koko variocolor", CritterMotion.Fish, "", "", Fps: 12, Sheet: "tapukoko", Cell: 168, Angles: [-30, -26, -22], Pose: -26, Height: 93, Drift: 0, Bob: 0, Surge: 0),
+            // Machamp and Gigantamax Machamp (2026-10-18, prototype): they punch the second Z-Crystal into the Gimmighoul ruins (CapMachamp);
+            // not visitors of any lane. Fps 1: the film picks each frame by its number.
+            new(68, "Machamp", CritterMotion.Fish, "", "", Fps: 1, Sheet: "machamp", Cell: 104, Angles: [-40, -20, 0, 20, 40], Pose: 0, Height: 68, Drift: 0, Bob: 0, Surge: 0),
+            new(20068, "Machamp Gigamax", CritterMotion.Fish, "", "", Fps: 1, Sheet: "gmaxmachamp", Cell: 96, Angles: [0], Pose: 0, Height: 64, Drift: 0, Bob: 0, Surge: 0),
+            new(20069, "Setas Dinamax", CritterMotion.Fish, "", "", Fps: 1, Sheet: "setasdinamax", Cell: 58, Angles: [-60, -30, 0, 30, 60], Pose: 0, Height: 27, Drift: 0, Bob: 0, Surge: 0),
+            // Mega Greninja (2026-10-18, prototype): it throws the third Z-Crystal into the ruins (CapGreninja); standing, and mid-flip turned right round.
+            new(10658, "Mega Greninja", CritterMotion.Fish, "", "", Fps: 1, Sheet: "megagreninja", Cell: 104, Angles: [0], Pose: 0, Height: 96, Drift: 0, Bob: 0, Surge: 0),
+            // Ho-Oh beating its wings (2026-10-18, prototype): it brings the fourth Z-Crystal in a rainbow feather (CapHoOh).
+            // Shaymin (2026-10-18, prototype): it brings the fifth Z-Crystal (CapShaymin); Land Forme, Sky Forme and the Gracidea flower.
+            new(492, "Shaymin forma Tierra", CritterMotion.Fish, "", "", Fps: 6, Sheet: "shaymintierra", Cell: 62, Angles: [-60, -40, -20, 0, 20, 40, 60], Pose: 0, Height: 31, Drift: 0, Bob: 0, Surge: 0),
+            new(10492, "Shaymin forma Cielo", CritterMotion.Fish, "", "", Fps: 10, Sheet: "shaymincielo", Cell: 78, Angles: [-15, -8, 0, 8, 15], Pose: 0, Height: 43, Drift: 0, Bob: 0, Surge: 0),
+            new(20492, "Gracídea", CritterMotion.Fish, "", "", Fps: 1, Sheet: "gracidea", Cell: 50, Angles: [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330], Pose: 0, Height: 23, Drift: 0, Bob: 0, Surge: 0),
+            // Terapagos and Miraidon (2026-10-18, prototype, not animated yet): the sixth Z-Crystal (CapAreaZero).
+            new(1024, "Terápagos", CritterMotion.Fish, "", "", Fps: 8, Sheet: "terapagos", Cell: 90, Angles: [-30, -20, -10, 0, 10, 20, 30], Pose: 0, Height: 45, Drift: 0, Bob: 0, Surge: 0),
+            new(1008, "Miraidon", CritterMotion.Fish, "", "", Fps: 10, Sheet: "miraidon", Cell: 128, Angles: [-20, -10, 0, 10, 20], Pose: 0, Height: 85, Drift: 0, Bob: 0, Surge: 0),
+            new(20250, "Ho-Oh en vuelo", CritterMotion.Fish, "", "", Fps: 12, Sheet: "hoohsagrado", Cell: 154, Angles: [-10, -5, 0, 5, 10], Pose: 0, Height: 85, Drift: 0, Bob: 0, Surge: 0),
+            new(20658, "Mega Greninja en el salto", CritterMotion.Fish, "", "", Fps: 1, Sheet: "megagreninjasalto", Cell: 148, Angles: [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330], Pose: 0, Height: 96, Drift: 0, Bob: 0, Surge: 0),
             new(350, "Milotic", CritterMotion.Fish, "", "", Fps: 7, Sheet: "milotic", Cell: 106, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 76, Drift: 5, Bob: 1, Surge: 0.7),
             new(230, "Kingdra", CritterMotion.Fish, "", "", Fps: 9, Sheet: "kingdra", Cell: 88, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 66, Drift: 4, Bob: 1.5, Surge: 0.5),
             new(490, "Manaphy", CritterMotion.Fish, "", "", Fps: 8, Sheet: "manaphy", Cell: 72, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 39, Drift: 4, Bob: 2.5, Surge: 0.5),

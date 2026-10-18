@@ -98,7 +98,11 @@ public sealed class HpPresenter
 
     /// <summary>Tells the life really read for a Pokémon at a moment.</summary>
     /// <returns>True when this reading holds a change back that the game's bar will have to release: the bar is worth arming.</returns>
-    public bool Observe(uint pid, int hp, int max, double now, bool inBattle, bool barSeen = false)
+    /// <param name="tablesGone">
+    /// The battle's tables no longer answer, though the battle may still be going on (the panel's grace). A rise then is shown at once
+    /// (2026-10-17: a heal right after a battle, Faba's, waited about five seconds); a drop is still held, it may be end-of-turn damage.
+    /// </param>
+    public bool Observe(uint pid, int hp, int max, double now, bool inBattle, bool barSeen = false, bool tablesGone = false)
     {
         if (!_tracks.TryGetValue(pid, out var track))
         {
@@ -113,7 +117,7 @@ public sealed class HpPresenter
         track.Real = hp;
         track.Max = max;
 
-        if (Mode == HpSyncMode.Instant || !inBattle || maximumMoved)
+        if (Mode == HpSyncMode.Instant || !inBattle || maximumMoved || (tablesGone && hp > before))
         {
             // Out of a battle, or a level: it is shown at once, and whatever was held for this Pokémon goes with it.
             track.Shown = hp;

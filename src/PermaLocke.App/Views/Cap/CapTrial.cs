@@ -9,10 +9,10 @@ namespace PermaLocke.App.Views;
 public sealed record CapTrialTurn(double Since, int From, int To, CapTrialCrystal? Crystal)
 {
     /// <summary>The moment of the crystal's film, with its held frames.</summary>
-    public double CrystalT => CapTrial.Held(Since, CapTrial.CrystalHolds);
+    public double CrystalT => CapTrial.Held(Since - CapTrial.Lead(Crystal), CapTrial.HoldsOf(Crystal));
 
     /// <summary>The moment of the cap's film (negative before it starts), with its held frames.</summary>
-    public double CapT => CapTrial.Held(Since - CapTrial.CapStart(Crystal is not null), CapTrial.CapHolds);
+    public double CapT => CapTrial.Held(Since - CapTrial.CapStart(Crystal), CapTrial.CapHolds);
 }
 
 /// <summary>
@@ -50,15 +50,31 @@ public static class CapTrial
     /// <summary>When the cap's film starts: after the crystal's has had its impact and its waves.</summary>
     public static double CapStart(bool crystal) => crystal ? 6.4 : 0;
 
+    /// <summary>When the cap's film starts after this crystal's, its prelude and its own held frames counted.</summary>
+    public static double CapStart(CapTrialCrystal? crystal) =>
+        crystal is null ? 0 : CapStart(true) + Lead(crystal) + HoldsOf(crystal).Sum(h => h.Span) - CrystalHolds.Sum(h => h.Span)
+            + (crystal.Item == CapMachamp.Lucharastal ? CapMachamp.After : 0);
+
     /// <summary>How long both films last, held frames and all.</summary>
     public static double Length(bool crystal) => CapStart(crystal) + CapEnd + 0.4;
+
+    public static double Length(CapTrialCrystal? crystal) => CapStart(crystal) + CapEnd + 0.4;
+
+    /// <summary>
+    /// How long a crystal's film runs before its own clock starts: the Lucharastal's Machamp comes out, eats and Gigantamaxes first
+    /// (<see cref="CapMachamp"/>; its film clock is negative till then).
+    /// </summary>
+    internal static double Lead(CapTrialCrystal? crystal) => crystal?.Item switch { CapMachamp.Lucharastal => CapMachamp.Lead, CapGreninja.Hidrostal => CapGreninja.Lead, CapHoOh.Pirostal => CapHoOh.Lead, CapShaymin.Fitostal => CapShaymin.Lead, CapAreaZero.Litostal => CapAreaZero.Lead, _ => 0 };
+
+    /// <summary>The frames a crystal's film holds still on.</summary>
+    internal static (double At, double Span)[] HoldsOf(CapTrialCrystal? crystal) => crystal?.Item == CapMachamp.Lucharastal ? CapMachamp.Holds : CrystalHolds;
 
     /// <summary>The trial being shown now, or null.</summary>
     public static CapTrialTurn? Now(CapPlaqueData data, CapAnim? anim, double t)
     {
         if (anim?.CapRise(t) is not { } rise) return null;
         var crystal = CapTrialCrystal.Of(data.CrystalItem, data.Crystal);
-        return rise.Since < Length(crystal is not null) ? new CapTrialTurn(rise.Since, rise.From, rise.To, crystal) : null;
+        return rise.Since < Length(crystal) ? new CapTrialTurn(rise.Since, rise.From, rise.To, crystal) : null;
     }
 
     /// <summary>The moment a film shows: it stands still for a moment at each of its held frames.</summary>
@@ -127,7 +143,7 @@ public static class CapTrial
         }
     }
 
-    private static void Star(CapSheet p, double x, double y, uint c, double a, int size = 0)
+    internal static void Star(CapSheet p, double x, double y, uint c, double a, int size = 0)
     {
         Light(p, x, y, White, a);
         foreach (var (ox, oy) in Round4)
@@ -136,7 +152,7 @@ public static class CapTrial
         }
     }
 
-    private static void Ring(CapSheet p, double x, double y, double r, double squash, uint c, double a, bool add = true)
+    internal static void Ring(CapSheet p, double x, double y, double r, double squash, uint c, double a, bool add = true)
     {
         var n = Math.Max(24, (int)Math.Round(r * 7));
         for (var i = 0; i < n; i++)
@@ -153,14 +169,14 @@ public static class CapTrial
         Each(p, (x, y) => p.Set(x, y, Dark, (int)(a * keep(x, y))));
     }
 
-    private static void Flash(CapSheet p, double a)
+    internal static void Flash(CapSheet p, double a)
     {
         if (a <= 0) return;
         Each(p, (x, y) => p.Set(x, y, White, (int)a));
     }
 
     /// <summary>The window moved a few cells this frame: a jolt that dies away, or (growing) a rumble that builds.</summary>
-    private static void Shake(CapSheet p, double since, double strength, double span, bool growing = false)
+    internal static void Shake(CapSheet p, double since, double strength, double span, bool growing = false)
     {
         if (since < 0 || since > span) return;
         var f = growing ? since / span : Math.Pow(1 - (since / span), 1.5);
@@ -176,7 +192,7 @@ public static class CapTrial
     }
 
     /// <summary>A shockwave that bends the water it passes, like a lens, with light on its edge.</summary>
-    private static void Lens(CapSheet p, double cx, double cy, double r, double amp, double band, uint edge)
+    internal static void Lens(CapSheet p, double cx, double cy, double r, double amp, double band, uint edge)
     {
         var copy = (byte[])p.B.Clone();
         int y0 = Math.Max(0, (int)(cy - ((r + band) / 1.25)) - 1), y1 = Math.Min(p.H - 1, (int)(cy + ((r + band) / 1.25)) + 1);
@@ -200,9 +216,15 @@ public static class CapTrial
     // ---------------------------------------------------------------- the crystal's film
 
     /// <summary>Where the crystal lands, in a window: in the near sand of the abyss, in front of its crystals (in the party's, where that is in the sea's world).</summary>
-    private static (int X, int Y) Land(CapWorldLayout l, CapSeaContext ctx) =>
-        l.Panel == CapPanelKind.Deep ? (Math.Min(110, l.Cols - 30), l.Rows - 12)
-        : (ctx.WorldWidth > 0 ? 110 - ctx.WorldX : -160, l.Rows - 12);
+    // With the Gimmighoul ruins (2026-10-18) the Normastal comes down onto the top of their tall wall (CapCrystalFall), near the abyss's left;
+    // the other crystals keep the film's own way until theirs are made.
+    private static (int X, int Y) Land(CapWorldLayout l, CapSeaContext ctx, int item)
+    {
+        var ruins = item is CapCrystalFall.Normastal or CapMachamp.Lucharastal or CapGreninja.Hidrostal or CapHoOh.Pirostal or CapShaymin.Fitostal or CapAreaZero.Litostal;
+        var spot = item == CapMachamp.Lucharastal ? CapMachamp.Target(l, ctx) : item == CapGreninja.Hidrostal ? CapGreninja.Catching(l, ctx) : item == CapHoOh.Pirostal ? CapHoOh.Spot(l, ctx) : item == CapShaymin.Fitostal ? CapShaymin.Spot(l, ctx) : item == CapAreaZero.Litostal ? CapAreaZero.Spot(l, ctx) : ruins ? CapCrystalFall.LandingSpot(l, ctx) : null;
+        return l.Panel == CapPanelKind.Deep ? spot ?? (Math.Min(110, l.Cols - 30), l.Rows - 12)
+            : (ctx.WorldWidth > 0 ? (ruins ? 34 : 110) - ctx.WorldX : -160, l.Rows - 12);
+    }
 
     /// <summary>The first or last column of a row that is not under the game.</summary>
     private static int Edge(CapWorldLayout l, int y, bool left)
@@ -224,17 +246,17 @@ public static class CapTrial
         return (Of(a.X, b.X, c.X, d.X), Of(a.Y, b.Y, c.Y, d.Y));
     }
 
-    private readonly record struct Flight((double X, double Y) P, double Scale, double Spin, double? Hover = null, double? Landed = null);
+    internal readonly record struct Flight((double X, double Y) P, double Scale, double Spin, double? Hover = null, double? Landed = null);
 
     /// <summary>
     /// Where the crystal is in a window at a moment of its film, or null when it is not in that window. Its flight is one curve through both
     /// skies, laid out as if the two windows touched: each window has its half, and both halves meet at the edge between them at the same
     /// height and the same velocity, so it leaves one sky and comes into the other going the same way.
     /// </summary>
-    private static Flight? Where(CapWorldLayout l, CapSeaContext ctx, double t)
+    internal static Flight? Where(CapWorldLayout l, CapSeaContext ctx, int item, double t)
     {
         if (t < Born) return null;
-        var land = Land(l, ctx);
+        var land = Land(l, ctx, item);
         var yE = R(l.SurfaceY * 0.55);
         (double X, double Y) v = (-95, 4);
         var scale = 0.18 + (0.62 * Ease(Math.Min(1, (t - Born) / (Splash - Born) * 1.3)));
@@ -273,9 +295,9 @@ public static class CapTrial
     }
 
     /// <summary>When the first wave of the crystal's light reaches a cell of a window.</summary>
-    private static double WaveAt(CapWorldLayout l, CapSeaContext ctx, double x, double y)
+    private static double WaveAt(CapWorldLayout l, CapSeaContext ctx, int item, double x, double y)
     {
-        var land = Land(l, ctx);
+        var land = Land(l, ctx, item);
         return Math.Sqrt(((x - land.X) * (x - land.X)) + ((y - land.Y) * 1.1 * (y - land.Y) * 1.1)) / Speed;
     }
 
@@ -284,7 +306,7 @@ public static class CapTrial
     {
         if (turn.Crystal is { } crystal)
         {
-            var a = turn.CrystalT - Hit - WaveAt(l, ctx, centre.X, centre.Y);
+            var a = turn.CrystalT - Hit - WaveAt(l, ctx, crystal.Item, centre.X, centre.Y);
             if (a >= 0 && a < 0.7) return (a < 0.4 ? R(Math.Sin(Math.PI * a / 0.4) * 4) : 0, crystal.Shine, (int)(140 * (1 - (a / 0.7))), 2.4 * (1 - (a / 0.7)));
         }
 
@@ -339,19 +361,45 @@ public static class CapTrial
     {
         if (turn.Crystal is not { } crystal || l.Mode is not (CapMode.Column or CapMode.Slim)) return;
         var t = turn.CrystalT;
-        if (t >= CrystalEnd + 3) return;
+        if (t >= CrystalEnd + 3)
+        {
+            // with the ruins, it stays where it came to rest (CapCrystalFall)
+            if (l.Panel == CapPanelKind.Deep && crystal.Item == CapCrystalFall.Normastal) CapCrystalFall.Paint(p, l, ctx, crystal, t);
+            if (crystal.Item == CapMachamp.Lucharastal) CapMachamp.Paint(p, l, ctx, crystal, t);
+            if (crystal.Item == CapGreninja.Hidrostal) CapGreninja.Paint(p, l, ctx, crystal, t);
+            if (crystal.Item == CapHoOh.Pirostal) CapHoOh.Paint(p, l, ctx, crystal, t);
+            if (crystal.Item == CapShaymin.Fitostal) CapShaymin.Paint(p, l, ctx, crystal, t);
+            if (crystal.Item == CapAreaZero.Litostal) CapAreaZero.Paint(p, l, ctx, crystal, t);
+            return;
+        }
 
         var deep = l.Panel == CapPanelKind.Deep;
-        var land = Land(l, ctx);
+        var item = crystal.Item;
+        // the Lucharastal is punched into the ruins' column by Gigantamax Machamp (2026-10-18, prototype, the player's idea): its own way all through
+        var champ = item == CapMachamp.Lucharastal;
+        var ruins = deep && ((item == CapCrystalFall.Normastal && CapCrystalFall.LandingSpot(l, ctx) is not null) || (champ && CapMachamp.Target(l, ctx) is not null)
+            || (item == CapGreninja.Hidrostal && CapGreninja.Catching(l, ctx) is not null) || (item == CapHoOh.Pirostal && CapHoOh.Spot(l, ctx) is not null)
+            || (item == CapShaymin.Fitostal && CapShaymin.Spot(l, ctx) is not null)
+            || (item == CapAreaZero.Litostal && CapAreaZero.Spot(l, ctx) is not null));
+        // the Hidrostal is brought, caught and thrown by Mega Greninja (2026-10-18, prototype): its own film in both windows, slower than this one
+        var ninja = item == CapGreninja.Hidrostal;
+        // the Pirostal is brought by Ho-Oh in a rainbow feather (2026-10-18, prototype): its own film in both windows too
+        var phoenix = item is CapHoOh.Pirostal or CapShaymin.Fitostal or CapAreaZero.Litostal;
+        var own = champ || ninja || phoenix;
+        // the Normastal is brought by Tapu Koko (2026-10-18, the player's choice; the lab can still show the other ways with --variante):
+        // the film's own flight and splash give way to it
+        var tapu = (item == CapCrystalFall.Normastal && CapCrystalFall.Variant == 4) || own;
+        if (tapu && !own) CapTapuKoko.Paint(p, l, ctx, crystal, t);
+        var land = Land(l, ctx, item);
         var surface = l.SurfaceY;
         var hit = t - Hit;
-        var st = Where(l, ctx, t);
+        var st = Where(l, ctx, item, t);
 
         // the skies dim for it, and stay dim until its light has gone through
-        var darkness = t < Born ? Ease(t / 0.6) : t < Hit ? 1 : 1 - Ease((t - Hit - 1.2) / 1.6);
+        var darkness = own && t < Hit ? Ease((t + Lead(crystal)) / 0.6) : t < Born ? Ease(t / 0.6) : t < Hit ? 1 : 1 - Ease((t - Hit - 1.2) / 1.6);
         Dim(p, 70 * darkness, (_, y) => y < surface + 2 ? 1 : 0.55);
 
-        if (!deep && CapFarSky.WormholeAt(l) is { } core)
+        if (!deep && !own && CapFarSky.WormholeAt(l) is { } core)
         {
             // anticipation: the wormhole beats twice like a heart, pulling light into itself, rays turning round it
             if (t < Born + 0.4)
@@ -399,13 +447,13 @@ public static class CapTrial
         }
 
         // the flight: two ribbons of its light twisting round its path, sparks shed from it
-        if (t >= Born && t < Splash)
+        if (t >= Born && t < Splash && !tapu)
         {
             for (var k = 0; k < 26; k++)
             {
                 var tt = t - (k * 0.014);
-                if (tt < Born || Where(l, ctx, tt) is not { } s) continue;
-                var prev = Where(l, ctx, Math.Max(Born, tt - 0.01))?.P ?? s.P;
+                if (tt < Born || Where(l, ctx, item, tt) is not { } s) continue;
+                var prev = Where(l, ctx, item, Math.Max(Born, tt - 0.01))?.P ?? s.P;
                 var ang = Math.Atan2(s.P.Y - prev.Y, s.P.X - prev.X) + (Math.PI / 2);
                 var fade = 1 - (k / 26.0);
                 foreach (var (side, c) in new[] { (1, crystal.Shine), (-1, White) })
@@ -421,7 +469,7 @@ public static class CapTrial
             {
                 var born = Born + (n / 60.0 * (Splash - Born));
                 var age = t - born;
-                if (age < 0 || age > 0.7 || Where(l, ctx, born) is not { } s) continue;
+                if (age < 0 || age > 0.7 || Where(l, ctx, item, born) is not { } s) continue;
                 var c = n % 3 == 0 ? White : n % 3 == 1 ? crystal.Shine : crystal.Glow;
                 Star(p, s.P.X + ((Rnd(n, 1) - 0.5) * 8) + ((Rnd(n, 2) - 0.5) * age * 18), s.P.Y + ((Rnd(n, 4) - 0.5) * 6) + (age * 10), c, 230 * (1 - (age / 0.7)), n % 7 == 0 ? 1 : 0);
             }
@@ -431,7 +479,7 @@ public static class CapTrial
         {
             // it goes past the Sky Pillar, which glints
             var pass = t - Cross - 0.25;
-            if (pass > 0 && pass < 0.6 && CapFarSky.PillarTopAt(l) is { } top)
+            if (pass > 0 && pass < 0.6 && !own && CapFarSky.PillarTopAt(l) is { } top)
             {
                 var k = Math.Sin(Math.PI * pass / 0.6);
                 Star(p, top.X, top.Y, crystal.Shine, 255 * k, 3);
@@ -440,7 +488,7 @@ public static class CapTrial
 
             // the water: a crown of drops, rings on the surface, bubbles behind it as it sinks
             var sp = t - Splash;
-            if (sp > 0)
+            if (sp > 0 && !tapu && !ninja && !phoenix)
             {
                 if (sp < 0.12) Shine(p, land.X, surface, 30, 10, White, 230 * (1 - (sp / 0.12)));
                 for (var n = 0; n < 54; n++)
@@ -470,11 +518,11 @@ public static class CapTrial
 
                 if (sp < 0.4) for (var dy = 0; dy < 10; dy++) Put(p, land.X + ((Rnd(dy, 3) - 0.5) * 6), surface - dy - (sp * 30), White, 220 * (1 - (sp / 0.4)) * (1 - (dy / 10.0)));
 
-                for (var n = 0; n < 50; n++)
+                for (var n = 0; n < 50 && !ruins; n++)
                 {
                     var born = Splash + (n / 50.0 * (Hit + 0.3 - Splash));
                     var age = t - born;
-                    if (age < 0 || age > 1.3 || Where(l, ctx, born) is not { } s) continue;
+                    if (age < 0 || age > 1.3 || Where(l, ctx, item, born) is not { } s) continue;
                     var x = s.P.X + ((Rnd(n, 21) - 0.5) * 16) + (Math.Sin((age * 7) + n) * 2);
                     var y = s.P.Y - (age * 26);
                     if (y < surface + 1) continue;
@@ -488,7 +536,11 @@ public static class CapTrial
             }
 
             // hanging over the sand: its symbol kindles, light is drawn into it
-            if (st is { Hover: { } hover, Landed: null } h)
+            if (ruins)
+            {
+                // its own way down into the ruins: CapCrystalFall
+            }
+            else if (st is { Hover: { } hover, Landed: null } h)
             {
                 for (var n = 0; n < 34; n++)
                 {
@@ -509,7 +561,26 @@ public static class CapTrial
         }
 
         // the crystal itself, while it flies and sinks
-        if (st is { Landed: null } f)
+        if (champ)
+        {
+            CapMachamp.Paint(p, l, ctx, crystal, t);
+        }
+        else if (ninja)
+        {
+            CapGreninja.Paint(p, l, ctx, crystal, t);
+        }
+        else if (phoenix)
+        {
+            // the Pirostal by Ho-Oh, the Fitostal by Shaymin (2026-10-18, prototype)
+            if (item == CapHoOh.Pirostal) CapHoOh.Paint(p, l, ctx, crystal, t);
+            else if (item == CapShaymin.Fitostal) CapShaymin.Paint(p, l, ctx, crystal, t);
+            else CapAreaZero.Paint(p, l, ctx, crystal, t);
+        }
+        else if (ruins && t >= Splash)
+        {
+            CapCrystalFall.Paint(p, l, ctx, crystal, t);
+        }
+        else if (st is { Landed: null } f && !tapu)
         {
             if (t < Splash) Shine(p, f.P.X, f.P.Y, (12 * f.Scale) + 6, (10 * f.Scale) + 5, crystal.Glow, 130);
             var burn = f.Hover ?? (t > Splash ? Clamp01((t - Hover + 0.5) / 0.5) * 0.4 : 0);
@@ -519,8 +590,10 @@ public static class CapTrial
         if (hit >= 0)
         {
             // the impact: everything flashes; in the abyss the sand bursts and a ring runs over it
-            if (hit < 0.1) Flash(p, (deep ? 230 : 140) * (1 - (hit / 0.1)));
-            if (deep)
+            // (the Lucharastal has impact frames instead, CapMachamp.Overlay)
+            if (hit < 0.1 && !own) Flash(p, (deep ? 230 : 140) * (1 - (hit / 0.1)));
+            // when Gimmighoul fishes it (CapCrystalFall variant 3) the impact is the hook biting in open water: no sand flies off the tower
+            if (deep && !ninja && !phoenix && !(ruins && (champ || (item == CapCrystalFall.Normastal && CapCrystalFall.Variant is 3 or 4))))
             {
                 for (var n = 0; n < 90; n++)
                 {
@@ -553,8 +626,8 @@ public static class CapTrial
                 }
             }
 
-            // three waves of its light through the water
-            foreach (var (from, strength) in new[] { (0.0, 1.0), (0.16, 0.6), (0.6, 0.45) })
+            // three waves of its light through the water (not the Lucharastal's: the player found them cheap; it has its shockwave, CapMachamp)
+            foreach (var (from, strength) in own ? [] : new[] { (0.0, 1.0), (0.16, 0.6), (0.6, 0.45) })
             {
                 var r = (hit - from) * Speed;
                 if (r <= 0 || r > 820) continue;
@@ -571,16 +644,16 @@ public static class CapTrial
             }
 
             // what the waves touch: the Pillar and the Wormhole (the party is lit through its pose); the Unown wall and the abyss's crystals were taken out (2026-10-15)
-            foreach (var (point, size) in new[] { (CapFarSky.PillarTopAt(l), 3), (CapFarSky.WormholeAt(l), 4) })
+            foreach (var (point, size) in own ? [] : new[] { (CapFarSky.PillarTopAt(l), 3), (CapFarSky.WormholeAt(l), 4) })
             {
                 if (point is not { } at) continue;
-                var a = hit - WaveAt(l, ctx, at.X, at.Y);
+                var a = hit - WaveAt(l, ctx, item, at.X, at.Y);
                 if (a <= 0 || a >= 0.8) continue;
                 Star(p, at.X, at.Y, crystal.Shine, 255 * Math.Sin(Math.PI * a / 0.8), size);
                 Shine(p, at.X, at.Y, 14, 11, crystal.Glow, 130 * Math.Sin(Math.PI * a / 0.8));
             }
 
-            if (deep)
+            if (deep && !ruins)
             {
                 // after: half buried, a beam of its light up to the surface, motes rising in it, its glow breathing, a glint now and then
                 double stand = land.Y - (CapTrialCrystal.H * Scale) + 4, after = Clamp01((hit - 0.6) / 0.8) * (1 - Clamp01((t - CrystalEnd - 1.5) / 1.5)), breath = 0.75 + (0.25 * Math.Sin(hit * 3.2));
@@ -620,13 +693,16 @@ public static class CapTrial
             }
         }
 
+        // the Lucharastal's impact frames, over all the rest of the film
+        if (champ) CapMachamp.Overlay(p, l, ctx, t);
+
         // the jolts: the birth in the party's window, the splash and the hanging in the abyss's, the impact in both
         if (deep)
         {
-            Shake(p, t - Splash, 2, 0.25);
-            if (t > Hover && t < Hit) Shake(p, t - Hover, 1, Hit - Hover, true);
+            if (!own) Shake(p, t - Splash, 2, 0.25);
+            if (t > Hover && t < Hit && !own) Shake(p, t - Hover, 1, Hit - Hover, true);
         }
-        else
+        else if (!own)
         {
             Shake(p, t - Born, 2, 0.3);
         }

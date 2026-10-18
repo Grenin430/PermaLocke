@@ -642,7 +642,7 @@ public sealed class RulePatchesTests
         }
 
         Assert.Equal(RulePatches.BattleState.Patched, RulePatches.PatchBagCursor(cro));
-        Assert.Equal(0xE5942170u, BinaryPrimitives.ReadUInt32LittleEndian(cro.AsSpan(0xE8BC)));
+        Assert.Equal(0xE3A02032u, BinaryPrimitives.ReadUInt32LittleEndian(cro.AsSpan(0xE8BC))); // the evolution keeps its 50
         Assert.Equal(0xE5942170u, BinaryPrimitives.ReadUInt32LittleEndian(cro.AsSpan(0xEA58)));
         Assert.Equal(0xE5941170u, BinaryPrimitives.ReadUInt32LittleEndian(cro.AsSpan(0xE8F4)));
         foreach (var (site, @out, ldr) in loops)
@@ -654,6 +654,11 @@ public sealed class RulePatchesTests
             Assert.Equal(RulePatches.Bl(site + 24, 0x6D8), BinaryPrimitives.ReadUInt32LittleEndian(cro.AsSpan(site + 24)));
         }
         Assert.Equal(RulePatches.BattleState.AlreadyPatched, RulePatches.PatchBagCursor(cro));
+
+        // a bag patched by the first version, which also changed the evolution's and froze it, gets its 50 back
+        BinaryPrimitives.WriteUInt32LittleEndian(cro.AsSpan(0xE8BC), 0xE5942170);
+        Assert.Equal(RulePatches.BattleState.Patched, RulePatches.PatchBagCursor(cro));
+        Assert.Equal(0xE3A02032u, BinaryPrimitives.ReadUInt32LittleEndian(cro.AsSpan(0xE8BC)));
 
         Assert.Equal(RulePatches.BattleState.Unknown, RulePatches.PatchBagCursor(new byte[0x10000]));
     }
