@@ -1,7 +1,6 @@
 using System.IO;
 using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using PermaLocke.App.Services;
 using PermaLocke.App.ViewModels;
@@ -171,9 +170,6 @@ public partial class App : Application
             sp.GetRequiredService<ILoggerFactory>().CreateLogger<Services.MachineItemLookup>()));
 
         collection.AddPermaLockeGameLink(paths.SaveBackups);
-
-        // Una sola persona (2026-10-12): lo que costaba puntos cuesta el dinero del juego.
-        collection.Replace(ServiceDescriptor.Singleton<IPointsService, GameMoneyPoints>());
 
         // EL ALMACEN DE EVENTOS, ENVUELTO para que avise cuando la run cambia. Se hace aqui y
         // despues de registrarlo porque la envoltura es cosa de la aplicacion que dibuja los

@@ -102,7 +102,7 @@ public sealed class MaintenanceService(
                 integrity.IsValid ? "ok" : "bad",
                 integrity.IsValid ? string.Empty : "Restaura una copia de la run."),
 
-            new("Dinero del juego", $"{balance} ₽", "ok"),
+            new("Saldo de puntos", balance.ToString(), "ok"),
 
             new("Copias de seguridad", CountBackups().ToString(), CountBackups() > 0 ? "ok" : "warn"),
         };
@@ -213,7 +213,7 @@ public sealed class MaintenanceService(
 
         logger.LogInformation("Muerte revocada a mano: {Pokemon} ({Motivo})", name, why);
 
-        return $"{name} vuelve a estar vivo. Cúralo en un Centro Pokémon.";
+        return $"{name} vuelve a estar vivo y has recuperado los puntos. Cúralo en un Centro Pokémon.";
     }
 
     /// <summary>

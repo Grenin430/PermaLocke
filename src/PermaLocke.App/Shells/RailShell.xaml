@@ -255,7 +255,7 @@
                             <pixel:PixelText Text="{Binding PointsText}" Scale="3" Tight="True"
                                              Colour="{DynamicResource PxAccentInk}" Shadow="{DynamicResource PxShadow}"
                                              Visibility="{Binding HasPoints, Converter={StaticResource InverseBoolToVisibility}}" />
-                            <pixel:PixelText Text="DINERO" Scale="2" Tight="True" Margin="0,3,0,0"
+                            <pixel:PixelText Text="PUNTOS" Scale="2" Tight="True" Margin="0,3,0,0"
                                              Colour="{DynamicResource PxTextDim}" Shadow="{DynamicResource PxShadow}" />
                         </StackPanel>
                         </StackPanel>

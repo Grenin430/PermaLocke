@@ -88,15 +88,9 @@ if (args.Length >= 1 && args[0] == "--huevo-copias")
 
 // Dónde guarda el juego el mapa y la posición mientras se juega, tomando la última partida guardada como
 // verdad. Sin argumento enseña lo guardado; «buscar» hace UNA búsqueda; «vigilar» solo lee. Ver §117.
-// El dinero del juego tal como lo lee la versión de un jugador (2026-10-12). Solo lee.
 if (args.Length >= 1 && args[0] == "--repelente")
 {
     return PermaLocke.Probe.RepelProbe.Run();
-}
-
-if (args.Length >= 1 && args[0] == "--dinero")
-{
-    return PermaLocke.Probe.MoneyProbe.Run();
 }
 
 if (args.Length >= 1 && args[0] == "--situacion")

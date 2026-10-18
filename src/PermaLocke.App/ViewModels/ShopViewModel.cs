@@ -67,7 +67,7 @@ public sealed partial class ShopViewModel : SectionViewModel
     public ShopViewModel(ShopService shop, IRunContext runs, PokemonSpriteService sprites,
         IAppDialogs dialogs, IBoxReader boxes, ILogger<ShopViewModel> logger,
         PermaLocke.Rules.Services.ProgressService? progress = null)
-        : base("TIENDA", "Objetos a cambio del dinero del juego")
+        : base("TIENDA", "Objetos a cambio de puntos")
     {
         // Bought or sold in the game (2026-10-16): the figure and what can be afforded follow it without opening the section again.
         Services.GameMoneyPoints.BalanceSeen += money => System.Windows.Application.Current?.Dispatcher.BeginInvoke(() =>
@@ -327,9 +327,9 @@ public sealed partial class ShopViewModel : SectionViewModel
         // que se pulsa paso de un boton pequeño a un objeto grande. Y una compra no se deshace
         // -el objeto se escribe en la mochila del juego-, asi que aqui se pregunta.
         var confirmed = _dialogs.Confirm("Comprar",
-            $"¿Comprar {card.Name} por {card.Price} ₽?"
+            $"¿Comprar {card.Name} por {card.Price} puntos?"
             + $"{Environment.NewLine}{Environment.NewLine}"
-            + $"Tienes {Balance} ₽.");
+            + $"Tienes {Balance} puntos.");
 
         _logger.LogInformation("Tienda: {Item} por {Price} puntos, {Answer}",
             card.Name, card.Price, confirmed ? "confirmado" : "cancelado");
@@ -422,9 +422,9 @@ public sealed partial class ShopViewModel : SectionViewModel
         }
 
         var confirmed = _dialogs.Confirm("Hierba",
-            $"¿Dar la {herb.Name} a {target.Name} por {herb.Price} ₽?"
+            $"¿Dar la {herb.Name} a {target.Name} por {herb.Price} puntos?"
             + $"{Environment.NewLine}{Environment.NewLine}"
-            + $"Ahora es {target.Pokemon.NatureName}. El cambio es para siempre. Tienes {Balance} ₽.");
+            + $"Ahora es {target.Pokemon.NatureName}. El cambio es para siempre. Tienes {Balance} puntos.");
 
         _logger.LogInformation("Tienda: {Herb} para {Pokemon}, {Answer}", herb.Name, target.Name, confirmed ? "confirmado" : "cancelado");
 

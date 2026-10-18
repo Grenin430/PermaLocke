@@ -53,12 +53,6 @@ public static class ServiceCollectionExtensions
             sp.GetRequiredService<PlayerSave>(),
             backupFolder,
             sp.GetRequiredService<ILogger<SaveBoxDelivery>>()));
-        services.TryAddSingleton(sp => new GameMoney(
-            sp.GetRequiredService<PlayerSave>(),
-            sp.GetRequiredService<AzaharRpcClient>(),
-            sp.GetRequiredService<Field.LiveSave>(),
-            backupFolder,
-            sp.GetRequiredService<ILogger<GameMoney>>()));
         services.TryAddSingleton<IPokemonDelivery>(sp => sp.GetRequiredService<SaveBoxDelivery>());
         services.TryAddSingleton<IEggDelivery>(sp => sp.GetRequiredService<SaveBoxDelivery>());
         services.TryAddSingleton<SaveBoxReader>(sp => new SaveBoxReader(

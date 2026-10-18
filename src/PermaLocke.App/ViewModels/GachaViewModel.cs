@@ -149,7 +149,7 @@ public sealed partial class BannerViewModel(GachaBanner banner, string odds,
     /// <summary>What the card says it costs: the points, or that it is on the house.</summary>
     public string Cost => Free > 0
         ? $"{Free} tirada{(Free == 1 ? string.Empty : "s")} gratis"
-        : $"{Banner.Cost} ₽";
+        : $"{Banner.Cost} puntos";
 
     public bool HasFree => Free > 0;
 
@@ -243,7 +243,7 @@ public sealed partial class GachaViewModel : SectionViewModel
         IPokemonDelivery delivery, PokemonIdentityService identity, CreditService credits,
         PokemonSpriteService sprites, IEventStore events, ISpeciesLookup species,
         PermaLocke.Rules.Services.ProgressService progress, ILogger<GachaViewModel> logger)
-        : base("GACHA", "Paga con el dinero del juego y llévate un Pokémon: a tu equipo si cabe, si no al PC")
+        : base("GACHA", "Gasta puntos y llévate un Pokémon: a tu equipo si cabe, si no al PC")
     {
         // Bought or sold in the game (2026-10-16): the figure follows it without opening the section again.
         Services.GameMoneyPoints.BalanceSeen += money => System.Windows.Application.Current?.Dispatcher.BeginInvoke(() => Balance = money);
@@ -1027,7 +1027,7 @@ public sealed partial class GachaViewModel : SectionViewModel
 
             return banner.Free > 0
                 ? $"te quedan {banner.Free}"
-                : $"{banner.Banner.Cost} ₽";
+                : $"{banner.Banner.Cost} puntos";
         }
     }
 

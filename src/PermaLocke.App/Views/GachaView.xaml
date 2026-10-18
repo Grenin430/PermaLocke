@@ -500,7 +500,7 @@
                             <views:PixelPanel Fill="{DynamicResource PxWell}" IsSunken="True" HasShadow="False" />
                             <StackPanel Orientation="Horizontal" Margin="10,7,12,8" HorizontalAlignment="Center">
                                 <pixel:PixelIcon Icon="IconPoints" Scale="1" VerticalAlignment="Center" Margin="0,0,7,0" />
-                                <pixel:PixelText Text="{Binding Balance, StringFormat='{}{0} ₽'}" Scale="2" Tight="True"
+                                <pixel:PixelText Text="{Binding Balance, StringFormat='{}{0} puntos'}" Scale="2" Tight="True"
                                                  VerticalAlignment="Center" Colour="{DynamicResource PxAccentInkLight}" />
                             </StackPanel>
                         </Grid>
