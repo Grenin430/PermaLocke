@@ -252,3 +252,4 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Views/TrainerRoomScene.cs` — **RoomSprite, RoomCrystal, TrainerRoomState, TrainerRoomScene** — A picture of the cartridge as cells, or null without one.
 - `Views/UpdateWindow.xaml.cs` — **UpdateWindow** — The update window (§201). Closing it during the download cancels it; after that it waits.
 - `Views/WheelEnding.cs` — **WheelEnding** — One way the wheel can come to a stop: how hard it brakes, how far it travels, and how much it settles back at the very end. 
+- `Services/PokeVialService.cs` — **PokeVialService** — The Pokévial's side in the app (1.0.18): keeps the run's uses (Saves/pokevial-<run>.json), writes them to the rule block, heals the party in memory on request, refills on the nurse's record.

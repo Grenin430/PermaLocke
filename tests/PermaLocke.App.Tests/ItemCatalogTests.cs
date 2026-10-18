@@ -122,7 +122,7 @@ public sealed class ItemCatalogTests
         Assert.Equal(94, NamesOf(catalog, names, ItemCategory.MegaStone).Length);  // 47 of the game and 47 of the mod
         Assert.Equal(70, NamesOf(catalog, names, ItemCategory.ZCrystal).Length);
         Assert.Equal(27, NamesOf(catalog, names, ItemCategory.PokeBall).Length);
-        Assert.Equal(201, NamesOf(catalog, names, ItemCategory.Key).Length);       // and the two key items of the mod
+        Assert.Equal(202, NamesOf(catalog, names, ItemCategory.Key).Length);       // and the three key items of PermaLocke
     }
 
     [Fact]

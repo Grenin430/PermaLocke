@@ -89,3 +89,4 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Co
 - `Services/SpeciesSyncService.cs` — **SeenSpecies, SpeciesSyncService** — A Pokémon as the game has it right now: who it is, by PID, and which species and form it is.
 - `Services/TradedAwayReconciler.cs` — **TradedAwayCandidate, TradedAwayReport, TradedAwayReconciler** — Closes the records of Pokémon handed over in a wonder trade that the run still counts as alive. 
 - `Services/WonderTradeService.cs` — **WonderTradeService** — Trades a Pokémon away for another of comparable strength. 
+- `Domain/PokeVial.cs` — **PokeVial** — The Pokévial (2026-10-16, en el torneo desde la 1.0.18): key item 120 that heals the whole party anywhere except the fallen; MaxUses by trials cleared (1, +1 at 4, +1 at 6).

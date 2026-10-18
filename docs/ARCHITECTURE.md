@@ -13504,3 +13504,33 @@ Arreglos de lo que se vio al jugar el §246, más la publicación de todo el pan
 - **Quemadura = aura** (elegida entre cinco prototipos, `PERMALOCKE_BURN` ya quitado): brillo rojo naranja que pulsa sobre el cuerpo, llamitas que nacen del contorno (`CapCreature.Edge`) y chispas y ceniza que salen a los lados. Veneno (10 burbujas de tres tamaños y tinte), sueño (3 Z y tinte) y parálisis (3 rayos por destello) rellenados también. Lo anterior (llamas en los pies, brasas, cuerpo ardiendo) no gustó.
 - **Lectura**: la bomba rápida va a **120 por segundo** en combate (`VitalsPump.BattleHz`); estuvo a 200 unas horas, sin medir contra Azahar de verdad, y el revisor lo señaló (≈2800 peticiones UDP por segundo). `AzaharBatchReader` tiene un plazo total por lote además del de cada recepción.
 - **Sin verificar**: el orden de los números de estado (salvo el 4); el tiempo real y las constantes de `HpSyncTable`; la latencia contra Azahar de verdad (`docs/MEDICIONES-CAP.md`); el coste de la ventana (`--medir-ventana`). Pendientes menores del revisor: `_layout` de `CapBadge` leído desde varios hilos, `HighResolutionTimer` sin `Dispose`, `ActiveBar.Follow(false)` puede dejar una lectura de 3 s, la calibración del equipo caliente puede fallar en la primera captura de una pelea.
+
+## §248 · Pokévial, traído de la versión de un jugador (2026-10-18, publicado en la 1.0.18)
+
+Solo el objeto: ni el frasco del panel del cap (`CapVial`), ni la Poción Variocolor, ni nada más del singleplayer. El código es el
+de la rama `singleplayer` (2026-10-16 y 2026-10-17), donde se usó jugando.
+
+- **El objeto** (`Core/Domain/PokeVial.cs`, `Randomizer/Rom/RulePatches.PokeVial.cs`): el 120, otro hueco libre de la expansión,
+  hecho como el Repelente Infinito y la Incubadora Turbo: datos del Repartir Exp (objetos clave, no se gasta), nombre, plural,
+  descripción, líneas 149/150 del texto de la mochila e icono `Sprites/PokeVialIcon.cs` (frasco Poké Ball, la «B» elegida en el
+  singleplayer). `RulePatches.Apply` lo instala al pulsar JUGAR, así que llega también a los mundos ya generados. En `code.bin`
+  solo la entrada de su icono.
+- **La mochila** (`Bag.cro`): la consulta de la cueva gana un tercer caso (`cmp r5,#120`) y salta a `BagVialCode`: con usos, quita
+  uno de `RuleBlock.PokeVialUses` (0x11), pone `PokeVialRequest` (0x12) a 1 y dice «¡Tu equipo se ha recuperado…!»; sin usos,
+  «El Pokévial está vacío…». La consulta pasa de 14 a 19 palabras, así que el manejador del Repelente, el mensaje y la Incubadora
+  se corren 0x14 (`BagHandler = BagCave + 0x4C`); la cueva acaba en 0x16D9C, dentro del hueco que termina en 0x16DFC. Una mochila
+  ya parcheada se reescribe sola (gancho puesto: se copia la cueva nueva).
+- **La app** (`App/Services/PokeVialService.cs`, cada 400 ms con el juego conectado y una run): escribe los usos de la run en el
+  bloque (el juego arranca con 0); al ver la petición cura en memoria a todo el equipo vivo, en cada copia del equipo con el paso
+  autoritativo y por PID (`AzaharGameWriter.HealLive`: PS al máximo, sin estado, PP según la tabla de movimientos del mundo
+  instalado, con copia de seguridad y relectura) y devuelve la petición a 0. Los caídos de la run no se tocan.
+- **Usos por las pruebas de cada jugador**: `PokeVial.MaxUses(superadas)` = 1, +1 desde la prueba 4, +1 desde la 6, con
+  `ProgressService.ClearedAsync(run)` de la propia run; una prueba que sube el máximo da su uso en el acto. Se guardan en
+  `Saves/pokevial-<run>.json`.
+- **Recarga**: el récord 10 del juego, «Pokémon curados en Centros Pokémon» (`BattleCounters.CentreHeals`, leído por
+  `BattleCounterReader`). Sube cada vez que la enfermera cura, aunque el equipo esté lleno; camas, pociones y el propio vial no.
+- **MISCELÁNEA**: botón POKÉVIAL en DARSE OBJETOS (`GiveAsync`, con su evento como los demás).
+- Pruebas: rutina de la mochila desensamblada, consulta con el tercer caso, la cueva cabe, `MaxUses`, instalación sobre una copia
+  de los ficheros del mod (`RulePatchesTests`); `ItemCatalogTests` cuenta un objeto clave más (202).
+- **Sin probar en el juego en esta app.** Sin PermaLocke abierto nadie atiende la petición: el uso se gasta y no cura (en el
+  torneo la app está siempre abierta mientras se juega).

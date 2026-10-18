@@ -377,20 +377,21 @@ public sealed class RulePatchesTests
     [Fact]
     public void The_bag_sends_the_infinite_repel_to_its_routine_which_turns_it_on_and_off()
     {
-        Assert.Equal("cmp r5, #0x72; beq #0x16c18; cmp r5, #0x73; beq #0x16c28; cmp r3, r5; bx lr; mov r0, r4; mov r1, r5; pop {r3, r4, r5, r6, r7, lr}; b #0x16c38; "
-                     + "mov r0, r4; mov r1, r5; pop {r3, r4, r5, r6, r7, lr}; b #0x16ce8",
+        Assert.Equal("cmp r5, #0x72; beq #0x16c20; cmp r5, #0x73; beq #0x16c30; cmp r5, #0x78; beq #0x16c40; cmp r3, r5; bx lr; "
+                     + "mov r0, r4; mov r1, r5; pop {r3, r4, r5, r6, r7, lr}; b #0x16c4c; "
+                     + "mov r0, r4; mov r1, r5; pop {r3, r4, r5, r6, r7, lr}; b #0x16cfc; mov r0, r4; pop {r3, r4, r5, r6, r7, lr}; b #0x16d48",
             Disassemble(RulePatches.BagLookup(), RulePatches.BagCave));
         Assert.Equal("push {r4, r5, r6, lr}; mov r4, r0; mov r5, r1; ldr r0, [r4, #0x4c]; add r3, r0, #0xa00; "
                      + "ldrh r2, [r3, #0x58]; ldrh r3, [r3, #0x3e]; subs r6, r3, r5; movne r6, #1; cmp r2, #0; moveq r6, #1; "
                      + "mov r2, r6; mov r1, r5; bl #0x738; ldr r0, [r4, #0x70]; cmp r6, #0; moveq r1, #0x3c; movne r1, #0x3b; "
-                     + "bl #0x16ca0; ldr r0, [r4, #0x70]; mov r1, #0; bl #0xa5e4; mov r0, #2; str r0, [r4, #4]; mov r0, #0; "
+                     + "bl #0x16cb4; ldr r0, [r4, #0x70]; mov r1, #0; bl #0xa5e4; mov r0, #2; str r0, [r4, #4]; mov r0, #0; "
                      + "pop {r4, r5, r6, pc}",
-            Disassemble(RulePatches.BagHandlerCode(), RulePatches.BagCave + 0x38));
+            Disassemble(RulePatches.BagHandlerCode(), RulePatches.BagCave + 0x4C));
         Assert.Equal("push {r4, r5, sb, sl, fp, lr}; mov r4, r0; mov r5, r1; add r0, r0, #4; bl #0x3a8; mov sl, r0; mov r1, #1; "
                      + "bl #0x460; mov sb, r0; mov r1, r0; mov r2, r5; mov r0, sl; bl #0x590; mov r1, sb; mov r0, r4; mov r2, #1; "
                      + "pop {r4, r5, sb, sl, fp, lr}; b #0xae20",
-            Disassemble(RulePatches.BagShowCode(), RulePatches.BagCave + 0xA0));
-        Assert.Equal(0x38, RulePatches.BagLookup().Length);
+            Disassemble(RulePatches.BagShowCode(), RulePatches.BagCave + 0xB4));
+        Assert.Equal(0x4C, RulePatches.BagLookup().Length);
         Assert.Equal(0x68, RulePatches.BagHandlerCode().Length);
         Assert.Equal((RulePatches.RepelOnLine, RulePatches.RepelOffLine), (0x3B, 0x3C));
     }
@@ -540,6 +541,21 @@ public sealed class RulePatchesTests
 
             // El cuerpo del juego no cambia más que en esas 26 palabras y la llamada, y con otro code.bin no se toca nada.
             Assert.Null(RulePatches.EggTurboRecords(new byte[bytes.Length], icon.Value));
+
+            // The Pokévial (2026-10-16): the next icon, a copy of the Exp. Share's data, its text and the two lines of the bag, and only its icon in code.bin.
+            var vial = RulePatches.InstallPokeVial(romfs, out problem);
+            Assert.Null(problem);
+            Assert.Equal(before + 3, vial);
+            Assert.Equal(vial, RulePatches.InstallPokeVial(romfs, out problem));
+            items = new pk3DS.Core.CTR.GARC.LazyGARC(File.ReadAllBytes(Path.Combine(romfs, "a", "0", "1", "9")));
+            Assert.Equal(items[RulePatches.ExpShareItem], items[PokeVial.ItemId]);
+            garc = new pk3DS.Core.CTR.GARC.LazyGARC(File.ReadAllBytes(Path.Combine(romfs, "a", "0", "3", "6")));
+            Assert.Equal(PokeVial.Name, Line(RulePatches.ItemNamesFile, PokeVial.ItemId));
+            Assert.Equal(RulePatches.PokeVialUsedText, Line(RulePatches.BagTextFile, RulePatches.PokeVialUsedLine));
+            Assert.Equal(RulePatches.PokeVialEmptyText, Line(RulePatches.BagTextFile, RulePatches.PokeVialEmptyLine));
+            Assert.Equal(RulePatches.EggTurboOnText, Line(RulePatches.BagTextFile, RulePatches.EggTurboOnLine));
+            var vialRecords = RulePatches.PokeVialRecords(bytes, vial!.Value)!;
+            Assert.Equal([RulePatches.ItemIconTable + 4 * PokeVial.ItemId], vialRecords.Select(r => r.Offset));
         }
         finally
         {
@@ -551,19 +567,45 @@ public sealed class RulePatchesTests
     public void The_bag_routes_both_key_items_and_the_incubator_flips_the_blocks_byte()
     {
         var lookup = RulePatches.BagLookup();
-        Assert.Equal(14 * 4, lookup.Length);
+        Assert.Equal(19 * 4, lookup.Length);
         Assert.Equal(
-            "cmp r5, #0x72; beq #0x16c18; cmp r5, #0x73; beq #0x16c28; cmp r3, r5; bx lr; mov r0, r4; mov r1, r5; pop {r3, r4, r5, r6, r7, lr}; "
-            + $"b #0x{0x16C00 + 0x38:x}; mov r0, r4; mov r1, r5; pop {{r3, r4, r5, r6, r7, lr}}; b #0x{0x16C00 + 0x38 + 0x68 + 0x48:x}",
+            "cmp r5, #0x72; beq #0x16c20; cmp r5, #0x73; beq #0x16c30; cmp r5, #0x78; beq #0x16c40; cmp r3, r5; bx lr; "
+            + $"mov r0, r4; mov r1, r5; pop {{r3, r4, r5, r6, r7, lr}}; b #0x{0x16C00 + 0x4C:x}; "
+            + $"mov r0, r4; mov r1, r5; pop {{r3, r4, r5, r6, r7, lr}}; b #0x{0x16C00 + 0x4C + 0x68 + 0x48:x}; "
+            + $"mov r0, r4; pop {{r3, r4, r5, r6, r7, lr}}; b #0x{0x16C00 + 0x4C + 0x68 + 0x48 + 0x4C:x}",
             Disassemble(lookup, 0x16C00));
 
         var egg = RulePatches.BagEggCode();
         Assert.Equal(19 * 4, egg.Length);
         Assert.Equal(RuleBlock.EggTurbo, BinaryPrimitives.ReadUInt32LittleEndian(egg.AsSpan(18 * 4)));
-        var at = 0x16C00 + 0x38 + 0x68 + 0x48;
+        var at = 0x16C00 + 0x4C + 0x68 + 0x48;
         Assert.Equal(
             "push {r4, r5, r6, lr}; mov r4, r0; ldr r2, [pc, #0x38]; ldrb r3, [r2]; eor r6, r3, #1; strb r6, [r2]; ldr r0, [r4, #0x70]; cmp r6, #0; "
             + "moveq r1, #0x5c; movne r1, #0x5b",
             Disassemble(egg[..(10 * 4)], at));
+    }
+
+    [Fact]
+    public void The_pokevial_takes_a_use_asks_for_the_healing_and_says_so_or_says_it_is_empty()
+    {
+        var vial = RulePatches.BagVialCode();
+        Assert.Equal(21 * 4, vial.Length);
+        Assert.Equal(RuleBlock.PokeVialUses, BinaryPrimitives.ReadUInt32LittleEndian(vial.AsSpan(20 * 4)));
+        Assert.Equal(RuleBlock.PokeVialUses + 1, RuleBlock.PokeVialRequest);
+        var at = 0x16C00 + 0x4C + 0x68 + 0x48 + 0x4C;
+        Assert.Equal(
+            "push {r4, r5, r6, lr}; mov r4, r0; ldr r2, [pc, #0x40]; ldrb r3, [r2]; cmp r3, #0; subne r3, r3, #1; strbne r3, [r2]; movne r6, #1; "
+            + "strbne r6, [r2, #1]; ldr r0, [r4, #0x70]; moveq r1, #0x96; movne r1, #0x95; bl #0x16cb4; ldr r0, [r4, #0x70]; mov r1, #0; bl #0xa5e4; "
+            + "mov r0, #2; str r0, [r4, #4]; mov r0, #0; pop {r4, r5, r6, pc}",
+            Disassemble(vial[..(20 * 4)], at));
+
+        // The whole cave still ends before the code segment does (0x16DFC).
+        var cave = RulePatches.BagLookup().Length + RulePatches.BagHandlerCode().Length + RulePatches.BagShowCode().Length
+                   + RulePatches.BagEggCode().Length + vial.Length;
+        Assert.True(RulePatches.BagCave + cave <= 0x16DFC, $"la cueva acaba en {RulePatches.BagCave + cave:X}");
+
+        // One use, a second after the fourth trial, a third after the sixth.
+        Assert.Equal(120, PokeVial.ItemId);
+        Assert.Equal([1, 1, 1, 1, 2, 2, 3, 3], Enumerable.Range(0, 8).Select(PokeVial.MaxUses));
     }
 }

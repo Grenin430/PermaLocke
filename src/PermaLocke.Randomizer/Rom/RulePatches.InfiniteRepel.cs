@@ -125,7 +125,7 @@ public static partial class RulePatches
         (GetStringVeneer, VeneerJump)
     ];
 
-    private const int BagCheck = BagCave, BagHandler = BagCave + 0x38, BagShow = BagHandler + 0x68, BagEgg = BagShow + 0x48;
+    private const int BagCheck = BagCave, BagHandler = BagCave + 0x4C, BagShow = BagHandler + 0x68, BagEgg = BagShow + 0x48, BagVial = BagEgg + 0x4C;
 
     /// <summary>
     /// In place of the lookup's <c>cmp r3,r5</c> (r5 the item, r3 the table's first): this item leaves the lookup's frame
@@ -133,19 +133,24 @@ public static partial class RulePatches
     /// </summary>
     public static byte[] BagLookup() => Words(
         0xE3550000 | InfiniteRepelItem,     //  0 cmp   r5, #114
-        0x0A000003,                         //  1 beq   repel
+        B(BagCheck + 4, BagCheck + 8 * 4, 0), //  1 beq repel
         0xE3550000 | EggTurboItem,          //  2 cmp   r5, #115
-        0x0A000005,                         //  3 beq   incubator
-        CmpR3R5,                            //  4 cmp   r3, r5
-        0xE12FFF1E,                         //  5 bx    lr
-        0xE1A00004,                         //  6 repel: cpy r0, r4
-        0xE1A01005,                         //  7 cpy   r1, r5
-        0xE8BD40F8,                         //  8 ldmia sp!, {r3-r7, lr} ; the lookup's frame
-        B(BagCheck + 9 * 4, BagHandler),    //  9 b     handler
-        0xE1A00004,                         // 10 incubator: cpy r0, r4
-        0xE1A01005,                         // 11 cpy   r1, r5
-        0xE8BD40F8,                         // 12 ldmia sp!, {r3-r7, lr}
-        B(BagCheck + 13 * 4, BagEgg));      // 13 b     incubator's routine
+        B(BagCheck + 3 * 4, BagCheck + 12 * 4, 0), //  3 beq incubator
+        0xE3550000 | PokeVialItem,          //  4 cmp   r5, #120
+        B(BagCheck + 5 * 4, BagCheck + 16 * 4, 0), //  5 beq vial
+        CmpR3R5,                            //  6 cmp   r3, r5
+        0xE12FFF1E,                         //  7 bx    lr
+        0xE1A00004,                         //  8 repel: cpy r0, r4
+        0xE1A01005,                         //  9 cpy   r1, r5
+        0xE8BD40F8,                         // 10 ldmia sp!, {r3-r7, lr} ; the lookup's frame
+        B(BagCheck + 11 * 4, BagHandler),   // 11 b     handler
+        0xE1A00004,                         // 12 incubator: cpy r0, r4
+        0xE1A01005,                         // 13 cpy   r1, r5
+        0xE8BD40F8,                         // 14 ldmia sp!, {r3-r7, lr}
+        B(BagCheck + 15 * 4, BagEgg),       // 15 b     incubator's routine
+        0xE1A00004,                         // 16 vial: cpy r0, r4
+        0xE8BD40F8,                         // 17 ldmia sp!, {r3-r7, lr}
+        B(BagCheck + 18 * 4, BagVial));     // 18 b     the Pokévial's routine
 
     /// <summary>The routine: on or off, the message, back to the bag (state 2) with nothing spent.</summary>
     public static byte[] BagHandlerCode() => Words(
@@ -219,7 +224,7 @@ public static partial class RulePatches
         0xE8BD8070,                         // 17 ldmia sp!, {r4-r6, pc}
         RuleBlock.EggTurbo);                // 18 the byte's address
 
-    private static byte[] BagCaveCode() => [.. BagLookup(), .. BagHandlerCode(), .. BagShowCode(), .. BagEggCode()];
+    private static byte[] BagCaveCode() => [.. BagLookup(), .. BagHandlerCode(), .. BagShowCode(), .. BagEggCode(), .. BagVialCode()];
 
     /// <summary>Puts the item into <c>Bag.cro</c>, in place.</summary>
     public static BattleState PatchBag(Span<byte> cro)

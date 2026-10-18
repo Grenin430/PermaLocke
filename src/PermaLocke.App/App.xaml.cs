@@ -263,6 +263,7 @@ public partial class App : Application
         collection.AddSingleton<BarSync>();
         collection.AddSingleton<ActiveBar>();
         collection.AddSingleton<CapBadge>();
+        collection.AddSingleton<PokeVialService>();
         collection.AddSingleton<BackgroundMode>();
         collection.AddSingleton<PokemonIdentityService>();
         collection.AddSingleton<IRewardCatalog>(_ =>
@@ -547,6 +548,7 @@ public partial class App : Application
 
             // El cap de nivel siempre a la vista, encima del juego (1.0.4.7).
             _services.GetRequiredService<CapBadge>().Start();
+            _services.GetRequiredService<PokeVialService>().Start();
 
             // Las líneas evolutivas se leen ya, en segundo plano: la primera vez puede tocar sacar el fichero de
             // la ROM, y eso no debe caer en el segundo en que empieza un combate.

@@ -378,6 +378,8 @@ public static partial class RulePatches
         if (repelProblem is not null) said.Add(repelProblem);
         var eggIcon = InstallEggTurbo(Path.Combine(modFolder, "romfs"), out var eggProblem);
         if (eggProblem is not null) said.Add(eggProblem);
+        var vialIcon = InstallPokeVial(Path.Combine(modFolder, "romfs"), out var vialProblem);
+        if (vialProblem is not null) said.Add(vialProblem);
 
         if (File.Exists(code))
         {
@@ -394,7 +396,8 @@ public static partial class RulePatches
                 var hadOurs = existing.Any(r => CodeOffsets.Contains(r.Offset));
                 var rest = existing.Where(r => !CodeOffsets.Contains(r.Offset) && !SuperCandyOffsets.Contains(r.Offset)
                                                    && !InfiniteRepelOffsets.Contains(r.Offset)
-                                                   && !EggTurboOffsets.Contains(r.Offset)).ToList();
+                                                   && !EggTurboOffsets.Contains(r.Offset)
+                                                   && !PokeVialOffsets.Contains(r.Offset)).ToList();
                 var bytes = File.ReadAllBytes(code);
                 var ours = on ? CodeRecords(bytes) : null;
                 var super = superIcon is { } icon ? SuperCandyRecords(bytes, icon) : null;
@@ -404,6 +407,8 @@ public static partial class RulePatches
                 if (repel is not null) final = Ips.Merge(final, repel);
                 var egg = eggIcon is { } eggAt ? EggTurboRecords(bytes, eggAt) : null;
                 if (egg is not null) final = Ips.Merge(final, egg);
+                var vial = vialIcon is { } vialAt ? PokeVialRecords(bytes, vialAt) : null;
+                if (vial is not null) final = Ips.Merge(final, vial);
 
                 if (final.Count > 0) File.WriteAllBytes(ips, Ips.Write(final));
                 else if (File.Exists(ips)) File.Delete(ips);
@@ -420,6 +425,9 @@ public static partial class RulePatches
 
                 if (egg is not null) said.Add("code.bin: Incubadora Turbo puesta (code.ips)");
                 else if (eggIcon is not null) said.Add("code.bin no es el que se conoce: la Incubadora Turbo no acelera los huevos");
+
+                if (vial is not null) said.Add("code.bin: Pokévial puesto (code.ips)");
+                else if (vialIcon is not null) said.Add("code.bin no es el que se conoce: el Pokévial sale sin icono");
             }
         }
 

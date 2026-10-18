@@ -63,6 +63,7 @@ Cómo llega una versión nueva a los jugadores desde el 2026-09-26. Detalle téc
 | 1.0.14 | commit directo a main, Action | avisos como pergamino que se desenrolla a la izquierda, con mecha como cuenta atrás |
 | 1.0.15 / 1.0.15.1 | commit directo a main, Action | panel del cap como placa de trofeo, pergamino suave, aviso de duplicado que no se pierde; una MT del suelo en un solo sitio (§241) |
 | 1.0.16 | commit directo a main pedido por el usuario (2026-10-10), Action | animación del objeto por categorías: las once con estilo propio, Megapiedra de 4,5 s (§243). **Sin probar en el emulador real** |
+| 1.0.18 | commit directo a main pedido por el usuario (2026-10-18), Action | Pokévial: objeto clave que cura al equipo, usos por pruebas superadas (1, +1 en la 4, +1 en la 6), se recarga con la enfermera (§248). **Sin probar en el emulador real** |
 
 **1.0.2 y 1.0.3 no pueden actualizarse solas** (§204: la descarga se desbordaba en el primer trozo). Quien las tenga,
 una vez a mano: cerrar PermaLocke y cambiar `PermaLocke.exe` por el del zip de la 1.0.4.

@@ -224,6 +224,11 @@ public sealed partial class MiscellaneousViewModel : SectionViewModel
     private Task GrantEggTurboAsync() =>
         GiveAsync(EggTurbo.ItemId, 1, EggTurbo.Name, "Huevos que eclosionan en dos pasos");
 
+    /// <summary>The Pokévial (2026-10-16), a key item too: one in the bag; its uses are the run's (PokeVialService).</summary>
+    [RelayCommand(CanExecute = nameof(CanUseTools))]
+    private Task GrantPokeVialAsync() =>
+        GiveAsync(PokeVial.ItemId, 1, PokeVial.Name, "Cura a todo el equipo en cualquier sitio");
+
     /// <summary>
     /// Adds an item to the bag on top of what is already there, and records it.
     /// </summary>
@@ -341,6 +346,7 @@ public sealed partial class MiscellaneousViewModel : SectionViewModel
         GrantShinyCharmCommand.NotifyCanExecuteChanged();
         GrantInfiniteRepelCommand.NotifyCanExecuteChanged();
         GrantEggTurboCommand.NotifyCanExecuteChanged();
+        GrantPokeVialCommand.NotifyCanExecuteChanged();
         ClaimRewardCommand.NotifyCanExecuteChanged();
     }
 }

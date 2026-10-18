@@ -260,6 +260,7 @@ public sealed class BagLayout
             {
                 legal = legal.Append((ushort)PermaLocke.Core.Domain.InfiniteRepel.ItemId);
                 legal = legal.Append((ushort)PermaLocke.Core.Domain.EggTurbo.ItemId);
+                legal = legal.Append((ushort)PermaLocke.Core.Domain.PokeVial.ItemId);
             }
 
             pockets.Add(new BagPocket(pouch.Type, offset, pouch.Items.Length, pouch.MaxCount, legal));

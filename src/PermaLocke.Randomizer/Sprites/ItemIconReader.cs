@@ -112,6 +112,14 @@ public sealed class ItemIconReader
                                 ?? throw new InvalidDataException("El icono del Repelente no es el que se conoce.")));
     }
 
+    /// <summary>The Pokévial, drawn on the Repel's template the same way (<see cref="PokeVialIcon"/>).</summary>
+    public PokemonIcon ReadPokeVial()
+    {
+        return Crop(PermaLocke.Core.Domain.PokeVial.ItemId,
+            BflimTexture.Decode(PokeVialIcon.Bflim(Decompress(_garc.GetFile(RepelItemId - 1)))
+                                ?? throw new InvalidDataException("El icono del Repelente no es el que se conoce.")));
+    }
+
     private const int RareCandyItemId = 50;
 
     private const int RepelItemId = 79;

@@ -80,4 +80,17 @@ public static class RuleBlock
     public const uint EggTurboOffset = 0x10;
 
     public static uint EggTurbo => Address + EggTurboOffset;
+
+    /// <summary>
+    /// The Pokévial (2026-10-16): the uses it has left (a byte). PermaLocke writes it (what the run keeps), and the game's bag takes one when it is
+    /// used, then asks for the healing with <see cref="PokeVialRequest"/>. A fresh game reads 0: the vial is empty.
+    /// </summary>
+    public const uint PokeVialUsesOffset = 0x11;
+
+    public static uint PokeVialUses => Address + PokeVialUsesOffset;
+
+    /// <summary>The bag sets this byte to 1 when the Pokévial is used; PermaLocke heals the party and puts it back to 0.</summary>
+    public const uint PokeVialRequestOffset = 0x12;
+
+    public static uint PokeVialRequest => Address + PokeVialRequestOffset;
 }

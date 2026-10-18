@@ -76,3 +76,5 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ra
 - `StaticOverride.cs` — **StaticOverrideRule** — What a static encounter is replaced by, when the ordinary draw is not what is wanted.
 - `TrainerDifficultyOptions.cs` — **TrainerHeldItem, TrainerDifficultyOptions** — How much harder the trainers are than the cartridge made them, beyond the role's levels. 
 - `TrainerMinimum.cs` — **TrainerMinimum** — 
+- `Rom/RulePatches.PokeVial.cs` — **RulePatches** — The Pokévial (2026-10-16, 1.0.18): item data, text, icon and the bag routine `BagVialCode` (takes a use, raises the request for the app). 
+- `Sprites/PokeVialIcon.cs` — **PokeVialIcon** — The Pokévial's icon: a flask whose body is a Poké Ball, painted over the Repel's BFLIM.
