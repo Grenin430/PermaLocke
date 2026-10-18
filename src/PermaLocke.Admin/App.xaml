@@ -13,6 +13,8 @@
 
             <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
             <admin:NullToVisibleConverter x:Key="NullToVisible" />
+            <admin:ZeroToVisibleConverter x:Key="ZeroToVisible" />
+            <admin:EmptyToHiddenConverter x:Key="EmptyToHidden" />
 
             <!-- Superficies, de más oscura a más clara. -->
             <SolidColorBrush x:Key="Canvas" Color="#FF120E20" />
@@ -295,9 +297,106 @@
                 <Setter Property="Background" Value="{StaticResource Raised}" />
                 <Setter Property="Foreground" Value="{StaticResource Gold}" />
                 <Setter Property="FontFamily" Value="Segoe UI Semibold" />
-                <Setter Property="Padding" Value="10,8" />
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="Padding" Value="10,7" />
                 <Setter Property="BorderBrush" Value="{StaticResource Line}" />
                 <Setter Property="BorderThickness" Value="0,0,0,1" />
+                <Setter Property="Cursor" Value="Hand" />
+            </Style>
+            <!-- Filas (2026-10-08): la que tiene el ratón se ilumina y la marcada lleva el violeta del menú. -->
+            <Style TargetType="DataGridRow">
+                <Setter Property="SnapsToDevicePixels" Value="True" />
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="{StaticResource Hover}" />
+                    </Trigger>
+                    <Trigger Property="IsSelected" Value="True">
+                        <Setter Property="Background" Value="{StaticResource AccentDeep}" />
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <!-- ============================== CENTRO DE CONTROL (2026-10-08) -->
+            <SolidColorBrush x:Key="Ink" Color="{StaticResource PxInk}" />
+            <SolidColorBrush x:Key="Warn" Color="{StaticResource PxWarn}" />
+
+            <!-- Un bloque de página: superficie, borde fino y esquina pequeña. -->
+            <Style x:Key="Panel" TargetType="Border">
+                <Setter Property="Background" Value="{StaticResource Surface}" />
+                <Setter Property="BorderBrush" Value="{StaticResource Line}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="CornerRadius" Value="6" />
+                <Setter Property="Padding" Value="16,14" />
+            </Style>
+
+            <!-- El rótulo de una sección o de una cifra. -->
+            <Style x:Key="Caption" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                <Setter Property="Foreground" Value="{StaticResource Faint}" />
+                <Setter Property="FontFamily" Value="Segoe UI Semibold" />
+                <Setter Property="FontSize" Value="11" />
+            </Style>
+
+            <!-- La explicación bajo un control. -->
+            <Style x:Key="Hint" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                <Setter Property="Foreground" Value="{StaticResource Faint}" />
+                <Setter Property="FontSize" Value="11.5" />
+                <Setter Property="TextWrapping" Value="Wrap" />
+            </Style>
+
+            <!-- Una acción que quita o castiga: borde rojo. -->
+            <Style x:Key="Danger" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                <Setter Property="BorderBrush" Value="{StaticResource Bad}" />
+            </Style>
+
+            <!-- Un enlace dentro de una lista («ver», «abrir»). -->
+            <Style x:Key="Link" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderBrush" Value="Transparent" />
+                <Setter Property="Foreground" Value="{StaticResource Accent}" />
+                <Setter Property="Padding" Value="6,2" />
+                <Setter Property="MinHeight" Value="24" />
+            </Style>
+
+            <!-- Los filtros de una lista: botones que se quedan marcados, con su cuenta al lado. -->
+            <Style x:Key="FilterChip" TargetType="RadioButton">
+                <Setter Property="Foreground" Value="{StaticResource Muted}" />
+                <Setter Property="FontFamily" Value="Segoe UI Semibold" />
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="Margin" Value="0,0,6,0" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="RadioButton">
+                            <Border x:Name="Face" Background="{StaticResource Raised}" BorderBrush="{StaticResource Line}" BorderThickness="1"
+                                    CornerRadius="4" Padding="10,5">
+                                <ContentPresenter VerticalAlignment="Center" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Face" Property="BorderBrush" Value="{StaticResource Accent}" />
+                                </Trigger>
+                                <Trigger Property="IsKeyboardFocused" Value="True">
+                                    <Setter TargetName="Face" Property="BorderBrush" Value="{StaticResource Accent}" />
+                                </Trigger>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="Face" Property="Background" Value="{StaticResource AccentDeep}" />
+                                    <Setter TargetName="Face" Property="BorderBrush" Value="{StaticResource Accent}" />
+                                    <Setter Property="Foreground" Value="{StaticResource Text}" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Una etiqueta de estado (JUGANDO, SUSPENDIDO, 1.0.16...). -->
+            <Style x:Key="Tag" TargetType="Border">
+                <Setter Property="Background" Value="{StaticResource Raised}" />
+                <Setter Property="BorderBrush" Value="{StaticResource Line}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="CornerRadius" Value="3" />
+                <Setter Property="Padding" Value="7,2" />
+                <Setter Property="Margin" Value="0,0,6,0" />
             </Style>
             <Style TargetType="DataGridCell">
                 <Setter Property="BorderThickness" Value="0" />
@@ -314,7 +413,7 @@
                 </Setter>
                 <Style.Triggers>
                     <Trigger Property="IsSelected" Value="True">
-                        <Setter Property="Background" Value="{StaticResource Hover}" />
+                        <Setter Property="Background" Value="{StaticResource AccentDeep}" />
                         <Setter Property="Foreground" Value="{StaticResource Text}" />
                     </Trigger>
                 </Style.Triggers>

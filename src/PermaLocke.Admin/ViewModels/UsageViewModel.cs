@@ -29,7 +29,7 @@ public sealed record UsageRun(string? Jugador, bool Activa, int Eventos, long By
 /// not here on purpose: Supabase only gives them to its dashboard or to an account-wide key, and that key does not
 /// belong in an application.
 /// </remarks>
-public sealed partial class UsageViewModel(DiscordLogin discord, ILogger<UsageViewModel> logger) : ObservableObject
+public sealed partial class UsageViewModel(ITournamentServer discord, ILogger<UsageViewModel> logger) : ObservableObject
 {
     /// <summary>The free plan's database limit.</summary>
     public const long Limit = 500L * 1024 * 1024;

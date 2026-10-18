@@ -26,7 +26,7 @@ public sealed record ReportLine(string Player, StoredFile File)
 /// Listed by <c>informes_lista()</c> (17-informes.sql), which only an organiser may call; downloaded through Storage.
 /// Read-only: the LIMPIEZA removes the ones older than 30 days.
 /// </remarks>
-public sealed partial class ReportsViewModel(GiftDesk desk, DiscordLogin discord, ILogger<ReportsViewModel> logger) : ObservableObject
+public sealed partial class ReportsViewModel(GiftDesk desk, ITournamentServer discord, ILogger<ReportsViewModel> logger) : ObservableObject
 {
     /// <summary>The bucket of the reports (17-informes.sql); the same name the player's CrashReportUpload sends to.</summary>
     public const string CrashReportBucket = "informes";
@@ -51,7 +51,8 @@ public sealed partial class ReportsViewModel(GiftDesk desk, DiscordLogin discord
                 return;
             }
 
-            var names = (await desk.PlayersAsync()).ToDictionary(player => player.Id, player => player.Name);
+            var names = (await desk.PlayersAsync()).Where(player => player.HasAccount)
+                .ToDictionary(player => player.Id, player => player.Name);
             Reports.Clear();
             foreach (var row in JsonSerializer.Deserialize<List<Row>>(json, Json) ?? [])
             {

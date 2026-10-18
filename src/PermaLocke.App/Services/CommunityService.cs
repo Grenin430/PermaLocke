@@ -5,6 +5,7 @@ using System.Windows.Threading;
 using Microsoft.Extensions.Logging;
 using PermaLocke.Core.Abstractions;
 using PermaLocke.Core.Domain;
+using PermaLocke.Infrastructure;
 
 namespace PermaLocke.App.Services;
 
@@ -162,6 +163,29 @@ public sealed class CommunityService : INotifyPropertyChanged
         {
             _lastWritten = state;
             _lastBeat = now;
+            await TellVersionAsync();
+        }
+    }
+
+    private bool _versionTold;
+
+    /// <summary>
+    /// Says this app's version next to its presence, once per run (2026-10-08, <c>anotar_version</c> in 21-admin.sql): what
+    /// Admin shows to know who has updated. A server without that function answers 404; it is noted once and not asked again.
+    /// </summary>
+    private async Task TellVersionAsync()
+    {
+        if (_versionTold) return;
+        _versionTold = true;
+
+        try
+        {
+            await _discord.CallAsync("anotar_version",
+                JsonSerializer.Serialize(new { p_version = AppUpdate.Display(UpdateService.Current) }));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInformation("No se ha podido anotar la versión en el servidor (¿falta 21-admin.sql?): {Message}", ex.Message);
         }
     }
 

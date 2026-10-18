@@ -254,4 +254,6 @@ Otros docs: `docs/DISTRIBUCION-LOCAL.md` (reparto local, informes del amigo, rev
 - L13361 · 241 · Una MT del suelo salía en dos sitios (MT03/06/93 en dos zonas del cartucho); se baraja por MT distinta
 - L13367 · 242 · Rectas negras en la animación del objeto (bloques de ancho fijo con píxel no entero) y seis prototipos de rediseño A-F
 - L13374 · 243 · Animación del objeto por categorías, publicada en la 1.0.16: fase 1 (ItemCatalog, tiempos, ItemLab; iconos reales de la tabla del cartucho: 944 de 1001, 57 son «?» del propio juego), Megapiedra, las once categorías con estilo propio, Megapiedra sin viñeta y qué quedó fuera por categoría; 1.0.16.1: la tecla ya no corta el objeto
+- L13437 · 244-246 · El panel del cap como un mar (banda negra, cielo de Alola, criaturas de luz, fósiles, sucesos, lectura rápida de vida), publicado en la 1.0.17
+- L13498 · 247 · El mar con el juego delante: estado por el número del juego, fondo por la barra del que está en el campo (sin barra no hay peligro), quemadura en aura, bomba a 120 Hz
 - L13508 · 248 · Pokévial traído del singleplayer (publicado en la 1.0.18): objeto 120, rama de la mochila, curación desde la app, usos por pruebas superadas y recarga con la enfermera

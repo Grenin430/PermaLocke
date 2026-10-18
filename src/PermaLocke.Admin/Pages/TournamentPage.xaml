@@ -8,10 +8,7 @@
             <pixel:PixelWindow Title="EL TORNEO" Icon="IconSwords" Margin="0,0,14,0">
                 <StackPanel>
                     <TextBlock TextWrapping="Wrap" Foreground="{StaticResource Muted}"
-                               Text="PAUSAR cierra JUGAR a todos los jugadores a la vez (una pausa, o el final del torneo). REANUDAR lo vuelve a abrir. Cada uno lo ve en su app con el motivo." />
-                    <pixel:PixelText Text="MOTIVO" Style="{StaticResource Heading}" Margin="0,16,0,6" />
-                    <TextBox Text="{Binding Reason, UpdateSourceTrigger=PropertyChanged}" TextWrapping="Wrap" MinHeight="46" AcceptsReturn="True"
-                             ToolTip="Lo leen todos. Obligatorio." />
+                               Text="PAUSAR cierra JUGAR a todos los jugadores a la vez (una pausa, o el final del torneo). REANUDAR lo vuelve a abrir. Cada uno lo ve en su app con el motivo, que se pide al confirmar." />
                     <UniformGrid Columns="2" Margin="0,14,0,0">
                         <Button Content="PAUSAR" Command="{Binding PauseAllCommand}" Margin="0,0,6,0"
                                 ToolTip="Nadie puede pulsar JUGAR hasta que lo reanudes. Pregunta antes." />

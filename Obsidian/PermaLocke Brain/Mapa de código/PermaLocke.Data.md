@@ -1,7 +1,7 @@
 ---
 tipo: mapa-codigo
 proyecto: PermaLocke.Data
-generado: 2026-10-10
+generado: 2026-10-08
 ---
 # PermaLocke.Data — mapa de ficheros
 

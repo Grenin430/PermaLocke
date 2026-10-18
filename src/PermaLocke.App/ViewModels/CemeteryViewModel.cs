@@ -152,7 +152,7 @@ public sealed partial class CemeteryViewModel : SectionViewModel
     public string EmptyText => _owner is null ? "Aún no ha caído nadie en esta run." : "Aún no ha caído nadie (o no lo ha compartido).";
 
     /// <summary>Whether there are friends to switch to.</summary>
-    public bool HasOwners => _community.Friends.Count > 0;
+    public bool HasOwners => !Services.RecordingMode.On && _community.Friends.Count > 0;
 
     /// <summary>Every player as a tab above the scene (1.0.5.7): you first, then each friend.</summary>
     public ObservableCollection<OwnerTab> Owners { get; } = [];

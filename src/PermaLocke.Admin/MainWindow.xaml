@@ -4,11 +4,15 @@
         xmlns:pixel="clr-namespace:PermaLocke.App.Views.Pixel"
         xmlns:vm="clr-namespace:PermaLocke.Admin.ViewModels"
         xmlns:pages="clr-namespace:PermaLocke.Admin.Pages"
-        Title="PermaLocke Admin" Height="860" Width="1440" MinWidth="1100" MinHeight="640" Icon="Assets/PermaLocke.Admin.ico"
+        Title="PermaLocke Admin" Height="900" Width="1500" MinWidth="1120" MinHeight="660" Icon="Assets/PermaLocke.Admin.ico"
         Background="{StaticResource PxBaseBrush}" WindowStartupLocation="CenterScreen">
 
-    <!-- Admin (2026-09-28): un menú a la izquierda, agrupado, y cada cosa en su página a la derecha; lo que antes eran
-         ventanas sueltas son ahora páginas. Cada página es un view model y estas plantillas eligen su vista. -->
+    <!-- Admin (2026-09-28, centro de control 2026-10-08): el menú a la izquierda con lo pendiente de cada página, y arriba
+         la página, un buscador de jugadores y ACTUALIZAR. Cada página es un view model y estas plantillas eligen su vista. -->
+    <Window.InputBindings>
+        <KeyBinding Key="F5" Command="{Binding RefreshAllCommand}" />
+    </Window.InputBindings>
+
     <Window.Resources>
         <DataTemplate DataType="{x:Type vm:HomeSection}"><pages:HomePage DataContext="{Binding Admin}" /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:PlayersSection}"><pages:PlayersPage DataContext="{Binding Admin}" /></DataTemplate>
@@ -18,6 +22,7 @@
         <DataTemplate DataType="{x:Type vm:AnnouncementsViewModel}"><pages:AnnouncementsPage /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:AuditViewModel}"><pages:AuditPage /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:ReportsViewModel}"><pages:ReportsPage /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:LogViewModel}"><pages:LogPage /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:SuggestionsViewModel}"><pages:SuggestionsPage /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:MotesViewModel}"><pages:MotesPage /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:FallenViewModel}"><pages:FallenPage /></DataTemplate>
@@ -34,16 +39,18 @@
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="250" />
+            <ColumnDefinition Width="232" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
         <!-- ================================================== EL MENÚ -->
         <Border Grid.Column="0" Background="{StaticResource Canvas}" BorderBrush="{StaticResource Line}" BorderThickness="0,0,1,0">
             <DockPanel>
-                <StackPanel DockPanel.Dock="Top" Margin="18,20,18,14">
-                    <pixel:PixelText Text="PERMALOCKE" Scale="3" Tight="True" Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
-                    <pixel:PixelText Text="ADMIN" Scale="3" Tight="True" Colour="{StaticResource PxGold}" Shadow="{StaticResource PxShadow}" Margin="0,4,0,0" />
+                <StackPanel DockPanel.Dock="Top" Margin="18,18,18,10" Orientation="Horizontal">
+                    <pixel:PixelText Text="PERMALOCKE" Scale="2" Tight="True" Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" VerticalAlignment="Center" />
+                    <Border Background="{StaticResource Gold}" Padding="5,2" Margin="8,0,0,0" VerticalAlignment="Center">
+                        <pixel:PixelText Text="ADMIN" Scale="2" Tight="True" Colour="{StaticResource PxInk}" />
+                    </Border>
                 </StackPanel>
 
                 <!-- La cuenta, abajo del todo -->
@@ -52,25 +59,26 @@
                         <Button Content="ENTRAR CON DISCORD" Style="{StaticResource Primary}" Command="{Binding SignInCommand}"
                                 Visibility="{Binding IsSignedOut, Converter={StaticResource BoolToVisibility}}" />
                         <DockPanel Visibility="{Binding IsSignedIn, Converter={StaticResource BoolToVisibility}}">
-                            <Image DockPanel.Dock="Left" Source="{Binding Photo, TargetNullValue={x:Null}}" Width="34" Height="34" Margin="0,0,10,0" />
+                            <Image DockPanel.Dock="Left" Source="{Binding Photo, TargetNullValue={x:Null}}" Width="32" Height="32" Margin="0,0,10,0" />
                             <Button DockPanel.Dock="Right" Content="SALIR" Command="{Binding SignOutCommand}" Padding="10,4" MinHeight="28"
                                     ToolTip="Cierra la sesión de Discord en este PC." />
                             <StackPanel VerticalAlignment="Center">
-                                <pixel:PixelText Text="{Binding AdminName}" Scale="2" Tight="True" Colour="{StaticResource PxGold}" />
-                                <TextBlock Text="organizador" Foreground="{StaticResource Faint}" FontSize="11" Margin="0,3,0,0" />
+                                <TextBlock Text="{Binding AdminName}" Foreground="{StaticResource Gold}" FontFamily="Segoe UI Semibold" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="organizador" Foreground="{StaticResource Faint}" FontSize="11" Margin="0,1,0,0" />
                             </StackPanel>
                         </DockPanel>
                     </Grid>
                 </Border>
 
                 <ListBox ItemsSource="{Binding Source={StaticResource Menu}}" SelectedItem="{Binding SelectedSection}"
-                         Background="Transparent" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                         Background="Transparent" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         AutomationProperties.Name="Menú de Admin">
                     <ListBox.GroupStyle>
                         <GroupStyle>
                             <GroupStyle.HeaderTemplate>
                                 <DataTemplate>
                                     <TextBlock Text="{Binding Name}" Foreground="{StaticResource Faint}" FontSize="10.5"
-                                               FontFamily="Segoe UI Semibold" Margin="20,14,0,4" />
+                                               FontFamily="Segoe UI Semibold" Margin="20,12,0,3" />
                                 </DataTemplate>
                             </GroupStyle.HeaderTemplate>
                         </GroupStyle>
@@ -79,12 +87,19 @@
                         <Style TargetType="ListBoxItem">
                             <Setter Property="Cursor" Value="Hand" />
                             <Setter Property="ToolTip" Value="{Binding Help}" />
+                            <Setter Property="AutomationProperties.Name" Value="{Binding Title}" />
+                            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
                             <Setter Property="Template">
                                 <Setter.Value>
                                     <ControlTemplate TargetType="ListBoxItem">
-                                        <Border x:Name="Row" Background="Transparent" Margin="10,1" Padding="10,8" CornerRadius="6">
+                                        <Border x:Name="Row" Background="Transparent" Margin="8,1" Padding="10,7" CornerRadius="4" BorderThickness="1" BorderBrush="Transparent">
                                             <DockPanel>
                                                 <Border x:Name="Mark" DockPanel.Dock="Left" Width="3" Margin="-10,0,9,0" Background="Transparent" />
+                                                <Border DockPanel.Dock="Right" Background="{StaticResource Gold}" Padding="6,1" MinWidth="20" CornerRadius="2"
+                                                        VerticalAlignment="Center" Visibility="{Binding HasBadge, Converter={StaticResource BoolToVisibility}}">
+                                                    <TextBlock Text="{Binding Badge}" Foreground="{StaticResource Ink}" FontFamily="Segoe UI Semibold" FontSize="11"
+                                                               HorizontalAlignment="Center" />
+                                                </Border>
                                                 <pixel:PixelIcon x:Name="Glyph" DockPanel.Dock="Left" Icon="{Binding Icon}" Scale="2" Margin="0,0,10,0" VerticalAlignment="Center" />
                                                 <pixel:PixelText x:Name="Label" Text="{Binding Title}" Scale="2" Tight="True" VerticalAlignment="Center"
                                                                  Colour="{StaticResource PxTextDim}" />
@@ -93,6 +108,9 @@
                                         <ControlTemplate.Triggers>
                                             <Trigger Property="IsMouseOver" Value="True">
                                                 <Setter TargetName="Row" Property="Background" Value="{StaticResource Hover}" />
+                                            </Trigger>
+                                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                                <Setter TargetName="Row" Property="BorderBrush" Value="{StaticResource Accent}" />
                                             </Trigger>
                                             <Trigger Property="IsSelected" Value="True">
                                                 <Setter TargetName="Row" Property="Background" Value="{StaticResource AccentDeep}" />
@@ -111,27 +129,77 @@
 
         <!-- ================================================== LA PÁGINA -->
         <DockPanel Grid.Column="1">
-            <!-- Arriba: lo de hoy y ACTUALIZAR, siempre a la vista -->
-            <Border DockPanel.Dock="Top" Background="{StaticResource Surface}" Padding="18,10" BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1">
+            <!-- Arriba: el título, el buscador de jugadores y ACTUALIZAR, siempre a la vista -->
+            <Border DockPanel.Dock="Top" Background="{StaticResource Surface}" Padding="20,10,14,10" BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1">
                 <DockPanel>
-                    <Button DockPanel.Dock="Right" Content="ACTUALIZAR" Command="{Binding RefreshAllCommand}"
-                            ToolTip="Vuelve a leer todo del servidor (se hace solo cada minuto)." />
+                    <Button DockPanel.Dock="Right" Command="{Binding RefreshAllCommand}" ToolTip="Vuelve a leer todo del servidor (F5). Se hace solo cada minuto."
+                            Margin="10,0,0,0" AutomationProperties.Name="Actualizar">
+                        <StackPanel Orientation="Horizontal">
+                            <pixel:PixelIcon Icon="IconRefresh" Scale="2" Margin="0,0,8,0" VerticalAlignment="Center" />
+                            <TextBlock Text="ACTUALIZAR" VerticalAlignment="Center" FontFamily="Segoe UI Semibold" />
+                        </StackPanel>
+                    </Button>
+                    <TextBlock DockPanel.Dock="Right" Text="{Binding LastRefreshText}" Foreground="{StaticResource Faint}" FontSize="11.5"
+                               VerticalAlignment="Center" Margin="12,0,0,0" />
+                    <Grid DockPanel.Dock="Right" Width="260" VerticalAlignment="Center">
+                        <TextBox x:Name="GlobalSearch" Text="{Binding Search, UpdateSourceTrigger=PropertyChanged, Delay=150}" Padding="30,5,8,5"
+                                 GotKeyboardFocus="OnSearchFocus" AutomationProperties.Name="Buscar jugador" ToolTip="Nombre, ID de Discord o rol (Ctrl+F)" />
+                        <pixel:PixelIcon Icon="IconPeople" Scale="1" Margin="10,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center" IsHitTestVisible="False" />
+                        <TextBlock Text="Buscar jugador  ·  Ctrl+F" Foreground="{StaticResource Faint}" Margin="30,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False"
+                                   FontSize="12">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Text, ElementName=GlobalSearch}" Value="">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Grid>
                     <StackPanel VerticalAlignment="Center">
                         <pixel:PixelText Text="{Binding SelectedSection.Title}" Scale="3" Tight="True" Colour="{StaticResource PxText}"
                                          Shadow="{StaticResource PxShadow}" />
-                        <TextBlock Text="{Binding SelectedSection.Help}" Foreground="{StaticResource Faint}" FontSize="12" Margin="0,4,0,0" />
+                        <TextBlock Text="{Binding SelectedSection.Help}" Foreground="{StaticResource Faint}" FontSize="12" Margin="0,4,0,0" TextTrimming="CharacterEllipsis" />
                     </StackPanel>
                 </DockPanel>
             </Border>
 
-            <Border DockPanel.Dock="Bottom" Background="{StaticResource Canvas}" Padding="18,6">
+            <!-- Lo que hay que saber de la sesión: modo demo, o el servidor sin 21-admin.sql -->
+            <Border DockPanel.Dock="Top" Background="#FF3A2E12" BorderBrush="{StaticResource Gold}" BorderThickness="0,0,0,1" Padding="20,7"
+                    Visibility="{Binding HasNotice, Converter={StaticResource BoolToVisibility}}">
                 <DockPanel>
-                    <TextBlock DockPanel.Dock="Right" Text="{Binding Today}" Foreground="{StaticResource Gold}" FontSize="11.5" />
-                    <TextBlock Text="{Binding Status}" Foreground="{StaticResource Muted}" FontSize="11.5" />
+                    <pixel:PixelIcon DockPanel.Dock="Left" Icon="IconWarning" Scale="2" Margin="0,0,10,0" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding Notice}" Foreground="{StaticResource Gold}" TextWrapping="Wrap" VerticalAlignment="Center" FontSize="12.5" />
                 </DockPanel>
             </Border>
 
-            <ContentControl Content="{Binding SelectedSection.Page}" Margin="4,0,4,0" Focusable="False" />
+            <Border DockPanel.Dock="Bottom" Background="{StaticResource Canvas}" Padding="20,6" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Right" Text="{Binding Today}" Foreground="{StaticResource Faint}" FontSize="11.5" Margin="16,0,0,0" />
+                    <TextBlock Text="{Binding Status}" FontSize="11.5" TextTrimming="CharacterEllipsis">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                <Setter Property="Foreground" Value="{StaticResource Muted}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding StatusIsError}" Value="True">
+                                        <Setter Property="Foreground" Value="{StaticResource Bad}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </DockPanel>
+            </Border>
+
+            <Grid>
+                <ContentControl Content="{Binding SelectedSection.Page}" Focusable="False" />
+                <!-- Leyendo: una franja fina arriba, sin tapar la página -->
+                <ProgressBar VerticalAlignment="Top" Height="2" IsIndeterminate="True" BorderThickness="0" Background="Transparent"
+                             Foreground="{StaticResource Accent}" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" />
+            </Grid>
         </DockPanel>
     </Grid>
 </Window>

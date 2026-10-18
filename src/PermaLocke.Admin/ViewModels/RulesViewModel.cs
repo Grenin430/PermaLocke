@@ -31,7 +31,7 @@ public sealed record RuleFile(string File, string What)
 /// price written as text is caught here and not on six computers.
 /// </para>
 /// </remarks>
-public sealed partial class RulesViewModel(DiscordLogin discord, AppPaths paths, ILogger<RulesViewModel> logger) : ObservableObject
+public sealed partial class RulesViewModel(ITournamentServer discord, AppPaths paths, ILogger<RulesViewModel> logger) : ObservableObject
 {
     private sealed record Row(string Fichero, string Contenido, DateTimeOffset Actualizado);
 

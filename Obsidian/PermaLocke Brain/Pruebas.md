@@ -44,6 +44,13 @@ revisado: 2026-09-24
 - Capturas de la app real en la copia aislada ([[UI y kit pixel]]).
 - Jugando, con el usuario: es lo que falta para casi todo lo marcado «sin jugar» en la tabla de `CLAUDE.md`.
 
+## Admin y SQL del servidor (2026-10-08, §240)
+- `tests/PermaLocke.Admin.Tests` (21): filtros y búsqueda, `Ago`, envío idempotente con `DemoServer`, respaldo sin
+  21-admin.sql (lista de `clasificacion`, 409 saltado), estado de una orden, textos del REGISTRO, «volver a antes», la
+  confirmación obligatoria con motivo (`Confirm.Handler` se sustituye), reinicio con palabra, sin cuenta no se manda.
+- SQL: `tools/supabase/pruebas/21-admin.sql` en el Postgres local (ver [[Comandos]]).
+- Visual: `--demo --capturas`.
+
 ## Animación del objeto por categorías (2026-10-10, §243)
 - `tests/PermaLocke.App.Tests`: `ItemCatalogTests` (13), `ItemIconCoverageTests` (3, sobre `Expansion/`), `ItemSceneTests` (1, sin huecos a cuatro tamaños), `ItemStyleTests` (7: altura declarada, escalado a 1,0/1,5/2,3/3,7, determinismo, tinte, placa y **0 bytes por fotograma**) y un fichero por estilo: `MegaStoneStyleTests` (14), `ZCrystalStyleTests` (4), `KeyItemStyleTests` (4), `EvolutionStyleTests` (3), `MachineStyleTests` (4), `BerryStyleTests` (3), `HealingStyleTests` (3), `BoostStyleTests` (4), `PokeBallStyleTests` (3), `BattleStyleTests` (3), `MiscStyleTests` (3).
 - De la Megapiedra, las que importan: destello visible a 30, 45 y 60 fps con diez desfases, marca de impacto a 30, placa que no se sale de la escena y fondo vacío en todo instante (`The_background_is_left_alone_...`).

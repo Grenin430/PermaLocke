@@ -1,7 +1,7 @@
 ---
 tipo: mapa-codigo
 proyecto: PermaLocke.GameLink
-generado: 2026-10-10
+generado: 2026-10-08
 ---
 # PermaLocke.GameLink — mapa de ficheros
 

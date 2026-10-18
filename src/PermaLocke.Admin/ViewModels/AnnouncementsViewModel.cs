@@ -17,7 +17,7 @@ public sealed record Announcement(long Id, string Texto, DateTimeOffset Creado)
 /// ANUNCIOS: a message for every player of the tournament. The newest one shows in JUGAR, and each player gets a
 /// notice the first time they see it. Only an organiser can publish or withdraw (<c>10-control.sql</c>).
 /// </summary>
-public sealed partial class AnnouncementsViewModel(DiscordLogin discord, ILogger<AnnouncementsViewModel> logger)
+public sealed partial class AnnouncementsViewModel(ITournamentServer discord, ILogger<AnnouncementsViewModel> logger)
     : ObservableObject
 {
     private static readonly JsonSerializerOptions Json = new() { PropertyNameCaseInsensitive = true };

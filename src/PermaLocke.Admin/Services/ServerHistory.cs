@@ -23,7 +23,7 @@ public static class ServerHistory
     /// The history of a run with its events, reading them from <c>eventos</c> when <c>runs.history</c> has none but
     /// the summary says there are. As it was when the server has no <c>eventos</c> (SQL 15 not run).
     /// </summary>
-    public static async Task<RunHistory?> CompleteAsync(DiscordLogin discord, RunHistory? history, RunSnapshot snapshot,
+    public static async Task<RunHistory?> CompleteAsync(ITournamentServer discord, RunHistory? history, RunSnapshot snapshot,
         JsonSerializerOptions json)
     {
         if (history is { Events.Count: > 0 } || snapshot.EventCount == 0)
@@ -65,7 +65,7 @@ public static class ServerHistory
     }
 
     /// <summary>The gifts collected in the runs that upload event by event, by run: <c>AdminGiftClaimed</c> only.</summary>
-    public static async Task<ILookup<Guid, GameEvent>> ClaimsAsync(DiscordLogin discord, JsonSerializerOptions json)
+    public static async Task<ILookup<Guid, GameEvent>> ClaimsAsync(ITournamentServer discord, JsonSerializerOptions json)
     {
         try
         {

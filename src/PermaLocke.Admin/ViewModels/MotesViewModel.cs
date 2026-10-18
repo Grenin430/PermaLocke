@@ -18,7 +18,7 @@ public sealed record MoteLine(long Id, string Player, string Pokemon, string Sta
 /// MOTES (2026-09-28): every voted nickname, newest first, with its proposals and votes. The organiser can cancel one,
 /// which deletes it: an open vote vanishes from every screen and a closed one not applied yet never gets applied.
 /// </summary>
-public sealed partial class MotesViewModel(DiscordLogin discord, ILogger<MotesViewModel> logger) : ObservableObject
+public sealed partial class MotesViewModel(ITournamentServer discord, ILogger<MotesViewModel> logger) : ObservableObject
 {
     private static readonly JsonSerializerOptions Json = new() { PropertyNameCaseInsensitive = true };
 

@@ -1,0 +1,75 @@
+<UserControl x:Class="PermaLocke.Admin.Pages.LogPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:pixel="clr-namespace:PermaLocke.App.Views.Pixel">
+    <!-- REGISTRO (2026-10-08): todo lo que han cambiado los organizadores, apuntado por el servidor. Se filtra por tipo y se
+         busca por texto; un cambio de REGLAS se puede deshacer desde su línea. -->
+    <DockPanel Margin="14,12,14,12">
+        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
+            <ComboBox DockPanel.Dock="Left" Width="200" ItemsSource="{Binding Kinds}" SelectedItem="{Binding Kind}" AutomationProperties.Name="Tipo de cambio" />
+            <TextBlock DockPanel.Dock="Right" Text="{Binding Status}" Foreground="{StaticResource Faint}" VerticalAlignment="Center" Margin="12,0,0,0" />
+            <Grid Margin="8,0,0,0" Width="360" HorizontalAlignment="Left">
+                <TextBox x:Name="SearchBox" Text="{Binding Search, UpdateSourceTrigger=PropertyChanged, Delay=150}"
+                         ToolTip="Busca en el qué, el detalle, quién, el motivo y el objetivo" AutomationProperties.Name="Buscar en el registro" />
+                <TextBlock Text="Buscar: jugador, fichero, motivo..." Foreground="{StaticResource Faint}" Margin="10,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Text, ElementName=SearchBox}" Value="">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </Grid>
+        </DockPanel>
+
+        <Grid>
+            <Border BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="6" Background="{StaticResource Well}">
+                <DataGrid ItemsSource="{Binding Lines}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" SelectionMode="Single"
+                          Background="Transparent" BorderThickness="0" EnableRowVirtualization="True" AutomationProperties.Name="Registro">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Cuándo" Binding="{Binding WhenText}" Width="96" SortMemberPath="When" />
+                        <DataGridTextColumn Header="Quién" Binding="{Binding ByText}" Width="160" />
+                        <DataGridTextColumn Header="Qué" Binding="{Binding What}" Width="170" />
+                        <DataGridTextColumn Header="Detalle" Binding="{Binding Summary}" Width="2*">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                    <Setter Property="TextWrapping" Value="Wrap" />
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="Motivo" Binding="{Binding Reason}" Width="*">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                    <Setter Property="TextWrapping" Value="Wrap" />
+                                    <Setter Property="Foreground" Value="{StaticResource Muted}" />
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTemplateColumn Header="" Width="150">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Content="VOLVER A ANTES" Margin="2" Padding="8,2" MinHeight="24" Style="{StaticResource Danger}" CommandParameter="{Binding}"
+                                            ToolTip="Publica las reglas como estaban antes de este cambio"
+                                            Visibility="{Binding CanRevert, Converter={StaticResource BoolToVisibility}}"
+                                            Command="{Binding DataContext.RevertCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Border>
+
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="420"
+                        Visibility="{Binding Lines.Count, Converter={StaticResource ZeroToVisible}}">
+                <pixel:PixelIcon Icon="IconDocument" Scale="4" HorizontalAlignment="Center" />
+                <TextBlock Text="{Binding Status}" Foreground="{StaticResource Muted}" Margin="0,12,0,0" TextAlignment="Center" TextWrapping="Wrap" />
+            </StackPanel>
+            <ProgressBar VerticalAlignment="Top" Height="2" IsIndeterminate="True" BorderThickness="0" Background="Transparent"
+                         Foreground="{StaticResource Accent}" Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibility}}" />
+        </Grid>
+    </DockPanel>
+</UserControl>

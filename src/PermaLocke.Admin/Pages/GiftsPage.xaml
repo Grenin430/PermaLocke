@@ -19,7 +19,7 @@
                         ToolTip="Marca a todos los jugadores (o desmarca si ya lo estaban)." />
                 <TextBlock DockPanel.Dock="Top" Text="Clic en un jugador para marcarlo o desmarcarlo." Foreground="{StaticResource Faint}"
                            FontSize="11.5" Margin="0,0,0,8" TextWrapping="Wrap" />
-                <ListBox x:Name="PlayerList" ItemsSource="{Binding Players}" SelectionMode="Multiple" SelectionChanged="OnPlayersChosen"
+                <ListBox x:Name="PlayerList" ItemsSource="{Binding Recipients}" SelectionMode="Multiple" SelectionChanged="OnPlayersChosen"
                          HorizontalContentAlignment="Stretch" Background="Transparent" BorderThickness="0">
                     <ListBox.ItemContainerStyle>
                         <Style TargetType="ListBoxItem">

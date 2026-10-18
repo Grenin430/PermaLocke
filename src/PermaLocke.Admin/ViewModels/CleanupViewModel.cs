@@ -35,7 +35,7 @@ public sealed record CleanupLine(string Name, string Why, long Rows, long Bytes,
 /// Supabase does not let SQL delete files. A server without that function simply has none to show.
 /// </para>
 /// </remarks>
-public sealed partial class CleanupViewModel(DiscordLogin discord, ILogger<CleanupViewModel> logger) : ObservableObject
+public sealed partial class CleanupViewModel(ITournamentServer discord, ILogger<CleanupViewModel> logger) : ObservableObject
 {
     private static readonly JsonSerializerOptions Json = new() { PropertyNameCaseInsensitive = true };
 
@@ -169,8 +169,19 @@ public sealed partial class CleanupViewModel(DiscordLogin discord, ILogger<Clean
     {
         try
         {
-            if (await discord.CallAsync("limpieza", JsonSerializer.Serialize(new { p_ejecutar = execute, p_historiales = Histories }))
-                is not { } json)
+            // limpiar() (21-admin.sql) es la misma limpieza apuntada en el REGISTRO en una sola línea; sin ese SQL, limpieza().
+            var body = JsonSerializer.Serialize(new { p_ejecutar = execute, p_historiales = Histories });
+            string? json;
+            try
+            {
+                json = await discord.CallAsync("limpiar", body);
+            }
+            catch (System.Net.Http.HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                json = await discord.CallAsync("limpieza", body);
+            }
+
+            if (json is null)
             {
                 Status = "Entra con Discord (la cuenta del organizador).";
                 return null;

@@ -36,7 +36,7 @@ public sealed record AuditRow(Guid RunId, bool Active, Guid UserId, string Playe
 /// What it is not: proof against someone who rebuilds a whole valid chain with tools. It is evidence to look at.
 /// </para>
 /// </remarks>
-public sealed partial class AuditViewModel(DiscordLogin discord, ILogger<AuditViewModel> logger) : ObservableObject
+public sealed partial class AuditViewModel(ITournamentServer discord, ILogger<AuditViewModel> logger) : ObservableObject
 {
     private static readonly JsonSerializerOptions Json = new()
     {

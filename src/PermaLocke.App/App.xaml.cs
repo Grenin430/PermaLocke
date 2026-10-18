@@ -104,6 +104,7 @@ public partial class App : Application
     protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        Services.RecordingMode.On = e.Args.Contains("--grabacion", StringComparer.OrdinalIgnoreCase);
 
         // Lo primero de todo, antes de copiar la base de datos o de tocar nada.
         // La otra copia se enseña si estaba en segundo plano o detrás (1.0.5.4); el aviso, solo si no contesta.
@@ -590,6 +591,13 @@ public partial class App : Application
             // El intercambio de cartas del álbum (1.0.4.7) con tres cartas de la partida, sin escribir nada.
             main.Navigate("ÁLBUM");
             await _services!.GetRequiredService<AlbumViewModel>().RehearseTradeAsync();
+        }
+
+        if (e.Args.Contains("--ensayar-portal", StringComparer.OrdinalIgnoreCase))
+        {
+            // La Ultraumbral del randomizador (2026-10-12) con pasos de ensayo: no genera ni escribe nada.
+            main.Navigate("RANDOMIZADOR");
+            _ = _services!.GetRequiredService<RandomizerViewModel>().RehearsePortalAsync();
         }
 
         if (e.Args.Contains("--ensayar-cap", StringComparer.OrdinalIgnoreCase))

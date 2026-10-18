@@ -1,0 +1,48 @@
+<Window x:Class="PermaLocke.Admin.ConfirmDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:pixel="clr-namespace:PermaLocke.App.Views.Pixel"
+        Title="Confirmar" Width="520" SizeToContent="Height" ResizeMode="NoResize" WindowStartupLocation="CenterOwner"
+        Background="{StaticResource Surface}" ShowInTaskbar="False" WindowStyle="SingleBorderWindow">
+    <!-- Confirmación de Admin (2026-10-08): qué se va a hacer, a quién, qué pasa después y el motivo, en una sola caja. -->
+    <Border BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0">
+        <StackPanel Margin="22,18,22,18">
+            <DockPanel>
+                <Border x:Name="Stripe" DockPanel.Dock="Left" Width="4" Margin="0,0,12,0" Background="{StaticResource Accent}" />
+                <StackPanel>
+                    <pixel:PixelText x:Name="Heading" Scale="3" Tight="True" Colour="{StaticResource PxText}" Shadow="{StaticResource PxShadow}" />
+                    <TextBlock x:Name="Target" Foreground="{StaticResource Gold}" FontFamily="Segoe UI Semibold" Margin="0,6,0,0" TextWrapping="Wrap" />
+                </StackPanel>
+            </DockPanel>
+
+            <ItemsControl x:Name="Consequences" Margin="0,14,0,0" Focusable="False">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <DockPanel Margin="0,0,0,6">
+                            <Border DockPanel.Dock="Left" Width="6" Height="6" Background="{StaticResource Faint}" Margin="2,7,10,0" VerticalAlignment="Top" />
+                            <TextBlock Text="{Binding}" TextWrapping="Wrap" Foreground="{StaticResource Muted}" />
+                        </DockPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <StackPanel x:Name="ReasonBox" Margin="0,10,0,0">
+                <TextBlock Text="MOTIVO" Foreground="{StaticResource Faint}" FontSize="11" FontFamily="Segoe UI Semibold" />
+                <TextBox x:Name="Reason" Margin="0,5,0,0" TextWrapping="Wrap" AcceptsReturn="False" MaxLength="300"
+                         TextChanged="OnTyped" AutomationProperties.Name="Motivo" />
+                <TextBlock Text="Lo lee el jugador y queda en su historial y en el REGISTRO." Foreground="{StaticResource Faint}" FontSize="11.5" Margin="0,4,0,0" />
+            </StackPanel>
+
+            <StackPanel x:Name="TypeBox" Margin="0,12,0,0">
+                <TextBlock x:Name="TypeHint" Foreground="{StaticResource Faint}" FontSize="11.5" TextWrapping="Wrap" />
+                <TextBox x:Name="Typed" Margin="0,5,0,0" TextChanged="OnTyped" AutomationProperties.Name="Confirmación escrita" />
+            </StackPanel>
+
+            <DockPanel Margin="0,18,0,0" LastChildFill="False">
+                <Button x:Name="Yes" DockPanel.Dock="Right" Style="{StaticResource Primary}" MinWidth="120" Click="OnYes" IsDefault="True" />
+                <Button DockPanel.Dock="Right" Content="CANCELAR" MinWidth="100" Margin="0,0,8,0" IsCancel="True" />
+                <TextBlock x:Name="Why" DockPanel.Dock="Left" Foreground="{StaticResource Faint}" FontSize="11.5" VerticalAlignment="Center" />
+            </DockPanel>
+        </StackPanel>
+    </Border>
+</Window>

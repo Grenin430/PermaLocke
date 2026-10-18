@@ -4,89 +4,197 @@
              xmlns:pixel="clr-namespace:PermaLocke.App.Views.Pixel"
              xmlns:vm="clr-namespace:PermaLocke.Admin.ViewModels"
              xmlns:pages="clr-namespace:PermaLocke.Admin.Pages">
-    <!-- JUGADORES (2026-09-28): la lista a la izquierda y la ficha del que pulses al lado, sin abrir ventanas. -->
+    <!-- JUGADORES (2026-09-28, centro de control 2026-10-08): la tabla con filtros y búsqueda a la izquierda, la ficha del
+         que marques a la derecha, y con varios marcados una barra de acciones para todos ellos. -->
     <UserControl.Resources>
         <DataTemplate DataType="{x:Type vm:PlayerSheetViewModel}"><pages:PlayerSheetPage /></DataTemplate>
+        <Style x:Key="TightCell" TargetType="DataGridCell" BasedOn="{StaticResource {x:Type DataGridCell}}">
+            <Setter Property="Padding" Value="2,0" />
+        </Style>
+
+
+        <!-- El punto de presencia: verde jugando, azul en la app, gris desconectado. -->
+        <Style x:Key="PresenceDot" TargetType="Border">
+            <Setter Property="Width" Value="8" />
+            <Setter Property="Height" Value="8" />
+            <Setter Property="Background" Value="#FF5A5670" />
+            <Setter Property="ToolTip" Value="{Binding Presence}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding State}" Value="Playing">
+                    <Setter Property="Background" Value="#FF90BA3C" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding State}" Value="InApp">
+                    <Setter Property="Background" Value="#FF57CBDE" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
 
-    <Grid Margin="14">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="300" />
-            <ColumnDefinition Width="14" />
-            <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
+    <DockPanel Margin="14,12,14,12">
+        <!-- ================================================== FILTROS -->
+        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
+            <TextBlock DockPanel.Dock="Right" Text="{Binding ShownText}" Foreground="{StaticResource Faint}" VerticalAlignment="Center" />
+            <WrapPanel>
+                <RadioButton Style="{StaticResource FilterChip}" GroupName="PlayerFilter" Checked="OnFilter" Tag="Todos" x:Name="FilterTodos"
+                             AutomationProperties.Name="Todos">
+                    <TextBlock><Run Text="TODOS " /><Run Text="{Binding CountTodos, Mode=OneWay}" Foreground="{StaticResource Faint}" /></TextBlock>
+                </RadioButton>
+                <RadioButton Style="{StaticResource FilterChip}" GroupName="PlayerFilter" Checked="OnFilter" Tag="Conectados" x:Name="FilterConectados"
+                             AutomationProperties.Name="Conectados">
+                    <TextBlock><Run Text="CONECTADOS " /><Run Text="{Binding CountConectados, Mode=OneWay}" Foreground="{StaticResource Faint}" /></TextBlock>
+                </RadioButton>
+                <RadioButton Style="{StaticResource FilterChip}" GroupName="PlayerFilter" Checked="OnFilter" Tag="ARevisar" x:Name="FilterARevisar"
+                             AutomationProperties.Name="A revisar" ToolTip="Retrocesos en su historial, suspendidos o con run fuera de la lista.">
+                    <TextBlock><Run Text="A REVISAR " /><Run Text="{Binding CountARevisar, Mode=OneWay}" Foreground="{StaticResource Gold}" /></TextBlock>
+                </RadioButton>
+                <RadioButton Style="{StaticResource FilterChip}" GroupName="PlayerFilter" Checked="OnFilter" Tag="Suspendidos" x:Name="FilterSuspendidos"
+                             AutomationProperties.Name="Suspendidos">
+                    <TextBlock><Run Text="SUSPENDIDOS " /><Run Text="{Binding CountSuspendidos, Mode=OneWay}" Foreground="{StaticResource Faint}" /></TextBlock>
+                </RadioButton>
+                <RadioButton Style="{StaticResource FilterChip}" GroupName="PlayerFilter" Checked="OnFilter" Tag="SinRun" x:Name="FilterSinRun"
+                             AutomationProperties.Name="Sin run" ToolTip="Sin run activa, o que nunca han entrado.">
+                    <TextBlock><Run Text="SIN RUN " /><Run Text="{Binding CountSinRun, Mode=OneWay}" Foreground="{StaticResource Faint}" /></TextBlock>
+                </RadioButton>
+            </WrapPanel>
+        </DockPanel>
 
-        <pixel:PixelWindow Grid.Column="0" Title="JUGADORES" Icon="IconPeople">
-            <ListBox ItemsSource="{Binding Players}" HorizontalContentAlignment="Stretch" Background="Transparent" BorderThickness="0"
-                     SelectionChanged="OnPlayerChosen">
-                <ListBox.ItemContainerStyle>
-                    <Style TargetType="ListBoxItem">
-                        <Setter Property="Cursor" Value="Hand" />
-                        <Setter Property="Margin" Value="0,0,0,6" />
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="ListBoxItem">
-                                    <Border x:Name="Row" Background="{StaticResource FaceHigh}" BorderBrush="{StaticResource Canvas}"
-                                            BorderThickness="1" Padding="12,9" CornerRadius="6">
-                                        <ContentPresenter />
-                                    </Border>
-                                    <ControlTemplate.Triggers>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter TargetName="Row" Property="Background" Value="{StaticResource Hover}" />
-                                        </Trigger>
-                                        <Trigger Property="IsSelected" Value="True">
-                                            <Setter TargetName="Row" Property="BorderBrush" Value="{StaticResource Accent}" />
-                                        </Trigger>
-                                    </ControlTemplate.Triggers>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                    </Style>
-                </ListBox.ItemContainerStyle>
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <DockPanel>
-                            <TextBlock DockPanel.Dock="Right" Text="{Binding Presence}" VerticalAlignment="Center" FontSize="11">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Foreground" Value="#FF898989" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding State}" Value="Playing">
-                                                <Setter Property="Foreground" Value="#FF90BA3C" />
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding State}" Value="InApp">
-                                                <Setter Property="Foreground" Value="#FF57CBDE" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
+        <!-- ================================================== A VARIOS A LA VEZ -->
+        <Border DockPanel.Dock="Top" Style="{StaticResource Panel}" Padding="12,8" Margin="0,0,0,10" BorderBrush="{StaticResource Accent}"
+                Visibility="{Binding HasBulk, Converter={StaticResource BoolToVisibility}}">
+            <DockPanel>
+                <pixel:PixelText DockPanel.Dock="Left" Text="{Binding BulkText}" Scale="2" Tight="True" Colour="{StaticResource PxGold}"
+                                 VerticalAlignment="Center" Margin="0,0,14,0" />
+                <Button DockPanel.Dock="Right" Content="ABRIR JUEGO" Command="{Binding BulkUnlockCommand}" Margin="6,0,0,0" />
+                <Button DockPanel.Dock="Right" Content="CERRAR JUEGO" Style="{StaticResource Danger}" Command="{Binding BulkLockCommand}" Margin="6,0,0,0" />
+                <Button DockPanel.Dock="Right" Content="AJUSTAR" Command="{Binding BulkAdjustCommand}" Margin="6,0,0,0" />
+                <TextBox DockPanel.Dock="Right" Text="{Binding BulkPoints, UpdateSourceTrigger=PropertyChanged}" Width="70" Margin="12,0,0,0"
+                         ToolTip="Puntos para todos los marcados (en negativo para quitar)" AutomationProperties.Name="Puntos para los marcados" />
+                <Button DockPanel.Dock="Right" Content="MENSAJE" Command="{Binding BulkMessageCommand}" Margin="6,0,0,0" />
+                <Grid>
+                    <TextBox x:Name="BulkMessageBox" Text="{Binding BulkMessage, UpdateSourceTrigger=PropertyChanged}" MaxLength="500"
+                             AutomationProperties.Name="Mensaje para los marcados" />
+                    <TextBlock Text="Mensaje privado para todos los marcados" Foreground="{StaticResource Faint}" Margin="10,0,0,0" VerticalAlignment="Center"
+                               IsHitTestVisible="False">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Text, ElementName=BulkMessageBox}" Value="">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </Grid>
+            </DockPanel>
+        </Border>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="5*" MinWidth="450" />
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="6*" MinWidth="400" />
+            </Grid.ColumnDefinitions>
+
+            <!-- ================================================== LA TABLA -->
+            <Border Grid.Column="0" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="6" Background="{StaticResource Well}">
+                <Grid>
+                    <DataGrid x:Name="List" ItemsSource="{Binding VisiblePlayers}" AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Extended"
+                              SelectionUnit="FullRow" CanUserAddRows="False" CanUserResizeRows="False" CanUserReorderColumns="False"
+                              VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" EnableRowVirtualization="True"
+                              SelectionChanged="OnSelection" AutomationProperties.Name="Jugadores" Background="Transparent" BorderThickness="0">
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn Header="" Width="26" SortMemberPath="State" CanUserResize="False" CellStyle="{StaticResource TightCell}">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border Style="{StaticResource PresenceDot}" HorizontalAlignment="Center" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="Jugador" Width="*" MinWidth="120" SortMemberPath="Name">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Name}" FontFamily="Segoe UI Semibold" TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}" />
+                                            <StackPanel Orientation="Horizontal" Margin="0,1,0,0">
+                                                <TextBlock Text="{Binding Standing}" Foreground="{StaticResource Gold}" FontSize="10.5" Margin="0,0,8,0"
+                                                           FontFamily="Segoe UI Semibold" />
+                                                <TextBlock Text="{Binding RoleText}" Foreground="{StaticResource Faint}" FontSize="10.5" TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="Puntos" Binding="{Binding Points, StringFormat={}{0:N0}}" Width="64" SortMemberPath="Points">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                        <Setter Property="HorizontalAlignment" Value="Right" />
+                                        <Setter Property="FontFamily" Value="Consolas" />
                                     </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                            <StackPanel>
-                                <TextBlock Text="{Binding Name}" FontSize="15" />
-                                <TextBlock Foreground="{StaticResource Faint}" FontSize="11.5" Margin="0,2,0,0">
-                                    <Run Text="{Binding Points, Mode=OneWay}" /><Run Text=" pts · " /><Run
-                                        Text="{Binding Alive, Mode=OneWay}" /><Run Text=" en pie · " /><Run
-                                        Text="{Binding Dead, Mode=OneWay}" /><Run Text=" caídos" />
-                                </TextBlock>
-                            </StackPanel>
-                        </DockPanel>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
-        </pixel:PixelWindow>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTemplateColumn Header="V / C" Width="60" SortMemberPath="Dead">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock FontFamily="Consolas" HorizontalAlignment="Center">
+                                            <Run Text="{Binding Alive, Mode=OneWay}" Foreground="{StaticResource Good}" /><Run Text=" / " Foreground="{StaticResource Faint}" /><Run
+                                                Text="{Binding Dead, Mode=OneWay}" Foreground="{StaticResource Bad}" />
+                                        </TextBlock>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="Pruebas" Binding="{Binding StagesText}" Width="70" SortMemberPath="Stages">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                        <Setter Property="HorizontalAlignment" Value="Center" />
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="Subida" Binding="{Binding LastUploadText}" Width="78" SortMemberPath="LastUpload">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                        <Setter Property="Foreground" Value="{StaticResource Muted}" />
+                                        <Setter Property="FontSize" Value="12" />
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTemplateColumn Header="" Width="26" SortMemberPath="Rewinds" CanUserResize="False" CellStyle="{StaticResource TightCell}">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <pixel:PixelIcon Icon="IconWarning" Scale="1" HorizontalAlignment="Center"
+                                                         ToolTip="Necesita que lo mires: retrocesos, suspendido o fuera de la lista."
+                                                         Visibility="{Binding NeedsLook, Converter={StaticResource BoolToVisibility}}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
 
-        <Grid Grid.Column="2">
-            <Border Background="{StaticResource Surface}" CornerRadius="10" Padding="30"
-                    Visibility="{Binding Sheet, Converter={StaticResource NullToVisible}}">
-                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                    <pixel:PixelIcon Icon="IconPeople" Scale="5" HorizontalAlignment="Center" />
-                    <pixel:PixelText Text="ELIGE UN JUGADOR" Scale="3" Tight="True" Colour="{StaticResource PxTextDim}" Margin="0,16,0,0"
-                                     HorizontalAlignment="Center" />
-                    <TextBlock Text="Pulsa uno de la lista para ver su run y mandarle órdenes." Foreground="{StaticResource Faint}"
-                               Margin="0,10,0,0" HorizontalAlignment="Center" />
-                </StackPanel>
+                    <!-- Vacío: lo que pasa y qué hacer -->
+                    <StackPanel x:Name="Empty" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="20" Visibility="Collapsed">
+                        <pixel:PixelIcon Icon="IconPeople" Scale="4" HorizontalAlignment="Center" />
+                        <TextBlock x:Name="EmptyText" Foreground="{StaticResource Muted}" Margin="0,12,0,0" TextAlignment="Center" TextWrapping="Wrap" MaxWidth="320" />
+                    </StackPanel>
+                </Grid>
             </Border>
-            <ContentControl Content="{Binding Sheet}" Focusable="False" />
+
+            <GridSplitter Grid.Column="1" Width="10" HorizontalAlignment="Stretch" Background="Transparent" Cursor="SizeWE"
+                          ToolTip="Arrastra para dar más sitio a la tabla o a la ficha" />
+
+            <!-- ================================================== LA FICHA -->
+            <Grid Grid.Column="2">
+                <Border Style="{StaticResource Panel}" Visibility="{Binding Sheet, Converter={StaticResource NullToVisible}}">
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="380">
+                        <pixel:PixelIcon Icon="IconPeople" Scale="5" HorizontalAlignment="Center" />
+                        <pixel:PixelText Text="ELIGE UN JUGADOR" Scale="3" Tight="True" Colour="{StaticResource PxTextDim}" Margin="0,16,0,0"
+                                         HorizontalAlignment="Center" />
+                        <TextBlock Text="Pulsa uno de la tabla para ver su run, lo que se le ha mandado y actuar. Marca varios con Ctrl o Mayús para mandarles algo a la vez."
+                                   Foreground="{StaticResource Faint}" Margin="0,10,0,0" TextAlignment="Center" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+                <ContentControl Content="{Binding Sheet}" Focusable="False" />
+            </Grid>
         </Grid>
-    </Grid>
+    </DockPanel>
 </UserControl>

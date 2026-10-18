@@ -1,7 +1,7 @@
 ---
 tipo: mapa-codigo
 proyecto: PermaLocke.App
-generado: 2026-10-10
+generado: 2026-10-08
 ---
 # PermaLocke.App — mapa de ficheros
 
@@ -44,7 +44,6 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Services/EncounterGuard.cs` — **EncounterNotice, WildCatch, EncounterGuard** — Something the guard wants the player to hear, and the Pokémon it is about when there is one.
 - `Services/EventIcons.cs` — **EventIcons** — The pixel icon of each kind of event, for the history lists drawn in the pixel style (§176). 
 - `Services/FallenShare.cs` — **FallenShare** — The cemeteries of everybody (1.0.5.5): this player's graves and killcams go to the tournament server, and the friends' ones come back for the CEMENTERIO (tools/supabase/19-caidos.sql). 
-- `Services/GameInputWatch.cs` — **GameInputWatch, InputEdges** — Tells when the player carries on (2026-10-09): a key or a button of the controller that goes down while the emulator's window has the focus. What the animation of an item uses to leave at once inst...
 - `Services/GameLinkMonitor.cs` — **GameLinkMonitor** — Polls the running game and publishes what it sees. One poller for the whole application, so every screen shows the same snapshot and the emulator is asked once per cycle. 
 - `Services/GameWindow.cs` — **GameWindow** — Where the emulator is, and which screen it is on. 
 - `Services/GhostService.cs` — **GhostService** — The ghosts (§183): this player's deaths go to the tournament server at once, and the other players' come over this player's emulator as a notice and a ghost crossing the screen. A team wipe makes ...
@@ -52,10 +51,10 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Services/HerbArt.cs` — **HerbArt** — The icon of a nature herb (2026-09-27): a pixel leaf tinted by the stat it raises, since the cartridge has no Mints and so no icon for them. Grey for the five natures that change nothing. 
 - `Services/HpBarWatcher.cs` — **HpBarWatcher** — Waits, looking at the emulator's window, for the player's HP bar to reach zero. 
 - `Services/IKillcamRecorder.cs` — **IKillcamRecorder** — Recording operations used by the game monitor.
+- `Services/ITournamentServer.cs` — **ITournamentServer** — The tournament server as Admin talks to it: the signed-in account and the REST, function and Storage calls. 
 - `Services/InstalledWorld.cs` — **InstalledWorld** — Reads how big the world Azahar will actually load is, and tells the live readers. 
 - `Services/IntegrityGuard.cs` — **IntegrityGuard** — Stops the reload tricks of a locke and writes down, for the organiser only, the ones it cannot stop (2026-09-26). 
 - `Services/IslandMapService.cs` — **IslandMapService** — The four island maps, taken from the player's own cartridge the first time they are needed. 
-- `Services/ItemCatalog.cs` — **ItemClass, ItemCatalog** — What an item is for its animation, and how strong: see `temCategory` for what each power means.
 - `Services/KillcamClip.cs` — **KillcamFrame, KillcamClip** — One frame of a killcam: when it was taken, relative to the moment the bar reached zero.
 - `Services/KillcamFrameBuffer.cs` — **KillcamFrameBuffer** — A bounded ring that reuses pixel arrays; snapshots own their pixels.
 - `Services/KillcamRecorder.cs` — **KillcamRecorder** — Keeps the last seconds of the battle on screen, so a death can be saved with what led to it. 
@@ -90,7 +89,14 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Services/WindowSizeService.cs` — **WindowSize, WindowSizeService** — How big the window opens, chosen by the player and remembered. 
 - `Services/WorldAllowedStatics.cs` — **WorldAllowedStatics** — The static captures the competition allows (§119), as the species they are in the world the player is playing. 
 - `Services/WorldEvolutionLines.cs` — **WorldEvolutionLines** — Evolutionary families, read from the world the player is actually playing. 
-- `Services/WorldItemCatalog.cs` — **WorldItemCatalog** — The `temCatalog` of the world the player is actually playing (2026-10-09), read from the item table (a/0/1/9) and the mega evolution table (a/0/1/5) of the game Azahar loads. 
+- `Services/ItemCatalog.cs` — **ItemCatalog, ItemClass** — Which ItemCategory every item of the game belongs to (2026-10-09), told by the cartridge itself.
+- `Views/Items/ItemCanvas.cs` — **ItemCanvas** — The trunk every item animation is drawn on: pixels, dither, bag, shadow, icon and plate.
+- `Views/Items/ItemStyle.cs` — **ItemStyle, ItemStyles** — How one category of item goes into the bag: its height, phases and drawing.
+- `Views/Items/ClassicStyle.cs` — **ClassicStyle** — The classic bag-and-icon scene every category plays until it has its own.
+- `Views/Items/MegaStoneStyle.cs` — **MegaStoneStyle** — A Mega Stone going into the bag: the longest animation, 112 high, with resonance and climax.
+- `Services/WorldItemCatalog.cs` — **WorldItemCatalog** — The ItemCatalog of the world the player is actually playing, read from a/0/1/9 and a/0/1/5.
+- `Views/Items/ItemCategory.cs` — **ItemCategory** — What kind of thing a picked-up item is: each kind has its own animation going into the bag.
+- `Views/Items/ItemTint.cs` — **ItemTint** — The colour an item is known by, taken from its own icon.
 - `Services/ZonePhotoService.cs` — **ZonePhotoService** — The picture of each zone, shown on the card that appears when hovering a marker. 
 - `Shells/Banners.xaml.cs` — **Banners** — False when the design says the need elsewhere (the dialogue box, the ticker): only the update strip stays.
 - `Shells/DesignGalleryWindow.xaml.cs` — **ThemeCard, DesignGalleryWindow** — One look in the gallery: whether it is the one in use now.
@@ -183,24 +189,7 @@ Generado de la primera frase del `<summary>` de cada fichero (`src/PermaLocke.Ap
 - `Views/HandScene.cs` — **HandPose, HandScene** — Where the card in the hand is and how it is turned, for one frame.
 - `Views/HomeView.xaml.cs` — **HomeView** — 
 - `Views/InformationView.xaml.cs` — **InformationView** — 
-- `Views/ItemScene.cs` — **ItemPhases, ItemTimeline, ItemScene** — How long each part of an item's animation lasts, in seconds (2026-10-09): the dither coming in, the anticipation, the resonance (only the Mega Stones have one), the climax, the wrap-up, and the dit...
-- `Views/Items/BattleStyle.cs` — **BattleStyle** — A held item or a battle item going into the bag (2026-10-09): strength and presence, and quickly. The item appears at once, a dry glint crosses it in a single sweep, and it comes down hard with str...
-- `Views/Items/BerryStyle.cs` — **BerryStyle** — A berry going into the bag (2026-10-09): organic and playful. It is thrown out of the bag, stretched while it is fast and squashed when it lands, bounces on the rim of the bag once or twice with a ...
-- `Views/Items/BoostStyle.cs` — **BoostStyle** — An upgrade (Rare Candy, vitamins, PP Up, feathers, the Super Candy) going into the bag (2026-10-09): progress and reward, so as never to be taken for a healing item. The item rises and arrows climb...
-- `Views/Items/ClassicStyle.cs` — **ClassicStyle** — The scene of 2026-09-28 and the one every category plays until it has a style of its own: the bag with the item's icon jumping out of it with a glint across, floating, dropping in, and the bag hopp...
-- `Views/Items/EvolutionStyle.cs` — **EvolutionStyle** — An evolution item going into the bag (2026-10-09): a gesture, not an event, so that it can never be taken for a Mega Stone. The stone hops out of the bag and beats three or four times, faster each ...
-- `Views/Items/HealingStyle.cs` — **HealingStyle** — A healing item going into the bag (2026-10-09): warmth and relief. The item floats up out of the bag and hangs there while something good happens round it; there are four of those, and the one that...
-- `Views/Items/ItemCanvas.cs` — **ItemCanvas** — The trunk every item animation is drawn on (2026-10-09): the pixels, the dither that fades the scene in and out, and the pieces they all share, the bag, its shadow, the item's icon and the plate wi...
-- `Views/Items/ItemCategory.cs` — **ItemCategory** — What kind of thing a picked-up item is (2026-10-09): each kind has its own animation going into the bag, and has to be told from the others at a glance, without reading the plate. 
-- `Views/Items/ItemKit.cs` — **ItemSeed, ItemPrism, ItemFx** — Numbers that depend on an item's seed and on nothing else (2026-10-09): the same seed always gives the same ones, so any frame of any animation can be made again. Nothing here is random. 
-- `Views/Items/ItemStyle.cs` — **ItemStyle, ItemStyles** — How one category of item goes into the bag (2026-10-09): its choreography, its colours and its particles, drawn on the trunk (`temCanvas`) as a pure function of the moment and the item's seed. A st...
-- `Views/Items/ItemTint.cs` — **ItemTint** — The colour an item is known by (2026-10-09), taken from its own icon so that no table of colours is written by hand.
-- `Views/Items/KeyItemStyle.cs` — **KeyItemStyle** — A key item going into the bag (2026-10-09): the most solemn of all. A beam of light comes down from above into the open bag, which leans towards it as in a bow; the item rises along it slowly, with...
-- `Views/Items/MachineStyle.cs` — **MachineStyle** — A TM or an HM going into the bag (2026-10-09): knowledge being downloaded. The disc comes out of the bag spinning like a coin, opens into rings of data that turn the other way from each other, bits...
-- `Views/Items/MegaStoneStyle.cs` — **MegaStoneStyle** — A Mega Stone going into the bag (2026-10-09): the event of the whole system, the longest animation there is (4.5 s) and the only one with a resonance. The bag crouches and springs open, the stone r...
-- `Views/Items/MiscStyle.cs` — **MiscStyle** — Everything else going into the bag (2026-10-09): treasures, repels, fossils, mail. The simplest and the quickest of all, because it is also what is picked up most: the item hops out of the bag, han...
-- `Views/Items/PokeBallStyle.cs` — **PokeBallStyle** — A Poké Ball going into the bag (2026-10-09): the sound of a ball. It is thrown out of the bag spinning, lands on the edge of the mouth and bounces two or three times, each smaller than the last, w...
-- `Views/Items/ZCrystalStyle.cs` — **ZCrystalStyle** — A Z-Crystal going into the bag (2026-10-09): the power of the move being gathered. The crystal rises out of the bag spinning like a coin and settles facing us; a ring of tips appears round it one b...
+- `Views/ItemScene.cs` — **ItemPhases, ItemTimeline, ItemScene** — How long each part of an item's animation lasts (per category, ItemTimeline.For) and the scene of an item going into the bag.
 - `Views/KillcamPlayer.cs` — **KillcamPlayer** — Plays a killcam: the frames at their own times, at real speed or slowed down, looping, with a mark on the timeline where the bar reached zero. 
 - `Views/LauncherView.xaml.cs` — **LauncherView** — A card of NOVEDADES opens that version as its own post, like an event on Steam. Presentation only.
 - `Views/LoginWindow.xaml.cs` — **LoginWindow** — 

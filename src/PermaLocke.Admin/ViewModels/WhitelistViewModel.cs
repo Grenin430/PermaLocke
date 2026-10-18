@@ -27,7 +27,7 @@ public sealed record Allowed(string Discord_id, string? Nombre, DateTimeOffset A
 /// Removing somebody locks them out the next time they open the application, and the server stops accepting what
 /// their copy sends. Their run is not touched: to start them again from zero, use REINICIAR in the audit.
 /// </remarks>
-public sealed partial class WhitelistViewModel(DiscordLogin discord, ILogger<WhitelistViewModel> logger) : ObservableObject
+public sealed partial class WhitelistViewModel(ITournamentServer discord, ILogger<WhitelistViewModel> logger) : ObservableObject
 {
     private static readonly JsonSerializerOptions Json = new() { PropertyNameCaseInsensitive = true };
 

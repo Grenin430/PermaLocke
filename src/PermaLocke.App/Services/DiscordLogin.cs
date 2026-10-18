@@ -32,7 +32,7 @@ public sealed record DiscordAccount(string Name, string? AvatarUrl, string Refre
 /// copied Config folder does not carry a working session to another PC.
 /// </para>
 /// </remarks>
-public sealed class DiscordLogin(AppPaths paths, ILogger<DiscordLogin> logger)
+public sealed class DiscordLogin(AppPaths paths, ILogger<DiscordLogin> logger) : ITournamentServer
 {
     private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(20) };
     private static readonly TimeSpan BrowserWait = TimeSpan.FromMinutes(3);
@@ -223,8 +223,33 @@ public sealed class DiscordLogin(AppPaths paths, ILogger<DiscordLogin> logger)
         var sent = DateTimeOffset.UtcNow;
         using var response = await Http.SendAsync(request, cancel);
         LearnServerClock(sent, response.Headers.Date);
-        response.EnsureSuccessStatusCode();
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new HttpRequestException(ServerMessage(await response.Content.ReadAsStringAsync(cancel))
+                ?? $"El servidor ha respondido {(int)response.StatusCode} {response.ReasonPhrase}.", null, response.StatusCode);
+        }
+
         return await response.Content.ReadAsStringAsync(cancel);
+    }
+
+    /// <summary>
+    /// What the server said when it refused (2026-10-08): PostgREST answers with JSON whose <c>message</c> is the database's
+    /// own text, such as «Solo el organizador puede…» from a function. Null when the answer is not that.
+    /// </summary>
+    public static string? ServerMessage(string body)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(body);
+            return document.RootElement.ValueKind == JsonValueKind.Object
+                   && document.RootElement.TryGetProperty("message", out var message) && message.ValueKind == JsonValueKind.String
+                ? message.GetString()
+                : null;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
     }
 
     private int _clockSamples;

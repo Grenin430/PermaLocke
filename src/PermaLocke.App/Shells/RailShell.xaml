@@ -42,7 +42,8 @@
                             ToolTip="Cerrar" AutomationProperties.Name="Cerrar" />
                 </StackPanel>
 
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0"
+                            Visibility="{x:Static svc:RecordingMode.BrandVisibility}">
                     <pixel:PixelIcon Icon="IconGacha" Scale="2" VerticalAlignment="Center" Margin="0,0,10,0" />
                     <pixel:PixelText Text="PERMALOCKE" Scale="2" Tight="True" Colour="{DynamicResource PxText}"
                                      Shadow="{DynamicResource PxShadow}" VerticalAlignment="Center" />

@@ -1,45 +1,32 @@
 ---
 tipo: mapa-codigo
-generado: 2026-10-10
+generado: 2026-10-08
 ---
 # Pruebas — ficheros y número de [Fact]/[Theory]
 
 Contado con grep, NO ejecutado. Detalle en [[Pruebas]].
 
+## PermaLocke.Admin.Tests
+- `ControlCentreTests.cs` (15)
 ## PermaLocke.App.Tests
 - `AlbumTests.cs` (24)
-- `BattleStyleTests.cs` (3)
-- `BerryStyleTests.cs` (3)
 - `BloodRainTests.cs` (7)
-- `BoostStyleTests.cs` (4)
 - `CapBadgeTests.cs` (2)
 - `CapPlaqueTests.cs` (1)
 - `CapsuleMachineTests.cs` (13)
 - `DiscordLoginTests.cs` (1)
 - `EmulatorCrashTests.cs` (8)
 - `EmulatorProcessTests.cs` (7)
-- `EvolutionStyleTests.cs` (3)
-- `HealingStyleTests.cs` (3)
 - `HomeViewTests.cs` (1)
-- `ItemCatalogTests.cs` (13)
-- `ItemIconCoverageTests.cs` (3)
-- `ItemSceneTests.cs` (1)
-- `ItemStyleTests.cs` (7)
-- `KeyItemStyleTests.cs` (4)
 - `KillcamBufferTests.cs` (6)
 - `KillcamNotificationTests.cs` (3)
 - `KillcamVideoTests.cs` (2)
-- `MachineStyleTests.cs` (4)
-- `MegaStoneStyleTests.cs` (14)
-- `MiscStyleTests.cs` (3)
 - `NotificationTests.cs` (8)
 - `PixelUiTests.cs` (11)
-- `PokeBallStyleTests.cs` (3)
 - `ReleaseNotesTests.cs` (3)
 - `RouletteMachineTests.cs` (9)
 - `SpritePreparationTests.cs` (3)
 - `TrainerRoomTests.cs` (6)
-- `ZCrystalStyleTests.cs` (4)
 ## PermaLocke.Core.Tests
 - `AbilityBackfillTests.cs` (3)
 - `AbilityDrawTests.cs` (4)
@@ -149,7 +136,7 @@ Contado con grep, NO ejecutado. Detalle en [[Pruebas]].
 - `ExpansionBaseTests.cs` (7)
 - `ExpansionItemIconTests.cs` (6)
 - `ExtraPokemonTests.cs` (5)
-- `FieldItemRandomTests.cs` (10)
+- `FieldItemRandomTests.cs` (9)
 - `FinalEvolutionTests.cs` (5)
 - `FormIconsTests.cs` (3)
 - `FullyEvolvedThresholdTests.cs` (3)

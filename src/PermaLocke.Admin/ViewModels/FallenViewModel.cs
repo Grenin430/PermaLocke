@@ -19,7 +19,7 @@ public sealed record FallenLine(string Player, string Pokemon, string FellTo, st
 /// CEMENTERIO (2026-09-28): every player's graves in one list, from the table the apps share them to
 /// (<c>19-caidos.sql</c>). Read only: deaths are changed from each player's sheet (revive, mark fallen).
 /// </summary>
-public sealed partial class FallenViewModel(DiscordLogin discord, ILogger<FallenViewModel> logger) : ObservableObject
+public sealed partial class FallenViewModel(ITournamentServer discord, ILogger<FallenViewModel> logger) : ObservableObject
 {
     private static readonly JsonSerializerOptions Json = new() { PropertyNameCaseInsensitive = true };
 

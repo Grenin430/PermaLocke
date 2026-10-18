@@ -17,7 +17,7 @@ public sealed record SuggestionLine(long Id, string Player, string Text, string 
 /// SUGERENCIAS (1.0.5.5): what the players wrote in the suggestion box of their app, newest first. Only the organiser
 /// can read or delete them (18-sugerencias.sql).
 /// </summary>
-public sealed partial class SuggestionsViewModel(DiscordLogin discord, ILogger<SuggestionsViewModel> logger) : ObservableObject
+public sealed partial class SuggestionsViewModel(ITournamentServer discord, ILogger<SuggestionsViewModel> logger) : ObservableObject
 {
     private static readonly JsonSerializerOptions Json = new() { PropertyNameCaseInsensitive = true };
 
