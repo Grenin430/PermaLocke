@@ -8,6 +8,24 @@
          y lo que pide la sección del juego (abierto o cerrado, y por qué). Ámbar lo pedido, verde y rojo solo lo
          comprobado. Cada diseño decide si va esta (Mode Banner, a todo lo ancho) o la línea (Mode Line, una sola fila). -->
     <StackPanel>
+        <!-- LA VERSIÓN NUEVA (§202) -->
+        <Grid Margin="0,0,0,10" DataContext="{Binding Update}"
+              Visibility="{Binding IsVisible, Converter={StaticResource BoolToVisibility}}">
+            <views:PixelPanel HasShadow="False" Fill="{DynamicResource PxWarnDeep}" />
+            <DockPanel Margin="14,10,12,10">
+                <pixel:PixelIcon DockPanel.Dock="Left" Icon="IconWarning" Scale="2" Bob="True"
+                                 VerticalAlignment="Center" Margin="0,0,12,0" />
+                <Button DockPanel.Dock="Right" Content="ACTUALIZAR" Style="{StaticResource PxButton}"
+                        Command="{Binding UpdateCommand}" VerticalAlignment="Center" Margin="12,0,0,0" />
+                <StackPanel VerticalAlignment="Center">
+                    <pixel:PixelText Text="{Binding Text}" Scale="3" Tight="True" Colour="{DynamicResource PxWarn}"
+                                     Shadow="{DynamicResource PxShadow}" />
+                    <pixel:PixelText Text="{Binding Hint}" Scale="2" Tight="True" Margin="0,5,0,0"
+                                     Colour="{DynamicResource PxText}" />
+                </StackPanel>
+            </DockPanel>
+        </Grid>
+
         <!-- LO QUE PIDE LA SECCIÓN -->
         <Grid x:Name="NeedHost">
         <Grid Margin="0,0,0,10" Visibility="{Binding ShowsNeed, Converter={StaticResource BoolToVisibility}}">

@@ -90,6 +90,19 @@
             </Button.Template>
         </Button>
 
+        <!-- LA BANDEJA DE REGALOS, solo si hay alguno, con la cuenta en una chapa roja. -->
+        <Grid VerticalAlignment="Center" Visibility="{Binding Gifts.HasGifts, Converter={StaticResource BoolToVisibility}}">
+            <Button Style="{StaticResource PlateButton}" Tag="IconGift" Command="{Binding Gifts.ToggleCommand}"
+                    ToolTip="Regalos" AutomationProperties.Name="Regalos" />
+            <Grid HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-7,-8,0" IsHitTestVisible="False">
+                <views:PixelPanel Fill="#FFB8433A" HasShadow="False" />
+                <pixel:PixelText Text="{Binding Gifts.Count}" Scale="2" Tight="True" Margin="7,5,7,5" Colour="#FFFFFFFF" />
+            </Grid>
+        </Grid>
+
+        <Button Style="{StaticResource PlateButton}" Tag="IconMailbox" Command="{Binding Suggestions.ToggleCommand}"
+                ToolTip="Buzón de sugerencias" AutomationProperties.Name="Buzón de sugerencias" />
+
         <Grid x:Name="Role" Margin="10,0,0,0" VerticalAlignment="Center">
             <views:PixelPanel Fill="{DynamicResource PxFaceLift}" HasShadow="False" />
             <pixel:PixelText Text="{Binding RoleText}" Scale="2" Tight="True" Margin="11,8,11,8"

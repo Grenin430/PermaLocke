@@ -1,0 +1,73 @@
+<UserControl x:Class="PermaLocke.Admin.Pages.HomePage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:pixel="clr-namespace:PermaLocke.App.Views.Pixel">
+    <!-- INICIO (2026-09-28): lo de hoy en grande y un botón a cada sitio, con lo que hace escrito debajo. -->
+    <UserControl.Resources>
+        <Style x:Key="Card" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource Surface}" />
+            <Setter Property="BorderBrush" Value="{StaticResource Line}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Padding" Value="18,16" />
+            <Setter Property="Margin" Value="0,0,14,14" />
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="18">
+            <UniformGrid Columns="3">
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="CONECTADOS AHORA" Foreground="{StaticResource Faint}" FontSize="11" FontFamily="Segoe UI Semibold" />
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                            <pixel:PixelText Text="{Binding Online}" Scale="6" Tight="True" Colour="{StaticResource PxGood}" Shadow="{StaticResource PxShadow}" />
+                            <pixel:PixelText Text="{Binding Players.Count, StringFormat=/ {0}}" Scale="3" Tight="True" Colour="{StaticResource PxTextFaint}"
+                                             VerticalAlignment="Bottom" Margin="8,0,0,2" />
+                        </StackPanel>
+                        <TextBlock Text="jugadores con la app o el juego abiertos" Foreground="{StaticResource Faint}" FontSize="11.5" Margin="0,8,0,0" />
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="REGALOS SIN RECOGER" Foreground="{StaticResource Faint}" FontSize="11" FontFamily="Segoe UI Semibold" />
+                        <pixel:PixelText Text="{Binding PendingGifts}" Scale="6" Tight="True" Colour="{StaticResource PxGold}" Shadow="{StaticResource PxShadow}" Margin="0,10,0,0" />
+                        <TextBlock Text="alguien aún no ha abierto PermaLocke para recogerlos" Foreground="{StaticResource Faint}" FontSize="11.5" Margin="0,8,0,0" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="EN EL BUZÓN" Foreground="{StaticResource Faint}" FontSize="11" FontFamily="Segoe UI Semibold" />
+                        <pixel:PixelText Text="{Binding Mailbox}" Scale="6" Tight="True" Colour="{StaticResource PxAccentLight}" Shadow="{StaticResource PxShadow}" Margin="0,10,0,0" />
+                        <TextBlock Text="sugerencias de los jugadores por leer" Foreground="{StaticResource Faint}" FontSize="11.5" Margin="0,8,0,0" />
+                    </StackPanel>
+                </Border>
+            </UniformGrid>
+
+            <pixel:PixelText Text="¿QUÉ QUIERES HACER?" Style="{StaticResource Heading}" Margin="0,10,0,12" />
+            <ItemsControl ItemsSource="{Binding QuickSections}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Columns="3" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Button Margin="0,0,14,14" Padding="16,14" HorizontalContentAlignment="Left" MinHeight="84"
+                                Command="{Binding DataContext.GoCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                CommandParameter="{Binding Title}">
+                            <DockPanel>
+                                <pixel:PixelIcon DockPanel.Dock="Left" Icon="{Binding Icon}" Scale="3" Margin="0,0,14,0" VerticalAlignment="Center" />
+                                <StackPanel VerticalAlignment="Center">
+                                    <pixel:PixelText Text="{Binding Title}" Scale="2" Tight="True" Colour="{StaticResource PxText}" />
+                                    <TextBlock Text="{Binding Help}" Foreground="{StaticResource Faint}" FontSize="11.5" FontFamily="Segoe UI"
+                                               TextWrapping="Wrap" Margin="0,6,0,0" />
+                                </StackPanel>
+                            </DockPanel>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

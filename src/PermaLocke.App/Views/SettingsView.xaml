@@ -53,12 +53,33 @@
                 </DockPanel>
             </pixel:PixelWindow>
 
+            <!-- ================================================== TORNEO: entrar con Discord (fase 1, solo identidad) -->
+            <pixel:PixelWindow Title="TORNEO" Icon="IconTrophy" Margin="0,12,0,0">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal"
+                                Visibility="{Binding IsSignedIn, Converter={StaticResource BoolToVisibility}}">
+                        <Image Source="{Binding DiscordAvatar, TargetNullValue={x:Null}}" Width="48" Height="48" Margin="0,0,12,0" />
+                        <pixel:PixelText Text="{Binding DiscordName}" Scale="3" Tight="True" VerticalAlignment="Center"
+                                         Colour="{DynamicResource PxText}" Shadow="{DynamicResource PxShadow}" />
+                        <Button Content="SALIR" Style="{StaticResource PxSubtleButton}" Command="{Binding SignOutCommand}"
+                                VerticalAlignment="Center" Margin="18,0,0,0" />
+                    </StackPanel>
+                    <Button Content="ENTRAR CON DISCORD" Style="{StaticResource PxButton}" Command="{Binding SignInCommand}"
+                            HorizontalAlignment="Left" Visibility="{Binding IsSignedIn, Converter={StaticResource InverseBoolToVisibility}}" />
+                    <pixel:PixelText Style="{StaticResource Explain}" Margin="0,10,0,0"
+                                     Text="Solo para el torneo. PermaLocke no ve tu contraseña." />
+                </StackPanel>
+            </pixel:PixelWindow>
+
             <!-- ================================================== MIENTRAS JUEGAS -->
             <pixel:PixelWindow Title="MIENTRAS JUEGAS" Icon="IconPlay" Margin="0,12,0,0">
                 <StackPanel>
                     <CheckBox Style="{StaticResource Check}" IsChecked="{Binding DeathScene}" Content="Escena de muerte" />
                     <pixel:PixelText Style="{StaticResource Explain}" Text="Al caer un Pokémon, su muerte se ve en la plantilla del cap (una de ocho, al azar). Sin ella, su fila se vacía y ya está." />
 
+
+                    <CheckBox Style="{StaticResource Check}" IsChecked="{Binding Nicknames}" Content="Motes entre todos" />
+                    <pixel:PixelText Style="{StaticResource Explain}" Text="Al capturar te pregunta si los demás eligen el mote, y te salen las votaciones de los motes de tus amigos. Apagado, no te sale ninguna de las dos." />
 
                     <CheckBox Style="{StaticResource Check}" IsChecked="{Binding CapPanel}" Content="Cap de nivel encima del juego" />
                     <pixel:PixelText Style="{StaticResource Explain}" Text="Un mar de luz en la banda negra del emulador: tu equipo con sus datos, el cap en un cartel en la arena, y las muertes y las pruebas superadas como escenas. Nunca tapa las pantallas del juego: si no cabe, se hace más pequeño o se esconde." />

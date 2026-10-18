@@ -19,14 +19,20 @@ public sealed partial class CemeteryViewModel : SectionViewModel
     private readonly CemeteryService _cemetery;
     private readonly PokemonSpriteService _sprites;
     private readonly ILogger<CemeteryViewModel> _logger;
+    private readonly FallenShare _share;
+    private readonly CommunityService _community;
 
-    public CemeteryViewModel(CemeteryService cemetery, PokemonSpriteService sprites, IRunContext runContext,
+    public CemeteryViewModel(CemeteryService cemetery, PokemonSpriteService sprites, IRunContext runContext, FallenShare share,
+        CommunityService community,
         GameLinkMonitor monitor, IUiDispatcher ui, ILogger<CemeteryViewModel> logger)
         : base("CEMENTERIO", "Los que no volvieron, y cómo cayeron")
     {
         _cemetery = cemetery;
         _sprites = sprites;
         _logger = logger;
+        _share = share;
+        _community = community;
+        community.PropertyChanged += (_, _) => _ = ui.InvokeAsync(() => { ShowOwners(); return Task.CompletedTask; });
 
         runContext.CurrentChanged += (_, _) => _ = ui.InvokeAsync(RefreshAsync);
 
@@ -137,13 +143,65 @@ public sealed partial class CemeteryViewModel : SectionViewModel
         }
 
         Selected = grave;
-
+        _ = FetchKillcamAsync(grave);
     }
 
-    public string EmptyText => "Aún no ha caído nadie en esta run.";
+    /// <summary>Whose cemetery is on screen (1.0.5.5): null for this player's own, or a friend's id.</summary>
+    private FriendStatus? _owner;
 
-    private async Task<IReadOnlyList<GraveViewModel>> LoadAsync() =>
-        [.. (await _cemetery.GravesAsync()).Select(grave => new GraveViewModel(grave, _sprites.Get(grave.Species, grave.Form, grave.IsShiny)))];
+    public string EmptyText => _owner is null ? "Aún no ha caído nadie en esta run." : "Aún no ha caído nadie (o no lo ha compartido).";
+
+    /// <summary>Whether there are friends to switch to.</summary>
+    public bool HasOwners => _community.Friends.Count > 0;
+
+    /// <summary>Every player as a tab above the scene (1.0.5.7): you first, then each friend.</summary>
+    public ObservableCollection<OwnerTab> Owners { get; } = [];
+
+    private void ShowOwners()
+    {
+        var tabs = new List<OwnerTab> { new(null, "TÚ", _owner is null) };
+        tabs.AddRange(_community.Friends.Select(f => new OwnerTab(f, f.Name.ToUpperInvariant(), f.PlayerId == _owner?.PlayerId)));
+
+        // Solo si ha cambiado: la lista de amigos avisa a menudo y rehacer las pestañas parpadea.
+        static (Guid?, string, bool) Key(OwnerTab t) => (t.Friend?.PlayerId, t.Name, t.IsSelected);
+        if (tabs.Select(Key).SequenceEqual(Owners.Select(Key))) return;
+        Owners.Clear();
+        foreach (var tab in tabs) Owners.Add(tab);
+        OnPropertyChanged(nameof(HasOwners));
+    }
+
+    [RelayCommand]
+    private Task SelectOwner(OwnerTab? tab)
+    {
+        if (tab is null || tab.Friend?.PlayerId == _owner?.PlayerId) return Task.CompletedTask;
+
+        _owner = tab.Friend;
+        ShowOwners();
+        OnPropertyChanged(nameof(EmptyText));
+        IsTheaterOpen = false;
+        return RefreshAsync();
+    }
+
+    private async Task<IReadOnlyList<GraveViewModel>> LoadAsync()
+    {
+        if (_owner is not { } friend)
+        {
+            return [.. (await _cemetery.GravesAsync()).Select(grave => new GraveViewModel(grave, _sprites.Get(grave.Species, grave.Form, grave.IsShiny)))];
+        }
+
+        return [.. (await _share.FriendGravesAsync(friend.PlayerId)).Select(pair =>
+            new GraveViewModel(pair.Grave, _sprites.Get(pair.Grave.Species, pair.Grave.Form, pair.Grave.IsShiny), friend.PlayerId, pair.Killcam))];
+    }
+
+    private async Task FetchKillcamAsync(GraveViewModel grave)
+    {
+        if (grave.Owner is not { } player || !grave.RemoteKillcam || grave.KillcamPath is not null || grave.IsFetching) return;
+
+        grave.IsFetching = true;
+        grave.KillcamPath = await _share.FriendKillcamAsync(player, grave.PokemonId);
+        grave.IsFetching = false;
+        OpenTheaterCommand.NotifyCanExecuteChanged();
+    }
 
     private async Task RefreshAsync()
     {
@@ -155,6 +213,7 @@ public sealed partial class CemeteryViewModel : SectionViewModel
             var picked = Selected?.PokemonId;
 
             Graves.Clear();
+            ShowOwners();
 
             foreach (var grave in graves)
             {
@@ -300,3 +359,5 @@ public sealed partial class GraveViewModel(Grave grave, BitmapSource? sprite, Gu
                     : "Sin repetición.";
 }
 
+/// <summary>One player's tab above the cemetery (1.0.5.7); <paramref name="Friend"/> is null for this player.</summary>
+public sealed record OwnerTab(FriendStatus? Friend, string Name, bool IsSelected);

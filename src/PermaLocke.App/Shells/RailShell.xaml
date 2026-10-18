@@ -262,6 +262,72 @@
                         </Grid>
                     </StackPanel>
 
+                    <!-- ==================================== EL BUZÓN DE SUGERENCIAS (1.0.5.5) -->
+                    <Button DockPanel.Dock="Right" Margin="18,0,0,0" VerticalAlignment="Center" Cursor="Hand"
+                            Command="{Binding Suggestions.ToggleCommand}" AutomationProperties.Name="Buzón de sugerencias"
+                            ToolTip="Buzón de sugerencias">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Grid x:Name="Body" Height="40" Width="46" Background="Transparent">
+                                    <views:PixelPanel x:Name="Plate" Fill="{DynamicResource PxFaceLift}" />
+                                    <pixel:PixelIcon x:Name="Face" Icon="IconMailbox" Scale="2" HorizontalAlignment="Center"
+                                                     VerticalAlignment="Center" Margin="0,0,6,6" />
+                                </Grid>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Plate" Property="Fill" Value="{DynamicResource PxAccentDeep}" />
+                                    </Trigger>
+                                    <Trigger Property="IsPressed" Value="True">
+                                        <Setter TargetName="Plate" Property="HasShadow" Value="False" />
+                                        <Setter TargetName="Plate" Property="Margin" Value="6,6,0,0" />
+                                        <Setter TargetName="Face" Property="RenderTransform">
+                                            <Setter.Value>
+                                                <TranslateTransform X="6" Y="6" />
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+
+                    <!-- ==================================== LA BANDEJA DE REGALOS (§129) -->
+                    <Grid DockPanel.Dock="Right" Margin="18,0,0,0" VerticalAlignment="Center"
+                          Visibility="{Binding Gifts.HasGifts, Converter={StaticResource BoolToVisibility}}">
+                        <Button x:Name="GiftButton" Cursor="Hand" Command="{Binding Gifts.ToggleCommand}"
+                                AutomationProperties.Name="Regalos">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Grid x:Name="Body" Height="40" Width="46" Background="Transparent">
+                                        <views:PixelPanel x:Name="Plate" Fill="{DynamicResource PxFaceLift}" />
+                                        <pixel:PixelIcon x:Name="Face" Icon="IconGift" Scale="2" HorizontalAlignment="Center"
+                                                         VerticalAlignment="Center" Margin="0,0,6,6" />
+                                    </Grid>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="Plate" Property="Fill" Value="{DynamicResource PxAccentDeep}" />
+                                        </Trigger>
+                                        <Trigger Property="IsPressed" Value="True">
+                                            <Setter TargetName="Plate" Property="HasShadow" Value="False" />
+                                            <Setter TargetName="Plate" Property="Margin" Value="6,6,0,0" />
+                                            <Setter TargetName="Face" Property="RenderTransform">
+                                                <Setter.Value>
+                                                    <TranslateTransform X="6" Y="6" />
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+
+                        <Grid HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-6,-8,0" IsHitTestVisible="False">
+                            <views:PixelPanel Fill="#FFB8433A" HasShadow="False" />
+                            <pixel:PixelText Text="{Binding Gifts.Count}" Scale="2" Tight="True" Margin="7,5,7,5"
+                                             Colour="{DynamicResource PxText}" />
+                        </Grid>
+                    </Grid>
+
                     <!-- JUGAR, EN PEQUEÑO (§125). En todas las pantallas menos en la del lanzador, que tiene el
                          grande: dice si el juego está abierto y cuánto lleva, y lleva a JUGAR. -->
                     <Button DockPanel.Dock="Right" Margin="18,0,0,0" VerticalAlignment="Center" Cursor="Hand"
@@ -328,6 +394,25 @@
             <!-- El contenido se apoya en el suelo, sin marco propio. -->
                 <!-- EL JUEGO, ABIERTO O CERRADO: una franja a todo lo ancho encima de cada sección, con qué pide y por qué (2026-09-24:
                      antes era una etiqueta pequeña en la cabecera y no se veía). Ámbar lo pedido, verde y rojo solo lo comprobado. -->
+                <!-- LA VERSIÓN NUEVA (§202): una franja ámbar encima de cada sección mientras haya una esperando, con su
+                     señal de peligro y un ACTUALIZAR pequeño dentro. Sustituye a la pregunta de sí o no de §196. -->
+                <Grid Grid.Row="1" Margin="4,0,4,14" DataContext="{Binding Update}"
+                      Visibility="{Binding IsVisible, Converter={StaticResource BoolToVisibility}}">
+                    <views:PixelPanel HasShadow="False" Fill="{DynamicResource PxWarnDeep}" />
+                    <DockPanel Margin="14,10,12,10">
+                        <pixel:PixelIcon DockPanel.Dock="Left" Icon="IconWarning" Scale="2" Bob="True"
+                                         VerticalAlignment="Center" Margin="0,0,12,0" />
+                        <Button DockPanel.Dock="Right" Content="ACTUALIZAR" Style="{StaticResource PxButton}"
+                                Command="{Binding UpdateCommand}" VerticalAlignment="Center" Margin="12,0,0,0" />
+                        <StackPanel VerticalAlignment="Center">
+                            <pixel:PixelText Text="{Binding Text}" Scale="3" Tight="True" Colour="{DynamicResource PxWarn}"
+                                             Shadow="{DynamicResource PxShadow}" />
+                            <pixel:PixelText Text="{Binding Hint}" Scale="2" Tight="True" Margin="0,5,0,0"
+                                             Colour="{DynamicResource PxText}" />
+                        </StackPanel>
+                    </DockPanel>
+                </Grid>
+
                 <Grid Grid.Row="2" Margin="4,0,4,14"
                       Visibility="{Binding ShowsNeed, Converter={StaticResource BoolToVisibility}}">
                     <views:PixelPanel HasShadow="False">
@@ -378,5 +463,83 @@
         </Grid>
         </Grid>
 
+        <!-- LA BANDEJA ABIERTA, una capa de la ventana y no un menú del sistema: así se dibuja con el mismo
+             pixel art que el resto y se queda pegada debajo del regalo. -->
+        <Grid Grid.Row="1" HorizontalAlignment="Right" VerticalAlignment="Top" Width="400" Margin="0,58,26,0"
+              Visibility="{Binding Gifts.IsOpen, Converter={StaticResource BoolToVisibility}}">
+            <pixel:PixelWindow Title="REGALOS" Icon="IconGift">
+                <pixel:PixelWindow.HeaderContent>
+                    <Button Content="CERRAR" Style="{StaticResource PxSubtleButton}" Command="{Binding Gifts.CloseCommand}" />
+                </pixel:PixelWindow.HeaderContent>
+
+                <StackPanel>
+                    <ItemsControl ItemsSource="{Binding Gifts.Items}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,0,0,8">
+                                    <views:PixelPanel Fill="{DynamicResource PxWell}" IsSunken="True" HasShadow="False" />
+                                    <StackPanel Margin="14,10,16,14">
+                                        <DockPanel>
+                                            <pixel:PixelText DockPanel.Dock="Right" Text="{Binding When}" Scale="2" Tight="True"
+                                                             Margin="10,0,0,0" Colour="{DynamicResource PxTextFaint}" />
+                                            <pixel:PixelText Text="{Binding From}" Scale="2" Tight="True" Trim="True"
+                                                             Colour="{DynamicResource PxText}" Shadow="{DynamicResource PxShadow}" />
+                                        </DockPanel>
+
+                                        <pixel:PixelText Text="{Binding What}" Scale="2" Wrap="True" Margin="0,8,0,0"
+                                                         Colour="{DynamicResource PxGold}" />
+
+                                        <pixel:PixelText Text="{Binding Reason}" Scale="2" Wrap="True" Margin="0,6,0,0"
+                                                         Colour="{DynamicResource PxTextDim}" />
+
+                                        <pixel:PixelText Text="Necesita Azahar abierto." Scale="2" Tight="True" Margin="0,6,0,0"
+                                                         Colour="{DynamicResource PxTextFaint}"
+                                                         Visibility="{Binding NeedsTheGame, Converter={StaticResource BoolToVisibility}}" />
+
+                                        <Button Content="RECOGER" Style="{StaticResource PxButton}" Margin="0,10,0,0"
+                                                HorizontalAlignment="Left"
+                                                Command="{Binding DataContext.Gifts.ClaimCommand,
+                                                          RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}"
+                                                Visibility="{Binding IsCollected, Converter={StaticResource InverseBoolToVisibility}}" />
+
+                                        <pixel:PixelText Text="RECOGIDO" Scale="2" Tight="True" Margin="0,10,0,0"
+                                                         Colour="{DynamicResource PxGood}"
+                                                         Visibility="{Binding IsCollected, Converter={StaticResource BoolToVisibility}}" />
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <pixel:PixelText Text="{Binding Gifts.Status}" Scale="2" Wrap="True" Margin="0,4,0,0"
+                                     Colour="{DynamicResource PxText}" />
+                </StackPanel>
+            </pixel:PixelWindow>
+        </Grid>
+
+        <!-- EL BUZÓN ABIERTO (1.0.5.5): lo que se escribe llega a la app de Admin del organizador. -->
+        <Grid Grid.Row="1" HorizontalAlignment="Right" VerticalAlignment="Top" Width="420" Margin="0,58,26,0"
+              Visibility="{Binding Suggestions.IsOpen, Converter={StaticResource BoolToVisibility}}">
+            <pixel:PixelWindow Title="SUGERENCIAS" Icon="IconMailbox">
+                <pixel:PixelWindow.HeaderContent>
+                    <Button Content="CERRAR" Style="{StaticResource PxSubtleButton}" Command="{Binding Suggestions.CloseCommand}" />
+                </pixel:PixelWindow.HeaderContent>
+
+                <StackPanel>
+                    <pixel:PixelText Text="Escribe lo que quieras: ideas, fallos, quejas. Le llega al organizador." Scale="2"
+                                     Wrap="True" Margin="0,0,0,10" Colour="{DynamicResource PxTextDim}" />
+                    <TextBox Text="{Binding Suggestions.Text, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PxTextBox}"
+                             AcceptsReturn="True" TextWrapping="Wrap" MaxLength="1000" Height="150"
+                             VerticalContentAlignment="Top" VerticalScrollBarVisibility="Auto" />
+                    <DockPanel Margin="0,10,0,0">
+                        <Button DockPanel.Dock="Right" Content="ENVIAR" Style="{StaticResource PxButton}"
+                                Command="{Binding Suggestions.SendCommand}" />
+                        <pixel:PixelText Text="{Binding Suggestions.Status}" Scale="2" Wrap="True" VerticalAlignment="Center"
+                                         Margin="0,0,10,0" Colour="{DynamicResource PxText}" />
+                    </DockPanel>
+                </StackPanel>
+            </pixel:PixelWindow>
+        </Grid>
     </Grid>
 </shells:ShellBase>

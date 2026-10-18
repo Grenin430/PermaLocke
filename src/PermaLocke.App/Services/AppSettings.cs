@@ -44,6 +44,7 @@ public sealed class AppSettings(
     DeathCeremony ceremony,
     KillcamRecorder killcam,
     CatchCeremony catches,
+    NicknameVoteService nicknames,
     ILogger<AppSettings> logger)
 {
     private static readonly JsonSerializerOptions Options = new() { WriteIndented = true };
@@ -95,5 +96,6 @@ public sealed class AppSettings(
         ceremony.Ghosts = Current.Ghosts;
         killcam.Enabled = Current.Killcam;
         catches.Enabled = Current.CatchCard;
+        nicknames.Enabled = Current.Nicknames;
     }
 }

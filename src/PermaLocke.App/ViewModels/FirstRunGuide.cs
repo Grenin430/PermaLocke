@@ -24,7 +24,7 @@ public sealed record GuideStep(int Number, string Title, string Detail, bool Don
 
 /// <summary>
 /// PRIMEROS PASOS (§197, plan del próximo torneo, paso 4): the first time, in JUGAR, what is left before playing — the
-/// ROM, the emulator, the run (or bringing it from another folder, §195), the world and the first save — each
+/// ROM, the emulator, Discord, the run (or bringing it from another folder, §195), the world and the first save — each
 /// ticked off as soon as it is true, with the button that does it.
 /// </summary>
 /// <remarks>
@@ -32,7 +32,7 @@ public sealed record GuideStep(int Number, string Title, string Detail, bool Don
 /// <c>ROM/</c>, the emulator's executable, the session, the run, the world installed in the emulator, the save). Gone by
 /// itself once all is done; hidden for good with OCULTAR.
 /// </remarks>
-public sealed partial class FirstRunGuide(AppPaths paths, IRunContext runs, AzaharInstallation azahar,
+public sealed partial class FirstRunGuide(AppPaths paths, IRunContext runs, DiscordLogin discord, AzaharInstallation azahar,
     PlayerSave save, IAppDialogs dialogs, TransferOffer transfer, AppSettings settings, EmulatorLauncher launcher) : ObservableObject
 {
     private const string ProgramId = "00040000001B5100";
@@ -60,18 +60,19 @@ public sealed partial class FirstRunGuide(AppPaths paths, IRunContext runs, Azah
 
         GuideStep[] steps =
         [
-            new(1, "Tu ROM de Ultra Luna", "Desencriptada, .3ds o .cci, en la carpeta ROM.",
+            new(1, "Entrar con Discord", "Con una cuenta de la lista del torneo.", discord.Saved is { Allowed: true }),
+            new(2, "Tu ROM de Ultra Luna", "Desencriptada, .3ds o .cci, en la carpeta ROM.",
                 RomInspector.ScanFolder(paths.Rom).Count > 0, "ABRIR CARPETA ROM", OpenRomFolderCommand),
             // La misma elección que JUGAR: en una build de desarrollo el exe está en bin, lejos de Emulator.
-            new(2, "El emulador", emulator is not null
+            new(3, "El emulador", emulator is not null
                     ? "Viene con PermaLocke, ya preparado."
                     : "Falta Emulator\\azahar.exe: vuelve a extraer la carpeta entera.",
                 emulator is not null),
-            new(3, "Tu run", "Con tu nombre y el rol que quieras. ¿Ya jugabas en otra carpeta? Tráetela entera.",
+            new(4, "Tu run", "Con tu nombre y el rol que quieras. ¿Ya jugabas en otra carpeta? Tráetela entera.",
                 hasRun, "CREAR RUN", CreateRunCommand, "TRAER MI PARTIDA DE OTRA CARPETA", BringCommand),
-            new(4, "Tu mundo", "En RANDOMIZADOR: genéralo y pulsa INSTALAR EN AZAHAR, con el emulador cerrado.",
+            new(5, "Tu mundo", "En RANDOMIZADOR: genéralo y pulsa INSTALAR EN AZAHAR, con el emulador cerrado.",
                 Directory.Exists(mod) && Directory.EnumerateFileSystemEntries(mod).Any(), "IR AL RANDOMIZADOR", GoToRandomizerCommand),
-            new(5, "Juega y guarda", "Pulsa JUGAR y guarda en el juego en cuanto tengas tu primer Pokémon.", save.Find() is not null)
+            new(6, "Juega y guarda", "Pulsa JUGAR y guarda en el juego en cuanto tengas tu primer Pokémon.", save.Find() is not null)
         ];
 
         Steps.Clear();

@@ -11,7 +11,7 @@ namespace PermaLocke.App.Services;
 /// Opening PermaLocke again (the shortcut) brings the hidden window back: the second copy rings <see cref="ShowSignal"/>
 /// and leaves. The icon's menu has «Cerrar del todo», which closes as if the setting were off.
 /// </remarks>
-public sealed class BackgroundMode(AppSettings settings, ILogger<BackgroundMode> logger)
+public sealed class BackgroundMode(AppSettings settings, DiscordPresence presence, ILogger<BackgroundMode> logger)
 {
     private const string ShowSignal = @"Local\PermaLocke.App.Show";
 
@@ -69,6 +69,7 @@ public sealed class BackgroundMode(AppSettings settings, ILogger<BackgroundMode>
     private void Hide()
     {
         _window!.Hide();
+        presence.Stop();
         ShowIcon(true);
         _hidden = true;
         logger.LogInformation("PermaLocke sigue en segundo plano");
@@ -110,6 +111,7 @@ public sealed class BackgroundMode(AppSettings settings, ILogger<BackgroundMode>
         {
             _hidden = false;
             ShowIcon(false);
+            presence.Start();
         }
 
         _window.Show();

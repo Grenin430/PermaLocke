@@ -1,39 +1,26 @@
-using System.Windows.Media.Imaging;
-using PermaLocke.Core.Domain;
 using PermaLocke.Rules.Services;
 
 namespace PermaLocke.App.Services;
 
 /// <summary>
-/// Turns what the watcher does on its own into notices on top of the game.
+/// What the watcher does on its own that the app answers outside the cap panel.
 /// </summary>
 /// <remarks>
-/// <para>
-/// A separate class and not a couple of lines in the startup, because the list of things worth
-/// interrupting somebody for is a decision, and decisions belong somewhere they can be read. The
-/// rule used here: <b>a notice is for something that already happened and cannot be undone</b> — a
-/// death, a penalty, a prize handed over. Not for states, not for warnings, not for «still no
-/// connection»: those live on HOME, where you go to look, instead of on top of a battle.
-/// </para>
-/// <para>
-/// Nothing here decides anything. Every one of these events is raised <b>after</b> the thing was
-/// written and verified, so a notice can never claim something that did not happen.
-/// </para>
-/// <para>
-/// A death gets the corner notice, which stays in the list of notices. The moment itself is in the cap panel
-/// beside the game (2026-10-15, <c>CapDeath</c>): nothing covers the game any more, neither the old scene
-/// over it nor the blood rain of a wipe.
-/// </para>
-/// <para>
-/// Every notice carries a sprite from the player's own cartridge when there is one to carry: the Pokémon of the
-/// battle, the fallen one, the Poké Ball that was taken or given back, the item of a prize.
-/// </para>
+/// Nothing is said on top of the game any more (2026-10-17 in the single-player version, in the tournament from 1.0.19 at the player's word):
+/// no notices, no card flying to the album, no death scene over the game, no ghosts nor blood rain on the others' screens; the deaths
+/// happen inside the cap panel (<c>CapDeath</c>) and what the notices said goes to the log. Better ones may come back later. What stays: an
+/// item from the ground, bought or given jumps into the bag over the game, and the others vote the nickname of every wild catch and every
+/// newcomer that is not the starter (2026-09-28).
 /// </remarks>
 public sealed class PlayNotifications
 {
-    public PlayNotifications(GameLinkMonitor monitor, CatchCeremony catches)
+    public PlayNotifications(GameLinkMonitor monitor, CatchCeremony catches, EncounterGuard encounters, NicknameVoteService votes)
     {
-        // La carta que volaba al álbum y los avisos encima del juego, quitados (2026-10-17, pedido del jugador).
+        encounters.Caught += (_, caught) => votes.Offer(caught.Pokemon);
+        monitor.NewcomerArrived += (_, pokemon) =>
+        {
+            if (!monitor.IsStarter(pokemon.PID)) votes.Offer(pokemon);
+        };
 
         // Un objeto del suelo, comprado o regalado salta a la mochila encima del juego (2026-09-28).
         monitor.ItemGained += (_, item) => catches.CelebrateItem(item.ItemId, item.Amount);

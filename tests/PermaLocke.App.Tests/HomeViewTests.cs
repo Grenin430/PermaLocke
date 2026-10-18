@@ -53,7 +53,7 @@ public sealed class HomeViewTests
                 // StaticResource que no existe o un estilo mal heredado lanza.
                 UserControl[] screens =
                 [
-                    new LauncherView(), new RandomizerView(), new GachaView(), new ShopView(),
+                    new LauncherView(), new RandomizerView(), new GachaView(), new ShopView(), new AchievementsView(),
                     new MapView(), new AlbumView(), new EvTrainingView(), new MoveReminderView(), new PokePasteView(), new CemeteryView(),
                     new BattleModeView(), new RouletteView(), new MiscellaneousView(), new SettingsView(),
                 ];
