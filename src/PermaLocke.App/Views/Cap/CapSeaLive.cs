@@ -62,38 +62,7 @@ public static class CapSeaLive
         }
     }
 
-    // ---------------------------------------------------------------- the light and the snow
-
-    /// <summary>Shafts of light from the surface, slanted, widening and fading with depth, made of dither so they stay pixel art.</summary>
-    public static void Shafts(CapSheet p, CapWorldLayout l, CapSeaPalette pal, CapSeaContext ctx, double phase)
-    {
-        var count = l.Mode switch { CapMode.Compact => 1, CapMode.Slim => 2, CapMode.Strip => 4, _ => 3 };
-        var top = l.SurfaceY + 1;
-        var bottom = Math.Max(top + 1, l.FloorTop - 8);
-        var height = bottom - top;
-        var width = l.Main.Width;
-
-        for (var k = 0; k < count; k++)
-        {
-            var baseX = l.Main.Left + (CapArt.Hash(ctx.Seed + ctx.WorldX, k + 40) % Math.Max(1, width));
-            var drift = Math.Sin((phase * 0.12 * (k + 1)) + k) * 8;
-            var strength = pal.ShaftStrength * (0.78 + (0.22 * Math.Sin((phase * 0.35) + (k * 2))));
-
-            for (var y = top; y < bottom; y++)
-            {
-                var d = (y - top) / (double)height;
-                var centre = baseX + drift + (0.28 * (y - top));
-                var half = 3 + (0.07 * (y - top));
-                var level = strength * Math.Pow(1 - d, 1.5);
-                for (var x = (int)Math.Floor(centre - half); x <= (int)Math.Ceiling(centre + half); x++)
-                {
-                    var edge = 1 - (Math.Abs(x - centre) / half);
-                    if (edge <= 0) continue;
-                    if ((level * edge * 16) > CapSeaPalette.Bayer[((y & 3) * 4) + (x & 3)]) p.Set(x, y, pal.Shaft, 48);
-                }
-            }
-        }
-    }
+    // ---------------------------------------------------------------- the snow (the shafts of light under the surface removed, 2026-10-19: the player did not want them)
 
     /// <summary>Marine snow in three planes: the far one slow and dim, the near one fast and bright, and a current that leans them all.</summary>
     public static void Snow(CapSheet p, CapWorldLayout l, CapSeaPalette pal, CapSeaContext ctx, double phase)

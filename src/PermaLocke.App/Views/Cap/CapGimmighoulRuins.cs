@@ -83,9 +83,13 @@ public static class CapGimmighoulRuins
         var x0 = l.Main.Left + 3;
         var floor = int.MaxValue;
         for (var x = 0; x < width; x++) floor = Math.Min(floor, CapSea.Relief(l, ctx, x0 + x));
-        floor += Ground;
+        // standing on the storey that rose out of the sand after the Electrostal, once it has
+        floor += Ground - Lift(ctx);
         return floor - 62 < l.SurfaceY + 6 ? null : (x0, floor, width);
     }
+
+    /// <summary>How many rows the risen storey lifts the ruins by now.</summary>
+    private static int Lift(CapSeaContext ctx) => (int)Math.Round(Storey * Math.Clamp(ctx.Rise, 0, 1));
 
     /// <summary>Where the chest stands: its art's first column in the ruins and its top row in the window (its foot on the stone floor).</summary>
     public const int ChestLeft = 68;
@@ -119,6 +123,10 @@ public static class CapGimmighoulRuins
         var murk = 0.16 + (0.4 * pal.Murk);
         var water = pal.Water[5];
         void Put(int x, int y, uint c) => p.Set(x0 + x, y, CapSheet.Mix(c, water, murk));
+
+        // the storey that rose under them (as much of it as is out of the sand)
+        var foot = floor + Lift(ctx);
+        if (foot > floor) Lower(p, x0, floor, foot, width, murk, water);
 
         // the walls, back to front, and the ledge of the upper storey on the tall one
         foreach (var piece in Pieces)
@@ -203,12 +211,14 @@ public static class CapGimmighoulRuins
         for (var x = -6; x < width + 4; x++)
         {
             var bed = CapSea.Relief(l, ctx, x0 + x);
-            var top = floor - 2 + (int)Math.Round((0.9 * Math.Sin(x * 0.17)) + (0.6 * Math.Sin(x * 0.53)));
+            var top = foot - 2 + (int)Math.Round((0.9 * Math.Sin(x * 0.17)) + (0.6 * Math.Sin(x * 0.53)));
             if (x < 0 || x >= width) top += (int)Math.Round((Math.Min(Math.Abs(x < 0 ? x : x - width + 1), 8) / 8.0) * Math.Max(0, bed - top));
             for (var y = top; y <= bed; y++) p.Set(x0 + x, y, y == top ? sand : sandDark);
         }
 
-        // the fallen blocks and the rubble, on the sand
+        if (ctx.Rising >= 0) Rising(p, x0, floor, foot, width, ctx.Rising, sand, sandDark);
+
+        // the fallen blocks and the rubble, on the sand (on the risen storey's top once it has risen)
         Block(p, x0, 6, floor - 8, 14, 7, murk, water);
         if (width > 170) Block(p, x0, 150, floor - 7, 12, 6, murk, water);
         foreach (var (rx, ry, rw) in Rubble) if (rx + rw < width) Stone(p, x0, rx, floor - 1 - ry, (rw * 2) - 1, murk, water);
@@ -322,6 +332,212 @@ public static class CapGimmighoulRuins
                 uint c = edge ? Outline : dy == 1 && dx < w - 2 ? BrickHi : Brick[2];
                 p.Set(x0 + x + dx, y - h + dy + 1, CapSheet.Mix(c, water, murk));
             }
+        }
+    }
+
+    // ---------------------------------------------------------------- the storey that rises (2026-10-19)
+
+    /// <summary>
+    /// How high the buried storey stands once it has risen: the ruins on it go up by as much. It rises after the Electrostal's film (the player
+    /// asked for room for the crystals still to come): the ground rumbles and it comes up out of the sand in four shoves, sand pouring off it.
+    /// </summary>
+    public const int Storey = 30;
+
+    /// <summary>When it starts rising, on the Electrostal's film clock (Raikou has left the abyss's window), and how long it takes.</summary>
+    public const double RiseStart = 7.4, RiseSpan = 4.4;
+
+    private const int Shoves = 4;
+
+    /// <summary>How far it has risen (0 to 1), some seconds after it started: four shoves, each a jolt up and a settle.</summary>
+    public static double RiseOf(double since)
+    {
+        if (since <= 0) return 0;
+        if (since >= RiseSpan) return 1;
+        var each = RiseSpan / Shoves;
+        var k = Math.Floor(since / each);
+        var u = Math.Clamp((since - (k * each)) / (each * 0.6), 0, 1);
+        // fast at first, slowing to a stop: a heavy thing pushed up
+        return (k + (1 - Math.Pow(1 - u, 3))) / Shoves;
+    }
+
+    /// <summary>The ground shaking while it rises, a jolt at each shove: over the whole window, once everything is painted.</summary>
+    public static void Rumble(CapSheet p, CapWorldLayout l, CapSeaContext ctx)
+    {
+        if (l.Panel != CapPanelKind.Deep || ctx.Rising < 0 || ctx.Rising >= RiseSpan + 0.3) return;
+        var each = RiseSpan / Shoves;
+        CapTrial.Shake(p, ctx.Rising % each, 2.4, each * 0.8);
+    }
+
+    /// <summary>The arches of the risen storey: where along it (each a niche for a crystal still to come).</summary>
+    internal static readonly int[] Arches = [16, 52, 88, 124, 160, 196, 228];
+
+    internal const int ArchW = 14, ArchH = 19, Cornice = 3, Plinth = 2;
+
+    /// <summary>
+    /// The risen storey, its top under the ruins' floor and as much of it as is out of the sand: a cornice of long stones lit on top, then a
+    /// wall of big worn blocks with a row of round arches (dark niches, their inner side lit, a keystone over each), pilasters between them,
+    /// moss in patches and dripping from the cornice, cracks, and the plinth at its foot.
+    /// </summary>
+    private static void Lower(CapSheet p, int x0, int top, int bed, int width, double murk, uint water)
+    {
+        void Put(int x, int y, uint c) => p.Set(x0 + x, y, CapSheet.Mix(c, water, murk));
+
+        for (var y = top + 1; y <= bed; y++)
+        {
+            var ly = y - top - 1;                                       // rows down from its top
+            for (var x = 0; x < width; x++)
+            {
+                uint c;
+                var edge = x == 0 || x == width - 1;
+                if (ly < Cornice)
+                {
+                    // the cornice: long stones, standing out a cell either side
+                    c = ly == 0 || ly == Cornice - 1 || edge ? Outline : x % 10 == 0 ? Mortar : BrickHi;
+                    if (ly == 1 && c == BrickHi && Noise(x, 3, 11) > 0.6) c = Moss[0];
+                    Put(x, y, c);
+                    continue;
+                }
+
+                var fromFoot = Storey - 1 - ly;                         // rows up from its foot
+                var arch = ArchAt(x, fromFoot);
+                if (arch is { } a)
+                {
+                    // inside a niche: dark, its left side and its top lit a little by the light from the way in
+                    c = a.Rim ? Outline : a.Dx <= 1 ? Side : a.Top ? SideDark : Recess;
+                    Put(x, y, c);
+                    continue;
+                }
+
+                if (fromFoot < Plinth)
+                {
+                    c = fromFoot == Plinth - 1 ? Outline : x % 12 == 11 ? Mortar : Side;
+                    Put(x, y, edge ? Outline : c);
+                    continue;
+                }
+
+                // big blocks, four cells high and eight long, every other course set half over
+                var course = (ly - Cornice) / 4;
+                var off = (course % 2) * 4;
+                var mortar = (ly - Cornice) % 4 == 3 || (x + off) % 8 == 7;
+                var stone = Brick[Hash(((x + off) / 8) + 900, course) % 4];
+                c = mortar ? Mortar : (ly - Cornice) % 4 == 0 || (x + off) % 8 == 0 ? CapSheet.Mix(stone, BrickHi, 0.5) : stone;
+                if (!mortar && Hash(((x + off) / 8) + 950, course) % 23 == 0) c = Recess;
+                if (Pilaster(x)) c = mortar ? SideDark : (x % 36) == 33 ? BrickHi : Brick[3];
+                // the keystone over each arch
+                if (Keystone(x, fromFoot)) c = (Hash(x, fromFoot) % 2 == 0) ? BrickHi : Brick[3];
+                // moss: patches, and dripping down from under the cornice
+                var drip = ly - Cornice < 1 + (int)(Hash(x, 17) % 5) && Hash(x, 19) % 3 == 0;
+                if (drip || Noise(x + 300, ly, 21) > 0.76) c = Moss[1 + (int)(Hash(x, ly) % 2)];
+                // a crack or two
+                if (Crack(x, ly)) c = Outline;
+                if (edge) c = Outline;
+                Put(x, y, c);
+            }
+        }
+
+        static bool Pilaster(int x) => x % 36 >= 32 && x % 36 < 35;
+
+        static bool Keystone(int x, int fromFoot)
+        {
+            foreach (var ax in Arches)
+            {
+                if (Math.Abs(x - (ax + (ArchW / 2))) <= 1 && fromFoot >= ArchH && fromFoot < ArchH + 3) return true;
+            }
+
+            return false;
+        }
+
+        static bool Crack(int x, int ly) =>
+            (x == 70 + (ly / 3) && ly > 6 && ly < 18) || (x == 182 - (ly / 4) && ly > 4 && ly < 14) || (x == 112 + (ly % 3 == 0 ? 1 : 0) && ly > 12 && ly < 22);
+    }
+
+    /// <summary>Whether a cell of the storey (a column, and how far up from its foot) is in an arch: its rim, how far in from its left, whether in its top.</summary>
+    internal static (bool Rim, int Dx, bool Top)? ArchAt(int x, int fromFoot)
+    {
+        foreach (var ax in Arches)
+        {
+            var dx = x - ax;
+            if (dx < 0 || dx >= ArchW || fromFoot < Plinth) continue;
+            var r = ArchW / 2.0;
+            var cx = dx + 0.5 - r;
+            var spring = ArchH - r;
+            var inside = fromFoot < spring ? Math.Abs(cx) < r : (cx * cx) + ((fromFoot - spring) * (fromFoot - spring)) < r * r;
+            if (!inside) continue;
+            var rimIn = fromFoot < spring ? Math.Abs(cx) >= r - 1 : (cx * cx) + ((fromFoot - spring) * (fromFoot - spring)) >= (r - 1) * (r - 1);
+            return (rimIn, dx, fromFoot >= spring);
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// What it throws off as it rises: sand pouring off its cornice in streams and off its ends, clouds of sand billowing out along its foot at
+    /// each shove, and stones knocked off the walls falling.
+    /// </summary>
+    private static void Rising(CapSheet p, int x0, int top, int foot, int width, double since, uint sand, uint sandDark)
+    {
+        var each = RiseSpan / Shoves;
+        var shove = since % each;
+
+        // streams of sand pouring off the cornice while it moves, and running dry after: a column a cell wide, its grains running down in
+        // light and dark pairs; bigger ones off both ends
+        for (var s = 0; s < 12; s++)
+        {
+            var x = s == 0 ? 0 : s == 1 ? width - 1 : 8 + (int)(Hash(s, 71) % (uint)Math.Max(1, width - 16));
+            var start = (s % Shoves) * each;
+            var age = since - start;
+            if (age < 0 || age > each * 0.9) continue;
+            var thick = s < 2 ? 2 : 1;
+            // the head of the stream falls; its tail follows once the shove stops
+            var head = top + 2 + (age * 70);
+            var tail = top + 2 + Math.Max(0, (age - (each * 0.5)) * 70);
+            for (var y = (int)tail; y < Math.Min(head, foot); y++)
+            {
+                var grain = (y + (int)(since * 40)) % 4;
+                if (grain == 3) continue;
+                for (var w = 0; w < thick; w++) p.Set(x0 + x + (s == 0 ? -w - 1 : s == 1 ? w + 1 : w), y, grain == 0 ? sandDark : sand);
+            }
+
+            // where it lands, a little heap splashing
+            if (head >= foot - 1) { p.Set(x0 + x - 1, foot - 2, sand); p.Set(x0 + x + 1, foot - 2, sand); p.Set(x0 + x, foot - 3, sandDark); }
+        }
+
+        // puffs of sand rolling out along its foot at each shove: round billows, lit on top, shrinking away as they go
+        if (since < RiseSpan + 1)
+        {
+            var age = since >= RiseSpan ? since - ((Shoves - 1) * each) : shove;
+            for (var n = 0; n < 14; n++)
+            {
+                const double Life = 0.9;
+                if (age > Life) continue;
+                var k = age / Life;
+                var dir = n % 2 == 0 ? -1 : 1;
+                var x = (n * width / 14.0) + 6 + (dir * k * 10);
+                var r = (int)Math.Round((2 + (Hash(n, 75) % 2)) * (k < 0.3 ? 0.6 + k : 1.3 - (k * 1.1)));
+                if (r < 1) continue;
+                var cy = foot - 2 - (int)(k * 3);
+                for (var oy = -r; oy <= r; oy++)
+                {
+                    for (var ox = -r - 1; ox <= r + 1; ox++)
+                    {
+                        if ((ox * ox * 0.7) + (oy * oy) > (r * r) + 0.5) continue;
+                        p.Set(x0 + (int)Math.Round(x) + ox, cy + oy, oy < 0 ? sand : oy == r ? CapSheet.Mix(sandDark, Outline, 0.3) : sandDark);
+                    }
+                }
+            }
+        }
+
+        // stones knocked off the walls by the shoves, falling with a bounce
+        for (var n = 0; n < 8 && since < RiseSpan + 1.2; n++)
+        {
+            var at = (n % Shoves) * each + 0.05 + (Hash(n, 77) % 30 / 100.0);
+            var t = since - at;
+            if (t < 0 || t > 1.2) continue;
+            var x = 10 + (int)(Hash(n, 79) % (uint)Math.Max(1, width - 20));
+            var y0 = top - 20 - (int)(Hash(n, 81) % 16);
+            var y = y0 + (60 * t * t);
+            if (y > foot - 2) y = foot - 2 - (Math.Abs(Math.Sin(t * 9)) * 3 * (1.2 - t));
+            for (var dy = 0; dy < 2; dy++) for (var dx = 0; dx < 2; dx++) p.Set(x0 + x + dx + (int)(t * (n % 2 == 0 ? 6 : -6)), (int)y + dy, dy == 0 && dx == 0 ? BrickHi : Brick[2]);
         }
     }
 }

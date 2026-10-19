@@ -8,8 +8,10 @@ namespace PermaLocke.App.Views;
 /// <param name="Megas">The Mega Evolution is unlocked (the sixth trial cleared, 2026-10-16): the visitors that have a Mega form pass in it.</param>
 /// <param name="Parade">The Megas' parade is on (CapMega): the visitors keep away.</param>
 /// <param name="Shiny">Seconds since a shiny's rainbow began (2026-10-17), -1 without one: the passing Pokémon then come out in their shiny colours.</param>
+/// <param name="Rise">How far the Gimmighoul ruins' buried storey has risen out of the sand, 0 to 1 (2026-10-19, after the Electrostal): the ruins stand on it.</param>
+/// <param name="Rising">Seconds since it started rising while that is being shown, -1 otherwise.</param>
 public sealed record CapSeaContext(int Seed = 0, double Hour = -1, int WorldX = 0, int WorldWidth = 0, bool Megas = false, bool Parade = false,
-    double Shiny = -1)
+    double Shiny = -1, double Rise = 0, double Rising = -1)
 {
     public double SkyHour => Hour < 0 ? 10 : Hour;
 }

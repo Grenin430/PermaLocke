@@ -64,7 +64,7 @@ public static class CapTrial
     /// How long a crystal's film runs before its own clock starts: the Lucharastal's Machamp comes out, eats and Gigantamaxes first
     /// (<see cref="CapMachamp"/>; its film clock is negative till then).
     /// </summary>
-    internal static double Lead(CapTrialCrystal? crystal) => crystal?.Item switch { CapMachamp.Lucharastal => CapMachamp.Lead, CapGreninja.Hidrostal => CapGreninja.Lead, CapHoOh.Pirostal => CapHoOh.Lead, CapShaymin.Fitostal => CapShaymin.Lead, CapAreaZero.Litostal => CapAreaZero.Lead, _ => 0 };
+    internal static double Lead(CapTrialCrystal? crystal) => crystal?.Item switch { CapCrystalFall.Normastal when CapCrystalFall.Variant == 4 => CapArceus.Lead, CapMachamp.Lucharastal => CapMachamp.Lead, CapGreninja.Hidrostal => CapGreninja.Lead, CapHoOh.Pirostal => CapHoOh.Lead, CapShaymin.Fitostal => CapShaymin.Lead, CapAreaZero.Litostal => CapAreaZero.Lead, CapRaikou.Electrostal => CapRaikou.Lead, CapGiratina.Spectrostal => CapGiratina.Lead, CapNictostal.Nictostal => CapNictostal.Lead, CapDragapult.Dracostal => CapDragapult.Lead, CapDiancie.Feeristal => CapDiancie.Lead, CapGroudon.Geostal => CapGroudon.Lead, _ => 0 };
 
     /// <summary>The frames a crystal's film holds still on.</summary>
     internal static (double At, double Span)[] HoldsOf(CapTrialCrystal? crystal) => crystal?.Item == CapMachamp.Lucharastal ? CapMachamp.Holds : CrystalHolds;
@@ -220,8 +220,8 @@ public static class CapTrial
     // the other crystals keep the film's own way until theirs are made.
     private static (int X, int Y) Land(CapWorldLayout l, CapSeaContext ctx, int item)
     {
-        var ruins = item is CapCrystalFall.Normastal or CapMachamp.Lucharastal or CapGreninja.Hidrostal or CapHoOh.Pirostal or CapShaymin.Fitostal or CapAreaZero.Litostal;
-        var spot = item == CapMachamp.Lucharastal ? CapMachamp.Target(l, ctx) : item == CapGreninja.Hidrostal ? CapGreninja.Catching(l, ctx) : item == CapHoOh.Pirostal ? CapHoOh.Spot(l, ctx) : item == CapShaymin.Fitostal ? CapShaymin.Spot(l, ctx) : item == CapAreaZero.Litostal ? CapAreaZero.Spot(l, ctx) : ruins ? CapCrystalFall.LandingSpot(l, ctx) : null;
+        var ruins = item is CapCrystalFall.Normastal or CapMachamp.Lucharastal or CapGreninja.Hidrostal or CapHoOh.Pirostal or CapShaymin.Fitostal or CapAreaZero.Litostal or CapRaikou.Electrostal or CapGiratina.Spectrostal or CapNictostal.Nictostal or CapDragapult.Dracostal or CapDiancie.Feeristal or CapGroudon.Geostal;
+        var spot = item == CapMachamp.Lucharastal ? CapMachamp.Target(l, ctx) : item == CapGreninja.Hidrostal ? CapGreninja.Catching(l, ctx) : item == CapHoOh.Pirostal ? CapHoOh.Spot(l, ctx) : item == CapShaymin.Fitostal ? CapShaymin.Spot(l, ctx) : item == CapAreaZero.Litostal ? CapAreaZero.Spot(l, ctx) : item == CapRaikou.Electrostal ? CapRaikou.Spot(l, ctx) : item == CapGiratina.Spectrostal ? CapGiratina.Spot(l, ctx) : item == CapNictostal.Nictostal ? CapNictostal.Spot(l, ctx) : item == CapDragapult.Dracostal ? CapDragapult.Spot(l, ctx) : item == CapDiancie.Feeristal ? CapDiancie.Spot(l, ctx) : item == CapGroudon.Geostal ? CapGroudon.Spot(l, ctx) : ruins ? CapCrystalFall.LandingSpot(l, ctx) : null;
         return l.Panel == CapPanelKind.Deep ? spot ?? (Math.Min(110, l.Cols - 30), l.Rows - 12)
             : (ctx.WorldWidth > 0 ? (ruins ? 34 : 110) - ctx.WorldX : -160, l.Rows - 12);
     }
@@ -370,6 +370,12 @@ public static class CapTrial
             if (crystal.Item == CapHoOh.Pirostal) CapHoOh.Paint(p, l, ctx, crystal, t);
             if (crystal.Item == CapShaymin.Fitostal) CapShaymin.Paint(p, l, ctx, crystal, t);
             if (crystal.Item == CapAreaZero.Litostal) CapAreaZero.Paint(p, l, ctx, crystal, t);
+            if (crystal.Item == CapRaikou.Electrostal) CapRaikou.Paint(p, l, ctx, crystal, t);
+            if (crystal.Item == CapGiratina.Spectrostal) CapGiratina.Paint(p, l, ctx, crystal, t);
+            if (crystal.Item == CapNictostal.Nictostal) CapNictostal.Paint(p, l, ctx, crystal, t);
+            if (crystal.Item == CapDragapult.Dracostal) CapDragapult.Paint(p, l, ctx, crystal, t);
+            if (crystal.Item == CapDiancie.Feeristal) CapDiancie.Paint(p, l, ctx, crystal, t);
+            if (crystal.Item == CapGroudon.Geostal) CapGroudon.Paint(p, l, ctx, crystal, t);
             return;
         }
 
@@ -380,36 +386,44 @@ public static class CapTrial
         var ruins = deep && ((item == CapCrystalFall.Normastal && CapCrystalFall.LandingSpot(l, ctx) is not null) || (champ && CapMachamp.Target(l, ctx) is not null)
             || (item == CapGreninja.Hidrostal && CapGreninja.Catching(l, ctx) is not null) || (item == CapHoOh.Pirostal && CapHoOh.Spot(l, ctx) is not null)
             || (item == CapShaymin.Fitostal && CapShaymin.Spot(l, ctx) is not null)
-            || (item == CapAreaZero.Litostal && CapAreaZero.Spot(l, ctx) is not null));
+            || (item == CapAreaZero.Litostal && CapAreaZero.Spot(l, ctx) is not null)
+            || (item == CapRaikou.Electrostal && CapRaikou.Spot(l, ctx) is not null)
+            || (item == CapGiratina.Spectrostal && CapGiratina.Spot(l, ctx) is not null)
+            || (item == CapNictostal.Nictostal && CapNictostal.Spot(l, ctx) is not null)
+            || (item == CapDragapult.Dracostal && CapDragapult.Spot(l, ctx) is not null)
+            || (item == CapDiancie.Feeristal && CapDiancie.Spot(l, ctx) is not null)
+            || (item == CapGroudon.Geostal && CapGroudon.Spot(l, ctx) is not null));
         // the Hidrostal is brought, caught and thrown by Mega Greninja (2026-10-18, prototype): its own film in both windows, slower than this one
         var ninja = item == CapGreninja.Hidrostal;
         // the Pirostal is brought by Ho-Oh in a rainbow feather (2026-10-18, prototype): its own film in both windows too
-        var phoenix = item is CapHoOh.Pirostal or CapShaymin.Fitostal or CapAreaZero.Litostal;
+        var phoenix = item is CapHoOh.Pirostal or CapShaymin.Fitostal or CapAreaZero.Litostal or CapRaikou.Electrostal or CapGiratina.Spectrostal or CapNictostal.Nictostal or CapDragapult.Dracostal or CapDiancie.Feeristal or CapGroudon.Geostal;
         var own = champ || ninja || phoenix;
-        // the Normastal is brought by Tapu Koko (2026-10-18, the player's choice; the lab can still show the other ways with --variante):
+        // the Normastal is brought by Arceus (2026-10-18 Tapu Koko, 2026-10-19 Arceus: the player's choice; the lab can still show the other ways with --variante):
         // the film's own flight and splash give way to it
         var tapu = (item == CapCrystalFall.Normastal && CapCrystalFall.Variant == 4) || own;
-        if (tapu && !own) CapTapuKoko.Paint(p, l, ctx, crystal, t);
+        if (tapu && !own) CapArceus.Paint(p, l, ctx, crystal, t);
         var land = Land(l, ctx, item);
         var surface = l.SurfaceY;
         var hit = t - Hit;
         var st = Where(l, ctx, item, t);
 
-        // the skies dim for it, and stay dim until its light has gone through
-        var darkness = own && t < Hit ? Ease((t + Lead(crystal)) / 0.6) : t < Born ? Ease(t / 0.6) : t < Hit ? 1 : 1 - Ease((t - Hit - 1.2) / 1.6);
+        // the skies dim for it, and stay dim until its light has gone through; the wormhole's beats and birth go by the film's own start
+        // (with Arceus's prelude for the Normastal, 2026-10-19: it comes out of the wormhole before the clock)
+        var tw = t + Lead(crystal);
+        var darkness = own && t < Hit ? Ease((t + Lead(crystal)) / 0.6) : tw < Born ? Ease(tw / 0.6) : t < Hit ? 1 : 1 - Ease((t - Hit - 1.2) / 1.6);
         Dim(p, 70 * darkness, (_, y) => y < surface + 2 ? 1 : 0.55);
 
         if (!deep && !own && CapFarSky.WormholeAt(l) is { } core)
         {
             // anticipation: the wormhole beats twice like a heart, pulling light into itself, rays turning round it
-            if (t < Born + 0.4)
+            if (tw < Born + 0.4)
             {
-                var beat = Math.Max(Math.Exp(-Math.Pow((t - 0.35) / 0.09, 2)), Math.Exp(-Math.Pow((t - 0.85) / 0.09, 2)));
-                var grow = Clamp01(t / Born);
+                var beat = Math.Max(Math.Exp(-Math.Pow((tw - 0.35) / 0.09, 2)), Math.Exp(-Math.Pow((tw - 0.85) / 0.09, 2)));
+                var grow = Clamp01(tw / Born);
                 Shine(p, core.X, core.Y, 14 + (grow * 10) + (beat * 8), 12 + (grow * 8) + (beat * 7), crystal.Glow, (150 * grow) + (110 * beat));
                 for (var r = 0; r < 12; r++)
                 {
-                    var ang = (r / 12.0 * 2 * Math.PI) + (t * 0.9);
+                    var ang = (r / 12.0 * 2 * Math.PI) + (tw * 0.9);
                     var len = 18 + (14 * grow) + (10 * beat);
                     Line(core.X + (Math.Cos(ang) * 5), core.Y + (Math.Sin(ang) * 4), core.X + (Math.Cos(ang) * len), core.Y + (Math.Sin(ang) * len * 0.8), (x, y) =>
                     {
@@ -419,7 +433,7 @@ public static class CapTrial
 
                 for (var n = 0; n < 40; n++)
                 {
-                    var age = t - (n / 40.0 * 1.2);
+                    var age = tw - (n / 40.0 * 1.2);
                     if (age < 0 || age > 0.7) continue;
                     var ang = Rnd(n, 7) * 2 * Math.PI;
                     var r = (1 - EaseIn(age / 0.7)) * (26 + (Rnd(n, 8) * 22));
@@ -428,7 +442,7 @@ public static class CapTrial
             }
 
             // birth: the core bursts white, a ring runs over the sky, a streak of light across it
-            var b = t - Born;
+            var b = tw - Born;
             if (b > 0 && b < 0.7)
             {
                 Shine(p, core.X, core.Y, 26 * (1 - b), 22 * (1 - b), White, 255 * (1 - (b / 0.7)));
@@ -574,6 +588,12 @@ public static class CapTrial
             // the Pirostal by Ho-Oh, the Fitostal by Shaymin (2026-10-18, prototype)
             if (item == CapHoOh.Pirostal) CapHoOh.Paint(p, l, ctx, crystal, t);
             else if (item == CapShaymin.Fitostal) CapShaymin.Paint(p, l, ctx, crystal, t);
+            else if (item == CapRaikou.Electrostal) CapRaikou.Paint(p, l, ctx, crystal, t);
+            else if (item == CapGiratina.Spectrostal) CapGiratina.Paint(p, l, ctx, crystal, t);
+            else if (item == CapNictostal.Nictostal) CapNictostal.Paint(p, l, ctx, crystal, t);
+            else if (item == CapDragapult.Dracostal) CapDragapult.Paint(p, l, ctx, crystal, t);
+            else if (item == CapDiancie.Feeristal) CapDiancie.Paint(p, l, ctx, crystal, t);
+            else if (item == CapGroudon.Geostal) CapGroudon.Paint(p, l, ctx, crystal, t);
             else CapAreaZero.Paint(p, l, ctx, crystal, t);
         }
         else if (ruins && t >= Splash)
@@ -704,7 +724,7 @@ public static class CapTrial
         }
         else if (!own)
         {
-            Shake(p, t - Born, 2, 0.3);
+            Shake(p, t + Lead(crystal) - Born, 2, 0.3);
         }
 
         Shake(p, hit, 4, 0.45);

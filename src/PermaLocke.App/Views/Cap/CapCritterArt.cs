@@ -77,8 +77,10 @@ public sealed record CritterArt(int Species, string Name, CritterMotion Motion, 
             new(10398, "Mega Staraptor", CritterMotion.Fish, "", "", Fps: 9, Sheet: "megastaraptor", Cell: 98, Angles: [-2, 0, 2], Pose: 0, Height: 83, Drift: 2, Bob: 0.5, Surge: 0.7),
             new(10380, "Mega Latias", CritterMotion.Fish, "", "", Fps: 7, Sheet: "megalatias", Cell: 94, Angles: [-4, -2, 0, 2, 4], Pose: 0, Height: 74, Drift: 4, Bob: 1, Surge: 0.8),
             new(10381, "Mega Latios", CritterMotion.Fish, "", "", Fps: 7, Sheet: "megalatios", Cell: 114, Angles: [-2, 0, 2], Pose: 0, Height: 68, Drift: 2, Bob: 0.5, Surge: 0.7),
-            // Shiny Tapu Koko (2026-10-18): it brings the first Z-Crystal to the Gimmighoul ruins (CapTapuKoko); not a visitor of any lane.
+            // Shiny Tapu Koko (2026-10-18): it brought the first Z-Crystal until Arceus took its place (2026-10-19); kept, nothing draws it now.
             new(785, "Tapu Koko variocolor", CritterMotion.Fish, "", "", Fps: 12, Sheet: "tapukoko", Cell: 168, Angles: [-30, -26, -22], Pose: -26, Height: 93, Drift: 0, Bob: 0, Surge: 0),
+            // Arceus flying (2026-10-19): brings the first Z-Crystal now, in Tapu Koko's place (CapArceus).
+            new(493, "Arceus", CritterMotion.Fish, "", "", Fps: 8, Sheet: "arceus", Cell: 128, Angles: [-8, -4, 0, 4, 8], Pose: 0, Height: 90, Drift: 0, Bob: 0, Surge: 0),
             // Machamp and Gigantamax Machamp (2026-10-18, prototype): they punch the second Z-Crystal into the Gimmighoul ruins (CapMachamp);
             // not visitors of any lane. Fps 1: the film picks each frame by its number.
             new(68, "Machamp", CritterMotion.Fish, "", "", Fps: 1, Sheet: "machamp", Cell: 104, Angles: [-40, -20, 0, 20, 40], Pose: 0, Height: 68, Drift: 0, Bob: 0, Surge: 0),
@@ -94,6 +96,17 @@ public sealed record CritterArt(int Species, string Name, CritterMotion Motion, 
             // Terapagos and Miraidon (2026-10-18, prototype, not animated yet): the sixth Z-Crystal (CapAreaZero).
             new(1024, "Terápagos", CritterMotion.Fish, "", "", Fps: 8, Sheet: "terapagos", Cell: 90, Angles: [-30, -20, -10, 0, 10, 20, 30], Pose: 0, Height: 45, Drift: 0, Bob: 0, Surge: 0),
             new(1008, "Miraidon", CritterMotion.Fish, "", "", Fps: 10, Sheet: "miraidon", Cell: 128, Angles: [-20, -10, 0, 10, 20], Pose: 0, Height: 85, Drift: 0, Bob: 0, Surge: 0),
+            // Raikou galloping (2026-10-18, prototype): the seventh Z-Crystal (CapRaikou).
+            new(243, "Raikou", CritterMotion.Fish, "", "", Fps: 16, Sheet: "raikou", Cell: 132, Angles: [-20, -10, 0, 10, 20], Pose: 0, Height: 65, Drift: 0, Bob: 0, Surge: 0),
+            new(20243, "Raikou de pie", CritterMotion.Fish, "", "", Fps: 1, Sheet: "raikoupie", Cell: 122, Angles: [-10, 0, 10], Pose: 0, Height: 65, Drift: 0, Bob: 0, Surge: 0),
+            new(10487, "Giratina Origen", CritterMotion.Fish, "", "", Fps: 8, Sheet: "giratina", Cell: 98, Angles: [-10, 0, 10], Pose: 0, Height: 64, Drift: 0, Bob: 0, Surge: 0),
+            new(717, "Yveltal", CritterMotion.Fish, "", "", Fps: 8, Sheet: "yveltal", Cell: 124, Angles: [-10, 0, 10], Pose: 0, Height: 84, Drift: 0, Bob: 0, Surge: 0),
+            new(887, "Dragapult", CritterMotion.Fish, "", "", Fps: 8, Sheet: "dragapult", Cell: 94, Angles: [-10, 0, 10], Pose: 0, Height: 59, Drift: 0, Bob: 0, Surge: 0),
+            new(885, "Dreepy", CritterMotion.Fish, "", "", Fps: 10, Sheet: "dreepy", Cell: 38, Angles: [-60, -30, 0, 30, 60], Pose: 0, Height: 17, Drift: 0, Bob: 0, Surge: 0),
+            new(719, "Diancie", CritterMotion.Fish, "", "", Fps: 8, Sheet: "diancie", Cell: 80, Angles: [-10, 0, 10], Pose: 0, Height: 62, Drift: 0, Bob: 0, Surge: 0),
+            new(10719, "Mega Diancie", CritterMotion.Fish, "", "", Fps: 8, Sheet: "megadiancie", Cell: 138, Angles: [-10, 0, 10], Pose: 0, Height: 108, Drift: 0, Bob: 0, Surge: 0),
+            new(383, "Groudon", CritterMotion.Fish, "", "", Fps: 7, Sheet: "groudon", Cell: 102, Angles: [-10, 0, 10], Pose: 0, Height: 74, Drift: 0, Bob: 0, Surge: 0),
+            new(10383, "Groudon Primigenio", CritterMotion.Fish, "", "", Fps: 8, Sheet: "primalgroudon", Cell: 124, Angles: [-10, 0, 10], Pose: 0, Height: 88, Drift: 0, Bob: 0, Surge: 0),
             new(20250, "Ho-Oh en vuelo", CritterMotion.Fish, "", "", Fps: 12, Sheet: "hoohsagrado", Cell: 154, Angles: [-10, -5, 0, 5, 10], Pose: 0, Height: 85, Drift: 0, Bob: 0, Surge: 0),
             new(20658, "Mega Greninja en el salto", CritterMotion.Fish, "", "", Fps: 1, Sheet: "megagreninjasalto", Cell: 148, Angles: [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330], Pose: 0, Height: 96, Drift: 0, Bob: 0, Surge: 0),
             new(350, "Milotic", CritterMotion.Fish, "", "", Fps: 7, Sheet: "milotic", Cell: 106, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 76, Drift: 5, Bob: 1, Surge: 0.7),

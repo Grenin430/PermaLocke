@@ -236,6 +236,84 @@ public static class CapScenarios
                 Crystals = [(807, item?.Invoke(807)), (813, item?.Invoke(813)), (809, item?.Invoke(809)), (808, item?.Invoke(808)), (811, item?.Invoke(811)), (819, item?.Invoke(819))],
             })]));
 
+        // The seventh trial passed (2026-10-18, prototype): Raikou runs over the sea and brings the Electrostal down in a bolt, from 2 s.
+        scenarios.Add(new CapScenario("electrostal", "Se supera la prueba 7: Raikou y el Electrostal", [
+            new(0, Base(icon, atCap, 5, cap: 44, highest: 44, cleared: 6) with
+            {
+                Trial = "PRUEBA 7 DE 12", Next = 48,
+                Crystals = [(807, item?.Invoke(807)), (813, item?.Invoke(813)), (809, item?.Invoke(809)), (808, item?.Invoke(808)), (811, item?.Invoke(811)), (819, item?.Invoke(819))],
+            }),
+            new(2, Base(icon, atCap, 5, cap: 48, highest: 44, cleared: 7) with
+            {
+                Trial = "PRUEBA 8 DE 12", Next = 52, CrystalItem = 810, Crystal = item?.Invoke(810),
+                Crystals = [(807, item?.Invoke(807)), (813, item?.Invoke(813)), (809, item?.Invoke(809)), (808, item?.Invoke(808)), (811, item?.Invoke(811)), (819, item?.Invoke(819)), (810, item?.Invoke(810))],
+            })]));
+
+        // The eighth trial passed (2026-10-19, prototype): Giratina comes out of a portal to the Distortion World with the Spectrostal, from 2 s.
+        scenarios.Add(new CapScenario("spectrostal", "Se supera la prueba 8: Giratina y el Spectrostal", [
+            new(0, Base(icon, atCap, 5, cap: 48, highest: 48, cleared: 7) with
+            {
+                Trial = "PRUEBA 8 DE 12", Next = 52,
+                Crystals = [(807, item?.Invoke(807)), (813, item?.Invoke(813)), (809, item?.Invoke(809)), (808, item?.Invoke(808)), (811, item?.Invoke(811)), (819, item?.Invoke(819)), (810, item?.Invoke(810))],
+            }),
+            new(2, Base(icon, atCap, 5, cap: 52, highest: 48, cleared: 8) with
+            {
+                Trial = "PRUEBA 9 DE 12", Next = 56, CrystalItem = 820, Crystal = item?.Invoke(820),
+                Crystals = [(807, item?.Invoke(807)), (813, item?.Invoke(813)), (809, item?.Invoke(809)), (808, item?.Invoke(808)), (811, item?.Invoke(811)), (819, item?.Invoke(819)), (810, item?.Invoke(810)), (820, item?.Invoke(820))],
+            })]));
+
+        // The ninth trial passed (2026-10-19, prototype): Yveltal fires Oblivion Wing into the ruins and the Nictostal comes down its path, from 2 s.
+        scenarios.Add(new CapScenario("nictostal", "Se supera la prueba 9: Yveltal y el Nictostal", [
+            new(0, Base(icon, atCap, 5, cap: 52, highest: 52, cleared: 8) with
+            {
+                Trial = "PRUEBA 9 DE 12", Next = 56,
+                Crystals = [(807, item?.Invoke(807)), (813, item?.Invoke(813)), (809, item?.Invoke(809)), (808, item?.Invoke(808)), (811, item?.Invoke(811)), (819, item?.Invoke(819)), (810, item?.Invoke(810)), (820, item?.Invoke(820))],
+            }),
+            new(2, Base(icon, atCap, 5, cap: 56, highest: 52, cleared: 9) with
+            {
+                Trial = "PRUEBA 10 DE 12", Next = 60, CrystalItem = 822, Crystal = item?.Invoke(822),
+                Crystals = [(807, item?.Invoke(807)), (813, item?.Invoke(813)), (809, item?.Invoke(809)), (808, item?.Invoke(808)), (811, item?.Invoke(811)), (819, item?.Invoke(819)), (810, item?.Invoke(810)), (820, item?.Invoke(820)), (822, item?.Invoke(822))],
+            })]));
+
+        // The tenth trial passed (2026-10-19, prototype): Dragapult fires its Dreepy as darts and one brings the Dracostal into an arch, from 2 s.
+        scenarios.Add(new CapScenario("dracostal", "Se supera la prueba 10: Dragapult y el Dracostal", [
+            new(0, Base(icon, atCap, 5, cap: 56, highest: 56, cleared: 9) with
+            {
+                Trial = "PRUEBA 10 DE 12", Next = 60,
+                Crystals = [(807, item?.Invoke(807)), (813, item?.Invoke(813)), (809, item?.Invoke(809)), (808, item?.Invoke(808)), (811, item?.Invoke(811)), (819, item?.Invoke(819)), (810, item?.Invoke(810)), (820, item?.Invoke(820)), (822, item?.Invoke(822))],
+            }),
+            new(2, Base(icon, atCap, 5, cap: 60, highest: 56, cleared: 10) with
+            {
+                Trial = "PRUEBA 11 DE 12", Next = 64, CrystalItem = 821, Crystal = item?.Invoke(821),
+                Crystals = [(807, item?.Invoke(807)), (813, item?.Invoke(813)), (809, item?.Invoke(809)), (808, item?.Invoke(808)), (811, item?.Invoke(811)), (819, item?.Invoke(819)), (810, item?.Invoke(810)), (820, item?.Invoke(820)), (822, item?.Invoke(822)), (821, item?.Invoke(821))],
+            })]));
+
+        // The eleventh trial passed (2026-10-19, prototype): Diancie Mega-Evolves and brings the Feeristal down in Diamond Storm, from 2 s.
+        scenarios.Add(new CapScenario("feeristal", "Se supera la prueba 11: Mega Diancie y el Feeristal", [
+            new(0, Base(icon, atCap, 5, cap: 60, highest: 60, cleared: 10) with
+            {
+                Trial = "PRUEBA 11 DE 12", Next = 64,
+                Crystals = [(807, item?.Invoke(807)), (813, item?.Invoke(813)), (809, item?.Invoke(809)), (808, item?.Invoke(808)), (811, item?.Invoke(811)), (819, item?.Invoke(819)), (810, item?.Invoke(810)), (820, item?.Invoke(820)), (822, item?.Invoke(822)), (821, item?.Invoke(821))],
+            }),
+            new(2, Base(icon, atCap, 5, cap: 64, highest: 60, cleared: 11) with
+            {
+                Trial = "PRUEBA 12 DE 12", Next = 68, CrystalItem = 824, Crystal = item?.Invoke(824),
+                Crystals = [(807, item?.Invoke(807)), (813, item?.Invoke(813)), (809, item?.Invoke(809)), (808, item?.Invoke(808)), (811, item?.Invoke(811)), (819, item?.Invoke(819)), (810, item?.Invoke(810)), (820, item?.Invoke(820)), (822, item?.Invoke(822)), (821, item?.Invoke(821)), (824, item?.Invoke(824))],
+            })]));
+
+        // The twelfth and last trial passed (2026-10-19, prototype): Groudon rises, Primal Reverts and brings the Geostal up on Precipice Blades, from 2 s.
+        scenarios.Add(new CapScenario("geostal", "Se supera la prueba 12: Groudon Primigenio y el Geostal", [
+            new(0, Base(icon, atCap, 5, cap: 64, highest: 64, cleared: 11) with
+            {
+                Trial = "PRUEBA 12 DE 12", Next = 68,
+                Crystals = [(807, item?.Invoke(807)), (813, item?.Invoke(813)), (809, item?.Invoke(809)), (808, item?.Invoke(808)), (811, item?.Invoke(811)), (819, item?.Invoke(819)), (810, item?.Invoke(810)), (820, item?.Invoke(820)), (822, item?.Invoke(822)), (821, item?.Invoke(821)), (824, item?.Invoke(824))],
+            }),
+            new(2, Base(icon, atCap, 5, cap: 68, highest: 64, cleared: 12) with
+            {
+                Trial = "PRUEBA 12 DE 12", Next = 70, CrystalItem = 815, Crystal = item?.Invoke(815),
+                Crystals = [(807, item?.Invoke(807)), (813, item?.Invoke(813)), (809, item?.Invoke(809)), (808, item?.Invoke(808)), (811, item?.Invoke(811)), (819, item?.Invoke(819)), (810, item?.Invoke(810)), (820, item?.Invoke(820)), (822, item?.Invoke(822)), (821, item?.Invoke(821)), (824, item?.Invoke(824)), (815, item?.Invoke(815))],
+            })]));
+
         scenarios.Add(new CapScenario("eclosion", "Un huevo eclosiona", [
             new(0, Base(icon, eggs, 0)),
             new(2, Base(icon, Replace(eggs, 1, m => m with { Egg = false, Level = 1, Hp = 11, MaxHp = 11 }), 0))]));

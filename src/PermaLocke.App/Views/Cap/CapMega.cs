@@ -681,7 +681,7 @@ public static class CapMega
     /// edges and shaded on its lower right ones, an ink outline; a light sweeping across it now and then; sparkles of its colours round it.
     /// <paramref name="white"/> draws it all white, for the flash it is born in.
     /// </summary>
-    private static void Symbol(CapSheet p, int cx, int cy, double scale, double s, double keep, bool white)
+    internal static void Symbol(CapSheet p, int cx, int cy, double scale, double s, double keep, bool white)
     {
         if (scale <= 0 || keep <= 0) return;
         var hw = (int)Math.Ceiling(HelixW * scale / 2) + 2;

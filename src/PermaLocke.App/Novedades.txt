@@ -1,3 +1,7 @@
+1.1.1 2026-10-19
+PANEL DEL CAP
+Las ruinas de Gimmighoul, completas: cada una de las doce pruebas trae su Cristal Z con su propia película. Raikou, Giratina, Yveltal, Dragapult, Mega Diancie y Groudon Primigenio traen los seis últimos, y ahora Arceus trae el primero. Tras el Electrostal, el piso enterrado de las ruinas sube de la arena.
+Ya no hay rayos de sol bajo el agua.
 1.1.0 2026-10-18
 PANEL DEL CAP
 El mar se llena de vida: los Pokémon que pasan por el agua y por el cielo están redibujados, y tras superar la prueba 6 aparecen también megas. En el cielo, el ultraumbral es ahora fiel al arte oficial, hay nubes nuevas y el día es más azul.

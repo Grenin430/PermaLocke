@@ -854,3 +854,7 @@ Batido pendiente de aprobación; otros tres sin modificar. Rutas y método en la
 - Lista aprobada por el jugador: fuera los fantasmas enteros («en un futuro lo haremos mejorado»), la carta al álbum, avisos y muerte encima del juego; dentro el ultraumbral del randomizador (WormholeStage).
 - Primero commit del trabajo pendiente del torneo (`37248de`, Admin como centro de control). Luego rama `traspaso-singleplayer`: fases 1-4 deshechas en una copia y fusión con main. 2110 pruebas y PixelCheck en verde.
 - Pidió publicar «la 1.0.8», pero ya iba por la 1.0.18 y la actualización sola nunca llegaría; eligió la 1.1.0. Los mensajes del organizador pasan a la bandeja de regalos (contador de lo no visto).
+
+## 2026-10-19 — Las ruinas de Gimmighoul completas, en el torneo (§261-§269, 1.1.1)
+- Desde el singleplayer: cristales 7 a 12, el piso enterrado que sube, Arceus en el cristal 1 y sin rayos de sol bajo el agua. Los ficheros del panel del torneo no tenían cambios propios: se copiaron con CRLF.
+- Compila, pruebas en verde, los doce escenarios de cristal del laboratorio iguales que en el singleplayer. Publicada como 1.1.1 a petición del jugador.

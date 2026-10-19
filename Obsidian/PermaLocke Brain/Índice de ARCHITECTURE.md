@@ -271,3 +271,5 @@ Otros docs: `docs/DISTRIBUCION-LOCAL.md` (reparto local, informes del amigo, rev
 - §258 · Ruinas, cristal 6: Terápagos y Miraidon con el Litostal (`CapAreaZero`, prototipo simple); megas de la prueba 6 aplazadas. Traspaso en [[Traspaso Litostal]].
 - §259 · Litostal pulido y aprobado: Terápagos y Miraidon animados, cristales del Área Cero (bloques pálidos en la arena), torre y nubes cristalizadas, golpes épicos de Miraidon, bloque ámbar y la marca de roca en el muro.
 - L13663 · 260 · El singleplayer en el torneo (1.1.0): panel del cap entero, Poción Variocolor, cursor del SuperCarameloraro, Olor Persistente vetada; fuera avisos, muerte encima del juego, carta al álbum y fantasmas.
+- §261-§268 · Ruinas, cristales 7 a 12 y el 1 rehecho, hechos en el singleplayer (allí §260-§267): Raikou y el Electrostal, el piso enterrado que sube, Giratina, Yveltal, Dragapult, Mega Diancie, Groudon Primigenio y Arceus en lugar de Tapu Koko; fuera los rayos de sol bajo el agua.
+- §269 · Las ruinas completas, en el torneo: ficheros del panel copiados (el torneo no tenía cambios propios), once hojas nuevas; laboratorio idéntico al singleplayer.

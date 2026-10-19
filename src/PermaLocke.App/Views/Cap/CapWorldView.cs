@@ -123,7 +123,11 @@ public sealed class CapWorldView
         _context = _context with
         {
             Megas = data.Cleared >= 6 && !(parade < CapMega.Reveal), Parade = parade is not null,
-            Shiny = data.Shiny is { } rainbow && t >= rainbow.Start && rainbow.End is null ? t - rainbow.Start : -1
+            Shiny = data.Shiny is { } rainbow && t >= rainbow.Start && rainbow.End is null ? t - rainbow.Start : -1,
+            // the ruins' buried storey rises after the Electrostal's film (2026-10-19), and stays risen
+            Rise = trial?.Crystal?.Item == CapRaikou.Electrostal ? CapGimmighoulRuins.RiseOf(trial.CrystalT - CapGimmighoulRuins.RiseStart)
+                : Won(data, CapRaikou.Electrostal) ? 1 : 0,
+            Rising = trial?.Crystal?.Item == CapRaikou.Electrostal ? trial.CrystalT - CapGimmighoulRuins.RiseStart : -1,
         };
         CapShiny.BeginFrame(frame.W);
 
@@ -135,7 +139,6 @@ public sealed class CapWorldView
         CapClouds.Paint(frame, Layout, pal, _context, t);
         CapFarSky.Paint(frame, Layout, pal, _context, phase, scene?.WormholeSize(t) ?? 1);
         CapSeaLive.Surface(frame, Layout, pal, _context, phase);
-        CapSeaLive.Shafts(frame, Layout, pal, _context, phase);
         CapSeaLive.Snow(frame, Layout, pal, _context, phase);
         CapFlora.Paint(frame, Layout, pal, _context, _fossils, phase);
         // In the party's window, the sign with the cap (2026-10-15). The coral and the little things on the sand (CapReefLife) were not liked
@@ -163,6 +166,36 @@ public sealed class CapWorldView
                 if (item == CapAreaZero.Litostal && trial?.Crystal?.Item != CapAreaZero.Litostal && CapTrialCrystal.Of(item, icon) is { } litostal)
                 {
                     CapAreaZero.PaintRest(frame, Layout, _context, litostal, phase);
+                }
+
+                if (item == CapRaikou.Electrostal && trial?.Crystal?.Item != CapRaikou.Electrostal && CapTrialCrystal.Of(item, icon) is { } electrostal)
+                {
+                    CapRaikou.PaintRest(frame, Layout, _context, electrostal, phase);
+                }
+
+                if (item == CapGroudon.Geostal && trial?.Crystal?.Item != CapGroudon.Geostal && CapTrialCrystal.Of(item, icon) is { } geostal)
+                {
+                    CapGroudon.PaintRest(frame, Layout, _context, geostal, phase);
+                }
+
+                if (item == CapDiancie.Feeristal && trial?.Crystal?.Item != CapDiancie.Feeristal && CapTrialCrystal.Of(item, icon) is { } feeristal)
+                {
+                    CapDiancie.PaintRest(frame, Layout, _context, feeristal, phase);
+                }
+
+                if (item == CapDragapult.Dracostal && trial?.Crystal?.Item != CapDragapult.Dracostal && CapTrialCrystal.Of(item, icon) is { } dracostal)
+                {
+                    CapDragapult.PaintRest(frame, Layout, _context, dracostal, phase);
+                }
+
+                if (item == CapNictostal.Nictostal && trial?.Crystal?.Item != CapNictostal.Nictostal && CapTrialCrystal.Of(item, icon) is { } nictostal)
+                {
+                    CapNictostal.PaintRest(frame, Layout, _context, nictostal, phase);
+                }
+
+                if (item == CapGiratina.Spectrostal && trial?.Crystal?.Item != CapGiratina.Spectrostal && CapTrialCrystal.Of(item, icon) is { } spectrostal)
+                {
+                    CapGiratina.PaintRest(frame, Layout, _context, spectrostal, phase);
                 }
 
                 if (item == CapShaymin.Fitostal && trial?.Crystal?.Item != CapShaymin.Fitostal && CapTrialCrystal.Of(item, icon) is { } fitostal)
@@ -239,8 +272,19 @@ public sealed class CapWorldView
             if (Layout.Panel == CapPanelKind.Party && PlaqueOf(trial, data) is { } plaque) CapTrial.PaintCap(frame, Layout, trial, plaque);
         }
 
+        // the ground shaking while the ruins' storey rises
+        CapGimmighoulRuins.Rumble(frame, Layout, _context);
+
         // A shiny in this battle (2026-10-16): over everything, the look drawn for it.
         if (data.Shiny is { } shiny) _shiny.Paint(frame, Layout, shiny, t);
+    }
+
+    /// <summary>Whether a trial's crystal has been won.</summary>
+    private static bool Won(CapPlaqueData data, int item)
+    {
+        if (data.Crystals is not { } won) return false;
+        foreach (var (got, _) in won) if (got == item) return true;
+        return false;
     }
 
     /// <summary>What the cap's film breaks and remakes, worked out when a trial starts and kept while it plays.</summary>

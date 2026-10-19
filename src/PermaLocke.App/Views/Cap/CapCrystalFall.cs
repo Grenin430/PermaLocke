@@ -5,7 +5,7 @@ namespace PermaLocke.App.Views;
 /// comes down onto the top of the upper storey of the tall wall (red), stands there on its point, wobbles and topples onto the wall's right
 /// shoulder (green), slides down the slope of broken bricks and drops into the window of the low wall (yellow), where it stays. Only the way
 /// down to the red spot changes between the prototypes (<see cref="Variant"/>): 0 a leaf swaying down, 1 a dive, 2 a spiral round the tower,
-/// 3 Gimmighoul fishing it out with a golden line, 4 shiny Tapu Koko flying over and dropping it (CapTapuKoko).
+/// 3 Gimmighoul fishing it out with a golden line, 4 Arceus flying over and dropping it (CapArceus; Tapu Koko until 2026-10-19).
 /// Places are in the ruins' own cells: across from their first column, up from the floor their walls stand on. A function of the moment.
 /// </summary>
 public static class CapCrystalFall
@@ -91,7 +91,7 @@ public static class CapCrystalFall
         // lying on one of its faces along the slope
         var lie = slope - Rest;
 
-        // Tapu Koko brings it (it holds it until the film's impact): the rest of the way starts that much later
+        // Arceus brings it (it holds it until the film's impact): the rest of the way starts that much later
         if (Variant == 4)
         {
             if (t < Land + Carried) return FromTapu(p, l, ctx, crystal, t, x0, floor, red);
@@ -460,20 +460,20 @@ public static class CapCrystalFall
         }
     }
 
-    /// <summary>How much later it reaches the tower when Tapu Koko brings it (<see cref="Variant"/> 4): the rest of the way waits for it.</summary>
+    /// <summary>How much later it reaches the tower when Arceus brings it (<see cref="Variant"/> 4): the rest of the way waits for it.</summary>
     private const double Carried = 1.38;
 
-    // Tapu Koko lets it go at the film's impact; it falls through the air, splashes, sinks onto the tower.
+    // Arceus lets it go at the film's impact; it falls through the air, splashes, sinks onto the tower.
     private const double LetGo = CapTrial.Hit, InWater = LetGo + 0.4, OnTower = Land + Carried;
 
     /// <summary>
-    /// The crystal let go by Tapu Koko (variant 4): it tumbles down through the air, less than half a turn, growing to its size, and splashes
+    /// The crystal let go by Arceus (variant 4): it tumbles down through the air, less than half a turn, growing to its size, and splashes
     /// into the sea over the ruins (a crown of drops, rings, a gulp of bubbles); it sinks, swaying, slowing, turning upright, and comes down on
     /// its point on the top of the tower.
     /// </summary>
     private static bool FromTapu(CapSheet p, CapWorldLayout l, CapSeaContext ctx, CapTrialCrystal crystal, double t, int x0, int floor, (double X, double Y) red)
     {
-        if (t < LetGo || CapTapuKoko.Hands(l, ctx, LetGo) is not { } hands) return true;
+        if (t < LetGo || CapArceus.Hands(l, ctx, LetGo) is not { } hands) return true;
         var surface = (double)l.SurfaceY;
         var top = Over(red, 0, Scale);
         if (t < InWater)
