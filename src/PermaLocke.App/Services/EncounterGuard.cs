@@ -132,10 +132,22 @@ public sealed class EncounterGuard(
     public event EventHandler? ShinyAppeared;
 
     /// <summary>
+    /// A route's first encounter, an allowed static or a duplicate, once the Pokémon is to be seen in the game (2026-10-20): the overlay turns
+    /// into the route until the battle ends, its banner saying which. Once per battle; off the UI thread.
+    /// </summary>
+    public event EventHandler<RouteEncounter>? EncounterSeen;
+
+    /// <summary>An allowed static fought without the wild battle counter has been told to the overlay; cleared out of battle.</summary>
+    private bool _staticAnnounced;
+
+    /// <summary>
     /// A wild battle ended in a capture, as soon as the game's own record of captures says so (§190): the card flies
     /// into the album over the game. Raised once per battle, after the battle, because that is when the game counts it.
     /// </summary>
     public event EventHandler<WildCatch>? Caught;
+
+    /// <summary>The wild Pokémon of this battle has fainted (2026-10-20): it sinks into the grass on the overlay. Once per battle; off the UI thread.</summary>
+    public event EventHandler? WildFainted;
 
     /// <summary>
     /// The battle whose capture is still being watched for. Apart from <see cref="_battle"/>, which is let go as soon as
@@ -279,6 +291,8 @@ public sealed class EncounterGuard(
 
         _last = read ?? _last;
 
+        if (!tablesSayBattle) _staticAnnounced = false;
+
         if (_battle is null && tablesSayBattle && await AllowedStaticWithoutCounterAsync(run, tables, now, ct) is { } handled)
         {
             return handled;
@@ -414,10 +428,20 @@ public sealed class EncounterGuard(
                 logger.LogInformation("Salvaje: {Species}{Duplicate}{Allowed}", speciesNames.GetName(wild.Species),
                     battle.Duplicate ? " (duplicado)" : string.Empty,
                     battle.AllowedStatic is { } note ? $" (captura permitida: {note})" : string.Empty);
+                // once per battle: it may have been told already while the counter had not gone up yet
+                if (battle.AllowedStatic is not null && battle.Zone is { } at && !_staticAnnounced)
+                {
+                    _staticAnnounced = true;
+                    AnnounceLater(battle, wild.Species, at.LocationName, catchable: true);
+                }
             }
         }
 
-        battle.WildFainted |= faints.Any(faint => !faint.IsPlayers);
+        if (!battle.WildFainted && faints.Any(faint => !faint.IsPlayers))
+        {
+            battle.WildFainted = true;
+            WildFainted?.Invoke(this, EventArgs.Empty);
+        }
         battle.PlayerFainted |= faints.Any(faint => faint.IsPlayers);
         // Segunda señal, por si el salvaje no se deja leer. Solo segunda: medido en pleno combate contra un Wooloo
         // variocolor, el récord 127 seguía en 5, así que se cuenta más tarde y no llega a tiempo de devolver nada.
@@ -661,6 +685,12 @@ public sealed class EncounterGuard(
             Routes().Contains(confirmed.Zone.LocationId), Spent: false, InWildBattle: true, rival.Species,
             AllowedStatic: note, HasAllowedStatic: true), balls.ShinyConsumesEncounter);
 
+        if (!_staticAnnounced)
+        {
+            _staticAnnounced = true;
+            AnnounceLater(null, rival.Species, confirmed.Zone.LocationName, catchable: true);
+        }
+
         return await ApplyAsync(run, decision, confirmed.Zone, now, quiet: false, ct, rival.Species, allowed: true);
     }
 
@@ -702,8 +732,27 @@ public sealed class EncounterGuard(
         var look = LookOf(species);
         _ = Task.Delay(FirstEncounterDelay).ContinueWith(_ =>
             Say(ToastKind.FirstEncounter, "Primer encuentro", decision.Reason, species, look), TaskScheduler.Default);
+        // an allowed static is told as one when it is read
+        if (battle.AllowedStatic is null) AnnounceLater(battle, species ?? 0, zone.LocationName, catchable: false);
         return true;
     }
+
+    /// <summary>
+    /// Tells the overlay, once the Pokémon is to be seen (<see cref="OverlayDelay"/>), that this battle is a route's first encounter or an
+    /// allowed static. The wild one is read again then: it may have been read only after the battle was told about.
+    /// </summary>
+    private void AnnounceLater(WildBattle? battle, int species, string route, bool catchable, bool duplicate = false) =>
+        _ = Task.Delay(OverlayDelay).ContinueWith(_ =>
+        {
+            // only if that battle is still the one going on (a quick flight and a new battle meanwhile would get the old one's route)
+            if (battle is not null ? !ReferenceEquals(battle, _battle) : !_staticAnnounced) return;
+            var seen = battle?.Wild?.Species ?? species;
+            if (seen > 0)
+            {
+                EncounterSeen?.Invoke(this, new RouteEncounter(seen, battle?.Wild?.Form ?? 0, battle?.Wild?.IsShiny ?? false, route, catchable, duplicate,
+                    Tracked: battle is not null));
+            }
+        }, TaskScheduler.Default);
 
     /// <summary>Drops a battle the map could not be told about, saying why when it may have been a first encounter.</summary>
     private void GiveUp(WildBattle battle, string why)
@@ -785,6 +834,11 @@ public sealed class EncounterGuard(
         {
             current.NewsSaid = shiny ? 2 : 1;
             SayNews(decision, species, shiny, allowed, inGame: rules.GameRulePatches);
+            // a duplicate the player may take or leave: the route on the overlay, its banner saying so (2026-10-20)
+            if (decision.Optional && !shiny && !allowed && current.Zone is { } at)
+            {
+                AnnounceLater(current, species ?? 0, at.LocationName, catchable: false, duplicate: true);
+            }
         }
 
         var due = decision.Action != _applied
@@ -973,6 +1027,9 @@ public sealed class EncounterGuard(
     /// <summary>How long after the battle starts the first-encounter notice waits: the wild Pokémon shows up first.</summary>
     private static readonly TimeSpan FirstEncounterDelay = TimeSpan.FromSeconds(6);
 
+    /// <summary>How long after the battle starts the overlay turns into the route (2026-10-20: 6 s was slow, the player asked for 2-2,5 s).</summary>
+    private static readonly TimeSpan OverlayDelay = TimeSpan.FromSeconds(2.5);
+
     /// <summary>The duplicate notice, a few seconds after the battle starts: the Pokémon shows up first, and the notice names no one.</summary>
     private void SayDuplicateLater(string reason, int? species)
     {
@@ -991,3 +1048,10 @@ public sealed class EncounterGuard(
     private (int Form, bool Shiny) LookOf(int? species) =>
         _battle?.Wild is { } wild && wild.Species == species ? (wild.Form, wild.IsShiny) : (0, false);
 }
+
+/// <summary>
+/// A route's first encounter, an allowed static or a duplicate as the overlay needs it: the wild species, its form and shininess, the route's
+/// name, whether it is an allowed static (catchable whatever the route says), and whether it is a duplicate the player may take or leave.
+/// </summary>
+/// <param name="Tracked">Whether its outcome is followed (caught, fainted): not for an allowed static fought without the wild battle counter.</param>
+public sealed record RouteEncounter(int Species, int Form, bool Shiny, string Route, bool Catchable, bool Duplicate = false, bool Tracked = true);

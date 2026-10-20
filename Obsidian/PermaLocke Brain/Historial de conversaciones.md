@@ -858,3 +858,11 @@ Batido pendiente de aprobación; otros tres sin modificar. Rutas y método en la
 ## 2026-10-19 — Las ruinas de Gimmighoul completas, en el torneo (§261-§269, 1.1.1)
 - Desde el singleplayer: cristales 7 a 12, el piso enterrado que sube, Arceus en el cristal 1 y sin rayos de sol bajo el agua. Los ficheros del panel del torneo no tenían cambios propios: se copiaron con CRLF.
 - Compila, pruebas en verde, los doce escenarios de cristal del laboratorio iguales que en el singleplayer. Publicada como 1.1.1 a petición del jugador.
+
+## 2026-10-19 — Isla Exeggutor: capturas de sus estáticos (§270)
+- El jugador pidió poder capturar los estáticos de la Isla Exeggutor, donde solo dejaba capturar en la hierba. Según PKHeX son tres: Chesnaught Nv45 y Pinsir Nv42 y Nv43 (location 184; en el cartucho, las filas 126, 155-157).
+- Solo hubo que añadir tres filas a `allowedStatics` de `rules.json`, zona `isla-exeggutor`, y ampliar `LevelCapAndConfigTests`. Hecho en el torneo, también en el singleplayer (§268). Sin commit y sin probar en el emulador.
+
+## 2026-10-20 — 1.1.2: lo del singleplayer después de la 1.1.1 (§271)
+- Lista aprobada: primer encuentro de ruta, capturables, duplicados, finales en la hierba, rendimiento, objetos al mar, ojos, sol, marea roja, y la Isla Exeggutor pendiente. Respuestas: banderín en el abismo sí, quitar el objeto encima del juego sí, quitar la marea roja sí, publicar como 1.1.2.
+- Ficheros copiados del singleplayer; `PlayNotifications` a mano (el voto de motes del torneo se queda). 2111 pruebas en verde; revisor sobre `EncounterGuard` y `CapBadge`.

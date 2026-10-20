@@ -60,11 +60,13 @@ public sealed record CapGrave(BitmapSource? Sprite, string Name, string? FellTo 
 /// <param name="Crystals">Every trial's Z-Crystal cleared so far, in order, with its icon: they stay set in the abyss's sand.</param>
 /// <param name="CrystalItem">The Z-Crystal of the last trial cleared (its item id), 0 when there is none: the trial film (CapTrial) shows it.</param>
 /// <param name="Crystal">That crystal's icon, out of the player's cartridge.</param>
+/// <param name="Encounter">A route's first encounter being shown (CapEncounter), or null.</param>
 public sealed record CapPlaqueData(string Trial, int Cap, int? Next, int? Highest, IReadOnlyList<CapPlaqueMember> Party,
     bool InBattle = false, IReadOnlyList<CapGrave>? Graves = null, int Cleared = 0, int Trials = 0, double Hour = -1, int Seed = 0,
     IReadOnlyList<CapEvent>? Events = null, double? ActiveShare = null, bool DeathScenes = true, int CrystalItem = 0, BitmapSource? Crystal = null,
     IReadOnlyList<(int Item, BitmapSource? Icon)>? Crystals = null, CapShinyTurn? Shiny = null, CapVialState? Vial = null,
-    CapToggle? Repel = null, CapToggle? Turbo = null);
+    CapToggle? Repel = null, CapToggle? Turbo = null, CapEncounterTurn? Encounter = null,
+    IReadOnlyList<CapItemDrop>? Items = null);
 
 /// <summary>
 /// The Pokévial in the overlay (2026-10-16): its uses left and the most it holds, and when it was last used (on the panel's clock) with the uses it had

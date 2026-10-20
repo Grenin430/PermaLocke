@@ -65,6 +65,7 @@ Cómo llega una versión nueva a los jugadores desde el 2026-09-26. Detalle téc
 | 1.0.16 | commit directo a main pedido por el usuario (2026-10-10), Action | animación del objeto por categorías: las once con estilo propio, Megapiedra de 4,5 s (§243). **Sin probar en el emulador real** |
 | 1.0.18 | commit directo a main pedido por el usuario (2026-10-18), Action | Pokévial: objeto clave que cura al equipo, usos por pruebas superadas (1, +1 en la 4, +1 en la 6), se recarga con la enfermera (§248). **Sin probar en el emulador real** |
 | 1.1.0 | commit directo a main pedido por el usuario (2026-10-18), Action | el singleplayer en el torneo: panel del cap entero (ruinas, cristales Z, ultraumbral, megas), Poción Variocolor, cursor del SuperCarameloraro; fuera avisos, muerte encima del juego, carta al álbum y fantasmas; mensajes del organizador en la bandeja (§260). El usuario pidió «1.0.8», por debajo de la 1.0.18: eligió 1.1.0 |
+| 1.1.2 | commit directo a main pedido por el usuario (2026-10-20), Action | primer encuentro de ruta en el panel, capturables y duplicados con banderín, finales en la hierba, objetos al mar por un ultraumbral, Isla Exeggutor, ojos, sol y marea roja (§270-§271) |
 | 1.1.1 | commit directo a main pedido por el usuario (2026-10-19), Action | las ruinas de Gimmighoul completas: cristales 7 a 12, el piso enterrado que sube, Arceus en el cristal 1 y sin rayos de sol bajo el agua (§261-§269) |
 
 **1.0.2 y 1.0.3 no pueden actualizarse solas** (§204: la descarga se desbordaba en el primer trozo). Quien las tenga,

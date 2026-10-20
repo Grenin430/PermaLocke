@@ -273,3 +273,5 @@ Otros docs: `docs/DISTRIBUCION-LOCAL.md` (reparto local, informes del amigo, rev
 - L13663 · 260 · El singleplayer en el torneo (1.1.0): panel del cap entero, Poción Variocolor, cursor del SuperCarameloraro, Olor Persistente vetada; fuera avisos, muerte encima del juego, carta al álbum y fantasmas.
 - §261-§268 · Ruinas, cristales 7 a 12 y el 1 rehecho, hechos en el singleplayer (allí §260-§267): Raikou y el Electrostal, el piso enterrado que sube, Giratina, Yveltal, Dragapult, Mega Diancie, Groudon Primigenio y Arceus en lugar de Tapu Koko; fuera los rayos de sol bajo el agua.
 - §269 · Las ruinas completas, en el torneo: ficheros del panel copiados (el torneo no tenía cambios propios), once hojas nuevas; laboratorio idéntico al singleplayer.
+- §270 · Isla Exeggutor: Chesnaught Nv45 y Pinsir Nv42 y Nv43 en `allowedStatics`. Se pueden capturar siempre y no gastan la ruta.
+- §271 · Primer encuentro (la ruta en el panel), capturables y duplicados con banderín, finales en la hierba, objetos al mar por un ultraumbral, ojos que no parpadean, sin destellos del sol ni marea roja: pasado del singleplayer (1.1.2).

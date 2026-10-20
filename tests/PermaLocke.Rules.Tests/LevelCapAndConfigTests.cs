@@ -133,11 +133,15 @@ public sealed class RulesConfigurationTests
         Assert.False(configuration.For(RuleIds.DupesClause).IgnoreEvolutionaryLine);
         Assert.False(configuration.For(RuleIds.SpeciesClause).Enabled);
 
-        // §119: el Necrozma del Lanakila es el de nivel 65, y los cuatro Tapus en sus ruinas.
-        Assert.Equal(5, configuration.BallControl.AllowedStatics.Count);
+        // §119: el Necrozma del Lanakila es el de nivel 65, los cuatro Tapus en sus ruinas y los tres estáticos de la Isla Exeggutor.
+        Assert.Equal(8, configuration.BallControl.AllowedStatics.Count);
+        Assert.Contains(new AllowedStatic("Chesnaught de la Isla Exeggutor", "isla-exeggutor", 652, 0, 45),
+            configuration.BallControl.AllowedStatics);
+        Assert.Equal([127, 127, 652],
+            configuration.BallControl.AllowedStatics.Where(entry => entry.Zone == "isla-exeggutor").Select(entry => entry.Species).Order());
         Assert.Contains(new AllowedStatic("Necrozma del Monte Lanakila", "monte-lanakila", 800, 0, 65),
             configuration.BallControl.AllowedStatics);
-        Assert.Equal([785, 786, 787, 788, 800],
+        Assert.Equal([127, 127, 652, 785, 786, 787, 788, 800],
             configuration.BallControl.AllowedStatics.Select(entry => entry.Species).Order());
         Assert.Equal(
             [EncounterType.Wild, EncounterType.Fishing, EncounterType.Sos],

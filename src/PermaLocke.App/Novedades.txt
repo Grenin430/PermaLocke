@@ -1,3 +1,16 @@
+1.1.2 2026-10-20
+ENCUENTROS
+Cuando te sale el primer Pokémon de una ruta, el panel del cap se convierte en la ruta: el mar se vacía y aparece la hierba vista desde arriba, con el camino y el Pokémon del combate escondido en ella, y un banderín «POKÉMON CAPTURABLE».
+Los estáticos que se pueden capturar (Necrozma, los Tapus y los de la Isla Exeggutor) salen igual, y un duplicado que puedes coger o dejar sale con el banderín ámbar «DUPLICADO, TÚ ELIGES».
+Al acabar el combate en la hierba: si lo capturas, la Poké Ball lo absorbe y se sacude tres veces; si lo debilitas, se hunde en la hierba; si huyes, se va en una nube de humo.
+ISLA EXEGGUTOR
+Sus tres estáticos se pueden capturar siempre y no gastan la ruta: Chesnaught Nv45 y Pinsir Nv42 y Nv43.
+OBJETOS
+Ya no sale ninguna animación encima del juego al recoger un objeto: un pequeño ultraumbral a la derecha de la torre lo escupe al mar y se entierra en la arena.
+PANEL DEL CAP
+Arreglado: a algunos Pokémon que nadan o vuelan les parpadeaba un ojo.
+Fuera los destellos del sol y la luna en el agua, y el mar ya no se pone rojo cuando tu Pokémon tiene pocos PS.
+
 1.1.1 2026-10-19
 PANEL DEL CAP
 Las ruinas de Gimmighoul, completas: cada una de las doce pruebas trae su Cristal Z con su propia película. Raikou, Giratina, Yveltal, Dragapult, Mega Diancie y Groudon Primigenio traen los seis últimos, y ahora Arceus trae el primero. Tras el Electrostal, el piso enterrado de las ruinas sube de la arena.

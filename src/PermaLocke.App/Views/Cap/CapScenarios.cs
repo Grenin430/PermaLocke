@@ -118,6 +118,14 @@ public static class CapScenarios
             Still("inicio", "Inicio de la run: dos Pokémon, sin caídos", Base(icon, begin, 0, cap: 15, cleared: 0) with { Trial = "PRUEBA 1 DE 12", Next = 22 }),
             Still("liga", "La Liga, sin siguiente cap", Base(icon, full, 9, cap: 90, cleared: 12) with { Trial = "CAMPEONATO DE LA LIGA", Next = null }),
             // A shiny (2026-10-16): each of its two looks from the start of the battle, ending at 12 s.
+            // A route's first encounter (2026-10-19, prototype): the sea drains and the route stands in its place, from 1 s.
+            Still("primer-encuentro", "Primer encuentro de una ruta: el layout se convierte en la ruta", Base(icon, full, battle: true) with { Encounter = new CapEncounterTurn(icon(734), "Ruta 2", 1, 22) }),
+            Still("encuentro-captura", "Ruta del encuentro: lo capturas (Poké Ball, tres sacudidas, clic)", Base(icon, full, battle: true) with { Encounter = new CapEncounterTurn(icon(734), "Ruta 2", -8, 3.5, Outcome: CapEncounterOutcome.Caught, OutcomeAt: 3) }),
+            Still("encuentro-debilitado", "Ruta del encuentro: lo debilitas (se hunde en la hierba)", Base(icon, full, battle: true) with { Encounter = new CapEncounterTurn(icon(734), "Ruta 2", -8, 3.5, Outcome: CapEncounterOutcome.Fainted, OutcomeAt: 3) }),
+            Still("encuentro-huida", "Ruta del encuentro: huyes (se va en humo)", Base(icon, full, battle: true) with { Encounter = new CapEncounterTurn(icon(734), "Ruta 2", -8, 3, Outcome: CapEncounterOutcome.Fled, OutcomeAt: 3) }),
+            Still("objetos", "Objetos: el ultraumbral junto a la torre los escupe al mar y se entierran", Base(icon, full, battle: false) with { Items = [new CapItemDrop(item?.Invoke(17), 1, 17), new CapItemDrop(item?.Invoke(4), 2.1, 22), new CapItemDrop(item?.Invoke(328), 3.2, 31)] }),
+            Still("duplicado", "Duplicado: la misma ruta, banderín ámbar «DUPLICADO, TÚ ELIGES»", Base(icon, full, battle: true) with { Encounter = new CapEncounterTurn(icon(903), "Isla Exeggutor", 1, 22, Duplicate: true) }),
+            Still("estatico-capturable", "Pokémon estático capturable: la misma ruta y el mismo banderín", Base(icon, full, battle: true) with { Encounter = new CapEncounterTurn(icon(800), "Monte Lanakila", 1, 22, Catchable: true) }),
             Still("shiny-cosas", "Variocolor: cada cosa su color", Base(icon, full, battle: true) with { Shiny = new CapShinyTurn(CapShinyKind.Things, 0.5, 12.5) }),
             // The Pokévial (2026-10-16): at rest with two of three, and used at 1 s, two of two to one.
             Still("pokevial", "Pokévial con dos de tres usos", Base(icon, full) with { Vial = new CapVialState(2, 3) }),

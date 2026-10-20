@@ -77,7 +77,7 @@ public static class CapSea
         Sky(p, l, pal, ctx);
         if (l.Panel == CapPanelKind.Deep && l.Sun.Width > 0) Sun(p, l, pal, ctx);
         Water(p, l, pal);
-        if (l.Panel == CapPanelKind.Deep && l.Sun.Width > 0) Glitter(p, l, pal, ctx);
+        // The glitter of the sun or the moon on the water under it is gone (2026-10-20, asked by the player).
         Floor(p, l, pal, data, ctx, fossilColumns);
         // The ruins, the crystals and the old fossils on the deep's sand (2026-10-15); the fossils of the fallen lie in front of them.
     }
@@ -151,24 +151,6 @@ public static class CapSea
                 {
                     p.Set(x, y, day ? 0xFFE8A0u : 0xBCC8F0u, (int)(70 * (1 - ((d - radius) / 6))));
                 }
-            }
-        }
-    }
-
-    /// <summary>The glitter of the sun or the moon on the water under it: a short column of dither.</summary>
-    private static void Glitter(CapSheet p, CapWorldLayout l, CapSeaPalette pal, CapSeaContext ctx)
-    {
-        var hour = ctx.SkyHour;
-        var day = hour is >= 6 and < 19;
-        var k = Math.Clamp(day ? (hour - 6) / 13.0 : (((hour + 5) % 24) / 11.0), 0, 1);
-        var cx = l.Sun.Left + 14 + (int)(k * (l.Sun.Width - 28));
-        for (var y = l.SurfaceY + 1; y < l.SurfaceY + 20; y++)
-        {
-            var spread = 2 + ((y - l.SurfaceY) / 3);
-            for (var x = cx - spread; x <= cx + spread; x++)
-            {
-                if (CapArt.Hash(x, y + ctx.Seed) % 5 != 0) continue;
-                p.Set(x, y, day ? 0xFFF0B0u : 0xD8E0FFu, (int)(120 * (1 - ((y - l.SurfaceY) / 20.0))));
             }
         }
     }

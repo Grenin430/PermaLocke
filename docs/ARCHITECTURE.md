@@ -13791,3 +13791,23 @@ Pedido por el jugador: subir al torneo lo hecho en el singleplayer después del 
 - **Cómo se hizo.** Los ficheros del panel del torneo no tenían cambios propios desde §260: todo lo que difería eran líneas del singleplayer (y el fin de línea, que en el torneo sigue en CRLF). Se copiaron con CRLF `CapRaikou`, `CapGiratina`, `CapNictostal`, `CapDragapult`, `CapDiancie`, `CapGroudon` y `CapArceus` (que sustituye a `CapTapuKoko`), y los cambios de `CapCritterArt`, `CapCrystalFall`, `CapGimmighoulRuins`, `CapMega` (`Symbol` internal), `CapScenarios`, `CapSea` (`Rise`, `Rising`), `CapSeaLive` (sin `Shafts`), `CapTrial` (`Lead`, `tw`, pintado de los seis cristales nuevos) y `CapWorldView` (`Won`, `Rumble`, `PaintRest` de cada cristal, sin la llamada a `Shafts`). Hojas nuevas en `Views/Cap/Critters`: `raikou`, `raikoupie`, `giratina`, `yveltal`, `dragapult`, `dreepy`, `diancie`, `megadiancie`, `groudon`, `primalgroudon` y `arceus` (entran solas por el comodín del csproj). La hoja `tapukoko` y su entrada se quedan sin uso, como en el singleplayer.
 - **No se pasaron** los scripts de `tools/critters` que generaron las hojas: las hojas ya van hechas.
 - **Comprobado:** compila, todas las pruebas en verde (las de memoria del panel incluidas) y los doce escenarios de cristal del laboratorio (`--ventana <cristal> 4|8|12|18 1920`) salen idénticos en el torneo y en el singleplayer. Sin probar en el emulador real.
+
+## §270 · Isla Exeggutor: sus tres estáticos se pueden capturar (2026-10-19, hecho en el torneo y en el singleplayer, allí §268, sin commit)
+
+El jugador vio que en la Isla Exeggutor solo dejaba capturar en la hierba, y quería capturar también los Pokémon estáticos de la isla.
+
+- **Qué hay en la isla.** Según la tabla de encuentros legales de PKHeX para Ultra Sol y Ultra Luna (`Encounters7USUM`, `StaticUSUM`, location 184), son tres: Chesnaught Nv45 y Pinsir Nv42 y Nv43. En toda la tabla no hay ningún otro Chesnaught ni Pinsir estático. En el cartucho (`RomTool estaticos-dump`) son las filas 126 (Chesnaught Nv45), 155 y 157 (Pinsir Nv42) y 156 (Pinsir Nv43). PKHeX junta en un solo encuentro las dos filas de Pinsir Nv42.
+- **Cambio.** No hace falta código: el mecanismo de §119 ya existe. Se añaden tres filas a `ballControl.allowedStatics` de `Data/rules.json`, con la zona `isla-exeggutor` (mapa 290 y mundo 215 en `Data/mapas.json`). Como el Necrozma y los Tapus, `WorldAllowedStatics` busca cada fila por especie, forma y nivel del cartucho y lee del mundo instalado en qué especie se convirtió. Esas especies se pueden capturar siempre en esa zona, aunque la ruta esté gastada o la zona no esté en el mapa, y no gastan nada. La regla compara la pareja (zona, especie), así que en otras zonas no cambia nada. Un combate en la hierba de la isla sigue gastando la ruta igual que antes.
+- **Prueba.** `LevelCapAndConfigTests` comprueba las ocho capturas permitidas y que las tres de `isla-exeggutor` son Chesnaught y dos Pinsir.
+- **Sin probar en el emulador real.**
+- Este cambio va en `rules.json`, que el organizador también reparte desde Admin, REGLAS (`TournamentRules`). Si el servidor ya tiene unas reglas oficiales publicadas, hay que volver a publicarlas desde Admin para que lleguen a los jugadores.
+
+
+## §271 · Primer encuentro, capturables, duplicados y objetos al mar, en el torneo (2026-10-20, 1.1.2)
+
+Pedido por el jugador: subir al torneo lo hecho en el singleplayer después de la 1.1.1 (allí §269-§275). La muerte «Eternatus» se descartó y borró antes, así que no viene.
+
+- **Ficheros copiados del singleplayer** (en el torneo no tenían cambios propios fuera de estas funciones): `CapEncounter.cs` y `CapItemRain.cs` (nuevos), `CapAnim`, `CapModel`, `CapScenarios`, `CapSea`, `CapVisitors`, `CapWorldView`, `CapBadge`, `EncounterGuard` y las pruebas `CapAnimTests` y `CapVisitorLabTests`.
+- **Qué hace** (detalle en el singleplayer, §269-§275): la ruta del primer encuentro en el panel (`EncounterGuard.EncounterSeen`, a los 2,5 s), el banderín «POKÉMON CAPTURABLE» para los estáticos permitidos y ámbar «DUPLICADO, TÚ ELIGES» para un duplicado, los tres finales en la hierba (`WildFainted`, `CapBadge.Outcome`), las cachés del suelo, el ultraumbral junto a la torre que escupe los objetos al mar (`CapItemRain`), los ojos que no parpadean al encoger (`CapVisitors.Pick`/`Tiny`), sin destellos del sol en el agua y sin la marea roja por pocos PS.
+- **Decisiones del jugador para el torneo:** el banderín con texto en el abismo se mantiene como excepción; la animación del objeto encima del juego se quita (`PlayNotifications` ya no llama a `CatchCeremony.CelebrateItem`; el voto de motes sigue); la marea roja también se quita.
+- Con la Isla Exeggutor (§270). Pruebas: 2111 en verde.

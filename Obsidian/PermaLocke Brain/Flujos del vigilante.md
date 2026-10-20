@@ -94,7 +94,7 @@ flowchart LR
   - `SettleAsync`, al acabar: captura o huida por los récords, con `CountGrace` de 4 s; K.O. por las tablas. Marca el MAPA (`ZoneOutcomeSet`) y gasta la ruta (`ZoneEncounterSpent`).
 - **Excepciones:**
   - zonas de prueba (`trialZones`: Cueva Sotobosque sala de la prueba, Colina Saltagua y Jungla Umbría): hasta tener el cristal Z, sin balls salvo un variocolor, y un combate no gasta la ruta (`TrialZoneService` → `EncounterSituation.PendingTrial`, §160 y §179);
-  - las capturas estáticas permitidas (`WorldAllowedStatics`, `allowedStatics` en `rules.json`, §119);
+  - las capturas estáticas permitidas (`WorldAllowedStatics`, `allowedStatics` en `rules.json`, §119; Necrozma, Tapus y los tres de la Isla Exeggutor, §270);
   - fuera del MAPA no hay balls nunca.
 - `EncounterGuard.Problem` es `counters.Problem ?? _zoneProblem`; `GameLinkMonitor.EncounterProblem` lo lleva a HOME, que dice por qué no se detectan encuentros.
 - `Said` produce avisos como «te quitamos las balls» (`PlayNotifications`).

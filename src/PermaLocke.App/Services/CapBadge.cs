@@ -133,6 +133,10 @@ public sealed class CapBadge
     private DateTime _movedAt = DateTime.MinValue;
     private DateTime _hurryUntil = DateTime.MinValue;
     private CapShinyTurn? _shinyTurn;
+    private CapEncounterTurn? _encounterTurn;
+
+    /// <summary>Items got lately, for the wormhole by the tower to spit out one after another (2026-10-20); dropped once they are buried.</summary>
+    private readonly List<CapItemDrop> _drops = [];
     private PokeVialService? _vialService;
     private double _vialUsedAt = double.NegativeInfinity;
     private int _vialFrom;
@@ -222,8 +226,35 @@ public sealed class CapBadge
             Replace();
         });
 
+        // A route's first encounter or an allowed static (2026-10-20): once the Pokémon is to be seen, the overlay turns into the route until the
+        // battle ends. If the battle is already over by then (a quick escape), nothing.
+        encounters.EncounterSeen += (_, seen) => _ = Application.Current?.Dispatcher.BeginInvoke(() =>
+        {
+            if (_monitor.BattleNow.Count == 0) return;
+            _encounterTurn = new CapEncounterTurn(_sprites.Get(seen.Species, seen.Form, seen.Shiny), seen.Route, Now, Catchable: seen.Catchable, Duplicate: seen.Duplicate,
+                Tracked: seen.Tracked);
+            _logger.LogInformation("{What} en {Route}: el panel del cap se convierte en la ruta",
+                seen.Duplicate ? "Duplicado" : seen.Catchable ? "Pokémon capturable" : "Primer encuentro", seen.Route);
+            Replace();
+        });
+
+        // How the route's battle ended (2026-10-20), for its animation in the grass: caught or fainted as it happens; a capture may also come
+        // just after the battle was taken for fled, and then it wins.
+        encounters.Caught += (_, _) => _ = Application.Current?.Dispatcher.BeginInvoke(() => Outcome(CapEncounterOutcome.Caught));
+        encounters.WildFainted += (_, _) => _ = Application.Current?.Dispatcher.BeginInvoke(() => Outcome(CapEncounterOutcome.Fainted));
+
         // A trial's Z-Crystal in the bag (2026-10-16): the cap and its film come at once, not on the next ten-second read. The run takes a moment
         // to count the trial as cleared, so for a few seconds it is read every second.
+        // Any item got in the game (2026-10-20, in place of the animation into the bag over the game): the small wormhole by the tower spits it
+        // out into the sea. One after another, a second apart.
+        monitor.ItemGained += (_, gained) => _ = Application.Current?.Dispatcher.BeginInvoke(() =>
+        {
+            _drops.RemoveAll(drop => Now - drop.Spit > CapItemRain.Life);
+            var spit = Math.Max(Now + CapItemRain.Open, _drops.Count > 0 ? _drops[^1].Spit + 1.1 : 0);
+            _drops.Add(new CapItemDrop(_sprites.GetItem(gained.ItemId), spit, gained.ItemId + _drops.Count));
+            Replace();
+        });
+
         monitor.ItemGained += (_, gained) =>
         {
             if (gained.ItemId is < 807 or > 824) return;
@@ -248,6 +279,15 @@ public sealed class CapBadge
     }
 
     private double Now => _clock.Elapsed.TotalSeconds;
+
+    /// <summary>The route's battle ended this way: caught or fainted over nothing or over a flight just taken for one.</summary>
+    private void Outcome(CapEncounterOutcome outcome)
+    {
+        if (_encounterTurn is not { Tracked: true } turn || turn.Outcome is not (CapEncounterOutcome.None or CapEncounterOutcome.Fled)) return;
+        _encounterTurn = turn with { Outcome = outcome, OutcomeAt = Now };
+        _logger.LogInformation("Encuentro en {Route}: {Outcome}", turn.Route, outcome);
+        Replace();
+    }
 
     /// <summary>A toggle after a reading: turned on now, off now, or as it was; on at the first reading, on long ago.</summary>
     private CapToggle Turned(CapToggle was, bool on, bool first)
@@ -643,6 +683,20 @@ public sealed class CapBadge
         else if (_shinyTurn is { End: { } ended } leaving && _monitor.BattleNow.Count > 0 && Now - ended < CapShiny.Back) _shinyTurn = leaving with { End = null };
         if (_shinyTurn?.Over(Now) == true) _shinyTurn = null;
 
+        // The route the same way: open as long as its battle, then its outcome plays and the sea comes back up; ended with neither a capture nor
+        // a faint, it fled. Back open if the battle answers again meanwhile.
+        if (_encounterTurn is { End: null } open && tablesGone)
+        {
+            _encounterTurn = open.Outcome == CapEncounterOutcome.None && open.Tracked
+                ? open with { End = Now, Outcome = CapEncounterOutcome.Fled, OutcomeAt = Now }
+                : open with { End = Now };
+        }
+        else if (_encounterTurn is { End: { } shut } closing && _monitor.BattleNow.Count > 0 && Now - shut < CapEncounter.Refill)
+        {
+            _encounterTurn = closing.Outcome == CapEncounterOutcome.Fled ? closing with { End = null, Outcome = CapEncounterOutcome.None } : closing with { End = null };
+        }
+        if (_encounterTurn?.Over(Now) == true) _encounterTurn = null;
+
         _lastMode = plan.Main?.Mode;
         var seed = _runContext.Current is { } activeRun ? activeRun.Id.GetHashCode() & 0x7FFFFFFF : 0;
         var data = _rehearsal ?? new CapPlaqueData(reading.Trial, reading.Cap, reading.Next, reading.Highest, _party, _battle, _graves, reading.Cleared,
@@ -650,7 +704,8 @@ public sealed class CapBadge
             reading.CrystalItem, reading.CrystalItem > 0 ? _sprites.GetItem(reading.CrystalItem) : null,
             [.. (reading.Crystals ?? []).Select(i => (i, _sprites.GetItem(i)))], _shinyTurn,
             _vialService?.Now is { Owned: true } held ? new CapVialState(held.Uses, held.Max, _vialUsedAt, _vialFrom) : null,
-            _fieldItems?.Now.RepelOwned == true ? _repel : null, _fieldItems?.Now.TurboOwned == true ? _turbo : null);
+            _fieldItems?.Now.RepelOwned == true ? _repel : null, _fieldItems?.Now.TurboOwned == true ? _turbo : null, _encounterTurn,
+            _drops.Count > 0 ? [.. _drops] : null);
         _data = data;
 
         // One sea in two windows.

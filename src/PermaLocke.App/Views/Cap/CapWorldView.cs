@@ -141,17 +141,23 @@ public sealed class CapWorldView
         CapSeaLive.Surface(frame, Layout, pal, _context, phase);
         CapSeaLive.Snow(frame, Layout, pal, _context, phase);
         CapFlora.Paint(frame, Layout, pal, _context, _fossils, phase);
-        // In the party's window, the sign with the cap (2026-10-15). The coral and the little things on the sand (CapReefLife) were not liked
-        // and are not painted until something else is chosen.
-        if (Layout.Panel == CapPanelKind.Party)
-        {
-            var atCap = (mood.Now == CapMood.Cap ? mood.Blend : 0) + (mood.Before == CapMood.Cap ? 1 - mood.Blend : 0);
-            var number = CapTrial.SignNumber(trial, data.Cap);
-            CapSign.Paint(frame, Layout, pal, _context, data, _fossils, atCap, phase, number ?? data.Cap, number is not null);
-        }
+        // A route's first encounter being shown (2026-10-20): the sea drains and the route stands in its place, over what swims in the sea (asked:
+        // the field in front of them); in the party's window its sign and its list over it, in the abyss's the ruins under it
+        var route = data.Encounter is { } met && met.Showing(t) ? met : null;
+
+        // In the party's window, the sign with the cap (2026-10-15), before what swims; while a route is shown, after it. The coral and the
+        // little things on the sand (CapReefLife) were not liked and are not painted until something else is chosen.
+        var atCap = (mood.Now == CapMood.Cap ? mood.Blend : 0) + (mood.Before == CapMood.Cap ? 1 - mood.Blend : 0);
+        var number = CapTrial.SignNumber(trial, data.Cap);
+        if (Layout.Panel == CapPanelKind.Party && route is null) CapSign.Paint(frame, Layout, pal, _context, data, _fossils, atCap, phase, number ?? data.Cap, number is not null);
 
         if (anim is not null) CapFauna.Paint(frame, Layout, pal, mood, _context, t, phase, []);
         if (parade is { } megaSince) CapMega.Paint(frame, Layout, _context, megaSince, Layout.Panel == CapPanelKind.Deep);
+        if (Layout.Panel == CapPanelKind.Party && route is not null)
+        {
+            CapEncounter.Paint(frame, Layout, _context, route, t - route.Start);
+            CapSign.Paint(frame, Layout, pal, _context, data, _fossils, atCap, phase, number ?? data.Cap, number is not null);
+        }
 
         // The crystals of the trials cleared, set in the abyss's sand (2026-10-16).
         // prototype of the plan (2026-10-18): the Gimmighoul ruins take the altar's place; the crystals go into them in the next step
@@ -219,6 +225,11 @@ public sealed class CapWorldView
                 }
             }
         }
+
+        // The wormhole by the tower, there for good, and the items got in the game (2026-10-20) that it spits into the sea and the sand.
+        if (Layout.Panel == CapPanelKind.Deep) CapItemRain.Paint(frame, Layout, _context, data.Items ?? [], t);
+
+        if (Layout.Panel == CapPanelKind.Deep && route is not null) CapEncounter.Paint(frame, Layout, _context, route, t - route.Start);
 
         if (Layout.Panel == CapPanelKind.Party) PaintParty(frame, data, pal, mood, anim, t, phase, deaths, trial, order);
 

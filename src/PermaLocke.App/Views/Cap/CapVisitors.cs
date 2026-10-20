@@ -50,12 +50,15 @@ public static class CapVisitors
     /// patch, a dark outline counting half as much again. Plain nearest neighbour dropped the thin joins (a neck, an antenna, a tail) in
     /// thirty species; this keeps them (2026-10-14). A lone pixel, one with no neighbour of its own colour (an eye, its glint), counts
     /// two and a half times: otherwise it won or lost by where the frame fell on the grid, and the eye blinked as the body moved (2026-10-17).
+    /// That still lost now and then, when the pixel fell across four output pixels and had too little of each (2026-10-20, the player saw
+    /// eyes blink on some swimmers and fliers): now a tiny pixel (one with at most one neighbour of its own colour) always shows in the output
+    /// pixel its middle falls in, the darkest if two do, so every eye of the sheet is in every frame.
     /// </summary>
-    private static int Pick(ToastPixels.SpritePixels sheet, int baseX, int baseY, int cell, int ox, int oy, double scale = Shrink)
+    internal static int Pick(ToastPixels.SpritePixels sheet, int baseX, int baseY, int cell, int ox, int oy, double scale = Shrink)
     {
         double x0 = ox / scale, x1 = (ox + 1) / scale, y0 = oy / scale, y1 = (oy + 1) / scale;
         double total = 0, covered = 0, bestScore = 0;
-        var best = -1;
+        int best = -1, eye = -1, eyeSum = int.MaxValue;
         for (var y = (int)Math.Floor(y0); y < Math.Min(cell, (int)Math.Ceiling(y1)); y++)
         {
             var wy = Math.Min(y + 1, y1) - Math.Max(y, y0);
@@ -68,6 +71,12 @@ public static class CapVisitors
                 covered += w;
                 var score = sheet.Bgra[at] + sheet.Bgra[at + 1] + sheet.Bgra[at + 2] < 150 ? w * 1.5 : w;
                 if (Lone(sheet, baseX, baseY, cell, x, y)) score *= 2.5;
+                var sum = sheet.Bgra[at] + sheet.Bgra[at + 1] + sheet.Bgra[at + 2];
+                if (x + 0.5 >= x0 && x + 0.5 < x1 && y + 0.5 >= y0 && y + 0.5 < y1 && sum < eyeSum && Tiny(sheet, baseX, baseY, cell, x, y))
+                {
+                    eye = at;
+                    eyeSum = sum;
+                }
                 if (score > bestScore)
                 {
                     bestScore = score;
@@ -76,7 +85,27 @@ public static class CapVisitors
             }
         }
 
+        if (eye >= 0) return eye;
         return total > 0 && covered / total >= 0.30 ? best : -1;
+    }
+
+    /// <summary>Whether a drawn pixel of a cell has at most one neighbour, of the eight round it, of exactly its colour: an eye, a pupil, a glint.</summary>
+    private static bool Tiny(ToastPixels.SpritePixels sheet, int baseX, int baseY, int cell, int x, int y)
+    {
+        var at = (((baseY + y) * sheet.Width) + baseX + x) * 4;
+        var same = 0;
+        for (var dy = -1; dy <= 1; dy++)
+        {
+            for (var dx = -1; dx <= 1; dx++)
+            {
+                if ((dx | dy) == 0 || x + dx < 0 || y + dy < 0 || x + dx >= cell || y + dy >= cell) continue;
+                var n = (((baseY + y + dy) * sheet.Width) + baseX + x + dx) * 4;
+                if (sheet.Bgra[n + 3] >= 128 && sheet.Bgra[n] == sheet.Bgra[at] && sheet.Bgra[n + 1] == sheet.Bgra[at + 1]
+                    && sheet.Bgra[n + 2] == sheet.Bgra[at + 2] && ++same > 1) return false;
+            }
+        }
+
+        return true;
     }
 
     /// <summary>Whether a drawn pixel of a cell has no neighbour, of the eight round it, of exactly its colour.</summary>

@@ -187,8 +187,9 @@ public sealed class CapAnim
         _danger = data.InBattle && data.ActiveShare is { } active && active <= DangerShare;
         var capped = alive.Count > 0 && highest >= data.Cap && data.Cap > 0;
 
-        var mood = _danger ? CapMood.Danger
-            : data.InBattle ? CapMood.Battle
+        // The sea no longer turns to the red tide when the one on the field is low (2026-10-20, the player: it looked like dusk); its own
+        // sprite says it, with the red halo that beats (CapFx.Pose). _danger still keeps the panel lively.
+        var mood = data.InBattle ? CapMood.Battle
             : capped ? CapMood.Cap
             : CapMood.Calm;
         if (mood != _mood)
