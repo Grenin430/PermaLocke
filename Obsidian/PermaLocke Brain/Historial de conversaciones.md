@@ -869,3 +869,7 @@ Batido pendiente de aprobación; otros tres sin modificar. Rutas y método en la
 
 ## 2026-10-23 — 1.1.3: lo del singleplayer después de la 1.1.2 (§272)
 - Pedido: «sube actualización al torneo con todo lo pendiente». Ficheros copiados del singleplayer; `PlayNotifications` no se toca (el voto de motes sigue). 2111 pruebas en verde. Publicada como 1.1.3.
+
+## 2026-10-23 — Cap de BxnnyLocke y escalón a 100 (§273)
+- Mirado BxnnyLocke (solo lectura): el cap vive en su Azahar, tabla fija igual a la nuestra más 100, por cristales Z y Alto Mando, aplicada al acabar el combate.
+- Torneo: `postgame` a 100 en `levelcaps.json`; `EncounterService` usaba solo el botón de HOME para el cap de la regla de captura, ahora `ProgressService.CurrentCapAsync`. El resto ya contaba solo con el cristal sin reclamar. 2111 pruebas en verde. Publicado como 1.1.4 a petición del jugador.

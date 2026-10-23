@@ -68,6 +68,7 @@ Cómo llega una versión nueva a los jugadores desde el 2026-09-26. Detalle téc
 | 1.1.2 | commit directo a main pedido por el usuario (2026-10-20), Action | primer encuentro de ruta en el panel, capturables y duplicados con banderín, finales en la hierba, objetos al mar por un ultraumbral, Isla Exeggutor, ojos, sol y marea roja (§270-§271) |
 | 1.1.1 | commit directo a main pedido por el usuario (2026-10-19), Action | las ruinas de Gimmighoul completas: cristales 7 a 12, el piso enterrado que sube, Arceus en el cristal 1 y sin rayos de sol bajo el agua (§261-§269) |
 | 1.1.3 | commit directo a main pedido por el usuario (2026-10-23), Action | visitantes nuevos y más a menudo, muerte Autodestrucción, portal del randomizador, líquido del Pokévial, ultraumbral de objetos detrás de los voladores (§272) |
+| 1.1.4 | commit directo a main pedido por el usuario (2026-10-23), Action | cap a 100 tras el Rematch; la regla de captura cuenta los cristales Z en vez del botón de HOME (§273) |
 
 **1.0.2 y 1.0.3 no pueden actualizarse solas** (§204: la descarga se desbordaba en el primer trozo). Quien las tenga,
 una vez a mano: cerrar PermaLocke y cambiar `PermaLocke.exe` por el del zip de la 1.0.4.

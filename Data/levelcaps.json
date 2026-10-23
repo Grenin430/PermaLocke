@@ -5,6 +5,8 @@
 
   "comentarioLogro": "logro es el logro que da por superada esa etapa. Como los 21 logros se cuentan solos, el cap sube SOLO: en cuanto el cristal Z de la prueba entra en tu mochila, la etapa cuenta como superada y el cap pasa al siguiente. El botón de HOME sigue existiendo como red de seguridad y solo puede subir el cap, nunca bajarlo.",
 
+  "comentarioPostgame": "Tras el Rematch el cap se abre a 100 (2026-10-23, como en BxnnyLocke). Esa etapa no lleva logro: nada la supera, es la última.",
+
   "caps": [
     { "id": "trial-01", "order": 1,  "name": "1ª prueba",  "level": 14, "logro": "prueba-01" },
     { "id": "trial-02", "order": 2,  "name": "2ª prueba",  "level": 20, "logro": "prueba-02" },
@@ -19,6 +21,7 @@
     { "id": "trial-11", "order": 11, "name": "11ª prueba", "level": 66, "logro": "prueba-11" },
     { "id": "trial-12", "order": 12, "name": "12ª prueba", "level": 67, "logro": "prueba-12" },
     { "id": "league",   "order": 13, "name": "Liga",       "level": 73, "logro": "alto-mando-campeon" },
-    { "id": "rematch",  "order": 14, "name": "Rematch",    "level": 85, "logro": "alto-mando-otra-vez" }
+    { "id": "rematch",  "order": 14, "name": "Rematch",    "level": 85, "logro": "alto-mando-otra-vez" },
+    { "id": "postgame", "order": 15, "name": "Postgame",   "level": 100 }
   ]
 }

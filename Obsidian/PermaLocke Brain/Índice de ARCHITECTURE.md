@@ -277,3 +277,5 @@ Otros docs: `docs/DISTRIBUCION-LOCAL.md` (reparto local, informes del amigo, rev
 - §271 · Primer encuentro (la ruta en el panel), capturables y duplicados con banderín, finales en la hierba, objetos al mar por un ultraumbral, ojos que no parpadean, sin destellos del sol ni marea roja: pasado del singleplayer (1.1.2).
 
 - §272 · Visitantes nuevos del mar y del cielo (y más a menudo), muerte Autodestrucción, portal del randomizador como ultraumbral, líquido del Pokévial, ultraumbral de objetos detrás de los voladores: pasado del singleplayer (1.1.3).
+
+- §273 · Cap a 100 tras el Rematch (como BxnnyLocke); la regla de captura cuenta los cristales Z en vez del botón de HOME.

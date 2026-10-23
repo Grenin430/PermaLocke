@@ -89,20 +89,24 @@ public sealed class LevelCapStageTests : IDisposable
 
     /// <summary>
     /// The table the competition ships: fourteen stages, every one tied to its achievement, so the
-    /// cap can move by itself from the first trial to the rematch.
+    /// cap can move by itself from the first trial to the rematch; then the postgame, open to 100, which
+    /// nothing clears.
     /// </summary>
     [Fact]
     public void The_shipped_table_ties_every_stage_to_an_achievement()
     {
         var table = LevelCapTable.Load(Path.Combine(Root(), "Data", "levelcaps.json"));
 
-        Assert.Equal(14, table.Stages.Count);
-        Assert.All(table.Stages, stage => Assert.False(string.IsNullOrWhiteSpace(stage.Achievement)));
+        Assert.Equal(15, table.Stages.Count);
+        Assert.All(table.Stages.SkipLast(1), stage => Assert.False(string.IsNullOrWhiteSpace(stage.Achievement)));
 
         Assert.Equal("prueba-01", table.Stages[0].Achievement);
         Assert.Equal(14, table.Stages[0].Level);
-        Assert.Equal("alto-mando-otra-vez", table.Stages[^1].Achievement);
-        Assert.Equal(85, table.Stages[^1].Level);
+        Assert.Equal("alto-mando-otra-vez", table.Stages[^2].Achievement);
+        Assert.Equal(85, table.Stages[^2].Level);
+        Assert.Null(table.Stages[^1].Achievement);
+        Assert.Equal(100, table.Stages[^1].Level);
+        Assert.Equal(100, table.CapFor(14));
 
         // Los caps sólo suben: una tabla que bajase dejaría fuera de ley a un equipo ya legal.
         for (var i = 1; i < table.Stages.Count; i++)

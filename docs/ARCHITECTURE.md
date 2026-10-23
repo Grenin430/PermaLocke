@@ -13820,3 +13820,14 @@ Pedido por el jugador: subir al torneo todo lo pendiente del singleplayer despu�
 - **Hojas nuevas** en `Views/Cap/Critters` (entran por el comodín del csproj): 32, con `articuno` redibujada. `lunala` va sin uso: el jugador la descartó y no está en ninguna ruta.
 - **Más a menudo** (2026-10-23, pedido): las probabilidades de las seis rutas de `CapVisitors.Lanes` suben (75/60/55/70/55/45 a 90/80/65/85/70/55) y los periodos bajan donde la pasada deja sitio (150 a 110, 22 a 18, 60 a 45, 165 a 120).
 - **Comprobado:** compila, 2111 pruebas en verde. Sin probar en el emulador real.
+
+## §273 · Cap a 100 tras el Rematch, y la regla de captura lee los cristales Z (2026-10-23, 1.1.4)
+
+Pedido por el jugador tras mirar cómo lo hace BxnnyLocke: su Azahar modificado lleva la tabla fija 14, 20, 24, 26, 29, 34, 40, 42, 54, 59, 66, 67, 73, 85 y 100, indexada por los doce cristales Z y el Alto Mando, y la aplica al acabar cada combate. Es la nuestra más un último escalón.
+
+- **Escalón nuevo:** `postgame` (orden 15, nivel 100) en `Data/levelcaps.json`, sin logro: nada lo supera. Superado el Rematch (`alto-mando-otra-vez`), `ClearedAsync` da 14 y el cap pasa a 100. `LevelCapStageTests` lo fija.
+- **Progreso sin reclamar nada:** ya era así. `ProgressService.DetectedAsync` mira `Unlocked` (contador al objetivo), no `Claimed`; las doce pruebas cuentan por su cristal Z (`item` 807-824 en `achievements.json`, partida guardada más mochila viva), la Liga y el Rematch por los contadores del cartucho (`record` 2 y 100).
+- **Fallo arreglado:** `EncounterService.BuildContextAsync` calculaba el cap de `LevelCapRule` con `run.ClearedStages`, o sea solo el botón de HOME. Una prueba superada sin pulsar dejaba la regla de captura una etapa por detrás del cap que aplica el enlace con el juego. Ahora recibe `ProgressService` (parámetro opcional, lo da la DI) y usa `CurrentCapAsync`, como el resto.
+- `levelcaps.json` viaja en las reglas oficiales (`TournamentRules`): si el servidor ya tiene unas publicadas, hay que volver a publicarlas desde Admin para que llegue el 100.
+- El singleplayer tiene la misma regla de captura con el botón y no tiene el escalón a 100: no se ha tocado.
+- 2111 pruebas en verde. Sin probar en el emulador real.

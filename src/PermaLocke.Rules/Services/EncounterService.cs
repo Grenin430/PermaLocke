@@ -42,7 +42,8 @@ public sealed class EncounterService(
     IEvolutionLineProvider evolutionLines,
     LevelCapTable caps,
     IRunContext runContext,
-    IClock clock)
+    IClock clock,
+    ProgressService? progress = null)
 {
     /// <summary>Evaluates without writing anything, for the preview shown before confirming.</summary>
     public async Task<RuleEvaluation> PreviewAsync(Guid runId, RegisterCaptureRequest request,
@@ -190,8 +191,12 @@ public sealed class EncounterService(
             Configuration = configuration,
             EvolutionLines = evolutionLines,
 
-            // The cap of the stage the player is about to face, from Data/levelcaps.json.
-            LevelCap = runContext.Current is { } run ? caps.CapFor(run.ClearedStages) : null
+            // The cap of the stage the player is about to face, from Data/levelcaps.json. With the progress service it counts the
+            // Z-Crystals in the bag like everywhere else (2026-10-23): it read only the HOME button, so a trial cleared and not pressed
+            // kept the capture rule a stage behind the cap the game link enforced.
+            LevelCap = runContext.Current is not { } run ? null
+                : progress is not null ? await progress.CurrentCapAsync(run, ct).ConfigureAwait(false)
+                : caps.CapFor(run.ClearedStages)
         };
     }
 
