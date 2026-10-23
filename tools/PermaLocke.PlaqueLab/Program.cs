@@ -62,7 +62,9 @@ public static class Program
             if (sequence + 6 >= args.Length) throw new ArgumentException("Faltan argumentos de --secuencia-ventana.");
             var culture = System.Globalization.CultureInfo.InvariantCulture;
             var scenario = data.Scenarios.First(s => s.Name == args[sequence + 1]);
-            var start = double.Parse(args[sequence + 2], culture);
+            // "m" or "m+5" as for --ventana: from the moment that says most about the scenario
+            var start = args[sequence + 2].StartsWith('m') ? (scenario.Moment ?? 0) + (args[sequence + 2].Length > 1 ? double.Parse(args[sequence + 2][1..], culture) : 0)
+                : double.Parse(args[sequence + 2], culture);
             var seconds = double.Parse(args[sequence + 3], culture);
             var fps = int.Parse(args[sequence + 4], culture);
             if (!double.IsFinite(start) || !double.IsFinite(seconds) || seconds <= 0 || seconds > 300 || fps is < 1 or > 60)

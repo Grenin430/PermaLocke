@@ -26,16 +26,17 @@ public static class CapVisitors
 
     // Spearow and Rayquaza taken out of the skies (2026-10-16, the player's wish); their drawings stay.
     // Periods halved (2026-10-14): the visitors come by twice as often, now that they are drawn smaller.
+    // A little more often again (2026-10-23, the player's wish): higher chances, and shorter periods where the passage leaves room.
     public static readonly Lane[] Lanes =
     [
         // The sea: commons often, then the less common with a rare among them, and the great ones now and then.
-        new(10, 34, 32, 75, false, [129, 129, 118, 116, 456, 370, 223, 211, 746, 779, 170, 318]),
-        new(11, 48, 42, 60, false, [119, 226, 320, 319, 457, 171, 369, 117, 131, 130, 350, 230, 490]),
-        new(12, 150, 70, 55, false, [382, 382, 249, 321, 131], Big: true),
+        new(10, 34, 32, 90, false, [129, 129, 118, 116, 456, 370, 223, 211, 746, 779, 170, 318, 60, 535, 550, 686]),
+        new(11, 48, 42, 80, false, [119, 226, 320, 319, 457, 171, 369, 117, 131, 130, 350, 230, 490, 73, 340, 902, 593, 691]),
+        new(12, 110, 70, 65, false, [382, 382, 249, 321, 131], Big: true),
         // The sky.
-        new(13, 22, 14, 70, true, [278, 278, 16, 731, 12, 333, 41]),
-        new(14, 60, 20, 55, true, [279, 18, 22, 733, 334, 227, 398, 169, 468, 149, 6, 142, 380, 381]),
-        new(15, 165, 26, 45, true, [250, 144, 145, 146, 249], Big: true)
+        new(13, 18, 14, 85, true, [278, 278, 16, 731, 12, 333, 41, 425, 708]),
+        new(14, 45, 20, 70, true, [279, 18, 22, 733, 334, 227, 398, 169, 468, 149, 6, 142, 380, 381, 92, 93, 374, 416, 429, 670]),
+        new(15, 120, 26, 55, true, [250, 144, 145, 146, 249, 385, 641, 642, 645, 720, 788, 786, 789, 793, 804, 803], Big: true)
     ];
 
     /// <summary>Every drawing from a sheet is painted at two thirds of its size (2026-10-14), keeping its thin joins (<see cref="Pick"/>).</summary>
@@ -204,6 +205,21 @@ public static class CapVisitors
         // a shiny in the battle (2026-10-17): it passes in its shiny colours, whole, over the rainbow, with sparkles behind it
         var shiny = ctx.Shiny >= 0;
         if (shiny) (alpha, tintAmount) = (255, 0);
+
+        // Gastly leaves a trail of its gas (2026-10-22, asked): puffs where it was a moment ago, growing, rising and thinning away
+        if (art.Species == Gastly)
+        {
+            for (var k = 5; k >= 1; k--)
+            {
+                var age = (k * 0.15) - (Frac(tau / 0.15) * 0.15) + 0.05;
+                var before = tau - age;
+                var bx = Across(e.Progress - (age / lane.Duration), dir, world, size) - ctx.WorldX + (dir > 0 ? -size / 2.0 : size / 2.0);
+                var by = Math.Clamp(mid + (a1 * Math.Sin((w1 * before) + p1)) + (a2 * Math.Sin((w2 * before) + p2)), top, bottom) - (age * 6);
+                var born = (int)Math.Floor((tau - age) / 0.15);
+                GasPuff(p, bx + (Math.Sin(born * 1.7) * 1.5), by, (size * 0.13) + (age * size * 0.12), age / 0.8, tint, tintAmount, born, dir);
+            }
+        }
+
         for (var oy = 0; oy < size; oy++)
         {
             for (var ox = 0; ox < size; ox++)
@@ -220,6 +236,55 @@ public static class CapVisitors
         if (shiny) CapShiny.Trail(p, left + (size / 2), topY + (size / 2), size, dir, ctx.Shiny);
 
         if (!party && !lane.Flies) Bubbles(p, pal, (int)Math.Round(x + (dir * size * 0.33)), topY + (size / 2), beat);
+    }
+
+    private const int Gastly = 92;
+
+    private static double Frac(double v) => v - Math.Floor(v);
+
+    /// <summary>
+    /// One puff of Gastly's gas, ageing from 0 to 1: a lumpy round puff lit from the upper left (a pale heart with a glint while young, the lilac
+    /// body, a darker rim along its lower right), a little curl of gas peeling off its top as it ages and drifting back, the whole thinning
+    /// through the dither from its rim in.
+    /// </summary>
+    private static void GasPuff(CapSheet p, double x0, double y0, double r, double age, uint tint, double tintAmount, int salt, int dir)
+    {
+        if (age >= 1) return;
+        int cx = (int)Math.Round(x0), cy = (int)Math.Round(y0), reach = (int)Math.Ceiling(r * 1.35) + 1;
+        uint Tone(uint c) => tintAmount > 0 ? CapSheet.Mix(c, tint, tintAmount) : c;
+        for (var dy = -reach; dy <= reach; dy++)
+        {
+            for (var dx = -reach; dx <= reach; dx++)
+            {
+                var a = Math.Atan2(dy, dx);
+                var edge = 1 + (0.18 * Math.Sin((a * 3) + salt)) + (0.1 * Math.Sin((a * 5) - (salt * 2)));
+                var d = Math.Sqrt((dx * dx) + (dy * dy)) / r / edge;
+                if (d > 1) continue;
+                int x = cx + dx, y = cy + dy;
+                if (CapSeaPalette.Bayer[((y & 3) * 4) + (x & 3)] < ((age - 0.35) * 26) + (d * d * 8 * age)) continue;
+                var lit = -(dx + dy) / Math.Max(1, r);
+                uint c = d > 0.78 && lit < 0.2 ? 0x76607Au
+                    : lit > 0.45 && d < 0.7 ? (age < 0.45 && d < 0.35 && lit > 0.6 ? 0xE6D8E4u : 0xC6AEC2u)
+                    : lit > -0.35 ? 0xA489A0u
+                    : 0x8E7690u;
+                p.Set(x, y, Tone(c));
+            }
+        }
+
+        // the curl peeling off its top as it ages, drifting back from the way Gastly goes
+        if (age > 0.3)
+        {
+            var k = (age - 0.3) / 0.7;
+            var bx = x0 - (dir * (r * 0.4 + (k * 4)));
+            var by = y0 - r - (k * 3);
+            for (var i = 0; i < 5; i++)
+            {
+                var u = i / 4.0 * Math.PI * 1.2;
+                int x = (int)Math.Round(bx - (dir * Math.Cos(u) * 2)), y = (int)Math.Round(by - (Math.Sin(u) * 2));
+                if (CapSeaPalette.Bayer[((y & 3) * 4) + (x & 3)] < k * 18) continue;
+                p.Set(x, y, Tone(i < 2 ? 0xC6AEC2u : 0xA489A0u));
+            }
+        }
     }
 
     /// <summary>Lab selection: retain the existing lane assignments, but include every species when a batch exceeds its sea or sky lanes.</summary>
@@ -259,6 +324,8 @@ public static class CapVisitors
             // a Mega form (10000 + the species) goes where its species goes
             var forcedHere = ForcedSpecies is { } forced && Lanes.Any(other => other.Flies == lane.Flies && other.Pool.Contains(forced % 10000));
             var species = forcedHere ? ForcedSpecies!.Value : lane.Pool[e.Variant % lane.Pool.Length];
+            // the other form of a species (20000 + it, Jellicent's female, 2026-10-23): every other passing of it
+            if (!forcedHere && (e.Variant / 5) % 2 == 1 && CritterArt.All.ContainsKey(20000 + species)) species += 20000;
             // once the Mega Evolution is unlocked (the sixth trial), those that have a Mega form pass in it (2026-10-16)
             if (ctx.Megas && !forcedHere && CritterArt.All.ContainsKey(10000 + species)) species += 10000;
             if (CritterArt.All.TryGetValue(species, out var posed) && posed.Sheet is not null)

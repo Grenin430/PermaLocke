@@ -866,3 +866,6 @@ Batido pendiente de aprobación; otros tres sin modificar. Rutas y método en la
 ## 2026-10-20 — 1.1.2: lo del singleplayer después de la 1.1.1 (§271)
 - Lista aprobada: primer encuentro de ruta, capturables, duplicados, finales en la hierba, rendimiento, objetos al mar, ojos, sol, marea roja, y la Isla Exeggutor pendiente. Respuestas: banderín en el abismo sí, quitar el objeto encima del juego sí, quitar la marea roja sí, publicar como 1.1.2.
 - Ficheros copiados del singleplayer; `PlayNotifications` a mano (el voto de motes del torneo se queda). 2111 pruebas en verde; revisor sobre `EncounterGuard` y `CapBadge`.
+
+## 2026-10-23 — 1.1.3: lo del singleplayer después de la 1.1.2 (§272)
+- Pedido: «sube actualización al torneo con todo lo pendiente». Ficheros copiados del singleplayer; `PlayNotifications` no se toca (el voto de motes sigue). 2111 pruebas en verde. Publicada como 1.1.3.

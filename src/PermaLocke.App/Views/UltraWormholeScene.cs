@@ -148,13 +148,16 @@ public sealed class UltraWormholeScene : PixelScene
         Background(t, cx, cy, energy, f, failed);
         if (radius > 0.5)
         {
-            Halo(cx, cy, radius, slit, t, energy, failed);
-            Thickness(cx, cy, radius, slit, failed);
-            Tunnel(cx, cy, radius, slit, t, energy, pulse, failed);
+            // a real Ultra Wormhole, as the player's photo (2026-10-22): its glow, what it swallows going in, its net, its bolts, its core
+            var grow = Grow(t);
+            Glow(cx, cy, radius, slit, energy * GlowIn(t), pulse, failed);
             Particles(state, t, finale, cx, cy, radius, slit, inside: true);
-            FrameRing(cx, cy, radius, slit, t, energy, pulse, failed);
-            Lightning(cx, cy, radius, slit, t, energy, failed);
+            Net(cx, cy, radius, slit, t, grow, failed);
+            Filaments(cx, cy, radius, slit, t, energy * GlowIn(t), failed);
+            Bolts(cx, cy, radius, slit, t, energy, grow, failed);
+            Motes(cx, cy, radius, slit, t, grow, failed);
             Particles(state, t, finale, cx, cy, radius, slit, inside: false);
+            Core(cx, cy, radius, slit, pulse, failed);
             Shockwaves(state.PulseTimes, t, cx, cy, radius, slit);
             Sparks(cx, cy, radius, slit, t, energy, failed);
         }
@@ -167,16 +170,322 @@ public sealed class UltraWormholeScene : PixelScene
         if (toScreen) Present();
     }
 
-    private static double OpenScale(double t)
+    // ============================================================================================= the wormhole of the photo
+
+    /// <summary>The core's radius against the portal's: the rest is measured from it as in the reference (the items' wormhole, CapItemRain).</summary>
+    private const double CoreShare = 0.32;
+
+    /// <summary>One bolt of the burst round the core: its points out from the middle (in cores), and whether it is a twig off another.</summary>
+    private sealed record Ray((double X, double Y)[] Points, bool Twig);
+
+    /// <summary>The burst, made once: long jagged bolts all round the core, of uneven lengths as in the reference, some with a branch.</summary>
+    private static readonly Ray[] Rays = MakeRays();
+
+    /// <summary>The bolts that are not twigs, for the sparks that run along them.</summary>
+    private static readonly int[] MainRays = [.. Enumerable.Range(0, Rays.Length).Where(i => !Rays[i].Twig)];
+
+    private static Ray[] MakeRays()
     {
-        // The slit appears first (0-0.35) and then opens into the ring, overshooting a little before it settles.
-        if (t < 0.3) return 0.18;
-        var k = Math.Clamp((t - 0.3) / 0.9, 0, 1);
-        return 0.18 + (0.82 * Overshoot(k));
+        var rays = new List<Ray>();
+        uint seed = 1913;
+        double Rnd()
+        {
+            seed = (uint)(Hash((int)seed, 91) * 1000003);
+            return Hash((int)seed, 17);
+        }
+
+        const int count = 18;
+        for (var i = 0; i < count; i++)
+        {
+            var a = (i / (double)count * 2 * Math.PI) + ((Rnd() - 0.5) * 0.3);
+            var end = 2.3 + (Rnd() * 1.1);
+            var dist = 1.05 + (Rnd() * 0.15);
+            var points = new List<(double X, double Y)> { (Math.Cos(a) * dist, Math.Sin(a) * dist) };
+            var side = 0.0;
+            while (dist < end - 0.2)
+            {
+                dist += 0.2 + (Rnd() * 0.2);
+                side = Math.Clamp(side + ((Rnd() - 0.5) * 0.45), -0.32, 0.32);
+                points.Add(((Math.Cos(a) * dist) - (Math.Sin(a) * side), (Math.Sin(a) * dist) + (Math.Cos(a) * side)));
+                if (Rnd() < 0.12 && dist > 1.6)
+                {
+                    var fork = a + ((Rnd() < 0.5 ? 1 : -1) * (0.5 + (Rnd() * 0.4)));
+                    var (bx, by) = points[^1];
+                    var length = 0.3 + (Rnd() * 0.3);
+                    rays.Add(new Ray([(bx, by), (bx + (Math.Cos(fork) * length * 0.5), by + (Math.Sin(fork) * length * 0.5)), (bx + (Math.Cos(fork) * length), by + (Math.Sin(fork) * length))], true));
+                }
+            }
+
+            var tip = a + ((Rnd() - 0.5) * 0.25);
+            points.Add((Math.Cos(tip) * end, Math.Sin(tip) * end));
+            rays.Add(new Ray([.. points], false));
+        }
+
+        return [.. rays];
     }
 
-    /// <summary>The height of the portal against its width: a thin vertical slit of light that opens into the ellipse.</summary>
-    private static double SlitScale(double t) => t < 0.3 ? 4.5 * Math.Clamp(t / 0.3, 0.05, 1) : 1;
+    /// <summary>A colour, grey when the randomizer failed.</summary>
+    private static uint Tone(uint c, bool failed) => failed ? Desaturate(c) : c;
+
+    /// <summary>
+    /// The glow round it, one soft light as the photo has it: violet outside, magenta nearer, pale pink by the core; a little bluer to the
+    /// right, a touch warmer to the left; brighter as it works harder and in each pulse.
+    /// </summary>
+    private void Glow(double cx, double cy, double radius, double slit, double energy, double pulse, bool failed)
+    {
+        var core = radius * CoreShare;
+        var g = core * 3.1;
+        var strength = Math.Min(1.25, (0.75 + (energy * 0.35) + (pulse * 0.2)) * Math.Min(1, energy * 3));
+        for (var y = (int)(cy - (g * slit)) - 1; y <= cy + (g * slit) + 1; y++)
+        {
+            for (var x = (int)(cx - g) - 1; x <= cx + g + 1; x++)
+            {
+                double dx = x + 0.5 - cx, dy = (y + 0.5 - cy) / slit;
+                var d = Math.Sqrt(((dx + 1) * (dx + 1)) + (dy * dy)) / g;
+                if (d > 1 || (dx * dx) + (dy * dy) <= core * core) continue;
+                var c = Mix(0x7048E0u, 0xE050D0u, Math.Clamp((0.9 - d) / 0.45, 0, 1));
+                c = Mix(c, 0xFFC8F0u, Math.Clamp((0.42 - d) / 0.22, 0, 1));
+                if (dx > 0) c = Mix(c, 0x5A7CF0u, dx / g * 0.9);
+                var warm = Math.Sqrt(Math.Pow((dx + (g * 0.32)) / (g * 0.22), 2) + Math.Pow((dy + 2) / (g * 0.2), 2));
+                if (warm < 1) c = Mix(c, 0xFFA868u, (1 - warm) * 0.55);
+                // in five bands, stepped through the Bayer dither, so it reads as pixel art and not as a blur
+                var level = Math.Min(1, 1.2 * strength * Math.Pow(1 - d, 1.1));
+                var band = Math.Floor((level * 5) + (Bayer[((y & 3) * 4) + (x & 3)] / 16.0)) / 5;
+                Blend(x, y, Tone(c, failed), band);
+            }
+        }
+    }
+
+    /// <summary>The net: spokes out of the core across the disc and two close rings near its edge, thin and white, turning slowly.</summary>
+    private void Net(double cx, double cy, double radius, double slit, double t, double grow, bool failed)
+    {
+        var core = radius * CoreShare;
+        var reach = 1.02 + (0.88 * Ease(grow));
+        for (var k = 0; k < 24; k++)
+        {
+            var a = (k / 24.0 * 2 * Math.PI) + (t * 0.12);
+            double ca = Math.Cos(a), sa = Math.Sin(a);
+            Thin(cx + (ca * core * 1.02), cy + (sa * core * 1.02 * slit), cx + (ca * core * reach), cy + (sa * core * reach * slit), Tone(0xEAF6FFu, failed), k % 2 == 0 ? 0.55 : 0.35);
+
+            // a bright knot where a spoke crosses a ring
+            foreach (var ring in (ReadOnlySpan<double>)[1.45, 1.68])
+            {
+                if (reach < ring) continue;
+                Put((int)Math.Round(cx + (ca * core * ring)), (int)Math.Round(cy + (sa * core * ring * slit)), Tone(0xFFFFFFu, failed));
+            }
+        }
+
+        // the rings draw themselves round as it opens; the third one, inside, is faint and dotted
+        var sweep = Math.Clamp((grow - 0.25) / 0.6, 0, 1);
+        foreach (var (ring, alpha, dotted) in (ReadOnlySpan<(double, double, bool)>)[(1.45, 0.8, false), (1.68, 0.8, false), (1.22, 0.4, true)])
+        {
+            var r = core * ring;
+            var steps = (int)(r * 7) + 8;
+            var from = (ring * 2.1) + (t * (dotted ? -0.3 : 0.12));
+            for (var k = 0; k < steps * sweep; k++)
+            {
+                if (dotted && k % 3 != 0) continue;
+                var a = from + (k / (double)steps * 2 * Math.PI);
+                Blend((int)Math.Round(cx + (Math.Cos(a) * r)), (int)Math.Round(cy + (Math.Sin(a) * r * slit)), Tone(0xF0F8FFu, failed), alpha);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Fine crackle in the glow between the bolts: short thin lilac threads out of the core's edge, new ones ten times a second.
+    /// </summary>
+    private void Filaments(double cx, double cy, double radius, double slit, double t, double energy, bool failed)
+    {
+        var core = radius * CoreShare;
+        var tick = (int)Math.Floor(t * 10);
+        var count = (int)(16 + (Math.Min(1, energy) * 20));
+        for (var i = 0; i < count; i++)
+        {
+            var seed = (tick * 97) + i;
+            var a = Hash(seed, 3) * 2 * Math.PI;
+            var dist = 1.04;
+            var side = 0.0;
+            double px = cx + (Math.Cos(a) * core * dist), py = cy + (Math.Sin(a) * core * dist * slit);
+            var segments = 3 + (int)(Hash(seed, 5) * 4);
+            for (var j = 0; j < segments; j++)
+            {
+                dist += 0.12 + (Hash(seed + j, 7) * 0.14);
+                side += (Hash(seed + j, 11) - 0.5) * 0.3;
+                var nx = cx + (((Math.Cos(a) * dist) - (Math.Sin(a) * side)) * core);
+                var ny = cy + (((Math.Sin(a) * dist) + (Math.Cos(a) * side)) * core * slit);
+                Thin(px, py, nx, ny, Tone(j == 0 ? 0xF4E8FFu : 0xD8B8FFu, failed), 0.55 - (j * 0.07));
+                px = nx;
+                py = ny;
+            }
+        }
+    }
+
+    /// <summary>Sparks running out along the bolts from the core to their tips, a white point with a lilac trail.</summary>
+    private void Motes(double cx, double cy, double radius, double slit, double t, double grow, bool failed)
+    {
+        if (grow < 1) return;
+        var core = radius * CoreShare;
+        for (var m = 0; m < 14; m++)
+        {
+            var b = MainRays[(int)(Hash(m, 21) * MainRays.Length) % MainRays.Length];
+            var points = Rays[b].Points;
+            var u = Frac((t * (0.9 + (Hash(m, 23) * 0.6))) + Hash(m, 25));
+            for (var trail = 0; trail < 3; trail++)
+            {
+                var along = Math.Max(0, u - (trail * 0.04)) * (points.Length - 1);
+                var i = Math.Min(points.Length - 2, (int)along);
+                var f = along - i;
+                var x = points[i].X + ((points[i + 1].X - points[i].X) * f);
+                var y = points[i].Y + ((points[i + 1].Y - points[i].Y) * f);
+                var px = (int)Math.Round(cx + (x * core));
+                var py = (int)Math.Round(cy + (y * core * slit));
+                if (trail == 0)
+                {
+                    Put(px, py, Tone(0xFFFFFFu, failed));
+                    Blend(px + 1, py, Tone(0xE8D8FFu, failed), 0.8);
+                    Blend(px, py + 1, Tone(0xE8D8FFu, failed), 0.8);
+                }
+                else
+                {
+                    Blend(px, py, Tone(0xD8B8FFu, failed), 0.7 - (trail * 0.2));
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// The bolts: thick and jagged, white over a lilac glow, crackling ten times a second (one now and then flashing), a thin line where they
+    /// cross the disc so the net shows through; more of them lit as it works harder.
+    /// </summary>
+    private void Bolts(double cx, double cy, double radius, double slit, double t, double energy, double grow, bool failed)
+    {
+        var core = radius * CoreShare;
+        var tick = (int)Math.Floor(t * 10);
+        for (var pass = 0; pass < 2; pass++)
+        {
+            for (var b = 0; b < Rays.Length; b++)
+            {
+                var points = Rays[b].Points;
+
+                // how much of it has torn out of the core: each one a little after the last, the twigs only once the trunks are out
+                var frac = Rays[b].Twig ? Math.Clamp(((grow * 1.35) - 0.55) / 0.8, 0, 1) : Math.Clamp((grow * 1.35) - (Hash(b, 33) * 0.35), 0, 1);
+                var shown = frac * (points.Length - 1);
+                if (shown <= 0) continue;
+                var light = (Rays[b].Twig ? 0.8 : 1) * (0.78 + (0.22 * Hash(tick, b + 900))) * Math.Min(1, 0.6 + (energy * 0.4));
+                var flash = Hash(tick, b + 400) < 0.08;
+                for (var i = 0; i + 1 < points.Length && i < shown; i++)
+                {
+                    var (x0, y0) = Shake(points, i, b, tick);
+                    var (x1, y1) = Shake(points, i + 1, b, tick);
+                    if (i + 1 > shown)
+                    {
+                        var part = shown - i;
+                        x1 = x0 + ((x1 - x0) * part);
+                        y1 = y0 + ((y1 - y0) * part);
+                    }
+                    var outside = Math.Sqrt((((x0 + x1) / 2) * ((x0 + x1) / 2)) + (((y0 + y1) / 2) * ((y0 + y1) / 2))) > 1.75;
+                    double ax = cx + (x0 * core), ay = cy + (y0 * core * slit), bx = cx + (x1 * core), by = cy + (y1 * core * slit);
+                    if (pass == 0)
+                    {
+                        if (!outside) continue;
+                        Thick(ax, ay, bx, by, Tone(0xD6B4FFu, failed), (flash ? 0.45 : 0.18) * light, 2);
+                        Thick(ax, ay, bx, by, Tone(0xC8A6FFu, failed), (flash ? 0.8 : 0.55) * light, 1);
+                    }
+                    else
+                    {
+                        Thin(ax, ay, bx, by, Tone(0xFFFFFFu, failed), flash ? 1 : 0.96 * light);
+                        if (outside && !Rays[b].Twig && i < points.Length - 2) Thin(ax + 1, ay + 1, bx + 1, by + 1, Tone(0xF8F0FFu, failed), 0.8 * light);
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>A point of a bolt, nudged a little every tick so it crackles; its root and its tip stay.</summary>
+    private static (double X, double Y) Shake((double X, double Y)[] points, int i, int b, int tick)
+    {
+        var (x, y) = points[i];
+        if (i == 0 || i == points.Length - 1) return (x, y);
+        return (x + ((Hash(tick + (i * 31), b) - 0.5) * 0.12), y + ((Hash(tick + (i * 17), b + 50) - 0.5) * 0.12));
+    }
+
+    /// <summary>The white core and its bloom, pulsing and swelling in each pulse; its edge a ring of cyan on the right, as in the photo.</summary>
+    private void Core(double cx, double cy, double radius, double slit, double pulse, bool failed)
+    {
+        var core = radius * CoreShare * (1 + (pulse * 0.18));
+        var bloom = core + (radius * 0.05) + (pulse * radius * 0.06);
+        for (var y = (int)(cy - (bloom * slit)) - 1; y <= cy + (bloom * slit) + 1; y++)
+        {
+            for (var x = (int)(cx - bloom) - 1; x <= cx + bloom + 1; x++)
+            {
+                double dx = x + 0.5 - cx, dy = (y + 0.5 - cy) / slit;
+                var d = Math.Sqrt((dx * dx) + (dy * dy));
+                if (d > bloom) continue;
+                if (d > core)
+                {
+                    var fall = 1 - ((d - core) / (bloom - core));
+                    Blend(x, y, Tone(d < core + 1 ? 0xE0C8FFu : 0xFFF0FCu, failed), Math.Floor(((0.85 * fall) * 4) + (Bayer[((y & 3) * 4) + (x & 3)] / 16.0)) / 4);
+                    continue;
+                }
+
+                // the edge: cyan on its right, pink-white on its left; a faint ice ring inside; the heart pure white
+                var side = dx / Math.Max(0.001, d);
+                uint c = d > core - 1.6 ? (side > -0.15 ? 0x9CE8FFu : 0xFFE6FAu)
+                    : d > core * 0.68 && d < core * 0.76 ? 0xE6FAFFu
+                    : 0xFFFFFFu;
+                Put(x, y, Tone(c, failed));
+            }
+        }
+    }
+
+    private void Thin(double x0, double y0, double x1, double y1, uint c, double a)
+    {
+        var steps = (int)Math.Ceiling(Math.Max(Math.Abs(x1 - x0), Math.Abs(y1 - y0))) + 1;
+        for (var i = 0; i <= steps; i++)
+        {
+            var u = i / (double)steps;
+            Blend((int)Math.Round(x0 + ((x1 - x0) * u)), (int)Math.Round(y0 + ((y1 - y0) * u)), c, a);
+        }
+    }
+
+    private void Thick(double x0, double y0, double x1, double y1, uint c, double a, int w)
+    {
+        for (var oy = -w; oy <= w; oy++)
+        {
+            for (var ox = -w; ox <= w; ox++)
+            {
+                if ((ox * ox) + (oy * oy) > w * w) continue;
+                Thin(x0 + ox, y0 + oy, x1 + ox, y1 + oy, c, a);
+            }
+        }
+    }
+
+    private static uint Mix(uint a, uint b, double k)
+    {
+        k = Math.Clamp(k, 0, 1);
+        uint Ch(int shift) => (uint)Math.Round((((a >> shift) & 255) * (1 - k)) + (((b >> shift) & 255) * k));
+        return (Ch(16) << 16) | (Ch(8) << 8) | Ch(0);
+    }
+
+    /// <summary>
+    /// How big it is: a spark first (0-0.25 s), a small crackling knot (0.25-0.45), then it tears open round, a touch too far, and
+    /// settles by 1.35 s.
+    /// </summary>
+    private static double OpenScale(double t)
+    {
+        if (t < 0.25) return 0;
+        if (t < 0.45) return 0.1 * Ease((t - 0.25) / 0.2);
+        return 0.1 + (0.9 * Overshoot((t - 0.45) / 0.9));
+    }
+
+    /// <summary>It is round from the start: the old tall slit is gone (kept as 1 so the finale can still flatten it).</summary>
+    private static double SlitScale(double t) => 1;
+
+    /// <summary>How far the bolts and the net have grown out of the core, a little behind the core itself.</summary>
+    private static double Grow(double t) => Math.Clamp((t - 0.3) / 1.05, 0, 1);
+
+    /// <summary>The glow comes in as it tears open.</summary>
+    private static double GlowIn(double t) => Ease(Math.Clamp((t - 0.35) / 0.8, 0, 1));
 
     private static double Pulse(IReadOnlyList<double> pulses, double t)
     {
@@ -526,7 +835,7 @@ public sealed class UltraWormholeScene : PixelScene
         if (k is <= 0 or >= 1) return;
         var e = Math.Pow(k, 1.6);
         var r = start * (1 - e);
-        var deep = r < radius * TunnelEdge;
+        var deep = r < radius * 0.75;   // before it would turn to a silhouette of light (light 0.5 at 0.68)
         if (deep != inside) return;
 
         var angle = arm + (t * Spin) + (e * Twist);
@@ -536,7 +845,21 @@ public sealed class UltraWormholeScene : PixelScene
         // Size and light depend only on the distance, so an arm reads as one line.
         var scale = 0.28 + (0.6 * Math.Min(1, r / (radius * 2.4)));
         var light = Math.Clamp(1.15 - (r / (radius * 1.05)), 0, 1);
-        DrawSprite(sprite, x, y, scale, failed ? Grey : CoreIce, light);
+        // past the net it is only a speck of light falling into the core, never a blot over the bolts
+        if (deep)
+        {
+            int px = (int)Math.Round(x), py = (int)Math.Round(y);
+            Put(px, py, failed ? Grey : CoreWhite);
+            if (r > radius * 0.5)
+            {
+                Blend(px + 1, py, failed ? Grey : 0xE8D6FFu, 0.8);
+                Blend(px, py + 1, failed ? Grey : 0xE8D6FFu, 0.8);
+            }
+
+            return;
+        }
+
+        DrawSprite(sprite, x, y, scale, failed ? Grey : 0xE8D6FFu, light);
     }
 
     private static int Pick(int id, int count) => (int)(Hash(id, 12) * count) % count;
@@ -579,35 +902,62 @@ public sealed class UltraWormholeScene : PixelScene
         }
     }
 
-    /// <summary>The very first instant: a point of light that tears open into a vertical line.</summary>
+    /// <summary>
+    /// The very first instant: a point of light that flares into a four-pointed star with shorter diagonals, a ring of light
+    /// running out when it tears open, and the star fading as the wormhole takes its place.
+    /// </summary>
     private void Opening(double t, double cx, double cy)
     {
-        if (t > 0.45) return;
-        var k = t / 0.45;
-        var height = Ease(Math.Min(1, k * 2)) * 70;
-        var width = 1 + (k * 2);
-        for (var y = (int)(cy - height); y <= (int)(cy + height); y++)
+        if (t > 0.75) return;
+        var x0 = (int)Math.Floor(cx);
+        var y0 = (int)Math.Floor(cy);
+
+        // the star: grows to 0.3 s, then shrinks back into the core
+        var size = t < 0.3 ? Ease(t / 0.3) : 1 - Ease(Math.Clamp((t - 0.3) / 0.45, 0, 1));
+        var arm = (int)Math.Round(size * 22);
+        var diag = (int)Math.Round(size * 9);
+        for (var d = 0; d <= arm; d++)
         {
-            var fade = 1 - (Math.Abs(y - cy) / Math.Max(1, height));
-            for (var x = (int)(cx - width - 2); x <= (int)(cx + width + 2); x++)
+            var c = d < arm * 0.45 ? CoreWhite : d < arm * 0.8 ? CoreIce : CoreCyan;
+            foreach (var (ux, uy) in (ReadOnlySpan<(int, int)>)[(1, 0), (-1, 0), (0, 1), (0, -1)])
             {
-                var off = Math.Abs(x + 0.5 - cx);
-                if (off < width * 0.5) Put(x, y, CoreWhite);
-                else if (off < width) Put(x, y, CoreCyan);
-                else if (Bayer[((y & 3) * 4) + (x & 3)] < fade * 8) Put(x, y, HaloHot);
+                Put(x0 + (ux * d), y0 + (uy * d), c);
+                if (d < arm * 0.35)
+                {
+                    Put(x0 + (ux * d) + uy, y0 + (uy * d) + ux, HaloHot);
+                    Put(x0 + (ux * d) - uy, y0 + (uy * d) - ux, HaloHot);
+                }
             }
         }
 
-        // Rays from the point at the very start.
-        if (t < 0.2)
+        for (var d = 0; d <= diag; d++)
         {
-            for (var i = 0; i < 8; i++)
+            var c = d < diag * 0.5 ? CoreIce : HaloHot;
+            Put(x0 + d, y0 + d, c);
+            Put(x0 - d, y0 + d, c);
+            Put(x0 + d, y0 - d, c);
+            Put(x0 - d, y0 - d, c);
+        }
+
+        // its bright heart
+        var heart = (int)Math.Round(size * 3);
+        for (var y = -heart; y <= heart; y++)
+        for (var x = -heart; x <= heart; x++)
+        {
+            if ((x * x) + (y * y) <= heart * heart) Put(x0 + x, y0 + y, CoreWhite);
+        }
+
+        // the ring that runs out as it tears (0.4-0.75 s), through the dither as it fades
+        if (t >= 0.4)
+        {
+            var k = (t - 0.4) / 0.35;
+            var r = 8 + (Ease(k) * 70);
+            var steps = (int)(r * 7);
+            for (var i = 0; i < steps; i++)
             {
-                var a = i * Math.PI / 4;
-                for (var d = 2; d < 4 + (t * 120); d += 2)
-                {
-                    Put((int)(cx + (Math.Cos(a) * d)), (int)(cy + (Math.Sin(a) * d * Squash)), CoreIce);
-                }
+                if (Bayer[i & 15] > (1 - k) * 16) continue;
+                var ang = i * 2 * Math.PI / steps;
+                Put((int)Math.Round(cx + (Math.Cos(ang) * r)), (int)Math.Round(cy + (Math.Sin(ang) * r)), k < 0.5 ? CoreIce : HaloHot);
             }
         }
     }

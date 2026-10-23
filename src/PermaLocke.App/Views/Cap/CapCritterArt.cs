@@ -52,8 +52,12 @@ public sealed record CritterArt(int Species, string Name, CritterMotion Motion, 
             new(170, "Chinchou", CritterMotion.Fish, "", "", Fps: 8, Sheet: "chinchou", Cell: 70, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 35, Drift: 4, Bob: 3, Surge: 0.4),
             new(318, "Carvanha", CritterMotion.Fish, "", "", Fps: 10, Sheet: "carvanha", Cell: 70, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 51, Drift: 6, Bob: 1.5, Surge: 1.3),
             new(779, "Bruxish", CritterMotion.Fish, "", "", Fps: 8, Sheet: "bruxish", Cell: 78, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 39, Drift: 5, Bob: 1.5, Surge: 0.9),
+            // Poliwag (2026-10-22, the player sends the sprites one by one): its fin beats on its root, its foot kicks
+            new(60, "Poliwag", CritterMotion.Fish, "", "", Fps: 8, Sheet: "poliwag", Cell: 72, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 35, Drift: 5, Bob: 2, Surge: 0.8),
 
             // ------------------------------------------------------------ the sea, less common and rare
+            // Tentacruel (2026-10-22): a jellyfish; its hood pulses, its flaps beat, its tentacles trail in a slow wave
+            new(73, "Tentacruel", CritterMotion.Fish, "", "", Fps: 7, Sheet: "tentacruel", Cell: 88, Angles: [-3, 0, 3], Pose: 0, Height: 63, Drift: 4, Bob: 2.5, Surge: 0.4),
             new(119, "Seaking", CritterMotion.Fish, "", "", Fps: 7, Sheet: "seaking", Cell: 80, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 51, Drift: 5, Bob: 1.5, Surge: 0.8),
             new(226, "Mantine", CritterMotion.Fish, "", "", Fps: 6, Sheet: "mantine", Cell: 96, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 57, Drift: 7, Bob: 2, Surge: 0.9),
             new(320, "Wailmer", CritterMotion.Fish, "", "", Fps: 6, Sheet: "wailmer", Cell: 88, Angles: [-4, 0, 4], Pose: 0, Height: 47, Drift: 4, Bob: 1.5, Surge: 0.6),
@@ -77,6 +81,10 @@ public sealed record CritterArt(int Species, string Name, CritterMotion Motion, 
             new(10398, "Mega Staraptor", CritterMotion.Fish, "", "", Fps: 9, Sheet: "megastaraptor", Cell: 98, Angles: [-2, 0, 2], Pose: 0, Height: 83, Drift: 2, Bob: 0.5, Surge: 0.7),
             new(10380, "Mega Latias", CritterMotion.Fish, "", "", Fps: 7, Sheet: "megalatias", Cell: 94, Angles: [-4, -2, 0, 2, 4], Pose: 0, Height: 74, Drift: 4, Bob: 1, Surge: 0.8),
             new(10381, "Mega Latios", CritterMotion.Fish, "", "", Fps: 7, Sheet: "megalatios", Cell: 114, Angles: [-2, 0, 2], Pose: 0, Height: 68, Drift: 2, Bob: 0.5, Surge: 0.7),
+            // Mega Floette (2026-10-23): pixelized from the official artwork; it takes Floette's place once the Megas are unlocked
+            new(10670, "Mega Floette", CritterMotion.Fish, "", "", Fps: 7, Sheet: "megafloette", Cell: 136, Angles: [-3, 0, 3], Pose: 0, Height: 75, Drift: 2, Bob: 0.8, Surge: 0.4),
+            // Mega Dragalge (2026-10-23): takes Dragalge's place once the Megas are unlocked
+            new(10691, "Mega Dragalge", CritterMotion.Fish, "", "", Fps: 7, Sheet: "megadragalge", Cell: 108, Angles: [-3, 0, 3], Pose: 0, Height: 87, Drift: 4, Bob: 1.5, Surge: 0.5),
             // Shiny Tapu Koko (2026-10-18): it brought the first Z-Crystal until Arceus took its place (2026-10-19); kept, nothing draws it now.
             new(785, "Tapu Koko variocolor", CritterMotion.Fish, "", "", Fps: 12, Sheet: "tapukoko", Cell: 168, Angles: [-30, -26, -22], Pose: -26, Height: 93, Drift: 0, Bob: 0, Surge: 0),
             // Arceus flying (2026-10-19): brings the first Z-Crystal now, in Tapu Koko's place (CapArceus).
@@ -122,6 +130,61 @@ public sealed record CritterArt(int Species, string Name, CritterMotion Motion, 
             new(278, "Wingull", CritterMotion.Fish, "", "", Fps: 9, Sheet: "wingull", Cell: 82, Angles: [-8, -4, 0, 4, 8], Pose: 0, Height: 39, Drift: 10, Bob: 1.5, Surge: 0.8),
             new(16, "Pidgey", CritterMotion.Fish, "", "", Fps: 12, Sheet: "pidgey", Cell: 78, Angles: [-4, 0, 4], Pose: 0, Height: 58, Drift: 1, Bob: 0.3, Surge: 0.6),
             new(21, "Spearow", CritterMotion.Fish, "", "", Fps: 12, Sheet: "spearow", Cell: 92, Angles: [-2, 0, 2], Pose: 0, Height: 60, Drift: 1, Bob: 0.3, Surge: 0.6),
+            // Gastly (2026-10-22): its gas swells round the ball; it leaves a trail of gas (CapVisitors.GasPuff)
+            new(92, "Gastly", CritterMotion.Fish, "", "", Fps: 8, Sheet: "gastly", Cell: 58, Angles: [-3, 0, 3], Pose: 0, Height: 42, Drift: 5, Bob: 2, Surge: 0.4),
+            // Haunter (2026-10-22): the body floats, each hand floats on its own beat, the wisp of its tail waves
+            new(93, "Haunter", CritterMotion.Fish, "", "", Fps: 8, Sheet: "haunter", Cell: 78, Angles: [-3, 0, 3], Pose: 0, Height: 49, Drift: 4, Bob: 2, Surge: 0.5),
+            // Whiscash (2026-10-22): tail fin, whiskers, dorsal and the three fins underneath swung whole on their roots
+            new(340, "Whiscash", CritterMotion.Fish, "", "", Fps: 6, Sheet: "whiscash", Cell: 88, Angles: [-4, 0, 4], Pose: 0, Height: 49, Drift: 4, Bob: 1, Surge: 0.6),
+            // Beldum (2026-10-22): it hovers; the head nods whole, the arm rocks on its joint, the claws twitch
+            new(374, "Beldum", CritterMotion.Fish, "", "", Fps: 7, Sheet: "beldum", Cell: 58, Angles: [-4, 0, 4], Pose: 0, Height: 35, Drift: 3, Bob: 1.5, Surge: 0.3),
+            // Jirachi (2026-10-22): it floats swaying, its two ribbons wave on their roots, the tags of its star rock
+            new(385, "Jirachi", CritterMotion.Fish, "", "", Fps: 8, Sheet: "jirachi", Cell: 64, Angles: [-4, 0, 4], Pose: 0, Height: 45, Drift: 4, Bob: 2, Surge: 0.5),
+            // Vespiquen (2026-10-22): it hovers; its wings buzz twice a cycle, its arms sway
+            new(416, "Vespiquen", CritterMotion.Fish, "", "", Fps: 10, Sheet: "vespiquen", Cell: 72, Angles: [-3, 0, 3], Pose: 0, Height: 56, Drift: 3, Bob: 1.5, Surge: 0.4),
+            // Drifloon (2026-10-23): the balloon bobs, its puff sways, its four strings swing like pendulums
+            new(425, "Drifloon", CritterMotion.Fish, "", "", Fps: 7, Sheet: "drifloon", Cell: 78, Angles: [-3, 0, 3], Pose: 0, Height: 59, Drift: 4, Bob: 1.5, Surge: 0.2),
+            // Mismagius (2026-10-23): hat and head float, frills and hat tip flutter, robe and tails swing
+            new(429, "Mismagius", CritterMotion.Fish, "", "", Fps: 7, Sheet: "mismagius", Cell: 84, Angles: [-3, 0, 3], Pose: 0, Height: 64, Drift: 4, Bob: 1.5, Surge: 0.4),
+            // Tympole (2026-10-23): its tail beats on its root, its head bobs, its sound-balls pulse
+            new(535, "Tympole", CritterMotion.Fish, "", "", Fps: 9, Sheet: "tympole", Cell: 52, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 34, Drift: 5, Bob: 2, Surge: 0.9),
+            // Basculin (2026-10-23): tail fin beats hard, dorsal, underside and jaw fins swung whole
+            new(550, "Basculin", CritterMotion.Fish, "", "", Fps: 10, Sheet: "basculin", Cell: 68, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 38, Drift: 5, Bob: 1.5, Surge: 1.2),
+            // Basculegion (2026-10-23): tail and ghost wisps, dorsal and fins swung whole; drawn nose-down, Pose 18
+            new(902, "Basculegion", CritterMotion.Fish, "", "", Fps: 9, Sheet: "basculegion", Cell: 96, Angles: [12, 15, 18, 21, 24], Pose: 18, Height: 45, Drift: 5, Bob: 1.5, Surge: 1.1),
+            // Jellicent (2026-10-23), both forms: the male here, the female as 20000 + the species; head pulses, arms beat, tentacles sway
+            new(593, "Jellicent", CritterMotion.Fish, "", "", Fps: 7, Sheet: "jellicent_macho", Cell: 76, Angles: [-3, 0, 3], Pose: 0, Height: 50, Drift: 5, Bob: 2.5, Surge: 0.4),
+            new(20593, "Jellicent", CritterMotion.Fish, "", "", Fps: 7, Sheet: "jellicent_hembra", Cell: 96, Angles: [-3, 0, 3], Pose: 0, Height: 66, Drift: 5, Bob: 2.5, Surge: 0.4),
+            // Tornadus (2026-10-23): rides its cloud; tail, mane and fist swung whole, the cloud drifting behind
+            new(641, "Tornadus", CritterMotion.Fish, "", "", Fps: 7, Sheet: "tornadus", Cell: 96, Angles: [-3, 0, 3], Pose: 0, Height: 76, Drift: 3, Bob: 1, Surge: 0.8),
+            // Thundurus (2026-10-23): riding its cloud like Tornadus (genie_rig.js)
+            new(642, "Thundurus", CritterMotion.Fish, "", "", Fps: 7, Sheet: "thundurus", Cell: 96, Angles: [-3, 0, 3], Pose: 0, Height: 73, Drift: 3, Bob: 1, Surge: 0.8),
+            // Landorus (2026-10-23): riding its cloud like Tornadus (genie_rig.js)
+            new(645, "Landorus", CritterMotion.Fish, "", "", Fps: 7, Sheet: "landorus", Cell: 98, Angles: [-3, 0, 3], Pose: 0, Height: 75, Drift: 3, Bob: 1, Surge: 0.8),
+            // Floette of the Eternal Flower (2026-10-23): hat brim, arms, stem and legs swung whole
+            new(670, "Floette", CritterMotion.Fish, "", "", Fps: 8, Sheet: "floette", Cell: 86, Angles: [-3, 0, 3], Pose: 0, Height: 66, Drift: 4, Bob: 2, Surge: 0.4),
+            // Hoopa (2026-10-23): floats; horns rock in their rings, hands drift on their own beat
+            new(720, "Hoopa", CritterMotion.Fish, "", "", Fps: 8, Sheet: "hoopa", Cell: 62, Angles: [-3, 0, 3], Pose: 0, Height: 44, Drift: 4, Bob: 2, Surge: 0.4),
+            // Dragalge (2026-10-23): crest, branch, leaf fins and tail leaf swung whole
+            new(691, "Dragalge", CritterMotion.Fish, "", "", Fps: 7, Sheet: "dragalge", Cell: 106, Angles: [-4, 0, 4], Pose: 0, Height: 87, Drift: 5, Bob: 1.5, Surge: 0.6),
+            // Phantump (2026-10-23): floating stump; branch arms, head curl and ghost tail swung whole
+            new(708, "Phantump", CritterMotion.Fish, "", "", Fps: 8, Sheet: "phantump", Cell: 60, Angles: [-3, 0, 3], Pose: 0, Height: 40, Drift: 4, Bob: 2, Surge: 0.4),
+            // Inkay (2026-10-23): swims upside down; its arms flap outward, mirrored
+            new(686, "Inkay", CritterMotion.Fish, "", "", Fps: 8, Sheet: "inkay", Cell: 58, Angles: [-3, 0, 3], Pose: 0, Height: 43, Drift: 4, Bob: 2, Surge: 0.5),
+            // Tapu Fini (2026-10-23): flota en su concha; el cuerno y las dos aletas de abajo se mecen enteros
+            new(788, "Tapu Fini", CritterMotion.Fish, "", "", Fps: 7, Sheet: "tapufini", Cell: 116, Angles: [-3, 0, 3], Pose: 0, Height: 91, Drift: 4, Bob: 2, Surge: 0.4),
+            // Tapu Lele (2026-10-23): flota en su concha; las dos cintas rizadas se mecen sobre los hombros a contratiempo
+            new(786, "Tapu Lele", CritterMotion.Fish, "", "", Fps: 7, Sheet: "tapulele", Cell: 94, Angles: [-3, 0, 3], Pose: 0, Height: 75, Drift: 4, Bob: 2, Surge: 0.4),
+            // Cosmog (2026-10-23): flota; los dos brazos con sus nubes de gas se mecen sobre su raíz a contratiempo
+            new(789, "Cosmog", CritterMotion.Fish, "", "", Fps: 7, Sheet: "cosmog", Cell: 66, Angles: [-3, 0, 3], Pose: 0, Height: 46, Drift: 4, Bob: 2, Surge: 0.4),
+            // Lunala (2026-10-23): de frente; las alas baten en espejo, inclinadas desde el costado (sin abrir hueco), bajando rápido y subiendo despacio; el cuerpo sube con el golpe y la media luna de abajo va con retraso
+            new(792, "Lunala", CritterMotion.Fish, "", "", Fps: 10, Sheet: "lunala", Cell: 106, Angles: [-3, 0, 3], Pose: 0, Height: 86, Drift: 3, Bob: 1, Surge: 0.8),
+            // Nihilego (2026-10-23): flota como una medusa; los lados cuelgan del sombrero y se mecen a contratiempo, las dos colas de abajo con el cuerpo
+            new(793, "Nihilego", CritterMotion.Fish, "", "", Fps: 7, Sheet: "nihilego", Cell: 86, Angles: [-3, 0, 3], Pose: 0, Height: 68, Drift: 5, Bob: 2.5, Surge: 0.4),
+            // Naganadel (2026-10-23): baten las dos alas enteras (la del fondo con retraso), el cuerpo sube con el golpe y el aguijón va detrás
+            new(804, "Naganadel", CritterMotion.Fish, "", "", Fps: 9, Sheet: "naganadel", Cell: 100, Angles: [-3, 0, 3], Pose: 0, Height: 78, Drift: 3, Bob: 1.5, Surge: 0.8),
+            // Poipole (2026-10-23): flota; los brazos se agitan a contratiempo, la cresta se mece y la cola se mueve
+            new(803, "Poipole", CritterMotion.Fish, "", "", Fps: 8, Sheet: "poipole", Cell: 74, Angles: [-3, 0, 3], Pose: 0, Height: 56, Drift: 4, Bob: 2, Surge: 0.5),
             new(731, "Pikipek", CritterMotion.Fish, "", "", Fps: 14, Sheet: "pikipek", Cell: 84, Angles: [-2, 0, 2], Pose: 0, Height: 58, Drift: 1, Bob: 0.3, Surge: 0.6),
             new(12, "Butterfree", CritterMotion.Fish, "", "", Fps: 8, Sheet: "butterfree", Cell: 76, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 52, Drift: 8, Bob: 3.5, Surge: 0.6),
             new(333, "Swablu", CritterMotion.Fish, "", "", Fps: 8, Sheet: "swablu", Cell: 94, Angles: [-6, -3, 0, 3, 6], Pose: 0, Height: 38, Drift: 8, Bob: 3, Surge: 0.6),
@@ -147,7 +210,7 @@ public sealed record CritterArt(int Species, string Name, CritterMotion Motion, 
             // ------------------------------------------------------------ the legends of the sky
             new(384, "Rayquaza", CritterMotion.Fish, "", "", Fps: 7, Sheet: "rayquaza", Cell: 80, Angles: [-1, 0, 1], Pose: 0, Height: 61, Drift: 2, Bob: 0.5, Surge: 0.7),
             new(250, "Ho-Oh", CritterMotion.Fish, "", "", Fps: 6, Sheet: "hooh", Cell: 80, Angles: [-1, 0, 1], Pose: 0, Height: 61, Drift: 2, Bob: 0.5, Surge: 0.6),
-            new(144, "Articuno", CritterMotion.Fish, "", "", Fps: 7, Sheet: "articuno", Cell: 76, Angles: [-2, 0, 2], Pose: 0, Height: 61, Drift: 2, Bob: 0.5, Surge: 0.6),
+            new(144, "Articuno", CritterMotion.Fish, "", "", Fps: 8, Sheet: "articuno", Cell: 82, Angles: [-2, 0, 2], Pose: 0, Height: 61, Drift: 2, Bob: 0.5, Surge: 0.6),
             new(145, "Zapdos", CritterMotion.Fish, "", "", Fps: 9, Sheet: "zapdos", Cell: 108, Angles: [-2, 0, 2], Pose: 0, Height: 61, Drift: 2, Bob: 0.5, Surge: 0.9),
             new(146, "Moltres", CritterMotion.Fish, "", "", Fps: 8, Sheet: "moltres", Cell: 90, Angles: [-2, 0, 2], Pose: 0, Height: 61, Drift: 2, Bob: 0.5, Surge: 0.8),
         ];

@@ -30,6 +30,9 @@ internal abstract class DeathStyle(CapDeathScene s)
     public virtual void AfterPiece(CapSheet p, DeathPiece piece, double s, double t) { }
     public virtual double WormholeSize(double t) => 1;
 
+    /// <summary>How far another of the party is pushed from its place at a moment of the death (the deaths whose blast reaches them).</summary>
+    public virtual (int X, int Y) Push(CapCreature c, double t) => (0, 0);
+
     /// <summary>A frame of the death: its own things under the fallen one, the shared breaking, its own things over it, and the shake of the hit.</summary>
     public virtual void Frame(CapSheet p, double t, double phase)
     {
@@ -67,6 +70,7 @@ internal abstract class DeathStyle(CapDeathScene s)
         CapDeathKind.Corruption => new CorruptionDeath(s),
         CapDeathKind.Storm => new StormDeath(s),
         CapDeathKind.Bolts => new BoltsDeath(s),
+        CapDeathKind.SelfDestruct => new SelfDestructDeath(s),
         _ => new NecrozmaDeath(s)
     };
 }

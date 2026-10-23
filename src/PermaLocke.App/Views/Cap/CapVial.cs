@@ -217,53 +217,119 @@ public sealed class CapVial
             }
         }
 
+        // The gush: a dome of medicine welling up out of the open neck, pushed higher as the streams leave it, then sinking back.
+        if (s is > 0.36 and < 1.1)
+        {
+            var g = (s - 0.36) / 0.74;
+            var height = Math.Sin(Math.Min(1, g * 1.6) * Math.PI * 0.5) * 7 * (1 - (g * g));
+            for (var k = 0.0; k <= height; k += 0.5)
+            {
+                var w = k > height - 2 ? 2.2 * Math.Sqrt(Math.Max(0, (height - k) / 2)) : 2.2 + (Math.Sin((s * 30) + k) * 0.3);
+                Blob(p, mx, my - k, w, k > height - 1.5);
+            }
+        }
+
         for (var n = 0; n < targets.Count; n++)
         {
             var target = targets[n];
-            var leave = 0.45 + (n * 0.1);
-            var fly = 0.5 + ((targets.Count - 1 - n) * 0.04);
+            var leave = 0.45 + (n * 0.09);
+            var fly = 0.55 + ((targets.Count - 1 - n) * 0.05);
             var u = (s - leave) / fly;
-            var ctrlX = mx - 16 - (n * 2);
-            var ctrlY = target.Y - 12.0;
+
+            // A thrown arc: out of the neck, swinging out to the left early on (each one further, so they fan like a fountain), over the
+            // Pokémon's head and straight down onto it from above (the swing is gone by then, so it never lands sideways).
+            double lx = target.X - 3, ly = target.Y - 6;
+            var lift = ((my - ly + (2.2 * Math.Abs(lx - mx))) / 4) + 6;   // high enough that it always comes down steeply, even onto the lowest
+            var bow = 4 + ((my - ly) * 0.14);   // the higher it goes, the wider it swings: a fan, and the low ones never cross sideways
             (double X, double Y) Point(double k) =>
-                (((1 - k) * (1 - k) * mx) + (2 * (1 - k) * k * ctrlX) + (k * k * (target.X - 3)),
-                 ((1 - k) * (1 - k) * my) + (2 * (1 - k) * k * ctrlY) + (k * k * (target.Y - 4)));
+                (mx + ((lx - mx) * k) - (bow * 6.75 * k * (1 - k) * (1 - k)), my + ((ly - my) * k) - (lift * 4 * k * (1 - k)));
 
-            // the ribbon: a light core, darker edges, its tail thinning; drops falling off it
-            if (u is > 0 and < 1.3)
+            if (u is > 0 and < 1)
             {
-                for (var k = 0; k < 46; k++)
+                // the stream behind it: thick near the drop and thinning back, broken into beads at its far end
+                const double Tail = 0.15;
+                for (var k = Tail; k > 0; k -= 0.006)
                 {
-                    var v = Math.Min(1, u) - (k * 0.006);
+                    var v = u - k;
                     if (v <= 0) continue;
+                    var near = 1 - (k / Tail);
+                    if (near < 0.4 && ((int)(k / 0.006) % 6) > 1) continue;
                     var (x, y) = Point(v);
-                    int ix = (int)Math.Round(x), iy = (int)Math.Round(y);
-                    p.Set(ix, iy, k < 3 ? WhiteC : Pink[3]);
-                    if (k < 30)
-                    {
-                        p.Set(ix + 1, iy, Pink[2]);
-                        p.Set(ix, iy + 1, Pink[1]);
-                        p.Set(ix - 1, iy, Pink[2]);
-                    }
-
-                    if (k < 4)
-                    {
-                        p.Set(ix, iy - 1, Pink[4]);
-                        p.Set(ix + 1, iy - 1, Pink[3]);
-                    }
+                    Blob(p, x, y, near < 0.4 ? 0.9 : 0.8 + (near * 1.4), false);
                 }
 
-                for (var d = 0; d < 6; d++)
-                {
-                    var age = s - (leave + (d * fly / 6));
-                    if (age is < 0 or > 0.6) continue;
-                    var (x, y) = Point(Math.Min(1, (d / 6.0) + 0.08));
-                    p.Set((int)Math.Round(x + ((Rnd(d, n) - 0.5) * 2)), (int)Math.Round(y + (age * age * 60) + (age * 4)), d % 2 == 0 ? Pink[2] : Pink[3]);
-                }
+                // the drop at its head, stretched along its way, a round front and a light on it
+                var (hx, hy) = Point(u);
+                var (bx, by) = Point(Math.Max(0, u - 0.02));
+                Drop(p, hx, hy, hx - bx, hy - by, 2.7);
+            }
+
+            // beads shed off the stream, falling on their own
+            for (var d = 0; d < 5; d++)
+            {
+                var shed = leave + (fly * (0.15 + (d * 0.16)));
+                var age = s - shed;
+                if (age is < 0 or > 0.55) continue;
+                var (x, y) = Point(0.15 + (d * 0.16));
+                Blob(p, x + ((Rnd(d, n) - 0.5) * 3) - (age * 4), y + (age * age * 70), age < 0.3 ? 1 : 0.6, true);
             }
 
             Splash(p, s - leave - fly, target, n);
         }
+    }
+
+    /// <summary>A round bead of the medicine: a dark rim, a pink body lit from the upper left, a white glint on the bigger ones.</summary>
+    private static void Blob(CapSheet p, double x0, double y0, double r, bool glint)
+    {
+        int ix = (int)Math.Round(x0), iy = (int)Math.Round(y0);
+        if (r < 1.2)
+        {
+            // a small bead is a 2×2 square lit on its upper left, a tiny one a single cell: never a plus sign
+            p.Set(ix, iy, r < 0.8 ? Pink[2] : Pink[3]);
+            if (r < 0.8) return;
+            p.Set(ix + 1, iy, Pink[2]);
+            p.Set(ix, iy + 1, Pink[2]);
+            p.Set(ix + 1, iy + 1, Pink[1]);
+            return;
+        }
+
+        var reach = (int)Math.Ceiling(r) + 1;
+        for (var y = -reach; y <= reach; y++)
+        {
+            for (var x = -reach; x <= reach; x++)
+            {
+                var d = Math.Sqrt((x * x) + (y * y));
+                if (d > r + 0.35) continue;
+                var c = d > r - 0.6 ? Pink[1] : x + y < -r * 0.6 ? Pink[3] : Pink[2];
+                p.Set(ix + x, iy + y, c);
+            }
+        }
+
+        if (glint && r >= 1.5) p.Set(ix - 1, iy - 1, WhiteC);
+    }
+
+    /// <summary>The drop at the head of a stream: a teardrop pointing back along <paramref name="vx"/>, <paramref name="vy"/>, round in front.</summary>
+    private static void Drop(CapSheet p, double x0, double y0, double vx, double vy, double r)
+    {
+        var l = Math.Max(0.001, Math.Sqrt((vx * vx) + (vy * vy)));
+        double fx = vx / l, fy = vy / l;
+        var reach = (int)Math.Ceiling(r * 2.4) + 1;
+        int ix = (int)Math.Round(x0), iy = (int)Math.Round(y0);
+        for (var y = -reach; y <= reach; y++)
+        {
+            for (var x = -reach; x <= reach; x++)
+            {
+                var along = (x * fx) + (y * fy);
+                var across = (-x * fy) + (y * fx);
+                var stretch = along < 0 ? r * 2.2 : r;
+                var e = Math.Sqrt(((along / stretch) * (along / stretch)) + ((across / (r * (along < 0 ? 1 + (along / (r * 4.4)) : 1))) * (across / r)));
+                if (e > 1.12) continue;
+                var c = e > 0.82 ? Pink[1] : x + y < -1 ? Pink[4] : x + y < 1 ? Pink[3] : Pink[2];
+                p.Set(ix + x, iy + y, c);
+            }
+        }
+
+        p.Set(ix - 1 + (int)Math.Round(fx * 0.6), iy - 1 + (int)Math.Round(fy * 0.6), WhiteC);
     }
 
     private static void Splash(CapSheet p, double h, Target target, int n)
@@ -304,10 +370,19 @@ public sealed class CapVial
                 var c = p.At(x, y);
                 if (Near(c, sea1) || Near(c, sea2) || Near(c, sea3) || Near(c, sea4) || Luma(c) < 30) continue;
                 var down = (y - box.Top) / (double)Math.Max(1, box.Height);
-                if (h < 0.42 && down < run) p.Set(x, y, CapSheet.Mix(c, Pink[3], 0.7));
+                if (h < 0.42 && down < run) p.Set(x, y, CapSheet.Mix(c, Pink[4], run - down < 0.12 ? 0.75 : 0.35));
                 else if (h is >= 0.42 and < 0.5) p.Set(x, y, WhiteC);
                 else if (h is >= 0.5 and < 0.9 && Bayer[y & 3, x & 3] < (1 - ((h - 0.5) / 0.4)) * 16) p.Set(x, y, CapSheet.Mix(c, Pink[4], 0.55));
             }
+        }
+
+        // two drips sliding off its underside once the sheen reaches it
+        for (var q = 0; q < 2; q++)
+        {
+            var age = h - 0.3 - (q * 0.08);
+            if (age is < 0 or > 0.45) continue;
+            var dx = box.Left + (box.Width * (0.35 + (q * 0.3)));
+            Blob(p, dx, box.Top + box.Height - 2 + (age * age * 60), age < 0.15 ? 1.4 : 1, age < 0.15);
         }
 
         // sparkles twinkling round it

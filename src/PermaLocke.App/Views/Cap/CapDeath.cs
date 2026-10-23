@@ -25,7 +25,10 @@ public enum CapDeathKind
     Bolts,
 
     /// <summary>Necrozma comes out of a rift, drinks the colour of the whole layout and takes it, as a cinematic.</summary>
-    Necrozma
+    Necrozma,
+
+    /// <summary>Self-Destruct: it glows, trembles and swells, bursts in a fireball whose shockwave shoves the party and lifts the abyss's sea.</summary>
+    SelfDestruct
 }
 
 /// <summary>One death being shown: whose (its place in the party), which, and when it starts.</summary>
@@ -56,6 +59,7 @@ public static class CapDeath
         CapDeathKind.Corruption => 3.6,
         CapDeathKind.Storm => 7.4,
         CapDeathKind.Bolts => 3.8,
+        CapDeathKind.SelfDestruct => SelfDestructDeath.Blast + 4.4,
         _ => 6.6
     };
 

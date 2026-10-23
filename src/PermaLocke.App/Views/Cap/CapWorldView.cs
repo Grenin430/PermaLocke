@@ -14,6 +14,9 @@ public sealed class CapWorldView
     private readonly CapRepel _repel = new();
     private readonly CapEggTurbo _turbo = new();
     private readonly List<CapVial.Target> _vialTargets = [];
+
+    /// <summary>The death being shown in this frame, for the ones whose blast pushes the rest of the party.</summary>
+    private CapDeathScene? _pushing;
     private readonly string?[] _keys;
     private readonly int[] _builtCap;
     private readonly CapBuoy _buoy = new();
@@ -138,6 +141,8 @@ public sealed class CapWorldView
         CapSeaLive.Stars(frame, Layout, _context, phase);
         CapClouds.Paint(frame, Layout, pal, _context, t);
         CapFarSky.Paint(frame, Layout, pal, _context, phase, scene?.WormholeSize(t) ?? 1);
+        // the small wormhole by the tower behind what flies past (2026-10-21, asked)
+        if (Layout.Panel == CapPanelKind.Deep) CapItemRain.PaintWormhole(frame, Layout, data.Items ?? [], t);
         CapSeaLive.Surface(frame, Layout, pal, _context, phase);
         CapSeaLive.Snow(frame, Layout, pal, _context, phase);
         CapFlora.Paint(frame, Layout, pal, _context, _fossils, phase);
@@ -231,6 +236,7 @@ public sealed class CapWorldView
 
         if (Layout.Panel == CapPanelKind.Deep && route is not null) CapEncounter.Paint(frame, Layout, _context, route, t - route.Start);
 
+        _pushing = scene;
         if (Layout.Panel == CapPanelKind.Party) PaintParty(frame, data, pal, mood, anim, t, phase, deaths, trial, order);
 
         // The Pokévial (2026-10-16): beside the cap's sign, and its healing over the party while it plays.
@@ -273,6 +279,9 @@ public sealed class CapWorldView
                     break;
                 case CapDeathKind.Corruption:
                     CorruptionDeath.Deep(frame, since);
+                    break;
+                case CapDeathKind.SelfDestruct:
+                    SelfDestructDeath.Deep(frame, Layout, _context, since);
                     break;
             }
         }
@@ -455,8 +464,10 @@ public sealed class CapWorldView
 
             // the light of a trial passing over it: it hops, washes towards the light and its halo grows
             var lift = trial is null ? null : CapTrial.Lift(trial, Layout, _context, creature.Centre, ground);
-            var ox = pose.Dx + (anim is null ? 0 : (int)Math.Round(sway * Math.Sin((phase * 0.8) + (i * 1.3))));
-            var oy = pose.Dy - (lift?.Hop ?? 0) + (anim is null ? 0 : (int)Math.Round(1.2 * Math.Sin((phase * 1.1) + (i * 1.7))));
+            // a death's blast reaching it (Self-Destruct) throws it from its place
+            var (px, py) = _pushing?.Push(creature, t) ?? (0, 0);
+            var ox = pose.Dx + px + (anim is null ? 0 : (int)Math.Round(sway * Math.Sin((phase * 0.8) + (i * 1.3))));
+            var oy = pose.Dy + py - (lift?.Hop ?? 0) + (anim is null ? 0 : (int)Math.Round(1.2 * Math.Sin((phase * 1.1) + (i * 1.7))));
             if (!pose.Hidden)
             {
                 creature.PaintPicture(p, ox, oy, pal.Ink, pose.Breath, pose.Strength, lift?.Wash ?? pose.HaloTint, pose.Wave, (phase * pose.WaveSpeed) + (i * 1.1),

@@ -129,6 +129,13 @@ public sealed class CapDeathScene
     /// <summary>The size the wormhole is drawn at while this death plays (it swells in some of them).</summary>
     public double WormholeSize(double t) => _style.WormholeSize(t - Turn.Start);
 
+    /// <summary>How far another of the party is pushed from its place at a moment of the window's clock.</summary>
+    public (int X, int Y) Push(CapCreature c, double now)
+    {
+        var t = now - Turn.Start;
+        return t < 0 || t > Seconds(Turn.Kind) ? (0, 0) : _style.Push(c, t);
+    }
+
     /// <summary>Paints the death at a moment of the window's clock, after the rest of the window.</summary>
     public void Paint(CapSheet p, double now, double phase)
     {

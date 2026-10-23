@@ -191,6 +191,11 @@
       "x": 0.3297709923664122,
       "y": 0.5916334661354582
     },
+    "prado-de-poni": {
+      "isla": "Poni",
+      "x": 0.412,
+      "y": 0.589
+    },
     "rancho-ohana": {
       "isla": "Akala",
       "x": 0.45426829268292684,
@@ -331,7 +336,6 @@
     "playa-de-kantai",
     "playa-de-ula-ula",
     "poni",
-    "prado-de-poni",
     "pueblo-lilii",
     "pueblo-ohana",
     "pueblo-po",

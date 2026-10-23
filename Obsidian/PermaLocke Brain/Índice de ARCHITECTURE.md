@@ -275,3 +275,5 @@ Otros docs: `docs/DISTRIBUCION-LOCAL.md` (reparto local, informes del amigo, rev
 - §269 · Las ruinas completas, en el torneo: ficheros del panel copiados (el torneo no tenía cambios propios), once hojas nuevas; laboratorio idéntico al singleplayer.
 - §270 · Isla Exeggutor: Chesnaught Nv45 y Pinsir Nv42 y Nv43 en `allowedStatics`. Se pueden capturar siempre y no gastan la ruta.
 - §271 · Primer encuentro (la ruta en el panel), capturables y duplicados con banderín, finales en la hierba, objetos al mar por un ultraumbral, ojos que no parpadean, sin destellos del sol ni marea roja: pasado del singleplayer (1.1.2).
+
+- §272 · Visitantes nuevos del mar y del cielo (y más a menudo), muerte Autodestrucción, portal del randomizador como ultraumbral, líquido del Pokévial, ultraumbral de objetos detrás de los voladores: pasado del singleplayer (1.1.3).

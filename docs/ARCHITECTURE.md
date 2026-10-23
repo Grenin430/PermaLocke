@@ -13811,3 +13811,12 @@ Pedido por el jugador: subir al torneo lo hecho en el singleplayer después de l
 - **Qué hace** (detalle en el singleplayer, §269-§275): la ruta del primer encuentro en el panel (`EncounterGuard.EncounterSeen`, a los 2,5 s), el banderín «POKÉMON CAPTURABLE» para los estáticos permitidos y ámbar «DUPLICADO, TÚ ELIGES» para un duplicado, los tres finales en la hierba (`WildFainted`, `CapBadge.Outcome`), las cachés del suelo, el ultraumbral junto a la torre que escupe los objetos al mar (`CapItemRain`), los ojos que no parpadean al encoger (`CapVisitors.Pick`/`Tiny`), sin destellos del sol en el agua y sin la marea roja por pocos PS.
 - **Decisiones del jugador para el torneo:** el banderín con texto en el abismo se mantiene como excepción; la animación del objeto encima del juego se quita (`PlayNotifications` ya no llama a `CatchCeremony.CelebrateItem`; el voto de motes sigue); la marea roja también se quita.
 - Con la Isla Exeggutor (§270). Pruebas: 2111 en verde.
+
+## §272 · Visitantes nuevos, autodestrucción, portal y Pokévial, en el torneo (2026-10-23, 1.1.3)
+
+Pedido por el jugador: subir al torneo todo lo pendiente del singleplayer después de la 1.1.2 (allí §276-§278 y los visitantes nuevos, uno a uno, apuntados en `CONTINUIDAD_SPRITES_POKEMON.md` del singleplayer).
+
+- **Ficheros copiados del singleplayer** (pasados a CRLF; el torneo no tenía cambios propios en ellos): `CapCritterArt`, `CapVisitors`, `CapDeath`, `CapDeathScene` (`Push`), `CapDeathStyles`, `CapDeathSelfDestruct` (nuevo), `CapItemRain` (`PaintWormhole` aparte, detrás de los voladores), `CapVial`, `CapWorldView`, `UltraWormholeScene`, `PlaqueLab` (`--secuencia-ventana` acepta "m") y `Data/marcadores.json` (marcador del Prado de Poni).
+- **Hojas nuevas** en `Views/Cap/Critters` (entran por el comodín del csproj): 32, con `articuno` redibujada. `lunala` va sin uso: el jugador la descartó y no está en ninguna ruta.
+- **Más a menudo** (2026-10-23, pedido): las probabilidades de las seis rutas de `CapVisitors.Lanes` suben (75/60/55/70/55/45 a 90/80/65/85/70/55) y los periodos bajan donde la pasada deja sitio (150 a 110, 22 a 18, 60 a 45, 165 a 120).
+- **Comprobado:** compila, 2111 pruebas en verde. Sin probar en el emulador real.

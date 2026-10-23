@@ -89,7 +89,11 @@ public static class CapItemRain
         return x + 26 >= l.Main.Right || l.InNotch(x + 24, y) ? null : (x, y);
     }
 
-    public static void Paint(CapSheet p, CapWorldLayout l, CapSeaContext ctx, IReadOnlyList<CapItemDrop> drops, double t)
+    /// <summary>
+    /// The wormhole itself, painted behind what flies across the sky (2026-10-21, asked: it covered the fliers); the items it spits are painted
+    /// later, in front, by <see cref="Paint"/>.
+    /// </summary>
+    public static void PaintWormhole(CapSheet p, CapWorldLayout l, IReadOnlyList<CapItemDrop> drops, double t)
     {
         if (WormholeAt(l) is not { } at) return;
 
@@ -102,7 +106,12 @@ public static class CapItemRain
         }
 
         Wormhole(p, l, at.X, at.Y, Size, flare, t);
+    }
 
+    /// <summary>The items the wormhole spits, falling into the sea and burying themselves, in front of everything in the sky.</summary>
+    public static void Paint(CapSheet p, CapWorldLayout l, CapSeaContext ctx, IReadOnlyList<CapItemDrop> drops, double t)
+    {
+        if (WormholeAt(l) is not { } at) return;
         for (var i = 0; i < drops.Count; i++)
         {
             var since = t - drops[i].Spit;
