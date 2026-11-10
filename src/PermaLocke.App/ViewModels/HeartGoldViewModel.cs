@@ -43,7 +43,7 @@ public sealed partial class HeartGoldViewModel : ObservableObject
     public string RomText => Rom is null ? "No está. Pon tu ROM de HeartGold (.nds) en la carpeta ROM." : Path.GetFileName(Rom);
 
     public string SettingsText => Settings is null ? "No hay ajustes. Hazlos en el Randomizer, guárdalos y elígelos aquí."
-        : Settings == _game.DefaultSettings ? "Los básicos de PermaLocke: iniciales de línea de tres, movimientos y habilidades al azar; salvajes de fuerza parecida y sin legendarios, entrenadores, estáticos y objetos del suelo (sin Master Ball) al azar, MT al azar según el tipo, evoluciones más fáciles y sin hora. Tipos y estadísticas como el cartucho."
+        : Settings == _game.DefaultSettings ? "Los básicos de PermaLocke: iniciales de línea de tres, movimientos y habilidades al azar; salvajes de fuerza parecida y sin legendarios, entrenadores, estáticos y objetos del suelo (sin Master Ball) al azar, MT al azar según el tipo, evoluciones más fáciles y sin hora, sin fulminantes y el rival con tu inicial. Tipos y estadísticas como el cartucho."
         : Path.GetFileName(Settings);
 
     public string RandomizedText => Randomized is null ? "Todavía ninguna. Randomiza primero." : Path.GetFileName(Randomized);

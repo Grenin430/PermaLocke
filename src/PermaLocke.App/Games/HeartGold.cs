@@ -87,7 +87,7 @@ public sealed class HeartGold(AppPaths paths)
     /// </summary>
     private bool WriteDefaultSettings() => WriteResource("PermaLocke.App.HeartGold.rnqs", DefaultSettings);
 
-    /// <summary>PermaLocke's own step after the Randomizer (no Master Ball on the ground), next to it; source in Games/PermaLockeNoMasterBall.java.</summary>
+    /// <summary>PermaLocke's own step after the Randomizer (no Master Ball on the ground, no one-hit KO moves); source in Games/PermaLockeTweaks.java.</summary>
     private string ExtrasJar => Path.Combine(Tools, "upr", "PermaLocke-upr.jar");
 
     /// <summary>Writes a file that travels inside the exe into upr/, when the Randomizer's folder is there.</summary>
@@ -130,9 +130,9 @@ public sealed class HeartGold(AppPaths paths)
         var (done, text) = await RunJavaAsync("-Xmx4096M", "-jar", RandomizerJar, "cli", "-s", settings, "-i", rom, "-o", output).ConfigureAwait(false);
         if (done && File.Exists(output))
         {
-            // the Randomizer cannot ban the Master Ball from the ground: PermaLocke's step turns each into an Ultra Ball
+            // what the Randomizer has no option for: no Master Ball on the ground, no one-hit KO moves (PermaLockeTweaks)
             if (!WriteResource("PermaLocke.App.HeartGold.upr.jar", ExtrasJar)) return (false, text + "\nFalta el paso de PermaLocke (PermaLocke-upr.jar).");
-            var (fixedOk, fixedText) = await RunJavaAsync("-cp", $"{RandomizerJar}{Path.PathSeparator}{ExtrasJar}", "PermaLockeNoMasterBall", output).ConfigureAwait(false);
+            var (fixedOk, fixedText) = await RunJavaAsync("-cp", $"{RandomizerJar}{Path.PathSeparator}{ExtrasJar}", "PermaLockeTweaks", output).ConfigureAwait(false);
             text += "\n" + fixedText;
             done = fixedOk;
         }
