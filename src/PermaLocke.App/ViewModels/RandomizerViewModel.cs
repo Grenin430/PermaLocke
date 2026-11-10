@@ -184,7 +184,7 @@ public sealed partial class RandomizerViewModel : SectionViewModel
 
         try
         {
-            var options = RandomizerOptionsLoader.Load(Path.Combine(_paths.Data, "randomizer.json"));
+            var options = RandomizerOptionsLoader.Load(_paths.DataFile("randomizer.json"));
 
             // El ROL manda sobre el fichero de opciones: parte de la dificultad se cuece en la
             // ROM, y quien decide cuánto suben los entrenadores es el rol de la run, no una

@@ -107,7 +107,7 @@ public sealed partial class InformationViewModel(AppPaths paths, PokemonSpriteSe
         try
         {
             var data = JsonSerializer.Deserialize<Data>(
-                await File.ReadAllTextAsync(Path.Combine(paths.Data, "informacion.json")),
+                await File.ReadAllTextAsync(paths.DataFile("informacion.json")),
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
 
             _allEvolutions = [.. Groups

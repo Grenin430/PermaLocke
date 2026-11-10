@@ -303,7 +303,7 @@ public sealed partial class UpdateService(AppPaths paths, DiscordLogin discord, 
     {
         try
         {
-            var settings = JsonSerializer.Deserialize<Settings>(File.ReadAllText(Path.Combine(paths.Data, "torneo.json")),
+            var settings = JsonSerializer.Deserialize<Settings>(File.ReadAllText(paths.DataFile("torneo.json")),
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             return string.IsNullOrWhiteSpace(settings?.Actualizaciones) ? null : settings.Actualizaciones.Trim();
         }

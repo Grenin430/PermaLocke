@@ -31,7 +31,7 @@ public sealed class MegaFloorTests
 
     private static int SixthTrialCap()
     {
-        using var stream = File.OpenRead(Path.Combine(Root(), "Data", "levelcaps.json"));
+        using var stream = File.OpenRead(Path.Combine(Root(), "Data", "ultraluna", "levelcaps.json"));
         using var document = JsonDocument.Parse(stream);
 
         return document.RootElement.GetProperty("caps").EnumerateArray()
@@ -42,7 +42,7 @@ public sealed class MegaFloorTests
     [Fact]
     public void The_first_battle_with_a_mega_is_the_first_one_above_the_sixth_trial_cap()
     {
-        var options = RandomizerOptionsLoader.Load(Path.Combine(Root(), "Data", "randomizer.json"));
+        var options = RandomizerOptionsLoader.Load(Path.Combine(Root(), "Data", "ultraluna", "randomizer.json"));
         var cap = SixthTrialCap();
         var floor = options.MegaTrainerMinimumLevel;
 
@@ -62,7 +62,7 @@ public sealed class MegaFloorTests
     [Fact]
     public void The_sixth_trial_itself_has_no_mega()
     {
-        var options = RandomizerOptionsLoader.Load(Path.Combine(Root(), "Data", "randomizer.json"));
+        var options = RandomizerOptionsLoader.Load(Path.Combine(Root(), "Data", "ultraluna", "randomizer.json"));
 
         Assert.True(28 < options.MegaTrainerMinimumLevel);
     }

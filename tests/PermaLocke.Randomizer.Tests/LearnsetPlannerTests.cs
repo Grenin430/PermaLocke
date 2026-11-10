@@ -308,7 +308,7 @@ public class LearnsetPlannerTests
     [Fact]
     public void The_configuration_asks_for_the_share_of_the_reference()
     {
-        var options = RandomizerOptionsLoader.Load(Path.Combine(MegaFloorTests.Root(), "Data", "randomizer.json"));
+        var options = RandomizerOptionsLoader.Load(Path.Combine(MegaFloorTests.Root(), "Data", "ultraluna", "randomizer.json"));
 
         Assert.Equal(20, options.EffectiveSameTypePercent());
         Assert.Equal(40, new RandomizerOptions { LearnsetPreferSameType = true }.EffectiveSameTypePercent());

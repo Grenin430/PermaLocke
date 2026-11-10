@@ -87,7 +87,7 @@ internal static class RulesProbe
             }
 
             var zone = BitConverter.ToUInt16(client.ReadMemory(data + 0x62, 2));
-            var map = PermaLocke.Data.JsonMapTable.Load(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "Data", "mapas.json")).For(zone);
+            var map = PermaLocke.Data.JsonMapTable.Load(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "Data", "ultraluna", "mapas.json")).For(zone);
             Console.WriteLine($"GameManager 0x{manager:X8}, GameData 0x{data:X8}, zona {zone}: {map?.LocationName ?? "sin ruta en mapas.json"}");
             return 0;
         }

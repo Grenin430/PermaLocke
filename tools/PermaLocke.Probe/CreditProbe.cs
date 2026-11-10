@@ -34,22 +34,23 @@ public static class CreditProbe
     {
         var root = Root();
         var paths = new AppPaths(root);
+        paths.UseGame("ultraluna");
 
         var collection = new ServiceCollection();
         collection.AddPermaLockeInfrastructure(paths, "probe");
         collection.AddPermaLockeData(paths.Saves);
         collection.AddPermaLockeCore();
-        collection.AddPermaLockeRules(Path.Combine(paths.Data, "rules.json"));
+        collection.AddPermaLockeRules(paths.DataFile("rules.json"));
         collection.AddPermaLockeGameLink(paths.SaveBackups);
         collection.AddSingleton<AzaharInstallation>();
         collection.AddSingleton<IAchievementCatalog>(_ =>
-            JsonAchievementCatalog.Load(Path.Combine(paths.Data, "achievements.json")));
+            JsonAchievementCatalog.Load(paths.DataFile("achievements.json")));
         collection.AddSingleton<IRoleCatalog>(_ =>
-            JsonRoleCatalog.Load(Path.Combine(paths.Data, "roles.json")));
+            JsonRoleCatalog.Load(paths.DataFile("roles.json")));
         collection.AddSingleton<IRunRoles, RunRoles>();
         collection.AddSingleton<AchievementService>();
         collection.AddSingleton<ICreditCatalog>(_ =>
-            JsonCreditCatalog.Load(Path.Combine(paths.Data, "grants.json")));
+            JsonCreditCatalog.Load(paths.DataFile("grants.json")));
         collection.AddSingleton<CreditService>();
 
         using var services = collection.BuildServiceProvider();

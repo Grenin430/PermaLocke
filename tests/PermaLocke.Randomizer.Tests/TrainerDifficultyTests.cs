@@ -162,7 +162,7 @@ public sealed class TrainerDifficultyTests
     [Fact]
     public void The_shipped_configuration_is_what_was_asked()
     {
-        var shipped = RandomizerOptionsLoader.Load(Path.Combine(Root(), "Data", "randomizer.json")).TrainerDifficulty;
+        var shipped = RandomizerOptionsLoader.Load(Path.Combine(Root(), "Data", "ultraluna", "randomizer.json")).TrainerDifficulty;
 
         Assert.True(shipped.Enabled);
         Assert.Equal(0x07, shipped.AiFlagsAdded);

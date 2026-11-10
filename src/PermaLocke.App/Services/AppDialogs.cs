@@ -67,20 +67,13 @@ public sealed class AppDialogs(IServiceProvider services) : IAppDialogs
         // del comando asincrono, que se traga la excepcion.
         var owner = Application.Current?.MainWindow;
 
-        var answer = owner is null
-            ? MessageBox.Show(message, title, MessageBoxButton.YesNo, MessageBoxImage.Warning,
-                MessageBoxResult.No)
-            : MessageBox.Show(owner, message, title, MessageBoxButton.YesNo,
-                MessageBoxImage.Warning, MessageBoxResult.No);
-
-        return answer == MessageBoxResult.Yes;
+        return Views.PixelDialog.Show(title, message, Views.PixelDialogKind.Warning, ask: true, owner: owner);
     }
 
     public void Tell(string title, string message)
     {
         var owner = Application.Current?.MainWindow;
-        if (owner is null) MessageBox.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Information);
-        else MessageBox.Show(owner, message, title, MessageBoxButton.OK, MessageBoxImage.Information);
+        Views.PixelDialog.Show(title, message, owner: owner);
     }
 
     public string? PickFolder(string title)

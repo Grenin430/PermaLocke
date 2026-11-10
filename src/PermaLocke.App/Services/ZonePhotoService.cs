@@ -25,7 +25,7 @@ public sealed class ZonePhotoService(AppPaths paths, ILogger<ZonePhotoService> l
 {
     private readonly Dictionary<string, BitmapSource?> _cache = new(StringComparer.Ordinal);
     private readonly JsonZonePhotos _index =
-        JsonZonePhotos.Load(Path.Combine(paths.Data, "fotos.json"));
+        JsonZonePhotos.Load(paths.DataFile("fotos.json"));
 
     public int Count => _index.Count;
 

@@ -247,6 +247,10 @@ public sealed partial class MainViewModel : ObservableObject
         SelectedSection = _play;
     }
 
+    /// <summary>Back to the menu of games (2026-11-10): PermaLocke opens again and asks which game.</summary>
+    [CommunityToolkit.Mvvm.Input.RelayCommand]
+    private void ChangeGame() => Services.GameSwitch.BackToMenu(Launcher.IsRunning);
+
     /// <summary>
     /// The badge, which says whether the section's requirement is <b>met</b> and not merely what it
     /// is.

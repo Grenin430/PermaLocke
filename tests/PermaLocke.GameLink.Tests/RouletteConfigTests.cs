@@ -15,7 +15,7 @@ namespace PermaLocke.GameLink.Tests;
 public sealed class RouletteConfigTests
 {
     private static JsonRouletteCatalog Shipped() =>
-        JsonRouletteCatalog.Load(Path.Combine(Root(), "Data", "roulette.json"), new PkhexAbilityLookup());
+        JsonRouletteCatalog.Load(Path.Combine(Root(), "Data", "ultraluna", "roulette.json"), new PkhexAbilityLookup());
 
     private static string Root()
     {
@@ -177,7 +177,7 @@ public sealed class RouletteConfigTests
 public sealed class GrantConfigTests
 {
     private static JsonCreditCatalog Shipped() =>
-        JsonCreditCatalog.Load(Path.Combine(Root(), "Data", "grants.json"));
+        JsonCreditCatalog.Load(Path.Combine(Root(), "Data", "ultraluna", "grants.json"));
 
     private static string Root()
     {
@@ -303,7 +303,7 @@ public sealed class GrantConfigTests
     [Fact]
     public void Every_species_is_in_exactly_one_evolution_family()
     {
-        var species = JsonSpeciesStatsCatalog.Load(Path.Combine(Root(), "Data", "species.json"));
+        var species = JsonSpeciesStatsCatalog.Load(Path.Combine(Root(), "Data", "ultraluna", "species.json"));
 
         Assert.NotEmpty(species.All);
         Assert.NotEmpty(species.Lines);

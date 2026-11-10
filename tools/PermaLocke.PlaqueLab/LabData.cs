@@ -32,7 +32,7 @@ public sealed class LabData
 
         try
         {
-            var sprites = new PokemonSpriteService(new AppPaths(root), NullLogger<PokemonSpriteService>.Instance);
+            var sprites = new PokemonSpriteService(new AppPaths(root).ForGame("ultraluna"), NullLogger<PokemonSpriteService>.Instance);
             Task.Run(() => sprites.PrepareAsync()).GetAwaiter().GetResult();
             var data = new LabData(sprites);
             data.RealIcons = sprites.Get(130, 0, false) is not null;

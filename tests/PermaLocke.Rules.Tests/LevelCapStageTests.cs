@@ -95,7 +95,7 @@ public sealed class LevelCapStageTests : IDisposable
     [Fact]
     public void The_shipped_table_ties_every_stage_to_an_achievement()
     {
-        var table = LevelCapTable.Load(Path.Combine(Root(), "Data", "levelcaps.json"));
+        var table = LevelCapTable.Load(Path.Combine(Root(), "Data", "ultraluna", "levelcaps.json"));
 
         Assert.Equal(15, table.Stages.Count);
         Assert.All(table.Stages.SkipLast(1), stage => Assert.False(string.IsNullOrWhiteSpace(stage.Achievement)));

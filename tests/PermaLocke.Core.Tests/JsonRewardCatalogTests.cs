@@ -65,7 +65,7 @@ public sealed class JsonRewardCatalogTests : IDisposable
     [Fact]
     public void The_shipped_file_still_has_an_automatic_prize_for_the_first_balls()
     {
-        var data = Path.Combine(Repository(), "Data", "rewards.json");
+        var data = Path.Combine(Repository(), "Data", "ultraluna", "rewards.json");
         Assert.True(File.Exists(data), $"No está {data}");
 
         var balls = Assert.Single(JsonRewardCatalog.Load(data).All, r => r.Id == "primeras-balls");
@@ -108,7 +108,7 @@ public sealed class JsonRewardCatalogTests : IDisposable
     [Fact]
     public void The_shipped_file_unlocks_megas_after_six_trials()
     {
-        var data = Path.Combine(Repository(), "Data", "rewards.json");
+        var data = Path.Combine(Repository(), "Data", "ultraluna", "rewards.json");
         var mega = Assert.Single(JsonRewardCatalog.Load(data).All, r => r.Id == "megaevolucion");
 
         Assert.Equal("megaevolucion", Assert.Single(mega.Unlocked));

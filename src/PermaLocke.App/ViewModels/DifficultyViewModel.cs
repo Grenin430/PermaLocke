@@ -68,7 +68,7 @@ public sealed partial class DifficultyViewModel(AppPaths paths, LevelCapTable ca
 
         try
         {
-            var file = JsonSerializer.Deserialize<FileRow>(await File.ReadAllTextAsync(Path.Combine(paths.Data, "dificultad.json")),
+            var file = JsonSerializer.Deserialize<FileRow>(await File.ReadAllTextAsync(paths.DataFile("dificultad.json")),
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
 
             Heading = file.Titulo;

@@ -285,7 +285,7 @@ async Task NamesAsync(int[] ids)
 
 async Task RandomizeAsync(ulong seed)
 {
-    var options = RandomizerOptionsLoader.Load(Path.Combine(root, "Data", "randomizer.json"));
+    var options = RandomizerOptionsLoader.Load(Path.Combine(root, "Data", "ultraluna", "randomizer.json"));
 
     // El rol manda sobre el fichero de opciones, igual que en la aplicación: --rol experto.
     var roles = PermaLocke.Data.JsonRoleCatalog.Load(Path.Combine(root, "Data", "roles.json"));
@@ -385,7 +385,7 @@ async Task DumpAsync(ulong seed, string zone)
         workspace.Config.GetlzGARCData("zonedata"),
         workspace.Config.GetlzGARCData("worlddata"), locations);
 
-    var options = RandomizerOptionsLoader.Load(Path.Combine(root, "Data", "randomizer.json"));
+    var options = RandomizerOptionsLoader.Load(Path.Combine(root, "Data", "ultraluna", "randomizer.json"));
     var banned = options.BannedSpecies.ToHashSet();
     var offenders = 0;
     var total = 0;
@@ -493,7 +493,7 @@ async Task StaticsAsync(ulong seed)
 {
     using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work, baseLayer: baseLayer);
     var names = workspace.Config.GetText(TextName.SpeciesNames);
-    var options = RandomizerOptionsLoader.Load(Path.Combine(root, "Data", "randomizer.json"));
+    var options = RandomizerOptionsLoader.Load(Path.Combine(root, "Data", "ultraluna", "randomizer.json"));
     var banned = options.BannedSpecies.ToHashSet();
 
     var vanillaPath = workspace.PathOf(GameFiles.EncounterStatic);
@@ -577,7 +577,7 @@ async Task TrainersAsync(ulong seed, string? path = null)
 {
     using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work, baseLayer: baseLayer);
     var names = workspace.Config.GetText(TextName.SpeciesNames);
-    var options = RandomizerOptionsLoader.Load(Path.Combine(root, "Data", "randomizer.json"));
+    var options = RandomizerOptionsLoader.Load(Path.Combine(root, "Data", "ultraluna", "randomizer.json"));
     var banned = options.BannedSpecies.ToHashSet();
 
     var generatedPath = path ?? Path.Combine(root, "Randomized", $"seed-{seed}", "romfs",
@@ -1144,7 +1144,7 @@ async Task ZonesAsync()
         areas = entries
     };
 
-    var path = Path.Combine(root, "Data", "zones.json");
+    var path = Path.Combine(root, "Data", "ultraluna", "zones.json");
     await File.WriteAllTextAsync(path, System.Text.Json.JsonSerializer.Serialize(document,
         new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
 
@@ -1175,7 +1175,7 @@ async Task SpeciesAsync()
 
     // Las formas regionales que el gacha y el wonder trade pueden dar: las de la configuracion que
     // ESTE mundo declara, con el nombre que les da PKHeX en español (§139).
-    var regional = RandomizerOptionsLoader.Load(Path.Combine(root, "Data", "randomizer.json")).RegionalForms;
+    var regional = RandomizerOptionsLoader.Load(Path.Combine(root, "Data", "ultraluna", "randomizer.json")).RegionalForms;
     var spanish = PKHeX.Core.GameInfo.GetStrings("es");
     var speciesNames = workspace.Config.GetText(TextName.SpeciesNames);
     var abilityNames = workspace.Config.GetText(TextName.AbilityNames);
@@ -1292,7 +1292,7 @@ async Task SpeciesAsync()
         lines.Add([[id]]);
     }
 
-    var path = Path.Combine(root, "Data", "species.json");
+    var path = Path.Combine(root, "Data", "ultraluna", "species.json");
     await File.WriteAllTextAsync(path, System.Text.Json.JsonSerializer.Serialize(
         new
         {
@@ -1715,7 +1715,7 @@ async Task QuienLlevaAsync(int species, string? trpokePath, int onlyTrainer = -1
     var names = workspace.Config.GetText(TextName.SpeciesNames);
     var classNames = workspace.Config.GetText(TextName.TrainerClasses);
     var trainerNames = workspace.Config.GetText(TextName.TrainerNames);
-    var options = RandomizerOptionsLoader.Load(Path.Combine(root, "Data", "randomizer.json"));
+    var options = RandomizerOptionsLoader.Load(Path.Combine(root, "Data", "ultraluna", "randomizer.json"));
 
     var trpoke = trpokePath is not null && File.Exists(trpokePath)
         ? trpokePath
@@ -1853,7 +1853,7 @@ async Task QuienLlevaAsync(int species, string? trpokePath, int onlyTrainer = -1
 async Task ParchearTiendasAsync(string croPath, bool write)
 {
     using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work, baseLayer: baseLayer);
-    var options = RandomizerOptionsLoader.Load(Path.Combine(root, "Data", "randomizer.json"));
+    var options = RandomizerOptionsLoader.Load(Path.Combine(root, "Data", "ultraluna", "randomizer.json"));
     var items = workspace.Config.GetText(TextName.ItemNames);
 
     if (options.RegularMartReplaced.Count == 0)
@@ -1932,7 +1932,7 @@ async Task ParchearTiendasAsync(string croPath, bool write)
 async Task ParchearMegasAsync(string modRomfs, int[] wanted, bool write)
 {
     using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work, baseLayer: baseLayer);
-    var options = RandomizerOptionsLoader.Load(Path.Combine(root, "Data", "randomizer.json"));
+    var options = RandomizerOptionsLoader.Load(Path.Combine(root, "Data", "ultraluna", "randomizer.json"));
 
     var forms = MegaTrainerRandomizer.ReadForms(workspace.PathOf(GameFiles.MegaEvolution));
     var candidates = MegaTrainerRandomizer.Candidates(forms, options, workspace.MaxSpecies);
@@ -2089,7 +2089,7 @@ async Task MovimientosAsync(string? filter)
 async Task AprendizajesAsync(string learnsetPath)
 {
     using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work, baseLayer: baseLayer);
-    var options = RandomizerOptionsLoader.Load(Path.Combine(root, "Data", "randomizer.json"));
+    var options = RandomizerOptionsLoader.Load(Path.Combine(root, "Data", "ultraluna", "randomizer.json"));
     var moves = workspace.Config.Moves;
     var names = workspace.Config.GetText(TextName.MoveNames);
 
@@ -2330,7 +2330,7 @@ async Task ImportantesAsync()
     // El corte de verdad, el del JSON: con el 33 escrito aqui la lista decia MEGA donde el randomizador no la ponia.
     // Sin ruta los niveles son del cartucho y se comparan tal cual; en un mod generado ya van subidos.
     // Con --rol, el porcentaje con el que se genero ese mod; sin el, el del fichero de opciones.
-    var megaOptions = RandomizerOptionsLoader.Load(Path.Combine(root, "Data", "randomizer.json"));
+    var megaOptions = RandomizerOptionsLoader.Load(Path.Combine(root, "Data", "ultraluna", "randomizer.json"));
     var megaRole = args.SkipWhile(a => a != "--rol").Skip(1).FirstOrDefault() is { } roleId ? roles.Find(roleId) : null;
     var megaFloor = trpoke == workspace.PathOf(GameFiles.TrainerPokemon)
         ? megaOptions.MegaTrainerMinimumLevel
@@ -2580,7 +2580,7 @@ async Task MapasAsync(int[] only, bool write)
         mapas = entries
     };
 
-    var path = Path.Combine(root, "Data", "mapas.json");
+    var path = Path.Combine(root, "Data", "ultraluna", "mapas.json");
     await File.WriteAllTextAsync(path, System.Text.Json.JsonSerializer.Serialize(document, new System.Text.Json.JsonSerializerOptions
     {
         WriteIndented = true,
@@ -2770,7 +2770,7 @@ void WriteIslands(Dictionary<string, string> byName, (string Token, string Islan
                     .OrderBy(name => name, StringComparer.Ordinal).ToArray())
     };
 
-    var path = Path.Combine(root, "Data", "islas.json");
+    var path = Path.Combine(root, "Data", "ultraluna", "islas.json");
     File.WriteAllText(path, System.Text.Json.JsonSerializer.Serialize(document,
         new System.Text.Json.JsonSerializerOptions
         {
@@ -4402,7 +4402,7 @@ async Task MegasCuentaAsync()
     using var patcher = new GarcPatcher(workspace.PathOf(GameFiles.MegaEvolution));
     Console.WriteLine($"la tabla de megas tiene {patcher.FileCount} subficheros");
     Console.WriteLine($"nombres de especie disponibles: {names.Length}");
-    var options = RandomizerOptionsLoader.Load(Path.Combine(root, "Data", "randomizer.json"));
+    var options = RandomizerOptionsLoader.Load(Path.Combine(root, "Data", "ultraluna", "randomizer.json"));
     Console.WriteLine($"claves con mega: {forms.Count}, de {forms.Keys.Min()} a {forms.Keys.Max()}");
     Console.WriteLine($"workspace.MaxSpecies = {workspace.MaxSpecies}");
     Console.WriteLine($"options.MaxSpecies = {options.MaxSpecies}");
@@ -4424,7 +4424,7 @@ async Task MegasCuentaAsync()
 async Task LigaAsync(ulong seed)
 {
     using var workspace = await RomWorkspace.ExtractAsync(RequireRom(), work, baseLayer: baseLayer);
-    var options = RandomizerOptionsLoader.Load(Path.Combine(root, "Data", "randomizer.json"));
+    var options = RandomizerOptionsLoader.Load(Path.Combine(root, "Data", "ultraluna", "randomizer.json"));
     var names = workspace.Config.GetText(TextName.SpeciesNames);
     var classNames = workspace.Config.GetText(TextName.TrainerClasses);
     var trainerNames = workspace.Config.GetText(TextName.TrainerNames);
@@ -4585,7 +4585,7 @@ async Task InformacionAsync()
     var typeNames = workspace.Config.GetText(TextName.Types);
     string TypeName(int type) => type >= 0 && type < typeNames.Length ? typeNames[type] : "?";
     var moveNames = workspace.Config.GetText(TextName.MoveNames);
-    var options = RandomizerOptionsLoader.Load(Path.Combine(root, "Data", "randomizer.json"));
+    var options = RandomizerOptionsLoader.Load(Path.Combine(root, "Data", "ultraluna", "randomizer.json"));
 
     // Fila de la tabla -> especie y forma: las formas con fila propia van al final, a partir de su FormStatsIndex.
     var personal = new GARC.LazyGARC(await File.ReadAllBytesAsync(workspace.PathOf(GameFiles.Personal)));
@@ -4730,7 +4730,7 @@ async Task InformacionAsync()
         if (here.Count > 0) shops.Add(new { lugar = place, objetos = here });
     }
 
-    var output = Path.Combine(root, "Data", "informacion.json");
+    var output = Path.Combine(root, "Data", "ultraluna", "informacion.json");
     await File.WriteAllTextAsync(output, System.Text.Json.JsonSerializer.Serialize(new
     {
         _comentario = "Generado por RomTool «informacion» desde el juego con el mod de gen 8-9 y Data/randomizer.json. No se edita a mano.",
@@ -4830,7 +4830,7 @@ async Task VariocolorAsync()
         missing.Add($"{t.Species}/{t.Form} {t.Name}: {why}");
     });
 
-    var output = Path.Combine(root, "Data", "variocolor.json");
+    var output = Path.Combine(root, "Data", "ultraluna", "variocolor.json");
     await File.WriteAllTextAsync(output, System.Text.Json.JsonSerializer.Serialize(new
     {
         _comentario = "Generado por RomTool «variocolor». Por icono del cartucho (a/0/6/2 con el mod): color normal > color variocolor, en hexadecimal RGB. Los colores salen de comparar los renders dex y dex-shiny de Pokémon Showdown; es una aproximación. No se edita a mano: los que salen mal se quitan en «descartados».",

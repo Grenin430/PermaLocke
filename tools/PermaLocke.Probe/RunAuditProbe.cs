@@ -145,7 +145,7 @@ public static class RunAuditProbe
 
     private static async Task ReportCapAsync(IEventStore events, Run run, string root)
     {
-        var caps = LevelCapTable.Load(Path.Combine(root, "Data", "levelcaps.json"));
+        var caps = LevelCapTable.Load(Path.Combine(root, "Data", "ultraluna", "levelcaps.json"));
         var claimed = (await events.GetAllAsync(run.Id))
             .Where(e => e.Type == GameEventType.AchievementUnlocked)
             .Select(e => e.Data.TryGetValue("logro", out var id) ? id : null)

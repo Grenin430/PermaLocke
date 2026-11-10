@@ -167,6 +167,9 @@ public sealed class CapWorldView
         // The crystals of the trials cleared, set in the abyss's sand (2026-10-16).
         // prototype of the plan (2026-10-18): the Gimmighoul ruins take the altar's place; the crystals go into them in the next step
         CapGimmighoulRuins.Paint(frame, Layout, pal, _context, phase);
+        // THE LIVES (2026-10-30): a Heal Ball for every life in the sand, either side of the overlay's items, and over the cap's sign the count
+        if (data.Lives is { } lives) CapLivesDecor.Paint(frame, Layout, lives, t, x => CapSea.Relief(Layout, _context, x, _fossils), ItemsStretch(data));
+        if (data.Lives is { } counted && Layout.Panel == CapPanelKind.Party && CapSign.Where(Layout, data, _context, _fossils) is { } signAt) CapLivesDecor.Counter(frame, counted, t, signAt.Board);
 
         // the Normastal in the ruins' window for the rest of the run (2026-10-18), unless its film is showing it coming
         if (Layout.Panel == CapPanelKind.Deep && trial?.Crystal?.Item != CapCrystalFall.Normastal && data.Crystals is { } won)
@@ -297,6 +300,27 @@ public sealed class CapWorldView
 
         // A shiny in this battle (2026-10-16): over everything, the look drawn for it.
         if (data.Shiny is { } shiny) _shiny.Paint(frame, Layout, shiny, t);
+
+        // The Locke lost (2026-10-30): the last thing painted, over everything.
+        if (data.Lives is { LossAt: < double.PositiveInfinity } over)
+        {
+            // after the last death has ended, not before: its whole animation is seen, then the loss
+            var lossStart = over.LossAt;
+            foreach (var d in deaths) lossStart = Math.Max(lossStart, d.End + 0.4);
+            CapLockLoss.Paint(frame, Layout, t - lossStart);
+        }
+    }
+
+    /// <summary>
+    /// The columns the overlay's items take on the sand right of the cap's sign (the Pokévial, then the Incubadora Turbo, then the Repelente
+    /// Infinito, each where its own Paint puts it), so the Heal Balls keep out of them; empty when none is shown.
+    /// </summary>
+    private (int From, int To) ItemsStretch(CapPlaqueData data)
+    {
+        if (Layout.Panel != CapPanelKind.Party || CapSign.Where(Layout, data, _context, _fossils) is not { } sign) return default;
+        var right = sign.Board.Left + sign.Board.Width;
+        var last = data.Repel is not null ? right + 13 + 27 + 24 : data.Turbo is not null ? right + 13 + 27 : data.Vial is not null ? right + 13 : 0;
+        return last == 0 ? default : (right - 8, last + 14);
     }
 
     /// <summary>Whether a trial's crystal has been won.</summary>

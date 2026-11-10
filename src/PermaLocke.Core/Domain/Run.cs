@@ -53,4 +53,22 @@ public sealed record Run
     /// only ever moves through an auditable event.
     /// </summary>
     public int ClearedStages { get; init; }
+
+    /// <summary>The most lives a run can start with.</summary>
+    public const int MaxLives = 30;
+
+    /// <summary>
+    /// Lives the run started with (1 to <see cref="MaxLives"/>), or null when the run has none. Written once at creation: the lives left are
+    /// this minus the Pokémon fallen, so no number is stored that could disagree with the history.
+    /// </summary>
+    public int? Lives { get; init; }
+
+    /// <summary>When the lives began: only the Pokémon fallen after it break hearts. Null counts every death (a run born with lives).</summary>
+    public DateTimeOffset? LivesSince { get; init; }
+
+    /// <summary>How many of these deaths (their dates; null when unknown) count against the lives.</summary>
+    public int FallenCounted(IEnumerable<DateTimeOffset?> diedAt) => LivesSince is { } since ? diedAt.Count(d => d is { } at && at > since) : diedAt.Count();
+
+    /// <summary>Lives left after <paramref name="fallen"/> deaths; null when the run plays without lives.</summary>
+    public int? LivesLeft(int fallen) => Lives is { } start ? Math.Max(0, start - fallen) : null;
 }

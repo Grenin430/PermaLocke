@@ -144,17 +144,22 @@ public static class AppUpdate
             var data = Path.Combine(unpacked, "Data");
             if (Directory.Exists(data))
             {
-                foreach (var file in Directory.EnumerateFiles(data, "*.json", SearchOption.TopDirectoryOnly))
+                // with the folder of each game (2026-11-10): Data/ultraluna/… goes to its own place
+                foreach (var file in Directory.EnumerateFiles(data, "*.json", SearchOption.AllDirectories))
                 {
                     var name = Path.GetFileName(file);
+                    var relative = Path.GetRelativePath(data, file);
+                    var shown = relative.Replace('\\', '/');
                     if (keep.Contains(name))
                     {
-                        log.Add($"Data/{name}: se queda la regla oficial del organizador");
+                        log.Add($"Data/{shown}: se queda la regla oficial del organizador");
                         continue;
                     }
 
-                    File.Copy(file, Path.Combine(root, "Data", name), overwrite: true);
-                    log.Add($"Data/{name}");
+                    var destination = Path.Combine(root, "Data", relative);
+                    Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
+                    File.Copy(file, destination, overwrite: true);
+                    log.Add($"Data/{shown}");
                 }
             }
 

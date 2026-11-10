@@ -44,7 +44,8 @@ public sealed class RulesSync(DiscordLogin discord, AppPaths paths, ILogger<Rule
                     continue;
                 }
 
-                var local = Path.Combine(paths.Data, row.Fichero);
+                // donde la app la lee: en la carpeta del juego si la tiene ahí (launcher, 2026-11-10), si no en Data/
+                var local = paths.DataFile(row.Fichero);
 
                 if (File.Exists(local) && Same(await File.ReadAllTextAsync(local), row.Contenido))
                 {

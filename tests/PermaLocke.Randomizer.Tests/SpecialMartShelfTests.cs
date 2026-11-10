@@ -152,7 +152,7 @@ public sealed class SpecialMartShelfTests
     [Fact]
     public void The_configured_lists_are_the_ones_the_player_asked_for()
     {
-        var options = RandomizerOptionsLoader.Load(Path.Combine(FindRoot(), "Data", "randomizer.json"));
+        var options = RandomizerOptionsLoader.Load(Path.Combine(FindRoot(), "Data", "ultraluna", "randomizer.json"));
         var shelves = options.SpecialMartShelves.ToDictionary(shelf => shelf.Shop);
 
         Assert.Equal(11, shelves[14].Items.Count);

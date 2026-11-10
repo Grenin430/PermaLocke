@@ -1,3 +1,14 @@
+1.1.5 2026-11-10
+JUEGOS
+Al abrir PermaLocke eliges a qué juego jugar, con su portada. Desde dentro de cada juego vuelves al menú con JUEGOS (o el botón de la casa).
+HeartGold, de momento lo más básico: RANDOMIZAR con el Universal Randomizer tal cual y JUGAR con melonDS. Pon tu ROM de HeartGold en la carpeta ROM. Si faltan las herramientas (melonDS, el Randomizer y Java, unos 60 MB), la ventana las descarga una sola vez.
+VIDAS
+Al crear una run puedes activar vidas, de 1 a 30, arrastrando la fila de corazones. No se pueden cambiar después.
+Cada Pokémon que muere gasta una vida. Sin vidas, el Locke se pierde para siempre: se ve la muerte entera, luego la animación de LOCKE PERDIDO, el juego se cierra y ya no se puede volver a jugar esa run.
+En el panel del cap, cada vida es una Sana Ball en la arena, y encima del cartel un corazón con las que quedan. La que se pierde se agrieta y se queda así.
+AVISOS
+Los avisos de la app son propios, en pixel, en vez de las ventanas de Windows.
+
 1.1.4 2026-10-23
 CAP DE NIVEL
 Tras superar el Rematch, el cap se abre a nivel 100.

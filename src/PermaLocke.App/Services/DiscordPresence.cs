@@ -102,7 +102,7 @@ public sealed class DiscordPresence(AppPaths paths, ILogger<DiscordPresence> log
     {
         try
         {
-            return JsonSerializer.Deserialize<PresenceConfig>(File.ReadAllText(Path.Combine(paths.Data, "torneo.json")),
+            return JsonSerializer.Deserialize<PresenceConfig>(File.ReadAllText(paths.DataFile("torneo.json")),
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         }
         catch (Exception ex)

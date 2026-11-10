@@ -71,7 +71,7 @@ public sealed class RegionalFormsTests
     [Fact]
     public void The_configured_list_is_the_measured_one()
     {
-        var options = RandomizerOptionsLoader.Load(Path.Combine(FindRoot(), "Data", "randomizer.json"));
+        var options = RandomizerOptionsLoader.Load(Path.Combine(FindRoot(), "Data", "ultraluna", "randomizer.json"));
         var entries = options.RegionalForms;
 
         Assert.Equal(54, entries.Count);

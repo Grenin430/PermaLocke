@@ -15,7 +15,7 @@ public static class Program
         var root = LabData.Root() ?? throw new InvalidOperationException("No se encuentra PermaLocke.slnx subiendo desde " + AppContext.BaseDirectory);
 
         // Los iconos salen como en la app: de la ROM y de Expansion/ de esta carpeta, a Data/sprites (que no se versiona).
-        var sprites = new PokemonSpriteService(new AppPaths(root), NullLogger<PokemonSpriteService>.Instance);
+        var sprites = new PokemonSpriteService(new AppPaths(root).ForGame("ultraluna"), NullLogger<PokemonSpriteService>.Instance);
         Task.Run(() => sprites.PrepareAsync()).GetAwaiter().GetResult();
 
         var data = new LabData(sprites, root);

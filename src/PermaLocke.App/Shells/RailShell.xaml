@@ -329,6 +329,10 @@
                         </Grid>
                     </Grid>
 
+                    <!-- VOLVER AL MENÚ DE JUEGOS (2026-11-10): siempre, a la derecha del todo. -->
+                    <Button DockPanel.Dock="Right" Margin="18,0,0,0" VerticalAlignment="Center" Content="JUEGOS"
+                            Style="{StaticResource PxSubtleButton}" Command="{Binding ChangeGameCommand}" ToolTip="Cambiar de juego" />
+
                     <!-- JUGAR, EN PEQUEÑO (§125). En todas las pantallas menos en la del lanzador, que tiene el
                          grande: dice si el juego está abierto y cuánto lleva, y lleva a JUGAR. -->
                     <Button DockPanel.Dock="Right" Margin="18,0,0,0" VerticalAlignment="Center" Cursor="Hand"

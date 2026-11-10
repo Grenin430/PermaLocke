@@ -28,18 +28,19 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
-        var paths = new AppPaths();
+        // Admin es del torneo de Ultra Luna: sus reglas y su tienda, en la carpeta de ese juego (launcher, 2026-11-10)
+        var paths = new AppPaths().ForGame("ultraluna");
         paths.EnsureCreated();
 
         var collection = new ServiceCollection();
         collection.AddPermaLockeInfrastructure(paths, "permalocke-admin");
         collection.AddSingleton<IGachaCatalog>(_ =>
-            JsonGachaCatalog.Load(Path.Combine(paths.Data, "gacha.json")));
+            JsonGachaCatalog.Load(paths.DataFile("gacha.json")));
         collection.AddSingleton<GiftDesk>();
         collection.AddSingleton<ISpeciesStatsCatalog>(_ =>
-            JsonSpeciesStatsCatalog.Load(Path.Combine(paths.Data, "species.json")));
+            JsonSpeciesStatsCatalog.Load(paths.DataFile("species.json")));
         collection.AddSingleton<IShopCatalog>(_ =>
-            JsonShopCatalog.Load(Path.Combine(paths.Data, "shop.json")));
+            JsonShopCatalog.Load(paths.DataFile("shop.json")));
         // --demo (2026-10-08): jugadores inventados en memoria, para mirar Admin sin leer ni tocar el torneo.
         var demo = e.Args.Contains("--demo");
         collection.AddSingleton(new AdminMode(demo));

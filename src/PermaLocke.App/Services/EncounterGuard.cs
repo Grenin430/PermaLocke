@@ -1017,7 +1017,7 @@ public sealed class EncounterGuard(
 
         if (_routes is null || now - _routesAt > RoutesCacheLife)
         {
-            _routes = JsonZoneMarkers.Load(Path.Combine(paths.Data, "marcadores.json")).All.Keys.ToHashSet(StringComparer.Ordinal);
+            _routes = JsonZoneMarkers.Load(paths.DataFile("marcadores.json")).All.Keys.ToHashSet(StringComparer.Ordinal);
             _routesAt = now;
         }
 

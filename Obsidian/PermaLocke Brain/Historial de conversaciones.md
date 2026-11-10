@@ -6,6 +6,11 @@ revisado: 2026-09-26
 
 La última sesión va arriba. Antes del 2026-09-23 solo hay un resumen por fechas sacado de `CLAUDE.md` y de `ARCHITECTURE.md`: el detalle está en el § citado ([[Índice de ARCHITECTURE]]). **Cada sesión nueva añade su entrada aquí.**
 
+## 2026-11-10 — vidas, launcher, HeartGold y 1.1.5 del torneo
+- Singleplayer: vidas (1-30, Sana Balls agrietadas en la arena, LOCKE PERDIDO), PixelDialog, launcher de juegos y HeartGold lo más básico (Universal Randomizer tal cual + melonDS). Las generaciones extra de HeartGold, aparcadas (hg-engine solo en inglés).
+- Pasado al torneo (§275, §276). Java portátil por jlink y ajustes `PermaLocke-basico.rnqs`; zip de herramientas en la prerelease `herramientas-heartgold-1` (SHA-256 en `HeartGold.ToolsSha256`), descargable desde la ventana de HeartGold. `publicar.ps1` mete melonDS, upr y java en la carpeta de amigos.
+- 1.1.5 publicada por la Action y desplegada a prueba. `Data/ultraluna/shop.json` (tienda cerrada) y `wondertrade.json` (banda 0,05) tienen cambios locales del 2026-10-12 que NO se subieron.
+
 ## 2026-10-12 — guion del tráiler y modo de grabación
 - Guion de tráiler para un jugador (sin torneo, multijugador ni nombre de la app: marcador [NOMBRE]). Lista de grabación con los `--ensayar-*` reales.
 - `--grabacion` (`Services/RecordingMode`): oculta la marca de la barra de título (`ShellCaption`, `RailShell`) y las pestañas de jugadores del CEMENTERIO (`HasOwners`). Sin commit. El usuario prefirió grabar con el exe de `PermaLocke prueba` (su partida; el del repo lee otra run) y recortar: ffmpeg de `C:\Program Files (x86)\Soundux\ffmpeg.exe` (4.3), salida en `Videos\Captures\Trailer` (01-09 hechos: visor, cementerio, wonder trade, muertes, carta al capturar, megapiedras, gacha, wipe real con lluvia, mega Gyarados). Observado 2026-10-12: la animación de megapiedra se ve bien encima de Azahar (§243) y va ×3 si hay otro objeto en cola; la lluvia del propio wipe sale sin servidor; el usuario hizo un wipe real con Piplup para grabarlo. Quedan con el nombre: dorso de carta (`TcgCardArt`), título por defecto de los avisos (`Notifier`), CONFIGURACIÓN, LoginWindow, UpdateWindow.

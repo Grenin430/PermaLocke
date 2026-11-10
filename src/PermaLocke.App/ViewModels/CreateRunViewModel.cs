@@ -81,6 +81,20 @@ public sealed partial class CreateRunViewModel : ObservableObject
     [NotifyCanExecuteChangedFor(nameof(CreateCommand))]
     private string _roleId = string.Empty;
 
+    /// <summary>Whether the run plays with lives: each Pokémon that falls breaks one, and with the last the run is over.</summary>
+    [ObservableProperty]
+    private bool _livesOn;
+
+    /// <summary>The lives the run starts with, 1 to <see cref="Run.MaxLives"/>; only counts while <see cref="LivesOn"/>.</summary>
+    [ObservableProperty]
+    private int _lives = 5;
+
+    public string LivesText => LivesOn ? (Lives == 1 ? "1 VIDA" : $"{Lives} VIDAS") : "SIN VIDAS";
+
+    partial void OnLivesChanged(int value) => OnPropertyChanged(nameof(LivesText));
+
+    partial void OnLivesOnChanged(bool value) => OnPropertyChanged(nameof(LivesText));
+
     [ObservableProperty]
     private string _romStatus = string.Empty;
 
@@ -118,7 +132,8 @@ public sealed partial class CreateRunViewModel : ObservableObject
                 RoleId.Trim(),
                 GameVersion.UltraMoon,
                 TitleId: _rom?.TitleId,
-                PlayerId: profile.Id));
+                PlayerId: profile.Id,
+                Lives: LivesOn ? Lives : null));
 
             _logger.LogInformation("Run creada: {Name} ({Seed}) para {Player}",
                 run.Name, run.SeedLabel, run.PlayerName);

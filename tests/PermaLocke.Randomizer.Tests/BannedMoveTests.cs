@@ -120,7 +120,7 @@ public sealed class BannedMoveTests
     [Fact]
     public void The_shipped_configuration_bans_the_four_one_hit_knockouts()
     {
-        var options = RandomizerOptionsLoader.Load(Path.Combine(Root(), "Data", "randomizer.json"));
+        var options = RandomizerOptionsLoader.Load(Path.Combine(Root(), "Data", "ultraluna", "randomizer.json"));
 
         Assert.Equal([12, 32, 90, 329], options.BannedMoves.Order());
     }

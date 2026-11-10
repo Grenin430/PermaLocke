@@ -2,6 +2,7 @@ using System.IO;
 using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using PermaLocke.App.Games;
 using PermaLocke.App.Services;
 using PermaLocke.App.ViewModels;
 using PermaLocke.Core.Abstractions;
@@ -60,12 +61,12 @@ public partial class App : Application
                 logger.LogInformation("Traspaso: {Line}", line);
             }
 
-            MessageBox.Show(MainWindowOrNull(),
+            PermaLocke.App.Views.PixelDialog.Show("Traer mi partida",
                 result.Done
                     ? $"Tu partida está aquí: {result.Files} ficheros copiados. La carpeta de antes sigue como estaba."
                       + (result.SetAside is { } aside ? $"\n\nLo que había aquí antes se ha apartado en «{aside}»." : string.Empty)
                     : "No se ha podido traer tu partida:\n\n" + string.Join("\n", result.Log),
-                "Traer mi partida", MessageBoxButton.OK, result.Done ? MessageBoxImage.Information : MessageBoxImage.Warning);
+                result.Done ? PermaLocke.App.Views.PixelDialogKind.Info : PermaLocke.App.Views.PixelDialogKind.Warning, owner: MainWindowOrNull());
         }
         catch (Exception ex)
         {
@@ -116,9 +117,9 @@ public partial class App : Application
                 return;
             }
 
-            MessageBox.Show(
-                "PermaLocke ya está abierto. Usa esa ventana: dos a la vez vigilan y escriben en el mismo juego y se pisan.",
-                "PermaLocke", MessageBoxButton.OK, MessageBoxImage.Information);
+            // Antes de que haya recursos del tema el aviso de píxel puede no salir: PixelDialog cae al cuadro de Windows.
+            PermaLocke.App.Views.PixelDialog.Show("PermaLocke",
+                "PermaLocke ya está abierto. Usa esa ventana: dos a la vez vigilan y escriben en el mismo juego y se pisan.");
             Shutdown();
             return;
         }
@@ -133,6 +134,42 @@ public partial class App : Application
         if (!string.Equals(themeKey, Views.Pixel.PixelTheme.Current.Key, StringComparison.Ordinal))
         {
             Views.Pixel.PixelTheme.Apply(themeKey, Resources);
+        }
+
+        // EL LAUNCHER (2026-11-10): a qué juego se juega, preguntado cada vez, antes de abrir nada de ninguno. Con el tema ya puesto, para
+        // que la ventana salga en píxeles. --juego <nombre> lo elige sin preguntar y --sin-juego no pregunta (las pruebas y capturas).
+        var gameAt = Array.FindIndex(e.Args, arg => string.Equals(arg, "--juego", StringComparison.OrdinalIgnoreCase));
+        if (gameAt >= 0 && gameAt + 1 < e.Args.Length && Enum.TryParse<GameVersion>(e.Args[gameAt + 1], true, out var forced))
+        {
+            Services.GameSession.Current = GameCatalog.Of(forced);
+        }
+        else if (!e.Args.Contains("--sin-juego", StringComparer.OrdinalIgnoreCase))
+        {
+            // Mientras pregunta no hay ventana principal: sin esto, cerrar la del launcher cerraría la aplicación antes de tiempo.
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            var picker = new Views.GamePickerWindow();
+            if (picker.ShowDialog() != true || picker.Chosen is not { } chosen)
+            {
+                Shutdown();
+                return;
+            }
+
+            Services.GameSession.Current = chosen;
+            ShutdownMode = ShutdownMode.OnMainWindowClose;
+        }
+
+        // los datos del juego elegido, en su carpeta de Data/ (con respaldo a la de siempre)
+        paths.UseGame(Services.GameSession.Current.Folder);
+
+        // HEARTGOLD (2026-11-10): solo randomizar y jugar, en su propia ventana. Nada del resto de la aplicación (base de datos, vigilante,
+        // runs, servidor), así que se abre aquí y no se sigue.
+        if (Services.GameSession.Current.Id == GameVersion.HeartGold)
+        {
+            var heartGold = new Views.HeartGoldWindow(new HeartGoldViewModel(new Games.HeartGold(paths)));
+            MainWindow = heartGold;
+            ShutdownMode = ShutdownMode.OnMainWindowClose;
+            heartGold.Show();
+            return;
         }
 
         // EL TRASPASO desde la carpeta vieja, si el jugador lo pidió (§195): antes que la copia de la base de datos y que
@@ -161,17 +198,18 @@ public partial class App : Application
         collection.AddPermaLockeInfrastructure(paths, "permalocke");
         collection.AddPermaLockeData(paths.Saves);
         collection.AddPermaLockeCore();
-        collection.AddPermaLockeRules(Path.Combine(paths.Data, "rules.json"));
-        // ANTES de GameLink, que registra el suyo con TryAdd: asi una MT dice que movimiento
-        // ensena en ESTE mundo en vez de solo su numero, que con las maquinas randomizadas no
-        // significa nada. Va aqui porque necesita leer el code.bin del mod instalado, y eso es
-        // cosa de la aplicacion: GameLink no conoce al randomizador.
-        collection.AddSingleton<IItemLookup>(sp => new Services.MachineItemLookup(
-            new PermaLocke.GameLink.Data.PkhexItemLookup(),
-            sp.GetRequiredService<AzaharInstallation>(),
-            sp.GetRequiredService<ILoggerFactory>().CreateLogger<Services.MachineItemLookup>()));
+        collection.AddPermaLockeRules(paths.DataFile("rules.json"), paths.DataFile("levelcaps.json"));
 
-        collection.AddPermaLockeGameLink(paths.SaveBackups);
+        // LO DEL JUEGO (launcher, 2026-11-10): emulador, partida, memoria, mundo instalado, panel del cap. Detrás de los servicios comunes,
+        // porque sustituye alguno (las líneas evolutivas). HeartGold no llega aquí: tiene su propia ventana.
+        switch (Services.GameSession.Current.Id)
+        {
+            case GameVersion.UltraMoon:
+                collection.AddUltraMoon(paths);
+                break;
+            default:
+                throw new InvalidOperationException($"{Services.GameSession.Current.Name} no usa la aplicación completa.");
+        }
 
         // EL ALMACEN DE EVENTOS, ENVUELTO para que avise cuando la run cambia. Se hace aqui y
         // despues de registrarlo porque la envoltura es cosa de la aplicacion que dibuja los
@@ -183,37 +221,24 @@ public partial class App : Application
         // Gacha: los banners y la tabla de especies son configuración; sin ellas la sección lo
         // dice en pantalla en vez de tirar con datos inventados.
         collection.AddSingleton<IGachaCatalog>(_ =>
-            JsonGachaCatalog.Load(Path.Combine(paths.Data, "gacha.json")));
+            JsonGachaCatalog.Load(paths.DataFile("gacha.json")));
         // Las habilidades que no se reparten salen de la MISMA lista que usa el randomizador: dos
         // listas de «qué no se puede dar» acabarían discrepando (§136).
         collection.AddSingleton<ISpeciesStatsCatalog>(_ =>
-            JsonSpeciesStatsCatalog.Load(Path.Combine(paths.Data, "species.json"),
+            JsonSpeciesStatsCatalog.Load(paths.DataFile("species.json"),
                 [.. PermaLocke.Randomizer.RandomizerOptionsLoader
-                    .Load(Path.Combine(paths.Data, "randomizer.json")).BannedAbilities]));
+                    .Load(paths.DataFile("randomizer.json")).BannedAbilities]));
         collection.AddSingleton<MonotypeRule>();
         collection.AddSingleton<GachaService>();
         collection.AddSingleton<IWonderTradeCatalog>(_ =>
-            JsonWonderTradeCatalog.Load(Path.Combine(paths.Data, "wondertrade.json")));
+            JsonWonderTradeCatalog.Load(paths.DataFile("wondertrade.json")));
         collection.AddSingleton<WonderTradeService>();
         collection.AddSingleton<EncounterService>();
         collection.AddSingleton<ZoneOutcomeService>();
         collection.AddSingleton<IPenaltyCatalog>(_ =>
-            JsonPenaltyCatalog.Load(Path.Combine(paths.Data, "penalties.json")));
+            JsonPenaltyCatalog.Load(paths.DataFile("penalties.json")));
         collection.AddSingleton<PenaltyService>();
         collection.AddSingleton<GameWatcher>();
-
-        collection.AddSingleton<AzaharInstallation>();
-        collection.AddSingleton<InstalledWorld>();
-
-        // LA REGLA DE PRIMER ENCUENTRO (§117). Los mapas del cartucho para saber dónde está el jugador, y las
-        // líneas evolutivas del mundo instalado para los duplicados: esta segunda sustituye a la vacía que
-        // registra Rules, porque es la última que se registra la que se sirve.
-        collection.AddSingleton(_ => JsonMapTable.Load(Path.Combine(paths.Data, "mapas.json")));
-        collection.AddSingleton<WorldEvolutionLines>();
-        collection.AddSingleton<WorldItemCatalog>();
-        collection.AddSingleton<PermaLocke.Rules.IEvolutionLineProvider>(sp => sp.GetRequiredService<WorldEvolutionLines>());
-        collection.AddSingleton<WorldAllowedStatics>();
-        collection.AddSingleton<PermaLocke.Rules.Services.TrialZoneService>();
         collection.AddSingleton<EncounterGuard>();
         collection.AddSingleton<IAppDialogs, AppDialogs>();
         collection.AddSingleton<IUiDispatcher, WpfUiDispatcher>();
@@ -238,18 +263,18 @@ public partial class App : Application
         collection.AddSingleton<RandomizerViewModel>();
         collection.AddSingleton<GachaViewModel>();
         collection.AddSingleton<IAchievementCatalog>(_ =>
-            JsonAchievementCatalog.Load(Path.Combine(paths.Data, "achievements.json")));
+            JsonAchievementCatalog.Load(paths.DataFile("achievements.json")));
         collection.AddSingleton<AchievementService>();
         collection.AddSingleton<AchievementsViewModel>();
         collection.AddSingleton<IRoleCatalog>(_ =>
-            JsonRoleCatalog.Load(Path.Combine(paths.Data, "roles.json")));
+            JsonRoleCatalog.Load(paths.DataFile("roles.json")));
         collection.AddSingleton<IRunRoles, RunRoles>();
         collection.AddSingleton<IShopCatalog>(_ =>
-            JsonShopCatalog.Load(Path.Combine(paths.Data, "shop.json")));
+            JsonShopCatalog.Load(paths.DataFile("shop.json")));
         // El reparto de zonas por isla, medido del cartucho con «RomTool mundos». Si falta el
         // fichero, el mapa lo dice en vez de dibujar media Alola.
         collection.AddSingleton(_ =>
-            JsonIslandMap.Load(Path.Combine(paths.Data, "islas.json")));
+            JsonIslandMap.Load(paths.DataFile("islas.json")));
         collection.AddSingleton<IItemDelivery, BagItemDelivery>();
         collection.AddSingleton<ShopService>();
         collection.AddSingleton<EvTrainingService>();
@@ -259,32 +284,21 @@ public partial class App : Application
         collection.AddSingleton<IntegrityGuard>();
         collection.AddSingleton<OrderService>();
         collection.AddSingleton<RulesSync>();
-        collection.AddSingleton<VitalsPump>();
-        collection.AddSingleton<BarSync>();
-        collection.AddSingleton<ActiveBar>();
-        collection.AddSingleton<CapBadge>();
-        collection.AddSingleton<PokeVialService>();
-        collection.AddSingleton<FieldItemsService>();
+        collection.AddSingleton<RunOverGuard>();
         collection.AddSingleton<BackgroundMode>();
         collection.AddSingleton<PokemonIdentityService>();
         collection.AddSingleton<IRewardCatalog>(_ =>
-            JsonRewardCatalog.Load(Path.Combine(paths.Data, "rewards.json")));
+            JsonRewardCatalog.Load(paths.DataFile("rewards.json")));
         collection.AddSingleton<RewardService>();
-        collection.AddSingleton<IAbilityLookup>(_ => new PermaLocke.GameLink.Data.PkhexAbilityLookup());
         collection.AddSingleton<IRouletteCatalog>(sp =>
-            JsonRouletteCatalog.Load(Path.Combine(paths.Data, "roulette.json"),
+            JsonRouletteCatalog.Load(paths.DataFile("roulette.json"),
                 sp.GetRequiredService<IAbilityLookup>()));
-        collection.AddSingleton<IRouletteWorldPort>(sp => new SaveRouletteWorld(
-            sp.GetRequiredService<PlayerSave>(), paths.SaveBackups,
-            sp.GetRequiredService<ISpeciesLookup>(), sp.GetRequiredService<IItemLookup>(),
-            sp.GetRequiredService<IAbilityLookup>(),
-            sp.GetRequiredService<ILogger<SaveRouletteWorld>>()));
         collection.AddSingleton<ICreditCatalog>(_ =>
-            JsonCreditCatalog.Load(Path.Combine(paths.Data, "grants.json")));
+            JsonCreditCatalog.Load(paths.DataFile("grants.json")));
         collection.AddSingleton<CreditService>();
         collection.AddSingleton<RouletteService>();
         collection.AddSingleton<RouletteViewModel>();
-        collection.AddSingleton<INurseryCatalog>(_ => JsonNurseryCatalog.Load(Path.Combine(paths.Data, "guarderia.json")));
+        collection.AddSingleton<INurseryCatalog>(_ => JsonNurseryCatalog.Load(paths.DataFile("guarderia.json")));
         collection.AddSingleton<NurseryService>();
         collection.AddSingleton<SpeciesSyncService>();
         collection.AddSingleton<AbilityKeeper>();
@@ -314,8 +328,6 @@ public partial class App : Application
 
         // EL LANZADOR (§125): abrir, vigilar y cerrar el juego desde la aplicación, y el tiempo jugado por run.
         collection.AddSingleton<IPlaytimeStore>(_ => new JsonPlaytimeStore(paths.Saves));
-        collection.AddSingleton<EmulatorCrashReport>();
-        collection.AddSingleton<EmulatorLauncher>();
         collection.AddSingleton<LauncherViewModel>();
         collection.AddSingleton<BattleModeViewModel>();
 
@@ -341,7 +353,6 @@ public partial class App : Application
         collection.AddSingleton<DifficultyViewModel>();
         collection.AddSingleton<SyncViewModel>();
         collection.AddSingleton<InformationViewModel>();
-        collection.AddSingleton<AlolaSky>();
         collection.AddSingleton<CemeteryService>();
         collection.AddSingleton<FallenShare>();
         collection.AddSingleton<CemeteryViewModel>();
@@ -361,9 +372,7 @@ public partial class App : Application
         DispatcherUnhandledException += (_, args) =>
         {
             logger.LogError(args.Exception, "Excepción no controlada en la interfaz");
-            MessageBox.Show(
-                "Ha ocurrido un error inesperado.",
-                "PermaLocke", MessageBoxButton.OK, MessageBoxImage.Error);
+            PermaLocke.App.Views.PixelDialog.Show("PermaLocke", "Ha ocurrido un error inesperado.", PermaLocke.App.Views.PixelDialogKind.Error);
             args.Handled = true;
         };
 
@@ -488,8 +497,8 @@ public partial class App : Application
             if (integrity.Enabled && EmulatorLauncher.IsOpen())
             {
                 closing.Cancel = true;
-                MessageBox.Show(window, "Cierra primero el juego. PermaLocke no se puede cerrar mientras Ultra Luna está abierto.",
-                    "PermaLocke", MessageBoxButton.OK, MessageBoxImage.Information);
+                PermaLocke.App.Views.PixelDialog.Show("PermaLocke",
+                    "Cierra primero el juego. PermaLocke no se puede cerrar mientras Ultra Luna está abierto.", owner: window);
             }
         };
 
@@ -547,6 +556,7 @@ public partial class App : Application
 
             // El cap de nivel siempre a la vista, encima del juego (1.0.4.7).
             _services.GetRequiredService<CapBadge>().Start();
+            _services.GetRequiredService<RunOverGuard>().Start();
             _services.GetRequiredService<PokeVialService>().Start();
             _services.GetRequiredService<FieldItemsService>().Start();
 

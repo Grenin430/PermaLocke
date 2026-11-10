@@ -90,6 +90,18 @@ foreach ($name in $runtime) {
     Copy-Item -LiteralPath $source -Destination $emulatorDir
 }
 Write-Host "Visual C++ $needed o posterior junto al emulador ($($runtime.Count) DLL)"
+# HeartGold (2026-11-10): melonDS, el Universal Randomizer con los ajustes basicos de PermaLocke y Java portatil, sin la
+# configuracion de nadie (melonDS.toml y config.ini guardan rutas del PC del que se copian).
+foreach ($tool in @('melonDS','upr','java')) {
+    $toolSource = Join-Path $raiz "Emulator\$tool"
+    if (-not (Test-Path -LiteralPath $toolSource)) { throw "Faltan las herramientas de HeartGold en Emulator\$tool (estan en la release herramientas-heartgold-1)." }
+    Copy-Item -LiteralPath $toolSource -Destination $emulatorDir -Recurse
+}
+foreach ($personal in @('melonDS\melonDS.toml','melonDS\rtc.bin','melonDS\wfcsettings.bin','upr\config.ini')) {
+    $path = Join-Path $emulatorDir $personal
+    if (Test-Path -LiteralPath $path) { Remove-Item -LiteralPath $path -Force }
+}
+Write-Host "Herramientas de HeartGold junto al emulador (melonDS, Randomizer, Java)"
 Copy-Item -LiteralPath (Join-Path $raiz 'tools\recoger-diagnostico.ps1') -Destination (Join-Path $Destino 'Soporte')
 @"
 @echo off
@@ -112,18 +124,19 @@ try {
             $_.FullName -notmatch '[\\/](bin|obj|\.git)[\\/]' -and $_.FullName -notmatch '[\\/](PermaLocke\.Admin|supabase)[\\/]'
         }
     }
-    $sources += Get-ChildItem -LiteralPath (Join-Path $raiz 'Data') -Filter '*.json' -File
+    # con las carpetas de cada juego (2026-11-10), sin los sprites del cartucho ni las reglas apartadas
+    $sources += Get-ChildItem -LiteralPath (Join-Path $raiz 'Data') -Filter '*.json' -File -Recurse | Where-Object { $_.FullName -notmatch '[\\/](sprites|reglas-anteriores)[\\/]' }
     $sources += @('README.md','LICENSE','PermaLocke.slnx','.gitignore','docs/DISTRIBUCION-LOCAL.md') | ForEach-Object { Get-Item -LiteralPath (Join-Path $raiz $_) }
     foreach ($file in $sources) {
         $relative = (Relative $raiz $file.FullName).Replace('\','/')
         [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($sourceZip, $file.FullName, $relative, [IO.Compression.CompressionLevel]::Optimal) | Out-Null
     }
 } finally { $sourceZip.Dispose() }
-$requiredFiles = @('PermaLocke.exe','PermaLocke.local','EVOLUCIONES CAMBIADAS.txt','TIENDAS.txt','Emulator\azahar.exe','Emulator\plugins\platforms\qwindows.dll','Emulator\follower\Gen7FieldFollower.3gx','Emulator\follower\LEEME.txt','Expansion\exefs\code.bin','Expansion\romfs\a\0\9\4','Expansion\README.txt','Data\mapas.json','Data\marcadores.json','Data\fotos.json') + @($runtime | ForEach-Object { "Emulator\$_" })
+$requiredFiles = @('PermaLocke.exe','PermaLocke.local','EVOLUCIONES CAMBIADAS.txt','TIENDAS.txt','Emulator\azahar.exe','Emulator\plugins\platforms\qwindows.dll','Emulator\follower\Gen7FieldFollower.3gx','Emulator\follower\LEEME.txt','Expansion\exefs\code.bin','Expansion\romfs\a\0\9\4','Expansion\README.txt','Data\ultraluna\mapas.json','Data\ultraluna\marcadores.json','Data\ultraluna\fotos.json','Data\roles.json','Emulator\melonDS\melonDS.exe','Emulator\upr\PokeRandoZX.jar','Emulator\upr\PermaLocke-basico.rnqs','Emulator\java\bin\java.exe','Emulator\java\bin\javaw.exe') + @($runtime | ForEach-Object { "Emulator\$_" })
 foreach ($file in $requiredFiles) {
     if (-not (Test-Path -LiteralPath (Join-Path $Destino $file))) { throw "Falta en la distribucion: $file" }
 }
-foreach ($private in @('Saves','Logs','Randomized','Data\sprites','Config\sync.json','Config\jugador.json','Emulator\user\sdmc','Emulator\user\nand','Emulator\user\load','Emulator\user\shader')) {
+foreach ($private in @('Saves','Logs','Randomized','Data\sprites','Config\sync.json','Config\jugador.json','Emulator\user\sdmc','Emulator\user\nand','Emulator\user\load','Emulator\user\shader','Emulator\melonDS\melonDS.toml','Emulator\upr\config.ini')) {
     if (Test-Path -LiteralPath (Join-Path $Destino $private)) { throw "Se ha incluido informacion personal: $private" }
 }
 $manifest = @(Get-ChildItem -LiteralPath $Destino -Recurse -File | ForEach-Object {

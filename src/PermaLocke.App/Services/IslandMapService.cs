@@ -29,7 +29,7 @@ public sealed class IslandMapService(AppPaths paths, ILogger<IslandMapService> l
 
     private bool _prepared;
 
-    private string MapDirectory => Path.Combine(paths.Data, "mapa-islas");
+    private string MapDirectory => paths.DataFile("mapa-islas");
 
     /// <summary>True once at least one island picture is on disk.</summary>
     public bool IsAvailable { get; private set; }

@@ -4,8 +4,8 @@
         xmlns:views="clr-namespace:PermaLocke.App.Views"
         xmlns:pixel="clr-namespace:PermaLocke.App.Views.Pixel"
         Title="PermaLocke — Nueva run"
-        Height="720" Width="640"
-        MinHeight="480" MinWidth="540"
+        Height="920" Width="820"
+        MinHeight="560" MinWidth="620"
         WindowStartupLocation="CenterOwner"
         UseLayoutRounding="True" SnapsToDevicePixels="True"
         Background="{DynamicResource PxBaseBrush}">
@@ -53,6 +53,21 @@
 
                             <pixel:PixelText Text="{Binding RoleProblem}" Scale="2" Wrap="True" Colour="{DynamicResource PxBad}"
                                              Margin="2,4,0,0" />
+                        </StackPanel>
+                    </pixel:PixelWindow>
+
+                    <!-- LAS VIDAS (2026-10-29): opcionales. Arrastrar la línea de corazones elige cuántas; cada Pokémon caído rompe uno. -->
+                    <pixel:PixelWindow Title="VIDAS" Icon="IconPeople" Margin="0,12,0,0">
+                        <StackPanel>
+                            <CheckBox Content="Jugar con vidas" IsChecked="{Binding LivesOn}"
+                                      Style="{StaticResource PxCheckBox}" Margin="0,0,0,12" />
+                            <pixel:PixelText Text="Cada Pokémon que cae rompe un corazón. Al romperse el último, la run se acaba y ya no se puede seguir jugándola."
+                                             Scale="2" Wrap="True" Colour="{DynamicResource PxTextDim}" Margin="2,0,0,12" />
+                            <pixel:HeartSlider Value="{Binding Lives, Mode=TwoWay}" IsLit="{Binding LivesOn}" />
+                            <pixel:PixelText Text="{Binding LivesText}" Scale="3" Tight="True" Margin="2,10,0,0"
+                                             Colour="{DynamicResource PxAccentInkLight}" Shadow="{DynamicResource PxShadow}" />
+                            <pixel:PixelText Text="Arrastra por los corazones para elegir de 1 a 30." Scale="2" Tight="True" Margin="2,6,0,0"
+                                             Colour="{DynamicResource PxTextFaint}" />
                         </StackPanel>
                     </pixel:PixelWindow>
 

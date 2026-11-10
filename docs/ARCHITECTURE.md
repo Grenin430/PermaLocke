@@ -13831,3 +13831,64 @@ Pedido por el jugador tras mirar cómo lo hace BxnnyLocke: su Azahar modificado 
 - `levelcaps.json` viaja en las reglas oficiales (`TournamentRules`): si el servidor ya tiene unas publicadas, hay que volver a publicarlas desde Admin para que llegue el 100.
 - El singleplayer tiene la misma regla de captura con el botón y no tiene el escalón a 100: no se ha tocado.
 - 2111 pruebas en verde. Sin probar en el emulador real.
+
+
+## §274 · La sala del Dominante de la Aldea Marina (2026-10-28)
+
+El Dominante de la prueba 11 (Rika) salió como primer encuentro de ruta: su sala era `aldea-marina`, que sí tiene encuentros y se alcanza mucho antes de la prueba, así que no valía marcarla como zona de prueba (se probó y se revirtió). Con `--situacion` y la partida guardada dentro de la sala: mapa **295** (mundo 219), que ninguna otra parte de la aldea usa. Ahora es la zona `aldea-marina-sala-del-dominante` (como las de Wela, Colina Saltagua y Cueva Sotobosque): en `mapas.json` y en `sinEncuentros` de `marcadores.json`. Ahí no se gasta ruta ni sale en el MAPA; el resto de la aldea se captura antes de la prueba como siempre. Sin desplegar: en `PermaLocke prueba` hay que copiar `mapas.json` y `marcadores.json`.
+
+## §275 · Sistema de vidas, desde el singleplayer (2026-11-10, sin commit)
+
+Traído del singleplayer (allí §280), igual salvo lo que el torneo tiene distinto:
+- **Run**: `Run.Lives` (1-30, null sin vidas) y `Run.LivesSince` (desde cuándo cuentan las muertes; null = todas). Se eligen al crear la
+  run (ventana «Nueva run», sección VIDAS: casilla y `HeartSlider`, una línea de corazones que se arrastra) y **no se pueden cambiar**
+  después. Vidas que quedan = `Lives` − Pokémon del cementerio posteriores a `LivesSince` (`Run.FallenCounted`, `Run.LivesLeft`): nada
+  guarda un número que pueda contradecir la historia; un muerto revocado devuelve su vida.
+- **Sin vidas**: `RunOverGuard` (cada 2 s) escribe un `GameEventType.RunEnded` una sola vez; si se perdió jugando espera a que el overlay
+  acabe la última muerte y la pérdida del Locke (`CapLockLoss.Finished`, máx. 30 s), avisa con `PixelDialog` y cierra el juego; el
+  lanzador se niega a abrirlo para esa run (`EmulatorLauncher.LaunchBlocker`).
+- **Overlay**: una Sana Ball en 3D por vida en la arena de la ventana del equipo (`CapLivesDecor`: esfera con la textura del
+  modelo del usuario, luz en tres tonos), todas visibles (tamaño hasta radio 12, filas hacia abajo en la arena, nunca sobre el texto,
+  dejando libre el sitio del Pokévial, la Incubadora Turbo y el Repelente, `CapWorldView.ItemsStretch`); la perdida se agrieta en cuatro
+  saltos y se queda para siempre. Sobre el cartel del cap, un corazón y «×N» (`CapLivesDecor.Counter`). Tras la última muerte, la
+  pérdida del Locke (`CapLockLoss`: el panel se apaga, cae un candado, cadenas, «LOCKE PERDIDO»).
+- Los prototipos descartados (corales, cadenas, boyas, santuario…) se borraron antes de traerlo: `CapLivesDecor` solo tiene las Sana Balls y su contador, y `CapLivesState` vive en él (no hay `CapLivesHud`).
+- **`PixelDialog`**: el aviso de Windows sustituido por uno en píxeles en toda la app (`AppDialogs.Confirm/Tell`, arranque, errores).
+- En el torneo las muertes siguen costando puntos como siempre: las vidas son aparte y opcionales al crear la run.
+
+## §276 · Launcher multijuego y HeartGold, desde el singleplayer (2026-11-10, sin commit)
+
+Traído del singleplayer (allí §281):
+Plan completo en el cerebro: «Plan del launcher multijuego - fase 1 (2026-11-10)».
+- `GameVersion.HeartGold` (al final: `run.json` guarda el nombre). `GameCatalog`/`GameInfo` (nombre, plataforma, jugable, carpeta):
+  los dos jugables (HeartGold, de momento, solo randomizar y jugar: ver abajo).
+- **Al abrir, «¿A QUÉ VAS A JUGAR?»** (`GamePickerWindow`, portadas en `Assets/Games/`), antes que todo lo demás; `--juego <nombre>` la
+  salta y `--sin-juego` no pregunta. **Un juego por proceso**: volver al menú (icono de casa en `HeaderActions`, JUEGOS en Rail;
+  `GameSwitch.BackToMenu`) reabre PermaLocke; no con el emulador abierto.
+- **Datos por juego**: `AppPaths.UseGame/ForGame/DataFile`: primero `Data/<juego>/`, si no `Data/`. Los 19 JSON de Ultra Luna están ya
+  en `Data/ultraluna/`; en `Data/` quedan los comunes (`roles`, `penalties`, `gacha`) y lo extraído de la ROM de cada jugador
+  (`sprites/`, `mapa-islas/`). RomTool, Probe, los labs y los tests apuntan a `Data/ultraluna/`; el proyecto publica `Data/**` (sin
+  `sprites`), `publicar.ps1` lo comprueba, y `AppUpdate` copia las subcarpetas conservando las reglas oficiales por nombre (que se siguen
+  leyendo de `Data/` por el respaldo).
+- **Ultra Luna como módulo** (paso 3): `Games/UltraMoonModule.AddUltraMoon(paths)` registra lo que es del juego y no de la app: Azahar
+  (`AzaharInstallation`, `EmulatorLauncher`, `EmulatorCrashReport`), GameLink (partida y memoria), el dinero como puntos, el mundo
+  instalado (`InstalledWorld`, `MachineItemLookup`, `World*`), mapas y pruebas de Alola (`JsonMapTable`, `TrialZoneService`), la memoria en
+  vivo y el panel del cap (`VitalsPump`, `BarSync`, `ActiveBar`, `CapBadge`, `PokeVialService`, `FieldItemsService`, `AlolaSky`), las
+  habilidades y el mundo de la ruleta. `App.OnStartup` lo llama según `GameSession.Current` justo tras los servicios comunes (el mismo
+  sitio de antes, así que `TryAdd`/`Replace` se resuelven igual); un juego sin módulo no arranca. Las pantallas siguen pidiendo esos
+  servicios directamente: el segundo juego tendrá que dar los suyos o las pantallas aprender a prescindir (fase 2).
+- **HeartGold, lo más básico** (decisión del usuario: de momento solo randomizar y jugar; las generaciones, aparcadas): al elegirlo en el
+  launcher se abre `HeartGoldWindow` y nada más (sin base de datos, vigilante ni runs). `Games/HeartGold`: la ROM es la primera `.nds`
+  de `ROM/` cuyo código de cabecera empieza por `IPK` (no se toca); RANDOMIZAR llama al Universal Pokémon Randomizer tal cual
+  (`Emulator/upr/PokeRandoZX.jar`, `java -Xmx4096M -jar … cli -s <ajustes .rnqs> -i <ROM> -o Randomized/HeartGold-<fecha>.nds`); los
+  ajustes se hacen en la propia ventana del Randomizer (ABRIR EL RANDOMIZER) y se eligen con AJUSTES; JUGAR abre melonDS
+  (`Emulator/melonDS/melonDS.exe`) con la última ROM randomizada. Estado en `Config/heartgold.json`.
+- **Propio del torneo**: el módulo no lleva el «dinero como puntos» (aquí hay puntos de verdad). `RulesSync` escribe cada regla oficial donde la app la lee (`paths.DataFile`: en `Data/ultraluna/` si está allí, si no en `Data/`), y Admin abre con `ForGame("ultraluna")`. El proyecto y `publicar.ps1` no publican `Data/reglas-anteriores/`. `torneo.json` sigue en `Data/` (común). melonDS y el Randomizer copiados a `Emulator/melonDS` y `Emulator/upr` (ignorados por git).
+- **Las herramientas viajan o se descargan** (1.1.5): `publicar.ps1` copia `Emulator/melonDS`, `Emulator/upr` (con los ajustes básicos
+  `PermaLocke-basico.rnqs`: salvajes por zona, iniciales, entrenadores y estáticos al azar) y `Emulator/java` (Java 21 recortado con jlink:
+  `java.base,java.desktop,java.logging,java.naming`, unos 48 MB) y quita lo personal (`melonDS.toml`, `rtc.bin`, `wfcsettings.bin`,
+  `upr/config.ini`). Una copia que no las tenga (quien se actualiza por la Action, que solo trae exe y `Data/`) las descarga desde
+  HeartGoldWindow con DESCARGAR: un zip en la prerelease `herramientas-heartgold-1` (60 MB), comprobado por SHA-256 en
+  `HeartGold.ToolsSha256` antes de descomprimirlo en `Emulator/`. Es prerelease para que el actualizador (`releases/latest`) no la tome.
+  `HeartGold.Java` usa `Emulator/java` y, si no está, el Java del sistema. Visto: randomizar con esos ajustes tarda 4 s y la ROM arranca en
+  melonDS. **Sin probar en el ordenador de un amigo.**

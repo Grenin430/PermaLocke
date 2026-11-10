@@ -43,7 +43,7 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
         new Dictionary<(int Species, int Form), int>();
     private bool _prepared;
     private string _sourceKey = "pending";
-    private string SpriteDirectory => Path.Combine(paths.Data, "sprites", "v2", _sourceKey);
+    private string SpriteDirectory => paths.DataFile("sprites", "v2", _sourceKey);
 
     /// <summary>The balls live apart so the Pokémon folder stays one file per icon index.</summary>
     private string BallDirectory => Path.Combine(SpriteDirectory, "balls");
@@ -253,7 +253,7 @@ public sealed class PokemonSpriteService(AppPaths paths, ILogger<PokemonSpriteSe
 
     private IReadOnlyDictionary<int, Dictionary<int, int>> ReadShinyTables()
     {
-        var file = Path.Combine(paths.Data, "variocolor.json");
+        var file = paths.DataFile("variocolor.json");
         var tables = new Dictionary<int, Dictionary<int, int>>();
 
         try

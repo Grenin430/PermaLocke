@@ -33,17 +33,18 @@ public static class StageProbe
     {
         var root = Root();
         var paths = new AppPaths(root);
+        paths.UseGame("ultraluna");
 
         var collection = new ServiceCollection();
         collection.AddPermaLockeInfrastructure(paths, "probe");
         collection.AddPermaLockeData(paths.Saves);
         collection.AddPermaLockeCore();
-        collection.AddPermaLockeRules(Path.Combine(paths.Data, "rules.json"));
+        collection.AddPermaLockeRules(paths.DataFile("rules.json"));
         collection.AddPermaLockeGameLink(paths.SaveBackups);
         collection.AddSingleton<IAchievementCatalog>(_ =>
-            JsonAchievementCatalog.Load(Path.Combine(paths.Data, "achievements.json")));
+            JsonAchievementCatalog.Load(paths.DataFile("achievements.json")));
         collection.AddSingleton<IRoleCatalog>(_ =>
-            JsonRoleCatalog.Load(Path.Combine(paths.Data, "roles.json")));
+            JsonRoleCatalog.Load(paths.DataFile("roles.json")));
         collection.AddSingleton<IRunRoles, RunRoles>();
         collection.AddSingleton<AzaharInstallation>();
         collection.AddSingleton<AchievementService>();

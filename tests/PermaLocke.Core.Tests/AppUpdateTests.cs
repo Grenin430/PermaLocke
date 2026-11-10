@@ -145,4 +145,30 @@ public sealed class AppUpdateTests : IDisposable
         Assert.False(result.Done);
         Assert.Equal("programa viejo", File.ReadAllText(Path.Combine(_root, "PermaLocke.exe")));
     }
+
+    [Fact]
+    public void The_data_of_each_game_goes_to_its_own_folder_and_the_official_rules_stay()
+    {
+        // una carpeta de antes del launcher: todo en Data/, con la tienda oficial del organizador
+        Write(Path.Combine(_root, "PermaLocke.exe"), "programa viejo");
+        Write(Path.Combine(_root, "Data", "shop.json"), "tienda oficial del organizador");
+
+        var build = Path.Combine(_root, "paquete");
+        Write(Path.Combine(build, "PermaLocke.exe"), "programa nuevo");
+        Write(Path.Combine(build, "Data", "roles.json"), "roles nuevos");
+        Write(Path.Combine(build, "Data", "ultraluna", "species.json"), "especies nuevas");
+        Write(Path.Combine(build, "Data", "ultraluna", "shop.json"), "tienda del paquete");
+        var package = Path.Combine(_root, "PermaLocke-actualizacion-1.3.0.zip");
+        ZipFile.CreateFromDirectory(build, package);
+
+        var result = AppUpdate.Apply(package, _root, "PermaLocke.exe", new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "shop.json" },
+            NullLogger.Instance);
+
+        Assert.True(result.Done, string.Join(" / ", result.Log));
+        Assert.Equal("roles nuevos", File.ReadAllText(Path.Combine(_root, "Data", "roles.json")));
+        Assert.Equal("especies nuevas", File.ReadAllText(Path.Combine(_root, "Data", "ultraluna", "species.json")));
+        // la tienda oficial no se pisa: el juego la sigue leyendo de Data/ por el respaldo (AppPaths.DataFile)
+        Assert.False(File.Exists(Path.Combine(_root, "Data", "ultraluna", "shop.json")));
+        Assert.Equal("tienda oficial del organizador", File.ReadAllText(Path.Combine(_root, "Data", "shop.json")));
+    }
 }

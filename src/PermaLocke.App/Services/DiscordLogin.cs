@@ -45,7 +45,7 @@ public sealed class DiscordLogin(AppPaths paths, ILogger<DiscordLogin> logger) :
     private string SessionPath => Path.Combine(paths.Config, "discord.json");
 
     private ServerConfig Config =>
-        JsonSerializer.Deserialize<ServerConfig>(File.ReadAllText(Path.Combine(paths.Data, "torneo.json")),
+        JsonSerializer.Deserialize<ServerConfig>(File.ReadAllText(paths.DataFile("torneo.json")),
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
         ?? throw new InvalidDataException("Data/torneo.json está vacío.");
 

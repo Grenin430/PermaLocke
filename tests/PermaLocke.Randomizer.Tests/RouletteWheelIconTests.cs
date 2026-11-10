@@ -35,7 +35,7 @@ public sealed class RouletteWheelIconTests
 
     private static List<int> WantedItems()
     {
-        using var stream = File.OpenRead(Path.Combine(Root(), "Data", "roulette.json"));
+        using var stream = File.OpenRead(Path.Combine(Root(), "Data", "ultraluna", "roulette.json"));
         using var document = JsonDocument.Parse(stream);
 
         return [.. document.RootElement.GetProperty("caras").EnumerateArray()

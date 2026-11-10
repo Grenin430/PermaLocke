@@ -191,7 +191,7 @@ public sealed partial class MapViewModel : SectionViewModel
         _art = art;
         _photos = photos;
         _logger = logger;
-        _markers = JsonZoneMarkers.Load(Path.Combine(paths.Data, "marcadores.json"));
+        _markers = JsonZoneMarkers.Load(paths.DataFile("marcadores.json"));
 
         // Una marca nueva aparece con el mapa abierto: es la única forma que tiene de cambiar.
         monitor.RunDataChanged += (_, _) => _ = ui.InvokeAsync(RefreshAsync);

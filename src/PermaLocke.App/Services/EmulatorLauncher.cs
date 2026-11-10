@@ -364,8 +364,13 @@ public sealed partial class EmulatorLauncher : ObservableObject
 
     /// <summary>Opens the game, or brings its window forward when it is already open.</summary>
     /// <returns>Null when it opened; otherwise why not.</returns>
+    /// <summary>Set by the run-over guard: why the game cannot be opened (a run with no lives left), or null.</summary>
+    public Func<string?>? LaunchBlocker { get; set; }
+
     public string? Launch()
     {
+        if (LaunchBlocker?.Invoke() is { } blocked) return blocked;
+
         using var running = FindProcess();
         if (running is not null)
         {

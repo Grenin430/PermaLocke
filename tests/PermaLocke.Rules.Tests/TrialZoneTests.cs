@@ -93,14 +93,14 @@ public sealed class TrialZoneTests
     [Fact]
     public void Every_shipped_trial_zone_exists_and_its_trial_has_a_crystal()
     {
-        var rules = RulesConfigurationLoader.Load(Path.Combine(Root(), "Data", "rules.json"));
+        var rules = RulesConfigurationLoader.Load(Path.Combine(Root(), "Data", "ultraluna", "rules.json"));
         Assert.NotEmpty(rules.BallControl.TrialZones);
 
-        using var maps = JsonDocument.Parse(File.ReadAllText(Path.Combine(Root(), "Data", "mapas.json")));
+        using var maps = JsonDocument.Parse(File.ReadAllText(Path.Combine(Root(), "Data", "ultraluna", "mapas.json")));
         var zones = maps.RootElement.GetProperty("mapas").EnumerateArray()
             .Select(map => map.GetProperty("zona").GetString()).ToHashSet();
 
-        using var achievements = JsonDocument.Parse(File.ReadAllText(Path.Combine(Root(), "Data", "achievements.json")));
+        using var achievements = JsonDocument.Parse(File.ReadAllText(Path.Combine(Root(), "Data", "ultraluna", "achievements.json")));
         var crystals = achievements.RootElement.GetProperty("achievements").EnumerateArray()
             .Where(achievement => achievement.TryGetProperty("item", out _))
             .ToDictionary(achievement => achievement.GetProperty("id").GetString()!,

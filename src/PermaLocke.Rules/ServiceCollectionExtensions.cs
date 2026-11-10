@@ -9,7 +9,7 @@ public static class ServiceCollectionExtensions
     /// Registers the engine and every rule. Adding a rule means adding one line here and one
     /// entry in Data/rules.json; nothing else in the application changes.
     /// </summary>
-    public static IServiceCollection AddPermaLockeRules(this IServiceCollection services, string rulesJsonPath)
+    public static IServiceCollection AddPermaLockeRules(this IServiceCollection services, string rulesJsonPath, string? levelCapsPath = null)
     {
         services.AddSingleton<IRule, FirstEncounterRule>();
         services.AddSingleton<IRule, ShinyClauseRule>();
@@ -22,7 +22,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IRuleEngine, RuleEngine>();
         services.AddSingleton(_ => RulesConfigurationLoader.Load(rulesJsonPath));
         services.AddSingleton(_ => LevelCapTable.Load(
-            Path.Combine(Path.GetDirectoryName(rulesJsonPath)!, "levelcaps.json")));
+            levelCapsPath ?? Path.Combine(Path.GetDirectoryName(rulesJsonPath)!, "levelcaps.json")));
         services.AddSingleton<IEvolutionLineProvider, NullEvolutionLineProvider>();
         services.AddSingleton<Services.ProgressService>();
 

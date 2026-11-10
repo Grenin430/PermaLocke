@@ -66,7 +66,7 @@ public sealed record CapPlaqueData(string Trial, int Cap, int? Next, int? Highes
     IReadOnlyList<CapEvent>? Events = null, double? ActiveShare = null, bool DeathScenes = true, int CrystalItem = 0, BitmapSource? Crystal = null,
     IReadOnlyList<(int Item, BitmapSource? Icon)>? Crystals = null, CapShinyTurn? Shiny = null, CapVialState? Vial = null,
     CapToggle? Repel = null, CapToggle? Turbo = null, CapEncounterTurn? Encounter = null,
-    IReadOnlyList<CapItemDrop>? Items = null);
+    IReadOnlyList<CapItemDrop>? Items = null, CapLivesState? Lives = null);
 
 /// <summary>
 /// The Pokévial in the overlay (2026-10-16): its uses left and the most it holds, and when it was last used (on the panel's clock) with the uses it had

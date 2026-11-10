@@ -174,7 +174,7 @@ public sealed class RulesConfigurationTests
 
         while (dir is not null)
         {
-            var candidate = Path.Combine(dir.FullName, "Data", name);
+            var candidate = Path.Combine(dir.FullName, "Data", "ultraluna", name);
             if (File.Exists(candidate))
             {
                 return candidate;

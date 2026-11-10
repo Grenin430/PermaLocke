@@ -53,8 +53,10 @@ public sealed class InstalledWorld(AzaharInstallation azahar, ILogger<InstalledW
     {
         try
         {
-            var banned = PermaLocke.Randomizer.RandomizerOptionsLoader
-                .Load(Path.Combine(appDirectory, "Data", "randomizer.json")).BannedMoves;
+            // in Ultra Luna's folder since the launcher (2026-11-10); a folder not updated yet still has it in Data/
+            var file = Path.Combine(appDirectory, "Data", "ultraluna", "randomizer.json");
+            if (!File.Exists(file)) file = Path.Combine(appDirectory, "Data", "randomizer.json");
+            var banned = PermaLocke.Randomizer.RandomizerOptionsLoader.Load(file).BannedMoves;
             WorldMoves.Banned = banned.ToHashSet();
             logger.LogInformation("Movimientos prohibidos: {Count} ({Ids})", banned.Count, string.Join(", ", banned));
         }

@@ -33,7 +33,7 @@ public sealed class StaticOverrideConfigTests
     }
 
     private static RandomizerOptions Shipped() =>
-        RandomizerOptionsLoader.Load(Path.Combine(Root(), "Data", "randomizer.json"));
+        RandomizerOptionsLoader.Load(Path.Combine(Root(), "Data", "ultraluna", "randomizer.json"));
 
     /// <summary>Every Necrozma that is a boss fight is a mega, and the catchable ones are not.</summary>
     /// <remarks>

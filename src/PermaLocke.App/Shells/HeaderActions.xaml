@@ -90,6 +90,10 @@
             </Button.Template>
         </Button>
 
+        <!-- VOLVER AL MENÚ DE JUEGOS (2026-11-10): en todas las pantallas, al lado de JUGAR. Reabre PermaLocke en el launcher. -->
+        <Button Style="{StaticResource PlateButton}" Tag="IconHome" Command="{Binding ChangeGameCommand}"
+                ToolTip="Cambiar de juego" AutomationProperties.Name="Cambiar de juego" />
+
         <!-- LA BANDEJA DE REGALOS, solo si hay alguno, con la cuenta en una chapa roja. -->
         <Grid VerticalAlignment="Center" Visibility="{Binding Gifts.HasGifts, Converter={StaticResource BoolToVisibility}}">
             <Button Style="{StaticResource PlateButton}" Tag="IconGift" Command="{Binding Gifts.ToggleCommand}"

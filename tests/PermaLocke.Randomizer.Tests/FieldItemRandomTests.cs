@@ -134,7 +134,7 @@ public sealed class FieldItemRandomTests
     [Fact]
     public void The_competition_draws_at_random_at_most_twice_and_never_a_master_ball()
     {
-        var options = RandomizerOptionsLoader.Load(Path.Combine(Root(), "Data", "randomizer.json"));
+        var options = RandomizerOptionsLoader.Load(Path.Combine(Root(), "Data", "ultraluna", "randomizer.json"));
 
         Assert.True(options.FieldItems);
         Assert.Equal(FieldItemsMode.Random, options.FieldItemsMode);

@@ -22,7 +22,7 @@ public sealed class IslandMapTests
         }
 
         Assert.NotNull(root);
-        return JsonIslandMap.Load(Path.Combine(root!, "Data", "islas.json"));
+        return JsonIslandMap.Load(Path.Combine(root!, "Data", "ultraluna", "islas.json"));
     }
 
     [Fact]

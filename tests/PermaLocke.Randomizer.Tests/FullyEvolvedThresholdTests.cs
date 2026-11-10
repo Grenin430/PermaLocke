@@ -37,7 +37,7 @@ public sealed class FullyEvolvedThresholdTests
 
     private static int Threshold()
     {
-        using var stream = File.OpenRead(Path.Combine(Root(), "Data", "randomizer.json"));
+        using var stream = File.OpenRead(Path.Combine(Root(), "Data", "ultraluna", "randomizer.json"));
         using var document = JsonDocument.Parse(stream);
 
         return document.RootElement.GetProperty("fullyEvolvedFromLevel").GetInt32();
@@ -45,7 +45,7 @@ public sealed class FullyEvolvedThresholdTests
 
     private static int SixthTrialCap()
     {
-        using var stream = File.OpenRead(Path.Combine(Root(), "Data", "levelcaps.json"));
+        using var stream = File.OpenRead(Path.Combine(Root(), "Data", "ultraluna", "levelcaps.json"));
         using var document = JsonDocument.Parse(stream);
 
         return document.RootElement.GetProperty("caps").EnumerateArray()

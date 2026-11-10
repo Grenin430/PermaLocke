@@ -35,10 +35,10 @@ public sealed class WildBannedSpeciesTests
     [Fact]
     public void Every_legendary_is_kept_out_of_the_wild()
     {
-        var options = RandomizerOptionsLoader.Load(Path.Combine(Root(), "Data", "randomizer.json"));
+        var options = RandomizerOptionsLoader.Load(Path.Combine(Root(), "Data", "ultraluna", "randomizer.json"));
         var outOfTheWild = options.BannedSpecies.Concat(options.WildBannedSpecies).ToHashSet();
 
-        using var stream = File.OpenRead(Path.Combine(Root(), "Data", "species.json"));
+        using var stream = File.OpenRead(Path.Combine(Root(), "Data", "ultraluna", "species.json"));
         using var document = JsonDocument.Parse(stream);
 
         var legendaries = document.RootElement.GetProperty("species").EnumerateArray()

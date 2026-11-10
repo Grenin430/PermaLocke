@@ -72,7 +72,7 @@ public sealed class AbilityTableTests
     [Fact]
     public void The_configured_list_keeps_the_form_abilities_out()
     {
-        var options = RandomizerOptionsLoader.Load(Path.Combine(FindRoot(), "Data", "randomizer.json"));
+        var options = RandomizerOptionsLoader.Load(Path.Combine(FindRoot(), "Data", "ultraluna", "randomizer.json"));
 
         Assert.Equal(0, options.MaxAbility);
         Assert.Equal(0, options.MaxMove);

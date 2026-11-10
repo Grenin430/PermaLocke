@@ -69,6 +69,31 @@ public sealed class AppPaths
 
     public string Data { get; }
 
+    /// <summary>The data folder of the game being played (2026-11-10), «ultraluna» or «heartgold» under <see cref="Data"/>; null before one is chosen.</summary>
+    public string? GameFolder { get; private set; }
+
+    /// <summary>Says which game is being played, so <see cref="DataFile"/> looks in its folder first.</summary>
+    public void UseGame(string folder) => GameFolder = folder;
+
+    /// <summary>The same, in one expression: <c>new AppPaths(root).ForGame("ultraluna")</c>, for the labs and probes.</summary>
+    public AppPaths ForGame(string folder)
+    {
+        UseGame(folder);
+        return this;
+    }
+
+    /// <summary>
+    /// A file or folder of data: the game's own one in <c>Data/ultraluna/</c> (or the folder of the game being played) when it has it, otherwise the shared one in <c>Data/</c>.
+    /// The fallback keeps every folder made before the launcher working while the files move into the game's folder.
+    /// </summary>
+    public string DataFile(params string[] parts)
+    {
+        var shared = Path.Combine([Data, .. parts]);
+        if (GameFolder is null) return shared;
+        var own = Path.Combine([Data, GameFolder, .. parts]);
+        return File.Exists(own) || Directory.Exists(own) ? own : shared;
+    }
+
     public string Config { get; }
 
     public string Logs { get; }

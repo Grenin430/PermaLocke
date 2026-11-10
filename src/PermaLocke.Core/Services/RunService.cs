@@ -12,7 +12,8 @@ public sealed record CreateRunRequest(
     ulong? Seed = null,
     string? RomHash = null,
     string? TitleId = null,
-    Guid? PlayerId = null);
+    Guid? PlayerId = null,
+    int? Lives = null);
 
 /// <param name="Events">How many events went with it.</param>
 /// <param name="Pokemon">How many registered Pokémon went with it.</param>
@@ -42,6 +43,8 @@ public sealed class RunService(IRunRepository runs, IEventStore events, IPokemon
             PlayerName = request.PlayerName,
             PlayerId = request.PlayerId,
             RoleId = request.RoleId,
+            Lives = request.Lives is { } lives ? Math.Clamp(lives, 1, Run.MaxLives) : null,
+            LivesSince = request.Lives is null ? null : clock.Now,
             Game = request.Game,
             Seed = seed,
             SeedLabel = FormatSeed(seed),
@@ -71,6 +74,7 @@ public sealed class RunService(IRunRepository runs, IEventStore events, IPokemon
             {
                 ["game"] = run.Game.ToString(),
                 ["role"] = run.RoleId,
+                ["vidas"] = run.Lives?.ToString() ?? string.Empty,
                 ["titleId"] = run.TitleId ?? string.Empty,
                 ["romHash"] = run.RomHash ?? string.Empty,
                 ["playerId"] = run.PlayerId?.ToString("N") ?? string.Empty

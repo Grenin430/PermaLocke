@@ -127,6 +127,14 @@ public static class CapScenarios
             Still("duplicado", "Duplicado: la misma ruta, banderín ámbar «DUPLICADO, TÚ ELIGES»", Base(icon, full, battle: true) with { Encounter = new CapEncounterTurn(icon(903), "Isla Exeggutor", 1, 22, Duplicate: true) }),
             Still("estatico-capturable", "Pokémon estático capturable: la misma ruta y el mismo banderín", Base(icon, full, battle: true) with { Encounter = new CapEncounterTurn(icon(800), "Monte Lanakila", 1, 22, Catchable: true) }),
             Still("shiny-cosas", "Variocolor: cada cosa su color", Base(icon, full, battle: true) with { Shiny = new CapShinyTurn(CapShinyKind.Things, 0.5, 12.5) }),
+            // The lives (2026-10-29): a Heal Ball for each of 1, 5, 10 and 30, with the overlay's items in the sand, two cracking at 1 s, the Locke lost.
+            Still("vidas-1", "Vidas: una sola", Base(icon, full) with { Lives = new CapLivesState(1, 1) }),
+            Still("vidas-5", "Vidas: cinco, una rota", Base(icon, full) with { Lives = new CapLivesState(5, 4) }),
+            Still("vidas-10", "Vidas: diez, tres rotas", Base(icon, full) with { Lives = new CapLivesState(10, 7) }),
+            Still("vidas-30", "Vidas: treinta, doce rotas", Base(icon, full) with { Lives = new CapLivesState(30, 18) }),
+            Still("vidas-30-objetos", "Vidas: treinta con el Pokévial, la Incubadora Turbo y el Repelente en la arena", Base(icon, full) with { Lives = new CapLivesState(30, 30), Vial = new CapVialState(2, 3), Repel = CapToggle.Off, Turbo = CapToggle.Off }),
+            Still("vidas-fin", "Locke perdido: se rompe la última vida a 1 s y a 3 s empieza la pérdida", Base(icon, full) with { Lives = new CapLivesState(2, 0, 1.0, 1, 3.0) }),
+            Still("vidas-rotura", "Vidas: se agrietan dos Sana Balls de golpe a 1 s", Base(icon, full) with { Lives = new CapLivesState(10, 6, 1.0, 8) }),
             // The Pokévial (2026-10-16): at rest with two of three, and used at 1 s, two of two to one.
             Still("pokevial", "Pokévial con dos de tres usos", Base(icon, full) with { Vial = new CapVialState(2, 3) }),
             Still("pokevial-uso", "Pokévial usado: de dos a uno", Base(icon, full) with { Vial = new CapVialState(1, 2, 1.0, 2) }),

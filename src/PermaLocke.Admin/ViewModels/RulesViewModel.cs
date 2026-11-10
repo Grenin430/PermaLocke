@@ -68,7 +68,7 @@ public sealed partial class RulesViewModel(ITournamentServer discord, AppPaths p
             }
             else
             {
-                var local = Path.Combine(paths.Data, file.File);
+                var local = paths.DataFile(file.File);
                 Text = File.Exists(local) ? await File.ReadAllTextAsync(local) : string.Empty;
                 Status = "Sin versión oficial: cada jugador usa la que venía con su PermaLocke. Esto es la de este PC.";
             }
@@ -196,7 +196,7 @@ public sealed partial class RulesViewModel(ITournamentServer discord, AppPaths p
             if (json is null) return "Entra con Discord (la cuenta del organizador).";
 
             var row = (JsonSerializer.Deserialize<List<Row>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? []).FirstOrDefault();
-            var text = row?.Contenido ?? await File.ReadAllTextAsync(Path.Combine(paths.Data, "shop.json"));
+            var text = row?.Contenido ?? await File.ReadAllTextAsync(paths.DataFile("shop.json"));
 
             if (System.Text.Json.Nodes.JsonNode.Parse(text) is not System.Text.Json.Nodes.JsonObject shop)
             {

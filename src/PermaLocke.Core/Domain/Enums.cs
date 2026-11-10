@@ -1,10 +1,13 @@
 namespace PermaLocke.Core.Domain;
 
-/// <summary>Supported games. PermaLocke targets Ultra Moon first.</summary>
+/// <summary>The games PermaLocke knows. Stored by name in run.json, so new ones go at the end and old runs still read.</summary>
 public enum GameVersion
 {
     UltraSun,
-    UltraMoon
+    UltraMoon,
+
+    /// <summary>Pokémon HeartGold (Nintendo DS), since 2026-11-10: for now only randomized with the Universal Randomizer and played in melonDS.</summary>
+    HeartGold
 }
 
 /// <summary>
@@ -425,5 +428,8 @@ public enum GameEventType
     /// <summary>
     /// PermaLocke put back the ability it had given a Pokémon, which the game had recomputed after an evolution or a form change (§237). At the end: stored as a number.
     /// </summary>
-    AbilityRestored
+    AbilityRestored,
+
+    /// <summary>The run's last life broke: it can no longer be played (2026-10-29). At the end: stored as a number.</summary>
+    RunEnded
 }

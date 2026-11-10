@@ -33,6 +33,8 @@
       sale liso a cualquier tamaño.
     -->
     <Resource Include="Assets\PermaLocke.png" />
+    <!-- Las portadas del launcher (2026-11-10), las que paso el jugador. -->
+    <Resource Include="Assets\Games\*.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -51,7 +53,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <!-- La versión que compara la actualización automática (§196). Se sube aquí con cada release, y
          tools/publicar-actualizacion.ps1 -Version la pone igual al publicarla; tools/publicar.ps1 usa esta. -->
-    <Version>1.1.4</Version>
+    <Version>1.1.5</Version>
 
     <!-- La Poke Ball es DIBUJADA POR NOSOTROS, geometrica, en nuestros colores. No sale del
          cartucho: los sprites de Nintendo se extraen de la ROM de cada jugador y no se reparten,
@@ -92,9 +94,11 @@
     repositorio y ya lee estos mismos ficheros desde su sitio.
   -->
   <ItemGroup>
-    <DataFiles Include="$(MSBuildThisFileDirectory)..\..\Data\*.json" />
+    <!-- con las carpetas de cada juego (2026-11-10): Data\ultraluna\… sale en su sitio; sin los sprites ni las reglas apartadas -->
+    <DataFiles Include="$(MSBuildThisFileDirectory)..\..\Data\**\*.json"
+               Exclude="$(MSBuildThisFileDirectory)..\..\Data\sprites\**;$(MSBuildThisFileDirectory)..\..\Data\reglas-anteriores\**" />
     <None Include="@(DataFiles)"
-          Link="Data\%(Filename)%(Extension)"
+          Link="Data\%(RecursiveDir)%(Filename)%(Extension)"
           CopyToOutputDirectory="Never"
           CopyToPublishDirectory="PreserveNewest"
           ExcludeFromSingleFile="true" />

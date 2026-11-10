@@ -46,7 +46,7 @@ public sealed class SpecialMartItemTests
     public void La_lista_configurada_no_repite_ningun_id()
     {
         var options = RandomizerOptionsLoader.Load(
-            Path.Combine(FindRoot(), "Data", "randomizer.json"));
+            Path.Combine(FindRoot(), "Data", "ultraluna", "randomizer.json"));
 
         Assert.Equal(18, options.SpecialMartItems.Count);
         Assert.Equal(18, options.SpecialMartItems.Select(i => i.Id).Distinct().Count());

@@ -54,8 +54,8 @@ public static class ZonePhotoMatcher
             return 1;
         }
 
-        var markers = JsonZoneMarkers.Load(Path.Combine(root, "Data", "marcadores.json"));
-        var islands = JsonIslandMap.Load(Path.Combine(root, "Data", "islas.json"));
+        var markers = JsonZoneMarkers.Load(Path.Combine(root, "Data", "ultraluna", "marcadores.json"));
+        var islands = JsonIslandMap.Load(Path.Combine(root, "Data", "ultraluna", "islas.json"));
 
         // Solo las zonas que estan EN el mapa: una foto de un sitio sin marcador no se puede ver.
         var wanted = islands.Zones
@@ -115,7 +115,7 @@ public static class ZonePhotoMatcher
             return 1;
         }
 
-        var path = Path.Combine(root, "Data", "fotos.json");
+        var path = Path.Combine(root, "Data", "ultraluna", "fotos.json");
         var document = new
         {
             comentario = "Foto de cada zona, relativa a la carpeta de la aplicacion. Generado por "

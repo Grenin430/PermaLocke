@@ -36,23 +36,24 @@ public static class RouletteProbe
     {
         var root = Root();
         var paths = new AppPaths(root);
+        paths.UseGame("ultraluna");
 
         var collection = new ServiceCollection();
         collection.AddPermaLockeInfrastructure(paths, "probe");
         collection.AddPermaLockeData(paths.Saves);
         collection.AddPermaLockeCore();
-        collection.AddPermaLockeRules(Path.Combine(paths.Data, "rules.json"));
+        collection.AddPermaLockeRules(paths.DataFile("rules.json"));
         collection.AddPermaLockeGameLink(paths.SaveBackups);
         collection.AddSingleton<AzaharInstallation>();
         collection.AddSingleton<IAchievementCatalog>(_ =>
-            JsonAchievementCatalog.Load(Path.Combine(paths.Data, "achievements.json")));
+            JsonAchievementCatalog.Load(paths.DataFile("achievements.json")));
         collection.AddSingleton<IRoleCatalog>(_ =>
-            JsonRoleCatalog.Load(Path.Combine(paths.Data, "roles.json")));
+            JsonRoleCatalog.Load(paths.DataFile("roles.json")));
         collection.AddSingleton<IRunRoles, RunRoles>();
         collection.AddSingleton<AchievementService>();
         collection.AddSingleton<IAbilityLookup>(_ => new PkhexAbilityLookup());
         collection.AddSingleton<IRouletteCatalog>(sp =>
-            JsonRouletteCatalog.Load(Path.Combine(paths.Data, "roulette.json"),
+            JsonRouletteCatalog.Load(paths.DataFile("roulette.json"),
                 sp.GetRequiredService<IAbilityLookup>()));
 
         // El puerto del mundo apunta al TEMPORAL. Aunque algo llamase por error al camino normal

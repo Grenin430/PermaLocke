@@ -587,12 +587,40 @@ public sealed class CapBadge
         return new CapReading(label, stage.Level, next, Highest(), cleared, trials, crystal, crystals);
     }
 
+    private int _fallenCount;
+    private int _livesLeft = -1;
+    private double _livesLostAt = double.NegativeInfinity;
+    private int _livesFrom;
+    private double _lossAt = double.PositiveInfinity;
+
+    /// <summary>
+    /// The run's lives for the overlay (2026-10-29): what it started with minus the Pokémon in the cemetery. The first reading only sets the number;
+    /// a drop after it is the moment the hearts break.
+    /// </summary>
+    private CapLivesState? LivesNow()
+    {
+        if (_runContext.Current is not { Lives: { } start } run) { _livesLeft = -1; return null; }
+
+        var left = run.LivesLeft(_fallenCount) ?? 0;
+        if (_livesLeft >= 0 && left < _livesLeft)
+        {
+            _livesLostAt = Now;
+            _livesFrom = _livesLeft;
+            if (left == 0) _lossAt = Now + CapLockLoss.DeathWait;
+        }
+
+        if (left > 0) _lossAt = double.PositiveInfinity;
+        _livesLeft = left;
+        return new CapLivesState(start, left, _livesLostAt, _livesFrom, left == 0 ? _lossAt : double.PositiveInfinity);
+    }
+
     /// <summary>The run's fallen, the latest first, with the icon of each; empty when the run's record cannot be read.</summary>
     private async Task<IReadOnlyList<CapGrave>> ReadGravesAsync()
     {
         try
         {
             var graves = await _cemetery.GravesAsync();
+            _fallenCount = _runContext.Current?.FallenCounted(graves.Select(g => g.DiedAt)) ?? 0;
             return [.. graves.OrderBy(g => g.DiedAt ?? DateTimeOffset.MinValue)
                 .Select(g => new CapGrave(_sprites.Get(g.Species, g.Form, g.IsShiny), g.Name, g.FellTo, g.Level,
                     g.DiedAt is { } died ? Math.Max(0, (int)(DateTimeOffset.UtcNow - died).TotalDays) : 0))];
@@ -705,7 +733,7 @@ public sealed class CapBadge
             [.. (reading.Crystals ?? []).Select(i => (i, _sprites.GetItem(i)))], _shinyTurn,
             _vialService?.Now is { Owned: true } held ? new CapVialState(held.Uses, held.Max, _vialUsedAt, _vialFrom) : null,
             _fieldItems?.Now.RepelOwned == true ? _repel : null, _fieldItems?.Now.TurboOwned == true ? _turbo : null, _encounterTurn,
-            _drops.Count > 0 ? [.. _drops] : null);
+            _drops.Count > 0 ? [.. _drops] : null, LivesNow());
         _data = data;
 
         // One sea in two windows.
