@@ -71,6 +71,7 @@ Cómo llega una versión nueva a los jugadores desde el 2026-09-26. Detalle téc
 | 1.1.4 | commit directo a main pedido por el usuario (2026-10-23), Action | cap a 100 tras el Rematch; la regla de captura cuenta los cristales Z en vez del botón de HOME (§273) |
 | 1.1.5 | commit directo a main pedido por el usuario (2026-11-10), Action | vidas con Sana Balls, avisos pixel, launcher de juegos y HeartGold (randomizar + melonDS); herramientas en la carpeta de amigos o por DESCARGAR desde la prerelease `herramientas-heartgold-1` (§275, §276) |
 | 1.1.6 | commit directo a main pedido por el usuario (2026-11-10), Action | HeartGold: ajustes básicos como Ultra Luna (iniciales de línea de tres, movimientos y habilidades al azar), dentro del exe (§276) |
+| 1.1.7 | commit directo a main pedido por el usuario (2026-11-10), Action | HeartGold: salvajes de fuerza parecida y sin legendarios (§276) |
 
 **1.0.2 y 1.0.3 no pueden actualizarse solas** (§204: la descarga se desbordaba en el primer trozo). Quien las tenga,
 una vez a mano: cerrar PermaLocke y cambiar `PermaLocke.exe` por el del zip de la 1.0.4.

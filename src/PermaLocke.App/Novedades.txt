@@ -1,3 +1,7 @@
+1.1.7 2026-11-10
+HEARTGOLD
+Los Pokémon salvajes salen de fuerza parecida al original, como en Ultra Luna: en las primeras rutas, Pokémon flojos y no evoluciones finales. Ya no salen legendarios en la hierba. Para tenerlo, vuelve a pulsar RANDOMIZAR.
+
 1.1.6 2026-11-10
 HEARTGOLD
 El randomizado básico ya no lo cambia todo: los tres iniciales son la primera etapa de una línea de tres, los movimientos y las habilidades salen al azar, y los tipos, las estadísticas y las evoluciones se quedan como en el cartucho, igual que en Ultra Luna. Las evoluciones por intercambio pasan a subir de nivel o a llevar un objeto. Salvajes, entrenadores y estáticos siguen al azar.
