@@ -1,3 +1,10 @@
+1.1.8 2026-11-10
+HEARTGOLD
+Objetos del suelo al azar, sin repetir apenas y sin Master Ball: si el Randomizer pone una, PermaLocke la cambia por una Ultra Ball.
+Qué MT aprende cada Pokémon, al azar con preferencia por su tipo. Las MO las puede aprender cualquiera, para no quedarte atascado.
+Evoluciones más fáciles: las de día o noche pasan a otro método, la amistad pide menos (160) y las de nivel muy alto bajan a 30-40.
+Para tenerlo, vuelve a pulsar RANDOMIZAR.
+
 1.1.7 2026-11-10
 HEARTGOLD
 Los Pokémon salvajes salen de fuerza parecida al original, como en Ultra Luna: en las primeras rutas, Pokémon flojos y no evoluciones finales. Ya no salen legendarios en la hierba. Para tenerlo, vuelve a pulsar RANDOMIZAR.

@@ -3,6 +3,8 @@
     <EmbeddedResource Include="Novedades.txt" LogicalName="PermaLocke.App.Novedades.txt" />
     <!-- los ajustes básicos del Randomizer para HeartGold: viajan en el exe para que una actualización los cambie -->
     <EmbeddedResource Include="Games\PermaLocke-basico.rnqs" LogicalName="PermaLocke.App.HeartGold.rnqs" />
+    <!-- y el paso propio tras randomizar (quita las Master Ball del suelo); su fuente, PermaLockeNoMasterBall.java, al lado -->
+    <EmbeddedResource Include="Games\PermaLocke-upr.jar" LogicalName="PermaLocke.App.HeartGold.upr.jar" />
     <EmbeddedResource Include="Views\Cap\Critters\*.png" LogicalName="PermaLocke.App.Critters.%(Filename).png" />
   </ItemGroup>
 
@@ -55,7 +57,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <!-- La versión que compara la actualización automática (§196). Se sube aquí con cada release, y
          tools/publicar-actualizacion.ps1 -Version la pone igual al publicarla; tools/publicar.ps1 usa esta. -->
-    <Version>1.1.7</Version>
+    <Version>1.1.8</Version>
 
     <!-- La Poke Ball es DIBUJADA POR NOSOTROS, geometrica, en nuestros colores. No sale del
          cartucho: los sprites de Nintendo se extraen de la ROM de cada jugador y no se reparten,

@@ -85,20 +85,26 @@ public sealed class HeartGold(AppPaths paths)
     /// upr/ each time, when the Randomizer is there. Starters from three-stage lines, random movesets and abilities, impossible evolutions
     /// fixed; types, stats and evolutions as the cartridge has them, like Ultra Luna (2026-11-10).
     /// </summary>
-    private bool WriteDefaultSettings()
+    private bool WriteDefaultSettings() => WriteResource("PermaLocke.App.HeartGold.rnqs", DefaultSettings);
+
+    /// <summary>PermaLocke's own step after the Randomizer (no Master Ball on the ground), next to it; source in Games/PermaLockeNoMasterBall.java.</summary>
+    private string ExtrasJar => Path.Combine(Tools, "upr", "PermaLocke-upr.jar");
+
+    /// <summary>Writes a file that travels inside the exe into upr/, when the Randomizer's folder is there.</summary>
+    private static bool WriteResource(string name, string path)
     {
         try
         {
-            if (!Directory.Exists(Path.GetDirectoryName(DefaultSettings))) return false;
-            using var embedded = typeof(HeartGold).Assembly.GetManifestResourceStream("PermaLocke.App.HeartGold.rnqs");
-            if (embedded is null) return File.Exists(DefaultSettings);
-            using var file = File.Create(DefaultSettings);
+            if (!Directory.Exists(Path.GetDirectoryName(path))) return false;
+            using var embedded = typeof(HeartGold).Assembly.GetManifestResourceStream(name);
+            if (embedded is null) return File.Exists(path);
+            using var file = File.Create(path);
             embedded.CopyTo(file);
             return true;
         }
         catch (IOException)
         {
-            return File.Exists(DefaultSettings);
+            return File.Exists(path);
         }
     }
 
@@ -121,6 +127,26 @@ public sealed class HeartGold(AppPaths paths)
     {
         Directory.CreateDirectory(paths.Randomized);
         var output = Path.Combine(paths.Randomized, $"HeartGold-{DateTime.Now:yyyyMMdd-HHmmss}.nds");
+        var (done, text) = await RunJavaAsync("-Xmx4096M", "-jar", RandomizerJar, "cli", "-s", settings, "-i", rom, "-o", output).ConfigureAwait(false);
+        if (done && File.Exists(output))
+        {
+            // the Randomizer cannot ban the Master Ball from the ground: PermaLocke's step turns each into an Ultra Ball
+            if (!WriteResource("PermaLocke.App.HeartGold.upr.jar", ExtrasJar)) return (false, text + "\nFalta el paso de PermaLocke (PermaLocke-upr.jar).");
+            var (fixedOk, fixedText) = await RunJavaAsync("-cp", $"{RandomizerJar}{Path.PathSeparator}{ExtrasJar}", "PermaLockeNoMasterBall", output).ConfigureAwait(false);
+            text += "\n" + fixedText;
+            done = fixedOk;
+        }
+        else
+        {
+            done = false;
+        }
+
+        if (done) LastRandomized = output;
+        return (done, text);
+    }
+
+    private async Task<(bool Done, string Output)> RunJavaAsync(params string[] args)
+    {
         var start = new ProcessStartInfo(Java(window: false))
         {
             WorkingDirectory = Path.GetDirectoryName(RandomizerJar)!,
@@ -129,17 +155,13 @@ public sealed class HeartGold(AppPaths paths)
             RedirectStandardOutput = true,
             RedirectStandardError = true
         };
-        foreach (var arg in new[] { "-Xmx4096M", "-jar", RandomizerJar, "cli", "-s", settings, "-i", rom, "-o", output }) start.ArgumentList.Add(arg);
+        foreach (var arg in args) start.ArgumentList.Add(arg);
 
         using var process = Process.Start(start) ?? throw new InvalidOperationException("No se ha podido abrir Java.");
         var stdout = process.StandardOutput.ReadToEndAsync();
         var stderr = process.StandardError.ReadToEndAsync();
         await process.WaitForExitAsync().ConfigureAwait(false);
-        var text = ((await stdout.ConfigureAwait(false)) + (await stderr.ConfigureAwait(false))).Trim();
-
-        var done = process.ExitCode == 0 && File.Exists(output);
-        if (done) LastRandomized = output;
-        return (done, text);
+        return (process.ExitCode == 0, ((await stdout.ConfigureAwait(false)) + (await stderr.ConfigureAwait(false))).Trim());
     }
 
     /// <summary>Opens melonDS with a ROM.</summary>
