@@ -25,7 +25,7 @@ public sealed partial class HeartGoldViewModel : ObservableObject
     private string? _settings;
 
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(PlayCommand))]
+    [NotifyCanExecuteChangedFor(nameof(PlayCommand), nameof(AddRareCandiesCommand))]
     private string? _randomized;
 
     /// <summary>The Randomizer or melonDS are not there yet: the window offers to download them.</summary>
@@ -34,7 +34,7 @@ public sealed partial class HeartGoldViewModel : ObservableObject
     private bool _toolsMissing;
 
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(RandomizeCommand), nameof(PlayCommand), nameof(DownloadToolsCommand))]
+    [NotifyCanExecuteChangedFor(nameof(RandomizeCommand), nameof(PlayCommand), nameof(DownloadToolsCommand), nameof(AddRareCandiesCommand))]
     private bool _busy;
 
     [ObservableProperty]
@@ -43,7 +43,7 @@ public sealed partial class HeartGoldViewModel : ObservableObject
     public string RomText => Rom is null ? "No está. Pon tu ROM de HeartGold (.nds) en la carpeta ROM." : Path.GetFileName(Rom);
 
     public string SettingsText => Settings is null ? "No hay ajustes. Hazlos en el Randomizer, guárdalos y elígelos aquí."
-        : Settings == _game.DefaultSettings ? "Los básicos de PermaLocke: salvajes por zona, iniciales, entrenadores y estáticos al azar."
+        : Settings == _game.DefaultSettings ? "Los básicos de PermaLocke: iniciales de línea de tres, movimientos y habilidades al azar; salvajes, entrenadores y estáticos al azar. Tipos, estadísticas y evoluciones como el cartucho."
         : Path.GetFileName(Settings);
 
     public string RandomizedText => Randomized is null ? "Todavía ninguna. Randomiza primero." : Path.GetFileName(Randomized);
@@ -145,6 +145,25 @@ public sealed partial class HeartGoldViewModel : ObservableObject
         catch (Exception ex)
         {
             Status = $"No se ha podido abrir melonDS: {ex.Message}";
+        }
+    }
+
+    /// <summary>How many Rare Candies each press puts in the bag.</summary>
+    public const int CandiesPerPress = 10;
+
+    private bool CanAddCandies() => !Busy && Randomized is not null;
+
+    [RelayCommand(CanExecute = nameof(CanAddCandies))]
+    private void AddRareCandies()
+    {
+        try
+        {
+            var now = HeartGold.AddRareCandies(Randomized!, CandiesPerPress);
+            Status = $"+{CandiesPerPress} Caramelos Raros: ahora tienes {now}. Carga la partida guardada, no un estado guardado de melonDS.";
+        }
+        catch (Exception ex)
+        {
+            Status = $"No se han podido meter: {ex.Message}";
         }
     }
 

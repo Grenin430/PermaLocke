@@ -1,6 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <EmbeddedResource Include="Novedades.txt" LogicalName="PermaLocke.App.Novedades.txt" />
+    <!-- los ajustes básicos del Randomizer para HeartGold: viajan en el exe para que una actualización los cambie -->
+    <EmbeddedResource Include="Games\PermaLocke-basico.rnqs" LogicalName="PermaLocke.App.HeartGold.rnqs" />
     <EmbeddedResource Include="Views\Cap\Critters\*.png" LogicalName="PermaLocke.App.Critters.%(Filename).png" />
   </ItemGroup>
 
@@ -53,7 +55,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <!-- La versión que compara la actualización automática (§196). Se sube aquí con cada release, y
          tools/publicar-actualizacion.ps1 -Version la pone igual al publicarla; tools/publicar.ps1 usa esta. -->
-    <Version>1.1.5</Version>
+    <Version>1.1.6</Version>
 
     <!-- La Poke Ball es DIBUJADA POR NOSOTROS, geometrica, en nuestros colores. No sale del
          cartucho: los sprites de Nintendo se extraen de la ROM de cada jugador y no se reparten,

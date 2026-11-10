@@ -80,6 +80,10 @@
                     <DockPanel>
                         <Button DockPanel.Dock="Right" Content="▶ JUGAR" Style="{StaticResource PxButton}" Margin="10,0,0,0"
                                 VerticalAlignment="Center" Command="{Binding PlayCommand}" />
+                        <!-- +10 Caramelos Raros en la partida guardada de esa ROM, con melonDS cerrado (2026-11-10) -->
+                        <Button DockPanel.Dock="Right" Content="+10 CARAMELOS RAROS" Style="{StaticResource PxSubtleButton}" Margin="10,0,0,0"
+                                VerticalAlignment="Center" Command="{Binding AddRareCandiesCommand}"
+                                ToolTip="Guarda en el juego y cierra melonDS antes. Luego carga la partida guardada, no un estado guardado." />
                         <Grid>
                             <views:PixelPanel Fill="{DynamicResource PxWell}" IsSunken="True" HasShadow="False" />
                             <pixel:PixelText Text="{Binding RandomizedText}" Style="{StaticResource Value}" />

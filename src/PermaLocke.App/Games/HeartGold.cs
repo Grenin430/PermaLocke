@@ -78,7 +78,29 @@ public sealed class HeartGold(AppPaths paths)
     }
 
     /// <summary>The settings that will be used: the player's, or PermaLocke's basic ones; null when there is neither.</summary>
-    public string? Settings => ChosenSettings ?? (File.Exists(DefaultSettings) ? DefaultSettings : null);
+    public string? Settings => ChosenSettings ?? (WriteDefaultSettings() ? DefaultSettings : null);
+
+    /// <summary>
+    /// The basic settings travel inside the exe, so an update changes them for everyone (the tools' zip keeps the old ones): written to
+    /// upr/ each time, when the Randomizer is there. Starters from three-stage lines, random movesets and abilities, impossible evolutions
+    /// fixed; types, stats and evolutions as the cartridge has them, like Ultra Luna (2026-11-10).
+    /// </summary>
+    private bool WriteDefaultSettings()
+    {
+        try
+        {
+            if (!Directory.Exists(Path.GetDirectoryName(DefaultSettings))) return false;
+            using var embedded = typeof(HeartGold).Assembly.GetManifestResourceStream("PermaLocke.App.HeartGold.rnqs");
+            if (embedded is null) return File.Exists(DefaultSettings);
+            using var file = File.Create(DefaultSettings);
+            embedded.CopyTo(file);
+            return true;
+        }
+        catch (IOException)
+        {
+            return File.Exists(DefaultSettings);
+        }
+    }
 
     /// <summary>The last ROM the Randomizer made, when it is still there.</summary>
     public string? LastRandomized
@@ -123,6 +145,47 @@ public sealed class HeartGold(AppPaths paths)
     /// <summary>Opens melonDS with a ROM.</summary>
     public void Play(string rom) =>
         Process.Start(new ProcessStartInfo(Emulator) { ArgumentList = { rom }, WorkingDirectory = Path.GetDirectoryName(Emulator)!, UseShellExecute = false });
+
+    /// <summary>Rare Candy's item id, the same in every generation.</summary>
+    public const int RareCandy = 50;
+
+    /// <summary>The in-game save melonDS keeps next to the ROM.</summary>
+    public static string SaveOf(string rom) => Path.ChangeExtension(rom, ".sav");
+
+    /// <summary>
+    /// Puts Rare Candies in the bag of a ROM's in-game save (2026-11-10, asked for). Only with melonDS closed: it writes the save on exit.
+    /// A copy of the save is left next to it first. Returns how many the bag holds now. A savestate loaded afterwards brings back its own
+    /// save, so the candies are only there when the game is loaded from the in-game save.
+    /// </summary>
+    public static int AddRareCandies(string rom, int amount)
+    {
+        if (Process.GetProcessesByName("melonDS").Length > 0) throw new InvalidOperationException("Cierra melonDS primero (guardando antes en el juego).");
+        var path = SaveOf(rom);
+        if (!File.Exists(path)) throw new FileNotFoundException("Esta ROM aún no tiene partida guardada. Guarda en el juego y cierra melonDS.");
+        if (!PKHeX.Core.SaveUtil.TryGetSaveFile(path, out var save) || save is not PKHeX.Core.SAV4HGSS)
+        {
+            throw new InvalidDataException("La partida no es de HeartGold o no se puede leer.");
+        }
+
+        var now = PutRareCandies(save, amount);
+        File.Copy(path, $"{path}.antes-caramelos-{DateTime.Now:yyyyMMdd-HHmmss}", overwrite: true);
+        File.WriteAllBytes(path + ".tmp", save.Write().ToArray());
+        File.Move(path + ".tmp", path, overwrite: true);
+        return now;
+    }
+
+    /// <summary>The bag part: adds the candies to the medicine pocket (the slot they have, or the first empty one), up to the pocket's cap.</summary>
+    internal static int PutRareCandies(PKHeX.Core.SaveFile save, int amount)
+    {
+        var bag = save.Inventory;
+        var pouch = bag.Pouches.First(p => p.Type == PKHeX.Core.InventoryType.Medicine);
+        var slot = pouch.Items.FirstOrDefault(i => i.Index == RareCandy) ?? pouch.Items.FirstOrDefault(i => i.Index == 0)
+            ?? throw new InvalidOperationException("El bolsillo de medicinas está lleno.");
+        slot.Index = RareCandy;
+        slot.Count = Math.Min(pouch.MaxCount, slot.Count + amount);
+        bag.CopyTo(save);
+        return slot.Count;
+    }
 
     /// <summary>
     /// Downloads the tools' zip, checks it is exactly the one put up (SHA-256) and unpacks it into Emulator/. Reports the share done, 0 to 1.
