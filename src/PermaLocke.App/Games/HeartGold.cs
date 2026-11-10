@@ -83,7 +83,7 @@ public sealed class HeartGold(AppPaths paths)
     /// <summary>
     /// The basic settings travel inside the exe, so an update changes them for everyone (the tools' zip keeps the old ones): written to
     /// upr/ each time, when the Randomizer is there. Starters from three-stage lines, random movesets and abilities, impossible evolutions
-    /// fixed; types, stats and evolutions as the cartridge has them, like Ultra Luna (2026-11-10).
+    /// fixed, each species its own abilities (they change on evolving); types, stats and evolutions as the cartridge has them, like Ultra Luna.
     /// </summary>
     private bool WriteDefaultSettings() => WriteResource("PermaLocke.App.HeartGold.rnqs", DefaultSettings);
 

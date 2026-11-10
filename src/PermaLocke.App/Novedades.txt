@@ -1,3 +1,8 @@
+1.1.10 2026-11-10
+HEARTGOLD
+Las habilidades se randomizan por especie, como en Ultra Luna: al evolucionar, el Pokémon cambia de habilidad.
+Para tenerlo, vuelve a pulsar RANDOMIZAR.
+
 1.1.9 2026-11-10
 HEARTGOLD
 Sin ataques fulminantes, como en Ultra Luna: nadie aprende Guillotina, Perforador, Fisura ni Frío Polar, ni subiendo de nivel, ni por huevo, ni en los entrenadores.

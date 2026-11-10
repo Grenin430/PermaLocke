@@ -74,6 +74,7 @@ Cómo llega una versión nueva a los jugadores desde el 2026-09-26. Detalle téc
 | 1.1.7 | commit directo a main pedido por el usuario (2026-11-10), Action | HeartGold: salvajes de fuerza parecida y sin legendarios (§276) |
 | 1.1.8 | commit directo a main pedido por el usuario (2026-11-10), Action | HeartGold: objetos del suelo al azar sin Master Ball (paso propio en Java), MT al azar por tipo con MO para todos, evoluciones más fáciles y sin hora (§276) |
 | 1.1.9 | commit directo a main pedido por el usuario (2026-11-10), Action | HeartGold: sin fulminantes (paso propio `PermaLockeTweaks`) y el rival lleva tu inicial (§276) |
+| 1.1.10 | commit directo a main pedido por el usuario (2026-11-10), Action | HeartGold: habilidades al azar por especie, cambian al evolucionar (§276) |
 
 **1.0.2 y 1.0.3 no pueden actualizarse solas** (§204: la descarga se desbordaba en el primer trozo). Quien las tenga,
 una vez a mano: cerrar PermaLocke y cambiar `PermaLocke.exe` por el del zip de la 1.0.4.
